@@ -137,8 +137,11 @@ function NayaLanding() {
       <DomainsSection />
       <DemoSection />
       <VisionSection />
+      <PositioningSection />
+      <ModelSection />
       <CTASection />
       <Footer />
+
     </div>
   );
 }
