@@ -198,6 +198,13 @@ function ProfileCard({
         <span>★ {profile.favorite_challenges.length} favoris</span>
         <span>✓ {profile.completed_challenges.length} complétés</span>
       </div>
+      <Link
+        to="/profiles/$profileId/challenges"
+        params={{ profileId: profile.id }}
+        className="mb-2 block w-full rounded-xl bg-brand px-3 py-2 text-center text-xs font-bold text-white shadow-brand hover:bg-brand-dark"
+      >
+        ✨ Défis personnalisés →
+      </Link>
       <div className="flex gap-2">
         <button
           onClick={onEdit}
