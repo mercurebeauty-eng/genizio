@@ -14,6 +14,68 @@ export type Database = {
   }
   public: {
     Tables: {
+      challenges: {
+        Row: {
+          child_id: string
+          completed_at: string | null
+          created_at: string
+          description: string
+          domain: string
+          duration: string
+          id: string
+          materials: Json
+          notes: string | null
+          progress: number
+          status: Database["public"]["Enums"]["challenge_status"]
+          steps: Json
+          title: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          child_id: string
+          completed_at?: string | null
+          created_at?: string
+          description: string
+          domain: string
+          duration: string
+          id?: string
+          materials?: Json
+          notes?: string | null
+          progress?: number
+          status?: Database["public"]["Enums"]["challenge_status"]
+          steps?: Json
+          title: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          child_id?: string
+          completed_at?: string | null
+          created_at?: string
+          description?: string
+          domain?: string
+          duration?: string
+          id?: string
+          materials?: Json
+          notes?: string | null
+          progress?: number
+          status?: Database["public"]["Enums"]["challenge_status"]
+          steps?: Json
+          title?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "challenges_child_id_fkey"
+            columns: ["child_id"]
+            isOneToOne: false
+            referencedRelation: "child_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       child_profiles: {
         Row: {
           age: number
@@ -67,7 +129,7 @@ export type Database = {
       [_ in never]: never
     }
     Enums: {
-      [_ in never]: never
+      challenge_status: "todo" | "in_progress" | "completed"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -194,6 +256,8 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      challenge_status: ["todo", "in_progress", "completed"],
+    },
   },
 } as const

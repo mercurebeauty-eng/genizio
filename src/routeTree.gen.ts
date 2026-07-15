@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as ProfilesRouteImport } from './routes/profiles'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as ProfilesProfileIdChallengesRouteImport } from './routes/profiles.$profileId.challenges'
 
 const ProfilesRoute = ProfilesRouteImport.update({
   id: '/profiles',
@@ -28,35 +29,49 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ProfilesProfileIdChallengesRoute =
+  ProfilesProfileIdChallengesRouteImport.update({
+    id: '/$profileId/challenges',
+    path: '/$profileId/challenges',
+    getParentRoute: () => ProfilesRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
-  '/profiles': typeof ProfilesRoute
+  '/profiles': typeof ProfilesRouteWithChildren
+  '/profiles/$profileId/challenges': typeof ProfilesProfileIdChallengesRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
-  '/profiles': typeof ProfilesRoute
+  '/profiles': typeof ProfilesRouteWithChildren
+  '/profiles/$profileId/challenges': typeof ProfilesProfileIdChallengesRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
-  '/profiles': typeof ProfilesRoute
+  '/profiles': typeof ProfilesRouteWithChildren
+  '/profiles/$profileId/challenges': typeof ProfilesProfileIdChallengesRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/auth' | '/profiles'
+  fullPaths: '/' | '/auth' | '/profiles' | '/profiles/$profileId/challenges'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/auth' | '/profiles'
-  id: '__root__' | '/' | '/auth' | '/profiles'
+  to: '/' | '/auth' | '/profiles' | '/profiles/$profileId/challenges'
+  id:
+    | '__root__'
+    | '/'
+    | '/auth'
+    | '/profiles'
+    | '/profiles/$profileId/challenges'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthRoute: typeof AuthRoute
-  ProfilesRoute: typeof ProfilesRoute
+  ProfilesRoute: typeof ProfilesRouteWithChildren
 }
 
 declare module '@tanstack/react-router' {
@@ -82,13 +97,32 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/profiles/$profileId/challenges': {
+      id: '/profiles/$profileId/challenges'
+      path: '/$profileId/challenges'
+      fullPath: '/profiles/$profileId/challenges'
+      preLoaderRoute: typeof ProfilesProfileIdChallengesRouteImport
+      parentRoute: typeof ProfilesRoute
+    }
   }
 }
+
+interface ProfilesRouteChildren {
+  ProfilesProfileIdChallengesRoute: typeof ProfilesProfileIdChallengesRoute
+}
+
+const ProfilesRouteChildren: ProfilesRouteChildren = {
+  ProfilesProfileIdChallengesRoute: ProfilesProfileIdChallengesRoute,
+}
+
+const ProfilesRouteWithChildren = ProfilesRoute._addFileChildren(
+  ProfilesRouteChildren,
+)
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthRoute: AuthRoute,
-  ProfilesRoute: ProfilesRoute,
+  ProfilesRoute: ProfilesRouteWithChildren,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
