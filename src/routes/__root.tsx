@@ -88,10 +88,14 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       {
         property: "og:description",
         content:
-          "Une plateforme d'expérimentation qui révèle les talents des enfants à travers des défis concrets, ancrés dans les réalités africaines.",
+          "Naya transforme les curiosités naturelles des enfants africains en talents concrets grâce à des défis personnalisés par IA. Bien au-delà du programme scolaire.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
+      { name: "twitter:title", content: "Naya — Révélez le potentiel unique de votre enfant" },
+      { name: "twitter:description", content: "Naya transforme les curiosités naturelles des enfants africains en talents concrets grâce à des défis personnalisés par IA. Bien au-delà du programme scolaire." },
+      { property: "og:image", content: "https://storage.googleapis.com/gpt-engineer-file-uploads/attachments/og-images/a733782a-c6a3-4fca-b286-bb202621019e" },
+      { name: "twitter:image", content: "https://storage.googleapis.com/gpt-engineer-file-uploads/attachments/og-images/a733782a-c6a3-4fca-b286-bb202621019e" },
     ],
     links: [
       { rel: "preconnect", href: "https://fonts.googleapis.com" },
@@ -104,7 +108,6 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
         rel: "stylesheet",
         href: appCss,
       },
-      { rel: "icon", href: "/favicon.ico", type: "image/x-icon" },
     ],
   }),
   shellComponent: RootShell,
