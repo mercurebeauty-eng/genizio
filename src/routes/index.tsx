@@ -164,6 +164,10 @@ function Nav() {
           <a href="#demo" className="text-ink/70 transition-colors hover:text-brand">
             Démo
           </a>
+          <a href="#modele" className="text-ink/70 transition-colors hover:text-brand">
+            Le projet
+          </a>
+
         </div>
         {session ? (
           <Link
