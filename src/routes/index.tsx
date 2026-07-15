@@ -588,7 +588,199 @@ function CTASection() {
   );
 }
 
+function PositioningSection() {
+  return (
+    <section className="bg-white/60 border-y border-ink/5 px-6 py-24">
+      <div className="mx-auto grid max-w-6xl gap-12 md:grid-cols-5 md:items-center">
+        <div className="md:col-span-2">
+          <span className="mb-3 inline-block text-xs font-bold uppercase tracking-widest text-brand">
+            Positionnement
+          </span>
+          <h2 className="font-display text-4xl font-extrabold leading-tight md:text-5xl">
+            Pas une plateforme éducative.
+          </h2>
+          <p className="mt-6 text-lg text-ink/70">
+            Ça, ça existe déjà. Naya propose autre chose : un lieu où les enfants
+            découvrent qui ils sont.
+          </p>
+        </div>
+        <div className="md:col-span-3 grid gap-4">
+          <blockquote className="rounded-3xl bg-ink p-8 text-white shadow-soft">
+            <p className="font-display text-2xl font-extrabold leading-snug md:text-3xl">
+              « Le laboratoire de découverte des talents. »
+            </p>
+          </blockquote>
+          <blockquote className="rounded-3xl bg-brand/10 p-8 ring-1 ring-brand/20">
+            <p className="font-display text-2xl font-extrabold leading-snug text-brand md:text-3xl">
+              « L'endroit où les enfants découvrent qui ils sont. »
+            </p>
+          </blockquote>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+const MODEL_LEVELS: {
+  n: string;
+  title: string;
+  tagline: string;
+  points: string[];
+  tone: "brand" | "leaf" | "sky" | "ink" | "glow";
+}[] = [
+  {
+    n: "01",
+    title: "Application gratuite",
+    tagline: "La porte d'entrée pour toutes les familles.",
+    points: ["Défis simples", "Accessible à tous", "Sans engagement"],
+    tone: "leaf",
+  },
+  {
+    n: "02",
+    title: "Abonnement premium",
+    tagline: "L'accompagnement IA au quotidien.",
+    points: ["Défis avancés", "Suivi IA personnalisé", "Analyse des talents"],
+    tone: "brand",
+  },
+  {
+    n: "03",
+    title: "Ateliers physiques",
+    tagline: "Se rencontrer, construire, expérimenter.",
+    points: ["Abidjan", "Bouaké", "Yamoussoukro"],
+    tone: "sky",
+  },
+  {
+    n: "04",
+    title: "Camps de vacances",
+    tagline: "Une semaine pour plonger dans un univers.",
+    points: ["Ingénierie", "Entrepreneuriat", "Agriculture", "Art", "Sport"],
+    tone: "glow",
+  },
+  {
+    n: "05",
+    title: "École expérimentale",
+    tagline: "Le rêve initial. Une école construite autour du potentiel — pas autour du programme.",
+    points: ["Pédagogie par projet", "Mentors experts", "Portfolio vivant"],
+    tone: "ink",
+  },
+];
+
+const LEVEL_TONES: Record<
+  (typeof MODEL_LEVELS)[number]["tone"],
+  { card: string; badge: string; num: string }
+> = {
+  leaf: {
+    card: "bg-white ring-1 ring-ink/5",
+    badge: "bg-leaf/10 text-leaf",
+    num: "text-leaf",
+  },
+  brand: {
+    card: "bg-white ring-1 ring-brand/20",
+    badge: "bg-brand/10 text-brand",
+    num: "text-brand",
+  },
+  sky: {
+    card: "bg-white ring-1 ring-ink/5",
+    badge: "bg-sky/10 text-sky",
+    num: "text-sky",
+  },
+  glow: {
+    card: "bg-white ring-1 ring-ink/5",
+    badge: "bg-brand-glow/20 text-brand-dark",
+    num: "text-brand-dark",
+  },
+  ink: {
+    card: "bg-ink text-white ring-1 ring-ink",
+    badge: "bg-brand/20 text-brand-glow",
+    num: "text-brand-glow",
+  },
+};
+
+function ModelSection() {
+  return (
+    <section id="modele" className="px-6 py-24">
+      <div className="mx-auto max-w-7xl">
+        <div className="mb-16 max-w-2xl">
+          <span className="mb-3 inline-block text-xs font-bold uppercase tracking-widest text-brand">
+            Le modèle · 5 niveaux
+          </span>
+          <h2 className="font-display text-4xl font-extrabold leading-tight md:text-5xl">
+            De l'application au campus.
+          </h2>
+          <p className="mt-4 text-lg text-ink/70">
+            Naya se construit par étapes. Chaque niveau finance et prépare le suivant —
+            jusqu'à l'école dont nous rêvons.
+          </p>
+        </div>
+
+        <ol className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+          {MODEL_LEVELS.map((lvl) => {
+            const t = LEVEL_TONES[lvl.tone];
+            const isDark = lvl.tone === "ink";
+            return (
+              <li
+                key={lvl.n}
+                className={
+                  "flex flex-col rounded-3xl p-8 shadow-soft transition-all hover:-translate-y-1 " +
+                  t.card
+                }
+              >
+                <div className="mb-6 flex items-center justify-between">
+                  <span
+                    className={
+                      "font-display text-5xl font-extrabold leading-none " + t.num
+                    }
+                  >
+                    {lvl.n}
+                  </span>
+                  <span
+                    className={
+                      "rounded-full px-3 py-1 text-[10px] font-bold uppercase tracking-widest " +
+                      t.badge
+                    }
+                  >
+                    Niveau {lvl.n}
+                  </span>
+                </div>
+                <h3 className="mb-2 font-display text-2xl font-extrabold">{lvl.title}</h3>
+                <p
+                  className={
+                    "mb-6 text-sm italic " + (isDark ? "text-white/70" : "text-ink/60")
+                  }
+                >
+                  {lvl.tagline}
+                </p>
+                <ul
+                  className={
+                    "mt-auto space-y-2 text-sm font-medium " +
+                    (isDark ? "text-white/90" : "text-ink/80")
+                  }
+                >
+                  {lvl.points.map((p) => (
+                    <li key={p} className="flex items-center gap-3">
+                      <span
+                        className={
+                          "grid size-5 place-items-center rounded-full text-[10px] font-bold " +
+                          t.badge
+                        }
+                      >
+                        →
+                      </span>
+                      {p}
+                    </li>
+                  ))}
+                </ul>
+              </li>
+            );
+          })}
+        </ol>
+      </div>
+    </section>
+  );
+}
+
 function Footer() {
+
   return (
     <footer className="border-t border-ink/5 px-6 py-12">
       <div className="mx-auto flex max-w-7xl flex-col items-center justify-between gap-8 md:flex-row">
