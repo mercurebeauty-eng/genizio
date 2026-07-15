@@ -131,7 +131,12 @@ export const updateChallenge = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input: unknown) => UpdateInput.parse(input))
   .handler(async ({ data, context }) => {
-    const patch: Record<string, unknown> = {};
+    const patch: {
+      status?: "todo" | "in_progress" | "completed";
+      progress?: number;
+      notes?: string | null;
+      completed_at?: string | null;
+    } = {};
     if (data.status !== undefined) {
       patch.status = data.status;
       if (data.status === "completed") {
