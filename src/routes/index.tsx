@@ -1,6 +1,8 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
+import { useSession } from "@/hooks/use-session";
 import heroChild from "@/assets/hero-child.jpg";
+
 
 export const Route = createFileRoute("/")({
   component: NayaLanding,
@@ -142,6 +144,7 @@ function NayaLanding() {
 }
 
 function Nav() {
+  const { session } = useSession();
   return (
     <nav className="sticky top-0 z-50 border-b border-ink/5 bg-surface/80 backdrop-blur-md">
       <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-4">
@@ -159,16 +162,26 @@ function Nav() {
             Démo
           </a>
         </div>
-        <a
-          href="#inscription"
-          className="rounded-full bg-ink px-5 py-2.5 text-sm font-semibold text-surface shadow-sm transition-all hover:bg-brand"
-        >
-          Rejoindre la liste
-        </a>
+        {session ? (
+          <Link
+            to="/profiles"
+            className="rounded-full bg-ink px-5 py-2.5 text-sm font-semibold text-surface shadow-sm transition-all hover:bg-brand"
+          >
+            Mes profils
+          </Link>
+        ) : (
+          <Link
+            to="/auth"
+            className="rounded-full bg-ink px-5 py-2.5 text-sm font-semibold text-surface shadow-sm transition-all hover:bg-brand"
+          >
+            Se connecter
+          </Link>
+        )}
       </div>
     </nav>
   );
 }
+
 
 function Hero() {
   return (
