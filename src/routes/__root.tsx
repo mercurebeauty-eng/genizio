@@ -77,14 +77,21 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "Lovable App" },
-      { name: "description", content: "Lovable Generated Project" },
-      { name: "author", content: "Lovable" },
-      { property: "og:title", content: "Lovable App" },
-      { property: "og:description", content: "Lovable Generated Project" },
+      { title: "Naya — Révélez le potentiel unique de votre enfant" },
+      {
+        name: "description",
+        content:
+          "Naya transforme les curiosités naturelles des enfants africains en talents concrets grâce à des défis personnalisés par IA. Bien au-delà du programme scolaire.",
+      },
+      { name: "author", content: "Naya" },
+      { property: "og:title", content: "Naya — Révélez le potentiel unique de votre enfant" },
+      {
+        property: "og:description",
+        content:
+          "Une plateforme d'expérimentation qui révèle les talents des enfants à travers des défis concrets, ancrés dans les réalités africaines.",
+      },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
-      { name: "twitter:site", content: "@Lovable" },
     ],
     links: [
       {
