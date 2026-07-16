@@ -11,6 +11,8 @@ const ChallengeSchema = z.object({
   materials: z.array(z.string()),
   pedagogical_context: z.string().optional(),
   intelligences: z.array(z.string()).optional(),
+  requires_supervision: z.boolean().default(false),
+  supervision_warning: z.string().optional(),
 });
 
 const DOMAINS = [
@@ -213,6 +215,8 @@ Réponds STRICTEMENT en JSON valide avec ce format :
       materials: c.materials,
       pedagogical_context: c.pedagogical_context || null,
       target_intelligences: c.intelligences || [c.domain],
+      requires_supervision: c.requires_supervision,
+      supervision_warning: c.supervision_warning || null,
     }));
 
     const { data: inserted, error: insErr } = await supabase
@@ -432,7 +436,8 @@ export const assignTemplateChallenge = createServerFn({ method: "POST" })
 
 const GenerateSingleInput = z.object({
   childId: z.string().uuid(),
-  domain: z.string(),
+  timeAvailable: z.string(),
+  location: z.string(),
 });
 
 export const generateSingleChallenge = createServerFn({ method: "POST" })
@@ -449,7 +454,6 @@ export const generateSingleChallenge = createServerFn({ method: "POST" })
       .maybeSingle();
     if (childErr || !child) throw new Error("Profil enfant introuvable");
 
-    // Fetch completed challenges to bypass parental bias & understand child context
     const { data: completedChallenges } = await supabase
       .from("challenges")
       .select("title, domain, ai_observations")
@@ -463,7 +467,7 @@ export const generateSingleChallenge = createServerFn({ method: "POST" })
       .join("\n");
 
     const prompt = `Tu es Naya, un mentor pédagogique d'élite spécialisé dans la psychologie de l'enfant et les Intelligences Multiples d'Howard Gardner, opérant en Afrique francophone.
-Génère un défi d'apprentissage sur-mesure, hautement interactif et passionnant pour cet enfant.
+Génère un défi d'apprentissage sur-mesure, hautement interactif et passionnant pour cet enfant, en respectant son contexte immédiat.
 
 Profil de l'enfant :
 - Prénom : ${child.name}
@@ -475,33 +479,63 @@ Profil de l'enfant :
 Défis déjà accomplis par l'enfant et observations de Naya :
 ${completedSummary || "(Aucun défi complété pour le moment)"}
 
-Domaine requis : ${data.domain === 'all' || !data.domain ? 'Choix Intelligent de Naya' : data.domain}
+Contexte immédiat (TRÈS IMPORTANT) :
+- Temps disponible : ${data.timeAvailable}
+- Lieu / Environnement : ${data.location}
 
-Ta mission (Bannir le biais parental) :
-1. Analyse objectivement le profil de l'enfant et ses réalisations passées.
-2. Si le domaine requis est "Choix Intelligent de Naya", choisis stratégiquement un domaine inexploré ou faible dans ses scores pour faire du diagnostic proactif, OU au contraire, choisis de renforcer une force naissante.
-3. Si le parent a forcé un domaine (ex: Sciences) mais que tu observes par le passé que l'enfant performe mieux ou a des blocages, formule un défi "hybride" (formule de croisement) : utilise son intelligence forte (ex: dessin/spatial, musique) pour aborder et résoudre le sujet du domaine requis.
-4. Le défi doit être extrêmement pratique, ancré dans le quotidien local en Afrique francophone (ex: Côte d'Ivoire, Sénégal, RDC...) en utilisant des objets simples de récupération ou du quartier (briques, carton, calebasses, sable, emballages, etc.).
+Ta mission :
+1. Choisis le domaine d'intelligence (Sciences, Art, Artisanat, Cuisine, etc.) le plus pertinent pour ce temps et ce lieu.
+2. Le défi doit s'adapter EXACTEMENT au temps disponible. S'il n'y a que 10 minutes, propose un "mini-défi" immédiat. Si c'est 1h+, propose un projet structuré.
+3. Le défi doit être réalisable avec les objets de ce lieu précis.
+4. SÉCURITÉ ET SUPERVISION : Analyse si le défi comporte des risques (cuisine, feu, objets coupants, produits chimiques, électricité, extérieur non sécurisé). Si OUI, tu DOIS régler "requires_supervision" à true et rédiger un "supervision_warning" clair à l'attention du parent.
 
 Réponds STRICTEMENT en JSON valide avec ce format exact :
 {
-  "title": "Titre du défi",
-  "domain": "Domaine de l'intelligence",
-  "description": "Description stimulante expliquant le but du défi",
-  "duration": "Durée estimée (ex: 2h, 1 après-midi)",
-  "steps": ["Étape 1...", "Étape 2..."],
-  "materials": ["Matériel 1...", "Matériel 2..."],
-  "pedagogical_context": "En quoi ce défi développe le potentiel de l'enfant et comment ton diagnostic a combiné ses talents pour outrepasser la subjectivité parentale.",
-  "intelligences": ["spatial", "creative", "logico_mathematique", "artisanale", "sociale", "entrepreneuriale", "linguistique", "corporelle", "emotionnelle"]
+  "domain": "Domaine choisi",
+  "title": "Titre accrocheur du défi",
+  "description": "Pitch pour l'enfant",
+  "duration": "Durée estimée",
+  "steps": ["Étape 1", "Étape 2..."],
+  "materials": ["Outil 1", "Matériau 2..."],
+  "pedagogical_context": "Ce que Naya observe via cette activité",
+  "intelligences": ["Intelligence dominante sollicitée"],
+  "requires_supervision": true ou false,
+  "supervision_warning": "Attention: Manipulez le couteau avec l'enfant" (ou null si false)
 }`;
 
     const content = await callClaude(prompt, true);
-    
+    let parsed: unknown;
     try {
-      return JSON.parse(content);
+      parsed = JSON.parse(content);
     } catch {
-      throw new Error("Réponse IA illisible.");
+      throw new Error("Réponse IA invalide");
     }
+
+    const c = ChallengeSchema.parse(parsed);
+
+    const row = {
+      user_id: userId,
+      child_id: data.childId,
+      domain: c.domain,
+      title: c.title.slice(0, 120),
+      description: c.description,
+      duration: c.duration,
+      steps: c.steps,
+      materials: c.materials,
+      pedagogical_context: c.pedagogical_context || null,
+      target_intelligences: c.intelligences || [c.domain],
+      requires_supervision: c.requires_supervision,
+      supervision_warning: c.supervision_warning || null,
+    };
+
+    const { data: inserted, error } = await supabase
+      .from("challenges")
+      .insert(row)
+      .select("*")
+      .single();
+
+    if (error) throw new Error(error.message);
+    return inserted;
   });
 
 export const getChildAISynthesis = createServerFn({ method: "POST" })

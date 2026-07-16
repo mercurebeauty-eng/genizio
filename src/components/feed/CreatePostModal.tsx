@@ -15,6 +15,7 @@ export function CreatePostModal({ onPostCreated }: CreatePostModalProps) {
   const [loading, setLoading] = useState(false);
   const [caption, setCaption] = useState("");
   const [preview, setPreview] = useState<string | null>(null);
+  const [fileToUpload, setFileToUpload] = useState<File | null>(null);
   const [challenges, setChallenges] = useState<any[]>([]);
   const [selectedChallengeId, setSelectedChallengeId] = useState<string>("");
 
@@ -24,7 +25,7 @@ export function CreatePostModal({ onPostCreated }: CreatePostModalProps) {
       const fetchChallenges = async () => {
         const { data, error } = await supabase
           .from("challenges")
-          .select("id, title, domain, child_profiles(name, avatar_color)")
+          .select("id, title, domain, child_id, child_profiles(id, name, avatar_color)")
           .eq("status", "completed");
           
         if (!error && data) {
@@ -45,6 +46,7 @@ export function CreatePostModal({ onPostCreated }: CreatePostModalProps) {
     // Simulate upload with local object URL
     const url = URL.createObjectURL(file);
     setPreview(url);
+    setFileToUpload(file);
   };
 
   const handlePost = async () => {
@@ -58,32 +60,68 @@ export function CreatePostModal({ onPostCreated }: CreatePostModalProps) {
       return;
     }
 
+    const selectedChallenge = challenges.find(c => c.id === selectedChallengeId);
+    if (!selectedChallenge) return;
+
     setLoading(true);
-    // Simuler le délai réseau
-    await new Promise((resolve) => setTimeout(resolve, 1000));
 
-    const selected = challenges.find(c => c.id === selectedChallengeId);
+    try {
+      // 1. Upload image to Supabase Storage
+      const fileExt = fileToUpload?.name.split('.').pop() || 'png';
+      const fileName = `${session?.user.id}/${Date.now()}.${fileExt}`;
+      
+      const { error: uploadError } = await supabase.storage
+        .from('posts')
+        .upload(fileName, fileToUpload!);
 
-    const newPost = {
-      id: "local-" + Date.now(),
-      childName: selected?.child_profiles?.name || "Votre Enfant",
-      familyName: "Votre Famille",
-      avatarColor: selected?.child_profiles?.avatar_color === "leaf" ? "bg-leaf" : selected?.child_profiles?.avatar_color === "sky" ? "bg-sky" : "bg-brand",
-      missionTitle: selected?.title || "Mission",
-      description: caption || "Une nouvelle découverte géniale !",
-      date: "À l'instant",
-      likes: 0,
-      badge: selected?.domain || "⭐ Exploit",
-      image: preview,
-      isLiked: false,
-    };
+      if (uploadError) throw uploadError;
 
-    onPostCreated(newPost);
-    toast.success("Post publié avec succès !");
-    setLoading(false);
-    setOpen(false);
-    setCaption("");
-    setPreview(null);
+      // 2. Get public URL
+      const { data: { publicUrl } } = supabase.storage
+        .from('posts')
+        .getPublicUrl(fileName);
+
+      // 3. Insert into posts table
+      const { data: newPostData, error: insertError } = await supabase
+        .from('posts')
+        .insert({
+          parent_id: session?.user.id,
+          child_profile_id: selectedChallenge.child_profiles?.id, // Wait, challenges query gives child_profiles(name, avatar_color) but not child_profile_id easily unless selectedChallenge has it
+          image_url: publicUrl,
+          caption: caption || "",
+          likes_count: 0
+        })
+        .select('*, child_profiles(name, avatar_color)')
+        .single();
+
+      if (insertError) throw insertError;
+
+      const newPost = {
+        id: newPostData.id,
+        childName: newPostData.child_profiles?.name || "Enfant",
+        familyName: "Votre Famille",
+        avatarColor: newPostData.child_profiles?.avatar_color === "leaf" ? "bg-leaf" : newPostData.child_profiles?.avatar_color === "sky" ? "bg-sky" : "bg-brand",
+        missionTitle: selectedChallenge.title,
+        description: newPostData.caption ?? "",
+        date: "À l'instant",
+        likes: newPostData.likes_count,
+        badge: selectedChallenge.domain || "⭐ Exploit",
+        image: newPostData.image_url,
+        isLiked: false,
+      };
+
+      onPostCreated(newPost);
+      toast.success("Post publié avec succès !");
+      setOpen(false);
+      setCaption("");
+      setPreview(null);
+      setFileToUpload(null);
+    } catch (err: any) {
+      console.error(err);
+      toast.error("Erreur lors de la publication : " + err.message);
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (

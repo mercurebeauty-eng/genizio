@@ -5,7 +5,7 @@ import { useSession } from "@/hooks/use-session";
 import { AppHeader } from "@/components/AppHeader";
 import { supabase } from "@/integrations/supabase/client";
 import { generateSingleChallenge, assignTemplateChallenge } from "@/lib/challenges.functions";
-import { Sparkles, Loader2, RotateCcw, Check, BookOpen, ShieldAlert, Award, Compass } from "lucide-react";
+import { Sparkles, Loader2, RotateCcw, Check, BookOpen, ShieldAlert, Award, Compass, TriangleAlert, Clock, MapPin } from "lucide-react";
 import { toast } from "sonner";
 import { NayaAvatar } from "@/components/NayaAvatar";
 
@@ -13,32 +13,19 @@ export const Route = createFileRoute("/laboratory")({
   component: LaboratoryPage,
 });
 
-const CATEGORIES = [
-  { id: "all", label: "Surprenez-moi ! (Toutes)" },
-  { id: "Sciences", label: "Sciences & Ingénierie" },
-  { id: "Architecture", label: "Architecture & Bâtiment" },
-  { id: "Artisanat", label: "Artisanat & Manuel" },
-  { id: "Agriculture", label: "Agriculture & Nature" },
-  { id: "Sport", label: "Sport & Corps" },
-  { id: "Communication", label: "Communication & Leadership" },
-  { id: "Entrepreneuriat", label: "Entrepreneuriat" },
-  { id: "Arts", label: "Arts & Créativité" },
-  { id: "Langues", label: "Langues & Culture" },
-  { id: "Tech & IA", label: "Tech & IA" },
+const TIME_OPTIONS = [
+  { id: "10 min", label: "10 min (Mini-Défi)" },
+  { id: "30 min", label: "30 min (Activité rapide)" },
+  { id: "1 heure", label: "1 heure (Projet)" },
+  { id: "1 après-midi", label: "Tout un après-midi" },
 ];
 
-const DOMAIN_COLORS: Record<string, string> = {
-  Sciences: "from-blue-500/10 to-indigo-500/10 border-blue-500/30 text-blue-600 bg-blue-50/50",
-  Architecture: "from-amber-500/10 to-orange-500/10 border-amber-500/30 text-amber-700 bg-amber-50/50",
-  Artisanat: "from-amber-600/10 to-stone-600/10 border-amber-600/30 text-amber-900 bg-amber-50/30",
-  Agriculture: "from-emerald-500/10 to-teal-500/10 border-emerald-500/30 text-emerald-700 bg-emerald-50/50",
-  Sport: "from-red-500/10 to-rose-500/10 border-red-500/30 text-red-600 bg-red-50/50",
-  Communication: "from-purple-500/10 to-pink-500/10 border-purple-500/30 text-purple-600 bg-purple-50/50",
-  Entrepreneuriat: "from-sky-500/10 to-cyan-500/10 border-sky-500/30 text-sky-700 bg-sky-50/50",
-  Arts: "from-fuchsia-500/10 to-pink-500/10 border-fuchsia-500/30 text-fuchsia-600 bg-fuchsia-50/50",
-  Langues: "from-indigo-500/10 to-violet-500/10 border-indigo-500/30 text-indigo-600 bg-indigo-50/50",
-  "Tech & IA": "from-teal-500/10 to-cyan-500/10 border-teal-500/30 text-teal-700 bg-teal-50/50",
-};
+const LOCATION_OPTIONS = [
+  { id: "Maison (Intérieur)", label: "À la maison" },
+  { id: "Cuisine", label: "Dans la cuisine" },
+  { id: "Extérieur / Jardin", label: "Dehors / Jardin" },
+  { id: "En trajet (Voiture/Transport)", label: "En trajet" },
+];
 
 interface GeneratedChallenge {
   title: string;
@@ -49,14 +36,15 @@ interface GeneratedChallenge {
   materials: string[];
   pedagogical_context?: string;
   intelligences?: string[];
+  requires_supervision?: boolean;
+  supervision_warning?: string;
 }
 
 const LOADING_STEPS = [
   "Naya étudie la carte des talents de l'enfant...",
-  "Analyse des centres d'intérêt et de l'âge...",
-  "Recherche d'une idée d'expérience stimulante...",
-  "Conception des étapes étape par étape...",
-  "Vérification de la faisabilité avec des matériaux locaux...",
+  "Analyse du contexte de temps et de lieu...",
+  "Recherche d'une idée stimulante adaptée...",
+  "Vérification des règles de sécurité...",
   "Mise en forme pédagogique du défi...",
 ];
 
@@ -66,14 +54,15 @@ function LaboratoryPage() {
 
   const [childrenList, setChildrenList] = useState<any[]>([]);
   const [selectedChild, setSelectedChild] = useState<string>("");
-  const [selectedCategory, setSelectedCategory] = useState<string>("all");
+  const [selectedTime, setSelectedTime] = useState<string>("30 min");
+  const [selectedLocation, setSelectedLocation] = useState<string>("Maison (Intérieur)");
 
   const [isGenerating, setIsGenerating] = useState(false);
   const [loadingTextIndex, setLoadingTextIndex] = useState(0);
   const [currentChallenge, setCurrentChallenge] = useState<GeneratedChallenge | null>(null);
   
   const [isAssigning, setIsAssigning] = useState(false);
-  const [activeTab, setActiveTab] = useState<"steps" | "materials" | "pedagogical">("steps");
+  const [activeTab, setActiveTab] = useState<"steps" | "materials" | "pedagogical">("materials");
 
   const generateAction = useServerFn(generateSingleChallenge);
   const assignAction = useServerFn(assignTemplateChallenge);
@@ -114,11 +103,12 @@ function LaboratoryPage() {
       const challenge = await generateAction({
         data: {
           childId: selectedChild,
-          domain: selectedCategory,
+          timeAvailable: selectedTime,
+          location: selectedLocation,
         }
       });
       setCurrentChallenge(challenge as GeneratedChallenge);
-      setActiveTab("steps");
+      setActiveTab("materials");
       toast.success("Nouveau défi généré avec succès !");
     } catch (err) {
       console.error(err);
@@ -147,7 +137,7 @@ function LaboratoryPage() {
           }
         }
       });
-      toast.success("Défi assigné avec succès !");
+      toast.success("Défi commencé avec succès !");
       navigate({ to: `/profiles/${selectedChild}/challenges` });
     } catch (err) {
       console.error(err);
@@ -164,7 +154,7 @@ function LaboratoryPage() {
   const childName = childrenList.find((c) => c.id === selectedChild)?.name ?? "l'enfant";
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-surface via-surface to-brand/5 p-6 font-sans text-ink">
+    <div className="min-h-screen bg-gradient-to-b from-surface via-surface to-brand/5 p-6 font-sans text-ink pb-24">
       <AppHeader />
 
       <div className="pt-6"></div>
@@ -174,30 +164,31 @@ function LaboratoryPage() {
           <NayaAvatar size="md" className="mx-auto mb-2" />
           <div className="inline-flex items-center gap-2 rounded-full bg-brand/10 px-4 py-1.5 text-xs font-bold uppercase tracking-wider text-brand">
             <Sparkles className="size-4 animate-pulse" />
-            Inspiration Sharpen & IA
+            Génération Contextuelle
           </div>
           <h1 className="mt-4 font-display text-4xl font-extrabold tracking-tight md:text-5xl">
-            Le Laboratoire d'Expériences
+            Inspirer Maintenant
           </h1>
           <p className="mx-auto mt-3 max-w-xl text-lg text-ink/70">
-            Faites tourner le générateur pour inventer des missions pédagogiques captivantes, ancrées dans la réalité et adaptées aux talents de votre enfant.
+            L'IA crée une activité sur-mesure basée sur votre temps, votre lieu actuel, et les talents cachés de votre enfant.
           </p>
         </header>
 
         {/* Configuration Panel */}
         <div className="mb-8 rounded-3xl border border-ink/5 bg-white p-6 shadow-soft md:p-8">
-          <div className="grid gap-6 md:grid-cols-2">
+          <div className="grid gap-6 md:grid-cols-1">
+            {/* Profil Enfant */}
             <div>
-              <label className="block text-sm font-bold uppercase tracking-wider text-ink/60">
-                1. Choisir l'enfant :
+              <label className="block text-sm font-bold uppercase tracking-wider text-ink/60 mb-2.5">
+                Pour qui ?
               </label>
               {childrenList.length > 0 ? (
-                <div className="mt-2.5 flex flex-wrap gap-2">
+                <div className="flex flex-wrap gap-2">
                   {childrenList.map((c) => (
                     <button
                       key={c.id}
                       onClick={() => setSelectedChild(c.id)}
-                      className={`rounded-2xl px-4 py-3 text-sm font-bold transition-all ${
+                      className={`rounded-2xl px-5 py-3 text-sm font-bold transition-all ${
                         selectedChild === c.id
                           ? "bg-brand text-white shadow-md shadow-brand/20 ring-2 ring-brand ring-offset-2"
                           : "bg-surface text-ink/80 hover:bg-ink/5"
@@ -215,21 +206,44 @@ function LaboratoryPage() {
               )}
             </div>
 
-            <div>
-              <label className="block text-sm font-bold uppercase tracking-wider text-ink/60">
-                2. Sélectionner une Intelligence :
-              </label>
-              <select
-                value={selectedCategory}
-                onChange={(e) => setSelectedCategory(e.target.value)}
-                className="mt-3 block w-full rounded-2xl border border-ink/10 bg-surface px-4 py-3.5 text-sm font-bold outline-none focus:border-brand focus:ring-2 focus:ring-brand/20 transition-all"
-              >
-                {CATEGORIES.map((cat) => (
-                  <option key={cat.id} value={cat.id}>
-                    {cat.label}
-                  </option>
-                ))}
-              </select>
+            <div className="grid gap-6 sm:grid-cols-2 mt-4">
+              {/* Temps */}
+              <div>
+                <label className="flex items-center gap-2 text-sm font-bold uppercase tracking-wider text-ink/60 mb-3">
+                  <Clock className="size-4" />
+                  Temps disponible
+                </label>
+                <div className="grid gap-2">
+                  {TIME_OPTIONS.map((time) => (
+                    <label key={time.id} className={`flex items-center gap-3 p-3 rounded-xl border-2 cursor-pointer transition-all ${selectedTime === time.id ? "border-brand bg-brand/5 text-brand" : "border-ink/5 hover:bg-ink/5 text-ink"}`}>
+                      <input type="radio" name="time" value={time.id} checked={selectedTime === time.id} onChange={(e) => setSelectedTime(e.target.value)} className="hidden" />
+                      <div className={`size-4 rounded-full border-2 flex items-center justify-center ${selectedTime === time.id ? "border-brand" : "border-ink/20"}`}>
+                        {selectedTime === time.id && <div className="size-2 rounded-full bg-brand" />}
+                      </div>
+                      <span className="font-bold text-sm">{time.label}</span>
+                    </label>
+                  ))}
+                </div>
+              </div>
+
+              {/* Lieu */}
+              <div>
+                <label className="flex items-center gap-2 text-sm font-bold uppercase tracking-wider text-ink/60 mb-3">
+                  <MapPin className="size-4" />
+                  Environnement actuel
+                </label>
+                <div className="grid gap-2">
+                  {LOCATION_OPTIONS.map((loc) => (
+                    <label key={loc.id} className={`flex items-center gap-3 p-3 rounded-xl border-2 cursor-pointer transition-all ${selectedLocation === loc.id ? "border-brand bg-brand/5 text-brand" : "border-ink/5 hover:bg-ink/5 text-ink"}`}>
+                      <input type="radio" name="location" value={loc.id} checked={selectedLocation === loc.id} onChange={(e) => setSelectedLocation(e.target.value)} className="hidden" />
+                      <div className={`size-4 rounded-full border-2 flex items-center justify-center ${selectedLocation === loc.id ? "border-brand" : "border-ink/20"}`}>
+                        {selectedLocation === loc.id && <div className="size-2 rounded-full bg-brand" />}
+                      </div>
+                      <span className="font-bold text-sm">{loc.label}</span>
+                    </label>
+                  ))}
+                </div>
+              </div>
             </div>
           </div>
 
@@ -237,7 +251,7 @@ function LaboratoryPage() {
             <button
               onClick={handleGenerate}
               disabled={isGenerating || childrenList.length === 0}
-              className="group relative inline-flex items-center gap-3 overflow-hidden rounded-2xl bg-brand px-8 py-4 font-display text-lg font-bold text-white shadow-lg shadow-brand/30 transition-all hover:scale-[1.02] hover:bg-brand-dark hover:shadow-brand/40 active:scale-95 disabled:pointer-events-none disabled:opacity-50"
+              className="group relative inline-flex items-center gap-3 overflow-hidden rounded-2xl bg-brand px-8 py-4 font-display text-lg font-bold text-white shadow-lg shadow-brand/30 transition-all hover:scale-[1.02] hover:bg-brand-dark border-b-4 border-brand-dark active:border-b-0 active:translate-y-[4px] disabled:pointer-events-none disabled:opacity-50"
             >
               {isGenerating ? (
                 <>
@@ -247,7 +261,7 @@ function LaboratoryPage() {
               ) : (
                 <>
                   <Sparkles className="size-5 transition-transform group-hover:rotate-12" />
-                  <span>Générer un défi sur-mesure ✨</span>
+                  <span>Générer l'activité magique ✨</span>
                 </>
               )}
             </button>
@@ -259,16 +273,33 @@ function LaboratoryPage() {
           <div className="flex flex-col items-center justify-center py-16 text-center">
             <NayaAvatar size="lg" thoughts={LOADING_STEPS} className="mb-6" />
             <p className="text-lg font-bold text-brand">{LOADING_STEPS[loadingTextIndex]}</p>
-            <p className="mt-2 text-xs text-ink/40">Génération par Naya</p>
           </div>
         )}
 
         {/* Challenge Display */}
         {currentChallenge && (
           <div className="animate-in fade-in slide-in-from-bottom-5 duration-500">
+            
+            {/* SÉCURITÉ : ALERTE SUPERVISION */}
+            {currentChallenge.requires_supervision && (
+              <div className="mb-4 overflow-hidden rounded-2xl border-2 border-red-500/20 bg-red-50 p-5 shadow-sm relative">
+                <div className="flex gap-4">
+                  <div className="flex size-10 shrink-0 items-center justify-center rounded-full bg-red-100 text-red-600">
+                    <TriangleAlert className="size-6" />
+                  </div>
+                  <div>
+                    <h3 className="text-lg font-black text-red-800">Supervision Requise</h3>
+                    <p className="mt-1 text-sm font-semibold text-red-700/90 leading-relaxed">
+                      {currentChallenge.supervision_warning || "Cette activité nécessite la présence et l'aide d'un adulte pour des raisons de sécurité."}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
+
             <div className="overflow-hidden rounded-3xl border border-ink/10 bg-white shadow-xl">
-              {/* Header Gradient */}
-              <div className={`bg-gradient-to-br p-6 border-b border-ink/5 md:p-8 ${DOMAIN_COLORS[currentChallenge.domain] ?? "from-brand/10 to-indigo-100/10 text-brand"}`}>
+              {/* Header */}
+              <div className="bg-gradient-to-br from-brand/10 to-indigo-100/10 p-6 border-b border-ink/5 md:p-8 text-brand">
                 <div className="flex items-center justify-between">
                   <span className="inline-flex items-center gap-1.5 rounded-full border border-current px-3 py-1 text-xs font-extrabold uppercase tracking-wider">
                     <Compass className="size-3.5" />
@@ -289,20 +320,20 @@ function LaboratoryPage() {
               {/* Tabs Navigation */}
               <div className="flex border-b border-ink/5 bg-stone-50/50">
                 <button
-                  onClick={() => setActiveTab("steps")}
-                  className={`flex-1 px-4 py-3.5 text-xs font-bold uppercase tracking-wider transition-all border-b-2 ${
-                    activeTab === "steps" ? "border-brand text-brand bg-white" : "border-transparent text-ink/50 hover:text-ink hover:bg-stone-50"
-                  }`}
-                >
-                  📋 Les Étapes
-                </button>
-                <button
                   onClick={() => setActiveTab("materials")}
                   className={`flex-1 px-4 py-3.5 text-xs font-bold uppercase tracking-wider transition-all border-b-2 ${
                     activeTab === "materials" ? "border-brand text-brand bg-white" : "border-transparent text-ink/50 hover:text-ink hover:bg-stone-50"
                   }`}
                 >
-                  🛠 Le Matériel
+                  🛠 Matériel
+                </button>
+                <button
+                  onClick={() => setActiveTab("steps")}
+                  className={`flex-1 px-4 py-3.5 text-xs font-bold uppercase tracking-wider transition-all border-b-2 ${
+                    activeTab === "steps" ? "border-brand text-brand bg-white" : "border-transparent text-ink/50 hover:text-ink hover:bg-stone-50"
+                  }`}
+                >
+                  📋 Étapes
                 </button>
                 <button
                   onClick={() => setActiveTab("pedagogical")}
@@ -310,39 +341,39 @@ function LaboratoryPage() {
                     activeTab === "pedagogical" ? "border-brand text-brand bg-white" : "border-transparent text-ink/50 hover:text-ink hover:bg-stone-50"
                   }`}
                 >
-                  💡 Contexte Pédagogique
+                  💡 Pourquoi ce défi
                 </button>
               </div>
 
               {/* Tab Contents */}
               <div className="p-6 md:p-8">
-                {activeTab === "steps" && (
-                  <div className="space-y-4">
-                    <h3 className="text-sm font-bold uppercase tracking-widest text-ink/50 mb-3">Plan d'action de l'expérience</h3>
-                    <ol className="space-y-4">
-                      {currentChallenge.steps.map((step, idx) => (
-                        <li key={idx} className="flex gap-4">
-                          <div className="grid size-7 flex-shrink-0 place-items-center rounded-full bg-brand/10 text-xs font-bold text-brand">
-                            {idx + 1}
-                          </div>
-                          <div className="text-sm leading-relaxed text-ink/80 pt-0.5">{step}</div>
-                        </li>
-                      ))}
-                    </ol>
-                  </div>
-                )}
-
                 {activeTab === "materials" && (
                   <div>
-                    <h3 className="text-sm font-bold uppercase tracking-widest text-ink/50 mb-4">Matériel nécessaire</h3>
+                    <h3 className="text-sm font-bold uppercase tracking-widest text-ink/50 mb-4">À réunir avant de commencer :</h3>
                     <div className="grid gap-3 sm:grid-cols-2">
                       {currentChallenge.materials.map((mat, idx) => (
-                        <div key={idx} className="flex items-center gap-2.5 rounded-2xl bg-leaf/5 px-4 py-3.5 border border-leaf/10">
-                          <Check className="size-4 text-leaf flex-shrink-0" />
-                          <span className="text-sm font-semibold text-leaf/90">{mat}</span>
+                        <div key={idx} className="flex items-center gap-3 rounded-2xl bg-leaf/5 px-4 py-3 border border-leaf/10">
+                          <div className="size-5 rounded-full border-2 border-leaf flex items-center justify-center bg-white flex-shrink-0" />
+                          <span className="text-sm font-bold text-leaf/90">{mat}</span>
                         </div>
                       ))}
                     </div>
+                  </div>
+                )}
+
+                {activeTab === "steps" && (
+                  <div className="space-y-4">
+                    <h3 className="text-sm font-bold uppercase tracking-widest text-ink/50 mb-3">Plan d'action</h3>
+                    <ol className="space-y-4">
+                      {currentChallenge.steps.map((step, idx) => (
+                        <li key={idx} className="flex gap-4 p-4 rounded-2xl bg-surface/50 border border-ink/5">
+                          <div className="grid size-8 flex-shrink-0 place-items-center rounded-full bg-brand text-sm font-black text-white">
+                            {idx + 1}
+                          </div>
+                          <div className="text-sm font-medium leading-relaxed text-ink pt-1">{step}</div>
+                        </li>
+                      ))}
+                    </ol>
                   </div>
                 )}
 
@@ -351,8 +382,8 @@ function LaboratoryPage() {
                     <div className="flex gap-3">
                       <Award className="size-6 text-brand flex-shrink-0 mt-0.5" />
                       <div>
-                        <h4 className="text-sm font-bold text-brand uppercase tracking-wider mb-2">Observations de Naya</h4>
-                        <p className="text-sm leading-relaxed text-ink/80 italic">
+                        <h4 className="text-sm font-bold text-brand uppercase tracking-wider mb-2">Analyse de Naya</h4>
+                        <p className="text-sm font-semibold leading-relaxed text-ink/80 italic">
                           "{currentChallenge.pedagogical_context || "Ce défi permet d'explorer les aptitudes naturelles et de stimuler l'esprit créatif de l'enfant."}"
                         </p>
                       </div>
@@ -366,26 +397,19 @@ function LaboratoryPage() {
                 <button
                   onClick={handleAssign}
                   disabled={isAssigning}
-                  className="flex-1 rounded-2xl bg-brand py-4 text-center font-display text-sm font-bold text-white shadow-md shadow-brand/20 hover:bg-brand-dark transition-all disabled:opacity-50 flex items-center justify-center gap-2"
+                  className="flex-1 rounded-2xl bg-brand py-4 text-center font-display text-sm font-black text-white hover:bg-brand-dark border-b-4 border-brand-dark active:border-b-0 active:translate-y-[4px] transition-all disabled:opacity-50 flex items-center justify-center gap-2"
                 >
                   {isAssigning ? (
                     <>
-                      <Loader2 className="size-4 animate-spin" />
-                      <span>Assignation en cours...</span>
+                      <Loader2 className="size-5 animate-spin" />
+                      <span>Démarrage...</span>
                     </>
                   ) : (
                     <>
-                      <Check className="size-4" />
-                      <span>Assigner ce défi à {childName}</span>
+                      <Check className="size-5" />
+                      <span>Démarrer l'activité maintenant</span>
                     </>
                   )}
-                </button>
-                <button
-                  onClick={handleGenerate}
-                  className="rounded-2xl border border-ink/10 bg-white px-6 py-4 font-display text-sm font-bold text-ink/75 hover:bg-stone-50 transition-all flex items-center justify-center gap-2"
-                >
-                  <RotateCcw className="size-4" />
-                  <span>Relancer le générateur</span>
                 </button>
               </div>
             </div>

@@ -77,14 +77,12 @@ function FeedPage() {
     if (session) {
       const fetchFeed = async () => {
         setFetching(true);
-        // On a real app, this would fetch public posts.
-        // For now, we fetch the user's completed challenges and mix them with public mocks.
+        // Fetch real community posts from the database
         const { data, error } = await supabase
-          .from("challenges")
+          .from("posts")
           .select("*, child_profiles(name, avatar_color)")
-          .eq("status", "completed")
-          .order("completed_at", { ascending: false })
-          .limit(10);
+          .order("created_at", { ascending: false })
+          .limit(20);
 
         if (!error && data) {
           const userPosts = data.map(item => ({
@@ -92,12 +90,12 @@ function FeedPage() {
             childName: item.child_profiles?.name || "Enfant",
             familyName: "Votre Famille",
             avatarColor: item.child_profiles?.avatar_color === "leaf" ? "bg-leaf" : item.child_profiles?.avatar_color === "sky" ? "bg-sky" : "bg-brand",
-            missionTitle: item.title,
-            description: item.ai_observations ? `"${item.ai_observations}" - Naya` : "Défi complété avec succès !",
-            date: item.completed_at ? new Date(item.completed_at).toLocaleDateString("fr-FR", { day: "numeric", month: "short" }) : "Récemment",
-            likes: Math.floor(Math.random() * 50) + 5,
-            badge: item.domain || "Exploration",
-            image: item.proof_image_url || "https://images.unsplash.com/photo-1502086223501-7ea6ecd79368?w=800&q=80",
+            missionTitle: "Mission", // We don't join challenges title yet, we can just say "Mission Accomplie"
+            description: item.caption,
+            date: item.created_at ? new Date(item.created_at).toLocaleDateString("fr-FR", { day: "numeric", month: "short" }) : "Récemment",
+            likes: item.likes_count || 0,
+            badge: "⭐ Exploit",
+            image: item.image_url,
             isLiked: false,
           }));
           
