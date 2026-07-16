@@ -55,11 +55,11 @@ function ManageProfilesPage() {
     <div className="min-h-screen bg-surface text-ink">
       <nav className="border-b border-ink/5 bg-surface/80 backdrop-blur-md">
         <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
-          <Link to="/profiles/" className="flex items-center gap-2 font-display text-2xl font-extrabold text-brand">
+          <Link to="/profiles" className="flex items-center gap-2 font-display text-2xl font-extrabold text-brand">
             <img src="/favicon-96x96.png" alt="" className="h-8 w-8" />
             GÉNIZIO
           </Link>
-          <Link to="/profiles/" className="text-sm font-bold text-brand hover:text-brand-dark">
+          <Link to="/profiles" className="text-sm font-bold text-brand hover:text-brand-dark">
             ← Retour à l'accueil
           </Link>
         </div>

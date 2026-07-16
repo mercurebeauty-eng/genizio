@@ -43,7 +43,7 @@ export const deleteAccountAndData = createServerFn({ method: "POST" })
     // associated challenges, child_mentors, and consent_events where child_id is set.
     // However, consent_events without a child_id might remain if not cascaded by user_id.
     // Let's explicitly delete child_profiles first (as an extra step to ensure everything drops cleanly).
-    await supabase.from("child_profiles").delete().eq("owner_user_id", userId);
+    await supabase.from("child_profiles").delete().eq("user_id", userId);
 
     // Some consent_events might be global (child_id null), let's delete them as well to be completely clean
     // before the actual user deletion.

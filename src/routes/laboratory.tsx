@@ -4,7 +4,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { useSession } from "@/hooks/use-session";
 import { supabase } from "@/integrations/supabase/client";
 import { generateSingleChallenge, assignTemplateChallenge } from "@/lib/challenges.functions";
-import { Sparkles, Loader2, RotateCcw, Check, BookOpen, ShieldAlert, Award } from "lucide-react";
+import { Sparkles, Loader2, RotateCcw, Check, BookOpen, ShieldAlert, Award, Compass } from "lucide-react";
 import { toast } from "sonner";
 import { NayaAvatar } from "@/components/NayaAvatar";
 

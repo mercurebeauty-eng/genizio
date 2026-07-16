@@ -9,6 +9,7 @@ import { AVATAR_COLORS, type ChildProfile } from "@/components/profiles/shared";
 import { getActiveChallenge, type ChallengeLike } from "@/lib/active-challenge";
 import { getPortfolioPulse } from "@/lib/talent-buckets";
 import { InviteMentorDialog } from "@/components/mentors/InviteMentorDialog";
+import { TalentRadarChart } from "@/components/TalentRadarChart";
 
 const COUNTRIES = [
   { code: "+225", flag: "🇨🇮", name: "Côte d'Ivoire", limit: 10 },
@@ -34,6 +35,9 @@ type Challenge = ChallengeLike & {
   title: string;
   description: string;
   duration: string;
+  materials?: string[] | null;
+  steps?: string[] | null;
+  proof_image_url?: string | null;
 };
 
 function DashboardPage() {
@@ -120,7 +124,7 @@ function DashboardPage() {
     setFetchingChallenges(true);
     supabase
       .from("challenges")
-      .select("id, status, created_at, updated_at, domain, title, description, duration")
+      .select("id, status, created_at, updated_at, domain, title, description, duration, materials, steps, proof_image_url")
       .eq("child_id", selectedId)
       .then(({ data }) => {
         setChallenges((data ?? []) as Challenge[]);
@@ -245,6 +249,20 @@ function DashboardPage() {
                       </div>
                       <h2 className="font-display text-xl font-extrabold">{activeChallenge.title}</h2>
                       <p className="mt-2 text-sm text-ink/70">{activeChallenge.description}</p>
+                      
+                      {activeChallenge.materials && activeChallenge.materials.length > 0 && (
+                        <div className="mt-4 space-y-2">
+                          <p className="text-[11px] font-bold uppercase tracking-wider text-ink/40">Matériel nécessaire :</p>
+                          <div className="flex flex-wrap gap-2">
+                            {activeChallenge.materials.map((m, i) => (
+                              <span key={i} className="inline-flex items-center gap-1 rounded-xl bg-surface px-2.5 py-1 text-xs font-medium text-ink/80 border border-ink/5">
+                                📦 {m}
+                              </span>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+
                       <Link
                         to="/profiles/$profileId/challenges"
                         params={{ profileId: selected!.id }}
@@ -269,15 +287,20 @@ function DashboardPage() {
                   )}
                 </div>
 
-                <div className="rounded-3xl bg-white p-6 shadow-soft ring-1 ring-ink/5">
-                  <p className="mb-3 text-xs font-bold uppercase tracking-wider text-ink/40">Pouls du portfolio</p>
-                  <ul className="space-y-2">
-                    {pulse.map((entry) => (
-                      <li key={entry.key} className="rounded-xl bg-surface px-3 py-2 text-sm font-medium text-ink/80">
-                        {entry.phrase}
-                      </li>
-                    ))}
-                  </ul>
+                <div className="rounded-3xl bg-white p-6 shadow-soft ring-1 ring-ink/5 flex flex-col justify-between">
+                  <div>
+                    <p className="mb-3 text-xs font-bold uppercase tracking-wider text-ink/40">Pouls du portfolio</p>
+                    <div className="h-44 w-full flex items-center justify-center my-2">
+                      <TalentRadarChart talents={selected!.talents || {}} name={selected!.name} className="h-full w-full" />
+                    </div>
+                    <ul className="space-y-2 mt-4">
+                      {pulse.slice(0, 3).map((entry) => (
+                        <li key={entry.key} className="rounded-xl bg-surface px-3 py-1.5 text-xs font-medium text-ink/80">
+                          {entry.phrase}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
                   <Link
                     to="/profiles/$profileId/portfolio"
                     params={{ profileId: selected!.id }}
@@ -288,6 +311,23 @@ function DashboardPage() {
                 </div>
               </div>
 
+              {/* Recent Artifacts Row from Wireframe 1b */}
+              {challenges.filter(c => c.status === "completed" && c.proof_image_url).length > 0 && (
+                <div className="mt-6 rounded-3xl bg-white p-6 shadow-soft ring-1 ring-ink/5">
+                  <p className="mb-4 text-xs font-bold uppercase tracking-wider text-ink/40">Réalisations récentes</p>
+                  <div className="flex gap-4 overflow-x-auto pb-2">
+                    {challenges
+                      .filter(c => c.status === "completed" && c.proof_image_url)
+                      .slice(0, 5)
+                      .map(c => (
+                        <div key={c.id} className="relative size-16 shrink-0 overflow-hidden rounded-2xl border border-ink/10 bg-surface group cursor-pointer" title={c.title}>
+                          <img src={c.proof_image_url!} alt={c.title} className="h-full w-full object-cover" />
+                        </div>
+                      ))}
+                  </div>
+                </div>
+              )}
+
               <div className="mt-6 flex flex-wrap gap-3">
                 <Link
                   to="/profiles/$profileId/challenges"
@@ -296,7 +336,7 @@ function DashboardPage() {
                 >
                   Logger une observation
                 </Link>
-                <InviteMentorDialog childId={selected.id} childName={selected.name} />
+                <InviteMentorDialog childId={selected!.id} childName={selected!.name} />
               </div>
             </>
           )}

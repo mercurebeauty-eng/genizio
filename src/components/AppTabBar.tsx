@@ -10,7 +10,7 @@ const inactiveClass = "text-ink/40 hover:text-ink/70";
 
 export function AppTabBar({ profileId }: AppTabBarProps) {
   const items = [
-    { to: "/profiles/" as const, label: "Accueil", icon: Home, needsProfileId: false },
+    {to: "/profiles" as const, label: "Accueil", icon: Home, needsProfileId: false},
     { to: "/profiles/$profileId/challenges" as const, label: "Défi", icon: Sparkles, needsProfileId: true },
     { to: "/profiles/$profileId/portfolio" as const, label: "Portfolio", icon: PieChart, needsProfileId: true },
     { to: "/profiles/$profileId/mentors" as const, label: "Mentors", icon: Users, needsProfileId: true },

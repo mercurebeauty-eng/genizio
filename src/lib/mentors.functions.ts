@@ -163,7 +163,7 @@ export const getSharedChildView = createServerFn({ method: "GET" })
             completed_at: c.completed_at,
             proof_image_url: c.proof_image_url,
             ai_observations: c.ai_observations,
-            notes: undefined,
+            notes: undefined as string | null | undefined,
           };
           if (mentor.can_view_raw_observations) {
             safeC.notes = c.notes;
