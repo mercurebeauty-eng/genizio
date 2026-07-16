@@ -321,21 +321,33 @@ function DashboardPage() {
               </div>
 
               {/* Recent Artifacts Row from Wireframe 1b */}
-              {challenges.filter(c => c.status === "completed" && c.proof_image_url).length > 0 && (
-                <div className="mt-6 rounded-3xl bg-white p-6 shadow-soft ring-1 ring-ink/5">
-                  <p className="mb-4 text-xs font-bold uppercase tracking-wider text-ink/40">Réalisations récentes</p>
+              <div className="mt-6 rounded-3xl bg-white p-6 shadow-soft ring-1 ring-ink/5">
+                <p className="mb-4 text-xs font-bold uppercase tracking-wider text-ink/40">Réalisations récentes</p>
+                {challenges.filter(c => c.status === "completed" && c.proof_image_url).length > 0 ? (
                   <div className="flex gap-4 overflow-x-auto pb-2">
                     {challenges
                       .filter(c => c.status === "completed" && c.proof_image_url)
                       .slice(0, 5)
                       .map(c => (
-                        <div key={c.id} className="relative size-16 shrink-0 overflow-hidden rounded-2xl border border-ink/10 bg-surface group cursor-pointer" title={c.title}>
+                        <div key={c.id} className="relative size-16 shrink-0 overflow-hidden rounded-2xl border border-ink/10 bg-surface group cursor-pointer hover:border-brand/40 transition-all" title={c.title}>
                           <img src={c.proof_image_url!} alt={c.title} className="h-full w-full object-cover" />
                         </div>
                       ))}
                   </div>
-                </div>
-              )}
+                ) : (
+                  <div className="flex gap-4">
+                    <div className="flex size-16 shrink-0 items-center justify-center rounded-2xl border-2 border-dashed border-ink/10 bg-surface text-ink/20 text-[10px] font-bold">
+                      Défis 1
+                    </div>
+                    <div className="flex size-16 shrink-0 items-center justify-center rounded-2xl border-2 border-dashed border-ink/10 bg-surface text-ink/20 text-[10px] font-bold">
+                      Défis 2
+                    </div>
+                    <div className="flex size-16 shrink-0 items-center justify-center rounded-2xl border-2 border-dashed border-ink/10 bg-surface text-ink/20 text-[10px] font-bold">
+                      Défis 3
+                    </div>
+                  </div>
+                )}
+              </div>
 
               <div className="mt-6 flex flex-wrap gap-3">
                 <Link
