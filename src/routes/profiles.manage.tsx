@@ -2,6 +2,7 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useSession } from "@/hooks/use-session";
+import { AppHeader } from "@/components/AppHeader";
 import { ProfileCard } from "@/components/profiles/ProfileCard";
 import { ProfileDialog } from "@/components/profiles/ProfileDialog";
 import type { ChildProfile } from "@/components/profiles/shared";
@@ -53,17 +54,7 @@ function ManageProfilesPage() {
 
   return (
     <div className="min-h-screen bg-surface text-ink">
-      <nav className="border-b border-ink/5 bg-surface/80 backdrop-blur-md">
-        <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
-          <Link to="/profiles" className="flex items-center gap-2 font-display text-2xl font-extrabold text-brand">
-            <img src="/favicon-96x96.png" alt="" className="h-8 w-8" />
-            GÉNIZIO
-          </Link>
-          <Link to="/profiles" className="text-sm font-bold text-brand hover:text-brand-dark">
-            ← Retour à l'accueil
-          </Link>
-        </div>
-      </nav>
+      <AppHeader />
 
       <main className="mx-auto max-w-6xl px-6 py-12">
         <div className="mb-10 flex flex-col justify-between gap-4 md:flex-row md:items-end">

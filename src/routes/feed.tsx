@@ -2,6 +2,7 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useSession } from "@/hooks/use-session";
+import { AppHeader } from "@/components/AppHeader";
 
 export const Route = createFileRoute("/feed")({
   component: FeedPage,
@@ -72,35 +73,15 @@ function FeedPage() {
 
   return (
     <div className="min-h-screen bg-surface p-6 font-sans text-ink">
-      <header className="mx-auto mb-8 max-w-2xl flex items-center justify-between">
-        <div>
+      <AppHeader />
+
+      <main className="mx-auto max-w-2xl px-6 py-10">
+        <header className="mb-8">
           <h1 className="text-3xl font-bold tracking-tight text-brand">Mur de Célébration</h1>
           <p className="mt-2 text-ink/70">
             Découvrez les réalisations de vos enfants et célébrez leurs nouveaux talents.
           </p>
-        </div>
-        <div className="flex items-center gap-3">
-          <Link
-            to="/profiles"
-            className="rounded-full bg-white px-4 py-2 font-medium text-ink shadow-sm ring-1 ring-ink/10 hover:bg-surface/50"
-          >
-            Mes Enfants
-          </Link>
-          <Link
-            to="/laboratory"
-            className="rounded-full bg-white px-4 py-2 font-medium text-ink shadow-sm ring-1 ring-ink/10 hover:bg-surface/50"
-          >
-            Le Labo
-          </Link>
-          <Link
-            to="/profile"
-            className="inline-flex items-center justify-center rounded-full border border-brand/20 bg-brand/5 p-2 font-bold text-brand hover:bg-brand/10 transition-all"
-            aria-label="Mon Compte"
-          >
-            ⚙️
-          </Link>
-        </div>
-      </header>
+        </header>
 
       <div className="mx-auto max-w-2xl space-y-8">
         {fetching ? (
@@ -186,6 +167,7 @@ function FeedPage() {
           })
         )}
       </div>
+      </main>
     </div>
   );
 }

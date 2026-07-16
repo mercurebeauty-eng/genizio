@@ -19,6 +19,9 @@ import { TalentRadarChart } from "@/components/TalentRadarChart";
 import { StepAccordion } from "@/components/challenges/StepAccordion";
 import { ObservationPrompts } from "@/components/challenges/ObservationPrompts";
 import { OutcomeChat } from "@/components/challenges/OutcomeChat";
+import { AppHeader } from "@/components/AppHeader";
+import { AppTabBar } from "@/components/AppTabBar";
+import { getActiveChallenge } from "@/lib/active-challenge";
 
 const CATEGORIES = [
   { id: "all", label: "Suggéré par Naya (Diagnostic)" },
@@ -199,7 +202,12 @@ function ChallengesPage() {
         .order("created_at", { ascending: false }),
     ]);
     setChild((c.data as Child) ?? null);
-    setChallenges((ch.data ?? []) as Challenge[]);
+    const list = (ch.data ?? []) as Challenge[];
+    setChallenges(list);
+    const active = getActiveChallenge(list);
+    if (active && !openId) {
+      setOpenId(active.id);
+    }
     setFetching(false);
   };
 
@@ -297,37 +305,12 @@ function ChallengesPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-surface via-surface to-brand/5 text-ink">
-      <nav className="border-b border-ink/5 bg-white/80 backdrop-blur-md sticky top-0 z-30">
-        <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
-          <div className="flex items-center gap-3">
-            <Link to="/profiles" className="flex items-center gap-2 font-display text-2xl font-extrabold text-brand tracking-wider">
-              <img src="/favicon-96x96.png" alt="" className="h-8 w-8" />
-              GÉNIZIO
-            </Link>
-            <span className="h-5 w-px bg-ink/10"></span>
-            <p className="text-sm font-semibold text-ink/50">Espace Parent</p>
-          </div>
-          <div className="flex items-center gap-3">
-            <Link
-              to="/profiles"
-              className="inline-flex items-center gap-2 rounded-full border border-ink/10 bg-white px-4 py-2 text-xs font-bold hover:bg-stone-50 transition-all shadow-sm"
-            >
-              <ArrowLeft className="size-3.5" />
-              Retour
-            </Link>
-            <Link
-              to="/profile"
-              className="inline-flex items-center justify-center rounded-full border border-brand/20 bg-brand/5 p-2 font-bold text-brand hover:bg-brand/10 transition-all"
-              aria-label="Mon Compte"
-            >
-              ⚙️
-            </Link>
-          </div>
-        </div>
-      </nav>
+      <AppHeader />
 
-      <main className="mx-auto max-w-6xl px-6 py-10">
-        {/* Child Header Profile */}
+      <main className="mx-auto max-w-6xl px-6 py-10 md:flex md:gap-8">
+        <AppTabBar profileId={profileId} />
+        <div className="min-w-0 flex-1">
+          {/* Child Header Profile */}
         <div className="mb-10 rounded-3xl border border-ink/5 bg-white p-6 shadow-soft md:p-8 flex flex-col gap-6 md:flex-row md:items-center md:justify-between">
           <div className="flex items-center gap-5">
             <div
@@ -630,8 +613,9 @@ function ChallengesPage() {
 
           </div>
         </div>
-      </main>
-    </div>
+      </div>
+    </main>
+  </div>
   );
 }
 

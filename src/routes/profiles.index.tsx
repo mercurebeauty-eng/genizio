@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useSession } from "@/hooks/use-session";
 import { Phone, Check, Loader2, Sparkles } from "lucide-react";
 import { AppTabBar } from "@/components/AppTabBar";
+import { AppHeader } from "@/components/AppHeader";
 import { ProfileDialog } from "@/components/profiles/ProfileDialog";
 import { AVATAR_COLORS, type ChildProfile } from "@/components/profiles/shared";
 import { getActiveChallenge, type ChallengeLike } from "@/lib/active-challenge";
@@ -151,37 +152,7 @@ function DashboardPage() {
 
   return (
     <div className="min-h-screen bg-surface pb-24 text-ink md:pb-6">
-      <nav className="border-b border-ink/5 bg-surface/80 backdrop-blur-md">
-        <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
-          <Link to="/profiles" className="flex items-center gap-2 font-display text-2xl font-extrabold text-brand">
-            <img src="/favicon-96x96.png" alt="" className="h-8 w-8" />
-            GÉNIZIO
-          </Link>
-          <div className="hidden items-center gap-4 text-sm font-medium md:flex">
-            <Link to="/profiles/manage" className="text-ink/60 hover:text-brand">Gérer mes profils</Link>
-            <Link to="/laboratory" className="text-ink/60 hover:text-brand">Laboratoire</Link>
-            <Link to="/feed" className="text-ink/60 hover:text-brand">Mur Public</Link>
-          </div>
-          <div className="flex items-center gap-4 text-sm">
-            <Link
-              to="/profile"
-              className="hidden items-center gap-1.5 rounded-full border border-brand/20 bg-brand/5 px-4 py-2 font-bold text-brand hover:bg-brand/10 md:flex transition-all"
-            >
-              ⚙️ {session.user.email}
-            </Link>
-            <Link
-              to="/profile"
-              className="flex items-center justify-center rounded-full border border-brand/20 bg-brand/5 p-2 font-bold text-brand hover:bg-brand/10 md:hidden transition-all"
-              aria-label="Mon Compte"
-            >
-              ⚙️
-            </Link>
-            <button onClick={signOut} className="rounded-full border border-ink/10 px-4 py-2 font-semibold hover:bg-white cursor-pointer">
-              Se déconnecter
-            </button>
-          </div>
-        </div>
-      </nav>
+      <AppHeader />
 
       <main className="mx-auto max-w-6xl px-6 py-10 md:flex md:gap-8">
         {selected && <AppTabBar profileId={selected.id} />}

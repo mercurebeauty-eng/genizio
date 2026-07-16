@@ -7,6 +7,8 @@ import { MentorGrantsTable } from "@/components/mentors/MentorGrantsTable";
 import { Users } from "lucide-react";
 import { AppTabBar } from "@/components/AppTabBar";
 
+import { AppHeader } from "@/components/AppHeader";
+
 export const Route = createFileRoute("/profiles/$profileId/mentors")({
   component: MentorsPage,
 });
@@ -36,24 +38,27 @@ function MentorsPage() {
   if (loading || !session) return null;
 
   return (
-    <div className="min-h-screen bg-surface pb-24 text-ink md:flex md:justify-center md:gap-8 md:pb-6 md:pt-8">
-      <div className="w-full max-w-4xl px-4 md:px-8 space-y-8 animate-in fade-in duration-500">
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mt-8 md:mt-0">
-          <div>
-            <h1 className="font-display text-3xl font-extrabold text-ink flex items-center gap-3">
-              <Users className="size-8 text-brand" />
-              Accès Mentors
-            </h1>
-            <p className="mt-2 text-ink/60">
-              Gérez les personnes qui ont accès aux progrès de {childName}.
-            </p>
+    <div className="min-h-screen bg-surface pb-24 text-ink md:pb-6">
+      <AppHeader />
+      <main className="mx-auto max-w-6xl px-6 py-10 md:flex md:gap-8">
+        <AppTabBar profileId={profileId} />
+        <div className="min-w-0 flex-1 space-y-8 animate-in fade-in duration-500">
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div>
+              <h1 className="font-display text-3xl font-extrabold text-ink flex items-center gap-3">
+                <Users className="size-8 text-brand" />
+                Accès Mentors
+              </h1>
+              <p className="mt-2 text-ink/60">
+                Gérer les personnes qui ont accès aux progrès de {childName}.
+              </p>
+            </div>
+            <InviteMentorDialog childId={profileId} childName={childName} />
           </div>
-          <InviteMentorDialog childId={profileId} childName={childName} />
-        </div>
 
-        <MentorGrantsTable childId={profileId} />
-      </div>
-      <AppTabBar profileId={profileId} />
+          <MentorGrantsTable childId={profileId} />
+        </div>
+      </main>
     </div>
   );
 }

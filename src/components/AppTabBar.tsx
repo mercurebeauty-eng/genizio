@@ -10,11 +10,11 @@ const inactiveClass = "text-ink/40 hover:text-ink/70";
 
 export function AppTabBar({ profileId }: AppTabBarProps) {
   const items = [
-    {to: "/profiles" as const, label: "Accueil", icon: Home, needsProfileId: false},
+    { to: "/profiles" as const, label: "Accueil", icon: Home, needsProfileId: false, hideOnDesktop: true },
     { to: "/profiles/$profileId/challenges" as const, label: "Défi", icon: Sparkles, needsProfileId: true },
     { to: "/profiles/$profileId/portfolio" as const, label: "Portfolio", icon: PieChart, needsProfileId: true },
     { to: "/profiles/$profileId/mentors" as const, label: "Mentors", icon: Users, needsProfileId: true },
-    { to: "/profile" as const, label: "Réglages", icon: Settings, needsProfileId: false },
+    { to: "/profile" as const, label: "Réglages", icon: Settings, needsProfileId: false, hideOnDesktop: true },
   ];
 
   return (
@@ -23,12 +23,14 @@ export function AppTabBar({ profileId }: AppTabBarProps) {
       aria-label="Navigation principale"
     >
       <div className="mx-auto flex max-w-6xl items-center justify-around px-2 py-2 md:flex-col md:gap-4 md:py-0">
-        {items.map(({ to, label, icon: Icon, needsProfileId }) => (
+        {items.map(({ to, label, icon: Icon, needsProfileId, hideOnDesktop }) => (
           <Link
             key={to}
             to={to}
             params={(needsProfileId ? { profileId } : undefined) as never}
-            className={`flex flex-col items-center gap-1 rounded-xl px-3 py-1.5 text-[10px] font-bold transition-colors ${inactiveClass}`}
+            className={`flex flex-col items-center gap-1 rounded-xl px-3 py-1.5 text-[10px] font-bold transition-colors ${inactiveClass} ${
+              hideOnDesktop ? "md:hidden" : ""
+            }`}
             activeProps={{ className: activeClass }}
           >
             <Icon className="size-5" />

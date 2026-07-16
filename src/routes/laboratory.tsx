@@ -2,6 +2,7 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { useSession } from "@/hooks/use-session";
+import { AppHeader } from "@/components/AppHeader";
 import { supabase } from "@/integrations/supabase/client";
 import { generateSingleChallenge, assignTemplateChallenge } from "@/lib/challenges.functions";
 import { Sparkles, Loader2, RotateCcw, Check, BookOpen, ShieldAlert, Award, Compass } from "lucide-react";
@@ -164,37 +165,9 @@ function LaboratoryPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-surface via-surface to-brand/5 p-6 font-sans text-ink">
-      <nav className="mb-10 flex items-center justify-between border-b border-ink/5 pb-5">
-        <div className="flex items-center gap-4">
-          <Link to="/profiles" className="flex items-center gap-2 font-display text-2xl font-extrabold text-brand tracking-wider">
-            <img src="/favicon-96x96.png" alt="" className="h-8 w-8" />
-            GÉNIZIO
-          </Link>
-          <span className="h-6 w-px bg-ink/10"></span>
-          <p className="text-sm font-semibold text-ink/60">Le Générateur Pédagogique</p>
-        </div>
-        <div className="flex items-center gap-3">
-          <Link
-            to="/profiles"
-            className="rounded-full bg-white px-4 py-2 text-sm font-semibold text-ink shadow-sm ring-1 ring-ink/10 hover:bg-surface/50 transition-all"
-          >
-            Mes Enfants
-          </Link>
-          <Link
-            to="/feed"
-            className="rounded-full bg-white px-4 py-2 text-sm font-semibold text-ink shadow-sm ring-1 ring-ink/10 hover:bg-surface/50 transition-all"
-          >
-            Le Mur
-          </Link>
-          <Link
-            to="/profile"
-            className="inline-flex items-center justify-center rounded-full border border-brand/20 bg-brand/5 p-2 font-bold text-brand hover:bg-brand/10 transition-all"
-            aria-label="Mon Compte"
-          >
-            ⚙️
-          </Link>
-        </div>
-      </nav>
+      <AppHeader />
+
+      <div className="pt-6"></div>
 
       <div className="mx-auto max-w-4xl">
         <header className="mb-10 text-center">

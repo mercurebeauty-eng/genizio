@@ -8,6 +8,7 @@ import { AppTabBar } from "@/components/AppTabBar";
 import { TalentRadarChart } from "@/components/TalentRadarChart";
 import { Award, Calendar, ImageIcon, Loader2, Share2 } from "lucide-react";
 import { InviteMentorDialog } from "@/components/mentors/InviteMentorDialog";
+import { AppHeader } from "@/components/AppHeader";
 
 export const Route = createFileRoute("/profiles/$profileId/portfolio")({
   component: PortfolioPage,
@@ -86,15 +87,7 @@ function PortfolioPage() {
 
   return (
     <div className="min-h-screen bg-surface pb-24 text-ink md:pb-6">
-      <nav className="border-b border-ink/5 bg-white/80 backdrop-blur-md">
-        <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
-          <Link to="/profiles/$profileId/challenges" params={{ profileId }} className="flex items-center gap-2 font-display text-2xl font-extrabold text-brand tracking-wider">
-            <img src="/favicon-96x96.png" alt="" className="h-8 w-8" />
-            GÉNIZIO
-          </Link>
-          <p className="text-sm font-semibold text-ink/50">Portfolio de {child.name}</p>
-        </div>
-      </nav>
+      <AppHeader />
 
       <main className="mx-auto max-w-6xl px-6 py-10 md:flex md:gap-8">
         <AppTabBar profileId={profileId} />

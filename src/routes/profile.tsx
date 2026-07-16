@@ -2,6 +2,7 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useSession } from "@/hooks/use-session";
+import { AppHeader } from "@/components/AppHeader";
 import { toast } from "sonner";
 import { User, Phone, Lock, ArrowLeft, Check, Loader2, Users, Calendar, Shield } from "lucide-react";
 import { ConsentLedger } from "@/components/settings/ConsentLedger";
@@ -125,23 +126,9 @@ function ProfilePage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-surface via-surface to-brand/5 p-6 font-sans text-ink">
-      <nav className="mx-auto max-w-4xl mb-10 flex items-center justify-between border-b border-ink/5 pb-5">
-        <div className="flex items-center gap-3">
-          <Link to="/profiles" className="flex items-center gap-2 font-display text-2xl font-extrabold text-brand tracking-wider">
-            <img src="/favicon-96x96.png" alt="" className="h-8 w-8" />
-            GÉNIZIO
-          </Link>
-          <span className="h-5 w-px bg-ink/10"></span>
-          <p className="text-sm font-semibold text-ink/50">Profil Parent</p>
-        </div>
-        <Link
-          to="/profiles"
-          className="inline-flex items-center gap-2 rounded-full border border-ink/10 bg-white px-4 py-2 text-xs font-bold hover:bg-stone-50 transition-all shadow-sm"
-        >
-          <ArrowLeft className="size-3.5" />
-          Mes Enfants
-        </Link>
-      </nav>
+      <AppHeader />
+
+      <div className="pt-6"></div>
 
       <div className="mx-auto max-w-4xl grid gap-8 md:grid-cols-3">
         {/* Left Column: Summary Card */}
