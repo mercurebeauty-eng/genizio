@@ -16,6 +16,7 @@ import { Route as FeedRouteImport } from './routes/feed'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as ProfilesIndexRouteImport } from './routes/profiles.index'
+import { Route as STokenRouteImport } from './routes/s.$token'
 import { Route as ProfilesManageRouteImport } from './routes/profiles.manage'
 import { Route as ProfilesProfileIdQuestRouteImport } from './routes/profiles.$profileId.quest'
 import { Route as ProfilesProfileIdPortfolioRouteImport } from './routes/profiles.$profileId.portfolio'
@@ -57,6 +58,11 @@ const ProfilesIndexRoute = ProfilesIndexRouteImport.update({
   path: '/',
   getParentRoute: () => ProfilesRoute,
 } as any)
+const STokenRoute = STokenRouteImport.update({
+  id: '/s/$token',
+  path: '/s/$token',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ProfilesManageRoute = ProfilesManageRouteImport.update({
   id: '/manage',
   path: '/manage',
@@ -94,6 +100,7 @@ export interface FileRoutesByFullPath {
   '/profile': typeof ProfileRoute
   '/profiles': typeof ProfilesRouteWithChildren
   '/profiles/manage': typeof ProfilesManageRoute
+  '/s/$token': typeof STokenRoute
   '/profiles/': typeof ProfilesIndexRoute
   '/profiles/$profileId/challenges': typeof ProfilesProfileIdChallengesRoute
   '/profiles/$profileId/mentors': typeof ProfilesProfileIdMentorsRoute
@@ -107,6 +114,7 @@ export interface FileRoutesByTo {
   '/laboratory': typeof LaboratoryRoute
   '/profile': typeof ProfileRoute
   '/profiles/manage': typeof ProfilesManageRoute
+  '/s/$token': typeof STokenRoute
   '/profiles': typeof ProfilesIndexRoute
   '/profiles/$profileId/challenges': typeof ProfilesProfileIdChallengesRoute
   '/profiles/$profileId/mentors': typeof ProfilesProfileIdMentorsRoute
@@ -122,6 +130,7 @@ export interface FileRoutesById {
   '/profile': typeof ProfileRoute
   '/profiles': typeof ProfilesRouteWithChildren
   '/profiles/manage': typeof ProfilesManageRoute
+  '/s/$token': typeof STokenRoute
   '/profiles/': typeof ProfilesIndexRoute
   '/profiles/$profileId/challenges': typeof ProfilesProfileIdChallengesRoute
   '/profiles/$profileId/mentors': typeof ProfilesProfileIdMentorsRoute
@@ -138,6 +147,7 @@ export interface FileRouteTypes {
     | '/profile'
     | '/profiles'
     | '/profiles/manage'
+    | '/s/$token'
     | '/profiles/'
     | '/profiles/$profileId/challenges'
     | '/profiles/$profileId/mentors'
@@ -151,6 +161,7 @@ export interface FileRouteTypes {
     | '/laboratory'
     | '/profile'
     | '/profiles/manage'
+    | '/s/$token'
     | '/profiles'
     | '/profiles/$profileId/challenges'
     | '/profiles/$profileId/mentors'
@@ -165,6 +176,7 @@ export interface FileRouteTypes {
     | '/profile'
     | '/profiles'
     | '/profiles/manage'
+    | '/s/$token'
     | '/profiles/'
     | '/profiles/$profileId/challenges'
     | '/profiles/$profileId/mentors'
@@ -179,6 +191,7 @@ export interface RootRouteChildren {
   LaboratoryRoute: typeof LaboratoryRoute
   ProfileRoute: typeof ProfileRoute
   ProfilesRoute: typeof ProfilesRouteWithChildren
+  STokenRoute: typeof STokenRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -231,6 +244,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/profiles/'
       preLoaderRoute: typeof ProfilesIndexRouteImport
       parentRoute: typeof ProfilesRoute
+    }
+    '/s/$token': {
+      id: '/s/$token'
+      path: '/s/$token'
+      fullPath: '/s/$token'
+      preLoaderRoute: typeof STokenRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/profiles/manage': {
       id: '/profiles/manage'
@@ -299,6 +319,7 @@ const rootRouteChildren: RootRouteChildren = {
   LaboratoryRoute: LaboratoryRoute,
   ProfileRoute: ProfileRoute,
   ProfilesRoute: ProfilesRouteWithChildren,
+  STokenRoute: STokenRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

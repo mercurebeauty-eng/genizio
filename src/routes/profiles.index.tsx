@@ -8,6 +8,7 @@ import { ProfileDialog } from "@/components/profiles/ProfileDialog";
 import { AVATAR_COLORS, type ChildProfile } from "@/components/profiles/shared";
 import { getActiveChallenge, type ChallengeLike } from "@/lib/active-challenge";
 import { getPortfolioPulse } from "@/lib/talent-buckets";
+import { InviteMentorDialog } from "@/components/mentors/InviteMentorDialog";
 
 const COUNTRIES = [
   { code: "+225", flag: "🇨🇮", name: "Côte d'Ivoire", limit: 10 },
@@ -295,13 +296,7 @@ function DashboardPage() {
                 >
                   Logger une observation
                 </Link>
-                <button
-                  disabled
-                  title="Bientôt disponible"
-                  className="cursor-not-allowed rounded-2xl border border-ink/10 bg-white px-4 py-2.5 text-sm font-bold text-ink/30"
-                >
-                  Inviter un mentor
-                </button>
+                <InviteMentorDialog childId={selected.id} childName={selected.name} />
               </div>
             </>
           )}

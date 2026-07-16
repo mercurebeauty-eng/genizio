@@ -7,6 +7,7 @@ import { getChildAISynthesis } from "@/lib/challenges.functions";
 import { AppTabBar } from "@/components/AppTabBar";
 import { TalentRadarChart } from "@/components/TalentRadarChart";
 import { Award, Calendar, ImageIcon, Loader2, Share2 } from "lucide-react";
+import { InviteMentorDialog } from "@/components/mentors/InviteMentorDialog";
 
 export const Route = createFileRoute("/profiles/$profileId/portfolio")({
   component: PortfolioPage,
@@ -130,14 +131,7 @@ function PortfolioPage() {
                 <Calendar className="size-5 text-brand" />
                 Timeline de progression
               </h3>
-              <button
-                disabled
-                title="Bientôt disponible"
-                className="flex cursor-not-allowed items-center gap-2 rounded-2xl border border-ink/10 px-4 py-2 text-sm font-bold text-ink/30"
-              >
-                <Share2 className="size-4" />
-                Partager un aperçu
-              </button>
+              {child && <InviteMentorDialog childId={child.id} childName={child.name} />}
             </div>
             {completed.length === 0 ? (
               <p className="text-sm text-ink/50">Aucun défi complété pour l'instant.</p>
