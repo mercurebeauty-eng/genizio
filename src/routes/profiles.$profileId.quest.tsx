@@ -6,6 +6,7 @@ import { getActiveChallenge, ChallengeLike } from "@/lib/active-challenge";
 import { ArrowLeft, Play, Check, Circle, Sparkles, Smile, Trophy, X, ChevronRight, MessageCircle, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { NayaAvatar } from "@/components/NayaAvatar";
+import nayaAvatar from "@/assets/naya-avatar.png";
 
 export const Route = createFileRoute("/profiles/$profileId/quest")({
   component: QuestPage,
@@ -259,20 +260,8 @@ export function QuestPage() {
           <div className="md:col-span-2 flex flex-col items-center justify-center text-center">
             <div className="relative flex flex-col items-center gap-6">
               {/* Mascot Face */}
-              <div className="relative size-32 md:size-40 rounded-full bg-gradient-to-tr from-sky-400 to-indigo-500 border-4 border-white shadow-2xl flex items-center justify-center animate-bounce duration-1000">
-                <div className="flex gap-4">
-                  {/* Eyes */}
-                  <div className="size-4 rounded-full bg-white flex items-center justify-center">
-                    <div className="size-2 rounded-full bg-ink animate-pulse" />
-                  </div>
-                  <div className="size-4 rounded-full bg-white flex items-center justify-center">
-                    <div className="size-2 rounded-full bg-ink animate-pulse" />
-                  </div>
-                </div>
-                {/* Smile */}
-                <div className="absolute bottom-8 w-8 h-4 border-b-4 border-white rounded-b-full"></div>
-                {/* Stars/Sparkles */}
-                <Sparkles className="absolute -top-3 -right-3 size-8 text-amber-400 animate-spin duration-3000" />
+              <div className="relative size-32 md:size-40 rounded-full border-4 border-white shadow-2xl flex items-center justify-center animate-bounce duration-1000 overflow-hidden bg-white shrink-0">
+                <img src={nayaAvatar} alt="Naya" className="h-full w-full object-cover" />
               </div>
               
               {/* Speech bubble */}
@@ -308,17 +297,17 @@ export function QuestPage() {
                         copy[currentStepIndex] = !copy[currentStepIndex];
                         setStepChecked(copy);
                       }}
-                      className={`w-full rounded-2xl p-5 border-2 text-left font-bold text-lg flex items-center justify-between transition-all cursor-pointer ${
+                      className={`w-full rounded-2xl p-5 border-2 border-b-4 text-left font-black text-lg flex items-center justify-between transition-all cursor-pointer transform duration-100 active:border-b-2 active:translate-y-[2px] ${
                         stepChecked[currentStepIndex]
-                          ? "bg-emerald-50 border-emerald-400 text-emerald-800 shadow-md shadow-emerald-100"
-                          : "bg-surface border-ink/10 text-ink/75 hover:bg-stone-50 hover:border-brand/40"
+                          ? "bg-emerald-50 border-emerald-500 text-emerald-800 shadow-sm"
+                          : "bg-white border-ink/15 text-ink/75 hover:bg-stone-50 hover:border-brand/40"
                       }`}
                     >
                       <span>{stepChecked[currentStepIndex] ? "✓ C'est fait !" : "J'ai terminé cette étape !"}</span>
-                      <div className={`size-7 rounded-full border-2 flex items-center justify-center ${
+                      <div className={`size-7 rounded-full border-2 flex items-center justify-center transition-all ${
                         stepChecked[currentStepIndex]
                           ? "border-emerald-500 bg-emerald-500 text-white"
-                          : "border-ink/20"
+                          : "border-ink/20 bg-stone-50"
                       }`}>
                         {stepChecked[currentStepIndex] && <Check className="size-4 stroke-[3px]" />}
                       </div>
@@ -337,7 +326,7 @@ export function QuestPage() {
                         }
                       }}
                       disabled={!stepChecked[currentStepIndex]}
-                      className="rounded-2xl bg-brand px-6 py-4 text-sm font-black text-white shadow-brand hover:bg-brand-dark transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 cursor-pointer"
+                      className="rounded-2xl bg-brand border-b-4 border-brand-dark px-7 py-3.5 text-sm font-black text-white hover:bg-brand shadow-brand hover:brightness-105 active:border-b-0 active:translate-y-[4px] transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 cursor-pointer shrink-0"
                     >
                       <span>Suivant</span>
                       <ChevronRight className="size-4" />
@@ -373,7 +362,7 @@ export function QuestPage() {
                     <button
                       onClick={handleFinishQuest}
                       disabled={completing}
-                      className="flex-1 rounded-2xl bg-emerald-500 px-6 py-4 text-base font-black text-white shadow-lg shadow-emerald-500/25 hover:bg-emerald-600 transition-all flex items-center justify-center gap-2 cursor-pointer disabled:bg-emerald-400"
+                      className="flex-1 rounded-2xl bg-emerald-500 border-b-4 border-emerald-600 px-6 py-4 text-base font-black text-white shadow-lg active:border-b-0 active:translate-y-[4px] hover:brightness-105 transition-all flex items-center justify-center gap-2 cursor-pointer disabled:bg-emerald-400"
                     >
                       {completing ? (
                         <>
@@ -500,7 +489,7 @@ export function QuestPage() {
 
             <button
               onClick={() => setIsQuestActive(true)}
-              className="inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-brand px-8 py-4 text-base font-black text-white shadow-lg shadow-brand/25 hover:bg-brand-dark hover:-translate-y-0.5 transition-all cursor-pointer"
+              className="inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-brand border-b-4 border-brand-dark px-8 py-4 text-base font-black text-white active:border-b-0 active:translate-y-[4px] shadow-brand hover:brightness-105 transition-all cursor-pointer"
             >
               <Play className="size-5 fill-current" />
               Commencer la mission ! 🚀
