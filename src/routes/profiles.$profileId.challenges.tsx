@@ -4,7 +4,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { supabase } from "@/integrations/supabase/client";
 import { useSession } from "@/hooks/use-session";
 import { toast } from "sonner";
-import { Brain, Award, Trash2, Calendar, CheckCircle2, ArrowLeft, Sparkles, Upload, Loader2, Play, Check, X } from "lucide-react";
+import { Brain, Award, Trash2, Calendar, CheckCircle2, ArrowLeft, Sparkles, Upload, Loader2, Play, Check, X, MessageCircle } from "lucide-react";
 import {
   generateChallenges,
   updateChallenge,
@@ -835,6 +835,22 @@ function ChallengeCard({
                   {savedFlash && <span className="text-xs text-emerald-600 font-bold">✓ Notes enregistrées</span>}
                 </div>
               </div>
+
+              {/* If in_progress, offer to start AI debrief chat */}
+              {c.status === "in_progress" && (
+                <div className="rounded-2xl border border-brand/25 bg-brand/5 p-5 text-center mt-4">
+                  <p className="text-xs font-bold text-ink/75 mb-3 leading-relaxed">
+                    L'activité est terminée ? Partagez vos observations avec Naya pour débriefer le projet de {childName} et mettre à jour ses talents !
+                  </p>
+                  <button
+                    onClick={() => onStatus("completed")}
+                    className="inline-flex items-center gap-1.5 rounded-xl bg-brand px-4 py-2.5 text-xs font-bold text-white shadow-sm hover:bg-brand-dark transition-all cursor-pointer"
+                  >
+                    <MessageCircle className="size-4" />
+                    Lancer le chat de débriefing 💬
+                  </button>
+                </div>
+              )}
 
               {/* Validation section */}
               {c.status === "completed" && !c.ai_observations && (
