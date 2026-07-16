@@ -1,5 +1,5 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
-import { useMemo, useState } from "react";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { useMemo, useState, useEffect } from "react";
 import { useSession } from "@/hooks/use-session";
 import heroChild from "@/assets/hero-child.jpg";
 
@@ -130,6 +130,23 @@ const TONE_STYLES: Record<Challenge["tone"], { chip: string; num: string }> = {
 };
 
 function NayaLanding() {
+  const { session, loading } = useSession();
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    if (!loading && session) {
+      navigate({ to: "/profiles", replace: true });
+    }
+  }, [session, loading, navigate]);
+
+  if (loading || session) {
+    return (
+      <div className="grid min-h-screen place-items-center bg-surface">
+        <div className="text-center font-bold text-ink/50">Chargement...</div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-surface text-ink">
       <Nav />
@@ -141,7 +158,6 @@ function NayaLanding() {
       <ModelSection />
       <CTASection />
       <Footer />
-
     </div>
   );
 }
@@ -151,10 +167,10 @@ function Nav() {
   return (
     <nav className="sticky top-0 z-50 border-b border-ink/5 bg-surface/80 backdrop-blur-md">
       <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-4">
-        <a href="#" className="flex items-center gap-2 font-display text-2xl font-extrabold tracking-tight text-brand">
+        <Link to={session ? "/profiles" : "/"} className="flex items-center gap-2 font-display text-2xl font-extrabold tracking-tight text-brand">
           <img src="/favicon-96x96.png" alt="" className="h-8 w-8" />
           GÉNIZIO
-        </a>
+        </Link>
         <div className="hidden gap-8 font-medium md:flex">
           <a href="#approche" className="text-ink/70 transition-colors hover:text-brand">
             L'approche

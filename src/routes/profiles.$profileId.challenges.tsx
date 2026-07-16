@@ -300,7 +300,7 @@ function ChallengesPage() {
       <nav className="border-b border-ink/5 bg-white/80 backdrop-blur-md sticky top-0 z-30">
         <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
           <div className="flex items-center gap-3">
-            <Link to="/" className="flex items-center gap-2 font-display text-2xl font-extrabold text-brand tracking-wider">
+            <Link to="/profiles" className="flex items-center gap-2 font-display text-2xl font-extrabold text-brand tracking-wider">
               <img src="/favicon-96x96.png" alt="" className="h-8 w-8" />
               GÉNIZIO
             </Link>

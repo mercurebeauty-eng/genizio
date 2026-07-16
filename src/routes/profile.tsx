@@ -127,7 +127,7 @@ function ProfilePage() {
     <div className="min-h-screen bg-gradient-to-b from-surface via-surface to-brand/5 p-6 font-sans text-ink">
       <nav className="mx-auto max-w-4xl mb-10 flex items-center justify-between border-b border-ink/5 pb-5">
         <div className="flex items-center gap-3">
-          <Link to="/" className="flex items-center gap-2 font-display text-2xl font-extrabold text-brand tracking-wider">
+          <Link to="/profiles" className="flex items-center gap-2 font-display text-2xl font-extrabold text-brand tracking-wider">
             <img src="/favicon-96x96.png" alt="" className="h-8 w-8" />
             GÉNIZIO
           </Link>
