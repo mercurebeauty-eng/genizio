@@ -619,6 +619,42 @@ function ChallengesPage() {
   );
 }
 
+function MaterialsChecklist({ materials }: { materials: string[] }) {
+  const [checked, setChecked] = useState<boolean[]>(new Array(materials.length).fill(false));
+  
+  return (
+    <div>
+      <p className="mb-2.5 text-[10px] font-extrabold uppercase tracking-widest text-ink/40">
+        Matériel requis & rassemblé
+      </p>
+      <div className="flex flex-wrap gap-2">
+        {materials.map((m, i) => (
+          <button
+            key={i}
+            onClick={() => {
+              const copy = [...checked];
+              copy[i] = !copy[i];
+              setChecked(copy);
+            }}
+            className={`flex items-center gap-2 rounded-full border px-3 py-1.5 text-xs font-bold transition-all cursor-pointer ${
+              checked[i]
+                ? "bg-emerald-50 border-emerald-300 text-emerald-700 shadow-sm"
+                : "bg-surface border-ink/5 text-ink/70 hover:bg-stone-50"
+            }`}
+          >
+            <div className={`size-3.5 rounded flex items-center justify-center border ${
+              checked[i] ? "border-emerald-500 bg-emerald-500 text-white" : "border-ink/20"
+            }`}>
+              {checked[i] && <Check className="size-2 stroke-[3px]" />}
+            </div>
+            <span>{m}</span>
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 function ChallengeCard({
   c,
   childId,
@@ -713,100 +749,122 @@ function ChallengeCard({
       </button>
 
       {open && (
-        <div className="mt-5 space-y-6 border-t border-ink/5 pt-5 animate-in fade-in duration-200">
-          
-          {/* pedagogical context */}
-          {c.pedagogical_context && (
-            <div className="rounded-2xl bg-brand/5 border border-brand/10 p-4 flex gap-2.5">
-              <Brain className="size-5 text-brand flex-shrink-0 mt-0.5" />
+        <div className="mt-5 border-t border-ink/5 pt-5 animate-in fade-in duration-200">
+          <div className="grid gap-8 md:grid-cols-2">
+            
+            {/* Left Pane: Child Facing (Pour l'enfant) */}
+            <div className="space-y-6 bg-surface/40 p-5 rounded-3xl border border-ink/5">
               <div>
                 <p className="text-[10px] font-extrabold uppercase tracking-widest text-brand mb-1">
-                  Intention Pédagogique
+                  Pour {childName}
                 </p>
-                <p className="text-xs text-brand/90 leading-relaxed italic">
-                  "{c.pedagogical_context}"
+                <h4 className="font-display text-lg font-black text-ink">
+                  {c.title}
+                </h4>
+                <p className="mt-2 text-sm text-ink/75 leading-relaxed">
+                  {c.description}
                 </p>
               </div>
-            </div>
-          )}
 
-          {/* steps */}
-          {c.steps.length > 0 && (
-            <StepAccordion steps={c.steps} />
-          )}
+              {/* steps */}
+              {c.steps.length > 0 && (
+                <StepAccordion steps={c.steps} />
+              )}
 
-          {/* materials */}
-          {c.materials.length > 0 && (
-            <div>
-              <p className="mb-2 text-[10px] font-extrabold uppercase tracking-widest text-ink/40">
-                Matériel requis
-              </p>
-              <div className="flex flex-wrap gap-1.5">
-                {c.materials.map((m, i) => (
-                  <span key={i} className="rounded-full bg-emerald-50 border border-emerald-100 px-3 py-1 text-xs text-emerald-700 font-bold">
-                    {m}
-                  </span>
-                ))}
+              {/* Child-oriented Start Quest button */}
+              <div className="pt-2">
+                <Link
+                  to="/profiles/$profileId/quest"
+                  params={{ profileId: childId }}
+                  className="inline-flex items-center gap-2 rounded-xl bg-brand px-4 py-2.5 text-xs font-bold text-white shadow-sm hover:bg-brand-dark transition-all cursor-pointer"
+                >
+                  <Play className="size-3.5 fill-current" />
+                  Mode Enfant (Quête) 🎮
+                </Link>
               </div>
             </div>
-          )}
 
-          {/* Parent Notes */}
-          <div className="space-y-4">
-            <ObservationPrompts />
-            <div>
-              <p className="mb-2 text-[10px] font-extrabold uppercase tracking-widest text-ink/40">
-                Journal d'apprentissage du parent
-              </p>
-            <textarea
-              value={notesDraft}
-              onChange={(e) => setNotesDraft(e.target.value.slice(0, 2000))}
-              rows={3}
-              placeholder="Écrivez ce que l'enfant a fait, ses réussites et difficultés..."
-              className="w-full rounded-2xl border border-ink/10 px-4 py-3 text-sm outline-none focus:border-brand transition-all resize-none"
-            />
-            <div className="mt-2 flex items-center justify-between">
-              <button
-                onClick={async () => {
-                  await onNotes(notesDraft);
-                  setSavedFlash(true);
-                  setTimeout(() => setSavedFlash(false), 1500);
-                }}
-                className="rounded-xl bg-ink px-4 py-2 text-xs font-bold text-white hover:bg-brand transition-all"
-              >
-                Enregistrer les notes
-              </button>
-              {savedFlash && <span className="text-xs text-emerald-600 font-bold">✓ Notes enregistrées</span>}
+            {/* Right Pane: Parent Facing (Pendant l'observation) */}
+            <div className="space-y-6">
+              {/* pedagogical context */}
+              {c.pedagogical_context && (
+                <div className="rounded-2xl bg-brand/5 border border-brand/10 p-4 flex gap-2.5">
+                  <Brain className="size-5 text-brand flex-shrink-0 mt-0.5" />
+                  <div>
+                    <p className="text-[10px] font-extrabold uppercase tracking-widest text-brand mb-1">
+                      Intention Pédagogique
+                    </p>
+                    <p className="text-xs text-brand/90 leading-relaxed italic">
+                      "{c.pedagogical_context}"
+                    </p>
+                  </div>
+                </div>
+              )}
+
+              {/* Observation prompts */}
+              <ObservationPrompts />
+
+              {/* materials with checklist interactive items */}
+              {c.materials.length > 0 && (
+                <MaterialsChecklist materials={c.materials} />
+              )}
+
+              {/* Parent Notes */}
+              <div className="space-y-3">
+                <p className="text-[10px] font-extrabold uppercase tracking-widest text-ink/40">
+                  Journal d'apprentissage du parent
+                </p>
+                <textarea
+                  value={notesDraft}
+                  onChange={(e) => setNotesDraft(e.target.value.slice(0, 2000))}
+                  rows={3}
+                  placeholder="Écrivez ce que l'enfant a fait, ses réussites et difficultés..."
+                  className="w-full rounded-2xl border border-ink/10 px-4 py-3 text-sm outline-none focus:border-brand transition-all resize-none"
+                />
+                <div className="flex items-center justify-between">
+                  <button
+                    onClick={async () => {
+                      await onNotes(notesDraft);
+                      setSavedFlash(true);
+                      setTimeout(() => setSavedFlash(false), 1500);
+                    }}
+                    className="rounded-xl bg-ink px-4 py-2 text-xs font-bold text-white hover:bg-brand transition-all cursor-pointer"
+                  >
+                    Enregistrer les notes
+                  </button>
+                  {savedFlash && <span className="text-xs text-emerald-600 font-bold">✓ Notes enregistrées</span>}
+                </div>
+              </div>
+
+              {/* Validation section */}
+              {c.status === "completed" && !c.ai_observations && (
+                <OutcomeChat 
+                  challenge={c} 
+                  childId={childId} 
+                  childName={childName} 
+                  onValidated={onValidated} 
+                />
+              )}
+
+              {/* AI Observations feedback */}
+              {c.ai_observations && (
+                <div className="rounded-2xl border border-emerald-200 bg-emerald-50/50 p-5">
+                  <p className="mb-2 text-xs font-extrabold uppercase tracking-widest text-emerald-800 flex items-center gap-1">
+                    <Brain className="size-4 text-emerald-700" />
+                    Analyse de Naya (IA)
+                  </p>
+                  <p className="text-sm italic text-ink/80 leading-relaxed mb-3">"{c.ai_observations}"</p>
+                  <p className="text-[10px] font-extrabold text-emerald-800 uppercase tracking-wider">✓ La Carte des Talents de l'enfant a été enrichie !</p>
+                </div>
+              )}
             </div>
-            </div>
+
           </div>
 
-          {/* Validation section */}
-          {c.status === "completed" && !c.ai_observations && (
-            <OutcomeChat 
-              challenge={c} 
-              childId={childId} 
-              childName={childName} 
-              onValidated={onValidated} 
-            />
-          )}
-
-          {/* AI Observations feedback */}
-          {c.ai_observations && (
-            <div className="rounded-2xl border border-emerald-200 bg-emerald-50/50 p-5">
-              <p className="mb-2 text-xs font-extrabold uppercase tracking-widest text-emerald-800 flex items-center gap-1">
-                <Brain className="size-4 text-emerald-700" />
-                Analyse de Naya (IA)
-              </p>
-              <p className="text-sm italic text-ink/80 leading-relaxed mb-3">"{c.ai_observations}"</p>
-              <p className="text-[10px] font-extrabold text-emerald-800 uppercase tracking-wider">✓ La Carte des Talents de l'enfant a été enrichie !</p>
-            </div>
-          )}
-
-          <div className="flex justify-end pt-3">
+          <div className="flex justify-end pt-5 border-t border-ink/5 mt-6">
             <button
               onClick={onDelete}
-              className="inline-flex items-center gap-1.5 rounded-xl border border-red-100 px-3 py-2 text-xs font-bold text-red-600 hover:bg-red-50 transition-all"
+              className="inline-flex items-center gap-1.5 rounded-xl border border-red-100 px-3 py-2 text-xs font-bold text-red-600 hover:bg-red-50 transition-all cursor-pointer"
             >
               <Trash2 className="size-3.5" />
               Supprimer
