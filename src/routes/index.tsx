@@ -151,8 +151,9 @@ function Nav() {
   return (
     <nav className="sticky top-0 z-50 border-b border-ink/5 bg-surface/80 backdrop-blur-md">
       <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-4">
-        <a href="#" className="font-display text-2xl font-extrabold tracking-tight text-brand">
-          NAYA
+        <a href="#" className="flex items-center gap-2 font-display text-2xl font-extrabold tracking-tight text-brand">
+          <img src="/favicon-96x96.png" alt="" className="h-8 w-8" />
+          GÉNIZIO
         </a>
         <div className="hidden gap-8 font-medium md:flex">
           <a href="#approche" className="text-ink/70 transition-colors hover:text-brand">
@@ -201,7 +202,7 @@ function Hero() {
           Révélez le <span className="text-brand">potentiel unique</span> de votre enfant.
         </h1>
         <p className="mb-10 max-w-lg text-lg leading-relaxed text-ink/70">
-          Naya transforme les curiosités naturelles des enfants africains en parcours d'apprentissage
+          Génizio transforme les curiosités naturelles des enfants africains en parcours d'apprentissage
           concrets grâce à une IA qui comprend leur environnement, leurs talents et leur rythme.
         </p>
         <div className="flex flex-col gap-4 sm:flex-row">
@@ -238,14 +239,14 @@ function Hero() {
         />
         <img
           src={heroChild}
-          alt="Un enfant construit une maquette en carton lors d'un défi Naya"
+          alt="Un enfant construit une maquette en carton lors d'un défi Génizio"
           width={1200}
           height={1200}
           className="relative aspect-square w-full rotate-2 rounded-[2.5rem] object-cover shadow-soft transition-transform hover:rotate-0"
         />
         <div className="absolute -bottom-6 -left-6 hidden max-w-[260px] rounded-2xl border border-stone-100 bg-white p-6 shadow-soft md:block">
           <p className="text-sm font-medium italic leading-relaxed">
-            « Grâce à Naya, Moussa a découvert sa passion pour l'agritech à seulement 10 ans. »
+            « Grâce à Génizio, Moussa a découvert sa passion pour l'agritech à seulement 10 ans. »
           </p>
           <p className="mt-2 text-xs text-ink/50">— Fatou, Dakar</p>
         </div>
@@ -600,7 +601,7 @@ function PositioningSection() {
             Pas une plateforme éducative.
           </h2>
           <p className="mt-6 text-lg text-ink/70">
-            Ça, ça existe déjà. Naya propose autre chose : un lieu où les enfants
+            Ça, ça existe déjà. Génizio propose autre chose : un lieu où les enfants
             découvrent qui ils sont.
           </p>
         </div>
@@ -708,7 +709,7 @@ function ModelSection() {
             De l'application au campus.
           </h2>
           <p className="mt-4 text-lg text-ink/70">
-            Naya se construit par étapes. Chaque niveau finance et prépare le suivant —
+            Génizio se construit par étapes. Chaque niveau finance et prépare le suivant —
             jusqu'à l'école dont nous rêvons.
           </p>
         </div>
@@ -784,7 +785,10 @@ function Footer() {
   return (
     <footer className="border-t border-ink/5 px-6 py-12">
       <div className="mx-auto flex max-w-7xl flex-col items-center justify-between gap-8 md:flex-row">
-        <div className="font-display text-xl font-extrabold text-brand">NAYA</div>
+        <div className="flex items-center gap-2 font-display text-xl font-extrabold text-brand">
+          <img src="/favicon-96x96.png" alt="" className="h-7 w-7" />
+          GÉNIZIO
+        </div>
         <div className="flex gap-8 text-sm font-medium text-ink/60">
           <a href="#" className="hover:text-brand">
             Confidentialité
@@ -797,7 +801,7 @@ function Footer() {
           </a>
         </div>
         <div className="text-xs text-ink/40">
-          © 2026 Naya — Dakar · Abidjan · Yaoundé
+          © 2026 Génizio — Dakar · Abidjan · Yaoundé
         </div>
       </div>
     </footer>

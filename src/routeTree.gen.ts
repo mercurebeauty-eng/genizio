@@ -10,13 +10,36 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as ProfilesRouteImport } from './routes/profiles'
+import { Route as ProfileRouteImport } from './routes/profile'
+import { Route as LaboratoryRouteImport } from './routes/laboratory'
+import { Route as FeedRouteImport } from './routes/feed'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as ProfilesIndexRouteImport } from './routes/profiles.index'
+import { Route as ProfilesManageRouteImport } from './routes/profiles.manage'
+import { Route as ProfilesProfileIdQuestRouteImport } from './routes/profiles.$profileId.quest'
+import { Route as ProfilesProfileIdPortfolioRouteImport } from './routes/profiles.$profileId.portfolio'
+import { Route as ProfilesProfileIdMentorsRouteImport } from './routes/profiles.$profileId.mentors'
 import { Route as ProfilesProfileIdChallengesRouteImport } from './routes/profiles.$profileId.challenges'
 
 const ProfilesRoute = ProfilesRouteImport.update({
   id: '/profiles',
   path: '/profiles',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ProfileRoute = ProfileRouteImport.update({
+  id: '/profile',
+  path: '/profile',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LaboratoryRoute = LaboratoryRouteImport.update({
+  id: '/laboratory',
+  path: '/laboratory',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const FeedRoute = FeedRouteImport.update({
+  id: '/feed',
+  path: '/feed',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AuthRoute = AuthRouteImport.update({
@@ -29,6 +52,33 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ProfilesIndexRoute = ProfilesIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => ProfilesRoute,
+} as any)
+const ProfilesManageRoute = ProfilesManageRouteImport.update({
+  id: '/manage',
+  path: '/manage',
+  getParentRoute: () => ProfilesRoute,
+} as any)
+const ProfilesProfileIdQuestRoute = ProfilesProfileIdQuestRouteImport.update({
+  id: '/$profileId/quest',
+  path: '/$profileId/quest',
+  getParentRoute: () => ProfilesRoute,
+} as any)
+const ProfilesProfileIdPortfolioRoute =
+  ProfilesProfileIdPortfolioRouteImport.update({
+    id: '/$profileId/portfolio',
+    path: '/$profileId/portfolio',
+    getParentRoute: () => ProfilesRoute,
+  } as any)
+const ProfilesProfileIdMentorsRoute =
+  ProfilesProfileIdMentorsRouteImport.update({
+    id: '/$profileId/mentors',
+    path: '/$profileId/mentors',
+    getParentRoute: () => ProfilesRoute,
+  } as any)
 const ProfilesProfileIdChallengesRoute =
   ProfilesProfileIdChallengesRouteImport.update({
     id: '/$profileId/challenges',
@@ -39,38 +89,95 @@ const ProfilesProfileIdChallengesRoute =
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/feed': typeof FeedRoute
+  '/laboratory': typeof LaboratoryRoute
+  '/profile': typeof ProfileRoute
   '/profiles': typeof ProfilesRouteWithChildren
+  '/profiles/manage': typeof ProfilesManageRoute
+  '/profiles/': typeof ProfilesIndexRoute
   '/profiles/$profileId/challenges': typeof ProfilesProfileIdChallengesRoute
+  '/profiles/$profileId/mentors': typeof ProfilesProfileIdMentorsRoute
+  '/profiles/$profileId/portfolio': typeof ProfilesProfileIdPortfolioRoute
+  '/profiles/$profileId/quest': typeof ProfilesProfileIdQuestRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
-  '/profiles': typeof ProfilesRouteWithChildren
+  '/feed': typeof FeedRoute
+  '/laboratory': typeof LaboratoryRoute
+  '/profile': typeof ProfileRoute
+  '/profiles/manage': typeof ProfilesManageRoute
+  '/profiles': typeof ProfilesIndexRoute
   '/profiles/$profileId/challenges': typeof ProfilesProfileIdChallengesRoute
+  '/profiles/$profileId/mentors': typeof ProfilesProfileIdMentorsRoute
+  '/profiles/$profileId/portfolio': typeof ProfilesProfileIdPortfolioRoute
+  '/profiles/$profileId/quest': typeof ProfilesProfileIdQuestRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/feed': typeof FeedRoute
+  '/laboratory': typeof LaboratoryRoute
+  '/profile': typeof ProfileRoute
   '/profiles': typeof ProfilesRouteWithChildren
+  '/profiles/manage': typeof ProfilesManageRoute
+  '/profiles/': typeof ProfilesIndexRoute
   '/profiles/$profileId/challenges': typeof ProfilesProfileIdChallengesRoute
+  '/profiles/$profileId/mentors': typeof ProfilesProfileIdMentorsRoute
+  '/profiles/$profileId/portfolio': typeof ProfilesProfileIdPortfolioRoute
+  '/profiles/$profileId/quest': typeof ProfilesProfileIdQuestRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/auth' | '/profiles' | '/profiles/$profileId/challenges'
+  fullPaths:
+    | '/'
+    | '/auth'
+    | '/feed'
+    | '/laboratory'
+    | '/profile'
+    | '/profiles'
+    | '/profiles/manage'
+    | '/profiles/'
+    | '/profiles/$profileId/challenges'
+    | '/profiles/$profileId/mentors'
+    | '/profiles/$profileId/portfolio'
+    | '/profiles/$profileId/quest'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/auth' | '/profiles' | '/profiles/$profileId/challenges'
+  to:
+    | '/'
+    | '/auth'
+    | '/feed'
+    | '/laboratory'
+    | '/profile'
+    | '/profiles/manage'
+    | '/profiles'
+    | '/profiles/$profileId/challenges'
+    | '/profiles/$profileId/mentors'
+    | '/profiles/$profileId/portfolio'
+    | '/profiles/$profileId/quest'
   id:
     | '__root__'
     | '/'
     | '/auth'
+    | '/feed'
+    | '/laboratory'
+    | '/profile'
     | '/profiles'
+    | '/profiles/manage'
+    | '/profiles/'
     | '/profiles/$profileId/challenges'
+    | '/profiles/$profileId/mentors'
+    | '/profiles/$profileId/portfolio'
+    | '/profiles/$profileId/quest'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthRoute: typeof AuthRoute
+  FeedRoute: typeof FeedRoute
+  LaboratoryRoute: typeof LaboratoryRoute
+  ProfileRoute: typeof ProfileRoute
   ProfilesRoute: typeof ProfilesRouteWithChildren
 }
 
@@ -81,6 +188,27 @@ declare module '@tanstack/react-router' {
       path: '/profiles'
       fullPath: '/profiles'
       preLoaderRoute: typeof ProfilesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/profile': {
+      id: '/profile'
+      path: '/profile'
+      fullPath: '/profile'
+      preLoaderRoute: typeof ProfileRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/laboratory': {
+      id: '/laboratory'
+      path: '/laboratory'
+      fullPath: '/laboratory'
+      preLoaderRoute: typeof LaboratoryRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/feed': {
+      id: '/feed'
+      path: '/feed'
+      fullPath: '/feed'
+      preLoaderRoute: typeof FeedRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/auth': {
@@ -97,6 +225,41 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/profiles/': {
+      id: '/profiles/'
+      path: '/'
+      fullPath: '/profiles/'
+      preLoaderRoute: typeof ProfilesIndexRouteImport
+      parentRoute: typeof ProfilesRoute
+    }
+    '/profiles/manage': {
+      id: '/profiles/manage'
+      path: '/manage'
+      fullPath: '/profiles/manage'
+      preLoaderRoute: typeof ProfilesManageRouteImport
+      parentRoute: typeof ProfilesRoute
+    }
+    '/profiles/$profileId/quest': {
+      id: '/profiles/$profileId/quest'
+      path: '/$profileId/quest'
+      fullPath: '/profiles/$profileId/quest'
+      preLoaderRoute: typeof ProfilesProfileIdQuestRouteImport
+      parentRoute: typeof ProfilesRoute
+    }
+    '/profiles/$profileId/portfolio': {
+      id: '/profiles/$profileId/portfolio'
+      path: '/$profileId/portfolio'
+      fullPath: '/profiles/$profileId/portfolio'
+      preLoaderRoute: typeof ProfilesProfileIdPortfolioRouteImport
+      parentRoute: typeof ProfilesRoute
+    }
+    '/profiles/$profileId/mentors': {
+      id: '/profiles/$profileId/mentors'
+      path: '/$profileId/mentors'
+      fullPath: '/profiles/$profileId/mentors'
+      preLoaderRoute: typeof ProfilesProfileIdMentorsRouteImport
+      parentRoute: typeof ProfilesRoute
+    }
     '/profiles/$profileId/challenges': {
       id: '/profiles/$profileId/challenges'
       path: '/$profileId/challenges'
@@ -108,11 +271,21 @@ declare module '@tanstack/react-router' {
 }
 
 interface ProfilesRouteChildren {
+  ProfilesManageRoute: typeof ProfilesManageRoute
+  ProfilesIndexRoute: typeof ProfilesIndexRoute
   ProfilesProfileIdChallengesRoute: typeof ProfilesProfileIdChallengesRoute
+  ProfilesProfileIdMentorsRoute: typeof ProfilesProfileIdMentorsRoute
+  ProfilesProfileIdPortfolioRoute: typeof ProfilesProfileIdPortfolioRoute
+  ProfilesProfileIdQuestRoute: typeof ProfilesProfileIdQuestRoute
 }
 
 const ProfilesRouteChildren: ProfilesRouteChildren = {
+  ProfilesManageRoute: ProfilesManageRoute,
+  ProfilesIndexRoute: ProfilesIndexRoute,
   ProfilesProfileIdChallengesRoute: ProfilesProfileIdChallengesRoute,
+  ProfilesProfileIdMentorsRoute: ProfilesProfileIdMentorsRoute,
+  ProfilesProfileIdPortfolioRoute: ProfilesProfileIdPortfolioRoute,
+  ProfilesProfileIdQuestRoute: ProfilesProfileIdQuestRoute,
 }
 
 const ProfilesRouteWithChildren = ProfilesRoute._addFileChildren(
@@ -122,8 +295,21 @@ const ProfilesRouteWithChildren = ProfilesRoute._addFileChildren(
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthRoute: AuthRoute,
+  FeedRoute: FeedRoute,
+  LaboratoryRoute: LaboratoryRoute,
+  ProfileRoute: ProfileRoute,
   ProfilesRoute: ProfilesRouteWithChildren,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}

@@ -11,6 +11,7 @@ import { useEffect, type ReactNode } from "react";
 
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
+import { Toaster } from "../components/ui/sonner";
 
 function NotFoundComponent() {
   return (
@@ -77,32 +78,39 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "Naya — Révélez le potentiel unique de votre enfant" },
+      { title: "Génizio — Révélez le potentiel unique de votre enfant" },
       {
         name: "description",
         content:
-          "Naya transforme les curiosités naturelles des enfants africains en talents concrets grâce à des défis personnalisés par IA. Bien au-delà du programme scolaire.",
+          "Génizio transforme les curiosités naturelles des enfants en talents concrets grâce à des défis personnalisés. Bien au-delà du programme scolaire.",
       },
-      { name: "author", content: "Naya" },
-      { property: "og:title", content: "Naya — Révélez le potentiel unique de votre enfant" },
+      { name: "author", content: "Génizio" },
+      { name: "apple-mobile-web-app-title", content: "Génizio" },
+      { property: "og:title", content: "Génizio — Révélez le potentiel unique de votre enfant" },
       {
         property: "og:description",
         content:
-          "Naya transforme les curiosités naturelles des enfants africains en talents concrets grâce à des défis personnalisés par IA. Bien au-delà du programme scolaire.",
+          "Génizio transforme les curiosités naturelles des enfants en talents concrets grâce à des défis personnalisés. Bien au-delà du programme scolaire.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
-      { name: "twitter:title", content: "Naya — Révélez le potentiel unique de votre enfant" },
-      { name: "twitter:description", content: "Naya transforme les curiosités naturelles des enfants africains en talents concrets grâce à des défis personnalisés par IA. Bien au-delà du programme scolaire." },
+      { name: "twitter:title", content: "Génizio — Révélez le potentiel unique de votre enfant" },
+      { name: "twitter:description", content: "Génizio transforme les curiosités naturelles des enfants en talents concrets grâce à des défis personnalisés. Bien au-delà du programme scolaire." },
       { property: "og:image", content: "https://storage.googleapis.com/gpt-engineer-file-uploads/attachments/og-images/a733782a-c6a3-4fca-b286-bb202621019e" },
       { name: "twitter:image", content: "https://storage.googleapis.com/gpt-engineer-file-uploads/attachments/og-images/a733782a-c6a3-4fca-b286-bb202621019e" },
+      { name: "theme-color", content: "#ffffff" },
     ],
     links: [
+      { rel: "icon", type: "image/png", href: "/favicon-96x96.png", sizes: "96x96" },
+      { rel: "icon", type: "image/svg+xml", href: "/favicon.svg" },
+      { rel: "shortcut icon", href: "/favicon.ico" },
+      { rel: "apple-touch-icon", sizes: "180x180", href: "/apple-touch-icon.png" },
+      { rel: "manifest", href: "/site.webmanifest" },
       { rel: "preconnect", href: "https://fonts.googleapis.com" },
       { rel: "preconnect", href: "https://fonts.gstatic.com", crossOrigin: "anonymous" },
       {
         rel: "stylesheet",
-        href: "https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=Inter:wght@400;500;600&display=swap",
+        href: "https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap",
       },
       {
         rel: "stylesheet",
@@ -135,8 +143,8 @@ function RootComponent() {
 
   return (
     <QueryClientProvider client={queryClient}>
-      {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
       <Outlet />
+      <Toaster />
     </QueryClientProvider>
   );
 }

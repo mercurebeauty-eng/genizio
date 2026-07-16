@@ -16,6 +16,7 @@ export type Database = {
     Tables: {
       challenges: {
         Row: {
+          ai_observations: string | null
           child_id: string
           completed_at: string | null
           created_at: string
@@ -25,14 +26,18 @@ export type Database = {
           id: string
           materials: Json
           notes: string | null
+          pedagogical_context: string | null
           progress: number
+          proof_image_url: string | null
           status: Database["public"]["Enums"]["challenge_status"]
           steps: Json
+          target_intelligences: Json
           title: string
           updated_at: string
           user_id: string
         }
         Insert: {
+          ai_observations?: string | null
           child_id: string
           completed_at?: string | null
           created_at?: string
@@ -42,14 +47,18 @@ export type Database = {
           id?: string
           materials?: Json
           notes?: string | null
+          pedagogical_context?: string | null
           progress?: number
+          proof_image_url?: string | null
           status?: Database["public"]["Enums"]["challenge_status"]
           steps?: Json
+          target_intelligences?: Json
           title: string
           updated_at?: string
           user_id: string
         }
         Update: {
+          ai_observations?: string | null
           child_id?: string
           completed_at?: string | null
           created_at?: string
@@ -59,9 +68,12 @@ export type Database = {
           id?: string
           materials?: Json
           notes?: string | null
+          pedagogical_context?: string | null
           progress?: number
+          proof_image_url?: string | null
           status?: Database["public"]["Enums"]["challenge_status"]
           steps?: Json
+          target_intelligences?: Json
           title?: string
           updated_at?: string
           user_id?: string
@@ -69,6 +81,65 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "challenges_child_id_fkey"
+            columns: ["child_id"]
+            isOneToOne: false
+            referencedRelation: "child_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      child_mentors: {
+        Row: {
+          access_token: string
+          can_view_raw_observations: boolean
+          can_view_talent_map: boolean
+          can_view_timeline: boolean
+          child_id: string
+          created_at: string
+          expires_at: string | null
+          id: string
+          mentor_email: string | null
+          mentor_name: string | null
+          owner_user_id: string
+          revoked_at: string | null
+          scope_domains: string[]
+          status: string
+        }
+        Insert: {
+          access_token: string
+          can_view_raw_observations?: boolean
+          can_view_talent_map?: boolean
+          can_view_timeline?: boolean
+          child_id: string
+          created_at?: string
+          expires_at?: string | null
+          id?: string
+          mentor_email?: string | null
+          mentor_name?: string | null
+          owner_user_id: string
+          revoked_at?: string | null
+          scope_domains?: string[]
+          status?: string
+        }
+        Update: {
+          access_token?: string
+          can_view_raw_observations?: boolean
+          can_view_talent_map?: boolean
+          can_view_timeline?: boolean
+          child_id?: string
+          created_at?: string
+          expires_at?: string | null
+          id?: string
+          mentor_email?: string | null
+          mentor_name?: string | null
+          owner_user_id?: string
+          revoked_at?: string | null
+          scope_domains?: string[]
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "child_mentors_child_id_fkey"
             columns: ["child_id"]
             isOneToOne: false
             referencedRelation: "child_profiles"
@@ -88,6 +159,7 @@ export type Database = {
           id: string
           interests: string[]
           name: string
+          talents: Json
           updated_at: string
           user_id: string
         }
@@ -102,6 +174,7 @@ export type Database = {
           id?: string
           interests?: string[]
           name: string
+          talents?: Json
           updated_at?: string
           user_id: string
         }
@@ -116,10 +189,49 @@ export type Database = {
           id?: string
           interests?: string[]
           name?: string
+          talents?: Json
           updated_at?: string
           user_id?: string
         }
         Relationships: []
+      }
+      consent_events: {
+        Row: {
+          child_id: string | null
+          created_at: string
+          description: string
+          event_type: string
+          id: string
+          metadata: Json
+          user_id: string
+        }
+        Insert: {
+          child_id?: string | null
+          created_at?: string
+          description: string
+          event_type: string
+          id?: string
+          metadata?: Json
+          user_id: string
+        }
+        Update: {
+          child_id?: string | null
+          created_at?: string
+          description?: string
+          event_type?: string
+          id?: string
+          metadata?: Json
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "consent_events_child_id_fkey"
+            columns: ["child_id"]
+            isOneToOne: false
+            referencedRelation: "child_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
     }
     Views: {
