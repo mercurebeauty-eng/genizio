@@ -69,7 +69,9 @@ function SharedChildView() {
               </div>
             </div>
             <div>
-              <p className="text-xs font-bold text-ink/50 uppercase tracking-widest">Partage privé</p>
+              <p className="text-xs font-bold text-ink/50 uppercase tracking-widest">
+                Partage privé • {data.scopeDomains && data.scopeDomains.length > 0 ? `Domaines : ${data.scopeDomains.join(", ")}` : "Tous les domaines"}
+              </p>
               <h1 className="font-bold text-ink">{data.childName} & {data.mentorName}</h1>
             </div>
           </div>

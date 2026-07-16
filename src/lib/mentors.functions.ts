@@ -136,6 +136,7 @@ export const getSharedChildView = createServerFn({ method: "GET" })
       childName: child.name,
       childColor: child.avatar_color,
       talents: mentor.can_view_talent_map ? child.talents : null,
+      scopeDomains: mentor.scope_domains || [],
       timeline: [],
     };
 
