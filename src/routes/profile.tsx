@@ -3,7 +3,10 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useSession } from "@/hooks/use-session";
 import { toast } from "sonner";
-import { User, Phone, Lock, ArrowLeft, Check, Loader2, Users, Calendar } from "lucide-react";
+import { User, Phone, Lock, ArrowLeft, Check, Loader2, Users, Calendar, Shield } from "lucide-react";
+import { ConsentLedger } from "@/components/settings/ConsentLedger";
+import { ExportDataButton } from "@/components/settings/ExportDataButton";
+import { DeleteAccountDialog } from "@/components/settings/DeleteAccountDialog";
 
 export const Route = createFileRoute("/profile")({
   component: ProfilePage,
@@ -282,6 +285,26 @@ function ProfilePage() {
                 <span>Modifier le mot de passe</span>
               </button>
             </form>
+          </div>
+
+          {/* Privacy & Consent Settings */}
+          <div className="rounded-3xl border border-ink/5 bg-white p-6 shadow-soft md:p-8 space-y-6 animate-in slide-in-from-bottom-4 duration-700">
+            <div>
+              <h3 className="font-display text-lg font-bold flex items-center gap-2 mb-2">
+                <Shield className="size-5 text-brand" />
+                Confidentialité & Consentement
+              </h3>
+              <p className="text-xs text-ink/50 leading-relaxed mb-6">
+                Consultez l'historique d'accès à vos données, exportez vos informations ou supprimez définitivement votre compte.
+              </p>
+            </div>
+            
+            <ConsentLedger />
+            
+            <div className="pt-4 border-t border-ink/5 space-y-4">
+              <ExportDataButton />
+              <DeleteAccountDialog />
+            </div>
           </div>
         </div>
       </div>
