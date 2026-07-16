@@ -179,82 +179,120 @@ function DashboardPage() {
             </div>
           ) : (
             <>
-              <div className="mb-8 flex flex-wrap items-center gap-2">
-                {profiles.map((p) => {
-                  const color = AVATAR_COLORS.find((c) => c.key === p.avatar_color)?.cls ?? "bg-brand";
-                  const isActive = p.id === selectedId;
-                  return (
-                    <button
-                      key={p.id}
-                      onClick={() => setSelectedId(p.id)}
-                      className={`flex items-center gap-2 rounded-full px-3 py-2 text-sm font-bold transition-all ${
-                        isActive ? "bg-ink text-white shadow-md" : "bg-white text-ink/70 ring-1 ring-ink/10 hover:bg-stone-50"
-                      }`}
-                    >
-                      <span className={`grid size-6 place-items-center rounded-full text-[11px] font-bold text-white ${color}`}>
-                        {p.name.charAt(0).toUpperCase()}
-                      </span>
-                      {p.name}
-                    </button>
-                  );
-                })}
-                <button
-                  onClick={() => setCreating(true)}
-                  className="rounded-full border-2 border-dashed border-ink/15 px-3 py-2 text-sm font-bold text-ink/50 hover:border-brand hover:text-brand"
-                >
-                  + Ajouter
-                </button>
+              <div className="mb-10 flex flex-col gap-4 rounded-3xl border border-ink/5 bg-white p-6 shadow-soft md:p-8">
+                <p className="text-[10px] font-extrabold uppercase tracking-widest text-ink/40">Profils enfants</p>
+                <div className="flex flex-wrap items-center gap-6">
+                  {profiles.map((p) => {
+                    const color = AVATAR_COLORS.find((c) => c.key === p.avatar_color)?.cls ?? "bg-brand";
+                    const isActive = p.id === selectedId;
+                    return (
+                      <button
+                        key={p.id}
+                        onClick={() => setSelectedId(p.id)}
+                        className="group flex flex-col items-center gap-2 focus:outline-none transition-all relative"
+                      >
+                        <div className={`relative flex size-16 items-center justify-center rounded-full text-xl font-bold text-white transition-all ${color} ${
+                          isActive
+                            ? "ring-4 ring-brand ring-offset-2 scale-105 shadow-lg shadow-brand/10"
+                            : "opacity-60 hover:opacity-100 hover:scale-102"
+                        }`}>
+                          {p.name.charAt(0).toUpperCase()}
+                          {isActive && (
+                            <span className="absolute -bottom-1 right-0 flex h-4 w-4 items-center justify-center rounded-full bg-brand text-[9px] font-extrabold text-white ring-2 ring-white">
+                              ✓
+                            </span>
+                          )}
+                        </div>
+                        <span className={`text-xs font-bold transition-all ${isActive ? "text-brand font-extrabold" : "text-ink/60"}`}>
+                          {p.name}
+                        </span>
+                      </button>
+                    );
+                  })}
+                  <button
+                    onClick={() => setCreating(true)}
+                    className="group flex flex-col items-center gap-2 focus:outline-none"
+                  >
+                    <div className="flex size-16 items-center justify-center rounded-full border-2 border-dashed border-ink/20 text-ink/40 group-hover:border-brand group-hover:text-brand group-hover:bg-brand/5 transition-all text-2xl font-bold">
+                      +
+                    </div>
+                    <span className="text-xs font-bold text-ink/40 group-hover:text-brand transition-all">
+                      Ajouter
+                    </span>
+                  </button>
+                </div>
               </div>
 
               <div className="grid gap-6 md:grid-cols-2">
-                <div className="rounded-3xl bg-white p-6 shadow-soft ring-1 ring-ink/5">
+                <div className="rounded-3xl bg-gradient-to-br from-white to-brand/5 p-6 shadow-soft ring-1 ring-ink/5 flex flex-col justify-between min-h-[320px] relative overflow-hidden border border-brand/10">
+                  <div className="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-brand via-sky to-leaf"></div>
                   {fetchingChallenges ? (
-                    <p className="text-sm text-ink/40">Chargement du défi…</p>
+                    <div className="flex flex-1 items-center justify-center py-10">
+                      <Loader2 className="size-6 animate-spin text-brand" />
+                    </div>
                   ) : activeChallenge ? (
-                    <>
-                      <div className="mb-3 flex items-center justify-between">
-                        <span className="rounded-full bg-brand/10 px-3 py-1 text-xs font-bold uppercase tracking-wider text-brand">
-                          {activeChallenge.domain}
-                        </span>
-                        <span className="text-xs font-semibold text-ink/40">⏱ {activeChallenge.duration}</span>
-                      </div>
-                      <h2 className="font-display text-xl font-extrabold">{activeChallenge.title}</h2>
-                      <p className="mt-2 text-sm text-ink/70">{activeChallenge.description}</p>
-                      
-                      {activeChallenge.materials && activeChallenge.materials.length > 0 && (
-                        <div className="mt-4 space-y-2">
-                          <p className="text-[11px] font-bold uppercase tracking-wider text-ink/40">Matériel nécessaire :</p>
-                          <div className="flex flex-wrap gap-2">
-                            {activeChallenge.materials.map((m, i) => (
-                              <span key={i} className="inline-flex items-center gap-1 rounded-xl bg-surface px-2.5 py-1 text-xs font-medium text-ink/80 border border-ink/5">
-                                📦 {m}
-                              </span>
-                            ))}
-                          </div>
+                    <div className="flex-1 flex flex-col justify-between">
+                      <div>
+                        <div className="mb-4 flex items-center justify-between">
+                          <span className="rounded-full bg-brand/10 px-3 py-1 text-xs font-bold uppercase tracking-wider text-brand">
+                            {activeChallenge.domain}
+                          </span>
+                          <span className="text-xs font-semibold text-ink/40">⏱ {activeChallenge.duration}</span>
                         </div>
-                      )}
+                        <h2 className="font-display text-2xl font-extrabold text-ink tracking-tight mb-2 leading-tight">
+                          {activeChallenge.title}
+                        </h2>
+                        <p className="text-sm text-ink/75 leading-relaxed">
+                          {activeChallenge.description}
+                        </p>
+                        
+                        {activeChallenge.materials && activeChallenge.materials.length > 0 && (
+                          <div className="mt-5">
+                            <p className="text-[10px] font-extrabold uppercase tracking-widest text-ink/40 mb-2">Matériel requis :</p>
+                            <div className="flex flex-wrap gap-2">
+                              {activeChallenge.materials.map((m, i) => (
+                                <span key={i} className="inline-flex items-center gap-1.5 rounded-full bg-white px-3 py-1.5 text-xs font-semibold text-ink/80 border border-ink/5 shadow-sm">
+                                  📦 {m}
+                                </span>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+                      </div>
 
-                      <Link
-                        to="/profiles/$profileId/challenges"
-                        params={{ profileId: selected!.id }}
-                        className="mt-5 inline-flex items-center gap-2 rounded-2xl bg-brand px-5 py-2.5 text-sm font-bold text-white shadow-brand hover:bg-brand-dark"
-                      >
-                        Commencer avec {selected!.name} →
-                      </Link>
-                    </>
+                      <div className="mt-8 flex flex-col sm:flex-row gap-3">
+                        <Link
+                          to="/profiles/$profileId/challenges"
+                          params={{ profileId: selected!.id }}
+                          className="flex-1 text-center rounded-2xl bg-brand px-6 py-3.5 text-sm font-bold text-white shadow-brand hover:bg-brand-dark hover:-translate-y-0.5 transition-all flex items-center justify-center gap-2 cursor-pointer"
+                        >
+                          Lancer avec {selected!.name} →
+                        </Link>
+                        <Link
+                          to="/profiles/$profileId/quest"
+                          params={{ profileId: selected!.id }}
+                          className="text-center rounded-2xl border border-brand/20 bg-brand/5 px-6 py-3.5 text-sm font-bold text-brand hover:bg-brand/10 transition-all flex items-center justify-center gap-2 cursor-pointer"
+                        >
+                          Mode Enfant (Quête) 🎮
+                        </Link>
+                      </div>
+                    </div>
                   ) : (
-                    <>
-                      <p className="text-sm text-ink/60">
-                        Aucun défi en cours pour {selected?.name}. Générez-en un dans le laboratoire.
-                      </p>
+                    <div className="flex-1 flex flex-col justify-between py-4">
+                      <div className="text-center space-y-3">
+                        <span className="inline-block text-4xl">🌟</span>
+                        <p className="text-sm text-ink/60 font-medium">
+                          Aucun défi en cours pour {selected?.name}. Générez-en un dans le laboratoire.
+                        </p>
+                      </div>
                       <Link
                         to="/profiles/$profileId/challenges"
                         params={{ profileId: selected!.id }}
-                        className="mt-4 inline-flex items-center gap-2 rounded-2xl bg-brand px-5 py-2.5 text-sm font-bold text-white shadow-brand hover:bg-brand-dark"
+                        className="mt-6 w-full text-center rounded-2xl bg-brand px-6 py-3.5 text-sm font-bold text-white shadow-brand hover:bg-brand-dark flex items-center justify-center gap-2 cursor-pointer"
                       >
                         <Sparkles className="size-4" /> Générer un défi
                       </Link>
-                    </>
+                    </div>
                   )}
                 </div>
 
