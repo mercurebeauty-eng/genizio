@@ -141,9 +141,10 @@ export function OutcomeChat({ challenge, childId, childName, onValidated }: Outc
               <p className="font-semibold mb-3">Super ! Pour finir, avez-vous une photo du projet ou du résultat final ?</p>
               
               {!selectedFile ? (
-                <label className="flex w-fit items-center gap-2 rounded-xl border border-brand/20 bg-brand/5 px-4 py-2.5 text-xs font-bold text-brand cursor-pointer hover:bg-brand/10 transition-all shadow-sm">
-                  <Upload className="size-4" />
-                  <span>Importer une photo (Optionnel)</span>
+                <label className="mt-3 flex flex-col items-center justify-center gap-2 rounded-2xl border-2 border-dashed border-brand/30 bg-brand/5 p-6 hover:bg-brand/10 transition-all cursor-pointer text-center w-full">
+                  <Upload className="size-6 text-brand animate-pulse" />
+                  <span className="text-xs font-black text-brand">Sélectionner une photo</span>
+                  <span className="text-[10px] text-ink/40 font-bold">Formats acceptés : PNG, JPG</span>
                   <input 
                     type="file" 
                     accept="image/*" 
@@ -152,14 +153,16 @@ export function OutcomeChat({ challenge, childId, childName, onValidated }: Outc
                   />
                 </label>
               ) : (
-                <div className="flex items-center gap-2 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-2.5 text-xs font-bold text-emerald-700 shadow-sm">
-                  <Check className="size-4" />
-                  <span className="truncate max-w-[200px]">{selectedFile.name}</span>
+                <div className="mt-3 flex items-center justify-between gap-2 rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-xs font-bold text-emerald-700 shadow-sm w-full">
+                  <div className="flex items-center gap-2 min-w-0">
+                    <Check className="size-4 shrink-0 stroke-[3px]" />
+                    <span className="truncate max-w-[180px]">{selectedFile.name}</span>
+                  </div>
                   <button 
                     onClick={() => setSelectedFile(null)} 
-                    className="ml-2 hover:text-red-500 hover:bg-red-50 p-1 rounded-full transition-colors"
+                    className="hover:text-red-500 hover:bg-red-50 p-1.5 rounded-full transition-colors cursor-pointer shrink-0"
                   >
-                    <X className="size-3" />
+                    <X className="size-3.5" />
                   </button>
                 </div>
               )}
