@@ -44,6 +44,8 @@ function ProfilePage() {
   // Parent Stats
   const [childCount, setChildCount] = useState(0);
   const [challengeStats, setChallengeStats] = useState({ total: 0, completed: 0 });
+  const [mentorCount, setMentorCount] = useState(0);
+  const [artifactsCount, setArtifactsCount] = useState(0);
 
   useEffect(() => {
     if (!loading && !session) navigate({ to: "/auth", replace: true });
@@ -62,12 +64,16 @@ function ProfilePage() {
       supabase.from("child_profiles").select("id", { count: "exact" }).then(({ count }) => {
         setChildCount(count || 0);
       });
-      supabase.from("challenges").select("status").then(({ data }) => {
+      supabase.from("child_mentors").select("id", { count: "exact" }).then(({ count }) => {
+        setMentorCount(count || 0);
+      });
+      supabase.from("challenges").select("status, proof_image_url").then(({ data }) => {
         if (data) {
           setChallengeStats({
             total: data.length,
             completed: data.filter((c) => c.status === "completed").length,
           });
+          setArtifactsCount(data.filter((c) => c.status === "completed" && c.proof_image_url).length);
         }
       });
     }
@@ -281,9 +287,28 @@ function ProfilePage() {
                 <Shield className="size-5 text-brand" />
                 Confidentialité & Consentement
               </h3>
-              <p className="text-xs text-ink/50 leading-relaxed mb-6">
+              <p className="text-xs text-ink/50 leading-relaxed">
                 Consultez l'historique d'accès à vos données, exportez vos informations ou supprimez définitivement votre compte.
               </p>
+            </div>
+
+            {/* Privacy Dashboard from Wireframe 1n */}
+            <div className="space-y-3">
+              <p className="text-[10px] font-extrabold uppercase tracking-widest text-ink/40">Vos données en un coup d'œil</p>
+              <div className="grid grid-cols-3 gap-3">
+                <div className="rounded-2xl border border-ink/5 bg-surface/50 p-4 text-center">
+                  <p className="text-2xl font-black text-ink">{mentorCount}</p>
+                  <p className="mt-1 text-[9px] font-bold text-ink/50 uppercase leading-snug">Mentors connectés</p>
+                </div>
+                <div className="rounded-2xl border border-ink/5 bg-surface/50 p-4 text-center">
+                  <p className="text-2xl font-black text-brand">{artifactsCount}</p>
+                  <p className="mt-1 text-[9px] font-bold text-ink/50 uppercase leading-snug">Réalisations privées</p>
+                </div>
+                <div className="rounded-2xl border border-ink/5 bg-surface/50 p-4 text-center">
+                  <p className="text-2xl font-black text-emerald-600">Actif</p>
+                  <p className="mt-1 text-[9px] font-bold text-ink/50 uppercase leading-snug">Consentement</p>
+                </div>
+              </div>
             </div>
             
             <ConsentLedger />
