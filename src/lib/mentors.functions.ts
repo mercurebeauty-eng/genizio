@@ -81,6 +81,7 @@ export const revokeMentorAccess = createServerFn({ method: "POST" })
         revoked_at: new Date().toISOString(),
       })
       .eq("id", data.mentorId)
+      .eq("child_id", data.childId)
       .eq("owner_user_id", userId);
 
     if (error) {
