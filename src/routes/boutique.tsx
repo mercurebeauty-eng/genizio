@@ -81,6 +81,7 @@ function BoutiquePage() {
   const [generatedChallenge, setGeneratedChallenge] = useState<any | null>(null);
   const [isAssigning, setIsAssigning] = useState(false);
   const [orderingId, setOrderingId] = useState<string | null>(null);
+  const [tagsModalProduct, setTagsModalProduct] = useState<Product | null>(null);
 
   const createOrderFn = useServerFn(createOrder);
   const generateSingleFn = useServerFn(generateSingleChallenge);
@@ -296,7 +297,7 @@ function BoutiquePage() {
                     </p>
 
                     <div className="mt-4 flex flex-wrap gap-1">
-                      {p.material_tags.map((t) => (
+                      {p.material_tags.slice(0, 3).map((t) => (
                         <span
                           key={t}
                           className="rounded-full border-2 border-ink bg-stone-100 px-2 py-0.5 text-[10px] font-bold text-ink"
@@ -304,6 +305,14 @@ function BoutiquePage() {
                           #{t}
                         </span>
                       ))}
+                      {p.material_tags.length > 3 && (
+                        <button
+                          onClick={() => setTagsModalProduct(p)}
+                          className="rounded-full border-2 border-ink bg-sky px-2 py-0.5 text-[10px] font-bold text-ink hover:bg-sky/70 transition-colors cursor-pointer"
+                        >
+                          +{p.material_tags.length - 3}
+                        </button>
+                      )}
                     </div>
 
                     {outOfStock && (
@@ -586,6 +595,40 @@ function BoutiquePage() {
                   <>Démarrer ce défi ! 🎮</>
                 )}
               </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal - Tous les tags matériel d'un kit */}
+      {tagsModalProduct && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-ink/55 backdrop-blur-sm p-4 animate-in fade-in duration-200"
+          onClick={() => setTagsModalProduct(null)}
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            className="relative w-full max-w-sm rounded-3xl border-[3px] border-ink bg-white p-6 shadow-brutal"
+          >
+            <button
+              onClick={() => setTagsModalProduct(null)}
+              className="absolute right-4 top-4 rounded-xl border-2 border-ink bg-stone-100 p-1.5 hover:bg-stone-200 transition-colors cursor-pointer"
+            >
+              <X className="size-4" />
+            </button>
+            <h3 className="font-display text-lg font-black pr-8">{tagsModalProduct.name}</h3>
+            <p className="mt-1 text-xs text-ink/50">
+              {tagsModalProduct.material_tags.length} matériau{tagsModalProduct.material_tags.length > 1 ? "x" : ""}
+            </p>
+            <div className="mt-4 flex max-h-72 flex-wrap gap-1.5 overflow-y-auto">
+              {tagsModalProduct.material_tags.map((t) => (
+                <span
+                  key={t}
+                  className="rounded-full border-2 border-ink bg-stone-100 px-2.5 py-1 text-xs font-bold text-ink"
+                >
+                  #{t}
+                </span>
+              ))}
             </div>
           </div>
         </div>
