@@ -132,14 +132,37 @@ export const createOrder = createServerFn({ method: "POST" })
       .maybeSingle();
     if (childErr || !child) throw new Error("Profil enfant introuvable ou accès refusé.");
 
+    // Price and item names come from the client, so they're only a hint —
+    // recompute both from the real catalog before persisting. Prevents a
+    // tampered request from recording a falsified total_price_xof/items.
+    const productIds = data.items.map((i) => i.id).filter((id): id is string => !!id);
+    if (productIds.length !== data.items.length) {
+      throw new Error("Commande invalide : un article ne référence aucun produit.");
+    }
+
+    const { data: products, error: productsErr } = await supabaseAdmin
+      .from("products")
+      .select("id, name, price_xof, is_active")
+      .in("id", productIds);
+    if (productsErr) throw new Error(productsErr.message);
+
+    const productById = new Map((products ?? []).map((p) => [p.id, p]));
+    const items = productIds.map((id) => {
+      const product = productById.get(id);
+      if (!product) throw new Error("Un des produits commandés n'existe plus.");
+      if (!product.is_active) throw new Error(`Produit indisponible actuellement : ${product.name}`);
+      return { id: product.id, name: product.name, price_xof: product.price_xof };
+    });
+    const total_price_xof = items.reduce((sum, item) => sum + item.price_xof, 0);
+
     const { data: row, error } = await supabaseAdmin
       .from("orders")
       .insert({
         user_id: userId,
         child_id: data.child_id,
         challenge_id: data.challenge_id || null,
-        total_price_xof: data.total_price_xof,
-        items: data.items,
+        total_price_xof,
+        items,
         delivery_notes: data.delivery_notes || null,
         status: "pending",
       })
