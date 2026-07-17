@@ -86,7 +86,7 @@ export function WhatsAppFAB({ phoneNumber }: WhatsAppFABProps) {
       target="_blank"
       rel="noopener noreferrer"
       aria-label="Besoin d'aide ? Discuter sur WhatsApp"
-      className="fixed bottom-24 right-5 z-50 flex items-center gap-2 rounded-full border-[3px] border-ink bg-[#25D366] px-4 py-3 text-sm font-bold text-white shadow-brutal transition-all hover:-translate-y-1 hover:shadow-brutal-lg active:translate-y-0 md:bottom-8"
+      className="fixed bottom-24 right-5 z-50 flex items-center gap-2 rounded-full border-[3px] border-ink bg-[#0B7A5A] px-4 py-3 text-sm font-bold text-white shadow-brutal transition-all hover:-translate-y-1 hover:shadow-brutal-lg active:translate-y-0 md:bottom-8"
     >
       <MessageCircle className="size-5 fill-white stroke-none" />
       <span className="hidden sm:inline">Aide</span>

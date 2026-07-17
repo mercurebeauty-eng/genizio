@@ -442,7 +442,7 @@ function AdminProductsPage() {
                               value={o.status}
                               disabled={updatingOrderId === o.id}
                               onChange={(e) => handleUpdateStatus(o.id, e.target.value)}
-                              className="rounded-xl border-2 border-ink px-3 py-1 text-xs font-bold outline-none bg-surface shadow-brutal-sm cursor-pointer"
+                              className="rounded-xl border-2 border-ink px-3 py-1 text-xs font-bold outline-none focus:ring-2 focus:ring-brand bg-surface shadow-brutal-sm cursor-pointer"
                             >
                               <option value="pending">En attente</option>
                               <option value="confirmed">Confirmé</option>

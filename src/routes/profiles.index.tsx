@@ -234,7 +234,7 @@ function DashboardPage() {
                       <button
                         key={p.id}
                         onClick={() => setSelectedId(p.id)}
-                        className={`group flex items-center gap-2 focus:outline-none transition-all px-6 py-2.5 rounded-full border-2 border-ink shadow-brutal-sm font-bold text-sm ${
+                        className={`group flex items-center gap-2 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 transition-all px-6 py-2.5 rounded-full border-2 border-ink shadow-brutal-sm font-bold text-sm ${
                           isActive
                             ? "bg-brand text-white"
                             : "bg-sky text-ink hover:bg-sky/80"
