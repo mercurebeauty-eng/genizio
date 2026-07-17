@@ -42,8 +42,8 @@ function SharedChildView() {
   if (error || !data) {
     return (
       <div className="grid min-h-screen place-items-center bg-surface p-6 text-center">
-        <div className="max-w-md bg-white p-8 rounded-3xl shadow-soft border border-ink/5">
-          <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-red-50 text-red-500 mb-4">
+        <div className="max-w-md bg-white p-8 rounded-3xl shadow-brutal border-[3px] border-ink">
+          <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full border-2 border-ink bg-red-50 text-red-500 mb-4">
             <ShieldAlert className="size-8" />
           </div>
           <h1 className="font-display text-2xl font-extrabold text-ink mb-2">Accès restreint</h1>
@@ -57,14 +57,14 @@ function SharedChildView() {
 
   return (
     <div className="min-h-screen bg-surface pb-24 text-ink">
-      <header className="bg-white border-b border-ink/5 sticky top-0 z-10">
+      <header className="bg-surface border-b-[3px] border-ink sticky top-0 z-10">
         <div className="max-w-4xl mx-auto px-6 py-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="flex -space-x-2">
-              <div className="size-10 rounded-full flex items-center justify-center font-extrabold text-white shadow-sm border-2 border-white" style={{ backgroundColor: data.childColor }}>
+              <div className="size-10 rounded-full flex items-center justify-center font-extrabold text-white border-2 border-ink" style={{ backgroundColor: data.childColor }}>
                 {data.childName.charAt(0)}
               </div>
-              <div className="size-10 rounded-full flex items-center justify-center bg-brand/10 text-brand font-extrabold shadow-sm border-2 border-white">
+              <div className="size-10 rounded-full flex items-center justify-center bg-brand/10 text-brand font-extrabold border-2 border-ink">
                 {data.mentorName.charAt(0)}
               </div>
             </div>
@@ -75,8 +75,8 @@ function SharedChildView() {
               <h1 className="font-bold text-ink">{data.childName} & {data.mentorName}</h1>
             </div>
           </div>
-          <div className="rounded-full bg-emerald-50 px-3 py-1 text-[10px] font-bold text-emerald-700 border border-emerald-100 flex items-center gap-1.5 hidden sm:flex">
-            <div className="size-1.5 rounded-full bg-emerald-500"></div>
+          <div className="rounded-full border-2 border-ink bg-leaf px-3 py-1 text-[10px] font-bold text-white flex items-center gap-1.5 hidden sm:flex">
+            <div className="size-1.5 rounded-full bg-white"></div>
             Accès Sécurisé
           </div>
         </div>
@@ -85,7 +85,7 @@ function SharedChildView() {
       <main className="max-w-4xl mx-auto px-4 md:px-6 py-8 space-y-8">
         
         {data.talents && (
-          <div className="rounded-3xl border border-ink/5 bg-white p-6 md:p-8 shadow-soft">
+          <div className="rounded-3xl border-[3px] border-ink bg-white p-6 md:p-8 shadow-brutal">
             <h3 className="font-display text-xl font-bold flex items-center gap-2 mb-6">
               <Award className="size-6 text-brand" />
               Carte des Talents de {data.childName}
@@ -102,27 +102,27 @@ function SharedChildView() {
             
             <div className="space-y-4">
               {data.timeline.map((c: any) => (
-                <div key={c.id} className="rounded-3xl bg-white p-6 border border-ink/5 shadow-soft">
+                <div key={c.id} className="rounded-3xl bg-white p-6 border-[3px] border-ink shadow-brutal">
                   <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
-                    <span className="rounded-full bg-brand/10 px-3 py-1 text-[10px] font-extrabold uppercase tracking-wider text-brand">
+                    <span className="rounded-full border-2 border-ink bg-brand px-3 py-1 text-[10px] font-extrabold uppercase tracking-wider text-white">
                       {c.domain}
                     </span>
                     <span className="text-xs font-semibold text-ink/40">
                       Terminé le {new Date(c.completed_at).toLocaleDateString()}
                     </span>
                   </div>
-                  
+
                   <h4 className="font-display text-lg font-extrabold text-ink mb-2">{c.title}</h4>
                   <p className="text-sm text-ink/70 leading-relaxed mb-6">{c.description}</p>
-                  
+
                   {c.proof_image_url && (
-                    <div className="mb-6 rounded-2xl overflow-hidden border border-ink/5 bg-surface/50">
+                    <div className="mb-6 rounded-2xl overflow-hidden border-[3px] border-ink bg-surface">
                       <img src={c.proof_image_url} alt="Preuve" className="w-full max-h-64 object-contain" />
                     </div>
                   )}
 
                   {c.ai_observations && (
-                    <div className="rounded-2xl border border-emerald-100 bg-emerald-50/50 p-4 mb-4">
+                    <div className="rounded-2xl border-[3px] border-ink bg-leaf/10 p-4 mb-4">
                       <p className="mb-2 text-xs font-extrabold uppercase tracking-widest text-emerald-800 flex items-center gap-1.5">
                         <Brain className="size-4" />
                         Analyse
@@ -132,7 +132,7 @@ function SharedChildView() {
                   )}
 
                   {c.notes !== undefined && c.notes && (
-                    <div className="rounded-2xl border border-sky-100 bg-sky-50/50 p-4">
+                    <div className="rounded-2xl border-[3px] border-ink bg-sky/20 p-4">
                       <p className="mb-2 text-xs font-extrabold uppercase tracking-widest text-sky-800 flex items-center gap-1.5">
                         Notes Privées
                       </p>

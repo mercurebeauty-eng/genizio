@@ -11,7 +11,7 @@ const DOMAINS = [
   "Communication", "Entrepreneuriat", "Arts", "Langues", "Tech & IA",
 ];
 
-export function InviteMentorDialog({ childId, childName }: { childId: string, childName: string }) {
+export function InviteMentorDialog({ childId, childName, customTrigger }: { childId: string, childName: string, customTrigger?: React.ReactNode }) {
   const [open, setOpen] = useState(false);
   const [mentorName, setMentorName] = useState("");
   const [canViewTalentMap, setCanViewTalentMap] = useState(true);
@@ -79,12 +79,14 @@ export function InviteMentorDialog({ childId, childName }: { childId: string, ch
       }
     }}>
       <DialogTrigger asChild>
-        <button className="flex items-center justify-center gap-2 rounded-2xl bg-brand px-5 py-3 text-sm font-bold text-white shadow-md hover:bg-brand-dark transition-all">
-          <Plus className="size-4" />
-          Inviter un mentor
-        </button>
+        {customTrigger ? customTrigger : (
+          <button className="flex items-center justify-center gap-2 rounded-2xl border-[3px] border-ink bg-brand px-5 py-3 text-sm font-bold text-white shadow-brutal hover:-translate-y-0.5 active:translate-y-0 active:shadow-none transition-all">
+            <Plus className="size-4" />
+            Inviter un mentor
+          </button>
+        )}
       </DialogTrigger>
-      <DialogContent className="sm:max-w-md rounded-3xl p-6">
+      <DialogContent className="sm:max-w-md rounded-3xl p-6 border-[3px] border-ink shadow-brutal">
         <DialogHeader>
           <DialogTitle className="font-display text-2xl font-extrabold text-ink">
             Inviter un mentor
@@ -98,16 +100,16 @@ export function InviteMentorDialog({ childId, childName }: { childId: string, ch
           <div className="space-y-6 py-4">
             <div className="space-y-2">
               <label className="text-sm font-bold text-ink">Nom du mentor</label>
-              <input 
-                type="text" 
+              <input
+                type="text"
                 value={mentorName}
                 onChange={(e) => setMentorName(e.target.value)}
                 placeholder="Ex: M. Dupont (Prof de maths)"
-                className="w-full rounded-2xl border border-ink/10 px-4 py-3 text-sm outline-none focus:border-brand focus:ring-1 focus:ring-brand shadow-sm"
+                className="w-full rounded-2xl border-[3px] border-ink px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-brand shadow-brutal-sm"
               />
             </div>
 
-            <div className="space-y-4 rounded-2xl border border-ink/5 bg-surface/30 p-4">
+            <div className="space-y-4 rounded-2xl border-[3px] border-ink bg-white p-4 shadow-brutal-sm">
               <h4 className="text-sm font-bold text-ink mb-2">Permissions d'accès</h4>
               
               <div className="flex items-center justify-between">
@@ -127,7 +129,7 @@ export function InviteMentorDialog({ childId, childName }: { childId: string, ch
               </div>
 
               {canViewTimeline && (
-                <div className="pl-4 border-l-2 border-brand/10 space-y-4 animate-in fade-in slide-in-from-top-2">
+                <div className="pl-4 border-l-[3px] border-ink space-y-4 animate-in fade-in slide-in-from-top-2">
                   <div className="flex items-center justify-between">
                     <div className="space-y-0.5">
                       <label className="text-sm font-medium text-ink">Notes parentales</label>
@@ -143,10 +145,10 @@ export function InviteMentorDialog({ childId, childName }: { childId: string, ch
                         <button
                           key={domain}
                           onClick={() => toggleDomain(domain)}
-                          className={`rounded-full px-3 py-1 text-[10px] font-bold uppercase transition-all border ${
-                            scopeDomains.includes(domain) 
-                              ? 'bg-brand/10 border-brand/30 text-brand' 
-                              : 'bg-white border-ink/10 text-ink/60 hover:bg-ink/5'
+                          className={`rounded-full px-3 py-1 text-[10px] font-bold uppercase transition-all border-2 ${
+                            scopeDomains.includes(domain)
+                              ? 'bg-brand border-ink text-white'
+                              : 'bg-white border-ink text-ink/60 hover:bg-surface'
                           }`}
                         >
                           {domain}
@@ -161,31 +163,31 @@ export function InviteMentorDialog({ childId, childName }: { childId: string, ch
             <button
               onClick={handleInvite}
               disabled={loading || !mentorName.trim()}
-              className="w-full rounded-2xl bg-brand py-3.5 text-sm font-bold text-white shadow-md shadow-brand/20 hover:bg-brand-dark transition-all disabled:opacity-50 flex items-center justify-center gap-2"
+              className="w-full rounded-2xl border-[3px] border-ink bg-brand py-3.5 text-sm font-bold text-white shadow-brutal hover:-translate-y-0.5 active:translate-y-0 active:shadow-none transition-all disabled:opacity-50 flex items-center justify-center gap-2"
             >
               {loading ? <Loader2 className="size-5 animate-spin" /> : "Générer le lien d'accès"}
             </button>
           </div>
         ) : (
           <div className="space-y-6 py-6 text-center animate-in zoom-in-95">
-            <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-emerald-100 text-emerald-600 mb-4">
+            <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full border-[3px] border-ink bg-leaf text-white shadow-brutal-sm mb-4">
               <Check className="size-8" />
             </div>
             <h3 className="text-xl font-bold text-ink">Accès créé !</h3>
             <p className="text-sm text-ink/60 px-4">
               Transmettez ce lien unique à <strong>{mentorName}</strong>. L'accès peut être révoqué à tout moment.
             </p>
-            
-            <div className="flex items-center gap-2 rounded-xl border border-brand/20 bg-brand/5 p-2">
-              <input 
-                type="text" 
-                readOnly 
-                value={shareUrl} 
-                className="flex-1 bg-transparent px-2 text-xs font-mono text-ink/80 outline-none"
+
+            <div className="flex items-center gap-2 rounded-xl border-[3px] border-ink bg-sky p-2">
+              <input
+                type="text"
+                readOnly
+                value={shareUrl}
+                className="flex-1 bg-transparent px-2 text-xs font-mono text-ink outline-none"
               />
               <button
                 onClick={copyLink}
-                className="flex items-center justify-center rounded-lg bg-white p-2.5 text-brand shadow-sm border border-brand/10 hover:bg-brand hover:text-white transition-colors"
+                className="flex items-center justify-center rounded-lg border-2 border-ink bg-white p-2.5 text-brand shadow-brutal-sm hover:bg-brand hover:text-white transition-colors"
               >
                 {copied ? <Check className="size-4" /> : <LinkIcon className="size-4" />}
               </button>

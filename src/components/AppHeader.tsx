@@ -1,23 +1,56 @@
 import { Link, useNavigate } from "@tanstack/react-router";
 import { useSession } from "@/hooks/use-session";
 import { supabase } from "@/integrations/supabase/client";
-import { Menu, X, Settings, LogOut, LayoutDashboard, Beaker, Users, Sparkles } from "lucide-react";
-import { useState } from "react";
+import { Menu, X, Settings, LogOut, LayoutDashboard, Users, Brain, ShoppingBag, Eye, ChevronDown, Shield } from "lucide-react";
+import { useState, useEffect } from "react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+
 
 export function AppHeader() {
   const { session } = useSession();
   const navigate = useNavigate();
   const [isOpen, setIsOpen] = useState(false);
+  const [isSupervisor, setIsSupervisor] = useState(false);
+  const [isAdmin, setIsAdmin] = useState(false);
 
   const signOut = async () => {
     await supabase.auth.signOut();
     navigate({ to: "/auth", replace: true });
   };
 
+  useEffect(() => {
+    if (!session) return;
+
+    // Check admin status
+    const adminEmails = (import.meta.env.VITE_ADMIN_EMAILS ?? "")
+      .split(",")
+      .map((e: string) => e.trim().toLowerCase())
+      .filter(Boolean);
+    const userEmail = session.user.email?.toLowerCase();
+    setIsAdmin(adminEmails.includes(userEmail) || userEmail === "mercurebeauty@gmail.com");
+
+    // Check supervisor status
+    supabase
+      .from("supervisors")
+      .select("id", { count: "exact", head: true })
+      .eq("supervisor_user_id", session.user.id)
+      .then(({ count }) => {
+        setIsSupervisor((count ?? 0) > 0);
+      });
+  }, [session]);
+
   if (!session) return null;
 
+
   return (
-    <nav className="border-b border-ink/5 bg-white/80 backdrop-blur-md sticky top-0 z-50">
+    <nav className="border-b-[3px] border-ink bg-surface sticky top-0 z-50">
       <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
         {/* Logo */}
         <Link to="/profiles" className="flex items-center gap-2 font-display text-2xl font-extrabold text-brand tracking-wider">
@@ -30,11 +63,11 @@ export function AppHeader() {
           <Link to="/profiles" className="text-ink/60 hover:text-brand transition-colors" activeProps={{ className: "text-brand" }}>
             Accueil
           </Link>
-          <Link to="/laboratory" className="text-ink/60 hover:text-brand transition-colors" activeProps={{ className: "text-brand" }}>
-            Laboratoire
-          </Link>
           <Link to="/feed" className="text-ink/60 hover:text-brand transition-colors" activeProps={{ className: "text-brand" }}>
             Mur Public
+          </Link>
+          <Link to="/boutique" className="text-ink/60 hover:text-brand transition-colors" activeProps={{ className: "text-brand" }}>
+            Boutique
           </Link>
           <Link to="/profiles/manage" className="text-ink/60 hover:text-brand transition-colors" activeProps={{ className: "text-brand" }}>
             Gérer mes profils
@@ -43,21 +76,67 @@ export function AppHeader() {
 
         {/* Desktop actions */}
         <div className="hidden items-center gap-4 text-sm font-semibold md:flex">
-          <Link
-            to="/profile"
-            className="flex items-center gap-1.5 rounded-full border border-brand/20 bg-brand/5 px-4 py-2 text-brand hover:bg-brand/10 transition-all"
-            activeProps={{ className: "bg-brand text-white border-brand" }}
-          >
-            <Settings className="size-4" />
-            {session.user.email?.split("@")[0]}
-          </Link>
-          <button
-            onClick={signOut}
-            className="rounded-full border border-ink/10 px-4 py-2 font-semibold hover:bg-white transition-all text-ink/75 hover:text-ink cursor-pointer"
-          >
-            Se déconnecter
-          </button>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <button className="flex items-center gap-1.5 rounded-full border-2 border-ink bg-white px-4.5 py-2 text-sm font-bold text-ink hover:bg-surface transition-all cursor-pointer shadow-brutal-sm">
+                <Settings className="size-4 text-brand" />
+                <span>{session.user.email?.split("@")[0]}</span>
+                <ChevronDown className="size-3.5 text-ink/40" />
+              </button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-56 border-[3px] border-ink rounded-2xl p-1.5 bg-white shadow-brutal mt-1">
+              <DropdownMenuLabel className="font-display font-extrabold text-[10px] text-ink/50 uppercase tracking-widest px-2.5 py-1.5">
+                Mon Espace
+              </DropdownMenuLabel>
+              <DropdownMenuItem asChild>
+                <Link to="/profile" className="flex items-center gap-2 rounded-xl px-2.5 py-2 text-xs font-black uppercase tracking-wider text-ink/75 hover:bg-surface cursor-pointer">
+                  <Settings className="size-4 text-brand" />
+                  <span>Mon Compte</span>
+                </Link>
+              </DropdownMenuItem>
+
+              {(isSupervisor || isAdmin) && (
+                <>
+                  <DropdownMenuSeparator className="-mx-1.5 my-1.5 border-t-[2px] border-ink/10" />
+                  <DropdownMenuLabel className="font-display font-extrabold text-[10px] text-ink/50 uppercase tracking-widest px-2.5 py-1.5">
+                    Accompagnant & Pro
+                  </DropdownMenuLabel>
+                  {isSupervisor && (
+                    <DropdownMenuItem asChild>
+                      <Link to="/supervisor" className="flex items-center gap-2 rounded-xl px-2.5 py-2 text-xs font-black uppercase tracking-wider text-brand hover:bg-brand/5 cursor-pointer">
+                        <Eye className="size-4" />
+                        <span>Superviseur</span>
+                      </Link>
+                    </DropdownMenuItem>
+                  )}
+                  {isAdmin && (
+                    <>
+                      <DropdownMenuItem asChild>
+                        <Link to="/admin/products" className="flex items-center gap-2 rounded-xl px-2.5 py-2 text-xs font-black uppercase tracking-wider text-purple-600 hover:bg-purple-50 cursor-pointer">
+                          <ShoppingBag className="size-4" />
+                          <span>Admin Kits</span>
+                        </Link>
+                      </DropdownMenuItem>
+                      <DropdownMenuItem asChild>
+                        <Link to="/admin/supervisors" className="flex items-center gap-2 rounded-xl px-2.5 py-2 text-xs font-black uppercase tracking-wider text-purple-600 hover:bg-purple-50 cursor-pointer">
+                          <Users className="size-4" />
+                          <span>Admin Superviseurs</span>
+                        </Link>
+                      </DropdownMenuItem>
+                    </>
+                  )}
+                </>
+              )}
+
+              <DropdownMenuSeparator className="-mx-1.5 my-1.5 border-t-[2px] border-ink/10" />
+              <DropdownMenuItem onClick={signOut} className="flex items-center gap-2 rounded-xl px-2.5 py-2 text-xs font-black uppercase tracking-wider text-red-600 hover:bg-red-50 cursor-pointer">
+                <LogOut className="size-4" />
+                <span>Se déconnecter</span>
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
+
 
         {/* Mobile menu button */}
         <button
@@ -81,23 +160,24 @@ export function AppHeader() {
               <LayoutDashboard className="size-4" />
               Accueil
             </Link>
-            <Link
-              to="/laboratory"
-              onClick={() => setIsOpen(false)}
-              className="flex items-center gap-2.5 rounded-2xl px-4 py-3 text-sm font-bold text-ink/70 hover:bg-surface"
-              activeProps={{ className: "bg-brand/5 text-brand" }}
-            >
-              <Beaker className="size-4" />
-              Laboratoire
-            </Link>
+
             <Link
               to="/feed"
               onClick={() => setIsOpen(false)}
               className="flex items-center gap-2.5 rounded-2xl px-4 py-3 text-sm font-bold text-ink/70 hover:bg-surface"
               activeProps={{ className: "bg-brand/5 text-brand" }}
             >
-              <Sparkles className="size-4" />
+              <Brain className="size-4" />
               Mur Public
+            </Link>
+            <Link
+              to="/boutique"
+              onClick={() => setIsOpen(false)}
+              className="flex items-center gap-2.5 rounded-2xl px-4 py-3 text-sm font-bold text-ink/70 hover:bg-surface"
+              activeProps={{ className: "bg-brand/5 text-brand" }}
+            >
+              <ShoppingBag className="size-4" />
+              Boutique
             </Link>
             <Link
               to="/profiles/manage"
@@ -108,6 +188,47 @@ export function AppHeader() {
               <Users className="size-4" />
               Gérer mes profils
             </Link>
+            {(isSupervisor || isAdmin) && (
+              <div className="border-t border-ink/10 my-1 pt-2">
+                <p className="text-[10px] font-extrabold uppercase tracking-widest text-ink/40 px-4 mb-1.5">
+                  Accompagnant & Pro
+                </p>
+                {isSupervisor && (
+                  <Link
+                    to="/supervisor"
+                    onClick={() => setIsOpen(false)}
+                    className="flex items-center gap-2.5 rounded-2xl px-4 py-3 text-sm font-bold text-brand hover:bg-brand/5"
+                    activeProps={{ className: "bg-brand/5 text-brand" }}
+                  >
+                    <Eye className="size-4" />
+                    Superviseur
+                  </Link>
+                )}
+                {isAdmin && (
+                  <>
+                    <Link
+                      to="/admin/products"
+                      onClick={() => setIsOpen(false)}
+                      className="flex items-center gap-2.5 rounded-2xl px-4 py-3 text-sm font-bold text-purple-600 hover:bg-purple-50"
+                      activeProps={{ className: "bg-purple-50 text-purple-600" }}
+                    >
+                      <ShoppingBag className="size-4" />
+                      Admin Kits
+                    </Link>
+                    <Link
+                      to="/admin/supervisors"
+                      onClick={() => setIsOpen(false)}
+                      className="flex items-center gap-2.5 rounded-2xl px-4 py-3 text-sm font-bold text-purple-600 hover:bg-purple-50"
+                      activeProps={{ className: "bg-purple-50 text-purple-600" }}
+                    >
+                      <Users className="size-4" />
+                      Admin Superviseurs
+                    </Link>
+                  </>
+                )}
+              </div>
+            )}
+
             <Link
               to="/profile"
               onClick={() => setIsOpen(false)}
@@ -117,6 +238,7 @@ export function AppHeader() {
               <Settings className="size-4" />
               Mon Compte
             </Link>
+
           </div>
           <div className="pt-2 border-t border-ink/5">
             <button

@@ -58,8 +58,8 @@ export function MentorGrantsTable({ childId }: { childId: string }) {
 
   if (mentors.length === 0) {
     return (
-      <div className="rounded-3xl border border-ink/5 bg-white p-8 text-center shadow-soft">
-        <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-brand/10 text-brand mb-3">
+      <div className="rounded-3xl border-[3px] border-ink bg-white p-8 text-center shadow-brutal">
+        <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full border-2 border-ink bg-brand/10 text-brand mb-3">
           <ShieldAlert className="size-6" />
         </div>
         <p className="text-ink/60 text-sm">Aucun mentor n'a accès au profil pour le moment.</p>
@@ -68,7 +68,7 @@ export function MentorGrantsTable({ childId }: { childId: string }) {
   }
 
   return (
-    <div className="rounded-3xl border border-ink/5 bg-white shadow-soft overflow-hidden">
+    <div className="rounded-3xl border-[3px] border-ink bg-white shadow-brutal overflow-hidden">
       {/* Desktop Table */}
       <div className="hidden md:block overflow-x-auto">
         <Table>
@@ -97,13 +97,13 @@ export function MentorGrantsTable({ childId }: { childId: string }) {
                 </TableCell>
                 <TableCell>
                   {m.status === "active" ? (
-                    <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-100 px-2.5 py-1 text-xs font-bold text-emerald-800">
-                      <div className="size-1.5 rounded-full bg-emerald-500"></div>
+                    <span className="inline-flex items-center gap-1.5 rounded-full border-2 border-ink bg-leaf px-2.5 py-1 text-xs font-bold text-white">
+                      <div className="size-1.5 rounded-full bg-white"></div>
                       Actif
                     </span>
                   ) : (
-                    <span className="inline-flex items-center gap-1.5 rounded-full bg-red-100 px-2.5 py-1 text-xs font-bold text-red-800">
-                      <div className="size-1.5 rounded-full bg-red-500"></div>
+                    <span className="inline-flex items-center gap-1.5 rounded-full border-2 border-ink bg-[#FF5A5F] px-2.5 py-1 text-xs font-bold text-white">
+                      <div className="size-1.5 rounded-full bg-white"></div>
                       Révoqué
                     </span>
                   )}
@@ -111,20 +111,20 @@ export function MentorGrantsTable({ childId }: { childId: string }) {
                 <TableCell className="text-right">
                   {m.status === "active" && (
                     <div className="flex items-center justify-end gap-2">
-                      <button 
+                      <button
                         onClick={() => copyLink(m.access_token, m.id)}
-                        className="p-2 hover:bg-ink/5 rounded-lg text-ink/60 transition-colors"
+                        className="p-2 border-2 border-ink rounded-lg text-ink/60 hover:-translate-y-0.5 transition-all"
                         title="Copier le lien"
                       >
                         {copiedId === m.id ? <Check className="size-4 text-emerald-600" /> : <Copy className="size-4" />}
                       </button>
                       <AlertDialog>
                         <AlertDialogTrigger asChild>
-                          <button className="p-2 hover:bg-red-50 rounded-lg text-red-500 transition-colors" title="Révoquer">
+                          <button className="p-2 border-2 border-ink rounded-lg text-red-500 hover:-translate-y-0.5 transition-all" title="Révoquer">
                             {revoking === m.id ? <Loader2 className="size-4 animate-spin" /> : <Trash2 className="size-4" />}
                           </button>
                         </AlertDialogTrigger>
-                        <AlertDialogContent className="rounded-3xl">
+                        <AlertDialogContent className="rounded-3xl border-[3px] border-ink shadow-brutal">
                           <AlertDialogHeader>
                             <AlertDialogTitle>Révoquer l'accès ?</AlertDialogTitle>
                             <AlertDialogDescription>
@@ -132,10 +132,10 @@ export function MentorGrantsTable({ childId }: { childId: string }) {
                             </AlertDialogDescription>
                           </AlertDialogHeader>
                           <AlertDialogFooter>
-                            <AlertDialogCancel className="rounded-xl">Annuler</AlertDialogCancel>
-                            <AlertDialogAction 
+                            <AlertDialogCancel className="rounded-xl border-[3px] border-ink shadow-brutal-sm">Annuler</AlertDialogCancel>
+                            <AlertDialogAction
                               onClick={() => handleRevoke(m.id)}
-                              className="bg-red-600 hover:bg-red-700 text-white rounded-xl"
+                              className="bg-red-600 hover:bg-red-700 text-white rounded-xl border-[3px] border-ink shadow-brutal-sm"
                             >
                               Oui, révoquer
                             </AlertDialogAction>
@@ -161,12 +161,12 @@ export function MentorGrantsTable({ childId }: { childId: string }) {
                 <p className="text-xs text-ink/40">Le {new Date(m.created_at).toLocaleDateString()}</p>
               </div>
               {m.status === "active" ? (
-                <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] font-bold text-emerald-800">Actif</span>
+                <span className="rounded-full border-2 border-ink bg-leaf px-2 py-0.5 text-[10px] font-bold text-white">Actif</span>
               ) : (
-                <span className="rounded-full bg-red-100 px-2 py-0.5 text-[10px] font-bold text-red-800">Révoqué</span>
+                <span className="rounded-full border-2 border-ink bg-[#FF5A5F] px-2 py-0.5 text-[10px] font-bold text-white">Révoqué</span>
               )}
             </div>
-            
+
             <div className="flex flex-wrap gap-1">
               {m.can_view_talent_map && <span className="rounded bg-brand/10 px-2 py-0.5 text-[10px] font-bold text-brand uppercase">Talents</span>}
               {m.can_view_timeline && <span className="rounded bg-sky/10 px-2 py-0.5 text-[10px] font-bold text-sky-700 uppercase">Journal</span>}
@@ -174,28 +174,28 @@ export function MentorGrantsTable({ childId }: { childId: string }) {
 
             {m.status === "active" && (
               <div className="flex gap-2 pt-2">
-                <button 
+                <button
                   onClick={() => copyLink(m.access_token, m.id)}
-                  className="flex-1 flex items-center justify-center gap-2 rounded-xl border border-ink/10 py-2 text-xs font-bold text-ink/70 hover:bg-ink/5"
+                  className="flex-1 flex items-center justify-center gap-2 rounded-xl border-[3px] border-ink py-2 text-xs font-bold text-ink shadow-brutal-sm hover:-translate-y-0.5 transition-all"
                 >
                   {copiedId === m.id ? <Check className="size-3.5 text-emerald-600" /> : <Copy className="size-3.5" />}
                   Lien
                 </button>
                 <AlertDialog>
                   <AlertDialogTrigger asChild>
-                    <button className="flex-1 flex items-center justify-center gap-2 rounded-xl bg-red-50 py-2 text-xs font-bold text-red-600 hover:bg-red-100">
+                    <button className="flex-1 flex items-center justify-center gap-2 rounded-xl border-[3px] border-ink bg-[#FF5A5F] py-2 text-xs font-bold text-white shadow-brutal-sm hover:-translate-y-0.5 transition-all">
                       {revoking === m.id ? <Loader2 className="size-3.5 animate-spin" /> : <Trash2 className="size-3.5" />}
                       Révoquer
                     </button>
                   </AlertDialogTrigger>
-                  <AlertDialogContent className="rounded-3xl w-[90%] max-w-sm">
+                  <AlertDialogContent className="rounded-3xl w-[90%] max-w-sm border-[3px] border-ink shadow-brutal">
                     <AlertDialogHeader>
                       <AlertDialogTitle>Révoquer l'accès ?</AlertDialogTitle>
                       <AlertDialogDescription>Le lien cessera de fonctionner immédiatement.</AlertDialogDescription>
                     </AlertDialogHeader>
                     <AlertDialogFooter className="flex-row gap-2 sm:space-x-0">
-                      <AlertDialogCancel className="flex-1 rounded-xl mt-0">Annuler</AlertDialogCancel>
-                      <AlertDialogAction onClick={() => handleRevoke(m.id)} className="flex-1 bg-red-600 hover:bg-red-700 rounded-xl">Révoquer</AlertDialogAction>
+                      <AlertDialogCancel className="flex-1 rounded-xl mt-0 border-[3px] border-ink shadow-brutal-sm">Annuler</AlertDialogCancel>
+                      <AlertDialogAction onClick={() => handleRevoke(m.id)} className="flex-1 bg-red-600 hover:bg-red-700 rounded-xl border-[3px] border-ink shadow-brutal-sm">Révoquer</AlertDialogAction>
                     </AlertDialogFooter>
                   </AlertDialogContent>
                 </AlertDialog>

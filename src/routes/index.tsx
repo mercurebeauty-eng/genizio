@@ -2,6 +2,7 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useMemo, useState, useEffect } from "react";
 import { useSession } from "@/hooks/use-session";
 import heroChild from "@/assets/hero-child.jpg";
+import { NayaAvatar } from "@/components/NayaAvatar";
 
 
 export const Route = createFileRoute("/")({
@@ -165,7 +166,7 @@ function NayaLanding() {
 function Nav() {
   const { session } = useSession();
   return (
-    <nav className="sticky top-0 z-50 border-b border-ink/5 bg-surface/80 backdrop-blur-md">
+    <nav className="sticky top-0 z-50 border-b-[3px] border-ink bg-surface">
       <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-4">
         <Link to={session ? "/profiles" : "/"} className="flex items-center gap-2 font-display text-2xl font-extrabold tracking-tight text-brand">
           <img src="/favicon-96x96.png" alt="" className="h-8 w-8" />
@@ -189,14 +190,14 @@ function Nav() {
         {session ? (
           <Link
             to="/profiles"
-            className="rounded-full bg-ink px-5 py-2.5 text-sm font-semibold text-surface shadow-sm transition-all hover:bg-brand"
+            className="rounded-full border-[3px] border-ink bg-ink px-5 py-2.5 text-sm font-semibold text-surface shadow-brutal-sm transition-all hover:-translate-y-0.5 hover:bg-brand"
           >
             Mes profils
           </Link>
         ) : (
           <Link
             to="/auth"
-            className="rounded-full bg-ink px-5 py-2.5 text-sm font-semibold text-surface shadow-sm transition-all hover:bg-brand"
+            className="rounded-full border-[3px] border-ink bg-ink px-5 py-2.5 text-sm font-semibold text-surface shadow-brutal-sm transition-all hover:-translate-y-0.5 hover:bg-brand"
           >
             Se connecter
           </Link>
@@ -217,10 +218,16 @@ function Hero() {
         <h1 className="mb-6 font-display text-5xl font-extrabold leading-[1.05] md:text-7xl">
           Révélez le <span className="text-brand">potentiel unique</span> de votre enfant.
         </h1>
-        <p className="mb-10 max-w-lg text-lg leading-relaxed text-ink/70">
+        <p className="mb-6 max-w-lg text-lg leading-relaxed text-ink/70">
           Génizio transforme les curiosités naturelles des enfants africains en parcours d'apprentissage
           concrets grâce à une IA qui comprend leur environnement, leurs talents et leur rythme.
         </p>
+        <div className="mb-8 flex items-center gap-3 rounded-2xl border-[3px] border-ink bg-white px-4 py-3 shadow-brutal-sm w-fit">
+          <NayaAvatar size="sm" thoughts={["Je t'accompagne à chaque défi !"]} />
+          <p className="text-sm font-bold text-ink">
+            Guidé par <span className="text-brand">Naya</span>, votre mentor IA bienveillant.
+          </p>
+        </div>
         <div className="flex flex-col gap-4 sm:flex-row">
           <a
             href="#demo"
@@ -230,7 +237,7 @@ function Hero() {
           </a>
           <a
             href="#approche"
-            className="rounded-2xl border-2 border-ink/10 px-8 py-4 text-center text-lg font-bold transition-all hover:bg-white"
+            className="rounded-2xl border-[3px] border-ink bg-white px-8 py-4 text-center text-lg font-bold shadow-brutal-sm transition-all hover:-translate-y-0.5 hover:bg-surface"
           >
             Voir une démo
           </a>
@@ -258,9 +265,9 @@ function Hero() {
           alt="Un enfant construit une maquette en carton lors d'un défi Génizio"
           width={1200}
           height={1200}
-          className="relative aspect-square w-full rotate-2 rounded-[2.5rem] object-cover shadow-soft transition-transform hover:rotate-0"
+          className="relative aspect-square w-full rotate-2 rounded-[2.5rem] border-[3px] border-ink object-cover shadow-brutal transition-transform hover:rotate-0"
         />
-        <div className="absolute -bottom-6 -left-6 hidden max-w-[260px] rounded-2xl border border-stone-100 bg-white p-6 shadow-soft md:block">
+        <div className="absolute -bottom-6 -left-6 hidden max-w-[260px] rounded-2xl border-[3px] border-ink bg-white p-6 shadow-brutal md:block">
           <p className="text-sm font-medium italic leading-relaxed">
             « Grâce à Génizio, Moussa a découvert sa passion pour l'agritech à seulement 10 ans. »
           </p>
@@ -273,7 +280,7 @@ function Hero() {
 
 function DomainsSection() {
   return (
-    <section id="domaines" className="border-y border-ink/5 bg-white/60 py-20">
+    <section id="domaines" className="border-y-[3px] border-ink bg-white/60 py-20">
       <div className="mx-auto max-w-7xl px-6">
         <div className="mb-12 flex flex-col justify-between gap-6 md:flex-row md:items-end">
           <div className="max-w-2xl">
@@ -294,7 +301,7 @@ function DomainsSection() {
           {DOMAINS.map((d, i) => (
             <div
               key={d.name}
-              className="group relative overflow-hidden rounded-2xl bg-surface p-6 ring-1 ring-ink/5 transition-all hover:-translate-y-1 hover:ring-brand/30"
+              className="group relative overflow-hidden rounded-2xl border-[3px] border-ink bg-white p-6 shadow-brutal-sm transition-all hover:-translate-y-1"
             >
               <span className="text-[10px] font-bold uppercase tracking-widest text-brand/60">
                 {String(i + 1).padStart(2, "0")}
@@ -344,7 +351,7 @@ function DemoSection() {
               personnalisés en temps réel.
             </p>
           </div>
-          <div className="rounded-xl border border-brand/30 bg-brand/20 px-6 py-3 font-bold text-brand-glow">
+          <div className="rounded-xl border-2 border-brand-glow bg-brand/20 px-6 py-3 font-bold text-brand-glow">
             Aperçu de la plateforme
           </div>
         </div>
@@ -352,7 +359,7 @@ function DemoSection() {
         <div className="grid gap-8 lg:grid-cols-12">
           {/* Profile config */}
           <div className="space-y-6 lg:col-span-4">
-            <div className="rounded-3xl border border-white/10 bg-white/5 p-8">
+            <div className="rounded-3xl border-2 border-white/30 bg-white/5 p-8">
               <div className="mb-8 flex items-center gap-4">
                 <div className="grid size-16 place-items-center rounded-full border-2 border-brand bg-brand/20 font-display text-2xl font-bold text-brand-glow">
                   {name.charAt(0).toUpperCase() || "?"}
@@ -421,7 +428,7 @@ function DemoSection() {
             {matched.map((c, i) => (
               <div
                 key={c.title}
-                className="group rounded-3xl bg-white p-6 text-ink transition-all hover:-translate-y-1"
+                className="group rounded-3xl border-[3px] border-ink bg-white p-6 text-ink shadow-brutal-sm transition-all hover:-translate-y-1"
               >
                 <div
                   className={
@@ -445,7 +452,7 @@ function DemoSection() {
                   <span className="text-xs font-medium text-ink/40">⏱ {c.duration}</span>
                   <button
                     type="button"
-                    className="rounded-xl border-2 border-ink/5 px-4 py-2 text-sm font-bold transition-all group-hover:bg-ink group-hover:text-white"
+                    className="rounded-xl border-2 border-ink px-4 py-2 text-sm font-bold transition-all group-hover:bg-ink group-hover:text-white"
                   >
                     Lancer →
                   </button>
@@ -461,10 +468,10 @@ function DemoSection() {
 
 function VisionSection() {
   const skills = [
-    { label: "Innovation Agricole", pct: 85, color: "bg-leaf" },
-    { label: "Arts Visuels", pct: 62, color: "bg-brand" },
-    { label: "Négociation", pct: 45, color: "bg-sky" },
-    { label: "Construction", pct: 71, color: "bg-brand-glow" },
+    { label: "Innovation Agricole", level: "Confirmé", color: "bg-leaf" },
+    { label: "Arts Visuels", level: "En développement", color: "bg-brand" },
+    { label: "Négociation", level: "Signal précoce", color: "bg-sky" },
+    { label: "Construction", level: "Confirmé", color: "bg-brand-glow" },
   ];
   return (
     <section id="approche" className="mx-auto max-w-7xl px-6 py-24">
@@ -505,7 +512,7 @@ function VisionSection() {
 
         <div className="relative">
           <div aria-hidden className="absolute -inset-4 rounded-3xl bg-brand/5 blur-2xl" />
-          <div className="relative rounded-3xl bg-white p-8 shadow-soft ring-1 ring-ink/5">
+          <div className="relative rounded-3xl border-[3px] border-ink bg-white p-8 shadow-brutal">
             <div className="mb-6 flex items-center justify-between">
               <div>
                 <p className="text-[10px] font-bold uppercase tracking-widest text-brand">
@@ -513,29 +520,23 @@ function VisionSection() {
                 </p>
                 <p className="font-display text-2xl font-extrabold">Explorateur émergent</p>
               </div>
-              <div className="flex size-12 items-center justify-center rounded-full border-2 border-dashed border-brand/40 text-xs font-bold">
+              <div className="flex size-12 items-center justify-center rounded-full border-2 border-dashed border-ink text-xs font-bold">
                 +3
               </div>
             </div>
 
-            <div className="space-y-5">
+            <div className="space-y-3">
               {skills.map((s) => (
-                <div key={s.label}>
-                  <div className="mb-2 flex justify-between text-sm">
-                    <span className="font-medium">{s.label}</span>
-                    <span className="text-ink/50">{s.pct}%</span>
-                  </div>
-                  <div className="h-2 overflow-hidden rounded-full bg-ink/5">
-                    <div
-                      className={"h-full rounded-full " + s.color}
-                      style={{ width: `${s.pct}%` }}
-                    />
-                  </div>
+                <div key={s.label} className="flex items-center justify-between">
+                  <span className="text-sm font-medium">{s.label}</span>
+                  <span className={"rounded-full border-2 border-ink px-2.5 py-1 text-[10px] font-black uppercase tracking-wide text-white " + s.color}>
+                    {s.level}
+                  </span>
                 </div>
               ))}
             </div>
 
-            <div className="mt-8 grid grid-cols-3 gap-3 border-t border-ink/5 pt-6">
+            <div className="mt-8 grid grid-cols-3 gap-3 border-t-[3px] border-ink pt-6">
               <div className="text-center">
                 <div className="font-display text-2xl font-extrabold text-brand">27</div>
                 <div className="text-[10px] uppercase tracking-widest text-ink/50">Défis</div>
@@ -561,7 +562,7 @@ function CTASection() {
   const [sent, setSent] = useState(false);
   return (
     <section id="inscription" className="px-6 py-24">
-      <div className="mx-auto max-w-3xl rounded-[2.5rem] bg-ink p-12 text-center text-white shadow-soft md:p-16">
+      <div className="mx-auto max-w-3xl rounded-[2.5rem] border-[3px] border-ink bg-ink p-12 text-center text-white shadow-brutal md:p-16">
         <span className="mb-4 inline-block text-xs font-bold uppercase tracking-widest text-brand-glow">
           Lancement — Septembre 2026
         </span>
@@ -589,7 +590,7 @@ function CTASection() {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               placeholder="votre@email.com"
-              className="h-12 flex-1 rounded-full border border-white/20 bg-white/10 px-6 text-sm text-white placeholder:text-white/40 outline-none focus:border-brand"
+              className="h-12 flex-1 rounded-full border-2 border-white/40 bg-white/10 px-6 text-sm text-white placeholder:text-white/40 outline-none focus:border-brand"
               aria-label="Adresse email"
             />
             <button
@@ -607,7 +608,7 @@ function CTASection() {
 
 function PositioningSection() {
   return (
-    <section className="bg-white/60 border-y border-ink/5 px-6 py-24">
+    <section className="bg-white/60 border-y-[3px] border-ink px-6 py-24">
       <div className="mx-auto grid max-w-6xl gap-12 md:grid-cols-5 md:items-center">
         <div className="md:col-span-2">
           <span className="mb-3 inline-block text-xs font-bold uppercase tracking-widest text-brand">
@@ -622,12 +623,12 @@ function PositioningSection() {
           </p>
         </div>
         <div className="md:col-span-3 grid gap-4">
-          <blockquote className="rounded-3xl bg-ink p-8 text-white shadow-soft">
+          <blockquote className="rounded-3xl border-[3px] border-ink bg-ink p-8 text-white shadow-brutal">
             <p className="font-display text-2xl font-extrabold leading-snug md:text-3xl">
               « Le laboratoire de découverte des talents. »
             </p>
           </blockquote>
-          <blockquote className="rounded-3xl bg-brand/10 p-8 ring-1 ring-brand/20">
+          <blockquote className="rounded-3xl border-[3px] border-ink bg-brand/10 p-8 shadow-brutal">
             <p className="font-display text-2xl font-extrabold leading-snug text-brand md:text-3xl">
               « L'endroit où les enfants découvrent qui ils sont. »
             </p>
@@ -687,27 +688,27 @@ const LEVEL_TONES: Record<
   { card: string; badge: string; num: string }
 > = {
   leaf: {
-    card: "bg-white ring-1 ring-ink/5",
+    card: "bg-white border-[3px] border-ink shadow-brutal",
     badge: "bg-leaf/10 text-leaf",
     num: "text-leaf",
   },
   brand: {
-    card: "bg-white ring-1 ring-brand/20",
+    card: "bg-white border-[3px] border-ink shadow-brutal",
     badge: "bg-brand/10 text-brand",
     num: "text-brand",
   },
   sky: {
-    card: "bg-white ring-1 ring-ink/5",
+    card: "bg-white border-[3px] border-ink shadow-brutal",
     badge: "bg-sky/10 text-sky",
     num: "text-sky",
   },
   glow: {
-    card: "bg-white ring-1 ring-ink/5",
+    card: "bg-white border-[3px] border-ink shadow-brutal",
     badge: "bg-brand-glow/20 text-brand-dark",
     num: "text-brand-dark",
   },
   ink: {
-    card: "bg-ink text-white ring-1 ring-ink",
+    card: "bg-ink text-white border-[3px] border-ink shadow-brutal",
     badge: "bg-brand/20 text-brand-glow",
     num: "text-brand-glow",
   },
@@ -738,7 +739,7 @@ function ModelSection() {
               <li
                 key={lvl.n}
                 className={
-                  "flex flex-col rounded-3xl p-8 shadow-soft transition-all hover:-translate-y-1 " +
+                  "flex flex-col rounded-3xl p-8 transition-all hover:-translate-y-1 " +
                   t.card
                 }
               >
@@ -799,7 +800,7 @@ function ModelSection() {
 function Footer() {
 
   return (
-    <footer className="border-t border-ink/5 px-6 py-12">
+    <footer className="border-t-[3px] border-ink px-6 py-12">
       <div className="mx-auto flex max-w-7xl flex-col items-center justify-between gap-8 md:flex-row">
         <div className="flex items-center gap-2 font-display text-xl font-extrabold text-brand">
           <img src="/favicon-96x96.png" alt="" className="h-7 w-7" />

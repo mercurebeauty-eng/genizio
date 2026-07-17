@@ -42,10 +42,10 @@ export function ExportDataButton() {
     <button
       onClick={handleExport}
       disabled={exporting}
-      className="flex w-full items-center justify-between rounded-2xl border border-ink/10 bg-white p-4 shadow-sm hover:bg-ink/5 transition-colors"
+      className="flex w-full items-center justify-between rounded-2xl border-[3px] border-ink bg-white p-4 shadow-brutal-sm hover:-translate-y-0.5 active:translate-y-0 transition-all"
     >
       <div className="flex items-center gap-3">
-        <div className="flex size-10 items-center justify-center rounded-xl bg-brand/10 text-brand">
+        <div className="flex size-10 items-center justify-center rounded-xl border-2 border-ink bg-brand/10 text-brand">
           {exporting ? <Loader2 className="size-5 animate-spin" /> : <Download className="size-5" />}
         </div>
         <div className="text-left">

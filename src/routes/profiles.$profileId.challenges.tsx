@@ -4,7 +4,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { supabase } from "@/integrations/supabase/client";
 import { useSession } from "@/hooks/use-session";
 import { toast } from "sonner";
-import { Brain, Award, Trash2, Calendar, CheckCircle2, ArrowLeft, Sparkles, Upload, Loader2, Play, Check, X, MessageCircle } from "lucide-react";
+import { Brain, Award, Trash2, Calendar, CheckCircle2, ArrowLeft, Sparkles, Upload, Loader2, Play, Check, X, MessageCircle, Beaker, Trophy } from "lucide-react";
 import {
   generateChallenges,
   updateChallenge,
@@ -14,14 +14,17 @@ import {
   generateSingleChallenge,
   assignTemplateChallenge,
 } from "@/lib/challenges.functions";
+import { createOrder } from "@/lib/products.functions";
 import { NayaAvatar } from "@/components/NayaAvatar";
 import { TalentRadarChart } from "@/components/TalentRadarChart";
 import { StepAccordion } from "@/components/challenges/StepAccordion";
 import { ObservationPrompts } from "@/components/challenges/ObservationPrompts";
 import { OutcomeChat } from "@/components/challenges/OutcomeChat";
+import { KitSuggestion } from "@/components/challenges/KitSuggestion";
 import { AppHeader } from "@/components/AppHeader";
 import { AppTabBar } from "@/components/AppTabBar";
 import { getActiveChallenge } from "@/lib/active-challenge";
+import { ShoppingBag } from "lucide-react";
 
 const CATEGORIES = [
   { id: "all", label: "Suggéré par Naya (Diagnostic)" },
@@ -47,6 +50,7 @@ type Challenge = {
   duration: string;
   steps: string[];
   materials: string[];
+  material_tags?: string[] | null;
   status: "todo" | "in_progress" | "completed";
   progress: number;
   notes: string | null;
@@ -98,6 +102,26 @@ function ChallengesPage() {
   const [generating, setGenerating] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [openId, setOpenId] = useState<string | null>(null);
+  const [activeProducts, setActiveProducts] = useState<any[]>([]);
+  const [assignedChallengeForKit, setAssignedChallengeForKit] = useState<{ id: string; title: string; products: any[] } | null>(null);
+  const [orderingKit, setOrderingKit] = useState(false);
+
+  useEffect(() => {
+    supabase
+      .from("products")
+      .select("id, name, price_xof, material_tags")
+      .eq("is_active", true)
+      .then(({ data }) => {
+        if (data) setActiveProducts(data);
+      });
+  }, []);
+
+  const hasKit = (materialTags?: string[] | null) => {
+    if (!materialTags || materialTags.length === 0) return false;
+    return activeProducts.some((product) =>
+      product.material_tags?.some((t: string) => materialTags.includes(t))
+    );
+  };
 
   // IA Synthesis State
   const [aiSynthesis, setAiSynthesis] = useState<string>("");
@@ -116,6 +140,7 @@ function ChallengesPage() {
   const fetchSynthesis = useServerFn(getChildAISynthesis);
   const generateSingle = useServerFn(generateSingleChallenge);
   const assignSingle = useServerFn(assignTemplateChallenge);
+  const createOrderFn = useServerFn(createOrder);
 
   const LOADING_STEPS = [
     "Naya étudie la carte des talents...",
@@ -161,7 +186,7 @@ function ChallengesPage() {
     if (!currentGeneratedChallenge) return;
     setIsAssigningSingle(true);
     try {
-      await assignSingle({
+      const resp = await assignSingle({
         data: {
           childId: profileId,
           template: {
@@ -171,6 +196,7 @@ function ChallengesPage() {
             duration: currentGeneratedChallenge.duration,
             steps: currentGeneratedChallenge.steps,
             materials: currentGeneratedChallenge.materials,
+            material_tags: currentGeneratedChallenge.material_tags ?? [],
             intelligences: currentGeneratedChallenge.intelligences || [currentGeneratedChallenge.domain],
             pedagogical_context: currentGeneratedChallenge.pedagogical_context,
           }
@@ -179,11 +205,60 @@ function ChallengesPage() {
       toast.success("Défi assigné avec succès !");
       setCurrentGeneratedChallenge(null);
       await refetch();
+
+      const matching = activeProducts.filter(p => p.material_tags?.some((t: string) => currentGeneratedChallenge.material_tags?.includes(t)));
+      if (matching.length > 0) {
+        setAssignedChallengeForKit({
+          id: resp.id,
+          title: resp.title,
+          products: matching,
+        });
+      }
     } catch (e) {
       console.error(e);
       toast.error("Impossible d'assigner ce défi.");
     } finally {
       setIsAssigningSingle(false);
+    }
+  };
+
+  const handleOrderKit = async () => {
+    if (!assignedChallengeForKit || !child) return;
+    setOrderingKit(true);
+    const total = assignedChallengeForKit.products.reduce((sum, p) => sum + p.price_xof, 0);
+    const whatsappNumber = import.meta.env.VITE_WHATSAPP_NUMBER as string | undefined;
+    const message = `Bonjour ! Je souhaite commander le kit pour le défi "${assignedChallengeForKit.title}" de ${child.name} :\n${assignedChallengeForKit.products
+      .map((p) => `- ${p.name} (${p.price_xof.toLocaleString("fr-FR")} FCFA)`)
+      .join("\n")}\nTotal : ${total.toLocaleString("fr-FR")} FCFA`;
+    const waUrl = whatsappNumber ? `https://wa.me/${whatsappNumber}?text=${encodeURIComponent(message)}` : null;
+
+    try {
+      const orderItems = assignedChallengeForKit.products.map((p) => ({
+        id: p.id,
+        name: p.name,
+        price_xof: p.price_xof,
+      }));
+
+      await createOrderFn({
+        data: {
+          child_id: profileId,
+          challenge_id: assignedChallengeForKit.id,
+          total_price_xof: total,
+          items: orderItems,
+          delivery_notes: `Commande post-Labo (Challenges Page) pour le défi: ${assignedChallengeForKit.title}`,
+        },
+      });
+
+      toast.success("Commande enregistrée ! Ouverture de WhatsApp...");
+      if (waUrl) {
+        window.open(waUrl, "_blank", "noopener,noreferrer");
+      }
+      setAssignedChallengeForKit(null);
+    } catch (err) {
+      console.error(err);
+      toast.error("Erreur lors de la création de la commande.");
+    } finally {
+      setOrderingKit(false);
     }
   };
 
@@ -194,7 +269,7 @@ function ChallengesPage() {
   const refetch = async () => {
     setFetching(true);
     const [c, ch] = await Promise.all([
-      supabase.from("child_profiles").select("*").eq("id", profileId).maybeSingle(),
+      supabase.from("child_profiles").select("*").eq("id", profileId).eq("user_id", session!.user.id).maybeSingle(),
       supabase
         .from("challenges")
         .select("*")
@@ -311,7 +386,7 @@ function ChallengesPage() {
         <AppTabBar profileId={profileId} />
         <div className="min-w-0 flex-1">
           {/* Child Header Profile */}
-        <div className="mb-10 rounded-3xl border border-ink/5 bg-white p-6 shadow-soft md:p-8 flex flex-col gap-6 md:flex-row md:items-center md:justify-between">
+        <div className="mb-10 rounded-3xl border-[3px] border-ink bg-white p-6 shadow-brutal md:p-8 flex flex-col gap-6 md:flex-row md:items-center md:justify-between">
           <div className="flex items-center gap-5">
             <div
               className={`grid size-16 place-items-center rounded-2xl font-display text-2xl font-bold shadow-md shadow-brand/10 ${COLORS[child.avatar_color] ?? "bg-brand"}`}
@@ -334,15 +409,15 @@ function ChallengesPage() {
               onClick={() => {
                 document.getElementById("genizio-lab")?.scrollIntoView({ behavior: "smooth" });
               }}
-              className="rounded-2xl border border-brand/20 bg-brand/5 px-5 py-3 text-sm font-bold text-brand hover:bg-brand/10 transition-all flex items-center gap-2 cursor-pointer"
+              className="rounded-2xl border-[3px] border-ink bg-white px-5 py-3 text-sm font-bold text-ink shadow-brutal-sm hover:-translate-y-0.5 active:translate-y-0 transition-all flex items-center gap-2 cursor-pointer"
             >
-              <Sparkles className="size-4" />
+              <Beaker className="size-4 text-brand" />
               Générateur d'Expériences
             </button>
             <button
               onClick={handleGenerate}
               disabled={generating}
-              className="rounded-2xl bg-brand px-5 py-3 text-sm font-bold text-white shadow-lg shadow-brand/25 hover:bg-brand-dark transition-all disabled:bg-brand-dark disabled:cursor-wait flex items-center gap-2"
+              className="rounded-2xl border-[3px] border-ink bg-brand px-5 py-3 text-sm font-bold text-white shadow-brutal hover:-translate-y-0.5 active:translate-y-0 transition-all disabled:opacity-60 disabled:cursor-wait flex items-center gap-2"
             >
               {generating ? (
                 <>
@@ -359,7 +434,7 @@ function ChallengesPage() {
             <Link
               to="/profiles/$profileId/quest"
               params={{ profileId }}
-              className="rounded-2xl border border-sky/30 bg-sky/5 px-5 py-3 text-sm font-bold text-sky-600 hover:bg-sky/10 transition-all flex items-center gap-2 cursor-pointer"
+              className="rounded-2xl border-[3px] border-ink bg-sky px-5 py-3 text-sm font-bold text-ink shadow-brutal hover:-translate-y-0.5 active:translate-y-0 transition-all flex items-center gap-2 cursor-pointer"
             >
               Au tour de {child.name} →
             </Link>
@@ -373,7 +448,7 @@ function ChallengesPage() {
           <div className="lg:col-span-1 space-y-6">
             
             {/* Radar Chart Card */}
-            <div className="rounded-3xl border border-ink/5 bg-white p-6 shadow-soft">
+            <div className="rounded-3xl border-[3px] border-ink bg-ink text-white p-6 shadow-brutal flex flex-col">
               <h3 className="font-display text-lg font-bold flex items-center gap-2 mb-4">
                 <Award className="size-5 text-brand" />
                 Carte des Talents
@@ -385,21 +460,20 @@ function ChallengesPage() {
             </div>
 
             {/* AI Synthesis Card */}
-            <div className="rounded-3xl border border-brand/10 bg-gradient-to-br from-brand/5 to-indigo-50/20 p-6 shadow-soft relative overflow-hidden">
-              <div className="absolute top-0 right-0 -mr-6 -mt-6 size-24 rounded-full bg-brand/10 blur-xl"></div>
-              
-              <h3 className="font-display text-lg font-bold flex items-center gap-2 text-brand mb-4">
-                <Brain className="size-5" />
+            <div className="rounded-3xl border-[3px] border-ink bg-white p-6 shadow-brutal relative overflow-hidden">
+
+              <h3 className="font-display text-lg font-bold flex items-center gap-2 text-ink mb-4">
+                <Brain className="size-5 text-brand" />
                 Rapport de Naya
               </h3>
 
               {fetchingSynthesis ? (
-                <div className="flex flex-col items-center justify-center py-4 text-ink/40 text-sm">
+                <div className="flex flex-col items-center justify-center py-4 text-ink/60 text-sm font-bold">
                   <NayaAvatar size="sm" className="mb-2" />
                   <span>Naya réunit ses observations...</span>
                 </div>
               ) : (
-                <div className="text-sm leading-relaxed text-ink/80 space-y-3 whitespace-pre-line">
+                <div className="text-sm font-medium leading-relaxed text-ink space-y-3 whitespace-pre-line">
                   {aiSynthesis}
                 </div>
               )}
@@ -407,12 +481,12 @@ function ChallengesPage() {
 
             {/* Micro stats */}
             <div className="grid grid-cols-2 gap-3">
-              <div className="bg-white rounded-2xl border border-ink/5 p-4 text-center">
-                <span className="text-[10px] font-bold uppercase tracking-wider text-ink/40">Défis Terminés</span>
-                <p className="mt-1 font-display text-2xl font-extrabold text-emerald-600">{done}</p>
+              <div className="bg-white rounded-2xl border-[3px] border-ink shadow-brutal-sm p-4 text-center">
+                <span className="text-[10px] font-bold uppercase tracking-wider text-ink/60">Défis Terminés</span>
+                <p className="mt-1 font-display text-2xl font-extrabold text-brand">{done}</p>
               </div>
-              <div className="bg-white rounded-2xl border border-ink/5 p-4 text-center">
-                <span className="text-[10px] font-bold uppercase tracking-wider text-ink/40">Progression</span>
+              <div className="bg-white rounded-2xl border-[3px] border-ink shadow-brutal-sm p-4 text-center">
+                <span className="text-[10px] font-bold uppercase tracking-wider text-ink/60">Progression</span>
                 <p className="mt-1 font-display text-2xl font-extrabold text-brand">{totalProgress}%</p>
               </div>
             </div>
@@ -423,28 +497,28 @@ function ChallengesPage() {
           <div className="lg:col-span-2 space-y-6">
             
             {/* 🧪 Unified Lab Panel */}
-            <div id="genizio-lab" className="rounded-3xl border border-indigo-500/20 bg-gradient-to-br from-indigo-50/40 via-white to-brand/5 p-6 shadow-soft md:p-8">
+            <div id="genizio-lab" className="rounded-3xl border-[3px] border-ink bg-sky p-6 shadow-brutal md:p-8">
               <div className="mb-4 flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <span className="grid place-items-center rounded-xl bg-indigo-500/10 p-2 text-indigo-600">
-                    <Sparkles className="size-5" />
+                <div className="flex items-center gap-3">
+                  <span className="grid place-items-center rounded-2xl bg-brand p-2.5 text-white border-2 border-ink shadow-brutal-sm">
+                    <Beaker className="size-6" />
                   </span>
                   <div>
-                    <h3 className="font-display text-lg font-bold">Le Laboratoire de Génizio</h3>
-                    <p className="text-xs text-ink/50">Composez un défi d'apprentissage sur-mesure pour {child.name}</p>
+                    <h3 className="font-display text-xl font-bold">Le Laboratoire de Génizio</h3>
+                    <p className="text-xs font-bold text-ink/60">Composez un défi d'apprentissage sur-mesure pour {child.name}</p>
                   </div>
                 </div>
               </div>
 
               <div className="mt-6 grid gap-4 sm:grid-cols-3 sm:items-end">
                 <div className="sm:col-span-2">
-                  <label className="block text-xs font-semibold uppercase tracking-wider text-ink/50 mb-2">
+                  <label className="block text-xs font-bold uppercase tracking-wider text-ink mb-2">
                     Sélectionner l'Intelligence
                   </label>
                   <select
                     value={selectedCategory}
                     onChange={(e) => setSelectedCategory(e.target.value)}
-                    className="block w-full rounded-2xl border border-ink/10 bg-white px-4 py-3 text-sm font-bold outline-none focus:border-brand transition-all cursor-pointer shadow-sm"
+                    className="block w-full rounded-2xl border-[3px] border-ink bg-white px-4 py-3 text-sm font-bold outline-none focus:ring-2 focus:ring-brand focus:ring-offset-2 transition-all cursor-pointer shadow-brutal-sm"
                   >
                     {CATEGORIES.map((cat) => (
                       <option key={cat.id} value={cat.id}>
@@ -457,7 +531,7 @@ function ChallengesPage() {
                   <button
                     onClick={handleGenerateSingle}
                     disabled={isGeneratingSingle}
-                    className="w-full rounded-2xl bg-indigo-600 px-5 py-3 text-sm font-bold text-white shadow-lg shadow-indigo-600/25 hover:bg-indigo-700 transition-all disabled:bg-indigo-500 disabled:cursor-wait flex items-center justify-center gap-2"
+                    className="w-full rounded-2xl border-[3px] border-ink bg-brand px-5 py-3 text-sm font-bold text-white shadow-brutal hover:-translate-y-0.5 active:translate-y-0 transition-all disabled:opacity-50 disabled:cursor-wait flex items-center justify-center gap-2"
                   >
                     {isGeneratingSingle ? (
                       <>
@@ -476,7 +550,7 @@ function ChallengesPage() {
 
               {/* Loader display */}
               {isGeneratingSingle && (
-                <div className="mt-8 flex flex-col items-center justify-center py-6 text-center border-t border-dashed border-ink/10">
+                <div className="mt-8 flex flex-col items-center justify-center py-6 text-center border-t-[3px] border-dashed border-ink">
                   <NayaAvatar size="md" thoughts={LOADING_STEPS} className="mb-4" />
                   <p className="text-sm font-bold text-indigo-600 animate-pulse">{LOADING_STEPS[loadingTextIndex]}</p>
                 </div>
@@ -484,9 +558,9 @@ function ChallengesPage() {
 
               {/* Generated challenge display */}
               {currentGeneratedChallenge && !isGeneratingSingle && (
-                <div className="mt-6 rounded-2xl border border-indigo-100 bg-white p-5 shadow-sm animate-in fade-in slide-in-from-top-3 duration-300">
+                <div className="mt-6 rounded-2xl border-[3px] border-ink bg-white p-6 shadow-brutal-sm animate-in fade-in slide-in-from-top-3 duration-300">
                   <div className="mb-3 flex items-center justify-between">
-                    <span className="rounded-full bg-indigo-50 px-2.5 py-0.5 text-[10px] font-extrabold uppercase tracking-wider text-indigo-600 border border-indigo-100">
+                    <span className="rounded-full bg-brand px-3 py-1 text-[10px] font-black uppercase tracking-widest text-white border-2 border-ink">
                       {currentGeneratedChallenge.domain}
                     </span>
                     <span className="text-xs text-ink/40 font-semibold">🕒 {currentGeneratedChallenge.duration}</span>
@@ -499,7 +573,7 @@ function ChallengesPage() {
                   </p>
 
                   {currentGeneratedChallenge.pedagogical_context && (
-                    <div className="mb-4 rounded-xl bg-amber-50/50 border border-amber-100/50 p-4 text-xs leading-relaxed text-amber-800">
+                    <div className="mb-4 rounded-xl bg-amber-50 border-2 border-ink p-4 text-xs leading-relaxed text-amber-800">
                       <p className="font-bold flex items-center gap-1.5 mb-1 text-amber-900">
                         💡 Intention pédagogique (Naya)
                       </p>
@@ -526,11 +600,20 @@ function ChallengesPage() {
                     </div>
                   </div>
 
-                  <div className="flex gap-2 border-t border-ink/5 pt-4">
+                  <div className="mb-6">
+                    <KitSuggestion
+                      childId={profileId}
+                      materialTags={currentGeneratedChallenge.material_tags}
+                      challengeTitle={currentGeneratedChallenge.title}
+                      childName={child.name}
+                    />
+                  </div>
+
+                  <div className="flex gap-2 border-t-[3px] border-ink pt-4">
                     <button
                       onClick={handleAssignSingle}
                       disabled={isAssigningSingle}
-                      className="flex-1 rounded-xl bg-brand py-2.5 text-center text-xs font-bold text-white shadow-md shadow-brand/10 hover:bg-brand-dark transition-all disabled:opacity-50 flex items-center justify-center gap-1.5 cursor-pointer"
+                      className="flex-1 rounded-xl border-[3px] border-ink bg-brand py-2.5 text-center text-xs font-bold text-white shadow-brutal-sm hover:-translate-y-0.5 active:translate-y-0 transition-all disabled:opacity-50 flex items-center justify-center gap-1.5 cursor-pointer"
                     >
                       {isAssigningSingle ? (
                         <>
@@ -546,7 +629,7 @@ function ChallengesPage() {
                     </button>
                     <button
                       onClick={handleGenerateSingle}
-                      className="rounded-xl border border-ink/10 bg-white px-4 py-2.5 text-xs font-bold text-ink/60 hover:bg-stone-50 transition-all cursor-pointer"
+                      className="rounded-xl border-[3px] border-ink bg-white px-4 py-2.5 text-xs font-bold text-ink/60 shadow-brutal-sm hover:-translate-y-0.5 transition-all cursor-pointer"
                     >
                       Relancer
                     </button>
@@ -566,23 +649,23 @@ function ChallengesPage() {
             )}
 
             {challenges.length === 0 ? (
-              <div className="rounded-3xl border-2 border-dashed border-ink/10 bg-white/40 p-16 text-center">
+              <div className="rounded-3xl border-[3px] border-dashed border-ink bg-white/40 p-16 text-center shadow-brutal-sm">
                 <p className="mb-2 text-lg font-bold">Aucune expérience entamée</p>
-                <p className="mb-6 text-sm text-ink/50 max-w-sm mx-auto">
+                <p className="mb-6 text-sm text-ink/70 font-medium max-w-sm mx-auto">
                   Démarrez des expériences sur-mesure pour {child.name} via le générateur IA ou laissez Naya composer une première liste de base.
                 </p>
                 <div className="flex justify-center gap-3">
                   <Link
                     to="/laboratory"
-                    className="rounded-2xl border border-brand/20 bg-brand/5 px-5 py-3 text-sm font-bold text-brand hover:bg-brand/10 transition-all flex items-center gap-2"
+                    className="rounded-2xl border-[3px] border-ink bg-white px-5 py-3 text-sm font-bold text-ink shadow-brutal hover:-translate-y-0.5 transition-all flex items-center gap-2"
                   >
-                    <Sparkles className="size-4" />
+                    <Beaker className="size-4 text-brand" />
                     Le Générateur IA
                   </Link>
                   <button
                     onClick={handleGenerate}
                     disabled={generating}
-                    className="rounded-2xl bg-brand px-5 py-3 text-sm font-bold text-white hover:bg-brand-dark disabled:opacity-60 transition-all"
+                    className="rounded-2xl border-[3px] border-ink bg-brand px-5 py-3 text-sm font-bold text-white shadow-brutal hover:-translate-y-0.5 disabled:opacity-60 transition-all"
                   >
                     ✨ Suggérer 4 défis
                   </button>
@@ -597,6 +680,7 @@ function ChallengesPage() {
                     childId={profileId}
                     childName={child.name}
                     open={openId === c.id}
+                    hasKit={hasKit(c.material_tags)}
                     onToggle={() => setOpenId((v) => (v === c.id ? null : c.id))}
                     onStatus={(s) => setStatus(c.id, s)}
                     onProgress={(p) => setProgress(c.id, p)}
@@ -615,6 +699,73 @@ function ChallengesPage() {
         </div>
       </div>
     </main>
+
+    {/* Modal Recommandation de Kit Post-Assignation */}
+    {assignedChallengeForKit && (
+      <div className="fixed inset-0 z-50 flex items-center justify-center bg-ink/55 backdrop-blur-sm p-4 animate-in fade-in duration-200">
+        <div className="relative w-full max-w-md rounded-3xl border-[3px] border-ink bg-white p-6 shadow-brutal md:p-8">
+          <button
+            onClick={() => setAssignedChallengeForKit(null)}
+            className="absolute right-4 top-4 rounded-xl border-2 border-ink bg-stone-100 p-1.5 hover:bg-stone-200 transition-colors"
+          >
+            <X className="size-4" />
+          </button>
+
+          <div className="mb-4 flex items-center gap-2">
+            <ShoppingBag className="size-6 text-brand" />
+            <h2 className="font-display text-2xl font-black">Défi assigné avec succès ! 🎉</h2>
+          </div>
+
+          <p className="text-sm text-ink/75 leading-relaxed mb-6">
+            Naya a préparé le défi <strong className="text-ink">"{assignedChallengeForKit.title}"</strong>.
+            Souhaitez-vous commander le kit matériel associé maintenant ?
+          </p>
+
+          <div className="rounded-2xl border-2 border-ink bg-sky/15 p-4 mb-6">
+            <ul className="space-y-1.5 mb-3">
+              {assignedChallengeForKit.products.map((p) => (
+                <li key={p.id} className="flex justify-between text-sm font-bold text-ink">
+                  <span>{p.name}</span>
+                  <span>{p.price_xof.toLocaleString("fr-FR")} FCFA</span>
+                </li>
+              ))}
+            </ul>
+            <div className="flex justify-between border-t border-ink/20 pt-2 text-sm font-black text-ink">
+              <span>Total</span>
+              <span>
+                {assignedChallengeForKit.products
+                  .reduce((sum, p) => sum + p.price_xof, 0)
+                  .toLocaleString("fr-FR")}{" "}
+                FCFA
+              </span>
+            </div>
+          </div>
+
+          <div className="flex gap-3">
+            <button
+              onClick={() => setAssignedChallengeForKit(null)}
+              className="flex-1 rounded-xl border-2 border-ink bg-stone-100 py-3 text-sm font-bold hover:bg-stone-200 transition-all cursor-pointer text-center"
+            >
+              Faire sans kit
+            </button>
+            <button
+              onClick={handleOrderKit}
+              disabled={orderingKit}
+              className="flex-1 flex items-center justify-center gap-2 rounded-xl border-2 border-ink bg-leaf py-3 text-sm font-bold text-white shadow-brutal-sm hover:-translate-y-0.5 active:translate-y-0 transition-all cursor-pointer disabled:opacity-50"
+            >
+              {orderingKit ? (
+                <>
+                  <Loader2 className="size-4 animate-spin" />
+                  Envoi...
+                </>
+              ) : (
+                <>Commander le kit</>
+              )}
+            </button>
+          </div>
+        </div>
+      </div>
+    )}
   </div>
   );
 }
@@ -636,14 +787,14 @@ function MaterialsChecklist({ materials }: { materials: string[] }) {
               copy[i] = !copy[i];
               setChecked(copy);
             }}
-            className={`flex items-center gap-2 rounded-full border px-3 py-1.5 text-xs font-bold transition-all cursor-pointer ${
+            className={`flex items-center gap-2 rounded-full border-2 px-3 py-1.5 text-xs font-bold transition-all cursor-pointer ${
               checked[i]
-                ? "bg-emerald-50 border-emerald-300 text-emerald-700 shadow-sm"
-                : "bg-surface border-ink/5 text-ink/70 hover:bg-stone-50"
+                ? "bg-leaf border-ink text-white"
+                : "bg-white border-ink text-ink/70 hover:bg-surface"
             }`}
           >
-            <div className={`size-3.5 rounded flex items-center justify-center border ${
-              checked[i] ? "border-emerald-500 bg-emerald-500 text-white" : "border-ink/20"
+            <div className={`size-3.5 rounded flex items-center justify-center border-2 ${
+              checked[i] ? "border-white bg-white text-leaf" : "border-ink/30"
             }`}>
               {checked[i] && <Check className="size-2 stroke-[3px]" />}
             </div>
@@ -666,6 +817,7 @@ function ChallengeCard({
   onNotes,
   onDelete,
   onValidated,
+  hasKit,
 }: {
   c: Challenge;
   childId: string;
@@ -677,18 +829,26 @@ function ChallengeCard({
   onNotes: (n: string) => void;
   onDelete: () => void;
   onValidated: () => void;
+  hasKit?: boolean;
 }) {
   const [notesDraft, setNotesDraft] = useState(c.notes ?? "");
   const [savedFlash, setSavedFlash] = useState(false);
 
   return (
-    <div className="rounded-3xl bg-white p-5 border border-ink/5 shadow-soft transition-all hover:border-brand/20">
+    <div className="rounded-3xl bg-white p-6 border-[3px] border-ink shadow-brutal transition-all">
       <div className="mb-4 flex items-center justify-between">
-        <span className="rounded-full bg-brand/10 px-3 py-1 text-[10px] font-extrabold uppercase tracking-wider text-brand">
-          {c.domain}
-        </span>
+        <div className="flex items-center gap-2">
+          <span className="rounded-full bg-brand px-3 py-1 text-[10px] font-black uppercase tracking-widest text-white border-2 border-ink shadow-brutal-sm">
+            {c.domain}
+          </span>
+          {hasKit && (
+            <span className="rounded-full bg-sky px-3 py-1 text-[10px] font-black uppercase tracking-widest text-ink border-2 border-ink shadow-brutal-sm">
+              📦 Kit disponible
+            </span>
+          )}
+        </div>
         <span
-          className={`rounded-full border px-2.5 py-0.5 text-xs font-bold ${STATUS_STYLE[c.status]}`}
+          className={`rounded-full border-2 border-ink shadow-brutal-sm px-3 py-1 text-[10px] font-black uppercase tracking-widest ${STATUS_STYLE[c.status]}`}
         >
           {STATUS_LABEL[c.status]}
         </span>
@@ -698,7 +858,7 @@ function ChallengeCard({
       <p className="text-sm text-ink/75 leading-relaxed mb-4">{c.description}</p>
 
       {/* Progress Slider */}
-      <div className="mb-4 rounded-2xl bg-surface/50 p-4 border border-ink/5">
+      <div className="mb-4 rounded-2xl bg-surface p-4 border-2 border-ink">
         <div className="mb-2 flex items-center justify-between text-xs">
           <span className="font-bold text-ink/50">Progression</span>
           <span className="font-extrabold text-brand">{c.progress}%</span>
@@ -743,17 +903,17 @@ function ChallengeCard({
 
       <button
         onClick={onToggle}
-        className="w-full rounded-xl border border-ink/10 px-3 py-2.5 text-xs font-bold text-ink/70 hover:bg-stone-50 transition-all flex items-center justify-center gap-1.5"
+        className="w-full rounded-2xl border-[3px] border-ink bg-white px-3 py-3 text-xs font-bold text-ink shadow-brutal-sm hover:-translate-y-0.5 active:translate-y-0 transition-all flex items-center justify-center gap-1.5"
       >
         <span>{open ? "Masquer les détails" : "Afficher étapes, matériel & preuve IA"}</span>
       </button>
 
       {open && (
-        <div className="mt-5 border-t border-ink/5 pt-5 animate-in fade-in duration-200">
+        <div className="mt-5 border-t-[3px] border-ink pt-5 animate-in fade-in duration-200">
           <div className="grid gap-8 md:grid-cols-2">
-            
+
             {/* Left Pane: Child Facing (Pour l'enfant) */}
-            <div className="space-y-6 bg-surface/40 p-5 rounded-3xl border border-ink/5">
+            <div className="space-y-6 bg-surface p-5 rounded-3xl border-2 border-ink">
               <div>
                 <p className="text-[10px] font-extrabold uppercase tracking-widest text-brand mb-1">
                   Pour {childName}
@@ -776,7 +936,7 @@ function ChallengeCard({
                 <Link
                   to="/profiles/$profileId/quest"
                   params={{ profileId: childId }}
-                  className="inline-flex items-center gap-2 rounded-xl bg-brand px-4 py-2.5 text-xs font-bold text-white shadow-sm hover:bg-brand-dark transition-all cursor-pointer"
+                  className="inline-flex items-center gap-2 rounded-xl border-[3px] border-ink bg-brand px-4 py-2.5 text-xs font-bold text-white shadow-brutal-sm hover:-translate-y-0.5 transition-all cursor-pointer"
                 >
                   <Play className="size-3.5 fill-current" />
                   Mode Enfant (Quête) 🎮
@@ -788,7 +948,7 @@ function ChallengeCard({
             <div className="space-y-6">
               {/* pedagogical context */}
               {c.pedagogical_context && (
-                <div className="rounded-2xl bg-brand/5 border border-brand/10 p-4 flex gap-2.5">
+                <div className="rounded-2xl bg-brand/5 border-[3px] border-ink p-4 flex gap-2.5">
                   <Brain className="size-5 text-brand flex-shrink-0 mt-0.5" />
                   <div>
                     <p className="text-[10px] font-extrabold uppercase tracking-widest text-brand mb-1">
@@ -809,6 +969,14 @@ function ChallengeCard({
                 <MaterialsChecklist materials={c.materials} />
               )}
 
+              <KitSuggestion
+                childId={childId}
+                challengeId={c.id}
+                materialTags={c.material_tags}
+                challengeTitle={c.title}
+                childName={childName}
+              />
+
               {/* Parent Notes */}
               <div className="space-y-3">
                 <p className="text-[10px] font-extrabold uppercase tracking-widest text-ink/40">
@@ -819,7 +987,7 @@ function ChallengeCard({
                   onChange={(e) => setNotesDraft(e.target.value.slice(0, 2000))}
                   rows={3}
                   placeholder="Écrivez ce que l'enfant a fait, ses réussites et difficultés..."
-                  className="w-full rounded-2xl border border-ink/10 px-4 py-3 text-sm outline-none focus:border-brand transition-all resize-none"
+                  className="w-full rounded-2xl border-[3px] border-ink px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-brand transition-all resize-none shadow-brutal-sm"
                 />
                 <div className="flex items-center justify-between">
                   <button
@@ -828,7 +996,7 @@ function ChallengeCard({
                       setSavedFlash(true);
                       setTimeout(() => setSavedFlash(false), 1500);
                     }}
-                    className="rounded-xl bg-ink px-4 py-2 text-xs font-bold text-white hover:bg-brand transition-all cursor-pointer"
+                    className="rounded-xl border-[3px] border-ink bg-ink px-4 py-2 text-xs font-bold text-white shadow-brutal-sm hover:-translate-y-0.5 hover:bg-brand transition-all cursor-pointer"
                   >
                     Enregistrer les notes
                   </button>
@@ -838,13 +1006,13 @@ function ChallengeCard({
 
               {/* If in_progress, offer to start AI debrief chat */}
               {c.status === "in_progress" && (
-                <div className="rounded-2xl border border-brand/25 bg-brand/5 p-5 text-center mt-4">
+                <div className="rounded-2xl border-[3px] border-ink bg-brand/5 p-5 text-center mt-4">
                   <p className="text-xs font-bold text-ink/75 mb-3 leading-relaxed">
                     L'activité est terminée ? Partagez vos observations avec Naya pour débriefer le projet de {childName} et mettre à jour ses talents !
                   </p>
                   <button
                     onClick={() => onStatus("completed")}
-                    className="inline-flex items-center gap-1.5 rounded-xl bg-brand px-4 py-2.5 text-xs font-bold text-white shadow-sm hover:bg-brand-dark transition-all cursor-pointer"
+                    className="inline-flex items-center gap-1.5 rounded-xl border-[3px] border-ink bg-brand px-4 py-2.5 text-xs font-bold text-white shadow-brutal-sm hover:-translate-y-0.5 transition-all cursor-pointer"
                   >
                     <MessageCircle className="size-4" />
                     Lancer le chat de débriefing 💬
@@ -864,7 +1032,7 @@ function ChallengeCard({
 
               {/* AI Observations feedback */}
               {c.ai_observations && (
-                <div className="rounded-2xl border border-emerald-200 bg-emerald-50/50 p-5">
+                <div className="rounded-2xl border-[3px] border-ink bg-leaf/10 p-5">
                   <p className="mb-2 text-xs font-extrabold uppercase tracking-widest text-emerald-800 flex items-center gap-1">
                     <Brain className="size-4 text-emerald-700" />
                     Analyse de Naya (IA)
@@ -877,10 +1045,10 @@ function ChallengeCard({
 
           </div>
 
-          <div className="flex justify-end pt-5 border-t border-ink/5 mt-6">
+          <div className="flex justify-end pt-5 border-t-[3px] border-ink mt-6">
             <button
               onClick={onDelete}
-              className="inline-flex items-center gap-1.5 rounded-xl border border-red-100 px-3 py-2 text-xs font-bold text-red-600 hover:bg-red-50 transition-all cursor-pointer"
+              className="inline-flex items-center gap-1.5 rounded-xl border-2 border-ink px-3 py-2 text-xs font-bold text-red-600 hover:bg-red-50 transition-all cursor-pointer"
             >
               <Trash2 className="size-3.5" />
               Supprimer

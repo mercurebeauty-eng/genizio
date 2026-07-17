@@ -28,6 +28,7 @@ function ManageProfilesPage() {
     const { data } = await supabase
       .from("child_profiles")
       .select("*")
+      .eq("user_id", session.user.id)
       .order("created_at", { ascending: false });
     setProfiles((data ?? []) as ChildProfile[]);
     setFetching(false);
@@ -66,7 +67,7 @@ function ManageProfilesPage() {
           </div>
           <button
             onClick={() => setEditing("new")}
-            className="rounded-2xl bg-brand px-6 py-3 text-sm font-bold text-white shadow-brand hover:bg-brand-dark"
+            className="rounded-2xl border-[3px] border-ink bg-brand px-6 py-3 text-sm font-bold text-white shadow-brutal hover:-translate-y-0.5 active:translate-y-0 active:shadow-none transition-all"
           >
             + Nouveau profil
           </button>
@@ -75,7 +76,7 @@ function ManageProfilesPage() {
         {fetching ? (
           <p className="text-ink/40">Chargement…</p>
         ) : profiles.length === 0 ? (
-          <div className="rounded-3xl border-2 border-dashed border-ink/10 bg-white/40 p-12 text-center">
+          <div className="rounded-3xl border-[3px] border-dashed border-ink bg-white/40 p-12 text-center shadow-brutal-sm">
             <p className="text-ink/60">Aucun profil pour l'instant. Créez le premier.</p>
           </div>
         ) : (

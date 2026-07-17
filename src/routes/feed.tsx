@@ -25,6 +25,7 @@ const MOCK_PUBLIC_POSTS = [
     badge: "🏆 Ingénieur en Herbe",
     image: "https://images.unsplash.com/photo-1584483758362-e64e9e51c86d?w=800&q=80",
     isLiked: false,
+    aiTalentTag: "Naya détecte une forte intelligence spatiale et créative dans cette magnifique construction !",
   },
   {
     id: "pub-2",
@@ -38,6 +39,7 @@ const MOCK_PUBLIC_POSTS = [
     badge: "🌱 Main Verte",
     image: "https://images.unsplash.com/photo-1599940778173-e276d4acb2bb?w=800&q=80",
     isLiked: true,
+    aiTalentTag: "L'intelligence naturaliste et logique de Mia est particulièrement sollicitée ici !",
   },
   {
     id: "pub-3",
@@ -51,6 +53,7 @@ const MOCK_PUBLIC_POSTS = [
     badge: "🎨 Artiste",
     image: "https://images.unsplash.com/photo-1513364776144-60967b0f800f?w=800&q=80",
     isLiked: false,
+    aiTalentTag: null,
   }
 ];
 
@@ -97,6 +100,7 @@ function FeedPage() {
             badge: "⭐ Exploit",
             image: item.image_url,
             isLiked: false,
+            aiTalentTag: item.ai_talent_tag,
           }));
           
           setFeedItems([...userPosts, ...MOCK_PUBLIC_POSTS]);
@@ -129,10 +133,11 @@ function FeedPage() {
   }
 
   return (
-    <div className="min-h-screen bg-surface pb-20 font-sans text-ink">
+    <div className="min-h-screen bg-surface pb-10 font-sans text-ink">
+      <AppHeader />
       {/* Genizio Instagram-like Header */}
-      <header className="sticky top-0 z-50 bg-white border-b border-ink/5 px-4 h-16 flex items-center justify-between shadow-sm">
-        <h1 className="font-display text-2xl font-black tracking-tight text-brand">Genizio</h1>
+      <header className="sticky top-0 z-40 bg-surface border-b-[3px] border-ink px-4 h-16 flex items-center justify-between">
+        <h1 className="font-display text-2xl font-black tracking-tight text-brand">Mur Public</h1>
         <div className="flex items-center gap-3">
           <CreatePostModal onPostCreated={handlePostCreated} />
         </div>
@@ -144,23 +149,23 @@ function FeedPage() {
           <div className="flex gap-4 overflow-x-auto pb-4 scrollbar-hide px-2">
             {/* My Story (Add) */}
             <div className="flex flex-col items-center gap-1 shrink-0 cursor-pointer group">
-              <div className="relative size-16 rounded-full border-2 border-transparent bg-surface overflow-hidden group-hover:opacity-80 transition-opacity">
+              <div className="relative size-16 rounded-full border-[3px] border-ink bg-white shadow-brutal-sm overflow-hidden group-hover:-translate-y-0.5 transition-all">
                 <div className="absolute inset-0 flex items-center justify-center bg-brand/10">
                   <Plus className="size-6 text-brand" />
                 </div>
               </div>
-              <span className="text-[11px] font-semibold text-ink/70">Votre story</span>
+              <span className="text-[11px] font-bold text-ink">Votre story</span>
             </div>
             
             {/* Community Stories */}
             {STORIES.map(story => (
-              <div key={story.id} className="flex flex-col items-center gap-1 shrink-0 cursor-pointer">
-                <div className={`relative size-16 rounded-full p-[2px] ${story.hasUnseen ? "bg-gradient-to-tr from-amber-400 via-brand to-fuchsia-500" : "bg-ink/10"}`}>
-                  <div className="size-full rounded-full border-2 border-white overflow-hidden bg-white">
+              <div key={story.id} className="flex flex-col items-center gap-1 shrink-0 cursor-pointer group">
+                <div className={`relative size-16 rounded-full border-[3px] border-ink overflow-hidden shadow-brutal-sm group-hover:-translate-y-0.5 transition-all ${story.hasUnseen ? "bg-brand" : "bg-white"} p-0.5`}>
+                  <div className="size-full rounded-full overflow-hidden bg-white border border-ink">
                     <img src={story.image} alt={story.name} className="size-full object-cover" />
                   </div>
                 </div>
-                <span className="text-[11px] font-semibold text-ink/80">{story.name}</span>
+                <span className="text-[11px] font-bold text-ink">{story.name}</span>
               </div>
             ))}
           </div>
@@ -174,36 +179,36 @@ function FeedPage() {
             </div>
           ) : feedItems.length === 0 ? (
             <div className="px-4">
-              <div className="rounded-3xl border-2 border-dashed border-ink/10 bg-white p-12 text-center">
-                <p className="text-ink/60 font-medium">Aucune publication pour l'instant.</p>
+              <div className="rounded-3xl border-[3px] border-dashed border-ink bg-white/40 p-12 text-center shadow-brutal-sm">
+                <p className="text-ink font-bold">Aucune publication pour l'instant.</p>
               </div>
             </div>
           ) : (
             feedItems.map((post) => (
-              <article key={post.id} className="bg-white border-y sm:border sm:rounded-3xl border-ink/5 sm:shadow-sm overflow-hidden">
+              <article key={post.id} className="bg-white border-y-[3px] sm:border-[3px] sm:rounded-3xl border-ink sm:shadow-brutal overflow-hidden">
                 {/* Post Header */}
-                <div className="flex items-center justify-between p-4">
+                <div className="flex items-center justify-between p-4 border-b-[3px] border-ink bg-leaf/10">
                   <div className="flex items-center gap-3">
-                    <div className={`flex size-10 items-center justify-center rounded-full text-white font-bold shadow-inner ${post.avatarColor}`}>
+                    <div className={`flex size-10 items-center justify-center rounded-2xl border-[3px] border-ink text-white font-black shadow-brutal-sm ${post.avatarColor}`}>
                       {post.childName[0]}
                     </div>
                     <div>
-                      <h3 className="text-sm font-bold text-ink leading-tight flex items-center gap-1">
+                      <h3 className="text-sm font-black text-ink leading-tight flex items-center gap-1">
                         {post.childName}
-                        <span className="text-xs font-normal text-ink/50">• {post.familyName}</span>
+                        <span className="text-[10px] font-bold text-ink/60 uppercase tracking-widest ml-1">• {post.familyName}</span>
                       </h3>
-                      <p className="text-xs text-ink/50">{post.missionTitle}</p>
+                      <p className="text-[11px] font-bold text-ink/60 mt-0.5">{post.missionTitle}</p>
                     </div>
                   </div>
-                  <button className="p-2 text-ink/40 hover:text-ink/80 transition-colors">
+                  <button className="p-2 text-ink/40 hover:text-ink transition-colors border-2 border-transparent hover:border-ink rounded-xl">
                     <MoreHorizontal className="size-5" />
                   </button>
                 </div>
 
                 {/* Media Full Bleed */}
-                <div className="aspect-[4/5] w-full bg-surface relative">
+                <div className="aspect-[4/5] w-full bg-surface relative border-b-[3px] border-ink">
                   <img src={post.image} alt="Post" className="h-full w-full object-cover" />
-                  <div className="absolute top-4 right-4 rounded-full bg-black/40 backdrop-blur-md px-3 py-1 text-[10px] font-bold text-white uppercase tracking-wider">
+                  <div className="absolute top-4 right-4 rounded-full border-2 border-ink bg-white px-3 py-1 text-[10px] font-black text-ink uppercase tracking-wider shadow-brutal-sm">
                     {post.badge}
                   </div>
                 </div>
@@ -211,7 +216,11 @@ function FeedPage() {
                 {/* Interaction Bar */}
                 <div className="p-4 pb-2 flex items-center gap-4">
                   <button onClick={() => handleLike(post.id)} className="group transition-transform active:scale-90 cursor-pointer">
-                    <Heart className={`size-7 transition-colors ${post.isLiked ? "fill-red-500 text-red-500" : "text-ink hover:text-ink/70 group-hover:scale-105"}`} />
+                    {post.isLiked ? (
+                      <span className="text-2xl hover:scale-105 transition-transform block">🙌</span>
+                    ) : (
+                      <span className="text-2xl grayscale opacity-50 hover:grayscale-0 hover:opacity-100 transition-all block">🙌</span>
+                    )}
                   </button>
                   <button className="group transition-transform active:scale-90 cursor-pointer">
                     <MessageCircle className="size-7 text-ink hover:text-ink/70 group-hover:scale-105" />
@@ -223,23 +232,28 @@ function FeedPage() {
 
                 {/* Likes & Caption */}
                 <div className="px-4 pb-4">
-                  <p className="text-sm font-bold text-ink mb-1">{post.likes.toLocaleString()} J'aime</p>
+                  <p className="text-sm font-black text-ink mb-2">{post.likes.toLocaleString()} High-Fives</p>
+                  
+                  {post.aiTalentTag && (
+                    <div className="mb-3 rounded-2xl border-[3px] border-ink bg-sky p-3 shadow-brutal-sm flex items-start gap-2">
+                      <span className="text-lg leading-none shrink-0">✨</span>
+                      <p className="text-[13px] font-bold text-ink italic leading-relaxed">
+                        "{post.aiTalentTag}"
+                      </p>
+                    </div>
+                  )}
+
                   <p className="text-sm text-ink">
                     <span className="font-bold mr-2">{post.childName}</span>
                     <span className="text-ink/90">{post.description}</span>
                   </p>
-                  <p className="text-[11px] text-ink/40 mt-2 font-medium uppercase tracking-wide">{post.date}</p>
+                  <p className="text-[11px] text-ink/40 mt-3 font-medium uppercase tracking-wide">{post.date}</p>
                 </div>
               </article>
             ))
           )}
         </div>
       </main>
-      
-      {/* Bottom Nav Placeholder (Usually AppHeader does this) */}
-      <div className="fixed bottom-0 left-0 right-0 z-50 bg-white border-t border-ink/5">
-        <AppHeader />
-      </div>
     </div>
   );
 }

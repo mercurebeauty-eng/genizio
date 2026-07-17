@@ -43,21 +43,23 @@
   --font-display: "Fredoka", ui-sans-serif, system-ui, sans-serif;
   --font-body: "Inter", ui-sans-serif, system-ui, sans-serif;
 
-  --shadow-brand: 0 20px 40px -20px color-mix(in oklab, var(--brand) 45%, transparent);
-  --shadow-soft: 0 12px 30px -12px color-mix(in oklab, var(--ink) 20%, transparent);
+  --shadow-brutal: 4px 4px 0px 0px var(--ink);
+  --shadow-brutal-sm: 2px 2px 0px 0px var(--ink);
+  --shadow-brand: var(--shadow-brutal);
+  --shadow-soft: var(--shadow-brutal);
 }
 
 :root {
   --radius: 0.75rem;
 
-  /* Génizio brand — Modern Sahelian warmth */
-  --brand: oklch(0.68 0.16 46);           /* terracotta orange #E67E22 */
-  --brand-dark: oklch(0.60 0.17 40);      /* deeper burnt orange */
+  /* Génizio brand — Neo-Brutalism */
+  --brand: oklch(0.55 0.16 40);           /* bold rust orange */
+  --brand-dark: oklch(0.45 0.14 40);      /* deeper burnt orange */
   --brand-glow: oklch(0.78 0.13 55);      /* warm ochre highlight */
-  --surface: oklch(0.98 0.012 85);        /* warm cream #FCF8F3 */
-  --ink: oklch(0.32 0.035 250);           /* deep navy-slate #2C3E50 */
-  --leaf: oklch(0.62 0.14 150);           /* verdant green #27AE60 */
-  --sky: oklch(0.66 0.13 240);            /* soft blue */
+  --surface: oklch(0.98 0.01 80);         /* warm cream */
+  --ink: oklch(0.18 0.03 250);            /* very dark navy-slate, almost black */
+  --leaf: oklch(0.62 0.14 150);           /* verdant green */
+  --sky: oklch(0.85 0.06 240);            /* light baby blue */
 
   --background: var(--surface);
   --foreground: var(--ink);

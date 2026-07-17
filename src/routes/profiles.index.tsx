@@ -2,15 +2,18 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useSession } from "@/hooks/use-session";
-import { Phone, Check, Loader2, Sparkles } from "lucide-react";
+import { Phone, Check, Loader2, Trophy } from "lucide-react";
 import { AppTabBar } from "@/components/AppTabBar";
 import { AppHeader } from "@/components/AppHeader";
 import { ProfileDialog } from "@/components/profiles/ProfileDialog";
 import { AVATAR_COLORS, type ChildProfile } from "@/components/profiles/shared";
 import { getActiveChallenge, type ChallengeLike } from "@/lib/active-challenge";
 import { getPortfolioPulse } from "@/lib/talent-buckets";
+import { getChildGuild } from "@/lib/guilds";
 import { InviteMentorDialog } from "@/components/mentors/InviteMentorDialog";
 import { TalentRadarChart } from "@/components/TalentRadarChart";
+import { NayaAvatar } from "@/components/NayaAvatar";
+import { KitSuggestion } from "@/components/challenges/KitSuggestion";
 
 const COUNTRIES = [
   { code: "+225", flag: "🇨🇮", name: "Côte d'Ivoire", limit: 10 },
@@ -31,12 +34,17 @@ export const Route = createFileRoute("/profiles/")({
   component: DashboardPage,
 });
 
-type Challenge = ChallengeLike & {
+type Challenge = {
+  id: string;
+  status: "todo" | "in_progress" | "completed";
+  created_at: string;
+  updated_at: string;
   domain: string;
   title: string;
   description: string;
   duration: string;
   materials?: string[] | null;
+  material_tags?: string[] | null;
   steps?: string[] | null;
   proof_image_url?: string | null;
 };
@@ -50,6 +58,24 @@ function DashboardPage() {
   const [challenges, setChallenges] = useState<Challenge[]>([]);
   const [fetchingChallenges, setFetchingChallenges] = useState(false);
   const [creating, setCreating] = useState(false);
+  const [activeProducts, setActiveProducts] = useState<any[]>([]);
+
+  useEffect(() => {
+    supabase
+      .from("products")
+      .select("id, material_tags")
+      .eq("is_active", true)
+      .then(({ data }) => {
+        if (data) setActiveProducts(data);
+      });
+  }, []);
+
+  const hasKit = (materialTags?: string[] | null) => {
+    if (!materialTags || materialTags.length === 0) return false;
+    return activeProducts.some((product) =>
+      product.material_tags?.some((t: string) => materialTags.includes(t))
+    );
+  };
 
   // Phone Onboarding States
   const [showPhoneModal, setShowPhoneModal] = useState(false);
@@ -105,6 +131,7 @@ function DashboardPage() {
     const { data } = await supabase
       .from("child_profiles")
       .select("*")
+      .eq("user_id", session.user.id)
       .order("created_at", { ascending: false });
     const list = (data ?? []) as ChildProfile[];
     setProfiles(list);
@@ -125,7 +152,7 @@ function DashboardPage() {
     setFetchingChallenges(true);
     supabase
       .from("challenges")
-      .select("id, status, created_at, updated_at, domain, title, description, duration, materials, steps, proof_image_url")
+      .select("id, status, created_at, updated_at, domain, title, description, duration, materials, material_tags, steps, proof_image_url")
       .eq("child_id", selectedId)
       .then(({ data }) => {
         setChallenges((data ?? []) as Challenge[]);
@@ -158,207 +185,226 @@ function DashboardPage() {
         {selected && <AppTabBar profileId={selected.id} />}
 
         <div className="min-w-0 flex-1">
-          <div className="mb-8">
-            <p className="text-sm text-ink/50">Bonjour !</p>
+          <div className="mb-6">
+            <div className="mb-3 flex items-end gap-3">
+              <NayaAvatar size="sm" />
+              <p className="text-sm text-ink/50 mb-0.5">Bonjour !</p>
+            </div>
             <h1 className="font-display text-3xl font-extrabold md:text-4xl">
               {selected ? `Voici où en est ${selected.name} cette semaine.` : "Mes profils enfants"}
             </h1>
           </div>
 
+          {/* Badge Guilde de l'enfant sélectionné */}
+          {selected && (() => {
+            const guild = getChildGuild(selected.talents);
+            return (
+              <div className="mb-8 flex items-center gap-3">
+                <div className={`inline-flex items-center gap-2 rounded-2xl border-[3px] border-ink px-4 py-2.5 shadow-brutal-sm font-bold text-sm ${guild.bgColor} ${guild.color}`}>
+                  <span className="text-xl">{guild.emoji}</span>
+                  <div>
+                    <p className="text-[10px] font-extrabold uppercase tracking-widest opacity-60">Guilde de {selected.name}</p>
+                    <p className="font-display text-base font-black leading-tight">{guild.name}</p>
+                  </div>
+                </div>
+                <p className="hidden text-sm text-ink/60 font-medium italic sm:block">« {guild.tagline} »</p>
+              </div>
+            );
+          })()}
+
           {fetching ? (
             <p className="text-ink/40">Chargement…</p>
           ) : profiles.length === 0 ? (
-            <div className="rounded-3xl border-2 border-dashed border-ink/10 bg-white/40 p-12 text-center">
+            <div className="rounded-3xl border-[3px] border-dashed border-ink bg-white/40 p-12 text-center shadow-brutal-sm">
               <p className="mb-4 text-ink/60">Aucun profil pour l'instant. Créez le premier.</p>
               <button
                 onClick={() => setCreating(true)}
-                className="rounded-2xl bg-brand px-6 py-3 text-sm font-bold text-white shadow-brand hover:bg-brand-dark"
+                className="rounded-2xl border-[3px] border-ink bg-brand px-6 py-3 text-sm font-bold text-white shadow-brutal hover:-translate-y-0.5 active:translate-y-0 active:shadow-none transition-all"
               >
                 + Nouveau profil
               </button>
             </div>
           ) : (
             <>
-              <div className="mb-10 flex flex-col gap-4 rounded-3xl border border-ink/5 bg-white p-6 shadow-soft md:p-8">
-                <p className="text-[10px] font-extrabold uppercase tracking-widest text-ink/40">Profils enfants</p>
-                <div className="flex flex-wrap items-center gap-6">
+              <div className="mb-10">
+                <div className="flex flex-wrap items-center gap-4">
                   {profiles.map((p) => {
-                    const color = AVATAR_COLORS.find((c) => c.key === p.avatar_color)?.cls ?? "bg-brand";
                     const isActive = p.id === selectedId;
                     return (
                       <button
                         key={p.id}
                         onClick={() => setSelectedId(p.id)}
-                        className="group flex flex-col items-center gap-2 focus:outline-none transition-all relative"
-                      >
-                        <div className={`relative flex size-16 items-center justify-center rounded-full text-xl font-bold text-white transition-all ${color} ${
+                        className={`group flex items-center gap-2 focus:outline-none transition-all px-6 py-2.5 rounded-full border-2 border-ink shadow-brutal-sm font-bold text-sm ${
                           isActive
-                            ? "ring-4 ring-brand ring-offset-2 scale-105 shadow-lg shadow-brand/10"
-                            : "opacity-60 hover:opacity-100 hover:scale-102"
-                        }`}>
-                          {p.name.charAt(0).toUpperCase()}
-                          {isActive && (
-                            <span className="absolute -bottom-1 right-0 flex h-4 w-4 items-center justify-center rounded-full bg-brand text-[9px] font-extrabold text-white ring-2 ring-white">
-                              ✓
-                            </span>
-                          )}
-                        </div>
-                        <span className={`text-xs font-bold transition-all ${isActive ? "text-brand font-extrabold" : "text-ink/60"}`}>
-                          {p.name}
-                        </span>
+                            ? "bg-brand text-white"
+                            : "bg-sky text-ink hover:bg-sky/80"
+                        }`}
+                      >
+                        {p.name}
+                        {isActive && <span className="flex size-4 items-center justify-center rounded-full border border-white text-[10px]">✓</span>}
                       </button>
                     );
                   })}
                   <button
                     onClick={() => setCreating(true)}
-                    className="group flex flex-col items-center gap-2 focus:outline-none"
+                    className="flex size-11 items-center justify-center rounded-full border-2 border-ink bg-white shadow-brutal-sm text-ink hover:bg-surface transition-all text-xl font-bold"
                   >
-                    <div className="flex size-16 items-center justify-center rounded-full border-2 border-dashed border-ink/20 text-ink/40 group-hover:border-brand group-hover:text-brand group-hover:bg-brand/5 transition-all text-2xl font-bold">
-                      +
-                    </div>
-                    <span className="text-xs font-bold text-ink/40 group-hover:text-brand transition-all">
-                      Ajouter
-                    </span>
+                    +
                   </button>
                 </div>
               </div>
 
-              <div className="grid gap-6 md:grid-cols-2">
-                <div className="rounded-3xl bg-gradient-to-br from-white to-brand/5 p-6 shadow-soft ring-1 ring-ink/5 flex flex-col justify-between min-h-[320px] relative overflow-hidden border border-brand/10">
-                  <div className="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-brand via-sky to-leaf"></div>
-                  {fetchingChallenges ? (
-                    <div className="flex flex-1 items-center justify-center py-10">
-                      <Loader2 className="size-6 animate-spin text-brand" />
+              <div className="grid gap-8 md:grid-cols-2">
+                <div className="flex flex-col">
+                  <h2 className="mb-4 text-2xl font-display font-medium text-ink flex justify-between items-center">
+                    Cette semaine
+                    <div className="flex items-center gap-2">
+                      {activeChallenge && (
+                        <span className="rounded-full bg-brand px-3 py-1 text-[10px] font-black uppercase tracking-widest text-white border-2 border-ink shadow-brutal-sm">
+                          {activeChallenge.domain}
+                        </span>
+                      )}
+                      {activeChallenge && hasKit(activeChallenge.material_tags) && (
+                        <span className="rounded-full bg-sky px-3 py-1 text-[10px] font-black uppercase tracking-widest text-ink border-2 border-ink shadow-brutal-sm">
+                          📦 Kit disponible
+                        </span>
+                      )}
                     </div>
-                  ) : activeChallenge ? (
-                    <div className="flex-1 flex flex-col justify-between">
-                      <div>
-                        <div className="mb-4 flex items-center justify-between">
-                          <span className="rounded-full bg-brand/10 px-3 py-1 text-xs font-bold uppercase tracking-wider text-brand">
-                            {activeChallenge.domain}
-                          </span>
-                          <span className="text-xs font-semibold text-ink/40">⏱ {activeChallenge.duration}</span>
-                        </div>
-                        <h2 className="font-display text-2xl font-extrabold text-ink tracking-tight mb-2 leading-tight">
-                          {activeChallenge.title}
-                        </h2>
-                        <p className="text-sm text-ink/75 leading-relaxed">
-                          {activeChallenge.description}
-                        </p>
-                        
-                        {activeChallenge.materials && activeChallenge.materials.length > 0 && (
-                          <div className="mt-5">
-                            <p className="text-[10px] font-extrabold uppercase tracking-widest text-ink/40 mb-2">Matériel requis :</p>
-                            <div className="flex flex-wrap gap-2">
-                              {activeChallenge.materials.map((m, i) => (
-                                <span key={i} className="inline-flex items-center gap-1.5 rounded-full bg-white px-3 py-1.5 text-xs font-semibold text-ink/80 border border-ink/5 shadow-sm">
+                  </h2>
+                  <div className="rounded-3xl bg-white p-6 shadow-brutal border-[3px] border-ink flex flex-col min-h-[300px]">
+                    {fetchingChallenges ? (
+                      <div className="flex flex-1 items-center justify-center py-10">
+                        <Loader2 className="size-6 animate-spin text-brand" />
+                      </div>
+                    ) : activeChallenge ? (
+                      <div className="flex-1 flex flex-col justify-between">
+                        <div>
+                          <div className="flex gap-4 mb-4">
+                            <div className="size-16 shrink-0 rounded-2xl bg-brand flex items-center justify-center border-2 border-ink shadow-brutal-sm text-white">
+                              <Trophy className="size-8" />
+                            </div>
+                            <div>
+                              <h3 className="font-display text-xl font-bold text-ink leading-tight mb-2">
+                                {activeChallenge.title}
+                              </h3>
+                              <p className="text-sm text-ink/80 leading-relaxed font-medium">
+                                {activeChallenge.description}
+                              </p>
+                            </div>
+                          </div>
+
+                          {activeChallenge.materials && activeChallenge.materials.length > 0 && (
+                            <div className="mb-2 flex flex-wrap gap-2">
+                              {activeChallenge.materials.slice(0, 4).map((m, i) => (
+                                <span key={i} className="inline-flex items-center gap-1 rounded-full border-2 border-ink bg-surface px-2.5 py-1 text-[11px] font-bold text-ink">
                                   📦 {m}
                                 </span>
                               ))}
                             </div>
-                          </div>
-                        )}
-                      </div>
+                          )}
 
-                      <div className="mt-8 flex flex-col sm:flex-row gap-3">
+                          <div className="mb-2">
+                            <KitSuggestion
+                              childId={selected!.id}
+                              challengeId={activeChallenge.id}
+                              materialTags={activeChallenge.material_tags}
+                              challengeTitle={activeChallenge.title}
+                              childName={selected?.name ?? ""}
+                            />
+                          </div>
+
+                          <hr className="border-t border-dashed border-ink/30 my-5" />
+                        </div>
+
+                        <div className="mt-auto flex flex-col gap-3">
+                          <Link
+                            to="/profiles/$profileId/challenges"
+                            params={{ profileId: selected!.id }}
+                            className="w-full text-center rounded-xl bg-brand-dark px-6 py-4 text-base font-bold text-white shadow-brutal border-[3px] border-ink hover:-translate-y-0.5 active:translate-y-1 transition-all cursor-pointer"
+                          >
+                            Commencer le défi
+                          </Link>
+                          <Link
+                            to="/profiles/$profileId/quest"
+                            params={{ profileId: selected!.id }}
+                            className="w-full text-center rounded-xl bg-sky px-6 py-3 text-sm font-bold text-ink shadow-brutal-sm border-[3px] border-ink hover:-translate-y-0.5 active:translate-y-1 transition-all cursor-pointer"
+                          >
+                            Mode Enfant (Quête) 🎮
+                          </Link>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="flex-1 flex flex-col justify-center items-center py-4 text-center">
+                        <span className="inline-block text-4xl mb-4">🌟</span>
+                        <p className="text-sm text-ink/80 font-bold mb-6">
+                          Aucun défi en cours pour {selected?.name}.
+                        </p>
                         <Link
                           to="/profiles/$profileId/challenges"
                           params={{ profileId: selected!.id }}
-                          className="flex-1 text-center rounded-2xl bg-brand px-6 py-3.5 text-sm font-bold text-white shadow-brand hover:bg-brand-dark hover:-translate-y-0.5 transition-all flex items-center justify-center gap-2 cursor-pointer"
+                          className="w-full text-center rounded-xl bg-brand px-6 py-4 text-base font-bold text-white shadow-brutal border-[3px] border-ink hover:-translate-y-0.5 active:translate-y-1 transition-all cursor-pointer"
                         >
-                          Lancer avec {selected!.name} →
-                        </Link>
-                        <Link
-                          to="/profiles/$profileId/quest"
-                          params={{ profileId: selected!.id }}
-                          className="text-center rounded-2xl border border-brand/20 bg-brand/5 px-6 py-3.5 text-sm font-bold text-brand hover:bg-brand/10 transition-all flex items-center justify-center gap-2 cursor-pointer"
-                        >
-                          Mode Enfant (Quête) 🎮
+                          Générer un défi
                         </Link>
                       </div>
-                    </div>
-                  ) : (
-                    <div className="flex-1 flex flex-col justify-between py-4">
-                      <div className="text-center space-y-3">
-                        <span className="inline-block text-4xl">🌟</span>
-                        <p className="text-sm text-ink/60 font-medium">
-                          Aucun défi en cours pour {selected?.name}. Générez-en un dans le laboratoire.
-                        </p>
-                      </div>
-                      <Link
-                        to="/profiles/$profileId/challenges"
-                        params={{ profileId: selected!.id }}
-                        className="mt-6 w-full text-center rounded-2xl bg-brand px-6 py-3.5 text-sm font-bold text-white shadow-brand hover:bg-brand-dark flex items-center justify-center gap-2 cursor-pointer"
-                      >
-                        <Sparkles className="size-4" /> Générer un défi
-                      </Link>
-                    </div>
-                  )}
+                    )}
+                  </div>
                 </div>
 
-                <div className="rounded-3xl bg-white p-6 shadow-soft ring-1 ring-ink/5 flex flex-col justify-between">
-                  <div>
-                    <p className="mb-3 text-xs font-bold uppercase tracking-wider text-ink/40">Pouls du portfolio</p>
-                    <div className="h-44 w-full flex items-center justify-center my-2">
-                      <TalentRadarChart talents={selected!.talents || {}} name={selected!.name} className="h-full w-full" />
+                <div className="flex flex-col">
+                  <h2 className="mb-4 text-2xl font-display font-medium text-ink">
+                    Pouls du portfolio
+                  </h2>
+                  <div className="rounded-3xl bg-white p-6 shadow-brutal border-[3px] border-ink flex flex-col justify-between min-h-[300px]">
+                    <div>
+                      <div className="h-44 w-full flex items-center justify-center my-2">
+                        <TalentRadarChart talents={selected!.talents || {}} name={selected!.name} className="h-full w-full" />
+                      </div>
+                      <ul className="space-y-2 mt-4">
+                        {pulse.slice(0, 3).map((entry) => (
+                          <li key={entry.key} className="rounded-xl border-2 border-ink bg-surface px-3 py-1.5 text-xs font-bold text-ink/80">
+                            {entry.phrase}
+                          </li>
+                        ))}
+                      </ul>
                     </div>
-                    <ul className="space-y-2 mt-4">
-                      {pulse.slice(0, 3).map((entry) => (
-                        <li key={entry.key} className="rounded-xl bg-surface px-3 py-1.5 text-xs font-medium text-ink/80">
-                          {entry.phrase}
-                        </li>
-                      ))}
-                    </ul>
+                    <Link
+                      to="/profiles/$profileId/portfolio"
+                      params={{ profileId: selected!.id }}
+                      className="mt-4 inline-block text-sm font-bold text-brand hover:text-brand-dark"
+                    >
+                      Voir le portfolio complet →
+                    </Link>
                   </div>
-                  <Link
-                    to="/profiles/$profileId/portfolio"
-                    params={{ profileId: selected!.id }}
-                    className="mt-4 inline-block text-sm font-bold text-brand hover:text-brand-dark"
-                  >
-                    Voir le portfolio complet →
-                  </Link>
                 </div>
               </div>
 
-              {/* Recent Artifacts Row from Wireframe 1b */}
-              <div className="mt-6 rounded-3xl bg-white p-6 shadow-soft ring-1 ring-ink/5">
-                <p className="mb-4 text-xs font-bold uppercase tracking-wider text-ink/40">Réalisations récentes</p>
-                {challenges.filter(c => c.status === "completed" && c.proof_image_url).length > 0 ? (
-                  <div className="flex gap-4 overflow-x-auto pb-2">
-                    {challenges
-                      .filter(c => c.status === "completed" && c.proof_image_url)
-                      .slice(0, 5)
-                      .map(c => (
-                        <div key={c.id} className="relative size-16 shrink-0 overflow-hidden rounded-2xl border border-ink/10 bg-surface group cursor-pointer hover:border-brand/40 transition-all" title={c.title}>
-                          <img src={c.proof_image_url!} alt={c.title} className="h-full w-full object-cover" />
-                        </div>
-                      ))}
-                  </div>
-                ) : (
-                  <div className="flex gap-4">
-                    <div className="flex size-16 shrink-0 items-center justify-center rounded-2xl border-2 border-dashed border-ink/10 bg-surface text-ink/20 text-[10px] font-bold">
-                      Défis 1
-                    </div>
-                    <div className="flex size-16 shrink-0 items-center justify-center rounded-2xl border-2 border-dashed border-ink/10 bg-surface text-ink/20 text-[10px] font-bold">
-                      Défis 2
-                    </div>
-                    <div className="flex size-16 shrink-0 items-center justify-center rounded-2xl border-2 border-dashed border-ink/10 bg-surface text-ink/20 text-[10px] font-bold">
-                      Défis 3
-                    </div>
-                  </div>
-                )}
-              </div>
-
-              <div className="mt-6 flex flex-wrap gap-3">
+              <div className="mt-8 grid gap-6 md:grid-cols-2">
                 <Link
                   to="/profiles/$profileId/challenges"
                   params={{ profileId: selected!.id }}
-                  className="rounded-2xl border border-ink/10 bg-white px-4 py-2.5 text-sm font-bold text-ink/70 hover:bg-stone-50"
+                  className="rounded-3xl bg-sky border-[3px] border-ink shadow-brutal p-8 flex flex-col items-center justify-center gap-4 text-ink font-bold hover:bg-sky/80 transition-all hover:-translate-y-1 active:translate-y-0"
                 >
-                  Logger une observation
+                  <div className="size-16 rounded-full bg-brand text-white border-[3px] border-ink shadow-brutal-sm flex items-center justify-center">
+                    <Trophy className="size-8" />
+                  </div>
+                  <span className="text-lg">Voir les missions</span>
                 </Link>
-                <InviteMentorDialog childId={selected!.id} childName={selected!.name} />
+
+                <InviteMentorDialog
+                  childId={selected!.id}
+                  childName={selected!.name}
+                  customTrigger={
+                    <button className="rounded-3xl bg-sky border-[3px] border-ink shadow-brutal p-8 flex flex-col items-center justify-center gap-4 text-ink font-bold hover:bg-sky/80 transition-all hover:-translate-y-1 active:translate-y-0 cursor-pointer w-full text-center">
+                      <div className="size-16 rounded-full bg-surface text-ink border-[3px] border-ink shadow-brutal-sm flex items-center justify-center">
+                        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="19" x2="19" y1="8" y2="14"/><line x1="22" x2="16" y1="11" y2="11"/></svg>
+                      </div>
+                      <span className="text-lg">Inviter un mentor</span>
+                    </button>
+                  }
+                />
               </div>
+
             </>
           )}
         </div>
@@ -378,9 +424,9 @@ function DashboardPage() {
 
       {showPhoneModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm animate-in fade-in duration-200">
-          <div className="w-full max-w-md rounded-3xl border border-ink/5 bg-white p-6 shadow-xl animate-in zoom-in-95 duration-200 md:p-8">
+          <div className="w-full max-w-md rounded-3xl border-[3px] border-ink bg-white p-6 shadow-brutal animate-in zoom-in-95 duration-200 md:p-8">
             <div className="text-center">
-              <div className="mx-auto flex size-14 items-center justify-center rounded-2xl bg-brand/10 text-brand">
+              <div className="mx-auto flex size-14 items-center justify-center rounded-2xl border-2 border-ink bg-brand/10 text-brand">
                 <Phone className="size-6" />
               </div>
               <h2 className="mt-4 font-display text-2xl font-extrabold leading-tight">
@@ -408,7 +454,7 @@ function DashboardPage() {
                         setPhoneNumber("");
                       }
                     }}
-                    className="rounded-xl border border-ink/10 bg-stone-50 px-3 py-3 text-sm font-bold outline-none focus:border-brand cursor-pointer"
+                    className="rounded-xl border-[3px] border-ink bg-white px-3 py-3 text-sm font-bold outline-none focus:ring-2 focus:ring-brand cursor-pointer shadow-brutal-sm"
                   >
                     {COUNTRIES.map((c) => (
                       <option key={c.code} value={c.code}>
@@ -429,7 +475,7 @@ function DashboardPage() {
                         setPhoneNumber(val);
                       }}
                       placeholder={`ex: 0123456789`}
-                      className="w-full rounded-xl border border-ink/10 px-4 py-3 text-sm font-bold outline-none focus:border-brand placeholder:font-normal placeholder:text-ink/30"
+                      className="w-full rounded-xl border-[3px] border-ink px-4 py-3 text-sm font-bold outline-none focus:ring-2 focus:ring-brand placeholder:font-normal placeholder:text-ink/30 shadow-brutal-sm"
                       required
                     />
                   </div>
@@ -450,7 +496,7 @@ function DashboardPage() {
                 <button
                   type="submit"
                   disabled={savingPhone || !phoneNumber}
-                  className="flex w-full items-center justify-center gap-2 rounded-2xl bg-brand py-3.5 text-sm font-bold text-white shadow-md shadow-brand/20 hover:bg-brand-dark transition-all disabled:opacity-50 cursor-pointer"
+                  className="flex w-full items-center justify-center gap-2 rounded-2xl border-[3px] border-ink bg-brand py-3.5 text-sm font-bold text-white shadow-brutal hover:-translate-y-0.5 active:translate-y-0 active:shadow-none transition-all disabled:opacity-50 cursor-pointer"
                 >
                   {savingPhone ? (
                     <>

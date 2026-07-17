@@ -10,15 +10,15 @@ export function ObservationPrompts({ className }: { className?: string }) {
   ];
 
   return (
-    <div className={cn("rounded-2xl bg-sky-50/50 border border-sky-100 p-4", className)}>
-      <p className="mb-3 text-xs font-extrabold uppercase tracking-widest text-sky-800 flex items-center gap-1.5">
-        <Eye className="size-4 text-sky-600" />
+    <div className={cn("rounded-2xl bg-sky border-[3px] border-ink p-4 shadow-brutal-sm", className)}>
+      <p className="mb-3 text-xs font-extrabold uppercase tracking-widest text-ink flex items-center gap-1.5">
+        <Eye className="size-4 text-ink" />
         Pendant que vous observez...
       </p>
-      <ul className="space-y-2 text-sm text-sky-900/80">
+      <ul className="space-y-2 text-sm text-ink/80">
         {prompts.map((prompt, i) => (
           <li key={i} className="flex gap-2">
-            <span className="text-sky-400 font-bold">•</span>
+            <span className="text-ink font-bold">•</span>
             <span>{prompt}</span>
           </li>
         ))}

@@ -9,20 +9,29 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as SupervisorRouteImport } from './routes/supervisor'
 import { Route as ProfilesRouteImport } from './routes/profiles'
 import { Route as ProfileRouteImport } from './routes/profile'
 import { Route as LaboratoryRouteImport } from './routes/laboratory'
 import { Route as FeedRouteImport } from './routes/feed'
+import { Route as BoutiqueRouteImport } from './routes/boutique'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as ProfilesIndexRouteImport } from './routes/profiles.index'
 import { Route as STokenRouteImport } from './routes/s.$token'
 import { Route as ProfilesManageRouteImport } from './routes/profiles.manage'
+import { Route as AdminSupervisorsRouteImport } from './routes/admin.supervisors'
+import { Route as AdminProductsRouteImport } from './routes/admin.products'
 import { Route as ProfilesProfileIdQuestRouteImport } from './routes/profiles.$profileId.quest'
 import { Route as ProfilesProfileIdPortfolioRouteImport } from './routes/profiles.$profileId.portfolio'
 import { Route as ProfilesProfileIdMentorsRouteImport } from './routes/profiles.$profileId.mentors'
 import { Route as ProfilesProfileIdChallengesRouteImport } from './routes/profiles.$profileId.challenges'
 
+const SupervisorRoute = SupervisorRouteImport.update({
+  id: '/supervisor',
+  path: '/supervisor',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ProfilesRoute = ProfilesRouteImport.update({
   id: '/profiles',
   path: '/profiles',
@@ -41,6 +50,11 @@ const LaboratoryRoute = LaboratoryRouteImport.update({
 const FeedRoute = FeedRouteImport.update({
   id: '/feed',
   path: '/feed',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const BoutiqueRoute = BoutiqueRouteImport.update({
+  id: '/boutique',
+  path: '/boutique',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AuthRoute = AuthRouteImport.update({
@@ -67,6 +81,16 @@ const ProfilesManageRoute = ProfilesManageRouteImport.update({
   id: '/manage',
   path: '/manage',
   getParentRoute: () => ProfilesRoute,
+} as any)
+const AdminSupervisorsRoute = AdminSupervisorsRouteImport.update({
+  id: '/admin/supervisors',
+  path: '/admin/supervisors',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AdminProductsRoute = AdminProductsRouteImport.update({
+  id: '/admin/products',
+  path: '/admin/products',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const ProfilesProfileIdQuestRoute = ProfilesProfileIdQuestRouteImport.update({
   id: '/$profileId/quest',
@@ -95,10 +119,14 @@ const ProfilesProfileIdChallengesRoute =
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/boutique': typeof BoutiqueRoute
   '/feed': typeof FeedRoute
   '/laboratory': typeof LaboratoryRoute
   '/profile': typeof ProfileRoute
   '/profiles': typeof ProfilesRouteWithChildren
+  '/supervisor': typeof SupervisorRoute
+  '/admin/products': typeof AdminProductsRoute
+  '/admin/supervisors': typeof AdminSupervisorsRoute
   '/profiles/manage': typeof ProfilesManageRoute
   '/s/$token': typeof STokenRoute
   '/profiles/': typeof ProfilesIndexRoute
@@ -110,9 +138,13 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/boutique': typeof BoutiqueRoute
   '/feed': typeof FeedRoute
   '/laboratory': typeof LaboratoryRoute
   '/profile': typeof ProfileRoute
+  '/supervisor': typeof SupervisorRoute
+  '/admin/products': typeof AdminProductsRoute
+  '/admin/supervisors': typeof AdminSupervisorsRoute
   '/profiles/manage': typeof ProfilesManageRoute
   '/s/$token': typeof STokenRoute
   '/profiles': typeof ProfilesIndexRoute
@@ -125,10 +157,14 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/boutique': typeof BoutiqueRoute
   '/feed': typeof FeedRoute
   '/laboratory': typeof LaboratoryRoute
   '/profile': typeof ProfileRoute
   '/profiles': typeof ProfilesRouteWithChildren
+  '/supervisor': typeof SupervisorRoute
+  '/admin/products': typeof AdminProductsRoute
+  '/admin/supervisors': typeof AdminSupervisorsRoute
   '/profiles/manage': typeof ProfilesManageRoute
   '/s/$token': typeof STokenRoute
   '/profiles/': typeof ProfilesIndexRoute
@@ -142,10 +178,14 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/auth'
+    | '/boutique'
     | '/feed'
     | '/laboratory'
     | '/profile'
     | '/profiles'
+    | '/supervisor'
+    | '/admin/products'
+    | '/admin/supervisors'
     | '/profiles/manage'
     | '/s/$token'
     | '/profiles/'
@@ -157,9 +197,13 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/auth'
+    | '/boutique'
     | '/feed'
     | '/laboratory'
     | '/profile'
+    | '/supervisor'
+    | '/admin/products'
+    | '/admin/supervisors'
     | '/profiles/manage'
     | '/s/$token'
     | '/profiles'
@@ -171,10 +215,14 @@ export interface FileRouteTypes {
     | '__root__'
     | '/'
     | '/auth'
+    | '/boutique'
     | '/feed'
     | '/laboratory'
     | '/profile'
     | '/profiles'
+    | '/supervisor'
+    | '/admin/products'
+    | '/admin/supervisors'
     | '/profiles/manage'
     | '/s/$token'
     | '/profiles/'
@@ -187,15 +235,26 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthRoute: typeof AuthRoute
+  BoutiqueRoute: typeof BoutiqueRoute
   FeedRoute: typeof FeedRoute
   LaboratoryRoute: typeof LaboratoryRoute
   ProfileRoute: typeof ProfileRoute
   ProfilesRoute: typeof ProfilesRouteWithChildren
+  SupervisorRoute: typeof SupervisorRoute
+  AdminProductsRoute: typeof AdminProductsRoute
+  AdminSupervisorsRoute: typeof AdminSupervisorsRoute
   STokenRoute: typeof STokenRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/supervisor': {
+      id: '/supervisor'
+      path: '/supervisor'
+      fullPath: '/supervisor'
+      preLoaderRoute: typeof SupervisorRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/profiles': {
       id: '/profiles'
       path: '/profiles'
@@ -222,6 +281,13 @@ declare module '@tanstack/react-router' {
       path: '/feed'
       fullPath: '/feed'
       preLoaderRoute: typeof FeedRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/boutique': {
+      id: '/boutique'
+      path: '/boutique'
+      fullPath: '/boutique'
+      preLoaderRoute: typeof BoutiqueRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/auth': {
@@ -258,6 +324,20 @@ declare module '@tanstack/react-router' {
       fullPath: '/profiles/manage'
       preLoaderRoute: typeof ProfilesManageRouteImport
       parentRoute: typeof ProfilesRoute
+    }
+    '/admin/supervisors': {
+      id: '/admin/supervisors'
+      path: '/admin/supervisors'
+      fullPath: '/admin/supervisors'
+      preLoaderRoute: typeof AdminSupervisorsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin/products': {
+      id: '/admin/products'
+      path: '/admin/products'
+      fullPath: '/admin/products'
+      preLoaderRoute: typeof AdminProductsRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/profiles/$profileId/quest': {
       id: '/profiles/$profileId/quest'
@@ -315,10 +395,14 @@ const ProfilesRouteWithChildren = ProfilesRoute._addFileChildren(
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthRoute: AuthRoute,
+  BoutiqueRoute: BoutiqueRoute,
   FeedRoute: FeedRoute,
   LaboratoryRoute: LaboratoryRoute,
   ProfileRoute: ProfileRoute,
   ProfilesRoute: ProfilesRouteWithChildren,
+  SupervisorRoute: SupervisorRoute,
+  AdminProductsRoute: AdminProductsRoute,
+  AdminSupervisorsRoute: AdminSupervisorsRoute,
   STokenRoute: STokenRoute,
 }
 export const routeTree = rootRouteImport

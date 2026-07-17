@@ -110,3 +110,119 @@ ces occurrences seront corrigées au fil des phases qui touchent chaque écran c
   non-authentifiée de l'app, risque de confidentialité plus élevé que la fuite RLS déjà trouvée et
   corrigée cette session.
 **Statut** : Phase 0 terminée et vérifiée (voir [[genizio-etat-code]]). Phases 1-6 en cours.
+
+## Décision #12 : Boutique de kits — commande WhatsApp avant vrai paiement in-app
+**Décision** : Le premier jalon du modèle économique "Kits Génizio" (cf. [[genizio-vision]] §
+Extension écosystème) démarre par une redirection WhatsApp pré-remplie plutôt qu'un vrai panier/
+paiement in-app. Un seul admin (allowlist email en dur via `ADMIN_EMAILS` dans `.env`,
+`mercurebeauty@gmail.com`) gère prix/stock via `/admin/products`, pas de table de rôles.
+**Pourquoi** : Valider la demande réelle avant d'investir dans une intégration Mobile Money
+(Wave/Orange Money/MTN MoMo — plus pertinent que Stripe pour le marché cible). Décision explicite
+de l'utilisateur via AskUserQuestion le 2026-07-16, recommandation acceptée. Un seul admin pour
+l'instant car l'utilisateur gère seul le catalogue à ce stade — pas de rôle "Administrateur" en
+base pour éviter de sur-construire avant d'en avoir besoin (cf. [[genizio-vision]] § rôles à
+anticiper, qui liste ce rôle pour plus tard si l'équipe grandit).
+**Alternatives rejetées** :
+- ❌ Paiement Mobile Money in-app dès la Phase 0 : plus lourd (comptes marchands, webhooks,
+  échecs de paiement) sans certitude que la demande existe.
+- ❌ Stripe : peu adapté à un marché où le mobile money domine l'usage carte bancaire.
+- ❌ Vrai système de rôles admin dès maintenant : premature, un seul admin existe aujourd'hui.
+**Architecture** : la génération de défi (`challenges.functions.ts`, 3 chemins : `generateChallenges`,
+`generateSingleChallenge`, `assignTemplateChallenge`) émet désormais un `material_tags: string[]`
+normalisé (slugs sans accent) en plus du `materials: string[]` texte libre déjà existant, pour
+matcher fiablement contre `products.material_tags` (index GIN) sans fuzzy-matching sur du texte
+libre. Table `products` : RLS lecture publique sur `is_active=true` uniquement (vérifié via
+`pg_policies` en prod), aucune policy d'écriture — les mutations passent exclusivement par
+`requireAdmin` (middleware composé sur `requireSupabaseAuth`, vérifie `claims.email` contre
+`ADMIN_EMAILS`) + `supabaseAdmin` (service role). Migration `20260716170000_add_products_catalog.sql`
+appliquée en prod avec confirmation explicite de l'utilisateur.
+**Statut** : Phases 0, 1 et 2 terminées et vérifiées de bout en bout le 2026-07-16/17 (génération
+réelle → aucune ligne fantôme → assignation → exactement 1 ligne en base → produit de test matché
+→ lien `wa.me` correctement pré-rempli, puis données de test nettoyées). Phase 3 (suivi commandes
+léger) : voir [[genizio-backlog]], pas commencée.
+
+## Décision #13 : Deux bugs trouvés en vérifiant la Phase 0-2 de la boutique
+**Contexte** : découverts en testant le flux réel de génération de défi pendant l'implémentation
+de la Décision #12, pas des changements demandés — corrigés sur-le-champ car du même ordre que les
+bugs déjà corrigés cette session (cf. le bug de dashboard cassé plus tôt).
+
+**Bug 1 — double insertion en base à chaque prévisualisation** : `generateSingleChallenge`
+(`challenges.functions.ts`) insérait directement le défi généré en base de données, alors que
+`laboratory.tsx` ET `profiles.$profileId.challenges.tsx` (générateur unique) traitent tous deux son
+retour comme un simple aperçu à confirmer via `assignTemplateChallenge`. Résultat : chaque
+génération/régénération créait une ligne fantôme dans `challenges` (statut "todo", jamais vue par
+l'utilisateur), et cliquer "Assigner" en créait une deuxième, en double. **Fix** :
+`generateSingleChallenge` ne fait plus d'insert, retourne uniquement l'objet validé ; les deux
+templates (`template.material_tags`) propagent bien vers `assignTemplateChallenge`, seul point
+d'insertion réel désormais. Vérifié : génération seule → 0 ligne créée ; génération + assignation
+→ exactement 1 ligne.
+
+**Bug 2 — les listes d'enfants mélangent les familles (pas une fuite RLS, une sur-portée de RLS)** :
+`laboratory.tsx` (sélecteur "Pour qui ?"), `profiles.index.tsx` (pastilles du dashboard) et
+`profiles.manage.tsx` (grille de gestion) lisaient `child_profiles` sans filtre `user_id`, en
+comptant uniquement sur RLS pour scoper les résultats. Or la policy publique posée par la
+[[genizio-decisions]] #10 autorise la lecture de **tout** profil ayant un défi complété (nécessaire
+pour le Mur Public) — donc dès qu'un enfant d'une autre famille a un défi complété, il apparaissait
+mélangé dans CES listes-là aussi, pas seulement dans le flux public. Repéré parce que "pari"
+(compte `mercurebeauty@gmail.com`) apparaissait dans le sélecteur du Labo alors que la session de
+test était `mochicky4real@gmail.com`. `profile.tsx` (stats du compte) avait le même problème sur
+les comptages `child_profiles`/`challenges`. **Fix** : `.eq("user_id", session.user.id)` ajouté aux
+4 requêtes concernées. **Non corrigé, flagué pour plus tard** : les routes `/profiles/$profileId/*`
+(challenges, portfolio, quest, mentors) font `.eq("id", profileId)` sans vérifier l'ownership —
+en théorie, naviguer directement vers l'URL d'un enfant public d'une autre famille (UUID à
+deviner) donnerait accès à sa page de gestion complète. Risque plus faible (nécessite l'UUID exact,
+plus atteignable via les listes désormais corrigées) mais reste une vraie question d'architecture :
+faut-il un contrôle d'ownership explicite sur ces routes plutôt que de compter sur RLS ? Voir
+[[genizio-backlog]].
+
+## Décision #14 : Boutique de kits — Phase 3 (suivi manuel des commandes)
+**Décision** : Création de la table `orders` avec RLS (les parents insèrent et lisent leurs propres commandes). Ajout des server functions `createOrder` (authentifié), `listOrdersAdmin` (admin-only) et `updateOrderStatus` (admin-only) dans `src/lib/products.functions.ts`.
+**Pourquoi** : Permettre à l'admin de suivre et gérer le statut de chaque commande ('pending', 'confirmed', 'shipped', 'delivered', 'cancelled') de manière centralisée dans l'onglet "Commandes" de l'interface `/admin/products`.
+**Workflow** : Lorsque le parent clique sur "Commander via WhatsApp" dans le composant `KitSuggestion`, l'application enregistre d'abord la commande dans la base de données, puis le redirige vers WhatsApp avec le texte pré-rempli. L'administrateur peut ensuite mettre à jour le statut manuellement.
+
+## Décision #15 : Adaptation stricte à l'âge & Matériaux disponibles à la maison dans le Labo
+**Décision** : 
+1. **Intégration d'instructions de développement par tranches d'âge** dans le prompt de génération de défis de Naya (1-3 ans exploration sensorielle/sans motricité fine complexe, 4-7 ans exploratoire et imaginaire/narration, 8-11 ans projets de construction concrets et méthodiques, 12 ans+ abstraction et stratégie/pensée critique/énigmes complexes).
+2. **Ajout d'un champ de saisie optionnel "Matériaux à la maison"** (`homeMaterials`) dans le formulaire du Laboratoire, connecté à l'API de génération.
+**Pourquoi** : 
+1. Mieux s'aligner sur les systèmes d'apprentissage basés sur le développement cognitif de l'enfant par âge (comme au Canada ou en Chine).
+2. Offrir aux parents la possibilité de recycler/réutiliser les ingrédients et bricoles qu'ils ont sous la main, tout en demandant à Naya d'adapter le défi et d'ajouter uniquement les éléments manquants.
+**Statut** : Complété et fonctionnel.
+
+## Décision #16 : Nettoyage de la navigation et correction de la surutilisation de l'icône étoile (Sparkles)
+**Décision** :
+1. **Remplacement de "Portfolio" par "Labo"** dans la barre de navigation principale mobile (`AppTabBar.tsx`), pointant directement vers `/laboratory` avec l'icône `Beaker` (au lieu de `PieChart`). Le portfolio reste accessible via le tableau de bord principal.
+2. **Suppression du lien "Laboratoire" doublon** dans le menu du haut (`AppHeader.tsx`, version desktop et mobile drawer) pour éviter les redondances dans l'accès aux pages.
+3. **Harmonisation et diversification des icônes** pour éviter la répétition de l'étoile (`Sparkles`) :
+   - **Défis / Missions** : Icône `Trophy` (au lieu de `Sparkles`).
+   - **Mur Public (Feed)** : Icône `Brain` (au lieu de `Sparkles`), renforçant le concept de "Cerveau Collectif".
+   - **Laboratoire / Générateur IA** : Icône `Beaker` (au lieu de `Sparkles`).
+**Pourquoi** : Améliorer la clarté de la navigation, donner une identité propre à chaque section de l'application et éviter la confusion cognitive générée par l'utilisation d'une même icône pour des fonctionnalités différentes.
+**Statut** : Complété et compilé avec succès.
+
+## Décision #17 : Affichage des badges "Kit disponible" sur les points chauds de l'application
+**Décision** :
+1. **Intégration d'un badge "📦 Kit disponible"** sur la carte du défi actif de la semaine sur le Dashboard Parent (`profiles.index.tsx`).
+2. **Intégration du badge "📦 Kit disponible"** sur les cartes de défis de la liste (`profiles.$profileId.challenges.tsx`) pour chaque défi ayant des matériels correspondants aux produits actifs de la boutique.
+3. **Chargement optimisé en mémoire** : La liste des produits actifs de la boutique est requêtée une seule fois à l'initialisation du composant parent, puis le calcul d'intersection des tags se fait de manière instantanée en mémoire côté client sans multiplier les requêtes à la base de données.
+**Pourquoi** : Augmenter radicalement la découvrabilité des kits physiques vendus par Génizio et inciter les parents à passer commande en amont ou en cours de réalisation du défi, directement depuis leurs principaux points de consultation de l'application.
+**Statut** : Complété et compilé avec succès.
+
+## Décision #18 : Vision & Roadmap — V4 (Le Kit comme point d'entrée vers le défi)
+**Décision (Potentiel Futur)** :
+*   **Concept de la V4** : Permettre d'inverser le tunnel d'achat classique (Activité → Kit) par une boucle inverse (Kit → Activités multiples). Le parent achète ou reçoit d'abord un kit physique (ex: "Kit Architecte Junior — carton + colle"), et l'IA Naya génère à la demande des défis d'apprentissage sur-mesure pour l'enfant en se basant *exclusivement* sur les composants de ce kit déjà possédé.
+*   **Pourquoi** : Augmente la valeur perçue des kits matériels (un seul achat physique débloque des dizaines d'activités différentes générées à l'infini par l'IA) et élimine totalement la friction de l'attente de livraison entre le choix du défi et sa réalisation.
+**Statut** : **Implémenté** (2026-07-17, hors mémoire jusqu'ici) — route `/boutique.tsx`, accessible depuis `AppTabBar` et `AppHeader`. Chaque produit affiche "Déjà utilisé dans X défis de vos enfants" (compteur calculé côté client par intersection de `material_tags`) + deux actions : "Générer un défi ⚡" (appelle `generateSingleChallenge` avec `homeMaterials` pré-rempli par le nom/tags du kit, puis `assignTemplateChallenge`) et "Commander via WhatsApp" (appelle `createOrder` puis ouvre `wa.me`). Voir [[#19]] pour l'audit qui a confirmé cet état.
+
+## Décision #19 : Audit du business model boutique — le parcours était déjà largement construit, un point chaud manquait
+**Contexte** : demande utilisateur explicite (2026-07-17) — "faut proposer aussi aux parents d'acheter les matériaux [...] c'est le business modèle qu'il faut bien intégrer" — avec invocation de `/product-intelligence-architect` pour challenger le placement actuel (jugé enfoui dans les cartes de défi ouvertes).
+**Constat à l'audit** : une session parallèle de l'utilisateur avait déjà construit, hors mémoire, l'essentiel de la stratégie identifiée par l'analyse produit — badge "📦 Kit disponible" sur la carte active + cartes fermées (Décision #17), `KitSuggestion` dans la carte de défi ouverte, un flux post-génération dans le Labo qui propose le kit juste après l'assignation d'un défi (le point le plus chaud — enthousiasme au pic), la page `/boutique` dédiée (V4, Décision #18), un `WhatsAppFAB` global, et une vraie table `orders` (Décision #14) au lieu du simple lien `wa.me` sans trace. Seul trou identifié : le bloc d'achat *actionnable* (liste produits + prix + bouton "Commander") n'apparaissait pas sur la carte de défi actif du **dashboard** (`profiles.index.tsx`) — seul le badge y était, obligeant le parent à cliquer "Commencer le défi" pour atteindre le vrai bouton de commande.
+**Décision** : ajouter `<KitSuggestion childId challengeId materialTags challengeTitle childName>` directement sous les puces de matériaux de la carte active du dashboard, juste avant les CTA "Commencer le défi"/"Mode Enfant" — le dashboard est l'écran le plus consulté, donc le point de plus forte exposition pour la conversion.
+**Bug annexe trouvé et corrigé** : `src/integrations/supabase/types.ts` n'avait jamais été régénéré après l'application de la migration `20260717110000_add_supervisors_table.sql` (table `supervisors` existante en prod mais absente des types) — `npx tsc --noEmit` échouait sur ~10 erreurs dans `supervisors.functions.ts`/`AppHeader.tsx`. Corrigé par régénération via l'API Management (`GET /v1/projects/{id}/types/typescript`), 0 erreur `tsc` ensuite.
+**Vérifié** : `tsc --noEmit` propre · test en direct via navigateur preview — `material_tags` d'un défi actif temporairement mis à `{colle}` (produit réel en catalogue), badge + bloc kit complet (produit, prix, total, bouton WhatsApp) confirmés visibles sur le dashboard, aucune erreur console, puis valeur de test restaurée à `{}`.
+**Non fait / hors périmètre de cette session** : aucune nouvelle feature de fond — l'essentiel du travail était de l'audit + un point d'intégration manquant + une dette technique annexe. Le concept V4 "kit comme point d'entrée" (Décision #18) est déjà en code, pas seulement en vision.
+
+
+
+
+

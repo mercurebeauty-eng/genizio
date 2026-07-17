@@ -85,7 +85,7 @@ export function ProfileDialog({
     <div className="fixed inset-0 z-50 grid place-items-center bg-ink/60 p-4" onClick={onClose}>
       <div
         onClick={(e) => e.stopPropagation()}
-        className="max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-3xl bg-white p-8 shadow-soft"
+        className="max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-3xl border-[3px] border-ink bg-white p-8 shadow-brutal"
       >
         <div className="mb-6 flex items-center gap-4">
           <div
@@ -106,7 +106,7 @@ export function ProfileDialog({
             <input
               value={draft.name}
               onChange={(e) => setDraft({ ...draft, name: e.target.value.slice(0, 40) })}
-              className="w-full rounded-xl border border-ink/10 px-4 py-3 text-sm outline-none focus:border-brand"
+              className="w-full rounded-xl border-[3px] border-ink px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-brand shadow-brutal-sm"
             />
           </div>
 
@@ -133,7 +133,7 @@ export function ProfileDialog({
                 value={draft.city ?? ""}
                 onChange={(e) => setDraft({ ...draft, city: e.target.value.slice(0, 60) })}
                 placeholder="Dakar"
-                className="w-full rounded-xl border border-ink/10 px-4 py-3 text-sm outline-none focus:border-brand"
+                className="w-full rounded-xl border-[3px] border-ink px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-brand shadow-brutal-sm"
               />
             </div>
             <div>
@@ -144,7 +144,7 @@ export function ProfileDialog({
                 value={draft.country ?? ""}
                 onChange={(e) => setDraft({ ...draft, country: e.target.value.slice(0, 60) })}
                 placeholder="Sénégal"
-                className="w-full rounded-xl border border-ink/10 px-4 py-3 text-sm outline-none focus:border-brand"
+                className="w-full rounded-xl border-[3px] border-ink px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-brand shadow-brutal-sm"
               />
             </div>
           </div>
@@ -161,7 +161,7 @@ export function ProfileDialog({
                   onClick={() => setDraft({ ...draft, avatar_color: c.key })}
                   aria-label={c.key}
                   className={`size-10 rounded-full ${c.cls} transition-all ${
-                    draft.avatar_color === c.key ? "ring-2 ring-ink ring-offset-2" : "opacity-70"
+                    draft.avatar_color === c.key ? "border-[3px] border-ink shadow-brutal-sm" : "opacity-70 border-2 border-transparent"
                   }`}
                 />
               ))}
@@ -181,8 +181,8 @@ export function ProfileDialog({
                     type="button"
                     onClick={() => toggle(i)}
                     className={
-                      "rounded-full px-3 py-1 text-xs font-medium transition-all " +
-                      (on ? "bg-brand text-white" : "bg-ink/5 text-ink/70 hover:bg-ink/10")
+                      "rounded-full px-3 py-1 text-xs font-bold border-2 transition-all " +
+                      (on ? "bg-brand border-ink text-white" : "bg-white border-ink/20 text-ink/70 hover:border-ink")
                     }
                   >
                     {i}
@@ -198,14 +198,14 @@ export function ProfileDialog({
         <div className="mt-8 flex justify-end gap-3">
           <button
             onClick={onClose}
-            className="rounded-2xl border-2 border-ink/10 px-5 py-2.5 text-sm font-bold hover:bg-stone-50"
+            className="rounded-2xl border-[3px] border-ink bg-white px-5 py-2.5 text-sm font-bold shadow-brutal-sm hover:-translate-y-0.5 active:translate-y-0 transition-all"
           >
             Annuler
           </button>
           <button
             onClick={save}
             disabled={busy}
-            className="rounded-2xl bg-brand px-6 py-2.5 text-sm font-bold text-white hover:bg-brand-dark disabled:opacity-60"
+            className="rounded-2xl border-[3px] border-ink bg-brand px-6 py-2.5 text-sm font-bold text-white shadow-brutal hover:-translate-y-0.5 active:translate-y-0 active:shadow-none transition-all disabled:opacity-60"
           >
             {busy ? "…" : "Enregistrer"}
           </button>

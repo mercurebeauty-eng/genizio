@@ -42,7 +42,7 @@ const DOMAIN_COLORS: Record<string, string> = {
   Entrepreneuriat: "bg-sky-500 text-white",
 };
 
-export function QuestPage() {
+function QuestPage() {
   const { profileId } = Route.useParams();
   const { session, loading } = useSession();
   const navigate = useNavigate();
@@ -61,7 +61,7 @@ export function QuestPage() {
   const loadChallenges = async () => {
     setFetching(true);
     const [c, ch] = await Promise.all([
-      supabase.from("child_profiles").select("id, name, avatar_color").eq("id", profileId).maybeSingle(),
+      supabase.from("child_profiles").select("id, name, avatar_color").eq("id", profileId).eq("user_id", session!.user.id).maybeSingle(),
       supabase.from("challenges").select("*").eq("child_id", profileId)
     ]);
     setChild((c.data as Child) ?? null);
@@ -239,7 +239,7 @@ export function QuestPage() {
                 setCurrentStepIndex(0);
               }
             }}
-            className="rounded-full bg-white/80 hover:bg-white p-2.5 shadow-sm border border-ink/5 text-ink/50 hover:text-ink transition-all cursor-pointer"
+            className="rounded-full bg-white p-2.5 border-[3px] border-ink shadow-brutal-sm text-ink hover:-translate-y-0.5 active:translate-y-0 transition-all cursor-pointer"
           >
             <X className="size-5" />
           </button>
@@ -247,9 +247,9 @@ export function QuestPage() {
 
         {/* Progress bar */}
         {!isCompletedScreen && (
-          <div className="w-full max-w-4xl mx-auto bg-stone-200/50 h-3 rounded-full mb-10 overflow-hidden relative z-10 border border-white">
+          <div className="w-full max-w-4xl mx-auto bg-white h-4 rounded-full mb-10 overflow-hidden relative z-10 border-[3px] border-ink shadow-brutal-sm">
             <div
-              className="bg-gradient-to-r from-brand via-sky to-leaf h-full transition-all duration-500 rounded-full"
+              className="bg-brand h-full transition-all duration-500 border-r-[3px] border-ink"
               style={{ width: `${((currentStepIndex + 1) / steps.length) * 100}%` }}
             />
           </div>
@@ -260,22 +260,20 @@ export function QuestPage() {
           <div className="md:col-span-2 flex flex-col items-center justify-center text-center">
             <div className="relative flex flex-col items-center gap-6">
               {/* Mascot Face */}
-              <div className="relative size-32 md:size-40 rounded-full border-4 border-white shadow-2xl flex items-center justify-center animate-bounce duration-1000 overflow-hidden bg-white shrink-0">
+              <div className="relative size-32 md:size-40 rounded-full border-[4px] border-ink shadow-brutal flex items-center justify-center animate-bounce duration-1000 overflow-hidden bg-white shrink-0">
                 <img src={nayaAvatar} alt="Naya" className="h-full w-full object-cover" />
               </div>
               
               {/* Speech bubble */}
-              <div className="bg-white border border-ink/5 p-4 rounded-3xl shadow-soft max-w-xs text-sm font-bold text-ink leading-relaxed relative">
+              <div className="bg-white border-[3px] border-ink p-4 rounded-3xl shadow-brutal-sm max-w-xs text-sm font-black text-ink leading-relaxed relative">
                 {getCompanionSpeech()}
-                <div className="absolute top-1/2 right-full -translate-y-1/2 border-8 border-transparent border-r-white hidden md:block" />
               </div>
             </div>
           </div>
 
           {/* Right Column: Interaction Card */}
           <div className="md:col-span-3 w-full">
-            <div className="bg-white rounded-3xl p-8 shadow-soft border border-ink/5 min-h-[340px] flex flex-col justify-between relative overflow-hidden">
-              <div className="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-brand via-sky to-leaf" />
+            <div className="bg-white rounded-3xl p-8 border-[3px] border-ink shadow-brutal min-h-[340px] flex flex-col justify-between relative overflow-hidden">
 
               {!isCompletedScreen ? (
                 <>
@@ -297,19 +295,19 @@ export function QuestPage() {
                         copy[currentStepIndex] = !copy[currentStepIndex];
                         setStepChecked(copy);
                       }}
-                      className={`w-full rounded-2xl p-5 border-2 border-b-4 text-left font-black text-lg flex items-center justify-between transition-all cursor-pointer transform duration-100 active:border-b-2 active:translate-y-[2px] ${
+                      className={`w-full rounded-2xl p-5 border-[3px] text-left font-black text-lg flex items-center justify-between transition-all cursor-pointer hover:-translate-y-0.5 active:translate-y-0 ${
                         stepChecked[currentStepIndex]
-                          ? "bg-emerald-50 border-emerald-500 text-emerald-800 shadow-sm"
-                          : "bg-white border-ink/15 text-ink/75 hover:bg-stone-50 hover:border-brand/40"
+                          ? "bg-leaf border-ink text-white shadow-brutal-sm"
+                          : "bg-white border-ink shadow-brutal-sm text-ink"
                       }`}
                     >
                       <span>{stepChecked[currentStepIndex] ? "✓ C'est fait !" : "J'ai terminé cette étape !"}</span>
-                      <div className={`size-7 rounded-full border-2 flex items-center justify-center transition-all ${
+                      <div className={`size-8 rounded-full border-[3px] flex items-center justify-center transition-all ${
                         stepChecked[currentStepIndex]
-                          ? "border-emerald-500 bg-emerald-500 text-white"
-                          : "border-ink/20 bg-stone-50"
+                          ? "border-ink bg-white text-ink"
+                          : "border-ink bg-surface"
                       }`}>
-                        {stepChecked[currentStepIndex] && <Check className="size-4 stroke-[3px]" />}
+                        {stepChecked[currentStepIndex] && <Check className="size-5 stroke-[3px]" />}
                       </div>
                     </button>
                   </div>
@@ -326,7 +324,7 @@ export function QuestPage() {
                         }
                       }}
                       disabled={!stepChecked[currentStepIndex]}
-                      className="rounded-2xl bg-brand border-b-4 border-brand-dark px-7 py-3.5 text-sm font-black text-white hover:bg-brand shadow-brand hover:brightness-105 active:border-b-0 active:translate-y-[4px] transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 cursor-pointer shrink-0"
+                      className="rounded-2xl border-[3px] border-ink bg-brand px-7 py-3.5 text-sm font-black text-white shadow-brutal hover:-translate-y-0.5 active:translate-y-0 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 cursor-pointer shrink-0"
                     >
                       <span>Suivant</span>
                       <ChevronRight className="size-4" />
@@ -354,7 +352,7 @@ export function QuestPage() {
                       onChange={(e) => setChildFeedback(e.target.value.slice(0, 1000))}
                       rows={3}
                       placeholder="J'ai adoré construire le pont mais le pistolet à colle était un peu difficile..."
-                      className="w-full rounded-2xl border border-ink/10 px-4 py-3 text-sm font-semibold outline-none focus:border-brand transition-all resize-none bg-surface/50"
+                      className="w-full rounded-2xl border-[3px] border-ink px-4 py-3 text-sm font-bold outline-none focus:ring-2 focus:ring-brand bg-white shadow-brutal-sm resize-none"
                     />
                   </div>
 
@@ -362,7 +360,7 @@ export function QuestPage() {
                     <button
                       onClick={handleFinishQuest}
                       disabled={completing}
-                      className="flex-1 rounded-2xl bg-emerald-500 border-b-4 border-emerald-600 px-6 py-4 text-base font-black text-white shadow-lg active:border-b-0 active:translate-y-[4px] hover:brightness-105 transition-all flex items-center justify-center gap-2 cursor-pointer disabled:bg-emerald-400"
+                      className="flex-1 rounded-2xl border-[3px] border-ink bg-leaf px-6 py-4 text-base font-black text-white shadow-brutal active:translate-y-0 hover:-translate-y-0.5 transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
                     >
                       {completing ? (
                         <>
@@ -398,7 +396,7 @@ export function QuestPage() {
         </h1>
         <Link 
           to="/profiles" 
-          className="inline-flex items-center gap-2 rounded-full bg-white/80 backdrop-blur px-4 py-2 text-xs font-extrabold text-ink/50 hover:text-ink/80 hover:bg-white shadow-sm border border-ink/5 transition-all"
+          className="inline-flex items-center gap-2 rounded-full bg-white px-4 py-2 text-xs font-extrabold text-ink/50 hover:text-ink/80 hover:bg-white shadow-brutal-sm border-2 border-ink transition-all"
         >
           <ArrowLeft className="size-3.5" />
           Retour parent
@@ -409,7 +407,7 @@ export function QuestPage() {
         
         {/* Quest Map Node Tree (Screen 1j) */}
         {mapNodes.length > 0 && (
-          <div className="w-full mb-12 py-8 bg-white/50 backdrop-blur-sm rounded-3xl border border-ink/5 p-6 shadow-soft">
+          <div className="w-full mb-12 py-8 bg-white rounded-3xl border-[3px] border-ink p-6 shadow-brutal">
             <h2 className="font-display text-xs font-black text-ink/40 mb-8 uppercase tracking-widest">Mon chemin de découverte</h2>
             <div className="flex items-center justify-between px-4 md:px-12 relative max-w-md mx-auto">
               
@@ -423,7 +421,7 @@ export function QuestPage() {
                 if (node.type === "completed") {
                   return (
                     <div key={node.challenge.id} className={`flex flex-col items-center gap-2 relative z-10 ${offset}`}>
-                      <div className="size-11 rounded-full bg-emerald-500 text-white border-4 border-white shadow-md flex items-center justify-center font-bold text-sm">
+                      <div className="size-11 rounded-full bg-emerald-500 text-white border-[3px] border-ink shadow-brutal-sm flex items-center justify-center font-bold text-sm">
                         <Check className="size-5 stroke-[3px]" />
                       </div>
                       <span className="text-[10px] font-black text-emerald-600 uppercase tracking-wider">Fait</span>
@@ -434,7 +432,7 @@ export function QuestPage() {
                 if (node.type === "active") {
                   return (
                     <div key={node.challenge.id} className={`flex flex-col items-center gap-2 relative z-10 ${offset}`}>
-                      <div className={`size-14 rounded-full ${color} border-4 border-white shadow-xl flex items-center justify-center font-bold text-base animate-pulse`}>
+                      <div className={`size-14 rounded-full ${color} border-[3px] border-ink shadow-brutal flex items-center justify-center font-bold text-base animate-pulse`}>
                         ★
                       </div>
                       <span className="text-[11px] font-black text-ink uppercase tracking-wider max-w-[120px] truncate">{node.challenge.title}</span>
@@ -445,10 +443,10 @@ export function QuestPage() {
                 // Upcoming
                 return (
                   <div key={node.challenge.id} className={`flex flex-col items-center gap-2 relative z-10 ${offset} opacity-40`}>
-                    <div className="size-10 rounded-full bg-white border-2 border-dashed border-ink/30 flex items-center justify-center text-ink/30">
+                    <div className="size-10 rounded-full bg-white border-[3px] border-dashed border-ink flex items-center justify-center text-ink">
                       <Circle className="size-4 fill-current opacity-20" />
                     </div>
-                    <span className="text-[10px] font-black text-ink/50 uppercase tracking-wider">Prochain</span>
+                    <span className="text-[10px] font-black text-ink uppercase tracking-wider">Prochain</span>
                   </div>
                 );
               })}
@@ -459,13 +457,12 @@ export function QuestPage() {
         <NayaAvatar size="md" className="mb-6" thoughts={activeChallenge ? ["Hop, on s'y met !"] : ["Bientôt de nouveaux défis !"]} />
 
         {activeChallenge ? (
-          <div className="bg-white rounded-3xl p-8 shadow-soft border border-brand/10 w-full animate-in zoom-in-95 duration-500 relative overflow-hidden text-left">
-            <div className="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-brand via-sky to-leaf" />
+          <div className="bg-white rounded-3xl p-8 border-[3px] border-ink shadow-brutal w-full animate-in zoom-in-95 duration-500 relative overflow-hidden text-left">
             <div className="mb-4 flex items-center justify-between">
-              <span className="inline-block rounded-full bg-brand/10 px-3.5 py-1 text-xs font-black uppercase tracking-wider text-brand">
+              <span className="inline-block rounded-full border-[3px] border-ink bg-brand px-3.5 py-1 text-xs font-black uppercase tracking-widest text-white shadow-brutal-sm">
                 Mission : {activeChallenge.domain}
               </span>
-              <span className="text-xs font-semibold text-ink/40">⏱ {activeChallenge.duration}</span>
+              <span className="text-xs font-black text-ink/40">⏱ {activeChallenge.duration}</span>
             </div>
             <h2 className="font-display text-2xl font-black text-ink leading-tight mb-3">
               {activeChallenge.title}
@@ -479,7 +476,7 @@ export function QuestPage() {
                 <p className="text-[10px] font-black uppercase tracking-widest text-ink/40 mb-3">Matériel à rassembler :</p>
                 <div className="flex flex-wrap gap-2">
                   {materials.map((m, i) => (
-                    <span key={i} className="inline-flex items-center gap-1.5 rounded-full bg-surface px-3.5 py-1.5 text-xs font-bold text-ink/80 border border-ink/5 shadow-sm">
+                    <span key={i} className="inline-flex items-center gap-1.5 rounded-full border-2 border-ink bg-white px-3.5 py-1.5 text-xs font-bold text-ink shadow-brutal-sm">
                       📦 {m}
                     </span>
                   ))}
@@ -489,14 +486,14 @@ export function QuestPage() {
 
             <button
               onClick={() => setIsQuestActive(true)}
-              className="inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-brand border-b-4 border-brand-dark px-8 py-4 text-base font-black text-white active:border-b-0 active:translate-y-[4px] shadow-brand hover:brightness-105 transition-all cursor-pointer"
+              className="inline-flex w-full items-center justify-center gap-2 rounded-2xl border-[3px] border-ink bg-brand px-8 py-4 text-base font-black text-white shadow-brutal hover:-translate-y-0.5 active:translate-y-0 transition-all cursor-pointer"
             >
               <Play className="size-5 fill-current" />
               Commencer la mission ! 🚀
             </button>
           </div>
         ) : (
-          <div className="bg-white rounded-3xl p-8 shadow-soft border border-ink/5 w-full">
+          <div className="bg-white rounded-3xl p-8 border-[3px] border-ink shadow-brutal w-full text-center">
             <p className="text-ink/65 text-lg font-bold">
               Tu n'as pas de mission active pour le moment ! Demande à tes parents de t'en attribuer une. 😊
             </p>

@@ -120,3 +120,72 @@ en lui. »*
    départ (préférence utilisateur explicite, cf. [[genizio-etat-code]]).
 3. **Analyse IA :** chaque validation de défi enrichit le profil cognitif/talent de l'enfant
    (Carte des Talents), sans jamais noter/juger l'enfant.
+
+## Extension vision — écosystème complet (brainstorm du 2026-07-16)
+
+> Source : `C:\Users\USER\Documents\GÉNIZIO brainstorm supplémentaire.md` (fichier personnel de
+> l'utilisateur, hors repo). Détaille et confirme la "Trajectoire long terme" ci-dessus. Résumé
+> fidèle, pas une nouvelle direction — c'est la même vision, plus détaillée.
+
+**Génizio Discover** — le nom du point d'entrée gratuit (l'app actuelle = ceci). Naya y est
+définie comme "pas un professeur, pas un juge — un guide" qui observe pour révéler, jamais pour
+classer.
+
+**Les Guildes Génizio** — la communauté s'organise autour de 6 familles de talents (pas les 9
+clés Gardner utilisées dans la Carte des Talents — vocabulaire distinct, à ne pas confondre) :
+Bâtisseurs (architecture/construction/ingénierie), Inventeurs (technologie/robotique/innovation),
+Explorateurs (nature/sciences/découvertes), Créateurs (art/design/expression), Stratèges
+(leadership/entrepreneuriat/négociation), Protecteurs du Vivant (agriculture/environnement/
+biodiversité). Permettent projets collaboratifs, rencontres, défis collectifs, mentorat entre
+pairs — feature non commencée, aucune table `guilds` n'existe encore.
+
+**Portfolio vivant** — confirmé comme "pas un bulletin scolaire" mais un historique réel
+(projets, défis, expériences, concours, compétences) — déjà partiellement construit dans l'app
+actuelle (écran Portfolio).
+
+**Défis et Concours** — les concours restent accessibles à tous, "pas conçus pour sélectionner
+une élite" mais pour encourager la création (cf. backlog "Concours & Prix mensuels").
+
+**Modèle économique long terme** (l'app gratuite reste le point d'entrée, l'accessibilité est un
+principe explicite — "ne doit pas être réservée aux familles les plus aisées") :
+- **Kits Génizio** — kits matériel thématiques (Inventeur, Robotique, Agronome, Architecte,
+  Créateur, Scientifique) pour rendre l'expérimentation physique accessible, pas un objectif de
+  vente en soi.
+- **Génizio Camps** — camps d'immersion (Innovation, Entrepreneuriat, Nature, IA, Sciences,
+  Créativité) — "l'une des premières sources de revenus du projet" (explicitement identifié
+  comme priorité monétisation).
+- **Génizio Labs** — espaces physiques d'expérimentation, "prolongement réel de l'application".
+- **Génizio Centers** — accompagnement avancé (coaching, suivi pédagogique, ateliers, orientation,
+  mentorat).
+
+**Données au service du potentiel** — les données d'usage doivent, à terme, permettre de
+répondre à des questions comme "quels environnements favorisent certains talents ?" — mais avec
+la priorité affichée "servir le développement des enfants" (pas d'exploitation commerciale des
+données comme fin en soi).
+
+**La Fondation Génizio** — ambition long terme : identifier et accompagner des jeunes talents de
+milieux défavorisés, financée indirectement par les revenus commerciaux ci-dessus.
+
+**Rôles de plateforme à anticiper dans le modèle de données** (au-delà de Parent/Enfant actuels) :
+Superviseur (accompagne plusieurs enfants), Mentor (expert volontaire), École (gère plusieurs
+élèves), Administrateur (pilote l'écosystème), Fondation (suit les talents soutenus). Aucun de
+ces rôles n'existe dans le schéma actuel (`child_profiles` n'a que parent/enfant).
+
+## Génizio Admin OS (brainstorm séparé, même fichier source)
+
+Spec pour un dashboard interne/admin — totalement distinct de l'app parent/enfant actuelle,
+**aucune implémentation commencée**. Modules envisagés : Vue Exécutive (KPIs globaux), Cartographie
+géographique (par ville, comme Sharpen-style heatmap), Module Talents (répartition par guilde +
+détection auto de profils forts, ex. "120 enfants montrent un fort potentiel entrepreneurial"),
+Module Défis (popularité, taux d'abandon, difficulté perçue), Module IA Naya (coût par requête/
+jour/mois/utilisateur — **surveillance de coût explicitement identifiée comme critique**), Module
+Communauté (modération), Module Événements, Module Écoles, Module Fondation, Module Commerce
+(kits).
+
+**Support WhatsApp-first** — idée forte et validée par l'utilisateur ("je pense que tu as
+totalement raison") : dans le contexte africain, un bouton WhatsApp global partout dans l'app
+("Besoin d'aide ? 👉 Discuter avec un conseiller") plutôt que ticket/email/formulaire. Idée
+d'aller plus loin — Naya pré-remplit le message avec le contexte utilisateur avant l'ouverture de
+WhatsApp (ex. "Bonjour, je suis le parent de Mariam. Son profil principal est Créatrice. Elle a
+réalisé 23 défis.") pour que le support humain reçoive déjà le contexte. Rien de tout cela n'est
+implémenté — pas de bouton WhatsApp dans l'app actuelle.

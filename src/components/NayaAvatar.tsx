@@ -22,7 +22,7 @@ const DEFAULT_THOUGHTS = [
   "Ton talent grandit, je le vois.",
 ];
 
-export function NayaAvatar({ size = "md", thoughts = DEFAULT_THOUGHTS, className = "" }: NayaAvatarProps) {
+export function NayaAvatar({ size = "md", thoughts, className = "" }: NayaAvatarProps) {
   const [isHovered, setIsHovered] = useState(false);
   const [isClicked, setIsClicked] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
@@ -31,15 +31,22 @@ export function NayaAvatar({ size = "md", thoughts = DEFAULT_THOUGHTS, className
   const [particles, setParticles] = useState<Array<{ id: number; x: number; y: number; kind: number }>>([]);
   const px = SIZES[size];
 
+  // Allow all avatars to have thoughts, but position them above the head to avoid colliding with text on the right
+  const activeThoughts = thoughts !== undefined ? thoughts : DEFAULT_THOUGHTS;
+
   useEffect(() => {
+    if (activeThoughts.length === 0) {
+      setShowThought(false);
+      return;
+    }
     const interval = setInterval(() => {
-      setThoughtIndex((prev) => (prev + 1) % thoughts.length);
+      setThoughtIndex((prev) => (prev + 1) % activeThoughts.length);
       setShowThought(true);
       const hide = setTimeout(() => setShowThought(false), 3200);
       return () => clearTimeout(hide);
     }, 6000);
     return () => clearInterval(interval);
-  }, [thoughts.length]);
+  }, [activeThoughts.length]);
 
   const handleClick = () => {
     setIsClicked(true);
@@ -50,8 +57,10 @@ export function NayaAvatar({ size = "md", thoughts = DEFAULT_THOUGHTS, className
       kind: Math.floor(Math.random() * 3),
     }));
     setParticles(burst);
-    setThoughtIndex((prev) => (prev + 1) % thoughts.length);
-    setShowThought(true);
+    if (activeThoughts.length > 0) {
+      setThoughtIndex((prev) => (prev + 1) % activeThoughts.length);
+      setShowThought(true);
+    }
     setTimeout(() => {
       setIsClicked(false);
       setParticles([]);
@@ -82,19 +91,21 @@ export function NayaAvatar({ size = "md", thoughts = DEFAULT_THOUGHTS, className
       </AnimatePresence>
 
       <AnimatePresence>
-        {showThought && (
+        {(showThought || isHovered) && activeThoughts.length > 0 && (
           <motion.div
-            className="absolute -top-3 left-full z-20 ml-1 w-max max-w-[11rem] -translate-y-full cursor-default rounded-2xl border border-ink/10 bg-white px-3 py-2 shadow-soft"
-            initial={{ opacity: 0, scale: 0.7, x: -8 }}
-            animate={{ opacity: 1, scale: 1, x: 0 }}
-            exit={{ opacity: 0, scale: 0.7 }}
-            transition={{ duration: 0.25 }}
+            className="absolute -top-3.5 left-1/2 z-30 w-max max-w-[10rem] cursor-default rounded-2xl border-[3px] border-ink bg-white px-3 py-2 shadow-brutal-sm text-center"
+            initial={{ opacity: 0, scale: 0.6, y: 15, x: "-50%" }}
+            animate={{ opacity: 1, scale: 1, y: 0, x: "-50%" }}
+            exit={{ opacity: 0, scale: 0.6, y: 15, x: "-50%" }}
+            transition={{ type: "spring", stiffness: 300, damping: 20 }}
           >
-            <p className="text-xs font-semibold text-ink">{thoughts[thoughtIndex]}</p>
-            <div className="absolute -bottom-1.5 left-4 size-3 rotate-45 border-b border-r border-ink/10 bg-white" />
+            <p className="text-xs font-semibold leading-snug text-ink">{activeThoughts[thoughtIndex]}</p>
+            <div className="absolute -bottom-[7px] left-1/2 -translate-x-1/2 size-3 rotate-45 border-r-[3px] border-b-[3px] border-ink bg-white" />
           </motion.div>
         )}
       </AnimatePresence>
+
+
 
       <motion.div
         drag
@@ -130,6 +141,34 @@ export function NayaAvatar({ size = "md", thoughts = DEFAULT_THOUGHTS, className
           className="relative h-full w-full object-contain drop-shadow-lg"
           draggable={false}
         />
+
+        {/* Blink overlay: two eyelid pills, invisible until the periodic blink */}
+        {[
+          { left: "38.2%", top: "56%" },
+          { left: "48%", top: "56%" },
+        ].map((eye, i) => (
+          <motion.div
+            key={i}
+            className="pointer-events-none absolute rounded-full bg-[#8a4a30]"
+            style={{
+              left: eye.left,
+              top: eye.top,
+              width: "7.5%",
+              height: "7.5%",
+              x: "-50%",
+              y: "-50%",
+              transformOrigin: "center",
+            }}
+            animate={{ scaleY: [0, 0, 1, 0, 0] }}
+            transition={{
+              duration: 4.6,
+              repeat: Infinity,
+              repeatDelay: 0,
+              ease: "easeInOut",
+              times: [0, 0.93, 0.965, 0.99, 1],
+            }}
+          />
+        ))}
       </motion.div>
     </div>
   );

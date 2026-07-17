@@ -1,4 +1,4 @@
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useSession } from "@/hooks/use-session";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
@@ -18,6 +18,8 @@ function MentorsPage() {
   const { session, loading } = useSession();
   const navigate = useNavigate();
   const [childName, setChildName] = useState("");
+  const [fetchingChild, setFetchingChild] = useState(true);
+  const [childFound, setChildFound] = useState(false);
 
   useEffect(() => {
     if (!loading && !session) navigate({ to: "/auth", replace: true });
@@ -25,17 +27,32 @@ function MentorsPage() {
 
   useEffect(() => {
     if (!session) return;
+    setFetchingChild(true);
     supabase
       .from("child_profiles")
       .select("name")
       .eq("id", profileId)
-      .single()
+      .eq("user_id", session.user.id)
+      .maybeSingle()
       .then(({ data }) => {
+        setChildFound(!!data);
         if (data) setChildName(data.name);
+        setFetchingChild(false);
       });
   }, [session, profileId]);
 
-  if (loading || !session) return null;
+  if (loading || !session || fetchingChild) return null;
+
+  if (!childFound) {
+    return (
+      <div className="grid min-h-screen place-items-center bg-surface text-ink">
+        <div className="text-center">
+          <p className="mb-4 font-bold">Profil introuvable.</p>
+          <Link to="/profiles" className="underline text-sm opacity-80 hover:opacity-100">Retour</Link>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-surface pb-24 text-ink md:pb-6">

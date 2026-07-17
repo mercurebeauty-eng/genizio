@@ -10,11 +10,15 @@
 - [Backlog](genizio_backlog.md) — tout ce qui est différé, avec pourquoi
 
 ## 📊 Status Overview
-**Last Updated:** 2026-07-16 | vérifié contre `main` @ `561152e` + modifications non commitées de ce jour
+**Last Updated:** 2026-07-17 | vérifié contre `main` @ `561152e` + modifications non commitées de ce jour
 - ✅ Mergé/réel (commit `561152e`) : Dashboard parent, Laboratoire, Mur de célébration, Flux de validation IA, `.env` retiré du suivi git.
 - ✅ Corrigé en production (2026-07-16, hors git) : faille RLS sur `child_profiles` qui exposait tous les profils enfants à tous les comptes — voir [[genizio-decisions]] #10. Migration correspondante ajoutée au repo.
 - 🟡 En cours, non commité (session du 2026-07-16) : renommage marque Génizio, favicon complet, typographie Fredoka, auth Google-only, séparation marque Génizio / mentor Naya + avatar animé implémenté — voir [[genizio-etat-code]] pour le détail des fichiers touchés.
 - 🔵 Conçu mais PAS commencé : Financement/Concours sponsorisés, refonte UI globale (discussion en pause, tentative d'import de wireframe Claude Design bloquée — voir [[genizio-backlog]]).
+- 📄 Vision étendue le 2026-07-16 (hors code) : brainstorm utilisateur détaillant l'écosystème complet (Guildes, Kits, Camps, Labs, Centers, Fondation) + spec d'un « Génizio Admin OS » interne + idée de support WhatsApp-first. Intégré à [[genizio-vision]] et [[genizio-backlog]].
+- ✅ Session du 2026-07-16 (suite) : une session parallèle de l'utilisateur avait ajouté un mur public "Cerveau Collectif" (posts + tags IA), un flux Naya complet (chat/quest/mentor invite déjà construits mais bruts) et une refonte neo-brutaliste partielle — **le dashboard `/profiles` ne compilait plus du tout** (JSX cassé + `RadarChart` non importé + faux pourcentages). Corrigé, puis neo-brutalisme généralisé à tout l'app (Portfolio/Mentors/Réglages/manage/landing/auth/vue mentor publique), avatar Naya détouré (fond transparent, avant c'était un PNG opaque avec damier peint en dur) + clignement des yeux ajouté en CSS.
+- ✅ Boutique de kits Phases 0-3 (2026-07-16/17) : catalogue produits, file de matériaux détectés, badges "Kit disponible" + bloc de commande actionnable sur tous les points chauds du parcours parent (dashboard, cartes de défi fermées/ouvertes, post-génération Labo), page `/boutique` dédiée (kit → génération de défi), table `orders` + suivi admin, `WhatsAppFAB` global. Voir [[genizio-decisions]] #12-14, #17-19, [[genizio-backlog]] pour Phase 4 (paiement in-app) restante.
+- ⚠️ Deux bugs trouvés et corrigés en marge (pas demandés, découverts en testant) : double-insertion de défi fantôme à chaque prévisualisation Labo, et les listes d'enfants (dashboard/manage/labo/stats compte) mélangeaient les familles à cause d'une policy RLS publique trop large pour ces contextes-là. Voir [[genizio-decisions]] #13. Un 3e trouvé le 2026-07-17 : `types.ts` jamais régénéré après la migration `supervisors`, cassait `tsc` — corrigé (voir [[genizio-decisions]] #19). Reste flagué : ownership des routes `/profiles/$profileId/*` elles-mêmes (voir [[genizio-backlog]]).
 
 ## 💡 Key Principles (Ne PAS Oublier)
 1. L'enfant au centre, mais le parent aux commandes (Validation Parentale).

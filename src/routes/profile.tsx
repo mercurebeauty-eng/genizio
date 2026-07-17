@@ -61,13 +61,13 @@ function ProfilePage() {
       }
 
       // Fetch stats
-      supabase.from("child_profiles").select("id", { count: "exact" }).then(({ count }) => {
+      supabase.from("child_profiles").select("id", { count: "exact" }).eq("user_id", session.user.id).then(({ count }) => {
         setChildCount(count || 0);
       });
       supabase.from("child_mentors").select("id", { count: "exact" }).then(({ count }) => {
         setMentorCount(count || 0);
       });
-      supabase.from("challenges").select("status, proof_image_url").then(({ data }) => {
+      supabase.from("challenges").select("status, proof_image_url").eq("user_id", session.user.id).then(({ data }) => {
         if (data) {
           setChallengeStats({
             total: data.length,
@@ -139,8 +139,8 @@ function ProfilePage() {
       <div className="mx-auto max-w-4xl grid gap-8 md:grid-cols-3">
         {/* Left Column: Summary Card */}
         <div className="md:col-span-1 space-y-6">
-          <div className="rounded-3xl border border-ink/5 bg-white p-6 shadow-soft text-center">
-            <div className="mx-auto grid size-16 place-items-center rounded-2xl bg-brand/10 text-brand text-2xl font-bold">
+          <div className="rounded-3xl border-[3px] border-ink bg-white p-6 shadow-brutal text-center">
+            <div className="mx-auto grid size-16 place-items-center rounded-2xl border-2 border-ink bg-brand/10 text-brand text-2xl font-bold">
               <User className="size-8" />
             </div>
             <h2 className="mt-4 font-display text-xl font-bold truncate">{session.user.email}</h2>
@@ -171,7 +171,7 @@ function ProfilePage() {
         {/* Right Column: Settings Sections */}
         <div className="md:col-span-2 space-y-6">
           {/* Phone Settings */}
-          <div className="rounded-3xl border border-ink/5 bg-white p-6 shadow-soft md:p-8">
+          <div className="rounded-3xl border-[3px] border-ink bg-white p-6 shadow-brutal md:p-8">
             <h3 className="font-display text-lg font-bold flex items-center gap-2 mb-2">
               <Phone className="size-5 text-brand" />
               Numéro de téléphone
@@ -190,7 +190,7 @@ function ProfilePage() {
                       setPhoneNumber("");
                     }
                   }}
-                  className="rounded-xl border border-ink/10 bg-stone-50 px-3 py-3 text-sm font-bold outline-none focus:border-brand cursor-pointer"
+                  className="rounded-xl border-[3px] border-ink bg-white px-3 py-3 text-sm font-bold outline-none focus:ring-2 focus:ring-brand cursor-pointer shadow-brutal-sm"
                 >
                   {COUNTRIES.map((c) => (
                     <option key={c.code} value={c.code}>
@@ -211,7 +211,7 @@ function ProfilePage() {
                       setPhoneNumber(val);
                     }}
                     placeholder="Numéro sans l'indicatif"
-                    className="w-full rounded-xl border border-ink/10 px-4 py-3 text-sm font-bold outline-none focus:border-brand"
+                    className="w-full rounded-xl border-[3px] border-ink px-4 py-3 text-sm font-bold outline-none focus:ring-2 focus:ring-brand shadow-brutal-sm"
                     required
                   />
                 </div>
@@ -223,7 +223,7 @@ function ProfilePage() {
               <button
                 type="submit"
                 disabled={savingPhone || !phoneNumber}
-                className="rounded-xl bg-brand px-6 py-2.5 text-sm font-bold text-white shadow-md shadow-brand/10 hover:bg-brand-dark transition-all disabled:opacity-50 flex items-center gap-2"
+                className="rounded-xl border-[3px] border-ink bg-brand px-6 py-2.5 text-sm font-bold text-white shadow-brutal hover:-translate-y-0.5 active:translate-y-0 active:shadow-none transition-all disabled:opacity-50 flex items-center gap-2"
               >
                 {savingPhone ? <Loader2 className="size-4 animate-spin" /> : <Check className="size-4" />}
                 <span>Enregistrer le numéro</span>
@@ -232,7 +232,7 @@ function ProfilePage() {
           </div>
 
           {/* Password Settings */}
-          <div className="rounded-3xl border border-ink/5 bg-white p-6 shadow-soft md:p-8">
+          <div className="rounded-3xl border-[3px] border-ink bg-white p-6 shadow-brutal md:p-8">
             <h3 className="font-display text-lg font-bold flex items-center gap-2 mb-2">
               <Lock className="size-5 text-amber-500" />
               Modifier le mot de passe
@@ -251,7 +251,7 @@ function ProfilePage() {
                     value={newPassword}
                     onChange={(e) => setNewPassword(e.target.value)}
                     placeholder="Min. 6 caractères"
-                    className="w-full rounded-xl border border-ink/10 px-4 py-3 text-sm outline-none focus:border-brand"
+                    className="w-full rounded-xl border-[3px] border-ink px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-brand shadow-brutal-sm"
                     required
                   />
                 </div>
@@ -264,7 +264,7 @@ function ProfilePage() {
                     value={confirmPassword}
                     onChange={(e) => setConfirmPassword(e.target.value)}
                     placeholder="Confirmez"
-                    className="w-full rounded-xl border border-ink/10 px-4 py-3 text-sm outline-none focus:border-brand"
+                    className="w-full rounded-xl border-[3px] border-ink px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-brand shadow-brutal-sm"
                     required
                   />
                 </div>
@@ -272,7 +272,7 @@ function ProfilePage() {
               <button
                 type="submit"
                 disabled={updatingPassword || !newPassword}
-                className="rounded-xl bg-ink px-6 py-2.5 text-sm font-bold text-white hover:bg-brand transition-all disabled:opacity-50 flex items-center gap-2"
+                className="rounded-xl border-[3px] border-ink bg-ink px-6 py-2.5 text-sm font-bold text-white shadow-brutal hover:-translate-y-0.5 active:translate-y-0 active:shadow-none transition-all disabled:opacity-50 flex items-center gap-2"
               >
                 {updatingPassword ? <Loader2 className="size-4 animate-spin" /> : <Check className="size-4" />}
                 <span>Modifier le mot de passe</span>
@@ -281,7 +281,7 @@ function ProfilePage() {
           </div>
 
           {/* Privacy & Consent Settings */}
-          <div className="rounded-3xl border border-ink/5 bg-white p-6 shadow-soft md:p-8 space-y-6 animate-in slide-in-from-bottom-4 duration-700">
+          <div className="rounded-3xl border-[3px] border-ink bg-white p-6 shadow-brutal md:p-8 space-y-6 animate-in slide-in-from-bottom-4 duration-700">
             <div>
               <h3 className="font-display text-lg font-bold flex items-center gap-2 mb-2">
                 <Shield className="size-5 text-brand" />
@@ -296,15 +296,15 @@ function ProfilePage() {
             <div className="space-y-3">
               <p className="text-[10px] font-extrabold uppercase tracking-widest text-ink/40">Vos données en un coup d'œil</p>
               <div className="grid grid-cols-3 gap-3">
-                <div className="rounded-2xl border border-ink/5 bg-surface/50 p-4 text-center">
+                <div className="rounded-2xl border-2 border-ink bg-surface p-4 text-center">
                   <p className="text-2xl font-black text-ink">{mentorCount}</p>
                   <p className="mt-1 text-[9px] font-bold text-ink/50 uppercase leading-snug">Mentors connectés</p>
                 </div>
-                <div className="rounded-2xl border border-ink/5 bg-surface/50 p-4 text-center">
+                <div className="rounded-2xl border-2 border-ink bg-surface p-4 text-center">
                   <p className="text-2xl font-black text-brand">{artifactsCount}</p>
                   <p className="mt-1 text-[9px] font-bold text-ink/50 uppercase leading-snug">Réalisations privées</p>
                 </div>
-                <div className="rounded-2xl border border-ink/5 bg-surface/50 p-4 text-center">
+                <div className="rounded-2xl border-2 border-ink bg-surface p-4 text-center">
                   <p className="text-2xl font-black text-emerald-600">Actif</p>
                   <p className="mt-1 text-[9px] font-bold text-ink/50 uppercase leading-snug">Consentement</p>
                 </div>
@@ -313,7 +313,7 @@ function ProfilePage() {
             
             <ConsentLedger />
             
-            <div className="pt-4 border-t border-ink/5 space-y-4">
+            <div className="pt-4 border-t-[3px] border-ink space-y-4">
               <ExportDataButton />
               <DeleteAccountDialog />
             </div>

@@ -9,11 +9,57 @@ const ChallengeSchema = z.object({
   duration: z.string(),
   steps: z.array(z.string()),
   materials: z.array(z.string()),
-  pedagogical_context: z.string().optional(),
+  material_tags: z.array(z.string()).optional(),
+  pedagogical_context: z.string().nullable().optional(),
   intelligences: z.array(z.string()).optional(),
   requires_supervision: z.boolean().default(false),
-  supervision_warning: z.string().optional(),
+  supervision_warning: z.string().nullable().optional(),
 });
+
+// Shop Phase 1: log material tags that don't match any active product yet, so the
+// admin sees what Naya is recommending most and can price it. Never breaks the
+// caller's real insert if this side-tracking fails.
+async function trackMaterialSuggestions(items: { material_tags: string[]; title: string }[]) {
+  try {
+    const allTags = Array.from(new Set(items.flatMap((i) => i.material_tags))).filter(Boolean);
+    if (allTags.length === 0) return;
+
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+
+    const { data: activeProducts } = await supabaseAdmin
+      .from("products")
+      .select("material_tags")
+      .eq("is_active", true);
+    const covered = new Set((activeProducts ?? []).flatMap((p) => p.material_tags ?? []));
+
+    const uncovered = allTags.filter((t) => !covered.has(t));
+    if (uncovered.length === 0) return;
+
+    for (const tag of uncovered) {
+      const sample = items.find((i) => i.material_tags.includes(tag))?.title ?? null;
+      const { data: existing } = await supabaseAdmin
+        .from("material_suggestions")
+        .select("id, seen_count")
+        .eq("tag", tag)
+        .maybeSingle();
+
+      if (existing) {
+        await supabaseAdmin
+          .from("material_suggestions")
+          .update({
+            seen_count: existing.seen_count + 1,
+            last_seen_at: new Date().toISOString(),
+            sample_challenge_title: sample,
+          })
+          .eq("id", existing.id);
+      } else {
+        await supabaseAdmin.from("material_suggestions").insert({ tag, sample_challenge_title: sample });
+      }
+    }
+  } catch (err) {
+    console.error("trackMaterialSuggestions failed (non-fatal):", err);
+  }
+}
 
 const DOMAINS = [
   "Sciences",
@@ -184,15 +230,25 @@ Profil :
 - Ville / pays : ${[child.city, child.country].filter(Boolean).join(", ") || "non précisé"}
 - Centres d'intérêt : ${(child.interests ?? []).join(", ") || "variés"}
 
+CONSIGNES DE DÉVELOPPEMENT LIÉES À L'ÂGE :
+Adapte strictement la forme, la complexité intellectuelle et la motricité requise pour le défi à l'âge exact de l'enfant :
+- De 1 à 3 ans (Exploration sensorielle et motrice) : Activités purement sensorielles (toucher, manipuler, transvaser, trier des couleurs/objets simples, textures, eau, sable). Aucune règle complexe, aucune consigne de motricité fine avancée (pas de découpage précis, pas d'écriture). Étape ultra-simple en 1 action à la fois.
+- De 4 à 7 ans (Phase exploratoire et imaginative) : Activités intégrant de l'imagination, des petits jeux de rôle ("fait semblant de"), du dessin, des petites manipulations de cause à effet guidées par le plaisir immédiat. L'action pratique doit primer sur la théorie.
+- De 8 à 11 ans (Phase structurée et concrète) : Proposer des projets de fabrication concrets (maquettes, expériences scientifiques simples, recettes simples, bricolage) avec des règles claires, des étapes méthodiques, et de l'observation logique ou sociale.
+- De 12 ans et + (Phase d'abstraction et d'analyse) : Permettre de la pensée critique, de la stratégie, des projets plus autonomes et complexes, de la logique conceptuelle (ex: coder un algorithme sur papier, déchiffrer des énigmes ou concevoir des objets élaborés).
+
 Contraintes :
 - Ancre les défis dans le contexte africain (matériaux locaux, réalités du quotidien, langues, marchés, agriculture, artisanat, culture).
 - Choisis parmi ces domaines : ${DOMAINS.join(", ")}.
 - Chaque défi doit être concret, réalisable à la maison ou dans le quartier, adapté à l'âge.
 - Étapes claires (3 à 6), matériaux simples et accessibles.
 - Ne répète pas ces titres déjà proposés : ${existingTitles.join(" | ") || "(aucun)"}.
+- Pour "material_tags" : un tag court en minuscules, sans accent, par matériau physique achetable
+  (ex: "carton", "cutter", "colle", "ampoule") — pas les objets déjà présents chez tout le monde
+  (eau, table, papier). Un tableau vide si rien d'achetable n'est nécessaire.
 
 Réponds STRICTEMENT en JSON valide avec ce format :
-{"challenges":[{"domain":"...","title":"...","description":"...","duration":"...","steps":["...","..."],"materials":["...","..."]}]}`;
+{"challenges":[{"domain":"...","title":"...","description":"...","duration":"...","steps":["...","..."],"materials":["...","..."],"material_tags":["..."]}]}`;
 
     const content = await callClaude(prompt, true);
     let parsed: { challenges?: unknown };
@@ -213,6 +269,7 @@ Réponds STRICTEMENT en JSON valide avec ce format :
       duration: c.duration,
       steps: c.steps,
       materials: c.materials,
+      material_tags: c.material_tags ?? [],
       pedagogical_context: c.pedagogical_context || null,
       target_intelligences: c.intelligences || [c.domain],
       requires_supervision: c.requires_supervision,
@@ -224,6 +281,7 @@ Réponds STRICTEMENT en JSON valide avec ce format :
       .insert(rows)
       .select("*");
     if (insErr) throw new Error(insErr.message);
+    void trackMaterialSuggestions((inserted ?? []).map((c) => ({ material_tags: c.material_tags ?? [], title: c.title })));
     return inserted;
   });
 
@@ -422,6 +480,7 @@ export const assignTemplateChallenge = createServerFn({ method: "POST" })
         duration: template.duration,
         steps: template.steps,
         materials: template.materials,
+        material_tags: template.material_tags ?? [],
         target_intelligences: template.intelligences ?? [],
         status: "todo",
         progress: 0,
@@ -431,6 +490,7 @@ export const assignTemplateChallenge = createServerFn({ method: "POST" })
       .single();
 
     if (error) throw new Error(error.message);
+    void trackMaterialSuggestions([{ material_tags: inserted.material_tags ?? [], title: inserted.title }]);
     return inserted;
   });
 
@@ -438,6 +498,7 @@ const GenerateSingleInput = z.object({
   childId: z.string().uuid(),
   timeAvailable: z.string(),
   location: z.string(),
+  homeMaterials: z.string().optional().nullable(),
 });
 
 export const generateSingleChallenge = createServerFn({ method: "POST" })
@@ -476,18 +537,36 @@ Profil de l'enfant :
 - Centres d'intérêt initiaux (déclarés par le parent) : ${(child.interests ?? []).join(", ") || "aucun"}
 - Scores de talents actuels (Radar Chart de Howard Gardner) : ${JSON.stringify(child.talents || {})}
 
+CONSIGNES DE DÉVELOPPEMENT LIÉES À L'ÂGE :
+Adapte strictement la forme, la complexité intellectuelle et la motricité requise pour le défi à l'âge exact de l'enfant :
+- De 1 à 3 ans (Exploration sensorielle et motrice) : Activités purement sensorielles (toucher, manipuler, transvaser, trier des couleurs/objets simples, textures, eau, sable). Aucune règle complexe, aucune consigne de motricité fine avancée (pas de découpage précis, pas d'écriture). Étape ultra-simple en 1 action à la fois.
+- De 4 à 7 ans (Phase exploratoire et imaginative) : Activités intégrant de l'imagination, des petits jeux de rôle ("fait semblant de"), du dessin, des petites manipulations de cause à effet guidées par le plaisir immédiat. L'action pratique doit primer sur la théorie.
+- De 8 à 11 ans (Phase structurée et concrète) : Proposer des projets de fabrication concrets (maquettes, expériences scientifiques simples, recettes simples, bricolage) avec des règles claires, des étapes méthodiques, et de l'observation logique ou sociale.
+- De 12 ans et + (Phase d'abstraction et d'analyse) : Permettre de la pensée critique, de la stratégie, des projets plus autonomes et complexes, de la logique conceptuelle (ex: coder un algorithme sur papier, déchiffrer des énigmes ou concevoir des objets élaborés).
+
 Défis déjà accomplis par l'enfant et observations de Naya :
 ${completedSummary || "(Aucun défi complété pour le moment)"}
 
 Contexte immédiat (TRÈS IMPORTANT) :
 - Temps disponible : ${data.timeAvailable}
 - Lieu / Environnement : ${data.location}
+${data.homeMaterials ? `- Matériaux/objets disponibles à la maison : ${data.homeMaterials}` : ""}
 
-Ta mission :
-1. Choisis le domaine d'intelligence (Sciences, Art, Artisanat, Cuisine, etc.) le plus pertinent pour ce temps et ce lieu.
-2. Le défi doit s'adapter EXACTEMENT au temps disponible. S'il n'y a que 10 minutes, propose un "mini-défi" immédiat. Si c'est 1h+, propose un projet structuré.
-3. Le défi doit être réalisable avec les objets de ce lieu précis.
-4. SÉCURITÉ ET SUPERVISION : Analyse si le défi comporte des risques (cuisine, feu, objets coupants, produits chimiques, électricité, extérieur non sécurisé). Si OUI, tu DOIS régler "requires_supervision" à true et rédiger un "supervision_warning" clair à l'attention du parent.
+Ta mission (Ignorer le biais parental et utiliser les données réelles) :
+1. Analyse la carte des talents (Radar Chart), les intérêts déclarés par le parent, ET les observations des défis passés.
+2. Détecte les biais : Si le parent a déclaré certains intérêts, mais que les observations passées montrent que l'enfant bloque dessus ou excelle ailleurs, Naya doit prendre l'initiative de pivoter.
+3. Choisis le domaine d'intelligence (Sciences, Art, Artisanat, Cuisine, etc.) le plus pertinent pour ce temps et ce lieu, tout en visant à renforcer une faiblesse ou exalter une force réelle. Tu peux créer des défis "hybrides" (ex: utiliser l'art pour comprendre les mathématiques).
+4. Le défi doit s'adapter EXACTEMENT au temps disponible. S'il n'y a que 10 minutes, propose un "mini-défi" immédiat. Si c'est 1h+, propose un projet structuré.
+5. Le défi doit être réalisable avec les objets de ce lieu précis.
+${
+  data.homeMaterials
+    ? `6. UTILISATION DES MATÉRIAUX DE LA MAISON : Tu DOIS concevoir un défi qui utilise en priorité ou exclusivement les matériaux indiqués par le parent ("${data.homeMaterials}"). Si ces matériaux ne suffisent pas ou ne sont pas propices à une activité d'apprentissage stimulante dans le domaine choisi, tu PEUX inclure d'autres ustensiles simples ou matériaux courants, mais signale-le de façon transparente dans la description et les étapes (et liste le matériel additionnel nécessaire). Si les matériaux fournis ne permettent vraiment rien d'intéressant, génère le défi sans cette contrainte et explique-le brièvement dans la description ou le contexte pédagogique.`
+    : ""
+}
+6. SÉCURITÉ ET SUPERVISION : Analyse si le défi comporte des risques (cuisine, feu, objets coupants, produits chimiques, électricité, extérieur non sécurisé). Si OUI, tu DOIS régler "requires_supervision" à true et rédiger un "supervision_warning" clair à l'attention du parent.
+7. Pour "material_tags" : un tag court en minuscules, sans accent, par matériau physique achetable
+   (ex: "carton", "cutter", "colle", "ampoule") — pas les objets déjà présents chez tout le monde
+   (eau, table, papier). Un tableau vide si rien d'achetable n'est nécessaire.
 
 Réponds STRICTEMENT en JSON valide avec ce format exact :
 {
@@ -497,6 +576,7 @@ Réponds STRICTEMENT en JSON valide avec ce format exact :
   "duration": "Durée estimée",
   "steps": ["Étape 1", "Étape 2..."],
   "materials": ["Outil 1", "Matériau 2..."],
+  "material_tags": ["outil-1", "materiau-2"],
   "pedagogical_context": "Ce que Naya observe via cette activité",
   "intelligences": ["Intelligence dominante sollicitée"],
   "requires_supervision": true ou false,
@@ -513,29 +593,14 @@ Réponds STRICTEMENT en JSON valide avec ce format exact :
 
     const c = ChallengeSchema.parse(parsed);
 
-    const row = {
-      user_id: userId,
-      child_id: data.childId,
-      domain: c.domain,
+    // Preview only — nothing is persisted here. The Laboratoire and the Défi page's
+    // single-challenge generator both show this as a draft the parent can regenerate
+    // freely; assignTemplateChallenge is the only insertion point once they confirm.
+    return {
+      ...c,
       title: c.title.slice(0, 120),
-      description: c.description,
-      duration: c.duration,
-      steps: c.steps,
-      materials: c.materials,
-      pedagogical_context: c.pedagogical_context || null,
-      target_intelligences: c.intelligences || [c.domain],
-      requires_supervision: c.requires_supervision,
-      supervision_warning: c.supervision_warning || null,
+      material_tags: c.material_tags ?? [],
     };
-
-    const { data: inserted, error } = await supabase
-      .from("challenges")
-      .insert(row)
-      .select("*")
-      .single();
-
-    if (error) throw new Error(error.message);
-    return inserted;
   });
 
 export const getChildAISynthesis = createServerFn({ method: "POST" })
@@ -581,4 +646,25 @@ Mets en lumière ses formes d'intelligence dominantes qui ressortent de ses acti
       console.error("AI Synthesis Error:", e.message);
       return "L'intelligence de Naya se repose quelques instants (quota de requêtes atteint). Revenez dans une petite minute pour lire la synthèse complète !";
     }
+  });
+
+const AnalyzePostInput = z.object({
+  imageUrl: z.string().url(),
+  domain: z.string().optional(),
+});
+
+export const analyzePostProof = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: unknown) => AnalyzePostInput.parse(input))
+  .handler(async ({ data }) => {
+    const prompt = `Tu es Naya, une IA experte en développement de l'enfant et intelligences multiples (Howard Gardner).
+Analyse cette photo qui représente une "preuve" d'activité ou une création réalisée par un enfant. 
+Le parent a indiqué que cette activité était liée au domaine : ${data.domain || 'Non spécifié'}.
+Ton but est de valider cette preuve et d'y apposer ton "Tampon pédagogique".
+Réponds STRICTEMENT en une seule phrase courte, chaleureuse et valorisante. Ta phrase DOIT mentionner l'intelligence principale que l'enfant a dû utiliser dans cette scène (ex: spatiale, créative, kinesthésique, logico-mathématique, naturaliste, etc.).
+Exemple: "Naya détecte une forte intelligence spatiale et créative dans cette magnifique construction !"
+NE mets PAS de guillemets autour de ta réponse.`;
+    
+    const tag = await callClaude(prompt, false, data.imageUrl);
+    return tag.trim().slice(0, 150); // safety cap
   });

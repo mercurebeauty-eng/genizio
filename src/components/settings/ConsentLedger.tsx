@@ -23,12 +23,12 @@ export function ConsentLedger() {
   }, []);
 
   if (loading) {
-    return <div className="animate-pulse h-32 bg-ink/5 rounded-2xl"></div>;
+    return <div className="animate-pulse h-32 bg-ink/5 rounded-2xl border-[3px] border-ink"></div>;
   }
 
   if (events.length === 0) {
     return (
-      <div className="text-center py-6 text-sm text-ink/50 bg-white rounded-2xl border border-ink/5 shadow-soft">
+      <div className="text-center py-6 text-sm text-ink/50 bg-white rounded-2xl border-[3px] border-ink shadow-brutal">
         Aucun événement de confidentialité enregistré pour le moment.
       </div>
     );
@@ -53,15 +53,15 @@ export function ConsentLedger() {
   };
 
   return (
-    <div className="bg-white rounded-3xl border border-ink/5 shadow-soft overflow-hidden">
-      <div className="p-4 border-b border-ink/5 bg-surface/30 flex items-center gap-2">
+    <div className="bg-white rounded-3xl border-[3px] border-ink shadow-brutal overflow-hidden">
+      <div className="p-4 border-b-[3px] border-ink bg-surface flex items-center gap-2">
         <ShieldCheck className="size-5 text-emerald-600" />
         <h3 className="font-bold text-ink text-sm">Registre de Consentement</h3>
       </div>
-      <div className="divide-y divide-ink/5 max-h-[300px] overflow-y-auto">
+      <div className="divide-y-2 divide-ink/10 max-h-[300px] overflow-y-auto">
         {events.map((ev) => (
           <div key={ev.id} className="p-4 flex gap-4">
-            <div className={`mt-0.5 flex size-8 shrink-0 items-center justify-center rounded-full ${getEventColor(ev.event_type)}`}>
+            <div className={`mt-0.5 flex size-8 shrink-0 items-center justify-center rounded-full border-2 border-ink ${getEventColor(ev.event_type)}`}>
               {getEventIcon(ev.event_type)}
             </div>
             <div className="flex-1 space-y-1">

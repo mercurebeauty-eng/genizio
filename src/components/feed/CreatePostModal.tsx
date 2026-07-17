@@ -5,19 +5,45 @@ import { useSession } from "@/hooks/use-session";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
+import { analyzePostProof } from "@/lib/challenges.functions";
+import { useServerFn } from "@tanstack/react-start";
+
 interface CreatePostModalProps {
-  onPostCreated: (post: any) => void;
+  onPostCreated?: (post: any) => void;
+  isOpen?: boolean;
+  onOpenChange?: (open: boolean) => void;
+  initialChallengeId?: string;
+  initialImageUrl?: string;
 }
 
-export function CreatePostModal({ onPostCreated }: CreatePostModalProps) {
+export function CreatePostModal({ 
+  onPostCreated, 
+  isOpen, 
+  onOpenChange, 
+  initialChallengeId,
+  initialImageUrl 
+}: CreatePostModalProps) {
   const { session } = useSession();
-  const [open, setOpen] = useState(false);
+  const [internalOpen, setInternalOpen] = useState(false);
+  const open = isOpen !== undefined ? isOpen : internalOpen;
+  
+  const handleOpenChange = (newOpen: boolean) => {
+    if (onOpenChange) {
+      onOpenChange(newOpen);
+    } else {
+      setInternalOpen(newOpen);
+    }
+  };
+
   const [loading, setLoading] = useState(false);
   const [caption, setCaption] = useState("");
-  const [preview, setPreview] = useState<string | null>(null);
+  const [preview, setPreview] = useState<string | null>(initialImageUrl || null);
   const [fileToUpload, setFileToUpload] = useState<File | null>(null);
   const [challenges, setChallenges] = useState<any[]>([]);
-  const [selectedChallengeId, setSelectedChallengeId] = useState<string>("");
+  const [selectedChallengeId, setSelectedChallengeId] = useState<string>(initialChallengeId || "");
+  const [loadingText, setLoadingText] = useState("");
+
+  const analyzeAction = useServerFn(analyzePostProof);
 
   useEffect(() => {
     if (open && session) {
@@ -30,7 +56,7 @@ export function CreatePostModal({ onPostCreated }: CreatePostModalProps) {
           
         if (!error && data) {
           setChallenges(data);
-          if (data.length > 0) {
+          if (data.length > 0 && !selectedChallengeId) {
             setSelectedChallengeId(data[0].id);
           }
         }
@@ -62,34 +88,59 @@ export function CreatePostModal({ onPostCreated }: CreatePostModalProps) {
 
     const selectedChallenge = challenges.find(c => c.id === selectedChallengeId);
     if (!selectedChallenge) return;
+    if (!session) return;
 
     setLoading(true);
+    setLoadingText("Téléchargement de l'image...");
 
     try {
-      // 1. Upload image to Supabase Storage
-      const fileExt = fileToUpload?.name.split('.').pop() || 'png';
-      const fileName = `${session?.user.id}/${Date.now()}.${fileExt}`;
+      let publicUrl = preview;
       
-      const { error: uploadError } = await supabase.storage
-        .from('posts')
-        .upload(fileName, fileToUpload!);
+      if (fileToUpload) {
+        setLoadingText("Téléchargement de l'image...");
+        const fileExt = fileToUpload.name.split('.').pop() || 'png';
+        const fileName = `${session?.user.id}/${Date.now()}.${fileExt}`;
+        
+        const { error: uploadError } = await supabase.storage
+          .from('posts')
+          .upload(fileName, fileToUpload);
 
-      if (uploadError) throw uploadError;
+        if (uploadError) throw uploadError;
 
-      // 2. Get public URL
-      const { data: { publicUrl } } = supabase.storage
-        .from('posts')
-        .getPublicUrl(fileName);
+        const { data: publicUrlData } = supabase.storage
+          .from('posts')
+          .getPublicUrl(fileName);
+          
+        publicUrl = publicUrlData.publicUrl;
+      }
 
-      // 3. Insert into posts table
+      if (!publicUrl) throw new Error("Image manquante");
+
+      // 3. AI Analysis
+      setLoadingText("Analyse de la photo par Naya...");
+      let aiAnalysisTag = null;
+      try {
+        aiAnalysisTag = await analyzeAction({
+          data: {
+            imageUrl: publicUrl,
+            domain: selectedChallenge.domain
+          }
+        });
+      } catch (aiErr) {
+        console.error("AI Analysis failed", aiErr);
+      }
+
+      // 4. Insert into posts table
+      setLoadingText("Publication en cours...");
       const { data: newPostData, error: insertError } = await supabase
         .from('posts')
         .insert({
-          parent_id: session?.user.id,
-          child_profile_id: selectedChallenge.child_profiles?.id, // Wait, challenges query gives child_profiles(name, avatar_color) but not child_profile_id easily unless selectedChallenge has it
+          parent_id: session.user.id,
+          child_profile_id: selectedChallenge.child_profiles?.id,
           image_url: publicUrl,
           caption: caption || "",
-          likes_count: 0
+          likes_count: 0,
+          ai_talent_tag: aiAnalysisTag
         })
         .select('*, child_profiles(name, avatar_color)')
         .single();
@@ -108,13 +159,14 @@ export function CreatePostModal({ onPostCreated }: CreatePostModalProps) {
         badge: selectedChallenge.domain || "⭐ Exploit",
         image: newPostData.image_url,
         isLiked: false,
+        aiTalentTag: newPostData.ai_talent_tag
       };
 
-      onPostCreated(newPost);
+      if (onPostCreated) onPostCreated(newPost);
       toast.success("Post publié avec succès !");
-      setOpen(false);
+      handleOpenChange(false);
       setCaption("");
-      setPreview(null);
+      if (!initialImageUrl) setPreview(null);
       setFileToUpload(null);
     } catch (err: any) {
       console.error(err);
@@ -125,15 +177,17 @@ export function CreatePostModal({ onPostCreated }: CreatePostModalProps) {
   };
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        <button className="flex h-10 w-10 items-center justify-center rounded-xl bg-brand text-white hover:bg-brand-dark transition-all border-b-4 border-brand-dark active:border-b-0 active:translate-y-[4px] shadow-sm">
-          <Plus className="size-6" />
-        </button>
-      </DialogTrigger>
-      <DialogContent className="sm:max-w-md rounded-3xl p-6">
+    <Dialog open={open} onOpenChange={handleOpenChange}>
+      {isOpen === undefined && (
+        <DialogTrigger asChild>
+          <button className="flex h-10 w-10 items-center justify-center rounded-xl border-[3px] border-ink bg-brand text-white shadow-brutal-sm hover:-translate-y-0.5 active:translate-y-0 active:shadow-none transition-all">
+            <Plus className="size-6" />
+          </button>
+        </DialogTrigger>
+      )}
+      <DialogContent className="sm:max-w-md rounded-3xl p-6 border-[3px] border-ink shadow-brutal">
         <DialogHeader className="mb-4">
-          <DialogTitle className="text-xl font-black text-ink">Créer un post public</DialogTitle>
+          <DialogTitle className="text-xl font-black text-ink">Publier dans le Cerveau Collectif</DialogTitle>
         </DialogHeader>
 
         <div className="space-y-4">
@@ -142,7 +196,7 @@ export function CreatePostModal({ onPostCreated }: CreatePostModalProps) {
             <label className="text-xs font-bold text-ink/60 uppercase tracking-wider">Mission liée</label>
             <div className="relative">
               <select
-                className="w-full appearance-none rounded-xl border border-ink/10 bg-surface/50 px-4 py-3 text-sm font-semibold text-ink outline-none focus:border-brand transition-all cursor-pointer"
+                className="w-full appearance-none rounded-xl border-[3px] border-ink bg-white px-4 py-3 text-sm font-semibold text-ink outline-none focus:ring-2 focus:ring-brand transition-all cursor-pointer shadow-brutal-sm"
                 value={selectedChallengeId}
                 onChange={(e) => setSelectedChallengeId(e.target.value)}
               >
@@ -161,8 +215,8 @@ export function CreatePostModal({ onPostCreated }: CreatePostModalProps) {
 
           {/* Image Upload Area */}
           {!preview ? (
-            <label className="flex aspect-square w-full cursor-pointer flex-col items-center justify-center gap-4 rounded-2xl border-2 border-dashed border-ink/20 bg-surface hover:bg-ink/5 hover:border-brand/50 transition-all">
-              <div className="rounded-full bg-brand/10 p-4">
+            <label className="flex aspect-square w-full cursor-pointer flex-col items-center justify-center gap-4 rounded-2xl border-[3px] border-dashed border-ink bg-white/50 shadow-brutal-sm hover:-translate-y-0.5 transition-all">
+              <div className="rounded-full border-2 border-ink bg-brand/10 p-4">
                 <ImageIcon className="size-8 text-brand" />
               </div>
               <div className="text-center">
@@ -172,22 +226,21 @@ export function CreatePostModal({ onPostCreated }: CreatePostModalProps) {
               <input type="file" accept="image/*" className="hidden" onChange={handleImageChange} />
             </label>
           ) : (
-            <div className="relative aspect-square w-full overflow-hidden rounded-2xl bg-surface">
+            <div className="relative aspect-square w-full overflow-hidden rounded-2xl border-[3px] border-ink bg-surface">
               <img src={preview} alt="Aperçu" className="h-full w-full object-cover" />
               <button
                 onClick={() => setPreview(null)}
-                className="absolute right-3 top-3 rounded-full bg-black/50 p-2 text-white hover:bg-black/70 backdrop-blur-sm transition-all"
+                className="absolute right-3 top-3 rounded-full border-2 border-white bg-black/50 p-2 text-white hover:bg-black/70 backdrop-blur-sm transition-all"
               >
                 <X className="size-4" />
               </button>
             </div>
           )}
 
-          {/* Caption */}
           <div>
             <textarea
               placeholder="Racontez l'exploit de votre enfant à la communauté..."
-              className="w-full min-h-[100px] resize-none rounded-xl border border-ink/10 bg-surface/50 p-4 text-sm font-medium text-ink outline-none focus:border-brand transition-all placeholder:text-ink/40"
+              className="w-full min-h-[100px] resize-none rounded-xl border-[3px] border-ink bg-white p-4 text-sm font-medium text-ink outline-none focus:ring-2 focus:ring-brand transition-all placeholder:text-ink/40 shadow-brutal-sm"
               value={caption}
               onChange={(e) => setCaption(e.target.value)}
             />
@@ -196,9 +249,16 @@ export function CreatePostModal({ onPostCreated }: CreatePostModalProps) {
           <button
             onClick={handlePost}
             disabled={loading || !preview || !selectedChallengeId}
-            className="w-full rounded-2xl bg-brand border-b-4 border-brand-dark py-4 text-base font-black text-white active:border-b-0 active:translate-y-[4px] transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+            className="w-full rounded-2xl border-[3px] border-ink bg-brand py-4 text-base font-black text-white shadow-brutal hover:-translate-y-0.5 active:translate-y-0 active:shadow-none transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
           >
-            {loading ? <Loader2 className="size-5 animate-spin" /> : "Publier l'exploit"}
+            {loading ? (
+              <>
+                <Loader2 className="size-5 animate-spin" />
+                <span>{loadingText || "Publication..."}</span>
+              </>
+            ) : (
+              "Publier l'exploit"
+            )}
           </button>
         </div>
       </DialogContent>
