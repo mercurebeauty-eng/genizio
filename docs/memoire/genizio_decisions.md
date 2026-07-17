@@ -4,7 +4,7 @@ description: Décisions d'architecture et produit — quoi, pourquoi, alternativ
 metadata:
   type: project
   status: living-document
-  last_updated: 2026-07-16
+  last_updated: 2026-07-17
 ---
 
 ## Décision #1 : Nom du projet — Geniusio
@@ -221,6 +221,15 @@ faut-il un contrôle d'ownership explicite sur ces routes plutôt que de compter
 **Bug annexe trouvé et corrigé** : `src/integrations/supabase/types.ts` n'avait jamais été régénéré après l'application de la migration `20260717110000_add_supervisors_table.sql` (table `supervisors` existante en prod mais absente des types) — `npx tsc --noEmit` échouait sur ~10 erreurs dans `supervisors.functions.ts`/`AppHeader.tsx`. Corrigé par régénération via l'API Management (`GET /v1/projects/{id}/types/typescript`), 0 erreur `tsc` ensuite.
 **Vérifié** : `tsc --noEmit` propre · test en direct via navigateur preview — `material_tags` d'un défi actif temporairement mis à `{colle}` (produit réel en catalogue), badge + bloc kit complet (produit, prix, total, bouton WhatsApp) confirmés visibles sur le dashboard, aucune erreur console, puis valeur de test restaurée à `{}`.
 **Non fait / hors périmètre de cette session** : aucune nouvelle feature de fond — l'essentiel du travail était de l'audit + un point d'intégration manquant + une dette technique annexe. Le concept V4 "kit comme point d'entrée" (Décision #18) est déjà en code, pas seulement en vision.
+
+## Décision #20 : Fermeture de trois dettes flaguées (RLS `child_mentors`, ownership routes, `WhatsAppFAB` contexte)
+**Contexte** : demande utilisateur explicite (2026-07-17, "Attaquons ces points") sur trois items identifiés lors de l'audit de la Décision #19.
+**Sur le paiement Mobile Money (Phase 4, cf. [[genizio-backlog]])** : l'utilisateur a explicitement choisi de garder WhatsApp pour l'instant et de d'abord évaluer s'il faut une vraie plateforme e-commerce/mini e-commerce pour paiements + suivi, avant tout paiement in-app une fois la confiance des parents établie. Aucun code de paiement écrit ce tour-ci — décision cohérente avec la Décision #12.
+**Fix 1 — RLS `child_mentors` (le plus critique)** : en creusant l'audit ownership, découverte que la policy `"Owners manage their child mentors"` (`USING`/`WITH CHECK` : `auth.uid() = owner_user_id`) ne vérifiait jamais que `child_id` appartenait réellement à cet utilisateur — n'importe quel compte authentifié pouvait s'inviter lui-même comme "mentor" d'un `child_id` arbitraire (deviné/connu) et lire sa carte de talents complète via le lien public `/s/$token`, contournant le scope RLS normal `child_profiles`/`challenges`. **Migration** `20260717120000_fix_child_mentors_ownership_check.sql` : `USING`/`WITH CHECK` ajoutent `EXISTS (SELECT 1 FROM child_profiles cp WHERE cp.id = child_mentors.child_id AND cp.user_id = auth.uid())`. Appliquée en prod avec confirmation explicite de l'utilisateur (écriture prod bloquée une première fois par le classifieur auto-mode, débloquée après confirmation). Vérifiée via `pg_policies` (nouveau `qual`/`with_check` visibles) et `get_advisors` (aucune régression).
+**Fix 2 — Ownership explicite sur les 4 routes `/profiles/$profileId/*`** (flaguée depuis la Décision #13) : `challenges.tsx`, `portfolio.tsx`, `quest.tsx`, `mentors.tsx` ajoutent `.eq("user_id", session.user.id)` à leur lecture `child_profiles`, avec un état "Profil introuvable" explicite (`portfolio.tsx` bouclait sur "Chargement…" à l'infini avant ; `mentors.tsx` utilisait `.single()` qui plantait sur 0 ligne, passé à `.maybeSingle()` + état dédié). **Vérifié en navigateur** : URL directe vers l'enfant "pari" (compte différent) depuis une session "TestPhase1" → "Profil introuvable" sur les 4 routes, aucune fuite de données, aucune erreur console bloquante.
+**Fix 3 — `WhatsAppFAB` contextualisé** : le composant lit désormais `useParams({ strict: false })` pour détecter un `profileId` de route courant, va chercher nom/âge/talents (pour la guilde via `getChildGuild`)/nb de défis complétés du compte courant uniquement (`.eq("user_id", session.user.id)`), et construit le message WhatsApp avec ce contexte réel au lieu du message générique. Sur `/profiles` (dashboard, pas de `$profileId` dans l'URL) le message reste générique par design ; sur une route enfant-scopée il devient contextualisé. Vérifié en navigateur sur `/profiles/$profileId/challenges`.
+**Type-check** : `tsc --noEmit` propre après chaque fix.
+**Commit** : `67575f0` — un seul commit couvrant l'ensemble du travail non commité de la session (boutique complète, Guildes/Superviseurs scaffolding, ces trois fixes), à la demande explicite de l'utilisateur ("quand tu finis tu commit"). `supabase/.temp/cli-latest` (cache local du CLI Supabase) volontairement exclu du commit.
 
 
 
