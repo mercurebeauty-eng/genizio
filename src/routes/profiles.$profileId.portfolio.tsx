@@ -399,7 +399,7 @@ function PortfolioPage() {
                 <Award className="size-5 text-brand" />
                 Carte des Talents
               </h3>
-              <TalentRadarChart talents={child.talents} name={child.name} className="h-64 w-full" />
+              <TalentRadarChart talents={child.talents} name={child.name} className="h-64 w-full" age={child.age} />
               <p className="text-center text-[11px] font-medium text-ink/40">
                 Cette carte s'affine et se développe à mesure que {child.name} réalise ses défis.
               </p>

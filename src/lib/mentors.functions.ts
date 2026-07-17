@@ -123,7 +123,7 @@ export const getSharedChildView = createServerFn({ method: "GET" })
     // Fetch whitelisted child data
     const { data: child, error: childError } = await supabaseAdmin
       .from("child_profiles")
-      .select("id, name, avatar_color, talents")
+      .select("id, name, avatar_color, talents, age")
       .eq("id", mentor.child_id)
       .single();
 
@@ -135,6 +135,7 @@ export const getSharedChildView = createServerFn({ method: "GET" })
       mentorName: mentor.mentor_name,
       childName: child.name,
       childColor: child.avatar_color,
+      childAge: child.age,
       talents: mentor.can_view_talent_map ? child.talents : null,
       scopeDomains: mentor.scope_domains || [],
       timeline: [],

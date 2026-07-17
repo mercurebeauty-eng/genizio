@@ -362,7 +362,7 @@ function DashboardPage() {
                   <div className="rounded-3xl bg-white p-6 shadow-brutal border-[3px] border-ink flex flex-col justify-between min-h-[300px]">
                     <div>
                       <div className="h-44 w-full flex items-center justify-center my-2">
-                        <TalentRadarChart talents={selected!.talents || {}} name={selected!.name} className="h-full w-full" />
+                        <TalentRadarChart talents={selected!.talents || {}} name={selected!.name} className="h-full w-full" age={selected!.age} />
                       </div>
                       <ul className="space-y-2 mt-4">
                         {pulse.slice(0, 3).map((entry) => (

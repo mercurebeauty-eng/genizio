@@ -92,7 +92,7 @@ function SharedChildView() {
               Carte des Talents de {data.childName}
             </h3>
             <div className="max-w-lg mx-auto">
-              <TalentRadarChart talents={data.talents} name={data.childName} className="h-72 w-full" />
+              <TalentRadarChart talents={data.talents} name={data.childName} className="h-72 w-full" age={data.childAge} />
             </div>
           </div>
         )}

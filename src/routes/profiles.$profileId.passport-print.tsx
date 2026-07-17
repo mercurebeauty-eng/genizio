@@ -278,7 +278,7 @@ function PassportPrintPage() {
             <div className="grid gap-8 md:grid-cols-2 items-center">
               <div className="border-[3px] border-ink rounded-3xl p-4 bg-white shadow-brutal-sm flex flex-col items-center">
                 <h3 className="text-xs font-black uppercase tracking-wider text-ink/40 mb-2 self-start">Carte Radar</h3>
-                <TalentRadarChart talents={child.talents} name={child.name} className="h-64 w-full" />
+                <TalentRadarChart talents={child.talents} name={child.name} className="h-64 w-full" age={child.age} />
               </div>
 
               <div className="space-y-4">
