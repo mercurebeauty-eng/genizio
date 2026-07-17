@@ -277,7 +277,12 @@ Réponds STRICTEMENT en JSON valide avec ce format, pour chaque défi :
       throw new Error("Réponse IA invalide");
     }
 
-    const list = z.array(ChallengeSchema).parse(parsed.challenges ?? []);
+    let list: z.infer<typeof ChallengeSchema>[];
+    try {
+      list = z.array(ChallengeSchema).parse(parsed.challenges ?? []);
+    } catch {
+      throw new Error("Réponse IA invalide");
+    }
 
     const rows = list.map((c) => ({
       user_id: userId,
@@ -633,7 +638,12 @@ Réponds STRICTEMENT en JSON valide avec ce format exact :
       throw new Error("Réponse IA invalide");
     }
 
-    const c = ChallengeSchema.parse(parsed);
+    let c: z.infer<typeof ChallengeSchema>;
+    try {
+      c = ChallengeSchema.parse(parsed);
+    } catch {
+      throw new Error("Réponse IA invalide");
+    }
 
     // Preview only — nothing is persisted here. The Laboratoire and the Défi page's
     // single-challenge generator both show this as a draft the parent can regenerate

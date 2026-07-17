@@ -327,6 +327,7 @@ function ChallengesPage() {
   };
 
   const setStatus = async (id: string, status: Challenge["status"]) => {
+    const previous = challenges;
     setChallenges((prev) =>
       prev.map((c) =>
         c.id === id
@@ -338,17 +339,32 @@ function ChallengesPage() {
           : c,
       ),
     );
-    await update({ data: { id, status } });
+    try {
+      await update({ data: { id, status } });
+    } catch (e) {
+      setChallenges(previous);
+      toast.error(e instanceof Error ? e.message : "Erreur lors de la mise à jour du statut.");
+    }
   };
 
   const setProgress = async (id: string, progress: number) => {
+    const previous = challenges;
     setChallenges((prev) => prev.map((c) => (c.id === id ? { ...c, progress } : c)));
-    await update({ data: { id, progress } });
+    try {
+      await update({ data: { id, progress } });
+    } catch (e) {
+      setChallenges(previous);
+      toast.error(e instanceof Error ? e.message : "Erreur lors de la mise à jour de la progression.");
+    }
   };
 
   const saveNotes = async (id: string, notes: string) => {
-    await update({ data: { id, notes } });
-    setChallenges((prev) => prev.map((c) => (c.id === id ? { ...c, notes } : c)));
+    try {
+      await update({ data: { id, notes } });
+      setChallenges((prev) => prev.map((c) => (c.id === id ? { ...c, notes } : c)));
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Erreur lors de l'enregistrement des notes.");
+    }
   };
 
   const remove = async (id: string) => {
