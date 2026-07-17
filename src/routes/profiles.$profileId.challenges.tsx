@@ -103,6 +103,7 @@ function ChallengesPage() {
   const [child, setChild] = useState<Child | null>(null);
   const [challenges, setChallenges] = useState<Challenge[]>([]);
   const [fetching, setFetching] = useState(true);
+  const [initialLoad, setInitialLoad] = useState(true);
   const [generating, setGenerating] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [openId, setOpenId] = useState<string | null>(null);
@@ -291,6 +292,7 @@ function ChallengesPage() {
       setOpenId(active.id);
     }
     setFetching(false);
+    setInitialLoad(false);
   };
 
   const loadAISynthesis = async () => {
@@ -377,7 +379,7 @@ function ChallengesPage() {
     }
   };
 
-  if (loading || !session || fetching) {
+  if (loading || !session || (fetching && initialLoad)) {
     return (
       <div className="grid min-h-screen place-items-center bg-surface text-ink/50">
         Chargement…

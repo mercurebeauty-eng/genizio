@@ -1,7 +1,9 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState, useMemo } from "react";
+import { useServerFn } from "@tanstack/react-start";
 import { supabase } from "@/integrations/supabase/client";
 import { useSession } from "@/hooks/use-session";
+import { updateChallenge } from "@/lib/challenges.functions";
 import { getActiveChallenge, ChallengeLike } from "@/lib/active-challenge";
 import { ArrowLeft, Play, Check, Circle, Sparkles, Smile, Trophy, X, ChevronRight, MessageCircle, Loader2 } from "lucide-react";
 import { toast } from "sonner";
@@ -50,6 +52,7 @@ function QuestPage() {
   const { profileId } = Route.useParams();
   const { session, loading } = useSession();
   const navigate = useNavigate();
+  const updateChallengeFn = useServerFn(updateChallenge);
 
   const [child, setChild] = useState<Child | null>(null);
   const [challenges, setChallenges] = useState<Challenge[]>([]);
@@ -158,19 +161,23 @@ function QuestPage() {
       const childText = childFeedback.trim() ? `\n\n[Enfant] : "${childFeedback.trim()}"` : "";
       const updatedNotes = (activeChallenge.notes || "") + childText;
 
-      const { error } = await supabase
-        .from("challenges")
-        .update({
+      await updateChallengeFn({
+        data: {
+          id: activeChallenge.id,
           status: "completed",
           progress: 100,
           notes: updatedNotes || null,
-          completed_at: new Date().toISOString(),
-        })
-        .eq("id", activeChallenge.id);
+        },
+      });
 
-      if (error) throw error;
-      
-      toast.success(`Félicitations ! Mission terminée ! 🏆`);
+      toast.success("Félicitations ! Mission terminée ! 🏆", {
+        description: "Ajoute une photo pour que Naya découvre tes talents.",
+        action: {
+          label: "Ajouter une preuve",
+          onClick: () => navigate({ to: "/profiles/$profileId/challenges", params: { profileId } }),
+        },
+        duration: 8000,
+      });
       setIsQuestActive(false);
       setCurrentStepIndex(0);
       setChildFeedback("");
