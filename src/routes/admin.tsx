@@ -1,6 +1,8 @@
 import { createFileRoute, Outlet, useNavigate } from "@tanstack/react-router";
+import { useServerFn } from "@tanstack/react-start";
 import { useEffect, useState } from "react";
 import { useSession } from "@/hooks/use-session";
+import { checkAdminStatus } from "@/lib/admin.functions";
 import { ShieldAlert, Loader2 } from "lucide-react";
 
 export const Route = createFileRoute("/admin")({
@@ -12,6 +14,7 @@ function AdminLayout() {
   const navigate = useNavigate();
   const [isAdmin, setIsAdmin] = useState(false);
   const [checking, setChecking] = useState(true);
+  const checkAdmin = useServerFn(checkAdminStatus);
 
   useEffect(() => {
     if (loading) return;
@@ -20,15 +23,10 @@ function AdminLayout() {
       return;
     }
 
-    const adminEmails = (import.meta.env.VITE_ADMIN_EMAILS ?? "")
-      .split(",")
-      .map((e: string) => e.trim().toLowerCase())
-      .filter(Boolean);
-    const userEmail = session.user.email?.toLowerCase();
-    const isUserAdmin = adminEmails.includes(userEmail) || userEmail === "mercurebeauty@gmail.com";
-
-    setIsAdmin(isUserAdmin);
-    setChecking(false);
+    // Server-side allowlist is the only source of truth for admin status.
+    checkAdmin()
+      .then(({ isAdmin: isUserAdmin }) => setIsAdmin(isUserAdmin))
+      .finally(() => setChecking(false));
   }, [session, loading, navigate]);
 
   if (loading || checking) {

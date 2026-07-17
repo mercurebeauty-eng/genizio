@@ -17,8 +17,6 @@ export const Route = createFileRoute("/admin/supervisors")({
   component: AdminSupervisorsPage,
 });
 
-const ADMIN_EMAILS = (import.meta.env.VITE_ADMIN_EMAILS ?? "").split(",").map((e: string) => e.trim());
-
 function AdminSupervisorsPage() {
   const { session, loading } = useSession();
   const navigate = useNavigate();

@@ -1,6 +1,8 @@
 import { Link, useNavigate } from "@tanstack/react-router";
+import { useServerFn } from "@tanstack/react-start";
 import { useSession } from "@/hooks/use-session";
 import { supabase } from "@/integrations/supabase/client";
+import { checkAdminStatus } from "@/lib/admin.functions";
 import { Menu, X, Settings, LogOut, LayoutDashboard, Users, Brain, ShoppingBag, Eye, ChevronDown, Shield } from "lucide-react";
 import { useState, useEffect } from "react";
 import {
@@ -19,6 +21,7 @@ export function AppHeader() {
   const [isOpen, setIsOpen] = useState(false);
   const [isSupervisor, setIsSupervisor] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
+  const checkAdmin = useServerFn(checkAdminStatus);
 
   const signOut = async () => {
     await supabase.auth.signOut();
@@ -28,13 +31,8 @@ export function AppHeader() {
   useEffect(() => {
     if (!session) return;
 
-    // Check admin status
-    const adminEmails = (import.meta.env.VITE_ADMIN_EMAILS ?? "")
-      .split(",")
-      .map((e: string) => e.trim().toLowerCase())
-      .filter(Boolean);
-    const userEmail = session.user.email?.toLowerCase();
-    setIsAdmin(adminEmails.includes(userEmail) || userEmail === "mercurebeauty@gmail.com");
+    // Check admin status — server-side allowlist is the only source of truth.
+    checkAdmin().then(({ isAdmin }) => setIsAdmin(isAdmin));
 
     // Check supervisor status
     supabase
