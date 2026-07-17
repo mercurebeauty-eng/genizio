@@ -426,24 +426,26 @@ Réponds STRICTEMENT en JSON valide avec ce format :
     const observations = parsed.observations ?? "Bravo pour cette belle réalisation !";
     const awarded = parsed.talents_awarded ?? {};
 
-    const currentTalents = (challenge.child_profiles.talents as any) || {};
-    const newTalents = { ...currentTalents };
+    const deltas: Record<string, number> = {};
     let intelligenceKeys: string[] = [];
     for (const [key, points] of Object.entries(awarded)) {
       if (typeof points === 'number') {
         // Cap points between 1 and 3 per challenge validation to ensure gradual progression
-        const clampedPoints = Math.max(1, Math.min(3, points));
-        newTalents[key] = (newTalents[key] || 0) + clampedPoints;
+        deltas[key] = Math.max(1, Math.min(3, points));
         intelligenceKeys.push(key);
       }
     }
 
-    const { error: talentsError } = await supabase
-      .from("child_profiles")
-      .update({ talents: newTalents })
-      .eq("id", challenge.child_profiles.id);
-
-    if (talentsError) throw new Error(talentsError.message);
+    if (Object.keys(deltas).length > 0) {
+      // Atomic increment (row-locked, see increment_child_talents) instead of a
+      // client-side read-modify-write, so two near-simultaneous validations for
+      // the same child can't silently drop one set of points.
+      const { error: talentsError } = await supabase.rpc("increment_child_talents", {
+        p_child_id: challenge.child_profiles.id,
+        p_deltas: deltas,
+      });
+      if (talentsError) throw new Error(talentsError.message);
+    }
 
     const patch = {
       status: "completed" as const,

@@ -546,7 +546,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      increment_child_talents: {
+        Args: { p_child_id: string; p_deltas: Json }
+        Returns: Json
+      }
     }
     Enums: {
       challenge_status: "todo" | "in_progress" | "completed"
