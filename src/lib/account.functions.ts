@@ -49,8 +49,18 @@ export const deleteAccountAndData = createServerFn({ method: "POST" })
     // before the actual user deletion.
     await supabase.from("consent_events").delete().eq("user_id", userId);
 
-    // Finally, use service role to delete the user account from auth.users
+    // orders.user_id is ON DELETE SET NULL (not CASCADE, unlike every other table
+    // here) so it survives account deletion unless removed explicitly — and there's
+    // no owner DELETE policy on orders, so this has to go through the service role
+    // client rather than the RLS-scoped one above.
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { error: ordersError } = await supabaseAdmin.from("orders").delete().eq("user_id", userId);
+    if (ordersError) {
+      console.error("Erreur lors de la suppression des commandes :", ordersError);
+      throw new Error("Impossible de supprimer le compte utilisateur.");
+    }
+
+    // Finally, use service role to delete the user account from auth.users
     const { error: deleteError } = await supabaseAdmin.auth.admin.deleteUser(userId);
 
     if (deleteError) {
