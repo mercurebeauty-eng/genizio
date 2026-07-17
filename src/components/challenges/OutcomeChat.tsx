@@ -90,6 +90,9 @@ export function OutcomeChat({ challenge, childId, childName, onValidated }: Outc
         }
       });
       setReport(result);
+      if (imageUrl && !result.imageAnalyzed) {
+        toast.warning("Naya n'a pas pu analyser la photo — son observation se base uniquement sur vos notes.");
+      }
       toast.success("Analyse terminée !");
     } catch (err) {
       setValidationError(err instanceof Error ? err.message : "Erreur inconnue");

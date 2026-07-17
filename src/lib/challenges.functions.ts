@@ -105,31 +105,30 @@ export async function callClaude(
   const contentBlocks: any[] = [];
 
   if (imageUrl) {
-    try {
-      const imgResp = await fetch(imageUrl);
-      if (!imgResp.ok) {
-        throw new Error(`Impossible de récupérer l'image (${imgResp.status})`);
-      }
-      const arrayBuffer = await imgResp.arrayBuffer();
-      const base64Data = Buffer.from(arrayBuffer).toString("base64");
-      const contentType = imgResp.headers.get("content-type") || "image/jpeg";
-      
-      let mediaType = contentType;
-      if (!["image/jpeg", "image/png", "image/gif", "image/webp"].includes(contentType)) {
-        mediaType = "image/jpeg";
-      }
-
-      contentBlocks.push({
-        type: "image",
-        source: {
-          type: "base64",
-          media_type: mediaType,
-          data: base64Data,
-        },
-      });
-    } catch (err: any) {
-      console.error("Error fetching or converting image for Claude:", err);
+    // Let a fetch/decode failure propagate instead of silently continuing
+    // text-only — callers that pass an image expect the AI to actually see
+    // it, and validateChallengeProof's fallback path only works if this throws.
+    const imgResp = await fetch(imageUrl);
+    if (!imgResp.ok) {
+      throw new Error(`Impossible de récupérer l'image (${imgResp.status})`);
     }
+    const arrayBuffer = await imgResp.arrayBuffer();
+    const base64Data = Buffer.from(arrayBuffer).toString("base64");
+    const contentType = imgResp.headers.get("content-type") || "image/jpeg";
+
+    let mediaType = contentType;
+    if (!["image/jpeg", "image/png", "image/gif", "image/webp"].includes(contentType)) {
+      mediaType = "image/jpeg";
+    }
+
+    contentBlocks.push({
+      type: "image",
+      source: {
+        type: "base64",
+        media_type: mediaType,
+        data: base64Data,
+      },
+    });
   }
 
   contentBlocks.push({
@@ -422,10 +421,12 @@ Réponds STRICTEMENT en JSON valide avec ce format :
 }`;
 
     let aiContent = "";
+    let imageAnalyzed = !!data.proofImageUrl;
     try {
       aiContent = await callClaude(prompt, true, data.proofImageUrl);
     } catch (err) {
       console.warn("Vision model call failed, falling back to text only:", err);
+      imageAnalyzed = false;
       aiContent = await callClaude(prompt, true);
     }
 
@@ -481,9 +482,10 @@ Réponds STRICTEMENT en JSON valide avec ce format :
 
     if (error) throw new Error(error.message);
     
-    return { 
+    return {
       challenge: updatedChallenge,
-      awarded_points: awarded
+      awarded_points: awarded,
+      imageAnalyzed,
     };
   });
 
