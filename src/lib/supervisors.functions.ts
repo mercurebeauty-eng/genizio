@@ -9,6 +9,22 @@ import { z } from "zod";
 // Seul l'admin peut assigner des superviseurs.
 // ────────────────────────────────────────────────────────────
 
+// Utilisée par le sélecteur "Profil enfant" de /admin/supervisors — la requête
+// client directe (soumise aux RLS) ne remontait que les enfants du compte admin
+// lui-même plus ceux ayant déjà un défi complété (policy publique du Mur Public),
+// rendant tout enfant nouvellement inscrit invisible pour l'assignation.
+export const listChildProfilesAdmin = createServerFn({ method: "GET" })
+  .middleware([requireAdmin])
+  .handler(async () => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data, error } = await supabaseAdmin
+      .from("child_profiles")
+      .select("id, name, age")
+      .order("name");
+    if (error) throw new Error(error.message);
+    return data ?? [];
+  });
+
 export const listSupervisors = createServerFn({ method: "GET" })
   .middleware([requireAdmin])
   .handler(async () => {

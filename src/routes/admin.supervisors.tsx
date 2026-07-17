@@ -7,8 +7,8 @@ import {
   listSupervisors,
   assignSupervisor,
   removeSupervisor,
+  listChildProfilesAdmin,
 } from "@/lib/supervisors.functions";
-import { supabase } from "@/integrations/supabase/client";
 import { Loader2, Plus, Trash2, ShieldAlert, Users } from "lucide-react";
 import { toast } from "sonner";
 import { confirmDialog } from "@/components/ui/confirm-dialog";
@@ -31,6 +31,7 @@ function AdminSupervisorsPage() {
   const listFn = useServerFn(listSupervisors);
   const assignFn = useServerFn(assignSupervisor);
   const removeFn = useServerFn(removeSupervisor);
+  const listChildrenFn = useServerFn(listChildProfilesAdmin);
 
   useEffect(() => {
     if (!loading && !session) navigate({ to: "/auth", replace: true });
@@ -51,12 +52,11 @@ function AdminSupervisorsPage() {
 
   useEffect(() => {
     if (!session) return;
-    // Charger tous les profils enfants pour le sélecteur
-    supabase
-      .from("child_profiles")
-      .select("id, name, age")
-      .order("name")
-      .then(({ data }) => setChildProfiles((data ?? []) as any[]));
+    // Charger tous les profils enfants pour le sélecteur (accès admin — pas soumis
+    // aux RLS publiques du Mur Public, donc les enfants sans défi complété y figurent aussi)
+    listChildrenFn()
+      .then((data) => setChildProfiles((data as any[]) ?? []))
+      .catch(() => setChildProfiles([]));
 
     void refetch();
     // eslint-disable-next-line react-hooks/exhaustive-deps
