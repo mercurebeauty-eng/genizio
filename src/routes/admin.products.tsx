@@ -170,20 +170,32 @@ function AdminProductsPage() {
   };
 
   const ignoreSuggestion = async (id: string) => {
-    await ignoreSuggestionFn({ data: { id } });
-    setSuggestions((prev) => prev.filter((s) => s.id !== id));
+    try {
+      await ignoreSuggestionFn({ data: { id } });
+      setSuggestions((prev) => prev.filter((s) => s.id !== id));
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Erreur lors du rejet de la suggestion.");
+    }
   };
 
   const toggleActive = async (p: Product) => {
-    await updateFn({ data: { id: p.id, is_active: !p.is_active } });
-    void refetch();
+    try {
+      await updateFn({ data: { id: p.id, is_active: !p.is_active } });
+      void refetch();
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Erreur lors de la mise à jour du produit.");
+    }
   };
 
   const remove = async (id: string) => {
     if (!(await confirmDialog({ title: "Supprimer ce produit ?", confirmLabel: "Supprimer", variant: "danger" }))) return;
-    await deleteFn({ data: { id } });
-    toast.success("Produit supprimé.");
-    void refetch();
+    try {
+      await deleteFn({ data: { id } });
+      toast.success("Produit supprimé.");
+      void refetch();
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Erreur lors de la suppression du produit.");
+    }
   };
 
   if (loading || !session) {

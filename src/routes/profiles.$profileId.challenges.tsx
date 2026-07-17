@@ -369,8 +369,12 @@ function ChallengesPage() {
 
   const remove = async (id: string) => {
     if (!(await confirmDialog({ title: "Supprimer ce défi ?", confirmLabel: "Supprimer", variant: "danger" }))) return;
-    await del({ data: { id } });
-    setChallenges((prev) => prev.filter((c) => c.id !== id));
+    try {
+      await del({ data: { id } });
+      setChallenges((prev) => prev.filter((c) => c.id !== id));
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Erreur lors de la suppression du défi.");
+    }
   };
 
   if (loading || !session || fetching) {

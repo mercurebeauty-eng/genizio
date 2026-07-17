@@ -83,9 +83,13 @@ function AdminSupervisorsPage() {
 
   const handleRemove = async (id: string) => {
     if (!(await confirmDialog({ title: "Retirer ce superviseur ?", confirmLabel: "Retirer", variant: "danger" }))) return;
-    await removeFn({ data: { id } });
-    toast.success("Superviseur retiré.");
-    void refetch();
+    try {
+      await removeFn({ data: { id } });
+      toast.success("Superviseur retiré.");
+      void refetch();
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Erreur lors du retrait du superviseur.");
+    }
   };
 
   if (loading || !session) {
