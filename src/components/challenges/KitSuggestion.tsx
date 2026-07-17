@@ -110,24 +110,20 @@ export function KitSuggestion({
         <span>Total</span>
         <span>{total.toLocaleString("fr-FR")} FCFA</span>
       </div>
-      {waUrl ? (
-        <button
-          onClick={handleOrder}
-          disabled={ordering}
-          className="w-full flex items-center justify-center gap-2 rounded-xl border-2 border-ink bg-leaf px-4 py-2.5 text-sm font-bold text-white hover:-translate-y-0.5 active:translate-y-0 shadow-brutal-sm transition-all cursor-pointer disabled:opacity-50"
-        >
-          {ordering ? (
-            <>
-              <Loader2 className="size-4 animate-spin" />
-              Enregistrement...
-            </>
-          ) : (
-            <>Commander via WhatsApp</>
-          )}
-        </button>
-      ) : (
-        <p className="text-center text-xs text-ink/40">Commande WhatsApp bientôt disponible.</p>
-      )}
+      <button
+        onClick={handleOrder}
+        disabled={ordering}
+        className="w-full flex items-center justify-center gap-2 rounded-xl border-2 border-ink bg-leaf px-4 py-2.5 text-sm font-bold text-white hover:-translate-y-0.5 active:translate-y-0 shadow-brutal-sm transition-all cursor-pointer disabled:opacity-50"
+      >
+        {ordering ? (
+          <>
+            <Loader2 className="size-4 animate-spin" />
+            Enregistrement...
+          </>
+        ) : (
+          <>Commander via WhatsApp</>
+        )}
+      </button>
     </div>
   );
 }
