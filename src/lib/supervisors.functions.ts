@@ -56,7 +56,7 @@ const AssignSupervisorInput = z.object({
 
 export const assignSupervisor = createServerFn({ method: "POST" })
   .middleware([requireAdmin])
-  .inputValidator((input: unknown) => AssignSupervisorInput.parse(input))
+  .validator((input: unknown) => AssignSupervisorInput.parse(input))
   .handler(async ({ data, context }) => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
@@ -84,7 +84,7 @@ export const assignSupervisor = createServerFn({ method: "POST" })
 
 export const removeSupervisor = createServerFn({ method: "POST" })
   .middleware([requireAdmin])
-  .inputValidator((input: unknown) => z.object({ id: z.string().uuid() }).parse(input))
+  .validator((input: unknown) => z.object({ id: z.string().uuid() }).parse(input))
   .handler(async ({ data }) => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { error } = await supabaseAdmin.from("supervisors").delete().eq("id", data.id);

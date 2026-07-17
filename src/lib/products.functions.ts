@@ -29,7 +29,7 @@ const ProductInput = z.object({
 
 export const createProduct = createServerFn({ method: "POST" })
   .middleware([requireAdmin])
-  .inputValidator((input: unknown) => ProductInput.parse(input))
+  .validator((input: unknown) => ProductInput.parse(input))
   .handler(async ({ data }) => {
     const { fromSuggestionId, ...productData } = data;
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
@@ -54,7 +54,7 @@ const UpdateProductInput = ProductInput.omit({ fromSuggestionId: true }).partial
 
 export const updateProduct = createServerFn({ method: "POST" })
   .middleware([requireAdmin])
-  .inputValidator((input: unknown) => UpdateProductInput.parse(input))
+  .validator((input: unknown) => UpdateProductInput.parse(input))
   .handler(async ({ data }) => {
     const { id, ...patch } = data;
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
@@ -70,7 +70,7 @@ export const updateProduct = createServerFn({ method: "POST" })
 
 export const deleteProduct = createServerFn({ method: "POST" })
   .middleware([requireAdmin])
-  .inputValidator((input: unknown) => z.object({ id: z.string().uuid() }).parse(input))
+  .validator((input: unknown) => z.object({ id: z.string().uuid() }).parse(input))
   .handler(async ({ data }) => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { error } = await supabaseAdmin.from("products").delete().eq("id", data.id);
@@ -93,7 +93,7 @@ export const listMaterialSuggestions = createServerFn({ method: "GET" })
 
 export const ignoreMaterialSuggestion = createServerFn({ method: "POST" })
   .middleware([requireAdmin])
-  .inputValidator((input: unknown) => z.object({ id: z.string().uuid() }).parse(input))
+  .validator((input: unknown) => z.object({ id: z.string().uuid() }).parse(input))
   .handler(async ({ data }) => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { error } = await supabaseAdmin
@@ -120,7 +120,7 @@ const OrderInput = z.object({
 
 export const createOrder = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((input: unknown) => OrderInput.parse(input))
+  .validator((input: unknown) => OrderInput.parse(input))
   .handler(async ({ data, context }) => {
     const userId = context.claims.sub;
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
@@ -203,7 +203,7 @@ const UpdateOrderStatusInput = z.object({
 
 export const updateOrderStatus = createServerFn({ method: "POST" })
   .middleware([requireAdmin])
-  .inputValidator((input: unknown) => UpdateOrderStatusInput.parse(input))
+  .validator((input: unknown) => UpdateOrderStatusInput.parse(input))
   .handler(async ({ data }) => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { data: row, error } = await supabaseAdmin
@@ -332,7 +332,7 @@ export const listParentsBI = createServerFn({ method: "GET" })
 
 export const togglePassportUnlock = createServerFn({ method: "POST" })
   .middleware([requireAdmin])
-  .inputValidator((input: unknown) => z.object({
+  .validator((input: unknown) => z.object({
     childId: z.string().uuid(),
     unlock: z.boolean(),
   }).parse(input))
@@ -350,7 +350,7 @@ export const togglePassportUnlock = createServerFn({ method: "POST" })
 
 export const grantProfileSlot = createServerFn({ method: "POST" })
   .middleware([requireAdmin])
-  .inputValidator((input: unknown) =>
+  .validator((input: unknown) =>
     z.object({
       userId: z.string().uuid(),
       delta: z.number().int().min(-10).max(10), // +1 to grant, -1 to revoke

@@ -219,7 +219,7 @@ const GenerateInput = z.object({
 
 export const generateChallenges = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((input: unknown) => GenerateInput.parse(input))
+  .validator((input: unknown) => GenerateInput.parse(input))
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
 
@@ -319,7 +319,7 @@ const UpdateInput = z.object({
 
 export const updateChallenge = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((input: unknown) => UpdateInput.parse(input))
+  .validator((input: unknown) => UpdateInput.parse(input))
   .handler(async ({ data, context }) => {
     const patch: {
       status?: "todo" | "in_progress" | "completed";
@@ -366,7 +366,7 @@ export const updateChallenge = createServerFn({ method: "POST" })
 
 export const deleteChallenge = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((input: unknown) => z.object({ id: z.string().uuid() }).parse(input))
+  .validator((input: unknown) => z.object({ id: z.string().uuid() }).parse(input))
   .handler(async ({ data, context }) => {
     const { error } = await context.supabase
       .from("challenges")
@@ -385,7 +385,7 @@ const ValidateInput = z.object({
 
 export const validateChallengeProof = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((input: unknown) => ValidateInput.parse(input))
+  .validator((input: unknown) => ValidateInput.parse(input))
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
 
@@ -499,7 +499,7 @@ const AssignTemplateInput = z.object({
 
 export const assignTemplateChallenge = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((input: unknown) => AssignTemplateInput.parse(input))
+  .validator((input: unknown) => AssignTemplateInput.parse(input))
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
 
@@ -552,7 +552,7 @@ const GenerateSingleInput = z.object({
 
 export const generateSingleChallenge = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((input: unknown) => GenerateSingleInput.parse(input))
+  .validator((input: unknown) => GenerateSingleInput.parse(input))
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
 
@@ -671,7 +671,7 @@ Réponds STRICTEMENT en JSON valide avec ce format exact :
 
 export const getChildAISynthesis = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((input: unknown) => z.object({ childId: z.string().uuid() }).parse(input))
+  .validator((input: unknown) => z.object({ childId: z.string().uuid() }).parse(input))
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
 
@@ -721,7 +721,7 @@ const AnalyzePostInput = z.object({
 
 export const analyzePostProof = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((input: unknown) => AnalyzePostInput.parse(input))
+  .validator((input: unknown) => AnalyzePostInput.parse(input))
   .handler(async ({ data }) => {
     const prompt = `Tu es Naya, une IA experte en développement de l'enfant et intelligences multiples (Howard Gardner).
 Analyse cette photo qui représente une "preuve" d'activité ou une création réalisée par un enfant. 
