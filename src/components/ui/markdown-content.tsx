@@ -47,9 +47,14 @@ export function MarkdownContent({
   inline?: boolean;
 }) {
   if (!content) return null;
+  // The wrapper itself must match: a <div> is invalid HTML inside a <p>,
+  // which is exactly where every inline call site embeds this (e.g.
+  // `<p>"<MarkdownContent inline />"</p>`) — using <span> here isn't just
+  // cosmetic, it's what makes `inline` actually valid to nest.
+  const Wrapper = inline ? "span" : "div";
   return (
-    <div className={className}>
+    <Wrapper className={className}>
       <ReactMarkdown components={inline ? inlineComponents : blockComponents}>{content}</ReactMarkdown>
-    </div>
+    </Wrapper>
   );
 }

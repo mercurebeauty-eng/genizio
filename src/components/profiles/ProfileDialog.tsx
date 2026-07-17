@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { ALL_INTERESTS, AVATAR_COLORS, emptyProfileDraft, type ChildProfile, type ProfileDraft } from "./shared";
+import { INTERESTS_BY_TALENT, AVATAR_COLORS, emptyProfileDraft, type ChildProfile, type ProfileDraft } from "./shared";
 
 export function ProfileDialog({
   initial,
@@ -169,26 +169,38 @@ export function ProfileDialog({
           </div>
 
           <div>
-            <label className="mb-2 block text-xs font-semibold uppercase tracking-wider text-ink/50">
+            <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-ink/50">
               Centres d'intérêt
             </label>
-            <div className="flex flex-wrap gap-2">
-              {ALL_INTERESTS.map((i) => {
-                const on = draft.interests.includes(i);
-                return (
-                  <button
-                    key={i}
-                    type="button"
-                    onClick={() => toggle(i)}
-                    className={
-                      "rounded-full px-3 py-1 text-xs font-bold border-2 transition-all " +
-                      (on ? "bg-brand border-ink text-white" : "bg-white border-ink/20 text-ink/70 hover:border-ink")
-                    }
-                  >
-                    {i}
-                  </button>
-                );
-              })}
+            <p className="mb-3 text-[11px] text-ink/40 leading-relaxed">
+              Organisés par type de talent — ça aide Naya à proposer des défis mieux ciblés dès le départ.
+            </p>
+            <div className="space-y-4">
+              {Object.entries(INTERESTS_BY_TALENT).map(([key, group]) => (
+                <div key={key}>
+                  <p className="mb-1.5 text-[10px] font-extrabold uppercase tracking-widest text-brand">
+                    {group.label}
+                  </p>
+                  <div className="flex flex-wrap gap-2">
+                    {group.tags.map((i) => {
+                      const on = draft.interests.includes(i);
+                      return (
+                        <button
+                          key={i}
+                          type="button"
+                          onClick={() => toggle(i)}
+                          className={
+                            "rounded-full px-3 py-1 text-xs font-bold border-2 transition-all " +
+                            (on ? "bg-brand border-ink text-white" : "bg-white border-ink/20 text-ink/70 hover:border-ink")
+                          }
+                        >
+                          {i}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              ))}
             </div>
           </div>
 
