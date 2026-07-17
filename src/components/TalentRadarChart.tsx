@@ -1,16 +1,7 @@
 import { Radar, RadarChart, PolarGrid, PolarAngleAxis, ResponsiveContainer } from "recharts";
+import { TALENT_KEY_LABELS } from "@/lib/talent-buckets";
 
-const TALENT_KEYS = [
-  { key: "spatial", subject: "Spatiale" },
-  { key: "corporelle", subject: "Corporelle" },
-  { key: "sociale", subject: "Sociale" },
-  { key: "entrepreneuriale", subject: "Entreprendre" },
-  { key: "creative", subject: "Créative" },
-  { key: "artisanale", subject: "Artisanale" },
-  { key: "emotionnelle", subject: "Émotionnelle" },
-  { key: "logico_mathematique", subject: "Logique" },
-  { key: "linguistique", subject: "Linguistique" },
-] as const;
+const TALENT_KEYS = Object.entries(TALENT_KEY_LABELS).map(([key, subject]) => ({ key, subject }));
 
 type TalentRadarChartProps = {
   talents: Record<string, number> | null | undefined;

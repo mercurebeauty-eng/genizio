@@ -1,5 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { VALID_TALENT_KEYS } from "@/lib/talent-buckets";
 import { z } from "zod";
 
 const ChallengeSchema = z.object({
@@ -431,10 +432,13 @@ Réponds STRICTEMENT en JSON valide avec ce format :
     const observations = parsed.observations ?? "Bravo pour cette belle réalisation !";
     const awarded = parsed.talents_awarded ?? {};
 
+    const validTalentKeys = new Set(VALID_TALENT_KEYS);
     const deltas: Record<string, number> = {};
     let intelligenceKeys: string[] = [];
     for (const [key, points] of Object.entries(awarded)) {
-      if (typeof points === 'number') {
+      // Drop anything the AI returns outside the 9 known intelligences — a
+      // hallucinated or misspelled key would otherwise pollute talents forever.
+      if (typeof points === 'number' && validTalentKeys.has(key)) {
         // Cap points between 1 and 3 per challenge validation to ensure gradual progression
         deltas[key] = Math.max(1, Math.min(3, points));
         intelligenceKeys.push(key);

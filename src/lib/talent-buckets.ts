@@ -26,6 +26,12 @@ export const TALENT_KEY_LABELS: Record<string, string> = {
   linguistique: "Linguistique",
 };
 
+// The single allow-list of talent keys — child_profiles.talents must never
+// contain anything outside this set (an AI hallucination or a stray field
+// like pdf_unlocked has polluted it before). Anything else consuming/writing
+// talent keys should derive from this rather than keeping its own copy.
+export const VALID_TALENT_KEYS = Object.keys(TALENT_KEY_LABELS);
+
 // Short narrative phrases per domain × bucket — richer than "Domaine — bucket",
 // closer to the hi-fi reference copy ("Itératrice qui rebondit vite").
 // Falls back to "{Domaine} — {bucket label}" for any (domain, bucket) pair not
