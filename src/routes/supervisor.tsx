@@ -35,6 +35,7 @@ function SupervisorDashboardPage() {
   const navigate = useNavigate();
   const [children, setChildren] = useState<ChildWithChallenges[]>([]);
   const [fetching, setFetching] = useState(true);
+  const [loadError, setLoadError] = useState(false);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [selectedChallenge, setSelectedChallenge] = useState<any | null>(null);
 
@@ -47,13 +48,17 @@ function SupervisorDashboardPage() {
   useEffect(() => {
     if (!session) return;
     setFetching(true);
+    setLoadError(false);
     getDashboardFn()
       .then((res) => {
         const kids = (res.children ?? []) as ChildWithChallenges[];
         setChildren(kids);
         setSelectedId(kids[0]?.id ?? null);
       })
-      .catch(() => setChildren([]))
+      .catch(() => {
+        setChildren([]);
+        setLoadError(true);
+      })
       .finally(() => setFetching(false));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [session]);
@@ -81,6 +86,14 @@ function SupervisorDashboardPage() {
         {fetching ? (
           <div className="flex justify-center py-20">
             <Loader2 className="size-6 animate-spin text-brand" />
+          </div>
+        ) : loadError ? (
+          <div className="rounded-3xl border-[3px] border-dashed border-red-400 bg-red-50 p-16 text-center shadow-brutal-sm">
+            <AlertTriangle className="size-16 text-red-400 mx-auto mb-4" />
+            <p className="font-display text-xl font-bold mb-2 text-red-700">Impossible de charger votre tableau de bord</p>
+            <p className="text-sm text-ink/60">
+              Une erreur est survenue. Vérifiez votre connexion et réessayez, ou rechargez la page.
+            </p>
           </div>
         ) : children.length === 0 ? (
           <div className="rounded-3xl border-[3px] border-dashed border-ink bg-white/40 p-16 text-center shadow-brutal-sm">
