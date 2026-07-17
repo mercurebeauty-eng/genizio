@@ -14,7 +14,8 @@ export type GuildKey =
   | "protecteurs";
 
 export type GuildInfo = {
-  key: GuildKey;
+  /** "aucune" is only ever used by NO_GUILD_YET below, never inside GUILDS. */
+  key: GuildKey | "aucune";
   name: string;
   emoji: string;
   tagline: string;
@@ -90,17 +91,34 @@ export const GUILDS: Record<GuildKey, GuildInfo> = {
   },
 };
 
-/** Retourne l'info de la Guilde dominante d'un enfant
- *  à partir de ses scores de talents.
- *  Retourne `strateges` par défaut si aucun talent n'est encore développé.
+// Deliberately NOT part of GUILDS — it isn't a 7th recruitable guild, it's a
+// "no signal yet" placeholder returned by getChildGuild() when every talent
+// score is 0. Kept out of GUILDS so `Object.values(GUILDS)` (used by the
+// admin "Les 6 Guildes" legend) still enumerates exactly the 6 real ones.
+// Shares GuildInfo's exact shape so every caller of getChildGuild() renders
+// it correctly with zero changes on their end.
+export const NO_GUILD_YET: GuildInfo = {
+  key: "aucune",
+  name: "Guilde à découvrir",
+  emoji: "🔍",
+  tagline: "Ses premiers défis révéleront sa voie",
+  description: "Pas encore assez de données pour déterminer une guilde dominante.",
+  color: "text-stone-600",
+  bgColor: "bg-stone-100 border-stone-300",
+  talentKeys: [],
+};
+
+/** Retourne l'info de la Guilde dominante d'un enfant à partir de ses scores
+ *  de talents, ou NO_GUILD_YET si aucun talent n'a encore de score positif —
+ *  on ne force plus une guilde arbitraire sur un enfant qui n'a rien fait.
  */
 export function getChildGuild(
   talents: Record<string, number> | null | undefined
 ): GuildInfo {
   const raw = talents ?? {};
 
-  let bestGuildKey: GuildKey = "strateges";
-  let bestScore = -1;
+  let bestGuildKey: GuildKey | null = null;
+  let bestScore = 0;
 
   for (const [guildKey, guild] of Object.entries(GUILDS) as [GuildKey, GuildInfo][]) {
     const guildScore = guild.talentKeys.reduce(
@@ -113,21 +131,22 @@ export function getChildGuild(
     }
   }
 
-  // Si aucun talent n'est développé (tous à 0), on se base sur
-  // l'index du premier talent non-nul dans l'ordre alphabétique
-  if (bestScore === 0) {
-    const topTalent = Object.entries(raw)
-      .filter(([, v]) => v > 0)
-      .sort(([, a], [, b]) => b - a)[0]?.[0];
+  if (bestGuildKey) return GUILDS[bestGuildKey];
 
-    if (topTalent) {
-      for (const [gKey, guild] of Object.entries(GUILDS) as [GuildKey, GuildInfo][]) {
-        if (guild.talentKeys.includes(topTalent)) {
-          return guild;
-        }
-      }
+  // No guild scored above 0 — fall back to whichever single talent has the
+  // highest raw score, in case a future talent key isn't yet mapped into any
+  // guild's talentKeys. Today all 9 keys are covered, so this branch is a
+  // safety net rather than reachable code — verified by
+  // guilds.test.ts's "every talent key covered exactly once" check.
+  const topTalent = Object.entries(raw)
+    .filter(([, v]) => v > 0)
+    .sort(([, a], [, b]) => b - a)[0]?.[0];
+
+  if (topTalent) {
+    for (const guild of Object.values(GUILDS)) {
+      if (guild.talentKeys.includes(topTalent)) return guild;
     }
   }
 
-  return GUILDS[bestGuildKey];
+  return NO_GUILD_YET;
 }

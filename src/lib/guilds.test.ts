@@ -1,30 +1,29 @@
 import { describe, it, expect } from "vitest";
-import { getChildGuild, GUILDS } from "./guilds";
+import { getChildGuild, GUILDS, NO_GUILD_YET } from "./guilds";
 
 describe("getChildGuild", () => {
-  // getChildGuild's own JSDoc says it "retourne strateges par défaut si aucun
-  // talent n'est encore développé" — but that is NOT what the code does. The
-  // loop initializes bestScore = -1 and bestGuildKey = "strateges", then the
-  // very first guild iterated (batisseurs, first key in GUILDS) scores 0 for
-  // an empty talents object, and 0 > -1, so bestGuildKey is immediately
-  // overwritten to "batisseurs" and nothing later beats a tied 0. This test
-  // characterizes the actual behavior, not the documented intent — see the
-  // characterization note in this session's report. Do not "fix" this without
-  // deciding which of the two (code or comment) is the intended behavior.
-  it("defaults to Les Bâtisseurs (not Les Stratèges, despite the docstring) when talents is empty", () => {
-    expect(getChildGuild({}).key).toBe("batisseurs");
+  // Was previously "defaults to batisseurs" — a bug (bestScore started at -1,
+  // so the first guild's tied score of 0 always won) that also contradicted
+  // the function's own docstring (which claimed "strateges"). Fixed per user
+  // request: no talent data should mean no guild forced, not a guessed one.
+  it("returns NO_GUILD_YET (not any real guild) when talents is empty", () => {
+    expect(getChildGuild({})).toEqual(NO_GUILD_YET);
   });
 
-  it("defaults to Les Bâtisseurs for null talents too", () => {
-    expect(getChildGuild(null).key).toBe("batisseurs");
+  it("returns NO_GUILD_YET for null talents too", () => {
+    expect(getChildGuild(null)).toEqual(NO_GUILD_YET);
   });
 
-  it("defaults to Les Bâtisseurs when every talent score is explicitly 0", () => {
+  it("returns NO_GUILD_YET when every talent score is explicitly 0", () => {
     const allZero = Object.fromEntries(
       ["spatial", "corporelle", "sociale", "entrepreneuriale", "creative", "artisanale", "emotionnelle", "logico_mathematique", "linguistique"]
         .map((k) => [k, 0]),
     );
-    expect(getChildGuild(allZero).key).toBe("batisseurs");
+    expect(getChildGuild(allZero)).toEqual(NO_GUILD_YET);
+  });
+
+  it("NO_GUILD_YET is not one of the 6 real guilds", () => {
+    expect(Object.values(GUILDS)).not.toContainEqual(NO_GUILD_YET);
   });
 
   it("picks the guild whose talent keys sum to the highest score", () => {

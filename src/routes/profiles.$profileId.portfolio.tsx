@@ -242,8 +242,11 @@ function PortfolioPage() {
             const guild = getChildGuild(child.talents);
             const level = Math.max(1, Math.min(10, Math.floor(completed.length / 4) + 1));
             
-            // Singularize guild name for the title
-            let singularGuild = "Explorateur";
+            // Singularize guild name for the title. "Curieux" covers
+            // NO_GUILD_YET explicitly — distinct from any real guild's
+            // singular form AND from every entry in `suffixes` below, so it
+            // can't collide into an odd repeat like "Aventurier Aventurier".
+            let singularGuild = "Curieux";
             if (guild.name.includes("Bâtisseurs")) singularGuild = "Bâtisseur";
             else if (guild.name.includes("Inventeurs")) singularGuild = "Inventeur";
             else if (guild.name.includes("Explorateurs")) singularGuild = "Explorateur";
