@@ -157,7 +157,7 @@ function BoutiquePage() {
     try {
       await createOrderFn({
         data: {
-          child_id: children[0].id, // Default to first child
+          child_id: selectedChild || children[0].id,
           challenge_id: null,
           total_price_xof: product.price_xof,
           items: [{ id: product.id, name: product.name, price_xof: product.price_xof }],
@@ -275,6 +275,7 @@ function BoutiquePage() {
             <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
               {products.map((p) => {
                 const count = getChallengeCount(p.material_tags);
+                const outOfStock = p.stock_quantity !== null && p.stock_quantity <= 0;
                 return (
                   <div
                     key={p.id}
@@ -305,6 +306,11 @@ function BoutiquePage() {
                       ))}
                     </div>
 
+                    {outOfStock && (
+                      <p className="mt-4 text-xs font-bold text-red-600 flex items-center gap-1">
+                        Rupture de stock — commande temporairement indisponible
+                      </p>
+                    )}
                     {count > 0 ? (
                       <p className="mt-4 text-xs font-bold text-brand flex items-center gap-1">
                         <Trophy className="size-3.5" />
@@ -324,14 +330,16 @@ function BoutiquePage() {
                       </button>
                       <button
                         onClick={() => handleOrder(p)}
-                        disabled={orderingId === p.id}
-                        className="w-full flex items-center justify-center gap-2 rounded-xl border-2 border-ink bg-leaf px-4 py-2.5 text-xs font-bold text-white hover:-translate-y-0.5 active:translate-y-0 shadow-brutal-sm transition-all cursor-pointer disabled:opacity-50"
+                        disabled={orderingId === p.id || outOfStock}
+                        className="w-full flex items-center justify-center gap-2 rounded-xl border-2 border-ink bg-leaf px-4 py-2.5 text-xs font-bold text-white hover:-translate-y-0.5 active:translate-y-0 shadow-brutal-sm transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                       >
                         {orderingId === p.id ? (
                           <>
                             <Loader2 className="size-4 animate-spin" />
                             Commande en cours...
                           </>
+                        ) : outOfStock ? (
+                          <>Rupture de stock</>
                         ) : (
                           <>Commander via WhatsApp</>
                         )}
