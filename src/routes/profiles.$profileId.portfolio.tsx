@@ -28,50 +28,53 @@ import { InviteMentorDialog } from "@/components/mentors/InviteMentorDialog";
 import { AppHeader } from "@/components/AppHeader";
 import { MarkdownContent } from "@/components/ui/markdown-content";
 import { INTERESTS_BY_TALENT } from "@/components/profiles/shared";
+import { TALENT_KEY_LABELS } from "@/lib/talent-buckets";
 
+// title vient de TALENT_KEY_LABELS (source unique des 9 libellés) — seuls
+// l'icône et la description restent propres à cette page.
 const TALENT_DETAILS: Record<string, { title: string; icon: any; description: string }> = {
   spatial: {
-    title: "Spatiale",
+    title: TALENT_KEY_LABELS.spatial,
     icon: Compass,
     description: "Perception de l'espace, dessin, construction en 3D et orientation.",
   },
   corporelle: {
-    title: "Corporelle",
+    title: TALENT_KEY_LABELS.corporelle,
     icon: Activity,
     description: "Coordination physique, habileté manuelle, sport et mouvement.",
   },
   sociale: {
-    title: "Sociale",
+    title: TALENT_KEY_LABELS.sociale,
     icon: Users,
     description: "Relations avec autrui, leadership, empathie et travail en groupe.",
   },
   entrepreneuriale: {
-    title: "Entreprendre",
+    title: TALENT_KEY_LABELS.entrepreneuriale,
     icon: Lightbulb,
     description: "Esprit d'initiative, créativité de projets, organisation et commerce.",
   },
   creative: {
-    title: "Créative",
+    title: TALENT_KEY_LABELS.creative,
     icon: Palette,
     description: "Expression artistique, imaginaire, musique et récits.",
   },
   artisanale: {
-    title: "Artisanale",
+    title: TALENT_KEY_LABELS.artisanale,
     icon: Wrench,
     description: "Cuisine, couture, modélisme, travaux manuels et outils.",
   },
   emotionnelle: {
-    title: "Émotionnelle",
+    title: TALENT_KEY_LABELS.emotionnelle,
     icon: Heart,
     description: "Compréhension de soi, empathie, gestion des émotions et calme.",
   },
   logico_mathematique: {
-    title: "Logique",
+    title: TALENT_KEY_LABELS.logico_mathematique,
     icon: Binary,
     description: "Raisonnement logique, calcul, sciences et jeux de stratégie.",
   },
   linguistique: {
-    title: "Linguistique",
+    title: TALENT_KEY_LABELS.linguistique,
     icon: BookOpen,
     description: "Aisance avec les mots, lecture, écriture et prise de parole.",
   },

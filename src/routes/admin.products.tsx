@@ -18,6 +18,7 @@ import { Loader2, Plus, Trash2, ShieldAlert, Package, Sparkles, X, BarChart2, Us
 import { toast } from "sonner";
 import { RadarChart, PolarGrid, PolarAngleAxis, Radar, ResponsiveContainer, Cell, BarChart, Bar, XAxis, YAxis, Tooltip, Legend } from "recharts";
 import { GUILDS, getChildGuild } from "@/lib/guilds";
+import { TALENT_KEY_LABELS } from "@/lib/talent-buckets";
 import { confirmDialog } from "@/components/ui/confirm-dialog";
 
 
@@ -533,7 +534,7 @@ function AdminProductsPage() {
                     {Object.keys(ecosystemStats.talentTotals).length > 0 ? (
                       <ResponsiveContainer width="100%" height={240}>
                         <RadarChart data={Object.entries(ecosystemStats.talentTotals).map(([key, val]) => ({
-                          talent: ({ spatial: "Spatial", corporelle: "Corporel", sociale: "Social", entrepreneuriale: "Entrepreneur", creative: "Creatif", artisanale: "Artisanal", emotionnelle: "Emotionnel", logico_mathematique: "Logique", linguistique: "Linguistique" } as Record<string,string>)[key] ?? key,
+                          talent: TALENT_KEY_LABELS[key] ?? key,
                           score: val,
                         }))}>
                           <PolarGrid stroke="#00000020" />

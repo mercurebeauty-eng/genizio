@@ -1,45 +1,48 @@
+import { TALENT_KEY_LABELS } from "@/lib/talent-buckets";
+
 // Centres d'intérêt organisés par clé de talent Gardner (les mêmes 9 clés que
 // child_profiles.talents et TALENT_KEY_LABELS dans talent-buckets.ts) plutôt
 // qu'une liste plate sans lien avec le reste de l'app. Chaque tag reste une
 // formulation concrète et reconnaissable par un parent — pas le nom brut de
 // l'intelligence — pour que le choix serve à la fois de signal de contexte
 // pour la génération IA et de reflet direct du potentiel déjà suivi ailleurs
-// (carte des talents, domaines de défis, Guildes).
+// (carte des talents, domaines de défis, Guildes). Le label vient directement
+// de TALENT_KEY_LABELS pour ne plus être retapé à la main en parallèle.
 export const INTERESTS_BY_TALENT: Record<string, { label: string; tags: readonly string[] }> = {
   spatial: {
-    label: "Spatiale",
+    label: TALENT_KEY_LABELS.spatial,
     tags: ["Construction & Lego", "Dessin & Design", "Puzzles & Cartes", "Orientation & Exploration"],
   },
   corporelle: {
-    label: "Corporelle",
+    label: TALENT_KEY_LABELS.corporelle,
     tags: ["Sport & Mouvement", "Danse", "Théâtre & Mime", "Bricolage manuel"],
   },
   sociale: {
-    label: "Sociale",
+    label: TALENT_KEY_LABELS.sociale,
     tags: ["Aime jouer en groupe", "Leadership naturel", "Aide les autres", "Sens de la négociation"],
   },
   entrepreneuriale: {
-    label: "Entreprendre",
+    label: TALENT_KEY_LABELS.entrepreneuriale,
     tags: ["A des idées de projets", "Aime vendre / échanger", "Aime organiser des choses", "Curieux du commerce"],
   },
   creative: {
-    label: "Créative",
+    label: TALENT_KEY_LABELS.creative,
     tags: ["Dessin & Peinture", "Musique", "Invente des histoires", "Bricolage créatif"],
   },
   artisanale: {
-    label: "Artisanale",
+    label: TALENT_KEY_LABELS.artisanale,
     tags: ["Cuisine", "Couture & Tissage", "Répare des objets", "Travaux manuels"],
   },
   emotionnelle: {
-    label: "Émotionnelle",
+    label: TALENT_KEY_LABELS.emotionnelle,
     tags: ["Empathique", "Comprend ses émotions", "Attentif aux autres", "Calme sous pression"],
   },
   logico_mathematique: {
-    label: "Logique",
+    label: TALENT_KEY_LABELS.logico_mathematique,
     tags: ["Aime les chiffres", "Résout des énigmes", "Sciences & Expériences", "Jeux de stratégie"],
   },
   linguistique: {
-    label: "Linguistique",
+    label: TALENT_KEY_LABELS.linguistique,
     tags: ["Aime parler & raconter", "Prise de parole en public", "Aime lire", "Écriture & Poésie"],
   },
 };
