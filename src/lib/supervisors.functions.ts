@@ -75,7 +75,10 @@ export const assignSupervisor = createServerFn({ method: "POST" })
       })
       .select("*")
       .single();
-    if (error) throw new Error(error.message);
+    if (error) {
+      if (error.code === "23505") throw new Error("Ce superviseur est déjà assigné à cet enfant.");
+      throw new Error(error.message);
+    }
     return row;
   });
 
