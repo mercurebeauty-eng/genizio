@@ -139,7 +139,11 @@ function DashboardPage() {
       .order("created_at", { ascending: false });
     const list = (data ?? []) as ChildProfile[];
     setProfiles(list);
-    setSelectedId((prev) => prev ?? list[0]?.id ?? null);
+    // Keep the current selection only if it's still in the refetched list —
+    // it may have been deleted elsewhere (another tab, /profiles/manage)
+    // since the last fetch, which would otherwise leave selectedId pointing
+    // at a profile that no longer exists.
+    setSelectedId((prev) => (prev && list.some((p) => p.id === prev) ? prev : list[0]?.id ?? null));
     setFetching(false);
   };
 
