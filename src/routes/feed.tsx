@@ -5,6 +5,7 @@ import { useSession } from "@/hooks/use-session";
 import { AppHeader } from "@/components/AppHeader";
 import { MessageCircle, Send, MoreHorizontal, Loader2, Trash2 } from "lucide-react";
 import { CreatePostModal } from "@/components/feed/CreatePostModal";
+import { confirmDialog } from "@/components/ui/confirm-dialog";
 import { toast } from "sonner";
 import { formatDistanceToNow } from "date-fns";
 import { fr } from "date-fns/locale";
@@ -50,6 +51,7 @@ function FeedPage() {
         if (!error && data) {
           const userPosts = data.map(item => ({
             id: item.id,
+            parentId: item.parent_id,
             childName: item.child_profiles?.name || "Enfant",
             avatarColor: item.child_profiles?.avatar_color === "leaf" ? "bg-leaf" : item.child_profiles?.avatar_color === "sky" ? "bg-sky" : "bg-brand",
             description: item.caption,
@@ -169,6 +171,22 @@ function FeedPage() {
     }));
   };
 
+  const deletePost = async (post: any) => {
+    if (!(await confirmDialog({
+      title: "Supprimer cette publication ?",
+      description: "Cette action est irréversible.",
+      confirmLabel: "Supprimer",
+      variant: "danger",
+    }))) return;
+    const { error } = await supabase.from("posts").delete().eq("id", post.id);
+    if (error) {
+      toast.error("Erreur lors de la suppression de la publication.");
+      return;
+    }
+    setFeedItems((items) => items.filter((item) => item.id !== post.id));
+    toast.success("Publication supprimée.");
+  };
+
   const handleShare = async (post: any) => {
     try {
       await navigator.clipboard.writeText(post.image);
@@ -229,9 +247,16 @@ function FeedPage() {
                         </h3>
                       </div>
                     </div>
-                    <button className="p-2 text-ink/40 hover:text-ink transition-colors border-2 border-transparent hover:border-ink rounded-xl">
-                      <MoreHorizontal className="size-5" />
-                    </button>
+                    {post.parentId === session.user.id && (
+                      <button
+                        onClick={() => deletePost(post)}
+                        aria-label="Supprimer la publication"
+                        title="Supprimer la publication"
+                        className="p-2 text-ink/40 hover:text-red-600 transition-colors border-2 border-transparent hover:border-ink rounded-xl cursor-pointer"
+                      >
+                        <MoreHorizontal className="size-5" />
+                      </button>
+                    )}
                   </div>
 
                   {/* Media Full Bleed */}
