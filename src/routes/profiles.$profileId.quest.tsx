@@ -8,6 +8,8 @@ import { toast } from "sonner";
 import { NayaAvatar } from "@/components/NayaAvatar";
 import nayaAvatar from "@/assets/naya-avatar.png";
 import { confirmDialog } from "@/components/ui/confirm-dialog";
+import { DifficultyBadge } from "@/components/challenges/DifficultyBadge";
+import { MarkdownContent } from "@/components/ui/markdown-content";
 
 export const Route = createFileRoute("/profiles/$profileId/quest")({
   component: QuestPage,
@@ -31,6 +33,7 @@ type Challenge = ChallengeLike & {
   notes: string | null;
   progress: number;
   duration: string;
+  difficulty?: string | null;
 };
 
 const DOMAIN_COLORS: Record<string, string> = {
@@ -465,17 +468,20 @@ function QuestPage() {
         {activeChallenge ? (
           <div className="bg-white rounded-3xl p-8 border-[3px] border-ink shadow-brutal w-full animate-in zoom-in-95 duration-500 relative overflow-hidden text-left">
             <div className="mb-4 flex items-center justify-between">
-              <span className="inline-block rounded-full border-[3px] border-ink bg-brand px-3.5 py-1 text-xs font-black uppercase tracking-widest text-white shadow-brutal-sm">
-                Mission : {activeChallenge.domain}
-              </span>
+              <div className="flex items-center gap-2">
+                <span className="inline-block rounded-full border-[3px] border-ink bg-brand px-3.5 py-1 text-xs font-black uppercase tracking-widest text-white shadow-brutal-sm">
+                  Mission : {activeChallenge.domain}
+                </span>
+                <DifficultyBadge difficulty={activeChallenge.difficulty} />
+              </div>
               <span className="text-xs font-black text-ink/40">⏱ {activeChallenge.duration}</span>
             </div>
             <h2 className="font-display text-2xl font-black text-ink leading-tight mb-3">
               {activeChallenge.title}
             </h2>
-            <p className="text-ink/70 leading-relaxed mb-6">
-              {activeChallenge.description}
-            </p>
+            <div className="text-ink/70 leading-relaxed mb-6">
+              <MarkdownContent content={activeChallenge.description} />
+            </div>
 
             {materials.length > 0 && (
               <div className="mb-8">

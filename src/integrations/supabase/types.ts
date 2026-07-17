@@ -21,6 +21,7 @@ export type Database = {
           completed_at: string | null
           created_at: string
           description: string
+          difficulty: string | null
           domain: string
           duration: string
           id: string
@@ -45,6 +46,7 @@ export type Database = {
           completed_at?: string | null
           created_at?: string
           description: string
+          difficulty?: string | null
           domain: string
           duration: string
           id?: string
@@ -69,6 +71,7 @@ export type Database = {
           completed_at?: string | null
           created_at?: string
           description?: string
+          difficulty?: string | null
           domain?: string
           duration?: string
           id?: string

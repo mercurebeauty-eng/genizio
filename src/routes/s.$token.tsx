@@ -4,6 +4,7 @@ import { getSharedChildView } from "@/lib/mentors.functions";
 import { useEffect, useState } from "react";
 import { ShieldAlert, Loader2, Award, Brain, Image as ImageIcon } from "lucide-react";
 import { TalentRadarChart } from "@/components/TalentRadarChart";
+import { MarkdownContent } from "@/components/ui/markdown-content";
 
 export const Route = createFileRoute("/s/$token")({
   component: SharedChildView,
@@ -113,7 +114,9 @@ function SharedChildView() {
                   </div>
 
                   <h4 className="font-display text-lg font-extrabold text-ink mb-2">{c.title}</h4>
-                  <p className="text-sm text-ink/70 leading-relaxed mb-6">{c.description}</p>
+                  <div className="text-sm text-ink/70 leading-relaxed mb-6">
+                    <MarkdownContent content={c.description} />
+                  </div>
 
                   {c.proof_image_url && (
                     <div className="mb-6 rounded-2xl overflow-hidden border-[3px] border-ink bg-surface">
@@ -127,7 +130,7 @@ function SharedChildView() {
                         <Brain className="size-4" />
                         Analyse
                       </p>
-                      <p className="text-sm text-ink/80 leading-relaxed italic">"{c.ai_observations}"</p>
+                      <p className="text-sm text-ink/80 leading-relaxed italic">"<MarkdownContent content={c.ai_observations} inline />"</p>
                     </div>
                   )}
 

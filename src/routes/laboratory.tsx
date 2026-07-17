@@ -10,6 +10,8 @@ import { Sparkles, Loader2, RotateCcw, Check, BookOpen, ShieldAlert, Award, Comp
 import { toast } from "sonner";
 import { NayaAvatar } from "@/components/NayaAvatar";
 import { KitSuggestion } from "@/components/challenges/KitSuggestion";
+import { DifficultyBadge } from "@/components/challenges/DifficultyBadge";
+import { MarkdownContent } from "@/components/ui/markdown-content";
 
 export const Route = createFileRoute("/laboratory")({
   component: LaboratoryPage,
@@ -41,6 +43,7 @@ interface GeneratedChallenge {
   intelligences?: string[];
   requires_supervision?: boolean;
   supervision_warning?: string;
+  difficulty?: string;
 }
 
 const LOADING_STEPS = [
@@ -161,6 +164,9 @@ function LaboratoryPage() {
             material_tags: currentChallenge.material_tags ?? [],
             intelligences: currentChallenge.intelligences || [currentChallenge.domain],
             pedagogical_context: currentChallenge.pedagogical_context,
+            requires_supervision: currentChallenge.requires_supervision ?? false,
+            supervision_warning: currentChallenge.supervision_warning,
+            difficulty: currentChallenge.difficulty,
           }
         }
       });
@@ -425,11 +431,14 @@ function LaboratoryPage() {
             <div className="overflow-hidden rounded-3xl border-[3px] border-ink bg-white shadow-brutal">
               {/* Header */}
               <div className="bg-leaf p-6 border-b-[3px] border-ink md:p-8 text-white">
-                <div className="flex items-center justify-between">
-                  <span className="inline-flex items-center gap-1.5 rounded-full border border-current px-3 py-1 text-xs font-extrabold uppercase tracking-wider">
-                    <Compass className="size-3.5" />
-                    {currentChallenge.domain}
-                  </span>
+                <div className="flex items-center justify-between gap-2">
+                  <div className="flex items-center gap-2">
+                    <span className="inline-flex items-center gap-1.5 rounded-full border border-current px-3 py-1 text-xs font-extrabold uppercase tracking-wider">
+                      <Compass className="size-3.5" />
+                      {currentChallenge.domain}
+                    </span>
+                    <DifficultyBadge difficulty={currentChallenge.difficulty} />
+                  </div>
                   <span className="text-sm font-bold uppercase tracking-wider">
                     ⏱ {currentChallenge.duration}
                   </span>
@@ -437,9 +446,9 @@ function LaboratoryPage() {
                 <h2 className="mt-4 font-display text-2xl font-extrabold leading-tight text-ink md:text-3xl">
                   {currentChallenge.title}
                 </h2>
-                <p className="mt-2.5 text-sm font-medium leading-relaxed text-ink/70">
-                  {currentChallenge.description}
-                </p>
+                <div className="mt-2.5 text-sm font-medium leading-relaxed text-ink/70">
+                  <MarkdownContent content={currentChallenge.description} />
+                </div>
               </div>
 
               {/* Tabs Navigation */}
@@ -503,7 +512,9 @@ function LaboratoryPage() {
                           <div className="grid size-8 flex-shrink-0 place-items-center rounded-full bg-brand text-sm font-black text-white">
                             {idx + 1}
                           </div>
-                          <div className="text-sm font-medium leading-relaxed text-ink pt-1">{step}</div>
+                          <div className="text-sm font-medium leading-relaxed text-ink pt-1">
+                            <MarkdownContent content={step} inline />
+                          </div>
                         </li>
                       ))}
                     </ol>
@@ -516,9 +527,9 @@ function LaboratoryPage() {
                       <Award className="size-6 text-brand flex-shrink-0 mt-0.5" />
                       <div>
                         <h4 className="text-sm font-bold text-brand uppercase tracking-wider mb-2">Analyse de Naya</h4>
-                        <p className="text-sm font-semibold leading-relaxed text-ink/80 italic">
-                          "{currentChallenge.pedagogical_context || "Ce défi permet d'explorer les aptitudes naturelles et de stimuler l'esprit créatif de l'enfant."}"
-                        </p>
+                        <div className="text-sm font-semibold leading-relaxed text-ink/80 italic">
+                          "<MarkdownContent content={currentChallenge.pedagogical_context || "Ce défi permet d'explorer les aptitudes naturelles et de stimuler l'esprit créatif de l'enfant."} inline />"
+                        </div>
                       </div>
                     </div>
                   </div>

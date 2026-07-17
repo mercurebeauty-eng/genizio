@@ -1,5 +1,6 @@
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { cn } from "@/lib/utils";
+import { MarkdownContent } from "@/components/ui/markdown-content";
 
 export function StepAccordion({ steps, className }: { steps: string[], className?: string }) {
   if (!steps || steps.length === 0) return null;
@@ -28,12 +29,12 @@ export function StepAccordion({ steps, className }: { steps: string[], className
                     {index + 1}.
                   </span>
                   <span className="font-semibold">
-                    {shortTitle}
+                    <MarkdownContent content={shortTitle} inline />
                   </span>
                 </div>
               </AccordionTrigger>
               <AccordionContent className="text-ink/70 leading-relaxed pb-4 pt-1 pl-7">
-                {step}
+                <MarkdownContent content={step} inline />
               </AccordionContent>
             </AccordionItem>
           );

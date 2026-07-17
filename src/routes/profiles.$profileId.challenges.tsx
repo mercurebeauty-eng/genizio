@@ -21,6 +21,8 @@ import { StepAccordion } from "@/components/challenges/StepAccordion";
 import { ObservationPrompts } from "@/components/challenges/ObservationPrompts";
 import { OutcomeChat } from "@/components/challenges/OutcomeChat";
 import { KitSuggestion } from "@/components/challenges/KitSuggestion";
+import { DifficultyBadge } from "@/components/challenges/DifficultyBadge";
+import { MarkdownContent } from "@/components/ui/markdown-content";
 import { confirmDialog } from "@/components/ui/confirm-dialog";
 import { AppHeader } from "@/components/AppHeader";
 import { AppTabBar } from "@/components/AppTabBar";
@@ -60,6 +62,7 @@ type Challenge = {
   target_intelligences?: string[] | null;
   proof_image_url?: string | null;
   ai_observations?: string | null;
+  difficulty?: string | null;
 };
 
 type Child = {
@@ -200,6 +203,9 @@ function ChallengesPage() {
             material_tags: currentGeneratedChallenge.material_tags ?? [],
             intelligences: currentGeneratedChallenge.intelligences || [currentGeneratedChallenge.domain],
             pedagogical_context: currentGeneratedChallenge.pedagogical_context,
+            requires_supervision: currentGeneratedChallenge.requires_supervision ?? false,
+            supervision_warning: currentGeneratedChallenge.supervision_warning,
+            difficulty: currentGeneratedChallenge.difficulty,
           }
         }
       });
@@ -474,8 +480,8 @@ function ChallengesPage() {
                   <span>Naya réunit ses observations...</span>
                 </div>
               ) : (
-                <div className="text-sm font-medium leading-relaxed text-ink space-y-3 whitespace-pre-line">
-                  {aiSynthesis}
+                <div className="text-sm font-medium leading-relaxed text-ink space-y-3">
+                  <MarkdownContent content={aiSynthesis} />
                 </div>
               )}
             </div>
@@ -561,24 +567,27 @@ function ChallengesPage() {
               {currentGeneratedChallenge && !isGeneratingSingle && (
                 <div className="mt-6 rounded-2xl border-[3px] border-ink bg-white p-6 shadow-brutal-sm animate-in fade-in slide-in-from-top-3 duration-300">
                   <div className="mb-3 flex items-center justify-between">
-                    <span className="rounded-full bg-brand px-3 py-1 text-[10px] font-black uppercase tracking-widest text-white border-2 border-ink">
-                      {currentGeneratedChallenge.domain}
-                    </span>
+                    <div className="flex items-center gap-2">
+                      <span className="rounded-full bg-brand px-3 py-1 text-[10px] font-black uppercase tracking-widest text-white border-2 border-ink">
+                        {currentGeneratedChallenge.domain}
+                      </span>
+                      <DifficultyBadge difficulty={currentGeneratedChallenge.difficulty} />
+                    </div>
                     <span className="text-xs text-ink/40 font-semibold">🕒 {currentGeneratedChallenge.duration}</span>
                   </div>
                   <h4 className="font-display text-xl font-extrabold leading-tight text-ink mb-2">
                     {currentGeneratedChallenge.title}
                   </h4>
-                  <p className="text-sm text-ink/70 leading-relaxed mb-4">
-                    {currentGeneratedChallenge.description}
-                  </p>
+                  <div className="text-sm text-ink/70 leading-relaxed mb-4">
+                    <MarkdownContent content={currentGeneratedChallenge.description} />
+                  </div>
 
                   {currentGeneratedChallenge.pedagogical_context && (
                     <div className="mb-4 rounded-xl bg-amber-50 border-2 border-ink p-4 text-xs leading-relaxed text-amber-800">
                       <p className="font-bold flex items-center gap-1.5 mb-1 text-amber-900">
                         💡 Intention pédagogique (Naya)
                       </p>
-                      {currentGeneratedChallenge.pedagogical_context}
+                      <MarkdownContent content={currentGeneratedChallenge.pedagogical_context} inline />
                     </div>
                   )}
 
@@ -587,7 +596,7 @@ function ChallengesPage() {
                       <h5 className="text-[10px] font-bold uppercase tracking-wider text-ink/40 mb-2">Étapes du défi</h5>
                       <ul className="text-xs space-y-1.5 text-ink/70 list-decimal list-inside pl-1">
                         {currentGeneratedChallenge.steps.slice(0, 4).map((step: string, idx: number) => (
-                          <li key={idx} className="truncate">{step}</li>
+                          <li key={idx} className="truncate"><MarkdownContent content={step} inline /></li>
                         ))}
                       </ul>
                     </div>
@@ -842,6 +851,7 @@ function ChallengeCard({
           <span className="rounded-full bg-brand px-3 py-1 text-[10px] font-black uppercase tracking-widest text-white border-2 border-ink shadow-brutal-sm">
             {c.domain}
           </span>
+          <DifficultyBadge difficulty={c.difficulty} />
           {hasKit && (
             <span className="rounded-full bg-sky px-3 py-1 text-[10px] font-black uppercase tracking-widest text-ink border-2 border-ink shadow-brutal-sm">
               📦 Kit disponible
@@ -856,7 +866,9 @@ function ChallengeCard({
       </div>
 
       <h3 className="font-display text-xl font-extrabold text-ink leading-tight mb-2">{c.title}</h3>
-      <p className="text-sm text-ink/75 leading-relaxed mb-4">{c.description}</p>
+      <div className="text-sm text-ink/75 leading-relaxed mb-4">
+        <MarkdownContent content={c.description} />
+      </div>
 
       {/* Progress Slider */}
       <div className="mb-4 rounded-2xl bg-surface p-4 border-2 border-ink">
@@ -922,9 +934,9 @@ function ChallengeCard({
                 <h4 className="font-display text-lg font-black text-ink">
                   {c.title}
                 </h4>
-                <p className="mt-2 text-sm text-ink/75 leading-relaxed">
-                  {c.description}
-                </p>
+                <div className="mt-2 text-sm text-ink/75 leading-relaxed">
+                  <MarkdownContent content={c.description} />
+                </div>
               </div>
 
               {/* steps */}
@@ -956,7 +968,7 @@ function ChallengeCard({
                       Intention Pédagogique
                     </p>
                     <p className="text-xs text-brand/90 leading-relaxed italic">
-                      "{c.pedagogical_context}"
+                      "<MarkdownContent content={c.pedagogical_context} inline />"
                     </p>
                   </div>
                 </div>
@@ -1038,7 +1050,7 @@ function ChallengeCard({
                     <Brain className="size-4 text-emerald-700" />
                     Analyse de Naya (IA)
                   </p>
-                  <p className="text-sm italic text-ink/80 leading-relaxed mb-3">"{c.ai_observations}"</p>
+                  <p className="text-sm italic text-ink/80 leading-relaxed mb-3">"<MarkdownContent content={c.ai_observations} inline />"</p>
                   <p className="text-[10px] font-extrabold text-emerald-800 uppercase tracking-wider">✓ La Carte des Talents de l'enfant a été enrichie !</p>
                 </div>
               )}

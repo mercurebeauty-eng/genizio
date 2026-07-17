@@ -6,6 +6,7 @@ import { NayaAvatar } from "@/components/NayaAvatar";
 import { Loader2, Play, Upload, Check, X, Send, Sparkles, Share2 } from "lucide-react";
 import { toast } from "sonner";
 import { CreatePostModal } from "@/components/feed/CreatePostModal";
+import { MarkdownContent } from "@/components/ui/markdown-content";
 
 type Challenge = {
   id: string;
@@ -113,7 +114,7 @@ export function OutcomeChat({ challenge, childId, childName, onValidated }: Outc
           </div>
 
           <div className="bg-white rounded-2xl p-6 shadow-brutal-sm mb-6 border-[3px] border-ink relative">
-            <p className="text-sm italic text-ink/80 leading-relaxed font-medium">"{report.challenge.ai_observations}"</p>
+            <p className="text-sm italic text-ink/80 leading-relaxed font-medium">"<MarkdownContent content={report.challenge.ai_observations} inline />"</p>
             
             <div className="mt-5 pt-5 border-t-2 border-ink/20">
               <p className="text-[10px] font-extrabold uppercase tracking-widest text-brand mb-3">

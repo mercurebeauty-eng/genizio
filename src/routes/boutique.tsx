@@ -10,6 +10,8 @@ import { generateSingleChallenge, assignTemplateChallenge } from "@/lib/challeng
 import { ShoppingBag, Sparkles, Loader2, Trophy, Clock, MapPin, X, Check, Brain, MessageCircle } from "lucide-react";
 import { toast } from "sonner";
 import { NayaAvatar } from "@/components/NayaAvatar";
+import { DifficultyBadge } from "@/components/challenges/DifficultyBadge";
+import { MarkdownContent } from "@/components/ui/markdown-content";
 
 export const Route = createFileRoute("/boutique")({
   component: BoutiquePage,
@@ -216,6 +218,9 @@ function BoutiquePage() {
             material_tags: generatedChallenge.material_tags ?? [],
             intelligences: generatedChallenge.intelligences || [generatedChallenge.domain],
             pedagogical_context: generatedChallenge.pedagogical_context,
+            requires_supervision: generatedChallenge.requires_supervision ?? false,
+            supervision_warning: generatedChallenge.supervision_warning,
+            difficulty: generatedChallenge.difficulty,
           },
         },
       });
@@ -473,9 +478,12 @@ function BoutiquePage() {
             </button>
 
             <header className="mb-6">
-              <span className="rounded-full bg-brand px-3 py-1 text-[10px] font-black uppercase tracking-widest text-white border-2 border-ink shadow-brutal-sm">
-                {generatedChallenge.domain}
-              </span>
+              <div className="flex items-center gap-2">
+                <span className="rounded-full bg-brand px-3 py-1 text-[10px] font-black uppercase tracking-widest text-white border-2 border-ink shadow-brutal-sm">
+                  {generatedChallenge.domain}
+                </span>
+                <DifficultyBadge difficulty={generatedChallenge.difficulty} />
+              </div>
               <h2 className="mt-3 font-display text-2xl font-black md:text-3xl">
                 {generatedChallenge.title}
               </h2>
@@ -491,9 +499,9 @@ function BoutiquePage() {
 
             <div className="space-y-6">
               <div className="rounded-2xl border-2 border-ink bg-stone-50 p-4">
-                <p className="text-sm font-bold text-ink/80 leading-relaxed">
-                  {generatedChallenge.description}
-                </p>
+                <div className="text-sm font-bold text-ink/80 leading-relaxed">
+                  <MarkdownContent content={generatedChallenge.description} />
+                </div>
               </div>
 
               {generatedChallenge.requires_supervision && (
@@ -528,7 +536,7 @@ function BoutiquePage() {
                       <span className="flex size-6 shrink-0 items-center justify-center rounded-full border-2 border-ink bg-brand text-xs font-black text-white shadow-brutal-sm">
                         {i + 1}
                       </span>
-                      <p className="text-sm font-bold leading-relaxed pt-0.5">{step}</p>
+                      <p className="text-sm font-bold leading-relaxed pt-0.5"><MarkdownContent content={step} inline /></p>
                     </li>
                   ))}
                 </ol>
@@ -542,7 +550,7 @@ function BoutiquePage() {
                       Observation pédagogique de Naya
                     </h5>
                     <p className="text-xs font-bold text-brand leading-relaxed">
-                      "{generatedChallenge.pedagogical_context}"
+                      "<MarkdownContent content={generatedChallenge.pedagogical_context} inline />"
                     </p>
                   </div>
                 </div>

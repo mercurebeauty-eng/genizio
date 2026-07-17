@@ -14,6 +14,7 @@ const ChallengeSchema = z.object({
   intelligences: z.array(z.string()).optional(),
   requires_supervision: z.boolean().default(false),
   supervision_warning: z.string().nullable().optional(),
+  difficulty: z.enum(["facile", "moyen", "difficile"]).optional(),
 });
 
 // Shop Phase 1: log material tags that don't match any active product yet, so the
@@ -73,6 +74,20 @@ const DOMAINS = [
   "Langues",
   "Tech & IA",
 ];
+
+// Shared constitution injected into every challenge-generation prompt (bulk
+// and single). Written dense and numbered on purpose: the text-only calls
+// run on Haiku (lightweight model), which needs explicit, unambiguous rules
+// rather than loose guidance to reliably avoid generic/unrealistic output.
+const GENIZIO_PRINCIPLES = `PRINCIPES DE GÉNÉRATION GÉNIZIO (règles strictes, à respecter impérativement) :
+- CONCRET AVANT TOUT : chaque défi doit produire un résultat observable et vérifiable (objet construit, expérience réalisée, problème résolu, performance accomplie) — jamais une simple rêverie sans action physique.
+- Priorise dans cet ordre : observation du réel > expérimentation > création manuelle > résolution de problème concret. L'imagination doit s'appuyer sur une action réelle, jamais la remplacer seule.
+- Utilise en priorité les objets déjà disponibles chez l'enfant. N'invente jamais un défi nécessitant un achat important ou des conditions rares/spéciales.
+- INTERDIT : défi irréalisable concrètement, matériel inaccessible, exercice creux sans valeur pédagogique réelle, tâche trop abstraite déconnectée du quotidien, formulation générique déjà vue mille fois ("dessine ce que tu veux", "imagine une histoire" sans ancrage réel).
+- Cible explicitement 1 à 2 compétences précises et nomme-les dans "pedagogical_context" : Cognitives (logique, esprit critique, curiosité scientifique, créativité) · Pratiques (autonomie, débrouillardise/ingéniosité, méthode et rigueur, gestion du temps) · Sociales (communication, leadership, collaboration, empathie) · Personnelles (résilience face à la frustration, confiance en soi, esprit d'initiative, adaptabilité).
+- Ne vise pas systématiquement le format le plus court : plus l'enfant grandit (8 ans et +), plus des formats longs et immersifs (au-delà d'une heure, voire un projet sur plusieurs jours) construisent une vraie résilience — une alternative constructive aux écrans, tant que ça reste réaliste pour le temps disponible indiqué.
+- AUCUNE syntaxe Markdown dans les champs texte (pas de #, ##, **, tirets de liste) — phrases en texte brut uniquement. Les étapes vont exclusivement dans le tableau "steps", jamais mises en forme dans "description".
+- "difficulty" ("facile" | "moyen" | "difficile") : évalue selon le temps nécessaire, le niveau d'autonomie requis, la complexité cognitive, la quantité de matériel, et le niveau de créativité/analyse demandé — reste cohérent avec la tranche d'âge.`;
 
 // Helper to call Google AI Studio OpenAI-compatible endpoint
 export async function callClaude(
@@ -238,6 +253,8 @@ Adapte strictement la forme, la complexité intellectuelle et la motricité requ
 - De 8 à 11 ans (Phase structurée et concrète) : Proposer des projets de fabrication concrets (maquettes, expériences scientifiques simples, recettes simples, bricolage) avec des règles claires, des étapes méthodiques, et de l'observation logique ou sociale.
 - De 12 ans et + (Phase d'abstraction et d'analyse) : Permettre de la pensée critique, de la stratégie, des projets plus autonomes et complexes, de la logique conceptuelle (ex: coder un algorithme sur papier, déchiffrer des énigmes ou concevoir des objets élaborés).
 
+${GENIZIO_PRINCIPLES}
+
 Contraintes :
 - Ancre les défis dans le contexte africain (matériaux locaux, réalités du quotidien, langues, marchés, agriculture, artisanat, culture).
 - Choisis parmi ces domaines : ${DOMAINS.join(", ")}.
@@ -247,9 +264,10 @@ Contraintes :
 - Pour "material_tags" : un tag court en minuscules, sans accent, par matériau physique achetable
   (ex: "carton", "cutter", "colle", "ampoule") — pas les objets déjà présents chez tout le monde
   (eau, table, papier). Un tableau vide si rien d'achetable n'est nécessaire.
+- SÉCURITÉ ET SUPERVISION : Analyse si le défi comporte des risques (cuisine, feu, objets coupants, produits chimiques, électricité, extérieur non sécurisé). Si OUI, "requires_supervision" doit être true avec un "supervision_warning" clair pour le parent.
 
-Réponds STRICTEMENT en JSON valide avec ce format :
-{"challenges":[{"domain":"...","title":"...","description":"...","duration":"...","steps":["...","..."],"materials":["...","..."],"material_tags":["..."]}]}`;
+Réponds STRICTEMENT en JSON valide avec ce format, pour chaque défi :
+{"challenges":[{"domain":"...","title":"...","description":"...","duration":"...","steps":["...","..."],"materials":["...","..."],"material_tags":["..."],"pedagogical_context":"Ce que Naya observe via cette activité","intelligences":["Intelligence dominante sollicitée"],"requires_supervision":true ou false,"supervision_warning":"..." (ou null si false),"difficulty":"facile"|"moyen"|"difficile"}]}`;
 
     const content = await callClaude(prompt, true);
     let parsed: { challenges?: unknown };
@@ -275,6 +293,7 @@ Réponds STRICTEMENT en JSON valide avec ce format :
       target_intelligences: c.intelligences || [c.domain],
       requires_supervision: c.requires_supervision,
       supervision_warning: c.supervision_warning || null,
+      difficulty: c.difficulty ?? "moyen",
     }));
 
     const { data: inserted, error: insErr } = await supabase
@@ -377,7 +396,7 @@ ${data.proofText ? `Texte/Notes : "${data.proofText}"` : ""}
 ${data.proofImageUrl ? `Une image a également été fournie (vérifie l'image si possible).` : ""}
 
 Ta mission :
-1. Rédige une courte observation (2-3 phrases) très encourageante pour le parent, soulignant l'ingéniosité de l'enfant dans cette réalisation. (Tu peux t'adresser au parent).
+1. Rédige une courte observation (2-3 phrases) très encourageante pour le parent, soulignant l'ingéniosité de l'enfant dans cette réalisation. (Tu peux t'adresser au parent). Texte brut uniquement, sans aucune syntaxe Markdown (pas de #, ##, **, tirets de liste).
 2. Détermine quelles intelligences ont été mobilisées et attribue des points (de 1 à 3 par intelligence).
 Les intelligences possibles sont : spatial, corporelle, sociale, entrepreneuriale, creative, artisanale, emotionnelle, logico_mathematique, linguistique.
 
@@ -487,6 +506,9 @@ export const assignTemplateChallenge = createServerFn({ method: "POST" })
         status: "todo",
         progress: 0,
         pedagogical_context: template.pedagogical_context ?? null,
+        requires_supervision: template.requires_supervision ?? false,
+        supervision_warning: template.supervision_warning ?? null,
+        difficulty: template.difficulty ?? "moyen",
       })
       .select()
       .single();
@@ -546,6 +568,8 @@ Adapte strictement la forme, la complexité intellectuelle et la motricité requ
 - De 8 à 11 ans (Phase structurée et concrète) : Proposer des projets de fabrication concrets (maquettes, expériences scientifiques simples, recettes simples, bricolage) avec des règles claires, des étapes méthodiques, et de l'observation logique ou sociale.
 - De 12 ans et + (Phase d'abstraction et d'analyse) : Permettre de la pensée critique, de la stratégie, des projets plus autonomes et complexes, de la logique conceptuelle (ex: coder un algorithme sur papier, déchiffrer des énigmes ou concevoir des objets élaborés).
 
+${GENIZIO_PRINCIPLES}
+
 Défis déjà accomplis par l'enfant et observations de Naya :
 ${completedSummary || "(Aucun défi complété pour le moment)"}
 
@@ -565,8 +589,8 @@ ${
     ? `6. UTILISATION DES MATÉRIAUX DE LA MAISON : Tu DOIS concevoir un défi qui utilise en priorité ou exclusivement les matériaux indiqués par le parent ("${data.homeMaterials}"). Si ces matériaux ne suffisent pas ou ne sont pas propices à une activité d'apprentissage stimulante dans le domaine choisi, tu PEUX inclure d'autres ustensiles simples ou matériaux courants, mais signale-le de façon transparente dans la description et les étapes (et liste le matériel additionnel nécessaire). Si les matériaux fournis ne permettent vraiment rien d'intéressant, génère le défi sans cette contrainte et explique-le brièvement dans la description ou le contexte pédagogique.`
     : ""
 }
-6. SÉCURITÉ ET SUPERVISION : Analyse si le défi comporte des risques (cuisine, feu, objets coupants, produits chimiques, électricité, extérieur non sécurisé). Si OUI, tu DOIS régler "requires_supervision" à true et rédiger un "supervision_warning" clair à l'attention du parent.
-7. Pour "material_tags" : un tag court en minuscules, sans accent, par matériau physique achetable
+7. SÉCURITÉ ET SUPERVISION : Analyse si le défi comporte des risques (cuisine, feu, objets coupants, produits chimiques, électricité, extérieur non sécurisé). Si OUI, tu DOIS régler "requires_supervision" à true et rédiger un "supervision_warning" clair à l'attention du parent.
+8. Pour "material_tags" : un tag court en minuscules, sans accent, par matériau physique achetable
    (ex: "carton", "cutter", "colle", "ampoule") — pas les objets déjà présents chez tout le monde
    (eau, table, papier). Un tableau vide si rien d'achetable n'est nécessaire.
 
@@ -582,7 +606,8 @@ Réponds STRICTEMENT en JSON valide avec ce format exact :
   "pedagogical_context": "Ce que Naya observe via cette activité",
   "intelligences": ["Intelligence dominante sollicitée"],
   "requires_supervision": true ou false,
-  "supervision_warning": "Attention: Manipulez le couteau avec l'enfant" (ou null si false)
+  "supervision_warning": "Attention: Manipulez le couteau avec l'enfant" (ou null si false),
+  "difficulty": "facile" | "moyen" | "difficile"
 }`;
 
     const content = await callClaude(prompt, true);
@@ -602,6 +627,7 @@ Réponds STRICTEMENT en JSON valide avec ce format exact :
       ...c,
       title: c.title.slice(0, 120),
       material_tags: c.material_tags ?? [],
+      difficulty: c.difficulty ?? "moyen",
     };
   });
 
@@ -638,9 +664,9 @@ export const getChildAISynthesis = createServerFn({ method: "POST" })
 Analyse les accomplissements suivants de l'enfant ${child.name} (${child.age} ans, centres d'intérêt: ${(child.interests ?? []).join(", ")}) :
 ${completedSummary}
 
-Rédige une synthèse pédagogique bienveillante et constructive à l'attention des parents (2 paragraphes courts maximum). 
+Rédige une synthèse pédagogique bienveillante et constructive à l'attention des parents (2 paragraphes courts maximum).
 Mets en lumière ses formes d'intelligence dominantes qui ressortent de ses actions, ses points forts comportementaux, et donne 1-2 recommandations de domaines à explorer ensuite pour cultiver son potentiel.
-Écris dans un style fluide, chaleureux et professionnel.`;
+Écris dans un style fluide, chaleureux et professionnel, en texte brut uniquement — aucune syntaxe Markdown (pas de #, ##, **, tirets de liste), sépare les deux paragraphes par un simple retour à la ligne.`;
 
     try {
       return await callClaude(prompt, false);

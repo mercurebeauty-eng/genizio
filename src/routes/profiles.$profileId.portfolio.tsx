@@ -11,6 +11,7 @@ import { NayaAvatar } from "@/components/NayaAvatar";
 import { Award, Calendar, ImageIcon, Loader2 } from "lucide-react";
 import { InviteMentorDialog } from "@/components/mentors/InviteMentorDialog";
 import { AppHeader } from "@/components/AppHeader";
+import { MarkdownContent } from "@/components/ui/markdown-content";
 
 export const Route = createFileRoute("/profiles/$profileId/portfolio")({
   component: PortfolioPage,
@@ -146,7 +147,9 @@ function PortfolioPage() {
                   Naya prépare le portrait...
                 </div>
               ) : (
-                <p className="whitespace-pre-line text-sm leading-relaxed text-ink font-medium">{synthesis}</p>
+                <div className="text-sm leading-relaxed text-ink font-medium">
+                  <MarkdownContent content={synthesis} />
+                </div>
               )}
             </div>
           </div>

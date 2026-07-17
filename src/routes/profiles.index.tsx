@@ -14,6 +14,8 @@ import { InviteMentorDialog } from "@/components/mentors/InviteMentorDialog";
 import { TalentRadarChart } from "@/components/TalentRadarChart";
 import { NayaAvatar } from "@/components/NayaAvatar";
 import { KitSuggestion } from "@/components/challenges/KitSuggestion";
+import { DifficultyBadge } from "@/components/challenges/DifficultyBadge";
+import { MarkdownContent } from "@/components/ui/markdown-content";
 
 const COUNTRIES = [
   { code: "+225", flag: "🇨🇮", name: "Côte d'Ivoire", limit: 10 },
@@ -47,6 +49,7 @@ type Challenge = {
   material_tags?: string[] | null;
   steps?: string[] | null;
   proof_image_url?: string | null;
+  difficulty?: string | null;
 };
 
 function DashboardPage() {
@@ -152,7 +155,7 @@ function DashboardPage() {
     setFetchingChallenges(true);
     supabase
       .from("challenges")
-      .select("id, status, created_at, updated_at, domain, title, description, duration, materials, material_tags, steps, proof_image_url")
+      .select("id, status, created_at, updated_at, domain, title, description, duration, materials, material_tags, steps, proof_image_url, difficulty")
       .eq("child_id", selectedId)
       .then(({ data }) => {
         setChallenges((data ?? []) as Challenge[]);
@@ -264,6 +267,7 @@ function DashboardPage() {
                           {activeChallenge.domain}
                         </span>
                       )}
+                      {activeChallenge && <DifficultyBadge difficulty={activeChallenge.difficulty} />}
                       {activeChallenge && hasKit(activeChallenge.material_tags) && (
                         <span className="rounded-full bg-sky px-3 py-1 text-[10px] font-black uppercase tracking-widest text-ink border-2 border-ink shadow-brutal-sm">
                           📦 Kit disponible
@@ -287,9 +291,9 @@ function DashboardPage() {
                               <h3 className="font-display text-xl font-bold text-ink leading-tight mb-2">
                                 {activeChallenge.title}
                               </h3>
-                              <p className="text-sm text-ink/80 leading-relaxed font-medium">
-                                {activeChallenge.description}
-                              </p>
+                              <div className="text-sm text-ink/80 leading-relaxed font-medium">
+                                <MarkdownContent content={activeChallenge.description} />
+                              </div>
                             </div>
                           </div>
 
