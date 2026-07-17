@@ -9,9 +9,12 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as TermsRouteImport } from './routes/terms'
 import { Route as SupervisorRouteImport } from './routes/supervisor'
 import { Route as ProfilesRouteImport } from './routes/profiles'
 import { Route as ProfileRouteImport } from './routes/profile'
+import { Route as PrivacyRouteImport } from './routes/privacy'
+import { Route as MentionsLegalesRouteImport } from './routes/mentions-legales'
 import { Route as LaboratoryRouteImport } from './routes/laboratory'
 import { Route as FeedRouteImport } from './routes/feed'
 import { Route as BoutiqueRouteImport } from './routes/boutique'
@@ -27,6 +30,11 @@ import { Route as ProfilesProfileIdPortfolioRouteImport } from './routes/profile
 import { Route as ProfilesProfileIdMentorsRouteImport } from './routes/profiles.$profileId.mentors'
 import { Route as ProfilesProfileIdChallengesRouteImport } from './routes/profiles.$profileId.challenges'
 
+const TermsRoute = TermsRouteImport.update({
+  id: '/terms',
+  path: '/terms',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const SupervisorRoute = SupervisorRouteImport.update({
   id: '/supervisor',
   path: '/supervisor',
@@ -40,6 +48,16 @@ const ProfilesRoute = ProfilesRouteImport.update({
 const ProfileRoute = ProfileRouteImport.update({
   id: '/profile',
   path: '/profile',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PrivacyRoute = PrivacyRouteImport.update({
+  id: '/privacy',
+  path: '/privacy',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const MentionsLegalesRoute = MentionsLegalesRouteImport.update({
+  id: '/mentions-legales',
+  path: '/mentions-legales',
   getParentRoute: () => rootRouteImport,
 } as any)
 const LaboratoryRoute = LaboratoryRouteImport.update({
@@ -122,9 +140,12 @@ export interface FileRoutesByFullPath {
   '/boutique': typeof BoutiqueRoute
   '/feed': typeof FeedRoute
   '/laboratory': typeof LaboratoryRoute
+  '/mentions-legales': typeof MentionsLegalesRoute
+  '/privacy': typeof PrivacyRoute
   '/profile': typeof ProfileRoute
   '/profiles': typeof ProfilesRouteWithChildren
   '/supervisor': typeof SupervisorRoute
+  '/terms': typeof TermsRoute
   '/admin/products': typeof AdminProductsRoute
   '/admin/supervisors': typeof AdminSupervisorsRoute
   '/profiles/manage': typeof ProfilesManageRoute
@@ -141,8 +162,11 @@ export interface FileRoutesByTo {
   '/boutique': typeof BoutiqueRoute
   '/feed': typeof FeedRoute
   '/laboratory': typeof LaboratoryRoute
+  '/mentions-legales': typeof MentionsLegalesRoute
+  '/privacy': typeof PrivacyRoute
   '/profile': typeof ProfileRoute
   '/supervisor': typeof SupervisorRoute
+  '/terms': typeof TermsRoute
   '/admin/products': typeof AdminProductsRoute
   '/admin/supervisors': typeof AdminSupervisorsRoute
   '/profiles/manage': typeof ProfilesManageRoute
@@ -160,9 +184,12 @@ export interface FileRoutesById {
   '/boutique': typeof BoutiqueRoute
   '/feed': typeof FeedRoute
   '/laboratory': typeof LaboratoryRoute
+  '/mentions-legales': typeof MentionsLegalesRoute
+  '/privacy': typeof PrivacyRoute
   '/profile': typeof ProfileRoute
   '/profiles': typeof ProfilesRouteWithChildren
   '/supervisor': typeof SupervisorRoute
+  '/terms': typeof TermsRoute
   '/admin/products': typeof AdminProductsRoute
   '/admin/supervisors': typeof AdminSupervisorsRoute
   '/profiles/manage': typeof ProfilesManageRoute
@@ -181,9 +208,12 @@ export interface FileRouteTypes {
     | '/boutique'
     | '/feed'
     | '/laboratory'
+    | '/mentions-legales'
+    | '/privacy'
     | '/profile'
     | '/profiles'
     | '/supervisor'
+    | '/terms'
     | '/admin/products'
     | '/admin/supervisors'
     | '/profiles/manage'
@@ -200,8 +230,11 @@ export interface FileRouteTypes {
     | '/boutique'
     | '/feed'
     | '/laboratory'
+    | '/mentions-legales'
+    | '/privacy'
     | '/profile'
     | '/supervisor'
+    | '/terms'
     | '/admin/products'
     | '/admin/supervisors'
     | '/profiles/manage'
@@ -218,9 +251,12 @@ export interface FileRouteTypes {
     | '/boutique'
     | '/feed'
     | '/laboratory'
+    | '/mentions-legales'
+    | '/privacy'
     | '/profile'
     | '/profiles'
     | '/supervisor'
+    | '/terms'
     | '/admin/products'
     | '/admin/supervisors'
     | '/profiles/manage'
@@ -238,9 +274,12 @@ export interface RootRouteChildren {
   BoutiqueRoute: typeof BoutiqueRoute
   FeedRoute: typeof FeedRoute
   LaboratoryRoute: typeof LaboratoryRoute
+  MentionsLegalesRoute: typeof MentionsLegalesRoute
+  PrivacyRoute: typeof PrivacyRoute
   ProfileRoute: typeof ProfileRoute
   ProfilesRoute: typeof ProfilesRouteWithChildren
   SupervisorRoute: typeof SupervisorRoute
+  TermsRoute: typeof TermsRoute
   AdminProductsRoute: typeof AdminProductsRoute
   AdminSupervisorsRoute: typeof AdminSupervisorsRoute
   STokenRoute: typeof STokenRoute
@@ -248,6 +287,13 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/terms': {
+      id: '/terms'
+      path: '/terms'
+      fullPath: '/terms'
+      preLoaderRoute: typeof TermsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/supervisor': {
       id: '/supervisor'
       path: '/supervisor'
@@ -267,6 +313,20 @@ declare module '@tanstack/react-router' {
       path: '/profile'
       fullPath: '/profile'
       preLoaderRoute: typeof ProfileRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/privacy': {
+      id: '/privacy'
+      path: '/privacy'
+      fullPath: '/privacy'
+      preLoaderRoute: typeof PrivacyRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/mentions-legales': {
+      id: '/mentions-legales'
+      path: '/mentions-legales'
+      fullPath: '/mentions-legales'
+      preLoaderRoute: typeof MentionsLegalesRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/laboratory': {
@@ -398,9 +458,12 @@ const rootRouteChildren: RootRouteChildren = {
   BoutiqueRoute: BoutiqueRoute,
   FeedRoute: FeedRoute,
   LaboratoryRoute: LaboratoryRoute,
+  MentionsLegalesRoute: MentionsLegalesRoute,
+  PrivacyRoute: PrivacyRoute,
   ProfileRoute: ProfileRoute,
   ProfilesRoute: ProfilesRouteWithChildren,
   SupervisorRoute: SupervisorRoute,
+  TermsRoute: TermsRoute,
   AdminProductsRoute: AdminProductsRoute,
   AdminSupervisorsRoute: AdminSupervisorsRoute,
   STokenRoute: STokenRoute,

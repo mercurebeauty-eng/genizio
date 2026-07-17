@@ -46,6 +46,7 @@ function ProfilePage() {
   const [challengeStats, setChallengeStats] = useState({ total: 0, completed: 0 });
   const [mentorCount, setMentorCount] = useState(0);
   const [artifactsCount, setArtifactsCount] = useState(0);
+  const [consentEventsCount, setConsentEventsCount] = useState(0);
 
   useEffect(() => {
     if (!loading && !session) navigate({ to: "/auth", replace: true });
@@ -66,6 +67,9 @@ function ProfilePage() {
       });
       supabase.from("child_mentors").select("id", { count: "exact" }).then(({ count }) => {
         setMentorCount(count || 0);
+      });
+      supabase.from("consent_events").select("id", { count: "exact" }).then(({ count }) => {
+        setConsentEventsCount(count || 0);
       });
       supabase.from("challenges").select("status, proof_image_url").eq("user_id", session.user.id).then(({ data }) => {
         if (data) {
@@ -305,8 +309,8 @@ function ProfilePage() {
                   <p className="mt-1 text-[9px] font-bold text-ink/50 uppercase leading-snug">Réalisations privées</p>
                 </div>
                 <div className="rounded-2xl border-2 border-ink bg-surface p-4 text-center">
-                  <p className="text-2xl font-black text-emerald-600">Actif</p>
-                  <p className="mt-1 text-[9px] font-bold text-ink/50 uppercase leading-snug">Consentement</p>
+                  <p className="text-2xl font-black text-emerald-600">{consentEventsCount}</p>
+                  <p className="mt-1 text-[9px] font-bold text-ink/50 uppercase leading-snug">Événements enregistrés</p>
                 </div>
               </div>
             </div>

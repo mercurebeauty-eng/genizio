@@ -806,16 +806,16 @@ function Footer() {
           <img src="/favicon-96x96.png" alt="" className="h-7 w-7" />
           GÉNIZIO
         </div>
-        <div className="flex gap-8 text-sm font-medium text-ink/60">
-          <a href="#" className="hover:text-brand">
+        <div className="flex flex-wrap justify-center gap-6 text-sm font-medium text-ink/60">
+          <Link to="/privacy" className="hover:text-brand">
             Confidentialité
-          </a>
-          <a href="#" className="hover:text-brand">
-            Guide parents
-          </a>
-          <a href="#" className="hover:text-brand">
-            Écoles partenaires
-          </a>
+          </Link>
+          <Link to="/terms" className="hover:text-brand">
+            Conditions d'utilisation
+          </Link>
+          <Link to="/mentions-legales" className="hover:text-brand">
+            Mentions légales
+          </Link>
         </div>
         <div className="text-xs text-ink/40">
           © 2026 Génizio — Dakar · Abidjan · Yaoundé
