@@ -52,7 +52,8 @@ export function CreatePostModal({
         const { data, error } = await supabase
           .from("challenges")
           .select("id, title, domain, child_id, child_profiles(id, name, avatar_color)")
-          .eq("status", "completed");
+          .eq("status", "completed")
+          .eq("user_id", session.user.id);
           
         if (!error && data) {
           setChallenges(data);

@@ -212,6 +212,7 @@ export const generateChallenges = createServerFn({ method: "POST" })
       .from("child_profiles")
       .select("*")
       .eq("id", data.childId)
+      .eq("user_id", userId)
       .maybeSingle();
     if (childErr || !child) throw new Error("Profil enfant introuvable");
 
@@ -362,8 +363,9 @@ export const validateChallengeProof = createServerFn({ method: "POST" })
       .select("*, child_profiles(*)")
       .eq("id", data.id)
       .single();
-      
+
     if (challengeErr || !challenge) throw new Error("Défi introuvable");
+    if (challenge.user_id !== userId) throw new Error("Accès refusé.");
 
     const prompt = `Tu es un mentor pédagogique et un expert en psychologie de l'enfant (Inspiré par Howard Gardner et les intelligences multiples).
 L'enfant (Prénom: ${challenge.child_profiles.name}, Âge: ${challenge.child_profiles.age}) vient de terminer le défi : "${challenge.title}".

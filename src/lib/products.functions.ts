@@ -123,6 +123,15 @@ export const createOrder = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     const userId = context.claims.sub;
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+
+    const { data: child, error: childErr } = await supabaseAdmin
+      .from("child_profiles")
+      .select("id")
+      .eq("id", data.child_id)
+      .eq("user_id", userId)
+      .maybeSingle();
+    if (childErr || !child) throw new Error("Profil enfant introuvable ou accès refusé.");
+
     const { data: row, error } = await supabaseAdmin
       .from("orders")
       .insert({
