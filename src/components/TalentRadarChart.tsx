@@ -17,9 +17,11 @@ type TalentRadarChartProps = {
   name?: string;
   className?: string;
   age?: number;
+  /** Pass true when the chart sits on a dark background (bg-ink). */
+  dark?: boolean;
 };
 
-export function TalentRadarChart({ talents, name, className = "h-48 w-full", age }: TalentRadarChartProps) {
+export function TalentRadarChart({ talents, name, className = "h-48 w-full", age, dark = false }: TalentRadarChartProps) {
   const raw = talents ?? {};
   const data = TALENT_KEYS.map(({ key, subject }) => ({ subject, A: raw[key] || 0, fullMark: 100 }));
 
@@ -35,18 +37,23 @@ export function TalentRadarChart({ talents, name, className = "h-48 w-full", age
     }
   }
 
+  // Palette depends on background
+  const labelColor  = dark ? "#FFFFFF" : "#1A1A1A";
+  const gridColor   = dark ? "#FFFFFF" : "#1A1A1A";
+  const gridOpacity = dark ? 0.20     : 0.15;
+
   return (
     <div className={className}>
       <ResponsiveContainer width="100%" height="100%">
         <RadarChart cx="50%" cy="50%" outerRadius="70%" data={data}>
-          <PolarGrid stroke="#1A1A1A" strokeOpacity={0.15} />
+          <PolarGrid stroke={gridColor} strokeOpacity={gridOpacity} />
           <PolarAngleAxis
             dataKey="subject"
             tick={{
-              fill: "#1A1A1A",
+              fill: labelColor,
               fontSize: 10,
               fontWeight: 800,
-              fontFamily: "Fredoka, sans-serif"
+              fontFamily: "Fredoka, sans-serif",
             }}
           />
           <Radar
@@ -54,7 +61,7 @@ export function TalentRadarChart({ talents, name, className = "h-48 w-full", age
             dataKey="A"
             stroke={chartColor}
             fill={chartColor}
-            fillOpacity={0.35}
+            fillOpacity={0.40}
             strokeWidth={3}
           />
         </RadarChart>

@@ -427,7 +427,7 @@ function DemoSection() {
               <h4 className="text-xs font-bold uppercase tracking-wider text-white/40 mb-4 self-start">
                 Profil en temps réel (Radar des intelligences)
               </h4>
-              <TalentRadarChart talents={mockTalents} name={name} className="h-64 w-full" age={age} />
+              <TalentRadarChart talents={mockTalents} name={name} className="h-64 w-full" age={age} dark />
             </div>
 
           </div>

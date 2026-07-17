@@ -460,7 +460,7 @@ function ChallengesPage() {
                 <Award className="size-5 text-brand" />
                 Carte des Talents
               </h3>
-              <TalentRadarChart talents={child.talents} name={child.name} className="h-64 w-full" age={child.age} />
+              <TalentRadarChart talents={child.talents} name={child.name} className="h-64 w-full" age={child.age} dark />
               <p className="text-[11px] text-center text-ink/40 font-medium">
                 Cette carte s'affine et se développe à mesure que l'enfant réalise ses défis.
               </p>
