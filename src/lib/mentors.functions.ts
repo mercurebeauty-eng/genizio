@@ -49,14 +49,18 @@ export const inviteMentor = createServerFn({ method: "POST" })
       throw new Error("Impossible d'inviter le mentor");
     }
 
-    // Log consent event
-    await supabase.from("consent_events").insert({
+    // Log consent event — the invite itself already succeeded above, so a
+    // failure here shouldn't fail the whole request, but it must not be
+    // invisible either: this ledger is what /profile shows as the record of
+    // consent-relevant actions on the account.
+    const { error: consentError } = await supabase.from("consent_events").insert({
       user_id: userId,
       child_id: data.childId,
       event_type: "mentor_invited",
       description: `Invitation du mentor ${data.mentorName}`,
       metadata: { mentor_id: mentorData.id },
     });
+    if (consentError) console.error("Échec de la journalisation du consentement (mentor_invited):", consentError);
 
     const appUrl = process.env.VITE_APP_URL || "http://localhost:5173";
     const shareUrl = `${appUrl}/s/${accessToken}`;
@@ -84,14 +88,15 @@ export const revokeMentorAccess = createServerFn({ method: "POST" })
       throw new Error("Impossible de révoquer l'accès");
     }
 
-    // Log consent event
-    await supabase.from("consent_events").insert({
+    // Log consent event — same non-fatal-but-not-silent handling as inviteMentor.
+    const { error: consentError } = await supabase.from("consent_events").insert({
       user_id: userId,
       child_id: data.childId,
       event_type: "mentor_revoked",
       description: "Accès du mentor révoqué",
       metadata: { mentor_id: data.mentorId },
     });
+    if (consentError) console.error("Échec de la journalisation du consentement (mentor_revoked):", consentError);
 
     return { success: true };
   });
