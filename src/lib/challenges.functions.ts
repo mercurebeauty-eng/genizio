@@ -438,10 +438,12 @@ Réponds STRICTEMENT en JSON valide avec ce format :
       }
     }
 
-    await supabase
+    const { error: talentsError } = await supabase
       .from("child_profiles")
       .update({ talents: newTalents })
       .eq("id", challenge.child_profiles.id);
+
+    if (talentsError) throw new Error(talentsError.message);
 
     const patch = {
       status: "completed" as const,
