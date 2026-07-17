@@ -39,6 +39,7 @@ function AdminIndexPage() {
   const [stats, setStats] = useState<EcosystemStats>(null);
   const [parents, setParents] = useState<ParentBI[]>([]);
   const [loading, setLoading] = useState(true);
+  const [pendingSlotUserId, setPendingSlotUserId] = useState<string | null>(null);
 
   const getStatsFn = useServerFn(getEcosystemStats);
   const listParentsFn = useServerFn(listParentsBI);
@@ -46,6 +47,8 @@ function AdminIndexPage() {
   const grantSlotFn = useServerFn(grantProfileSlot);
 
   const handleGrantSlot = async (userId: string, delta: number) => {
+    if (pendingSlotUserId === userId) return;
+    setPendingSlotUserId(userId);
     try {
       const res = await grantSlotFn({ data: { userId, delta } });
       if (res.ok) {
@@ -54,6 +57,8 @@ function AdminIndexPage() {
       }
     } catch (err: any) {
       toast.error("Erreur : " + err.message);
+    } finally {
+      setPendingSlotUserId(null);
     }
   };
 
@@ -288,7 +293,7 @@ function AdminIndexPage() {
                         <div className="flex items-center justify-center gap-2">
                           <button
                             onClick={() => handleGrantSlot(parent.id, -1)}
-                            disabled={parent.extraSlots <= 0}
+                            disabled={parent.extraSlots <= 0 || pendingSlotUserId === parent.id}
                             title="Révoquer 1 slot"
                             className="flex size-7 items-center justify-center rounded-lg border-2 border-ink bg-red-100 text-red-700 font-black text-sm hover:bg-red-200 disabled:opacity-30 disabled:cursor-not-allowed transition-all"
                           >
@@ -300,6 +305,7 @@ function AdminIndexPage() {
                           </div>
                           <button
                             onClick={() => handleGrantSlot(parent.id, +1)}
+                            disabled={pendingSlotUserId === parent.id}
                             title="Accorder 1 slot"
                             className="flex size-7 items-center justify-center rounded-lg border-2 border-ink bg-emerald-100 text-emerald-700 font-black text-sm hover:bg-emerald-200 transition-all"
                           >
