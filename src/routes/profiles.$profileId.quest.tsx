@@ -7,6 +7,7 @@ import { ArrowLeft, Play, Check, Circle, Sparkles, Smile, Trophy, X, ChevronRigh
 import { toast } from "sonner";
 import { NayaAvatar } from "@/components/NayaAvatar";
 import nayaAvatar from "@/assets/naya-avatar.png";
+import { confirmDialog } from "@/components/ui/confirm-dialog";
 
 export const Route = createFileRoute("/profiles/$profileId/quest")({
   component: QuestPage,
@@ -233,8 +234,13 @@ function QuestPage() {
             </span>
           </div>
           <button
-            onClick={() => {
-              if (confirm("Veux-tu vraiment quitter ta mission en cours ? Ton avancée ne sera pas perdue.")) {
+            onClick={async () => {
+              const ok = await confirmDialog({
+                title: "Quitter la mission en cours ?",
+                description: "Ton avancée ne sera pas perdue.",
+                confirmLabel: "Quitter",
+              });
+              if (ok) {
                 setIsQuestActive(false);
                 setCurrentStepIndex(0);
               }

@@ -18,6 +18,7 @@ import { Loader2, Plus, Trash2, ShieldAlert, Package, Sparkles, X, BarChart2, Us
 import { toast } from "sonner";
 import { RadarChart, PolarGrid, PolarAngleAxis, Radar, ResponsiveContainer, Cell, BarChart, Bar, XAxis, YAxis, Tooltip, Legend } from "recharts";
 import { GUILDS, getChildGuild } from "@/lib/guilds";
+import { confirmDialog } from "@/components/ui/confirm-dialog";
 
 
 export const Route = createFileRoute("/admin/products")({
@@ -179,7 +180,7 @@ function AdminProductsPage() {
   };
 
   const remove = async (id: string) => {
-    if (!confirm("Supprimer ce produit ?")) return;
+    if (!(await confirmDialog({ title: "Supprimer ce produit ?", confirmLabel: "Supprimer", variant: "danger" }))) return;
     await deleteFn({ data: { id } });
     toast.success("Produit supprimé.");
     void refetch();

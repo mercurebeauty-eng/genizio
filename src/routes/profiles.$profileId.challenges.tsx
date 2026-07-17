@@ -21,6 +21,7 @@ import { StepAccordion } from "@/components/challenges/StepAccordion";
 import { ObservationPrompts } from "@/components/challenges/ObservationPrompts";
 import { OutcomeChat } from "@/components/challenges/OutcomeChat";
 import { KitSuggestion } from "@/components/challenges/KitSuggestion";
+import { confirmDialog } from "@/components/ui/confirm-dialog";
 import { AppHeader } from "@/components/AppHeader";
 import { AppTabBar } from "@/components/AppTabBar";
 import { getActiveChallenge } from "@/lib/active-challenge";
@@ -345,7 +346,7 @@ function ChallengesPage() {
   };
 
   const remove = async (id: string) => {
-    if (!confirm("Supprimer ce défi ?")) return;
+    if (!(await confirmDialog({ title: "Supprimer ce défi ?", confirmLabel: "Supprimer", variant: "danger" }))) return;
     await del({ data: { id } });
     setChallenges((prev) => prev.filter((c) => c.id !== id));
   };

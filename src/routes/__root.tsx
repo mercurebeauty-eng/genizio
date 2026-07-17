@@ -13,6 +13,7 @@ import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
 import { Toaster } from "../components/ui/sonner";
 import { WhatsAppFAB } from "../components/WhatsAppFAB";
+import { ConfirmDialogHost } from "../components/ui/confirm-dialog";
 
 
 function NotFoundComponent() {
@@ -148,6 +149,7 @@ function RootComponent() {
       <Outlet />
       <Toaster />
       <WhatsAppFAB />
+      <ConfirmDialogHost />
     </QueryClientProvider>
   );
 }

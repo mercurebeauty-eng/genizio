@@ -6,6 +6,7 @@ import { AppHeader } from "@/components/AppHeader";
 import { ProfileCard } from "@/components/profiles/ProfileCard";
 import { ProfileDialog } from "@/components/profiles/ProfileDialog";
 import type { ChildProfile } from "@/components/profiles/shared";
+import { confirmDialog } from "@/components/ui/confirm-dialog";
 
 export const Route = createFileRoute("/profiles/manage")({
   component: ManageProfilesPage,
@@ -40,7 +41,12 @@ function ManageProfilesPage() {
   }, [session]);
 
   const remove = async (id: string) => {
-    if (!confirm("Supprimer ce profil ?")) return;
+    if (!(await confirmDialog({
+      title: "Supprimer ce profil ?",
+      description: "Cette action est irréversible et supprimera aussi tout l'historique de défis associé.",
+      confirmLabel: "Supprimer",
+      variant: "danger",
+    }))) return;
     await supabase.from("child_profiles").delete().eq("id", id);
     void refetch();
   };

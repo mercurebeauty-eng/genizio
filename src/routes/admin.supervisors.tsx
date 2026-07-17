@@ -11,6 +11,7 @@ import {
 import { supabase } from "@/integrations/supabase/client";
 import { Loader2, Plus, Trash2, ShieldAlert, Users } from "lucide-react";
 import { toast } from "sonner";
+import { confirmDialog } from "@/components/ui/confirm-dialog";
 
 export const Route = createFileRoute("/admin/supervisors")({
   component: AdminSupervisorsPage,
@@ -83,7 +84,7 @@ function AdminSupervisorsPage() {
   };
 
   const handleRemove = async (id: string) => {
-    if (!confirm("Retirer ce superviseur ?")) return;
+    if (!(await confirmDialog({ title: "Retirer ce superviseur ?", confirmLabel: "Retirer", variant: "danger" }))) return;
     await removeFn({ data: { id } });
     toast.success("Superviseur retiré.");
     void refetch();
