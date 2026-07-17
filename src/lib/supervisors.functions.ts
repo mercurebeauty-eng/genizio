@@ -93,7 +93,7 @@ export const getSupervisorDashboard = createServerFn({ method: "GET" })
 
     const { data: challenges } = await supabaseAdmin
       .from("challenges")
-      .select("child_id, id, title, domain, status, created_at")
+      .select("child_id, id, title, domain, status, created_at, description, duration, steps, materials, proof_image_url, ai_observations, notes, difficulty, pedagogical_context, requires_supervision, supervision_warning")
       .in("child_id", childIds)
       .order("created_at", { ascending: false });
 

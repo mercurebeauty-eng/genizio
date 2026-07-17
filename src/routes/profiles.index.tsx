@@ -189,8 +189,8 @@ function DashboardPage() {
 
         <div className="min-w-0 flex-1">
           <div className="mb-6">
-            <div className="mb-3 flex items-end gap-3">
-              <NayaAvatar size="sm" />
+            <div className="mb-3 flex items-end gap-3" style={{ paddingTop: "3.5rem", marginTop: "-3.5rem" }}>
+              <NayaAvatar size="sm" thoughts={[`Bonjour ! Prêt à explorer avec ${selected?.name ?? "votre enfant"} ?`]} />
               <p className="text-sm text-ink/50 mb-0.5">Bonjour !</p>
             </div>
             <h1 className="font-display text-3xl font-extrabold md:text-4xl">

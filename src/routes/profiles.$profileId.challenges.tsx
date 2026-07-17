@@ -517,8 +517,8 @@ function ChallengesPage() {
                 </div>
               </div>
 
-              <div className="mt-6 grid gap-4 sm:grid-cols-3 sm:items-end">
-                <div className="sm:col-span-2">
+              <div className="mt-6 grid gap-4 sm:grid-cols-4 sm:items-end">
+                <div className="sm:col-span-3">
                   <label className="block text-xs font-bold uppercase tracking-wider text-ink mb-2">
                     Sélectionner l'Intelligence
                   </label>

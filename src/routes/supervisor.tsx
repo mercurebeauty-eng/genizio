@@ -5,8 +5,9 @@ import { useSession } from "@/hooks/use-session";
 import { AppHeader } from "@/components/AppHeader";
 import { getSupervisorDashboard } from "@/lib/supervisors.functions";
 import { getChildGuild } from "@/lib/guilds";
-import { Loader2, Users, Trophy, CheckSquare, Eye, ClipboardList, Zap, CheckCircle2 } from "lucide-react";
+import { Loader2, Users, Trophy, CheckSquare, Eye, ClipboardList, Zap, CheckCircle2, X, Clock, AlertTriangle, Brain } from "lucide-react";
 import { NayaAvatar } from "@/components/NayaAvatar";
+import { MarkdownContent } from "@/components/ui/markdown-content";
 
 
 export const Route = createFileRoute("/supervisor")({
@@ -35,6 +36,7 @@ function SupervisorDashboardPage() {
   const [children, setChildren] = useState<ChildWithChallenges[]>([]);
   const [fetching, setFetching] = useState(true);
   const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [selectedChallenge, setSelectedChallenge] = useState<any | null>(null);
 
   const getDashboardFn = useServerFn(getSupervisorDashboard);
 
@@ -69,8 +71,8 @@ function SupervisorDashboardPage() {
       <main className="mx-auto max-w-5xl px-6 py-10">
         {/* Header */}
         <div className="mb-8">
-          <div className="mb-3 flex items-end gap-3">
-            <NayaAvatar size="sm" />
+          <div className="mb-3 flex items-end gap-3" style={{ paddingTop: "3.5rem", marginTop: "-3.5rem" }}>
+            <NayaAvatar size="sm" thoughts={["Bonjour Superviseur ! Voici vos enfants à accompagner."]} />
             <p className="text-sm text-ink/50 mb-0.5">Espace Superviseur</p>
           </div>
           <h1 className="font-display text-3xl font-extrabold">Tableau de Bord Superviseur</h1>
@@ -169,9 +171,13 @@ function SupervisorDashboardPage() {
                     ) : (
                       <ul className="space-y-3">
                         {selected.challenges.map((c) => (
-                          <li key={c.id} className="flex items-center justify-between rounded-2xl border-2 border-ink bg-surface px-4 py-3">
+                          <button
+                            key={c.id}
+                            onClick={() => setSelectedChallenge(c)}
+                            className="w-full flex items-center justify-between rounded-2xl border-2 border-ink bg-surface px-4 py-3 hover:bg-stone-50 transition-all text-left cursor-pointer"
+                          >
                             <div>
-                              <p className="text-sm font-bold text-ink">{c.title}</p>
+                              <p className="text-sm font-bold text-ink hover:text-brand transition-colors">{c.title}</p>
                               <p className="text-xs text-ink/50">{c.domain}</p>
                             </div>
                             <span className={`rounded-full px-2.5 py-1 text-[10px] font-black uppercase tracking-widest border-2 border-ink ${
@@ -181,7 +187,7 @@ function SupervisorDashboardPage() {
                             }`}>
                               {c.status === "completed" ? "✅ Complété" : c.status === "in_progress" ? "⚡ En cours" : "📋 À faire"}
                             </span>
-                          </li>
+                          </button>
                         ))}
                       </ul>
                     )}
@@ -192,6 +198,162 @@ function SupervisorDashboardPage() {
           </div>
         )}
       </main>
+      {/* Challenge Detail Modal */}
+      {selectedChallenge && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-ink/40 p-4 backdrop-blur-sm">
+          <div className="w-full max-w-2xl max-h-[85vh] overflow-y-auto bg-white rounded-3xl border-[3px] border-ink p-6 md:p-8 shadow-brutal animate-in zoom-in-95 duration-200">
+            {/* Modal Header */}
+            <div className="flex items-start justify-between gap-4 border-b-2 border-ink pb-4 mb-6">
+              <div>
+                <div className="flex flex-wrap items-center gap-2 mb-2">
+                  <span className="rounded-full border-2 border-ink bg-brand px-2.5 py-0.5 text-[10px] font-black uppercase tracking-widest text-white">
+                    {selectedChallenge.domain}
+                  </span>
+                  <span className={`rounded-full border-2 border-ink px-2.5 py-0.5 text-[10px] font-black uppercase tracking-widest ${
+                    selectedChallenge.status === "completed" ? "bg-emerald-100 text-emerald-800" :
+                    selectedChallenge.status === "in_progress" ? "bg-brand/10 text-brand" :
+                    "bg-stone-100 text-stone-700"
+                  }`}>
+                    {selectedChallenge.status === "completed" ? "✅ Complété" : selectedChallenge.status === "in_progress" ? "⚡ En cours" : "📋 À faire"}
+                  </span>
+                  {selectedChallenge.difficulty && (
+                    <span className="rounded-full border-2 border-ink bg-orange-100 px-2.5 py-0.5 text-[10px] font-black uppercase tracking-widest text-orange-800">
+                      🔥 {selectedChallenge.difficulty}
+                    </span>
+                  )}
+                  {selectedChallenge.duration && (
+                    <span className="rounded-full border-2 border-ink bg-sky px-2.5 py-0.5 text-[10px] font-black uppercase tracking-widest text-ink flex items-center gap-1">
+                      <Clock className="size-3" />
+                      {selectedChallenge.duration}
+                    </span>
+                  )}
+                </div>
+                <h3 className="font-display text-xl font-black text-ink">{selectedChallenge.title}</h3>
+              </div>
+              <button
+                onClick={() => setSelectedChallenge(null)}
+                className="rounded-xl border-2 border-ink p-1.5 hover:bg-stone-100 transition-all cursor-pointer"
+              >
+                <X className="size-5" />
+              </button>
+            </div>
+
+            {/* Modal Body */}
+            <div className="space-y-6">
+              {/* Supervision warning */}
+              {selectedChallenge.requires_supervision && (
+                <div className="rounded-2xl border-[3px] border-ink bg-amber-50 p-4 flex gap-3 text-amber-900">
+                  <AlertTriangle className="size-6 text-amber-600 shrink-0" />
+                  <div>
+                    <p className="text-xs font-black uppercase tracking-wider mb-0.5 text-amber-800">Attention - Supervision requise</p>
+                    <p className="text-sm font-medium leading-relaxed">{selectedChallenge.supervision_warning || "La présence d'un adulte est nécessaire pour cette activité."}</p>
+                  </div>
+                </div>
+              )}
+
+              {/* Description */}
+              <div>
+                <h4 className="text-xs font-black uppercase tracking-widest text-ink/40 mb-2">Description du défi</h4>
+                <div className="text-sm text-ink/80 leading-relaxed font-medium">
+                  <MarkdownContent content={selectedChallenge.description} />
+                </div>
+              </div>
+
+              {/* Pedagogical context */}
+              {selectedChallenge.pedagogical_context && (
+                <div className="rounded-2xl border-2 border-ink bg-stone-50 p-4">
+                  <p className="text-xs font-black uppercase tracking-wider text-ink/50 mb-1">Objectif Pédagogique (Naya)</p>
+                  <p className="text-xs text-ink/70 leading-relaxed font-medium">{selectedChallenge.pedagogical_context}</p>
+                </div>
+              )}
+
+              {/* Materials */}
+              {selectedChallenge.materials && Array.isArray(selectedChallenge.materials) && selectedChallenge.materials.length > 0 && (
+                <div>
+                  <h4 className="text-xs font-black uppercase tracking-widest text-ink/40 mb-2">Matériel nécessaire</h4>
+                  <ul className="grid gap-2 sm:grid-cols-2">
+                    {selectedChallenge.materials.map((m: string, i: number) => (
+                      <li key={i} className="flex items-center gap-2 text-sm font-bold text-ink">
+                        <span className="size-2 rounded-full bg-brand shrink-0"></span>
+                        <span>{m}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+
+              {/* Steps */}
+              {selectedChallenge.steps && Array.isArray(selectedChallenge.steps) && selectedChallenge.steps.length > 0 && (
+                <div>
+                  <h4 className="text-xs font-black uppercase tracking-widest text-ink/40 mb-3">Étapes de réalisation</h4>
+                  <ol className="space-y-3">
+                    {selectedChallenge.steps.map((s: string, i: number) => (
+                      <li key={i} className="flex gap-3 text-sm">
+                        <span className="grid size-6 place-items-center rounded-lg border-2 border-ink bg-white font-mono text-xs font-bold text-ink shrink-0">
+                          {i + 1}
+                        </span>
+                        <span className="leading-relaxed font-semibold text-ink/80">{s}</span>
+                      </li>
+                    ))}
+                  </ol>
+                </div>
+              )}
+
+              {/* Proof / Observations if completed */}
+              {selectedChallenge.status === "completed" && (
+                <div className="border-t-2 border-ink pt-6 space-y-6">
+                  <h4 className="font-display text-base font-extrabold text-ink">Retour sur la réalisation</h4>
+
+                  {/* Proof Image */}
+                  {selectedChallenge.proof_image_url && (
+                    <div>
+                      <p className="text-xs font-black uppercase tracking-widest text-ink/40 mb-2">Preuve de réalisation</p>
+                      <div className="rounded-2xl overflow-hidden border-[3px] border-ink bg-surface max-w-md">
+                        <img src={selectedChallenge.proof_image_url} alt="Preuve" className="w-full max-h-64 object-contain" />
+                      </div>
+                    </div>
+                  )}
+
+                  {/* AI Analysis */}
+                  {selectedChallenge.ai_observations && (
+                    <div className="rounded-2xl border-[3px] border-ink bg-leaf/10 p-4">
+                      <p className="mb-2 text-xs font-extrabold uppercase tracking-widest text-emerald-800 flex items-center gap-1.5">
+                        <Brain className="size-4 text-emerald-700" />
+                        Observations pédagogiques de Naya
+                      </p>
+                      <p className="text-sm text-ink/80 leading-relaxed italic font-medium">
+                        "{selectedChallenge.ai_observations}"
+                      </p>
+                    </div>
+                  )}
+
+                  {/* Parent notes */}
+                  {selectedChallenge.notes && (
+                    <div className="rounded-2xl border-[3px] border-ink bg-sky/10 p-4">
+                      <p className="mb-2 text-xs font-extrabold uppercase tracking-widest text-sky-800">
+                        Notes du parent
+                      </p>
+                      <p className="text-sm text-ink/80 leading-relaxed font-medium">
+                        {selectedChallenge.notes}
+                      </p>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+
+            {/* Modal Footer */}
+            <div className="border-t-2 border-ink pt-4 mt-6 flex justify-end">
+              <button
+                onClick={() => setSelectedChallenge(null)}
+                className="rounded-2xl border-[3px] border-ink bg-ink px-6 py-2.5 text-xs font-bold text-white shadow-brutal-sm hover:-translate-y-0.5 transition-all cursor-pointer"
+              >
+                Fermer
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -14,6 +14,7 @@ import { reportLovableError } from "../lib/lovable-error-reporting";
 import { Toaster } from "../components/ui/sonner";
 import { WhatsAppFAB } from "../components/WhatsAppFAB";
 import { ConfirmDialogHost } from "../components/ui/confirm-dialog";
+import { PwaInstallPrompt } from "../components/PwaInstallPrompt";
 
 
 function NotFoundComponent() {
@@ -150,6 +151,7 @@ function RootComponent() {
       <Toaster />
       <WhatsAppFAB />
       <ConfirmDialogHost />
+      <PwaInstallPrompt />
     </QueryClientProvider>
   );
 }

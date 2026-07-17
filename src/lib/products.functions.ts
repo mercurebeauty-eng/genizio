@@ -243,3 +243,86 @@ export const getEcosystemStats = createServerFn({ method: "GET" })
       topDomains,
     };
   });
+
+export const listParentsBI = createServerFn({ method: "GET" })
+  .middleware([requireAdmin])
+  .handler(async () => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+
+    // 1. Fetch all users from Supabase Auth admin API
+    const { data: { users }, error: usersErr } = await supabaseAdmin.auth.admin.listUsers();
+    if (usersErr) throw new Error(usersErr.message);
+
+    // 2. Fetch children profile statistics grouped by user_id
+    const { data: children, error: childrenErr } = await supabaseAdmin
+      .from("child_profiles")
+      .select("id, name, age, user_id, talents");
+    if (childrenErr) throw new Error(childrenErr.message);
+
+    // 3. Fetch challenge statistics grouped by user_id
+    const { data: challenges, error: challengesErr } = await supabaseAdmin
+      .from("challenges")
+      .select("id, status, user_id");
+    if (challengesErr) throw new Error(challengesErr.message);
+
+    // 4. Correlate data
+    const parents = users.map(user => {
+      const parentChildren = children.filter(c => c.user_id === user.id);
+      const parentChallenges = challenges.filter(c => c.user_id === user.id);
+      const completedChallenges = parentChallenges.filter(c => c.status === "completed");
+
+      return {
+        id: user.id,
+        email: user.email,
+        phone: user.user_metadata?.phone || null,
+        createdAt: user.created_at,
+        childCount: parentChildren.length,
+        childNames: parentChildren.map(c => `${c.name} (${c.age} ans)`).join(", "),
+        children: parentChildren.map(c => ({
+          id: c.id,
+          name: c.name,
+          age: c.age,
+          pdfUnlocked: (c.talents as any)?.pdf_unlocked === true
+        })),
+        challengeCount: parentChallenges.length,
+        completedCount: completedChallenges.length,
+      };
+    });
+
+    // Sort parents by creation date (newest first)
+    parents.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+
+    return parents;
+  });
+
+export const togglePassportUnlock = createServerFn({ method: "POST" })
+  .middleware([requireAdmin])
+  .inputValidator((input: unknown) => z.object({
+    childId: z.string().uuid(),
+    unlock: z.boolean(),
+  }).parse(input))
+  .handler(async ({ data }) => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    
+    // 1. Fetch current talents
+    const { data: child, error: fetchErr } = await supabaseAdmin
+      .from("child_profiles")
+      .select("talents")
+      .eq("id", data.childId)
+      .single();
+    if (fetchErr) throw new Error(fetchErr.message);
+
+    const talents = {
+      ...(child.talents as any || {}),
+      pdf_unlocked: data.unlock,
+    };
+
+    // 2. Update talents
+    const { error: updateErr } = await supabaseAdmin
+      .from("child_profiles")
+      .update({ talents })
+      .eq("id", data.childId);
+    if (updateErr) throw new Error(updateErr.message);
+
+    return { ok: true, unlocked: data.unlock };
+  });

@@ -520,9 +520,10 @@ export const assignTemplateChallenge = createServerFn({ method: "POST" })
 
 const GenerateSingleInput = z.object({
   childId: z.string().uuid(),
-  timeAvailable: z.string(),
-  location: z.string(),
+  timeAvailable: z.string().optional(),
+  location: z.string().optional(),
   homeMaterials: z.string().optional().nullable(),
+  domain: z.string().optional().nullable(),
 });
 
 export const generateSingleChallenge = createServerFn({ method: "POST" })
@@ -551,6 +552,14 @@ export const generateSingleChallenge = createServerFn({ method: "POST" })
       .map((c) => `- Défi "${c.title}" (${c.domain}) : "${c.ai_observations ?? ''}"`)
       .join("\n");
 
+    const timeAvailable = data.timeAvailable || "30 min";
+    const location = data.location || "Maison (Intérieur)";
+    const targetDomain = data.domain && data.domain !== "all" ? data.domain : null;
+
+    const domainInstruction = targetDomain
+      ? `3. Tu DOIS générer un défi spécifiquement dans le domaine d'intelligence ou la catégorie suivante : "${targetDomain}". Adapte l'activité pour cibler ce domaine précis.`
+      : `3. Choisis le domaine d'intelligence (Sciences, Art, Artisanat, Cuisine, etc.) le plus pertinent pour ce temps et ce lieu, tout en visant à renforcer une faiblesse ou exalter une force réelle. Tu peux créer des défis "hybrides" (ex: utiliser l'art pour comprendre les mathématiques).`;
+
     const prompt = `Tu es Naya, un mentor pédagogique d'élite spécialisé dans la psychologie de l'enfant et les Intelligences Multiples d'Howard Gardner, opérant en Afrique francophone.
 Génère un défi d'apprentissage sur-mesure, hautement interactif et passionnant pour cet enfant, en respectant son contexte immédiat.
 
@@ -574,14 +583,14 @@ Défis déjà accomplis par l'enfant et observations de Naya :
 ${completedSummary || "(Aucun défi complété pour le moment)"}
 
 Contexte immédiat (TRÈS IMPORTANT) :
-- Temps disponible : ${data.timeAvailable}
-- Lieu / Environnement : ${data.location}
+- Temps disponible : ${timeAvailable}
+- Lieu / Environnement : ${location}
 ${data.homeMaterials ? `- Matériaux/objets disponibles à la maison : ${data.homeMaterials}` : ""}
 
 Ta mission (Ignorer le biais parental et utiliser les données réelles) :
 1. Analyse la carte des talents (Radar Chart), les intérêts déclarés par le parent, ET les observations des défis passés.
 2. Détecte les biais : Si le parent a déclaré certains intérêts, mais que les observations passées montrent que l'enfant bloque dessus ou excelle ailleurs, Naya doit prendre l'initiative de pivoter.
-3. Choisis le domaine d'intelligence (Sciences, Art, Artisanat, Cuisine, etc.) le plus pertinent pour ce temps et ce lieu, tout en visant à renforcer une faiblesse ou exalter une force réelle. Tu peux créer des défis "hybrides" (ex: utiliser l'art pour comprendre les mathématiques).
+${domainInstruction}
 4. Le défi doit s'adapter EXACTEMENT au temps disponible. S'il n'y a que 10 minutes, propose un "mini-défi" immédiat. Si c'est 1h+, propose un projet structuré.
 5. Le défi doit être réalisable avec les objets de ce lieu précis.
 ${

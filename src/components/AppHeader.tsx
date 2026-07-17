@@ -109,8 +109,14 @@ export function AppHeader() {
                       </Link>
                     </DropdownMenuItem>
                   )}
-                  {isAdmin && (
+                   {isAdmin && (
                     <>
+                      <DropdownMenuItem asChild>
+                        <Link to="/admin" className="flex items-center gap-2 rounded-xl px-2.5 py-2 text-xs font-black uppercase tracking-wider text-purple-600 hover:bg-purple-50 cursor-pointer">
+                          <LayoutDashboard className="size-4" />
+                          <span>Admin Dashboard</span>
+                        </Link>
+                      </DropdownMenuItem>
                       <DropdownMenuItem asChild>
                         <Link to="/admin/products" className="flex items-center gap-2 rounded-xl px-2.5 py-2 text-xs font-black uppercase tracking-wider text-purple-600 hover:bg-purple-50 cursor-pointer">
                           <ShoppingBag className="size-4" />
@@ -204,8 +210,17 @@ export function AppHeader() {
                     Superviseur
                   </Link>
                 )}
-                {isAdmin && (
+                 {isAdmin && (
                   <>
+                    <Link
+                      to="/admin"
+                      onClick={() => setIsOpen(false)}
+                      className="flex items-center gap-2.5 rounded-2xl px-4 py-3 text-sm font-bold text-purple-600 hover:bg-purple-50"
+                      activeProps={{ className: "bg-purple-50 text-purple-600" }}
+                    >
+                      <LayoutDashboard className="size-4" />
+                      Admin Dashboard
+                    </Link>
                     <Link
                       to="/admin/products"
                       onClick={() => setIsOpen(false)}

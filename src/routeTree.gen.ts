@@ -19,14 +19,17 @@ import { Route as LaboratoryRouteImport } from './routes/laboratory'
 import { Route as FeedRouteImport } from './routes/feed'
 import { Route as BoutiqueRouteImport } from './routes/boutique'
 import { Route as AuthRouteImport } from './routes/auth'
+import { Route as AdminRouteImport } from './routes/admin'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as ProfilesIndexRouteImport } from './routes/profiles.index'
+import { Route as AdminIndexRouteImport } from './routes/admin.index'
 import { Route as STokenRouteImport } from './routes/s.$token'
 import { Route as ProfilesManageRouteImport } from './routes/profiles.manage'
 import { Route as AdminSupervisorsRouteImport } from './routes/admin.supervisors'
 import { Route as AdminProductsRouteImport } from './routes/admin.products'
 import { Route as ProfilesProfileIdQuestRouteImport } from './routes/profiles.$profileId.quest'
 import { Route as ProfilesProfileIdPortfolioRouteImport } from './routes/profiles.$profileId.portfolio'
+import { Route as ProfilesProfileIdPassportPrintRouteImport } from './routes/profiles.$profileId.passport-print'
 import { Route as ProfilesProfileIdMentorsRouteImport } from './routes/profiles.$profileId.mentors'
 import { Route as ProfilesProfileIdChallengesRouteImport } from './routes/profiles.$profileId.challenges'
 
@@ -80,6 +83,11 @@ const AuthRoute = AuthRouteImport.update({
   path: '/auth',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AdminRoute = AdminRouteImport.update({
+  id: '/admin',
+  path: '/admin',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
@@ -89,6 +97,11 @@ const ProfilesIndexRoute = ProfilesIndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => ProfilesRoute,
+} as any)
+const AdminIndexRoute = AdminIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => AdminRoute,
 } as any)
 const STokenRoute = STokenRouteImport.update({
   id: '/s/$token',
@@ -101,14 +114,14 @@ const ProfilesManageRoute = ProfilesManageRouteImport.update({
   getParentRoute: () => ProfilesRoute,
 } as any)
 const AdminSupervisorsRoute = AdminSupervisorsRouteImport.update({
-  id: '/admin/supervisors',
-  path: '/admin/supervisors',
-  getParentRoute: () => rootRouteImport,
+  id: '/supervisors',
+  path: '/supervisors',
+  getParentRoute: () => AdminRoute,
 } as any)
 const AdminProductsRoute = AdminProductsRouteImport.update({
-  id: '/admin/products',
-  path: '/admin/products',
-  getParentRoute: () => rootRouteImport,
+  id: '/products',
+  path: '/products',
+  getParentRoute: () => AdminRoute,
 } as any)
 const ProfilesProfileIdQuestRoute = ProfilesProfileIdQuestRouteImport.update({
   id: '/$profileId/quest',
@@ -119,6 +132,12 @@ const ProfilesProfileIdPortfolioRoute =
   ProfilesProfileIdPortfolioRouteImport.update({
     id: '/$profileId/portfolio',
     path: '/$profileId/portfolio',
+    getParentRoute: () => ProfilesRoute,
+  } as any)
+const ProfilesProfileIdPassportPrintRoute =
+  ProfilesProfileIdPassportPrintRouteImport.update({
+    id: '/$profileId/passport-print',
+    path: '/$profileId/passport-print',
     getParentRoute: () => ProfilesRoute,
   } as any)
 const ProfilesProfileIdMentorsRoute =
@@ -136,6 +155,7 @@ const ProfilesProfileIdChallengesRoute =
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/admin': typeof AdminRouteWithChildren
   '/auth': typeof AuthRoute
   '/boutique': typeof BoutiqueRoute
   '/feed': typeof FeedRoute
@@ -150,9 +170,11 @@ export interface FileRoutesByFullPath {
   '/admin/supervisors': typeof AdminSupervisorsRoute
   '/profiles/manage': typeof ProfilesManageRoute
   '/s/$token': typeof STokenRoute
+  '/admin/': typeof AdminIndexRoute
   '/profiles/': typeof ProfilesIndexRoute
   '/profiles/$profileId/challenges': typeof ProfilesProfileIdChallengesRoute
   '/profiles/$profileId/mentors': typeof ProfilesProfileIdMentorsRoute
+  '/profiles/$profileId/passport-print': typeof ProfilesProfileIdPassportPrintRoute
   '/profiles/$profileId/portfolio': typeof ProfilesProfileIdPortfolioRoute
   '/profiles/$profileId/quest': typeof ProfilesProfileIdQuestRoute
 }
@@ -171,15 +193,18 @@ export interface FileRoutesByTo {
   '/admin/supervisors': typeof AdminSupervisorsRoute
   '/profiles/manage': typeof ProfilesManageRoute
   '/s/$token': typeof STokenRoute
+  '/admin': typeof AdminIndexRoute
   '/profiles': typeof ProfilesIndexRoute
   '/profiles/$profileId/challenges': typeof ProfilesProfileIdChallengesRoute
   '/profiles/$profileId/mentors': typeof ProfilesProfileIdMentorsRoute
+  '/profiles/$profileId/passport-print': typeof ProfilesProfileIdPassportPrintRoute
   '/profiles/$profileId/portfolio': typeof ProfilesProfileIdPortfolioRoute
   '/profiles/$profileId/quest': typeof ProfilesProfileIdQuestRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/admin': typeof AdminRouteWithChildren
   '/auth': typeof AuthRoute
   '/boutique': typeof BoutiqueRoute
   '/feed': typeof FeedRoute
@@ -194,9 +219,11 @@ export interface FileRoutesById {
   '/admin/supervisors': typeof AdminSupervisorsRoute
   '/profiles/manage': typeof ProfilesManageRoute
   '/s/$token': typeof STokenRoute
+  '/admin/': typeof AdminIndexRoute
   '/profiles/': typeof ProfilesIndexRoute
   '/profiles/$profileId/challenges': typeof ProfilesProfileIdChallengesRoute
   '/profiles/$profileId/mentors': typeof ProfilesProfileIdMentorsRoute
+  '/profiles/$profileId/passport-print': typeof ProfilesProfileIdPassportPrintRoute
   '/profiles/$profileId/portfolio': typeof ProfilesProfileIdPortfolioRoute
   '/profiles/$profileId/quest': typeof ProfilesProfileIdQuestRoute
 }
@@ -204,6 +231,7 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/admin'
     | '/auth'
     | '/boutique'
     | '/feed'
@@ -218,9 +246,11 @@ export interface FileRouteTypes {
     | '/admin/supervisors'
     | '/profiles/manage'
     | '/s/$token'
+    | '/admin/'
     | '/profiles/'
     | '/profiles/$profileId/challenges'
     | '/profiles/$profileId/mentors'
+    | '/profiles/$profileId/passport-print'
     | '/profiles/$profileId/portfolio'
     | '/profiles/$profileId/quest'
   fileRoutesByTo: FileRoutesByTo
@@ -239,14 +269,17 @@ export interface FileRouteTypes {
     | '/admin/supervisors'
     | '/profiles/manage'
     | '/s/$token'
+    | '/admin'
     | '/profiles'
     | '/profiles/$profileId/challenges'
     | '/profiles/$profileId/mentors'
+    | '/profiles/$profileId/passport-print'
     | '/profiles/$profileId/portfolio'
     | '/profiles/$profileId/quest'
   id:
     | '__root__'
     | '/'
+    | '/admin'
     | '/auth'
     | '/boutique'
     | '/feed'
@@ -261,15 +294,18 @@ export interface FileRouteTypes {
     | '/admin/supervisors'
     | '/profiles/manage'
     | '/s/$token'
+    | '/admin/'
     | '/profiles/'
     | '/profiles/$profileId/challenges'
     | '/profiles/$profileId/mentors'
+    | '/profiles/$profileId/passport-print'
     | '/profiles/$profileId/portfolio'
     | '/profiles/$profileId/quest'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AdminRoute: typeof AdminRouteWithChildren
   AuthRoute: typeof AuthRoute
   BoutiqueRoute: typeof BoutiqueRoute
   FeedRoute: typeof FeedRoute
@@ -280,8 +316,6 @@ export interface RootRouteChildren {
   ProfilesRoute: typeof ProfilesRouteWithChildren
   SupervisorRoute: typeof SupervisorRoute
   TermsRoute: typeof TermsRoute
-  AdminProductsRoute: typeof AdminProductsRoute
-  AdminSupervisorsRoute: typeof AdminSupervisorsRoute
   STokenRoute: typeof STokenRoute
 }
 
@@ -357,6 +391,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/admin': {
+      id: '/admin'
+      path: '/admin'
+      fullPath: '/admin'
+      preLoaderRoute: typeof AdminRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/': {
       id: '/'
       path: '/'
@@ -370,6 +411,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/profiles/'
       preLoaderRoute: typeof ProfilesIndexRouteImport
       parentRoute: typeof ProfilesRoute
+    }
+    '/admin/': {
+      id: '/admin/'
+      path: '/'
+      fullPath: '/admin/'
+      preLoaderRoute: typeof AdminIndexRouteImport
+      parentRoute: typeof AdminRoute
     }
     '/s/$token': {
       id: '/s/$token'
@@ -387,17 +435,17 @@ declare module '@tanstack/react-router' {
     }
     '/admin/supervisors': {
       id: '/admin/supervisors'
-      path: '/admin/supervisors'
+      path: '/supervisors'
       fullPath: '/admin/supervisors'
       preLoaderRoute: typeof AdminSupervisorsRouteImport
-      parentRoute: typeof rootRouteImport
+      parentRoute: typeof AdminRoute
     }
     '/admin/products': {
       id: '/admin/products'
-      path: '/admin/products'
+      path: '/products'
       fullPath: '/admin/products'
       preLoaderRoute: typeof AdminProductsRouteImport
-      parentRoute: typeof rootRouteImport
+      parentRoute: typeof AdminRoute
     }
     '/profiles/$profileId/quest': {
       id: '/profiles/$profileId/quest'
@@ -411,6 +459,13 @@ declare module '@tanstack/react-router' {
       path: '/$profileId/portfolio'
       fullPath: '/profiles/$profileId/portfolio'
       preLoaderRoute: typeof ProfilesProfileIdPortfolioRouteImport
+      parentRoute: typeof ProfilesRoute
+    }
+    '/profiles/$profileId/passport-print': {
+      id: '/profiles/$profileId/passport-print'
+      path: '/$profileId/passport-print'
+      fullPath: '/profiles/$profileId/passport-print'
+      preLoaderRoute: typeof ProfilesProfileIdPassportPrintRouteImport
       parentRoute: typeof ProfilesRoute
     }
     '/profiles/$profileId/mentors': {
@@ -430,11 +485,26 @@ declare module '@tanstack/react-router' {
   }
 }
 
+interface AdminRouteChildren {
+  AdminProductsRoute: typeof AdminProductsRoute
+  AdminSupervisorsRoute: typeof AdminSupervisorsRoute
+  AdminIndexRoute: typeof AdminIndexRoute
+}
+
+const AdminRouteChildren: AdminRouteChildren = {
+  AdminProductsRoute: AdminProductsRoute,
+  AdminSupervisorsRoute: AdminSupervisorsRoute,
+  AdminIndexRoute: AdminIndexRoute,
+}
+
+const AdminRouteWithChildren = AdminRoute._addFileChildren(AdminRouteChildren)
+
 interface ProfilesRouteChildren {
   ProfilesManageRoute: typeof ProfilesManageRoute
   ProfilesIndexRoute: typeof ProfilesIndexRoute
   ProfilesProfileIdChallengesRoute: typeof ProfilesProfileIdChallengesRoute
   ProfilesProfileIdMentorsRoute: typeof ProfilesProfileIdMentorsRoute
+  ProfilesProfileIdPassportPrintRoute: typeof ProfilesProfileIdPassportPrintRoute
   ProfilesProfileIdPortfolioRoute: typeof ProfilesProfileIdPortfolioRoute
   ProfilesProfileIdQuestRoute: typeof ProfilesProfileIdQuestRoute
 }
@@ -444,6 +514,7 @@ const ProfilesRouteChildren: ProfilesRouteChildren = {
   ProfilesIndexRoute: ProfilesIndexRoute,
   ProfilesProfileIdChallengesRoute: ProfilesProfileIdChallengesRoute,
   ProfilesProfileIdMentorsRoute: ProfilesProfileIdMentorsRoute,
+  ProfilesProfileIdPassportPrintRoute: ProfilesProfileIdPassportPrintRoute,
   ProfilesProfileIdPortfolioRoute: ProfilesProfileIdPortfolioRoute,
   ProfilesProfileIdQuestRoute: ProfilesProfileIdQuestRoute,
 }
@@ -454,6 +525,7 @@ const ProfilesRouteWithChildren = ProfilesRoute._addFileChildren(
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AdminRoute: AdminRouteWithChildren,
   AuthRoute: AuthRoute,
   BoutiqueRoute: BoutiqueRoute,
   FeedRoute: FeedRoute,
@@ -464,8 +536,6 @@ const rootRouteChildren: RootRouteChildren = {
   ProfilesRoute: ProfilesRouteWithChildren,
   SupervisorRoute: SupervisorRoute,
   TermsRoute: TermsRoute,
-  AdminProductsRoute: AdminProductsRoute,
-  AdminSupervisorsRoute: AdminSupervisorsRoute,
   STokenRoute: STokenRoute,
 }
 export const routeTree = rootRouteImport
