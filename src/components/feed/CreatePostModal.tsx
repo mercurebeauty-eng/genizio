@@ -66,9 +66,23 @@ export function CreatePostModal({
     }
   }, [open, session]);
 
+  const MAX_IMAGE_BYTES = 5 * 1024 * 1024;
+  const ACCEPTED_IMAGE_TYPES = ["image/png", "image/jpeg", "image/webp", "image/gif"];
+
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
+
+    if (!ACCEPTED_IMAGE_TYPES.includes(file.type)) {
+      toast.error("Format non supporté — utilisez une image PNG, JPG, WEBP ou GIF.");
+      e.target.value = "";
+      return;
+    }
+    if (file.size > MAX_IMAGE_BYTES) {
+      toast.error("Image trop volumineuse (5MB maximum).");
+      e.target.value = "";
+      return;
+    }
 
     // Simulate upload with local object URL
     const url = URL.createObjectURL(file);
@@ -129,6 +143,7 @@ export function CreatePostModal({
         });
       } catch (aiErr) {
         console.error("AI Analysis failed", aiErr);
+        toast.warning("Naya n'a pas pu analyser la photo — la publication continue sans son commentaire.");
       }
 
       // 4. Insert into posts table
