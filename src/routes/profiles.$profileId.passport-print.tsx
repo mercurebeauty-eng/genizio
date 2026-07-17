@@ -150,7 +150,7 @@ function PassportPrintPage() {
           <p className="text-sm font-semibold text-ink/75 leading-relaxed mb-6">
             Le Passeport d'Excellence pour {child.name} n'a pas encore été débloqué par l'administration. Veuillez procéder à son activation ou contacter le support.
           </p>
-          <Link to={`/profiles/${child.id}/portfolio`} className="rounded-xl border-2 border-ink bg-brand px-5 py-2 text-xs font-bold text-white shadow-brutal-sm hover:-translate-y-0.5 active:translate-y-0 transition-all cursor-pointer">
+          <Link to="/profiles/$profileId/portfolio" params={{ profileId: child.id }} className="rounded-xl border-2 border-ink bg-brand px-5 py-2 text-xs font-bold text-white shadow-brutal-sm hover:-translate-y-0.5 active:translate-y-0 transition-all cursor-pointer">
             Retour au Portfolio
           </Link>
         </div>
@@ -169,7 +169,7 @@ function PassportPrintPage() {
       {/* Print Controls / Alert for Screen View */}
       <div className="max-w-[21cm] mx-auto mb-8 px-6 py-4 bg-white border-[3px] border-ink rounded-2xl flex items-center justify-between shadow-brutal-sm print:hidden">
         <div className="flex items-center gap-3">
-          <Link to={`/profiles/${child.id}/portfolio`} className="rounded-xl border-2 border-ink p-2 hover:bg-stone-100 transition-all">
+          <Link to="/profiles/$profileId/portfolio" params={{ profileId: child.id }} className="rounded-xl border-2 border-ink p-2 hover:bg-stone-100 transition-all">
             <ChevronLeft className="size-4" />
           </Link>
           <div>

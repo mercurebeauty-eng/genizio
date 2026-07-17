@@ -286,6 +286,7 @@ export const listParentsBI = createServerFn({ method: "GET" })
         })),
         challengeCount: parentChallenges.length,
         completedCount: completedChallenges.length,
+        extraSlots: (user.app_metadata?.extra_profile_slots as number) ?? 0,
       };
     });
 
@@ -325,4 +326,30 @@ export const togglePassportUnlock = createServerFn({ method: "POST" })
     if (updateErr) throw new Error(updateErr.message);
 
     return { ok: true, unlocked: data.unlock };
+  });
+
+export const grantProfileSlot = createServerFn({ method: "POST" })
+  .middleware([requireAdmin])
+  .inputValidator((input: unknown) =>
+    z.object({
+      userId: z.string().uuid(),
+      delta: z.number().int().min(-10).max(10), // +1 to grant, -1 to revoke
+    }).parse(input)
+  )
+  .handler(async ({ data }) => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+
+    // Fetch current app_metadata
+    const { data: user, error: fetchErr } = await supabaseAdmin.auth.admin.getUserById(data.userId);
+    if (fetchErr) throw new Error(fetchErr.message);
+
+    const current = (user.user.app_metadata?.extra_profile_slots as number) ?? 0;
+    const next = Math.max(0, current + data.delta); // never go below 0
+
+    const { error: updateErr } = await supabaseAdmin.auth.admin.updateUserById(data.userId, {
+      app_metadata: { extra_profile_slots: next },
+    });
+    if (updateErr) throw new Error(updateErr.message);
+
+    return { ok: true, extraSlots: next };
   });

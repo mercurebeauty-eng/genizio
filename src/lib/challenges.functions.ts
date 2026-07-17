@@ -431,7 +431,9 @@ Réponds STRICTEMENT en JSON valide avec ce format :
     let intelligenceKeys: string[] = [];
     for (const [key, points] of Object.entries(awarded)) {
       if (typeof points === 'number') {
-        newTalents[key] = (newTalents[key] || 0) + points;
+        // Cap points between 1 and 3 per challenge validation to ensure gradual progression
+        const clampedPoints = Math.max(1, Math.min(3, points));
+        newTalents[key] = (newTalents[key] || 0) + clampedPoints;
         intelligenceKeys.push(key);
       }
     }

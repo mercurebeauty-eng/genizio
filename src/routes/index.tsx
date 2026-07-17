@@ -326,7 +326,7 @@ function DemoSection() {
     };
     Object.entries(INTERESTS_BY_TALENT).forEach(([key, value]) => {
       const matchCount = value.tags.filter(t => interests.includes(t)).length;
-      base[key] += matchCount * 25; // 25 points per selected interest tag
+      base[key] += matchCount * 8; // 8 points per selected interest tag (gradual progression)
       if (base[key] > 95) base[key] = 95; // cap it
     });
     return base;

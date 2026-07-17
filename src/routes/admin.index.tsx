@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { useSession } from "@/hooks/use-session";
 import { AppHeader } from "@/components/AppHeader";
-import { getEcosystemStats, listParentsBI, togglePassportUnlock } from "@/lib/products.functions";
+import { getEcosystemStats, listParentsBI, togglePassportUnlock, grantProfileSlot } from "@/lib/products.functions";
 import { Loader2, Users, Brain, ShoppingBag, Phone, ExternalLink, Calendar, BarChart3, ChevronRight, Award } from "lucide-react";
 import { toast } from "sonner";
 
@@ -30,6 +30,8 @@ type ParentBI = {
   childNames: string;
   challengeCount: number;
   completedCount: number;
+  extraSlots: number;
+  children?: { id: string; name: string; age: number; pdfUnlocked: boolean }[];
 };
 
 function AdminIndexPage() {
@@ -41,6 +43,19 @@ function AdminIndexPage() {
   const getStatsFn = useServerFn(getEcosystemStats);
   const listParentsFn = useServerFn(listParentsBI);
   const toggleUnlockFn = useServerFn(togglePassportUnlock);
+  const grantSlotFn = useServerFn(grantProfileSlot);
+
+  const handleGrantSlot = async (userId: string, delta: number) => {
+    try {
+      const res = await grantSlotFn({ data: { userId, delta } });
+      if (res.ok) {
+        toast.success(delta > 0 ? `Slot débloqué (total : ${res.extraSlots} slots bonus)` : `Slot révoqué (total : ${res.extraSlots} slots bonus)`);
+        void fetchData();
+      }
+    } catch (err: any) {
+      toast.error("Erreur : " + err.message);
+    }
+  };
 
   const handleTogglePassport = async (childId: string, unlock: boolean) => {
     try {
@@ -195,6 +210,7 @@ function AdminIndexPage() {
                   <th className="pb-3 pr-4">Téléphone</th>
                   <th className="pb-3 pr-4">WhatsApp</th>
                   <th className="pb-3 pr-4">Enfants associés</th>
+                  <th className="pb-3 pr-4 text-center">Slots Profils</th>
                   <th className="pb-3 text-center">Défis (Total/Terminés)</th>
                 </tr>
               </thead>
@@ -241,7 +257,7 @@ function AdminIndexPage() {
                           </button>
                         )}
                       </td>
-                      <td className="py-4 pr-4 font-medium text-ink/80">
+                      <td className="py-4 pr-4">
                         {parent.children && parent.children.length > 0 ? (
                           <div className="flex flex-col gap-1.5">
                             {parent.children.map((child: any) => (
@@ -265,6 +281,31 @@ function AdminIndexPage() {
                         ) : (
                           <span className="text-ink/30 italic text-xs">Aucun enfant</span>
                         )}
+                      </td>
+
+                      {/* ── Slots Profils ── */}
+                      <td className="py-4 pr-4">
+                        <div className="flex items-center justify-center gap-2">
+                          <button
+                            onClick={() => handleGrantSlot(parent.id, -1)}
+                            disabled={parent.extraSlots <= 0}
+                            title="Révoquer 1 slot"
+                            className="flex size-7 items-center justify-center rounded-lg border-2 border-ink bg-red-100 text-red-700 font-black text-sm hover:bg-red-200 disabled:opacity-30 disabled:cursor-not-allowed transition-all"
+                          >
+                            −
+                          </button>
+                          <div className="text-center min-w-[48px]">
+                            <p className="text-xs font-black text-ink">{2 + parent.extraSlots}</p>
+                            <p className="text-[9px] text-ink/40 font-bold">{parent.extraSlots > 0 ? `+${parent.extraSlots} bonus` : "gratuits"}</p>
+                          </div>
+                          <button
+                            onClick={() => handleGrantSlot(parent.id, +1)}
+                            title="Accorder 1 slot"
+                            className="flex size-7 items-center justify-center rounded-lg border-2 border-ink bg-emerald-100 text-emerald-700 font-black text-sm hover:bg-emerald-200 transition-all"
+                          >
+                            +
+                          </button>
+                        </div>
                       </td>
                       <td className="py-4 text-center">
                         <span className="rounded-full bg-brand/10 px-2.5 py-1 text-xs font-bold text-brand">

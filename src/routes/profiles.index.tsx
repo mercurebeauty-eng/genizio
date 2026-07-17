@@ -2,7 +2,7 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useSession } from "@/hooks/use-session";
-import { Phone, Check, Loader2, Trophy } from "lucide-react";
+import { Phone, Check, Loader2, Trophy, Lock } from "lucide-react";
 import { AppTabBar } from "@/components/AppTabBar";
 import { AppHeader } from "@/components/AppHeader";
 import { ProfileDialog } from "@/components/profiles/ProfileDialog";
@@ -61,6 +61,7 @@ function DashboardPage() {
   const [challenges, setChallenges] = useState<Challenge[]>([]);
   const [fetchingChallenges, setFetchingChallenges] = useState(false);
   const [creating, setCreating] = useState(false);
+  const [showUpgradeModal, setShowUpgradeModal] = useState(false);
   const [activeProducts, setActiveProducts] = useState<any[]>([]);
 
   useEffect(() => {
@@ -248,12 +249,25 @@ function DashboardPage() {
                       </button>
                     );
                   })}
-                  <button
-                    onClick={() => setCreating(true)}
-                    className="flex size-11 items-center justify-center rounded-full border-2 border-ink bg-white shadow-brutal-sm text-ink hover:bg-surface transition-all text-xl font-bold"
-                  >
-                    +
-                  </button>
+                  {(() => {
+                    const FREE_SLOTS = 2;
+                    const extraSlots = (session?.user?.app_metadata?.extra_profile_slots as number) ?? 0;
+                    const quota = FREE_SLOTS + extraSlots;
+                    const atQuota = profiles.length >= quota;
+                    return (
+                      <button
+                        onClick={() => atQuota ? setShowUpgradeModal(true) : setCreating(true)}
+                        title={atQuota ? `Quota atteint (${quota} profils). Débloquer un slot supplémentaire.` : "Ajouter un enfant"}
+                        className={`flex size-11 items-center justify-center rounded-full border-2 border-ink shadow-brutal-sm text-xl font-bold transition-all ${
+                          atQuota
+                            ? "bg-amber-100 text-amber-700 hover:bg-amber-200"
+                            : "bg-white text-ink hover:bg-surface"
+                        }`}
+                      >
+                        {atQuota ? <Lock className="size-4" /> : "+"}
+                      </button>
+                    );
+                  })()}
                 </div>
               </div>
 
@@ -523,6 +537,78 @@ function DashboardPage() {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* ── Upgrade Modal — Profil supplémentaire ────────────────────── */}
+      {showUpgradeModal && (
+        <div className="fixed inset-0 z-50 grid place-items-center bg-ink/70 p-4 backdrop-blur-sm" onClick={() => setShowUpgradeModal(false)}>
+          <div
+            onClick={(e) => e.stopPropagation()}
+            className="w-full max-w-md rounded-3xl border-[3px] border-ink bg-white p-8 shadow-brutal"
+          >
+            {/* Header */}
+            <div className="mb-6 flex items-start gap-4">
+              <div className="grid size-14 shrink-0 place-items-center rounded-2xl border-[3px] border-ink bg-amber-100 text-3xl shadow-brutal-sm">
+                🔒
+              </div>
+              <div>
+                <h2 className="font-display text-2xl font-extrabold text-ink leading-tight">
+                  Quota gratuit atteint
+                </h2>
+                <p className="mt-1 text-sm text-ink/60 font-medium">
+                  Vous avez déjà {profiles.length} profils enregistrés.
+                </p>
+              </div>
+            </div>
+
+            {/* Pricing */}
+            <div className="mb-6 rounded-2xl border-[3px] border-ink bg-surface p-5 shadow-brutal-sm">
+              <p className="text-xs font-black uppercase tracking-widest text-ink/40 mb-1">Profil supplémentaire</p>
+              <p className="font-display text-3xl font-black text-ink">
+                5 000 <span className="text-lg text-ink/60">FCFA</span>
+              </p>
+              <p className="mt-2 text-xs text-ink/60 leading-relaxed">
+                Chaque nouveau slot est débloqué manuellement après confirmation du paiement via WhatsApp. Votre accès est permanent.
+              </p>
+            </div>
+
+            {/* Steps */}
+            <ol className="mb-6 space-y-2 text-sm font-medium text-ink/80">
+              {[
+                "Envoyez le message WhatsApp ci-dessous",
+                "Effectuez le virement de 5 000 FCFA",
+                "L'administrateur active votre slot dans les 24h",
+              ].map((step, i) => (
+                <li key={i} className="flex items-start gap-3">
+                  <span className="flex size-5 shrink-0 items-center justify-center rounded-full border-2 border-ink bg-brand text-[10px] font-black text-white">
+                    {i + 1}
+                  </span>
+                  {step}
+                </li>
+              ))}
+            </ol>
+
+            {/* WhatsApp CTA */}
+            <a
+              href={`https://wa.me/${import.meta.env.VITE_WHATSAPP_NUMBER || "33606433148"}?text=${encodeURIComponent(
+                `Bonjour, je souhaite débloquer un profil supplémentaire sur Génizio.\nCompte : ${session?.user?.email}\nMontant : 5 000 FCFA`
+              )}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex w-full items-center justify-center gap-2.5 rounded-2xl border-[3px] border-ink bg-[#25D366] py-3.5 font-bold text-sm text-white shadow-brutal hover:-translate-y-0.5 active:translate-y-0 active:shadow-none transition-all"
+            >
+              <Phone className="size-4 fill-white" />
+              Contacter l'administrateur sur WhatsApp
+            </a>
+
+            <button
+              onClick={() => setShowUpgradeModal(false)}
+              className="mt-3 w-full py-2 text-center text-xs font-bold text-ink/40 hover:text-ink transition-all"
+            >
+              Fermer
+            </button>
           </div>
         </div>
       )}

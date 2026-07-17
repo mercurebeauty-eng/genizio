@@ -7,6 +7,7 @@ import { ProfileCard } from "@/components/profiles/ProfileCard";
 import { ProfileDialog } from "@/components/profiles/ProfileDialog";
 import type { ChildProfile } from "@/components/profiles/shared";
 import { confirmDialog } from "@/components/ui/confirm-dialog";
+import { Lock, Phone } from "lucide-react";
 
 export const Route = createFileRoute("/profiles/manage")({
   component: ManageProfilesPage,
@@ -18,6 +19,7 @@ function ManageProfilesPage() {
   const [profiles, setProfiles] = useState<ChildProfile[]>([]);
   const [fetching, setFetching] = useState(true);
   const [editing, setEditing] = useState<ChildProfile | "new" | null>(null);
+  const [showUpgradeModal, setShowUpgradeModal] = useState(false);
 
   useEffect(() => {
     if (!loading && !session) navigate({ to: "/auth", replace: true });
@@ -71,12 +73,23 @@ function ManageProfilesPage() {
               Sauvegardez le questionnaire de chaque enfant pour retrouver ses défis en un clic.
             </p>
           </div>
-          <button
-            onClick={() => setEditing("new")}
-            className="rounded-2xl border-[3px] border-ink bg-brand px-6 py-3 text-sm font-bold text-white shadow-brutal hover:-translate-y-0.5 active:translate-y-0 active:shadow-none transition-all"
-          >
-            + Nouveau profil
-          </button>
+          {(() => {
+            const FREE_SLOTS = 2;
+            const extraSlots = (session?.user?.app_metadata?.extra_profile_slots as number) ?? 0;
+            const quota = FREE_SLOTS + extraSlots;
+            const atQuota = profiles.length >= quota;
+            return (
+              <button
+                onClick={() => atQuota ? setShowUpgradeModal(true) : setEditing("new")}
+                className={`rounded-2xl border-[3px] border-ink px-6 py-3 text-sm font-bold shadow-brutal hover:-translate-y-0.5 active:translate-y-0 active:shadow-none transition-all flex items-center gap-2 ${
+                  atQuota ? "bg-amber-100 text-amber-800" : "bg-brand text-white"
+                }`}
+              >
+                {atQuota && <Lock className="size-4" />}
+                {atQuota ? "Quota atteint" : "+ Nouveau profil"}
+              </button>
+            );
+          })()}
         </div>
 
         {fetching ? (
@@ -104,6 +117,37 @@ function ManageProfilesPage() {
           }}
           userId={session.user.id}
         />
+      )}
+
+      {/* ── Upgrade Modal ─────────────────────────────────────────────── */}
+      {showUpgradeModal && (
+        <div className="fixed inset-0 z-50 grid place-items-center bg-ink/70 p-4 backdrop-blur-sm" onClick={() => setShowUpgradeModal(false)}>
+          <div onClick={(e) => e.stopPropagation()} className="w-full max-w-md rounded-3xl border-[3px] border-ink bg-white p-8 shadow-brutal">
+            <div className="mb-6 flex items-start gap-4">
+              <div className="grid size-14 shrink-0 place-items-center rounded-2xl border-[3px] border-ink bg-amber-100 text-3xl shadow-brutal-sm">🔒</div>
+              <div>
+                <h2 className="font-display text-2xl font-extrabold text-ink">Quota gratuit atteint</h2>
+                <p className="mt-1 text-sm text-ink/60">Vous avez {profiles.length} profils enregistrés.</p>
+              </div>
+            </div>
+            <div className="mb-6 rounded-2xl border-[3px] border-ink bg-surface p-5 shadow-brutal-sm">
+              <p className="text-xs font-black uppercase tracking-widest text-ink/40 mb-1">Profil supplémentaire</p>
+              <p className="font-display text-3xl font-black text-ink">5 000 <span className="text-lg text-ink/60">FCFA</span></p>
+              <p className="mt-2 text-xs text-ink/60 leading-relaxed">Débloqué manuellement après confirmation du paiement. Accès permanent.</p>
+            </div>
+            <a
+              href={`https://wa.me/${import.meta.env.VITE_WHATSAPP_NUMBER || "33606433148"}?text=${encodeURIComponent(
+                `Bonjour, je souhaite débloquer un profil supplémentaire sur Génizio.\nCompte : ${session?.user?.email}\nMontant : 5 000 FCFA`
+              )}`}
+              target="_blank" rel="noopener noreferrer"
+              className="flex w-full items-center justify-center gap-2.5 rounded-2xl border-[3px] border-ink bg-[#25D366] py-3.5 font-bold text-sm text-white shadow-brutal hover:-translate-y-0.5 active:translate-y-0 active:shadow-none transition-all"
+            >
+              <Phone className="size-4 fill-white" />
+              Contacter l'administrateur sur WhatsApp
+            </a>
+            <button onClick={() => setShowUpgradeModal(false)} className="mt-3 w-full py-2 text-center text-xs font-bold text-ink/40 hover:text-ink transition-all">Fermer</button>
+          </div>
+        </div>
       )}
     </div>
   );
