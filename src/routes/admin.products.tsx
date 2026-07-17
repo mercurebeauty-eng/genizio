@@ -547,7 +547,8 @@ function AdminProductsPage() {
                   </div>
 
                   <div className="rounded-3xl border-[3px] border-ink bg-white p-6 shadow-brutal">
-                    <h3 className="font-display text-lg font-black mb-4">Top domaines</h3>
+                    <h3 className="font-display text-lg font-black">Top domaines</h3>
+                    <p className="text-[11px] text-ink/40 mb-4">Sur les 200 défis les plus récents</p>
                     {ecosystemStats.topDomains.length > 0 ? (
                       <ResponsiveContainer width="100%" height={240}>
                         <BarChart data={ecosystemStats.topDomains} layout="vertical">
