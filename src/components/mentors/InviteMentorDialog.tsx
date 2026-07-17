@@ -1,6 +1,8 @@
 import { useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { inviteMentor } from "@/lib/mentors.functions";
+import { supabase } from "@/integrations/supabase/client";
+import { confirmDialog } from "@/components/ui/confirm-dialog";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Switch } from "@/components/ui/switch";
 import { Loader2, Link as LinkIcon, Check, Plus } from "lucide-react";
@@ -11,6 +13,13 @@ const DOMAINS = [
   "Communication", "Entrepreneuriat", "Arts", "Langues", "Tech & IA",
 ];
 
+const EXPIRATION_OPTIONS = [
+  { value: "never", label: "Jamais", days: null },
+  { value: "7", label: "7 jours", days: 7 },
+  { value: "30", label: "30 jours", days: 30 },
+  { value: "90", label: "90 jours", days: 90 },
+] as const;
+
 export function InviteMentorDialog({ childId, childName, customTrigger }: { childId: string, childName: string, customTrigger?: React.ReactNode }) {
   const [open, setOpen] = useState(false);
   const [mentorName, setMentorName] = useState("");
@@ -18,7 +27,8 @@ export function InviteMentorDialog({ childId, childName, customTrigger }: { chil
   const [canViewTimeline, setCanViewTimeline] = useState(true);
   const [canViewRawObservations, setCanViewRawObservations] = useState(false);
   const [scopeDomains, setScopeDomains] = useState<string[]>([]);
-  
+  const [expiration, setExpiration] = useState<(typeof EXPIRATION_OPTIONS)[number]["value"]>("never");
+
   const [loading, setLoading] = useState(false);
   const [shareUrl, setShareUrl] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
@@ -26,21 +36,41 @@ export function InviteMentorDialog({ childId, childName, customTrigger }: { chil
   const inviteFn = useServerFn(inviteMentor);
 
   const handleInvite = async () => {
-    if (!mentorName.trim()) {
+    const name = mentorName.trim();
+    if (!name) {
       toast.error("Le nom du mentor est requis");
       return;
     }
+
+    const { data: existing } = await supabase
+      .from("child_mentors")
+      .select("id")
+      .eq("child_id", childId)
+      .eq("status", "active")
+      .ilike("mentor_name", name);
+    if (existing && existing.length > 0) {
+      if (!(await confirmDialog({
+        title: "Mentor déjà invité",
+        description: `Un mentor nommé "${name}" a déjà un accès actif à ce profil. Créer un lien supplémentaire pour lui quand même ?`,
+        confirmLabel: "Créer quand même",
+      }))) {
+        return;
+      }
+    }
+
     setLoading(true);
     try {
+      const days = EXPIRATION_OPTIONS.find((o) => o.value === expiration)?.days ?? null;
+      const expiresAt = days ? new Date(Date.now() + days * 24 * 60 * 60 * 1000).toISOString() : null;
       const res = await inviteFn({
         data: {
           childId,
-          mentorName: mentorName.trim(),
+          mentorName: name,
           scopeDomains,
           canViewTalentMap,
           canViewTimeline,
           canViewRawObservations,
-          expiresAt: null,
+          expiresAt,
         }
       });
       setShareUrl(res.shareUrl);
@@ -76,6 +106,7 @@ export function InviteMentorDialog({ childId, childName, customTrigger }: { chil
         setCanViewTalentMap(true);
         setCanViewTimeline(true);
         setCanViewRawObservations(false);
+        setExpiration("never");
       }
     }}>
       <DialogTrigger asChild>
@@ -107,6 +138,26 @@ export function InviteMentorDialog({ childId, childName, customTrigger }: { chil
                 placeholder="Ex: M. Dupont (Prof de maths)"
                 className="w-full rounded-2xl border-[3px] border-ink px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-brand shadow-brutal-sm"
               />
+            </div>
+
+            <div className="space-y-2">
+              <label className="text-sm font-bold text-ink">Durée d'accès</label>
+              <div className="flex flex-wrap gap-2">
+                {EXPIRATION_OPTIONS.map((opt) => (
+                  <button
+                    key={opt.value}
+                    type="button"
+                    onClick={() => setExpiration(opt.value)}
+                    className={`rounded-full px-3 py-1.5 text-xs font-bold transition-all border-2 ${
+                      expiration === opt.value
+                        ? 'bg-brand border-ink text-white'
+                        : 'bg-white border-ink text-ink/60 hover:bg-surface'
+                    }`}
+                  >
+                    {opt.label}
+                  </button>
+                ))}
+              </div>
             </div>
 
             <div className="space-y-4 rounded-2xl border-[3px] border-ink bg-white p-4 shadow-brutal-sm">
