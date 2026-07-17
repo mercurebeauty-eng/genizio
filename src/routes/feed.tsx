@@ -27,6 +27,7 @@ function FeedPage() {
   const [feedItems, setFeedItems] = useState<any[]>([]);
   const [fetching, setFetching] = useState(true);
   const [likedPostIds, setLikedPostIds] = useState<Set<string>>(new Set());
+  const [pendingLikes, setPendingLikes] = useState<Set<string>>(new Set());
   const [openCommentsFor, setOpenCommentsFor] = useState<string | null>(null);
   const [commentsByPost, setCommentsByPost] = useState<Record<string, Comment[]>>({});
   const [fetchingComments, setFetchingComments] = useState(false);
@@ -81,9 +82,10 @@ function FeedPage() {
   }, [session]);
 
   const handleLike = async (id: string) => {
-    if (!session) return;
+    if (!session || pendingLikes.has(id)) return;
     const alreadyLiked = likedPostIds.has(id);
 
+    setPendingLikes((prev) => new Set(prev).add(id));
     // Optimistic update
     setLikedPostIds((prev) => {
       const next = new Set(prev);
@@ -121,6 +123,12 @@ function FeedPage() {
         setFeedItems((items) => items.map((item) => (item.id === id ? { ...item, likes: item.likes - 1 } : item)));
       }
     }
+
+    setPendingLikes((prev) => {
+      const next = new Set(prev);
+      next.delete(id);
+      return next;
+    });
   };
 
   const toggleComments = async (postId: string) => {
@@ -269,7 +277,7 @@ function FeedPage() {
 
                   {/* Interaction Bar */}
                   <div className="p-4 pb-2 flex items-center gap-4">
-                    <button onClick={() => handleLike(post.id)} className="group transition-transform active:scale-90 cursor-pointer">
+                    <button onClick={() => handleLike(post.id)} disabled={pendingLikes.has(post.id)} className="group transition-transform active:scale-90 cursor-pointer disabled:opacity-70">
                       {isLiked ? (
                         <span className="text-2xl hover:scale-105 transition-transform block">🙌</span>
                       ) : (
