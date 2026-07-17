@@ -35,7 +35,8 @@ export function DeleteAccountDialog() {
       toast.success("Votre compte a été supprimé.");
       navigate({ to: "/", replace: true });
     } catch (e) {
-      toast.error("Une erreur est survenue.");
+      console.error("Erreur lors de la suppression du compte :", e);
+      toast.error(e instanceof Error ? e.message : "Une erreur est survenue.");
       setDeleting(false);
     }
   };
