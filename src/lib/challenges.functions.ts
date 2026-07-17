@@ -352,10 +352,13 @@ export const updateChallenge = createServerFn({ method: "POST" })
     }
     if (data.notes !== undefined) patch.notes = data.notes;
 
+    // Ownership is enforced by RLS too, but every other mutation in this file
+    // checks it explicitly — do the same here instead of relying solely on RLS.
     const { data: row, error } = await context.supabase
       .from("challenges")
       .update(patch)
       .eq("id", data.id)
+      .eq("user_id", context.userId)
       .select("*")
       .single();
     if (error) throw new Error(error.message);
@@ -366,7 +369,11 @@ export const deleteChallenge = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input: unknown) => z.object({ id: z.string().uuid() }).parse(input))
   .handler(async ({ data, context }) => {
-    const { error } = await context.supabase.from("challenges").delete().eq("id", data.id);
+    const { error } = await context.supabase
+      .from("challenges")
+      .delete()
+      .eq("id", data.id)
+      .eq("user_id", context.userId);
     if (error) throw new Error(error.message);
     return { ok: true };
   });
