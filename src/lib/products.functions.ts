@@ -133,6 +133,16 @@ export const createOrder = createServerFn({ method: "POST" })
       .maybeSingle();
     if (childErr || !child) throw new Error("Profil enfant introuvable ou accès refusé.");
 
+    if (data.challenge_id) {
+      const { data: challenge, error: challengeErr } = await supabaseAdmin
+        .from("challenges")
+        .select("id")
+        .eq("id", data.challenge_id)
+        .eq("child_id", data.child_id)
+        .maybeSingle();
+      if (challengeErr || !challenge) throw new Error("Défi introuvable ou n'appartenant pas à cet enfant.");
+    }
+
     // Price and item names come from the client, so they're only a hint —
     // recompute both from the real catalog before persisting. Prevents a
     // tampered request from recording a falsified total_price_xof/items.
