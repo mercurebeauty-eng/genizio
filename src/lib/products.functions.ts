@@ -1,6 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireAdmin } from "@/integrations/supabase/admin-middleware";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { listAllUsers } from "@/integrations/supabase/admin-users";
 import { z } from "zod";
 
 export const listProductsAdmin = createServerFn({ method: "GET" })
@@ -215,7 +216,7 @@ export const getEcosystemStats = createServerFn({ method: "GET" })
 
     const [
       { count: totalChildren },
-      { count: totalParents },
+      allUsers,
       { count: totalChallenges },
       { count: completedChallenges },
       { count: totalOrders },
@@ -223,7 +224,7 @@ export const getEcosystemStats = createServerFn({ method: "GET" })
       { data: topChallenges },
     ] = await Promise.all([
       supabaseAdmin.from("child_profiles").select("*", { count: "exact", head: true }),
-      supabaseAdmin.from("child_profiles").select("user_id", { count: "exact", head: true }),
+      listAllUsers(supabaseAdmin),
       supabaseAdmin.from("challenges").select("*", { count: "exact", head: true }),
       supabaseAdmin.from("challenges").select("*", { count: "exact", head: true }).eq("status", "completed"),
       supabaseAdmin.from("orders").select("*", { count: "exact", head: true }),
@@ -234,6 +235,7 @@ export const getEcosystemStats = createServerFn({ method: "GET" })
         .order("created_at", { ascending: false })
         .limit(200),
     ]);
+    const totalParents = allUsers.length;
 
     // Aggrégation des talents pour la répartition des Guildes
     // On compte les scores de talents par domaine à travers tous les enfants
@@ -273,8 +275,7 @@ export const listParentsBI = createServerFn({ method: "GET" })
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
     // 1. Fetch all users from Supabase Auth admin API
-    const { data: { users }, error: usersErr } = await supabaseAdmin.auth.admin.listUsers();
-    if (usersErr) throw new Error(usersErr.message);
+    const users = await listAllUsers(supabaseAdmin);
 
     // 2. Fetch children profile statistics grouped by user_id
     const { data: children, error: childrenErr } = await supabaseAdmin

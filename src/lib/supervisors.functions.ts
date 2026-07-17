@@ -1,6 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireAdmin } from "@/integrations/supabase/admin-middleware";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { listAllUsers } from "@/integrations/supabase/admin-users";
 import { z } from "zod";
 
 // ────────────────────────────────────────────────────────────
@@ -35,10 +36,9 @@ export const listSupervisors = createServerFn({ method: "GET" })
       .order("created_at", { ascending: false });
     if (error) throw new Error(error.message);
 
-    const { data: usersData, error: userError } = await supabaseAdmin.auth.admin.listUsers();
-    if (userError) throw new Error(userError.message);
+    const usersData = await listAllUsers(supabaseAdmin);
 
-    const usersMap = new Map(usersData.users.map((u) => [u.id, u.email]));
+    const usersMap = new Map(usersData.map((u) => [u.id, u.email]));
 
     return (data ?? []).map((row) => ({
       ...row,
@@ -61,10 +61,9 @@ export const assignSupervisor = createServerFn({ method: "POST" })
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
     // Chercher l'utilisateur par email via auth admin
-    const { data: users, error: userError } = await supabaseAdmin.auth.admin.listUsers();
-    if (userError) throw new Error(userError.message);
+    const users = await listAllUsers(supabaseAdmin);
 
-    const targetUser = users.users.find((u) => u.email === data.email);
+    const targetUser = users.find((u) => u.email === data.email);
     if (!targetUser) throw new Error(`Aucun compte trouvé pour l'email : ${data.email}`);
 
     const { data: row, error } = await supabaseAdmin
