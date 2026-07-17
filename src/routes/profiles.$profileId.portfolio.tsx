@@ -125,6 +125,7 @@ type Child = {
   age: number;
   talents: Record<string, number>;
   interests: string[];
+  pdf_unlocked: boolean;
 };
 
 type Challenge = {
@@ -158,7 +159,7 @@ function PortfolioPage() {
     if (!session) return;
     setFetching(true);
     Promise.all([
-      supabase.from("child_profiles").select("id, name, age, talents, interests").eq("id", profileId).eq("user_id", session!.user.id).maybeSingle(),
+      supabase.from("child_profiles").select("id, name, age, talents, interests, pdf_unlocked").eq("id", profileId).eq("user_id", session!.user.id).maybeSingle(),
       supabase
         .from("challenges")
         .select("id, title, domain, status, completed_at, proof_image_url")
@@ -334,7 +335,7 @@ function PortfolioPage() {
 
           {/* Card: Le Passeport d'Excellence (uniquement pour 14 ans et plus) */}
           {child.age >= 14 && (() => {
-            const isUnlocked = (child.talents as any)?.pdf_unlocked === true;
+            const isUnlocked = child.pdf_unlocked === true;
             
             // Build the WhatsApp redirection message
             const whatsappNumber = import.meta.env.VITE_WHATSAPP_NUMBER || "33606433148";

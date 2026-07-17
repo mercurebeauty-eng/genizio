@@ -49,6 +49,7 @@ type Child = {
   age: number;
   talents: Record<string, number>;
   interests: string[];
+  pdf_unlocked: boolean;
 };
 
 type Challenge = {
@@ -85,7 +86,7 @@ function PassportPrintPage() {
     if (!session) return;
     setFetching(true);
     Promise.all([
-      supabase.from("child_profiles").select("id, name, age, talents, interests").eq("id", profileId).eq("user_id", session!.user.id).maybeSingle(),
+      supabase.from("child_profiles").select("id, name, age, talents, interests, pdf_unlocked").eq("id", profileId).eq("user_id", session!.user.id).maybeSingle(),
       supabase
         .from("challenges")
         .select("id, title, domain, status, completed_at, proof_image_url, description, ai_observations, notes, difficulty")
@@ -141,7 +142,7 @@ function PassportPrintPage() {
     );
   }
 
-  const isUnlocked = (child.talents as any)?.pdf_unlocked === true;
+  const isUnlocked = child.pdf_unlocked === true;
   if (!isUnlocked) {
     return (
       <div className="grid min-h-screen place-items-center bg-stone-50 text-ink">

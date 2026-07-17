@@ -12,6 +12,31 @@ export type Database = {
   __InternalSupabase: {
     PostgrestVersion: "14.5"
   }
+  graphql_public: {
+    Tables: {
+      [_ in never]: never
+    }
+    Views: {
+      [_ in never]: never
+    }
+    Functions: {
+      graphql: {
+        Args: {
+          extensions?: Json
+          operationName?: string
+          query?: string
+          variables?: Json
+        }
+        Returns: Json
+      }
+    }
+    Enums: {
+      [_ in never]: never
+    }
+    CompositeTypes: {
+      [_ in never]: never
+    }
+  }
   public: {
     Tables: {
       challenges: {
@@ -171,6 +196,7 @@ export type Database = {
           id: string
           interests: string[]
           name: string
+          pdf_unlocked: boolean
           talents: Json
           updated_at: string
           user_id: string
@@ -186,6 +212,7 @@ export type Database = {
           id?: string
           interests?: string[]
           name: string
+          pdf_unlocked?: boolean
           talents?: Json
           updated_at?: string
           user_id: string
@@ -201,6 +228,7 @@ export type Database = {
           id?: string
           interests?: string[]
           name?: string
+          pdf_unlocked?: boolean
           talents?: Json
           updated_at?: string
           user_id?: string
@@ -647,6 +675,9 @@ export type CompositeTypes<
     : never
 
 export const Constants = {
+  graphql_public: {
+    Enums: {},
+  },
   public: {
     Enums: {
       challenge_status: ["todo", "in_progress", "completed"],

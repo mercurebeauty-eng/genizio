@@ -65,11 +65,12 @@ export type ChildProfile = {
   favorite_challenges: string[];
   completed_challenges: string[];
   talents: Record<string, number>;
+  pdf_unlocked: boolean;
 };
 
 export type ProfileDraft = Omit<
   ChildProfile,
-  "id" | "user_id" | "favorite_challenges" | "completed_challenges" | "talents"
+  "id" | "user_id" | "favorite_challenges" | "completed_challenges" | "talents" | "pdf_unlocked"
 >;
 
 export const emptyProfileDraft = (): ProfileDraft => ({

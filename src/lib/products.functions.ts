@@ -256,7 +256,7 @@ export const listParentsBI = createServerFn({ method: "GET" })
     // 2. Fetch children profile statistics grouped by user_id
     const { data: children, error: childrenErr } = await supabaseAdmin
       .from("child_profiles")
-      .select("id, name, age, user_id, talents");
+      .select("id, name, age, user_id, talents, pdf_unlocked");
     if (childrenErr) throw new Error(childrenErr.message);
 
     // 3. Fetch challenge statistics grouped by user_id
@@ -282,7 +282,7 @@ export const listParentsBI = createServerFn({ method: "GET" })
           id: c.id,
           name: c.name,
           age: c.age,
-          pdfUnlocked: (c.talents as any)?.pdf_unlocked === true
+          pdfUnlocked: c.pdf_unlocked === true
         })),
         challengeCount: parentChallenges.length,
         completedCount: completedChallenges.length,
@@ -304,24 +304,10 @@ export const togglePassportUnlock = createServerFn({ method: "POST" })
   }).parse(input))
   .handler(async ({ data }) => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    
-    // 1. Fetch current talents
-    const { data: child, error: fetchErr } = await supabaseAdmin
-      .from("child_profiles")
-      .select("talents")
-      .eq("id", data.childId)
-      .single();
-    if (fetchErr) throw new Error(fetchErr.message);
 
-    const talents = {
-      ...(child.talents as any || {}),
-      pdf_unlocked: data.unlock,
-    };
-
-    // 2. Update talents
     const { error: updateErr } = await supabaseAdmin
       .from("child_profiles")
-      .update({ talents })
+      .update({ pdf_unlocked: data.unlock })
       .eq("id", data.childId);
     if (updateErr) throw new Error(updateErr.message);
 
