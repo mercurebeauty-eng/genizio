@@ -9,14 +9,73 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as TermsRouteImport } from './routes/terms'
+import { Route as SupervisorRouteImport } from './routes/supervisor'
 import { Route as ProfilesRouteImport } from './routes/profiles'
+import { Route as ProfileRouteImport } from './routes/profile'
+import { Route as PrivacyRouteImport } from './routes/privacy'
+import { Route as MentionsLegalesRouteImport } from './routes/mentions-legales'
+import { Route as LaboratoryRouteImport } from './routes/laboratory'
+import { Route as FeedRouteImport } from './routes/feed'
+import { Route as BoutiqueRouteImport } from './routes/boutique'
 import { Route as AuthRouteImport } from './routes/auth'
+import { Route as AdminRouteImport } from './routes/admin'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as ProfilesIndexRouteImport } from './routes/profiles.index'
+import { Route as AdminIndexRouteImport } from './routes/admin.index'
+import { Route as STokenRouteImport } from './routes/s.$token'
+import { Route as ProfilesManageRouteImport } from './routes/profiles.manage'
+import { Route as AdminSupervisorsRouteImport } from './routes/admin.supervisors'
+import { Route as AdminProductsRouteImport } from './routes/admin.products'
+import { Route as ProfilesProfileIdQuestRouteImport } from './routes/profiles.$profileId.quest'
+import { Route as ProfilesProfileIdPortfolioRouteImport } from './routes/profiles.$profileId.portfolio'
+import { Route as ProfilesProfileIdPassportPrintRouteImport } from './routes/profiles.$profileId.passport-print'
+import { Route as ProfilesProfileIdMentorsRouteImport } from './routes/profiles.$profileId.mentors'
 import { Route as ProfilesProfileIdChallengesRouteImport } from './routes/profiles.$profileId.challenges'
 
+const TermsRoute = TermsRouteImport.update({
+  id: '/terms',
+  path: '/terms',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SupervisorRoute = SupervisorRouteImport.update({
+  id: '/supervisor',
+  path: '/supervisor',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ProfilesRoute = ProfilesRouteImport.update({
   id: '/profiles',
   path: '/profiles',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ProfileRoute = ProfileRouteImport.update({
+  id: '/profile',
+  path: '/profile',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PrivacyRoute = PrivacyRouteImport.update({
+  id: '/privacy',
+  path: '/privacy',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const MentionsLegalesRoute = MentionsLegalesRouteImport.update({
+  id: '/mentions-legales',
+  path: '/mentions-legales',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LaboratoryRoute = LaboratoryRouteImport.update({
+  id: '/laboratory',
+  path: '/laboratory',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const FeedRoute = FeedRouteImport.update({
+  id: '/feed',
+  path: '/feed',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const BoutiqueRoute = BoutiqueRouteImport.update({
+  id: '/boutique',
+  path: '/boutique',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AuthRoute = AuthRouteImport.update({
@@ -24,11 +83,69 @@ const AuthRoute = AuthRouteImport.update({
   path: '/auth',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AdminRoute = AdminRouteImport.update({
+  id: '/admin',
+  path: '/admin',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ProfilesIndexRoute = ProfilesIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => ProfilesRoute,
+} as any)
+const AdminIndexRoute = AdminIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => AdminRoute,
+} as any)
+const STokenRoute = STokenRouteImport.update({
+  id: '/s/$token',
+  path: '/s/$token',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ProfilesManageRoute = ProfilesManageRouteImport.update({
+  id: '/manage',
+  path: '/manage',
+  getParentRoute: () => ProfilesRoute,
+} as any)
+const AdminSupervisorsRoute = AdminSupervisorsRouteImport.update({
+  id: '/supervisors',
+  path: '/supervisors',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminProductsRoute = AdminProductsRouteImport.update({
+  id: '/products',
+  path: '/products',
+  getParentRoute: () => AdminRoute,
+} as any)
+const ProfilesProfileIdQuestRoute = ProfilesProfileIdQuestRouteImport.update({
+  id: '/$profileId/quest',
+  path: '/$profileId/quest',
+  getParentRoute: () => ProfilesRoute,
+} as any)
+const ProfilesProfileIdPortfolioRoute =
+  ProfilesProfileIdPortfolioRouteImport.update({
+    id: '/$profileId/portfolio',
+    path: '/$profileId/portfolio',
+    getParentRoute: () => ProfilesRoute,
+  } as any)
+const ProfilesProfileIdPassportPrintRoute =
+  ProfilesProfileIdPassportPrintRouteImport.update({
+    id: '/$profileId/passport-print',
+    path: '/$profileId/passport-print',
+    getParentRoute: () => ProfilesRoute,
+  } as any)
+const ProfilesProfileIdMentorsRoute =
+  ProfilesProfileIdMentorsRouteImport.update({
+    id: '/$profileId/mentors',
+    path: '/$profileId/mentors',
+    getParentRoute: () => ProfilesRoute,
+  } as any)
 const ProfilesProfileIdChallengesRoute =
   ProfilesProfileIdChallengesRouteImport.update({
     id: '/$profileId/challenges',
@@ -38,49 +155,233 @@ const ProfilesProfileIdChallengesRoute =
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/admin': typeof AdminRouteWithChildren
   '/auth': typeof AuthRoute
+  '/boutique': typeof BoutiqueRoute
+  '/feed': typeof FeedRoute
+  '/laboratory': typeof LaboratoryRoute
+  '/mentions-legales': typeof MentionsLegalesRoute
+  '/privacy': typeof PrivacyRoute
+  '/profile': typeof ProfileRoute
   '/profiles': typeof ProfilesRouteWithChildren
+  '/supervisor': typeof SupervisorRoute
+  '/terms': typeof TermsRoute
+  '/admin/products': typeof AdminProductsRoute
+  '/admin/supervisors': typeof AdminSupervisorsRoute
+  '/profiles/manage': typeof ProfilesManageRoute
+  '/s/$token': typeof STokenRoute
+  '/admin/': typeof AdminIndexRoute
+  '/profiles/': typeof ProfilesIndexRoute
   '/profiles/$profileId/challenges': typeof ProfilesProfileIdChallengesRoute
+  '/profiles/$profileId/mentors': typeof ProfilesProfileIdMentorsRoute
+  '/profiles/$profileId/passport-print': typeof ProfilesProfileIdPassportPrintRoute
+  '/profiles/$profileId/portfolio': typeof ProfilesProfileIdPortfolioRoute
+  '/profiles/$profileId/quest': typeof ProfilesProfileIdQuestRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
-  '/profiles': typeof ProfilesRouteWithChildren
+  '/boutique': typeof BoutiqueRoute
+  '/feed': typeof FeedRoute
+  '/laboratory': typeof LaboratoryRoute
+  '/mentions-legales': typeof MentionsLegalesRoute
+  '/privacy': typeof PrivacyRoute
+  '/profile': typeof ProfileRoute
+  '/supervisor': typeof SupervisorRoute
+  '/terms': typeof TermsRoute
+  '/admin/products': typeof AdminProductsRoute
+  '/admin/supervisors': typeof AdminSupervisorsRoute
+  '/profiles/manage': typeof ProfilesManageRoute
+  '/s/$token': typeof STokenRoute
+  '/admin': typeof AdminIndexRoute
+  '/profiles': typeof ProfilesIndexRoute
   '/profiles/$profileId/challenges': typeof ProfilesProfileIdChallengesRoute
+  '/profiles/$profileId/mentors': typeof ProfilesProfileIdMentorsRoute
+  '/profiles/$profileId/passport-print': typeof ProfilesProfileIdPassportPrintRoute
+  '/profiles/$profileId/portfolio': typeof ProfilesProfileIdPortfolioRoute
+  '/profiles/$profileId/quest': typeof ProfilesProfileIdQuestRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/admin': typeof AdminRouteWithChildren
   '/auth': typeof AuthRoute
+  '/boutique': typeof BoutiqueRoute
+  '/feed': typeof FeedRoute
+  '/laboratory': typeof LaboratoryRoute
+  '/mentions-legales': typeof MentionsLegalesRoute
+  '/privacy': typeof PrivacyRoute
+  '/profile': typeof ProfileRoute
   '/profiles': typeof ProfilesRouteWithChildren
+  '/supervisor': typeof SupervisorRoute
+  '/terms': typeof TermsRoute
+  '/admin/products': typeof AdminProductsRoute
+  '/admin/supervisors': typeof AdminSupervisorsRoute
+  '/profiles/manage': typeof ProfilesManageRoute
+  '/s/$token': typeof STokenRoute
+  '/admin/': typeof AdminIndexRoute
+  '/profiles/': typeof ProfilesIndexRoute
   '/profiles/$profileId/challenges': typeof ProfilesProfileIdChallengesRoute
+  '/profiles/$profileId/mentors': typeof ProfilesProfileIdMentorsRoute
+  '/profiles/$profileId/passport-print': typeof ProfilesProfileIdPassportPrintRoute
+  '/profiles/$profileId/portfolio': typeof ProfilesProfileIdPortfolioRoute
+  '/profiles/$profileId/quest': typeof ProfilesProfileIdQuestRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/auth' | '/profiles' | '/profiles/$profileId/challenges'
+  fullPaths:
+    | '/'
+    | '/admin'
+    | '/auth'
+    | '/boutique'
+    | '/feed'
+    | '/laboratory'
+    | '/mentions-legales'
+    | '/privacy'
+    | '/profile'
+    | '/profiles'
+    | '/supervisor'
+    | '/terms'
+    | '/admin/products'
+    | '/admin/supervisors'
+    | '/profiles/manage'
+    | '/s/$token'
+    | '/admin/'
+    | '/profiles/'
+    | '/profiles/$profileId/challenges'
+    | '/profiles/$profileId/mentors'
+    | '/profiles/$profileId/passport-print'
+    | '/profiles/$profileId/portfolio'
+    | '/profiles/$profileId/quest'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/auth' | '/profiles' | '/profiles/$profileId/challenges'
+  to:
+    | '/'
+    | '/auth'
+    | '/boutique'
+    | '/feed'
+    | '/laboratory'
+    | '/mentions-legales'
+    | '/privacy'
+    | '/profile'
+    | '/supervisor'
+    | '/terms'
+    | '/admin/products'
+    | '/admin/supervisors'
+    | '/profiles/manage'
+    | '/s/$token'
+    | '/admin'
+    | '/profiles'
+    | '/profiles/$profileId/challenges'
+    | '/profiles/$profileId/mentors'
+    | '/profiles/$profileId/passport-print'
+    | '/profiles/$profileId/portfolio'
+    | '/profiles/$profileId/quest'
   id:
     | '__root__'
     | '/'
+    | '/admin'
     | '/auth'
+    | '/boutique'
+    | '/feed'
+    | '/laboratory'
+    | '/mentions-legales'
+    | '/privacy'
+    | '/profile'
     | '/profiles'
+    | '/supervisor'
+    | '/terms'
+    | '/admin/products'
+    | '/admin/supervisors'
+    | '/profiles/manage'
+    | '/s/$token'
+    | '/admin/'
+    | '/profiles/'
     | '/profiles/$profileId/challenges'
+    | '/profiles/$profileId/mentors'
+    | '/profiles/$profileId/passport-print'
+    | '/profiles/$profileId/portfolio'
+    | '/profiles/$profileId/quest'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AdminRoute: typeof AdminRouteWithChildren
   AuthRoute: typeof AuthRoute
+  BoutiqueRoute: typeof BoutiqueRoute
+  FeedRoute: typeof FeedRoute
+  LaboratoryRoute: typeof LaboratoryRoute
+  MentionsLegalesRoute: typeof MentionsLegalesRoute
+  PrivacyRoute: typeof PrivacyRoute
+  ProfileRoute: typeof ProfileRoute
   ProfilesRoute: typeof ProfilesRouteWithChildren
+  SupervisorRoute: typeof SupervisorRoute
+  TermsRoute: typeof TermsRoute
+  STokenRoute: typeof STokenRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/terms': {
+      id: '/terms'
+      path: '/terms'
+      fullPath: '/terms'
+      preLoaderRoute: typeof TermsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/supervisor': {
+      id: '/supervisor'
+      path: '/supervisor'
+      fullPath: '/supervisor'
+      preLoaderRoute: typeof SupervisorRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/profiles': {
       id: '/profiles'
       path: '/profiles'
       fullPath: '/profiles'
       preLoaderRoute: typeof ProfilesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/profile': {
+      id: '/profile'
+      path: '/profile'
+      fullPath: '/profile'
+      preLoaderRoute: typeof ProfileRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/privacy': {
+      id: '/privacy'
+      path: '/privacy'
+      fullPath: '/privacy'
+      preLoaderRoute: typeof PrivacyRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/mentions-legales': {
+      id: '/mentions-legales'
+      path: '/mentions-legales'
+      fullPath: '/mentions-legales'
+      preLoaderRoute: typeof MentionsLegalesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/laboratory': {
+      id: '/laboratory'
+      path: '/laboratory'
+      fullPath: '/laboratory'
+      preLoaderRoute: typeof LaboratoryRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/feed': {
+      id: '/feed'
+      path: '/feed'
+      fullPath: '/feed'
+      preLoaderRoute: typeof FeedRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/boutique': {
+      id: '/boutique'
+      path: '/boutique'
+      fullPath: '/boutique'
+      preLoaderRoute: typeof BoutiqueRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/auth': {
@@ -90,12 +391,89 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/admin': {
+      id: '/admin'
+      path: '/admin'
+      fullPath: '/admin'
+      preLoaderRoute: typeof AdminRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/': {
       id: '/'
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/profiles/': {
+      id: '/profiles/'
+      path: '/'
+      fullPath: '/profiles/'
+      preLoaderRoute: typeof ProfilesIndexRouteImport
+      parentRoute: typeof ProfilesRoute
+    }
+    '/admin/': {
+      id: '/admin/'
+      path: '/'
+      fullPath: '/admin/'
+      preLoaderRoute: typeof AdminIndexRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/s/$token': {
+      id: '/s/$token'
+      path: '/s/$token'
+      fullPath: '/s/$token'
+      preLoaderRoute: typeof STokenRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/profiles/manage': {
+      id: '/profiles/manage'
+      path: '/manage'
+      fullPath: '/profiles/manage'
+      preLoaderRoute: typeof ProfilesManageRouteImport
+      parentRoute: typeof ProfilesRoute
+    }
+    '/admin/supervisors': {
+      id: '/admin/supervisors'
+      path: '/supervisors'
+      fullPath: '/admin/supervisors'
+      preLoaderRoute: typeof AdminSupervisorsRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/products': {
+      id: '/admin/products'
+      path: '/products'
+      fullPath: '/admin/products'
+      preLoaderRoute: typeof AdminProductsRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/profiles/$profileId/quest': {
+      id: '/profiles/$profileId/quest'
+      path: '/$profileId/quest'
+      fullPath: '/profiles/$profileId/quest'
+      preLoaderRoute: typeof ProfilesProfileIdQuestRouteImport
+      parentRoute: typeof ProfilesRoute
+    }
+    '/profiles/$profileId/portfolio': {
+      id: '/profiles/$profileId/portfolio'
+      path: '/$profileId/portfolio'
+      fullPath: '/profiles/$profileId/portfolio'
+      preLoaderRoute: typeof ProfilesProfileIdPortfolioRouteImport
+      parentRoute: typeof ProfilesRoute
+    }
+    '/profiles/$profileId/passport-print': {
+      id: '/profiles/$profileId/passport-print'
+      path: '/$profileId/passport-print'
+      fullPath: '/profiles/$profileId/passport-print'
+      preLoaderRoute: typeof ProfilesProfileIdPassportPrintRouteImport
+      parentRoute: typeof ProfilesRoute
+    }
+    '/profiles/$profileId/mentors': {
+      id: '/profiles/$profileId/mentors'
+      path: '/$profileId/mentors'
+      fullPath: '/profiles/$profileId/mentors'
+      preLoaderRoute: typeof ProfilesProfileIdMentorsRouteImport
+      parentRoute: typeof ProfilesRoute
     }
     '/profiles/$profileId/challenges': {
       id: '/profiles/$profileId/challenges'
@@ -107,12 +485,38 @@ declare module '@tanstack/react-router' {
   }
 }
 
+interface AdminRouteChildren {
+  AdminProductsRoute: typeof AdminProductsRoute
+  AdminSupervisorsRoute: typeof AdminSupervisorsRoute
+  AdminIndexRoute: typeof AdminIndexRoute
+}
+
+const AdminRouteChildren: AdminRouteChildren = {
+  AdminProductsRoute: AdminProductsRoute,
+  AdminSupervisorsRoute: AdminSupervisorsRoute,
+  AdminIndexRoute: AdminIndexRoute,
+}
+
+const AdminRouteWithChildren = AdminRoute._addFileChildren(AdminRouteChildren)
+
 interface ProfilesRouteChildren {
+  ProfilesManageRoute: typeof ProfilesManageRoute
+  ProfilesIndexRoute: typeof ProfilesIndexRoute
   ProfilesProfileIdChallengesRoute: typeof ProfilesProfileIdChallengesRoute
+  ProfilesProfileIdMentorsRoute: typeof ProfilesProfileIdMentorsRoute
+  ProfilesProfileIdPassportPrintRoute: typeof ProfilesProfileIdPassportPrintRoute
+  ProfilesProfileIdPortfolioRoute: typeof ProfilesProfileIdPortfolioRoute
+  ProfilesProfileIdQuestRoute: typeof ProfilesProfileIdQuestRoute
 }
 
 const ProfilesRouteChildren: ProfilesRouteChildren = {
+  ProfilesManageRoute: ProfilesManageRoute,
+  ProfilesIndexRoute: ProfilesIndexRoute,
   ProfilesProfileIdChallengesRoute: ProfilesProfileIdChallengesRoute,
+  ProfilesProfileIdMentorsRoute: ProfilesProfileIdMentorsRoute,
+  ProfilesProfileIdPassportPrintRoute: ProfilesProfileIdPassportPrintRoute,
+  ProfilesProfileIdPortfolioRoute: ProfilesProfileIdPortfolioRoute,
+  ProfilesProfileIdQuestRoute: ProfilesProfileIdQuestRoute,
 }
 
 const ProfilesRouteWithChildren = ProfilesRoute._addFileChildren(
@@ -121,9 +525,29 @@ const ProfilesRouteWithChildren = ProfilesRoute._addFileChildren(
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AdminRoute: AdminRouteWithChildren,
   AuthRoute: AuthRoute,
+  BoutiqueRoute: BoutiqueRoute,
+  FeedRoute: FeedRoute,
+  LaboratoryRoute: LaboratoryRoute,
+  MentionsLegalesRoute: MentionsLegalesRoute,
+  PrivacyRoute: PrivacyRoute,
+  ProfileRoute: ProfileRoute,
   ProfilesRoute: ProfilesRouteWithChildren,
+  SupervisorRoute: SupervisorRoute,
+  TermsRoute: TermsRoute,
+  STokenRoute: STokenRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
