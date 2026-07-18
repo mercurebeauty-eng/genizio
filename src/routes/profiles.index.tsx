@@ -51,6 +51,17 @@ function DashboardPage() {
   const [activeProducts, setActiveProducts] = useState<any[]>([]);
 
   useEffect(() => {
+    // extra_profile_slots lives in the session JWT's app_metadata, cached
+    // client-side since login/last token refresh. When an admin grants a
+    // slot, this session doesn't see it until the token refreshes, which
+    // can silently block "+ Nouveau profil" below even though the DB-side
+    // quota (enforced by the enforce_child_profile_quota trigger, which
+    // reads auth.users live) was actually raised. Refresh once on mount so
+    // the quota gate reflects the real current slot count.
+    supabase.auth.refreshSession();
+  }, []);
+
+  useEffect(() => {
     supabase
       .from("products")
       .select("id, material_tags")

@@ -25,6 +25,13 @@ function ManageProfilesPage() {
     if (!loading && !session) navigate({ to: "/auth", replace: true });
   }, [session, loading, navigate]);
 
+  useEffect(() => {
+    // See profiles.index.tsx: extra_profile_slots lives in the session
+    // JWT's app_metadata, cached client-side. Refresh once on mount so a
+    // recently-granted slot is reflected before the quota gate below runs.
+    supabase.auth.refreshSession();
+  }, []);
+
   const refetch = async () => {
     if (!session) return;
     setFetching(true);
