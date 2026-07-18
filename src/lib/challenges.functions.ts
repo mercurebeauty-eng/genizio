@@ -1020,6 +1020,18 @@ export const getChildAISynthesis = createServerFn({ method: "POST" })
       return "Naya attend que l'enfant réalise ses premiers défis pour analyser son profil et dresser une synthèse de ses talents émergents. Dès qu'un défi sera complété et validé par l'IA, vous retrouverez ici ses points forts et styles d'apprentissage préférentiels.";
     }
 
+    // Regenerated at most once a week instead of on every page load (this
+    // function used to call the AI fresh every single time, including on
+    // every remount and after every challenge validation). The 7-day window
+    // rolls forward from the last successful generation, not a fixed
+    // calendar boundary — visiting again 8 days after the last regeneration
+    // triggers a new one, and the next window starts from that moment.
+    const ONE_WEEK_MS = 7 * 24 * 60 * 60 * 1000;
+    const lastGeneratedAt = child.ai_synthesis_generated_at ? new Date(child.ai_synthesis_generated_at).getTime() : 0;
+    if (child.ai_synthesis && Date.now() - lastGeneratedAt < ONE_WEEK_MS) {
+      return child.ai_synthesis;
+    }
+
     const completedSummary = completed
       .map((c) => `- Défi "${c.title}" (${c.domain}) : "${c.ai_observations ?? 'Pas d\'observation'}"`)
       .join("\n");
@@ -1034,10 +1046,23 @@ Mets en lumière ses formes d'intelligence dominantes qui ressortent de ses acti
 
     try {
       // 2 short paragraphs, not a batch of défis.
-      return await callClaude(prompt, false, undefined, 700);
+      const synthesis = await callClaude(prompt, false, undefined, 700);
+      // Only refresh the cache on a genuine success — a transient
+      // quota/API failure must not lock in the fallback message as "the"
+      // synthesis for the next 7 days.
+      await supabase
+        .from("child_profiles")
+        .update({ ai_synthesis: synthesis, ai_synthesis_generated_at: new Date().toISOString() })
+        .eq("id", data.childId);
+      return synthesis;
     } catch (e: any) {
       console.error("AI Synthesis Error:", e.message);
-      return "L'intelligence de Naya se repose quelques instants (quota de requêtes atteint). Revenez dans une petite minute pour lire la synthèse complète !";
+      // Prefer a real (if stale) previous synthesis over the generic
+      // "please wait" message when one exists.
+      return (
+        child.ai_synthesis ||
+        "L'intelligence de Naya se repose quelques instants (quota de requêtes atteint). Revenez dans une petite minute pour lire la synthèse complète !"
+      );
     }
   });
 

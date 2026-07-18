@@ -187,6 +187,8 @@ export type Database = {
       child_profiles: {
         Row: {
           age: number
+          ai_synthesis: string | null
+          ai_synthesis_generated_at: string | null
           avatar_color: string
           city: string | null
           completed_challenges: string[]
@@ -203,6 +205,8 @@ export type Database = {
         }
         Insert: {
           age: number
+          ai_synthesis?: string | null
+          ai_synthesis_generated_at?: string | null
           avatar_color?: string
           city?: string | null
           completed_challenges?: string[]
@@ -219,6 +223,8 @@ export type Database = {
         }
         Update: {
           age?: number
+          ai_synthesis?: string | null
+          ai_synthesis_generated_at?: string | null
           avatar_color?: string
           city?: string | null
           completed_challenges?: string[]
