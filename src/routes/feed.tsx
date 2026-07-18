@@ -197,7 +197,11 @@ function FeedPage() {
 
   const handleShare = async (post: any) => {
     try {
-      await navigator.clipboard.writeText(post.image);
+      // The post's own id, not the raw Supabase storage URL — that used to
+      // expose the project ref plus the child's internal id/challenge id in
+      // plain text to whoever the link was shared with.
+      const shareUrl = `${window.location.origin}/p/${post.id}`;
+      await navigator.clipboard.writeText(shareUrl);
       toast.success("Lien de la photo copié !");
     } catch {
       toast.error("Impossible de copier le lien.");
@@ -269,7 +273,7 @@ function FeedPage() {
 
                   {/* Media Full Bleed */}
                   <div className="aspect-[4/5] w-full bg-surface relative border-b-[3px] border-ink">
-                    <img src={post.image} alt="Post" className="h-full w-full object-cover" />
+                    <img src={post.image} alt="Post" className="h-full w-full object-contain" />
                     <div className="absolute top-4 right-4 rounded-full border-2 border-ink bg-white px-3 py-1 text-[10px] font-black text-ink uppercase tracking-wider shadow-brutal-sm">
                       {post.badge}
                     </div>

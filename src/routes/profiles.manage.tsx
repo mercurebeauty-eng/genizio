@@ -29,8 +29,10 @@ function ManageProfilesPage() {
     // See profiles.index.tsx: extra_profile_slots lives in the session
     // JWT's app_metadata, cached client-side. Refresh once on mount so a
     // recently-granted slot is reflected before the quota gate below runs.
-    supabase.auth.refreshSession();
-  }, []);
+    // Gated on an existing session so logged-out visitors don't pay this
+    // network call.
+    if (session) void supabase.auth.refreshSession();
+  }, [session]);
 
   const refetch = async () => {
     if (!session) return;

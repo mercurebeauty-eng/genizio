@@ -61,6 +61,35 @@ type EcosystemStats = {
   topDomains: { domain: string; count: number }[];
 } | null;
 
+const ORDER_STATUSES = ["pending", "confirmed", "shipped", "delivered", "cancelled"] as const;
+
+const ORDER_STATUS_LABEL: Record<string, string> = {
+  pending: "En attente",
+  confirmed: "Confirmé",
+  shipped: "Expédié",
+  delivered: "Livré",
+  cancelled: "Annulé",
+};
+
+// Card background tint per status — border stays black (border-ink) to keep
+// the neo-brutalist look consistent everywhere else in the app; only the
+// fill changes, so a large order list is scannable by color at a glance
+// instead of requiring reading each dropdown individually.
+const ORDER_STATUS_CARD: Record<string, string> = {
+  pending: "bg-amber-50",
+  confirmed: "bg-sky-50",
+  shipped: "bg-violet-50",
+  delivered: "bg-emerald-50",
+  cancelled: "bg-stone-100 opacity-75",
+};
+
+const ORDER_STATUS_PILL: Record<string, string> = {
+  pending: "bg-amber-100 text-amber-800 border-amber-300",
+  confirmed: "bg-sky-100 text-sky-800 border-sky-300",
+  shipped: "bg-violet-100 text-violet-800 border-violet-300",
+  delivered: "bg-emerald-100 text-emerald-800 border-emerald-300",
+  cancelled: "bg-stone-200 text-stone-600 border-stone-300",
+};
 
 function AdminProductsPage() {
   const { session, loading } = useSession();
@@ -70,6 +99,7 @@ function AdminProductsPage() {
   const [orders, setOrders] = useState<any[]>([]);
   const [ecosystemStats, setEcosystemStats] = useState<EcosystemStats>(null);
   const [activeTab, setActiveTab] = useState<"products" | "orders" | "stats">("products");
+  const [orderStatusFilter, setOrderStatusFilter] = useState<string>("all");
   const [updatingOrderId, setUpdatingOrderId] = useState<string | null>(null);
   const [fetching, setFetching] = useState(true);
   const [forbidden, setForbidden] = useState(false);
@@ -287,7 +317,7 @@ function AdminProductsPage() {
                       {suggestions.map((s) => (
                         <div
                           key={s.id}
-                          className="flex items-center justify-between gap-3 rounded-2xl border-2 border-ink bg-surface px-4 py-3"
+                          className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border-2 border-ink bg-surface px-4 py-3"
                         >
                           <div className="min-w-0">
                             <p className="font-bold text-ink">
@@ -428,11 +458,54 @@ function AdminProductsPage() {
                     <p className="text-ink/65 font-bold">Aucune commande pour le moment.</p>
                   </div>
                 ) : (
-                  <div className="space-y-4">
-                    {orders.map((o) => (
-                      <div
+                  <>
+                    <div className="mb-4 flex flex-wrap gap-2">
+                      <button
+                        onClick={() => setOrderStatusFilter("all")}
+                        className={`rounded-xl border-2 border-ink px-3 py-1.5 text-xs font-bold transition-all ${
+                          orderStatusFilter === "all"
+                            ? "bg-ink text-white shadow-brutal-sm"
+                            : "bg-white text-ink/65 hover:bg-surface"
+                        }`}
+                      >
+                        Toutes ({orders.length})
+                      </button>
+                      {ORDER_STATUSES.map((status) => {
+                        const count = orders.filter((o) => o.status === status).length;
+                        return (
+                          <button
+                            key={status}
+                            onClick={() => setOrderStatusFilter(status)}
+                            className={`rounded-xl border-2 border-ink px-3 py-1.5 text-xs font-bold transition-all ${
+                              orderStatusFilter === status
+                                ? "bg-ink text-white shadow-brutal-sm"
+                                : "bg-white text-ink/65 hover:bg-surface"
+                            }`}
+                          >
+                            {ORDER_STATUS_LABEL[status]} ({count})
+                          </button>
+                        );
+                      })}
+                    </div>
+
+                    {(() => {
+                      const filteredOrders =
+                        orderStatusFilter === "all" ? orders : orders.filter((o) => o.status === orderStatusFilter);
+                      if (filteredOrders.length === 0) {
+                        return (
+                          <div className="rounded-3xl border-[3px] border-dashed border-ink bg-white/40 p-10 text-center shadow-brutal-sm">
+                            <p className="text-ink/65 font-bold">Aucune commande avec ce statut.</p>
+                          </div>
+                        );
+                      }
+                      return (
+                        <div className="space-y-4">
+                          {filteredOrders.map((o) => (
+                    <div
                         key={o.id}
-                        className="rounded-3xl border-[3px] border-ink bg-white p-6 shadow-brutal flex flex-col gap-4"
+                        className={`rounded-3xl border-[3px] border-ink p-6 shadow-brutal flex flex-col gap-4 transition-colors ${
+                          ORDER_STATUS_CARD[o.status] ?? "bg-white"
+                        }`}
                       >
                         <div className="flex justify-between items-start border-b-[3px] border-ink/10 pb-4">
                           <div>
@@ -451,6 +524,13 @@ function AdminProductsPage() {
                           </div>
                           <div className="flex items-center gap-2">
                             {updatingOrderId === o.id && <Loader2 className="size-4 animate-spin text-brand" />}
+                            <span
+                              className={`rounded-full border-2 px-2.5 py-1 text-[10px] font-black uppercase tracking-wider ${
+                                ORDER_STATUS_PILL[o.status] ?? "bg-stone-100 text-stone-600 border-stone-300"
+                              }`}
+                            >
+                              {ORDER_STATUS_LABEL[o.status] ?? o.status}
+                            </span>
                             <select
                               value={o.status}
                               disabled={updatingOrderId === o.id}
@@ -488,8 +568,11 @@ function AdminProductsPage() {
                           </div>
                         )}
                       </div>
-                    ))}
-                  </div>
+                          ))}
+                        </div>
+                      );
+                    })()}
+                  </>
                 )}
               </>
             )}

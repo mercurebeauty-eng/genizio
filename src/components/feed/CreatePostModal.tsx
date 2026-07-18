@@ -243,7 +243,7 @@ export function CreatePostModal({
             </label>
           ) : (
             <div className="relative aspect-square w-full overflow-hidden rounded-2xl border-[3px] border-ink bg-surface">
-              <img src={preview} alt="Aperçu" className="h-full w-full object-cover" />
+              <img src={preview} alt="Aperçu" className="h-full w-full object-contain" />
               <button
                 onClick={() => setPreview(null)}
                 className="absolute right-3 top-3 rounded-full border-2 border-white bg-black/50 p-2 text-white hover:bg-black/70 backdrop-blur-sm transition-all"
