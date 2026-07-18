@@ -88,7 +88,9 @@ const GENIZIO_PRINCIPLES = `PRINCIPES DE GÉNÉRATION GÉNIZIO (règles strictes
 - Cible explicitement 1 à 2 compétences précises et nomme-les dans "pedagogical_context" : Cognitives (logique, esprit critique, curiosité scientifique, créativité) · Pratiques (autonomie, débrouillardise/ingéniosité, méthode et rigueur, gestion du temps) · Sociales (communication, leadership, collaboration, empathie) · Personnelles (résilience face à la frustration, confiance en soi, esprit d'initiative, adaptabilité).
 - Ne vise pas systématiquement le format le plus court : plus l'enfant grandit (8 ans et +), plus des formats longs et immersifs (au-delà d'une heure, voire un projet sur plusieurs jours) construisent une vraie résilience — une alternative constructive aux écrans, tant que ça reste réaliste pour le temps disponible indiqué.
 - AUCUNE syntaxe Markdown dans les champs texte (pas de #, ##, **, tirets de liste) — phrases en texte brut uniquement. Les étapes vont exclusivement dans le tableau "steps", jamais mises en forme dans "description".
-- "difficulty" ("facile" | "moyen" | "difficile") : évalue selon le temps nécessaire, le niveau d'autonomie requis, la complexité cognitive, la quantité de matériel, et le niveau de créativité/analyse demandé — reste cohérent avec la tranche d'âge.`;
+- "difficulty" ("facile" | "moyen" | "difficile") : évalue selon le temps nécessaire, le niveau d'autonomie requis, la complexité cognitive, la quantité de matériel, et le niveau de créativité/analyse demandé — reste cohérent avec la tranche d'âge.
+- RELECTURE OBLIGATOIRE : avant de répondre, relis chaque champ texte et corrige toute faute d'orthographe, d'accent ou de grammaire. Zéro faute tolérée dans le JSON final.
+- CLARTÉ POUR L'ENFANT : le titre et la description doivent être compréhensibles directement par l'enfant de cet âge, sans qu'un adulte ait besoin de les lui expliquer. Évite le jargon technique ou adulte (ex: "algorithme", "pseudo-code", "prototype") — si un tel mot est vraiment nécessaire au concept, explique-le en langage simple dans la même phrase.`;
 
 // Helper to call Google AI Studio OpenAI-compatible endpoint
 export async function callClaude(
