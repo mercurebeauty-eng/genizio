@@ -563,7 +563,7 @@ function LaboratoryPage() {
 
       {/* Modal Recommandation de Kit Post-Assignation */}
       {assignedChallengeForKit && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-ink/55 backdrop-blur-sm p-4 animate-in fade-in duration-200">
+        <div className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-ink/55 backdrop-blur-sm p-4 animate-in fade-in duration-200">
           <div className="relative w-full max-w-md rounded-3xl border-[3px] border-ink bg-white p-6 shadow-brutal md:p-8">
             <button
               onClick={() => {

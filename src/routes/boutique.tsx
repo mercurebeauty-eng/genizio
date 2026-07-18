@@ -258,7 +258,7 @@ function BoutiquePage() {
     : products;
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-surface via-surface to-brand/5 text-ink">
+    <div className="min-h-screen bg-gradient-to-b from-surface via-surface to-brand/5 pb-24 text-ink md:pb-6">
       <AppHeader hideTabBarLinks />
 
       <main className="mx-auto max-w-6xl px-6 py-10 md:flex md:gap-8">
@@ -411,7 +411,7 @@ function BoutiquePage() {
 
       {/* Modal - Configuration de la génération */}
       {selectedProduct && !generatedChallenge && !isGenerating && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-ink/55 backdrop-blur-sm p-4 animate-in fade-in duration-200">
+        <div className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-ink/55 backdrop-blur-sm p-4 animate-in fade-in duration-200">
           <div className="relative w-full max-w-lg rounded-3xl border-[3px] border-ink bg-white p-6 shadow-brutal md:p-8">
             <button
               onClick={() => setSelectedProduct(null)}
@@ -520,7 +520,7 @@ function BoutiquePage() {
 
       {/* Modal - Génération en cours */}
       {isGenerating && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-ink/55 backdrop-blur-sm p-4 animate-in fade-in duration-200">
+        <div className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-ink/55 backdrop-blur-sm p-4 animate-in fade-in duration-200">
           <div className="w-full max-w-md rounded-3xl border-[3px] border-ink bg-white p-8 text-center shadow-brutal">
             <NayaAvatar size="lg" thoughts={LOADING_STEPS} className="mx-auto mb-6" />
             <p className="text-lg font-black text-brand animate-pulse">
@@ -650,7 +650,7 @@ function BoutiquePage() {
       {/* Modal - Tous les tags matériel d'un kit */}
       {tagsModalProduct && (
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-ink/55 backdrop-blur-sm p-4 animate-in fade-in duration-200"
+          className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-ink/55 backdrop-blur-sm p-4 animate-in fade-in duration-200"
           onClick={() => setTagsModalProduct(null)}
         >
           <div

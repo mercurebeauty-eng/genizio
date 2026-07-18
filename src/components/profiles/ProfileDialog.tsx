@@ -82,7 +82,7 @@ export function ProfileDialog({
   );
 
   return (
-    <div className="fixed inset-0 z-50 grid place-items-center bg-ink/60 p-4" onClick={onClose}>
+    <div className="fixed inset-0 z-50 grid place-items-center overflow-y-auto bg-ink/60 p-4" onClick={onClose}>
       <div
         onClick={(e) => e.stopPropagation()}
         className="max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-3xl border-[3px] border-ink bg-white p-8 shadow-brutal"

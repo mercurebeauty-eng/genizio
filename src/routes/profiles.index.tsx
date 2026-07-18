@@ -437,7 +437,7 @@ function DashboardPage() {
       )}
 
       {showPhoneModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm animate-in fade-in duration-200">
+        <div className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-black/60 p-4 backdrop-blur-sm animate-in fade-in duration-200">
           <div className="w-full max-w-md rounded-3xl border-[3px] border-ink bg-white p-6 shadow-brutal animate-in zoom-in-95 duration-200 md:p-8">
             <div className="text-center">
               <div className="mx-auto flex size-14 items-center justify-center rounded-2xl border-2 border-ink bg-brand/10 text-brand">
@@ -539,7 +539,7 @@ function DashboardPage() {
 
       {/* ── Upgrade Modal — Profil supplémentaire ────────────────────── */}
       {showUpgradeModal && (
-        <div className="fixed inset-0 z-50 grid place-items-center bg-ink/70 p-4 backdrop-blur-sm" onClick={() => setShowUpgradeModal(false)}>
+        <div className="fixed inset-0 z-50 grid place-items-center overflow-y-auto bg-ink/70 p-4 backdrop-blur-sm" onClick={() => setShowUpgradeModal(false)}>
           <div
             onClick={(e) => e.stopPropagation()}
             className="w-full max-w-md rounded-3xl border-[3px] border-ink bg-white p-8 shadow-brutal"
