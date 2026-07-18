@@ -1076,7 +1076,6 @@ function ChallengeCard({
               {c.status === "completed" && !c.ai_observations && (
                 <OutcomeChat
                   challenge={c}
-                  childId={childId}
                   childName={childName}
                   notes={notesDraft}
                   onSaveNotes={onNotes}

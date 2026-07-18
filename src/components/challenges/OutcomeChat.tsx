@@ -1,5 +1,4 @@
 import { useState } from "react";
-import { supabase } from "@/integrations/supabase/client";
 import { useServerFn } from "@tanstack/react-start";
 import { validateChallengeProof } from "@/lib/challenges.functions";
 import { NayaAvatar } from "@/components/NayaAvatar";
@@ -16,9 +15,21 @@ type Challenge = {
   status: "todo" | "in_progress" | "completed";
 };
 
+// Reads a File as base64 in the browser and sends the bytes directly to the
+// server — no Supabase Storage upload happens until after the AI confirms
+// the photo is actually relevant (see validateChallengeProof), instead of
+// uploading on every attempt regardless of outcome.
+function fileToBase64(file: File): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve((reader.result as string).split(",")[1] ?? "");
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+}
+
 type OutcomeChatProps = {
   challenge: Challenge;
-  childId: string;
   childName: string;
   // The parent's "Journal d'apprentissage" notes just above this card — reused
   // as the proof text instead of a separate 3-question interview, which asked
@@ -33,7 +44,7 @@ type OutcomeChatProps = {
   onValidated: () => void;
 };
 
-export function OutcomeChat({ challenge, childId, childName, notes = "", onSaveNotes, onValidated }: OutcomeChatProps) {
+export function OutcomeChat({ challenge, childName, notes = "", onSaveNotes, onValidated }: OutcomeChatProps) {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [validating, setValidating] = useState(false);
   const [validationError, setValidationError] = useState<string | null>(null);
@@ -52,37 +63,19 @@ export function OutcomeChat({ challenge, childId, childName, notes = "", onSaveN
       const trimmedNotes = notes.trim();
       if (trimmedNotes) onSaveNotes(trimmedNotes);
 
-      let imageUrl = undefined;
       const file = selectedFile;
-
-      if (file) {
-        const fileExt = file.name.split('.').pop();
-        const fileName = `${childId}/${challenge.id}-${Math.random()}.${fileExt}`;
-
-        const { error: uploadError } = await supabase.storage
-          .from('proofs')
-          .upload(fileName, file);
-
-        if (uploadError) {
-          console.error("Erreur d'upload ignorée (fallback texte) :", uploadError);
-          toast.warning("L'image n'a pas pu être envoyée. Naya analyse uniquement vos notes.");
-        } else {
-          const { data: publicUrlData } = supabase.storage
-            .from('proofs')
-            .getPublicUrl(fileName);
-          imageUrl = publicUrlData.publicUrl;
-        }
-      }
+      const proofImageBase64 = file ? await fileToBase64(file) : undefined;
 
       const result = await validateAI({
         data: {
           id: challenge.id,
           proofText: trimmedNotes.slice(0, 2000),
-          proofImageUrl: imageUrl,
+          proofImageBase64,
+          proofImageMediaType: file?.type,
         },
       });
       setReport(result);
-      if (imageUrl && !result.imageAnalyzed) {
+      if (file && !result.imageAnalyzed) {
         toast.warning("Naya n'a pas pu analyser la photo — son observation se base uniquement sur vos notes.");
       }
       toast.success("Analyse terminée !");

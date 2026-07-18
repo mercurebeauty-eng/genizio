@@ -273,6 +273,8 @@ const GENIZIO_PRINCIPLES = `PRINCIPES DE GÉNÉRATION GÉNIZIO (règles strictes
 const SAFETY_INSTRUCTION = `SÉCURITÉ ET SUPERVISION, sans excès de prudence : analyse si le défi comporte des risques réels (feu, cuisine avec source de chaleur — plaque, four, eau ou huile chaude —, objets coupants, produits chimiques, électricité, extérieur non sécurisé — eau profonde, hauteur, circulation, animaux dangereux). Si OUI, règle "requires_supervision" à true. Adapte le ton de "supervision_warning" à l'âge : avant 12 ans, précise qu'un adulte doit être présent pour cette étape ; à partir de 12 ans, un enfant peut réaliser l'étape lui-même — donne des mesures de sécurité concrètes à suivre plutôt que d'exiger la présence d'un adulte (ex: manipuler un briquet loin de matières inflammables, avec de l'eau à proximité). Ne signale pas de risque pour des activités quotidiennes sans danger réel (cuisine froide/sans cuisson, mélanger des ingrédients, extérieur familier, etc.).`;
 
 // Helper to call Google AI Studio OpenAI-compatible endpoint
+const ALLOWED_IMAGE_MEDIA_TYPES = ["image/jpeg", "image/png", "image/gif", "image/webp"];
+
 export async function callClaude(
   prompt: string,
   jsonMode: boolean = false,
@@ -283,7 +285,14 @@ export async function callClaude(
   // Every call site should pass a value close to its real expected output
   // instead of relying on one size fits all.
   maxOutputTokens = 4000,
-  maxRetries = 3
+  maxRetries = 3,
+  // Preferred over imageUrl when present — the caller already has the raw
+  // bytes (e.g. straight from the browser's file input) and skips the
+  // upload-then-fetch round trip through Supabase Storage that imageUrl
+  // requires (see validateChallengeProof: that upload used to happen on
+  // every submission attempt regardless of outcome, hitting the storage
+  // API's own rate limit).
+  imageData?: { base64: string; mediaType: string }
 ): Promise<string> {
   const apiKey = process.env.ANTHROPIC_API_KEY;
   if (!apiKey) {
@@ -292,7 +301,19 @@ export async function callClaude(
 
   const contentBlocks: any[] = [];
 
-  if (imageUrl) {
+  if (imageData) {
+    const mediaType = ALLOWED_IMAGE_MEDIA_TYPES.includes(imageData.mediaType)
+      ? imageData.mediaType
+      : "image/jpeg";
+    contentBlocks.push({
+      type: "image",
+      source: {
+        type: "base64",
+        media_type: mediaType,
+        data: imageData.base64,
+      },
+    });
+  } else if (imageUrl) {
     // Let a fetch/decode failure propagate instead of silently continuing
     // text-only — callers that pass an image expect the AI to actually see
     // it, and validateChallengeProof's fallback path only works if this throws.
@@ -303,11 +324,7 @@ export async function callClaude(
     const arrayBuffer = await imgResp.arrayBuffer();
     const base64Data = Buffer.from(arrayBuffer).toString("base64");
     const contentType = imgResp.headers.get("content-type") || "image/jpeg";
-
-    let mediaType = contentType;
-    if (!["image/jpeg", "image/png", "image/gif", "image/webp"].includes(contentType)) {
-      mediaType = "image/jpeg";
-    }
+    const mediaType = ALLOWED_IMAGE_MEDIA_TYPES.includes(contentType) ? contentType : "image/jpeg";
 
     contentBlocks.push({
       type: "image",
@@ -627,7 +644,11 @@ export const deleteChallenge = createServerFn({ method: "POST" })
 const ValidateInput = z.object({
   id: z.string().uuid(),
   proofText: z.string().max(2000).optional(),
-  proofImageUrl: z.string().url().optional(),
+  // Raw bytes instead of a pre-uploaded Storage URL — the image is only
+  // persisted to Storage after the AI confirms it's actually relevant (see
+  // below), instead of on every submission attempt regardless of outcome.
+  proofImageBase64: z.string().optional(),
+  proofImageMediaType: z.string().optional(),
 });
 
 export const validateChallengeProof = createServerFn({ method: "POST" })
@@ -652,7 +673,7 @@ Description du défi : ${challenge.description}
 
 Le parent a soumis cette preuve de réalisation :
 ${data.proofText ? `Texte/Notes : "${data.proofText}"` : ""}
-${data.proofImageUrl ? `Une image a également été fournie (vérifie l'image si possible).` : ""}
+${data.proofImageBase64 ? `Une image a également été fournie (vérifie l'image si possible).` : ""}
 
 Ta mission :
 1. Vérifie D'ABORD si cette preuve correspond réellement à CE défi précis (le texte décrit-il une activité liée au défi ? l'image montre-t-elle quelque chose en rapport ?). Si la preuve est manifestement hors-sujet ou sans rapport avec le défi, n'écris AUCUN message de félicitations : explique poliment et brièvement au parent que la preuve ne semble pas correspondre à ce défi et invite à en soumettre une nouvelle. Dans ce cas, "talents_awarded" doit être un objet vide {}.
@@ -669,13 +690,16 @@ Réponds STRICTEMENT en JSON valide avec ce format :
 }`;
 
     let aiContent = "";
-    let imageAnalyzed = !!data.proofImageUrl;
+    let imageAnalyzed = !!data.proofImageBase64;
+    const imageData = data.proofImageBase64
+      ? { base64: data.proofImageBase64, mediaType: data.proofImageMediaType ?? "image/jpeg" }
+      : undefined;
     // A short observation + a small talents_awarded object — nowhere near
     // the 4000-token default sized for a batch of full défis. Reserving
     // that much per call was the main way this endpoint could exhaust the
     // org's per-minute output-token budget on a single request.
     try {
-      aiContent = await callClaude(prompt, true, data.proofImageUrl, 500);
+      aiContent = await callClaude(prompt, true, undefined, 500, 3, imageData);
     } catch (err) {
       // A 429 isn't specific to the image — it's the whole API key rate
       // limited. Falling back to a second full retry cycle (3 more attempts)
@@ -733,11 +757,31 @@ Réponds STRICTEMENT en JSON valide avec ce format :
       if (talentsError) throw new Error(talentsError.message);
     }
 
+    // Only persist the photo once the AI has actually confirmed it's
+    // relevant to this défi — an irrelevant/off-topic submission (deltas
+    // empty) is never uploaded at all, instead of every attempt hitting
+    // Storage regardless of outcome like before.
+    let proofImageUrl: string | null = null;
+    if (data.proofImageBase64 && Object.keys(deltas).length > 0) {
+      const mediaType = data.proofImageMediaType ?? "image/jpeg";
+      const ext = mediaType.split("/")[1] ?? "jpg";
+      const fileName = `${challenge.child_id}/${challenge.id}-${Math.random()}.${ext}`;
+      const { error: uploadError } = await supabase.storage
+        .from("proofs")
+        .upload(fileName, Buffer.from(data.proofImageBase64, "base64"), { contentType: mediaType });
+      if (uploadError) {
+        console.error("Erreur d'upload de la preuve (non bloquant):", uploadError);
+      } else {
+        const { data: publicUrlData } = supabase.storage.from("proofs").getPublicUrl(fileName);
+        proofImageUrl = publicUrlData.publicUrl;
+      }
+    }
+
     const patch = {
       status: "completed" as const,
       progress: 100,
       completed_at: new Date().toISOString(),
-      proof_image_url: data.proofImageUrl || null,
+      proof_image_url: proofImageUrl,
       ai_observations: observations,
       target_intelligences: intelligenceKeys,
     };
