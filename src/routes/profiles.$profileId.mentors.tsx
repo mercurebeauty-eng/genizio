@@ -56,7 +56,7 @@ function MentorsPage() {
 
   return (
     <div className="min-h-screen bg-surface pb-24 text-ink md:pb-6">
-      <AppHeader />
+      <AppHeader hideTabBarLinks />
       <main className="mx-auto max-w-6xl px-6 py-10 md:flex md:gap-8">
         <AppTabBar profileId={profileId} />
         <div className="min-w-0 flex-1 space-y-8 animate-in fade-in duration-500">

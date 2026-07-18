@@ -192,7 +192,7 @@ function PortfolioPage() {
 
   if (loading || !session || fetching) {
     return (
-      <div className="grid min-h-screen place-items-center bg-surface text-ink/50">
+      <div className="grid min-h-screen place-items-center bg-surface text-ink/60">
         Chargement…
       </div>
     );
@@ -214,7 +214,7 @@ function PortfolioPage() {
 
   return (
     <div className="min-h-screen bg-surface pb-24 text-ink md:pb-6">
-      <AppHeader />
+      <AppHeader hideTabBarLinks />
 
       <main className="mx-auto max-w-6xl px-6 py-10 md:flex md:gap-8">
         <AppTabBar profileId={profileId} />
@@ -293,7 +293,7 @@ function PortfolioPage() {
                     
                     {/* Circular Dashed Level Badge */}
                     <div className="size-14 rounded-full border-[3px] border-dashed border-ink bg-surface flex flex-col items-center justify-center shrink-0">
-                      <span className="text-[9px] font-black uppercase tracking-wider text-ink/40 leading-none">Level</span>
+                      <span className="text-[9px] font-black uppercase tracking-wider text-ink/60 leading-none">Level</span>
                       <span className="font-display text-base font-black text-ink leading-none mt-0.5">{level}</span>
                     </div>
                   </div>
@@ -322,17 +322,17 @@ function PortfolioPage() {
                 <div className="grid grid-cols-3 gap-4 text-center mt-2">
                   <div>
                     <div className="font-display text-2xl font-black text-orange-600">{completed.length}</div>
-                    <div className="text-[10px] font-bold uppercase tracking-widest text-ink/40 mt-0.5">Défis complétés</div>
+                    <div className="text-[10px] font-bold uppercase tracking-widest text-ink/60 mt-0.5">Défis complétés</div>
                   </div>
                   <div>
                     <div className="font-display text-2xl font-black text-emerald-600">
                       {Object.values(child.talents || {}).filter((val) => val > 0).length}
                     </div>
-                    <div className="text-[10px] font-bold uppercase tracking-widest text-ink/40 mt-0.5">Talents cartographiés</div>
+                    <div className="text-[10px] font-bold uppercase tracking-widest text-ink/60 mt-0.5">Talents cartographiés</div>
                   </div>
                   <div>
                     <div className="font-display text-2xl font-black text-sky-600">{mentorCount}</div>
-                    <div className="text-[10px] font-bold uppercase tracking-widest text-ink/40 mt-0.5">Mentors actifs</div>
+                    <div className="text-[10px] font-bold uppercase tracking-widest text-ink/60 mt-0.5">Mentors actifs</div>
                   </div>
                 </div>
               </div>
@@ -392,7 +392,7 @@ function PortfolioPage() {
                       <span>Activer le Passeport (50 000 FCFA)</span>
                     </a>
                   )}
-                  <p className="text-[9px] text-center text-ink/40 font-bold">
+                  <p className="text-[9px] text-center text-ink/60 font-bold">
                     * Activation par l'administration après règlement WhatsApp.
                   </p>
                 </div>
@@ -407,7 +407,7 @@ function PortfolioPage() {
                 Carte des Talents
               </h3>
               <TalentRadarChart talents={child.talents} name={child.name} className="h-64 w-full" age={child.age} />
-              <p className="text-center text-[11px] font-medium text-ink/40">
+              <p className="text-center text-[11px] font-medium text-ink/60">
                 Cette carte s'affine et se développe à mesure que {child.name} réalise ses défis.
               </p>
             </div>
@@ -437,7 +437,7 @@ function PortfolioPage() {
                 <Star className="size-5 text-brand fill-brand" />
                 Cartes de Potentiels de {child.name}
               </h3>
-              <p className="text-xs font-semibold text-ink/50 mt-1">
+              <p className="text-xs font-semibold text-ink/60 mt-1">
                 Les talents de {child.name} se développent sous forme de cartes d'aptitudes évolutives adaptées à sa tranche d'âge.
               </p>
             </div>
@@ -482,7 +482,7 @@ function PortfolioPage() {
                     {/* Progress Bar & Score inside the card */}
                     <div className="space-y-1">
                       <div className="flex justify-between items-center text-[10px] font-black">
-                        <span className="text-ink/40">{card.levelLabel}</span>
+                        <span className="text-ink/60">{card.levelLabel}</span>
                         <span className="text-ink">{score} / 100</span>
                       </div>
                       <div className="h-2 rounded-full border-2 border-ink bg-white overflow-hidden">
@@ -507,16 +507,16 @@ function PortfolioPage() {
               {child && <InviteMentorDialog childId={child.id} childName={child.name} />}
             </div>
             {completed.length === 0 ? (
-              <p className="text-sm text-ink/50">Aucun défi complété pour l'instant.</p>
+              <p className="text-sm text-ink/60">Aucun défi complété pour l'instant.</p>
             ) : (
               <ul className="space-y-3">
                 {completed.map((c) => (
                   <li key={c.id} className="flex items-center justify-between rounded-2xl border-2 border-ink bg-surface px-4 py-3">
                     <div>
                       <p className="text-sm font-bold text-ink">{c.title}</p>
-                      <p className="text-xs text-ink/50">{c.domain}</p>
+                      <p className="text-xs text-ink/60">{c.domain}</p>
                     </div>
-                    <span className="text-xs font-semibold text-ink/40">
+                    <span className="text-xs font-semibold text-ink/60">
                       {c.completed_at ? new Date(c.completed_at).toLocaleDateString("fr-FR") : ""}
                     </span>
                   </li>
@@ -531,7 +531,7 @@ function PortfolioPage() {
               Galerie d'artefacts
             </h3>
             {artifacts.length === 0 ? (
-              <p className="text-sm text-ink/50">Aucune photo pour l'instant.</p>
+              <p className="text-sm text-ink/60">Aucune photo pour l'instant.</p>
             ) : (
               <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4">
                 {artifacts.map((c) => (

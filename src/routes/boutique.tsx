@@ -7,7 +7,7 @@ import { AppTabBar } from "@/components/AppTabBar";
 import { supabase } from "@/integrations/supabase/client";
 import { createOrder } from "@/lib/products.functions";
 import { generateSingleChallenge, assignTemplateChallenge } from "@/lib/challenges.functions";
-import { ShoppingBag, Sparkles, Loader2, Trophy, Clock, MapPin, X, Check, Brain, MessageCircle } from "lucide-react";
+import { ShoppingBag, Sparkles, Loader2, Trophy, Clock, MapPin, X, Check, Brain, MessageCircle, Search } from "lucide-react";
 import { toast } from "sonner";
 import { NayaAvatar } from "@/components/NayaAvatar";
 import { DifficultyBadge } from "@/components/challenges/DifficultyBadge";
@@ -69,6 +69,7 @@ function BoutiquePage() {
   const [children, setChildren] = useState<Child[]>([]);
   const [challenges, setChallenges] = useState<Challenge[]>([]);
   const [fetching, setFetching] = useState(true);
+  const [searchQuery, setSearchQuery] = useState("");
 
   // Modal generation states
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
@@ -239,7 +240,7 @@ function BoutiquePage() {
 
   if (loading || fetching) {
     return (
-      <div className="grid min-h-screen place-items-center bg-surface text-ink/50">
+      <div className="grid min-h-screen place-items-center bg-surface text-ink/60">
         Chargement de la boutique…
       </div>
     );
@@ -247,15 +248,24 @@ function BoutiquePage() {
 
   const firstChildId = children[0]?.id || "";
 
+  const query = searchQuery.trim().toLowerCase();
+  const filteredProducts = query
+    ? products.filter((p) =>
+        p.name.toLowerCase().includes(query) ||
+        (p.description ?? "").toLowerCase().includes(query) ||
+        p.material_tags.some((t) => t.toLowerCase().includes(query))
+      )
+    : products;
+
   return (
     <div className="min-h-screen bg-gradient-to-b from-surface via-surface to-brand/5 text-ink">
-      <AppHeader />
+      <AppHeader hideTabBarLinks />
 
       <main className="mx-auto max-w-6xl px-6 py-10 md:flex md:gap-8">
         <AppTabBar profileId={firstChildId} />
 
         <div className="min-w-0 flex-1">
-          <header className="mb-10 text-center md:text-left">
+          <header className="mb-6 text-center md:text-left">
             <h1 className="font-display text-4xl font-extrabold tracking-tight md:text-5xl">
               La Boutique de Kits Naya 📦
             </h1>
@@ -263,6 +273,29 @@ function BoutiquePage() {
               Des kits matériels physiques pensés pour débloquer de vrais projets d'apprentissage à la maison.
             </p>
           </header>
+
+          {products.length > 0 && (
+            <div className="relative mb-8 max-w-md mx-auto md:mx-0">
+              <Search className="absolute left-4 top-1/2 -translate-y-1/2 size-4 text-ink/50 pointer-events-none" />
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="Rechercher un kit (nom, matériel...)"
+                aria-label="Rechercher un kit"
+                className="w-full rounded-full border-2 border-ink bg-white py-2.5 pl-11 pr-10 text-sm font-bold text-ink shadow-brutal-sm outline-none focus:ring-2 focus:ring-brand transition-all"
+              />
+              {searchQuery && (
+                <button
+                  onClick={() => setSearchQuery("")}
+                  aria-label="Effacer la recherche"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 rounded-full p-1 text-ink/50 hover:text-ink hover:bg-surface transition-colors cursor-pointer"
+                >
+                  <X className="size-4" />
+                </button>
+              )}
+            </div>
+          )}
 
           {products.length === 0 ? (
             <div className="rounded-3xl border-[3px] border-ink bg-white p-12 text-center shadow-brutal">
@@ -272,9 +305,23 @@ function BoutiquePage() {
                 Aucun kit n'est actuellement disponible dans le catalogue.
               </p>
             </div>
+          ) : filteredProducts.length === 0 ? (
+            <div className="rounded-3xl border-[3px] border-dashed border-ink bg-white/40 p-12 text-center shadow-brutal-sm">
+              <Search className="mx-auto size-12 text-ink/20" />
+              <h3 className="mt-4 text-xl font-bold">Aucun résultat</h3>
+              <p className="mt-2 text-sm text-ink/60">
+                Aucun kit ne correspond à « {searchQuery.trim()} ».
+              </p>
+              <button
+                onClick={() => setSearchQuery("")}
+                className="mt-4 rounded-xl border-2 border-ink bg-white px-4 py-2 text-sm font-bold text-ink shadow-brutal-sm hover:bg-surface transition-all cursor-pointer"
+              >
+                Réinitialiser la recherche
+              </button>
+            </div>
           ) : (
             <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-              {products.map((p) => {
+              {filteredProducts.map((p) => {
                 const count = getChallengeCount(p.material_tags);
                 const outOfStock = p.stock_quantity !== null && p.stock_quantity <= 0;
                 return (
@@ -300,7 +347,7 @@ function BoutiquePage() {
                       {p.material_tags.slice(0, 3).map((t) => (
                         <span
                           key={t}
-                          className="rounded-full border-2 border-ink bg-stone-100 px-2 py-0.5 text-[10px] font-bold text-ink"
+                          className="rounded-full border-2 border-ink bg-stone-100 px-2 py-0.5 text-xs font-bold text-ink"
                         >
                           #{t}
                         </span>
@@ -308,7 +355,7 @@ function BoutiquePage() {
                       {p.material_tags.length > 3 && (
                         <button
                           onClick={() => setTagsModalProduct(p)}
-                          className="rounded-full border-2 border-ink bg-sky px-2 py-0.5 text-[10px] font-bold text-ink hover:bg-sky/70 transition-colors cursor-pointer"
+                          className="rounded-full border-2 border-ink bg-sky px-2 py-0.5 text-xs font-bold text-ink hover:bg-sky/70 transition-colors cursor-pointer"
                         >
                           +{p.material_tags.length - 3}
                         </button>
@@ -326,13 +373,13 @@ function BoutiquePage() {
                         Déjà utilisé dans {count} défi{count > 1 ? "s" : ""} de vos enfants
                       </p>
                     ) : (
-                      <p className="mt-4 text-xs font-bold text-ink/40">Pas encore utilisé</p>
+                      <p className="mt-4 text-xs font-bold text-ink/60">Pas encore utilisé</p>
                     )}
 
                     <div className="mt-6 space-y-3">
                       <button
                         onClick={() => setSelectedProduct(p)}
-                        className="w-full flex items-center justify-center gap-2 rounded-xl border-2 border-ink bg-sky px-4 py-2.5 text-xs font-extrabold text-ink hover:-translate-y-0.5 active:translate-y-0 shadow-brutal-sm transition-all cursor-pointer"
+                        className="w-full flex items-center justify-center gap-2 rounded-xl border-2 border-ink bg-brand px-4 py-3 text-xs font-extrabold text-white hover:-translate-y-0.5 active:translate-y-0 shadow-brutal-sm transition-all cursor-pointer"
                       >
                         <Sparkles className="size-4 animate-pulse" />
                         Générer un défi ⚡
@@ -340,7 +387,7 @@ function BoutiquePage() {
                       <button
                         onClick={() => handleOrder(p)}
                         disabled={orderingId === p.id || outOfStock}
-                        className="w-full flex items-center justify-center gap-2 rounded-xl border-2 border-ink bg-leaf px-4 py-2.5 text-xs font-bold text-white hover:-translate-y-0.5 active:translate-y-0 shadow-brutal-sm transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                        className="w-full flex items-center justify-center gap-2 rounded-xl border-2 border-ink bg-white px-4 py-3 text-xs font-bold text-ink hover:bg-surface active:translate-y-0 transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                       >
                         {orderingId === p.id ? (
                           <>
@@ -385,7 +432,7 @@ function BoutiquePage() {
             <div className="space-y-5">
               {children.length > 1 && (
                 <div>
-                  <label className="block text-xs font-black uppercase tracking-widest text-ink/50 mb-2">
+                  <label className="block text-xs font-black uppercase tracking-widest text-ink/60 mb-2">
                     Pour quel enfant ?
                   </label>
                   <div className="grid grid-cols-2 gap-3">
@@ -411,7 +458,7 @@ function BoutiquePage() {
               )}
 
               <div>
-                <label className="block text-xs font-black uppercase tracking-widest text-ink/50 mb-2">
+                <label className="block text-xs font-black uppercase tracking-widest text-ink/60 mb-2">
                   Lieu disponible
                 </label>
                 <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
@@ -432,7 +479,7 @@ function BoutiquePage() {
               </div>
 
               <div>
-                <label className="block text-xs font-black uppercase tracking-widest text-ink/50 mb-2">
+                <label className="block text-xs font-black uppercase tracking-widest text-ink/60 mb-2">
                   Temps disponible
                 </label>
                 <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
@@ -504,7 +551,7 @@ function BoutiquePage() {
               <h2 className="mt-3 font-display text-2xl font-black md:text-3xl">
                 {generatedChallenge.title}
               </h2>
-              <div className="mt-2 flex gap-4 text-xs font-bold text-ink/50">
+              <div className="mt-2 flex gap-4 text-xs font-bold text-ink/60">
                 <span className="flex items-center gap-1">
                   <Clock className="size-4" /> {generatedChallenge.duration}
                 </span>
@@ -528,7 +575,7 @@ function BoutiquePage() {
               )}
 
               <div>
-                <h4 className="text-xs font-black uppercase tracking-widest text-ink/40 mb-2">
+                <h4 className="text-xs font-black uppercase tracking-widest text-ink/60 mb-2">
                   Matériel requis
                 </h4>
                 <ul className="grid gap-2 sm:grid-cols-2">
@@ -544,7 +591,7 @@ function BoutiquePage() {
               </div>
 
               <div>
-                <h4 className="text-xs font-black uppercase tracking-widest text-ink/40 mb-2">
+                <h4 className="text-xs font-black uppercase tracking-widest text-ink/60 mb-2">
                   Les étapes d'apprentissage
                 </h4>
                 <ol className="space-y-3">
@@ -617,7 +664,7 @@ function BoutiquePage() {
               <X className="size-4" />
             </button>
             <h3 className="font-display text-lg font-black pr-8">{tagsModalProduct.name}</h3>
-            <p className="mt-1 text-xs text-ink/50">
+            <p className="mt-1 text-xs text-ink/60">
               {tagsModalProduct.material_tags.length} matériau{tagsModalProduct.material_tags.length > 1 ? "x" : ""}
             </p>
             <div className="mt-4 flex max-h-72 flex-wrap gap-1.5 overflow-y-auto">

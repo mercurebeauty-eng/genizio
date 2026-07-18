@@ -15,7 +15,15 @@ import {
 } from "@/components/ui/dropdown-menu";
 
 
-export function AppHeader() {
+type AppHeaderProps = {
+  /**
+   * Set on pages that already render <AppTabBar> — it duplicates "Accueil"
+   * and "Boutique" as a persistent nav, so the header shouldn't repeat them.
+   */
+  hideTabBarLinks?: boolean;
+};
+
+export function AppHeader({ hideTabBarLinks = false }: AppHeaderProps = {}) {
   const { session } = useSession();
   const navigate = useNavigate();
   const [isOpen, setIsOpen] = useState(false);
@@ -56,17 +64,16 @@ export function AppHeader() {
           GÉNIZIO
         </Link>
 
-        {/* Desktop navigation */}
+        {/* Desktop navigation — "Accueil" isn't repeated here, the logo above already links home on every page. */}
         <div className="hidden items-center gap-6 text-sm font-bold md:flex">
-          <Link to="/profiles" className="text-ink/60 hover:text-brand transition-colors" activeProps={{ className: "text-brand" }}>
-            Accueil
-          </Link>
           <Link to="/feed" className="text-ink/60 hover:text-brand transition-colors" activeProps={{ className: "text-brand" }}>
             Mur Public
           </Link>
-          <Link to="/boutique" className="text-ink/60 hover:text-brand transition-colors" activeProps={{ className: "text-brand" }}>
-            Boutique
-          </Link>
+          {!hideTabBarLinks && (
+            <Link to="/boutique" className="text-ink/60 hover:text-brand transition-colors" activeProps={{ className: "text-brand" }}>
+              Boutique
+            </Link>
+          )}
           <Link to="/profiles/manage" className="text-ink/60 hover:text-brand transition-colors" activeProps={{ className: "text-brand" }}>
             Gérer mes profils
           </Link>
@@ -79,11 +86,11 @@ export function AppHeader() {
               <button className="flex items-center gap-1.5 rounded-full border-2 border-ink bg-white px-4.5 py-2 text-sm font-bold text-ink hover:bg-surface transition-all cursor-pointer shadow-brutal-sm">
                 <Settings className="size-4 text-brand" />
                 <span>{session.user.email?.split("@")[0]}</span>
-                <ChevronDown className="size-3.5 text-ink/40" />
+                <ChevronDown className="size-3.5 text-ink/60" />
               </button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-56 border-[3px] border-ink rounded-2xl p-1.5 bg-white shadow-brutal mt-1">
-              <DropdownMenuLabel className="font-display font-extrabold text-[10px] text-ink/50 uppercase tracking-widest px-2.5 py-1.5">
+              <DropdownMenuLabel className="font-display font-extrabold text-[10px] text-ink/60 uppercase tracking-widest px-2.5 py-1.5">
                 Mon Espace
               </DropdownMenuLabel>
               <DropdownMenuItem asChild>
@@ -96,7 +103,7 @@ export function AppHeader() {
               {(isSupervisor || isAdmin) && (
                 <>
                   <DropdownMenuSeparator className="-mx-1.5 my-1.5 border-t-[2px] border-ink/10" />
-                  <DropdownMenuLabel className="font-display font-extrabold text-[10px] text-ink/50 uppercase tracking-widest px-2.5 py-1.5">
+                  <DropdownMenuLabel className="font-display font-extrabold text-[10px] text-ink/60 uppercase tracking-widest px-2.5 py-1.5">
                     Accompagnant & Pro
                   </DropdownMenuLabel>
                   {isSupervisor && (
@@ -156,16 +163,6 @@ export function AppHeader() {
         <div className="border-t border-ink/5 bg-white px-6 py-4 md:hidden space-y-4 animate-in slide-in-from-top-5 duration-200">
           <div className="flex flex-col gap-3">
             <Link
-              to="/profiles"
-              onClick={() => setIsOpen(false)}
-              className="flex items-center gap-2.5 rounded-2xl px-4 py-3 text-sm font-bold text-ink/70 hover:bg-surface"
-              activeProps={{ className: "bg-brand/5 text-brand" }}
-            >
-              <LayoutDashboard className="size-4" />
-              Accueil
-            </Link>
-
-            <Link
               to="/feed"
               onClick={() => setIsOpen(false)}
               className="flex items-center gap-2.5 rounded-2xl px-4 py-3 text-sm font-bold text-ink/70 hover:bg-surface"
@@ -174,15 +171,17 @@ export function AppHeader() {
               <Brain className="size-4" />
               Mur Public
             </Link>
-            <Link
-              to="/boutique"
-              onClick={() => setIsOpen(false)}
-              className="flex items-center gap-2.5 rounded-2xl px-4 py-3 text-sm font-bold text-ink/70 hover:bg-surface"
-              activeProps={{ className: "bg-brand/5 text-brand" }}
-            >
-              <ShoppingBag className="size-4" />
-              Boutique
-            </Link>
+            {!hideTabBarLinks && (
+              <Link
+                to="/boutique"
+                onClick={() => setIsOpen(false)}
+                className="flex items-center gap-2.5 rounded-2xl px-4 py-3 text-sm font-bold text-ink/70 hover:bg-surface"
+                activeProps={{ className: "bg-brand/5 text-brand" }}
+              >
+                <ShoppingBag className="size-4" />
+                Boutique
+              </Link>
+            )}
             <Link
               to="/profiles/manage"
               onClick={() => setIsOpen(false)}
@@ -194,7 +193,7 @@ export function AppHeader() {
             </Link>
             {(isSupervisor || isAdmin) && (
               <div className="border-t border-ink/10 my-1 pt-2">
-                <p className="text-[10px] font-extrabold uppercase tracking-widest text-ink/40 px-4 mb-1.5">
+                <p className="text-[10px] font-extrabold uppercase tracking-widest text-ink/60 px-4 mb-1.5">
                   Accompagnant & Pro
                 </p>
                 {isSupervisor && (
@@ -242,15 +241,19 @@ export function AppHeader() {
               </div>
             )}
 
-            <Link
-              to="/profile"
-              onClick={() => setIsOpen(false)}
-              className="flex items-center gap-2.5 rounded-2xl px-4 py-3 text-sm font-bold text-ink/70 hover:bg-surface"
-              activeProps={{ className: "bg-brand/5 text-brand" }}
-            >
-              <Settings className="size-4" />
-              Mon Compte
-            </Link>
+            {/* On mobile, AppTabBar already has a "Réglages" tab pointing here when
+                hideTabBarLinks is set — no need to repeat it in this drawer. */}
+            {!hideTabBarLinks && (
+              <Link
+                to="/profile"
+                onClick={() => setIsOpen(false)}
+                className="flex items-center gap-2.5 rounded-2xl px-4 py-3 text-sm font-bold text-ink/70 hover:bg-surface"
+                activeProps={{ className: "bg-brand/5 text-brand" }}
+              >
+                <Settings className="size-4" />
+                Mon Compte
+              </Link>
+            )}
 
           </div>
           <div className="pt-2 border-t border-ink/5">

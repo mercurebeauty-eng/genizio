@@ -128,8 +128,15 @@ function DashboardPage() {
     // Keep the current selection only if it's still in the refetched list —
     // it may have been deleted elsewhere (another tab, /profiles/manage)
     // since the last fetch, which would otherwise leave selectedId pointing
-    // at a profile that no longer exists.
-    setSelectedId((prev) => (prev && list.some((p) => p.id === prev) ? prev : list[0]?.id ?? null));
+    // at a profile that no longer exists. On a fresh mount (prev is null,
+    // e.g. after a page reload) fall back to the last profile the user
+    // picked, persisted in localStorage, rather than always the newest one.
+    const storedId = localStorage.getItem(`genizio:selectedChildId:${session.user.id}`);
+    setSelectedId((prev) => {
+      if (prev && list.some((p) => p.id === prev)) return prev;
+      if (storedId && list.some((p) => p.id === storedId)) return storedId;
+      return list[0]?.id ?? null;
+    });
     setFetching(false);
   };
 
@@ -137,6 +144,12 @@ function DashboardPage() {
     if (session) void refetch();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [session]);
+
+  useEffect(() => {
+    if (session && selectedId) {
+      localStorage.setItem(`genizio:selectedChildId:${session.user.id}`, selectedId);
+    }
+  }, [session, selectedId]);
 
   useEffect(() => {
     if (!selectedId) {
@@ -165,7 +178,7 @@ function DashboardPage() {
 
   if (loading || !session) {
     return (
-      <div className="grid min-h-screen place-items-center bg-surface text-ink/50">
+      <div className="grid min-h-screen place-items-center bg-surface text-ink/60">
         Chargement…
       </div>
     );
@@ -173,7 +186,7 @@ function DashboardPage() {
 
   return (
     <div className="min-h-screen bg-surface pb-24 text-ink md:pb-6">
-      <AppHeader />
+      <AppHeader hideTabBarLinks={!!selected} />
 
       <main className="mx-auto max-w-6xl px-6 py-10 md:flex md:gap-8">
         {selected && <AppTabBar profileId={selected.id} />}
@@ -182,32 +195,15 @@ function DashboardPage() {
           <div className="mb-6">
             <div className="mb-3 flex items-end gap-3" style={{ paddingTop: "3.5rem", marginTop: "-3.5rem" }}>
               <NayaAvatar size="sm" thoughts={[`Bonjour ! Prêt à explorer avec ${selected?.name ?? "votre enfant"} ?`]} />
-              <p className="text-sm text-ink/50 mb-0.5">Bonjour !</p>
+              <p className="text-sm text-ink/60 mb-0.5">Bonjour !</p>
             </div>
             <h1 className="font-display text-3xl font-extrabold md:text-4xl">
               {selected ? `Voici où en est ${selected.name} cette semaine.` : "Mes profils enfants"}
             </h1>
           </div>
 
-          {/* Badge Guilde de l'enfant sélectionné */}
-          {selected && (() => {
-            const guild = getChildGuild(selected.talents);
-            return (
-              <div className="mb-8 flex items-center gap-3">
-                <div className={`inline-flex items-center gap-2 rounded-2xl border-[3px] border-ink px-4 py-2.5 shadow-brutal-sm font-bold text-sm ${guild.bgColor} ${guild.color}`}>
-                  <span className="text-xl">{guild.emoji}</span>
-                  <div>
-                    <p className="text-[10px] font-extrabold uppercase tracking-widest opacity-60">Guilde de {selected.name}</p>
-                    <p className="font-display text-base font-black leading-tight">{guild.name}</p>
-                  </div>
-                </div>
-                <p className="hidden text-sm text-ink/60 font-medium italic sm:block">« {guild.tagline} »</p>
-              </div>
-            );
-          })()}
-
           {fetching ? (
-            <p className="text-ink/40">Chargement…</p>
+            <p className="text-ink/60">Chargement…</p>
           ) : profiles.length === 0 ? (
             <div className="rounded-3xl border-[3px] border-dashed border-ink bg-white/40 p-12 text-center shadow-brutal-sm">
               <p className="mb-4 text-ink/60">Aucun profil pour l'instant. Créez le premier.</p>
@@ -261,9 +257,27 @@ function DashboardPage() {
                 </div>
               </div>
 
+              {/* Badge Guilde de l'enfant sélectionné — affiché après le sélecteur de profil,
+                  puisqu'il décrit celui qu'on vient de choisir. */}
+              {selected && (() => {
+                const guild = getChildGuild(selected.talents);
+                return (
+                  <div className="mb-8 flex items-center gap-3">
+                    <div className={`inline-flex items-center gap-2 rounded-2xl border-[3px] border-ink px-4 py-2.5 shadow-brutal-sm font-bold text-sm ${guild.bgColor} ${guild.color}`}>
+                      <span className="text-xl">{guild.emoji}</span>
+                      <div>
+                        <p className="text-[10px] font-extrabold uppercase tracking-widest opacity-60">Guilde de {selected.name}</p>
+                        <p className="font-display text-base font-black leading-tight">{guild.name}</p>
+                      </div>
+                    </div>
+                    <p className="hidden text-sm text-ink/60 font-medium italic sm:block">« {guild.tagline} »</p>
+                  </div>
+                );
+              })()}
+
               <div className="grid gap-8 md:grid-cols-2">
                 <div className="flex flex-col">
-                  <h2 className="mb-4 text-2xl font-display font-medium text-ink flex justify-between items-center">
+                  <h2 className="mb-4 text-2xl font-display font-bold text-ink flex justify-between items-center">
                     Cette semaine
                     <div className="flex items-center gap-2">
                       {activeChallenge && (
@@ -360,7 +374,7 @@ function DashboardPage() {
                 </div>
 
                 <div className="flex flex-col">
-                  <h2 className="mb-4 text-2xl font-display font-medium text-ink">
+                  <h2 className="mb-4 text-2xl font-display font-bold text-ink">
                     Pouls du portfolio
                   </h2>
                   <div className="rounded-3xl bg-white p-6 shadow-brutal border-[3px] border-ink flex flex-col justify-between min-h-[300px]">
@@ -387,18 +401,10 @@ function DashboardPage() {
                 </div>
               </div>
 
-              <div className="mt-8 grid gap-6 md:grid-cols-2">
-                <Link
-                  to="/profiles/$profileId/challenges"
-                  params={{ profileId: selected!.id }}
-                  className="rounded-3xl bg-sky border-[3px] border-ink shadow-brutal p-8 flex flex-col items-center justify-center gap-4 text-ink font-bold hover:bg-sky/80 transition-all hover:-translate-y-1 active:translate-y-0"
-                >
-                  <div className="size-16 rounded-full bg-brand text-white border-[3px] border-ink shadow-brutal-sm flex items-center justify-center">
-                    <Trophy className="size-8" />
-                  </div>
-                  <span className="text-lg">Voir les missions</span>
-                </Link>
-
+              {/* "Voir les missions" retiré : c'est déjà l'onglet "Défis" de la barre de
+                  navigation et le CTA de la carte "Cette semaine" ci-dessus — un 3e lien
+                  vers la même page n'ajoutait rien. */}
+              <div className="mt-8 grid gap-6 md:max-w-sm">
                 <InviteMentorDialog
                   childId={selected!.id}
                   childName={selected!.name}
@@ -449,7 +455,7 @@ function DashboardPage() {
 
             <form onSubmit={handleSavePhone} className="mt-6 space-y-4">
               <div>
-                <label className="mb-2 block text-xs font-semibold uppercase tracking-wider text-ink/50">
+                <label className="mb-2 block text-xs font-semibold uppercase tracking-wider text-ink/60">
                   Numéro de téléphone
                 </label>
                 <div className="flex gap-2">
@@ -488,7 +494,7 @@ function DashboardPage() {
                     />
                   </div>
                 </div>
-                <div className="mt-1 flex items-center justify-between text-[11px] font-medium text-ink/40">
+                <div className="mt-1 flex items-center justify-between text-[11px] font-medium text-ink/60">
                   <span>Pays : {selectedCountry.name}</span>
                   <span>{phoneNumber.length} / {selectedCountry.limit} chiffres</span>
                 </div>
@@ -521,7 +527,7 @@ function DashboardPage() {
                 <button
                   type="button"
                   onClick={() => setShowPhoneModal(false)}
-                  className="w-full py-2.5 text-center text-xs font-bold text-ink/40 hover:text-ink transition-all cursor-pointer"
+                  className="w-full py-2.5 text-center text-xs font-bold text-ink/60 hover:text-ink transition-all cursor-pointer"
                 >
                   {session?.user?.user_metadata?.phone ? "Fermer" : "Passer pour l'instant"}
                 </button>
@@ -555,7 +561,7 @@ function DashboardPage() {
 
             {/* Pricing */}
             <div className="mb-6 rounded-2xl border-[3px] border-ink bg-surface p-5 shadow-brutal-sm">
-              <p className="text-xs font-black uppercase tracking-widest text-ink/40 mb-1">Profil supplémentaire</p>
+              <p className="text-xs font-black uppercase tracking-widest text-ink/60 mb-1">Profil supplémentaire</p>
               <p className="font-display text-3xl font-black text-ink">
                 5 000 <span className="text-lg text-ink/60">FCFA</span>
               </p>
@@ -595,7 +601,7 @@ function DashboardPage() {
 
             <button
               onClick={() => setShowUpgradeModal(false)}
-              className="mt-3 w-full py-2 text-center text-xs font-bold text-ink/40 hover:text-ink transition-all"
+              className="mt-3 w-full py-2 text-center text-xs font-bold text-ink/60 hover:text-ink transition-all"
             >
               Fermer
             </button>

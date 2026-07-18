@@ -381,7 +381,7 @@ function ChallengesPage() {
 
   if (loading || !session || (fetching && initialLoad)) {
     return (
-      <div className="grid min-h-screen place-items-center bg-surface text-ink/50">
+      <div className="grid min-h-screen place-items-center bg-surface text-ink/60">
         Chargement…
       </div>
     );
@@ -409,7 +409,7 @@ function ChallengesPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-surface via-surface to-brand/5 text-ink">
-      <AppHeader />
+      <AppHeader hideTabBarLinks />
 
       <main className="mx-auto max-w-6xl px-6 py-10 md:flex md:gap-8">
         <AppTabBar profileId={profileId} />
@@ -427,7 +427,7 @@ function ChallengesPage() {
                 Tableau de bord de
               </p>
               <h1 className="font-display text-3xl font-extrabold md:text-4xl">{child.name}</h1>
-              <p className="mt-1 text-sm font-medium text-ink/50">
+              <p className="mt-1 text-sm font-medium text-ink/60">
                 {child.age} ans
                 {child.interests.length > 0 && ` · ${child.interests.slice(0, 3).join(", ")}`}
               </p>
@@ -483,7 +483,7 @@ function ChallengesPage() {
                 Carte des Talents
               </h3>
               <TalentRadarChart talents={child.talents} name={child.name} className="h-64 w-full" age={child.age} dark />
-              <p className="text-[11px] text-center text-ink/40 font-medium">
+              <p className="text-[11px] text-center text-ink/60 font-medium">
                 Cette carte s'affine et se développe à mesure que l'enfant réalise ses défis.
               </p>
             </div>
@@ -595,7 +595,7 @@ function ChallengesPage() {
                       </span>
                       <DifficultyBadge difficulty={currentGeneratedChallenge.difficulty} />
                     </div>
-                    <span className="text-xs text-ink/40 font-semibold">🕒 {currentGeneratedChallenge.duration}</span>
+                    <span className="text-xs text-ink/60 font-semibold">🕒 {currentGeneratedChallenge.duration}</span>
                   </div>
                   <h4 className="font-display text-xl font-extrabold leading-tight text-ink mb-2">
                     {currentGeneratedChallenge.title}
@@ -615,7 +615,7 @@ function ChallengesPage() {
 
                   <div className="grid gap-4 sm:grid-cols-2 mb-6">
                     <div>
-                      <h5 className="text-[10px] font-bold uppercase tracking-wider text-ink/40 mb-2">Étapes du défi</h5>
+                      <h5 className="text-[10px] font-bold uppercase tracking-wider text-ink/60 mb-2">Étapes du défi</h5>
                       <ul className="text-xs space-y-1.5 text-ink/70 list-decimal list-inside pl-1">
                         {currentGeneratedChallenge.steps.slice(0, 4).map((step: string, idx: number) => (
                           <li key={idx} className="truncate"><MarkdownContent content={step} inline /></li>
@@ -623,7 +623,7 @@ function ChallengesPage() {
                       </ul>
                     </div>
                     <div>
-                      <h5 className="text-[10px] font-bold uppercase tracking-wider text-ink/40 mb-2">Matériel requis</h5>
+                      <h5 className="text-[10px] font-bold uppercase tracking-wider text-ink/60 mb-2">Matériel requis</h5>
                       <ul className="text-xs space-y-1.5 text-ink/70 list-disc list-inside pl-1">
                         {currentGeneratedChallenge.materials.slice(0, 4).map((mat: string, idx: number) => (
                           <li key={idx} className="truncate">{mat}</li>
@@ -807,7 +807,7 @@ function MaterialsChecklist({ materials }: { materials: string[] }) {
   
   return (
     <div>
-      <p className="mb-2.5 text-[10px] font-extrabold uppercase tracking-widest text-ink/40">
+      <p className="mb-2.5 text-[10px] font-extrabold uppercase tracking-widest text-ink/60">
         Matériel requis & rassemblé
       </p>
       <div className="flex flex-wrap gap-2">
@@ -895,7 +895,7 @@ function ChallengeCard({
       {/* Progress Slider */}
       <div className="mb-4 rounded-2xl bg-surface p-4 border-2 border-ink">
         <div className="mb-2 flex items-center justify-between text-xs">
-          <span className="font-bold text-ink/50">Progression</span>
+          <span className="font-bold text-ink/60">Progression</span>
           <span className="font-extrabold text-brand">{c.progress}%</span>
         </div>
         <input
@@ -909,7 +909,7 @@ function ChallengeCard({
         />
       </div>
 
-      <div className="mb-4 flex items-center gap-4 text-xs font-semibold text-ink/40">
+      <div className="mb-4 flex items-center gap-4 text-xs font-semibold text-ink/60">
         <span>⏱ Durée : {c.duration}</span>
         {c.completed_at && (
           <span className="flex items-center gap-1 text-emerald-600">
@@ -1014,7 +1014,7 @@ function ChallengeCard({
 
               {/* Parent Notes */}
               <div className="space-y-3">
-                <p className="text-[10px] font-extrabold uppercase tracking-widest text-ink/40">
+                <p className="text-[10px] font-extrabold uppercase tracking-widest text-ink/60">
                   Journal d'apprentissage du parent
                 </p>
                 <textarea
