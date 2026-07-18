@@ -57,9 +57,10 @@ function DashboardPage() {
     // can silently block "+ Nouveau profil" below even though the DB-side
     // quota (enforced by the enforce_child_profile_quota trigger, which
     // reads auth.users live) was actually raised. Refresh once on mount so
-    // the quota gate reflects the real current slot count.
-    supabase.auth.refreshSession();
-  }, []);
+    // the quota gate reflects the real current slot count. Gated on an
+    // existing session so logged-out visitors don't pay this network call.
+    if (session) void supabase.auth.refreshSession();
+  }, [session]);
 
   useEffect(() => {
     supabase

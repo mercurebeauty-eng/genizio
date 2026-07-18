@@ -25,6 +25,7 @@ import { Route as ProfilesIndexRouteImport } from './routes/profiles.index'
 import { Route as AdminIndexRouteImport } from './routes/admin.index'
 import { Route as STokenRouteImport } from './routes/s.$token'
 import { Route as ProfilesManageRouteImport } from './routes/profiles.manage'
+import { Route as PPostIdRouteImport } from './routes/p.$postId'
 import { Route as AdminSupervisorsRouteImport } from './routes/admin.supervisors'
 import { Route as AdminProductsRouteImport } from './routes/admin.products'
 import { Route as ProfilesProfileIdQuestRouteImport } from './routes/profiles.$profileId.quest'
@@ -113,6 +114,11 @@ const ProfilesManageRoute = ProfilesManageRouteImport.update({
   path: '/manage',
   getParentRoute: () => ProfilesRoute,
 } as any)
+const PPostIdRoute = PPostIdRouteImport.update({
+  id: '/p/$postId',
+  path: '/p/$postId',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AdminSupervisorsRoute = AdminSupervisorsRouteImport.update({
   id: '/supervisors',
   path: '/supervisors',
@@ -168,6 +174,7 @@ export interface FileRoutesByFullPath {
   '/terms': typeof TermsRoute
   '/admin/products': typeof AdminProductsRoute
   '/admin/supervisors': typeof AdminSupervisorsRoute
+  '/p/$postId': typeof PPostIdRoute
   '/profiles/manage': typeof ProfilesManageRoute
   '/s/$token': typeof STokenRoute
   '/admin/': typeof AdminIndexRoute
@@ -191,6 +198,7 @@ export interface FileRoutesByTo {
   '/terms': typeof TermsRoute
   '/admin/products': typeof AdminProductsRoute
   '/admin/supervisors': typeof AdminSupervisorsRoute
+  '/p/$postId': typeof PPostIdRoute
   '/profiles/manage': typeof ProfilesManageRoute
   '/s/$token': typeof STokenRoute
   '/admin': typeof AdminIndexRoute
@@ -217,6 +225,7 @@ export interface FileRoutesById {
   '/terms': typeof TermsRoute
   '/admin/products': typeof AdminProductsRoute
   '/admin/supervisors': typeof AdminSupervisorsRoute
+  '/p/$postId': typeof PPostIdRoute
   '/profiles/manage': typeof ProfilesManageRoute
   '/s/$token': typeof STokenRoute
   '/admin/': typeof AdminIndexRoute
@@ -244,6 +253,7 @@ export interface FileRouteTypes {
     | '/terms'
     | '/admin/products'
     | '/admin/supervisors'
+    | '/p/$postId'
     | '/profiles/manage'
     | '/s/$token'
     | '/admin/'
@@ -267,6 +277,7 @@ export interface FileRouteTypes {
     | '/terms'
     | '/admin/products'
     | '/admin/supervisors'
+    | '/p/$postId'
     | '/profiles/manage'
     | '/s/$token'
     | '/admin'
@@ -292,6 +303,7 @@ export interface FileRouteTypes {
     | '/terms'
     | '/admin/products'
     | '/admin/supervisors'
+    | '/p/$postId'
     | '/profiles/manage'
     | '/s/$token'
     | '/admin/'
@@ -316,6 +328,7 @@ export interface RootRouteChildren {
   ProfilesRoute: typeof ProfilesRouteWithChildren
   SupervisorRoute: typeof SupervisorRoute
   TermsRoute: typeof TermsRoute
+  PPostIdRoute: typeof PPostIdRoute
   STokenRoute: typeof STokenRoute
 }
 
@@ -433,6 +446,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ProfilesManageRouteImport
       parentRoute: typeof ProfilesRoute
     }
+    '/p/$postId': {
+      id: '/p/$postId'
+      path: '/p/$postId'
+      fullPath: '/p/$postId'
+      preLoaderRoute: typeof PPostIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/admin/supervisors': {
       id: '/admin/supervisors'
       path: '/supervisors'
@@ -536,6 +556,7 @@ const rootRouteChildren: RootRouteChildren = {
   ProfilesRoute: ProfilesRouteWithChildren,
   SupervisorRoute: SupervisorRoute,
   TermsRoute: TermsRoute,
+  PPostIdRoute: PPostIdRoute,
   STokenRoute: STokenRoute,
 }
 export const routeTree = rootRouteImport

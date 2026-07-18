@@ -174,7 +174,14 @@ function QuestPage() {
         description: "Ajoute une photo pour que Naya découvre tes talents.",
         action: {
           label: "Ajouter une preuve",
-          onClick: () => navigate({ to: "/profiles/$profileId/challenges", params: { profileId } }),
+          onClick: () => {
+            // The challenges page never auto-opens a just-completed card
+            // (getActiveChallenge only surfaces in_progress/todo), so without
+            // this it lands the parent on a page with no indication of which
+            // collapsed card is theirs. One-shot deep link consumed there.
+            sessionStorage.setItem("genizio:highlightChallenge", activeChallenge.id);
+            navigate({ to: "/profiles/$profileId/challenges", params: { profileId } });
+          },
         },
         duration: 8000,
       });
@@ -228,7 +235,7 @@ function QuestPage() {
     const currentStepText = steps[currentStepIndex] || "";
 
     return (
-      <div className="min-h-screen bg-gradient-to-br from-amber-50/50 via-sky-50/50 to-emerald-50/50 flex flex-col p-6 relative overflow-hidden font-sans text-ink select-none">
+      <div className="min-h-screen bg-gradient-to-br from-amber-50/50 via-sky-50/50 to-emerald-50/50 flex flex-col p-6 pb-24 relative overflow-hidden font-sans text-ink select-none md:pb-6">
         {/* Floating background decorative circles */}
         <div className="absolute top-0 right-0 -mr-20 -mt-20 size-64 rounded-full bg-brand/10 blur-3xl pointer-events-none" />
         <div className="absolute bottom-0 left-0 -ml-20 -mb-20 size-64 rounded-full bg-sky/10 blur-3xl pointer-events-none" />
@@ -401,7 +408,7 @@ function QuestPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-brand/5 to-white flex flex-col relative overflow-hidden font-sans text-ink">
+    <div className="min-h-screen bg-gradient-to-b from-brand/5 to-white flex flex-col relative overflow-hidden pb-24 font-sans text-ink md:pb-6">
       {/* Decorative background blobs */}
       <div className="absolute top-0 right-0 -mr-20 -mt-20 size-64 rounded-full bg-brand/10 blur-3xl pointer-events-none" />
       <div className="absolute bottom-0 left-0 -ml-20 -mb-20 size-64 rounded-full bg-sky/10 blur-3xl pointer-events-none" />

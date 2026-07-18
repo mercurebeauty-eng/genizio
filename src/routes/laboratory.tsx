@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { useSession } from "@/hooks/use-session";
 import { AppHeader } from "@/components/AppHeader";
+import { AppTabBar } from "@/components/AppTabBar";
 import { supabase } from "@/integrations/supabase/client";
 import { generateSingleChallenge, assignTemplateChallenge } from "@/lib/challenges.functions";
 import { createOrder } from "@/lib/products.functions";
@@ -240,7 +241,8 @@ function LaboratoryPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-surface via-surface to-brand/5 p-6 font-sans text-ink pb-24">
-      <AppHeader />
+      <AppHeader hideTabBarLinks />
+      <AppTabBar profileId={selectedChild} />
 
       <div className="pt-6"></div>
 

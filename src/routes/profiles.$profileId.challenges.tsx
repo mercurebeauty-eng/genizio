@@ -287,10 +287,27 @@ function ChallengesPage() {
     setChild((c.data as Child) ?? null);
     const list = (ch.data ?? []) as Challenge[];
     setChallenges(list);
-    const active = getActiveChallenge(list);
-    if (active && !openId) {
-      setOpenId(active.id);
+
+    // A just-completed challenge is never picked by getActiveChallenge below
+    // (it only surfaces in_progress/todo) — arriving here from the Quest
+    // page's "Ajouter une preuve" toast used to drop the parent on this list
+    // with no indication of which (collapsed) card was theirs, so the
+    // proof/validation step was effectively undiscoverable. Honor a
+    // one-shot deep link set by that toast instead.
+    const highlightId = sessionStorage.getItem("genizio:highlightChallenge");
+    if (highlightId && list.some((item) => item.id === highlightId)) {
+      sessionStorage.removeItem("genizio:highlightChallenge");
+      setOpenId(highlightId);
+      setTimeout(() => {
+        document.getElementById(`challenge-${highlightId}`)?.scrollIntoView({ behavior: "smooth", block: "center" });
+      }, 150);
+    } else {
+      const active = getActiveChallenge(list);
+      if (active && !openId) {
+        setOpenId(active.id);
+      }
     }
+
     setFetching(false);
     setInitialLoad(false);
   };
@@ -867,7 +884,7 @@ function ChallengeCard({
   const [savedFlash, setSavedFlash] = useState(false);
 
   return (
-    <div className="rounded-3xl bg-white p-6 border-[3px] border-ink shadow-brutal transition-all">
+    <div id={`challenge-${c.id}`} className="rounded-3xl bg-white p-6 border-[3px] border-ink shadow-brutal transition-all">
       <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
         <div className="flex items-center gap-2">
           <span className="rounded-full bg-brand px-3 py-1 text-[10px] font-black uppercase tracking-widest text-white border-2 border-ink shadow-brutal-sm">
@@ -1057,11 +1074,12 @@ function ChallengeCard({
 
               {/* Validation section */}
               {c.status === "completed" && !c.ai_observations && (
-                <OutcomeChat 
-                  challenge={c} 
-                  childId={childId} 
-                  childName={childName} 
-                  onValidated={onValidated} 
+                <OutcomeChat
+                  challenge={c}
+                  childName={childName}
+                  notes={notesDraft}
+                  onSaveNotes={onNotes}
+                  onValidated={onValidated}
                 />
               )}
 

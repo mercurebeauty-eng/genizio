@@ -63,6 +63,17 @@ async function trackMaterialSuggestions(items: { material_tags: string[]; title:
   }
 }
 
+// LLMs are known to favor items earlier in a list they're asked to choose
+// from, independent of actual relevance. DOMAINS is always presented in the
+// same order to every generation call for every child — shuffle it per call
+// so that position bias doesn't quietly skew which domain gets picked across
+// the whole platform. Same principle as the talent tie-break fix: don't let
+// a fixed array order stand in for what should be a random/deterministic
+// choice.
+function shuffle<T>(items: readonly T[]): T[] {
+  return [...items].sort(() => Math.random() - 0.5);
+}
+
 const DOMAINS = [
   "Sciences",
   "Architecture",
@@ -89,6 +100,10 @@ function getLeastExploredTalentLabels(
   const raw = talents ?? {};
   return VALID_TALENT_KEYS
     .map((key) => ({ key, score: raw[key] ?? 0 }))
+    // Shuffle before the (stable) sort so ties — e.g. a brand-new profile
+    // where every score defaults to 0 — don't always resolve to the same
+    // two talents in VALID_TALENT_KEYS' declared order.
+    .sort(() => Math.random() - 0.5)
     .sort((a, b) => a.score - b.score)
     .slice(0, count)
     .map(({ key }) => TALENT_KEY_LABELS[key]);
@@ -102,33 +117,67 @@ function getLeastExploredTalentLabels(
 // 12+ get concrete precautions to follow rather than a blocking tone — a
 // 12-year-old lighting a candle with instructions is normal, not something
 // to gate behind mandatory adult presence.
+// JS's \b word boundary is ASCII-only (\w never matches accented letters),
+// so a plain \b...\b pattern silently fails to match a keyword that starts
+// or ends with an accented character (e.g. "électricité", "dénudé") — the
+// boundary can never form between two non-\w characters. Build boundaries
+// with Unicode-aware lookarounds instead so accented keywords match too.
+function wordBoundaryPattern(alternatives: string): RegExp {
+  return new RegExp(`(?<![\\p{L}\\p{N}_])(?:${alternatives})(?![\\p{L}\\p{N}_])`, "iu");
+}
+
 const SAFETY_KEYWORDS: { pattern: RegExp; note: { under12: string; from12: string } }[] = [
   {
-    pattern: /\b(feu|flamme|briquet|allumettes?|bougie)\b/i,
+    pattern: wordBoundaryPattern("feu|flamme|briquet|allumettes?|bougie"),
     note: {
       under12: "Cette activité implique du feu : un adulte doit être présent et superviser directement toute la manipulation.",
       from12: "Mesures de sécurité à prendre : utilise le briquet ou les allumettes dans un endroit dégagé, loin de tissus ou de papier, garde de l'eau ou un linge humide à proximité, et éteins bien la flamme après usage. Informe un parent avant de commencer.",
     },
   },
   {
-    pattern: /\b(couteau|cutter|lame|ciseaux pointus)\b/i,
+    pattern: wordBoundaryPattern("couteau|cutter|lame|ciseaux pointus"),
     note: {
       under12: "Cette activité implique un objet tranchant : un adulte doit couper ou superviser directement cette étape.",
       from12: "Mesures de sécurité à prendre : coupe toujours en éloignant tes doigts de la lame, travaille sur une surface stable, et range l'outil après usage.",
     },
   },
   {
-    pattern: /\b(produits? chimiques?|eau de javel|acide|soude caustique)\b/i,
+    pattern: wordBoundaryPattern("produits? chimiques?|eau de javel|acide|soude caustique"),
     note: {
       under12: "Cette activité implique des produits chimiques : un adulte doit manipuler ou superviser directement cette étape.",
       from12: "Mesures de sécurité à prendre : manipule ces produits dans un endroit ventilé, évite tout contact avec les yeux ou la peau, et lave-toi les mains après usage.",
     },
   },
   {
-    pattern: /\b(électricité|prise électrique|courant électrique|fils? dénudés?)\b/i,
+    pattern: wordBoundaryPattern("électricité|prise électrique|courant électrique|fils? dénudés?"),
     note: {
       under12: "Cette activité implique de l'électricité : un adulte doit superviser directement cette étape.",
       from12: "Mesures de sécurité à prendre : ne touche jamais une prise ou un fil dénudé avec les mains mouillées, et débranche l'appareil avant toute manipulation.",
+    },
+  },
+  {
+    pattern: wordBoundaryPattern("cuisinière|plaque de cuisson|plaque chauffante|four chaud|eau bouillante|huile chaude|casserole|poêle"),
+    note: {
+      under12: "Cette activité implique une source de chaleur en cuisine (cuisinière, four, eau ou huile chaude) : un adulte doit être présent et superviser directement toute la manipulation.",
+      from12: "Mesures de sécurité à prendre : ne laisse jamais une casserole ou une poêle sans surveillance sur le feu, utilise des maniques pour les ustensiles chauds, éloigne les manches des bords de la plaque, et informe un parent avant de commencer.",
+    },
+  },
+  {
+    // "Extérieur non sécurisé" is the one risk category the prompt asks the
+    // model to catch with zero deterministic backstop behind it. Nouns only
+    // where possible (piscine, toit...) plus stems (grimp\p{L}*, escalad\p{L}*)
+    // for the two common verbs, so conjugated forms ("grimpe", "escalade")
+    // still match — a plain infinitive-only match would miss most real
+    // generated text. Deliberately excludes generic outdoor words (jardin,
+    // quartier, dehors) since the app's own principles already push for
+    // "réalisable... dans le quartier" — flagging that would be exactly the
+    // over-caution this net is designed to avoid.
+    pattern: wordBoundaryPattern(
+      "piscine|rivière|fleuve|lac|étang|mer|hauteur|toit|échelle|grimp\\p{L}*|escalad\\p{L}*|falaise|circulation|serpent|scorpion|animal sauvage"
+    ),
+    note: {
+      under12: "Cette activité se déroule dans un environnement extérieur avec un risque réel (eau profonde, hauteur, circulation ou animal) : un adulte doit être présent et superviser directement toute la manipulation.",
+      from12: "Mesures de sécurité à prendre : reste dans une zone connue de tes parents, ne t'approche jamais seul d'un point d'eau profond, d'une hauteur ou d'une route très fréquentée, et informe un parent avant de commencer.",
     },
   },
 ];
@@ -157,6 +206,49 @@ function applySafetyNet<T extends {
   };
 }
 
+// The model can (and does) omit "difficulty" despite the prompt asking for
+// it; defaulting straight to "moyen" masked that silently. Warn so the gap
+// is at least visible in logs instead of inflating the "moyen" bucket with
+// no trace of why.
+function resolveDifficulty(
+  difficulty: string | null | undefined,
+  challengeTitle: string
+): "facile" | "moyen" | "difficile" {
+  if (difficulty === "facile" || difficulty === "moyen" || difficulty === "difficile") {
+    return difficulty;
+  }
+  console.warn(`[challenges] "difficulty" manquant ou invalide pour "${challengeTitle}" — défaut "moyen" appliqué.`);
+  return "moyen";
+}
+
+// Single choke point for the checks every challenge must pass through before
+// it reaches a parent or the DB: the safety net, the difficulty fallback,
+// title truncation, material_tags normalization. Before this existed, the
+// 3 insertion points (bulk insert, single-challenge preview, template
+// assignment) each called applySafetyNet/resolveDifficulty separately —
+// nothing stopped a future 4th call site (or a reordering refactor) from
+// silently skipping one of them. Route every insertion/preview through this
+// instead of re-deriving these fields by hand.
+function finalizeChallenge<T extends {
+  title: string;
+  description: string;
+  steps: string[];
+  materials: string[];
+  material_tags?: string[] | null;
+  requires_supervision?: boolean | null;
+  supervision_warning?: string | null;
+  difficulty?: string | null;
+}>(c: T, age: number) {
+  const safety = applySafetyNet(c, age);
+  return {
+    title: c.title.slice(0, 120),
+    material_tags: c.material_tags ?? [],
+    difficulty: resolveDifficulty(c.difficulty, c.title),
+    requires_supervision: safety.requires_supervision,
+    supervision_warning: safety.supervision_warning,
+  };
+}
+
 // Shared constitution injected into every challenge-generation prompt (bulk
 // and single). Written dense and numbered on purpose: the text-only calls
 // run on Haiku (lightweight model), which needs explicit, unambiguous rules
@@ -173,12 +265,34 @@ const GENIZIO_PRINCIPLES = `PRINCIPES DE GÉNÉRATION GÉNIZIO (règles strictes
 - RELECTURE OBLIGATOIRE : avant de répondre, relis chaque champ texte et corrige toute faute d'orthographe, d'accent ou de grammaire. Zéro faute tolérée dans le JSON final.
 - CLARTÉ POUR L'ENFANT : le titre et la description doivent être compréhensibles directement par l'enfant de cet âge, sans qu'un adulte ait besoin de les lui expliquer. Évite le jargon technique ou adulte (ex: "algorithme", "pseudo-code", "prototype") — si un tel mot est vraiment nécessaire au concept, explique-le en langage simple dans la même phrase.`;
 
+// Was hand-copied into both prompts below and had already drifted once
+// (one copy had an extra clarifying example the other lacked) — a single
+// shared string, like GENIZIO_PRINCIPLES above, means a future wording
+// tweak only has to be made once. Each call site prefixes its own list
+// marker ("- " or "N. ") since the two prompts use different list styles.
+const SAFETY_INSTRUCTION = `SÉCURITÉ ET SUPERVISION, sans excès de prudence : analyse si le défi comporte des risques réels (feu, cuisine avec source de chaleur — plaque, four, eau ou huile chaude —, objets coupants, produits chimiques, électricité, extérieur non sécurisé — eau profonde, hauteur, circulation, animaux dangereux). Si OUI, règle "requires_supervision" à true. Adapte le ton de "supervision_warning" à l'âge : avant 12 ans, précise qu'un adulte doit être présent pour cette étape ; à partir de 12 ans, un enfant peut réaliser l'étape lui-même — donne des mesures de sécurité concrètes à suivre plutôt que d'exiger la présence d'un adulte (ex: manipuler un briquet loin de matières inflammables, avec de l'eau à proximité). Ne signale pas de risque pour des activités quotidiennes sans danger réel (cuisine froide/sans cuisson, mélanger des ingrédients, extérieur familier, etc.).`;
+
 // Helper to call Google AI Studio OpenAI-compatible endpoint
+const ALLOWED_IMAGE_MEDIA_TYPES = ["image/jpeg", "image/png", "image/gif", "image/webp"];
+
 export async function callClaude(
   prompt: string,
   jsonMode: boolean = false,
   imageUrl?: string,
-  maxRetries = 3
+  // Anthropic's output-token rate limit is reserved based on this requested
+  // max, not on what's actually generated — a call that only needs ~100
+  // tokens but asks for 4000 can eat an entire minute's budget by itself.
+  // Every call site should pass a value close to its real expected output
+  // instead of relying on one size fits all.
+  maxOutputTokens = 4000,
+  maxRetries = 3,
+  // Preferred over imageUrl when present — the caller already has the raw
+  // bytes (e.g. straight from the browser's file input) and skips the
+  // upload-then-fetch round trip through Supabase Storage that imageUrl
+  // requires (see validateChallengeProof: that upload used to happen on
+  // every submission attempt regardless of outcome, hitting the storage
+  // API's own rate limit).
+  imageData?: { base64: string; mediaType: string }
 ): Promise<string> {
   const apiKey = process.env.ANTHROPIC_API_KEY;
   if (!apiKey) {
@@ -187,7 +301,19 @@ export async function callClaude(
 
   const contentBlocks: any[] = [];
 
-  if (imageUrl) {
+  if (imageData) {
+    const mediaType = ALLOWED_IMAGE_MEDIA_TYPES.includes(imageData.mediaType)
+      ? imageData.mediaType
+      : "image/jpeg";
+    contentBlocks.push({
+      type: "image",
+      source: {
+        type: "base64",
+        media_type: mediaType,
+        data: imageData.base64,
+      },
+    });
+  } else if (imageUrl) {
     // Let a fetch/decode failure propagate instead of silently continuing
     // text-only — callers that pass an image expect the AI to actually see
     // it, and validateChallengeProof's fallback path only works if this throws.
@@ -198,11 +324,7 @@ export async function callClaude(
     const arrayBuffer = await imgResp.arrayBuffer();
     const base64Data = Buffer.from(arrayBuffer).toString("base64");
     const contentType = imgResp.headers.get("content-type") || "image/jpeg";
-
-    let mediaType = contentType;
-    if (!["image/jpeg", "image/png", "image/gif", "image/webp"].includes(contentType)) {
-      mediaType = "image/jpeg";
-    }
+    const mediaType = ALLOWED_IMAGE_MEDIA_TYPES.includes(contentType) ? contentType : "image/jpeg";
 
     contentBlocks.push({
       type: "image",
@@ -241,7 +363,7 @@ export async function callClaude(
         },
         body: JSON.stringify({
           model: model,
-          max_tokens: 4000,
+          max_tokens: maxOutputTokens,
           system: systemPrompt,
           messages: [
             {
@@ -314,22 +436,56 @@ export const generateChallenges = createServerFn({ method: "POST" })
       .maybeSingle();
     if (childErr || !child) throw new Error("Profil enfant introuvable");
 
-    const { data: existing } = await supabase
-      .from("challenges")
-      .select("title")
-      .eq("child_id", data.childId);
-    const existingTitles = (existing ?? []).map((c) => c.title);
+    // Domains repeatedly generated but never even started are a real signal
+    // that's currently thrown away: the prompt only ever sees *completed*
+    // challenges (below), so a domain the child ignores keeps coming back
+    // just because the rotation/least-explored logic doesn't know it was
+    // ignored. 14 days is long enough that "todo" genuinely means ignored,
+    // not "hasn't gotten to it yet this week".
+    const STALE_DOMAIN_CUTOFF = new Date(Date.now() - 14 * 24 * 60 * 60 * 1000).toISOString();
 
-    const { data: completedChallenges } = await supabase
-      .from("challenges")
-      .select("title, domain, ai_observations")
-      .eq("child_id", data.childId)
-      .eq("status", "completed")
-      .order("completed_at", { ascending: false })
-      .limit(6);
+    const [{ data: existing }, { data: completedChallenges }, { data: staleChallenges }] = await Promise.all([
+      supabase
+        .from("challenges")
+        .select("title")
+        .eq("child_id", data.childId)
+        // Unbounded before: for a long-tenured family this list could grow
+        // into a huge block of text sitting right before the safety
+        // instruction later in the prompt, risking the "lost in the middle"
+        // effect where instructions buried in a long context get followed
+        // less reliably. The 30 most recent titles are enough to avoid
+        // repeats without letting the prompt grow indefinitely.
+        .order("created_at", { ascending: false })
+        .limit(30),
+      supabase
+        .from("challenges")
+        .select("title, domain, ai_observations")
+        .eq("child_id", data.childId)
+        .eq("status", "completed")
+        .order("completed_at", { ascending: false })
+        .limit(6),
+      supabase
+        .from("challenges")
+        .select("domain")
+        .eq("child_id", data.childId)
+        .eq("status", "todo")
+        .lt("created_at", STALE_DOMAIN_CUTOFF),
+    ]);
+    const existingTitles = (existing ?? []).map((c) => c.title);
     const completedSummary = (completedChallenges ?? [])
       .map((c) => `- Défi "${c.title}" (${c.domain}) : "${c.ai_observations ?? ''}"`)
       .join("\n");
+
+    // A single unstarted challenge in a domain proves nothing (parents get
+    // busy) — only flag a domain once it's happened at least twice, so this
+    // is a real repeated pattern rather than noise from one busy week.
+    const staleDomainCounts = (staleChallenges ?? []).reduce<Record<string, number>>((acc, r) => {
+      acc[r.domain] = (acc[r.domain] ?? 0) + 1;
+      return acc;
+    }, {});
+    const ignoredDomains = Object.entries(staleDomainCounts)
+      .filter(([, count]) => count >= 2)
+      .map(([domain]) => domain);
 
     const leastExplored = getLeastExploredTalentLabels(child.talents as Record<string, number> | null);
 
@@ -358,19 +514,21 @@ ${GENIZIO_PRINCIPLES}
 Contraintes :
 - Ignore le biais parental et utilise les données réelles : les intelligences actuellement les moins explorées chez cet enfant sont ${leastExplored.join(" et ")}. Sauf si le contexte les rend peu réalistes, au moins un des ${data.count} défis DOIT cibler l'une de ces intelligences plutôt que de renforcer uniquement les intérêts déjà connus — c'est ainsi que Naya révèle des talents cachés au lieu de se contenter de confirmer ce que le parent pense déjà savoir.
 - Ancre les défis dans le contexte africain (matériaux locaux, réalités du quotidien, langues, marchés, agriculture, artisanat, culture).
-- Choisis parmi ces domaines : ${DOMAINS.join(", ")}.
+- Choisis parmi ces domaines : ${shuffle(DOMAINS).join(", ")}.${ignoredDomains.length > 0 ? `\n- Cet enfant a déjà reçu plusieurs défis dans ${ignoredDomains.length > 1 ? "ces domaines" : "ce domaine"} (${ignoredDomains.join(", ")}) sans jamais les commencer : évite de reproposer ${ignoredDomains.length > 1 ? "ces domaines" : "ce domaine"}, sauf sous un angle radicalement différent de ce qui a déjà été proposé.` : ""}
 - Chaque défi doit être concret, réalisable à la maison ou dans le quartier, adapté à l'âge.
 - Étapes claires (3 à 6), matériaux simples et accessibles.
 - Ne répète pas ces titres déjà proposés : ${existingTitles.join(" | ") || "(aucun)"}.
 - Pour "material_tags" : un tag court en minuscules, sans accent, par matériau physique achetable
   (ex: "carton", "cutter", "colle", "ampoule") — pas les objets déjà présents chez tout le monde
   (eau, table, papier). Un tableau vide si rien d'achetable n'est nécessaire.
-- SÉCURITÉ ET SUPERVISION, sans excès de prudence : analyse si le défi comporte des risques réels (feu, objets coupants, produits chimiques, électricité, extérieur non sécurisé). Si OUI, règle "requires_supervision" à true. Adapte le ton de "supervision_warning" à l'âge : avant 12 ans, précise qu'un adulte doit être présent pour cette étape ; à partir de 12 ans, un enfant peut réaliser l'étape lui-même — donne des mesures de sécurité concrètes à suivre plutôt que d'exiger la présence d'un adulte (ex: manipuler un briquet loin de matières inflammables, avec de l'eau à proximité). Ne signale pas de risque pour des activités quotidiennes sans danger réel (cuisine simple, extérieur familier, etc.).
+- ${SAFETY_INSTRUCTION}
 
 Réponds STRICTEMENT en JSON valide avec ce format, pour chaque défi :
 {"challenges":[{"domain":"...","title":"...","description":"...","duration":"...","steps":["...","..."],"materials":["...","..."],"material_tags":["..."],"pedagogical_context":"Ce que Naya observe via cette activité","intelligences":["Intelligence dominante sollicitée"],"requires_supervision":true ou false,"supervision_warning":"..." (ou null si false),"difficulty":"facile"|"moyen"|"difficile"}]}`;
 
-    const content = await callClaude(prompt, true);
+    // Up to 6 full défis in one response — genuinely needs the full default
+    // budget, unlike every other callClaude site in this file.
+    const content = await callClaude(prompt, true, undefined, 4000);
     let parsed: { challenges?: unknown };
     try {
       parsed = JSON.parse(content);
@@ -385,25 +543,27 @@ Réponds STRICTEMENT en JSON valide avec ce format, pour chaque défi :
       throw new Error("Réponse IA invalide");
     }
 
-    const rows = list.map((c) => {
-      const safety = applySafetyNet(c, child.age);
-      return {
-        user_id: userId,
-        child_id: data.childId,
-        domain: c.domain,
-        title: c.title.slice(0, 120),
-        description: c.description,
-        duration: c.duration,
-        steps: c.steps,
-        materials: c.materials,
-        material_tags: c.material_tags ?? [],
-        pedagogical_context: c.pedagogical_context || null,
-        target_intelligences: c.intelligences || [c.domain],
-        requires_supervision: safety.requires_supervision,
-        supervision_warning: safety.supervision_warning,
-        difficulty: c.difficulty ?? "moyen",
-      };
-    });
+    const rows = list.map((c) => ({
+      user_id: userId,
+      child_id: data.childId,
+      domain: c.domain,
+      description: c.description,
+      duration: c.duration,
+      steps: c.steps,
+      materials: c.materials,
+      pedagogical_context: c.pedagogical_context || null,
+      // The model isn't told which exact tokens to use for "intelligences"
+      // (it's free text, e.g. "Créativité"), so it never matches
+      // VALID_TALENT_KEYS's technical keys (creative, spatial, ...) —
+      // target_intelligences at creation time is decorative, not the
+      // source of truth for talent scoring (that's increment_child_talents
+      // at validation time, which does constrain to the 9 known keys).
+      // Falling back to [c.domain] used to silently write a non-taxonomy
+      // value (e.g. "Cuisine") into this column; [] keeps this consistent
+      // with assignTemplateChallenge instead.
+      target_intelligences: c.intelligences || [],
+      ...finalizeChallenge(c, child.age),
+    }));
 
     const { data: inserted, error: insErr } = await supabase
       .from("challenges")
@@ -484,7 +644,11 @@ export const deleteChallenge = createServerFn({ method: "POST" })
 const ValidateInput = z.object({
   id: z.string().uuid(),
   proofText: z.string().max(2000).optional(),
-  proofImageUrl: z.string().url().optional(),
+  // Raw bytes instead of a pre-uploaded Storage URL — the image is only
+  // persisted to Storage after the AI confirms it's actually relevant (see
+  // below), instead of on every submission attempt regardless of outcome.
+  proofImageBase64: z.string().optional(),
+  proofImageMediaType: z.string().optional(),
 });
 
 export const validateChallengeProof = createServerFn({ method: "POST" })
@@ -509,11 +673,12 @@ Description du défi : ${challenge.description}
 
 Le parent a soumis cette preuve de réalisation :
 ${data.proofText ? `Texte/Notes : "${data.proofText}"` : ""}
-${data.proofImageUrl ? `Une image a également été fournie (vérifie l'image si possible).` : ""}
+${data.proofImageBase64 ? `Une image a également été fournie (vérifie l'image si possible).` : ""}
 
 Ta mission :
-1. Rédige une courte observation (2-3 phrases) très encourageante pour le parent, soulignant l'ingéniosité de l'enfant dans cette réalisation. (Tu peux t'adresser au parent). Texte brut uniquement, sans aucune syntaxe Markdown (pas de #, ##, **, tirets de liste).
-2. Détermine quelles intelligences ont été mobilisées et attribue des points (de 1 à 3 par intelligence).
+1. Vérifie D'ABORD si cette preuve correspond réellement à CE défi précis (le texte décrit-il une activité liée au défi ? l'image montre-t-elle quelque chose en rapport ?). Si la preuve est manifestement hors-sujet ou sans rapport avec le défi, n'écris AUCUN message de félicitations : explique poliment et brièvement au parent que la preuve ne semble pas correspondre à ce défi et invite à en soumettre une nouvelle. Dans ce cas, "talents_awarded" doit être un objet vide {}.
+2. Si (et seulement si) la preuve correspond bien au défi, rédige une courte observation (2-3 phrases) encourageante pour le parent, soulignant l'ingéniosité de l'enfant dans cette réalisation. (Tu peux t'adresser au parent). Texte brut uniquement, sans aucune syntaxe Markdown (pas de #, ##, **, tirets de liste).
+3. Dans ce cas seulement, détermine quelles intelligences ont été réellement mobilisées et attribue des points (de 1 à 3 par intelligence, selon la qualité réelle de la réalisation — ne distribue jamais de points par défaut).
 Les intelligences possibles sont : spatial, corporelle, sociale, entrepreneuriale, creative, artisanale, emotionnelle, logico_mathematique, linguistique.
 
 Réponds STRICTEMENT en JSON valide avec ce format :
@@ -525,20 +690,36 @@ Réponds STRICTEMENT en JSON valide avec ce format :
 }`;
 
     let aiContent = "";
-    let imageAnalyzed = !!data.proofImageUrl;
+    let imageAnalyzed = !!data.proofImageBase64;
+    const imageData = data.proofImageBase64
+      ? { base64: data.proofImageBase64, mediaType: data.proofImageMediaType ?? "image/jpeg" }
+      : undefined;
+    // A short observation + a small talents_awarded object — nowhere near
+    // the 4000-token default sized for a batch of full défis. Reserving
+    // that much per call was the main way this endpoint could exhaust the
+    // org's per-minute output-token budget on a single request.
     try {
-      aiContent = await callClaude(prompt, true, data.proofImageUrl);
+      aiContent = await callClaude(prompt, true, undefined, 500, 3, imageData);
     } catch (err) {
+      // A 429 isn't specific to the image — it's the whole API key rate
+      // limited. Falling back to a second full retry cycle (3 more attempts)
+      // on the exact same key almost always hits the same wall, burns ~6
+      // requests total, and used to surface as the confusing "Réponse IA
+      // invalide" instead of the real cause once both attempts failed.
+      // Surface the actual rate-limit message immediately instead.
+      if (err instanceof Error && err.message.includes("429")) {
+        throw err;
+      }
       console.warn("Vision model call failed, falling back to text only:", err);
       imageAnalyzed = false;
-      aiContent = await callClaude(prompt, true);
+      aiContent = await callClaude(prompt, true, undefined, 500);
     }
 
     let parsed: { observations?: string; talents_awarded?: Record<string, number> };
     try {
       parsed = JSON.parse(aiContent);
     } catch {
-      throw new Error("Réponse IA invalide");
+      throw new Error("Réponse IA invalide — réessayez dans quelques instants.");
     }
 
     const observations = parsed.observations ?? "Bravo pour cette belle réalisation !";
@@ -551,9 +732,17 @@ Réponds STRICTEMENT en JSON valide avec ce format :
       // Drop anything the AI returns outside the 9 known intelligences — a
       // hallucinated or misspelled key would otherwise pollute talents forever.
       if (typeof points === 'number' && validTalentKeys.has(key)) {
-        // Cap points between 1 and 3 per challenge validation to ensure gradual progression
-        deltas[key] = Math.max(1, Math.min(3, points));
-        intelligenceKeys.push(key);
+        // Floor was previously 1 — meaning even when the model correctly
+        // judged a submission irrelevant/low-effort and tried to award 0,
+        // the code silently bumped it back up to 1, guaranteeing every
+        // submission got rewarded regardless of what the AI concluded.
+        // Floor of 0 lets a genuine "no merit" verdict actually result in
+        // no points, instead of masking it.
+        const clamped = Math.max(0, Math.min(3, Math.round(points)));
+        if (clamped > 0) {
+          deltas[key] = clamped;
+          intelligenceKeys.push(key);
+        }
       }
     }
 
@@ -568,11 +757,31 @@ Réponds STRICTEMENT en JSON valide avec ce format :
       if (talentsError) throw new Error(talentsError.message);
     }
 
+    // Only persist the photo once the AI has actually confirmed it's
+    // relevant to this défi — an irrelevant/off-topic submission (deltas
+    // empty) is never uploaded at all, instead of every attempt hitting
+    // Storage regardless of outcome like before.
+    let proofImageUrl: string | null = null;
+    if (data.proofImageBase64 && Object.keys(deltas).length > 0) {
+      const mediaType = data.proofImageMediaType ?? "image/jpeg";
+      const ext = mediaType.split("/")[1] ?? "jpg";
+      const fileName = `${challenge.child_id}/${challenge.id}-${Math.random()}.${ext}`;
+      const { error: uploadError } = await supabase.storage
+        .from("proofs")
+        .upload(fileName, Buffer.from(data.proofImageBase64, "base64"), { contentType: mediaType });
+      if (uploadError) {
+        console.error("Erreur d'upload de la preuve (non bloquant):", uploadError);
+      } else {
+        const { data: publicUrlData } = supabase.storage.from("proofs").getPublicUrl(fileName);
+        proofImageUrl = publicUrlData.publicUrl;
+      }
+    }
+
     const patch = {
       status: "completed" as const,
       progress: 100,
       completed_at: new Date().toISOString(),
-      proof_image_url: data.proofImageUrl || null,
+      proof_image_url: proofImageUrl,
       ai_observations: observations,
       target_intelligences: intelligenceKeys,
     };
@@ -617,31 +826,26 @@ export const assignTemplateChallenge = createServerFn({ method: "POST" })
     if (childErr || !child) throw new Error("Profil enfant introuvable ou accès refusé.");
 
     const { template } = data;
-    // Re-run the deterministic safety net here rather than trusting
-    // template.requires_supervision/supervision_warning as-is: this is a
-    // client-supplied value (round-tripped from generateSingleChallenge's
-    // preview) and this insert is the actual point of truth in the DB.
-    const safety = applySafetyNet(template, child.age);
-
+    // Re-run the deterministic checks here rather than trusting
+    // template.requires_supervision/supervision_warning/difficulty as-is:
+    // this is a client-supplied value (round-tripped from
+    // generateSingleChallenge's preview) and this insert is the actual
+    // point of truth in the DB.
     const { data: inserted, error } = await supabase
       .from("challenges")
       .insert({
         user_id: userId,
         child_id: data.childId,
         domain: template.domain,
-        title: template.title,
         description: template.description,
         duration: template.duration,
         steps: template.steps,
         materials: template.materials,
-        material_tags: template.material_tags ?? [],
         target_intelligences: template.intelligences ?? [],
         status: "todo",
         progress: 0,
         pedagogical_context: template.pedagogical_context ?? null,
-        requires_supervision: safety.requires_supervision,
-        supervision_warning: safety.supervision_warning,
-        difficulty: template.difficulty ?? "moyen",
+        ...finalizeChallenge(template, child.age),
       })
       .select()
       .single();
@@ -731,7 +935,7 @@ ${
     ? `6. UTILISATION DES MATÉRIAUX DE LA MAISON : Tu DOIS concevoir un défi qui utilise en priorité ou exclusivement les matériaux indiqués par le parent ("${data.homeMaterials}"). Si ces matériaux ne suffisent pas ou ne sont pas propices à une activité d'apprentissage stimulante dans le domaine choisi, tu PEUX inclure d'autres ustensiles simples ou matériaux courants, mais signale-le de façon transparente dans la description et les étapes (et liste le matériel additionnel nécessaire). Si les matériaux fournis ne permettent vraiment rien d'intéressant, génère le défi sans cette contrainte et explique-le brièvement dans la description ou le contexte pédagogique.`
     : ""
 }
-7. SÉCURITÉ ET SUPERVISION, sans excès de prudence : Analyse si le défi comporte des risques réels (feu, objets coupants, produits chimiques, électricité, extérieur non sécurisé). Si OUI, tu DOIS régler "requires_supervision" à true. Adapte le ton de "supervision_warning" à l'âge : avant 12 ans, précise qu'un adulte doit être présent pour cette étape ; à partir de 12 ans, un enfant peut réaliser l'étape lui-même — donne des mesures de sécurité concrètes à suivre plutôt que d'exiger la présence d'un adulte (ex: manipuler un briquet loin de matières inflammables, avec de l'eau à proximité). Ne signale pas de risque pour des activités quotidiennes sans danger réel.
+7. ${SAFETY_INSTRUCTION}
 8. Pour "material_tags" : un tag court en minuscules, sans accent, par matériau physique achetable
    (ex: "carton", "cutter", "colle", "ampoule") — pas les objets déjà présents chez tout le monde
    (eau, table, papier). Un tableau vide si rien d'achetable n'est nécessaire.
@@ -752,7 +956,11 @@ Réponds STRICTEMENT en JSON valide avec ce format exact :
   "difficulty": "facile" | "moyen" | "difficile"
 }`;
 
-    const content = await callClaude(prompt, true);
+    // A single défi, not a batch — the 4000 default (sized for up to 6 défis
+    // in generateChallenges) would needlessly reserve most of the org's
+    // per-minute output-token budget for a response that only needs a
+    // fraction of that.
+    const content = await callClaude(prompt, true, undefined, 1200);
     let parsed: unknown;
     try {
       parsed = JSON.parse(content);
@@ -769,16 +977,11 @@ Réponds STRICTEMENT en JSON valide avec ce format exact :
 
     // Preview only — nothing is persisted here. The Laboratoire and the Défi page's
     // single-challenge generator both show this as a draft the parent can regenerate
-    // freely; assignTemplateChallenge re-applies the safety net server-side at the
+    // freely; assignTemplateChallenge re-applies the same checks server-side at the
     // real insertion point, since this preview is round-tripped through the client.
-    const safety = applySafetyNet(c, child.age);
     return {
       ...c,
-      title: c.title.slice(0, 120),
-      material_tags: c.material_tags ?? [],
-      difficulty: c.difficulty ?? "moyen",
-      requires_supervision: safety.requires_supervision,
-      supervision_warning: safety.supervision_warning,
+      ...finalizeChallenge(c, child.age),
     };
   });
 
@@ -820,7 +1023,8 @@ Mets en lumière ses formes d'intelligence dominantes qui ressortent de ses acti
 Écris dans un style fluide, chaleureux et professionnel, en texte brut uniquement — aucune syntaxe Markdown (pas de #, ##, **, tirets de liste), sépare les deux paragraphes par un simple retour à la ligne.`;
 
     try {
-      return await callClaude(prompt, false);
+      // 2 short paragraphs, not a batch of défis.
+      return await callClaude(prompt, false, undefined, 700);
     } catch (e: any) {
       console.error("AI Synthesis Error:", e.message);
       return "L'intelligence de Naya se repose quelques instants (quota de requêtes atteint). Revenez dans une petite minute pour lire la synthèse complète !";
@@ -844,6 +1048,8 @@ Réponds STRICTEMENT en une seule phrase courte, chaleureuse et valorisante. Ta 
 Exemple: "Naya détecte une forte intelligence spatiale et créative dans cette magnifique construction !"
 NE mets PAS de guillemets autour de ta réponse.`;
     
-    const tag = await callClaude(prompt, false, data.imageUrl);
+    // One short sentence, capped at 150 chars below — 4000 was ~25x more
+    // budget than this could ever use.
+    const tag = await callClaude(prompt, false, data.imageUrl, 200);
     return tag.trim().slice(0, 150); // safety cap
   });

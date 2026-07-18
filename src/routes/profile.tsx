@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useSession } from "@/hooks/use-session";
 import { AppHeader } from "@/components/AppHeader";
 import { toast } from "sonner";
-import { User, Phone, Lock, ArrowLeft, Check, Loader2, Users, Calendar, Shield } from "lucide-react";
+import { User, Phone, ArrowLeft, Check, Loader2, Users, Calendar, Shield } from "lucide-react";
 import { ConsentLedger } from "@/components/settings/ConsentLedger";
 import { ExportDataButton } from "@/components/settings/ExportDataButton";
 import { DeleteAccountDialog } from "@/components/settings/DeleteAccountDialog";
@@ -21,11 +21,6 @@ function ProfilePage() {
   const [phoneNumber, setPhoneNumber] = useState("");
   const [selectedCountry, setSelectedCountry] = useState(COUNTRIES[0]);
   const [savingPhone, setSavingPhone] = useState(false);
-
-  // Password reset states
-  const [newPassword, setNewPassword] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState("");
-  const [updatingPassword, setUpdatingPassword] = useState(false);
 
   // Parent Stats
   const [childCount, setChildCount] = useState(0);
@@ -90,32 +85,6 @@ function ProfilePage() {
     }
   };
 
-  const handleUpdatePassword = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (newPassword !== confirmPassword) {
-      toast.error("Les mots de passe ne correspondent pas.");
-      return;
-    }
-    if (newPassword.length < 6) {
-      toast.error("Le mot de passe doit contenir au moins 6 caractères.");
-      return;
-    }
-    setUpdatingPassword(true);
-    try {
-      const { error } = await supabase.auth.updateUser({
-        password: newPassword,
-      });
-      if (error) throw error;
-      toast.success("Mot de passe mis à jour !");
-      setNewPassword("");
-      setConfirmPassword("");
-    } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Erreur.");
-    } finally {
-      setUpdatingPassword(false);
-    }
-  };
-
   if (loading || !session) {
     return <div className="grid min-h-screen place-items-center bg-surface">Chargement...</div>;
   }
@@ -133,7 +102,9 @@ function ProfilePage() {
             <div className="mx-auto grid size-16 place-items-center rounded-2xl border-2 border-ink bg-brand/10 text-brand text-2xl font-bold">
               <User className="size-8" />
             </div>
-            <h2 className="mt-4 font-display text-xl font-bold truncate">{session.user.email}</h2>
+            <h2 className="mt-4 font-display text-xl font-bold truncate">
+              {session.user.user_metadata?.full_name || session.user.user_metadata?.name || session.user.email}
+            </h2>
             <p className="text-xs text-ink/60 font-semibold mt-1">Compte Parent</p>
             <div className="mt-6 border-t border-ink/5 pt-6 text-left space-y-4">
               <div className="flex items-center justify-between text-sm">
@@ -217,55 +188,6 @@ function ProfilePage() {
               >
                 {savingPhone ? <Loader2 className="size-4 animate-spin" /> : <Check className="size-4" />}
                 <span>Enregistrer le numéro</span>
-              </button>
-            </form>
-          </div>
-
-          {/* Password Settings */}
-          <div className="rounded-3xl border-[3px] border-ink bg-white p-6 shadow-brutal md:p-8">
-            <h3 className="font-display text-lg font-bold flex items-center gap-2 mb-2">
-              <Lock className="size-5 text-amber-500" />
-              Modifier le mot de passe
-            </h3>
-            <p className="text-xs text-ink/60 leading-relaxed mb-6">
-              Assurez la sécurité de votre compte parent en modifiant régulièrement votre clé d'accès.
-            </p>
-            <form onSubmit={handleUpdatePassword} className="space-y-4">
-              <div className="grid gap-4 sm:grid-cols-2">
-                <div>
-                  <label className="mb-2 block text-xs font-semibold uppercase tracking-wider text-ink/60">
-                    Nouveau mot de passe
-                  </label>
-                  <input
-                    type="password"
-                    value={newPassword}
-                    onChange={(e) => setNewPassword(e.target.value)}
-                    placeholder="Min. 6 caractères"
-                    className="w-full rounded-xl border-[3px] border-ink px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-brand shadow-brutal-sm"
-                    required
-                  />
-                </div>
-                <div>
-                  <label className="mb-2 block text-xs font-semibold uppercase tracking-wider text-ink/60">
-                    Confirmer le mot de passe
-                  </label>
-                  <input
-                    type="password"
-                    value={confirmPassword}
-                    onChange={(e) => setConfirmPassword(e.target.value)}
-                    placeholder="Confirmez"
-                    className="w-full rounded-xl border-[3px] border-ink px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-brand shadow-brutal-sm"
-                    required
-                  />
-                </div>
-              </div>
-              <button
-                type="submit"
-                disabled={updatingPassword || !newPassword}
-                className="rounded-xl border-[3px] border-ink bg-ink px-6 py-2.5 text-sm font-bold text-white shadow-brutal hover:-translate-y-0.5 active:translate-y-0 active:shadow-none transition-all disabled:opacity-50 flex items-center gap-2"
-              >
-                {updatingPassword ? <Loader2 className="size-4 animate-spin" /> : <Check className="size-4" />}
-                <span>Modifier le mot de passe</span>
               </button>
             </form>
           </div>
