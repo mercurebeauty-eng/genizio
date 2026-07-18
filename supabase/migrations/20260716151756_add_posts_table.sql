@@ -33,7 +33,11 @@ CREATE POLICY "Users can delete their own posts."
 INSERT INTO storage.buckets (id, name, public) VALUES ('posts', 'posts', true);
 
 -- Storage policies for posts bucket
-CREATE POLICY "Public Access"
+-- Named "Public Access posts" (not "Public Access") because RLS policy
+-- names must be unique per table, and storage.objects is shared across every
+-- bucket — the proofs bucket migration (20260715181500) already claims the
+-- unqualified "Public Access" name on this same table.
+CREATE POLICY "Public Access posts"
 ON storage.objects FOR SELECT
 USING ( bucket_id = 'posts' );
 

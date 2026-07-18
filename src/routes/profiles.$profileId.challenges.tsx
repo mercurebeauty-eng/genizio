@@ -89,6 +89,8 @@ const STATUS_LABEL: Record<Challenge["status"], string> = {
   completed: "Terminé",
 };
 
+const CHALLENGE_STATUSES: Challenge["status"][] = ["todo", "in_progress", "completed"];
+
 const STATUS_STYLE: Record<Challenge["status"], string> = {
   todo: "bg-stone-100 text-stone-700 border-stone-200",
   in_progress: "bg-sky-50 text-sky-700 border-sky-200",
@@ -107,6 +109,7 @@ function ChallengesPage() {
   const [generating, setGenerating] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [openId, setOpenId] = useState<string | null>(null);
+  const [statusFilter, setStatusFilter] = useState<"all" | Challenge["status"]>("all");
   const [activeProducts, setActiveProducts] = useState<any[]>([]);
   const [assignedChallengeForKit, setAssignedChallengeForKit] = useState<{ id: string; title: string; products: any[] } | null>(null);
   const [orderingKit, setOrderingKit] = useState(false);
@@ -721,27 +724,67 @@ function ChallengesPage() {
                 </div>
               </div>
             ) : (
-              <div className="space-y-5">
-                {challenges.map((c) => (
-                  <ChallengeCard
-                    key={c.id}
-                    c={c}
-                    childId={profileId}
-                    childName={child.name}
-                    open={openId === c.id}
-                    hasKit={hasKit(c.material_tags)}
-                    onToggle={() => setOpenId((v) => (v === c.id ? null : c.id))}
-                    onStatus={(s) => setStatus(c.id, s)}
-                    onProgress={(p) => setProgress(c.id, p)}
-                    onNotes={(n) => saveNotes(c.id, n)}
-                    onDelete={() => remove(c.id)}
-                    onValidated={async () => {
-                      await refetch();
-                      await loadAISynthesis();
-                    }}
-                  />
-                ))}
-              </div>
+              <>
+                <div className="flex flex-wrap gap-2">
+                  <button
+                    onClick={() => setStatusFilter("all")}
+                    className={`rounded-xl border-2 border-ink px-3 py-1.5 text-xs font-bold transition-all ${
+                      statusFilter === "all" ? "bg-ink text-white shadow-brutal-sm" : "bg-white text-ink/65 hover:bg-surface"
+                    }`}
+                  >
+                    Tous ({challenges.length})
+                  </button>
+                  {CHALLENGE_STATUSES.map((s) => {
+                    const count = challenges.filter((c) => c.status === s).length;
+                    return (
+                      <button
+                        key={s}
+                        onClick={() => setStatusFilter(s)}
+                        className={`rounded-xl border-2 border-ink px-3 py-1.5 text-xs font-bold transition-all ${
+                          statusFilter === s ? "bg-ink text-white shadow-brutal-sm" : "bg-white text-ink/65 hover:bg-surface"
+                        }`}
+                      >
+                        {STATUS_LABEL[s]} ({count})
+                      </button>
+                    );
+                  })}
+                </div>
+
+                {(() => {
+                  const filteredChallenges =
+                    statusFilter === "all" ? challenges : challenges.filter((c) => c.status === statusFilter);
+                  if (filteredChallenges.length === 0) {
+                    return (
+                      <div className="rounded-3xl border-[3px] border-dashed border-ink bg-white/40 p-10 text-center shadow-brutal-sm">
+                        <p className="text-ink/65 font-bold">Aucun défi avec ce statut.</p>
+                      </div>
+                    );
+                  }
+                  return (
+                    <div className="space-y-5">
+                      {filteredChallenges.map((c) => (
+                        <ChallengeCard
+                          key={c.id}
+                          c={c}
+                          childId={profileId}
+                          childName={child.name}
+                          open={openId === c.id}
+                          hasKit={hasKit(c.material_tags)}
+                          onToggle={() => setOpenId((v) => (v === c.id ? null : c.id))}
+                          onStatus={(s) => setStatus(c.id, s)}
+                          onProgress={(p) => setProgress(c.id, p)}
+                          onNotes={(n) => saveNotes(c.id, n)}
+                          onDelete={() => remove(c.id)}
+                          onValidated={async () => {
+                            await refetch();
+                            await loadAISynthesis();
+                          }}
+                        />
+                      ))}
+                    </div>
+                  );
+                })()}
+              </>
             )}
 
           </div>
