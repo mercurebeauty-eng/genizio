@@ -275,7 +275,7 @@ function DashboardPage() {
                 );
               })()}
 
-              <div className="grid gap-8 md:grid-cols-2">
+              <div className="grid grid-cols-1 gap-8 md:grid-cols-2">
                 <div className="flex flex-col">
                   <h2 className="mb-4 text-2xl font-display font-bold text-ink flex justify-between items-center">
                     Cette semaine

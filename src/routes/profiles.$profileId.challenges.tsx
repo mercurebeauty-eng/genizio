@@ -471,7 +471,7 @@ function ChallengesPage() {
         </div>
 
         {/* Dashboard Grid Layout */}
-        <div className="grid gap-8 lg:grid-cols-3">
+        <div className="grid grid-cols-1 gap-8 lg:grid-cols-3">
           
           {/* LEFT COLUMN: Radar chart & AI Synthesis */}
           <div className="lg:col-span-1 space-y-6">

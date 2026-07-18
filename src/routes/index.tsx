@@ -362,7 +362,7 @@ function DemoSection() {
           </div>
         </div>
 
-        <div className="grid gap-8 lg:grid-cols-12">
+        <div className="grid grid-cols-1 gap-8 lg:grid-cols-12">
           {/* LEFT COLUMN: Input controls & Radar */}
           <div className="space-y-6 lg:col-span-5">
             

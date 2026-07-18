@@ -400,7 +400,7 @@ function PortfolioPage() {
             );
           })()}
 
-          <div className="grid gap-6 lg:grid-cols-2">
+          <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
             <div className="rounded-3xl border-[3px] border-ink bg-white p-6 shadow-brutal">
               <h3 className="mb-4 flex items-center gap-2 font-display text-lg font-bold">
                 <Award className="size-5 text-brand" />
