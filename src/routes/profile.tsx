@@ -134,22 +134,22 @@ function ProfilePage() {
               <User className="size-8" />
             </div>
             <h2 className="mt-4 font-display text-xl font-bold truncate">{session.user.email}</h2>
-            <p className="text-xs text-ink/40 font-semibold mt-1">Compte Parent</p>
+            <p className="text-xs text-ink/60 font-semibold mt-1">Compte Parent</p>
             <div className="mt-6 border-t border-ink/5 pt-6 text-left space-y-4">
               <div className="flex items-center justify-between text-sm">
-                <span className="font-medium text-ink/50 flex items-center gap-2">
+                <span className="font-medium text-ink/60 flex items-center gap-2">
                   <Users className="size-4 text-brand" /> Enfants
                 </span>
                 <span className="font-bold">{childCount}</span>
               </div>
               <div className="flex items-center justify-between text-sm">
-                <span className="font-medium text-ink/50 flex items-center gap-2">
+                <span className="font-medium text-ink/60 flex items-center gap-2">
                   <Check className="size-4 text-emerald-600" /> Défis complétés
                 </span>
                 <span className="font-bold text-emerald-600">{challengeStats.completed} / {challengeStats.total}</span>
               </div>
               <div className="flex items-center justify-between text-sm">
-                <span className="font-medium text-ink/50 flex items-center gap-2">
+                <span className="font-medium text-ink/60 flex items-center gap-2">
                   <Calendar className="size-4 text-amber-600" /> Créé le
                 </span>
                 <span className="font-bold text-xs">{new Date(session.user.created_at).toLocaleDateString()}</span>
@@ -166,7 +166,7 @@ function ProfilePage() {
               <Phone className="size-5 text-brand" />
               Numéro de téléphone
             </h3>
-            <p className="text-xs text-ink/50 leading-relaxed mb-6">
+            <p className="text-xs text-ink/60 leading-relaxed mb-6">
               Renseignez votre numéro pour recevoir des synthèses personnalisées et des notifications sur le potentiel de vos enfants.
             </p>
             <form onSubmit={handleSavePhone} className="space-y-4">
@@ -206,7 +206,7 @@ function ProfilePage() {
                   />
                 </div>
               </div>
-              <div className="flex items-center justify-between text-xs text-ink/40 font-medium">
+              <div className="flex items-center justify-between text-xs text-ink/60 font-medium">
                 <span>Pays actuel : {selectedCountry.name}</span>
                 <span>{phoneNumber.length} / {selectedCountry.limit} chiffres</span>
               </div>
@@ -227,13 +227,13 @@ function ProfilePage() {
               <Lock className="size-5 text-amber-500" />
               Modifier le mot de passe
             </h3>
-            <p className="text-xs text-ink/50 leading-relaxed mb-6">
+            <p className="text-xs text-ink/60 leading-relaxed mb-6">
               Assurez la sécurité de votre compte parent en modifiant régulièrement votre clé d'accès.
             </p>
             <form onSubmit={handleUpdatePassword} className="space-y-4">
               <div className="grid gap-4 sm:grid-cols-2">
                 <div>
-                  <label className="mb-2 block text-xs font-semibold uppercase tracking-wider text-ink/50">
+                  <label className="mb-2 block text-xs font-semibold uppercase tracking-wider text-ink/60">
                     Nouveau mot de passe
                   </label>
                   <input
@@ -246,7 +246,7 @@ function ProfilePage() {
                   />
                 </div>
                 <div>
-                  <label className="mb-2 block text-xs font-semibold uppercase tracking-wider text-ink/50">
+                  <label className="mb-2 block text-xs font-semibold uppercase tracking-wider text-ink/60">
                     Confirmer le mot de passe
                   </label>
                   <input
@@ -277,26 +277,26 @@ function ProfilePage() {
                 <Shield className="size-5 text-brand" />
                 Confidentialité & Consentement
               </h3>
-              <p className="text-xs text-ink/50 leading-relaxed">
+              <p className="text-xs text-ink/60 leading-relaxed">
                 Consultez l'historique d'accès à vos données, exportez vos informations ou supprimez définitivement votre compte.
               </p>
             </div>
 
             {/* Privacy Dashboard from Wireframe 1n */}
             <div className="space-y-3">
-              <p className="text-[10px] font-extrabold uppercase tracking-widest text-ink/40">Vos données en un coup d'œil</p>
+              <p className="text-[10px] font-extrabold uppercase tracking-widest text-ink/60">Vos données en un coup d'œil</p>
               <div className="grid grid-cols-3 gap-3">
                 <div className="rounded-2xl border-2 border-ink bg-surface p-4 text-center">
                   <p className="text-2xl font-black text-ink">{mentorCount}</p>
-                  <p className="mt-1 text-[9px] font-bold text-ink/50 uppercase leading-snug">Mentors connectés</p>
+                  <p className="mt-1 text-[9px] font-bold text-ink/60 uppercase leading-snug">Mentors connectés</p>
                 </div>
                 <div className="rounded-2xl border-2 border-ink bg-surface p-4 text-center">
                   <p className="text-2xl font-black text-brand">{artifactsCount}</p>
-                  <p className="mt-1 text-[9px] font-bold text-ink/50 uppercase leading-snug">Réalisations privées</p>
+                  <p className="mt-1 text-[9px] font-bold text-ink/60 uppercase leading-snug">Réalisations privées</p>
                 </div>
                 <div className="rounded-2xl border-2 border-ink bg-surface p-4 text-center">
                   <p className="text-2xl font-black text-emerald-600">{consentEventsCount}</p>
-                  <p className="mt-1 text-[9px] font-bold text-ink/50 uppercase leading-snug">Événements enregistrés</p>
+                  <p className="mt-1 text-[9px] font-bold text-ink/60 uppercase leading-snug">Événements enregistrés</p>
                 </div>
               </div>
             </div>

@@ -129,7 +129,7 @@ function AdminIndexPage() {
             <h1 className="font-display text-3xl font-extrabold md:text-4xl mt-1">
               Tableau de Bord BI & Métriques
             </h1>
-            <p className="text-sm font-medium text-ink/50 mt-1">
+            <p className="text-sm font-medium text-ink/60 mt-1">
               Suivi en temps réel de l'écosystème parent-enfant Génizio.
             </p>
           </div>
@@ -156,7 +156,7 @@ function AdminIndexPage() {
         {/* 📊 Key Metrics Cards */}
         <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-5 mb-10">
           <div className="rounded-2xl border-[3px] border-ink bg-white p-5 shadow-brutal-sm">
-            <div className="flex items-center justify-between text-ink/40 mb-2">
+            <div className="flex items-center justify-between text-ink/60 mb-2">
               <span className="text-xs font-extrabold uppercase tracking-wider">Parents inscrits</span>
               <Users className="size-4" />
             </div>
@@ -164,7 +164,7 @@ function AdminIndexPage() {
           </div>
 
           <div className="rounded-2xl border-[3px] border-ink bg-white p-5 shadow-brutal-sm">
-            <div className="flex items-center justify-between text-ink/40 mb-2">
+            <div className="flex items-center justify-between text-ink/60 mb-2">
               <span className="text-xs font-extrabold uppercase tracking-wider">Enfants suivis</span>
               <Award className="size-4" />
             </div>
@@ -172,7 +172,7 @@ function AdminIndexPage() {
           </div>
 
           <div className="rounded-2xl border-[3px] border-ink bg-white p-5 shadow-brutal-sm">
-            <div className="flex items-center justify-between text-ink/40 mb-2">
+            <div className="flex items-center justify-between text-ink/60 mb-2">
               <span className="text-xs font-extrabold uppercase tracking-wider">Défis générés</span>
               <Brain className="size-4" />
             </div>
@@ -180,18 +180,18 @@ function AdminIndexPage() {
           </div>
 
           <div className="rounded-2xl border-[3px] border-ink bg-white p-5 shadow-brutal-sm">
-            <div className="flex items-center justify-between text-ink/40 mb-2">
+            <div className="flex items-center justify-between text-ink/60 mb-2">
               <span className="text-xs font-extrabold uppercase tracking-wider">Taux de réussite</span>
               <BarChart3 className="size-4" />
             </div>
             <p className="font-display text-3xl font-black text-ink">{completionRate}%</p>
-            <p className="text-[10px] text-ink/50 mt-1 font-bold">
+            <p className="text-[10px] text-ink/60 mt-1 font-bold">
               {stats?.completedChallenges ?? 0} défis validés
             </p>
           </div>
 
           <div className="rounded-2xl border-[3px] border-ink bg-white p-5 shadow-brutal-sm">
-            <div className="flex items-center justify-between text-ink/40 mb-2">
+            <div className="flex items-center justify-between text-ink/60 mb-2">
               <span className="text-xs font-extrabold uppercase tracking-wider">Kits commandés</span>
               <ShoppingBag className="size-4" />
             </div>
@@ -209,7 +209,7 @@ function AdminIndexPage() {
           <div className="overflow-x-auto">
             <table className="w-full text-left border-collapse text-sm">
               <thead>
-                <tr className="border-b-[3px] border-ink text-xs font-extrabold uppercase tracking-wider text-ink/50">
+                <tr className="border-b-[3px] border-ink text-xs font-extrabold uppercase tracking-wider text-ink/60">
                   <th className="pb-3 pr-4">Inscription</th>
                   <th className="pb-3 pr-4">Email</th>
                   <th className="pb-3 pr-4">Téléphone</th>
@@ -301,7 +301,7 @@ function AdminIndexPage() {
                           </button>
                           <div className="text-center min-w-[48px]">
                             <p className="text-xs font-black text-ink">{2 + parent.extraSlots}</p>
-                            <p className="text-[9px] text-ink/40 font-bold">{parent.extraSlots > 0 ? `+${parent.extraSlots} bonus` : "gratuits"}</p>
+                            <p className="text-[9px] text-ink/60 font-bold">{parent.extraSlots > 0 ? `+${parent.extraSlots} bonus` : "gratuits"}</p>
                           </div>
                           <button
                             onClick={() => handleGrantSlot(parent.id, +1)}

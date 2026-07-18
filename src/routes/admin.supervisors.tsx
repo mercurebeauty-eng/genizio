@@ -93,7 +93,7 @@ function AdminSupervisorsPage() {
   };
 
   if (loading || !session) {
-    return <div className="grid min-h-screen place-items-center bg-surface text-ink/50">Chargement…</div>;
+    return <div className="grid min-h-screen place-items-center bg-surface text-ink/60">Chargement…</div>;
   }
 
   return (
@@ -107,7 +107,7 @@ function AdminSupervisorsPage() {
           </div>
           <div>
             <h1 className="font-display text-2xl font-extrabold">Gestion des Superviseurs</h1>
-            <p className="text-sm text-ink/50">Assigner des superviseurs à des profils d'enfants.</p>
+            <p className="text-sm text-ink/60">Assigner des superviseurs à des profils d'enfants.</p>
           </div>
         </div>
 
@@ -121,7 +121,7 @@ function AdminSupervisorsPage() {
               <ShieldAlert className="size-6" />
             </div>
             <p className="font-bold text-ink">Accès réservé à l'administrateur.</p>
-            <p className="mt-1 text-sm text-ink/50">
+            <p className="mt-1 text-sm text-ink/60">
               Ce compte ({session.user.email}) n'est pas autorisé à gérer les superviseurs.
             </p>
           </div>
@@ -132,7 +132,7 @@ function AdminSupervisorsPage() {
               <h2 className="font-display text-lg font-black mb-5">Assigner un nouveau superviseur</h2>
               <div className="grid gap-4 md:grid-cols-3">
                 <div className="md:col-span-1">
-                  <label className="mb-1.5 block text-xs font-extrabold uppercase tracking-widest text-ink/50">
+                  <label className="mb-1.5 block text-xs font-extrabold uppercase tracking-widest text-ink/60">
                     Email du superviseur
                   </label>
                   <input
@@ -144,7 +144,7 @@ function AdminSupervisorsPage() {
                   />
                 </div>
                 <div className="md:col-span-1">
-                  <label className="mb-1.5 block text-xs font-extrabold uppercase tracking-widest text-ink/50">
+                  <label className="mb-1.5 block text-xs font-extrabold uppercase tracking-widest text-ink/60">
                     Profil enfant
                   </label>
                   <select
@@ -175,7 +175,7 @@ function AdminSupervisorsPage() {
             <div className="rounded-3xl border-[3px] border-ink bg-white p-6 shadow-brutal">
               <h2 className="font-display text-lg font-black mb-5">Superviseurs actifs ({supervisors.length})</h2>
               {supervisors.length === 0 ? (
-                <p className="text-sm text-ink/50 italic">Aucun superviseur assigné pour le moment.</p>
+                <p className="text-sm text-ink/60 italic">Aucun superviseur assigné pour le moment.</p>
               ) : (
                 <ul className="space-y-3">
                   {supervisors.map((s) => (
@@ -184,7 +184,7 @@ function AdminSupervisorsPage() {
                         <p className="text-sm font-bold text-ink">
                           {(s.supervisor as any)?.email ?? "—"}
                         </p>
-                        <p className="text-xs text-ink/50">
+                        <p className="text-xs text-ink/60">
                           Supervise : {(s.child_profiles as any)?.name ?? "—"} ({(s.child_profiles as any)?.age ?? "?"} ans)
                         </p>
                       </div>

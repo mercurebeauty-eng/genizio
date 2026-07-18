@@ -14,7 +14,7 @@ function MentionsLegalesPage() {
         </Link>
 
         <h1 className="font-display text-3xl font-extrabold mb-2">Mentions légales</h1>
-        <p className="mb-8 text-sm text-ink/50">Dernière mise à jour : 17 juillet 2026</p>
+        <p className="mb-8 text-sm text-ink/60">Dernière mise à jour : 17 juillet 2026</p>
 
         <div className="rounded-2xl border-[3px] border-amber-400 bg-amber-50 p-4 mb-8 text-sm text-amber-900">
           <strong>Note :</strong> ce document a été rédigé avec l'assistance d'une IA à partir des informations
@@ -68,7 +68,7 @@ function MentionsLegalesPage() {
           </section>
 
           <section className="pt-4 border-t-2 border-ink/10">
-            <p className="text-xs text-ink/40">
+            <p className="text-xs text-ink/60">
               Voir aussi : <Link to="/privacy" className="text-brand underline">Politique de confidentialité</Link> ·{" "}
               <Link to="/terms" className="text-brand underline">Conditions d'utilisation</Link>
             </p>

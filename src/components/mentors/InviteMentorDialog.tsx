@@ -166,7 +166,7 @@ export function InviteMentorDialog({ childId, childName, customTrigger }: { chil
               <div className="flex items-center justify-between">
                 <div className="space-y-0.5">
                   <label className="text-sm font-medium text-ink">Carte des talents</label>
-                  <p className="text-[11px] text-ink/50">Vue globale des aptitudes</p>
+                  <p className="text-[11px] text-ink/60">Vue globale des aptitudes</p>
                 </div>
                 <Switch checked={canViewTalentMap} onCheckedChange={setCanViewTalentMap} />
               </div>
@@ -174,7 +174,7 @@ export function InviteMentorDialog({ childId, childName, customTrigger }: { chil
               <div className="flex items-center justify-between">
                 <div className="space-y-0.5">
                   <label className="text-sm font-medium text-ink">Journal des défis</label>
-                  <p className="text-[11px] text-ink/50">Historique des missions accomplies</p>
+                  <p className="text-[11px] text-ink/60">Historique des missions accomplies</p>
                 </div>
                 <Switch checked={canViewTimeline} onCheckedChange={setCanViewTimeline} />
               </div>
@@ -184,7 +184,7 @@ export function InviteMentorDialog({ childId, childName, customTrigger }: { chil
                   <div className="flex items-center justify-between">
                     <div className="space-y-0.5">
                       <label className="text-sm font-medium text-ink">Notes parentales</label>
-                      <p className="text-[11px] text-ink/50">Inclure vos observations privées</p>
+                      <p className="text-[11px] text-ink/60">Inclure vos observations privées</p>
                     </div>
                     <Switch checked={canViewRawObservations} onCheckedChange={setCanViewRawObservations} />
                   </div>
@@ -246,7 +246,7 @@ export function InviteMentorDialog({ childId, childName, customTrigger }: { chil
             
             <button
               onClick={() => setOpen(false)}
-              className="text-sm font-bold text-ink/50 hover:text-ink underline decoration-ink/30 underline-offset-4"
+              className="text-sm font-bold text-ink/60 hover:text-ink underline decoration-ink/30 underline-offset-4"
             >
               Fermer
             </button>

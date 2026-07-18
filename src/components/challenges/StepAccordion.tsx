@@ -7,7 +7,7 @@ export function StepAccordion({ steps, className }: { steps: string[], className
 
   return (
     <div className={className}>
-      <p className="mb-3 text-[10px] font-extrabold uppercase tracking-widest text-ink/40">
+      <p className="mb-3 text-[10px] font-extrabold uppercase tracking-widest text-ink/60">
         Les étapes du défi
       </p>
       <Accordion type="single" collapsible className="w-full space-y-2">

@@ -131,7 +131,7 @@ export function OutcomeChat({ challenge, childId, childName, onValidated }: Outc
                   </div>
                 ))}
                 {Object.keys(report.awarded_points || {}).length === 0 && (
-                  <span className="text-xs text-ink/50 italic">Aucune intelligence spécifique détectée.</span>
+                  <span className="text-xs text-ink/60 italic">Aucune intelligence spécifique détectée.</span>
                 )}
               </div>
             </div>
@@ -219,7 +219,7 @@ export function OutcomeChat({ challenge, childId, childName, onValidated }: Outc
                 <label className="mt-3 flex flex-col items-center justify-center gap-2 rounded-2xl border-[3px] border-dashed border-ink bg-white/50 p-6 hover:-translate-y-0.5 shadow-brutal-sm transition-all cursor-pointer text-center w-full">
                   <Upload className="size-6 text-brand animate-pulse" />
                   <span className="text-xs font-black text-brand">Sélectionner une photo</span>
-                  <span className="text-[10px] text-ink/40 font-bold">Formats acceptés : PNG, JPG</span>
+                  <span className="text-[10px] text-ink/60 font-bold">Formats acceptés : PNG, JPG</span>
                   <input 
                     type="file" 
                     accept="image/*" 

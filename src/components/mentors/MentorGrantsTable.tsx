@@ -85,7 +85,7 @@ export function MentorGrantsTable({ childId }: { childId: string }) {
               <TableRow key={m.id}>
                 <TableCell className="font-medium">
                   {m.mentor_name}
-                  <div className="text-[10px] text-ink/40 mt-1">Créé le {new Date(m.created_at).toLocaleDateString()}</div>
+                  <div className="text-[10px] text-ink/60 mt-1">Créé le {new Date(m.created_at).toLocaleDateString()}</div>
                 </TableCell>
                 <TableCell>
                   <div className="flex flex-wrap gap-1">
@@ -158,7 +158,7 @@ export function MentorGrantsTable({ childId }: { childId: string }) {
             <div className="flex justify-between items-start">
               <div>
                 <h4 className="font-bold text-ink">{m.mentor_name}</h4>
-                <p className="text-xs text-ink/40">Le {new Date(m.created_at).toLocaleDateString()}</p>
+                <p className="text-xs text-ink/60">Le {new Date(m.created_at).toLocaleDateString()}</p>
               </div>
               {m.status === "active" ? (
                 <span className="rounded-full border-2 border-ink bg-leaf px-2 py-0.5 text-[10px] font-bold text-white">Actif</span>

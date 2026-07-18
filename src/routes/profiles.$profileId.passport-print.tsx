@@ -175,7 +175,7 @@ function PassportPrintPage() {
           </Link>
           <div>
             <h1 className="font-bold text-sm">Passeport d'Excellence • {child.name}</h1>
-            <p className="text-xs text-ink/50 font-semibold">Le dialogue d'impression va s'ouvrir automatiquement.</p>
+            <p className="text-xs text-ink/60 font-semibold">Le dialogue d'impression va s'ouvrir automatiquement.</p>
           </div>
         </div>
         <button
@@ -237,7 +237,7 @@ function PassportPrintPage() {
             <h1 className="font-display text-4xl md:text-5xl font-black uppercase tracking-tight text-ink">
               Passeport d'Excellence
             </h1>
-            <p className="text-sm font-bold text-ink/50 uppercase tracking-widest max-w-md mx-auto leading-relaxed border-t-2 border-b-2 border-ink py-2">
+            <p className="text-sm font-bold text-ink/60 uppercase tracking-widest max-w-md mx-auto leading-relaxed border-t-2 border-b-2 border-ink py-2">
               Dossier de valorisation des talents et compétences par projet
             </p>
             
@@ -251,9 +251,9 @@ function PassportPrintPage() {
           {/* Footer Cover */}
           <div className="border-t-[3px] border-ink pt-6 flex justify-between items-end">
             <div className="space-y-1">
-              <p className="text-[10px] font-black text-ink/40 uppercase tracking-wider">Délivré par</p>
+              <p className="text-[10px] font-black text-ink/60 uppercase tracking-wider">Délivré par</p>
               <p className="text-xs font-bold text-ink/80">Laboratoire d'Innovation Pédagogique Génizio</p>
-              <p className="text-[10px] font-medium text-ink/50">Dakar · Abidjan · Yaoundé</p>
+              <p className="text-[10px] font-medium text-ink/60">Dakar · Abidjan · Yaoundé</p>
             </div>
 
             <div className="flex items-center gap-2 border-2 border-emerald-500 bg-emerald-50 text-emerald-800 rounded-xl px-3 py-2 text-xs font-bold shadow-brutal-sm">
@@ -278,12 +278,12 @@ function PassportPrintPage() {
 
             <div className="grid gap-8 md:grid-cols-2 items-center">
               <div className="border-[3px] border-ink rounded-3xl p-4 bg-white shadow-brutal-sm flex flex-col items-center">
-                <h3 className="text-xs font-black uppercase tracking-wider text-ink/40 mb-2 self-start">Carte Radar</h3>
+                <h3 className="text-xs font-black uppercase tracking-wider text-ink/60 mb-2 self-start">Carte Radar</h3>
                 <TalentRadarChart talents={child.talents} name={child.name} className="h-64 w-full" age={child.age} />
               </div>
 
               <div className="space-y-4">
-                <h3 className="text-xs font-black uppercase tracking-wider text-ink/40 border-b border-ink/10 pb-1">Forces identifiées</h3>
+                <h3 className="text-xs font-black uppercase tracking-wider text-ink/60 border-b border-ink/10 pb-1">Forces identifiées</h3>
                 <ul className="space-y-3">
                   {Object.entries(child.talents || {})
                     .filter(([_, val]) => val > 0)
@@ -335,7 +335,7 @@ function PassportPrintPage() {
           </div>
 
           {/* Page Footer */}
-          <div className="border-t border-ink/10 pt-4 flex justify-between text-[9px] font-bold text-ink/40 uppercase tracking-wider">
+          <div className="border-t border-ink/10 pt-4 flex justify-between text-[9px] font-bold text-ink/60 uppercase tracking-wider">
             <span>Passeport d'Excellence • {child.name}</span>
             <span>Page 2 / {Math.min(6, 2 + Math.ceil(challenges.length / 2))}</span>
           </div>
@@ -370,7 +370,7 @@ function PassportPrintPage() {
                           <h3 className="font-display text-base font-extrabold text-ink mt-1.5 leading-tight">{c.title}</h3>
                         </div>
                         {c.completed_at && (
-                          <span className="text-[10px] font-bold text-ink/40 uppercase tracking-wider shrink-0 mt-0.5">
+                          <span className="text-[10px] font-bold text-ink/60 uppercase tracking-wider shrink-0 mt-0.5">
                             Validé le {new Date(c.completed_at).toLocaleDateString("fr-FR")}
                           </span>
                         )}
@@ -378,7 +378,7 @@ function PassportPrintPage() {
 
                       {/* Description */}
                       <div className="text-xs text-ink/70 leading-relaxed font-semibold">
-                        <p className="text-[9px] font-black uppercase tracking-wider text-ink/40 mb-1">Description de la mission</p>
+                        <p className="text-[9px] font-black uppercase tracking-wider text-ink/60 mb-1">Description de la mission</p>
                         <MarkdownContent content={c.description} />
                       </div>
 
@@ -419,7 +419,7 @@ function PassportPrintPage() {
               </div>
 
               {/* Page Footer */}
-              <div className="border-t border-ink/10 pt-4 flex justify-between text-[9px] font-bold text-ink/40 uppercase tracking-wider">
+              <div className="border-t border-ink/10 pt-4 flex justify-between text-[9px] font-bold text-ink/60 uppercase tracking-wider">
                 <span>Passeport d'Excellence • {child.name}</span>
                 <span>Page {3 + chunkIdx} / {2 + chunks.length}</span>
               </div>

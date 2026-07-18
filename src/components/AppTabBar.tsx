@@ -6,7 +6,7 @@ type AppTabBarProps = {
 };
 
 const activeClass = "text-brand";
-const inactiveClass = "text-ink/40 hover:text-ink/70";
+const inactiveClass = "text-ink/60 hover:text-ink/70";
 
 export function AppTabBar({ profileId }: AppTabBarProps) {
   const items = [

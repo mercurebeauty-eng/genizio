@@ -260,7 +260,7 @@ function FeedPage() {
                         onClick={() => deletePost(post)}
                         aria-label="Supprimer la publication"
                         title="Supprimer la publication"
-                        className="p-2 text-ink/40 hover:text-red-600 transition-colors border-2 border-transparent hover:border-ink rounded-xl cursor-pointer"
+                        className="p-2 text-ink/60 hover:text-red-600 transition-colors border-2 border-transparent hover:border-ink rounded-xl cursor-pointer"
                       >
                         <MoreHorizontal className="size-5" />
                       </button>
@@ -309,7 +309,7 @@ function FeedPage() {
                       <span className="font-bold mr-2">{post.childName}</span>
                       <span className="text-ink/90">{post.description}</span>
                     </p>
-                    <p className="text-[11px] text-ink/40 mt-3 font-medium uppercase tracking-wide">{post.date}</p>
+                    <p className="text-[11px] text-ink/60 mt-3 font-medium uppercase tracking-wide">{post.date}</p>
 
                     {commentsOpen && (
                       <div className="mt-4 border-t-2 border-ink/10 pt-3 space-y-3">
@@ -318,7 +318,7 @@ function FeedPage() {
                             <Loader2 className="size-4 animate-spin text-brand" />
                           </div>
                         ) : comments.length === 0 ? (
-                          <p className="text-xs text-ink/40">Aucun commentaire pour l'instant.</p>
+                          <p className="text-xs text-ink/60">Aucun commentaire pour l'instant.</p>
                         ) : (
                           comments.map((c) => (
                             <div key={c.id} className="flex items-start justify-between gap-2 text-sm">

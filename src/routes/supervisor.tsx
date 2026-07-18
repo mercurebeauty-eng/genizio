@@ -66,7 +66,7 @@ function SupervisorDashboardPage() {
   const selected = children.find((c) => c.id === selectedId) ?? null;
 
   if (loading || !session) {
-    return <div className="grid min-h-screen place-items-center bg-surface text-ink/50">Chargement…</div>;
+    return <div className="grid min-h-screen place-items-center bg-surface text-ink/60">Chargement…</div>;
   }
 
   return (
@@ -78,7 +78,7 @@ function SupervisorDashboardPage() {
         <div className="mb-8">
           <div className="mb-3 flex items-end gap-3" style={{ paddingTop: "3.5rem", marginTop: "-3.5rem" }}>
             <NayaAvatar size="sm" thoughts={["Bonjour Superviseur ! Voici vos enfants à accompagner."]} />
-            <p className="text-sm text-ink/50 mb-0.5">Espace Superviseur</p>
+            <p className="text-sm text-ink/60 mb-0.5">Espace Superviseur</p>
           </div>
           <h1 className="font-display text-3xl font-extrabold">Tableau de Bord Superviseur</h1>
         </div>
@@ -107,7 +107,7 @@ function SupervisorDashboardPage() {
           <div className="grid gap-8 md:grid-cols-3">
             {/* Sidebar — liste des enfants */}
             <div className="space-y-3">
-              <h2 className="text-xs font-extrabold uppercase tracking-widest text-ink/40 mb-3">Enfants assignés ({children.length})</h2>
+              <h2 className="text-xs font-extrabold uppercase tracking-widest text-ink/60 mb-3">Enfants assignés ({children.length})</h2>
               {children.map((child) => {
                 const guild = getChildGuild(child.talents);
                 const completed = child.challenges.filter((c) => c.status === "completed").length;
@@ -127,7 +127,7 @@ function SupervisorDashboardPage() {
                     <div className={`text-xs font-bold ${isActive ? "text-white/80" : "text-ink/60"}`}>
                       {child.age} ans · {guild.name}
                     </div>
-                    <div className={`text-xs mt-1 font-semibold ${isActive ? "text-white/70" : "text-ink/50"}`}>
+                    <div className={`text-xs mt-1 font-semibold ${isActive ? "text-white/70" : "text-ink/60"}`}>
                       {completed} défis complétés · {child.challenges.length} total
                     </div>
                   </button>
@@ -166,7 +166,7 @@ function SupervisorDashboardPage() {
                         <div key={stat.label} className={`rounded-2xl border-[3px] border-ink p-4 text-center shadow-brutal-sm ${stat.color} flex flex-col items-center justify-center`}>
                           <Icon className={`size-6 mb-1.5 ${stat.iconColor}`} />
                           <div className="font-display text-2xl font-black">{stat.count}</div>
-                          <p className="text-[10px] font-bold uppercase tracking-widest text-ink/50 mt-1">{stat.label}</p>
+                          <p className="text-[10px] font-bold uppercase tracking-widest text-ink/60 mt-1">{stat.label}</p>
                         </div>
                       );
                     })}
@@ -180,7 +180,7 @@ function SupervisorDashboardPage() {
                       Défis de {selected.name}
                     </h3>
                     {selected.challenges.length === 0 ? (
-                      <p className="text-sm text-ink/50 italic">Aucun défi assigné pour le moment.</p>
+                      <p className="text-sm text-ink/60 italic">Aucun défi assigné pour le moment.</p>
                     ) : (
                       <ul className="space-y-3">
                         {selected.challenges.map((c) => (
@@ -191,7 +191,7 @@ function SupervisorDashboardPage() {
                           >
                             <div>
                               <p className="text-sm font-bold text-ink hover:text-brand transition-colors">{c.title}</p>
-                              <p className="text-xs text-ink/50">{c.domain}</p>
+                              <p className="text-xs text-ink/60">{c.domain}</p>
                             </div>
                             <span className={`rounded-full px-2.5 py-1 text-[10px] font-black uppercase tracking-widest border-2 border-ink ${
                               c.status === "completed" ? "bg-emerald-100 text-emerald-800" :
@@ -266,7 +266,7 @@ function SupervisorDashboardPage() {
 
               {/* Description */}
               <div>
-                <h4 className="text-xs font-black uppercase tracking-widest text-ink/40 mb-2">Description du défi</h4>
+                <h4 className="text-xs font-black uppercase tracking-widest text-ink/60 mb-2">Description du défi</h4>
                 <div className="text-sm text-ink/80 leading-relaxed font-medium">
                   <MarkdownContent content={selectedChallenge.description} />
                 </div>
@@ -275,7 +275,7 @@ function SupervisorDashboardPage() {
               {/* Pedagogical context */}
               {selectedChallenge.pedagogical_context && (
                 <div className="rounded-2xl border-2 border-ink bg-stone-50 p-4">
-                  <p className="text-xs font-black uppercase tracking-wider text-ink/50 mb-1">Objectif Pédagogique (Naya)</p>
+                  <p className="text-xs font-black uppercase tracking-wider text-ink/60 mb-1">Objectif Pédagogique (Naya)</p>
                   <p className="text-xs text-ink/70 leading-relaxed font-medium">{selectedChallenge.pedagogical_context}</p>
                 </div>
               )}
@@ -283,7 +283,7 @@ function SupervisorDashboardPage() {
               {/* Materials */}
               {selectedChallenge.materials && Array.isArray(selectedChallenge.materials) && selectedChallenge.materials.length > 0 && (
                 <div>
-                  <h4 className="text-xs font-black uppercase tracking-widest text-ink/40 mb-2">Matériel nécessaire</h4>
+                  <h4 className="text-xs font-black uppercase tracking-widest text-ink/60 mb-2">Matériel nécessaire</h4>
                   <ul className="grid gap-2 sm:grid-cols-2">
                     {selectedChallenge.materials.map((m: string, i: number) => (
                       <li key={i} className="flex items-center gap-2 text-sm font-bold text-ink">
@@ -298,7 +298,7 @@ function SupervisorDashboardPage() {
               {/* Steps */}
               {selectedChallenge.steps && Array.isArray(selectedChallenge.steps) && selectedChallenge.steps.length > 0 && (
                 <div>
-                  <h4 className="text-xs font-black uppercase tracking-widest text-ink/40 mb-3">Étapes de réalisation</h4>
+                  <h4 className="text-xs font-black uppercase tracking-widest text-ink/60 mb-3">Étapes de réalisation</h4>
                   <ol className="space-y-3">
                     {selectedChallenge.steps.map((s: string, i: number) => (
                       <li key={i} className="flex gap-3 text-sm">
@@ -320,7 +320,7 @@ function SupervisorDashboardPage() {
                   {/* Proof Image */}
                   {selectedChallenge.proof_image_url && (
                     <div>
-                      <p className="text-xs font-black uppercase tracking-widest text-ink/40 mb-2">Preuve de réalisation</p>
+                      <p className="text-xs font-black uppercase tracking-widest text-ink/60 mb-2">Preuve de réalisation</p>
                       <div className="rounded-2xl overflow-hidden border-[3px] border-ink bg-surface max-w-md">
                         <img src={selectedChallenge.proof_image_url} alt="Preuve" className="w-full max-h-64 object-contain" />
                       </div>

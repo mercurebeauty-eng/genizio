@@ -223,7 +223,7 @@ export function CreatePostModal({
                   </option>
                 ))}
               </select>
-              <div className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-ink/40">
+              <div className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-ink/60">
                 <ChevronDown className="size-4" />
               </div>
             </div>
@@ -237,7 +237,7 @@ export function CreatePostModal({
               </div>
               <div className="text-center">
                 <p className="font-bold text-ink">Ajouter une photo</p>
-                <p className="text-xs text-ink/50 mt-1">PNG, JPG jusqu'à 5MB</p>
+                <p className="text-xs text-ink/60 mt-1">PNG, JPG jusqu'à 5MB</p>
               </div>
               <input type="file" accept="image/*" className="hidden" onChange={handleImageChange} />
             </label>
@@ -256,7 +256,7 @@ export function CreatePostModal({
           <div>
             <textarea
               placeholder="Racontez l'exploit de votre enfant à la communauté..."
-              className="w-full min-h-[100px] resize-none rounded-xl border-[3px] border-ink bg-white p-4 text-sm font-medium text-ink outline-none focus:ring-2 focus:ring-brand transition-all placeholder:text-ink/40 shadow-brutal-sm"
+              className="w-full min-h-[100px] resize-none rounded-xl border-[3px] border-ink bg-white p-4 text-sm font-medium text-ink outline-none focus:ring-2 focus:ring-brand transition-all placeholder:text-ink/60 shadow-brutal-sm"
               value={caption}
               onChange={(e) => setCaption(e.target.value)}
             />

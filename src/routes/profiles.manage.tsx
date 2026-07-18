@@ -55,7 +55,7 @@ function ManageProfilesPage() {
 
   if (loading || !session) {
     return (
-      <div className="grid min-h-screen place-items-center bg-surface text-ink/50">
+      <div className="grid min-h-screen place-items-center bg-surface text-ink/60">
         Chargement…
       </div>
     );
@@ -93,7 +93,7 @@ function ManageProfilesPage() {
         </div>
 
         {fetching ? (
-          <p className="text-ink/40">Chargement…</p>
+          <p className="text-ink/60">Chargement…</p>
         ) : profiles.length === 0 ? (
           <div className="rounded-3xl border-[3px] border-dashed border-ink bg-white/40 p-12 text-center shadow-brutal-sm">
             <p className="text-ink/60">Aucun profil pour l'instant. Créez le premier.</p>
@@ -131,7 +131,7 @@ function ManageProfilesPage() {
               </div>
             </div>
             <div className="mb-6 rounded-2xl border-[3px] border-ink bg-surface p-5 shadow-brutal-sm">
-              <p className="text-xs font-black uppercase tracking-widest text-ink/40 mb-1">Profil supplémentaire</p>
+              <p className="text-xs font-black uppercase tracking-widest text-ink/60 mb-1">Profil supplémentaire</p>
               <p className="font-display text-3xl font-black text-ink">5 000 <span className="text-lg text-ink/60">FCFA</span></p>
               <p className="mt-2 text-xs text-ink/60 leading-relaxed">Débloqué manuellement après confirmation du paiement. Accès permanent.</p>
             </div>
@@ -145,7 +145,7 @@ function ManageProfilesPage() {
               <Phone className="size-4 fill-white" />
               Contacter l'administrateur sur WhatsApp
             </a>
-            <button onClick={() => setShowUpgradeModal(false)} className="mt-3 w-full py-2 text-center text-xs font-bold text-ink/40 hover:text-ink transition-all">Fermer</button>
+            <button onClick={() => setShowUpgradeModal(false)} className="mt-3 w-full py-2 text-center text-xs font-bold text-ink/60 hover:text-ink transition-all">Fermer</button>
           </div>
         </div>
       )}

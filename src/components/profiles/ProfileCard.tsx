@@ -23,7 +23,7 @@ export function ProfileCard({
         </div>
         <div>
           <h3 className="font-display text-xl font-bold">{profile.name}</h3>
-          <p className="text-xs text-ink/50">
+          <p className="text-xs text-ink/60">
             {profile.age} ans
             {profile.city ? ` · ${profile.city}` : ""}
             {profile.country ? `, ${profile.country}` : ""}
@@ -37,10 +37,10 @@ export function ProfileCard({
           </span>
         ))}
         {profile.interests.length === 0 && (
-          <span className="text-xs text-ink/40">Aucun centre d'intérêt</span>
+          <span className="text-xs text-ink/60">Aucun centre d'intérêt</span>
         )}
       </div>
-      <div className="mb-4 flex gap-4 text-xs text-ink/50">
+      <div className="mb-4 flex gap-4 text-xs text-ink/60">
         <span>★ {profile.favorite_challenges.length} favoris</span>
         <span>✓ {profile.completed_challenges.length} complétés</span>
       </div>

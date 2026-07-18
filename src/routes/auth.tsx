@@ -60,7 +60,7 @@ function AuthPage() {
             {busy ? "…" : "Continuer avec Google"}
           </button>
 
-          <p className="mt-4 text-center text-xs text-ink/50">
+          <p className="mt-4 text-center text-xs text-ink/60">
             En continuant, vous acceptez nos{" "}
             <Link to="/terms" className="underline hover:text-brand">Conditions d'utilisation</Link> et notre{" "}
             <Link to="/privacy" className="underline hover:text-brand">Politique de confidentialité</Link>.

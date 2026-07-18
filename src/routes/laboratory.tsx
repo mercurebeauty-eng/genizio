@@ -336,7 +336,7 @@ function LaboratoryPage() {
               <label className="flex items-center gap-2 text-sm font-bold uppercase tracking-wider text-ink/60 mb-2">
                 🏠 Matériaux que vous avez à la maison (Optionnel)
               </label>
-              <p className="text-xs text-ink/50 mb-3">
+              <p className="text-xs text-ink/60 mb-3">
                 Citez ce qui est disponible (ingrédients, cartons, cailloux...) pour que Naya concocte un défi adapté.
               </p>
               <textarea
@@ -346,7 +346,7 @@ function LaboratoryPage() {
                 className="w-full min-h-[80px] rounded-xl border-[3px] border-ink p-3 text-sm font-bold outline-none focus:ring-2 focus:ring-brand shadow-brutal-sm resize-y"
               />
               <div className="mt-2.5 flex flex-wrap gap-2 items-center">
-                <span className="text-[10px] font-extrabold uppercase text-ink/40 tracking-wider">Ajout rapide :</span>
+                <span className="text-[10px] font-extrabold uppercase text-ink/60 tracking-wider">Ajout rapide :</span>
                 {[
                   { label: "🥬 Oignon, Farine, Oeuf", val: "farine, oignons, oeuf" },
                   { label: "📦 Bouteilles, Carton", val: "bouteille plastique, carton" },
@@ -484,7 +484,7 @@ function LaboratoryPage() {
                 {activeTab === "materials" && (
                   <div className="space-y-6">
                     <div>
-                      <h3 className="text-sm font-bold uppercase tracking-widest text-ink/50 mb-4">À réunir avant de commencer :</h3>
+                      <h3 className="text-sm font-bold uppercase tracking-widest text-ink/60 mb-4">À réunir avant de commencer :</h3>
                       <div className="grid gap-3 sm:grid-cols-2">
                         {currentChallenge.materials.map((mat, idx) => (
                           <div key={idx} className="flex items-center gap-3 rounded-2xl bg-white px-4 py-3 border-2 border-ink">
@@ -505,7 +505,7 @@ function LaboratoryPage() {
 
                 {activeTab === "steps" && (
                   <div className="space-y-4">
-                    <h3 className="text-sm font-bold uppercase tracking-widest text-ink/50 mb-3">Plan d'action</h3>
+                    <h3 className="text-sm font-bold uppercase tracking-widest text-ink/60 mb-3">Plan d'action</h3>
                     <ol className="space-y-4">
                       {currentChallenge.steps.map((step, idx) => (
                         <li key={idx} className="flex gap-4 p-4 rounded-2xl bg-surface border-2 border-ink">

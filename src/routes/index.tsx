@@ -119,7 +119,7 @@ function NayaLanding() {
   if (loading || session) {
     return (
       <div className="grid min-h-screen place-items-center bg-surface">
-        <div className="text-center font-bold text-ink/50">
+        <div className="text-center font-bold text-ink/60">
           <Loader2 className="size-8 animate-spin text-brand mx-auto mb-2" />
           <span>Chargement...</span>
         </div>
@@ -226,7 +226,7 @@ function Hero() {
             <div className="size-8 rounded-full border-2 border-ink bg-sky" />
             <div className="size-8 rounded-full border-2 border-ink bg-ink" />
           </div>
-          <span className="text-xs font-bold text-ink/50 uppercase tracking-wide">
+          <span className="text-xs font-bold text-ink/60 uppercase tracking-wide">
             Rejoint par des familles à Dakar, Abidjan et Yaoundé
           </span>
         </div>
@@ -471,7 +471,7 @@ function DemoSection() {
                   </div>
 
                   <div className="flex items-center justify-between border-t border-ink/5 pt-3 mt-4">
-                    <span className="text-[10px] font-bold text-ink/40">⏱ {c.duration}</span>
+                    <span className="text-[10px] font-bold text-ink/60">⏱ {c.duration}</span>
                     <Link
                       to="/auth"
                       className="inline-flex items-center gap-1 text-xs font-bold text-brand hover:text-brand-dark hover:underline"
@@ -563,15 +563,15 @@ function VisionSection() {
             <div className="mt-8 grid grid-cols-3 gap-3 border-t-[3px] border-ink pt-6">
               <div className="text-center">
                 <div className="font-display text-2xl font-extrabold text-brand">27</div>
-                <div className="text-[10px] font-bold uppercase tracking-widest text-ink/40">Défis complétés</div>
+                <div className="text-[10px] font-bold uppercase tracking-widest text-ink/60">Défis complétés</div>
               </div>
               <div className="text-center">
                 <div className="font-display text-2xl font-extrabold text-leaf">9</div>
-                <div className="text-[10px] font-bold uppercase tracking-widest text-ink/40">Talents cartographiés</div>
+                <div className="text-[10px] font-bold uppercase tracking-widest text-ink/60">Talents cartographiés</div>
               </div>
               <div className="text-center">
                 <div className="font-display text-2xl font-extrabold text-sky">3</div>
-                <div className="text-[10px] font-bold uppercase tracking-widest text-ink/40">Mentors actifs</div>
+                <div className="text-[10px] font-bold uppercase tracking-widest text-ink/60">Mentors actifs</div>
               </div>
             </div>
           </div>
@@ -800,7 +800,7 @@ function Footer() {
           <img src="/favicon-96x96.png" alt="" className="h-7 w-7" />
           GÉNIZIO
         </div>
-        <div className="flex flex-wrap justify-center gap-6 text-xs font-bold text-ink/50 uppercase tracking-wider">
+        <div className="flex flex-wrap justify-center gap-6 text-xs font-bold text-ink/60 uppercase tracking-wider">
           <Link to="/privacy" className="hover:text-brand">
             Confidentialité
           </Link>
@@ -811,7 +811,7 @@ function Footer() {
             Mentions légales
           </Link>
         </div>
-        <div className="text-xs font-bold text-ink/40">
+        <div className="text-xs font-bold text-ink/60">
           © 2026 Génizio — Dakar · Abidjan · Yaoundé
         </div>
       </div>

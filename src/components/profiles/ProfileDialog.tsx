@@ -100,7 +100,7 @@ export function ProfileDialog({
 
         <div className="space-y-5">
           <div>
-            <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-ink/50">
+            <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-ink/60">
               Prénom
             </label>
             <input
@@ -111,7 +111,7 @@ export function ProfileDialog({
           </div>
 
           <div>
-            <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-ink/50">
+            <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-ink/60">
               Âge : {draft.age} ans
             </label>
             <input
@@ -126,7 +126,7 @@ export function ProfileDialog({
 
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-ink/50">
+              <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-ink/60">
                 Ville
               </label>
               <input
@@ -137,7 +137,7 @@ export function ProfileDialog({
               />
             </div>
             <div>
-              <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-ink/50">
+              <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-ink/60">
                 Pays
               </label>
               <input
@@ -150,7 +150,7 @@ export function ProfileDialog({
           </div>
 
           <div>
-            <label className="mb-2 block text-xs font-semibold uppercase tracking-wider text-ink/50">
+            <label className="mb-2 block text-xs font-semibold uppercase tracking-wider text-ink/60">
               Couleur d'avatar
             </label>
             <div className="flex gap-3">
@@ -169,10 +169,10 @@ export function ProfileDialog({
           </div>
 
           <div>
-            <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-ink/50">
+            <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-ink/60">
               Centres d'intérêt
             </label>
-            <p className="mb-3 text-[11px] text-ink/40 leading-relaxed">
+            <p className="mb-3 text-[11px] text-ink/60 leading-relaxed">
               Organisés par type de talent — ça aide Naya à proposer des défis mieux ciblés dès le départ.
             </p>
             <div className="space-y-4">

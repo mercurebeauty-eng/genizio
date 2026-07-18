@@ -28,7 +28,7 @@ export function ConsentLedger() {
 
   if (events.length === 0) {
     return (
-      <div className="text-center py-6 text-sm text-ink/50 bg-white rounded-2xl border-[3px] border-ink shadow-brutal">
+      <div className="text-center py-6 text-sm text-ink/60 bg-white rounded-2xl border-[3px] border-ink shadow-brutal">
         Aucun événement de confidentialité enregistré pour le moment.
       </div>
     );
@@ -39,7 +39,7 @@ export function ConsentLedger() {
       case "data_exported": return <Download className="size-4 text-sky-600" />;
       case "mentor_invited": return <Share2 className="size-4 text-brand" />;
       case "mentor_revoked": return <Trash2 className="size-4 text-red-600" />;
-      default: return <KeyRound className="size-4 text-ink/50" />;
+      default: return <KeyRound className="size-4 text-ink/60" />;
     }
   };
 
@@ -66,7 +66,7 @@ export function ConsentLedger() {
             </div>
             <div className="flex-1 space-y-1">
               <p className="text-sm font-medium text-ink">{ev.description}</p>
-              <div className="flex flex-wrap gap-x-3 text-[11px] text-ink/40">
+              <div className="flex flex-wrap gap-x-3 text-[11px] text-ink/60">
                 <span>{formatDistanceToNow(new Date(ev.created_at), { addSuffix: true, locale: fr })}</span>
                 {ev.metadata?.mentor_id && <span>Mentor ID: {ev.metadata.mentor_id.slice(0, 8)}...</span>}
               </div>

@@ -192,7 +192,7 @@ function QuestPage() {
 
   if (loading || fetching || !session) {
     return (
-      <div className="grid min-h-screen place-items-center bg-brand/5 text-ink/50">
+      <div className="grid min-h-screen place-items-center bg-brand/5 text-ink/60">
         <p className="font-bold animate-pulse">Chargement de la quête...</p>
       </div>
     );
@@ -239,7 +239,7 @@ function QuestPage() {
             <span className="rounded-full bg-brand/10 px-3.5 py-1.5 text-xs font-black uppercase tracking-wider text-brand">
               Mode Quête
             </span>
-            <span className="text-sm font-bold text-ink/40">
+            <span className="text-sm font-bold text-ink/60">
               {isCompletedScreen ? "Fin de mission" : `Étape ${currentStepIndex + 1} sur ${steps.length}`}
             </span>
           </div>
@@ -412,7 +412,7 @@ function QuestPage() {
         </h1>
         <Link 
           to="/profiles" 
-          className="inline-flex items-center gap-2 rounded-full bg-white px-4 py-2 text-xs font-extrabold text-ink/50 hover:text-ink/80 hover:bg-white shadow-brutal-sm border-2 border-ink transition-all"
+          className="inline-flex items-center gap-2 rounded-full bg-white px-4 py-2 text-xs font-extrabold text-ink/60 hover:text-ink/80 hover:bg-white shadow-brutal-sm border-2 border-ink transition-all"
         >
           <ArrowLeft className="size-3.5" />
           Retour parent
@@ -424,7 +424,7 @@ function QuestPage() {
         {/* Quest Map Node Tree (Screen 1j) */}
         {mapNodes.length > 0 && (
           <div className="w-full mb-12 py-8 bg-white rounded-3xl border-[3px] border-ink p-6 shadow-brutal">
-            <h2 className="font-display text-xs font-black text-ink/40 mb-8 uppercase tracking-widest">Mon chemin de découverte</h2>
+            <h2 className="font-display text-xs font-black text-ink/60 mb-8 uppercase tracking-widest">Mon chemin de découverte</h2>
             <div className="flex items-center justify-between px-4 md:px-12 relative max-w-md mx-auto">
               
               {/* Connector Lines */}
@@ -481,7 +481,7 @@ function QuestPage() {
                 </span>
                 <DifficultyBadge difficulty={activeChallenge.difficulty} />
               </div>
-              <span className="text-xs font-black text-ink/40">⏱ {activeChallenge.duration}</span>
+              <span className="text-xs font-black text-ink/60">⏱ {activeChallenge.duration}</span>
             </div>
             <h2 className="font-display text-2xl font-black text-ink leading-tight mb-3">
               {activeChallenge.title}
@@ -492,7 +492,7 @@ function QuestPage() {
 
             {materials.length > 0 && (
               <div className="mb-8">
-                <p className="text-[10px] font-black uppercase tracking-widest text-ink/40 mb-3">Matériel à rassembler :</p>
+                <p className="text-[10px] font-black uppercase tracking-widest text-ink/60 mb-3">Matériel à rassembler :</p>
                 <div className="flex flex-wrap gap-2">
                   {materials.map((m, i) => (
                     <span key={i} className="inline-flex items-center gap-1.5 rounded-full border-2 border-ink bg-white px-3.5 py-1.5 text-xs font-bold text-ink shadow-brutal-sm">

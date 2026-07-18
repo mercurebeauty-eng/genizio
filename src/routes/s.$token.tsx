@@ -70,7 +70,7 @@ function SharedChildView() {
               </div>
             </div>
             <div>
-              <p className="text-xs font-bold text-ink/50 uppercase tracking-widest">
+              <p className="text-xs font-bold text-ink/60 uppercase tracking-widest">
                 Partage privé • {data.scopeDomains && data.scopeDomains.length > 0 ? `Domaines : ${data.scopeDomains.join(", ")}` : "Tous les domaines"}
               </p>
               <h1 className="font-bold text-ink">{data.childName} & {data.mentorName}</h1>
@@ -108,7 +108,7 @@ function SharedChildView() {
                     <span className="rounded-full border-2 border-ink bg-brand px-3 py-1 text-[10px] font-extrabold uppercase tracking-wider text-white">
                       {c.domain}
                     </span>
-                    <span className="text-xs font-semibold text-ink/40">
+                    <span className="text-xs font-semibold text-ink/60">
                       Terminé le {new Date(c.completed_at).toLocaleDateString()}
                     </span>
                   </div>
@@ -150,7 +150,7 @@ function SharedChildView() {
 
         {(!data.timeline || data.timeline.length === 0) && !data.talents && (
           <div className="text-center py-12">
-            <p className="text-ink/50 font-medium">Ce profil ne contient aucune donnée visible pour le moment.</p>
+            <p className="text-ink/60 font-medium">Ce profil ne contient aucune donnée visible pour le moment.</p>
           </div>
         )}
       </main>

@@ -200,7 +200,7 @@ function AdminProductsPage() {
   };
 
   if (loading || !session) {
-    return <div className="grid min-h-screen place-items-center bg-surface text-ink/50">Chargement…</div>;
+    return <div className="grid min-h-screen place-items-center bg-surface text-ink/60">Chargement…</div>;
   }
 
   return (
@@ -214,7 +214,7 @@ function AdminProductsPage() {
           </div>
           <div>
             <h1 className="font-display text-2xl font-extrabold">Catalogue de kits</h1>
-            <p className="text-sm text-ink/50">Prix et stock des matériaux suggérés par Naya.</p>
+            <p className="text-sm text-ink/60">Prix et stock des matériaux suggérés par Naya.</p>
           </div>
         </div>
 
@@ -228,7 +228,7 @@ function AdminProductsPage() {
               <ShieldAlert className="size-6" />
             </div>
             <p className="font-bold text-ink">Accès réservé à l'administrateur.</p>
-            <p className="mt-1 text-sm text-ink/50">
+            <p className="mt-1 text-sm text-ink/60">
               Ce compte ({session.user.email}) n'est pas autorisé à gérer le catalogue.
             </p>
           </div>
@@ -280,7 +280,7 @@ function AdminProductsPage() {
                       <Sparkles className="size-5 text-brand" />
                       <h2 className="font-display text-lg font-bold">Matériaux détectés sans produit</h2>
                     </div>
-                    <p className="mb-4 text-sm text-ink/50">
+                    <p className="mb-4 text-sm text-ink/60">
                       Naya a mentionné ces matériaux dans des défis, mais aucun produit actif ne les couvre.
                     </p>
                     <div className="space-y-2">
@@ -297,7 +297,7 @@ function AdminProductsPage() {
                               </span>
                             </p>
                             {s.sample_challenge_title && (
-                              <p className="truncate text-xs text-ink/40">ex: {s.sample_challenge_title}</p>
+                              <p className="truncate text-xs text-ink/60">ex: {s.sample_challenge_title}</p>
                             )}
                           </div>
                           <div className="flex shrink-0 items-center gap-2">
@@ -309,7 +309,7 @@ function AdminProductsPage() {
                             </button>
                             <button
                               onClick={() => ignoreSuggestion(s.id)}
-                              className="rounded-xl border-2 border-ink bg-white p-1.5 text-ink/50 hover:-translate-y-0.5 transition-all"
+                              className="rounded-xl border-2 border-ink bg-white p-1.5 text-ink/60 hover:-translate-y-0.5 transition-all"
                               title="Ignorer"
                             >
                               <X className="size-4" />
@@ -386,7 +386,7 @@ function AdminProductsPage() {
                       >
                         <div className="min-w-0">
                           <p className="font-bold text-ink">{p.name}</p>
-                          <p className="text-xs text-ink/50">
+                          <p className="text-xs text-ink/60">
                             {p.price_xof.toLocaleString("fr-FR")} FCFA
                             {p.stock_quantity !== null ? ` · ${p.stock_quantity} en stock` : " · stock illimité"}
                           </p>
@@ -438,7 +438,7 @@ function AdminProductsPage() {
                           <div>
                             <div className="flex items-center gap-2">
                               <span className="text-sm font-black text-ink">Commande #{o.id.slice(0, 8)}</span>
-                              <span className="text-xs text-ink/40">· {new Date(o.created_at).toLocaleString("fr-FR")}</span>
+                              <span className="text-xs text-ink/60">· {new Date(o.created_at).toLocaleString("fr-FR")}</span>
                             </div>
                             <p className="mt-1 text-xs text-ink/65">
                               Enfant : <span className="font-bold text-ink">{o.child_profiles?.name || "Inconnu"}</span>
@@ -467,7 +467,7 @@ function AdminProductsPage() {
                         </div>
 
                         <div>
-                          <h4 className="text-xs font-black uppercase tracking-widest text-ink/50 mb-2">Produits commandés :</h4>
+                          <h4 className="text-xs font-black uppercase tracking-widest text-ink/60 mb-2">Produits commandés :</h4>
                           <ul className="space-y-1">
                             {((Array.isArray(o.items) ? o.items : []) as any[]).map((item, idx) => (
                               <li key={idx} className="flex justify-between text-sm font-semibold text-ink">
@@ -543,13 +543,13 @@ function AdminProductsPage() {
                         </RadarChart>
                       </ResponsiveContainer>
                     ) : (
-                      <p className="text-sm text-ink/50 italic">Pas encore de donnees de talents.</p>
+                      <p className="text-sm text-ink/60 italic">Pas encore de donnees de talents.</p>
                     )}
                   </div>
 
                   <div className="rounded-3xl border-[3px] border-ink bg-white p-6 shadow-brutal">
                     <h3 className="font-display text-lg font-black">Top domaines</h3>
-                    <p className="text-[11px] text-ink/40 mb-4">Sur les 200 défis les plus récents</p>
+                    <p className="text-[11px] text-ink/60 mb-4">Sur les 200 défis les plus récents</p>
                     {ecosystemStats.topDomains.length > 0 ? (
                       <ResponsiveContainer width="100%" height={240}>
                         <BarChart data={ecosystemStats.topDomains} layout="vertical">
@@ -569,7 +569,7 @@ function AdminProductsPage() {
                         </BarChart>
                       </ResponsiveContainer>
                     ) : (
-                      <p className="text-sm text-ink/50 italic">Pas encore de defis.</p>
+                      <p className="text-sm text-ink/60 italic">Pas encore de defis.</p>
                     )}
                   </div>
                 </div>

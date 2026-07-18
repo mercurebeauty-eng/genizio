@@ -130,7 +130,7 @@ export function PwaInstallPrompt() {
                 <span>Installer maintenant</span>
               </button>
             </div>
-            <p className="text-[10px] text-center text-ink/40 font-bold mt-3 leading-relaxed">
+            <p className="text-[10px] text-center text-ink/60 font-bold mt-3 leading-relaxed">
               * Android crée automatiquement un fichier d'installation natif (WebAPK) pour une intégration système parfaite.
             </p>
           </div>
