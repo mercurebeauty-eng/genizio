@@ -277,6 +277,12 @@ export async function callClaude(
   prompt: string,
   jsonMode: boolean = false,
   imageUrl?: string,
+  // Anthropic's output-token rate limit is reserved based on this requested
+  // max, not on what's actually generated — a call that only needs ~100
+  // tokens but asks for 4000 can eat an entire minute's budget by itself.
+  // Every call site should pass a value close to its real expected output
+  // instead of relying on one size fits all.
+  maxOutputTokens = 4000,
   maxRetries = 3
 ): Promise<string> {
   const apiKey = process.env.ANTHROPIC_API_KEY;
@@ -340,7 +346,7 @@ export async function callClaude(
         },
         body: JSON.stringify({
           model: model,
-          max_tokens: 4000,
+          max_tokens: maxOutputTokens,
           system: systemPrompt,
           messages: [
             {
@@ -503,7 +509,9 @@ Contraintes :
 Réponds STRICTEMENT en JSON valide avec ce format, pour chaque défi :
 {"challenges":[{"domain":"...","title":"...","description":"...","duration":"...","steps":["...","..."],"materials":["...","..."],"material_tags":["..."],"pedagogical_context":"Ce que Naya observe via cette activité","intelligences":["Intelligence dominante sollicitée"],"requires_supervision":true ou false,"supervision_warning":"..." (ou null si false),"difficulty":"facile"|"moyen"|"difficile"}]}`;
 
-    const content = await callClaude(prompt, true);
+    // Up to 6 full défis in one response — genuinely needs the full default
+    // budget, unlike every other callClaude site in this file.
+    const content = await callClaude(prompt, true, undefined, 4000);
     let parsed: { challenges?: unknown };
     try {
       parsed = JSON.parse(content);
@@ -662,8 +670,12 @@ Réponds STRICTEMENT en JSON valide avec ce format :
 
     let aiContent = "";
     let imageAnalyzed = !!data.proofImageUrl;
+    // A short observation + a small talents_awarded object — nowhere near
+    // the 4000-token default sized for a batch of full défis. Reserving
+    // that much per call was the main way this endpoint could exhaust the
+    // org's per-minute output-token budget on a single request.
     try {
-      aiContent = await callClaude(prompt, true, data.proofImageUrl);
+      aiContent = await callClaude(prompt, true, data.proofImageUrl, 500);
     } catch (err) {
       // A 429 isn't specific to the image — it's the whole API key rate
       // limited. Falling back to a second full retry cycle (3 more attempts)
@@ -676,7 +688,7 @@ Réponds STRICTEMENT en JSON valide avec ce format :
       }
       console.warn("Vision model call failed, falling back to text only:", err);
       imageAnalyzed = false;
-      aiContent = await callClaude(prompt, true);
+      aiContent = await callClaude(prompt, true, undefined, 500);
     }
 
     let parsed: { observations?: string; talents_awarded?: Record<string, number> };
@@ -900,7 +912,11 @@ Réponds STRICTEMENT en JSON valide avec ce format exact :
   "difficulty": "facile" | "moyen" | "difficile"
 }`;
 
-    const content = await callClaude(prompt, true);
+    // A single défi, not a batch — the 4000 default (sized for up to 6 défis
+    // in generateChallenges) would needlessly reserve most of the org's
+    // per-minute output-token budget for a response that only needs a
+    // fraction of that.
+    const content = await callClaude(prompt, true, undefined, 1200);
     let parsed: unknown;
     try {
       parsed = JSON.parse(content);
@@ -963,7 +979,8 @@ Mets en lumière ses formes d'intelligence dominantes qui ressortent de ses acti
 Écris dans un style fluide, chaleureux et professionnel, en texte brut uniquement — aucune syntaxe Markdown (pas de #, ##, **, tirets de liste), sépare les deux paragraphes par un simple retour à la ligne.`;
 
     try {
-      return await callClaude(prompt, false);
+      // 2 short paragraphs, not a batch of défis.
+      return await callClaude(prompt, false, undefined, 700);
     } catch (e: any) {
       console.error("AI Synthesis Error:", e.message);
       return "L'intelligence de Naya se repose quelques instants (quota de requêtes atteint). Revenez dans une petite minute pour lire la synthèse complète !";
@@ -987,6 +1004,8 @@ Réponds STRICTEMENT en une seule phrase courte, chaleureuse et valorisante. Ta 
 Exemple: "Naya détecte une forte intelligence spatiale et créative dans cette magnifique construction !"
 NE mets PAS de guillemets autour de ta réponse.`;
     
-    const tag = await callClaude(prompt, false, data.imageUrl);
+    // One short sentence, capped at 150 chars below — 4000 was ~25x more
+    // budget than this could ever use.
+    const tag = await callClaude(prompt, false, data.imageUrl, 200);
     return tag.trim().slice(0, 150); // safety cap
   });
