@@ -51,6 +51,12 @@ export function OutcomeChat({ challenge, childName, notes = "", onSaveNotes, onV
 
   const [report, setReport] = useState<any>(null);
   const [showPostModal, setShowPostModal] = useState(false);
+  // Set instead of `report` when the AI judges the proof irrelevant — that
+  // response is never persisted server-side (see validateChallengeProof),
+  // so staying on this form (instead of switching to the success screen) is
+  // what actually lets the parent try again, matching what the AI's own
+  // message promises.
+  const [rejectionNotice, setRejectionNotice] = useState<string | null>(null);
 
   const validateAI = useServerFn(validateChallengeProof);
 
@@ -59,6 +65,7 @@ export function OutcomeChat({ challenge, childName, notes = "", onSaveNotes, onV
   const handleValidate = async () => {
     setValidating(true);
     setValidationError(null);
+    setRejectionNotice(null);
     try {
       const trimmedNotes = notes.trim();
       if (trimmedNotes) onSaveNotes(trimmedNotes);
@@ -74,6 +81,13 @@ export function OutcomeChat({ challenge, childName, notes = "", onSaveNotes, onV
           proofImageMediaType: file?.type,
         },
       });
+
+      if (!result.relevant) {
+        setRejectionNotice(result.observations);
+        setSelectedFile(null);
+        return;
+      }
+
       setReport(result);
       if (file && !result.imageAnalyzed) {
         toast.warning("Naya n'a pas pu analyser la photo — son observation se base uniquement sur vos notes.");
@@ -167,6 +181,14 @@ export function OutcomeChat({ challenge, childName, notes = "", onSaveNotes, onV
               </p>
             </div>
           </div>
+
+          {rejectionNotice && (
+            <div className="mb-6 rounded-2xl border-[3px] border-ink bg-amber-50 p-4">
+              <p className="text-sm font-semibold text-ink/80 leading-relaxed">
+                <MarkdownContent content={rejectionNotice} inline />
+              </p>
+            </div>
+          )}
 
           <div className="mb-6">
             {!selectedFile ? (

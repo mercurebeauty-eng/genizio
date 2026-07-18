@@ -676,7 +676,7 @@ ${data.proofText ? `Texte/Notes : "${data.proofText}"` : ""}
 ${data.proofImageBase64 ? `Une image a également été fournie (vérifie l'image si possible).` : ""}
 
 Ta mission :
-1. Vérifie D'ABORD si cette preuve correspond réellement à CE défi précis (le texte décrit-il une activité liée au défi ? l'image montre-t-elle quelque chose en rapport ?). Si la preuve est manifestement hors-sujet ou sans rapport avec le défi, n'écris AUCUN message de félicitations : explique poliment et brièvement au parent que la preuve ne semble pas correspondre à ce défi et invite à en soumettre une nouvelle. Dans ce cas, "talents_awarded" doit être un objet vide {}.
+1. Vérifie D'ABORD si cette preuve correspond réellement à CE défi précis (le texte décrit-il une activité liée au défi ? l'image montre-t-elle quelque chose en rapport ?). Si la preuve est manifestement hors-sujet ou sans rapport avec le défi, n'écris AUCUN message de félicitations : explique poliment et brièvement au parent que la preuve ne semble pas correspondre à ce défi et invite à en soumettre une nouvelle. Dans ce cas, "talents_awarded" doit être un objet vide {}. IMPORTANT : le parent ne peut joindre qu'UNE SEULE photo à la fois (jamais plusieurs) — ne demande jamais "des photos" au pluriel ni plusieurs preuves différentes ; suggère UNE seule photo montrant l'aspect le plus représentatif du défi.
 2. Si (et seulement si) la preuve correspond bien au défi, rédige une courte observation (2-3 phrases) encourageante pour le parent, soulignant l'ingéniosité de l'enfant dans cette réalisation. (Tu peux t'adresser au parent). Texte brut uniquement, sans aucune syntaxe Markdown (pas de #, ##, **, tirets de liste).
 3. Dans ce cas seulement, détermine quelles intelligences ont été réellement mobilisées et attribue des points (de 1 à 3 par intelligence, selon la qualité réelle de la réalisation — ne distribue jamais de points par défaut).
 Les intelligences possibles sont : spatial, corporelle, sociale, entrepreneuriale, creative, artisanale, emotionnelle, logico_mathematique, linguistique.
@@ -757,48 +757,58 @@ Réponds STRICTEMENT en JSON valide avec ce format :
       if (talentsError) throw new Error(talentsError.message);
     }
 
-    // Only persist the photo once the AI has actually confirmed it's
-    // relevant to this défi — an irrelevant/off-topic submission (deltas
-    // empty) is never uploaded at all, instead of every attempt hitting
-    // Storage regardless of outcome like before.
-    let proofImageUrl: string | null = null;
-    if (data.proofImageBase64 && Object.keys(deltas).length > 0) {
-      const mediaType = data.proofImageMediaType ?? "image/jpeg";
-      const ext = mediaType.split("/")[1] ?? "jpg";
-      const fileName = `${challenge.child_id}/${challenge.id}-${Math.random()}.${ext}`;
-      const { error: uploadError } = await supabase.storage
-        .from("proofs")
-        .upload(fileName, Buffer.from(data.proofImageBase64, "base64"), { contentType: mediaType });
-      if (uploadError) {
-        console.error("Erreur d'upload de la preuve (non bloquant):", uploadError);
-      } else {
-        const { data: publicUrlData } = supabase.storage.from("proofs").getPublicUrl(fileName);
-        proofImageUrl = publicUrlData.publicUrl;
+    const relevant = Object.keys(deltas).length > 0;
+
+    // A rejected submission used to still write ai_observations to the DB —
+    // and the UI only ever renders this whole validation card while
+    // ai_observations is null, so writing it here permanently hid the
+    // "submit again" form the AI's own rejection message just promised the
+    // parent. Only persist the outcome (and only upload the photo) once the
+    // AI actually confirms the submission is relevant.
+    let updatedChallenge: any = challenge;
+    if (relevant) {
+      let proofImageUrl: string | null = null;
+      if (data.proofImageBase64) {
+        const mediaType = data.proofImageMediaType ?? "image/jpeg";
+        const ext = mediaType.split("/")[1] ?? "jpg";
+        const fileName = `${challenge.child_id}/${challenge.id}-${Math.random()}.${ext}`;
+        const { error: uploadError } = await supabase.storage
+          .from("proofs")
+          .upload(fileName, Buffer.from(data.proofImageBase64, "base64"), { contentType: mediaType });
+        if (uploadError) {
+          console.error("Erreur d'upload de la preuve (non bloquant):", uploadError);
+        } else {
+          const { data: publicUrlData } = supabase.storage.from("proofs").getPublicUrl(fileName);
+          proofImageUrl = publicUrlData.publicUrl;
+        }
       }
+
+      const patch = {
+        status: "completed" as const,
+        progress: 100,
+        completed_at: new Date().toISOString(),
+        proof_image_url: proofImageUrl,
+        ai_observations: observations,
+        target_intelligences: intelligenceKeys,
+      };
+
+      const { data: updated, error } = await supabase
+        .from("challenges")
+        .update(patch)
+        .eq("id", data.id)
+        .select("*")
+        .single();
+
+      if (error) throw new Error(error.message);
+      updatedChallenge = updated;
     }
 
-    const patch = {
-      status: "completed" as const,
-      progress: 100,
-      completed_at: new Date().toISOString(),
-      proof_image_url: proofImageUrl,
-      ai_observations: observations,
-      target_intelligences: intelligenceKeys,
-    };
-
-    const { data: updatedChallenge, error } = await supabase
-      .from("challenges")
-      .update(patch)
-      .eq("id", data.id)
-      .select("*")
-      .single();
-
-    if (error) throw new Error(error.message);
-    
     return {
       challenge: updatedChallenge,
+      observations,
       awarded_points: awarded,
       imageAnalyzed,
+      relevant,
     };
   });
 
