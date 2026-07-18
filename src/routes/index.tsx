@@ -5,7 +5,7 @@ import heroChild from "@/assets/hero-child.jpg";
 import { NayaAvatar } from "@/components/NayaAvatar";
 import { TalentRadarChart } from "@/components/TalentRadarChart";
 import { INTERESTS_BY_TALENT } from "@/components/profiles/shared";
-import { Users, Brain, ShoppingBag, Award, Sparkles, BookOpen, Star, HelpCircle, ArrowRight, ShieldCheck, Loader2 } from "lucide-react";
+import { Users, Brain, ShoppingBag, Award, Sparkles, BookOpen, Star, HelpCircle, ArrowRight, ShieldCheck, Loader2, Menu, X } from "lucide-react";
 
 export const Route = createFileRoute("/")({
   component: NayaLanding,
@@ -142,8 +142,17 @@ function NayaLanding() {
   );
 }
 
+const NAV_LINKS = [
+  { href: "#approche", label: "L'approche" },
+  { href: "#domaines", label: "Les 9 Talents" },
+  { href: "#demo", label: "Simulateur" },
+  { href: "#modele", label: "Vision 5 Niveaux" },
+];
+
 function Nav() {
   const { session } = useSession();
+  const [isOpen, setIsOpen] = useState(false);
+
   return (
     <nav className="sticky top-0 z-50 border-b-[3px] border-ink bg-surface">
       <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
@@ -152,35 +161,56 @@ function Nav() {
           GÉNIZIO
         </Link>
         <div className="hidden gap-8 font-bold text-sm md:flex">
-          <a href="#approche" className="text-ink/60 hover:text-brand transition-colors">
-            L'approche
-          </a>
-          <a href="#domaines" className="text-ink/60 hover:text-brand transition-colors">
-            Les 9 Talents
-          </a>
-          <a href="#demo" className="text-ink/60 hover:text-brand transition-colors">
-            Simulateur
-          </a>
-          <a href="#modele" className="text-ink/60 hover:text-brand transition-colors">
-            Vision 5 Niveaux
-          </a>
+          {NAV_LINKS.map((link) => (
+            <a key={link.href} href={link.href} className="text-ink/60 hover:text-brand transition-colors">
+              {link.label}
+            </a>
+          ))}
         </div>
-        {session ? (
-          <Link
-            to="/profiles"
-            className="rounded-2xl border-[3px] border-ink bg-ink px-5 py-2.5 text-xs font-bold text-white shadow-brutal-sm hover:-translate-y-0.5 active:translate-y-0 transition-all cursor-pointer"
+        <div className="flex items-center gap-2">
+          {session ? (
+            <Link
+              to="/profiles"
+              className="rounded-2xl border-[3px] border-ink bg-ink px-4 py-2.5 text-xs font-bold text-white shadow-brutal-sm hover:-translate-y-0.5 active:translate-y-0 transition-all cursor-pointer sm:px-5"
+            >
+              <span className="hidden sm:inline">Accéder à l'Espace Parent</span>
+              <span className="sm:hidden">Espace Parent</span>
+            </Link>
+          ) : (
+            <Link
+              to="/auth"
+              className="rounded-2xl border-[3px] border-ink bg-brand px-5 py-2.5 text-xs font-bold text-white shadow-brutal-sm hover:-translate-y-0.5 active:translate-y-0 transition-all cursor-pointer"
+            >
+              Se connecter
+            </Link>
+          )}
+          <button
+            onClick={() => setIsOpen((v) => !v)}
+            aria-label={isOpen ? "Fermer le menu" : "Ouvrir le menu"}
+            aria-expanded={isOpen}
+            className="rounded-xl border-[3px] border-ink bg-white p-2 shadow-brutal-sm md:hidden"
           >
-            Accéder à l'Espace Parent
-          </Link>
-        ) : (
-          <Link
-            to="/auth"
-            className="rounded-2xl border-[3px] border-ink bg-brand px-5 py-2.5 text-xs font-bold text-white shadow-brutal-sm hover:-translate-y-0.5 active:translate-y-0 transition-all cursor-pointer"
-          >
-            Se connecter
-          </Link>
-        )}
+            {isOpen ? <X className="size-5" /> : <Menu className="size-5" />}
+          </button>
+        </div>
       </div>
+
+      {isOpen && (
+        <div className="border-t-[3px] border-ink bg-surface px-6 py-4 md:hidden animate-in slide-in-from-top-5 duration-200">
+          <div className="flex flex-col gap-4 font-bold text-sm">
+            {NAV_LINKS.map((link) => (
+              <a
+                key={link.href}
+                href={link.href}
+                onClick={() => setIsOpen(false)}
+                className="text-ink/60 hover:text-brand transition-colors"
+              >
+                {link.label}
+              </a>
+            ))}
+          </div>
+        </div>
+      )}
     </nav>
   );
 }
@@ -373,7 +403,7 @@ function DemoSection() {
                   {name.charAt(0).toUpperCase() || "?"}
                 </div>
                 <div className="flex-1">
-                  <label className="block text-[10px] font-bold uppercase tracking-widest text-white/40 mb-1">Prénom de l'enfant</label>
+                  <label className="block text-[10px] font-bold uppercase tracking-widest text-white/60 mb-1">Prénom de l'enfant</label>
                   <input
                     value={name}
                     onChange={(e) => setName(e.target.value.slice(0, 20))}
@@ -383,7 +413,7 @@ function DemoSection() {
               </div>
 
               <div>
-                <label className="block text-[10px] font-bold uppercase tracking-widest text-white/40 mb-2">
+                <label className="block text-[10px] font-bold uppercase tracking-widest text-white/60 mb-2">
                   Âge : {age} ans
                 </label>
                 <input
@@ -397,7 +427,7 @@ function DemoSection() {
               </div>
 
               <div>
-                <label className="block text-[10px] font-bold uppercase tracking-widest text-white/40 mb-3">
+                <label className="block text-[10px] font-bold uppercase tracking-widest text-white/60 mb-3">
                   Sélectionner ses curiosités & forces
                 </label>
                 <div className="flex flex-wrap gap-2 max-h-48 overflow-y-auto pr-1">
@@ -424,7 +454,7 @@ function DemoSection() {
 
             {/* LIVE RADAR CHART */}
             <div className="rounded-3xl border-2 border-white/20 bg-white/5 p-6 flex flex-col items-center">
-              <h4 className="text-xs font-bold uppercase tracking-wider text-white/40 mb-4 self-start">
+              <h4 className="text-xs font-bold uppercase tracking-wider text-white/60 mb-4 self-start">
                 Profil en temps réel (Radar des intelligences)
               </h4>
               <TalentRadarChart talents={mockTalents} name={name} className="h-64 w-full" age={age} dark />
@@ -776,7 +806,7 @@ function CTASection() {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               placeholder="votre@email.com"
-              className="h-12 flex-1 rounded-2xl border-2 border-white/30 bg-white/10 px-4 text-xs font-bold text-white placeholder:text-white/40 outline-none focus:border-brand transition-all"
+              className="h-12 flex-1 rounded-2xl border-2 border-white/30 bg-white/10 px-4 text-xs font-bold text-white placeholder:text-white/60 outline-none focus:border-brand transition-all"
               aria-label="Adresse email"
             />
             <button
