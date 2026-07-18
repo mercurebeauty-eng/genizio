@@ -474,7 +474,7 @@ function QuestPage() {
 
         {activeChallenge ? (
           <div className="bg-white rounded-3xl p-8 border-[3px] border-ink shadow-brutal w-full animate-in zoom-in-95 duration-500 relative overflow-hidden text-left">
-            <div className="mb-4 flex items-center justify-between">
+            <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
               <div className="flex items-center gap-2">
                 <span className="inline-block rounded-full border-[3px] border-ink bg-brand px-3.5 py-1 text-xs font-black uppercase tracking-widest text-white shadow-brutal-sm">
                   Mission : {activeChallenge.domain}

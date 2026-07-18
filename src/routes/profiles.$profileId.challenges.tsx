@@ -588,7 +588,7 @@ function ChallengesPage() {
               {/* Generated challenge display */}
               {currentGeneratedChallenge && !isGeneratingSingle && (
                 <div className="mt-6 rounded-2xl border-[3px] border-ink bg-white p-6 shadow-brutal-sm animate-in fade-in slide-in-from-top-3 duration-300">
-                  <div className="mb-3 flex items-center justify-between">
+                  <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
                     <div className="flex items-center gap-2">
                       <span className="rounded-full bg-brand px-3 py-1 text-[10px] font-black uppercase tracking-widest text-white border-2 border-ink">
                         {currentGeneratedChallenge.domain}
@@ -868,7 +868,7 @@ function ChallengeCard({
 
   return (
     <div className="rounded-3xl bg-white p-6 border-[3px] border-ink shadow-brutal transition-all">
-      <div className="mb-4 flex items-center justify-between">
+      <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
         <div className="flex items-center gap-2">
           <span className="rounded-full bg-brand px-3 py-1 text-[10px] font-black uppercase tracking-widest text-white border-2 border-ink shadow-brutal-sm">
             {c.domain}
