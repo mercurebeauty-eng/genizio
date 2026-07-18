@@ -1,6 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
-import { VALID_TALENT_KEYS } from "@/lib/talent-buckets";
+import { VALID_TALENT_KEYS, TALENT_KEY_LABELS } from "@/lib/talent-buckets";
 import { z } from "zod";
 
 const ChallengeSchema = z.object({
@@ -75,6 +75,87 @@ const DOMAINS = [
   "Langues",
   "Tech & IA",
 ];
+
+// V2 (product-intelligence-architect pass): rather than leaving "which
+// intelligence needs more exploration" entirely to the model's judgment on
+// a raw JSON dump of scores, compute it deterministically and name it in
+// the prompt. Cheap, zero hallucination risk, and directly serves the
+// product's "reveal hidden talents" pitch instead of only reinforcing
+// declared interests.
+function getLeastExploredTalentLabels(
+  talents: Record<string, number> | null | undefined,
+  count = 2
+): string[] {
+  const raw = talents ?? {};
+  return VALID_TALENT_KEYS
+    .map((key) => ({ key, score: raw[key] ?? 0 }))
+    .sort((a, b) => a.score - b.score)
+    .slice(0, count)
+    .map(({ key }) => TALENT_KEY_LABELS[key]);
+}
+
+// V3: a deterministic safety net behind the model's own risk self-assessment.
+// The model can forget to flag a risky activity; this catches it from the
+// generated text itself instead of trusting the same single pass that wrote
+// it. Age-differentiated on purpose (per product direction): younger
+// children always get a direct "adult must be present" instruction, while
+// 12+ get concrete precautions to follow rather than a blocking tone — a
+// 12-year-old lighting a candle with instructions is normal, not something
+// to gate behind mandatory adult presence.
+const SAFETY_KEYWORDS: { pattern: RegExp; note: { under12: string; from12: string } }[] = [
+  {
+    pattern: /\b(feu|flamme|briquet|allumettes?|bougie)\b/i,
+    note: {
+      under12: "Cette activité implique du feu : un adulte doit être présent et superviser directement toute la manipulation.",
+      from12: "Mesures de sécurité à prendre : utilise le briquet ou les allumettes dans un endroit dégagé, loin de tissus ou de papier, garde de l'eau ou un linge humide à proximité, et éteins bien la flamme après usage. Informe un parent avant de commencer.",
+    },
+  },
+  {
+    pattern: /\b(couteau|cutter|lame|ciseaux pointus)\b/i,
+    note: {
+      under12: "Cette activité implique un objet tranchant : un adulte doit couper ou superviser directement cette étape.",
+      from12: "Mesures de sécurité à prendre : coupe toujours en éloignant tes doigts de la lame, travaille sur une surface stable, et range l'outil après usage.",
+    },
+  },
+  {
+    pattern: /\b(produits? chimiques?|eau de javel|acide|soude caustique)\b/i,
+    note: {
+      under12: "Cette activité implique des produits chimiques : un adulte doit manipuler ou superviser directement cette étape.",
+      from12: "Mesures de sécurité à prendre : manipule ces produits dans un endroit ventilé, évite tout contact avec les yeux ou la peau, et lave-toi les mains après usage.",
+    },
+  },
+  {
+    pattern: /\b(électricité|prise électrique|courant électrique|fils? dénudés?)\b/i,
+    note: {
+      under12: "Cette activité implique de l'électricité : un adulte doit superviser directement cette étape.",
+      from12: "Mesures de sécurité à prendre : ne touche jamais une prise ou un fil dénudé avec les mains mouillées, et débranche l'appareil avant toute manipulation.",
+    },
+  },
+];
+
+function applySafetyNet<T extends {
+  description: string;
+  steps: string[];
+  materials: string[];
+  requires_supervision?: boolean | null;
+  supervision_warning?: string | null;
+}>(challenge: T, age: number): { requires_supervision: boolean; supervision_warning: string | null } {
+  const haystack = [challenge.description, ...challenge.steps, ...challenge.materials].join(" \n ");
+  const matched = SAFETY_KEYWORDS.find((k) => k.pattern.test(haystack));
+
+  if (!matched) {
+    return {
+      requires_supervision: challenge.requires_supervision ?? false,
+      supervision_warning: challenge.supervision_warning ?? null,
+    };
+  }
+
+  const fallbackNote = age < 12 ? matched.note.under12 : matched.note.from12;
+  return {
+    requires_supervision: true,
+    supervision_warning: challenge.supervision_warning?.trim() || fallbackNote,
+  };
+}
 
 // Shared constitution injected into every challenge-generation prompt (bulk
 // and single). Written dense and numbered on purpose: the text-only calls
@@ -239,6 +320,19 @@ export const generateChallenges = createServerFn({ method: "POST" })
       .eq("child_id", data.childId);
     const existingTitles = (existing ?? []).map((c) => c.title);
 
+    const { data: completedChallenges } = await supabase
+      .from("challenges")
+      .select("title, domain, ai_observations")
+      .eq("child_id", data.childId)
+      .eq("status", "completed")
+      .order("completed_at", { ascending: false })
+      .limit(6);
+    const completedSummary = (completedChallenges ?? [])
+      .map((c) => `- Défi "${c.title}" (${c.domain}) : "${c.ai_observations ?? ''}"`)
+      .join("\n");
+
+    const leastExplored = getLeastExploredTalentLabels(child.talents as Record<string, number> | null);
+
     const prompt = `Tu es Naya, un mentor pédagogique pour enfants en Afrique francophone, sur la plateforme Génizio.
 Génère ${data.count} défis d'apprentissage sur mesure pour cet enfant.
 
@@ -246,7 +340,11 @@ Profil :
 - Prénom : ${child.name}
 - Âge : ${child.age} ans
 - Ville / pays : ${[child.city, child.country].filter(Boolean).join(", ") || "non précisé"}
-- Centres d'intérêt : ${(child.interests ?? []).join(", ") || "variés"}
+- Centres d'intérêt déclarés par le parent : ${(child.interests ?? []).join(", ") || "variés"}
+- Scores de talents actuels (Radar Chart de Howard Gardner, sur les 9 intelligences) : ${JSON.stringify(child.talents || {})}
+
+Défis déjà accomplis par l'enfant et observations de Naya :
+${completedSummary || "(Aucun défi complété pour le moment)"}
 
 CONSIGNES DE DÉVELOPPEMENT LIÉES À L'ÂGE :
 Adapte strictement la forme, la complexité intellectuelle et la motricité requise pour le défi à l'âge exact de l'enfant :
@@ -258,6 +356,7 @@ Adapte strictement la forme, la complexité intellectuelle et la motricité requ
 ${GENIZIO_PRINCIPLES}
 
 Contraintes :
+- Ignore le biais parental et utilise les données réelles : les intelligences actuellement les moins explorées chez cet enfant sont ${leastExplored.join(" et ")}. Sauf si le contexte les rend peu réalistes, au moins un des ${data.count} défis DOIT cibler l'une de ces intelligences plutôt que de renforcer uniquement les intérêts déjà connus — c'est ainsi que Naya révèle des talents cachés au lieu de se contenter de confirmer ce que le parent pense déjà savoir.
 - Ancre les défis dans le contexte africain (matériaux locaux, réalités du quotidien, langues, marchés, agriculture, artisanat, culture).
 - Choisis parmi ces domaines : ${DOMAINS.join(", ")}.
 - Chaque défi doit être concret, réalisable à la maison ou dans le quartier, adapté à l'âge.
@@ -266,7 +365,7 @@ Contraintes :
 - Pour "material_tags" : un tag court en minuscules, sans accent, par matériau physique achetable
   (ex: "carton", "cutter", "colle", "ampoule") — pas les objets déjà présents chez tout le monde
   (eau, table, papier). Un tableau vide si rien d'achetable n'est nécessaire.
-- SÉCURITÉ ET SUPERVISION : Analyse si le défi comporte des risques (cuisine, feu, objets coupants, produits chimiques, électricité, extérieur non sécurisé). Si OUI, "requires_supervision" doit être true avec un "supervision_warning" clair pour le parent.
+- SÉCURITÉ ET SUPERVISION, sans excès de prudence : analyse si le défi comporte des risques réels (feu, objets coupants, produits chimiques, électricité, extérieur non sécurisé). Si OUI, règle "requires_supervision" à true. Adapte le ton de "supervision_warning" à l'âge : avant 12 ans, précise qu'un adulte doit être présent pour cette étape ; à partir de 12 ans, un enfant peut réaliser l'étape lui-même — donne des mesures de sécurité concrètes à suivre plutôt que d'exiger la présence d'un adulte (ex: manipuler un briquet loin de matières inflammables, avec de l'eau à proximité). Ne signale pas de risque pour des activités quotidiennes sans danger réel (cuisine simple, extérieur familier, etc.).
 
 Réponds STRICTEMENT en JSON valide avec ce format, pour chaque défi :
 {"challenges":[{"domain":"...","title":"...","description":"...","duration":"...","steps":["...","..."],"materials":["...","..."],"material_tags":["..."],"pedagogical_context":"Ce que Naya observe via cette activité","intelligences":["Intelligence dominante sollicitée"],"requires_supervision":true ou false,"supervision_warning":"..." (ou null si false),"difficulty":"facile"|"moyen"|"difficile"}]}`;
@@ -286,22 +385,25 @@ Réponds STRICTEMENT en JSON valide avec ce format, pour chaque défi :
       throw new Error("Réponse IA invalide");
     }
 
-    const rows = list.map((c) => ({
-      user_id: userId,
-      child_id: data.childId,
-      domain: c.domain,
-      title: c.title.slice(0, 120),
-      description: c.description,
-      duration: c.duration,
-      steps: c.steps,
-      materials: c.materials,
-      material_tags: c.material_tags ?? [],
-      pedagogical_context: c.pedagogical_context || null,
-      target_intelligences: c.intelligences || [c.domain],
-      requires_supervision: c.requires_supervision,
-      supervision_warning: c.supervision_warning || null,
-      difficulty: c.difficulty ?? "moyen",
-    }));
+    const rows = list.map((c) => {
+      const safety = applySafetyNet(c, child.age);
+      return {
+        user_id: userId,
+        child_id: data.childId,
+        domain: c.domain,
+        title: c.title.slice(0, 120),
+        description: c.description,
+        duration: c.duration,
+        steps: c.steps,
+        materials: c.materials,
+        material_tags: c.material_tags ?? [],
+        pedagogical_context: c.pedagogical_context || null,
+        target_intelligences: c.intelligences || [c.domain],
+        requires_supervision: safety.requires_supervision,
+        supervision_warning: safety.supervision_warning,
+        difficulty: c.difficulty ?? "moyen",
+      };
+    });
 
     const { data: inserted, error: insErr } = await supabase
       .from("challenges")
@@ -507,7 +609,7 @@ export const assignTemplateChallenge = createServerFn({ method: "POST" })
 
     const { data: child, error: childErr } = await supabase
       .from("child_profiles")
-      .select("id")
+      .select("id, age")
       .eq("id", data.childId)
       .eq("user_id", userId)
       .maybeSingle();
@@ -515,6 +617,11 @@ export const assignTemplateChallenge = createServerFn({ method: "POST" })
     if (childErr || !child) throw new Error("Profil enfant introuvable ou accès refusé.");
 
     const { template } = data;
+    // Re-run the deterministic safety net here rather than trusting
+    // template.requires_supervision/supervision_warning as-is: this is a
+    // client-supplied value (round-tripped from generateSingleChallenge's
+    // preview) and this insert is the actual point of truth in the DB.
+    const safety = applySafetyNet(template, child.age);
 
     const { data: inserted, error } = await supabase
       .from("challenges")
@@ -532,8 +639,8 @@ export const assignTemplateChallenge = createServerFn({ method: "POST" })
         status: "todo",
         progress: 0,
         pedagogical_context: template.pedagogical_context ?? null,
-        requires_supervision: template.requires_supervision ?? false,
-        supervision_warning: template.supervision_warning ?? null,
+        requires_supervision: safety.requires_supervision,
+        supervision_warning: safety.supervision_warning,
         difficulty: template.difficulty ?? "moyen",
       })
       .select()
@@ -584,7 +691,7 @@ export const generateSingleChallenge = createServerFn({ method: "POST" })
 
     const domainInstruction = targetDomain
       ? `3. Tu DOIS générer un défi spécifiquement dans le domaine d'intelligence ou la catégorie suivante : "${targetDomain}". Adapte l'activité pour cibler ce domaine précis.`
-      : `3. Choisis le domaine d'intelligence (Sciences, Art, Artisanat, Cuisine, etc.) le plus pertinent pour ce temps et ce lieu, tout en visant à renforcer une faiblesse ou exalter une force réelle. Tu peux créer des défis "hybrides" (ex: utiliser l'art pour comprendre les mathématiques).`;
+      : `3. Les intelligences actuellement les moins explorées chez cet enfant sont ${getLeastExploredTalentLabels(child.talents as Record<string, number> | null).join(" et ")}. Sauf si le temps/lieu disponible les rend peu réalistes, choisis un domaine d'intelligence qui cible l'une de ces intelligences plutôt que de renforcer un talent déjà confirmé. Tu peux créer des défis "hybrides" (ex: utiliser l'art pour comprendre les mathématiques).`;
 
     const prompt = `Tu es Naya, un mentor pédagogique d'élite spécialisé dans la psychologie de l'enfant et les Intelligences Multiples d'Howard Gardner, opérant en Afrique francophone.
 Génère un défi d'apprentissage sur-mesure, hautement interactif et passionnant pour cet enfant, en respectant son contexte immédiat.
@@ -624,7 +731,7 @@ ${
     ? `6. UTILISATION DES MATÉRIAUX DE LA MAISON : Tu DOIS concevoir un défi qui utilise en priorité ou exclusivement les matériaux indiqués par le parent ("${data.homeMaterials}"). Si ces matériaux ne suffisent pas ou ne sont pas propices à une activité d'apprentissage stimulante dans le domaine choisi, tu PEUX inclure d'autres ustensiles simples ou matériaux courants, mais signale-le de façon transparente dans la description et les étapes (et liste le matériel additionnel nécessaire). Si les matériaux fournis ne permettent vraiment rien d'intéressant, génère le défi sans cette contrainte et explique-le brièvement dans la description ou le contexte pédagogique.`
     : ""
 }
-7. SÉCURITÉ ET SUPERVISION : Analyse si le défi comporte des risques (cuisine, feu, objets coupants, produits chimiques, électricité, extérieur non sécurisé). Si OUI, tu DOIS régler "requires_supervision" à true et rédiger un "supervision_warning" clair à l'attention du parent.
+7. SÉCURITÉ ET SUPERVISION, sans excès de prudence : Analyse si le défi comporte des risques réels (feu, objets coupants, produits chimiques, électricité, extérieur non sécurisé). Si OUI, tu DOIS régler "requires_supervision" à true. Adapte le ton de "supervision_warning" à l'âge : avant 12 ans, précise qu'un adulte doit être présent pour cette étape ; à partir de 12 ans, un enfant peut réaliser l'étape lui-même — donne des mesures de sécurité concrètes à suivre plutôt que d'exiger la présence d'un adulte (ex: manipuler un briquet loin de matières inflammables, avec de l'eau à proximité). Ne signale pas de risque pour des activités quotidiennes sans danger réel.
 8. Pour "material_tags" : un tag court en minuscules, sans accent, par matériau physique achetable
    (ex: "carton", "cutter", "colle", "ampoule") — pas les objets déjà présents chez tout le monde
    (eau, table, papier). Un tableau vide si rien d'achetable n'est nécessaire.
@@ -662,12 +769,16 @@ Réponds STRICTEMENT en JSON valide avec ce format exact :
 
     // Preview only — nothing is persisted here. The Laboratoire and the Défi page's
     // single-challenge generator both show this as a draft the parent can regenerate
-    // freely; assignTemplateChallenge is the only insertion point once they confirm.
+    // freely; assignTemplateChallenge re-applies the safety net server-side at the
+    // real insertion point, since this preview is round-tripped through the client.
+    const safety = applySafetyNet(c, child.age);
     return {
       ...c,
       title: c.title.slice(0, 120),
       material_tags: c.material_tags ?? [],
       difficulty: c.difficulty ?? "moyen",
+      requires_supervision: safety.requires_supervision,
+      supervision_warning: safety.supervision_warning,
     };
   });
 
