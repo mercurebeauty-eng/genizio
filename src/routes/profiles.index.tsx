@@ -1,5 +1,5 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useSession } from "@/hooks/use-session";
 import { Phone, Check, Loader2, Trophy, Lock } from "lucide-react";
@@ -50,6 +50,7 @@ function DashboardPage() {
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
   const [activeProducts, setActiveProducts] = useState<any[]>([]);
 
+  const hasRefreshedSessionRef = useRef(false);
   useEffect(() => {
     // extra_profile_slots lives in the session JWT's app_metadata, cached
     // client-side since login/last token refresh. When an admin grants a
@@ -57,10 +58,19 @@ function DashboardPage() {
     // can silently block "+ Nouveau profil" below even though the DB-side
     // quota (enforced by the enforce_child_profile_quota trigger, which
     // reads auth.users live) was actually raised. Refresh once on mount so
-    // the quota gate reflects the real current slot count. Gated on an
-    // existing session so logged-out visitors don't pay this network call.
-    if (session) void supabase.auth.refreshSession();
-  }, [session]);
+    // the quota gate reflects the real current slot count.
+    //
+    // Guarded with a ref, not just `if (session)`: refreshSession() itself
+    // triggers onAuthStateChange, which gives useSession() a new session
+    // object — with `[session]` as the only dependency, that re-fired this
+    // effect, which called refreshSession() again, which produced another
+    // new session object, forever. That infinite refresh loop is what
+    // showed up as the profiles page endlessly flickering on load.
+    if (!loading && session && !hasRefreshedSessionRef.current) {
+      hasRefreshedSessionRef.current = true;
+      void supabase.auth.refreshSession();
+    }
+  }, [loading, session]);
 
   useEffect(() => {
     supabase
