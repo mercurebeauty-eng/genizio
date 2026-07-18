@@ -239,6 +239,17 @@ export const generateChallenges = createServerFn({ method: "POST" })
       .eq("child_id", data.childId);
     const existingTitles = (existing ?? []).map((c) => c.title);
 
+    const { data: completedChallenges } = await supabase
+      .from("challenges")
+      .select("title, domain, ai_observations")
+      .eq("child_id", data.childId)
+      .eq("status", "completed")
+      .order("completed_at", { ascending: false })
+      .limit(6);
+    const completedSummary = (completedChallenges ?? [])
+      .map((c) => `- Défi "${c.title}" (${c.domain}) : "${c.ai_observations ?? ''}"`)
+      .join("\n");
+
     const prompt = `Tu es Naya, un mentor pédagogique pour enfants en Afrique francophone, sur la plateforme Génizio.
 Génère ${data.count} défis d'apprentissage sur mesure pour cet enfant.
 
@@ -246,7 +257,11 @@ Profil :
 - Prénom : ${child.name}
 - Âge : ${child.age} ans
 - Ville / pays : ${[child.city, child.country].filter(Boolean).join(", ") || "non précisé"}
-- Centres d'intérêt : ${(child.interests ?? []).join(", ") || "variés"}
+- Centres d'intérêt déclarés par le parent : ${(child.interests ?? []).join(", ") || "variés"}
+- Scores de talents actuels (Radar Chart de Howard Gardner, sur les 9 intelligences) : ${JSON.stringify(child.talents || {})}
+
+Défis déjà accomplis par l'enfant et observations de Naya :
+${completedSummary || "(Aucun défi complété pour le moment)"}
 
 CONSIGNES DE DÉVELOPPEMENT LIÉES À L'ÂGE :
 Adapte strictement la forme, la complexité intellectuelle et la motricité requise pour le défi à l'âge exact de l'enfant :
@@ -258,6 +273,7 @@ Adapte strictement la forme, la complexité intellectuelle et la motricité requ
 ${GENIZIO_PRINCIPLES}
 
 Contraintes :
+- Ignore le biais parental et utilise les données réelles : analyse les scores de talents et les observations des défis passés ci-dessus. Si une ou plusieurs intelligences sont sous-représentées (score faible ou nul) par rapport aux intérêts déclarés par le parent, au moins un des ${data.count} défis DOIT cibler une intelligence peu explorée plutôt que de renforcer uniquement les intérêts déjà connus — c'est ainsi que Naya révèle des talents cachés au lieu de se contenter de confirmer ce que le parent pense déjà savoir.
 - Ancre les défis dans le contexte africain (matériaux locaux, réalités du quotidien, langues, marchés, agriculture, artisanat, culture).
 - Choisis parmi ces domaines : ${DOMAINS.join(", ")}.
 - Chaque défi doit être concret, réalisable à la maison ou dans le quartier, adapté à l'âge.
