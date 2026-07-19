@@ -8,6 +8,7 @@ import { getChildGuild } from "@/lib/guilds";
 import { TalentRadarChart } from "@/components/TalentRadarChart";
 import { MarkdownContent } from "@/components/ui/markdown-content";
 import { Award, Sparkles, BookOpen, ShieldCheck, Printer, CheckCircle, ChevronLeft } from "lucide-react";
+import { GenizioLoader } from "@/components/GenizioLoader";
 
 function getTalentCardInfo(age: number, score: number) {
   let typeLabel = "Carte Éveil";
@@ -121,11 +122,8 @@ function PassportPrintPage() {
 
   if (loading || !session || fetching) {
     return (
-      <div className="grid min-h-screen place-items-center bg-stone-50 text-ink">
-        <div className="text-center font-bold">
-          <div className="size-8 rounded-full border-4 border-t-brand border-brand/20 animate-spin mx-auto mb-3"></div>
-          <p>Préparation du Passeport d'Excellence...</p>
-        </div>
+      <div className="grid min-h-screen place-items-center bg-stone-50">
+        <GenizioLoader label="Préparation du Passeport d'Excellence…" />
       </div>
     );
   }

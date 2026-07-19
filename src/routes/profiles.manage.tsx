@@ -111,7 +111,7 @@ function ManageProfilesPage() {
         </div>
 
         {fetching ? (
-          <GenizioLoader size="sm" className="py-8" />
+          <GenizioLoader className="py-8" />
         ) : profiles.length === 0 ? (
           <div className="rounded-3xl border-[3px] border-dashed border-ink bg-white/40 p-12 text-center shadow-brutal-sm">
             <p className="text-ink/60">Aucun profil pour l'instant. Créez le premier.</p>
