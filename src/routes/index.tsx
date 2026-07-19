@@ -5,7 +5,8 @@ import heroChild from "@/assets/hero-child.jpg";
 import { NayaAvatar } from "@/components/NayaAvatar";
 import { TalentRadarChart } from "@/components/TalentRadarChart";
 import { INTERESTS_BY_TALENT } from "@/components/profiles/shared";
-import { Users, Brain, ShoppingBag, Award, Sparkles, BookOpen, Star, HelpCircle, ArrowRight, ShieldCheck, Loader2, Menu, X } from "lucide-react";
+import { Users, Brain, ShoppingBag, Award, Sparkles, BookOpen, Star, HelpCircle, ArrowRight, ShieldCheck, Menu, X } from "lucide-react";
+import { GenizioLoader } from "@/components/GenizioLoader";
 
 export const Route = createFileRoute("/")({
   component: NayaLanding,
@@ -119,10 +120,7 @@ function NayaLanding() {
   if (loading || session) {
     return (
       <div className="grid min-h-screen place-items-center bg-surface">
-        <div className="text-center font-bold text-ink/60">
-          <Loader2 className="size-8 animate-spin text-brand mx-auto mb-2" />
-          <span>Chargement...</span>
-        </div>
+        <GenizioLoader label="Chargement…" />
       </div>
     );
   }

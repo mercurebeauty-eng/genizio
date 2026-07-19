@@ -9,6 +9,7 @@ import { ConsentLedger } from "@/components/settings/ConsentLedger";
 import { ExportDataButton } from "@/components/settings/ExportDataButton";
 import { DeleteAccountDialog } from "@/components/settings/DeleteAccountDialog";
 import { COUNTRIES } from "@/lib/countries";
+import { GenizioLoader } from "@/components/GenizioLoader";
 
 export const Route = createFileRoute("/profile")({
   component: ProfilePage,
@@ -86,7 +87,11 @@ function ProfilePage() {
   };
 
   if (loading || !session) {
-    return <div className="grid min-h-screen place-items-center bg-surface">Chargement...</div>;
+    return (
+      <div className="grid min-h-screen place-items-center bg-surface">
+        <GenizioLoader label="Chargement…" />
+      </div>
+    );
   }
 
   return (

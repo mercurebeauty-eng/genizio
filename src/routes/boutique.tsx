@@ -12,6 +12,7 @@ import { toast } from "sonner";
 import { NayaAvatar } from "@/components/NayaAvatar";
 import { DifficultyBadge } from "@/components/challenges/DifficultyBadge";
 import { MarkdownContent } from "@/components/ui/markdown-content";
+import { GenizioLoader } from "@/components/GenizioLoader";
 
 export const Route = createFileRoute("/boutique")({
   component: BoutiquePage,
@@ -240,8 +241,8 @@ function BoutiquePage() {
 
   if (loading || fetching) {
     return (
-      <div className="grid min-h-screen place-items-center bg-surface text-ink/60">
-        Chargement de la boutique…
+      <div className="grid min-h-screen place-items-center bg-surface">
+        <GenizioLoader label="Chargement de la boutique…" />
       </div>
     );
   }

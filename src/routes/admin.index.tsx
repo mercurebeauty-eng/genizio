@@ -4,8 +4,9 @@ import { useServerFn } from "@tanstack/react-start";
 import { useSession } from "@/hooks/use-session";
 import { AppHeader } from "@/components/AppHeader";
 import { getEcosystemStats, listParentsBI, togglePassportUnlock, grantProfileSlot } from "@/lib/products.functions";
-import { Loader2, Users, Brain, ShoppingBag, Phone, ExternalLink, Calendar, BarChart3, ChevronRight, Award } from "lucide-react";
+import { Users, Brain, ShoppingBag, Phone, ExternalLink, Calendar, BarChart3, ChevronRight, Award } from "lucide-react";
 import { toast } from "sonner";
+import { GenizioLoader } from "@/components/GenizioLoader";
 
 export const Route = createFileRoute("/admin/")({
   component: AdminIndexPage,
@@ -102,10 +103,7 @@ function AdminIndexPage() {
       <div className="min-h-screen bg-surface text-ink">
         <AppHeader />
         <div className="flex h-[80vh] items-center justify-center">
-          <div className="text-center font-bold">
-            <Loader2 className="size-8 animate-spin text-brand mx-auto mb-2" />
-            <span>Chargement des métriques BI...</span>
-          </div>
+          <GenizioLoader label="Chargement des métriques BI…" />
         </div>
       </div>
     );

@@ -13,6 +13,7 @@ import { NayaAvatar } from "@/components/NayaAvatar";
 import { KitSuggestion } from "@/components/challenges/KitSuggestion";
 import { DifficultyBadge } from "@/components/challenges/DifficultyBadge";
 import { MarkdownContent } from "@/components/ui/markdown-content";
+import { GenizioLoader } from "@/components/GenizioLoader";
 
 export const Route = createFileRoute("/laboratory")({
   component: LaboratoryPage,
@@ -234,7 +235,11 @@ function LaboratoryPage() {
   };
 
   if (loading || !session) {
-    return <div className="grid min-h-screen place-items-center bg-surface">Chargement...</div>;
+    return (
+      <div className="grid min-h-screen place-items-center bg-surface">
+        <GenizioLoader label="Chargement…" />
+      </div>
+    );
   }
 
   const childName = childrenList.find((c) => c.id === selectedChild)?.name ?? "l'enfant";
