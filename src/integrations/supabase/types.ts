@@ -39,51 +39,6 @@ export type Database = {
   }
   public: {
     Tables: {
-      anomaly_triggers: {
-        Row: {
-          child_id: string
-          created_at: string
-          id: string
-          resolved: boolean
-          school_grade_id: string
-          user_id: string
-          z_score: number
-        }
-        Insert: {
-          child_id: string
-          created_at?: string
-          id?: string
-          resolved?: boolean
-          school_grade_id: string
-          user_id: string
-          z_score: number
-        }
-        Update: {
-          child_id?: string
-          created_at?: string
-          id?: string
-          resolved?: boolean
-          school_grade_id?: string
-          user_id?: string
-          z_score?: number
-        }
-        Relationships: [
-          {
-            foreignKeyName: "anomaly_triggers_child_id_fkey"
-            columns: ["child_id"]
-            isOneToOne: false
-            referencedRelation: "child_profiles"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "anomaly_triggers_school_grade_id_fkey"
-            columns: ["school_grade_id"]
-            isOneToOne: false
-            referencedRelation: "school_grades"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       challenges: {
         Row: {
           ai_observations: string | null
@@ -373,7 +328,6 @@ export type Database = {
       }
       hypothesis_cycles: {
         Row: {
-          anomaly_trigger_id: string
           child_id: string
           created_at: string
           final_diagnosis: string | null
@@ -387,7 +341,6 @@ export type Database = {
           user_id: string
         }
         Insert: {
-          anomaly_trigger_id: string
           child_id: string
           created_at?: string
           final_diagnosis?: string | null
@@ -401,7 +354,6 @@ export type Database = {
           user_id: string
         }
         Update: {
-          anomaly_trigger_id?: string
           child_id?: string
           created_at?: string
           final_diagnosis?: string | null
@@ -415,13 +367,6 @@ export type Database = {
           user_id?: string
         }
         Relationships: [
-          {
-            foreignKeyName: "hypothesis_cycles_anomaly_trigger_id_fkey"
-            columns: ["anomaly_trigger_id"]
-            isOneToOne: false
-            referencedRelation: "anomaly_triggers"
-            referencedColumns: ["id"]
-          },
           {
             foreignKeyName: "hypothesis_cycles_child_id_fkey"
             columns: ["child_id"]
@@ -722,53 +667,6 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
-      }
-      school_grades: {
-        Row: {
-          child_id: string
-          context: string | null
-          created_at: string
-          evaluation_type: string | null
-          grade: number
-          graded_at: string
-          id: string
-          max_grade: number
-          subject: string
-          user_id: string
-        }
-        Insert: {
-          child_id: string
-          context?: string | null
-          created_at?: string
-          evaluation_type?: string | null
-          grade: number
-          graded_at?: string
-          id?: string
-          max_grade?: number
-          subject: string
-          user_id: string
-        }
-        Update: {
-          child_id?: string
-          context?: string | null
-          created_at?: string
-          evaluation_type?: string | null
-          grade?: number
-          graded_at?: string
-          id?: string
-          max_grade?: number
-          subject?: string
-          user_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "school_grades_child_id_fkey"
-            columns: ["child_id"]
-            isOneToOne: false
-            referencedRelation: "child_profiles"
-            referencedColumns: ["id"]
-          },
-        ]
       }
       supervisors: {
         Row: {

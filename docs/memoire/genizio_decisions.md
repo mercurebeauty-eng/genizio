@@ -921,3 +921,66 @@ mesures sur papier, même pour un thème sportif/chronométré) :
   non-bloquant que l'appel déjà vérifié dans `validateChallengeProof` (décision #34), risque jugé
   faible mais non testé en direct pour cette combinaison précise.
 - `tsc --noEmit` propre après chaque étape.
+
+## Décision #37 : suppression complète des notes scolaires — remplacées par un référentiel académique interne
+
+**Contexte** : suite à la décision #35 (gap identifié, pas corrigé), l'utilisateur a précisé le
+vrai problème : un enfant change de classe/école/pays d'une année à l'autre, et le système ne
+connaît aucun programme scolaire réel — une note n'a donc jamais de référentiel stable pour être
+interprétée, quel que soit le soin mis à en corriger le calcul de Z-score. Décision, verbatim :
+*"je pense finalement qu'il vaut mieux supprimer ce facteur"*, remplacé par un référentiel
+académique **interne à Génizio**, par domaine de connaissance et tranche d'âge, calé sur des
+standards internationaux exigeants (Singapour/Chine, Common Core US/Canada cités en exemple) —
+pour que les défis soient à la fois adaptés à l'enfant ET alignés sur un niveau capable de
+"relever le niveau des enfants des zones africaines", plutôt que de refléter la moyenne locale
+d'une école particulière.
+
+**Vérifié avant de coder** : `school_grades`/`anomaly_triggers` n'alimentaient QUE le
+déclencheur du Phase 3 (`ensureHypothesesForChild`) — aucune génération de défi ne les lisait.
+Zéro ligne dans les 3 tables concernées (`school_grades`, `anomaly_triggers`,
+`hypothesis_cycles`) au moment de la suppression : aucune perte de donnée réelle, fenêtre de
+changement gratuite tant qu'aucun usage n'existe.
+
+**Suppression exécutée** :
+- Migration `20260720192542` : `DROP COLUMN hypothesis_cycles.anomaly_trigger_id` (FK NOT NULL
+  vers `anomaly_triggers`, devait être retirée en premier), `DROP TABLE anomaly_triggers`,
+  `DROP TABLE school_grades`, `DROP FUNCTION detect_grade_anomaly()`.
+- `src/lib/school-grades.functions.ts` et `src/components/grades/AddGradeDialog.tsx` supprimés
+  (`git rm`).
+- `ensureHypothesesForChild` et `narrateForParent` retirés de `hypotheses.functions.ts` (leur
+  logique entière reposait sur le snapshot "note anormale" — rien à en garder sans grades) ainsi
+  que `SUBJECT_TO_TALENT`/`relatedTalentKey` (mapping matière scolaire → clé Gardner, devenu sans
+  objet). **Conservés en l'état** : `generateDiscriminantChallenge` et `processDiscriminantResult`
+  (le moteur bayésien lui-même n'est pas spécifique aux notes — juste sa colonne de traçabilité
+  `anomaly_trigger_id`, retirée, et son ancien lookup de matière via l'anomalie, remplacé par un
+  `"apprentissage"` générique) : prêts à recevoir de nouveaux cycles une fois un futur
+  déclencheur construit.
+- `profiles.$profileId.portfolio.tsx` : carte "Notes scolaires" retirée, déclenchement
+  fire-and-forget de `ensureHypothesesForChild` retiré. `refetchOpenCycle` et la carte "Ce que
+  Naya a remarqué" (Phase 4) conservés tels quels — ils ne dépendaient pas des notes, prêts pour
+  le futur déclencheur.
+- `types.ts` régénéré via le CLI (jamais le MCP sur ce projet — consigne explicite de
+  l'utilisateur, cf. [[MEMORY]] principe #8).
+
+**Effet secondaire assumé** : Phase 3a/3b (moteur bayésien de diagnostic) n'a plus aucun
+déclencheur — `hypothesis_cycles` ne recevra plus aucune nouvelle ligne tant qu'un remplaçant
+n'est pas construit. Décision explicite de ne pas improviser ce remplaçant dans la foulée : il
+dépend du référentiel académique, que l'utilisateur doit d'abord valider.
+
+**Premier jet du référentiel** : [genizio_referentiel_academique.md](genizio_referentiel_academique.md)
+— brouillon **non sourcé**, banderole d'avertissement en tête du document, à ne câbler dans
+aucun système tant qu'il n'a pas été relu et corrigé. Périmètre volontairement restreint à 3
+domaines "académiques" au sens scolaire (mathématiques/logique, langage, sciences/monde) sur des
+repères annuels de 4 à 14 ans — les 6 autres intelligences Gardner restent hors de ce
+référentiel, mesurées comme aujourd'hui via les défis validés.
+
+**Vérifié en production** : zéro régression après suppression — Portfolio et page Défis
+rechargés en direct (TestPhase1), aucune erreur console liée à la suppression, `recommendChallengesForChild`/
+`getChildAISynthesis` répondent toujours 200. `tsc --noEmit` propre. La déclaration test
+"jongles" (décision #36) reste intacte dans la Timeline, preuve que la suppression n'a touché
+que son périmètre prévu.
+
+**Alternative rejetée** : garder une saisie de notes minimale comme mémo parent sans rôle
+système. Rejetée par l'utilisateur — suppression complète demandée explicitement, cohérent avec
+Simplicity Maximizer (un champ qui ne sert plus à rien pour le système ne mérite pas de rester
+"au cas où").

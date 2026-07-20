@@ -24,21 +24,14 @@ import {
   Heart,
   Binary,
   BookOpen,
-  GraduationCap,
-  Trash2,
   Search,
   Sparkles,
 } from "lucide-react";
 import { InviteMentorDialog } from "@/components/mentors/InviteMentorDialog";
-import { AddGradeDialog } from "@/components/grades/AddGradeDialog";
-import { deleteSchoolGrade } from "@/lib/school-grades.functions";
-import { ensureHypothesesForChild } from "@/lib/hypotheses.functions";
 import { AppHeader } from "@/components/AppHeader";
 import { MarkdownContent } from "@/components/ui/markdown-content";
 import { INTERESTS_BY_TALENT } from "@/components/profiles/shared";
 import { TALENT_KEY_LABELS } from "@/lib/talent-buckets";
-import { confirmDialog } from "@/components/ui/confirm-dialog";
-import { toast } from "sonner";
 
 // title vient de TALENT_KEY_LABELS (source unique des 9 libellés) — seuls
 // l'icône et la description restent propres à cette page.
@@ -150,15 +143,6 @@ type Challenge = {
   proof_image_url: string | null;
 };
 
-type SchoolGrade = {
-  id: string;
-  subject: string;
-  grade: number;
-  max_grade: number;
-  evaluation_type: string | null;
-  graded_at: string;
-};
-
 // NAYA 2.0 Phase 4 — cf. genizio-decisions #33. Seule parent_narrative est lue ici : le
 // JSON hypotheses (causes, probabilités, evidence_log) reste strictement interne, jamais
 // exposé à ce niveau de l'app, conforme à la règle "jamais de probabilité brute" (§1 du
@@ -175,7 +159,6 @@ function PortfolioPage() {
 
   const [child, setChild] = useState<Child | null>(null);
   const [challenges, setChallenges] = useState<Challenge[]>([]);
-  const [grades, setGrades] = useState<SchoolGrade[]>([]);
   const [openCycle, setOpenCycle] = useState<OpenHypothesisCycle | null>(null);
   const [fetching, setFetching] = useState(true);
   const [synthesis, setSynthesis] = useState("");
@@ -183,36 +166,10 @@ function PortfolioPage() {
   const [mentorCount, setMentorCount] = useState(0);
 
   const fetchSynthesis = useServerFn(getChildAISynthesis);
-  const deleteGradeFn = useServerFn(deleteSchoolGrade);
-  const ensureHypotheses = useServerFn(ensureHypothesesForChild);
 
   useEffect(() => {
     if (!loading && !session) navigate({ to: "/auth", replace: true });
   }, [session, loading, navigate]);
-
-  const refetchGrades = () => {
-    supabase
-      .from("school_grades")
-      .select("id, subject, grade, max_grade, evaluation_type, graded_at")
-      .eq("child_id", profileId)
-      .order("graded_at", { ascending: false })
-      .then(({ data }) => setGrades((data ?? []) as SchoolGrade[]));
-  };
-
-  const handleDeleteGrade = async (id: string) => {
-    if (!(await confirmDialog({
-      title: "Supprimer cette note ?",
-      description: "Cette action est irréversible.",
-      confirmLabel: "Supprimer",
-      variant: "danger",
-    }))) return;
-    try {
-      await deleteGradeFn({ data: { id } });
-      setGrades((prev) => prev.filter((g) => g.id !== id));
-    } catch (e) {
-      toast.error(e instanceof Error ? e.message : "Erreur lors de la suppression");
-    }
-  };
 
   useEffect(() => {
     if (!session) return;
@@ -229,11 +186,6 @@ function PortfolioPage() {
         .select("id", { count: "exact", head: true })
         .eq("child_id", profileId),
       supabase
-        .from("school_grades")
-        .select("id, subject, grade, max_grade, evaluation_type, graded_at")
-        .eq("child_id", profileId)
-        .order("graded_at", { ascending: false }),
-      supabase
         .from("hypothesis_cycles")
         .select("id, parent_narrative")
         .eq("child_id", profileId)
@@ -242,11 +194,10 @@ function PortfolioPage() {
         .order("created_at", { ascending: false })
         .limit(1)
         .maybeSingle(),
-    ]).then(([c, ch, cm, sg, hc]) => {
+    ]).then(([c, ch, cm, hc]) => {
       setChild((c.data as Child) ?? null);
       setChallenges((ch.data ?? []) as Challenge[]);
       setMentorCount(cm.count ?? 0);
-      setGrades((sg.data ?? []) as SchoolGrade[]);
       setOpenCycle((hc.data as OpenHypothesisCycle) ?? null);
       setFetching(false);
     });
@@ -275,20 +226,12 @@ function PortfolioPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [session, profileId]);
 
-  // NAYA 2.0 Phase 3a/4 : déclenche la génération d'hypothèses (+ narration Phase 4)
-  // pour toute anomalie scolaire non encore diagnostiquée. Fire-and-forget,
-  // best-effort. Idempotent côté serveur : ne coûte un appel IA que s'il existe une
-  // anomalie sans cycle (ou un cycle sans narration), sinon simple vérification en
-  // base. Un échec (quota, réseau) est silencieux : le prochain chargement du
-  // Portfolio réessaiera. Re-fetch le cycle après coup pour que la carte "Ce que Naya
-  // a remarqué" apparaisse sans recharger la page si ce montage vient d'en générer un.
-  useEffect(() => {
-    if (!session) return;
-    ensureHypotheses({ data: { childId: profileId } })
-      .then((res) => { if (res.generated) refetchOpenCycle(); })
-      .catch(() => {});
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [session, profileId]);
+  // NAYA 2.0 Phase 3a/4 — déclencheur retiré (cf. genizio-decisions #37) : les notes
+  // scolaires étaient l'unique source d'anomalie qui amorçait un cycle d'hypothèses ;
+  // supprimées car sans référentiel stable (programme/tranche d'âge/pays inconnus du
+  // système). refetchOpenCycle et la carte "Ce que Naya a remarqué" ci-dessous restent
+  // en place — ils ne dépendent pas des notes — prêts pour le futur déclencheur basé
+  // sur un écart au référentiel académique (cf. genizio_referentiel_academique.md).
 
   if (loading || !session || fetching) {
     return (
@@ -633,43 +576,6 @@ function PortfolioPage() {
                 );
               })}
             </div>
-          </div>
-
-          {/* Notes scolaires — NAYA 2.0 Phase 2 (cf. genizio-decisions #31). Liste
-              purement factuelle : aucune détection d'anomalie ni interprétation
-              n'est affichée ici, seulement en Phase 4 ("Compréhension de Naya"). */}
-          <div className="rounded-3xl border-[3px] border-ink bg-white p-6 shadow-brutal">
-            <div className="mb-4 flex items-center justify-between gap-3">
-              <h3 className="flex items-center gap-2 font-display text-lg font-bold">
-                <GraduationCap className="size-5 text-brand" />
-                Notes scolaires
-              </h3>
-              <AddGradeDialog childId={profileId} childName={child.name} onCreated={refetchGrades} />
-            </div>
-            {grades.length === 0 ? (
-              <p className="text-sm text-ink/60">Aucune note enregistrée pour l'instant.</p>
-            ) : (
-              <ul className="space-y-2">
-                {grades.map((g) => (
-                  <li key={g.id} className="flex items-center justify-between rounded-2xl border-2 border-ink bg-surface px-4 py-3">
-                    <div>
-                      <p className="text-sm font-bold text-ink">
-                        {g.subject} — {g.grade}/{g.max_grade}
-                        {g.evaluation_type && <span className="ml-2 text-xs font-semibold text-ink/50">{g.evaluation_type}</span>}
-                      </p>
-                      <p className="text-xs text-ink/60">{new Date(g.graded_at).toLocaleDateString("fr-FR")}</p>
-                    </div>
-                    <button
-                      onClick={() => handleDeleteGrade(g.id)}
-                      className="rounded-xl border-2 border-transparent p-1.5 text-ink/40 hover:border-ink hover:text-red-600 transition-all"
-                      aria-label="Supprimer cette note"
-                    >
-                      <Trash2 className="size-4" />
-                    </button>
-                  </li>
-                ))}
-              </ul>
-            )}
           </div>
 
           <div className="rounded-3xl border-[3px] border-ink bg-white p-6 shadow-brutal">

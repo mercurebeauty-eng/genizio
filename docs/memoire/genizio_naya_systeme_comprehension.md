@@ -9,13 +9,20 @@ metadata:
 
 # NAYA 2.0 — Système de Compréhension Développementale
 
-> ⚠️ **STATUT (vérifié le 2026-07-20, branche `security-fixes-and-ux-improvements`, PR #8)** :
-> conçu et approuvé le 2026-07-20. **TOUTES les phases (0, 1, 2, 3a, 3b, 4 et 5) sont livrées
-> et vérifiées en production** (Phase 0 : `observation_events` ; Phase 1 : `pedagogical_twin` ;
-> Phase 2 : `school_grades`/`anomaly_triggers` ; Phase 3a : `hypothesis_cycles` + `generateHypotheses`
-> (Sonnet) ; Phase 3b : `generateDiscriminantChallenge` + `processDiscriminantResult` (boucle bayésienne) ;
-> Phase 4 : `parent_narrative` + restitution parent ; Phase 5 : moteur `recommendChallengesForChild`
-> hybride branché sur l'Atelier et la page Défis). Système de compréhension 100% opérationnel.
+> ⚠️ **STATUT (révisé le 2026-07-20, branche `security-fixes-and-ux-improvements`, PR #8)** :
+> conçu et approuvé le 2026-07-20, toutes les phases livrées et vérifiées le même jour — **puis
+> Phase 2 supprimée le soir même (décision #37)**, ne pas se fier à "toutes les phases livrées"
+> sans lire la suite. État actuel : Phase 0 (`observation_events`) et Phase 1 (`pedagogical_twin`)
+> opérationnelles. **Phase 2 (notes scolaires) supprimée** — aucun référentiel stable possible
+> sans connaître le programme/l'âge/le pays réels de l'enfant, remplacée par un référentiel
+> académique interne en brouillon (cf. [genizio_referentiel_academique.md](genizio_referentiel_academique.md)).
+> **Phase 3a/3b (hypothèses + boucle bayésienne) dormantes** : le code (`generateDiscriminantChallenge`,
+> `processDiscriminantResult`) reste en place et correct, mais son unique déclencheur
+> (`ensureHypothesesForChild`, amorcé par une anomalie de note) a été retiré avec Phase 2 — plus
+> aucun nouveau cycle ne peut démarrer tant qu'un remplaçant (écart au référentiel académique)
+> n'est pas construit. Phase 4 (restitution parent) et Phase 5 (`recommendChallengesForChild`,
+> branches ESSAIMAGE/STABILISATION) restent pleinement opérationnelles — seule leur branche
+> INVESTIGATION (dépendante de Phase 3a/3b) est actuellement sans nouvelle donnée à afficher.
 > **Note de provenance (décision #34)** : Phase 3b et 5 ont été construites par une session
 > parallèle de l'utilisateur pendant une session de ce même agent ; le premier commit affirmait
 > "vérifié en production" alors qu'un bug bloquait TOUTE mise à jour bayésienne
@@ -210,7 +217,13 @@ Chaque phase est livrable, vérifiable de bout en bout, et committable seule. D�
   proprement (aucune table laissée en état partiel), corrigé en `integer`, ré-appliqué avec
   succès. Interne uniquement (rien de visible parent) — conforme au plan.
 
-### Phase 2 — Signaux scolaires + détection d'anomalies (0 IA) — ✅ LIVRÉE le 2026-07-20
+### Phase 2 — Signaux scolaires + détection d'anomalies (0 IA) — ❌ SUPPRIMÉE le 2026-07-20 (décision #37)
+> Retirée le même jour que sa livraison initiale : une note n'a aucun référentiel stable
+> (l'enfant change de classe/école/pays d'une année à l'autre). Remplacée par un référentiel
+> académique interne par domaine × âge — cf. [genizio_referentiel_academique.md](genizio_referentiel_academique.md)
+> (brouillon non sourcé) et décision #37. Section ci-dessous conservée comme trace historique de
+> ce qui a été construit puis retiré, pas comme description de l'état actuel.
+
 - Table `school_grades` (matière, note, note max, type d'évaluation optionnel, contexte libre
   optionnel, date) + `anomaly_triggers` (FK directe vers `school_grades`, `z_score`, `resolved`
   pour la Phase 3 à venir). RLS owner-only (write via `FOR ALL` avec vérification d'ownership
@@ -364,8 +377,9 @@ Chaque phase est livrable, vérifiable de bout en bout, et committable seule. D�
 
 - ~~**Phase 3** : traitement synchrone vs asynchrone (Database Webhook → Edge Function).~~
   **Tranché en Phase 3a** : synchrone, server function TanStack (cf. décision #32).
-- **Phase 2** : photo du bulletin analysée par vision (rôle *vision*) en plus de la saisie
-  manuelle ? Reporté — la saisie manuelle valide d'abord l'usage.
+- ~~**Phase 2** : photo du bulletin analysée par vision en plus de la saisie manuelle ?~~
+  **Sans objet** : Phase 2 supprimée entièrement le 2026-07-20 (décision #37), les notes ne sont
+  plus un signal du système, quel que soit leur mode de saisie.
 - ~~**Phase 1** : fréquence de la classification (hebdo via pg_cron vs recalcul à l'événement).~~
   **Tranché en Phase 1** : recalcul à l'événement (trigger), pas de pg_cron (cf. décision #28).
 - **Niveau 1 (Fondations)** : source d'évaluation initiale — questionnaire parental validé à
