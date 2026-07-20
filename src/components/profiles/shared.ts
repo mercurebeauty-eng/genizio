@@ -8,14 +8,24 @@ import { TALENT_KEY_LABELS } from "@/lib/talent-buckets";
 // pour la génération IA et de reflet direct du potentiel déjà suivi ailleurs
 // (carte des talents, domaines de défis, Guildes). Le label vient directement
 // de TALENT_KEY_LABELS pour ne plus être retapé à la main en parallèle.
+//
+// Dédoublonné le 2026-07-20 (cf. genizio-decisions #24) : la contrainte "4 tags
+// par groupe" forçait des quasi-synonymes déroutants pour le parent. Retirés —
+// "Dessin & Design" (doublon de "Dessin & Peinture"), "Bricolage manuel" +
+// "Bricolage créatif" + "Travaux manuels" (le côté fabrication-à-la-main reste
+// couvert par Cuisine/Couture/Répare des objets sous Artisanale), et "Attentif
+// aux autres" (doublon d'"Empathique" DANS le même groupe). Les groupes ont
+// désormais 3 ou 4 tags, tous distincts. Signal doux (n'alimente pas la carte
+// des talents) : les anciens tags encore stockés sur des profils existants
+// restent du texte libre inoffensif, pas de migration de données.
 export const INTERESTS_BY_TALENT: Record<string, { label: string; tags: readonly string[] }> = {
   spatial: {
     label: TALENT_KEY_LABELS.spatial,
-    tags: ["Construction & Lego", "Dessin & Design", "Puzzles & Cartes", "Orientation & Exploration"],
+    tags: ["Construction & Lego", "Puzzles & Cartes", "Orientation & Exploration"],
   },
   corporelle: {
     label: TALENT_KEY_LABELS.corporelle,
-    tags: ["Sport & Mouvement", "Danse", "Théâtre & Mime", "Bricolage manuel"],
+    tags: ["Sport & Mouvement", "Danse", "Théâtre & Mime"],
   },
   sociale: {
     label: TALENT_KEY_LABELS.sociale,
@@ -27,15 +37,15 @@ export const INTERESTS_BY_TALENT: Record<string, { label: string; tags: readonly
   },
   creative: {
     label: TALENT_KEY_LABELS.creative,
-    tags: ["Dessin & Peinture", "Musique", "Invente des histoires", "Bricolage créatif"],
+    tags: ["Dessin & Peinture", "Musique", "Invente des histoires"],
   },
   artisanale: {
     label: TALENT_KEY_LABELS.artisanale,
-    tags: ["Cuisine", "Couture & Tissage", "Répare des objets", "Travaux manuels"],
+    tags: ["Cuisine", "Couture & Tissage", "Répare des objets"],
   },
   emotionnelle: {
     label: TALENT_KEY_LABELS.emotionnelle,
-    tags: ["Empathique", "Comprend ses émotions", "Attentif aux autres", "Calme sous pression"],
+    tags: ["Empathique", "Comprend ses émotions", "Calme sous pression"],
   },
   logico_mathematique: {
     label: TALENT_KEY_LABELS.logico_mathematique,
@@ -46,8 +56,6 @@ export const INTERESTS_BY_TALENT: Record<string, { label: string; tags: readonly
     tags: ["Aime parler & raconter", "Prise de parole en public", "Aime lire", "Écriture & Poésie"],
   },
 };
-
-export const ALL_INTERESTS = Object.values(INTERESTS_BY_TALENT).flatMap((g) => g.tags);
 
 export const AVATAR_COLORS = [
   { key: "brand", cls: "bg-brand" },

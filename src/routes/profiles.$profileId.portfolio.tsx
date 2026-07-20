@@ -261,7 +261,7 @@ function PortfolioPage() {
             // List of interests tags to map status
             const childInterests = child.interests && child.interests.length > 0
               ? child.interests.slice(0, 4)
-              : ["Sciences & Expériences", "Dessin & Design", "Sens de la négociation", "Construction & Lego"];
+              : ["Sciences & Expériences", "Dessin & Peinture", "Sens de la négociation", "Construction & Lego"];
 
             // Helper to get bucket for an interest
             const getInterestBucket = (interestName: string) => {

@@ -307,6 +307,21 @@ faut-il un contrôle d'ownership explicite sur ces routes plutôt que de compter
 
 **Commit** : `1876265`. `tsc --noEmit` propre.
 
+**Mise à jour du 2026-07-20 — dédoublonnage** : l'utilisateur a signalé que la contrainte
+"4 tags par groupe" (9×4=36) forçait des quasi-synonymes déroutants. Vérifié dans le code :
+"Dessin" apparaissait 2× ("Dessin & Design" spatial + "Dessin & Peinture" créatif), "bricolage/
+manuel" 3× ("Bricolage manuel" corporelle + "Bricolage créatif" créative + "Travaux manuels"
+artisanale), et "Empathique"/"Attentif aux autres" faisaient doublon DANS le groupe Émotionnelle.
+5 tags retirés (`shared.ts`) → groupes à 3-4 tags, tous distincts. `ALL_INTERESTS` (export mort,
+aucun conscommateur — le simulateur `index.tsx` recompose sa propre liste plate depuis
+`INTERESTS_BY_TALENT`, donc la note "copie indépendante" ci-dessus était inexacte : il consomme
+bien la source partagée) supprimé. 2 presets codés en dur référençant "Dessin & Design"
+(`portfolio.tsx`, `index.tsx`) repointés vers "Dessin & Peinture". **Pas de migration de
+données** : signal doux (n'alimente pas la carte des talents), les anciens tags encore stockés
+sur les profils existants restent du texte libre inoffensif. **Vérifié en direct** (dialogue de
+création ouvert en navigateur) : 9 groupes, "Dessin" une seule fois, zéro "Bricolage"/"Travaux
+manuels", zéro "Attentif aux autres". `tsc --noEmit` propre.
+
 ## Décision #25 : Système d'export du Passeport d'Excellence (14 ans et plus)
 **Décision** : Implémenter le "Passeport d'Excellence Génizio" payant (50 000 FCFA) pour les enfants de 14 ans et plus. L'accès est débloqué manuellement par l'administrateur et stocké en base de données sous la forme d'un attribut boolean `pdf_unlocked` dans le JSONB `talents` de la table `child_profiles` (ce qui évite d'altérer la structure de la table).
 **Pourquoi** : Offrir aux parents d'adolescents un document d'orientation officiel et de haute fidélité pour les dossiers d'admission aux lycées d'élite et universités. Le paiement s'effectue via redirection WhatsApp et validation manuelle dans le tableau d'administration (`/admin/index.tsx`).
