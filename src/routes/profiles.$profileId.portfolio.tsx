@@ -30,6 +30,7 @@ import {
 import { InviteMentorDialog } from "@/components/mentors/InviteMentorDialog";
 import { AddGradeDialog } from "@/components/grades/AddGradeDialog";
 import { deleteSchoolGrade } from "@/lib/school-grades.functions";
+import { ensureHypothesesForChild } from "@/lib/hypotheses.functions";
 import { AppHeader } from "@/components/AppHeader";
 import { MarkdownContent } from "@/components/ui/markdown-content";
 import { INTERESTS_BY_TALENT } from "@/components/profiles/shared";
@@ -171,6 +172,7 @@ function PortfolioPage() {
 
   const fetchSynthesis = useServerFn(getChildAISynthesis);
   const deleteGradeFn = useServerFn(deleteSchoolGrade);
+  const ensureHypotheses = useServerFn(ensureHypothesesForChild);
 
   useEffect(() => {
     if (!loading && !session) navigate({ to: "/auth", replace: true });
@@ -235,6 +237,18 @@ function PortfolioPage() {
       .then((resp) => setSynthesis(resp || ""))
       .catch(() => setSynthesis(""))
       .finally(() => setFetchingSynthesis(false));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [session, profileId]);
+
+  // NAYA 2.0 Phase 3a : déclenche la génération d'hypothèses pour toute anomalie
+  // scolaire non encore diagnostiquée. Fire-and-forget, best-effort — le résultat
+  // n'est pas affiché ici (c'est la Phase 4, "Compréhension de Naya"). Idempotent
+  // côté serveur : ne coûte un appel IA que s'il existe une anomalie sans cycle,
+  // sinon simple vérification en base. Un échec (quota, réseau) est silencieux : le
+  // prochain chargement du Portfolio réessaiera.
+  useEffect(() => {
+    if (!session) return;
+    void ensureHypotheses({ data: { childId: profileId } }).catch(() => {});
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [session, profileId]);
 

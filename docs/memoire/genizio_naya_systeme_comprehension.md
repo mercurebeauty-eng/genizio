@@ -10,13 +10,13 @@ metadata:
 # NAYA 2.0 — Système de Compréhension Développementale
 
 > ⚠️ **STATUT (vérifié le 2026-07-20, branche `security-fixes-and-ux-improvements`, PR #8)** :
-> conçu et approuvé le 2026-07-20. **Phases 0, 1 et 2 livrées et vérifiées en production le jour
-> même** (Phase 0 : `20260720100000_add_observation_events.sql` ; Phase 1 :
-> `20260720110000_add_pedagogical_twin.sql` ; Phase 2 :
-> `20260720140000_add_school_grades_and_anomaly_detection.sql` — détection Z-score vérifiée
-> au chiffre près, détail en fin de §6). **Phases 3-5 PAS commencées** — aucune table
-> `hypothesis_cycles` en base, aucun appel IA dans le pipeline NAYA 2.0. Prochain pas = Phase 3
-> (premier point IA du système). Mettre ce bandeau à jour à chaque phase livrée.
+> conçu et approuvé le 2026-07-20. **Phases 0, 1, 2 et 3a livrées et vérifiées en production le
+> jour même** (Phase 0 : `observation_events` ; Phase 1 : `pedagogical_twin` ; Phase 2 :
+> `school_grades`/`anomaly_triggers` ; **Phase 3a : `hypothesis_cycles` + moteur
+> `generateHypotheses` — premier point IA, cas Lola reproduit correctement**, détail en fin de
+> §6). **Phase 3b** (boucle bayésienne : défis discriminants + mise à jour + convergence) et
+> **Phases 4-5 PAS commencées**. Prochain pas = Phase 3b OU Phase 4 (restitution parent, qui
+> affichera enfin les hypothèses déjà générées). Mettre ce bandeau à jour à chaque phase livrée.
 
 > **Document source** : `C:\Users\USER\Documents\Mise en place Projet\#Génizion - Système de Compréhensio.txt`
 > (fichier personnel de l'utilisateur, hors repo). Structure : sections 1-12 = la formalisation
@@ -229,13 +229,35 @@ Chaque phase est livrable, vérifiable de bout en bout, et committable seule. D�
   cascade sans résidu. Interne uniquement pour `anomaly_triggers` (rien de visible parent),
   conforme au plan — seule la liste brute des notes est visible, pas leur analyse.
 
-### Phase 3 — Cycle de diagnostic (premier point IA)
-- `hypothesis_cycles` + `generateHypotheses` (rôle *raisonnement*, JSON strict, evidence_log,
-  somme des probabilités = 1, température basse).
+### Phase 3a — Moteur de génération d'hypothèses (premier point IA) — ✅ LIVRÉE le 2026-07-20
+- Table `hypothesis_cycles` (FK unique vers `anomaly_trigger_id` = idempotence DB) + server
+  function `ensureHypothesesForChild` (`hypotheses.functions.ts`). Décision #32.
+- **Question ouverte sync/async tranchée : synchrone.** Server function TanStack réutilisant
+  `callClaude` (pattern déjà éprouvé), aucune Edge Function, aucune nouvelle infra. Déclenchée
+  en **fire-and-forget au chargement du Portfolio** (idempotent : ne coûte un appel IA que s'il
+  existe une anomalie sans cycle) — latence hors du chemin critique.
+- **Rôle *raisonnement* = Sonnet** (`callClaude` a gagné un `modelOverride`) : décision #27 réserve
+  le premium au moment "où le système doit réfléchir", ici volume faible (sur anomalie seule).
+- **Prompt adapté au Jumeau RÉEL** : le document source suppose des Fondations N1 (anxiété innée,
+  learning_modes) qu'on n'a pas (décision #28) — le prompt raisonne donc sur les compétences
+  Gardner (issues de défis validés), les moteurs (persévérance, time_awareness), les intérêts, et
+  le contexte/type de la note. Signal-clé de débruitage fourni explicitement : la compétence
+  Gardner liée à la matière (map `SUBJECT_TO_TALENT`) — compétence forte + note effondrée = fort
+  METHOD_MISMATCH, pas CONCEPTUAL_GAP. Priors renormalisés à 1.0 côté serveur.
+- **Vérifié en production (cas Lola)** : enfant à `logico_mathematique=0.85 FORCE` + note maths
+  effondrée (4/20, z=-10) → hypothèses **METHOD_MISMATCH 0.45 (tête), PERFORMANCE_ANXIETY 0.25,
+  LACK_OF_ENGAGEMENT 0.20, CONCEPTUAL_GAP 0.10 (queue)**, somme=1.0, evidence_log pointant les
+  vrais nœuds, chaque rationale citant la FORCE qui contredit une lacune. Anxiété correctement
+  sous-pondérée (contexte de stress absent, pesé NEGATIVE). Idempotence (1 cycle malgré 2 appels
+  concurrents), RLS anon=0, UTF-8 correct en base, cascade propre. **Deux bugs trouvés et corrigés
+  en vérifiant** (cf. décision #32) : `callClaude` lisait `content[0]` au lieu du bloc `text` (le
+  bloc `thinking` de Sonnet cassait TOUT appel Sonnet texte) ; budget tokens trop bas (le thinking
+  consomme le budget, 1500 tronquait le JSON — vérifié `stop_reason=max_tokens` en direct).
+
+### Phase 3b — Boucle bayésienne (défis discriminants) — PAS commencée
 - Défis discriminants via le générateur existant contraint (cf. adaptation #2).
-- Mise à jour bayésienne à la complétion du défi discriminant ; convergence → diagnostic
-  provisoire + frein appris le cas échéant.
-- Vérifiable : reproduire le cas "Lola" du document source sur données réelles de test.
+- Mise à jour bayésienne des `current_probability` à la complétion du défi discriminant ;
+  convergence → `status=resolved` + `final_diagnosis` + frein appris le cas échéant.
 
 ### Phase 4 — Restitution parent
 - Vue "Compréhension de Naya" : hypothèses en cours et diagnostics en langage bienveillant

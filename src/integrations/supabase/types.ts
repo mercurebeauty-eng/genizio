@@ -84,6 +84,60 @@ export type Database = {
           },
         ]
       }
+      hypothesis_cycles: {
+        Row: {
+          anomaly_trigger_id: string
+          child_id: string
+          created_at: string
+          final_diagnosis: string | null
+          hypotheses: Json
+          id: string
+          model: string | null
+          resolved_at: string | null
+          status: string
+          user_id: string
+        }
+        Insert: {
+          anomaly_trigger_id: string
+          child_id: string
+          created_at?: string
+          final_diagnosis?: string | null
+          hypotheses: Json
+          id?: string
+          model?: string | null
+          resolved_at?: string | null
+          status?: string
+          user_id: string
+        }
+        Update: {
+          anomaly_trigger_id?: string
+          child_id?: string
+          created_at?: string
+          final_diagnosis?: string | null
+          hypotheses?: Json
+          id?: string
+          model?: string | null
+          resolved_at?: string | null
+          status?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "hypothesis_cycles_anomaly_trigger_id_fkey"
+            columns: ["anomaly_trigger_id"]
+            isOneToOne: true
+            referencedRelation: "anomaly_triggers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "hypothesis_cycles_child_id_fkey"
+            columns: ["child_id"]
+            isOneToOne: false
+            referencedRelation: "child_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       challenges: {
         Row: {
           ai_observations: string | null

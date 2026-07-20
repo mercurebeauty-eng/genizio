@@ -292,7 +292,13 @@ export async function callClaude(
   // requires (see validateChallengeProof: that upload used to happen on
   // every submission attempt regardless of outcome, hitting the storage
   // API's own rate limit).
-  imageData?: { base64: string; mediaType: string }
+  imageData?: { base64: string; mediaType: string },
+  // Force a specific model regardless of the vision/text default routing.
+  // Used by the NAYA 2.0 reasoning role (generateHypotheses) to run on
+  // Sonnet even though it's a text-only call — bayesian causal diagnosis is
+  // the "when the system needs to think" case decision #27 reserves the
+  // premium model for. Existing call sites omit it and keep Haiku-for-text.
+  modelOverride?: string
 ): Promise<string> {
   const apiKey = process.env.ANTHROPIC_API_KEY;
   if (!apiKey) {
@@ -345,8 +351,9 @@ export async function callClaude(
     ? "Tu es un assistant IA précis. Tu dois impérativement répondre au format JSON demandé, sous forme de JSON brut, sans bloc de code Markdown, sans préambule ni explications."
     : undefined;
 
-  // Cost-effective routing: use Claude Sonnet 5 only when analyzing an image (vision), otherwise use Claude Haiku 4.5
-  const model = imageUrl ? "claude-sonnet-5" : "claude-haiku-4-5-20251001";
+  // Cost-effective routing: use Claude Sonnet 5 only when analyzing an image (vision), otherwise use Claude Haiku 4.5.
+  // modelOverride wins over both — lets a text-only call opt into Sonnet (NAYA reasoning role).
+  const model = modelOverride ?? (imageUrl ? "claude-sonnet-5" : "claude-haiku-4-5-20251001");
 
   let attempt = 0;
   while (attempt < maxRetries) {
@@ -390,7 +397,15 @@ export async function callClaude(
       }
 
       const json = await response.json();
-      let textContent = json.content?.[0]?.text ?? "";
+      // Read the first *text* block, not content[0] blindly: claude-sonnet-5 prepends
+      // a "thinking" block (content[0].type === "thinking", no .text), so content[0].text
+      // is undefined for any reasoning-capable model — that silently produced "" and made
+      // JSON.parse fail with "Réponse IA invalide" on every Sonnet call. Finding the text
+      // block makes callClaude robust to thinking blocks regardless of model.
+      const textBlock = Array.isArray(json.content)
+        ? json.content.find((b: any) => b?.type === "text")
+        : null;
+      let textContent = textBlock?.text ?? json.content?.[0]?.text ?? "";
       if (jsonMode) {
         textContent = textContent.trim();
         if (textContent.startsWith("```")) {

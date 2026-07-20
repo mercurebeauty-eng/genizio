@@ -602,3 +602,65 @@ que le paradigme d'investigation (§1 du plan) interdit.
 seule la 4e déclenche une anomalie, `z = -11.000` vérifié au calcul manuel exact ; une 5e note
 normale n'ajoute aucune anomalie ; RLS anon = 0 ligne sur les deux tables ; formulaire testé en
 direct dans le navigateur ; suppression en cascade sans résidu. `tsc --noEmit` propre.
+
+## Décision #32 : Phase 3a NAYA — moteur de génération d'hypothèses (premier point IA)
+
+**Contexte** : implémentation du cœur du système — transformer une anomalie (Phase 2) en arbre
+d'hypothèses causales pondérées. Premier appel IA du pipeline NAYA 2.0. Phase 3 découpée : 3a =
+`generateHypotheses` (ce commit), 3b = boucle bayésienne (défis discriminants + convergence).
+
+**Décision 1 — traitement synchrone, pas d'Edge Function** (résout la question ouverte du plan
+§7). Server function TanStack (`ensureHypothesesForChild`) réutilisant `callClaude`, le pattern
+déjà éprouvé pour `generateChallenges`/`validateChallengeProof`. Déclenchée en **fire-and-forget
+au chargement du Portfolio**, idempotente (index unique sur `anomaly_trigger_id` + garde "anomalie
+sans cycle") donc sûre à appeler à chaque montage.
+**Alternative rejetée** : Database Webhook → Supabase Edge Function (la vision "async" du document
+source). Rejeté pour la 3a : nouvelle infra (déploiement Edge Function, duplication du secret
+Anthropic), pour un volume faible (uniquement sur anomalie) et une latence hors chemin critique.
+Réévaluable si le volume grandit — cohérent avec l'adaptation §5.3 ("pas de nouveau runtime tant
+que pas nécessaire").
+
+**Décision 2 — rôle *raisonnement* = Sonnet** (`callClaude` a gagné un paramètre `modelOverride`
+optionnel ; les appels existants restent sur Haiku-pour-texte, inchangés). C'est le cas "quand le
+système doit réfléchir" que la décision #27 réserve explicitement au modèle premium. Volume faible
+(sur anomalie seule) → coût maîtrisé. Un mauvais diagnostic polluerait le Jumeau et tromperait le
+parent : la qualité prime ici.
+
+**Décision 3 — prompt adapté au Jumeau RÉEL, pas au document source.** Le document source suppose
+des Fondations N1 (anxiété innée `emotional_sensitivity`, `learning_modes` explicites) qu'on n'a
+délibérément PAS (décision #28). Le prompt raisonne donc sur ce qui existe vraiment : compétences
+Gardner (preuve de défis validés), moteurs (persévérance, time_awareness), intérêts déclarés +
+domaines engagés, et le contexte/type de la note. Le signal de débruitage clé (§2 du plan :
+performance ≠ compétence) est fourni explicitement via `SUBJECT_TO_TALENT` (map matière→clé
+Gardner) : une compétence forte + une note effondrée dans la matière liée = fort METHOD_MISMATCH,
+pas CONCEPTUAL_GAP. Priors renormalisés à 1.0 côté serveur (une dérive du modèle ne casse pas
+l'invariant) ; `current_probability = prior` à l'initialisation (la 3b les fera diverger).
+
+**Décision 4 — écriture via `supabaseAdmin`, `hypothesis_cycles` en lecture seule cliente.** Même
+principe que `anomaly_triggers` (décision #31) : c'est un résultat calculé, pas une saisie. Aucune
+policy d'écriture RLS ; la server function écrit après vérification d'ownership de l'anomalie.
+
+**DEUX BUGS trouvés et corrigés en vérifiant** (illustrent pourquoi on teste en direct, pas juste
+au type-check) :
+- **`callClaude` lisait `json.content[0].text` en aveugle.** `claude-sonnet-5` renvoie un bloc
+  `thinking` en `content[0]` (sans `.text`) et le vrai JSON en `content[1]` → `content[0].text`
+  était `undefined` → `JSON.parse("")` → "Réponse IA invalide" sur TOUT appel Sonnet en mode
+  texte. Passé silencieusement inaperçu jusqu'ici car les autres appels tournent en réalité sur
+  **Haiku** : le routage de `callClaude` teste `imageUrl` (que `validateChallengeProof` ne passe
+  pas — il passe `imageData`), donc même les analyses de photo tournaient sur Haiku, pas Sonnet.
+  **Fix** : lire le premier bloc de type `text`, robuste aux blocs `thinking` quel que soit le
+  modèle. Corrige aussi `analyzePostProof` (Sonnet vision) qui était silencieusement cassé.
+- **Budget tokens trop bas.** Le thinking de Sonnet consomme le budget `max_tokens` AVANT le
+  JSON : à 1500, tout partait dans le thinking, JSON tronqué/vide (`stop_reason=max_tokens`
+  vérifié par appel API direct). **Fix** : 4000 pour l'appel d'hypothèses.
+
+**Vérifié en production, cas Lola de bout en bout** : enfant semé avec `logico_mathematique=0.85
+FORCE` (Jumeau) + notes maths 14/15/13 puis effondrement à 4/20 (z=-10). Portfolio chargé →
+`ensureHypotheses` déclenché → cycle généré avec **METHOD_MISMATCH 0.45 (tête), PERFORMANCE_ANXIETY
+0.25, LACK_OF_ENGAGEMENT 0.20, CONCEPTUAL_GAP 0.10 (queue)**, somme exacte = 1.0, chaque rationale
+citant la compétence FORCE qui contredit une lacune, anxiété sous-pondérée (contexte de stress
+absent, pesé NEGATIVE dans l'evidence_log) — diagnostic conforme au cas Lola du document source.
+Idempotence (1 seul cycle malgré 2 appels concurrents du double-montage React), RLS anon = 0,
+UTF-8 correct en base (vérifié par hexdump : `0xC3 0xA9` = « é », le `Ã©` initial n'était
+qu'un artefact d'affichage `python json.tool` sur Windows), cascade de suppression propre.
+`tsc --noEmit` propre. Données de test nettoyées.
