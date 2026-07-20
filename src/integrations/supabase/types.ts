@@ -43,6 +43,7 @@ export type Database = {
         Row: {
           academic_domain: string | null
           academic_level_age: number | null
+          academic_reference_note: string | null
           ai_observations: string | null
           child_id: string
           completed_at: string | null
@@ -75,6 +76,7 @@ export type Database = {
         Insert: {
           academic_domain?: string | null
           academic_level_age?: number | null
+          academic_reference_note?: string | null
           ai_observations?: string | null
           child_id: string
           completed_at?: string | null
@@ -107,6 +109,7 @@ export type Database = {
         Update: {
           academic_domain?: string | null
           academic_level_age?: number | null
+          academic_reference_note?: string | null
           ai_observations?: string | null
           child_id?: string
           completed_at?: string | null

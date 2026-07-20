@@ -114,8 +114,9 @@ Format JSON strict :
   "proof_mode": "photo" ou "declarative",
   "proof_target": {"metric": "...", "value": 20} (uniquement si declarative),
   "declarative_award": {"corporelle": 2} (uniquement si declarative),
-  "academic_domain": "mathematiques" | "langage" | "sciences" | null,
-  "academic_level_age": 14 (uniquement si academic_domain non null)
+  "academic_domain": "mathematiques" | "langage" | "sciences" | "corporelle" | "sociale" | "emotionnelle" | "entrepreneuriale" | "artisanale" | "spatiale" | null,
+  "academic_level_age": 14 (uniquement si academic_domain non null),
+  "academic_reference_note": "..." (uniquement si academic_domain non null)
 }`;
 
       try {
@@ -156,6 +157,7 @@ Format JSON strict :
                 declarative_award: parsed.declarative_award,
                 academic_domain: parsed.academic_domain,
                 academic_level_age: parsed.academic_level_age,
+                academic_reference_note: parsed.academic_reference_note,
               },
               child.age
             ),
@@ -206,8 +208,9 @@ Format JSON strict :
   "proof_mode": "photo" ou "declarative",
   "proof_target": {"metric": "...", "value": 5} (uniquement si declarative),
   "declarative_award": {"corporelle": 2} (uniquement si declarative),
-  "academic_domain": "mathematiques" | "langage" | "sciences" | null,
-  "academic_level_age": 14 (uniquement si academic_domain non null)
+  "academic_domain": "mathematiques" | "langage" | "sciences" | "corporelle" | "sociale" | "emotionnelle" | "entrepreneuriale" | "artisanale" | "spatiale" | null,
+  "academic_level_age": 14 (uniquement si academic_domain non null),
+  "academic_reference_note": "..." (uniquement si academic_domain non null)
 }`;
 
       try {
@@ -246,6 +249,7 @@ Format JSON strict :
                 declarative_award: parsed.declarative_award,
                 academic_domain: parsed.academic_domain,
                 academic_level_age: parsed.academic_level_age,
+                academic_reference_note: parsed.academic_reference_note,
               },
               child.age
             ),

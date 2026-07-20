@@ -1077,3 +1077,78 @@ isoler le mécanisme du jugement probabiliste de l'IA sur l'étiquetage :
   défis qu'il génère lui-même.
 - `tsc --noEmit` propre à chaque étape. États de test artificiels nettoyés après vérification
   (cycle maths reremis à `open` après isolement temporaire).
+
+## Décision #39 : extension à 8 domaines + citation traçable + accélérateur parent + révision semestrielle
+
+**Contexte** : suite à la décision #38, l'utilisateur a demandé 4 choses d'un coup ("on attaque
+tout de front") : (1) réviser le référentiel tous les 6 mois, (2) un moyen de vérifier que l'IA
+ne se trompe pas dans son propre étiquetage, (3) un levier pour accélérer le signal sur un
+domaine précis, (4) couvrir "tout" plutôt que seulement 3 domaines.
+
+**Item 3 vérifié avant de construire quoi que ce soit** : la page Défis a déjà "Composer un défi
+ciblé" avec un sélecteur qui force le domaine du prochain défi généré (`generateSingleChallenge`,
+instruction "Tu DOIS générer un défi spécifiquement dans le domaine..."). Pas besoin d'un nouveau
+bouton — juste combler les trous : "Mathématiques" était absente de la liste, et rien ne couvrait
+le social/émotionnel. Les deux ajoutées à `CATEGORIES`.
+
+**Item 4 — recherche menée sur les 6 talents restants** (corporelle, sociale, émotionnelle,
+entrepreneuriale, artisanale, spatiale) :
+- **Corporelle** : CDC (checklists officielles, mais seulement jusqu'à 5 ans) + SHAPE America
+  (standards officiels K-12, structure par cycle plutôt qu'année précise).
+- **Sociale + Émotionnelle** : CASEL, 5 compétences réparties sur les deux domaines, bandes K-2/
+  3-5/6-8/9-12 confirmées par plusieurs États US — contenu détaillé par bande estimé, pas extrait
+  ligne par ligne.
+- **Entrepreneuriale** : NFEC (organisme privé, pas public comme les autres — signalé comme tel),
+  bandes PK-2/3-5/6-8 avec "Career & Entrepreneurship" comme thème dédié.
+- **Artisanale** : littérature de motricité fine/dextérité manuelle, repères annuels précis
+  trouvés (6-7, 8-9, 10-14 ans) — mieux sourcé que prévu.
+- **Spatiale** : littérature de psychologie du développement (recherche publiée, pas un
+  organisme de standards), repères d'âge précis et concordants entre études (allocentrisme
+  2,5-3 ans, pliage mental dès 5 ans, plafond 7-8 ans).
+- **Créative — délibérément EXCLUE**, et c'est la trouvaille la plus importante de cette
+  recherche : les travaux de Torrance montrent un développement de la créativité **non
+  linéaire** (creux normaux et documentés à 5, 9, 13, 17 ans, liés à la transition vers un
+  raisonnement plus logique). Le mécanisme de ce document compare systématiquement "niveau
+  observé" à "niveau attendu" et interprète un niveau plus bas comme un retard — hypothèse
+  fausse et potentiellement trompeuse pour un domaine où un creux à 9 ans est normal et sain.
+  Décision : ne jamais étiqueter un défi créatif avec `academic_domain`/`academic_level_age`,
+  pas un trou de données mais un refus assumé de fabriquer un mécanisme qui mentirait.
+
+**Item 2 — citation traçable** : plutôt que de faire confiance à un chiffre brut non vérifiable,
+l'IA doit désormais aussi fournir `academic_reference_note` — une phrase citant la ligne précise
+du référentiel sur laquelle elle s'est basée (ex: "toutes les tables à un chiffre mémorisées vers
+8 ans"). Ne conditionne pas la validité de l'étiquetage (un domaine/âge cohérents sans citation
+restent utilisables), sert uniquement la traçabilité lors d'une relecture d'échantillon.
+
+**Item 1 — révision semestrielle** : tâche planifiée créée via `create_scheduled_task`
+(`genizio-referentiel-revision-semestrielle`, cron `17 9 1 1,7 *` = 1er janvier et 1er juillet
+chaque année). Prompt entièrement autonome (aucune dépendance à cette conversation) : relire le
+document, re-sourcer chaque domaine, vérifier un échantillon d'étiquetages IA récents en base via
+le CLI Supabase, documenter en décision numérotée, committer sans pousser sans confirmation
+utilisateur explicite. Limite transparente signalée à l'utilisateur : la tâche ne s'exécute que
+si l'application est ouverte au moment prévu, ce n'est pas un cron serveur garanti.
+
+**Implémentation** : `ACADEMIC_DOMAINS` (nouvelle liste exportée, remplace les 3 valeurs en dur
+dans le zod enum et `resolveAcademicLevel`), `ACADEMIC_REFERENTIAL_INSTRUCTION` étendue aux 6
+nouveaux domaines + instruction de citation, `academic_reference_note` ajoutée aux 6 points de
+génération (même schéma que `proof_mode`/`academic_domain` avant elle). Migration : CHECK
+constraints de `challenges.academic_domain` et `hypothesis_cycles.trigger_domain` élargis aux 9
+valeurs, colonne `challenges.academic_reference_note` ajoutée.
+
+**Vérifié, avec une limite honnête à signaler** :
+- `tsc --noEmit` propre après chaque étape.
+- Le mécanisme central (`academic_domain`/`academic_level_age` remplis par une vraie génération
+  IA) était déjà vérifié en direct lors de la décision #38 (défi "Fusée Mathématique" et "Fontaine
+  Magique") — cette extension réutilise strictement le même point de passage
+  (`finalizeChallenge`/`resolveAcademicLevel`), donc le risque d'ajouter 6 valeurs d'enum et 1
+  champ texte optionnel au même contrat JSON est jugé faible.
+- **Non vérifié par une génération IA fraîche cette passe** : le Browser pane a rencontré un
+  problème d'outillage pendant cette session (captures d'écran qui expirent, clics qui
+  n'atteignent pas la page même via un nouvel onglet et un clic DOM natif confirmé par script) —
+  confirmé en interrogeant directement la base (aucune nouvelle ligne créée) plutôt que de se fier
+  aux apparences. Contournement partiel : une insertion directe en base a confirmé que la
+  contrainte CHECK élargie accepte bien les 6 nouveaux domaines et que la colonne
+  `academic_reference_note` fonctionne au niveau base de données — mais aucune vérification que
+  Sonnet/Haiku produit réellement une citation cohérente sur les nouveaux domaines n'a pu être
+  faite en direct. À refaire dès que l'outillage du navigateur repasse fiable, ou lors de la
+  première génération réelle en production.

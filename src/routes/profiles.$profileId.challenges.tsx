@@ -31,12 +31,19 @@ import { GenizioLoader } from "@/components/GenizioLoader";
 import { getActiveChallenge } from "@/lib/active-challenge";
 import { ShoppingBag } from "lucide-react";
 
+// "Mathématiques" et "Émotions et relations sociales" ajoutées (décision #39, item 3) : le
+// parent peut ainsi orienter volontairement Naya vers un domaine du référentiel académique
+// précis pour accélérer le signal de détection d'écart, plutôt que d'attendre que ces domaines
+// sortent naturellement de la rotation. L'id est injecté tel quel comme instruction de domaine
+// dans le prompt (cf. generateSingleChallenge) — garder des libellés explicites, pas des codes.
 const CATEGORIES = [
   { id: "all", label: "Suggéré par Naya (Diagnostic)" },
+  { id: "Mathématiques", label: "Mathématiques & Logique" },
   { id: "Sciences", label: "Sciences & Ingénierie" },
   { id: "Arts", label: "Arts & Créativité" },
   { id: "Langues", label: "Langues & Littérature" },
   { id: "Sport", label: "Sport & motricité" },
+  { id: "Émotions et relations sociales", label: "Émotions & Vie sociale" },
   { id: "Artisanat", label: "Artisanat & Métiers" },
   { id: "Agriculture", label: "Agriculture & Nature" },
   { id: "Entrepreneuriat", label: "Échanges & Commerce" },

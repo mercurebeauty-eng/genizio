@@ -3,6 +3,14 @@ import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { VALID_TALENT_KEYS, TALENT_KEY_LABELS } from "@/lib/talent-buckets";
 import { z } from "zod";
 
+// Domaines couverts par le référentiel académique (cf. genizio-decisions #39). "creative"
+// exclue volontairement (développement non linéaire par âge, cf. ACADEMIC_REFERENTIAL_INSTRUCTION
+// ci-dessous) — ne jamais l'ajouter ici sans revoir le mécanisme de détection d'écart.
+export const ACADEMIC_DOMAINS = [
+  "mathematiques", "langage", "sciences",
+  "corporelle", "sociale", "emotionnelle", "entrepreneuriale", "artisanale", "spatiale",
+] as const;
+
 const ChallengeSchema = z.object({
   domain: z.string(),
   title: z.string(),
@@ -19,8 +27,9 @@ const ChallengeSchema = z.object({
   proof_mode: z.enum(["photo", "declarative"]).optional(),
   proof_target: z.object({ metric: z.string(), value: z.number() }).nullable().optional(),
   declarative_award: z.record(z.string(), z.number()).nullable().optional(),
-  academic_domain: z.enum(["mathematiques", "langage", "sciences"]).nullable().optional(),
+  academic_domain: z.enum(ACADEMIC_DOMAINS).nullable().optional(),
   academic_level_age: z.number().nullable().optional(),
+  academic_reference_note: z.string().nullable().optional(),
 });
 
 // Shop Phase 1: log material tags that don't match any active product yet, so the
@@ -277,9 +286,16 @@ function resolveProofMode(
 function resolveAcademicLevel(
   domain: string | null | undefined,
   levelAge: number | null | undefined,
+  referenceNote: string | null | undefined,
   challengeTitle: string
-): { academic_domain: "mathematiques" | "langage" | "sciences" | null; academic_level_age: number | null } {
-  const validDomain = domain === "mathematiques" || domain === "langage" || domain === "sciences" ? domain : null;
+): {
+  academic_domain: (typeof ACADEMIC_DOMAINS)[number] | null;
+  academic_level_age: number | null;
+  academic_reference_note: string | null;
+} {
+  const validDomain = (ACADEMIC_DOMAINS as readonly string[]).includes(domain ?? "")
+    ? (domain as (typeof ACADEMIC_DOMAINS)[number])
+    : null;
   const validAge = typeof levelAge === "number" && Number.isFinite(levelAge) && levelAge >= 3 && levelAge <= 18
     ? Math.round(levelAge)
     : null;
@@ -288,10 +304,14 @@ function resolveAcademicLevel(
     if (domain || levelAge) {
       console.warn(`[challenges] étiquetage du référentiel académique incohérent pour "${challengeTitle}" — ignoré.`);
     }
-    return { academic_domain: null, academic_level_age: null };
+    return { academic_domain: null, academic_level_age: null, academic_reference_note: null };
   }
 
-  return { academic_domain: validDomain, academic_level_age: validAge };
+  // La citation est un bonus de traçabilité (décision #39), pas une condition de validité —
+  // un domaine/âge cohérents sans citation restent utilisables pour la détection d'écart.
+  const note = typeof referenceNote === "string" && referenceNote.trim() ? referenceNote.trim().slice(0, 200) : null;
+
+  return { academic_domain: validDomain, academic_level_age: validAge, academic_reference_note: note };
 }
 
 // Single choke point for the checks every challenge must pass through before
@@ -321,10 +341,11 @@ export function finalizeChallenge<T extends {
   declarative_award?: Record<string, unknown> | null;
   academic_domain?: string | null;
   academic_level_age?: number | null;
+  academic_reference_note?: string | null;
 }>(c: T, age: number) {
   const safety = applySafetyNet(c, age);
   const proof = resolveProofMode(c.proof_mode, c.proof_target, c.declarative_award, c.title);
-  const academic = resolveAcademicLevel(c.academic_domain, c.academic_level_age, c.title);
+  const academic = resolveAcademicLevel(c.academic_domain, c.academic_level_age, c.academic_reference_note, c.title);
   return {
     title: c.title.slice(0, 120),
     material_tags: c.material_tags ?? [],
@@ -336,6 +357,7 @@ export function finalizeChallenge<T extends {
     declarative_award: proof.declarative_award,
     academic_domain: academic.academic_domain,
     academic_level_age: academic.academic_level_age,
+    academic_reference_note: academic.academic_reference_note,
   };
 }
 
@@ -373,13 +395,16 @@ export const PROOF_MODE_INSTRUCTION = `MODE DE PREUVE : détermine "proof_mode" 
   - "proof_target": {"metric": "unité comptée en 2-4 mots, ex: jongles réussis / minutes de course", "value": nombre cible}
   - "declarative_award": objet {"clé":points} avec des points de 1 à 3, clés EXCLUSIVEMENT parmi : spatial, corporelle, sociale, entrepreneuriale, creative, artisanale, emotionnelle, logico_mathematique, linguistique — les intelligences réellement mobilisées si le défi est réussi.`;
 
-// Référentiel académique interne Génizio (cf. genizio-decisions #37, docs/memoire/
+// Référentiel académique interne Génizio (cf. genizio-decisions #37/#39, docs/memoire/
 // genizio_referentiel_academique.md — version condensée pour prompt, sans le détail des
 // sources). Remplace les notes scolaires comme signal de calibrage : indépendant de l'école
 // réelle de l'enfant, volontairement calé sur des standards internationaux exigeants
-// (Common Core US, Singapore Math, NGSS). Sert à étiqueter le CONTENU réel d'un défi
-// académique par âge — jamais à afficher un verdict au parent (§1 du plan NAYA).
-export const ACADEMIC_REFERENTIAL_INSTRUCTION = `RÉFÉRENTIEL ACADÉMIQUE : si le défi relève d'un des 3 domaines académiques ci-dessous, détermine "academic_domain" ("mathematiques" | "langage" | "sciences") et "academic_level_age" (nombre entier = l'âge auquel correspond RÉELLEMENT le contenu du défi que tu viens de concevoir, d'après ce référentiel — PAS forcément l'âge de l'enfant). Pour tout autre domaine (créatif, artisanal, social, sportif hors mesure, etc.), omets les deux champs.
+// (Common Core US, Singapore Math, NGSS, SHAPE America, CASEL, NFEC selon le domaine — niveaux
+// de confiance inégaux, cf. le document source). Sert à étiqueter le CONTENU réel d'un défi
+// par âge — jamais à afficher un verdict au parent (§1 du plan NAYA). "creative" est
+// délibérément absente : son développement documenté n'est pas linéaire par âge (creux normaux
+// à certains âges), incompatible avec ce mécanisme de comparaison — ne JAMAIS l'étiqueter.
+export const ACADEMIC_REFERENTIAL_INSTRUCTION = `RÉFÉRENTIEL ACADÉMIQUE : si le défi relève d'un des domaines ci-dessous, détermine "academic_domain" ("mathematiques" | "langage" | "sciences" | "corporelle" | "sociale" | "emotionnelle" | "entrepreneuriale" | "artisanale" | "spatiale"), "academic_level_age" (nombre entier = l'âge auquel correspond RÉELLEMENT le contenu du défi que tu viens de concevoir, d'après ce référentiel — PAS forcément l'âge de l'enfant), et "academic_reference_note" (1 phrase courte citant la ligne précise du référentiel sur laquelle tu t'es basé, ex: "toutes les tables à un chiffre mémorisées vers 8 ans" — pas juste "niveau 8 ans"). Pour "creative" (créativité pure, imaginaire libre) ou tout domaine hors de cette liste, omets les trois champs.
 
 MATHÉMATIQUES / LOGIQUE :
 5 ans : compter à 100 par 1 et 10, écrire les nombres 0-20. 6 ans : addition/soustraction dans les 20. 7 ans : tables de multiplication 2,3,4,5,10 mémorisées, mesures standard, figures géométriques. 8 ans : TOUTES les tables à un chiffre (2-9) mémorisées, fractions comme quantité (1/b, a/b). 9 ans : multiplication à plusieurs chiffres, division avec reste, fractions équivalentes. 10 ans : multiplication/division à 2 chiffres, nombres décimaux. 11 ans : équations à une inconnue simples (x+p=q, px=q), inégalités simples. 12 ans : équations plus complexes (px+q=r), inégalités. 13 ans : exposants, racines, systèmes de 2 équations, notion de fonction. 14 ans : théorème de Pythagore, statistiques descriptives, algèbre avancée.
@@ -388,7 +413,25 @@ LANGAGE (lecture/écriture) :
 5 ans : isole les sons d'un mot de 3 sons, débute le décodage syllabe par syllabe. 6 ans : lit un texte de son niveau à voix haute avec précision et expression, se corrige seul. 7 ans : même fluidité sur un texte plus avancé, décode des mots à plusieurs syllabes. 8-10 ans : décode des mots complexes, résume un texte, utilise des connecteurs logiques (parce que, donc, ensuite). 11-14 ans : rédige des textes structurés en plusieurs paragraphes, argumente avec plusieurs arguments organisés, analyse un texte (intention de l'auteur, point de vue).
 
 SCIENCES / DÉCOUVERTE DU MONDE :
-5-7 ans : propriétés de base des matériaux (ex: ce qui flotte/coule), besoins de base des êtres vivants. 8-10 ans : états et changements de la matière (fusion, évaporation...), systèmes du corps humain, cycle de la matière entre êtres vivants et environnement. 11-14 ans : cycle de l'eau complet (évaporation, condensation, précipitation), rôle de la photosynthèse, écosystèmes, énergie et forces.`;
+5-7 ans : propriétés de base des matériaux (ex: ce qui flotte/coule), besoins de base des êtres vivants. 8-10 ans : états et changements de la matière (fusion, évaporation...), systèmes du corps humain, cycle de la matière entre êtres vivants et environnement. 11-14 ans : cycle de l'eau complet (évaporation, condensation, précipitation), rôle de la photosynthèse, écosystèmes, énergie et forces.
+
+CORPORELLE (motricité) :
+3-5 ans : motricité globale en développement rapide (courir, sauter, grimper avec plus de contrôle). 6-10 ans : compétence dans une variété d'habiletés motrices (lancer, attraper, dribbler), concepts de mouvement de base, notions de condition physique. 11-14 ans : stratégies/tactiques dans des situations de jeu complexes, autonomie dans l'activité physique.
+
+SOCIALE (relations) :
+5-7 ans : partage, tour de rôle, reconnaît les émotions d'autrui simplement. 8-10 ans : comprend les perspectives d'autrui, empathie, communique et coopère, résout des conflits simples. 11-14 ans : négociation, résiste à la pression sociale négative, travail d'équipe dans des groupes plus larges/moins familiers.
+
+EMOTIONNELLE (conscience et gestion de soi) :
+5-7 ans : reconnaît et nomme ses émotions de base, autorégulation simple avec aide d'un adulte. 8-10 ans : reconnaît l'influence de ses émotions sur son comportement, autorégulation plus autonome, fixe de petits objectifs. 11-14 ans : gestion du stress plus complexe, prise de décision responsable tenant compte de plusieurs facteurs.
+
+ENTREPRENEURIALE :
+5-7 ans : notions d'argent de base (compter, épargner, différence besoin/envie). 8-10 ans : budget simple, idée de gagner de l'argent par un petit service, comprend qu'un choix a un coût. 11-14 ans : notions de base d'un petit projet (coût, prix, marge), planifie un budget sur plusieurs semaines.
+
+ARTISANALE (habileté manuelle) :
+6-7 ans : écriture fluide et contrôlée, maniement précis ciseaux/colle. 8-9 ans : motricité fine raffinée, tâches demandant une concentration prolongée. 10-14 ans : motricité fine proche de l'adulte, projets complexes en plusieurs séances, recherche un résultat "professionnel".
+
+SPATIALE :
+3 ans : vocabulaire spatial de base (dessus/dessous, dedans/dehors). 4-9 ans : perçoit des objets sous différents points de vue, notion de perspective en développement. 5 ans : réussit une tâche simple de "pliage mental" (imaginer un objet après pliage). 7-8 ans : pliage mental plus avancé, plafonne généralement vers cet âge.`;
 
 // Helper to call Google AI Studio OpenAI-compatible endpoint
 const ALLOWED_IMAGE_MEDIA_TYPES = ["image/jpeg", "image/png", "image/gif", "image/webp"];
@@ -663,7 +706,7 @@ Contraintes :
 - ${ACADEMIC_REFERENTIAL_INSTRUCTION}
 
 Réponds STRICTEMENT en JSON valide avec ce format, pour chaque défi :
-{"challenges":[{"domain":"...","title":"...","description":"...","duration":"...","steps":["...","..."],"materials":["...","..."],"material_tags":["..."],"pedagogical_context":"Ce que Naya observe via cette activité","intelligences":["Intelligence dominante sollicitée"],"requires_supervision":true ou false,"supervision_warning":"..." (ou null si false),"difficulty":"facile"|"moyen"|"difficile","proof_mode":"photo"|"declarative","proof_target":{"metric":"...","value":20} (uniquement si declarative),"declarative_award":{"corporelle":2} (uniquement si declarative),"academic_domain":"mathematiques"|"langage"|"sciences"|null,"academic_level_age":14 (uniquement si academic_domain non null)}]}`;
+{"challenges":[{"domain":"...","title":"...","description":"...","duration":"...","steps":["...","..."],"materials":["...","..."],"material_tags":["..."],"pedagogical_context":"Ce que Naya observe via cette activité","intelligences":["Intelligence dominante sollicitée"],"requires_supervision":true ou false,"supervision_warning":"..." (ou null si false),"difficulty":"facile"|"moyen"|"difficile","proof_mode":"photo"|"declarative","proof_target":{"metric":"...","value":20} (uniquement si declarative),"declarative_award":{"corporelle":2} (uniquement si declarative),"academic_domain":"mathematiques"|"langage"|"sciences"|"corporelle"|"sociale"|"emotionnelle"|"entrepreneuriale"|"artisanale"|"spatiale"|null,"academic_level_age":14 (uniquement si academic_domain non null),"academic_reference_note":"..." (uniquement si academic_domain non null)}]}`;
 
     // Up to 6 full défis in one response — genuinely needs the full default
     // budget, unlike every other callClaude site in this file.
@@ -1257,8 +1300,9 @@ Réponds STRICTEMENT en JSON valide avec ce format exact :
   "proof_mode": "photo" | "declarative",
   "proof_target": {"metric": "...", "value": 20} (uniquement si declarative),
   "declarative_award": {"corporelle": 2} (uniquement si declarative),
-  "academic_domain": "mathematiques" | "langage" | "sciences" | null,
-  "academic_level_age": 14 (uniquement si academic_domain non null)
+  "academic_domain": "mathematiques" | "langage" | "sciences" | "corporelle" | "sociale" | "emotionnelle" | "entrepreneuriale" | "artisanale" | "spatiale" | null,
+  "academic_level_age": 14 (uniquement si academic_domain non null),
+  "academic_reference_note": "..." (uniquement si academic_domain non null)
 }`;
 
     // A single défi, not a batch — the 4000 default (sized for up to 6 défis
