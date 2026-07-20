@@ -839,10 +839,16 @@ Réponds STRICTEMENT en JSON valide avec ce format :
 
 const AssignTemplateInput = z.object({
   childId: z.string().uuid(),
-  template: ChallengeSchema.extend({ 
+  template: ChallengeSchema.extend({
     intelligences: z.array(z.string()).optional(),
     pedagogical_context: z.string().optional(),
   }),
+  // Atelier du Temps — mécanique "Estimation" (cf. genizio-decisions #30) : combien
+  // de temps l'enfant pense avoir besoin, capturé au moment de l'assignation depuis
+  // l'Atelier. Absent pour tout autre chemin d'assignation (ex. "Composer un défi
+  // ciblé" sur la page Défis, qui ne demande pas de temps) — reste NULL en base,
+  // aucune carte de comparaison ne s'affichera pour ces défis-là, c'est voulu.
+  estimated_duration_minutes: z.number().int().positive().max(1440).optional(),
 });
 
 export const assignTemplateChallenge = createServerFn({ method: "POST" })
@@ -880,6 +886,7 @@ export const assignTemplateChallenge = createServerFn({ method: "POST" })
         status: "todo",
         progress: 0,
         pedagogical_context: template.pedagogical_context ?? null,
+        estimated_duration_minutes: data.estimated_duration_minutes ?? null,
         ...finalizeChallenge(template, child.age),
       })
       .select()

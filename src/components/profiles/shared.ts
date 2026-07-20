@@ -18,10 +18,17 @@ import { TALENT_KEY_LABELS } from "@/lib/talent-buckets";
 // désormais 3 ou 4 tags, tous distincts. Signal doux (n'alimente pas la carte
 // des talents) : les anciens tags encore stockés sur des profils existants
 // restent du texte libre inoffensif, pas de migration de données.
+//
+// Diversifié le 2026-07-20 (cf. genizio-decisions #24) : deux domaines entiers de
+// génération de défis (DOMAINS dans challenges.functions.ts : "Agriculture",
+// "Tech & IA" — et la vision produit qui les cite explicitement) n'avaient AUCUN
+// tag correspondant, alors que 7 des 10 domaines en avaient un. "Nature & Animaux"
+// (logico_mathematique — curiosité scientifique envers le vivant) et "Robotique &
+// Programmation" (spatial — construction/assemblage) comblent ces deux trous.
 export const INTERESTS_BY_TALENT: Record<string, { label: string; tags: readonly string[] }> = {
   spatial: {
     label: TALENT_KEY_LABELS.spatial,
-    tags: ["Construction & Lego", "Puzzles & Cartes", "Orientation & Exploration"],
+    tags: ["Construction & Lego", "Puzzles & Cartes", "Orientation & Exploration", "Robotique & Programmation"],
   },
   corporelle: {
     label: TALENT_KEY_LABELS.corporelle,
@@ -49,7 +56,7 @@ export const INTERESTS_BY_TALENT: Record<string, { label: string; tags: readonly
   },
   logico_mathematique: {
     label: TALENT_KEY_LABELS.logico_mathematique,
-    tags: ["Aime les chiffres", "Résout des énigmes", "Sciences & Expériences", "Jeux de stratégie"],
+    tags: ["Aime les chiffres", "Résout des énigmes", "Sciences & Expériences", "Jeux de stratégie", "Nature & Animaux"],
   },
   linguistique: {
     label: TALENT_KEY_LABELS.linguistique,

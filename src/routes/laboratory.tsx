@@ -26,6 +26,18 @@ const TIME_OPTIONS = [
   { id: "1 après-midi", label: "Tout un après-midi" },
 ];
 
+// Atelier du Temps — mécanique "Estimation" (cf. genizio-decisions #30) : ancre
+// numérique de l'estimation de l'enfant, dérivée du même choix de temps déjà fait
+// pour contraindre la génération IA. "1 après-midi" est volontairement approximatif
+// (180 min) — l'enfant ne travaillera pas l'après-midi entier sur un seul défi, mais
+// l'ancre sert de point de comparaison pour la métacognition, pas de mesure exacte.
+const TIME_TO_MINUTES: Record<string, number> = {
+  "10 min": 10,
+  "30 min": 30,
+  "1 heure": 60,
+  "1 après-midi": 180,
+};
+
 const LOCATION_OPTIONS = [
   { id: "Maison (Intérieur)", label: "À la maison" },
   { id: "Cuisine", label: "Dans la cuisine" },
@@ -169,7 +181,8 @@ function LaboratoryPage() {
             requires_supervision: currentChallenge.requires_supervision ?? false,
             supervision_warning: currentChallenge.supervision_warning,
             difficulty: currentChallenge.difficulty,
-          }
+          },
+          estimated_duration_minutes: TIME_TO_MINUTES[selectedTime],
         }
       });
       toast.success("Défi commencé avec succès !");

@@ -480,3 +480,66 @@ départager une hypothèse — Phase 3). Détail dans [[genizio-naya-systeme-com
 **Branding tranché (2026-07-20)** : nom = **« L'Atelier du Temps »** (choisi par l'utilisateur
 via AskUserQuestion parmi Atelier du Temps / Le Tempo / Le Défi Chrono). La route reste
 `/laboratory` (URL non user-facing, pas de lien cassé) ; seuls les libellés changent.
+
+## Décision #30 : V3 "Estimation" — nouveau driver N2 `time_awareness`, pas une compétence N3
+
+**Contexte** : première mécanique réelle de l'Atelier du Temps (cf. décision #29). L'enfant
+prédit combien de temps un défi va lui prendre au moment de l'assignation ; à la complétion, Naya
+compare l'estimation au temps réellement écoulé. C'est le "défi de révélation" qui alimente
+enfin un Moteur N2 laissé vide en Phase 1.
+
+**Décision 1 — nouveau driver N2, pas N3** : `time_awareness` (précision d'estimation temporelle)
+rejoint `perseverance` comme deuxième Moteur calculé. **Alternative rejetée** : le classer en
+Compétence N3 "métacognition" (c'est ainsi que le document source NAYA le catégorise à l'origine,
+§4.3). Rejeté car la décision #28 a délibérément fermé le N3 aux 9 clés Gardner pour éviter la
+fragmentation déjà vécue (Guildes vs Gardner) — et la métacognition temporelle ne correspond à
+aucune des 9 clés (spatial, corporelle, sociale, entrepreneuriale, creative, artisanale,
+emotionnelle, logico_mathematique, linguistique). Un Moteur (capacité de régulation générale,
+transversale à tous les domaines) est le bon niveau, cohérent avec la logique déjà établie pour
+la persévérance.
+
+**Décision 2 — mesure = temps de travail actif, pas temps depuis l'assignation.** `actual_duration_minutes = completed_at - started_at` (jamais `- created_at`). **Pourquoi** : un défi
+peut légitimement traîner plusieurs jours dans la liste "à faire" avant d'être commencé — comparer
+une estimation de 30 minutes à "3 jours" aurait produit une réaction absurde et démotivante,
+contraire au principe "feedback sur le processus" (§9.2 du document source). Si `started_at` est
+absent (défi complété sans jamais passer par "en cours"), aucune carte de comparaison ne
+s'affiche — pas de mesure fabriquée.
+
+**Décision 3 — `started_at` géré par trigger** (`set_challenge_started_at`, BEFORE UPDATE), pas
+par le code applicatif. **Pourquoi** : cohérent avec le principe Phase 0 "un signal qui ne peut
+pas être oublié par un futur chemin de mutation" — contrairement à `completed_at` (déjà géré côté
+application, hérité d'avant cette session). Remis à `NULL` si le défi retourne à "à faire", pour
+qu'une reprise ultérieure mesure sa propre durée plutôt qu'un total agrégé sur plusieurs tentatives.
+
+**Décision 4 — jamais de score/pourcentage affiché à l'enfant.** La carte de reflet dans
+`OutcomeChat` montre les deux durées brutes (estimée, réelle) + un message chaleureux en 3
+variantes (juste / sous-estimé / sur-estimé), jamais un calcul d'écart en pourcentage — non-
+négociable déjà établi (décision #11 : "aucun score/percentile/pass-fail nulle part dans l'app").
+Le calcul de précision (`1 - écart_relatif`, symétrique, borné [0,1]) reste strictement interne
+au driver `time_awareness`.
+
+**Alternatives rejetées** :
+- ❌ Estimation saisie via une nouvelle UI dédiée : rejeté — l'Atelier a déjà un sélecteur "temps
+  disponible" (`TIME_OPTIONS`) qui sert la même intention ; le réutiliser évite d'ajouter une
+  étape et respecte le principe "supprimer/fusionner avant d'ajouter" de l'analyse produit.
+- ❌ Afficher un score de précision au parent/enfant ("tu étais à 15% d'écart") : rejeté, viole
+  le non-négociable "pas de score" (décision #11).
+
+**Vérifié en production (2026-07-20)**, pipeline complet bout en bout via l'Atelier réel (pas de
+raccourci) : assignation avec `estimated_duration_minutes=30` → trigger `started_at` confirmé au
+clic "En cours" → complétion → événement `CHALLENGE_COMPLETED` avec
+`actual_duration_minutes=43.0` → driver `time_awareness` calculé à **0.6977**, vérifié au chiffre
+près (`1 - |43-30|/43 = 0.697674`). Carte de reflet capturée en direct dans le DOM rendu (après
+plusieurs tentatives — un refetch en arrière-plan de la page fait disparaître la vue "rapport" de
+`OutcomeChat` très vite, capture réussie en sondant le DOM toutes les 200ms dans un seul contexte
+d'exécution continu) : message exact "Tu avais prévu 10 min, tu as mis 9 min — ton estimation
+était juste !" pour une estimation de 10 min / 9 min réel. Les 3 branches de message (juste /
+sous-estimé / sur-estimé) vérifiées séparément via la fonction pure. Défis de test supprimés
+après vérification. `tsc --noEmit` propre.
+
+**Non résolu, signalé** : la vue "rapport" de `OutcomeChat` (déjà existante avant cette session —
+le bloc "Intelligences enrichies") semble se faire remplacer très rapidement par un refetch de la
+liste des défis, fermant la fenêtre d'affichage du succès plus vite qu'attendu. Pas un défaut
+introduit par ce chantier (même mécanisme affecte le bloc "Intelligences enrichies" préexistant) —
+observé en vérifiant, pas corrigé (hors périmètre de cette demande), à investiguer si un jour
+signalé comme gênant par un usage réel.

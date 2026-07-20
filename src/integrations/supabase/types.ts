@@ -49,6 +49,7 @@ export type Database = {
           difficulty: string | null
           domain: string
           duration: string
+          estimated_duration_minutes: number | null
           id: string
           material_tags: string[]
           materials: Json
@@ -57,6 +58,7 @@ export type Database = {
           progress: number
           proof_image_url: string | null
           requires_supervision: boolean | null
+          started_at: string | null
           status: Database["public"]["Enums"]["challenge_status"]
           steps: Json
           supervision_warning: string | null
@@ -74,6 +76,7 @@ export type Database = {
           difficulty?: string | null
           domain: string
           duration: string
+          estimated_duration_minutes?: number | null
           id?: string
           material_tags?: string[]
           materials?: Json
@@ -82,6 +85,7 @@ export type Database = {
           progress?: number
           proof_image_url?: string | null
           requires_supervision?: boolean | null
+          started_at?: string | null
           status?: Database["public"]["Enums"]["challenge_status"]
           steps?: Json
           supervision_warning?: string | null
@@ -99,6 +103,7 @@ export type Database = {
           difficulty?: string | null
           domain?: string
           duration?: string
+          estimated_duration_minutes?: number | null
           id?: string
           material_tags?: string[]
           materials?: Json
@@ -107,6 +112,7 @@ export type Database = {
           progress?: number
           proof_image_url?: string | null
           requires_supervision?: boolean | null
+          started_at?: string | null
           status?: Database["public"]["Enums"]["challenge_status"]
           steps?: Json
           supervision_warning?: string | null

@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { validateChallengeProof } from "@/lib/challenges.functions";
 import { NayaAvatar } from "@/components/NayaAvatar";
-import { Loader2, Upload, Check, X, Play, Sparkles, Share2 } from "lucide-react";
+import { Loader2, Upload, Check, X, Play, Sparkles, Share2, Clock } from "lucide-react";
 import { toast } from "sonner";
 import { CreatePostModal } from "@/components/feed/CreatePostModal";
 import { MarkdownContent } from "@/components/ui/markdown-content";
@@ -14,6 +14,24 @@ type Challenge = {
   description: string;
   status: "todo" | "in_progress" | "completed";
 };
+
+// Atelier du Temps — mécanique "Estimation" (cf. genizio-decisions #30). Toujours en
+// langage de processus, jamais de score/pourcentage affiché (non-négociable établi en
+// décision #11 — "aucun score/percentile/pass-fail nulle part") : on montre les deux
+// durées brutes et un message chaleureux, jamais un "tu étais à 40% d'écart".
+function getTimeReflection(estimatedMinutes: number, actualMinutes: number): string {
+  const rounded = Math.max(1, Math.round(actualMinutes));
+  const diff = actualMinutes - estimatedMinutes;
+  const relativeDiff = Math.abs(diff) / Math.max(estimatedMinutes, actualMinutes);
+
+  if (relativeDiff <= 0.2) {
+    return `Tu avais prévu ${estimatedMinutes} min, tu as mis ${rounded} min — ton estimation était juste ! Tu sens de mieux en mieux ton temps.`;
+  }
+  if (diff > 0) {
+    return `Tu avais prévu ${estimatedMinutes} min, ça t'a pris ${rounded} min — pas grave, certains défis prennent plus de temps qu'on ne le pense. Chaque essai t'aide à mieux le sentir.`;
+  }
+  return `Tu avais prévu ${estimatedMinutes} min, tu as fini en ${rounded} min — tu es allé plus vite que prévu !`;
+}
 
 // Reads a File as base64 in the browser and sends the bytes directly to the
 // server — no Supabase Storage upload happens until after the AI confirms
@@ -117,6 +135,21 @@ export function OutcomeChat({ challenge, childName, notes = "", onSaveNotes, onV
 
           <div className="bg-white rounded-2xl p-6 shadow-brutal-sm mb-6 border-[3px] border-ink relative">
             <p className="text-sm italic text-ink/80 leading-relaxed font-medium">"<MarkdownContent content={report.challenge.ai_observations} inline /></p>
+
+            {report.challenge.estimated_duration_minutes && report.challenge.started_at && report.challenge.completed_at && (
+              <div className="mt-5 pt-5 border-t-2 border-ink/20">
+                <p className="text-[10px] font-extrabold uppercase tracking-widest text-brand mb-3 flex items-center gap-1.5">
+                  <Clock className="size-3.5" />
+                  L'Atelier du Temps
+                </p>
+                <p className="text-sm font-semibold text-ink/80 leading-relaxed">
+                  {getTimeReflection(
+                    report.challenge.estimated_duration_minutes,
+                    (new Date(report.challenge.completed_at).getTime() - new Date(report.challenge.started_at).getTime()) / 60000
+                  )}
+                </p>
+              </div>
+            )}
 
             <div className="mt-5 pt-5 border-t-2 border-ink/20">
               <p className="text-[10px] font-extrabold uppercase tracking-widest text-brand mb-3">

@@ -251,11 +251,11 @@ Chaque phase est livrable, vérifiable de bout en bout, et committable seule. D�
 
 ## 9. Chantier lié — l'Atelier du Temps (repositionnement du Labo)
 
-> ⚠️ **STATUT (2026-07-20)** : nom **confirmé « L'Atelier du Temps »**. **V1 livrée** (renommage
-> nav + page + fin de la collision de noms avec les Défis — commit `9eb9b22`). **V3/V4 PAS
-> commencées** (aucune mécanique de temps réel, aucun `observation_event` dédié — le `/laboratory`
-> reste le générateur contextuel actuel, juste renommé). Détail + alternatives dans
-> [[genizio-decisions]] #29.
+> ⚠️ **STATUT (2026-07-20)** : nom **confirmé « L'Atelier du Temps »**. **V1 livrée** (commit
+> `9eb9b22`). **V3 mécanique "Estimation" livrée et vérifiée en production** (décision #30) —
+> première mécanique réelle de gestion du temps, alimente enfin le driver N2 `time_awareness`
+> laissé vide en Phase 1. Régularité (2e mécanique V3) et V4 **PAS commencées**. Détail +
+> alternatives dans [[genizio-decisions]] #29/#30.
 
 Le `/laboratory` actuel ne se différencie pas des Défis : même backend
 (`generateSingleChallenge` + `assignTemplateChallenge`), même objet produit, noms qui se
@@ -289,3 +289,11 @@ persistance server-authoritative pour que « le temps coule app fermée » ne so
 V4 (Naya déclenche elle-même un défi chronométré quand le Jumeau doit départager une hypothèse —
 Phase 3 : le chrono devient le protocole expérimental de Naya). Cf. paliers V1→V4 de l'analyse
 `product-intelligence-architect`.
+
+**V3 — Estimation, livrée le 2026-07-20 (décision #30)** : l'enfant estime la durée au moment de
+l'assignation depuis l'Atelier (réutilise le sélecteur de temps déjà existant, aucune nouvelle UI
+d'entrée) ; `started_at` capturé par trigger au premier passage en cours (jamais oublié, jamais
+écrasé par une reprise) ; à la complétion, comparaison estimé/réel affichée dans `OutcomeChat` en
+langage de processus (jamais de score/pourcentage). Alimente un **nouveau driver N2**
+`time_awareness` (pas N3 — décision #28 ferme le N3 aux 9 clés Gardner, et la métacognition
+temporelle n'en est pas une). Régularité reste à construire.
