@@ -329,7 +329,7 @@ function DemoSection() {
 
   const [interests, setInterests] = useState<string[]>([
     "Sciences & Expériences",
-    "Dessin & Design",
+    "Dessin & Peinture",
     "Construction & Lego"
   ]);
 

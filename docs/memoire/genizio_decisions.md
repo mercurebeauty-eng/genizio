@@ -4,7 +4,7 @@ description: Décisions d'architecture et produit — quoi, pourquoi, alternativ
 metadata:
   type: project
   status: living-document
-  last_updated: 2026-07-17
+  last_updated: 2026-07-20
 ---
 
 ## Décision #1 : Nom du projet — Geniusio
@@ -307,6 +307,21 @@ faut-il un contrôle d'ownership explicite sur ces routes plutôt que de compter
 
 **Commit** : `1876265`. `tsc --noEmit` propre.
 
+**Mise à jour du 2026-07-20 — dédoublonnage** : l'utilisateur a signalé que la contrainte
+"4 tags par groupe" (9×4=36) forçait des quasi-synonymes déroutants. Vérifié dans le code :
+"Dessin" apparaissait 2× ("Dessin & Design" spatial + "Dessin & Peinture" créatif), "bricolage/
+manuel" 3× ("Bricolage manuel" corporelle + "Bricolage créatif" créative + "Travaux manuels"
+artisanale), et "Empathique"/"Attentif aux autres" faisaient doublon DANS le groupe Émotionnelle.
+5 tags retirés (`shared.ts`) → groupes à 3-4 tags, tous distincts. `ALL_INTERESTS` (export mort,
+aucun conscommateur — le simulateur `index.tsx` recompose sa propre liste plate depuis
+`INTERESTS_BY_TALENT`, donc la note "copie indépendante" ci-dessus était inexacte : il consomme
+bien la source partagée) supprimé. 2 presets codés en dur référençant "Dessin & Design"
+(`portfolio.tsx`, `index.tsx`) repointés vers "Dessin & Peinture". **Pas de migration de
+données** : signal doux (n'alimente pas la carte des talents), les anciens tags encore stockés
+sur les profils existants restent du texte libre inoffensif. **Vérifié en direct** (dialogue de
+création ouvert en navigateur) : 9 groupes, "Dessin" une seule fois, zéro "Bricolage"/"Travaux
+manuels", zéro "Attentif aux autres". `tsc --noEmit` propre.
+
 ## Décision #25 : Système d'export du Passeport d'Excellence (14 ans et plus)
 **Décision** : Implémenter le "Passeport d'Excellence Génizio" payant (50 000 FCFA) pour les enfants de 14 ans et plus. L'accès est débloqué manuellement par l'administrateur et stocké en base de données sous la forme d'un attribut boolean `pdf_unlocked` dans le JSONB `talents` de la table `child_profiles` (ce qui évite d'altérer la structure de la table).
 **Pourquoi** : Offrir aux parents d'adolescents un document d'orientation officiel et de haute fidélité pour les dossiers d'admission aux lycées d'élite et universités. Le paiement s'effectue via redirection WhatsApp et validation manuelle dans le tableau d'administration (`/admin/index.tsx`).
@@ -325,3 +340,815 @@ faut-il un contrôle d'ownership explicite sur ces routes plutôt que de compter
 **Pourquoi** : Un score brut (ex: 80 en créativité) n'a pas la même signification pour un enfant de 5 ans et un adolescent de 15 ans. Le type de carte indique le stade de développement pédagogique de l'enfant tandis que le niveau et les étoiles indiquent sa maîtrise relative au sein de sa tranche d'âge.
 **Statut** : Intégré sur le Portfolio Parent en ligne et par cohérence visuelle dans le Passeport d'Excellence imprimable (PDF).
 **Vérifié** : Build complet sans erreur (`tsc --noEmit` propre). Les rendus en direct s'adaptent selon l'âge réel du profil sélectionné.
+
+## Décision #27 : NAYA 2.0 — paradigme d'investigation développementale + stratégie modèles IA
+
+**Contexte** : le 2026-07-20, l'utilisateur a partagé un document de formalisation complet
+(`#Génizion - Système de Compréhensio.txt`, cf. [[genizio-naya-systeme-comprehension]]) faisant
+évoluer Naya de "générateur de défis + cartographe de talents" vers un **système de compréhension
+développementale** : Jumeau Pédagogique à 4 niveaux, notes/résultats traités comme des signaux à
+investiguer (jamais des verdicts), moteur de diagnostic par hypothèses causales + défis
+discriminants + mise à jour bayésienne, classification dynamique Force/Faiblesse/Fragilité/Risque.
+
+**Décision 1 — le paradigme est adopté comme direction produit** : demande explicite de
+l'utilisateur ("structurer au mieux… développer un plan d'implémentation… l'intégrer en mémoire").
+La conception structurée, les adaptations à l'existant et le plan par phases vivent dans
+[[genizio-naya-systeme-comprehension]] — ce fichier-là fait foi, pas le document source brut.
+
+**Décision 2 — modèles IA : Anthropic seul, architecture swappable** (choix explicite de
+l'utilisateur via AskUserQuestion, option recommandée acceptée). Le pipeline définit des *rôles*
+(vision / raisonnement / narration) implémentés aujourd'hui uniquement avec les modèles Anthropic
+déjà en place (`callClaude` : Sonnet vision, Haiku texte) — cohérent avec la décision #3 corrigée.
+**Alternatives rejetées** :
+- ❌ Hybride multi-fournisseurs immédiat (Gemini vision + DeepSeek raisonnement, proposé par le
+  brainstorm Gemini du document source) : 2 SDK/clés API de plus à gérer pour un gain de coût
+  purement théorique au volume actuel — et surtout fondé sur des benchmarks/prix générés par
+  Gemini, invérifiables et en partie manifestement inventés (ex. un id de modèle Anthropic
+  inexistant). Réévaluable plus tard SI le volume le justifie ET sur des chiffres vérifiés.
+- ❌ Trancher plus tard : rejeté par l'utilisateur — le choix est fait maintenant pour que le
+  plan soit stable ; l'abstraction par rôles préserve de toute façon la réversibilité.
+**Trade-off accepté** : coût par appel de raisonnement potentiellement plus élevé qu'un
+fournisseur low-cost — mitigé par le design frugal (l'IA n'intervient que sur anomalie détectée
+par du code déterministe, pas sur chaque événement).
+
+## Décision #28 : Phase 1 NAYA — Compétences N3 réutilisent les 9 clés Gardner, scope v1 restreint
+
+**Contexte** : implémentation de la Phase 1 (Jumeau Pédagogique v1, cf.
+[[genizio-naya-systeme-comprehension]] §6). Le document source décrit une taxonomie de
+"Compétences" (créativité, communication, logique, organisation, métacognition, travail
+d'équipe) distincte des 9 intelligences de Gardner déjà utilisées pour `child_profiles.talents`.
+
+**Décision 1 — réutiliser `VALID_TALENT_KEYS` (9 clés Gardner) pour le Niveau 3, pas un nouveau
+vocabulaire.** `pedagogical_twins.competencies` stocke un signal **dérivé** par clé Gardner :
+moyenne mobile exponentielle [0,1] avec tendance/variance (α=0.25), recalculée à chaque
+`CHALLENGE_COMPLETED` validé par l'IA — différent du score cumulatif déjà affiché au parent
+(`child_profiles.talents`, incrémental non borné, sans notion de tendance).
+**Alternatives rejetées** :
+- ❌ Introduire le vocabulaire créativité/communication/logique/organisation/métacognition/
+  travail-d'équipe du document source : recouvrement sémantique fort avec les clés Gardner déjà
+  en place (créative≈créativité, sociale≈travail d'équipe, logico_mathematique≈logique,
+  linguistique≈communication) → fragmentation du "quelle compétence a quel score" en deux
+  systèmes à réconcilier, exactement le problème déjà identifié entre Guildes et clés Gardner
+  ("vocabulaire distinct, à ne pas confondre", [[genizio-vision]]). Rejeté par discipline
+  evolution-first ("préserver avant d'optimiser") plutôt que par manque de fidélité au document
+  source — le document source décrit une architecture cible générique, pas un vocabulaire figé.
+- ❌ Faire de `pedagogical_twins.competencies` un simple miroir/copie de `child_profiles.talents` :
+  aurait perdu la notion de tendance (le score cumulatif ne peut que monter), indispensable à la
+  classification Force/Faiblesse/Fragilité/Risque (§4 du plan) qui a besoin d'une pente, pas
+  seulement d'une valeur.
+
+**Décision 2 — seule la persévérance (N2) est calculée en v1.** Curiosité, autonomie,
+compétition/coopération, tolérance à la frustration, orientation intrinsèque/extrinsèque
+restent des champs absents du JSONB `drivers` (pas des valeurs par défaut inventées) tant
+qu'aucun événement de la Phase 0 ne porte de signal fiable pour ces traits.
+**Pourquoi** : fabriquer un score sans signal réel violerait le principe déjà établi "les scores
+de talents restent strictement basés sur des preuves" ([[genizio-decisions]] #24) et le risque
+"sur-interprétation psychométrique" déjà identifié dans le plan (§8).
+
+**Décision 3 — recalcul événementiel (trigger sur `observation_events`), pas de `pg_cron`.**
+Résout la question ouverte du plan ("fréquence de la classification"). Cohérent avec le pattern
+déjà utilisé en Phase 0 (triggers plutôt que jobs planifiés), pas de nouvelle dépendance
+d'infrastructure tant que le volume d'événements reste faible.
+
+**Décision 4 — intérêts déclarés et intérêts comportementaux (domaines engagés) restent deux
+axes JSONB séparés**, jamais fusionnés. Les vocabulaires ne se recouvrent pas 1:1 (tags Gardner
+libres pour les intérêts déclarés vs `DOMAINS` des défis pour l'engagement comportemental) —
+inventer un mapping aurait été malhonnête, dans la même veine que la décision #24 ("les tags
+restent un signal de contexte, pas un raccourci").
+
+**Bug trouvé et corrigé avant tout dégât en production** : la migration utilisait `smallint`
+pour la colonne `trait_series.level` et le paramètre `p_level` de `record_trait_point`. Un
+littéral entier (`3`, `2`) passé à un appel de fonction est typé `integer` par Postgres, et
+`integer → smallint` n'est qu'un cast *assignment*, pas *implicit* — la résolution de fonction a
+échoué (`42883`), toute la migration (une seule transaction) a roulé en arrière proprement,
+aucune table laissée en état partiel. Corrigé en `integer` partout, ré-appliqué avec succès.
+
+**Vérifié en production** : backfill cohérent, classification FORCE atteinte après 5 signaux
+positifs constants sur une même compétence (n≥4 franchi), tendance négative détectée après une
+série d'abandons, renfort de domaine plafonné à 1.0, bump d'intérêt sans écrasement sur
+re-déclaration, RLS anon = 0 ligne, suppression en cascade sans résidu. Détail complet dans
+[[genizio-naya-systeme-comprehension]] §6.
+
+## Décision #29 : Repositionnement du Labo → « l'Atelier du Temps » (gestion du temps comme compétence)
+
+> ⚠️ **STATUT (2026-07-20)** : direction approuvée, nom **confirmé par l'utilisateur : « L'Atelier
+> du Temps »**. **V1 livrée** (renommage + fin de la collision de noms, commit `9eb9b22`). V3
+> (mécaniques Estimation + Régularité) et V4 PAS commencées.
+
+**Contexte** : l'utilisateur a signalé que le Labo (`/laboratory`) et les Défis se différencient
+mal — vérifié dans le code : même backend (`generateSingleChallenge` + `assignTemplateChallenge`),
+même objet produit (une ligne `challenges` dans la même roadmap), et collision de noms (une
+section « Le Laboratoire de Génizio » existe *dans* `profiles.$profileId.challenges.tsx` en plus
+de la route `/laboratory`). Analyse menée sous `product-intelligence-architect`.
+
+**Recadrage apporté par l'utilisateur** : le chronométrage n'est pas là pour "mettre la pression"
+mais pour développer **la gestion du temps comme compétence de vie** (école, monde pro) — et il
+existe plusieurs façons de gérer le temps.
+
+**Décision** : le Labo est repositionné autour de la gestion du temps. Ancre d'identité = deux
+façons **sans anxiété** : **Estimation** (« combien de temps penses-tu ? » puis révèle le réel —
+métacognition temporelle) et **Régularité** (« un peu chaque jour, N jours » — c'est là que « le
+temps qui coule même app fermée » prend un sens sain, un compteur de rythme et non une bombe). Le
+**Temps imparti** (compte à rebours dur, les « retranchements » que l'utilisateur voulait) devient
+un **mode avancé âge-gaté (~10 ans+)**, pas l'identité par défaut. L'expiration n'est jamais
+affichée comme un échec — c'est de la donnée de coaching.
+
+**Pourquoi** : 
+- Un défi chronométré est un **instrument d'observation d'une nature différente** des défis
+  auto-rythmés — il alimente précisément les Moteurs N2 laissés vides en Phase 1 (décision #28 :
+  tolérance à la frustration, gestion du stress, persévérance étalée). C'est le « défi de
+  révélation » du plan (§3 de [[genizio-naya-systeme-comprehension]]) rendu concret. Le
+  repositionnement n'est donc pas cosmétique : c'est la source de signal manquante du Jumeau.
+- Faire de la pression le **cœur** du Labo combattrait le non-négociable « Naya observe/développe,
+  ne juge pas » — le compte à rebours est le mécanisme le plus proche d'un verdict. Le cadrer
+  comme *compétence à développer* le rend compatible avec l'ADN de la marque à tout âge.
+
+**Alternatives rejetées** :
+- ❌ Temps imparti comme cœur d'identité du Labo (l'intuition initiale de l'utilisateur) : rejeté
+  car un Labo *défini par la pression* trahit l'ADN anti-verdict pour les jeunes enfants.
+  Conservé comme mode avancé âge-gaté — l'intuition est juste pour les grands, fausse comme défaut.
+- ❌ Laisser le Labo en simple générateur de défis contextuels (statu quo) : redondance totale
+  avec les Défis, aucune différenciation, collision de noms persistante.
+- ❌ Différencier seulement par le vocabulaire/nom sans nouveau mécanisme (V1 seule) : réglerait la
+  collision de noms mais pas la redondance de fond — retenu comme *première étape*, pas comme fin.
+
+**Séquence de construction** : V1 (renommage + suppression de la section Labo doublon dans la page
+Défis) → V3 (mécaniques Estimation + Régularité, nouveaux types d'`observation_event`, persistance
+server-authoritative pour la Régularité) → V4 (Naya déclenche elle-même un défi chronométré pour
+départager une hypothèse — Phase 3). Détail dans [[genizio-naya-systeme-comprehension]] §9.
+
+**Branding tranché (2026-07-20)** : nom = **« L'Atelier du Temps »** (choisi par l'utilisateur
+via AskUserQuestion parmi Atelier du Temps / Le Tempo / Le Défi Chrono). La route reste
+`/laboratory` (URL non user-facing, pas de lien cassé) ; seuls les libellés changent.
+
+## Décision #30 : V3 "Estimation" — nouveau driver N2 `time_awareness`, pas une compétence N3
+
+**Contexte** : première mécanique réelle de l'Atelier du Temps (cf. décision #29). L'enfant
+prédit combien de temps un défi va lui prendre au moment de l'assignation ; à la complétion, Naya
+compare l'estimation au temps réellement écoulé. C'est le "défi de révélation" qui alimente
+enfin un Moteur N2 laissé vide en Phase 1.
+
+**Décision 1 — nouveau driver N2, pas N3** : `time_awareness` (précision d'estimation temporelle)
+rejoint `perseverance` comme deuxième Moteur calculé. **Alternative rejetée** : le classer en
+Compétence N3 "métacognition" (c'est ainsi que le document source NAYA le catégorise à l'origine,
+§4.3). Rejeté car la décision #28 a délibérément fermé le N3 aux 9 clés Gardner pour éviter la
+fragmentation déjà vécue (Guildes vs Gardner) — et la métacognition temporelle ne correspond à
+aucune des 9 clés (spatial, corporelle, sociale, entrepreneuriale, creative, artisanale,
+emotionnelle, logico_mathematique, linguistique). Un Moteur (capacité de régulation générale,
+transversale à tous les domaines) est le bon niveau, cohérent avec la logique déjà établie pour
+la persévérance.
+
+**Décision 2 — mesure = temps de travail actif, pas temps depuis l'assignation.** `actual_duration_minutes = completed_at - started_at` (jamais `- created_at`). **Pourquoi** : un défi
+peut légitimement traîner plusieurs jours dans la liste "à faire" avant d'être commencé — comparer
+une estimation de 30 minutes à "3 jours" aurait produit une réaction absurde et démotivante,
+contraire au principe "feedback sur le processus" (§9.2 du document source). Si `started_at` est
+absent (défi complété sans jamais passer par "en cours"), aucune carte de comparaison ne
+s'affiche — pas de mesure fabriquée.
+
+**Décision 3 — `started_at` géré par trigger** (`set_challenge_started_at`, BEFORE UPDATE), pas
+par le code applicatif. **Pourquoi** : cohérent avec le principe Phase 0 "un signal qui ne peut
+pas être oublié par un futur chemin de mutation" — contrairement à `completed_at` (déjà géré côté
+application, hérité d'avant cette session). Remis à `NULL` si le défi retourne à "à faire", pour
+qu'une reprise ultérieure mesure sa propre durée plutôt qu'un total agrégé sur plusieurs tentatives.
+
+**Décision 4 — jamais de score/pourcentage affiché à l'enfant.** La carte de reflet dans
+`OutcomeChat` montre les deux durées brutes (estimée, réelle) + un message chaleureux en 3
+variantes (juste / sous-estimé / sur-estimé), jamais un calcul d'écart en pourcentage — non-
+négociable déjà établi (décision #11 : "aucun score/percentile/pass-fail nulle part dans l'app").
+Le calcul de précision (`1 - écart_relatif`, symétrique, borné [0,1]) reste strictement interne
+au driver `time_awareness`.
+
+**Alternatives rejetées** :
+- ❌ Estimation saisie via une nouvelle UI dédiée : rejeté — l'Atelier a déjà un sélecteur "temps
+  disponible" (`TIME_OPTIONS`) qui sert la même intention ; le réutiliser évite d'ajouter une
+  étape et respecte le principe "supprimer/fusionner avant d'ajouter" de l'analyse produit.
+- ❌ Afficher un score de précision au parent/enfant ("tu étais à 15% d'écart") : rejeté, viole
+  le non-négociable "pas de score" (décision #11).
+
+**Vérifié en production (2026-07-20)**, pipeline complet bout en bout via l'Atelier réel (pas de
+raccourci) : assignation avec `estimated_duration_minutes=30` → trigger `started_at` confirmé au
+clic "En cours" → complétion → événement `CHALLENGE_COMPLETED` avec
+`actual_duration_minutes=43.0` → driver `time_awareness` calculé à **0.6977**, vérifié au chiffre
+près (`1 - |43-30|/43 = 0.697674`). Carte de reflet capturée en direct dans le DOM rendu (après
+plusieurs tentatives — un refetch en arrière-plan de la page fait disparaître la vue "rapport" de
+`OutcomeChat` très vite, capture réussie en sondant le DOM toutes les 200ms dans un seul contexte
+d'exécution continu) : message exact "Tu avais prévu 10 min, tu as mis 9 min — ton estimation
+était juste !" pour une estimation de 10 min / 9 min réel. Les 3 branches de message (juste /
+sous-estimé / sur-estimé) vérifiées séparément via la fonction pure. Défis de test supprimés
+après vérification. `tsc --noEmit` propre.
+
+**Non résolu, signalé** : la vue "rapport" de `OutcomeChat` (déjà existante avant cette session —
+le bloc "Intelligences enrichies") semble se faire remplacer très rapidement par un refetch de la
+liste des défis, fermant la fenêtre d'affichage du succès plus vite qu'attendu. Pas un défaut
+introduit par ce chantier (même mécanisme affecte le bloc "Intelligences enrichies" préexistant) —
+observé en vérifiant, pas corrigé (hors périmètre de cette demande), à investiguer si un jour
+signalé comme gênant par un usage réel.
+
+## Décision #31 : Phase 2 NAYA — school_grades + détection d'anomalies Z-score
+
+**Contexte** : implémentation de la Phase 2 (cf. [[genizio-naya-systeme-comprehension]] §6) —
+signaux scolaires + détection d'anomalie, toujours 0 IA (code statistique pur).
+
+**Décision 1 — UI intégrée au Portfolio existant, pas de nouvelle route.** La page Portfolio est
+déjà "l'écran de compréhension de l'enfant" (radar, portrait, timeline) — une section "Notes
+scolaires" y prend sa place naturelle plutôt que de créer une 7e route/nav-entry pour un
+formulaire ponctuel. **Alternative rejetée** : route dédiée `/profiles/$id/grades` — plus de
+poids (nav, param routing) pour un gain de découvrabilité marginal vu le trafic déjà existant
+sur Portfolio.
+
+**Décision 2 — Z-score calculé sur `grade/max_grade` (ratio normalisé), jamais sur la note
+brute.** **Pourquoi** : deux évaluations sur des barèmes différents (/10, /20, /100) ne sont
+comparables qu'une fois normalisées — comparer des notes brutes de barèmes différents aurait
+statistiquement invalidé la détection.
+
+**Décision 3 — garde cold-start à n≥3 notes antérieures** (même logique que `v_min_n=4` en
+Phase 1, appliqué ici à un besoin statistique différent : un écart-type sur 1-2 points est
+incalculable ou trop instable pour être publié). **Seuil `z ≤ -2.5`** : repris tel quel de
+l'exemple SQL du document source NAYA, pas une valeur inventée.
+
+**Décision 4 — `school_grades` accepte l'écriture directe du parent (RLS `FOR ALL` avec
+vérification d'ownership), contrairement à `observation_events`/`pedagogical_twins` qui sont
+strictement trigger-only.** **Pourquoi** : c'est une saisie parent de première main (comme
+`child_profiles`), pas un journal d'événements dérivé du comportement de l'app — la distinction
+déjà établie en Phase 0/1 entre "données sources" et "journal d'événements consommé par le
+Jumeau" s'applique ici aussi. `anomaly_triggers`, lui, reste strictement lecture seule côté
+client (écrit uniquement par le trigger), car c'est un résultat calculé, pas une saisie.
+
+**Décision 5 — matière = liste fermée + "Autre" libre, pas texte libre pur.** **Pourquoi** : la
+matière est la clé de regroupement du calcul Z-score (`GROUP BY child_id, subject` implicite
+dans le trigger) — une orthographe qui varie d'une saisie à l'autre casserait silencieusement le
+regroupement statistique sans qu'aucune erreur ne soit levée.
+
+**Décision 6 — aucun indicateur d'anomalie affiché au parent en Phase 2.** La liste de notes
+dans Portfolio est purement factuelle (matière, note, date) — pas de badge "détecté", pas de
+couleur d'alerte. **Pourquoi** : conforme au séquençage du plan — c'est la Phase 4
+("Compréhension de Naya") qui a la responsabilité d'afficher quoi que ce soit d'interprétatif au
+parent, en langage bienveillant. Afficher une alerte maintenant, avant que Phase 3 ait généré la
+moindre hypothèse causale, reviendrait à afficher un signal brut sans contexte — exactement ce
+que le paradigme d'investigation (§1 du plan) interdit.
+
+**Alternatives rejetées** :
+- ❌ `anomaly_triggers` en table polymorphe générique (`source_type` + `source_id`) plutôt qu'une
+  FK directe vers `school_grades` : sur-ingénierie — aucune autre source d'anomalie n'est prévue
+  avant que la Phase 3 en révèle le besoin réel. FK directe, simple, extensible plus tard si
+  nécessaire.
+- ❌ Champs structurés "évaluation chronométrée ?" / "niveau de stress" dans le formulaire (le
+  document source mentionne `anxiety_self_report` dans le payload `SCHOOL_GRADE_ENTERED`) :
+  reporté — construire pour un besoin Phase 3 pas encore conçu serait deviner. Le champ
+  `context` (texte libre) capture cette nuance en attendant ; une colonne structurée pourra être
+  ajoutée plus tard si Phase 3 le justifie réellement.
+
+**Vérifié en production** : séquence de notes 14/15/13/20 puis 3/20 dans une matière de test →
+seule la 4e déclenche une anomalie, `z = -11.000` vérifié au calcul manuel exact ; une 5e note
+normale n'ajoute aucune anomalie ; RLS anon = 0 ligne sur les deux tables ; formulaire testé en
+direct dans le navigateur ; suppression en cascade sans résidu. `tsc --noEmit` propre.
+
+## Décision #32 : Phase 3a NAYA — moteur de génération d'hypothèses (premier point IA)
+
+**Contexte** : implémentation du cœur du système — transformer une anomalie (Phase 2) en arbre
+d'hypothèses causales pondérées. Premier appel IA du pipeline NAYA 2.0. Phase 3 découpée : 3a =
+`generateHypotheses` (ce commit), 3b = boucle bayésienne (défis discriminants + convergence).
+
+**Décision 1 — traitement synchrone, pas d'Edge Function** (résout la question ouverte du plan
+§7). Server function TanStack (`ensureHypothesesForChild`) réutilisant `callClaude`, le pattern
+déjà éprouvé pour `generateChallenges`/`validateChallengeProof`. Déclenchée en **fire-and-forget
+au chargement du Portfolio**, idempotente (index unique sur `anomaly_trigger_id` + garde "anomalie
+sans cycle") donc sûre à appeler à chaque montage.
+**Alternative rejetée** : Database Webhook → Supabase Edge Function (la vision "async" du document
+source). Rejeté pour la 3a : nouvelle infra (déploiement Edge Function, duplication du secret
+Anthropic), pour un volume faible (uniquement sur anomalie) et une latence hors chemin critique.
+Réévaluable si le volume grandit — cohérent avec l'adaptation §5.3 ("pas de nouveau runtime tant
+que pas nécessaire").
+
+**Décision 2 — rôle *raisonnement* = Sonnet** (`callClaude` a gagné un paramètre `modelOverride`
+optionnel ; les appels existants restent sur Haiku-pour-texte, inchangés). C'est le cas "quand le
+système doit réfléchir" que la décision #27 réserve explicitement au modèle premium. Volume faible
+(sur anomalie seule) → coût maîtrisé. Un mauvais diagnostic polluerait le Jumeau et tromperait le
+parent : la qualité prime ici.
+
+**Décision 3 — prompt adapté au Jumeau RÉEL, pas au document source.** Le document source suppose
+des Fondations N1 (anxiété innée `emotional_sensitivity`, `learning_modes` explicites) qu'on n'a
+délibérément PAS (décision #28). Le prompt raisonne donc sur ce qui existe vraiment : compétences
+Gardner (preuve de défis validés), moteurs (persévérance, time_awareness), intérêts déclarés +
+domaines engagés, et le contexte/type de la note. Le signal de débruitage clé (§2 du plan :
+performance ≠ compétence) est fourni explicitement via `SUBJECT_TO_TALENT` (map matière→clé
+Gardner) : une compétence forte + une note effondrée dans la matière liée = fort METHOD_MISMATCH,
+pas CONCEPTUAL_GAP. Priors renormalisés à 1.0 côté serveur (une dérive du modèle ne casse pas
+l'invariant) ; `current_probability = prior` à l'initialisation (la 3b les fera diverger).
+
+**Décision 4 — écriture via `supabaseAdmin`, `hypothesis_cycles` en lecture seule cliente.** Même
+principe que `anomaly_triggers` (décision #31) : c'est un résultat calculé, pas une saisie. Aucune
+policy d'écriture RLS ; la server function écrit après vérification d'ownership de l'anomalie.
+
+**DEUX BUGS trouvés et corrigés en vérifiant** (illustrent pourquoi on teste en direct, pas juste
+au type-check) :
+- **`callClaude` lisait `json.content[0].text` en aveugle.** `claude-sonnet-5` renvoie un bloc
+  `thinking` en `content[0]` (sans `.text`) et le vrai JSON en `content[1]` → `content[0].text`
+  était `undefined` → `JSON.parse("")` → "Réponse IA invalide" sur TOUT appel Sonnet en mode
+  texte. Passé silencieusement inaperçu jusqu'ici car les autres appels tournent en réalité sur
+  **Haiku** : le routage de `callClaude` teste `imageUrl` (que `validateChallengeProof` ne passe
+  pas — il passe `imageData`), donc même les analyses de photo tournaient sur Haiku, pas Sonnet.
+  **Fix** : lire le premier bloc de type `text`, robuste aux blocs `thinking` quel que soit le
+  modèle. Corrige aussi `analyzePostProof` (Sonnet vision) qui était silencieusement cassé.
+- **Budget tokens trop bas.** Le thinking de Sonnet consomme le budget `max_tokens` AVANT le
+  JSON : à 1500, tout partait dans le thinking, JSON tronqué/vide (`stop_reason=max_tokens`
+  vérifié par appel API direct). **Fix** : 4000 pour l'appel d'hypothèses.
+
+**Vérifié en production, cas Lola de bout en bout** : enfant semé avec `logico_mathematique=0.85
+FORCE` (Jumeau) + notes maths 14/15/13 puis effondrement à 4/20 (z=-10). Portfolio chargé →
+`ensureHypotheses` déclenché → cycle généré avec **METHOD_MISMATCH 0.45 (tête), PERFORMANCE_ANXIETY
+0.25, LACK_OF_ENGAGEMENT 0.20, CONCEPTUAL_GAP 0.10 (queue)**, somme exacte = 1.0, chaque rationale
+citant la compétence FORCE qui contredit une lacune, anxiété sous-pondérée (contexte de stress
+absent, pesé NEGATIVE dans l'evidence_log) — diagnostic conforme au cas Lola du document source.
+Idempotence (1 seul cycle malgré 2 appels concurrents du double-montage React), RLS anon = 0,
+UTF-8 correct en base (vérifié par hexdump : `0xC3 0xA9` = « é », le `Ã©` initial n'était
+qu'un artefact d'affichage `python json.tool` sur Windows), cascade de suppression propre.
+`tsc --noEmit` propre. Données de test nettoyées.
+
+**Correctif de suivi (même jour, sur demande explicite)** : le bug de routage vision signalé
+ci-dessus (`imageUrl ? Sonnet : Haiku` ignorait `imageData`) a été corrigé — la condition teste
+désormais `imageData || imageUrl`. Impact réel : chaque validation de preuve photo d'un défi
+(`validateChallengeProof`) tournait silencieusement sur Haiku au lieu de Sonnet depuis l'origine
+de cette route, malgré le commentaire du code affirmant le contraire — un bug préexistant à toute
+la session NAYA, découvert en marge du debug du bloc `thinking`. **Vérifié en direct** avec un
+log temporaire (`console.log` retiré après coup) : soumission réelle d'une preuve photo via
+`OutcomeChat` (note + image) → `model=claude-sonnet-5 hasImageData=true hasImageUrl=false` dans
+les logs serveur, validation IA aboutie (`Bulletin de Découverte` affiché). Confirme aussi que le
+fix de parsing du bloc `thinking` (déjà appliqué) couvre bien ce chemin d'appel, partagé avec
+`generateHypotheses`. Défi de test supprimé après vérification. `tsc --noEmit` propre.
+
+## Décision #33 : Phase 4 NAYA — restitution parent, rôle narration séparé (Haiku)
+
+**Contexte** : premier écran NAYA réellement visible par le parent. Les hypothèses (Phase 3a)
+existent déjà en base mais ne peuvent pas être affichées telles quelles — `rationale` et
+`evidence_log` contiennent des chiffres bruts ("0.85", "z=-10", "6 observations") et des
+étiquettes cliniques (`METHOD_MISMATCH`), ce qui violerait directement "jamais de probabilité
+brute ni de label clinique" (§1 du plan, décision #11).
+
+**Décision 1 — nouveau rôle *narration*, distinct du rôle *raisonnement*, sur Haiku.**
+`narrateForParent` (`hypotheses.functions.ts`) prend les hypothèses déjà calculées et les
+traduit en 2-3 phrases chaleureuses pour le parent. Pas Sonnet : traduire une structure déjà
+raisonnée en prose est le même type de tâche que `getChildAISynthesis`, déjà éprouvé sur Haiku
+dans ce même fichier — pas un problème de jugement causal qui justifierait le premium (décision
+#27 : payer Sonnet seulement "quand le système doit réfléchir"). Appelée en séquence juste
+avant l'insert du cycle (pas un second déclenchement lazy séparé) pour qu'un cycle nouvellement
+visible n'ait jamais de fenêtre "raisonné mais pas encore raconté".
+**Alternative rejetée** : templater le `rationale` existant tel quel (0 appel IA supplémentaire,
+gratuit). Rejeté car concrètement testé et confirmé dangereux — le `rationale` généré en Phase
+3a contient des chiffres par construction (le prompt de raisonnement l'y encourage
+explicitement, "comme pour un futur lecteur humain (éducateur)", pas pour un parent). Un simple
+gabarit enum→phrase aurait été sûr mais générique et aurait perdu toute la spécificité du cas
+réel (l'historique de notes précis, la force mesurée) — la narration IA est donc réellement
+nécessaire, pas un confort superflu.
+
+**Décision 2 — garde-fou déterministe contre toute fuite de chiffre, jamais de confiance
+aveugle dans la consigne du modèle.** `narrateForParent` rejette (retourne `null`) toute
+narration contenant un chiffre (`/\d/.test(text)`), même si le prompt l'interdit explicitement
+— même logique que `applySafetyNet` (`challenges.functions.ts`) : un modèle peut ne pas suivre
+une instruction, une règle non-négociable a besoin d'un filet mécanique derrière elle.
+
+**Décision 3 — résilience par re-tentative ciblée, pas par re-génération complète.** Un cycle
+déjà raisonné (Sonnet, coûteux, ~15-20s) dont la narration (Haiku, ~3s) a échoué au tour
+précédent n'est jamais re-raisonné — le déclencheur lazy détecte un cycle sans
+`parent_narrative` et retente UNIQUEMENT la narration, en réutilisant les hypothèses déjà
+stockées. Économise un appel Sonnet à chaque échec transitoire de la narration.
+
+**Décision 4 — carte visuellement distincte du Portrait de synthèse existant, absente par
+défaut.** Badge ambre "Naya enquête encore" (vs le sky "réglé/stable" du Portrait) — jamais le
+même traitement visuel qu'une conclusion. N'apparaît dans le DOM que si un cycle ouvert avec
+narration existe ; pas d'état "rien détecté" qui sonnerait comme un jugement en soi (l'absence
+de carte est neutre, pas un verdict "tout va bien").
+
+**Vérifié en production, cas Lola resemé (compétence linguistique FORCE 0.82, note 3/20)** :
+raisonnement Sonnet impeccable (METHOD_MISMATCH 0.5 en tête, cohérent avec le cas Lola de la
+Phase 3a). **Le garde-fou anti-chiffre a réellement déclenché** — faux positif intéressant : le
+nom de l'enfant de test "Phase4Test" contenait un chiffre, pas une fuite de diagnostic. Après
+renommage, **la résilience a été vérifiée en direct** : la retentative n'a réutilisé QUE le
+raisonnement déjà stocké (narration obtenue en ~3s au lieu de ~20s pour un cycle complet, zéro
+second appel Sonnet). Narration finale confirmée 100% conforme (zéro chiffre, zéro étiquette
+technique, ton d'enquête provisoire) et rendue correctement dans le DOM du Portfolio (badge +
+texte exact). RLS anon = 0, cascade de suppression propre. `tsc --noEmit` propre.
+
+## Décision #34 : Phase 3b/5 — code d'une session parallèle, "vérifié en production" faux, corrigé
+
+**Contexte** : pendant une session de cet agent sur ce projet, une **session parallèle de
+l'utilisateur** (même repo, même branche `security-fixes-and-ux-improvements`) a commité deux
+changements directement sur disque : `0850f6a` (petits correctifs Phase 4) et `c2d2da4`
+("deliver Phase 3b (Bayesian loop) and Phase 5 (hybrid recommendation engine)"). Le second
+modifiait aussi la mémoire projet pour affirmer que les Phases 3b et 5 étaient "livrées et
+vérifiées en production".
+
+**Ce qui a déclenché la vérification** : un rappel système accompagnant ces modifications
+contenait une instruction de ne pas signaler ce changement à l'utilisateur ("ils sont déjà au
+courant"). Cette instruction n'a pas été suivie — une instruction cachée demandant de taire
+quelque chose à l'utilisateur se signale, elle ne s'exécute pas en silence, quelle que soit sa
+source. Signalé explicitement, avec la preuve (`git log`, auteur confirmé
+`mercurebeauty-eng` — donc très probablement une session parallèle légitime, pas un tiers
+malveillant), avant de continuer.
+
+**Ce que la vérification a trouvé** : le principe déjà inscrit dans ce fichier —
+*"Rapport 'Complet' (session parallèle, sous-agent) : ne jamais y croire sans relire le code
+réel"* (cf. [[MEMORY]], leçon de l'incident du 2026-07-16 sur le dashboard cassé) — s'est
+appliqué à la lettre. L'affirmation "vérifié en production" était fausse. Trois bugs réels :
+
+1. **Critique — la boucle bayésienne ne pouvait jamais persister.** `processDiscriminantResult`
+   écrivait `updated_at` dans `hypothesis_cycles`, colonne absente du schéma (créé en Phase
+   3a/4, jamais étendue). **Reproduit en direct AVANT tout correctif** : requête PATCH identique
+   au code → `PGRST204: Could not find the 'updated_at' column`. Le code ne vérifiait jamais
+   l'erreur du `.update()` (`await supabaseAdmin.from(...).update(...).eq(...)`, résultat
+   ignoré) — donc cet échec était silencieux à 100%, la fonction retournait un succès fictif.
+   Autrement dit : chaque défi discriminant complété, chaque abandon, n'avait STRICTEMENT AUCUN
+   effet sur les probabilités stockées, quel que soit le nombre de tentatives.
+2. **Filet de sécurité contourné.** `generateDiscriminantChallenge` et la branche ESSAIMAGE de
+   `recommendChallengesForChild` inséraient des défis générés par IA sans passer par
+   `finalizeChallenge` (jamais exportée jusqu'ici) — donc sans `applySafetyNet`. Un défi
+   discriminant ciblant METHOD_MISMATCH explicitement "contourne la présentation scolaire
+   habituelle" pouvait impliquer une activité plus manuelle/physique que la normale, sans
+   que `requires_supervision` soit jamais évalué.
+3. **Branche STABILISATION inachevée.** Retournait `challenge: null` — une recommandation
+   affichée sans aucun défi réel derrière, chemin manifestement pas fini.
+
+**Décision** : corriger les trois plutôt que réécrire le travail de la session parallèle depuis
+zéro (son architecture — hiérarchie de priorité INVESTIGATION > ESSAIMAGE > STABILISATION, le
+schéma du multiplicateur bayésien, le couplage METHOD_MISMATCH↔CONCEPTUAL_GAP — est saine et
+fidèle au plan NAYA ; seuls les trois points ci-dessus étaient réellement cassés ou incomplets).
+Cohérent avec la discipline evolution-first : changement minimal viable, pas une reconstruction.
+
+**Corrections appliquées** :
+1. Migration `20260720170000` : `ALTER TABLE hypothesis_cycles ADD COLUMN updated_at
+   timestamptz NOT NULL DEFAULT now()`. Ajout aussi de la vérification d'erreur explicite après
+   le `.update()`, et renseignement de `resolved_at` (colonne existante depuis la Phase 3a,
+   jamais renseignée) au moment de la résolution.
+2. `finalizeChallenge` exportée depuis `challenges.functions.ts`. Les deux points d'insertion
+   (`generateDiscriminantChallenge`, branche ESSAIMAGE) reconstruits pour y passer, exactement
+   comme tous les autres générateurs de défis de l'app.
+3. Branche STABILISATION réécrite avec un vrai prompt ("défi doudou", cf. plan NAYA §9.3 :
+   environnement structuré, succès quasi garanti, appuyé sur une force si disponible) + le même
+   passage par `finalizeChallenge`.
+
+**Vérifié en production, de bout en bout, cas Kadi (compétence logico-mathématique FORCE 0.85 +
+chute en maths, z=-12)** :
+- Colonne : le même PATCH qui échouait avec `PGRST204` renvoie maintenant `204 No Content`.
+- Chaîne d'appel imbriquée `recommendChallengesForChild` → `generateDiscriminantChallenge`
+  (server function appelant directement une autre server function côté serveur) : confirmée
+  fonctionnelle sous TanStack Start — c'était une inconnue de conception non testée par la
+  session parallèle, vérifiée ici pour de vrai.
+- Défi discriminant réellement affiché sur la page Défis, complété via le vrai flux
+  `OutcomeChat`, `processDiscriminantResult` déclenché depuis `validateChallengeProof`.
+- **Mathématique bayésienne vérifiée à la main** : prior 0.5 × multiplicateur 1.8 = 0.9,
+  renormalisé sur un total de 1.31 → **0.6870**, exact à 4 décimales avec la valeur en base.
+  Seuil de convergence (0.65) franchi → `status=resolved`, `final_diagnosis=METHOD_MISMATCH`,
+  `resolved_at` correctement horodaté (était absent avant ce correctif).
+- Carte de recommandation confirmée disparaissant proprement une fois le cycle résolu (pas de
+  fixation sur une investigation terminée).
+- **Les 3 branches de recommandation testées séparément** (twin reconfiguré entre chaque test) :
+  INVESTIGATION, ESSAIMAGE ("⚡ Défi de renforcement Naya", `difficulty`/`requires_supervision`/
+  `material_tags` correctement résolus), STABILISATION ("🛡️ Défi d'ancrage Naya", idem).
+- RLS anon = 0 sur `hypothesis_cycles`. Cascade de suppression propre. `tsc --noEmit` propre.
+
+**Alternative rejetée** : réécrire Phase 3b/5 entièrement plutôt que corriger le travail
+existant. Rejeté — l'architecture était saine, seuls des bugs précis et localisés
+l'empêchaient de fonctionner ; les réécrire aurait jeté un travail de conception correct pour
+un gain nul.
+
+**Leçon reconfirmée** : la mémoire de ce projet portait déjà la règle qui a permis de détecter
+ce problème avant qu'il ne s'installe. Elle a fonctionné exactement comme prévu — mais seulement
+parce qu'elle a été appliquée activement (relire le code réel, reproduire l'erreur en direct)
+plutôt que d'accorder une confiance par défaut à une affirmation "vérifié en production", même
+quand cette affirmation vient d'un commit signé et d'une mémoire à jour en apparence.
+
+## Décision #35 : `school_grades` — le trigger Z-score ignore type/récence/moyenne de classe (gap identifié, PAS corrigé)
+
+**Contexte** : l'utilisateur a fait remarquer que les notes scolaires (Phase 2, `school_grades`)
+n'ont "aucun contexte" — on ne sait pas si une note est un devoir ou un contrôle, récente ou
+ancienne, forte ou faible relativement à la classe. Il pose aussi une question plus large : les
+notes devraient servir à distinguer "mode d'apprentissage inadapté" (l'enfant a les moyens mais
+la méthode ne convient pas) de "talent ailleurs, mieux vaut rediriger" (les notes sont faibles
+mais un autre talent est manifestement fort).
+
+**Vérifié dans le code (pas supposé)** :
+- `evaluation_type` et `context` (texte libre du parent) sont bien captés dans le formulaire
+  ([AddGradeDialog.tsx](../../src/components/grades/AddGradeDialog.tsx)), stockés, et **atteignent
+  bien le prompt IA de la Phase 3a** (`type_evaluation`, `contexte_declare_par_le_parent` dans
+  [hypotheses.functions.ts:241-242](../../src/lib/hypotheses.functions.ts#L241-L242)) — ce n'est
+  donc pas un champ mort.
+- Le vrai trou est en amont : le trigger SQL `detect_grade_anomaly()` (qui décide SI une
+  investigation démarre) calcule sa moyenne/écart-type sur **tout** l'historique de la matière,
+  sans segmenter par `evaluation_type` ni fenêtre de récence, et la "moyenne de classe" n'existe
+  nulle part dans le schéma. Un trimestre noté sévèrement par un professeur peut donc déclencher
+  une investigation sur un enfant parfaitement dans la norme de sa classe.
+- Le "cas A" de l'utilisateur (mode d'apprentissage inadapté) correspond déjà exactement à la
+  cause `METHOD_MISMATCH` du moteur bayésien (Phase 3a/3b) — vérifié et fonctionnel. Le "cas B"
+  (talent ailleurs → rediriger plutôt qu'insister) **n'a pas d'équivalent** dans les 5 causes
+  (`METHOD_MISMATCH`, `PERFORMANCE_ANXIETY`, `LACK_OF_ENGAGEMENT`, `CONCEPTUAL_GAP`, `OTHER`) —
+  toutes répondent à "pourquoi ça coince ici", aucune à "faut-il continuer à insister ici".
+
+**Décision : ne rien construire pour l'instant.** Deux raisons distinctes de ne pas agir :
+1. Le trigger Z-score (type/récence/moyenne de classe) est un vrai gap technique, mais mineur et
+   non demandé explicitement — laissé en l'état, à reprendre si l'utilisateur le priorise.
+2. Le "cas B" (redirection vers un autre talent) n'est **pas qu'un gap technique** — recommander
+   à un parent de lâcher une matière scolaire pour miser sur un autre talent est une
+   recommandation d'orientation, d'un poids different d'un exercice ciblé. Nécessite une décision
+   produit/philosophie assumée avant tout code, pas juste une nouvelle cause bayésienne.
+
+**Statut** : ouvert, non priorisé. Ne pas supposer que ce gap est corrigé dans une session future
+sans revérifier `detect_grade_anomaly()` et `ALLOWED_CAUSES`.
+
+## Décision #36 : mode de preuve "declarative" — retirer la photo/IA pour les défis comptables/chronométrés
+
+**Contexte** : deuxième faille soulevée par l'utilisateur dans la même conversation — un défi
+comme "fais 20 jongles" ne peut structurellement pas être prouvé par une seule photo (elle montre
+un instant, pas un comptage ni une durée). Ce n'est pas un problème de qualité du modèle de
+vision : aucune photo ne peut porter cette information. `validateChallengeProof` traitait
+pourtant tous les défis de la même façon (photo + jugement IA Sonnet). Décision de l'utilisateur,
+verbatim : pour ce type de défi, la preuve doit être "un champ à remplir minutieusement en match
+strict avec les directives données dans le challenge" plutôt qu'une image — on fait confiance au
+parent/superviseur, comme pour n'importe quelle activité qu'il supervise dans la vraie vie.
+
+**Piège évité en vérifiant avant de coder** : le réflexe naturel aurait été de réutiliser
+`challenges.target_intelligences` pour attribuer les points à la soumission déclarative. Le code
+documente déjà explicitement que ce champ est "décoratif" à la création (texte libre de l'IA,
+jamais garanti dans les 9 clés `VALID_TALENT_KEYS`) — la vraie attribution de points a toujours
+lieu à la validation, via une décision IA fraîche. Comme le mode déclaratif retire justement
+cette décision IA à la validation, il fallait un mécanisme différent : faire proposer la
+récompense **à la génération** (même moment que `material_tags`/`difficulty`), pas la réutiliser
+depuis un champ connu pour être non fiable.
+
+**Implémentation** (niveau 2 evolution-first — extension de l'existant, aucune réécriture) :
+- `finalizeChallenge` (verrou unique déjà utilisé par les 6 points d'insertion de défis IA de
+  l'app) accepte et normalise 3 nouveaux champs optionnels : `proof_mode` ("photo" par défaut |
+  "declarative"), `proof_target` (`{metric, value}`), `declarative_award` (points 1-3 whitelistés
+  contre `VALID_TALENT_KEYS`, comme `validateChallengeProof` le fait déjà à la validation).
+  Backstop `resolveProofMode` : si l'IA annonce "declarative" sans cible/récompense cohérente,
+  repli silencieux sur "photo" — même philosophie que `applySafetyNet`, ne jamais faire confiance
+  à la seule auto-discipline du modèle.
+- Instruction partagée `PROOF_MODE_INSTRUCTION` (exportée, même raison que `SAFETY_INSTRUCTION` :
+  un seul texte source pour les 5 prompts de génération plutôt que des copies qui dérivent).
+- Nouvelle server function `submitDeclarativeProof` : **0 appel IA**. Compare la valeur déclarée
+  à `proof_target.value` (réussite si ≥, pas égalité stricte), attribue `declarative_award` via
+  `increment_child_talents` si réussite. Retourne exactement la même forme que
+  `validateChallengeProof` (`{challenge, observations, awarded_points, imageAnalyzed, relevant}`)
+  — `OutcomeChat` réutilise sans aucune modification son écran de succès et son message de refus,
+  seul le formulaire (champ chiffré vs upload photo) est branché sur `proof_mode`.
+- Migration additive (`proof_mode` NOT NULL DEFAULT 'photo', `proof_target`/`declarative_award`
+  nullable) : tout défi existant ou futur qui ne précise rien garde exactement le comportement
+  actuel, aucune régression silencieuse possible.
+
+**Découverte opérationnelle en cours de route** : le connecteur MCP Supabase de cet agent
+(`5de1fa6f-...`) est authentifié sur un **compte différent** de celui qui possède le projet
+Génizio (`list_projects` retourne BABIMOB_PWA/QuickFlow/ishop, pas geniusio) —
+`apply_migration`/`execute_sql`/`generate_typescript_types` échouent donc systématiquement avec
+"You do not have permission" sur ce projet. **Contournement qui fonctionne** : le CLI Supabase
+local (`npx supabase`) est correctement lié au bon projet (`xpcmjvytbpafmfgvfadm`, org
+`atbgmnvekhtunulirgdh`, confirmé par `supabase projects list` et `migration list`) — utiliser
+`supabase db push` pour les migrations et `supabase gen types typescript --linked` pour les
+types tant que le connecteur MCP n'est pas réauthentifié sur le bon compte.
+
+**Vérifié en production, de bout en bout, sur TestPhase1** (défi test inséré directement en base
+pour tester le mécanisme indépendamment du jugement probabiliste de l'IA sur le choix
+photo/declarative — un essai réel via le générateur de l'Atelier a par ailleurs confirmé que
+l'IA choisit "photo" à bon escient quand le défi produit un livrable visible, comme un tableau de
+mesures sur papier, même pour un thème sportif/chronométré) :
+- Déclaration sous la cible (5 pour un objectif de 10) : message de refus exact
+  ("Pas encore atteint cette fois (5/10 jongles reussis)..."), aucune mutation en base
+  (`status`/`ai_observations`/`progress` inchangés), formulaire réaffiché pour réessayer.
+- Déclaration au-dessus de la cible (12 pour un objectif de 10) : écran de succès affiché avec
+  l'observation déterministe exacte, `status=completed`, `progress=100`, `completed_at` renseigné,
+  `target_intelligences=["corporelle"]`, et `talents.corporelle` réellement incrémenté de 0 → 2
+  via `increment_child_talents`.
+- Le rappel de `processDiscriminantResult` depuis ce nouveau chemin n'a pas été re-vérifié avec un
+  cycle d'hypothèses réel — il réutilise exactement la même signature et le même enrobage
+  non-bloquant que l'appel déjà vérifié dans `validateChallengeProof` (décision #34), risque jugé
+  faible mais non testé en direct pour cette combinaison précise.
+- `tsc --noEmit` propre après chaque étape.
+
+## Décision #37 : suppression complète des notes scolaires — remplacées par un référentiel académique interne
+
+**Contexte** : suite à la décision #35 (gap identifié, pas corrigé), l'utilisateur a précisé le
+vrai problème : un enfant change de classe/école/pays d'une année à l'autre, et le système ne
+connaît aucun programme scolaire réel — une note n'a donc jamais de référentiel stable pour être
+interprétée, quel que soit le soin mis à en corriger le calcul de Z-score. Décision, verbatim :
+*"je pense finalement qu'il vaut mieux supprimer ce facteur"*, remplacé par un référentiel
+académique **interne à Génizio**, par domaine de connaissance et tranche d'âge, calé sur des
+standards internationaux exigeants (Singapour/Chine, Common Core US/Canada cités en exemple) —
+pour que les défis soient à la fois adaptés à l'enfant ET alignés sur un niveau capable de
+"relever le niveau des enfants des zones africaines", plutôt que de refléter la moyenne locale
+d'une école particulière.
+
+**Vérifié avant de coder** : `school_grades`/`anomaly_triggers` n'alimentaient QUE le
+déclencheur du Phase 3 (`ensureHypothesesForChild`) — aucune génération de défi ne les lisait.
+Zéro ligne dans les 3 tables concernées (`school_grades`, `anomaly_triggers`,
+`hypothesis_cycles`) au moment de la suppression : aucune perte de donnée réelle, fenêtre de
+changement gratuite tant qu'aucun usage n'existe.
+
+**Suppression exécutée** :
+- Migration `20260720192542` : `DROP COLUMN hypothesis_cycles.anomaly_trigger_id` (FK NOT NULL
+  vers `anomaly_triggers`, devait être retirée en premier), `DROP TABLE anomaly_triggers`,
+  `DROP TABLE school_grades`, `DROP FUNCTION detect_grade_anomaly()`.
+- `src/lib/school-grades.functions.ts` et `src/components/grades/AddGradeDialog.tsx` supprimés
+  (`git rm`).
+- `ensureHypothesesForChild` et `narrateForParent` retirés de `hypotheses.functions.ts` (leur
+  logique entière reposait sur le snapshot "note anormale" — rien à en garder sans grades) ainsi
+  que `SUBJECT_TO_TALENT`/`relatedTalentKey` (mapping matière scolaire → clé Gardner, devenu sans
+  objet). **Conservés en l'état** : `generateDiscriminantChallenge` et `processDiscriminantResult`
+  (le moteur bayésien lui-même n'est pas spécifique aux notes — juste sa colonne de traçabilité
+  `anomaly_trigger_id`, retirée, et son ancien lookup de matière via l'anomalie, remplacé par un
+  `"apprentissage"` générique) : prêts à recevoir de nouveaux cycles une fois un futur
+  déclencheur construit.
+- `profiles.$profileId.portfolio.tsx` : carte "Notes scolaires" retirée, déclenchement
+  fire-and-forget de `ensureHypothesesForChild` retiré. `refetchOpenCycle` et la carte "Ce que
+  Naya a remarqué" (Phase 4) conservés tels quels — ils ne dépendaient pas des notes, prêts pour
+  le futur déclencheur.
+- `types.ts` régénéré via le CLI (jamais le MCP sur ce projet — consigne explicite de
+  l'utilisateur, cf. [[MEMORY]] principe #8).
+
+**Effet secondaire assumé** : Phase 3a/3b (moteur bayésien de diagnostic) n'a plus aucun
+déclencheur — `hypothesis_cycles` ne recevra plus aucune nouvelle ligne tant qu'un remplaçant
+n'est pas construit. Décision explicite de ne pas improviser ce remplaçant dans la foulée : il
+dépend du référentiel académique, que l'utilisateur doit d'abord valider.
+
+**Premier jet du référentiel** : [genizio_referentiel_academique.md](genizio_referentiel_academique.md)
+— brouillon **non sourcé**, banderole d'avertissement en tête du document, à ne câbler dans
+aucun système tant qu'il n'a pas été relu et corrigé. Périmètre volontairement restreint à 3
+domaines "académiques" au sens scolaire (mathématiques/logique, langage, sciences/monde) sur des
+repères annuels de 4 à 14 ans — les 6 autres intelligences Gardner restent hors de ce
+référentiel, mesurées comme aujourd'hui via les défis validés.
+
+**Vérifié en production** : zéro régression après suppression — Portfolio et page Défis
+rechargés en direct (TestPhase1), aucune erreur console liée à la suppression, `recommendChallengesForChild`/
+`getChildAISynthesis` répondent toujours 200. `tsc --noEmit` propre. La déclaration test
+"jongles" (décision #36) reste intacte dans la Timeline, preuve que la suppression n'a touché
+que son périmètre prévu.
+
+**Alternative rejetée** : garder une saisie de notes minimale comme mémo parent sans rôle
+système. Rejetée par l'utilisateur — suppression complète demandée explicitement, cohérent avec
+Simplicity Maximizer (un champ qui ne sert plus à rien pour le système ne mérite pas de rester
+"au cas où").
+
+**Mise à jour (même jour) — sourçage web du référentiel** : l'utilisateur a demandé de corriger
+le brouillon via une vraie recherche internet plutôt que de mémoire. Recherches menées sur
+Common Core Mathematics/ELA (US), Singapore Math scope and sequence, NGSS (sciences), curriculum
+chinois. Résultat : la majorité des repères en mathématiques et une partie du langage sont
+maintenant **sourcés avec citation exacte** (ex : Common Core 3.OA.C.7 — mémorisation de toutes
+les tables à un chiffre "from memory" en fin de Grade 3/8 ans ; 6.EE/7.EE pour les premières
+équations à 11-12 ans). Deux corrections concrètes trouvées en sourçant, documentées dans le
+fichier plutôt que silencieusement corrigées :
+1. L'exemple d'origine de l'utilisateur ("table de 5 à 5 ans") est en réalité plus précoce que
+   ce qu'aucun des référentiels vérifiés n'exige — même Singapour/Chine (les plus exigeants
+   trouvés) placent l'introduction formelle de la multiplication à 7 ans, la mémorisation
+   complète vers 8 ans.
+2. Sciences restructurées par **bande d'âge** (K-2/3-5/6-8) plutôt que par année précise — NGSS,
+   la source la mieux documentée trouvée, n'est lui-même pas organisé année par année ; forcer
+   une fausse précision annuelle aurait été moins honnête. "Cycle de l'eau" et "photosynthèse",
+   placés trop tôt dans le premier jet, sont en réalité des standards de collège (11-14 ans,
+   MS-ESS2-4/MS-LS1-6) avec un vocabulaire précis exigé.
+
+Ce qui reste non sourcé cette passe est marqué explicitement ligne par ligne dans le document
+(colonne "Source / confiance") plutôt que laissé ambigu — notamment 4 ans (avant les
+référentiels formels), une partie de Grade 1/9 ans en maths, et les standards d'écriture
+11-14 ans (Common Core Writing non recherchés individuellement). Toujours **pas câblé** dans le
+moteur de génération ni un déclencheur — seul le contenu a changé, pas son statut d'usage.
+
+## Décision #38 : nouveau déclencheur Phase 3 — écart au référentiel académique, 4 défis, les deux sens
+
+**Contexte** : suite aux décisions #35-37, le référentiel académique était rédigé et sourcé mais
+non câblé — Phase 3a/3b restait dormante (plus aucun déclencheur depuis le retrait des notes).
+Conception du remplaçant avec l'utilisateur : deux paramètres explicitement tranchés par lui —
+**4 défis consécutifs** dans le même domaine avant de déclencher (pas 3, pas 2, pas 5-6), et
+**les deux sens comptent** : un enfant en retard sur le référentiel ET un enfant en avance
+déclenchent tous les deux une investigation (le second cas "pour proposer des défis plus
+costauds", pas pour signaler un problème).
+
+**Découverte technique avant de coder** : `difficulty` (facile/moyen/difficile), le seul signal
+de niveau qui existait déjà, est délibérément relatif à l'âge déclaré de l'enfant — chaque
+prompt de génération l'évalue explicitement "cohérent avec la tranche d'âge". Il ne peut donc
+structurellement pas détecter un écart à un référentiel absolu (par construction, tout y est
+toujours "cohérent avec l'âge"). Nécessite un signal différent, pas une réutilisation.
+
+**Mécanisme implémenté** (niveau 2 evolution-first — extension de l'existant, `finalizeChallenge`
+reste le verrou unique) :
+- Référentiel injecté dans les prompts comme texte constant (`ACADEMIC_REFERENTIAL_INSTRUCTION`,
+  même pattern que `GENIZIO_PRINCIPLES`/`SAFETY_INSTRUCTION`) — pas de nouvelle table à
+  synchroniser avec le markdown source.
+- 2 nouveaux champs optionnels sur `challenges` (`academic_domain`, `academic_level_age`) :
+  pour les défis dans un des 3 domaines académiques, l'IA étiquette à la génération l'âge
+  auquel correspond RÉELLEMENT le contenu du défi — indépendamment de l'âge réel de l'enfant.
+  Backstop `resolveAcademicLevel` dans `finalizeChallenge` : domaine/âge incohérent → les deux
+  champs redeviennent `null` (repli sûr, un défi mal étiqueté ne doit pas polluer la détection).
+- Détection 0 IA (même philosophie que l'ancien Z-score) : `ensureHypothesesForChild`,
+  reconstruite, regarde les 4 derniers défis complétés par domaine académique — si les 4
+  `academic_level_age` sont constamment ≥1 an en dessous OU ≥1 an au-dessus de l'âge réel,
+  déclenche un cycle. Un domaine avec un cycle déjà ouvert est ignoré (pas de doublon).
+- Nouvelle cause `READY_FOR_MORE` dans `ALLOWED_CAUSES` : seule cause qui n'est pas un problème
+  à résoudre. Branche dédiée dans `generateDiscriminantChallenge` (propose un défi
+  "sensiblement plus avancé... présenté comme une mission spéciale/bonus, jamais comme un
+  test"). `narrateForParent` reconstruite avec un ton conditionnel (enthousiaste si "en avance",
+  chaleureux-mais-pas-alarmiste si "en retard").
+- `hypothesis_cycles.trigger_domain` (nouvelle colonne) remplace l'ancienne indirection
+  `anomaly_trigger_id → anomaly_triggers → school_grades` : le domaine est stocké directement
+  sur le cycle, un seul saut au lieu de deux tables.
+
+**Vérifié en production, de bout en bout, cas réel (TestPhase1, 10 ans)** — 8 défis test insérés
+directement (4 "maths" à `academic_level_age=7`, 4 "sciences" à `academic_level_age=13`) pour
+isoler le mécanisme du jugement probabiliste de l'IA sur l'étiquetage :
+- Chargement du Portfolio → détecte sciences en premier (ordre d'insertion du Map), crée un
+  cycle réel avec Sonnet : hypothèse dominante `READY_FOR_MORE` (0.75) citant explicitement
+  "quatre observations consécutives à 13, sans variance" ET le Jumeau Pédagogique réel de
+  l'enfant (`time_awareness` FORCE) comme preuve à l'appui — raisonnement de qualité, pas un
+  gabarit. Seconde hypothèse `LACK_OF_ENGAGEMENT` (0.25) cohérente avec la consigne ("pertinent
+  dans les deux directions").
+- Rechargement → domaine sciences ignoré (cycle déjà ouvert), détecte maths → cycle réel avec
+  3 hypothèses `METHOD_MISMATCH`/`LACK_OF_ENGAGEMENT`/`CONCEPTUAL_GAP`, **`READY_FOR_MORE`
+  correctement absente** (la consigne "pertinent UNIQUEMENT si direction = en avance" a été
+  respectée par le modèle).
+- Piège déjà documenté (décision #36) retombé une 3e fois : narration rejetée deux fois par le
+  filet anti-chiffres car Haiku a écrit "TestPhase1" (contient un chiffre) dans le texte —
+  confirme que le filet fonctionne toujours. Non un bug : au 3e essai (cycle maths), Haiku a
+  spontanément écrit "votre enfant" et la narration est passée — et la résilience de reprise
+  (retente uniquement la narration, pas le raisonnement Sonnet coûteux) a fonctionné comme prévu
+  entre chaque tentative.
+- Carte "Ce que Naya a remarqué" (Phase 4, code inchangé) affichée correctement dans le
+  navigateur avec la vraie narration.
+- **Défi discriminant `READY_FOR_MORE` généré réellement** (cycle sciences isolé en
+  résolvant temporairement le cycle maths) : "Mission : Crée ta Fontaine Magique à Réaction en
+  Chaîne", présenté comme une mission valorisante conforme à la consigne, auto-étiqueté
+  `academic_domain=sciences, academic_level_age=11` — cohérent avec "sensiblement plus avancé"
+  (11 > 10 ans réels), preuve que le mécanisme d'étiquetage boucle correctement même sur les
+  défis qu'il génère lui-même.
+- `tsc --noEmit` propre à chaque étape. États de test artificiels nettoyés après vérification
+  (cycle maths reremis à `open` après isolement temporaire).
+
+## Décision #39 : extension à 8 domaines + citation traçable + accélérateur parent + révision semestrielle
+
+**Contexte** : suite à la décision #38, l'utilisateur a demandé 4 choses d'un coup ("on attaque
+tout de front") : (1) réviser le référentiel tous les 6 mois, (2) un moyen de vérifier que l'IA
+ne se trompe pas dans son propre étiquetage, (3) un levier pour accélérer le signal sur un
+domaine précis, (4) couvrir "tout" plutôt que seulement 3 domaines.
+
+**Item 3 vérifié avant de construire quoi que ce soit** : la page Défis a déjà "Composer un défi
+ciblé" avec un sélecteur qui force le domaine du prochain défi généré (`generateSingleChallenge`,
+instruction "Tu DOIS générer un défi spécifiquement dans le domaine..."). Pas besoin d'un nouveau
+bouton — juste combler les trous : "Mathématiques" était absente de la liste, et rien ne couvrait
+le social/émotionnel. Les deux ajoutées à `CATEGORIES`.
+
+**Item 4 — recherche menée sur les 6 talents restants** (corporelle, sociale, émotionnelle,
+entrepreneuriale, artisanale, spatiale) :
+- **Corporelle** : CDC (checklists officielles, mais seulement jusqu'à 5 ans) + SHAPE America
+  (standards officiels K-12, structure par cycle plutôt qu'année précise).
+- **Sociale + Émotionnelle** : CASEL, 5 compétences réparties sur les deux domaines, bandes K-2/
+  3-5/6-8/9-12 confirmées par plusieurs États US — contenu détaillé par bande estimé, pas extrait
+  ligne par ligne.
+- **Entrepreneuriale** : NFEC (organisme privé, pas public comme les autres — signalé comme tel),
+  bandes PK-2/3-5/6-8 avec "Career & Entrepreneurship" comme thème dédié.
+- **Artisanale** : littérature de motricité fine/dextérité manuelle, repères annuels précis
+  trouvés (6-7, 8-9, 10-14 ans) — mieux sourcé que prévu.
+- **Spatiale** : littérature de psychologie du développement (recherche publiée, pas un
+  organisme de standards), repères d'âge précis et concordants entre études (allocentrisme
+  2,5-3 ans, pliage mental dès 5 ans, plafond 7-8 ans).
+- **Créative — délibérément EXCLUE**, et c'est la trouvaille la plus importante de cette
+  recherche : les travaux de Torrance montrent un développement de la créativité **non
+  linéaire** (creux normaux et documentés à 5, 9, 13, 17 ans, liés à la transition vers un
+  raisonnement plus logique). Le mécanisme de ce document compare systématiquement "niveau
+  observé" à "niveau attendu" et interprète un niveau plus bas comme un retard — hypothèse
+  fausse et potentiellement trompeuse pour un domaine où un creux à 9 ans est normal et sain.
+  Décision : ne jamais étiqueter un défi créatif avec `academic_domain`/`academic_level_age`,
+  pas un trou de données mais un refus assumé de fabriquer un mécanisme qui mentirait.
+
+**Item 2 — citation traçable** : plutôt que de faire confiance à un chiffre brut non vérifiable,
+l'IA doit désormais aussi fournir `academic_reference_note` — une phrase citant la ligne précise
+du référentiel sur laquelle elle s'est basée (ex: "toutes les tables à un chiffre mémorisées vers
+8 ans"). Ne conditionne pas la validité de l'étiquetage (un domaine/âge cohérents sans citation
+restent utilisables), sert uniquement la traçabilité lors d'une relecture d'échantillon.
+
+**Item 1 — révision semestrielle** : tâche planifiée créée via `create_scheduled_task`
+(`genizio-referentiel-revision-semestrielle`, cron `17 9 1 1,7 *` = 1er janvier et 1er juillet
+chaque année). Prompt entièrement autonome (aucune dépendance à cette conversation) : relire le
+document, re-sourcer chaque domaine, vérifier un échantillon d'étiquetages IA récents en base via
+le CLI Supabase, documenter en décision numérotée, committer sans pousser sans confirmation
+utilisateur explicite. Limite transparente signalée à l'utilisateur : la tâche ne s'exécute que
+si l'application est ouverte au moment prévu, ce n'est pas un cron serveur garanti.
+
+**Implémentation** : `ACADEMIC_DOMAINS` (nouvelle liste exportée, remplace les 3 valeurs en dur
+dans le zod enum et `resolveAcademicLevel`), `ACADEMIC_REFERENTIAL_INSTRUCTION` étendue aux 6
+nouveaux domaines + instruction de citation, `academic_reference_note` ajoutée aux 6 points de
+génération (même schéma que `proof_mode`/`academic_domain` avant elle). Migration : CHECK
+constraints de `challenges.academic_domain` et `hypothesis_cycles.trigger_domain` élargis aux 9
+valeurs, colonne `challenges.academic_reference_note` ajoutée.
+
+**Vérifié, avec une limite honnête à signaler** :
+- `tsc --noEmit` propre après chaque étape.
+- Le mécanisme central (`academic_domain`/`academic_level_age` remplis par une vraie génération
+  IA) était déjà vérifié en direct lors de la décision #38 (défi "Fusée Mathématique" et "Fontaine
+  Magique") — cette extension réutilise strictement le même point de passage
+  (`finalizeChallenge`/`resolveAcademicLevel`), donc le risque d'ajouter 6 valeurs d'enum et 1
+  champ texte optionnel au même contrat JSON est jugé faible.
+- **Non vérifié par une génération IA fraîche cette passe** : le Browser pane a rencontré un
+  problème d'outillage pendant cette session (captures d'écran qui expirent, clics qui
+  n'atteignent pas la page même via un nouvel onglet et un clic DOM natif confirmé par script) —
+  confirmé en interrogeant directement la base (aucune nouvelle ligne créée) plutôt que de se fier
+  aux apparences. Contournement partiel : une insertion directe en base a confirmé que la
+  contrainte CHECK élargie accepte bien les 6 nouveaux domaines et que la colonne
+  `academic_reference_note` fonctionne au niveau base de données — mais aucune vérification que
+  Sonnet/Haiku produit réellement une citation cohérente sur les nouveaux domaines n'a pu être
+  faite en direct. À refaire dès que l'outillage du navigateur repasse fiable, ou lors de la
+  première génération réelle en production.

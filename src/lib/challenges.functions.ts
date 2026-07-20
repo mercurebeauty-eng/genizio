@@ -3,6 +3,14 @@ import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { VALID_TALENT_KEYS, TALENT_KEY_LABELS } from "@/lib/talent-buckets";
 import { z } from "zod";
 
+// Domaines couverts par le référentiel académique (cf. genizio-decisions #39). "creative"
+// exclue volontairement (développement non linéaire par âge, cf. ACADEMIC_REFERENTIAL_INSTRUCTION
+// ci-dessous) — ne jamais l'ajouter ici sans revoir le mécanisme de détection d'écart.
+export const ACADEMIC_DOMAINS = [
+  "mathematiques", "langage", "sciences",
+  "corporelle", "sociale", "emotionnelle", "entrepreneuriale", "artisanale", "spatiale",
+] as const;
+
 const ChallengeSchema = z.object({
   domain: z.string(),
   title: z.string(),
@@ -16,6 +24,12 @@ const ChallengeSchema = z.object({
   requires_supervision: z.boolean().default(false),
   supervision_warning: z.string().nullable().optional(),
   difficulty: z.enum(["facile", "moyen", "difficile"]).optional(),
+  proof_mode: z.enum(["photo", "declarative"]).optional(),
+  proof_target: z.object({ metric: z.string(), value: z.number() }).nullable().optional(),
+  declarative_award: z.record(z.string(), z.number()).nullable().optional(),
+  academic_domain: z.enum(ACADEMIC_DOMAINS).nullable().optional(),
+  academic_level_age: z.number().nullable().optional(),
+  academic_reference_note: z.string().nullable().optional(),
 });
 
 // Shop Phase 1: log material tags that don't match any active product yet, so the
@@ -221,6 +235,85 @@ function resolveDifficulty(
   return "moyen";
 }
 
+// Backstop for "proof_mode: declarative" (défis comptables/chronométrés/live — cf.
+// genizio-decisions #35) : même philosophie que applySafetyNet ci-dessus — ne jamais
+// faire confiance à la seule auto-discipline du modèle. Un défi ne devient déclaratif
+// que si le modèle a AUSSI produit une cible et une récompense cohérentes ; sinon,
+// repli silencieux sur "photo" (le mode utilisé par tous les défis avant l'existence
+// de celui-ci, donc toujours sûr). Floor à 1 (pas 0 comme validateChallengeProof) :
+// ici le modèle propose une récompense à la génération plutôt que de juger une
+// soumission réelle — il n'y a aucune raison de "proposer" 0 point pour une clé,
+// autant l'omettre.
+function resolveProofMode(
+  proofMode: string | null | undefined,
+  proofTarget: { metric?: unknown; value?: unknown } | null | undefined,
+  declarativeAward: Record<string, unknown> | null | undefined,
+  challengeTitle: string
+): {
+  proof_mode: "photo" | "declarative";
+  proof_target: { metric: string; value: number } | null;
+  declarative_award: Record<string, number> | null;
+} {
+  if (proofMode !== "declarative") {
+    return { proof_mode: "photo", proof_target: null, declarative_award: null };
+  }
+
+  const metric = typeof proofTarget?.metric === "string" ? proofTarget.metric.trim().slice(0, 60) : "";
+  const value = typeof proofTarget?.value === "number" ? proofTarget.value : NaN;
+
+  const award: Record<string, number> = {};
+  const validTalentKeys = new Set(VALID_TALENT_KEYS);
+  for (const [key, points] of Object.entries(declarativeAward ?? {})) {
+    if (typeof points === "number" && validTalentKeys.has(key)) {
+      award[key] = Math.max(1, Math.min(3, Math.round(points)));
+    }
+  }
+
+  if (!metric || !Number.isFinite(value) || value <= 0 || Object.keys(award).length === 0) {
+    console.warn(`[challenges] "proof_mode: declarative" incohérent pour "${challengeTitle}" — repli sur "photo".`);
+    return { proof_mode: "photo", proof_target: null, declarative_award: null };
+  }
+
+  return { proof_mode: "declarative", proof_target: { metric, value }, declarative_award: award };
+}
+
+// Backstop pour l'étiquetage du référentiel académique (cf. genizio-decisions #38) : un âge
+// incohérent (hors [3,18], absent, ou domaine invalide) redevient simplement "pas de
+// signal" — même philosophie que resolveProofMode, ne jamais faire confiance à la seule
+// auto-discipline du modèle. Contrairement à proof_mode, il n'y a pas de "valeur par défaut
+// sûre" ici : l'absence de signal (les deux champs à null) est elle-même le repli sûr, un
+// défi non académique ou mal étiqueté ne doit simplement pas compter dans la détection d'écart.
+function resolveAcademicLevel(
+  domain: string | null | undefined,
+  levelAge: number | null | undefined,
+  referenceNote: string | null | undefined,
+  challengeTitle: string
+): {
+  academic_domain: (typeof ACADEMIC_DOMAINS)[number] | null;
+  academic_level_age: number | null;
+  academic_reference_note: string | null;
+} {
+  const validDomain = (ACADEMIC_DOMAINS as readonly string[]).includes(domain ?? "")
+    ? (domain as (typeof ACADEMIC_DOMAINS)[number])
+    : null;
+  const validAge = typeof levelAge === "number" && Number.isFinite(levelAge) && levelAge >= 3 && levelAge <= 18
+    ? Math.round(levelAge)
+    : null;
+
+  if (!validDomain || validAge === null) {
+    if (domain || levelAge) {
+      console.warn(`[challenges] étiquetage du référentiel académique incohérent pour "${challengeTitle}" — ignoré.`);
+    }
+    return { academic_domain: null, academic_level_age: null, academic_reference_note: null };
+  }
+
+  // La citation est un bonus de traçabilité (décision #39), pas une condition de validité —
+  // un domaine/âge cohérents sans citation restent utilisables pour la détection d'écart.
+  const note = typeof referenceNote === "string" && referenceNote.trim() ? referenceNote.trim().slice(0, 200) : null;
+
+  return { academic_domain: validDomain, academic_level_age: validAge, academic_reference_note: note };
+}
+
 // Single choke point for the checks every challenge must pass through before
 // it reaches a parent or the DB: the safety net, the difficulty fallback,
 // title truncation, material_tags normalization. Before this existed, the
@@ -229,7 +322,12 @@ function resolveDifficulty(
 // nothing stopped a future 4th call site (or a reordering refactor) from
 // silently skipping one of them. Route every insertion/preview through this
 // instead of re-deriving these fields by hand.
-function finalizeChallenge<T extends {
+// Exported (2026-07-20, NAYA Phase 3b/5 fix): the two new AI-generated-challenge
+// insertion points added by Phase 3b (generateDiscriminantChallenge) and Phase 5
+// (recommendChallengesForChild) had each re-implemented insertion by hand and
+// skipped this choke point entirely — exactly the failure mode this comment
+// already warned about. Import this instead of duplicating the checks again.
+export function finalizeChallenge<T extends {
   title: string;
   description: string;
   steps: string[];
@@ -238,14 +336,28 @@ function finalizeChallenge<T extends {
   requires_supervision?: boolean | null;
   supervision_warning?: string | null;
   difficulty?: string | null;
+  proof_mode?: string | null;
+  proof_target?: { metric?: unknown; value?: unknown } | null;
+  declarative_award?: Record<string, unknown> | null;
+  academic_domain?: string | null;
+  academic_level_age?: number | null;
+  academic_reference_note?: string | null;
 }>(c: T, age: number) {
   const safety = applySafetyNet(c, age);
+  const proof = resolveProofMode(c.proof_mode, c.proof_target, c.declarative_award, c.title);
+  const academic = resolveAcademicLevel(c.academic_domain, c.academic_level_age, c.academic_reference_note, c.title);
   return {
     title: c.title.slice(0, 120),
     material_tags: c.material_tags ?? [],
     difficulty: resolveDifficulty(c.difficulty, c.title),
     requires_supervision: safety.requires_supervision,
     supervision_warning: safety.supervision_warning,
+    proof_mode: proof.proof_mode,
+    proof_target: proof.proof_target,
+    declarative_award: proof.declarative_award,
+    academic_domain: academic.academic_domain,
+    academic_level_age: academic.academic_level_age,
+    academic_reference_note: academic.academic_reference_note,
   };
 }
 
@@ -272,6 +384,55 @@ const GENIZIO_PRINCIPLES = `PRINCIPES DE GÉNÉRATION GÉNIZIO (règles strictes
 // marker ("- " or "N. ") since the two prompts use different list styles.
 const SAFETY_INSTRUCTION = `SÉCURITÉ ET SUPERVISION, sans excès de prudence : analyse si le défi comporte des risques réels (feu, cuisine avec source de chaleur — plaque, four, eau ou huile chaude —, objets coupants, produits chimiques, électricité, extérieur non sécurisé — eau profonde, hauteur, circulation, animaux dangereux). Si OUI, règle "requires_supervision" à true. Adapte le ton de "supervision_warning" à l'âge : avant 12 ans, précise qu'un adulte doit être présent pour cette étape ; à partir de 12 ans, un enfant peut réaliser l'étape lui-même — donne des mesures de sécurité concrètes à suivre plutôt que d'exiger la présence d'un adulte (ex: manipuler un briquet loin de matières inflammables, avec de l'eau à proximité). Ne signale pas de risque pour des activités quotidiennes sans danger réel (cuisine froide/sans cuisson, mélanger des ingrédients, extérieur familier, etc.).`;
 
+// Partagée entre les 5 générateurs de défis IA de l'app (cf. genizio-decisions #35) —
+// même raison que SAFETY_INSTRUCTION ci-dessus : un seul texte source, pas de copies
+// qui dérivent. "declarative" retire tout jugement IA à la soumission (voir
+// submitDeclarativeProof) : aucune photo n'a le pouvoir de prouver un comptage ou une
+// durée, donc autant ne pas prétendre le vérifier — la déclaration du parent fait foi.
+export const PROOF_MODE_INSTRUCTION = `MODE DE PREUVE : détermine "proof_mode" selon la nature du défi.
+- "photo" (par défaut, le cas le plus courant) : le défi produit un résultat final visible (objet construit, dessin, expérience montée, texte écrit) — une photo suffit à en juger. N'inclus alors ni "proof_target" ni "declarative_award".
+- "declarative" : le défi consiste en une action comptable, chronométrée ou physique en direct qu'une seule photo ne peut structurellement pas prouver (répétitions, durée, distance — ex: "20 jongles", "courir 10 minutes sans s'arrêter"). Dans ce cas UNIQUEMENT, fournis aussi :
+  - "proof_target": {"metric": "unité comptée en 2-4 mots, ex: jongles réussis / minutes de course", "value": nombre cible}
+  - "declarative_award": objet {"clé":points} avec des points de 1 à 3, clés EXCLUSIVEMENT parmi : spatial, corporelle, sociale, entrepreneuriale, creative, artisanale, emotionnelle, logico_mathematique, linguistique — les intelligences réellement mobilisées si le défi est réussi.`;
+
+// Référentiel académique interne Génizio (cf. genizio-decisions #37/#39, docs/memoire/
+// genizio_referentiel_academique.md — version condensée pour prompt, sans le détail des
+// sources). Remplace les notes scolaires comme signal de calibrage : indépendant de l'école
+// réelle de l'enfant, volontairement calé sur des standards internationaux exigeants
+// (Common Core US, Singapore Math, NGSS, SHAPE America, CASEL, NFEC selon le domaine — niveaux
+// de confiance inégaux, cf. le document source). Sert à étiqueter le CONTENU réel d'un défi
+// par âge — jamais à afficher un verdict au parent (§1 du plan NAYA). "creative" est
+// délibérément absente : son développement documenté n'est pas linéaire par âge (creux normaux
+// à certains âges), incompatible avec ce mécanisme de comparaison — ne JAMAIS l'étiqueter.
+export const ACADEMIC_REFERENTIAL_INSTRUCTION = `RÉFÉRENTIEL ACADÉMIQUE : si le défi relève d'un des domaines ci-dessous, détermine "academic_domain" ("mathematiques" | "langage" | "sciences" | "corporelle" | "sociale" | "emotionnelle" | "entrepreneuriale" | "artisanale" | "spatiale"), "academic_level_age" (nombre entier = l'âge auquel correspond RÉELLEMENT le contenu du défi que tu viens de concevoir, d'après ce référentiel — PAS forcément l'âge de l'enfant), et "academic_reference_note" (1 phrase courte citant la ligne précise du référentiel sur laquelle tu t'es basé, ex: "toutes les tables à un chiffre mémorisées vers 8 ans" — pas juste "niveau 8 ans"). Pour "creative" (créativité pure, imaginaire libre) ou tout domaine hors de cette liste, omets les trois champs.
+
+MATHÉMATIQUES / LOGIQUE :
+5 ans : compter à 100 par 1 et 10, écrire les nombres 0-20. 6 ans : addition/soustraction dans les 20. 7 ans : tables de multiplication 2,3,4,5,10 mémorisées, mesures standard, figures géométriques. 8 ans : TOUTES les tables à un chiffre (2-9) mémorisées, fractions comme quantité (1/b, a/b). 9 ans : multiplication à plusieurs chiffres, division avec reste, fractions équivalentes. 10 ans : multiplication/division à 2 chiffres, nombres décimaux. 11 ans : équations à une inconnue simples (x+p=q, px=q), inégalités simples. 12 ans : équations plus complexes (px+q=r), inégalités. 13 ans : exposants, racines, systèmes de 2 équations, notion de fonction. 14 ans : théorème de Pythagore, statistiques descriptives, algèbre avancée.
+
+LANGAGE (lecture/écriture) :
+5 ans : isole les sons d'un mot de 3 sons, débute le décodage syllabe par syllabe. 6 ans : lit un texte de son niveau à voix haute avec précision et expression, se corrige seul. 7 ans : même fluidité sur un texte plus avancé, décode des mots à plusieurs syllabes. 8-10 ans : décode des mots complexes, résume un texte, utilise des connecteurs logiques (parce que, donc, ensuite). 11-14 ans : rédige des textes structurés en plusieurs paragraphes, argumente avec plusieurs arguments organisés, analyse un texte (intention de l'auteur, point de vue).
+
+SCIENCES / DÉCOUVERTE DU MONDE :
+5-7 ans : propriétés de base des matériaux (ex: ce qui flotte/coule), besoins de base des êtres vivants. 8-10 ans : états et changements de la matière (fusion, évaporation...), systèmes du corps humain, cycle de la matière entre êtres vivants et environnement. 11-14 ans : cycle de l'eau complet (évaporation, condensation, précipitation), rôle de la photosynthèse, écosystèmes, énergie et forces.
+
+CORPORELLE (motricité) :
+3-5 ans : motricité globale en développement rapide (courir, sauter, grimper avec plus de contrôle). 6-10 ans : compétence dans une variété d'habiletés motrices (lancer, attraper, dribbler), concepts de mouvement de base, notions de condition physique. 11-14 ans : stratégies/tactiques dans des situations de jeu complexes, autonomie dans l'activité physique.
+
+SOCIALE (relations) :
+5-7 ans : partage, tour de rôle, reconnaît les émotions d'autrui simplement. 8-10 ans : comprend les perspectives d'autrui, empathie, communique et coopère, résout des conflits simples. 11-14 ans : négociation, résiste à la pression sociale négative, travail d'équipe dans des groupes plus larges/moins familiers.
+
+EMOTIONNELLE (conscience et gestion de soi) :
+5-7 ans : reconnaît et nomme ses émotions de base, autorégulation simple avec aide d'un adulte. 8-10 ans : reconnaît l'influence de ses émotions sur son comportement, autorégulation plus autonome, fixe de petits objectifs. 11-14 ans : gestion du stress plus complexe, prise de décision responsable tenant compte de plusieurs facteurs.
+
+ENTREPRENEURIALE :
+5-7 ans : notions d'argent de base (compter, épargner, différence besoin/envie). 8-10 ans : budget simple, idée de gagner de l'argent par un petit service, comprend qu'un choix a un coût. 11-14 ans : notions de base d'un petit projet (coût, prix, marge), planifie un budget sur plusieurs semaines.
+
+ARTISANALE (habileté manuelle) :
+6-7 ans : écriture fluide et contrôlée, maniement précis ciseaux/colle. 8-9 ans : motricité fine raffinée, tâches demandant une concentration prolongée. 10-14 ans : motricité fine proche de l'adulte, projets complexes en plusieurs séances, recherche un résultat "professionnel".
+
+SPATIALE :
+3 ans : vocabulaire spatial de base (dessus/dessous, dedans/dehors). 4-9 ans : perçoit des objets sous différents points de vue, notion de perspective en développement. 5 ans : réussit une tâche simple de "pliage mental" (imaginer un objet après pliage). 7-8 ans : pliage mental plus avancé, plafonne généralement vers cet âge.`;
+
 // Helper to call Google AI Studio OpenAI-compatible endpoint
 const ALLOWED_IMAGE_MEDIA_TYPES = ["image/jpeg", "image/png", "image/gif", "image/webp"];
 
@@ -292,7 +453,13 @@ export async function callClaude(
   // requires (see validateChallengeProof: that upload used to happen on
   // every submission attempt regardless of outcome, hitting the storage
   // API's own rate limit).
-  imageData?: { base64: string; mediaType: string }
+  imageData?: { base64: string; mediaType: string },
+  // Force a specific model regardless of the vision/text default routing.
+  // Used by the NAYA 2.0 reasoning role (generateHypotheses) to run on
+  // Sonnet even though it's a text-only call — bayesian causal diagnosis is
+  // the "when the system needs to think" case decision #27 reserves the
+  // premium model for. Existing call sites omit it and keep Haiku-for-text.
+  modelOverride?: string
 ): Promise<string> {
   const apiKey = process.env.ANTHROPIC_API_KEY;
   if (!apiKey) {
@@ -345,8 +512,13 @@ export async function callClaude(
     ? "Tu es un assistant IA précis. Tu dois impérativement répondre au format JSON demandé, sous forme de JSON brut, sans bloc de code Markdown, sans préambule ni explications."
     : undefined;
 
-  // Cost-effective routing: use Claude Sonnet 5 only when analyzing an image (vision), otherwise use Claude Haiku 4.5
-  const model = imageUrl ? "claude-sonnet-5" : "claude-haiku-4-5-20251001";
+  // Cost-effective routing: use Claude Sonnet 5 only when analyzing an image (vision), otherwise use Claude Haiku 4.5.
+  // Must check imageData too, not just imageUrl: validateChallengeProof's real photo
+  // path sends raw bytes via imageData (see its own comment above) and was silently
+  // falling through to Haiku for every proof-photo validation despite this comment's
+  // intent — imageUrl stayed undefined so the ternary never saw a reason to pick Sonnet.
+  // modelOverride wins over both — lets a text-only call opt into Sonnet (NAYA reasoning role).
+  const model = modelOverride ?? (imageData || imageUrl ? "claude-sonnet-5" : "claude-haiku-4-5-20251001");
 
   let attempt = 0;
   while (attempt < maxRetries) {
@@ -390,7 +562,15 @@ export async function callClaude(
       }
 
       const json = await response.json();
-      let textContent = json.content?.[0]?.text ?? "";
+      // Read the first *text* block, not content[0] blindly: claude-sonnet-5 prepends
+      // a "thinking" block (content[0].type === "thinking", no .text), so content[0].text
+      // is undefined for any reasoning-capable model — that silently produced "" and made
+      // JSON.parse fail with "Réponse IA invalide" on every Sonnet call. Finding the text
+      // block makes callClaude robust to thinking blocks regardless of model.
+      const textBlock = Array.isArray(json.content)
+        ? json.content.find((b: any) => b?.type === "text")
+        : null;
+      let textContent = textBlock?.text ?? json.content?.[0]?.text ?? "";
       if (jsonMode) {
         textContent = textContent.trim();
         if (textContent.startsWith("```")) {
@@ -522,9 +702,11 @@ Contraintes :
   (ex: "carton", "cutter", "colle", "ampoule") — pas les objets déjà présents chez tout le monde
   (eau, table, papier). Un tableau vide si rien d'achetable n'est nécessaire.
 - ${SAFETY_INSTRUCTION}
+- ${PROOF_MODE_INSTRUCTION}
+- ${ACADEMIC_REFERENTIAL_INSTRUCTION}
 
 Réponds STRICTEMENT en JSON valide avec ce format, pour chaque défi :
-{"challenges":[{"domain":"...","title":"...","description":"...","duration":"...","steps":["...","..."],"materials":["...","..."],"material_tags":["..."],"pedagogical_context":"Ce que Naya observe via cette activité","intelligences":["Intelligence dominante sollicitée"],"requires_supervision":true ou false,"supervision_warning":"..." (ou null si false),"difficulty":"facile"|"moyen"|"difficile"}]}`;
+{"challenges":[{"domain":"...","title":"...","description":"...","duration":"...","steps":["...","..."],"materials":["...","..."],"material_tags":["..."],"pedagogical_context":"Ce que Naya observe via cette activité","intelligences":["Intelligence dominante sollicitée"],"requires_supervision":true ou false,"supervision_warning":"..." (ou null si false),"difficulty":"facile"|"moyen"|"difficile","proof_mode":"photo"|"declarative","proof_target":{"metric":"...","value":20} (uniquement si declarative),"declarative_award":{"corporelle":2} (uniquement si declarative),"academic_domain":"mathematiques"|"langage"|"sciences"|"corporelle"|"sociale"|"emotionnelle"|"entrepreneuriale"|"artisanale"|"spatiale"|null,"academic_level_age":14 (uniquement si academic_domain non null),"academic_reference_note":"..." (uniquement si academic_domain non null)}]}`;
 
     // Up to 6 full défis in one response — genuinely needs the full default
     // budget, unlike every other callClaude site in this file.
@@ -759,6 +941,31 @@ Réponds STRICTEMENT en JSON valide avec ce format :
 
     const relevant = Object.keys(deltas).length > 0;
 
+    if (!relevant) {
+      // NAYA 2.0 Phase 0 : une soumission jugée hors-sujet ne modifie rien en
+      // base (aucun trigger DB ne peut donc la capter) — c'est pourtant un vrai
+      // signal de friction pour le Jumeau Pédagogique. Émission applicative,
+      // best-effort : un échec de journalisation ne doit jamais casser la
+      // validation elle-même.
+      try {
+        const { error: evtErr } = await supabase.from("observation_events").insert({
+          child_id: challenge.child_id,
+          user_id: userId,
+          type: "PROOF_REJECTED",
+          source: "app",
+          payload: {
+            challenge_id: challenge.id,
+            domain: challenge.domain,
+            had_image: !!data.proofImageBase64,
+            image_analyzed: imageAnalyzed,
+          },
+        });
+        if (evtErr) console.error("PROOF_REJECTED event insert failed (non-fatal):", evtErr);
+      } catch (err) {
+        console.error("PROOF_REJECTED event insert failed (non-fatal):", err);
+      }
+    }
+
     // A rejected submission used to still write ai_observations to the DB —
     // and the UI only ever renders this whole validation card while
     // ai_observations is null, so writing it here permanently hid the
@@ -801,6 +1008,14 @@ Réponds STRICTEMENT en JSON valide avec ce format :
 
       if (error) throw new Error(error.message);
       updatedChallenge = updated;
+
+      // NAYA 2.0 Phase 3b : si ce défi était un défi discriminant, met à jour la boucle bayésienne
+      try {
+        const { processDiscriminantResult } = await import("@/lib/hypotheses.functions");
+        void processDiscriminantResult(data.id, "COMPLETED", relevant);
+      } catch (err) {
+        console.error("Non-fatal: processDiscriminantResult failed", err);
+      }
     }
 
     return {
@@ -812,12 +1027,127 @@ Réponds STRICTEMENT en JSON valide avec ce format :
     };
   });
 
+const SubmitDeclarativeInput = z.object({
+  id: z.string().uuid(),
+  reportedValue: z.number().finite(),
+});
+
+// Chemin de preuve "declarative" (cf. genizio-decisions #35) : 0 appel IA, par
+// design. Une seule photo ne peut pas prouver un comptage/une durée, donc on ne
+// prétend plus le vérifier — on compare la déclaration du parent à la cible fixée
+// par finalizeChallenge au moment de la génération du défi. Retourne exactement
+// la même forme que validateChallengeProof ({challenge, observations,
+// awarded_points, imageAnalyzed, relevant}) pour qu'OutcomeChat réutilise sans
+// modification son écran de succès / son message de refus.
+export const submitDeclarativeProof = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .validator((input: unknown) => SubmitDeclarativeInput.parse(input))
+  .handler(async ({ data, context }) => {
+    const { supabase, userId } = context;
+
+    const { data: challenge, error: challengeErr } = await supabase
+      .from("challenges")
+      .select("*, child_profiles(*)")
+      .eq("id", data.id)
+      .single();
+
+    if (challengeErr || !challenge) throw new Error("Défi introuvable");
+    if (challenge.user_id !== userId) throw new Error("Accès refusé.");
+    if (challenge.proof_mode !== "declarative") {
+      throw new Error("Ce défi ne se valide pas par déclaration.");
+    }
+
+    const target = challenge.proof_target as { metric?: string; value?: number } | null;
+    if (!target?.metric || typeof target.value !== "number") {
+      throw new Error("Cible de déclaration manquante pour ce défi.");
+    }
+
+    const childName = challenge.child_profiles.name as string;
+    const relevant = data.reportedValue >= target.value;
+
+    if (!relevant) {
+      // Même logique que le rejet côté photo (PROOF_REJECTED) : rien n'est modifié
+      // en base pour le défi, mais c'est un vrai signal de friction pour le Jumeau
+      // Pédagogique — journalisation best-effort, jamais bloquante.
+      try {
+        const { error: evtErr } = await supabase.from("observation_events").insert({
+          child_id: challenge.child_id,
+          user_id: userId,
+          type: "PROOF_REJECTED",
+          source: "app",
+          payload: { challenge_id: challenge.id, domain: challenge.domain, declarative: true, reported_value: data.reportedValue, target_value: target.value },
+        });
+        if (evtErr) console.error("PROOF_REJECTED event insert failed (non-fatal):", evtErr);
+      } catch (err) {
+        console.error("PROOF_REJECTED event insert failed (non-fatal):", err);
+      }
+
+      return {
+        challenge,
+        observations: `Pas encore atteint cette fois (${data.reportedValue}/${target.value} ${target.metric}) — ce n'est pas grave, ${childName} peut retenter dès que prêt·e !`,
+        awarded_points: {},
+        imageAnalyzed: false,
+        relevant: false,
+      };
+    }
+
+    const award = (challenge.declarative_award as Record<string, number> | null) ?? {};
+    if (Object.keys(award).length > 0) {
+      const { error: talentsError } = await supabase.rpc("increment_child_talents", {
+        p_child_id: challenge.child_id,
+        p_deltas: award,
+      });
+      if (talentsError) throw new Error(talentsError.message);
+    }
+
+    const observations = `Bravo ! ${childName} a réussi ${data.reportedValue} ${target.metric} (objectif : ${target.value}). Une belle preuve de persévérance.`;
+
+    const { data: updated, error } = await supabase
+      .from("challenges")
+      .update({
+        status: "completed" as const,
+        progress: 100,
+        completed_at: new Date().toISOString(),
+        ai_observations: observations,
+        target_intelligences: Object.keys(award),
+      })
+      .eq("id", data.id)
+      .select("*")
+      .single();
+    if (error) throw new Error(error.message);
+
+    // NAYA 2.0 Phase 3b : si ce défi déclaratif était le défi discriminant d'un
+    // cycle d'hypothèses, met à jour la boucle bayésienne — même point d'entrée
+    // que validateChallengeProof, l'origine de la preuve ne doit pas changer le
+    // fonctionnement du moteur bayésien en aval.
+    try {
+      const { processDiscriminantResult } = await import("@/lib/hypotheses.functions");
+      void processDiscriminantResult(data.id, "COMPLETED", true);
+    } catch (err) {
+      console.error("Non-fatal: processDiscriminantResult failed", err);
+    }
+
+    return {
+      challenge: updated,
+      observations,
+      awarded_points: award,
+      imageAnalyzed: false,
+      relevant: true,
+    };
+  });
+
 const AssignTemplateInput = z.object({
   childId: z.string().uuid(),
-  template: ChallengeSchema.extend({ 
+  template: ChallengeSchema.extend({
     intelligences: z.array(z.string()).optional(),
     pedagogical_context: z.string().optional(),
   }),
+  // Atelier du Temps — mécanique "Estimation" (cf. genizio-decisions #30) : combien
+  // de temps l'enfant pense avoir besoin, capturé au moment de l'assignation depuis
+  // l'Atelier. Absent pour tout autre chemin d'assignation (ex. "Composer un défi
+  // ciblé" sur la page Défis, qui ne demande pas de temps) — reste NULL en base,
+  // aucune carte de comparaison ne s'affichera pour ces défis-là, c'est voulu.
+  estimated_duration_minutes: z.number().int().positive().max(1440).optional(),
 });
 
 export const assignTemplateChallenge = createServerFn({ method: "POST" })
@@ -855,6 +1185,7 @@ export const assignTemplateChallenge = createServerFn({ method: "POST" })
         status: "todo",
         progress: 0,
         pedagogical_context: template.pedagogical_context ?? null,
+        estimated_duration_minutes: data.estimated_duration_minutes ?? null,
         ...finalizeChallenge(template, child.age),
       })
       .select()
@@ -949,6 +1280,8 @@ ${
 8. Pour "material_tags" : un tag court en minuscules, sans accent, par matériau physique achetable
    (ex: "carton", "cutter", "colle", "ampoule") — pas les objets déjà présents chez tout le monde
    (eau, table, papier). Un tableau vide si rien d'achetable n'est nécessaire.
+9. ${PROOF_MODE_INSTRUCTION}
+10. ${ACADEMIC_REFERENTIAL_INSTRUCTION}
 
 Réponds STRICTEMENT en JSON valide avec ce format exact :
 {
@@ -963,7 +1296,13 @@ Réponds STRICTEMENT en JSON valide avec ce format exact :
   "intelligences": ["Intelligence dominante sollicitée"],
   "requires_supervision": true ou false,
   "supervision_warning": "Attention: Manipulez le couteau avec l'enfant" (ou null si false),
-  "difficulty": "facile" | "moyen" | "difficile"
+  "difficulty": "facile" | "moyen" | "difficile",
+  "proof_mode": "photo" | "declarative",
+  "proof_target": {"metric": "...", "value": 20} (uniquement si declarative),
+  "declarative_award": {"corporelle": 2} (uniquement si declarative),
+  "academic_domain": "mathematiques" | "langage" | "sciences" | "corporelle" | "sociale" | "emotionnelle" | "entrepreneuriale" | "artisanale" | "spatiale" | null,
+  "academic_level_age": 14 (uniquement si academic_domain non null),
+  "academic_reference_note": "..." (uniquement si academic_domain non null)
 }`;
 
     // A single défi, not a batch — the 4000 default (sized for up to 6 défis

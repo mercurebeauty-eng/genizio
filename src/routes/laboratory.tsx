@@ -26,6 +26,18 @@ const TIME_OPTIONS = [
   { id: "1 après-midi", label: "Tout un après-midi" },
 ];
 
+// Atelier du Temps — mécanique "Estimation" (cf. genizio-decisions #30) : ancre
+// numérique de l'estimation de l'enfant, dérivée du même choix de temps déjà fait
+// pour contraindre la génération IA. "1 après-midi" est volontairement approximatif
+// (180 min) — l'enfant ne travaillera pas l'après-midi entier sur un seul défi, mais
+// l'ancre sert de point de comparaison pour la métacognition, pas de mesure exacte.
+const TIME_TO_MINUTES: Record<string, number> = {
+  "10 min": 10,
+  "30 min": 30,
+  "1 heure": 60,
+  "1 après-midi": 180,
+};
+
 const LOCATION_OPTIONS = [
   { id: "Maison (Intérieur)", label: "À la maison" },
   { id: "Cuisine", label: "Dans la cuisine" },
@@ -169,7 +181,8 @@ function LaboratoryPage() {
             requires_supervision: currentChallenge.requires_supervision ?? false,
             supervision_warning: currentChallenge.supervision_warning,
             difficulty: currentChallenge.difficulty,
-          }
+          },
+          estimated_duration_minutes: TIME_TO_MINUTES[selectedTime],
         }
       });
       toast.success("Défi commencé avec succès !");
@@ -255,14 +268,14 @@ function LaboratoryPage() {
         <header className="mb-10 text-center">
           <NayaAvatar size="md" className="mx-auto mb-2" />
           <div className="inline-flex items-center gap-2 rounded-full bg-brand px-4 py-1.5 text-xs font-black uppercase tracking-widest text-white border-2 border-ink shadow-brutal-sm">
-            <Sparkles className="size-4 animate-pulse" />
-            Génération Contextuelle
+            <Clock className="size-4 animate-pulse" />
+            L'Atelier du Temps
           </div>
           <h1 className="mt-4 font-display text-4xl font-extrabold tracking-tight md:text-5xl">
-            Inspirer Maintenant
+            Un défi taillé pour ton temps
           </h1>
           <p className="mx-auto mt-3 max-w-xl text-lg text-ink/70">
-            L'IA crée une activité sur-mesure basée sur votre temps, votre lieu actuel, et les talents cachés de votre enfant.
+            Dis à Naya combien de temps tu as, où tu es et ce que tu as sous la main : elle compose une activité qui tient exactement dans ce temps-là. C'est ici qu'on apprend, peu à peu, à faire avec le temps qu'on a.
           </p>
         </header>
 

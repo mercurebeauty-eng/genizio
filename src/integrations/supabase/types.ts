@@ -41,14 +41,19 @@ export type Database = {
     Tables: {
       challenges: {
         Row: {
+          academic_domain: string | null
+          academic_level_age: number | null
+          academic_reference_note: string | null
           ai_observations: string | null
           child_id: string
           completed_at: string | null
           created_at: string
+          declarative_award: Json | null
           description: string
           difficulty: string | null
           domain: string
           duration: string
+          estimated_duration_minutes: number | null
           id: string
           material_tags: string[]
           materials: Json
@@ -56,7 +61,10 @@ export type Database = {
           pedagogical_context: string | null
           progress: number
           proof_image_url: string | null
+          proof_mode: string
+          proof_target: Json | null
           requires_supervision: boolean | null
+          started_at: string | null
           status: Database["public"]["Enums"]["challenge_status"]
           steps: Json
           supervision_warning: string | null
@@ -66,14 +74,19 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          academic_domain?: string | null
+          academic_level_age?: number | null
+          academic_reference_note?: string | null
           ai_observations?: string | null
           child_id: string
           completed_at?: string | null
           created_at?: string
+          declarative_award?: Json | null
           description: string
           difficulty?: string | null
           domain: string
           duration: string
+          estimated_duration_minutes?: number | null
           id?: string
           material_tags?: string[]
           materials?: Json
@@ -81,7 +94,10 @@ export type Database = {
           pedagogical_context?: string | null
           progress?: number
           proof_image_url?: string | null
+          proof_mode?: string
+          proof_target?: Json | null
           requires_supervision?: boolean | null
+          started_at?: string | null
           status?: Database["public"]["Enums"]["challenge_status"]
           steps?: Json
           supervision_warning?: string | null
@@ -91,14 +107,19 @@ export type Database = {
           user_id: string
         }
         Update: {
+          academic_domain?: string | null
+          academic_level_age?: number | null
+          academic_reference_note?: string | null
           ai_observations?: string | null
           child_id?: string
           completed_at?: string | null
           created_at?: string
+          declarative_award?: Json | null
           description?: string
           difficulty?: string | null
           domain?: string
           duration?: string
+          estimated_duration_minutes?: number | null
           id?: string
           material_tags?: string[]
           materials?: Json
@@ -106,7 +127,10 @@ export type Database = {
           pedagogical_context?: string | null
           progress?: number
           proof_image_url?: string | null
+          proof_mode?: string
+          proof_target?: Json | null
           requires_supervision?: boolean | null
+          started_at?: string | null
           status?: Database["public"]["Enums"]["challenge_status"]
           steps?: Json
           supervision_warning?: string | null
@@ -311,6 +335,59 @@ export type Database = {
           },
         ]
       }
+      hypothesis_cycles: {
+        Row: {
+          child_id: string
+          created_at: string
+          final_diagnosis: string | null
+          hypotheses: Json
+          id: string
+          model: string | null
+          parent_narrative: string | null
+          resolved_at: string | null
+          status: string
+          trigger_domain: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          child_id: string
+          created_at?: string
+          final_diagnosis?: string | null
+          hypotheses: Json
+          id?: string
+          model?: string | null
+          parent_narrative?: string | null
+          resolved_at?: string | null
+          status?: string
+          trigger_domain?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          child_id?: string
+          created_at?: string
+          final_diagnosis?: string | null
+          hypotheses?: Json
+          id?: string
+          model?: string | null
+          parent_narrative?: string | null
+          resolved_at?: string | null
+          status?: string
+          trigger_domain?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "hypothesis_cycles_child_id_fkey"
+            columns: ["child_id"]
+            isOneToOne: false
+            referencedRelation: "child_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       material_suggestions: {
         Row: {
           first_seen_at: string
@@ -348,6 +425,50 @@ export type Database = {
             columns: ["product_id"]
             isOneToOne: false
             referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      observation_events: {
+        Row: {
+          child_id: string
+          id: string
+          occurred_at: string
+          payload: Json
+          processed: boolean
+          recorded_at: string
+          source: string
+          type: string
+          user_id: string
+        }
+        Insert: {
+          child_id: string
+          id?: string
+          occurred_at?: string
+          payload?: Json
+          processed?: boolean
+          recorded_at?: string
+          source?: string
+          type: string
+          user_id: string
+        }
+        Update: {
+          child_id?: string
+          id?: string
+          occurred_at?: string
+          payload?: Json
+          processed?: boolean
+          recorded_at?: string
+          source?: string
+          type?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "observation_events_child_id_fkey"
+            columns: ["child_id"]
+            isOneToOne: false
+            referencedRelation: "child_profiles"
             referencedColumns: ["id"]
           },
         ]
@@ -401,6 +522,50 @@ export type Database = {
             foreignKeyName: "orders_child_id_fkey"
             columns: ["child_id"]
             isOneToOne: false
+            referencedRelation: "child_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      pedagogical_twins: {
+        Row: {
+          child_id: string
+          competencies: Json
+          created_at: string
+          drivers: Json
+          id: string
+          interests: Json
+          last_computed_at: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          child_id: string
+          competencies?: Json
+          created_at?: string
+          drivers?: Json
+          id?: string
+          interests?: Json
+          last_computed_at?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          child_id?: string
+          competencies?: Json
+          created_at?: string
+          drivers?: Json
+          id?: string
+          interests?: Json
+          last_computed_at?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pedagogical_twins_child_id_fkey"
+            columns: ["child_id"]
+            isOneToOne: true
             referencedRelation: "child_profiles"
             referencedColumns: ["id"]
           },
@@ -547,14 +712,86 @@ export type Database = {
           },
         ]
       }
+      trait_series: {
+        Row: {
+          child_id: string
+          id: string
+          level: number
+          recorded_at: string
+          source_event_id: string | null
+          trait_key: string
+          user_id: string
+          value: number
+        }
+        Insert: {
+          child_id: string
+          id?: string
+          level: number
+          recorded_at?: string
+          source_event_id?: string | null
+          trait_key: string
+          user_id: string
+          value: number
+        }
+        Update: {
+          child_id?: string
+          id?: string
+          level?: number
+          recorded_at?: string
+          source_event_id?: string | null
+          trait_key?: string
+          user_id?: string
+          value?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "trait_series_child_id_fkey"
+            columns: ["child_id"]
+            isOneToOne: false
+            referencedRelation: "child_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "trait_series_source_event_id_fkey"
+            columns: ["source_event_id"]
+            isOneToOne: false
+            referencedRelation: "observation_events"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
+      apply_observation_to_twin: {
+        Args: {
+          p_event: Database["public"]["Tables"]["observation_events"]["Row"]
+        }
+        Returns: undefined
+      }
+      classify_trait: {
+        Args: { p_trend: number; p_value: number; p_variance: number }
+        Returns: string
+      }
       increment_child_talents: {
         Args: { p_child_id: string; p_deltas: Json }
         Returns: Json
+      }
+      record_trait_point: {
+        Args: {
+          p_alpha: number
+          p_child_id: string
+          p_field: string
+          p_level: number
+          p_occurred_at: string
+          p_signal: number
+          p_source_event_id: string
+          p_trait_key: string
+          p_user_id: string
+        }
+        Returns: undefined
       }
     }
     Enums: {

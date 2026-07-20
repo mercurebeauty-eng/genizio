@@ -14,6 +14,7 @@ import {
   generateSingleChallenge,
   assignTemplateChallenge,
 } from "@/lib/challenges.functions";
+import { recommendChallengesForChild, type RecommendedChallengeResult } from "@/lib/recommendations.functions";
 import { createOrder } from "@/lib/products.functions";
 import { NayaAvatar } from "@/components/NayaAvatar";
 import { TalentRadarChart } from "@/components/TalentRadarChart";
@@ -30,12 +31,19 @@ import { GenizioLoader } from "@/components/GenizioLoader";
 import { getActiveChallenge } from "@/lib/active-challenge";
 import { ShoppingBag } from "lucide-react";
 
+// "Mathématiques" et "Émotions et relations sociales" ajoutées (décision #39, item 3) : le
+// parent peut ainsi orienter volontairement Naya vers un domaine du référentiel académique
+// précis pour accélérer le signal de détection d'écart, plutôt que d'attendre que ces domaines
+// sortent naturellement de la rotation. L'id est injecté tel quel comme instruction de domaine
+// dans le prompt (cf. generateSingleChallenge) — garder des libellés explicites, pas des codes.
 const CATEGORIES = [
   { id: "all", label: "Suggéré par Naya (Diagnostic)" },
+  { id: "Mathématiques", label: "Mathématiques & Logique" },
   { id: "Sciences", label: "Sciences & Ingénierie" },
   { id: "Arts", label: "Arts & Créativité" },
   { id: "Langues", label: "Langues & Littérature" },
   { id: "Sport", label: "Sport & motricité" },
+  { id: "Émotions et relations sociales", label: "Émotions & Vie sociale" },
   { id: "Artisanat", label: "Artisanat & Métiers" },
   { id: "Agriculture", label: "Agriculture & Nature" },
   { id: "Entrepreneuriat", label: "Échanges & Commerce" },
@@ -142,6 +150,7 @@ function ChallengesPage() {
   const [isAssigningSingle, setIsAssigningSingle] = useState(false);
   const [currentGeneratedChallenge, setCurrentGeneratedChallenge] = useState<any | null>(null);
   const [loadingTextIndex, setLoadingTextIndex] = useState(0);
+  const [recommendation, setRecommendation] = useState<RecommendedChallengeResult | null>(null);
 
   const generate = useServerFn(generateChallenges);
   const update = useServerFn(updateChallenge);
@@ -150,6 +159,7 @@ function ChallengesPage() {
   const generateSingle = useServerFn(generateSingleChallenge);
   const assignSingle = useServerFn(assignTemplateChallenge);
   const createOrderFn = useServerFn(createOrder);
+  const recommendFn = useServerFn(recommendChallengesForChild);
 
   const LOADING_STEPS = [
     "Naya étudie la carte des talents...",
@@ -328,10 +338,20 @@ function ChallengesPage() {
     }
   };
 
+  const loadRecommendation = async () => {
+    try {
+      const res = await recommendFn({ data: { childId: profileId } });
+      setRecommendation(res || null);
+    } catch (e) {
+      console.error("Failed to load recommendation:", e);
+    }
+  };
+
   useEffect(() => {
     if (session) {
       void refetch();
       void loadAISynthesis();
+      void loadRecommendation();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [session, profileId]);
@@ -545,6 +565,41 @@ function ChallengesPage() {
 
           {/* RIGHT COLUMN: Challenges List */}
           <div className="lg:col-span-2 space-y-6">
+
+            {/* NAYA 2.0 Phase 5 — Recommandation Prioritaire */}
+            {recommendation && (
+              <div className="rounded-3xl border-[3px] border-ink bg-gradient-to-br from-amber-100 via-amber-50 to-white p-6 shadow-brutal mb-6">
+                <div className="flex flex-wrap items-center justify-between gap-3 mb-3">
+                  <span className="inline-flex items-center gap-1.5 rounded-full border-2 border-ink bg-amber-300 px-3 py-1 text-xs font-black uppercase tracking-wider text-ink shadow-brutal-sm">
+                    <Sparkles className="size-4 text-amber-800 fill-amber-800" />
+                    {recommendation.badgeLabel}
+                  </span>
+                  <span className="text-xs font-bold text-ink/50">Recommandation prioritaire Naya 2.0</span>
+                </div>
+                <p className="text-sm font-semibold text-ink/80 mb-4">
+                  {recommendation.pedagogicalReason}
+                </p>
+                {recommendation.challenge && (
+                  <div className="rounded-2xl border-2 border-ink bg-white p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                    <div>
+                      <span className="text-[10px] font-black uppercase text-brand tracking-widest">{recommendation.challenge.domain}</span>
+                      <h4 className="font-display text-lg font-black text-ink">{recommendation.challenge.title}</h4>
+                      <p className="text-xs text-ink/70 line-clamp-2 mt-0.5">{recommendation.challenge.description}</p>
+                    </div>
+                    <button
+                      onClick={() => {
+                        setStatus(recommendation.challenge.id, "in_progress");
+                        setOpenId(recommendation.challenge.id);
+                      }}
+                      className="inline-flex items-center justify-center gap-2 rounded-xl border-2 border-ink bg-brand px-5 py-2.5 text-xs font-bold text-white shadow-brutal-sm hover:-translate-y-0.5 active:translate-y-0 transition-all shrink-0 cursor-pointer"
+                    >
+                      <Play className="size-4 fill-white" />
+                      <span>Commencer cette mission</span>
+                    </button>
+                  </div>
+                )}
+              </div>
+            )}
             
             {/* 🧪 Unified Lab Panel */}
             <div id="genizio-lab" className="rounded-3xl border-[3px] border-ink bg-sky p-6 shadow-brutal md:p-8">
@@ -554,8 +609,8 @@ function ChallengesPage() {
                     <Beaker className="size-6" />
                   </span>
                   <div>
-                    <h3 className="font-display text-xl font-bold">Le Laboratoire de Génizio</h3>
-                    <p className="text-xs font-bold text-ink/60">Composez un défi d'apprentissage sur-mesure pour {child.name}</p>
+                    <h3 className="font-display text-xl font-bold">Composer un défi ciblé</h3>
+                    <p className="text-xs font-bold text-ink/60">Générez un défi d'apprentissage sur-mesure pour {child.name}</p>
                   </div>
                 </div>
               </div>

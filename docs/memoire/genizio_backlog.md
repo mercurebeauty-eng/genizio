@@ -4,7 +4,7 @@ description: Fonctionnalités futures et différées, avec pourquoi
 metadata:
   type: project
   status: living-document
-  last_updated: 2026-07-17
+  last_updated: 2026-07-20
 ---
 
 # Backlog
@@ -14,7 +14,7 @@ metadata:
 - **Application mobile dédiée** : Transformer cette PWA (TanStack Start) en application mobile native ou Capacitor pour simplifier la prise de photo.
 - **Paramétrage des récompenses** : Permettre au parent de configurer des cadeaux physiques ou monétaires débloqués en fonction des points de talents accumulés.
 - **Confirmation du guide de marque officiel** : Si l'utilisateur obtient un fichier de police source ou un guide de marque pour le logo, revérifier le choix "Fredoka" comme police d'affichage (cf. [[genizio-decisions]] #6 — actuellement une estimation visuelle, pas une valeur confirmée).
-- **Refonte UI globale** : L'utilisateur juge l'UI actuelle "AI-generated" / générique au-delà de la seule question de la police — discussion explicitement mise en pause le temps de traiter Naya en premier ("avant de parler de l'ui globale je vais parler de l'IA interne"). Reprendre cette conversation une fois Naya scoping terminé. Une tentative d'import via un wireframe Claude Design (`Génizio Wireframes.dc.html`) a échoué faute d'accès (voir [[genizio-etat-code]]) — reste à trouver un moyen d'en récupérer le contenu (export/partage claudeusercontent.com, ou fichier local).
+- **Refonte UI globale** : L'utilisateur juge l'UI actuelle "AI-generated" / générique au-delà de la seule question de la police — discussion explicitement mise en pause le temps de traiter Naya en premier ("avant de parler de l'ui globale je vais parler de l'IA interne"). **Mise à jour 2026-07-20 : le scoping Naya est fait** ([[genizio-naya-systeme-comprehension]], décision #27) — la conversation refonte UI peut être reprise quand l'utilisateur le souhaite. Une tentative d'import via un wireframe Claude Design (`Génizio Wireframes.dc.html`) a échoué faute d'accès (voir [[genizio-etat-code]]) — reste à trouver un moyen d'en récupérer le contenu (export/partage claudeusercontent.com, ou fichier local).
 - **Audit ligne à ligne post-rename** : `genizio_etat_code.md` "Ce qui est en place et fonctionne" date du 2026-07-15 et n'a pas été re-vérifié fonctionnellement depuis (seuls les textes/branding ont changé). Faire un passage de vérification directe dans le navigateur des flux clés (génération de défi, validation de preuve) avant la prochaine session de fonctionnalités.
 - **Vue Postgres dédiée pour le Mur public** : la policy RLS publique sur `child_profiles` (cf. [[genizio-decisions]] #10) expose encore toutes les colonnes (âge, ville, pays, talents...) des profils ayant un défi complété, alors que `/feed` n'a besoin que de `name` et `avatar_color`. Créer une vue/RPC dédiée n'exposant que ces deux colonnes, puis migrer `feed.tsx` dessus.
 - **Audit RLS complet du schéma — fait le 2026-07-17** (cf. [[genizio-decisions]] #22) : toutes les tables + buckets storage passés en revue, 4 failles réelles trouvées et corrigées (posts, proofs, orders, generateChallenges). `get_advisors` propre hormis 3 items déjà connus/acceptés (material_suggestions sans policy par design, listing public des buckets, protection mot de passe désactivée — non pertinent en Google-only). Reste : re-auditer si de nouvelles tables/buckets sont ajoutés, ce n'est pas un audit "une fois pour toutes".

@@ -1,0 +1,569 @@
+import { createServerFn } from "@tanstack/react-start";
+import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { callClaude, finalizeChallenge, PROOF_MODE_INSTRUCTION, ACADEMIC_REFERENTIAL_INSTRUCTION } from "@/lib/challenges.functions";
+import { TALENT_KEY_LABELS } from "@/lib/talent-buckets";
+import { z } from "zod";
+
+const ACADEMIC_DOMAIN_LABELS: Record<string, string> = {
+  mathematiques: "mathématiques",
+  langage: "langage",
+  sciences: "sciences",
+  corporelle: "motricité/sport",
+  sociale: "compétences sociales",
+  emotionnelle: "gestion des émotions",
+  entrepreneuriale: "esprit d'initiative",
+  artisanale: "habileté manuelle",
+  spatiale: "repérage dans l'espace",
+};
+
+// NAYA 2.0 Phase 3a — moteur de génération d'hypothèses causales (cf. genizio-decisions #32).
+// Premier point IA du pipeline NAYA. Rôle *raisonnement* → Sonnet (décision #27 : on paie le
+// modèle premium quand le système doit réfléchir, ici uniquement sur anomalie détectée, volume
+// faible). Résout la question ouverte sync/async du plan §7 en faveur du synchrone : server
+// function TanStack réutilisant callClaude (pattern déjà éprouvé pour generateChallenges/
+// validateChallengeProof), aucune nouvelle infra Edge Function, latence hors du chemin critique
+// (déclenché en fire-and-forget au chargement du Portfolio, pas sur une action urgente).
+
+const ALLOWED_CAUSES = [
+  "METHOD_MISMATCH",
+  "PERFORMANCE_ANXIETY",
+  "LACK_OF_ENGAGEMENT",
+  "CONCEPTUAL_GAP",
+  // Cause "en avance" (cf. genizio-decisions #38) : l'enfant réussit sans effort des défis
+  // dont le contenu correspond en fait à des enfants plus âgés — signe possible qu'il n'est
+  // pas assez challengé. Seule cause qui n'est PAS un problème à résoudre — l'utilisateur a
+  // explicitement demandé le même traitement (investigation) pour ce cas que pour un retard.
+  "READY_FOR_MORE",
+  "OTHER",
+] as const;
+
+// NAYA 2.0 Phase 3a, reconstruit (cf. genizio-decisions #38) : le déclencheur d'origine
+// (note scolaire anormale) a été retiré en décision #37 — remplacé par un écart RÉPÉTÉ entre
+// le référentiel académique interne et l'âge réel de l'enfant, mesuré sur ses défis
+// RÉELLEMENT complétés dans l'app (jamais déclaratif). 0 IA pour la détection elle-même,
+// exactement comme l'ancien Z-score — Sonnet n'intervient qu'une fois un écart confirmé,
+// pour raisonner sur le POURQUOI.
+const GAP_WINDOW = 4; // nombre de défis consécutifs requis dans le même sens (décision utilisateur)
+const GAP_THRESHOLD_YEARS = 1; // écart minimal (en années) pour compter comme "en retard"/"en avance"
+
+async function narrateForParent(
+  childName: string,
+  childAge: number,
+  domainLabel: string,
+  direction: "BEHIND" | "AHEAD",
+  hypotheses: { cause: string; evidence_log: { fact: string }[] }[]
+): Promise<string | null> {
+  const sanitizeFact = (fact: string) => {
+    return fact
+      .replace(/z\s*=\s*-?\d+(\.\d+)?/gi, "écart significatif")
+      .replace(/\b\d+(\.\d+)?\s*\/\s*\d+\b/g, "évaluation récente")
+      .replace(/\b0\.\d+\b/g, "niveau très élevé")
+      .replace(/\b\d+\s*observations?\b/gi, "plusieurs observations")
+      .replace(/\b\d{1,2}\s*ans?\b/gi, "cette tranche d'âge");
+  };
+
+  const top = hypotheses.slice(0, 2).map((h) => ({
+    piste: h.cause,
+    elements_observes: h.evidence_log.map((e) => sanitizeFact(e.fact)),
+  }));
+
+  const toneInstruction = direction === "AHEAD"
+    ? `Le ton doit être ENTHOUSIASTE et valorisant — ${childName} semble prêt·e pour des défis plus stimulants en ${domainLabel}, ce n'est jamais un problème, c'est une bonne nouvelle à explorer.`
+    : `Le ton doit être chaleureux et jamais alarmiste — c'est une observation provisoire que Naya continue d'explorer, pas un jugement sur ${childName} ni sur le parent.`;
+
+  const prompt = `Tu es Naya, la mentore IA bienveillante de Génizio. Tu écris directement pour le PARENT de ${childName}, ${childAge} ans, à propos d'une observation récente en ${domainLabel}.
+
+RÈGLES ABSOLUES, sans exception :
+- INTERDICTION TOTALE de tout nombre, pourcentage, score ou âge précis dans ta réponse — même si les données ci-dessous en contiennent. Traduis TOUJOURS en tendances qualitatives, en langage courant.
+- INTERDICTION d'utiliser les étiquettes techniques ("METHOD_MISMATCH", "READY_FOR_MORE", etc.) ou tout mot à consonance clinique/diagnostique ("trouble", "déficit", "anomalie", "cause", "diagnostic").
+- Ne présente JAMAIS ceci comme une conclusion, un verdict ou un jugement définitif. ${toneInstruction}
+- Commence par la piste la plus probable ; n'évoque la seconde que si elle semble vraiment plausible aussi.
+- 2 à 3 phrases courtes maximum, en français naturel, comme si tu parlais directement au parent.
+
+Ce que Naya a observé (données internes à traduire fidèlement en langage humain, ne JAMAIS citer telles quelles) :
+${JSON.stringify(top, null, 2)}
+
+Réponds uniquement avec le texte final, sans guillemets, sans préambule, sans Markdown.`;
+
+  try {
+    const text = (await callClaude(prompt, false, undefined, 400, 2)).trim();
+    if (!text) return null;
+
+    let cleaned = text.replace(/^[\d\s.#-]+/gm, "").trim();
+    const digitWords: Record<string, string> = {
+      "0": "zéro", "1": "un", "2": "deux", "3": "trois", "4": "quatre",
+      "5": "cinq", "6": "six", "7": "sept", "8": "huit", "9": "neuf"
+    };
+    cleaned = cleaned.replace(/\b([0-9])\b/g, (m) => digitWords[m] || m);
+
+    if (/\d/.test(cleaned)) {
+      console.warn("narrateForParent: chiffre détecté malgré la consigne, narration rejetée:", cleaned);
+      return null;
+    }
+    return cleaned;
+  } catch (err) {
+    console.error("narrateForParent failed (non-fatal, cycle stocké sans narration):", err);
+    return null;
+  }
+}
+
+const EnsureInput = z.object({ childId: z.string().uuid() });
+
+export const ensureHypothesesForChild = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .validator((input: unknown) => EnsureInput.parse(input))
+  .handler(async ({ data, context }) => {
+    const { supabase, userId } = context;
+
+    const { data: child, error: childErr } = await supabase
+      .from("child_profiles")
+      .select("id, name, age")
+      .eq("id", data.childId)
+      .eq("user_id", userId)
+      .maybeSingle();
+    if (childErr || !child) throw new Error("Profil enfant introuvable ou accès refusé.");
+
+    const { data: existingCycles } = await supabase
+      .from("hypothesis_cycles")
+      .select("id, trigger_domain, status, hypotheses, parent_narrative")
+      .eq("child_id", data.childId);
+
+    // Résilience : un cycle déjà raisonné (Sonnet) mais dont la narration (Haiku) a échoué
+    // précédemment n'a pas besoin de repasser par le raisonnement — seule la narration,
+    // moins coûteuse, est retentée.
+    const unnarrated = (existingCycles ?? []).find((c) => !c.parent_narrative);
+    if (unnarrated) {
+      const hyps = (unnarrated.hypotheses as { cause: string; evidence_log: { fact: string }[] }[]) || [];
+      const domainLabel = ACADEMIC_DOMAIN_LABELS[unnarrated.trigger_domain ?? ""] ?? "apprentissage";
+      const direction = hyps[0]?.cause === "READY_FOR_MORE" ? "AHEAD" as const : "BEHIND" as const;
+      const narrative = await narrateForParent(child.name, child.age, domainLabel, direction, hyps);
+      if (narrative) {
+        const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+        const { data: updated } = await supabaseAdmin
+          .from("hypothesis_cycles")
+          .update({ parent_narrative: narrative })
+          .eq("id", unnarrated.id)
+          .select("*")
+          .single();
+        return { generated: true as const, cycle: updated };
+      }
+      return { generated: false as const };
+    }
+
+    // Détection : les GAP_WINDOW derniers défis académiques complétés, groupés par domaine.
+    const { data: recentAcademic } = await supabase
+      .from("challenges")
+      .select("academic_domain, academic_level_age, completed_at")
+      .eq("child_id", data.childId)
+      .eq("status", "completed")
+      .not("academic_domain", "is", null)
+      .order("completed_at", { ascending: false })
+      .limit(30);
+
+    const byDomain = new Map<string, number[]>();
+    for (const c of recentAcademic ?? []) {
+      if (!c.academic_domain || c.academic_level_age == null) continue;
+      const arr = byDomain.get(c.academic_domain) ?? [];
+      if (arr.length < GAP_WINDOW) arr.push(c.academic_level_age);
+      byDomain.set(c.academic_domain, arr);
+    }
+
+    const openDomains = new Set(
+      (existingCycles ?? []).filter((c) => c.status === "open" && c.trigger_domain).map((c) => c.trigger_domain as string)
+    );
+
+    let triggerDomain: string | null = null;
+    let direction: "BEHIND" | "AHEAD" | null = null;
+    for (const [domain, levels] of byDomain.entries()) {
+      if (levels.length < GAP_WINDOW || openDomains.has(domain)) continue;
+      const allBehind = levels.every((l) => child.age - l >= GAP_THRESHOLD_YEARS);
+      const allAhead = levels.every((l) => l - child.age >= GAP_THRESHOLD_YEARS);
+      if (allBehind || allAhead) {
+        triggerDomain = domain;
+        direction = allBehind ? "BEHIND" : "AHEAD";
+        break;
+      }
+    }
+
+    if (!triggerDomain || !direction) return { generated: false as const };
+
+    const domainLabel = ACADEMIC_DOMAIN_LABELS[triggerDomain] ?? triggerDomain;
+
+    // Snapshot du Jumeau Pédagogique pour le débruitage (même logique qu'avant le retrait
+    // des notes : une compétence Gardner déjà forte dans le domaine change la lecture).
+    const { data: twin } = await supabase
+      .from("pedagogical_twins")
+      .select("drivers, competencies, interests")
+      .eq("child_id", data.childId)
+      .maybeSingle();
+
+    const snapshot = {
+      enfant: { prenom: child.name, age: child.age },
+      ecart_referentiel: {
+        domaine: domainLabel,
+        direction: direction === "BEHIND" ? "en retard sur le référentiel" : "en avance sur le référentiel",
+        niveaux_recents_observes: byDomain.get(triggerDomain),
+      },
+      jumeau_pedagogique: {
+        moteurs: twin?.drivers ?? {},
+        competences_gardner: twin?.competencies ?? {},
+        interets: twin?.interests ?? {},
+      },
+    };
+
+    const systemReminders = `Tu es le moteur de diagnostic de Naya, l'IA mentore de Génizio. Tu opères selon le PARADIGME D'INVESTIGATION : un écart au référentiel n'est JAMAIS un verdict, c'est un signal dont tu dois rechercher la cause profonde. Tu génères un arbre d'hypothèses causales pondérées, jamais une conclusion définitive.
+
+RÈGLE ABSOLUE : raisonne UNIQUEMENT à partir des données fournies dans le snapshot. Si un signal est absent, ne l'invente pas.
+
+LES CAUSES POSSIBLES (utilise ces libellés exacts) :
+- METHOD_MISMATCH : la méthode/le format des défis ne convient pas ; la connaissance existe mais ne s'exprime pas dans ce format. Pertinent uniquement si direction = "en retard".
+- PERFORMANCE_ANXIETY : stress/pression face aux défis. Pertinent uniquement si direction = "en retard" ET un indice contextuel existe (moteurs bas, persévérance en chute) — sinon ne pas surpondérer.
+- LACK_OF_ENGAGEMENT : désintérêt pour le domaine, déconnexion des centres d'intérêt. Pertinent dans les deux directions (un enfant "en avance" peut aussi s'ennuyer par manque d'intérêt réel pour le sujet, pas seulement par facilité).
+- CONCEPTUAL_GAP : lacune conceptuelle réelle sur des prérequis. Pertinent UNIQUEMENT si direction = "en retard". ATTENTION : c'est l'hypothèse la plus proche d'un verdict — ne l'attribue une probabilité élevée QUE si aucun signal de compétence liée forte n'existe.
+- READY_FOR_MORE : l'enfant a réellement les moyens d'aller plus loin dans ce domaine. Pertinent UNIQUEMENT si direction = "en avance" — dans ce cas, c'est presque toujours l'hypothèse dominante, sauf indice contraire clair.
+- OTHER : uniquement si aucune des causes ci-dessus ne colle ; explique alors précisément.
+
+DIRECTIVES DE SORTIE STRICTES :
+- Génère 1 à 3 hypothèses cohérentes avec la direction indiquée (n'invente pas de cause "en retard" pour un écart "en avance", et inversement), classées de la plus probable à la moins probable.
+- La somme des "prior_probability" DOIT valoir 1.0.
+- Chaque hypothèse cite dans "evidence_log" les nœuds réels du snapshot qui la justifient.
+- "rationale" : explique en français clair le mécanisme psychopédagogique suspecté, en 1-2 phrases.
+- Réponds EXCLUSIVEMENT en JSON brut valide selon ce schéma, sans texte autour, sans bloc Markdown :
+{"hypotheses":[{"cause":"READY_FOR_MORE","prior_probability":0.7,"rationale":"...","evidence_log":[{"source_node":"...","fact":"...","weight_impact":"POSITIVE_HIGH"}]}]}
+"weight_impact" ∈ {"POSITIVE_HIGH","POSITIVE_LOW","NEGATIVE"}.`;
+
+    const userContent = `Voici le cas à diagnostiquer :\n${JSON.stringify(snapshot, null, 2)}`;
+
+    const NAYA_REASONING_MODEL = "claude-sonnet-5";
+    const raw = await callClaude(
+      `${systemReminders}\n\n${userContent}`,
+      true,
+      undefined,
+      4000,
+      3,
+      undefined,
+      NAYA_REASONING_MODEL
+    );
+
+    let parsed: { hypotheses?: unknown };
+    try {
+      parsed = JSON.parse(raw);
+    } catch {
+      throw new Error("Réponse IA invalide (JSON non parsable).");
+    }
+
+    const HypothesisSchema = z.object({
+      cause: z.string(),
+      prior_probability: z.number(),
+      rationale: z.string().default(""),
+      evidence_log: z
+        .array(
+          z.object({
+            source_node: z.string().default(""),
+            fact: z.string().default(""),
+            weight_impact: z.string().default("POSITIVE_LOW"),
+          })
+        )
+        .default([]),
+    });
+
+    let list: z.infer<typeof HypothesisSchema>[];
+    try {
+      list = z.array(HypothesisSchema).parse(parsed.hypotheses ?? []);
+    } catch {
+      throw new Error("Réponse IA invalide (schéma d'hypothèses).");
+    }
+
+    list = list.filter((h) => (ALLOWED_CAUSES as readonly string[]).includes(h.cause) && h.prior_probability > 0);
+    if (list.length === 0) throw new Error("Aucune hypothèse valide générée.");
+
+    const total = list.reduce((s, h) => s + h.prior_probability, 0);
+    const hypotheses = list
+      .map((h) => {
+        const prior = Number((h.prior_probability / total).toFixed(4));
+        return {
+          cause: h.cause,
+          prior_probability: prior,
+          current_probability: prior,
+          rationale: h.rationale,
+          evidence_log: h.evidence_log,
+        };
+      })
+      .sort((a, b) => b.prior_probability - a.prior_probability);
+
+    const parentNarrative = await narrateForParent(child.name, child.age, domainLabel, direction, hypotheses);
+
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: cycle, error: insertErr } = await supabaseAdmin
+      .from("hypothesis_cycles")
+      .insert({
+        child_id: data.childId,
+        user_id: userId,
+        trigger_domain: triggerDomain,
+        hypotheses,
+        model: NAYA_REASONING_MODEL,
+        status: "open",
+        parent_narrative: parentNarrative,
+      })
+      .select("*")
+      .single();
+
+    if (insertErr) throw new Error(insertErr.message);
+
+    return { generated: true as const, cycle };
+  });
+
+// ── NAYA 2.0 Phase 3b — Génération de Défi Discriminant & Boucle Bayésienne ──
+
+const DiscriminantInput = z.object({
+  childId: z.string().uuid(),
+});
+
+export const generateDiscriminantChallenge = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .validator((input: unknown) => DiscriminantInput.parse(input))
+  .handler(async ({ data, context }) => {
+    const { supabase, userId } = context;
+
+    // 1. Ownership & profil enfant
+    const { data: child, error: childErr } = await supabase
+      .from("child_profiles")
+      .select("id, name, age, interests, talents")
+      .eq("id", data.childId)
+      .eq("user_id", userId)
+      .maybeSingle();
+    if (childErr || !child) throw new Error("Profil enfant introuvable.");
+
+    // 2. Récupère le cycle ouvert le plus récent
+    const { data: cycle, error: cycleErr } = await supabase
+      .from("hypothesis_cycles")
+      .select("id, hypotheses, trigger_domain")
+      .eq("child_id", data.childId)
+      .eq("status", "open")
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    if (cycleErr || !cycle) {
+      return { ok: false as const, reason: "NO_OPEN_CYCLE" as const };
+    }
+
+    const hypotheses = (cycle.hypotheses as { cause: string; current_probability: number }[]) || [];
+    if (hypotheses.length === 0) return { ok: false as const, reason: "NO_HYPOTHESES" as const };
+
+    // Hypothèse prioritaire (celle avec la plus grande probabilité actuelle)
+    const topHypothesis = hypotheses[0];
+    const isReadyForMore = topHypothesis.cause === "READY_FOR_MORE";
+
+    // Domaine concerné — stocké directement sur le cycle depuis le nouveau déclencheur
+    // (cf. genizio-decisions #38), plus simple que l'ancienne indirection par anomalie.
+    const subject = ACADEMIC_DOMAIN_LABELS[cycle.trigger_domain ?? ""] ?? "apprentissage";
+
+    // 3. Prompt d'IA pour concevoir le défi discriminant
+    const interestsStr = (child.interests || []).join(", ") || "expérimentation, création";
+    const objective = isReadyForMore
+      ? `vérifier si ${child.name} est vraiment prêt·e pour un niveau plus avancé en ${subject}`
+      : `tester l'hypothèse causale "${topHypothesis.cause}" concernant des difficultés récentes en ${subject}`;
+    const prompt = `Tu es Naya, la mentore IA. Tu dois concevoir un DÉFI DISCRIMINANT sur mesure pour ${child.name}, ${child.age} ans.
+Objectif pédagogique : ${objective}.
+
+Centres d'intérêt de l'enfant : ${interestsStr}
+
+Règles de conception selon l'hypothèse à tester :
+- Si METHOD_MISMATCH : Propose un défi hautement pratique, visuel ou manipulatoire en ${subject} qui contourne la présentation scolaire théorique habituelle.
+- Si PERFORMANCE_ANXIETY : Propose un défi ludique, décontracté et sans pression de temps ni d'évaluation, axé uniquement sur le plaisir d'essayer.
+- Si LACK_OF_ENGAGEMENT : Ancre le défi à 100% sur un des centres d'intérêt de l'enfant (${interestsStr}) pour raviver la curiosité.
+- Si CONCEPTUAL_GAP : Propose une micro-activité fondamentale pas-à-pas très accessible pour vérifier les bases de manière amusante.
+- Si READY_FOR_MORE : Propose un défi sensiblement PLUS AVANCÉ que d'habitude en ${subject} (niveau au-dessus de l'âge de l'enfant selon le référentiel ci-dessous), présenté comme une mission spéciale/bonus valorisante — jamais comme un test ou une punition.
+
+${PROOF_MODE_INSTRUCTION}
+
+${ACADEMIC_REFERENTIAL_INSTRUCTION}
+
+Réponds EXCLUSIVEMENT avec un objet JSON strict au format suivant :
+{
+  "title": "Titre stimulant et captivant",
+  "domain": "Domaine (ex: Logique, Créativité, Sciences, etc.)",
+  "description": "Consigne claire, encourageante et adaptée à l'âge de l'enfant",
+  "duration": "15 min",
+  "steps": ["Étape 1", "Étape 2", "Étape 3"],
+  "materials": ["Matériel 1", "Matériel 2"],
+  "material_tags": ["tag1", "tag2"],
+  "difficulty": "moyen",
+  "proof_mode": "photo" ou "declarative",
+  "proof_target": {"metric": "...", "value": 20} (uniquement si declarative),
+  "declarative_award": {"corporelle": 2} (uniquement si declarative),
+  "academic_domain": "mathematiques" | "langage" | "sciences" | "corporelle" | "sociale" | "emotionnelle" | "entrepreneuriale" | "artisanale" | "spatiale" | null,
+  "academic_level_age": 14 (uniquement si academic_domain non null),
+  "academic_reference_note": "..." (uniquement si academic_domain non null)
+}`;
+
+    const rawJson = await callClaude(prompt, true, undefined, 1000, 2);
+    let parsed: any;
+    try {
+      parsed = JSON.parse(rawJson);
+    } catch {
+      throw new Error("Erreur de génération du défi discriminant.");
+    }
+
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const pedagogicalContext = JSON.stringify({
+      cycle_id: cycle.id,
+      target_cause: topHypothesis.cause,
+      is_discriminant: true,
+      subject,
+    });
+
+    // Correctif (2026-07-20, décision #34) : cette insertion contournait entièrement
+    // finalizeChallenge (filet de sécurité + difficulté + material_tags) — un défi
+    // discriminant généré par IA pouvait donc partir sans requires_supervision même
+    // s'il impliquait feu/objets tranchants/etc. Même point de passage obligé que
+    // tous les autres générateurs de défis de l'app (cf. assignTemplateChallenge).
+    const safeTitle = (parsed.title || `Mission spéciale Naya : ${subject}`) as string;
+    const safeDescription = (parsed.description || "") as string;
+    const safeSteps = (parsed.steps || []) as string[];
+    const safeMaterials = (parsed.materials || []) as string[];
+
+    const { data: challenge, error: insertErr } = await supabaseAdmin
+      .from("challenges")
+      .insert({
+        child_id: data.childId,
+        user_id: userId,
+        domain: parsed.domain || "Exploration",
+        description: safeDescription,
+        duration: parsed.duration || "15 min",
+        steps: safeSteps,
+        materials: safeMaterials,
+        status: "todo",
+        progress: 0,
+        pedagogical_context: pedagogicalContext,
+        ...finalizeChallenge(
+          {
+            title: safeTitle,
+            description: safeDescription,
+            steps: safeSteps,
+            materials: safeMaterials,
+            material_tags: parsed.material_tags,
+            difficulty: parsed.difficulty,
+            proof_mode: parsed.proof_mode,
+            proof_target: parsed.proof_target,
+            declarative_award: parsed.declarative_award,
+            academic_domain: parsed.academic_domain,
+            academic_level_age: parsed.academic_level_age,
+            academic_reference_note: parsed.academic_reference_note,
+          },
+          child.age
+        ),
+      })
+      .select("*")
+      .single();
+
+    if (insertErr) throw new Error(insertErr.message);
+
+    return { ok: true as const, challenge, targetCause: topHypothesis.cause };
+  });
+
+// ── Fonction interne de mise à jour bayésienne lors du résultat d'un défi discriminant ──
+
+export async function processDiscriminantResult(
+  challengeId: string,
+  action: "COMPLETED" | "ABANDONED",
+  aiValidated: boolean = true
+): Promise<{ processed: boolean; resolved?: boolean; finalDiagnosis?: string }> {
+  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+
+  // 1. Récupère le défi et son contexte pédagogique
+  const { data: challenge } = await supabaseAdmin
+    .from("challenges")
+    .select("id, pedagogical_context")
+    .eq("id", challengeId)
+    .maybeSingle();
+
+  if (!challenge?.pedagogical_context) return { processed: false };
+
+  let context: any;
+  try {
+    context = JSON.parse(challenge.pedagogical_context);
+  } catch {
+    return { processed: false };
+  }
+
+  if (!context?.is_discriminant || !context?.cycle_id || !context?.target_cause) {
+    return { processed: false };
+  }
+
+  // 2. Récupère le cycle d'hypothèses
+  const { data: cycle } = await supabaseAdmin
+    .from("hypothesis_cycles")
+    .select("id, hypotheses, status")
+    .eq("id", context.cycle_id)
+    .maybeSingle();
+
+  if (!cycle || cycle.status !== "open") return { processed: false };
+
+  const hypotheses = (cycle.hypotheses as { cause: string; current_probability: number; prior_probability: number }[]) || [];
+  if (hypotheses.length === 0) return { processed: false };
+
+  const targetCause = context.target_cause;
+
+  // 3. Mise à jour bayésienne des probabilités
+  const updated = hypotheses.map((h) => {
+    let mult = 1.0;
+    if (h.cause === targetCause) {
+      if (action === "COMPLETED" && aiValidated) {
+        mult = 1.8; // Succès au défi discriminant -> fort renforcement de la piste
+      } else if (action === "ABANDONED") {
+        mult = (h.cause === "PERFORMANCE_ANXIETY" || h.cause === "LACK_OF_ENGAGEMENT") ? 1.5 : 0.6;
+      }
+    } else if (targetCause === "METHOD_MISMATCH" && h.cause === "CONCEPTUAL_GAP" && action === "COMPLETED") {
+      mult = 0.4; // Réussite sur méthode alternative dément un manque de capacités réelles
+    }
+    return { ...h, current_probability: h.current_probability * mult };
+  });
+
+  // Renormalisation somme = 1.0
+  const total = updated.reduce((s, h) => s + h.current_probability, 0);
+  const normalized = updated
+    .map((h) => ({
+      ...h,
+      current_probability: Number((h.current_probability / (total || 1)).toFixed(4)),
+    }))
+    .sort((a, b) => b.current_probability - a.current_probability);
+
+  const topHypothesis = normalized[0];
+
+  // Seuil de convergence : probabilité >= 0.65
+  const isResolved = topHypothesis.current_probability >= 0.65;
+
+  const updatePayload: any = {
+    hypotheses: normalized,
+    updated_at: new Date().toISOString(),
+  };
+
+  if (isResolved) {
+    updatePayload.status = "resolved";
+    updatePayload.final_diagnosis = topHypothesis.cause;
+    // Manquait dans la version d'origine : resolved_at existe dans le schéma
+    // (Phase 3a) précisément pour marquer ce moment, jamais renseigné jusqu'ici.
+    updatePayload.resolved_at = new Date().toISOString();
+  }
+
+  // Correctif (2026-07-20, décision #34) : cet update échouait silencieusement sur
+  // TOUTE mise à jour bayésienne — updated_at n'existait pas encore sur
+  // hypothesis_cycles (PGRST204, confirmé en direct avant correctif) et l'erreur
+  // n'était jamais vérifiée. La colonne a été ajoutée (migration
+  // 20260720170000) ; on vérifie maintenant explicitement l'erreur en plus, pour
+  // qu'un futur problème similaire ne redevienne pas silencieux.
+  const { error: updateErr } = await supabaseAdmin
+    .from("hypothesis_cycles")
+    .update(updatePayload)
+    .eq("id", cycle.id);
+
+  if (updateErr) {
+    console.error("processDiscriminantResult: échec de la mise à jour bayésienne:", updateErr);
+    return { processed: false };
+  }
+
+  return { processed: true, resolved: isResolved, finalDiagnosis: topHypothesis.cause };
+}
+

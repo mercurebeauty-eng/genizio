@@ -4,6 +4,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { supabase } from "@/integrations/supabase/client";
 import { useSession } from "@/hooks/use-session";
 import { getChildAISynthesis } from "@/lib/challenges.functions";
+import { ensureHypothesesForChild } from "@/lib/hypotheses.functions";
 import { getChildGuild } from "@/lib/guilds";
 import { AppTabBar } from "@/components/AppTabBar";
 import { TalentRadarChart } from "@/components/TalentRadarChart";
@@ -23,7 +24,9 @@ import {
   Wrench,
   Heart,
   Binary,
-  BookOpen
+  BookOpen,
+  Search,
+  Sparkles,
 } from "lucide-react";
 import { InviteMentorDialog } from "@/components/mentors/InviteMentorDialog";
 import { AppHeader } from "@/components/AppHeader";
@@ -141,6 +144,15 @@ type Challenge = {
   proof_image_url: string | null;
 };
 
+// NAYA 2.0 Phase 4 — cf. genizio-decisions #33. Seule parent_narrative est lue ici : le
+// JSON hypotheses (causes, probabilités, evidence_log) reste strictement interne, jamais
+// exposé à ce niveau de l'app, conforme à la règle "jamais de probabilité brute" (§1 du
+// plan NAYA).
+type OpenHypothesisCycle = {
+  id: string;
+  parent_narrative: string | null;
+};
+
 function PortfolioPage() {
   const { profileId } = Route.useParams();
   const { session, loading } = useSession();
@@ -148,12 +160,14 @@ function PortfolioPage() {
 
   const [child, setChild] = useState<Child | null>(null);
   const [challenges, setChallenges] = useState<Challenge[]>([]);
+  const [openCycle, setOpenCycle] = useState<OpenHypothesisCycle | null>(null);
   const [fetching, setFetching] = useState(true);
   const [synthesis, setSynthesis] = useState("");
   const [fetchingSynthesis, setFetchingSynthesis] = useState(false);
   const [mentorCount, setMentorCount] = useState(0);
 
   const fetchSynthesis = useServerFn(getChildAISynthesis);
+  const ensureHypotheses = useServerFn(ensureHypothesesForChild);
 
   useEffect(() => {
     if (!loading && !session) navigate({ to: "/auth", replace: true });
@@ -172,14 +186,37 @@ function PortfolioPage() {
       supabase
         .from("child_mentors")
         .select("id", { count: "exact", head: true })
+        .eq("child_id", profileId),
+      supabase
+        .from("hypothesis_cycles")
+        .select("id, parent_narrative")
         .eq("child_id", profileId)
-    ]).then(([c, ch, cm]) => {
+        .eq("status", "open")
+        .not("parent_narrative", "is", null)
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .maybeSingle(),
+    ]).then(([c, ch, cm, hc]) => {
       setChild((c.data as Child) ?? null);
       setChallenges((ch.data ?? []) as Challenge[]);
       setMentorCount(cm.count ?? 0);
+      setOpenCycle((hc.data as OpenHypothesisCycle) ?? null);
       setFetching(false);
     });
   }, [session, profileId]);
+
+  const refetchOpenCycle = () => {
+    supabase
+      .from("hypothesis_cycles")
+      .select("id, parent_narrative")
+      .eq("child_id", profileId)
+      .eq("status", "open")
+      .not("parent_narrative", "is", null)
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle()
+      .then(({ data }) => setOpenCycle((data as OpenHypothesisCycle) ?? null));
+  };
 
   useEffect(() => {
     if (!session) return;
@@ -188,6 +225,19 @@ function PortfolioPage() {
       .then((resp) => setSynthesis(resp || ""))
       .catch(() => setSynthesis(""))
       .finally(() => setFetchingSynthesis(false));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [session, profileId]);
+
+  // NAYA 2.0 Phase 3a/4, déclencheur reconstruit (cf. genizio-decisions #38) : plus
+  // d'anomalie de note, mais un écart répété entre le référentiel académique et l'âge
+  // réel de l'enfant sur ses défis complétés. Fire-and-forget, idempotent côté serveur
+  // (ne coûte un appel IA que si un écart est confirmé ou qu'un cycle attend sa narration),
+  // même pattern qu'avant le retrait des notes.
+  useEffect(() => {
+    if (!session) return;
+    ensureHypotheses({ data: { childId: profileId } })
+      .then((res) => { if (res.generated) refetchOpenCycle(); })
+      .catch(() => {});
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [session, profileId]);
 
@@ -238,6 +288,43 @@ function PortfolioPage() {
             );
           })()}
 
+          {/* NAYA 2.0 Phase 4 — "Ce que Naya a remarqué" (cf. genizio-decisions #33).
+              Visuellement distincte du Portrait (ambre = provisoire, pas la synthèse
+              stable en sky ci-dessous) : jamais présentée comme un verdict, jamais de
+              chiffre — seul parent_narrative (texte déjà nettoyé côté serveur) est
+              rendu ici. Absente du DOM si aucun cycle ouvert n'existe encore : ne
+              jamais afficher un état "rien détecté" qui sonnerait comme un jugement. */}
+          {openCycle?.parent_narrative && (
+            <div className="rounded-3xl border-[3px] border-ink bg-amber-50 p-6 shadow-brutal">
+              <div className="mb-3 flex items-center gap-3">
+                <NayaAvatar size="sm" thoughts={[`Je réfléchis à quelque chose sur ${child.name}...`]} />
+                <div>
+                  <span className="inline-flex items-center gap-1.5 rounded-full border-2 border-ink bg-amber-200 px-2.5 py-0.5 text-[10px] font-black uppercase tracking-wider text-amber-900">
+                    <Search className="size-3" />
+                    Naya enquête encore
+                  </span>
+                  <h3 className="mt-1 font-display text-lg font-bold text-ink">Ce que Naya a remarqué</h3>
+                </div>
+              </div>
+              <p className="text-sm font-medium leading-relaxed text-ink">
+                {openCycle.parent_narrative}
+              </p>
+              <div className="mt-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-3 border-t-2 border-dashed border-amber-200">
+                <p className="text-xs italic text-ink/60">
+                  Naya continue d'observer les prochains défis de {child.name} pour affiner sa compréhension.
+                </p>
+                <Link
+                  to="/profiles/$profileId/challenges"
+                  params={{ profileId: child.id }}
+                  className="inline-flex items-center justify-center gap-2 rounded-2xl border-2 border-ink bg-amber-300 px-4 py-2 text-xs font-bold text-ink shadow-brutal-sm hover:-translate-y-0.5 active:translate-y-0 transition-all shrink-0 cursor-pointer"
+                >
+                  <Sparkles className="size-3.5 fill-amber-700 text-amber-700" />
+                  <span>Proposer un défi adapté</span>
+                </Link>
+              </div>
+            </div>
+          )}
+
           {/* Success card dashboard: Profil Actuel de l'Enfant */}
           {(() => {
             const guild = getChildGuild(child.talents);
@@ -261,7 +348,7 @@ function PortfolioPage() {
             // List of interests tags to map status
             const childInterests = child.interests && child.interests.length > 0
               ? child.interests.slice(0, 4)
-              : ["Sciences & Expériences", "Dessin & Design", "Sens de la négociation", "Construction & Lego"];
+              : ["Sciences & Expériences", "Dessin & Peinture", "Sens de la négociation", "Construction & Lego"];
 
             // Helper to get bucket for an interest
             const getInterestBucket = (interestName: string) => {

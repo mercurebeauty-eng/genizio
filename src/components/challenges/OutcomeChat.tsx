@@ -1,8 +1,8 @@
 import { useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
-import { validateChallengeProof } from "@/lib/challenges.functions";
+import { validateChallengeProof, submitDeclarativeProof } from "@/lib/challenges.functions";
 import { NayaAvatar } from "@/components/NayaAvatar";
-import { Loader2, Upload, Check, X, Play, Sparkles, Share2 } from "lucide-react";
+import { Loader2, Upload, Check, X, Play, Sparkles, Share2, Clock, Target } from "lucide-react";
 import { toast } from "sonner";
 import { CreatePostModal } from "@/components/feed/CreatePostModal";
 import { MarkdownContent } from "@/components/ui/markdown-content";
@@ -13,7 +13,29 @@ type Challenge = {
   title: string;
   description: string;
   status: "todo" | "in_progress" | "completed";
+  // Génizio — mode de preuve déclaratif (cf. genizio-decisions #35) : absent sur
+  // tout défi antérieur à cette fonctionnalité, d'où l'optionnalité.
+  proof_mode?: string;
+  proof_target?: { metric?: string; value?: number } | null;
 };
+
+// Atelier du Temps — mécanique "Estimation" (cf. genizio-decisions #30). Toujours en
+// langage de processus, jamais de score/pourcentage affiché (non-négociable établi en
+// décision #11 — "aucun score/percentile/pass-fail nulle part") : on montre les deux
+// durées brutes et un message chaleureux, jamais un "tu étais à 40% d'écart".
+function getTimeReflection(estimatedMinutes: number, actualMinutes: number): string {
+  const rounded = Math.max(1, Math.round(actualMinutes));
+  const diff = actualMinutes - estimatedMinutes;
+  const relativeDiff = Math.abs(diff) / Math.max(estimatedMinutes, actualMinutes);
+
+  if (relativeDiff <= 0.2) {
+    return `Tu avais prévu ${estimatedMinutes} min, tu as mis ${rounded} min — ton estimation était juste ! Tu sens de mieux en mieux ton temps.`;
+  }
+  if (diff > 0) {
+    return `Tu avais prévu ${estimatedMinutes} min, ça t'a pris ${rounded} min — pas grave, certains défis prennent plus de temps qu'on ne le pense. Chaque essai t'aide à mieux le sentir.`;
+  }
+  return `Tu avais prévu ${estimatedMinutes} min, tu as fini en ${rounded} min — tu es allé plus vite que prévu !`;
+}
 
 // Reads a File as base64 in the browser and sends the bytes directly to the
 // server — no Supabase Storage upload happens until after the AI confirms
@@ -46,6 +68,7 @@ type OutcomeChatProps = {
 
 export function OutcomeChat({ challenge, childName, notes = "", onSaveNotes, onValidated }: OutcomeChatProps) {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [reportedValue, setReportedValue] = useState("");
   const [validating, setValidating] = useState(false);
   const [validationError, setValidationError] = useState<string | null>(null);
 
@@ -59,8 +82,16 @@ export function OutcomeChat({ challenge, childName, notes = "", onSaveNotes, onV
   const [rejectionNotice, setRejectionNotice] = useState<string | null>(null);
 
   const validateAI = useServerFn(validateChallengeProof);
+  const submitDeclarative = useServerFn(submitDeclarativeProof);
 
-  const canSubmit = !!notes.trim() || !!selectedFile;
+  // Génizio — défis à preuve déclarative (cf. genizio-decisions #35) : pas de
+  // photo/IA, un champ chiffré comparé strictement à la cible du défi.
+  const isDeclarative = challenge.proof_mode === "declarative" && !!challenge.proof_target?.metric;
+  const declarativeValueNum = parseFloat(reportedValue.replace(",", "."));
+
+  const canSubmit = isDeclarative
+    ? reportedValue.trim() !== "" && Number.isFinite(declarativeValueNum)
+    : !!notes.trim() || !!selectedFile;
 
   const handleValidate = async () => {
     setValidating(true);
@@ -101,6 +132,31 @@ export function OutcomeChat({ challenge, childName, notes = "", onSaveNotes, onV
     }
   };
 
+  const handleValidateDeclarative = async () => {
+    setValidating(true);
+    setValidationError(null);
+    setRejectionNotice(null);
+    try {
+      const result = await submitDeclarative({
+        data: { id: challenge.id, reportedValue: declarativeValueNum },
+      });
+
+      if (!result.relevant) {
+        setRejectionNotice(result.observations);
+        setReportedValue("");
+        return;
+      }
+
+      setReport(result);
+      toast.success("Défi validé !");
+    } catch (err) {
+      setValidationError(err instanceof Error ? err.message : "Erreur inconnue");
+      toast.error(err instanceof Error ? err.message : "Erreur lors de la validation");
+    } finally {
+      setValidating(false);
+    }
+  };
+
   return (
     <div className="rounded-3xl border-[3px] border-ink bg-sky p-6 mt-5 relative overflow-hidden shadow-brutal">
       {report ? (
@@ -117,6 +173,21 @@ export function OutcomeChat({ challenge, childName, notes = "", onSaveNotes, onV
 
           <div className="bg-white rounded-2xl p-6 shadow-brutal-sm mb-6 border-[3px] border-ink relative">
             <p className="text-sm italic text-ink/80 leading-relaxed font-medium">"<MarkdownContent content={report.challenge.ai_observations} inline /></p>
+
+            {report.challenge.estimated_duration_minutes && report.challenge.started_at && report.challenge.completed_at && (
+              <div className="mt-5 pt-5 border-t-2 border-ink/20">
+                <p className="text-[10px] font-extrabold uppercase tracking-widest text-brand mb-3 flex items-center gap-1.5">
+                  <Clock className="size-3.5" />
+                  L'Atelier du Temps
+                </p>
+                <p className="text-sm font-semibold text-ink/80 leading-relaxed">
+                  {getTimeReflection(
+                    report.challenge.estimated_duration_minutes,
+                    (new Date(report.challenge.completed_at).getTime() - new Date(report.challenge.started_at).getTime()) / 60000
+                  )}
+                </p>
+              </div>
+            )}
 
             <div className="mt-5 pt-5 border-t-2 border-ink/20">
               <p className="text-[10px] font-extrabold uppercase tracking-widest text-brand mb-3">
@@ -177,7 +248,9 @@ export function OutcomeChat({ challenge, childName, notes = "", onSaveNotes, onV
                 Échange avec Naya
               </p>
               <p className="text-sm font-semibold text-ink/70">
-                Ajoutez une photo du résultat pour que Naya découvre les talents de {childName} !
+                {isDeclarative
+                  ? `Indiquez le résultat obtenu pour que Naya valide le défi de ${childName} !`
+                  : `Ajoutez une photo du résultat pour que Naya découvre les talents de ${childName} !`}
               </p>
             </div>
           </div>
@@ -190,39 +263,61 @@ export function OutcomeChat({ challenge, childName, notes = "", onSaveNotes, onV
             </div>
           )}
 
-          <div className="mb-6">
-            {!selectedFile ? (
-              <label className="flex flex-col items-center justify-center gap-2 rounded-2xl border-[3px] border-dashed border-ink bg-white/50 p-6 hover:-translate-y-0.5 shadow-brutal-sm transition-all cursor-pointer text-center w-full">
-                <Upload className="size-6 text-brand animate-pulse" />
-                <span className="text-xs font-black text-brand">Sélectionner une photo</span>
-                <span className="text-[10px] text-ink/60 font-bold">Formats acceptés : PNG, JPG</span>
+          {isDeclarative ? (
+            <div className="mb-6">
+              <label className="flex flex-col gap-2 rounded-2xl border-[3px] border-ink bg-white/50 p-4 shadow-brutal-sm w-full">
+                <span className="flex items-center gap-1.5 text-xs font-black text-brand">
+                  <Target className="size-4" />
+                  {challenge.proof_target?.metric} (objectif : {challenge.proof_target?.value})
+                </span>
                 <input
-                  type="file"
-                  accept="image/*"
-                  className="hidden"
-                  onChange={(e) => setSelectedFile(e.target.files?.[0] ?? null)}
+                  type="text"
+                  inputMode="decimal"
+                  value={reportedValue}
+                  onChange={(e) => setReportedValue(e.target.value)}
+                  placeholder={`Ex : ${challenge.proof_target?.value}`}
+                  className="w-full rounded-xl border-[3px] border-ink px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-brand"
                 />
               </label>
-            ) : (
-              <div className="flex items-center justify-between gap-2 rounded-2xl border-[3px] border-ink bg-leaf px-4 py-3 text-xs font-bold text-white shadow-brutal-sm w-full">
-                <div className="flex items-center gap-2 min-w-0">
-                  <Check className="size-4 shrink-0 stroke-[3px]" />
-                  <span className="truncate max-w-[180px]">{selectedFile.name}</span>
-                </div>
-                <button
-                  onClick={() => setSelectedFile(null)}
-                  className="hover:text-red-300 hover:bg-black/10 p-1.5 rounded-full transition-colors cursor-pointer shrink-0"
-                >
-                  <X className="size-3.5" />
-                </button>
-              </div>
-            )}
-            {!notes.trim() && (
               <p className="mt-2 text-xs text-ink/60 italic">
-                Astuce : remplissez le journal d'apprentissage ci-dessus pour une analyse plus précise.
+                Ce défi se valide par déclaration : indiquez le résultat réellement obtenu, sans photo.
               </p>
-            )}
-          </div>
+            </div>
+          ) : (
+            <div className="mb-6">
+              {!selectedFile ? (
+                <label className="flex flex-col items-center justify-center gap-2 rounded-2xl border-[3px] border-dashed border-ink bg-white/50 p-6 hover:-translate-y-0.5 shadow-brutal-sm transition-all cursor-pointer text-center w-full">
+                  <Upload className="size-6 text-brand animate-pulse" />
+                  <span className="text-xs font-black text-brand">Sélectionner une photo</span>
+                  <span className="text-[10px] text-ink/60 font-bold">Formats acceptés : PNG, JPG</span>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={(e) => setSelectedFile(e.target.files?.[0] ?? null)}
+                  />
+                </label>
+              ) : (
+                <div className="flex items-center justify-between gap-2 rounded-2xl border-[3px] border-ink bg-leaf px-4 py-3 text-xs font-bold text-white shadow-brutal-sm w-full">
+                  <div className="flex items-center gap-2 min-w-0">
+                    <Check className="size-4 shrink-0 stroke-[3px]" />
+                    <span className="truncate max-w-[180px]">{selectedFile.name}</span>
+                  </div>
+                  <button
+                    onClick={() => setSelectedFile(null)}
+                    className="hover:text-red-300 hover:bg-black/10 p-1.5 rounded-full transition-colors cursor-pointer shrink-0"
+                  >
+                    <X className="size-3.5" />
+                  </button>
+                </div>
+              )}
+              {!notes.trim() && (
+                <p className="mt-2 text-xs text-ink/60 italic">
+                  Astuce : remplissez le journal d'apprentissage ci-dessus pour une analyse plus précise.
+                </p>
+              )}
+            </div>
+          )}
 
           {validationError && (
             <p className="mb-3 text-xs text-red-600 font-bold bg-red-50 p-3 rounded-xl border border-red-100">
@@ -230,19 +325,19 @@ export function OutcomeChat({ challenge, childName, notes = "", onSaveNotes, onV
             </p>
           )}
           <button
-            onClick={handleValidate}
+            onClick={isDeclarative ? handleValidateDeclarative : handleValidate}
             disabled={validating || !canSubmit}
             className="w-full rounded-2xl border-[3px] border-ink bg-brand py-3.5 text-sm font-bold text-white shadow-brutal hover:-translate-y-0.5 active:translate-y-0 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
           >
             {validating ? (
               <>
                 <Loader2 className="size-5 animate-spin" />
-                <span>Naya analyse le projet...</span>
+                <span>{isDeclarative ? "Naya vérifie..." : "Naya analyse le projet..."}</span>
               </>
             ) : (
               <>
                 <Play className="size-5" />
-                <span>Soumettre pour Analyse</span>
+                <span>{isDeclarative ? "Valider le résultat" : "Soumettre pour Analyse"}</span>
               </>
             )}
           </button>
