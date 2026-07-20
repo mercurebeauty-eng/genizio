@@ -816,3 +816,108 @@ ce problème avant qu'il ne s'installe. Elle a fonctionné exactement comme pré
 parce qu'elle a été appliquée activement (relire le code réel, reproduire l'erreur en direct)
 plutôt que d'accorder une confiance par défaut à une affirmation "vérifié en production", même
 quand cette affirmation vient d'un commit signé et d'une mémoire à jour en apparence.
+
+## Décision #35 : `school_grades` — le trigger Z-score ignore type/récence/moyenne de classe (gap identifié, PAS corrigé)
+
+**Contexte** : l'utilisateur a fait remarquer que les notes scolaires (Phase 2, `school_grades`)
+n'ont "aucun contexte" — on ne sait pas si une note est un devoir ou un contrôle, récente ou
+ancienne, forte ou faible relativement à la classe. Il pose aussi une question plus large : les
+notes devraient servir à distinguer "mode d'apprentissage inadapté" (l'enfant a les moyens mais
+la méthode ne convient pas) de "talent ailleurs, mieux vaut rediriger" (les notes sont faibles
+mais un autre talent est manifestement fort).
+
+**Vérifié dans le code (pas supposé)** :
+- `evaluation_type` et `context` (texte libre du parent) sont bien captés dans le formulaire
+  ([AddGradeDialog.tsx](../../src/components/grades/AddGradeDialog.tsx)), stockés, et **atteignent
+  bien le prompt IA de la Phase 3a** (`type_evaluation`, `contexte_declare_par_le_parent` dans
+  [hypotheses.functions.ts:241-242](../../src/lib/hypotheses.functions.ts#L241-L242)) — ce n'est
+  donc pas un champ mort.
+- Le vrai trou est en amont : le trigger SQL `detect_grade_anomaly()` (qui décide SI une
+  investigation démarre) calcule sa moyenne/écart-type sur **tout** l'historique de la matière,
+  sans segmenter par `evaluation_type` ni fenêtre de récence, et la "moyenne de classe" n'existe
+  nulle part dans le schéma. Un trimestre noté sévèrement par un professeur peut donc déclencher
+  une investigation sur un enfant parfaitement dans la norme de sa classe.
+- Le "cas A" de l'utilisateur (mode d'apprentissage inadapté) correspond déjà exactement à la
+  cause `METHOD_MISMATCH` du moteur bayésien (Phase 3a/3b) — vérifié et fonctionnel. Le "cas B"
+  (talent ailleurs → rediriger plutôt qu'insister) **n'a pas d'équivalent** dans les 5 causes
+  (`METHOD_MISMATCH`, `PERFORMANCE_ANXIETY`, `LACK_OF_ENGAGEMENT`, `CONCEPTUAL_GAP`, `OTHER`) —
+  toutes répondent à "pourquoi ça coince ici", aucune à "faut-il continuer à insister ici".
+
+**Décision : ne rien construire pour l'instant.** Deux raisons distinctes de ne pas agir :
+1. Le trigger Z-score (type/récence/moyenne de classe) est un vrai gap technique, mais mineur et
+   non demandé explicitement — laissé en l'état, à reprendre si l'utilisateur le priorise.
+2. Le "cas B" (redirection vers un autre talent) n'est **pas qu'un gap technique** — recommander
+   à un parent de lâcher une matière scolaire pour miser sur un autre talent est une
+   recommandation d'orientation, d'un poids different d'un exercice ciblé. Nécessite une décision
+   produit/philosophie assumée avant tout code, pas juste une nouvelle cause bayésienne.
+
+**Statut** : ouvert, non priorisé. Ne pas supposer que ce gap est corrigé dans une session future
+sans revérifier `detect_grade_anomaly()` et `ALLOWED_CAUSES`.
+
+## Décision #36 : mode de preuve "declarative" — retirer la photo/IA pour les défis comptables/chronométrés
+
+**Contexte** : deuxième faille soulevée par l'utilisateur dans la même conversation — un défi
+comme "fais 20 jongles" ne peut structurellement pas être prouvé par une seule photo (elle montre
+un instant, pas un comptage ni une durée). Ce n'est pas un problème de qualité du modèle de
+vision : aucune photo ne peut porter cette information. `validateChallengeProof` traitait
+pourtant tous les défis de la même façon (photo + jugement IA Sonnet). Décision de l'utilisateur,
+verbatim : pour ce type de défi, la preuve doit être "un champ à remplir minutieusement en match
+strict avec les directives données dans le challenge" plutôt qu'une image — on fait confiance au
+parent/superviseur, comme pour n'importe quelle activité qu'il supervise dans la vraie vie.
+
+**Piège évité en vérifiant avant de coder** : le réflexe naturel aurait été de réutiliser
+`challenges.target_intelligences` pour attribuer les points à la soumission déclarative. Le code
+documente déjà explicitement que ce champ est "décoratif" à la création (texte libre de l'IA,
+jamais garanti dans les 9 clés `VALID_TALENT_KEYS`) — la vraie attribution de points a toujours
+lieu à la validation, via une décision IA fraîche. Comme le mode déclaratif retire justement
+cette décision IA à la validation, il fallait un mécanisme différent : faire proposer la
+récompense **à la génération** (même moment que `material_tags`/`difficulty`), pas la réutiliser
+depuis un champ connu pour être non fiable.
+
+**Implémentation** (niveau 2 evolution-first — extension de l'existant, aucune réécriture) :
+- `finalizeChallenge` (verrou unique déjà utilisé par les 6 points d'insertion de défis IA de
+  l'app) accepte et normalise 3 nouveaux champs optionnels : `proof_mode` ("photo" par défaut |
+  "declarative"), `proof_target` (`{metric, value}`), `declarative_award` (points 1-3 whitelistés
+  contre `VALID_TALENT_KEYS`, comme `validateChallengeProof` le fait déjà à la validation).
+  Backstop `resolveProofMode` : si l'IA annonce "declarative" sans cible/récompense cohérente,
+  repli silencieux sur "photo" — même philosophie que `applySafetyNet`, ne jamais faire confiance
+  à la seule auto-discipline du modèle.
+- Instruction partagée `PROOF_MODE_INSTRUCTION` (exportée, même raison que `SAFETY_INSTRUCTION` :
+  un seul texte source pour les 5 prompts de génération plutôt que des copies qui dérivent).
+- Nouvelle server function `submitDeclarativeProof` : **0 appel IA**. Compare la valeur déclarée
+  à `proof_target.value` (réussite si ≥, pas égalité stricte), attribue `declarative_award` via
+  `increment_child_talents` si réussite. Retourne exactement la même forme que
+  `validateChallengeProof` (`{challenge, observations, awarded_points, imageAnalyzed, relevant}`)
+  — `OutcomeChat` réutilise sans aucune modification son écran de succès et son message de refus,
+  seul le formulaire (champ chiffré vs upload photo) est branché sur `proof_mode`.
+- Migration additive (`proof_mode` NOT NULL DEFAULT 'photo', `proof_target`/`declarative_award`
+  nullable) : tout défi existant ou futur qui ne précise rien garde exactement le comportement
+  actuel, aucune régression silencieuse possible.
+
+**Découverte opérationnelle en cours de route** : le connecteur MCP Supabase de cet agent
+(`5de1fa6f-...`) est authentifié sur un **compte différent** de celui qui possède le projet
+Génizio (`list_projects` retourne BABIMOB_PWA/QuickFlow/ishop, pas geniusio) —
+`apply_migration`/`execute_sql`/`generate_typescript_types` échouent donc systématiquement avec
+"You do not have permission" sur ce projet. **Contournement qui fonctionne** : le CLI Supabase
+local (`npx supabase`) est correctement lié au bon projet (`xpcmjvytbpafmfgvfadm`, org
+`atbgmnvekhtunulirgdh`, confirmé par `supabase projects list` et `migration list`) — utiliser
+`supabase db push` pour les migrations et `supabase gen types typescript --linked` pour les
+types tant que le connecteur MCP n'est pas réauthentifié sur le bon compte.
+
+**Vérifié en production, de bout en bout, sur TestPhase1** (défi test inséré directement en base
+pour tester le mécanisme indépendamment du jugement probabiliste de l'IA sur le choix
+photo/declarative — un essai réel via le générateur de l'Atelier a par ailleurs confirmé que
+l'IA choisit "photo" à bon escient quand le défi produit un livrable visible, comme un tableau de
+mesures sur papier, même pour un thème sportif/chronométré) :
+- Déclaration sous la cible (5 pour un objectif de 10) : message de refus exact
+  ("Pas encore atteint cette fois (5/10 jongles reussis)..."), aucune mutation en base
+  (`status`/`ai_observations`/`progress` inchangés), formulaire réaffiché pour réessayer.
+- Déclaration au-dessus de la cible (12 pour un objectif de 10) : écran de succès affiché avec
+  l'observation déterministe exacte, `status=completed`, `progress=100`, `completed_at` renseigné,
+  `target_intelligences=["corporelle"]`, et `talents.corporelle` réellement incrémenté de 0 → 2
+  via `increment_child_talents`.
+- Le rappel de `processDiscriminantResult` depuis ce nouveau chemin n'a pas été re-vérifié avec un
+  cycle d'hypothèses réel — il réutilise exactement la même signature et le même enrobage
+  non-bloquant que l'appel déjà vérifié dans `validateChallengeProof` (décision #34), risque jugé
+  faible mais non testé en direct pour cette combinaison précise.
+- `tsc --noEmit` propre après chaque étape.

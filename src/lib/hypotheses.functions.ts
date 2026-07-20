@@ -1,6 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
-import { callClaude, finalizeChallenge } from "@/lib/challenges.functions";
+import { callClaude, finalizeChallenge, PROOF_MODE_INSTRUCTION } from "@/lib/challenges.functions";
 import { TALENT_KEY_LABELS } from "@/lib/talent-buckets";
 import { z } from "zod";
 
@@ -467,6 +467,8 @@ Règles de conception selon l'hypothèse à tester :
 - Si LACK_OF_ENGAGEMENT : Ancre le défi à 100% sur un des centres d'intérêt de l'enfant (${interestsStr}) pour raviver la curiosité.
 - Si CONCEPTUAL_GAP : Propose une micro-activité fondamentale pas-à-pas très accessible pour vérifier les bases de manière amusante.
 
+${PROOF_MODE_INSTRUCTION}
+
 Réponds EXCLUSIVEMENT avec un objet JSON strict au format suivant :
 {
   "title": "Titre stimulant et captivant",
@@ -476,7 +478,10 @@ Réponds EXCLUSIVEMENT avec un objet JSON strict au format suivant :
   "steps": ["Étape 1", "Étape 2", "Étape 3"],
   "materials": ["Matériel 1", "Matériel 2"],
   "material_tags": ["tag1", "tag2"],
-  "difficulty": "moyen"
+  "difficulty": "moyen",
+  "proof_mode": "photo" ou "declarative",
+  "proof_target": {"metric": "...", "value": 20} (uniquement si declarative),
+  "declarative_award": {"corporelle": 2} (uniquement si declarative)
 }`;
 
     const rawJson = await callClaude(prompt, true, undefined, 1000, 2);
@@ -526,6 +531,9 @@ Réponds EXCLUSIVEMENT avec un objet JSON strict au format suivant :
             materials: safeMaterials,
             material_tags: parsed.material_tags,
             difficulty: parsed.difficulty,
+            proof_mode: parsed.proof_mode,
+            proof_target: parsed.proof_target,
+            declarative_award: parsed.declarative_award,
           },
           child.age
         ),

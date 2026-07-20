@@ -1,7 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { generateDiscriminantChallenge } from "@/lib/hypotheses.functions";
-import { callClaude, finalizeChallenge } from "@/lib/challenges.functions";
+import { callClaude, finalizeChallenge, PROOF_MODE_INSTRUCTION } from "@/lib/challenges.functions";
 import { z } from "zod";
 
 const RecommendInput = z.object({
@@ -97,6 +97,8 @@ export const recommendChallengesForChild = createServerFn({ method: "POST" })
       const prompt = `Tu es Naya, mentore IA. Conçois un micro-défi d'ESSAIMAGE pour ${child.name}, ${child.age} ans.
 Principe : Utiliser sa FORCE (${strengthEntry[0]}) et ses centres d'intérêt (${interestsStr}) pour développer doucement sa compétence en progression (${weaknessEntry[0]}).
 
+${PROOF_MODE_INSTRUCTION}
+
 Format JSON strict :
 {
   "title": "Titre motivant",
@@ -106,7 +108,10 @@ Format JSON strict :
   "steps": ["Étape 1", "Étape 2"],
   "materials": ["Matériel 1"],
   "material_tags": ["tag1"],
-  "difficulty": "facile"
+  "difficulty": "facile",
+  "proof_mode": "photo" ou "declarative",
+  "proof_target": {"metric": "...", "value": 20} (uniquement si declarative),
+  "declarative_award": {"corporelle": 2} (uniquement si declarative)
 }`;
 
       try {
@@ -142,6 +147,9 @@ Format JSON strict :
                 materials: safeMaterials,
                 material_tags: parsed.material_tags,
                 difficulty: "facile",
+                proof_mode: parsed.proof_mode,
+                proof_target: parsed.proof_target,
+                declarative_award: parsed.declarative_award,
               },
               child.age
             ),
@@ -174,6 +182,9 @@ Format JSON strict :
 
 Principe : ${child.name} traverse une phase instable sur une compétence (résultats en dents de scie). Ce défi doit RASSURER, pas challenger : structure très détaillée, étapes ultra-simples et peu nombreuses, aucune surprise, appuyé sur ${strengthEntry ? `sa force reconnue (${comfortSkill})` : "quelque chose de familier et confortable"} et ses centres d'intérêt (${interestsStr}). La réussite doit être quasi certaine.
 
+${PROOF_MODE_INSTRUCTION}
+Pour ce défi de stabilisation en particulier, une cible "declarative" doit rester trivialement atteignable (ex: 5 répétitions, pas 20) — le but est une réussite garantie, pas un défi physique.
+
 Format JSON strict :
 {
   "title": "Titre chaleureux et rassurant",
@@ -183,7 +194,10 @@ Format JSON strict :
   "steps": ["Étape 1 très simple", "Étape 2 très simple"],
   "materials": ["Matériel 1"],
   "material_tags": ["tag1"],
-  "difficulty": "facile"
+  "difficulty": "facile",
+  "proof_mode": "photo" ou "declarative",
+  "proof_target": {"metric": "...", "value": 5} (uniquement si declarative),
+  "declarative_award": {"corporelle": 2} (uniquement si declarative)
 }`;
 
       try {
@@ -217,6 +231,9 @@ Format JSON strict :
                 materials: safeMaterials,
                 material_tags: parsed.material_tags,
                 difficulty: "facile",
+                proof_mode: parsed.proof_mode,
+                proof_target: parsed.proof_target,
+                declarative_award: parsed.declarative_award,
               },
               child.age
             ),

@@ -84,72 +84,13 @@ export type Database = {
           },
         ]
       }
-      hypothesis_cycles: {
-        Row: {
-          anomaly_trigger_id: string
-          child_id: string
-          created_at: string
-          final_diagnosis: string | null
-          hypotheses: Json
-          id: string
-          model: string | null
-          parent_narrative: string | null
-          resolved_at: string | null
-          status: string
-          updated_at: string
-          user_id: string
-        }
-        Insert: {
-          anomaly_trigger_id: string
-          child_id: string
-          created_at?: string
-          final_diagnosis?: string | null
-          hypotheses: Json
-          id?: string
-          model?: string | null
-          parent_narrative?: string | null
-          resolved_at?: string | null
-          status?: string
-          updated_at?: string
-          user_id: string
-        }
-        Update: {
-          anomaly_trigger_id?: string
-          child_id?: string
-          created_at?: string
-          final_diagnosis?: string | null
-          hypotheses?: Json
-          id?: string
-          model?: string | null
-          parent_narrative?: string | null
-          resolved_at?: string | null
-          status?: string
-          updated_at?: string
-          user_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "hypothesis_cycles_anomaly_trigger_id_fkey"
-            columns: ["anomaly_trigger_id"]
-            isOneToOne: true
-            referencedRelation: "anomaly_triggers"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "hypothesis_cycles_child_id_fkey"
-            columns: ["child_id"]
-            isOneToOne: false
-            referencedRelation: "child_profiles"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       challenges: {
         Row: {
           ai_observations: string | null
           child_id: string
           completed_at: string | null
           created_at: string
+          declarative_award: Json | null
           description: string
           difficulty: string | null
           domain: string
@@ -162,6 +103,8 @@ export type Database = {
           pedagogical_context: string | null
           progress: number
           proof_image_url: string | null
+          proof_mode: string
+          proof_target: Json | null
           requires_supervision: boolean | null
           started_at: string | null
           status: Database["public"]["Enums"]["challenge_status"]
@@ -177,6 +120,7 @@ export type Database = {
           child_id: string
           completed_at?: string | null
           created_at?: string
+          declarative_award?: Json | null
           description: string
           difficulty?: string | null
           domain: string
@@ -189,6 +133,8 @@ export type Database = {
           pedagogical_context?: string | null
           progress?: number
           proof_image_url?: string | null
+          proof_mode?: string
+          proof_target?: Json | null
           requires_supervision?: boolean | null
           started_at?: string | null
           status?: Database["public"]["Enums"]["challenge_status"]
@@ -204,6 +150,7 @@ export type Database = {
           child_id?: string
           completed_at?: string | null
           created_at?: string
+          declarative_award?: Json | null
           description?: string
           difficulty?: string | null
           domain?: string
@@ -216,6 +163,8 @@ export type Database = {
           pedagogical_context?: string | null
           progress?: number
           proof_image_url?: string | null
+          proof_mode?: string
+          proof_target?: Json | null
           requires_supervision?: boolean | null
           started_at?: string | null
           status?: Database["public"]["Enums"]["challenge_status"]
@@ -415,6 +364,66 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "consent_events_child_id_fkey"
+            columns: ["child_id"]
+            isOneToOne: false
+            referencedRelation: "child_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      hypothesis_cycles: {
+        Row: {
+          anomaly_trigger_id: string
+          child_id: string
+          created_at: string
+          final_diagnosis: string | null
+          hypotheses: Json
+          id: string
+          model: string | null
+          parent_narrative: string | null
+          resolved_at: string | null
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          anomaly_trigger_id: string
+          child_id: string
+          created_at?: string
+          final_diagnosis?: string | null
+          hypotheses: Json
+          id?: string
+          model?: string | null
+          parent_narrative?: string | null
+          resolved_at?: string | null
+          status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          anomaly_trigger_id?: string
+          child_id?: string
+          created_at?: string
+          final_diagnosis?: string | null
+          hypotheses?: Json
+          id?: string
+          model?: string | null
+          parent_narrative?: string | null
+          resolved_at?: string | null
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "hypothesis_cycles_anomaly_trigger_id_fkey"
+            columns: ["anomaly_trigger_id"]
+            isOneToOne: false
+            referencedRelation: "anomaly_triggers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "hypothesis_cycles_child_id_fkey"
             columns: ["child_id"]
             isOneToOne: false
             referencedRelation: "child_profiles"
@@ -846,9 +855,33 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      apply_observation_to_twin: {
+        Args: {
+          p_event: Database["public"]["Tables"]["observation_events"]["Row"]
+        }
+        Returns: undefined
+      }
+      classify_trait: {
+        Args: { p_trend: number; p_value: number; p_variance: number }
+        Returns: string
+      }
       increment_child_talents: {
         Args: { p_child_id: string; p_deltas: Json }
         Returns: Json
+      }
+      record_trait_point: {
+        Args: {
+          p_alpha: number
+          p_child_id: string
+          p_field: string
+          p_level: number
+          p_occurred_at: string
+          p_signal: number
+          p_source_event_id: string
+          p_trait_key: string
+          p_user_id: string
+        }
+        Returns: undefined
       }
     }
     Enums: {

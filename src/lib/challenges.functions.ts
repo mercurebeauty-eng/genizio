@@ -16,6 +16,9 @@ const ChallengeSchema = z.object({
   requires_supervision: z.boolean().default(false),
   supervision_warning: z.string().nullable().optional(),
   difficulty: z.enum(["facile", "moyen", "difficile"]).optional(),
+  proof_mode: z.enum(["photo", "declarative"]).optional(),
+  proof_target: z.object({ metric: z.string(), value: z.number() }).nullable().optional(),
+  declarative_award: z.record(z.string(), z.number()).nullable().optional(),
 });
 
 // Shop Phase 1: log material tags that don't match any active product yet, so the
@@ -221,6 +224,48 @@ function resolveDifficulty(
   return "moyen";
 }
 
+// Backstop for "proof_mode: declarative" (défis comptables/chronométrés/live — cf.
+// genizio-decisions #35) : même philosophie que applySafetyNet ci-dessus — ne jamais
+// faire confiance à la seule auto-discipline du modèle. Un défi ne devient déclaratif
+// que si le modèle a AUSSI produit une cible et une récompense cohérentes ; sinon,
+// repli silencieux sur "photo" (le mode utilisé par tous les défis avant l'existence
+// de celui-ci, donc toujours sûr). Floor à 1 (pas 0 comme validateChallengeProof) :
+// ici le modèle propose une récompense à la génération plutôt que de juger une
+// soumission réelle — il n'y a aucune raison de "proposer" 0 point pour une clé,
+// autant l'omettre.
+function resolveProofMode(
+  proofMode: string | null | undefined,
+  proofTarget: { metric?: unknown; value?: unknown } | null | undefined,
+  declarativeAward: Record<string, unknown> | null | undefined,
+  challengeTitle: string
+): {
+  proof_mode: "photo" | "declarative";
+  proof_target: { metric: string; value: number } | null;
+  declarative_award: Record<string, number> | null;
+} {
+  if (proofMode !== "declarative") {
+    return { proof_mode: "photo", proof_target: null, declarative_award: null };
+  }
+
+  const metric = typeof proofTarget?.metric === "string" ? proofTarget.metric.trim().slice(0, 60) : "";
+  const value = typeof proofTarget?.value === "number" ? proofTarget.value : NaN;
+
+  const award: Record<string, number> = {};
+  const validTalentKeys = new Set(VALID_TALENT_KEYS);
+  for (const [key, points] of Object.entries(declarativeAward ?? {})) {
+    if (typeof points === "number" && validTalentKeys.has(key)) {
+      award[key] = Math.max(1, Math.min(3, Math.round(points)));
+    }
+  }
+
+  if (!metric || !Number.isFinite(value) || value <= 0 || Object.keys(award).length === 0) {
+    console.warn(`[challenges] "proof_mode: declarative" incohérent pour "${challengeTitle}" — repli sur "photo".`);
+    return { proof_mode: "photo", proof_target: null, declarative_award: null };
+  }
+
+  return { proof_mode: "declarative", proof_target: { metric, value }, declarative_award: award };
+}
+
 // Single choke point for the checks every challenge must pass through before
 // it reaches a parent or the DB: the safety net, the difficulty fallback,
 // title truncation, material_tags normalization. Before this existed, the
@@ -243,14 +288,21 @@ export function finalizeChallenge<T extends {
   requires_supervision?: boolean | null;
   supervision_warning?: string | null;
   difficulty?: string | null;
+  proof_mode?: string | null;
+  proof_target?: { metric?: unknown; value?: unknown } | null;
+  declarative_award?: Record<string, unknown> | null;
 }>(c: T, age: number) {
   const safety = applySafetyNet(c, age);
+  const proof = resolveProofMode(c.proof_mode, c.proof_target, c.declarative_award, c.title);
   return {
     title: c.title.slice(0, 120),
     material_tags: c.material_tags ?? [],
     difficulty: resolveDifficulty(c.difficulty, c.title),
     requires_supervision: safety.requires_supervision,
     supervision_warning: safety.supervision_warning,
+    proof_mode: proof.proof_mode,
+    proof_target: proof.proof_target,
+    declarative_award: proof.declarative_award,
   };
 }
 
@@ -276,6 +328,17 @@ const GENIZIO_PRINCIPLES = `PRINCIPES DE GÉNÉRATION GÉNIZIO (règles strictes
 // tweak only has to be made once. Each call site prefixes its own list
 // marker ("- " or "N. ") since the two prompts use different list styles.
 const SAFETY_INSTRUCTION = `SÉCURITÉ ET SUPERVISION, sans excès de prudence : analyse si le défi comporte des risques réels (feu, cuisine avec source de chaleur — plaque, four, eau ou huile chaude —, objets coupants, produits chimiques, électricité, extérieur non sécurisé — eau profonde, hauteur, circulation, animaux dangereux). Si OUI, règle "requires_supervision" à true. Adapte le ton de "supervision_warning" à l'âge : avant 12 ans, précise qu'un adulte doit être présent pour cette étape ; à partir de 12 ans, un enfant peut réaliser l'étape lui-même — donne des mesures de sécurité concrètes à suivre plutôt que d'exiger la présence d'un adulte (ex: manipuler un briquet loin de matières inflammables, avec de l'eau à proximité). Ne signale pas de risque pour des activités quotidiennes sans danger réel (cuisine froide/sans cuisson, mélanger des ingrédients, extérieur familier, etc.).`;
+
+// Partagée entre les 5 générateurs de défis IA de l'app (cf. genizio-decisions #35) —
+// même raison que SAFETY_INSTRUCTION ci-dessus : un seul texte source, pas de copies
+// qui dérivent. "declarative" retire tout jugement IA à la soumission (voir
+// submitDeclarativeProof) : aucune photo n'a le pouvoir de prouver un comptage ou une
+// durée, donc autant ne pas prétendre le vérifier — la déclaration du parent fait foi.
+export const PROOF_MODE_INSTRUCTION = `MODE DE PREUVE : détermine "proof_mode" selon la nature du défi.
+- "photo" (par défaut, le cas le plus courant) : le défi produit un résultat final visible (objet construit, dessin, expérience montée, texte écrit) — une photo suffit à en juger. N'inclus alors ni "proof_target" ni "declarative_award".
+- "declarative" : le défi consiste en une action comptable, chronométrée ou physique en direct qu'une seule photo ne peut structurellement pas prouver (répétitions, durée, distance — ex: "20 jongles", "courir 10 minutes sans s'arrêter"). Dans ce cas UNIQUEMENT, fournis aussi :
+  - "proof_target": {"metric": "unité comptée en 2-4 mots, ex: jongles réussis / minutes de course", "value": nombre cible}
+  - "declarative_award": objet {"clé":points} avec des points de 1 à 3, clés EXCLUSIVEMENT parmi : spatial, corporelle, sociale, entrepreneuriale, creative, artisanale, emotionnelle, logico_mathematique, linguistique — les intelligences réellement mobilisées si le défi est réussi.`;
 
 // Helper to call Google AI Studio OpenAI-compatible endpoint
 const ALLOWED_IMAGE_MEDIA_TYPES = ["image/jpeg", "image/png", "image/gif", "image/webp"];
@@ -546,9 +609,10 @@ Contraintes :
   (ex: "carton", "cutter", "colle", "ampoule") — pas les objets déjà présents chez tout le monde
   (eau, table, papier). Un tableau vide si rien d'achetable n'est nécessaire.
 - ${SAFETY_INSTRUCTION}
+- ${PROOF_MODE_INSTRUCTION}
 
 Réponds STRICTEMENT en JSON valide avec ce format, pour chaque défi :
-{"challenges":[{"domain":"...","title":"...","description":"...","duration":"...","steps":["...","..."],"materials":["...","..."],"material_tags":["..."],"pedagogical_context":"Ce que Naya observe via cette activité","intelligences":["Intelligence dominante sollicitée"],"requires_supervision":true ou false,"supervision_warning":"..." (ou null si false),"difficulty":"facile"|"moyen"|"difficile"}]}`;
+{"challenges":[{"domain":"...","title":"...","description":"...","duration":"...","steps":["...","..."],"materials":["...","..."],"material_tags":["..."],"pedagogical_context":"Ce que Naya observe via cette activité","intelligences":["Intelligence dominante sollicitée"],"requires_supervision":true ou false,"supervision_warning":"..." (ou null si false),"difficulty":"facile"|"moyen"|"difficile","proof_mode":"photo"|"declarative","proof_target":{"metric":"...","value":20} (uniquement si declarative),"declarative_award":{"corporelle":2} (uniquement si declarative)}]}`;
 
     // Up to 6 full défis in one response — genuinely needs the full default
     // budget, unlike every other callClaude site in this file.
@@ -869,6 +933,115 @@ Réponds STRICTEMENT en JSON valide avec ce format :
     };
   });
 
+const SubmitDeclarativeInput = z.object({
+  id: z.string().uuid(),
+  reportedValue: z.number().finite(),
+});
+
+// Chemin de preuve "declarative" (cf. genizio-decisions #35) : 0 appel IA, par
+// design. Une seule photo ne peut pas prouver un comptage/une durée, donc on ne
+// prétend plus le vérifier — on compare la déclaration du parent à la cible fixée
+// par finalizeChallenge au moment de la génération du défi. Retourne exactement
+// la même forme que validateChallengeProof ({challenge, observations,
+// awarded_points, imageAnalyzed, relevant}) pour qu'OutcomeChat réutilise sans
+// modification son écran de succès / son message de refus.
+export const submitDeclarativeProof = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .validator((input: unknown) => SubmitDeclarativeInput.parse(input))
+  .handler(async ({ data, context }) => {
+    const { supabase, userId } = context;
+
+    const { data: challenge, error: challengeErr } = await supabase
+      .from("challenges")
+      .select("*, child_profiles(*)")
+      .eq("id", data.id)
+      .single();
+
+    if (challengeErr || !challenge) throw new Error("Défi introuvable");
+    if (challenge.user_id !== userId) throw new Error("Accès refusé.");
+    if (challenge.proof_mode !== "declarative") {
+      throw new Error("Ce défi ne se valide pas par déclaration.");
+    }
+
+    const target = challenge.proof_target as { metric?: string; value?: number } | null;
+    if (!target?.metric || typeof target.value !== "number") {
+      throw new Error("Cible de déclaration manquante pour ce défi.");
+    }
+
+    const childName = challenge.child_profiles.name as string;
+    const relevant = data.reportedValue >= target.value;
+
+    if (!relevant) {
+      // Même logique que le rejet côté photo (PROOF_REJECTED) : rien n'est modifié
+      // en base pour le défi, mais c'est un vrai signal de friction pour le Jumeau
+      // Pédagogique — journalisation best-effort, jamais bloquante.
+      try {
+        const { error: evtErr } = await supabase.from("observation_events").insert({
+          child_id: challenge.child_id,
+          user_id: userId,
+          type: "PROOF_REJECTED",
+          source: "app",
+          payload: { challenge_id: challenge.id, domain: challenge.domain, declarative: true, reported_value: data.reportedValue, target_value: target.value },
+        });
+        if (evtErr) console.error("PROOF_REJECTED event insert failed (non-fatal):", evtErr);
+      } catch (err) {
+        console.error("PROOF_REJECTED event insert failed (non-fatal):", err);
+      }
+
+      return {
+        challenge,
+        observations: `Pas encore atteint cette fois (${data.reportedValue}/${target.value} ${target.metric}) — ce n'est pas grave, ${childName} peut retenter dès que prêt·e !`,
+        awarded_points: {},
+        imageAnalyzed: false,
+        relevant: false,
+      };
+    }
+
+    const award = (challenge.declarative_award as Record<string, number> | null) ?? {};
+    if (Object.keys(award).length > 0) {
+      const { error: talentsError } = await supabase.rpc("increment_child_talents", {
+        p_child_id: challenge.child_id,
+        p_deltas: award,
+      });
+      if (talentsError) throw new Error(talentsError.message);
+    }
+
+    const observations = `Bravo ! ${childName} a réussi ${data.reportedValue} ${target.metric} (objectif : ${target.value}). Une belle preuve de persévérance.`;
+
+    const { data: updated, error } = await supabase
+      .from("challenges")
+      .update({
+        status: "completed" as const,
+        progress: 100,
+        completed_at: new Date().toISOString(),
+        ai_observations: observations,
+        target_intelligences: Object.keys(award),
+      })
+      .eq("id", data.id)
+      .select("*")
+      .single();
+    if (error) throw new Error(error.message);
+
+    // NAYA 2.0 Phase 3b : si ce défi déclaratif était le défi discriminant d'un
+    // cycle d'hypothèses, met à jour la boucle bayésienne — même point d'entrée
+    // que validateChallengeProof, l'origine de la preuve ne doit pas changer le
+    // fonctionnement du moteur bayésien en aval.
+    try {
+      const { processDiscriminantResult } = await import("@/lib/hypotheses.functions");
+      void processDiscriminantResult(data.id, "COMPLETED", true);
+    } catch (err) {
+      console.error("Non-fatal: processDiscriminantResult failed", err);
+    }
+
+    return {
+      challenge: updated,
+      observations,
+      awarded_points: award,
+      imageAnalyzed: false,
+      relevant: true,
+    };
+  });
+
 const AssignTemplateInput = z.object({
   childId: z.string().uuid(),
   template: ChallengeSchema.extend({
@@ -1013,6 +1186,7 @@ ${
 8. Pour "material_tags" : un tag court en minuscules, sans accent, par matériau physique achetable
    (ex: "carton", "cutter", "colle", "ampoule") — pas les objets déjà présents chez tout le monde
    (eau, table, papier). Un tableau vide si rien d'achetable n'est nécessaire.
+9. ${PROOF_MODE_INSTRUCTION}
 
 Réponds STRICTEMENT en JSON valide avec ce format exact :
 {
@@ -1027,7 +1201,10 @@ Réponds STRICTEMENT en JSON valide avec ce format exact :
   "intelligences": ["Intelligence dominante sollicitée"],
   "requires_supervision": true ou false,
   "supervision_warning": "Attention: Manipulez le couteau avec l'enfant" (ou null si false),
-  "difficulty": "facile" | "moyen" | "difficile"
+  "difficulty": "facile" | "moyen" | "difficile",
+  "proof_mode": "photo" | "declarative",
+  "proof_target": {"metric": "...", "value": 20} (uniquement si declarative),
+  "declarative_award": {"corporelle": 2} (uniquement si declarative)
 }`;
 
     // A single défi, not a batch — the 4000 default (sized for up to 6 défis
