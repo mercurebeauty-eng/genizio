@@ -9,20 +9,21 @@ metadata:
 
 # NAYA 2.0 — Système de Compréhension Développementale
 
-> ⚠️ **STATUT (révisé le 2026-07-20, branche `security-fixes-and-ux-improvements`, PR #8)** :
+> ⚠️ **STATUT (re-révisé le 2026-07-20, branche `security-fixes-and-ux-improvements`, PR #8)** :
 > conçu et approuvé le 2026-07-20, toutes les phases livrées et vérifiées le même jour — **puis
-> Phase 2 supprimée le soir même (décision #37)**, ne pas se fier à "toutes les phases livrées"
-> sans lire la suite. État actuel : Phase 0 (`observation_events`) et Phase 1 (`pedagogical_twin`)
-> opérationnelles. **Phase 2 (notes scolaires) supprimée** — aucun référentiel stable possible
-> sans connaître le programme/l'âge/le pays réels de l'enfant, remplacée par un référentiel
-> académique interne en brouillon (cf. [genizio_referentiel_academique.md](genizio_referentiel_academique.md)).
-> **Phase 3a/3b (hypothèses + boucle bayésienne) dormantes** : le code (`generateDiscriminantChallenge`,
-> `processDiscriminantResult`) reste en place et correct, mais son unique déclencheur
-> (`ensureHypothesesForChild`, amorcé par une anomalie de note) a été retiré avec Phase 2 — plus
-> aucun nouveau cycle ne peut démarrer tant qu'un remplaçant (écart au référentiel académique)
-> n'est pas construit. Phase 4 (restitution parent) et Phase 5 (`recommendChallengesForChild`,
-> branches ESSAIMAGE/STABILISATION) restent pleinement opérationnelles — seule leur branche
-> INVESTIGATION (dépendante de Phase 3a/3b) est actuellement sans nouvelle donnée à afficher.
+> Phase 2 supprimée le soir même (décision #37)**, remplacée par un référentiel académique
+> interne sourcé, **et Phase 3a/3b re-câblée sur ce référentiel comme nouveau déclencheur le
+> même jour aussi (décision #38)**. Ne pas se fier à un ancien snapshot mental de ce statut sans
+> relire la suite. État actuel : Phase 0, 1, 3a, 3b, 4, 5 toutes opérationnelles et vérifiées.
+> **Phase 2 (notes scolaires) reste supprimée** — aucun référentiel stable possible sans
+> connaître le programme/l'âge/le pays réels de l'enfant. Remplacée par un référentiel
+> académique interne sourcé (cf. [genizio_referentiel_academique.md](genizio_referentiel_academique.md))
+> qui alimente désormais directement Phase 3a/3b : `ensureHypothesesForChild` détecte un écart
+> RÉPÉTÉ (4 défis consécutifs complétés dans le même domaine académique, en dessous OU au-dessus
+> de l'âge réel de l'enfant) plutôt qu'une anomalie de note isolée — et déclenche dans les deux
+> sens (en retard → causes existantes ; en avance → nouvelle cause `READY_FOR_MORE`, "propose
+> des défis plus costauds"). Vérifié en production, les deux sens, cycle réel avec Sonnet +
+> narration Haiku + défi discriminant généré — détail complet dans décision #38.
 > **Note de provenance (décision #34)** : Phase 3b et 5 ont été construites par une session
 > parallèle de l'utilisateur pendant une session de ce même agent ; le premier commit affirmait
 > "vérifié en production" alors qu'un bug bloquait TOUTE mise à jour bayésienne

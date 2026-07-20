@@ -1,12 +1,12 @@
 # Référentiel académique par domaine × âge — v2, sourcé par recherche web
 
-> ⚠️ **Toujours pas câblé dans aucun système** — ce document reste une référence de contenu à
-> discuter, pas une entrée du moteur de génération de défis ni d'un déclencheur Phase 3. Ce qui
-> a changé depuis le premier jet : chaque repère ci-dessous a été confronté à une recherche web
-> réelle (Common Core US, Singapore Math, NGSS, curriculum chinois quand trouvable) plutôt que
-> rédigé de mémoire. La colonne **Source / confiance** dit explicitement, ligne par ligne, ce qui
-> est une citation vérifiée vs. une estimation encore raisonnée mais non confirmée cette passe.
-> Ne traitez comme acquis QUE les lignes marquées **Sourcé**.
+> ✅ **Câblé le 2026-07-20 (décision #38)** — le contenu ci-dessous (condensé) est injecté dans
+> les prompts de génération de défis (`ACADEMIC_REFERENTIAL_INSTRUCTION`,
+> `src/lib/challenges.functions.ts`) et sert de base au nouveau déclencheur Phase 3
+> (`ensureHypothesesForChild`, écart de 4 défis consécutifs). La colonne **Source / confiance**
+> ci-dessous reste la référence pour juger la fiabilité de chaque repère — un repère marqué
+> "estimation raisonnée non vérifiée" peut donc influencer une vraie investigation Phase 3 ou le
+> calibrage d'un défi ; à garder en tête pour une future passe de vérification plus complète.
 
 ## 0. Pourquoi ce document (cf. décision #37)
 
@@ -84,17 +84,15 @@ Je le signale explicitement plutôt que de forcer les chiffres pour coller à l'
 | 8-10 ans (3-5) | Matière et énergie : propriétés et changements d'état. Systèmes du corps humain. Histoire de la Terre et formation des reliefs. À 10 ans (Grade 5) spécifiquement : modélise le mouvement de la matière entre plantes, animaux, décomposeurs et environnement. | **Sourcé** — NGSS bande 3-5 (général) + standard 5-LS2-1 (Grade 5, cité précisément). |
 | 11-14 ans (6-8) | Cycle de l'eau complet avec vocabulaire exact — évaporation, condensation, précipitation, transpiration (MS-ESS2-4). Rôle de la photosynthèse dans le cycle de la matière et de l'énergie (MS-LS1-6). États de la matière et énergie thermique (MS-PS1-4). Plus largement : écosystèmes, diversité du vivant, énergie et forces. | **Sourcé** — NGSS Middle School, 3 standards cités précisément (MS-ESS2-4, MS-LS1-6, MS-PS1-4) + bande générale 6-8. |
 
-## 4. Comment ceci remplacerait le déclencheur retiré (à concevoir après validation du contenu)
+## 4. Comment ceci remplace le déclencheur retiré — ✅ construit (décision #38, 2026-07-20)
 
-Idée directrice, **pas encore construite** : au lieu d'un Z-score sur une note auto-déclarée,
-comparer les défis réellement complétés par l'enfant dans un domaine à son repère d'âge
-ci-dessus — un écart net et répété (l'enfant échoue systématiquement des défis calibrés en
-dessous de son repère d'âge, ou au contraire les réussit très largement au-dessus) devient le
-nouveau signal qui amorce un cycle d'hypothèses (`hypothesis_cycles`), à la place de
-`anomaly_triggers`. Reste à trancher une fois ce contenu validé : le mécanisme précis de
-détection de l'écart, et comment `difficulty`/le domaine d'un défi se rattachent à une ligne
-précise de ce tableau — la bande large des sciences (vs. l'année précise des deux autres
-domaines) devra probablement se traduire différemment dans ce mécanisme.
+Au lieu d'un Z-score sur une note auto-déclarée : chaque défi généré dans un des 3 domaines
+ci-dessus est étiqueté par l'IA (`academic_domain`, `academic_level_age`) avec l'âge auquel son
+contenu correspond réellement. `ensureHypothesesForChild` regarde les 4 derniers défis complétés
+d'un même domaine — si les 4 sont constamment ≥1 an en dessous OU au-dessus de l'âge réel de
+l'enfant, ça amorce un cycle d'hypothèses (`hypothesis_cycles`, colonne `trigger_domain`), dans
+les deux sens (en retard → causes existantes ; en avance → nouvelle cause `READY_FOR_MORE`).
+Vérifié en production sur un cas réel, les deux sens. Détail complet : décision #38.
 
 ## Sources consultées
 

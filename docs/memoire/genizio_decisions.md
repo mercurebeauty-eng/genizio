@@ -1008,3 +1008,72 @@ Ce qui reste non sourcé cette passe est marqué explicitement ligne par ligne d
 référentiels formels), une partie de Grade 1/9 ans en maths, et les standards d'écriture
 11-14 ans (Common Core Writing non recherchés individuellement). Toujours **pas câblé** dans le
 moteur de génération ni un déclencheur — seul le contenu a changé, pas son statut d'usage.
+
+## Décision #38 : nouveau déclencheur Phase 3 — écart au référentiel académique, 4 défis, les deux sens
+
+**Contexte** : suite aux décisions #35-37, le référentiel académique était rédigé et sourcé mais
+non câblé — Phase 3a/3b restait dormante (plus aucun déclencheur depuis le retrait des notes).
+Conception du remplaçant avec l'utilisateur : deux paramètres explicitement tranchés par lui —
+**4 défis consécutifs** dans le même domaine avant de déclencher (pas 3, pas 2, pas 5-6), et
+**les deux sens comptent** : un enfant en retard sur le référentiel ET un enfant en avance
+déclenchent tous les deux une investigation (le second cas "pour proposer des défis plus
+costauds", pas pour signaler un problème).
+
+**Découverte technique avant de coder** : `difficulty` (facile/moyen/difficile), le seul signal
+de niveau qui existait déjà, est délibérément relatif à l'âge déclaré de l'enfant — chaque
+prompt de génération l'évalue explicitement "cohérent avec la tranche d'âge". Il ne peut donc
+structurellement pas détecter un écart à un référentiel absolu (par construction, tout y est
+toujours "cohérent avec l'âge"). Nécessite un signal différent, pas une réutilisation.
+
+**Mécanisme implémenté** (niveau 2 evolution-first — extension de l'existant, `finalizeChallenge`
+reste le verrou unique) :
+- Référentiel injecté dans les prompts comme texte constant (`ACADEMIC_REFERENTIAL_INSTRUCTION`,
+  même pattern que `GENIZIO_PRINCIPLES`/`SAFETY_INSTRUCTION`) — pas de nouvelle table à
+  synchroniser avec le markdown source.
+- 2 nouveaux champs optionnels sur `challenges` (`academic_domain`, `academic_level_age`) :
+  pour les défis dans un des 3 domaines académiques, l'IA étiquette à la génération l'âge
+  auquel correspond RÉELLEMENT le contenu du défi — indépendamment de l'âge réel de l'enfant.
+  Backstop `resolveAcademicLevel` dans `finalizeChallenge` : domaine/âge incohérent → les deux
+  champs redeviennent `null` (repli sûr, un défi mal étiqueté ne doit pas polluer la détection).
+- Détection 0 IA (même philosophie que l'ancien Z-score) : `ensureHypothesesForChild`,
+  reconstruite, regarde les 4 derniers défis complétés par domaine académique — si les 4
+  `academic_level_age` sont constamment ≥1 an en dessous OU ≥1 an au-dessus de l'âge réel,
+  déclenche un cycle. Un domaine avec un cycle déjà ouvert est ignoré (pas de doublon).
+- Nouvelle cause `READY_FOR_MORE` dans `ALLOWED_CAUSES` : seule cause qui n'est pas un problème
+  à résoudre. Branche dédiée dans `generateDiscriminantChallenge` (propose un défi
+  "sensiblement plus avancé... présenté comme une mission spéciale/bonus, jamais comme un
+  test"). `narrateForParent` reconstruite avec un ton conditionnel (enthousiaste si "en avance",
+  chaleureux-mais-pas-alarmiste si "en retard").
+- `hypothesis_cycles.trigger_domain` (nouvelle colonne) remplace l'ancienne indirection
+  `anomaly_trigger_id → anomaly_triggers → school_grades` : le domaine est stocké directement
+  sur le cycle, un seul saut au lieu de deux tables.
+
+**Vérifié en production, de bout en bout, cas réel (TestPhase1, 10 ans)** — 8 défis test insérés
+directement (4 "maths" à `academic_level_age=7`, 4 "sciences" à `academic_level_age=13`) pour
+isoler le mécanisme du jugement probabiliste de l'IA sur l'étiquetage :
+- Chargement du Portfolio → détecte sciences en premier (ordre d'insertion du Map), crée un
+  cycle réel avec Sonnet : hypothèse dominante `READY_FOR_MORE` (0.75) citant explicitement
+  "quatre observations consécutives à 13, sans variance" ET le Jumeau Pédagogique réel de
+  l'enfant (`time_awareness` FORCE) comme preuve à l'appui — raisonnement de qualité, pas un
+  gabarit. Seconde hypothèse `LACK_OF_ENGAGEMENT` (0.25) cohérente avec la consigne ("pertinent
+  dans les deux directions").
+- Rechargement → domaine sciences ignoré (cycle déjà ouvert), détecte maths → cycle réel avec
+  3 hypothèses `METHOD_MISMATCH`/`LACK_OF_ENGAGEMENT`/`CONCEPTUAL_GAP`, **`READY_FOR_MORE`
+  correctement absente** (la consigne "pertinent UNIQUEMENT si direction = en avance" a été
+  respectée par le modèle).
+- Piège déjà documenté (décision #36) retombé une 3e fois : narration rejetée deux fois par le
+  filet anti-chiffres car Haiku a écrit "TestPhase1" (contient un chiffre) dans le texte —
+  confirme que le filet fonctionne toujours. Non un bug : au 3e essai (cycle maths), Haiku a
+  spontanément écrit "votre enfant" et la narration est passée — et la résilience de reprise
+  (retente uniquement la narration, pas le raisonnement Sonnet coûteux) a fonctionné comme prévu
+  entre chaque tentative.
+- Carte "Ce que Naya a remarqué" (Phase 4, code inchangé) affichée correctement dans le
+  navigateur avec la vraie narration.
+- **Défi discriminant `READY_FOR_MORE` généré réellement** (cycle sciences isolé en
+  résolvant temporairement le cycle maths) : "Mission : Crée ta Fontaine Magique à Réaction en
+  Chaîne", présenté comme une mission valorisante conforme à la consigne, auto-étiqueté
+  `academic_domain=sciences, academic_level_age=11` — cohérent avec "sensiblement plus avancé"
+  (11 > 10 ans réels), preuve que le mécanisme d'étiquetage boucle correctement même sur les
+  défis qu'il génère lui-même.
+- `tsc --noEmit` propre à chaque étape. États de test artificiels nettoyés après vérification
+  (cycle maths reremis à `open` après isolement temporaire).

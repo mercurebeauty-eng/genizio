@@ -41,6 +41,8 @@ export type Database = {
     Tables: {
       challenges: {
         Row: {
+          academic_domain: string | null
+          academic_level_age: number | null
           ai_observations: string | null
           child_id: string
           completed_at: string | null
@@ -71,6 +73,8 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          academic_domain?: string | null
+          academic_level_age?: number | null
           ai_observations?: string | null
           child_id: string
           completed_at?: string | null
@@ -101,6 +105,8 @@ export type Database = {
           user_id: string
         }
         Update: {
+          academic_domain?: string | null
+          academic_level_age?: number | null
           ai_observations?: string | null
           child_id?: string
           completed_at?: string | null
@@ -337,6 +343,7 @@ export type Database = {
           parent_narrative: string | null
           resolved_at: string | null
           status: string
+          trigger_domain: string | null
           updated_at: string
           user_id: string
         }
@@ -350,6 +357,7 @@ export type Database = {
           parent_narrative?: string | null
           resolved_at?: string | null
           status?: string
+          trigger_domain?: string | null
           updated_at?: string
           user_id: string
         }
@@ -363,6 +371,7 @@ export type Database = {
           parent_narrative?: string | null
           resolved_at?: string | null
           status?: string
+          trigger_domain?: string | null
           updated_at?: string
           user_id?: string
         }

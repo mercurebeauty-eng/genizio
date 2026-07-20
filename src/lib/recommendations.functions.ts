@@ -1,7 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { generateDiscriminantChallenge } from "@/lib/hypotheses.functions";
-import { callClaude, finalizeChallenge, PROOF_MODE_INSTRUCTION } from "@/lib/challenges.functions";
+import { callClaude, finalizeChallenge, PROOF_MODE_INSTRUCTION, ACADEMIC_REFERENTIAL_INSTRUCTION } from "@/lib/challenges.functions";
 import { z } from "zod";
 
 const RecommendInput = z.object({
@@ -99,6 +99,8 @@ Principe : Utiliser sa FORCE (${strengthEntry[0]}) et ses centres d'intérêt ($
 
 ${PROOF_MODE_INSTRUCTION}
 
+${ACADEMIC_REFERENTIAL_INSTRUCTION}
+
 Format JSON strict :
 {
   "title": "Titre motivant",
@@ -111,7 +113,9 @@ Format JSON strict :
   "difficulty": "facile",
   "proof_mode": "photo" ou "declarative",
   "proof_target": {"metric": "...", "value": 20} (uniquement si declarative),
-  "declarative_award": {"corporelle": 2} (uniquement si declarative)
+  "declarative_award": {"corporelle": 2} (uniquement si declarative),
+  "academic_domain": "mathematiques" | "langage" | "sciences" | null,
+  "academic_level_age": 14 (uniquement si academic_domain non null)
 }`;
 
       try {
@@ -150,6 +154,8 @@ Format JSON strict :
                 proof_mode: parsed.proof_mode,
                 proof_target: parsed.proof_target,
                 declarative_award: parsed.declarative_award,
+                academic_domain: parsed.academic_domain,
+                academic_level_age: parsed.academic_level_age,
               },
               child.age
             ),
@@ -185,6 +191,8 @@ Principe : ${child.name} traverse une phase instable sur une compétence (résul
 ${PROOF_MODE_INSTRUCTION}
 Pour ce défi de stabilisation en particulier, une cible "declarative" doit rester trivialement atteignable (ex: 5 répétitions, pas 20) — le but est une réussite garantie, pas un défi physique.
 
+${ACADEMIC_REFERENTIAL_INSTRUCTION}
+
 Format JSON strict :
 {
   "title": "Titre chaleureux et rassurant",
@@ -197,7 +205,9 @@ Format JSON strict :
   "difficulty": "facile",
   "proof_mode": "photo" ou "declarative",
   "proof_target": {"metric": "...", "value": 5} (uniquement si declarative),
-  "declarative_award": {"corporelle": 2} (uniquement si declarative)
+  "declarative_award": {"corporelle": 2} (uniquement si declarative),
+  "academic_domain": "mathematiques" | "langage" | "sciences" | null,
+  "academic_level_age": 14 (uniquement si academic_domain non null)
 }`;
 
       try {
@@ -234,6 +244,8 @@ Format JSON strict :
                 proof_mode: parsed.proof_mode,
                 proof_target: parsed.proof_target,
                 declarative_award: parsed.declarative_award,
+                academic_domain: parsed.academic_domain,
+                academic_level_age: parsed.academic_level_age,
               },
               child.age
             ),

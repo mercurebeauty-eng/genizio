@@ -4,6 +4,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { supabase } from "@/integrations/supabase/client";
 import { useSession } from "@/hooks/use-session";
 import { getChildAISynthesis } from "@/lib/challenges.functions";
+import { ensureHypothesesForChild } from "@/lib/hypotheses.functions";
 import { getChildGuild } from "@/lib/guilds";
 import { AppTabBar } from "@/components/AppTabBar";
 import { TalentRadarChart } from "@/components/TalentRadarChart";
@@ -166,6 +167,7 @@ function PortfolioPage() {
   const [mentorCount, setMentorCount] = useState(0);
 
   const fetchSynthesis = useServerFn(getChildAISynthesis);
+  const ensureHypotheses = useServerFn(ensureHypothesesForChild);
 
   useEffect(() => {
     if (!loading && !session) navigate({ to: "/auth", replace: true });
@@ -226,12 +228,18 @@ function PortfolioPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [session, profileId]);
 
-  // NAYA 2.0 Phase 3a/4 — déclencheur retiré (cf. genizio-decisions #37) : les notes
-  // scolaires étaient l'unique source d'anomalie qui amorçait un cycle d'hypothèses ;
-  // supprimées car sans référentiel stable (programme/tranche d'âge/pays inconnus du
-  // système). refetchOpenCycle et la carte "Ce que Naya a remarqué" ci-dessous restent
-  // en place — ils ne dépendent pas des notes — prêts pour le futur déclencheur basé
-  // sur un écart au référentiel académique (cf. genizio_referentiel_academique.md).
+  // NAYA 2.0 Phase 3a/4, déclencheur reconstruit (cf. genizio-decisions #38) : plus
+  // d'anomalie de note, mais un écart répété entre le référentiel académique et l'âge
+  // réel de l'enfant sur ses défis complétés. Fire-and-forget, idempotent côté serveur
+  // (ne coûte un appel IA que si un écart est confirmé ou qu'un cycle attend sa narration),
+  // même pattern qu'avant le retrait des notes.
+  useEffect(() => {
+    if (!session) return;
+    ensureHypotheses({ data: { childId: profileId } })
+      .then((res) => { if (res.generated) refetchOpenCycle(); })
+      .catch(() => {});
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [session, profileId]);
 
   if (loading || !session || fetching) {
     return (
