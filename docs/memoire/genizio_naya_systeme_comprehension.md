@@ -251,8 +251,10 @@ Chaque phase est livrable, vérifiable de bout en bout, et committable seule. D�
 
 ## 9. Chantier lié — l'Atelier du Temps (repositionnement du Labo)
 
-> ⚠️ **STATUT (2026-07-20)** : direction produit **approuvée** par l'utilisateur, **PAS
-> implémentée**. Nom de travail « l'Atelier du Temps » à confirmer. Détail + alternatives dans
+> ⚠️ **STATUT (2026-07-20)** : nom **confirmé « L'Atelier du Temps »**. **V1 livrée** (renommage
+> nav + page + fin de la collision de noms avec les Défis — commit `9eb9b22`). **V3/V4 PAS
+> commencées** (aucune mécanique de temps réel, aucun `observation_event` dédié — le `/laboratory`
+> reste le générateur contextuel actuel, juste renommé). Détail + alternatives dans
 > [[genizio-decisions]] #29.
 
 Le `/laboratory` actuel ne se différencie pas des Défis : même backend

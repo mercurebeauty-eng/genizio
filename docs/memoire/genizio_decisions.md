@@ -431,9 +431,9 @@ re-déclaration, RLS anon = 0 ligne, suppression en cascade sans résidu. Détai
 
 ## Décision #29 : Repositionnement du Labo → « l'Atelier du Temps » (gestion du temps comme compétence)
 
-> ⚠️ **STATUT (2026-07-20)** : direction produit **approuvée** par l'utilisateur, **PAS encore
-> implémentée**. Nom de travail « l'Atelier du Temps » à confirmer avec l'utilisateur (choix de
-> marque — cf. principe #5 de [[MEMORY]], l'utilisateur valide explicitement le branding).
+> ⚠️ **STATUT (2026-07-20)** : direction approuvée, nom **confirmé par l'utilisateur : « L'Atelier
+> du Temps »**. **V1 livrée** (renommage + fin de la collision de noms, commit `9eb9b22`). V3
+> (mécaniques Estimation + Régularité) et V4 PAS commencées.
 
 **Contexte** : l'utilisateur a signalé que le Labo (`/laboratory`) et les Défis se différencient
 mal — vérifié dans le code : même backend (`generateSingleChallenge` + `assignTemplateChallenge`),
@@ -477,5 +477,6 @@ Défis) → V3 (mécaniques Estimation + Régularité, nouveaux types d'`observa
 server-authoritative pour la Régularité) → V4 (Naya déclenche elle-même un défi chronométré pour
 départager une hypothèse — Phase 3). Détail dans [[genizio-naya-systeme-comprehension]] §9.
 
-**Décision de branding en attente** : nom définitif du Labo repositionné (question posée à
-l'utilisateur). Conditionne le renommage V1 (route, nav, copy) et le type d'`observation_event`.
+**Branding tranché (2026-07-20)** : nom = **« L'Atelier du Temps »** (choisi par l'utilisateur
+via AskUserQuestion parmi Atelier du Temps / Le Tempo / Le Défi Chrono). La route reste
+`/laboratory` (URL non user-facing, pas de lien cassé) ; seuls les libellés changent.
