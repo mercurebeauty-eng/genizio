@@ -3,7 +3,8 @@ import { useServerFn } from "@tanstack/react-start";
 import { useEffect, useState } from "react";
 import { useSession } from "@/hooks/use-session";
 import { checkAdminStatus } from "@/lib/admin.functions";
-import { ShieldAlert, Loader2 } from "lucide-react";
+import { ShieldAlert } from "lucide-react";
+import { GenizioLoader } from "@/components/GenizioLoader";
 
 export const Route = createFileRoute("/admin")({
   component: AdminLayout,
@@ -32,7 +33,7 @@ function AdminLayout() {
   if (loading || checking) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-surface">
-        <Loader2 className="size-8 animate-spin text-brand" />
+        <GenizioLoader label="Chargement…" />
       </div>
     );
   }

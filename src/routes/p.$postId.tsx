@@ -1,7 +1,8 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { Loader2, ShieldAlert } from "lucide-react";
+import { ShieldAlert } from "lucide-react";
+import { GenizioLoader } from "@/components/GenizioLoader";
 
 export const Route = createFileRoute("/p/$postId")({
   component: PhotoRedirect,
@@ -46,7 +47,7 @@ function PhotoRedirect() {
 
   return (
     <div className="grid min-h-screen place-items-center bg-surface">
-      <Loader2 className="size-8 animate-spin text-brand/50" />
+      <GenizioLoader />
     </div>
   );
 }

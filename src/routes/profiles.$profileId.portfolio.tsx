@@ -8,6 +8,7 @@ import { getChildGuild } from "@/lib/guilds";
 import { AppTabBar } from "@/components/AppTabBar";
 import { TalentRadarChart } from "@/components/TalentRadarChart";
 import { NayaAvatar } from "@/components/NayaAvatar";
+import { GenizioLoader } from "@/components/GenizioLoader";
 import {
   Award,
   Calendar,
@@ -192,8 +193,8 @@ function PortfolioPage() {
 
   if (loading || !session || fetching) {
     return (
-      <div className="grid min-h-screen place-items-center bg-surface text-ink/60">
-        Chargement…
+      <div className="grid min-h-screen place-items-center bg-surface">
+        <GenizioLoader label="Chargement…" />
       </div>
     );
   }

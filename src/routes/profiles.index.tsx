@@ -17,6 +17,7 @@ import { KitSuggestion } from "@/components/challenges/KitSuggestion";
 import { DifficultyBadge } from "@/components/challenges/DifficultyBadge";
 import { MarkdownContent } from "@/components/ui/markdown-content";
 import { COUNTRIES } from "@/lib/countries";
+import { GenizioLoader } from "@/components/GenizioLoader";
 
 export const Route = createFileRoute("/profiles/")({
   component: DashboardPage,
@@ -200,8 +201,8 @@ function DashboardPage() {
 
   if (loading || !session) {
     return (
-      <div className="grid min-h-screen place-items-center bg-surface text-ink/60">
-        Chargement…
+      <div className="grid min-h-screen place-items-center bg-surface">
+        <GenizioLoader label="Chargement…" />
       </div>
     );
   }
@@ -225,7 +226,7 @@ function DashboardPage() {
           </div>
 
           {fetching ? (
-            <p className="text-ink/60">Chargement…</p>
+            <GenizioLoader className="py-8" />
           ) : profiles.length === 0 ? (
             <div className="rounded-3xl border-[3px] border-dashed border-ink bg-white/40 p-12 text-center shadow-brutal-sm">
               <p className="mb-4 text-ink/60">Aucun profil pour l'instant. Créez le premier.</p>

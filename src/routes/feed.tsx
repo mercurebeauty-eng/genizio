@@ -9,6 +9,7 @@ import { confirmDialog } from "@/components/ui/confirm-dialog";
 import { toast } from "sonner";
 import { formatDistanceToNow } from "date-fns";
 import { fr } from "date-fns/locale";
+import { GenizioLoader } from "@/components/GenizioLoader";
 
 export const Route = createFileRoute("/feed")({
   component: FeedPage,
@@ -213,7 +214,11 @@ function FeedPage() {
   };
 
   if (loading || !session) {
-    return <div className="grid min-h-screen place-items-center bg-surface">Chargement...</div>;
+    return (
+      <div className="grid min-h-screen place-items-center bg-surface">
+        <GenizioLoader label="Chargement…" />
+      </div>
+    );
   }
 
   return (

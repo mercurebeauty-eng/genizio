@@ -3,6 +3,7 @@ import { useEffect, useRef, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { useSession } from "@/hooks/use-session";
 import { AppHeader } from "@/components/AppHeader";
+import { GenizioLoader } from "@/components/GenizioLoader";
 import {
   listProductsAdmin,
   createProduct,
@@ -230,7 +231,11 @@ function AdminProductsPage() {
   };
 
   if (loading || !session) {
-    return <div className="grid min-h-screen place-items-center bg-surface text-ink/60">Chargement…</div>;
+    return (
+      <div className="grid min-h-screen place-items-center bg-surface">
+        <GenizioLoader label="Chargement…" />
+      </div>
+    );
   }
 
   return (

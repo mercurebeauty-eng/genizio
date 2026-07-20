@@ -8,6 +8,7 @@ import { getChildGuild } from "@/lib/guilds";
 import { Loader2, Users, Trophy, CheckSquare, Eye, ClipboardList, Zap, CheckCircle2, X, Clock, AlertTriangle, Brain } from "lucide-react";
 import { NayaAvatar } from "@/components/NayaAvatar";
 import { MarkdownContent } from "@/components/ui/markdown-content";
+import { GenizioLoader } from "@/components/GenizioLoader";
 
 
 export const Route = createFileRoute("/supervisor")({
@@ -66,7 +67,11 @@ function SupervisorDashboardPage() {
   const selected = children.find((c) => c.id === selectedId) ?? null;
 
   if (loading || !session) {
-    return <div className="grid min-h-screen place-items-center bg-surface text-ink/60">Chargement…</div>;
+    return (
+      <div className="grid min-h-screen place-items-center bg-surface">
+        <GenizioLoader label="Chargement…" />
+      </div>
+    );
   }
 
   return (

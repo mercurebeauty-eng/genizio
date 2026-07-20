@@ -12,6 +12,7 @@ import nayaAvatar from "@/assets/naya-avatar.png";
 import { confirmDialog } from "@/components/ui/confirm-dialog";
 import { DifficultyBadge } from "@/components/challenges/DifficultyBadge";
 import { MarkdownContent } from "@/components/ui/markdown-content";
+import { GenizioLoader } from "@/components/GenizioLoader";
 
 export const Route = createFileRoute("/profiles/$profileId/quest")({
   component: QuestPage,
@@ -199,8 +200,8 @@ function QuestPage() {
 
   if (loading || fetching || !session) {
     return (
-      <div className="grid min-h-screen place-items-center bg-brand/5 text-ink/60">
-        <p className="font-bold animate-pulse">Chargement de la quête...</p>
+      <div className="grid min-h-screen place-items-center bg-brand/5">
+        <GenizioLoader label="Chargement de la quête…" />
       </div>
     );
   }

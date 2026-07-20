@@ -3,12 +3,14 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useSession } from "@/hooks/use-session";
 import { AppHeader } from "@/components/AppHeader";
+import { AppTabBar } from "@/components/AppTabBar";
 import { toast } from "sonner";
 import { User, Phone, ArrowLeft, Check, Loader2, Users, Calendar, Shield } from "lucide-react";
 import { ConsentLedger } from "@/components/settings/ConsentLedger";
 import { ExportDataButton } from "@/components/settings/ExportDataButton";
 import { DeleteAccountDialog } from "@/components/settings/DeleteAccountDialog";
 import { COUNTRIES } from "@/lib/countries";
+import { GenizioLoader } from "@/components/GenizioLoader";
 
 export const Route = createFileRoute("/profile")({
   component: ProfilePage,
@@ -86,12 +88,17 @@ function ProfilePage() {
   };
 
   if (loading || !session) {
-    return <div className="grid min-h-screen place-items-center bg-surface">Chargement...</div>;
+    return (
+      <div className="grid min-h-screen place-items-center bg-surface">
+        <GenizioLoader label="Chargement…" />
+      </div>
+    );
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-surface via-surface to-brand/5 p-6 font-sans text-ink">
-      <AppHeader />
+    <div className="min-h-screen bg-gradient-to-b from-surface via-surface to-brand/5 p-6 font-sans text-ink pb-24 md:pb-6">
+      <AppHeader hideTabBarLinks />
+      <AppTabBar profileId="" />
 
       <div className="pt-6"></div>
 

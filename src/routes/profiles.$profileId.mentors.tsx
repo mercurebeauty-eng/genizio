@@ -8,6 +8,7 @@ import { Users } from "lucide-react";
 import { AppTabBar } from "@/components/AppTabBar";
 
 import { AppHeader } from "@/components/AppHeader";
+import { GenizioLoader } from "@/components/GenizioLoader";
 
 export const Route = createFileRoute("/profiles/$profileId/mentors")({
   component: MentorsPage,
@@ -41,7 +42,13 @@ function MentorsPage() {
       });
   }, [session, profileId]);
 
-  if (loading || !session || fetchingChild) return null;
+  if (loading || !session || fetchingChild) {
+    return (
+      <div className="grid min-h-screen place-items-center bg-surface">
+        <GenizioLoader label="Chargement…" />
+      </div>
+    );
+  }
 
   if (!childFound) {
     return (

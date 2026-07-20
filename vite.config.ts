@@ -19,6 +19,18 @@ export default defineConfig({
         registerType: 'autoUpdate',
         outDir: '.output/public',
         includeAssets: ['favicon.ico', 'apple-touch-icon.png', 'mask-icon.svg'],
+        // This app is server-rendered per route (TanStack Start/Nitro) — there is
+        // no single static index.html shell to fall back to. vite-plugin-pwa's
+        // generateSW strategy defaults navigateFallback to 'index.html', which
+        // doesn't exist in .output/public and isn't in the precache manifest,
+        // so every fresh navigation (cold PWA launch, hard refresh, deep link)
+        // was intercepted by the service worker and served a broken response —
+        // the exact "mangled layout" bug reported on iOS. Disabling it lets
+        // navigation requests hit the network/server as normal; static assets
+        // (JS/CSS/images) are still precached below.
+        workbox: {
+          navigateFallback: null,
+        },
         manifest: {
           name: 'Génizio',
           short_name: 'Génizio',

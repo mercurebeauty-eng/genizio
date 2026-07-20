@@ -2,7 +2,8 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { getSharedChildView } from "@/lib/mentors.functions";
 import { useEffect, useState } from "react";
-import { ShieldAlert, Loader2, Award, Brain, Image as ImageIcon } from "lucide-react";
+import { ShieldAlert, Award, Brain, Image as ImageIcon } from "lucide-react";
+import { GenizioLoader } from "@/components/GenizioLoader";
 import { TalentRadarChart } from "@/components/TalentRadarChart";
 import { MarkdownContent } from "@/components/ui/markdown-content";
 
@@ -35,7 +36,7 @@ function SharedChildView() {
   if (loading) {
     return (
       <div className="grid min-h-screen place-items-center bg-surface">
-        <Loader2 className="size-8 animate-spin text-brand/50" />
+        <GenizioLoader />
       </div>
     );
   }
