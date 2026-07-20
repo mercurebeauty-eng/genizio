@@ -352,8 +352,12 @@ export async function callClaude(
     : undefined;
 
   // Cost-effective routing: use Claude Sonnet 5 only when analyzing an image (vision), otherwise use Claude Haiku 4.5.
+  // Must check imageData too, not just imageUrl: validateChallengeProof's real photo
+  // path sends raw bytes via imageData (see its own comment above) and was silently
+  // falling through to Haiku for every proof-photo validation despite this comment's
+  // intent — imageUrl stayed undefined so the ternary never saw a reason to pick Sonnet.
   // modelOverride wins over both — lets a text-only call opt into Sonnet (NAYA reasoning role).
-  const model = modelOverride ?? (imageUrl ? "claude-sonnet-5" : "claude-haiku-4-5-20251001");
+  const model = modelOverride ?? (imageData || imageUrl ? "claude-sonnet-5" : "claude-haiku-4-5-20251001");
 
   let attempt = 0;
   while (attempt < maxRetries) {

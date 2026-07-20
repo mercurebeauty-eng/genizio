@@ -664,3 +664,15 @@ Idempotence (1 seul cycle malgré 2 appels concurrents du double-montage React),
 UTF-8 correct en base (vérifié par hexdump : `0xC3 0xA9` = « é », le `Ã©` initial n'était
 qu'un artefact d'affichage `python json.tool` sur Windows), cascade de suppression propre.
 `tsc --noEmit` propre. Données de test nettoyées.
+
+**Correctif de suivi (même jour, sur demande explicite)** : le bug de routage vision signalé
+ci-dessus (`imageUrl ? Sonnet : Haiku` ignorait `imageData`) a été corrigé — la condition teste
+désormais `imageData || imageUrl`. Impact réel : chaque validation de preuve photo d'un défi
+(`validateChallengeProof`) tournait silencieusement sur Haiku au lieu de Sonnet depuis l'origine
+de cette route, malgré le commentaire du code affirmant le contraire — un bug préexistant à toute
+la session NAYA, découvert en marge du debug du bloc `thinking`. **Vérifié en direct** avec un
+log temporaire (`console.log` retiré après coup) : soumission réelle d'une preuve photo via
+`OutcomeChat` (note + image) → `model=claude-sonnet-5 hasImageData=true hasImageUrl=false` dans
+les logs serveur, validation IA aboutie (`Bulletin de Découverte` affiché). Confirme aussi que le
+fix de parsing du bloc `thinking` (déjà appliqué) couvre bien ce chemin d'appel, partagé avec
+`generateHypotheses`. Défi de test supprimé après vérification. `tsc --noEmit` propre.
