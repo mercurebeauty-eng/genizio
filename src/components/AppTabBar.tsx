@@ -1,5 +1,5 @@
 import { Link } from "@tanstack/react-router";
-import { Home, Trophy, Beaker, ShoppingBag, Users, Settings } from "lucide-react";
+import { Home, Trophy, Clock, ShoppingBag, Users, Settings } from "lucide-react";
 
 type AppTabBarProps = {
   profileId: string;
@@ -12,7 +12,7 @@ export function AppTabBar({ profileId }: AppTabBarProps) {
   const items = [
     { to: "/profiles" as const, label: "Accueil", icon: Home, needsProfileId: false, hideOnDesktop: true },
     { to: "/profiles/$profileId/challenges" as const, label: "Défis", icon: Trophy, needsProfileId: true },
-    { to: "/laboratory" as const, label: "Labo", icon: Beaker, needsProfileId: false },
+    { to: "/laboratory" as const, label: "Atelier", icon: Clock, needsProfileId: false },
     { to: "/boutique" as const, label: "Boutique", icon: ShoppingBag, needsProfileId: false },
     { to: "/profiles/$profileId/mentors" as const, label: "Mentors", icon: Users, needsProfileId: true },
     { to: "/profile" as const, label: "Réglages", icon: Settings, needsProfileId: false, hideOnDesktop: true },

@@ -554,8 +554,8 @@ function ChallengesPage() {
                     <Beaker className="size-6" />
                   </span>
                   <div>
-                    <h3 className="font-display text-xl font-bold">Le Laboratoire de Génizio</h3>
-                    <p className="text-xs font-bold text-ink/60">Composez un défi d'apprentissage sur-mesure pour {child.name}</p>
+                    <h3 className="font-display text-xl font-bold">Composer un défi ciblé</h3>
+                    <p className="text-xs font-bold text-ink/60">Générez un défi d'apprentissage sur-mesure pour {child.name}</p>
                   </div>
                 </div>
               </div>

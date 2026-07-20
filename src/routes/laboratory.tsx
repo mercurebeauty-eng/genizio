@@ -255,14 +255,14 @@ function LaboratoryPage() {
         <header className="mb-10 text-center">
           <NayaAvatar size="md" className="mx-auto mb-2" />
           <div className="inline-flex items-center gap-2 rounded-full bg-brand px-4 py-1.5 text-xs font-black uppercase tracking-widest text-white border-2 border-ink shadow-brutal-sm">
-            <Sparkles className="size-4 animate-pulse" />
-            Génération Contextuelle
+            <Clock className="size-4 animate-pulse" />
+            L'Atelier du Temps
           </div>
           <h1 className="mt-4 font-display text-4xl font-extrabold tracking-tight md:text-5xl">
-            Inspirer Maintenant
+            Un défi taillé pour ton temps
           </h1>
           <p className="mx-auto mt-3 max-w-xl text-lg text-ink/70">
-            L'IA crée une activité sur-mesure basée sur votre temps, votre lieu actuel, et les talents cachés de votre enfant.
+            Dis à Naya combien de temps tu as, où tu es et ce que tu as sous la main : elle compose une activité qui tient exactement dans ce temps-là. C'est ici qu'on apprend, peu à peu, à faire avec le temps qu'on a.
           </p>
         </header>
 
