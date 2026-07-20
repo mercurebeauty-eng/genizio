@@ -845,6 +845,14 @@ Réponds STRICTEMENT en JSON valide avec ce format :
 
       if (error) throw new Error(error.message);
       updatedChallenge = updated;
+
+      // NAYA 2.0 Phase 3b : si ce défi était un défi discriminant, met à jour la boucle bayésienne
+      try {
+        const { processDiscriminantResult } = await import("@/lib/hypotheses.functions");
+        void processDiscriminantResult(data.id, "COMPLETED", relevant);
+      } catch (err) {
+        console.error("Non-fatal: processDiscriminantResult failed", err);
+      }
     }
 
     return {

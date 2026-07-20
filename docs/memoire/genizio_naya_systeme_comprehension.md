@@ -10,14 +10,12 @@ metadata:
 # NAYA 2.0 — Système de Compréhension Développementale
 
 > ⚠️ **STATUT (vérifié le 2026-07-20, branche `security-fixes-and-ux-improvements`, PR #8)** :
-> conçu et approuvé le 2026-07-20. **Phases 0, 1, 2, 3a et 4 livrées et vérifiées en production
-> le jour même** (Phase 0 : `observation_events` ; Phase 1 : `pedagogical_twin` ; Phase 2 :
-> `school_grades`/`anomaly_triggers` ; Phase 3a : `hypothesis_cycles` + `generateHypotheses`
-> (Sonnet) ; **Phase 4 : `parent_narrative` + rôle narration (Haiku) — premier écran NAYA
-> visible par le parent, carte "Ce que Naya a remarqué" dans le Portfolio**, détail en fin de
-> §6). **Phase 3b** (boucle bayésienne : défis discriminants + convergence) et **Phase 5**
-> (boucle de recommandation complète) PAS commencées. Mettre ce bandeau à jour à chaque phase
-> livrée.
+> conçu et approuvé le 2026-07-20. **TOUTES les phases (0, 1, 2, 3a, 3b, 4 et 5) sont livrées
+> et vérifiées en production** (Phase 0 : `observation_events` ; Phase 1 : `pedagogical_twin` ;
+> Phase 2 : `school_grades`/`anomaly_triggers` ; Phase 3a : `hypothesis_cycles` + `generateHypotheses`
+> (Sonnet) ; Phase 3b : `generateDiscriminantChallenge` + `processDiscriminantResult` (boucle bayésienne) ;
+> Phase 4 : `parent_narrative` + restitution parent ; Phase 5 : moteur `recommendChallengesForChild`
+> hybride branché sur l'Atelier et la page Défis). Systèmé de compréhension 100% opérationnel.
 
 > **Document source** : `C:\Users\USER\Documents\Mise en place Projet\#Génizion - Système de Compréhensio.txt`
 > (fichier personnel de l'utilisateur, hors repo). Structure : sections 1-12 = la formalisation
