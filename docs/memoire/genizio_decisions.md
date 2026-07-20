@@ -984,3 +984,27 @@ que son périmètre prévu.
 système. Rejetée par l'utilisateur — suppression complète demandée explicitement, cohérent avec
 Simplicity Maximizer (un champ qui ne sert plus à rien pour le système ne mérite pas de rester
 "au cas où").
+
+**Mise à jour (même jour) — sourçage web du référentiel** : l'utilisateur a demandé de corriger
+le brouillon via une vraie recherche internet plutôt que de mémoire. Recherches menées sur
+Common Core Mathematics/ELA (US), Singapore Math scope and sequence, NGSS (sciences), curriculum
+chinois. Résultat : la majorité des repères en mathématiques et une partie du langage sont
+maintenant **sourcés avec citation exacte** (ex : Common Core 3.OA.C.7 — mémorisation de toutes
+les tables à un chiffre "from memory" en fin de Grade 3/8 ans ; 6.EE/7.EE pour les premières
+équations à 11-12 ans). Deux corrections concrètes trouvées en sourçant, documentées dans le
+fichier plutôt que silencieusement corrigées :
+1. L'exemple d'origine de l'utilisateur ("table de 5 à 5 ans") est en réalité plus précoce que
+   ce qu'aucun des référentiels vérifiés n'exige — même Singapour/Chine (les plus exigeants
+   trouvés) placent l'introduction formelle de la multiplication à 7 ans, la mémorisation
+   complète vers 8 ans.
+2. Sciences restructurées par **bande d'âge** (K-2/3-5/6-8) plutôt que par année précise — NGSS,
+   la source la mieux documentée trouvée, n'est lui-même pas organisé année par année ; forcer
+   une fausse précision annuelle aurait été moins honnête. "Cycle de l'eau" et "photosynthèse",
+   placés trop tôt dans le premier jet, sont en réalité des standards de collège (11-14 ans,
+   MS-ESS2-4/MS-LS1-6) avec un vocabulaire précis exigé.
+
+Ce qui reste non sourcé cette passe est marqué explicitement ligne par ligne dans le document
+(colonne "Source / confiance") plutôt que laissé ambigu — notamment 4 ans (avant les
+référentiels formels), une partie de Grade 1/9 ans en maths, et les standards d'écriture
+11-14 ans (Common Core Writing non recherchés individuellement). Toujours **pas câblé** dans le
+moteur de génération ni un déclencheur — seul le contenu a changé, pas son statut d'usage.
