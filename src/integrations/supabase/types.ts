@@ -450,6 +450,50 @@ export type Database = {
           },
         ]
       }
+      pedagogical_twins: {
+        Row: {
+          child_id: string
+          competencies: Json
+          created_at: string
+          drivers: Json
+          id: string
+          interests: Json
+          last_computed_at: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          child_id: string
+          competencies?: Json
+          created_at?: string
+          drivers?: Json
+          id?: string
+          interests?: Json
+          last_computed_at?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          child_id?: string
+          competencies?: Json
+          created_at?: string
+          drivers?: Json
+          id?: string
+          interests?: Json
+          last_computed_at?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pedagogical_twins_child_id_fkey"
+            columns: ["child_id"]
+            isOneToOne: true
+            referencedRelation: "child_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       post_likes: {
         Row: {
           created_at: string
@@ -587,6 +631,54 @@ export type Database = {
             columns: ["child_profile_id"]
             isOneToOne: false
             referencedRelation: "child_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      trait_series: {
+        Row: {
+          child_id: string
+          id: string
+          level: number
+          recorded_at: string
+          source_event_id: string | null
+          trait_key: string
+          user_id: string
+          value: number
+        }
+        Insert: {
+          child_id: string
+          id?: string
+          level: number
+          recorded_at?: string
+          source_event_id?: string | null
+          trait_key: string
+          user_id: string
+          value: number
+        }
+        Update: {
+          child_id?: string
+          id?: string
+          level?: number
+          recorded_at?: string
+          source_event_id?: string | null
+          trait_key?: string
+          user_id?: string
+          value?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "trait_series_child_id_fkey"
+            columns: ["child_id"]
+            isOneToOne: false
+            referencedRelation: "child_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "trait_series_source_event_id_fkey"
+            columns: ["source_event_id"]
+            isOneToOne: false
+            referencedRelation: "observation_events"
             referencedColumns: ["id"]
           },
         ]

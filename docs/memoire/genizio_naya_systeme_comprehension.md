@@ -9,12 +9,13 @@ metadata:
 
 # NAYA 2.0 — Système de Compréhension Développementale
 
-> ⚠️ **STATUT (vérifié le 2026-07-20, branche `security-fixes-and-ux-improvements`)** :
-> conçu et approuvé le 2026-07-20. **Phase 0 livrée et vérifiée en production le jour même**
-> (migration `20260720100000_add_observation_events.sql` appliquée via `supabase db push`,
-> triggers + backfill + RLS testés de bout en bout — détail en fin de §6). **Phases 1-5 PAS
-> commencées** — aucune table `pedagogical_twins`/`trait_series`/`hypothesis_cycles` en base.
-> Prochain pas = Phase 1. Mettre ce bandeau à jour à chaque phase livrée.
+> ⚠️ **STATUT (vérifié le 2026-07-20, branche `security-fixes-and-ux-improvements`, PR #8)** :
+> conçu et approuvé le 2026-07-20. **Phases 0 et 1 livrées et vérifiées en production le jour
+> même** (Phase 0 : `20260720100000_add_observation_events.sql` ; Phase 1 :
+> `20260720110000_add_pedagogical_twin.sql` — triggers + EMA + classification + backfill +
+> RLS testés de bout en bout, détail en fin de §6). **Phases 2-5 PAS commencées** — aucune
+> table `anomaly_triggers`/`hypothesis_cycles` en base, aucune saisie de notes scolaires.
+> Prochain pas = Phase 2. Mettre ce bandeau à jour à chaque phase livrée.
 
 > **Document source** : `C:\Users\USER\Documents\Mise en place Projet\#Génizion - Système de Compréhensio.txt`
 > (fichier personnel de l'utilisateur, hors repo). Structure : sections 1-12 = la formalisation
@@ -158,14 +159,47 @@ Chaque phase est livrable, vérifiable de bout en bout, et committable seule. D�
   navigateur ; premier événement organique capté pendant les tests (profil "Khadidja" créé par
   l'utilisateur réel → `INTEREST_EXPRESSED` automatique). Données de test nettoyées.
 
-### Phase 1 — Jumeau Pédagogique v1 (0 IA)
-- Tables `pedagogical_twins` (état courant) + `trait_series` (historique versionné).
-- Updaters déterministes : lissage exponentiel par niveau (α par niveau), alimentés par les
-  événements Phase 0 (complétion par domaine/difficulté → compétences ; abandons/délais →
-  persévérance ; choix répétés → centres d'intérêt).
-- Classification périodique Force/Faiblesse/Fragilité/Risque/Émergence (valeur × pente × variance).
-- Interne uniquement (rien de visible parent). Vérifiable : snapshot JP requêtable et cohérent
-  pour un enfant réel avec historique.
+### Phase 1 — Jumeau Pédagogique v1 (0 IA) — ✅ LIVRÉE le 2026-07-20
+- Tables `pedagogical_twins` (état courant, JSONB `drivers`/`competencies`/`interests`) +
+  `trait_series` (historique append-only, `level` 2 ou 3, `trait_key`, `value`, `recorded_at`,
+  `source_event_id`). RLS owner-only SELECT, aucune policy d'écriture — tout passe par des
+  fonctions `SECURITY DEFINER` (`EXECUTE` révoqué au public), même pattern que la Phase 0.
+- **Décision #28 (détail dans decisions.md) : N3 "Compétences" réutilise les 9 clés Gardner**
+  déjà en place (`VALID_TALENT_KEYS`) plutôt qu'un nouveau vocabulaire créativité/communication/
+  logique/organisation/métacognition/travail-d'équipe du document source — signal **dérivé**
+  différent (moyenne mobile [0,1] + tendance) du score cumulatif déjà affiché au parent, pas un
+  doublon. N2 "Moteurs" : **seule la persévérance est calculée en v1** — curiosité, autonomie,
+  compétition, tolérance à la frustration n'ont aucun signal fiable dans la forme actuelle des
+  événements ; champs absents du JSONB plutôt que valeurs inventées.
+- Updaters (fonction `apply_observation_to_twin`, appelée par un trigger `AFTER INSERT` sur
+  `observation_events` — **résout la question ouverte "pg_cron vs événementiel" en faveur de
+  l'événementiel**, cohérent avec Phase 0) :
+  - `CHALLENGE_COMPLETED` + `ai_validated=true` → EMA (α=0.25) sur chaque clé Gardner de
+    `target_intelligences` (signal=1.0) ; EMA (α=0.08) sur `perseverance` (signal=0.65,
+    inconditionnel — signal comportemental distinct de la validation IA du contenu) ; renfort du
+    domaine engagé (`interests.domains_engaged`, +0.2 plafonné à 1.0).
+  - `CHALLENGE_ABANDONED` → EMA sur `perseverance` (signal=0.15).
+  - `INTEREST_EXPRESSED` → renfort de `interests.declared` (+0.1 si déjà présent, base 0.6 si
+    nouveau) — jamais de suppression sur retrait d'un tag (signal doux, pas d'oubli implémenté
+    en v1, cf. adaptation §5).
+- Classification (`classify_trait`, seuils §4 : FORCE si valeur>0.7 et tendance≥0 ; RISQUE si
+  tendance<-0.02 ; FAIBLESSE si valeur<0.3 et tendance>0 ; FRAGILITE sinon en zone basse ou si
+  variance>0.02 en zone médiane ; EMERGENCE sinon) calculée via les agrégats natifs Postgres
+  `regr_slope`/`variance` sur les 10 derniers points, **seulement si n≥4** pour ce trait (sinon
+  `category=NULL` — pas de classification prématurée sur 1-2 points).
+- Backfill : rejoue chronologiquement les `observation_events` déjà backfillés par la Phase 0.
+- **Vérifié en production** : backfill cohérent (n=1, `category=NULL` partout, comme attendu) ;
+  5 complétions validées ciblant la même compétence → EMA converge à 1.0, tendance=0,
+  variance=0, **catégorie=FORCE** ; séquence 5 complétions + 6 abandons → persévérance descend
+  à 0.45 avec tendance négative détectée, catégorie EMERGENCE (zone médiane, variance sous le
+  seuil — comportement exact des règles §4, pas une erreur) ; renfort de domaine plafonné à 1.0
+  après 5 défis dans "Arts" ; intérêt déclaré deux fois → 0.6→0.7 (bump, pas de reset) ; RLS
+  anon = 0 ligne sur les deux tables ; suppression du profil de test → cascade complète, 0
+  résidu. Un bug de résolution de type Postgres trouvé et corrigé avant tout dégât en prod :
+  `smallint` pour `level`/`p_level` empêchait la résolution de fonction (littéral `integer` non
+  castable implicitement vers `smallint`) — la transaction complète a échoué et roulé en arrière
+  proprement (aucune table laissée en état partiel), corrigé en `integer`, ré-appliqué avec
+  succès. Interne uniquement (rien de visible parent) — conforme au plan.
 
 ### Phase 2 — Signaux scolaires + détection d'anomalies (0 IA)
 - UI parent de saisie de notes (matière, note/max, type d'évaluation, contexte optionnel).

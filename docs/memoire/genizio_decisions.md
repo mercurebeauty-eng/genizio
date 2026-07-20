@@ -355,3 +355,61 @@ déjà en place (`callClaude` : Sonnet vision, Haiku texte) — cohérent avec l
 **Trade-off accepté** : coût par appel de raisonnement potentiellement plus élevé qu'un
 fournisseur low-cost — mitigé par le design frugal (l'IA n'intervient que sur anomalie détectée
 par du code déterministe, pas sur chaque événement).
+
+## Décision #28 : Phase 1 NAYA — Compétences N3 réutilisent les 9 clés Gardner, scope v1 restreint
+
+**Contexte** : implémentation de la Phase 1 (Jumeau Pédagogique v1, cf.
+[[genizio-naya-systeme-comprehension]] §6). Le document source décrit une taxonomie de
+"Compétences" (créativité, communication, logique, organisation, métacognition, travail
+d'équipe) distincte des 9 intelligences de Gardner déjà utilisées pour `child_profiles.talents`.
+
+**Décision 1 — réutiliser `VALID_TALENT_KEYS` (9 clés Gardner) pour le Niveau 3, pas un nouveau
+vocabulaire.** `pedagogical_twins.competencies` stocke un signal **dérivé** par clé Gardner :
+moyenne mobile exponentielle [0,1] avec tendance/variance (α=0.25), recalculée à chaque
+`CHALLENGE_COMPLETED` validé par l'IA — différent du score cumulatif déjà affiché au parent
+(`child_profiles.talents`, incrémental non borné, sans notion de tendance).
+**Alternatives rejetées** :
+- ❌ Introduire le vocabulaire créativité/communication/logique/organisation/métacognition/
+  travail-d'équipe du document source : recouvrement sémantique fort avec les clés Gardner déjà
+  en place (créative≈créativité, sociale≈travail d'équipe, logico_mathematique≈logique,
+  linguistique≈communication) → fragmentation du "quelle compétence a quel score" en deux
+  systèmes à réconcilier, exactement le problème déjà identifié entre Guildes et clés Gardner
+  ("vocabulaire distinct, à ne pas confondre", [[genizio-vision]]). Rejeté par discipline
+  evolution-first ("préserver avant d'optimiser") plutôt que par manque de fidélité au document
+  source — le document source décrit une architecture cible générique, pas un vocabulaire figé.
+- ❌ Faire de `pedagogical_twins.competencies` un simple miroir/copie de `child_profiles.talents` :
+  aurait perdu la notion de tendance (le score cumulatif ne peut que monter), indispensable à la
+  classification Force/Faiblesse/Fragilité/Risque (§4 du plan) qui a besoin d'une pente, pas
+  seulement d'une valeur.
+
+**Décision 2 — seule la persévérance (N2) est calculée en v1.** Curiosité, autonomie,
+compétition/coopération, tolérance à la frustration, orientation intrinsèque/extrinsèque
+restent des champs absents du JSONB `drivers` (pas des valeurs par défaut inventées) tant
+qu'aucun événement de la Phase 0 ne porte de signal fiable pour ces traits.
+**Pourquoi** : fabriquer un score sans signal réel violerait le principe déjà établi "les scores
+de talents restent strictement basés sur des preuves" ([[genizio-decisions]] #24) et le risque
+"sur-interprétation psychométrique" déjà identifié dans le plan (§8).
+
+**Décision 3 — recalcul événementiel (trigger sur `observation_events`), pas de `pg_cron`.**
+Résout la question ouverte du plan ("fréquence de la classification"). Cohérent avec le pattern
+déjà utilisé en Phase 0 (triggers plutôt que jobs planifiés), pas de nouvelle dépendance
+d'infrastructure tant que le volume d'événements reste faible.
+
+**Décision 4 — intérêts déclarés et intérêts comportementaux (domaines engagés) restent deux
+axes JSONB séparés**, jamais fusionnés. Les vocabulaires ne se recouvrent pas 1:1 (tags Gardner
+libres pour les intérêts déclarés vs `DOMAINS` des défis pour l'engagement comportemental) —
+inventer un mapping aurait été malhonnête, dans la même veine que la décision #24 ("les tags
+restent un signal de contexte, pas un raccourci").
+
+**Bug trouvé et corrigé avant tout dégât en production** : la migration utilisait `smallint`
+pour la colonne `trait_series.level` et le paramètre `p_level` de `record_trait_point`. Un
+littéral entier (`3`, `2`) passé à un appel de fonction est typé `integer` par Postgres, et
+`integer → smallint` n'est qu'un cast *assignment*, pas *implicit* — la résolution de fonction a
+échoué (`42883`), toute la migration (une seule transaction) a roulé en arrière proprement,
+aucune table laissée en état partiel. Corrigé en `integer` partout, ré-appliqué avec succès.
+
+**Vérifié en production** : backfill cohérent, classification FORCE atteinte après 5 signaux
+positifs constants sur une même compétence (n≥4 franchi), tendance négative détectée après une
+série d'abandons, renfort de domaine plafonné à 1.0, bump d'intérêt sans écrasement sur
+re-déclaration, RLS anon = 0 ligne, suppression en cascade sans résidu. Détail complet dans
+[[genizio-naya-systeme-comprehension]] §6.
