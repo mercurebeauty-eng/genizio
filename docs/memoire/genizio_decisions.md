@@ -428,3 +428,54 @@ positifs constants sur une même compétence (n≥4 franchi), tendance négative
 série d'abandons, renfort de domaine plafonné à 1.0, bump d'intérêt sans écrasement sur
 re-déclaration, RLS anon = 0 ligne, suppression en cascade sans résidu. Détail complet dans
 [[genizio-naya-systeme-comprehension]] §6.
+
+## Décision #29 : Repositionnement du Labo → « l'Atelier du Temps » (gestion du temps comme compétence)
+
+> ⚠️ **STATUT (2026-07-20)** : direction produit **approuvée** par l'utilisateur, **PAS encore
+> implémentée**. Nom de travail « l'Atelier du Temps » à confirmer avec l'utilisateur (choix de
+> marque — cf. principe #5 de [[MEMORY]], l'utilisateur valide explicitement le branding).
+
+**Contexte** : l'utilisateur a signalé que le Labo (`/laboratory`) et les Défis se différencient
+mal — vérifié dans le code : même backend (`generateSingleChallenge` + `assignTemplateChallenge`),
+même objet produit (une ligne `challenges` dans la même roadmap), et collision de noms (une
+section « Le Laboratoire de Génizio » existe *dans* `profiles.$profileId.challenges.tsx` en plus
+de la route `/laboratory`). Analyse menée sous `product-intelligence-architect`.
+
+**Recadrage apporté par l'utilisateur** : le chronométrage n'est pas là pour "mettre la pression"
+mais pour développer **la gestion du temps comme compétence de vie** (école, monde pro) — et il
+existe plusieurs façons de gérer le temps.
+
+**Décision** : le Labo est repositionné autour de la gestion du temps. Ancre d'identité = deux
+façons **sans anxiété** : **Estimation** (« combien de temps penses-tu ? » puis révèle le réel —
+métacognition temporelle) et **Régularité** (« un peu chaque jour, N jours » — c'est là que « le
+temps qui coule même app fermée » prend un sens sain, un compteur de rythme et non une bombe). Le
+**Temps imparti** (compte à rebours dur, les « retranchements » que l'utilisateur voulait) devient
+un **mode avancé âge-gaté (~10 ans+)**, pas l'identité par défaut. L'expiration n'est jamais
+affichée comme un échec — c'est de la donnée de coaching.
+
+**Pourquoi** : 
+- Un défi chronométré est un **instrument d'observation d'une nature différente** des défis
+  auto-rythmés — il alimente précisément les Moteurs N2 laissés vides en Phase 1 (décision #28 :
+  tolérance à la frustration, gestion du stress, persévérance étalée). C'est le « défi de
+  révélation » du plan (§3 de [[genizio-naya-systeme-comprehension]]) rendu concret. Le
+  repositionnement n'est donc pas cosmétique : c'est la source de signal manquante du Jumeau.
+- Faire de la pression le **cœur** du Labo combattrait le non-négociable « Naya observe/développe,
+  ne juge pas » — le compte à rebours est le mécanisme le plus proche d'un verdict. Le cadrer
+  comme *compétence à développer* le rend compatible avec l'ADN de la marque à tout âge.
+
+**Alternatives rejetées** :
+- ❌ Temps imparti comme cœur d'identité du Labo (l'intuition initiale de l'utilisateur) : rejeté
+  car un Labo *défini par la pression* trahit l'ADN anti-verdict pour les jeunes enfants.
+  Conservé comme mode avancé âge-gaté — l'intuition est juste pour les grands, fausse comme défaut.
+- ❌ Laisser le Labo en simple générateur de défis contextuels (statu quo) : redondance totale
+  avec les Défis, aucune différenciation, collision de noms persistante.
+- ❌ Différencier seulement par le vocabulaire/nom sans nouveau mécanisme (V1 seule) : réglerait la
+  collision de noms mais pas la redondance de fond — retenu comme *première étape*, pas comme fin.
+
+**Séquence de construction** : V1 (renommage + suppression de la section Labo doublon dans la page
+Défis) → V3 (mécaniques Estimation + Régularité, nouveaux types d'`observation_event`, persistance
+server-authoritative pour la Régularité) → V4 (Naya déclenche elle-même un défi chronométré pour
+départager une hypothèse — Phase 3). Détail dans [[genizio-naya-systeme-comprehension]] §9.
+
+**Décision de branding en attente** : nom définitif du Labo repositionné (question posée à
+l'utilisateur). Conditionne le renommage V1 (route, nav, copy) et le type d'`observation_event`.

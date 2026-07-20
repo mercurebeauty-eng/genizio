@@ -231,7 +231,8 @@ Chaque phase est livrable, vérifiable de bout en bout, et committable seule. D�
   (Database Webhook → Edge Function). Critère : latence réelle mesurée de `generateHypotheses`.
 - **Phase 2** : photo du bulletin analysée par vision (rôle *vision*) en plus de la saisie
   manuelle ? Reporté — la saisie manuelle valide d'abord l'usage.
-- **Phase 1** : fréquence de la classification (hebdo via pg_cron vs recalcul à l'événement).
+- ~~**Phase 1** : fréquence de la classification (hebdo via pg_cron vs recalcul à l'événement).~~
+  **Tranché en Phase 1** : recalcul à l'événement (trigger), pas de pg_cron (cf. décision #28).
 - **Niveau 1 (Fondations)** : source d'évaluation initiale — questionnaire parental validé à
   concevoir (surface produit non scopée), ou inférence lente depuis les patterns seuls au début.
 
@@ -247,3 +248,42 @@ Chaque phase est livrable, vérifiable de bout en bout, et committable seule. D�
   cf. [[genizio-vision]]).
 - **RLS** : chaque nouvelle table = re-audit (cf. [[genizio-backlog]] — l'audit RLS n'est pas
   "une fois pour toutes").
+
+## 9. Chantier lié — l'Atelier du Temps (repositionnement du Labo)
+
+> ⚠️ **STATUT (2026-07-20)** : direction produit **approuvée** par l'utilisateur, **PAS
+> implémentée**. Nom de travail « l'Atelier du Temps » à confirmer. Détail + alternatives dans
+> [[genizio-decisions]] #29.
+
+Le `/laboratory` actuel ne se différencie pas des Défis : même backend
+(`generateSingleChallenge` + `assignTemplateChallenge`), même objet produit, noms qui se
+chevauchent (une section « Le Laboratoire de Génizio » existe *dans* la page Défis en plus de la
+route). Repositionnement décidé : le Labo devient un espace dédié à **la gestion du temps comme
+compétence** (école, vie pro) — pas un générateur de défis bis.
+
+**Pourquoi ça appartient à NAYA 2.0, pas juste à l'UX** : un défi *chronométré* produit une
+classe d'observation que les défis auto-rythmés ne peuvent pas générer — précisément les Moteurs
+N2 laissés vides en Phase 1 (décision #28 : tolérance à la frustration, gestion du stress,
+persévérance étalée). C'est le **défi de révélation** du §3, matérialisé. Chaque « façon » de
+gérer le temps = un nouveau type d'`observation_event` alimentant un driver distinct.
+
+**Les 4 façons (chacune = une mécanique + un signal Jumeau)** :
+| Façon | Mécanique | Signal N2/N3 |
+|---|---|---|
+| Temps imparti | compte à rebours dur | tolérance à la frustration, stress |
+| Estimation | « combien de temps ? » puis révèle le réel | métacognition temporelle |
+| Régularité | « un peu chaque jour, N jours » (temps qui coule app fermée = sain ici) | persévérance étalée, habitude |
+| Priorisation | temps limité < tâches possibles | jugement, autonomie |
+
+**Ancre choisie (décision #29)** : cœur = **Estimation + Régularité** (sans anxiété,
+différenciants, alimentent le Jumeau) ; **Temps imparti = mode avancé âge-gaté (10 ans+)** — les
+« retranchements » voulus par l'utilisateur, mais au bon âge et jamais comme identité par défaut
+(sinon le mécanisme-verdict combat le non-négociable « Naya ne juge pas »). L'expiration n'est
+jamais un échec affiché : c'est de la donnée de coaching bienveillante.
+
+**Séquence** : V1 (renommage + suppression de la section Labo doublon dans la page Défis, sans
+nouveau mécanisme) → V3 (mécaniques Estimation + Régularité, `observation_event` dédiés,
+persistance server-authoritative pour que « le temps coule app fermée » ne soit pas trichable) →
+V4 (Naya déclenche elle-même un défi chronométré quand le Jumeau doit départager une hypothèse —
+Phase 3 : le chrono devient le protocole expérimental de Naya). Cf. paliers V1→V4 de l'analyse
+`product-intelligence-architect`.
