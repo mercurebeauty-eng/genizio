@@ -543,3 +543,62 @@ liste des défis, fermant la fenêtre d'affichage du succès plus vite qu'attend
 introduit par ce chantier (même mécanisme affecte le bloc "Intelligences enrichies" préexistant) —
 observé en vérifiant, pas corrigé (hors périmètre de cette demande), à investiguer si un jour
 signalé comme gênant par un usage réel.
+
+## Décision #31 : Phase 2 NAYA — school_grades + détection d'anomalies Z-score
+
+**Contexte** : implémentation de la Phase 2 (cf. [[genizio-naya-systeme-comprehension]] §6) —
+signaux scolaires + détection d'anomalie, toujours 0 IA (code statistique pur).
+
+**Décision 1 — UI intégrée au Portfolio existant, pas de nouvelle route.** La page Portfolio est
+déjà "l'écran de compréhension de l'enfant" (radar, portrait, timeline) — une section "Notes
+scolaires" y prend sa place naturelle plutôt que de créer une 7e route/nav-entry pour un
+formulaire ponctuel. **Alternative rejetée** : route dédiée `/profiles/$id/grades` — plus de
+poids (nav, param routing) pour un gain de découvrabilité marginal vu le trafic déjà existant
+sur Portfolio.
+
+**Décision 2 — Z-score calculé sur `grade/max_grade` (ratio normalisé), jamais sur la note
+brute.** **Pourquoi** : deux évaluations sur des barèmes différents (/10, /20, /100) ne sont
+comparables qu'une fois normalisées — comparer des notes brutes de barèmes différents aurait
+statistiquement invalidé la détection.
+
+**Décision 3 — garde cold-start à n≥3 notes antérieures** (même logique que `v_min_n=4` en
+Phase 1, appliqué ici à un besoin statistique différent : un écart-type sur 1-2 points est
+incalculable ou trop instable pour être publié). **Seuil `z ≤ -2.5`** : repris tel quel de
+l'exemple SQL du document source NAYA, pas une valeur inventée.
+
+**Décision 4 — `school_grades` accepte l'écriture directe du parent (RLS `FOR ALL` avec
+vérification d'ownership), contrairement à `observation_events`/`pedagogical_twins` qui sont
+strictement trigger-only.** **Pourquoi** : c'est une saisie parent de première main (comme
+`child_profiles`), pas un journal d'événements dérivé du comportement de l'app — la distinction
+déjà établie en Phase 0/1 entre "données sources" et "journal d'événements consommé par le
+Jumeau" s'applique ici aussi. `anomaly_triggers`, lui, reste strictement lecture seule côté
+client (écrit uniquement par le trigger), car c'est un résultat calculé, pas une saisie.
+
+**Décision 5 — matière = liste fermée + "Autre" libre, pas texte libre pur.** **Pourquoi** : la
+matière est la clé de regroupement du calcul Z-score (`GROUP BY child_id, subject` implicite
+dans le trigger) — une orthographe qui varie d'une saisie à l'autre casserait silencieusement le
+regroupement statistique sans qu'aucune erreur ne soit levée.
+
+**Décision 6 — aucun indicateur d'anomalie affiché au parent en Phase 2.** La liste de notes
+dans Portfolio est purement factuelle (matière, note, date) — pas de badge "détecté", pas de
+couleur d'alerte. **Pourquoi** : conforme au séquençage du plan — c'est la Phase 4
+("Compréhension de Naya") qui a la responsabilité d'afficher quoi que ce soit d'interprétatif au
+parent, en langage bienveillant. Afficher une alerte maintenant, avant que Phase 3 ait généré la
+moindre hypothèse causale, reviendrait à afficher un signal brut sans contexte — exactement ce
+que le paradigme d'investigation (§1 du plan) interdit.
+
+**Alternatives rejetées** :
+- ❌ `anomaly_triggers` en table polymorphe générique (`source_type` + `source_id`) plutôt qu'une
+  FK directe vers `school_grades` : sur-ingénierie — aucune autre source d'anomalie n'est prévue
+  avant que la Phase 3 en révèle le besoin réel. FK directe, simple, extensible plus tard si
+  nécessaire.
+- ❌ Champs structurés "évaluation chronométrée ?" / "niveau de stress" dans le formulaire (le
+  document source mentionne `anxiety_self_report` dans le payload `SCHOOL_GRADE_ENTERED`) :
+  reporté — construire pour un besoin Phase 3 pas encore conçu serait deviner. Le champ
+  `context` (texte libre) capture cette nuance en attendant ; une colonne structurée pourra être
+  ajoutée plus tard si Phase 3 le justifie réellement.
+
+**Vérifié en production** : séquence de notes 14/15/13/20 puis 3/20 dans une matière de test →
+seule la 4e déclenche une anomalie, `z = -11.000` vérifié au calcul manuel exact ; une 5e note
+normale n'ajoute aucune anomalie ; RLS anon = 0 ligne sur les deux tables ; formulaire testé en
+direct dans le navigateur ; suppression en cascade sans résidu. `tsc --noEmit` propre.

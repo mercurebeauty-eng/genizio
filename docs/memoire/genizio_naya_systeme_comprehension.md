@@ -10,12 +10,13 @@ metadata:
 # NAYA 2.0 — Système de Compréhension Développementale
 
 > ⚠️ **STATUT (vérifié le 2026-07-20, branche `security-fixes-and-ux-improvements`, PR #8)** :
-> conçu et approuvé le 2026-07-20. **Phases 0 et 1 livrées et vérifiées en production le jour
+> conçu et approuvé le 2026-07-20. **Phases 0, 1 et 2 livrées et vérifiées en production le jour
 > même** (Phase 0 : `20260720100000_add_observation_events.sql` ; Phase 1 :
-> `20260720110000_add_pedagogical_twin.sql` — triggers + EMA + classification + backfill +
-> RLS testés de bout en bout, détail en fin de §6). **Phases 2-5 PAS commencées** — aucune
-> table `anomaly_triggers`/`hypothesis_cycles` en base, aucune saisie de notes scolaires.
-> Prochain pas = Phase 2. Mettre ce bandeau à jour à chaque phase livrée.
+> `20260720110000_add_pedagogical_twin.sql` ; Phase 2 :
+> `20260720140000_add_school_grades_and_anomaly_detection.sql` — détection Z-score vérifiée
+> au chiffre près, détail en fin de §6). **Phases 3-5 PAS commencées** — aucune table
+> `hypothesis_cycles` en base, aucun appel IA dans le pipeline NAYA 2.0. Prochain pas = Phase 3
+> (premier point IA du système). Mettre ce bandeau à jour à chaque phase livrée.
 
 > **Document source** : `C:\Users\USER\Documents\Mise en place Projet\#Génizion - Système de Compréhensio.txt`
 > (fichier personnel de l'utilisateur, hors repo). Structure : sections 1-12 = la formalisation
@@ -201,10 +202,32 @@ Chaque phase est livrable, vérifiable de bout en bout, et committable seule. D�
   proprement (aucune table laissée en état partiel), corrigé en `integer`, ré-appliqué avec
   succès. Interne uniquement (rien de visible parent) — conforme au plan.
 
-### Phase 2 — Signaux scolaires + détection d'anomalies (0 IA)
-- UI parent de saisie de notes (matière, note/max, type d'évaluation, contexte optionnel).
-- Trigger Postgres Z-score (par enfant × matière, garde cold-start) → table `anomaly_triggers`.
-- Vérifiable : note aberrante insérée → anomalie détectée ; note normale → rien.
+### Phase 2 — Signaux scolaires + détection d'anomalies (0 IA) — ✅ LIVRÉE le 2026-07-20
+- Table `school_grades` (matière, note, note max, type d'évaluation optionnel, contexte libre
+  optionnel, date) + `anomaly_triggers` (FK directe vers `school_grades`, `z_score`, `resolved`
+  pour la Phase 3 à venir). RLS owner-only (write via `FOR ALL` avec vérification d'ownership
+  sur `school_grades` — écriture directement possible par le parent, contrairement à
+  `observation_events`/`pedagogical_twins` qui sont trigger-only ; `anomaly_triggers` reste
+  lecture seule côté client, écrit uniquement par le trigger `SECURITY DEFINER`).
+- UI : section "Notes scolaires" intégrée à la page Portfolio existante (pas de nouvelle route —
+  c'est déjà l'écran "compréhension de l'enfant"), liste factuelle + dialogue d'ajout
+  (`AddGradeDialog`). **Aucun indicateur d'anomalie affiché** — volontaire, c'est la Phase 4
+  ("Compréhension de Naya") qui aura ce rôle, pas celle-ci.
+- Matière = liste fermée (+ "Autre" libre) plutôt que texte libre pur : sert de clé de
+  regroupement au calcul du Z-score, une orthographe qui varie casserait le regroupement.
+- Trigger `detect_grade_anomaly` (`AFTER INSERT` sur `school_grades`) : émet toujours un
+  `SCHOOL_GRADE_ENTERED` dans `observation_events` (ratio `grade/max_grade` normalisé, pas la
+  note brute — deux évaluations sur des barèmes différents doivent être comparables) ; calcule
+  ensuite mean/stddev des ratios PRIOR (même enfant × même matière, la ligne courante exclue) ;
+  **garde cold-start : n≥3 notes antérieures** avant d'activer le calcul (sous ce seuil un
+  écart-type est trop bruité) ; seuil `z ≤ -2.5` (identique à l'exemple SQL du document source).
+- Vérifié en production : séquence 14/15/13/20 puis 3/20 dans une matière de test → seule la 4e
+  note déclenche une anomalie, **z = -11.000 vérifié au calcul manuel exact**
+  (`(0.15-0.70)/0.05`) ; une 5e note normale (14/20) ajoutée ensuite → aucune nouvelle anomalie
+  (toujours 1 au total) ; RLS anon = 0 ligne sur les deux tables ; formulaire testé en direct
+  dans le navigateur (note réelle saisie, affichée immédiatement dans la liste) ; suppression en
+  cascade sans résidu. Interne uniquement pour `anomaly_triggers` (rien de visible parent),
+  conforme au plan — seule la liste brute des notes est visible, pas leur analyse.
 
 ### Phase 3 — Cycle de diagnostic (premier point IA)
 - `hypothesis_cycles` + `generateHypotheses` (rôle *raisonnement*, JSON strict, evidence_log,

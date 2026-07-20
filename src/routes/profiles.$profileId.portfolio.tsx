@@ -23,13 +23,19 @@ import {
   Wrench,
   Heart,
   Binary,
-  BookOpen
+  BookOpen,
+  GraduationCap,
+  Trash2,
 } from "lucide-react";
 import { InviteMentorDialog } from "@/components/mentors/InviteMentorDialog";
+import { AddGradeDialog } from "@/components/grades/AddGradeDialog";
+import { deleteSchoolGrade } from "@/lib/school-grades.functions";
 import { AppHeader } from "@/components/AppHeader";
 import { MarkdownContent } from "@/components/ui/markdown-content";
 import { INTERESTS_BY_TALENT } from "@/components/profiles/shared";
 import { TALENT_KEY_LABELS } from "@/lib/talent-buckets";
+import { confirmDialog } from "@/components/ui/confirm-dialog";
+import { toast } from "sonner";
 
 // title vient de TALENT_KEY_LABELS (source unique des 9 libellés) — seuls
 // l'icône et la description restent propres à cette page.
@@ -141,6 +147,15 @@ type Challenge = {
   proof_image_url: string | null;
 };
 
+type SchoolGrade = {
+  id: string;
+  subject: string;
+  grade: number;
+  max_grade: number;
+  evaluation_type: string | null;
+  graded_at: string;
+};
+
 function PortfolioPage() {
   const { profileId } = Route.useParams();
   const { session, loading } = useSession();
@@ -148,16 +163,42 @@ function PortfolioPage() {
 
   const [child, setChild] = useState<Child | null>(null);
   const [challenges, setChallenges] = useState<Challenge[]>([]);
+  const [grades, setGrades] = useState<SchoolGrade[]>([]);
   const [fetching, setFetching] = useState(true);
   const [synthesis, setSynthesis] = useState("");
   const [fetchingSynthesis, setFetchingSynthesis] = useState(false);
   const [mentorCount, setMentorCount] = useState(0);
 
   const fetchSynthesis = useServerFn(getChildAISynthesis);
+  const deleteGradeFn = useServerFn(deleteSchoolGrade);
 
   useEffect(() => {
     if (!loading && !session) navigate({ to: "/auth", replace: true });
   }, [session, loading, navigate]);
+
+  const refetchGrades = () => {
+    supabase
+      .from("school_grades")
+      .select("id, subject, grade, max_grade, evaluation_type, graded_at")
+      .eq("child_id", profileId)
+      .order("graded_at", { ascending: false })
+      .then(({ data }) => setGrades((data ?? []) as SchoolGrade[]));
+  };
+
+  const handleDeleteGrade = async (id: string) => {
+    if (!(await confirmDialog({
+      title: "Supprimer cette note ?",
+      description: "Cette action est irréversible.",
+      confirmLabel: "Supprimer",
+      variant: "danger",
+    }))) return;
+    try {
+      await deleteGradeFn({ data: { id } });
+      setGrades((prev) => prev.filter((g) => g.id !== id));
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Erreur lors de la suppression");
+    }
+  };
 
   useEffect(() => {
     if (!session) return;
@@ -172,11 +213,17 @@ function PortfolioPage() {
       supabase
         .from("child_mentors")
         .select("id", { count: "exact", head: true })
+        .eq("child_id", profileId),
+      supabase
+        .from("school_grades")
+        .select("id, subject, grade, max_grade, evaluation_type, graded_at")
         .eq("child_id", profileId)
-    ]).then(([c, ch, cm]) => {
+        .order("graded_at", { ascending: false }),
+    ]).then(([c, ch, cm, sg]) => {
       setChild((c.data as Child) ?? null);
       setChallenges((ch.data ?? []) as Challenge[]);
       setMentorCount(cm.count ?? 0);
+      setGrades((sg.data ?? []) as SchoolGrade[]);
       setFetching(false);
     });
   }, [session, profileId]);
@@ -497,6 +544,43 @@ function PortfolioPage() {
                 );
               })}
             </div>
+          </div>
+
+          {/* Notes scolaires — NAYA 2.0 Phase 2 (cf. genizio-decisions #31). Liste
+              purement factuelle : aucune détection d'anomalie ni interprétation
+              n'est affichée ici, seulement en Phase 4 ("Compréhension de Naya"). */}
+          <div className="rounded-3xl border-[3px] border-ink bg-white p-6 shadow-brutal">
+            <div className="mb-4 flex items-center justify-between gap-3">
+              <h3 className="flex items-center gap-2 font-display text-lg font-bold">
+                <GraduationCap className="size-5 text-brand" />
+                Notes scolaires
+              </h3>
+              <AddGradeDialog childId={profileId} childName={child.name} onCreated={refetchGrades} />
+            </div>
+            {grades.length === 0 ? (
+              <p className="text-sm text-ink/60">Aucune note enregistrée pour l'instant.</p>
+            ) : (
+              <ul className="space-y-2">
+                {grades.map((g) => (
+                  <li key={g.id} className="flex items-center justify-between rounded-2xl border-2 border-ink bg-surface px-4 py-3">
+                    <div>
+                      <p className="text-sm font-bold text-ink">
+                        {g.subject} — {g.grade}/{g.max_grade}
+                        {g.evaluation_type && <span className="ml-2 text-xs font-semibold text-ink/50">{g.evaluation_type}</span>}
+                      </p>
+                      <p className="text-xs text-ink/60">{new Date(g.graded_at).toLocaleDateString("fr-FR")}</p>
+                    </div>
+                    <button
+                      onClick={() => handleDeleteGrade(g.id)}
+                      className="rounded-xl border-2 border-transparent p-1.5 text-ink/40 hover:border-ink hover:text-red-600 transition-all"
+                      aria-label="Supprimer cette note"
+                    >
+                      <Trash2 className="size-4" />
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            )}
           </div>
 
           <div className="rounded-3xl border-[3px] border-ink bg-white p-6 shadow-brutal">
