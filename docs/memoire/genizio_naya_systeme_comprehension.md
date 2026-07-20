@@ -15,7 +15,16 @@ metadata:
 > Phase 2 : `school_grades`/`anomaly_triggers` ; Phase 3a : `hypothesis_cycles` + `generateHypotheses`
 > (Sonnet) ; Phase 3b : `generateDiscriminantChallenge` + `processDiscriminantResult` (boucle bayésienne) ;
 > Phase 4 : `parent_narrative` + restitution parent ; Phase 5 : moteur `recommendChallengesForChild`
-> hybride branché sur l'Atelier et la page Défis). Systèmé de compréhension 100% opérationnel.
+> hybride branché sur l'Atelier et la page Défis). Système de compréhension 100% opérationnel.
+> **Note de provenance (décision #34)** : Phase 3b et 5 ont été construites par une session
+> parallèle de l'utilisateur pendant une session de ce même agent ; le premier commit affirmait
+> "vérifié en production" alors qu'un bug bloquait TOUTE mise à jour bayésienne
+> (`PGRST204`, colonne `updated_at` absente, erreur jamais vérifiée dans le code — reproduite en
+> direct avant tout correctif). 2 autres bugs trouvés en lisant le code (filet de sécurité
+> contourné sur 2 points d'insertion ; branche STABILISATION inachevée, `challenge: null`). Les
+> 3 corrigés puis **réellement** vérifiés de bout en bout (math bayésienne exacte au 4e chiffre,
+> convergence, 3 branches de recommandation) avant que cette affirmation soit vraie — détail
+> complet dans [[genizio-decisions]] #34.
 
 > **Document source** : `C:\Users\USER\Documents\Mise en place Projet\#Génizion - Système de Compréhensio.txt`
 > (fichier personnel de l'utilisateur, hors repo). Structure : sections 1-12 = la formalisation
@@ -253,10 +262,38 @@ Chaque phase est livrable, vérifiable de bout en bout, et committable seule. D�
   bloc `thinking` de Sonnet cassait TOUT appel Sonnet texte) ; budget tokens trop bas (le thinking
   consomme le budget, 1500 tronquait le JSON — vérifié `stop_reason=max_tokens` en direct).
 
-### Phase 3b — Boucle bayésienne (défis discriminants) — PAS commencée
-- Défis discriminants via le générateur existant contraint (cf. adaptation #2).
-- Mise à jour bayésienne des `current_probability` à la complétion du défi discriminant ;
-  convergence → `status=resolved` + `final_diagnosis` + frein appris le cas échéant.
+### Phase 3b — Boucle bayésienne (défis discriminants) — ✅ LIVRÉE le 2026-07-20
+- `generateDiscriminantChallenge` (`hypotheses.functions.ts`) : génère un défi ciblant
+  spécifiquement l'hypothèse en tête du cycle ouvert (`pedagogical_context` porte
+  `{cycle_id, target_cause, is_discriminant}` pour le retrouver ensuite). `processDiscriminantResult`
+  (fonction interne, pas une server function — appelée depuis `validateChallengeProof` sur
+  complétion) applique un multiplicateur bayésien à la probabilité de la cause ciblée (×1.8 si
+  complété et validé par l'IA, ×0.6/×1.5 si abandonné selon la cause) + un couplage
+  METHOD_MISMATCH↔CONCEPTUAL_GAP (réussite sur méthode alternative affaiblit x0.4 une lacune
+  conceptuelle), renormalise à 1.0, et fait converger (`status=resolved` + `final_diagnosis`)
+  au premier franchissement du seuil 0.65.
+- **Construite par une session parallèle** pendant une session de cet agent — cf. note de
+  provenance en tête de fichier et décision #34 pour le récit complet. Trois bugs trouvés en
+  vérifiant AVANT de croire l'affirmation "vérifié en production" du commit d'origine, tous
+  corrigés :
+  1. `hypothesis_cycles` n'avait pas de colonne `updated_at` — chaque mise à jour bayésienne
+     échouait silencieusement (`PGRST204`, `error` du `.update()` jamais vérifié). Colonne
+     ajoutée (migration `20260720170000`), erreur maintenant vérifiée explicitement.
+  2. `generateDiscriminantChallenge` contournait `finalizeChallenge` (filet de sécurité +
+     difficulté + material_tags) — export ajouté, les deux points d'insertion (3b + Essaimage
+     de la Phase 5) y passent désormais, cohérent avec tous les autres générateurs de l'app.
+  3. `resolved_at` (colonne existante depuis la Phase 3a) n'était jamais renseigné à la
+     résolution — ajouté.
+- **Vérifié en production, cas Kadi (ex-Lola, compétence logico-mathématique FORCE 0.85 +
+  chute en maths, z=-12)** : défi discriminant réellement généré et affiché sur la page Défis
+  (via l'appel imbriqué `recommendChallengesForChild` → `generateDiscriminantChallenge`,
+  fonctionnement confirmé — c'était une inconnue avant vérification), complété via le vrai
+  flux `OutcomeChat`, `processDiscriminantResult` déclenché depuis `validateChallengeProof`.
+  **Mathématique vérifiée à la main** : prior 0.5 × 1.8 = 0.9, renormalisé sur 1.31 → **0.6870**
+  — exact à 4 décimales avec la valeur stockée en base. Franchissement du seuil (0.687 ≥ 0.65)
+  → `status=resolved`, `final_diagnosis=METHOD_MISMATCH`, `resolved_at` correctement horodaté.
+  Confirmé aussi que la carte de recommandation disparaît proprement une fois le cycle résolu
+  (pas de fixation sur une investigation terminée). `tsc --noEmit` propre.
 
 ### Phase 4 — Restitution parent — ✅ LIVRÉE le 2026-07-20
 - Colonne `hypothesis_cycles.parent_narrative` (nullable) + rôle **narration séparé du
@@ -293,21 +330,40 @@ Chaque phase est livrable, vérifiable de bout en bout, et committable seule. D�
   Carte confirmée dans le DOM rendu (badge + texte exact). RLS anon = 0. Cascade de
   suppression propre. `tsc --noEmit` propre.
 
-### Phase 4 — Restitution parent
-- Vue "Compréhension de Naya" : hypothèses en cours et diagnostics en langage bienveillant
-  (jamais de probabilité/verdict — cf. §1), alertes Risque, plan d'action suggéré.
-- Rapport narratif périodique (rôle *narration*).
-- Vérifiable : écran réel + contenu conforme à la règle UI.
-
-### Phase 5 — Boucle de recommandation complète
-- `recommendChallenges` hybride (exploitation force/faiblesse en zone proximale, exploration
-  d'hypothèses non résolues, stabilisation des fragilités) branché sur le Labo et le dashboard.
-- Vérifiable : les défis proposés changent selon la catégorie des traits d'un profil de test.
+### Phase 5 — Boucle de recommandation complète — ✅ LIVRÉE le 2026-07-20
+- `recommendChallengesForChild` (`recommendations.functions.ts`, nouveau fichier), branché sur
+  la page Défis (`loadRecommendation()` au montage) — pas sur l'Atelier. Hiérarchie de priorité,
+  la première branche qui matche gagne :
+  1. **INVESTIGATION** : un cycle d'hypothèses `open` existe → réutilise le défi discriminant
+     déjà généré pour ce cycle s'il existe (recherché via `pedagogical_context LIKE
+     %"cycle_id":"<id>"%` — texte, pas JSONB natif, cf. note ci-dessous), sinon appelle
+     `generateDiscriminantChallenge` (Phase 3b) pour en créer un.
+  2. **ESSAIMAGE** : une compétence FORCE + une compétence FAIBLESSE/RISQUE coexistent → génère
+     un défi qui mobilise la force pour développer doucement la faiblesse.
+  3. **STABILISATION** : une compétence FRAGILITE existe → génère un "défi doudou" à succès
+     quasi garanti, appuyé sur une force si disponible (plan NAYA §9.3).
+  4. Sinon : aucune recommandation (`null`), pas d'état "rien à signaler" affiché.
+- **Construite par une session parallèle** — cf. note de provenance + décision #34. La branche
+  STABILISATION d'origine retournait `challenge: null` (chemin inachevé) ; complétée pour de
+  vrai (prompt dédié "défi doudou", même passage par `finalizeChallenge` que les deux autres
+  branches).
+- `pedagogical_context` reste une colonne texte contenant un JSON sérialisé (pas un type JSONB
+  natif) — le matching par `LIKE` sur une sous-chaîne fonctionne mais est fragile de conception ;
+  accepté tel quel (la colonne est déjà utilisée ailleurs dans l'app pour du texte libre, changer
+  son type est hors périmètre de ce correctif).
+- **Vérifié en production, les 3 branches** (même profil de test, twin reconfiguré entre chaque
+  test) : INVESTIGATION confirmée (défi discriminant réel affiché + complété, cf. Phase 3b) ;
+  ESSAIMAGE confirmée (badge "⚡ Défi de renforcement Naya", défi réel avec `difficulty`/
+  `requires_supervision`/`material_tags` correctement résolus par `finalizeChallenge`) ;
+  STABILISATION confirmée (badge "🛡️ Défi d'ancrage Naya", même vérification). Appel imbriqué
+  server-fn→server-fn (`recommendChallengesForChild` appelant directement
+  `generateDiscriminantChallenge`) confirmé fonctionnel sous TanStack Start — c'était une
+  inconnue de conception avant test réel. `tsc --noEmit` propre.
 
 ## 7. Décisions ouvertes (à trancher au moment de la phase concernée)
 
-- **Phase 3** : traitement synchrone (server function au moment de l'événement) vs asynchrone
-  (Database Webhook → Edge Function). Critère : latence réelle mesurée de `generateHypotheses`.
+- ~~**Phase 3** : traitement synchrone vs asynchrone (Database Webhook → Edge Function).~~
+  **Tranché en Phase 3a** : synchrone, server function TanStack (cf. décision #32).
 - **Phase 2** : photo du bulletin analysée par vision (rôle *vision*) en plus de la saisie
   manuelle ? Reporté — la saisie manuelle valide d'abord l'usage.
 - ~~**Phase 1** : fréquence de la classification (hebdo via pg_cron vs recalcul à l'événement).~~

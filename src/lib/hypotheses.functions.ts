@@ -1,6 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
-import { callClaude } from "@/lib/challenges.functions";
+import { callClaude, finalizeChallenge } from "@/lib/challenges.functions";
 import { TALENT_KEY_LABELS } from "@/lib/talent-buckets";
 import { z } from "zod";
 
@@ -495,21 +495,40 @@ Réponds EXCLUSIVEMENT avec un objet JSON strict au format suivant :
       subject,
     });
 
+    // Correctif (2026-07-20, décision #34) : cette insertion contournait entièrement
+    // finalizeChallenge (filet de sécurité + difficulté + material_tags) — un défi
+    // discriminant généré par IA pouvait donc partir sans requires_supervision même
+    // s'il impliquait feu/objets tranchants/etc. Même point de passage obligé que
+    // tous les autres générateurs de défis de l'app (cf. assignTemplateChallenge).
+    const safeTitle = (parsed.title || `Mission spéciale Naya : ${subject}`) as string;
+    const safeDescription = (parsed.description || "") as string;
+    const safeSteps = (parsed.steps || []) as string[];
+    const safeMaterials = (parsed.materials || []) as string[];
+
     const { data: challenge, error: insertErr } = await supabaseAdmin
       .from("challenges")
       .insert({
         child_id: data.childId,
         user_id: userId,
-        title: parsed.title || `Mission spéciale Naya : ${subject}`,
         domain: parsed.domain || "Exploration",
-        description: parsed.description,
+        description: safeDescription,
         duration: parsed.duration || "15 min",
-        steps: parsed.steps || [],
-        materials: parsed.materials || [],
-        material_tags: parsed.material_tags || [],
-        difficulty: parsed.difficulty || "moyen",
+        steps: safeSteps,
+        materials: safeMaterials,
         status: "todo",
+        progress: 0,
         pedagogical_context: pedagogicalContext,
+        ...finalizeChallenge(
+          {
+            title: safeTitle,
+            description: safeDescription,
+            steps: safeSteps,
+            materials: safeMaterials,
+            material_tags: parsed.material_tags,
+            difficulty: parsed.difficulty,
+          },
+          child.age
+        ),
       })
       .select("*")
       .single();
@@ -599,12 +618,26 @@ export async function processDiscriminantResult(
   if (isResolved) {
     updatePayload.status = "resolved";
     updatePayload.final_diagnosis = topHypothesis.cause;
+    // Manquait dans la version d'origine : resolved_at existe dans le schéma
+    // (Phase 3a) précisément pour marquer ce moment, jamais renseigné jusqu'ici.
+    updatePayload.resolved_at = new Date().toISOString();
   }
 
-  await supabaseAdmin
+  // Correctif (2026-07-20, décision #34) : cet update échouait silencieusement sur
+  // TOUTE mise à jour bayésienne — updated_at n'existait pas encore sur
+  // hypothesis_cycles (PGRST204, confirmé en direct avant correctif) et l'erreur
+  // n'était jamais vérifiée. La colonne a été ajoutée (migration
+  // 20260720170000) ; on vérifie maintenant explicitement l'erreur en plus, pour
+  // qu'un futur problème similaire ne redevienne pas silencieux.
+  const { error: updateErr } = await supabaseAdmin
     .from("hypothesis_cycles")
     .update(updatePayload)
     .eq("id", cycle.id);
+
+  if (updateErr) {
+    console.error("processDiscriminantResult: échec de la mise à jour bayésienne:", updateErr);
+    return { processed: false };
+  }
 
   return { processed: true, resolved: isResolved, finalDiagnosis: topHypothesis.cause };
 }

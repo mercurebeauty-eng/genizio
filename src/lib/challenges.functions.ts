@@ -229,7 +229,12 @@ function resolveDifficulty(
 // nothing stopped a future 4th call site (or a reordering refactor) from
 // silently skipping one of them. Route every insertion/preview through this
 // instead of re-deriving these fields by hand.
-function finalizeChallenge<T extends {
+// Exported (2026-07-20, NAYA Phase 3b/5 fix): the two new AI-generated-challenge
+// insertion points added by Phase 3b (generateDiscriminantChallenge) and Phase 5
+// (recommendChallengesForChild) had each re-implemented insertion by hand and
+// skipped this choke point entirely — exactly the failure mode this comment
+// already warned about. Import this instead of duplicating the checks again.
+export function finalizeChallenge<T extends {
   title: string;
   description: string;
   steps: string[];

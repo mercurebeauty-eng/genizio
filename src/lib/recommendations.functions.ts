@@ -1,7 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { generateDiscriminantChallenge } from "@/lib/hypotheses.functions";
-import { callClaude } from "@/lib/challenges.functions";
+import { callClaude, finalizeChallenge } from "@/lib/challenges.functions";
 import { z } from "zod";
 
 const RecommendInput = z.object({
@@ -81,7 +81,10 @@ export const recommendChallengesForChild = createServerFn({ method: "POST" })
       .eq("child_id", data.childId)
       .maybeSingle();
 
-    const competencies = (twin?.competencies as Record<string, { level: number; category: string }>) || {};
+    // "level" corrigé en "value" (2026-07-20, décision #34) : le champ réel écrit par
+    // Phase 1 (record_trait_point, migration 20260720110000) est "value", pas "level"
+    // — n'était encore lu nulle part donc sans conséquence runtime, mais trompeur.
+    const competencies = (twin?.competencies as Record<string, { value: number; category: string }>) || {};
     const entries = Object.entries(competencies);
 
     const weaknessEntry = entries.find(([, v]) => v.category === "RISQUE" || v.category === "FAIBLESSE");
@@ -110,22 +113,38 @@ Format JSON strict :
         const rawJson = await callClaude(prompt, true, undefined, 1000, 2);
         const parsed = JSON.parse(rawJson);
 
+        // Correctif (2026-07-20, décision #34) : contournait finalizeChallenge — même
+        // problème que generateDiscriminantChallenge, même fix.
+        const safeTitle = (parsed.title || "Mission d'Essaimage Naya") as string;
+        const safeDescription = (parsed.description || "") as string;
+        const safeSteps = (parsed.steps || []) as string[];
+        const safeMaterials = (parsed.materials || []) as string[];
+
         const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
         const { data: challenge } = await supabaseAdmin
           .from("challenges")
           .insert({
             child_id: data.childId,
             user_id: userId,
-            title: parsed.title || "Mission d'Essaimage Naya",
             domain: parsed.domain || "Développement",
-            description: parsed.description,
+            description: safeDescription,
             duration: parsed.duration || "15 min",
-            steps: parsed.steps || [],
-            materials: parsed.materials || [],
-            material_tags: parsed.material_tags || [],
-            difficulty: "facile",
+            steps: safeSteps,
+            materials: safeMaterials,
             status: "todo",
+            progress: 0,
             pedagogical_context: JSON.stringify({ is_recommendation: true, type: "ESSAIMAGE" }),
+            ...finalizeChallenge(
+              {
+                title: safeTitle,
+                description: safeDescription,
+                steps: safeSteps,
+                materials: safeMaterials,
+                material_tags: parsed.material_tags,
+                difficulty: "facile",
+              },
+              child.age
+            ),
           })
           .select("*")
           .single();
@@ -143,14 +162,80 @@ Format JSON strict :
       }
     }
 
-    // 3B. Stabilisation (Succès garanti)
+    // 3B. Stabilisation — "défi doudou (force)" (plan NAYA §9.3 : environnement
+    // hyper-structuré, succès quasi-certain, appuyé sur une force reconnue quand il y
+    // en a une). Complété le 2026-07-20 (décision #34) : la version d'origine
+    // retournait challenge:null, un chemin visiblement inachevé plutôt qu'une vraie
+    // recommandation.
     if (fragilityEntry) {
-      return {
-        recommendationType: "STABILISATION",
-        badgeLabel: "🛡️ Défi d'ancrage Naya",
-        pedagogicalReason: "Un défi rassurant pour ancrer la confiance et stabiliser la régularité.",
-        challenge: null,
-      };
+      const comfortSkill = strengthEntry?.[0] ?? fragilityEntry[0];
+      const interestsStr = (child.interests || []).join(", ") || "création, jeux";
+      const prompt = `Tu es Naya, mentore IA. Conçois un micro-défi de STABILISATION pour ${child.name}, ${child.age} ans — un défi "doudou" au succès quasi garanti.
+
+Principe : ${child.name} traverse une phase instable sur une compétence (résultats en dents de scie). Ce défi doit RASSURER, pas challenger : structure très détaillée, étapes ultra-simples et peu nombreuses, aucune surprise, appuyé sur ${strengthEntry ? `sa force reconnue (${comfortSkill})` : "quelque chose de familier et confortable"} et ses centres d'intérêt (${interestsStr}). La réussite doit être quasi certaine.
+
+Format JSON strict :
+{
+  "title": "Titre chaleureux et rassurant",
+  "domain": "Domaine lié",
+  "description": "Consigne très simple et encourageante",
+  "duration": "10 min",
+  "steps": ["Étape 1 très simple", "Étape 2 très simple"],
+  "materials": ["Matériel 1"],
+  "material_tags": ["tag1"],
+  "difficulty": "facile"
+}`;
+
+      try {
+        const rawJson = await callClaude(prompt, true, undefined, 1000, 2);
+        const parsed = JSON.parse(rawJson);
+
+        const safeTitle = (parsed.title || "Petit défi tranquille avec Naya") as string;
+        const safeDescription = (parsed.description || "") as string;
+        const safeSteps = (parsed.steps || []) as string[];
+        const safeMaterials = (parsed.materials || []) as string[];
+
+        const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+        const { data: challenge } = await supabaseAdmin
+          .from("challenges")
+          .insert({
+            child_id: data.childId,
+            user_id: userId,
+            domain: parsed.domain || "Confiance",
+            description: safeDescription,
+            duration: parsed.duration || "10 min",
+            steps: safeSteps,
+            materials: safeMaterials,
+            status: "todo",
+            progress: 0,
+            pedagogical_context: JSON.stringify({ is_recommendation: true, type: "STABILISATION" }),
+            ...finalizeChallenge(
+              {
+                title: safeTitle,
+                description: safeDescription,
+                steps: safeSteps,
+                materials: safeMaterials,
+                material_tags: parsed.material_tags,
+                difficulty: "facile",
+              },
+              child.age
+            ),
+          })
+          .select("*")
+          .single();
+
+        if (challenge) {
+          return {
+            recommendationType: "STABILISATION",
+            badgeLabel: "🛡️ Défi d'ancrage Naya",
+            pedagogicalReason: "Un défi rassurant et structuré pour ancrer la confiance avant de reprendre l'exploration.",
+            challenge,
+          };
+        }
+      } catch {
+        // Pas de recommandation dégradée si la génération échoue — mieux vaut
+        // aucune recommandation qu'une carte de stabilisation sans défi réel.
+      }
     }
 
     // 4. Default : Pas de recommandation spéciale (Exploration classique)
