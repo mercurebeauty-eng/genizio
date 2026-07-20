@@ -27,6 +27,7 @@ import {
   GraduationCap,
   Trash2,
   Search,
+  Sparkles,
 } from "lucide-react";
 import { InviteMentorDialog } from "@/components/mentors/InviteMentorDialog";
 import { AddGradeDialog } from "@/components/grades/AddGradeDialog";
@@ -357,9 +358,19 @@ function PortfolioPage() {
               <p className="text-sm font-medium leading-relaxed text-ink">
                 {openCycle.parent_narrative}
               </p>
-              <p className="mt-4 text-xs italic text-ink/60">
-                Naya continue d'observer les prochains défis de {child.name} pour affiner sa compréhension.
-              </p>
+              <div className="mt-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-3 border-t-2 border-dashed border-amber-200">
+                <p className="text-xs italic text-ink/60">
+                  Naya continue d'observer les prochains défis de {child.name} pour affiner sa compréhension.
+                </p>
+                <Link
+                  to="/profiles/$profileId/challenges"
+                  params={{ profileId: child.id }}
+                  className="inline-flex items-center justify-center gap-2 rounded-2xl border-2 border-ink bg-amber-300 px-4 py-2 text-xs font-bold text-ink shadow-brutal-sm hover:-translate-y-0.5 active:translate-y-0 transition-all shrink-0 cursor-pointer"
+                >
+                  <Sparkles className="size-3.5 fill-amber-700 text-amber-700" />
+                  <span>Proposer un défi adapté</span>
+                </Link>
+              </div>
             </div>
           )}
 

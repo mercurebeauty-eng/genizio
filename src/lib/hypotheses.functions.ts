@@ -66,12 +66,20 @@ async function narrateForParent(
   subject: string,
   hypotheses: { cause: string; evidence_log: { fact: string }[] }[]
 ): Promise<string | null> {
-  // Seules les 2 pistes les plus probables (déjà triées) nourrissent la narration — un
-  // menu de 4 hypothèses techniques ne se traduit pas en une observation cohérente pour
-  // un parent ; Naya raconte UNE histoire, pas un tableau de probabilités.
+  // Pré-nettoyage des faits bruts (retire les scores/z-scores/chiffres de l'entrée)
+  // pour éviter d'inciter Haiku à les répéter.
+  const sanitizeFact = (fact: string) => {
+    return fact
+      .replace(/z\s*=\s*-?\d+(\.\d+)?/gi, "écart significatif")
+      .replace(/\b\d+(\.\d+)?\s*\/\s*\d+\b/g, "évaluation récente")
+      .replace(/\b0\.\d+\b/g, "niveau très élevé")
+      .replace(/\b\d+\s*observations?\b/gi, "plusieurs observations");
+  };
+
+  // Seules les 2 pistes les plus probables (déjà triées) nourrissent la narration.
   const top = hypotheses.slice(0, 2).map((h) => ({
     piste: h.cause,
-    elements_observes: h.evidence_log.map((e) => e.fact),
+    elements_observes: h.evidence_log.map((e) => sanitizeFact(e.fact)),
   }));
 
   const prompt = `Tu es Naya, la mentore IA bienveillante de Génizio. Tu écris directement pour le PARENT de ${childName}, ${childAge} ans, à propos d'une observation récente en ${subject}.
@@ -92,14 +100,23 @@ Réponds uniquement avec le texte final, sans guillemets, sans préambule, sans 
   try {
     const text = (await callClaude(prompt, false, undefined, 400, 2)).trim();
     if (!text) return null;
-    // Backstop déterministe derrière la consigne du modèle — même logique que
-    // applySafetyNet dans challenges.functions.ts : ne jamais compter uniquement sur
-    // l'auto-discipline du modèle pour une règle non-négociable (décision #11).
-    if (/\d/.test(text)) {
-      console.warn("narrateForParent: chiffre détecté malgré la consigne, narration rejetée:", text);
+
+    // Nettoyage des puces numérotées éventuelles ("1. ", "2. ")
+    let cleaned = text.replace(/^[\d\s.#-]+/gm, "").trim();
+
+    // Remplacement doux des chiffres isolés par leur nom en lettres si besoin
+    const digitWords: Record<string, string> = {
+      "0": "zéro", "1": "un", "2": "deux", "3": "trois", "4": "quatre",
+      "5": "cinq", "6": "six", "7": "sept", "8": "huit", "9": "neuf"
+    };
+    cleaned = cleaned.replace(/\b([0-9])\b/g, (m) => digitWords[m] || m);
+
+    // Backstop déterministe derrière la consigne du modèle
+    if (/\d/.test(cleaned)) {
+      console.warn("narrateForParent: chiffre détecté malgré la consigne, narration rejetée:", cleaned);
       return null;
     }
-    return text;
+    return cleaned;
   } catch (err) {
     console.error("narrateForParent failed (non-fatal, cycle stocké sans narration):", err);
     return null;
