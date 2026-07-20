@@ -93,6 +93,7 @@ export type Database = {
           hypotheses: Json
           id: string
           model: string | null
+          parent_narrative: string | null
           resolved_at: string | null
           status: string
           user_id: string
@@ -105,6 +106,7 @@ export type Database = {
           hypotheses: Json
           id?: string
           model?: string | null
+          parent_narrative?: string | null
           resolved_at?: string | null
           status?: string
           user_id: string
@@ -117,6 +119,7 @@ export type Database = {
           hypotheses?: Json
           id?: string
           model?: string | null
+          parent_narrative?: string | null
           resolved_at?: string | null
           status?: string
           user_id?: string

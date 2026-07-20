@@ -50,6 +50,62 @@ function relatedTalentKey(subject: string): string | null {
   return null;
 }
 
+// NAYA 2.0 Phase 4 — restitution parent (cf. genizio-decisions #33). Rôle *narration*,
+// délibérément séparé du rôle *raisonnement* ci-dessus (décision #27 : rôles swappables
+// indépendamment) — et sur Haiku, pas Sonnet : traduire une structure déjà raisonnée en
+// prose chaleureuse est le même type de tâche que getChildAISynthesis (Haiku, déjà
+// éprouvé dans ce fichier), pas un problème de jugement causal qui justifierait le
+// premium. Découverte concrète en construisant cette phase : le "rationale"/"evidence_log"
+// généré par le rôle raisonnement contient des chiffres bruts ("0.85", "z=-10",
+// "6 observations") — sûrs en interne, mais leur exposition directe violerait "jamais de
+// probabilité brute" (§1 du plan). Cette fonction est donc réellement nécessaire, pas un
+// simple confort : reformuler le rationale tel quel serait montrer un chiffre au parent.
+async function narrateForParent(
+  childName: string,
+  childAge: number,
+  subject: string,
+  hypotheses: { cause: string; evidence_log: { fact: string }[] }[]
+): Promise<string | null> {
+  // Seules les 2 pistes les plus probables (déjà triées) nourrissent la narration — un
+  // menu de 4 hypothèses techniques ne se traduit pas en une observation cohérente pour
+  // un parent ; Naya raconte UNE histoire, pas un tableau de probabilités.
+  const top = hypotheses.slice(0, 2).map((h) => ({
+    piste: h.cause,
+    elements_observes: h.evidence_log.map((e) => e.fact),
+  }));
+
+  const prompt = `Tu es Naya, la mentore IA bienveillante de Génizio. Tu écris directement pour le PARENT de ${childName}, ${childAge} ans, à propos d'une observation récente en ${subject}.
+
+RÈGLES ABSOLUES, sans exception :
+- INTERDICTION TOTALE de tout nombre, pourcentage, score ou statistique dans ta réponse — même si les données ci-dessous en contiennent (ex: ne jamais écrire "0.85", "75%", "z=-10", "6 observations"). Traduis TOUJOURS en tendances qualitatives, en langage courant ("elle réussit habituellement très bien dans ce domaine", "un écart net par rapport à d'habitude").
+- INTERDICTION d'utiliser les étiquettes techniques ("METHOD_MISMATCH", "CONCEPTUAL_GAP", etc.) ou tout mot à consonance clinique/diagnostique ("trouble", "déficit", "anomalie", "cause", "diagnostic").
+- Ne présente JAMAIS ceci comme une conclusion, un verdict ou un jugement définitif. C'est une observation provisoire que Naya continue d'explorer — le temps et le ton doivent le montrer ("Naya se demande si...", "elle a remarqué que...", "elle va continuer à observer...").
+- Reste chaleureux, concret, tourné vers l'enfant comme une personne pleine de ressources — jamais alarmiste, jamais culpabilisant pour le parent ou l'enfant.
+- Commence par la piste la plus probable ; n'évoque la seconde que si elle semble vraiment plausible aussi.
+- 2 à 3 phrases courtes maximum, en français naturel, comme si tu parlais directement au parent.
+
+Ce que Naya a observé (données internes à traduire fidèlement en langage humain, ne JAMAIS citer telles quelles) :
+${JSON.stringify(top, null, 2)}
+
+Réponds uniquement avec le texte final, sans guillemets, sans préambule, sans Markdown.`;
+
+  try {
+    const text = (await callClaude(prompt, false, undefined, 400, 2)).trim();
+    if (!text) return null;
+    // Backstop déterministe derrière la consigne du modèle — même logique que
+    // applySafetyNet dans challenges.functions.ts : ne jamais compter uniquement sur
+    // l'auto-discipline du modèle pour une règle non-négociable (décision #11).
+    if (/\d/.test(text)) {
+      console.warn("narrateForParent: chiffre détecté malgré la consigne, narration rejetée:", text);
+      return null;
+    }
+    return text;
+  } catch (err) {
+    console.error("narrateForParent failed (non-fatal, cycle stocké sans narration):", err);
+    return null;
+  }
+}
+
 const EnsureInput = z.object({ childId: z.string().uuid() });
 
 export const ensureHypothesesForChild = createServerFn({ method: "POST" })
@@ -79,9 +135,44 @@ export const ensureHypothesesForChild = createServerFn({ method: "POST" })
         .order("created_at", { ascending: false }),
       supabase
         .from("hypothesis_cycles")
-        .select("anomaly_trigger_id")
+        .select("id, anomaly_trigger_id, hypotheses, parent_narrative")
         .eq("child_id", data.childId),
     ]);
+
+    // Résilience : un cycle déjà raisonné (Sonnet) mais dont la narration (Haiku) a
+    // échoué précédemment n'a pas besoin de repasser par le raisonnement — seule la
+    // narration, moins coûteuse, est retentée. Évite de gaspiller un appel Sonnet sur
+    // une simple panne transitoire du second appel.
+    const unnarrated = (existingCycles ?? []).find((c) => !c.parent_narrative);
+    if (unnarrated) {
+      const anomaly = (anomalies ?? []).find((a) => a.id === unnarrated.anomaly_trigger_id);
+      if (anomaly) {
+        const { data: g } = await supabase
+          .from("school_grades")
+          .select("subject")
+          .eq("id", anomaly.school_grade_id)
+          .maybeSingle();
+        if (g) {
+          const narrative = await narrateForParent(
+            child.name,
+            child.age,
+            g.subject,
+            unnarrated.hypotheses as { cause: string; evidence_log: { fact: string }[] }[]
+          );
+          if (narrative) {
+            const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+            const { data: updated } = await supabaseAdmin
+              .from("hypothesis_cycles")
+              .update({ parent_narrative: narrative })
+              .eq("id", unnarrated.id)
+              .select("*")
+              .single();
+            return { generated: true as const, cycle: updated };
+          }
+        }
+      }
+      return { generated: false as const };
+    }
 
     const cycledIds = new Set((existingCycles ?? []).map((c) => c.anomaly_trigger_id));
     const pending = (anomalies ?? []).find((a) => !cycledIds.has(a.id));
@@ -245,6 +336,13 @@ DIRECTIVES DE SORTIE STRICTES :
       })
       .sort((a, b) => b.prior_probability - a.prior_probability);
 
+    // Rôle narration (Haiku) : traduit les hypothèses en langage parent AVANT l'insert,
+    // pour qu'un cycle nouvellement visible n'ait jamais de fenêtre "raisonné mais pas
+    // encore raconté" — un échec ici laisse simplement parent_narrative à null (voir la
+    // résilience de backfill au début du handler), la génération d'hypothèses reste
+    // acquise dans tous les cas.
+    const parentNarrative = await narrateForParent(child.name, child.age, grade.subject, hypotheses);
+
     // Écriture via service role : hypothesis_cycles n'a aucune policy d'écriture cliente
     // (résultat calculé, pas une saisie). L'ownership de l'anomalie est déjà garanti par
     // les requêtes RLS-scopées ci-dessus.
@@ -258,6 +356,7 @@ DIRECTIVES DE SORTIE STRICTES :
         hypotheses,
         model: NAYA_REASONING_MODEL,
         status: "open",
+        parent_narrative: parentNarrative,
       })
       .select("*")
       .single();

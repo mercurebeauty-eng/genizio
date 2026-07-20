@@ -26,6 +26,7 @@ import {
   BookOpen,
   GraduationCap,
   Trash2,
+  Search,
 } from "lucide-react";
 import { InviteMentorDialog } from "@/components/mentors/InviteMentorDialog";
 import { AddGradeDialog } from "@/components/grades/AddGradeDialog";
@@ -157,6 +158,15 @@ type SchoolGrade = {
   graded_at: string;
 };
 
+// NAYA 2.0 Phase 4 — cf. genizio-decisions #33. Seule parent_narrative est lue ici : le
+// JSON hypotheses (causes, probabilités, evidence_log) reste strictement interne, jamais
+// exposé à ce niveau de l'app, conforme à la règle "jamais de probabilité brute" (§1 du
+// plan NAYA).
+type OpenHypothesisCycle = {
+  id: string;
+  parent_narrative: string | null;
+};
+
 function PortfolioPage() {
   const { profileId } = Route.useParams();
   const { session, loading } = useSession();
@@ -165,6 +175,7 @@ function PortfolioPage() {
   const [child, setChild] = useState<Child | null>(null);
   const [challenges, setChallenges] = useState<Challenge[]>([]);
   const [grades, setGrades] = useState<SchoolGrade[]>([]);
+  const [openCycle, setOpenCycle] = useState<OpenHypothesisCycle | null>(null);
   const [fetching, setFetching] = useState(true);
   const [synthesis, setSynthesis] = useState("");
   const [fetchingSynthesis, setFetchingSynthesis] = useState(false);
@@ -221,14 +232,37 @@ function PortfolioPage() {
         .select("id, subject, grade, max_grade, evaluation_type, graded_at")
         .eq("child_id", profileId)
         .order("graded_at", { ascending: false }),
-    ]).then(([c, ch, cm, sg]) => {
+      supabase
+        .from("hypothesis_cycles")
+        .select("id, parent_narrative")
+        .eq("child_id", profileId)
+        .eq("status", "open")
+        .not("parent_narrative", "is", null)
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .maybeSingle(),
+    ]).then(([c, ch, cm, sg, hc]) => {
       setChild((c.data as Child) ?? null);
       setChallenges((ch.data ?? []) as Challenge[]);
       setMentorCount(cm.count ?? 0);
       setGrades((sg.data ?? []) as SchoolGrade[]);
+      setOpenCycle((hc.data as OpenHypothesisCycle) ?? null);
       setFetching(false);
     });
   }, [session, profileId]);
+
+  const refetchOpenCycle = () => {
+    supabase
+      .from("hypothesis_cycles")
+      .select("id, parent_narrative")
+      .eq("child_id", profileId)
+      .eq("status", "open")
+      .not("parent_narrative", "is", null)
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle()
+      .then(({ data }) => setOpenCycle((data as OpenHypothesisCycle) ?? null));
+  };
 
   useEffect(() => {
     if (!session) return;
@@ -240,15 +274,18 @@ function PortfolioPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [session, profileId]);
 
-  // NAYA 2.0 Phase 3a : déclenche la génération d'hypothèses pour toute anomalie
-  // scolaire non encore diagnostiquée. Fire-and-forget, best-effort — le résultat
-  // n'est pas affiché ici (c'est la Phase 4, "Compréhension de Naya"). Idempotent
-  // côté serveur : ne coûte un appel IA que s'il existe une anomalie sans cycle,
-  // sinon simple vérification en base. Un échec (quota, réseau) est silencieux : le
-  // prochain chargement du Portfolio réessaiera.
+  // NAYA 2.0 Phase 3a/4 : déclenche la génération d'hypothèses (+ narration Phase 4)
+  // pour toute anomalie scolaire non encore diagnostiquée. Fire-and-forget,
+  // best-effort. Idempotent côté serveur : ne coûte un appel IA que s'il existe une
+  // anomalie sans cycle (ou un cycle sans narration), sinon simple vérification en
+  // base. Un échec (quota, réseau) est silencieux : le prochain chargement du
+  // Portfolio réessaiera. Re-fetch le cycle après coup pour que la carte "Ce que Naya
+  // a remarqué" apparaisse sans recharger la page si ce montage vient d'en générer un.
   useEffect(() => {
     if (!session) return;
-    void ensureHypotheses({ data: { childId: profileId } }).catch(() => {});
+    ensureHypotheses({ data: { childId: profileId } })
+      .then((res) => { if (res.generated) refetchOpenCycle(); })
+      .catch(() => {});
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [session, profileId]);
 
@@ -298,6 +335,33 @@ function PortfolioPage() {
               </div>
             );
           })()}
+
+          {/* NAYA 2.0 Phase 4 — "Ce que Naya a remarqué" (cf. genizio-decisions #33).
+              Visuellement distincte du Portrait (ambre = provisoire, pas la synthèse
+              stable en sky ci-dessous) : jamais présentée comme un verdict, jamais de
+              chiffre — seul parent_narrative (texte déjà nettoyé côté serveur) est
+              rendu ici. Absente du DOM si aucun cycle ouvert n'existe encore : ne
+              jamais afficher un état "rien détecté" qui sonnerait comme un jugement. */}
+          {openCycle?.parent_narrative && (
+            <div className="rounded-3xl border-[3px] border-ink bg-amber-50 p-6 shadow-brutal">
+              <div className="mb-3 flex items-center gap-3">
+                <NayaAvatar size="sm" thoughts={[`Je réfléchis à quelque chose sur ${child.name}...`]} />
+                <div>
+                  <span className="inline-flex items-center gap-1.5 rounded-full border-2 border-ink bg-amber-200 px-2.5 py-0.5 text-[10px] font-black uppercase tracking-wider text-amber-900">
+                    <Search className="size-3" />
+                    Naya enquête encore
+                  </span>
+                  <h3 className="mt-1 font-display text-lg font-bold text-ink">Ce que Naya a remarqué</h3>
+                </div>
+              </div>
+              <p className="text-sm font-medium leading-relaxed text-ink">
+                {openCycle.parent_narrative}
+              </p>
+              <p className="mt-4 text-xs italic text-ink/60">
+                Naya continue d'observer les prochains défis de {child.name} pour affiner sa compréhension.
+              </p>
+            </div>
+          )}
 
           {/* Success card dashboard: Profil Actuel de l'Enfant */}
           {(() => {

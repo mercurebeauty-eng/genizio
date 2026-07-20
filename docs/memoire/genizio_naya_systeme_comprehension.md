@@ -10,13 +10,14 @@ metadata:
 # NAYA 2.0 — Système de Compréhension Développementale
 
 > ⚠️ **STATUT (vérifié le 2026-07-20, branche `security-fixes-and-ux-improvements`, PR #8)** :
-> conçu et approuvé le 2026-07-20. **Phases 0, 1, 2 et 3a livrées et vérifiées en production le
-> jour même** (Phase 0 : `observation_events` ; Phase 1 : `pedagogical_twin` ; Phase 2 :
-> `school_grades`/`anomaly_triggers` ; **Phase 3a : `hypothesis_cycles` + moteur
-> `generateHypotheses` — premier point IA, cas Lola reproduit correctement**, détail en fin de
-> §6). **Phase 3b** (boucle bayésienne : défis discriminants + mise à jour + convergence) et
-> **Phases 4-5 PAS commencées**. Prochain pas = Phase 3b OU Phase 4 (restitution parent, qui
-> affichera enfin les hypothèses déjà générées). Mettre ce bandeau à jour à chaque phase livrée.
+> conçu et approuvé le 2026-07-20. **Phases 0, 1, 2, 3a et 4 livrées et vérifiées en production
+> le jour même** (Phase 0 : `observation_events` ; Phase 1 : `pedagogical_twin` ; Phase 2 :
+> `school_grades`/`anomaly_triggers` ; Phase 3a : `hypothesis_cycles` + `generateHypotheses`
+> (Sonnet) ; **Phase 4 : `parent_narrative` + rôle narration (Haiku) — premier écran NAYA
+> visible par le parent, carte "Ce que Naya a remarqué" dans le Portfolio**, détail en fin de
+> §6). **Phase 3b** (boucle bayésienne : défis discriminants + convergence) et **Phase 5**
+> (boucle de recommandation complète) PAS commencées. Mettre ce bandeau à jour à chaque phase
+> livrée.
 
 > **Document source** : `C:\Users\USER\Documents\Mise en place Projet\#Génizion - Système de Compréhensio.txt`
 > (fichier personnel de l'utilisateur, hors repo). Structure : sections 1-12 = la formalisation
@@ -258,6 +259,41 @@ Chaque phase est livrable, vérifiable de bout en bout, et committable seule. D�
 - Défis discriminants via le générateur existant contraint (cf. adaptation #2).
 - Mise à jour bayésienne des `current_probability` à la complétion du défi discriminant ;
   convergence → `status=resolved` + `final_diagnosis` + frein appris le cas échéant.
+
+### Phase 4 — Restitution parent — ✅ LIVRÉE le 2026-07-20
+- Colonne `hypothesis_cycles.parent_narrative` (nullable) + rôle **narration séparé du
+  raisonnement** (décision #27 : rôles swappables indépendamment) : `narrateForParent`
+  (`hypotheses.functions.ts`), sur **Haiku** (pas Sonnet — traduire une structure déjà
+  raisonnée en prose est le même type de tâche que `getChildAISynthesis`, déjà éprouvé sur
+  Haiku dans ce fichier, pas un problème de jugement causal). Appelée juste avant l'insert du
+  cycle (jamais de fenêtre "raisonné mais pas raconté" visible).
+- **Découverte concrète en construisant cette phase** : `rationale`/`evidence_log` (Phase 3a)
+  contiennent des chiffres bruts ("0.85", "z=-10") — sûrs en interne, mais leur exposition
+  directe violerait "jamais de probabilité brute" (§1). La narration n'est donc pas un simple
+  confort, elle est structurellement nécessaire.
+- **Garde-fou déterministe derrière la consigne du modèle** (même logique que
+  `applySafetyNet` dans `challenges.functions.ts`) : toute narration contenant un chiffre est
+  rejetée (`parent_narrative` reste `null`) plutôt que risquer une fuite — jamais de confiance
+  aveugle en l'auto-discipline du modèle pour une règle non-négociable.
+- **Résilience** : un cycle déjà raisonné (Sonnet, coûteux) dont la narration (Haiku, moins
+  coûteuse) a échoué n'est jamais re-raisonné — seule la narration est retentée au prochain
+  déclenchement lazy, en réutilisant `hypotheses` déjà stocké.
+- UI : carte "Ce que Naya a remarqué" dans le Portfolio (pas une nouvelle route), badge ambre
+  "Naya enquête encore" — **visuellement distincte** du Portrait de synthèse (sky, réglé/stable)
+  pour ne jamais donner un air de conclusion à quelque chose de provisoire. N'apparaît dans le
+  DOM QUE si un cycle ouvert avec narration existe (jamais d'état "rien détecté" qui sonnerait
+  comme un jugement en soi). Seule `parent_narrative` est lue côté client — `hypotheses` (JSON
+  brut, causes, probabilités, evidence_log) reste strictement interne à cette couche de l'app.
+- **Vérifié en production** : cas type Lola resemé (compétence linguistique FORCE 0.82 +
+  chute à 3/20) → raisonnement Sonnet impeccable (METHOD_MISMATCH 0.5 en tête) → narration
+  Haiku **rejetée une première fois par le garde-fou** (faux positif : le nom de test
+  "Phase4Test" contenait un chiffre, pas une fuite de diagnostic) → renommage → **résilience
+  vérifiée en direct** : la retentative n'a réutilisé QUE le raisonnement déjà stocké, narration
+  obtenue en ~3s (vs ~20s pour un cycle complet), zéro second appel Sonnet. Narration finale
+  100% conforme : zéro chiffre, zéro étiquette technique (`METHOD_MISMATCH` etc.), ton
+  d'enquête provisoire ("Naya se demande si…", "elle va continuer à observer…"), chaleureux.
+  Carte confirmée dans le DOM rendu (badge + texte exact). RLS anon = 0. Cascade de
+  suppression propre. `tsc --noEmit` propre.
 
 ### Phase 4 — Restitution parent
 - Vue "Compréhension de Naya" : hypothèses en cours et diagnostics en langage bienveillant

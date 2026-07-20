@@ -676,3 +676,55 @@ log temporaire (`console.log` retiré après coup) : soumission réelle d'une pr
 les logs serveur, validation IA aboutie (`Bulletin de Découverte` affiché). Confirme aussi que le
 fix de parsing du bloc `thinking` (déjà appliqué) couvre bien ce chemin d'appel, partagé avec
 `generateHypotheses`. Défi de test supprimé après vérification. `tsc --noEmit` propre.
+
+## Décision #33 : Phase 4 NAYA — restitution parent, rôle narration séparé (Haiku)
+
+**Contexte** : premier écran NAYA réellement visible par le parent. Les hypothèses (Phase 3a)
+existent déjà en base mais ne peuvent pas être affichées telles quelles — `rationale` et
+`evidence_log` contiennent des chiffres bruts ("0.85", "z=-10", "6 observations") et des
+étiquettes cliniques (`METHOD_MISMATCH`), ce qui violerait directement "jamais de probabilité
+brute ni de label clinique" (§1 du plan, décision #11).
+
+**Décision 1 — nouveau rôle *narration*, distinct du rôle *raisonnement*, sur Haiku.**
+`narrateForParent` (`hypotheses.functions.ts`) prend les hypothèses déjà calculées et les
+traduit en 2-3 phrases chaleureuses pour le parent. Pas Sonnet : traduire une structure déjà
+raisonnée en prose est le même type de tâche que `getChildAISynthesis`, déjà éprouvé sur Haiku
+dans ce même fichier — pas un problème de jugement causal qui justifierait le premium (décision
+#27 : payer Sonnet seulement "quand le système doit réfléchir"). Appelée en séquence juste
+avant l'insert du cycle (pas un second déclenchement lazy séparé) pour qu'un cycle nouvellement
+visible n'ait jamais de fenêtre "raisonné mais pas encore raconté".
+**Alternative rejetée** : templater le `rationale` existant tel quel (0 appel IA supplémentaire,
+gratuit). Rejeté car concrètement testé et confirmé dangereux — le `rationale` généré en Phase
+3a contient des chiffres par construction (le prompt de raisonnement l'y encourage
+explicitement, "comme pour un futur lecteur humain (éducateur)", pas pour un parent). Un simple
+gabarit enum→phrase aurait été sûr mais générique et aurait perdu toute la spécificité du cas
+réel (l'historique de notes précis, la force mesurée) — la narration IA est donc réellement
+nécessaire, pas un confort superflu.
+
+**Décision 2 — garde-fou déterministe contre toute fuite de chiffre, jamais de confiance
+aveugle dans la consigne du modèle.** `narrateForParent` rejette (retourne `null`) toute
+narration contenant un chiffre (`/\d/.test(text)`), même si le prompt l'interdit explicitement
+— même logique que `applySafetyNet` (`challenges.functions.ts`) : un modèle peut ne pas suivre
+une instruction, une règle non-négociable a besoin d'un filet mécanique derrière elle.
+
+**Décision 3 — résilience par re-tentative ciblée, pas par re-génération complète.** Un cycle
+déjà raisonné (Sonnet, coûteux, ~15-20s) dont la narration (Haiku, ~3s) a échoué au tour
+précédent n'est jamais re-raisonné — le déclencheur lazy détecte un cycle sans
+`parent_narrative` et retente UNIQUEMENT la narration, en réutilisant les hypothèses déjà
+stockées. Économise un appel Sonnet à chaque échec transitoire de la narration.
+
+**Décision 4 — carte visuellement distincte du Portrait de synthèse existant, absente par
+défaut.** Badge ambre "Naya enquête encore" (vs le sky "réglé/stable" du Portrait) — jamais le
+même traitement visuel qu'une conclusion. N'apparaît dans le DOM que si un cycle ouvert avec
+narration existe ; pas d'état "rien détecté" qui sonnerait comme un jugement en soi (l'absence
+de carte est neutre, pas un verdict "tout va bien").
+
+**Vérifié en production, cas Lola resemé (compétence linguistique FORCE 0.82, note 3/20)** :
+raisonnement Sonnet impeccable (METHOD_MISMATCH 0.5 en tête, cohérent avec le cas Lola de la
+Phase 3a). **Le garde-fou anti-chiffre a réellement déclenché** — faux positif intéressant : le
+nom de l'enfant de test "Phase4Test" contenait un chiffre, pas une fuite de diagnostic. Après
+renommage, **la résilience a été vérifiée en direct** : la retentative n'a réutilisé QUE le
+raisonnement déjà stocké (narration obtenue en ~3s au lieu de ~20s pour un cycle complet, zéro
+second appel Sonnet). Narration finale confirmée 100% conforme (zéro chiffre, zéro étiquette
+technique, ton d'enquête provisoire) et rendue correctement dans le DOM du Portfolio (badge +
+texte exact). RLS anon = 0, cascade de suppression propre. `tsc --noEmit` propre.
