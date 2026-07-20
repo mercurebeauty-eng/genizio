@@ -352,6 +352,50 @@ export type Database = {
           },
         ]
       }
+      observation_events: {
+        Row: {
+          child_id: string
+          id: string
+          occurred_at: string
+          payload: Json
+          processed: boolean
+          recorded_at: string
+          source: string
+          type: string
+          user_id: string
+        }
+        Insert: {
+          child_id: string
+          id?: string
+          occurred_at?: string
+          payload?: Json
+          processed?: boolean
+          recorded_at?: string
+          source?: string
+          type: string
+          user_id: string
+        }
+        Update: {
+          child_id?: string
+          id?: string
+          occurred_at?: string
+          payload?: Json
+          processed?: boolean
+          recorded_at?: string
+          source?: string
+          type?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "observation_events_child_id_fkey"
+            columns: ["child_id"]
+            isOneToOne: false
+            referencedRelation: "child_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       orders: {
         Row: {
           challenge_id: string | null

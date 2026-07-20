@@ -759,6 +759,31 @@ Réponds STRICTEMENT en JSON valide avec ce format :
 
     const relevant = Object.keys(deltas).length > 0;
 
+    if (!relevant) {
+      // NAYA 2.0 Phase 0 : une soumission jugée hors-sujet ne modifie rien en
+      // base (aucun trigger DB ne peut donc la capter) — c'est pourtant un vrai
+      // signal de friction pour le Jumeau Pédagogique. Émission applicative,
+      // best-effort : un échec de journalisation ne doit jamais casser la
+      // validation elle-même.
+      try {
+        const { error: evtErr } = await supabase.from("observation_events").insert({
+          child_id: challenge.child_id,
+          user_id: userId,
+          type: "PROOF_REJECTED",
+          source: "app",
+          payload: {
+            challenge_id: challenge.id,
+            domain: challenge.domain,
+            had_image: !!data.proofImageBase64,
+            image_analyzed: imageAnalyzed,
+          },
+        });
+        if (evtErr) console.error("PROOF_REJECTED event insert failed (non-fatal):", evtErr);
+      } catch (err) {
+        console.error("PROOF_REJECTED event insert failed (non-fatal):", err);
+      }
+    }
+
     // A rejected submission used to still write ai_observations to the DB —
     // and the UI only ever renders this whole validation card while
     // ai_observations is null, so writing it here permanently hid the

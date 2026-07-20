@@ -4,7 +4,7 @@ description: Décisions d'architecture et produit — quoi, pourquoi, alternativ
 metadata:
   type: project
   status: living-document
-  last_updated: 2026-07-17
+  last_updated: 2026-07-20
 ---
 
 ## Décision #1 : Nom du projet — Geniusio
@@ -325,3 +325,33 @@ faut-il un contrôle d'ownership explicite sur ces routes plutôt que de compter
 **Pourquoi** : Un score brut (ex: 80 en créativité) n'a pas la même signification pour un enfant de 5 ans et un adolescent de 15 ans. Le type de carte indique le stade de développement pédagogique de l'enfant tandis que le niveau et les étoiles indiquent sa maîtrise relative au sein de sa tranche d'âge.
 **Statut** : Intégré sur le Portfolio Parent en ligne et par cohérence visuelle dans le Passeport d'Excellence imprimable (PDF).
 **Vérifié** : Build complet sans erreur (`tsc --noEmit` propre). Les rendus en direct s'adaptent selon l'âge réel du profil sélectionné.
+
+## Décision #27 : NAYA 2.0 — paradigme d'investigation développementale + stratégie modèles IA
+
+**Contexte** : le 2026-07-20, l'utilisateur a partagé un document de formalisation complet
+(`#Génizion - Système de Compréhensio.txt`, cf. [[genizio-naya-systeme-comprehension]]) faisant
+évoluer Naya de "générateur de défis + cartographe de talents" vers un **système de compréhension
+développementale** : Jumeau Pédagogique à 4 niveaux, notes/résultats traités comme des signaux à
+investiguer (jamais des verdicts), moteur de diagnostic par hypothèses causales + défis
+discriminants + mise à jour bayésienne, classification dynamique Force/Faiblesse/Fragilité/Risque.
+
+**Décision 1 — le paradigme est adopté comme direction produit** : demande explicite de
+l'utilisateur ("structurer au mieux… développer un plan d'implémentation… l'intégrer en mémoire").
+La conception structurée, les adaptations à l'existant et le plan par phases vivent dans
+[[genizio-naya-systeme-comprehension]] — ce fichier-là fait foi, pas le document source brut.
+
+**Décision 2 — modèles IA : Anthropic seul, architecture swappable** (choix explicite de
+l'utilisateur via AskUserQuestion, option recommandée acceptée). Le pipeline définit des *rôles*
+(vision / raisonnement / narration) implémentés aujourd'hui uniquement avec les modèles Anthropic
+déjà en place (`callClaude` : Sonnet vision, Haiku texte) — cohérent avec la décision #3 corrigée.
+**Alternatives rejetées** :
+- ❌ Hybride multi-fournisseurs immédiat (Gemini vision + DeepSeek raisonnement, proposé par le
+  brainstorm Gemini du document source) : 2 SDK/clés API de plus à gérer pour un gain de coût
+  purement théorique au volume actuel — et surtout fondé sur des benchmarks/prix générés par
+  Gemini, invérifiables et en partie manifestement inventés (ex. un id de modèle Anthropic
+  inexistant). Réévaluable plus tard SI le volume le justifie ET sur des chiffres vérifiés.
+- ❌ Trancher plus tard : rejeté par l'utilisateur — le choix est fait maintenant pour que le
+  plan soit stable ; l'abstraction par rôles préserve de toute façon la réversibilité.
+**Trade-off accepté** : coût par appel de raisonnement potentiellement plus élevé qu'un
+fournisseur low-cost — mitigé par le design frugal (l'IA n'intervient que sur anomalie détectée
+par du code déterministe, pas sur chaque événement).
