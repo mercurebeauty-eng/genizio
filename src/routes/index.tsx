@@ -152,7 +152,7 @@ function Nav() {
   const [isOpen, setIsOpen] = useState(false);
 
   return (
-    <nav className="sticky top-0 z-50 border-b-[3px] border-ink bg-surface">
+    <nav className="sticky top-0 z-50 border-b border-ink/10 bg-surface/90 backdrop-blur-md transition-all shadow-xs">
       <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
         <Link to={session ? "/profiles" : "/"} className="flex items-center gap-2 font-display text-2xl font-extrabold tracking-tight text-brand">
           <img src="/favicon-96x96.png" alt="" className="h-8 w-8" />
@@ -169,7 +169,7 @@ function Nav() {
           {session ? (
             <Link
               to="/profiles"
-              className="rounded-2xl border-[3px] border-ink bg-ink px-4 py-2.5 text-xs font-bold text-white shadow-brutal-sm hover:-translate-y-0.5 active:translate-y-0 transition-all cursor-pointer sm:px-5"
+              className="press-brand rounded-full px-5 py-2.5 text-xs font-bold text-white transition-all cursor-pointer"
             >
               <span className="hidden sm:inline">Accéder à l'Espace Parent</span>
               <span className="sm:hidden">Espace Parent</span>
@@ -177,7 +177,7 @@ function Nav() {
           ) : (
             <Link
               to="/auth"
-              className="rounded-2xl border-[3px] border-ink bg-brand px-5 py-2.5 text-xs font-bold text-white shadow-brutal-sm hover:-translate-y-0.5 active:translate-y-0 transition-all cursor-pointer"
+              className="press-brand rounded-full px-5 py-2.5 text-xs font-bold text-white transition-all cursor-pointer"
             >
               Se connecter
             </Link>
@@ -186,7 +186,7 @@ function Nav() {
             onClick={() => setIsOpen((v) => !v)}
             aria-label={isOpen ? "Fermer le menu" : "Ouvrir le menu"}
             aria-expanded={isOpen}
-            className="rounded-xl border-[3px] border-ink bg-white p-2 shadow-brutal-sm md:hidden"
+            className="rounded-full border border-ink/10 bg-white p-2 shadow-sm md:hidden"
           >
             {isOpen ? <X className="size-5" /> : <Menu className="size-5" />}
           </button>
@@ -194,7 +194,7 @@ function Nav() {
       </div>
 
       {isOpen && (
-        <div className="border-t-[3px] border-ink bg-surface px-6 py-4 md:hidden animate-in slide-in-from-top-5 duration-200">
+        <div className="border-t border-ink/10 bg-surface px-6 py-4 md:hidden animate-in slide-in-from-top-5 duration-200">
           <div className="flex flex-col gap-4 font-bold text-sm">
             {NAV_LINKS.map((link) => (
               <a
@@ -215,38 +215,43 @@ function Nav() {
 
 function Hero() {
   return (
-    <header className="mx-auto grid max-w-6xl items-center gap-12 px-6 pt-16 pb-24 md:grid-cols-2">
-      <div>
-        <span className="mb-4 inline-block rounded-full bg-brand/10 px-4 py-1.5 text-xs font-bold uppercase tracking-wider text-brand">
-          Le laboratoire de potentiel par projet
-        </span>
-        <h1 className="mb-6 font-display text-4xl font-extrabold leading-[1.05] md:text-6xl text-ink">
-          Révélez les <span className="text-brand">intelligences</span> naturelles de votre enfant.
-        </h1>
-        <p className="mb-8 text-base font-medium leading-relaxed text-ink/70">
-          Bien plus qu'un soutien scolaire. Génizio propose à votre enfant d'expérimenter le monde réel grâce à des défis d'apprentissage sur-mesure validés par l'IA et accompagnés par des mentors.
-        </p>
-        <div className="mb-8 flex items-center gap-3.5 rounded-2xl border-[3px] border-ink bg-white p-4 shadow-brutal-sm w-fit">
-          <NayaAvatar size="sm" thoughts={["Bonjour ! Prêt pour un nouveau défi ?"]} />
-          <div>
-            <p className="text-xs font-black uppercase tracking-wider text-brand">Co-pilote Pédagogique</p>
-            <p className="text-xs font-bold text-ink/75">Guidé par Naya, notre IA mentore bienveillante.</p>
+    <header className="relative overflow-hidden">
+      {/* Background Aura Gradient Blobs */}
+      <div className="pointer-events-none absolute -top-20 -left-20 h-96 w-96 rounded-full bg-brand/10 blur-3xl" />
+      <div className="pointer-events-none absolute top-40 -right-20 h-96 w-96 rounded-full bg-sky/20 blur-3xl" />
+
+      <div className="relative mx-auto grid max-w-6xl items-center gap-12 px-6 pt-16 pb-24 md:grid-cols-2">
+        <div>
+          <span className="mb-4 inline-block rounded-full bg-brand-50 px-4 py-1.5 text-xs font-bold uppercase tracking-wider text-brand-700 border border-brand/20">
+            Le laboratoire de potentiel par projet
+          </span>
+          <h1 className="mb-6 font-display text-4xl font-extrabold leading-[1.05] md:text-6xl text-ink">
+            Révélez les <span className="text-brand">intelligences</span> naturelles de votre enfant.
+          </h1>
+          <p className="mb-8 text-base font-medium leading-relaxed text-ink/70">
+            Bien plus qu'un soutien scolaire. Génizio propose à votre enfant d'expérimenter le monde réel grâce à des défis d'apprentissage sur-mesure validés par l'IA et accompagnés par des mentors.
+          </p>
+          <div className="mb-8 flex items-center gap-3.5 rounded-2xl border border-ink/10 bg-white/90 p-4 shadow-md backdrop-blur-md w-fit">
+            <NayaAvatar size="sm" thoughts={["Bonjour ! Prêt pour un nouveau défi ?"]} />
+            <div>
+              <p className="text-xs font-black uppercase tracking-wider text-brand">Co-pilote Pédagogique</p>
+              <p className="text-xs font-bold text-ink/75">Guidé par Naya, notre IA mentore bienveillante.</p>
+            </div>
           </div>
-        </div>
-        <div className="flex flex-col gap-4 sm:flex-row">
-          <a
-            href="#demo"
-            className="rounded-2xl border-[3px] border-ink bg-brand px-8 py-4 text-center text-base font-bold text-white shadow-brutal hover:-translate-y-0.5 active:translate-y-0 transition-all cursor-pointer"
-          >
-            Tester le Simulateur
-          </a>
-          <Link
-            to="/auth"
-            className="rounded-2xl border-[3px] border-ink bg-white px-8 py-4 text-center text-base font-bold text-ink shadow-brutal-sm hover:-translate-y-0.5 active:translate-y-0 transition-all cursor-pointer"
-          >
-            Créer un compte
-          </Link>
-        </div>
+          <div className="flex flex-col gap-4 sm:flex-row">
+            <a
+              href="#demo"
+              className="press-brand rounded-2xl px-8 py-4 text-center text-base font-bold text-white cursor-pointer"
+            >
+              Tester le Simulateur
+            </a>
+            <Link
+              to="/auth"
+              className="press-white rounded-2xl border border-ink/10 bg-white px-8 py-4 text-center text-base font-bold text-ink cursor-pointer"
+            >
+              Créer un compte
+            </Link>
+          </div>
         <div className="mt-10 flex items-center gap-4">
           <div className="flex -space-x-3">
             <div className="size-8 rounded-full border-2 border-ink bg-brand" />
@@ -272,12 +277,13 @@ function Hero() {
           height={1200}
           className="relative aspect-square w-full rotate-1 rounded-3xl border-[3px] border-ink object-cover shadow-brutal transition-transform hover:rotate-0"
         />
-        <div className="absolute -bottom-6 -left-6 hidden max-w-[280px] rounded-2xl border-[3px] border-ink bg-white p-5 shadow-brutal md:block">
+        <div className="absolute -bottom-6 -left-6 hidden max-w-[280px] rounded-2xl border border-ink/10 bg-white/95 p-5 shadow-lg backdrop-blur-md md:block">
           <p className="text-xs font-bold italic leading-relaxed text-ink/80">
             « Avec les défis d'entrepreneuriat et de sciences, ma fille de 9 ans a appris à concevoir des projets réels au lieu de juste réciter ses leçons. »
           </p>
           <p className="mt-2 text-[10px] font-black uppercase tracking-widest text-brand">— Aminata, Abidjan</p>
         </div>
+      </div>
       </div>
     </header>
   );

@@ -56,7 +56,7 @@ export function AppHeader({ hideTabBarLinks = false }: AppHeaderProps = {}) {
 
 
   return (
-    <nav className="border-b-[3px] border-ink bg-surface sticky top-0 z-50">
+    <nav className="border-b border-ink/10 bg-surface/90 backdrop-blur-md sticky top-0 z-50 transition-all shadow-xs">
       <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
         {/* Logo */}
         <Link to="/profiles" className="flex items-center gap-2 font-display text-2xl font-extrabold text-brand tracking-wider">

@@ -228,11 +228,11 @@ function DashboardPage() {
           {fetching ? (
             <GenizioLoader className="py-8" />
           ) : profiles.length === 0 ? (
-            <div className="rounded-3xl border-[3px] border-dashed border-ink bg-white/40 p-12 text-center shadow-brutal-sm">
+            <div className="rounded-3xl border border-dashed border-ink/20 bg-white/60 p-12 text-center shadow-md backdrop-blur-md">
               <p className="mb-4 text-ink/60">Aucun profil pour l'instant. Créez le premier.</p>
               <button
                 onClick={() => setCreating(true)}
-                className="rounded-2xl border-[3px] border-ink bg-brand px-6 py-3 text-sm font-bold text-white shadow-brutal hover:-translate-y-0.5 active:translate-y-0 active:shadow-none transition-all"
+                className="press-brand rounded-2xl px-6 py-3 text-sm font-bold text-white cursor-pointer"
               >
                 + Nouveau profil
               </button>
@@ -247,14 +247,14 @@ function DashboardPage() {
                       <button
                         key={p.id}
                         onClick={() => setSelectedId(p.id)}
-                        className={`group flex items-center gap-2 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 transition-all px-6 py-2.5 rounded-full border-2 border-ink shadow-brutal-sm font-bold text-sm ${
+                        className={`group flex items-center gap-2 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 transition-all px-6 py-2.5 rounded-full border border-ink/10 font-bold text-sm cursor-pointer ${
                           isActive
-                            ? "bg-brand text-white"
-                            : "bg-sky text-ink hover:bg-sky/80"
+                            ? "press-brand bg-brand text-white"
+                            : "press-sky bg-sky text-ink"
                         }`}
                       >
                         {p.name}
-                        {isActive && <span className="flex size-4 items-center justify-center rounded-full border border-white text-[10px]">✓</span>}
+                        {isActive && <span className="flex size-4 items-center justify-center rounded-full border border-white/60 text-[10px]">✓</span>}
                       </button>
                     );
                   })}
@@ -267,10 +267,10 @@ function DashboardPage() {
                       <button
                         onClick={() => atQuota ? setShowUpgradeModal(true) : setCreating(true)}
                         title={atQuota ? `Quota atteint (${quota} profils). Débloquer un slot supplémentaire.` : "Ajouter un enfant"}
-                        className={`flex size-11 items-center justify-center rounded-full border-2 border-ink shadow-brutal-sm text-xl font-bold transition-all ${
+                        className={`flex size-11 items-center justify-center rounded-full border border-ink/10 text-xl font-bold transition-all cursor-pointer ${
                           atQuota
-                            ? "bg-amber-100 text-amber-700 hover:bg-amber-200"
-                            : "bg-white text-ink hover:bg-surface"
+                            ? "press-white bg-amber-100 text-amber-800"
+                            : "press-white bg-white text-ink"
                         }`}
                       >
                         {atQuota ? <Lock className="size-4" /> : "+"}
