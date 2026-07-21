@@ -10,6 +10,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { AppTabBar } from "@/components/AppTabBar";
 import { AppHeader } from "@/components/AppHeader";
 import { ProfileDialog } from "@/components/profiles/ProfileDialog";
@@ -216,7 +217,7 @@ function DashboardPage() {
 
   return (
     <div className="min-h-dvh bg-surface pb-24 text-ink ">
-      <AppHeader hideTabBarLinks={!!selected} />
+      <AppHeader />
 
       <main className="mx-auto max-w-6xl px-6 py-10 md:flex ">
         {selected && <AppTabBar profileId={selected.id} />}
@@ -237,7 +238,7 @@ function DashboardPage() {
               <p className="mb-4 text-ink/60">Aucun profil pour l'instant. Créez le premier.</p>
               <button
                 onClick={() => setCreating(true)}
-                className="press-brand rounded-2xl px-6 py-3 text-sm font-bold text-white cursor-pointer"
+                className="press-brand rounded-2xl bg-brand px-6 py-3 text-sm font-bold text-white cursor-pointer"
               >
                 + Nouveau profil
               </button>
@@ -298,10 +299,22 @@ function DashboardPage() {
                         </div>
                       </div>
                       <div className="flex gap-2">
-                        <div className="inline-flex items-center gap-[5px] px-3 py-2 bg-glow-100 rounded-full font-display text-balance font-bold text-[14px] text-brand-700 shadow-sm">
-                          <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.07-2.14-.22-4.05 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.15.43-2.29 1-3a2.5 2.5 0 0 0 2.5 2.5z"/></svg>
-                          {selected.streak || 0}
-                        </div>
+                        <Popover>
+                          <PopoverTrigger className="inline-flex items-center gap-[5px] px-3 py-2 bg-glow-100 rounded-full font-display text-balance font-bold text-[14px] text-brand-700 shadow-sm cursor-pointer outline-none">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.07-2.14-.22-4.05 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.15.43-2.29 1-3a2.5 2.5 0 0 0 2.5 2.5z"/></svg>
+                            {selected.streak || 0}
+                          </PopoverTrigger>
+                          <PopoverContent align="end" className="w-64 rounded-2xl border border-ink/10 bg-white p-4 shadow-xl">
+                            <p className="font-display text-balance text-sm font-bold text-ink">
+                              {selected.streak ? `🔥 ${selected.streak} jour${selected.streak > 1 ? "s" : ""} d'affilée` : "Pas encore de série"}
+                            </p>
+                            <p className="mt-1 text-xs leading-relaxed text-ink/60">
+                              {selected.streak
+                                ? "Termine un défi aujourd'hui pour continuer ta série."
+                                : "Termine un défi aujourd'hui pour démarrer ta série !"}
+                            </p>
+                          </PopoverContent>
+                        </Popover>
                       </div>
                     </div>
 

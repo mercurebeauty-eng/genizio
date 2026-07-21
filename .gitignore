@@ -38,3 +38,13 @@ supabase/.temp/
 *.njsproj
 *.sln
 *.sw?
+
+# Agent workspace logs (ephemeral - keep only AGENTS.md)
+.agents/auditor_*/
+.agents/challenger_*/
+.agents/reviewer_*/
+.agents/worker_*/
+.agents/sentinel/
+.agents/orchestrator/
+.agents/teamwork_preview_explorer_*/
+.agents/ORIGINAL_REQUEST.md

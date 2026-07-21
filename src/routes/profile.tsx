@@ -1,16 +1,18 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
+import { useServerFn } from "@tanstack/react-start";
 import { supabase } from "@/integrations/supabase/client";
 import { useSession } from "@/hooks/use-session";
 import { AppHeader } from "@/components/AppHeader";
 import { AppTabBar } from "@/components/AppTabBar";
 import { toast } from "sonner";
-import { User, Phone, ArrowLeft, Check, Loader2, Users, Calendar, Shield } from "lucide-react";
+import { User, Phone, ArrowLeft, Check, Loader2, Users, Calendar, Shield, LogOut, Eye, LayoutDashboard, ShoppingBag } from "lucide-react";
 import { ConsentLedger } from "@/components/settings/ConsentLedger";
 import { ExportDataButton } from "@/components/settings/ExportDataButton";
 import { DeleteAccountDialog } from "@/components/settings/DeleteAccountDialog";
 import { COUNTRIES } from "@/lib/countries";
 import { GenizioLoader } from "@/components/GenizioLoader";
+import { checkAdminStatus } from "@/lib/admin.functions";
 
 export const Route = createFileRoute("/profile")({
   component: ProfilePage,
@@ -30,10 +32,19 @@ function ProfilePage() {
   const [mentorCount, setMentorCount] = useState(0);
   const [artifactsCount, setArtifactsCount] = useState(0);
   const [consentEventsCount, setConsentEventsCount] = useState(0);
+  const [isSupervisor, setIsSupervisor] = useState(false);
+  const [isAdmin, setIsAdmin] = useState(false);
+  const checkAdmin = useServerFn(checkAdminStatus);
 
   useEffect(() => {
     if (!loading && !session) navigate({ to: "/auth", replace: true });
     if (session) {
+      checkAdmin().then(({ isAdmin }) => setIsAdmin(isAdmin));
+      supabase
+        .from("supervisors")
+        .select("id", { count: "exact", head: true })
+        .eq("supervisor_user_id", session.user.id)
+        .then(({ count }) => setIsSupervisor((count ?? 0) > 0));
       // Load saved phone
       const savedPhone = session.user.user_metadata?.phone;
       if (savedPhone) {
@@ -66,6 +77,11 @@ function ProfilePage() {
     }
   }, [session, loading, navigate]);
 
+  const handleSignOut = async () => {
+    await supabase.auth.signOut();
+    navigate({ to: "/auth", replace: true });
+  };
+
   const handleSavePhone = async (e: React.FormEvent) => {
     e.preventDefault();
     if (phoneNumber.length < selectedCountry.limit - 2) {
@@ -96,13 +112,11 @@ function ProfilePage() {
   }
 
   return (
-    <div className="min-h-dvh bg-gradient-to-b from-surface via-surface to-brand/5 p-6 font-sans text-ink pb-24 ">
-      <AppHeader hideTabBarLinks />
+    <div className="min-h-dvh bg-gradient-to-b from-surface via-surface to-brand/5 font-sans text-ink pb-24 ">
+      <AppHeader />
       <AppTabBar profileId="" />
 
-      <div className="pt-6"></div>
-
-      <div className="mx-auto max-w-4xl grid gap-8 ">
+      <div className="mx-auto max-w-4xl grid gap-8 px-6 pt-6 ">
         {/* Left Column: Summary Card */}
         <div className="md:col-span-1 space-y-6">
           <div className="rounded-3xl border border-ink/10 bg-white p-6 shadow-xl text-center">
@@ -133,7 +147,64 @@ function ProfilePage() {
                 <span className="font-bold text-xs">{new Date(session.user.created_at).toLocaleDateString()}</span>
               </div>
             </div>
+            <div className="mt-6 border-t border-ink/5 pt-4 space-y-2">
+              <Link
+                to="/profiles/manage"
+                className="press-white flex w-full items-center justify-center gap-2 rounded-xl border border-ink/10 bg-white px-4 py-2.5 text-xs font-bold text-ink"
+              >
+                <Users className="size-3.5 text-brand" />
+                Gérer mes profils
+              </Link>
+              <button
+                onClick={handleSignOut}
+                className="flex w-full items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-xs font-bold text-red-600 hover:bg-red-50 cursor-pointer"
+              >
+                <LogOut className="size-3.5" />
+                Se déconnecter
+              </button>
+            </div>
           </div>
+
+          {(isSupervisor || isAdmin) && (
+            <div className="rounded-3xl border border-ink/10 bg-white p-6 shadow-xl">
+              <h3 className="font-display text-balance text-base font-bold flex items-center gap-2 mb-3">
+                <Eye className="size-4 text-brand" />
+                Accompagnant & Pro
+              </h3>
+              <div className="space-y-1">
+                {isSupervisor && (
+                  <Link
+                    to="/supervisor"
+                    className="flex items-center gap-2.5 rounded-xl px-3 py-2.5 text-sm font-bold text-brand hover:bg-brand/5"
+                  >
+                    <Eye className="size-4" /> Superviseur
+                  </Link>
+                )}
+                {isAdmin && (
+                  <>
+                    <Link
+                      to="/admin"
+                      className="flex items-center gap-2.5 rounded-xl px-3 py-2.5 text-sm font-bold text-purple-600 hover:bg-purple-50"
+                    >
+                      <LayoutDashboard className="size-4" /> Admin Dashboard
+                    </Link>
+                    <Link
+                      to="/admin/products"
+                      className="flex items-center gap-2.5 rounded-xl px-3 py-2.5 text-sm font-bold text-purple-600 hover:bg-purple-50"
+                    >
+                      <ShoppingBag className="size-4" /> Admin Kits
+                    </Link>
+                    <Link
+                      to="/admin/supervisors"
+                      className="flex items-center gap-2.5 rounded-xl px-3 py-2.5 text-sm font-bold text-purple-600 hover:bg-purple-50"
+                    >
+                      <Users className="size-4" /> Admin Superviseurs
+                    </Link>
+                  </>
+                )}
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Right Column: Settings Sections */}

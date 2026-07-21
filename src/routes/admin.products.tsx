@@ -356,20 +356,20 @@ function AdminProductsPage() {
                   </div>
                 )}
 
-                <div ref={formRef} className="mb-8 rounded-3xl border border-ink/10 bg-sky p-6 shadow-xl">
+                <div ref={formRef} className="mb-8 rounded-3xl border border-ink/10 bg-sky p-4 sm:p-6 shadow-xl max-w-full overflow-hidden">
                   <h2 className="mb-4 font-display text-balance text-lg font-bold">Ajouter un produit</h2>
-                  <div className="grid gap-3 ">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     <input
                       value={draft.name}
                       onChange={(e) => setDraft({ ...draft, name: e.target.value })}
                       placeholder="Nom (ex: Lot de carton)"
-                      className="rounded-xl border border-ink/10 px-4 py-2.5 text-sm font-bold outline-none focus:ring-2 focus:ring-brand shadow-sm sm:col-span-2"
+                      className="rounded-xl border border-ink/10 px-4 py-2.5 text-sm font-bold outline-none focus:ring-2 focus:ring-brand shadow-sm sm:col-span-2 w-full"
                     />
                     <input
                       value={draft.description}
                       onChange={(e) => setDraft({ ...draft, description: e.target.value })}
                       placeholder="Description (optionnel)"
-                      className="rounded-xl border border-ink/10 px-4 py-2.5 text-sm outline-none focus:ring-2 focus:ring-brand shadow-sm sm:col-span-2"
+                      className="rounded-xl border border-ink/10 px-4 py-2.5 text-sm outline-none focus:ring-2 focus:ring-brand shadow-sm sm:col-span-2 w-full"
                     />
                     <input
                       type="number"
@@ -379,7 +379,7 @@ function AdminProductsPage() {
                         setDraft({ ...draft, price_xof: e.target.value === "" ? "" : Number(e.target.value) })
                       }
                       placeholder="Prix (FCFA)"
-                      className="rounded-xl border border-ink/10 px-4 py-2.5 text-sm font-bold outline-none focus:ring-2 focus:ring-brand shadow-sm"
+                      className="rounded-xl border border-ink/10 px-4 py-2.5 text-sm font-bold outline-none focus:ring-2 focus:ring-brand shadow-sm w-full"
                     />
                     <input
                       type="number"
@@ -389,19 +389,19 @@ function AdminProductsPage() {
                         setDraft({ ...draft, stock_quantity: e.target.value === "" ? "" : Number(e.target.value) })
                       }
                       placeholder="Stock (vide = illimité)"
-                      className="rounded-xl border border-ink/10 px-4 py-2.5 text-sm font-bold outline-none focus:ring-2 focus:ring-brand shadow-sm"
+                      className="rounded-xl border border-ink/10 px-4 py-2.5 text-sm font-bold outline-none focus:ring-2 focus:ring-brand shadow-sm w-full"
                     />
                     <input
                       value={draft.material_tags}
                       onChange={(e) => setDraft({ ...draft, material_tags: e.target.value })}
                       placeholder="Tags matériaux, séparés par des virgules (ex: carton, cutter)"
-                      className="rounded-xl border border-ink/10 px-4 py-2.5 text-sm outline-none focus:ring-2 focus:ring-brand shadow-sm sm:col-span-2"
+                      className="rounded-xl border border-ink/10 px-4 py-2.5 text-sm outline-none focus:ring-2 focus:ring-brand shadow-sm sm:col-span-2 w-full"
                     />
                   </div>
                   <button
                     onClick={handleCreate}
                     disabled={saving}
-                    className="press-brand mt-4 flex items-center gap-2 rounded-2xl bg-brand px-5 py-2.5 text-sm font-bold text-white disabled:opacity-50"
+                    className="press-brand mt-4 flex items-center justify-center gap-2 rounded-2xl bg-brand px-5 py-2.5 text-sm font-bold text-white disabled:opacity-50 w-full sm:w-auto"
                   >
                     {saving ? <Loader2 className="size-4 animate-spin" /> : <Plus className="size-4" />}
                     Ajouter au catalogue
@@ -417,7 +417,7 @@ function AdminProductsPage() {
                     {products.map((p) => (
                       <div
                         key={p.id}
-                        className={`flex items-center justify-between gap-4 rounded-2xl border border-ink/10 bg-white p-4 shadow-sm ${!p.is_active ? "opacity-50" : ""}`}
+                        className={`flex flex-col sm:flex-row sm:items-center justify-between gap-3 rounded-2xl border border-ink/10 bg-white p-4 shadow-sm ${!p.is_active ? "opacity-50" : ""}`}
                       >
                         <div className="min-w-0">
                           <p className="font-bold text-ink">{p.name}</p>

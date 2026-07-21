@@ -28,39 +28,39 @@ import { TALENT_KEY_LABELS } from "@/lib/talent-buckets";
 export const INTERESTS_BY_TALENT: Record<string, { label: string; tags: readonly string[] }> = {
   spatial: {
     label: TALENT_KEY_LABELS.spatial,
-    tags: ["Construction & Lego", "Puzzles & Cartes", "Orientation & Exploration", "Robotique & Programmation"],
+    tags: ["Démonte pour comprendre", "Remarque les petits détails visuels", "Aime assembler et construire", "S'oriente facilement dans l'espace"],
   },
   corporelle: {
     label: TALENT_KEY_LABELS.corporelle,
-    tags: ["Sport & Mouvement", "Danse", "Théâtre & Mime"],
+    tags: ["A besoin de bouger pour réfléchir", "Touche tout ce qu'il voit", "Apprend en imitant les gestes"],
   },
   sociale: {
     label: TALENT_KEY_LABELS.sociale,
-    tags: ["Aime jouer en groupe", "Leadership naturel", "Aide les autres", "Sens de la négociation"],
+    tags: ["Joue souvent le médiateur", "Comprend vite les règles du groupe", "Aime organiser les autres"],
   },
   entrepreneuriale: {
     label: TALENT_KEY_LABELS.entrepreneuriale,
-    tags: ["A des idées de projets", "Aime vendre / échanger", "Aime organiser des choses", "Curieux du commerce"],
+    tags: ["Invente ses propres règles de jeu", "Négocie toujours (même le coucher)", "Cherche à optimiser ou marchander"],
   },
   creative: {
     label: TALENT_KEY_LABELS.creative,
-    tags: ["Dessin & Peinture", "Musique", "Invente des histoires"],
+    tags: ["Détourne les objets de leur usage", "A un imaginaire débordant", "Préfère inventer que suivre la notice"],
   },
   artisanale: {
     label: TALENT_KEY_LABELS.artisanale,
-    tags: ["Cuisine", "Couture & Tissage", "Répare des objets"],
+    tags: ["Préfère faire de ses propres mains", "Aime les résultats concrets et finis", "S'applique sur les tâches minutieuses"],
   },
   emotionnelle: {
     label: TALENT_KEY_LABELS.emotionnelle,
-    tags: ["Empathique", "Comprend ses émotions", "Calme sous pression"],
+    tags: ["Ressent intensément l'humeur ambiante", "A besoin de solitude pour se recharger", "Très sensible à l'injustice"],
   },
   logico_mathematique: {
     label: TALENT_KEY_LABELS.logico_mathematique,
-    tags: ["Aime les chiffres", "Résout des énigmes", "Sciences & Expériences", "Jeux de stratégie", "Nature & Animaux"],
+    tags: ["Pose sans arrêt la question 'Pourquoi ?'", "Aime classer, trier et mesurer", "Cherche la logique cachée des choses", "Fasciné par le lien cause/effet"],
   },
   linguistique: {
     label: TALENT_KEY_LABELS.linguistique,
-    tags: ["Aime parler & raconter", "Prise de parole en public", "Aime lire", "Écriture & Poésie"],
+    tags: ["Retient très facilement les histoires", "Joue avec les mots et les sons", "Argumente pour défendre ses idées"],
   },
 };
 

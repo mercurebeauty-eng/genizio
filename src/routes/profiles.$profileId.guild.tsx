@@ -89,7 +89,7 @@ function GuildPage() {
 
   return (
     <div className="min-h-dvh bg-surface pb-24 text-ink ">
-      <AppHeader hideTabBarLinks />
+      <AppHeader />
       <main className="mx-auto max-w-6xl px-6 py-10 md:flex ">
         <AppTabBar profileId={profileId} />
         <div className="min-w-0 flex-1 space-y-6 animate-in fade-in duration-500">
@@ -175,6 +175,13 @@ function GuildPage() {
               </button>
             </>
           )}
+
+          <Link
+            to="/feed"
+            className="press-white flex items-center justify-center gap-2 rounded-2xl border border-ink/10 bg-white py-3 text-sm font-bold text-brand shadow-sm"
+          >
+            Voir le Mur Public →
+          </Link>
         </div>
       </main>
     </div>

@@ -31,6 +31,20 @@ export function ProfileDialog({
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  const [selectedTalentKeys, setSelectedTalentKeys] = useState<string[]>(() => {
+    const activeKeys: string[] = [];
+    for (const [key, group] of Object.entries(INTERESTS_BY_TALENT)) {
+      if (group.tags.some((tag) => draft.interests.includes(tag))) {
+        activeKeys.push(key);
+      }
+    }
+    return activeKeys;
+  });
+
+  const [step, setStep] = useState<"universes" | "tags">(
+    initial && initial.interests.length > 0 ? "tags" : "universes"
+  );
+
   const toggle = (i: string) =>
     setDraft((d) => ({
       ...d,
@@ -173,38 +187,127 @@ export function ProfileDialog({
 
           <div>
             <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-ink/60">
-              Centres d'intérêt
+              Leviers & Moteurs d'engagement
             </label>
             <p className="mb-3 text-[11px] text-ink/60 leading-relaxed">
-              Organisés par type de talent — ça aide Naya à proposer des défis mieux ciblés dès le départ.
+              Sélectionnez d'abord les univers dominants de votre enfant, puis affinez ses postures d'apprentissage.
             </p>
-            <div className="space-y-4">
-              {Object.entries(INTERESTS_BY_TALENT).map(([key, group]) => (
-                <div key={key}>
-                  <p className="mb-1.5 text-[10px] font-extrabold uppercase tracking-widest text-brand">
-                    {group.label}
-                  </p>
-                  <div className="flex flex-wrap gap-2">
-                    {group.tags.map((i) => {
-                      const on = draft.interests.includes(i);
-                      return (
-                        <button
-                          key={i}
-                          type="button"
-                          onClick={() => toggle(i)}
-                          className={
-                            "rounded-full px-3 py-1 text-xs font-bold border-2 transition-all " +
-                            (on ? "bg-brand border-ink text-white" : "bg-white border-ink/20 text-ink/70 hover:border-ink")
-                          }
-                        >
-                          {i}
-                        </button>
-                      );
-                    })}
-                  </div>
-                </div>
-              ))}
+            
+            {/* Navigation par étapes */}
+            <div className="mb-4 flex items-center justify-between rounded-xl bg-ink/5 p-1 text-xs font-bold">
+              <button
+                type="button"
+                onClick={() => setStep("universes")}
+                className={`flex-1 rounded-lg py-1.5 transition-all ${
+                  step === "universes" ? "bg-white text-ink shadow-sm" : "text-ink/60 hover:text-ink"
+                }`}
+              >
+                1. Univers ({selectedTalentKeys.length})
+              </button>
+              <button
+                type="button"
+                onClick={() => setStep("tags")}
+                className={`flex-1 rounded-lg py-1.5 transition-all ${
+                  step === "tags" ? "bg-white text-ink shadow-sm" : "text-ink/60 hover:text-ink"
+                }`}
+              >
+                2. Comportements ({draft.interests.length})
+              </button>
             </div>
+
+            {step === "universes" ? (
+              <div className="space-y-3">
+                <p className="text-[11px] font-medium text-ink/70">
+                  Choisissez les univers dans lesquels votre enfant s'épanouit le plus :
+                </p>
+                <div className="grid grid-cols-2 gap-2">
+                  {Object.entries(INTERESTS_BY_TALENT).map(([key, group]) => {
+                    const selected = selectedTalentKeys.includes(key);
+                    return (
+                      <button
+                        key={key}
+                        type="button"
+                        onClick={() => {
+                          if (selected) {
+                            setSelectedTalentKeys((prev) => prev.filter((k) => k !== key));
+                            // Purge tags from deselected universe
+                            setDraft((d) => ({
+                              ...d,
+                              interests: d.interests.filter((tag) => !group.tags.includes(tag)),
+                            }));
+                          } else {
+                            setSelectedTalentKeys((prev) => [...prev, key]);
+                          }
+                        }}
+                        className={
+                          "flex flex-col items-start rounded-2xl p-3 text-left border-2 transition-all " +
+                          (selected
+                            ? "bg-brand/10 border-brand text-brand"
+                            : "bg-white border-ink/10 text-ink/70 hover:border-ink/30")
+                        }
+                      >
+                        <span className="text-xs font-extrabold">{group.label}</span>
+                        <span className="mt-1 text-[10px] opacity-75">{group.tags.length} postures</span>
+                      </button>
+                    );
+                  })}
+                </div>
+                {selectedTalentKeys.length > 0 && (
+                  <button
+                    type="button"
+                    onClick={() => setStep("tags")}
+                    className="mt-3 w-full rounded-xl bg-ink p-2.5 text-center text-xs font-bold text-white transition-all hover:bg-ink/90"
+                  >
+                    Suivant : Affiner les comportements ({selectedTalentKeys.length} univers) →
+                  </button>
+                )}
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {selectedTalentKeys.length === 0 ? (
+                  <div className="rounded-xl border border-dashed border-ink/20 p-4 text-center">
+                    <p className="text-xs text-ink/60">Aucun univers sélectionné à l'étape 1.</p>
+                    <button
+                      type="button"
+                      onClick={() => setStep("universes")}
+                      className="mt-2 text-xs font-bold text-brand hover:underline"
+                    >
+                      ← Sélectionner des univers
+                    </button>
+                  </div>
+                ) : (
+                  Object.entries(INTERESTS_BY_TALENT)
+                    .filter(([key]) => selectedTalentKeys.includes(key))
+                    .map(([key, group]) => (
+                      <div key={key} className="rounded-2xl border border-ink/10 p-3 bg-surface/50">
+                        <p className="mb-2 text-[10px] font-extrabold uppercase tracking-widest text-brand">
+                          {group.label}
+                        </p>
+                        <div className="flex flex-wrap gap-1.5">
+                          {group.tags.map((i) => {
+                            const on = draft.interests.includes(i);
+                            return (
+                              <button
+                                key={i}
+                                type="button"
+                                onClick={() => toggle(i)}
+                                className={
+                                  "rounded-full px-3 py-1 text-xs font-bold border-2 transition-all " +
+                                  (on
+                                    ? "bg-brand border-ink text-white"
+                                    : "bg-white border-ink/20 text-ink/70 hover:border-ink")
+                                }
+                              >
+                                {i}
+                              </button>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    ))
+                )}
+              </div>
+            )}
           </div>
 
           {error && <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">{error}</p>}

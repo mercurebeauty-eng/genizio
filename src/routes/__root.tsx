@@ -4,6 +4,7 @@ import {
   Link,
   createRootRouteWithContext,
   useRouter,
+  useRouterState,
   HeadContent,
   Scripts,
 } from "@tanstack/react-router";
@@ -145,6 +146,26 @@ function RootShell({ children }: { children: ReactNode }) {
 
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
+  const pathname = useRouterState({ select: (s) => s.location.pathname });
+  // Admin OS and the Superviseur dashboard are desktop-oriented (max-w-4xl to
+  // max-w-6xl multi-column layouts, built for a small internal audience, not
+  // the parent-facing phone experience). Squeezing them into the 414px phone
+  // shell below clips their content — the shell's overflow-hidden was cutting
+  // off the left/right edges of every wide row. These routes render full-bleed
+  // instead, bypassing the shell entirely.
+  const isWideAdminRoute = pathname.startsWith("/admin") || pathname === "/supervisor";
+
+  if (isWideAdminRoute) {
+    return (
+      <QueryClientProvider client={queryClient}>
+        <div className="min-h-dvh bg-[radial-gradient(120%_90%_at_15%_0%,#f4eee1,#e7ddca)] font-body">
+          <Outlet />
+        </div>
+        <Toaster />
+        <ConfirmDialogHost />
+      </QueryClientProvider>
+    );
+  }
 
   return (
     <QueryClientProvider client={queryClient}>
