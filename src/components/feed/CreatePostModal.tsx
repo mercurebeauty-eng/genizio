@@ -196,12 +196,12 @@ export function CreatePostModal({
     <Dialog open={open} onOpenChange={handleOpenChange}>
       {isOpen === undefined && (
         <DialogTrigger asChild>
-          <button className="flex h-10 w-10 items-center justify-center rounded-xl border-[3px] border-ink bg-brand text-white shadow-brutal-sm hover:-translate-y-0.5 active:translate-y-0 active:shadow-none transition-all">
+          <button className="press-brand flex h-10 w-10 items-center justify-center rounded-xl bg-brand text-white">
             <Plus className="size-6" />
           </button>
         </DialogTrigger>
       )}
-      <DialogContent className="sm:max-w-md rounded-3xl p-6 border-[3px] border-ink shadow-brutal">
+      <DialogContent className="sm:max-w-md rounded-3xl p-6 border border-ink/10 shadow-xl">
         <DialogHeader className="mb-4">
           <DialogTitle className="text-xl font-black text-ink">Publier dans le Cerveau Collectif</DialogTitle>
         </DialogHeader>
@@ -212,7 +212,7 @@ export function CreatePostModal({
             <label className="text-xs font-bold text-ink/60 uppercase tracking-wider">Mission liée</label>
             <div className="relative">
               <select
-                className="w-full appearance-none rounded-xl border-[3px] border-ink bg-white px-4 py-3 text-sm font-semibold text-ink outline-none focus:ring-2 focus:ring-brand transition-all cursor-pointer shadow-brutal-sm"
+                className="w-full appearance-none rounded-xl border border-ink/10 bg-white px-4 py-3 text-sm font-semibold text-ink outline-none focus:ring-2 focus:ring-brand transition-all cursor-pointer shadow-sm"
                 value={selectedChallengeId}
                 onChange={(e) => setSelectedChallengeId(e.target.value)}
               >
@@ -231,7 +231,7 @@ export function CreatePostModal({
 
           {/* Image Upload Area */}
           {!preview ? (
-            <label className="flex aspect-square w-full cursor-pointer flex-col items-center justify-center gap-4 rounded-2xl border-[3px] border-dashed border-ink bg-white/50 shadow-brutal-sm hover:-translate-y-0.5 transition-all">
+            <label className="flex aspect-square w-full cursor-pointer flex-col items-center justify-center gap-4 rounded-2xl border-2 border-dashed border-ink/20 bg-white/50 shadow-sm hover:-translate-y-0.5 transition-all">
               <div className="rounded-full border-2 border-ink bg-brand/10 p-4">
                 <ImageIcon className="size-8 text-brand" />
               </div>
@@ -242,7 +242,7 @@ export function CreatePostModal({
               <input type="file" accept="image/*" className="hidden" onChange={handleImageChange} />
             </label>
           ) : (
-            <div className="relative aspect-square w-full overflow-hidden rounded-2xl border-[3px] border-ink bg-surface">
+            <div className="relative aspect-square w-full overflow-hidden rounded-2xl border border-ink/10 bg-surface">
               <img src={preview} alt="Aperçu" className="h-full w-full object-contain" />
               <button
                 onClick={() => setPreview(null)}
@@ -256,7 +256,7 @@ export function CreatePostModal({
           <div>
             <textarea
               placeholder="Racontez l'exploit de votre enfant à la communauté..."
-              className="w-full min-h-[100px] resize-none rounded-xl border-[3px] border-ink bg-white p-4 text-sm font-medium text-ink outline-none focus:ring-2 focus:ring-brand transition-all placeholder:text-ink/60 shadow-brutal-sm"
+              className="w-full min-h-[100px] resize-none rounded-xl border border-ink/10 bg-white p-4 text-sm font-medium text-ink outline-none focus:ring-2 focus:ring-brand transition-all placeholder:text-ink/60 shadow-sm"
               value={caption}
               onChange={(e) => setCaption(e.target.value)}
             />
@@ -265,7 +265,7 @@ export function CreatePostModal({
           <button
             onClick={handlePost}
             disabled={loading || !preview || !selectedChallengeId}
-            className="w-full rounded-2xl border-[3px] border-ink bg-brand py-4 text-base font-black text-white shadow-brutal hover:-translate-y-0.5 active:translate-y-0 active:shadow-none transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+            className="press-brand w-full rounded-2xl bg-brand py-4 text-base font-black text-white disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
           >
             {loading ? (
               <>

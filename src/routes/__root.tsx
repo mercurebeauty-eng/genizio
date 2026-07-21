@@ -19,7 +19,7 @@ import { PwaInstallPrompt } from "../components/PwaInstallPrompt";
 
 function NotFoundComponent() {
   return (
-    <div className="flex min-h-screen items-center justify-center bg-background px-4">
+    <div className="flex min-h-dvh items-center justify-center bg-background px-4">
       <div className="max-w-md text-center">
         <h1 className="text-7xl font-bold text-foreground">404</h1>
         <h2 className="mt-4 text-xl font-semibold text-foreground">Page not found</h2>
@@ -47,7 +47,7 @@ function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
   }, [error]);
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-background px-4">
+    <div className="flex min-h-dvh items-center justify-center bg-background px-4">
       <div className="max-w-md text-center">
         <h1 className="text-xl font-semibold tracking-tight text-foreground">
           This page didn't load
@@ -147,7 +147,20 @@ function RootComponent() {
 
   return (
     <QueryClientProvider client={queryClient}>
-      <Outlet />
+      <div className="min-h-dvh bg-[radial-gradient(120%_90%_at_15%_0%,#f4eee1,#e7ddca)] flex justify-center items-center py-0 md:py-8 px-0 md:px-4 relative overflow-x-hidden font-body">
+        {/* Ambient background glowing blur circles */}
+        <div className="hidden md:block absolute -top-24 -left-20 size-[520px] bg-brand-glow/20 blur-3xl pointer-events-none rounded-full" />
+        <div className="hidden md:block absolute -bottom-32 -right-24 size-[560px] bg-sky/20 blur-3xl pointer-events-none rounded-full" />
+        <div className="hidden md:block absolute bottom-10 -left-20 size-[360px] bg-leaf/20 blur-3xl pointer-events-none rounded-full" />
+
+        {/* Device Shell Frame */}
+        <div className="w-full max-w-[414px] min-h-dvh md:min-h-[868px] md:h-[868px] bg-surface md:bg-[#15130f] md:rounded-[56px] md:p-2.5 md:shadow-2xl md:ring-1 md:ring-black/20 relative flex flex-col overflow-hidden">
+          {/* Inner Mobile Screen Content */}
+          <div className="w-full h-full bg-surface md:rounded-[44px] overflow-y-auto flex flex-col relative scrollbar-none">
+            <Outlet />
+          </div>
+        </div>
+      </div>
       <Toaster />
       <WhatsAppFAB />
       <ConfirmDialogHost />

@@ -89,27 +89,27 @@ function ProfilePage() {
 
   if (loading || !session) {
     return (
-      <div className="grid min-h-screen place-items-center bg-surface">
+      <div className="grid min-h-dvh place-items-center bg-surface">
         <GenizioLoader label="Chargement…" />
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-surface via-surface to-brand/5 p-6 font-sans text-ink pb-24 md:pb-6">
+    <div className="min-h-dvh bg-gradient-to-b from-surface via-surface to-brand/5 p-6 font-sans text-ink pb-24 ">
       <AppHeader hideTabBarLinks />
       <AppTabBar profileId="" />
 
       <div className="pt-6"></div>
 
-      <div className="mx-auto max-w-4xl grid gap-8 md:grid-cols-3">
+      <div className="mx-auto max-w-4xl grid gap-8 ">
         {/* Left Column: Summary Card */}
         <div className="md:col-span-1 space-y-6">
-          <div className="rounded-3xl border-[3px] border-ink bg-white p-6 shadow-brutal text-center">
+          <div className="rounded-3xl border border-ink/10 bg-white p-6 shadow-xl text-center">
             <div className="mx-auto grid size-16 place-items-center rounded-2xl border-2 border-ink bg-brand/10 text-brand text-2xl font-bold">
               <User className="size-8" />
             </div>
-            <h2 className="mt-4 font-display text-xl font-bold truncate">
+            <h2 className="mt-4 font-display text-balance text-xl font-bold truncate">
               {session.user.user_metadata?.full_name || session.user.user_metadata?.name || session.user.email}
             </h2>
             <p className="text-xs text-ink/60 font-semibold mt-1">Compte Parent</p>
@@ -139,8 +139,8 @@ function ProfilePage() {
         {/* Right Column: Settings Sections */}
         <div className="md:col-span-2 space-y-6">
           {/* Phone Settings */}
-          <div className="rounded-3xl border-[3px] border-ink bg-white p-6 shadow-brutal md:p-8">
-            <h3 className="font-display text-lg font-bold flex items-center gap-2 mb-2">
+          <div className="rounded-3xl border border-ink/10 bg-white p-6 shadow-xl md:p-8">
+            <h3 className="font-display text-balance text-lg font-bold flex items-center gap-2 mb-2">
               <Phone className="size-5 text-brand" />
               Numéro de téléphone
             </h3>
@@ -158,7 +158,7 @@ function ProfilePage() {
                       setPhoneNumber("");
                     }
                   }}
-                  className="rounded-xl border-[3px] border-ink bg-white px-3 py-3 text-sm font-bold outline-none focus:ring-2 focus:ring-brand cursor-pointer shadow-brutal-sm"
+                  className="rounded-xl border border-ink/10 bg-white px-3 py-3 text-sm font-bold outline-none focus:ring-2 focus:ring-brand cursor-pointer shadow-sm"
                 >
                   {COUNTRIES.map((c) => (
                     <option key={c.code} value={c.code}>
@@ -179,7 +179,7 @@ function ProfilePage() {
                       setPhoneNumber(val);
                     }}
                     placeholder="Numéro sans l'indicatif"
-                    className="w-full rounded-xl border-[3px] border-ink px-4 py-3 text-sm font-bold outline-none focus:ring-2 focus:ring-brand shadow-brutal-sm"
+                    className="w-full rounded-xl border border-ink/10 px-4 py-3 text-sm font-bold outline-none focus:ring-2 focus:ring-brand shadow-sm"
                     required
                   />
                 </div>
@@ -191,7 +191,7 @@ function ProfilePage() {
               <button
                 type="submit"
                 disabled={savingPhone || !phoneNumber}
-                className="rounded-xl border-[3px] border-ink bg-brand px-6 py-2.5 text-sm font-bold text-white shadow-brutal hover:-translate-y-0.5 active:translate-y-0 active:shadow-none transition-all disabled:opacity-50 flex items-center gap-2"
+                className="press-brand rounded-xl bg-brand px-6 py-2.5 text-sm font-bold text-white disabled:opacity-50 flex items-center gap-2"
               >
                 {savingPhone ? <Loader2 className="size-4 animate-spin" /> : <Check className="size-4" />}
                 <span>Enregistrer le numéro</span>
@@ -200,9 +200,9 @@ function ProfilePage() {
           </div>
 
           {/* Privacy & Consent Settings */}
-          <div className="rounded-3xl border-[3px] border-ink bg-white p-6 shadow-brutal md:p-8 space-y-6 animate-in slide-in-from-bottom-4 duration-700">
+          <div className="rounded-3xl border border-ink/10 bg-white p-6 shadow-xl md:p-8 space-y-6 animate-in slide-in-from-bottom-4 duration-700">
             <div>
-              <h3 className="font-display text-lg font-bold flex items-center gap-2 mb-2">
+              <h3 className="font-display text-balance text-lg font-bold flex items-center gap-2 mb-2">
                 <Shield className="size-5 text-brand" />
                 Confidentialité & Consentement
               </h3>

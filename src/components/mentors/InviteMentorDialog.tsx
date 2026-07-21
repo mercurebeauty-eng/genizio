@@ -111,15 +111,15 @@ export function InviteMentorDialog({ childId, childName, customTrigger }: { chil
     }}>
       <DialogTrigger asChild>
         {customTrigger ? customTrigger : (
-          <button className="flex items-center justify-center gap-2 rounded-2xl border-[3px] border-ink bg-brand px-5 py-3 text-sm font-bold text-white shadow-brutal hover:-translate-y-0.5 active:translate-y-0 active:shadow-none transition-all">
+          <button className="press-brand flex items-center justify-center gap-2 rounded-2xl bg-brand px-5 py-3 text-sm font-bold text-white">
             <Plus className="size-4" />
             Inviter un mentor
           </button>
         )}
       </DialogTrigger>
-      <DialogContent className="sm:max-w-md rounded-3xl p-6 border-[3px] border-ink shadow-brutal">
+      <DialogContent className="sm:max-w-md rounded-3xl p-6 border border-ink/10 shadow-xl">
         <DialogHeader>
-          <DialogTitle className="font-display text-2xl font-extrabold text-ink">
+          <DialogTitle className="font-display text-balance text-2xl font-extrabold text-ink">
             Inviter un mentor
           </DialogTitle>
           <p className="text-sm text-ink/60">
@@ -136,7 +136,7 @@ export function InviteMentorDialog({ childId, childName, customTrigger }: { chil
                 value={mentorName}
                 onChange={(e) => setMentorName(e.target.value)}
                 placeholder="Ex: M. Dupont (Prof de maths)"
-                className="w-full rounded-2xl border-[3px] border-ink px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-brand shadow-brutal-sm"
+                className="w-full rounded-2xl border border-ink/10 px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-brand shadow-sm"
               />
             </div>
 
@@ -160,7 +160,7 @@ export function InviteMentorDialog({ childId, childName, customTrigger }: { chil
               </div>
             </div>
 
-            <div className="space-y-4 rounded-2xl border-[3px] border-ink bg-white p-4 shadow-brutal-sm">
+            <div className="space-y-4 rounded-2xl border border-ink/10 bg-white p-4 shadow-sm">
               <h4 className="text-sm font-bold text-ink mb-2">Permissions d'accès</h4>
               
               <div className="flex items-center justify-between">
@@ -214,14 +214,14 @@ export function InviteMentorDialog({ childId, childName, customTrigger }: { chil
             <button
               onClick={handleInvite}
               disabled={loading || !mentorName.trim()}
-              className="w-full rounded-2xl border-[3px] border-ink bg-brand py-3.5 text-sm font-bold text-white shadow-brutal hover:-translate-y-0.5 active:translate-y-0 active:shadow-none transition-all disabled:opacity-50 flex items-center justify-center gap-2"
+              className="press-brand w-full rounded-2xl bg-brand py-3.5 text-sm font-bold text-white disabled:opacity-50 flex items-center justify-center gap-2"
             >
               {loading ? <Loader2 className="size-5 animate-spin" /> : "Générer le lien d'accès"}
             </button>
           </div>
         ) : (
           <div className="space-y-6 py-6 text-center animate-in zoom-in-95">
-            <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full border-[3px] border-ink bg-leaf text-white shadow-brutal-sm mb-4">
+            <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full border border-white/20 bg-leaf text-white shadow-md mb-4">
               <Check className="size-8" />
             </div>
             <h3 className="text-xl font-bold text-ink">Accès créé !</h3>
@@ -229,7 +229,7 @@ export function InviteMentorDialog({ childId, childName, customTrigger }: { chil
               Transmettez ce lien unique à <strong>{mentorName}</strong>. L'accès peut être révoqué à tout moment.
             </p>
 
-            <div className="flex items-center gap-2 rounded-xl border-[3px] border-ink bg-sky p-2">
+            <div className="flex items-center gap-2 rounded-xl border border-ink/10 bg-sky p-2">
               <input
                 type="text"
                 readOnly
@@ -238,7 +238,7 @@ export function InviteMentorDialog({ childId, childName, customTrigger }: { chil
               />
               <button
                 onClick={copyLink}
-                className="flex items-center justify-center rounded-lg border-2 border-ink bg-white p-2.5 text-brand shadow-brutal-sm hover:bg-brand hover:text-white transition-colors"
+                className="flex items-center justify-center rounded-lg border border-ink/10 bg-white p-2.5 text-brand shadow-sm hover:bg-brand hover:text-white transition-colors"
               >
                 {copied ? <Check className="size-4" /> : <LinkIcon className="size-4" />}
               </button>

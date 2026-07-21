@@ -18,7 +18,7 @@ export function DifficultyBadge({
 
   return (
     <span
-      className={`inline-flex items-center gap-1 rounded-full border-2 px-2.5 py-1 text-[10px] font-black uppercase tracking-wider shadow-brutal-sm ${meta.className} ${className}`}
+      className={`inline-flex items-center gap-1 rounded-full border px-2.5 py-1 text-[10px] font-black uppercase tracking-wider shadow-sm ${meta.className} ${className}`}
     >
       <span aria-hidden>{meta.emoji}</span>
       {meta.label}

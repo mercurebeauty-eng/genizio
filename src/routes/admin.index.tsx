@@ -100,7 +100,7 @@ function AdminIndexPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-surface text-ink">
+      <div className="min-h-dvh bg-surface text-ink">
         <AppHeader />
         <div className="flex h-[80vh] items-center justify-center">
           <GenizioLoader label="Chargement des métriques BI…" />
@@ -114,17 +114,17 @@ function AdminIndexPage() {
     : 0;
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-surface via-surface to-brand/5 text-ink pb-24">
+    <div className="min-h-dvh bg-gradient-to-b from-surface via-surface to-brand/5 text-ink pb-24">
       <AppHeader />
 
       <main className="mx-auto max-w-6xl px-6 py-10">
         {/* Title */}
-        <div className="mb-10 flex flex-col justify-between gap-6 sm:flex-row sm:items-center">
+        <div className="mb-10 flex flex-col justify-between gap-6  sm:items-center">
           <div>
             <span className="rounded-full bg-brand/10 px-3 py-1 text-xs font-bold text-brand uppercase tracking-wider">
               Console d'Administration
             </span>
-            <h1 className="font-display text-3xl font-extrabold md:text-4xl mt-1">
+            <h1 className="font-display text-balance text-3xl font-extrabold md:text-4xl mt-1">
               Tableau de Bord BI & Métriques
             </h1>
             <p className="text-sm font-medium text-ink/60 mt-1">
@@ -136,14 +136,14 @@ function AdminIndexPage() {
           <div className="flex flex-wrap gap-3">
             <Link
               to="/admin/products"
-              className="rounded-2xl border-[3px] border-ink bg-white px-5 py-3 text-sm font-bold text-ink shadow-brutal-sm hover:-translate-y-0.5 active:translate-y-0 transition-all flex items-center gap-2 cursor-pointer"
+              className="press-white rounded-2xl border border-ink/10 bg-white px-5 py-3 text-sm font-bold text-ink flex items-center gap-2 cursor-pointer"
             >
               <ShoppingBag className="size-4 text-purple-600" />
               <span>Gérer les Kits Boutique</span>
             </Link>
             <Link
               to="/admin/supervisors"
-              className="rounded-2xl border-[3px] border-ink bg-white px-5 py-3 text-sm font-bold text-ink shadow-brutal-sm hover:-translate-y-0.5 active:translate-y-0 transition-all flex items-center gap-2 cursor-pointer"
+              className="press-white rounded-2xl border border-ink/10 bg-white px-5 py-3 text-sm font-bold text-ink flex items-center gap-2 cursor-pointer"
             >
               <Users className="size-4 text-emerald-600" />
               <span>Gérer les Superviseurs</span>
@@ -152,54 +152,54 @@ function AdminIndexPage() {
         </div>
 
         {/* 📊 Key Metrics Cards */}
-        <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-5 mb-10">
-          <div className="rounded-2xl border-[3px] border-ink bg-white p-5 shadow-brutal-sm">
+        <div className="grid gap-6   mb-10">
+          <div className="rounded-2xl border border-ink/10 bg-white p-5 shadow-md">
             <div className="flex items-center justify-between text-ink/60 mb-2">
               <span className="text-xs font-extrabold uppercase tracking-wider">Parents inscrits</span>
               <Users className="size-4" />
             </div>
-            <p className="font-display text-3xl font-black text-brand">{stats?.totalParents ?? 0}</p>
+            <p className="font-display text-balance text-3xl font-black text-brand">{stats?.totalParents ?? 0}</p>
           </div>
 
-          <div className="rounded-2xl border-[3px] border-ink bg-white p-5 shadow-brutal-sm">
+          <div className="rounded-2xl border border-ink/10 bg-white p-5 shadow-md">
             <div className="flex items-center justify-between text-ink/60 mb-2">
               <span className="text-xs font-extrabold uppercase tracking-wider">Enfants suivis</span>
               <Award className="size-4" />
             </div>
-            <p className="font-display text-3xl font-black text-leaf">{stats?.totalChildren ?? 0}</p>
+            <p className="font-display text-balance text-3xl font-black text-leaf">{stats?.totalChildren ?? 0}</p>
           </div>
 
-          <div className="rounded-2xl border-[3px] border-ink bg-white p-5 shadow-brutal-sm">
+          <div className="rounded-2xl border border-ink/10 bg-white p-5 shadow-md">
             <div className="flex items-center justify-between text-ink/60 mb-2">
               <span className="text-xs font-extrabold uppercase tracking-wider">Défis générés</span>
               <Brain className="size-4" />
             </div>
-            <p className="font-display text-3xl font-black text-sky">{stats?.totalChallenges ?? 0}</p>
+            <p className="font-display text-balance text-3xl font-black text-sky">{stats?.totalChallenges ?? 0}</p>
           </div>
 
-          <div className="rounded-2xl border-[3px] border-ink bg-white p-5 shadow-brutal-sm">
+          <div className="rounded-2xl border border-ink/10 bg-white p-5 shadow-md">
             <div className="flex items-center justify-between text-ink/60 mb-2">
               <span className="text-xs font-extrabold uppercase tracking-wider">Taux de réussite</span>
               <BarChart3 className="size-4" />
             </div>
-            <p className="font-display text-3xl font-black text-ink">{completionRate}%</p>
+            <p className="font-display text-balance text-3xl font-black text-ink">{completionRate}%</p>
             <p className="text-[10px] text-ink/60 mt-1 font-bold">
               {stats?.completedChallenges ?? 0} défis validés
             </p>
           </div>
 
-          <div className="rounded-2xl border-[3px] border-ink bg-white p-5 shadow-brutal-sm">
+          <div className="rounded-2xl border border-ink/10 bg-white p-5 shadow-md">
             <div className="flex items-center justify-between text-ink/60 mb-2">
               <span className="text-xs font-extrabold uppercase tracking-wider">Kits commandés</span>
               <ShoppingBag className="size-4" />
             </div>
-            <p className="font-display text-3xl font-black text-purple-600">{stats?.totalOrders ?? 0}</p>
+            <p className="font-display text-balance text-3xl font-black text-purple-600">{stats?.totalOrders ?? 0}</p>
           </div>
         </div>
 
         {/* 👥 Parents BI Table */}
-        <div className="rounded-3xl border-[3px] border-ink bg-white p-6 shadow-brutal">
-          <h2 className="font-display text-xl font-bold mb-6 flex items-center gap-2">
+        <div className="rounded-3xl border border-ink/10 bg-white p-6 shadow-xl">
+          <h2 className="font-display text-balance text-xl font-bold mb-6 flex items-center gap-2">
             <Users className="size-5 text-brand" />
             Annuaire des Parents & Contact Direct
           </h2>
@@ -244,7 +244,7 @@ function AdminIndexPage() {
                             href={whatsappUrl}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="inline-flex items-center gap-1.5 rounded-xl border-2 border-ink bg-[#25D366] px-3 py-1.5 text-xs font-bold text-white shadow-brutal-sm hover:-translate-y-0.5 active:translate-y-0 transition-all cursor-pointer"
+                            className="inline-flex items-center gap-1.5 rounded-xl border border-white/20 bg-[#25D366] px-3 py-1.5 text-xs font-bold text-white shadow-sm hover:-translate-y-0.5 active:translate-y-0 transition-all cursor-pointer"
                           >
                             <Phone className="size-3.5 fill-current text-white" />
                             <span>WhatsApp</span>

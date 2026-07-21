@@ -60,6 +60,11 @@
   --shadow-lg: 0 20px 45px oklch(0.18 0.03 250 / 0.14), 0 6px 14px oklch(0.18 0.03 250 / 0.08);
   --shadow-xl: 0 30px 70px oklch(0.18 0.03 250 / 0.18), 0 10px 20px oklch(0.18 0.03 250 / 0.10);
 
+  /* Colored glows — for CTAs and celebratory moments (Level Up, Badge), instead of black */
+  --shadow-glow-brand: 0 10px 26px oklch(0.55 0.16 40 / 0.35);
+  --shadow-glow-leaf: 0 10px 24px oklch(0.54 0.14 150 / 0.30);
+  --shadow-glow-sky: 0 10px 22px oklch(0.6 0.1 235 / 0.28);
+
   /* Tactile keycap & brutalism backwards-compatibility aliases */
   --shadow-brutal: 0 4px 0 0 var(--brand-dark), 0 8px 20px oklch(0.18 0.03 250 / 0.10);
   --shadow-brutal-sm: 0 2px 0 0 var(--brand-dark), 0 4px 10px oklch(0.18 0.03 250 / 0.08);
@@ -150,6 +155,8 @@
   --press-sky-sm: 0 2px 0 0 var(--sky-dark);
   --press-white: 0 4px 0 0 oklch(0.88 0.008 80);
   --press-white-sm: 0 2px 0 0 oklch(0.88 0.008 80);
+  --press-destructive: 0 4px 0 0 oklch(0.42 0.20 27);
+  --press-destructive-sm: 0 2px 0 0 oklch(0.42 0.20 27);
 
   /* Soft Background Aura Gradient Blobs */
   --aura-brand: radial-gradient(circle, oklch(0.55 0.16 40 / 0.14), transparent 70%);
@@ -207,9 +214,15 @@
   100% { transform: scale(1); }
 }
 
+@keyframes gz-confetti-fall {
+  0% { transform: translateY(-20px) rotate(0deg); opacity: 1; }
+  100% { transform: translateY(420px) rotate(720deg); opacity: 0; }
+}
+
 .animate-gz-pop { animation: gz-pop-in 0.4s var(--ease-bounce) forwards; }
 .animate-gz-float { animation: gz-float 4s var(--ease-in-out) infinite; }
 .animate-gz-wiggle { animation: gz-wiggle 1s var(--ease-bounce) infinite; }
+.animate-gz-bounce-in { animation: gz-bounce-in 0.7s var(--ease-bounce); }
 
 /* Tactile 3D Keycap Press Classes */
 .press-brand { box-shadow: var(--press-brand); transition: all 0.12s var(--ease-out); }
@@ -223,6 +236,9 @@
 
 .press-white { box-shadow: var(--press-white); transition: all 0.12s var(--ease-out); }
 .press-white:active { transform: translateY(3px); box-shadow: 0 1px 0 0 oklch(0.88 0.008 80); }
+
+.press-destructive { box-shadow: var(--press-destructive); transition: all 0.12s var(--ease-out); }
+.press-destructive:active { transform: translateY(3px); box-shadow: 0 1px 0 0 oklch(0.42 0.20 27); }
 
 @layer base {
   * {

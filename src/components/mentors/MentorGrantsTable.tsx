@@ -58,7 +58,7 @@ export function MentorGrantsTable({ childId }: { childId: string }) {
 
   if (mentors.length === 0) {
     return (
-      <div className="rounded-3xl border-[3px] border-ink bg-white p-8 text-center shadow-brutal">
+      <div className="rounded-3xl border border-ink/10 bg-white p-8 text-center shadow-xl">
         <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full border-2 border-ink bg-brand/10 text-brand mb-3">
           <ShieldAlert className="size-6" />
         </div>
@@ -68,7 +68,7 @@ export function MentorGrantsTable({ childId }: { childId: string }) {
   }
 
   return (
-    <div className="rounded-3xl border-[3px] border-ink bg-white shadow-brutal overflow-hidden">
+    <div className="rounded-3xl border border-ink/10 bg-white shadow-xl overflow-hidden">
       {/* Desktop Table */}
       <div className="hidden md:block overflow-x-auto">
         <Table>
@@ -124,7 +124,7 @@ export function MentorGrantsTable({ childId }: { childId: string }) {
                             {revoking === m.id ? <Loader2 className="size-4 animate-spin" /> : <Trash2 className="size-4" />}
                           </button>
                         </AlertDialogTrigger>
-                        <AlertDialogContent className="rounded-3xl border-[3px] border-ink shadow-brutal">
+                        <AlertDialogContent className="rounded-3xl border border-ink/10 shadow-xl">
                           <AlertDialogHeader>
                             <AlertDialogTitle>Révoquer l'accès ?</AlertDialogTitle>
                             <AlertDialogDescription>
@@ -132,10 +132,10 @@ export function MentorGrantsTable({ childId }: { childId: string }) {
                             </AlertDialogDescription>
                           </AlertDialogHeader>
                           <AlertDialogFooter>
-                            <AlertDialogCancel className="rounded-xl border-[3px] border-ink shadow-brutal-sm">Annuler</AlertDialogCancel>
+                            <AlertDialogCancel className="rounded-xl border border-ink/10 shadow-sm">Annuler</AlertDialogCancel>
                             <AlertDialogAction
                               onClick={() => handleRevoke(m.id)}
-                              className="bg-red-600 hover:bg-red-700 text-white rounded-xl border-[3px] border-ink shadow-brutal-sm"
+                              className="press-destructive bg-red-600 hover:bg-red-700 text-white rounded-xl"
                             >
                               Oui, révoquer
                             </AlertDialogAction>
@@ -176,26 +176,26 @@ export function MentorGrantsTable({ childId }: { childId: string }) {
               <div className="flex gap-2 pt-2">
                 <button
                   onClick={() => copyLink(m.access_token, m.id)}
-                  className="flex-1 flex items-center justify-center gap-2 rounded-xl border-[3px] border-ink py-2 text-xs font-bold text-ink shadow-brutal-sm hover:-translate-y-0.5 transition-all"
+                  className="press-white flex-1 flex items-center justify-center gap-2 rounded-xl border border-ink/10 py-2 text-xs font-bold text-ink"
                 >
                   {copiedId === m.id ? <Check className="size-3.5 text-emerald-600" /> : <Copy className="size-3.5" />}
                   Lien
                 </button>
                 <AlertDialog>
                   <AlertDialogTrigger asChild>
-                    <button className="flex-1 flex items-center justify-center gap-2 rounded-xl border-[3px] border-ink bg-[#FF5A5F] py-2 text-xs font-bold text-white shadow-brutal-sm hover:-translate-y-0.5 transition-all">
+                    <button className="press-destructive flex-1 flex items-center justify-center gap-2 rounded-xl bg-[#FF5A5F] py-2 text-xs font-bold text-white">
                       {revoking === m.id ? <Loader2 className="size-3.5 animate-spin" /> : <Trash2 className="size-3.5" />}
                       Révoquer
                     </button>
                   </AlertDialogTrigger>
-                  <AlertDialogContent className="rounded-3xl w-[90%] max-w-sm border-[3px] border-ink shadow-brutal">
+                  <AlertDialogContent className="rounded-3xl w-[90%] max-w-sm border border-ink/10 shadow-xl">
                     <AlertDialogHeader>
                       <AlertDialogTitle>Révoquer l'accès ?</AlertDialogTitle>
                       <AlertDialogDescription>Le lien cessera de fonctionner immédiatement.</AlertDialogDescription>
                     </AlertDialogHeader>
                     <AlertDialogFooter className="flex-row gap-2 sm:space-x-0">
-                      <AlertDialogCancel className="flex-1 rounded-xl mt-0 border-[3px] border-ink shadow-brutal-sm">Annuler</AlertDialogCancel>
-                      <AlertDialogAction onClick={() => handleRevoke(m.id)} className="flex-1 bg-red-600 hover:bg-red-700 rounded-xl border-[3px] border-ink shadow-brutal-sm">Révoquer</AlertDialogAction>
+                      <AlertDialogCancel className="flex-1 rounded-xl mt-0 border border-ink/10 shadow-sm">Annuler</AlertDialogCancel>
+                      <AlertDialogAction onClick={() => handleRevoke(m.id)} className="press-destructive flex-1 bg-red-600 hover:bg-red-700 rounded-xl">Révoquer</AlertDialogAction>
                     </AlertDialogFooter>
                   </AlertDialogContent>
                 </AlertDialog>

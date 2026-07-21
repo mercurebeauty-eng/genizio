@@ -10,7 +10,7 @@ export function ObservationPrompts({ className }: { className?: string }) {
   ];
 
   return (
-    <div className={cn("rounded-2xl bg-sky border-[3px] border-ink p-4 shadow-brutal-sm", className)}>
+    <div className={cn("rounded-2xl bg-sky border border-ink/10 p-4 shadow-sm", className)}>
       <p className="mb-3 text-xs font-extrabold uppercase tracking-widest text-ink flex items-center gap-1.5">
         <Eye className="size-4 text-ink" />
         Pendant que vous observez...

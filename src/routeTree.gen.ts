@@ -32,6 +32,7 @@ import { Route as ProfilesProfileIdQuestRouteImport } from './routes/profiles.$p
 import { Route as ProfilesProfileIdPortfolioRouteImport } from './routes/profiles.$profileId.portfolio'
 import { Route as ProfilesProfileIdPassportPrintRouteImport } from './routes/profiles.$profileId.passport-print'
 import { Route as ProfilesProfileIdMentorsRouteImport } from './routes/profiles.$profileId.mentors'
+import { Route as ProfilesProfileIdGuildRouteImport } from './routes/profiles.$profileId.guild'
 import { Route as ProfilesProfileIdChallengesRouteImport } from './routes/profiles.$profileId.challenges'
 
 const TermsRoute = TermsRouteImport.update({
@@ -152,6 +153,11 @@ const ProfilesProfileIdMentorsRoute =
     path: '/$profileId/mentors',
     getParentRoute: () => ProfilesRoute,
   } as any)
+const ProfilesProfileIdGuildRoute = ProfilesProfileIdGuildRouteImport.update({
+  id: '/$profileId/guild',
+  path: '/$profileId/guild',
+  getParentRoute: () => ProfilesRoute,
+} as any)
 const ProfilesProfileIdChallengesRoute =
   ProfilesProfileIdChallengesRouteImport.update({
     id: '/$profileId/challenges',
@@ -180,6 +186,7 @@ export interface FileRoutesByFullPath {
   '/admin/': typeof AdminIndexRoute
   '/profiles/': typeof ProfilesIndexRoute
   '/profiles/$profileId/challenges': typeof ProfilesProfileIdChallengesRoute
+  '/profiles/$profileId/guild': typeof ProfilesProfileIdGuildRoute
   '/profiles/$profileId/mentors': typeof ProfilesProfileIdMentorsRoute
   '/profiles/$profileId/passport-print': typeof ProfilesProfileIdPassportPrintRoute
   '/profiles/$profileId/portfolio': typeof ProfilesProfileIdPortfolioRoute
@@ -204,6 +211,7 @@ export interface FileRoutesByTo {
   '/admin': typeof AdminIndexRoute
   '/profiles': typeof ProfilesIndexRoute
   '/profiles/$profileId/challenges': typeof ProfilesProfileIdChallengesRoute
+  '/profiles/$profileId/guild': typeof ProfilesProfileIdGuildRoute
   '/profiles/$profileId/mentors': typeof ProfilesProfileIdMentorsRoute
   '/profiles/$profileId/passport-print': typeof ProfilesProfileIdPassportPrintRoute
   '/profiles/$profileId/portfolio': typeof ProfilesProfileIdPortfolioRoute
@@ -231,6 +239,7 @@ export interface FileRoutesById {
   '/admin/': typeof AdminIndexRoute
   '/profiles/': typeof ProfilesIndexRoute
   '/profiles/$profileId/challenges': typeof ProfilesProfileIdChallengesRoute
+  '/profiles/$profileId/guild': typeof ProfilesProfileIdGuildRoute
   '/profiles/$profileId/mentors': typeof ProfilesProfileIdMentorsRoute
   '/profiles/$profileId/passport-print': typeof ProfilesProfileIdPassportPrintRoute
   '/profiles/$profileId/portfolio': typeof ProfilesProfileIdPortfolioRoute
@@ -259,6 +268,7 @@ export interface FileRouteTypes {
     | '/admin/'
     | '/profiles/'
     | '/profiles/$profileId/challenges'
+    | '/profiles/$profileId/guild'
     | '/profiles/$profileId/mentors'
     | '/profiles/$profileId/passport-print'
     | '/profiles/$profileId/portfolio'
@@ -283,6 +293,7 @@ export interface FileRouteTypes {
     | '/admin'
     | '/profiles'
     | '/profiles/$profileId/challenges'
+    | '/profiles/$profileId/guild'
     | '/profiles/$profileId/mentors'
     | '/profiles/$profileId/passport-print'
     | '/profiles/$profileId/portfolio'
@@ -309,6 +320,7 @@ export interface FileRouteTypes {
     | '/admin/'
     | '/profiles/'
     | '/profiles/$profileId/challenges'
+    | '/profiles/$profileId/guild'
     | '/profiles/$profileId/mentors'
     | '/profiles/$profileId/passport-print'
     | '/profiles/$profileId/portfolio'
@@ -495,6 +507,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ProfilesProfileIdMentorsRouteImport
       parentRoute: typeof ProfilesRoute
     }
+    '/profiles/$profileId/guild': {
+      id: '/profiles/$profileId/guild'
+      path: '/$profileId/guild'
+      fullPath: '/profiles/$profileId/guild'
+      preLoaderRoute: typeof ProfilesProfileIdGuildRouteImport
+      parentRoute: typeof ProfilesRoute
+    }
     '/profiles/$profileId/challenges': {
       id: '/profiles/$profileId/challenges'
       path: '/$profileId/challenges'
@@ -523,6 +542,7 @@ interface ProfilesRouteChildren {
   ProfilesManageRoute: typeof ProfilesManageRoute
   ProfilesIndexRoute: typeof ProfilesIndexRoute
   ProfilesProfileIdChallengesRoute: typeof ProfilesProfileIdChallengesRoute
+  ProfilesProfileIdGuildRoute: typeof ProfilesProfileIdGuildRoute
   ProfilesProfileIdMentorsRoute: typeof ProfilesProfileIdMentorsRoute
   ProfilesProfileIdPassportPrintRoute: typeof ProfilesProfileIdPassportPrintRoute
   ProfilesProfileIdPortfolioRoute: typeof ProfilesProfileIdPortfolioRoute
@@ -533,6 +553,7 @@ const ProfilesRouteChildren: ProfilesRouteChildren = {
   ProfilesManageRoute: ProfilesManageRoute,
   ProfilesIndexRoute: ProfilesIndexRoute,
   ProfilesProfileIdChallengesRoute: ProfilesProfileIdChallengesRoute,
+  ProfilesProfileIdGuildRoute: ProfilesProfileIdGuildRoute,
   ProfilesProfileIdMentorsRoute: ProfilesProfileIdMentorsRoute,
   ProfilesProfileIdPassportPrintRoute: ProfilesProfileIdPassportPrintRoute,
   ProfilesProfileIdPortfolioRoute: ProfilesProfileIdPortfolioRoute,

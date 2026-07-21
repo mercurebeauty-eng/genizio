@@ -54,18 +54,17 @@ export function AppHeader({ hideTabBarLinks = false }: AppHeaderProps = {}) {
 
   if (!session) return null;
 
-
   return (
-    <nav className="border-b border-ink/10 bg-surface/90 backdrop-blur-md sticky top-0 z-50 transition-all shadow-xs">
+    <nav className="border-b border-ink/5 bg-surface/90 backdrop-blur-md sticky top-0 z-50 transition-all shadow-sm">
       <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
         {/* Logo */}
-        <Link to="/profiles" className="flex items-center gap-2 font-display text-2xl font-extrabold text-brand tracking-wider">
+        <Link to="/profiles" className="flex items-center gap-2 font-display text-balance text-2xl font-extrabold text-brand tracking-wider">
           <img src="/favicon-96x96.png" alt="" className="h-8 w-8" />
           GÉNIZIO
         </Link>
 
         {/* Desktop navigation — "Accueil" isn't repeated here, the logo above already links home on every page. */}
-        <div className="hidden items-center gap-6 text-sm font-bold md:flex">
+        <div className="hidden">
           <Link to="/feed" className="text-ink/60 hover:text-brand transition-colors" activeProps={{ className: "text-brand" }}>
             Mur Public
           </Link>
@@ -80,17 +79,17 @@ export function AppHeader({ hideTabBarLinks = false }: AppHeaderProps = {}) {
         </div>
 
         {/* Desktop actions */}
-        <div className="hidden items-center gap-4 text-sm font-semibold md:flex">
+        <div className="hidden">
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <button className="flex items-center gap-1.5 rounded-full border-2 border-ink bg-white px-4.5 py-2 text-sm font-bold text-ink hover:bg-surface transition-all cursor-pointer shadow-brutal-sm">
+              <button className="flex items-center gap-1.5 rounded-full border border-ink/10 bg-white px-4.5 py-2 text-sm font-bold text-ink hover:bg-surface transition-all cursor-pointer shadow-sm">
                 <Settings className="size-4 text-brand" />
                 <span>{session.user.email?.split("@")[0]}</span>
                 <ChevronDown className="size-3.5 text-ink/60" />
               </button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-56 border-[3px] border-ink rounded-2xl p-1.5 bg-white shadow-brutal mt-1">
-              <DropdownMenuLabel className="font-display font-extrabold text-[10px] text-ink/60 uppercase tracking-widest px-2.5 py-1.5">
+            <DropdownMenuContent align="end" className="w-56 border border-ink/10 rounded-3xl p-1.5 bg-white/95 backdrop-blur-md shadow-xl mt-1">
+              <DropdownMenuLabel className="font-display text-balance font-extrabold text-[10px] text-ink/60 uppercase tracking-widest px-2.5 py-1.5">
                 Mon Espace
               </DropdownMenuLabel>
               <DropdownMenuItem asChild>
@@ -102,8 +101,8 @@ export function AppHeader({ hideTabBarLinks = false }: AppHeaderProps = {}) {
 
               {(isSupervisor || isAdmin) && (
                 <>
-                  <DropdownMenuSeparator className="-mx-1.5 my-1.5 border-t-[2px] border-ink/10" />
-                  <DropdownMenuLabel className="font-display font-extrabold text-[10px] text-ink/60 uppercase tracking-widest px-2.5 py-1.5">
+                  <DropdownMenuSeparator className="-mx-1.5 my-1.5 border-t border-ink/10" />
+                  <DropdownMenuLabel className="font-display text-balance font-extrabold text-[10px] text-ink/60 uppercase tracking-widest px-2.5 py-1.5">
                     Accompagnant & Pro
                   </DropdownMenuLabel>
                   {isSupervisor && (
@@ -138,8 +137,7 @@ export function AppHeader({ hideTabBarLinks = false }: AppHeaderProps = {}) {
                   )}
                 </>
               )}
-
-              <DropdownMenuSeparator className="-mx-1.5 my-1.5 border-t-[2px] border-ink/10" />
+              <DropdownMenuSeparator className="-mx-1.5 my-1.5 border-t border-ink/10" />
               <DropdownMenuItem onClick={signOut} className="flex items-center gap-2 rounded-xl px-2.5 py-2 text-xs font-black uppercase tracking-wider text-red-600 hover:bg-red-50 cursor-pointer">
                 <LogOut className="size-4" />
                 <span>Se déconnecter</span>
@@ -152,7 +150,7 @@ export function AppHeader({ hideTabBarLinks = false }: AppHeaderProps = {}) {
         {/* Mobile menu button */}
         <button
           onClick={() => setIsOpen(!isOpen)}
-          className="rounded-xl p-2 text-ink/60 hover:bg-ink/5 md:hidden"
+          className="rounded-xl p-2 text-ink/60 hover:bg-ink/5"
         >
           {isOpen ? <X className="size-6" /> : <Menu className="size-6" />}
         </button>
@@ -160,7 +158,7 @@ export function AppHeader({ hideTabBarLinks = false }: AppHeaderProps = {}) {
 
       {/* Mobile navigation drawer */}
       {isOpen && (
-        <div className="border-t border-ink/5 bg-white px-6 py-4 md:hidden space-y-4 animate-in slide-in-from-top-5 duration-200">
+        <div className="border-t border-ink/5 bg-white px-6 py-4 space-y-4 animate-in slide-in-from-top-5 duration-200">
           <div className="flex flex-col gap-3">
             <Link
               to="/feed"

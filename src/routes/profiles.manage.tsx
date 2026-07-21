@@ -73,20 +73,20 @@ function ManageProfilesPage() {
 
   if (loading || !session) {
     return (
-      <div className="grid min-h-screen place-items-center bg-surface">
+      <div className="grid min-h-dvh place-items-center bg-surface">
         <GenizioLoader label="Chargement…" />
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-surface text-ink">
+    <div className="min-h-dvh bg-surface text-ink">
       <AppHeader />
 
       <main className="mx-auto max-w-6xl px-6 py-12">
-        <div className="mb-10 flex flex-col justify-between gap-4 md:flex-row md:items-end">
+        <div className="mb-10 flex flex-col justify-between gap-4  md:items-end">
           <div>
-            <h1 className="font-display text-4xl font-extrabold md:text-5xl">Mes profils enfants</h1>
+            <h1 className="font-display text-balance text-4xl font-extrabold md:text-5xl">Mes profils enfants</h1>
             <p className="mt-2 text-ink/60">
               Sauvegardez le questionnaire de chaque enfant pour retrouver ses défis en un clic.
             </p>
@@ -99,7 +99,7 @@ function ManageProfilesPage() {
             return (
               <button
                 onClick={() => atQuota ? setShowUpgradeModal(true) : setEditing("new")}
-                className={`rounded-2xl border-[3px] border-ink px-6 py-3 text-sm font-bold shadow-brutal hover:-translate-y-0.5 active:translate-y-0 active:shadow-none transition-all flex items-center gap-2 ${
+                className={`rounded-2xl border border-ink/10 px-6 py-3 text-sm font-bold shadow-xl hover:-translate-y-0.5 active:translate-y-0 active:shadow-none transition-all flex items-center gap-2 ${
                   atQuota ? "bg-amber-100 text-amber-800" : "bg-brand text-white"
                 }`}
               >
@@ -113,11 +113,11 @@ function ManageProfilesPage() {
         {fetching ? (
           <GenizioLoader className="py-8" />
         ) : profiles.length === 0 ? (
-          <div className="rounded-3xl border-[3px] border-dashed border-ink bg-white/40 p-12 text-center shadow-brutal-sm">
+          <div className="rounded-3xl border border-dashed border-ink/20 bg-white/40 p-12 text-center shadow-sm">
             <p className="text-ink/60">Aucun profil pour l'instant. Créez le premier.</p>
           </div>
         ) : (
-          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+          <div className="grid gap-6  ">
             {profiles.map((p) => (
               <ProfileCard key={p.id} profile={p} onEdit={() => setEditing(p)} onDelete={() => remove(p.id)} />
             ))}
@@ -140,17 +140,17 @@ function ManageProfilesPage() {
       {/* ── Upgrade Modal ─────────────────────────────────────────────── */}
       {showUpgradeModal && (
         <div className="fixed inset-0 z-50 grid place-items-center overflow-y-auto bg-ink/70 p-4 backdrop-blur-sm" onClick={() => setShowUpgradeModal(false)}>
-          <div onClick={(e) => e.stopPropagation()} className="w-full max-w-md rounded-3xl border-[3px] border-ink bg-white p-8 shadow-brutal">
+          <div onClick={(e) => e.stopPropagation()} className="w-full max-w-md rounded-3xl border border-ink/10 bg-white p-8 shadow-xl">
             <div className="mb-6 flex items-start gap-4">
-              <div className="grid size-14 shrink-0 place-items-center rounded-2xl border-[3px] border-ink bg-amber-100 text-3xl shadow-brutal-sm">🔒</div>
+              <div className="grid size-14 shrink-0 place-items-center rounded-2xl border border-ink/10 bg-amber-100 text-3xl shadow-sm">🔒</div>
               <div>
-                <h2 className="font-display text-2xl font-extrabold text-ink">Quota gratuit atteint</h2>
+                <h2 className="font-display text-balance text-2xl font-extrabold text-ink">Quota gratuit atteint</h2>
                 <p className="mt-1 text-sm text-ink/60">Vous avez {profiles.length} profils enregistrés.</p>
               </div>
             </div>
-            <div className="mb-6 rounded-2xl border-[3px] border-ink bg-surface p-5 shadow-brutal-sm">
+            <div className="mb-6 rounded-2xl border border-ink/10 bg-surface p-5 shadow-sm">
               <p className="text-xs font-black uppercase tracking-widest text-ink/60 mb-1">Profil supplémentaire</p>
-              <p className="font-display text-3xl font-black text-ink">5 000 <span className="text-lg text-ink/60">FCFA</span></p>
+              <p className="font-display text-balance text-3xl font-black text-ink">5 000 <span className="text-lg text-ink/60">FCFA</span></p>
               <p className="mt-2 text-xs text-ink/60 leading-relaxed">Débloqué manuellement après confirmation du paiement. Accès permanent.</p>
             </div>
             <a
@@ -158,7 +158,7 @@ function ManageProfilesPage() {
                 `Bonjour, je souhaite débloquer un profil supplémentaire sur Génizio.\nCompte : ${session?.user?.email}\nMontant : 5 000 FCFA`
               )}`}
               target="_blank" rel="noopener noreferrer"
-              className="flex w-full items-center justify-center gap-2.5 rounded-2xl border-[3px] border-ink bg-[#25D366] py-3.5 font-bold text-sm text-white shadow-brutal hover:-translate-y-0.5 active:translate-y-0 active:shadow-none transition-all"
+              className="flex w-full items-center justify-center gap-2.5 rounded-2xl border border-ink/10 bg-[#25D366] py-3.5 font-bold text-sm text-white shadow-xl hover:-translate-y-0.5 active:translate-y-0 active:shadow-none transition-all"
             >
               <Phone className="size-4 fill-white" />
               Contacter l'administrateur sur WhatsApp

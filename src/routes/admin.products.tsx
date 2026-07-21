@@ -232,23 +232,23 @@ function AdminProductsPage() {
 
   if (loading || !session) {
     return (
-      <div className="grid min-h-screen place-items-center bg-surface">
+      <div className="grid min-h-dvh place-items-center bg-surface">
         <GenizioLoader label="Chargement…" />
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-surface pb-24 text-ink">
+    <div className="min-h-dvh bg-surface pb-24 text-ink">
       <AppHeader />
 
       <main className="mx-auto max-w-4xl px-6 py-10">
         <div className="mb-8 flex items-center gap-3">
-          <div className="flex size-12 items-center justify-center rounded-2xl border-[3px] border-ink bg-brand text-white shadow-brutal-sm">
+          <div className="flex size-12 items-center justify-center rounded-2xl border border-white/10 bg-brand text-white shadow-md">
             <Package className="size-6" />
           </div>
           <div>
-            <h1 className="font-display text-2xl font-extrabold">Catalogue de kits</h1>
+            <h1 className="font-display text-balance text-2xl font-extrabold">Catalogue de kits</h1>
             <p className="text-sm text-ink/60">Prix et stock des matériaux suggérés par Naya.</p>
           </div>
         </div>
@@ -258,7 +258,7 @@ function AdminProductsPage() {
             <Loader2 className="size-6 animate-spin text-brand" />
           </div>
         ) : forbidden ? (
-          <div className="rounded-3xl border-[3px] border-ink bg-white p-10 text-center shadow-brutal">
+          <div className="rounded-3xl border border-ink/10 bg-white p-10 text-center shadow-xl">
             <div className="mx-auto mb-3 flex size-12 items-center justify-center rounded-full border-2 border-ink bg-red-50 text-red-500">
               <ShieldAlert className="size-6" />
             </div>
@@ -270,12 +270,12 @@ function AdminProductsPage() {
         ) : (
           <>
             {/* Tab Selector */}
-            <div className="mb-6 flex gap-2 border-[3px] border-ink bg-white p-1 rounded-2xl shadow-brutal-sm">
+            <div className="mb-6 flex gap-2 border border-ink/10 bg-white p-1 rounded-2xl shadow-sm">
               <button
                 onClick={() => setActiveTab("products")}
                 className={`flex-1 py-2.5 text-xs font-black uppercase tracking-wider rounded-xl transition-all flex items-center justify-center gap-1.5 ${
                   activeTab === "products"
-                    ? "bg-brand text-white border-2 border-ink shadow-brutal-sm"
+                    ? "bg-brand text-white border border-white/20 shadow-md"
                     : "text-ink/65 hover:bg-surface"
                 }`}
               >
@@ -286,7 +286,7 @@ function AdminProductsPage() {
                 onClick={() => setActiveTab("orders")}
                 className={`flex-1 py-2.5 text-xs font-black uppercase tracking-wider rounded-xl transition-all flex items-center justify-center gap-1.5 ${
                   activeTab === "orders"
-                    ? "bg-brand text-white border-2 border-ink shadow-brutal-sm"
+                    ? "bg-brand text-white border border-white/20 shadow-md"
                     : "text-ink/65 hover:bg-surface"
                 }`}
               >
@@ -297,7 +297,7 @@ function AdminProductsPage() {
                 onClick={() => setActiveTab("stats")}
                 className={`flex-1 py-2.5 text-xs font-black uppercase tracking-wider rounded-xl transition-all flex items-center justify-center gap-1.5 ${
                   activeTab === "stats"
-                    ? "bg-ink text-white border-2 border-ink shadow-brutal-sm"
+                    ? "bg-ink text-white border border-white/20 shadow-md"
                     : "text-ink/65 hover:bg-surface"
                 }`}
               >
@@ -310,10 +310,10 @@ function AdminProductsPage() {
             {activeTab === "products" && (
               <>
                 {suggestions.length > 0 && (
-                  <div className="mb-8 rounded-3xl border-[3px] border-ink bg-white p-6 shadow-brutal">
+                  <div className="mb-8 rounded-3xl border border-ink/10 bg-white p-6 shadow-xl">
                     <div className="mb-4 flex items-center gap-2">
                       <Sparkles className="size-5 text-brand" />
-                      <h2 className="font-display text-lg font-bold">Matériaux détectés sans produit</h2>
+                      <h2 className="font-display text-balance text-lg font-bold">Matériaux détectés sans produit</h2>
                     </div>
                     <p className="mb-4 text-sm text-ink/60">
                       Naya a mentionné ces matériaux dans des défis, mais aucun produit actif ne les couvre.
@@ -356,20 +356,20 @@ function AdminProductsPage() {
                   </div>
                 )}
 
-                <div ref={formRef} className="mb-8 rounded-3xl border-[3px] border-ink bg-sky p-6 shadow-brutal">
-                  <h2 className="mb-4 font-display text-lg font-bold">Ajouter un produit</h2>
-                  <div className="grid gap-3 sm:grid-cols-2">
+                <div ref={formRef} className="mb-8 rounded-3xl border border-ink/10 bg-sky p-6 shadow-xl">
+                  <h2 className="mb-4 font-display text-balance text-lg font-bold">Ajouter un produit</h2>
+                  <div className="grid gap-3 ">
                     <input
                       value={draft.name}
                       onChange={(e) => setDraft({ ...draft, name: e.target.value })}
                       placeholder="Nom (ex: Lot de carton)"
-                      className="rounded-xl border-[3px] border-ink px-4 py-2.5 text-sm font-bold outline-none focus:ring-2 focus:ring-brand shadow-brutal-sm sm:col-span-2"
+                      className="rounded-xl border border-ink/10 px-4 py-2.5 text-sm font-bold outline-none focus:ring-2 focus:ring-brand shadow-sm sm:col-span-2"
                     />
                     <input
                       value={draft.description}
                       onChange={(e) => setDraft({ ...draft, description: e.target.value })}
                       placeholder="Description (optionnel)"
-                      className="rounded-xl border-[3px] border-ink px-4 py-2.5 text-sm outline-none focus:ring-2 focus:ring-brand shadow-brutal-sm sm:col-span-2"
+                      className="rounded-xl border border-ink/10 px-4 py-2.5 text-sm outline-none focus:ring-2 focus:ring-brand shadow-sm sm:col-span-2"
                     />
                     <input
                       type="number"
@@ -379,7 +379,7 @@ function AdminProductsPage() {
                         setDraft({ ...draft, price_xof: e.target.value === "" ? "" : Number(e.target.value) })
                       }
                       placeholder="Prix (FCFA)"
-                      className="rounded-xl border-[3px] border-ink px-4 py-2.5 text-sm font-bold outline-none focus:ring-2 focus:ring-brand shadow-brutal-sm"
+                      className="rounded-xl border border-ink/10 px-4 py-2.5 text-sm font-bold outline-none focus:ring-2 focus:ring-brand shadow-sm"
                     />
                     <input
                       type="number"
@@ -389,19 +389,19 @@ function AdminProductsPage() {
                         setDraft({ ...draft, stock_quantity: e.target.value === "" ? "" : Number(e.target.value) })
                       }
                       placeholder="Stock (vide = illimité)"
-                      className="rounded-xl border-[3px] border-ink px-4 py-2.5 text-sm font-bold outline-none focus:ring-2 focus:ring-brand shadow-brutal-sm"
+                      className="rounded-xl border border-ink/10 px-4 py-2.5 text-sm font-bold outline-none focus:ring-2 focus:ring-brand shadow-sm"
                     />
                     <input
                       value={draft.material_tags}
                       onChange={(e) => setDraft({ ...draft, material_tags: e.target.value })}
                       placeholder="Tags matériaux, séparés par des virgules (ex: carton, cutter)"
-                      className="rounded-xl border-[3px] border-ink px-4 py-2.5 text-sm outline-none focus:ring-2 focus:ring-brand shadow-brutal-sm sm:col-span-2"
+                      className="rounded-xl border border-ink/10 px-4 py-2.5 text-sm outline-none focus:ring-2 focus:ring-brand shadow-sm sm:col-span-2"
                     />
                   </div>
                   <button
                     onClick={handleCreate}
                     disabled={saving}
-                    className="mt-4 flex items-center gap-2 rounded-2xl border-[3px] border-ink bg-brand px-5 py-2.5 text-sm font-bold text-white shadow-brutal hover:-translate-y-0.5 active:translate-y-0 active:shadow-none transition-all disabled:opacity-50"
+                    className="press-brand mt-4 flex items-center gap-2 rounded-2xl bg-brand px-5 py-2.5 text-sm font-bold text-white disabled:opacity-50"
                   >
                     {saving ? <Loader2 className="size-4 animate-spin" /> : <Plus className="size-4" />}
                     Ajouter au catalogue
@@ -409,7 +409,7 @@ function AdminProductsPage() {
                 </div>
 
                 {products.length === 0 ? (
-                  <div className="rounded-3xl border-[3px] border-dashed border-ink bg-white/40 p-10 text-center shadow-brutal-sm">
+                  <div className="rounded-3xl border-2 border-dashed border-ink/20 bg-white/40 p-10 text-center shadow-sm">
                     <p className="text-ink/65 font-bold">Aucun produit pour l'instant.</p>
                   </div>
                 ) : (
@@ -417,7 +417,7 @@ function AdminProductsPage() {
                     {products.map((p) => (
                       <div
                         key={p.id}
-                        className={`flex items-center justify-between gap-4 rounded-2xl border-[3px] border-ink bg-white p-4 shadow-brutal-sm ${!p.is_active ? "opacity-50" : ""}`}
+                        className={`flex items-center justify-between gap-4 rounded-2xl border border-ink/10 bg-white p-4 shadow-sm ${!p.is_active ? "opacity-50" : ""}`}
                       >
                         <div className="min-w-0">
                           <p className="font-bold text-ink">{p.name}</p>
@@ -459,7 +459,7 @@ function AdminProductsPage() {
             {activeTab === "orders" && (
               <>
                 {orders.length === 0 ? (
-                  <div className="rounded-3xl border-[3px] border-dashed border-ink bg-white/40 p-10 text-center shadow-brutal-sm">
+                  <div className="rounded-3xl border-2 border-dashed border-ink/20 bg-white/40 p-10 text-center shadow-sm">
                     <p className="text-ink/65 font-bold">Aucune commande pour le moment.</p>
                   </div>
                 ) : (
@@ -467,9 +467,9 @@ function AdminProductsPage() {
                     <div className="mb-4 flex flex-wrap gap-2">
                       <button
                         onClick={() => setOrderStatusFilter("all")}
-                        className={`rounded-xl border-2 border-ink px-3 py-1.5 text-xs font-bold transition-all ${
+                        className={`rounded-xl border border-ink/10 px-3 py-1.5 text-xs font-bold transition-all ${
                           orderStatusFilter === "all"
-                            ? "bg-ink text-white shadow-brutal-sm"
+                            ? "bg-ink text-white shadow-md"
                             : "bg-white text-ink/65 hover:bg-surface"
                         }`}
                       >
@@ -481,9 +481,9 @@ function AdminProductsPage() {
                           <button
                             key={status}
                             onClick={() => setOrderStatusFilter(status)}
-                            className={`rounded-xl border-2 border-ink px-3 py-1.5 text-xs font-bold transition-all ${
+                            className={`rounded-xl border border-ink/10 px-3 py-1.5 text-xs font-bold transition-all ${
                               orderStatusFilter === status
-                                ? "bg-ink text-white shadow-brutal-sm"
+                                ? "bg-ink text-white shadow-md"
                                 : "bg-white text-ink/65 hover:bg-surface"
                             }`}
                           >
@@ -498,7 +498,7 @@ function AdminProductsPage() {
                         orderStatusFilter === "all" ? orders : orders.filter((o) => o.status === orderStatusFilter);
                       if (filteredOrders.length === 0) {
                         return (
-                          <div className="rounded-3xl border-[3px] border-dashed border-ink bg-white/40 p-10 text-center shadow-brutal-sm">
+                          <div className="rounded-3xl border-2 border-dashed border-ink/20 bg-white/40 p-10 text-center shadow-sm">
                             <p className="text-ink/65 font-bold">Aucune commande avec ce statut.</p>
                           </div>
                         );
@@ -508,7 +508,7 @@ function AdminProductsPage() {
                           {filteredOrders.map((o) => (
                     <div
                         key={o.id}
-                        className={`rounded-3xl border-[3px] border-ink p-6 shadow-brutal flex flex-col gap-4 transition-colors ${
+                        className={`rounded-3xl border border-ink/10 p-6 shadow-xl flex flex-col gap-4 transition-colors ${
                           ORDER_STATUS_CARD[o.status] ?? "bg-white"
                         }`}
                       >
@@ -540,7 +540,7 @@ function AdminProductsPage() {
                               value={o.status}
                               disabled={updatingOrderId === o.id}
                               onChange={(e) => handleUpdateStatus(o.id, e.target.value)}
-                              className="rounded-xl border-2 border-ink px-3 py-1 text-xs font-bold outline-none focus:ring-2 focus:ring-brand bg-surface shadow-brutal-sm cursor-pointer"
+                              className="rounded-xl border border-ink/10 px-3 py-1 text-xs font-bold outline-none focus:ring-2 focus:ring-brand bg-surface shadow-sm cursor-pointer"
                             >
                               <option value="pending">En attente</option>
                               <option value="confirmed">Confirmé</option>
@@ -584,24 +584,24 @@ function AdminProductsPage() {
 
             {activeTab === "stats" && ecosystemStats && (
               <div className="space-y-8">
-                <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
+                <div className="grid grid-cols-2 gap-4 ">
                   {[
                     { label: "Enfants inscrits", value: ecosystemStats.totalChildren, emoji: "👶", color: "bg-brand/10 border-brand" },
                     { label: "Defis lances", value: ecosystemStats.totalChallenges, emoji: "🎯", color: "bg-sky/30 border-sky-400" },
                     { label: "Defis completes", value: ecosystemStats.completedChallenges, emoji: "✅", color: "bg-emerald-50 border-emerald-400" },
                     { label: "Commandes", value: ecosystemStats.totalOrders, emoji: "🛍️", color: "bg-amber-50 border-amber-400" },
                   ].map((kpi) => (
-                    <div key={kpi.label} className={`rounded-3xl border-[3px] ${kpi.color} bg-white p-5 shadow-brutal`}>
+                    <div key={kpi.label} className={`rounded-3xl border-2 ${kpi.color} bg-white p-5 shadow-md`}>
                       <div className="text-3xl mb-1">{kpi.emoji}</div>
-                      <div className="font-display text-3xl font-black text-ink">{kpi.value.toLocaleString("fr-FR")}</div>
+                      <div className="font-display text-balance text-3xl font-black text-ink">{kpi.value.toLocaleString("fr-FR")}</div>
                       <p className="text-xs font-bold text-ink/60 uppercase tracking-wider mt-1">{kpi.label}</p>
                     </div>
                   ))}
                 </div>
 
                 {ecosystemStats.totalChallenges > 0 && (
-                  <div className="rounded-3xl border-[3px] border-ink bg-white p-6 shadow-brutal">
-                    <h3 className="font-display text-lg font-black mb-4">Taux de completion global</h3>
+                  <div className="rounded-3xl border border-ink/10 bg-white p-6 shadow-xl">
+                    <h3 className="font-display text-balance text-lg font-black mb-4">Taux de completion global</h3>
                     <div className="flex items-center gap-4">
                       <div className="flex-1 h-4 rounded-full bg-surface border-2 border-ink overflow-hidden">
                         <div
@@ -616,9 +616,9 @@ function AdminProductsPage() {
                   </div>
                 )}
 
-                <div className="grid gap-6 md:grid-cols-2">
-                  <div className="rounded-3xl border-[3px] border-ink bg-white p-6 shadow-brutal">
-                    <h3 className="font-display text-lg font-black mb-4">Talents dominants</h3>
+                <div className="grid gap-6 ">
+                  <div className="rounded-3xl border border-ink/10 bg-white p-6 shadow-xl">
+                    <h3 className="font-display text-balance text-lg font-black mb-4">Talents dominants</h3>
                     {Object.keys(ecosystemStats.talentTotals).length > 0 ? (
                       <ResponsiveContainer width="100%" height={240}>
                         <RadarChart data={Object.entries(ecosystemStats.talentTotals).map(([key, val]) => ({
@@ -635,8 +635,8 @@ function AdminProductsPage() {
                     )}
                   </div>
 
-                  <div className="rounded-3xl border-[3px] border-ink bg-white p-6 shadow-brutal">
-                    <h3 className="font-display text-lg font-black">Top domaines</h3>
+                  <div className="rounded-3xl border border-ink/10 bg-white p-6 shadow-xl">
+                    <h3 className="font-display text-balance text-lg font-black">Top domaines</h3>
                     <p className="text-[11px] text-ink/60 mb-4">Sur les 200 défis les plus récents</p>
                     {ecosystemStats.topDomains.length > 0 ? (
                       <ResponsiveContainer width="100%" height={240}>
@@ -662,9 +662,9 @@ function AdminProductsPage() {
                   </div>
                 </div>
 
-                <div className="rounded-3xl border-[3px] border-ink bg-white p-6 shadow-brutal">
-                  <h3 className="font-display text-lg font-black mb-5">Les 6 Guildes Genizio</h3>
-                  <div className="grid grid-cols-2 gap-3 md:grid-cols-3">
+                <div className="rounded-3xl border border-ink/10 bg-white p-6 shadow-xl">
+                  <h3 className="font-display text-balance text-lg font-black mb-5">Les 6 Guildes Genizio</h3>
+                  <div className="grid grid-cols-2 gap-3 ">
                     {Object.values(GUILDS).map((guild) => (
                       <div key={guild.key} className={`rounded-2xl border-2 border-ink px-4 py-3 flex items-center gap-2 ${guild.bgColor}`}>
                         <span className="text-2xl">{guild.emoji}</span>

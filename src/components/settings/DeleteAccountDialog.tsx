@@ -47,7 +47,7 @@ export function DeleteAccountDialog() {
       if (!val) setConfirmText("");
     }}>
       <AlertDialogTrigger asChild>
-        <button className="flex w-full items-center justify-between rounded-2xl border-[3px] border-ink bg-[#FF5A5F]/10 p-4 shadow-brutal-sm hover:-translate-y-0.5 active:translate-y-0 transition-all">
+        <button className="flex w-full items-center justify-between rounded-2xl border border-ink/10 bg-[#FF5A5F]/10 p-4 shadow-sm hover:-translate-y-0.5 active:translate-y-0 transition-all">
           <div className="flex items-center gap-3">
             <div className="flex size-10 items-center justify-center rounded-xl border-2 border-ink bg-[#FF5A5F] text-white">
               <Trash2 className="size-5" />
@@ -59,7 +59,7 @@ export function DeleteAccountDialog() {
           </div>
         </button>
       </AlertDialogTrigger>
-      <AlertDialogContent className="rounded-3xl max-w-sm border-[3px] border-ink shadow-brutal">
+      <AlertDialogContent className="rounded-3xl max-w-sm border border-ink/10 shadow-xl">
         <AlertDialogHeader>
           <AlertDialogTitle className="flex items-center gap-2 text-red-600">
             <AlertTriangle className="size-5" />
@@ -79,19 +79,19 @@ export function DeleteAccountDialog() {
             value={confirmText}
             onChange={(e) => setConfirmText(e.target.value)}
             placeholder="SUPPRIMER"
-            className="w-full rounded-xl border-[3px] border-ink px-4 py-2 text-sm outline-none focus:ring-2 focus:ring-red-500 shadow-brutal-sm"
+            className="w-full rounded-xl border border-ink/10 px-4 py-2 text-sm outline-none focus:ring-2 focus:ring-red-500 shadow-sm"
           />
         </div>
 
         <AlertDialogFooter className="flex-row gap-2 sm:space-x-0">
-          <AlertDialogCancel className="flex-1 mt-0 rounded-xl border-[3px] border-ink shadow-brutal-sm">Annuler</AlertDialogCancel>
+          <AlertDialogCancel className="flex-1 mt-0 rounded-xl border border-ink/10 shadow-sm">Annuler</AlertDialogCancel>
           <AlertDialogAction
             onClick={(e) => {
               e.preventDefault();
               handleDelete();
             }}
             disabled={confirmText !== "SUPPRIMER" || deleting}
-            className="flex-1 rounded-xl border-[3px] border-ink bg-red-600 text-white shadow-brutal-sm hover:bg-red-700 disabled:opacity-50"
+            className="press-destructive flex-1 rounded-xl bg-red-600 text-white hover:bg-red-700 disabled:opacity-50"
           >
             {deleting ? <Loader2 className="size-4 animate-spin" /> : "Supprimer"}
           </AlertDialogAction>

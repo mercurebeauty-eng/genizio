@@ -149,6 +149,35 @@ export type Database = {
           },
         ]
       }
+      child_badges: {
+        Row: {
+          badge_slug: string
+          child_id: string
+          earned_at: string
+          id: string
+        }
+        Insert: {
+          badge_slug: string
+          child_id: string
+          earned_at?: string
+          id?: string
+        }
+        Update: {
+          badge_slug?: string
+          child_id?: string
+          earned_at?: string
+          id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "child_badges_child_id_fkey"
+            columns: ["child_id"]
+            isOneToOne: false
+            referencedRelation: "child_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       child_mentors: {
         Row: {
           access_token: string
@@ -219,13 +248,17 @@ export type Database = {
           country: string | null
           created_at: string
           favorite_challenges: string[]
+          guild_participation_opt_in: boolean
           id: string
           interests: string[]
+          last_activity_date: string | null
           name: string
           pdf_unlocked: boolean
+          streak: number
           talents: Json
           updated_at: string
           user_id: string
+          xp: number
         }
         Insert: {
           age: number
@@ -237,13 +270,17 @@ export type Database = {
           country?: string | null
           created_at?: string
           favorite_challenges?: string[]
+          guild_participation_opt_in?: boolean
           id?: string
           interests?: string[]
+          last_activity_date?: string | null
           name: string
           pdf_unlocked?: boolean
+          streak?: number
           talents?: Json
           updated_at?: string
           user_id: string
+          xp?: number
         }
         Update: {
           age?: number
@@ -255,13 +292,17 @@ export type Database = {
           country?: string | null
           created_at?: string
           favorite_challenges?: string[]
+          guild_participation_opt_in?: boolean
           id?: string
           interests?: string[]
+          last_activity_date?: string | null
           name?: string
           pdf_unlocked?: boolean
+          streak?: number
           talents?: Json
           updated_at?: string
           user_id?: string
+          xp?: number
         }
         Relationships: []
       }
@@ -778,6 +819,15 @@ export type Database = {
       increment_child_talents: {
         Args: { p_child_id: string; p_deltas: Json }
         Returns: Json
+      }
+      list_opted_in_guild_members: {
+        Args: { p_requesting_child_id: string }
+        Returns: {
+          age: number
+          id: string
+          name: string
+          talents: Json
+        }[]
       }
       record_trait_point: {
         Args: {

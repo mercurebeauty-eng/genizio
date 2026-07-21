@@ -59,7 +59,7 @@ export function ConfirmDialogHost() {
 
   return (
     <AlertDialog open={!!pending} onOpenChange={(open) => { if (!open) close(false); }}>
-      <AlertDialogContent className="rounded-3xl max-w-sm border-[3px] border-ink shadow-brutal">
+      <AlertDialogContent className="rounded-3xl max-w-sm border border-ink/10 shadow-xl">
         <AlertDialogHeader>
           <AlertDialogTitle className={`flex items-center gap-2 ${danger ? "text-red-600" : "text-ink"}`}>
             <AlertTriangle className="size-5" />
@@ -72,7 +72,7 @@ export function ConfirmDialogHost() {
         <AlertDialogFooter className="flex-row gap-2 sm:space-x-0">
           <AlertDialogCancel
             onClick={() => close(false)}
-            className="flex-1 mt-0 rounded-xl border-[3px] border-ink shadow-brutal-sm"
+            className="flex-1 mt-0 rounded-xl border border-ink/10 shadow-sm"
           >
             {pending?.cancelLabel ?? "Annuler"}
           </AlertDialogCancel>
@@ -81,7 +81,7 @@ export function ConfirmDialogHost() {
               e.preventDefault();
               close(true);
             }}
-            className={`flex-1 rounded-xl border-[3px] border-ink shadow-brutal-sm ${
+            className={`flex-1 rounded-xl border border-ink/10 shadow-sm ${
               danger ? "bg-red-600 text-white hover:bg-red-700" : "bg-brand text-white hover:bg-brand-dark"
             }`}
           >

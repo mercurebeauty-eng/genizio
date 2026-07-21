@@ -22,6 +22,9 @@ export function ProfileDialog({
           city: initial.city ?? "",
           country: initial.country ?? "",
           avatar_color: initial.avatar_color,
+          xp: initial.xp ?? 0,
+          streak: initial.streak ?? 0,
+          last_activity_date: initial.last_activity_date ?? null,
         }
       : emptyProfileDraft(),
   );
@@ -85,15 +88,15 @@ export function ProfileDialog({
     <div className="fixed inset-0 z-50 grid place-items-center overflow-y-auto bg-ink/60 p-4" onClick={onClose}>
       <div
         onClick={(e) => e.stopPropagation()}
-        className="max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-3xl border-[3px] border-ink bg-white p-8 shadow-brutal"
+        className="max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-3xl border border-ink/10 bg-white p-8 shadow-xl"
       >
         <div className="mb-6 flex items-center gap-4">
           <div
-            className={`grid size-14 place-items-center rounded-full font-display text-xl font-bold text-white ${selectedColor}`}
+            className={`grid size-14 place-items-center rounded-full font-display text-balance text-xl font-bold text-white ${selectedColor}`}
           >
             {draft.name.charAt(0).toUpperCase() || "?"}
           </div>
-          <h2 className="font-display text-2xl font-extrabold">
+          <h2 className="font-display text-balance text-2xl font-extrabold">
             {initial ? "Modifier le profil" : "Nouveau profil"}
           </h2>
         </div>
@@ -106,7 +109,7 @@ export function ProfileDialog({
             <input
               value={draft.name}
               onChange={(e) => setDraft({ ...draft, name: e.target.value.slice(0, 40) })}
-              className="w-full rounded-xl border-[3px] border-ink px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-brand shadow-brutal-sm"
+              className="w-full rounded-xl border border-ink/10 px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-brand shadow-sm"
             />
           </div>
 
@@ -133,7 +136,7 @@ export function ProfileDialog({
                 value={draft.city ?? ""}
                 onChange={(e) => setDraft({ ...draft, city: e.target.value.slice(0, 60) })}
                 placeholder="Dakar"
-                className="w-full rounded-xl border-[3px] border-ink px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-brand shadow-brutal-sm"
+                className="w-full rounded-xl border border-ink/10 px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-brand shadow-sm"
               />
             </div>
             <div>
@@ -144,7 +147,7 @@ export function ProfileDialog({
                 value={draft.country ?? ""}
                 onChange={(e) => setDraft({ ...draft, country: e.target.value.slice(0, 60) })}
                 placeholder="Sénégal"
-                className="w-full rounded-xl border-[3px] border-ink px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-brand shadow-brutal-sm"
+                className="w-full rounded-xl border border-ink/10 px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-brand shadow-sm"
               />
             </div>
           </div>
@@ -161,7 +164,7 @@ export function ProfileDialog({
                   onClick={() => setDraft({ ...draft, avatar_color: c.key })}
                   aria-label={c.key}
                   className={`size-10 rounded-full ${c.cls} transition-all ${
-                    draft.avatar_color === c.key ? "border-[3px] border-ink shadow-brutal-sm" : "opacity-70 border-2 border-transparent"
+                    draft.avatar_color === c.key ? "border-2 border-ink shadow-sm" : "opacity-70 border-2 border-transparent"
                   }`}
                 />
               ))}
@@ -210,14 +213,14 @@ export function ProfileDialog({
         <div className="mt-8 flex justify-end gap-3">
           <button
             onClick={onClose}
-            className="rounded-2xl border-[3px] border-ink bg-white px-5 py-2.5 text-sm font-bold shadow-brutal-sm hover:-translate-y-0.5 active:translate-y-0 transition-all"
+            className="press-white rounded-2xl border border-ink/10 bg-white px-5 py-2.5 text-sm font-bold"
           >
             Annuler
           </button>
           <button
             onClick={save}
             disabled={busy}
-            className="rounded-2xl border-[3px] border-ink bg-brand px-6 py-2.5 text-sm font-bold text-white shadow-brutal hover:-translate-y-0.5 active:translate-y-0 active:shadow-none transition-all disabled:opacity-60"
+            className="press-brand rounded-2xl bg-brand px-6 py-2.5 text-sm font-bold text-white disabled:opacity-60"
           >
             {busy ? "…" : "Enregistrer"}
           </button>

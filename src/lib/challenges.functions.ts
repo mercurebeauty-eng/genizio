@@ -77,6 +77,149 @@ async function trackMaterialSuggestions(items: { material_tags: string[]; title:
   }
 }
 
+const XP_PER_COMPLETION = 180;
+// Le niveau vient de la même formule que le tableau de bord (profiles.index.tsx :
+// Math.floor(xp / 500) + 1) — comparer l'avant/après xp permet de détecter un
+// passage de niveau au moment même où on l'attribue, sans requête séparée.
+function levelForXp(xp: number): number {
+  return Math.floor(xp / 500) + 1;
+}
+
+async function awardCompletionXP(supabaseClient: any, childId: string) {
+  try {
+    const { data: profile } = await supabaseClient
+      .from("child_profiles")
+      .select("xp, streak, last_activity_date")
+      .eq("id", childId)
+      .single();
+    if (!profile) return null;
+
+    const now = new Date();
+    let newStreak = profile.streak || 0;
+    if (profile.last_activity_date) {
+      const lastDate = new Date(profile.last_activity_date);
+      const diffHours = (now.getTime() - lastDate.getTime()) / (1000 * 60 * 60);
+      if (diffHours > 24 && diffHours < 48) newStreak += 1;
+      else if (diffHours >= 48) newStreak = 1;
+      // if < 24h, streak remains the same (already incremented today)
+    } else {
+      newStreak = 1;
+    }
+
+    const oldXp = profile.xp || 0;
+    const newXp = oldXp + XP_PER_COMPLETION;
+
+    await supabaseClient
+      .from("child_profiles")
+      .update({
+        xp: newXp,
+        streak: newStreak,
+        last_activity_date: now.toISOString()
+      })
+      .eq("id", childId);
+
+    return {
+      xpGained: XP_PER_COMPLETION,
+      newXp,
+      newStreak,
+      newLevel: levelForXp(newXp),
+      leveledUp: levelForXp(newXp) > levelForXp(oldXp),
+    };
+  } catch (err) {
+    console.error("awardCompletionXP failed (non-fatal):", err);
+    return null;
+  }
+}
+
+// Système de badges (cf. écran 8 du prototype, genizio-decisions) : un badge
+// par domaine de DOMAINS ci-dessus, débloqué au 3e défi complété dans ce
+// domaine. Le catalogue (titre/description/seuil) reste ici plutôt qu'en
+// base — seule l'attribution réelle par enfant vit dans child_badges. Les
+// chemins de génération hors DOMAINS (référentiel académique, gabarits de
+// l'Atelier...) peuvent écrire des valeurs de domaine différentes : ces
+// défis-là ne comptent simplement pour aucun badge, pas une erreur, juste
+// une couverture partielle assumée pour ce premier jet.
+const BADGE_THRESHOLD = 3;
+const BADGE_CATALOG: Record<string, { title: string; description: string }> = {
+  Sciences: {
+    title: "Scientifique en herbe",
+    description: "Tu as mené 3 expériences. Tu observes, tu questionnes, tu comprends le monde qui t'entoure.",
+  },
+  Architecture: {
+    title: "Bâtisseur·se en herbe",
+    description: "Tu as terminé 3 défis de construction. Tu penses déjà comme quelqu'un qui bâtit des choses solides.",
+  },
+  Artisanat: {
+    title: "Artisan·e en herbe",
+    description: "Tu as fabriqué 3 objets de tes propres mains. Le geste précis devient une seconde nature.",
+  },
+  Agriculture: {
+    title: "Cultivateur·rice en herbe",
+    description: "Tu as mené 3 défis liés à la nature et au vivant. Tu sais prendre soin de ce qui pousse.",
+  },
+  Sport: {
+    title: "Athlète en herbe",
+    description: "Tu as relevé 3 défis physiques. Ton corps devient un allié de plus en plus sûr.",
+  },
+  Communication: {
+    title: "Orateur·rice en herbe",
+    description: "Tu as réussi 3 défis de communication. Tes mots portent de plus en plus loin.",
+  },
+  Entrepreneuriat: {
+    title: "Entrepreneur·se en herbe",
+    description: "Tu as mené 3 projets à la manière d'un vrai petit commerce. Tu sais transformer une idée en réalité.",
+  },
+  Arts: {
+    title: "Artiste en herbe",
+    description: "Tu as créé 3 œuvres. Ton regard sur le monde devient de plus en plus unique.",
+  },
+  Langues: {
+    title: "Linguiste en herbe",
+    description: "Tu as relevé 3 défis de langue et d'écriture. Les mots deviennent un vrai terrain de jeu.",
+  },
+  "Tech & IA": {
+    title: "Ingénieur·e numérique en herbe",
+    description: "Tu as relevé 3 défis de logique et de technologie. Tu commences à penser comme la machine — puis mieux qu'elle.",
+  },
+};
+
+async function checkAndAwardBadge(supabaseClient: any, childId: string, domain: string | null | undefined) {
+  try {
+    if (!domain) return null;
+    const badgeDef = BADGE_CATALOG[domain];
+    if (!badgeDef) return null;
+
+    const { data: existing } = await supabaseClient
+      .from("child_badges")
+      .select("id")
+      .eq("child_id", childId)
+      .eq("badge_slug", domain)
+      .maybeSingle();
+    if (existing) return null; // déjà débloqué — pas de re-notification
+
+    const { count } = await supabaseClient
+      .from("challenges")
+      .select("id", { count: "exact", head: true })
+      .eq("child_id", childId)
+      .eq("domain", domain)
+      .eq("status", "completed");
+    if ((count ?? 0) < BADGE_THRESHOLD) return null;
+
+    const { error } = await supabaseClient
+      .from("child_badges")
+      .insert({ child_id: childId, badge_slug: domain });
+    if (error) {
+      console.error("checkAndAwardBadge insert failed (non-fatal):", error);
+      return null;
+    }
+
+    return { slug: domain, title: badgeDef.title, description: badgeDef.description };
+  } catch (err) {
+    console.error("checkAndAwardBadge failed (non-fatal):", err);
+    return null;
+  }
+}
+
 // LLMs are known to favor items earlier in a list they're asked to choose
 // from, independent of actual relevance. DOMAINS is always presented in the
 // same order to every generation call for every child — shuffle it per call
@@ -812,6 +955,11 @@ export const updateChallenge = createServerFn({ method: "POST" })
       .select("*")
       .single();
     if (error) throw new Error(error.message);
+
+    if (patch.status === "completed" && row?.child_id) {
+      await awardCompletionXP(context.supabase, row.child_id);
+    }
+
     return row;
   });
 
@@ -978,6 +1126,8 @@ Réponds STRICTEMENT en JSON valide avec ce format :
     // parent. Only persist the outcome (and only upload the photo) once the
     // AI actually confirms the submission is relevant.
     let updatedChallenge: any = challenge;
+    let levelUp: Awaited<ReturnType<typeof awardCompletionXP>> = null;
+    let badgeUnlocked: Awaited<ReturnType<typeof checkAndAwardBadge>> = null;
     if (relevant) {
       let proofImageUrl: string | null = null;
       if (data.proofImageBase64) {
@@ -1014,6 +1164,9 @@ Réponds STRICTEMENT en JSON valide avec ce format :
       if (error) throw new Error(error.message);
       updatedChallenge = updated;
 
+      levelUp = await awardCompletionXP(supabase, challenge.child_id);
+      badgeUnlocked = await checkAndAwardBadge(supabase, challenge.child_id, challenge.domain);
+
       // NAYA 2.0 Phase 3b : si ce défi était un défi discriminant, met à jour la boucle bayésienne
       try {
         const { processDiscriminantResult } = await import("@/lib/hypotheses.functions");
@@ -1029,6 +1182,8 @@ Réponds STRICTEMENT en JSON valide avec ce format :
       awarded_points: awarded,
       imageAnalyzed,
       relevant,
+      levelUp,
+      badgeUnlocked,
     };
   });
 
@@ -1093,6 +1248,8 @@ export const submitDeclarativeProof = createServerFn({ method: "POST" })
         awarded_points: {},
         imageAnalyzed: false,
         relevant: false,
+        levelUp: null,
+        badgeUnlocked: null,
       };
     }
 
@@ -1121,6 +1278,13 @@ export const submitDeclarativeProof = createServerFn({ method: "POST" })
       .single();
     if (error) throw new Error(error.message);
 
+    // Manquait ici jusqu'à présent : validateChallengeProof et updateChallenge
+    // l'appellent déjà toutes les deux — un défi validé par déclaration (jongles,
+    // minutes de course...) est une complétion tout aussi réelle et doit compter
+    // pour l'XP/la série au même titre qu'une preuve photo.
+    const levelUp = await awardCompletionXP(supabase, challenge.child_id);
+    const badgeUnlocked = await checkAndAwardBadge(supabase, challenge.child_id, challenge.domain);
+
     // NAYA 2.0 Phase 3b : si ce défi déclaratif était le défi discriminant d'un
     // cycle d'hypothèses, met à jour la boucle bayésienne — même point d'entrée
     // que validateChallengeProof, l'origine de la preuve ne doit pas changer le
@@ -1138,6 +1302,8 @@ export const submitDeclarativeProof = createServerFn({ method: "POST" })
       awarded_points: award,
       imageAnalyzed: false,
       relevant: true,
+      levelUp,
+      badgeUnlocked,
     };
   });
 
