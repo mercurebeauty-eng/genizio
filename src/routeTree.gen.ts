@@ -14,6 +14,7 @@ import { Route as SupervisorRouteImport } from './routes/supervisor'
 import { Route as ProfilesRouteImport } from './routes/profiles'
 import { Route as ProfileRouteImport } from './routes/profile'
 import { Route as PrivacyRouteImport } from './routes/privacy'
+import { Route as NouveautesRouteImport } from './routes/nouveautes'
 import { Route as MentionsLegalesRouteImport } from './routes/mentions-legales'
 import { Route as LaboratoryRouteImport } from './routes/laboratory'
 import { Route as FeedRouteImport } from './routes/feed'
@@ -58,6 +59,11 @@ const ProfileRoute = ProfileRouteImport.update({
 const PrivacyRoute = PrivacyRouteImport.update({
   id: '/privacy',
   path: '/privacy',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const NouveautesRoute = NouveautesRouteImport.update({
+  id: '/nouveautes',
+  path: '/nouveautes',
   getParentRoute: () => rootRouteImport,
 } as any)
 const MentionsLegalesRoute = MentionsLegalesRouteImport.update({
@@ -173,6 +179,7 @@ export interface FileRoutesByFullPath {
   '/feed': typeof FeedRoute
   '/laboratory': typeof LaboratoryRoute
   '/mentions-legales': typeof MentionsLegalesRoute
+  '/nouveautes': typeof NouveautesRoute
   '/privacy': typeof PrivacyRoute
   '/profile': typeof ProfileRoute
   '/profiles': typeof ProfilesRouteWithChildren
@@ -199,6 +206,7 @@ export interface FileRoutesByTo {
   '/feed': typeof FeedRoute
   '/laboratory': typeof LaboratoryRoute
   '/mentions-legales': typeof MentionsLegalesRoute
+  '/nouveautes': typeof NouveautesRoute
   '/privacy': typeof PrivacyRoute
   '/profile': typeof ProfileRoute
   '/supervisor': typeof SupervisorRoute
@@ -226,6 +234,7 @@ export interface FileRoutesById {
   '/feed': typeof FeedRoute
   '/laboratory': typeof LaboratoryRoute
   '/mentions-legales': typeof MentionsLegalesRoute
+  '/nouveautes': typeof NouveautesRoute
   '/privacy': typeof PrivacyRoute
   '/profile': typeof ProfileRoute
   '/profiles': typeof ProfilesRouteWithChildren
@@ -255,6 +264,7 @@ export interface FileRouteTypes {
     | '/feed'
     | '/laboratory'
     | '/mentions-legales'
+    | '/nouveautes'
     | '/privacy'
     | '/profile'
     | '/profiles'
@@ -281,6 +291,7 @@ export interface FileRouteTypes {
     | '/feed'
     | '/laboratory'
     | '/mentions-legales'
+    | '/nouveautes'
     | '/privacy'
     | '/profile'
     | '/supervisor'
@@ -307,6 +318,7 @@ export interface FileRouteTypes {
     | '/feed'
     | '/laboratory'
     | '/mentions-legales'
+    | '/nouveautes'
     | '/privacy'
     | '/profile'
     | '/profiles'
@@ -335,6 +347,7 @@ export interface RootRouteChildren {
   FeedRoute: typeof FeedRoute
   LaboratoryRoute: typeof LaboratoryRoute
   MentionsLegalesRoute: typeof MentionsLegalesRoute
+  NouveautesRoute: typeof NouveautesRoute
   PrivacyRoute: typeof PrivacyRoute
   ProfileRoute: typeof ProfileRoute
   ProfilesRoute: typeof ProfilesRouteWithChildren
@@ -379,6 +392,13 @@ declare module '@tanstack/react-router' {
       path: '/privacy'
       fullPath: '/privacy'
       preLoaderRoute: typeof PrivacyRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/nouveautes': {
+      id: '/nouveautes'
+      path: '/nouveautes'
+      fullPath: '/nouveautes'
+      preLoaderRoute: typeof NouveautesRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/mentions-legales': {
@@ -572,6 +592,7 @@ const rootRouteChildren: RootRouteChildren = {
   FeedRoute: FeedRoute,
   LaboratoryRoute: LaboratoryRoute,
   MentionsLegalesRoute: MentionsLegalesRoute,
+  NouveautesRoute: NouveautesRoute,
   PrivacyRoute: PrivacyRoute,
   ProfileRoute: ProfileRoute,
   ProfilesRoute: ProfilesRouteWithChildren,

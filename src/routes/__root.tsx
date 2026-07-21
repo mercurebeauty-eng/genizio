@@ -15,6 +15,7 @@ import { Toaster } from "../components/ui/sonner";
 import { WhatsAppFAB } from "../components/WhatsAppFAB";
 import { ConfirmDialogHost } from "../components/ui/confirm-dialog";
 import { PwaInstallPrompt } from "../components/PwaInstallPrompt";
+import { PwaUpdateBanner } from "../components/PwaUpdateBanner";
 
 
 function NotFoundComponent() {
@@ -165,6 +166,7 @@ function RootComponent() {
       <WhatsAppFAB />
       <ConfirmDialogHost />
       <PwaInstallPrompt />
+      <PwaUpdateBanner />
     </QueryClientProvider>
   );
 }
