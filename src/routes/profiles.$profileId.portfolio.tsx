@@ -527,8 +527,8 @@ function PortfolioPage() {
             );
           })()}
 
-          {/* Card: Le Passeport d'Excellence (pour tous les profils) */}
-          {(() => {
+          {/* Card: Le Passeport d'Excellence (uniquement pour 14 ans et plus) */}
+          {child.age >= 14 && (() => {
             const isUnlocked = child.pdf_unlocked === true;
             
             // Build the WhatsApp redirection message
