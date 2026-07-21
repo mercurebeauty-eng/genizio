@@ -374,22 +374,30 @@ function DashboardPage() {
                       </div>
                     )}
 
-                    {/* Compact Cards: Niveau / Talents */}
+                    {/* Compact Cards: Niveau / Talents — cliquables vers leur page de détail respective */}
                     <div className="flex gap-3 mb-5">
-                      <div className="flex-1 bg-card rounded-[1rem] p-[14px] shadow-sm border border-border">
+                      <Link
+                        to="/profiles/$profileId/parcours"
+                        params={{ profileId: selected.id }}
+                        className="flex-1 bg-card rounded-[1rem] p-[14px] shadow-sm border border-border cursor-pointer"
+                      >
                         <div className="text-[12px] text-ink/60 font-semibold mb-2">Niveau {currentLevel} · {guild.name.replace('Les ', '')}</div>
                         <div className="h-[9px] bg-ink/5 rounded-full overflow-hidden">
                           <div className="h-full rounded-full transition-all duration-700 ease-out origin-left animate-[gzGrowBar_.7s_ease-out]" style={{ width: `${xpPct}%`, background: "linear-gradient(90deg, var(--brand), oklch(0.6 0.15 45))" }}></div>
                         </div>
                         <div className="text-[12px] text-ink/40 font-bold text-right mt-[5px]">{totalXP} XP</div>
-                      </div>
-                      <div className="flex-1 bg-card rounded-[1rem] p-[14px] shadow-sm border border-border">
+                      </Link>
+                      <Link
+                        to="/profiles/$profileId/portfolio"
+                        params={{ profileId: selected.id }}
+                        className="flex-1 bg-card rounded-[1rem] p-[14px] shadow-sm border border-border cursor-pointer"
+                      >
                         <div className="text-[12px] text-ink/60 font-semibold mb-2">Talents actifs</div>
                         <div className="flex items-baseline gap-[5px]">
                           <span className="font-display text-balance font-bold text-[26px]" style={{ color: `var(--guild-${guild.key === 'aucune' ? 'batisseurs' : guild.key})` }}>{activeTalents}</span>
                           <span className="text-[12px] text-ink/60">domaines</span>
                         </div>
-                      </div>
+                      </Link>
                     </div>
 
                     {/* Continuer à explorer */}
