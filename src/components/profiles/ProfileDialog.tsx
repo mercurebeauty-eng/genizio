@@ -135,7 +135,7 @@ export function ProfileDialog({
               <input
                 value={draft.city ?? ""}
                 onChange={(e) => setDraft({ ...draft, city: e.target.value.slice(0, 60) })}
-                placeholder="Dakar"
+                placeholder="Abidjan"
                 className="w-full rounded-xl border border-ink/10 px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-brand shadow-sm"
               />
             </div>
@@ -146,7 +146,7 @@ export function ProfileDialog({
               <input
                 value={draft.country ?? ""}
                 onChange={(e) => setDraft({ ...draft, country: e.target.value.slice(0, 60) })}
-                placeholder="Sénégal"
+                placeholder="Côte d'Ivoire"
                 className="w-full rounded-xl border border-ink/10 px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-brand shadow-sm"
               />
             </div>
