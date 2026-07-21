@@ -551,11 +551,11 @@ function ChallengesPage() {
 
             {/* Micro stats */}
             <div className="grid grid-cols-2 gap-3">
-              <div className="bg-white rounded-2xl border-[3px] border-ink shadow-brutal-sm p-4 text-center">
+              <div className="bg-white rounded-2xl border border-ink/10 shadow-sm p-4 text-center">
                 <span className="text-[10px] font-bold uppercase tracking-wider text-ink/60">Défis Terminés</span>
                 <p className="mt-1 font-display text-2xl font-extrabold text-brand">{done}</p>
               </div>
-              <div className="bg-white rounded-2xl border-[3px] border-ink shadow-brutal-sm p-4 text-center">
+              <div className="bg-white rounded-2xl border border-ink/10 shadow-sm p-4 text-center">
                 <span className="text-[10px] font-bold uppercase tracking-wider text-ink/60">Progression</span>
                 <p className="mt-1 font-display text-2xl font-extrabold text-brand">{totalProgress}%</p>
               </div>
@@ -568,9 +568,9 @@ function ChallengesPage() {
 
             {/* NAYA 2.0 Phase 5 — Recommandation Prioritaire */}
             {recommendation && (
-              <div className="rounded-3xl border-[3px] border-ink bg-gradient-to-br from-amber-100 via-amber-50 to-white p-6 shadow-brutal mb-6">
+              <div className="rounded-3xl border border-amber-200 bg-gradient-to-br from-amber-100/90 via-amber-50 to-white p-6 shadow-md mb-6 backdrop-blur-md">
                 <div className="flex flex-wrap items-center justify-between gap-3 mb-3">
-                  <span className="inline-flex items-center gap-1.5 rounded-full border-2 border-ink bg-amber-300 px-3 py-1 text-xs font-black uppercase tracking-wider text-ink shadow-brutal-sm">
+                  <span className="inline-flex items-center gap-1.5 rounded-full border border-amber-400 bg-amber-300 px-3 py-1 text-xs font-black uppercase tracking-wider text-ink shadow-xs">
                     <Sparkles className="size-4 text-amber-800 fill-amber-800" />
                     {recommendation.badgeLabel}
                   </span>
@@ -580,7 +580,7 @@ function ChallengesPage() {
                   {recommendation.pedagogicalReason}
                 </p>
                 {recommendation.challenge && (
-                  <div className="rounded-2xl border-2 border-ink bg-white p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                  <div className="rounded-2xl border border-amber-200 bg-white p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-sm">
                     <div>
                       <span className="text-[10px] font-black uppercase text-brand tracking-widest">{recommendation.challenge.domain}</span>
                       <h4 className="font-display text-lg font-black text-ink">{recommendation.challenge.title}</h4>
@@ -591,7 +591,7 @@ function ChallengesPage() {
                         setStatus(recommendation.challenge.id, "in_progress");
                         setOpenId(recommendation.challenge.id);
                       }}
-                      className="inline-flex items-center justify-center gap-2 rounded-xl border-2 border-ink bg-brand px-5 py-2.5 text-xs font-bold text-white shadow-brutal-sm hover:-translate-y-0.5 active:translate-y-0 transition-all shrink-0 cursor-pointer"
+                      className="press-brand inline-flex items-center justify-center gap-2 rounded-xl bg-brand px-5 py-2.5 text-xs font-bold text-white shrink-0 cursor-pointer"
                     >
                       <Play className="size-4 fill-white" />
                       <span>Commencer cette mission</span>
@@ -602,7 +602,7 @@ function ChallengesPage() {
             )}
             
             {/* 🧪 Unified Lab Panel */}
-            <div id="genizio-lab" className="rounded-3xl border-[3px] border-ink bg-sky p-6 shadow-brutal md:p-8">
+            <div id="genizio-lab" className="rounded-3xl border border-ink/10 bg-sky-50/80 p-6 shadow-md md:p-8 backdrop-blur-md">
               <div className="mb-4 flex items-center justify-between">
                 <div className="flex items-center gap-3">
                   <span className="grid place-items-center rounded-2xl bg-brand p-2.5 text-white border-2 border-ink shadow-brutal-sm">

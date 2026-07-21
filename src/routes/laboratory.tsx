@@ -280,7 +280,7 @@ function LaboratoryPage() {
         </header>
 
         {/* Configuration Panel */}
-        <div className="mb-8 rounded-3xl border-[3px] border-ink bg-white p-6 shadow-brutal md:p-8">
+        <div className="mb-8 rounded-3xl border border-ink/10 bg-white/90 p-6 shadow-md backdrop-blur-md md:p-8">
           <div className="grid gap-6 md:grid-cols-1">
             {/* Profil Enfant */}
             <div>
@@ -293,10 +293,10 @@ function LaboratoryPage() {
                     <button
                       key={c.id}
                       onClick={() => setSelectedChild(c.id)}
-                      className={`rounded-2xl border-[3px] border-ink px-5 py-3 text-sm font-bold transition-all ${
+                      className={`rounded-2xl border border-ink/10 px-5 py-3 text-sm font-bold transition-all cursor-pointer ${
                         selectedChild === c.id
-                          ? "bg-brand text-white shadow-brutal -translate-y-0.5"
-                          : "bg-surface text-ink shadow-brutal-sm hover:-translate-y-0.5 hover:bg-white"
+                          ? "press-brand bg-brand text-white"
+                          : "press-white bg-surface text-ink hover:bg-white"
                       }`}
                     >
                       {c.name}

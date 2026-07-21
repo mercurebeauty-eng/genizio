@@ -295,11 +295,11 @@ function PortfolioPage() {
               rendu ici. Absente du DOM si aucun cycle ouvert n'existe encore : ne
               jamais afficher un état "rien détecté" qui sonnerait comme un jugement. */}
           {openCycle?.parent_narrative && (
-            <div className="rounded-3xl border-[3px] border-ink bg-amber-50 p-6 shadow-brutal">
+            <div className="rounded-3xl border border-amber-200 bg-amber-50/90 p-6 shadow-md backdrop-blur-md">
               <div className="mb-3 flex items-center gap-3">
                 <NayaAvatar size="sm" thoughts={[`Je réfléchis à quelque chose sur ${child.name}...`]} />
                 <div>
-                  <span className="inline-flex items-center gap-1.5 rounded-full border-2 border-ink bg-amber-200 px-2.5 py-0.5 text-[10px] font-black uppercase tracking-wider text-amber-900">
+                  <span className="inline-flex items-center gap-1.5 rounded-full border border-amber-300 bg-amber-200 px-2.5 py-0.5 text-[10px] font-black uppercase tracking-wider text-amber-900 shadow-xs">
                     <Search className="size-3" />
                     Naya enquête encore
                   </span>
@@ -309,14 +309,14 @@ function PortfolioPage() {
               <p className="text-sm font-medium leading-relaxed text-ink">
                 {openCycle.parent_narrative}
               </p>
-              <div className="mt-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-3 border-t-2 border-dashed border-amber-200">
+              <div className="mt-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-3 border-t border-dashed border-amber-200">
                 <p className="text-xs italic text-ink/60">
                   Naya continue d'observer les prochains défis de {child.name} pour affiner sa compréhension.
                 </p>
                 <Link
                   to="/profiles/$profileId/challenges"
                   params={{ profileId: child.id }}
-                  className="inline-flex items-center justify-center gap-2 rounded-2xl border-2 border-ink bg-amber-300 px-4 py-2 text-xs font-bold text-ink shadow-brutal-sm hover:-translate-y-0.5 active:translate-y-0 transition-all shrink-0 cursor-pointer"
+                  className="press-white inline-flex items-center justify-center gap-2 rounded-2xl border border-amber-300 bg-amber-300 px-4 py-2 text-xs font-bold text-ink shrink-0 cursor-pointer"
                 >
                   <Sparkles className="size-3.5 fill-amber-700 text-amber-700" />
                   <span>Proposer un défi adapté</span>
@@ -330,10 +330,6 @@ function PortfolioPage() {
             const guild = getChildGuild(child.talents);
             const level = Math.max(1, Math.min(10, Math.floor(completed.length / 4) + 1));
             
-            // Singularize guild name for the title. "Curieux" covers
-            // NO_GUILD_YET explicitly — distinct from any real guild's
-            // singular form AND from every entry in `suffixes` below, so it
-            // can't collide into an odd repeat like "Aventurier Aventurier".
             let singularGuild = "Curieux";
             if (guild.name.includes("Bâtisseurs")) singularGuild = "Bâtisseur";
             else if (guild.name.includes("Inventeurs")) singularGuild = "Inventeur";
@@ -345,14 +341,11 @@ function PortfolioPage() {
             const suffixes = ["Novice", "Apprenti", "Émergent", "Compagnon", "Initié", "Confirmé", "Aventurier", "Maître", "Champion", "Légende"];
             const rank = `${singularGuild} ${suffixes[level - 1] || "Expert"}`;
 
-            // List of interests tags to map status
             const childInterests = child.interests && child.interests.length > 0
               ? child.interests.slice(0, 4)
               : ["Sciences & Expériences", "Dessin & Peinture", "Sens de la négociation", "Construction & Lego"];
 
-            // Helper to get bucket for an interest
             const getInterestBucket = (interestName: string) => {
-              // Find which talent key contains this interest tag
               let foundKey = "spatial";
               Object.entries(INTERESTS_BY_TALENT).forEach(([key, value]) => {
                 if (value.tags.includes(interestName)) {
@@ -368,7 +361,7 @@ function PortfolioPage() {
             };
 
             return (
-              <div className="rounded-3xl border-[3px] border-ink bg-white p-6 shadow-brutal flex flex-col justify-between">
+              <div className="rounded-3xl border border-ink/10 bg-white p-6 shadow-md flex flex-col justify-between">
                 <div>
                   {/* Card Header */}
                   <div className="flex justify-between items-start gap-4 mb-4">
