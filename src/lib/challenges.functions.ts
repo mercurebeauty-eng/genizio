@@ -1,6 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { VALID_TALENT_KEYS, TALENT_KEY_LABELS } from "@/lib/talent-buckets";
+import { INTERESTS_BY_TALENT } from "@/components/profiles/shared";
 import { z } from "zod";
 
 // Domaines couverts par le référentiel académique (cf. genizio-decisions #39). "creative"
@@ -511,6 +512,30 @@ export function finalizeChallenge<T extends {
   };
 }
 
+/**
+ * Helper mapping child.interests tags (from INTERESTS_BY_TALENT in src/components/profiles/shared.ts)
+ * into rich cognitive posture descriptors and behavioral drivers for AI prompt payloads.
+ */
+export function formatChildInterestsPayload(interests?: string[] | null): string {
+  if (!interests || interests.length === 0) {
+    return "Aucun levier spécifique renseigné — explorer et expérimenter avec différentes postures d'apprentissage.";
+  }
+
+  const tagMap = new Map<string, string>();
+  for (const [, talentGroup] of Object.entries(INTERESTS_BY_TALENT)) {
+    for (const tag of talentGroup.tags) {
+      tagMap.set(tag, talentGroup.label);
+    }
+  }
+
+  return interests
+    .map((tag) => {
+      const label = tagMap.get(tag);
+      return label ? `- [${label}] "${tag}"` : `- [Général] "${tag}"`;
+    })
+    .join("\n");
+}
+
 // Shared constitution injected into every challenge-generation prompt (bulk
 // and single). Written dense and numbered on purpose: the text-only calls
 // run on Haiku (lightweight model), which needs explicit, unambiguous rules
@@ -519,7 +544,7 @@ const GENIZIO_PRINCIPLES = `PRINCIPES DE GÉNÉRATION GÉNIZIO (règles strictes
 - CONCRET AVANT TOUT : chaque défi doit produire un résultat observable et vérifiable (objet construit, expérience réalisée, problème résolu, performance accomplie) — jamais une simple rêverie sans action physique.
 - Priorise dans cet ordre : observation du réel > expérimentation > création manuelle > résolution de problème concret. L'imagination doit s'appuyer sur une action réelle, jamais la remplacer seule.
 - Utilise en priorité les objets déjà disponibles chez l'enfant. N'invente jamais un défi nécessitant un achat important ou des conditions rares/spéciales.
-- CENTRES D'INTÉRÊT COMME TREMPLIN, PAS COMME CONTRAT : les centres d'intérêt déclarés par le parent sont un point de départ pour ancrer le défi dans ce que l'enfant aime, jamais un sujet littéral obligatoire à chaque fois. Si l'intérêt est "Football", un défi sur la stratégie d'équipe, le calcul de score, la géométrie du terrain ou la condition physique est tout aussi légitime qu'un défi littéralement "sur le foot" — varie l'angle plutôt que répéter le sujet brut d'un défi à l'autre.
+- CENTRES D'INTÉRÊT = LEVIERS COMPORTEMENTAUX ET MODES COGNITIFS PROFONDS : Ne traite jamais un centre d'intérêt (déclaré par le parent ou observé) comme un simple thème, un sujet de surface ou un hobby décoratif (ex: "football", "dinosaures"). Décode et exploite le LEVIER COMPORTEMENTAL ET LE MODE OPÉRATOIRE MENTAL sous-jacent de l'enfant (ex: "Démonte pour comprendre", "Négocie toujours", "A besoin de bouger pour réfléchir"). Utilise ces traits comme MÉCANIQUE ET POSTURE D'APPRENTISSAGE pour introduire n'importe quel domaine. Si l'enfant "démonte pour comprendre", propose un défi de déconstruction/analyse inverse, qu'il s'agisse de sciences, d'écriture, d'artisanat ou de logique. Chaque défi doit employer la mécanique d'action préférée de l'enfant (démonter, schématiser, simuler, optimiser, enquêter) pour l'engager naturellement dans les apprentissages.
 - VARIE LA MÉCANIQUE D'UN DÉFI À L'AUTRE : ne fais pas de "récupérer des matériaux et construire un objet" le réflexe par défaut de chaque défi. Alterne réellement entre observation, expérimentation, fabrication, résolution de problème, performance physique ou chronométrée, enquête sociale — la variété de forme compte autant que la variété de sujet.
 - INTERDIT : défi irréalisable concrètement, matériel inaccessible, exercice creux sans valeur pédagogique réelle, tâche trop abstraite déconnectée du quotidien, formulation générique déjà vue mille fois ("dessine ce que tu veux", "imagine une histoire" sans ancrage réel).
 - Cible explicitement 1 à 2 compétences précises et nomme-les dans "pedagogical_context" : Cognitives (logique, esprit critique, curiosité scientifique, créativité) · Pratiques (autonomie, débrouillardise/ingéniosité, méthode et rigueur, gestion du temps) · Sociales (communication, leadership, collaboration, empathie) · Personnelles (résilience face à la frustration, confiance en soi, esprit d'initiative, adaptabilité).
@@ -828,14 +853,15 @@ Profil :
 - Prénom : ${child.name}
 - Âge : ${child.age} ans
 - Ville / pays : ${[child.city, child.country].filter(Boolean).join(", ") || "non précisé"}
-- Centres d'intérêt déclarés par le parent : ${(child.interests ?? []).join(", ") || "variés"}
+- Modes d'engagement et leviers comportementaux observés par le parent :
+${formatChildInterestsPayload(child.interests)}
 - Scores de talents actuels (Radar Chart de Howard Gardner, sur les 9 intelligences) : ${JSON.stringify(child.talents || {})}
 
 Défis déjà accomplis par l'enfant et observations de Naya :
 ${completedSummary || "(Aucun défi complété pour le moment)"}
 
 CONSIGNES DE DÉVELOPPEMENT LIÉES À L'ÂGE :
-Adapte strictement la forme, la complexité intellectuelle et la motricité requise pour le défi à l'âge exact de l'enfant :
+Adapte strictly la forme, la complexité intellectuelle et la motricité requise pour le défi à l'âge exact de l'enfant :
 - De 1 à 3 ans (Exploration sensorielle et motrice) : Activités purement sensorielles (toucher, manipuler, transvaser, trier des couleurs/objets simples, textures, eau, sable). Aucune règle complexe, aucune consigne de motricité fine avancée (pas de découpage précis, pas d'écriture). Étape ultra-simple en 1 action à la fois.
 - De 4 à 7 ans (Phase exploratoire et imaginative) : Activités intégrant de l'imagination, des petits jeux de rôle ("fait semblant de"), du dessin, des petites manipulations de cause à effet guidées par le plaisir immédiat. L'action pratique doit primer sur la théorie.
 - De 8 à 11 ans (Phase structurée et concrète) : Proposer des projets de fabrication concrets (maquettes, expériences scientifiques simples, recettes simples, bricolage) avec des règles claires, des étapes méthodiques, et de l'observation logique ou sociale.
@@ -844,7 +870,7 @@ Adapte strictement la forme, la complexité intellectuelle et la motricité requ
 ${GENIZIO_PRINCIPLES}
 
 Contraintes :
-- Ignore le biais parental et utilise les données réelles : les intelligences actuellement les moins explorées chez cet enfant sont ${leastExplored.join(" et ")}. Sauf si le contexte les rend peu réalistes, au moins un des ${data.count} défis DOIT cibler l'une de ces intelligences plutôt que de renforcer uniquement les intérêts déjà connus — c'est ainsi que Naya révèle des talents cachés au lieu de se contenter de confirmer ce que le parent pense déjà savoir.
+- SYNTHÈSE PÉDAGOGIQUE ET APPRENTISSAGE ÉQUILIBRÉ : Associe les leviers comportementaux observés par le parent (posture cognitive) avec la cartographie des talents de l'enfant. Les intelligences actuellement les moins explorées chez cet enfant sont ${leastExplored.join(" et ")}. Sauf si le contexte les rend peu réalistes, au moins un des ${data.count} défis DOIT utiliser la posture ou mécanique d'action préférentielle de l'enfant comme passerelle naturelle pour explorer l'une de ces intelligences moins travaillées — c'est ainsi que Naya révèle des talents cachés en s'appuyant sur ses moteurs d'action naturels.
 - Ancre les défis dans le contexte africain (matériaux locaux, réalités du quotidien, langues, marchés, agriculture, artisanat, culture).
 - Choisis parmi ces domaines : ${shuffle(DOMAINS).join(", ")}.${ignoredDomains.length > 0 ? `\n- Cet enfant a déjà reçu plusieurs défis dans ${ignoredDomains.length > 1 ? "ces domaines" : "ce domaine"} (${ignoredDomains.join(", ")}) sans jamais les commencer : évite de reproposer ${ignoredDomains.length > 1 ? "ces domaines" : "ce domaine"}, sauf sous un angle radicalement différent de ce qui a déjà été proposé.` : ""}
 - Chaque défi doit être concret, réalisable à la maison ou dans le quartier, adapté à l'âge.
@@ -1436,7 +1462,8 @@ Profil de l'enfant :
 - Prénom : ${child.name}
 - Âge : ${child.age} ans
 - Ville / pays : ${[child.city, child.country].filter(Boolean).join(", ") || "non précisé"}
-- Centres d'intérêt initiaux (déclarés par le parent) : ${(child.interests ?? []).join(", ") || "aucun"}
+- Modes d'engagement et leviers comportementaux observés par le parent :
+${formatChildInterestsPayload(child.interests)}
 - Scores de talents actuels (Radar Chart de Howard Gardner) : ${JSON.stringify(child.talents || {})}
 
 CONSIGNES DE DÉVELOPPEMENT LIÉES À L'ÂGE :
@@ -1458,9 +1485,9 @@ Contexte immédiat (TRÈS IMPORTANT) :
 - Lieu / Environnement : ${location}
 ${data.homeMaterials ? `- Matériaux/objets disponibles à la maison : ${data.homeMaterials}` : ""}
 
-Ta mission (Ignorer le biais parental et utiliser les données réelles) :
-1. Analyse la carte des talents (Radar Chart), les intérêts déclarés par le parent, ET les observations des défis passés.
-2. Détecte les biais : Si le parent a déclaré certains intérêts, mais que les observations passées montrent que l'enfant bloque dessus ou excelle ailleurs, Naya doit prendre l'initiative de pivoter.
+Ta mission (Synthèse Pédagogique) :
+1. Analyse la carte des talents (Radar Chart), les leviers comportementaux observés par le parent (posture cognitive), ET les observations des défis passés.
+2. Synthèse pédagogique : Utilise les postures cognitives et mécaniques d'action préférées de l'enfant comme levier d'entrée pour aborder le domaine cible. Si les observations passées indiquent une évolution ou des points de blocage, adapte la mécanique d'action pour créer une passerelle d'apprentissage stimulante.
 ${domainInstruction}
 4. Le défi doit s'adapter EXACTEMENT au temps disponible. S'il n'y a que 10 minutes, propose un "mini-défi" immédiat. Si c'est 1h+, propose un projet structuré.
 5. Le défi doit être réalisable avec les objets de ce lieu précis.
@@ -1568,8 +1595,14 @@ export const getChildAISynthesis = createServerFn({ method: "POST" })
       .map((c) => `- Défi "${c.title}" (${c.domain}) : "${c.ai_observations ?? 'Pas d\'observation'}"`)
       .join("\n");
 
+    const formattedInterests = formatChildInterestsPayload(child.interests);
+
     const prompt = `Tu es Naya, une IA mentore pédagogique.
-Analyse les accomplissements suivants de l'enfant ${child.name} (${child.age} ans, centres d'intérêt: ${(child.interests ?? []).join(", ")}) :
+Analyse les accomplissements suivants de l'enfant ${child.name} (${child.age} ans) :
+Modes d'engagement et leviers comportementaux observés par le parent :
+${formattedInterests}
+
+Défis accomplis et observations de Naya :
 ${completedSummary}
 
 Rédige une synthèse pédagogique bienveillante et constructive à l'attention des parents (2 paragraphes courts maximum).

@@ -1,7 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { generateDiscriminantChallenge } from "@/lib/hypotheses.functions";
-import { callClaude, finalizeChallenge, PROOF_MODE_INSTRUCTION, ACADEMIC_REFERENTIAL_INSTRUCTION } from "@/lib/challenges.functions";
+import { callClaude, finalizeChallenge, PROOF_MODE_INSTRUCTION, ACADEMIC_REFERENTIAL_INSTRUCTION, formatChildInterestsPayload } from "@/lib/challenges.functions";
 import { z } from "zod";
 
 const RecommendInput = z.object({
@@ -93,9 +93,12 @@ export const recommendChallengesForChild = createServerFn({ method: "POST" })
 
     // 3A. Essaimage (Lever la faiblesse grâce à une force)
     if (weaknessEntry && strengthEntry) {
-      const interestsStr = (child.interests || []).join(", ") || "création, jeux";
+      const formattedInterests = formatChildInterestsPayload(child.interests);
       const prompt = `Tu es Naya, mentore IA. Conçois un micro-défi d'ESSAIMAGE pour ${child.name}, ${child.age} ans.
-Principe : Utiliser sa FORCE (${strengthEntry[0]}) et ses centres d'intérêt (${interestsStr}) pour développer doucement sa compétence en progression (${weaknessEntry[0]}).
+Principe : Utiliser sa FORCE (${strengthEntry[0]}) et ses leviers comportementaux / postures d'action préférentielles pour développer doucement sa compétence en progression (${weaknessEntry[0]}).
+
+Modes d'engagement et leviers comportementaux observés par le parent :
+${formattedInterests}
 
 ${PROOF_MODE_INSTRUCTION}
 
@@ -185,10 +188,13 @@ Format JSON strict :
     // recommandation.
     if (fragilityEntry) {
       const comfortSkill = strengthEntry?.[0] ?? fragilityEntry[0];
-      const interestsStr = (child.interests || []).join(", ") || "création, jeux";
+      const formattedInterests = formatChildInterestsPayload(child.interests);
       const prompt = `Tu es Naya, mentore IA. Conçois un micro-défi de STABILISATION pour ${child.name}, ${child.age} ans — un défi "doudou" au succès quasi garanti.
 
-Principe : ${child.name} traverse une phase instable sur une compétence (résultats en dents de scie). Ce défi doit RASSURER, pas challenger : structure très détaillée, étapes ultra-simples et peu nombreuses, aucune surprise, appuyé sur ${strengthEntry ? `sa force reconnue (${comfortSkill})` : "quelque chose de familier et confortable"} et ses centres d'intérêt (${interestsStr}). La réussite doit être quasi certaine.
+Principe : ${child.name} traverse une phase instable sur une compétence (résultats en dents de scie). Ce défi doit RASSURER, pas challenger : structure très détaillée, étapes ultra-simples et peu nombreuses, aucune surprise, appuyé sur ${strengthEntry ? `sa force reconnue (${comfortSkill})` : "quelque chose de familier et confortable"} et ses leviers comportementaux d'action habituels. La réussite doit être quasi certaine.
+
+Modes d'engagement et leviers comportementaux observés par le parent :
+${formattedInterests}
 
 ${PROOF_MODE_INSTRUCTION}
 Pour ce défi de stabilisation en particulier, une cible "declarative" doit rester trivialement atteignable (ex: 5 répétitions, pas 20) — le but est une réussite garantie, pas un défi physique.
