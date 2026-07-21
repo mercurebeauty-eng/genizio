@@ -16,6 +16,7 @@ import {
   Target,
   MapPin,
   ChevronRight,
+  ChevronDown,
   Star,
   Clock,
 } from "lucide-react";
@@ -76,6 +77,9 @@ function getDomainStyle(domain: string) {
   return DOMAIN_COLORS[domain] ?? "bg-ink/5 text-ink/60 border-ink/10";
 }
 
+/** Nombre de mois toujours dépliés en haut de l'historique, avant repli par défaut. */
+const DEFAULT_EXPANDED_MONTHS = 2;
+
 /** Regroupe les défis complétés par mois (YYYY-MM) */
 function groupByMonth(challenges: Challenge[]) {
   const groups = new Map<string, Challenge[]>();
@@ -102,6 +106,11 @@ function ParcoursPage() {
   const [child, setChild] = useState<Child | null>(null);
   const [challenges, setChallenges] = useState<Challenge[]>([]);
   const [fetching, setFetching] = useState(true);
+  // Mois repliés par défaut au-delà de DEFAULT_EXPANDED_MONTHS (voir plus bas) —
+  // un enfant actif depuis longtemps peut accumuler des centaines de défis, et
+  // tout afficher d'un coup rendait la page interminable à scroller. Suivi des
+  // mois que l'utilisateur a explicitement dépliés au-delà du défaut.
+  const [expandedMonths, setExpandedMonths] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     if (!loading && !session) navigate({ to: "/auth", replace: true });
@@ -345,10 +354,29 @@ function ParcoursPage() {
           </div>
         ) : (
           <div className="space-y-6">
-            {monthGroups.map(([monthKey, items]) => (
+            {monthGroups.map(([monthKey, items], index) => {
+              // Les 2 mois les plus récents restent toujours dépliés ; au-delà,
+              // repliés par défaut tant que l'utilisateur n'a pas cliqué dessus —
+              // évite de tout charger/scroller d'un coup pour un historique long.
+              const isDefaultExpanded = index < DEFAULT_EXPANDED_MONTHS;
+              const isExpanded = isDefaultExpanded || expandedMonths.has(monthKey);
+
+              return (
               <div key={monthKey}>
                 {/* Month label */}
-                <div className="mb-3 flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (isDefaultExpanded) return;
+                    setExpandedMonths((prev) => {
+                      const next = new Set(prev);
+                      if (next.has(monthKey)) next.delete(monthKey);
+                      else next.add(monthKey);
+                      return next;
+                    });
+                  }}
+                  className={`mb-3 flex w-full items-center gap-2 ${isDefaultExpanded ? "cursor-default" : "cursor-pointer"}`}
+                >
                   <span className="text-[11px] font-black uppercase tracking-widest text-ink/40">
                     {formatMonthLabel(monthKey)}
                   </span>
@@ -356,9 +384,13 @@ function ParcoursPage() {
                   <span className="text-[10px] font-bold text-ink/30">
                     {items.length} défi{items.length > 1 ? "s" : ""}
                   </span>
-                </div>
+                  {!isDefaultExpanded && (
+                    <ChevronDown className={`size-3.5 text-ink/30 transition-transform ${isExpanded ? "rotate-180" : ""}`} />
+                  )}
+                </button>
 
                 {/* Items */}
+                {isExpanded && (
                 <div className="space-y-2.5 pl-2 border-l-2 border-ink/6">
                   {items.map((c) => (
                     <div
@@ -402,8 +434,10 @@ function ParcoursPage() {
                     </div>
                   ))}
                 </div>
+                )}
               </div>
-            ))}
+              );
+            })}
           </div>
         )}
 
