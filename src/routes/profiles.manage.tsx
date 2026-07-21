@@ -8,7 +8,7 @@ import { ProfileDialog } from "@/components/profiles/ProfileDialog";
 import { GenizioLoader } from "@/components/GenizioLoader";
 import type { ChildProfile } from "@/components/profiles/shared";
 import { confirmDialog } from "@/components/ui/confirm-dialog";
-import { Lock, Phone } from "lucide-react";
+import { ArrowLeft, Lock, Phone } from "lucide-react";
 
 export const Route = createFileRoute("/profiles/manage")({
   component: ManageProfilesPage,
@@ -84,6 +84,10 @@ function ManageProfilesPage() {
       <AppHeader />
 
       <main className="mx-auto max-w-6xl px-6 py-12">
+        <Link to="/profile" className="mb-6 inline-flex items-center gap-2 text-sm font-bold text-ink/60 hover:text-brand">
+          <ArrowLeft className="size-4" /> Retour aux réglages
+        </Link>
+
         <div className="mb-10 flex flex-col justify-between gap-4  md:items-end">
           <div>
             <h1 className="font-display text-balance text-4xl font-extrabold md:text-5xl">Mes profils enfants</h1>
