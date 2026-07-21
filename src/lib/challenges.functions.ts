@@ -77,7 +77,12 @@ async function trackMaterialSuggestions(items: { material_tags: string[]; title:
   }
 }
 
-const XP_PER_COMPLETION = 180;
+function calculateXPGain(age: number): number {
+  // L'XP gagnée diminue à mesure que l'enfant grandit, rendant les niveaux
+  // plus exigeants sans toucher au palier mathématique (500) du frontend.
+  // ex: 4 ans = 190 XP, 8 ans = 130 XP, 12 ans = 70 XP
+  return Math.max(50, 250 - (age * 15));
+}
 // Le niveau vient de la même formule que le tableau de bord (profiles.index.tsx :
 // Math.floor(xp / 500) + 1) — comparer l'avant/après xp permet de détecter un
 // passage de niveau au moment même où on l'attribue, sans requête séparée.
@@ -89,7 +94,7 @@ async function awardCompletionXP(supabaseClient: any, childId: string) {
   try {
     const { data: profile } = await supabaseClient
       .from("child_profiles")
-      .select("xp, streak, last_activity_date")
+      .select("xp, streak, last_activity_date, age")
       .eq("id", childId)
       .single();
     if (!profile) return null;
@@ -107,7 +112,9 @@ async function awardCompletionXP(supabaseClient: any, childId: string) {
     }
 
     const oldXp = profile.xp || 0;
-    const newXp = oldXp + XP_PER_COMPLETION;
+    const childAge = profile.age || 7; // Âge par défaut si non renseigné
+    const xpGain = calculateXPGain(childAge);
+    const newXp = oldXp + xpGain;
 
     await supabaseClient
       .from("child_profiles")
@@ -119,7 +126,7 @@ async function awardCompletionXP(supabaseClient: any, childId: string) {
       .eq("id", childId);
 
     return {
-      xpGained: XP_PER_COMPLETION,
+      xpGained: xpGain,
       newXp,
       newStreak,
       newLevel: levelForXp(newXp),
