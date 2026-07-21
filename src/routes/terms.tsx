@@ -7,16 +7,16 @@ export const Route = createFileRoute("/terms")({
 
 function TermsPage() {
   return (
-    <div className="min-h-screen bg-surface px-6 py-12 text-ink">
+    <div className="min-h-dvh bg-surface px-6 py-12 text-ink">
       <div className="mx-auto max-w-2xl">
         <Link to="/" className="mb-8 inline-flex items-center gap-2 text-sm font-bold text-ink/60 hover:text-brand">
           <ArrowLeft className="size-4" /> Retour
         </Link>
 
-        <h1 className="font-display text-3xl font-extrabold mb-2">Conditions d'utilisation</h1>
+        <h1 className="font-display text-balance text-3xl font-extrabold mb-2">Conditions d'utilisation</h1>
         <p className="mb-8 text-sm text-ink/60">Dernière mise à jour : 17 juillet 2026</p>
 
-        <div className="rounded-2xl border-[3px] border-amber-400 bg-amber-50 p-4 mb-8 text-sm text-amber-900">
+        <div className="rounded-2xl border border-amber-400 bg-amber-50 p-4 mb-8 text-sm text-amber-900">
           <strong>Note :</strong> ce document a été rédigé avec l'assistance d'une IA à partir du fonctionnement
           réel de l'application. Il n'a pas été relu par un professionnel du droit — à faire réviser avant tout
           lancement commercial à grande échelle, notamment du fait des juridictions concernées (Sénégal, Côte
@@ -25,7 +25,7 @@ function TermsPage() {
 
         <div className="space-y-6 text-sm leading-relaxed text-ink/80">
           <section>
-            <h2 className="font-display text-lg font-bold text-ink mb-2">1. Objet</h2>
+            <h2 className="font-display text-balance text-lg font-bold text-ink mb-2">1. Objet</h2>
             <p>
               Génizio est une application qui aide les parents à découvrir et accompagner les talents de leurs
               enfants à travers des défis personnalisés générés par une intelligence artificielle (« Naya »),
@@ -35,7 +35,7 @@ function TermsPage() {
           </section>
 
           <section>
-            <h2 className="font-display text-lg font-bold text-ink mb-2">2. Qui peut utiliser Génizio</h2>
+            <h2 className="font-display text-balance text-lg font-bold text-ink mb-2">2. Qui peut utiliser Génizio</h2>
             <p>
               La création d'un compte est réservée aux parents ou tuteurs légaux majeurs. Les profils d'enfants
               sont créés et gérés exclusivement par le titulaire du compte parent — un enfant n'a jamais son
@@ -46,7 +46,7 @@ function TermsPage() {
           </section>
 
           <section>
-            <h2 className="font-display text-lg font-bold text-ink mb-2">3. Ce que Naya n'est pas</h2>
+            <h2 className="font-display text-balance text-lg font-bold text-ink mb-2">3. Ce que Naya n'est pas</h2>
             <p>
               Naya est un compagnon pédagogique qui observe et propose — elle n'est ni un professionnel de
               santé, ni un psychologue, ni un enseignant diplômé. Les « intelligences » et « talents » affichés
@@ -57,7 +57,7 @@ function TermsPage() {
           </section>
 
           <section>
-            <h2 className="font-display text-lg font-bold text-ink mb-2">4. Contenu que vous partagez</h2>
+            <h2 className="font-display text-balance text-lg font-bold text-ink mb-2">4. Contenu que vous partagez</h2>
             <p>
               Les photos, descriptions et notes que vous ajoutez restent votre propriété. En les soumettant sur
               Génizio, vous nous accordez le droit de les stocker et de les afficher dans l'application (et,
@@ -69,7 +69,7 @@ function TermsPage() {
           </section>
 
           <section>
-            <h2 className="font-display text-lg font-bold text-ink mb-2">5. Mur Public</h2>
+            <h2 className="font-display text-balance text-lg font-bold text-ink mb-2">5. Mur Public</h2>
             <p>
               La publication d'un défi sur le Mur Public est toujours une action volontaire et explicite du
               parent — aucun contenu n'y est publié automatiquement. Nous nous réservons le droit de retirer
@@ -78,7 +78,7 @@ function TermsPage() {
           </section>
 
           <section>
-            <h2 className="font-display text-lg font-bold text-ink mb-2">6. Boutique de kits</h2>
+            <h2 className="font-display text-balance text-lg font-bold text-ink mb-2">6. Boutique de kits</h2>
             <p>
               La boutique permet de commander du matériel pédagogique. À ce jour, aucun paiement n'est traité
               directement dans l'application : la commande est enregistrée puis finalisée par échange direct
@@ -88,7 +88,7 @@ function TermsPage() {
           </section>
 
           <section>
-            <h2 className="font-display text-lg font-bold text-ink mb-2">7. Partage avec un mentor</h2>
+            <h2 className="font-display text-balance text-lg font-bold text-ink mb-2">7. Partage avec un mentor</h2>
             <p>
               Le parent peut inviter un tiers (enseignant, coach) à consulter une vue limitée et révocable du
               parcours de l'enfant, en choisissant précisément quelles informations sont visibles. Le parent
@@ -97,7 +97,7 @@ function TermsPage() {
           </section>
 
           <section>
-            <h2 className="font-display text-lg font-bold text-ink mb-2">8. Limitation de responsabilité</h2>
+            <h2 className="font-display text-balance text-lg font-bold text-ink mb-2">8. Limitation de responsabilité</h2>
             <p>
               Génizio est fourni « en l'état ». Nous mettons en œuvre des moyens raisonnables pour assurer la
               disponibilité et la fiabilité du service, sans garantir une disponibilité continue et sans faille.
@@ -107,7 +107,7 @@ function TermsPage() {
           </section>
 
           <section>
-            <h2 className="font-display text-lg font-bold text-ink mb-2">9. Suppression de compte</h2>
+            <h2 className="font-display text-balance text-lg font-bold text-ink mb-2">9. Suppression de compte</h2>
             <p>
               Vous pouvez supprimer votre compte à tout moment depuis les Réglages ; cette action est
               irréversible et efface définitivement vos données et celles des profils enfants associés.
@@ -115,7 +115,7 @@ function TermsPage() {
           </section>
 
           <section>
-            <h2 className="font-display text-lg font-bold text-ink mb-2">10. Droit applicable</h2>
+            <h2 className="font-display text-balance text-lg font-bold text-ink mb-2">10. Droit applicable</h2>
             <p>
               Génizio opère à destination de familles au Sénégal, en Côte d'Ivoire et en France. À défaut
               d'accord contraire, le droit français régit ces conditions. Cette clause n'a pas pour effet de
@@ -125,7 +125,7 @@ function TermsPage() {
           </section>
 
           <section>
-            <h2 className="font-display text-lg font-bold text-ink mb-2">11. Modifications</h2>
+            <h2 className="font-display text-balance text-lg font-bold text-ink mb-2">11. Modifications</h2>
             <p>
               Ces conditions peuvent évoluer à mesure que le service évolue. La date de dernière mise à jour en
               haut de cette page reflète la version en vigueur.

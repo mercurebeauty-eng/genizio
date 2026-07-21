@@ -66,7 +66,7 @@ export function PwaInstallPrompt() {
   if (!showPrompt) return null;
 
   return (
-    <div className="fixed bottom-6 left-6 right-6 z-50 mx-auto max-w-md rounded-3xl border-[3px] border-ink bg-white p-5 shadow-brutal animate-in slide-in-from-bottom-10 duration-300">
+    <div className="fixed bottom-6 left-6 right-6 z-50 mx-auto max-w-md rounded-3xl border border-ink/10 bg-white p-5 shadow-xl animate-in slide-in-from-bottom-10 duration-300">
       <button
         onClick={handleDismiss}
         className="absolute top-3 right-3 rounded-xl border-2 border-ink p-1 hover:bg-surface transition-all cursor-pointer"
@@ -76,11 +76,11 @@ export function PwaInstallPrompt() {
       </button>
 
       <div className="flex gap-4 items-start pr-8">
-        <div className="grid size-12 place-items-center rounded-2xl bg-brand border-2 border-ink text-white shadow-brutal-sm shrink-0">
+        <div className="grid size-12 place-items-center rounded-2xl bg-brand border border-white/20 text-white shadow-md shrink-0">
           <Smartphone className="size-6" />
         </div>
         <div>
-          <h4 className="font-display text-base font-black text-ink">Installer Génizio</h4>
+          <h4 className="font-display text-balance text-base font-black text-ink">Installer Génizio</h4>
           <p className="text-xs font-semibold text-ink/60 mt-0.5 leading-relaxed">
             Installez l'application sur votre écran d'accueil pour l'ouvrir en plein écran et accéder rapidement à Naya.
           </p>
@@ -117,14 +117,14 @@ export function PwaInstallPrompt() {
             <div className="flex items-center justify-between gap-4">
               <button
                 onClick={handleDismiss}
-                className="rounded-2xl border-[3px] border-ink bg-white px-4 py-2.5 text-xs font-bold text-ink shadow-brutal-sm hover:-translate-y-0.5 active:translate-y-0 transition-all cursor-pointer"
+                className="press-white rounded-2xl border border-ink/10 bg-white px-4 py-2.5 text-xs font-bold text-ink cursor-pointer"
               >
                 Plus tard
               </button>
               <button
                 onClick={handleInstallClick}
                 disabled={!deferredPrompt}
-                className="flex-1 flex items-center justify-center gap-1.5 rounded-2xl border-[3px] border-ink bg-brand px-4 py-2.5 text-xs font-bold text-white shadow-brutal-sm hover:-translate-y-0.5 active:translate-y-0 transition-all disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+                className="press-brand flex-1 flex items-center justify-center gap-1.5 rounded-2xl px-4 py-2.5 text-xs font-bold text-white disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
               >
                 <Download className="size-4" />
                 <span>Installer maintenant</span>

@@ -14,6 +14,7 @@ import { Route as SupervisorRouteImport } from './routes/supervisor'
 import { Route as ProfilesRouteImport } from './routes/profiles'
 import { Route as ProfileRouteImport } from './routes/profile'
 import { Route as PrivacyRouteImport } from './routes/privacy'
+import { Route as NouveautesRouteImport } from './routes/nouveautes'
 import { Route as MentionsLegalesRouteImport } from './routes/mentions-legales'
 import { Route as LaboratoryRouteImport } from './routes/laboratory'
 import { Route as FeedRouteImport } from './routes/feed'
@@ -32,6 +33,7 @@ import { Route as ProfilesProfileIdQuestRouteImport } from './routes/profiles.$p
 import { Route as ProfilesProfileIdPortfolioRouteImport } from './routes/profiles.$profileId.portfolio'
 import { Route as ProfilesProfileIdPassportPrintRouteImport } from './routes/profiles.$profileId.passport-print'
 import { Route as ProfilesProfileIdMentorsRouteImport } from './routes/profiles.$profileId.mentors'
+import { Route as ProfilesProfileIdGuildRouteImport } from './routes/profiles.$profileId.guild'
 import { Route as ProfilesProfileIdChallengesRouteImport } from './routes/profiles.$profileId.challenges'
 
 const TermsRoute = TermsRouteImport.update({
@@ -57,6 +59,11 @@ const ProfileRoute = ProfileRouteImport.update({
 const PrivacyRoute = PrivacyRouteImport.update({
   id: '/privacy',
   path: '/privacy',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const NouveautesRoute = NouveautesRouteImport.update({
+  id: '/nouveautes',
+  path: '/nouveautes',
   getParentRoute: () => rootRouteImport,
 } as any)
 const MentionsLegalesRoute = MentionsLegalesRouteImport.update({
@@ -152,6 +159,11 @@ const ProfilesProfileIdMentorsRoute =
     path: '/$profileId/mentors',
     getParentRoute: () => ProfilesRoute,
   } as any)
+const ProfilesProfileIdGuildRoute = ProfilesProfileIdGuildRouteImport.update({
+  id: '/$profileId/guild',
+  path: '/$profileId/guild',
+  getParentRoute: () => ProfilesRoute,
+} as any)
 const ProfilesProfileIdChallengesRoute =
   ProfilesProfileIdChallengesRouteImport.update({
     id: '/$profileId/challenges',
@@ -167,6 +179,7 @@ export interface FileRoutesByFullPath {
   '/feed': typeof FeedRoute
   '/laboratory': typeof LaboratoryRoute
   '/mentions-legales': typeof MentionsLegalesRoute
+  '/nouveautes': typeof NouveautesRoute
   '/privacy': typeof PrivacyRoute
   '/profile': typeof ProfileRoute
   '/profiles': typeof ProfilesRouteWithChildren
@@ -180,6 +193,7 @@ export interface FileRoutesByFullPath {
   '/admin/': typeof AdminIndexRoute
   '/profiles/': typeof ProfilesIndexRoute
   '/profiles/$profileId/challenges': typeof ProfilesProfileIdChallengesRoute
+  '/profiles/$profileId/guild': typeof ProfilesProfileIdGuildRoute
   '/profiles/$profileId/mentors': typeof ProfilesProfileIdMentorsRoute
   '/profiles/$profileId/passport-print': typeof ProfilesProfileIdPassportPrintRoute
   '/profiles/$profileId/portfolio': typeof ProfilesProfileIdPortfolioRoute
@@ -192,6 +206,7 @@ export interface FileRoutesByTo {
   '/feed': typeof FeedRoute
   '/laboratory': typeof LaboratoryRoute
   '/mentions-legales': typeof MentionsLegalesRoute
+  '/nouveautes': typeof NouveautesRoute
   '/privacy': typeof PrivacyRoute
   '/profile': typeof ProfileRoute
   '/supervisor': typeof SupervisorRoute
@@ -204,6 +219,7 @@ export interface FileRoutesByTo {
   '/admin': typeof AdminIndexRoute
   '/profiles': typeof ProfilesIndexRoute
   '/profiles/$profileId/challenges': typeof ProfilesProfileIdChallengesRoute
+  '/profiles/$profileId/guild': typeof ProfilesProfileIdGuildRoute
   '/profiles/$profileId/mentors': typeof ProfilesProfileIdMentorsRoute
   '/profiles/$profileId/passport-print': typeof ProfilesProfileIdPassportPrintRoute
   '/profiles/$profileId/portfolio': typeof ProfilesProfileIdPortfolioRoute
@@ -218,6 +234,7 @@ export interface FileRoutesById {
   '/feed': typeof FeedRoute
   '/laboratory': typeof LaboratoryRoute
   '/mentions-legales': typeof MentionsLegalesRoute
+  '/nouveautes': typeof NouveautesRoute
   '/privacy': typeof PrivacyRoute
   '/profile': typeof ProfileRoute
   '/profiles': typeof ProfilesRouteWithChildren
@@ -231,6 +248,7 @@ export interface FileRoutesById {
   '/admin/': typeof AdminIndexRoute
   '/profiles/': typeof ProfilesIndexRoute
   '/profiles/$profileId/challenges': typeof ProfilesProfileIdChallengesRoute
+  '/profiles/$profileId/guild': typeof ProfilesProfileIdGuildRoute
   '/profiles/$profileId/mentors': typeof ProfilesProfileIdMentorsRoute
   '/profiles/$profileId/passport-print': typeof ProfilesProfileIdPassportPrintRoute
   '/profiles/$profileId/portfolio': typeof ProfilesProfileIdPortfolioRoute
@@ -246,6 +264,7 @@ export interface FileRouteTypes {
     | '/feed'
     | '/laboratory'
     | '/mentions-legales'
+    | '/nouveautes'
     | '/privacy'
     | '/profile'
     | '/profiles'
@@ -259,6 +278,7 @@ export interface FileRouteTypes {
     | '/admin/'
     | '/profiles/'
     | '/profiles/$profileId/challenges'
+    | '/profiles/$profileId/guild'
     | '/profiles/$profileId/mentors'
     | '/profiles/$profileId/passport-print'
     | '/profiles/$profileId/portfolio'
@@ -271,6 +291,7 @@ export interface FileRouteTypes {
     | '/feed'
     | '/laboratory'
     | '/mentions-legales'
+    | '/nouveautes'
     | '/privacy'
     | '/profile'
     | '/supervisor'
@@ -283,6 +304,7 @@ export interface FileRouteTypes {
     | '/admin'
     | '/profiles'
     | '/profiles/$profileId/challenges'
+    | '/profiles/$profileId/guild'
     | '/profiles/$profileId/mentors'
     | '/profiles/$profileId/passport-print'
     | '/profiles/$profileId/portfolio'
@@ -296,6 +318,7 @@ export interface FileRouteTypes {
     | '/feed'
     | '/laboratory'
     | '/mentions-legales'
+    | '/nouveautes'
     | '/privacy'
     | '/profile'
     | '/profiles'
@@ -309,6 +332,7 @@ export interface FileRouteTypes {
     | '/admin/'
     | '/profiles/'
     | '/profiles/$profileId/challenges'
+    | '/profiles/$profileId/guild'
     | '/profiles/$profileId/mentors'
     | '/profiles/$profileId/passport-print'
     | '/profiles/$profileId/portfolio'
@@ -323,6 +347,7 @@ export interface RootRouteChildren {
   FeedRoute: typeof FeedRoute
   LaboratoryRoute: typeof LaboratoryRoute
   MentionsLegalesRoute: typeof MentionsLegalesRoute
+  NouveautesRoute: typeof NouveautesRoute
   PrivacyRoute: typeof PrivacyRoute
   ProfileRoute: typeof ProfileRoute
   ProfilesRoute: typeof ProfilesRouteWithChildren
@@ -367,6 +392,13 @@ declare module '@tanstack/react-router' {
       path: '/privacy'
       fullPath: '/privacy'
       preLoaderRoute: typeof PrivacyRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/nouveautes': {
+      id: '/nouveautes'
+      path: '/nouveautes'
+      fullPath: '/nouveautes'
+      preLoaderRoute: typeof NouveautesRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/mentions-legales': {
@@ -495,6 +527,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ProfilesProfileIdMentorsRouteImport
       parentRoute: typeof ProfilesRoute
     }
+    '/profiles/$profileId/guild': {
+      id: '/profiles/$profileId/guild'
+      path: '/$profileId/guild'
+      fullPath: '/profiles/$profileId/guild'
+      preLoaderRoute: typeof ProfilesProfileIdGuildRouteImport
+      parentRoute: typeof ProfilesRoute
+    }
     '/profiles/$profileId/challenges': {
       id: '/profiles/$profileId/challenges'
       path: '/$profileId/challenges'
@@ -523,6 +562,7 @@ interface ProfilesRouteChildren {
   ProfilesManageRoute: typeof ProfilesManageRoute
   ProfilesIndexRoute: typeof ProfilesIndexRoute
   ProfilesProfileIdChallengesRoute: typeof ProfilesProfileIdChallengesRoute
+  ProfilesProfileIdGuildRoute: typeof ProfilesProfileIdGuildRoute
   ProfilesProfileIdMentorsRoute: typeof ProfilesProfileIdMentorsRoute
   ProfilesProfileIdPassportPrintRoute: typeof ProfilesProfileIdPassportPrintRoute
   ProfilesProfileIdPortfolioRoute: typeof ProfilesProfileIdPortfolioRoute
@@ -533,6 +573,7 @@ const ProfilesRouteChildren: ProfilesRouteChildren = {
   ProfilesManageRoute: ProfilesManageRoute,
   ProfilesIndexRoute: ProfilesIndexRoute,
   ProfilesProfileIdChallengesRoute: ProfilesProfileIdChallengesRoute,
+  ProfilesProfileIdGuildRoute: ProfilesProfileIdGuildRoute,
   ProfilesProfileIdMentorsRoute: ProfilesProfileIdMentorsRoute,
   ProfilesProfileIdPassportPrintRoute: ProfilesProfileIdPassportPrintRoute,
   ProfilesProfileIdPortfolioRoute: ProfilesProfileIdPortfolioRoute,
@@ -551,6 +592,7 @@ const rootRouteChildren: RootRouteChildren = {
   FeedRoute: FeedRoute,
   LaboratoryRoute: LaboratoryRoute,
   MentionsLegalesRoute: MentionsLegalesRoute,
+  NouveautesRoute: NouveautesRoute,
   PrivacyRoute: PrivacyRoute,
   ProfileRoute: ProfileRoute,
   ProfilesRoute: ProfilesRouteWithChildren,

@@ -2,7 +2,14 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useSession } from "@/hooks/use-session";
-import { Phone, Check, Loader2, Trophy, Lock } from "lucide-react";
+import { Phone, Check, Loader2, Trophy, Lock, ChevronDown, Plus } from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { AppTabBar } from "@/components/AppTabBar";
 import { AppHeader } from "@/components/AppHeader";
 import { ProfileDialog } from "@/components/profiles/ProfileDialog";
@@ -201,29 +208,27 @@ function DashboardPage() {
 
   if (loading || !session) {
     return (
-      <div className="grid min-h-screen place-items-center bg-surface">
+      <div className="grid min-h-dvh place-items-center bg-surface">
         <GenizioLoader label="Chargement…" />
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-surface pb-24 text-ink md:pb-6">
+    <div className="min-h-dvh bg-surface pb-24 text-ink ">
       <AppHeader hideTabBarLinks={!!selected} />
 
-      <main className="mx-auto max-w-6xl px-6 py-10 md:flex md:gap-8">
+      <main className="mx-auto max-w-6xl px-6 py-10 md:flex ">
         {selected && <AppTabBar profileId={selected.id} />}
 
         <div className="min-w-0 flex-1">
-          <div className="mb-6">
-            <div className="mb-3 flex items-end gap-3" style={{ paddingTop: "3.5rem", marginTop: "-3.5rem" }}>
-              <NayaAvatar size="sm" thoughts={[`Bonjour ! Prêt à explorer avec ${selected?.name ?? "votre enfant"} ?`]} />
-              <p className="text-sm text-ink/60 mb-0.5">Bonjour !</p>
+          {!selected && (
+            <div className="mb-6">
+              <h1 className="font-display text-balance text-3xl font-extrabold md:text-4xl">
+                Mes profils enfants
+              </h1>
             </div>
-            <h1 className="font-display text-3xl font-extrabold md:text-4xl">
-              {selected ? `Voici où en est ${selected.name} cette semaine.` : "Mes profils enfants"}
-            </h1>
-          </div>
+          )}
 
           {fetching ? (
             <GenizioLoader className="py-8" />
@@ -239,209 +244,158 @@ function DashboardPage() {
             </div>
           ) : (
             <>
-              <div className="mb-10">
-                <div className="flex flex-wrap items-center gap-4">
-                  {profiles.map((p) => {
-                    const isActive = p.id === selectedId;
-                    return (
-                      <button
-                        key={p.id}
-                        onClick={() => setSelectedId(p.id)}
-                        className={`group flex items-center gap-2 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 transition-all px-6 py-2.5 rounded-full border border-ink/10 font-bold text-sm cursor-pointer ${
-                          isActive
-                            ? "press-brand bg-brand text-white"
-                            : "press-sky bg-sky text-ink"
-                        }`}
-                      >
-                        {p.name}
-                        {isActive && <span className="flex size-4 items-center justify-center rounded-full border border-white/60 text-[10px]">✓</span>}
-                      </button>
-                    );
-                  })}
-                  {(() => {
-                    const FREE_SLOTS = 2;
-                    const extraSlots = (session?.user?.app_metadata?.extra_profile_slots as number) ?? 0;
-                    const quota = FREE_SLOTS + extraSlots;
-                    const atQuota = profiles.length >= quota;
-                    return (
-                      <button
-                        onClick={() => atQuota ? setShowUpgradeModal(true) : setCreating(true)}
-                        title={atQuota ? `Quota atteint (${quota} profils). Débloquer un slot supplémentaire.` : "Ajouter un enfant"}
-                        className={`flex size-11 items-center justify-center rounded-full border border-ink/10 text-xl font-bold transition-all cursor-pointer ${
-                          atQuota
-                            ? "press-white bg-amber-100 text-amber-800"
-                            : "press-white bg-white text-ink"
-                        }`}
-                      >
-                        {atQuota ? <Lock className="size-4" /> : "+"}
-                      </button>
-                    );
-                  })()}
-                </div>
-              </div>
-
-              {/* Badge Guilde de l'enfant sélectionné — affiché après le sélecteur de profil,
-                  puisqu'il décrit celui qu'on vient de choisir. */}
               {selected && (() => {
                 const guild = getChildGuild(selected.talents);
+                const dateStr = new Date().toLocaleDateString('fr-FR', { weekday: 'long' });
+                const capitalizedDate = dateStr.charAt(0).toUpperCase() + dateStr.slice(1);
+                const avatarColor = AVATAR_COLORS[profiles.findIndex(p=>p.id===selected.id)%AVATAR_COLORS.length] || AVATAR_COLORS[0];
+                const activeTalents = pulse.filter(p => (p.score || 0) > 0).length;
+                const totalXP = selected.xp || 0;
+                const currentLevel = Math.floor(totalXP / 500) + 1;
+                const xpPct = Math.min(100, (totalXP % 500) / 500 * 100);
+
+                const FREE_SLOTS = 2;
+                const extraSlots = (session?.user?.app_metadata?.extra_profile_slots as number) ?? 0;
+                const quota = FREE_SLOTS + extraSlots;
+                const atQuota = profiles.length >= quota;
+
                 return (
-                  <div className="mb-8 flex items-center gap-3">
-                    <div className={`inline-flex items-center gap-2 rounded-2xl border-[3px] border-ink px-4 py-2.5 shadow-brutal-sm font-bold text-sm ${guild.bgColor} ${guild.color}`}>
-                      <span className="text-xl">{guild.emoji}</span>
-                      <div>
-                        <p className="text-[10px] font-extrabold uppercase tracking-widest opacity-60">Guilde de {selected.name}</p>
-                        <p className="font-display text-base font-black leading-tight">{guild.name}</p>
+                  <div className="animate-in fade-in slide-in-from-bottom-4 duration-300 ease-out md:mx-auto max-w-[414px] w-full">
+                    
+                    {/* Top Header Prototype */}
+                    <div className="flex items-center justify-between mb-5">
+                      <div className="flex items-center gap-3">
+                        <div className={`size-11 rounded-full object-cover shadow-sm flex items-center justify-center text-white font-bold text-lg ${avatarColor.bg} ${avatarColor.text}`}>
+                          {selected.name.charAt(0).toUpperCase()}
+                        </div>
+                        <div>
+                          <div className="text-xs text-ink/60 font-semibold">{capitalizedDate} · bonjour</div>
+                          <DropdownMenu>
+                            <DropdownMenuTrigger className="focus:outline-none flex items-center gap-1 group cursor-pointer">
+                              <div className="font-display text-balance font-bold text-[20px] leading-none group-hover:text-brand transition-colors">{selected.name}, {selected.age ?? 9} ans</div>
+                              <ChevronDown className="size-4 text-ink/60 group-hover:text-brand transition-colors" />
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="start" className="w-[220px] rounded-3xl shadow-xl border border-ink/10 p-2 bg-white/95 backdrop-blur-md">
+                              {profiles.map(p => (
+                                <DropdownMenuItem 
+                                  key={p.id} 
+                                  className={`rounded-xl py-2.5 px-3 mb-1 cursor-pointer font-bold outline-none ${p.id === selected.id ? 'bg-brand/10 text-brand' : 'text-ink focus:bg-ink/5'}`}
+                                  onClick={() => setSelectedId(p.id)}
+                                >
+                                  {p.name}
+                                  {p.id === selected.id && <Check className="size-4 ml-auto" />}
+                                </DropdownMenuItem>
+                              ))}
+                              <DropdownMenuSeparator className="my-1 border-border/60" />
+                              <DropdownMenuItem 
+                                className="rounded-xl py-2.5 px-3 cursor-pointer font-bold text-brand outline-none focus:bg-brand/5"
+                                onClick={() => atQuota ? setShowUpgradeModal(true) : setCreating(true)}
+                              >
+                                <Plus className="size-4 mr-2" /> Nouveau profil
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        </div>
+                      </div>
+                      <div className="flex gap-2">
+                        <div className="inline-flex items-center gap-[5px] px-3 py-2 bg-glow-100 rounded-full font-display text-balance font-bold text-[14px] text-brand-700 shadow-sm">
+                          <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.07-2.14-.22-4.05 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.15.43-2.29 1-3a2.5 2.5 0 0 0 2.5 2.5z"/></svg>
+                          {selected.streak || 0}
+                        </div>
                       </div>
                     </div>
-                    <p className="hidden text-sm text-ink/60 font-medium italic sm:block">« {guild.tagline} »</p>
-                  </div>
-                );
-              })()}
 
-              <div className="grid grid-cols-1 gap-8 md:grid-cols-2">
-                <div className="flex flex-col">
-                  <h2 className="mb-4 text-2xl font-display font-bold text-ink flex flex-wrap justify-between items-center gap-2">
-                    Cette semaine
-                    <div className="flex items-center gap-2">
-                      {activeChallenge && (
-                        <span className="rounded-full bg-brand px-3 py-1 text-[10px] font-black uppercase tracking-widest text-white border-2 border-ink shadow-brutal-sm">
-                          {activeChallenge.domain}
-                        </span>
-                      )}
-                      {activeChallenge && <DifficultyBadge difficulty={activeChallenge.difficulty} />}
-                      {activeChallenge && hasKit(activeChallenge.material_tags) && (
-                        <span className="rounded-full bg-sky px-3 py-1 text-[10px] font-black uppercase tracking-widest text-ink border-2 border-ink shadow-brutal-sm">
-                          📦 Kit disponible
-                        </span>
-                      )}
+                    {/* Naya daily bubble */}
+                    <div className="flex gap-3 items-start bg-card rounded-3xl p-[15px] shadow-md mb-[18px] border border-border">
+                      <img src="/naya-mascot.png" alt="Naya" className="size-11 rounded-full object-cover shrink-0 animate-[gzDots_4s_ease-in-out_infinite]" style={{ animation: "gz-float 4s ease-in-out infinite" }} />
+                      <div>
+                        <div className="font-display text-balance font-semibold text-[13px] text-brand">Naya</div>
+                        <div className="text-[15px] leading-[1.4] text-ink mt-[2px]">Prête pour ton défi du jour, {selected.name}&nbsp;? Aujourd'hui on construit&nbsp;— pour de vrai&nbsp;!</div>
+                      </div>
                     </div>
-                  </h2>
-                  <div className="rounded-3xl bg-white p-6 shadow-brutal border-[3px] border-ink flex flex-col min-h-[300px]">
+
+                    {/* "Ton défi de la semaine" */}
+                    <div className="font-display text-balance font-bold text-[13px] tracking-[.06em] uppercase text-ink/40 mx-1 mb-[10px]">Ton défi de la semaine</div>
+                    
                     {fetchingChallenges ? (
-                      <div className="flex flex-1 items-center justify-center py-10">
+                      <div className="rounded-[1.5rem] border border-dashed border-ink/20 bg-white/60 p-12 text-center flex justify-center shadow-lg backdrop-blur-md mb-5">
                         <Loader2 className="size-6 animate-spin text-brand" />
                       </div>
                     ) : activeChallenge ? (
-                      <div className="flex-1 flex flex-col justify-between">
-                        <div>
-                          <div className="flex gap-4 mb-4">
-                            <div className="size-16 shrink-0 rounded-2xl bg-brand flex items-center justify-center border-2 border-ink shadow-brutal-sm text-white">
-                              <Trophy className="size-8" />
-                            </div>
-                            <div>
-                              <h3 className="font-display text-xl font-bold text-ink leading-tight mb-2">
-                                {activeChallenge.title}
-                              </h3>
-                              <div className="text-sm text-ink/80 leading-relaxed font-medium">
-                                <MarkdownContent content={activeChallenge.description} />
-                              </div>
-                            </div>
+                      <div className="relative rounded-[1.5rem] overflow-hidden shadow-lg mb-5">
+                        <div className="absolute inset-0" style={{ background: `linear-gradient(150deg, var(--guild-${guild.key === 'aucune' ? 'batisseurs' : guild.key}), oklch(0.6 0.15 45))` }}></div>
+                        <div className="absolute -top-10 -right-7 w-[180px] h-[180px]" style={{ background: "radial-gradient(circle,rgba(255,255,255,.28),transparent 70%)" }}></div>
+                        <div className="relative p-5">
+                          <div className="flex gap-[7px] mb-3">
+                            <span className="inline-flex items-center gap-[5px] px-[11px] py-[5px] bg-white/20 rounded-full text-white text-[12px] font-bold">{activeChallenge.domain}</span>
+                            <DifficultyBadge difficulty={activeChallenge.difficulty} />
                           </div>
-
-                          {activeChallenge.materials && activeChallenge.materials.length > 0 && (
-                            <div className="mb-2 flex flex-wrap gap-2">
-                              {activeChallenge.materials.slice(0, 4).map((m, i) => (
-                                <span key={i} className="inline-flex items-center gap-1 rounded-full border-2 border-ink bg-surface px-2.5 py-1 text-[11px] font-bold text-ink">
-                                  📦 {m}
-                                </span>
-                              ))}
-                            </div>
-                          )}
-
-                          <div className="mb-2">
-                            <KitSuggestion
-                              childId={selected!.id}
-                              challengeId={activeChallenge.id}
-                              materialTags={activeChallenge.material_tags}
-                              challengeTitle={activeChallenge.title}
-                              childName={selected?.name ?? ""}
-                            />
+                          <div className="font-display text-balance font-bold text-[26px] text-white leading-[1.05]">{activeChallenge.title}</div>
+                          <div className="text-white/90 text-[14px] mt-[6px] leading-[1.4] line-clamp-2">
+                            {activeChallenge.description}
                           </div>
-
-                          <hr className="border-t border-dashed border-ink/30 my-5" />
-                        </div>
-
-                        <div className="mt-auto flex flex-col gap-3">
-                          <Link
-                            to="/profiles/$profileId/challenges"
-                            params={{ profileId: selected!.id }}
-                            className="w-full text-center rounded-xl bg-brand-dark px-6 py-4 text-base font-bold text-white shadow-brutal border-[3px] border-ink hover:-translate-y-0.5 active:translate-y-1 transition-all cursor-pointer"
-                          >
-                            Commencer le défi
-                          </Link>
-                          <Link
-                            to="/profiles/$profileId/quest"
-                            params={{ profileId: selected!.id }}
-                            className="w-full text-center rounded-xl bg-sky px-6 py-3 text-sm font-bold text-ink shadow-brutal-sm border-[3px] border-ink hover:-translate-y-0.5 active:translate-y-1 transition-all cursor-pointer"
-                          >
-                            Mode Enfant (Quête) 🎮
-                          </Link>
+                          <div className="mt-4">
+                            <div className="flex justify-between text-white text-[12px] font-bold mb-[6px]">
+                              <span>+180 XP à gagner</span>
+                              <span>{activeChallenge.steps?.length ?? 0} étapes</span>
+                            </div>
+                            <Link to="/profiles/$profileId/challenges" params={{ profileId: selected.id }} className="w-full flex items-center justify-center bg-white text-ink font-bold h-[44px] rounded-full cursor-pointer shadow-sm">
+                              Voir le défi →
+                            </Link>
+                          </div>
                         </div>
                       </div>
                     ) : (
-                      <div className="flex-1 flex flex-col justify-center items-center py-4 text-center">
-                        <span className="inline-block text-4xl mb-4">🌟</span>
-                        <p className="text-sm text-ink/80 font-bold mb-6">
-                          Aucun défi en cours pour {selected?.name}.
+                      <div className="rounded-[1.5rem] border border-dashed border-ink/20 bg-white/60 p-8 text-center shadow-lg backdrop-blur-md mb-5">
+                        <span className="inline-block text-4xl mb-2">🌟</span>
+                        <p className="text-[14px] text-ink/80 font-bold mb-4">
+                          Aucun défi en cours pour {selected.name}.
                         </p>
                         <Link
                           to="/profiles/$profileId/challenges"
-                          params={{ profileId: selected!.id }}
-                          className="w-full text-center rounded-xl bg-brand px-6 py-4 text-base font-bold text-white shadow-brutal border-[3px] border-ink hover:-translate-y-0.5 active:translate-y-1 transition-all cursor-pointer"
+                          params={{ profileId: selected.id }}
+                          className="w-full inline-flex items-center justify-center bg-brand text-white font-bold h-[44px] rounded-full cursor-pointer shadow-sm"
                         >
                           Générer un défi
                         </Link>
                       </div>
                     )}
-                  </div>
-                </div>
 
-                <div className="flex flex-col">
-                  <h2 className="mb-4 text-2xl font-display font-bold text-ink">
-                    Pouls du portfolio
-                  </h2>
-                  <div className="rounded-3xl bg-white p-6 shadow-brutal border-[3px] border-ink flex flex-col justify-between min-h-[300px]">
-                    <div>
-                      <div className="h-44 w-full flex items-center justify-center my-2">
-                        <TalentRadarChart talents={selected!.talents || {}} name={selected!.name} className="h-full w-full" age={selected!.age} />
+                    {/* Compact Cards: Niveau / Talents */}
+                    <div className="flex gap-3 mb-5">
+                      <div className="flex-1 bg-card rounded-[1rem] p-[14px] shadow-sm border border-border">
+                        <div className="text-[12px] text-ink/60 font-semibold mb-2">Niveau {currentLevel} · {guild.name.replace('Les ', '')}</div>
+                        <div className="h-[9px] bg-ink/5 rounded-full overflow-hidden">
+                          <div className="h-full rounded-full transition-all duration-700 ease-out origin-left animate-[gzGrowBar_.7s_ease-out]" style={{ width: `${xpPct}%`, background: "linear-gradient(90deg, var(--brand), oklch(0.6 0.15 45))" }}></div>
+                        </div>
+                        <div className="text-[12px] text-ink/40 font-bold text-right mt-[5px]">{totalXP} XP</div>
                       </div>
-                      <ul className="space-y-2 mt-4">
-                        {pulse.slice(0, 3).map((entry) => (
-                          <li key={entry.key} className="rounded-xl border-2 border-ink bg-surface px-3 py-1.5 text-xs font-bold text-ink/80">
-                            {entry.phrase}
-                          </li>
-                        ))}
-                      </ul>
+                      <div className="flex-1 bg-card rounded-[1rem] p-[14px] shadow-sm border border-border">
+                        <div className="text-[12px] text-ink/60 font-semibold mb-2">Talents actifs</div>
+                        <div className="flex items-baseline gap-[5px]">
+                          <span className="font-display text-balance font-bold text-[26px]" style={{ color: `var(--guild-${guild.key === 'aucune' ? 'batisseurs' : guild.key})` }}>{activeTalents}</span>
+                          <span className="text-[12px] text-ink/60">domaines</span>
+                        </div>
+                      </div>
                     </div>
-                    <Link
-                      to="/profiles/$profileId/portfolio"
-                      params={{ profileId: selected!.id }}
-                      className="mt-4 inline-block text-sm font-bold text-brand hover:text-brand-dark"
-                    >
-                      Voir le portfolio complet →
-                    </Link>
+
+                    {/* Continuer à explorer */}
+                    <div className="font-display text-balance font-bold text-[13px] tracking-[.06em] uppercase text-ink/40 mx-1 mb-[10px]">Continuer à explorer</div>
+                    <div className="grid grid-cols-2 gap-3 mb-6">
+                      <Link to="/profiles/$profileId/challenges" params={{ profileId: selected.id }} className="text-left border border-border bg-leaf-50 rounded-[1rem] p-[15px] cursor-pointer shadow-sm">
+                        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--leaf-dark)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><path d="m16.24 7.76-2.12 6.36-6.36 2.12 2.12-6.36 6.36-2.12z"/></svg>
+                        <div className="font-display text-balance font-bold text-[15px] mt-[8px] text-ink">Mon parcours</div>
+                        <div className="text-[12px] text-ink/60 mt-[2px]">Ton arbre de talents</div>
+                      </Link>
+                      <Link to="/profiles/$profileId/portfolio" params={{ profileId: selected.id }} className="text-left border border-border bg-sky-50 rounded-[1rem] p-[15px] cursor-pointer shadow-sm">
+                        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--sky-dark)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m12.83 2.18a2 2 0 0 0-1.66 0L2.6 6.08a1 1 0 0 0 0 1.83l8.58 3.91a2 2 0 0 0 1.66 0l8.58-3.9a1 1 0 0 0 0-1.83Z"/><path d="m2 12 8.58 3.91a2 2 0 0 0 1.66 0L20.83 12"/><path d="m2 17 8.58 3.91a2 2 0 0 0 1.66 0L20.83 17"/></svg>
+                        <div className="font-display text-balance font-bold text-[15px] mt-[8px] text-ink">Portfolio vivant</div>
+                        <div className="text-[12px] text-ink/60 mt-[2px]">Là où ça t'emmène</div>
+                      </Link>
+                    </div>
                   </div>
-                </div>
-              </div>
-
-              {/* "Voir les missions" retiré : c'est déjà l'onglet "Défis" de la barre de
-                  navigation et le CTA de la carte "Cette semaine" ci-dessus — un 3e lien
-                  vers la même page n'ajoutait rien. */}
-              <div className="mt-8 grid gap-6 md:max-w-sm">
-                <InviteMentorDialog
-                  childId={selected!.id}
-                  childName={selected!.name}
-                  customTrigger={
-                    <button className="rounded-3xl bg-sky border-[3px] border-ink shadow-brutal p-8 flex flex-col items-center justify-center gap-4 text-ink font-bold hover:bg-sky/80 transition-all hover:-translate-y-1 active:translate-y-0 cursor-pointer w-full text-center">
-                      <div className="size-16 rounded-full bg-surface text-ink border-[3px] border-ink shadow-brutal-sm flex items-center justify-center">
-                        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="19" x2="19" y1="8" y2="14"/><line x1="22" x2="16" y1="11" y2="11"/></svg>
-                      </div>
-                      <span className="text-lg">Inviter un mentor</span>
-                    </button>
-                  }
-                />
-              </div>
-
+                );
+              })()}
             </>
           )}
         </div>
@@ -461,12 +415,12 @@ function DashboardPage() {
 
       {showPhoneModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-black/60 p-4 backdrop-blur-sm animate-in fade-in duration-200">
-          <div className="w-full max-w-md rounded-3xl border-[3px] border-ink bg-white p-6 shadow-brutal animate-in zoom-in-95 duration-200 md:p-8">
+          <div className="w-full max-w-md rounded-[2rem] border border-ink/10 bg-white/95 backdrop-blur-md p-6 shadow-xl animate-in zoom-in-95 duration-200 md:p-8">
             <div className="text-center">
-              <div className="mx-auto flex size-14 items-center justify-center rounded-2xl border-2 border-ink bg-brand/10 text-brand">
+              <div className="mx-auto flex size-14 items-center justify-center rounded-[1.2rem] bg-brand/10 text-brand">
                 <Phone className="size-6" />
               </div>
-              <h2 className="mt-4 font-display text-2xl font-extrabold leading-tight">
+              <h2 className="mt-4 font-display text-balance text-2xl font-extrabold leading-tight">
                 {session?.user?.user_metadata?.phone ? "Mon Compte" : "Une dernière étape !"}
               </h2>
               <p className="mt-2 text-sm text-ink/60">
@@ -491,7 +445,7 @@ function DashboardPage() {
                         setPhoneNumber("");
                       }
                     }}
-                    className="rounded-xl border-[3px] border-ink bg-white px-3 py-3 text-sm font-bold outline-none focus:ring-2 focus:ring-brand cursor-pointer shadow-brutal-sm"
+                    className="rounded-2xl border border-ink/10 bg-surface px-4 py-3 text-sm font-bold outline-none focus:ring-2 focus:ring-brand cursor-pointer transition-all hover:bg-ink/5"
                   >
                     {COUNTRIES.map((c) => (
                       <option key={c.code} value={c.code}>
@@ -512,7 +466,7 @@ function DashboardPage() {
                         setPhoneNumber(val);
                       }}
                       placeholder={`ex: 0123456789`}
-                      className="w-full rounded-xl border-[3px] border-ink px-4 py-3 text-sm font-bold outline-none focus:ring-2 focus:ring-brand placeholder:font-normal placeholder:text-ink/30 shadow-brutal-sm"
+                      className="w-full rounded-2xl border border-ink/10 bg-surface px-4 py-3 text-sm font-bold outline-none focus:ring-2 focus:ring-brand placeholder:font-normal placeholder:text-ink/30 transition-all"
                       required
                     />
                   </div>
@@ -533,7 +487,7 @@ function DashboardPage() {
                 <button
                   type="submit"
                   disabled={savingPhone || !phoneNumber}
-                  className="flex w-full items-center justify-center gap-2 rounded-2xl border-[3px] border-ink bg-brand py-3.5 text-sm font-bold text-white shadow-brutal hover:-translate-y-0.5 active:translate-y-0 active:shadow-none transition-all disabled:opacity-50 cursor-pointer"
+                  className="flex w-full items-center justify-center gap-2 rounded-full bg-brand py-3.5 text-sm font-bold text-white shadow-md hover:shadow-lg hover:-translate-y-0.5 active:translate-y-0 active:shadow-sm transition-all disabled:opacity-50 cursor-pointer"
                 >
                   {savingPhone ? (
                     <>
@@ -565,15 +519,15 @@ function DashboardPage() {
         <div className="fixed inset-0 z-50 grid place-items-center overflow-y-auto bg-ink/70 p-4 backdrop-blur-sm" onClick={() => setShowUpgradeModal(false)}>
           <div
             onClick={(e) => e.stopPropagation()}
-            className="w-full max-w-md rounded-3xl border-[3px] border-ink bg-white p-8 shadow-brutal"
+            className="w-full max-w-md rounded-[2rem] border border-ink/10 bg-white/95 backdrop-blur-md p-8 shadow-xl"
           >
             {/* Header */}
             <div className="mb-6 flex items-start gap-4">
-              <div className="grid size-14 shrink-0 place-items-center rounded-2xl border-[3px] border-ink bg-amber-100 text-3xl shadow-brutal-sm">
+              <div className="grid size-14 shrink-0 place-items-center rounded-[1.2rem] bg-amber-100 text-3xl">
                 🔒
               </div>
               <div>
-                <h2 className="font-display text-2xl font-extrabold text-ink leading-tight">
+                <h2 className="font-display text-balance text-2xl font-extrabold text-ink leading-tight">
                   Quota gratuit atteint
                 </h2>
                 <p className="mt-1 text-sm text-ink/60 font-medium">
@@ -583,9 +537,9 @@ function DashboardPage() {
             </div>
 
             {/* Pricing */}
-            <div className="mb-6 rounded-2xl border-[3px] border-ink bg-surface p-5 shadow-brutal-sm">
+            <div className="mb-6 rounded-2xl border border-ink/10 bg-surface p-5">
               <p className="text-xs font-black uppercase tracking-widest text-ink/60 mb-1">Profil supplémentaire</p>
-              <p className="font-display text-3xl font-black text-ink">
+              <p className="font-display text-balance text-3xl font-black text-ink">
                 5 000 <span className="text-lg text-ink/60">FCFA</span>
               </p>
               <p className="mt-2 text-xs text-ink/60 leading-relaxed">
@@ -601,7 +555,7 @@ function DashboardPage() {
                 "L'administrateur active votre slot dans les 24h",
               ].map((step, i) => (
                 <li key={i} className="flex items-start gap-3">
-                  <span className="flex size-5 shrink-0 items-center justify-center rounded-full border-2 border-ink bg-brand text-[10px] font-black text-white">
+                  <span className="flex size-5 shrink-0 items-center justify-center rounded-full bg-brand text-[10px] font-black text-white shadow-sm">
                     {i + 1}
                   </span>
                   {step}
@@ -616,7 +570,7 @@ function DashboardPage() {
               )}`}
               target="_blank"
               rel="noopener noreferrer"
-              className="flex w-full items-center justify-center gap-2.5 rounded-2xl border-[3px] border-ink bg-[#25D366] py-3.5 font-bold text-sm text-white shadow-brutal hover:-translate-y-0.5 active:translate-y-0 active:shadow-none transition-all"
+              className="flex w-full items-center justify-center gap-2.5 rounded-full bg-[#25D366] py-3.5 font-bold text-sm text-white shadow-md hover:shadow-lg hover:-translate-y-0.5 active:translate-y-0 active:shadow-sm transition-all"
             >
               <Phone className="size-4 fill-white" />
               Contacter l'administrateur sur WhatsApp

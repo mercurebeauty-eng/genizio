@@ -21,7 +21,7 @@ export function StepAccordion({ steps, className }: { steps: string[], className
             <AccordionItem 
               key={index} 
               value={`step-${index}`} 
-              className="border-2 border-ink bg-white rounded-xl px-4 overflow-hidden data-[state=open]:bg-white data-[state=open]:shadow-brutal-sm transition-all"
+              className="border border-ink/10 bg-white rounded-xl px-4 overflow-hidden data-[state=open]:bg-white data-[state=open]:shadow-md transition-all"
             >
               <AccordionTrigger className="py-3 hover:no-underline text-ink/80 hover:text-ink text-sm data-[state=open]:text-brand group">
                 <div className="flex gap-3 text-left items-center">

@@ -200,7 +200,7 @@ function QuestPage() {
 
   if (loading || fetching || !session) {
     return (
-      <div className="grid min-h-screen place-items-center bg-brand/5">
+      <div className="grid min-h-dvh place-items-center bg-brand/5">
         <GenizioLoader label="Chargement de la quête…" />
       </div>
     );
@@ -208,7 +208,7 @@ function QuestPage() {
 
   if (!child) {
     return (
-      <div className="grid min-h-screen place-items-center bg-surface text-ink">
+      <div className="grid min-h-dvh place-items-center bg-surface text-ink">
         <div className="text-center">
           <p className="mb-4 font-bold">Profil introuvable.</p>
           <Link to="/profiles" className="underline text-sm opacity-80 hover:opacity-100">Retour</Link>
@@ -236,7 +236,7 @@ function QuestPage() {
     const currentStepText = steps[currentStepIndex] || "";
 
     return (
-      <div className="min-h-screen bg-gradient-to-br from-amber-50/50 via-sky-50/50 to-emerald-50/50 flex flex-col p-6 pb-24 relative overflow-hidden font-sans text-ink select-none md:pb-6">
+      <div className="min-h-dvh bg-gradient-to-br from-amber-50/50 via-sky-50/50 to-emerald-50/50 flex flex-col p-6 pb-24 relative overflow-hidden font-sans text-ink select-none ">
         {/* Floating background decorative circles */}
         <div className="absolute top-0 right-0 -mr-20 -mt-20 size-64 rounded-full bg-brand/10 blur-3xl pointer-events-none" />
         <div className="absolute bottom-0 left-0 -ml-20 -mb-20 size-64 rounded-full bg-sky/10 blur-3xl pointer-events-none" />
@@ -263,7 +263,7 @@ function QuestPage() {
                 setCurrentStepIndex(0);
               }
             }}
-            className="rounded-full bg-white p-2.5 border-[3px] border-ink shadow-brutal-sm text-ink hover:-translate-y-0.5 active:translate-y-0 transition-all cursor-pointer"
+            className="rounded-full bg-white p-2.5 border border-ink/10 shadow-sm text-ink hover:-translate-y-0.5 active:translate-y-0 transition-all cursor-pointer"
           >
             <X className="size-5" />
           </button>
@@ -271,7 +271,7 @@ function QuestPage() {
 
         {/* Progress bar */}
         {!isCompletedScreen && (
-          <div className="w-full max-w-4xl mx-auto bg-white h-4 rounded-full mb-10 overflow-hidden relative z-10 border-[3px] border-ink shadow-brutal-sm">
+          <div className="w-full max-w-4xl mx-auto bg-white h-4 rounded-full mb-10 overflow-hidden relative z-10 border border-ink/10 shadow-sm">
             <div
               className="bg-brand h-full transition-all duration-500 border-r-[3px] border-ink"
               style={{ width: `${((currentStepIndex + 1) / steps.length) * 100}%` }}
@@ -279,17 +279,17 @@ function QuestPage() {
           </div>
         )}
 
-        <main className="flex-1 flex flex-col md:grid md:grid-cols-5 items-center justify-center gap-10 max-w-4xl mx-auto w-full relative z-10">
+        <main className="flex-1 flex flex-col md:grid  items-center justify-center gap-10 max-w-4xl mx-auto w-full relative z-10">
           {/* Left Column: Mascot Naya */}
           <div className="md:col-span-2 flex flex-col items-center justify-center text-center">
             <div className="relative flex flex-col items-center gap-6">
               {/* Mascot Face */}
-              <div className="relative size-32 md:size-40 rounded-full border-[4px] border-ink shadow-brutal flex items-center justify-center animate-bounce duration-1000 overflow-hidden bg-white shrink-0">
+              <div className="relative size-32 md:size-40 rounded-full border-[4px] border-ink shadow-xl flex items-center justify-center animate-bounce duration-1000 overflow-hidden bg-white shrink-0">
                 <img src={nayaAvatar} alt="Naya" className="h-full w-full object-cover" />
               </div>
               
               {/* Speech bubble */}
-              <div className="bg-white border-[3px] border-ink p-4 rounded-3xl shadow-brutal-sm max-w-xs text-sm font-black text-ink leading-relaxed relative">
+              <div className="bg-white border border-ink/10 p-4 rounded-3xl shadow-sm max-w-xs text-sm font-black text-ink leading-relaxed relative">
                 {getCompanionSpeech()}
               </div>
             </div>
@@ -297,7 +297,7 @@ function QuestPage() {
 
           {/* Right Column: Interaction Card */}
           <div className="md:col-span-3 w-full">
-            <div className="bg-white rounded-3xl p-8 border-[3px] border-ink shadow-brutal min-h-[340px] flex flex-col justify-between relative overflow-hidden">
+            <div className="bg-white rounded-3xl p-8 border border-ink/10 shadow-xl min-h-[340px] flex flex-col justify-between relative overflow-hidden">
 
               {!isCompletedScreen ? (
                 <>
@@ -306,7 +306,7 @@ function QuestPage() {
                       <span className="text-xl">🚀</span>
                       <span className="text-xs font-black uppercase tracking-widest text-brand">Étape en cours</span>
                     </div>
-                    <h3 className="font-display text-2xl font-black text-ink leading-tight">
+                    <h3 className="font-display text-balance text-2xl font-black text-ink leading-tight">
                       {currentStepText}
                     </h3>
                   </div>
@@ -319,14 +319,14 @@ function QuestPage() {
                         copy[currentStepIndex] = !copy[currentStepIndex];
                         setStepChecked(copy);
                       }}
-                      className={`w-full rounded-2xl p-5 border-[3px] text-left font-black text-lg flex items-center justify-between transition-all cursor-pointer hover:-translate-y-0.5 active:translate-y-0 ${
+                      className={`w-full rounded-2xl p-5 border text-left font-black text-lg flex items-center justify-between transition-all cursor-pointer hover:-translate-y-0.5 active:translate-y-0 ${
                         stepChecked[currentStepIndex]
-                          ? "bg-leaf border-ink text-white shadow-brutal-sm"
-                          : "bg-white border-ink shadow-brutal-sm text-ink"
+                          ? "bg-leaf border-ink text-white shadow-sm"
+                          : "bg-white border-ink shadow-sm text-ink"
                       }`}
                     >
                       <span>{stepChecked[currentStepIndex] ? "✓ C'est fait !" : "J'ai terminé cette étape !"}</span>
-                      <div className={`size-8 rounded-full border-[3px] flex items-center justify-center transition-all ${
+                      <div className={`size-8 rounded-full border flex items-center justify-center transition-all ${
                         stepChecked[currentStepIndex]
                           ? "border-ink bg-white text-ink"
                           : "border-ink bg-surface"
@@ -348,7 +348,7 @@ function QuestPage() {
                         }
                       }}
                       disabled={!stepChecked[currentStepIndex]}
-                      className="rounded-2xl border-[3px] border-ink bg-brand px-7 py-3.5 text-sm font-black text-white shadow-brutal hover:-translate-y-0.5 active:translate-y-0 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 cursor-pointer shrink-0"
+                      className="rounded-2xl border border-ink/10 bg-brand px-7 py-3.5 text-sm font-black text-white shadow-xl hover:-translate-y-0.5 active:translate-y-0 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 cursor-pointer shrink-0"
                     >
                       <span>Suivant</span>
                       <ChevronRight className="size-4" />
@@ -362,7 +362,7 @@ function QuestPage() {
                       <Trophy className="size-6 text-amber-500" />
                       <span className="text-xs font-black uppercase tracking-widest text-amber-600">Félicitations !</span>
                     </div>
-                    <h3 className="font-display text-2xl font-black text-ink leading-tight">
+                    <h3 className="font-display text-balance text-2xl font-black text-ink leading-tight">
                       Tu as achevé toute la mission avec succès !
                     </h3>
                     <p className="text-sm text-ink/60">
@@ -376,15 +376,15 @@ function QuestPage() {
                       onChange={(e) => setChildFeedback(e.target.value.slice(0, 1000))}
                       rows={3}
                       placeholder="J'ai adoré construire le pont mais le pistolet à colle était un peu difficile..."
-                      className="w-full rounded-2xl border-[3px] border-ink px-4 py-3 text-sm font-bold outline-none focus:ring-2 focus:ring-brand bg-white shadow-brutal-sm resize-none"
+                      className="w-full rounded-2xl border border-ink/10 px-4 py-3 text-sm font-bold outline-none focus:ring-2 focus:ring-brand bg-white shadow-sm resize-none"
                     />
                   </div>
 
-                  <div className="mt-6 flex flex-col sm:flex-row gap-3">
+                  <div className="mt-6 flex flex-col  gap-3">
                     <button
                       onClick={handleFinishQuest}
                       disabled={completing}
-                      className="flex-1 rounded-2xl border-[3px] border-ink bg-leaf px-6 py-4 text-base font-black text-white shadow-brutal active:translate-y-0 hover:-translate-y-0.5 transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
+                      className="flex-1 rounded-2xl border border-ink/10 bg-leaf px-6 py-4 text-base font-black text-white shadow-xl active:translate-y-0 hover:-translate-y-0.5 transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
                     >
                       {completing ? (
                         <>
@@ -409,18 +409,18 @@ function QuestPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-brand/5 to-white flex flex-col relative overflow-hidden pb-24 font-sans text-ink md:pb-6">
+    <div className="min-h-dvh bg-gradient-to-b from-brand/5 to-white flex flex-col relative overflow-hidden pb-24 font-sans text-ink ">
       {/* Decorative background blobs */}
       <div className="absolute top-0 right-0 -mr-20 -mt-20 size-64 rounded-full bg-brand/10 blur-3xl pointer-events-none" />
       <div className="absolute bottom-0 left-0 -ml-20 -mb-20 size-64 rounded-full bg-sky/10 blur-3xl pointer-events-none" />
 
       <header className="p-6 relative z-10 flex justify-between items-center max-w-4xl mx-auto w-full">
-        <h1 className="font-display text-2xl font-black text-ink tracking-tight">
+        <h1 className="font-display text-balance text-2xl font-black text-ink tracking-tight">
           La Carte des Quêtes
         </h1>
         <Link 
           to="/profiles" 
-          className="inline-flex items-center gap-2 rounded-full bg-white px-4 py-2 text-xs font-extrabold text-ink/60 hover:text-ink/80 hover:bg-white shadow-brutal-sm border-2 border-ink transition-all"
+          className="inline-flex items-center gap-2 rounded-full bg-white px-4 py-2 text-xs font-extrabold text-ink/60 hover:text-ink/80 hover:bg-white shadow-sm border border-ink/10 transition-all"
         >
           <ArrowLeft className="size-3.5" />
           Retour parent
@@ -431,8 +431,8 @@ function QuestPage() {
         
         {/* Quest Map Node Tree (Screen 1j) */}
         {mapNodes.length > 0 && (
-          <div className="w-full mb-12 py-8 bg-white rounded-3xl border-[3px] border-ink p-6 shadow-brutal">
-            <h2 className="font-display text-xs font-black text-ink/60 mb-8 uppercase tracking-widest">Mon chemin de découverte</h2>
+          <div className="w-full mb-12 py-8 bg-white rounded-3xl border border-ink/10 p-6 shadow-xl">
+            <h2 className="font-display text-balance text-xs font-black text-ink/60 mb-8 uppercase tracking-widest">Mon chemin de découverte</h2>
             <div className="flex items-center justify-between px-4 md:px-12 relative max-w-md mx-auto">
               
               {/* Connector Lines */}
@@ -445,7 +445,7 @@ function QuestPage() {
                 if (node.type === "completed") {
                   return (
                     <div key={node.challenge.id} className={`flex flex-col items-center gap-2 relative z-10 ${offset}`}>
-                      <div className="size-11 rounded-full bg-emerald-500 text-white border-[3px] border-ink shadow-brutal-sm flex items-center justify-center font-bold text-sm">
+                      <div className="size-11 rounded-full bg-emerald-500 text-white border border-ink/10 shadow-sm flex items-center justify-center font-bold text-sm">
                         <Check className="size-5 stroke-[3px]" />
                       </div>
                       <span className="text-[10px] font-black text-emerald-600 uppercase tracking-wider">Fait</span>
@@ -456,7 +456,7 @@ function QuestPage() {
                 if (node.type === "active") {
                   return (
                     <div key={node.challenge.id} className={`flex flex-col items-center gap-2 relative z-10 ${offset}`}>
-                      <div className={`size-14 rounded-full ${color} border-[3px] border-ink shadow-brutal flex items-center justify-center font-bold text-base animate-pulse`}>
+                      <div className={`size-14 rounded-full ${color} border border-ink/10 shadow-xl flex items-center justify-center font-bold text-base animate-pulse`}>
                         ★
                       </div>
                       <span className="text-[11px] font-black text-ink uppercase tracking-wider max-w-[120px] truncate">{node.challenge.title}</span>
@@ -467,7 +467,7 @@ function QuestPage() {
                 // Upcoming
                 return (
                   <div key={node.challenge.id} className={`flex flex-col items-center gap-2 relative z-10 ${offset} opacity-40`}>
-                    <div className="size-10 rounded-full bg-white border-[3px] border-dashed border-ink flex items-center justify-center text-ink">
+                    <div className="size-10 rounded-full bg-white border border-dashed border-ink/20 flex items-center justify-center text-ink">
                       <Circle className="size-4 fill-current opacity-20" />
                     </div>
                     <span className="text-[10px] font-black text-ink uppercase tracking-wider">Prochain</span>
@@ -481,17 +481,17 @@ function QuestPage() {
         <NayaAvatar size="md" className="mb-6" thoughts={activeChallenge ? ["Hop, on s'y met !"] : ["Bientôt de nouveaux défis !"]} />
 
         {activeChallenge ? (
-          <div className="bg-white rounded-3xl p-8 border-[3px] border-ink shadow-brutal w-full animate-in zoom-in-95 duration-500 relative overflow-hidden text-left">
+          <div className="bg-white rounded-3xl p-8 border border-ink/10 shadow-xl w-full animate-in zoom-in-95 duration-500 relative overflow-hidden text-left">
             <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
               <div className="flex items-center gap-2">
-                <span className="inline-block rounded-full border-[3px] border-ink bg-brand px-3.5 py-1 text-xs font-black uppercase tracking-widest text-white shadow-brutal-sm">
+                <span className="inline-block rounded-full border border-ink/10 bg-brand px-3.5 py-1 text-xs font-black uppercase tracking-widest text-white shadow-sm">
                   Mission : {activeChallenge.domain}
                 </span>
                 <DifficultyBadge difficulty={activeChallenge.difficulty} />
               </div>
               <span className="text-xs font-black text-ink/60">⏱ {activeChallenge.duration}</span>
             </div>
-            <h2 className="font-display text-2xl font-black text-ink leading-tight mb-3">
+            <h2 className="font-display text-balance text-2xl font-black text-ink leading-tight mb-3">
               {activeChallenge.title}
             </h2>
             <div className="text-ink/70 leading-relaxed mb-6">
@@ -503,7 +503,7 @@ function QuestPage() {
                 <p className="text-[10px] font-black uppercase tracking-widest text-ink/60 mb-3">Matériel à rassembler :</p>
                 <div className="flex flex-wrap gap-2">
                   {materials.map((m, i) => (
-                    <span key={i} className="inline-flex items-center gap-1.5 rounded-full border-2 border-ink bg-white px-3.5 py-1.5 text-xs font-bold text-ink shadow-brutal-sm">
+                    <span key={i} className="inline-flex items-center gap-1.5 rounded-full border border-ink/10 bg-white px-3.5 py-1.5 text-xs font-bold text-ink shadow-sm">
                       📦 {m}
                     </span>
                   ))}
@@ -513,14 +513,14 @@ function QuestPage() {
 
             <button
               onClick={() => setIsQuestActive(true)}
-              className="inline-flex w-full items-center justify-center gap-2 rounded-2xl border-[3px] border-ink bg-brand px-8 py-4 text-base font-black text-white shadow-brutal hover:-translate-y-0.5 active:translate-y-0 transition-all cursor-pointer"
+              className="inline-flex w-full items-center justify-center gap-2 rounded-2xl border border-ink/10 bg-brand px-8 py-4 text-base font-black text-white shadow-xl hover:-translate-y-0.5 active:translate-y-0 transition-all cursor-pointer"
             >
               <Play className="size-5 fill-current" />
               Commencer la mission ! 🚀
             </button>
           </div>
         ) : (
-          <div className="bg-white rounded-3xl p-8 border-[3px] border-ink shadow-brutal w-full text-center">
+          <div className="bg-white rounded-3xl p-8 border border-ink/10 shadow-xl w-full text-center">
             <p className="text-ink/65 text-lg font-bold">
               Tu n'as pas de mission active pour le moment ! Demande à tes parents de t'en attribuer une. 😊
             </p>

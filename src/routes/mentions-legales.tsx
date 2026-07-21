@@ -7,16 +7,16 @@ export const Route = createFileRoute("/mentions-legales")({
 
 function MentionsLegalesPage() {
   return (
-    <div className="min-h-screen bg-surface px-6 py-12 text-ink">
+    <div className="min-h-dvh bg-surface px-6 py-12 text-ink">
       <div className="mx-auto max-w-2xl">
         <Link to="/" className="mb-8 inline-flex items-center gap-2 text-sm font-bold text-ink/60 hover:text-brand">
           <ArrowLeft className="size-4" /> Retour
         </Link>
 
-        <h1 className="font-display text-3xl font-extrabold mb-2">Mentions légales</h1>
+        <h1 className="font-display text-balance text-3xl font-extrabold mb-2">Mentions légales</h1>
         <p className="mb-8 text-sm text-ink/60">Dernière mise à jour : 17 juillet 2026</p>
 
-        <div className="rounded-2xl border-[3px] border-amber-400 bg-amber-50 p-4 mb-8 text-sm text-amber-900">
+        <div className="rounded-2xl border border-amber-400 bg-amber-50 p-4 mb-8 text-sm text-amber-900">
           <strong>Note :</strong> ce document a été rédigé avec l'assistance d'une IA à partir des informations
           fournies par l'éditeur. Il constitue une base de bonne foi mais n'a pas été relu par un professionnel
           du droit. À faire réviser par un juriste avant tout lancement commercial à grande échelle, notamment
@@ -25,7 +25,7 @@ function MentionsLegalesPage() {
 
         <div className="space-y-6 text-sm leading-relaxed text-ink/80">
           <section>
-            <h2 className="font-display text-lg font-bold text-ink mb-2">Éditeur du site</h2>
+            <h2 className="font-display text-balance text-lg font-bold text-ink mb-2">Éditeur du site</h2>
             <p>
               Le site et l'application Génizio sont édités par <strong>Cheick Mohamed TRAORE</strong>, exerçant
               en tant qu'entrepreneur individuel (statut juridique de la structure porteuse en cours de
@@ -41,7 +41,7 @@ function MentionsLegalesPage() {
           </section>
 
           <section>
-            <h2 className="font-display text-lg font-bold text-ink mb-2">Hébergement</h2>
+            <h2 className="font-display text-balance text-lg font-bold text-ink mb-2">Hébergement</h2>
             <p>
               L'application est hébergée par <strong>Vercel Inc.</strong> (ou l'hébergeur de déploiement en
               vigueur) et les données sont stockées via <strong>Supabase</strong> (infrastructure Amazon Web
@@ -50,7 +50,7 @@ function MentionsLegalesPage() {
           </section>
 
           <section>
-            <h2 className="font-display text-lg font-bold text-ink mb-2">Propriété intellectuelle</h2>
+            <h2 className="font-display text-balance text-lg font-bold text-ink mb-2">Propriété intellectuelle</h2>
             <p>
               L'ensemble des contenus présents sur Génizio (textes, logos, mascotte « Naya », charte graphique,
               structure des défis) est la propriété de l'éditeur, sauf mention contraire. Toute reproduction
@@ -59,7 +59,7 @@ function MentionsLegalesPage() {
           </section>
 
           <section>
-            <h2 className="font-display text-lg font-bold text-ink mb-2">Contact</h2>
+            <h2 className="font-display text-balance text-lg font-bold text-ink mb-2">Contact</h2>
             <p>
               Pour toute question relative à ces mentions légales, à la Politique de confidentialité ou aux
               Conditions d'utilisation, écrivez à{" "}

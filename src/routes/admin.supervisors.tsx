@@ -95,23 +95,23 @@ function AdminSupervisorsPage() {
 
   if (loading || !session) {
     return (
-      <div className="grid min-h-screen place-items-center bg-surface">
+      <div className="grid min-h-dvh place-items-center bg-surface">
         <GenizioLoader label="Chargement…" />
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-surface pb-24 text-ink">
+    <div className="min-h-dvh bg-surface pb-24 text-ink">
       <AppHeader />
 
       <main className="mx-auto max-w-4xl px-6 py-10">
         <div className="mb-8 flex items-center gap-3">
-          <div className="flex size-12 items-center justify-center rounded-2xl border-[3px] border-ink bg-ink text-white shadow-brutal-sm">
+          <div className="flex size-12 items-center justify-center rounded-2xl border border-white/10 bg-ink text-white shadow-md">
             <Users className="size-6" />
           </div>
           <div>
-            <h1 className="font-display text-2xl font-extrabold">Gestion des Superviseurs</h1>
+            <h1 className="font-display text-balance text-2xl font-extrabold">Gestion des Superviseurs</h1>
             <p className="text-sm text-ink/60">Assigner des superviseurs à des profils d'enfants.</p>
           </div>
         </div>
@@ -121,7 +121,7 @@ function AdminSupervisorsPage() {
             <Loader2 className="size-6 animate-spin text-brand" />
           </div>
         ) : forbidden ? (
-          <div className="rounded-3xl border-[3px] border-ink bg-white p-10 text-center shadow-brutal">
+          <div className="rounded-3xl border border-ink/10 bg-white p-10 text-center shadow-xl">
             <div className="mx-auto mb-3 flex size-12 items-center justify-center rounded-full border-2 border-ink bg-red-50 text-red-500">
               <ShieldAlert className="size-6" />
             </div>
@@ -133,9 +133,9 @@ function AdminSupervisorsPage() {
         ) : (
           <div className="space-y-8">
             {/* Formulaire d'assignation */}
-            <div className="rounded-3xl border-[3px] border-ink bg-white p-6 shadow-brutal">
-              <h2 className="font-display text-lg font-black mb-5">Assigner un nouveau superviseur</h2>
-              <div className="grid gap-4 md:grid-cols-3">
+            <div className="rounded-3xl border border-ink/10 bg-white p-6 shadow-xl">
+              <h2 className="font-display text-balance text-lg font-black mb-5">Assigner un nouveau superviseur</h2>
+              <div className="grid gap-4 ">
                 <div className="md:col-span-1">
                   <label className="mb-1.5 block text-xs font-extrabold uppercase tracking-widest text-ink/60">
                     Email du superviseur
@@ -145,7 +145,7 @@ function AdminSupervisorsPage() {
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     placeholder="superviseur@exemple.com"
-                    className="w-full rounded-2xl border-[3px] border-ink px-4 py-3 text-sm font-bold outline-none focus:ring-2 focus:ring-brand shadow-brutal-sm"
+                    className="w-full rounded-2xl border border-ink/10 px-4 py-3 text-sm font-bold outline-none focus:ring-2 focus:ring-brand shadow-sm"
                   />
                 </div>
                 <div className="md:col-span-1">
@@ -155,7 +155,7 @@ function AdminSupervisorsPage() {
                   <select
                     value={childProfileId}
                     onChange={(e) => setChildProfileId(e.target.value)}
-                    className="w-full rounded-2xl border-[3px] border-ink bg-white px-4 py-3 text-sm font-bold outline-none focus:ring-2 focus:ring-brand shadow-brutal-sm cursor-pointer"
+                    className="w-full rounded-2xl border border-ink/10 bg-white px-4 py-3 text-sm font-bold outline-none focus:ring-2 focus:ring-brand shadow-sm cursor-pointer"
                   >
                     <option value="">Sélectionner un enfant…</option>
                     {childProfiles.map((p) => (
@@ -167,7 +167,7 @@ function AdminSupervisorsPage() {
                   <button
                     onClick={handleAssign}
                     disabled={saving || !email.trim() || !childProfileId}
-                    className="w-full flex items-center justify-center gap-2 rounded-2xl border-[3px] border-ink bg-ink py-3 text-sm font-bold text-white shadow-brutal hover:-translate-y-0.5 disabled:opacity-50 transition-all cursor-pointer"
+                    className="press-ink w-full flex items-center justify-center gap-2 rounded-2xl bg-ink py-3 text-sm font-bold text-white disabled:opacity-50 cursor-pointer"
                   >
                     {saving ? <Loader2 className="size-4 animate-spin" /> : <Plus className="size-4" />}
                     Assigner
@@ -177,8 +177,8 @@ function AdminSupervisorsPage() {
             </div>
 
             {/* Liste des superviseurs actuels */}
-            <div className="rounded-3xl border-[3px] border-ink bg-white p-6 shadow-brutal">
-              <h2 className="font-display text-lg font-black mb-5">Superviseurs actifs ({supervisors.length})</h2>
+            <div className="rounded-3xl border border-ink/10 bg-white p-6 shadow-xl">
+              <h2 className="font-display text-balance text-lg font-black mb-5">Superviseurs actifs ({supervisors.length})</h2>
               {supervisors.length === 0 ? (
                 <p className="text-sm text-ink/60 italic">Aucun superviseur assigné pour le moment.</p>
               ) : (

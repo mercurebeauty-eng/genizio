@@ -422,7 +422,7 @@ function ChallengesPage() {
 
   if (loading || !session || (fetching && initialLoad)) {
     return (
-      <div className="grid min-h-screen place-items-center bg-surface">
+      <div className="grid min-h-dvh place-items-center bg-surface">
         <GenizioLoader label="Chargement…" />
       </div>
     );
@@ -430,7 +430,7 @@ function ChallengesPage() {
 
   if (!child) {
     return (
-      <div className="grid min-h-screen place-items-center bg-surface">
+      <div className="grid min-h-dvh place-items-center bg-surface">
         <div className="text-center">
           <p className="mb-4 text-ink/60">Profil introuvable.</p>
           <Link to="/profiles" className="rounded-full bg-brand px-5 py-2 text-sm font-bold text-white">
@@ -449,17 +449,17 @@ function ChallengesPage() {
       : 0;
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-surface via-surface to-brand/5 pb-24 text-ink md:pb-6">
+    <div className="min-h-dvh bg-gradient-to-b from-surface via-surface to-brand/5 pb-24 text-ink ">
       <AppHeader hideTabBarLinks />
 
-      <main className="mx-auto max-w-6xl px-6 py-10 md:flex md:gap-8">
+      <main className="mx-auto max-w-6xl px-6 py-10 md:flex ">
         <AppTabBar profileId={profileId} />
         <div className="min-w-0 flex-1">
           {/* Child Header Profile */}
-        <div className="mb-10 rounded-3xl border-[3px] border-ink bg-white p-6 shadow-brutal md:p-8 flex flex-col gap-6 md:flex-row md:items-center md:justify-between">
+        <div className="mb-10 rounded-3xl border border-ink/10 bg-white p-6 shadow-xl md:p-8 flex flex-col gap-6  md:items-center md:justify-between">
           <div className="flex items-center gap-5">
             <div
-              className={`grid size-16 place-items-center rounded-2xl font-display text-2xl font-bold shadow-md shadow-brand/10 ${COLORS[child.avatar_color] ?? "bg-brand"}`}
+              className={`grid size-16 place-items-center rounded-2xl font-display text-balance text-2xl font-bold shadow-md shadow-brand/10 ${COLORS[child.avatar_color] ?? "bg-brand"}`}
             >
               {child.name.charAt(0).toUpperCase()}
             </div>
@@ -467,7 +467,7 @@ function ChallengesPage() {
               <p className="text-[10px] font-extrabold uppercase tracking-widest text-brand">
                 Tableau de bord de
               </p>
-              <h1 className="font-display text-3xl font-extrabold md:text-4xl">{child.name}</h1>
+              <h1 className="font-display text-balance text-3xl font-extrabold md:text-4xl">{child.name}</h1>
               <p className="mt-1 text-sm font-medium text-ink/60">
                 {child.age} ans
                 {child.interests.length > 0 && ` · ${child.interests.slice(0, 3).join(", ")}`}
@@ -479,7 +479,7 @@ function ChallengesPage() {
               onClick={() => {
                 document.getElementById("genizio-lab")?.scrollIntoView({ behavior: "smooth" });
               }}
-              className="rounded-2xl border-[3px] border-ink bg-white px-5 py-3 text-sm font-bold text-ink shadow-brutal-sm hover:-translate-y-0.5 active:translate-y-0 transition-all flex items-center gap-2 cursor-pointer"
+              className="rounded-2xl border border-ink/10 bg-white px-5 py-3 text-sm font-bold text-ink shadow-sm hover:-translate-y-0.5 active:translate-y-0 transition-all flex items-center gap-2 cursor-pointer"
             >
               <Beaker className="size-4 text-brand" />
               Générateur d'Expériences
@@ -487,7 +487,7 @@ function ChallengesPage() {
             <button
               onClick={handleGenerate}
               disabled={generating}
-              className="rounded-2xl border-[3px] border-ink bg-brand px-5 py-3 text-sm font-bold text-white shadow-brutal hover:-translate-y-0.5 active:translate-y-0 transition-all disabled:opacity-60 disabled:cursor-wait flex items-center gap-2"
+              className="rounded-2xl border border-ink/10 bg-brand px-5 py-3 text-sm font-bold text-white shadow-xl hover:-translate-y-0.5 active:translate-y-0 transition-all disabled:opacity-60 disabled:cursor-wait flex items-center gap-2"
             >
               {generating ? (
                 <>
@@ -504,7 +504,7 @@ function ChallengesPage() {
             <Link
               to="/profiles/$profileId/quest"
               params={{ profileId }}
-              className="rounded-2xl border-[3px] border-ink bg-sky px-5 py-3 text-sm font-bold text-ink shadow-brutal hover:-translate-y-0.5 active:translate-y-0 transition-all flex items-center gap-2 cursor-pointer"
+              className="rounded-2xl border border-ink/10 bg-sky px-5 py-3 text-sm font-bold text-ink shadow-xl hover:-translate-y-0.5 active:translate-y-0 transition-all flex items-center gap-2 cursor-pointer"
             >
               Au tour de {child.name} →
             </Link>
@@ -512,14 +512,14 @@ function ChallengesPage() {
         </div>
 
         {/* Dashboard Grid Layout */}
-        <div className="grid grid-cols-1 gap-8 lg:grid-cols-3">
+        <div className="grid grid-cols-1 gap-8 ">
           
           {/* LEFT COLUMN: Radar chart & AI Synthesis */}
           <div className="lg:col-span-1 space-y-6">
             
             {/* Radar Chart Card */}
-            <div className="rounded-3xl border-[3px] border-ink bg-ink text-white p-6 shadow-brutal flex flex-col">
-              <h3 className="font-display text-lg font-bold flex items-center gap-2 mb-4">
+            <div className="rounded-3xl border border-ink/10 bg-ink text-white p-6 shadow-xl flex flex-col">
+              <h3 className="font-display text-balance text-lg font-bold flex items-center gap-2 mb-4">
                 <Award className="size-5 text-brand" />
                 Carte des Talents
               </h3>
@@ -530,9 +530,9 @@ function ChallengesPage() {
             </div>
 
             {/* AI Synthesis Card */}
-            <div className="rounded-3xl border-[3px] border-ink bg-white p-6 shadow-brutal relative overflow-hidden">
+            <div className="rounded-3xl border border-ink/10 bg-white p-6 shadow-xl relative overflow-hidden">
 
-              <h3 className="font-display text-lg font-bold flex items-center gap-2 text-ink mb-4">
+              <h3 className="font-display text-balance text-lg font-bold flex items-center gap-2 text-ink mb-4">
                 <Brain className="size-5 text-brand" />
                 Rapport de Naya
               </h3>
@@ -553,11 +553,11 @@ function ChallengesPage() {
             <div className="grid grid-cols-2 gap-3">
               <div className="bg-white rounded-2xl border border-ink/10 shadow-sm p-4 text-center">
                 <span className="text-[10px] font-bold uppercase tracking-wider text-ink/60">Défis Terminés</span>
-                <p className="mt-1 font-display text-2xl font-extrabold text-brand">{done}</p>
+                <p className="mt-1 font-display text-balance text-2xl font-extrabold text-brand">{done}</p>
               </div>
               <div className="bg-white rounded-2xl border border-ink/10 shadow-sm p-4 text-center">
                 <span className="text-[10px] font-bold uppercase tracking-wider text-ink/60">Progression</span>
-                <p className="mt-1 font-display text-2xl font-extrabold text-brand">{totalProgress}%</p>
+                <p className="mt-1 font-display text-balance text-2xl font-extrabold text-brand">{totalProgress}%</p>
               </div>
             </div>
 
@@ -580,10 +580,10 @@ function ChallengesPage() {
                   {recommendation.pedagogicalReason}
                 </p>
                 {recommendation.challenge && (
-                  <div className="rounded-2xl border border-amber-200 bg-white p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-sm">
+                  <div className="rounded-2xl border border-amber-200 bg-white p-4 flex flex-col  sm:items-center justify-between gap-4 shadow-sm">
                     <div>
                       <span className="text-[10px] font-black uppercase text-brand tracking-widest">{recommendation.challenge.domain}</span>
-                      <h4 className="font-display text-lg font-black text-ink">{recommendation.challenge.title}</h4>
+                      <h4 className="font-display text-balance text-lg font-black text-ink">{recommendation.challenge.title}</h4>
                       <p className="text-xs text-ink/70 line-clamp-2 mt-0.5">{recommendation.challenge.description}</p>
                     </div>
                     <button
@@ -605,17 +605,17 @@ function ChallengesPage() {
             <div id="genizio-lab" className="rounded-3xl border border-ink/10 bg-sky-50/80 p-6 shadow-md md:p-8 backdrop-blur-md">
               <div className="mb-4 flex items-center justify-between">
                 <div className="flex items-center gap-3">
-                  <span className="grid place-items-center rounded-2xl bg-brand p-2.5 text-white border-2 border-ink shadow-brutal-sm">
+                  <span className="grid place-items-center rounded-2xl bg-brand p-2.5 text-white border border-ink/10 shadow-sm">
                     <Beaker className="size-6" />
                   </span>
                   <div>
-                    <h3 className="font-display text-xl font-bold">Composer un défi ciblé</h3>
+                    <h3 className="font-display text-balance text-xl font-bold">Composer un défi ciblé</h3>
                     <p className="text-xs font-bold text-ink/60">Générez un défi d'apprentissage sur-mesure pour {child.name}</p>
                   </div>
                 </div>
               </div>
 
-              <div className="mt-6 grid gap-4 sm:grid-cols-4 sm:items-end">
+              <div className="mt-6 grid gap-4  sm:items-end">
                 <div className="sm:col-span-3">
                   <label className="block text-xs font-bold uppercase tracking-wider text-ink mb-2">
                     Sélectionner l'Intelligence
@@ -623,7 +623,7 @@ function ChallengesPage() {
                   <select
                     value={selectedCategory}
                     onChange={(e) => setSelectedCategory(e.target.value)}
-                    className="block w-full rounded-2xl border-[3px] border-ink bg-white px-4 py-3 text-sm font-bold outline-none focus:ring-2 focus:ring-brand focus:ring-offset-2 transition-all cursor-pointer shadow-brutal-sm"
+                    className="block w-full rounded-2xl border border-ink/10 bg-white px-4 py-3 text-sm font-bold outline-none focus:ring-2 focus:ring-brand focus:ring-offset-2 transition-all cursor-pointer shadow-sm"
                   >
                     {CATEGORIES.map((cat) => (
                       <option key={cat.id} value={cat.id}>
@@ -636,7 +636,7 @@ function ChallengesPage() {
                   <button
                     onClick={handleGenerateSingle}
                     disabled={isGeneratingSingle}
-                    className="w-full rounded-2xl border-[3px] border-ink bg-brand px-5 py-3 text-sm font-bold text-white shadow-brutal hover:-translate-y-0.5 active:translate-y-0 transition-all disabled:opacity-50 disabled:cursor-wait flex items-center justify-center gap-2"
+                    className="w-full rounded-2xl border border-ink/10 bg-brand px-5 py-3 text-sm font-bold text-white shadow-xl hover:-translate-y-0.5 active:translate-y-0 transition-all disabled:opacity-50 disabled:cursor-wait flex items-center justify-center gap-2"
                   >
                     {isGeneratingSingle ? (
                       <>
@@ -663,17 +663,17 @@ function ChallengesPage() {
 
               {/* Generated challenge display */}
               {currentGeneratedChallenge && !isGeneratingSingle && (
-                <div className="mt-6 rounded-2xl border-[3px] border-ink bg-white p-6 shadow-brutal-sm animate-in fade-in slide-in-from-top-3 duration-300">
+                <div className="mt-6 rounded-2xl border border-ink/10 bg-white p-6 shadow-sm animate-in fade-in slide-in-from-top-3 duration-300">
                   <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
                     <div className="flex items-center gap-2">
-                      <span className="rounded-full bg-brand px-3 py-1 text-[10px] font-black uppercase tracking-widest text-white border-2 border-ink">
+                      <span className="rounded-full bg-brand px-3 py-1 text-[10px] font-black uppercase tracking-widest text-white border border-ink/10">
                         {currentGeneratedChallenge.domain}
                       </span>
                       <DifficultyBadge difficulty={currentGeneratedChallenge.difficulty} />
                     </div>
                     <span className="text-xs text-ink/60 font-semibold">🕒 {currentGeneratedChallenge.duration}</span>
                   </div>
-                  <h4 className="font-display text-xl font-extrabold leading-tight text-ink mb-2">
+                  <h4 className="font-display text-balance text-xl font-extrabold leading-tight text-ink mb-2">
                     {currentGeneratedChallenge.title}
                   </h4>
                   <div className="text-sm text-ink/70 leading-relaxed mb-4">
@@ -681,7 +681,7 @@ function ChallengesPage() {
                   </div>
 
                   {currentGeneratedChallenge.pedagogical_context && (
-                    <div className="mb-4 rounded-xl bg-amber-50 border-2 border-ink p-4 text-xs leading-relaxed text-amber-800">
+                    <div className="mb-4 rounded-xl bg-amber-50 border border-ink/10 p-4 text-xs leading-relaxed text-amber-800">
                       <p className="font-bold flex items-center gap-1.5 mb-1 text-amber-900">
                         💡 Intention pédagogique (Naya)
                       </p>
@@ -689,7 +689,7 @@ function ChallengesPage() {
                     </div>
                   )}
 
-                  <div className="grid gap-4 sm:grid-cols-2 mb-6">
+                  <div className="grid gap-4  mb-6">
                     <div>
                       <h5 className="text-[10px] font-bold uppercase tracking-wider text-ink/60 mb-2">Étapes du défi</h5>
                       <ul className="text-xs space-y-1.5 text-ink/70 list-decimal list-inside pl-1">
@@ -721,7 +721,7 @@ function ChallengesPage() {
                     <button
                       onClick={handleAssignSingle}
                       disabled={isAssigningSingle}
-                      className="flex-1 rounded-xl border-[3px] border-ink bg-brand py-2.5 text-center text-xs font-bold text-white shadow-brutal-sm hover:-translate-y-0.5 active:translate-y-0 transition-all disabled:opacity-50 flex items-center justify-center gap-1.5 cursor-pointer"
+                      className="flex-1 rounded-xl border border-ink/10 bg-brand py-2.5 text-center text-xs font-bold text-white shadow-sm hover:-translate-y-0.5 active:translate-y-0 transition-all disabled:opacity-50 flex items-center justify-center gap-1.5 cursor-pointer"
                     >
                       {isAssigningSingle ? (
                         <>
@@ -737,7 +737,7 @@ function ChallengesPage() {
                     </button>
                     <button
                       onClick={handleGenerateSingle}
-                      className="rounded-xl border-[3px] border-ink bg-white px-4 py-2.5 text-xs font-bold text-ink/60 shadow-brutal-sm hover:-translate-y-0.5 transition-all cursor-pointer"
+                      className="rounded-xl border border-ink/10 bg-white px-4 py-2.5 text-xs font-bold text-ink/60 shadow-sm hover:-translate-y-0.5 transition-all cursor-pointer"
                     >
                       Relancer
                     </button>
@@ -747,7 +747,7 @@ function ChallengesPage() {
 
             </div>
 
-            <h3 className="font-display text-xl font-bold flex items-center gap-2">
+            <h3 className="font-display text-balance text-xl font-bold flex items-center gap-2">
               <Calendar className="size-5 text-indigo-500" />
               Feuille de Route des Défis ({challenges.length})
             </h3>
@@ -757,25 +757,19 @@ function ChallengesPage() {
             )}
 
             {challenges.length === 0 ? (
-              <div className="rounded-3xl border-[3px] border-dashed border-ink bg-white/40 p-16 text-center shadow-brutal-sm">
+              <div className="rounded-3xl border border-dashed border-ink/20 bg-white/40 p-16 text-center shadow-sm">
                 <p className="mb-2 text-lg font-bold">Aucune expérience entamée</p>
                 <p className="mb-6 text-sm text-ink/70 font-medium max-w-sm mx-auto">
                   Démarrez des expériences sur-mesure pour {child.name} via le générateur IA ou laissez Naya composer une première liste de base.
                 </p>
                 <div className="flex justify-center gap-3">
-                  <Link
-                    to="/laboratory"
-                    className="rounded-2xl border-[3px] border-ink bg-white px-5 py-3 text-sm font-bold text-ink shadow-brutal hover:-translate-y-0.5 transition-all flex items-center gap-2"
-                  >
-                    <Beaker className="size-4 text-brand" />
-                    Le Générateur IA
-                  </Link>
                   <button
                     onClick={handleGenerate}
                     disabled={generating}
-                    className="rounded-2xl border-[3px] border-ink bg-brand px-5 py-3 text-sm font-bold text-white shadow-brutal hover:-translate-y-0.5 disabled:opacity-60 transition-all"
+                    className="rounded-2xl border border-ink/10 bg-brand px-6 py-3.5 text-sm font-bold text-white shadow-xl hover:-translate-y-0.5 disabled:opacity-60 transition-all flex items-center gap-2 cursor-pointer"
                   >
-                    ✨ Suggérer 4 défis
+                    <Sparkles className="size-4 animate-pulse" />
+                    ✨ Déposer 4 nouveaux défis Naya
                   </button>
                 </div>
               </div>
@@ -784,8 +778,8 @@ function ChallengesPage() {
                 <div className="flex flex-wrap gap-2">
                   <button
                     onClick={() => setStatusFilter("all")}
-                    className={`rounded-xl border-2 border-ink px-3 py-1.5 text-xs font-bold transition-all ${
-                      statusFilter === "all" ? "bg-ink text-white shadow-brutal-sm" : "bg-white text-ink/65 hover:bg-surface"
+                    className={`rounded-xl border border-ink/10 px-3 py-1.5 text-xs font-bold transition-all ${
+                      statusFilter === "all" ? "bg-ink text-white shadow-sm" : "bg-white text-ink/65 hover:bg-surface"
                     }`}
                   >
                     Tous ({challenges.length})
@@ -796,8 +790,8 @@ function ChallengesPage() {
                       <button
                         key={s}
                         onClick={() => setStatusFilter(s)}
-                        className={`rounded-xl border-2 border-ink px-3 py-1.5 text-xs font-bold transition-all ${
-                          statusFilter === s ? "bg-ink text-white shadow-brutal-sm" : "bg-white text-ink/65 hover:bg-surface"
+                        className={`rounded-xl border border-ink/10 px-3 py-1.5 text-xs font-bold transition-all ${
+                          statusFilter === s ? "bg-ink text-white shadow-sm" : "bg-white text-ink/65 hover:bg-surface"
                         }`}
                       >
                         {STATUS_LABEL[s]} ({count})
@@ -811,7 +805,7 @@ function ChallengesPage() {
                     statusFilter === "all" ? challenges : challenges.filter((c) => c.status === statusFilter);
                   if (filteredChallenges.length === 0) {
                     return (
-                      <div className="rounded-3xl border-[3px] border-dashed border-ink bg-white/40 p-10 text-center shadow-brutal-sm">
+                      <div className="rounded-3xl border border-dashed border-ink/20 bg-white/40 p-10 text-center shadow-sm">
                         <p className="text-ink/65 font-bold">Aucun défi avec ce statut.</p>
                       </div>
                     );
@@ -851,17 +845,17 @@ function ChallengesPage() {
     {/* Modal Recommandation de Kit Post-Assignation */}
     {assignedChallengeForKit && (
       <div className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-ink/55 backdrop-blur-sm p-4 animate-in fade-in duration-200">
-        <div className="relative w-full max-w-md rounded-3xl border-[3px] border-ink bg-white p-6 shadow-brutal md:p-8">
+        <div className="relative w-full max-w-md rounded-3xl border border-ink/10 bg-white p-6 shadow-xl md:p-8">
           <button
             onClick={() => setAssignedChallengeForKit(null)}
-            className="absolute right-4 top-4 rounded-xl border-2 border-ink bg-stone-100 p-1.5 hover:bg-stone-200 transition-colors"
+            className="absolute right-4 top-4 rounded-xl border border-ink/10 bg-stone-100 p-1.5 hover:bg-stone-200 transition-colors"
           >
             <X className="size-4" />
           </button>
 
           <div className="mb-4 flex items-center gap-2">
             <ShoppingBag className="size-6 text-brand" />
-            <h2 className="font-display text-2xl font-black">Défi assigné avec succès ! 🎉</h2>
+            <h2 className="font-display text-balance text-2xl font-black">Défi assigné avec succès ! 🎉</h2>
           </div>
 
           <p className="text-sm text-ink/75 leading-relaxed mb-6">
@@ -869,7 +863,7 @@ function ChallengesPage() {
             Souhaitez-vous commander le kit matériel associé maintenant ?
           </p>
 
-          <div className="rounded-2xl border-2 border-ink bg-sky/15 p-4 mb-6">
+          <div className="rounded-2xl border border-ink/10 bg-sky/15 p-4 mb-6">
             <ul className="space-y-1.5 mb-3">
               {assignedChallengeForKit.products.map((p) => (
                 <li key={p.id} className="flex justify-between text-sm font-bold text-ink">
@@ -892,14 +886,14 @@ function ChallengesPage() {
           <div className="flex gap-3">
             <button
               onClick={() => setAssignedChallengeForKit(null)}
-              className="flex-1 rounded-xl border-2 border-ink bg-stone-100 py-3 text-sm font-bold hover:bg-stone-200 transition-all cursor-pointer text-center"
+              className="flex-1 rounded-xl border border-ink/10 bg-stone-100 py-3 text-sm font-bold hover:bg-stone-200 transition-all cursor-pointer text-center"
             >
               Faire sans kit
             </button>
             <button
               onClick={handleOrderKit}
               disabled={orderingKit}
-              className="flex-1 flex items-center justify-center gap-2 rounded-xl border-2 border-ink bg-leaf py-3 text-sm font-bold text-white shadow-brutal-sm hover:-translate-y-0.5 active:translate-y-0 transition-all cursor-pointer disabled:opacity-50"
+              className="flex-1 flex items-center justify-center gap-2 rounded-xl border border-ink/10 bg-leaf py-3 text-sm font-bold text-white shadow-sm hover:-translate-y-0.5 active:translate-y-0 transition-all cursor-pointer disabled:opacity-50"
             >
               {orderingKit ? (
                 <>
@@ -935,13 +929,13 @@ function MaterialsChecklist({ materials }: { materials: string[] }) {
               copy[i] = !copy[i];
               setChecked(copy);
             }}
-            className={`flex items-center gap-2 rounded-full border-2 px-3 py-1.5 text-xs font-bold transition-all cursor-pointer ${
+            className={`flex items-center gap-2 rounded-full border px-3 py-1.5 text-xs font-bold transition-all cursor-pointer ${
               checked[i]
                 ? "bg-leaf border-ink text-white"
                 : "bg-white border-ink text-ink/70 hover:bg-surface"
             }`}
           >
-            <div className={`size-3.5 rounded flex items-center justify-center border-2 ${
+            <div className={`size-3.5 rounded flex items-center justify-center border ${
               checked[i] ? "border-white bg-white text-leaf" : "border-ink/30"
             }`}>
               {checked[i] && <Check className="size-2 stroke-[3px]" />}
@@ -982,232 +976,223 @@ function ChallengeCard({
   const [notesDraft, setNotesDraft] = useState(c.notes ?? "");
   const [savedFlash, setSavedFlash] = useState(false);
 
-  return (
-    <div id={`challenge-${c.id}`} className="rounded-3xl bg-white p-6 border-[3px] border-ink shadow-brutal transition-all">
-      <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
-        <div className="flex items-center gap-2">
-          <span className="rounded-full bg-brand px-3 py-1 text-[10px] font-black uppercase tracking-widest text-white border-2 border-ink shadow-brutal-sm">
-            {c.domain}
-          </span>
-          <DifficultyBadge difficulty={c.difficulty} />
-          {hasKit && (
-            <span className="rounded-full bg-sky px-3 py-1 text-[10px] font-black uppercase tracking-widest text-ink border-2 border-ink shadow-brutal-sm">
-              📦 Kit disponible
+  if (!open) {
+    // Unexpanded state: A clean compact card that feels like the prototype
+    return (
+      <div id={`challenge-${c.id}`} className="rounded-[1.5rem] bg-white p-5 shadow-sm border border-border transition-all flex flex-col gap-4">
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <div className="flex items-center gap-2">
+            <span className="rounded-full bg-surface px-[11px] py-[5px] text-[12px] font-bold text-ink border border-border">
+              {c.domain}
             </span>
+            <DifficultyBadge difficulty={c.difficulty} />
+          </div>
+          <span className={`rounded-full px-[11px] py-[5px] text-[12px] font-bold ${STATUS_STYLE[c.status]}`}>
+            {STATUS_LABEL[c.status]}
+          </span>
+        </div>
+        <div>
+          <h3 className="font-display text-balance text-[20px] font-bold text-ink leading-tight mb-1">{c.title}</h3>
+          <div className="text-[14px] text-ink/60 line-clamp-2">
+            <MarkdownContent content={c.description} />
+          </div>
+        </div>
+        <button
+          onClick={onToggle}
+          className="w-full h-[44px] rounded-full border border-border bg-surface text-[14px] font-bold text-ink shadow-sm hover:bg-surface/80 transition-all flex items-center justify-center cursor-pointer"
+        >
+          Voir le défi →
+        </button>
+      </div>
+    );
+  }
+
+  // Expanded state: The exact prototype "DÉFI — DÉTAIL" layout
+  return (
+    <div id={`challenge-${c.id}`} className="rounded-[26px] overflow-hidden bg-surface shadow-md transition-all border border-border">
+      
+      {/* 2. DÉFI — DÉTAIL (Prototype equivalent) */}
+      <div className="relative px-5 pt-3 pb-7 overflow-hidden">
+        <div className="absolute inset-0 bg-gradient-to-br from-[#df8f3e] to-[#a35e16]"></div>
+        <div className="absolute -top-[30px] -right-[20px] w-[170px] h-[170px]" style={{ background: "radial-gradient(circle,rgba(255,255,255,.3),transparent 70%)" }}></div>
+        <div className="relative">
+          <button onClick={onToggle} className="w-[38px] h-[38px] border-none rounded-full bg-white/25 text-white flex items-center justify-center cursor-pointer mb-[14px]">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round"><path d="m15 18-6-6 6-6"/></svg>
+          </button>
+          <div className="flex flex-wrap gap-[7px] mb-3">
+            <span className="px-[11px] py-[5px] bg-white/20 rounded-full text-white text-[12px] font-bold">{c.domain}</span>
+            <DifficultyBadge difficulty={c.difficulty} />
+            <span className="inline-flex items-center gap-1 px-[11px] py-[5px] bg-white/20 rounded-full text-white text-[12px] font-bold">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M11.5 2.3a.5.5 0 0 1 1 0l2.3 4.6 5.1.75a.5.5 0 0 1 .3.86l-3.7 3.6.87 5.1a.5.5 0 0 1-.77.53L12 15.9l-4.6 2.4a.5.5 0 0 1-.77-.53l.88-5.1-3.7-3.6a.5.5 0 0 1 .29-.86l5.1-.75z"/></svg>
+              180 XP
+            </span>
+          </div>
+          <div className="font-display text-balance font-bold text-[30px] text-white leading-[1.02]">{c.title}</div>
+        </div>
+      </div>
+
+      <div className="px-5 pt-5 pb-0 -mt-[14px] bg-surface rounded-t-[26px] relative">
+        <div className="flex gap-3 items-start bg-brand-50 rounded-[1rem] p-[14px] mb-5">
+          <img src="/naya-mascot.png" alt="Naya" className="w-[40px] h-[40px] rounded-full object-cover shrink-0" />
+          <div className="text-[14px] leading-[1.45] text-ink">
+            <b className="text-brand">Naya&nbsp;:</b> J'ai préparé ce défi spécialement pour toi. Montre-moi de quoi tu es capable !
+          </div>
+        </div>
+
+        <div className="font-display text-balance font-bold text-[16px] mb-2">Ton objectif</div>
+        <div className="bg-card border border-border rounded-[1rem] p-4 text-[15px] leading-[1.5] text-ink shadow-sm mb-[22px]">
+          <MarkdownContent content={c.description} />
+        </div>
+
+        {c.steps && c.steps.length > 0 && (
+          <div className="mb-[22px]">
+            <StepAccordion steps={c.steps} />
+          </div>
+        )}
+
+        <div className="font-display text-balance font-bold text-[16px] mb-[10px]">Ce que tu développes</div>
+        <div className="flex flex-wrap gap-[9px] mb-[22px]">
+          <span className="px-[14px] py-[9px] bg-brand-50 text-brand-700 rounded-full font-bold text-[13px]">{c.domain}</span>
+          <span className="px-[14px] py-[9px] bg-leaf-50 text-leaf-dark rounded-full font-bold text-[13px]">Créativité</span>
+          <span className="px-[14px] py-[9px] bg-sky-50 text-sky-dark rounded-full font-bold text-[13px]">Persévérance</span>
+        </div>
+
+        {c.materials && c.materials.length > 0 && (
+          <>
+            <div className="font-display text-balance font-bold text-[16px] mb-[10px]">Le matériel</div>
+            <div className="grid grid-cols-2 gap-[10px] mb-[24px]">
+              {c.materials.map((m, i) => (
+                <div key={i} className="flex items-center gap-[9px] bg-card border border-border rounded-[12px] px-[13px] py-[11px] text-[14px] font-semibold">
+                  <span className={`w-[8px] h-[8px] rounded-full ${['bg-brand', 'bg-leaf', 'bg-sky-dark', 'bg-pink-500'][i % 4]}`}></span>
+                  <span className="truncate">{m}</span>
+                </div>
+              ))}
+            </div>
+          </>
+        )}
+
+        <div className="pb-5">
+          {c.status === "todo" ? (
+            <button
+              onClick={() => onStatus("in_progress")}
+              className="w-full flex items-center justify-center bg-brand text-white font-bold h-[56px] text-[16px] rounded-full cursor-pointer shadow-sm hover:bg-brand/90 transition-all"
+            >
+              Commencer le défi
+            </button>
+          ) : c.status === "in_progress" ? (
+            <button
+              onClick={() => onStatus("completed")}
+              className="w-full flex items-center justify-center bg-leaf text-white font-bold h-[56px] text-[16px] rounded-full cursor-pointer shadow-sm hover:bg-leaf/90 transition-all"
+            >
+              Terminer le défi
+            </button>
+          ) : (
+            <div className="flex items-center justify-center gap-2 bg-emerald-50 text-emerald-700 font-bold h-[56px] text-[16px] rounded-full">
+              <CheckCircle2 className="size-5" /> Défi accompli !
+            </div>
           )}
         </div>
-        <span
-          className={`rounded-full border-2 border-ink shadow-brutal-sm px-3 py-1 text-[10px] font-black uppercase tracking-widest ${STATUS_STYLE[c.status]}`}
-        >
-          {STATUS_LABEL[c.status]}
-        </span>
       </div>
-
-      <h3 className="font-display text-xl font-extrabold text-ink leading-tight mb-2">{c.title}</h3>
-      <div className="text-sm text-ink/75 leading-relaxed mb-4">
-        <MarkdownContent content={c.description} />
-      </div>
-
-      {/* Progress Slider */}
-      <div className="mb-4 rounded-2xl bg-surface p-4 border-2 border-ink">
-        <div className="mb-2 flex items-center justify-between text-xs">
-          <span className="font-bold text-ink/60">Progression</span>
-          <span className="font-extrabold text-brand">{c.progress}%</span>
-        </div>
-        <input
-          type="range"
-          min={0}
-          max={100}
-          step={5}
-          value={c.progress}
-          onChange={(e) => onProgress(Number(e.target.value))}
-          className="w-full accent-brand cursor-pointer"
-        />
-      </div>
-
-      <div className="mb-4 flex items-center gap-4 text-xs font-semibold text-ink/60">
-        <span>⏱ Durée : {c.duration}</span>
-        {c.completed_at && (
-          <span className="flex items-center gap-1 text-emerald-600">
-            <CheckCircle2 className="size-3.5" /> Complété le {new Date(c.completed_at).toLocaleDateString()}
-          </span>
-        )}
-      </div>
-
-      {/* Status control buttons */}
-      <div className="mb-4 flex gap-2">
-        {(["todo", "in_progress", "completed"] as const).map((s) => (
-          <button
-            key={s}
-            onClick={() => onStatus(s)}
-            className={
-              "rounded-full px-3 py-1.5 text-xs font-bold transition-all " +
-              (c.status === s
-                ? "bg-brand text-white shadow-md shadow-brand/10"
-                : "bg-surface text-ink/60 hover:bg-ink/5")
-            }
+      
+      {/* 3. DÉFI EN COURS (Parent pane + details) */}
+      <div className="px-5 pb-5 mt-2 pt-5 border-t border-border bg-surface">
+        <h4 className="font-display text-balance text-[16px] font-bold text-ink/60 uppercase tracking-widest mb-4">Espace Parent</h4>
+        
+        {/* Child-oriented Start Quest button */}
+        <div className="mb-6">
+          <Link
+            to="/profiles/$profileId/quest"
+            params={{ profileId: childId }}
+            className="w-full inline-flex items-center justify-center gap-2 rounded-full border border-border bg-white px-4 py-3 text-[14px] font-bold text-ink shadow-sm hover:bg-surface/80 transition-all cursor-pointer"
           >
-            {STATUS_LABEL[s]}
-          </button>
-        ))}
-      </div>
+            <Play className="size-4 fill-current" />
+            Lancer le Mode Enfant (Quête) 🎮
+          </Link>
+        </div>
 
-      <button
-        onClick={onToggle}
-        className="w-full rounded-2xl border-[3px] border-ink bg-white px-3 py-3 text-xs font-bold text-ink shadow-brutal-sm hover:-translate-y-0.5 active:translate-y-0 transition-all flex items-center justify-center gap-1.5"
-      >
-        <span>{open ? "Masquer les détails" : "Afficher étapes, matériel & preuve IA"}</span>
-      </button>
-
-      {open && (
-        <div className="mt-5 border-t-[3px] border-ink pt-5 animate-in fade-in duration-200">
-          <div className="grid gap-8 md:grid-cols-2">
-
-            {/* Left Pane: Child Facing (Pour l'enfant) */}
-            <div className="space-y-6 bg-surface p-5 rounded-3xl border-2 border-ink">
-              <div>
-                <p className="text-[10px] font-extrabold uppercase tracking-widest text-brand mb-1">
-                  Pour {childName}
-                </p>
-                <h4 className="font-display text-lg font-black text-ink">
-                  {c.title}
-                </h4>
-                <div className="mt-2 text-sm text-ink/75 leading-relaxed">
-                  <MarkdownContent content={c.description} />
-                </div>
-              </div>
-
-              {/* steps */}
-              {c.steps.length > 0 && (
-                <StepAccordion steps={c.steps} />
-              )}
-
-              {/* Child-oriented Start Quest button */}
-              <div className="pt-2">
-                <Link
-                  to="/profiles/$profileId/quest"
-                  params={{ profileId: childId }}
-                  className="inline-flex items-center gap-2 rounded-xl border-[3px] border-ink bg-brand px-4 py-2.5 text-xs font-bold text-white shadow-brutal-sm hover:-translate-y-0.5 transition-all cursor-pointer"
-                >
-                  <Play className="size-3.5 fill-current" />
-                  Mode Enfant (Quête) 🎮
-                </Link>
-              </div>
+        {/* pedagogical context */}
+        {c.pedagogical_context && (
+          <div className="rounded-[1rem] bg-brand-50 p-4 flex gap-3 mb-6">
+            <Brain className="size-5 text-brand flex-shrink-0 mt-0.5" />
+            <div>
+              <p className="text-[11px] font-bold uppercase tracking-widest text-brand mb-1">
+                Intention Pédagogique
+              </p>
+              <p className="text-[13px] text-brand-700 leading-relaxed italic">
+                "<MarkdownContent content={c.pedagogical_context} inline />"
+              </p>
             </div>
-
-            {/* Right Pane: Parent Facing (Pendant l'observation) */}
-            <div className="space-y-6">
-              {/* pedagogical context */}
-              {c.pedagogical_context && (
-                <div className="rounded-2xl bg-brand/5 border-[3px] border-ink p-4 flex gap-2.5">
-                  <Brain className="size-5 text-brand flex-shrink-0 mt-0.5" />
-                  <div>
-                    <p className="text-[10px] font-extrabold uppercase tracking-widest text-brand mb-1">
-                      Intention Pédagogique
-                    </p>
-                    <p className="text-xs text-brand/90 leading-relaxed italic">
-                      "<MarkdownContent content={c.pedagogical_context} inline />"
-                    </p>
-                  </div>
-                </div>
-              )}
-
-              {/* Observation prompts */}
-              <ObservationPrompts />
-
-              {/* materials with checklist interactive items */}
-              {c.materials.length > 0 && (
-                <MaterialsChecklist materials={c.materials} />
-              )}
-
-              <KitSuggestion
-                childId={childId}
-                challengeId={c.id}
-                materialTags={c.material_tags}
-                challengeTitle={c.title}
-                childName={childName}
-              />
-
-              {/* Parent Notes */}
-              <div className="space-y-3">
-                <p className="text-[10px] font-extrabold uppercase tracking-widest text-ink/60">
-                  Journal d'apprentissage du parent
-                </p>
-                <textarea
-                  value={notesDraft}
-                  onChange={(e) => setNotesDraft(e.target.value.slice(0, 2000))}
-                  rows={3}
-                  placeholder="Écrivez ce que l'enfant a fait, ses réussites et difficultés..."
-                  className="w-full rounded-2xl border-[3px] border-ink px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-brand transition-all resize-none shadow-brutal-sm"
-                />
-                <div className="flex items-center justify-between">
-                  <button
-                    onClick={async () => {
-                      await onNotes(notesDraft);
-                      setSavedFlash(true);
-                      setTimeout(() => setSavedFlash(false), 1500);
-                    }}
-                    className="rounded-xl border-[3px] border-ink bg-ink px-4 py-2 text-xs font-bold text-white shadow-brutal-sm hover:-translate-y-0.5 hover:bg-brand transition-all cursor-pointer"
-                  >
-                    Enregistrer les notes
-                  </button>
-                  {savedFlash && <span className="text-xs text-emerald-600 font-bold">✓ Notes enregistrées</span>}
-                </div>
-              </div>
-
-              {/* If in_progress, offer to start AI debrief chat */}
-              {c.status === "in_progress" && (
-                <div className="rounded-2xl border-[3px] border-ink bg-brand/5 p-5 text-center mt-4">
-                  <p className="text-xs font-bold text-ink/75 mb-3 leading-relaxed">
-                    L'activité est terminée ? Partagez vos observations avec Naya pour débriefer le projet de {childName} et mettre à jour ses talents !
-                  </p>
-                  <button
-                    onClick={() => onStatus("completed")}
-                    className="inline-flex items-center gap-1.5 rounded-xl border-[3px] border-ink bg-brand px-4 py-2.5 text-xs font-bold text-white shadow-brutal-sm hover:-translate-y-0.5 transition-all cursor-pointer"
-                  >
-                    <MessageCircle className="size-4" />
-                    Lancer le chat de débriefing 💬
-                  </button>
-                </div>
-              )}
-
-              {/* Validation section */}
-              {c.status === "completed" && !c.ai_observations && (
-                <OutcomeChat
-                  challenge={c}
-                  childName={childName}
-                  notes={notesDraft}
-                  onSaveNotes={onNotes}
-                  onValidated={onValidated}
-                />
-              )}
-
-              {/* AI Observations feedback */}
-              {c.ai_observations && (
-                <div className="rounded-2xl border-[3px] border-ink bg-leaf/10 p-5">
-                  <p className="mb-2 text-xs font-extrabold uppercase tracking-widest text-emerald-800 flex items-center gap-1">
-                    <Brain className="size-4 text-emerald-700" />
-                    Analyse de Naya (IA)
-                  </p>
-                  <p className="text-sm italic text-ink/80 leading-relaxed mb-3">"<MarkdownContent content={c.ai_observations} inline />"</p>
-                  <p className="text-[10px] font-extrabold text-emerald-800 uppercase tracking-wider">✓ La Carte des Talents de l'enfant a été enrichie !</p>
-                </div>
-              )}
-            </div>
-
           </div>
+        )}
 
-          <div className="flex justify-end pt-5 border-t-[3px] border-ink mt-6">
+        <KitSuggestion
+          childId={childId}
+          challengeId={c.id}
+          materialTags={c.material_tags}
+          challengeTitle={c.title}
+          childName={childName}
+        />
+
+        {/* Parent Notes */}
+        <div className="space-y-3 mb-6">
+          <p className="text-[11px] font-bold uppercase tracking-widest text-ink/60">
+            Journal d'apprentissage du parent
+          </p>
+          <textarea
+            value={notesDraft}
+            onChange={(e) => setNotesDraft(e.target.value.slice(0, 2000))}
+            rows={3}
+            placeholder="Écrivez ce que l'enfant a fait, ses réussites et difficultés..."
+            className="w-full rounded-[1rem] border border-border bg-white px-4 py-3 text-[14px] outline-none focus:ring-2 focus:ring-brand transition-all resize-none shadow-sm"
+          />
+          <div className="flex items-center justify-between">
             <button
-              onClick={onDelete}
-              className="inline-flex items-center gap-1.5 rounded-xl border-2 border-ink px-3 py-2 text-xs font-bold text-red-600 hover:bg-red-50 transition-all cursor-pointer"
+              onClick={async () => {
+                await onNotes(notesDraft);
+                setSavedFlash(true);
+                setTimeout(() => setSavedFlash(false), 1500);
+              }}
+              className="rounded-full bg-ink px-5 py-2.5 text-[13px] font-bold text-white shadow-sm hover:bg-ink/80 transition-all cursor-pointer"
             >
-              <Trash2 className="size-3.5" />
-              Supprimer
+              Enregistrer les notes
             </button>
+            {savedFlash && <span className="text-[13px] text-emerald-600 font-bold">✓ Enregistré</span>}
           </div>
         </div>
-      )}
+
+        {/* Validation section */}
+        {c.status === "completed" && !c.ai_observations && (
+          <OutcomeChat
+            challenge={c}
+            childName={childName}
+            notes={notesDraft}
+            onSaveNotes={onNotes}
+            onValidated={onValidated}
+          />
+        )}
+
+        {/* AI Observations feedback */}
+        {c.ai_observations && (
+          <div className="rounded-[1rem] bg-leaf-50 p-5 mb-6">
+            <p className="mb-2 text-[11px] font-bold uppercase tracking-widest text-leaf-dark flex items-center gap-1">
+              <Brain className="size-4 text-leaf-dark" />
+              Analyse de Naya (IA)
+            </p>
+            <p className="text-[14px] italic text-ink/80 leading-relaxed mb-3">"<MarkdownContent content={c.ai_observations} inline />"</p>
+            <p className="text-[10px] font-extrabold text-leaf-dark uppercase tracking-wider">✓ La Carte des Talents de l'enfant a été enrichie !</p>
+          </div>
+        )}
+
+        <div className="flex justify-end pt-5 border-t border-border mt-6">
+          <button
+            onClick={onDelete}
+            className="inline-flex items-center gap-1.5 rounded-full border border-border bg-white px-4 py-2 text-[13px] font-bold text-red-600 hover:bg-red-50 transition-all cursor-pointer"
+          >
+            <Trash2 className="size-4" />
+            Supprimer ce défi
+          </button>
+        </div>
+      </div>
     </div>
   );
 }

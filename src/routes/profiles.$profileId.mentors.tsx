@@ -44,7 +44,7 @@ function MentorsPage() {
 
   if (loading || !session || fetchingChild) {
     return (
-      <div className="grid min-h-screen place-items-center bg-surface">
+      <div className="grid min-h-dvh place-items-center bg-surface">
         <GenizioLoader label="Chargement…" />
       </div>
     );
@@ -52,7 +52,7 @@ function MentorsPage() {
 
   if (!childFound) {
     return (
-      <div className="grid min-h-screen place-items-center bg-surface text-ink">
+      <div className="grid min-h-dvh place-items-center bg-surface text-ink">
         <div className="text-center">
           <p className="mb-4 font-bold">Profil introuvable.</p>
           <Link to="/profiles" className="underline text-sm opacity-80 hover:opacity-100">Retour</Link>
@@ -62,14 +62,14 @@ function MentorsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-surface pb-24 text-ink md:pb-6">
+    <div className="min-h-dvh bg-surface pb-24 text-ink ">
       <AppHeader hideTabBarLinks />
-      <main className="mx-auto max-w-6xl px-6 py-10 md:flex md:gap-8">
+      <main className="mx-auto max-w-6xl px-6 py-10 md:flex ">
         <AppTabBar profileId={profileId} />
         <div className="min-w-0 flex-1 space-y-8 animate-in fade-in duration-500">
-          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div className="flex flex-col  md:items-center justify-between gap-4">
             <div>
-              <h1 className="font-display text-3xl font-extrabold text-ink flex items-center gap-3">
+              <h1 className="font-display text-balance text-3xl font-extrabold text-ink flex items-center gap-3">
                 <Users className="size-8 text-brand" />
                 Accès Mentors
               </h1>

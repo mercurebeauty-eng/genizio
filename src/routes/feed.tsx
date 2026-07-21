@@ -215,18 +215,18 @@ function FeedPage() {
 
   if (loading || !session) {
     return (
-      <div className="grid min-h-screen place-items-center bg-surface">
+      <div className="grid min-h-dvh place-items-center bg-surface">
         <GenizioLoader label="Chargement…" />
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-surface pb-10 font-sans text-ink">
+    <div className="min-h-dvh bg-surface pb-10 font-sans text-ink">
       <AppHeader />
       {/* Genizio Instagram-like Header */}
       <header className="sticky top-0 z-40 bg-surface border-b-[3px] border-ink px-4 h-16 flex items-center justify-between">
-        <h1 className="font-display text-2xl font-black tracking-tight text-brand">Mur Public</h1>
+        <h1 className="font-display text-balance text-2xl font-black tracking-tight text-brand">Mur Public</h1>
         <div className="flex items-center gap-3">
           <CreatePostModal onPostCreated={handlePostCreated} />
         </div>
@@ -241,7 +241,7 @@ function FeedPage() {
             </div>
           ) : feedItems.length === 0 ? (
             <div className="px-4">
-              <div className="rounded-3xl border-[3px] border-dashed border-ink bg-white/40 p-12 text-center shadow-brutal-sm">
+              <div className="rounded-3xl border-2 border-dashed border-ink/20 bg-white/40 p-12 text-center shadow-sm">
                 <p className="text-ink font-bold">Aucune publication pour l'instant.</p>
               </div>
             </div>
@@ -251,11 +251,11 @@ function FeedPage() {
               const commentsOpen = openCommentsFor === post.id;
               const comments = commentsByPost[post.id] ?? [];
               return (
-                <article key={post.id} className="bg-white border-y-[3px] sm:border-[3px] sm:rounded-3xl border-ink sm:shadow-brutal overflow-hidden">
+                <article key={post.id} className="bg-white border-y border-ink/10 sm:border sm:rounded-3xl sm:shadow-xl overflow-hidden">
                   {/* Post Header */}
-                  <div className="flex items-center justify-between p-4 border-b-[3px] border-ink bg-leaf/10">
+                  <div className="flex items-center justify-between p-4 border-b border-ink/10 bg-leaf/10">
                     <div className="flex items-center gap-3">
-                      <div className={`flex size-10 items-center justify-center rounded-2xl border-[3px] border-ink text-white font-black shadow-brutal-sm ${post.avatarColor}`}>
+                      <div className={`flex size-10 items-center justify-center rounded-2xl border border-ink/10 text-white font-black shadow-sm ${post.avatarColor}`}>
                         {post.childName[0]}
                       </div>
                       <div>
@@ -277,9 +277,9 @@ function FeedPage() {
                   </div>
 
                   {/* Media Full Bleed */}
-                  <div className="aspect-[4/5] w-full bg-surface relative border-b-[3px] border-ink">
+                  <div className="aspect-[4/5] w-full bg-surface relative border-b border-ink/10">
                     <img src={post.image} alt="Post" className="h-full w-full object-contain" />
-                    <div className="absolute top-4 right-4 rounded-full border-2 border-ink bg-white px-3 py-1 text-[10px] font-black text-ink uppercase tracking-wider shadow-brutal-sm">
+                    <div className="absolute top-4 right-4 rounded-full border border-ink/10 bg-white px-3 py-1 text-[10px] font-black text-ink uppercase tracking-wider shadow-sm">
                       {post.badge}
                     </div>
                   </div>
@@ -306,7 +306,7 @@ function FeedPage() {
                     <p className="text-sm font-black text-ink mb-2">{post.likes.toLocaleString()} High-Fives</p>
 
                     {post.aiTalentTag && (
-                      <div className="mb-3 rounded-2xl border-[3px] border-ink bg-sky p-3 shadow-brutal-sm flex items-start gap-2">
+                      <div className="mb-3 rounded-2xl border border-ink/10 bg-sky p-3 shadow-sm flex items-start gap-2">
                         <span className="text-lg leading-none shrink-0">✨</span>
                         <p className="text-[13px] font-bold text-ink italic leading-relaxed">
                           "{post.aiTalentTag}"

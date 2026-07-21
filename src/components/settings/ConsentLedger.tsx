@@ -23,12 +23,12 @@ export function ConsentLedger() {
   }, []);
 
   if (loading) {
-    return <div className="animate-pulse h-32 bg-ink/5 rounded-2xl border-[3px] border-ink"></div>;
+    return <div className="animate-pulse h-32 bg-ink/5 rounded-2xl border border-ink/10"></div>;
   }
 
   if (events.length === 0) {
     return (
-      <div className="text-center py-6 text-sm text-ink/60 bg-white rounded-2xl border-[3px] border-ink shadow-brutal">
+      <div className="text-center py-6 text-sm text-ink/60 bg-white rounded-2xl border border-ink/10 shadow-md">
         Aucun événement de confidentialité enregistré pour le moment.
       </div>
     );
@@ -53,8 +53,8 @@ export function ConsentLedger() {
   };
 
   return (
-    <div className="bg-white rounded-3xl border-[3px] border-ink shadow-brutal overflow-hidden">
-      <div className="p-4 border-b-[3px] border-ink bg-surface flex items-center gap-2">
+    <div className="bg-white rounded-3xl border border-ink/10 shadow-xl overflow-hidden">
+      <div className="p-4 border-b border-ink/10 bg-surface flex items-center gap-2">
         <ShieldCheck className="size-5 text-emerald-600" />
         <h3 className="font-bold text-ink text-sm">Registre de Consentement</h3>
       </div>

@@ -93,7 +93,7 @@ export function NayaAvatar({ size = "md", thoughts, className = "" }: NayaAvatar
       <AnimatePresence>
         {(showThought || isHovered) && activeThoughts.length > 0 && (
           <motion.div
-            className="absolute -top-3.5 left-1/2 z-30 w-max max-w-[10rem] cursor-default rounded-2xl border-[3px] border-ink bg-white px-3 py-2 shadow-brutal-sm text-center"
+            className="absolute -top-3.5 left-1/2 z-30 w-max max-w-[10rem] cursor-default rounded-2xl border border-ink/10 bg-white px-3 py-2 shadow-md text-center"
             initial={{ opacity: 0, scale: 0.6, y: 15, x: "-50%" }}
             animate={{ opacity: 1, scale: 1, y: 0, x: "-50%" }}
             exit={{ opacity: 0, scale: 0.6, y: 15, x: "-50%" }}

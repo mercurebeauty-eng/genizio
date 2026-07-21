@@ -1,58 +1,55 @@
 import { Link } from "@tanstack/react-router";
-import { Home, Trophy, Clock, ShoppingBag, Users, Settings } from "lucide-react";
+import { Home, Trophy, ShoppingBag, Users, Settings } from "lucide-react";
 
 type AppTabBarProps = {
   profileId: string;
 };
 
-const activeClass = "text-brand";
-const inactiveClass = "text-ink/60 hover:text-ink/70";
-
 export function AppTabBar({ profileId }: AppTabBarProps) {
   const items = [
-    { to: "/profiles" as const, label: "Accueil", icon: Home, needsProfileId: false, hideOnDesktop: true },
+    { to: "/profiles" as const, label: "Accueil", icon: Home, needsProfileId: false },
     { to: "/profiles/$profileId/challenges" as const, label: "Défis", icon: Trophy, needsProfileId: true },
-    { to: "/laboratory" as const, label: "Atelier", icon: Clock, needsProfileId: false },
     { to: "/boutique" as const, label: "Boutique", icon: ShoppingBag, needsProfileId: false },
     { to: "/profiles/$profileId/mentors" as const, label: "Mentors", icon: Users, needsProfileId: true },
-    { to: "/profile" as const, label: "Réglages", icon: Settings, needsProfileId: false, hideOnDesktop: true },
+    { to: "/profile" as const, label: "Réglages", icon: Settings, needsProfileId: false },
   ];
 
   return (
     <nav
-      className="fixed inset-x-0 bottom-0 z-40 border-t border-ink/10 bg-white/95 backdrop-blur-md md:sticky md:top-20 md:inset-x-auto md:h-fit md:w-20 md:rounded-3xl md:border md:border-ink/10 md:shadow-md md:py-4 transition-all"
+      className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[414px] z-40 bg-white/95 backdrop-blur-md border-t border-ink/5 pt-2.5 pb-2.5 px-2 flex flex-col justify-between shadow-xl rounded-t-[28px] transition-all"
       aria-label="Navigation principale"
     >
-      <div className="mx-auto flex max-w-6xl items-center justify-around px-2 py-2 md:flex-col md:gap-4 md:py-0">
-        {items.map(({ to, label, icon: Icon, needsProfileId, hideOnDesktop }) => {
-          if (needsProfileId && !profileId) {
-            return (
-              <Link
-                key={label}
-                to="/profiles"
-                className={`flex flex-col items-center gap-1 rounded-xl px-3 py-1.5 text-[10px] font-bold transition-colors ${inactiveClass}`}
-              >
-                <Icon className="size-5" />
-                {label}
-              </Link>
-            );
-          }
+      <div className="flex items-center justify-around w-full">
+        {items.map(({ to, label, icon: Icon, needsProfileId }) => {
+          const targetTo = (needsProfileId && !profileId) ? "/profiles" : to;
+          const params = (needsProfileId && profileId ? { profileId } : undefined) as never;
+
           return (
             <Link
-              key={to}
-              to={to}
-              params={(needsProfileId ? { profileId } : undefined) as never}
-              className={`flex flex-col items-center gap-1 rounded-xl px-3 py-1.5 text-[10px] font-bold transition-colors ${inactiveClass} ${
-                hideOnDesktop ? "md:hidden" : ""
-              }`}
-              activeProps={{ className: activeClass }}
+              key={label}
+              to={targetTo as any}
+              params={params}
+              activeOptions={{ exact: label === "Accueil" }}
+              className="flex flex-col items-center gap-1 px-3 py-1 cursor-pointer transition-all duration-150 text-ink/40 hover:text-ink/70"
+              activeProps={{
+                className: "!text-brand font-bold",
+              }}
             >
-              <Icon className="size-5" />
-              {label}
+              {({ isActive }) => (
+                <>
+                  <div className={`p-0.5 rounded-full transition-all ${isActive ? "ring-2 ring-brand rounded-full text-brand" : ""}`}>
+                    <Icon className="size-5 stroke-[2.1]" />
+                  </div>
+                  <span className="text-[10px] font-bold text-balance">{label}</span>
+                </>
+              )}
             </Link>
           );
         })}
       </div>
+
+      {/* iOS Home Indicator Bar */}
+      <div className="w-32 h-1 bg-ink/20 rounded-full mx-auto mt-2 mb-0.5 pointer-events-none" />
     </nav>
   );
 }

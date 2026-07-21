@@ -93,7 +93,7 @@ export function KitSuggestion({
   };
 
   return (
-    <div className="rounded-2xl border-[3px] border-ink bg-sky p-4 shadow-brutal-sm">
+    <div className="rounded-2xl border border-ink/10 bg-sky p-4 shadow-sm">
       <div className="mb-2 flex items-center gap-2">
         <ShoppingBag className="size-4 text-ink" />
         <p className="text-xs font-black uppercase tracking-widest text-ink">Kit suggéré par Naya</p>
@@ -113,7 +113,7 @@ export function KitSuggestion({
       <button
         onClick={handleOrder}
         disabled={ordering}
-        className="w-full flex items-center justify-center gap-2 rounded-xl border-2 border-ink bg-leaf px-4 py-2.5 text-sm font-bold text-white hover:-translate-y-0.5 active:translate-y-0 shadow-brutal-sm transition-all cursor-pointer disabled:opacity-50"
+        className="press-leaf w-full flex items-center justify-center gap-2 rounded-xl bg-leaf px-4 py-2.5 text-sm font-bold text-white transition-all cursor-pointer disabled:opacity-50"
       >
         {ordering ? (
           <>

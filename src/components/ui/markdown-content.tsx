@@ -15,9 +15,9 @@ const blockComponents: Components = {
   // These are short UI snippets, not documents — real <h1>-<h3> tags would be
   // semantically wrong (multiple per page) and visually oversized, so any
   // heading syntax the model emits anyway just renders as bold inline text.
-  h1: ({ children }) => <p className="font-display font-bold mb-1">{children}</p>,
-  h2: ({ children }) => <p className="font-display font-bold mb-1">{children}</p>,
-  h3: ({ children }) => <p className="font-display font-bold mb-1">{children}</p>,
+  h1: ({ children }) => <p className="font-display text-balance font-bold mb-1">{children}</p>,
+  h2: ({ children }) => <p className="font-display text-balance font-bold mb-1">{children}</p>,
+  h3: ({ children }) => <p className="font-display text-balance font-bold mb-1">{children}</p>,
   a: ({ children, href }) => (
     <a href={href} className="underline text-brand" target="_blank" rel="noreferrer">
       {children}

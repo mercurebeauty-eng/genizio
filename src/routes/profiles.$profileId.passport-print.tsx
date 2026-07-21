@@ -122,7 +122,7 @@ function PassportPrintPage() {
 
   if (loading || !session || fetching) {
     return (
-      <div className="grid min-h-screen place-items-center bg-stone-50">
+      <div className="grid min-h-dvh place-items-center bg-stone-50">
         <GenizioLoader label="Préparation du Passeport d'Excellence…" />
       </div>
     );
@@ -130,7 +130,7 @@ function PassportPrintPage() {
 
   if (!child) {
     return (
-      <div className="grid min-h-screen place-items-center bg-stone-50 text-ink">
+      <div className="grid min-h-dvh place-items-center bg-stone-50 text-ink">
         <div className="text-center p-6 border-2 border-ink bg-white rounded-3xl max-w-sm">
           <p className="font-bold text-red-500 mb-2">Accès refusé ou profil introuvable.</p>
           <p className="text-xs text-ink/60 mb-4">Ce document est sécurisé et réservé au compte parent propriétaire.</p>
@@ -143,13 +143,13 @@ function PassportPrintPage() {
   const isUnlocked = child.pdf_unlocked === true;
   if (!isUnlocked) {
     return (
-      <div className="grid min-h-screen place-items-center bg-stone-50 text-ink">
-        <div className="text-center p-8 border-3 border-ink bg-white rounded-3xl max-w-md shadow-brutal">
-          <h2 className="font-display text-xl font-black text-brand mb-2">Passeport d'Excellence Verrouillé</h2>
+      <div className="grid min-h-dvh place-items-center bg-stone-50 text-ink">
+        <div className="text-center p-8 border border-ink/10 bg-white rounded-3xl max-w-md shadow-xl">
+          <h2 className="font-display text-balance text-xl font-black text-brand mb-2">Passeport d'Excellence Verrouillé</h2>
           <p className="text-sm font-semibold text-ink/75 leading-relaxed mb-6">
             Le Passeport d'Excellence pour {child.name} n'a pas encore été débloqué par l'administration. Veuillez procéder à son activation ou contacter le support.
           </p>
-          <Link to="/profiles/$profileId/portfolio" params={{ profileId: child.id }} className="rounded-xl border-2 border-ink bg-brand px-5 py-2 text-xs font-bold text-white shadow-brutal-sm hover:-translate-y-0.5 active:translate-y-0 transition-all cursor-pointer">
+          <Link to="/profiles/$profileId/portfolio" params={{ profileId: child.id }} className="press-brand rounded-xl bg-brand px-5 py-2 text-xs font-bold text-white cursor-pointer">
             Retour au Portfolio
           </Link>
         </div>
@@ -163,12 +163,12 @@ function PassportPrintPage() {
   const rank = `${guild.name.replace("Les ", "").slice(0, -1)} ${suffixes[level - 1] || "Expert"}`;
 
   return (
-    <div className="min-h-screen bg-stone-100 py-10 print:py-0 print:bg-white text-ink">
+    <div className="min-h-dvh bg-stone-100 py-10 print:py-0 print:bg-white text-ink">
       
       {/* Print Controls / Alert for Screen View */}
-      <div className="max-w-[21cm] mx-auto mb-8 px-6 py-4 bg-white border-[3px] border-ink rounded-2xl flex items-center justify-between shadow-brutal-sm print:hidden">
+      <div className="max-w-[21cm] mx-auto mb-8 px-6 py-4 bg-white border border-ink/10 rounded-2xl flex items-center justify-between shadow-md print:hidden">
         <div className="flex items-center gap-3">
-          <Link to="/profiles/$profileId/portfolio" params={{ profileId: child.id }} className="rounded-xl border-2 border-ink p-2 hover:bg-stone-100 transition-all">
+          <Link to="/profiles/$profileId/portfolio" params={{ profileId: child.id }} className="rounded-xl border border-ink/10 p-2 hover:bg-stone-100 transition-all">
             <ChevronLeft className="size-4" />
           </Link>
           <div>
@@ -178,7 +178,7 @@ function PassportPrintPage() {
         </div>
         <button
           onClick={() => window.print()}
-          className="inline-flex items-center gap-2 rounded-xl border-2 border-ink bg-brand px-4 py-2 text-xs font-bold text-white shadow-brutal-sm hover:-translate-y-0.5 active:translate-y-0 transition-all cursor-pointer"
+          className="press-brand inline-flex items-center gap-2 rounded-xl bg-brand px-4 py-2 text-xs font-bold text-white cursor-pointer"
         >
           <Printer className="size-4" />
           Imprimer / Enregistrer en PDF
@@ -186,7 +186,7 @@ function PassportPrintPage() {
       </div>
 
       {/* 📄 PDF CONTENT PAGE CONTAINER */}
-      <div className="max-w-[21cm] mx-auto bg-white border-[3px] border-ink print:border-0 shadow-2xl print:shadow-none p-[1.5cm] min-h-[29.7cm] flex flex-col justify-between relative overflow-hidden">
+      <div className="max-w-[21cm] mx-auto bg-white border border-ink/10 print:border-0 shadow-2xl print:shadow-none p-[1.5cm] min-h-[29.7cm] flex flex-col justify-between relative overflow-hidden">
         
         {/* Style block for print-specific tweaks */}
         <style dangerouslySetInnerHTML={{ __html: `
@@ -218,7 +218,7 @@ function PassportPrintPage() {
         <div className="flex-1 flex flex-col justify-between min-h-[26cm]">
           {/* Header Cover */}
           <div className="flex justify-between items-center border-b-[3px] border-ink pb-6">
-            <div className="flex items-center gap-2 font-display text-xl font-black text-brand">
+            <div className="flex items-center gap-2 font-display text-balance text-xl font-black text-brand">
               <img src="/favicon-96x96.png" alt="" className="size-8" />
               <span>GÉNIZIO</span>
             </div>
@@ -229,10 +229,10 @@ function PassportPrintPage() {
 
           {/* Title block Cover */}
           <div className="my-auto py-12 text-center space-y-6">
-            <div className="inline-flex items-center justify-center size-20 rounded-3xl bg-brand/10 border-[3px] border-ink text-brand shadow-brutal mb-4">
+            <div className="inline-flex items-center justify-center size-20 rounded-3xl bg-brand/10 border border-ink/10 text-brand shadow-lg mb-4">
               <Award className="size-10" />
             </div>
-            <h1 className="font-display text-4xl md:text-5xl font-black uppercase tracking-tight text-ink">
+            <h1 className="font-display text-balance text-4xl md:text-5xl font-black uppercase tracking-tight text-ink">
               Passeport d'Excellence
             </h1>
             <p className="text-sm font-bold text-ink/60 uppercase tracking-widest max-w-md mx-auto leading-relaxed border-t-2 border-b-2 border-ink py-2">
@@ -240,7 +240,7 @@ function PassportPrintPage() {
             </p>
             
             <div className="pt-8 space-y-2">
-              <p className="text-3xl font-display font-extrabold text-brand">{child.name}</p>
+              <p className="text-3xl font-display text-balance font-extrabold text-brand">{child.name}</p>
               <p className="text-sm font-bold text-ink/70">Âge : {child.age} ans</p>
               <p className="text-sm font-bold text-ink/75">Statut de Guilde : <strong className="text-ink font-black">{rank}</strong> ({guild.name})</p>
             </div>
@@ -254,7 +254,7 @@ function PassportPrintPage() {
               <p className="text-[10px] font-medium text-ink/60">Dakar · Abidjan · Yaoundé</p>
             </div>
 
-            <div className="flex items-center gap-2 border-2 border-emerald-500 bg-emerald-50 text-emerald-800 rounded-xl px-3 py-2 text-xs font-bold shadow-brutal-sm">
+            <div className="flex items-center gap-2 border border-emerald-300 bg-emerald-50 text-emerald-800 rounded-xl px-3 py-2 text-xs font-bold shadow-sm">
               <ShieldCheck className="size-4 shrink-0 text-emerald-600" />
               <div>
                 <p className="text-[8px] font-black uppercase tracking-wider leading-none">Certifié Authentique</p>
@@ -268,14 +268,14 @@ function PassportPrintPage() {
         <div className="page-break flex-1 flex flex-col justify-between min-h-[26cm] pt-8">
           <div>
             <div className="border-b-[3px] border-ink pb-4 mb-8">
-              <h2 className="font-display text-xl font-black text-ink uppercase tracking-tight flex items-center gap-2">
+              <h2 className="font-display text-balance text-xl font-black text-ink uppercase tracking-tight flex items-center gap-2">
                 <Sparkles className="size-5 text-brand" />
                 I. Cartographie des intelligences multiples
               </h2>
             </div>
 
-            <div className="grid grid-cols-1 gap-8 md:grid-cols-2 items-center">
-              <div className="border-[3px] border-ink rounded-3xl p-4 bg-white shadow-brutal-sm flex flex-col items-center">
+            <div className="grid grid-cols-1 gap-8  items-center">
+              <div className="border border-ink/10 rounded-3xl p-4 bg-white shadow-md flex flex-col items-center">
                 <h3 className="text-xs font-black uppercase tracking-wider text-ink/60 mb-2 self-start">Carte Radar</h3>
                 <TalentRadarChart talents={child.talents} name={child.name} className="h-64 w-full" age={child.age} />
               </div>
@@ -320,7 +320,7 @@ function PassportPrintPage() {
 
             {/* AI Synthesis Statement */}
             {synthesis && (
-              <div className="mt-10 rounded-2xl border-[3px] border-ink bg-brand/5 p-6 shadow-brutal-sm">
+              <div className="mt-10 rounded-2xl border border-ink/10 bg-brand/5 p-6 shadow-md">
                 <h3 className="text-xs font-black uppercase tracking-wider text-brand mb-2 flex items-center gap-1.5">
                   <BookOpen className="size-4" />
                   Rapport de synthèse pédagogique (Co-pilote Naya)
@@ -351,21 +351,21 @@ function PassportPrintPage() {
             <div key={chunkIdx} className="page-break flex-1 flex flex-col justify-between min-h-[26cm] pt-8">
               <div>
                 <div className="border-b-[3px] border-ink pb-4 mb-8">
-                  <h2 className="font-display text-xl font-black text-ink uppercase tracking-tight">
+                  <h2 className="font-display text-balance text-xl font-black text-ink uppercase tracking-tight">
                     II. Réalisations Pratiques & Épreuves ({chunkIdx * 2 + 1} - {Math.min(challenges.length, chunkIdx * 2 + 2)})
                   </h2>
                 </div>
 
                 <div className="space-y-10">
                   {chunk.map((c) => (
-                    <div key={c.id} className="no-print-break border-2 border-ink rounded-3xl p-6 bg-white shadow-brutal-sm space-y-4">
+                    <div key={c.id} className="no-print-break border border-ink/10 rounded-3xl p-6 bg-white shadow-md space-y-4">
                       {/* Challenge header */}
                       <div className="flex justify-between items-start gap-4">
                         <div>
                           <span className="rounded-full border-2 border-ink bg-brand/10 text-brand px-2.5 py-0.5 text-[9px] font-black uppercase tracking-wider">
                             {c.domain}
                           </span>
-                          <h3 className="font-display text-base font-extrabold text-ink mt-1.5 leading-tight">{c.title}</h3>
+                          <h3 className="font-display text-balance text-base font-extrabold text-ink mt-1.5 leading-tight">{c.title}</h3>
                         </div>
                         {c.completed_at && (
                           <span className="text-[10px] font-bold text-ink/60 uppercase tracking-wider shrink-0 mt-0.5">
@@ -381,7 +381,7 @@ function PassportPrintPage() {
                       </div>
 
                       {/* Split photo and observations if photo exists */}
-                      <div className="grid gap-4 md:grid-cols-2">
+                      <div className="grid gap-4 ">
                         {/* Proof image */}
                         {c.proof_image_url && (
                           <div className="rounded-xl overflow-hidden border-2 border-ink bg-stone-50 aspect-[4/3] flex items-center justify-center">

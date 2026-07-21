@@ -16,7 +16,15 @@ export default defineConfig({
   vite: {
     plugins: [
       VitePWA({
-        registerType: 'autoUpdate',
+        // 'prompt' + injectRegister:false hands control of the update flow to our own
+        // PwaUpdateBanner component (virtual:pwa-register/react) instead of the plugin's
+        // auto-injected script. With the previous 'autoUpdate', a new service worker took
+        // over silently in the background — already-open tabs kept running the stale JS
+        // bundle until the next full navigation/reload, which is the "changes don't show up
+        // instantly" symptom reported. 'prompt' installs the new SW and waits for an explicit
+        // updateServiceWorker() call, which the banner triggers.
+        registerType: 'prompt',
+        injectRegister: false,
         outDir: '.output/public',
         includeAssets: ['favicon.ico', 'apple-touch-icon.png', 'mask-icon.svg'],
         // This app is server-rendered per route (TanStack Start/Nitro) — there is

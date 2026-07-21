@@ -7,16 +7,16 @@ export const Route = createFileRoute("/privacy")({
 
 function PrivacyPage() {
   return (
-    <div className="min-h-screen bg-surface px-6 py-12 text-ink">
+    <div className="min-h-dvh bg-surface px-6 py-12 text-ink">
       <div className="mx-auto max-w-2xl">
         <Link to="/" className="mb-8 inline-flex items-center gap-2 text-sm font-bold text-ink/60 hover:text-brand">
           <ArrowLeft className="size-4" /> Retour
         </Link>
 
-        <h1 className="font-display text-3xl font-extrabold mb-2">Politique de confidentialité</h1>
+        <h1 className="font-display text-balance text-3xl font-extrabold mb-2">Politique de confidentialité</h1>
         <p className="mb-8 text-sm text-ink/60">Dernière mise à jour : 17 juillet 2026</p>
 
-        <div className="rounded-2xl border-[3px] border-amber-400 bg-amber-50 p-4 mb-8 text-sm text-amber-900">
+        <div className="rounded-2xl border border-amber-400 bg-amber-50 p-4 mb-8 text-sm text-amber-900">
           <strong>Note :</strong> ce document a été rédigé avec l'assistance d'une IA à partir de l'architecture
           réelle de l'application, dans un esprit de bonne foi et en s'appuyant sur les standards RGPD comme
           référence la plus protectrice. Il n'a pas été relu par un professionnel du droit — à faire réviser
@@ -26,7 +26,7 @@ function PrivacyPage() {
 
         <div className="space-y-6 text-sm leading-relaxed text-ink/80">
           <section>
-            <h2 className="font-display text-lg font-bold text-ink mb-2">1. Qui sommes-nous ?</h2>
+            <h2 className="font-display text-balance text-lg font-bold text-ink mb-2">1. Qui sommes-nous ?</h2>
             <p>
               Génizio est édité par Cheick Mohamed TRAORE (voir{" "}
               <Link to="/mentions-legales" className="text-brand underline">mentions légales</Link>), responsable
@@ -36,7 +36,7 @@ function PrivacyPage() {
           </section>
 
           <section>
-            <h2 className="font-display text-lg font-bold text-ink mb-2">2. Génizio et les données d'enfants — principe fondateur</h2>
+            <h2 className="font-display text-balance text-lg font-bold text-ink mb-2">2. Génizio et les données d'enfants — principe fondateur</h2>
             <p>
               Génizio est un service utilisé par des <strong>parents</strong> pour accompagner leurs enfants.
               Le compte utilisateur (email, connexion Google) appartient toujours au parent. Les profils
@@ -47,7 +47,7 @@ function PrivacyPage() {
           </section>
 
           <section>
-            <h2 className="font-display text-lg font-bold text-ink mb-2">3. Données que nous collectons</h2>
+            <h2 className="font-display text-balance text-lg font-bold text-ink mb-2">3. Données que nous collectons</h2>
             <ul className="list-disc pl-5 space-y-1.5">
               <li><strong>Compte parent :</strong> adresse email, identifiant Google (aucun mot de passe stocké — connexion Google exclusivement).</li>
               <li><strong>Profil enfant :</strong> prénom, âge, ville/pays (optionnels), centres d'intérêt, scores de talents (carte des 9 intelligences).</li>
@@ -59,7 +59,7 @@ function PrivacyPage() {
           </section>
 
           <section>
-            <h2 className="font-display text-lg font-bold text-ink mb-2">4. Comment l'IA « Naya » utilise ces données</h2>
+            <h2 className="font-display text-balance text-lg font-bold text-ink mb-2">4. Comment l'IA « Naya » utilise ces données</h2>
             <p>
               Les photos de preuve et les descriptions de défis sont envoyées à l'API d'Anthropic (modèles
               Claude) pour générer des défis personnalisés et analyser les preuves photo. Anthropic agit ici
@@ -72,7 +72,7 @@ function PrivacyPage() {
           </section>
 
           <section>
-            <h2 className="font-display text-lg font-bold text-ink mb-2">5. Hébergement et sécurité</h2>
+            <h2 className="font-display text-balance text-lg font-bold text-ink mb-2">5. Hébergement et sécurité</h2>
             <p>
               Les données sont stockées via Supabase (base de données PostgreSQL et stockage de fichiers),
               hébergées en Europe (région Londres, Royaume-Uni). L'accès aux données est protégé par des règles
@@ -82,7 +82,7 @@ function PrivacyPage() {
           </section>
 
           <section>
-            <h2 className="font-display text-lg font-bold text-ink mb-2">6. Commande de kits matériels via WhatsApp</h2>
+            <h2 className="font-display text-balance text-lg font-bold text-ink mb-2">6. Commande de kits matériels via WhatsApp</h2>
             <p>
               Lorsque vous commandez un kit depuis la boutique, l'application enregistre la commande (produits,
               prix) puis vous redirige vers WhatsApp avec un message pré-rempli pour finaliser l'échange avec
@@ -93,7 +93,7 @@ function PrivacyPage() {
           </section>
 
           <section>
-            <h2 className="font-display text-lg font-bold text-ink mb-2">7. Cookies</h2>
+            <h2 className="font-display text-balance text-lg font-bold text-ink mb-2">7. Cookies</h2>
             <p>
               Génizio n'utilise aucun cookie de suivi publicitaire ou analytique. Seul un cookie technique
               strictement nécessaire (mémorisation de l'état replié/déplié d'un menu) est déposé — il ne
@@ -104,7 +104,7 @@ function PrivacyPage() {
           </section>
 
           <section>
-            <h2 className="font-display text-lg font-bold text-ink mb-2">8. Vos droits</h2>
+            <h2 className="font-display text-balance text-lg font-bold text-ink mb-2">8. Vos droits</h2>
             <p>
               Depuis la page <Link to="/profile" className="text-brand underline">Réglages</Link>, chaque parent
               peut à tout moment :
@@ -121,7 +121,7 @@ function PrivacyPage() {
           </section>
 
           <section>
-            <h2 className="font-display text-lg font-bold text-ink mb-2">9. Conservation des données</h2>
+            <h2 className="font-display text-balance text-lg font-bold text-ink mb-2">9. Conservation des données</h2>
             <p>
               Les données sont conservées tant que le compte parent est actif. En cas de suppression de compte,
               les données sont effacées immédiatement et de façon définitive de nos systèmes de production.

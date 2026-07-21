@@ -59,6 +59,7 @@ export type PortfolioPulseEntry = {
   label: string;
   bucket: TalentBucket;
   phrase: string;
+  score: number;
 };
 
 export function getPortfolioPulse(
@@ -84,5 +85,5 @@ export function getPortfolioPulse(
     const unexplored = sorted.find((e) => e.bucket === "pas_encore_explore");
     if (unexplored) top[top.length - 1] = unexplored;
   }
-  return top.map(({ key, label, bucket, phrase }) => ({ key, label, bucket, phrase }));
+  return top;
 }

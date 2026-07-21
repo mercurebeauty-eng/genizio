@@ -65,10 +65,10 @@ export const INTERESTS_BY_TALENT: Record<string, { label: string; tags: readonly
 };
 
 export const AVATAR_COLORS = [
-  { key: "brand", cls: "bg-brand" },
-  { key: "leaf", cls: "bg-leaf" },
-  { key: "sky", cls: "bg-sky" },
-  { key: "ink", cls: "bg-ink" },
+  { key: "brand", cls: "bg-brand", bg: "bg-brand", text: "text-white" },
+  { key: "leaf", cls: "bg-leaf", bg: "bg-leaf", text: "text-white" },
+  { key: "sky", cls: "bg-sky", bg: "bg-sky", text: "text-ink" },
+  { key: "ink", cls: "bg-ink", bg: "bg-ink", text: "text-white" },
 ] as const;
 
 export type ChildProfile = {
@@ -84,6 +84,9 @@ export type ChildProfile = {
   completed_challenges: string[];
   talents: Record<string, number>;
   pdf_unlocked: boolean;
+  xp: number;
+  streak: number;
+  last_activity_date: string | null;
 };
 
 export type ProfileDraft = Omit<
@@ -98,4 +101,7 @@ export const emptyProfileDraft = (): ProfileDraft => ({
   city: "",
   country: "",
   avatar_color: "brand",
+  xp: 0,
+  streak: 0,
+  last_activity_date: null,
 });

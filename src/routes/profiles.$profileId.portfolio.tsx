@@ -27,12 +27,13 @@ import {
   BookOpen,
   Search,
   Sparkles,
+  ChevronRight,
 } from "lucide-react";
 import { InviteMentorDialog } from "@/components/mentors/InviteMentorDialog";
 import { AppHeader } from "@/components/AppHeader";
 import { MarkdownContent } from "@/components/ui/markdown-content";
 import { INTERESTS_BY_TALENT } from "@/components/profiles/shared";
-import { TALENT_KEY_LABELS } from "@/lib/talent-buckets";
+import { TALENT_KEY_LABELS, getTalentBucket } from "@/lib/talent-buckets";
 
 // title vient de TALENT_KEY_LABELS (source unique des 9 libellés) — seuls
 // l'icône et la description restent propres à cette page.
@@ -165,6 +166,7 @@ function PortfolioPage() {
   const [synthesis, setSynthesis] = useState("");
   const [fetchingSynthesis, setFetchingSynthesis] = useState(false);
   const [mentorCount, setMentorCount] = useState(0);
+  const [dismissedDiscoveries, setDismissedDiscoveries] = useState<string[]>([]);
 
   const fetchSynthesis = useServerFn(getChildAISynthesis);
   const ensureHypotheses = useServerFn(ensureHypothesesForChild);
@@ -205,6 +207,38 @@ function PortfolioPage() {
     });
   }, [session, profileId]);
 
+  // Découverte de centre d'intérêt (cf. discussion produit) : un talent fort
+  // jamais déclaré par le parent est une vraie surprise, pas une routine —
+  // le rejet est donc mémorisé en local plutôt que dans une nouvelle colonne
+  // DB, pour ne pas alourdir le schéma pour un simple "ne re-propose pas ça".
+  useEffect(() => {
+    if (!profileId) return;
+    try {
+      const raw = localStorage.getItem(`genizio_dismissed_discoveries_${profileId}`);
+      setDismissedDiscoveries(raw ? JSON.parse(raw) : []);
+    } catch {
+      setDismissedDiscoveries([]);
+    }
+  }, [profileId]);
+
+  const dismissDiscovery = (domainKey: string) => {
+    const next = [...dismissedDiscoveries, domainKey];
+    setDismissedDiscoveries(next);
+    try {
+      localStorage.setItem(`genizio_dismissed_discoveries_${profileId}`, JSON.stringify(next));
+    } catch {
+      // Stockage local indisponible (navigation privée, quota...) — la
+      // suggestion réapparaîtra au prochain chargement, sans gravité.
+    }
+  };
+
+  const acceptDiscovery = async (label: string) => {
+    if (!child) return;
+    const nextInterests = [...(child.interests ?? []), label];
+    setChild({ ...child, interests: nextInterests });
+    await supabase.from("child_profiles").update({ interests: nextInterests }).eq("id", child.id);
+  };
+
   const refetchOpenCycle = () => {
     supabase
       .from("hypothesis_cycles")
@@ -243,7 +277,7 @@ function PortfolioPage() {
 
   if (loading || !session || fetching) {
     return (
-      <div className="grid min-h-screen place-items-center bg-surface">
+      <div className="grid min-h-dvh place-items-center bg-surface">
         <GenizioLoader label="Chargement…" />
       </div>
     );
@@ -251,7 +285,7 @@ function PortfolioPage() {
 
   if (!child) {
     return (
-      <div className="grid min-h-screen place-items-center bg-surface text-ink">
+      <div className="grid min-h-dvh place-items-center bg-surface text-ink">
         <div className="text-center">
           <p className="mb-4 font-bold">Profil introuvable.</p>
           <Link to="/profiles" className="underline text-sm opacity-80 hover:opacity-100">Retour</Link>
@@ -264,27 +298,32 @@ function PortfolioPage() {
   const artifacts = completed.filter((c) => c.proof_image_url);
 
   return (
-    <div className="min-h-screen bg-surface pb-24 text-ink md:pb-6">
+    <div className="min-h-dvh bg-surface pb-24 text-ink ">
       <AppHeader hideTabBarLinks />
 
-      <main className="mx-auto max-w-6xl px-6 py-10 md:flex md:gap-8">
+      <main className="mx-auto max-w-6xl px-6 py-10 md:flex ">
         <AppTabBar profileId={profileId} />
 
         <div className="min-w-0 flex-1 space-y-6">
-          {/* Bannière Guilde */}
+          {/* Bannière Guilde — cliquable vers Ma Guilde (vue communautaire, cf. genizio-decisions) */}
           {(() => {
             const guild = getChildGuild(child.talents);
             return (
-              <div className={`rounded-3xl border-[3px] border-ink p-5 shadow-brutal flex items-center gap-4 ${guild.bgColor}`}>
+              <Link
+                to="/profiles/$profileId/guild"
+                params={{ profileId }}
+                className={`rounded-3xl border border-ink/10 p-5 shadow-xl flex items-center gap-4 cursor-pointer transition-transform hover:-translate-y-0.5 ${guild.bgColor}`}
+              >
                 <div className="text-5xl">{guild.emoji}</div>
-                <div>
+                <div className="min-w-0 flex-1">
                   <p className={`text-[11px] font-extrabold uppercase tracking-widest mb-0.5 ${guild.color} opacity-70`}>
                     Guilde de {child.name}
                   </p>
-                  <h2 className={`font-display text-2xl font-black leading-tight ${guild.color}`}>{guild.name}</h2>
+                  <h2 className={`font-display text-balance text-2xl font-black leading-tight ${guild.color}`}>{guild.name}</h2>
                   <p className={`text-sm font-medium italic mt-1 ${guild.color} opacity-80`}>« {guild.description} »</p>
                 </div>
-              </div>
+                <ChevronRight className={`size-5 shrink-0 opacity-60 ${guild.color}`} />
+              </Link>
             );
           })()}
 
@@ -303,13 +342,13 @@ function PortfolioPage() {
                     <Search className="size-3" />
                     Naya enquête encore
                   </span>
-                  <h3 className="mt-1 font-display text-lg font-bold text-ink">Ce que Naya a remarqué</h3>
+                  <h3 className="mt-1 font-display text-balance text-lg font-bold text-ink">Ce que Naya a remarqué</h3>
                 </div>
               </div>
               <p className="text-sm font-medium leading-relaxed text-ink">
                 {openCycle.parent_narrative}
               </p>
-              <div className="mt-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-3 border-t border-dashed border-amber-200">
+              <div className="mt-4 flex flex-col  sm:items-center justify-between gap-3 pt-3 border-t border-dashed border-amber-200">
                 <p className="text-xs italic text-ink/60">
                   Naya continue d'observer les prochains défis de {child.name} pour affiner sa compréhension.
                 </p>
@@ -369,13 +408,13 @@ function PortfolioPage() {
                       <p className="text-[10px] font-black uppercase tracking-widest text-brand">
                         Profil actuel de l'enfant
                       </p>
-                      <h2 className="font-display text-2xl font-black text-ink mt-0.5">{rank}</h2>
+                      <h2 className="font-display text-balance text-2xl font-black text-ink mt-0.5">{rank}</h2>
                     </div>
                     
                     {/* Circular Dashed Level Badge */}
-                    <div className="size-14 rounded-full border-[3px] border-dashed border-ink bg-surface flex flex-col items-center justify-center shrink-0">
+                    <div className="size-14 rounded-full border border-dashed border-ink/20 bg-surface flex flex-col items-center justify-center shrink-0">
                       <span className="text-[9px] font-black uppercase tracking-wider text-ink/60 leading-none">Level</span>
-                      <span className="font-display text-base font-black text-ink leading-none mt-0.5">{level}</span>
+                      <span className="font-display text-balance text-base font-black text-ink leading-none mt-0.5">{level}</span>
                     </div>
                   </div>
 
@@ -388,7 +427,7 @@ function PortfolioPage() {
                       return (
                         <li key={interest} className="flex items-center justify-between py-1 border-b border-stone-100 last:border-b-0">
                           <span className="text-xs font-bold text-ink/75">{interest}</span>
-                          <span className={`rounded-full border-2 px-3 py-0.5 text-[9px] font-black uppercase tracking-wider ${bucket.cls}`}>
+                          <span className={`rounded-full border px-3 py-0.5 text-[9px] font-black uppercase tracking-wider ${bucket.cls}`}>
                             {bucket.label}
                           </span>
                         </li>
@@ -402,19 +441,82 @@ function PortfolioPage() {
                 {/* Footer stats */}
                 <div className="grid grid-cols-3 gap-4 text-center mt-2">
                   <div>
-                    <div className="font-display text-2xl font-black text-orange-600">{completed.length}</div>
+                    <div className="font-display text-balance text-2xl font-black text-orange-600">{completed.length}</div>
                     <div className="text-[10px] font-bold uppercase tracking-widest text-ink/60 mt-0.5">Défis complétés</div>
                   </div>
                   <div>
-                    <div className="font-display text-2xl font-black text-emerald-600">
+                    <div className="font-display text-balance text-2xl font-black text-emerald-600">
                       {Object.values(child.talents || {}).filter((val) => val > 0).length}
                     </div>
                     <div className="text-[10px] font-bold uppercase tracking-widest text-ink/60 mt-0.5">Talents cartographiés</div>
                   </div>
                   <div>
-                    <div className="font-display text-2xl font-black text-sky-600">{mentorCount}</div>
+                    <div className="font-display text-balance text-2xl font-black text-sky-600">{mentorCount}</div>
                     <div className="text-[10px] font-bold uppercase tracking-widest text-ink/60 mt-0.5">Mentors actifs</div>
                   </div>
+                </div>
+              </div>
+            );
+          })()}
+
+          {/* Découverte de centre d'intérêt non déclaré (discussion produit du
+              2026-07-21) : contrairement à "Ce que Naya a remarqué" ci-dessus
+              (ambre = provisoire, jamais un verdict), celle-ci ne montre qu'un
+              signal déjà CONFIRMÉ (score >= 70, même seuil que le badge
+              "CONFIRMÉ" de la liste au-dessus) sur un domaine ABSENT des
+              centres d'intérêt déclarés — vert comme le reste de l'app pour ce
+              niveau de certitude. Le parent tranche toujours : aucun ajout
+              automatique et silencieux à child.interests. Le rejet est mémorisé
+              en local (pas de nouvelle colonne DB pour un simple "ne re-propose
+              pas ça") ; un seul domaine affiché à la fois pour rester un vrai
+              signal plutôt qu'une liste qui s'accumule. */}
+          {(() => {
+            const coveredDomains = new Set(
+              (child.interests ?? [])
+                .map((tag) => Object.entries(INTERESTS_BY_TALENT).find(([, v]) => v.tags.includes(tag))?.[0])
+                .filter((k): k is string => Boolean(k))
+            );
+
+            const discovery = Object.keys(TALENT_KEY_LABELS)
+              .filter((key) => !coveredDomains.has(key) && !dismissedDiscoveries.includes(key))
+              .map((key) => ({ key, score: child.talents?.[key] ?? 0 }))
+              .filter(({ score }) => getTalentBucket(score) === "confirme")
+              .sort((a, b) => b.score - a.score)[0];
+
+            if (!discovery) return null;
+            const label = TALENT_KEY_LABELS[discovery.key];
+
+            return (
+              <div className="rounded-3xl border border-emerald-200 bg-emerald-50/90 p-6 shadow-md">
+                <div className="mb-3 flex items-center gap-3">
+                  <NayaAvatar size="sm" thoughts={[`${child.name} m'a surprise sur celui-là...`]} />
+                  <div>
+                    <span className="inline-flex items-center gap-1.5 rounded-full border border-emerald-300 bg-emerald-200 px-2.5 py-0.5 text-[10px] font-black uppercase tracking-wider text-emerald-900 shadow-xs">
+                      <Lightbulb className="size-3" />
+                      Une découverte de Naya
+                    </span>
+                    <h3 className="mt-1 font-display text-balance text-lg font-bold text-ink">
+                      {label}, pas encore dans ses centres d'intérêt
+                    </h3>
+                  </div>
+                </div>
+                <p className="text-sm font-medium leading-relaxed text-ink">
+                  {child.name} a beaucoup approfondi son côté <strong>{label}</strong> à travers ses défis — nettement plus que ce que ses centres d'intérêt déclarés laissaient penser.
+                </p>
+                <div className="mt-4 flex items-center justify-end gap-2 pt-3 border-t border-dashed border-emerald-200">
+                  <button
+                    onClick={() => dismissDiscovery(discovery.key)}
+                    className="rounded-2xl border border-ink/10 px-4 py-2 text-xs font-bold text-ink/60 hover:bg-ink/5 transition-colors cursor-pointer"
+                  >
+                    Pas maintenant
+                  </button>
+                  <button
+                    onClick={() => acceptDiscovery(label)}
+                    className="press-white inline-flex items-center justify-center gap-2 rounded-2xl border border-emerald-300 bg-emerald-300 px-4 py-2 text-xs font-bold text-ink shrink-0 cursor-pointer"
+                  >
+                    <Lightbulb className="size-3.5 fill-emerald-700 text-emerald-700" />
+                    <span>Ajouter à ses centres d'intérêt</span>
+                  </button>
                 </div>
               </div>
             );
@@ -432,15 +534,15 @@ function PortfolioPage() {
             const whatsappUrl = `https://wa.me/${whatsappNumber}?text=${whatsappText}`;
 
             return (
-              <div className="rounded-3xl border-[3px] border-ink bg-amber-50 p-6 shadow-brutal flex flex-col md:flex-row items-center justify-between gap-6">
+              <div className="rounded-3xl border border-ink/10 bg-amber-50 p-6 shadow-xl flex flex-col  items-center justify-between gap-6">
                 <div className="flex items-start gap-4">
-                  <div className="grid size-12 place-items-center rounded-2xl bg-brand border-2 border-ink text-white shadow-brutal-sm shrink-0">
+                  <div className="grid size-12 place-items-center rounded-2xl bg-brand border border-ink/10 text-white shadow-sm shrink-0">
                     <Award className="size-6 text-white" />
                   </div>
                   <div>
                     <div className="flex flex-wrap items-center gap-2">
-                      <h3 className="font-display text-lg font-black text-ink">Le Passeport d'Excellence Génizio</h3>
-                      <span className={`rounded-full border-2 px-2.5 py-0.5 text-[9px] font-black uppercase tracking-wider ${
+                      <h3 className="font-display text-balance text-lg font-black text-ink">Le Passeport d'Excellence Génizio</h3>
+                      <span className={`rounded-full border px-2.5 py-0.5 text-[9px] font-black uppercase tracking-wider ${
                         isUnlocked ? "bg-emerald-100 border-emerald-500 text-emerald-800" : "bg-red-100 border-red-500 text-red-800"
                       }`}>
                         {isUnlocked ? "Prêt au téléchargement" : "Non débloqué"}
@@ -458,7 +560,7 @@ function PortfolioPage() {
                       to="/profiles/$profileId/passport-print"
                       params={{ profileId: child.id }}
                       target="_blank"
-                      className="w-full md:w-auto text-center inline-flex items-center justify-center gap-2 rounded-2xl border-[3px] border-ink bg-[#25D366] px-5 py-3 text-xs font-black text-white shadow-brutal-sm hover:-translate-y-0.5 active:translate-y-0 transition-all cursor-pointer"
+                      className="w-full md:w-auto text-center inline-flex items-center justify-center gap-2 rounded-2xl border border-ink/10 bg-[#25D366] px-5 py-3 text-xs font-black text-white shadow-sm hover:-translate-y-0.5 active:translate-y-0 transition-all cursor-pointer"
                     >
                       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" className="shrink-0"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" x2="12" y1="15" y2="3"/></svg>
                       <span>Télécharger le Passeport</span>
@@ -468,7 +570,7 @@ function PortfolioPage() {
                       href={whatsappUrl}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="w-full md:w-auto text-center inline-flex items-center justify-center gap-2 rounded-2xl border-[3px] border-ink bg-brand px-5 py-3 text-xs font-black text-white shadow-brutal-sm hover:-translate-y-0.5 active:translate-y-0 transition-all cursor-pointer"
+                      className="w-full md:w-auto text-center inline-flex items-center justify-center gap-2 rounded-2xl border border-ink/10 bg-brand px-5 py-3 text-xs font-black text-white shadow-sm hover:-translate-y-0.5 active:translate-y-0 transition-all cursor-pointer"
                     >
                       <span>Activer le Passeport (50 000 FCFA)</span>
                     </a>
@@ -481,9 +583,9 @@ function PortfolioPage() {
             );
           })()}
 
-          <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-            <div className="rounded-3xl border-[3px] border-ink bg-white p-6 shadow-brutal">
-              <h3 className="mb-4 flex items-center gap-2 font-display text-lg font-bold">
+          <div className="grid grid-cols-1 gap-6 ">
+            <div className="rounded-3xl border border-ink/10 bg-white p-6 shadow-xl">
+              <h3 className="mb-4 flex items-center gap-2 font-display text-balance text-lg font-bold">
                 <Award className="size-5 text-brand" />
                 Carte des Talents
               </h3>
@@ -493,10 +595,10 @@ function PortfolioPage() {
               </p>
             </div>
 
-            <div className="rounded-3xl border-[3px] border-ink bg-sky p-6 shadow-brutal">
+            <div className="rounded-3xl border border-ink/10 bg-sky p-6 shadow-xl">
               <div className="mb-4 flex items-center gap-3">
                 <NayaAvatar size="sm" thoughts={[`J'observe les progrès de ${child.name} !`]} />
-                <h3 className="font-display text-lg font-bold text-ink">Portrait de {child.name}</h3>
+                <h3 className="font-display text-balance text-lg font-bold text-ink">Portrait de {child.name}</h3>
               </div>
               {fetchingSynthesis ? (
                 <div className="flex items-center gap-2 py-8 text-sm text-ink/60 font-bold">
@@ -512,9 +614,9 @@ function PortfolioPage() {
           </div>
 
           {/* 🃏 Collectible Talent Cards Grid */}
-          <div className="rounded-3xl border-[3px] border-ink bg-white p-6 shadow-brutal space-y-6">
+          <div className="rounded-3xl border border-ink/10 bg-white p-6 shadow-xl space-y-6">
             <div>
-              <h3 className="font-display text-lg font-black text-ink flex items-center gap-2">
+              <h3 className="font-display text-balance text-lg font-black text-ink flex items-center gap-2">
                 <Star className="size-5 text-brand fill-brand" />
                 Cartes de Potentiels de {child.name}
               </h3>
@@ -523,7 +625,7 @@ function PortfolioPage() {
               </p>
             </div>
 
-            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            <div className="grid gap-4  ">
               {Object.entries(TALENT_DETAILS).map(([key, details]) => {
                 const score = child.talents?.[key] || 0;
                 const card = getTalentCardInfo(child.age, score);
@@ -532,12 +634,12 @@ function PortfolioPage() {
                 return (
                   <div
                     key={key}
-                    className={`rounded-2xl border-[3px] border-ink p-4 flex flex-col justify-between transition-all hover:-translate-y-1 ${card.bgClass} shadow-brutal-sm`}
+                    className={`rounded-2xl border border-ink/10 p-4 flex flex-col justify-between transition-all hover:-translate-y-1 ${card.bgClass} shadow-sm`}
                   >
                     <div>
                       {/* Top bar: Card Type & Stars */}
                       <div className="flex justify-between items-center mb-3">
-                        <span className={`rounded-md border-2 border-ink px-2 py-0.5 text-[8px] font-black uppercase tracking-wider ${card.tagClass}`}>
+                        <span className={`rounded-md border border-ink/10 px-2 py-0.5 text-[8px] font-black uppercase tracking-wider ${card.tagClass}`}>
                           {card.typeLabel}
                         </span>
                         <div className="flex items-center gap-0.5 text-amber-500">
@@ -549,10 +651,10 @@ function PortfolioPage() {
 
                       {/* Card Title & Icon */}
                       <div className="flex items-center gap-2 mb-2">
-                        <div className="p-1.5 rounded-lg border-2 border-ink bg-white shrink-0">
+                        <div className="p-1.5 rounded-lg border border-ink/10 bg-white shrink-0">
                           <Icon className="size-4 text-ink" />
                         </div>
-                        <h4 className="font-display text-sm font-black text-ink leading-none">{details.title}</h4>
+                        <h4 className="font-display text-balance text-sm font-black text-ink leading-none">{details.title}</h4>
                       </div>
 
                       <p className="text-[10px] font-semibold text-ink/65 leading-tight mb-4 min-h-[32px]">
@@ -566,7 +668,7 @@ function PortfolioPage() {
                         <span className="text-ink/60">{card.levelLabel}</span>
                         <span className="text-ink">{score} / 100</span>
                       </div>
-                      <div className="h-2 rounded-full border-2 border-ink bg-white overflow-hidden">
+                      <div className="h-2 rounded-full border border-ink/10 bg-white overflow-hidden">
                         <div
                           className={`h-full border-r border-ink ${card.barColor}`}
                           style={{ width: `${score}%` }}
@@ -579,9 +681,9 @@ function PortfolioPage() {
             </div>
           </div>
 
-          <div className="rounded-3xl border-[3px] border-ink bg-white p-6 shadow-brutal">
+          <div className="rounded-3xl border border-ink/10 bg-white p-6 shadow-xl">
             <div className="mb-4 flex items-center justify-between">
-              <h3 className="flex items-center gap-2 font-display text-lg font-bold">
+              <h3 className="flex items-center gap-2 font-display text-balance text-lg font-bold">
                 <Calendar className="size-5 text-brand" />
                 Timeline de progression
               </h3>
@@ -592,7 +694,7 @@ function PortfolioPage() {
             ) : (
               <ul className="space-y-3">
                 {completed.map((c) => (
-                  <li key={c.id} className="flex items-center justify-between rounded-2xl border-2 border-ink bg-surface px-4 py-3">
+                  <li key={c.id} className="flex items-center justify-between rounded-2xl border border-ink/10 bg-surface px-4 py-3">
                     <div>
                       <p className="text-sm font-bold text-ink">{c.title}</p>
                       <p className="text-xs text-ink/60">{c.domain}</p>
@@ -606,17 +708,17 @@ function PortfolioPage() {
             )}
           </div>
 
-          <div className="rounded-3xl border-[3px] border-ink bg-white p-6 shadow-brutal">
-            <h3 className="mb-4 flex items-center gap-2 font-display text-lg font-bold">
+          <div className="rounded-3xl border border-ink/10 bg-white p-6 shadow-xl">
+            <h3 className="mb-4 flex items-center gap-2 font-display text-balance text-lg font-bold">
               <ImageIcon className="size-5 text-brand" />
               Galerie d'artefacts
             </h3>
             {artifacts.length === 0 ? (
               <p className="text-sm text-ink/60">Aucune photo pour l'instant.</p>
             ) : (
-              <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4">
+              <div className="grid grid-cols-2 gap-3  ">
                 {artifacts.map((c) => (
-                  <div key={c.id} className="aspect-square overflow-hidden rounded-2xl border-[3px] border-ink bg-surface">
+                  <div key={c.id} className="aspect-square overflow-hidden rounded-2xl border border-ink/10 bg-surface">
                     <img src={c.proof_image_url!} alt={c.title} className="h-full w-full object-cover" />
                   </div>
                 ))}

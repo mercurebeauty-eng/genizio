@@ -34,9 +34,9 @@ function PhotoRedirect() {
 
   if (notFound) {
     return (
-      <div className="grid min-h-screen place-items-center bg-surface p-6 text-center">
-        <div className="max-w-md rounded-3xl border-[3px] border-ink bg-white p-8 shadow-brutal">
-          <div className="mx-auto mb-4 flex size-14 items-center justify-center rounded-2xl border-2 border-ink bg-red-50 text-red-500">
+      <div className="grid min-h-dvh place-items-center bg-surface p-6 text-center">
+        <div className="max-w-md rounded-3xl border border-ink/10 bg-white p-8 shadow-xl">
+          <div className="mx-auto mb-4 flex size-14 items-center justify-center rounded-2xl border border-red-200 bg-red-50 text-red-500">
             <ShieldAlert className="size-7" />
           </div>
           <p className="font-bold text-ink">Photo introuvable — le lien a peut-être expiré.</p>
@@ -46,7 +46,7 @@ function PhotoRedirect() {
   }
 
   return (
-    <div className="grid min-h-screen place-items-center bg-surface">
+    <div className="grid min-h-dvh place-items-center bg-surface">
       <GenizioLoader />
     </div>
   );

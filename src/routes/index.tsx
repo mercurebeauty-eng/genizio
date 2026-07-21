@@ -119,14 +119,14 @@ function NayaLanding() {
 
   if (loading || session) {
     return (
-      <div className="grid min-h-screen place-items-center bg-surface">
+      <div className="grid min-h-dvh place-items-center bg-surface">
         <GenizioLoader label="Chargement…" />
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-surface text-ink antialiased">
+    <div className="min-h-dvh bg-surface text-ink antialiased">
       <Nav />
       <Hero />
       <DomainsSection />
@@ -154,7 +154,7 @@ function Nav() {
   return (
     <nav className="sticky top-0 z-50 border-b border-ink/10 bg-surface/90 backdrop-blur-md transition-all shadow-xs">
       <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
-        <Link to={session ? "/profiles" : "/"} className="flex items-center gap-2 font-display text-2xl font-extrabold tracking-tight text-brand">
+        <Link to={session ? "/profiles" : "/"} className="flex items-center gap-2 font-display text-balance text-2xl font-extrabold tracking-tight text-brand">
           <img src="/favicon-96x96.png" alt="" className="h-8 w-8" />
           GÉNIZIO
         </Link>
@@ -220,12 +220,12 @@ function Hero() {
       <div className="pointer-events-none absolute -top-20 -left-20 h-96 w-96 rounded-full bg-brand/10 blur-3xl" />
       <div className="pointer-events-none absolute top-40 -right-20 h-96 w-96 rounded-full bg-sky/20 blur-3xl" />
 
-      <div className="relative mx-auto grid max-w-6xl items-center gap-12 px-6 pt-16 pb-24 md:grid-cols-2">
+      <div className="relative mx-auto grid max-w-6xl items-center gap-12 px-6 pt-16 pb-24 ">
         <div>
           <span className="mb-4 inline-block rounded-full bg-brand-50 px-4 py-1.5 text-xs font-bold uppercase tracking-wider text-brand-700 border border-brand/20">
             Le laboratoire de potentiel par projet
           </span>
-          <h1 className="mb-6 font-display text-4xl font-extrabold leading-[1.05] md:text-6xl text-ink">
+          <h1 className="mb-6 font-display text-balance text-4xl font-extrabold leading-[1.05] md:text-6xl text-ink">
             Révélez les <span className="text-brand">intelligences</span> naturelles de votre enfant.
           </h1>
           <p className="mb-8 text-base font-medium leading-relaxed text-ink/70">
@@ -238,7 +238,7 @@ function Hero() {
               <p className="text-xs font-bold text-ink/75">Guidé par Naya, notre IA mentore bienveillante.</p>
             </div>
           </div>
-          <div className="flex flex-col gap-4 sm:flex-row">
+          <div className="flex flex-col gap-4 ">
             <a
               href="#demo"
               className="press-brand rounded-2xl px-8 py-4 text-center text-base font-bold text-white cursor-pointer"
@@ -268,14 +268,14 @@ function Hero() {
       <div className="relative">
         <div
           aria-hidden
-          className="absolute -inset-4 -rotate-1 rounded-[3rem] bg-brand/10 border-[3px] border-dashed border-brand/20"
+          className="absolute -inset-4 -rotate-1 rounded-[3rem] bg-brand/10 border-2 border-dashed border-brand/20"
         />
         <img
           src={heroChild}
           alt="Activité d'expérimentation pratique Génizio"
           width={1200}
           height={1200}
-          className="relative aspect-square w-full rotate-1 rounded-3xl border-[3px] border-ink object-cover shadow-brutal transition-transform hover:rotate-0"
+          className="relative aspect-square w-full rotate-1 rounded-3xl border border-ink/10 object-cover shadow-xl transition-transform hover:rotate-0"
         />
         <div className="absolute -bottom-6 -left-6 hidden max-w-[280px] rounded-2xl border border-ink/10 bg-white/95 p-5 shadow-lg backdrop-blur-md md:block">
           <p className="text-xs font-bold italic leading-relaxed text-ink/80">
@@ -291,13 +291,13 @@ function Hero() {
 
 function DomainsSection() {
   return (
-    <section id="domaines" className="border-y-[3px] border-ink bg-white/40 py-24">
+    <section id="domaines" className="border-y border-ink/10 bg-white/40 py-24">
       <div className="mx-auto max-w-6xl px-6">
         <div className="mb-16 max-w-2xl">
           <span className="mb-3 inline-block text-xs font-bold uppercase tracking-widest text-brand">
             Cadre Théorique (Gardner)
           </span>
-          <h2 className="font-display text-3xl font-extrabold md:text-4xl text-ink">
+          <h2 className="font-display text-balance text-3xl font-extrabold md:text-4xl text-ink">
             Les 9 formes d'intelligence.
           </h2>
           <p className="mt-3 text-sm font-semibold text-ink/60">
@@ -305,15 +305,15 @@ function DomainsSection() {
           </p>
         </div>
 
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="grid gap-4  ">
           {DOMAINS.map((d) => (
             <div
               key={d.label}
-              className="group relative rounded-2xl border-[3px] border-ink bg-white p-6 shadow-brutal-sm transition-all hover:-translate-y-0.5"
+              className="group relative rounded-2xl border border-ink/10 bg-white p-6 shadow-sm transition-all hover:-translate-y-0.5"
             >
               <div className="flex items-center gap-3 mb-3">
                 <span className="text-3xl">{d.icon}</span>
-                <h3 className="font-display text-base font-extrabold text-ink">{d.label}</h3>
+                <h3 className="font-display text-balance text-base font-extrabold text-ink">{d.label}</h3>
               </div>
               <p className="text-xs text-ink/60 leading-relaxed font-semibold">{d.desc}</p>
             </div>
@@ -379,12 +379,12 @@ function DemoSection() {
   return (
     <section id="demo" className="bg-ink px-6 py-24 text-white">
       <div className="mx-auto max-w-6xl">
-        <div className="mb-16 flex flex-col justify-between gap-6 md:flex-row md:items-end">
+        <div className="mb-16 flex flex-col justify-between gap-6  md:items-end">
           <div className="max-w-2xl">
             <span className="mb-3 inline-block text-xs font-bold uppercase tracking-widest text-brand-glow">
               Outil interactif de démonstration
             </span>
-            <h2 className="font-display text-3xl font-extrabold text-white md:text-4xl">
+            <h2 className="font-display text-balance text-3xl font-extrabold text-white md:text-4xl">
               Simulez la Carte des Talents de votre enfant.
             </h2>
             <p className="mt-3 text-sm text-white/60 leading-relaxed font-semibold">
@@ -403,7 +403,7 @@ function DemoSection() {
             {/* Form */}
             <div className="rounded-3xl border-2 border-white/20 bg-white/5 p-6 space-y-6">
               <div className="flex items-center gap-4">
-                <div className="grid size-14 place-items-center rounded-xl border-2 border-brand bg-brand/20 font-display text-xl font-bold text-brand-glow">
+                <div className="grid size-14 place-items-center rounded-xl border-2 border-brand bg-brand/20 font-display text-balance text-xl font-bold text-brand-glow">
                   {name.charAt(0).toUpperCase() || "?"}
                 </div>
                 <div className="flex-1">
@@ -473,7 +473,7 @@ function DemoSection() {
                 <Sparkles className="size-5" />
               </div>
               <div>
-                <h4 className="font-display font-extrabold text-white text-base">Recommandation IA pour {name}</h4>
+                <h4 className="font-display text-balance font-extrabold text-white text-base">Recommandation IA pour {name}</h4>
                 <p className="text-xs text-white/70 leading-relaxed font-semibold mt-1">
                   Basé sur les centres d'intérêt sélectionnés, {name} présente un profil axé sur l'expérimentation active. Nous suggérons des défis qui allient observation méthodique et mise en œuvre manuelle de projets.
                 </p>
@@ -481,11 +481,11 @@ function DemoSection() {
             </div>
 
             {/* Generated challenges cards */}
-            <div className="grid gap-4 sm:grid-cols-2">
+            <div className="grid gap-4 ">
               {matchedChallenges.map((c, index) => (
                 <div
                   key={c.title}
-                  className="group rounded-3xl border-[3px] border-ink bg-white p-5 text-ink shadow-brutal-sm hover:-translate-y-0.5 active:translate-y-0 transition-all flex flex-col justify-between"
+                  className="group rounded-3xl border border-ink/10 bg-white p-5 text-ink shadow-sm hover:-translate-y-0.5 active:translate-y-0 transition-all flex flex-col justify-between"
                 >
                   <div>
                     <div className="flex items-center justify-between mb-4">
@@ -496,7 +496,7 @@ function DemoSection() {
                         {c.domain}
                       </span>
                     </div>
-                    <h4 className="font-display text-base font-extrabold text-ink mb-2 leading-tight group-hover:text-brand transition-colors">
+                    <h4 className="font-display text-balance text-base font-extrabold text-ink mb-2 leading-tight group-hover:text-brand transition-colors">
                       {c.title}
                     </h4>
                     <p className="text-xs text-ink/60 leading-relaxed font-medium mb-6">
@@ -535,12 +535,12 @@ function VisionSection() {
 
   return (
     <section id="approche" className="mx-auto max-w-6xl px-6 py-24">
-      <div className="grid items-center gap-16 lg:grid-cols-2">
+      <div className="grid items-center gap-16 ">
         <div>
           <span className="mb-3 inline-block text-xs font-bold uppercase tracking-widest text-brand">
             Un portfolio vivant de réussites
           </span>
-          <h2 className="font-display text-3xl font-extrabold leading-tight md:text-4xl">
+          <h2 className="font-display text-balance text-3xl font-extrabold leading-tight md:text-4xl">
             L'IA n'est pas un examinateur. C'est un observateur bienveillant.
           </h2>
           <p className="mt-6 text-sm font-semibold leading-relaxed text-ink/70">
@@ -569,14 +569,14 @@ function VisionSection() {
         </div>
 
         <div className="relative">
-          <div aria-hidden className="absolute -inset-4 rounded-3xl bg-brand/5 blur-2xl border-[3px] border-brand/10" />
-          <div className="relative rounded-3xl border-[3px] border-ink bg-white p-6 md:p-8 shadow-brutal">
+          <div aria-hidden className="absolute -inset-4 rounded-3xl bg-brand/5 blur-2xl border-2 border-brand/10" />
+          <div className="relative rounded-3xl border border-ink/10 bg-white p-6 md:p-8 shadow-xl">
             <div className="mb-6 flex items-center justify-between">
               <div>
                 <p className="text-[10px] font-bold uppercase tracking-widest text-brand">
                   Profil actuel de l'enfant
                 </p>
-                <p className="font-display text-xl font-extrabold">Explorateur Émergent</p>
+                <p className="font-display text-balance text-xl font-extrabold">Explorateur Émergent</p>
               </div>
               <div className="flex size-11 items-center justify-center rounded-xl border-2 border-dashed border-ink text-xs font-bold bg-stone-50">
                 Level 3
@@ -596,15 +596,15 @@ function VisionSection() {
 
             <div className="mt-8 grid grid-cols-3 gap-3 border-t-[3px] border-ink pt-6">
               <div className="text-center">
-                <div className="font-display text-2xl font-extrabold text-brand">27</div>
+                <div className="font-display text-balance text-2xl font-extrabold text-brand">27</div>
                 <div className="text-[10px] font-bold uppercase tracking-widest text-ink/60">Défis complétés</div>
               </div>
               <div className="text-center">
-                <div className="font-display text-2xl font-extrabold text-leaf">9</div>
+                <div className="font-display text-balance text-2xl font-extrabold text-leaf">9</div>
                 <div className="text-[10px] font-bold uppercase tracking-widest text-ink/60">Talents cartographiés</div>
               </div>
               <div className="text-center">
-                <div className="font-display text-2xl font-extrabold text-sky">3</div>
+                <div className="font-display text-balance text-2xl font-extrabold text-sky">3</div>
                 <div className="text-[10px] font-bold uppercase tracking-widest text-ink/60">Mentors actifs</div>
               </div>
             </div>
@@ -618,12 +618,12 @@ function VisionSection() {
 function PositioningSection() {
   return (
     <section className="bg-white/40 border-y-[3px] border-ink px-6 py-24">
-      <div className="mx-auto grid max-w-6xl gap-12 md:grid-cols-5 md:items-center">
+      <div className="mx-auto grid max-w-6xl gap-12  md:items-center">
         <div className="md:col-span-2">
           <span className="mb-3 inline-block text-xs font-bold uppercase tracking-widest text-brand">
             Notre Philosophie
           </span>
-          <h2 className="font-display text-3xl font-extrabold leading-tight md:text-4xl">
+          <h2 className="font-display text-balance text-3xl font-extrabold leading-tight md:text-4xl">
             Au-delà des devoirs et de la théorie scolaire.
           </h2>
           <p className="mt-6 text-sm font-semibold leading-relaxed text-ink/70">
@@ -631,13 +631,13 @@ function PositioningSection() {
           </p>
         </div>
         <div className="md:col-span-3 grid gap-4">
-          <blockquote className="rounded-3xl border-[3px] border-ink bg-ink p-6 md:p-8 text-white shadow-brutal">
-            <p className="font-display text-xl font-extrabold leading-snug md:text-2xl">
+          <blockquote className="rounded-3xl border border-white/10 bg-ink p-6 md:p-8 text-white shadow-xl">
+            <p className="font-display text-balance text-xl font-extrabold leading-snug md:text-2xl">
               « Génizio n'est pas une école de devoirs. C'est un laboratoire où les enfants développent l'autonomie et le sens pratique de ce qu'ils découvrent. »
             </p>
           </blockquote>
-          <blockquote className="rounded-3xl border-[3px] border-ink bg-brand/10 p-6 md:p-8 shadow-brutal">
-            <p className="font-display text-xl font-extrabold leading-snug text-brand md:text-2xl">
+          <blockquote className="rounded-3xl border border-ink/10 bg-brand/10 p-6 md:p-8 shadow-xl">
+            <p className="font-display text-balance text-xl font-extrabold leading-snug text-brand md:text-2xl">
               « Le but n'est pas de faire de tous les enfants des ingénieurs ou des artistes, mais de s'assurer qu'aucun ne passe à côté de son génie naturel. »
             </p>
           </blockquote>
@@ -690,27 +690,27 @@ const LEVEL_TONES: Record<
   { card: string; badge: string; num: string }
 > = {
   leaf: {
-    card: "bg-white border-[3px] border-ink shadow-brutal",
+    card: "bg-white border border-ink/10 shadow-md",
     badge: "bg-leaf/10 text-leaf border-leaf/20",
     num: "text-leaf",
   },
   brand: {
-    card: "bg-white border-[3px] border-ink shadow-brutal",
+    card: "bg-white border border-ink/10 shadow-md",
     badge: "bg-brand/10 text-brand border-brand/20",
     num: "text-brand",
   },
   sky: {
-    card: "bg-white border-[3px] border-ink shadow-brutal",
+    card: "bg-white border border-ink/10 shadow-md",
     badge: "bg-sky/10 text-sky border-sky/20",
     num: "text-sky",
   },
   glow: {
-    card: "bg-white border-[3px] border-ink shadow-brutal",
+    card: "bg-white border border-ink/10 shadow-md",
     badge: "bg-brand-glow/20 text-brand-dark border-brand-glow/30",
     num: "text-brand-dark",
   },
   ink: {
-    card: "bg-ink text-white border-[3px] border-ink shadow-brutal",
+    card: "bg-ink text-white border border-white/10 shadow-md",
     badge: "bg-brand/20 text-brand-glow border-brand/30",
     num: "text-brand-glow",
   },
@@ -724,7 +724,7 @@ function ModelSection() {
           <span className="mb-3 inline-block text-xs font-bold uppercase tracking-widest text-brand">
             Notre Modèle éducatif
           </span>
-          <h2 className="font-display text-3xl font-extrabold leading-tight md:text-4xl">
+          <h2 className="font-display text-balance text-3xl font-extrabold leading-tight md:text-4xl">
             Une vision d'avenir en 5 étapes.
           </h2>
           <p className="mt-4 text-sm font-semibold text-ink/60">
@@ -732,7 +732,7 @@ function ModelSection() {
           </p>
         </div>
 
-        <ol className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+        <ol className="grid gap-6  ">
           {MODEL_LEVELS.map((lvl) => {
             const t = LEVEL_TONES[lvl.tone];
             const isDark = lvl.tone === "ink";
@@ -745,14 +745,14 @@ function ModelSection() {
                 }
               >
                 <div className="mb-6 flex items-center justify-between">
-                  <span className={"font-display text-4xl font-black leading-none " + t.num}>
+                  <span className={"font-display text-balance text-4xl font-black leading-none " + t.num}>
                     {lvl.n}
                   </span>
                   <span className={"rounded-full border-2 border-ink px-3 py-1 text-[9px] font-black uppercase tracking-widest " + t.badge}>
                     Étape {lvl.n}
                   </span>
                 </div>
-                <h3 className="mb-2 font-display text-lg font-extrabold leading-tight">{lvl.title}</h3>
+                <h3 className="mb-2 font-display text-balance text-lg font-extrabold leading-tight">{lvl.title}</h3>
                 <p className={"mb-6 text-xs italic font-medium " + (isDark ? "text-white/70" : "text-ink/60")}>
                   {lvl.tagline}
                 </p>
@@ -779,11 +779,11 @@ function CTASection() {
   
   return (
     <section id="inscription" className="px-6 py-12">
-      <div className="mx-auto max-w-4xl rounded-[2.5rem] border-[3px] border-ink bg-ink p-10 text-center text-white shadow-brutal md:p-14">
+      <div className="mx-auto max-w-4xl rounded-[2.5rem] border border-white/10 bg-ink p-10 text-center text-white shadow-xl md:p-14">
         <span className="mb-4 inline-block text-xs font-bold uppercase tracking-widest text-brand-glow">
           Inscription libre
         </span>
-        <h2 className="mb-4 font-display text-3xl font-extrabold leading-tight md:text-4xl">
+        <h2 className="mb-4 font-display text-balance text-3xl font-extrabold leading-tight md:text-4xl">
           Révélez le potentiel de vos enfants dès aujourd'hui.
         </h2>
         <p className="mx-auto mb-10 max-w-md text-sm text-white/70 font-semibold leading-relaxed">
@@ -802,7 +802,7 @@ function CTASection() {
               e.preventDefault();
               if (email.trim()) setSent(true);
             }}
-            className="mx-auto flex max-w-md flex-col gap-3 sm:flex-row"
+            className="mx-auto flex max-w-md flex-col gap-3 "
           >
             <input
               type="email"
@@ -815,7 +815,7 @@ function CTASection() {
             />
             <button
               type="submit"
-              className="h-12 rounded-2xl border-2 border-ink bg-brand px-8 text-xs font-black uppercase tracking-wider text-white shadow-brutal-sm hover:-translate-y-0.5 active:translate-y-0 transition-all cursor-pointer shrink-0"
+              className="press-brand h-12 rounded-2xl bg-brand px-8 text-xs font-black uppercase tracking-wider text-white cursor-pointer shrink-0"
             >
               Créer mon accès parent
             </button>
@@ -829,8 +829,8 @@ function CTASection() {
 function Footer() {
   return (
     <footer className="border-t-[3px] border-ink px-6 py-12 bg-white/20">
-      <div className="mx-auto flex max-w-6xl flex-col items-center justify-between gap-8 md:flex-row">
-        <div className="flex items-center gap-2 font-display text-xl font-extrabold text-brand">
+      <div className="mx-auto flex max-w-6xl flex-col items-center justify-between gap-8 ">
+        <div className="flex items-center gap-2 font-display text-balance text-xl font-extrabold text-brand">
           <img src="/favicon-96x96.png" alt="" className="h-7 w-7" />
           GÉNIZIO
         </div>

@@ -2,6 +2,8 @@ import { useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { validateChallengeProof, submitDeclarativeProof } from "@/lib/challenges.functions";
 import { NayaAvatar } from "@/components/NayaAvatar";
+import { LevelUpCelebration } from "@/components/challenges/LevelUpCelebration";
+import { BadgeUnlockedCelebration } from "@/components/challenges/BadgeUnlockedCelebration";
 import { Loader2, Upload, Check, X, Play, Sparkles, Share2, Clock, Target } from "lucide-react";
 import { toast } from "sonner";
 import { CreatePostModal } from "@/components/feed/CreatePostModal";
@@ -73,6 +75,10 @@ export function OutcomeChat({ challenge, childName, notes = "", onSaveNotes, onV
   const [validationError, setValidationError] = useState<string | null>(null);
 
   const [report, setReport] = useState<any>(null);
+  // Séquence des célébrations plein écran avant le bulletin normal — dans cet
+  // ordre si les deux surviennent sur la même complétion (ex: 3e défi Sciences
+  // qui franchit aussi un palier de 500 XP) : Level Up d'abord, Badge ensuite.
+  const [celebrationStep, setCelebrationStep] = useState<"levelup" | "badge" | null>(null);
   const [showPostModal, setShowPostModal] = useState(false);
   // Set instead of `report` when the AI judges the proof irrelevant — that
   // response is never persisted server-side (see validateChallengeProof),
@@ -120,6 +126,8 @@ export function OutcomeChat({ challenge, childName, notes = "", onSaveNotes, onV
       }
 
       setReport(result);
+      if (result.levelUp?.leveledUp) setCelebrationStep("levelup");
+      else if (result.badgeUnlocked) setCelebrationStep("badge");
       if (file && !result.imageAnalyzed) {
         toast.warning("Naya n'a pas pu analyser la photo — son observation se base uniquement sur vos notes.");
       }
@@ -148,6 +156,8 @@ export function OutcomeChat({ challenge, childName, notes = "", onSaveNotes, onV
       }
 
       setReport(result);
+      if (result.levelUp?.leveledUp) setCelebrationStep("levelup");
+      else if (result.badgeUnlocked) setCelebrationStep("badge");
       toast.success("Défi validé !");
     } catch (err) {
       setValidationError(err instanceof Error ? err.message : "Erreur inconnue");
@@ -158,7 +168,22 @@ export function OutcomeChat({ challenge, childName, notes = "", onSaveNotes, onV
   };
 
   return (
-    <div className="rounded-3xl border-[3px] border-ink bg-sky p-6 mt-5 relative overflow-hidden shadow-brutal">
+    <div className="rounded-3xl border border-ink/10 bg-sky p-6 mt-5 relative overflow-hidden shadow-xl">
+      {celebrationStep === "levelup" && report?.levelUp?.leveledUp && (
+        <LevelUpCelebration
+          newLevel={report.levelUp.newLevel}
+          xpGained={report.levelUp.xpGained}
+          newStreak={report.levelUp.newStreak}
+          onContinue={() => setCelebrationStep(report?.badgeUnlocked ? "badge" : null)}
+        />
+      )}
+      {celebrationStep === "badge" && report?.badgeUnlocked && (
+        <BadgeUnlockedCelebration
+          title={report.badgeUnlocked.title}
+          description={report.badgeUnlocked.description}
+          onContinue={() => setCelebrationStep(null)}
+        />
+      )}
       {report ? (
         <div className="animate-in zoom-in-95 duration-500">
           <div className="absolute -top-10 -right-10 size-40 bg-brand/10 rounded-full blur-3xl"></div>
@@ -171,7 +196,7 @@ export function OutcomeChat({ challenge, childName, notes = "", onSaveNotes, onV
             <p className="text-sm font-semibold text-ink/60">Analyse de Naya</p>
           </div>
 
-          <div className="bg-white rounded-2xl p-6 shadow-brutal-sm mb-6 border-[3px] border-ink relative">
+          <div className="bg-white rounded-2xl p-6 shadow-md mb-6 border border-ink/10 relative">
             <p className="text-sm italic text-ink/80 leading-relaxed font-medium">"<MarkdownContent content={report.challenge.ai_observations} inline /></p>
 
             {report.challenge.estimated_duration_minutes && report.challenge.started_at && report.challenge.completed_at && (
@@ -195,7 +220,7 @@ export function OutcomeChat({ challenge, childName, notes = "", onSaveNotes, onV
               </p>
               <div className="flex flex-wrap gap-2">
                 {Object.entries(report.awarded_points || {}).map(([key, points]) => (
-                  <div key={key} className="flex items-center gap-1.5 bg-sky border-[3px] border-ink px-3 py-1.5 rounded-full shadow-brutal-sm">
+                  <div key={key} className="flex items-center gap-1.5 bg-white border border-ink/10 px-3 py-1.5 rounded-full shadow-sm">
                     <span className="text-xs font-bold text-brand capitalize">{key.replace('_', ' ')}</span>
                     <span className="text-xs font-black text-brand bg-brand/10 px-1.5 rounded-md">+{String(points)}</span>
                   </div>
@@ -210,14 +235,14 @@ export function OutcomeChat({ challenge, childName, notes = "", onSaveNotes, onV
           <div className="flex flex-col gap-3">
             <button
               onClick={() => setShowPostModal(true)}
-              className="w-full flex items-center justify-center gap-2 rounded-2xl border-[3px] border-ink bg-brand py-4 text-sm font-black text-white shadow-brutal hover:-translate-y-0.5 active:translate-y-0 active:shadow-none transition-all"
+              className="press-brand w-full flex items-center justify-center gap-2 rounded-2xl bg-brand py-4 text-sm font-black text-white"
             >
               <Share2 className="size-5" />
               <span>Partager sur le Cerveau Collectif</span>
             </button>
             <button
               onClick={() => onValidated()}
-              className="w-full rounded-2xl border-[3px] border-ink bg-white py-3.5 text-sm font-bold text-ink shadow-brutal hover:-translate-y-0.5 active:translate-y-0 active:shadow-none transition-all"
+              className="press-white w-full rounded-2xl border border-ink/10 bg-white py-3.5 text-sm font-bold text-ink"
             >
               Fermer et voir le profil
             </button>
@@ -256,7 +281,7 @@ export function OutcomeChat({ challenge, childName, notes = "", onSaveNotes, onV
           </div>
 
           {rejectionNotice && (
-            <div className="mb-6 rounded-2xl border-[3px] border-ink bg-amber-50 p-4">
+            <div className="mb-6 rounded-2xl border border-amber-300 bg-amber-50 p-4">
               <p className="text-sm font-semibold text-ink/80 leading-relaxed">
                 <MarkdownContent content={rejectionNotice} inline />
               </p>
@@ -265,7 +290,7 @@ export function OutcomeChat({ challenge, childName, notes = "", onSaveNotes, onV
 
           {isDeclarative ? (
             <div className="mb-6">
-              <label className="flex flex-col gap-2 rounded-2xl border-[3px] border-ink bg-white/50 p-4 shadow-brutal-sm w-full">
+              <label className="flex flex-col gap-2 rounded-2xl border border-ink/10 bg-white/50 p-4 shadow-sm w-full">
                 <span className="flex items-center gap-1.5 text-xs font-black text-brand">
                   <Target className="size-4" />
                   {challenge.proof_target?.metric} (objectif : {challenge.proof_target?.value})
@@ -276,7 +301,7 @@ export function OutcomeChat({ challenge, childName, notes = "", onSaveNotes, onV
                   value={reportedValue}
                   onChange={(e) => setReportedValue(e.target.value)}
                   placeholder={`Ex : ${challenge.proof_target?.value}`}
-                  className="w-full rounded-xl border-[3px] border-ink px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-brand"
+                  className="w-full rounded-xl border border-ink/10 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-brand shadow-sm"
                 />
               </label>
               <p className="mt-2 text-xs text-ink/60 italic">
@@ -286,7 +311,7 @@ export function OutcomeChat({ challenge, childName, notes = "", onSaveNotes, onV
           ) : (
             <div className="mb-6">
               {!selectedFile ? (
-                <label className="flex flex-col items-center justify-center gap-2 rounded-2xl border-[3px] border-dashed border-ink bg-white/50 p-6 hover:-translate-y-0.5 shadow-brutal-sm transition-all cursor-pointer text-center w-full">
+                <label className="flex flex-col items-center justify-center gap-2 rounded-2xl border-2 border-dashed border-ink/20 bg-white/50 p-6 hover:-translate-y-0.5 shadow-sm transition-all cursor-pointer text-center w-full">
                   <Upload className="size-6 text-brand animate-pulse" />
                   <span className="text-xs font-black text-brand">Sélectionner une photo</span>
                   <span className="text-[10px] text-ink/60 font-bold">Formats acceptés : PNG, JPG</span>
@@ -298,7 +323,7 @@ export function OutcomeChat({ challenge, childName, notes = "", onSaveNotes, onV
                   />
                 </label>
               ) : (
-                <div className="flex items-center justify-between gap-2 rounded-2xl border-[3px] border-ink bg-leaf px-4 py-3 text-xs font-bold text-white shadow-brutal-sm w-full">
+                <div className="flex items-center justify-between gap-2 rounded-2xl border border-white/20 bg-leaf px-4 py-3 text-xs font-bold text-white shadow-sm w-full">
                   <div className="flex items-center gap-2 min-w-0">
                     <Check className="size-4 shrink-0 stroke-[3px]" />
                     <span className="truncate max-w-[180px]">{selectedFile.name}</span>
@@ -327,7 +352,7 @@ export function OutcomeChat({ challenge, childName, notes = "", onSaveNotes, onV
           <button
             onClick={isDeclarative ? handleValidateDeclarative : handleValidate}
             disabled={validating || !canSubmit}
-            className="w-full rounded-2xl border-[3px] border-ink bg-brand py-3.5 text-sm font-bold text-white shadow-brutal hover:-translate-y-0.5 active:translate-y-0 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+            className="press-brand w-full rounded-2xl bg-brand py-3.5 text-sm font-bold text-white disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
           >
             {validating ? (
               <>
