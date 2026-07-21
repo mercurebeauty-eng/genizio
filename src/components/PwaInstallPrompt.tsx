@@ -124,7 +124,7 @@ export function PwaInstallPrompt() {
               <button
                 onClick={handleInstallClick}
                 disabled={!deferredPrompt}
-                className="press-brand flex-1 flex items-center justify-center gap-1.5 rounded-2xl px-4 py-2.5 text-xs font-bold text-white disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+                className="press-brand flex-1 flex items-center justify-center gap-1.5 rounded-2xl bg-brand px-4 py-2.5 text-xs font-bold text-white disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
               >
                 <Download className="size-4" />
                 <span>Installer maintenant</span>

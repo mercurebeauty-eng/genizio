@@ -450,7 +450,7 @@ function ChallengesPage() {
 
   return (
     <div className="min-h-dvh bg-gradient-to-b from-surface via-surface to-brand/5 pb-24 text-ink ">
-      <AppHeader hideTabBarLinks />
+      <AppHeader />
 
       <main className="mx-auto max-w-6xl px-6 py-10 md:flex ">
         <AppTabBar profileId={profileId} />

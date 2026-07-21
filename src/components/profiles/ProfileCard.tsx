@@ -47,7 +47,7 @@ export function ProfileCard({
       <Link
         to="/profiles/$profileId/challenges"
         params={{ profileId: profile.id }}
-        className="press-brand mb-2 block w-full rounded-xl px-3 py-2 text-center text-xs font-bold text-white"
+        className="press-brand mb-2 block w-full rounded-xl bg-brand px-3 py-2 text-center text-xs font-bold text-white"
       >
         ✨ Défis en cours →
       </Link>

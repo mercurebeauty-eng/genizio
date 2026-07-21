@@ -169,7 +169,7 @@ function Nav() {
           {session ? (
             <Link
               to="/profiles"
-              className="press-brand rounded-full px-5 py-2.5 text-xs font-bold text-white transition-all cursor-pointer"
+              className="press-brand rounded-full bg-brand px-5 py-2.5 text-xs font-bold text-white transition-all cursor-pointer"
             >
               <span className="hidden sm:inline">Accéder à l'Espace Parent</span>
               <span className="sm:hidden">Espace Parent</span>
@@ -177,7 +177,7 @@ function Nav() {
           ) : (
             <Link
               to="/auth"
-              className="press-brand rounded-full px-5 py-2.5 text-xs font-bold text-white transition-all cursor-pointer"
+              className="press-brand rounded-full bg-brand px-5 py-2.5 text-xs font-bold text-white transition-all cursor-pointer"
             >
               Se connecter
             </Link>
@@ -241,7 +241,7 @@ function Hero() {
           <div className="flex flex-col gap-4 ">
             <a
               href="#demo"
-              className="press-brand rounded-2xl px-8 py-4 text-center text-base font-bold text-white cursor-pointer"
+              className="press-brand rounded-2xl bg-brand px-8 py-4 text-center text-base font-bold text-white cursor-pointer"
             >
               Tester le Simulateur
             </a>
