@@ -101,7 +101,7 @@ export const getSupervisorDashboard = createServerFn({ method: "GET" })
 
     const { data: assignments, error } = await supabaseAdmin
       .from("supervisors")
-      .select("child_profile_id, child_profiles(id, name, age, talents, city, interests)")
+      .select("child_profile_id, child_profiles(id, name, age, talents, city, interests, user_id)")
       .eq("supervisor_user_id", userId);
     if (error) throw new Error(error.message);
 
@@ -115,10 +115,21 @@ export const getSupervisorDashboard = createServerFn({ method: "GET" })
       .in("child_id", childIds)
       .order("created_at", { ascending: false });
 
+    // Le numéro de téléphone du parent vit dans auth.users.user_metadata, pas
+    // dans child_profiles — le superviseur doit pouvoir contacter le parent
+    // directement, donc jointure manuelle via l'API admin.
+    const { listAllUsers } = await import("@/integrations/supabase/admin-users");
+    const users = await listAllUsers(supabaseAdmin);
+    const phoneByUserId = new Map(users.map((u) => [u.id, (u.user_metadata as any)?.phone as string | undefined]));
+
     return {
-      children: assignments.map((a) => ({
-        ...(a.child_profiles as any),
-        challenges: (challenges ?? []).filter((c) => c.child_id === a.child_profile_id),
-      })),
+      children: assignments.map((a) => {
+        const child = a.child_profiles as any;
+        return {
+          ...child,
+          parentPhone: phoneByUserId.get(child?.user_id) ?? null,
+          challenges: (challenges ?? []).filter((c) => c.child_id === a.child_profile_id),
+        };
+      }),
     };
   });

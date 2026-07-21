@@ -395,10 +395,10 @@ function DashboardPage() {
                     {/* Continuer à explorer */}
                     <div className="font-display text-balance font-bold text-[13px] tracking-[.06em] uppercase text-ink/40 mx-1 mb-[10px]">Continuer à explorer</div>
                     <div className="grid grid-cols-2 gap-3 mb-6">
-                      <Link to="/profiles/$profileId/challenges" params={{ profileId: selected.id }} className="text-left border border-border bg-leaf-50 rounded-[1rem] p-[15px] cursor-pointer shadow-sm">
+                      <Link to="/profiles/$profileId/parcours" params={{ profileId: selected.id }} className="text-left border border-border bg-leaf-50 rounded-[1rem] p-[15px] cursor-pointer shadow-sm">
                         <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--leaf-dark)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><path d="m16.24 7.76-2.12 6.36-6.36 2.12 2.12-6.36 6.36-2.12z"/></svg>
                         <div className="font-display text-balance font-bold text-[15px] mt-[8px] text-ink">Mon parcours</div>
-                        <div className="text-[12px] text-ink/60 mt-[2px]">Ton arbre de talents</div>
+                        <div className="text-[12px] text-ink/60 mt-[2px]">Ton chemin de talents</div>
                       </Link>
                       <Link to="/profiles/$profileId/portfolio" params={{ profileId: selected.id }} className="text-left border border-border bg-sky-50 rounded-[1rem] p-[15px] cursor-pointer shadow-sm">
                         <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--sky-dark)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m12.83 2.18a2 2 0 0 0-1.66 0L2.6 6.08a1 1 0 0 0 0 1.83l8.58 3.91a2 2 0 0 0 1.66 0l8.58-3.9a1 1 0 0 0 0-1.83Z"/><path d="m2 12 8.58 3.91a2 2 0 0 0 1.66 0L20.83 12"/><path d="m2 17 8.58 3.91a2 2 0 0 0 1.66 0L20.83 17"/></svg>

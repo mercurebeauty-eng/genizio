@@ -5,7 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useSession } from "@/hooks/use-session";
 import { getChildAISynthesis } from "@/lib/challenges.functions";
 import { ensureHypothesesForChild } from "@/lib/hypotheses.functions";
-import { getChildGuild } from "@/lib/guilds";
+import { getChildGuild, getTalentAffinities } from "@/lib/guilds";
 import { AppTabBar } from "@/components/AppTabBar";
 import { TalentRadarChart } from "@/components/TalentRadarChart";
 import { NayaAvatar } from "@/components/NayaAvatar";
@@ -612,6 +612,37 @@ function PortfolioPage() {
               )}
             </div>
           </div>
+
+          {/* "Là où ses talents pourraient l'emmener" — affinités de parcours dérivées
+              des mêmes scores de talents que la bannière Guilde ci-dessus (cf.
+              getTalentAffinities dans lib/guilds.ts), pas une donnée inventée. */}
+          {child.talents && Object.values(child.talents).some((v) => v > 0) && (
+            <div className="rounded-3xl border border-ink/10 bg-white p-6 shadow-xl">
+              <h3 className="mb-1 flex items-center gap-2 font-display text-balance text-lg font-bold">
+                <Compass className="size-5 text-brand" />
+                Là où ses talents pourraient l'emmener
+              </h3>
+              <p className="mb-5 text-xs font-medium leading-relaxed text-ink/60">
+                Les possibilités restent infinies — {child.name} pourrait aussi bien concevoir, enseigner, chercher ou entreprendre. On garde toutes les portes ouvertes.
+              </p>
+              <div className="space-y-4">
+                {getTalentAffinities(child.talents).map((a) => (
+                  <div key={a.key}>
+                    <div className="mb-1.5 flex items-baseline justify-between">
+                      <span className="text-sm font-bold text-ink">{a.label}</span>
+                      <span className="text-sm font-black" style={{ color: `var(--guild-${a.key})` }}>{a.pct}%</span>
+                    </div>
+                    <div className="h-2 overflow-hidden rounded-full bg-ink/8">
+                      <div
+                        className="h-full rounded-full transition-all duration-700"
+                        style={{ width: `${a.pct}%`, background: `var(--guild-${a.key})` }}
+                      />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
 
           {/* 🃏 Collectible Talent Cards Grid */}
           <div className="rounded-3xl border border-ink/10 bg-white p-6 shadow-xl space-y-6">

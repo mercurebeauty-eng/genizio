@@ -2,10 +2,12 @@ import { useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { inviteMentor } from "@/lib/mentors.functions";
 import { supabase } from "@/integrations/supabase/client";
+import { useSession } from "@/hooks/use-session";
+import { COUNTRIES } from "@/lib/countries";
 import { confirmDialog } from "@/components/ui/confirm-dialog";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Switch } from "@/components/ui/switch";
-import { Loader2, Link as LinkIcon, Check, Plus } from "lucide-react";
+import { Loader2, Link as LinkIcon, Check, Plus, Phone } from "lucide-react";
 import { toast } from "sonner";
 
 const DOMAINS = [
@@ -21,6 +23,7 @@ const EXPIRATION_OPTIONS = [
 ] as const;
 
 export function InviteMentorDialog({ childId, childName, customTrigger }: { childId: string, childName: string, customTrigger?: React.ReactNode }) {
+  const { session } = useSession();
   const [open, setOpen] = useState(false);
   const [mentorName, setMentorName] = useState("");
   const [canViewTalentMap, setCanViewTalentMap] = useState(true);
@@ -33,7 +36,34 @@ export function InviteMentorDialog({ childId, childName, customTrigger }: { chil
   const [shareUrl, setShareUrl] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
 
+  // Un mentor qui reçoit le lien doit pouvoir joindre le parent — le
+  // numéro n'est donc plus juste optionnel dès qu'on partage un accès.
+  const [phoneJustSaved, setPhoneJustSaved] = useState(false);
+  const [phoneNumber, setPhoneNumber] = useState("");
+  const [selectedCountry, setSelectedCountry] = useState(COUNTRIES[0]);
+  const [savingPhone, setSavingPhone] = useState(false);
+  const hasPhone = !!session?.user?.user_metadata?.phone || phoneJustSaved;
+
   const inviteFn = useServerFn(inviteMentor);
+
+  const handleSavePhone = async () => {
+    if (phoneNumber.length < selectedCountry.limit - 2) {
+      toast.error(`Le numéro de téléphone doit contenir au moins ${selectedCountry.limit - 2} chiffres.`);
+      return;
+    }
+    setSavingPhone(true);
+    try {
+      const fullPhone = `${selectedCountry.code}${phoneNumber}`;
+      const { error } = await supabase.auth.updateUser({ data: { phone: fullPhone } });
+      if (error) throw error;
+      setPhoneJustSaved(true);
+      toast.success("Numéro enregistré.");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Erreur d'enregistrement.");
+    } finally {
+      setSavingPhone(false);
+    }
+  };
 
   const handleInvite = async () => {
     const name = mentorName.trim();
@@ -107,6 +137,7 @@ export function InviteMentorDialog({ childId, childName, customTrigger }: { chil
         setCanViewTimeline(true);
         setCanViewRawObservations(false);
         setExpiration("never");
+        setPhoneNumber("");
       }
     }}>
       <DialogTrigger asChild>
@@ -127,7 +158,54 @@ export function InviteMentorDialog({ childId, childName, customTrigger }: { chil
           </p>
         </DialogHeader>
 
-        {!shareUrl ? (
+        {!hasPhone ? (
+          <div className="space-y-4 py-4">
+            <div className="rounded-2xl border border-ink/10 bg-sky/20 p-4 flex gap-3">
+              <div className="grid size-9 shrink-0 place-items-center rounded-full bg-white text-brand shadow-sm">
+                <Phone className="size-4" />
+              </div>
+              <p className="text-sm text-ink/80 leading-relaxed">
+                Le mentor doit pouvoir vous joindre directement. Renseignez votre numéro avant de générer le lien.
+              </p>
+            </div>
+            <div className="flex gap-2">
+              <select
+                value={selectedCountry.code}
+                onChange={(e) => {
+                  const found = COUNTRIES.find((c) => c.code === e.target.value);
+                  if (found) {
+                    setSelectedCountry(found);
+                    setPhoneNumber("");
+                  }
+                }}
+                className="rounded-xl border border-ink/10 bg-white px-3 py-3 text-sm font-bold outline-none focus:ring-2 focus:ring-brand cursor-pointer shadow-sm"
+              >
+                {COUNTRIES.map((c) => (
+                  <option key={c.code} value={c.code}>
+                    {c.flag} {c.code}
+                  </option>
+                ))}
+              </select>
+              <input
+                type="tel"
+                inputMode="numeric"
+                pattern="[0-9]*"
+                maxLength={selectedCountry.limit}
+                value={phoneNumber}
+                onChange={(e) => setPhoneNumber(e.target.value.replace(/\D/g, ""))}
+                placeholder="Numéro sans l'indicatif"
+                className="flex-1 rounded-xl border border-ink/10 px-4 py-3 text-sm font-bold outline-none focus:ring-2 focus:ring-brand shadow-sm"
+              />
+            </div>
+            <button
+              onClick={handleSavePhone}
+              disabled={savingPhone || !phoneNumber}
+              className="press-brand w-full rounded-2xl bg-brand py-3.5 text-sm font-bold text-white disabled:opacity-50 flex items-center justify-center gap-2"
+            >
+              {savingPhone ? <Loader2 className="size-5 animate-spin" /> : "Enregistrer et continuer"}
+            </button>
+          </div>
+        ) : !shareUrl ? (
           <div className="space-y-6 py-4">
             <div className="space-y-2">
               <label className="text-sm font-bold text-ink">Nom du mentor</label>

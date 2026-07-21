@@ -1,12 +1,41 @@
+import { useEffect, useState } from "react";
 import { useRegisterSW } from "virtual:pwa-register/react";
 import { Link } from "@tanstack/react-router";
 import { RefreshCw, Sparkles } from "lucide-react";
 
+// Sans polling explicite, useRegisterSW ne revérifie une nouvelle version
+// qu'au moment de l'enregistrement initial du service worker — un onglet
+// (ou la PWA) resté ouvert après un déploiement ne voit donc jamais la
+// bannière tant qu'il n'est pas complètement fermé puis rouvert. On
+// revérifie périodiquement ET à chaque retour au premier plan (le cas réel
+// d'une PWA rouverte depuis l'écran d'accueil du téléphone).
+const UPDATE_CHECK_INTERVAL_MS = 30 * 60 * 1000;
+
 export function PwaUpdateBanner() {
+  const [registration, setRegistration] = useState<ServiceWorkerRegistration | null>(null);
+
   const {
     needRefresh: [needRefresh],
     updateServiceWorker,
-  } = useRegisterSW();
+  } = useRegisterSW({
+    onRegisteredSW(_url, reg) {
+      setRegistration(reg ?? null);
+    },
+  });
+
+  useEffect(() => {
+    if (!registration) return;
+    const check = () => registration.update();
+    const interval = setInterval(check, UPDATE_CHECK_INTERVAL_MS);
+    const onVisible = () => {
+      if (document.visibilityState === "visible") check();
+    };
+    document.addEventListener("visibilitychange", onVisible);
+    return () => {
+      clearInterval(interval);
+      document.removeEventListener("visibilitychange", onVisible);
+    };
+  }, [registration]);
 
   if (!needRefresh) return null;
 

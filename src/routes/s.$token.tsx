@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { getSharedChildView } from "@/lib/mentors.functions";
 import { useEffect, useState } from "react";
-import { ShieldAlert, Award, Brain, Image as ImageIcon } from "lucide-react";
+import { ShieldAlert, Award, Brain, Image as ImageIcon, Phone } from "lucide-react";
 import { GenizioLoader } from "@/components/GenizioLoader";
 import { TalentRadarChart } from "@/components/TalentRadarChart";
 import { MarkdownContent } from "@/components/ui/markdown-content";
@@ -85,7 +85,21 @@ function SharedChildView() {
       </header>
 
       <main className="max-w-4xl mx-auto px-4 md:px-6 py-8 space-y-8">
-        
+
+        {data.parentPhone && (
+          <div className="rounded-2xl border border-ink/10 bg-white p-4 shadow-sm flex items-center gap-3">
+            <div className="grid size-9 shrink-0 place-items-center rounded-full bg-brand/10 text-brand">
+              <Phone className="size-4" />
+            </div>
+            <div className="min-w-0">
+              <p className="text-[10px] font-extrabold uppercase tracking-widest text-ink/40">Contacter le parent de {data.childName}</p>
+              <a href={`tel:${data.parentPhone}`} className="text-sm font-bold text-ink hover:text-brand">
+                {data.parentPhone}
+              </a>
+            </div>
+          </div>
+        )}
+
         {data.talents && (
           <div className="rounded-3xl border border-ink/10 bg-white p-6 md:p-8 shadow-xl">
             <h3 className="font-display text-balance text-xl font-bold flex items-center gap-2 mb-6">
