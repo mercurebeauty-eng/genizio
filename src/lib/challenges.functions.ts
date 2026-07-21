@@ -369,6 +369,8 @@ const GENIZIO_PRINCIPLES = `PRINCIPES DE GÉNÉRATION GÉNIZIO (règles strictes
 - CONCRET AVANT TOUT : chaque défi doit produire un résultat observable et vérifiable (objet construit, expérience réalisée, problème résolu, performance accomplie) — jamais une simple rêverie sans action physique.
 - Priorise dans cet ordre : observation du réel > expérimentation > création manuelle > résolution de problème concret. L'imagination doit s'appuyer sur une action réelle, jamais la remplacer seule.
 - Utilise en priorité les objets déjà disponibles chez l'enfant. N'invente jamais un défi nécessitant un achat important ou des conditions rares/spéciales.
+- CENTRES D'INTÉRÊT COMME TREMPLIN, PAS COMME CONTRAT : les centres d'intérêt déclarés par le parent sont un point de départ pour ancrer le défi dans ce que l'enfant aime, jamais un sujet littéral obligatoire à chaque fois. Si l'intérêt est "Football", un défi sur la stratégie d'équipe, le calcul de score, la géométrie du terrain ou la condition physique est tout aussi légitime qu'un défi littéralement "sur le foot" — varie l'angle plutôt que répéter le sujet brut d'un défi à l'autre.
+- VARIE LA MÉCANIQUE D'UN DÉFI À L'AUTRE : ne fais pas de "récupérer des matériaux et construire un objet" le réflexe par défaut de chaque défi. Alterne réellement entre observation, expérimentation, fabrication, résolution de problème, performance physique ou chronométrée, enquête sociale — la variété de forme compte autant que la variété de sujet.
 - INTERDIT : défi irréalisable concrètement, matériel inaccessible, exercice creux sans valeur pédagogique réelle, tâche trop abstraite déconnectée du quotidien, formulation générique déjà vue mille fois ("dessine ce que tu veux", "imagine une histoire" sans ancrage réel).
 - Cible explicitement 1 à 2 compétences précises et nomme-les dans "pedagogical_context" : Cognitives (logique, esprit critique, curiosité scientifique, créativité) · Pratiques (autonomie, débrouillardise/ingéniosité, méthode et rigueur, gestion du temps) · Sociales (communication, leadership, collaboration, empathie) · Personnelles (résilience face à la frustration, confiance en soi, esprit d'initiative, adaptabilité).
 - Ne vise pas systématiquement le format le plus court : plus l'enfant grandit (8 ans et +), plus des formats longs et immersifs (au-delà d'une heure, voire un projet sur plusieurs jours) construisent une vraie résilience — une alternative constructive aux écrans, tant que ça reste réaliste pour le temps disponible indiqué.
@@ -697,7 +699,7 @@ Contraintes :
 - Choisis parmi ces domaines : ${shuffle(DOMAINS).join(", ")}.${ignoredDomains.length > 0 ? `\n- Cet enfant a déjà reçu plusieurs défis dans ${ignoredDomains.length > 1 ? "ces domaines" : "ce domaine"} (${ignoredDomains.join(", ")}) sans jamais les commencer : évite de reproposer ${ignoredDomains.length > 1 ? "ces domaines" : "ce domaine"}, sauf sous un angle radicalement différent de ce qui a déjà été proposé.` : ""}
 - Chaque défi doit être concret, réalisable à la maison ou dans le quartier, adapté à l'âge.
 - Étapes claires (3 à 6), matériaux simples et accessibles.
-- Ne répète pas ces titres déjà proposés : ${existingTitles.join(" | ") || "(aucun)"}.
+- Ne répète pas ces titres déjà proposés (${existingTitles.join(" | ") || "(aucun)"}) — et si tu remarques que plusieurs d'entre eux suivent la même mécanique de fond (ex: "récupère des matériaux et construis un objet"), varie consciemment vers une autre approche (observation, expérimentation, résolution de problème, performance...) plutôt que de prolonger ce schéma.
 - Pour "material_tags" : un tag court en minuscules, sans accent, par matériau physique achetable
   (ex: "carton", "cutter", "colle", "ampoule") — pas les objets déjà présents chez tout le monde
   (eau, table, papier). Un tableau vide si rien d'achetable n'est nécessaire.
@@ -1221,17 +1223,30 @@ export const generateSingleChallenge = createServerFn({ method: "POST" })
       .maybeSingle();
     if (childErr || !child) throw new Error("Profil enfant introuvable");
 
-    const { data: completedChallenges } = await supabase
-      .from("challenges")
-      .select("title, domain, ai_observations")
-      .eq("child_id", data.childId)
-      .eq("status", "completed")
-      .order("completed_at", { ascending: false })
-      .limit(6);
+    // Unlike generateChallenges (the batch generator), this on-demand single-défi
+    // path never checked recent titles at all — a parent clicking "Composer un défi
+    // ciblé" repeatedly could get literal duplicates. Fetching both in parallel
+    // matches generateChallenges' existing pattern instead of inventing a new one.
+    const [{ data: completedChallenges }, { data: existing }] = await Promise.all([
+      supabase
+        .from("challenges")
+        .select("title, domain, ai_observations")
+        .eq("child_id", data.childId)
+        .eq("status", "completed")
+        .order("completed_at", { ascending: false })
+        .limit(6),
+      supabase
+        .from("challenges")
+        .select("title")
+        .eq("child_id", data.childId)
+        .order("created_at", { ascending: false })
+        .limit(30),
+    ]);
 
     const completedSummary = (completedChallenges ?? [])
       .map((c) => `- Défi "${c.title}" (${c.domain}) : "${c.ai_observations ?? ''}"`)
       .join("\n");
+    const existingTitles = (existing ?? []).map((c) => c.title);
 
     const timeAvailable = data.timeAvailable || "30 min";
     const location = data.location || "Maison (Intérieur)";
@@ -1262,6 +1277,8 @@ ${GENIZIO_PRINCIPLES}
 
 Défis déjà accomplis par l'enfant et observations de Naya :
 ${completedSummary || "(Aucun défi complété pour le moment)"}
+
+Ne répète pas ces titres déjà proposés à cet enfant (${existingTitles.join(" | ") || "(aucun)"}) — et si tu remarques que plusieurs d'entre eux suivent la même mécanique de fond (ex: "récupère des matériaux et construis un objet"), varie consciemment vers une autre approche (observation, expérimentation, résolution de problème, performance...) plutôt que de prolonger ce schéma.
 
 Contexte immédiat (TRÈS IMPORTANT) :
 - Temps disponible : ${timeAvailable}
