@@ -1,5 +1,5 @@
 import { Link } from "@tanstack/react-router";
-import { Home, Compass, MessageSquare, Layers, User } from "lucide-react";
+import { Home, Trophy, ShoppingBag, Users, Settings } from "lucide-react";
 
 type AppTabBarProps = {
   profileId: string;
@@ -8,10 +8,10 @@ type AppTabBarProps = {
 export function AppTabBar({ profileId }: AppTabBarProps) {
   const items = [
     { to: "/profiles" as const, label: "Accueil", icon: Home, needsProfileId: false },
-    { to: "/profiles/$profileId/challenges" as const, label: "Parcours", icon: Compass, needsProfileId: true },
-    { to: "/profiles/$profileId/challenges" as const, label: "Naya", icon: MessageSquare, needsProfileId: true, search: { naya: true } },
-    { to: "/profiles/$profileId/portfolio" as const, label: "Portfolio", icon: Layers, needsProfileId: true },
-    { to: "/profile" as const, label: "Profil", icon: User, needsProfileId: false },
+    { to: "/profiles/$profileId/challenges" as const, label: "Défis", icon: Trophy, needsProfileId: true },
+    { to: "/boutique" as const, label: "Boutique", icon: ShoppingBag, needsProfileId: false },
+    { to: "/profiles/$profileId/mentors" as const, label: "Mentors", icon: Users, needsProfileId: true },
+    { to: "/profile" as const, label: "Réglages", icon: Settings, needsProfileId: false },
   ];
 
   return (
@@ -20,7 +20,7 @@ export function AppTabBar({ profileId }: AppTabBarProps) {
       aria-label="Navigation principale"
     >
       <div className="flex items-center justify-around w-full">
-        {items.map(({ to, label, icon: Icon, needsProfileId, search }) => {
+        {items.map(({ to, label, icon: Icon, needsProfileId }) => {
           const targetTo = (needsProfileId && !profileId) ? "/profiles" : to;
           const params = (needsProfileId && profileId ? { profileId } : undefined) as never;
 
@@ -29,8 +29,7 @@ export function AppTabBar({ profileId }: AppTabBarProps) {
               key={label}
               to={targetTo as any}
               params={params}
-              search={search as any}
-              activeOptions={{ exact: label === "Naya" }}
+              activeOptions={{ exact: label === "Accueil" }}
               className="flex flex-col items-center gap-1 px-3 py-1 cursor-pointer transition-all duration-150 text-ink/40 hover:text-ink/70"
               activeProps={{
                 className: "!text-brand font-bold",
