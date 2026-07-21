@@ -708,9 +708,12 @@ Contraintes :
 Réponds STRICTEMENT en JSON valide avec ce format, pour chaque défi :
 {"challenges":[{"domain":"...","title":"...","description":"...","duration":"...","steps":["...","..."],"materials":["...","..."],"material_tags":["..."],"pedagogical_context":"Ce que Naya observe via cette activité","intelligences":["Intelligence dominante sollicitée"],"requires_supervision":true ou false,"supervision_warning":"..." (ou null si false),"difficulty":"facile"|"moyen"|"difficile","proof_mode":"photo"|"declarative","proof_target":{"metric":"...","value":20} (uniquement si declarative),"declarative_award":{"corporelle":2} (uniquement si declarative),"academic_domain":"mathematiques"|"langage"|"sciences"|"corporelle"|"sociale"|"emotionnelle"|"entrepreneuriale"|"artisanale"|"spatiale"|null,"academic_level_age":14 (uniquement si academic_domain non null),"academic_reference_note":"..." (uniquement si academic_domain non null)}]}`;
 
-    // Up to 6 full défis in one response — genuinely needs the full default
-    // budget, unlike every other callClaude site in this file.
-    const content = await callClaude(prompt, true, undefined, 4000);
+    // Up to 6 full défis in one response, each now carrying the academic
+    // referential fields (domain/level/citation) added on top of the original
+    // schema. Measured live: 4 défis alone already uses 3100-3700 of a 4000
+    // cap (78-91%) — a single slightly longer response silently truncates the
+    // JSON and fails the whole batch. 8000 keeps real headroom at count=6 too.
+    const content = await callClaude(prompt, true, undefined, 8000);
     let parsed: { challenges?: unknown };
     try {
       parsed = JSON.parse(content);

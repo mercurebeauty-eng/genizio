@@ -20,7 +20,7 @@ export function AppTabBar({ profileId }: AppTabBarProps) {
 
   return (
     <nav
-      className="fixed inset-x-0 bottom-0 z-40 border-t-[3px] border-ink bg-surface md:sticky md:top-16 md:inset-x-auto md:h-fit md:w-20 md:rounded-3xl md:border-[3px] md:border-ink md:shadow-brutal md:py-4"
+      className="fixed inset-x-0 bottom-0 z-40 border-t border-ink/10 bg-white/95 backdrop-blur-md md:sticky md:top-20 md:inset-x-auto md:h-fit md:w-20 md:rounded-3xl md:border md:border-ink/10 md:shadow-md md:py-4 transition-all"
       aria-label="Navigation principale"
     >
       <div className="mx-auto flex max-w-6xl items-center justify-around px-2 py-2 md:flex-col md:gap-4 md:py-0">
