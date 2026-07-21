@@ -22,6 +22,7 @@ import {
 } from "lucide-react";
 import { GenizioLoader } from "@/components/GenizioLoader";
 import { TALENT_KEY_LABELS } from "@/lib/talent-buckets";
+import { normalizeChildInterests } from "@/lib/interest-migration";
 
 function getTalentCardInfo(age: number, score: number) {
   let typeLabel = "Carte Éveil";
@@ -381,24 +382,28 @@ function PassportPrintPage() {
             </div>
 
             {/* Moteurs comportementaux observables */}
-            {child.interests && child.interests.length > 0 && (
-              <div className="mt-6 rounded-2xl border border-ink/10 bg-amber-50/60 p-4 shadow-sm">
-                <h3 className="text-xs font-black uppercase tracking-wider text-amber-900 mb-2 flex items-center gap-1.5">
-                  <Compass className="size-4 text-amber-700" />
-                  Moteurs comportementaux & leviers d'action (Observés)
-                </h3>
-                <div className="flex flex-wrap gap-1.5">
-                  {child.interests.map((tag) => (
-                    <span
-                      key={tag}
-                      className="rounded-full border border-amber-300 bg-white px-2.5 py-1 text-[11px] font-bold text-amber-900 shadow-2xs"
-                    >
-                      ✦ {tag}
-                    </span>
-                  ))}
+            {(() => {
+              const behavioralDrivers = normalizeChildInterests(child.interests);
+              if (behavioralDrivers.length === 0) return null;
+              return (
+                <div className="mt-6 rounded-2xl border border-ink/10 bg-amber-50/60 p-4 shadow-sm">
+                  <h3 className="text-xs font-black uppercase tracking-wider text-amber-900 mb-2 flex items-center gap-1.5">
+                    <Compass className="size-4 text-amber-700" />
+                    Moteurs comportementaux & leviers d'action (Observés)
+                  </h3>
+                  <div className="flex flex-wrap gap-1.5">
+                    {behavioralDrivers.map((tag) => (
+                      <span
+                        key={tag}
+                        className="rounded-full border border-amber-300 bg-white px-2.5 py-1 text-[11px] font-bold text-amber-900 shadow-2xs"
+                      >
+                        ✦ {tag}
+                      </span>
+                    ))}
+                  </div>
                 </div>
-              </div>
-            )}
+              );
+            })()}
 
             {/* Top Domaines */}
             {topDomains.length > 0 && (

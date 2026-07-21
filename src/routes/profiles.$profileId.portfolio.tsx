@@ -34,6 +34,7 @@ import { AppHeader } from "@/components/AppHeader";
 import { MarkdownContent } from "@/components/ui/markdown-content";
 import { INTERESTS_BY_TALENT } from "@/components/profiles/shared";
 import { TALENT_KEY_LABELS, getTalentBucket } from "@/lib/talent-buckets";
+import { normalizeChildInterests } from "@/lib/interest-migration";
 
 // title vient de TALENT_KEY_LABELS (source unique des 9 libellés) — seuls
 // l'icône et la description restent propres à cette page.
@@ -385,9 +386,10 @@ function PortfolioPage() {
             const suffixes = ["Novice", "Apprenti", "Émergent", "Compagnon", "Initié", "Confirmé", "Aventurier", "Maître", "Champion", "Légende"];
             const rank = `${singularGuild} ${suffixes[level - 1] || "Expert"}`;
 
-            const childInterests = child.interests && child.interests.length > 0
-              ? child.interests.slice(0, 4)
-              : ["Sciences & Expériences", "Dessin & Peinture", "Sens de la négociation", "Construction & Lego"];
+            const normalizedInterests = normalizeChildInterests(child.interests);
+            const childInterests = normalizedInterests.length > 0
+              ? normalizedInterests.slice(0, 4)
+              : ["Pose sans arrêt la question 'Pourquoi ?'", "Cherche la logique cachée des choses", "Démonte pour comprendre", "Aime assembler et construire"];
 
             const getInterestBucket = (interestName: string) => {
               let foundKey = "spatial";

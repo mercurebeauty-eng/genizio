@@ -2,6 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { VALID_TALENT_KEYS, TALENT_KEY_LABELS } from "@/lib/talent-buckets";
 import { INTERESTS_BY_TALENT } from "@/components/profiles/shared";
+import { normalizeChildInterests } from "@/lib/interest-migration";
 import { z } from "zod";
 
 // Domaines couverts par le référentiel académique (cf. genizio-decisions #39). "creative"
@@ -517,7 +518,8 @@ export function finalizeChallenge<T extends {
  * into rich cognitive posture descriptors and behavioral drivers for AI prompt payloads.
  */
 export function formatChildInterestsPayload(interests?: string[] | null): string {
-  if (!interests || interests.length === 0) {
+  const normalized = normalizeChildInterests(interests);
+  if (normalized.length === 0) {
     return "Aucun levier spécifique renseigné — explorer et expérimenter avec différentes postures d'apprentissage.";
   }
 
@@ -528,10 +530,10 @@ export function formatChildInterestsPayload(interests?: string[] | null): string
     }
   }
 
-  return interests
+  return normalized
     .map((tag) => {
       const label = tagMap.get(tag);
-      return label ? `- [${label}] "${tag}"` : `- [Général] "${tag}"`;
+      return label ? `- [${label}] "${tag}"` : `- [Levier d'action] "${tag}"`;
     })
     .join("\n");
 }
