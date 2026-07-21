@@ -134,6 +134,7 @@ type Child = {
   talents: Record<string, number>;
   interests: string[];
   pdf_unlocked: boolean;
+  xp: number | null;
 };
 
 type Challenge = {
@@ -179,7 +180,7 @@ function PortfolioPage() {
     if (!session) return;
     setFetching(true);
     Promise.all([
-      supabase.from("child_profiles").select("id, name, age, talents, interests, pdf_unlocked").eq("id", profileId).eq("user_id", session!.user.id).maybeSingle(),
+      supabase.from("child_profiles").select("id, name, age, talents, interests, pdf_unlocked, xp").eq("id", profileId).eq("user_id", session!.user.id).maybeSingle(),
       supabase
         .from("challenges")
         .select("id, title, domain, status, completed_at, proof_image_url")
@@ -367,7 +368,11 @@ function PortfolioPage() {
           {/* Success card dashboard: Profil Actuel de l'Enfant */}
           {(() => {
             const guild = getChildGuild(child.talents);
-            const level = Math.max(1, Math.min(10, Math.floor(completed.length / 4) + 1));
+            // Même formule que le tableau de bord (profiles.index.tsx) et le Parcours —
+            // lue depuis child_profiles.xp, jamais recalculée à partir du nombre de défis
+            // complétés (ça part vite en désaccord avec le reste de l'app, cf. le même bug
+            // déjà corrigé sur la page Parcours).
+            const level = Math.floor((child.xp || 0) / 500) + 1;
             
             let singularGuild = "Curieux";
             if (guild.name.includes("Bâtisseurs")) singularGuild = "Bâtisseur";
