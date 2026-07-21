@@ -16,7 +16,7 @@ import { AppHeader } from "@/components/AppHeader";
 import { ProfileDialog } from "@/components/profiles/ProfileDialog";
 import { AVATAR_COLORS, type ChildProfile } from "@/components/profiles/shared";
 import { getActiveChallenge, type ChallengeLike } from "@/lib/active-challenge";
-import { getPortfolioPulse } from "@/lib/talent-buckets";
+import { getPortfolioPulse, TALENT_KEY_LABELS, getTalentBucket, TALENT_BUCKET_LABEL } from "@/lib/talent-buckets";
 import { getChildGuild } from "@/lib/guilds";
 import { InviteMentorDialog } from "@/components/mentors/InviteMentorDialog";
 import { TalentRadarChart } from "@/components/TalentRadarChart";
@@ -250,7 +250,14 @@ function DashboardPage() {
                 const dateStr = new Date().toLocaleDateString('fr-FR', { weekday: 'long' });
                 const capitalizedDate = dateStr.charAt(0).toUpperCase() + dateStr.slice(1);
                 const avatarColor = AVATAR_COLORS[profiles.findIndex(p=>p.id===selected.id)%AVATAR_COLORS.length] || AVATAR_COLORS[0];
-                const activeTalents = pulse.filter(p => (p.score || 0) > 0).length;
+                // Calculé sur les 9 domaines réels (selected.talents), pas sur `pulse` qui
+                // est plafonné à 5 entrées — pulse.filter(...) sous-comptait dès qu'un
+                // enfant avait plus de 5 domaines actifs.
+                const activeDomains = Object.entries(selected.talents || {})
+                  .filter(([, score]) => (score || 0) > 0)
+                  .sort(([, a], [, b]) => (b || 0) - (a || 0))
+                  .map(([key, score]) => ({ key, label: TALENT_KEY_LABELS[key] ?? key, score: score || 0, bucket: getTalentBucket(score || 0) }));
+                const activeTalents = activeDomains.length;
                 const totalXP = selected.xp || 0;
                 const currentLevel = Math.floor(totalXP / 500) + 1;
                 const xpPct = Math.min(100, (totalXP % 500) / 500 * 100);
@@ -374,10 +381,13 @@ function DashboardPage() {
                       </div>
                     )}
 
-                    {/* Compact Cards: Niveau / Talents — cliquables vers leur page de détail respective */}
+                    {/* Compact Cards: Niveau / Talents */}
                     <div className="flex gap-3 mb-5">
+                      {/* Niveau/XP → Ma Guilde (la carte affiche déjà le nom de la guilde ;
+                          "Mon parcours" ci-dessous couvre déjà la vue XP/progression détaillée,
+                          donc cette carte pointe ailleurs plutôt que de dupliquer ce lien). */}
                       <Link
-                        to="/profiles/$profileId/parcours"
+                        to="/profiles/$profileId/guild"
                         params={{ profileId: selected.id }}
                         className="flex-1 bg-card rounded-[1rem] p-[14px] shadow-sm border border-border cursor-pointer"
                       >
@@ -387,17 +397,35 @@ function DashboardPage() {
                         </div>
                         <div className="text-[12px] text-ink/40 font-bold text-right mt-[5px]">{totalXP} XP</div>
                       </Link>
-                      <Link
-                        to="/profiles/$profileId/portfolio"
-                        params={{ profileId: selected.id }}
-                        className="flex-1 bg-card rounded-[1rem] p-[14px] shadow-sm border border-border cursor-pointer"
-                      >
-                        <div className="text-[12px] text-ink/60 font-semibold mb-2">Talents actifs</div>
-                        <div className="flex items-baseline gap-[5px]">
-                          <span className="font-display text-balance font-bold text-[26px]" style={{ color: `var(--guild-${guild.key === 'aucune' ? 'batisseurs' : guild.key})` }}>{activeTalents}</span>
-                          <span className="text-[12px] text-ink/60">domaines</span>
-                        </div>
-                      </Link>
+
+                      {/* Talents actifs → pas de page dédiée aujourd'hui (Parcours et Portfolio
+                          sont déjà pris par les liens "Continuer à explorer" ci-dessous) : un
+                          Popover inline liste les domaines actifs sans quitter le dashboard,
+                          même pattern que le Popover de série déjà utilisé plus haut sur cette page. */}
+                      <Popover>
+                        <PopoverTrigger className="flex-1 bg-card rounded-[1rem] p-[14px] shadow-sm border border-border cursor-pointer text-left outline-none">
+                          <div className="text-[12px] text-ink/60 font-semibold mb-2">Talents actifs</div>
+                          <div className="flex items-baseline gap-[5px]">
+                            <span className="font-display text-balance font-bold text-[26px]" style={{ color: `var(--guild-${guild.key === 'aucune' ? 'batisseurs' : guild.key})` }}>{activeTalents}</span>
+                            <span className="text-[12px] text-ink/60">domaines</span>
+                          </div>
+                        </PopoverTrigger>
+                        <PopoverContent align="start" className="w-72 rounded-2xl border border-ink/10 bg-white p-4 shadow-xl">
+                          <p className="mb-3 font-display text-balance text-sm font-bold text-ink">Domaines actifs de {selected.name}</p>
+                          {activeDomains.length === 0 ? (
+                            <p className="text-xs leading-relaxed text-ink/60">Aucun domaine encore actif — le premier défi complété lancera la carte des talents.</p>
+                          ) : (
+                            <ul className="space-y-2">
+                              {activeDomains.map((d) => (
+                                <li key={d.key} className="flex items-center justify-between gap-2 text-xs">
+                                  <span className="font-bold text-ink">{d.label}</span>
+                                  <span className="text-ink/50">{TALENT_BUCKET_LABEL[d.bucket]}</span>
+                                </li>
+                              ))}
+                            </ul>
+                          )}
+                        </PopoverContent>
+                      </Popover>
                     </div>
 
                     {/* Continuer à explorer */}
