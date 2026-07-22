@@ -1,6 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
-import { callClaude, finalizeChallenge, PROOF_MODE_INSTRUCTION, ACADEMIC_REFERENTIAL_INSTRUCTION, formatChildInterestsPayload } from "@/lib/challenges.functions";
+import { callClaude, finalizeChallenge, PROOF_MODE_INSTRUCTION, ACADEMIC_REFERENTIAL_INSTRUCTION, formatChildInterestsPayload, extractJsonFromLLMResponse } from "@/lib/challenges.functions";
 import { TALENT_KEY_LABELS } from "@/lib/talent-buckets";
 import { z } from "zod";
 
@@ -234,7 +234,10 @@ DIRECTIVES DE SORTIE STRICTES :
 
     const userContent = `Voici le cas à diagnostiquer :\n${JSON.stringify(snapshot, null, 2)}`;
 
-    const NAYA_REASONING_MODEL = "claude-sonnet-5";
+    // DeepSeek Reasoner (R1) remplace Claude Sonnet 5 pour ce rôle de raisonnement
+    // depuis le passage à DeepSeek (2026-07-21) — Sonnet est désormais réservé à
+    // la vision uniquement (cf. callClaude dans challenges.functions.ts).
+    const NAYA_REASONING_MODEL = "deepseek-reasoner";
     const raw = await callClaude(
       `${systemReminders}\n\n${userContent}`,
       true,
@@ -247,8 +250,9 @@ DIRECTIVES DE SORTIE STRICTES :
 
     let parsed: { hypotheses?: unknown };
     try {
-      parsed = JSON.parse(raw);
-    } catch {
+      parsed = JSON.parse(extractJsonFromLLMResponse(raw));
+    } catch (err) {
+      console.error("Error parsing LLM response in runHypothesisEngine:", err, "Raw response:", raw);
       throw new Error("Réponse IA invalide (JSON non parsable).");
     }
 
@@ -402,8 +406,9 @@ Réponds EXCLUSIVEMENT avec un objet JSON strict au format suivant :
     const rawJson = await callClaude(prompt, true, undefined, 1000, 2);
     let parsed: any;
     try {
-      parsed = JSON.parse(rawJson);
-    } catch {
+      parsed = JSON.parse(extractJsonFromLLMResponse(rawJson));
+    } catch (err) {
+      console.error("Error parsing discriminant challenge LLM response:", err, "Raw:", rawJson);
       throw new Error("Erreur de génération du défi discriminant.");
     }
 
@@ -485,7 +490,8 @@ export async function processDiscriminantResult(
   let context: any;
   try {
     context = JSON.parse(challenge.pedagogical_context);
-  } catch {
+  } catch (err) {
+    console.error("processDiscriminantResult: Failed to parse pedagogical_context JSON:", err);
     return { processed: false };
   }
 

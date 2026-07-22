@@ -1,28 +1,18 @@
 import { describe, it, expect } from "vitest";
 import {
-  calculateNayaCosts,
+  calculateDeepSeekChatCost,
+  calculateDeepSeekReasonerCost,
+  calculateVisionSonnetCost,
   calculateNayaConversionRate,
   calculateNayaTelemetry,
-  NAYA_PRICING,
 } from "./naya-telemetry";
 
 describe("Naya Telemetry Stress & Edge Case Suite", () => {
   describe("Category 1: Zero Token & Zero Activity Scenarios", () => {
-    it("handles all-zero token usage objects in calculateNayaCosts", () => {
-      const result = calculateNayaCosts({
-        haikuInputTokens: 0,
-        haikuOutputTokens: 0,
-        sonnetInputTokens: 0,
-        sonnetOutputTokens: 0,
-      });
-      expect(result).toEqual({ costUsd: 0, costXof: 0 });
-    });
-
-    it("handles null, undefined, empty object, and partial zero inputs in calculateNayaCosts", () => {
-      expect(calculateNayaCosts(null)).toEqual({ costUsd: 0, costXof: 0 });
-      expect(calculateNayaCosts(undefined)).toEqual({ costUsd: 0, costXof: 0 });
-      expect(calculateNayaCosts({})).toEqual({ costUsd: 0, costXof: 0 });
-      expect(calculateNayaCosts({ haikuInputTokens: 0 })).toEqual({ costUsd: 0, costXof: 0 });
+    it("handles all-zero token usage in each cost function", () => {
+      expect(calculateDeepSeekChatCost(0, 0)).toEqual({ costUsd: 0, costXof: 0 });
+      expect(calculateDeepSeekReasonerCost(0, 0)).toEqual({ costUsd: 0, costXof: 0 });
+      expect(calculateVisionSonnetCost(0, 0)).toEqual({ costUsd: 0, costXof: 0 });
     });
 
     it("handles 0 generated vs 0 completed challenges conversion rate handling without NaN/Inf", () => {
@@ -48,10 +38,12 @@ describe("Naya Telemetry Stress & Edge Case Suite", () => {
       expect(telemetry.totalCostXof).toBe(0);
       expect(telemetry.conversionRatePct).toBe(0);
       expect(telemetry.tokenUsage).toEqual({
-        haikuInputTokens: 0,
-        haikuOutputTokens: 0,
-        sonnetInputTokens: 0,
-        sonnetOutputTokens: 0,
+        deepseekChatInputTokens: 0,
+        deepseekChatOutputTokens: 0,
+        deepseekReasonerInputTokens: 0,
+        deepseekReasonerOutputTokens: 0,
+        visionSonnetInputTokens: 0,
+        visionSonnetOutputTokens: 0,
       });
       expect(telemetry.projection).toEqual({
         projectedCallsMonthly: 0,
@@ -67,56 +59,43 @@ describe("Naya Telemetry Stress & Edge Case Suite", () => {
   });
 
   describe("Category 2: Large Token Volumes (100M+ to 1B+ tokens)", () => {
-    it("calculates accurate costs for 100M Haiku tokens", () => {
-      // 100M input = 100 * $0.25 = $25
-      // 100M output = 100 * $1.25 = $125
-      // Total = $150 USD -> 150 * 600 = 90,000 FCFA
-      const result = calculateNayaCosts({
-        haikuInputTokens: 100_000_000,
-        haikuOutputTokens: 100_000_000,
-      });
-
-      expect(result.costUsd).toBe(150);
-      expect(result.costXof).toBe(90000);
+    it("calculates accurate costs for 100M DeepSeek Chat tokens", () => {
+      // 100M input = 100 * $0.28 = $28
+      // 100M output = 100 * $0.42 = $42
+      // Total = $70 USD -> 70 * 600 = 42,000 FCFA
+      const result = calculateDeepSeekChatCost(100_000_000, 100_000_000);
+      expect(result.costUsd).toBe(70);
+      expect(result.costXof).toBe(42000);
     });
 
-    it("calculates accurate costs for 100M Sonnet tokens", () => {
+    it("calculates accurate costs for 100M vision Sonnet tokens", () => {
       // 100M input = 100 * $3.00 = $300
       // 100M output = 100 * $15.00 = $1500
       // Total = $1800 USD -> 1800 * 600 = 1,080,000 FCFA
-      const result = calculateNayaCosts({
-        sonnetInputTokens: 100_000_000,
-        sonnetOutputTokens: 100_000_000,
-      });
-
+      const result = calculateVisionSonnetCost(100_000_000, 100_000_000);
       expect(result.costUsd).toBe(1800);
       expect(result.costXof).toBe(1080000);
     });
 
     it("handles extreme token scale (1 Billion tokens per model)", () => {
-      // Haiku 1B input ($250) + 1B output ($1250) = $1500
-      // Sonnet 1B input ($3000) + 1B output ($15000) = $18000
-      // Total USD = $19,500 -> 19500 * 600 = 11,700,000 FCFA
-      const result = calculateNayaCosts({
-        haikuInputTokens: 1_000_000_000,
-        haikuOutputTokens: 1_000_000_000,
-        sonnetInputTokens: 1_000_000_000,
-        sonnetOutputTokens: 1_000_000_000,
-      });
+      const chat = calculateDeepSeekChatCost(1_000_000_000, 1_000_000_000);
+      const reasoner = calculateDeepSeekReasonerCost(1_000_000_000, 1_000_000_000);
+      const vision = calculateVisionSonnetCost(1_000_000_000, 1_000_000_000);
 
-      expect(result.costUsd).toBe(19500);
-      expect(result.costXof).toBe(11700000);
-      expect(Number.isSafeInteger(result.costXof)).toBe(true);
+      expect(Number.isSafeInteger(chat.costXof)).toBe(true);
+      expect(Number.isSafeInteger(reasoner.costXof)).toBe(true);
+      expect(Number.isSafeInteger(vision.costXof)).toBe(true);
+      expect(vision.costUsd).toBe(18000); // 1000 * $3 + 1000 * $15
     });
 
     it("handles massive enterprise scale telemetry calculations (1M API calls, 2B+ tokens)", () => {
       const telemetry = calculateNayaTelemetry({
-        challengesGenerated: 500_000, // 500k Haiku calls (600M in, 400M out = 1B tokens)
+        challengesGenerated: 500_000, // 500k DeepSeek Chat calls
         challengesStarted: 400_000,
         challengesCompleted: 250_000,
-        photoProofCompleted: 200_000, // 200k Sonnet calls (300M in, 60M out = 360M tokens)
-        hypothesesCycles: 100_000, // 100k Sonnet calls (250M in, 60M out = 310M tokens)
-        recommendationsCount: 200_000, // 200k Haiku calls (200M in, 100M out = 300M tokens)
+        photoProofCompleted: 200_000, // 200k Sonnet vision calls
+        hypothesesCycles: 100_000, // 100k DeepSeek Reasoner calls
+        recommendationsCount: 200_000, // 200k DeepSeek Chat calls
       });
 
       // Total API calls = 500k + 200k + 100k + 200k = 1,000,000 calls
@@ -139,49 +118,28 @@ describe("Naya Telemetry Stress & Edge Case Suite", () => {
   });
 
   describe("Category 3: Negative Token Counts, NaN Values & Non-Numeric Inputs", () => {
-    it("clamps negative token counts to 0 in calculateNayaCosts", () => {
-      const result = calculateNayaCosts({
-        haikuInputTokens: -100_000,
-        haikuOutputTokens: -50_000,
-        sonnetInputTokens: -1_000_000,
-        sonnetOutputTokens: -500,
-      });
-      expect(result).toEqual({ costUsd: 0, costXof: 0 });
+    it("clamps negative token counts to 0", () => {
+      expect(calculateDeepSeekChatCost(-100_000, -50_000)).toEqual({ costUsd: 0, costXof: 0 });
+      expect(calculateVisionSonnetCost(-1_000_000, -500)).toEqual({ costUsd: 0, costXof: 0 });
     });
 
-    it("handles NaN token values gracefully as 0 in calculateNayaCosts", () => {
-      const result = calculateNayaCosts({
-        haikuInputTokens: NaN,
-        haikuOutputTokens: NaN,
-        sonnetInputTokens: 1_000_000, // $3.00
-        sonnetOutputTokens: NaN,
-      });
-
+    it("handles NaN token values gracefully as 0", () => {
+      const result = calculateVisionSonnetCost(1_000_000, NaN);
       expect(result.costUsd).toBe(3.0);
       expect(result.costXof).toBe(1800);
     });
 
-    it("handles non-numeric inputs (strings, booleans, objects, arrays) in calculateNayaCosts", () => {
-      const result = calculateNayaCosts({
-        haikuInputTokens: "1000000" as any,
-        haikuOutputTokens: true as any,
-        sonnetInputTokens: {} as any,
-        sonnetOutputTokens: [100] as any,
-      });
+    it("handles non-numeric inputs (strings, booleans, objects, arrays)", () => {
+      const result = calculateDeepSeekChatCost("1000000" as any, true as any);
       expect(result).toEqual({ costUsd: 0, costXof: 0 });
     });
 
-    it("handles Infinity and -Infinity inputs in calculateNayaCosts without throwing", () => {
-      const resultPos = calculateNayaCosts({
-        haikuInputTokens: Infinity,
-      });
-      // Test behavior for Infinity - check if it returns finite number or handles it
+    it("handles Infinity and -Infinity inputs without throwing", () => {
+      const resultPos = calculateDeepSeekChatCost(Infinity, 0);
       expect(typeof resultPos.costUsd).toBe("number");
       expect(typeof resultPos.costXof).toBe("number");
 
-      const resultNeg = calculateNayaCosts({
-        haikuInputTokens: -Infinity,
-      });
+      const resultNeg = calculateDeepSeekChatCost(-Infinity, 0);
       expect(resultNeg).toEqual({ costUsd: 0, costXof: 0 });
     });
 
@@ -262,16 +220,12 @@ describe("Naya Telemetry Stress & Edge Case Suite", () => {
       expect(telemetryInvalidStr.conversionRatePct).toBe(0);
     });
 
-    it("handles Infinity inputs in calculateNayaCosts", () => {
-      const resultPos = calculateNayaCosts({
-        haikuInputTokens: Infinity,
-      });
-      expect(resultPos.costUsd).toBe(Infinity);
-      expect(resultPos.costXof).toBe(Infinity);
+    it("handles Infinity inputs consistently", () => {
+      const resultPos = calculateDeepSeekChatCost(Infinity, 0);
+      expect(resultPos.costUsd).toBe(0);
+      expect(resultPos.costXof).toBe(0);
 
-      const resultNeg = calculateNayaCosts({
-        haikuInputTokens: -Infinity,
-      });
+      const resultNeg = calculateDeepSeekChatCost(-Infinity, 0);
       expect(resultNeg).toEqual({ costUsd: 0, costXof: 0 });
     });
   });

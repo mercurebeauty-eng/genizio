@@ -1,7 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { generateDiscriminantChallenge } from "@/lib/hypotheses.functions";
-import { callClaude, finalizeChallenge, PROOF_MODE_INSTRUCTION, ACADEMIC_REFERENTIAL_INSTRUCTION, formatChildInterestsPayload } from "@/lib/challenges.functions";
+import { callClaude, finalizeChallenge, PROOF_MODE_INSTRUCTION, ACADEMIC_REFERENTIAL_INSTRUCTION, formatChildInterestsPayload, extractJsonFromLLMResponse } from "@/lib/challenges.functions";
 import { z } from "zod";
 
 const RecommendInput = z.object({
@@ -124,7 +124,7 @@ Format JSON strict :
 
       try {
         const rawJson = await callClaude(prompt, true, undefined, 1000, 2);
-        const parsed = JSON.parse(rawJson);
+        const parsed = JSON.parse(extractJsonFromLLMResponse(rawJson));
 
         // Correctif (2026-07-20, décision #34) : contournait finalizeChallenge — même
         // problème que generateDiscriminantChallenge, même fix.
@@ -176,8 +176,8 @@ Format JSON strict :
             challenge,
           };
         }
-      } catch {
-        // Fallback exploration
+      } catch (err) {
+        console.error("Error generating essaimage recommendation challenge:", err);
       }
     }
 
@@ -221,7 +221,7 @@ Format JSON strict :
 
       try {
         const rawJson = await callClaude(prompt, true, undefined, 1000, 2);
-        const parsed = JSON.parse(rawJson);
+        const parsed = JSON.parse(extractJsonFromLLMResponse(rawJson));
 
         const safeTitle = (parsed.title || "Petit défi tranquille avec Naya") as string;
         const safeDescription = (parsed.description || "") as string;
@@ -271,7 +271,8 @@ Format JSON strict :
             challenge,
           };
         }
-      } catch {
+      } catch (err) {
+        console.error("Error generating stabilisation recommendation challenge:", err);
         // Pas de recommandation dégradée si la génération échoue — mieux vaut
         // aucune recommandation qu'une carte de stabilisation sans défi réel.
       }

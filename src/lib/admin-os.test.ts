@@ -16,7 +16,8 @@ import {
   togglePassportState,
 } from "./admin-os.functions";
 import {
-  calculateNayaCosts,
+  calculateDeepSeekChatCost,
+  calculateVisionSonnetCost,
   calculateNayaConversionRate,
   calculateNayaTelemetry,
   NAYA_PRICING,
@@ -322,17 +323,14 @@ describe("Admin OS Helper Functions", () => {
   });
 
   describe("Admin OS Milestone 3: Naya AI Tracking & Costs", () => {
-    it("calculates Haiku and Sonnet cost breakdown correctly", () => {
-      const costs = calculateNayaCosts({
-        haikuInputTokens: 2_000_000, // $0.50
-        haikuOutputTokens: 1_000_000, // $1.25
-        sonnetInputTokens: 500_000, // $1.50
-        sonnetOutputTokens: 200_000, // $3.00
-      });
+    it("calculates DeepSeek Chat and vision Sonnet cost breakdown correctly", () => {
+      const chatCosts = calculateDeepSeekChatCost(2_000_000, 1_000_000); // $0.56 + $0.42
+      const visionCosts = calculateVisionSonnetCost(500_000, 200_000); // $1.50 + $3.00
 
-      // Total USD = 0.50 + 1.25 + 1.50 + 3.00 = $6.25
-      expect(costs.costUsd).toBe(6.25);
-      expect(costs.costXof).toBe(6.25 * NAYA_PRICING.USD_TO_XOF_RATE); // 3750 FCFA
+      // Total USD = 0.56 + 0.42 + 1.50 + 3.00 = $5.48
+      const totalUsd = Math.round((chatCosts.costUsd + visionCosts.costUsd) * 10000) / 10000;
+      expect(totalUsd).toBe(5.48);
+      expect(chatCosts.costXof + visionCosts.costXof).toBe(Math.round(totalUsd * NAYA_PRICING.USD_TO_XOF_RATE));
     });
 
     it("calculates clamped conversion rate percentage", () => {
@@ -354,7 +352,7 @@ describe("Admin OS Helper Functions", () => {
       expect(telemetry.totalApiCalls).toBe(44);
       expect(telemetry.conversionRatePct).toBe(60);
       expect(telemetry.featureBreakdown).toHaveLength(3);
-      expect(telemetry.modelBreakdown).toHaveLength(2);
+      expect(telemetry.modelBreakdown).toHaveLength(3);
       expect(telemetry.projection.projectedCallsMonthly).toBe(176);
     });
   });

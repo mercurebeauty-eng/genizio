@@ -7,21 +7,42 @@ import {
   Layers,
   Zap,
   CheckCircle2,
+  XCircle,
   ArrowRight,
   BarChart3,
   Sparkles,
   RefreshCw,
+  Route as RouteIcon,
+  Image as ImageIcon,
+  MessageSquare,
 } from "lucide-react";
 import type { NayaTelemetryResponse } from "@/lib/naya-telemetry";
+import type { AiProviderStatus } from "@/lib/admin-os.functions";
 
 interface AdminNayaTabProps {
   telemetry: NayaTelemetryResponse;
+  aiProviderStatus?: AiProviderStatus | null;
   isRefreshing?: boolean;
   onRefresh?: () => void;
 }
 
+// Couleur par modèle — 3 fournisseurs depuis le passage à DeepSeek (2026-07-21) :
+// sky = DeepSeek Chat (texte courant), amber = DeepSeek Reasoner (raisonnement
+// NAYA), purple = Claude Sonnet 5 (vision uniquement, seul cas encore Anthropic).
+function modelDotClass(modelLabel: string): string {
+  if (modelLabel.includes("Sonnet")) return "bg-purple-600";
+  if (modelLabel.includes("Reasoner")) return "bg-amber-500";
+  return "bg-sky";
+}
+function modelBadgeClass(modelLabel: string): string {
+  if (modelLabel.includes("Sonnet")) return "bg-purple-100 text-purple-700";
+  if (modelLabel.includes("Reasoner")) return "bg-amber-100 text-amber-700";
+  return "bg-sky/10 text-sky";
+}
+
 export function AdminNayaTab({
   telemetry,
+  aiProviderStatus,
   isRefreshing = false,
   onRefresh,
 }: AdminNayaTabProps) {
@@ -61,7 +82,7 @@ export function AdminNayaTab({
               Telemetry & Diagnostics de Consommation
             </h2>
             <p className="text-xs text-ink/60 font-medium">
-              Suivi en temps réel du volume de requêtes, de la répartition des tokens et des coûts estimatifs (Haiku vs Sonnet).
+              Suivi en temps réel du volume de requêtes, de la répartition des tokens et des coûts estimatifs (DeepSeek vs Sonnet vision).
             </p>
           </div>
         </div>
@@ -75,6 +96,74 @@ export function AdminNayaTab({
             <RefreshCw className={`size-3.5 ${isRefreshing ? "animate-spin text-brand" : "text-ink/60"}`} />
             <span>Actualiser la télémétrie</span>
           </button>
+        )}
+      </div>
+
+      {/* 🔀 Configuration IA active — routage par tâche + statut des clés API.
+          Ajouté au passage à DeepSeek (2026-07-21) pour que l'admin voie d'un
+          coup d'œil qui fait quoi et si les clés sont bien configurées sur cet
+          environnement, sans avoir à ouvrir .env/Vercel. */}
+      <div className="rounded-3xl border border-ink/10 bg-white p-6 shadow-xl space-y-5">
+        <div className="flex items-center gap-3">
+          <div className="p-2.5 rounded-2xl bg-brand/10 text-brand">
+            <RouteIcon className="size-5" />
+          </div>
+          <div>
+            <h3 className="font-display text-lg font-extrabold text-ink">
+              Configuration IA active
+            </h3>
+            <p className="text-xs text-ink/60 font-medium">
+              Routage par type de tâche — provisoire en attendant une clé Gemini 3.6.
+            </p>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+          <div className="rounded-2xl border border-sky/20 bg-sky/5 p-4">
+            <div className="flex items-center gap-2 mb-1.5">
+              <MessageSquare className="size-4 text-sky" />
+              <span className="text-[10px] font-extrabold uppercase tracking-wider text-sky">Texte général</span>
+            </div>
+            <p className="text-sm font-black text-ink">DeepSeek Chat</p>
+            <p className="text-[11px] text-ink/60 mt-0.5">Défis, synthèses, recommandations</p>
+          </div>
+          <div className="rounded-2xl border border-amber-500/20 bg-amber-500/5 p-4">
+            <div className="flex items-center gap-2 mb-1.5">
+              <Brain className="size-4 text-amber-600" />
+              <span className="text-[10px] font-extrabold uppercase tracking-wider text-amber-700">Raisonnement</span>
+            </div>
+            <p className="text-sm font-black text-ink">DeepSeek Reasoner</p>
+            <p className="text-[11px] text-ink/60 mt-0.5">Diagnostic bayésien NAYA (hypothèses)</p>
+          </div>
+          <div className="rounded-2xl border border-purple-500/20 bg-purple-500/5 p-4">
+            <div className="flex items-center gap-2 mb-1.5">
+              <ImageIcon className="size-4 text-purple-600" />
+              <span className="text-[10px] font-extrabold uppercase tracking-wider text-purple-700">Vision (photos)</span>
+            </div>
+            <p className="text-sm font-black text-ink">Claude Sonnet 5</p>
+            <p className="text-[11px] text-ink/60 mt-0.5">Seul cas encore sur Anthropic</p>
+          </div>
+        </div>
+
+        {aiProviderStatus && (
+          <div className="flex flex-wrap items-center gap-3 pt-3 border-t border-ink/5">
+            <span className="text-[10px] font-extrabold uppercase tracking-wider text-ink/50">Clés API sur cet environnement :</span>
+            {[
+              { label: "DeepSeek", ok: aiProviderStatus.deepseekConfigured },
+              { label: "Anthropic (vision)", ok: aiProviderStatus.anthropicConfigured },
+              { label: "Gemini (réserve)", ok: aiProviderStatus.geminiConfigured },
+            ].map(({ label, ok }) => (
+              <span
+                key={label}
+                className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] font-bold ${
+                  ok ? "bg-emerald-100 text-emerald-700" : "bg-red-100 text-red-700"
+                }`}
+              >
+                {ok ? <CheckCircle2 className="size-3.5" /> : <XCircle className="size-3.5" />}
+                {label}
+              </span>
+            ))}
+          </div>
         )}
       </div>
 
@@ -111,7 +200,7 @@ export function AdminNayaTab({
             <span className="text-xs font-bold text-ink/50">tokens</span>
           </div>
           <p className="text-xs text-ink/60 mt-2 font-medium">
-            Entrée : <strong className="text-ink">{(tokenUsage.haikuInputTokens + tokenUsage.sonnetInputTokens).toLocaleString("fr-FR")}</strong> | Sortie : <strong className="text-ink">{(tokenUsage.haikuOutputTokens + tokenUsage.sonnetOutputTokens).toLocaleString("fr-FR")}</strong>
+            Entrée : <strong className="text-ink">{(tokenUsage.deepseekChatInputTokens + tokenUsage.deepseekReasonerInputTokens + tokenUsage.visionSonnetInputTokens).toLocaleString("fr-FR")}</strong> | Sortie : <strong className="text-ink">{(tokenUsage.deepseekChatOutputTokens + tokenUsage.deepseekReasonerOutputTokens + tokenUsage.visionSonnetOutputTokens).toLocaleString("fr-FR")}</strong>
           </p>
         </div>
 
@@ -191,11 +280,7 @@ export function AdminNayaTab({
                     </td>
                     <td className="py-3 pr-3">
                       <span
-                        className={`inline-block text-[10px] font-extrabold uppercase px-2 py-0.5 rounded-full ${
-                          item.modelUsed.includes("Sonnet")
-                            ? "bg-purple-100 text-purple-700"
-                            : "bg-sky/10 text-sky"
-                        }`}
+                        className={`inline-block text-[10px] font-extrabold uppercase px-2 py-0.5 rounded-full ${modelBadgeClass(item.modelUsed)}`}
                       >
                         {item.modelUsed}
                       </span>
@@ -217,7 +302,7 @@ export function AdminNayaTab({
           </div>
         </div>
 
-        {/* Model Breakdown Panel (Haiku vs Sonnet) */}
+        {/* Model Breakdown Panel (DeepSeek Chat / Reasoner vs Sonnet vision) */}
         <div className="rounded-3xl border border-ink/10 bg-white p-6 shadow-xl space-y-5">
           <div className="flex items-center gap-3">
             <div className="p-2.5 rounded-2xl bg-purple-500/10 text-purple-600">
@@ -225,7 +310,7 @@ export function AdminNayaTab({
             </div>
             <div>
               <h3 className="font-display text-lg font-extrabold text-ink">
-                Distribution par Modèle (Haiku vs Sonnet)
+                Distribution par Modèle
               </h3>
               <p className="text-xs text-ink/60 font-medium">
                 Part relative du volume et de la facture globale.
@@ -241,11 +326,7 @@ export function AdminNayaTab({
               >
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
-                    <span
-                      className={`size-3 rounded-full ${
-                        model.model.includes("Sonnet") ? "bg-purple-600" : "bg-sky"
-                      }`}
-                    />
+                    <span className={`size-3 rounded-full ${modelDotClass(model.model)}`} />
                     <span className="font-display font-extrabold text-sm text-ink">
                       {model.model}
                     </span>
@@ -263,9 +344,7 @@ export function AdminNayaTab({
                 {/* Progress bar */}
                 <div className="w-full bg-ink/10 h-2.5 rounded-full overflow-hidden">
                   <div
-                    className={`h-full transition-all duration-500 ${
-                      model.model.includes("Sonnet") ? "bg-purple-600" : "bg-sky"
-                    }`}
+                    className={`h-full transition-all duration-500 ${modelDotClass(model.model)}`}
                     style={{ width: `${Math.max(5, model.sharePercentage)}%` }}
                   />
                 </div>
@@ -371,7 +450,7 @@ export function AdminNayaTab({
           </div>
 
           <div className="text-[11px] text-ink/50 italic text-center">
-            * Basé sur les tarifs publics Anthropic API Haiku 3.5 & Sonnet 3.5 (1 USD = 600 XOF).
+            * Basé sur les tarifs indicatifs DeepSeek Chat/Reasoner + Claude Sonnet 5 (vision), 1 USD = 600 XOF — à ajuster si les tarifs DeepSeek changent.
           </div>
         </div>
       </div>

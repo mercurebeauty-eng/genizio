@@ -149,7 +149,9 @@ async function awardCompletionXP(supabaseClient: any, childId: string) {
 // défis-là ne comptent simplement pour aucun badge, pas une erreur, juste
 // une couverture partielle assumée pour ce premier jet.
 const BADGE_THRESHOLD = 3;
-const BADGE_CATALOG: Record<string, { title: string; description: string }> = {
+// Exporté pour le Passeport d'Excellence (passport-print.tsx), qui affiche les
+// badges réellement gagnés par l'enfant (child_badges) avec leur titre/description.
+export const BADGE_CATALOG: Record<string, { title: string; description: string }> = {
   Sciences: {
     title: "Scientifique en herbe",
     description: "Tu as mené 3 expériences. Tu observes, tu questionnes, tu comprends le monde qui t'entoure.",
@@ -612,33 +614,66 @@ ARTISANALE (habileté manuelle) :
 SPATIALE :
 3 ans : vocabulaire spatial de base (dessus/dessous, dedans/dehors). 4-9 ans : perçoit des objets sous différents points de vue, notion de perspective en développement. 5 ans : réussit une tâche simple de "pliage mental" (imaginer un objet après pliage). 7-8 ans : pliage mental plus avancé, plafonne généralement vers cet âge.`;
 
-// Helper to call Google AI Studio OpenAI-compatible endpoint
 const ALLOWED_IMAGE_MEDIA_TYPES = ["image/jpeg", "image/png", "image/gif", "image/webp"];
 
-export async function callClaude(
+// Extraction robuste du JSON dans une réponse LLM brute. Remplace les regex
+// ad-hoc dispersées (une par site d'appel, chacune avec ses propres angles
+// morts) par une seule implémentation couvrant les cas réellement observés :
+// bloc balisé ```json ... ``` (avec ou sans texte de politesse autour, ex.
+// "Voici le résultat :\n```json\n{...}\n```\nJ'espère que ça aide"), bloc
+// balisé sans fermeture (troncature de sortie), plusieurs blocs balisés dans
+// la même réponse (on préfère celui explicitement tagué "json"), et JSON brut
+// sans balise du tout. DeepSeek Reasoner en particulier n'accepte pas
+// response_format:json_object (cf. callDeepSeekText) et est donc le provider
+// le plus susceptible d'entourer son JSON de texte conversationnel.
+export function extractJsonFromLLMResponse(raw: string): string {
+  const trimmed = (raw ?? "").trim();
+  if (!trimmed) return trimmed;
+
+  // 1. Bloc explicitement tagué ```json ... ``` (prioritaire s'il y a plusieurs blocs)
+  const tagged = trimmed.match(/```json\s*([\s\S]*?)```/i);
+  if (tagged) return tagged[1].trim();
+
+  // 2. N'importe quel bloc balisé dont le contenu ressemble à du JSON
+  for (const m of trimmed.matchAll(/```(?:\w+)?\s*([\s\S]*?)```/gi)) {
+    const content = m[1].trim();
+    if (content.startsWith("{") || content.startsWith("[")) return content;
+  }
+
+  // 3. Bloc balisé sans fermeture (réponse tronquée) — on retire juste le marqueur d'ouverture
+  const unclosed = trimmed.match(/^```(?:\w+)?\s*([\s\S]*)$/);
+  if (unclosed) {
+    const content = unclosed[1].trim();
+    if (content.startsWith("{") || content.startsWith("[")) return content;
+  }
+
+  // 4. Pas de balise — extrait le plus grand span {...} ou [...], tolère du
+  //    texte conversationnel avant/après le JSON.
+  const firstBrace = trimmed.search(/[{[]/);
+  const lastBrace = Math.max(trimmed.lastIndexOf("}"), trimmed.lastIndexOf("]"));
+  if (firstBrace !== -1 && lastBrace > firstBrace) {
+    return trimmed.slice(firstBrace, lastBrace + 1);
+  }
+
+  return trimmed;
+}
+
+// Routage IA (décision du 2026-07-21) : DeepSeek n'a pas de vision, donc toute
+// analyse d'image reste sur Claude Sonnet 5 — c'est la SEULE raison pour laquelle
+// Anthropic est encore appelé. Tout le texte (génération de défis, synthèses,
+// raisonnement bayésien NAYA...) passe par DeepSeek, en attendant une clé Gemini 3.6.
+// Anciens noms de modèles Anthropic conservés en commentaire pour mémoire :
+// claude-haiku-4-5-20251001 (texte, remplacé) / claude-sonnet-5 (vision, inchangé).
+const DEEPSEEK_CHAT_MODEL = "deepseek-chat";
+
+async function callAnthropicVision(
   prompt: string,
-  jsonMode: boolean = false,
-  imageUrl?: string,
-  // Anthropic's output-token rate limit is reserved based on this requested
-  // max, not on what's actually generated — a call that only needs ~100
-  // tokens but asks for 4000 can eat an entire minute's budget by itself.
-  // Every call site should pass a value close to its real expected output
-  // instead of relying on one size fits all.
-  maxOutputTokens = 4000,
-  maxRetries = 3,
-  // Preferred over imageUrl when present — the caller already has the raw
-  // bytes (e.g. straight from the browser's file input) and skips the
-  // upload-then-fetch round trip through Supabase Storage that imageUrl
-  // requires (see validateChallengeProof: that upload used to happen on
-  // every submission attempt regardless of outcome, hitting the storage
-  // API's own rate limit).
-  imageData?: { base64: string; mediaType: string },
-  // Force a specific model regardless of the vision/text default routing.
-  // Used by the NAYA 2.0 reasoning role (generateHypotheses) to run on
-  // Sonnet even though it's a text-only call — bayesian causal diagnosis is
-  // the "when the system needs to think" case decision #27 reserves the
-  // premium model for. Existing call sites omit it and keep Haiku-for-text.
-  modelOverride?: string
+  jsonMode: boolean,
+  imageUrl: string | undefined,
+  imageData: { base64: string; mediaType: string } | undefined,
+  maxOutputTokens: number,
+  maxRetries: number,
+  model: string
 ): Promise<string> {
   const apiKey = process.env.ANTHROPIC_API_KEY;
   if (!apiKey) {
@@ -691,14 +726,6 @@ export async function callClaude(
     ? "Tu es un assistant IA précis. Tu dois impérativement répondre au format JSON demandé, sous forme de JSON brut, sans bloc de code Markdown, sans préambule ni explications."
     : undefined;
 
-  // Cost-effective routing: use Claude Sonnet 5 only when analyzing an image (vision), otherwise use Claude Haiku 4.5.
-  // Must check imageData too, not just imageUrl: validateChallengeProof's real photo
-  // path sends raw bytes via imageData (see its own comment above) and was silently
-  // falling through to Haiku for every proof-photo validation despite this comment's
-  // intent — imageUrl stayed undefined so the ternary never saw a reason to pick Sonnet.
-  // modelOverride wins over both — lets a text-only call opt into Sonnet (NAYA reasoning role).
-  const model = modelOverride ?? (imageData || imageUrl ? "claude-sonnet-5" : "claude-haiku-4-5-20251001");
-
   let attempt = 0;
   while (attempt < maxRetries) {
     const controller = new AbortController();
@@ -713,7 +740,7 @@ export async function callClaude(
           "anthropic-version": "2023-06-01",
         },
         body: JSON.stringify({
-          model: model,
+          model,
           max_tokens: maxOutputTokens,
           system: systemPrompt,
           messages: [
@@ -729,14 +756,14 @@ export async function callClaude(
       if (!response.ok) {
         const errorText = await response.text();
         console.error(`Claude API Error Response (Attempt ${attempt + 1}):`, errorText);
-        
+
         if (response.status === 429) {
           throw new Error("Quota Anthropic atteint (429). Veuillez patienter une minute avant de réessayer.");
         }
         if (response.status === 503 || response.status >= 500) {
           throw new Error(`Erreur Anthropic API (${response.status})`); // Transient error -> trigger retry
         }
-        
+
         throw new Error(`Erreur Anthropic API (${response.status}) - Fatal`);
       }
 
@@ -745,7 +772,7 @@ export async function callClaude(
       // a "thinking" block (content[0].type === "thinking", no .text), so content[0].text
       // is undefined for any reasoning-capable model — that silently produced "" and made
       // JSON.parse fail with "Réponse IA invalide" on every Sonnet call. Finding the text
-      // block makes callClaude robust to thinking blocks regardless of model.
+      // block makes this robust to thinking blocks regardless of model.
       const textBlock = Array.isArray(json.content)
         ? json.content.find((b: any) => b?.type === "text")
         : null;
@@ -761,19 +788,138 @@ export async function callClaude(
     } catch (err: any) {
       clearTimeout(timeoutId);
       attempt++;
-      
+
       const isFatal = err.message && err.message.includes("Fatal");
       if (attempt >= maxRetries || isFatal) {
         throw err;
       }
-      
+
       const delay = Math.pow(2, attempt - 1) * 1000 + Math.random() * 500;
-      console.log(`Retrying Claude API in ${Math.round(delay)}ms...`);
+      console.log(`Retrying Anthropic API in ${Math.round(delay)}ms...`);
       await new Promise(res => setTimeout(res, delay));
     }
   }
-  
-  throw new Error("Erreur Claude API après plusieurs tentatives.");
+
+  throw new Error("Erreur Anthropic API après plusieurs tentatives.");
+}
+
+// DeepSeek expose une API compatible OpenAI (chat/completions) — même forme de
+// requête/réponse que la plupart des fournisseurs texte, contrairement au format
+// propriétaire d'Anthropic utilisé ci-dessus pour la vision.
+async function callDeepSeekText(
+  prompt: string,
+  jsonMode: boolean,
+  maxOutputTokens: number,
+  maxRetries: number,
+  model: string
+): Promise<string> {
+  const apiKey = process.env.DEEPSEEK_API_KEY;
+  if (!apiKey) {
+    throw new Error("Clé API DeepSeek non configurée dans .env (DEEPSEEK_API_KEY)");
+  }
+
+  const systemPrompt = jsonMode
+    ? "Tu es un assistant IA précis. Tu dois impérativement répondre au format JSON demandé, sous forme de JSON brut, sans bloc de code Markdown, sans préambule ni explications."
+    : "Tu es un assistant IA précis et utile.";
+
+  let attempt = 0;
+  while (attempt < maxRetries) {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 45000);
+
+    try {
+      const response = await fetch("https://api.deepseek.com/chat/completions", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${apiKey}`,
+        },
+        body: JSON.stringify({
+          model,
+          max_tokens: maxOutputTokens,
+          messages: [
+            { role: "system", content: systemPrompt },
+            { role: "user", content: prompt },
+          ],
+          // deepseek-reasoner n'accepte pas ce paramètre — ne le passer qu'en mode
+          // chat classique, JSON.parse(...) ci-dessous filtre quand même le résultat.
+          ...(jsonMode && model !== "deepseek-reasoner" ? { response_format: { type: "json_object" } } : {}),
+        }),
+        signal: controller.signal,
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error(`DeepSeek API Error Response (Attempt ${attempt + 1}):`, errorText);
+
+        if (response.status === 429) {
+          throw new Error("Quota DeepSeek atteint (429). Veuillez patienter une minute avant de réessayer.");
+        }
+        if (response.status === 503 || response.status >= 500) {
+          throw new Error(`Erreur DeepSeek API (${response.status})`); // Transient error -> trigger retry
+        }
+
+        throw new Error(`Erreur DeepSeek API (${response.status}) - Fatal`);
+      }
+
+      const json = await response.json();
+      let textContent: string = json.choices?.[0]?.message?.content ?? "";
+      if (jsonMode) {
+        textContent = textContent.trim();
+        if (textContent.startsWith("```")) {
+          textContent = textContent.replace(/^```[a-z]*\n/, "").replace(/\n```$/, "").trim();
+        }
+      }
+      clearTimeout(timeoutId);
+      return textContent;
+    } catch (err: any) {
+      clearTimeout(timeoutId);
+      attempt++;
+
+      const isFatal = err.message && err.message.includes("Fatal");
+      if (attempt >= maxRetries || isFatal) {
+        throw err;
+      }
+
+      const delay = Math.pow(2, attempt - 1) * 1000 + Math.random() * 500;
+      console.log(`Retrying DeepSeek API in ${Math.round(delay)}ms...`);
+      await new Promise(res => setTimeout(res, delay));
+    }
+  }
+
+  throw new Error("Erreur DeepSeek API après plusieurs tentatives.");
+}
+
+export async function callClaude(
+  prompt: string,
+  jsonMode: boolean = false,
+  imageUrl?: string,
+  // Le plafond de tokens de sortie réservé n'est pas ce qui est réellement généré —
+  // un appel qui n'a besoin que de ~100 tokens mais en demande 4000 peut consommer
+  // tout le budget par-minute à lui seul. Chaque site d'appel doit passer une
+  // valeur proche de sa sortie réelle attendue plutôt qu'une taille unique.
+  maxOutputTokens = 4000,
+  maxRetries = 3,
+  // Préféré à imageUrl quand présent — l'appelant a déjà les octets bruts (ex.
+  // directement depuis un input file du navigateur) et évite l'aller-retour
+  // upload-puis-fetch par Supabase Storage qu'imageUrl nécessite (cf.
+  // validateChallengeProof : cet upload se faisait avant à chaque soumission
+  // quel que soit le résultat, ce qui saturait le rate limit de l'API storage).
+  imageData?: { base64: string; mediaType: string },
+  // Force un modèle précis. Avant le passage à DeepSeek (2026-07-21), servait à
+  // faire tourner un appel texte sur Sonnet pour le rôle de raisonnement NAYA
+  // (diagnostic bayésien, decision #27 — "quand le système doit vraiment
+  // réfléchir"). Le seul site d'appel qui l'utilise (generateHypotheses) passe
+  // désormais "deepseek-reasoner" au lieu de "claude-sonnet-5".
+  modelOverride?: string
+): Promise<string> {
+  const hasImage = !!(imageData || imageUrl);
+  if (hasImage) {
+    // DeepSeek n'a pas de vision — toute analyse d'image reste sur Claude,
+    // quel que soit modelOverride (qui ne s'applique qu'au routage texte).
+    return callAnthropicVision(prompt, jsonMode, imageUrl, imageData, maxOutputTokens, maxRetries, "claude-sonnet-5");
+  }
+  return callDeepSeekText(prompt, jsonMode, maxOutputTokens, maxRetries, modelOverride ?? DEEPSEEK_CHAT_MODEL);
 }
 
 const GenerateInput = z.object({
@@ -896,8 +1042,9 @@ Réponds STRICTEMENT en JSON valide avec ce format, pour chaque défi :
     const content = await callClaude(prompt, true, undefined, 8000);
     let parsed: { challenges?: unknown };
     try {
-      parsed = JSON.parse(content);
-    } catch {
+      parsed = JSON.parse(extractJsonFromLLMResponse(content));
+    } catch (err) {
+      console.error("Error parsing generateChallenges LLM response:", err, "Raw:", content);
       throw new Error("Réponse IA invalide");
     }
 
@@ -1071,24 +1218,28 @@ Réponds STRICTEMENT en JSON valide avec ce format :
     try {
       aiContent = await callClaude(prompt, true, undefined, 500, 3, imageData);
     } catch (err) {
-      // A 429 isn't specific to the image — it's the whole API key rate
-      // limited. Falling back to a second full retry cycle (3 more attempts)
-      // on the exact same key almost always hits the same wall, burns ~6
-      // requests total, and used to surface as the confusing "Réponse IA
-      // invalide" instead of the real cause once both attempts failed.
-      // Surface the actual rate-limit message immediately instead.
-      if (err instanceof Error && err.message.includes("429")) {
-        throw err;
+      if (err instanceof Error && (err.message.includes("429") || err.message.includes("rate_limit") || err.message.includes("quota"))) {
+        console.error("Vision model rate limited / quota exceeded:", err);
+        throw new Error("Service IA temporairement surchargé (limite de débit atteinte). Veuillez réessayer dans un instant.");
       }
       console.warn("Vision model call failed, falling back to text only:", err);
       imageAnalyzed = false;
-      aiContent = await callClaude(prompt, true, undefined, 500);
+      try {
+        aiContent = await callClaude(prompt, true, undefined, 500);
+      } catch (fallbackErr) {
+        console.error("Text-only fallback model call failed:", fallbackErr);
+        if (fallbackErr instanceof Error && (fallbackErr.message.includes("429") || fallbackErr.message.includes("rate_limit") || fallbackErr.message.includes("quota"))) {
+          throw new Error("Service IA temporairement surchargé (limite de débit atteinte). Veuillez réessayer dans un instant.");
+        }
+        throw new Error(`Erreur d'analyse par l'IA : ${fallbackErr instanceof Error ? fallbackErr.message : "Erreur inconnue"}`);
+      }
     }
 
     let parsed: { observations?: string; talents_awarded?: Record<string, number> };
     try {
-      parsed = JSON.parse(aiContent);
-    } catch {
+      parsed = JSON.parse(extractJsonFromLLMResponse(aiContent));
+    } catch (parseErr) {
+      console.error("Error parsing vision/text AI response JSON:", parseErr, "Content:", aiContent);
       throw new Error("Réponse IA invalide — réessayez dans quelques instants.");
     }
 
@@ -1534,8 +1685,9 @@ Réponds STRICTEMENT en JSON valide avec ce format exact :
     const content = await callClaude(prompt, true, undefined, 1200);
     let parsed: unknown;
     try {
-      parsed = JSON.parse(content);
-    } catch {
+      parsed = JSON.parse(extractJsonFromLLMResponse(content));
+    } catch (err) {
+      console.error("Error parsing generateSingleChallenge LLM response:", err, "Raw:", content);
       throw new Error("Réponse IA invalide");
     }
 
@@ -1630,6 +1782,82 @@ Mets en lumière ses formes d'intelligence dominantes qui ressortent de ses acti
         child.ai_synthesis ||
         "L'intelligence de Naya se repose quelques instants (quota de requêtes atteint). Revenez dans une petite minute pour lire la synthèse complète !"
       );
+    }
+  });
+
+// Lettre d'orientation du Passeport d'Excellence — distincte de getChildAISynthesis
+// (qui est comportementale/pédagogique) : celle-ci est tournée vers l'avenir,
+// synthétise guilde + talents dominants + domaines les plus pratiqués en un
+// paragraphe de recommandation, dans le ton d'une lettre de référence. Gatée sur
+// pdf_unlocked (data.childId doit appartenir à un Passeport déjà payé/activé par
+// l'administration) : contrairement à un chat libre, le volume d'appels reste donc
+// borné au nombre de familles ayant payé, pas à l'usage gratuit de l'app. Même
+// cache 7 jours que ai_synthesis, mêmes garanties (fallback sur l'ancienne lettre
+// en cas d'échec transitoire de l'API).
+export const getPassportLetter = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .validator((input: unknown) => z.object({ childId: z.string().uuid() }).parse(input))
+  .handler(async ({ data, context }) => {
+    const { supabase, userId } = context;
+
+    const { data: child } = await supabase
+      .from("child_profiles")
+      .select("*")
+      .eq("id", data.childId)
+      .eq("user_id", userId)
+      .single();
+
+    if (!child) throw new Error("Profil introuvable");
+    if (!child.pdf_unlocked) throw new Error("Passeport non débloqué");
+
+    const { data: completed } = await supabase
+      .from("challenges")
+      .select("title, domain")
+      .eq("child_id", data.childId)
+      .eq("status", "completed");
+
+    if (!completed || completed.length === 0) {
+      return "";
+    }
+
+    const ONE_WEEK_MS = 7 * 24 * 60 * 60 * 1000;
+    const lastGeneratedAt = child.passport_letter_generated_at ? new Date(child.passport_letter_generated_at).getTime() : 0;
+    if (child.passport_letter && Date.now() - lastGeneratedAt < ONE_WEEK_MS) {
+      return child.passport_letter;
+    }
+
+    const domainCounts: Record<string, number> = {};
+    for (const c of completed) domainCounts[c.domain] = (domainCounts[c.domain] ?? 0) + 1;
+    const topDomains = Object.entries(domainCounts).sort((a, b) => b[1] - a[1]).slice(0, 3).map(([d]) => d);
+
+    const topTalents = Object.entries((child.talents as Record<string, number>) || {})
+      .filter(([, v]) => (v ?? 0) > 0)
+      .sort((a, b) => (b[1] ?? 0) - (a[1] ?? 0))
+      .slice(0, 3)
+      .map(([k]) => TALENT_KEY_LABELS[k] ?? k);
+
+    const prompt = `Tu es Naya, mentore IA de Génizio. Rédige la lettre de clôture du "Passeport d'Excellence" — un dossier de valorisation des talents — de ${child.name} (${child.age} ans).
+
+Domaines les plus pratiqués : ${topDomains.join(", ") || "non déterminés"}
+Talents dominants : ${topTalents.join(", ") || "non déterminés"}
+Nombre de défis réels complétés : ${completed.length}
+
+Écris un unique paragraphe (4 à 6 phrases), chaleureux et tourné vers l'avenir, qui :
+- résume ce que ces éléments révèlent du potentiel de ${child.name},
+- suggère 2-3 pistes concrètes (matières, activités, filières) où ce potentiel pourrait s'épanouir,
+- reste honnête et mesuré (aucun score, aucune comparaison à d'autres enfants, aucune promesse de réussite garantie).
+Texte brut uniquement, aucune syntaxe Markdown.`;
+
+    try {
+      const letter = await callClaude(prompt, false, undefined, 400);
+      await supabase
+        .from("child_profiles")
+        .update({ passport_letter: letter, passport_letter_generated_at: new Date().toISOString() })
+        .eq("id", data.childId);
+      return letter;
+    } catch (e: any) {
+      console.error("Passport letter error:", e.message);
+      return child.passport_letter || "";
     }
   });
 
