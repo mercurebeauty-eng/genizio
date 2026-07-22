@@ -44,8 +44,19 @@ function AdminSupervisorsPage() {
       const data = await listFn();
       setSupervisors((data as any[]) ?? []);
       setForbidden(false);
-    } catch {
-      setForbidden(true);
+    } catch (err: any) {
+      console.error("Error fetching supervisors:", err);
+      const isForbidden =
+        err?.status === 403 ||
+        err?.statusCode === 403 ||
+        String(err?.message || "").toLowerCase().includes("forbidden") ||
+        String(err?.message || "").includes("403") ||
+        String(err?.message || "").includes("Accès refusé");
+      if (isForbidden) {
+        setForbidden(true);
+      } else {
+        toast.error("Erreur de chargement des superviseurs.");
+      }
     } finally {
       setFetching(false);
     }
@@ -57,7 +68,11 @@ function AdminSupervisorsPage() {
     // aux RLS publiques du Mur Public, donc les enfants sans défi complété y figurent aussi)
     listChildrenFn()
       .then((data) => setChildProfiles((data as any[]) ?? []))
-      .catch(() => setChildProfiles([]));
+      .catch((err) => {
+        console.error("Erreur chargement profils enfants admin:", err);
+        toast.error("Erreur de chargement des profils enfants.");
+        setChildProfiles([]);
+      });
 
     void refetch();
     // eslint-disable-next-line react-hooks/exhaustive-deps

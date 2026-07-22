@@ -45,6 +45,10 @@ function getTimeReflection(estimatedMinutes: number, actualMinutes: number): str
 // uploading on every attempt regardless of outcome.
 function fileToBase64(file: File): Promise<string> {
   return new Promise((resolve, reject) => {
+    const MAX_SIZE_BYTES = 5 * 1024 * 1024; // 5 Mo
+    if (file.size > MAX_SIZE_BYTES) {
+      return reject(new Error("Image trop volumineuse (max 5 Mo)"));
+    }
     const reader = new FileReader();
     reader.onload = () => resolve((reader.result as string).split(",")[1] ?? "");
     reader.onerror = reject;
@@ -64,7 +68,7 @@ type OutcomeChatProps = {
   // could be lost on reload (never written to the DB) even though Naya just
   // used it. Persist it alongside submission instead of relying on the parent
   // having clicked that other button first.
-  onSaveNotes: (n: string) => void;
+  onSaveNotes: (n: string) => Promise<void> | void;
   onValidated: () => void;
 };
 
@@ -105,7 +109,7 @@ export function OutcomeChat({ challenge, childName, notes = "", onSaveNotes, onV
     setRejectionNotice(null);
     try {
       const trimmedNotes = notes.trim();
-      if (trimmedNotes) onSaveNotes(trimmedNotes);
+      if (trimmedNotes) await onSaveNotes(trimmedNotes);
 
       const file = selectedFile;
       const proofImageBase64 = file ? await fileToBase64(file) : undefined;

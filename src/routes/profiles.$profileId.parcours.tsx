@@ -131,11 +131,19 @@ function ParcoursPage() {
         .select("id, title, domain, status, completed_at, proof_image_url, ai_observations, created_at")
         .eq("child_id", profileId)
         .order("completed_at", { ascending: false, nullsFirst: false }),
-    ]).then(([childRes, challengesRes]) => {
-      setChild((childRes.data as Child) ?? null);
-      setChallenges((challengesRes.data as Challenge[]) ?? []);
-      setFetching(false);
-    });
+    ])
+      .then(([childRes, challengesRes]) => {
+        setChild((childRes.data as Child) ?? null);
+        setChallenges((challengesRes.data as Challenge[]) ?? []);
+      })
+      .catch((err) => {
+        console.error("Erreur chargement parcours:", err);
+        setChild(null);
+        setChallenges([]);
+      })
+      .finally(() => {
+        setFetching(false);
+      });
   }, [session, profileId]);
 
   if (loading || fetching) {
@@ -272,12 +280,20 @@ function ParcoursPage() {
         </div>
 
         {/* Radar des talents */}
-        {child.talents && Object.keys(child.talents).length > 0 && (
+        {child.talents && Object.keys(child.talents).length > 0 ? (
           <div className="mb-5 rounded-[1.5rem] border border-border bg-card p-5 shadow-sm">
             <h2 className="font-display font-bold text-[13px] uppercase tracking-wider text-ink/50 mb-4 flex items-center gap-2">
               <Sparkles className="size-3.5" /> Carte des talents
             </h2>
             <TalentRadarChart talents={child.talents} name={child.name} age={child.age} className="h-56 w-full" />
+          </div>
+        ) : (
+          <div className="mb-5 rounded-[1.5rem] border border-border bg-card p-5 text-center shadow-sm py-6">
+            <Sparkles className="size-8 mx-auto mb-2 text-brand/40" />
+            <h2 className="font-display font-bold text-sm text-ink mb-1">Profil en cours d'évaluation</h2>
+            <p className="text-xs text-ink/60 max-w-xs mx-auto">
+              Les premiers talents de {child.name} apparaîtront ici après la complétion de ses premiers défis.
+            </p>
           </div>
         )}
 

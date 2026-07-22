@@ -182,6 +182,7 @@ function ChallengesPage() {
   }, [isGeneratingSingle]);
 
   const handleGenerateSingle = async () => {
+    if (isGeneratingSingle) return;
     setIsGeneratingSingle(true);
     setCurrentGeneratedChallenge(null);
     try {
@@ -363,7 +364,9 @@ function ChallengesPage() {
       await generate({ data: { childId: profileId, count: 4 } });
       await refetch();
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Erreur");
+      const msg = e instanceof Error ? e.message : "Erreur lors de la génération des défis";
+      setError(msg);
+      toast.error(msg);
     } finally {
       setGenerating(false);
     }
@@ -737,7 +740,8 @@ function ChallengesPage() {
                     </button>
                     <button
                       onClick={handleGenerateSingle}
-                      className="rounded-xl border border-ink/10 bg-white px-4 py-2.5 text-xs font-bold text-ink/60 shadow-sm hover:-translate-y-0.5 transition-all cursor-pointer"
+                      disabled={isGeneratingSingle}
+                      className="rounded-xl border border-ink/10 bg-white px-4 py-2.5 text-xs font-bold text-ink/60 shadow-sm hover:-translate-y-0.5 transition-all disabled:opacity-50 cursor-pointer"
                     >
                       Relancer
                     </button>
@@ -975,6 +979,7 @@ function ChallengeCard({
 }) {
   const [notesDraft, setNotesDraft] = useState(c.notes ?? "");
   const [savedFlash, setSavedFlash] = useState(false);
+  const [isSavingNotes, setIsSavingNotes] = useState(false);
 
   if (!open) {
     // Unexpanded state: A clean compact card that feels like the prototype
@@ -1148,12 +1153,19 @@ function ChallengeCard({
           <div className="flex items-center justify-between">
             <button
               onClick={async () => {
-                await onNotes(notesDraft);
-                setSavedFlash(true);
-                setTimeout(() => setSavedFlash(false), 1500);
+                setIsSavingNotes(true);
+                try {
+                  await onNotes(notesDraft);
+                  setSavedFlash(true);
+                  setTimeout(() => setSavedFlash(false), 1500);
+                } finally {
+                  setIsSavingNotes(false);
+                }
               }}
-              className="rounded-full bg-ink px-5 py-2.5 text-[13px] font-bold text-white shadow-sm hover:bg-ink/80 transition-all cursor-pointer"
+              disabled={isSavingNotes}
+              className="inline-flex items-center gap-2 rounded-full bg-ink px-5 py-2.5 text-[13px] font-bold text-white shadow-sm hover:bg-ink/80 transition-all cursor-pointer disabled:opacity-60"
             >
+              {isSavingNotes ? <Loader2 className="size-4 animate-spin" /> : null}
               Enregistrer les notes
             </button>
             {savedFlash && <span className="text-[13px] text-emerald-600 font-bold">✓ Enregistré</span>}
