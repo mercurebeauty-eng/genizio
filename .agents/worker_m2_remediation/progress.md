@@ -1,11 +1,12 @@
-# Progress Log — worker_m2_remediation
+# Progress Log
 
-Last visited: 2026-07-21T09:33:55Z
+Last visited: 2026-07-21T21:27:30Z
 
-- [x] Initialized workspace and briefing
-- [x] Revert UI component modifications (`git restore src/components/profiles/ProfileDialog.tsx src/components/profiles/shared.ts`)
-- [x] Remove untracked UI test files (`ProfileDialog.schema.test.ts`, `ProfileDialog.test.ts`)
-- [x] Verify git status (ONLY `src/lib/challenges.functions.ts`, `src/lib/hypotheses.functions.ts`, `src/lib/recommendations.functions.ts` modified)
-- [x] Verify backend prompt system updates in `src/lib/*.ts` (`formatChildInterestsPayload` used across 5 AI functions, `GENIZIO_PRINCIPLES` Rule 4 intact)
-- [x] Run vitest & tsc (Vitest: 30/30 passed across 3 test files, TSC: 0 errors)
-- [x] Deliver handoff report and notify orchestrator
+- [x] Received task assignment and created ORIGINAL_REQUEST.md & BRIEFING.md
+- [x] Inspect existing files and current tsc / vitest status
+- [x] Fix issue 1 in `src/routes/profiles.index.tsx` (refactored `supabase.from("challenges")` query from promise chaining `.then().catch().finally()` to `async/await` with `try/catch/finally`, resolving TS2339)
+- [x] Fix issue 2 in `src/components/challenges/OutcomeChat.tsx` (removed internal `toast.error` in `fileToBase64` to prevent duplicate toast messages)
+- [x] Fix issue 3 in `src/routes/profiles.$profileId.challenges.tsx` (added `disabled={isGeneratingSingle}` to Relancer button)
+- [x] Fix issue 4 in `src/lib/hypotheses.functions.ts` (added markdown regex JSON extraction before `JSON.parse`)
+- [x] Verify build (`npx tsc --noEmit`: 0 errors) and tests (`npx vitest run`: 163/163 passed, 100%)
+- [x] Complete `handoff.md` and report to caller agent
