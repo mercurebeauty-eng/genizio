@@ -1,6 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
-import { callClaude, finalizeChallenge, PROOF_MODE_INSTRUCTION, ACADEMIC_REFERENTIAL_INSTRUCTION, ACADEMIC_DOMAIN_LABELS, formatChildInterestsPayload, extractJsonFromLLMResponse } from "@/lib/challenges.functions";
+import { callClaude, finalizeChallenge, PROOF_MODE_INSTRUCTION, ACADEMIC_REFERENTIAL_INSTRUCTION, ACADEMIC_DOMAIN_LABELS, STEPS_INSTRUCTION, formatChildInterestsPayload, extractJsonFromLLMResponse } from "@/lib/challenges.functions";
 import { TALENT_KEY_LABELS } from "@/lib/talent-buckets";
 import { z } from "zod";
 
@@ -415,6 +415,8 @@ Règles de conception selon l'hypothèse à tester :
 - Si LACK_OF_ENGAGEMENT : Ancre le défi à 100% sur les leviers comportementaux et la posture d'action préférentielle de l'enfant (décrits ci-dessus) pour raviver immédiatement sa curiosité et son engagement.
 - Si CONCEPTUAL_GAP : Propose une micro-activité fondamentale pas-à-pas très accessible pour vérifier les bases de manière amusante.
 - Si READY_FOR_MORE : Propose un défi sensiblement PLUS AVANCÉ que d'habitude en ${subject} (niveau au-dessus de l'âge de l'enfant selon le référentiel ci-dessous), présenté comme une mission spéciale/bonus valorisante — jamais comme un test ou une punition.
+
+${STEPS_INSTRUCTION}
 
 ${PROOF_MODE_INSTRUCTION}
 

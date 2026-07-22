@@ -751,6 +751,15 @@ const MATERIAL_TAGS_INSTRUCTION = `Pour "material_tags" : un tag court en minusc
 // matche pas, mais encore faut-il que l'IA vise juste dès le départ.
 const INTELLIGENCES_FIELD_INSTRUCTION = `Pour "intelligences" : 1 à 2 clés EXACTES parmi "spatial", "corporelle", "sociale", "entrepreneuriale", "creative", "artisanale", "emotionnelle", "logico_mathematique", "linguistique" — jamais un mot libre ou un nom français ("Créativité", "Logique") : uniquement ces clés techniques, celles réellement sollicitées par ce défi.`;
 
+// Ajoutée le 2026-07-22 suite à un retour parent concret (défi de baromètre aux
+// étapes trop vagues, sautant des sous-actions implicites que seul un adulte
+// connaissant déjà l'expérience pouvait deviner). Avant ça, seule generateChallenges
+// avait "Étapes claires (3 à 6)" — aucune indication sur le niveau de granularité,
+// et les 4 autres générateurs de défis n'avaient même pas ça. Partagée entre les 5
+// (comme PROOF_MODE_INSTRUCTION/ACADEMIC_REFERENTIAL_INSTRUCTION), pas seulement
+// generateChallenges/generateSingleChallenge comme les fragments précédents.
+export const STEPS_INSTRUCTION = `Pour "steps" (3 à 6 étapes) : chaque étape est UN SEUL geste concret et complet, sans sous-action implicite laissée à deviner. Décompose ce qu'un adulte qui ne connaît pas déjà l'expérience ne saurait pas reconstituer seul (ex: pas "prépare le baromètre" mais "verse de l'eau colorée dans la bouteille jusqu'à mi-hauteur", puis "enfonce la paille dans le bouchon sans qu'elle touche le fond"). Teste mentalement : si on ne lisait QUE la liste des étapes, sans le titre ni la description, pourrait-on réaliser le défi du début à la fin sans se poser de question ? Si non, ajoute l'étape manquante plutôt que de la sous-entendre.`;
+
 // Idem — dupliquée avec une variation mineure ("déjà proposés" vs "déjà proposés à
 // cet enfant"). Fonction plutôt que constante puisque paramétrée par existingTitles ;
 // garde la formulation la plus complète des deux anciennes copies.
@@ -1193,8 +1202,8 @@ Contraintes :
 - SYNTHÈSE PÉDAGOGIQUE ET APPRENTISSAGE ÉQUILIBRÉ : Associe les leviers comportementaux observés par le parent (posture cognitive) avec la cartographie des talents de l'enfant. Les intelligences actuellement les moins explorées chez cet enfant sont ${leastExplored.join(" et ")}. Sauf si le contexte les rend peu réalistes, au moins un des ${data.count} défis DOIT utiliser la posture ou mécanique d'action préférentielle de l'enfant comme passerelle naturelle pour explorer l'une de ces intelligences moins travaillées — c'est ainsi que Naya révèle des talents cachés en s'appuyant sur ses moteurs d'action naturels.
 - Ancre les défis dans le contexte africain (matériaux locaux, réalités du quotidien, langues, marchés, agriculture, artisanat, culture).
 - Choisis parmi ces domaines : ${shuffle(DOMAINS).join(", ")}.${ignoredDomains.length > 0 ? `\n- Cet enfant a déjà reçu plusieurs défis dans ${ignoredDomains.length > 1 ? "ces domaines" : "ce domaine"} (${ignoredDomains.join(", ")}) sans jamais les commencer : évite de reproposer ${ignoredDomains.length > 1 ? "ces domaines" : "ce domaine"}, sauf sous un angle radicalement différent de ce qui a déjà été proposé.` : ""}
-- Chaque défi doit être concret, réalisable à la maison ou dans le quartier, adapté à l'âge.
-- Étapes claires (3 à 6), matériaux simples et accessibles.
+- Chaque défi doit être concret, réalisable à la maison ou dans le quartier, adapté à l'âge, avec des matériaux simples et accessibles.
+- ${STEPS_INSTRUCTION}
 - ${buildAvoidRepeatsInstruction(existingTitles)}
 - ${MATERIAL_TAGS_INSTRUCTION}
 - ${INTELLIGENCES_FIELD_INSTRUCTION}
@@ -1816,8 +1825,9 @@ ${
 7. ${SAFETY_INSTRUCTION}
 8. ${MATERIAL_TAGS_INSTRUCTION}
 9. ${INTELLIGENCES_FIELD_INSTRUCTION}
-10. ${PROOF_MODE_INSTRUCTION}
-11. ${ACADEMIC_REFERENTIAL_INSTRUCTION}
+10. ${STEPS_INSTRUCTION}
+11. ${PROOF_MODE_INSTRUCTION}
+12. ${ACADEMIC_REFERENTIAL_INSTRUCTION}
 
 Réponds STRICTEMENT en JSON valide avec ce format exact :
 {

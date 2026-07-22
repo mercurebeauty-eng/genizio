@@ -1,7 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { generateDiscriminantChallenge } from "@/lib/hypotheses.functions";
-import { callClaude, finalizeChallenge, PROOF_MODE_INSTRUCTION, ACADEMIC_REFERENTIAL_INSTRUCTION, formatChildInterestsPayload, extractJsonFromLLMResponse } from "@/lib/challenges.functions";
+import { callClaude, finalizeChallenge, PROOF_MODE_INSTRUCTION, ACADEMIC_REFERENTIAL_INSTRUCTION, STEPS_INSTRUCTION, formatChildInterestsPayload, extractJsonFromLLMResponse } from "@/lib/challenges.functions";
 import { z } from "zod";
 
 const RecommendInput = z.object({
@@ -100,6 +100,8 @@ Principe : Utiliser sa FORCE (${strengthEntry[0]}) et ses leviers comportementau
 Modes d'engagement et leviers comportementaux observés par le parent :
 ${formattedInterests}
 
+${STEPS_INSTRUCTION}
+
 ${PROOF_MODE_INSTRUCTION}
 
 ${ACADEMIC_REFERENTIAL_INSTRUCTION}
@@ -195,6 +197,8 @@ Principe : ${child.name} traverse une phase instable sur une compétence (résul
 
 Modes d'engagement et leviers comportementaux observés par le parent :
 ${formattedInterests}
+
+${STEPS_INSTRUCTION}
 
 ${PROOF_MODE_INSTRUCTION}
 Pour ce défi de stabilisation en particulier, une cible "declarative" doit rester trivialement atteignable (ex: 5 répétitions, pas 20) — le but est une réussite garantie, pas un défi physique.
