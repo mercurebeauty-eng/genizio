@@ -13,8 +13,10 @@ import {
   getChildAISynthesis,
   generateSingleChallenge,
   assignTemplateChallenge,
-  CORPORELLE_SUBFORM_LABELS,
+  TALENT_SUBFORM_LABELS,
+  TALENT_SUBFORM_TO_DOMAIN,
 } from "@/lib/challenges.functions";
+import { TALENT_KEY_LABELS } from "@/lib/talent-buckets";
 import { recommendChallengesForChild, type RecommendedChallengeResult } from "@/lib/recommendations.functions";
 import { createOrder } from "@/lib/products.functions";
 import { NayaAvatar } from "@/components/NayaAvatar";
@@ -541,68 +543,78 @@ function ChallengesPage() {
               </p>
             </div>
 
-            {/* Sous-formes de talent — V1 du chantier "orientation fine" (2026-07-22, pilote
-                corporelle uniquement, cf. genizio-decisions #40). Savoir qu'un enfant est fort en
-                "corporelle" ne dit rien de la sous-forme où ça s'exprime le mieux ; ce petit encart
-                agrège ce que Naya a déjà tagué sur les défis complétés, sans deviner de discipline
-                précise (basket/foot/etc.) que les données de l'app ne permettent pas de fonder. */}
+            {/* Sous-formes de talent — V1 du chantier "orientation fine" (2026-07-22, cf.
+                genizio-decisions #40, étendu aux 9 domaines le même jour). Savoir qu'un enfant est
+                fort en "corporelle" ne dit rien de la sous-forme où ça s'exprime le mieux ; ce petit
+                encart agrège ce que Naya a déjà tagué sur les défis complétés, sans deviner de
+                discipline précise (basket/foot/etc.) que les données de l'app ne permettent pas de
+                fonder. Un encart par domaine ayant au moins un défi complété avec ce signal. */}
             {(() => {
-              const corporelleSubformCounts = challenges
-                .filter((c) => c.status === "completed" && c.trait_subform)
-                .reduce<Record<string, number>>((acc, c) => {
-                  const key = c.trait_subform as string;
-                  acc[key] = (acc[key] ?? 0) + 1;
-                  return acc;
-                }, {});
-              const corporelleSubformEntries = Object.entries(corporelleSubformCounts).sort((a, b) => b[1] - a[1]);
-
-              if (corporelleSubformEntries.length === 0) return null;
+              const subformCountsByDomain: Record<string, Record<string, number>> = {};
+              for (const c of challenges) {
+                if (c.status !== "completed" || !c.trait_subform) continue;
+                const domain = TALENT_SUBFORM_TO_DOMAIN[c.trait_subform];
+                if (!domain) continue;
+                subformCountsByDomain[domain] ??= {};
+                subformCountsByDomain[domain][c.trait_subform] = (subformCountsByDomain[domain][c.trait_subform] ?? 0) + 1;
+              }
+              const domainsPresent = Object.keys(subformCountsByDomain);
+              if (domainsPresent.length === 0) return null;
 
               return (
-                <div className="rounded-3xl border border-ink/10 bg-white p-5 shadow-sm">
-                  <h4 className="text-[11px] font-bold uppercase tracking-widest text-ink/60 mb-3">
-                    Au sein de Corporelle
-                  </h4>
-                  <div className="space-y-2">
-                    {corporelleSubformEntries.map(([key, count]) => (
-                      <div key={key} className="flex items-center justify-between text-sm">
-                        <span className="font-bold text-ink">
-                          {CORPORELLE_SUBFORM_LABELS[key as keyof typeof CORPORELLE_SUBFORM_LABELS] ?? key}
-                        </span>
-                        <span className="text-ink/60 font-medium">{count} défi{count > 1 ? "s" : ""}</span>
-                      </div>
-                    ))}
-                  </div>
+                <div className="space-y-4">
+                  {domainsPresent.map((domain) => {
+                    const entries = Object.entries(subformCountsByDomain[domain]).sort((a, b) => b[1] - a[1]);
+                    const pistesForDomain = CORPORELLE_SUBFORM_OPPORTUNITIES; // seule Boussole disponible pour l'instant (voir plus bas)
 
-                  {/* Boussole d'Opportunités — V3, couche d'interprétation distincte du Profil
-                      d'Aptitudes ci-dessus (cf. genizio-decisions #40). Réservée 12 ans et + :
-                      décision explicite pour ne pas rétrécir prématurément le champ des possibles
-                      d'un enfant plus jeune. Toujours datée et non-permanente. */}
-                  {child.age >= OPPORTUNITY_COMPASS_MIN_AGE && (
-                    <div className="mt-4 pt-4 border-t border-dashed border-ink/15">
-                      <div className="flex items-center justify-between mb-2">
-                        <h5 className="text-[10px] font-bold uppercase tracking-widest text-ink/50">
-                          Boussole d'Opportunités
-                        </h5>
-                        <span className="text-[9px] font-bold text-ink/40 uppercase">{OPPORTUNITY_COMPASS_VERSION}</span>
+                    return (
+                      <div key={domain} className="rounded-3xl border border-ink/10 bg-white p-5 shadow-sm">
+                        <h4 className="text-[11px] font-bold uppercase tracking-widest text-ink/60 mb-3">
+                          Au sein de {TALENT_KEY_LABELS[domain] ?? domain}
+                        </h4>
+                        <div className="space-y-2">
+                          {entries.map(([key, count]) => (
+                            <div key={key} className="flex items-center justify-between text-sm">
+                              <span className="font-bold text-ink">{TALENT_SUBFORM_LABELS[key] ?? key}</span>
+                              <span className="text-ink/60 font-medium">{count} défi{count > 1 ? "s" : ""}</span>
+                            </div>
+                          ))}
+                        </div>
+
+                        {/* Boussole d'Opportunités — V3, couche d'interprétation distincte du Profil
+                            d'Aptitudes ci-dessus (cf. genizio-decisions #40). Réservée 12 ans et + :
+                            décision explicite pour ne pas rétrécir prématurément le champ des
+                            possibles d'un enfant plus jeune. Contenu curé disponible pour corporelle
+                            seulement à ce stade — les autres domaines n'affichent rien tant que leur
+                            Boussole n'a pas été rédigée (choix délibéré, pas un oubli : contrairement
+                            au tagging V1, une liste de pistes de métiers mérite d'être pensée domaine
+                            par domaine plutôt que générée à la volée). */}
+                        {child.age >= OPPORTUNITY_COMPASS_MIN_AGE && entries.some(([key]) => pistesForDomain[key]) && (
+                          <div className="mt-4 pt-4 border-t border-dashed border-ink/15">
+                            <div className="flex items-center justify-between mb-2">
+                              <h5 className="text-[10px] font-bold uppercase tracking-widest text-ink/50">
+                                Boussole d'Opportunités
+                              </h5>
+                              <span className="text-[9px] font-bold text-ink/40 uppercase">{OPPORTUNITY_COMPASS_VERSION}</span>
+                            </div>
+                            <div className="space-y-2">
+                              {entries.map(([key]) => {
+                                const pistes = pistesForDomain[key];
+                                if (!pistes) return null;
+                                return (
+                                  <p key={key} className="text-xs text-ink/70 leading-relaxed">
+                                    <span className="font-bold text-ink">{TALENT_SUBFORM_LABELS[key] ?? key} :</span>{" "}
+                                    {pistes.join(", ")}
+                                  </p>
+                                );
+                              })}
+                            </div>
+                            <p className="text-[10px] text-ink/40 italic mt-2">{OPPORTUNITY_COMPASS_DISCLAIMER}</p>
+                          </div>
+                        )}
                       </div>
-                      <div className="space-y-2">
-                        {corporelleSubformEntries.map(([key]) => {
-                          const pistes = CORPORELLE_SUBFORM_OPPORTUNITIES[key];
-                          if (!pistes) return null;
-                          return (
-                            <p key={key} className="text-xs text-ink/70 leading-relaxed">
-                              <span className="font-bold text-ink">
-                                {CORPORELLE_SUBFORM_LABELS[key as keyof typeof CORPORELLE_SUBFORM_LABELS] ?? key} :
-                              </span>{" "}
-                              {pistes.join(", ")}
-                            </p>
-                          );
-                        })}
-                      </div>
-                      <p className="text-[10px] text-ink/40 italic mt-2">{OPPORTUNITY_COMPASS_DISCLAIMER}</p>
-                    </div>
-                  )}
+                    );
+                  })}
                 </div>
               );
             })()}

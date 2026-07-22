@@ -462,12 +462,13 @@ function resolveTargetIntelligences(intelligences: string[] | null | undefined):
 }
 
 // Même philosophie que resolveTargetIntelligences : ne jamais faire confiance à la seule
-// auto-discipline du modèle. N'accepte un trait_subform QUE si "corporelle" fait déjà partie
-// des intelligences résolues de ce défi (pas de signal fantôme sur un défi qui ne sollicite
-// pas ce talent) et que la valeur fait partie de CORPORELLE_SUBFORMS — sinon null.
+// auto-discipline du modèle. N'accepte un trait_subform QUE si son domaine parent (cf.
+// TALENT_SUBFORMS) fait déjà partie des intelligences résolues de ce défi (pas de signal
+// fantôme sur un défi qui ne sollicite pas ce talent, et pas de sous-forme empruntée à un
+// autre domaine que celui réellement choisi) — sinon null.
 function resolveTraitSubform(resolvedIntelligences: string[], subform: string | null | undefined): string | null {
-  if (!resolvedIntelligences.includes("corporelle")) return null;
-  return (CORPORELLE_SUBFORMS as readonly string[]).includes(subform ?? "") ? (subform as string) : null;
+  if (!subform) return null;
+  return resolvedIntelligences.some((domain) => TALENT_SUBFORMS[domain]?.includes(subform)) ? subform : null;
 }
 
 // Backstop pour l'étiquetage du référentiel académique (cf. genizio-decisions #38) : un âge
@@ -764,22 +765,85 @@ const MATERIAL_TAGS_INSTRUCTION = `Pour "material_tags" : un tag court en minusc
 // matche pas, mais encore faut-il que l'IA vise juste dès le départ.
 export const INTELLIGENCES_FIELD_INSTRUCTION = `Pour "intelligences" : 1 à 2 clés EXACTES parmi "spatial", "corporelle", "sociale", "entrepreneuriale", "creative", "artisanale", "emotionnelle", "logico_mathematique", "linguistique" — jamais un mot libre ou un nom français ("Créativité", "Logique") : uniquement ces clés techniques, celles réellement sollicitées par ce défi.`;
 
-// V1 "sous-formes de talent" (2026-07-22, cf. genizio-decisions #40) : savoir qu'un défi
-// sollicite l'intelligence "corporelle" ne dit rien de la sous-forme physique où le potentiel
-// s'exprime le mieux (endurance ≠ explosivité ≠ coordination) — cf. discussion produit du
-// 2026-07-22. Pilote volontairement restreint à corporelle (voir CORPORELLE_SUBFORMS et la
-// migration correspondante) avant d'envisager une extension aux 8 autres domaines. Dépend de
-// INTELLIGENCES_FIELD_INSTRUCTION (ne s'applique que si "corporelle" est déjà choisi), donc
-// placée juste après.
-export const CORPORELLE_SUBFORMS = ["endurance", "explosivite", "coordination_fine", "coordination_collective", "precision"] as const;
-export const CORPORELLE_SUBFORM_LABELS: Record<(typeof CORPORELLE_SUBFORMS)[number], string> = {
+// V1 "sous-formes de talent" (2026-07-22, cf. genizio-decisions #40, étendu aux 9 domaines le
+// même jour) : savoir qu'un défi sollicite l'intelligence "corporelle" ne dit rien de la
+// sous-forme physique où le potentiel s'exprime le mieux (endurance ≠ explosivité ≠
+// coordination) — même logique pour les 8 autres intelligences. Pilote initialement restreint à
+// corporelle le temps de valider le mécanisme en direct (défi "30 secondes de sauts" →
+// trait_subform: "explosivite", confirmé) ; étendu aux 8 autres dès la validation obtenue,
+// aucune raison technique de faire autrement une fois le garde-fou éprouvé — contrairement au
+// référentiel académique (décision #39), ce contenu n'est pas une recherche sourcée mais une
+// construction raisonnable de l'agent, donc l'argument "aller lentement pour sourcer chaque
+// domaine" ne s'applique pas ici. Dépend de INTELLIGENCES_FIELD_INSTRUCTION (une sous-forme
+// n'est acceptée que si son intelligence parente est déjà choisie), donc placée juste après.
+export const TALENT_SUBFORMS: Record<string, readonly string[]> = {
+  corporelle: ["endurance", "explosivite", "coordination_fine", "coordination_collective", "precision"],
+  spatial: ["orientation", "visualisation_3d", "representation_graphique", "organisation_espace"],
+  sociale: ["leadership", "mediation", "collaboration", "ecoute_empathique"],
+  entrepreneuriale: ["negociation", "prise_de_risque", "sens_du_client", "gestion_ressources"],
+  creative: ["invention_visuelle", "narration", "improvisation", "detournement"],
+  artisanale: ["dexterite_fine", "assemblage", "reparation", "finition_esthetique"],
+  emotionnelle: ["autoregulation", "expression", "empathie", "resilience"],
+  logico_mathematique: ["raisonnement_abstrait", "calcul", "resolution_problemes", "reconnaissance_motifs"],
+  linguistique: ["expression_ecrite", "expression_orale", "argumentation", "memorisation_lexicale"],
+};
+
+export const TALENT_SUBFORM_LABELS: Record<string, string> = {
   endurance: "Endurance",
   explosivite: "Explosivité",
   coordination_fine: "Coordination fine",
   coordination_collective: "Coordination collective",
   precision: "Précision",
+  orientation: "Orientation",
+  visualisation_3d: "Visualisation 3D",
+  representation_graphique: "Représentation graphique",
+  organisation_espace: "Organisation de l'espace",
+  leadership: "Leadership",
+  mediation: "Médiation",
+  collaboration: "Collaboration",
+  ecoute_empathique: "Écoute empathique",
+  negociation: "Négociation",
+  prise_de_risque: "Prise de risque",
+  sens_du_client: "Sens du client",
+  gestion_ressources: "Gestion des ressources",
+  invention_visuelle: "Invention visuelle",
+  narration: "Narration",
+  improvisation: "Improvisation",
+  detournement: "Détournement",
+  dexterite_fine: "Dextérité fine",
+  assemblage: "Assemblage",
+  reparation: "Réparation",
+  finition_esthetique: "Finition esthétique",
+  autoregulation: "Autorégulation",
+  expression: "Expression émotionnelle",
+  empathie: "Empathie",
+  resilience: "Résilience",
+  raisonnement_abstrait: "Raisonnement abstrait",
+  calcul: "Calcul",
+  resolution_problemes: "Résolution de problèmes",
+  reconnaissance_motifs: "Reconnaissance de motifs",
+  expression_ecrite: "Expression écrite",
+  expression_orale: "Expression orale",
+  argumentation: "Argumentation",
+  memorisation_lexicale: "Mémorisation lexicale",
 };
-export const TRAIT_SUBFORM_INSTRUCTION = `Si et seulement si "corporelle" fait partie des intelligences choisies ci-dessus, ajoute aussi "trait_subform" : EXACTEMENT une valeur parmi "endurance" (effort prolongé), "explosivite" (saut, sprint, puissance brève), "coordination_fine" (précision main/œil, manipulation), "coordination_collective" (jeu d'équipe, passe, synchronisation avec d'autres), "precision" (viser, ajuster, répéter un geste exact) — celle que ce défi précis sollicite le plus. Si "corporelle" n'est pas choisi, omets ce champ (null).`;
+
+// Lookup inverse (sous-forme → domaine parent) — construit une fois, utilisé par l'UI pour
+// grouper les défis complétés par domaine sans dupliquer la structure de TALENT_SUBFORMS.
+export const TALENT_SUBFORM_TO_DOMAIN: Record<string, string> = Object.fromEntries(
+  Object.entries(TALENT_SUBFORMS).flatMap(([domain, forms]) => forms.map((f) => [f, domain]))
+);
+export const TRAIT_SUBFORM_INSTRUCTION = `Ajoute aussi "trait_subform" : EXACTEMENT une valeur parmi celles listées pour l'intelligence choisie ci-dessus (jamais une valeur d'une autre intelligence) — celle que ce défi précis sollicite le plus :
+- corporelle : "endurance" (effort prolongé) | "explosivite" (saut, sprint, puissance brève) | "coordination_fine" (précision main/œil) | "coordination_collective" (jeu d'équipe, synchronisation) | "precision" (viser, ajuster, répéter un geste exact)
+- spatial : "orientation" (se repérer, naviguer) | "visualisation_3d" (imaginer un objet sous différents angles) | "representation_graphique" (dessiner, schématiser) | "organisation_espace" (agencer, ranger un espace)
+- sociale : "leadership" (prendre l'initiative pour le groupe) | "mediation" (résoudre un désaccord) | "collaboration" (travailler à plusieurs vers un but commun) | "ecoute_empathique" (comprendre ce que ressent l'autre)
+- entrepreneuriale : "negociation" (persuader, obtenir un accord) | "prise_de_risque" (tenter une idée incertaine) | "sens_du_client" (deviner un besoin, adapter une offre) | "gestion_ressources" (optimiser un budget/temps limité)
+- creative : "invention_visuelle" (dessin, design original) | "narration" (inventer une histoire) | "improvisation" (créer sans plan préétabli) | "detournement" (réutiliser un objet de façon inattendue)
+- artisanale : "dexterite_fine" (précision manuelle répétée) | "assemblage" (construire, monter des pièces) | "reparation" (remettre en état un objet cassé) | "finition_esthetique" (souci du détail, rendu soigné)
+- emotionnelle : "autoregulation" (se calmer, gérer sa frustration) | "expression" (mettre des mots sur ce qu'on ressent) | "empathie" (percevoir l'émotion d'un autre) | "resilience" (rebondir après un échec)
+- logico_mathematique : "raisonnement_abstrait" (déduire sans support concret) | "calcul" (manipuler des nombres) | "resolution_problemes" (décomposer un problème en étapes) | "reconnaissance_motifs" (repérer une régularité)
+- linguistique : "expression_ecrite" (rédiger clairement) | "expression_orale" (parler devant un groupe) | "argumentation" (convaincre par le raisonnement) | "memorisation_lexicale" (vocabulaire riche)
+Si aucune sous-forme ne correspond clairement à l'intelligence choisie, omets ce champ (null).`;
 
 // Ajoutée le 2026-07-22 suite à un retour parent concret (défi de baromètre aux
 // étapes trop vagues, sautant des sous-actions implicites que seul un adulte
@@ -1243,7 +1307,7 @@ Contraintes :
 - ${ACADEMIC_REFERENTIAL_INSTRUCTION}
 
 Réponds STRICTEMENT en JSON valide avec ce format, pour chaque défi :
-{"challenges":[{"domain":"...","title":"...","description":"...","duration":"...","steps":["...","..."],"materials":["...","..."],"material_tags":["..."],"pedagogical_context":"Ce que Naya observe via cette activité","intelligences":["creative"],"trait_subform":"endurance"|"explosivite"|"coordination_fine"|"coordination_collective"|"precision"|null (uniquement si "corporelle" est choisi),"requires_supervision":true ou false,"supervision_warning":"..." (ou null si false),"difficulty":"facile"|"moyen"|"difficile","proof_mode":"photo"|"declarative","proof_target":{"metric":"...","value":20} (uniquement si declarative),"declarative_award":{"corporelle":2} (uniquement si declarative),"academic_domain":"mathematiques"|"langage"|"sciences"|"corporelle"|"sociale"|"emotionnelle"|"entrepreneuriale"|"artisanale"|"spatiale"|null,"academic_level_age":14 (uniquement si academic_domain non null),"academic_reference_note":"..." (uniquement si academic_domain non null)}]}`;
+{"challenges":[{"domain":"...","title":"...","description":"...","duration":"...","steps":["...","..."],"materials":["...","..."],"material_tags":["..."],"pedagogical_context":"Ce que Naya observe via cette activité","intelligences":["creative"],"trait_subform":"..." (voir liste par intelligence ci-dessus) ou null,"requires_supervision":true ou false,"supervision_warning":"..." (ou null si false),"difficulty":"facile"|"moyen"|"difficile","proof_mode":"photo"|"declarative","proof_target":{"metric":"...","value":20} (uniquement si declarative),"declarative_award":{"corporelle":2} (uniquement si declarative),"academic_domain":"mathematiques"|"langage"|"sciences"|"corporelle"|"sociale"|"emotionnelle"|"entrepreneuriale"|"artisanale"|"spatiale"|null,"academic_level_age":14 (uniquement si academic_domain non null),"academic_reference_note":"..." (uniquement si academic_domain non null)}]}`;
 
     // Up to 6 full défis in one response, each now carrying the academic
     // referential fields (domain/level/citation) added on top of the original
@@ -1872,7 +1936,7 @@ Réponds STRICTEMENT en JSON valide avec ce format exact :
   "material_tags": ["outil-1", "materiau-2"],
   "pedagogical_context": "Ce que Naya observe via cette activité",
   "intelligences": ["creative"],
-  "trait_subform": "endurance" | "explosivite" | "coordination_fine" | "coordination_collective" | "precision" | null (uniquement si "corporelle" est choisi),
+  "trait_subform": "..." (voir liste par intelligence ci-dessus) ou null,
   "requires_supervision": true ou false,
   "supervision_warning": "Attention: Manipulez le couteau avec l'enfant" (ou null si false),
   "difficulty": "facile" | "moyen" | "difficile",

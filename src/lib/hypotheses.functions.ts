@@ -436,7 +436,7 @@ Réponds EXCLUSIVEMENT avec un objet JSON strict au format suivant :
   "materials": ["Matériel 1", "Matériel 2"],
   "material_tags": ["tag1", "tag2"],
   "intelligences": ["creative"],
-  "trait_subform": "endurance" | "explosivite" | "coordination_fine" | "coordination_collective" | "precision" | null (uniquement si "corporelle" est choisi),
+  "trait_subform": "..." (voir liste par intelligence ci-dessus) ou null,
   "difficulty": "moyen",
   "proof_mode": "photo" ou "declarative",
   "proof_target": {"metric": "...", "value": 20} (uniquement si declarative),
