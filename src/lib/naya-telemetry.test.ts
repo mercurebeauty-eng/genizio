@@ -11,10 +11,10 @@ import {
 describe("Naya Telemetry & Pricing Functions", () => {
   describe("NAYA_PRICING constants", () => {
     it("has the exact required pricing rates and USD-to-XOF conversion factor", () => {
-      expect(NAYA_PRICING.DEEPSEEK_CHAT_INPUT_PER_M).toBe(0.28);
-      expect(NAYA_PRICING.DEEPSEEK_CHAT_OUTPUT_PER_M).toBe(0.42);
-      expect(NAYA_PRICING.DEEPSEEK_REASONER_INPUT_PER_M).toBe(0.55);
-      expect(NAYA_PRICING.DEEPSEEK_REASONER_OUTPUT_PER_M).toBe(2.19);
+      expect(NAYA_PRICING.DEEPSEEK_CHAT_INPUT_PER_M).toBe(0.14);
+      expect(NAYA_PRICING.DEEPSEEK_CHAT_OUTPUT_PER_M).toBe(0.28);
+      expect(NAYA_PRICING.DEEPSEEK_REASONER_INPUT_PER_M).toBe(0.435);
+      expect(NAYA_PRICING.DEEPSEEK_REASONER_OUTPUT_PER_M).toBe(0.87);
       expect(NAYA_PRICING.SONNET_INPUT_PER_M).toBe(3.0);
       expect(NAYA_PRICING.SONNET_OUTPUT_PER_M).toBe(15.0);
       expect(NAYA_PRICING.USD_TO_XOF_RATE).toBe(600);
@@ -27,10 +27,10 @@ describe("Naya Telemetry & Pricing Functions", () => {
     });
 
     it("accurately calculates costs for DeepSeek Chat token usage", () => {
-      // 1M input ($0.28) + 1M output ($0.42) = $0.70 -> 420 FCFA
+      // 1M input ($0.14) + 1M output ($0.28) = $0.42 -> 252 FCFA
       const result = calculateDeepSeekChatCost(1_000_000, 1_000_000);
-      expect(result.costUsd).toBe(0.7);
-      expect(result.costXof).toBe(420);
+      expect(result.costUsd).toBe(0.42);
+      expect(result.costXof).toBe(252);
     });
 
     it("clamps negative or NaN token values to 0", () => {
@@ -40,10 +40,11 @@ describe("Naya Telemetry & Pricing Functions", () => {
 
   describe("calculateDeepSeekReasonerCost", () => {
     it("accurately calculates costs for DeepSeek Reasoner token usage", () => {
-      // 1M input ($0.55) + 1M output ($2.19) = $2.74 -> 1644 FCFA
+      // Depuis la décision du 2026-07-22, ce poste tourne sur deepseek-v4-pro —
+      // 1M input ($0.435) + 1M output ($0.87) = $1.305 -> 783 FCFA
       const result = calculateDeepSeekReasonerCost(1_000_000, 1_000_000);
-      expect(result.costUsd).toBe(2.74);
-      expect(result.costXof).toBe(1644);
+      expect(result.costUsd).toBe(1.305);
+      expect(result.costXof).toBe(783);
     });
   });
 

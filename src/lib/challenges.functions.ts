@@ -664,6 +664,10 @@ export function extractJsonFromLLMResponse(raw: string): string {
 // raisonnement bayésien NAYA...) passe par DeepSeek, en attendant une clé Gemini 3.6.
 // Anciens noms de modèles Anthropic conservés en commentaire pour mémoire :
 // claude-haiku-4-5-20251001 (texte, remplacé) / claude-sonnet-5 (vision, inchangé).
+//
+// "deepseek-chat" ci-dessous est un nom LOGIQUE interne (résolu vers le modèle
+// réel dans callDeepSeekText, cf. son propre commentaire) — pas le nom d'API
+// littéral, qui lui est déprécié le 2026-07-24 en faveur de deepseek-v4-flash.
 const DEEPSEEK_CHAT_MODEL = "deepseek-chat";
 
 async function callAnthropicVision(
@@ -822,6 +826,29 @@ async function callDeepSeekText(
     ? "Tu es un assistant IA précis. Tu dois impérativement répondre au format JSON demandé, sous forme de JSON brut, sans bloc de code Markdown, sans préambule ni explications."
     : "Tu es un assistant IA précis et utile.";
 
+  // deepseek-chat / deepseek-reasoner sont dépréciés le 2026-07-24 15:59 UTC — on
+  // traduit donc ici nos anciens noms logiques ("model" reçu du routage de
+  // callClaude) vers le nouveau format plutôt que de laisser filer des alias qui
+  // cesseront de fonctionner à la date de coupure. Décision produit (2026-07-22) :
+  // deepseek-v4-flash (rapide/économique) reste le modèle par défaut pour tout le
+  // texte à fort volume (défis, interactions utilisateur) ; le rôle de
+  // raisonnement NAYA (diagnostic bayésien, seul site d'appel = generateHypotheses,
+  // volume faible) monte en gamme sur deepseek-v4-pro, le modèle le plus avancé de
+  // DeepSeek, cohérent avec la decision #27 ("réserver le premium quand le système
+  // doit vraiment réfléchir").
+  //
+  // "thinking" désactivé même pour le raisonnement (2026-07-22) : la tâche de
+  // generateHypotheses est un diagnostic structuré et borné (probabilités sur une
+  // liste de causes prédéfinies), pas un problème ouvert à plusieurs étapes — le
+  // genre de cas où le thinking apporte le moins par rapport à son coût/latence
+  // (tokens de raisonnement facturés en plus, sur le poste déjà le plus cher).
+  // Le gain de qualité attendu vient surtout du choix de v4-pro lui-même. À
+  // réévaluer avec des données réelles cumulées : si le diagnostic manque de
+  // nuance sans thinking, remettre isReasoning ? "enabled" : "disabled" ci-dessous.
+  const isReasoning = model === "deepseek-reasoner";
+  const resolvedModel = isReasoning ? "deepseek-v4-pro" : "deepseek-v4-flash";
+  const thinking = { type: "disabled" as const };
+
   let attempt = 0;
   while (attempt < maxRetries) {
     const controller = new AbortController();
@@ -835,15 +862,17 @@ async function callDeepSeekText(
           "Authorization": `Bearer ${apiKey}`,
         },
         body: JSON.stringify({
-          model,
+          model: resolvedModel,
           max_tokens: maxOutputTokens,
+          thinking,
           messages: [
             { role: "system", content: systemPrompt },
             { role: "user", content: prompt },
           ],
-          // deepseek-reasoner n'accepte pas ce paramètre — ne le passer qu'en mode
-          // chat classique, JSON.parse(...) ci-dessous filtre quand même le résultat.
-          ...(jsonMode && model !== "deepseek-reasoner" ? { response_format: { type: "json_object" } } : {}),
+          // Le nouveau v4-flash supporte json_object même en mode "thinking", tant
+          // que le prompt système exige explicitement du JSON (fait ci-dessus) —
+          // contrairement à l'ancien deepseek-reasoner qui refusait ce paramètre.
+          ...(jsonMode ? { response_format: { type: "json_object" } } : {}),
         }),
         signal: controller.signal,
       });

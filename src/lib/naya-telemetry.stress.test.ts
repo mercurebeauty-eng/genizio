@@ -60,12 +60,12 @@ describe("Naya Telemetry Stress & Edge Case Suite", () => {
 
   describe("Category 2: Large Token Volumes (100M+ to 1B+ tokens)", () => {
     it("calculates accurate costs for 100M DeepSeek Chat tokens", () => {
-      // 100M input = 100 * $0.28 = $28
-      // 100M output = 100 * $0.42 = $42
-      // Total = $70 USD -> 70 * 600 = 42,000 FCFA
+      // 100M input = 100 * $0.14 = $14
+      // 100M output = 100 * $0.28 = $28
+      // Total = $42 USD -> 42 * 600 = 25,200 FCFA
       const result = calculateDeepSeekChatCost(100_000_000, 100_000_000);
-      expect(result.costUsd).toBe(70);
-      expect(result.costXof).toBe(42000);
+      expect(result.costUsd).toBe(42);
+      expect(result.costXof).toBe(25200);
     });
 
     it("calculates accurate costs for 100M vision Sonnet tokens", () => {

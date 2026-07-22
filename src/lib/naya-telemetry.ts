@@ -1,13 +1,21 @@
-// Tarifs indicatifs (2026-07-21) — DeepSeek Chat/Reasoner à vérifier contre la
-// page de tarification officielle DeepSeek au moment de la lecture (leurs prix
-// changent régulièrement) ; Sonnet reste au tarif Anthropic publié. Ce module
-// reste un ESTIMATEUR de coût (formules ci-dessous), jamais une facturation
-// réelle mesurée sur des logs d'appels.
+// Tarifs indicatifs (2026-07-22) — à vérifier contre la page de tarification
+// officielle DeepSeek au moment de la lecture (leurs prix changent régulièrement) ;
+// Sonnet reste au tarif Anthropic publié. Ce module reste un ESTIMATEUR de coût
+// (formules ci-dessous), jamais une facturation réelle mesurée sur des logs d'appels.
+//
+// Depuis la dépréciation des alias deepseek-chat/deepseek-reasoner (2026-07-24) et
+// la décision produit du 2026-07-22 (cf. callDeepSeekText dans
+// challenges.functions.ts) : DeepSeek Chat (défis, interactions utilisateur) reste
+// sur deepseek-v4-flash (rapide/économique) ; DeepSeek Reasoner (raisonnement
+// bayésien NAYA, volume faible) monte en gamme sur deepseek-v4-pro, le modèle le
+// plus avancé — d'où des tarifs distincts, plus élevés pour ce second poste. Tarif
+// "cache miss" (plein tarif) retenu par prudence, cet estimateur ne modélise pas
+// le cache de contexte.
 export const NAYA_PRICING = {
-  DEEPSEEK_CHAT_INPUT_PER_M: 0.28,
-  DEEPSEEK_CHAT_OUTPUT_PER_M: 0.42,
-  DEEPSEEK_REASONER_INPUT_PER_M: 0.55,
-  DEEPSEEK_REASONER_OUTPUT_PER_M: 2.19,
+  DEEPSEEK_CHAT_INPUT_PER_M: 0.14,
+  DEEPSEEK_CHAT_OUTPUT_PER_M: 0.28,
+  DEEPSEEK_REASONER_INPUT_PER_M: 0.435,
+  DEEPSEEK_REASONER_OUTPUT_PER_M: 0.87,
   SONNET_INPUT_PER_M: 3.00,
   SONNET_OUTPUT_PER_M: 15.00,
   USD_TO_XOF_RATE: 600,

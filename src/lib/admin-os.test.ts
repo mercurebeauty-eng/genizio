@@ -324,12 +324,12 @@ describe("Admin OS Helper Functions", () => {
 
   describe("Admin OS Milestone 3: Naya AI Tracking & Costs", () => {
     it("calculates DeepSeek Chat and vision Sonnet cost breakdown correctly", () => {
-      const chatCosts = calculateDeepSeekChatCost(2_000_000, 1_000_000); // $0.56 + $0.42
+      const chatCosts = calculateDeepSeekChatCost(2_000_000, 1_000_000); // $0.28 + $0.28
       const visionCosts = calculateVisionSonnetCost(500_000, 200_000); // $1.50 + $3.00
 
-      // Total USD = 0.56 + 0.42 + 1.50 + 3.00 = $5.48
+      // Total USD = 0.28 + 0.28 + 1.50 + 3.00 = $5.06
       const totalUsd = Math.round((chatCosts.costUsd + visionCosts.costUsd) * 10000) / 10000;
-      expect(totalUsd).toBe(5.48);
+      expect(totalUsd).toBe(5.06);
       expect(chatCosts.costXof + visionCosts.costXof).toBe(Math.round(totalUsd * NAYA_PRICING.USD_TO_XOF_RATE));
     });
 
