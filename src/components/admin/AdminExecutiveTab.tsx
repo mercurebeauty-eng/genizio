@@ -99,10 +99,10 @@ export function AdminExecutiveTab({
         <div className="rounded-3xl border border-ink/10 bg-white p-5 shadow-sm hover:shadow-md transition-shadow">
           <div className="flex items-center justify-between text-ink/60 mb-2">
             <span className="text-[11px] font-extrabold uppercase tracking-wider">Défis Validés</span>
-            <CheckCircle2 className="size-4 text-sky" />
+            <CheckCircle2 className="size-4 text-sky-600" />
           </div>
           <div className="flex items-baseline gap-2">
-            <span className="font-display text-3xl font-black text-sky">{kpis.completedChallenges}</span>
+            <span className="font-display text-3xl font-black text-sky-600">{kpis.completedChallenges}</span>
             <span className="text-xs font-bold text-ink/50">/ {kpis.totalChallenges}</span>
           </div>
           <p className="text-xs text-ink/60 mt-2 font-medium">

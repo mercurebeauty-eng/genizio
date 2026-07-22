@@ -110,7 +110,7 @@ export function AdminTalentsCitiesTab({
         <div className="rounded-3xl border border-ink/10 bg-white p-6 shadow-sm flex flex-col justify-between">
           <div className="flex items-center justify-between">
             <span className="text-xs font-bold uppercase tracking-wider text-ink/60">Commandes Boutique</span>
-            <div className="size-10 rounded-2xl bg-sky/10 text-sky flex items-center justify-center">
+            <div className="size-10 rounded-2xl bg-sky/10 text-sky-600 flex items-center justify-center">
               <ShoppingBag className="size-5" />
             </div>
           </div>

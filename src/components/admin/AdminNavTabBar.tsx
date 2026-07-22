@@ -42,7 +42,7 @@ export const ADMIN_TABS: Array<{
     icon: Brain,
     badge: "IA",
     badgeBgClass: "bg-sky/10",
-    badgeTextClass: "text-sky",
+    badgeTextClass: "text-sky-600",
   },
   {
     id: "commerce",
@@ -68,6 +68,7 @@ export function AdminNavTabBar({ activeTab, onTabChange }: AdminNavTabBarProps) 
               key={tab.id}
               type="button"
               onClick={() => onTabChange(tab.id)}
+              aria-current={isActive ? "page" : undefined}
               className={`group relative flex flex-col items-start p-3 sm:p-4 rounded-2xl transition-all duration-200 text-left cursor-pointer border min-w-[140px] sm:min-w-0 flex-1 ${
                 isActive
                   ? "bg-white border-ink/15 shadow-md scale-[1.01]"

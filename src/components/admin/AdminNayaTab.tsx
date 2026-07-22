@@ -35,12 +35,12 @@ interface AdminNayaTabProps {
 function modelDotClass(modelLabel: string): string {
   if (modelLabel.includes("Sonnet")) return "bg-purple-600";
   if (modelLabel.includes("Reasoner")) return "bg-amber-500";
-  return "bg-sky";
+  return "bg-sky-500";
 }
 function modelBadgeClass(modelLabel: string): string {
   if (modelLabel.includes("Sonnet")) return "bg-purple-100 text-purple-700";
   if (modelLabel.includes("Reasoner")) return "bg-amber-100 text-amber-700";
-  return "bg-sky/10 text-sky";
+  return "bg-sky-100 text-sky-700";
 }
 
 export function AdminNayaTab({
@@ -68,12 +68,12 @@ export function AdminNayaTab({
       {/* Header Banner */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 rounded-3xl border border-ink/10 bg-gradient-to-r from-sky/10 via-white to-purple-500/10 p-6 shadow-sm">
         <div className="flex items-center gap-4">
-          <div className="size-14 rounded-2xl bg-sky/20 text-sky flex items-center justify-center shadow-inner">
+          <div className="size-14 rounded-2xl bg-sky/20 text-sky-600 flex items-center justify-center shadow-inner">
             <Brain className="size-7 stroke-[2.2]" />
           </div>
           <div>
             <div className="flex items-center gap-2">
-              <span className="rounded-full bg-sky/10 px-2.5 py-0.5 text-[10px] font-extrabold text-sky uppercase tracking-wider">
+              <span className="rounded-full bg-sky/10 px-2.5 py-0.5 text-[10px] font-extrabold text-sky-600 uppercase tracking-wider">
                 Module IA Naya • Suivi & Coûts
               </span>
               {isRefreshing && (
@@ -125,8 +125,8 @@ export function AdminNayaTab({
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
           <div className="rounded-2xl border border-sky/20 bg-sky/5 p-4">
             <div className="flex items-center gap-2 mb-1.5">
-              <MessageSquare className="size-4 text-sky" />
-              <span className="text-[10px] font-extrabold uppercase tracking-wider text-sky">Texte général</span>
+              <MessageSquare className="size-4 text-sky-600" />
+              <span className="text-[10px] font-extrabold uppercase tracking-wider text-sky-600">Texte général</span>
             </div>
             <p className="text-sm font-black text-ink">DeepSeek Chat</p>
             <p className="text-[11px] text-ink/60 mt-0.5">Défis, synthèses, recommandations</p>
@@ -234,16 +234,16 @@ export function AdminNayaTab({
         <div className="rounded-3xl border border-ink/10 bg-white p-6 shadow-sm hover:shadow-md transition-shadow">
           <div className="flex items-center justify-between text-ink/60 mb-2">
             <span className="text-[11px] font-extrabold uppercase tracking-wider">Volume d'Appels API</span>
-            <Zap className="size-4 text-sky" />
+            <Zap className="size-4 text-sky-600" />
           </div>
           <div className="flex items-baseline gap-2">
-            <span className="font-display text-3xl font-black text-sky">
+            <span className="font-display text-3xl font-black text-sky-600">
               {totalApiCalls.toLocaleString("fr-FR")}
             </span>
             <span className="text-xs font-bold text-ink/50">appels</span>
           </div>
           <p className="text-xs text-ink/60 mt-2 font-medium flex items-center gap-1">
-            <span className="size-2 rounded-full bg-sky inline-block" />
+            <span className="size-2 rounded-full bg-sky-500 inline-block" />
             <strong className="text-ink">{featureBreakdown.length}</strong> modules actifs
           </p>
         </div>
@@ -307,7 +307,7 @@ export function AdminNayaTab({
         <div className="rounded-3xl border border-ink/10 bg-white p-6 shadow-xl space-y-5">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <div className="p-2.5 rounded-2xl bg-sky/10 text-sky">
+              <div className="p-2.5 rounded-2xl bg-sky/10 text-sky-600">
                 <Layers className="size-5" />
               </div>
               <div>
@@ -451,7 +451,7 @@ export function AdminNayaTab({
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 relative">
             {/* Step 1: Générés */}
             <div className="rounded-2xl border border-sky/20 bg-sky/5 p-5 text-center relative space-y-2">
-              <div className="text-[10px] font-extrabold uppercase tracking-wider text-sky">1. Défis Générés</div>
+              <div className="text-[10px] font-extrabold uppercase tracking-wider text-sky-600">1. Défis Générés</div>
               <div className="font-display text-3xl font-black text-ink">{funnel.generated}</div>
               <p className="text-xs font-medium text-ink/60">Générés par Naya IA</p>
             </div>
