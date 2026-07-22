@@ -3,9 +3,10 @@ import { useEffect, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { supabase } from "@/integrations/supabase/client";
 import { useSession } from "@/hooks/use-session";
+import { toast } from "sonner";
 import { getChildAISynthesis } from "@/lib/challenges.functions";
 import { ensureHypothesesForChild } from "@/lib/hypotheses.functions";
-import { getChildGuild } from "@/lib/guilds";
+import { getChildGuild, getTalentAffinities } from "@/lib/guilds";
 import { AppTabBar } from "@/components/AppTabBar";
 import { TalentRadarChart } from "@/components/TalentRadarChart";
 import { NayaAvatar } from "@/components/NayaAvatar";
@@ -34,6 +35,7 @@ import { AppHeader } from "@/components/AppHeader";
 import { MarkdownContent } from "@/components/ui/markdown-content";
 import { INTERESTS_BY_TALENT } from "@/components/profiles/shared";
 import { TALENT_KEY_LABELS, getTalentBucket } from "@/lib/talent-buckets";
+import { normalizeChildInterests } from "@/lib/interest-migration";
 
 // title vient de TALENT_KEY_LABELS (source unique des 9 libellés) — seuls
 // l'icône et la description restent propres à cette page.
@@ -134,6 +136,7 @@ type Child = {
   talents: Record<string, number>;
   interests: string[];
   pdf_unlocked: boolean;
+  xp: number | null;
 };
 
 type Challenge = {
@@ -179,7 +182,7 @@ function PortfolioPage() {
     if (!session) return;
     setFetching(true);
     Promise.all([
-      supabase.from("child_profiles").select("id, name, age, talents, interests, pdf_unlocked").eq("id", profileId).eq("user_id", session!.user.id).maybeSingle(),
+      supabase.from("child_profiles").select("id, name, age, talents, interests, pdf_unlocked, xp").eq("id", profileId).eq("user_id", session!.user.id).maybeSingle(),
       supabase
         .from("challenges")
         .select("id, title, domain, status, completed_at, proof_image_url")
@@ -198,13 +201,23 @@ function PortfolioPage() {
         .order("created_at", { ascending: false })
         .limit(1)
         .maybeSingle(),
-    ]).then(([c, ch, cm, hc]) => {
-      setChild((c.data as Child) ?? null);
-      setChallenges((ch.data ?? []) as Challenge[]);
-      setMentorCount(cm.count ?? 0);
-      setOpenCycle((hc.data as OpenHypothesisCycle) ?? null);
-      setFetching(false);
-    });
+    ])
+      .then(([c, ch, cm, hc]) => {
+        setChild((c.data as Child) ?? null);
+        setChallenges((ch.data ?? []) as Challenge[]);
+        setMentorCount(cm.count ?? 0);
+        setOpenCycle((hc.data as OpenHypothesisCycle) ?? null);
+      })
+      .catch((err) => {
+        console.error("Erreur lors du chargement du portfolio:", err);
+        setChild(null);
+        setChallenges([]);
+        setMentorCount(0);
+        setOpenCycle(null);
+      })
+      .finally(() => {
+        setFetching(false);
+      });
   }, [session, profileId]);
 
   // Découverte de centre d'intérêt (cf. discussion produit) : un talent fort
@@ -216,7 +229,8 @@ function PortfolioPage() {
     try {
       const raw = localStorage.getItem(`genizio_dismissed_discoveries_${profileId}`);
       setDismissedDiscoveries(raw ? JSON.parse(raw) : []);
-    } catch {
+    } catch (err) {
+      console.error("Erreur lecture découvertes masquées:", err);
       setDismissedDiscoveries([]);
     }
   }, [profileId]);
@@ -226,7 +240,8 @@ function PortfolioPage() {
     setDismissedDiscoveries(next);
     try {
       localStorage.setItem(`genizio_dismissed_discoveries_${profileId}`, JSON.stringify(next));
-    } catch {
+    } catch (err) {
+      console.error("Erreur sauvegarde découverte masquée:", err);
       // Stockage local indisponible (navigation privée, quota...) — la
       // suggestion réapparaîtra au prochain chargement, sans gravité.
     }
@@ -234,9 +249,17 @@ function PortfolioPage() {
 
   const acceptDiscovery = async (label: string) => {
     if (!child) return;
-    const nextInterests = [...(child.interests ?? []), label];
+    const previousInterests = child.interests ?? [];
+    const nextInterests = [...previousInterests, label];
     setChild({ ...child, interests: nextInterests });
-    await supabase.from("child_profiles").update({ interests: nextInterests }).eq("id", child.id);
+    try {
+      const { error } = await supabase.from("child_profiles").update({ interests: nextInterests }).eq("id", child.id);
+      if (error) throw error;
+    } catch (err) {
+      console.error("Erreur lors de l'ajout du centre d'intérêt:", err);
+      setChild({ ...child, interests: previousInterests });
+      toast.error("Impossible de sauvegarder la découverte.");
+    }
   };
 
   const refetchOpenCycle = () => {
@@ -257,7 +280,10 @@ function PortfolioPage() {
     setFetchingSynthesis(true);
     fetchSynthesis({ data: { childId: profileId } })
       .then((resp) => setSynthesis(resp || ""))
-      .catch(() => setSynthesis(""))
+      .catch((err) => {
+        console.error("Erreur lors de la récupération de la synthèse:", err);
+        setSynthesis("");
+      })
       .finally(() => setFetchingSynthesis(false));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [session, profileId]);
@@ -271,7 +297,9 @@ function PortfolioPage() {
     if (!session) return;
     ensureHypotheses({ data: { childId: profileId } })
       .then((res) => { if (res.generated) refetchOpenCycle(); })
-      .catch(() => {});
+      .catch((err) => {
+        console.error("Erreur lors de la vérification des hypothèses:", err);
+      });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [session, profileId]);
 
@@ -367,7 +395,11 @@ function PortfolioPage() {
           {/* Success card dashboard: Profil Actuel de l'Enfant */}
           {(() => {
             const guild = getChildGuild(child.talents);
-            const level = Math.max(1, Math.min(10, Math.floor(completed.length / 4) + 1));
+            // Même formule que le tableau de bord (profiles.index.tsx) et le Parcours —
+            // lue depuis child_profiles.xp, jamais recalculée à partir du nombre de défis
+            // complétés (ça part vite en désaccord avec le reste de l'app, cf. le même bug
+            // déjà corrigé sur la page Parcours).
+            const level = Math.floor((child.xp || 0) / 500) + 1;
             
             let singularGuild = "Curieux";
             if (guild.name.includes("Bâtisseurs")) singularGuild = "Bâtisseur";
@@ -380,9 +412,10 @@ function PortfolioPage() {
             const suffixes = ["Novice", "Apprenti", "Émergent", "Compagnon", "Initié", "Confirmé", "Aventurier", "Maître", "Champion", "Légende"];
             const rank = `${singularGuild} ${suffixes[level - 1] || "Expert"}`;
 
-            const childInterests = child.interests && child.interests.length > 0
-              ? child.interests.slice(0, 4)
-              : ["Sciences & Expériences", "Dessin & Peinture", "Sens de la négociation", "Construction & Lego"];
+            const normalizedInterests = normalizeChildInterests(child.interests);
+            const childInterests = normalizedInterests.length > 0
+              ? normalizedInterests.slice(0, 4)
+              : ["Pose sans arrêt la question 'Pourquoi ?'", "Cherche la logique cachée des choses", "Démonte pour comprendre", "Aime assembler et construire"];
 
             const getInterestBucket = (interestName: string) => {
               let foundKey = "spatial";
@@ -612,6 +645,37 @@ function PortfolioPage() {
               )}
             </div>
           </div>
+
+          {/* "Là où ses talents pourraient l'emmener" — affinités de parcours dérivées
+              des mêmes scores de talents que la bannière Guilde ci-dessus (cf.
+              getTalentAffinities dans lib/guilds.ts), pas une donnée inventée. */}
+          {child.talents && Object.values(child.talents).some((v) => v > 0) && (
+            <div className="rounded-3xl border border-ink/10 bg-white p-6 shadow-xl">
+              <h3 className="mb-1 flex items-center gap-2 font-display text-balance text-lg font-bold">
+                <Compass className="size-5 text-brand" />
+                Là où ses talents pourraient l'emmener
+              </h3>
+              <p className="mb-5 text-xs font-medium leading-relaxed text-ink/60">
+                Les possibilités restent infinies — {child.name} pourrait aussi bien concevoir, enseigner, chercher ou entreprendre. On garde toutes les portes ouvertes.
+              </p>
+              <div className="space-y-4">
+                {getTalentAffinities(child.talents).map((a) => (
+                  <div key={a.key}>
+                    <div className="mb-1.5 flex items-baseline justify-between">
+                      <span className="text-sm font-bold text-ink">{a.label}</span>
+                      <span className="text-sm font-black" style={{ color: `var(--guild-${a.key})` }}>{a.pct}%</span>
+                    </div>
+                    <div className="h-2 overflow-hidden rounded-full bg-ink/8">
+                      <div
+                        className="h-full rounded-full transition-all duration-700"
+                        style={{ width: `${a.pct}%`, background: `var(--guild-${a.key})` }}
+                      />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
 
           {/* 🃏 Collectible Talent Cards Grid */}
           <div className="rounded-3xl border border-ink/10 bg-white p-6 shadow-xl space-y-6">

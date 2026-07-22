@@ -18,6 +18,7 @@ import {
   XCircle,
   AlertCircle,
   Tag,
+  Loader2,
 } from "lucide-react";
 import { toast } from "sonner";
 import {
@@ -315,18 +316,23 @@ export function AdminCommerceTab({
 
                       {/* Status 1-Click Update Control */}
                       <td className="py-4 text-center whitespace-nowrap">
-                        <select
-                          value={order.status}
-                          disabled={updatingOrderId === order.id}
-                          onChange={(e) => handleStatusChange(order.id, e.target.value)}
-                          className="rounded-xl border-2 border-ink/20 bg-white px-3 py-1.5 text-xs font-bold text-ink cursor-pointer focus:border-purple-600 focus:outline-none transition-all disabled:opacity-50"
-                        >
-                          {ORDER_STATUS_OPTIONS.map((opt) => (
-                            <option key={opt.value} value={opt.value}>
-                              {opt.label}
-                            </option>
-                          ))}
-                        </select>
+                        <div className="inline-flex items-center gap-1.5">
+                          {updatingOrderId === order.id && (
+                            <Loader2 className="size-3.5 animate-spin text-purple-600 shrink-0" />
+                          )}
+                          <select
+                            value={order.status}
+                            disabled={updatingOrderId === order.id}
+                            onChange={(e) => handleStatusChange(order.id, e.target.value)}
+                            className="rounded-xl border-2 border-ink/20 bg-white px-3 py-1.5 text-xs font-bold text-ink cursor-pointer focus:border-purple-600 focus:outline-none transition-all disabled:opacity-50"
+                          >
+                            {ORDER_STATUS_OPTIONS.map((opt) => (
+                              <option key={opt.value} value={opt.value}>
+                                {opt.label}
+                              </option>
+                            ))}
+                          </select>
+                        </div>
                       </td>
                     </tr>
                   );
@@ -441,13 +447,17 @@ export function AdminCommerceTab({
                         <button
                           onClick={() => handleTogglePassportClick(teen.id, !teen.pdfUnlocked)}
                           disabled={pendingPassportChildId === teen.id}
-                          className={`inline-flex items-center gap-1.5 rounded-2xl px-4 py-2 text-xs font-extrabold transition-all cursor-pointer shadow-sm ${
+                          className={`inline-flex items-center gap-1.5 rounded-2xl px-4 py-2 text-xs font-extrabold transition-all cursor-pointer shadow-sm disabled:opacity-50 ${
                             teen.pdfUnlocked
                               ? "bg-amber-100 border-2 border-amber-400 text-amber-900 hover:bg-amber-200"
                               : "bg-emerald-600 border-2 border-emerald-600 text-white hover:bg-emerald-700"
                           }`}
                         >
-                          {teen.pdfUnlocked ? (
+                          {pendingPassportChildId === teen.id ? (
+                            <>
+                              <Loader2 className="size-3.5 animate-spin" /> Traitement…
+                            </>
+                          ) : teen.pdfUnlocked ? (
                             <>
                               <Lock className="size-3.5" /> Reverrouiller
                             </>

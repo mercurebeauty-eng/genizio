@@ -16,7 +16,7 @@ import { AppHeader } from "@/components/AppHeader";
 import { ProfileDialog } from "@/components/profiles/ProfileDialog";
 import { AVATAR_COLORS, type ChildProfile } from "@/components/profiles/shared";
 import { getActiveChallenge, type ChallengeLike } from "@/lib/active-challenge";
-import { getPortfolioPulse } from "@/lib/talent-buckets";
+import { getPortfolioPulse, TALENT_KEY_LABELS, getTalentBucket, TALENT_BUCKET_LABEL } from "@/lib/talent-buckets";
 import { getChildGuild } from "@/lib/guilds";
 import { InviteMentorDialog } from "@/components/mentors/InviteMentorDialog";
 import { TalentRadarChart } from "@/components/TalentRadarChart";
@@ -26,6 +26,7 @@ import { DifficultyBadge } from "@/components/challenges/DifficultyBadge";
 import { MarkdownContent } from "@/components/ui/markdown-content";
 import { COUNTRIES } from "@/lib/countries";
 import { GenizioLoader } from "@/components/GenizioLoader";
+import { toast } from "sonner";
 
 export const Route = createFileRoute("/profiles/")({
   component: DashboardPage,
@@ -187,15 +188,40 @@ function DashboardPage() {
       setChallenges([]);
       return;
     }
-    setFetchingChallenges(true);
-    supabase
-      .from("challenges")
-      .select("id, status, created_at, updated_at, domain, title, description, duration, materials, material_tags, steps, proof_image_url, difficulty")
-      .eq("child_id", selectedId)
-      .then(({ data }) => {
-        setChallenges((data ?? []) as Challenge[]);
-        setFetchingChallenges(false);
-      });
+    let isMounted = true;
+    const fetchChallenges = async () => {
+      setFetchingChallenges(true);
+      try {
+        const { data, error } = await supabase
+          .from("challenges")
+          .select("id, status, created_at, updated_at, domain, title, description, duration, materials, material_tags, steps, proof_image_url, difficulty")
+          .eq("child_id", selectedId);
+
+        if (!isMounted) return;
+        if (error) {
+          console.error("Error fetching challenges:", error);
+          toast.error("Erreur lors du chargement des défis.");
+          setChallenges([]);
+        } else {
+          setChallenges((data ?? []) as Challenge[]);
+        }
+      } catch (err) {
+        if (!isMounted) return;
+        console.error("Error fetching challenges:", err);
+        toast.error("Erreur lors du chargement des défis.");
+        setChallenges([]);
+      } finally {
+        if (isMounted) {
+          setFetchingChallenges(false);
+        }
+      }
+    };
+
+    void fetchChallenges();
+
+    return () => {
+      isMounted = false;
+    };
   }, [selectedId]);
 
   const selected = profiles.find((p) => p.id === selectedId) ?? null;
@@ -250,7 +276,14 @@ function DashboardPage() {
                 const dateStr = new Date().toLocaleDateString('fr-FR', { weekday: 'long' });
                 const capitalizedDate = dateStr.charAt(0).toUpperCase() + dateStr.slice(1);
                 const avatarColor = AVATAR_COLORS[profiles.findIndex(p=>p.id===selected.id)%AVATAR_COLORS.length] || AVATAR_COLORS[0];
-                const activeTalents = pulse.filter(p => (p.score || 0) > 0).length;
+                // Calculé sur les 9 domaines réels (selected.talents), pas sur `pulse` qui
+                // est plafonné à 5 entrées — pulse.filter(...) sous-comptait dès qu'un
+                // enfant avait plus de 5 domaines actifs.
+                const activeDomains = Object.entries(selected.talents || {})
+                  .filter(([, score]) => (score || 0) > 0)
+                  .sort(([, a], [, b]) => (b || 0) - (a || 0))
+                  .map(([key, score]) => ({ key, label: TALENT_KEY_LABELS[key] ?? key, score: score || 0, bucket: getTalentBucket(score || 0) }));
+                const activeTalents = activeDomains.length;
                 const totalXP = selected.xp || 0;
                 const currentLevel = Math.floor(totalXP / 500) + 1;
                 const xpPct = Math.min(100, (totalXP % 500) / 500 * 100);
@@ -376,29 +409,58 @@ function DashboardPage() {
 
                     {/* Compact Cards: Niveau / Talents */}
                     <div className="flex gap-3 mb-5">
-                      <div className="flex-1 bg-card rounded-[1rem] p-[14px] shadow-sm border border-border">
+                      {/* Niveau/XP → Ma Guilde (la carte affiche déjà le nom de la guilde ;
+                          "Mon parcours" ci-dessous couvre déjà la vue XP/progression détaillée,
+                          donc cette carte pointe ailleurs plutôt que de dupliquer ce lien). */}
+                      <Link
+                        to="/profiles/$profileId/guild"
+                        params={{ profileId: selected.id }}
+                        className="flex-1 bg-card rounded-[1rem] p-[14px] shadow-sm border border-border cursor-pointer"
+                      >
                         <div className="text-[12px] text-ink/60 font-semibold mb-2">Niveau {currentLevel} · {guild.name.replace('Les ', '')}</div>
                         <div className="h-[9px] bg-ink/5 rounded-full overflow-hidden">
                           <div className="h-full rounded-full transition-all duration-700 ease-out origin-left animate-[gzGrowBar_.7s_ease-out]" style={{ width: `${xpPct}%`, background: "linear-gradient(90deg, var(--brand), oklch(0.6 0.15 45))" }}></div>
                         </div>
                         <div className="text-[12px] text-ink/40 font-bold text-right mt-[5px]">{totalXP} XP</div>
-                      </div>
-                      <div className="flex-1 bg-card rounded-[1rem] p-[14px] shadow-sm border border-border">
-                        <div className="text-[12px] text-ink/60 font-semibold mb-2">Talents actifs</div>
-                        <div className="flex items-baseline gap-[5px]">
-                          <span className="font-display text-balance font-bold text-[26px]" style={{ color: `var(--guild-${guild.key === 'aucune' ? 'batisseurs' : guild.key})` }}>{activeTalents}</span>
-                          <span className="text-[12px] text-ink/60">domaines</span>
-                        </div>
-                      </div>
+                      </Link>
+
+                      {/* Talents actifs → pas de page dédiée aujourd'hui (Parcours et Portfolio
+                          sont déjà pris par les liens "Continuer à explorer" ci-dessous) : un
+                          Popover inline liste les domaines actifs sans quitter le dashboard,
+                          même pattern que le Popover de série déjà utilisé plus haut sur cette page. */}
+                      <Popover>
+                        <PopoverTrigger className="flex-1 bg-card rounded-[1rem] p-[14px] shadow-sm border border-border cursor-pointer text-left outline-none">
+                          <div className="text-[12px] text-ink/60 font-semibold mb-2">Talents actifs</div>
+                          <div className="flex items-baseline gap-[5px]">
+                            <span className="font-display text-balance font-bold text-[26px]" style={{ color: `var(--guild-${guild.key === 'aucune' ? 'batisseurs' : guild.key})` }}>{activeTalents}</span>
+                            <span className="text-[12px] text-ink/60">domaines</span>
+                          </div>
+                        </PopoverTrigger>
+                        <PopoverContent align="start" className="w-72 rounded-2xl border border-ink/10 bg-white p-4 shadow-xl">
+                          <p className="mb-3 font-display text-balance text-sm font-bold text-ink">Domaines actifs de {selected.name}</p>
+                          {activeDomains.length === 0 ? (
+                            <p className="text-xs leading-relaxed text-ink/60">Aucun domaine encore actif — le premier défi complété lancera la carte des talents.</p>
+                          ) : (
+                            <ul className="space-y-2">
+                              {activeDomains.map((d) => (
+                                <li key={d.key} className="flex items-center justify-between gap-2 text-xs">
+                                  <span className="font-bold text-ink">{d.label}</span>
+                                  <span className="text-ink/50">{TALENT_BUCKET_LABEL[d.bucket]}</span>
+                                </li>
+                              ))}
+                            </ul>
+                          )}
+                        </PopoverContent>
+                      </Popover>
                     </div>
 
                     {/* Continuer à explorer */}
                     <div className="font-display text-balance font-bold text-[13px] tracking-[.06em] uppercase text-ink/40 mx-1 mb-[10px]">Continuer à explorer</div>
                     <div className="grid grid-cols-2 gap-3 mb-6">
-                      <Link to="/profiles/$profileId/challenges" params={{ profileId: selected.id }} className="text-left border border-border bg-leaf-50 rounded-[1rem] p-[15px] cursor-pointer shadow-sm">
+                      <Link to="/profiles/$profileId/parcours" params={{ profileId: selected.id }} className="text-left border border-border bg-leaf-50 rounded-[1rem] p-[15px] cursor-pointer shadow-sm">
                         <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--leaf-dark)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><path d="m16.24 7.76-2.12 6.36-6.36 2.12 2.12-6.36 6.36-2.12z"/></svg>
                         <div className="font-display text-balance font-bold text-[15px] mt-[8px] text-ink">Mon parcours</div>
-                        <div className="text-[12px] text-ink/60 mt-[2px]">Ton arbre de talents</div>
+                        <div className="text-[12px] text-ink/60 mt-[2px]">Ton chemin de talents</div>
                       </Link>
                       <Link to="/profiles/$profileId/portfolio" params={{ profileId: selected.id }} className="text-left border border-border bg-sky-50 rounded-[1rem] p-[15px] cursor-pointer shadow-sm">
                         <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--sky-dark)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m12.83 2.18a2 2 0 0 0-1.66 0L2.6 6.08a1 1 0 0 0 0 1.83l8.58 3.91a2 2 0 0 0 1.66 0l8.58-3.9a1 1 0 0 0 0-1.83Z"/><path d="m2 12 8.58 3.91a2 2 0 0 0 1.66 0L20.83 12"/><path d="m2 17 8.58 3.91a2 2 0 0 0 1.66 0L20.83 17"/></svg>

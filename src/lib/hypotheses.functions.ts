@@ -1,20 +1,8 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
-import { callClaude, finalizeChallenge, PROOF_MODE_INSTRUCTION, ACADEMIC_REFERENTIAL_INSTRUCTION, formatChildInterestsPayload } from "@/lib/challenges.functions";
+import { callClaude, finalizeChallenge, PROOF_MODE_INSTRUCTION, ACADEMIC_REFERENTIAL_INSTRUCTION, ACADEMIC_DOMAIN_LABELS, formatChildInterestsPayload, extractJsonFromLLMResponse } from "@/lib/challenges.functions";
 import { TALENT_KEY_LABELS } from "@/lib/talent-buckets";
 import { z } from "zod";
-
-const ACADEMIC_DOMAIN_LABELS: Record<string, string> = {
-  mathematiques: "mathématiques",
-  langage: "langage",
-  sciences: "sciences",
-  corporelle: "motricité/sport",
-  sociale: "compétences sociales",
-  emotionnelle: "gestion des émotions",
-  entrepreneuriale: "esprit d'initiative",
-  artisanale: "habileté manuelle",
-  spatiale: "repérage dans l'espace",
-};
 
 // NAYA 2.0 Phase 3a — moteur de génération d'hypothèses causales (cf. genizio-decisions #32).
 // Premier point IA du pipeline NAYA. Rôle *raisonnement* → Sonnet (décision #27 : on paie le
@@ -109,6 +97,47 @@ Réponds uniquement avec le texte final, sans guillemets, sans préambule, sans 
 
 const EnsureInput = z.object({ childId: z.string().uuid() });
 
+// Ferme un fil déjà câblé mais jamais déclenché : processDiscriminantResult accepte
+// "ABANDONED" depuis sa création (cf. sa propre logique bayésienne pour ce cas —
+// un abandon sur une hypothèse anxiété/désengagement la renforce plutôt que de
+// simplement l'ignorer), mais rien ne l'appelait jamais avec cette valeur : un défi
+// discriminant abandonné restait invisible du moteur de diagnostic. Repère les
+// défis discriminants toujours "todo"/"in_progress" au-delà du même seuil que
+// STALE_DOMAIN_CUTOFF (14 jours, cf. generateChallenges), traite chacun une seule
+// fois — flag "abandoned_processed" dans pedagogical_context, pour ne pas
+// réappliquer le multiplicateur bayésien à chaque visite du Portfolio.
+async function processAbandonedDiscriminantChallenges(supabase: any, childId: string): Promise<void> {
+  const cutoff = new Date(Date.now() - 14 * 24 * 60 * 60 * 1000).toISOString();
+  const { data: staleCandidates } = await supabase
+    .from("challenges")
+    .select("id, pedagogical_context")
+    .eq("child_id", childId)
+    .in("status", ["todo", "in_progress"])
+    .lt("created_at", cutoff)
+    .not("pedagogical_context", "is", null);
+
+  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+
+  for (const c of staleCandidates ?? []) {
+    let ctx: any;
+    try {
+      ctx = JSON.parse(c.pedagogical_context);
+    } catch {
+      continue;
+    }
+    if (!ctx?.is_discriminant || ctx?.abandoned_processed) continue;
+
+    await processDiscriminantResult(c.id, "ABANDONED");
+    // Marqué "traité" indépendamment du résultat (ex: cycle déjà résolu autrement
+    // entre-temps) — retenter n'apporterait rien, autant arrêter de le revérifier
+    // à chaque visite.
+    await supabaseAdmin
+      .from("challenges")
+      .update({ pedagogical_context: JSON.stringify({ ...ctx, abandoned_processed: true }) })
+      .eq("id", c.id);
+  }
+}
+
 export const ensureHypothesesForChild = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .validator((input: unknown) => EnsureInput.parse(input))
@@ -122,6 +151,12 @@ export const ensureHypothesesForChild = createServerFn({ method: "POST" })
       .eq("user_id", userId)
       .maybeSingle();
     if (childErr || !child) throw new Error("Profil enfant introuvable ou accès refusé.");
+
+    try {
+      await processAbandonedDiscriminantChallenges(supabase, data.childId);
+    } catch (err) {
+      console.error("Non-fatal: processAbandonedDiscriminantChallenges failed", err);
+    }
 
     const { data: existingCycles } = await supabase
       .from("hypothesis_cycles")
@@ -234,7 +269,10 @@ DIRECTIVES DE SORTIE STRICTES :
 
     const userContent = `Voici le cas à diagnostiquer :\n${JSON.stringify(snapshot, null, 2)}`;
 
-    const NAYA_REASONING_MODEL = "claude-sonnet-5";
+    // DeepSeek Reasoner (R1) remplace Claude Sonnet 5 pour ce rôle de raisonnement
+    // depuis le passage à DeepSeek (2026-07-21) — Sonnet est désormais réservé à
+    // la vision uniquement (cf. callClaude dans challenges.functions.ts).
+    const NAYA_REASONING_MODEL = "deepseek-reasoner";
     const raw = await callClaude(
       `${systemReminders}\n\n${userContent}`,
       true,
@@ -247,8 +285,9 @@ DIRECTIVES DE SORTIE STRICTES :
 
     let parsed: { hypotheses?: unknown };
     try {
-      parsed = JSON.parse(raw);
-    } catch {
+      parsed = JSON.parse(extractJsonFromLLMResponse(raw));
+    } catch (err) {
+      console.error("Error parsing LLM response in runHypothesisEngine:", err, "Raw response:", raw);
       throw new Error("Réponse IA invalide (JSON non parsable).");
     }
 
@@ -402,8 +441,9 @@ Réponds EXCLUSIVEMENT avec un objet JSON strict au format suivant :
     const rawJson = await callClaude(prompt, true, undefined, 1000, 2);
     let parsed: any;
     try {
-      parsed = JSON.parse(rawJson);
-    } catch {
+      parsed = JSON.parse(extractJsonFromLLMResponse(rawJson));
+    } catch (err) {
+      console.error("Error parsing discriminant challenge LLM response:", err, "Raw:", rawJson);
       throw new Error("Erreur de génération du défi discriminant.");
     }
 
@@ -485,7 +525,8 @@ export async function processDiscriminantResult(
   let context: any;
   try {
     context = JSON.parse(challenge.pedagogical_context);
-  } catch {
+  } catch (err) {
+    console.error("processDiscriminantResult: Failed to parse pedagogical_context JSON:", err);
     return { processed: false };
   }
 

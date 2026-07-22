@@ -2,6 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { VALID_TALENT_KEYS, TALENT_KEY_LABELS } from "@/lib/talent-buckets";
 import { INTERESTS_BY_TALENT } from "@/components/profiles/shared";
+import { normalizeChildInterests } from "@/lib/interest-migration";
 import { z } from "zod";
 
 // Domaines couverts par le référentiel académique (cf. genizio-decisions #39). "creative"
@@ -11,6 +12,21 @@ export const ACADEMIC_DOMAINS = [
   "mathematiques", "langage", "sciences",
   "corporelle", "sociale", "emotionnelle", "entrepreneuriale", "artisanale", "spatiale",
 ] as const;
+
+// Déplacée depuis hypotheses.functions.ts (2026-07-22) — utilisée maintenant aussi
+// par computeProgressionTargets ci-dessous, source unique plutôt qu'une copie par
+// fichier consommateur (même remède que les fragments de prompt partagés).
+export const ACADEMIC_DOMAIN_LABELS: Record<string, string> = {
+  mathematiques: "mathématiques",
+  langage: "langage",
+  sciences: "sciences",
+  corporelle: "motricité/sport",
+  sociale: "compétences sociales",
+  emotionnelle: "gestion des émotions",
+  entrepreneuriale: "esprit d'initiative",
+  artisanale: "habileté manuelle",
+  spatiale: "repérage dans l'espace",
+};
 
 const ChallengeSchema = z.object({
   domain: z.string(),
@@ -148,7 +164,9 @@ async function awardCompletionXP(supabaseClient: any, childId: string) {
 // défis-là ne comptent simplement pour aucun badge, pas une erreur, juste
 // une couverture partielle assumée pour ce premier jet.
 const BADGE_THRESHOLD = 3;
-const BADGE_CATALOG: Record<string, { title: string; description: string }> = {
+// Exporté pour le Passeport d'Excellence (passport-print.tsx), qui affiche les
+// badges réellement gagnés par l'enfant (child_badges) avec leur titre/description.
+export const BADGE_CATALOG: Record<string, { title: string; description: string }> = {
   Sciences: {
     title: "Scientifique en herbe",
     description: "Tu as mené 3 expériences. Tu observes, tu questionnes, tu comprends le monde qui t'entoure.",
@@ -428,6 +446,20 @@ function resolveProofMode(
   return { proof_mode: "declarative", proof_target: { metric, value }, declarative_award: award };
 }
 
+// target_intelligences était rempli directement depuis le champ libre "intelligences"
+// du JSON généré par l'IA (2026-07-22 et avant) — jamais contraint aux 9 clés
+// réelles (VALID_TALENT_KEYS), donc jamais exploitable comme donnée (ex: "Créativité"
+// au lieu de "creative"). Même remède que declarative_award ci-dessus : filtrer
+// plutôt que faire confiance. Les défis déjà complétés ont déjà la vraie valeur
+// (validateChallengeProof/submitDeclarativeProof écrasent ce champ avec les
+// intelligences RÉELLEMENT démontrées à la validation) — ce filtre ne change donc
+// que les défis pas encore complétés, pour que le champ soit exploitable dès la
+// création (cf. computeProgressionTargets, qui ne lit que les défis complétés).
+function resolveTargetIntelligences(intelligences: string[] | null | undefined): string[] {
+  const validTalentKeys = new Set(VALID_TALENT_KEYS);
+  return (intelligences ?? []).filter((k) => typeof k === "string" && validTalentKeys.has(k));
+}
+
 // Backstop pour l'étiquetage du référentiel académique (cf. genizio-decisions #38) : un âge
 // incohérent (hors [3,18], absent, ou domaine invalide) redevient simplement "pas de
 // signal" — même philosophie que resolveProofMode, ne jamais faire confiance à la seule
@@ -484,6 +516,7 @@ export function finalizeChallenge<T extends {
   steps: string[];
   materials: string[];
   material_tags?: string[] | null;
+  intelligences?: string[] | null;
   requires_supervision?: boolean | null;
   supervision_warning?: string | null;
   difficulty?: string | null;
@@ -500,6 +533,7 @@ export function finalizeChallenge<T extends {
   return {
     title: c.title.slice(0, 120),
     material_tags: c.material_tags ?? [],
+    target_intelligences: resolveTargetIntelligences(c.intelligences),
     difficulty: resolveDifficulty(c.difficulty, c.title),
     requires_supervision: safety.requires_supervision,
     supervision_warning: safety.supervision_warning,
@@ -517,7 +551,8 @@ export function finalizeChallenge<T extends {
  * into rich cognitive posture descriptors and behavioral drivers for AI prompt payloads.
  */
 export function formatChildInterestsPayload(interests?: string[] | null): string {
-  if (!interests || interests.length === 0) {
+  const normalized = normalizeChildInterests(interests);
+  if (normalized.length === 0) {
     return "Aucun levier spécifique renseigné — explorer et expérimenter avec différentes postures d'apprentissage.";
   }
 
@@ -528,18 +563,102 @@ export function formatChildInterestsPayload(interests?: string[] | null): string
     }
   }
 
-  return interests
+  return normalized
     .map((tag) => {
       const label = tagMap.get(tag);
-      return label ? `- [${label}] "${tag}"` : `- [Général] "${tag}"`;
+      return label ? `- [${label}] "${tag}"` : `- [Levier d'action] "${tag}"`;
     })
     .join("\n");
 }
 
+// "Zone Proximale d'Apprentissage" (2026-07-22) : jusqu'ici, generateChallenges/
+// generateSingleChallenge mesuraient déjà academic_level_age par défi et
+// diagnostiquaient déjà une cause (READY_FOR_MORE, CONCEPTUAL_GAP...) via le moteur
+// bayésien, mais aucune des deux ne réinjectait cette mesure dans la génération
+// suivante — le "difficulty" du prochain défi restait une estimation qualitative de
+// l'IA, jamais calibrée sur le niveau RÉELLEMENT déjà démontré par cet enfant précis.
+// Ferme cette boucle : lit le dernier academic_level_age mesuré par domaine sur les
+// défis complétés, et calibre une cible numérique pour le prochain, ajustée par la
+// cause diagnostiquée si un cycle d'hypothèses est ouvert sur ce domaine.
+type ProgressionTarget = {
+  domain: string;
+  lastLevelAge: number;
+  targetLevelAge: number;
+  cause: string | null;
+};
+
+async function computeProgressionTargets(supabase: any, childId: string): Promise<ProgressionTarget[]> {
+  const [{ data: pastChallenges }, { data: openCycle }] = await Promise.all([
+    supabase
+      .from("challenges")
+      .select("academic_domain, academic_level_age, completed_at")
+      .eq("child_id", childId)
+      .eq("status", "completed")
+      .not("academic_domain", "is", null)
+      .not("academic_level_age", "is", null)
+      .order("completed_at", { ascending: false })
+      .limit(60),
+    supabase
+      .from("hypothesis_cycles")
+      .select("hypotheses, trigger_domain")
+      .eq("child_id", childId)
+      .eq("status", "open")
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle(),
+  ]);
+
+  // Le plus récent par domaine — la liste est déjà triée par completed_at
+  // décroissant, donc la première occurrence d'un domaine est la bonne.
+  const latestPerDomain = new Map<string, number>();
+  for (const c of pastChallenges ?? []) {
+    if (c.academic_domain && typeof c.academic_level_age === "number" && !latestPerDomain.has(c.academic_domain)) {
+      latestPerDomain.set(c.academic_domain, c.academic_level_age);
+    }
+  }
+
+  const hypotheses = (openCycle?.hypotheses as { cause: string; current_probability: number }[] | null) || [];
+  const topCause = hypotheses[0]?.cause;
+  const causeDomain = openCycle?.trigger_domain as string | undefined;
+
+  return Array.from(latestPerDomain.entries()).map(([domain, lastLevelAge]) => {
+    const causeApplies = Boolean(topCause) && causeDomain === domain;
+    // READY_FOR_MORE : pousse clairement plus haut. Toute autre cause diagnostiquée
+    // sur ce domaine (méthode inadaptée, anxiété, désengagement, lacune) : on
+    // consolide au même niveau plutôt que de complexifier davantage. Pas de cause
+    // applicable : progression par défaut d'un cran, le cas le plus courant.
+    const delta = causeApplies && topCause === "READY_FOR_MORE" ? 2 : causeApplies ? 0 : 1;
+    return {
+      domain,
+      lastLevelAge,
+      targetLevelAge: lastLevelAge + delta,
+      cause: causeApplies ? topCause! : null,
+    };
+  });
+}
+
+function formatProgressionInstruction(targets: ProgressionTarget[]): string {
+  if (targets.length === 0) {
+    return "PROGRESSION MESURÉE : aucun niveau académique mesuré pour l'instant chez cet enfant — calibre uniquement sur son âge chronologique (cf. consignes de développement ci-dessus).";
+  }
+  const lines = targets.map((t) => {
+    const label = ACADEMIC_DOMAIN_LABELS[t.domain] ?? t.domain;
+    const note =
+      t.cause === "READY_FOR_MORE"
+        ? " — Naya a diagnostiqué que l'enfant est prêt pour plus difficile ici : vise clairement ce niveau, ne reste pas en dessous."
+        : t.cause
+        ? " — Naya a diagnostiqué une difficulté récente ici : reste à ce niveau, mais change d'approche plutôt que de complexifier."
+        : "";
+    return `- ${label} : dernier niveau académique atteint ${t.lastLevelAge} ans → si tu génères un défi dans ce domaine, vise "academic_level_age" ${t.targetLevelAge} ans.${note}`;
+  });
+  return `PROGRESSION MESURÉE (zone proximale d'apprentissage — reflète le niveau réel déjà démontré par cet enfant sur ses défis complétés, pas une estimation) :\n${lines.join("\n")}`;
+}
+
 // Shared constitution injected into every challenge-generation prompt (bulk
 // and single). Written dense and numbered on purpose: the text-only calls
-// run on Haiku (lightweight model), which needs explicit, unambiguous rules
-// rather than loose guidance to reliably avoid generic/unrealistic output.
+// run on DeepSeek Chat (lightweight model), which needs explicit,
+// unambiguous rules rather than loose guidance to reliably avoid
+// generic/unrealistic output.
 const GENIZIO_PRINCIPLES = `PRINCIPES DE GÉNÉRATION GÉNIZIO (règles strictes, à respecter impérativement) :
 - CONCRET AVANT TOUT : chaque défi doit produire un résultat observable et vérifiable (objet construit, expérience réalisée, problème résolu, performance accomplie) — jamais une simple rêverie sans action physique.
 - Priorise dans cet ordre : observation du réel > expérimentation > création manuelle > résolution de problème concret. L'imagination doit s'appuyer sur une action réelle, jamais la remplacer seule.
@@ -610,33 +729,99 @@ ARTISANALE (habileté manuelle) :
 SPATIALE :
 3 ans : vocabulaire spatial de base (dessus/dessous, dedans/dehors). 4-9 ans : perçoit des objets sous différents points de vue, notion de perspective en développement. 5 ans : réussit une tâche simple de "pliage mental" (imaginer un objet après pliage). 7-8 ans : pliage mental plus avancé, plafonne généralement vers cet âge.`;
 
-// Helper to call Google AI Studio OpenAI-compatible endpoint
+// Dupliquée mot pour mot dans generateChallenges et generateSingleChallenge avant
+// extraction (2026-07-22) — avait déjà dérivé silencieusement (une copie disait
+// "Adapte strictly" au lieu de "strictement"), même risque que GENIZIO_PRINCIPLES
+// et SAFETY_INSTRUCTION ci-dessus, même remède : un seul texte source.
+const AGE_DEVELOPMENT_GUIDANCE = `CONSIGNES DE DÉVELOPPEMENT LIÉES À L'ÂGE :
+Adapte strictement la forme, la complexité intellectuelle et la motricité requise pour le défi à l'âge exact de l'enfant :
+- De 1 à 3 ans (Exploration sensorielle et motrice) : Activités purement sensorielles (toucher, manipuler, transvaser, trier des couleurs/objets simples, textures, eau, sable). Aucune règle complexe, aucune consigne de motricité fine avancée (pas de découpage précis, pas d'écriture). Étape ultra-simple en 1 action à la fois.
+- De 4 à 7 ans (Phase exploratoire et imaginative) : Activités intégrant de l'imagination, des petits jeux de rôle ("fait semblant de"), du dessin, des petites manipulations de cause à effet guidées par le plaisir immédiat. L'action pratique doit primer sur la théorie.
+- De 8 à 11 ans (Phase structurée et concrète) : Proposer des projets de fabrication concrets (maquettes, expériences scientifiques simples, recettes simples, bricolage) avec des règles claires, des étapes méthodiques, et de l'observation logique ou sociale.
+- De 12 ans et + (Phase d'abstraction et d'analyse) : Permettre de la pensée critique, de la stratégie, des projets plus autonomes et complexes, de la logique conceptuelle (ex: coder un algorithme sur papier, déchiffrer des énigmes ou concevoir des objets élaborés).`;
+
+// Idem — dupliquée dans les deux mêmes prompts, indentation cosmétique différente
+// à chaque site (alignée sur "- " ou "N. ") mais texte identique. Chaque site
+// garde son propre préfixe de liste, comme SAFETY_INSTRUCTION ci-dessus.
+const MATERIAL_TAGS_INSTRUCTION = `Pour "material_tags" : un tag court en minuscules, sans accent, par matériau physique achetable (ex: "carton", "cutter", "colle", "ampoule") — pas les objets déjà présents chez tout le monde (eau, table, papier). Un tableau vide si rien d'achetable n'est nécessaire.`;
+
+// Ajoutée le 2026-07-22 : avant, "intelligences" acceptait n'importe quel texte
+// libre (ex: "Créativité"), qui ne correspondait jamais aux 9 clés réelles de
+// VALID_TALENT_KEYS — resolveTargetIntelligences filtre désormais ce qui ne
+// matche pas, mais encore faut-il que l'IA vise juste dès le départ.
+const INTELLIGENCES_FIELD_INSTRUCTION = `Pour "intelligences" : 1 à 2 clés EXACTES parmi "spatial", "corporelle", "sociale", "entrepreneuriale", "creative", "artisanale", "emotionnelle", "logico_mathematique", "linguistique" — jamais un mot libre ou un nom français ("Créativité", "Logique") : uniquement ces clés techniques, celles réellement sollicitées par ce défi.`;
+
+// Idem — dupliquée avec une variation mineure ("déjà proposés" vs "déjà proposés à
+// cet enfant"). Fonction plutôt que constante puisque paramétrée par existingTitles ;
+// garde la formulation la plus complète des deux anciennes copies.
+function buildAvoidRepeatsInstruction(existingTitles: string[]): string {
+  return `Ne répète pas ces titres déjà proposés à cet enfant (${existingTitles.join(" | ") || "(aucun)"}) — et si tu remarques que plusieurs d'entre eux suivent la même mécanique de fond (ex: "récupère des matériaux et construis un objet"), varie consciemment vers une autre approche (observation, expérimentation, résolution de problème, performance...) plutôt que de prolonger ce schéma.`;
+}
+
 const ALLOWED_IMAGE_MEDIA_TYPES = ["image/jpeg", "image/png", "image/gif", "image/webp"];
 
-export async function callClaude(
+// Extraction robuste du JSON dans une réponse LLM brute. Remplace les regex
+// ad-hoc dispersées (une par site d'appel, chacune avec ses propres angles
+// morts) par une seule implémentation couvrant les cas réellement observés :
+// bloc balisé ```json ... ``` (avec ou sans texte de politesse autour, ex.
+// "Voici le résultat :\n```json\n{...}\n```\nJ'espère que ça aide"), bloc
+// balisé sans fermeture (troncature de sortie), plusieurs blocs balisés dans
+// la même réponse (on préfère celui explicitement tagué "json"), et JSON brut
+// sans balise du tout. DeepSeek Reasoner en particulier n'accepte pas
+// response_format:json_object (cf. callDeepSeekText) et est donc le provider
+// le plus susceptible d'entourer son JSON de texte conversationnel.
+export function extractJsonFromLLMResponse(raw: string): string {
+  const trimmed = (raw ?? "").trim();
+  if (!trimmed) return trimmed;
+
+  // 1. Bloc explicitement tagué ```json ... ``` (prioritaire s'il y a plusieurs blocs)
+  const tagged = trimmed.match(/```json\s*([\s\S]*?)```/i);
+  if (tagged) return tagged[1].trim();
+
+  // 2. N'importe quel bloc balisé dont le contenu ressemble à du JSON
+  for (const m of trimmed.matchAll(/```(?:\w+)?\s*([\s\S]*?)```/gi)) {
+    const content = m[1].trim();
+    if (content.startsWith("{") || content.startsWith("[")) return content;
+  }
+
+  // 3. Bloc balisé sans fermeture (réponse tronquée) — on retire juste le marqueur d'ouverture
+  const unclosed = trimmed.match(/^```(?:\w+)?\s*([\s\S]*)$/);
+  if (unclosed) {
+    const content = unclosed[1].trim();
+    if (content.startsWith("{") || content.startsWith("[")) return content;
+  }
+
+  // 4. Pas de balise — extrait le plus grand span {...} ou [...], tolère du
+  //    texte conversationnel avant/après le JSON.
+  const firstBrace = trimmed.search(/[{[]/);
+  const lastBrace = Math.max(trimmed.lastIndexOf("}"), trimmed.lastIndexOf("]"));
+  if (firstBrace !== -1 && lastBrace > firstBrace) {
+    return trimmed.slice(firstBrace, lastBrace + 1);
+  }
+
+  return trimmed;
+}
+
+// Routage IA (décision du 2026-07-21) : DeepSeek n'a pas de vision, donc toute
+// analyse d'image reste sur Claude Sonnet 5 — c'est la SEULE raison pour laquelle
+// Anthropic est encore appelé. Tout le texte (génération de défis, synthèses,
+// raisonnement bayésien NAYA...) passe par DeepSeek, en attendant une clé Gemini 3.6.
+// Anciens noms de modèles Anthropic conservés en commentaire pour mémoire :
+// claude-haiku-4-5-20251001 (texte, remplacé) / claude-sonnet-5 (vision, inchangé).
+//
+// "deepseek-chat" ci-dessous est un nom LOGIQUE interne (résolu vers le modèle
+// réel dans callDeepSeekText, cf. son propre commentaire) — pas le nom d'API
+// littéral, qui lui est déprécié le 2026-07-24 en faveur de deepseek-v4-flash.
+const DEEPSEEK_CHAT_MODEL = "deepseek-chat";
+
+async function callAnthropicVision(
   prompt: string,
-  jsonMode: boolean = false,
-  imageUrl?: string,
-  // Anthropic's output-token rate limit is reserved based on this requested
-  // max, not on what's actually generated — a call that only needs ~100
-  // tokens but asks for 4000 can eat an entire minute's budget by itself.
-  // Every call site should pass a value close to its real expected output
-  // instead of relying on one size fits all.
-  maxOutputTokens = 4000,
-  maxRetries = 3,
-  // Preferred over imageUrl when present — the caller already has the raw
-  // bytes (e.g. straight from the browser's file input) and skips the
-  // upload-then-fetch round trip through Supabase Storage that imageUrl
-  // requires (see validateChallengeProof: that upload used to happen on
-  // every submission attempt regardless of outcome, hitting the storage
-  // API's own rate limit).
-  imageData?: { base64: string; mediaType: string },
-  // Force a specific model regardless of the vision/text default routing.
-  // Used by the NAYA 2.0 reasoning role (generateHypotheses) to run on
-  // Sonnet even though it's a text-only call — bayesian causal diagnosis is
-  // the "when the system needs to think" case decision #27 reserves the
-  // premium model for. Existing call sites omit it and keep Haiku-for-text.
-  modelOverride?: string
+  jsonMode: boolean,
+  imageUrl: string | undefined,
+  imageData: { base64: string; mediaType: string } | undefined,
+  maxOutputTokens: number,
+  maxRetries: number,
+  model: string
 ): Promise<string> {
   const apiKey = process.env.ANTHROPIC_API_KEY;
   if (!apiKey) {
@@ -689,14 +874,6 @@ export async function callClaude(
     ? "Tu es un assistant IA précis. Tu dois impérativement répondre au format JSON demandé, sous forme de JSON brut, sans bloc de code Markdown, sans préambule ni explications."
     : undefined;
 
-  // Cost-effective routing: use Claude Sonnet 5 only when analyzing an image (vision), otherwise use Claude Haiku 4.5.
-  // Must check imageData too, not just imageUrl: validateChallengeProof's real photo
-  // path sends raw bytes via imageData (see its own comment above) and was silently
-  // falling through to Haiku for every proof-photo validation despite this comment's
-  // intent — imageUrl stayed undefined so the ternary never saw a reason to pick Sonnet.
-  // modelOverride wins over both — lets a text-only call opt into Sonnet (NAYA reasoning role).
-  const model = modelOverride ?? (imageData || imageUrl ? "claude-sonnet-5" : "claude-haiku-4-5-20251001");
-
   let attempt = 0;
   while (attempt < maxRetries) {
     const controller = new AbortController();
@@ -711,7 +888,7 @@ export async function callClaude(
           "anthropic-version": "2023-06-01",
         },
         body: JSON.stringify({
-          model: model,
+          model,
           max_tokens: maxOutputTokens,
           system: systemPrompt,
           messages: [
@@ -727,14 +904,14 @@ export async function callClaude(
       if (!response.ok) {
         const errorText = await response.text();
         console.error(`Claude API Error Response (Attempt ${attempt + 1}):`, errorText);
-        
+
         if (response.status === 429) {
           throw new Error("Quota Anthropic atteint (429). Veuillez patienter une minute avant de réessayer.");
         }
         if (response.status === 503 || response.status >= 500) {
           throw new Error(`Erreur Anthropic API (${response.status})`); // Transient error -> trigger retry
         }
-        
+
         throw new Error(`Erreur Anthropic API (${response.status}) - Fatal`);
       }
 
@@ -743,7 +920,7 @@ export async function callClaude(
       // a "thinking" block (content[0].type === "thinking", no .text), so content[0].text
       // is undefined for any reasoning-capable model — that silently produced "" and made
       // JSON.parse fail with "Réponse IA invalide" on every Sonnet call. Finding the text
-      // block makes callClaude robust to thinking blocks regardless of model.
+      // block makes this robust to thinking blocks regardless of model.
       const textBlock = Array.isArray(json.content)
         ? json.content.find((b: any) => b?.type === "text")
         : null;
@@ -759,19 +936,164 @@ export async function callClaude(
     } catch (err: any) {
       clearTimeout(timeoutId);
       attempt++;
-      
+
       const isFatal = err.message && err.message.includes("Fatal");
       if (attempt >= maxRetries || isFatal) {
         throw err;
       }
-      
+
       const delay = Math.pow(2, attempt - 1) * 1000 + Math.random() * 500;
-      console.log(`Retrying Claude API in ${Math.round(delay)}ms...`);
+      console.log(`Retrying Anthropic API in ${Math.round(delay)}ms...`);
       await new Promise(res => setTimeout(res, delay));
     }
   }
-  
-  throw new Error("Erreur Claude API après plusieurs tentatives.");
+
+  throw new Error("Erreur Anthropic API après plusieurs tentatives.");
+}
+
+// DeepSeek expose une API compatible OpenAI (chat/completions) — même forme de
+// requête/réponse que la plupart des fournisseurs texte, contrairement au format
+// propriétaire d'Anthropic utilisé ci-dessus pour la vision.
+async function callDeepSeekText(
+  prompt: string,
+  jsonMode: boolean,
+  maxOutputTokens: number,
+  maxRetries: number,
+  model: string
+): Promise<string> {
+  const apiKey = process.env.DEEPSEEK_API_KEY;
+  if (!apiKey) {
+    throw new Error("Clé API DeepSeek non configurée dans .env (DEEPSEEK_API_KEY)");
+  }
+
+  const systemPrompt = jsonMode
+    ? "Tu es un assistant IA précis. Tu dois impérativement répondre au format JSON demandé, sous forme de JSON brut, sans bloc de code Markdown, sans préambule ni explications."
+    : "Tu es un assistant IA précis et utile.";
+
+  // deepseek-chat / deepseek-reasoner sont dépréciés le 2026-07-24 15:59 UTC — on
+  // traduit donc ici nos anciens noms logiques ("model" reçu du routage de
+  // callClaude) vers le nouveau format plutôt que de laisser filer des alias qui
+  // cesseront de fonctionner à la date de coupure. Décision produit (2026-07-22) :
+  // deepseek-v4-flash (rapide/économique) reste le modèle par défaut pour tout le
+  // texte à fort volume (défis, interactions utilisateur) ; le rôle de
+  // raisonnement NAYA (diagnostic bayésien, seul site d'appel = generateHypotheses,
+  // volume faible) monte en gamme sur deepseek-v4-pro, le modèle le plus avancé de
+  // DeepSeek, cohérent avec la decision #27 ("réserver le premium quand le système
+  // doit vraiment réfléchir").
+  //
+  // "thinking" réactivé pour le raisonnement (2026-07-22, révision same-day) : le
+  // moteur bayésien alimente maintenant aussi le calcul de la cible de progression
+  // académique (cf. computeProgressionTargets plus bas — la cause diagnostiquée ici
+  // détermine le delta appliqué au prochain défi), un rôle plus déterminant qu'avant
+  // pour la qualité perçue de l'app. Le surcoût en tokens/latence reste réel mais
+  // acceptable vu le volume faible de ce site d'appel (une diagnose par écart
+  // détecté, pas par défi généré).
+  const isReasoning = model === "deepseek-reasoner";
+  const resolvedModel = isReasoning ? "deepseek-v4-pro" : "deepseek-v4-flash";
+  const thinking = isReasoning
+    ? { type: "enabled" as const, reasoning_effort: "high" as const }
+    : { type: "disabled" as const };
+
+  let attempt = 0;
+  while (attempt < maxRetries) {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 45000);
+
+    try {
+      const response = await fetch("https://api.deepseek.com/chat/completions", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${apiKey}`,
+        },
+        body: JSON.stringify({
+          model: resolvedModel,
+          max_tokens: maxOutputTokens,
+          thinking,
+          messages: [
+            { role: "system", content: systemPrompt },
+            { role: "user", content: prompt },
+          ],
+          // Le nouveau v4-flash supporte json_object même en mode "thinking", tant
+          // que le prompt système exige explicitement du JSON (fait ci-dessus) —
+          // contrairement à l'ancien deepseek-reasoner qui refusait ce paramètre.
+          ...(jsonMode ? { response_format: { type: "json_object" } } : {}),
+        }),
+        signal: controller.signal,
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error(`DeepSeek API Error Response (Attempt ${attempt + 1}):`, errorText);
+
+        if (response.status === 429) {
+          throw new Error("Quota DeepSeek atteint (429). Veuillez patienter une minute avant de réessayer.");
+        }
+        if (response.status === 503 || response.status >= 500) {
+          throw new Error(`Erreur DeepSeek API (${response.status})`); // Transient error -> trigger retry
+        }
+
+        throw new Error(`Erreur DeepSeek API (${response.status}) - Fatal`);
+      }
+
+      const json = await response.json();
+      let textContent: string = json.choices?.[0]?.message?.content ?? "";
+      if (jsonMode) {
+        textContent = textContent.trim();
+        if (textContent.startsWith("```")) {
+          textContent = textContent.replace(/^```[a-z]*\n/, "").replace(/\n```$/, "").trim();
+        }
+      }
+      clearTimeout(timeoutId);
+      return textContent;
+    } catch (err: any) {
+      clearTimeout(timeoutId);
+      attempt++;
+
+      const isFatal = err.message && err.message.includes("Fatal");
+      if (attempt >= maxRetries || isFatal) {
+        throw err;
+      }
+
+      const delay = Math.pow(2, attempt - 1) * 1000 + Math.random() * 500;
+      console.log(`Retrying DeepSeek API in ${Math.round(delay)}ms...`);
+      await new Promise(res => setTimeout(res, delay));
+    }
+  }
+
+  throw new Error("Erreur DeepSeek API après plusieurs tentatives.");
+}
+
+export async function callClaude(
+  prompt: string,
+  jsonMode: boolean = false,
+  imageUrl?: string,
+  // Le plafond de tokens de sortie réservé n'est pas ce qui est réellement généré —
+  // un appel qui n'a besoin que de ~100 tokens mais en demande 4000 peut consommer
+  // tout le budget par-minute à lui seul. Chaque site d'appel doit passer une
+  // valeur proche de sa sortie réelle attendue plutôt qu'une taille unique.
+  maxOutputTokens = 4000,
+  maxRetries = 3,
+  // Préféré à imageUrl quand présent — l'appelant a déjà les octets bruts (ex.
+  // directement depuis un input file du navigateur) et évite l'aller-retour
+  // upload-puis-fetch par Supabase Storage qu'imageUrl nécessite (cf.
+  // validateChallengeProof : cet upload se faisait avant à chaque soumission
+  // quel que soit le résultat, ce qui saturait le rate limit de l'API storage).
+  imageData?: { base64: string; mediaType: string },
+  // Force un modèle précis. Avant le passage à DeepSeek (2026-07-21), servait à
+  // faire tourner un appel texte sur Sonnet pour le rôle de raisonnement NAYA
+  // (diagnostic bayésien, decision #27 — "quand le système doit vraiment
+  // réfléchir"). Le seul site d'appel qui l'utilise (generateHypotheses) passe
+  // désormais "deepseek-reasoner" au lieu de "claude-sonnet-5".
+  modelOverride?: string
+): Promise<string> {
+  const hasImage = !!(imageData || imageUrl);
+  if (hasImage) {
+    // DeepSeek n'a pas de vision — toute analyse d'image reste sur Claude,
+    // quel que soit modelOverride (qui ne s'applique qu'au routage texte).
+    return callAnthropicVision(prompt, jsonMode, imageUrl, imageData, maxOutputTokens, maxRetries, "claude-sonnet-5");
+  }
+  return callDeepSeekText(prompt, jsonMode, maxOutputTokens, maxRetries, modelOverride ?? DEEPSEEK_CHAT_MODEL);
 }
 
 const GenerateInput = z.object({
@@ -801,7 +1123,7 @@ export const generateChallenges = createServerFn({ method: "POST" })
     // not "hasn't gotten to it yet this week".
     const STALE_DOMAIN_CUTOFF = new Date(Date.now() - 14 * 24 * 60 * 60 * 1000).toISOString();
 
-    const [{ data: existing }, { data: completedChallenges }, { data: staleChallenges }] = await Promise.all([
+    const [{ data: existing }, { data: completedChallenges }, { data: staleChallenges }, progressionTargets] = await Promise.all([
       supabase
         .from("challenges")
         .select("title")
@@ -827,6 +1149,7 @@ export const generateChallenges = createServerFn({ method: "POST" })
         .eq("child_id", data.childId)
         .eq("status", "todo")
         .lt("created_at", STALE_DOMAIN_CUTOFF),
+      computeProgressionTargets(supabase, data.childId),
     ]);
     const existingTitles = (existing ?? []).map((c) => c.title);
     const completedSummary = (completedChallenges ?? [])
@@ -860,12 +1183,9 @@ ${formatChildInterestsPayload(child.interests)}
 Défis déjà accomplis par l'enfant et observations de Naya :
 ${completedSummary || "(Aucun défi complété pour le moment)"}
 
-CONSIGNES DE DÉVELOPPEMENT LIÉES À L'ÂGE :
-Adapte strictly la forme, la complexité intellectuelle et la motricité requise pour le défi à l'âge exact de l'enfant :
-- De 1 à 3 ans (Exploration sensorielle et motrice) : Activités purement sensorielles (toucher, manipuler, transvaser, trier des couleurs/objets simples, textures, eau, sable). Aucune règle complexe, aucune consigne de motricité fine avancée (pas de découpage précis, pas d'écriture). Étape ultra-simple en 1 action à la fois.
-- De 4 à 7 ans (Phase exploratoire et imaginative) : Activités intégrant de l'imagination, des petits jeux de rôle ("fait semblant de"), du dessin, des petites manipulations de cause à effet guidées par le plaisir immédiat. L'action pratique doit primer sur la théorie.
-- De 8 à 11 ans (Phase structurée et concrète) : Proposer des projets de fabrication concrets (maquettes, expériences scientifiques simples, recettes simples, bricolage) avec des règles claires, des étapes méthodiques, et de l'observation logique ou sociale.
-- De 12 ans et + (Phase d'abstraction et d'analyse) : Permettre de la pensée critique, de la stratégie, des projets plus autonomes et complexes, de la logique conceptuelle (ex: coder un algorithme sur papier, déchiffrer des énigmes ou concevoir des objets élaborés).
+${AGE_DEVELOPMENT_GUIDANCE}
+
+${formatProgressionInstruction(progressionTargets)}
 
 ${GENIZIO_PRINCIPLES}
 
@@ -875,16 +1195,15 @@ Contraintes :
 - Choisis parmi ces domaines : ${shuffle(DOMAINS).join(", ")}.${ignoredDomains.length > 0 ? `\n- Cet enfant a déjà reçu plusieurs défis dans ${ignoredDomains.length > 1 ? "ces domaines" : "ce domaine"} (${ignoredDomains.join(", ")}) sans jamais les commencer : évite de reproposer ${ignoredDomains.length > 1 ? "ces domaines" : "ce domaine"}, sauf sous un angle radicalement différent de ce qui a déjà été proposé.` : ""}
 - Chaque défi doit être concret, réalisable à la maison ou dans le quartier, adapté à l'âge.
 - Étapes claires (3 à 6), matériaux simples et accessibles.
-- Ne répète pas ces titres déjà proposés (${existingTitles.join(" | ") || "(aucun)"}) — et si tu remarques que plusieurs d'entre eux suivent la même mécanique de fond (ex: "récupère des matériaux et construis un objet"), varie consciemment vers une autre approche (observation, expérimentation, résolution de problème, performance...) plutôt que de prolonger ce schéma.
-- Pour "material_tags" : un tag court en minuscules, sans accent, par matériau physique achetable
-  (ex: "carton", "cutter", "colle", "ampoule") — pas les objets déjà présents chez tout le monde
-  (eau, table, papier). Un tableau vide si rien d'achetable n'est nécessaire.
+- ${buildAvoidRepeatsInstruction(existingTitles)}
+- ${MATERIAL_TAGS_INSTRUCTION}
+- ${INTELLIGENCES_FIELD_INSTRUCTION}
 - ${SAFETY_INSTRUCTION}
 - ${PROOF_MODE_INSTRUCTION}
 - ${ACADEMIC_REFERENTIAL_INSTRUCTION}
 
 Réponds STRICTEMENT en JSON valide avec ce format, pour chaque défi :
-{"challenges":[{"domain":"...","title":"...","description":"...","duration":"...","steps":["...","..."],"materials":["...","..."],"material_tags":["..."],"pedagogical_context":"Ce que Naya observe via cette activité","intelligences":["Intelligence dominante sollicitée"],"requires_supervision":true ou false,"supervision_warning":"..." (ou null si false),"difficulty":"facile"|"moyen"|"difficile","proof_mode":"photo"|"declarative","proof_target":{"metric":"...","value":20} (uniquement si declarative),"declarative_award":{"corporelle":2} (uniquement si declarative),"academic_domain":"mathematiques"|"langage"|"sciences"|"corporelle"|"sociale"|"emotionnelle"|"entrepreneuriale"|"artisanale"|"spatiale"|null,"academic_level_age":14 (uniquement si academic_domain non null),"academic_reference_note":"..." (uniquement si academic_domain non null)}]}`;
+{"challenges":[{"domain":"...","title":"...","description":"...","duration":"...","steps":["...","..."],"materials":["...","..."],"material_tags":["..."],"pedagogical_context":"Ce que Naya observe via cette activité","intelligences":["creative"],"requires_supervision":true ou false,"supervision_warning":"..." (ou null si false),"difficulty":"facile"|"moyen"|"difficile","proof_mode":"photo"|"declarative","proof_target":{"metric":"...","value":20} (uniquement si declarative),"declarative_award":{"corporelle":2} (uniquement si declarative),"academic_domain":"mathematiques"|"langage"|"sciences"|"corporelle"|"sociale"|"emotionnelle"|"entrepreneuriale"|"artisanale"|"spatiale"|null,"academic_level_age":14 (uniquement si academic_domain non null),"academic_reference_note":"..." (uniquement si academic_domain non null)}]}`;
 
     // Up to 6 full défis in one response, each now carrying the academic
     // referential fields (domain/level/citation) added on top of the original
@@ -894,8 +1213,9 @@ Réponds STRICTEMENT en JSON valide avec ce format, pour chaque défi :
     const content = await callClaude(prompt, true, undefined, 8000);
     let parsed: { challenges?: unknown };
     try {
-      parsed = JSON.parse(content);
-    } catch {
+      parsed = JSON.parse(extractJsonFromLLMResponse(content));
+    } catch (err) {
+      console.error("Error parsing generateChallenges LLM response:", err, "Raw:", content);
       throw new Error("Réponse IA invalide");
     }
 
@@ -915,16 +1235,10 @@ Réponds STRICTEMENT en JSON valide avec ce format, pour chaque défi :
       steps: c.steps,
       materials: c.materials,
       pedagogical_context: c.pedagogical_context || null,
-      // The model isn't told which exact tokens to use for "intelligences"
-      // (it's free text, e.g. "Créativité"), so it never matches
-      // VALID_TALENT_KEYS's technical keys (creative, spatial, ...) —
-      // target_intelligences at creation time is decorative, not the
-      // source of truth for talent scoring (that's increment_child_talents
-      // at validation time, which does constrain to the 9 known keys).
-      // Falling back to [c.domain] used to silently write a non-taxonomy
-      // value (e.g. "Cuisine") into this column; [] keeps this consistent
-      // with assignTemplateChallenge instead.
-      target_intelligences: c.intelligences || [],
+      // target_intelligences vient de finalizeChallenge (resolveTargetIntelligences),
+      // qui filtre le champ "intelligences" du JSON contre VALID_TALENT_KEYS — plus
+      // de fallback silencieux vers [c.domain], le prompt demande maintenant
+      // explicitement les 9 clés exactes (cf. INTELLIGENCES_FIELD_INSTRUCTION).
       ...finalizeChallenge(c, child.age),
     }));
 
@@ -1069,24 +1383,28 @@ Réponds STRICTEMENT en JSON valide avec ce format :
     try {
       aiContent = await callClaude(prompt, true, undefined, 500, 3, imageData);
     } catch (err) {
-      // A 429 isn't specific to the image — it's the whole API key rate
-      // limited. Falling back to a second full retry cycle (3 more attempts)
-      // on the exact same key almost always hits the same wall, burns ~6
-      // requests total, and used to surface as the confusing "Réponse IA
-      // invalide" instead of the real cause once both attempts failed.
-      // Surface the actual rate-limit message immediately instead.
-      if (err instanceof Error && err.message.includes("429")) {
-        throw err;
+      if (err instanceof Error && (err.message.includes("429") || err.message.includes("rate_limit") || err.message.includes("quota"))) {
+        console.error("Vision model rate limited / quota exceeded:", err);
+        throw new Error("Service IA temporairement surchargé (limite de débit atteinte). Veuillez réessayer dans un instant.");
       }
       console.warn("Vision model call failed, falling back to text only:", err);
       imageAnalyzed = false;
-      aiContent = await callClaude(prompt, true, undefined, 500);
+      try {
+        aiContent = await callClaude(prompt, true, undefined, 500);
+      } catch (fallbackErr) {
+        console.error("Text-only fallback model call failed:", fallbackErr);
+        if (fallbackErr instanceof Error && (fallbackErr.message.includes("429") || fallbackErr.message.includes("rate_limit") || fallbackErr.message.includes("quota"))) {
+          throw new Error("Service IA temporairement surchargé (limite de débit atteinte). Veuillez réessayer dans un instant.");
+        }
+        throw new Error(`Erreur d'analyse par l'IA : ${fallbackErr instanceof Error ? fallbackErr.message : "Erreur inconnue"}`);
+      }
     }
 
     let parsed: { observations?: string; talents_awarded?: Record<string, number> };
     try {
-      parsed = JSON.parse(aiContent);
-    } catch {
+      parsed = JSON.parse(extractJsonFromLLMResponse(aiContent));
+    } catch (parseErr) {
+      console.error("Error parsing vision/text AI response JSON:", parseErr, "Content:", aiContent);
       throw new Error("Réponse IA invalide — réessayez dans quelques instants.");
     }
 
@@ -1385,11 +1703,12 @@ export const assignTemplateChallenge = createServerFn({ method: "POST" })
         duration: template.duration,
         steps: template.steps,
         materials: template.materials,
-        target_intelligences: template.intelligences ?? [],
         status: "todo",
         progress: 0,
         pedagogical_context: template.pedagogical_context ?? null,
         estimated_duration_minutes: data.estimated_duration_minutes ?? null,
+        // target_intelligences vient de finalizeChallenge (resolveTargetIntelligences)
+        // plutôt que directement de template.intelligences, non filtré.
         ...finalizeChallenge(template, child.age),
       })
       .select()
@@ -1426,7 +1745,7 @@ export const generateSingleChallenge = createServerFn({ method: "POST" })
     // path never checked recent titles at all — a parent clicking "Composer un défi
     // ciblé" repeatedly could get literal duplicates. Fetching both in parallel
     // matches generateChallenges' existing pattern instead of inventing a new one.
-    const [{ data: completedChallenges }, { data: existing }] = await Promise.all([
+    const [{ data: completedChallenges }, { data: existing }, progressionTargets] = await Promise.all([
       supabase
         .from("challenges")
         .select("title, domain, ai_observations")
@@ -1440,6 +1759,7 @@ export const generateSingleChallenge = createServerFn({ method: "POST" })
         .eq("child_id", data.childId)
         .order("created_at", { ascending: false })
         .limit(30),
+      computeProgressionTargets(supabase, data.childId),
     ]);
 
     const completedSummary = (completedChallenges ?? [])
@@ -1466,19 +1786,16 @@ Profil de l'enfant :
 ${formatChildInterestsPayload(child.interests)}
 - Scores de talents actuels (Radar Chart de Howard Gardner) : ${JSON.stringify(child.talents || {})}
 
-CONSIGNES DE DÉVELOPPEMENT LIÉES À L'ÂGE :
-Adapte strictement la forme, la complexité intellectuelle et la motricité requise pour le défi à l'âge exact de l'enfant :
-- De 1 à 3 ans (Exploration sensorielle et motrice) : Activités purement sensorielles (toucher, manipuler, transvaser, trier des couleurs/objets simples, textures, eau, sable). Aucune règle complexe, aucune consigne de motricité fine avancée (pas de découpage précis, pas d'écriture). Étape ultra-simple en 1 action à la fois.
-- De 4 à 7 ans (Phase exploratoire et imaginative) : Activités intégrant de l'imagination, des petits jeux de rôle ("fait semblant de"), du dessin, des petites manipulations de cause à effet guidées par le plaisir immédiat. L'action pratique doit primer sur la théorie.
-- De 8 à 11 ans (Phase structurée et concrète) : Proposer des projets de fabrication concrets (maquettes, expériences scientifiques simples, recettes simples, bricolage) avec des règles claires, des étapes méthodiques, et de l'observation logique ou sociale.
-- De 12 ans et + (Phase d'abstraction et d'analyse) : Permettre de la pensée critique, de la stratégie, des projets plus autonomes et complexes, de la logique conceptuelle (ex: coder un algorithme sur papier, déchiffrer des énigmes ou concevoir des objets élaborés).
+${AGE_DEVELOPMENT_GUIDANCE}
+
+${formatProgressionInstruction(progressionTargets)}
 
 ${GENIZIO_PRINCIPLES}
 
 Défis déjà accomplis par l'enfant et observations de Naya :
 ${completedSummary || "(Aucun défi complété pour le moment)"}
 
-Ne répète pas ces titres déjà proposés à cet enfant (${existingTitles.join(" | ") || "(aucun)"}) — et si tu remarques que plusieurs d'entre eux suivent la même mécanique de fond (ex: "récupère des matériaux et construis un objet"), varie consciemment vers une autre approche (observation, expérimentation, résolution de problème, performance...) plutôt que de prolonger ce schéma.
+${buildAvoidRepeatsInstruction(existingTitles)}
 
 Contexte immédiat (TRÈS IMPORTANT) :
 - Temps disponible : ${timeAvailable}
@@ -1497,11 +1814,10 @@ ${
     : ""
 }
 7. ${SAFETY_INSTRUCTION}
-8. Pour "material_tags" : un tag court en minuscules, sans accent, par matériau physique achetable
-   (ex: "carton", "cutter", "colle", "ampoule") — pas les objets déjà présents chez tout le monde
-   (eau, table, papier). Un tableau vide si rien d'achetable n'est nécessaire.
-9. ${PROOF_MODE_INSTRUCTION}
-10. ${ACADEMIC_REFERENTIAL_INSTRUCTION}
+8. ${MATERIAL_TAGS_INSTRUCTION}
+9. ${INTELLIGENCES_FIELD_INSTRUCTION}
+10. ${PROOF_MODE_INSTRUCTION}
+11. ${ACADEMIC_REFERENTIAL_INSTRUCTION}
 
 Réponds STRICTEMENT en JSON valide avec ce format exact :
 {
@@ -1513,7 +1829,7 @@ Réponds STRICTEMENT en JSON valide avec ce format exact :
   "materials": ["Outil 1", "Matériau 2..."],
   "material_tags": ["outil-1", "materiau-2"],
   "pedagogical_context": "Ce que Naya observe via cette activité",
-  "intelligences": ["Intelligence dominante sollicitée"],
+  "intelligences": ["creative"],
   "requires_supervision": true ou false,
   "supervision_warning": "Attention: Manipulez le couteau avec l'enfant" (ou null si false),
   "difficulty": "facile" | "moyen" | "difficile",
@@ -1532,8 +1848,9 @@ Réponds STRICTEMENT en JSON valide avec ce format exact :
     const content = await callClaude(prompt, true, undefined, 1200);
     let parsed: unknown;
     try {
-      parsed = JSON.parse(content);
-    } catch {
+      parsed = JSON.parse(extractJsonFromLLMResponse(content));
+    } catch (err) {
+      console.error("Error parsing generateSingleChallenge LLM response:", err, "Raw:", content);
       throw new Error("Réponse IA invalide");
     }
 
@@ -1628,6 +1945,82 @@ Mets en lumière ses formes d'intelligence dominantes qui ressortent de ses acti
         child.ai_synthesis ||
         "L'intelligence de Naya se repose quelques instants (quota de requêtes atteint). Revenez dans une petite minute pour lire la synthèse complète !"
       );
+    }
+  });
+
+// Lettre d'orientation du Passeport d'Excellence — distincte de getChildAISynthesis
+// (qui est comportementale/pédagogique) : celle-ci est tournée vers l'avenir,
+// synthétise guilde + talents dominants + domaines les plus pratiqués en un
+// paragraphe de recommandation, dans le ton d'une lettre de référence. Gatée sur
+// pdf_unlocked (data.childId doit appartenir à un Passeport déjà payé/activé par
+// l'administration) : contrairement à un chat libre, le volume d'appels reste donc
+// borné au nombre de familles ayant payé, pas à l'usage gratuit de l'app. Même
+// cache 7 jours que ai_synthesis, mêmes garanties (fallback sur l'ancienne lettre
+// en cas d'échec transitoire de l'API).
+export const getPassportLetter = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .validator((input: unknown) => z.object({ childId: z.string().uuid() }).parse(input))
+  .handler(async ({ data, context }) => {
+    const { supabase, userId } = context;
+
+    const { data: child } = await supabase
+      .from("child_profiles")
+      .select("*")
+      .eq("id", data.childId)
+      .eq("user_id", userId)
+      .single();
+
+    if (!child) throw new Error("Profil introuvable");
+    if (!child.pdf_unlocked) throw new Error("Passeport non débloqué");
+
+    const { data: completed } = await supabase
+      .from("challenges")
+      .select("title, domain")
+      .eq("child_id", data.childId)
+      .eq("status", "completed");
+
+    if (!completed || completed.length === 0) {
+      return "";
+    }
+
+    const ONE_WEEK_MS = 7 * 24 * 60 * 60 * 1000;
+    const lastGeneratedAt = child.passport_letter_generated_at ? new Date(child.passport_letter_generated_at).getTime() : 0;
+    if (child.passport_letter && Date.now() - lastGeneratedAt < ONE_WEEK_MS) {
+      return child.passport_letter;
+    }
+
+    const domainCounts: Record<string, number> = {};
+    for (const c of completed) domainCounts[c.domain] = (domainCounts[c.domain] ?? 0) + 1;
+    const topDomains = Object.entries(domainCounts).sort((a, b) => b[1] - a[1]).slice(0, 3).map(([d]) => d);
+
+    const topTalents = Object.entries((child.talents as Record<string, number>) || {})
+      .filter(([, v]) => (v ?? 0) > 0)
+      .sort((a, b) => (b[1] ?? 0) - (a[1] ?? 0))
+      .slice(0, 3)
+      .map(([k]) => TALENT_KEY_LABELS[k] ?? k);
+
+    const prompt = `Tu es Naya, mentore IA de Génizio. Rédige la lettre de clôture du "Passeport d'Excellence" — un dossier de valorisation des talents — de ${child.name} (${child.age} ans).
+
+Domaines les plus pratiqués : ${topDomains.join(", ") || "non déterminés"}
+Talents dominants : ${topTalents.join(", ") || "non déterminés"}
+Nombre de défis réels complétés : ${completed.length}
+
+Écris un unique paragraphe (4 à 6 phrases), chaleureux et tourné vers l'avenir, qui :
+- résume ce que ces éléments révèlent du potentiel de ${child.name},
+- suggère 2-3 pistes concrètes (matières, activités, filières) où ce potentiel pourrait s'épanouir,
+- reste honnête et mesuré (aucun score, aucune comparaison à d'autres enfants, aucune promesse de réussite garantie).
+Texte brut uniquement, aucune syntaxe Markdown.`;
+
+    try {
+      const letter = await callClaude(prompt, false, undefined, 400);
+      await supabase
+        .from("child_profiles")
+        .update({ passport_letter: letter, passport_letter_generated_at: new Date().toISOString() })
+        .eq("id", data.childId);
+      return letter;
+    } catch (e: any) {
+      console.error("Passport letter error:", e.message);
+      return child.passport_letter || "";
     }
   });
 

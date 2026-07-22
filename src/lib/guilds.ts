@@ -108,6 +108,40 @@ export const NO_GUILD_YET: GuildInfo = {
   talentKeys: [],
 };
 
+// Labels "voie/domaine" distincts des noms de personas de Guilde (celles-ci
+// s'affichent déjà ailleurs sur le Portfolio, ex. "Guilde de Nora : Les
+// Bâtisseurs") — utilisés uniquement par getTalentAffinities ci-dessous, pour
+// répondre à "où ça mène" plutôt que "à quelle Guilde j'appartiens".
+const AFFINITY_LABELS: Record<GuildKey, string> = {
+  batisseurs: "Ingénierie & construction",
+  inventeurs: "Technologie & innovation",
+  explorateurs: "Sciences & découverte",
+  createurs: "Arts & création",
+  strateges: "Entrepreneuriat & leadership",
+  protecteurs: "Écologie & vivant",
+};
+
+export type TalentAffinity = { key: GuildKey; label: string; pct: number };
+
+/** Pour chaque Guilde ayant au moins un talentKey (protecteurs en est
+ *  toujours exclu, cf. talentKeys: [] ci-dessus), calcule un % d'affinité =
+ *  moyenne des scores réels de l'enfant sur les talents de cette Guilde.
+ *  Trié du plus fort au plus faible. Aucune donnée inventée : mêmes scores
+ *  que ceux utilisés par getChildGuild(), juste agrégés différemment. */
+export function getTalentAffinities(
+  talents: Record<string, number> | null | undefined,
+): TalentAffinity[] {
+  const raw = talents ?? {};
+  return (Object.entries(GUILDS) as [GuildKey, GuildInfo][])
+    .filter(([, guild]) => guild.talentKeys.length > 0)
+    .map(([key, guild]) => {
+      const scores = guild.talentKeys.map((k) => raw[k] ?? 0);
+      const pct = Math.round(scores.reduce((a, b) => a + b, 0) / scores.length);
+      return { key, label: AFFINITY_LABELS[key], pct };
+    })
+    .sort((a, b) => b.pct - a.pct);
+}
+
 /** Retourne l'info de la Guilde dominante d'un enfant à partir de ses scores
  *  de talents, ou NO_GUILD_YET si aucun talent n'a encore de score positif —
  *  on ne force plus une guilde arbitraire sur un enfant qui n'a rien fait.

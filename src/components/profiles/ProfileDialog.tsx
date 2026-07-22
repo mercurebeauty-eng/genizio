@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { INTERESTS_BY_TALENT, AVATAR_COLORS, emptyProfileDraft, type ChildProfile, type ProfileDraft } from "./shared";
+import { toast } from "sonner";
 
 export function ProfileDialog({
   initial,
@@ -58,39 +59,47 @@ export function ProfileDialog({
       return;
     }
     setBusy(true);
-    const payload = {
-      user_id: userId,
-      name: draft.name.trim().slice(0, 40),
-      age: draft.age,
-      interests: draft.interests,
-      city: draft.city?.trim() || null,
-      country: draft.country?.trim() || null,
-      avatar_color: draft.avatar_color,
-    };
-    if (initial) {
-      const { error } = await supabase.from("child_profiles").update(payload).eq("id", initial.id);
+    try {
+      const payload = {
+        user_id: userId,
+        name: draft.name.trim().slice(0, 40),
+        age: draft.age,
+        interests: draft.interests,
+        city: draft.city?.trim() || null,
+        country: draft.country?.trim() || null,
+        avatar_color: draft.avatar_color,
+      };
+      if (initial) {
+        const { error } = await supabase.from("child_profiles").update(payload).eq("id", initial.id);
+        if (error) {
+          setError(error.message);
+          toast.error(error.message);
+          return;
+        }
+      } else {
+        const { data: created, error } = await supabase.from("child_profiles").insert(payload).select("id").single();
+        if (error) {
+          setError(error.message);
+          toast.error(error.message);
+          return;
+        }
+        if (created) {
+          await supabase.from("consent_events").insert({
+            user_id: userId,
+            child_id: created.id,
+            event_type: "child_profile_created",
+            description: `Profil créé pour ${payload.name}`,
+          });
+        }
+      }
+      onSaved();
+    } catch (err: any) {
+      const msg = err?.message ?? "Erreur lors de l'enregistrement du profil";
+      setError(msg);
+      toast.error(msg);
+    } finally {
       setBusy(false);
-      if (error) {
-        setError(error.message);
-        return;
-      }
-    } else {
-      const { data: created, error } = await supabase.from("child_profiles").insert(payload).select("id").single();
-      setBusy(false);
-      if (error) {
-        setError(error.message);
-        return;
-      }
-      if (created) {
-        await supabase.from("consent_events").insert({
-          user_id: userId,
-          child_id: created.id,
-          event_type: "child_profile_created",
-          description: `Profil créé pour ${payload.name}`,
-        });
-      }
     }
-    onSaved();
   };
 
   const selectedColor = useMemo(

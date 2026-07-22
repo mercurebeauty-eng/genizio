@@ -9,10 +9,14 @@ import {
   getTalentCityStatsAdmin,
   getNayaTelemetryAdmin,
   getCommercePassportsDataAdmin,
+  getAiProviderStatusAdmin,
+  getProgressionHealthAdmin,
   ExecutiveKPIs,
   ParentBIRC,
   TalentCityStatsResponse,
   CommercePassportsDataResponse,
+  AiProviderStatus,
+  ProgressionHealthResponse,
 } from "@/lib/admin-os.functions";
 import { NayaTelemetryResponse } from "@/lib/naya-telemetry";
 import { AdminNavTabBar, AdminTab } from "@/components/admin/AdminNavTabBar";
@@ -35,6 +39,8 @@ function AdminIndexPage() {
   const [parents, setParents] = useState<ParentBIRC[]>([]);
   const [talentStats, setTalentStats] = useState<TalentCityStatsResponse | null>(null);
   const [nayaTelemetry, setNayaTelemetry] = useState<NayaTelemetryResponse | null>(null);
+  const [aiProviderStatus, setAiProviderStatus] = useState<AiProviderStatus | null>(null);
+  const [progressionHealth, setProgressionHealth] = useState<ProgressionHealthResponse | null>(null);
   const [commerceData, setCommerceData] = useState<CommercePassportsDataResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
@@ -42,6 +48,8 @@ function AdminIndexPage() {
   const getExecutiveKPIsFn = useServerFn(getExecutiveKPIsAdmin);
   const getTalentStatsFn = useServerFn(getTalentCityStatsAdmin);
   const getNayaTelemetryFn = useServerFn(getNayaTelemetryAdmin);
+  const getAiProviderStatusFn = useServerFn(getAiProviderStatusAdmin);
+  const getProgressionHealthFn = useServerFn(getProgressionHealthAdmin);
   const getCommerceDataFn = useServerFn(getCommercePassportsDataAdmin);
   const toggleUnlockFn = useServerFn(togglePassportUnlock);
   const grantSlotFn = useServerFn(grantProfileSlot);
@@ -52,16 +60,20 @@ function AdminIndexPage() {
     else setIsRefreshing(true);
 
     try {
-      const [execData, talentData, nayaData, commData] = await Promise.all([
+      const [execData, talentData, nayaData, aiStatus, progressionData, commData] = await Promise.all([
         getExecutiveKPIsFn(),
         getTalentStatsFn(),
         getNayaTelemetryFn(),
+        getAiProviderStatusFn(),
+        getProgressionHealthFn(),
         getCommerceDataFn(),
       ]);
       setKpis(execData.kpis);
       setParents(execData.parents ?? []);
       setTalentStats(talentData);
       setNayaTelemetry(nayaData);
+      setAiProviderStatus(aiStatus);
+      setProgressionHealth(progressionData);
       setCommerceData(commData);
     } catch (err: any) {
       console.error("Error fetching executive data:", err);
@@ -79,30 +91,54 @@ function AdminIndexPage() {
   }, [session]);
 
   const handleGrantSlot = async (userId: string, delta: number) => {
-    const res = await grantSlotFn({ data: { userId, delta } });
-    if (res.ok) {
-      toast.success(
-        delta > 0
-          ? `Slot débloqué (total : ${res.extraSlots} slots bonus)`
-          : `Slot révoqué (total : ${res.extraSlots} slots bonus)`
-      );
-      await loadData(false);
+    try {
+      const res = await grantSlotFn({ data: { userId, delta } });
+      if (res.ok) {
+        toast.success(
+          delta > 0
+            ? `Slot débloqué (total : ${res.extraSlots} slots bonus)`
+            : `Slot révoqué (total : ${res.extraSlots} slots bonus)`
+        );
+        await loadData(false);
+      } else {
+        toast.error("Échec de la modification du slot.");
+      }
+    } catch (err: any) {
+      console.error("Erreur lors de la modification du slot:", err);
+      toast.error(err?.message || "Erreur lors de la modification du slot.");
+      throw err;
     }
   };
 
   const handleTogglePassport = async (childId: string, unlock: boolean) => {
-    const res = await toggleUnlockFn({ data: { childId, unlock } });
-    if (res.ok) {
-      toast.success(unlock ? "Passeport d'Excellence débloqué !" : "Passeport d'Excellence reverrouillé.");
-      await loadData(false);
+    try {
+      const res = await toggleUnlockFn({ data: { childId, unlock } });
+      if (res.ok) {
+        toast.success(unlock ? "Passeport d'Excellence débloqué !" : "Passeport d'Excellence reverrouillé.");
+        await loadData(false);
+      } else {
+        toast.error("Échec de la modification du statut passeport.");
+      }
+    } catch (err: any) {
+      console.error("Erreur lors de la modification du statut passeport:", err);
+      toast.error(err?.message || "Erreur lors du déblocage/verrouillage du passeport.");
+      throw err;
     }
   };
 
   const handleUpdateOrderStatus = async (orderId: string, status: string) => {
-    const res = await updateOrderStatusFn({ data: { id: orderId, status: status as any } });
-    if (res) {
-      toast.success("Statut de la commande mis à jour avec succès.");
-      await loadData(false);
+    try {
+      const res = await updateOrderStatusFn({ data: { id: orderId, status: status as any } });
+      if (res) {
+        toast.success("Statut de la commande mis à jour avec succès.");
+        await loadData(false);
+      } else {
+        toast.error("Échec de la mise à jour du statut de la commande.");
+      }
+    } catch (err: any) {
+      console.error("Erreur lors de la mise à jour de la commande:", err);
+      toast.error(err?.message || "Erreur lors de la mise à jour de la commande.");
+      throw err;
     }
   };
 
@@ -180,6 +216,8 @@ function AdminIndexPage() {
         {activeTab === "naya" && nayaTelemetry && (
           <AdminNayaTab
             telemetry={nayaTelemetry}
+            aiProviderStatus={aiProviderStatus}
+            progressionHealth={progressionHealth}
             isRefreshing={isRefreshing}
             onRefresh={() => loadData(false)}
           />

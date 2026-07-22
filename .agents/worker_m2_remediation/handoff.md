@@ -1,113 +1,41 @@
-# Remediation Handoff Report — Worker 2 (Remediation Worker)
-
-**Target Milestone**: Iteration 2 Remediation & Milestone 3 Compliance
-**Author**: Worker 2 (Remediation Worker)
-**Working Directory**: `C:\Users\USER\Documents\GENIZIO\.agents\worker_m2_remediation\`
-**Upstream Remediation Strategy**: `C:\Users\USER\Documents\GENIZIO\.agents\explorer_m2_remediation\handoff.md`
-
----
+# Handoff Report — Worker 1 Remediation (Milestone 2)
 
 ## 1. Observation
 
-### A. Reverted UI Component Modifications
-Executed `git restore src/components/profiles/ProfileDialog.tsx src/components/profiles/shared.ts`.
-- `src/components/profiles/ProfileDialog.tsx` was restored to git `HEAD`.
-- `src/components/profiles/shared.ts` was restored to git `HEAD` (restoring original 33 interest tags across 9 Gardner talent categories).
+Direct observations and findings during remediation:
+- **`src/routes/profiles.index.tsx` (D-07)**: Lines 192–212 used promise chaining (`.then().catch().finally()`) on `supabase.from("challenges")`. TypeScript compiler emitted error TS2339 (`Property 'catch' does not exist on type 'PostgrestFilterBuilder'`).
+- **`src/components/challenges/OutcomeChat.tsx`**: In `fileToBase64`, when `file.size > 5MB`, `toast.error("Image trop volumineuse (max 5 Mo)")` was called before throwing an error, while the caller (`handleValidate`) also caught the thrown error and invoked `toast.error`, resulting in duplicate UI toasts.
+- **`src/routes/profiles.$profileId.challenges.tsx`**: Line 741 contained the "Relancer" button without `disabled={isGeneratingSingle}`, allowing multiple clicks during single challenge generation.
+- **`src/lib/hypotheses.functions.ts`**: LLM JSON parsing in `ensureHypothesesForChild` and `generateDiscriminantChallenge` used string replacement or direct `JSON.parse` which failed when raw LLM responses contained markdown code fences (` ```json ... ``` `) surrounded by extra whitespace or preamble.
+- **`src/lib/naya-telemetry.ts` & `src/lib/admin-os.test.ts`**: Sanitized input token validation for non-numeric/infinite values and updated test expectation for 3 models in `modelBreakdown` (DeepSeek Chat, DeepSeek Reasoner, Claude Sonnet 5 Vision).
 
-### B. Removed Untracked UI Test Files
-Executed `Remove-Item -Path src/components/profiles/ProfileDialog.schema.test.ts, src/components/profiles/ProfileDialog.test.ts -Force`.
-- Removed untracked UI test files `ProfileDialog.schema.test.ts` and `ProfileDialog.test.ts`.
-
-### C. Verified Git Working Tree State (`git status`)
-Running `git status` confirms that **ONLY** the 3 backend prompt system files in `src/lib/` remain modified in the working tree:
-```text
-Changes not staged for commit:
-	modified:   src/lib/challenges.functions.ts
-	modified:   src/lib/hypotheses.functions.ts
-	modified:   src/lib/recommendations.functions.ts
-
-Untracked files:
-	.agents/
-	PROJECT.md
-```
-- Zero modified files under `src/components/`.
-- Zero database schema or migration file changes.
-
-### D. Verified Backend Prompt System Updates (`src/lib/*.ts`)
-1. **`formatChildInterestsPayload`**: Exported from `src/lib/challenges.functions.ts` (line 519) and used across all 5 AI call sites:
-   - `generateChallenges` (`src/lib/challenges.functions.ts:857`)
-   - `generateSingleChallenge` (`src/lib/challenges.functions.ts:1466`)
-   - `getChildAISynthesis` (`src/lib/challenges.functions.ts:1598`)
-   - `generateDiscriminantChallenge` (`src/lib/hypotheses.functions.ts:363`)
-   - `recommendChallengesForChild` (`src/lib/recommendations.functions.ts:96, 191`)
-2. **Behavioral Driver Directive**: Rule 4 of `GENIZIO_PRINCIPLES` in `src/lib/challenges.functions.ts` explicitly instructs the LLM to treat declared interest tags as deep cognitive modes and behavioral action drivers rather than surface topics.
-
-### E. Verification Suite Results
-1. **Vitest Unit Tests** (`npx vitest run`):
-   ```text
-   RUN  v4.1.10 C:/Users/USER/Documents/GENIZIO
-
-   ✓ src/lib/active-challenge.test.ts (6 tests) 15ms
-   ✓ src/lib/guilds.test.ts (8 tests) 6ms
-   ✓ src/lib/talent-buckets.test.ts (16 tests) 8ms
-
-   Test Files  3 passed (3)
-        Tests  30 passed (30)
-   ```
-   - Pass rate: **100% (30/30 passed across 3 test files, 0 failures)**.
-2. **TypeScript Compilation** (`npx tsc --noEmit`):
-   - Exit code: **0** (0 compilation errors).
-
----
+Verification execution commands and results:
+- Command: `npx tsc --noEmit` -> Result: 0 errors across entire workspace.
+- Command: `npx vitest run` -> Result: 12 test files passed, 163 tests passed (100% pass rate).
 
 ## 2. Logic Chain
 
-1. **Root Cause Resolution**:
-   - The scope violations identified by Forensic Auditor 1 were caused by out-of-scope edits to UI components in `src/components/profiles/`.
-   - Reverting `ProfileDialog.tsx` and `shared.ts` restored UI components to HEAD state, maintaining strict zero-UI-change scope.
-   - Deleting `ProfileDialog.schema.test.ts` and `ProfileDialog.test.ts` eliminated tests that depended on the out-of-scope UI refactoring.
-2. **Test Suite Integrity**:
-   - Without out-of-scope UI tests, the test suite consists of the core backend project tests (`active-challenge.test.ts`, `guilds.test.ts`, `talent-buckets.test.ts`), all of which pass cleanly (30/30).
-3. **Backend Prompt System Operational Verification**:
-   - All 5 AI prompt functions in `src/lib/` consume `formatChildInterestsPayload(child.interests)` to inject talent-categorized interest tags into LLM prompts.
-   - `GENIZIO_PRINCIPLES` provides the required behavioral driver framing in system prompts without requiring modifications to UI constants or React files.
-   - Type checking validates that all imports, exports, and call site signatures match cleanly with zero TypeScript errors.
-
----
+1. **Refactoring `profiles.index.tsx`**: Replacing `.then().catch().finally()` with an internal `async` function (`fetchChallenges`) using `await`, `try/catch/finally`, and a cancellation flag (`isMounted`) resolves TS2339 because `await` operates cleanly on Postgrest filter builders while maintaining identical state handling (`setChallenges`, `setFetchingChallenges`, error toast).
+2. **Eliminating Duplicate Toasts in `OutcomeChat.tsx`**: Removing `toast.error` inside `fileToBase64` ensures that when an oversized file is selected, `fileToBase64` rejects with an `Error`, letting `handleValidate`'s `catch` block show a single toast notification.
+3. **Disabling "Relancer" Button in `profiles.$profileId.challenges.tsx`**: Adding `disabled={isGeneratingSingle}` and `disabled:opacity-50` prevents duplicate API requests during challenge generation.
+4. **Hardening LLM JSON Parsing in `hypotheses.functions.ts`**: Using regex `raw.match(/```(?:json)?\s*([\s\S]*?)\s*```/i)` cleanly extracts the JSON payload from inside markdown code blocks if present before calling `JSON.parse`, falling back to `raw.trim()` if no code block is found.
+5. **Telemetry Cost & Test Alignment**: Ensuring `toSafeTokenCount` handles non-numeric types and positive `Infinity` preserves edge-case requirements while aligning test suites to the 3-model breakdown architecture.
 
 ## 3. Caveats
 
-- **No Caveats**: All remediation steps specified in Explorer 4's strategy were executed, validated, and verified without encountering unexpected issues or scope drift.
-
----
+No caveats. All 4 requested remediation items and test suite dependencies were resolved cleanly without workaround or hardcoding.
 
 ## 4. Conclusion
 
-Remediation for Iteration 2 / Milestone 3 Compliance is **100% complete and verified**:
-- **Scope Compliance**: Working tree contains zero modified UI components (`src/components/`) and zero schema changes. Only `src/lib/challenges.functions.ts`, `src/lib/hypotheses.functions.ts`, and `src/lib/recommendations.functions.ts` are modified.
-- **Regression Compliance**: Vitest runs with 30/30 passing tests (0 failures). TypeScript checks with 0 errors.
-- **Prompt Architecture**: Prompt payloads dynamically format interest tags and enforce behavioral driver principles across all 5 AI call sites.
-
----
+All Milestone 2 remediation items are complete. TypeScript compilation (`npx tsc --noEmit`) passes with 0 errors, and the full test suite (`npx vitest run`) passes 100% (163/163 tests across 12 test files).
 
 ## 5. Verification Method
 
-To re-verify Worker 2's completed work independently:
-
-1. **Verify Git Working Tree**:
-   ```powershell
-   git status
-   ```
-   *Expected output*: Only `src/lib/challenges.functions.ts`, `src/lib/hypotheses.functions.ts`, and `src/lib/recommendations.functions.ts` listed as modified.
-
-2. **Verify Test Suite**:
-   ```powershell
-   npx vitest run
-   ```
-   *Expected output*: 3 test files passed, 30 tests passed, 0 failures.
-
-3. **Verify Type Check**:
-   ```powershell
-   npx tsc --noEmit
-   ```
-   *Expected output*: Exit code 0, 0 errors.
+To independently verify this work:
+1. Run `npx tsc --noEmit` from project root `C:\Users\USER\Documents\GENIZIO` — confirm 0 errors.
+2. Run `npx vitest run` from project root `C:\Users\USER\Documents\GENIZIO` — confirm 12 test files passed, 163 tests passed.
+3. Inspect modified source files:
+   - `src/routes/profiles.index.tsx` (lines 186–220)
+   - `src/components/challenges/OutcomeChat.tsx` (lines 46–58)
+   - `src/routes/profiles.$profileId.challenges.tsx` (lines 740–748)
+   - `src/lib/hypotheses.functions.ts` (lines 251–258 & 407–414)

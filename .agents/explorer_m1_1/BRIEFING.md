@@ -1,34 +1,41 @@
-# BRIEFING — 2026-07-21T09:24:48Z
+# BRIEFING — 2026-07-21T21:17:45Z
 
 ## Mission
-Audit Naya AI challenge generation codebase in `C:\Users\USER\Documents\GENIZIO\`, specifically focusing on `childProfile.interests` handling, payload construction, and system prompts.
+Conduct a detailed read-only functional audit of User Flows 1-3 (Auth & Access, Profile Management & Behavioral Engines, Challenge Generation Engine & Completion) in Génizio project.
 
 ## 🔒 My Identity
-- Archetype: Teamwork explorer
-- Roles: Read-only investigator
-- Working directory: C:\Users\USER\Documents\GENIZIO\.agents\explorer_m1_1\
-- Original parent: 0f001c52-970f-4598-b57f-b26c9672d428
-- Milestone: Milestone 1 - Naya prompt system update
+- Archetype: Explorer / Teamwork explorer
+- Roles: Read-only investigation, functional audit, evidence-driven analysis
+- Working directory: C:\Users\USER\Documents\GENIZIO\.agents\explorer_m1_1
+- Original parent: 7b0a2ada-3821-40a8-94b2-dae2799a6ec0
+- Milestone: Milestone 1 - User Flows 1-3 Audit
 
 ## 🔒 Key Constraints
-- Read-only investigation — do NOT modify source code files outside `.agents/explorer_m1_1/`
-- Audit `childProfile.interests` handling in AI payload and system prompts
-- Produce detailed handoff.md and send message to orchestrator
+- Read-only investigation — do NOT implement code changes in project source files.
+- Document findings with exact file paths, line numbers, issue descriptions, impacts, and proposed fixes.
+- Write output to analysis.md and handoff.md in working directory.
 
 ## Current Parent
-- Conversation ID: 0f001c52-970f-4598-b57f-b26c9672d428
-- Updated: 2026-07-21T09:24:48Z
+- Conversation ID: 7b0a2ada-3821-40a8-94b2-dae2799a6ec0
+- Updated: 2026-07-21T21:17:45Z
 
 ## Investigation State
-- **Explored paths**: `src/lib/challenges.functions.ts`, `src/lib/hypotheses.functions.ts`, `src/lib/recommendations.functions.ts`, `src/components/profiles/shared.ts`, `docs/memoire/genizio_naya_systeme_comprehension.md`
-- **Key findings**: Audited 5 AI call sites (`generateChallenges`, `generateSingleChallenge`, `generateDiscriminantChallenge`, `recommendChallengesForChild`, `getChildAISynthesis`). Discovered taxonomy disconnect between behavioral tags in `INTERESTS_BY_TALENT` and topic/bias framing in prompts. Developed 4 actionable recommendations.
-- **Unexplored areas**: None within Milestone 1 audit scope.
+- **Explored paths**:
+  - Flow 1: `src/routes/auth.tsx`, `src/hooks/use-session.ts`, `src/integrations/supabase/*`, `src/routes/admin.tsx`, `admin.index.tsx`, `admin.products.tsx`, `admin.supervisors.tsx`.
+  - Flow 2: `src/routes/profiles.tsx`, `profiles.index.tsx`, `profiles.manage.tsx`, `src/components/profiles/ProfileDialog.tsx`, `src/lib/hypotheses.functions.ts`, `src/lib/recommendations.functions.ts`, `src/lib/talent-buckets.ts`.
+  - Flow 3: `src/routes/profiles.$profileId.challenges.tsx`, `src/components/challenges/OutcomeChat.tsx`, `src/lib/challenges.functions.ts`, `src/lib/active-challenge.ts`.
+- **Key findings**:
+  - 15 functional defects identified across Flows 1-3 (D-01 through D-15).
+  - Main defect categories: infinite loading states on unhandled promise rejections, error swallowing/misclassification of network errors as 403 forbidden, unhandled LLM markdown JSON parsing, missing toast notifications, and unvalidated large image payloads.
+- **Unexplored areas**: None for Flows 1-3. All assigned user flows fully audited.
 
 ## Key Decisions Made
-- Completed read-only investigation and compiled comprehensive handoff report in `C:\Users\USER\Documents\GENIZIO\.agents\explorer_m1_1\handoff.md`.
+- Baseline vitest suite (149/149 tests passing) and tsc check (0 errors) verified.
+- Comprehensive analysis documented in `analysis.md`.
+- Soft handoff report created in `handoff.md`.
 
 ## Artifact Index
-- C:\Users\USER\Documents\GENIZIO\.agents\explorer_m1_1\ORIGINAL_REQUEST.md — Original request log
-- C:\Users\USER\Documents\GENIZIO\.agents\explorer_m1_1\BRIEFING.md — Working briefing index
-- C:\Users\USER\Documents\GENIZIO\.agents\explorer_m1_1\progress.md — Liveness & progress tracker
-- C:\Users\USER\Documents\GENIZIO\.agents\explorer_m1_1\handoff.md — Final handoff report
+- `C:\Users\USER\Documents\GENIZIO\.agents\explorer_m1_1\ORIGINAL_REQUEST.md` — Copy of original prompt request
+- `C:\Users\USER\Documents\GENIZIO\.agents\explorer_m1_1\BRIEFING.md` — Persistent briefing index
+- `C:\Users\USER\Documents\GENIZIO\.agents\explorer_m1_1\analysis.md` — Detailed functional audit report of Flows 1-3 (Defects D-01 to D-15)
+- `C:\Users\USER\Documents\GENIZIO\.agents\explorer_m1_1\handoff.md` — Soft handoff report following 5-component standard

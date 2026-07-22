@@ -137,6 +137,11 @@ export const getSharedChildView = createServerFn({ method: "GET" })
       throw new Error("Lien invalide ou expiré");
     }
 
+    // Le numéro du parent (owner_user_id du mentor) vit dans auth.users.user_metadata,
+    // pas dans child_profiles — le mentor doit pouvoir contacter le parent directement.
+    const { data: ownerUser } = await supabaseAdmin.auth.admin.getUserById(mentor.owner_user_id);
+    const parentPhone = (ownerUser?.user?.user_metadata as any)?.phone ?? null;
+
     const result: any = {
       mentorName: mentor.mentor_name,
       childName: child.name,
@@ -144,6 +149,7 @@ export const getSharedChildView = createServerFn({ method: "GET" })
       childAge: child.age,
       talents: mentor.can_view_talent_map ? child.talents : null,
       scopeDomains: mentor.scope_domains || [],
+      parentPhone,
       timeline: [],
     };
 

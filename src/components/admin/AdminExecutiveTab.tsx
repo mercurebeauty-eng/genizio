@@ -13,6 +13,7 @@ import {
   UserCheck,
   CheckCircle2,
   PieChart,
+  Loader2,
 } from "lucide-react";
 import { toast } from "sonner";
 import type { ExecutiveKPIs, ParentBIRC } from "@/lib/admin-os.functions";
@@ -243,9 +244,13 @@ export function AdminExecutiveTab({
                                   child.pdfUnlocked
                                     ? "bg-emerald-100 border-emerald-400 text-emerald-800 hover:bg-emerald-200"
                                     : "bg-amber-100 border-amber-400 text-amber-800 hover:bg-amber-200"
-                                }`}
+                                } disabled:opacity-50`}
                               >
-                                {child.pdfUnlocked ? (
+                                {pendingPassportChildId === child.id ? (
+                                  <>
+                                    <Loader2 className="size-2.5 animate-spin" /> Traitement…
+                                  </>
+                                ) : child.pdfUnlocked ? (
                                   <>
                                     <Unlock className="size-2.5" /> Débloqué
                                   </>
@@ -272,7 +277,7 @@ export function AdminExecutiveTab({
                           title="Révoquer 1 slot"
                           className="flex size-7 items-center justify-center rounded-lg border-2 border-ink bg-red-100 text-red-700 font-black text-sm hover:bg-red-200 disabled:opacity-30 disabled:cursor-not-allowed transition-all"
                         >
-                          −
+                          {pendingSlotUserId === parent.id ? <Loader2 className="size-3 animate-spin" /> : "−"}
                         </button>
                         <div className="text-center min-w-[48px]">
                           <p className="text-xs font-black text-ink">{2 + parent.extraSlots}</p>
@@ -284,9 +289,9 @@ export function AdminExecutiveTab({
                           onClick={() => handleGrantSlotClick(parent.id, +1)}
                           disabled={pendingSlotUserId === parent.id}
                           title="Accorder 1 slot"
-                          className="flex size-7 items-center justify-center rounded-lg border-2 border-ink bg-emerald-100 text-emerald-700 font-black text-sm hover:bg-emerald-200 transition-all"
+                          className="flex size-7 items-center justify-center rounded-lg border-2 border-ink bg-emerald-100 text-emerald-700 font-black text-sm hover:bg-emerald-200 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
                         >
-                          +
+                          {pendingSlotUserId === parent.id ? <Loader2 className="size-3 animate-spin" /> : "+"}
                         </button>
                       </div>
                     </td>

@@ -253,6 +253,8 @@ export type Database = {
           interests: string[]
           last_activity_date: string | null
           name: string
+          passport_letter: string | null
+          passport_letter_generated_at: string | null
           pdf_unlocked: boolean
           streak: number
           talents: Json
@@ -275,6 +277,8 @@ export type Database = {
           interests?: string[]
           last_activity_date?: string | null
           name: string
+          passport_letter?: string | null
+          passport_letter_generated_at?: string | null
           pdf_unlocked?: boolean
           streak?: number
           talents?: Json
@@ -297,6 +301,8 @@ export type Database = {
           interests?: string[]
           last_activity_date?: string | null
           name?: string
+          passport_letter?: string | null
+          passport_letter_generated_at?: string | null
           pdf_unlocked?: boolean
           streak?: number
           talents?: Json

@@ -1,18 +1,25 @@
-# Project: Naya Prompt System Update
+# Project: Génizio End-to-End Functional Audit & Systemic Reliability Fix
 
 ## Architecture
-- Naya AI challenge generation prompt system located in `src/lib/challenges.functions.ts`, `src/lib/hypotheses.functions.ts`, and `src/lib/recommendations.functions.ts`.
-- Payload injection helper maps `childProfile.interests` tags (from `INTERESTS_BY_TALENT` in `src/components/profiles/shared.ts`) into enriched behavioral drivers and cognitive postures.
-- System prompt constants (`GENIZIO_PRINCIPLES`, `generateChallenges`, `generateSingleChallenge`, `generateDiscriminantChallenge`, `recommendChallengesForChild`, `getChildAISynthesis`) updated to treat `interests` as deep behavioral drivers rather than surface hobbies or parental bias.
+- **Framework**: React / TanStack Router / Supabase / TypeScript / Tailwind CSS / Vitest.
+- **Key Modules & Routes**:
+  1. Auth & Access: `/auth`, session persistence, admin middleware guard.
+  2. Profile Management & Engines: `/profiles`, `ProfileDialog.tsx`, universe/levers selection, behavioral engine computations in `src/lib/hypotheses.functions.ts` & `src/lib/recommendations.functions.ts`.
+  3. Challenge Engine & Completion: `/profiles/$profileId/challenges`, photo/declarative proof submission, Naya feedback loop in `src/lib/challenges.functions.ts`.
+  4. "Ton Parcours" & Portfolio: `/profiles/$profileId/parcours`, `/portfolio`, Gardner 9 intelligences radar chart, timeline rendering.
+  5. PDF Passport Generation & Print: `/profiles/$profileId/passport-print`, child data mapping, engines, guild, XP calculations, CSS `@media print` rendering.
+  6. Génizio Admin OS: `/admin` (4 tabs: Executive overview, Talents/Guilds per city, Naya telemetry & costs, Commerce/Orders/Passport unlocks).
 
 ## Milestones
 | # | Name | Scope | Dependencies | Status |
 |---|------|-------|-------------|--------|
-| 1 | Audit Injection | Audit AI call / Edge function for `childProfile.interests` payload | none | DONE |
-| 2 | Prompt Rewrite & Injection | Update prompt strings and inject `interests` in payload | M1 | DONE |
-| 3 | Verification & Audit | `npx tsc --noEmit`, check DB/UI untouched, Forensic Audit | M2 | DONE |
+| 1 | Exploration & Diagnostic Audit | Deep audit of 6 user flows, search silent catches/unhandled promises/edge cases, baseline vitest & tsc, output `audit_report.md` | none | DONE |
+| 2 | Core Flows Remediation (Flows 1-3) | Fix Auth, Profile Management & Challenge Engine defects (D-01..D-16), eliminate error swallowing, sanitize LLM JSON parsing, enforce double-submit guards & toast notifications | M1 | DONE |
+| 3 | Journey, Passport & Admin OS Remediation (Flows 4-6) | Fix Parcours/Portfolio, Passport PDF Print, Admin OS defects (D-17..D-24), fix auto-print locked screen bug, row-level pending states | M1, M2 | IN_PROGRESS |
+| 4 | Suite Hardening & 100% Pass Verification | 100% `npx vitest run` pass rate, 0 `npx tsc --noEmit` errors, adversarial stress testing & Forensic Integrity Audit | M2, M3 | PLANNED |
 
-## Interface Contracts
-- AI payload parameters: `formatChildInterestsPayload(interests: string[])` maps tags to `[Talent/Cognitive Dimension] "tag description"`.
-- `GENIZIO_PRINCIPLES`: Updated Rule 4 to instruct LLM on behavioral drivers and action mechanics ("Démonte pour comprendre" -> reverse engineering/deconstruction).
-- UI Components & DB: UNTOUCHED (0 changes to `src/components/` or `supabase/migrations/`).
+## Interface Contracts & Quality Standards
+- Strict Zero Error Swallowing: `catch {}` and `.catch(() => null)` must log errors and display Sonner/UI toast where applicable.
+- Async UX Safety: Double-click prevention (disabled during pending status), explicit loading spinners, empty states, and error fallbacks on all action handlers.
+- Automated Checks: `npx tsc --noEmit` must pass with 0 errors. `npx vitest run` must pass with 100% green tests.
+- Integrity: CLEAN verdict required from Forensic Auditor.

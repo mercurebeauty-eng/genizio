@@ -5,6 +5,7 @@ import { useSession } from "@/hooks/use-session";
 import { checkAdminStatus } from "@/lib/admin.functions";
 import { ShieldAlert } from "lucide-react";
 import { GenizioLoader } from "@/components/GenizioLoader";
+import { toast } from "sonner";
 
 export const Route = createFileRoute("/admin")({
   component: AdminLayout,
@@ -27,6 +28,10 @@ function AdminLayout() {
     // Server-side allowlist is the only source of truth for admin status.
     checkAdmin()
       .then(({ isAdmin: isUserAdmin }) => setIsAdmin(isUserAdmin))
+      .catch((err) => {
+        console.error("Error checking admin status:", err);
+        toast.error("Erreur de vérification des droits");
+      })
       .finally(() => setChecking(false));
   }, [session, loading, navigate]);
 

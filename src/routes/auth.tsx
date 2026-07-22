@@ -2,6 +2,7 @@ import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useSession } from "@/hooks/use-session";
+import { toast } from "sonner";
 
 export const Route = createFileRoute("/auth")({
   component: AuthPage,
@@ -20,14 +21,23 @@ function AuthPage() {
   const google = async () => {
     setError(null);
     setBusy(true);
-    const { error } = await supabase.auth.signInWithOAuth({
-      provider: "google",
-      options: {
-        redirectTo: window.location.origin + "/profiles",
-      },
-    });
-    if (error) {
-      setError(error.message ?? "Connexion Google échouée");
+    try {
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: "google",
+        options: {
+          redirectTo: window.location.origin + "/profiles",
+        },
+      });
+      if (error) {
+        const msg = error.message ?? "Connexion Google échouée";
+        setError(msg);
+        toast.error(msg);
+      }
+    } catch (err: any) {
+      const msg = err?.message ?? "Une erreur est survenue lors de la connexion Google";
+      setError(msg);
+      toast.error(msg);
+    } finally {
       setBusy(false);
     }
   };

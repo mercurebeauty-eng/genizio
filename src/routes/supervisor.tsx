@@ -5,7 +5,7 @@ import { useSession } from "@/hooks/use-session";
 import { AppHeader } from "@/components/AppHeader";
 import { getSupervisorDashboard } from "@/lib/supervisors.functions";
 import { getChildGuild } from "@/lib/guilds";
-import { Loader2, Users, Trophy, CheckSquare, Eye, ClipboardList, Zap, CheckCircle2, X, Clock, AlertTriangle, Brain } from "lucide-react";
+import { Loader2, Users, Trophy, CheckSquare, Eye, ClipboardList, Zap, CheckCircle2, X, Clock, AlertTriangle, Brain, Phone } from "lucide-react";
 import { NayaAvatar } from "@/components/NayaAvatar";
 import { MarkdownContent } from "@/components/ui/markdown-content";
 import { GenizioLoader } from "@/components/GenizioLoader";
@@ -22,6 +22,7 @@ type ChildWithChallenges = {
   city: string | null;
   interests: string[];
   talents: Record<string, number>;
+  parentPhone: string | null;
   challenges: {
     id: string;
     title: string;
@@ -156,6 +157,23 @@ function SupervisorDashboardPage() {
                       <p className={`text-[11px] font-extrabold uppercase tracking-widest mb-0.5 ${guild.color} opacity-70`}>Guilde</p>
                       <h2 className={`font-display text-balance text-2xl font-black ${guild.color}`}>{selected.name} — {guild.name}</h2>
                       <p className={`text-sm font-medium italic mt-1 ${guild.color} opacity-80`}>« {guild.tagline} »</p>
+                    </div>
+                  </div>
+
+                  {/* Contact parent */}
+                  <div className="rounded-2xl border border-ink/10 bg-white p-4 shadow-sm flex items-center gap-3">
+                    <div className="grid size-9 shrink-0 place-items-center rounded-full bg-brand/10 text-brand">
+                      <Phone className="size-4" />
+                    </div>
+                    <div className="min-w-0">
+                      <p className="text-[10px] font-extrabold uppercase tracking-widest text-ink/40">Contacter le parent</p>
+                      {selected.parentPhone ? (
+                        <a href={`tel:${selected.parentPhone}`} className="text-sm font-bold text-ink hover:text-brand">
+                          {selected.parentPhone}
+                        </a>
+                      ) : (
+                        <p className="text-sm font-semibold text-ink/50 italic">Non renseigné</p>
+                      )}
                     </div>
                   </div>
 

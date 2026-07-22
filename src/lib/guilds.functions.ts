@@ -90,11 +90,20 @@ export const getGuildCommunity = createServerFn({ method: "POST" })
       }
     }
 
+    // Défi collectif du mois (cf. écran 9 du prototype hi-fi — "Ensemble,
+    // construisons 500 ponts"). Le prototype montre un chiffre fixe arbitraire ;
+    // ici l'objectif est un multiple réel du nombre de membres (3 défis/membre/mois)
+    // plutôt qu'un nombre inventé — même logique qu'un palier de niveau (ex. 500 XP),
+    // un paramètre de jeu assumé, pas une donnée d'activité fabriquée. Minimum 15
+    // pour qu'une guilde à 1-2 membres ait un objectif qui reste motivant.
+    const monthlyTarget = Math.max(15, memberIds.length * 3);
+
     return {
       ownGuildKey: ownGuild.key,
       isOptedIn: child.guild_participation_opt_in,
       memberCount: memberIds.length,
       completedThisMonth,
+      monthlyTarget,
       recentActivity,
     };
   });

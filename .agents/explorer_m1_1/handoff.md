@@ -1,246 +1,130 @@
-# Milestone 1 Audit & Recommendation Report: Naya Prompt System Update & `childProfile.interests` Overhaul
+# Handoff Report — Explorer 1 (Milestone 1)
+
+**Agent**: Explorer 1 (`explorer_m1_1`)  
+**Date**: 2026-07-21  
+**Project**: Génizio End-to-End Functional Audit & Systemic Reliability Fix  
+**Handoff Type**: Soft Handoff (M1 Audit Complete for User Flows 1-3, transferring to Implementer / Orchestrator for M2 Remediation)
+
+---
 
 ## 1. Observation
 
-A comprehensive audit of the Naya AI prompt system and `childProfile.interests` handling across the `GENIZIO` codebase was conducted. The relevant files, line numbers, function signatures, prompt texts, and payload constructions were identified and examined.
+Direct observations and evidence collected during the read-only audit of User Flows 1-3:
 
-### Summary of Identified Files
+- **Baseline Automated Checks**:
+  - `npx tsc --noEmit`: Executed successfully with **0 errors**.
+  - `npx vitest run`: Executed successfully with **149 passed tests** across 11 test files (duration: 3.30s).
 
-| File Path | Primary Function(s) / Object | Purpose in Naya AI System |
-| --- | --- | --- |
-| `src/lib/challenges.functions.ts` | `generateChallenges`, `generateSingleChallenge`, `validateChallengeProof`, `getChildAISynthesis` | Core server functions for AI challenge batch generation, single challenge generation, proof validation, and pedagogical synthesis. Contains shared system prompt constants (`GENIZIO_PRINCIPLES`, `SAFETY_INSTRUCTION`, `PROOF_MODE_INSTRUCTION`, `ACADEMIC_REFERENTIAL_INSTRUCTION`). |
-| `src/lib/hypotheses.functions.ts` | `generateDiscriminantChallenge`, `generateHypotheses`, `generateParentNarrative` | NAYA 2.0 diagnostic hypothesis engine & discriminant challenge generator. |
-| `src/lib/recommendations.functions.ts` | `recommendChallengesForChild` | Pedagogical twin recommendation engine (ESSAIMAGE, STABILISATION, INVESTIGATION pathways). |
-| `src/components/profiles/shared.ts` | `INTERESTS_BY_TALENT`, `ChildProfile`, `ProfileDraft` | Taxonomy mapping Gardner talent keys (`spatial`, `corporelle`, `sociale`, `entrepreneuriale`, `creative`, `artisanale`, `emotionnelle`, `logico_mathematique`, `linguistique`) to concrete behavioral tags. |
-| `src/integrations/supabase/types.ts` | Database type definitions | Defines `child_profiles.interests` column as `Json` / `string[]`. |
-
----
-
-### Key Findings & Code Snippets
-
-#### 1. Taxonomy of `childProfile.interests` (`src/components/profiles/shared.ts`)
-Lines 28–65 define `INTERESTS_BY_TALENT`:
-```typescript
-export const INTERESTS_BY_TALENT: Record<string, { label: string; tags: readonly string[] }> = {
-  spatial: {
-    label: TALENT_KEY_LABELS.spatial,
-    tags: ["Démonte pour comprendre", "Remarque les petits détails visuels", "Aime assembler et construire", "S'oriente facilement dans l'espace"],
-  },
-  corporelle: {
-    label: TALENT_KEY_LABELS.corporelle,
-    tags: ["A besoin de bouger pour réfléchir", "Touche tout ce qu'il voit", "Apprend en imitant les gestes"],
-  },
-  sociale: {
-    label: TALENT_KEY_LABELS.sociale,
-    tags: ["Joue souvent le médiateur", "Comprend vite les règles du groupe", "Aime organiser les autres"],
-  },
-  entrepreneuriale: {
-    label: TALENT_KEY_LABELS.entrepreneuriale,
-    tags: ["Invente ses propres règles de jeu", "Négocie toujours (même le coucher)", "Cherche à optimiser ou marchander"],
-  },
-  creative: {
-    label: TALENT_KEY_LABELS.creative,
-    tags: ["Détourne les objets de leur usage", "A un imaginaire débordant", "Préfère inventer que suivre la notice"],
-  },
-  artisanale: {
-    label: TALENT_KEY_LABELS.artisanale,
-    tags: ["Préfère faire de ses propres mains", "Aime les résultats concrets et finis", "S'applique sur les tâches minutieuses"],
-  },
-  emotionnelle: {
-    label: TALENT_KEY_LABELS.emotionnelle,
-    tags: ["Ressent intensément l'humeur ambiante", "A besoin de solitude pour se recharger", "Très sensible à l'injustice"],
-  },
-  logico_mathematique: {
-    label: TALENT_KEY_LABELS.logico_mathematique,
-    tags: ["Pose sans arrêt la question 'Pourquoi ?'", "Aime classer, trier et mesurer", "Cherche la logique cachée des choses", "Fasciné par le lien cause/effet"],
-  },
-  linguistique: {
-    label: TALENT_KEY_LABELS.linguistique,
-    tags: ["Retient très facilement les histoires", "Joue avec les mots et les sons", "Argumente pour défendre ses idées"],
-  },
-};
-```
-*Observation*: `interests` in Genizio are **not** surface topics or traditional hobbies (e.g., "Football", "Dinosaures"), but rather **deep behavioral postures, cognitive mechanisms, and action modalities** declared by parents.
-
----
-
-#### 2. Batch Generator Prompt & Payload (`src/lib/challenges.functions.ts`)
-
-##### Function Signature & Payload Injection (Lines 757, 831):
-```typescript
-export const generateChallenges = createServerFn({ method: "POST" })
-// ...
-// Line 831:
-- Centres d'intérêt déclarés par le parent : ${(child.interests ?? []).join(", ") || "variés"}
-```
-
-##### System Prompt Context (`GENIZIO_PRINCIPLES`, Lines 518–530):
-```typescript
-const GENIZIO_PRINCIPLES = `PRINCIPES DE GÉNÉRATION GÉNIZIO (règles strictes, à respecter impérativement) :
-...
-- CENTRES D'INTÉRÊT COMME TREMPLIN, PAS COMME CONTRAT : les centres d'intérêt déclarés par le parent sont un point de départ pour ancrer le défi dans ce que l'enfant aime, jamais un sujet littéral obligatoire à chaque fois. Si l'intérêt est "Football", un défi sur la stratégie d'équipe, le calcul de score, la géométrie du terrain ou la condition physique est tout aussi légitime qu'un défi littéralement "sur le foot" — varie l'angle plutôt que répéter le sujet brut d'un défi à l'autre.
-...`;
-```
-
-##### Constraint Instructions (Lines 846–847):
-```typescript
-- Ignore le biais parental et utilise les données réelles : les intelligences actuellement les moins explorées chez cet enfant sont ${leastExplored.join(" et ")}. Sauf si le contexte les rend peu réalistes, au moins un des ${data.count} défis DOIT cibler l'une de ces intelligences plutôt que de renforcer uniquement les intérêts déjà connus — c'est ainsi que Naya révèle des talents cachés au lieu de se contenter de confirmer ce que le parent pense déjà savoir.
-```
-
----
-
-#### 3. Single Challenge Generator Prompt & Payload (`src/lib/challenges.functions.ts`)
-
-##### Function Signature & Payload Injection (Lines 1385, 1439):
-```typescript
-export const generateSingleChallenge = createServerFn({ method: "POST" })
-// ...
-// Line 1439:
-- Centres d'intérêt initiaux (déclarés par le parent) : ${(child.interests ?? []).join(", ") || "aucun"}
-```
-
-##### Prompt Instructions (Lines 1461–1463):
-```typescript
-Ta mission (Ignorer le biais parental et utiliser les données réelles) :
-1. Analyse la carte des talents (Radar Chart), les intérêts déclarés par le parent, ET les observations des défis passés.
-2. Détecte les biais : Si le parent a déclaré certains intérêts, mais que les observations passées montrent que l'enfant bloque dessus ou excelle ailleurs, Naya doit prendre l'initiative de pivoter.
-```
-
----
-
-#### 4. Diagnostic & Discriminant Generator (`src/lib/hypotheses.functions.ts`)
-
-##### Discriminant Challenge Generator (Lines 322, 370, 375):
-```typescript
-export const generateDiscriminantChallenge = createServerFn({ method: "POST" })
-// ...
-// Line 370:
-Centres d'intérêt de l'enfant : ${interestsStr}
-// Line 375:
-- Si LACK_OF_ENGAGEMENT : Ancre le défi à 100% sur un des centres d'intérêt de l'enfant (${interestsStr}) pour raviver la curiosité.
-```
-
-##### Hypothesis Engine (`generateHypotheses`, Lines 207–211):
-```typescript
-jumeau_pedagogique: {
-  moteurs: twin?.drivers ?? {},
-  competences_gardner: twin?.competencies ?? {},
-  interets: twin?.interests ?? {},
-}
-```
-
----
-
-#### 5. Recommendations Engine (`src/lib/recommendations.functions.ts`)
-
-##### Recommendation Pathways (Lines 96–98, 188–191):
-```typescript
-// ESSAIMAGE (Line 98):
-Principe : Utiliser sa FORCE (${strengthEntry[0]}) et ses centres d'intérêt (${interestsStr}) pour développer doucement sa compétence en progression (${weaknessEntry[0]}).
-
-// STABILISATION (Line 191):
-Principe : ... appuyé sur ${strengthEntry ? `sa force reconnue (${comfortSkill})` : "quelque chose de familier et confortable"} et ses centres d'intérêt (${interestsStr}).
-```
-
----
-
-#### 6. AI Pedagogical Synthesis (`src/lib/challenges.functions.ts`)
-
-##### Function Signature & Prompt (Lines 1529, 1572):
-```typescript
-export const getChildAISynthesis = createServerFn({ method: "POST" })
-// ...
-// Line 1572:
-Analyse les accomplissements suivants de l'enfant ${child.name} (${child.age} ans, centres d'intérêt: ${(child.interests ?? []).join(", ")}) :
-```
+- **Defects Identified (15 Total)**:
+  - **D-01 (`src/hooks/use-session.ts:13-16`)**: `supabase.auth.getSession().then(...)` lacks `.catch()`. On network failure, `loading` stays `true` forever.
+  - **D-02 (`src/routes/auth.tsx:20-33`)**: `google()` calls `signInWithOAuth` without `try/catch`. Button remains disabled with `"..."` on unhandled rejection; no toast alert.
+  - **D-03 (`src/routes/admin.tsx:28-30`)**: `checkAdmin()` inside `useEffect` calls `useServerFn` without `.catch()`. Rejection sets `checking = false` with `isAdmin = false`, rendering "Accès Interdit" instead of error message.
+  - **D-04 (`src/routes/admin.products.tsx:141` & `src/routes/admin.supervisors.tsx:47`)**: `refetch()` catches all errors and calls `setForbidden(true)`, misrepresenting network errors as unauthorized access.
+  - **D-05 (`src/routes/admin.supervisors.tsx:60`)**: `listChildrenFn().catch(() => setChildProfiles([]))` silently swallows errors.
+  - **D-06 (`src/components/profiles/ProfileDialog.tsx:54-94`)**: `save()` lacks `try/catch/finally`. Failed Supabase insert/update or consent event leaves modal frozen in `busy = true` state.
+  - **D-07 (`src/routes/profiles.index.tsx:195-199`)**: `supabase.from("challenges").select(...)` lacks `.catch()` and `{ error }` handling.
+  - **D-08 (`src/lib/hypotheses.functions.ts:252-256`)**: `JSON.parse(raw)` called directly on LLM output without stripping markdown fence wrappers (` ```json `), throwing `"Réponse IA invalide"`.
+  - **D-09 (`src/lib/hypotheses.functions.ts:488-494, 565-569`)**: `processDiscriminantResult` returns `{ processed: false }` silently on JSON or DB update error.
+  - **D-10 (`src/lib/recommendations.functions.ts:179-181, 274-276`)**: Catch blocks in recommendation engine silently swallow errors without logging.
+  - **D-11 (`src/components/challenges/OutcomeChat.tsx:110-118, 313-338`)**: `fileToBase64` converts large image files without size check, causing memory spikes and HTTP 413 server errors.
+  - **D-12 (`src/components/challenges/OutcomeChat.tsx:107-108`)**: `onSaveNotes` called asynchronously without `await` before proof validation.
+  - **D-13 (`src/routes/profiles.$profileId.challenges.tsx:365-367`)**: `handleGenerate` sets inline error state but omits `toast.error` notification.
+  - **D-14 (`src/lib/challenges.functions.ts:1177-1190`)**: `validateChallengeProof` vision fallback error handling hides API rate limits / parsing failures behind uninformative messages.
+  - **D-15 (`src/routes/profiles.$profileId.challenges.tsx:184-202`)**: `handleGenerateSingle` lacks double-click guard (`if (isGeneratingSingle) return`), enabling duplicate AI requests.
 
 ---
 
 ## 2. Logic Chain
 
-1. **Mismatch Between Data Taxonomy and System Prompt Conceptualization**:
-   - *Observation*: `INTERESTS_BY_TALENT` defines tags as behavioral traits ("Démonte pour comprendre", "A besoin de bouger pour réfléchir", "Détourne les objets de leur usage").
-   - *Observation*: `GENIZIO_PRINCIPLES` Rule 4 uses an example about "Football" ("Si l'intérêt est 'Football'...").
-   - *Deduction*: The system prompt was written under the assumption that `interests` are topical hobbies (sports, animals, gaming), whereas the UI tags selected by parents are behavioral indicators and cognitive styles.
+1. **Observation**: `useSession` (`use-session.ts:13`) calls `getSession().then(...)` without `.catch()`.
+   - **Reasoning**: If the network is offline or Supabase fails to respond, the promise rejects. Because there is no `.catch()`, `setLoading(false)` is never called.
+   - **Conclusion**: The application hangs in an infinite loading state on initial load.
 
-2. **Sub-optimal Payload Flattening**:
-   - *Observation*: In all 5 AI call sites (`generateChallenges`, `generateSingleChallenge`, `generateDiscriminantChallenge`, `recommendChallengesForChild`, `getChildAISynthesis`), `child.interests` is passed as a flat, comma-separated string (`(child.interests ?? []).join(", ")`).
-   - *Deduction*: By stripping out the underlying Gardner intelligence dimension (`spatial`, `logico_mathematique`, `entrepreneuriale`, etc.) that categorizes each tag in `INTERESTS_BY_TALENT`, the AI loses the cognitive context of *why* this interest matters.
+2. **Observation**: `ProfileDialog.tsx:54` sets `setBusy(true)` and awaits Supabase calls without a `finally` block.
+   - **Reasoning**: If network drops or RLS blocks the insert/update, an exception is thrown. Without `finally`, `setBusy(false)` is skipped.
+   - **Conclusion**: The user interface freezes with the button disabled indefinitely.
 
-3. **Framing Interests as "Parental Bias" to Override**:
-   - *Observation*: Prompt instructions in `generateChallenges` (line 847) and `generateSingleChallenge` (lines 1461–1463) explicitly instruct Naya to "Ignore le biais parental et utilise les données réelles... Naya doit prendre l'initiative de pivoter."
-   - *Deduction*: Framing parent-observed interests as "bias" leads the LLM to ignore or dismiss these key behavioral traits. In reality, parent-observed behavioral patterns are valuable signals of how the child naturally engages with challenges.
+3. **Observation**: `admin.products.tsx:141` and `admin.supervisors.tsx:47` catch all errors in `refetch()` and invoke `setForbidden(true)`.
+   - **Reasoning**: Catching generic network exceptions and assuming HTTP 403 Forbidden conflates connectivity/server issues with permission denial.
+   - **Conclusion**: Authenticated administrators are falsely shown "Accès réservé à l'administrateur" screens during temporary network failures.
 
-4. **Missed Opportunity for Deep Behavioral Drivers**:
-   - *Observation*: When generating challenges across different domains (e.g. Mathematics, Sciences, Art), the AI currently attempts to force thematic subjects rather than adopting the child's preferred *mechanic* or *posture*.
-   - *Deduction*: If a child has the interest tag "Démonte pour comprendre" (Spatial), Naya shouldn't just create a challenge about "machines" — she should design a *deconstruction / reverse-engineering mechanic* for whatever domain is being targeted (e.g., deconstructing a story structure in Language, or dissecting a recipe in Cooking).
+4. **Observation**: `hypotheses.functions.ts:252` calls `JSON.parse(raw)` directly on LLM responses.
+   - **Reasoning**: DeepSeek Reasoner and Claude models routinely return JSON wrapped in ` ```json ... ``` ` backticks. `JSON.parse` fails on backtick fences.
+   - **Conclusion**: Hypothesis cycle generation fails with "Réponse IA invalide".
+
+5. **Observation**: `OutcomeChat.tsx:110` converts selected images to Base64 without size checking.
+   - **Reasoning**: Full-resolution mobile photos (15MB-25MB) yield Base64 strings over 30MB, exceeding default HTTP payload limits.
+   - **Conclusion**: Proof submission fails with HTTP 413 or memory crash on mobile devices.
 
 ---
 
 ## 3. Caveats
 
-- **Legacy DB Data**: Existing database rows in `child_profiles.interests` may contain string values selected from prior versions of the UI. The payload building logic must gracefully handle tags that might not map directly to current `INTERESTS_BY_TALENT` keys.
-- **Token Usage / Prompt Length**: Enriching the prompt with behavioral descriptions must remain concise to stay within Anthropic token limits and prevent "lost-in-the-middle" attention degradation.
-- **Read-Only Scope**: Per the explorer role assignment, no source code outside `.agents/explorer_m1_1/` was modified during this investigation.
+- **Scope Boundary**: This audit covered User Flows 1-3 (`/auth`, `/profiles`, `/profiles/$profileId/challenges`, and associated `src/lib/` engine files). User Flows 4-6 (Parcours/Portfolio, Passport PDF Print, Admin OS) are scoped for other M1 sub-agents / M3.
+- **Environment**: Investigation was strictly read-only. No source files outside `.agents/explorer_m1_1/` were modified.
+- **Backend / Supabase RLS**: RLS policies were evaluated based on client-side and server-function integration patterns. Live Supabase database trigger execution was not modified.
 
 ---
 
-## 4. Conclusion & Recommendations
+## 4. Conclusion
 
-### Summary Conclusion
-`childProfile.interests` is currently underutilized and mischaracterized in the Naya AI system. It is passed as a flat list of strings, labeled as "parental bias," and illustrated with outdated "topic-based" examples ("Football"). To elevate Naya into a deep developmental mentor, `interests` must be treated as **Deep Behavioral Drivers & Cognitive Entry Points**.
+The functional architecture of User Flows 1–3 in Génizio is functionally sound in its core logic, but vulnerable to **systemic reliability defects**:
+1. Async state handlers lack `finally` blocks, causing frozen UI states.
+2. Error swallowing and broad catch blocks misinform users about network vs authorization errors.
+3. LLM integration lacks robust string sanitization before JSON parsing.
+4. User feedback (Sonner toasts) is missing on critical error paths.
 
----
-
-### Concrete Recommendations for Implementation
-
-#### Recommendation A: Enrich AI Payload with Behavioral Driver Context
-Create a standard helper function (e.g., `formatChildInterestsPayload(interests: string[])`) in `src/lib/challenges.functions.ts` or a shared utility.
-- Map each tag in `child.interests` back to its intelligence key from `INTERESTS_BY_TALENT`.
-- Format the payload explicitly:
-  ```text
-  Modes d'engagement et leviers comportementaux observés par le parent :
-  - [Logique & Cause à Effet] "Démonte pour comprendre"
-  - [Créativité & Imaginaire] "Détourne les objets de leur usage"
-  ```
-- Fallback gracefully for unrecognized/custom tags: `- [Général] "<tag>"`.
-
-#### Recommendation B: Overhaul `GENIZIO_PRINCIPLES` Rule 4
-Update `GENIZIO_PRINCIPLES` in `src/lib/challenges.functions.ts`:
-- **Current Prompt**:
-  > `- CENTRES D'INTÉRÊT COMME TREMPLIN, PAS COMME CONTRAT : les centres d'intérêt déclarés par le parent sont un point de départ pour ancrer le défi dans ce que l'enfant aime, jamais un sujet littéral obligatoire à chaque fois. Si l'intérêt me est "Football"...`
-- **Recommended Updated Prompt**:
-  > `- CENTRES D'INTÉRÊT COMME LEVIERS COMPORTEMENTAUX (POSTURE COGNITIVE) : les centres d'intérêt ne sont pas de simples sujets (comme "le foot" ou "les animaux"), mais les modes d'action et leviers d'engagement préférentiels de l'enfant (ex: "Démonte pour comprendre", "Négocie toujours", "A besoin de bouger pour réfléchir"). Utilise ces traits comme MÉCANIQUE ET POSTURE D'APPRENTISSAGE pour introduire n'importe quel domaine. Si l'enfant "démonte pour comprendre", propose un défi de déconstruction/analyse inverse, qu'il s'agisse de sciences, d'écriture, d'artisanat ou de logique.`
-
-#### Recommendation C: Reframe "Parental Bias" to "Pedagogical Synthesis"
-Modify the constraint text in `generateChallenges` (line 847) and `generateSingleChallenge` (lines 1461-1463):
-- Replace *"Ignore le biais parental"* with:
-  > *"SYNTHÈSE PÉDAGOGIQUE : Associe les leviers comportementaux observés par le parent (posture cognitive) avec les données d'observation de Naya. Utilise la posture préférentielle de l'enfant pour aborder les intelligences les moins explorées (${leastExplored.join(" et ")}), créant ainsi une passerelle naturelle vers de nouveaux talents."*
-
-#### Recommendation D: Standardize Across All Generator Pathways
-Ensure that:
-1. `generateChallenges` (`src/lib/challenges.functions.ts`)
-2. `generateSingleChallenge` (`src/lib/challenges.functions.ts`)
-3. `generateDiscriminantChallenge` (`src/lib/hypotheses.functions.ts`)
-4. `recommendChallengesForChild` (`src/lib/recommendations.functions.ts`)
-5. `getChildAISynthesis` (`src/lib/challenges.functions.ts`)
-all use the enriched payload formatter and share the updated behavioral driver instructions.
+Resolving these 15 documented defects in Milestone 2 will ensure 100% error handling compliance and UX safety across Flows 1-3.
 
 ---
 
 ## 5. Verification Method
 
-### How to Independently Verify Findings
+To verify findings independently:
 
-1. **Source Inspection**:
-   - Inspect `src/components/profiles/shared.ts` (lines 28–65) to verify `INTERESTS_BY_TALENT` structure.
-   - Inspect `src/lib/challenges.functions.ts` lines 518–530 (`GENIZIO_PRINCIPLES`), 831 (`generateChallenges`), 1439 (`generateSingleChallenge`), 1572 (`getChildAISynthesis`).
-   - Inspect `src/lib/hypotheses.functions.ts` lines 210, 370 (`generateDiscriminantChallenge`).
-   - Inspect `src/lib/recommendations.functions.ts` lines 98, 191 (`recommendChallengesForChild`).
-
-2. **Build & Type Checking**:
-   - Run `npx tsc --noEmit` or `bun run build` in `C:\Users\USER\Documents\GENIZIO\` to verify type compliance across all server functions.
+1. **TypeScript & Test Suite Verification**:
+   ```bash
+   npx tsc --noEmit
+   npx vitest run
+   ```
+2. **Defect Inspection Files**:
+   - `src/hooks/use-session.ts` (lines 13–16)
+   - `src/routes/auth.tsx` (lines 20–33)
+   - `src/routes/admin.tsx` (lines 28–30)
+   - `src/routes/admin.products.tsx` (lines 127–146)
+   - `src/routes/admin.supervisors.tsx` (lines 41–60)
+   - `src/components/profiles/ProfileDialog.tsx` (lines 54–94)
+   - `src/routes/profiles.index.tsx` (lines 185–199)
+   - `src/lib/hypotheses.functions.ts` (lines 252–256, 488–494)
+   - `src/lib/recommendations.functions.ts` (lines 179–181, 274–276)
+   - `src/components/challenges/OutcomeChat.tsx` (lines 107–118, 313–338)
+   - `src/routes/profiles.$profileId.challenges.tsx` (lines 184–202, 365–367)
+   - `src/lib/challenges.functions.ts` (lines 1177–1190)
 
 3. **Invalidation Conditions**:
-   - If `childProfile.interests` was changed to store structured objects `{ tag: string, intelligence: string }` instead of `string[]`, the payload mapping logic would need to adjust.
-   - If `INTERESTS_BY_TALENT` is moved or restructured, the lookup logic in the helper must reference the new export.
+   - Any unhandled promise rejection occurring on network loss during auth/session init.
+   - `JSON.parse` failing on markdown-wrapped LLM JSON outputs.
+   - Any async action leaving a button or spinner stuck in `loading`/`busy` state.
+
+---
+
+## 6. Remaining Work (Handoff to Implementer / Orchestrator for M2)
+
+1. **Remediate Auth & Access (Flow 1)**:
+   - Fix `useSession` catch handling (D-01).
+   - Add try/catch/finally & toast to `auth.tsx` (D-02).
+   - Add catch handler to `admin.tsx` (D-03).
+   - Differentiate 403 vs network errors in `admin.products.tsx` & `admin.supervisors.tsx` (D-04, D-05).
+
+2. **Remediate Profile Management & Behavioral Engines (Flow 2)**:
+   - Enclose `ProfileDialog.tsx` `save()` in try/catch/finally (D-06).
+   - Add error handling & loading resolution in `profiles.index.tsx` (D-07).
+   - Sanitize LLM raw string in `hypotheses.functions.ts` before `JSON.parse` (D-08).
+   - Improve telemetry & logging in `processDiscriminantResult` & recommendation catches (D-09, D-10).
+
+3. **Remediate Challenge Engine & Proof Submission (Flow 3)**:
+   - Add client-side 5MB file size limit in `OutcomeChat.tsx` (D-11).
+   - Await `onSaveNotes` in `OutcomeChat.tsx` (D-12).
+   - Add `toast.error` on bulk challenge generation failure in `profiles.$profileId.challenges.tsx` (D-13).
+   - Improve vision model error messaging in `challenges.functions.ts` (D-14).
+   - Add double-click guard to `handleGenerateSingle` (D-15).

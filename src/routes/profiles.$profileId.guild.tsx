@@ -141,6 +141,22 @@ function GuildPage() {
                 </div>
               </div>
 
+              <div className={`rounded-2xl border border-ink/10 p-4 shadow-sm ${guild.bgColor}`}>
+                <p className={`mb-1 font-display text-sm font-bold ${guild.color}`}>Défi collectif du mois</p>
+                <p className={`mb-3 text-xs font-medium opacity-80 ${guild.color}`}>
+                  Ensemble, {guild.name.toLowerCase()} visent {community.monthlyTarget} défis complétés ce mois-ci.
+                </p>
+                <div className="h-2.5 overflow-hidden rounded-full bg-white/60">
+                  <div
+                    className="h-full rounded-full bg-white transition-all duration-700"
+                    style={{ width: `${Math.min(100, Math.round((community.completedThisMonth / community.monthlyTarget) * 100))}%` }}
+                  />
+                </div>
+                <p className={`mt-2 text-xs font-bold ${guild.color}`}>
+                  {community.completedThisMonth} / {community.monthlyTarget} défis
+                </p>
+              </div>
+
               <div>
                 <p className="mb-3 text-xs font-extrabold uppercase tracking-widest text-ink/40">À célébrer</p>
                 {community.recentActivity.length === 0 ? (

@@ -4,6 +4,7 @@ import { listAllUsers } from "@/integrations/supabase/admin-users";
 import { getChildGuild, GUILDS, NO_GUILD_YET, GuildInfo } from "@/lib/guilds";
 import { TALENT_KEY_LABELS } from "@/lib/talent-buckets";
 import { calculateNayaTelemetry, NayaTelemetryResponse } from "@/lib/naya-telemetry";
+import { ACADEMIC_DOMAINS, ACADEMIC_DOMAIN_LABELS } from "@/lib/challenges.functions";
 
 export type AgeBracketKey = "3-6 ans" | "7-10 ans" | "11-13 ans" | "14+ ans";
 
@@ -733,6 +734,100 @@ export const getTalentCityStatsAdmin = createServerFn({ method: "GET" })
         totalOrders: orders.length,
       },
     };
+  });
+
+export interface AiProviderStatus {
+  deepseekConfigured: boolean;
+  anthropicConfigured: boolean;
+  geminiConfigured: boolean;
+}
+
+// Simple check de présence des clés API (jamais leur valeur) — pour que l'admin
+// voie immédiatement si DEEPSEEK_API_KEY est bien réglé sur cet environnement
+// après le passage à DeepSeek (2026-07-21), sans avoir à ouvrir .env/Vercel.
+export const getAiProviderStatusAdmin = createServerFn({ method: "GET" })
+  .middleware([requireAdmin])
+  .handler(async (): Promise<AiProviderStatus> => {
+    return {
+      deepseekConfigured: !!process.env.DEEPSEEK_API_KEY,
+      anthropicConfigured: !!process.env.ANTHROPIC_API_KEY,
+      geminiConfigured: !!process.env.GEMINI_API_KEY,
+    };
+  });
+
+export interface ProgressionDomainHealth {
+  domain: string;
+  domainLabel: string;
+  completedCount: number;
+  avgDaysToCompletion: number | null;
+  staleCount: number;
+}
+
+export interface ProgressionHealthResponse {
+  domains: ProgressionDomainHealth[];
+}
+
+// Ajoutée le 2026-07-22 pour valider le calibrage du moteur de progression
+// (computeProgressionTargets dans challenges.functions.ts, deltas +2/+0/+1 selon
+// la cause diagnostiquée) : sans ça, ces deltas restent une estimation jamais
+// confrontée à la réalité — "est-ce que les défis vraiment complétés le sont dans
+// un délai sain, ou est-ce qu'un domaine reste bloqué (stale) plus qu'un autre ?".
+// staleCount réutilise le même seuil (14 jours) que STALE_DOMAIN_CUTOFF et le
+// détecteur d'abandon des défis discriminants (processAbandonedDiscriminantChallenges),
+// mais couvre ici TOUS les défis académiques, pas seulement les discriminants — un
+// signal de reporting, pas un déclencheur du moteur bayésien.
+export const getProgressionHealthAdmin = createServerFn({ method: "GET" })
+  .middleware([requireAdmin])
+  .handler(async (): Promise<ProgressionHealthResponse> => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const cutoff = new Date(Date.now() - 14 * 24 * 60 * 60 * 1000).toISOString();
+
+    const [completedRes, staleRes] = await Promise.all([
+      supabaseAdmin
+        .from("challenges")
+        .select("academic_domain, created_at, completed_at")
+        .eq("status", "completed")
+        .not("academic_domain", "is", null)
+        .not("completed_at", "is", null),
+      supabaseAdmin
+        .from("challenges")
+        .select("academic_domain")
+        .in("status", ["todo", "in_progress"])
+        .not("academic_domain", "is", null)
+        .lt("created_at", cutoff),
+    ]);
+
+    if (completedRes.error) throw new Error(completedRes.error.message);
+    if (staleRes.error) throw new Error(staleRes.error.message);
+
+    const byDomain = new Map<string, { count: number; totalDays: number }>();
+    for (const c of completedRes.data ?? []) {
+      if (!c.academic_domain || !c.completed_at || !c.created_at) continue;
+      const days = (new Date(c.completed_at).getTime() - new Date(c.created_at).getTime()) / (1000 * 60 * 60 * 24);
+      const entry = byDomain.get(c.academic_domain) ?? { count: 0, totalDays: 0 };
+      entry.count += 1;
+      entry.totalDays += Math.max(0, days);
+      byDomain.set(c.academic_domain, entry);
+    }
+
+    const staleByDomain = new Map<string, number>();
+    for (const c of staleRes.data ?? []) {
+      if (!c.academic_domain) continue;
+      staleByDomain.set(c.academic_domain, (staleByDomain.get(c.academic_domain) ?? 0) + 1);
+    }
+
+    const domains: ProgressionDomainHealth[] = ACADEMIC_DOMAINS.map((domain) => {
+      const stats = byDomain.get(domain);
+      return {
+        domain,
+        domainLabel: ACADEMIC_DOMAIN_LABELS[domain] ?? domain,
+        completedCount: stats?.count ?? 0,
+        avgDaysToCompletion: stats && stats.count > 0 ? Math.round((stats.totalDays / stats.count) * 10) / 10 : null,
+        staleCount: staleByDomain.get(domain) ?? 0,
+      };
+    }).filter((d) => d.completedCount > 0 || d.staleCount > 0);
+
+    return { domains };
   });
 
 export const getNayaTelemetryAdmin = createServerFn({ method: "GET" })

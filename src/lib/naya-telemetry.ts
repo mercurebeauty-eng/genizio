@@ -1,16 +1,41 @@
+// Tarifs indicatifs (2026-07-22) — à vérifier contre la page de tarification
+// officielle DeepSeek au moment de la lecture (leurs prix changent régulièrement) ;
+// Sonnet reste au tarif Anthropic publié. Ce module reste un ESTIMATEUR de coût
+// (formules ci-dessous), jamais une facturation réelle mesurée sur des logs d'appels.
+//
+// Depuis la dépréciation des alias deepseek-chat/deepseek-reasoner (2026-07-24) et
+// la décision produit du 2026-07-22 (cf. callDeepSeekText dans
+// challenges.functions.ts) : DeepSeek Chat (défis, interactions utilisateur) reste
+// sur deepseek-v4-flash (rapide/économique) ; DeepSeek Reasoner (raisonnement
+// bayésien NAYA, volume faible) monte en gamme sur deepseek-v4-pro, le modèle le
+// plus avancé — d'où des tarifs distincts, plus élevés pour ce second poste. Tarif
+// "cache miss" (plein tarif) retenu par prudence, cet estimateur ne modélise pas
+// le cache de contexte.
 export const NAYA_PRICING = {
-  HAIKU_INPUT_PER_M: 0.25,
-  HAIKU_OUTPUT_PER_M: 1.25,
+  DEEPSEEK_CHAT_INPUT_PER_M: 0.14,
+  DEEPSEEK_CHAT_OUTPUT_PER_M: 0.28,
+  DEEPSEEK_REASONER_INPUT_PER_M: 0.435,
+  DEEPSEEK_REASONER_OUTPUT_PER_M: 0.87,
   SONNET_INPUT_PER_M: 3.00,
   SONNET_OUTPUT_PER_M: 15.00,
   USD_TO_XOF_RATE: 600,
 } as const;
 
 export interface NayaTokenUsage {
-  haikuInputTokens: number;
-  haikuOutputTokens: number;
-  sonnetInputTokens: number;
-  sonnetOutputTokens: number;
+  // Défis + Recommandations (texte général) — DeepSeek Chat depuis le 2026-07-21
+  // (remplace Claude Haiku 4.5). Noms de champs conservés ("deepseek*" au lieu
+  // de "haiku*") pour que la lecture reste immédiate sans dépendre du git blame.
+  deepseekChatInputTokens: number;
+  deepseekChatOutputTokens: number;
+  // Hypothèses (raisonnement bayésien NAYA) — DeepSeek Reasoner depuis le
+  // 2026-07-21 (remplace Claude Sonnet 5, decision #27 "quand le système doit
+  // vraiment réfléchir" — le rôle reste premium, seul le fournisseur change).
+  deepseekReasonerInputTokens: number;
+  deepseekReasonerOutputTokens: number;
+  // Validation de preuve photo (vision) — reste Claude Sonnet 5, DeepSeek n'a
+  // pas de vision. Seul cas où Anthropic est encore appelé.
+  visionSonnetInputTokens: number;
+  visionSonnetOutputTokens: number;
 }
 
 export interface NayaCostResult {
@@ -21,14 +46,14 @@ export interface NayaCostResult {
 export interface FeatureBreakdown {
   feature: "Défis" | "Hypothèses" | "Recommandations";
   callsCount: number;
-  modelUsed: "Haiku" | "Sonnet" | "Haiku + Sonnet";
+  modelUsed: "DeepSeek Chat" | "DeepSeek Chat + Sonnet (vision)" | "DeepSeek Reasoner";
   estimatedTokens: number;
   costUsd: number;
   costXof: number;
 }
 
 export interface ModelUsageBreakdown {
-  model: "Claude 3.5 Haiku" | "Claude 3.5 Sonnet";
+  model: "DeepSeek Chat" | "DeepSeek Reasoner" | "Claude Sonnet 5 (Vision)";
   inputTokens: number;
   outputTokens: number;
   totalTokens: number;
@@ -63,34 +88,44 @@ export interface NayaTelemetryResponse {
   projection: MonthlyProjection;
 }
 
-/**
- * Calculates estimated USD and XOF costs for Anthropic Claude (Haiku & Sonnet) usage.
- * Pricing:
- * - Haiku 3.5: $0.25/1M input, $1.25/1M output
- * - Sonnet 3.5: $3.00/1M input, $15.00/1M output
- * - USD to XOF rate: 600 FCFA
- */
-export function calculateNayaCosts(usage?: Partial<NayaTokenUsage> | null): NayaCostResult {
-  if (!usage) return { costUsd: 0, costXof: 0 };
+function round4(n: number): number {
+  return Math.round(n * 10000) / 10000;
+}
 
-  const haikuInput = Math.max(0, typeof usage.haikuInputTokens === "number" && !Number.isNaN(usage.haikuInputTokens) ? usage.haikuInputTokens : 0);
-  const haikuOutput = Math.max(0, typeof usage.haikuOutputTokens === "number" && !Number.isNaN(usage.haikuOutputTokens) ? usage.haikuOutputTokens : 0);
-  const sonnetInput = Math.max(0, typeof usage.sonnetInputTokens === "number" && !Number.isNaN(usage.sonnetInputTokens) ? usage.sonnetInputTokens : 0);
-  const sonnetOutput = Math.max(0, typeof usage.sonnetOutputTokens === "number" && !Number.isNaN(usage.sonnetOutputTokens) ? usage.sonnetOutputTokens : 0);
+function toSafeTokenCount(val: any): number {
+  if (typeof val !== "number" || Number.isNaN(val)) return 0;
+  if (val <= 0 || !Number.isFinite(val)) return 0;
+  return val;
+}
 
-  const haikuCost =
-    (haikuInput / 1_000_000) * NAYA_PRICING.HAIKU_INPUT_PER_M +
-    (haikuOutput / 1_000_000) * NAYA_PRICING.HAIKU_OUTPUT_PER_M;
+/** Coût DeepSeek Chat (défis + recommandations) pour une paire input/output de tokens. */
+export function calculateDeepSeekChatCost(inputTokens: number, outputTokens: number): NayaCostResult {
+  const input = toSafeTokenCount(inputTokens);
+  const output = toSafeTokenCount(outputTokens);
+  const usd =
+    (input / 1_000_000) * NAYA_PRICING.DEEPSEEK_CHAT_INPUT_PER_M +
+    (output / 1_000_000) * NAYA_PRICING.DEEPSEEK_CHAT_OUTPUT_PER_M;
+  return { costUsd: round4(usd), costXof: Math.round(usd * NAYA_PRICING.USD_TO_XOF_RATE) };
+}
 
-  const sonnetCost =
-    (sonnetInput / 1_000_000) * NAYA_PRICING.SONNET_INPUT_PER_M +
-    (sonnetOutput / 1_000_000) * NAYA_PRICING.SONNET_OUTPUT_PER_M;
+/** Coût DeepSeek Reasoner (hypothèses) pour une paire input/output de tokens. */
+export function calculateDeepSeekReasonerCost(inputTokens: number, outputTokens: number): NayaCostResult {
+  const input = toSafeTokenCount(inputTokens);
+  const output = toSafeTokenCount(outputTokens);
+  const usd =
+    (input / 1_000_000) * NAYA_PRICING.DEEPSEEK_REASONER_INPUT_PER_M +
+    (output / 1_000_000) * NAYA_PRICING.DEEPSEEK_REASONER_OUTPUT_PER_M;
+  return { costUsd: round4(usd), costXof: Math.round(usd * NAYA_PRICING.USD_TO_XOF_RATE) };
+}
 
-  const totalUsd = haikuCost + sonnetCost;
-  const costUsd = Math.round(totalUsd * 10000) / 10000;
-  const costXof = Math.round(totalUsd * NAYA_PRICING.USD_TO_XOF_RATE);
-
-  return { costUsd, costXof };
+/** Coût Claude Sonnet 5 (vision — preuve photo) pour une paire input/output de tokens. */
+export function calculateVisionSonnetCost(inputTokens: number, outputTokens: number): NayaCostResult {
+  const input = toSafeTokenCount(inputTokens);
+  const output = toSafeTokenCount(outputTokens);
+  const usd =
+    (input / 1_000_000) * NAYA_PRICING.SONNET_INPUT_PER_M +
+    (output / 1_000_000) * NAYA_PRICING.SONNET_OUTPUT_PER_M;
+  return { costUsd: round4(usd), costXof: Math.round(usd * NAYA_PRICING.USD_TO_XOF_RATE) };
 }
 
 /**
@@ -117,7 +152,7 @@ export function calculateNayaConversionRate(generatedCount: number, completedCou
 /**
  * Aggregates raw system counts into full Naya AI telemetry metrics:
  * - Feature breakdown (Défis, Hypothèses, Recommandations)
- * - Model breakdown (Haiku vs Sonnet token distribution & cost shares)
+ * - Model breakdown (DeepSeek Chat / DeepSeek Reasoner / Claude Sonnet 5 Vision)
  * - Conversion funnel
  * - Monthly projections
  */
@@ -136,64 +171,52 @@ export function calculateNayaTelemetry(raw: {
   const hypCount = Math.max(0, raw.hypothesesCycles || 0);
   const recCount = Math.max(0, raw.recommendationsCount || 0);
 
-  // Token multipliers per API call
-  // Défis text generation (Haiku): 1,200 input, 800 output per challenge generated
-  const defisHaikuInput = genCount * 1200;
-  const defisHaikuOutput = genCount * 800;
+  // Token multipliers per API call (mêmes ordres de grandeur qu'avant le
+  // passage à DeepSeek — seul le fournisseur/tarif change, pas le volume estimé)
+  // Défis text generation (DeepSeek Chat): 1,200 input, 800 output per challenge generated
+  const defisChatInput = genCount * 1200;
+  const defisChatOutput = genCount * 800;
 
-  // Photo proof validation (Sonnet): 1,500 input, 300 output per photo proof completed
-  const defisSonnetInput = photoProofCount * 1500;
-  const defisSonnetOutput = photoProofCount * 300;
+  // Photo proof validation (Claude Sonnet 5, vision) : 1,500 input, 300 output
+  const defisVisionInput = photoProofCount * 1500;
+  const defisVisionOutput = photoProofCount * 300;
 
-  // Hypotheses cycles (Sonnet): 2,500 input, 600 output per cycle
-  const hypSonnetInput = hypCount * 2500;
-  const hypSonnetOutput = hypCount * 600;
+  // Hypotheses cycles (DeepSeek Reasoner) : 2,500 input, 600 output per cycle
+  const hypReasonerInput = hypCount * 2500;
+  const hypReasonerOutput = hypCount * 600;
 
-  // Recommandations syntheses (Haiku): 1,000 input, 500 output per synthesis
-  const recHaikuInput = recCount * 1000;
-  const recHaikuOutput = recCount * 500;
+  // Recommandations syntheses (DeepSeek Chat) : 1,000 input, 500 output per synthesis
+  const recChatInput = recCount * 1000;
+  const recChatOutput = recCount * 500;
 
   const tokenUsage: NayaTokenUsage = {
-    haikuInputTokens: defisHaikuInput + recHaikuInput,
-    haikuOutputTokens: defisHaikuOutput + recHaikuOutput,
-    sonnetInputTokens: defisSonnetInput + hypSonnetInput,
-    sonnetOutputTokens: defisSonnetOutput + hypSonnetOutput,
+    deepseekChatInputTokens: defisChatInput + recChatInput,
+    deepseekChatOutputTokens: defisChatOutput + recChatOutput,
+    deepseekReasonerInputTokens: hypReasonerInput,
+    deepseekReasonerOutputTokens: hypReasonerOutput,
+    visionSonnetInputTokens: defisVisionInput,
+    visionSonnetOutputTokens: defisVisionOutput,
   };
 
-  const totalHaikuTokens =
-    tokenUsage.haikuInputTokens + tokenUsage.haikuOutputTokens;
-  const totalSonnetTokens =
-    tokenUsage.sonnetInputTokens + tokenUsage.sonnetOutputTokens;
-  const totalTokens = totalHaikuTokens + totalSonnetTokens;
+  const totalChatTokens = tokenUsage.deepseekChatInputTokens + tokenUsage.deepseekChatOutputTokens;
+  const totalReasonerTokens = tokenUsage.deepseekReasonerInputTokens + tokenUsage.deepseekReasonerOutputTokens;
+  const totalVisionTokens = tokenUsage.visionSonnetInputTokens + tokenUsage.visionSonnetOutputTokens;
+  const totalTokens = totalChatTokens + totalReasonerTokens + totalVisionTokens;
 
-  const haikuCosts = calculateNayaCosts({
-    haikuInputTokens: tokenUsage.haikuInputTokens,
-    haikuOutputTokens: tokenUsage.haikuOutputTokens,
-  });
+  const chatCosts = calculateDeepSeekChatCost(tokenUsage.deepseekChatInputTokens, tokenUsage.deepseekChatOutputTokens);
+  const reasonerCosts = calculateDeepSeekReasonerCost(tokenUsage.deepseekReasonerInputTokens, tokenUsage.deepseekReasonerOutputTokens);
+  const visionCosts = calculateVisionSonnetCost(tokenUsage.visionSonnetInputTokens, tokenUsage.visionSonnetOutputTokens);
 
-  const sonnetCosts = calculateNayaCosts({
-    sonnetInputTokens: tokenUsage.sonnetInputTokens,
-    sonnetOutputTokens: tokenUsage.sonnetOutputTokens,
-  });
+  const totalCostUsd = round4(chatCosts.costUsd + reasonerCosts.costUsd + visionCosts.costUsd);
+  const totalCostXof = chatCosts.costXof + reasonerCosts.costXof + visionCosts.costXof;
 
-  const totalCosts = calculateNayaCosts(tokenUsage);
+  const defisChatCosts = calculateDeepSeekChatCost(defisChatInput, defisChatOutput);
+  const defisVisionCosts = calculateVisionSonnetCost(defisVisionInput, defisVisionOutput);
+  const defisCostUsd = round4(defisChatCosts.costUsd + defisVisionCosts.costUsd);
+  const defisCostXof = defisChatCosts.costXof + defisVisionCosts.costXof;
 
-  const defisCosts = calculateNayaCosts({
-    haikuInputTokens: defisHaikuInput,
-    haikuOutputTokens: defisHaikuOutput,
-    sonnetInputTokens: defisSonnetInput,
-    sonnetOutputTokens: defisSonnetOutput,
-  });
-
-  const hypCosts = calculateNayaCosts({
-    sonnetInputTokens: hypSonnetInput,
-    sonnetOutputTokens: hypSonnetOutput,
-  });
-
-  const recCosts = calculateNayaCosts({
-    haikuInputTokens: recHaikuInput,
-    haikuOutputTokens: recHaikuOutput,
-  });
+  const hypCosts = calculateDeepSeekReasonerCost(hypReasonerInput, hypReasonerOutput);
+  const recCosts = calculateDeepSeekChatCost(recChatInput, recChatOutput);
 
   const totalApiCalls = genCount + photoProofCount + hypCount + recCount;
   const conversionRatePct = calculateNayaConversionRate(genCount, compCount);
@@ -202,24 +225,24 @@ export function calculateNayaTelemetry(raw: {
     {
       feature: "Défis",
       callsCount: genCount + photoProofCount,
-      modelUsed: photoProofCount > 0 ? "Haiku + Sonnet" : "Haiku",
-      estimatedTokens: defisHaikuInput + defisHaikuOutput + defisSonnetInput + defisSonnetOutput,
-      costUsd: defisCosts.costUsd,
-      costXof: defisCosts.costXof,
+      modelUsed: photoProofCount > 0 ? "DeepSeek Chat + Sonnet (vision)" : "DeepSeek Chat",
+      estimatedTokens: defisChatInput + defisChatOutput + defisVisionInput + defisVisionOutput,
+      costUsd: defisCostUsd,
+      costXof: defisCostXof,
     },
     {
       feature: "Hypothèses",
       callsCount: hypCount,
-      modelUsed: "Sonnet",
-      estimatedTokens: hypSonnetInput + hypSonnetOutput,
+      modelUsed: "DeepSeek Reasoner",
+      estimatedTokens: hypReasonerInput + hypReasonerOutput,
       costUsd: hypCosts.costUsd,
       costXof: hypCosts.costXof,
     },
     {
       feature: "Recommandations",
       callsCount: recCount,
-      modelUsed: "Haiku",
-      estimatedTokens: recHaikuInput + recHaikuOutput,
+      modelUsed: "DeepSeek Chat",
+      estimatedTokens: recChatInput + recChatOutput,
       costUsd: recCosts.costUsd,
       costXof: recCosts.costXof,
     },
@@ -227,22 +250,31 @@ export function calculateNayaTelemetry(raw: {
 
   const modelBreakdown: ModelUsageBreakdown[] = [
     {
-      model: "Claude 3.5 Haiku",
-      inputTokens: tokenUsage.haikuInputTokens,
-      outputTokens: tokenUsage.haikuOutputTokens,
-      totalTokens: totalHaikuTokens,
-      costUsd: haikuCosts.costUsd,
-      costXof: haikuCosts.costXof,
-      sharePercentage: totalTokens > 0 ? Math.round((totalHaikuTokens / totalTokens) * 100) : 0,
+      model: "DeepSeek Chat",
+      inputTokens: tokenUsage.deepseekChatInputTokens,
+      outputTokens: tokenUsage.deepseekChatOutputTokens,
+      totalTokens: totalChatTokens,
+      costUsd: chatCosts.costUsd,
+      costXof: chatCosts.costXof,
+      sharePercentage: totalTokens > 0 ? Math.round((totalChatTokens / totalTokens) * 100) : 0,
     },
     {
-      model: "Claude 3.5 Sonnet",
-      inputTokens: tokenUsage.sonnetInputTokens,
-      outputTokens: tokenUsage.sonnetOutputTokens,
-      totalTokens: totalSonnetTokens,
-      costUsd: sonnetCosts.costUsd,
-      costXof: sonnetCosts.costXof,
-      sharePercentage: totalTokens > 0 ? Math.round((totalSonnetTokens / totalTokens) * 100) : 0,
+      model: "DeepSeek Reasoner",
+      inputTokens: tokenUsage.deepseekReasonerInputTokens,
+      outputTokens: tokenUsage.deepseekReasonerOutputTokens,
+      totalTokens: totalReasonerTokens,
+      costUsd: reasonerCosts.costUsd,
+      costXof: reasonerCosts.costXof,
+      sharePercentage: totalTokens > 0 ? Math.round((totalReasonerTokens / totalTokens) * 100) : 0,
+    },
+    {
+      model: "Claude Sonnet 5 (Vision)",
+      inputTokens: tokenUsage.visionSonnetInputTokens,
+      outputTokens: tokenUsage.visionSonnetOutputTokens,
+      totalTokens: totalVisionTokens,
+      costUsd: visionCosts.costUsd,
+      costXof: visionCosts.costXof,
+      sharePercentage: totalTokens > 0 ? Math.round((totalVisionTokens / totalTokens) * 100) : 0,
     },
   ];
 
@@ -255,15 +287,15 @@ export function calculateNayaTelemetry(raw: {
 
   // Monthly projections based on a 4x multiplier on current baseline activity
   const projectedCallsMonthly = totalApiCalls * 4;
-  const projectedCostUsdMonthly = Math.round(totalCosts.costUsd * 4 * 10000) / 10000;
-  const projectedCostXofMonthly = Math.round(totalCosts.costXof * 4);
+  const projectedCostUsdMonthly = round4(totalCostUsd * 4);
+  const projectedCostXofMonthly = Math.round(totalCostXof * 4);
 
   return {
     totalApiCalls,
     totalTokens,
     tokenUsage,
-    totalCostUsd: totalCosts.costUsd,
-    totalCostXof: totalCosts.costXof,
+    totalCostUsd,
+    totalCostXof,
     conversionRatePct,
     featureBreakdown,
     modelBreakdown,

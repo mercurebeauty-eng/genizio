@@ -137,9 +137,19 @@ function AdminProductsPage() {
       setSuggestions((suggestionsData as MaterialSuggestion[]) ?? []);
       setOrders(ordersData ?? []);
       setEcosystemStats(statsData as EcosystemStats);
-      setForbidden(false);
-    } catch {
-      setForbidden(true);
+    } catch (err: any) {
+      console.error("Error fetching admin products data:", err);
+      const isForbidden =
+        err?.status === 403 ||
+        err?.statusCode === 403 ||
+        String(err?.message || "").toLowerCase().includes("forbidden") ||
+        String(err?.message || "").includes("403") ||
+        String(err?.message || "").includes("Accès refusé");
+      if (isForbidden) {
+        setForbidden(true);
+      } else {
+        toast.error("Erreur lors de la récupération des données d'administration.");
+      }
     } finally {
       setFetching(false);
     }
