@@ -37,7 +37,7 @@ import {
   OPPORTUNITY_COMPASS_VERSION,
   OPPORTUNITY_COMPASS_DISCLAIMER,
   OPPORTUNITY_COMPASS_MIN_AGE,
-  CORPORELLE_SUBFORM_OPPORTUNITIES,
+  TALENT_SUBFORM_OPPORTUNITIES,
 } from "@/lib/opportunity-compass";
 import { ShoppingBag } from "lucide-react";
 
@@ -565,7 +565,6 @@ function ChallengesPage() {
                 <div className="space-y-4">
                   {domainsPresent.map((domain) => {
                     const entries = Object.entries(subformCountsByDomain[domain]).sort((a, b) => b[1] - a[1]);
-                    const pistesForDomain = CORPORELLE_SUBFORM_OPPORTUNITIES; // seule Boussole disponible pour l'instant (voir plus bas)
 
                     return (
                       <div key={domain} className="rounded-3xl border border-ink/10 bg-white p-5 shadow-sm">
@@ -584,12 +583,10 @@ function ChallengesPage() {
                         {/* Boussole d'Opportunités — V3, couche d'interprétation distincte du Profil
                             d'Aptitudes ci-dessus (cf. genizio-decisions #40). Réservée 12 ans et + :
                             décision explicite pour ne pas rétrécir prématurément le champ des
-                            possibles d'un enfant plus jeune. Contenu curé disponible pour corporelle
-                            seulement à ce stade — les autres domaines n'affichent rien tant que leur
-                            Boussole n'a pas été rédigée (choix délibéré, pas un oubli : contrairement
-                            au tagging V1, une liste de pistes de métiers mérite d'être pensée domaine
-                            par domaine plutôt que générée à la volée). */}
-                        {child.age >= OPPORTUNITY_COMPASS_MIN_AGE && entries.some(([key]) => pistesForDomain[key]) && (
+                            possibles d'un enfant plus jeune. Contenu couvrant les 9 domaines depuis
+                            le même jour (TALENT_SUBFORM_OPPORTUNITIES) — construction raisonnable de
+                            l'agent, pas une recherche sourcée comme le référentiel académique #39. */}
+                        {child.age >= OPPORTUNITY_COMPASS_MIN_AGE && entries.some(([key]) => TALENT_SUBFORM_OPPORTUNITIES[key]) && (
                           <div className="mt-4 pt-4 border-t border-dashed border-ink/15">
                             <div className="flex items-center justify-between mb-2">
                               <h5 className="text-[10px] font-bold uppercase tracking-widest text-ink/50">
@@ -599,7 +596,7 @@ function ChallengesPage() {
                             </div>
                             <div className="space-y-2">
                               {entries.map(([key]) => {
-                                const pistes = pistesForDomain[key];
+                                const pistes = TALENT_SUBFORM_OPPORTUNITIES[key];
                                 if (!pistes) return null;
                                 return (
                                   <p key={key} className="text-xs text-ink/70 leading-relaxed">
