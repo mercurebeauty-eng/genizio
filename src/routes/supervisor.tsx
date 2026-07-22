@@ -9,6 +9,7 @@ import { Loader2, Users, Trophy, CheckSquare, Eye, ClipboardList, Zap, CheckCirc
 import { NayaAvatar } from "@/components/NayaAvatar";
 import { MarkdownContent } from "@/components/ui/markdown-content";
 import { GenizioLoader } from "@/components/GenizioLoader";
+import { formatPedagogicalIntention } from "@/lib/pedagogical-intention";
 
 
 export const Route = createFileRoute("/supervisor")({
@@ -296,10 +297,10 @@ function SupervisorDashboardPage() {
               </div>
 
               {/* Pedagogical context */}
-              {selectedChallenge.pedagogical_context && (
+              {formatPedagogicalIntention(selectedChallenge.pedagogical_context) && (
                 <div className="rounded-2xl border border-ink/10 bg-stone-50 p-4">
                   <p className="text-xs font-black uppercase tracking-wider text-ink/60 mb-1">Objectif Pédagogique (Naya)</p>
-                  <p className="text-xs text-ink/70 leading-relaxed font-medium">{selectedChallenge.pedagogical_context}</p>
+                  <p className="text-xs text-ink/70 leading-relaxed font-medium">{formatPedagogicalIntention(selectedChallenge.pedagogical_context)}</p>
                 </div>
               )}
 

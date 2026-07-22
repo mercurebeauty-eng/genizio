@@ -13,6 +13,7 @@ import {
   getChildAISynthesis,
   generateSingleChallenge,
   assignTemplateChallenge,
+  CORPORELLE_SUBFORM_LABELS,
 } from "@/lib/challenges.functions";
 import { recommendChallengesForChild, type RecommendedChallengeResult } from "@/lib/recommendations.functions";
 import { createOrder } from "@/lib/products.functions";
@@ -29,6 +30,13 @@ import { AppHeader } from "@/components/AppHeader";
 import { AppTabBar } from "@/components/AppTabBar";
 import { GenizioLoader } from "@/components/GenizioLoader";
 import { getActiveChallenge } from "@/lib/active-challenge";
+import { formatPedagogicalIntention } from "@/lib/pedagogical-intention";
+import {
+  OPPORTUNITY_COMPASS_VERSION,
+  OPPORTUNITY_COMPASS_DISCLAIMER,
+  OPPORTUNITY_COMPASS_MIN_AGE,
+  CORPORELLE_SUBFORM_OPPORTUNITIES,
+} from "@/lib/opportunity-compass";
 import { ShoppingBag } from "lucide-react";
 
 // "Mathématiques" et "Émotions et relations sociales" ajoutées (décision #39, item 3) : le
@@ -69,6 +77,7 @@ type Challenge = {
   completed_at: string | null;
   pedagogical_context?: string | null;
   target_intelligences?: string[] | null;
+  trait_subform?: string | null;
   proof_image_url?: string | null;
   ai_observations?: string | null;
   difficulty?: string | null;
@@ -532,6 +541,72 @@ function ChallengesPage() {
               </p>
             </div>
 
+            {/* Sous-formes de talent — V1 du chantier "orientation fine" (2026-07-22, pilote
+                corporelle uniquement, cf. genizio-decisions #40). Savoir qu'un enfant est fort en
+                "corporelle" ne dit rien de la sous-forme où ça s'exprime le mieux ; ce petit encart
+                agrège ce que Naya a déjà tagué sur les défis complétés, sans deviner de discipline
+                précise (basket/foot/etc.) que les données de l'app ne permettent pas de fonder. */}
+            {(() => {
+              const corporelleSubformCounts = challenges
+                .filter((c) => c.status === "completed" && c.trait_subform)
+                .reduce<Record<string, number>>((acc, c) => {
+                  const key = c.trait_subform as string;
+                  acc[key] = (acc[key] ?? 0) + 1;
+                  return acc;
+                }, {});
+              const corporelleSubformEntries = Object.entries(corporelleSubformCounts).sort((a, b) => b[1] - a[1]);
+
+              if (corporelleSubformEntries.length === 0) return null;
+
+              return (
+                <div className="rounded-3xl border border-ink/10 bg-white p-5 shadow-sm">
+                  <h4 className="text-[11px] font-bold uppercase tracking-widest text-ink/60 mb-3">
+                    Au sein de Corporelle
+                  </h4>
+                  <div className="space-y-2">
+                    {corporelleSubformEntries.map(([key, count]) => (
+                      <div key={key} className="flex items-center justify-between text-sm">
+                        <span className="font-bold text-ink">
+                          {CORPORELLE_SUBFORM_LABELS[key as keyof typeof CORPORELLE_SUBFORM_LABELS] ?? key}
+                        </span>
+                        <span className="text-ink/60 font-medium">{count} défi{count > 1 ? "s" : ""}</span>
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* Boussole d'Opportunités — V3, couche d'interprétation distincte du Profil
+                      d'Aptitudes ci-dessus (cf. genizio-decisions #40). Réservée 12 ans et + :
+                      décision explicite pour ne pas rétrécir prématurément le champ des possibles
+                      d'un enfant plus jeune. Toujours datée et non-permanente. */}
+                  {child.age >= OPPORTUNITY_COMPASS_MIN_AGE && (
+                    <div className="mt-4 pt-4 border-t border-dashed border-ink/15">
+                      <div className="flex items-center justify-between mb-2">
+                        <h5 className="text-[10px] font-bold uppercase tracking-widest text-ink/50">
+                          Boussole d'Opportunités
+                        </h5>
+                        <span className="text-[9px] font-bold text-ink/40 uppercase">{OPPORTUNITY_COMPASS_VERSION}</span>
+                      </div>
+                      <div className="space-y-2">
+                        {corporelleSubformEntries.map(([key]) => {
+                          const pistes = CORPORELLE_SUBFORM_OPPORTUNITIES[key];
+                          if (!pistes) return null;
+                          return (
+                            <p key={key} className="text-xs text-ink/70 leading-relaxed">
+                              <span className="font-bold text-ink">
+                                {CORPORELLE_SUBFORM_LABELS[key as keyof typeof CORPORELLE_SUBFORM_LABELS] ?? key} :
+                              </span>{" "}
+                              {pistes.join(", ")}
+                            </p>
+                          );
+                        })}
+                      </div>
+                      <p className="text-[10px] text-ink/40 italic mt-2">{OPPORTUNITY_COMPASS_DISCLAIMER}</p>
+                    </div>
+                  )}
+                </div>
+              );
+            })()}
+
             {/* AI Synthesis Card */}
             <div className="rounded-3xl border border-ink/10 bg-white p-6 shadow-xl relative overflow-hidden">
 
@@ -683,12 +758,12 @@ function ChallengesPage() {
                     <MarkdownContent content={currentGeneratedChallenge.description} />
                   </div>
 
-                  {currentGeneratedChallenge.pedagogical_context && (
+                  {formatPedagogicalIntention(currentGeneratedChallenge.pedagogical_context) && (
                     <div className="mb-4 rounded-xl bg-amber-50 border border-ink/10 p-4 text-xs leading-relaxed text-amber-800">
                       <p className="font-bold flex items-center gap-1.5 mb-1 text-amber-900">
                         💡 Intention pédagogique (Naya)
                       </p>
-                      <MarkdownContent content={currentGeneratedChallenge.pedagogical_context} inline />
+                      <MarkdownContent content={formatPedagogicalIntention(currentGeneratedChallenge.pedagogical_context)!} inline />
                     </div>
                   )}
 
@@ -1116,7 +1191,7 @@ function ChallengeCard({
         </div>
 
         {/* pedagogical context */}
-        {c.pedagogical_context && (
+        {formatPedagogicalIntention(c.pedagogical_context) && (
           <div className="rounded-[1rem] bg-brand-50 p-4 flex gap-3 mb-6">
             <Brain className="size-5 text-brand flex-shrink-0 mt-0.5" />
             <div>
@@ -1124,7 +1199,7 @@ function ChallengeCard({
                 Intention Pédagogique
               </p>
               <p className="text-[13px] text-brand-700 leading-relaxed italic">
-                "<MarkdownContent content={c.pedagogical_context} inline />"
+                "<MarkdownContent content={formatPedagogicalIntention(c.pedagogical_context)!} inline />"
               </p>
             </div>
           </div>

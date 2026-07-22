@@ -13,6 +13,7 @@ import { NayaAvatar } from "@/components/NayaAvatar";
 import { DifficultyBadge } from "@/components/challenges/DifficultyBadge";
 import { MarkdownContent } from "@/components/ui/markdown-content";
 import { GenizioLoader } from "@/components/GenizioLoader";
+import { formatPedagogicalIntention } from "@/lib/pedagogical-intention";
 
 export const Route = createFileRoute("/boutique")({
   component: BoutiquePage,
@@ -607,7 +608,7 @@ function BoutiquePage() {
                 </ol>
               </div>
 
-              {generatedChallenge.pedagogical_context && (
+              {formatPedagogicalIntention(generatedChallenge.pedagogical_context) && (
                 <div className="rounded-2xl border border-ink/10 bg-brand/5 p-4 flex gap-3">
                   <Brain className="size-5 text-brand shrink-0 mt-0.5" />
                   <div>
@@ -615,7 +616,7 @@ function BoutiquePage() {
                       Observation pédagogique de Naya
                     </h5>
                     <p className="text-xs font-bold text-brand leading-relaxed">
-                      "<MarkdownContent content={generatedChallenge.pedagogical_context} inline />"
+                      "<MarkdownContent content={formatPedagogicalIntention(generatedChallenge.pedagogical_context)!} inline />"
                     </p>
                   </div>
                 </div>

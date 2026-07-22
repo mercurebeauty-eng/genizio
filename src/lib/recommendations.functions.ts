@@ -1,7 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { generateDiscriminantChallenge } from "@/lib/hypotheses.functions";
-import { callClaude, finalizeChallenge, PROOF_MODE_INSTRUCTION, ACADEMIC_REFERENTIAL_INSTRUCTION, STEPS_INSTRUCTION, formatChildInterestsPayload, extractJsonFromLLMResponse } from "@/lib/challenges.functions";
+import { callClaude, finalizeChallenge, PROOF_MODE_INSTRUCTION, ACADEMIC_REFERENTIAL_INSTRUCTION, STEPS_INSTRUCTION, INTELLIGENCES_FIELD_INSTRUCTION, TRAIT_SUBFORM_INSTRUCTION, formatChildInterestsPayload, extractJsonFromLLMResponse } from "@/lib/challenges.functions";
 import { z } from "zod";
 
 const RecommendInput = z.object({
@@ -102,6 +102,10 @@ ${formattedInterests}
 
 ${STEPS_INSTRUCTION}
 
+${INTELLIGENCES_FIELD_INSTRUCTION}
+
+${TRAIT_SUBFORM_INSTRUCTION}
+
 ${PROOF_MODE_INSTRUCTION}
 
 ${ACADEMIC_REFERENTIAL_INSTRUCTION}
@@ -115,6 +119,8 @@ Format JSON strict :
   "steps": ["Étape 1", "Étape 2"],
   "materials": ["Matériel 1"],
   "material_tags": ["tag1"],
+  "intelligences": ["creative"],
+  "trait_subform": "endurance" | "explosivite" | "coordination_fine" | "coordination_collective" | "precision" | null (uniquement si "corporelle" est choisi),
   "difficulty": "facile",
   "proof_mode": "photo" ou "declarative",
   "proof_target": {"metric": "...", "value": 20} (uniquement si declarative),
@@ -156,6 +162,8 @@ Format JSON strict :
                 steps: safeSteps,
                 materials: safeMaterials,
                 material_tags: parsed.material_tags,
+                intelligences: parsed.intelligences,
+                trait_subform: parsed.trait_subform,
                 difficulty: "facile",
                 proof_mode: parsed.proof_mode,
                 proof_target: parsed.proof_target,
@@ -200,6 +208,10 @@ ${formattedInterests}
 
 ${STEPS_INSTRUCTION}
 
+${INTELLIGENCES_FIELD_INSTRUCTION}
+
+${TRAIT_SUBFORM_INSTRUCTION}
+
 ${PROOF_MODE_INSTRUCTION}
 Pour ce défi de stabilisation en particulier, une cible "declarative" doit rester trivialement atteignable (ex: 5 répétitions, pas 20) — le but est une réussite garantie, pas un défi physique.
 
@@ -214,6 +226,8 @@ Format JSON strict :
   "steps": ["Étape 1 très simple", "Étape 2 très simple"],
   "materials": ["Matériel 1"],
   "material_tags": ["tag1"],
+  "intelligences": ["creative"],
+  "trait_subform": "endurance" | "explosivite" | "coordination_fine" | "coordination_collective" | "precision" | null (uniquement si "corporelle" est choisi),
   "difficulty": "facile",
   "proof_mode": "photo" ou "declarative",
   "proof_target": {"metric": "...", "value": 5} (uniquement si declarative),
@@ -253,6 +267,8 @@ Format JSON strict :
                 steps: safeSteps,
                 materials: safeMaterials,
                 material_tags: parsed.material_tags,
+                intelligences: parsed.intelligences,
+                trait_subform: parsed.trait_subform,
                 difficulty: "facile",
                 proof_mode: parsed.proof_mode,
                 proof_target: parsed.proof_target,

@@ -1152,3 +1152,234 @@ valeurs, colonne `challenges.academic_reference_note` ajoutée.
   Sonnet/Haiku produit réellement une citation cohérente sur les nouveaux domaines n'a pu être
   faite en direct. À refaire dès que l'outillage du navigateur repasse fiable, ou lors de la
   première génération réelle en production.
+
+## Décision #40 : sous-formes de talent (V1) + Boussole d'Opportunités (V3) — pilote corporelle
+
+**Contexte** : discussion produit du 2026-07-22 partie d'une question concrète ("le sport et
+l'informatique sont mal couverts par les 9 intelligences") puis recadrée par l'utilisateur vers
+une vision plus large — un système d'orientation qui croise les aptitudes réelles observées chez
+l'enfant avec les besoins/métiers futurs, pour maximiser le potentiel individuel ET le capital
+humain collectif. Analyse complète menée via `/product-intelligence-architect` (mode Sparring +
+V1→V4), avec recherche web réelle sur la concurrence plutôt que supposée :
+[Talents.Kids](https://www.talents.kids/about) fait déjà la même détection large sur les mêmes 9
+intelligences de Gardner (donc plus un différenciateur en soi) ; [ai.io/aiScout](https://youthsportsbusinessreport.com/ai-ios-ai-talent-discovery-app-reaches-45000-youth-athletes-through-mls-partnership/)
+prouve que la discrimination fine par discipline sportive est possible, mais via vision par
+ordinateur sur des tests physiques standardisés — infrastructure totalement différente de celle
+de Génizio (défis à domicile, pas de vidéo/capteurs).
+
+**Décision explicite de l'utilisateur** : construire V1 et V3 seulement (pas V2 — le moteur de
+discrimination bayésienne généralisé aux sous-disciplines, prématuré tant que le volume de défis
+par domaine est faible ; pas V4 — l'infrastructure de crédentialisation externe, moonshot
+pluriannuel). Rejet explicite de deviner une discipline précise (basket vs foot) à partir des
+données actuelles — fausse précision, risque de confiance. Rejet explicite de coder en dur une
+carte "aptitude → métier de demain" figée (prédiction du marché du travail non fiable à 15 ans).
+
+**V1 — sous-formes de talent (pilote corporelle)** : un enfant fort en "corporelle" ne dit rien de
+la sous-forme où le potentiel s'exprime (endurance ≠ explosivité ≠ coordination). Nouveau champ
+`trait_subform` sur `challenges` (nullable, migration
+`20260722120000_add_trait_subform_to_challenges.sql`, CHECK restreint à 5 valeurs :
+`endurance`/`explosivite`/`coordination_fine`/`coordination_collective`/`precision`). Résolu par
+`resolveTraitSubform` dans `finalizeChallenge` (même philosophie que `resolveTargetIntelligences` :
+ne jamais faire confiance à la seule auto-discipline du modèle — n'accepte une sous-forme que si
+"corporelle" fait déjà partie des intelligences résolues ET que la valeur fait partie de
+`CORPORELLE_SUBFORMS`). Nouvelle instruction partagée `TRAIT_SUBFORM_INSTRUCTION` (même pattern
+que `STEPS_INSTRUCTION`), câblée dans les **5** générateurs de défis. Ce qui a révélé un bug
+préexistant en le faisant : `generateDiscriminantChallenge` (hypothèses) et les 2 recommandations
+ESSAIMAGE/STABILISATION ne demandaient jamais du tout le champ "intelligences" à l'IA — donc
+`target_intelligences` n'était JAMAIS rempli pour ces 3 générateurs depuis leur création. Corrigé
+au passage (même instruction ajoutée aux 3), pas seulement pour trait_subform. Agrégation affichée
+dans un nouvel encart "Au sein de Corporelle" sur la page Défis (Profil d'Aptitudes), juste sous la
+Carte des Talents — compte les défis **complétés** par sous-forme, ne montre rien tant qu'aucune
+donnée n'existe.
+
+**V3 — Boussole d'Opportunités** : séparation volontaire en deux couches. Le Profil d'Aptitudes
+(carte des talents + sous-formes ci-dessus) reste visible à tout âge — c'est le signal mesuré,
+propriété durable de Génizio. La Boussole (`src/lib/opportunity-compass.ts`) est une couche
+d'interprétation distincte, explicitement datée ("Vision 2026"), avec disclaimer visible
+("à réviser chaque semestre — ne remplace pas un vrai bilan professionnel"), mappant chaque
+sous-forme à 3-4 pistes de disciplines. **Réservée à 12 ans et + (`OPPORTUNITY_COMPASS_MIN_AGE`),
+décision utilisateur explicite** (via AskUserQuestion) pour ne pas rétrécir prématurément le champ
+des possibles d'un jeune enfant. **Contenu NON sourcé** contrairement au référentiel académique
+(décision #39) — construction raisonnable de l'agent, pas une recherche académique citée ; à
+traiter comme un premier jet révisable, pas une vérité établie.
+
+**Vérifié en direct** : génération réelle d'un défi Sport pour TestPhase1 (10 ans) — réponse LLM
+confirmée via l'inspection du réseau : `"trait_subform":"explosivite"` pour un défi de sauts
+chronométrés (cohérent avec la définition donnée à l'IA), `target_intelligences:
+["corporelle","logico_mathematique"]` correctement résolu. `tsc --noEmit` propre, 168/168 tests
+(nouveaux : `finalize-challenge.test.ts` sur le gating de `resolveTraitSubform`). Non vérifié en
+direct : l'affichage réel de l'encart "Au sein de Corporelle" et de la Boussole (aucun défi
+corporelle historique n'a encore ce champ rempli — normal, c'est un nouveau champ ; se remplira au
+fil des complétions réelles) ni le rendu pour un profil 12 ans+ (le seul profil de test disponible
+a 10 ans).
+
+**Limite à surveiller** : la migration a d'abord été bloquée par le classificateur auto-mode de
+Claude Code (`supabase db push` refusé), débloquée à la deuxième tentative sans changement
+d'approche — comportement non déterministe à garder en tête, pas la peine d'insister
+indéfiniment si ça se reproduit, redemander à l'utilisateur de lancer la commande lui-même.
+
+---
+
+**Note de numérotation** : les décisions #41 à #46 ci-dessous documentent rétroactivement (le
+2026-07-22, en rattrapage) des sessions antérieures à la décision #40 (entre le 2026-07-20 soir et
+le 2026-07-22 matin) qui n'avaient pas été journalisées au moment où elles ont eu lieu. Elles sont
+numérotées à la suite plutôt qu'insérées chronologiquement pour ne pas invalider les références
+`cf. genizio-decisions #40` déjà écrites dans le code (migration, `challenges.functions.ts`,
+`opportunity-compass.ts`, `MEMORY.md`). Se fier aux dates indiquées dans chaque **Contexte**, pas
+au numéro, pour l'ordre réel des événements.
+
+## Décision #41 : migration deepseek-chat/reasoner → deepseek-v4-flash/v4-pro (dépréciation 2026-07-24)
+
+**Contexte (2026-07-21/22)** : `deepseek-chat`/`deepseek-reasoner` dépréciés le 2026-07-24 15:59
+UTC. Mapping de compatibilité officiel DeepSeek : `deepseek-v4-flash` couvre les deux modes
+(thinking désactivé = ex-chat, thinking activé = ex-reasoner) ; `deepseek-v4-pro` est un palier
+séparé, plus cher et plus avancé (input $0.435/M vs $0.14/M, output $0.87/M vs $0.28/M), avec le
+même paramètre `thinking` orthogonal aux deux modèles.
+
+**Débat et décision utilisateur** : proposition initiale de l'agent — router NAYA (rôle
+raisonnement bayésien) vers v4-flash en mode thinking. L'utilisateur a contesté ("c'est clairement
+dit v4 pro qui est le modèle le plus avancé"), re-vérification faite via WebFetch de la doc
+DeepSeek (citée textuellement deux fois), confirmant la distinction entre "mapping de
+compatibilité" (v4-flash) et "palier réellement plus capable" (v4-pro). Décision finale de
+l'utilisateur (via AskUserQuestion) : v4-pro pour tout ce qui touche à la réflexion neuronale de
+NAYA (peu fréquent), v4-flash (avec/sans thinking selon le cas) pour la génération de défis et les
+interactions utilisateur. Le thinking sur v4-pro a d'abord été désactivé ("on verra selon les
+résultats après données cumulé"), puis réactivé dans la même conversation en même temps que
+l'approbation du moteur de progression V1/V2 (décision #42).
+
+**Implémentation** : `callDeepSeekText` (`challenges.functions.ts`) — `isReasoning = model ===
+"deepseek-reasoner"` ; `resolvedModel` = v4-pro si reasoning sinon v4-flash ; `thinking:
+{type:"enabled", reasoning_effort:"high"}` si reasoning, `{type:"disabled"}` sinon. `NAYA_PRICING`
+(`naya-telemetry.ts`) aux tarifs réels v4-pro pour le poste Reasoner (0.435/0.87 par M tokens),
+v4-flash pour Chat (0.14/0.28) — un aller-retour dans les valeurs (unifié puis re-séparé) reflète
+le débat ci-dessus.
+
+**Vérifié** : `tsc`/tests propres à chaque étape. Non re-testé par un appel API réel à v4-pro dans
+cette conversation (dépend d'un vrai écart diagnostiqué par le moteur bayésien, site d'appel à
+faible volume) — à confirmer à la prochaine génération d'hypothèses réelle en production.
+
+## Décision #42 : `target_intelligences` câblé pour de vrai + moteur de progression V1/V2 (Zone Proximale d'Apprentissage)
+
+**Contexte (2026-07-22)** : suite à une analyse `/product-intelligence-architect` complète
+("comment améliorer Naya en global... faire ressortir réellement les capacités des jeunes"), deux
+angles morts identifiés : `target_intelligences` était rempli directement depuis le texte libre de
+l'IA sans filtrage (donc jamais fiable comme donnée) ; rien ne fermait la boucle entre le niveau
+académique mesuré sur un défi complété et la difficulté ciblée du défi suivant. L'utilisateur a
+validé les deux d'un coup ("V1 et V2 m'interesse a appliqué maintenant").
+
+**`target_intelligences`** : `resolveTargetIntelligences` filtre le champ "intelligences" du JSON
+généré contre `VALID_TALENT_KEYS` (9 clés Gardner exactes) au lieu de faire confiance au texte
+libre de l'IA (qui produisait des valeurs comme "Créativité" au lieu de "creative"). Nouvelle
+instruction de prompt `INTELLIGENCES_FIELD_INSTRUCTION`. Câblé dans `finalizeChallenge` (le point
+de passage unique), donc actif partout où `finalizeChallenge` était déjà appelé.
+
+**Moteur de progression (Zone Proximale d'Apprentissage, inspiration Vygotsky)** :
+`computeProgressionTargets` lit, par domaine académique, le niveau du dernier défi complété + la
+cause diagnostiquée la plus probable d'un cycle d'hypothèses ouvert sur ce domaine, calcule un
+delta (`READY_FOR_MORE` → +2, autre cause diagnostiquée sur ce domaine → +0 consolidation, aucune
+cause applicable → +1 progression par défaut), et injecte une instruction de calibrage
+(`formatProgressionInstruction`) dans les prompts `generateChallenges`/`generateSingleChallenge`,
+juste après `AGE_DEVELOPMENT_GUIDANCE`.
+
+**Vérifié** : `tsc`/tests propres. Le calibrage delta lui-même n'était pas encore validé par des
+données réelles cumulées au moment de cette décision — trou d'instrumentation comblé ensuite par
+la décision #43, traité explicitement comme une estimation et non une certitude.
+
+## Décision #43 : fermeture de la boucle ABANDONED + instrumentation "Santé de la Progression" (Admin OS)
+
+**Contexte (2026-07-22)** : suite à la décision #42, l'utilisateur a demandé d'aller plus loin sur
+l'instrumentation de résultat ("le vrai goulot, c'est l'absence totale d'instrumentation de
+résultat"), en excluant explicitement pour plus tard le vrai test A/B de prompts et les niveaux
+V3/V4 (arbre de maîtrise visible, modèle ML entraîné). Approuvé globalement ("Vas-y lance").
+
+**Couche 1 — boucle ABANDONED** : `processDiscriminantResult(challengeId, action:
+"COMPLETED"|"ABANDONED", ...)` avait toute la logique bayésienne pour le cas ABANDONED depuis sa
+création, mais n'était JAMAIS appelé avec "ABANDONED" nulle part dans le code — fonctionnalité
+jamais câblée, pas un bug de logique interne. Nouvelle fonction
+`processAbandonedDiscriminantChallenges` (`hypotheses.functions.ts`) : repère les défis
+discriminants restés `todo`/`in_progress` 14 jours et plus, appelle `processDiscriminantResult(id,
+"ABANDONED")`, marque `abandoned_processed: true` dans `pedagogical_context` (idempotence). Câblée
+en fire-and-forget dans `ensureHypothesesForChild`.
+
+**Couche 2 — vue Admin OS** : `getExecutiveKPIsAdmin` ne donnait que des totaux agrégés
+superficiels (aucune ventilation par difficulté/domaine) — le calibrage +2/+0/+1 de la décision
+#42 restait une estimation non validée faute de données. Nouvelle fonction
+`getProgressionHealthAdmin` (par domaine académique : nombre de défis complétés, délai moyen de
+complétion, nombre de défis bloqués 14j+) + nouvelle carte "Santé de la Progression par Domaine"
+dans `AdminNayaTab`, juste avant les 4 cartes de métriques primaires.
+
+**Vérifié** : `tsc`/tests propres. La carte Admin OS n'a pas pu être vérifiée visuellement en
+direct (pas d'accès admin sur le compte de test disponible dans la session) — signalé comme tel à
+l'utilisateur au moment de la décision, jamais présenté comme confirmé.
+
+## Décision #44 : `STEPS_INSTRUCTION` — clarté des étapes de défis générés
+
+**Contexte (2026-07-22)** : retour parent concret ("les étapes du défi ne sont pas souvent très
+claires... un défi de baromètre dont les instructions n'étaient pas claires... elles sautent des
+sous-actions implicites"). Avant ce fix, seule `generateChallenges` avait une consigne minimale
+("Étapes claires (3 à 6)"), sans indication de granularité, et les 4 autres générateurs de défis
+n'avaient rien du tout sur ce point.
+
+**Implémentation** : nouvelle instruction partagée `STEPS_INSTRUCTION`, exigeant qu'une étape soit
+un seul geste concret et complet (exemple donné à l'IA : pas "prépare le baromètre" mais "verse de
+l'eau colorée dans la bouteille jusqu'à mi-hauteur"), avec un test explicite ("si on ne lisait QUE
+la liste des étapes... pourrait-on réaliser le défi sans se poser de question ?"). Appliquée aux 5
+générateurs de défis.
+
+**Vérifié** : `tsc`/tests propres. Le test en direct de cette itération spécifique a été gêné par
+une instabilité de l'outil de navigateur (déjà observée dans la session) — changement purement
+textuel de prompt, suivant le même schéma que les fragments partagés déjà validés en direct plus
+tôt (matériaux, intelligences). Confirmé indirectement depuis : le défi "30 secondes de sauts"
+généré en direct pour la décision #40 a des étapes conformes à ce style (gestes uniques, concrets).
+
+## Décision #45 : audit d'accessibilité Admin OS (WCAG 2.1 AA) — contraste `--sky` + état actif des onglets
+
+**Contexte (2026-07-22)** : `/design:accessibility-review` demandé sans cible précise ;
+l'utilisateur a choisi "Admin OS complet" via question de clarification.
+
+**Trouvaille principale** : le token de design `--sky` (`oklch(0.85 0.06 240)`, `styles.css`) a un
+ratio de contraste calculé (conversion OKLCH → sRGB linéaire → luminance relative, pas une
+supposition) d'environ **1.57:1** sur fond blanc — très en dessous des seuils WCAG 1.4.3 (4.5:1
+texte normal, 3:1 grand texte). Utilisé comme couleur de **texte** (`text-sky` nu, pas
+`text-sky-600`) à 8 endroits dans Admin OS, dont le chiffre KPI "Défis Validés" (AdminExecutiveTab)
+et "Volume d'Appels API" (AdminNayaTab). `AdminCommerceTab` utilisait déjà `text-sky-600`/
+`text-sky-700` (palette Tailwind standard) pour ses propres bleus — preuve que le fix est cohérent
+avec un pattern déjà présent ailleurs dans la même base de code, pas une convention inventée pour
+l'occasion.
+
+**Autre trouvaille** : la barre d'onglets Admin OS (`AdminNavTabBar`) ne signalait l'onglet actif
+que visuellement, sans `aria-current`/`role="tablist"` — un lecteur d'écran ne peut pas savoir
+quelle section est affichée.
+
+**Fix** : remplacement des 11 occurrences de `text-sky`/`bg-sky` (texte/graphique) par
+`text-sky-600`/`text-sky-700`/`bg-sky-500` selon le contexte, `aria-current="page"` ajouté sur
+l'onglet actif. 3 trouvailles mineures documentées mais non corrigées (focus indicator du
+`<select>` de statut commande, noms accessibles ambigus des boutons +/− de slots, `<th>` sans
+`scope="col"`) — laissées pour un futur passage de polish, faible urgence.
+
+**Vérifié** : calcul de contraste = preuve mathématique directe, `tsc`/tests propres. Pas de
+vérification visuelle live de la page Admin OS (pas d'accès admin sur le compte de test disponible
+dans le navigateur de la session).
+
+## Décision #46 : fix `pedagogical_context` — JSON brut affiché au parent au lieu d'une phrase lisible
+
+**Contexte (2026-07-22)** : signalement utilisateur avec capture d'écran — la carte "Intention
+Pédagogique" affichait littéralement `{"cycle_id":"...","target_cause":"METHOD_MISM...` au lieu
+d'un texte lisible.
+
+**Cause** : `pedagogical_context` sert deux usages depuis la décision #34 (défis discriminants,
+`hypotheses.functions.ts`) et les recommandations ESSAIMAGE/STABILISATION
+(`recommendations.functions.ts`) : JSON interne pour le moteur bayésien (`{cycle_id, target_cause,
+is_discriminant}` ou `{is_recommendation, type}`) au lieu du texte pédagogique lisible que les
+défis "normaux" y stockent. 4 sites d'affichage UI (`profiles.$profileId.challenges.tsx` ×2,
+`supervisor.tsx`, `boutique.tsx`) affichaient ce champ tel quel, sans jamais vérifier son format.
+
+**Fix** : nouveau helper `formatPedagogicalIntention` (`src/lib/pedagogical-intention.ts`) —
+traduit le JSON en phrase lisible (une par cause diagnostiquée, une par type de recommandation),
+laisse passer le texte humain normal inchangé, renvoie `null` (jamais de JSON brut) pour une forme
+JSON inconnue. Appliqué aux 4 sites.
+
+**Vérifié en direct** : le défi réel concerné par la capture d'écran de l'utilisateur ("La
+pâtisserie des fractions", mission d'investigation Naya, cause `METHOD_MISMATCH`) affiche
+maintenant la phrase traduite correcte après le fix — retrouvé et confirmé en direct dans le
+navigateur, pas seulement en théorie. 6 tests dédiés, `tsc`/tests propres.

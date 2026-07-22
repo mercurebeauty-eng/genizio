@@ -38,6 +38,7 @@ const ChallengeSchema = z.object({
   material_tags: z.array(z.string()).optional(),
   pedagogical_context: z.string().nullable().optional(),
   intelligences: z.array(z.string()).optional(),
+  trait_subform: z.string().nullable().optional(),
   requires_supervision: z.boolean().default(false),
   supervision_warning: z.string().nullable().optional(),
   difficulty: z.enum(["facile", "moyen", "difficile"]).optional(),
@@ -460,6 +461,15 @@ function resolveTargetIntelligences(intelligences: string[] | null | undefined):
   return (intelligences ?? []).filter((k) => typeof k === "string" && validTalentKeys.has(k));
 }
 
+// Même philosophie que resolveTargetIntelligences : ne jamais faire confiance à la seule
+// auto-discipline du modèle. N'accepte un trait_subform QUE si "corporelle" fait déjà partie
+// des intelligences résolues de ce défi (pas de signal fantôme sur un défi qui ne sollicite
+// pas ce talent) et que la valeur fait partie de CORPORELLE_SUBFORMS — sinon null.
+function resolveTraitSubform(resolvedIntelligences: string[], subform: string | null | undefined): string | null {
+  if (!resolvedIntelligences.includes("corporelle")) return null;
+  return (CORPORELLE_SUBFORMS as readonly string[]).includes(subform ?? "") ? (subform as string) : null;
+}
+
 // Backstop pour l'étiquetage du référentiel académique (cf. genizio-decisions #38) : un âge
 // incohérent (hors [3,18], absent, ou domaine invalide) redevient simplement "pas de
 // signal" — même philosophie que resolveProofMode, ne jamais faire confiance à la seule
@@ -517,6 +527,7 @@ export function finalizeChallenge<T extends {
   materials: string[];
   material_tags?: string[] | null;
   intelligences?: string[] | null;
+  trait_subform?: string | null;
   requires_supervision?: boolean | null;
   supervision_warning?: string | null;
   difficulty?: string | null;
@@ -530,10 +541,12 @@ export function finalizeChallenge<T extends {
   const safety = applySafetyNet(c, age);
   const proof = resolveProofMode(c.proof_mode, c.proof_target, c.declarative_award, c.title);
   const academic = resolveAcademicLevel(c.academic_domain, c.academic_level_age, c.academic_reference_note, c.title);
+  const resolvedIntelligences = resolveTargetIntelligences(c.intelligences);
   return {
     title: c.title.slice(0, 120),
     material_tags: c.material_tags ?? [],
-    target_intelligences: resolveTargetIntelligences(c.intelligences),
+    target_intelligences: resolvedIntelligences,
+    trait_subform: resolveTraitSubform(resolvedIntelligences, c.trait_subform),
     difficulty: resolveDifficulty(c.difficulty, c.title),
     requires_supervision: safety.requires_supervision,
     supervision_warning: safety.supervision_warning,
@@ -749,7 +762,24 @@ const MATERIAL_TAGS_INSTRUCTION = `Pour "material_tags" : un tag court en minusc
 // libre (ex: "Créativité"), qui ne correspondait jamais aux 9 clés réelles de
 // VALID_TALENT_KEYS — resolveTargetIntelligences filtre désormais ce qui ne
 // matche pas, mais encore faut-il que l'IA vise juste dès le départ.
-const INTELLIGENCES_FIELD_INSTRUCTION = `Pour "intelligences" : 1 à 2 clés EXACTES parmi "spatial", "corporelle", "sociale", "entrepreneuriale", "creative", "artisanale", "emotionnelle", "logico_mathematique", "linguistique" — jamais un mot libre ou un nom français ("Créativité", "Logique") : uniquement ces clés techniques, celles réellement sollicitées par ce défi.`;
+export const INTELLIGENCES_FIELD_INSTRUCTION = `Pour "intelligences" : 1 à 2 clés EXACTES parmi "spatial", "corporelle", "sociale", "entrepreneuriale", "creative", "artisanale", "emotionnelle", "logico_mathematique", "linguistique" — jamais un mot libre ou un nom français ("Créativité", "Logique") : uniquement ces clés techniques, celles réellement sollicitées par ce défi.`;
+
+// V1 "sous-formes de talent" (2026-07-22, cf. genizio-decisions #40) : savoir qu'un défi
+// sollicite l'intelligence "corporelle" ne dit rien de la sous-forme physique où le potentiel
+// s'exprime le mieux (endurance ≠ explosivité ≠ coordination) — cf. discussion produit du
+// 2026-07-22. Pilote volontairement restreint à corporelle (voir CORPORELLE_SUBFORMS et la
+// migration correspondante) avant d'envisager une extension aux 8 autres domaines. Dépend de
+// INTELLIGENCES_FIELD_INSTRUCTION (ne s'applique que si "corporelle" est déjà choisi), donc
+// placée juste après.
+export const CORPORELLE_SUBFORMS = ["endurance", "explosivite", "coordination_fine", "coordination_collective", "precision"] as const;
+export const CORPORELLE_SUBFORM_LABELS: Record<(typeof CORPORELLE_SUBFORMS)[number], string> = {
+  endurance: "Endurance",
+  explosivite: "Explosivité",
+  coordination_fine: "Coordination fine",
+  coordination_collective: "Coordination collective",
+  precision: "Précision",
+};
+export const TRAIT_SUBFORM_INSTRUCTION = `Si et seulement si "corporelle" fait partie des intelligences choisies ci-dessus, ajoute aussi "trait_subform" : EXACTEMENT une valeur parmi "endurance" (effort prolongé), "explosivite" (saut, sprint, puissance brève), "coordination_fine" (précision main/œil, manipulation), "coordination_collective" (jeu d'équipe, passe, synchronisation avec d'autres), "precision" (viser, ajuster, répéter un geste exact) — celle que ce défi précis sollicite le plus. Si "corporelle" n'est pas choisi, omets ce champ (null).`;
 
 // Ajoutée le 2026-07-22 suite à un retour parent concret (défi de baromètre aux
 // étapes trop vagues, sautant des sous-actions implicites que seul un adulte
@@ -1207,12 +1237,13 @@ Contraintes :
 - ${buildAvoidRepeatsInstruction(existingTitles)}
 - ${MATERIAL_TAGS_INSTRUCTION}
 - ${INTELLIGENCES_FIELD_INSTRUCTION}
+- ${TRAIT_SUBFORM_INSTRUCTION}
 - ${SAFETY_INSTRUCTION}
 - ${PROOF_MODE_INSTRUCTION}
 - ${ACADEMIC_REFERENTIAL_INSTRUCTION}
 
 Réponds STRICTEMENT en JSON valide avec ce format, pour chaque défi :
-{"challenges":[{"domain":"...","title":"...","description":"...","duration":"...","steps":["...","..."],"materials":["...","..."],"material_tags":["..."],"pedagogical_context":"Ce que Naya observe via cette activité","intelligences":["creative"],"requires_supervision":true ou false,"supervision_warning":"..." (ou null si false),"difficulty":"facile"|"moyen"|"difficile","proof_mode":"photo"|"declarative","proof_target":{"metric":"...","value":20} (uniquement si declarative),"declarative_award":{"corporelle":2} (uniquement si declarative),"academic_domain":"mathematiques"|"langage"|"sciences"|"corporelle"|"sociale"|"emotionnelle"|"entrepreneuriale"|"artisanale"|"spatiale"|null,"academic_level_age":14 (uniquement si academic_domain non null),"academic_reference_note":"..." (uniquement si academic_domain non null)}]}`;
+{"challenges":[{"domain":"...","title":"...","description":"...","duration":"...","steps":["...","..."],"materials":["...","..."],"material_tags":["..."],"pedagogical_context":"Ce que Naya observe via cette activité","intelligences":["creative"],"trait_subform":"endurance"|"explosivite"|"coordination_fine"|"coordination_collective"|"precision"|null (uniquement si "corporelle" est choisi),"requires_supervision":true ou false,"supervision_warning":"..." (ou null si false),"difficulty":"facile"|"moyen"|"difficile","proof_mode":"photo"|"declarative","proof_target":{"metric":"...","value":20} (uniquement si declarative),"declarative_award":{"corporelle":2} (uniquement si declarative),"academic_domain":"mathematiques"|"langage"|"sciences"|"corporelle"|"sociale"|"emotionnelle"|"entrepreneuriale"|"artisanale"|"spatiale"|null,"academic_level_age":14 (uniquement si academic_domain non null),"academic_reference_note":"..." (uniquement si academic_domain non null)}]}`;
 
     // Up to 6 full défis in one response, each now carrying the academic
     // referential fields (domain/level/citation) added on top of the original
@@ -1825,9 +1856,10 @@ ${
 7. ${SAFETY_INSTRUCTION}
 8. ${MATERIAL_TAGS_INSTRUCTION}
 9. ${INTELLIGENCES_FIELD_INSTRUCTION}
-10. ${STEPS_INSTRUCTION}
-11. ${PROOF_MODE_INSTRUCTION}
-12. ${ACADEMIC_REFERENTIAL_INSTRUCTION}
+10. ${TRAIT_SUBFORM_INSTRUCTION}
+11. ${STEPS_INSTRUCTION}
+12. ${PROOF_MODE_INSTRUCTION}
+13. ${ACADEMIC_REFERENTIAL_INSTRUCTION}
 
 Réponds STRICTEMENT en JSON valide avec ce format exact :
 {
@@ -1840,6 +1872,7 @@ Réponds STRICTEMENT en JSON valide avec ce format exact :
   "material_tags": ["outil-1", "materiau-2"],
   "pedagogical_context": "Ce que Naya observe via cette activité",
   "intelligences": ["creative"],
+  "trait_subform": "endurance" | "explosivite" | "coordination_fine" | "coordination_collective" | "precision" | null (uniquement si "corporelle" est choisi),
   "requires_supervision": true ou false,
   "supervision_warning": "Attention: Manipulez le couteau avec l'enfant" (ou null si false),
   "difficulty": "facile" | "moyen" | "difficile",

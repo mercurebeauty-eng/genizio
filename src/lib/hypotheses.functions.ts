@@ -1,6 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
-import { callClaude, finalizeChallenge, PROOF_MODE_INSTRUCTION, ACADEMIC_REFERENTIAL_INSTRUCTION, ACADEMIC_DOMAIN_LABELS, STEPS_INSTRUCTION, formatChildInterestsPayload, extractJsonFromLLMResponse } from "@/lib/challenges.functions";
+import { callClaude, finalizeChallenge, PROOF_MODE_INSTRUCTION, ACADEMIC_REFERENTIAL_INSTRUCTION, ACADEMIC_DOMAIN_LABELS, STEPS_INSTRUCTION, INTELLIGENCES_FIELD_INSTRUCTION, TRAIT_SUBFORM_INSTRUCTION, formatChildInterestsPayload, extractJsonFromLLMResponse } from "@/lib/challenges.functions";
 import { TALENT_KEY_LABELS } from "@/lib/talent-buckets";
 import { z } from "zod";
 
@@ -418,6 +418,10 @@ Règles de conception selon l'hypothèse à tester :
 
 ${STEPS_INSTRUCTION}
 
+${INTELLIGENCES_FIELD_INSTRUCTION}
+
+${TRAIT_SUBFORM_INSTRUCTION}
+
 ${PROOF_MODE_INSTRUCTION}
 
 ${ACADEMIC_REFERENTIAL_INSTRUCTION}
@@ -431,6 +435,8 @@ Réponds EXCLUSIVEMENT avec un objet JSON strict au format suivant :
   "steps": ["Étape 1", "Étape 2", "Étape 3"],
   "materials": ["Matériel 1", "Matériel 2"],
   "material_tags": ["tag1", "tag2"],
+  "intelligences": ["creative"],
+  "trait_subform": "endurance" | "explosivite" | "coordination_fine" | "coordination_collective" | "precision" | null (uniquement si "corporelle" est choisi),
   "difficulty": "moyen",
   "proof_mode": "photo" ou "declarative",
   "proof_target": {"metric": "...", "value": 20} (uniquement si declarative),
@@ -487,6 +493,8 @@ Réponds EXCLUSIVEMENT avec un objet JSON strict au format suivant :
             steps: safeSteps,
             materials: safeMaterials,
             material_tags: parsed.material_tags,
+            intelligences: parsed.intelligences,
+            trait_subform: parsed.trait_subform,
             difficulty: parsed.difficulty,
             proof_mode: parsed.proof_mode,
             proof_target: parsed.proof_target,

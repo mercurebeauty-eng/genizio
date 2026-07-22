@@ -70,6 +70,7 @@ export type Database = {
           supervision_warning: string | null
           target_intelligences: Json
           title: string
+          trait_subform: string | null
           updated_at: string
           user_id: string
         }
@@ -103,6 +104,7 @@ export type Database = {
           supervision_warning?: string | null
           target_intelligences?: Json
           title: string
+          trait_subform?: string | null
           updated_at?: string
           user_id: string
         }
@@ -136,6 +138,7 @@ export type Database = {
           supervision_warning?: string | null
           target_intelligences?: Json
           title?: string
+          trait_subform?: string | null
           updated_at?: string
           user_id?: string
         }
