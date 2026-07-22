@@ -3,8 +3,8 @@ import { useEffect, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { supabase } from "@/integrations/supabase/client";
 import { useSession } from "@/hooks/use-session";
-import { getChildAISynthesis } from "@/lib/challenges.functions";
-import { getChildGuild } from "@/lib/guilds";
+import { getChildAISynthesis, getPassportLetter, BADGE_CATALOG } from "@/lib/challenges.functions";
+import { getChildGuild, getTalentAffinities } from "@/lib/guilds";
 import { TalentRadarChart } from "@/components/TalentRadarChart";
 import { MarkdownContent } from "@/components/ui/markdown-content";
 import {
@@ -19,6 +19,8 @@ import {
   MapPin,
   Compass,
   Target,
+  Medal,
+  Rocket,
 } from "lucide-react";
 import { GenizioLoader } from "@/components/GenizioLoader";
 import { TALENT_KEY_LABELS } from "@/lib/talent-buckets";
@@ -90,11 +92,15 @@ function PassportPrintPage() {
 
   const [child, setChild] = useState<Child | null>(null);
   const [challenges, setChallenges] = useState<Challenge[]>([]);
+  const [earnedBadges, setEarnedBadges] = useState<string[]>([]);
   const [fetching, setFetching] = useState(true);
   const [synthesis, setSynthesis] = useState("");
   const [fetchingSynthesis, setFetchingSynthesis] = useState(false);
+  const [letter, setLetter] = useState("");
+  const [fetchingLetter, setFetchingLetter] = useState(false);
 
   const fetchSynthesis = useServerFn(getChildAISynthesis);
+  const fetchLetter = useServerFn(getPassportLetter);
 
   useEffect(() => {
     if (!loading && !session) navigate({ to: "/auth", replace: true });
@@ -116,9 +122,15 @@ function PassportPrintPage() {
         .eq("child_id", profileId)
         .eq("status", "completed")
         .order("completed_at", { ascending: false }),
-    ]).then(([c, ch]) => {
+      supabase
+        .from("child_badges")
+        .select("badge_slug")
+        .eq("child_id", profileId)
+        .order("earned_at", { ascending: true }),
+    ]).then(([c, ch, b]) => {
       setChild((c.data as Child) ?? null);
       setChallenges((ch.data ?? []) as Challenge[]);
+      setEarnedBadges((b.data ?? []).map((row) => row.badge_slug));
       setFetching(false);
     });
   }, [session, profileId]);
@@ -128,13 +140,32 @@ function PassportPrintPage() {
     setFetchingSynthesis(true);
     fetchSynthesis({ data: { childId: profileId } })
       .then((resp) => setSynthesis(resp || ""))
-      .catch(() => setSynthesis(""))
+      .catch((err) => {
+        console.error("Erreur récupération synthèse passeport:", err);
+        setSynthesis("");
+      })
       .finally(() => setFetchingSynthesis(false));
   }, [session, profileId]);
 
-  // Automatically trigger print dialog when data is loaded
+  // Lettre d'orientation IA — uniquement pour un Passeport déjà débloqué (gate
+  // côté serveur aussi, cf. getPassportLetter) : pas d'appel avant que le
+  // parent ait payé/activé le document.
   useEffect(() => {
-    if (!fetching && child && challenges.length > 0 && synthesis) {
+    if (!session || !child?.pdf_unlocked) return;
+    setFetchingLetter(true);
+    fetchLetter({ data: { childId: profileId } })
+      .then((resp) => setLetter(resp || ""))
+      .catch((err) => {
+        console.error("Erreur récupération lettre passeport:", err);
+        setLetter("");
+      })
+      .finally(() => setFetchingLetter(false));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [session, profileId, child?.pdf_unlocked]);
+
+  // Automatically trigger print dialog when data is loaded (only if PDF is unlocked)
+  useEffect(() => {
+    if (!fetching && child && child.pdf_unlocked && challenges.length > 0 && synthesis) {
       const timer = setTimeout(() => {
         window.print();
       }, 1500); // Allow charts and fonts to fully render
@@ -190,7 +221,14 @@ function PassportPrintPage() {
   const guild = getChildGuild(child.talents);
   const totalXP = child.xp || 0;
   const level = Math.floor(totalXP / 500) + 1;
-  const locationStr = [child.city, child.country].filter(Boolean).join(", ") || "Abidjan, Côte d'Ivoire";
+
+  const hasSynthesis = Boolean(synthesis);
+  const challengePagesCount = challenges.length > 0 ? Math.ceil(challenges.length / 2) : 0;
+  const totalPages = 2 + (hasSynthesis ? 1 : 0) + challengePagesCount;
+  // Jamais de ville/pays par défaut : un enfant sans localisation renseignée ne doit
+  // pas se voir attribuer une ville qui n'est pas la sienne sur un document destiné à
+  // représenter sa famille auprès de tiers.
+  const locationStr = [child.city, child.country].filter(Boolean).join(", ");
 
   // Top domains based on completed challenges
   const domainCounts: Record<string, number> = {};
@@ -268,7 +306,7 @@ function PassportPrintPage() {
               <span>GÉNIZIO</span>
             </div>
             <span className="rounded-full border-2 border-ink bg-stone-50 px-3 py-1 text-[10px] font-black uppercase tracking-wider">
-              Document Officiel Certifié
+              Dossier de Valorisation Génizio
             </span>
           </div>
 
@@ -288,10 +326,14 @@ function PassportPrintPage() {
               <p className="text-3xl font-display text-balance font-extrabold text-brand">{child.name}</p>
               <div className="flex items-center justify-center gap-3 text-xs font-bold text-ink/75 flex-wrap">
                 <span>Âge : {child.age} ans</span>
-                <span>•</span>
-                <span className="flex items-center gap-1">
-                  <MapPin className="size-3 text-brand" /> {locationStr}
-                </span>
+                {locationStr && (
+                  <>
+                    <span>•</span>
+                    <span className="flex items-center gap-1">
+                      <MapPin className="size-3 text-brand" /> {locationStr}
+                    </span>
+                  </>
+                )}
               </div>
 
               {/* Guilde & XP badge */}
@@ -318,8 +360,8 @@ function PassportPrintPage() {
             <div className="flex items-center gap-2 border border-emerald-300 bg-emerald-50 text-emerald-800 rounded-xl px-3 py-2 text-xs font-bold shadow-sm">
               <ShieldCheck className="size-4 shrink-0 text-emerald-600" />
               <div>
-                <p className="text-[8px] font-black uppercase tracking-wider leading-none">Certifié Authentique</p>
-                <p className="text-[10px] leading-tight mt-0.5 font-bold">Identifiant : {child.id.slice(0, 8).toUpperCase()}</p>
+                <p className="text-[8px] font-black uppercase tracking-wider leading-none">Généré par l'IA Naya</p>
+                <p className="text-[10px] leading-tight mt-0.5 font-bold">Référence : {child.id.slice(0, 8).toUpperCase()}</p>
               </div>
             </div>
           </div>
@@ -425,12 +467,62 @@ function PassportPrintPage() {
                 </div>
               </div>
             )}
+
+            {/* Affinités de parcours — même source réelle (getTalentAffinities) que la
+                section "Là où ses talents pourraient l'emmener" du Portfolio, pas de
+                donnée inventée pour ce document payant. */}
+            {(() => {
+              const affinities = getTalentAffinities(child.talents).filter((a) => a.pct > 0);
+              if (affinities.length === 0) return null;
+              return (
+                <div className="mt-4 rounded-2xl border border-ink/10 bg-sky-50/60 p-4 shadow-sm no-print-break">
+                  <h3 className="text-xs font-black uppercase tracking-wider text-sky-900 mb-3 flex items-center gap-1.5">
+                    <Rocket className="size-4 text-sky-700" />
+                    Voies d'orientation suggérées par ses talents
+                  </h3>
+                  <div className="space-y-2">
+                    {affinities.map((a) => (
+                      <div key={a.key} className="flex items-center gap-3">
+                        <span className="w-40 shrink-0 text-[11px] font-bold text-ink/80">{a.label}</span>
+                        <div className="h-2 flex-1 overflow-hidden rounded-full bg-white border border-ink/10">
+                          <div className="h-full rounded-full" style={{ width: `${a.pct}%`, background: `var(--guild-${a.key})` }} />
+                        </div>
+                        <span className="w-8 shrink-0 text-right text-[10px] font-black text-sky-800">{a.pct}%</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              );
+            })()}
+
+            {/* Badges — uniquement ceux réellement gagnés (child_badges), aucun badge
+                fictif affiché. */}
+            {earnedBadges.length > 0 && (
+              <div className="mt-4 rounded-2xl border border-ink/10 bg-amber-50/60 p-4 shadow-sm no-print-break">
+                <h3 className="text-xs font-black uppercase tracking-wider text-amber-900 mb-3 flex items-center gap-1.5">
+                  <Medal className="size-4 text-amber-700" />
+                  Distinctions obtenues
+                </h3>
+                <div className="grid grid-cols-2 gap-2.5">
+                  {earnedBadges.map((slug) => {
+                    const badge = BADGE_CATALOG[slug];
+                    if (!badge) return null;
+                    return (
+                      <div key={slug} className="rounded-xl border border-amber-200 bg-white p-2.5">
+                        <p className="text-[11px] font-black text-amber-900">{badge.title}</p>
+                        <p className="text-[9px] text-ink/60 leading-snug mt-0.5">{badge.description}</p>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
           </div>
 
           {/* Page Footer */}
           <div className="border-t border-ink/10 pt-4 flex justify-between text-[9px] font-bold text-ink/60 uppercase tracking-wider">
             <span>Passeport d'Excellence • {child.name}</span>
-            <span>Page 2 / {Math.min(6, 3 + Math.ceil(challenges.length / 2))}</span>
+            <span>Page 2 / {totalPages}</span>
           </div>
         </div>
 
@@ -453,12 +545,25 @@ function PassportPrintPage() {
                   <MarkdownContent content={synthesis} />
                 </div>
               </div>
+
+              {/* Lettre d'orientation — cf. getPassportLetter, distincte de la synthèse
+                  comportementale ci-dessus, tournée vers l'avenir plutôt que l'observation. */}
+              {letter && (
+                <div className="mt-6 rounded-3xl border-2 border-emerald-200 bg-emerald-50/60 p-8 shadow-md no-print-break">
+                  <p className="text-xs font-black uppercase tracking-widest text-emerald-800 mb-4">
+                    Mot de Naya sur son avenir
+                  </p>
+                  <div className="text-xs text-ink/85 leading-relaxed font-medium">
+                    <MarkdownContent content={letter} />
+                  </div>
+                </div>
+              )}
             </div>
 
             {/* Page Footer */}
             <div className="border-t border-ink/10 pt-4 flex justify-between text-[9px] font-bold text-ink/60 uppercase tracking-wider">
               <span>Passeport d'Excellence • {child.name}</span>
-              <span>Page 3 / {Math.min(6, 3 + Math.ceil(challenges.length / 2))}</span>
+              <span>Page 3 / {totalPages}</span>
             </div>
           </div>
         )}
@@ -549,7 +654,7 @@ function PassportPrintPage() {
               <div className="border-t border-ink/10 pt-4 flex justify-between text-[9px] font-bold text-ink/60 uppercase tracking-wider">
                 <span>Passeport d'Excellence • {child.name}</span>
                 <span>
-                  Page {startPage + chunkIdx} / {startPage + chunks.length - 1}
+                  Page {startPage + chunkIdx} / {totalPages}
                 </span>
               </div>
             </div>

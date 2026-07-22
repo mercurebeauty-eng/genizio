@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { supabase } from "@/integrations/supabase/client";
 import { useSession } from "@/hooks/use-session";
+import { toast } from "sonner";
 import { getChildAISynthesis } from "@/lib/challenges.functions";
 import { ensureHypothesesForChild } from "@/lib/hypotheses.functions";
 import { getChildGuild, getTalentAffinities } from "@/lib/guilds";
@@ -200,13 +201,23 @@ function PortfolioPage() {
         .order("created_at", { ascending: false })
         .limit(1)
         .maybeSingle(),
-    ]).then(([c, ch, cm, hc]) => {
-      setChild((c.data as Child) ?? null);
-      setChallenges((ch.data ?? []) as Challenge[]);
-      setMentorCount(cm.count ?? 0);
-      setOpenCycle((hc.data as OpenHypothesisCycle) ?? null);
-      setFetching(false);
-    });
+    ])
+      .then(([c, ch, cm, hc]) => {
+        setChild((c.data as Child) ?? null);
+        setChallenges((ch.data ?? []) as Challenge[]);
+        setMentorCount(cm.count ?? 0);
+        setOpenCycle((hc.data as OpenHypothesisCycle) ?? null);
+      })
+      .catch((err) => {
+        console.error("Erreur lors du chargement du portfolio:", err);
+        setChild(null);
+        setChallenges([]);
+        setMentorCount(0);
+        setOpenCycle(null);
+      })
+      .finally(() => {
+        setFetching(false);
+      });
   }, [session, profileId]);
 
   // Découverte de centre d'intérêt (cf. discussion produit) : un talent fort
@@ -218,7 +229,8 @@ function PortfolioPage() {
     try {
       const raw = localStorage.getItem(`genizio_dismissed_discoveries_${profileId}`);
       setDismissedDiscoveries(raw ? JSON.parse(raw) : []);
-    } catch {
+    } catch (err) {
+      console.error("Erreur lecture découvertes masquées:", err);
       setDismissedDiscoveries([]);
     }
   }, [profileId]);
@@ -228,7 +240,8 @@ function PortfolioPage() {
     setDismissedDiscoveries(next);
     try {
       localStorage.setItem(`genizio_dismissed_discoveries_${profileId}`, JSON.stringify(next));
-    } catch {
+    } catch (err) {
+      console.error("Erreur sauvegarde découverte masquée:", err);
       // Stockage local indisponible (navigation privée, quota...) — la
       // suggestion réapparaîtra au prochain chargement, sans gravité.
     }
@@ -236,9 +249,17 @@ function PortfolioPage() {
 
   const acceptDiscovery = async (label: string) => {
     if (!child) return;
-    const nextInterests = [...(child.interests ?? []), label];
+    const previousInterests = child.interests ?? [];
+    const nextInterests = [...previousInterests, label];
     setChild({ ...child, interests: nextInterests });
-    await supabase.from("child_profiles").update({ interests: nextInterests }).eq("id", child.id);
+    try {
+      const { error } = await supabase.from("child_profiles").update({ interests: nextInterests }).eq("id", child.id);
+      if (error) throw error;
+    } catch (err) {
+      console.error("Erreur lors de l'ajout du centre d'intérêt:", err);
+      setChild({ ...child, interests: previousInterests });
+      toast.error("Impossible de sauvegarder la découverte.");
+    }
   };
 
   const refetchOpenCycle = () => {
@@ -259,7 +280,10 @@ function PortfolioPage() {
     setFetchingSynthesis(true);
     fetchSynthesis({ data: { childId: profileId } })
       .then((resp) => setSynthesis(resp || ""))
-      .catch(() => setSynthesis(""))
+      .catch((err) => {
+        console.error("Erreur lors de la récupération de la synthèse:", err);
+        setSynthesis("");
+      })
       .finally(() => setFetchingSynthesis(false));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [session, profileId]);
@@ -273,7 +297,9 @@ function PortfolioPage() {
     if (!session) return;
     ensureHypotheses({ data: { childId: profileId } })
       .then((res) => { if (res.generated) refetchOpenCycle(); })
-      .catch(() => {});
+      .catch((err) => {
+        console.error("Erreur lors de la vérification des hypothèses:", err);
+      });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [session, profileId]);
 

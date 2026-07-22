@@ -26,6 +26,7 @@ import { DifficultyBadge } from "@/components/challenges/DifficultyBadge";
 import { MarkdownContent } from "@/components/ui/markdown-content";
 import { COUNTRIES } from "@/lib/countries";
 import { GenizioLoader } from "@/components/GenizioLoader";
+import { toast } from "sonner";
 
 export const Route = createFileRoute("/profiles/")({
   component: DashboardPage,
@@ -187,15 +188,40 @@ function DashboardPage() {
       setChallenges([]);
       return;
     }
-    setFetchingChallenges(true);
-    supabase
-      .from("challenges")
-      .select("id, status, created_at, updated_at, domain, title, description, duration, materials, material_tags, steps, proof_image_url, difficulty")
-      .eq("child_id", selectedId)
-      .then(({ data }) => {
-        setChallenges((data ?? []) as Challenge[]);
-        setFetchingChallenges(false);
-      });
+    let isMounted = true;
+    const fetchChallenges = async () => {
+      setFetchingChallenges(true);
+      try {
+        const { data, error } = await supabase
+          .from("challenges")
+          .select("id, status, created_at, updated_at, domain, title, description, duration, materials, material_tags, steps, proof_image_url, difficulty")
+          .eq("child_id", selectedId);
+
+        if (!isMounted) return;
+        if (error) {
+          console.error("Error fetching challenges:", error);
+          toast.error("Erreur lors du chargement des défis.");
+          setChallenges([]);
+        } else {
+          setChallenges((data ?? []) as Challenge[]);
+        }
+      } catch (err) {
+        if (!isMounted) return;
+        console.error("Error fetching challenges:", err);
+        toast.error("Erreur lors du chargement des défis.");
+        setChallenges([]);
+      } finally {
+        if (isMounted) {
+          setFetchingChallenges(false);
+        }
+      }
+    };
+
+    void fetchChallenges();
+
+    return () => {
+      isMounted = false;
+    };
   }, [selectedId]);
 
   const selected = profiles.find((p) => p.id === selectedId) ?? null;
