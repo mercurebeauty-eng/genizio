@@ -1,20 +1,8 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
-import { callClaude, finalizeChallenge, PROOF_MODE_INSTRUCTION, ACADEMIC_REFERENTIAL_INSTRUCTION, formatChildInterestsPayload, extractJsonFromLLMResponse } from "@/lib/challenges.functions";
+import { callClaude, finalizeChallenge, PROOF_MODE_INSTRUCTION, ACADEMIC_REFERENTIAL_INSTRUCTION, ACADEMIC_DOMAIN_LABELS, formatChildInterestsPayload, extractJsonFromLLMResponse } from "@/lib/challenges.functions";
 import { TALENT_KEY_LABELS } from "@/lib/talent-buckets";
 import { z } from "zod";
-
-const ACADEMIC_DOMAIN_LABELS: Record<string, string> = {
-  mathematiques: "mathématiques",
-  langage: "langage",
-  sciences: "sciences",
-  corporelle: "motricité/sport",
-  sociale: "compétences sociales",
-  emotionnelle: "gestion des émotions",
-  entrepreneuriale: "esprit d'initiative",
-  artisanale: "habileté manuelle",
-  spatiale: "repérage dans l'espace",
-};
 
 // NAYA 2.0 Phase 3a — moteur de génération d'hypothèses causales (cf. genizio-decisions #32).
 // Premier point IA du pipeline NAYA. Rôle *raisonnement* → Sonnet (décision #27 : on paie le

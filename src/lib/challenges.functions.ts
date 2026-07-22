@@ -13,6 +13,21 @@ export const ACADEMIC_DOMAINS = [
   "corporelle", "sociale", "emotionnelle", "entrepreneuriale", "artisanale", "spatiale",
 ] as const;
 
+// Déplacée depuis hypotheses.functions.ts (2026-07-22) — utilisée maintenant aussi
+// par computeProgressionTargets ci-dessous, source unique plutôt qu'une copie par
+// fichier consommateur (même remède que les fragments de prompt partagés).
+export const ACADEMIC_DOMAIN_LABELS: Record<string, string> = {
+  mathematiques: "mathématiques",
+  langage: "langage",
+  sciences: "sciences",
+  corporelle: "motricité/sport",
+  sociale: "compétences sociales",
+  emotionnelle: "gestion des émotions",
+  entrepreneuriale: "esprit d'initiative",
+  artisanale: "habileté manuelle",
+  spatiale: "repérage dans l'espace",
+};
+
 const ChallengeSchema = z.object({
   domain: z.string(),
   title: z.string(),
@@ -431,6 +446,20 @@ function resolveProofMode(
   return { proof_mode: "declarative", proof_target: { metric, value }, declarative_award: award };
 }
 
+// target_intelligences était rempli directement depuis le champ libre "intelligences"
+// du JSON généré par l'IA (2026-07-22 et avant) — jamais contraint aux 9 clés
+// réelles (VALID_TALENT_KEYS), donc jamais exploitable comme donnée (ex: "Créativité"
+// au lieu de "creative"). Même remède que declarative_award ci-dessus : filtrer
+// plutôt que faire confiance. Les défis déjà complétés ont déjà la vraie valeur
+// (validateChallengeProof/submitDeclarativeProof écrasent ce champ avec les
+// intelligences RÉELLEMENT démontrées à la validation) — ce filtre ne change donc
+// que les défis pas encore complétés, pour que le champ soit exploitable dès la
+// création (cf. computeProgressionTargets, qui ne lit que les défis complétés).
+function resolveTargetIntelligences(intelligences: string[] | null | undefined): string[] {
+  const validTalentKeys = new Set(VALID_TALENT_KEYS);
+  return (intelligences ?? []).filter((k) => typeof k === "string" && validTalentKeys.has(k));
+}
+
 // Backstop pour l'étiquetage du référentiel académique (cf. genizio-decisions #38) : un âge
 // incohérent (hors [3,18], absent, ou domaine invalide) redevient simplement "pas de
 // signal" — même philosophie que resolveProofMode, ne jamais faire confiance à la seule
@@ -487,6 +516,7 @@ export function finalizeChallenge<T extends {
   steps: string[];
   materials: string[];
   material_tags?: string[] | null;
+  intelligences?: string[] | null;
   requires_supervision?: boolean | null;
   supervision_warning?: string | null;
   difficulty?: string | null;
@@ -503,6 +533,7 @@ export function finalizeChallenge<T extends {
   return {
     title: c.title.slice(0, 120),
     material_tags: c.material_tags ?? [],
+    target_intelligences: resolveTargetIntelligences(c.intelligences),
     difficulty: resolveDifficulty(c.difficulty, c.title),
     requires_supervision: safety.requires_supervision,
     supervision_warning: safety.supervision_warning,
@@ -540,10 +571,94 @@ export function formatChildInterestsPayload(interests?: string[] | null): string
     .join("\n");
 }
 
+// "Zone Proximale d'Apprentissage" (2026-07-22) : jusqu'ici, generateChallenges/
+// generateSingleChallenge mesuraient déjà academic_level_age par défi et
+// diagnostiquaient déjà une cause (READY_FOR_MORE, CONCEPTUAL_GAP...) via le moteur
+// bayésien, mais aucune des deux ne réinjectait cette mesure dans la génération
+// suivante — le "difficulty" du prochain défi restait une estimation qualitative de
+// l'IA, jamais calibrée sur le niveau RÉELLEMENT déjà démontré par cet enfant précis.
+// Ferme cette boucle : lit le dernier academic_level_age mesuré par domaine sur les
+// défis complétés, et calibre une cible numérique pour le prochain, ajustée par la
+// cause diagnostiquée si un cycle d'hypothèses est ouvert sur ce domaine.
+type ProgressionTarget = {
+  domain: string;
+  lastLevelAge: number;
+  targetLevelAge: number;
+  cause: string | null;
+};
+
+async function computeProgressionTargets(supabase: any, childId: string): Promise<ProgressionTarget[]> {
+  const [{ data: pastChallenges }, { data: openCycle }] = await Promise.all([
+    supabase
+      .from("challenges")
+      .select("academic_domain, academic_level_age, completed_at")
+      .eq("child_id", childId)
+      .eq("status", "completed")
+      .not("academic_domain", "is", null)
+      .not("academic_level_age", "is", null)
+      .order("completed_at", { ascending: false })
+      .limit(60),
+    supabase
+      .from("hypothesis_cycles")
+      .select("hypotheses, trigger_domain")
+      .eq("child_id", childId)
+      .eq("status", "open")
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle(),
+  ]);
+
+  // Le plus récent par domaine — la liste est déjà triée par completed_at
+  // décroissant, donc la première occurrence d'un domaine est la bonne.
+  const latestPerDomain = new Map<string, number>();
+  for (const c of pastChallenges ?? []) {
+    if (c.academic_domain && typeof c.academic_level_age === "number" && !latestPerDomain.has(c.academic_domain)) {
+      latestPerDomain.set(c.academic_domain, c.academic_level_age);
+    }
+  }
+
+  const hypotheses = (openCycle?.hypotheses as { cause: string; current_probability: number }[] | null) || [];
+  const topCause = hypotheses[0]?.cause;
+  const causeDomain = openCycle?.trigger_domain as string | undefined;
+
+  return Array.from(latestPerDomain.entries()).map(([domain, lastLevelAge]) => {
+    const causeApplies = Boolean(topCause) && causeDomain === domain;
+    // READY_FOR_MORE : pousse clairement plus haut. Toute autre cause diagnostiquée
+    // sur ce domaine (méthode inadaptée, anxiété, désengagement, lacune) : on
+    // consolide au même niveau plutôt que de complexifier davantage. Pas de cause
+    // applicable : progression par défaut d'un cran, le cas le plus courant.
+    const delta = causeApplies && topCause === "READY_FOR_MORE" ? 2 : causeApplies ? 0 : 1;
+    return {
+      domain,
+      lastLevelAge,
+      targetLevelAge: lastLevelAge + delta,
+      cause: causeApplies ? topCause! : null,
+    };
+  });
+}
+
+function formatProgressionInstruction(targets: ProgressionTarget[]): string {
+  if (targets.length === 0) {
+    return "PROGRESSION MESURÉE : aucun niveau académique mesuré pour l'instant chez cet enfant — calibre uniquement sur son âge chronologique (cf. consignes de développement ci-dessus).";
+  }
+  const lines = targets.map((t) => {
+    const label = ACADEMIC_DOMAIN_LABELS[t.domain] ?? t.domain;
+    const note =
+      t.cause === "READY_FOR_MORE"
+        ? " — Naya a diagnostiqué que l'enfant est prêt pour plus difficile ici : vise clairement ce niveau, ne reste pas en dessous."
+        : t.cause
+        ? " — Naya a diagnostiqué une difficulté récente ici : reste à ce niveau, mais change d'approche plutôt que de complexifier."
+        : "";
+    return `- ${label} : dernier niveau académique atteint ${t.lastLevelAge} ans → si tu génères un défi dans ce domaine, vise "academic_level_age" ${t.targetLevelAge} ans.${note}`;
+  });
+  return `PROGRESSION MESURÉE (zone proximale d'apprentissage — reflète le niveau réel déjà démontré par cet enfant sur ses défis complétés, pas une estimation) :\n${lines.join("\n")}`;
+}
+
 // Shared constitution injected into every challenge-generation prompt (bulk
 // and single). Written dense and numbered on purpose: the text-only calls
-// run on Haiku (lightweight model), which needs explicit, unambiguous rules
-// rather than loose guidance to reliably avoid generic/unrealistic output.
+// run on DeepSeek Chat (lightweight model), which needs explicit,
+// unambiguous rules rather than loose guidance to reliably avoid
+// generic/unrealistic output.
 const GENIZIO_PRINCIPLES = `PRINCIPES DE GÉNÉRATION GÉNIZIO (règles strictes, à respecter impérativement) :
 - CONCRET AVANT TOUT : chaque défi doit produire un résultat observable et vérifiable (objet construit, expérience réalisée, problème résolu, performance accomplie) — jamais une simple rêverie sans action physique.
 - Priorise dans cet ordre : observation du réel > expérimentation > création manuelle > résolution de problème concret. L'imagination doit s'appuyer sur une action réelle, jamais la remplacer seule.
@@ -613,6 +728,35 @@ ARTISANALE (habileté manuelle) :
 
 SPATIALE :
 3 ans : vocabulaire spatial de base (dessus/dessous, dedans/dehors). 4-9 ans : perçoit des objets sous différents points de vue, notion de perspective en développement. 5 ans : réussit une tâche simple de "pliage mental" (imaginer un objet après pliage). 7-8 ans : pliage mental plus avancé, plafonne généralement vers cet âge.`;
+
+// Dupliquée mot pour mot dans generateChallenges et generateSingleChallenge avant
+// extraction (2026-07-22) — avait déjà dérivé silencieusement (une copie disait
+// "Adapte strictly" au lieu de "strictement"), même risque que GENIZIO_PRINCIPLES
+// et SAFETY_INSTRUCTION ci-dessus, même remède : un seul texte source.
+const AGE_DEVELOPMENT_GUIDANCE = `CONSIGNES DE DÉVELOPPEMENT LIÉES À L'ÂGE :
+Adapte strictement la forme, la complexité intellectuelle et la motricité requise pour le défi à l'âge exact de l'enfant :
+- De 1 à 3 ans (Exploration sensorielle et motrice) : Activités purement sensorielles (toucher, manipuler, transvaser, trier des couleurs/objets simples, textures, eau, sable). Aucune règle complexe, aucune consigne de motricité fine avancée (pas de découpage précis, pas d'écriture). Étape ultra-simple en 1 action à la fois.
+- De 4 à 7 ans (Phase exploratoire et imaginative) : Activités intégrant de l'imagination, des petits jeux de rôle ("fait semblant de"), du dessin, des petites manipulations de cause à effet guidées par le plaisir immédiat. L'action pratique doit primer sur la théorie.
+- De 8 à 11 ans (Phase structurée et concrète) : Proposer des projets de fabrication concrets (maquettes, expériences scientifiques simples, recettes simples, bricolage) avec des règles claires, des étapes méthodiques, et de l'observation logique ou sociale.
+- De 12 ans et + (Phase d'abstraction et d'analyse) : Permettre de la pensée critique, de la stratégie, des projets plus autonomes et complexes, de la logique conceptuelle (ex: coder un algorithme sur papier, déchiffrer des énigmes ou concevoir des objets élaborés).`;
+
+// Idem — dupliquée dans les deux mêmes prompts, indentation cosmétique différente
+// à chaque site (alignée sur "- " ou "N. ") mais texte identique. Chaque site
+// garde son propre préfixe de liste, comme SAFETY_INSTRUCTION ci-dessus.
+const MATERIAL_TAGS_INSTRUCTION = `Pour "material_tags" : un tag court en minuscules, sans accent, par matériau physique achetable (ex: "carton", "cutter", "colle", "ampoule") — pas les objets déjà présents chez tout le monde (eau, table, papier). Un tableau vide si rien d'achetable n'est nécessaire.`;
+
+// Ajoutée le 2026-07-22 : avant, "intelligences" acceptait n'importe quel texte
+// libre (ex: "Créativité"), qui ne correspondait jamais aux 9 clés réelles de
+// VALID_TALENT_KEYS — resolveTargetIntelligences filtre désormais ce qui ne
+// matche pas, mais encore faut-il que l'IA vise juste dès le départ.
+const INTELLIGENCES_FIELD_INSTRUCTION = `Pour "intelligences" : 1 à 2 clés EXACTES parmi "spatial", "corporelle", "sociale", "entrepreneuriale", "creative", "artisanale", "emotionnelle", "logico_mathematique", "linguistique" — jamais un mot libre ou un nom français ("Créativité", "Logique") : uniquement ces clés techniques, celles réellement sollicitées par ce défi.`;
+
+// Idem — dupliquée avec une variation mineure ("déjà proposés" vs "déjà proposés à
+// cet enfant"). Fonction plutôt que constante puisque paramétrée par existingTitles ;
+// garde la formulation la plus complète des deux anciennes copies.
+function buildAvoidRepeatsInstruction(existingTitles: string[]): string {
+  return `Ne répète pas ces titres déjà proposés à cet enfant (${existingTitles.join(" | ") || "(aucun)"}) — et si tu remarques que plusieurs d'entre eux suivent la même mécanique de fond (ex: "récupère des matériaux et construis un objet"), varie consciemment vers une autre approche (observation, expérimentation, résolution de problème, performance...) plutôt que de prolonger ce schéma.`;
+}
 
 const ALLOWED_IMAGE_MEDIA_TYPES = ["image/jpeg", "image/png", "image/gif", "image/webp"];
 
@@ -837,17 +981,18 @@ async function callDeepSeekText(
   // DeepSeek, cohérent avec la decision #27 ("réserver le premium quand le système
   // doit vraiment réfléchir").
   //
-  // "thinking" désactivé même pour le raisonnement (2026-07-22) : la tâche de
-  // generateHypotheses est un diagnostic structuré et borné (probabilités sur une
-  // liste de causes prédéfinies), pas un problème ouvert à plusieurs étapes — le
-  // genre de cas où le thinking apporte le moins par rapport à son coût/latence
-  // (tokens de raisonnement facturés en plus, sur le poste déjà le plus cher).
-  // Le gain de qualité attendu vient surtout du choix de v4-pro lui-même. À
-  // réévaluer avec des données réelles cumulées : si le diagnostic manque de
-  // nuance sans thinking, remettre isReasoning ? "enabled" : "disabled" ci-dessous.
+  // "thinking" réactivé pour le raisonnement (2026-07-22, révision same-day) : le
+  // moteur bayésien alimente maintenant aussi le calcul de la cible de progression
+  // académique (cf. computeProgressionTargets plus bas — la cause diagnostiquée ici
+  // détermine le delta appliqué au prochain défi), un rôle plus déterminant qu'avant
+  // pour la qualité perçue de l'app. Le surcoût en tokens/latence reste réel mais
+  // acceptable vu le volume faible de ce site d'appel (une diagnose par écart
+  // détecté, pas par défi généré).
   const isReasoning = model === "deepseek-reasoner";
   const resolvedModel = isReasoning ? "deepseek-v4-pro" : "deepseek-v4-flash";
-  const thinking = { type: "disabled" as const };
+  const thinking = isReasoning
+    ? { type: "enabled" as const, reasoning_effort: "high" as const }
+    : { type: "disabled" as const };
 
   let attempt = 0;
   while (attempt < maxRetries) {
@@ -978,7 +1123,7 @@ export const generateChallenges = createServerFn({ method: "POST" })
     // not "hasn't gotten to it yet this week".
     const STALE_DOMAIN_CUTOFF = new Date(Date.now() - 14 * 24 * 60 * 60 * 1000).toISOString();
 
-    const [{ data: existing }, { data: completedChallenges }, { data: staleChallenges }] = await Promise.all([
+    const [{ data: existing }, { data: completedChallenges }, { data: staleChallenges }, progressionTargets] = await Promise.all([
       supabase
         .from("challenges")
         .select("title")
@@ -1004,6 +1149,7 @@ export const generateChallenges = createServerFn({ method: "POST" })
         .eq("child_id", data.childId)
         .eq("status", "todo")
         .lt("created_at", STALE_DOMAIN_CUTOFF),
+      computeProgressionTargets(supabase, data.childId),
     ]);
     const existingTitles = (existing ?? []).map((c) => c.title);
     const completedSummary = (completedChallenges ?? [])
@@ -1037,12 +1183,9 @@ ${formatChildInterestsPayload(child.interests)}
 Défis déjà accomplis par l'enfant et observations de Naya :
 ${completedSummary || "(Aucun défi complété pour le moment)"}
 
-CONSIGNES DE DÉVELOPPEMENT LIÉES À L'ÂGE :
-Adapte strictly la forme, la complexité intellectuelle et la motricité requise pour le défi à l'âge exact de l'enfant :
-- De 1 à 3 ans (Exploration sensorielle et motrice) : Activités purement sensorielles (toucher, manipuler, transvaser, trier des couleurs/objets simples, textures, eau, sable). Aucune règle complexe, aucune consigne de motricité fine avancée (pas de découpage précis, pas d'écriture). Étape ultra-simple en 1 action à la fois.
-- De 4 à 7 ans (Phase exploratoire et imaginative) : Activités intégrant de l'imagination, des petits jeux de rôle ("fait semblant de"), du dessin, des petites manipulations de cause à effet guidées par le plaisir immédiat. L'action pratique doit primer sur la théorie.
-- De 8 à 11 ans (Phase structurée et concrète) : Proposer des projets de fabrication concrets (maquettes, expériences scientifiques simples, recettes simples, bricolage) avec des règles claires, des étapes méthodiques, et de l'observation logique ou sociale.
-- De 12 ans et + (Phase d'abstraction et d'analyse) : Permettre de la pensée critique, de la stratégie, des projets plus autonomes et complexes, de la logique conceptuelle (ex: coder un algorithme sur papier, déchiffrer des énigmes ou concevoir des objets élaborés).
+${AGE_DEVELOPMENT_GUIDANCE}
+
+${formatProgressionInstruction(progressionTargets)}
 
 ${GENIZIO_PRINCIPLES}
 
@@ -1052,16 +1195,15 @@ Contraintes :
 - Choisis parmi ces domaines : ${shuffle(DOMAINS).join(", ")}.${ignoredDomains.length > 0 ? `\n- Cet enfant a déjà reçu plusieurs défis dans ${ignoredDomains.length > 1 ? "ces domaines" : "ce domaine"} (${ignoredDomains.join(", ")}) sans jamais les commencer : évite de reproposer ${ignoredDomains.length > 1 ? "ces domaines" : "ce domaine"}, sauf sous un angle radicalement différent de ce qui a déjà été proposé.` : ""}
 - Chaque défi doit être concret, réalisable à la maison ou dans le quartier, adapté à l'âge.
 - Étapes claires (3 à 6), matériaux simples et accessibles.
-- Ne répète pas ces titres déjà proposés (${existingTitles.join(" | ") || "(aucun)"}) — et si tu remarques que plusieurs d'entre eux suivent la même mécanique de fond (ex: "récupère des matériaux et construis un objet"), varie consciemment vers une autre approche (observation, expérimentation, résolution de problème, performance...) plutôt que de prolonger ce schéma.
-- Pour "material_tags" : un tag court en minuscules, sans accent, par matériau physique achetable
-  (ex: "carton", "cutter", "colle", "ampoule") — pas les objets déjà présents chez tout le monde
-  (eau, table, papier). Un tableau vide si rien d'achetable n'est nécessaire.
+- ${buildAvoidRepeatsInstruction(existingTitles)}
+- ${MATERIAL_TAGS_INSTRUCTION}
+- ${INTELLIGENCES_FIELD_INSTRUCTION}
 - ${SAFETY_INSTRUCTION}
 - ${PROOF_MODE_INSTRUCTION}
 - ${ACADEMIC_REFERENTIAL_INSTRUCTION}
 
 Réponds STRICTEMENT en JSON valide avec ce format, pour chaque défi :
-{"challenges":[{"domain":"...","title":"...","description":"...","duration":"...","steps":["...","..."],"materials":["...","..."],"material_tags":["..."],"pedagogical_context":"Ce que Naya observe via cette activité","intelligences":["Intelligence dominante sollicitée"],"requires_supervision":true ou false,"supervision_warning":"..." (ou null si false),"difficulty":"facile"|"moyen"|"difficile","proof_mode":"photo"|"declarative","proof_target":{"metric":"...","value":20} (uniquement si declarative),"declarative_award":{"corporelle":2} (uniquement si declarative),"academic_domain":"mathematiques"|"langage"|"sciences"|"corporelle"|"sociale"|"emotionnelle"|"entrepreneuriale"|"artisanale"|"spatiale"|null,"academic_level_age":14 (uniquement si academic_domain non null),"academic_reference_note":"..." (uniquement si academic_domain non null)}]}`;
+{"challenges":[{"domain":"...","title":"...","description":"...","duration":"...","steps":["...","..."],"materials":["...","..."],"material_tags":["..."],"pedagogical_context":"Ce que Naya observe via cette activité","intelligences":["creative"],"requires_supervision":true ou false,"supervision_warning":"..." (ou null si false),"difficulty":"facile"|"moyen"|"difficile","proof_mode":"photo"|"declarative","proof_target":{"metric":"...","value":20} (uniquement si declarative),"declarative_award":{"corporelle":2} (uniquement si declarative),"academic_domain":"mathematiques"|"langage"|"sciences"|"corporelle"|"sociale"|"emotionnelle"|"entrepreneuriale"|"artisanale"|"spatiale"|null,"academic_level_age":14 (uniquement si academic_domain non null),"academic_reference_note":"..." (uniquement si academic_domain non null)}]}`;
 
     // Up to 6 full défis in one response, each now carrying the academic
     // referential fields (domain/level/citation) added on top of the original
@@ -1093,16 +1235,10 @@ Réponds STRICTEMENT en JSON valide avec ce format, pour chaque défi :
       steps: c.steps,
       materials: c.materials,
       pedagogical_context: c.pedagogical_context || null,
-      // The model isn't told which exact tokens to use for "intelligences"
-      // (it's free text, e.g. "Créativité"), so it never matches
-      // VALID_TALENT_KEYS's technical keys (creative, spatial, ...) —
-      // target_intelligences at creation time is decorative, not the
-      // source of truth for talent scoring (that's increment_child_talents
-      // at validation time, which does constrain to the 9 known keys).
-      // Falling back to [c.domain] used to silently write a non-taxonomy
-      // value (e.g. "Cuisine") into this column; [] keeps this consistent
-      // with assignTemplateChallenge instead.
-      target_intelligences: c.intelligences || [],
+      // target_intelligences vient de finalizeChallenge (resolveTargetIntelligences),
+      // qui filtre le champ "intelligences" du JSON contre VALID_TALENT_KEYS — plus
+      // de fallback silencieux vers [c.domain], le prompt demande maintenant
+      // explicitement les 9 clés exactes (cf. INTELLIGENCES_FIELD_INSTRUCTION).
       ...finalizeChallenge(c, child.age),
     }));
 
@@ -1567,11 +1703,12 @@ export const assignTemplateChallenge = createServerFn({ method: "POST" })
         duration: template.duration,
         steps: template.steps,
         materials: template.materials,
-        target_intelligences: template.intelligences ?? [],
         status: "todo",
         progress: 0,
         pedagogical_context: template.pedagogical_context ?? null,
         estimated_duration_minutes: data.estimated_duration_minutes ?? null,
+        // target_intelligences vient de finalizeChallenge (resolveTargetIntelligences)
+        // plutôt que directement de template.intelligences, non filtré.
         ...finalizeChallenge(template, child.age),
       })
       .select()
@@ -1608,7 +1745,7 @@ export const generateSingleChallenge = createServerFn({ method: "POST" })
     // path never checked recent titles at all — a parent clicking "Composer un défi
     // ciblé" repeatedly could get literal duplicates. Fetching both in parallel
     // matches generateChallenges' existing pattern instead of inventing a new one.
-    const [{ data: completedChallenges }, { data: existing }] = await Promise.all([
+    const [{ data: completedChallenges }, { data: existing }, progressionTargets] = await Promise.all([
       supabase
         .from("challenges")
         .select("title, domain, ai_observations")
@@ -1622,6 +1759,7 @@ export const generateSingleChallenge = createServerFn({ method: "POST" })
         .eq("child_id", data.childId)
         .order("created_at", { ascending: false })
         .limit(30),
+      computeProgressionTargets(supabase, data.childId),
     ]);
 
     const completedSummary = (completedChallenges ?? [])
@@ -1648,19 +1786,16 @@ Profil de l'enfant :
 ${formatChildInterestsPayload(child.interests)}
 - Scores de talents actuels (Radar Chart de Howard Gardner) : ${JSON.stringify(child.talents || {})}
 
-CONSIGNES DE DÉVELOPPEMENT LIÉES À L'ÂGE :
-Adapte strictement la forme, la complexité intellectuelle et la motricité requise pour le défi à l'âge exact de l'enfant :
-- De 1 à 3 ans (Exploration sensorielle et motrice) : Activités purement sensorielles (toucher, manipuler, transvaser, trier des couleurs/objets simples, textures, eau, sable). Aucune règle complexe, aucune consigne de motricité fine avancée (pas de découpage précis, pas d'écriture). Étape ultra-simple en 1 action à la fois.
-- De 4 à 7 ans (Phase exploratoire et imaginative) : Activités intégrant de l'imagination, des petits jeux de rôle ("fait semblant de"), du dessin, des petites manipulations de cause à effet guidées par le plaisir immédiat. L'action pratique doit primer sur la théorie.
-- De 8 à 11 ans (Phase structurée et concrète) : Proposer des projets de fabrication concrets (maquettes, expériences scientifiques simples, recettes simples, bricolage) avec des règles claires, des étapes méthodiques, et de l'observation logique ou sociale.
-- De 12 ans et + (Phase d'abstraction et d'analyse) : Permettre de la pensée critique, de la stratégie, des projets plus autonomes et complexes, de la logique conceptuelle (ex: coder un algorithme sur papier, déchiffrer des énigmes ou concevoir des objets élaborés).
+${AGE_DEVELOPMENT_GUIDANCE}
+
+${formatProgressionInstruction(progressionTargets)}
 
 ${GENIZIO_PRINCIPLES}
 
 Défis déjà accomplis par l'enfant et observations de Naya :
 ${completedSummary || "(Aucun défi complété pour le moment)"}
 
-Ne répète pas ces titres déjà proposés à cet enfant (${existingTitles.join(" | ") || "(aucun)"}) — et si tu remarques que plusieurs d'entre eux suivent la même mécanique de fond (ex: "récupère des matériaux et construis un objet"), varie consciemment vers une autre approche (observation, expérimentation, résolution de problème, performance...) plutôt que de prolonger ce schéma.
+${buildAvoidRepeatsInstruction(existingTitles)}
 
 Contexte immédiat (TRÈS IMPORTANT) :
 - Temps disponible : ${timeAvailable}
@@ -1679,11 +1814,10 @@ ${
     : ""
 }
 7. ${SAFETY_INSTRUCTION}
-8. Pour "material_tags" : un tag court en minuscules, sans accent, par matériau physique achetable
-   (ex: "carton", "cutter", "colle", "ampoule") — pas les objets déjà présents chez tout le monde
-   (eau, table, papier). Un tableau vide si rien d'achetable n'est nécessaire.
-9. ${PROOF_MODE_INSTRUCTION}
-10. ${ACADEMIC_REFERENTIAL_INSTRUCTION}
+8. ${MATERIAL_TAGS_INSTRUCTION}
+9. ${INTELLIGENCES_FIELD_INSTRUCTION}
+10. ${PROOF_MODE_INSTRUCTION}
+11. ${ACADEMIC_REFERENTIAL_INSTRUCTION}
 
 Réponds STRICTEMENT en JSON valide avec ce format exact :
 {
@@ -1695,7 +1829,7 @@ Réponds STRICTEMENT en JSON valide avec ce format exact :
   "materials": ["Outil 1", "Matériau 2..."],
   "material_tags": ["outil-1", "materiau-2"],
   "pedagogical_context": "Ce que Naya observe via cette activité",
-  "intelligences": ["Intelligence dominante sollicitée"],
+  "intelligences": ["creative"],
   "requires_supervision": true ou false,
   "supervision_warning": "Attention: Manipulez le couteau avec l'enfant" (ou null si false),
   "difficulty": "facile" | "moyen" | "difficile",
