@@ -97,6 +97,47 @@ Réponds uniquement avec le texte final, sans guillemets, sans préambule, sans 
 
 const EnsureInput = z.object({ childId: z.string().uuid() });
 
+// Ferme un fil déjà câblé mais jamais déclenché : processDiscriminantResult accepte
+// "ABANDONED" depuis sa création (cf. sa propre logique bayésienne pour ce cas —
+// un abandon sur une hypothèse anxiété/désengagement la renforce plutôt que de
+// simplement l'ignorer), mais rien ne l'appelait jamais avec cette valeur : un défi
+// discriminant abandonné restait invisible du moteur de diagnostic. Repère les
+// défis discriminants toujours "todo"/"in_progress" au-delà du même seuil que
+// STALE_DOMAIN_CUTOFF (14 jours, cf. generateChallenges), traite chacun une seule
+// fois — flag "abandoned_processed" dans pedagogical_context, pour ne pas
+// réappliquer le multiplicateur bayésien à chaque visite du Portfolio.
+async function processAbandonedDiscriminantChallenges(supabase: any, childId: string): Promise<void> {
+  const cutoff = new Date(Date.now() - 14 * 24 * 60 * 60 * 1000).toISOString();
+  const { data: staleCandidates } = await supabase
+    .from("challenges")
+    .select("id, pedagogical_context")
+    .eq("child_id", childId)
+    .in("status", ["todo", "in_progress"])
+    .lt("created_at", cutoff)
+    .not("pedagogical_context", "is", null);
+
+  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+
+  for (const c of staleCandidates ?? []) {
+    let ctx: any;
+    try {
+      ctx = JSON.parse(c.pedagogical_context);
+    } catch {
+      continue;
+    }
+    if (!ctx?.is_discriminant || ctx?.abandoned_processed) continue;
+
+    await processDiscriminantResult(c.id, "ABANDONED");
+    // Marqué "traité" indépendamment du résultat (ex: cycle déjà résolu autrement
+    // entre-temps) — retenter n'apporterait rien, autant arrêter de le revérifier
+    // à chaque visite.
+    await supabaseAdmin
+      .from("challenges")
+      .update({ pedagogical_context: JSON.stringify({ ...ctx, abandoned_processed: true }) })
+      .eq("id", c.id);
+  }
+}
+
 export const ensureHypothesesForChild = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .validator((input: unknown) => EnsureInput.parse(input))
@@ -110,6 +151,12 @@ export const ensureHypothesesForChild = createServerFn({ method: "POST" })
       .eq("user_id", userId)
       .maybeSingle();
     if (childErr || !child) throw new Error("Profil enfant introuvable ou accès refusé.");
+
+    try {
+      await processAbandonedDiscriminantChallenges(supabase, data.childId);
+    } catch (err) {
+      console.error("Non-fatal: processAbandonedDiscriminantChallenges failed", err);
+    }
 
     const { data: existingCycles } = await supabase
       .from("hypothesis_cycles")

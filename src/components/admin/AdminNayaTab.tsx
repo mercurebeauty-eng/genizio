@@ -15,13 +15,16 @@ import {
   Route as RouteIcon,
   Image as ImageIcon,
   MessageSquare,
+  Target,
+  AlertTriangle,
 } from "lucide-react";
 import type { NayaTelemetryResponse } from "@/lib/naya-telemetry";
-import type { AiProviderStatus } from "@/lib/admin-os.functions";
+import type { AiProviderStatus, ProgressionHealthResponse } from "@/lib/admin-os.functions";
 
 interface AdminNayaTabProps {
   telemetry: NayaTelemetryResponse;
   aiProviderStatus?: AiProviderStatus | null;
+  progressionHealth?: ProgressionHealthResponse | null;
   isRefreshing?: boolean;
   onRefresh?: () => void;
 }
@@ -43,6 +46,7 @@ function modelBadgeClass(modelLabel: string): string {
 export function AdminNayaTab({
   telemetry,
   aiProviderStatus,
+  progressionHealth,
   isRefreshing = false,
   onRefresh,
 }: AdminNayaTabProps) {
@@ -166,6 +170,63 @@ export function AdminNayaTab({
           </div>
         )}
       </div>
+
+      {/* 🎯 Santé de la Progression — ajoutée le 2026-07-22 pour valider le calibrage
+          du moteur de progression (computeProgressionTargets) : les deltas +2/+0/+1
+          selon la cause diagnostiquée restent une estimation tant qu'on ne voit pas
+          si les défis complétés le sont dans un délai sain, ou si un domaine reste
+          bloqué (stale) plus qu'un autre. */}
+      {progressionHealth && progressionHealth.domains.length > 0 && (
+        <div className="rounded-3xl border border-ink/10 bg-white p-6 shadow-xl space-y-5">
+          <div className="flex items-center gap-3">
+            <div className="p-2.5 rounded-2xl bg-leaf/10 text-leaf">
+              <Target className="size-5" />
+            </div>
+            <div>
+              <h3 className="font-display text-lg font-extrabold text-ink">
+                Santé de la Progression par Domaine
+              </h3>
+              <p className="text-xs text-ink/60 font-medium">
+                Valide le calibrage du moteur de progression (zone proximale d'apprentissage) : un défi complété vite est un bon signal, un domaine avec beaucoup de défis bloqués (14j+ sans avancer) mérite un regard.
+              </p>
+            </div>
+          </div>
+
+          <div className="overflow-x-auto">
+            <table className="w-full text-left border-collapse text-xs">
+              <thead>
+                <tr className="border-b-2 border-ink/10 font-extrabold uppercase tracking-wider text-ink/60 pb-2">
+                  <th className="py-2.5 pr-3">Domaine</th>
+                  <th className="py-2.5 pr-3 text-center">Complétés</th>
+                  <th className="py-2.5 pr-3 text-center">Délai moyen</th>
+                  <th className="py-2.5 text-center">Bloqués (14j+)</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-ink/5">
+                {progressionHealth.domains.map((d) => (
+                  <tr key={d.domain} className="hover:bg-surface/50 transition-colors">
+                    <td className="py-3 pr-3 font-bold text-ink capitalize">{d.domainLabel}</td>
+                    <td className="py-3 pr-3 text-center font-bold text-ink">{d.completedCount}</td>
+                    <td className="py-3 pr-3 text-center font-medium text-ink/70">
+                      {d.avgDaysToCompletion !== null ? `${d.avgDaysToCompletion} j` : "—"}
+                    </td>
+                    <td className="py-3 text-center">
+                      {d.staleCount > 0 ? (
+                        <span className="inline-flex items-center gap-1 rounded-full bg-red-100 px-2.5 py-0.5 text-[11px] font-bold text-red-700">
+                          <AlertTriangle className="size-3" />
+                          {d.staleCount}
+                        </span>
+                      ) : (
+                        <span className="text-ink/40">0</span>
+                      )}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
 
       {/* 📊 4 Primary Metric Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">

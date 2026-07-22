@@ -10,11 +10,13 @@ import {
   getNayaTelemetryAdmin,
   getCommercePassportsDataAdmin,
   getAiProviderStatusAdmin,
+  getProgressionHealthAdmin,
   ExecutiveKPIs,
   ParentBIRC,
   TalentCityStatsResponse,
   CommercePassportsDataResponse,
   AiProviderStatus,
+  ProgressionHealthResponse,
 } from "@/lib/admin-os.functions";
 import { NayaTelemetryResponse } from "@/lib/naya-telemetry";
 import { AdminNavTabBar, AdminTab } from "@/components/admin/AdminNavTabBar";
@@ -38,6 +40,7 @@ function AdminIndexPage() {
   const [talentStats, setTalentStats] = useState<TalentCityStatsResponse | null>(null);
   const [nayaTelemetry, setNayaTelemetry] = useState<NayaTelemetryResponse | null>(null);
   const [aiProviderStatus, setAiProviderStatus] = useState<AiProviderStatus | null>(null);
+  const [progressionHealth, setProgressionHealth] = useState<ProgressionHealthResponse | null>(null);
   const [commerceData, setCommerceData] = useState<CommercePassportsDataResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
@@ -46,6 +49,7 @@ function AdminIndexPage() {
   const getTalentStatsFn = useServerFn(getTalentCityStatsAdmin);
   const getNayaTelemetryFn = useServerFn(getNayaTelemetryAdmin);
   const getAiProviderStatusFn = useServerFn(getAiProviderStatusAdmin);
+  const getProgressionHealthFn = useServerFn(getProgressionHealthAdmin);
   const getCommerceDataFn = useServerFn(getCommercePassportsDataAdmin);
   const toggleUnlockFn = useServerFn(togglePassportUnlock);
   const grantSlotFn = useServerFn(grantProfileSlot);
@@ -56,11 +60,12 @@ function AdminIndexPage() {
     else setIsRefreshing(true);
 
     try {
-      const [execData, talentData, nayaData, aiStatus, commData] = await Promise.all([
+      const [execData, talentData, nayaData, aiStatus, progressionData, commData] = await Promise.all([
         getExecutiveKPIsFn(),
         getTalentStatsFn(),
         getNayaTelemetryFn(),
         getAiProviderStatusFn(),
+        getProgressionHealthFn(),
         getCommerceDataFn(),
       ]);
       setKpis(execData.kpis);
@@ -68,6 +73,7 @@ function AdminIndexPage() {
       setTalentStats(talentData);
       setNayaTelemetry(nayaData);
       setAiProviderStatus(aiStatus);
+      setProgressionHealth(progressionData);
       setCommerceData(commData);
     } catch (err: any) {
       console.error("Error fetching executive data:", err);
@@ -211,6 +217,7 @@ function AdminIndexPage() {
           <AdminNayaTab
             telemetry={nayaTelemetry}
             aiProviderStatus={aiProviderStatus}
+            progressionHealth={progressionHealth}
             isRefreshing={isRefreshing}
             onRefresh={() => loadData(false)}
           />
