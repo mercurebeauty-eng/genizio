@@ -152,24 +152,28 @@ function Nav() {
   const [isOpen, setIsOpen] = useState(false);
 
   return (
-    <nav className="sticky top-0 z-50 border-b border-ink/10 bg-surface/90 backdrop-blur-md transition-all shadow-xs">
-      <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
-        <Link to={session ? "/profiles" : "/"} className="flex items-center gap-2 font-display text-balance text-2xl font-extrabold tracking-tight text-brand">
-          <img src="/favicon-96x96.png" alt="" className="h-8 w-8" />
-          GÉNIZIO
+    <nav className="sticky top-0 z-50 border-b border-ink/10 bg-surface/95 backdrop-blur-md transition-all shadow-xs">
+      <div className="mx-auto flex max-w-6xl items-center justify-between px-4 sm:px-6 py-3 sm:py-4">
+        <Link to={session ? "/profiles" : "/"} className="flex items-center gap-2 font-display text-xl sm:text-2xl font-extrabold tracking-tight text-brand shrink-0">
+          <img src="/favicon-96x96.png" alt="" className="h-7 w-7 sm:h-8 sm:w-8 shrink-0" />
+          <span>GÉNIZIO</span>
         </Link>
-        <div className="hidden gap-8 font-bold text-sm md:flex">
+
+        {/* Desktop Links */}
+        <div className="max-md:hidden md:flex items-center gap-6 lg:gap-8 font-bold text-sm">
           {NAV_LINKS.map((link) => (
-            <a key={link.href} href={link.href} className="text-ink/60 hover:text-brand transition-colors">
+            <a key={link.href} href={link.href} className="text-ink/60 hover:text-brand transition-colors whitespace-nowrap">
               {link.label}
             </a>
           ))}
         </div>
-        <div className="flex items-center gap-2">
+
+        {/* Action Button & Mobile Hamburger */}
+        <div className="flex items-center gap-2 shrink-0">
           {session ? (
             <Link
               to="/profiles"
-              className="press-brand rounded-full bg-brand px-5 py-2.5 text-xs font-bold text-white transition-all cursor-pointer"
+              className="press-brand rounded-full bg-brand px-3.5 sm:px-5 py-2 sm:py-2.5 text-xs font-bold text-white transition-all cursor-pointer whitespace-nowrap"
             >
               <span className="hidden sm:inline">Accéder à l'Espace Parent</span>
               <span className="sm:hidden">Espace Parent</span>
@@ -177,7 +181,7 @@ function Nav() {
           ) : (
             <Link
               to="/auth"
-              className="press-brand rounded-full bg-brand px-5 py-2.5 text-xs font-bold text-white transition-all cursor-pointer"
+              className="press-brand rounded-full bg-brand px-3.5 sm:px-5 py-2 sm:py-2.5 text-xs font-bold text-white transition-all cursor-pointer whitespace-nowrap"
             >
               Se connecter
             </Link>
@@ -186,13 +190,14 @@ function Nav() {
             onClick={() => setIsOpen((v) => !v)}
             aria-label={isOpen ? "Fermer le menu" : "Ouvrir le menu"}
             aria-expanded={isOpen}
-            className="rounded-full border border-ink/10 bg-white p-2 shadow-sm md:hidden"
+            className="rounded-full border border-ink/10 bg-white p-2 shadow-sm md:hidden shrink-0 cursor-pointer"
           >
-            {isOpen ? <X className="size-5" /> : <Menu className="size-5" />}
+            {isOpen ? <X className="size-5 text-ink" /> : <Menu className="size-5 text-ink" />}
           </button>
         </div>
       </div>
 
+      {/* Mobile Drawer */}
       {isOpen && (
         <div className="border-t border-ink/10 bg-surface px-6 py-4 md:hidden animate-in slide-in-from-top-5 duration-200">
           <div className="flex flex-col gap-4 font-bold text-sm">
@@ -201,7 +206,7 @@ function Nav() {
                 key={link.href}
                 href={link.href}
                 onClick={() => setIsOpen(false)}
-                className="text-ink/60 hover:text-brand transition-colors"
+                className="text-ink/70 hover:text-brand transition-colors py-1"
               >
                 {link.label}
               </a>
