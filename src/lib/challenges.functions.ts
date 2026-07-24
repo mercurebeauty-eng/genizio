@@ -5,6 +5,18 @@ import { INTERESTS_BY_TALENT } from "@/components/profiles/shared";
 import { normalizeChildInterests } from "@/lib/interest-migration";
 import { z } from "zod";
 
+import {
+  GradeLevel,
+  AcademicSubject,
+  BehavioralDriver,
+  GRADE_LEVEL_METADATA,
+  DRIVER_FUSION_GUIDANCE,
+  CURRICULUM_TOPICS,
+  ACADEMIC_SUBJECT_LABELS,
+  calculateZPADifficulty,
+  findCurriculumTopic,
+} from "@/lib/academic-homework.functions";
+
 // Domaines couverts par le référentiel académique (cf. genizio-decisions #39). "creative"
 // exclue volontairement (développement non linéaire par âge, cf. ACADEMIC_REFERENTIAL_INSTRUCTION
 // ci-dessous) — ne jamais l'ajouter ici sans revoir le mécanisme de détection d'écart.
@@ -48,6 +60,11 @@ const ChallengeSchema = z.object({
   academic_domain: z.enum(ACADEMIC_DOMAINS).nullable().optional(),
   academic_level_age: z.number().nullable().optional(),
   academic_reference_note: z.string().nullable().optional(),
+  academic_subject: z.enum(["maths", "francais", "sciences", "histoire_geo", "anglais"]).nullable().optional(),
+  academic_grade_level: z.enum(["CP", "CE1", "CE2", "CM1", "CM2", "6eme", "5eme", "4eme", "3eme"]).nullable().optional(),
+  homework_instruction: z.string().nullable().optional(),
+  behavioral_driver: z.enum(["deconstruire", "schematiser", "simuler", "enqueter", "optimiser"]).nullable().optional(),
+  zpa_level: z.number().int().min(1).max(5).nullable().optional(),
 });
 
 // Shop Phase 1: log material tags that don't match any active product yet, so the
@@ -1811,6 +1828,11 @@ export const assignTemplateChallenge = createServerFn({ method: "POST" })
         progress: 0,
         pedagogical_context: template.pedagogical_context ?? null,
         estimated_duration_minutes: data.estimated_duration_minutes ?? null,
+        academic_subject: template.academic_subject ?? null,
+        academic_grade_level: template.academic_grade_level ?? null,
+        homework_instruction: template.homework_instruction ?? null,
+        behavioral_driver: template.behavioral_driver ?? null,
+        zpa_level: template.zpa_level ?? null,
         // target_intelligences vient de finalizeChallenge (resolveTargetIntelligences)
         // plutôt que directement de template.intelligences, non filtré.
         ...finalizeChallenge(template, child.age),
@@ -1821,6 +1843,181 @@ export const assignTemplateChallenge = createServerFn({ method: "POST" })
     if (error) throw new Error(error.message);
     void trackMaterialSuggestions([{ material_tags: inserted.material_tags ?? [], title: inserted.title }]);
     return inserted;
+  });
+
+const GenerateAcademicHomeworkInput = z.object({
+  childId: z.string().uuid(),
+  subject: z.enum(["maths", "francais", "sciences", "histoire_geo", "anglais"]),
+  gradeLevel: z.enum(["CP", "CE1", "CE2", "CM1", "CM2", "6eme", "5eme", "4eme", "3eme"]),
+  homeworkInstruction: z.string().min(2).max(500),
+  suggestedTopicId: z.string().optional().nullable(),
+  behavioralDriver: z.enum(["deconstruire", "schematiser", "simuler", "enqueter", "optimiser"]).optional().nullable(),
+  timeAvailable: z.string().optional(),
+  homeMaterials: z.string().optional().nullable(),
+  masteryScore: z.number().optional(),
+  hypothesisCauses: z.array(z.string()).optional(),
+  anxietyProb: z.number().optional(),
+  currentLevel: z.number().optional(),
+});
+
+export const generateAcademicHomeworkChallenge = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .validator((input: unknown) => GenerateAcademicHomeworkInput.parse(input))
+  .handler(async ({ data, context }) => {
+    const { supabase, userId } = context;
+
+    const { data: child, error: childErr } = await supabase
+      .from("child_profiles")
+      .select("*")
+      .eq("id", data.childId)
+      .eq("user_id", userId)
+      .maybeSingle();
+    if (childErr || !child) throw new Error("Profil enfant introuvable");
+
+    const { data: existing } = await supabase
+      .from("challenges")
+      .select("title")
+      .eq("child_id", data.childId)
+      .order("created_at", { ascending: false })
+      .limit(30);
+
+    const existingTitles = (existing ?? []).map((c) => c.title);
+
+    const zpaResult = calculateZPADifficulty(
+      data.masteryScore ?? 3,
+      data.hypothesisCauses ?? [],
+      data.anxietyProb ?? 0.1,
+      data.currentLevel
+    );
+
+    const gradeInfo = GRADE_LEVEL_METADATA[data.gradeLevel];
+    const targetAge = gradeInfo.nominalAge;
+    const timeAvailable = data.timeAvailable || "30 min";
+
+    const selectedDriver: BehavioralDriver = data.behavioralDriver || "deconstruire";
+    const driverGuidance = DRIVER_FUSION_GUIDANCE[selectedDriver];
+    const subjectLabel = ACADEMIC_SUBJECT_LABELS[data.subject];
+
+    const topic = data.suggestedTopicId
+      ? findCurriculumTopic(data.gradeLevel, data.subject, data.suggestedTopicId)
+      : undefined;
+    const topicContext = topic
+      ? `- Thème de programme suggéré : "${topic.name}" (Accroche : ${topic.hook})`
+      : "";
+
+    const prompt = `Tu es Naya, un mentor pédagogique d'élite spécialisé dans l'apprentissage ludique et l'ancrage concret des devoirs scolaires en Afrique francophone.
+Ta mission est de transformer une CONSEIGNE DE DEVOIR SCOLAIRE sous forme d'un DÉFI PHYSIQUE, CAPTIVANT ET CONCRET.
+
+Profil de l'enfant :
+- Prénom : ${child.name}
+- Âge chronologique : ${child.age} ans
+- Classe actuelle : ${gradeInfo.label} (${gradeInfo.cycle})
+- Ville / pays : ${[child.city, child.country].filter(Boolean).join(", ") || "non précisé"}
+- Modes d'engagement et leviers comportementaux observés par le parent :
+${formatChildInterestsPayload(child.interests)}
+
+CONSIGNE DE SOUTIEN SCOLAIRE / DEVOIR À FUSIONNER :
+- Matière : ${subjectLabel} (${data.subject})
+- Niveau scolaire visé : ${gradeInfo.label} (âge académique cible : ${targetAge} ans)
+- Consigne / Devoir explicite du parent : "${data.homeworkInstruction}"
+${topicContext}
+- Temps disponible : ${timeAvailable}
+${data.homeMaterials ? `- Matériaux disponibles à la maison : ${data.homeMaterials}` : ""}
+
+ZPA ET CALIBRAGE DE DIFFICULTÉ :
+- Niveau ZPA calculé (1 à 5) : Niveau ${zpaResult.level} (${zpaResult.supportMode})
+- Rationale ZPA : ${zpaResult.rationale}
+${zpaResult.isAnxietyDamped ? "- CONTEXTE D'ANXIÉTÉ DÉTECTÉ : Propose un soutien renforcé, rassurant et très guidé (mode HIGH_SUPPORT)." : ""}
+
+LEVIER COMPORTEMENTAL DE FUSION OBLIGATOIRE :
+${driverGuidance}
+
+RÈGLES DE FUSION ACADÉMIQUE-LUDIQUE STRICTES :
+1. LE DEVOIR DOIT ÊTRE RÉELLEMENT RÉVISÉ/APPRIS : La réussite du défi doit garantir que l'enfant a pratiqué ou assimilé la consigne scolaire ("${data.homeworkInstruction}"). Le défi ne doit PAS détourner l'enfant du devoir, mais en faire la mécanique centrale du jeu.
+2. PAS DE FICHE PAPIER NI DE QUIZ PASSIFS : Interdiction de proposer de simples QCM, fiches d'exercices ou récitations passives. L'apprentissage doit passer par une action physique avec les objets de la maison ou du quartier.
+3. RESPECT STRICT DU NIVEAU ${gradeInfo.label} : Le contenu académique doit correspondre exactement aux exigences de la classe de ${gradeInfo.label} (environ ${targetAge} ans).
+4. ${GENIZIO_PRINCIPLES}
+5. ${buildAvoidRepeatsInstruction(existingTitles)}
+6. ${STEPS_INSTRUCTION}
+7. ${SAFETY_INSTRUCTION}
+8. ${PROOF_MODE_INSTRUCTION}
+9. ${INTELLIGENCES_FIELD_INSTRUCTION}
+10. ${TRAIT_SUBFORM_INSTRUCTION}
+
+Réponds STRICTEMENT en JSON valide avec ce format exact :
+{
+  "domain": "${data.subject === 'maths' ? 'Sciences' : data.subject === 'francais' || data.subject === 'anglais' ? 'Langues' : 'Sciences'}",
+  "title": "Titre accrocheur du défi ludique",
+  "description": "Pitch du défi pour l'enfant intégrant la révision de ${data.homeworkInstruction}",
+  "duration": "${timeAvailable}",
+  "steps": ["Étape 1", "Étape 2..."],
+  "materials": ["Matériau 1", "Matériau 2..."],
+  "material_tags": ["materiau-1"],
+  "pedagogical_context": "Ce que Naya observe via cette activité de révision ludique",
+  "intelligences": ["${data.subject === 'maths' ? 'logico_mathematique' : data.subject === 'francais' || data.subject === 'anglais' ? 'linguistique' : 'creative'}"],
+  "trait_subform": null,
+  "requires_supervision": false,
+  "supervision_warning": null,
+  "difficulty": "moyen",
+  "proof_mode": "photo",
+  "proof_target": null,
+  "declarative_award": null,
+  "academic_domain": "${data.subject === 'maths' ? 'mathematiques' : data.subject === 'francais' || data.subject === 'anglais' ? 'langage' : 'sciences'}",
+  "academic_level_age": ${targetAge},
+  "academic_reference_note": "Consigne scolaire ${gradeInfo.label} : ${data.homeworkInstruction.slice(0, 100)}",
+  "academic_subject": "${data.subject}",
+  "academic_grade_level": "${data.gradeLevel}",
+  "homework_instruction": "${data.homeworkInstruction.replace(/"/g, '\\"')}",
+  "behavioral_driver": "${selectedDriver}",
+  "zpa_level": ${zpaResult.level}
+}`;
+
+    const content = await callClaude(prompt, true, undefined, 1500);
+    let parsed: unknown;
+    try {
+      parsed = JSON.parse(extractJsonFromLLMResponse(content));
+    } catch (err) {
+      console.error("Error parsing generateAcademicHomeworkChallenge LLM response:", err, "Raw:", content);
+      throw new Error("Réponse IA invalide");
+    }
+
+    let c: z.infer<typeof ChallengeSchema>;
+    try {
+      c = ChallengeSchema.parse(parsed);
+    } catch (err) {
+      console.error("Schema validation failed for academic challenge:", err);
+      throw new Error("Réponse IA invalide — structure non conforme.");
+    }
+
+    const finalized = finalizeChallenge(c, child.age);
+
+    try {
+      await supabase.from("observation_events").insert({
+        child_id: data.childId,
+        user_id: userId,
+        type: "ACADEMIC_HOMEWORK_GENERATED",
+        source: "app",
+        payload: {
+          subject: data.subject,
+          grade_level: data.gradeLevel,
+          behavioral_driver: selectedDriver,
+          zpa_level: zpaResult.level,
+          is_anxiety_damped: zpaResult.isAnxietyDamped,
+        },
+      });
+    } catch (err) {
+      console.error("Telemetry event insert failed (non-fatal):", err);
+    }
+
+    return {
+      ...c,
+      ...finalized,
+      academic_subject: data.subject,
+      academic_grade_level: data.gradeLevel,
+      homework_instruction: data.homeworkInstruction,
+      behavioral_driver: selectedDriver,
+      zpa_level: zpaResult.level,
+    };
   });
 
 const GenerateSingleInput = z.object({

@@ -1,130 +1,83 @@
-# Handoff Report — Explorer 1 (Milestone 1)
+# Handoff Report — Explorer 1 (Milestone 1: Fusion Académique-Ludique)
 
-**Agent**: Explorer 1 (`explorer_m1_1`)  
-**Date**: 2026-07-21  
-**Project**: Génizio End-to-End Functional Audit & Systemic Reliability Fix  
-**Handoff Type**: Soft Handoff (M1 Audit Complete for User Flows 1-3, transferring to Implementer / Orchestrator for M2 Remediation)
+**Working Directory**: `C:\Users\USER\Documents\GENIZIO\.agents\explorer_m1_1`  
+**Target Feature**: `feat/naya-academic-homework-fusion`  
+**Handoff Type**: Hard Handoff (Task Completed)  
+**Date**: 2026-07-23  
 
 ---
 
 ## 1. Observation
 
-Direct observations and evidence collected during the read-only audit of User Flows 1-3:
+Direct observations made during the read-only investigation of `src/lib/challenges.functions.ts` and related codebase files:
 
-- **Baseline Automated Checks**:
-  - `npx tsc --noEmit`: Executed successfully with **0 errors**.
-  - `npx vitest run`: Executed successfully with **149 passed tests** across 11 test files (duration: 3.30s).
+1. **AI Challenge Engine Structure (`src/lib/challenges.functions.ts`)**:
+   - `generateChallenges` (lines 1207–1356): Generates batches of 1–6 challenges based on child profile, Gardner talent radar, completed challenge observations, progression targets, and age development guidance.
+   - `generateSingleChallenge` (lines 1834–1979): Generates single targeted challenge draft for the Laboratory interface.
+   - `assignTemplateChallenge` (lines 1765–1824): Server function inserting template/draft challenge into `challenges` table.
+   - `finalizeChallenge` (lines 524–561): Centralized choke point enforcing safety rules (`applySafetyNet`), proof mode normalization (`resolveProofMode`), internal academic referential levels (`resolveAcademicLevel`), valid talent keys (`resolveTargetIntelligences`), and valid subforms (`resolveTraitSubform`).
 
-- **Defects Identified (15 Total)**:
-  - **D-01 (`src/hooks/use-session.ts:13-16`)**: `supabase.auth.getSession().then(...)` lacks `.catch()`. On network failure, `loading` stays `true` forever.
-  - **D-02 (`src/routes/auth.tsx:20-33`)**: `google()` calls `signInWithOAuth` without `try/catch`. Button remains disabled with `"..."` on unhandled rejection; no toast alert.
-  - **D-03 (`src/routes/admin.tsx:28-30`)**: `checkAdmin()` inside `useEffect` calls `useServerFn` without `.catch()`. Rejection sets `checking = false` with `isAdmin = false`, rendering "Accès Interdit" instead of error message.
-  - **D-04 (`src/routes/admin.products.tsx:141` & `src/routes/admin.supervisors.tsx:47`)**: `refetch()` catches all errors and calls `setForbidden(true)`, misrepresenting network errors as unauthorized access.
-  - **D-05 (`src/routes/admin.supervisors.tsx:60`)**: `listChildrenFn().catch(() => setChildProfiles([]))` silently swallows errors.
-  - **D-06 (`src/components/profiles/ProfileDialog.tsx:54-94`)**: `save()` lacks `try/catch/finally`. Failed Supabase insert/update or consent event leaves modal frozen in `busy = true` state.
-  - **D-07 (`src/routes/profiles.index.tsx:195-199`)**: `supabase.from("challenges").select(...)` lacks `.catch()` and `{ error }` handling.
-  - **D-08 (`src/lib/hypotheses.functions.ts:252-256`)**: `JSON.parse(raw)` called directly on LLM output without stripping markdown fence wrappers (` ```json `), throwing `"Réponse IA invalide"`.
-  - **D-09 (`src/lib/hypotheses.functions.ts:488-494, 565-569`)**: `processDiscriminantResult` returns `{ processed: false }` silently on JSON or DB update error.
-  - **D-10 (`src/lib/recommendations.functions.ts:179-181, 274-276`)**: Catch blocks in recommendation engine silently swallow errors without logging.
-  - **D-11 (`src/components/challenges/OutcomeChat.tsx:110-118, 313-338`)**: `fileToBase64` converts large image files without size check, causing memory spikes and HTTP 413 server errors.
-  - **D-12 (`src/components/challenges/OutcomeChat.tsx:107-108`)**: `onSaveNotes` called asynchronously without `await` before proof validation.
-  - **D-13 (`src/routes/profiles.$profileId.challenges.tsx:365-367`)**: `handleGenerate` sets inline error state but omits `toast.error` notification.
-  - **D-14 (`src/lib/challenges.functions.ts:1177-1190`)**: `validateChallengeProof` vision fallback error handling hides API rate limits / parsing failures behind uninformative messages.
-  - **D-15 (`src/routes/profiles.$profileId.challenges.tsx:184-202`)**: `handleGenerateSingle` lacks double-click guard (`if (isGeneratingSingle) return`), enabling duplicate AI requests.
+2. **LLM Provider Routing & Call Chain**:
+   - `callClaude` (lines 1170–1200): Central entry point for LLM interactions.
+   - Text generation calls `callDeepSeekText` (lines 1060–1168) targeting `deepseek-v4-flash` for regular text and `deepseek-v4-pro` (with thinking enabled) for reasoning tasks.
+   - Vision analysis calls `callAnthropicVision` (lines 920–1055) using `claude-sonnet-5`.
+   - Markdown JSON cleaning is centralized in `extractJsonFromLLMResponse` (lines 866–906).
+
+3. **Current Child Interest & Behavioral Injection**:
+   - `formatChildInterestsPayload` (lines 567–586): Converts raw `child.interests` tags into strings labeled by talent area from `INTERESTS_BY_TALENT`.
+   - `GENIZIO_PRINCIPLES` (lines 676–688): Instructs the LLM to treat interests as cognitive postures and action mechanics (*démonter*, *schématiser*, *simuler*, *optimiser*, *enquêter*).
+   - Limitation: Currently, there are no fields or helper modules to handle explicit school homework inputs (e.g. "Tables de 7"), school grade levels (CP to 3ème), curriculum topics, or explicit behavioral driver selections.
+
+4. **Existing Code Base Stability**:
+   - Running `npx vitest` confirms 149 passing unit test suites.
+   - Running `npx tsc --noEmit` confirms 0 TypeScript type errors.
 
 ---
 
 ## 2. Logic Chain
 
-1. **Observation**: `useSession` (`use-session.ts:13`) calls `getSession().then(...)` without `.catch()`.
-   - **Reasoning**: If the network is offline or Supabase fails to respond, the promise rejects. Because there is no `.catch()`, `setLoading(false)` is never called.
-   - **Conclusion**: The application hangs in an infinite loading state on initial load.
-
-2. **Observation**: `ProfileDialog.tsx:54` sets `setBusy(true)` and awaits Supabase calls without a `finally` block.
-   - **Reasoning**: If network drops or RLS blocks the insert/update, an exception is thrown. Without `finally`, `setBusy(false)` is skipped.
-   - **Conclusion**: The user interface freezes with the button disabled indefinitely.
-
-3. **Observation**: `admin.products.tsx:141` and `admin.supervisors.tsx:47` catch all errors in `refetch()` and invoke `setForbidden(true)`.
-   - **Reasoning**: Catching generic network exceptions and assuming HTTP 403 Forbidden conflates connectivity/server issues with permission denial.
-   - **Conclusion**: Authenticated administrators are falsely shown "Accès réservé à l'administrateur" screens during temporary network failures.
-
-4. **Observation**: `hypotheses.functions.ts:252` calls `JSON.parse(raw)` directly on LLM responses.
-   - **Reasoning**: DeepSeek Reasoner and Claude models routinely return JSON wrapped in ` ```json ... ``` ` backticks. `JSON.parse` fails on backtick fences.
-   - **Conclusion**: Hypothesis cycle generation fails with "Réponse IA invalide".
-
-5. **Observation**: `OutcomeChat.tsx:110` converts selected images to Base64 without size checking.
-   - **Reasoning**: Full-resolution mobile photos (15MB-25MB) yield Base64 strings over 30MB, exceeding default HTTP payload limits.
-   - **Conclusion**: Proof submission fails with HTTP 413 or memory crash on mobile devices.
+1. **Observation**: The current Naya engine in `src/lib/challenges.functions.ts` builds prompts using child age, Gardner talents, and raw `interests` tags.
+2. **Deduction**: While `GENIZIO_PRINCIPLES` mentions behavioral postures (*démonter*, *schématiser*, *simuler*, *enquêter*, *optimiser*), the engine lacks structured inputs for parent-specified school homework ("consignes de devoirs") and formal school grade levels (CP to 3ème).
+3. **Observation**: `finalizeChallenge` acts as a mandatory choke point for all inserted challenges, ensuring title truncation, safety warnings, talent key sanitization, and academic level validation.
+4. **Deduction**: We can extend the existing engine without breaking any current features by:
+   - Creating a dedicated helper module `src/lib/academic-homework.functions.ts` containing grade level mappings (CP -> 3ème), subject constants, official curriculum topics (`CURRICULUM_TOPICS`), and behavioral driver guidance (`DRIVER_FUSION_GUIDANCE`).
+   - Exporting a new server function `generateAcademicHomeworkChallenge` in `src/lib/challenges.functions.ts` that accepts `subject`, `gradeLevel`, `homeworkInstruction`, `behavioralDriver`, and uses `callClaude`, `extractJsonFromLLMResponse`, and `finalizeChallenge`.
+   - Adding optional academic fusion fields (`academic_subject`, `academic_grade_level`, `homework_instruction`, `behavioral_driver`) to `ChallengeSchema`.
+5. **Conclusion**: The proposed architecture achieves 100% backward compatibility with existing challenge generation features while providing full support for the Academic-Homework Fusion milestone.
 
 ---
 
 ## 3. Caveats
 
-- **Scope Boundary**: This audit covered User Flows 1-3 (`/auth`, `/profiles`, `/profiles/$profileId/challenges`, and associated `src/lib/` engine files). User Flows 4-6 (Parcours/Portfolio, Passport PDF Print, Admin OS) are scoped for other M1 sub-agents / M3.
-- **Environment**: Investigation was strictly read-only. No source files outside `.agents/explorer_m1_1/` were modified.
-- **Backend / Supabase RLS**: RLS policies were evaluated based on client-side and server-function integration patterns. Live Supabase database trigger execution was not modified.
+1. **Database Schema Migrations**: The database table `challenges` currently has `academic_domain` and `academic_level_age`. Adding explicit columns for `academic_subject`, `academic_grade_level`, `homework_instruction`, and `behavioral_driver` will require a Supabase migration script (or storing them inside a JSONB metadata column/field) if persistence of these specific input fields is required across page reloads.
+2. **API Quota Management**: Generated academic challenges should use an output token cap of ~1500 tokens (well within DeepSeek's limits) to avoid rate limit spikes.
 
 ---
 
 ## 4. Conclusion
 
-The functional architecture of User Flows 1–3 in Génizio is functionally sound in its core logic, but vulnerable to **systemic reliability defects**:
-1. Async state handlers lack `finally` blocks, causing frozen UI states.
-2. Error swallowing and broad catch blocks misinform users about network vs authorization errors.
-3. LLM integration lacks robust string sanitization before JSON parsing.
-4. User feedback (Sonner toasts) is missing on critical error paths.
+The analysis of `src/lib/challenges.functions.ts` and associated AI modules is complete. The exact technical specifications, interface definitions, curriculum topic catalog, prompt structures, and LLM guardrails have been documented in `analysis.md`. 
 
-Resolving these 15 documented defects in Milestone 2 will ensure 100% error handling compliance and UX safety across Flows 1-3.
+Key components specified:
+- New helper module: `src/lib/academic-homework.functions.ts`
+- New server function: `generateAcademicHomeworkChallenge` in `src/lib/challenges.functions.ts`
+- Updated Zod validation schema: `ChallengeSchema`
+- 5 core behavioral drivers (*déconstruire*, *schématiser*, *simuler*, *enquêter*, *optimiser*) explicitly integrated into academic prompt synthesis.
 
 ---
 
 ## 5. Verification Method
 
-To verify findings independently:
+To verify the investigation findings and technical proposals independently:
 
-1. **TypeScript & Test Suite Verification**:
-   ```bash
-   npx tsc --noEmit
-   npx vitest run
-   ```
-2. **Defect Inspection Files**:
-   - `src/hooks/use-session.ts` (lines 13–16)
-   - `src/routes/auth.tsx` (lines 20–33)
-   - `src/routes/admin.tsx` (lines 28–30)
-   - `src/routes/admin.products.tsx` (lines 127–146)
-   - `src/routes/admin.supervisors.tsx` (lines 41–60)
-   - `src/components/profiles/ProfileDialog.tsx` (lines 54–94)
-   - `src/routes/profiles.index.tsx` (lines 185–199)
-   - `src/lib/hypotheses.functions.ts` (lines 252–256, 488–494)
-   - `src/lib/recommendations.functions.ts` (lines 179–181, 274–276)
-   - `src/components/challenges/OutcomeChat.tsx` (lines 107–118, 313–338)
-   - `src/routes/profiles.$profileId.challenges.tsx` (lines 184–202, 365–367)
-   - `src/lib/challenges.functions.ts` (lines 1177–1190)
+1. **Inspect Report Files**:
+   - `C:\Users\USER\Documents\GENIZIO\.agents\explorer_m1_1\analysis.md`
+   - `C:\Users\USER\Documents\GENIZIO\.agents\explorer_m1_1\handoff.md`
+
+2. **Verify Codebase Base State**:
+   - Execute TypeScript check: `npx tsc --noEmit` (0 errors expected).
+   - Execute test suite: `npx vitest` (149 passing tests expected).
 
 3. **Invalidation Conditions**:
-   - Any unhandled promise rejection occurring on network loss during auth/session init.
-   - `JSON.parse` failing on markdown-wrapped LLM JSON outputs.
-   - Any async action leaving a button or spinner stuck in `loading`/`busy` state.
-
----
-
-## 6. Remaining Work (Handoff to Implementer / Orchestrator for M2)
-
-1. **Remediate Auth & Access (Flow 1)**:
-   - Fix `useSession` catch handling (D-01).
-   - Add try/catch/finally & toast to `auth.tsx` (D-02).
-   - Add catch handler to `admin.tsx` (D-03).
-   - Differentiate 403 vs network errors in `admin.products.tsx` & `admin.supervisors.tsx` (D-04, D-05).
-
-2. **Remediate Profile Management & Behavioral Engines (Flow 2)**:
-   - Enclose `ProfileDialog.tsx` `save()` in try/catch/finally (D-06).
-   - Add error handling & loading resolution in `profiles.index.tsx` (D-07).
-   - Sanitize LLM raw string in `hypotheses.functions.ts` before `JSON.parse` (D-08).
-   - Improve telemetry & logging in `processDiscriminantResult` & recommendation catches (D-09, D-10).
-
-3. **Remediate Challenge Engine & Proof Submission (Flow 3)**:
-   - Add client-side 5MB file size limit in `OutcomeChat.tsx` (D-11).
-   - Await `onSaveNotes` in `OutcomeChat.tsx` (D-12).
-   - Add `toast.error` on bulk challenge generation failure in `profiles.$profileId.challenges.tsx` (D-13).
-   - Improve vision model error messaging in `challenges.functions.ts` (D-14).
-   - Add double-click guard to `handleGenerateSingle` (D-15).
+   - If any existing exported function in `src/lib/challenges.functions.ts` (e.g. `generateChallenges`, `finalizeChallenge`) changes signature or behavior, existing unit tests would fail.
+   - If `academic_grade_level` does not map to `nominalAge` in `finalizeChallenge`, age calibration in Naya's progression targets would be skewed.

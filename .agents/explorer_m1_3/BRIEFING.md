@@ -1,39 +1,35 @@
-# BRIEFING — 2026-07-21T09:24:50Z
+# BRIEFING — 2026-07-23T17:38:44Z
 
 ## Mission
-Explore codebase for AI call construction, audit `src/lib/challenges.functions.ts` & edge functions / prompt helpers, and formulate concrete prompt rewriting suggestions to treat interests as deep behavioral drivers.
+Analyze UI Routes & Component Architecture for Challenge Generation & Homework Selection for Milestone 1 of Fusion Académique-Ludique.
 
 ## 🔒 My Identity
-- Archetype: Explorer
-- Roles: Codebase explorer, prompt engineering auditor
+- Archetype: Teamwork explorer
+- Roles: UI Routes & Component Architecture Explorer
 - Working directory: C:\Users\USER\Documents\GENIZIO\.agents\explorer_m1_3
-- Original parent: 0f001c52-970f-4598-b57f-b26c9672d428
-- Milestone: Milestone 1
+- Original parent: a2f7be4b-8417-4056-812d-409ebeab489a
+- Milestone: Milestone 1 - Fusion Académique-Ludique
 
 ## 🔒 Key Constraints
-- Read-only investigation — do NOT implement source code changes outside working directory
-- Focus on prompt construction, system prompts, user prompts, edge functions, and `src/lib/challenges.functions.ts`
-- Write detailed handoff report to `C:\Users\USER\Documents\GENIZIO\.agents\explorer_m1_3\handoff.md`
+- Read-only investigation — do NOT implement code in src/
+- Follow Handoff Protocol and 5-component handoff report
+- Follow Génizio's tactile design system (bg-surface, HSL badges, soft shadows, Fredoka typography)
 
 ## Current Parent
-- Conversation ID: 0f001c52-970f-4598-b57f-b26c9672d428
-- Updated: 2026-07-21T09:24:50Z
+- Conversation ID: a2f7be4b-8417-4056-812d-409ebeab489a
+- Updated: 2026-07-23T17:38:44Z
 
 ## Investigation State
-- **Explored paths**: `src/lib/challenges.functions.ts`, `src/lib/hypotheses.functions.ts`, `src/lib/recommendations.functions.ts`, `docs/memoire/genizio_naya_systeme_comprehension.md`, `docs/memoire/genizio_decisions.md`
-- **Key findings**:
-  1. All AI calls route through `callClaude` in `src/lib/challenges.functions.ts` (Anthropic API direct, Haiku 4.5 for text by default, Sonnet 5 for vision or when `modelOverride` is set).
-  2. Main challenge prompts are governed by `GENIZIO_PRINCIPLES`, `SAFETY_INSTRUCTION`, `PROOF_MODE_INSTRUCTION`, `ACADEMIC_REFERENTIAL_INSTRUCTION`.
-  3. Current interest handling treats `interests` as surface topics/hobbies ("football", "dessin").
-  4. Concrete prompt rewrite defined to elevate `interests` to **deep behavioral drivers** (e.g. "démonte pour comprendre" -> deconstruction, reverse engineering, functional autopsy).
-- **Unexplored areas**: None, full audit of AI call construction completed.
+- **Explored paths**: `src/routes/profiles.$profileId.challenges.tsx`, `src/routes/profiles.$profileId.quest.tsx`, `src/components/challenges/OutcomeChat.tsx`, `StepAccordion.tsx`, `KitSuggestion.tsx`, `DifficultyBadge.tsx`, `src/styles.css`
+- **Key findings**: Complete UI audit of challenge route, quest mode, and proof validation. Designed Homework Mode Toggle ("Défis Libres" vs "Devoirs Scolaires") and Hybrid Homework Input component (`AcademicHomeworkInput.tsx`) with grade level CP-3ème selection, curriculum chips, gap indicators, text input, and behavioral driver selection. Formulated async loading, double-click prevention, toast error handling, and design system compliance.
+- **Unexplored areas**: None for M1 explorer scope.
 
 ## Key Decisions Made
-- Audited `challenges.functions.ts`, `hypotheses.functions.ts`, `recommendations.functions.ts`.
-- Formulated concrete prompt rewriting specifications for Naya system prompt.
+- Finalized UI route architecture design and component specs for Academic Homework Fusion.
+- Produced `analysis.md` and `handoff.md`.
 
 ## Artifact Index
-- C:\Users\USER\Documents\GENIZIO\.agents\explorer_m1_3\ORIGINAL_REQUEST.md — Original request log
-- C:\Users\USER\Documents\GENIZIO\.agents\explorer_m1_3\BRIEFING.md — Briefing memory
-- C:\Users\USER\Documents\GENIZIO\.agents\explorer_m1_3\progress.md — Progress tracking
-- C:\Users\USER\Documents\GENIZIO\.agents\explorer_m1_3\handoff.md — Final handoff report
+- C:\Users\USER\Documents\GENIZIO\.agents\explorer_m1_3\ORIGINAL_REQUEST.md — Original request details
+- C:\Users\USER\Documents\GENIZIO\.agents\explorer_m1_3\BRIEFING.md — Working memory index
+- C:\Users\USER\Documents\GENIZIO\.agents\explorer_m1_3\analysis.md — Comprehensive analysis report
+- C:\Users\USER\Documents\GENIZIO\.agents\explorer_m1_3\handoff.md — Hard handoff report (5 components)

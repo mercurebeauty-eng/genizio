@@ -42,9 +42,12 @@ export type Database = {
       challenges: {
         Row: {
           academic_domain: string | null
+          academic_grade_level?: string | null
           academic_level_age: number | null
           academic_reference_note: string | null
+          academic_subject?: string | null
           ai_observations: string | null
+          behavioral_driver?: string | null
           child_id: string
           completed_at: string | null
           created_at: string
@@ -54,6 +57,7 @@ export type Database = {
           domain: string
           duration: string
           estimated_duration_minutes: number | null
+          homework_instruction?: string | null
           id: string
           material_tags: string[]
           materials: Json
@@ -73,12 +77,16 @@ export type Database = {
           trait_subform: string | null
           updated_at: string
           user_id: string
+          zpa_level?: number | null
         }
         Insert: {
           academic_domain?: string | null
+          academic_grade_level?: string | null
           academic_level_age?: number | null
           academic_reference_note?: string | null
+          academic_subject?: string | null
           ai_observations?: string | null
+          behavioral_driver?: string | null
           child_id: string
           completed_at?: string | null
           created_at?: string
@@ -88,6 +96,7 @@ export type Database = {
           domain: string
           duration: string
           estimated_duration_minutes?: number | null
+          homework_instruction?: string | null
           id?: string
           material_tags?: string[]
           materials?: Json
@@ -107,12 +116,16 @@ export type Database = {
           trait_subform?: string | null
           updated_at?: string
           user_id: string
+          zpa_level?: number | null
         }
         Update: {
           academic_domain?: string | null
+          academic_grade_level?: string | null
           academic_level_age?: number | null
           academic_reference_note?: string | null
+          academic_subject?: string | null
           ai_observations?: string | null
+          behavioral_driver?: string | null
           child_id?: string
           completed_at?: string | null
           created_at?: string
@@ -122,6 +135,7 @@ export type Database = {
           domain?: string
           duration?: string
           estimated_duration_minutes?: number | null
+          homework_instruction?: string | null
           id?: string
           material_tags?: string[]
           materials?: Json
@@ -141,6 +155,7 @@ export type Database = {
           trait_subform?: string | null
           updated_at?: string
           user_id?: string
+          zpa_level?: number | null
         }
         Relationships: [
           {

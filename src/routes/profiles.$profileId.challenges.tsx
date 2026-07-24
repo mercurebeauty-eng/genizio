@@ -4,7 +4,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { supabase } from "@/integrations/supabase/client";
 import { useSession } from "@/hooks/use-session";
 import { toast } from "sonner";
-import { Brain, Award, Trash2, Calendar, CheckCircle2, ArrowLeft, Sparkles, Upload, Loader2, Play, Check, X, MessageCircle, Beaker, Trophy } from "lucide-react";
+import { Brain, Award, Trash2, Calendar, CheckCircle2, ArrowLeft, Sparkles, Upload, Loader2, Play, Check, X, MessageCircle, Beaker, Trophy, BookOpen } from "lucide-react";
 import {
   generateChallenges,
   updateChallenge,
@@ -12,10 +12,20 @@ import {
   validateChallengeProof,
   getChildAISynthesis,
   generateSingleChallenge,
+  generateAcademicHomeworkChallenge,
   assignTemplateChallenge,
   TALENT_SUBFORM_LABELS,
   TALENT_SUBFORM_TO_DOMAIN,
 } from "@/lib/challenges.functions";
+import {
+  GRADE_LEVEL_METADATA,
+  ACADEMIC_SUBJECT_LABELS,
+  type GradeLevel,
+  type AcademicSubject,
+  type BehavioralDriver,
+} from "@/lib/academic-homework.functions";
+import { HomeworkModeToggle, type ChallengeMode } from "@/components/challenges/HomeworkModeToggle";
+import { AcademicHomeworkInput } from "@/components/challenges/AcademicHomeworkInput";
 import { TALENT_KEY_LABELS } from "@/lib/talent-buckets";
 import { recommendChallengesForChild, type RecommendedChallengeResult } from "@/lib/recommendations.functions";
 import { createOrder } from "@/lib/products.functions";
@@ -83,6 +93,13 @@ type Challenge = {
   proof_image_url?: string | null;
   ai_observations?: string | null;
   difficulty?: string | null;
+  academic_domain?: string | null;
+  academic_level_age?: number | null;
+  academic_subject?: string | null;
+  academic_grade_level?: string | null;
+  homework_instruction?: string | null;
+  behavioral_driver?: string | null;
+  zpa_level?: number | null;
 };
 
 type Child = {
@@ -156,8 +173,10 @@ function ChallengesPage() {
   const [fetchingSynthesis, setFetchingSynthesis] = useState(false);
 
   // Integrated Lab States
+  const [labMode, setLabMode] = useState<ChallengeMode>("free");
   const [selectedCategory, setSelectedCategory] = useState("all");
   const [isGeneratingSingle, setIsGeneratingSingle] = useState(false);
+  const [isGeneratingAcademic, setIsGeneratingAcademic] = useState(false);
   const [isAssigningSingle, setIsAssigningSingle] = useState(false);
   const [currentGeneratedChallenge, setCurrentGeneratedChallenge] = useState<any | null>(null);
   const [loadingTextIndex, setLoadingTextIndex] = useState(0);
@@ -168,6 +187,7 @@ function ChallengesPage() {
   const del = useServerFn(deleteChallenge);
   const fetchSynthesis = useServerFn(getChildAISynthesis);
   const generateSingle = useServerFn(generateSingleChallenge);
+  const generateAcademicHomework = useServerFn(generateAcademicHomeworkChallenge);
   const assignSingle = useServerFn(assignTemplateChallenge);
   const createOrderFn = useServerFn(createOrder);
   const recommendFn = useServerFn(recommendChallengesForChild);
@@ -180,17 +200,25 @@ function ChallengesPage() {
     "Finalisation du plan d'expérience...",
   ];
 
+  const ACADEMIC_LOADING_STEPS = [
+    "Naya consulte le programme scolaire...",
+    "Naya applique la mécanique de fusion...",
+    "Naya calibre les étapes pour le niveau sélectionné...",
+    "Naya rédige l'intention pédagogique...",
+    "Finalisation de la quête académique...",
+  ];
+
   useEffect(() => {
     let interval: any;
-    if (isGeneratingSingle) {
+    if (isGeneratingSingle || isGeneratingAcademic) {
       interval = setInterval(() => {
-        setLoadingTextIndex((prev) => (prev + 1) % LOADING_STEPS.length);
+        setLoadingTextIndex((prev) => (prev + 1) % 5);
       }, 1500);
     } else {
       setLoadingTextIndex(0);
     }
     return () => clearInterval(interval);
-  }, [isGeneratingSingle]);
+  }, [isGeneratingSingle, isGeneratingAcademic]);
 
   const handleGenerateSingle = async () => {
     if (isGeneratingSingle) return;
@@ -210,6 +238,38 @@ function ChallengesPage() {
       toast.error("Erreur lors de la génération. Réessayez.");
     } finally {
       setIsGeneratingSingle(false);
+    }
+  };
+
+  const handleGenerateAcademicHomework = async (params: {
+    gradeLevel: GradeLevel;
+    subject: AcademicSubject;
+    homeworkInstruction: string;
+    behavioralDriver?: BehavioralDriver;
+    suggestedTopicId?: string;
+  }) => {
+    if (isGeneratingAcademic) return;
+    setIsGeneratingAcademic(true);
+    setCurrentGeneratedChallenge(null);
+    try {
+      const resp = await generateAcademicHomework({
+        data: {
+          childId: profileId,
+          gradeLevel: params.gradeLevel,
+          subject: params.subject,
+          homeworkInstruction: params.homeworkInstruction,
+          behavioralDriver: params.behavioralDriver,
+          suggestedTopicId: params.suggestedTopicId,
+        },
+      });
+      setCurrentGeneratedChallenge(resp);
+      toast.success("Devoir transformé avec succès en défi ludique !");
+    } catch (e) {
+      console.error(e);
+      const msg = e instanceof Error ? e.message : "Erreur lors de la fusion du devoir. Réessayez.";
+      toast.error(msg);
+    } finally {
+      setIsGeneratingAcademic(false);
     }
   };
 
@@ -233,6 +293,11 @@ function ChallengesPage() {
             requires_supervision: currentGeneratedChallenge.requires_supervision ?? false,
             supervision_warning: currentGeneratedChallenge.supervision_warning,
             difficulty: currentGeneratedChallenge.difficulty,
+            academic_subject: currentGeneratedChallenge.academic_subject,
+            academic_grade_level: currentGeneratedChallenge.academic_grade_level,
+            homework_instruction: currentGeneratedChallenge.homework_instruction,
+            behavioral_driver: currentGeneratedChallenge.behavioral_driver,
+            zpa_level: currentGeneratedChallenge.zpa_level,
           }
         }
       });
@@ -697,65 +762,100 @@ function ChallengesPage() {
                   </span>
                   <div>
                     <h3 className="font-display text-balance text-xl font-bold">Composer un défi ciblé</h3>
-                    <p className="text-xs font-bold text-ink/60">Générez un défi d'apprentissage sur-mesure pour {child.name}</p>
+                    <p className="text-xs font-bold text-ink/60">Générez un défi d'apprentissage ou fusionnez un devoir pour {child.name}</p>
                   </div>
                 </div>
               </div>
 
-              <div className="mt-6 grid gap-4  sm:items-end">
-                <div className="sm:col-span-3">
-                  <label className="block text-xs font-bold uppercase tracking-wider text-ink mb-2">
-                    Sélectionner l'Intelligence
-                  </label>
-                  <select
-                    value={selectedCategory}
-                    onChange={(e) => setSelectedCategory(e.target.value)}
-                    className="block w-full rounded-2xl border border-ink/10 bg-white px-4 py-3 text-sm font-bold outline-none focus:ring-2 focus:ring-brand focus:ring-offset-2 transition-all cursor-pointer shadow-sm"
-                  >
-                    {CATEGORIES.map((cat) => (
-                      <option key={cat.id} value={cat.id}>
-                        {cat.label}
-                      </option>
-                    ))}
-                  </select>
+              {/* Homework Mode Switcher */}
+              <HomeworkModeToggle
+                mode={labMode}
+                onModeChange={(m) => {
+                  setLabMode(m);
+                  setCurrentGeneratedChallenge(null);
+                }}
+                className="mb-6"
+              />
+
+              {labMode === "free" ? (
+                <div className="mt-6 grid gap-4 sm:items-end">
+                  <div className="sm:col-span-3">
+                    <label className="block text-xs font-bold uppercase tracking-wider text-ink mb-2">
+                      Sélectionner l'Intelligence
+                    </label>
+                    <select
+                      value={selectedCategory}
+                      onChange={(e) => setSelectedCategory(e.target.value)}
+                      className="block w-full rounded-2xl border border-ink/10 bg-white px-4 py-3 text-sm font-bold outline-none focus:ring-2 focus:ring-brand focus:ring-offset-2 transition-all cursor-pointer shadow-sm"
+                    >
+                      {CATEGORIES.map((cat) => (
+                        <option key={cat.id} value={cat.id}>
+                          {cat.label}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  <div>
+                    <button
+                      onClick={handleGenerateSingle}
+                      disabled={isGeneratingSingle}
+                      className="w-full rounded-2xl border border-ink/10 bg-brand px-5 py-3 text-sm font-bold text-white shadow-xl hover:-translate-y-0.5 active:translate-y-0 transition-all disabled:opacity-50 disabled:cursor-wait flex items-center justify-center gap-2 cursor-pointer"
+                    >
+                      {isGeneratingSingle ? (
+                        <>
+                          <Loader2 className="size-4 animate-spin text-white" />
+                          <span className="text-white">Composition...</span>
+                        </>
+                      ) : (
+                        <>
+                          <Play className="size-4 fill-current text-white" />
+                          <span className="text-white">Lancer</span>
+                        </>
+                      )}
+                    </button>
+                  </div>
                 </div>
-                <div>
-                  <button
-                    onClick={handleGenerateSingle}
-                    disabled={isGeneratingSingle}
-                    className="w-full rounded-2xl border border-ink/10 bg-brand px-5 py-3 text-sm font-bold text-white shadow-xl hover:-translate-y-0.5 active:translate-y-0 transition-all disabled:opacity-50 disabled:cursor-wait flex items-center justify-center gap-2"
-                  >
-                    {isGeneratingSingle ? (
-                      <>
-                        <Loader2 className="size-4 animate-spin text-white" />
-                        <span className="text-white">Composition...</span>
-                      </>
-                    ) : (
-                      <>
-                        <Play className="size-4 fill-current text-white" />
-                        <span className="text-white">Lancer</span>
-                      </>
-                    )}
-                  </button>
+              ) : (
+                <div className="mt-6">
+                  <AcademicHomeworkInput
+                    childAge={child.age}
+                    childName={child.name}
+                    onGenerate={handleGenerateAcademicHomework}
+                    isGenerating={isGeneratingAcademic}
+                  />
                 </div>
-              </div>
+              )}
 
               {/* Loader display */}
-              {isGeneratingSingle && (
+              {(isGeneratingSingle || isGeneratingAcademic) && (
                 <div className="mt-8 flex flex-col items-center justify-center py-6 text-center border-t-[3px] border-dashed border-ink">
-                  <NayaAvatar size="md" thoughts={LOADING_STEPS} className="mb-4" />
-                  <p className="text-sm font-bold text-indigo-600 animate-pulse">{LOADING_STEPS[loadingTextIndex]}</p>
+                  <NayaAvatar
+                    size="md"
+                    thoughts={isGeneratingAcademic ? ACADEMIC_LOADING_STEPS : LOADING_STEPS}
+                    className="mb-4"
+                  />
+                  <p className="text-sm font-bold text-indigo-600 animate-pulse">
+                    {isGeneratingAcademic
+                      ? ACADEMIC_LOADING_STEPS[loadingTextIndex % ACADEMIC_LOADING_STEPS.length]
+                      : LOADING_STEPS[loadingTextIndex]}
+                  </p>
                 </div>
               )}
 
               {/* Generated challenge display */}
-              {currentGeneratedChallenge && !isGeneratingSingle && (
+              {currentGeneratedChallenge && !isGeneratingSingle && !isGeneratingAcademic && (
                 <div className="mt-6 rounded-2xl border border-ink/10 bg-white p-6 shadow-sm animate-in fade-in slide-in-from-top-3 duration-300">
                   <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-2 flex-wrap">
                       <span className="rounded-full bg-brand px-3 py-1 text-[10px] font-black uppercase tracking-widest text-white border border-ink/10">
                         {currentGeneratedChallenge.domain}
                       </span>
+                      {currentGeneratedChallenge.academic_grade_level && (
+                        <span className="rounded-full bg-amber-100 text-amber-900 border border-amber-300 px-3 py-1 text-[10px] font-extrabold uppercase tracking-wider inline-flex items-center gap-1">
+                          <BookOpen className="size-3" />
+                          Devoir • {GRADE_LEVEL_METADATA[currentGeneratedChallenge.academic_grade_level as GradeLevel]?.label ?? currentGeneratedChallenge.academic_grade_level} • {ACADEMIC_SUBJECT_LABELS[currentGeneratedChallenge.academic_subject as AcademicSubject] ?? currentGeneratedChallenge.academic_subject ?? ""}
+                        </span>
+                      )}
                       <DifficultyBadge difficulty={currentGeneratedChallenge.difficulty} />
                     </div>
                     <span className="text-xs text-ink/60 font-semibold">🕒 {currentGeneratedChallenge.duration}</span>
@@ -1070,10 +1170,16 @@ function ChallengeCard({
     return (
       <div id={`challenge-${c.id}`} className="rounded-[1.5rem] bg-white p-5 shadow-sm border border-border transition-all flex flex-col gap-4">
         <div className="flex flex-wrap items-center justify-between gap-2">
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 flex-wrap">
             <span className="rounded-full bg-surface px-[11px] py-[5px] text-[12px] font-bold text-ink border border-border">
               {c.domain}
             </span>
+            {c.academic_grade_level && (
+              <span className="rounded-full bg-amber-100 text-amber-900 border border-amber-300 px-[11px] py-[5px] text-[12px] font-bold inline-flex items-center gap-1">
+                <BookOpen className="size-3 shrink-0" />
+                Devoir • {GRADE_LEVEL_METADATA[c.academic_grade_level as GradeLevel]?.label ?? c.academic_grade_level} • {ACADEMIC_SUBJECT_LABELS[c.academic_subject as AcademicSubject] ?? c.academic_subject ?? ""}
+              </span>
+            )}
             <DifficultyBadge difficulty={c.difficulty} />
           </div>
           <span className={`rounded-full px-[11px] py-[5px] text-[12px] font-bold ${STATUS_STYLE[c.status]}`}>
@@ -1108,8 +1214,14 @@ function ChallengeCard({
           <button onClick={onToggle} className="w-[38px] h-[38px] border-none rounded-full bg-white/25 text-white flex items-center justify-center cursor-pointer mb-[14px]">
             <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round"><path d="m15 18-6-6 6-6"/></svg>
           </button>
-          <div className="flex flex-wrap gap-[7px] mb-3">
+          <div className="flex flex-wrap gap-[7px] mb-3 items-center">
             <span className="px-[11px] py-[5px] bg-white/20 rounded-full text-white text-[12px] font-bold">{c.domain}</span>
+            {c.academic_grade_level && (
+              <span className="inline-flex items-center gap-1 px-[11px] py-[5px] bg-amber-400/90 text-amber-950 rounded-full text-[12px] font-extrabold">
+                <BookOpen className="size-3 shrink-0" />
+                Devoir • {GRADE_LEVEL_METADATA[c.academic_grade_level as GradeLevel]?.label ?? c.academic_grade_level} • {ACADEMIC_SUBJECT_LABELS[c.academic_subject as AcademicSubject] ?? c.academic_subject ?? ""}
+              </span>
+            )}
             <DifficultyBadge difficulty={c.difficulty} />
             <span className="inline-flex items-center gap-1 px-[11px] py-[5px] bg-white/20 rounded-full text-white text-[12px] font-bold">
               <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M11.5 2.3a.5.5 0 0 1 1 0l2.3 4.6 5.1.75a.5.5 0 0 1 .3.86l-3.7 3.6.87 5.1a.5.5 0 0 1-.77.53L12 15.9l-4.6 2.4a.5.5 0 0 1-.77-.53l.88-5.1-3.7-3.6a.5.5 0 0 1 .29-.86l5.1-.75z"/></svg>
