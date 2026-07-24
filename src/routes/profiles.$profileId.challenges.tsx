@@ -879,17 +879,19 @@ function ChallengesPage() {
                   <div className="grid gap-4  mb-6">
                     <div>
                       <h5 className="text-[10px] font-bold uppercase tracking-wider text-ink/60 mb-2">Étapes du défi</h5>
-                      <ul className="text-xs space-y-1.5 text-ink/70 list-decimal list-inside pl-1">
-                        {currentGeneratedChallenge.steps.slice(0, 4).map((step: string, idx: number) => (
-                          <li key={idx} className="truncate"><MarkdownContent content={step} inline /></li>
+                      <ol className="text-xs space-y-2 text-ink/80 list-decimal pl-4 break-words">
+                        {currentGeneratedChallenge.steps.map((step: string, idx: number) => (
+                          <li key={idx} className="break-words leading-relaxed">
+                            <MarkdownContent content={step} inline />
+                          </li>
                         ))}
-                      </ul>
+                      </ol>
                     </div>
                     <div>
                       <h5 className="text-[10px] font-bold uppercase tracking-wider text-ink/60 mb-2">Matériel requis</h5>
-                      <ul className="text-xs space-y-1.5 text-ink/70 list-disc list-inside pl-1">
-                        {currentGeneratedChallenge.materials.slice(0, 4).map((mat: string, idx: number) => (
-                          <li key={idx} className="truncate">{mat}</li>
+                      <ul className="text-xs space-y-1.5 text-ink/80 list-disc pl-4 break-words">
+                        {currentGeneratedChallenge.materials.map((mat: string, idx: number) => (
+                          <li key={idx} className="break-words leading-relaxed">{mat}</li>
                         ))}
                       </ul>
                     </div>
