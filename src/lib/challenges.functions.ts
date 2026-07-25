@@ -65,6 +65,7 @@ const ChallengeSchema = z.object({
   homework_instruction: z.string().nullable().optional(),
   behavioral_driver: z.enum(["deconstruire", "schematiser", "simuler", "enqueter", "optimiser"]).nullable().optional(),
   zpa_level: z.number().int().min(1).max(5).nullable().optional(),
+  academic_secret: z.string().nullable().optional(),
 });
 
 // Shop Phase 1: log material tags that don't match any active product yet, so the
@@ -765,6 +766,8 @@ ARTISANALE (habileté manuelle) :
 
 SPATIALE :
 3 ans : vocabulaire spatial de base (dessus/dessous, dedans/dehors). 4-9 ans : perçoit des objets sous différents points de vue, notion de perspective en développement. 5 ans : réussit une tâche simple de "pliage mental" (imaginer un objet après pliage). 7-8 ans : pliage mental plus avancé, plafonne généralement vers cet âge.`;
+
+export const ACADEMIC_SECRET_INSTRUCTION = `SECRET ACADÉMIQUE DE NAYA ("academic_secret") : Génère obligatoirement un paragraphe captivant de 2 à 4 phrases à destination de l'enfant qui explique le "pourquoi scientifique, physique, géométrique ou logique" derrière l'action qu'il vient de réaliser dans ce défi. Relie ce geste concret à un concept théorique vu au collège ou plus tard (ex: Effet Magnus, frottements de l'air, parallélisme, oxydation, réfraction, angle d'incidence...). Présente ce savoir comme un superpouvoir secret ou un avantage tactique que les autres élèves n'auront qu'en classe de 5ème/4ème/3ème, mais qu'il/elle maîtrise déjà sur le terrain !`;
 
 // Dupliquée mot pour mot dans generateChallenges et generateSingleChallenge avant
 // extraction (2026-07-22) — avait déjà dérivé silencieusement (une copie disait
@@ -2127,6 +2130,7 @@ ${
 11. ${STEPS_INSTRUCTION}
 12. ${PROOF_MODE_INSTRUCTION}
 13. ${ACADEMIC_REFERENTIAL_INSTRUCTION}
+14. ${ACADEMIC_SECRET_INSTRUCTION}
 
 Réponds STRICTEMENT en JSON valide avec ce format exact :
 {
@@ -2148,7 +2152,8 @@ Réponds STRICTEMENT en JSON valide avec ce format exact :
   "declarative_award": {"corporelle": 2} (uniquement si declarative),
   "academic_domain": "mathematiques" | "langage" | "sciences" | "corporelle" | "sociale" | "emotionnelle" | "entrepreneuriale" | "artisanale" | "spatiale" | null,
   "academic_level_age": 14 (uniquement si academic_domain non null),
-  "academic_reference_note": "..." (uniquement si academic_domain non null)
+  "academic_reference_note": "..." (uniquement si academic_domain non null),
+  "academic_secret": "Explication stimulante du secret scientifique/physique avec niveau d'avance 4ème/3ème..."
 }`;
 
     // A single défi, not a batch — the 4000 default (sized for up to 6 défis

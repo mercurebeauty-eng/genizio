@@ -45,6 +45,7 @@ export type Database = {
           academic_grade_level?: string | null
           academic_level_age: number | null
           academic_reference_note: string | null
+          academic_secret?: string | null
           academic_subject?: string | null
           ai_observations: string | null
           behavioral_driver?: string | null
@@ -824,6 +825,138 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      seasons: {
+        Row: {
+          id: string
+          title: string
+          subtitle: string | null
+          theme: string
+          description: string | null
+          duration_months: number
+          start_date: string
+          end_date: string
+          price_xof: number
+          price_eur: number
+          status: string
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          title: string
+          subtitle?: string | null
+          theme: string
+          description?: string | null
+          duration_months?: number
+          start_date: string
+          end_date: string
+          price_xof?: number
+          price_eur?: number
+          status?: string
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          title?: string
+          subtitle?: string | null
+          theme?: string
+          description?: string | null
+          duration_months?: number
+          start_date?: string
+          end_date?: string
+          price_xof?: number
+          price_eur?: number
+          status?: string
+          created_at?: string
+        }
+        Relationships: []
+      }
+      season_enrollments: {
+        Row: {
+          id: string
+          season_id: string
+          child_id: string
+          user_id: string
+          sponsor_name: string | null
+          sponsor_email: string | null
+          sponsor_message: string | null
+          payment_status: string
+          artifact_url: string | null
+          enrolled_at: string
+        }
+        Insert: {
+          id?: string
+          season_id: string
+          child_id: string
+          user_id: string
+          sponsor_name?: string | null
+          sponsor_email?: string | null
+          sponsor_message?: string | null
+          payment_status?: string
+          artifact_url?: string | null
+          enrolled_at?: string
+        }
+        Update: {
+          id?: string
+          season_id?: string
+          child_id?: string
+          user_id?: string
+          sponsor_name?: string | null
+          sponsor_email?: string | null
+          sponsor_message?: string | null
+          payment_status?: string
+          artifact_url?: string | null
+          enrolled_at?: string
+        }
+        Relationships: []
+      }
+      sponsorship_tokens: {
+        Row: {
+          id: string
+          code: string
+          season_id: string | null
+          sponsor_name: string
+          sponsor_email: string
+          sponsor_message: string | null
+          target_child_name: string | null
+          amount_paid: number
+          currency: string
+          is_redeemed: boolean
+          redeemed_by_child_id: string | null
+          redeemed_at: string | null
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          code: string
+          season_id?: string | null
+          sponsor_name: string
+          sponsor_email: string
+          sponsor_message?: string | null
+          target_child_name?: string | null
+          amount_paid?: number
+          currency?: string
+          is_redeemed?: boolean
+          redeemed_by_child_id?: string | null
+          redeemed_at?: string | null
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          code?: string
+          season_id?: string | null
+          sponsor_name?: string
+          sponsor_email?: string
+          sponsor_message?: string | null
+          target_child_name?: string | null
+          amount_paid?: number
+          currency?: string
+          is_redeemed?: boolean
+          redeemed_by_child_id?: string | null
+          redeemed_at?: string | null
+          created_at?: string
+        }
+        Relationships: []
       }
     }
     Views: {

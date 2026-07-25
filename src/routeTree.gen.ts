@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as TermsRouteImport } from './routes/terms'
 import { Route as SupervisorRouteImport } from './routes/supervisor'
 import { Route as ProfilesRouteImport } from './routes/profiles'
+import { Route as ParrainageRouteImport } from './routes/parrainage'
 import { Route as ProfileRouteImport } from './routes/profile'
 import { Route as PrivacyRouteImport } from './routes/privacy'
 import { Route as NouveautesRouteImport } from './routes/nouveautes'
@@ -50,6 +51,11 @@ const SupervisorRoute = SupervisorRouteImport.update({
 const ProfilesRoute = ProfilesRouteImport.update({
   id: '/profiles',
   path: '/profiles',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ParrainageRoute = ParrainageRouteImport.update({
+  id: '/parrainage',
+  path: '/parrainage',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ProfileRoute = ProfileRouteImport.update({
@@ -187,6 +193,7 @@ export interface FileRoutesByFullPath {
   '/laboratory': typeof LaboratoryRoute
   '/mentions-legales': typeof MentionsLegalesRoute
   '/nouveautes': typeof NouveautesRoute
+  '/parrainage': typeof ParrainageRoute
   '/privacy': typeof PrivacyRoute
   '/profile': typeof ProfileRoute
   '/profiles': typeof ProfilesRouteWithChildren
@@ -215,6 +222,7 @@ export interface FileRoutesByTo {
   '/laboratory': typeof LaboratoryRoute
   '/mentions-legales': typeof MentionsLegalesRoute
   '/nouveautes': typeof NouveautesRoute
+  '/parrainage': typeof ParrainageRoute
   '/privacy': typeof PrivacyRoute
   '/profile': typeof ProfileRoute
   '/supervisor': typeof SupervisorRoute
@@ -244,6 +252,7 @@ export interface FileRoutesById {
   '/laboratory': typeof LaboratoryRoute
   '/mentions-legales': typeof MentionsLegalesRoute
   '/nouveautes': typeof NouveautesRoute
+  '/parrainage': typeof ParrainageRoute
   '/privacy': typeof PrivacyRoute
   '/profile': typeof ProfileRoute
   '/profiles': typeof ProfilesRouteWithChildren
@@ -405,6 +414,13 @@ declare module '@tanstack/react-router' {
       path: '/privacy'
       fullPath: '/privacy'
       preLoaderRoute: typeof PrivacyRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/parrainage': {
+      id: '/parrainage'
+      path: '/parrainage'
+      fullPath: '/parrainage'
+      preLoaderRoute: typeof ParrainageRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/nouveautes': {

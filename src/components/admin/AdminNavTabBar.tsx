@@ -1,7 +1,7 @@
 import React from "react";
 import { BarChart3, Award, Brain, ShoppingBag } from "lucide-react";
 
-export type AdminTab = "executive" | "talents" | "naya" | "commerce";
+export type AdminTab = "executive" | "talents" | "naya" | "commerce" | "seasons";
 
 interface AdminNavTabBarProps {
   activeTab: AdminTab;
@@ -52,6 +52,15 @@ export const ADMIN_TABS: Array<{
     badge: "Kits",
     badgeBgClass: "bg-purple-500/10",
     badgeTextClass: "text-purple-600",
+  },
+  {
+    id: "seasons",
+    label: "Saisons & Parrainages",
+    sublabel: "Trimestres & Diaspora",
+    icon: ShoppingBag,
+    badge: "3 Mois",
+    badgeBgClass: "bg-amber-500/10",
+    badgeTextClass: "text-amber-600",
   },
 ];
 

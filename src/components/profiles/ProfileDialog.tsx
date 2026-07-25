@@ -77,6 +77,18 @@ export function ProfileDialog({
           return;
         }
       } else {
+        const { count } = await supabase
+          .from("child_profiles")
+          .select("id", { count: "exact", head: true })
+          .eq("user_id", userId);
+
+        if ((count ?? 0) >= 5) {
+          const limitMsg = "Vous avez atteint la limite de 5 profils enfants maximum par compte parent.";
+          setError(limitMsg);
+          toast.error(limitMsg);
+          return;
+        }
+
         const { data: created, error } = await supabase.from("child_profiles").insert(payload).select("id").single();
         if (error) {
           setError(error.message);

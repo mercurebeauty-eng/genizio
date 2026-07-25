@@ -100,6 +100,7 @@ type Challenge = {
   homework_instruction?: string | null;
   behavioral_driver?: string | null;
   zpa_level?: number | null;
+  academic_secret?: string | null;
 };
 
 type Child = {
@@ -1247,11 +1248,13 @@ function ChallengeCard({
           <MarkdownContent content={c.description} />
         </div>
 
-        {c.steps && c.steps.length > 0 && (
+        {c.status === "completed" ? (
+          <AcademicSecretCard secret={c.academic_secret} academicGradeLevel={c.academic_grade_level} />
+        ) : c.steps && c.steps.length > 0 ? (
           <div className="mb-[22px]">
             <StepAccordion steps={c.steps} />
           </div>
-        )}
+        ) : null}
 
         <div className="font-display text-balance font-bold text-[16px] mb-[10px]">Ce que tu développes</div>
         <div className="flex flex-wrap gap-[9px] mb-[22px]">
@@ -1402,6 +1405,41 @@ function ChallengeCard({
             Supprimer ce défi
           </button>
         </div>
+      </div>
+    </div>
+  );
+}
+
+function AcademicSecretCard({ secret, academicGradeLevel }: { secret?: string | null; academicGradeLevel?: string | null }) {
+  return (
+    <div className="mb-[22px] rounded-3xl bg-gradient-to-br from-amber-500/15 via-amber-400/10 to-cyan-500/15 p-5 border-2 border-amber-400/50 shadow-md relative overflow-hidden">
+      <div className="flex items-center gap-2 mb-3 flex-wrap">
+        <span className="grid place-items-center rounded-2xl bg-amber-500 p-2 text-white shadow-md">
+          <Sparkles className="size-5" />
+        </span>
+        <div>
+          <span className="text-[10px] font-black uppercase tracking-widest text-amber-800">
+            L'Avantage Secret de Naya
+          </span>
+          <h4 className="font-display text-lg font-extrabold text-amber-950">
+            Le Savoir Scientifique Caché
+          </h4>
+        </div>
+        {academicGradeLevel && (
+          <span className="ml-auto rounded-full bg-amber-200 text-amber-950 px-3 py-1 text-xs font-black border border-amber-300 shadow-xs">
+            Niveau {academicGradeLevel}
+          </span>
+        )}
+      </div>
+
+      <div className="rounded-2xl bg-white/90 p-4 backdrop-blur-md border border-amber-200 text-sm leading-relaxed text-ink/90 font-medium shadow-xs">
+        {secret ? (
+          <MarkdownContent content={secret} />
+        ) : (
+          <p>
+            Bravo pour la réalisation de ce défi ! En accomplissant ces gestes concrets sur le terrain, tu as développé une intuition physique et logique qui te donnera une longueur d'avance en classe !
+          </p>
+        )}
       </div>
     </div>
   );

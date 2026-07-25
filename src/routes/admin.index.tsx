@@ -24,6 +24,7 @@ import { AdminExecutiveTab } from "@/components/admin/AdminExecutiveTab";
 import { AdminTalentsCitiesTab } from "@/components/admin/AdminTalentsCitiesTab";
 import { AdminNayaTab } from "@/components/admin/AdminNayaTab";
 import { AdminCommerceTab } from "@/components/admin/AdminCommerceTab";
+import { AdminSeasonsTab } from "@/components/admin/AdminSeasonsTab";
 import { Users, ShoppingBag, Brain, Award, Sparkles } from "lucide-react";
 import { toast } from "sonner";
 import { GenizioLoader } from "@/components/GenizioLoader";
@@ -232,6 +233,8 @@ function AdminIndexPage() {
             onTogglePassport={handleTogglePassport}
           />
         )}
+
+        {activeTab === "seasons" && <AdminSeasonsTab />}
       </main>
     </div>
   );
