@@ -161,6 +161,7 @@ export function AdminExecutiveTab({
                 <th className="pb-3 pr-4">Téléphone</th>
                 <th className="pb-3 pr-4">WhatsApp</th>
                 <th className="pb-3 pr-4">Enfants associés & Passeports</th>
+                <th className="pb-3 pr-4 text-center">Saisons</th>
                 <th className="pb-3 text-center">Défis (Total / Validés)</th>
               </tr>
             </thead>
@@ -219,7 +220,7 @@ export function AdminExecutiveTab({
                       {parent.children && parent.children.length > 0 ? (
                         <div className="flex flex-col gap-1.5">
                           {parent.children.map((child) => (
-                            <div key={child.id} className="flex flex-wrap items-center gap-2">
+                            <div key={child.id} className="flex h-5 items-center gap-2">
                               <span className="font-bold text-xs text-ink">
                                 {child.name} ({child.age} ans)
                               </span>
@@ -246,18 +247,32 @@ export function AdminExecutiveTab({
                                   </>
                                 )}
                               </button>
-                              <button
-                                onClick={() => setEnrollModalChild({ id: child.id, name: child.name })}
-                                className="inline-flex items-center gap-1 rounded-full border border-sky-400 bg-sky-100 px-2 py-0.5 text-[9px] font-black uppercase tracking-wider text-sky-800 transition-all hover:bg-sky-200 cursor-pointer"
-                                title="Inscrire à une saison"
-                              >
-                                <Calendar className="size-2.5" /> Saison
-                              </button>
                             </div>
                           ))}
                         </div>
                       ) : (
                         <span className="text-ink/30 italic text-xs">Aucun enfant</span>
+                      )}
+                    </td>
+
+                    {/* Saisons */}
+                    <td className="py-4 pr-4">
+                      {parent.children && parent.children.length > 0 ? (
+                        <div className="flex flex-col gap-1.5 items-center justify-center">
+                          {parent.children.map((child) => (
+                            <div key={child.id} className="flex h-5 items-center">
+                              <button
+                                onClick={() => setEnrollModalChild({ id: child.id, name: child.name })}
+                                className="inline-flex items-center gap-1 rounded-full border border-sky-400 bg-sky-100 px-3 py-0.5 text-[9px] font-black uppercase tracking-wider text-sky-800 transition-all hover:bg-sky-200 cursor-pointer"
+                                title="Inscrire à une saison"
+                              >
+                                <Calendar className="size-2.5" /> Gérer
+                              </button>
+                            </div>
+                          ))}
+                        </div>
+                      ) : (
+                        <span className="text-ink/30 italic text-xs">---</span>
                       )}
                     </td>
 
