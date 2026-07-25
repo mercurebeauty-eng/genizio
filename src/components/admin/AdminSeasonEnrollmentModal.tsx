@@ -23,10 +23,9 @@ export function AdminSeasonEnrollmentModal({ childId, childName, onClose, onSucc
   useEffect(() => {
     listSeasonsFn({ data: undefined })
       .then(fetchedSeasons => {
-        const activeSeasons = fetchedSeasons.filter(s => s.status === "active" || s.status === "upcoming");
-        setSeasons(activeSeasons);
-        if (activeSeasons.length > 0) {
-          setSelectedSeasonId(activeSeasons[0].id);
+        setSeasons(fetchedSeasons);
+        if (fetchedSeasons.length > 0) {
+          setSelectedSeasonId(fetchedSeasons[0].id);
         }
       })
       .catch(err => {

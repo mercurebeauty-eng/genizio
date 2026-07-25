@@ -207,12 +207,21 @@ export const redeemSponsorshipToken = createServerFn({ method: "POST" })
 export const listSeasonsAdmin = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async () => {
-    const { data: seasons } = await (supabaseAdmin as any)
+    const { data: seasons, error } = await (supabaseAdmin as any)
       .from("seasons")
       .select("*")
       .order("created_at", { ascending: false });
 
-    return (seasons as Season[]) || [DEFAULT_FALLBACK_SEASON];
+    if (error) {
+      console.error("Error fetching seasons:", error);
+      return [DEFAULT_FALLBACK_SEASON];
+    }
+
+    if (!seasons || seasons.length === 0) {
+      return [DEFAULT_FALLBACK_SEASON];
+    }
+
+    return seasons as Season[];
   });
 
 export const listSponsorshipsAdmin = createServerFn({ method: "GET" })
