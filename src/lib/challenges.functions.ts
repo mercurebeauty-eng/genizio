@@ -2035,6 +2035,7 @@ const GenerateSingleInput = z.object({
   location: z.string().optional(),
   homeMaterials: z.string().optional().nullable(),
   domain: z.string().optional().nullable(),
+  materialScope: z.enum(["home", "outdoor", "buy", "mixed"]).optional().default("mixed"),
 });
 
 export const generateSingleChallenge = createServerFn({ method: "POST" })
@@ -2085,6 +2086,14 @@ export const generateSingleChallenge = createServerFn({ method: "POST" })
       ? `3. Tu DOIS générer un défi spécifiquement dans le domaine d'intelligence ou la catégorie suivante : "${targetDomain}". Adapte l'activité pour cibler ce domaine précis.`
       : `3. Les intelligences actuellement les moins explorées chez cet enfant sont ${getLeastExploredTalentLabels(child.talents as Record<string, number> | null).join(" et ")}. Sauf si le temps/lieu disponible les rend peu réalistes, choisis un domaine d'intelligence qui cible l'une de ces intelligences plutôt que de renforcer un talent déjà confirmé. Tu peux créer des défis "hybrides" (ex: utiliser l'art pour comprendre les mathématiques).`;
 
+    const materialScopeInstruction = data.materialScope === "home" 
+      ? "5. MATÉRIEL (MAISON) : Le défi doit être réalisable avec les objets trouvés à la maison (intérieur) ou dans la chambre."
+      : data.materialScope === "outdoor"
+      ? "5. MATÉRIEL (NATURE/EXTÉRIEUR) : Le défi doit utiliser principalement des éléments trouvés dans la nature, à l'extérieur (jardin, parc, rue) ou récupérés dehors."
+      : data.materialScope === "buy"
+      ? "5. MATÉRIEL (À ACHETER) : Le défi peut impliquer d'aller acheter du petit matériel en grande surface, quincaillerie ou papeterie (abordable)."
+      : "5. MATÉRIEL (MIXTE) : Libre à toi ! Tu peux mixer du matériel de maison, des éléments trouvés dehors dans la nature, ou du petit matériel abordable à acheter (ex: colle spéciale, peinture).";
+
     const prompt = `Tu es Naya, un mentor pédagogique d'élite spécialisé dans la psychologie de l'enfant et les Intelligences Multiples d'Howard Gardner, opérant en Afrique francophone.
 Génère un défi d'apprentissage sur-mesure, hautement interactif et passionnant pour cet enfant, en respectant son contexte immédiat.
 
@@ -2117,10 +2126,10 @@ Ta mission (Synthèse Pédagogique) :
 2. Synthèse pédagogique : Utilise les postures cognitives et mécaniques d'action préférées de l'enfant comme levier d'entrée pour aborder le domaine cible. Si les observations passées indiquent une évolution ou des points de blocage, adapte la mécanique d'action pour créer une passerelle d'apprentissage stimulante.
 ${domainInstruction}
 4. Le défi doit s'adapter EXACTEMENT au temps disponible. S'il n'y a que 10 minutes, propose un "mini-défi" immédiat. Si c'est 1h+, propose un projet structuré.
-5. Le défi doit être réalisable avec les objets de ce lieu précis.
+${materialScopeInstruction}
 ${
   data.homeMaterials
-    ? `6. UTILISATION DES MATÉRIAUX DE LA MAISON : Tu DOIS concevoir un défi qui utilise en priorité ou exclusivement les matériaux indiqués par le parent ("${data.homeMaterials}"). Si ces matériaux ne suffisent pas ou ne sont pas propices à une activité d'apprentissage stimulante dans le domaine choisi, tu PEUX inclure d'autres ustensiles simples ou matériaux courants, mais signale-le de façon transparente dans la description et les étapes (et liste le matériel additionnel nécessaire). Si les matériaux fournis ne permettent vraiment rien d'intéressant, génère le défi sans cette contrainte et explique-le brièvement dans la description ou le contexte pédagogique.`
+    ? `6. UTILISATION DES MATÉRIAUX MENTIONNÉS : Tu DOIS concevoir un défi qui utilise en priorité ou exclusivement les matériaux indiqués par le parent ("${data.homeMaterials}"). Si ces matériaux ne suffisent pas, tu PEUX inclure d'autres ustensiles en fonction de la consigne (MAISON/EXTÉRIEUR/ACHAT/MIXTE).`
     : ""
 }
 7. ${SAFETY_INSTRUCTION}

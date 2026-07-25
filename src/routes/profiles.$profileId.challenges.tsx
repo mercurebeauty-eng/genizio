@@ -176,6 +176,7 @@ function ChallengesPage() {
   // Integrated Lab States
   const [labMode, setLabMode] = useState<ChallengeMode>("free");
   const [selectedCategory, setSelectedCategory] = useState("all");
+  const [materialScope, setMaterialScope] = useState<"home" | "outdoor" | "buy" | "mixed">("mixed");
   const [isGeneratingSingle, setIsGeneratingSingle] = useState(false);
   const [isGeneratingAcademic, setIsGeneratingAcademic] = useState(false);
   const [isAssigningSingle, setIsAssigningSingle] = useState(false);
@@ -230,6 +231,7 @@ function ChallengesPage() {
         data: {
           childId: profileId,
           domain: selectedCategory,
+          materialScope,
         }
       });
       setCurrentGeneratedChallenge(resp);
@@ -779,22 +781,39 @@ function ChallengesPage() {
               />
 
               {labMode === "free" ? (
-                <div className="mt-6 grid gap-4 sm:items-end">
-                  <div className="sm:col-span-3">
-                    <label className="block text-xs font-bold uppercase tracking-wider text-ink mb-2">
-                      Sélectionner l'Intelligence
-                    </label>
-                    <select
-                      value={selectedCategory}
-                      onChange={(e) => setSelectedCategory(e.target.value)}
-                      className="block w-full rounded-2xl border border-ink/10 bg-white px-4 py-3 text-sm font-bold outline-none focus:ring-2 focus:ring-brand focus:ring-offset-2 transition-all cursor-pointer shadow-sm"
-                    >
-                      {CATEGORIES.map((cat) => (
-                        <option key={cat.id} value={cat.id}>
-                          {cat.label}
-                        </option>
-                      ))}
-                    </select>
+                <div className="mt-6 grid gap-4">
+                  <div className="grid gap-4 sm:grid-cols-2">
+                    <div>
+                      <label className="block text-xs font-bold uppercase tracking-wider text-ink mb-2">
+                        Sélectionner l'Intelligence
+                      </label>
+                      <select
+                        value={selectedCategory}
+                        onChange={(e) => setSelectedCategory(e.target.value)}
+                        className="block w-full rounded-2xl border border-ink/10 bg-white px-4 py-3 text-sm font-bold outline-none focus:ring-2 focus:ring-brand focus:ring-offset-2 transition-all cursor-pointer shadow-sm"
+                      >
+                        {CATEGORIES.map((cat) => (
+                          <option key={cat.id} value={cat.id}>
+                            {cat.label}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block text-xs font-bold uppercase tracking-wider text-ink mb-2">
+                        Origine du matériel
+                      </label>
+                      <select
+                        value={materialScope}
+                        onChange={(e: any) => setMaterialScope(e.target.value)}
+                        className="block w-full rounded-2xl border border-ink/10 bg-white px-4 py-3 text-sm font-bold outline-none focus:ring-2 focus:ring-brand focus:ring-offset-2 transition-all cursor-pointer shadow-sm"
+                      >
+                        <option value="mixed">Mixte (Peu importe)</option>
+                        <option value="home">Maison (Intérieur)</option>
+                        <option value="outdoor">Nature & Extérieur</option>
+                        <option value="buy">À acheter (Supermarché/Papeterie)</option>
+                      </select>
+                    </div>
                   </div>
                   <div>
                     <button
