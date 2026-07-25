@@ -1,5 +1,5 @@
 import React from "react";
-import { BarChart3, Award, Brain, ShoppingBag } from "lucide-react";
+import { BarChart3, Award, Brain, ShoppingBag, Calendar } from "lucide-react";
 
 export type AdminTab = "executive" | "talents" | "naya" | "commerce" | "seasons";
 
@@ -57,7 +57,7 @@ export const ADMIN_TABS: Array<{
     id: "seasons",
     label: "Saisons & Parrainages",
     sublabel: "Trimestres & Diaspora",
-    icon: ShoppingBag,
+    icon: Calendar,
     badge: "3 Mois",
     badgeBgClass: "bg-amber-500/10",
     badgeTextClass: "text-amber-600",
@@ -67,7 +67,7 @@ export const ADMIN_TABS: Array<{
 export function AdminNavTabBar({ activeTab, onTabChange }: AdminNavTabBarProps) {
   return (
     <div className="w-full overflow-x-auto bg-surface/80 backdrop-blur-md border border-ink/10 p-1.5 sm:p-2 rounded-3xl shadow-sm mb-6 sm:mb-8 no-scrollbar">
-      <nav className="flex min-w-max gap-2 sm:grid sm:min-w-0 sm:grid-cols-2 md:grid-cols-4" aria-label="Navigation Admin OS">
+      <nav className="flex min-w-max gap-2 sm:grid sm:min-w-0 sm:grid-cols-2 md:grid-cols-5" aria-label="Navigation Admin OS">
         {ADMIN_TABS.map((tab) => {
           const Icon = tab.icon;
           const isActive = activeTab === tab.id;
