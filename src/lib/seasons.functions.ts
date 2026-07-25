@@ -76,14 +76,23 @@ export const getChildEnrolledSeason = createServerFn({ method: "GET" })
 
       const { data: enrollment, error } = await (supabaseAdmin as any)
         .from("season_enrollments")
-        .select("id")
+        .select("id, created_at")
         .eq("child_id", data.childId)
         .eq("season_id", activeSeason.id)
         .maybeSingle();
       
       if (error || !enrollment) return null;
 
-      return activeSeason as Season;
+      // Option B : Saison individuelle en rolling. La durée part de la date d'inscription.
+      const enrolledAt = new Date(enrollment.created_at);
+      const endDate = new Date(enrolledAt);
+      endDate.setMonth(endDate.getMonth() + activeSeason.duration_months);
+
+      return {
+        ...activeSeason,
+        individual_start_date: enrolledAt.toISOString(),
+        individual_end_date: endDate.toISOString(),
+      };
     } catch (err) {
       console.error("Error checking child season enrollment:", err);
       return null;

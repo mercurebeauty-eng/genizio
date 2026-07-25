@@ -586,6 +586,19 @@ function PortfolioPage() {
                   <p className="text-xs font-semibold text-ink/70 mt-1 leading-relaxed max-w-xl">
                     {enrolledSeason.description || "Un parcours immersif pour développer de nouvelles compétences."}
                   </p>
+                  {(enrolledSeason as any).individual_start_date && (enrolledSeason as any).individual_end_date && (
+                    <div className="mt-3 flex flex-wrap items-center gap-4 text-xs font-bold text-ink/60 bg-white/50 p-2 px-3 rounded-xl border border-emerald-100">
+                      <div className="flex items-center gap-1.5 text-emerald-800">
+                        <Calendar className="size-3.5" />
+                        Démarrée le {new Date((enrolledSeason as any).individual_start_date).toLocaleDateString("fr-FR")}
+                      </div>
+                      <div className="w-1 h-1 rounded-full bg-ink/20"></div>
+                      <div className="flex items-center gap-1.5 text-emerald-800">
+                        <Award className="size-3.5" />
+                        Fin prévue : {new Date((enrolledSeason as any).individual_end_date).toLocaleDateString("fr-FR")}
+                      </div>
+                    </div>
+                  )}
                 </div>
               </div>
               <div className="w-full shrink-0 flex flex-col gap-2">
