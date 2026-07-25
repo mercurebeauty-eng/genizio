@@ -1383,3 +1383,13 @@ JSON inconnue. AppliquÃ© aux 4 sites.
 pÃ¢tisserie des fractions", mission d'investigation Naya, cause `METHOD_MISMATCH`) affiche
 maintenant la phrase traduite correcte aprÃ¨s le fix â€” retrouvÃ© et confirmÃ© en direct dans le
 navigateur, pas seulement en thÃ©orie. 6 tests dÃ©diÃ©s, `tsc`/tests propres.
+
+## Décision #47 : Intégration des Saisons Trimestrielles & Fiabilisation Naya
+**Décision (2026-07-25)** : Introduction des Saisons Trimestrielles (ex: "Saison 1: Les Penseurs & Inventeurs") facturées à 5 000 FCFA. Ce mécanisme n'est pas qu'une surcouche visuelle mais modifie intrinsèquement le fonctionnement de l'IA (le générateur) en lui ajoutant des instructions de thématique, SEULEMENT si l'enfant est inscrit.
+**Détails UI** : Ajout d'un badge "En Cours" près du prénom dans le profil (header) ; ajout d'une carte "Certificat Trimestriel" dans le Portfolio, positionnée au-dessus de la carte du passeport certifié à 50 000 FCFA. Ajout d'un sélecteur de "Matériel" (Maison, Extérieur, Magasin, Mixte) pour filtrer explicitement le matériel autorisé.
+**Pourquoi** : Demande explicite de l'utilisateur. Le filtre par "Saison" modifie le générateur de défis de façon transparente et ajoute une composante narrative aux défis proposés (en plus du domaine de base).
+**Résolution technique** : 
+- Helper getChildEnrolledSeason créé avec createServerFn (TanStack) pour l'API.
+- L'injection JSON pour la génération des défis académiques "secrets" a été corrigée pour fusionner toutes les contraintes de contexte.
+- Résolution d'un bug où ctiveSeason et enrollment étaient définis en double via destructuring dans challenges.functions.ts causant un crash local de la compilation TypeScript. Tous les types TypeScript vérifiés avec 
+px tsc --noEmit.

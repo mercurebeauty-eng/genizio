@@ -1252,7 +1252,7 @@ export const generateChallenges = createServerFn({ method: "POST" })
     // not "hasn't gotten to it yet this week".
     const STALE_DOMAIN_CUTOFF = new Date(Date.now() - 14 * 24 * 60 * 60 * 1000).toISOString();
 
-    const [{ data: existing }, { data: completedChallenges }, { data: staleChallenges }, progressionTargets] = await Promise.all([
+    const [{ data: existing }, { data: completedChallenges }, { data: staleChallenges }, progressionTargets, { data: activeSeason }, { data: enrollment }] = await Promise.all([
       supabase
         .from("challenges")
         .select("title")
@@ -1279,6 +1279,20 @@ export const generateChallenges = createServerFn({ method: "POST" })
         .eq("status", "todo")
         .lt("created_at", STALE_DOMAIN_CUTOFF),
       computeProgressionTargets(supabase, data.childId),
+      supabase
+        .from("seasons")
+        .select("*")
+        .eq("status", "active")
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .maybeSingle(),
+      supabase
+        .from("season_enrollments")
+        .select("id, season_id")
+        .eq("child_id", data.childId)
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .maybeSingle(),
     ]);
     const existingTitles = (existing ?? []).map((c) => c.title);
     const completedSummary = (completedChallenges ?? [])
@@ -1297,6 +1311,11 @@ export const generateChallenges = createServerFn({ method: "POST" })
       .map(([domain]) => domain);
 
     const leastExplored = getLeastExploredTalentLabels(child.talents as Record<string, number> | null);
+
+    const isEnrolledInActiveSeason = activeSeason && enrollment && enrollment.season_id === activeSeason.id;
+    const seasonInstruction = isEnrolledInActiveSeason
+      ? `- THÉMATIQUE DE SAISON ("${activeSeason.title}") : Utilise le fil rouge narratif et la métaphore de cette saison ("${activeSeason.theme}") pour scénariser au moins la moitié des défis. Le domaine d'apprentissage ciblé reste la priorité, mais l'habillage narratif donne l'impression à l'enfant d'être le héros de cette thématique.`
+      : "";
 
     const prompt = `Tu es Naya, un mentor pédagogique pour enfants en Afrique francophone, sur la plateforme Génizio.
 Génère ${data.count} défis d'apprentissage sur mesure pour cet enfant.
@@ -1331,9 +1350,11 @@ Contraintes :
 - ${SAFETY_INSTRUCTION}
 - ${PROOF_MODE_INSTRUCTION}
 - ${ACADEMIC_REFERENTIAL_INSTRUCTION}
+- ${ACADEMIC_SECRET_INSTRUCTION}
+${seasonInstruction}
 
 Réponds STRICTEMENT en JSON valide avec ce format, pour chaque défi :
-{"challenges":[{"domain":"...","title":"...","description":"...","duration":"...","steps":["...","..."],"materials":["...","..."],"material_tags":["..."],"pedagogical_context":"Ce que Naya observe via cette activité","intelligences":["creative"],"trait_subform":"..." (voir liste par intelligence ci-dessus) ou null,"requires_supervision":true ou false,"supervision_warning":"..." (ou null si false),"difficulty":"facile"|"moyen"|"difficile","proof_mode":"photo"|"declarative","proof_target":{"metric":"...","value":20} (uniquement si declarative),"declarative_award":{"corporelle":2} (uniquement si declarative),"academic_domain":"mathematiques"|"langage"|"sciences"|"corporelle"|"sociale"|"emotionnelle"|"entrepreneuriale"|"artisanale"|"spatiale"|null,"academic_level_age":14 (uniquement si academic_domain non null),"academic_reference_note":"..." (uniquement si academic_domain non null)}]}`;
+{"challenges":[{"domain":"...","title":"...","description":"...","duration":"...","steps":["...","..."],"materials":["...","..."],"material_tags":["..."],"pedagogical_context":"Ce que Naya observe via cette activité","intelligences":["creative"],"trait_subform":"..." (voir liste par intelligence ci-dessus) ou null,"requires_supervision":true ou false,"supervision_warning":"..." (ou null si false),"difficulty":"facile"|"moyen"|"difficile","proof_mode":"photo"|"declarative","proof_target":{"metric":"...","value":20} (uniquement si declarative),"declarative_award":{"corporelle":2} (uniquement si declarative),"academic_domain":"mathematiques"|"langage"|"sciences"|"corporelle"|"sociale"|"emotionnelle"|"entrepreneuriale"|"artisanale"|"spatiale"|null,"academic_level_age":14 (uniquement si academic_domain non null),"academic_reference_note":"..." (uniquement si academic_domain non null),"academic_secret":"Explication stimulante du secret scientifique/physique..."}]}`;
 
     // Up to 6 full défis in one response, each now carrying the academic
     // referential fields (domain/level/citation) added on top of the original
@@ -2056,7 +2077,7 @@ export const generateSingleChallenge = createServerFn({ method: "POST" })
     // path never checked recent titles at all — a parent clicking "Composer un défi
     // ciblé" repeatedly could get literal duplicates. Fetching both in parallel
     // matches generateChallenges' existing pattern instead of inventing a new one.
-    const [{ data: completedChallenges }, { data: existing }, progressionTargets] = await Promise.all([
+    const [{ data: completedChallenges }, { data: existing }, progressionTargets, { data: activeSeason }, { data: enrollment }] = await Promise.all([
       supabase
         .from("challenges")
         .select("title, domain, ai_observations")
@@ -2071,6 +2092,20 @@ export const generateSingleChallenge = createServerFn({ method: "POST" })
         .order("created_at", { ascending: false })
         .limit(30),
       computeProgressionTargets(supabase, data.childId),
+      supabase
+        .from("seasons")
+        .select("*")
+        .eq("status", "active")
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .maybeSingle(),
+      supabase
+        .from("season_enrollments")
+        .select("id, season_id")
+        .eq("child_id", data.childId)
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .maybeSingle(),
     ]);
 
     const completedSummary = (completedChallenges ?? [])
@@ -2093,6 +2128,11 @@ export const generateSingleChallenge = createServerFn({ method: "POST" })
       : data.materialScope === "buy"
       ? "5. MATÉRIEL (À ACHETER) : Le défi peut impliquer d'aller acheter du petit matériel en grande surface, quincaillerie ou papeterie (abordable)."
       : "5. MATÉRIEL (MIXTE) : Libre à toi ! Tu peux mixer du matériel de maison, des éléments trouvés dehors dans la nature, ou du petit matériel abordable à acheter (ex: colle spéciale, peinture).";
+
+    const isEnrolledInActiveSeason = activeSeason && enrollment && enrollment.season_id === activeSeason.id;
+    const seasonInstruction = isEnrolledInActiveSeason
+      ? `\n3b. THÉMATIQUE DE SAISON ("${activeSeason.title}") : Utilise le fil rouge narratif et la métaphore de cette saison ("${activeSeason.theme}") pour scénariser le défi.`
+      : "";
 
     const prompt = `Tu es Naya, un mentor pédagogique d'élite spécialisé dans la psychologie de l'enfant et les Intelligences Multiples d'Howard Gardner, opérant en Afrique francophone.
 Génère un défi d'apprentissage sur-mesure, hautement interactif et passionnant pour cet enfant, en respectant son contexte immédiat.
@@ -2124,7 +2164,7 @@ ${data.homeMaterials ? `- Matériaux/objets disponibles à la maison : ${data.ho
 Ta mission (Synthèse Pédagogique) :
 1. Analyse la carte des talents (Radar Chart), les leviers comportementaux observés par le parent (posture cognitive), ET les observations des défis passés.
 2. Synthèse pédagogique : Utilise les postures cognitives et mécaniques d'action préférées de l'enfant comme levier d'entrée pour aborder le domaine cible. Si les observations passées indiquent une évolution ou des points de blocage, adapte la mécanique d'action pour créer une passerelle d'apprentissage stimulante.
-${domainInstruction}
+${domainInstruction}${seasonInstruction}
 4. Le défi doit s'adapter EXACTEMENT au temps disponible. S'il n'y a que 10 minutes, propose un "mini-défi" immédiat. Si c'est 1h+, propose un projet structuré.
 ${materialScopeInstruction}
 ${

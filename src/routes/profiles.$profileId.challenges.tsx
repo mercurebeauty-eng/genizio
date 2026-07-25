@@ -43,6 +43,7 @@ import { AppTabBar } from "@/components/AppTabBar";
 import { GenizioLoader } from "@/components/GenizioLoader";
 import { getActiveChallenge } from "@/lib/active-challenge";
 import { formatPedagogicalIntention } from "@/lib/pedagogical-intention";
+import { getChildEnrolledSeason, type Season } from "@/lib/seasons.functions";
 import {
   OPPORTUNITY_COMPASS_VERSION,
   OPPORTUNITY_COMPASS_DISCLAIMER,
@@ -141,6 +142,7 @@ function ChallengesPage() {
   const navigate = useNavigate();
 
   const [child, setChild] = useState<Child | null>(null);
+  const [enrolledSeason, setEnrolledSeason] = useState<Season | null>(null);
   const [challenges, setChallenges] = useState<Challenge[]>([]);
   const [fetching, setFetching] = useState(true);
   const [initialLoad, setInitialLoad] = useState(true);
@@ -427,11 +429,21 @@ function ChallengesPage() {
     }
   };
 
+  const loadEnrolledSeason = async () => {
+    try {
+      const season = await getChildEnrolledSeason({ data: { childId: profileId } });
+      setEnrolledSeason(season);
+    } catch (e) {
+      console.error("Failed to load enrolled season:", e);
+    }
+  };
+
   useEffect(() => {
     if (session) {
       void refetch();
       void loadAISynthesis();
       void loadRecommendation();
+      void loadEnrolledSeason();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [session, profileId]);
@@ -549,11 +561,25 @@ function ChallengesPage() {
               <p className="text-[10px] font-extrabold uppercase tracking-widest text-brand">
                 Tableau de bord de
               </p>
-              <h1 className="font-display text-balance text-3xl font-extrabold md:text-4xl">{child.name}</h1>
+              <div className="flex items-center gap-3">
+                <h1 className="font-display text-balance text-3xl font-extrabold md:text-4xl">{child.name}</h1>
+                {enrolledSeason && (
+                  <span className="hidden sm:inline-flex items-center gap-1.5 rounded-full border border-emerald-400 bg-emerald-50 px-3 py-1 text-[11px] font-black uppercase tracking-wider text-emerald-800 shadow-sm">
+                    <Sparkles className="size-3 text-emerald-600" />
+                    {enrolledSeason.title}
+                  </span>
+                )}
+              </div>
               <p className="mt-1 text-sm font-medium text-ink/60">
                 {child.age} ans
                 {child.interests.length > 0 && ` · ${child.interests.slice(0, 3).join(", ")}`}
               </p>
+              {enrolledSeason && (
+                <div className="mt-2 sm:hidden inline-flex items-center gap-1.5 rounded-full border border-emerald-400 bg-emerald-50 px-3 py-1 text-[11px] font-black uppercase tracking-wider text-emerald-800 shadow-sm">
+                  <Sparkles className="size-3 text-emerald-600" />
+                  {enrolledSeason.title}
+                </div>
+              )}
             </div>
           </div>
           <div className="flex flex-wrap gap-3">

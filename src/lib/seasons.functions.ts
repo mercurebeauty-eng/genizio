@@ -65,6 +65,31 @@ export const getActiveSeason = createServerFn({ method: "GET" }).handler(async (
   }
 });
 
+export const getChildEnrolledSeason = createServerFn({ method: "GET" })
+  .validator((input: unknown) => z.object({ childId: z.string().uuid() }).parse(input))
+  .handler(async ({ data }) => {
+    try {
+      const activeSeason = await getActiveSeason({ data: undefined });
+      if (!activeSeason || activeSeason.id === DEFAULT_FALLBACK_SEASON.id) {
+        return null; // Fallback season doesn't count as an actual paid enrollment
+      }
+
+      const { data: enrollment, error } = await (supabaseAdmin as any)
+        .from("season_enrollments")
+        .select("id")
+        .eq("child_id", data.childId)
+        .eq("season_id", activeSeason.id)
+        .maybeSingle();
+      
+      if (error || !enrollment) return null;
+
+      return activeSeason as Season;
+    } catch (err) {
+      console.error("Error checking child season enrollment:", err);
+      return null;
+    }
+  });
+
 export const createSponsorshipToken = createServerFn({ method: "POST" })
   .validator((input: unknown) =>
     z

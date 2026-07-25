@@ -7,6 +7,7 @@ import { toast } from "sonner";
 import { getChildAISynthesis } from "@/lib/challenges.functions";
 import { ensureHypothesesForChild } from "@/lib/hypotheses.functions";
 import { getChildGuild, getTalentAffinities } from "@/lib/guilds";
+import { getChildEnrolledSeason, type Season } from "@/lib/seasons.functions";
 import { AppTabBar } from "@/components/AppTabBar";
 import { TalentRadarChart } from "@/components/TalentRadarChart";
 import { NayaAvatar } from "@/components/NayaAvatar";
@@ -166,8 +167,9 @@ function PortfolioPage() {
   const [challenges, setChallenges] = useState<Challenge[]>([]);
   const [openCycle, setOpenCycle] = useState<OpenHypothesisCycle | null>(null);
   const [fetching, setFetching] = useState(true);
-  const [synthesis, setSynthesis] = useState("");
+  const [synthesis, setSynthesis] = useState<string>("");
   const [fetchingSynthesis, setFetchingSynthesis] = useState(false);
+  const [enrolledSeason, setEnrolledSeason] = useState<Season | null>(null);
   const [mentorCount, setMentorCount] = useState(0);
   const [dismissedDiscoveries, setDismissedDiscoveries] = useState<string[]>([]);
 
@@ -295,11 +297,15 @@ function PortfolioPage() {
   // même pattern qu'avant le retrait des notes.
   useEffect(() => {
     if (!session) return;
-    ensureHypotheses({ data: { childId: profileId } })
+    ensureHypothesesForChild({ data: { childId: profileId } })
       .then((res) => { if (res.generated) refetchOpenCycle(); })
       .catch((err) => {
         console.error("Erreur lors de la vérification des hypothèses:", err);
       });
+      
+    getChildEnrolledSeason({ data: { childId: profileId } })
+      .then(season => setEnrolledSeason(season))
+      .catch(console.error);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [session, profileId]);
 
@@ -554,6 +560,34 @@ function PortfolioPage() {
               </div>
             );
           })()}
+
+          {/* Card: Saison Trimestrielle Actuelle */}
+          {enrolledSeason && (
+            <div className="rounded-3xl border border-emerald-200 bg-gradient-to-br from-emerald-50/90 via-emerald-50/50 to-white p-6 shadow-xl flex flex-col items-center justify-between gap-6 backdrop-blur-md">
+              <div className="flex items-start gap-4">
+                <div className="grid size-12 place-items-center rounded-2xl bg-emerald-600 border border-emerald-200 text-white shadow-sm shrink-0">
+                  <Sparkles className="size-6 text-white" />
+                </div>
+                <div>
+                  <div className="flex flex-wrap items-center gap-2">
+                    <h3 className="font-display text-balance text-lg font-black text-ink">{enrolledSeason.title}</h3>
+                    <span className="rounded-full border bg-emerald-100 border-emerald-500 text-emerald-800 px-2.5 py-0.5 text-[9px] font-black uppercase tracking-wider">
+                      En cours
+                    </span>
+                  </div>
+                  <p className="text-xs font-semibold text-ink/70 mt-1 leading-relaxed max-w-xl">
+                    {enrolledSeason.description || "Un parcours immersif pour développer de nouvelles compétences."}
+                  </p>
+                </div>
+              </div>
+              <div className="w-full shrink-0 flex flex-col gap-2">
+                <div className="w-full text-center inline-flex items-center justify-center gap-2 rounded-2xl border border-emerald-200 bg-white px-5 py-3 text-xs font-black text-emerald-800 shadow-sm transition-all">
+                  <Star className="size-4 fill-emerald-500 text-emerald-500" />
+                  <span>Certificat de Saison (Disponible à la fin)</span>
+                </div>
+              </div>
+            </div>
+          )}
 
           {/* Card: Le Passeport d'Excellence (uniquement pour 14 ans et plus) */}
           {child.age >= 14 && (() => {
