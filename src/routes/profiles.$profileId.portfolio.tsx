@@ -7,8 +7,9 @@ import { toast } from "sonner";
 import { getChildAISynthesis } from "@/lib/challenges.functions";
 import { ensureHypothesesForChild } from "@/lib/hypotheses.functions";
 import { getChildGuild, getTalentAffinities } from "@/lib/guilds";
-import { getChildEnrolledSeason, type Season } from "@/lib/seasons.functions";
+import { getChildEnrolledSeason, getActiveSeason, type Season } from "@/lib/seasons.functions";
 import { AppTabBar } from "@/components/AppTabBar";
+import { SeasonEnrollmentModal } from "@/components/seasons/SeasonEnrollmentModal";
 import { TalentRadarChart } from "@/components/TalentRadarChart";
 import { NayaAvatar } from "@/components/NayaAvatar";
 import { GenizioLoader } from "@/components/GenizioLoader";
@@ -170,6 +171,8 @@ function PortfolioPage() {
   const [synthesis, setSynthesis] = useState<string>("");
   const [fetchingSynthesis, setFetchingSynthesis] = useState(false);
   const [enrolledSeason, setEnrolledSeason] = useState<Season | null>(null);
+  const [activeSeason, setActiveSeason] = useState<Season | null>(null);
+  const [isEnrollmentModalOpen, setIsEnrollmentModalOpen] = useState(false);
   const [mentorCount, setMentorCount] = useState(0);
   const [dismissedDiscoveries, setDismissedDiscoveries] = useState<string[]>([]);
 
@@ -305,6 +308,10 @@ function PortfolioPage() {
       
     getChildEnrolledSeason({ data: { childId: profileId } })
       .then(season => setEnrolledSeason(season))
+      .catch(console.error);
+      
+    getActiveSeason({ data: undefined })
+      .then(season => setActiveSeason(season))
       .catch(console.error);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [session, profileId]);
@@ -562,7 +569,7 @@ function PortfolioPage() {
           })()}
 
           {/* Card: Saison Trimestrielle Actuelle */}
-          {enrolledSeason && (
+          {enrolledSeason ? (
             <div className="rounded-3xl border border-emerald-200 bg-gradient-to-br from-emerald-50/90 via-emerald-50/50 to-white p-6 shadow-xl flex flex-col items-center justify-between gap-6 backdrop-blur-md">
               <div className="flex items-start gap-4">
                 <div className="grid size-12 place-items-center rounded-2xl bg-emerald-600 border border-emerald-200 text-white shadow-sm shrink-0">
@@ -587,7 +594,37 @@ function PortfolioPage() {
                 </div>
               </div>
             </div>
-          )}
+          ) : activeSeason && activeSeason.id !== "default-fallback-season" ? (
+            <div className="rounded-3xl border border-ink/10 bg-white p-6 shadow-xl flex flex-col items-center justify-between gap-6 relative overflow-hidden group">
+              <div className="absolute inset-0 bg-gradient-to-br from-ink/5 to-transparent z-0"></div>
+              
+              <div className="flex items-start gap-4 relative z-10 w-full opacity-60 grayscale group-hover:grayscale-0 group-hover:opacity-100 transition-all duration-500">
+                <div className="grid size-12 place-items-center rounded-2xl bg-ink/10 border border-ink/20 text-ink shadow-sm shrink-0">
+                  <Sparkles className="size-6" />
+                </div>
+                <div className="flex-1">
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <h3 className="font-display text-balance text-lg font-black text-ink">{activeSeason.title}</h3>
+                    <span className="rounded-full border bg-ink/10 border-ink/20 text-ink/60 px-2.5 py-0.5 text-[9px] font-black uppercase tracking-wider flex items-center gap-1">
+                      Non Inscrit
+                    </span>
+                  </div>
+                  <p className="text-xs font-semibold text-ink/70 mt-1 leading-relaxed max-w-xl">
+                    {activeSeason.description || "Inscrivez votre enfant pour débloquer le Portfolio d'Impact et valider ce trimestre !"}
+                  </p>
+                </div>
+              </div>
+              <div className="w-full shrink-0 flex flex-col gap-2 relative z-10">
+                <button
+                  onClick={() => setIsEnrollmentModalOpen(true)}
+                  className="w-full text-center inline-flex items-center justify-center gap-2 rounded-2xl border-none bg-brand px-5 py-3 text-sm font-black text-white shadow-md transition-all hover:bg-brand/90 hover:-translate-y-0.5 cursor-pointer"
+                >
+                  <Sparkles className="size-4" />
+                  <span>Rejoindre la Saison ({activeSeason.price_xof.toLocaleString()} FCFA)</span>
+                </button>
+              </div>
+            </div>
+          ) : null}
 
           {/* Card: Le Passeport d'Excellence (uniquement pour 14 ans et plus) */}
           {child.age >= 14 && (() => {
@@ -825,6 +862,21 @@ function PortfolioPage() {
           </div>
         </div>
       </main>
+
+      {isEnrollmentModalOpen && activeSeason && (
+        <SeasonEnrollmentModal
+          season={activeSeason}
+          childId={child.id}
+          childName={child.name}
+          onClose={() => setIsEnrollmentModalOpen(false)}
+          onSuccess={() => {
+            setIsEnrollmentModalOpen(false);
+            setEnrolledSeason(activeSeason);
+          }}
+        />
+      )}
+      
+      <AppTabBar profileId={profileId} />
     </div>
   );
 }

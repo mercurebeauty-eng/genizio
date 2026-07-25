@@ -217,3 +217,92 @@ export const listSponsorshipsAdmin = createServerFn({ method: "GET" })
 
     return (tokens as SponsorshipToken[]) || [];
   });
+
+export const createSeasonAdmin = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .validator((input: any) =>
+    z
+      .object({
+        title: z.string().min(3),
+        subtitle: z.string().optional(),
+        theme: z.string().min(3),
+        description: z.string().optional(),
+        duration_months: z.number().int().positive().default(3),
+        start_date: z.string(),
+        end_date: z.string(),
+        price_xof: z.number().positive().default(10000),
+        price_eur: z.number().positive().default(15),
+      })
+      .parse(input)
+  )
+  .handler(async ({ data }) => {
+    const { error } = await (supabaseAdmin as any).from("seasons").insert({
+      ...data,
+      status: "upcoming",
+    });
+
+    if (error) {
+      throw new Error(`Erreur lors de la création de la saison: ${error.message}`);
+    }
+    return { success: true };
+  });
+
+export const updateSeasonStatusAdmin = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .validator((input: any) =>
+    z
+      .object({
+        seasonId: z.string().uuid(),
+        status: z.enum(["upcoming", "active", "completed", "archived"]),
+      })
+      .parse(input)
+  )
+  .handler(async ({ data }) => {
+    const { error } = await (supabaseAdmin as any)
+      .from("seasons")
+      .update({ status: data.status })
+      .eq("id", data.seasonId);
+
+    if (error) {
+      throw new Error(`Erreur lors de la mise à jour: ${error.message}`);
+    }
+    return { success: true };
+  });
+
+export const enrollChildAdmin = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .validator((input: any) =>
+    z
+      .object({
+        childId: z.string().uuid(),
+        seasonId: z.string().uuid(),
+      })
+      .parse(input)
+  )
+  .handler(async ({ data, context }) => {
+    // Check if already enrolled
+    const { data: existing } = await (supabaseAdmin as any)
+      .from("season_enrollments")
+      .select("id")
+      .eq("child_id", data.childId)
+      .eq("season_id", data.seasonId)
+      .maybeSingle();
+
+    if (existing) {
+      throw new Error("L'enfant est déjà inscrit à cette saison.");
+    }
+
+    const { error } = await (supabaseAdmin as any).from("season_enrollments").insert({
+      season_id: data.seasonId,
+      child_id: data.childId,
+      user_id: context.userId,
+      sponsor_name: "Admin Enrollment",
+      sponsor_email: "admin@genizio.com",
+      payment_status: "admin_granted",
+    });
+
+    if (error) {
+      throw new Error(`Erreur lors de l'inscription: ${error.message}`);
+    }
+    return { success: true };
+  });

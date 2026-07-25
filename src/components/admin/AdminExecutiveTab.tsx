@@ -17,6 +17,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import type { ExecutiveKPIs, ParentBIRC } from "@/lib/admin-os.functions";
+import { AdminSeasonEnrollmentModal } from "./AdminSeasonEnrollmentModal";
 
 interface AdminExecutiveTabProps {
   kpis: ExecutiveKPIs;
@@ -35,6 +36,7 @@ export function AdminExecutiveTab({
 }: AdminExecutiveTabProps) {
   const [pendingSlotUserId, setPendingSlotUserId] = useState<string | null>(null);
   const [pendingPassportChildId, setPendingPassportChildId] = useState<string | null>(null);
+  const [enrollModalChild, setEnrollModalChild] = useState<{ id: string; name: string } | null>(null);
 
   const handleGrantSlotClick = async (userId: string, delta: number) => {
     if (!onGrantSlot || pendingSlotUserId === userId) return;
@@ -260,6 +262,13 @@ export function AdminExecutiveTab({
                                   </>
                                 )}
                               </button>
+                              <button
+                                onClick={() => setEnrollModalChild({ id: child.id, name: child.name })}
+                                className="inline-flex items-center gap-1 rounded-full border border-sky-400 bg-sky-100 px-2 py-0.5 text-[9px] font-black uppercase tracking-wider text-sky-800 transition-all hover:bg-sky-200 cursor-pointer"
+                                title="Inscrire à une saison"
+                              >
+                                <Calendar className="size-2.5" /> Saison
+                              </button>
                             </div>
                           ))}
                         </div>
@@ -312,6 +321,15 @@ export function AdminExecutiveTab({
           </table>
         </div>
       </div>
+
+      {enrollModalChild && (
+        <AdminSeasonEnrollmentModal
+          childId={enrollModalChild.id}
+          childName={enrollModalChild.name}
+          onClose={() => setEnrollModalChild(null)}
+          onSuccess={() => setEnrollModalChild(null)}
+        />
+      )}
     </div>
   );
 }

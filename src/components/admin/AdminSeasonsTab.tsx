@@ -1,33 +1,50 @@
 import { useEffect, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { Calendar, Gift, Users, CheckCircle, Sparkles, Link as LinkIcon, Plus, Copy, Check } from "lucide-react";
-import { listSeasonsAdmin, listSponsorshipsAdmin, DEFAULT_FALLBACK_SEASON, type Season, type SponsorshipToken } from "@/lib/seasons.functions";
+import { listSeasonsAdmin, listSponsorshipsAdmin, updateSeasonStatusAdmin, DEFAULT_FALLBACK_SEASON, type Season, type SponsorshipToken } from "@/lib/seasons.functions";
 import { toast } from "sonner";
+import { CreateSeasonModal } from "./CreateSeasonModal";
 
 export function AdminSeasonsTab() {
   const getSeasonsFn = useServerFn(listSeasonsAdmin);
   const getSponsorshipsFn = useServerFn(listSponsorshipsAdmin);
 
+  const updateStatusFn = useServerFn(updateSeasonStatusAdmin);
+
   const [seasons, setSeasons] = useState<Season[]>([DEFAULT_FALLBACK_SEASON]);
   const [sponsorships, setSponsorships] = useState<SponsorshipToken[]>([]);
   const [loading, setLoading] = useState(true);
+  const [isModalOpen, setIsModalOpen] = useState(false);
   const [copiedCode, setCopiedCode] = useState<string | null>(null);
 
-  useEffect(() => {
-    async function loadData() {
-      setLoading(true);
-      try {
-        const [sList, tList] = await Promise.all([getSeasonsFn(), getSponsorshipsFn()]);
-        if (sList && sList.length > 0) setSeasons(sList);
-        if (tList) setSponsorships(tList);
-      } catch (err) {
-        console.error("Error loading seasons admin data:", err);
-      } finally {
-        setLoading(false);
-      }
+  const loadData = async () => {
+    setLoading(true);
+    try {
+      const [sList, tList] = await Promise.all([getSeasonsFn(), getSponsorshipsFn()]);
+      if (sList && sList.length > 0) setSeasons(sList);
+      if (tList) setSponsorships(tList);
+    } catch (err) {
+      console.error("Error loading seasons admin data:", err);
+    } finally {
+      setLoading(false);
     }
+  };
+
+  useEffect(() => {
     loadData();
   }, []);
+
+  const handleUpdateStatus = async (seasonId: string, status: any) => {
+    try {
+      const res = await updateStatusFn({ data: { seasonId, status } });
+      if (res.success) {
+        toast.success("Statut mis à jour !");
+        loadData();
+      }
+    } catch (err: any) {
+      toast.error(err.message || "Erreur de mise à jour");
+    }
+  };
 
   const copyCode = (code: string) => {
     navigator.clipboard.writeText(code);
@@ -104,15 +121,24 @@ export function AdminSeasonsTab() {
               Chaque saison est un trimestre thématique débouchant sur la livraison du Portfolio d'Impact certifié.
             </p>
           </div>
-          <a
-            href="/parrainage"
-            target="_blank"
-            rel="noreferrer"
-            className="rounded-2xl bg-brand px-4 py-2.5 text-xs font-bold text-white shadow-md hover:bg-brand/90 transition-all flex items-center gap-2"
-          >
-            <LinkIcon className="size-4" />
-            Ouvrir la page de Parrainage →
-          </a>
+          <div className="flex items-center gap-3">
+            <button
+              onClick={() => setIsModalOpen(true)}
+              className="rounded-2xl bg-white border border-ink/10 px-4 py-2.5 text-xs font-bold text-ink shadow-sm hover:bg-ink/5 transition-all flex items-center gap-2 cursor-pointer"
+            >
+              <Plus className="size-4 text-brand" />
+              Nouvelle Saison
+            </button>
+            <a
+              href="/parrainage"
+              target="_blank"
+              rel="noreferrer"
+              className="rounded-2xl bg-brand px-4 py-2.5 text-xs font-bold text-white shadow-md hover:bg-brand/90 transition-all flex items-center gap-2"
+            >
+              <LinkIcon className="size-4" />
+              Page de Parrainage →
+            </a>
+          </div>
         </div>
 
         <div className="space-y-4">
@@ -130,11 +156,31 @@ export function AdminSeasonsTab() {
                 <h4 className="font-display text-lg font-extrabold text-ink">{season.title}</h4>
                 <p className="text-xs text-ink/70 font-medium mt-0.5">{season.theme}</p>
               </div>
-              <div className="text-right">
-                <span className="font-display text-lg font-black text-ink">
-                  {season.price_xof.toLocaleString()} FCFA
-                </span>
-                <span className="block text-xs text-ink/60 font-bold">({season.price_eur} €)</span>
+              <div className="flex items-center gap-6">
+                <div className="text-right">
+                  <span className="font-display text-lg font-black text-ink">
+                    {season.price_xof.toLocaleString()} FCFA
+                  </span>
+                  <span className="block text-xs text-ink/60 font-bold">({season.price_eur} €)</span>
+                </div>
+                <div className="flex flex-col gap-2 border-l border-ink/10 pl-6">
+                  {season.status !== "active" && (
+                    <button
+                      onClick={() => handleUpdateStatus(season.id, "active")}
+                      className="text-[10px] font-bold uppercase tracking-wider text-emerald-600 hover:text-emerald-700 bg-emerald-50 px-3 py-1.5 rounded-lg border border-emerald-200 transition-colors cursor-pointer"
+                    >
+                      Activer
+                    </button>
+                  )}
+                  {season.status !== "archived" && season.status !== "upcoming" && (
+                    <button
+                      onClick={() => handleUpdateStatus(season.id, "archived")}
+                      className="text-[10px] font-bold uppercase tracking-wider text-ink/50 hover:text-ink/80 bg-ink/5 px-3 py-1.5 rounded-lg border border-transparent hover:border-ink/10 transition-colors cursor-pointer"
+                    >
+                      Archiver
+                    </button>
+                  )}
+                </div>
               </div>
             </div>
           ))}
@@ -204,6 +250,16 @@ export function AdminSeasonsTab() {
           </div>
         )}
       </div>
+
+      {isModalOpen && (
+        <CreateSeasonModal
+          onClose={() => setIsModalOpen(false)}
+          onSuccess={() => {
+            setIsModalOpen(false);
+            loadData();
+          }}
+        />
+      )}
     </div>
   );
 }
