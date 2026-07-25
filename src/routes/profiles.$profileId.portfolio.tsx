@@ -30,6 +30,7 @@ import {
   BookOpen,
   Search,
   Sparkles,
+  Rocket,
   ChevronRight,
 } from "lucide-react";
 import { InviteMentorDialog } from "@/components/mentors/InviteMentorDialog";
@@ -573,7 +574,7 @@ function PortfolioPage() {
             <div className="rounded-3xl border border-emerald-200 bg-gradient-to-br from-emerald-50/90 via-emerald-50/50 to-white p-6 shadow-xl flex flex-col items-center justify-between gap-6 backdrop-blur-md">
               <div className="flex items-start gap-4">
                 <div className="grid size-12 place-items-center rounded-2xl bg-emerald-600 border border-emerald-200 text-white shadow-sm shrink-0">
-                  <Sparkles className="size-6 text-white" />
+                  <Rocket className="size-6 text-white" />
                 </div>
                 <div>
                   <div className="flex flex-wrap items-center gap-2">
@@ -600,7 +601,7 @@ function PortfolioPage() {
               
               <div className="flex items-start gap-4 relative z-10 w-full opacity-60 grayscale group-hover:grayscale-0 group-hover:opacity-100 transition-all duration-500">
                 <div className="grid size-12 place-items-center rounded-2xl bg-ink/10 border border-ink/20 text-ink shadow-sm shrink-0">
-                  <Sparkles className="size-6" />
+                  <Rocket className="size-6" />
                 </div>
                 <div className="flex-1">
                   <div className="flex flex-wrap items-center justify-between gap-2">
@@ -619,7 +620,7 @@ function PortfolioPage() {
                   onClick={() => setIsEnrollmentModalOpen(true)}
                   className="w-full text-center inline-flex items-center justify-center gap-2 rounded-2xl border-none bg-brand px-5 py-3 text-sm font-black text-white shadow-md transition-all hover:bg-brand/90 hover:-translate-y-0.5 cursor-pointer"
                 >
-                  <Sparkles className="size-4" />
+                  <Rocket className="size-4" />
                   <span>Rejoindre la Saison ({activeSeason.price_xof.toLocaleString()} FCFA)</span>
                 </button>
               </div>

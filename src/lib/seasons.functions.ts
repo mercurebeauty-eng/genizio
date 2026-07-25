@@ -42,8 +42,8 @@ export const DEFAULT_FALLBACK_SEASON: Season = {
   duration_months: 3,
   start_date: new Date().toISOString(),
   end_date: new Date(Date.now() + 90 * 24 * 60 * 60 * 1000).toISOString(),
-  price_xof: 5000,
-  price_eur: 7.50,
+  price_xof: 10000,
+  price_eur: 15,
   status: "active",
   created_at: new Date().toISOString(),
 };
