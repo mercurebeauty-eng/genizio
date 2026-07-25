@@ -1393,3 +1393,11 @@ navigateur, pas seulement en théorie. 6 tests dédiés, `tsc`/tests propres.
 - L'injection JSON pour la g�n�ration des d�fis acad�miques "secrets" a �t� corrig�e pour fusionner toutes les contraintes de contexte.
 - R�solution d'un bug o� ctiveSeason et enrollment �taient d�finis en double via destructuring dans challenges.functions.ts causant un crash local de la compilation TypeScript. Tous les types TypeScript v�rifi�s avec 
 px tsc --noEmit.
+
+## Décision #48 : Modèle "Rolling" pour les Saisons & Inscription Admin Manuelle
+**Décision (2026-07-25)** : Le modèle de Saisons devient "Evergreen/Rolling" (Option B). Les saisons ont une durée (ex: 3 mois) qui démarre *au moment exact de l'inscription* de chaque enfant, plutôt que des dates de début/fin fixes et globales pour tout le monde. 
+**Détails Techniques & UI** : 
+- Le prix de la saison par défaut a été ajusté de 5000 FCFA à 10 000 FCFA. L'icône Sparkles de la saison sur le portfolio a été remplacée par Rocket pour la démarquer du Passeport.
+- L'UI de la carte Saison affiche désormais "Démarrée le [Date]" et "Fin prévue : [Date]" calculées individuellement.
+- Ajout d'une fonctionnalité dans AdminExecutiveTab permettant à un administrateur d'inscrire manuellement un enfant à une saison en cours sans passer par la boutique, avec une AdminSeasonEnrollmentModal dédiée.
+**Pourquoi** : Favorise l'acquisition en continu, adapté au B2C éducatif (SaaS), tout en maintenant une expérience personnalisée (le chrono de Naya s'adapte à l'enfant).

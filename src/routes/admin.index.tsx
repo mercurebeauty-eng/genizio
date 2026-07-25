@@ -200,7 +200,6 @@ function AdminIndexPage() {
           <AdminExecutiveTab
             kpis={kpis}
             parents={parents}
-            onGrantSlot={handleGrantSlot}
             onTogglePassport={handleTogglePassport}
             isRefreshing={isRefreshing}
           />

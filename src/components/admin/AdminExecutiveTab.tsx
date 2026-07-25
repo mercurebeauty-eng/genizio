@@ -22,7 +22,6 @@ import { AdminSeasonEnrollmentModal } from "./AdminSeasonEnrollmentModal";
 interface AdminExecutiveTabProps {
   kpis: ExecutiveKPIs;
   parents: ParentBIRC[];
-  onGrantSlot?: (userId: string, delta: number) => Promise<void>;
   onTogglePassport?: (childId: string, unlock: boolean) => Promise<void>;
   isRefreshing?: boolean;
 }
@@ -30,25 +29,11 @@ interface AdminExecutiveTabProps {
 export function AdminExecutiveTab({
   kpis,
   parents,
-  onGrantSlot,
   onTogglePassport,
   isRefreshing = false,
 }: AdminExecutiveTabProps) {
-  const [pendingSlotUserId, setPendingSlotUserId] = useState<string | null>(null);
   const [pendingPassportChildId, setPendingPassportChildId] = useState<string | null>(null);
   const [enrollModalChild, setEnrollModalChild] = useState<{ id: string; name: string } | null>(null);
-
-  const handleGrantSlotClick = async (userId: string, delta: number) => {
-    if (!onGrantSlot || pendingSlotUserId === userId) return;
-    setPendingSlotUserId(userId);
-    try {
-      await onGrantSlot(userId, delta);
-    } catch (err: any) {
-      toast.error("Erreur lors de la modification des slots: " + (err?.message || "Erreur inconnue"));
-    } finally {
-      setPendingSlotUserId(null);
-    }
-  };
 
   const handleTogglePassportClick = async (childId: string, unlock: boolean) => {
     if (!onTogglePassport || pendingPassportChildId === childId) return;
@@ -176,7 +161,6 @@ export function AdminExecutiveTab({
                 <th className="pb-3 pr-4">Téléphone</th>
                 <th className="pb-3 pr-4">WhatsApp</th>
                 <th className="pb-3 pr-4">Enfants associés & Passeports</th>
-                <th className="pb-3 pr-4 text-center">Slots Profils</th>
                 <th className="pb-3 text-center">Défis (Total / Validés)</th>
               </tr>
             </thead>
@@ -275,34 +259,6 @@ export function AdminExecutiveTab({
                       ) : (
                         <span className="text-ink/30 italic text-xs">Aucun enfant</span>
                       )}
-                    </td>
-
-                    {/* Slots Profils */}
-                    <td className="py-4 pr-4">
-                      <div className="flex items-center justify-center gap-2">
-                        <button
-                          onClick={() => handleGrantSlotClick(parent.id, -1)}
-                          disabled={parent.extraSlots <= 0 || pendingSlotUserId === parent.id}
-                          title="Révoquer 1 slot"
-                          className="flex size-7 items-center justify-center rounded-lg border-2 border-ink bg-red-100 text-red-700 font-black text-sm hover:bg-red-200 disabled:opacity-30 disabled:cursor-not-allowed transition-all"
-                        >
-                          {pendingSlotUserId === parent.id ? <Loader2 className="size-3 animate-spin" /> : "−"}
-                        </button>
-                        <div className="text-center min-w-[48px]">
-                          <p className="text-xs font-black text-ink">{2 + parent.extraSlots}</p>
-                          <p className="text-[9px] text-ink/60 font-bold">
-                            {parent.extraSlots > 0 ? `+${parent.extraSlots} bonus` : "gratuits"}
-                          </p>
-                        </div>
-                        <button
-                          onClick={() => handleGrantSlotClick(parent.id, +1)}
-                          disabled={pendingSlotUserId === parent.id}
-                          title="Accorder 1 slot"
-                          className="flex size-7 items-center justify-center rounded-lg border-2 border-ink bg-emerald-100 text-emerald-700 font-black text-sm hover:bg-emerald-200 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
-                        >
-                          {pendingSlotUserId === parent.id ? <Loader2 className="size-3 animate-spin" /> : "+"}
-                        </button>
-                      </div>
                     </td>
 
                     {/* Challenges Stats */}
