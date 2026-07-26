@@ -60,22 +60,28 @@ function AdminIndexPage() {
     if (showMainLoader) setLoading(true);
     else setIsRefreshing(true);
 
+    const opts = session?.access_token
+      ? { headers: { Authorization: `Bearer ${session.access_token}` } }
+      : {};
+
     try {
       const [execData, talentData, nayaData, aiStatus, progressionData, commData] = await Promise.all([
-        getExecutiveKPIsFn(),
-        getTalentStatsFn(),
-        getNayaTelemetryFn(),
-        getAiProviderStatusFn(),
-        getProgressionHealthFn(),
-        getCommerceDataFn(),
+        getExecutiveKPIsFn({ data: undefined, ...opts }).catch((err) => { console.error("execData error", err); return null; }),
+        getTalentStatsFn({ data: undefined, ...opts }).catch((err) => { console.error("talentData error", err); return null; }),
+        getNayaTelemetryFn({ data: undefined, ...opts }).catch((err) => { console.error("nayaData error", err); return null; }),
+        getAiProviderStatusFn({ data: undefined, ...opts }).catch((err) => { console.error("aiStatus error", err); return null; }),
+        getProgressionHealthFn({ data: undefined, ...opts }).catch((err) => { console.error("progressionData error", err); return null; }),
+        getCommerceDataFn({ data: undefined, ...opts }).catch((err) => { console.error("commData error", err); return null; }),
       ]);
-      setKpis(execData.kpis);
-      setParents(execData.parents ?? []);
-      setTalentStats(talentData);
-      setNayaTelemetry(nayaData);
-      setAiProviderStatus(aiStatus);
-      setProgressionHealth(progressionData);
-      setCommerceData(commData);
+      if (execData) {
+        setKpis(execData.kpis);
+        setParents(execData.parents ?? []);
+      }
+      if (talentData) setTalentStats(talentData);
+      if (nayaData) setNayaTelemetry(nayaData);
+      if (aiStatus) setAiProviderStatus(aiStatus);
+      if (progressionData) setProgressionHealth(progressionData);
+      if (commData) setCommerceData(commData);
     } catch (err: any) {
       console.error("Error fetching executive data:", err);
       toast.error("Erreur lors du chargement des données Admin OS.");
