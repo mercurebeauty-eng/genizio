@@ -76,123 +76,171 @@ function B2bDashboard() {
   const talentMax = talentEntries.length > 0 ? talentEntries[0][1] : 1;
 
   return (
-    <main className="max-w-7xl mx-auto px-4 py-8 md:py-12 space-y-8">
+    <main className="max-w-7xl mx-auto px-4 sm:px-6 py-6 md:py-10 space-y-6 sm:space-y-8">
       {/* Header */}
-      <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
+      <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 bg-white p-6 sm:p-8 rounded-[2.5rem] border border-ink/10 shadow-xs">
         <div>
-          <div className="inline-flex items-center gap-2 px-3 py-1 bg-brand/10 text-brand rounded-full text-xs font-bold uppercase tracking-wider mb-4">
-            <ShieldCheck className="size-4" />
-            Espace Partenaire (ONG / B2B)
+          <div className="inline-flex items-center gap-2 px-3 py-1 bg-brand/10 text-brand rounded-full text-xs font-black uppercase tracking-wider mb-3">
+            <ShieldCheck className="size-4 text-brand" />
+            Espace Partenaire ONG & B2B
           </div>
-          <h1 className="text-4xl md:text-5xl font-display font-black text-ink tracking-tight">
+          <h1 className="text-3xl sm:text-4xl md:text-5xl font-display font-black text-ink tracking-tight">
             {activeCampaign.name}
           </h1>
-          <p className="text-lg text-ink/60 font-medium mt-2 max-w-2xl">
-            {activeCampaign.description || "Suivi de la cohorte et des performances."}
+          <p className="text-sm sm:text-base text-ink/70 font-medium mt-2 max-w-2xl">
+            {activeCampaign.description || "Suivi de la cohorte et des performances d'impact."}
           </p>
-          <p className="text-sm font-bold text-ink/50 mt-2">
-            Programme : {new Date(activeCampaign.start_date).toLocaleDateString("fr-FR")} → {new Date(activeCampaign.end_date).toLocaleDateString("fr-FR")}
-          </p>
+          <div className="inline-flex items-center gap-2 mt-3 px-3 py-1 bg-surface rounded-xl text-xs font-bold text-ink/60 border border-ink/5">
+            <span>Période :</span>
+            <strong className="text-ink">
+              {new Date(activeCampaign.start_date).toLocaleDateString("fr-FR")} → {new Date(activeCampaign.end_date).toLocaleDateString("fr-FR")}
+            </strong>
+          </div>
         </div>
       </div>
 
-      {/* KPIs */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <div className="bg-white rounded-3xl p-6 shadow-sm border border-ink/5">
-          <div className="flex items-center gap-3 text-ink/50 font-bold text-sm uppercase tracking-wider mb-2">
-            <Target className="size-4" /> Enrôlement
+      {/* KPIs Grid */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="bg-white rounded-3xl p-5 sm:p-6 shadow-2xs border border-brand/15 bg-gradient-to-br from-brand/5 via-white to-white relative overflow-hidden">
+          <div className="flex items-center justify-between text-brand font-black text-xs uppercase tracking-wider mb-2">
+            <span className="flex items-center gap-2"><Target className="size-4" /> Enrôlement</span>
+            <span className="px-2 py-0.5 rounded-full bg-brand/10 text-[10px]">Codes</span>
           </div>
-          <div className="text-4xl font-black text-ink">{stats?.redeemedTokens ?? 0} <span className="text-xl text-ink/40">/ {stats?.totalTokens ?? 0}</span></div>
-          <div className="text-sm font-medium text-ink/60 mt-1">Codes d'inscription activés</div>
+          <div className="text-3xl sm:text-4xl font-black text-ink mt-1">
+            {stats?.redeemedTokens ?? 0} <span className="text-lg text-ink/40 font-bold">/ {stats?.totalTokens ?? 0}</span>
+          </div>
+          <div className="text-xs font-medium text-ink/60 mt-1">Codes d'inscription activés</div>
         </div>
-        <div className="bg-white rounded-3xl p-6 shadow-sm border border-ink/5">
-          <div className="flex items-center gap-3 text-brand font-bold text-sm uppercase tracking-wider mb-2">
-            <Users className="size-4" /> Cohorte
+
+        <div className="bg-white rounded-3xl p-5 sm:p-6 shadow-2xs border border-emerald-500/15 bg-gradient-to-br from-emerald-500/5 via-white to-white relative overflow-hidden">
+          <div className="flex items-center justify-between text-emerald-700 font-black text-xs uppercase tracking-wider mb-2">
+            <span className="flex items-center gap-2"><Users className="size-4" /> Cohorte</span>
+            <span className="px-2 py-0.5 rounded-full bg-emerald-500/10 text-[10px]">Actifs</span>
           </div>
-          <div className="text-4xl font-black text-brand">{stats?.cohortSize ?? 0}</div>
-          <div className="text-sm font-medium text-ink/60 mt-1">Enfants actifs</div>
+          <div className="text-3xl sm:text-4xl font-black text-emerald-700 mt-1">{stats?.cohortSize ?? 0}</div>
+          <div className="text-xs font-medium text-ink/60 mt-1">Enfants inscrits et suivis</div>
         </div>
-        <div className="bg-white rounded-3xl p-6 shadow-sm border border-ink/5">
-          <div className="flex items-center gap-3 text-leaf font-bold text-sm uppercase tracking-wider mb-2">
-            <Rocket className="size-4" /> Défis
+
+        <div className="bg-white rounded-3xl p-5 sm:p-6 shadow-2xs border border-sky-500/15 bg-gradient-to-br from-sky-500/5 via-white to-white relative overflow-hidden">
+          <div className="flex items-center justify-between text-sky-700 font-black text-xs uppercase tracking-wider mb-2">
+            <span className="flex items-center gap-2"><Rocket className="size-4" /> Défis Réalisés</span>
+            <span className="px-2 py-0.5 rounded-full bg-sky-500/10 text-[10px]">{completionRate}%</span>
           </div>
-          <div className="text-4xl font-black text-leaf">{completionRate}<span className="text-xl text-ink/40">%</span></div>
-          <div className="text-sm font-medium text-ink/60 mt-1">{stats?.completedChallenges ?? 0} / {stats?.totalChallenges ?? 0} défis complétés</div>
+          <div className="text-3xl sm:text-4xl font-black text-sky-700 mt-1">
+            {stats?.completedChallenges ?? 0} <span className="text-lg text-ink/40 font-bold">/ {stats?.totalChallenges ?? 0}</span>
+          </div>
+          <div className="text-xs font-medium text-ink/60 mt-1">Taux de réalisation cohorte</div>
         </div>
-        <div className="bg-ink text-white rounded-3xl p-6 shadow-sm border border-ink/5">
-          <div className="flex items-center gap-3 text-white/50 font-bold text-sm uppercase tracking-wider mb-2">
-            <AlertCircle className="size-4" /> Supervision
+
+        <div className="bg-white rounded-3xl p-5 sm:p-6 shadow-2xs border border-amber-500/15 bg-gradient-to-br from-amber-500/5 via-white to-white relative overflow-hidden">
+          <div className="flex items-center justify-between text-amber-800 font-black text-xs uppercase tracking-wider mb-2">
+            <span className="flex items-center gap-2"><AlertCircle className="size-4" /> Supervision</span>
+            <span className="px-2 py-0.5 rounded-full bg-amber-500/10 text-[10px]">Superviseurs</span>
           </div>
-          <div className="text-2xl font-black">{stats?.supervisedChildren ?? 0} <span className="text-base text-white/50">/ {stats?.cohortSize ?? 0} enfants</span></div>
-          <div className="text-sm font-medium text-white/60 mt-1">Capacité : {stats?.totalSupervisorQuota ?? 0} places superviseurs</div>
+          <div className="text-3xl sm:text-4xl font-black text-amber-900 mt-1">
+            {stats?.supervisedChildren ?? 0} <span className="text-lg text-ink/40 font-bold">/ {stats?.cohortSize ?? 0}</span>
+          </div>
+          <div className="text-xs font-medium text-ink/60 mt-1">Capacité : {stats?.totalSupervisorQuota ?? 0} enfants supervisés</div>
         </div>
       </div>
 
       {/* Rapport d'Impact — agrégé, jamais nominatif */}
-      <div className="bg-white rounded-[2rem] border border-ink/10 overflow-hidden shadow-sm p-6">
-        <div className="flex items-center gap-2 mb-1">
-          <Sparkles className="size-5 text-brand" />
-          <h2 className="text-xl font-display font-black text-ink">Rapport d'Impact — Cohorte</h2>
-        </div>
-        <p className="text-sm text-ink/60 font-medium mb-6">
-          Répartition agrégée des 9 intelligences éveillées chez les enfants de votre cohorte. Aucune donnée individuelle n'est partagée.
-        </p>
-        {talentEntries.length === 0 ? (
-          <p className="text-sm text-ink/50 font-medium italic">Pas encore assez de données — les premiers défis complétés alimenteront ce rapport.</p>
-        ) : (
-          <div className="space-y-3">
-            {talentEntries.map(([key, value]) => (
-              <div key={key} className="flex items-center gap-3">
-                <span className="w-32 shrink-0 text-xs font-bold text-ink/70">{TALENT_KEY_LABELS[key] || key}</span>
-                <div className="flex-1 h-3 rounded-full bg-surface overflow-hidden">
-                  <div className="h-full bg-brand rounded-full" style={{ width: `${Math.max(4, (value / talentMax) * 100)}%` }} />
-                </div>
-                <span className="w-10 shrink-0 text-right text-xs font-bold text-ink/50">{value}</span>
-              </div>
-            ))}
+      <div className="bg-white rounded-[2rem] border border-ink/10 overflow-hidden shadow-xs p-5 sm:p-8">
+        <div className="flex items-center gap-2.5 mb-2">
+          <div className="size-9 rounded-xl bg-brand/10 text-brand flex items-center justify-center shrink-0">
+            <Sparkles className="size-5" />
           </div>
-        )}
+          <div>
+            <h2 className="text-xl sm:text-2xl font-display font-black text-ink">Rapport d'Impact — Cohorte</h2>
+            <p className="text-xs sm:text-sm text-ink/60 font-medium">
+              Répartition agrégée des 9 intelligences éveillées chez les enfants de votre cohorte. Aucune donnée individuelle n'est partagée.
+            </p>
+          </div>
+        </div>
+
+        <div className="mt-6 pt-4 border-t border-ink/5">
+          {talentEntries.length === 0 ? (
+            <div className="p-8 text-center bg-surface/50 rounded-2xl border border-dashed border-ink/10">
+              <p className="text-sm text-ink/50 font-medium italic">Pas encore assez de données — les premiers défis complétés alimenteront ce rapport d'impact.</p>
+            </div>
+          ) : (
+            <div className="space-y-3.5">
+              {talentEntries.map(([key, value]) => (
+                <div key={key} className="flex flex-col sm:flex-row sm:items-center gap-1.5 sm:gap-3">
+                  <span className="w-full sm:w-44 shrink-0 text-xs font-black text-ink">{TALENT_KEY_LABELS[key] || key}</span>
+                  <div className="flex-1 h-3.5 rounded-full bg-surface overflow-hidden border border-ink/5 p-0.5">
+                    <div className="h-full bg-brand rounded-full transition-all duration-500" style={{ width: `${Math.max(5, (value / talentMax) * 100)}%` }} />
+                  </div>
+                  <span className="w-12 text-right text-xs font-black text-brand shrink-0">{value} pts</span>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
       </div>
 
-      {/* Superviseurs — gestion de capacité, jamais quel enfant précis */}
-      <div className="bg-white rounded-[2rem] border border-ink/10 overflow-hidden shadow-sm">
-        <div className="p-6 border-b border-ink/5 flex items-center justify-between flex-wrap gap-4">
+      {/* Superviseurs — gestion de capacité */}
+      <div className="bg-white rounded-[2rem] border border-ink/10 overflow-hidden shadow-xs">
+        <div className="p-5 sm:p-8 border-b border-ink/5 flex items-center justify-between flex-wrap gap-4">
           <div>
-            <h2 className="text-xl font-display font-black text-ink">Superviseurs</h2>
-            <p className="text-sm text-ink/60 font-medium mt-1">Un superviseur suit jusqu'à 5 enfants de votre cohorte via son propre tableau de bord.</p>
+            <h2 className="text-xl sm:text-2xl font-display font-black text-ink">Superviseurs</h2>
+            <p className="text-xs sm:text-sm text-ink/60 font-medium mt-1">
+              Un superviseur suit jusqu'à 5 enfants de votre cohorte via son propre tableau de bord dédié.
+            </p>
           </div>
           <button
             onClick={() => setIsAssignModalOpen(true)}
-            className="inline-flex items-center gap-2 bg-brand text-white px-5 py-2.5 rounded-2xl font-bold hover:bg-brand/90 transition-colors"
+            className="w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-brand text-white px-5 py-3 rounded-2xl font-black text-sm hover:bg-brand/90 transition-colors shadow-xs cursor-pointer"
           >
             <UserPlus className="size-4" />
             <span>Assigner un superviseur</span>
           </button>
         </div>
-        <div className="overflow-x-auto">
-          <table className="w-full text-left">
-            <thead className="bg-surface/50 border-b border-ink/5">
-              <tr>
-                <th className="p-4 text-xs font-extrabold uppercase tracking-widest text-ink/50">Superviseur</th>
-                <th className="p-4 text-xs font-extrabold uppercase tracking-widest text-ink/50 text-right">Enfants assignés</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-ink/5">
-              {supervisors.map((s) => (
-                <tr key={s.email} className="hover:bg-surface/30 transition-colors">
-                  <td className="p-4 font-bold text-ink">{s.email}</td>
-                  <td className="p-4 text-right font-bold text-ink/70">{s.assignedCount} / 5</td>
-                </tr>
-              ))}
-              {supervisors.length === 0 && (
+
+        {/* Dynamic Card view on Mobile & Table view on Desktop */}
+        <div className="p-4 sm:p-0">
+          <div className="sm:hidden space-y-2.5">
+            {supervisors.map((s) => (
+              <div key={s.email} className="p-4 rounded-2xl bg-surface/70 border border-ink/5 flex items-center justify-between">
+                <div>
+                  <p className="text-xs font-black text-ink">{s.email}</p>
+                  <p className="text-[10px] text-ink/50 font-bold mt-0.5">Superviseur référent</p>
+                </div>
+                <span className="px-3 py-1 rounded-xl bg-brand/10 text-brand text-xs font-black">
+                  {s.assignedCount} / 5 enfants
+                </span>
+              </div>
+            ))}
+            {supervisors.length === 0 && (
+              <div className="p-6 text-center text-xs font-bold text-ink/40">Aucun superviseur assigné.</div>
+            )}
+          </div>
+
+          <div className="hidden sm:block overflow-x-auto">
+            <table className="w-full text-left">
+              <thead className="bg-surface/50 border-b border-ink/5">
                 <tr>
-                  <td colSpan={2} className="p-8 text-center text-ink/50 font-medium">
-                    Aucun superviseur assigné pour l'instant.
-                  </td>
+                  <th className="p-4 px-6 text-xs font-extrabold uppercase tracking-widest text-ink/50">Superviseur</th>
+                  <th className="p-4 px-6 text-xs font-extrabold uppercase tracking-widest text-ink/50 text-right">Enfants assignés</th>
                 </tr>
-              )}
-            </tbody>
-          </table>
+              </thead>
+              <tbody className="divide-y divide-ink/5">
+                {supervisors.map((s) => (
+                  <tr key={s.email} className="hover:bg-surface/30 transition-colors">
+                    <td className="p-4 px-6 font-bold text-sm text-ink">{s.email}</td>
+                    <td className="p-4 px-6 text-right font-black text-sm text-brand">{s.assignedCount} / 5</td>
+                  </tr>
+                ))}
+                {supervisors.length === 0 && (
+                  <tr>
+                    <td colSpan={2} className="p-8 text-center text-ink/50 font-medium text-sm">
+                      Aucun superviseur assigné pour l'instant.
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
         </div>
       </div>
 
@@ -229,42 +277,47 @@ function AssignSupervisorModal({ campaignId, onClose, onSuccess }: { campaignId:
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-ink/40 backdrop-blur-sm">
-      <div className="bg-white rounded-[2rem] w-full max-w-md p-6 shadow-2xl animate-in fade-in zoom-in-95 duration-200">
-        <div className="flex items-center justify-between mb-6">
-          <h3 className="font-display font-black text-xl text-ink flex items-center gap-2">
-            <UserPlus className="size-6 text-brand" />
-            Assigner un superviseur
-          </h3>
-          <button onClick={onClose} className="p-2 bg-surface rounded-full text-ink/60 hover:text-ink transition-colors">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-ink/40 backdrop-blur-sm animate-in fade-in duration-200">
+      <div className="bg-white rounded-[2.5rem] w-full max-w-md p-6 sm:p-8 shadow-2xl relative flex flex-col max-h-[90vh] overflow-y-auto">
+        <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center gap-3">
+            <div className="size-10 rounded-2xl bg-brand/10 text-brand flex items-center justify-center">
+              <UserPlus className="size-5" />
+            </div>
+            <h3 className="font-display font-black text-xl text-ink">
+              Assigner un superviseur
+            </h3>
+          </div>
+          <button onClick={onClose} className="p-2 bg-surface rounded-full text-ink/60 hover:text-ink transition-colors cursor-pointer">
             <X className="size-5" />
           </button>
         </div>
-      <form onSubmit={handleSubmit} className="space-y-4">
-        <p className="text-sm font-medium text-ink/70">
-          Entrez l'adresse email d'un superviseur (il doit déjà avoir un compte Génizio). Génizio lui confie automatiquement des enfants de votre cohorte qui n'ont pas encore de superviseur — vous n'avez pas à choisir lesquels.
-        </p>
-        <div className="bg-amber-50 border border-amber-200 rounded-2xl p-4 flex gap-3">
-          <AlertCircle className="size-5 text-amber-500 shrink-0 mt-0.5" />
-          <p className="text-sm font-bold text-amber-800">
-            Un superviseur ne peut gérer que 5 enfants maximum. Au-delà, un supplément de 7000 FCFA/superviseur s'applique.
+
+        <form onSubmit={handleSubmit} className="space-y-4 mt-2">
+          <p className="text-xs sm:text-sm font-medium text-ink/70 leading-relaxed">
+            Entrez l'adresse email d'un superviseur (compte Génizio). L'application lui confie automatiquement des enfants de votre cohorte qui n'ont pas encore de superviseur.
           </p>
-        </div>
-        <div>
-          <label className="block text-sm font-bold text-ink mb-1">Email du superviseur</label>
-          <input required type="email" value={email} onChange={e => setEmail(e.target.value)} className="w-full bg-surface border-none rounded-2xl p-4 font-medium" placeholder="superviseur@ong.org" />
-        </div>
-        <div>
-          <label className="block text-sm font-bold text-ink mb-1">Nombre d'enfants à confier</label>
-          <input required type="number" min={1} max={5} value={count} onChange={e => setCount(parseInt(e.target.value) || 1)} className="w-full bg-surface border-none rounded-2xl p-4 font-medium" />
-        </div>
-        <div className="flex gap-3 pt-4">
-          <button type="button" onClick={onClose} className="flex-1 px-4 py-3 bg-surface hover:bg-ink/5 text-ink rounded-2xl font-bold transition-colors">Annuler</button>
-          <button type="submit" disabled={isSubmitting} className="flex-1 px-4 py-3 bg-brand hover:bg-brand/90 text-white rounded-2xl font-bold transition-colors flex items-center justify-center gap-2">
-            {isSubmitting ? <Loader2 className="size-5 animate-spin" /> : <span>Assigner</span>}
-          </button>
-        </div>
-      </form>
+          <div className="bg-amber-50 border border-amber-200/80 rounded-2xl p-4 flex gap-3">
+            <AlertCircle className="size-5 text-amber-600 shrink-0 mt-0.5" />
+            <p className="text-xs font-bold text-amber-900 leading-relaxed">
+              Un superviseur ne peut gérer que 5 enfants maximum. Au-delà, un supplément de 7 000 FCFA / superviseur s'applique.
+            </p>
+          </div>
+          <div>
+            <label className="block text-xs font-extrabold uppercase tracking-widest text-ink/50 mb-1.5">Email du superviseur</label>
+            <input required type="email" value={email} onChange={e => setEmail(e.target.value)} className="w-full bg-surface border border-ink/10 rounded-2xl p-3.5 text-sm font-bold text-ink focus:outline-none focus:ring-2 focus:ring-brand/30" placeholder="superviseur@ong.org" />
+          </div>
+          <div>
+            <label className="block text-xs font-extrabold uppercase tracking-widest text-ink/50 mb-1.5">Nombre d'enfants à confier (max 5)</label>
+            <input required type="number" min={1} max={5} value={count} onChange={e => setCount(parseInt(e.target.value) || 1)} className="w-full bg-surface border border-ink/10 rounded-2xl p-3.5 text-sm font-bold text-ink focus:outline-none focus:ring-2 focus:ring-brand/30" />
+          </div>
+          <div className="flex gap-3 pt-4 border-t border-ink/5">
+            <button type="button" onClick={onClose} className="flex-1 px-4 py-3 bg-surface hover:bg-ink/5 text-ink rounded-2xl font-extrabold text-sm transition-colors cursor-pointer">Annuler</button>
+            <button type="submit" disabled={isSubmitting} className="flex-1 px-4 py-3 bg-brand hover:bg-brand/90 text-white rounded-2xl font-black text-sm transition-colors flex items-center justify-center gap-2 cursor-pointer shadow-xs">
+              {isSubmitting ? <Loader2 className="size-5 animate-spin" /> : <span>Confirmer</span>}
+            </button>
+          </div>
+        </form>
       </div>
     </div>
   );

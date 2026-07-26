@@ -111,35 +111,41 @@ function SupervisorDashboardPage() {
             </p>
           </div>
         ) : (
-          <div className="grid gap-8 ">
-            {/* Sidebar — liste des enfants */}
+          <div className="grid gap-6">
+            {/* Child Selector — Horizontal scroll bar on Mobile, grid on Desktop */}
             <div className="space-y-3">
-              <h2 className="text-xs font-extrabold uppercase tracking-widest text-ink/60 mb-3">Enfants assignés ({children.length})</h2>
-              {children.map((child) => {
-                const guild = getChildGuild(child.talents);
-                const completed = child.challenges.filter((c) => c.status === "completed").length;
-                const isActive = child.id === selectedId;
-                return (
-                  <button
-                    key={child.id}
-                    onClick={() => setSelectedId(child.id)}
-                    className={`w-full text-left rounded-3xl border border-ink/10 p-4 shadow-sm transition-all hover:-translate-y-0.5 ${
-                      isActive ? "bg-brand text-white" : "bg-white text-ink hover:bg-surface"
-                    }`}
-                  >
-                    <div className="flex items-center gap-2 mb-1">
-                      <span className="text-xl">{guild.emoji}</span>
-                      <div className="font-display text-balance text-base font-black">{child.name}</div>
-                    </div>
-                    <div className={`text-xs font-bold ${isActive ? "text-white/80" : "text-ink/60"}`}>
-                      {child.age} ans · {guild.name}
-                    </div>
-                    <div className={`text-xs mt-1 font-semibold ${isActive ? "text-white/70" : "text-ink/60"}`}>
-                      {completed} défis complétés · {child.challenges.length} total
-                    </div>
-                  </button>
-                );
-              })}
+              <div className="flex items-center justify-between">
+                <h2 className="text-xs font-black uppercase tracking-widest text-ink/60">Enfants assignés ({children.length})</h2>
+                <span className="text-[10px] font-bold text-ink/40 sm:hidden">Glissez pour voir tous</span>
+              </div>
+              <div className="flex overflow-x-auto sm:grid sm:grid-cols-2 md:grid-cols-3 gap-3 pb-2 no-scrollbar scroll-smooth">
+                {children.map((child) => {
+                  const guild = getChildGuild(child.talents);
+                  const completed = child.challenges.filter((c) => c.status === "completed").length;
+                  const isActive = child.id === selectedId;
+                  return (
+                    <button
+                      key={child.id}
+                      onClick={() => setSelectedId(child.id)}
+                      className={`min-w-[200px] sm:min-w-0 text-left rounded-2xl border border-ink/10 p-3.5 shadow-2xs transition-all cursor-pointer ${
+                        isActive ? "bg-brand text-white border-brand scale-[1.01]" : "bg-white text-ink hover:bg-surface hover:border-ink/20"
+                      }`}
+                    >
+                      <div className="flex items-center gap-2 mb-1">
+                        <span className="text-lg">{guild.emoji}</span>
+                        <div className="font-display font-black text-sm truncate">{child.name}</div>
+                      </div>
+                      <div className={`text-[11px] font-bold ${isActive ? "text-white/80" : "text-ink/60"}`}>
+                        {child.age} ans · {guild.name}
+                      </div>
+                      <div className={`text-[11px] mt-1 font-semibold flex items-center justify-between ${isActive ? "text-white/90" : "text-brand"}`}>
+                        <span>{completed} / {child.challenges.length} défis</span>
+                        {completed > 0 && <span className={`text-[9px] px-1.5 py-0.5 rounded-full font-black ${isActive ? "bg-white/20 text-white" : "bg-brand/10 text-brand"}`}>Active</span>}
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
             </div>
 
             {/* Main — profil de l'enfant sélectionné */}

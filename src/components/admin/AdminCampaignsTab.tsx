@@ -1,10 +1,12 @@
 import { useState, useEffect } from "react";
 import { Plus, Building2, Loader2, Key, X } from "lucide-react";
 import { useServerFn } from "@tanstack/react-start";
+import { useSession } from "@/hooks/use-session";
 import { listCampaignsAdmin, createCampaignAdmin, generateCampaignTokensAdmin, type Campaign } from "@/lib/campaigns.functions";
 import { toast } from "sonner";
 
 export function AdminCampaignsTab() {
+  const { session } = useSession();
   const [campaigns, setCampaigns] = useState<Campaign[]>([]);
   const [loading, setLoading] = useState(true);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
@@ -14,10 +16,14 @@ export function AdminCampaignsTab() {
   const listCampaignsFn = useServerFn(listCampaignsAdmin);
 
   const fetchCampaigns = async () => {
+    const opts = session?.access_token
+      ? { headers: { Authorization: `Bearer ${session.access_token}` } }
+      : {};
+
     try {
       setLoading(true);
-      const data = await listCampaignsFn({ data: undefined });
-      setCampaigns(data);
+      const data = await listCampaignsFn({ data: undefined, ...opts });
+      setCampaigns(data || []);
     } catch (err: any) {
       toast.error(err.message || "Erreur lors du chargement des campagnes.");
     } finally {
@@ -27,7 +33,7 @@ export function AdminCampaignsTab() {
 
   useEffect(() => {
     fetchCampaigns();
-  }, []);
+  }, [session]);
 
   return (
     <div className="space-y-6">

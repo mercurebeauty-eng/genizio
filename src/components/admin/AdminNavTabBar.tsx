@@ -75,8 +75,8 @@ export const ADMIN_TABS: Array<{
 
 export function AdminNavTabBar({ activeTab, onTabChange }: AdminNavTabBarProps) {
   return (
-    <div className="w-full overflow-x-auto bg-surface/80 backdrop-blur-md border border-ink/10 p-1.5 sm:p-2 rounded-3xl shadow-sm mb-6 sm:mb-8 no-scrollbar">
-      <nav className="flex min-w-max gap-2 sm:grid sm:min-w-0 sm:grid-cols-2 md:grid-cols-5" aria-label="Navigation Admin OS">
+    <div className="w-full overflow-x-auto bg-surface/80 backdrop-blur-md border border-ink/10 p-1.5 sm:p-2 rounded-3xl shadow-sm mb-6 sm:mb-8 no-scrollbar scroll-smooth">
+      <nav className="flex min-w-max gap-2 sm:grid sm:min-w-0 sm:grid-cols-3 lg:grid-cols-6" aria-label="Navigation Admin OS">
         {ADMIN_TABS.map((tab) => {
           const Icon = tab.icon;
           const isActive = activeTab === tab.id;
@@ -87,7 +87,7 @@ export function AdminNavTabBar({ activeTab, onTabChange }: AdminNavTabBarProps) 
               type="button"
               onClick={() => onTabChange(tab.id)}
               aria-current={isActive ? "page" : undefined}
-              className={`group relative flex flex-col items-start p-3 sm:p-4 rounded-2xl transition-all duration-200 text-left cursor-pointer border min-w-[140px] sm:min-w-0 flex-1 ${
+              className={`group relative flex flex-col items-start p-3 sm:p-4 rounded-2xl transition-all duration-200 text-left cursor-pointer border min-w-[155px] sm:min-w-0 flex-1 ${
                 isActive
                   ? "bg-white border-ink/15 shadow-md scale-[1.01]"
                   : "bg-white/40 border-transparent hover:bg-white/80 hover:border-ink/5 text-ink/70"
@@ -110,10 +110,10 @@ export function AdminNavTabBar({ activeTab, onTabChange }: AdminNavTabBarProps) 
                 </span>
               </div>
 
-              <span className="font-display font-extrabold text-xs sm:text-sm text-ink leading-tight">
+              <span className="font-display font-extrabold text-xs sm:text-sm text-ink leading-tight truncate w-full">
                 {tab.label}
               </span>
-              <span className="text-[10px] sm:text-xs font-medium text-ink/60 mt-0.5 line-clamp-1">
+              <span className="text-[10px] sm:text-xs font-medium text-ink/60 mt-0.5 line-clamp-1 w-full">
                 {tab.sublabel}
               </span>
 
