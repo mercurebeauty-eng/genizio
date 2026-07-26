@@ -1,8 +1,16 @@
 import { useState, useEffect } from "react";
-import { Plus, Building2, Loader2, Key, X } from "lucide-react";
+import { Plus, Building2, Loader2, Key, X, FileText, Download, Copy } from "lucide-react";
 import { useServerFn } from "@tanstack/react-start";
 import { useSession } from "@/hooks/use-session";
-import { listCampaignsAdmin, createCampaignAdmin, generateCampaignTokensAdmin, type Campaign } from "@/lib/campaigns.functions";
+import {
+  listCampaignsAdmin,
+  createCampaignAdmin,
+  generateCampaignTokensAdmin,
+  updateCampaignExtraQuotaAdmin,
+  listCampaignTokensAdmin,
+  type Campaign,
+  type CampaignTokenDetail,
+} from "@/lib/campaigns.functions";
 import { toast } from "sonner";
 
 export function AdminCampaignsTab() {
@@ -11,6 +19,7 @@ export function AdminCampaignsTab() {
   const [loading, setLoading] = useState(true);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [isGenerateModalOpen, setIsGenerateModalOpen] = useState(false);
+  const [isTokensModalOpen, setIsTokensModalOpen] = useState(false);
   const [selectedCampaign, setSelectedCampaign] = useState<Campaign | null>(null);
   
   const listCampaignsFn = useServerFn(listCampaignsAdmin);
@@ -34,6 +43,10 @@ export function AdminCampaignsTab() {
   useEffect(() => {
     fetchCampaigns();
   }, [session]);
+
+  const handleCampaignUpdated = (updated: Campaign) => {
+    setCampaigns((prev) => prev.map((c) => (c.id === updated.id ? updated : c)));
+  };
 
   return (
     <div className="space-y-6">
@@ -66,36 +79,50 @@ export function AdminCampaignsTab() {
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {campaigns.map(c => (
-            <div key={c.id} className="bg-white rounded-3xl p-6 border border-ink/10 shadow-sm hover:shadow-md transition-shadow">
-              <div className="flex items-start justify-between mb-4">
-                <div className="size-10 rounded-2xl bg-brand/10 text-brand flex items-center justify-center shrink-0">
-                  <Building2 className="size-5" />
-                </div>
-                <div className="text-right">
-                   <div className="text-xs font-bold text-ink/40 uppercase tracking-wider mb-1">Cible</div>
-                   <div className="text-lg font-black text-ink">{c.target_count} <span className="text-sm font-bold text-ink/50">enfants</span></div>
-                </div>
-              </div>
-              <h3 className="font-display font-bold text-lg text-ink truncate mb-1" title={c.name}>{c.name}</h3>
-              <p className="text-sm text-ink/60 line-clamp-2 mb-4 h-10">{c.description || "Aucune description"}</p>
-              
-              <div className="bg-surface p-3 rounded-2xl mb-3">
-                  <div className="text-xs font-bold text-ink/50 mb-1 uppercase tracking-wider">Chargé de projet (Propriétaire)</div>
-                  <div className="text-sm font-medium text-ink truncate" title={c.manager_email || ""}>
-                      {c.manager_email || <span className="text-ink/40 italic">Non assigné</span>}
+            <div key={c.id} className="bg-white rounded-3xl p-6 border border-ink/10 shadow-sm hover:shadow-md transition-shadow flex flex-col justify-between">
+              <div>
+                <div className="flex items-start justify-between mb-4">
+                  <div className="size-10 rounded-2xl bg-brand/10 text-brand flex items-center justify-center shrink-0">
+                    <Building2 className="size-5" />
                   </div>
-              </div>
-              <div className="text-xs font-bold text-ink/50 mb-4">
-                  Programme : {new Date(c.start_date).toLocaleDateString("fr-FR")} → {new Date(c.end_date).toLocaleDateString("fr-FR")}
+                  <div className="text-right">
+                     <div className="text-xs font-bold text-ink/40 uppercase tracking-wider mb-1">Cible</div>
+                     <div className="text-lg font-black text-ink">{c.target_count} <span className="text-sm font-bold text-ink/50">enfants</span></div>
+                  </div>
+                </div>
+                <h3 className="font-display font-bold text-lg text-ink truncate mb-1" title={c.name}>{c.name}</h3>
+                <p className="text-sm text-ink/60 line-clamp-2 mb-4 h-10">{c.description || "Aucune description"}</p>
+                
+                <div className="bg-surface p-3 rounded-2xl mb-3">
+                    <div className="text-xs font-bold text-ink/50 mb-1 uppercase tracking-wider">Chargé de projet (Propriétaire)</div>
+                    <div className="text-sm font-medium text-ink truncate" title={c.manager_email || ""}>
+                        {c.manager_email || <span className="text-ink/40 italic">Non assigné</span>}
+                    </div>
+                </div>
+                <div className="text-xs font-bold text-ink/50 mb-3">
+                    Programme : {new Date(c.start_date).toLocaleDateString("fr-FR")} → {new Date(c.end_date).toLocaleDateString("fr-FR")}
+                </div>
+
+                <CampaignQuotaEditor campaign={c} onUpdated={handleCampaignUpdated} />
               </div>
 
-              <button
-                onClick={() => { setSelectedCampaign(c); setIsGenerateModalOpen(true); }}
-                className="w-full flex items-center justify-center gap-2 bg-surface text-ink hover:bg-ink hover:text-white px-4 py-2 rounded-xl font-bold transition-colors text-sm"
-              >
-                <Key className="size-4" />
-                <span>Générer des Tokens</span>
-              </button>
+              <div className="grid grid-cols-2 gap-2 pt-2 border-t border-ink/5">
+                <button
+                  onClick={() => { setSelectedCampaign(c); setIsGenerateModalOpen(true); }}
+                  className="w-full flex items-center justify-center gap-1.5 bg-surface text-ink hover:bg-ink hover:text-white px-3 py-2 rounded-xl font-bold transition-colors text-xs"
+                >
+                  <Key className="size-3.5" />
+                  <span>Générer</span>
+                </button>
+
+                <button
+                  onClick={() => { setSelectedCampaign(c); setIsTokensModalOpen(true); }}
+                  className="w-full flex items-center justify-center gap-1.5 bg-brand/10 text-brand hover:bg-brand hover:text-white px-3 py-2 rounded-xl font-bold transition-colors text-xs"
+                >
+                  <FileText className="size-3.5" />
+                  <span>📋 Voir les codes</span>
+                </button>
+              </div>
             </div>
           ))}
         </div>
@@ -115,6 +142,65 @@ export function AdminCampaignsTab() {
             onSuccess={() => { setIsGenerateModalOpen(false); }} 
         />
       )}
+
+      {isTokensModalOpen && selectedCampaign && (
+        <ViewCampaignTokensModal
+            campaign={selectedCampaign}
+            onClose={() => setIsTokensModalOpen(false)}
+        />
+      )}
+    </div>
+  );
+}
+
+function CampaignQuotaEditor({ campaign, onUpdated }: { campaign: Campaign; onUpdated: (c: Campaign) => void }) {
+  const [value, setValue] = useState(campaign.extra_supervisors_quota);
+  const [saving, setSaving] = useState(false);
+  const updateFn = useServerFn(updateCampaignExtraQuotaAdmin);
+
+  useEffect(() => {
+    setValue(campaign.extra_supervisors_quota);
+  }, [campaign.extra_supervisors_quota]);
+
+  const dirty = value !== campaign.extra_supervisors_quota;
+
+  const handleSave = async () => {
+    setSaving(true);
+    try {
+      const updated = await updateFn({ data: { campaignId: campaign.id, extraSupervisorsQuota: value } });
+      onUpdated(updated);
+      toast.success("Quota mis à jour.");
+    } catch (err: any) {
+      toast.error(err.message || "Erreur lors de la mise à jour du quota.");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <div className="bg-surface p-3 rounded-2xl mb-3">
+      <div className="text-xs font-bold text-ink/50 mb-1.5 uppercase tracking-wider">Quota superviseurs</div>
+      <div className="flex items-center gap-2 flex-wrap">
+        <span className="text-sm font-medium text-ink/60 shrink-0">5 de base +</span>
+        <input
+          type="number"
+          min={0}
+          max={50}
+          value={value}
+          onChange={(e) => setValue(Math.max(0, parseInt(e.target.value) || 0))}
+          className="w-16 bg-white border border-ink/10 rounded-xl px-2 py-1.5 text-sm font-bold text-ink text-center"
+        />
+        <span className="text-sm font-medium text-ink/60 shrink-0">= {5 + value} enfants max/superviseur</span>
+        {dirty && (
+          <button
+            onClick={handleSave}
+            disabled={saving}
+            className="ml-auto flex items-center gap-1.5 bg-ink text-white px-3 py-1.5 rounded-xl text-xs font-bold hover:bg-ink/90 transition-colors shrink-0 disabled:opacity-50"
+          >
+            {saving ? <Loader2 className="size-3.5 animate-spin" /> : "Enregistrer"}
+          </button>
+        )}
+      </div>
     </div>
   );
 }
@@ -256,3 +342,213 @@ function GenerateTokensModal({ campaign, onClose, onSuccess }: { campaign: Campa
     </div>
   );
 }
+
+function ViewCampaignTokensModal({ campaign, onClose }: { campaign: Campaign; onClose: () => void }) {
+  const { session } = useSession();
+  const [tokens, setTokens] = useState<CampaignTokenDetail[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [filter, setFilter] = useState<"all" | "active" | "unactive">("all");
+
+  const listTokensFn = useServerFn(listCampaignTokensAdmin);
+
+  const fetchTokens = async () => {
+    const opts = session?.access_token
+      ? { headers: { Authorization: `Bearer ${session.access_token}` } }
+      : {};
+
+    try {
+      setLoading(true);
+      const data = await listTokensFn({ data: { campaignId: campaign.id }, ...opts });
+      setTokens(data || []);
+    } catch (err: any) {
+      toast.error(err.message || "Erreur lors du chargement des codes.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchTokens();
+  }, [campaign.id, session]);
+
+  const handleExportCSV = () => {
+    if (tokens.length === 0) {
+      toast.error("Aucun code à exporter.");
+      return;
+    }
+    const headers = ["Code", "Statut", "Date d'activation", "Nom Enfant", "Email Parent", "Date de création"];
+    const rows = tokens.map((t) => [
+      t.code,
+      t.is_redeemed ? "Activé" : "Non activé",
+      t.redeemed_at ? new Date(t.redeemed_at).toLocaleString("fr-FR") : "-",
+      t.child_name || "-",
+      t.parent_email || "-",
+      t.created_at ? new Date(t.created_at).toLocaleString("fr-FR") : "-",
+    ]);
+
+    const csvContent =
+      "\uFEFF" +
+      [
+        headers.join(";"),
+        ...rows.map((row) => row.map((val) => `"${String(val).replace(/"/g, '""')}"`).join(";")),
+      ].join("\n");
+
+    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    const safeName = campaign.name.toLowerCase().replace(/[^a-z0-9]/g, "_");
+    a.download = `tokens_${safeName}_${new Date().toISOString().slice(0, 10)}.csv`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    toast.success("Fichier CSV téléchargé avec succès !");
+  };
+
+  const handleCopyUnactivated = () => {
+    const unactivated = tokens.filter((t) => !t.is_redeemed).map((t) => t.code);
+    if (unactivated.length === 0) {
+      toast.info("Aucun code non-activé à copier.");
+      return;
+    }
+    navigator.clipboard.writeText(unactivated.join("\n"));
+    toast.success(`${unactivated.length} code(s) non-activé(s) copié(s) !`);
+  };
+
+  const filteredTokens = tokens.filter((t) => {
+    if (filter === "active") return t.is_redeemed;
+    if (filter === "unactive") return !t.is_redeemed;
+    return true;
+  });
+
+  const redeemedCount = tokens.filter((t) => t.is_redeemed).length;
+  const unredeemedCount = tokens.length - redeemedCount;
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-ink/40 backdrop-blur-sm">
+      <div className="bg-white rounded-[2rem] w-full max-w-3xl max-h-[85vh] flex flex-col p-6 shadow-2xl animate-in fade-in zoom-in-95 duration-200">
+        {/* Header */}
+        <div className="flex items-center justify-between pb-4 border-b border-ink/10">
+          <div>
+            <h3 className="font-display font-black text-xl text-ink flex items-center gap-2">
+              <FileText className="size-6 text-brand" />
+              Codes de la campagne : {campaign.name}
+            </h3>
+            <p className="text-xs font-medium text-ink/60 mt-0.5">
+              Total: {tokens.length} code(s) · Activés: {redeemedCount} · Non-activés: {unredeemedCount}
+            </p>
+          </div>
+          <button onClick={onClose} className="p-2 bg-surface rounded-full text-ink/60 hover:text-ink transition-colors">
+            <X className="size-5" />
+          </button>
+        </div>
+
+        {/* Action Bar */}
+        <div className="flex flex-wrap items-center justify-between gap-3 py-4 border-b border-ink/10">
+          <div className="flex gap-2">
+            <button
+              onClick={() => setFilter("all")}
+              className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-colors ${
+                filter === "all" ? "bg-ink text-white" : "bg-surface text-ink/70 hover:bg-ink/10"
+              }`}
+            >
+              Tous ({tokens.length})
+            </button>
+            <button
+              onClick={() => setFilter("unactive")}
+              className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-colors ${
+                filter === "unactive" ? "bg-amber-600 text-white" : "bg-surface text-ink/70 hover:bg-ink/10"
+              }`}
+            >
+              Non-activés ({unredeemedCount})
+            </button>
+            <button
+              onClick={() => setFilter("active")}
+              className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-colors ${
+                filter === "active" ? "bg-emerald-600 text-white" : "bg-surface text-ink/70 hover:bg-ink/10"
+              }`}
+            >
+              Activés ({redeemedCount})
+            </button>
+          </div>
+
+          <div className="flex flex-wrap gap-2">
+            <button
+              onClick={handleCopyUnactivated}
+              disabled={unredeemedCount === 0}
+              className="flex items-center gap-1.5 bg-surface text-ink hover:bg-ink hover:text-white px-3 py-2 rounded-xl text-xs font-bold transition-colors disabled:opacity-50"
+            >
+              <Copy className="size-3.5" />
+              <span>📋 Copier tous les codes non-activés</span>
+            </button>
+
+            <button
+              onClick={handleExportCSV}
+              disabled={tokens.length === 0}
+              className="flex items-center gap-1.5 bg-brand text-white hover:bg-brand/90 px-3 py-2 rounded-xl text-xs font-bold transition-colors disabled:opacity-50"
+            >
+              <Download className="size-3.5" />
+              <span>📥 Exporter CSV</span>
+            </button>
+          </div>
+        </div>
+
+        {/* Content list */}
+        <div className="flex-1 overflow-y-auto py-4 space-y-2">
+          {loading ? (
+            <div className="flex justify-center py-12">
+              <Loader2 className="size-8 animate-spin text-brand" />
+            </div>
+          ) : filteredTokens.length === 0 ? (
+            <div className="text-center py-8 text-ink/50 text-sm font-medium">
+              Aucun code ne correspond aux critères.
+            </div>
+          ) : (
+            <div className="space-y-2">
+              {filteredTokens.map((t) => (
+                <div
+                  key={t.id}
+                  className="flex flex-col sm:flex-row sm:items-center justify-between p-3.5 rounded-2xl border border-ink/10 bg-surface gap-3"
+                >
+                  <div className="flex items-center gap-3">
+                    <span className="font-mono font-bold text-sm text-ink bg-white px-3 py-1.5 rounded-xl border border-ink/10 shadow-xs">
+                      {t.code}
+                    </span>
+                    {t.is_redeemed ? (
+                      <span className="bg-emerald-100 text-emerald-800 text-[11px] font-extrabold px-2.5 py-0.5 rounded-full uppercase tracking-wider">
+                        Activé
+                      </span>
+                    ) : (
+                      <span className="bg-amber-100 text-amber-800 text-[11px] font-extrabold px-2.5 py-0.5 rounded-full uppercase tracking-wider">
+                        Non activé
+                      </span>
+                    )}
+                  </div>
+
+                  <div className="text-xs text-ink/70 flex flex-col sm:items-end gap-0.5">
+                    {t.is_redeemed ? (
+                      <>
+                        <span className="font-bold text-ink">
+                          Enfant: {t.child_name || "Anonyme"} {t.parent_email ? `(${t.parent_email})` : ""}
+                        </span>
+                        <span className="text-ink/50">
+                          Activé le: {t.redeemed_at ? new Date(t.redeemed_at).toLocaleString("fr-FR") : "-"}
+                        </span>
+                      </>
+                    ) : (
+                      <span className="text-ink/50">
+                        Créé le: {t.created_at ? new Date(t.created_at).toLocaleDateString("fr-FR") : "-"}
+                      </span>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+

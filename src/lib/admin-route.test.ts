@@ -3,17 +3,33 @@ import { ADMIN_TABS, AdminTab } from "@/components/admin/AdminNavTabBar";
 import fs from "node:fs";
 import path from "node:path";
 
-describe("Milestone 2 Admin Route Safety & Tab Switching", () => {
-  it("defines executive and talents tabs in ADMIN_TABS with valid metadata", () => {
+describe("Milestone 3 Admin Route Safety & Unified 8-Tab Navigation Hub", () => {
+  it("defines all 8 tabs in ADMIN_TABS with valid metadata", () => {
     const tabIds = ADMIN_TABS.map((t) => t.id);
-    expect(tabIds).toContain("executive");
-    expect(tabIds).toContain("talents");
-    expect(tabIds).toContain("naya");
-    expect(tabIds).toContain("commerce");
+    expect(tabIds).toHaveLength(8);
+    expect(tabIds).toEqual([
+      "executive",
+      "b2b",
+      "supervisors",
+      "products",
+      "talents",
+      "naya",
+      "commerce",
+      "seasons",
+    ]);
 
     const execTab = ADMIN_TABS.find((t) => t.id === "executive");
-    expect(execTab?.label).toBe("Vue Exécutive");
+    expect(execTab?.label).toBe("Exécutif");
     expect(execTab?.badge).toBe("BI CRM");
+
+    const b2bTab = ADMIN_TABS.find((t) => t.id === "b2b");
+    expect(b2bTab?.label).toBe("Campagnes B2B");
+
+    const supTab = ADMIN_TABS.find((t) => t.id === "supervisors");
+    expect(supTab?.label).toBe("Superviseurs");
+
+    const prodTab = ADMIN_TABS.find((t) => t.id === "products");
+    expect(prodTab?.label).toBe("Produits");
 
     const talentsTab = ADMIN_TABS.find((t) => t.id === "talents");
     expect(talentsTab?.label).toBe("Talents & Villes");
@@ -26,12 +42,14 @@ describe("Milestone 2 Admin Route Safety & Tab Switching", () => {
       currentTab = newTab;
     });
 
-    // Switch to talents tab
-    onTabChange("talents");
-    expect(onTabChange).toHaveBeenCalledWith("talents");
-    expect(currentTab).toBe("talents");
+    onTabChange("supervisors");
+    expect(onTabChange).toHaveBeenCalledWith("supervisors");
+    expect(currentTab).toBe("supervisors");
 
-    // Switch back to executive tab
+    onTabChange("products");
+    expect(onTabChange).toHaveBeenCalledWith("products");
+    expect(currentTab).toBe("products");
+
     onTabChange("executive");
     expect(onTabChange).toHaveBeenCalledWith("executive");
     expect(currentTab).toBe("executive");

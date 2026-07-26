@@ -67,7 +67,7 @@ export function LevelUpCelebration({ newLevel, xpGained, newStreak, onContinue }
           </div>
           <div className="rounded-2xl bg-white/15 px-5 py-3">
             <div className="font-display text-2xl font-bold text-white">{newStreak}</div>
-            <div className="text-[11px] font-semibold text-white/80">{newStreak > 1 ? "jours de suite" : "jour de suite"}</div>
+            <div className="text-[11px] font-semibold text-white/80">{newStreak > 1 ? "semaines de suite" : "semaine de suite"}</div>
           </div>
         </div>
 

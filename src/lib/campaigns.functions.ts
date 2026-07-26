@@ -67,6 +67,31 @@ export const createCampaignAdmin = createServerFn({ method: "POST" })
     return campaign as Campaign;
   });
 
+// Le quota de base (5 enfants/superviseur) est fixé dans le trigger DB check_supervisor_quota
+// (migration 20260726120000) — ce champ est le seul levier d'ajustement PAR CAMPAGNE, mais
+// n'avait jusqu'ici aucune UI pour le modifier après création (toujours figé à 0 à l'insert).
+export const updateCampaignExtraQuotaAdmin = createServerFn({ method: "POST" })
+  .middleware([requireAdmin])
+  .validator((input: any) =>
+    z
+      .object({
+        campaignId: z.string().uuid(),
+        extraSupervisorsQuota: z.number().int().min(0).max(50),
+      })
+      .parse(input)
+  )
+  .handler(async ({ data }) => {
+    const { data: campaign, error } = await (supabaseAdmin as any)
+      .from("campaigns")
+      .update({ extra_supervisors_quota: data.extraSupervisorsQuota })
+      .eq("id", data.campaignId)
+      .select()
+      .single();
+
+    if (error) throw new Error(error.message);
+    return campaign as Campaign;
+  });
+
 export const listCampaignsAdmin = createServerFn({ method: "GET" })
   .middleware([requireAdmin])
   .handler(async () => {
@@ -151,6 +176,70 @@ export const generateCampaignTokensAdmin = createServerFn({ method: "POST" })
 
     return { success: true, count: data.count };
   });
+
+export interface CampaignTokenDetail {
+  id: string;
+  code: string;
+  campaign_id: string | null;
+  is_redeemed: boolean;
+  redeemed_at: string | null;
+  redeemed_by_child_id: string | null;
+  created_at: string;
+  sponsor_name?: string;
+  sponsor_email?: string;
+  child_name?: string | null;
+  parent_email?: string | null;
+}
+
+export const listCampaignTokensAdmin = createServerFn({ method: "POST" })
+  .middleware([requireAdmin])
+  .validator((input: any) =>
+    z
+      .object({
+        campaignId: z.string().uuid(),
+      })
+      .parse(input)
+  )
+  .handler(async ({ data }) => {
+    const { data: tokens, error } = await (supabaseAdmin as any)
+      .from("sponsorship_tokens")
+      .select("*, child_profiles:redeemed_by_child_id(id, name, user_id)")
+      .eq("campaign_id", data.campaignId)
+      .order("created_at", { ascending: false });
+
+    if (error) {
+      console.error("Error fetching campaign tokens:", error);
+      throw new Error(`Erreur lors de la récupération des tokens: ${error.message}`);
+    }
+
+    if (!tokens || tokens.length === 0) {
+      return [] as CampaignTokenDetail[];
+    }
+
+    const users = await listAllUsers(supabaseAdmin).catch(() => []);
+    const emailMap = new Map(users.map((u) => [u.id, u.email]));
+
+    return (tokens as any[]).map((t) => {
+      const child = t.child_profiles;
+      const childName = child?.name ?? null;
+      const parentEmail = child?.user_id ? (emailMap.get(child.user_id) ?? null) : null;
+
+      return {
+        id: t.id,
+        code: t.code,
+        campaign_id: t.campaign_id,
+        is_redeemed: !!t.is_redeemed,
+        redeemed_at: t.redeemed_at ?? null,
+        redeemed_by_child_id: t.redeemed_by_child_id ?? null,
+        created_at: t.created_at,
+        sponsor_name: t.sponsor_name,
+        sponsor_email: t.sponsor_email,
+        child_name: childName,
+        parent_email: parentEmail,
+      };
+    }) as CampaignTokenDetail[];
+  });
+
 
 // ────────────────────────────────────────────────────────────
 // B2B Dashboard (Project Manager)

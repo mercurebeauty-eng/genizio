@@ -17,6 +17,7 @@ import { ProfileDialog } from "@/components/profiles/ProfileDialog";
 import { AVATAR_COLORS, type ChildProfile } from "@/components/profiles/shared";
 import { getActiveChallenge, type ChallengeLike } from "@/lib/active-challenge";
 import { getPortfolioPulse, TALENT_KEY_LABELS, getTalentBucket, TALENT_BUCKET_LABEL } from "@/lib/talent-buckets";
+import { calculateXPGain } from "@/lib/challenges.functions";
 import { getChildGuild } from "@/lib/guilds";
 import { InviteMentorDialog } from "@/components/mentors/InviteMentorDialog";
 import { TalentRadarChart } from "@/components/TalentRadarChart";
@@ -343,12 +344,12 @@ function DashboardPage() {
                           </PopoverTrigger>
                           <PopoverContent align="end" className="w-64 rounded-2xl border border-ink/10 bg-white p-4 shadow-xl">
                             <p className="font-display text-balance text-sm font-bold text-ink">
-                              {selected.streak ? `🔥 ${selected.streak} jour${selected.streak > 1 ? "s" : ""} d'affilée` : "Pas encore de série"}
+                              {selected.streak ? `🔥 ${selected.streak} semaine${selected.streak > 1 ? "s" : ""} d'affilée` : "Pas encore de série"}
                             </p>
                             <p className="mt-1 text-xs leading-relaxed text-ink/60">
                               {selected.streak
-                                ? "Termine un défi aujourd'hui pour continuer ta série."
-                                : "Termine un défi aujourd'hui pour démarrer ta série !"}
+                                ? "Termine un défi cette semaine pour continuer ta série."
+                                : "Termine un défi cette semaine pour démarrer ta série !"}
                             </p>
                           </PopoverContent>
                         </Popover>
@@ -360,7 +361,7 @@ function DashboardPage() {
                       <img src="/naya-mascot.png" alt="Naya" className="size-11 rounded-full object-cover shrink-0 animate-[gzDots_4s_ease-in-out_infinite]" style={{ animation: "gz-float 4s ease-in-out infinite" }} />
                       <div>
                         <div className="font-display text-balance font-semibold text-[13px] text-brand">Naya</div>
-                        <div className="text-[15px] leading-[1.4] text-ink mt-[2px]">Prête pour ton défi du jour, {selected.name}&nbsp;? Aujourd'hui on construit&nbsp;— pour de vrai&nbsp;!</div>
+                        <div className="text-[15px] leading-[1.4] text-ink mt-[2px]">Prête pour ton défi de la semaine, {selected.name}&nbsp;? On construit&nbsp;— pour de vrai&nbsp;!</div>
                       </div>
                     </div>
 
@@ -386,7 +387,7 @@ function DashboardPage() {
                           </div>
                           <div className="mt-4">
                             <div className="flex justify-between text-white text-[12px] font-bold mb-[6px]">
-                              <span>+180 XP à gagner</span>
+                              <span>+{calculateXPGain(selected.age ?? 9)} XP à gagner</span>
                               <span>{activeChallenge.steps?.length ?? 0} étapes</span>
                             </div>
                             <Link to="/profiles/$profileId/challenges" params={{ profileId: selected.id }} className="w-full flex items-center justify-center bg-white text-ink font-bold h-[44px] rounded-full cursor-pointer shadow-sm">
@@ -461,7 +462,7 @@ function DashboardPage() {
                     {/* Continuer à explorer */}
                     <div className="font-display text-balance font-bold text-[13px] tracking-[.06em] uppercase text-ink/40 mx-1 mb-[10px]">Continuer à explorer</div>
                     <div className="grid grid-cols-2 gap-3 mb-6">
-                      <Link to="/profiles/$profileId/parcours" params={{ profileId: selected.id }} className="text-left border border-border bg-leaf-50 rounded-[1rem] p-[15px] cursor-pointer shadow-sm">
+                      <Link to="/profiles/$profileId/portfolio" params={{ profileId: selected.id }} className="text-left border border-border bg-leaf-50 rounded-[1rem] p-[15px] cursor-pointer shadow-sm">
                         <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--leaf-dark)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><path d="m16.24 7.76-2.12 6.36-6.36 2.12 2.12-6.36 6.36-2.12z"/></svg>
                         <div className="font-display text-balance font-bold text-[15px] mt-[8px] text-ink">Mon parcours</div>
                         <div className="text-[12px] text-ink/60 mt-[2px]">Ton chemin de talents</div>

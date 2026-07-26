@@ -1,15 +1,20 @@
 import { Link } from "@tanstack/react-router";
-import { Home, Trophy, ShoppingBag, Users, Settings } from "lucide-react";
+import { Home, Trophy, Layers, Users, Settings } from "lucide-react";
 
 type AppTabBarProps = {
   profileId: string;
 };
 
 export function AppTabBar({ profileId }: AppTabBarProps) {
+  // Boutique retirée de la nav principale : aucun autre point d'entrée dans l'app ne pointe
+  // vers /boutique (le flux de commande de kit est déjà intégré directement dans la carte de
+  // défi via handleOrderKit — cf. profiles.$profileId.challenges.tsx), donc elle n'occupait
+  // qu'un cinquième de la barre sans jamais être le point d'entrée réel du parcours. Le
+  // Portfolio — la promesse centrale du produit ("portfolio vivant") — prend sa place.
   const items = [
     { to: "/profiles" as const, label: "Accueil", icon: Home, needsProfileId: false },
     { to: "/profiles/$profileId/challenges" as const, label: "Défis", icon: Trophy, needsProfileId: true },
-    { to: "/boutique" as const, label: "Boutique", icon: ShoppingBag, needsProfileId: false },
+    { to: "/profiles/$profileId/portfolio" as const, label: "Portfolio", icon: Layers, needsProfileId: true },
     { to: "/profiles/$profileId/mentors" as const, label: "Mentors", icon: Users, needsProfileId: true },
     { to: "/profile" as const, label: "Réglages", icon: Settings, needsProfileId: false },
   ];

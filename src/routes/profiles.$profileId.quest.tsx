@@ -5,7 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useSession } from "@/hooks/use-session";
 import { updateChallenge } from "@/lib/challenges.functions";
 import { getActiveChallenge, ChallengeLike } from "@/lib/active-challenge";
-import { ArrowLeft, Play, Check, Circle, Sparkles, Smile, Trophy, X, ChevronRight, MessageCircle, Loader2 } from "lucide-react";
+import { ArrowLeft, Play, Check, Circle, Sparkles, Smile, Trophy, X, ChevronRight, MessageCircle, Loader2, Upload } from "lucide-react";
 import { toast } from "sonner";
 import { NayaAvatar } from "@/components/NayaAvatar";
 import nayaAvatar from "@/assets/naya-avatar.png";
@@ -65,6 +65,13 @@ function QuestPage() {
   const [stepChecked, setStepChecked] = useState<boolean[]>([]);
   const [childFeedback, setChildFeedback] = useState("");
   const [completing, setCompleting] = useState(false);
+
+  // Celebration screen state
+  const [isCelebrated, setIsCelebrated] = useState(false);
+  const [completedChallengeId, setCompletedChallengeId] = useState<string | null>(null);
+  const [completedChallengeTitle, setCompletedChallengeTitle] = useState("");
+  const [uploadingProof, setUploadingProof] = useState(false);
+  const [proofUrl, setProofUrl] = useState<string | null>(null);
 
   const loadChallenges = async () => {
     setFetching(true);
@@ -171,23 +178,9 @@ function QuestPage() {
         },
       });
 
-      toast.success("Félicitations ! Mission terminée ! 🏆", {
-        description: "Ajoute une photo pour que Naya découvre tes talents.",
-        action: {
-          label: "Ajouter une preuve",
-          onClick: () => {
-            // The challenges page never auto-opens a just-completed card
-            // (getActiveChallenge only surfaces in_progress/todo), so without
-            // this it lands the parent on a page with no indication of which
-            // collapsed card is theirs. One-shot deep link consumed there.
-            sessionStorage.setItem("genizio:highlightChallenge", activeChallenge.id);
-            navigate({ to: "/profiles/$profileId/challenges", params: { profileId } });
-          },
-        },
-        duration: 8000,
-      });
-      setIsQuestActive(false);
-      setCurrentStepIndex(0);
+      setCompletedChallengeId(activeChallenge.id);
+      setCompletedChallengeTitle(activeChallenge.title);
+      setIsCelebrated(true);
       setChildFeedback("");
       void loadChallenges();
     } catch (e) {
@@ -195,6 +188,38 @@ function QuestPage() {
       toast.error("Erreur lors de la sauvegarde de ta quête.");
     } finally {
       setCompleting(false);
+    }
+  };
+
+  const handleUploadProof = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    const targetId = completedChallengeId || activeChallenge?.id;
+    if (!file || !targetId) return;
+    setUploadingProof(true);
+    try {
+      const ext = file.name.split(".").pop() || "jpg";
+      const fileName = `${profileId}/${targetId}-${Date.now()}.${ext}`;
+      const { error: uploadErr } = await supabase.storage
+        .from("proofs")
+        .upload(fileName, file, { contentType: file.type });
+      if (uploadErr) throw uploadErr;
+
+      const { data: publicUrlData } = supabase.storage.from("proofs").getPublicUrl(fileName);
+      const url = publicUrlData.publicUrl;
+
+      await updateChallengeFn({
+        data: {
+          id: targetId,
+          proof_image_url: url,
+        },
+      });
+      setProofUrl(url);
+      toast.success("Photo de preuve enregistrée ! 📸");
+    } catch (err) {
+      console.error(err);
+      toast.error("Erreur lors de l'envoi de la photo.");
+    } finally {
+      setUploadingProof(false);
     }
   };
 
@@ -212,6 +237,100 @@ function QuestPage() {
         <div className="text-center">
           <p className="mb-4 font-bold">Profil introuvable.</p>
           <Link to="/profiles" className="underline text-sm opacity-80 hover:opacity-100">Retour</Link>
+        </div>
+      </div>
+    );
+  }
+
+  if (isCelebrated) {
+    return (
+      <div className="min-h-dvh bg-gradient-to-br from-amber-100 via-sky-100 to-emerald-100 flex flex-col items-center justify-center p-6 text-center select-none relative overflow-hidden font-sans text-ink">
+        {/* Floating stars and confetti elements */}
+        <div className="absolute top-10 left-10 text-4xl animate-bounce">✨</div>
+        <div className="absolute top-20 right-14 text-4xl animate-pulse">🎉</div>
+        <div className="absolute bottom-20 left-16 text-4xl animate-bounce">🌟</div>
+        <div className="absolute bottom-10 right-10 text-4xl animate-pulse">🏆</div>
+
+        <div className="max-w-md w-full bg-white rounded-3xl p-8 border-2 border-brand/20 shadow-2xl space-y-6 relative z-10 animate-in zoom-in-95 duration-500">
+          <div className="inline-flex items-center justify-center size-20 rounded-full bg-amber-100 border-4 border-amber-300 text-amber-600 shadow-lg animate-bounce mx-auto">
+            <Trophy className="size-10 stroke-[2.5]" />
+          </div>
+
+          <div>
+            <h2 className="font-display text-balance text-3xl font-black text-ink mb-1">
+              Bravo ! 🎉
+            </h2>
+            <p className="text-xs font-black uppercase tracking-widest text-brand">
+              Mission accomplie avec succès !
+            </p>
+          </div>
+
+          {/* Mascot Praise */}
+          <div className="bg-amber-50 rounded-2xl p-4 border border-amber-200 flex items-center gap-3 text-left">
+            <img src={nayaAvatar} alt="Naya" className="size-12 rounded-full border-2 border-amber-400 shrink-0 object-cover" />
+            <p className="text-xs font-bold text-amber-950 leading-relaxed">
+              "Incroyable {child.name} ! Tu as brillamment réussi le défi <strong>'{completedChallengeTitle}'</strong> ! Naya est très fière de toi ! ✨"
+            </p>
+          </div>
+
+          {/* Photo Upload Option */}
+          <div className="bg-surface rounded-2xl p-4 border border-ink/10 text-left space-y-3">
+            <div className="flex items-center gap-2">
+              <Upload className="size-4 text-brand" />
+              <span className="text-xs font-extrabold text-ink">Ajouter une photo souvenir (preuve)</span>
+            </div>
+
+            {proofUrl ? (
+              <div className="space-y-2">
+                <img src={proofUrl} alt="Preuve" className="h-36 w-full object-cover rounded-xl border border-ink/10" />
+                <p className="text-[11px] font-bold text-emerald-600 flex items-center gap-1">
+                  ✓ Photo enregistrée ! Naya va pouvoir l'analyser.
+                </p>
+              </div>
+            ) : (
+              <div>
+                <label className="w-full inline-flex items-center justify-center gap-2 rounded-xl border border-ink/10 bg-white px-4 py-3 text-xs font-bold text-ink shadow-sm hover:bg-surface cursor-pointer transition-all">
+                  {uploadingProof ? (
+                    <>
+                      <Loader2 className="size-4 animate-spin text-brand" />
+                      <span>Envoi de la photo...</span>
+                    </>
+                  ) : (
+                    <>
+                      <Upload className="size-4 text-brand" />
+                      <span>Prendre ou choisir une photo 📸</span>
+                    </>
+                  )}
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={handleUploadProof}
+                    disabled={uploadingProof}
+                    className="hidden"
+                  />
+                </label>
+              </div>
+            )}
+          </div>
+
+          {/* Return Button to Child View */}
+          <button
+            onClick={() => {
+              setIsCelebrated(false);
+              setIsQuestActive(false);
+              setCurrentStepIndex(0);
+              setProofUrl(null);
+              setCompletedChallengeId(null);
+              navigate({
+                to: "/profiles/$profileId/challenges",
+                params: { profileId },
+                search: { mode: "child" },
+              });
+            }}
+            className="w-full inline-flex items-center justify-center gap-2 rounded-2xl border border-ink/10 bg-brand px-6 py-4 text-base font-black text-white shadow-xl hover:-translate-y-0.5 active:translate-y-0 transition-all cursor-pointer"
+          >
+            <span>Retour au Mode Enfant 🎮</span>
+          </button>
         </div>
       </div>
     );

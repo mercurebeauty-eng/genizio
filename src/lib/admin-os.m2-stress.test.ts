@@ -388,7 +388,7 @@ describe("Milestone 2 Stress Tests - Empirical Edge Case Verification", () => {
       const alerts = detectHighPotentialProfiles(children);
       expect(alerts).toHaveLength(1);
       expect(alerts[0].score).toBe(88);
-      expect(alerts[0].dominantTalent).toBe("Logique");
+      expect(alerts[0].dominantTalent).toBe("🧠 Logique");
     });
 
     it("handles tied top scores cleanly", () => {
@@ -406,7 +406,7 @@ describe("Milestone 2 Stress Tests - Empirical Edge Case Verification", () => {
       expect(alerts).toHaveLength(1);
       expect(alerts[0].score).toBe(85);
       // Picks first tied dominant talent encountered
-      expect(["Spatiale", "Créative"]).toContain(alerts[0].dominantTalent);
+      expect(["📐 Spatiale", "🎨 Créative"]).toContain(alerts[0].dominantTalent);
     });
 
     it("safely handles non-array input or null child items", () => {

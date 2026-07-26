@@ -5,6 +5,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { supabase } from "@/integrations/supabase/client";
 import { getGuildCommunity, setGuildParticipation } from "@/lib/guilds.functions";
 import { getChildGuild } from "@/lib/guilds";
+import { TALENT_KEY_LABELS } from "@/lib/talent-buckets";
 import { AppTabBar } from "@/components/AppTabBar";
 import { AppHeader } from "@/components/AppHeader";
 import { GenizioLoader } from "@/components/GenizioLoader";
@@ -102,6 +103,19 @@ function GuildPage() {
               </div>
             </div>
             <p className={`mt-3 text-sm font-medium opacity-90 ${guild.color}`}>{guild.description}</p>
+            {guild.talentKeys.length > 0 && (
+              <div className="mt-4 flex flex-wrap items-center gap-2">
+                <span className={`text-xs font-extrabold opacity-75 ${guild.color}`}>Talents associés :</span>
+                {guild.talentKeys.map((key) => (
+                  <span
+                    key={key}
+                    className="inline-flex items-center rounded-full bg-white/90 border border-ink/10 px-3 py-1 text-xs font-black shadow-xs text-ink"
+                  >
+                    {TALENT_KEY_LABELS[key] ?? key}
+                  </span>
+                ))}
+              </div>
+            )}
           </div>
 
           {!community?.isOptedIn ? (
@@ -114,8 +128,7 @@ function GuildPage() {
                   <h2 className="font-display text-lg font-bold">Rejoindre la communauté de guilde</h2>
                   <p className="mt-1.5 text-sm leading-relaxed text-ink/70">
                     Aujourd'hui, seule votre famille voit les progrès de {child.name}. En activant le partage, le prénom
-                    et l'âge de {child.name} — et les réussites que vous choisissez de partager sur le Mur Public —
-                    deviennent visibles aux autres familles de la guilde {guild.name}, et {child.name} voit aussi les leurs.
+                    et l'âge de {child.name} deviennent visibles aux autres familles de la guilde {guild.name}, et {child.name} voit aussi les leurs.
                     Rien d'autre n'est partagé (ni ville, ni centres d'intérêt, ni notes). Vous pouvez désactiver à tout moment.
                   </p>
                   <button
@@ -161,8 +174,7 @@ function GuildPage() {
                 <p className="mb-3 text-xs font-extrabold uppercase tracking-widest text-ink/40">À célébrer</p>
                 {community.recentActivity.length === 0 ? (
                   <div className="rounded-2xl border border-ink/10 bg-white p-6 text-center text-sm text-ink/60 shadow-sm">
-                    Personne d'autre n'a encore partagé de réussite dans cette guilde — {child.name} pourrait être le
-                    premier en partageant un défi sur le Mur Public !
+                    Aucune activité récente dans cette guilde pour le moment.
                   </div>
                 ) : (
                   <div className="flex flex-col gap-2.5">
@@ -192,12 +204,7 @@ function GuildPage() {
             </>
           )}
 
-          <Link
-            to="/feed"
-            className="press-white flex items-center justify-center gap-2 rounded-2xl border border-ink/10 bg-white py-3 text-sm font-bold text-brand shadow-sm"
-          >
-            Voir le Mur Public →
-          </Link>
+
         </div>
       </main>
     </div>

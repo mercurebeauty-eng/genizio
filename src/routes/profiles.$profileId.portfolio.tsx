@@ -8,6 +8,7 @@ import { getChildAISynthesis } from "@/lib/challenges.functions";
 import { ensureHypothesesForChild } from "@/lib/hypotheses.functions";
 import { getChildGuild, getTalentAffinities } from "@/lib/guilds";
 import { getChildEnrolledSeason, getActiveSeason, type Season } from "@/lib/seasons.functions";
+import { getChildSupervisorInfo } from "@/lib/supervisors.functions";
 import { AppTabBar } from "@/components/AppTabBar";
 import { SeasonEnrollmentModal } from "@/components/seasons/SeasonEnrollmentModal";
 import { TalentRadarChart } from "@/components/TalentRadarChart";
@@ -34,6 +35,12 @@ import {
   ChevronRight,
   BellRing,
   Phone,
+  Zap,
+  MapPin,
+  Clock,
+  ChevronDown,
+  CheckCircle2,
+  Target,
 } from "lucide-react";
 import { InviteMentorDialog } from "@/components/mentors/InviteMentorDialog";
 import { AppHeader } from "@/components/AppHeader";
@@ -41,6 +48,48 @@ import { MarkdownContent } from "@/components/ui/markdown-content";
 import { INTERESTS_BY_TALENT } from "@/components/profiles/shared";
 import { TALENT_KEY_LABELS, getTalentBucket } from "@/lib/talent-buckets";
 import { normalizeChildInterests } from "@/lib/interest-migration";
+
+function getLevelInfo(totalXP: number) {
+  const level = Math.floor(totalXP / 500) + 1;
+  const pct = Math.min(100, ((totalXP % 500) / 500) * 100);
+  const nextXP = 500 - (totalXP % 500);
+  return { level, pct, nextXP };
+}
+
+const DOMAIN_COLORS: Record<string, string> = {
+  Mathématiques: "bg-blue-100 text-blue-700 border-blue-200",
+  Sciences: "bg-emerald-100 text-emerald-700 border-emerald-200",
+  Arts: "bg-purple-100 text-purple-700 border-purple-200",
+  Langues: "bg-amber-100 text-amber-700 border-amber-200",
+  Sport: "bg-red-100 text-red-700 border-red-200",
+  "Émotions et relations sociales": "bg-pink-100 text-pink-700 border-pink-200",
+  Artisanat: "bg-orange-100 text-orange-700 border-orange-200",
+  Agriculture: "bg-green-100 text-green-700 border-green-200",
+  Entrepreneuriat: "bg-cyan-100 text-cyan-700 border-cyan-200",
+};
+
+function getDomainStyle(domain: string) {
+  return DOMAIN_COLORS[domain] ?? "bg-ink/5 text-ink/60 border-ink/10";
+}
+
+const DEFAULT_EXPANDED_MONTHS = 2;
+
+function groupByMonth(challenges: Challenge[]) {
+  const groups = new Map<string, Challenge[]>();
+  for (const c of challenges) {
+    const date = new Date(c.completed_at ?? c.created_at ?? Date.now());
+    const key = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`;
+    if (!groups.has(key)) groups.set(key, []);
+    groups.get(key)!.push(c);
+  }
+  return Array.from(groups.entries()).sort((a, b) => b[0].localeCompare(a[0]));
+}
+
+function formatMonthLabel(key: string) {
+  const [year, month] = key.split("-");
+  const date = new Date(Number(year), Number(month) - 1);
+  return date.toLocaleDateString("fr-FR", { month: "long", year: "numeric" });
+}
 
 // title vient de TALENT_KEY_LABELS (source unique des 9 libellés) — seuls
 // l'icône et la description restent propres à cette page.
@@ -151,10 +200,12 @@ type Challenge = {
   status: "todo" | "in_progress" | "completed";
   completed_at: string | null;
   proof_image_url: string | null;
+  ai_observations?: string | null;
+  created_at?: string;
 };
 
 // NAYA 2.0 Phase 4 — cf. genizio-decisions #33. Seule parent_narrative est lue ici : le
-// JSON hypotheses (causes, probabilités, evidence_log) reste strictement interne, jamais
+// JSON hypotheses (causes, probabilités, evidence_log) reste strictly interne, jamais
 // exposé à ce niveau de l'app, conforme à la règle "jamais de probabilité brute" (§1 du
 // plan NAYA).
 type OpenHypothesisCycle = {
@@ -175,9 +226,11 @@ function PortfolioPage() {
   const [fetchingSynthesis, setFetchingSynthesis] = useState(false);
   const [enrolledSeason, setEnrolledSeason] = useState<Season | null>(null);
   const [activeSeason, setActiveSeason] = useState<Season | null>(null);
+  const [supervisorInfo, setSupervisorInfo] = useState<{ email: string; assignedAt: string } | null>(null);
   const [isEnrollmentModalOpen, setIsEnrollmentModalOpen] = useState(false);
   const [mentorCount, setMentorCount] = useState(0);
   const [dismissedDiscoveries, setDismissedDiscoveries] = useState<string[]>([]);
+  const [expandedMonths, setExpandedMonths] = useState<Set<string>>(new Set());
 
   const fetchSynthesis = useServerFn(getChildAISynthesis);
   const ensureHypotheses = useServerFn(ensureHypothesesForChild);
@@ -193,9 +246,9 @@ function PortfolioPage() {
       supabase.from("child_profiles").select("id, name, age, talents, interests, pdf_unlocked, xp").eq("id", profileId).eq("user_id", session!.user.id).maybeSingle(),
       supabase
         .from("challenges")
-        .select("id, title, domain, status, completed_at, proof_image_url")
+        .select("id, title, domain, status, completed_at, proof_image_url, ai_observations, created_at")
         .eq("child_id", profileId)
-        .order("completed_at", { ascending: false }),
+        .order("completed_at", { ascending: false, nullsFirst: false }),
       supabase
         .from("child_mentors")
         .select("id", { count: "exact", head: true })
@@ -312,9 +365,13 @@ function PortfolioPage() {
     getChildEnrolledSeason({ data: { childId: profileId } })
       .then(season => setEnrolledSeason(season))
       .catch(console.error);
-      
+
     getActiveSeason({ data: undefined })
       .then(season => setActiveSeason(season))
+      .catch(console.error);
+
+    getChildSupervisorInfo({ data: { childId: profileId } })
+      .then(info => setSupervisorInfo(info))
       .catch(console.error);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [session, profileId]);
@@ -349,24 +406,53 @@ function PortfolioPage() {
         <AppTabBar profileId={profileId} />
 
         <div className="min-w-0 flex-1 space-y-6">
-          {/* Bannière Guilde — cliquable vers Ma Guilde (vue communautaire, cf. genizio-decisions) */}
+          {/* Bannière Guilde — cliquable vers Ma Guilde */}
           {(() => {
             const guild = getChildGuild(child.talents);
+            const totalXP = child.xp || 0;
+            const { level, pct, nextXP } = getLevelInfo(totalXP);
+
             return (
               <Link
                 to="/profiles/$profileId/guild"
                 params={{ profileId }}
-                className={`rounded-3xl border border-ink/10 p-5 shadow-xl flex items-center gap-4 cursor-pointer transition-transform hover:-translate-y-0.5 ${guild.bgColor}`}
+                className={`rounded-3xl border border-ink/10 p-6 shadow-xl flex flex-col sm:flex-row items-start sm:items-center gap-5 cursor-pointer transition-transform hover:-translate-y-0.5 ${guild.bgColor} relative overflow-hidden`}
               >
-                <div className="text-5xl">{guild.emoji}</div>
-                <div className="min-w-0 flex-1">
-                  <p className={`text-[11px] font-extrabold uppercase tracking-widest mb-0.5 ${guild.color} opacity-70`}>
-                    Guilde de {child.name}
-                  </p>
+                <div className="text-5xl shrink-0">{guild.emoji}</div>
+                <div className="min-w-0 flex-1 w-full">
+                  <div className="flex items-center gap-2 flex-wrap mb-1">
+                    <p className={`text-[11px] font-extrabold uppercase tracking-widest ${guild.color} opacity-70`}>
+                      Guilde de {child.name}
+                    </p>
+                    <span
+                      className="text-[10px] font-black uppercase tracking-wider px-2.5 py-0.5 rounded-full border bg-white/80"
+                      style={{ color: `var(--guild-${guild.key === "aucune" ? "batisseurs" : guild.key}, #7C3AED)` }}
+                    >
+                      Niveau {level}
+                    </span>
+                  </div>
                   <h2 className={`font-display text-balance text-2xl font-black leading-tight ${guild.color}`}>{guild.name}</h2>
-                  <p className={`text-sm font-medium italic mt-1 ${guild.color} opacity-80`}>« {guild.description} »</p>
+                  <p className={`text-xs font-medium italic mt-0.5 ${guild.color} opacity-80`}>« {guild.tagline || guild.description} »</p>
+
+                  {/* XP Bar */}
+                  <div className="mt-3">
+                    <div className="flex items-center justify-between mb-1">
+                      <span className="text-[11px] font-extrabold text-ink/75 flex items-center gap-1">
+                        <Zap className="size-3 text-amber-500 fill-amber-500" /> {totalXP} XP
+                      </span>
+                      <span className="text-[10px] text-ink/60 font-bold">
+                        {nextXP > 0 ? `encore ${nextXP} XP pour le niveau ${level + 1}` : "Niveau Max !"}
+                      </span>
+                    </div>
+                    <div className="h-2.5 bg-ink/10 rounded-full overflow-hidden border border-ink/5">
+                      <div
+                        className="h-full rounded-full transition-all duration-700 bg-brand"
+                        style={{ width: `${pct}%` }}
+                      />
+                    </div>
+                  </div>
                 </div>
-                <ChevronRight className={`size-5 shrink-0 opacity-60 ${guild.color}`} />
+                <ChevronRight className={`size-5 shrink-0 opacity-60 ${guild.color} hidden sm:block`} />
               </Link>
             );
           })()}
@@ -570,6 +656,24 @@ function PortfolioPage() {
               </div>
             );
           })()}
+
+          {/* Card: Superviseur assigné — jusqu'ici invisible pour le parent, découvert
+              seulement en ouvrant le portfolio (pas de notification, cf. absence d'infra
+              email/SMS dans ce projet) */}
+          {supervisorInfo && (
+            <div className="rounded-3xl border border-sky-200 bg-sky-50/60 p-5 shadow-sm flex items-center gap-4">
+              <div className="grid size-11 place-items-center rounded-2xl bg-sky-600 text-white shrink-0">
+                <Users className="size-5" />
+              </div>
+              <div>
+                <p className="text-xs font-black uppercase tracking-widest text-sky-700">Suivi par un superviseur</p>
+                <p className="text-sm font-bold text-ink mt-0.5">{supervisorInfo.email}</p>
+                <p className="text-xs text-ink/50 mt-0.5">
+                  Depuis le {new Date(supervisorInfo.assignedAt).toLocaleDateString("fr-FR")}
+                </p>
+              </div>
+            </div>
+          )}
 
           {/* Card: Saison Trimestrielle Actuelle */}
           {enrolledSeason ? (
@@ -861,30 +965,151 @@ function PortfolioPage() {
             </div>
           </div>
 
-          <div className="rounded-3xl border border-ink/10 bg-white p-6 shadow-xl">
-            <div className="mb-4 flex items-center justify-between">
+          {/* Top domaines — Terrains de jeu favoris */}
+          {(() => {
+            const domainCounts: Record<string, number> = {};
+            for (const c of completed) {
+              domainCounts[c.domain] = (domainCounts[c.domain] ?? 0) + 1;
+            }
+            const topDomains = Object.entries(domainCounts)
+              .sort((a, b) => b[1] - a[1])
+              .slice(0, 3);
+
+            if (topDomains.length === 0) return null;
+
+            return (
+              <div className="rounded-3xl border border-ink/10 bg-white p-6 shadow-xl space-y-4">
+                <h3 className="font-display font-bold text-lg text-ink flex items-center gap-2">
+                  <MapPin className="size-5 text-brand" /> Terrains de jeu favoris
+                </h3>
+                <div className="space-y-3">
+                  {topDomains.map(([domain, count], i) => (
+                    <div key={domain} className="flex items-center gap-3">
+                      <span className="font-display font-black text-xl text-ink/20 w-6 text-center">
+                        {i + 1}
+                      </span>
+                      <div className="flex-1">
+                        <div className="flex items-center justify-between mb-1">
+                          <span className={`text-xs font-bold px-2.5 py-0.5 rounded-full border ${getDomainStyle(domain)}`}>
+                            {domain}
+                          </span>
+                          <span className="text-xs font-bold text-ink/60">{count} défi{count > 1 ? "s" : ""}</span>
+                        </div>
+                        <div className="h-2 bg-ink/6 rounded-full overflow-hidden">
+                          <div
+                            className="h-full rounded-full bg-brand transition-all duration-500"
+                            style={{ width: `${Math.round((count / (topDomains[0][1] || 1)) * 100)}%` }}
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            );
+          })()}
+
+          {/* Achievement Timeline — Historique mensuel avec photos */}
+          <div className="rounded-3xl border border-ink/10 bg-white p-6 shadow-xl space-y-6">
+            <div className="flex items-center justify-between">
               <h3 className="flex items-center gap-2 font-display text-balance text-lg font-bold">
-                <Calendar className="size-5 text-brand" />
-                Timeline de progression
+                <Clock className="size-5 text-brand" />
+                Timeline & Historique de progression ({completed.length})
               </h3>
               {child && <InviteMentorDialog childId={child.id} childName={child.name} />}
             </div>
+
             {completed.length === 0 ? (
-              <p className="text-sm text-ink/60">Aucun défi complété pour l'instant.</p>
+              <div className="rounded-2xl border-2 border-dashed border-ink/10 bg-surface p-8 text-center">
+                <CheckCircle2 className="size-8 mx-auto mb-3 text-ink/20" />
+                <p className="font-bold text-ink/40 text-sm">Aucun défi complété pour l'instant.</p>
+                <Link
+                  to="/profiles/$profileId/challenges"
+                  params={{ profileId: child.id }}
+                  className="mt-4 inline-flex items-center gap-1.5 rounded-xl bg-brand px-4 py-2 text-xs font-bold text-white shadow-sm"
+                >
+                  <Sparkles className="size-3.5" /> Lancer un défi
+                </Link>
+              </div>
             ) : (
-              <ul className="space-y-3">
-                {completed.map((c) => (
-                  <li key={c.id} className="flex items-center justify-between rounded-2xl border border-ink/10 bg-surface px-4 py-3">
-                    <div>
-                      <p className="text-sm font-bold text-ink">{c.title}</p>
-                      <p className="text-xs text-ink/60">{c.domain}</p>
+              <div className="space-y-6">
+                {groupByMonth(completed).map(([monthKey, items], index) => {
+                  const isDefaultExpanded = index < DEFAULT_EXPANDED_MONTHS;
+                  const isExpanded = isDefaultExpanded || expandedMonths.has(monthKey);
+
+                  return (
+                    <div key={monthKey}>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          if (isDefaultExpanded) return;
+                          setExpandedMonths((prev) => {
+                            const next = new Set(prev);
+                            if (next.has(monthKey)) next.delete(monthKey);
+                            else next.add(monthKey);
+                            return next;
+                          });
+                        }}
+                        className={`mb-3 flex w-full items-center gap-2 ${isDefaultExpanded ? "cursor-default" : "cursor-pointer"}`}
+                      >
+                        <span className="text-[11px] font-black uppercase tracking-widest text-ink/40">
+                          {formatMonthLabel(monthKey)}
+                        </span>
+                        <div className="flex-1 h-px bg-ink/10" />
+                        <span className="text-[10px] font-bold text-ink/40">
+                          {items.length} défi{items.length > 1 ? "s" : ""}
+                        </span>
+                        {!isDefaultExpanded && (
+                          <ChevronDown className={`size-3.5 text-ink/40 transition-transform ${isExpanded ? "rotate-180" : ""}`} />
+                        )}
+                      </button>
+
+                      {isExpanded && (
+                        <div className="space-y-3 pl-3 border-l-2 border-brand/20">
+                          {items.map((c) => (
+                            <div
+                              key={c.id}
+                              className="relative ml-2 rounded-2xl border border-ink/10 bg-surface p-4 shadow-sm space-y-2"
+                            >
+                              <div className="absolute -left-[1.25rem] top-5 size-3 rounded-full bg-emerald-500 border-2 border-white shadow-sm" />
+
+                              <div className="flex items-start gap-3">
+                                <CheckCircle2 className="size-4 shrink-0 text-emerald-600 mt-0.5" />
+                                <div className="flex-1 min-w-0">
+                                  <p className="font-bold text-sm text-ink leading-snug">{c.title}</p>
+                                  <div className="mt-1.5 flex flex-wrap items-center gap-2">
+                                    <span className={`text-[10px] font-bold px-2.5 py-0.5 rounded-full border ${getDomainStyle(c.domain)}`}>
+                                      {c.domain}
+                                    </span>
+                                    {c.completed_at && (
+                                      <span className="text-[10px] text-ink/50 font-semibold">
+                                        {new Date(c.completed_at).toLocaleDateString("fr-FR", {
+                                          day: "numeric",
+                                          month: "short",
+                                        })}
+                                      </span>
+                                    )}
+                                    {c.proof_image_url && (
+                                      <span className="text-[10px] font-bold text-amber-700 bg-amber-50 px-2 py-0.5 rounded-full border border-amber-200 flex items-center gap-1">
+                                        📸 Photo
+                                      </span>
+                                    )}
+                                  </div>
+                                  {c.ai_observations && (
+                                    <p className="mt-2 text-xs text-ink/65 leading-relaxed italic line-clamp-2">
+                                      "{c.ai_observations}"
+                                    </p>
+                                  )}
+                                </div>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
                     </div>
-                    <span className="text-xs font-semibold text-ink/60">
-                      {c.completed_at ? new Date(c.completed_at).toLocaleDateString("fr-FR") : ""}
-                    </span>
-                  </li>
-                ))}
-              </ul>
+                  );
+                })}
+              </div>
             )}
           </div>
 

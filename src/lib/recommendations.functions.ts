@@ -1,7 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { generateDiscriminantChallenge } from "@/lib/hypotheses.functions";
-import { callClaude, finalizeChallenge, PROOF_MODE_INSTRUCTION, ACADEMIC_REFERENTIAL_INSTRUCTION, STEPS_INSTRUCTION, INTELLIGENCES_FIELD_INSTRUCTION, TRAIT_SUBFORM_INSTRUCTION, formatChildInterestsPayload, extractJsonFromLLMResponse } from "@/lib/challenges.functions";
+import { callClaude, finalizeChallenge, PROOF_MODE_INSTRUCTION, ACADEMIC_REFERENTIAL_INSTRUCTION, STEPS_INSTRUCTION, INTELLIGENCES_FIELD_INSTRUCTION, TRAIT_SUBFORM_INSTRUCTION, formatChildInterestsPayload, extractJsonFromLLMResponse, getLeastExploredTalentLabels } from "@/lib/challenges.functions";
 import { z } from "zod";
 
 const RecommendInput = z.object({
@@ -298,6 +298,125 @@ Format JSON strict :
       }
     }
 
-    // 4. Default : Pas de recommandation spéciale (Exploration classique)
+    // 4. EXPLORATION — fallback par défaut (2026-07-26, review produit) : jusqu'ici,
+    // quand aucune des 3 recommandations spéciales ci-dessus ne se déclenchait, le parent
+    // retombait sur "Suggérer 4 défis" et devait choisir lui-même lequel développe le mieux
+    // son enfant — précisément le jugement qu'il n'est pas équipé pour porter (c'est pour ça
+    // qu'il a acheté le produit). "EXPLORATION" existait déjà dans RecommendationType mais
+    // n'était jamais produite. Ne se déclenche QUE si l'enfant n'a AUCUN défi en attente —
+    // sinon getActiveChallenge() en affiche déjà un sur le tableau de bord, pas besoin d'en
+    // générer un second (pas de vérification d'idempotence séparée nécessaire : zéro défi
+    // todo/in_progress est déjà, par construction, la condition d'idempotence).
+    const { data: pending } = await supabase
+      .from("challenges")
+      .select("id")
+      .eq("child_id", data.childId)
+      .in("status", ["todo", "in_progress"])
+      .limit(1);
+
+    if (!pending || pending.length === 0) {
+      const targetLabels = getLeastExploredTalentLabels(child.talents as Record<string, number> | null, 1);
+      const formattedInterests = formatChildInterestsPayload(child.interests);
+      const prompt = `Tu es Naya, mentore IA. Conçois LE prochain défi d'EXPLORATION pour ${child.name}, ${child.age} ans — un défi terrain concret (pas un exercice abstrait), qui donne à l'enfant l'occasion de révéler un talent encore peu exploré.
+
+Cible en priorité l'intelligence "${targetLabels[0] ?? "polyvalente"}", encore peu explorée dans son profil actuel.
+
+Modes d'engagement et leviers comportementaux observés par le parent :
+${formattedInterests}
+
+${STEPS_INSTRUCTION}
+
+${INTELLIGENCES_FIELD_INSTRUCTION}
+
+${TRAIT_SUBFORM_INSTRUCTION}
+
+${PROOF_MODE_INSTRUCTION}
+
+${ACADEMIC_REFERENTIAL_INSTRUCTION}
+
+Format JSON strict :
+{
+  "title": "Titre motivant",
+  "domain": "Domaine lié",
+  "description": "Consigne concrète et motivante",
+  "duration": "30 min",
+  "steps": ["Étape 1", "Étape 2"],
+  "materials": ["Matériel 1"],
+  "material_tags": ["tag1"],
+  "intelligences": ["creative"],
+  "trait_subform": "..." (voir liste par intelligence ci-dessus) ou null,
+  "difficulty": "moyen",
+  "proof_mode": "photo" ou "declarative",
+  "proof_target": {"metric": "...", "value": 20} (uniquement si declarative),
+  "declarative_award": {"corporelle": 2} (uniquement si declarative),
+  "academic_domain": "mathematiques" | "langage" | "sciences" | "corporelle" | "sociale" | "emotionnelle" | "entrepreneuriale" | "artisanale" | "spatiale" | null,
+  "academic_level_age": 14 (uniquement si academic_domain non null),
+  "academic_reference_note": "..." (uniquement si academic_domain non null)
+}`;
+
+      try {
+        const rawJson = await callClaude(prompt, true, undefined, 1000, 2);
+        const parsed = JSON.parse(extractJsonFromLLMResponse(rawJson));
+
+        const safeTitle = (parsed.title || "Prochaine exploration Naya") as string;
+        const safeDescription = (parsed.description || "") as string;
+        const safeSteps = (parsed.steps || []) as string[];
+        const safeMaterials = (parsed.materials || []) as string[];
+
+        const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+        const { data: challenge } = await supabaseAdmin
+          .from("challenges")
+          .insert({
+            child_id: data.childId,
+            user_id: userId,
+            domain: parsed.domain || "Exploration",
+            description: safeDescription,
+            duration: parsed.duration || "30 min",
+            steps: safeSteps,
+            materials: safeMaterials,
+            status: "todo",
+            progress: 0,
+            pedagogical_context: JSON.stringify({ is_recommendation: true, type: "EXPLORATION" }),
+            ...finalizeChallenge(
+              {
+                title: safeTitle,
+                description: safeDescription,
+                steps: safeSteps,
+                materials: safeMaterials,
+                material_tags: parsed.material_tags,
+                intelligences: parsed.intelligences,
+                trait_subform: parsed.trait_subform,
+                difficulty: parsed.difficulty || "moyen",
+                proof_mode: parsed.proof_mode,
+                proof_target: parsed.proof_target,
+                declarative_award: parsed.declarative_award,
+                academic_domain: parsed.academic_domain,
+                academic_level_age: parsed.academic_level_age,
+                academic_reference_note: parsed.academic_reference_note,
+              },
+              child.age
+            ),
+          })
+          .select("*")
+          .single();
+
+        if (challenge) {
+          return {
+            recommendationType: "EXPLORATION",
+            badgeLabel: "🧭 Prochaine exploration Naya",
+            pedagogicalReason: targetLabels[0]
+              ? `Naya a choisi ce défi pour donner à ${child.name} l'occasion de révéler son talent en ${targetLabels[0]}, encore peu exploré.`
+              : `Naya a choisi ce défi pour ${child.name} — une nouvelle occasion de révéler un talent caché.`,
+            challenge,
+          };
+        }
+      } catch (err) {
+        console.error("Error generating exploration recommendation challenge:", err);
+        // Pas de recommandation dégradée si la génération échoue — le parent retombe sur le
+        // flux manuel existant (Suggérer 4 défis / Composer un défi ciblé), pas une carte cassée.
+      }
+    }
+
+    // 5. Rien à ajouter : l'enfant a déjà un défi en attente, ou la génération a échoué.
     return null;
   });

@@ -49,7 +49,7 @@ export const getGuildCommunity = createServerFn({ method: "POST" })
     startOfMonth.setHours(0, 0, 0, 0);
 
     let completedThisMonth = 0;
-    let recentActivity: { childName: string; childAge: number; title: string; domain: string; completedAt: string }[] = [];
+    const recentActivity: { childName: string; childAge: number; title: string; domain: string; completedAt: string }[] = [];
 
     if (memberIds.length > 0) {
       const { count } = await supabase
@@ -59,35 +59,6 @@ export const getGuildCommunity = createServerFn({ method: "POST" })
         .eq("status", "completed")
         .gte("completed_at", startOfMonth.toISOString());
       completedThisMonth = count ?? 0;
-
-      // "À célébrer" ne vient que du Mur Public (posts) — un enfant n'apparaît
-      // ici QUE si son parent a déjà explicitement cliqué "Partager" sur ce
-      // défi précis, jamais automatiquement dès qu'un défi est complété.
-      // Double opt-in donc : guild_participation_opt_in ET partage du post.
-      const otherMemberIds = sameGuildOthers.map((o) => o.id);
-      if (otherMemberIds.length > 0) {
-        const { data: posts } = await supabase
-          .from("posts")
-          .select("caption, ai_talent_tag, created_at, child_profile_id")
-          .in("child_profile_id", otherMemberIds)
-          .order("created_at", { ascending: false })
-          .limit(5);
-
-        const nameById = new Map(sameGuildOthers.map((o) => [o.id, { name: o.name, age: o.age }]));
-        recentActivity = (posts ?? [])
-          .map((p) => {
-            const who = p.child_profile_id ? nameById.get(p.child_profile_id) : null;
-            if (!who) return null;
-            return {
-              childName: who.name,
-              childAge: who.age,
-              title: p.ai_talent_tag || p.caption || "a partagé une réussite",
-              domain: "",
-              completedAt: p.created_at,
-            };
-          })
-          .filter((x): x is NonNullable<typeof x> => x !== null);
-      }
     }
 
     // Défi collectif du mois (cf. écran 9 du prototype hi-fi — "Ensemble,

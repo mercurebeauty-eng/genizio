@@ -24,6 +24,7 @@ type ChildWithChallenges = {
   interests: string[];
   talents: Record<string, number>;
   parentPhone: string | null;
+  assignedAt: string;
   challenges: {
     id: string;
     title: string;
@@ -123,14 +124,25 @@ function SupervisorDashboardPage() {
                   const guild = getChildGuild(child.talents);
                   const completed = child.challenges.filter((c) => c.status === "completed").length;
                   const isActive = child.id === selectedId;
+                  // Seul signal de "nouveau" disponible : pas de notification à l'assignation
+                  // (aucune infra email/SMS dans ce projet) — l'accueil.assignedAt sert de proxy.
+                  const daysSinceAssigned = (Date.now() - new Date(child.assignedAt).getTime()) / 86400000;
+                  const isNew = daysSinceAssigned <= 7;
                   return (
                     <button
                       key={child.id}
                       onClick={() => setSelectedId(child.id)}
-                      className={`min-w-[200px] sm:min-w-0 text-left rounded-2xl border border-ink/10 p-3.5 shadow-2xs transition-all cursor-pointer ${
+                      className={`relative min-w-[200px] sm:min-w-0 text-left rounded-2xl border border-ink/10 p-3.5 shadow-2xs transition-all cursor-pointer ${
                         isActive ? "bg-brand text-white border-brand scale-[1.01]" : "bg-white text-ink hover:bg-surface hover:border-ink/20"
                       }`}
                     >
+                      {isNew && (
+                        <span className={`absolute -top-2 -right-2 rounded-full px-2 py-0.5 text-[9px] font-black uppercase tracking-wider shadow-sm ${
+                          isActive ? "bg-white text-brand" : "bg-brand text-white"
+                        }`}>
+                          Nouveau
+                        </span>
+                      )}
                       <div className="flex items-center gap-2 mb-1">
                         <span className="text-lg">{guild.emoji}</span>
                         <div className="font-display font-black text-sm truncate">{child.name}</div>

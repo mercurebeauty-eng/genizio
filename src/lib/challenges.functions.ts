@@ -114,7 +114,9 @@ async function trackMaterialSuggestions(items: { material_tags: string[]; title:
   }
 }
 
-function calculateXPGain(age: number): number {
+// Exportée pour que l'aperçu de défi (profiles.index.tsx) affiche le vrai gain XP au lieu
+// d'un "+180 XP" en dur qui ne correspondait à la formule réelle pour aucun âge.
+export function calculateXPGain(age: number): number {
   // L'XP gagnée diminue à mesure que l'enfant grandit, rendant les niveaux
   // plus exigeants sans toucher au palier mathématique (500) du frontend.
   // ex: 4 ans = 190 XP, 8 ans = 130 XP, 12 ans = 70 XP
@@ -136,14 +138,19 @@ async function awardCompletionXP(supabaseClient: any, childId: string) {
       .single();
     if (!profile) return null;
 
+    // Série hebdomadaire, pas quotidienne (cf. genizio-decisions) : le rythme réel du produit
+    // est "un défi par semaine" (défi terrain de 30-60min, pas un exercice de 2 minutes) —
+    // une série à fenêtre de 24h ne pouvait mathématiquement pas survivre à ce rythme et
+    // n'avait aucun rappel pour la sauver. Même mécanique qu'avant (fenêtre "déjà comptée" /
+    // "période suivante" / "trop tard, reset"), juste étalée sur 7/14 jours au lieu de 24/48h.
     const now = new Date();
     let newStreak = profile.streak || 0;
     if (profile.last_activity_date) {
       const lastDate = new Date(profile.last_activity_date);
-      const diffHours = (now.getTime() - lastDate.getTime()) / (1000 * 60 * 60);
-      if (diffHours > 24 && diffHours < 48) newStreak += 1;
-      else if (diffHours >= 48) newStreak = 1;
-      // if < 24h, streak remains the same (already incremented today)
+      const diffDays = (now.getTime() - lastDate.getTime()) / (1000 * 60 * 60 * 24);
+      if (diffDays >= 7 && diffDays < 14) newStreak += 1;
+      else if (diffDays >= 14) newStreak = 1;
+      // if < 7j, streak remains the same (already counted this week)
     } else {
       newStreak = 1;
     }
@@ -296,7 +303,9 @@ const DOMAINS = [
 // the prompt. Cheap, zero hallucination risk, and directly serves the
 // product's "reveal hidden talents" pitch instead of only reinforcing
 // declared interests.
-function getLeastExploredTalentLabels(
+// Exportée pour le fallback EXPLORATION de recommendChallengesForChild (recommendations.functions.ts) —
+// même logique déterministe que la génération en lot, réutilisée plutôt que dupliquée.
+export function getLeastExploredTalentLabels(
   talents: Record<string, number> | null | undefined,
   count = 2
 ): string[] {
@@ -1463,6 +1472,17 @@ export const updateChallenge = createServerFn({ method: "POST" })
 
     if (patch.status === "completed" && row?.child_id) {
       await awardCompletionXP(context.supabase, row.child_id);
+
+      // Même pré-génération que validateChallengeProof/submitDeclarativeProof — ce chemin
+      // (bascule manuelle de statut, sans passage par une preuve) est un 3e endroit où un
+      // défi devient "completed" (cf. commentaire awardCompletionXP au-dessus), il doit
+      // déclencher la même mécanique, pas juste les deux autres.
+      try {
+        const { recommendChallengesForChild } = await import("@/lib/recommendations.functions");
+        void recommendChallengesForChild({ data: { childId: row.child_id } });
+      } catch (err) {
+        console.error("Non-fatal: pré-génération de la prochaine mission a échoué", err);
+      }
     }
 
     return row;
@@ -1683,6 +1703,19 @@ Réponds STRICTEMENT en JSON valide avec ce format :
       } catch (err) {
         console.error("Non-fatal: processDiscriminantResult failed", err);
       }
+
+      // Pré-génération de la prochaine mission (2026-07-26, review produit) : sans ça, le
+      // parent retrouve "aucun défi en cours" à sa prochaine visite et attend l'appel IA à ce
+      // moment-là. Fire-and-forget, même pattern que processDiscriminantResult ci-dessus —
+      // import dynamique pour éviter le cycle d'imports (recommendations.functions.ts importe
+      // déjà challenges.functions.ts statiquement). Idempotent par construction :
+      // recommendChallengesForChild ne génère que si l'enfant n'a plus aucun défi en attente.
+      try {
+        const { recommendChallengesForChild } = await import("@/lib/recommendations.functions");
+        void recommendChallengesForChild({ data: { childId: challenge.child_id } });
+      } catch (err) {
+        console.error("Non-fatal: pré-génération de la prochaine mission a échoué", err);
+      }
     }
 
     return {
@@ -1803,6 +1836,16 @@ export const submitDeclarativeProof = createServerFn({ method: "POST" })
       void processDiscriminantResult(data.id, "COMPLETED", true);
     } catch (err) {
       console.error("Non-fatal: processDiscriminantResult failed", err);
+    }
+
+    // Pré-génération de la prochaine mission — même mécanisme que validateChallengeProof,
+    // même raison de ne pas dupliquer davantage : fire-and-forget, idempotent côté
+    // recommendChallengesForChild (ne se déclenche que si plus aucun défi en attente).
+    try {
+      const { recommendChallengesForChild } = await import("@/lib/recommendations.functions");
+      void recommendChallengesForChild({ data: { childId: challenge.child_id } });
+    } catch (err) {
+      console.error("Non-fatal: pré-génération de la prochaine mission a échoué", err);
     }
 
     return {

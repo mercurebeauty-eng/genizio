@@ -14,17 +14,9 @@ export function getTalentBucket(score: number): TalentBucket {
   return "pas_encore_explore";
 }
 
-export const TALENT_KEY_LABELS: Record<string, string> = {
-  spatial: "Spatiale",
-  corporelle: "Corporelle",
-  sociale: "Sociale",
-  entrepreneuriale: "Entreprendre",
-  creative: "Créative",
-  artisanale: "Artisanale",
-  emotionnelle: "Émotionnelle",
-  logico_mathematique: "Logique",
-  linguistique: "Linguistique",
-};
+import { GARDNER_LABELS } from "./gardner";
+
+export const TALENT_KEY_LABELS: Record<string, string> = GARDNER_LABELS;
 
 // The single allow-list of talent keys — child_profiles.talents must never
 // contain anything outside this set (an AI hallucination or a stray field

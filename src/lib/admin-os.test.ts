@@ -312,12 +312,12 @@ describe("Admin OS Helper Functions", () => {
 
       expect(alerts[0].childName).toBe("Kofi");
       expect(alerts[0].score).toBe(95);
-      expect(alerts[0].dominantTalent).toBe("Créative");
+      expect(alerts[0].dominantTalent).toBe("🎨 Créative");
       expect(alerts[0].badgeColor).toContain("purple");
 
       expect(alerts[1].childName).toBe("Awa");
       expect(alerts[1].score).toBe(85);
-      expect(alerts[1].dominantTalent).toBe("Spatiale");
+      expect(alerts[1].dominantTalent).toBe("📐 Spatiale");
       expect(alerts[1].badgeColor).toContain("emerald");
     });
   });

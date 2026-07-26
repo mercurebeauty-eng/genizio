@@ -4,9 +4,8 @@ import { validateChallengeProof, submitDeclarativeProof } from "@/lib/challenges
 import { NayaAvatar } from "@/components/NayaAvatar";
 import { LevelUpCelebration } from "@/components/challenges/LevelUpCelebration";
 import { BadgeUnlockedCelebration } from "@/components/challenges/BadgeUnlockedCelebration";
-import { Loader2, Upload, Check, X, Play, Sparkles, Share2, Clock, Target } from "lucide-react";
+import { Loader2, Upload, Check, X, Play, Sparkles, Clock, Target } from "lucide-react";
 import { toast } from "sonner";
-import { CreatePostModal } from "@/components/feed/CreatePostModal";
 import { MarkdownContent } from "@/components/ui/markdown-content";
 
 type Challenge = {
@@ -83,7 +82,6 @@ export function OutcomeChat({ challenge, childName, notes = "", onSaveNotes, onV
   // ordre si les deux surviennent sur la même complétion (ex: 3e défi Sciences
   // qui franchit aussi un palier de 500 XP) : Level Up d'abord, Badge ensuite.
   const [celebrationStep, setCelebrationStep] = useState<"levelup" | "badge" | null>(null);
-  const [showPostModal, setShowPostModal] = useState(false);
   // Set instead of `report` when the AI judges the proof irrelevant — that
   // response is never persisted server-side (see validateChallengeProof),
   // so staying on this form (instead of switching to the success screen) is
@@ -238,35 +236,12 @@ export function OutcomeChat({ challenge, childName, notes = "", onSaveNotes, onV
 
           <div className="flex flex-col gap-3">
             <button
-              onClick={() => setShowPostModal(true)}
-              className="press-brand w-full flex items-center justify-center gap-2 rounded-2xl bg-brand py-4 text-sm font-black text-white"
-            >
-              <Share2 className="size-5" />
-              <span>Partager sur le Cerveau Collectif</span>
-            </button>
-            <button
               onClick={() => onValidated()}
               className="press-white w-full rounded-2xl border border-ink/10 bg-white py-3.5 text-sm font-bold text-ink"
             >
               Fermer et voir le profil
             </button>
           </div>
-
-          {showPostModal && (
-            <CreatePostModal
-              isOpen={showPostModal}
-              onOpenChange={(open) => {
-                setShowPostModal(open);
-                if (!open) onValidated(); // close OutcomeChat if they close the post modal
-              }}
-              initialChallengeId={challenge.id}
-              initialImageUrl={report.challenge.proof_image_url}
-              onPostCreated={() => {
-                setShowPostModal(false);
-                onValidated();
-              }}
-            />
-          )}
         </div>
       ) : (
         <>

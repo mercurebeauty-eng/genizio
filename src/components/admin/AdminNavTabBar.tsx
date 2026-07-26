@@ -1,7 +1,15 @@
 import React from "react";
-import { BarChart3, Award, Brain, ShoppingBag, Calendar, Building2 } from "lucide-react";
+import { BarChart3, Award, Brain, ShoppingBag, Calendar, Building2, Users, Package } from "lucide-react";
 
-export type AdminTab = "executive" | "talents" | "naya" | "commerce" | "seasons" | "b2b";
+export type AdminTab =
+  | "executive"
+  | "b2b"
+  | "supervisors"
+  | "products"
+  | "talents"
+  | "naya"
+  | "commerce"
+  | "seasons";
 
 interface AdminNavTabBarProps {
   activeTab: AdminTab;
@@ -19,8 +27,8 @@ export const ADMIN_TABS: Array<{
 }> = [
   {
     id: "executive",
-    label: "Vue Exécutive",
-    sublabel: "KPIs & Parents BI",
+    label: "Exécutif",
+    sublabel: "KPIs & CRM",
     icon: BarChart3,
     badge: "BI CRM",
     badgeBgClass: "bg-brand/10",
@@ -28,17 +36,35 @@ export const ADMIN_TABS: Array<{
   },
   {
     id: "b2b",
-    label: "Partenaires ONG",
-    sublabel: "Campagnes & B2B",
+    label: "Campagnes B2B",
+    sublabel: "ONG & Cohortes",
     icon: Building2,
     badge: "BI B2B",
     badgeBgClass: "bg-ink/10",
     badgeTextClass: "text-ink",
   },
   {
+    id: "supervisors",
+    label: "Superviseurs",
+    sublabel: "Mentors & Quotas",
+    icon: Users,
+    badge: "Mentors",
+    badgeBgClass: "bg-emerald-500/10",
+    badgeTextClass: "text-emerald-600",
+  },
+  {
+    id: "products",
+    label: "Produits",
+    sublabel: "Kits & Stock",
+    icon: Package,
+    badge: "Kits",
+    badgeBgClass: "bg-indigo-500/10",
+    badgeTextClass: "text-indigo-600",
+  },
+  {
     id: "talents",
     label: "Talents & Villes",
-    sublabel: "Guildes & Territoires",
+    sublabel: "Guildes & Radar",
     icon: Award,
     badge: "Radar",
     badgeBgClass: "bg-leaf/10",
@@ -47,7 +73,7 @@ export const ADMIN_TABS: Array<{
   {
     id: "naya",
     label: "IA Naya",
-    sublabel: "Prompting & Diagnostics",
+    sublabel: "Diagnostics & Prompts",
     icon: Brain,
     badge: "IA",
     badgeBgClass: "bg-sky/10",
@@ -55,16 +81,16 @@ export const ADMIN_TABS: Array<{
   },
   {
     id: "commerce",
-    label: "Commerce & Passeports",
-    sublabel: "Boutique & Slots",
+    label: "Commerce",
+    sublabel: "Boutique & Orders",
     icon: ShoppingBag,
-    badge: "Kits",
+    badge: "Ventes",
     badgeBgClass: "bg-purple-500/10",
     badgeTextClass: "text-purple-600",
   },
   {
     id: "seasons",
-    label: "Saisons & Parrainages",
+    label: "Seasons",
     sublabel: "Trimestres & Diaspora",
     icon: Calendar,
     badge: "3 Mois",
@@ -76,7 +102,7 @@ export const ADMIN_TABS: Array<{
 export function AdminNavTabBar({ activeTab, onTabChange }: AdminNavTabBarProps) {
   return (
     <div className="w-full overflow-x-auto bg-surface/80 backdrop-blur-md border border-ink/10 p-1.5 sm:p-2 rounded-3xl shadow-sm mb-6 sm:mb-8 no-scrollbar scroll-smooth">
-      <nav className="flex min-w-max gap-2 sm:grid sm:min-w-0 sm:grid-cols-3 lg:grid-cols-6" aria-label="Navigation Admin OS">
+      <nav className="flex min-w-max gap-2 sm:grid sm:min-w-0 sm:grid-cols-2 md:grid-cols-4 lg:grid-cols-8" aria-label="Navigation Admin OS">
         {ADMIN_TABS.map((tab) => {
           const Icon = tab.icon;
           const isActive = activeTab === tab.id;
@@ -87,7 +113,7 @@ export function AdminNavTabBar({ activeTab, onTabChange }: AdminNavTabBarProps) 
               type="button"
               onClick={() => onTabChange(tab.id)}
               aria-current={isActive ? "page" : undefined}
-              className={`group relative flex flex-col items-start p-3 sm:p-4 rounded-2xl transition-all duration-200 text-left cursor-pointer border min-w-[155px] sm:min-w-0 flex-1 ${
+              className={`group relative flex flex-col items-start p-3 sm:p-4 rounded-2xl transition-all duration-200 text-left cursor-pointer border min-w-[140px] sm:min-w-0 flex-1 ${
                 isActive
                   ? "bg-white border-ink/15 shadow-md scale-[1.01]"
                   : "bg-white/40 border-transparent hover:bg-white/80 hover:border-ink/5 text-ink/70"

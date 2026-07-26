@@ -66,11 +66,22 @@ export const assignSupervisor = createServerFn({ method: "POST" })
     const targetUser = users.find((u) => u.email === data.email);
     if (!targetUser) throw new Error(`Aucun compte trouvé pour l'email : ${data.email}`);
 
-    const { data: row, error } = await supabaseAdmin
+    // Chercher l'inscription à une campagne pour cet enfant si elle existe
+    const { data: enrollment } = await (supabaseAdmin as any)
+      .from("season_enrollments")
+      .select("campaign_id")
+      .eq("child_id", data.childProfileId)
+      .not("campaign_id", "is", null)
+      .order("enrolled_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    const { data: row, error } = await (supabaseAdmin as any)
       .from("supervisors")
       .insert({
         supervisor_user_id: targetUser.id,
         child_profile_id: data.childProfileId,
+        campaign_id: enrollment?.campaign_id ?? null,
         assigned_by: (context as any).claims?.sub ?? null,
       })
       .select("*")
@@ -92,6 +103,41 @@ export const removeSupervisor = createServerFn({ method: "POST" })
     return { ok: true };
   });
 
+// Le parent ne voyait jusqu'ici jamais qui supervise son enfant (aucune UI, aucune notif —
+// il n'existe pas d'infra email/SMS dans ce projet, seulement des liens WhatsApp manuels).
+// Cette fonction expose l'info de façon passive : le parent la découvre en ouvrant le
+// portfolio. Ownership vérifiée manuellement (supabaseAdmin bypass les RLS).
+const ChildSupervisorInfoInput = z.object({ childId: z.string().uuid() });
+
+export const getChildSupervisorInfo = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .validator((input: unknown) => ChildSupervisorInfoInput.parse(input))
+  .handler(async ({ data, context }) => {
+    const userId = (context as any).claims?.sub;
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+
+    const { data: child } = await supabaseAdmin
+      .from("child_profiles")
+      .select("id, user_id")
+      .eq("id", data.childId)
+      .maybeSingle();
+    if (!child || child.user_id !== userId) return null;
+
+    const { data: assignment } = await supabaseAdmin
+      .from("supervisors")
+      .select("supervisor_user_id, created_at")
+      .eq("child_profile_id", data.childId)
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    if (!assignment) return null;
+
+    const users = await listAllUsers(supabaseAdmin);
+    const email = users.find((u) => u.id === assignment.supervisor_user_id)?.email ?? "Inconnu";
+
+    return { email, assignedAt: assignment.created_at as string };
+  });
+
 // ── Vue superviseur : liste de ses enfants assignés ──
 export const getSupervisorDashboard = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
@@ -101,7 +147,7 @@ export const getSupervisorDashboard = createServerFn({ method: "GET" })
 
     const { data: assignments, error } = await supabaseAdmin
       .from("supervisors")
-      .select("child_profile_id, child_profiles(id, name, age, talents, city, interests, user_id)")
+      .select("child_profile_id, created_at, child_profiles(id, name, age, talents, city, interests, user_id)")
       .eq("supervisor_user_id", userId);
     if (error) throw new Error(error.message);
 
@@ -128,6 +174,7 @@ export const getSupervisorDashboard = createServerFn({ method: "GET" })
         return {
           ...child,
           parentPhone: phoneByUserId.get(child?.user_id) ?? null,
+          assignedAt: a.created_at as string,
           challenges: (challenges ?? []).filter((c) => c.child_id === a.child_profile_id),
         };
       }),

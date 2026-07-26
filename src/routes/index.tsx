@@ -7,6 +7,7 @@ import { TalentRadarChart } from "@/components/TalentRadarChart";
 import { INTERESTS_BY_TALENT } from "@/components/profiles/shared";
 import { Users, Brain, ShoppingBag, Award, Sparkles, BookOpen, Star, HelpCircle, ArrowRight, ShieldCheck, Menu, X } from "lucide-react";
 import { GenizioLoader } from "@/components/GenizioLoader";
+import { TALENT_KEY_LABELS } from "@/lib/talent-buckets";
 
 export const Route = createFileRoute("/")({
   component: NayaLanding,
@@ -89,15 +90,15 @@ const CHALLENGES: Challenge[] = [
 ];
 
 const DOMAINS = [
-  { key: "spatial", label: "Spatiale & Visuelle", icon: "🏗️", desc: "Architecture, construction de volumes, dessin et repérage dans l'espace." },
-  { key: "corporelle", label: "Corporelle & Mouvement", icon: "⚽", desc: "Motricité globale, agilité, théâtre et expression physique." },
-  { key: "sociale", label: "Sociale & Relations", icon: "🤝", desc: "Coopération, empathie, leadership naturel et négociation collective." },
-  { key: "entrepreneuriale", label: "Entreprendre & Projets", icon: "💡", desc: "Initiation commerciale, gestion, organisation et sens pratique de la valeur." },
-  { key: "creative", label: "Créative & Artistique", icon: "🎨", desc: "Expression picturale, composition musicale, improvisation et contes." },
-  { key: "artisanale", label: "Artisanale & Manuelle", icon: "🪵", desc: "Cuisine, couture, menuiserie, bricolage et entretien d'objets." },
-  { key: "emotionnelle", label: "Émotionnelle & Soi", icon: "❤️", desc: "Connaissance de ses forces, confiance, persévérance et gestion du stress." },
-  { key: "logico_mathematique", label: "Logique & Sciences", icon: "🔬", desc: "Résolution d'énigmes mathématiques, algorithmes simples et expériences." },
-  { key: "linguistique", label: "Linguistique & Mots", icon: "🗣️", desc: "Expression orale, plaidoyers, goût de la lecture et rédaction créative." },
+  { key: "spatial", label: TALENT_KEY_LABELS.spatial, icon: "📐", desc: "Architecture, construction de volumes, dessin et repérage dans l'espace." },
+  { key: "corporelle", label: TALENT_KEY_LABELS.corporelle, icon: "🏃", desc: "Motricité globale, agilité, théâtre et expression physique." },
+  { key: "sociale", label: TALENT_KEY_LABELS.sociale, icon: "🤝", desc: "Coopération, empathie, leadership naturel et négociation collective." },
+  { key: "entrepreneuriale", label: TALENT_KEY_LABELS.entrepreneuriale, icon: "💡", desc: "Initiation commerciale, gestion, organisation et sens pratique de la valeur." },
+  { key: "creative", label: TALENT_KEY_LABELS.creative, icon: "🎨", desc: "Expression picturale, composition musicale, improvisation et contes." },
+  { key: "artisanale", label: TALENT_KEY_LABELS.artisanale, icon: "🪵", desc: "Cuisine, couture, menuiserie, bricolage et entretien d'objets." },
+  { key: "emotionnelle", label: TALENT_KEY_LABELS.emotionnelle, icon: "🪞", desc: "Connaissance de ses forces, confiance, persévérance et gestion du stress." },
+  { key: "logico_mathematique", label: TALENT_KEY_LABELS.logico_mathematique, icon: "🧠", desc: "Résolution d'énigmes mathématiques, algorithmes simples et expériences." },
+  { key: "linguistique", label: TALENT_KEY_LABELS.linguistique, icon: "🗣️", desc: "Expression orale, plaidoyers, goût de la lecture et rédaction créative." },
 ];
 
 const TONE_STYLES: Record<Challenge["tone"], { chip: string; num: string }> = {
