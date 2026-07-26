@@ -2,7 +2,7 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useSession } from "@/hooks/use-session";
-import { Phone, Check, Loader2, Trophy, Lock, ChevronDown, Plus } from "lucide-react";
+import { Phone, Check, Loader2, Trophy, Lock, ChevronDown, Plus, ShoppingBag } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -467,10 +467,10 @@ function DashboardPage() {
                         <div className="font-display text-balance font-bold text-[15px] mt-[8px] text-ink">Mon parcours</div>
                         <div className="text-[12px] text-ink/60 mt-[2px]">Ton chemin de talents</div>
                       </Link>
-                      <Link to="/profiles/$profileId/portfolio" params={{ profileId: selected.id }} className="text-left border border-border bg-sky-50 rounded-[1rem] p-[15px] cursor-pointer shadow-sm">
-                        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--sky-dark)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m12.83 2.18a2 2 0 0 0-1.66 0L2.6 6.08a1 1 0 0 0 0 1.83l8.58 3.91a2 2 0 0 0 1.66 0l8.58-3.9a1 1 0 0 0 0-1.83Z"/><path d="m2 12 8.58 3.91a2 2 0 0 0 1.66 0L20.83 12"/><path d="m2 17 8.58 3.91a2 2 0 0 0 1.66 0L20.83 17"/></svg>
-                        <div className="font-display text-balance font-bold text-[15px] mt-[8px] text-ink">Portfolio vivant</div>
-                        <div className="text-[12px] text-ink/60 mt-[2px]">Là où ça t'emmène</div>
+                      <Link to="/boutique" className="text-left border border-border bg-amber-50 rounded-[1rem] p-[15px] cursor-pointer shadow-sm">
+                        <ShoppingBag width="22" height="22" strokeWidth={2} className="text-amber-700" />
+                        <div className="font-display text-balance font-bold text-[15px] mt-[8px] text-ink">Boutique</div>
+                        <div className="text-[12px] text-ink/60 mt-[2px]">Kits pour ses défis</div>
                       </Link>
                     </div>
                   </div>

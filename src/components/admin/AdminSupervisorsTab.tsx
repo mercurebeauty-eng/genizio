@@ -26,10 +26,17 @@ export function AdminSupervisorsTab() {
   const removeFn = useServerFn(removeSupervisor);
   const listChildrenFn = useServerFn(listChildProfilesAdmin);
 
+  // Même fix que AdminSeasonsTab/AdminProductsTab : sans en-tête Authorization explicite,
+  // requireAdmin s'appuie uniquement sur le repli cookie, qui échoue silencieusement dans
+  // certains contextes — c'est très probablement ce qui rendait cet écran (l'endroit même où
+  // on associe un superviseur à un enfant) peu fiable.
   const refetch = async () => {
+    const opts = session?.access_token
+      ? { headers: { Authorization: `Bearer ${session.access_token}` } }
+      : {};
     setFetching(true);
     try {
-      const data = await listFn();
+      const data = await listFn({ data: undefined, ...opts });
       setSupervisors((data as any[]) ?? []);
       setForbidden(false);
     } catch (err: any) {
@@ -52,7 +59,10 @@ export function AdminSupervisorsTab() {
 
   useEffect(() => {
     if (!session) return;
-    listChildrenFn()
+    const opts = session?.access_token
+      ? { headers: { Authorization: `Bearer ${session.access_token}` } }
+      : {};
+    listChildrenFn({ data: undefined, ...opts })
       .then((data) => setChildProfiles((data as any[]) ?? []))
       .catch((err) => {
         console.error("Erreur chargement profils enfants admin:", err);
@@ -69,9 +79,12 @@ export function AdminSupervisorsTab() {
       toast.error("Email et profil enfant requis.");
       return;
     }
+    const opts = session?.access_token
+      ? { headers: { Authorization: `Bearer ${session.access_token}` } }
+      : {};
     setSaving(true);
     try {
-      await assignFn({ data: { email: email.trim(), childProfileId } });
+      await assignFn({ data: { email: email.trim(), childProfileId }, ...opts });
       toast.success("Superviseur assigné avec succès !");
       setEmail("");
       setChildProfileId("");
@@ -85,14 +98,21 @@ export function AdminSupervisorsTab() {
 
   const handleRemove = async (id: string) => {
     if (!(await confirmDialog({ title: "Retirer ce superviseur ?", confirmLabel: "Retirer", variant: "danger" }))) return;
+    const opts = session?.access_token
+      ? { headers: { Authorization: `Bearer ${session.access_token}` } }
+      : {};
     try {
-      await removeFn({ data: { id } });
+      await removeFn({ data: { id }, ...opts });
       toast.success("Superviseur retiré.");
       void refetch();
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Erreur lors du retrait du superviseur.");
     }
   };
+
+  const supervisedChildIds = new Set(supervisors.map((s) => s.child_profile_id as string));
+  const unsupervisedChildProfiles = childProfiles.filter((p) => !supervisedChildIds.has(p.id));
+  const supervisedCount = childProfiles.length - unsupervisedChildProfiles.length;
 
   if (loading || !session) {
     return (
@@ -156,10 +176,18 @@ export function AdminSupervisorsTab() {
                   className="w-full rounded-2xl border border-ink/10 bg-white px-4 py-3 text-sm font-bold outline-none focus:ring-2 focus:ring-brand shadow-sm cursor-pointer"
                 >
                   <option value="">Sélectionner un enfant…</option>
-                  {childProfiles.map((p) => (
+                  {unsupervisedChildProfiles.map((p) => (
                     <option key={p.id} value={p.id}>{p.name} ({p.age} ans)</option>
                   ))}
                 </select>
+                {/* Un enfant ne peut avoir qu'un seul superviseur (contrainte base, migration
+                    20260726140000) — les enfants déjà supervisés sont donc retirés de la liste
+                    plutôt que de laisser l'admin choisir puis échouer sur une erreur en base. */}
+                {supervisedCount > 0 && (
+                  <p className="mt-1.5 text-[11px] text-ink/50">
+                    {supervisedCount} enfant{supervisedCount > 1 ? "s" : ""} déjà supervisé{supervisedCount > 1 ? "s" : ""} — non listé{supervisedCount > 1 ? "s" : ""} ici.
+                  </p>
+                )}
               </div>
               <div className="flex items-end md:col-span-1">
                 <button

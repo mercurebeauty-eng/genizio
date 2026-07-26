@@ -5,6 +5,7 @@ import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { listAllUsers } from "@/integrations/supabase/admin-users";
 import { getActiveSeason } from "./seasons.functions";
+import { insertSupervisorAssignments } from "./supervisors.functions";
 
 export interface Campaign {
   id: string;
@@ -375,7 +376,7 @@ export const assignCampaignSupervisor = createServerFn({ method: "POST" })
       .from("season_enrollments")
       .select("child_id")
       .eq("campaign_id", data.campaignId);
-    const cohortChildIds = [...new Set((enrollments ?? []).map((e: any) => e.child_id as string))];
+    const cohortChildIds: string[] = [...new Set<string>((enrollments ?? []).map((e: any) => e.child_id as string))];
     if (cohortChildIds.length === 0) {
       throw new Error("Aucun enfant inscrit dans cette campagne pour l'instant.");
     }
@@ -407,18 +408,15 @@ export const assignCampaignSupervisor = createServerFn({ method: "POST" })
       throw new Error(`Le superviseur ${data.supervisorEmail} a atteint sa limite de ${quota} enfants. Contactez le support pour augmenter son quota.`);
     }
 
-    const rows = unsupervisedChildIds.slice(0, toAssign).map((childId) => ({
-      supervisor_user_id: supervisor.id,
-      child_profile_id: childId,
-      campaign_id: data.campaignId,
-      assigned_by: managerId,
-    }));
-
-    const { error } = await (supabaseAdmin as any).from("supervisors").insert(rows);
-    if (error) {
-      if (error.code === "23505") throw new Error("Ce superviseur est déjà assigné à un ou plusieurs de ces enfants.");
-      throw new Error(error.message);
-    }
+    // Insertion centralisée (supervisors.functions.ts) — même point de passage que le chemin
+    // admin manuel, donc la contrainte UNIQUE(child_profile_id) et le message d'erreur sont
+    // gérés à un seul endroit pour les deux chemins.
+    await insertSupervisorAssignments(supabaseAdmin, {
+      supervisorUserId: supervisor.id,
+      childProfileIds: unsupervisedChildIds.slice(0, toAssign),
+      campaignId: data.campaignId,
+      assignedBy: managerId,
+    });
 
     return { success: true, assignedCount: toAssign };
   });

@@ -47,4 +47,7 @@ supabase/.temp/
 .agents/sentinel/
 .agents/orchestrator/
 .agents/teamwork_preview_explorer_*/
+.agents/teamwork_preview_auditor_*/
+.agents/teamwork_preview_reviewer_*/
+.agents/teamwork_preview_worker_*/
 .agents/ORIGINAL_REQUEST.md

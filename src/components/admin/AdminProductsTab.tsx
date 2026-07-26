@@ -106,14 +106,21 @@ export function AdminProductsTab() {
   const updateStatusFn = useServerFn(updateOrderStatus);
   const getStatsFn = useServerFn(getEcosystemStats);
 
+  // Seul onglet admin (avec AdminSupervisorsTab et CreateSeasonModal) encore jamais passé au
+  // fix "en-tête Authorization explicite" — sans lui, requireAdmin s'appuie uniquement sur le
+  // repli cookie, qui échoue silencieusement dans certains contextes (même classe de bug que
+  // AdminSeasonsTab, cf. commentaire là-bas).
   const refetch = async () => {
+    const opts = session?.access_token
+      ? { headers: { Authorization: `Bearer ${session.access_token}` } }
+      : {};
     setFetching(true);
     try {
       const [productsData, suggestionsData, ordersData, statsData] = await Promise.all([
-        listFn(),
-        listSuggestionsFn(),
-        listOrdersFn(),
-        getStatsFn(),
+        listFn({ data: undefined, ...opts }),
+        listSuggestionsFn({ data: undefined, ...opts }),
+        listOrdersFn({ data: undefined, ...opts }),
+        getStatsFn({ data: undefined, ...opts }),
       ]);
       setProducts((productsData as Product[]) ?? []);
       setSuggestions((suggestionsData as MaterialSuggestion[]) ?? []);
@@ -138,9 +145,12 @@ export function AdminProductsTab() {
   };
 
   const handleUpdateStatus = async (orderId: string, status: string) => {
+    const opts = session?.access_token
+      ? { headers: { Authorization: `Bearer ${session.access_token}` } }
+      : {};
     setUpdatingOrderId(orderId);
     try {
-      await updateStatusFn({ data: { id: orderId, status: status as any } });
+      await updateStatusFn({ data: { id: orderId, status: status as any }, ...opts });
       toast.success("Statut de la commande mis à jour.");
       void refetch();
     } catch (err) {
@@ -160,6 +170,9 @@ export function AdminProductsTab() {
       toast.error("Nom et prix requis.");
       return;
     }
+    const opts = session?.access_token
+      ? { headers: { Authorization: `Bearer ${session.access_token}` } }
+      : {};
     setSaving(true);
     try {
       await createFn({
@@ -175,6 +188,7 @@ export function AdminProductsTab() {
           is_active: true,
           fromSuggestionId: pendingSuggestionId ?? undefined,
         },
+        ...opts,
       });
       toast.success("Produit ajouté au catalogue.");
       setDraft(emptyDraft);
@@ -194,8 +208,11 @@ export function AdminProductsTab() {
   };
 
   const ignoreSuggestion = async (id: string) => {
+    const opts = session?.access_token
+      ? { headers: { Authorization: `Bearer ${session.access_token}` } }
+      : {};
     try {
-      await ignoreSuggestionFn({ data: { id } });
+      await ignoreSuggestionFn({ data: { id }, ...opts });
       setSuggestions((prev) => prev.filter((s) => s.id !== id));
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Erreur lors du rejet de la suggestion.");
@@ -203,8 +220,11 @@ export function AdminProductsTab() {
   };
 
   const toggleActive = async (p: Product) => {
+    const opts = session?.access_token
+      ? { headers: { Authorization: `Bearer ${session.access_token}` } }
+      : {};
     try {
-      await updateFn({ data: { id: p.id, is_active: !p.is_active } });
+      await updateFn({ data: { id: p.id, is_active: !p.is_active }, ...opts });
       void refetch();
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Erreur lors de la mise à jour du produit.");
@@ -213,8 +233,11 @@ export function AdminProductsTab() {
 
   const remove = async (id: string) => {
     if (!(await confirmDialog({ title: "Supprimer ce produit ?", confirmLabel: "Supprimer", variant: "danger" }))) return;
+    const opts = session?.access_token
+      ? { headers: { Authorization: `Bearer ${session.access_token}` } }
+      : {};
     try {
-      await deleteFn({ data: { id } });
+      await deleteFn({ data: { id }, ...opts });
       toast.success("Produit supprimé.");
       void refetch();
     } catch (err) {

@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { X, Sparkles } from "lucide-react";
 import { useServerFn } from "@tanstack/react-start";
+import { useSession } from "@/hooks/use-session";
 import { createSeasonAdmin, updateSeasonAdmin, type Season } from "@/lib/seasons.functions";
 import { toast } from "sonner";
 
@@ -11,6 +12,7 @@ interface CreateSeasonModalProps {
 }
 
 export function CreateSeasonModal({ initial, onClose, onSuccess }: CreateSeasonModalProps) {
+  const { session } = useSession();
   const createFn = useServerFn(createSeasonAdmin);
   const updateFn = useServerFn(updateSeasonAdmin);
   const isEditing = !!initial;
@@ -35,11 +37,14 @@ export function CreateSeasonModal({ initial, onClose, onSuccess }: CreateSeasonM
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    const opts = session?.access_token
+      ? { headers: { Authorization: `Bearer ${session.access_token}` } }
+      : {};
     setLoading(true);
     try {
       const res = isEditing
-        ? await updateFn({ data: { seasonId: initial!.id, ...formData } })
-        : await createFn({ data: formData });
+        ? await updateFn({ data: { seasonId: initial!.id, ...formData }, ...opts })
+        : await createFn({ data: formData, ...opts });
       if (res.success) {
         toast.success(isEditing ? "Saison modifiée avec succès !" : "Saison créée avec succès !");
         onSuccess();

@@ -54,6 +54,33 @@ const AssignSupervisorInput = z.object({
   childProfileId: z.string().uuid("ID de profil invalide"),
 });
 
+// Point d'insertion unique pour les deux chemins d'assignation (admin manuel ici, et B2B dans
+// campaigns.functions.ts) — décision utilisateur (2026-07-26) : "un seul superviseur par
+// enfant" est une règle du SYSTÈME, pas d'un chemin en particulier. Avant, seul le chemin B2B
+// filtrait les enfants déjà supervisés (côté application, pas garanti), et le chemin admin
+// n'appliquait rien du tout. Centraliser l'insertion ici évite qu'un futur 3e chemin
+// (import en masse, transfert...) oublie la même garde-fou. La contrainte UNIQUE
+// (child_profile_id) posée en base (migration 20260726140000) fait foi dans tous les cas ;
+// ceci ne fait que donner un message d'erreur clair au lieu d'un code Postgres brut.
+export async function insertSupervisorAssignments(
+  supabaseAdmin: any,
+  params: { supervisorUserId: string; childProfileIds: string[]; campaignId: string | null; assignedBy: string | null }
+) {
+  if (params.childProfileIds.length === 0) return [];
+  const rows = params.childProfileIds.map((childId) => ({
+    supervisor_user_id: params.supervisorUserId,
+    child_profile_id: childId,
+    campaign_id: params.campaignId,
+    assigned_by: params.assignedBy,
+  }));
+  const { data, error } = await supabaseAdmin.from("supervisors").insert(rows).select("*");
+  if (error) {
+    if (error.code === "23505") throw new Error("Un ou plusieurs de ces enfants ont déjà un superviseur assigné.");
+    throw new Error(error.message);
+  }
+  return data ?? [];
+}
+
 export const assignSupervisor = createServerFn({ method: "POST" })
   .middleware([requireAdmin])
   .validator((input: unknown) => AssignSupervisorInput.parse(input))
@@ -76,21 +103,13 @@ export const assignSupervisor = createServerFn({ method: "POST" })
       .limit(1)
       .maybeSingle();
 
-    const { data: row, error } = await (supabaseAdmin as any)
-      .from("supervisors")
-      .insert({
-        supervisor_user_id: targetUser.id,
-        child_profile_id: data.childProfileId,
-        campaign_id: enrollment?.campaign_id ?? null,
-        assigned_by: (context as any).claims?.sub ?? null,
-      })
-      .select("*")
-      .single();
-    if (error) {
-      if (error.code === "23505") throw new Error("Ce superviseur est déjà assigné à cet enfant.");
-      throw new Error(error.message);
-    }
-    return row;
+    const rows = await insertSupervisorAssignments(supabaseAdmin, {
+      supervisorUserId: targetUser.id,
+      childProfileIds: [data.childProfileId],
+      campaignId: enrollment?.campaign_id ?? null,
+      assignedBy: (context as any).claims?.sub ?? null,
+    });
+    return rows[0];
   });
 
 export const removeSupervisor = createServerFn({ method: "POST" })

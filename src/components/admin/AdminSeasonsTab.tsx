@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
+import { useSession } from "@/hooks/use-session";
 import { Calendar, Gift, Users, CheckCircle, Sparkles, Link as LinkIcon, Plus, Copy, Check, ShieldCheck, Loader2, Pencil, Trash2, BellRing, Phone } from "lucide-react";
 import { listSeasonsAdmin, listSponsorshipsAdmin, updateSeasonStatusAdmin, deleteSeasonAdmin, confirmSponsorshipPaymentAdmin, getUpcomingExpirationsAdmin, DEFAULT_FALLBACK_SEASON, type Season, type SponsorshipToken } from "@/lib/seasons.functions";
 import { toast } from "sonner";
@@ -23,6 +24,7 @@ const SEASON_STATUS_LABELS: Record<string, string> = {
 };
 
 export function AdminSeasonsTab() {
+  const { session } = useSession();
   const getSeasonsFn = useServerFn(listSeasonsAdmin);
   const getSponsorshipsFn = useServerFn(listSponsorshipsAdmin);
 
@@ -41,10 +43,24 @@ export function AdminSeasonsTab() {
   const [copiedCode, setCopiedCode] = useState<string | null>(null);
   const [confirmingId, setConfirmingId] = useState<string | null>(null);
 
+  // Ce fichier était le seul onglet admin encore jamais passé au fix "en-tête Authorization
+  // explicite" (admin.index.tsx / AdminCampaignsTab.tsx l'ont déjà) — sans ça, requireAdmin
+  // s'appuie uniquement sur le repli cookie, qui échoue silencieusement dans certains
+  // contextes. Les 3 requêtes échouaient alors ensemble (Promise.all), l'erreur atterrissait
+  // dans le catch, et l'état restait bloqué sur ses valeurs initiales ([] pour sponsorships)
+  // pour toujours — d'où "Historique des Parrainages" qui semble figé sur "Aucun parrainage
+  // enregistré" alors que 101 lignes existent réellement en base.
   const loadData = async () => {
+    const opts = session?.access_token
+      ? { headers: { Authorization: `Bearer ${session.access_token}` } }
+      : {};
     setLoading(true);
     try {
-      const [sList, tList, eList] = await Promise.all([getSeasonsFn(), getSponsorshipsFn(), getUpcomingExpirationsFn()]);
+      const [sList, tList, eList] = await Promise.all([
+        getSeasonsFn({ data: undefined, ...opts }),
+        getSponsorshipsFn({ data: undefined, ...opts }),
+        getUpcomingExpirationsFn({ data: undefined, ...opts }),
+      ]);
       if (sList && sList.length > 0) setSeasons(sList);
       if (tList) setSponsorships(tList);
       if (eList) setUpcomingExpirations(eList as UpcomingExpiration[]);
@@ -57,7 +73,8 @@ export function AdminSeasonsTab() {
 
   useEffect(() => {
     loadData();
-  }, []);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [session]);
 
   // seasons est trié par created_at desc (listSeasonsAdmin) — seasons[0] est donc la plus
   // récemment créée, pas forcément la saison active. Sans ce find, créer une "Saison 2" à
@@ -66,8 +83,11 @@ export function AdminSeasonsTab() {
   const activeSeason = seasons.find((s) => s.status === "active") ?? seasons[0];
 
   const handleUpdateStatus = async (seasonId: string, status: any) => {
+    const opts = session?.access_token
+      ? { headers: { Authorization: `Bearer ${session.access_token}` } }
+      : {};
     try {
-      const res = await updateStatusFn({ data: { seasonId, status } });
+      const res = await updateStatusFn({ data: { seasonId, status }, ...opts });
       if (res.success) {
         toast.success("Statut mis à jour !");
         loadData();
@@ -85,9 +105,12 @@ export function AdminSeasonsTab() {
       variant: "danger",
     }))) return;
 
+    const opts = session?.access_token
+      ? { headers: { Authorization: `Bearer ${session.access_token}` } }
+      : {};
     setDeletingId(season.id);
     try {
-      const res = await deleteSeasonFn({ data: { seasonId: season.id } });
+      const res = await deleteSeasonFn({ data: { seasonId: season.id }, ...opts });
       if (res.success) {
         toast.success("Saison supprimée.");
         loadData();
@@ -108,9 +131,12 @@ export function AdminSeasonsTab() {
 
   const handleConfirmPayment = async (tokenId: string) => {
     if (confirmingId === tokenId) return;
+    const opts = session?.access_token
+      ? { headers: { Authorization: `Bearer ${session.access_token}` } }
+      : {};
     setConfirmingId(tokenId);
     try {
-      const res = await confirmPaymentFn({ data: { tokenId } });
+      const res = await confirmPaymentFn({ data: { tokenId }, ...opts });
       if (res.success) {
         toast.success("Paiement confirmé — le code est maintenant activable.");
         loadData();
