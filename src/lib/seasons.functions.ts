@@ -28,6 +28,7 @@ export interface SponsorshipToken {
   target_child_name?: string | null;
   amount_paid: number;
   currency: string;
+  payment_confirmed: boolean;
   is_redeemed: boolean;
   redeemed_by_child_id?: string | null;
   created_at: string;
@@ -142,6 +143,7 @@ export const createSponsorshipToken = createServerFn({ method: "POST" })
         target_child_name: data.targetChildName,
         amount_paid: data.amountPaid,
         currency: data.currency,
+        payment_confirmed: false,
         is_redeemed: false,
         created_at: new Date().toISOString(),
       } as SponsorshipToken;
@@ -175,6 +177,15 @@ export const redeemSponsorshipToken = createServerFn({ method: "POST" })
 
     if (token.is_redeemed) {
       throw new Error("Ce code de parrainage a déjà été utilisé.");
+    }
+
+    // createSponsorshipToken (page publique /parrainage, sans authentification) ne vérifie
+    // aucun paiement réel au moment de la génération du code — sans ce garde-fou, n'importe
+    // qui pouvait créer un code gratuitement puis le rédimer immédiatement. Un admin doit
+    // confirmer manuellement le paiement (WhatsApp/Mobile Money) via confirmSponsorshipPaymentAdmin
+    // avant que ce code ne devienne utilisable, même pattern que les commandes boutique.
+    if (!token.payment_confirmed) {
+      throw new Error("Ce parrainage est en attente de confirmation de paiement par l'équipe Génizio. Vous recevrez une notification dès son activation.");
     }
 
     const { error: updateErr } = await (supabaseAdmin as any)
@@ -234,6 +245,24 @@ export const listSponsorshipsAdmin = createServerFn({ method: "GET" })
       .limit(50);
 
     return (tokens as SponsorshipToken[]) || [];
+  });
+
+// Sans ceci, aucun code de parrainage ne pouvait jamais devenir légitimement utilisable une
+// fois le garde-fou payment_confirmed ajouté à redeemSponsorshipToken — l'admin bascule ce
+// flag à TRUE une fois le paiement WhatsApp/Mobile Money du parrain vérifié manuellement.
+export const confirmSponsorshipPaymentAdmin = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .validator((input: any) => z.object({ tokenId: z.string().uuid() }).parse(input))
+  .handler(async ({ data }) => {
+    const { error } = await (supabaseAdmin as any)
+      .from("sponsorship_tokens")
+      .update({ payment_confirmed: true })
+      .eq("id", data.tokenId);
+
+    if (error) {
+      throw new Error(`Erreur lors de la confirmation du paiement: ${error.message}`);
+    }
+    return { success: true };
   });
 
 export const createSeasonAdmin = createServerFn({ method: "POST" })

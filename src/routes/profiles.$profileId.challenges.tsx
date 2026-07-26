@@ -13,6 +13,7 @@ import {
   getChildAISynthesis,
   generateSingleChallenge,
   generateAcademicHomeworkChallenge,
+  getAcademicGapsForChild,
   assignTemplateChallenge,
   TALENT_SUBFORM_LABELS,
   TALENT_SUBFORM_TO_DOMAIN,
@@ -164,6 +165,16 @@ function ChallengesPage() {
       });
   }, []);
 
+  // Alimente le badge "Lacune détectée" de AcademicHomeworkInput — auparavant jamais fourni,
+  // la prop restait sur son défaut {} et le badge n'apparaissait donc jamais (cf. audit
+  // feat/naya-academic-homework-fusion, 2026-07-22).
+  useEffect(() => {
+    if (!profileId) return;
+    getAcademicGaps({ data: { childId: profileId } })
+      .then((gaps) => setAcademicGaps(gaps ?? {}))
+      .catch((err) => console.error("Error fetching academic gaps:", err));
+  }, [profileId]);
+
   const hasKit = (materialTags?: string[] | null) => {
     if (!materialTags || materialTags.length === 0) return false;
     return activeProducts.some((product) =>
@@ -185,6 +196,7 @@ function ChallengesPage() {
   const [currentGeneratedChallenge, setCurrentGeneratedChallenge] = useState<any | null>(null);
   const [loadingTextIndex, setLoadingTextIndex] = useState(0);
   const [recommendation, setRecommendation] = useState<RecommendedChallengeResult | null>(null);
+  const [academicGaps, setAcademicGaps] = useState<Record<string, number>>({});
 
   const generate = useServerFn(generateChallenges);
   const update = useServerFn(updateChallenge);
@@ -192,6 +204,7 @@ function ChallengesPage() {
   const fetchSynthesis = useServerFn(getChildAISynthesis);
   const generateSingle = useServerFn(generateSingleChallenge);
   const generateAcademicHomework = useServerFn(generateAcademicHomeworkChallenge);
+  const getAcademicGaps = useServerFn(getAcademicGapsForChild);
   const assignSingle = useServerFn(assignTemplateChallenge);
   const createOrderFn = useServerFn(createOrder);
   const recommendFn = useServerFn(recommendChallengesForChild);
@@ -866,6 +879,7 @@ function ChallengesPage() {
                   <AcademicHomeworkInput
                     childAge={child.age}
                     childName={child.name}
+                    detectedGaps={academicGaps}
                     onGenerate={handleGenerateAcademicHomework}
                     isGenerating={isGeneratingAcademic}
                   />

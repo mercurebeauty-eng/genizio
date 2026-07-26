@@ -619,7 +619,7 @@ type ProgressionTarget = {
   cause: string | null;
 };
 
-async function computeProgressionTargets(supabase: any, childId: string): Promise<ProgressionTarget[]> {
+export async function computeProgressionTargets(supabase: any, childId: string): Promise<ProgressionTarget[]> {
   const [{ data: pastChallenges }, { data: openCycle }] = await Promise.all([
     supabase
       .from("challenges")
@@ -1875,6 +1875,15 @@ export const assignTemplateChallenge = createServerFn({ method: "POST" })
     return inserted;
   });
 
+// Correctif (2026-07-22, audit de la branche feat/naya-academic-homework-fusion) :
+// masteryScore/hypothesisCauses/anxietyProb/currentLevel étaient fournis par le CLIENT, qui ne
+// les transmettait en réalité jamais (AcademicHomeworkInput.tsx n'exposait même pas ces champs)
+// — le "moteur ZPA bayésien" tournait donc systématiquement sur les valeurs par défaut
+// (masteryScore=3, anxietyProb=0.1), jamais sur un signal réel. Retirés du schéma client :
+// computeHomeworkZPAContext calcule maintenant ces valeurs côté serveur à partir des vraies
+// données de l'enfant (academic_level_age mesuré, hypothesis_cycles ouvert), même philosophie
+// que resolveTargetIntelligences — ne jamais faire confiance à ce qu'un client pourrait fournir
+// quand la donnée doit venir d'un signal mesuré.
 const GenerateAcademicHomeworkInput = z.object({
   childId: z.string().uuid(),
   subject: z.enum(["maths", "francais", "sciences", "histoire_geo", "anglais"]),
@@ -1884,11 +1893,118 @@ const GenerateAcademicHomeworkInput = z.object({
   behavioralDriver: z.enum(["deconstruire", "schematiser", "simuler", "enqueter", "optimiser"]).optional().nullable(),
   timeAvailable: z.string().optional(),
   homeMaterials: z.string().optional().nullable(),
-  masteryScore: z.number().optional(),
-  hypothesisCauses: z.array(z.string()).optional(),
-  anxietyProb: z.number().optional(),
-  currentLevel: z.number().optional(),
 });
+
+// Mapping partiel : les 5 matières scolaires (academic-homework.functions.ts) ne couvrent pas
+// exactement les 9 domaines du référentiel académique (decision #39). "anglais" partage
+// "langage" avec "francais" (simplification assumée — pas de sous-domaine "langue étrangère"
+// distinct dans le référentiel) ; "histoire_geo" n'a aucun équivalent, reste non mappé.
+const SUBJECT_TO_ACADEMIC_DOMAIN: Record<string, string | null> = {
+  maths: "mathematiques",
+  francais: "langage",
+  anglais: "langage",
+  sciences: "sciences",
+  histoire_geo: null,
+};
+
+// Calcule les vrais paramètres du moteur ZPA à partir de l'historique de l'enfant, plutôt que
+// de faire confiance à des valeurs fournies par le client (cf. commentaire sur
+// GenerateAcademicHomeworkInput ci-dessus). Même source de données que computeProgressionTargets
+// (academic_level_age des défis complétés, hypothesis_cycles ouvert), pas une nouvelle
+// heuristique — juste appliquée au périmètre "devoir" plutôt qu'à tous les domaines.
+export async function computeHomeworkZPAContext(
+  supabase: any,
+  childId: string,
+  subject: string,
+  targetGradeAge: number
+): Promise<{ masteryScore: number; hypothesisCauses: string[]; anxietyProb: number; currentLevel?: number }> {
+  const domain = SUBJECT_TO_ACADEMIC_DOMAIN[subject] ?? null;
+
+  const [{ data: lastAcademic }, { data: openCycle }, { data: lastHomework }] = await Promise.all([
+    domain
+      ? supabase
+          .from("challenges")
+          .select("academic_level_age")
+          .eq("child_id", childId)
+          .eq("status", "completed")
+          .eq("academic_domain", domain)
+          .not("academic_level_age", "is", null)
+          .order("completed_at", { ascending: false })
+          .limit(1)
+          .maybeSingle()
+      : Promise.resolve({ data: null }),
+    supabase
+      .from("hypothesis_cycles")
+      .select("hypotheses, trigger_domain")
+      .eq("child_id", childId)
+      .eq("status", "open")
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle(),
+    supabase
+      .from("challenges")
+      .select("zpa_level")
+      .eq("child_id", childId)
+      .eq("academic_subject", subject)
+      .not("zpa_level", "is", null)
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle(),
+  ]);
+
+  // Score 1-5 dérivé de l'écart entre le dernier niveau académique mesuré dans ce domaine et
+  // le niveau académique cible de la classe visée par ce devoir précis (pas l'âge chronologique
+  // de l'enfant) — 0 défi mesuré ou domaine non mappé (histoire_geo) : repli neutre à 3.
+  let masteryScore = 3;
+  if (typeof lastAcademic?.academic_level_age === "number") {
+    masteryScore = Math.max(1, Math.min(5, 3 + (lastAcademic.academic_level_age - targetGradeAge)));
+  }
+
+  const hypotheses = (openCycle?.hypotheses as { cause: string; current_probability: number }[] | null) || [];
+  const causeApplies = Boolean(domain) && openCycle?.trigger_domain === domain;
+  const hypothesisCauses = causeApplies ? hypotheses.map((h) => h.cause) : [];
+  const anxietyProb = causeApplies ? (hypotheses.find((h) => h.cause === "PERFORMANCE_ANXIETY")?.current_probability ?? 0) : 0;
+
+  return {
+    masteryScore,
+    hypothesisCauses,
+    anxietyProb,
+    currentLevel: typeof lastHomework?.zpa_level === "number" ? lastHomework.zpa_level : undefined,
+  };
+}
+
+// Inverse partiel de SUBJECT_TO_ACADEMIC_DOMAIN — "langage" est mappé sur "francais" par
+// défaut ici (simplification assumée, cf. commentaire sur SUBJECT_TO_ACADEMIC_DOMAIN : le
+// référentiel académique n'a pas de sous-domaine "langue étrangère" distinct de "anglais").
+const ACADEMIC_DOMAIN_TO_SUBJECT: Record<string, string> = {
+  mathematiques: "maths",
+  langage: "francais",
+  sciences: "sciences",
+};
+
+// Correctif (2026-07-22) : AcademicHomeworkInput.tsx accepte une prop `detectedGaps` (affiche
+// un badge "Lacune détectée" + l'âge cible par matière), mais la route ne la lui fournissait
+// jamais — la prop utilisait toujours son défaut `{}`, donc ce badge n'apparaissait jamais.
+// Réutilise computeProgressionTargets (même donnée que le moteur de progression général),
+// projetée sur les matières scolaires plutôt que sur les 9 domaines Gardner.
+const GetAcademicGapsInput = z.object({ childId: z.string().uuid() });
+
+export const getAcademicGapsForChild = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .validator((input: unknown) => GetAcademicGapsInput.parse(input))
+  .handler(async ({ data, context }) => {
+    const { supabase } = context;
+    const targets = await computeProgressionTargets(supabase, data.childId);
+
+    const gaps: Record<string, number> = {};
+    for (const t of targets) {
+      const subject = ACADEMIC_DOMAIN_TO_SUBJECT[t.domain];
+      if (subject && t.cause) {
+        gaps[subject] = t.targetLevelAge;
+      }
+    }
+    return gaps;
+  });
 
 export const generateAcademicHomeworkChallenge = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
@@ -1913,16 +2029,17 @@ export const generateAcademicHomeworkChallenge = createServerFn({ method: "POST"
 
     const existingTitles = (existing ?? []).map((c) => c.title);
 
-    const zpaResult = calculateZPADifficulty(
-      data.masteryScore ?? 3,
-      data.hypothesisCauses ?? [],
-      data.anxietyProb ?? 0.1,
-      data.currentLevel
-    );
-
     const gradeInfo = GRADE_LEVEL_METADATA[data.gradeLevel];
     const targetAge = gradeInfo.nominalAge;
     const timeAvailable = data.timeAvailable || "30 min";
+
+    const zpaContext = await computeHomeworkZPAContext(supabase, data.childId, data.subject, targetAge);
+    const zpaResult = calculateZPADifficulty(
+      zpaContext.masteryScore,
+      zpaContext.hypothesisCauses,
+      zpaContext.anxietyProb,
+      zpaContext.currentLevel
+    );
 
     const selectedDriver: BehavioralDriver = data.behavioralDriver || "deconstruire";
     const driverGuidance = DRIVER_FUSION_GUIDANCE[selectedDriver];

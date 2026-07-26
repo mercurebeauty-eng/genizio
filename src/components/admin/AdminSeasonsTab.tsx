@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
-import { Calendar, Gift, Users, CheckCircle, Sparkles, Link as LinkIcon, Plus, Copy, Check } from "lucide-react";
-import { listSeasonsAdmin, listSponsorshipsAdmin, updateSeasonStatusAdmin, DEFAULT_FALLBACK_SEASON, type Season, type SponsorshipToken } from "@/lib/seasons.functions";
+import { Calendar, Gift, Users, CheckCircle, Sparkles, Link as LinkIcon, Plus, Copy, Check, ShieldCheck, Loader2 } from "lucide-react";
+import { listSeasonsAdmin, listSponsorshipsAdmin, updateSeasonStatusAdmin, confirmSponsorshipPaymentAdmin, DEFAULT_FALLBACK_SEASON, type Season, type SponsorshipToken } from "@/lib/seasons.functions";
 import { toast } from "sonner";
 import { CreateSeasonModal } from "./CreateSeasonModal";
 
@@ -10,12 +10,14 @@ export function AdminSeasonsTab() {
   const getSponsorshipsFn = useServerFn(listSponsorshipsAdmin);
 
   const updateStatusFn = useServerFn(updateSeasonStatusAdmin);
+  const confirmPaymentFn = useServerFn(confirmSponsorshipPaymentAdmin);
 
   const [seasons, setSeasons] = useState<Season[]>([DEFAULT_FALLBACK_SEASON]);
   const [sponsorships, setSponsorships] = useState<SponsorshipToken[]>([]);
   const [loading, setLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [copiedCode, setCopiedCode] = useState<string | null>(null);
+  const [confirmingId, setConfirmingId] = useState<string | null>(null);
 
   const loadData = async () => {
     setLoading(true);
@@ -51,6 +53,22 @@ export function AdminSeasonsTab() {
     setCopiedCode(code);
     toast.success("Code de parrainage copié !");
     setTimeout(() => setCopiedCode(null), 2000);
+  };
+
+  const handleConfirmPayment = async (tokenId: string) => {
+    if (confirmingId === tokenId) return;
+    setConfirmingId(tokenId);
+    try {
+      const res = await confirmPaymentFn({ data: { tokenId } });
+      if (res.success) {
+        toast.success("Paiement confirmé — le code est maintenant activable.");
+        loadData();
+      }
+    } catch (err: any) {
+      toast.error(err.message || "Erreur lors de la confirmation du paiement");
+    } finally {
+      setConfirmingId(null);
+    }
   };
 
   return (
@@ -228,20 +246,37 @@ export function AdminSeasonsTab() {
                         <span className="rounded-full bg-emerald-100 text-emerald-800 border border-emerald-300 px-2.5 py-0.5 text-[10px] font-bold">
                           ✓ Utilisé
                         </span>
+                      ) : token.payment_confirmed ? (
+                        <span className="rounded-full bg-sky-100 text-sky-800 border border-sky-300 px-2.5 py-0.5 text-[10px] font-bold">
+                          ✓ Payé — prêt
+                        </span>
                       ) : (
                         <span className="rounded-full bg-amber-100 text-amber-800 border border-amber-300 px-2.5 py-0.5 text-[10px] font-bold">
-                          ⏳ En attente
+                          ⏳ Paiement non confirmé
                         </span>
                       )}
                     </td>
                     <td className="py-3 px-4">
-                      <button
-                        onClick={() => copyCode(token.code)}
-                        className="rounded-xl border border-ink/10 bg-white px-3 py-1 text-[11px] font-bold hover:bg-surface transition-all flex items-center gap-1 cursor-pointer shadow-xs"
-                      >
-                        {copiedCode === token.code ? <Check className="size-3 text-emerald-600" /> : <Copy className="size-3" />}
-                        Copier
-                      </button>
+                      <div className="flex items-center gap-1.5">
+                        {!token.payment_confirmed && !token.is_redeemed && (
+                          <button
+                            onClick={() => handleConfirmPayment(token.id)}
+                            disabled={confirmingId === token.id}
+                            title="Confirmer que le paiement WhatsApp/Mobile Money a bien été reçu"
+                            className="rounded-xl border border-emerald-300 bg-emerald-50 px-3 py-1 text-[11px] font-bold text-emerald-800 hover:bg-emerald-100 transition-all flex items-center gap-1 cursor-pointer shadow-xs disabled:opacity-50"
+                          >
+                            {confirmingId === token.id ? <Loader2 className="size-3 animate-spin" /> : <ShieldCheck className="size-3" />}
+                            Confirmer paiement
+                          </button>
+                        )}
+                        <button
+                          onClick={() => copyCode(token.code)}
+                          className="rounded-xl border border-ink/10 bg-white px-3 py-1 text-[11px] font-bold hover:bg-surface transition-all flex items-center gap-1 cursor-pointer shadow-xs"
+                        >
+                          {copiedCode === token.code ? <Check className="size-3 text-emerald-600" /> : <Copy className="size-3" />}
+                          Copier
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 ))}

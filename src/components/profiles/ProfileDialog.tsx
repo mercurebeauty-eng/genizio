@@ -2,6 +2,14 @@ import { useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { INTERESTS_BY_TALENT, AVATAR_COLORS, emptyProfileDraft, type ChildProfile, type ProfileDraft } from "./shared";
 import { toast } from "sonner";
+import { useSession } from "@/hooks/use-session";
+
+// Même quota que profiles.index.tsx/profiles.manage.tsx : 2 slots gratuits + slots bonus
+// accordés par un admin (grantProfileSlot, cf. AdminExecutiveTab). Avant ce correctif, ce
+// dialogue bloquait à 5 en dur sans jamais lire extra_profile_slots — un parent avec des
+// slots bonus légitimement accordés se retrouvait bloqué ici alors que profiles.index.tsx
+// lui affichait un quota plus élevé. Garder ce nombre synchronisé avec les deux autres sites.
+const FREE_SLOTS = 2;
 
 export function ProfileDialog({
   initial,
@@ -14,6 +22,10 @@ export function ProfileDialog({
   onClose: () => void;
   onSaved: () => void;
 }) {
+  const { session } = useSession();
+  const extraSlots = (session?.user?.app_metadata?.extra_profile_slots as number) ?? 0;
+  const quota = FREE_SLOTS + extraSlots;
+
   const [draft, setDraft] = useState<ProfileDraft>(
     initial
       ? {
@@ -82,8 +94,8 @@ export function ProfileDialog({
           .select("id", { count: "exact", head: true })
           .eq("user_id", userId);
 
-        if ((count ?? 0) >= 5) {
-          const limitMsg = "Vous avez atteint la limite de 5 profils enfants maximum par compte parent.";
+        if ((count ?? 0) >= quota) {
+          const limitMsg = `Vous avez atteint la limite de ${quota} profils enfants maximum par compte parent${extraSlots > 0 ? ` (${FREE_SLOTS} gratuits + ${extraSlots} bonus)` : ""}.`;
           setError(limitMsg);
           toast.error(limitMsg);
           return;

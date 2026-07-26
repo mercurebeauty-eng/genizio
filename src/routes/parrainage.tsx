@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
-import { Heart, Sparkles, Gift, CheckCircle, ArrowRight, ShieldCheck, Copy, Check, Share2, Award, Users } from "lucide-react";
+import { Heart, Sparkles, Gift, CheckCircle, ArrowRight, ShieldCheck, Copy, Check, Share2, Award, Users, Phone } from "lucide-react";
 import { createSponsorshipToken, type SponsorshipToken } from "@/lib/seasons.functions";
 import { toast } from "sonner";
 
@@ -42,7 +42,7 @@ function ParrainagePage() {
         },
       });
       setCreatedToken(res);
-      toast.success("Parrainage validé avec succès ! 🎉");
+      toast.success("Demande de parrainage enregistrée ! Finalisez le paiement via WhatsApp pour l'activer.");
     } catch (err: any) {
       toast.error(err?.message || "Erreur lors de la création du parrainage.");
     } finally {
@@ -135,23 +135,36 @@ function ParrainagePage() {
               Merci pour votre générosité, {createdToken.sponsor_name} ! 🎉
             </h2>
             <p className="text-ink/70 font-medium mb-6 max-w-md mx-auto">
-              Votre parrainage de **3 mois** est actif. Transmettez ce code unique au parent de l'enfant pour qu'il l'active sur son compte Génizio.
+              Votre demande de parrainage de <strong>3 mois</strong> est enregistrée. Finalisez le paiement ({currency === "EUR" ? "7,50 €" : "5 000 FCFA"}) via WhatsApp pour l'activer — le code ci-dessous ne sera utilisable qu'une fois le paiement confirmé par notre équipe.
             </p>
 
             <div className="mx-auto max-w-md rounded-2xl bg-surface p-6 border border-ink/10 mb-6 relative">
               <span className="text-xs font-bold uppercase tracking-wider text-ink/60 block mb-2">
-                Code de Parrainage Unique
+                Code de Parrainage Unique <span className="text-amber-600">(en attente de paiement)</span>
               </span>
               <div className="font-mono text-2xl font-black text-brand tracking-widest selection:bg-brand selection:text-white mb-4">
                 {createdToken.code}
               </div>
-              <button
-                onClick={copyCode}
-                className="w-full rounded-xl bg-ink px-4 py-3 text-sm font-bold text-white shadow-md hover:bg-ink/90 transition-all flex items-center justify-center gap-2 cursor-pointer"
-              >
-                {copied ? <Check className="size-4 text-emerald-400" /> : <Copy className="size-4" />}
-                {copied ? "Code copié !" : "Copier le code de parrainage"}
-              </button>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                <a
+                  href={`https://wa.me/${import.meta.env.VITE_WHATSAPP_NUMBER || "33606433148"}?text=${encodeURIComponent(
+                    `Bonjour, je viens de faire une demande de parrainage Génizio (code ${createdToken.code}, ${currency === "EUR" ? "7,50 €" : "5 000 FCFA"}). Je souhaite finaliser le paiement.`
+                  )}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="w-full rounded-xl bg-[#25D366] px-4 py-3 text-sm font-bold text-white shadow-md hover:brightness-95 transition-all flex items-center justify-center gap-2 cursor-pointer"
+                >
+                  <Phone className="size-4 fill-current" />
+                  Payer via WhatsApp
+                </a>
+                <button
+                  onClick={copyCode}
+                  className="w-full rounded-xl bg-ink px-4 py-3 text-sm font-bold text-white shadow-md hover:bg-ink/90 transition-all flex items-center justify-center gap-2 cursor-pointer"
+                >
+                  {copied ? <Check className="size-4 text-emerald-400" /> : <Copy className="size-4" />}
+                  {copied ? "Code copié !" : "Copier le code"}
+                </button>
+              </div>
             </div>
 
             {createdToken.sponsor_message && (
