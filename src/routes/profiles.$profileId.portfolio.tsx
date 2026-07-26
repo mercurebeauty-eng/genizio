@@ -32,6 +32,8 @@ import {
   Sparkles,
   Rocket,
   ChevronRight,
+  BellRing,
+  Phone,
 } from "lucide-react";
 import { InviteMentorDialog } from "@/components/mentors/InviteMentorDialog";
 import { AppHeader } from "@/components/AppHeader";
@@ -599,6 +601,35 @@ function PortfolioPage() {
                       </div>
                     </div>
                   )}
+                  {(() => {
+                    const rawEnd = (enrolledSeason as any).individual_end_date;
+                    if (!rawEnd) return null;
+                    const daysLeft = Math.ceil((new Date(rawEnd).getTime() - Date.now()) / (24 * 60 * 60 * 1000));
+                    // Aucun rappel n'existait jusqu'ici — l'accès expirait en silence. Fenêtre de
+                    // 14 jours, cohérente avec le panneau admin équivalent (AdminSeasonsTab).
+                    if (daysLeft < 0 || daysLeft > 14) return null;
+                    return (
+                      <div className="mt-3 flex flex-wrap items-center gap-3 rounded-xl border border-amber-300 bg-amber-50 p-3">
+                        <BellRing className="size-4 text-amber-600 shrink-0" />
+                        <p className="flex-1 text-xs font-bold text-amber-900">
+                          {daysLeft === 0
+                            ? "Votre accès à la Saison se termine aujourd'hui !"
+                            : `Votre accès à la Saison se termine dans ${daysLeft} jour${daysLeft > 1 ? "s" : ""}.`}
+                        </p>
+                        <a
+                          href={`https://wa.me/${import.meta.env.VITE_WHATSAPP_NUMBER || "33606433148"}?text=${encodeURIComponent(
+                            `Bonjour, mon accès Génizio se termine bientôt (${new Date(rawEnd).toLocaleDateString("fr-FR")}). Je souhaite renouveler.`
+                          )}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="shrink-0 inline-flex items-center gap-1.5 rounded-xl bg-[#25D366] px-3 py-2 text-[11px] font-bold text-white shadow-sm hover:brightness-95 transition-all"
+                        >
+                          <Phone className="size-3.5" />
+                          Renouveler
+                        </a>
+                      </div>
+                    );
+                  })()}
                 </div>
               </div>
               <div className="w-full shrink-0 flex flex-col gap-2">

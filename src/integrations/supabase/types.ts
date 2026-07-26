@@ -43,28 +43,34 @@ export type Database = {
         Row: {
           created_at: string | null
           description: string | null
+          end_date: string
           extra_supervisors_quota: number
           id: string
           manager_user_id: string | null
           name: string
+          start_date: string
           target_count: number
         }
         Insert: {
           created_at?: string | null
           description?: string | null
+          end_date?: string
           extra_supervisors_quota?: number
           id?: string
           manager_user_id?: string | null
           name: string
+          start_date?: string
           target_count?: number
         }
         Update: {
           created_at?: string | null
           description?: string | null
+          end_date?: string
           extra_supervisors_quota?: number
           id?: string
           manager_user_id?: string | null
           name?: string
+          start_date?: string
           target_count?: number
         }
         Relationships: []

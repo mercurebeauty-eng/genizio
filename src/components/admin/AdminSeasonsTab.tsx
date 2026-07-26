@@ -1,10 +1,19 @@
 import { useEffect, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
-import { Calendar, Gift, Users, CheckCircle, Sparkles, Link as LinkIcon, Plus, Copy, Check, ShieldCheck, Loader2, Pencil, Trash2 } from "lucide-react";
-import { listSeasonsAdmin, listSponsorshipsAdmin, updateSeasonStatusAdmin, deleteSeasonAdmin, confirmSponsorshipPaymentAdmin, DEFAULT_FALLBACK_SEASON, type Season, type SponsorshipToken } from "@/lib/seasons.functions";
+import { Calendar, Gift, Users, CheckCircle, Sparkles, Link as LinkIcon, Plus, Copy, Check, ShieldCheck, Loader2, Pencil, Trash2, BellRing, Phone } from "lucide-react";
+import { listSeasonsAdmin, listSponsorshipsAdmin, updateSeasonStatusAdmin, deleteSeasonAdmin, confirmSponsorshipPaymentAdmin, getUpcomingExpirationsAdmin, DEFAULT_FALLBACK_SEASON, type Season, type SponsorshipToken } from "@/lib/seasons.functions";
 import { toast } from "sonner";
 import { confirmDialog } from "@/components/ui/confirm-dialog";
 import { CreateSeasonModal } from "./CreateSeasonModal";
+
+interface UpcomingExpiration {
+  childId: string;
+  childName: string;
+  parentPhone: string | null;
+  campaignName: string | null;
+  endDate: string;
+  daysLeft: number;
+}
 
 const SEASON_STATUS_LABELS: Record<string, string> = {
   upcoming: "À venir",
@@ -20,9 +29,11 @@ export function AdminSeasonsTab() {
   const updateStatusFn = useServerFn(updateSeasonStatusAdmin);
   const deleteSeasonFn = useServerFn(deleteSeasonAdmin);
   const confirmPaymentFn = useServerFn(confirmSponsorshipPaymentAdmin);
+  const getUpcomingExpirationsFn = useServerFn(getUpcomingExpirationsAdmin);
 
   const [seasons, setSeasons] = useState<Season[]>([DEFAULT_FALLBACK_SEASON]);
   const [sponsorships, setSponsorships] = useState<SponsorshipToken[]>([]);
+  const [upcomingExpirations, setUpcomingExpirations] = useState<UpcomingExpiration[]>([]);
   const [loading, setLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingSeason, setEditingSeason] = useState<Season | null>(null);
@@ -33,9 +44,10 @@ export function AdminSeasonsTab() {
   const loadData = async () => {
     setLoading(true);
     try {
-      const [sList, tList] = await Promise.all([getSeasonsFn(), getSponsorshipsFn()]);
+      const [sList, tList, eList] = await Promise.all([getSeasonsFn(), getSponsorshipsFn(), getUpcomingExpirationsFn()]);
       if (sList && sList.length > 0) setSeasons(sList);
       if (tList) setSponsorships(tList);
+      if (eList) setUpcomingExpirations(eList as UpcomingExpiration[]);
     } catch (err) {
       console.error("Error loading seasons admin data:", err);
     } finally {
@@ -165,6 +177,51 @@ export function AdminSeasonsTab() {
           </p>
         </div>
       </div>
+
+      {/* Renouvellements à venir — aucun rappel n'existait jusqu'ici, l'accès expirait en
+          silence (getChildEnrolledSeason renvoie juste null). Pas d'envoi automatisé (aucune
+          infra email/SMS dans ce projet) — juste de quoi relancer manuellement via WhatsApp. */}
+      {upcomingExpirations.length > 0 && (
+        <div className="rounded-3xl border border-amber-200 bg-amber-50 p-6 shadow-sm">
+          <div className="flex items-center gap-2 mb-1">
+            <BellRing className="size-5 text-amber-700" />
+            <h3 className="font-display text-lg font-black text-ink">
+              Renouvellements à venir (14 jours) — {upcomingExpirations.length}
+            </h3>
+          </div>
+          <p className="text-xs font-medium text-amber-800/70 mb-4">
+            Ces familles arrivent en fin de fenêtre d'accès. Aucun rappel automatique n'existe — contactez-les manuellement pour éviter une coupure surprise.
+          </p>
+          <div className="space-y-2">
+            {upcomingExpirations.map((exp) => (
+              <div key={exp.childId} className="flex items-center justify-between gap-3 rounded-2xl bg-white border border-amber-200/60 px-4 py-3">
+                <div>
+                  <span className="font-bold text-sm text-ink">{exp.childName}</span>
+                  {exp.campaignName && (
+                    <span className="ml-2 text-[10px] font-bold uppercase tracking-wider text-ink/40">{exp.campaignName}</span>
+                  )}
+                  <p className="text-xs text-ink/60 font-medium">
+                    {exp.daysLeft === 0 ? "Expire aujourd'hui" : `Expire dans ${exp.daysLeft} jour${exp.daysLeft > 1 ? "s" : ""}`} ({new Date(exp.endDate).toLocaleDateString("fr-FR")})
+                  </p>
+                </div>
+                {exp.parentPhone ? (
+                  <a
+                    href={`https://wa.me/${exp.parentPhone.replace(/[^0-9]/g, "")}?text=${encodeURIComponent(`Bonjour, l'accès Génizio de votre enfant se termine bientôt (${new Date(exp.endDate).toLocaleDateString("fr-FR")}). Souhaitez-vous renouveler ?`)}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="shrink-0 rounded-xl bg-[#25D366] px-3 py-2 text-[11px] font-bold text-white shadow-sm hover:brightness-95 transition-all flex items-center gap-1.5"
+                  >
+                    <Phone className="size-3.5" />
+                    Relancer
+                  </a>
+                ) : (
+                  <span className="shrink-0 text-[11px] font-bold text-ink/40 italic">Pas de téléphone</span>
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Seasons Management Section */}
       <div className="rounded-3xl border border-ink/10 bg-white p-8 shadow-sm">

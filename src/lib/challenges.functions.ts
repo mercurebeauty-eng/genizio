@@ -3,6 +3,7 @@ import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { VALID_TALENT_KEYS, TALENT_KEY_LABELS } from "@/lib/talent-buckets";
 import { INTERESTS_BY_TALENT } from "@/components/profiles/shared";
 import { normalizeChildInterests } from "@/lib/interest-migration";
+import { resolveEnrollmentWindow } from "@/lib/seasons.functions";
 import { z } from "zod";
 
 import {
@@ -1285,7 +1286,7 @@ export const generateChallenges = createServerFn({ method: "POST" })
       // thème narratif de chaque enfant déjà inscrit ailleurs, même encore dans sa fenêtre payée.
       supabase
         .from("season_enrollments")
-        .select("id, enrolled_at, seasons(title, theme, duration_months)")
+        .select("id, enrolled_at, campaign_id, seasons(title, theme, duration_months), campaigns(start_date, end_date)")
         .eq("child_id", data.childId)
         .order("enrolled_at", { ascending: false })
         .limit(1)
@@ -1312,9 +1313,12 @@ export const generateChallenges = createServerFn({ method: "POST" })
     const enrolledSeason = (enrollment as any)?.seasons as { title: string; theme: string; duration_months: number } | null;
     let isEnrolledInActiveSeason = false;
     if (enrollment && enrolledSeason) {
-      const seasonExpiry = new Date(enrollment.enrolled_at);
-      seasonExpiry.setMonth(seasonExpiry.getMonth() + enrolledSeason.duration_months);
-      isEnrolledInActiveSeason = new Date() <= seasonExpiry;
+      const { end } = resolveEnrollmentWindow(
+        enrollment.enrolled_at,
+        enrolledSeason.duration_months,
+        (enrollment as any).campaign_id ? (enrollment as any).campaigns : null
+      );
+      isEnrolledInActiveSeason = new Date() <= end;
     }
     const seasonInstruction = isEnrolledInActiveSeason
       ? `- THÉMATIQUE DE SAISON ("${enrolledSeason!.title}") : Utilise le fil rouge narratif et la métaphore de cette saison ("${enrolledSeason!.theme}") pour scénariser au moins la moitié des défis. Le domaine d'apprentissage ciblé reste la priorité, mais l'habillage narratif donne l'impression à l'enfant d'être le héros de cette thématique.`
@@ -2216,7 +2220,7 @@ export const generateSingleChallenge = createServerFn({ method: "POST" })
       // jamais sur "la saison active du moment" (une rotation ne doit rien casser rétroactivement).
       supabase
         .from("season_enrollments")
-        .select("id, enrolled_at, seasons(title, theme, duration_months)")
+        .select("id, enrolled_at, campaign_id, seasons(title, theme, duration_months), campaigns(start_date, end_date)")
         .eq("child_id", data.childId)
         .order("enrolled_at", { ascending: false })
         .limit(1)
@@ -2247,9 +2251,12 @@ export const generateSingleChallenge = createServerFn({ method: "POST" })
     const enrolledSeason = (enrollment as any)?.seasons as { title: string; theme: string; duration_months: number } | null;
     let isEnrolledInActiveSeason = false;
     if (enrollment && enrolledSeason) {
-      const seasonExpiry = new Date(enrollment.enrolled_at);
-      seasonExpiry.setMonth(seasonExpiry.getMonth() + enrolledSeason.duration_months);
-      isEnrolledInActiveSeason = new Date() <= seasonExpiry;
+      const { end } = resolveEnrollmentWindow(
+        enrollment.enrolled_at,
+        enrolledSeason.duration_months,
+        (enrollment as any).campaign_id ? (enrollment as any).campaigns : null
+      );
+      isEnrolledInActiveSeason = new Date() <= end;
     }
     const seasonInstruction = isEnrolledInActiveSeason
       ? `\n3b. THÉMATIQUE DE SAISON ("${enrolledSeason!.title}") : Utilise le fil rouge narratif et la métaphore de cette saison ("${enrolledSeason!.theme}") pour scénariser le défi.`

@@ -23,6 +23,7 @@ interface AdminExecutiveTabProps {
   kpis: ExecutiveKPIs;
   parents: ParentBIRC[];
   onTogglePassport?: (childId: string, unlock: boolean) => Promise<void>;
+  onRefresh?: () => void;
   isRefreshing?: boolean;
 }
 
@@ -30,10 +31,11 @@ export function AdminExecutiveTab({
   kpis,
   parents,
   onTogglePassport,
+  onRefresh,
   isRefreshing = false,
 }: AdminExecutiveTabProps) {
   const [pendingPassportChildId, setPendingPassportChildId] = useState<string | null>(null);
-  const [enrollModalChild, setEnrollModalChild] = useState<{ id: string; name: string } | null>(null);
+  const [enrollModalChild, setEnrollModalChild] = useState<{ id: string; name: string; currentCampaignName?: string | null } | null>(null);
 
   const handleTogglePassportClick = async (childId: string, unlock: boolean) => {
     if (!onTogglePassport || pendingPassportChildId === childId) return;
@@ -216,34 +218,44 @@ export function AdminExecutiveTab({
                     </td>
 
                     {/* Children & Passport Toggle */}
-                    <td className="py-4 pr-4">
+                    <td className="py-3 px-3">
                       {parent.children && parent.children.length > 0 ? (
-                        <div className="flex flex-col gap-1.5">
+                        <div className="space-y-1.5 min-w-[210px]">
                           {parent.children.map((child) => (
-                            <div key={child.id} className="flex h-5 items-center gap-2">
-                              <span className="font-bold text-xs text-ink">
-                                {child.name} ({child.age} ans)
-                              </span>
+                            <div
+                              key={child.id}
+                              className="flex items-center justify-between gap-2 p-2 rounded-2xl bg-surface/70 border border-ink/5 hover:border-ink/10 transition-colors"
+                            >
+                              <div className="flex flex-col text-left min-w-0">
+                                <span className="text-xs font-black text-ink truncate">
+                                  {child.name}
+                                </span>
+                                <span className="text-[10px] font-extrabold text-ink/50 mt-0.5">
+                                  {child.age} ans
+                                </span>
+                              </div>
+
                               <button
                                 onClick={() => handleTogglePassportClick(child.id, !child.pdfUnlocked)}
                                 disabled={pendingPassportChildId === child.id}
-                                className={`inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[9px] font-black uppercase tracking-wider transition-all cursor-pointer ${
+                                className={`inline-flex items-center gap-1.5 rounded-xl border px-2.5 py-1 text-[10px] font-black uppercase tracking-wider transition-all cursor-pointer shrink-0 shadow-2xs ${
                                   child.pdfUnlocked
-                                    ? "bg-emerald-100 border-emerald-400 text-emerald-800 hover:bg-emerald-200"
-                                    : "bg-amber-100 border-amber-400 text-amber-800 hover:bg-amber-200"
+                                    ? "bg-emerald-500/10 border-emerald-500/20 text-emerald-700 hover:bg-emerald-500/20"
+                                    : "bg-amber-500/10 border-amber-500/20 text-amber-700 hover:bg-amber-500/20"
                                 } disabled:opacity-50`}
+                                title={child.pdfUnlocked ? "Passeport PDF Débloqué — Clic pour verrouiller" : "Passeport PDF Verrouillé — Clic pour débloquer"}
                               >
                                 {pendingPassportChildId === child.id ? (
                                   <>
-                                    <Loader2 className="size-2.5 animate-spin" /> Traitement…
+                                    <Loader2 className="size-3 animate-spin" /> Traitement…
                                   </>
                                 ) : child.pdfUnlocked ? (
                                   <>
-                                    <Unlock className="size-2.5" /> Débloqué
+                                    <Unlock className="size-3 text-emerald-600" /> Débloqué
                                   </>
                                 ) : (
                                   <>
-                                    <Lock className="size-2.5" /> Débloquer
+                                    <Lock className="size-3 text-amber-600" /> Débloquer
                                   </>
                                 )}
                               </button>
@@ -255,18 +267,47 @@ export function AdminExecutiveTab({
                       )}
                     </td>
 
-                    {/* Saisons */}
-                    <td className="py-4 pr-4">
+                    {/* Saisons & Campagnes */}
+                    <td className="py-3 px-3">
                       {parent.children && parent.children.length > 0 ? (
-                        <div className="flex flex-col gap-1.5 items-center justify-center">
+                        <div className="space-y-1.5 min-w-[210px]">
                           {parent.children.map((child) => (
-                            <div key={child.id} className="flex h-5 items-center">
+                            <div
+                              key={child.id}
+                              className="flex items-center justify-between gap-2 p-2 rounded-2xl bg-surface/70 border border-ink/5 hover:border-ink/10 transition-colors"
+                            >
+                              <div className="flex flex-col text-left min-w-0">
+                                <span className="text-xs font-black text-ink truncate">
+                                  {child.name}
+                                </span>
+                                {child.isEnrolledActive ? (
+                                  <div
+                                    className="flex items-center gap-1 mt-0.5"
+                                    title={child.campaignName ? `Campagne ONG : ${child.campaignName}` : `Saison : ${child.activeSeasonTitle}`}
+                                  >
+                                    <span className="size-1.5 rounded-full bg-emerald-500 animate-pulse shrink-0" />
+                                    <span className="text-[10px] font-extrabold text-emerald-700 truncate max-w-[120px]">
+                                      {child.campaignName ? `ONG: ${child.campaignName}` : child.activeSeasonTitle || "Actif"}
+                                    </span>
+                                  </div>
+                                ) : (
+                                  <span className="text-[10px] font-medium text-ink/40 mt-0.5">Inactif</span>
+                                )}
+                              </div>
+
                               <button
-                                onClick={() => setEnrollModalChild({ id: child.id, name: child.name })}
-                                className="inline-flex items-center gap-1 rounded-full border border-sky-400 bg-sky-100 px-3 py-0.5 text-[9px] font-black uppercase tracking-wider text-sky-800 transition-all hover:bg-sky-200 cursor-pointer"
-                                title="Inscrire à une saison"
+                                onClick={() =>
+                                  setEnrollModalChild({
+                                    id: child.id,
+                                    name: child.name,
+                                    currentCampaignName: child.campaignName,
+                                  })
+                                }
+                                className="inline-flex items-center gap-1 rounded-xl border border-brand/20 bg-brand/5 px-2.5 py-1 text-[10px] font-extrabold text-brand hover:bg-brand hover:text-white transition-all cursor-pointer shrink-0 shadow-2xs"
+                                title="Gérer la saison / campagne"
                               >
-                                <Calendar className="size-2.5" /> Gérer
+                                <Calendar className="size-3" />
+                                Gérer
                               </button>
                             </div>
                           ))}
@@ -297,8 +338,12 @@ export function AdminExecutiveTab({
         <AdminSeasonEnrollmentModal
           childId={enrollModalChild.id}
           childName={enrollModalChild.name}
+          currentCampaignName={enrollModalChild.currentCampaignName}
           onClose={() => setEnrollModalChild(null)}
-          onSuccess={() => setEnrollModalChild(null)}
+          onSuccess={() => {
+            setEnrollModalChild(null);
+            onRefresh?.();
+          }}
         />
       )}
     </div>

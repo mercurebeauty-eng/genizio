@@ -181,6 +181,7 @@ function AdminIndexPage() {
             kpis={kpis}
             parents={parents}
             onTogglePassport={handleTogglePassport}
+            onRefresh={() => loadData(false)}
             isRefreshing={isRefreshing}
           />
         )}

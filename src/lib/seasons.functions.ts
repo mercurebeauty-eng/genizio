@@ -1,6 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { requireAdmin } from "@/integrations/supabase/admin-middleware";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 
 export interface Season {
@@ -106,6 +107,25 @@ export const getActiveSeason = createServerFn({ method: "GET" }).handler(async (
   }
 });
 
+// Fenêtre d'accès d'une inscription : rolling individuel par défaut (enrolled_at +
+// duration_months, décision #48), MAIS fixe et partagée par toute la cohorte si l'inscription
+// vient d'une campagne B2B (décision utilisateur 2026-07-26) — une ONG a besoin d'un vrai bilan
+// de fin de programme sur une cohorte, pas de 100 chronos individuels qui ne s'alignent jamais.
+// Exporté pour être réutilisé à l'identique dans challenges.functions.ts (thématique narrative).
+export function resolveEnrollmentWindow(
+  enrolledAt: string,
+  seasonDurationMonths: number,
+  campaign: { start_date: string; end_date: string } | null | undefined
+): { start: Date; end: Date } {
+  if (campaign) {
+    return { start: new Date(campaign.start_date), end: new Date(campaign.end_date) };
+  }
+  const start = new Date(enrolledAt);
+  const end = new Date(start);
+  end.setMonth(end.getMonth() + seasonDurationMonths);
+  return { start, end };
+}
+
 export const getChildEnrolledSeason = createServerFn({ method: "GET" })
   .validator((input: unknown) => z.object({ childId: z.string().uuid() }).parse(input))
   .handler(async ({ data }) => {
@@ -113,11 +133,10 @@ export const getChildEnrolledSeason = createServerFn({ method: "GET" })
       // Décision utilisateur (2026-07-26) : l'accès individuel d'un enfant ne doit jamais être
       // cassé rétroactivement par une rotation de la saison globale. On ne compare donc plus
       // à getActiveSeason() — on lit directement la saison référencée par la propre inscription
-      // de cet enfant, même si elle est depuis passée en 'completed'/'archived' côté catalogue,
-      // et on ne juge l'expiration que sur SA fenêtre individuelle (enrolled_at + duration_months).
+      // de cet enfant, même si elle est depuis passée en 'completed'/'archived' côté catalogue.
       const { data: enrollment, error } = await (supabaseAdmin as any)
         .from("season_enrollments")
-        .select("id, enrolled_at, seasons(*)")
+        .select("id, enrolled_at, campaign_id, seasons(*), campaigns(start_date, end_date)")
         .eq("child_id", data.childId)
         .order("enrolled_at", { ascending: false })
         .limit(1)
@@ -128,16 +147,18 @@ export const getChildEnrolledSeason = createServerFn({ method: "GET" })
       const season = enrollment.seasons as Season;
       if (season.id === DEFAULT_FALLBACK_SEASON.id) return null;
 
-      const enrolledAt = new Date(enrollment.enrolled_at);
-      const endDate = new Date(enrolledAt);
-      endDate.setMonth(endDate.getMonth() + season.duration_months);
+      const { start, end } = resolveEnrollmentWindow(
+        enrollment.enrolled_at,
+        season.duration_months,
+        enrollment.campaign_id ? enrollment.campaigns : null
+      );
 
-      if (new Date() > endDate) return null; // fenêtre individuelle expirée
+      if (new Date() > end) return null; // fenêtre expirée
 
       return {
         ...season,
-        individual_start_date: enrolledAt.toISOString(),
-        individual_end_date: endDate.toISOString(),
+        individual_start_date: start.toISOString(),
+        individual_end_date: end.toISOString(),
       };
     } catch (err) {
       console.error("Error checking child season enrollment:", err);
@@ -264,30 +285,39 @@ export const redeemSponsorshipToken = createServerFn({ method: "POST" })
     return { success: true, token };
   });
 
+// Toutes les fonctions "*Admin" de ce fichier étaient gardées par requireSupabaseAuth au lieu de
+// requireAdmin — n'importe quel compte parent authentifié pouvait les appeler directement (le
+// garde-fou de /admin n'est que côté client, pas sur le endpoint lui-même). Trouvaille grave sur
+// listSponsorshipsAdmin (fuite des codes/emails de parrainage à tout utilisateur connecté — la
+// même exposition que la policy RLS retirée le 22/07, mais toujours ouverte via ce chemin),
+// confirmSponsorshipPaymentAdmin (n'importe qui pouvait confirmer le paiement de N'IMPORTE QUEL
+// code puis le rédimer gratuitement) et enrollChildAdmin (inscription gratuite de n'importe quel
+// enfant). Corrigé sur les 8 fonctions de ce fichier.
 export const listSeasonsAdmin = createServerFn({ method: "GET" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireAdmin])
   .handler(async () => {
-    await rotateExpiredActiveSeason();
+    try {
+      await rotateExpiredActiveSeason();
 
-    const { data: seasons, error } = await (supabaseAdmin as any)
-      .from("seasons")
-      .select("*")
-      .order("created_at", { ascending: false });
+      const { data: seasons, error } = await (supabaseAdmin as any)
+        .from("seasons")
+        .select("*")
+        .order("created_at", { ascending: false });
 
-    if (error) {
-      console.error("Error fetching seasons:", error);
+      if (error || !seasons || seasons.length === 0) {
+        if (error) console.error("Error fetching seasons:", error);
+        return [DEFAULT_FALLBACK_SEASON];
+      }
+
+      return seasons as Season[];
+    } catch (err) {
+      console.error("Error in listSeasonsAdmin:", err);
       return [DEFAULT_FALLBACK_SEASON];
     }
-
-    if (!seasons || seasons.length === 0) {
-      return [DEFAULT_FALLBACK_SEASON];
-    }
-
-    return seasons as Season[];
   });
 
 export const listSponsorshipsAdmin = createServerFn({ method: "GET" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireAdmin])
   .handler(async () => {
     const { data: tokens } = await (supabaseAdmin as any)
       .from("sponsorship_tokens")
@@ -302,7 +332,7 @@ export const listSponsorshipsAdmin = createServerFn({ method: "GET" })
 // fois le garde-fou payment_confirmed ajouté à redeemSponsorshipToken — l'admin bascule ce
 // flag à TRUE une fois le paiement WhatsApp/Mobile Money du parrain vérifié manuellement.
 export const confirmSponsorshipPaymentAdmin = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireAdmin])
   .validator((input: any) => z.object({ tokenId: z.string().uuid() }).parse(input))
   .handler(async ({ data }) => {
     const { error } = await (supabaseAdmin as any)
@@ -317,7 +347,7 @@ export const confirmSponsorshipPaymentAdmin = createServerFn({ method: "POST" })
   });
 
 export const createSeasonAdmin = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireAdmin])
   .validator((input: any) =>
     z
       .object({
@@ -346,7 +376,7 @@ export const createSeasonAdmin = createServerFn({ method: "POST" })
   });
 
 export const updateSeasonStatusAdmin = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireAdmin])
   .validator((input: any) =>
     z
       .object({
@@ -377,7 +407,7 @@ export const updateSeasonStatusAdmin = createServerFn({ method: "POST" })
   });
 
 export const updateSeasonAdmin = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireAdmin])
   .validator((input: any) =>
     z
       .object({
@@ -405,7 +435,7 @@ export const updateSeasonAdmin = createServerFn({ method: "POST" })
   });
 
 export const deleteSeasonAdmin = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireAdmin])
   .validator((input: any) => z.object({ seasonId: z.string().uuid() }).parse(input))
   .handler(async ({ data }) => {
     // Suppression = risque supérieur à l'archivage : season_id est en ON DELETE CASCADE sur
@@ -438,39 +468,152 @@ export const deleteSeasonAdmin = createServerFn({ method: "POST" })
   });
 
 export const enrollChildAdmin = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireAdmin])
   .validator((input: any) =>
     z
       .object({
         childId: z.string().uuid(),
         seasonId: z.string().uuid(),
+        campaignId: z.string().uuid().optional(),
       })
       .parse(input)
   )
-  .handler(async ({ data, context }) => {
-    // Check if already enrolled
+  .handler(async ({ data }) => {
+    // 1. Fetch child profile to get the parent user_id
+    const { data: childProfile, error: childErr } = await (supabaseAdmin as any)
+      .from("child_profiles")
+      .select("user_id")
+      .eq("id", data.childId)
+      .single();
+
+    if (childErr || !childProfile) {
+      throw new Error("Profil enfant introuvable.");
+    }
+
+    // 2. Check if an enrollment already exists for this child
     const { data: existing } = await (supabaseAdmin as any)
       .from("season_enrollments")
       .select("id")
       .eq("child_id", data.childId)
-      .eq("season_id", data.seasonId)
+      .order("enrolled_at", { ascending: false })
+      .limit(1)
       .maybeSingle();
 
     if (existing) {
-      throw new Error("L'enfant est déjà inscrit à cette saison.");
+      const { error: updateErr } = await (supabaseAdmin as any)
+        .from("season_enrollments")
+        .update({
+          season_id: data.seasonId,
+          campaign_id: data.campaignId || null,
+          enrolled_at: new Date().toISOString(),
+          payment_status: "admin_granted",
+        })
+        .eq("id", existing.id);
+
+      if (updateErr) {
+        throw new Error(`Erreur lors de la mise à jour: ${updateErr.message}`);
+      }
+      return { success: true };
     }
 
-    const { error } = await (supabaseAdmin as any).from("season_enrollments").insert({
+    // 3. Insert new enrollment with correct parent user_id
+    const { error: insertErr } = await (supabaseAdmin as any).from("season_enrollments").insert({
       season_id: data.seasonId,
       child_id: data.childId,
-      user_id: context.userId,
-      sponsor_name: "Admin Enrollment",
+      user_id: childProfile.user_id,
+      campaign_id: data.campaignId || null,
+      sponsor_name: data.campaignId ? "Attribution Campagne Admin" : "Admin Enrollment",
       sponsor_email: "admin@genizio.com",
       payment_status: "admin_granted",
     });
 
-    if (error) {
-      throw new Error(`Erreur lors de l'inscription: ${error.message}`);
+    if (insertErr) {
+      throw new Error(`Erreur lors de l'inscription: ${insertErr.message}`);
     }
     return { success: true };
+  });
+
+export const unenrollCampaignAdmin = createServerFn({ method: "POST" })
+  .middleware([requireAdmin])
+  .validator((input: any) =>
+    z
+      .object({
+        childId: z.string().uuid(),
+      })
+      .parse(input)
+  )
+  .handler(async ({ data }) => {
+    const { error } = await (supabaseAdmin as any)
+      .from("season_enrollments")
+      .update({ campaign_id: null })
+      .eq("child_id", data.childId);
+
+    if (error) {
+      throw new Error(`Erreur lors du retrait de la campagne: ${error.message}`);
+    }
+    return { success: true };
+  });
+
+const EXPIRATION_REMINDER_WINDOW_DAYS = 14;
+
+// Il n'existait jusqu'ici AUCUN rappel de fin d'accès : getChildEnrolledSeason renvoie
+// silencieusement `null` une fois la fenêtre passée, sans jamais prévenir ni le parent ni
+// l'admin. Avec le rolling individuel (chaque famille a sa propre date de fin), une seule
+// communication groupée de fin de saison ne suffit plus — il faut une vue qui liste, par
+// famille, combien de jours il lui reste, pour permettre une relance manuelle (WhatsApp),
+// même logique que le reste de l'app (pas d'envoi automatisé, aucune infra d'email/SMS n'existe
+// ici).
+export const getUpcomingExpirationsAdmin = createServerFn({ method: "GET" })
+  .middleware([requireAdmin])
+  .handler(async () => {
+    const { data: enrollments, error } = await (supabaseAdmin as any)
+      .from("season_enrollments")
+      .select("child_id, enrolled_at, campaign_id, child_profiles(name, user_id), seasons(duration_months), campaigns(name, start_date, end_date)")
+      .order("enrolled_at", { ascending: false });
+
+    if (error) throw new Error(error.message);
+
+    // Ne garder que l'inscription la plus RÉCENTE de chaque enfant (déjà trié desc par
+    // enrolled_at) — un enfant peut avoir des inscriptions historiques d'anciennes saisons qui ne
+    // représentent plus sa fenêtre d'accès actuelle.
+    const latestByChild = new Map<string, any>();
+    for (const e of enrollments ?? []) {
+      if (!latestByChild.has(e.child_id)) latestByChild.set(e.child_id, e);
+    }
+
+    const { listAllUsers } = await import("@/integrations/supabase/admin-users");
+    const users = await listAllUsers(supabaseAdmin);
+    const phoneByUserId = new Map(users.map((u) => [u.id, (u.user_metadata as any)?.phone as string | undefined]));
+
+    const now = new Date();
+    const results: Array<{
+      childId: string;
+      childName: string;
+      parentPhone: string | null;
+      campaignName: string | null;
+      endDate: string;
+      daysLeft: number;
+    }> = [];
+
+    for (const e of latestByChild.values()) {
+      if (!e.seasons) continue;
+      const { end } = resolveEnrollmentWindow(
+        e.enrolled_at,
+        e.seasons.duration_months,
+        e.campaign_id ? e.campaigns : null
+      );
+      const daysLeft = Math.ceil((end.getTime() - now.getTime()) / (24 * 60 * 60 * 1000));
+      if (daysLeft >= 0 && daysLeft <= EXPIRATION_REMINDER_WINDOW_DAYS) {
+        results.push({
+          childId: e.child_id,
+          childName: e.child_profiles?.name ?? "?",
+          parentPhone: phoneByUserId.get(e.child_profiles?.user_id) ?? null,
+          campaignName: e.campaigns?.name ?? null,
+          endDate: end.toISOString(),
+          daysLeft,
+        });
+      }
+    }
+
+    return results.sort((a, b) => a.daysLeft - b.daysLeft);
   });

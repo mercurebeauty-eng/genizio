@@ -73,11 +73,14 @@ export function AdminCampaignsTab() {
               <h3 className="font-display font-bold text-lg text-ink truncate mb-1" title={c.name}>{c.name}</h3>
               <p className="text-sm text-ink/60 line-clamp-2 mb-4 h-10">{c.description || "Aucune description"}</p>
               
-              <div className="bg-surface p-3 rounded-2xl mb-4">
+              <div className="bg-surface p-3 rounded-2xl mb-3">
                   <div className="text-xs font-bold text-ink/50 mb-1 uppercase tracking-wider">Chargé de projet (Propriétaire)</div>
                   <div className="text-sm font-medium text-ink truncate" title={c.manager_email || ""}>
                       {c.manager_email || <span className="text-ink/40 italic">Non assigné</span>}
                   </div>
+              </div>
+              <div className="text-xs font-bold text-ink/50 mb-4">
+                  Programme : {new Date(c.start_date).toLocaleDateString("fr-FR")} → {new Date(c.end_date).toLocaleDateString("fr-FR")}
               </div>
 
               <button
@@ -110,20 +113,29 @@ export function AdminCampaignsTab() {
   );
 }
 
+const todayISO = () => new Date().toISOString().slice(0, 10);
+const threeMonthsFromNowISO = () => {
+  const d = new Date();
+  d.setMonth(d.getMonth() + 3);
+  return d.toISOString().slice(0, 10);
+};
+
 function CreateCampaignModal({ onClose, onSuccess }: { onClose: () => void, onSuccess: () => void }) {
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
   const [managerEmail, setManagerEmail] = useState("");
   const [targetCount, setTargetCount] = useState(100);
+  const [startDate, setStartDate] = useState(todayISO());
+  const [endDate, setEndDate] = useState(threeMonthsFromNowISO());
   const [isSubmitting, setIsSubmitting] = useState(false);
-  
+
   const createFn = useServerFn(createCampaignAdmin);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
     try {
-      await createFn({ data: { name, description, managerEmail, targetCount } });
+      await createFn({ data: { name, description, managerEmail, targetCount, startDate, endDate } });
       toast.success("Campagne créée avec succès !");
       onSuccess();
     } catch (err: any) {
@@ -159,6 +171,17 @@ function CreateCampaignModal({ onClose, onSuccess }: { onClose: () => void, onSu
           <label className="block text-sm font-bold text-ink mb-1">Nombre d'enfants ciblés</label>
           <input required type="number" min={1} value={targetCount} onChange={e => setTargetCount(parseInt(e.target.value))} className="w-full bg-surface border-none rounded-2xl p-4 font-medium" />
         </div>
+        <div className="grid grid-cols-2 gap-3">
+          <div>
+            <label className="block text-sm font-bold text-ink mb-1">Début du programme</label>
+            <input required type="date" value={startDate} onChange={e => setStartDate(e.target.value)} className="w-full bg-surface border-none rounded-2xl p-4 font-medium" />
+          </div>
+          <div>
+            <label className="block text-sm font-bold text-ink mb-1">Fin du programme</label>
+            <input required type="date" value={endDate} onChange={e => setEndDate(e.target.value)} className="w-full bg-surface border-none rounded-2xl p-4 font-medium" />
+          </div>
+        </div>
+        <p className="text-xs text-ink/50 -mt-2 font-medium">Fenêtre fixe et partagée par toute la cohorte — contrairement à un enfant isolé, ses enfants ne démarrent pas chacun leur propre chrono individuel.</p>
         <div>
           <label className="block text-sm font-bold text-ink mb-1">Description (Optionnelle)</label>
           <textarea value={description} onChange={e => setDescription(e.target.value)} className="w-full bg-surface border-none rounded-2xl p-4 font-medium min-h-[100px]" placeholder="Détails du programme..." />

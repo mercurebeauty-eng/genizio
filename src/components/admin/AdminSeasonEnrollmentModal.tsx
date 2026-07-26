@@ -1,50 +1,102 @@
 import { useState, useEffect } from "react";
-import { X, Calendar, Loader2 } from "lucide-react";
+import { X, Calendar, Loader2, Building2, UserX } from "lucide-react";
 import { useServerFn } from "@tanstack/react-start";
-import { enrollChildAdmin, listSeasonsAdmin, type Season } from "@/lib/seasons.functions";
+import { useSession } from "@/hooks/use-session";
+import { enrollChildAdmin, unenrollCampaignAdmin, listSeasonsAdmin, type Season } from "@/lib/seasons.functions";
+import { listCampaignsAdmin, type Campaign } from "@/lib/campaigns.functions";
 import { toast } from "sonner";
 
 interface AdminSeasonEnrollmentModalProps {
   childId: string;
   childName: string;
+  currentCampaignName?: string | null;
   onClose: () => void;
   onSuccess: () => void;
 }
 
-export function AdminSeasonEnrollmentModal({ childId, childName, onClose, onSuccess }: AdminSeasonEnrollmentModalProps) {
+export function AdminSeasonEnrollmentModal({
+  childId,
+  childName,
+  currentCampaignName,
+  onClose,
+  onSuccess,
+}: AdminSeasonEnrollmentModalProps) {
+  const { session } = useSession();
   const enrollFn = useServerFn(enrollChildAdmin);
+  const unenrollCampaignFn = useServerFn(unenrollCampaignAdmin);
   const listSeasonsFn = useServerFn(listSeasonsAdmin);
+  const listCampaignsFn = useServerFn(listCampaignsAdmin);
   
   const [seasons, setSeasons] = useState<Season[]>([]);
+  const [campaigns, setCampaigns] = useState<Campaign[]>([]);
   const [loadingSeasons, setLoadingSeasons] = useState(true);
   const [selectedSeasonId, setSelectedSeasonId] = useState<string>("");
+  const [selectedCampaignId, setSelectedCampaignId] = useState<string>("");
   const [enrolling, setEnrolling] = useState(false);
 
   useEffect(() => {
-    listSeasonsFn({ data: undefined })
-      .then(fetchedSeasons => {
+    const opts = session?.access_token
+      ? { headers: { Authorization: `Bearer ${session.access_token}` } }
+      : {};
+
+    Promise.all([
+      listSeasonsFn({ data: undefined, ...opts }).catch(() => [] as Season[]),
+      listCampaignsFn({ data: undefined, ...opts }).catch(() => [] as Campaign[]),
+    ])
+      .then(([fetchedSeasons, fetchedCampaigns]) => {
         setSeasons(fetchedSeasons);
+        setCampaigns(fetchedCampaigns || []);
         if (fetchedSeasons.length > 0) {
           setSelectedSeasonId(fetchedSeasons[0].id);
         }
       })
       .catch(err => {
         console.error(err);
-        toast.error("Erreur lors du chargement des saisons");
       })
       .finally(() => setLoadingSeasons(false));
-  }, []);
+  }, [session]);
 
   const handleEnroll = async () => {
     if (!selectedSeasonId) return;
     
     setEnrolling(true);
+    const opts = session?.access_token
+      ? { headers: { Authorization: `Bearer ${session.access_token}` } }
+      : {};
+
     try {
-      await enrollFn({ data: { childId, seasonId: selectedSeasonId } });
-      toast.success(`${childName} a été inscrit avec succès à la saison !`);
+      await enrollFn({
+        data: {
+          childId,
+          seasonId: selectedSeasonId,
+          campaignId: selectedCampaignId || undefined,
+        },
+        ...opts,
+      });
+      toast.success(`${childName} a été mis à jour avec succès !`);
       onSuccess();
     } catch (error: any) {
-      toast.error(error.message || "Erreur lors de l'inscription.");
+      toast.error(error.message || "Erreur lors de la mise à jour.");
+    } finally {
+      setEnrolling(false);
+    }
+  };
+
+  const handleUnenroll = async () => {
+    setEnrolling(true);
+    const opts = session?.access_token
+      ? { headers: { Authorization: `Bearer ${session.access_token}` } }
+      : {};
+
+    try {
+      await unenrollCampaignFn({
+        data: { childId },
+        ...opts,
+      });
+      toast.success(`${childName} a été retiré de la campagne.`);
+      onSuccess();
+    } catch (error: any) {
+      toast.error(error.message || "Erreur lors du retrait de la campagne.");
     } finally {
       setEnrolling(false);
     }
@@ -71,6 +123,29 @@ export function AdminSeasonEnrollmentModal({ childId, childName, onClose, onSucc
         </div>
 
         <div className="p-6 flex-1 overflow-y-auto">
+          {currentCampaignName && (
+            <div className="bg-amber-50 border border-amber-200/80 rounded-2xl p-3.5 mb-5 flex items-center justify-between gap-3 shadow-xs">
+              <div className="flex items-center gap-2.5 min-w-0">
+                <div className="size-8 rounded-xl bg-amber-500/10 text-amber-700 flex items-center justify-center shrink-0">
+                  <Building2 className="size-4" />
+                </div>
+                <div className="min-w-0">
+                  <p className="text-[10px] font-extrabold uppercase tracking-wider text-amber-700/80">Campagne active</p>
+                  <p className="text-xs font-black text-amber-900 truncate">{currentCampaignName}</p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={handleUnenroll}
+                disabled={enrolling}
+                className="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-black text-rose-700 bg-rose-100 hover:bg-rose-200 rounded-xl transition-colors shrink-0 disabled:opacity-50"
+              >
+                <UserX className="size-3.5" />
+                Retirer
+              </button>
+            </div>
+          )}
+
           {loadingSeasons ? (
             <div className="flex justify-center items-center py-8">
               <Loader2 className="size-6 animate-spin text-brand" />
@@ -112,6 +187,28 @@ export function AdminSeasonEnrollmentModal({ childId, childName, onClose, onSucc
                   </div>
                 </div>
               ))}
+
+              {/* Campagne ONG optionnelle */}
+              {campaigns.length > 0 && (
+                <div className="pt-3 border-t border-ink/10">
+                  <label className="block text-xs font-extrabold uppercase tracking-widest text-ink/50 mb-1.5 flex items-center gap-1.5">
+                    <Building2 className="size-3.5 text-brand" />
+                    Rattacher à une Campagne ONG (Optionnel)
+                  </label>
+                  <select
+                    value={selectedCampaignId}
+                    onChange={(e) => setSelectedCampaignId(e.target.value)}
+                    className="w-full bg-surface border border-ink/10 rounded-2xl p-3 text-xs font-bold text-ink focus:outline-none focus:ring-2 focus:ring-brand/30"
+                  >
+                    <option value="">Aucune campagne (Inscription standard)</option>
+                    {campaigns.map((c) => (
+                      <option key={c.id} value={c.id}>
+                        {c.name} ({c.target_count} enfants ciblés)
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              )}
             </div>
           )}
         </div>

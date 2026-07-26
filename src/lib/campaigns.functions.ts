@@ -14,6 +14,8 @@ export interface Campaign {
   manager_email?: string | null;
   target_count: number;
   extra_supervisors_quota: number;
+  start_date: string;
+  end_date: string;
   created_at: string;
 }
 
@@ -26,6 +28,12 @@ export const createCampaignAdmin = createServerFn({ method: "POST" })
         description: z.string().optional(),
         managerEmail: z.string().email(),
         targetCount: z.number().int().positive().default(100),
+        // Décision utilisateur (2026-07-26) : une campagne a sa propre fenêtre fixe, partagée par
+        // tous ses enfants — contrairement au rolling individuel par défaut (chaque enfant démarre
+        // son propre chrono à sa date d'inscription), une cohorte ONG a besoin d'un vrai début et
+        // d'une vraie fin communs, pour permettre un bilan de fin de programme cohérent.
+        startDate: z.string(),
+        endDate: z.string(),
       })
       .parse(input)
   )
@@ -46,6 +54,8 @@ export const createCampaignAdmin = createServerFn({ method: "POST" })
         manager_user_id: manager.id,
         target_count: data.targetCount,
         extra_supervisors_quota: 0,
+        start_date: data.startDate,
+        end_date: data.endDate,
       })
       .select()
       .single();
@@ -60,23 +70,29 @@ export const createCampaignAdmin = createServerFn({ method: "POST" })
 export const listCampaignsAdmin = createServerFn({ method: "GET" })
   .middleware([requireAdmin])
   .handler(async () => {
-    const { data: campaigns, error } = await (supabaseAdmin as any)
-      .from("campaigns")
-      .select("*")
-      .order("created_at", { ascending: false });
+    try {
+      const { data: campaigns, error } = await (supabaseAdmin as any)
+        .from("campaigns")
+        .select("*")
+        .order("created_at", { ascending: false });
 
-    if (error) {
-      throw new Error(error.message);
+      if (error || !campaigns) {
+        if (error) console.error("Error fetching campaigns:", error);
+        return [] as Campaign[];
+      }
+      
+      // Attach emails safely
+      const users = await listAllUsers(supabaseAdmin).catch(() => []);
+      const emailMap = new Map(users.map(u => [u.id, u.email]));
+      
+      return (campaigns as Campaign[]).map(c => ({
+          ...c,
+          manager_email: c.manager_user_id ? emailMap.get(c.manager_user_id) : null
+      }));
+    } catch (err) {
+      console.error("Error in listCampaignsAdmin:", err);
+      return [] as Campaign[];
     }
-    
-    // Attach emails
-    const users = await listAllUsers(supabaseAdmin);
-    const emailMap = new Map(users.map(u => [u.id, u.email]));
-    
-    return (campaigns as Campaign[]).map(c => ({
-        ...c,
-        manager_email: c.manager_user_id ? emailMap.get(c.manager_user_id) : null
-    }));
   });
 
 export const generateCampaignTokensAdmin = createServerFn({ method: "POST" })

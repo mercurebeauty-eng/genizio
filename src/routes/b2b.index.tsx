@@ -90,6 +90,9 @@ function B2bDashboard() {
           <p className="text-lg text-ink/60 font-medium mt-2 max-w-2xl">
             {activeCampaign.description || "Suivi de la cohorte et des performances."}
           </p>
+          <p className="text-sm font-bold text-ink/50 mt-2">
+            Programme : {new Date(activeCampaign.start_date).toLocaleDateString("fr-FR")} → {new Date(activeCampaign.end_date).toLocaleDateString("fr-FR")}
+          </p>
         </div>
       </div>
 
