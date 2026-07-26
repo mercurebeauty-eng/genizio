@@ -178,6 +178,22 @@ export const generateCampaignTokensAdmin = createServerFn({ method: "POST" })
     return { success: true, count: data.count };
   });
 
+// Jusqu'ici, rien dans la nav ne signalait à un chargé de projet ONG que son compte avait un
+// dashboard B2B — /b2b n'apparaît nulle part (ni AppHeader, ni AppTabBar, ni /profile), contrairement
+// à /supervisor et /admin qui sont déjà surfacés conditionnellement dans /profile. Seul moyen
+// d'y arriver aujourd'hui : quelqu'un chez Génizio communique l'URL à la main. Ce check permet
+// à /profile d'afficher le même genre de lien conditionnel que pour superviseur/admin.
+export const checkIsCampaignManager = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const userId = (context as any).claims?.sub;
+    const { count } = await (supabaseAdmin as any)
+      .from("campaigns")
+      .select("id", { count: "exact", head: true })
+      .eq("manager_user_id", userId);
+    return { isManager: (count ?? 0) > 0 };
+  });
+
 export interface CampaignTokenDetail {
   id: string;
   code: string;

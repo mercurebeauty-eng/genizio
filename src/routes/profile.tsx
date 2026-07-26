@@ -6,13 +6,14 @@ import { useSession } from "@/hooks/use-session";
 import { AppHeader } from "@/components/AppHeader";
 import { AppTabBar } from "@/components/AppTabBar";
 import { toast } from "sonner";
-import { User, Phone, ArrowLeft, Check, Loader2, Users, Calendar, Shield, LogOut, Eye, LayoutDashboard, ShoppingBag } from "lucide-react";
+import { User, Phone, ArrowLeft, Check, Loader2, Users, Calendar, Shield, LogOut, Eye, LayoutDashboard, ShoppingBag, Building2 } from "lucide-react";
 import { ConsentLedger } from "@/components/settings/ConsentLedger";
 import { ExportDataButton } from "@/components/settings/ExportDataButton";
 import { DeleteAccountDialog } from "@/components/settings/DeleteAccountDialog";
 import { COUNTRIES } from "@/lib/countries";
 import { GenizioLoader } from "@/components/GenizioLoader";
 import { checkAdminStatus } from "@/lib/admin.functions";
+import { checkIsCampaignManager } from "@/lib/campaigns.functions";
 
 export const Route = createFileRoute("/profile")({
   component: ProfilePage,
@@ -34,12 +35,15 @@ function ProfilePage() {
   const [consentEventsCount, setConsentEventsCount] = useState(0);
   const [isSupervisor, setIsSupervisor] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
+  const [isManager, setIsManager] = useState(false);
   const checkAdmin = useServerFn(checkAdminStatus);
+  const checkManager = useServerFn(checkIsCampaignManager);
 
   useEffect(() => {
     if (!loading && !session) navigate({ to: "/auth", replace: true });
     if (session) {
       checkAdmin().then(({ isAdmin }) => setIsAdmin(isAdmin));
+      checkManager().then(({ isManager }) => setIsManager(isManager));
       supabase
         .from("supervisors")
         .select("id", { count: "exact", head: true })
@@ -165,7 +169,7 @@ function ProfilePage() {
             </div>
           </div>
 
-          {(isSupervisor || isAdmin) && (
+          {(isSupervisor || isAdmin || isManager) && (
             <div className="rounded-3xl border border-ink/10 bg-white p-6 shadow-xl">
               <h3 className="font-display text-balance text-base font-bold flex items-center gap-2 mb-3">
                 <Eye className="size-4 text-brand" />
@@ -178,6 +182,14 @@ function ProfilePage() {
                     className="flex items-center gap-2.5 rounded-xl px-3 py-2.5 text-sm font-bold text-brand hover:bg-brand/5"
                   >
                     <Eye className="size-4" /> Superviseur
+                  </Link>
+                )}
+                {isManager && (
+                  <Link
+                    to="/b2b"
+                    className="flex items-center gap-2.5 rounded-xl px-3 py-2.5 text-sm font-bold text-emerald-700 hover:bg-emerald-50"
+                  >
+                    <Building2 className="size-4" /> Espace Partenaire ONG & B2B
                   </Link>
                 )}
                 {isAdmin && (

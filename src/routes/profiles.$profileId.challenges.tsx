@@ -151,8 +151,18 @@ function ChallengesPage() {
   const search = Route.useSearch();
   const { session, loading } = useSession();
   const navigate = useNavigate();
+  const routeNavigate = Route.useNavigate();
 
   const [viewMode, setViewMode] = useState<"parent" | "child">(search.mode || "parent");
+  // setViewMode seul ne changeait que l'état React local — un rechargement de page (courant sur
+  // le device cible réel : Android d'entrée de gamme, PWA en arrière-plan) repassait donc
+  // silencieusement en mode Parent, exposant le dashboard complet à l'enfant à qui on venait de
+  // tendre l'appareil. La lecture URL→state existait déjà (l'effet ci-dessous) ; il manquait
+  // l'écriture state→URL pour fermer la boucle.
+  const setMode = (mode: "parent" | "child") => {
+    setViewMode(mode);
+    routeNavigate({ search: (prev) => ({ ...prev, mode }), replace: true });
+  };
   useEffect(() => {
     if (search.mode) {
       setViewMode(search.mode);
@@ -603,7 +613,7 @@ function ChallengesPage() {
             <div className="inline-flex rounded-2xl bg-stone-100 p-1.5 border border-ink/10 shadow-inner">
               <button
                 type="button"
-                onClick={() => setViewMode("parent")}
+                onClick={() => setMode("parent")}
                 className={`px-5 py-2.5 rounded-xl text-sm font-extrabold transition-all cursor-pointer flex items-center gap-2 ${
                   viewMode === "parent"
                     ? "bg-white text-ink shadow-md border border-ink/10"
@@ -614,7 +624,7 @@ function ChallengesPage() {
               </button>
               <button
                 type="button"
-                onClick={() => setViewMode("child")}
+                onClick={() => setMode("child")}
                 className={`px-5 py-2.5 rounded-xl text-sm font-extrabold transition-all cursor-pointer flex items-center gap-2 ${
                   viewMode === "child"
                     ? "bg-brand text-white shadow-md"
@@ -689,7 +699,7 @@ function ChallengesPage() {
                     )}
                   </button>
                   <button
-                    onClick={() => setViewMode("child")}
+                    onClick={() => setMode("child")}
                     className="rounded-2xl border border-ink/10 bg-sky px-5 py-3 text-sm font-bold text-ink shadow-xl hover:-translate-y-0.5 active:translate-y-0 transition-all flex items-center gap-2 cursor-pointer"
                   >
                     Mode Enfant 🎮
