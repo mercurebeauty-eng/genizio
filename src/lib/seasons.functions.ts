@@ -22,6 +22,7 @@ export interface SponsorshipToken {
   id: string;
   code: string;
   season_id?: string | null;
+  campaign_id?: string | null;
   sponsor_name: string;
   sponsor_email: string;
   sponsor_message?: string | null;
@@ -49,8 +50,47 @@ export const DEFAULT_FALLBACK_SEASON: Season = {
   created_at: new Date().toISOString(),
 };
 
+// Rotation automatique paresseuse (pas de cron) : si la saison active a dépassé sa date de fin
+// "catalogue" (seasons.end_date — le calendrier du thème affiché, distinct de la fenêtre d'accès
+// individuelle de chaque enfant qui reste calculée séparément, cf. getChildEnrolledSeason), on la
+// marque 'completed' et on active la prochaine saison 'upcoming' en attente. Appelée au moment
+// de la lecture plutôt que sur une tâche planifiée — suffisant pour un besoin qui tolère un délai
+// de quelques heures, et évite d'ajouter de l'infra pour ça.
+async function rotateExpiredActiveSeason(): Promise<void> {
+  try {
+    const { data: current } = await (supabaseAdmin as any)
+      .from("seasons")
+      .select("id, end_date")
+      .eq("status", "active")
+      .maybeSingle();
+
+    if (!current || new Date(current.end_date) > new Date()) return;
+
+    const { data: next } = await (supabaseAdmin as any)
+      .from("seasons")
+      .select("id")
+      .eq("status", "upcoming")
+      .order("start_date", { ascending: true })
+      .order("created_at", { ascending: true })
+      .limit(1)
+      .maybeSingle();
+
+    if (next) {
+      await (supabaseAdmin as any).rpc("activate_season", { target_id: next.id });
+    } else {
+      // Personne en attente : on clôture quand même la saison expirée plutôt que de la laisser
+      // "active" indéfiniment après sa date de fin.
+      await (supabaseAdmin as any).from("seasons").update({ status: "completed" }).eq("id", current.id);
+    }
+  } catch (err) {
+    console.error("Error rotating expired season:", err);
+  }
+}
+
 export const getActiveSeason = createServerFn({ method: "GET" }).handler(async () => {
   try {
+    await rotateExpiredActiveSeason();
+
     const { data: season } = await (supabaseAdmin as any)
       .from("seasons")
       .select("*")
@@ -70,27 +110,32 @@ export const getChildEnrolledSeason = createServerFn({ method: "GET" })
   .validator((input: unknown) => z.object({ childId: z.string().uuid() }).parse(input))
   .handler(async ({ data }) => {
     try {
-      const activeSeason = await getActiveSeason({ data: undefined });
-      if (!activeSeason || activeSeason.id === DEFAULT_FALLBACK_SEASON.id) {
-        return null; // Fallback season doesn't count as an actual paid enrollment
-      }
-
+      // Décision utilisateur (2026-07-26) : l'accès individuel d'un enfant ne doit jamais être
+      // cassé rétroactivement par une rotation de la saison globale. On ne compare donc plus
+      // à getActiveSeason() — on lit directement la saison référencée par la propre inscription
+      // de cet enfant, même si elle est depuis passée en 'completed'/'archived' côté catalogue,
+      // et on ne juge l'expiration que sur SA fenêtre individuelle (enrolled_at + duration_months).
       const { data: enrollment, error } = await (supabaseAdmin as any)
         .from("season_enrollments")
-        .select("id, created_at")
+        .select("id, enrolled_at, seasons(*)")
         .eq("child_id", data.childId)
-        .eq("season_id", activeSeason.id)
+        .order("enrolled_at", { ascending: false })
+        .limit(1)
         .maybeSingle();
-      
-      if (error || !enrollment) return null;
 
-      // Option B : Saison individuelle en rolling. La durée part de la date d'inscription.
-      const enrolledAt = new Date(enrollment.created_at);
+      if (error || !enrollment || !enrollment.seasons) return null;
+
+      const season = enrollment.seasons as Season;
+      if (season.id === DEFAULT_FALLBACK_SEASON.id) return null;
+
+      const enrolledAt = new Date(enrollment.enrolled_at);
       const endDate = new Date(enrolledAt);
-      endDate.setMonth(endDate.getMonth() + activeSeason.duration_months);
+      endDate.setMonth(endDate.getMonth() + season.duration_months);
+
+      if (new Date() > endDate) return null; // fenêtre individuelle expirée
 
       return {
-        ...activeSeason,
+        ...season,
         individual_start_date: enrolledAt.toISOString(),
         individual_end_date: endDate.toISOString(),
       };
@@ -210,6 +255,7 @@ export const redeemSponsorshipToken = createServerFn({ method: "POST" })
       sponsor_email: token.sponsor_email,
       sponsor_message: token.sponsor_message,
       payment_status: "sponsored",
+      campaign_id: token.campaign_id || null,
     });
 
     return { success: true, token };
@@ -218,6 +264,8 @@ export const redeemSponsorshipToken = createServerFn({ method: "POST" })
 export const listSeasonsAdmin = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async () => {
+    await rotateExpiredActiveSeason();
+
     const { data: seasons, error } = await (supabaseAdmin as any)
       .from("seasons")
       .select("*")
@@ -305,6 +353,15 @@ export const updateSeasonStatusAdmin = createServerFn({ method: "POST" })
       .parse(input)
   )
   .handler(async ({ data }) => {
+    // Activer passe par le RPC atomique (désactive l'ancienne active -> 'completed' + active la
+    // cible dans la même transaction) pour garantir l'invariant "une seule saison active à la
+    // fois" même depuis un clic manuel admin, pas seulement depuis la rotation automatique.
+    if (data.status === "active") {
+      const { error } = await (supabaseAdmin as any).rpc("activate_season", { target_id: data.seasonId });
+      if (error) throw new Error(`Erreur lors de l'activation: ${error.message}`);
+      return { success: true };
+    }
+
     const { error } = await (supabaseAdmin as any)
       .from("seasons")
       .update({ status: data.status })
@@ -312,6 +369,67 @@ export const updateSeasonStatusAdmin = createServerFn({ method: "POST" })
 
     if (error) {
       throw new Error(`Erreur lors de la mise à jour: ${error.message}`);
+    }
+    return { success: true };
+  });
+
+export const updateSeasonAdmin = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .validator((input: any) =>
+    z
+      .object({
+        seasonId: z.string().uuid(),
+        title: z.string().min(3),
+        subtitle: z.string().optional(),
+        theme: z.string().min(3),
+        description: z.string().optional(),
+        duration_months: z.number().int().positive().default(3),
+        start_date: z.string(),
+        end_date: z.string(),
+        price_xof: z.number().positive().default(10000),
+        price_eur: z.number().positive().default(15),
+      })
+      .parse(input)
+  )
+  .handler(async ({ data }) => {
+    const { seasonId, ...fields } = data;
+    const { error } = await (supabaseAdmin as any).from("seasons").update(fields).eq("id", seasonId);
+
+    if (error) {
+      throw new Error(`Erreur lors de la modification de la saison: ${error.message}`);
+    }
+    return { success: true };
+  });
+
+export const deleteSeasonAdmin = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .validator((input: any) => z.object({ seasonId: z.string().uuid() }).parse(input))
+  .handler(async ({ data }) => {
+    // Suppression = risque supérieur à l'archivage : season_id est en ON DELETE CASCADE sur
+    // season_enrollments et sponsorship_tokens (migration 20260725100000). Supprimer une saison
+    // déjà utilisée effacerait l'historique de paiement/inscription des familles concernées.
+    // On ne l'autorise donc que pour une saison jamais utilisée ; sinon on dirige vers Archiver.
+    const [{ count: enrollmentCount }, { count: tokenCount }] = await Promise.all([
+      (supabaseAdmin as any)
+        .from("season_enrollments")
+        .select("id", { count: "exact", head: true })
+        .eq("season_id", data.seasonId),
+      (supabaseAdmin as any)
+        .from("sponsorship_tokens")
+        .select("id", { count: "exact", head: true })
+        .eq("season_id", data.seasonId),
+    ]);
+
+    if ((enrollmentCount ?? 0) > 0 || (tokenCount ?? 0) > 0) {
+      throw new Error(
+        "Impossible de supprimer : cette saison a déjà des inscriptions ou des parrainages liés. Archivez-la à la place pour préserver leur historique."
+      );
+    }
+
+    const { error } = await (supabaseAdmin as any).from("seasons").delete().eq("id", data.seasonId);
+
+    if (error) {
+      throw new Error(`Erreur lors de la suppression: ${error.message}`);
     }
     return { success: true };
   });

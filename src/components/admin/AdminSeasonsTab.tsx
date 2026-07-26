@@ -1,21 +1,32 @@
 import { useEffect, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
-import { Calendar, Gift, Users, CheckCircle, Sparkles, Link as LinkIcon, Plus, Copy, Check, ShieldCheck, Loader2 } from "lucide-react";
-import { listSeasonsAdmin, listSponsorshipsAdmin, updateSeasonStatusAdmin, confirmSponsorshipPaymentAdmin, DEFAULT_FALLBACK_SEASON, type Season, type SponsorshipToken } from "@/lib/seasons.functions";
+import { Calendar, Gift, Users, CheckCircle, Sparkles, Link as LinkIcon, Plus, Copy, Check, ShieldCheck, Loader2, Pencil, Trash2 } from "lucide-react";
+import { listSeasonsAdmin, listSponsorshipsAdmin, updateSeasonStatusAdmin, deleteSeasonAdmin, confirmSponsorshipPaymentAdmin, DEFAULT_FALLBACK_SEASON, type Season, type SponsorshipToken } from "@/lib/seasons.functions";
 import { toast } from "sonner";
+import { confirmDialog } from "@/components/ui/confirm-dialog";
 import { CreateSeasonModal } from "./CreateSeasonModal";
+
+const SEASON_STATUS_LABELS: Record<string, string> = {
+  upcoming: "À venir",
+  active: "En cours (Actif)",
+  completed: "Terminée",
+  archived: "Archivée",
+};
 
 export function AdminSeasonsTab() {
   const getSeasonsFn = useServerFn(listSeasonsAdmin);
   const getSponsorshipsFn = useServerFn(listSponsorshipsAdmin);
 
   const updateStatusFn = useServerFn(updateSeasonStatusAdmin);
+  const deleteSeasonFn = useServerFn(deleteSeasonAdmin);
   const confirmPaymentFn = useServerFn(confirmSponsorshipPaymentAdmin);
 
   const [seasons, setSeasons] = useState<Season[]>([DEFAULT_FALLBACK_SEASON]);
   const [sponsorships, setSponsorships] = useState<SponsorshipToken[]>([]);
   const [loading, setLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [editingSeason, setEditingSeason] = useState<Season | null>(null);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
   const [copiedCode, setCopiedCode] = useState<string | null>(null);
   const [confirmingId, setConfirmingId] = useState<string | null>(null);
 
@@ -36,6 +47,12 @@ export function AdminSeasonsTab() {
     loadData();
   }, []);
 
+  // seasons est trié par created_at desc (listSeasonsAdmin) — seasons[0] est donc la plus
+  // récemment créée, pas forcément la saison active. Sans ce find, créer une "Saison 2" à
+  // l'avance (upcoming) pendant que la Saison 1 tourne encore ferait afficher la 2 ici comme
+  // si elle était déjà en cours.
+  const activeSeason = seasons.find((s) => s.status === "active") ?? seasons[0];
+
   const handleUpdateStatus = async (seasonId: string, status: any) => {
     try {
       const res = await updateStatusFn({ data: { seasonId, status } });
@@ -45,6 +62,28 @@ export function AdminSeasonsTab() {
       }
     } catch (err: any) {
       toast.error(err.message || "Erreur de mise à jour");
+    }
+  };
+
+  const handleDelete = async (season: Season) => {
+    if (!(await confirmDialog({
+      title: "Supprimer cette saison ?",
+      description: `"${season.title}" sera définitivement supprimée. Impossible si des inscriptions ou parrainages y sont déjà liés — archivez-la dans ce cas.`,
+      confirmLabel: "Supprimer",
+      variant: "danger",
+    }))) return;
+
+    setDeletingId(season.id);
+    try {
+      const res = await deleteSeasonFn({ data: { seasonId: season.id } });
+      if (res.success) {
+        toast.success("Saison supprimée.");
+        loadData();
+      }
+    } catch (err: any) {
+      toast.error(err.message || "Erreur lors de la suppression");
+    } finally {
+      setDeletingId(null);
     }
   };
 
@@ -85,10 +124,10 @@ export function AdminSeasonsTab() {
             </span>
           </div>
           <h3 className="font-display text-xl font-bold text-ink">
-            {seasons[0]?.title || "Saison 1 : Les Penseurs"}
+            {activeSeason?.title || "Saison 1 : Les Penseurs"}
           </h3>
           <p className="text-xs text-ink/60 font-medium mt-1">
-            Durée : {seasons[0]?.duration_months || 3} Mois (Trimestre)
+            Durée : {activeSeason?.duration_months || 3} Mois (Trimestre)
           </p>
         </div>
 
@@ -165,7 +204,7 @@ export function AdminSeasonsTab() {
               <div>
                 <div className="flex items-center gap-2 mb-1">
                   <span className="rounded-full bg-brand/15 px-3 py-0.5 text-[10px] font-black uppercase text-brand border border-brand/20">
-                    {season.status === "active" ? "En cours (Actif)" : season.status}
+                    {SEASON_STATUS_LABELS[season.status] ?? season.status}
                   </span>
                   <span className="text-xs text-ink/60 font-bold">
                     {season.duration_months} Mois
@@ -181,22 +220,57 @@ export function AdminSeasonsTab() {
                   </span>
                   <span className="block text-xs text-ink/60 font-bold">({season.price_eur} €)</span>
                 </div>
-                <div className="flex flex-col gap-2 border-l border-ink/10 pl-6">
-                  {season.status !== "active" && (
-                    <button
-                      onClick={() => handleUpdateStatus(season.id, "active")}
-                      className="text-[10px] font-bold uppercase tracking-wider text-emerald-600 hover:text-emerald-700 bg-emerald-50 px-3 py-1.5 rounded-lg border border-emerald-200 transition-colors cursor-pointer"
-                    >
-                      Activer
-                    </button>
-                  )}
-                  {season.status !== "archived" && season.status !== "upcoming" && (
-                    <button
-                      onClick={() => handleUpdateStatus(season.id, "archived")}
-                      className="text-[10px] font-bold uppercase tracking-wider text-ink/50 hover:text-ink/80 bg-ink/5 px-3 py-1.5 rounded-lg border border-transparent hover:border-ink/10 transition-colors cursor-pointer"
-                    >
-                      Archiver
-                    </button>
+                <div className="flex flex-wrap items-center gap-2 border-l border-ink/10 pl-6">
+                  {season.id === DEFAULT_FALLBACK_SEASON.id ? (
+                    // Repli purement client (aucune saison créée en base) : aucune action n'a
+                    // de ligne réelle à cibler, donc aucun bouton plutôt qu'un bouton muet qui
+                    // afficherait "Statut mis à jour !" sans rien changer.
+                    <span className="text-[10px] font-bold uppercase tracking-wider text-ink/40">
+                      Créez votre première saison
+                    </span>
+                  ) : (
+                    <>
+                      {season.status !== "active" && (
+                        <button
+                          onClick={() => handleUpdateStatus(season.id, "active")}
+                          className="text-[10px] font-bold uppercase tracking-wider text-emerald-600 hover:text-emerald-700 bg-emerald-50 px-3 py-1.5 rounded-lg border border-emerald-200 transition-colors cursor-pointer"
+                        >
+                          Activer
+                        </button>
+                      )}
+                      {season.status === "active" && (
+                        <button
+                          onClick={() => handleUpdateStatus(season.id, "completed")}
+                          className="text-[10px] font-bold uppercase tracking-wider text-sky-700 hover:text-sky-800 bg-sky-50 px-3 py-1.5 rounded-lg border border-sky-200 transition-colors cursor-pointer flex items-center gap-1"
+                        >
+                          <CheckCircle className="size-3" />
+                          Marquer terminée
+                        </button>
+                      )}
+                      {season.status !== "archived" && season.status !== "upcoming" && (
+                        <button
+                          onClick={() => handleUpdateStatus(season.id, "archived")}
+                          className="text-[10px] font-bold uppercase tracking-wider text-ink/50 hover:text-ink/80 bg-ink/5 px-3 py-1.5 rounded-lg border border-transparent hover:border-ink/10 transition-colors cursor-pointer"
+                        >
+                          Archiver
+                        </button>
+                      )}
+                      <button
+                        onClick={() => setEditingSeason(season)}
+                        title="Modifier"
+                        className="grid size-7 place-items-center rounded-lg border border-ink/10 bg-white text-ink/60 hover:text-ink hover:bg-ink/5 transition-colors cursor-pointer"
+                      >
+                        <Pencil className="size-3.5" />
+                      </button>
+                      <button
+                        onClick={() => handleDelete(season)}
+                        disabled={deletingId === season.id}
+                        title="Supprimer"
+                        className="grid size-7 place-items-center rounded-lg border border-red-200 bg-red-50 text-red-600 hover:bg-red-100 transition-colors cursor-pointer disabled:opacity-50"
+                      >
+                        {deletingId === season.id ? <Loader2 className="size-3.5 animate-spin" /> : <Trash2 className="size-3.5" />}
+                      </button>
+                    </>
                   )}
                 </div>
               </div>
@@ -286,11 +360,16 @@ export function AdminSeasonsTab() {
         )}
       </div>
 
-      {isModalOpen && (
+      {(isModalOpen || editingSeason) && (
         <CreateSeasonModal
-          onClose={() => setIsModalOpen(false)}
+          initial={editingSeason}
+          onClose={() => {
+            setIsModalOpen(false);
+            setEditingSeason(null);
+          }}
           onSuccess={() => {
             setIsModalOpen(false);
+            setEditingSeason(null);
             loadData();
           }}
         />

@@ -1,25 +1,28 @@
 import { useState } from "react";
-import { X, Sparkles, Calendar, Tag } from "lucide-react";
+import { X, Sparkles } from "lucide-react";
 import { useServerFn } from "@tanstack/react-start";
-import { createSeasonAdmin } from "@/lib/seasons.functions";
+import { createSeasonAdmin, updateSeasonAdmin, type Season } from "@/lib/seasons.functions";
 import { toast } from "sonner";
 
 interface CreateSeasonModalProps {
+  initial?: Season | null;
   onClose: () => void;
   onSuccess: () => void;
 }
 
-export function CreateSeasonModal({ onClose, onSuccess }: CreateSeasonModalProps) {
+export function CreateSeasonModal({ initial, onClose, onSuccess }: CreateSeasonModalProps) {
   const createFn = useServerFn(createSeasonAdmin);
+  const updateFn = useServerFn(updateSeasonAdmin);
+  const isEditing = !!initial;
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
-    title: "",
-    theme: "",
-    duration_months: 3,
-    start_date: "",
-    end_date: "",
-    price_xof: 10000,
-    price_eur: 15,
+    title: initial?.title ?? "",
+    theme: initial?.theme ?? "",
+    duration_months: initial?.duration_months ?? 3,
+    start_date: initial?.start_date ? initial.start_date.slice(0, 10) : "",
+    end_date: initial?.end_date ? initial.end_date.slice(0, 10) : "",
+    price_xof: initial?.price_xof ?? 10000,
+    price_eur: initial?.price_eur ?? 15,
   });
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -34,13 +37,15 @@ export function CreateSeasonModal({ onClose, onSuccess }: CreateSeasonModalProps
     e.preventDefault();
     setLoading(true);
     try {
-      const res = await createFn({ data: formData });
+      const res = isEditing
+        ? await updateFn({ data: { seasonId: initial!.id, ...formData } })
+        : await createFn({ data: formData });
       if (res.success) {
-        toast.success("Saison créée avec succès !");
+        toast.success(isEditing ? "Saison modifiée avec succès !" : "Saison créée avec succès !");
         onSuccess();
       }
     } catch (err: any) {
-      toast.error(err.message || "Erreur lors de la création de la saison");
+      toast.error(err.message || "Erreur lors de l'enregistrement de la saison");
     } finally {
       setLoading(false);
     }
@@ -58,7 +63,7 @@ export function CreateSeasonModal({ onClose, onSuccess }: CreateSeasonModalProps
             <div className="grid size-10 place-items-center rounded-2xl bg-brand/10 text-brand">
               <Sparkles className="size-5" />
             </div>
-            <h2 className="font-display text-xl font-bold text-ink">Nouvelle Saison</h2>
+            <h2 className="font-display text-xl font-bold text-ink">{isEditing ? "Modifier la Saison" : "Nouvelle Saison"}</h2>
           </div>
           <button
             onClick={onClose}
@@ -171,7 +176,7 @@ export function CreateSeasonModal({ onClose, onSuccess }: CreateSeasonModalProps
                 disabled={loading}
                 className="rounded-2xl bg-brand px-6 py-3 text-sm font-bold text-white shadow-md hover:bg-brand/90 transition-all cursor-pointer disabled:opacity-50"
               >
-                {loading ? "Création..." : "Créer la Saison"}
+                {loading ? "Enregistrement..." : isEditing ? "Enregistrer" : "Créer la Saison"}
               </button>
             </div>
           </form>

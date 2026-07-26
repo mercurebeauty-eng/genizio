@@ -39,6 +39,36 @@ export type Database = {
   }
   public: {
     Tables: {
+      campaigns: {
+        Row: {
+          created_at: string | null
+          description: string | null
+          extra_supervisors_quota: number
+          id: string
+          manager_user_id: string | null
+          name: string
+          target_count: number
+        }
+        Insert: {
+          created_at?: string | null
+          description?: string | null
+          extra_supervisors_quota?: number
+          id?: string
+          manager_user_id?: string | null
+          name: string
+          target_count?: number
+        }
+        Update: {
+          created_at?: string | null
+          description?: string | null
+          extra_supervisors_quota?: number
+          id?: string
+          manager_user_id?: string | null
+          name?: string
+          target_count?: number
+        }
+        Relationships: []
+      }
       challenges: {
         Row: {
           academic_domain: string | null
@@ -751,6 +781,7 @@ export type Database = {
       season_enrollments: {
         Row: {
           artifact_url: string | null
+          campaign_id: string | null
           child_id: string
           enrolled_at: string
           id: string
@@ -763,6 +794,7 @@ export type Database = {
         }
         Insert: {
           artifact_url?: string | null
+          campaign_id?: string | null
           child_id: string
           enrolled_at?: string
           id?: string
@@ -775,6 +807,7 @@ export type Database = {
         }
         Update: {
           artifact_url?: string | null
+          campaign_id?: string | null
           child_id?: string
           enrolled_at?: string
           id?: string
@@ -786,6 +819,13 @@ export type Database = {
           user_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "season_enrollments_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: false
+            referencedRelation: "campaigns"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "season_enrollments_child_id_fkey"
             columns: ["child_id"]
@@ -850,6 +890,7 @@ export type Database = {
       sponsorship_tokens: {
         Row: {
           amount_paid: number
+          campaign_id: string | null
           code: string
           created_at: string
           currency: string
@@ -866,6 +907,7 @@ export type Database = {
         }
         Insert: {
           amount_paid?: number
+          campaign_id?: string | null
           code: string
           created_at?: string
           currency?: string
@@ -882,6 +924,7 @@ export type Database = {
         }
         Update: {
           amount_paid?: number
+          campaign_id?: string | null
           code?: string
           created_at?: string
           currency?: string
@@ -897,6 +940,13 @@ export type Database = {
           target_child_name?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "sponsorship_tokens_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: false
+            referencedRelation: "campaigns"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "sponsorship_tokens_redeemed_by_child_id_fkey"
             columns: ["redeemed_by_child_id"]
@@ -998,6 +1048,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      activate_season: { Args: { target_id: string }; Returns: undefined }
       apply_observation_to_twin: {
         Args: {
           p_event: Database["public"]["Tables"]["observation_events"]["Row"]

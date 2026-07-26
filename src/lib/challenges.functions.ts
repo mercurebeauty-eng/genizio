@@ -1252,7 +1252,7 @@ export const generateChallenges = createServerFn({ method: "POST" })
     // not "hasn't gotten to it yet this week".
     const STALE_DOMAIN_CUTOFF = new Date(Date.now() - 14 * 24 * 60 * 60 * 1000).toISOString();
 
-    const [{ data: existing }, { data: completedChallenges }, { data: staleChallenges }, progressionTargets, { data: activeSeason }, { data: enrollment }] = await Promise.all([
+    const [{ data: existing }, { data: completedChallenges }, { data: staleChallenges }, progressionTargets, { data: enrollment }] = await Promise.all([
       supabase
         .from("challenges")
         .select("title")
@@ -1279,18 +1279,15 @@ export const generateChallenges = createServerFn({ method: "POST" })
         .eq("status", "todo")
         .lt("created_at", STALE_DOMAIN_CUTOFF),
       computeProgressionTargets(supabase, data.childId),
-      supabase
-        .from("seasons")
-        .select("*")
-        .eq("status", "active")
-        .order("created_at", { ascending: false })
-        .limit(1)
-        .maybeSingle(),
+      // Décision utilisateur (2026-07-26) : la thématique de saison de cet enfant se lit sur
+      // SA propre inscription (+ la saison qu'elle référence), jamais en comparant à "la saison
+      // active du moment" — sinon une rotation globale de saison casserait rétroactivement le
+      // thème narratif de chaque enfant déjà inscrit ailleurs, même encore dans sa fenêtre payée.
       supabase
         .from("season_enrollments")
-        .select("id, season_id")
+        .select("id, enrolled_at, seasons(title, theme, duration_months)")
         .eq("child_id", data.childId)
-        .order("created_at", { ascending: false })
+        .order("enrolled_at", { ascending: false })
         .limit(1)
         .maybeSingle(),
     ]);
@@ -1312,9 +1309,15 @@ export const generateChallenges = createServerFn({ method: "POST" })
 
     const leastExplored = getLeastExploredTalentLabels(child.talents as Record<string, number> | null);
 
-    const isEnrolledInActiveSeason = activeSeason && enrollment && enrollment.season_id === activeSeason.id;
+    const enrolledSeason = (enrollment as any)?.seasons as { title: string; theme: string; duration_months: number } | null;
+    let isEnrolledInActiveSeason = false;
+    if (enrollment && enrolledSeason) {
+      const seasonExpiry = new Date(enrollment.enrolled_at);
+      seasonExpiry.setMonth(seasonExpiry.getMonth() + enrolledSeason.duration_months);
+      isEnrolledInActiveSeason = new Date() <= seasonExpiry;
+    }
     const seasonInstruction = isEnrolledInActiveSeason
-      ? `- THÉMATIQUE DE SAISON ("${activeSeason.title}") : Utilise le fil rouge narratif et la métaphore de cette saison ("${activeSeason.theme}") pour scénariser au moins la moitié des défis. Le domaine d'apprentissage ciblé reste la priorité, mais l'habillage narratif donne l'impression à l'enfant d'être le héros de cette thématique.`
+      ? `- THÉMATIQUE DE SAISON ("${enrolledSeason!.title}") : Utilise le fil rouge narratif et la métaphore de cette saison ("${enrolledSeason!.theme}") pour scénariser au moins la moitié des défis. Le domaine d'apprentissage ciblé reste la priorité, mais l'habillage narratif donne l'impression à l'enfant d'être le héros de cette thématique.`
       : "";
 
     const prompt = `Tu es Naya, un mentor pédagogique pour enfants en Afrique francophone, sur la plateforme Génizio.
@@ -2194,7 +2197,7 @@ export const generateSingleChallenge = createServerFn({ method: "POST" })
     // path never checked recent titles at all — a parent clicking "Composer un défi
     // ciblé" repeatedly could get literal duplicates. Fetching both in parallel
     // matches generateChallenges' existing pattern instead of inventing a new one.
-    const [{ data: completedChallenges }, { data: existing }, progressionTargets, { data: activeSeason }, { data: enrollment }] = await Promise.all([
+    const [{ data: completedChallenges }, { data: existing }, progressionTargets, { data: enrollment }] = await Promise.all([
       supabase
         .from("challenges")
         .select("title, domain, ai_observations")
@@ -2209,18 +2212,13 @@ export const generateSingleChallenge = createServerFn({ method: "POST" })
         .order("created_at", { ascending: false })
         .limit(30),
       computeProgressionTargets(supabase, data.childId),
-      supabase
-        .from("seasons")
-        .select("*")
-        .eq("status", "active")
-        .order("created_at", { ascending: false })
-        .limit(1)
-        .maybeSingle(),
+      // Cf. generateChallenges : accès/thématique lus sur la propre inscription de l'enfant,
+      // jamais sur "la saison active du moment" (une rotation ne doit rien casser rétroactivement).
       supabase
         .from("season_enrollments")
-        .select("id, season_id")
+        .select("id, enrolled_at, seasons(title, theme, duration_months)")
         .eq("child_id", data.childId)
-        .order("created_at", { ascending: false })
+        .order("enrolled_at", { ascending: false })
         .limit(1)
         .maybeSingle(),
     ]);
@@ -2246,9 +2244,15 @@ export const generateSingleChallenge = createServerFn({ method: "POST" })
       ? "5. MATÉRIEL (À ACHETER) : Le défi peut impliquer d'aller acheter du petit matériel en grande surface, quincaillerie ou papeterie (abordable)."
       : "5. MATÉRIEL (MIXTE) : Libre à toi ! Tu peux mixer du matériel de maison, des éléments trouvés dehors dans la nature, ou du petit matériel abordable à acheter (ex: colle spéciale, peinture).";
 
-    const isEnrolledInActiveSeason = activeSeason && enrollment && enrollment.season_id === activeSeason.id;
+    const enrolledSeason = (enrollment as any)?.seasons as { title: string; theme: string; duration_months: number } | null;
+    let isEnrolledInActiveSeason = false;
+    if (enrollment && enrolledSeason) {
+      const seasonExpiry = new Date(enrollment.enrolled_at);
+      seasonExpiry.setMonth(seasonExpiry.getMonth() + enrolledSeason.duration_months);
+      isEnrolledInActiveSeason = new Date() <= seasonExpiry;
+    }
     const seasonInstruction = isEnrolledInActiveSeason
-      ? `\n3b. THÉMATIQUE DE SAISON ("${activeSeason.title}") : Utilise le fil rouge narratif et la métaphore de cette saison ("${activeSeason.theme}") pour scénariser le défi.`
+      ? `\n3b. THÉMATIQUE DE SAISON ("${enrolledSeason!.title}") : Utilise le fil rouge narratif et la métaphore de cette saison ("${enrolledSeason!.theme}") pour scénariser le défi.`
       : "";
 
     const prompt = `Tu es Naya, un mentor pédagogique d'élite spécialisé dans la psychologie de l'enfant et les Intelligences Multiples d'Howard Gardner, opérant en Afrique francophone.
