@@ -1,8 +1,8 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { Heart, Sparkles, Gift, CheckCircle, ArrowRight, ShieldCheck, Copy, Check, Share2, Award, Users, Phone } from "lucide-react";
-import { createSponsorshipToken, type SponsorshipToken } from "@/lib/seasons.functions";
+import { createSponsorshipToken, getActiveSeason, DEFAULT_FALLBACK_SEASON, type SponsorshipToken, type Season } from "@/lib/seasons.functions";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/parrainage")({
@@ -11,6 +11,7 @@ export const Route = createFileRoute("/parrainage")({
 
 function ParrainagePage() {
   const createTokenFn = useServerFn(createSponsorshipToken);
+  const getActiveSeasonFn = useServerFn(getActiveSeason);
 
   const [sponsorName, setSponsorName] = useState("");
   const [sponsorEmail, setSponsorEmail] = useState("");
@@ -20,6 +21,16 @@ function ParrainagePage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [createdToken, setCreatedToken] = useState<SponsorshipToken | null>(null);
   const [copied, setCopied] = useState(false);
+  // Le prix affiché doit refléter le vrai prix de la saison en cours (seasons.price_xof/price_eur),
+  // jamais un montant codé en dur — trois prix différents circulaient ici avant harmonisation
+  // (5 000 FCFA sur cette page, 10 000 sur la fiche de repli, 10 000 côté génération B2B).
+  const [activeSeason, setActiveSeason] = useState<Season>(DEFAULT_FALLBACK_SEASON);
+
+  useEffect(() => {
+    getActiveSeasonFn({ data: undefined }).then(setActiveSeason).catch(() => {});
+  }, []);
+
+  const priceLabel = currency === "EUR" ? `${activeSeason.price_eur} €` : `${activeSeason.price_xof.toLocaleString()} FCFA`;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -30,7 +41,7 @@ function ParrainagePage() {
 
     setIsSubmitting(true);
     try {
-      const amount = currency === "EUR" ? 7.5 : 5000;
+      const amount = currency === "EUR" ? activeSeason.price_eur : activeSeason.price_xof;
       const res = await createTokenFn({
         data: {
           sponsorName: sponsorName.trim(),
@@ -135,7 +146,7 @@ function ParrainagePage() {
               Merci pour votre générosité, {createdToken.sponsor_name} ! 🎉
             </h2>
             <p className="text-ink/70 font-medium mb-6 max-w-md mx-auto">
-              Votre demande de parrainage de <strong>3 mois</strong> est enregistrée. Finalisez le paiement ({currency === "EUR" ? "7,50 €" : "5 000 FCFA"}) via WhatsApp pour l'activer — le code ci-dessous ne sera utilisable qu'une fois le paiement confirmé par notre équipe.
+              Votre demande de parrainage de <strong>3 mois</strong> est enregistrée. Finalisez le paiement ({priceLabel}) via WhatsApp pour l'activer — le code ci-dessous ne sera utilisable qu'une fois le paiement confirmé par notre équipe.
             </p>
 
             <div className="mx-auto max-w-md rounded-2xl bg-surface p-6 border border-ink/10 mb-6 relative">
@@ -148,7 +159,7 @@ function ParrainagePage() {
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                 <a
                   href={`https://wa.me/${import.meta.env.VITE_WHATSAPP_NUMBER || "33606433148"}?text=${encodeURIComponent(
-                    `Bonjour, je viens de faire une demande de parrainage Génizio (code ${createdToken.code}, ${currency === "EUR" ? "7,50 €" : "5 000 FCFA"}). Je souhaite finaliser le paiement.`
+                    `Bonjour, je viens de faire une demande de parrainage Génizio (code ${createdToken.code}, ${priceLabel}). Je souhaite finaliser le paiement.`
                   )}`}
                   target="_blank"
                   rel="noopener noreferrer"
@@ -253,7 +264,7 @@ function ParrainagePage() {
                         currency === "EUR" ? "border-brand bg-brand-50 text-brand shadow-xs" : "border-ink/10 bg-surface text-ink/65"
                       }`}
                     >
-                      7,50 € (Diaspora)
+                      {activeSeason.price_eur} € (Diaspora)
                     </button>
                     <button
                       type="button"
@@ -262,7 +273,7 @@ function ParrainagePage() {
                         currency === "XOF" ? "border-brand bg-brand-50 text-brand shadow-xs" : "border-ink/10 bg-surface text-ink/65"
                       }`}
                     >
-                      5 000 FCFA (Local)
+                      {activeSeason.price_xof.toLocaleString()} FCFA (Local)
                     </button>
                   </div>
                 </div>
@@ -297,7 +308,7 @@ function ParrainagePage() {
                   "Génération de la Saison..."
                 ) : (
                   <>
-                    <span>Valider le Parrainage ({currency === "EUR" ? "7,50 €" : "5 000 FCFA"})</span>
+                    <span>Valider le Parrainage ({priceLabel})</span>
                     <ArrowRight className="size-5" />
                   </>
                 )}

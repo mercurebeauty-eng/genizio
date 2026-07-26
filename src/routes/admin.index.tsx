@@ -25,6 +25,7 @@ import { AdminTalentsCitiesTab } from "@/components/admin/AdminTalentsCitiesTab"
 import { AdminNayaTab } from "@/components/admin/AdminNayaTab";
 import { AdminCommerceTab } from "@/components/admin/AdminCommerceTab";
 import { AdminSeasonsTab } from "@/components/admin/AdminSeasonsTab";
+import { AdminCampaignsTab } from "@/components/admin/AdminCampaignsTab";
 import { Users, ShoppingBag, Brain, Award, Sparkles } from "lucide-react";
 import { toast } from "sonner";
 import { GenizioLoader } from "@/components/GenizioLoader";
@@ -213,6 +214,7 @@ function AdminIndexPage() {
         )}
 
         {activeTab === "seasons" && <AdminSeasonsTab />}
+        {activeTab === "b2b" && <AdminCampaignsTab />}
       </main>
     </div>
   );

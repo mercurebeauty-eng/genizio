@@ -158,7 +158,7 @@ export function AdminSeasonsTab() {
             </span>
           </div>
           <h3 className="font-display text-2xl font-black text-ink">
-            5 000 FCFA <span className="text-sm text-ink/60 font-medium">/ 7,50 €</span>
+            {(activeSeason?.price_xof ?? 10000).toLocaleString()} FCFA <span className="text-sm text-ink/60 font-medium">/ {activeSeason?.price_eur ?? 15} €</span>
           </h3>
           <p className="text-xs text-ink/60 font-medium mt-1">
             100% Zero Pay-To-Win

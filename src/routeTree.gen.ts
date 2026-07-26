@@ -12,18 +12,20 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as TermsRouteImport } from './routes/terms'
 import { Route as SupervisorRouteImport } from './routes/supervisor'
 import { Route as ProfilesRouteImport } from './routes/profiles'
-import { Route as ParrainageRouteImport } from './routes/parrainage'
 import { Route as ProfileRouteImport } from './routes/profile'
 import { Route as PrivacyRouteImport } from './routes/privacy'
+import { Route as ParrainageRouteImport } from './routes/parrainage'
 import { Route as NouveautesRouteImport } from './routes/nouveautes'
 import { Route as MentionsLegalesRouteImport } from './routes/mentions-legales'
 import { Route as LaboratoryRouteImport } from './routes/laboratory'
 import { Route as FeedRouteImport } from './routes/feed'
 import { Route as BoutiqueRouteImport } from './routes/boutique'
+import { Route as B2bRouteImport } from './routes/b2b'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AdminRouteImport } from './routes/admin'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as ProfilesIndexRouteImport } from './routes/profiles.index'
+import { Route as B2bIndexRouteImport } from './routes/b2b.index'
 import { Route as AdminIndexRouteImport } from './routes/admin.index'
 import { Route as STokenRouteImport } from './routes/s.$token'
 import { Route as ProfilesManageRouteImport } from './routes/profiles.manage'
@@ -53,11 +55,6 @@ const ProfilesRoute = ProfilesRouteImport.update({
   path: '/profiles',
   getParentRoute: () => rootRouteImport,
 } as any)
-const ParrainageRoute = ParrainageRouteImport.update({
-  id: '/parrainage',
-  path: '/parrainage',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const ProfileRoute = ProfileRouteImport.update({
   id: '/profile',
   path: '/profile',
@@ -66,6 +63,11 @@ const ProfileRoute = ProfileRouteImport.update({
 const PrivacyRoute = PrivacyRouteImport.update({
   id: '/privacy',
   path: '/privacy',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ParrainageRoute = ParrainageRouteImport.update({
+  id: '/parrainage',
+  path: '/parrainage',
   getParentRoute: () => rootRouteImport,
 } as any)
 const NouveautesRoute = NouveautesRouteImport.update({
@@ -93,6 +95,11 @@ const BoutiqueRoute = BoutiqueRouteImport.update({
   path: '/boutique',
   getParentRoute: () => rootRouteImport,
 } as any)
+const B2bRoute = B2bRouteImport.update({
+  id: '/b2b',
+  path: '/b2b',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AuthRoute = AuthRouteImport.update({
   id: '/auth',
   path: '/auth',
@@ -112,6 +119,11 @@ const ProfilesIndexRoute = ProfilesIndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => ProfilesRoute,
+} as any)
+const B2bIndexRoute = B2bIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => B2bRoute,
 } as any)
 const AdminIndexRoute = AdminIndexRouteImport.update({
   id: '/',
@@ -188,6 +200,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/admin': typeof AdminRouteWithChildren
   '/auth': typeof AuthRoute
+  '/b2b': typeof B2bRouteWithChildren
   '/boutique': typeof BoutiqueRoute
   '/feed': typeof FeedRoute
   '/laboratory': typeof LaboratoryRoute
@@ -205,6 +218,7 @@ export interface FileRoutesByFullPath {
   '/profiles/manage': typeof ProfilesManageRoute
   '/s/$token': typeof STokenRoute
   '/admin/': typeof AdminIndexRoute
+  '/b2b/': typeof B2bIndexRoute
   '/profiles/': typeof ProfilesIndexRoute
   '/profiles/$profileId/challenges': typeof ProfilesProfileIdChallengesRoute
   '/profiles/$profileId/guild': typeof ProfilesProfileIdGuildRoute
@@ -233,6 +247,7 @@ export interface FileRoutesByTo {
   '/profiles/manage': typeof ProfilesManageRoute
   '/s/$token': typeof STokenRoute
   '/admin': typeof AdminIndexRoute
+  '/b2b': typeof B2bIndexRoute
   '/profiles': typeof ProfilesIndexRoute
   '/profiles/$profileId/challenges': typeof ProfilesProfileIdChallengesRoute
   '/profiles/$profileId/guild': typeof ProfilesProfileIdGuildRoute
@@ -247,6 +262,7 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/admin': typeof AdminRouteWithChildren
   '/auth': typeof AuthRoute
+  '/b2b': typeof B2bRouteWithChildren
   '/boutique': typeof BoutiqueRoute
   '/feed': typeof FeedRoute
   '/laboratory': typeof LaboratoryRoute
@@ -264,6 +280,7 @@ export interface FileRoutesById {
   '/profiles/manage': typeof ProfilesManageRoute
   '/s/$token': typeof STokenRoute
   '/admin/': typeof AdminIndexRoute
+  '/b2b/': typeof B2bIndexRoute
   '/profiles/': typeof ProfilesIndexRoute
   '/profiles/$profileId/challenges': typeof ProfilesProfileIdChallengesRoute
   '/profiles/$profileId/guild': typeof ProfilesProfileIdGuildRoute
@@ -279,11 +296,13 @@ export interface FileRouteTypes {
     | '/'
     | '/admin'
     | '/auth'
+    | '/b2b'
     | '/boutique'
     | '/feed'
     | '/laboratory'
     | '/mentions-legales'
     | '/nouveautes'
+    | '/parrainage'
     | '/privacy'
     | '/profile'
     | '/profiles'
@@ -295,6 +314,7 @@ export interface FileRouteTypes {
     | '/profiles/manage'
     | '/s/$token'
     | '/admin/'
+    | '/b2b/'
     | '/profiles/'
     | '/profiles/$profileId/challenges'
     | '/profiles/$profileId/guild'
@@ -312,6 +332,7 @@ export interface FileRouteTypes {
     | '/laboratory'
     | '/mentions-legales'
     | '/nouveautes'
+    | '/parrainage'
     | '/privacy'
     | '/profile'
     | '/supervisor'
@@ -322,6 +343,7 @@ export interface FileRouteTypes {
     | '/profiles/manage'
     | '/s/$token'
     | '/admin'
+    | '/b2b'
     | '/profiles'
     | '/profiles/$profileId/challenges'
     | '/profiles/$profileId/guild'
@@ -335,11 +357,13 @@ export interface FileRouteTypes {
     | '/'
     | '/admin'
     | '/auth'
+    | '/b2b'
     | '/boutique'
     | '/feed'
     | '/laboratory'
     | '/mentions-legales'
     | '/nouveautes'
+    | '/parrainage'
     | '/privacy'
     | '/profile'
     | '/profiles'
@@ -351,6 +375,7 @@ export interface FileRouteTypes {
     | '/profiles/manage'
     | '/s/$token'
     | '/admin/'
+    | '/b2b/'
     | '/profiles/'
     | '/profiles/$profileId/challenges'
     | '/profiles/$profileId/guild'
@@ -365,11 +390,13 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AdminRoute: typeof AdminRouteWithChildren
   AuthRoute: typeof AuthRoute
+  B2bRoute: typeof B2bRouteWithChildren
   BoutiqueRoute: typeof BoutiqueRoute
   FeedRoute: typeof FeedRoute
   LaboratoryRoute: typeof LaboratoryRoute
   MentionsLegalesRoute: typeof MentionsLegalesRoute
   NouveautesRoute: typeof NouveautesRoute
+  ParrainageRoute: typeof ParrainageRoute
   PrivacyRoute: typeof PrivacyRoute
   ProfileRoute: typeof ProfileRoute
   ProfilesRoute: typeof ProfilesRouteWithChildren
@@ -458,6 +485,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof BoutiqueRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/b2b': {
+      id: '/b2b'
+      path: '/b2b'
+      fullPath: '/b2b'
+      preLoaderRoute: typeof B2bRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/auth': {
       id: '/auth'
       path: '/auth'
@@ -485,6 +519,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/profiles/'
       preLoaderRoute: typeof ProfilesIndexRouteImport
       parentRoute: typeof ProfilesRoute
+    }
+    '/b2b/': {
+      id: '/b2b/'
+      path: '/'
+      fullPath: '/b2b/'
+      preLoaderRoute: typeof B2bIndexRouteImport
+      parentRoute: typeof B2bRoute
     }
     '/admin/': {
       id: '/admin/'
@@ -594,6 +635,16 @@ const AdminRouteChildren: AdminRouteChildren = {
 
 const AdminRouteWithChildren = AdminRoute._addFileChildren(AdminRouteChildren)
 
+interface B2bRouteChildren {
+  B2bIndexRoute: typeof B2bIndexRoute
+}
+
+const B2bRouteChildren: B2bRouteChildren = {
+  B2bIndexRoute: B2bIndexRoute,
+}
+
+const B2bRouteWithChildren = B2bRoute._addFileChildren(B2bRouteChildren)
+
 interface ProfilesRouteChildren {
   ProfilesManageRoute: typeof ProfilesManageRoute
   ProfilesIndexRoute: typeof ProfilesIndexRoute
@@ -626,11 +677,13 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AdminRoute: AdminRouteWithChildren,
   AuthRoute: AuthRoute,
+  B2bRoute: B2bRouteWithChildren,
   BoutiqueRoute: BoutiqueRoute,
   FeedRoute: FeedRoute,
   LaboratoryRoute: LaboratoryRoute,
   MentionsLegalesRoute: MentionsLegalesRoute,
   NouveautesRoute: NouveautesRoute,
+  ParrainageRoute: ParrainageRoute,
   PrivacyRoute: PrivacyRoute,
   ProfileRoute: ProfileRoute,
   ProfilesRoute: ProfilesRouteWithChildren,

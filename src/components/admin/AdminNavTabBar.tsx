@@ -1,7 +1,7 @@
 import React from "react";
-import { BarChart3, Award, Brain, ShoppingBag, Calendar } from "lucide-react";
+import { BarChart3, Award, Brain, ShoppingBag, Calendar, Building2 } from "lucide-react";
 
-export type AdminTab = "executive" | "talents" | "naya" | "commerce" | "seasons";
+export type AdminTab = "executive" | "talents" | "naya" | "commerce" | "seasons" | "b2b";
 
 interface AdminNavTabBarProps {
   activeTab: AdminTab;
@@ -25,6 +25,15 @@ export const ADMIN_TABS: Array<{
     badge: "BI CRM",
     badgeBgClass: "bg-brand/10",
     badgeTextClass: "text-brand",
+  },
+  {
+    id: "b2b",
+    label: "Partenaires ONG",
+    sublabel: "Campagnes & B2B",
+    icon: Building2,
+    badge: "BI B2B",
+    badgeBgClass: "bg-ink/10",
+    badgeTextClass: "text-ink",
   },
   {
     id: "talents",

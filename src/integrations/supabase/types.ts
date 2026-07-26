@@ -966,6 +966,7 @@ export type Database = {
       supervisors: {
         Row: {
           assigned_by: string | null
+          campaign_id: string | null
           child_profile_id: string
           created_at: string
           id: string
@@ -973,6 +974,7 @@ export type Database = {
         }
         Insert: {
           assigned_by?: string | null
+          campaign_id?: string | null
           child_profile_id: string
           created_at?: string
           id?: string
@@ -980,12 +982,20 @@ export type Database = {
         }
         Update: {
           assigned_by?: string | null
+          campaign_id?: string | null
           child_profile_id?: string
           created_at?: string
           id?: string
           supervisor_user_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "supervisors_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: false
+            referencedRelation: "campaigns"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "supervisors_child_profile_id_fkey"
             columns: ["child_profile_id"]

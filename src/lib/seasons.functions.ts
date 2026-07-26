@@ -155,12 +155,17 @@ export const createSponsorshipToken = createServerFn({ method: "POST" })
         targetChildName: z.string().optional(),
         amountPaid: z.number().default(5000),
         currency: z.string().default("XOF"),
-        seasonId: z.string().optional(),
       })
       .parse(input)
   )
   .handler(async ({ data }: { data: any }) => {
     const code = `GENIZIO-PARRAIN-${Math.random().toString(36).substring(2, 8).toUpperCase()}`;
+
+    // Décision utilisateur (2026-07-26) : un code se lie à sa saison à l'ACTIVATION
+    // (redeemSponsorshipToken), pas à la génération — le season_id ici n'est qu'indicatif
+    // (saison en cours au moment de l'achat, pour affichage admin), jamais utilisé pour
+    // déterminer l'inscription réelle de l'enfant.
+    const activeSeason = await getActiveSeason({ data: undefined });
 
     const { data: token, error } = await (supabaseAdmin as any)
       .from("sponsorship_tokens")
@@ -172,26 +177,18 @@ export const createSponsorshipToken = createServerFn({ method: "POST" })
         target_child_name: data.targetChildName || null,
         amount_paid: data.amountPaid,
         currency: data.currency,
-        season_id: data.seasonId || DEFAULT_FALLBACK_SEASON.id,
+        season_id: activeSeason.id,
       })
       .select("*")
       .single();
 
+    // Fabriquer un faux succès ici masquerait une écriture DB réellement échouée derrière un
+    // écran de confirmation identique — le parrain croirait son code enregistré alors qu'il
+    // n'existe nulle part (trouvé en auditant ce chemin : c'était le cas jusqu'ici, la table
+    // seasons étant vide, chaque appel violait sponsorship_tokens_season_id_fkey en silence).
     if (error) {
       console.error("Error creating sponsorship token:", error);
-      return {
-        id: "demo-token-" + Date.now(),
-        code,
-        sponsor_name: data.sponsorName,
-        sponsor_email: data.sponsorEmail,
-        sponsor_message: data.sponsorMessage,
-        target_child_name: data.targetChildName,
-        amount_paid: data.amountPaid,
-        currency: data.currency,
-        payment_confirmed: false,
-        is_redeemed: false,
-        created_at: new Date().toISOString(),
-      } as SponsorshipToken;
+      throw new Error("Erreur lors de l'enregistrement du parrainage. Veuillez réessayer.");
     }
 
     return token as SponsorshipToken;
@@ -246,9 +243,15 @@ export const redeemSponsorshipToken = createServerFn({ method: "POST" })
       throw new Error("Erreur lors de la validation du code.");
     }
 
-    // Register enrollment
+    // Décision utilisateur (2026-07-26) : le code se lie à sa saison au moment de l'ACTIVATION,
+    // pas de sa génération — token.season_id n'est qu'indicatif (voir createSponsorshipToken /
+    // generateCampaignTokensAdmin). Un lot de 100 codes B2B distribué sur 3 mois doit faire
+    // démarrer chaque enfant sur la vraie saison en cours à SON activation, pas sur celle qui
+    // était active le jour où l'admin a généré le lot.
+    const activeSeason = await getActiveSeason({ data: undefined });
+
     await (supabaseAdmin as any).from("season_enrollments").insert({
-      season_id: token.season_id || DEFAULT_FALLBACK_SEASON.id,
+      season_id: activeSeason.id,
       child_id: data.childId,
       user_id: userId,
       sponsor_name: token.sponsor_name,
