@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { useSession } from "@/hooks/use-session";
 import { AppHeader } from "@/components/AppHeader";
-import { togglePassportUnlock, grantProfileSlot, updateOrderStatus } from "@/lib/products.functions";
+import { togglePassportUnlock, updateOrderStatus } from "@/lib/products.functions";
 import {
   getExecutiveKPIsAdmin,
   getTalentCityStatsAdmin,
@@ -53,7 +53,6 @@ function AdminIndexPage() {
   const getProgressionHealthFn = useServerFn(getProgressionHealthAdmin);
   const getCommerceDataFn = useServerFn(getCommercePassportsDataAdmin);
   const toggleUnlockFn = useServerFn(togglePassportUnlock);
-  const grantSlotFn = useServerFn(grantProfileSlot);
   const updateOrderStatusFn = useServerFn(updateOrderStatus);
 
   const loadData = async (showMainLoader = false) => {
@@ -90,26 +89,6 @@ function AdminIndexPage() {
       void loadData(true);
     }
   }, [session]);
-
-  const handleGrantSlot = async (userId: string, delta: number) => {
-    try {
-      const res = await grantSlotFn({ data: { userId, delta } });
-      if (res.ok) {
-        toast.success(
-          delta > 0
-            ? `Slot débloqué (total : ${res.extraSlots} slots bonus)`
-            : `Slot révoqué (total : ${res.extraSlots} slots bonus)`
-        );
-        await loadData(false);
-      } else {
-        toast.error("Échec de la modification du slot.");
-      }
-    } catch (err: any) {
-      console.error("Erreur lors de la modification du slot:", err);
-      toast.error(err?.message || "Erreur lors de la modification du slot.");
-      throw err;
-    }
-  };
 
   const handleTogglePassport = async (childId: string, unlock: boolean) => {
     try {
@@ -200,7 +179,6 @@ function AdminIndexPage() {
           <AdminExecutiveTab
             kpis={kpis}
             parents={parents}
-            onGrantSlot={handleGrantSlot}
             onTogglePassport={handleTogglePassport}
             isRefreshing={isRefreshing}
           />

@@ -288,9 +288,13 @@ function DashboardPage() {
                 const currentLevel = Math.floor(totalXP / 500) + 1;
                 const xpPct = Math.min(100, (totalXP % 500) / 500 * 100);
 
-                const FREE_SLOTS = 2;
+                // Pivot confirmé (2026-07-22) : paywall par slot retiré au profit d'une limite
+                // gratuite de 5 pour tous, monétisation via les Saisons. Slots bonus achetés
+                // avant ce pivot honorés via Math.max — cf. ProfileDialog.tsx pour le détail.
+                const BASE_FREE_LIMIT = 5;
+                const LEGACY_FREE_SLOTS = 2;
                 const extraSlots = (session?.user?.app_metadata?.extra_profile_slots as number) ?? 0;
-                const quota = FREE_SLOTS + extraSlots;
+                const quota = Math.max(BASE_FREE_LIMIT, LEGACY_FREE_SLOTS + extraSlots);
                 const atQuota = profiles.length >= quota;
 
                 return (

@@ -348,28 +348,8 @@ export const togglePassportUnlock = createServerFn({ method: "POST" })
     return { ok: true, unlocked: data.unlock };
   });
 
-export const grantProfileSlot = createServerFn({ method: "POST" })
-  .middleware([requireAdmin])
-  .validator((input: unknown) =>
-    z.object({
-      userId: z.string().uuid(),
-      delta: z.number().int().min(-10).max(10), // +1 to grant, -1 to revoke
-    }).parse(input)
-  )
-  .handler(async ({ data }) => {
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-
-    // Fetch current app_metadata
-    const { data: user, error: fetchErr } = await supabaseAdmin.auth.admin.getUserById(data.userId);
-    if (fetchErr) throw new Error(fetchErr.message);
-
-    const current = (user.user.app_metadata?.extra_profile_slots as number) ?? 0;
-    const next = Math.max(0, current + data.delta); // never go below 0
-
-    const { error: updateErr } = await supabaseAdmin.auth.admin.updateUserById(data.userId, {
-      app_metadata: { extra_profile_slots: next },
-    });
-    if (updateErr) throw new Error(updateErr.message);
-
-    return { ok: true, extraSlots: next };
-  });
+// grantProfileSlot (vente admin de slots à 5000 FCFA) retiré — pivot confirmé (2026-07-22) :
+// le paywall par slot est abandonné au profit d'une limite gratuite de 5 pour tous, la
+// monétisation passant par les Saisons. extra_profile_slots reste lu (ProfileDialog.tsx,
+// profiles.index.tsx, profiles.manage.tsx, check_child_profile_quota) pour honorer les slots
+// déjà achetés avant ce pivot, mais plus aucun moyen d'en accorder de nouveaux.

@@ -4,12 +4,15 @@ import { INTERESTS_BY_TALENT, AVATAR_COLORS, emptyProfileDraft, type ChildProfil
 import { toast } from "sonner";
 import { useSession } from "@/hooks/use-session";
 
-// Même quota que profiles.index.tsx/profiles.manage.tsx : 2 slots gratuits + slots bonus
-// accordés par un admin (grantProfileSlot, cf. AdminExecutiveTab). Avant ce correctif, ce
-// dialogue bloquait à 5 en dur sans jamais lire extra_profile_slots — un parent avec des
-// slots bonus légitimement accordés se retrouvait bloqué ici alors que profiles.index.tsx
-// lui affichait un quota plus élevé. Garder ce nombre synchronisé avec les deux autres sites.
-const FREE_SLOTS = 2;
+// Pivot confirmé par l'utilisateur (2026-07-22) : le paywall par slot (2 gratuits + slots
+// payants à 5000 FCFA, commit b87488c du 2026-07-17) est retiré — la monétisation passe
+// désormais par les Saisons, pas par le nombre d'enfants. Nouvelle limite gratuite généreuse :
+// 5 pour tout le monde. Les slots bonus achetés AVANT ce pivot restent honorés (Math.max)
+// plutôt que d'être silencieusement réduits pour un parent qui a réellement payé pour plus
+// de 5 au total — mais plus aucun moyen d'en acquérir de nouveaux (grantProfileSlot retiré,
+// cf. products.functions.ts). Même règle que profiles.index.tsx/profiles.manage.tsx.
+const BASE_FREE_LIMIT = 5;
+const LEGACY_FREE_SLOTS = 2;
 
 export function ProfileDialog({
   initial,
@@ -24,7 +27,7 @@ export function ProfileDialog({
 }) {
   const { session } = useSession();
   const extraSlots = (session?.user?.app_metadata?.extra_profile_slots as number) ?? 0;
-  const quota = FREE_SLOTS + extraSlots;
+  const quota = Math.max(BASE_FREE_LIMIT, LEGACY_FREE_SLOTS + extraSlots);
 
   const [draft, setDraft] = useState<ProfileDraft>(
     initial
@@ -95,7 +98,7 @@ export function ProfileDialog({
           .eq("user_id", userId);
 
         if ((count ?? 0) >= quota) {
-          const limitMsg = `Vous avez atteint la limite de ${quota} profils enfants maximum par compte parent${extraSlots > 0 ? ` (${FREE_SLOTS} gratuits + ${extraSlots} bonus)` : ""}.`;
+          const limitMsg = `Vous avez atteint la limite de ${quota} profils enfants maximum par compte parent.`;
           setError(limitMsg);
           toast.error(limitMsg);
           return;
