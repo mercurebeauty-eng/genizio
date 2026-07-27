@@ -1,7 +1,15 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { ArrowLeft } from "lucide-react";
+import { pageMeta } from "@/lib/seo";
 
 export const Route = createFileRoute("/privacy")({
+  head: () =>
+    pageMeta({
+      title: "Politique de confidentialité — Génizio",
+      description:
+        "Comment Génizio collecte, utilise et protège les données personnelles des familles et des enfants sur l'application.",
+      path: "/privacy",
+    }),
   component: PrivacyPage,
 });
 

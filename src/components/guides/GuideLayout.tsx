@@ -123,6 +123,7 @@ export function GuideLayout({
         <div className="mx-auto flex max-w-5xl flex-col items-center justify-between gap-4 text-xs font-bold text-ink/50 md:flex-row">
           <span>© {new Date().getFullYear()} Génizio — Abidjan, Côte d'Ivoire</span>
           <div className="flex flex-wrap justify-center gap-5 uppercase tracking-wider">
+            <Link to="/a-propos" className="hover:text-brand">À propos</Link>
             <Link to="/privacy" className="hover:text-brand">Confidentialité</Link>
             <Link to="/terms" className="hover:text-brand">CGU</Link>
             <Link to="/mentions-legales" className="hover:text-brand">Mentions légales</Link>

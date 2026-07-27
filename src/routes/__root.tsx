@@ -194,6 +194,7 @@ const FULL_BLEED_EXACT = new Set([
   "/terms",
   "/privacy",
   "/mentions-legales",
+  "/a-propos",
 ]);
 
 function isFullBleedRoute(pathname: string): boolean {

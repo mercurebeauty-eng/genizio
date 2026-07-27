@@ -4,8 +4,16 @@ import { useServerFn } from "@tanstack/react-start";
 import { Heart, Sparkles, Gift, CheckCircle, ArrowRight, ShieldCheck, Copy, Check, Share2, Award, Users, Phone } from "lucide-react";
 import { createSponsorshipToken, getActiveSeason, DEFAULT_FALLBACK_SEASON, type SponsorshipToken, type Season } from "@/lib/seasons.functions";
 import { toast } from "sonner";
+import { pageMeta } from "@/lib/seo";
 
 export const Route = createFileRoute("/parrainage")({
+  head: () =>
+    pageMeta({
+      title: "Parrainage Diaspora & RSE — Génizio",
+      description:
+        "Offrez une Saison Génizio à un enfant en Côte d'Ivoire, depuis la diaspora ou via le mécénat de votre entreprise (RSE), pour révéler ses talents.",
+      path: "/parrainage",
+    }),
   component: ParrainagePage,
 });
 
