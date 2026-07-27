@@ -19,16 +19,22 @@ import { Route as OrganisationRouteImport } from './routes/organisation'
 import { Route as NouveautesRouteImport } from './routes/nouveautes'
 import { Route as MentionsLegalesRouteImport } from './routes/mentions-legales'
 import { Route as LaboratoryRouteImport } from './routes/laboratory'
+import { Route as GuidesRouteImport } from './routes/guides'
 import { Route as BoutiqueRouteImport } from './routes/boutique'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AdminRouteImport } from './routes/admin'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as ProfilesIndexRouteImport } from './routes/profiles.index'
 import { Route as OrganisationIndexRouteImport } from './routes/organisation.index'
+import { Route as GuidesIndexRouteImport } from './routes/guides.index'
 import { Route as AdminIndexRouteImport } from './routes/admin.index'
 import { Route as STokenRouteImport } from './routes/s.$token'
 import { Route as RejoindreCampaignIdRouteImport } from './routes/rejoindre.$campaignId'
 import { Route as ProfilesManageRouteImport } from './routes/profiles.manage'
+import { Route as GuidesIntelligencesMultiplesGardnerRouteImport } from './routes/guides.intelligences-multiples-gardner'
+import { Route as GuidesEnfantAgiteConcentrationRouteImport } from './routes/guides.enfant-agite-concentration'
+import { Route as GuidesDefisPourAdolescentsRouteImport } from './routes/guides.defis-pour-adolescents'
+import { Route as GuidesActivitesEducativesEnfantRouteImport } from './routes/guides.activites-educatives-enfant'
 import { Route as AdminSupervisorsRouteImport } from './routes/admin.supervisors'
 import { Route as AdminProductsRouteImport } from './routes/admin.products'
 import { Route as ProfilesProfileIdQuestRouteImport } from './routes/profiles.$profileId.quest'
@@ -88,6 +94,11 @@ const LaboratoryRoute = LaboratoryRouteImport.update({
   path: '/laboratory',
   getParentRoute: () => rootRouteImport,
 } as any)
+const GuidesRoute = GuidesRouteImport.update({
+  id: '/guides',
+  path: '/guides',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const BoutiqueRoute = BoutiqueRouteImport.update({
   id: '/boutique',
   path: '/boutique',
@@ -118,6 +129,11 @@ const OrganisationIndexRoute = OrganisationIndexRouteImport.update({
   path: '/',
   getParentRoute: () => OrganisationRoute,
 } as any)
+const GuidesIndexRoute = GuidesIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => GuidesRoute,
+} as any)
 const AdminIndexRoute = AdminIndexRouteImport.update({
   id: '/',
   path: '/',
@@ -138,6 +154,30 @@ const ProfilesManageRoute = ProfilesManageRouteImport.update({
   path: '/manage',
   getParentRoute: () => ProfilesRoute,
 } as any)
+const GuidesIntelligencesMultiplesGardnerRoute =
+  GuidesIntelligencesMultiplesGardnerRouteImport.update({
+    id: '/intelligences-multiples-gardner',
+    path: '/intelligences-multiples-gardner',
+    getParentRoute: () => GuidesRoute,
+  } as any)
+const GuidesEnfantAgiteConcentrationRoute =
+  GuidesEnfantAgiteConcentrationRouteImport.update({
+    id: '/enfant-agite-concentration',
+    path: '/enfant-agite-concentration',
+    getParentRoute: () => GuidesRoute,
+  } as any)
+const GuidesDefisPourAdolescentsRoute =
+  GuidesDefisPourAdolescentsRouteImport.update({
+    id: '/defis-pour-adolescents',
+    path: '/defis-pour-adolescents',
+    getParentRoute: () => GuidesRoute,
+  } as any)
+const GuidesActivitesEducativesEnfantRoute =
+  GuidesActivitesEducativesEnfantRouteImport.update({
+    id: '/activites-educatives-enfant',
+    path: '/activites-educatives-enfant',
+    getParentRoute: () => GuidesRoute,
+  } as any)
 const AdminSupervisorsRoute = AdminSupervisorsRouteImport.update({
   id: '/supervisors',
   path: '/supervisors',
@@ -188,6 +228,7 @@ export interface FileRoutesByFullPath {
   '/admin': typeof AdminRouteWithChildren
   '/auth': typeof AuthRoute
   '/boutique': typeof BoutiqueRoute
+  '/guides': typeof GuidesRouteWithChildren
   '/laboratory': typeof LaboratoryRoute
   '/mentions-legales': typeof MentionsLegalesRoute
   '/nouveautes': typeof NouveautesRoute
@@ -200,10 +241,15 @@ export interface FileRoutesByFullPath {
   '/terms': typeof TermsRoute
   '/admin/products': typeof AdminProductsRoute
   '/admin/supervisors': typeof AdminSupervisorsRoute
+  '/guides/activites-educatives-enfant': typeof GuidesActivitesEducativesEnfantRoute
+  '/guides/defis-pour-adolescents': typeof GuidesDefisPourAdolescentsRoute
+  '/guides/enfant-agite-concentration': typeof GuidesEnfantAgiteConcentrationRoute
+  '/guides/intelligences-multiples-gardner': typeof GuidesIntelligencesMultiplesGardnerRoute
   '/profiles/manage': typeof ProfilesManageRoute
   '/rejoindre/$campaignId': typeof RejoindreCampaignIdRoute
   '/s/$token': typeof STokenRoute
   '/admin/': typeof AdminIndexRoute
+  '/guides/': typeof GuidesIndexRoute
   '/organisation/': typeof OrganisationIndexRoute
   '/profiles/': typeof ProfilesIndexRoute
   '/profiles/$profileId/challenges': typeof ProfilesProfileIdChallengesRoute
@@ -227,10 +273,15 @@ export interface FileRoutesByTo {
   '/terms': typeof TermsRoute
   '/admin/products': typeof AdminProductsRoute
   '/admin/supervisors': typeof AdminSupervisorsRoute
+  '/guides/activites-educatives-enfant': typeof GuidesActivitesEducativesEnfantRoute
+  '/guides/defis-pour-adolescents': typeof GuidesDefisPourAdolescentsRoute
+  '/guides/enfant-agite-concentration': typeof GuidesEnfantAgiteConcentrationRoute
+  '/guides/intelligences-multiples-gardner': typeof GuidesIntelligencesMultiplesGardnerRoute
   '/profiles/manage': typeof ProfilesManageRoute
   '/rejoindre/$campaignId': typeof RejoindreCampaignIdRoute
   '/s/$token': typeof STokenRoute
   '/admin': typeof AdminIndexRoute
+  '/guides': typeof GuidesIndexRoute
   '/organisation': typeof OrganisationIndexRoute
   '/profiles': typeof ProfilesIndexRoute
   '/profiles/$profileId/challenges': typeof ProfilesProfileIdChallengesRoute
@@ -246,6 +297,7 @@ export interface FileRoutesById {
   '/admin': typeof AdminRouteWithChildren
   '/auth': typeof AuthRoute
   '/boutique': typeof BoutiqueRoute
+  '/guides': typeof GuidesRouteWithChildren
   '/laboratory': typeof LaboratoryRoute
   '/mentions-legales': typeof MentionsLegalesRoute
   '/nouveautes': typeof NouveautesRoute
@@ -258,10 +310,15 @@ export interface FileRoutesById {
   '/terms': typeof TermsRoute
   '/admin/products': typeof AdminProductsRoute
   '/admin/supervisors': typeof AdminSupervisorsRoute
+  '/guides/activites-educatives-enfant': typeof GuidesActivitesEducativesEnfantRoute
+  '/guides/defis-pour-adolescents': typeof GuidesDefisPourAdolescentsRoute
+  '/guides/enfant-agite-concentration': typeof GuidesEnfantAgiteConcentrationRoute
+  '/guides/intelligences-multiples-gardner': typeof GuidesIntelligencesMultiplesGardnerRoute
   '/profiles/manage': typeof ProfilesManageRoute
   '/rejoindre/$campaignId': typeof RejoindreCampaignIdRoute
   '/s/$token': typeof STokenRoute
   '/admin/': typeof AdminIndexRoute
+  '/guides/': typeof GuidesIndexRoute
   '/organisation/': typeof OrganisationIndexRoute
   '/profiles/': typeof ProfilesIndexRoute
   '/profiles/$profileId/challenges': typeof ProfilesProfileIdChallengesRoute
@@ -278,6 +335,7 @@ export interface FileRouteTypes {
     | '/admin'
     | '/auth'
     | '/boutique'
+    | '/guides'
     | '/laboratory'
     | '/mentions-legales'
     | '/nouveautes'
@@ -290,10 +348,15 @@ export interface FileRouteTypes {
     | '/terms'
     | '/admin/products'
     | '/admin/supervisors'
+    | '/guides/activites-educatives-enfant'
+    | '/guides/defis-pour-adolescents'
+    | '/guides/enfant-agite-concentration'
+    | '/guides/intelligences-multiples-gardner'
     | '/profiles/manage'
     | '/rejoindre/$campaignId'
     | '/s/$token'
     | '/admin/'
+    | '/guides/'
     | '/organisation/'
     | '/profiles/'
     | '/profiles/$profileId/challenges'
@@ -317,10 +380,15 @@ export interface FileRouteTypes {
     | '/terms'
     | '/admin/products'
     | '/admin/supervisors'
+    | '/guides/activites-educatives-enfant'
+    | '/guides/defis-pour-adolescents'
+    | '/guides/enfant-agite-concentration'
+    | '/guides/intelligences-multiples-gardner'
     | '/profiles/manage'
     | '/rejoindre/$campaignId'
     | '/s/$token'
     | '/admin'
+    | '/guides'
     | '/organisation'
     | '/profiles'
     | '/profiles/$profileId/challenges'
@@ -335,6 +403,7 @@ export interface FileRouteTypes {
     | '/admin'
     | '/auth'
     | '/boutique'
+    | '/guides'
     | '/laboratory'
     | '/mentions-legales'
     | '/nouveautes'
@@ -347,10 +416,15 @@ export interface FileRouteTypes {
     | '/terms'
     | '/admin/products'
     | '/admin/supervisors'
+    | '/guides/activites-educatives-enfant'
+    | '/guides/defis-pour-adolescents'
+    | '/guides/enfant-agite-concentration'
+    | '/guides/intelligences-multiples-gardner'
     | '/profiles/manage'
     | '/rejoindre/$campaignId'
     | '/s/$token'
     | '/admin/'
+    | '/guides/'
     | '/organisation/'
     | '/profiles/'
     | '/profiles/$profileId/challenges'
@@ -366,6 +440,7 @@ export interface RootRouteChildren {
   AdminRoute: typeof AdminRouteWithChildren
   AuthRoute: typeof AuthRoute
   BoutiqueRoute: typeof BoutiqueRoute
+  GuidesRoute: typeof GuidesRouteWithChildren
   LaboratoryRoute: typeof LaboratoryRoute
   MentionsLegalesRoute: typeof MentionsLegalesRoute
   NouveautesRoute: typeof NouveautesRoute
@@ -452,6 +527,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LaboratoryRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/guides': {
+      id: '/guides'
+      path: '/guides'
+      fullPath: '/guides'
+      preLoaderRoute: typeof GuidesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/boutique': {
       id: '/boutique'
       path: '/boutique'
@@ -494,6 +576,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof OrganisationIndexRouteImport
       parentRoute: typeof OrganisationRoute
     }
+    '/guides/': {
+      id: '/guides/'
+      path: '/'
+      fullPath: '/guides/'
+      preLoaderRoute: typeof GuidesIndexRouteImport
+      parentRoute: typeof GuidesRoute
+    }
     '/admin/': {
       id: '/admin/'
       path: '/'
@@ -521,6 +610,34 @@ declare module '@tanstack/react-router' {
       fullPath: '/profiles/manage'
       preLoaderRoute: typeof ProfilesManageRouteImport
       parentRoute: typeof ProfilesRoute
+    }
+    '/guides/intelligences-multiples-gardner': {
+      id: '/guides/intelligences-multiples-gardner'
+      path: '/intelligences-multiples-gardner'
+      fullPath: '/guides/intelligences-multiples-gardner'
+      preLoaderRoute: typeof GuidesIntelligencesMultiplesGardnerRouteImport
+      parentRoute: typeof GuidesRoute
+    }
+    '/guides/enfant-agite-concentration': {
+      id: '/guides/enfant-agite-concentration'
+      path: '/enfant-agite-concentration'
+      fullPath: '/guides/enfant-agite-concentration'
+      preLoaderRoute: typeof GuidesEnfantAgiteConcentrationRouteImport
+      parentRoute: typeof GuidesRoute
+    }
+    '/guides/defis-pour-adolescents': {
+      id: '/guides/defis-pour-adolescents'
+      path: '/defis-pour-adolescents'
+      fullPath: '/guides/defis-pour-adolescents'
+      preLoaderRoute: typeof GuidesDefisPourAdolescentsRouteImport
+      parentRoute: typeof GuidesRoute
+    }
+    '/guides/activites-educatives-enfant': {
+      id: '/guides/activites-educatives-enfant'
+      path: '/activites-educatives-enfant'
+      fullPath: '/guides/activites-educatives-enfant'
+      preLoaderRoute: typeof GuidesActivitesEducativesEnfantRouteImport
+      parentRoute: typeof GuidesRoute
     }
     '/admin/supervisors': {
       id: '/admin/supervisors'
@@ -595,6 +712,26 @@ const AdminRouteChildren: AdminRouteChildren = {
 
 const AdminRouteWithChildren = AdminRoute._addFileChildren(AdminRouteChildren)
 
+interface GuidesRouteChildren {
+  GuidesActivitesEducativesEnfantRoute: typeof GuidesActivitesEducativesEnfantRoute
+  GuidesDefisPourAdolescentsRoute: typeof GuidesDefisPourAdolescentsRoute
+  GuidesEnfantAgiteConcentrationRoute: typeof GuidesEnfantAgiteConcentrationRoute
+  GuidesIntelligencesMultiplesGardnerRoute: typeof GuidesIntelligencesMultiplesGardnerRoute
+  GuidesIndexRoute: typeof GuidesIndexRoute
+}
+
+const GuidesRouteChildren: GuidesRouteChildren = {
+  GuidesActivitesEducativesEnfantRoute: GuidesActivitesEducativesEnfantRoute,
+  GuidesDefisPourAdolescentsRoute: GuidesDefisPourAdolescentsRoute,
+  GuidesEnfantAgiteConcentrationRoute: GuidesEnfantAgiteConcentrationRoute,
+  GuidesIntelligencesMultiplesGardnerRoute:
+    GuidesIntelligencesMultiplesGardnerRoute,
+  GuidesIndexRoute: GuidesIndexRoute,
+}
+
+const GuidesRouteWithChildren =
+  GuidesRoute._addFileChildren(GuidesRouteChildren)
+
 interface OrganisationRouteChildren {
   OrganisationIndexRoute: typeof OrganisationIndexRoute
 }
@@ -638,6 +775,7 @@ const rootRouteChildren: RootRouteChildren = {
   AdminRoute: AdminRouteWithChildren,
   AuthRoute: AuthRoute,
   BoutiqueRoute: BoutiqueRoute,
+  GuidesRoute: GuidesRouteWithChildren,
   LaboratoryRoute: LaboratoryRoute,
   MentionsLegalesRoute: MentionsLegalesRoute,
   NouveautesRoute: NouveautesRoute,

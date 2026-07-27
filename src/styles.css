@@ -258,6 +258,55 @@
   }
 }
 
+/* Corps de texte des pages de guide (/guides/*).
+   Défini une fois ici plutôt qu'en classes utilitaires répétées sur chaque balise : ces pages
+   sont du texte long, et la lisibilité tient à la constance du rythme vertical. */
+.prose-genizio {
+  font-size: 1.0625rem;
+  line-height: 1.75;
+  color: oklch(0.18 0.03 250 / 0.82);
+  /* Longueur de ligne : mesuré à 85 caractères sur la largeur du conteneur, au-delà du confort
+     de lecture (l'œil perd la ligne suivante). L'unité ch borne directement le nombre de
+     caractères, quelle que soit la taille de police choisie ensuite. Le titre et le chapô
+     restent plus larges — c'est le rythme éditorial habituel, pas un défaut d'alignement. */
+  max-width: 68ch;
+}
+.prose-genizio > * + * { margin-top: 1.25rem; }
+.prose-genizio h2 {
+  font-family: var(--font-display);
+  font-size: 1.625rem;
+  font-weight: 800;
+  line-height: 1.2;
+  letter-spacing: -0.02em;
+  color: var(--ink);
+  margin-top: 3rem;
+  text-wrap: balance;
+}
+.prose-genizio h3 {
+  font-family: var(--font-display);
+  font-size: 1.1875rem;
+  font-weight: 800;
+  line-height: 1.3;
+  color: var(--ink);
+  margin-top: 2rem;
+  text-wrap: balance;
+}
+.prose-genizio strong { color: var(--ink); font-weight: 700; }
+.prose-genizio a { color: var(--brand); font-weight: 600; text-underline-offset: 0.15em; }
+.prose-genizio a:hover { text-decoration: underline; }
+.prose-genizio ul, .prose-genizio ol { padding-left: 1.4rem; }
+.prose-genizio ul { list-style: disc; }
+.prose-genizio ol { list-style: decimal; }
+.prose-genizio li + li { margin-top: 0.5rem; }
+.prose-genizio li::marker { color: var(--brand); }
+.prose-genizio blockquote {
+  border-left: 3px solid var(--brand);
+  padding-left: 1.25rem;
+  font-style: italic;
+  color: oklch(0.18 0.03 250 / 0.7);
+}
+.prose-genizio .not-prose { font-size: initial; line-height: initial; }
+
 /* Isole un rapport imprimable (ex: Rapport d'Impact B2B) du reste de l'app au moment de
    l'impression/export PDF — technique standard : tout devient invisible sauf .print-report,
    qui repasse en position fixe pour ignorer l'espace laissé par ses ancêtres masqués. */

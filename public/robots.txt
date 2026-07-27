@@ -1,0 +1,89 @@
+# Génizio — règles d'exploration
+# Principe : tout ce qui est vitrine est ouvert, tout ce qui est compte ou
+# donnée d'enfant est fermé.
+
+User-agent: *
+Allow: /$
+Allow: /guides
+Allow: /parrainage
+Allow: /terms
+Allow: /privacy
+Allow: /mentions-legales
+
+# Espaces authentifiés et données personnelles : jamais indexés.
+# /rejoindre/* contient les liens d'inscription des campagnes partenaires —
+# ils sont destinés à être partagés par l'organisation à ses familles, pas
+# trouvés par un moteur de recherche.
+Disallow: /admin
+Disallow: /organisation
+Disallow: /supervisor
+Disallow: /profiles
+Disallow: /profile
+Disallow: /auth
+Disallow: /rejoindre
+Disallow: /boutique
+Disallow: /laboratory
+Disallow: /nouveautes
+Disallow: /s/
+
+# Robots des moteurs de réponse et des assistants IA.
+# Autorisés explicitement : l'objectif est d'être cité comme source quand un
+# parent pose sa question à ChatGPT, Claude, Perplexity ou Gemini plutôt que
+# dans un moteur classique. Les mêmes restrictions de confidentialité
+# s'appliquent.
+User-agent: GPTBot
+Allow: /$
+Allow: /guides
+Disallow: /admin
+Disallow: /organisation
+Disallow: /supervisor
+Disallow: /profiles
+Disallow: /profile
+Disallow: /auth
+Disallow: /rejoindre
+
+User-agent: OAI-SearchBot
+Allow: /$
+Allow: /guides
+Disallow: /admin
+Disallow: /organisation
+Disallow: /supervisor
+Disallow: /profiles
+Disallow: /profile
+Disallow: /auth
+Disallow: /rejoindre
+
+User-agent: ClaudeBot
+Allow: /$
+Allow: /guides
+Disallow: /admin
+Disallow: /organisation
+Disallow: /supervisor
+Disallow: /profiles
+Disallow: /profile
+Disallow: /auth
+Disallow: /rejoindre
+
+User-agent: PerplexityBot
+Allow: /$
+Allow: /guides
+Disallow: /admin
+Disallow: /organisation
+Disallow: /supervisor
+Disallow: /profiles
+Disallow: /profile
+Disallow: /auth
+Disallow: /rejoindre
+
+User-agent: Google-Extended
+Allow: /$
+Allow: /guides
+Disallow: /admin
+Disallow: /organisation
+Disallow: /supervisor
+Disallow: /profiles
+Disallow: /profile
+Disallow: /auth
+Disallow: /rejoindre
+
+Sitemap: https://genizio.com/sitemap.xml

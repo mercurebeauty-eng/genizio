@@ -5,11 +5,67 @@ import heroChild from "@/assets/hero-child.jpg";
 import { NayaAvatar } from "@/components/NayaAvatar";
 import { TalentRadarChart } from "@/components/TalentRadarChart";
 import { INTERESTS_BY_TALENT } from "@/components/profiles/shared";
-import { Users, Brain, ShoppingBag, Award, Sparkles, BookOpen, Star, HelpCircle, ArrowRight, ShieldCheck, Menu, X } from "lucide-react";
-import { GenizioLoader } from "@/components/GenizioLoader";
+import {
+  Users, Brain, ShoppingBag, Award, Sparkles, BookOpen, Star, HelpCircle, ArrowRight,
+  ShieldCheck, Menu, X, Compass, Activity, Lightbulb, Palette, Hammer, HeartHandshake,
+  MessagesSquare, type LucideIcon,
+} from "lucide-react";
 import { TALENT_KEY_LABELS } from "@/lib/talent-buckets";
+import { pageMeta, jsonLdScript, faqPageJsonLd, SOFTWARE_APP_JSONLD } from "@/lib/seo";
+
+// Questions réellement tapées par des parents francophones, avec des réponses qui se
+// suffisent à elles-mêmes : c'est le format que Google affiche en réponse directe et que les
+// assistants IA (ChatGPT, Perplexity, Gemini) citent. Une réponse qui renvoie à « voir
+// ci-dessus » n'est jamais reprise.
+const LANDING_FAQ = [
+  {
+    question: "Comment révéler les talents cachés de son enfant ?",
+    answer:
+      "Les talents d'un enfant se révèlent dans l'action, pas dans un test. En lui proposant régulièrement des activités concrètes et variées — construire, cuisiner, négocier, raconter, observer — puis en notant ce qui l'absorbe vraiment, on voit apparaître des constantes. Génizio structure cette observation : l'application propose des défis adaptés à l'âge et aux centres d'intérêt de l'enfant, le parent photographie la réalisation, et une cartographie des 9 intelligences de Howard Gardner se construit au fil des semaines à partir de ce que l'enfant a réellement fait.",
+  },
+  {
+    question: "Que faire quand un enfant ne tient pas en place et ne se concentre pas ?",
+    answer:
+      "Un enfant qui ne tient pas en place n'est pas forcément un enfant en difficulté : beaucoup d'enfants apprennent par le mouvement et la manipulation plutôt qu'en restant assis. Avant d'y voir un problème, il est utile d'observer s'il se concentre longuement sur certaines activités précises — construire, bricoler, dessiner, jouer dehors. Cette différence entre les contextes est souvent plus parlante que l'agitation elle-même. Génizio aide à structurer cette observation à travers des défis pratiques, mais ne pose aucun diagnostic : si l'agitation gêne le quotidien ou les apprentissages, seul un médecin, un pédiatre ou un neuropsychologue peut évaluer un trouble de l'attention.",
+  },
+  {
+    question: "Quelles activités éducatives proposer à un enfant de 6 à 12 ans à la maison ?",
+    answer:
+      "Les activités les plus formatrices sont celles qui produisent un résultat visible avec du matériel du quotidien : fabriquer un système d'arrosage avec des bouteilles, calculer le prix de revient d'un jus de fruits et le vendre, construire un pont en bâtonnets qui tient sans colle, teindre un tissu avec des pigments de fleurs. Elles mobilisent plusieurs intelligences à la fois et laissent une trace concrète dont l'enfant est fier. Génizio génère ce type de défis sur mesure selon l'âge, la ville et les centres d'intérêt de l'enfant.",
+  },
+  {
+    question: "Qu'est-ce que la théorie des intelligences multiples de Howard Gardner ?",
+    answer:
+      "Proposée par le psychologue américain Howard Gardner en 1983, la théorie des intelligences multiples avance qu'il n'existe pas une intelligence unique mesurable par un QI, mais plusieurs formes d'intelligence relativement indépendantes : logico-mathématique, linguistique, spatiale, corporelle, musicale/créative, interpersonnelle, intrapersonnelle, naturaliste. Un enfant faible dans un registre scolaire peut être remarquablement fort dans un autre. Génizio s'appuie sur ce cadre pour cartographier 9 formes d'intelligence à partir des réalisations concrètes de l'enfant.",
+  },
+  {
+    question: "Génizio remplace-t-il le soutien scolaire ?",
+    answer:
+      "Non. Le soutien scolaire vise à faire progresser sur le programme et les notes ; Génizio vise à révéler ce que l'enfant sait faire en dehors de ce que l'école mesure. Les deux sont complémentaires. Génizio propose des défis pratiques à réaliser à la maison ou dans le quartier, avec du matériel simple, et construit un portfolio des réalisations de l'enfant plutôt qu'un bulletin de notes.",
+  },
+  {
+    question: "À partir de quel âge un enfant peut-il utiliser Génizio ?",
+    answer:
+      "Génizio est conçu pour les enfants de 5 à 16 ans. Les défis sont générés en fonction de l'âge précis de l'enfant : manipulations simples et courtes pour les plus jeunes, projets structurés sur plusieurs jours pour les adolescents. C'est le parent qui garde la main : il valide les défis et photographie les réalisations.",
+  },
+];
 
 export const Route = createFileRoute("/")({
+  head: () => {
+    const meta = pageMeta({
+      title: "Génizio — Révéler les talents de votre enfant",
+      description:
+        "Des défis concrets à faire à la maison pour révéler les talents de votre enfant de 5 à 16 ans, fondés sur les 9 intelligences de Howard Gardner.",
+      path: "/",
+    });
+    return {
+      ...meta,
+      scripts: [
+        jsonLdScript(SOFTWARE_APP_JSONLD),
+        jsonLdScript(faqPageJsonLd(LANDING_FAQ)),
+      ],
+    };
+  },
   component: NayaLanding,
 });
 
@@ -89,16 +145,20 @@ const CHALLENGES: Challenge[] = [
   },
 ];
 
-const DOMAINS = [
-  { key: "spatial", label: TALENT_KEY_LABELS.spatial, icon: "📐", desc: "Architecture, construction de volumes, dessin et repérage dans l'espace." },
-  { key: "corporelle", label: TALENT_KEY_LABELS.corporelle, icon: "🏃", desc: "Motricité globale, agilité, théâtre et expression physique." },
-  { key: "sociale", label: TALENT_KEY_LABELS.sociale, icon: "🤝", desc: "Coopération, empathie, leadership naturel et négociation collective." },
-  { key: "entrepreneuriale", label: TALENT_KEY_LABELS.entrepreneuriale, icon: "💡", desc: "Initiation commerciale, gestion, organisation et sens pratique de la valeur." },
-  { key: "creative", label: TALENT_KEY_LABELS.creative, icon: "🎨", desc: "Expression picturale, composition musicale, improvisation et contes." },
-  { key: "artisanale", label: TALENT_KEY_LABELS.artisanale, icon: "🪵", desc: "Cuisine, couture, menuiserie, bricolage et entretien d'objets." },
-  { key: "emotionnelle", label: TALENT_KEY_LABELS.emotionnelle, icon: "🪞", desc: "Connaissance de ses forces, confiance, persévérance et gestion du stress." },
-  { key: "logico_mathematique", label: TALENT_KEY_LABELS.logico_mathematique, icon: "🧠", desc: "Résolution d'énigmes mathématiques, algorithmes simples et expériences." },
-  { key: "linguistique", label: TALENT_KEY_LABELS.linguistique, icon: "🗣️", desc: "Expression orale, plaidoyers, goût de la lecture et rédaction créative." },
+// Les émojis servaient d'icônes ici. Remplacés par des pictogrammes vectoriels : les émojis se
+// rendent différemment sur chaque système (et sont lus à voix haute par les lecteurs d'écran
+// comme « visage souriant »), ce qui donne un rendu approximatif là où la page doit inspirer
+// confiance.
+const DOMAINS: { key: string; label: string; Icon: LucideIcon; desc: string }[] = [
+  { key: "spatial", label: TALENT_KEY_LABELS.spatial, Icon: Compass, desc: "Architecture, construction de volumes, dessin et repérage dans l'espace." },
+  { key: "corporelle", label: TALENT_KEY_LABELS.corporelle, Icon: Activity, desc: "Motricité globale, agilité, théâtre et expression physique." },
+  { key: "sociale", label: TALENT_KEY_LABELS.sociale, Icon: Users, desc: "Coopération, empathie, leadership naturel et négociation collective." },
+  { key: "entrepreneuriale", label: TALENT_KEY_LABELS.entrepreneuriale, Icon: Lightbulb, desc: "Initiation commerciale, gestion, organisation et sens pratique de la valeur." },
+  { key: "creative", label: TALENT_KEY_LABELS.creative, Icon: Palette, desc: "Expression picturale, composition musicale, improvisation et contes." },
+  { key: "artisanale", label: TALENT_KEY_LABELS.artisanale, Icon: Hammer, desc: "Cuisine, couture, menuiserie, bricolage et entretien d'objets." },
+  { key: "emotionnelle", label: TALENT_KEY_LABELS.emotionnelle, Icon: HeartHandshake, desc: "Connaissance de ses forces, confiance, persévérance et gestion du stress." },
+  { key: "logico_mathematique", label: TALENT_KEY_LABELS.logico_mathematique, Icon: Brain, desc: "Résolution d'énigmes mathématiques, algorithmes simples et expériences." },
+  { key: "linguistique", label: TALENT_KEY_LABELS.linguistique, Icon: MessagesSquare, desc: "Expression orale, plaidoyers, goût de la lecture et rédaction créative." },
 ];
 
 const TONE_STYLES: Record<Challenge["tone"], { chip: string; num: string }> = {
@@ -112,19 +172,18 @@ function NayaLanding() {
   const { session, loading } = useSession();
   const navigate = useNavigate();
 
+  // Un parent déjà connecté est renvoyé vers son espace — mais SANS masquer la page en
+  // attendant. `useSession` démarre à loading:true et il n'existe aucune session côté serveur,
+  // donc l'ancien garde-fou `if (loading || session) return <Loader/>` faisait rendre au serveur
+  // UNIQUEMENT un spinner : la page d'accueil livrait 8,7 Ko sans le moindre <h1> ni une ligne
+  // de texte commercial. C'est exactement ce que recevaient Google et les robots d'IA, qui ne
+  // ré-exécutent pas le cycle de session côté client — la page était donc invisible au
+  // référencement malgré tout son contenu. La redirection reste, le masquage disparaît.
   useEffect(() => {
     if (!loading && session) {
       navigate({ to: "/profiles", replace: true });
     }
   }, [session, loading, navigate]);
-
-  if (loading || session) {
-    return (
-      <div className="grid min-h-dvh place-items-center bg-surface">
-        <GenizioLoader label="Chargement…" />
-      </div>
-    );
-  }
 
   return (
     <div className="min-h-dvh bg-surface text-ink antialiased">
@@ -221,7 +280,7 @@ function Hero() {
       <div className="pointer-events-none absolute -top-20 -left-20 h-96 w-96 rounded-full bg-brand/10 blur-3xl" />
       <div className="pointer-events-none absolute top-40 -right-20 h-96 w-96 rounded-full bg-sky/20 blur-3xl" />
 
-      <div className="relative mx-auto grid max-w-6xl items-center gap-12 px-6 pt-16 pb-24 ">
+      <div className="relative mx-auto grid max-w-6xl items-center gap-12 px-6 pt-16 pb-24 lg:grid-cols-2 lg:gap-16 lg:pt-24 lg:pb-32">
         <div>
           <span className="mb-4 inline-block rounded-full bg-brand-50 px-4 py-1.5 text-xs font-bold uppercase tracking-wider text-brand-700 border border-brand/20">
             Le laboratoire de potentiel par projet
@@ -239,7 +298,7 @@ function Hero() {
               <p className="text-xs font-bold text-ink/75">Guidé par Naya, notre IA mentore bienveillante.</p>
             </div>
           </div>
-          <div className="flex flex-col gap-4 ">
+          <div className="flex flex-col gap-4 sm:flex-row">
             <a
               href="#demo"
               className="press-brand rounded-2xl bg-brand px-8 py-4 text-center text-base font-bold text-white cursor-pointer"
@@ -253,16 +312,24 @@ function Hero() {
               Créer un compte
             </Link>
           </div>
-        <div className="mt-10 flex items-center gap-4">
-          <div className="flex -space-x-3">
-            <div className="size-8 rounded-full border-2 border-ink bg-brand" />
-            <div className="size-8 rounded-full border-2 border-ink bg-leaf" />
-            <div className="size-8 rounded-full border-2 border-ink bg-sky" />
-            <div className="size-8 rounded-full border-2 border-ink bg-ink" />
+        {/* Les anciennes pastilles d'avatars et la mention « familles à Dakar, Abidjan et
+            Yaoundé » ont été retirées : la base de production ne contient d'utilisateurs qu'à
+            Abidjan. Une preuve sociale inventée est un risque de crédibilité réel face à un
+            partenaire institutionnel qui vérifie, et Google déclasse les signaux de confiance
+            fabriqués. Remplacé par des faits vérifiables sur le produit lui-même. */}
+        <div className="mt-10 flex flex-wrap items-center gap-x-6 gap-y-3 border-t border-ink/10 pt-6">
+          <div className="flex items-center gap-2">
+            <Brain className="size-4 text-brand" aria-hidden />
+            <span className="text-xs font-bold text-ink/70">9 formes d'intelligence cartographiées</span>
           </div>
-          <span className="text-xs font-bold text-ink/60 uppercase tracking-wide">
-            Rejoint par des familles à Dakar, Abidjan et Yaoundé
-          </span>
+          <div className="flex items-center gap-2">
+            <BookOpen className="size-4 text-leaf" aria-hidden />
+            <span className="text-xs font-bold text-ink/70">Défis ancrés dans le contexte africain</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <ShieldCheck className="size-4 text-sky-dark" aria-hidden />
+            <span className="text-xs font-bold text-ink/70">Validation parentale à chaque étape</span>
+          </div>
         </div>
       </div>
 
@@ -278,12 +345,19 @@ function Hero() {
           height={1200}
           className="relative aspect-square w-full rotate-1 rounded-3xl border border-ink/10 object-cover shadow-xl transition-transform hover:rotate-0"
         />
-        <div className="absolute -bottom-6 -left-6 hidden max-w-[280px] rounded-2xl border border-ink/10 bg-white/95 p-5 shadow-lg backdrop-blur-md md:block">
-          <p className="text-xs font-bold italic leading-relaxed text-ink/80">
-            « Avec les défis d'entrepreneuriat et de sciences, ma fille de 9 ans a appris à concevoir des projets réels au lieu de juste réciter ses leçons. »
+        {/* Ancien emplacement d'un témoignage signé « Aminata, Abidjan » : aucun témoignage
+            réel n'existe à ce stade (3 comptes en production, tous internes). Remplacé par une
+            description factuelle du mécanisme, à re-remplacer par un vrai verbatim dès qu'une
+            famille en donne un. */}
+        <figure className="absolute -bottom-6 -left-6 hidden max-w-[290px] rounded-2xl border border-ink/10 bg-white/95 p-5 shadow-lg backdrop-blur-md md:block">
+          <figcaption className="mb-2 text-[10px] font-black uppercase tracking-widest text-brand">
+            Comment se construit le profil
+          </figcaption>
+          <p className="text-xs font-semibold leading-relaxed text-ink/75">
+            L'enfant réalise un défi, le parent photographie le résultat, et la carte de ses
+            talents se précise — à partir de ce qu'il a fait, jamais d'un questionnaire.
           </p>
-          <p className="mt-2 text-[10px] font-black uppercase tracking-widest text-brand">— Aminata, Abidjan</p>
-        </div>
+        </figure>
       </div>
       </div>
     </header>
@@ -306,17 +380,19 @@ function DomainsSection() {
           </p>
         </div>
 
-        <div className="grid gap-4  ">
-          {DOMAINS.map((d) => (
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          {DOMAINS.map(({ label, desc, Icon }) => (
             <div
-              key={d.label}
-              className="group relative rounded-2xl border border-ink/10 bg-white p-6 shadow-sm transition-all hover:-translate-y-0.5"
+              key={label}
+              className="group relative rounded-2xl border border-ink/10 bg-white p-6 shadow-sm transition-all hover:-translate-y-0.5 hover:border-brand/30 hover:shadow-md"
             >
-              <div className="flex items-center gap-3 mb-3">
-                <span className="text-3xl">{d.icon}</span>
-                <h3 className="font-display text-balance text-base font-extrabold text-ink">{d.label}</h3>
+              <div className="mb-3 flex items-center gap-3">
+                <span className="grid size-10 shrink-0 place-items-center rounded-xl bg-brand/8 text-brand transition-colors group-hover:bg-brand group-hover:text-white">
+                  <Icon className="size-5" aria-hidden />
+                </span>
+                <h3 className="font-display text-balance text-base font-extrabold text-ink">{label}</h3>
               </div>
-              <p className="text-xs text-ink/60 leading-relaxed font-semibold">{d.desc}</p>
+              <p className="text-xs font-semibold leading-relaxed text-ink/60">{desc}</p>
             </div>
           ))}
         </div>
@@ -482,7 +558,7 @@ function DemoSection() {
             </div>
 
             {/* Generated challenges cards */}
-            <div className="grid gap-4 ">
+            <div className="grid gap-4 md:grid-cols-2">
               {matchedChallenges.map((c, index) => (
                 <div
                   key={c.title}
@@ -536,7 +612,7 @@ function VisionSection() {
 
   return (
     <section id="approche" className="mx-auto max-w-6xl px-6 py-24">
-      <div className="grid items-center gap-16 ">
+      <div className="grid items-center gap-16 lg:grid-cols-2">
         <div>
           <span className="mb-3 inline-block text-xs font-bold uppercase tracking-widest text-brand">
             Un portfolio vivant de réussites
@@ -619,7 +695,9 @@ function VisionSection() {
 function PositioningSection() {
   return (
     <section className="bg-white/40 border-y-[3px] border-ink px-6 py-24">
-      <div className="mx-auto grid max-w-6xl gap-12  md:items-center">
+      {/* md:col-span-2 / md:col-span-3 sur les enfants étaient orphelins : le parent ne
+          déclarait plus aucune colonne depuis le passage en cadre-téléphone. */}
+      <div className="mx-auto grid max-w-6xl gap-12 md:grid-cols-5 md:items-center">
         <div className="md:col-span-2">
           <span className="mb-3 inline-block text-xs font-bold uppercase tracking-widest text-brand">
             Notre Philosophie
@@ -733,7 +811,7 @@ function ModelSection() {
           </p>
         </div>
 
-        <ol className="grid gap-6  ">
+        <ol className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
           {MODEL_LEVELS.map((lvl) => {
             const t = LEVEL_TONES[lvl.tone];
             const isDark = lvl.tone === "ink";
@@ -774,10 +852,12 @@ function ModelSection() {
   );
 }
 
+// Le formulaire e-mail précédent affichait « Votre adresse a été enregistrée avec succès »
+// alors qu'il ne faisait que basculer un état local : rien n'était envoyé ni stocké nulle part.
+// Un parent croyait s'être inscrit et n'existait dans aucun système. Remplacé par le vrai
+// parcours d'inscription (connexion Google, seul mode d'authentification de l'application),
+// plutôt que de simuler une collecte qui n'existe pas.
 function CTASection() {
-  const [email, setEmail] = useState("");
-  const [sent, setSent] = useState(false);
-  
   return (
     <section id="inscription" className="px-6 py-12">
       <div className="mx-auto max-w-4xl rounded-[2.5rem] border border-white/10 bg-ink p-10 text-center text-white shadow-xl md:p-14">
@@ -787,41 +867,26 @@ function CTASection() {
         <h2 className="mb-4 font-display text-balance text-3xl font-extrabold leading-tight md:text-4xl">
           Révélez le potentiel de vos enfants dès aujourd'hui.
         </h2>
-        <p className="mx-auto mb-10 max-w-md text-sm text-white/70 font-semibold leading-relaxed">
-          Rejoignez les parents précurseurs qui façonnent avec nous le développement éducatif de la nouvelle génération.
+        <p className="mx-auto mb-10 max-w-md text-sm font-semibold leading-relaxed text-white/70">
+          Créez le profil de votre enfant en deux minutes et recevez son premier défi sur mesure.
         </p>
-        {sent ? (
-          <div className="mx-auto max-w-md rounded-2xl border-2 border-brand-glow bg-brand/10 px-6 py-4 font-bold text-brand-glow">
-            <div className="flex items-center justify-center gap-2">
-              <ShieldCheck className="size-5" />
-              <span>Merci ! Votre adresse a été enregistrée avec succès.</span>
-            </div>
-          </div>
-        ) : (
-          <form
-            onSubmit={(e) => {
-              e.preventDefault();
-              if (email.trim()) setSent(true);
-            }}
-            className="mx-auto flex max-w-md flex-col gap-3 "
+        <div className="mx-auto flex max-w-md flex-col items-center gap-3 sm:flex-row sm:justify-center">
+          <Link
+            to="/auth"
+            className="press-brand inline-flex h-12 w-full items-center justify-center rounded-2xl bg-brand px-8 text-xs font-black uppercase tracking-wider text-white cursor-pointer sm:w-auto"
           >
-            <input
-              type="email"
-              required
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder="votre@email.com"
-              className="h-12 flex-1 rounded-2xl border-2 border-white/30 bg-white/10 px-4 text-xs font-bold text-white placeholder:text-white/60 outline-none focus:border-brand transition-all"
-              aria-label="Adresse email"
-            />
-            <button
-              type="submit"
-              className="press-brand h-12 rounded-2xl bg-brand px-8 text-xs font-black uppercase tracking-wider text-white cursor-pointer shrink-0"
-            >
-              Créer mon accès parent
-            </button>
-          </form>
-        )}
+            Créer mon accès parent
+          </Link>
+          <a
+            href="#demo"
+            className="inline-flex h-12 w-full items-center justify-center rounded-2xl border-2 border-white/25 px-8 text-xs font-black uppercase tracking-wider text-white transition-colors hover:bg-white/10 sm:w-auto"
+          >
+            Essayer d'abord
+          </a>
+        </div>
+        <p className="mt-6 text-[11px] font-semibold text-white/50">
+          Gratuit pour 5 profils enfants · Aucune carte bancaire demandée
+        </p>
       </div>
     </section>
   );
@@ -830,7 +895,7 @@ function CTASection() {
 function Footer() {
   return (
     <footer className="border-t-[3px] border-ink px-6 py-12 bg-white/20">
-      <div className="mx-auto flex max-w-6xl flex-col items-center justify-between gap-8 ">
+      <div className="mx-auto flex max-w-6xl flex-col items-center justify-between gap-8 md:flex-row">
         <div className="flex items-center gap-2 font-display text-balance text-xl font-extrabold text-brand">
           <img src="/favicon-96x96.png" alt="" className="h-7 w-7" />
           GÉNIZIO
@@ -847,7 +912,7 @@ function Footer() {
           </Link>
         </div>
         <div className="text-xs font-bold text-ink/60">
-          © 2026 Génizio — Dakar · Abidjan · Yaoundé
+          © {new Date().getFullYear()} Génizio — Abidjan, Côte d'Ivoire
         </div>
       </div>
     </footer>

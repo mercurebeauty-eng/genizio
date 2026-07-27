@@ -1,0 +1,173 @@
+// ────────────────────────────────────────────────────────────
+// GÉNIZIO — Source unique de vérité SEO / AEO / GEO
+//
+// SEO  : référencement classique (Google, Bing)
+// AEO  : Answer Engine Optimization — être la réponse citée dans les encarts
+//        de réponse directe et les résumés IA de Google/Bing
+// GEO  : Generative Engine Optimization — être cité par ChatGPT, Claude,
+//        Perplexity, Gemini quand un parent leur pose la question
+//
+// Les trois reposent sur la même base : du contenu factuel structuré en
+// JSON-LD, dans le HTML rendu côté serveur (les crawlers d'IA n'exécutent
+// pas le JavaScript de la même façon qu'un navigateur).
+// ────────────────────────────────────────────────────────────
+
+// Domaine canonique. Aucun déploiement n'existe encore au moment de l'écriture —
+// genizio.com est déduit des adresses e-mail déjà utilisées dans le code
+// (b2b@genizio.com, admin@genizio.com). À confirmer avant mise en ligne : une
+// URL canonique erronée fait indexer des pages qui n'existent pas.
+export const SITE_URL = (import.meta.env.VITE_SITE_URL as string | undefined)?.replace(/\/$/, "") || "https://genizio.com";
+
+export const SITE_NAME = "Génizio";
+export const SITE_NAME_LONG = "Génizio — Révélez le potentiel unique de votre enfant";
+export const SITE_DESCRIPTION =
+  "Génizio révèle les talents naturels de votre enfant à travers des défis concrets à réaliser à la maison, fondés sur les 9 intelligences de Howard Gardner. Conçu pour les familles d'Afrique francophone.";
+
+// Image affichée quand un lien Génizio est partagé (WhatsApp, Facebook, LinkedIn, X).
+// Auto-hébergée : l'ancienne pointait vers un espace de stockage tiers hérité de
+// l'échafaudage du projet.
+//
+// Limite connue : c'est la photo carrée du site (1200×1200), que les réseaux recadrent au
+// centre en 1200×630. Le rendu est correct mais pas optimal — une vraie carte de partage
+// dessinée au format 1200×630, avec le logotype et une accroche, convertirait mieux. À
+// remplacer ici même dès qu'elle existe, sans autre changement de code.
+export const OG_IMAGE_PATH = "/og-image.jpg";
+
+export const FOUNDER_NAME = "Cheick Mohamed TRAORE";
+
+/** Construit une URL absolue à partir d'un chemin interne. */
+export function absoluteUrl(path: string): string {
+  if (!path.startsWith("/")) return `${SITE_URL}/${path}`;
+  return `${SITE_URL}${path}`;
+}
+
+/**
+ * Balises <head> communes à toute page publique : titre, description, canonique,
+ * Open Graph et Twitter. Sans canonique, plusieurs URL menant au même contenu
+ * (avec/sans slash, paramètres de campagne) se cannibalisent dans l'index.
+ */
+export function pageMeta(opts: {
+  title: string;
+  description: string;
+  path: string;
+  image?: string;
+  type?: "website" | "article";
+}) {
+  const url = absoluteUrl(opts.path);
+  const image = absoluteUrl(opts.image ?? OG_IMAGE_PATH);
+  return {
+    meta: [
+      { title: opts.title },
+      { name: "description", content: opts.description },
+      { property: "og:title", content: opts.title },
+      { property: "og:description", content: opts.description },
+      { property: "og:url", content: url },
+      { property: "og:type", content: opts.type ?? "website" },
+      { property: "og:image", content: image },
+      { name: "twitter:title", content: opts.title },
+      { name: "twitter:description", content: opts.description },
+      { name: "twitter:image", content: image },
+    ],
+    links: [{ rel: "canonical", href: url }],
+  };
+}
+
+/** Emballe un objet JSON-LD pour l'API `scripts` de TanStack Router. */
+export function jsonLdScript(data: unknown) {
+  return { type: "application/ld+json", children: JSON.stringify(data) };
+}
+
+// ── Entité éditrice ──
+// Réutilisée comme `publisher` par les autres schémas : les moteurs de réponse
+// attribuent plus volontiers une citation à une entité identifiable qu'à un
+// site anonyme.
+export const ORGANIZATION_JSONLD = {
+  "@context": "https://schema.org",
+  "@type": "Organization",
+  "@id": `${SITE_URL}/#organization`,
+  name: SITE_NAME,
+  url: SITE_URL,
+  logo: absoluteUrl("/web-app-manifest-512x512.png"),
+  description: SITE_DESCRIPTION,
+  founder: { "@type": "Person", name: FOUNDER_NAME },
+  areaServed: [
+    { "@type": "Country", name: "Côte d'Ivoire" },
+    { "@type": "Country", name: "Sénégal" },
+    { "@type": "Country", name: "France" },
+  ],
+  knowsAbout: [
+    "Intelligences multiples",
+    "Théorie de Howard Gardner",
+    "Développement de l'enfant",
+    "Apprentissage par projet",
+    "Activités éducatives pour enfants",
+    "Détection des talents chez l'enfant",
+  ],
+};
+
+export const WEBSITE_JSONLD = {
+  "@context": "https://schema.org",
+  "@type": "WebSite",
+  "@id": `${SITE_URL}/#website`,
+  url: SITE_URL,
+  name: SITE_NAME,
+  description: SITE_DESCRIPTION,
+  inLanguage: "fr-FR",
+  publisher: { "@id": `${SITE_URL}/#organization` },
+};
+
+export const SOFTWARE_APP_JSONLD = {
+  "@context": "https://schema.org",
+  "@type": "SoftwareApplication",
+  name: SITE_NAME,
+  applicationCategory: "EducationalApplication",
+  operatingSystem: "Web, Android, iOS",
+  inLanguage: "fr-FR",
+  description: SITE_DESCRIPTION,
+  publisher: { "@id": `${SITE_URL}/#organization` },
+  audience: {
+    "@type": "PeopleAudience",
+    audienceType: "Parents d'enfants de 5 à 16 ans",
+    suggestedMinAge: 5,
+    suggestedMaxAge: 16,
+  },
+  featureList: [
+    "Défis d'apprentissage personnalisés générés pour chaque enfant",
+    "Cartographie des 9 intelligences multiples",
+    "Portfolio de réalisations validées par preuve photo",
+    "Suivi parental et accompagnement par des mentors",
+  ],
+};
+
+/**
+ * Construit un FAQPage. C'est le format que les moteurs de réponse et les LLM
+ * consomment le plus directement : une question explicite, une réponse
+ * autonome et factuelle. Chaque réponse doit se suffire à elle-même,
+ * puisqu'elle peut être citée hors de son contexte.
+ */
+export function faqPageJsonLd(questions: { question: string; answer: string }[]) {
+  return {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    inLanguage: "fr-FR",
+    mainEntity: questions.map((q) => ({
+      "@type": "Question",
+      name: q.question,
+      acceptedAnswer: { "@type": "Answer", text: q.answer },
+    })),
+  };
+}
+
+/** Fil d'Ariane structuré — aide les moteurs à comprendre la hiérarchie du site. */
+export function breadcrumbJsonLd(items: { name: string; path: string }[]) {
+  return {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    itemListElement: items.map((item, i) => ({
+      "@type": "ListItem",
+      position: i + 1,
+      name: item.name,
+      item: absoluteUrl(item.path),
+    })),
+  };
+}
