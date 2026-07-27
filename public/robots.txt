@@ -86,4 +86,4 @@ Disallow: /profile
 Disallow: /auth
 Disallow: /rejoindre
 
-Sitemap: https://genizio.com/sitemap.xml
+Sitemap: https://genizio.vercel.app/sitemap.xml
