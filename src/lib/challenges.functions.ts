@@ -777,7 +777,11 @@ ARTISANALE (habileté manuelle) :
 SPATIALE :
 3 ans : vocabulaire spatial de base (dessus/dessous, dedans/dehors). 4-9 ans : perçoit des objets sous différents points de vue, notion de perspective en développement. 5 ans : réussit une tâche simple de "pliage mental" (imaginer un objet après pliage). 7-8 ans : pliage mental plus avancé, plafonne généralement vers cet âge.`;
 
-export const ACADEMIC_SECRET_INSTRUCTION = `SECRET ACADÉMIQUE DE NAYA ("academic_secret") : Génère obligatoirement un paragraphe captivant de 2 à 4 phrases à destination de l'enfant qui explique le "pourquoi scientifique, physique, géométrique ou logique" derrière l'action qu'il vient de réaliser dans ce défi. Relie ce geste concret à un concept théorique vu au collège ou plus tard (ex: Effet Magnus, frottements de l'air, parallélisme, oxydation, réfraction, angle d'incidence...). Présente ce savoir comme un superpouvoir secret ou un avantage tactique que les autres élèves n'auront qu'en classe de 5ème/4ème/3ème, mais qu'il/elle maîtrise déjà sur le terrain !`;
+export const ACADEMIC_SECRET_INSTRUCTION = `SECRET ACADÉMIQUE DE NAYA ("academic_secret") : Génère obligatoirement un paragraphe captivant de 3 à 5 phrases à destination de l'enfant, en trois temps :
+1. Nomme le concept théorique précis derrière l'action concrète qu'il vient de réaliser (ex: Effet Magnus, frottements de l'air, parallélisme, oxydation, réfraction, angle d'incidence...) et explique en une phrase simple pourquoi cette théorie explique ce qu'il vient d'observer sur le terrain.
+2. Indique la classe précise (une seule, pas une fourchette — 6ème, 5ème, 4ème, 3ème, seconde, première ou terminale selon le concept réel, choisis la plus juste) où ce concept est formellement enseigné en France.
+3. Termine par une ouverture concrète : un exemple de défi ou de projet plus ambitieux qu'il pourra réussir une fois cette théorie apprise à l'école — pour montrer que l'école débloque la suite plutôt que d'être coupée de ce qu'il vient de faire.
+Présente l'ensemble comme un superpouvoir secret ou un avantage tactique qu'il maîtrise déjà sur le terrain, avant même de l'avoir vu en classe. Ne mentionne jamais de métier ni de domaine professionnel — ce n'est pas le rôle de ce champ (cf. Boussole d'Opportunités, réservée 12 ans+).`;
 
 // Dupliquée mot pour mot dans generateChallenges et generateSingleChallenge avant
 // extraction (2026-07-22) — avait déjà dérivé silencieusement (une copie disait
@@ -1402,6 +1406,10 @@ Réponds STRICTEMENT en JSON valide avec ce format, pour chaque défi :
       steps: c.steps,
       materials: c.materials,
       pedagogical_context: c.pedagogical_context || null,
+      // Demandé au prompt (ACADEMIC_SECRET_INSTRUCTION) et validé par ChallengeSchema,
+      // mais jamais recopié jusqu'ici dans la ligne insérée — la carte "Avantage Secret
+      // de Naya" retombait donc systématiquement sur son texte générique par défaut.
+      academic_secret: c.academic_secret || null,
       // target_intelligences vient de finalizeChallenge (resolveTargetIntelligences),
       // qui filtre le champ "intelligences" du JSON contre VALID_TALENT_KEYS — plus
       // de fallback silencieux vers [c.domain], le prompt demande maintenant
@@ -1907,6 +1915,10 @@ export const assignTemplateChallenge = createServerFn({ method: "POST" })
         status: "todo",
         progress: 0,
         pedagogical_context: template.pedagogical_context ?? null,
+        // Même bug que dans generateChallenges : demandé au prompt, validé par le
+        // schéma, mais jamais recopié dans l'insertion réelle — voir le commentaire
+        // équivalent là-bas.
+        academic_secret: template.academic_secret ?? null,
         estimated_duration_minutes: data.estimated_duration_minutes ?? null,
         academic_subject: template.academic_subject ?? null,
         academic_grade_level: template.academic_grade_level ?? null,
