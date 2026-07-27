@@ -93,31 +93,94 @@ export const updateCampaignExtraQuotaAdmin = createServerFn({ method: "POST" })
     return campaign as Campaign;
   });
 
+export interface PaginatedCampaigns {
+  data: Campaign[];
+  total: number;
+  page: number;
+  pageSize: number;
+  totalPages: number;
+}
+
+const ListCampaignsInput = z.object({
+  search: z.string().optional(),
+  page: z.number().int().min(1).default(1),
+  pageSize: z.number().int().min(1).max(200).default(50),
+  statusFilter: z.enum(["all", "active", "upcoming", "ended"]).default("all"),
+});
+
+// Pagination + recherche (2026-07-27, décision utilisateur) : au-delà de 50 campagnes l'écran
+// devient inutilisable sans navigation par page. Contrairement aux parrainages (filtrés en base),
+// le filtrage se fait ici EN MÉMOIRE après récupération — l'email du gestionnaire ne vit pas dans
+// la table `campaigns` mais dans auth.users (résolu via listAllUsers), donc une recherche par
+// email est impossible côté SQL sans jointure inexistante. Acceptable car les campagnes sont des
+// contrats B2B (dizaines), pas des lignes utilisateur (milliers) — à revoir si ce volume change.
 export const listCampaignsAdmin = createServerFn({ method: "GET" })
   .middleware([requireAdmin])
-  .handler(async () => {
+  .validator((input: unknown) => ListCampaignsInput.parse(input ?? {}))
+  .handler(async ({ data }) => {
+    const empty: PaginatedCampaigns = { data: [], total: 0, page: data.page, pageSize: data.pageSize, totalPages: 1 };
     try {
+      // `id` en départage : la pagination ci-dessous découpe ce tableau à chaque requête, donc un
+      // ordre non déterministe (created_at n'est pas unique) ferait apparaître/disparaître des
+      // lignes d'une page à l'autre. Cf. seasons.functions.ts pour le cas réel mesuré.
       const { data: campaigns, error } = await (supabaseAdmin as any)
         .from("campaigns")
         .select("*")
-        .order("created_at", { ascending: false });
+        .order("created_at", { ascending: false })
+        .order("id", { ascending: false });
 
       if (error || !campaigns) {
         if (error) console.error("Error fetching campaigns:", error);
-        return [] as Campaign[];
+        return empty;
       }
-      
+
       // Attach emails safely
       const users = await listAllUsers(supabaseAdmin).catch(() => []);
       const emailMap = new Map(users.map(u => [u.id, u.email]));
-      
-      return (campaigns as Campaign[]).map(c => ({
+
+      let enriched = (campaigns as Campaign[]).map(c => ({
           ...c,
           manager_email: c.manager_user_id ? emailMap.get(c.manager_user_id) : null
       }));
+
+      const term = data.search?.trim().toLowerCase();
+      if (term) {
+        enriched = enriched.filter((c) =>
+          c.name?.toLowerCase().includes(term) ||
+          c.description?.toLowerCase().includes(term) ||
+          c.manager_email?.toLowerCase().includes(term)
+        );
+      }
+
+      if (data.statusFilter !== "all") {
+        const now = new Date();
+        enriched = enriched.filter((c) => {
+          const start = new Date(c.start_date);
+          const end = new Date(c.end_date);
+          if (data.statusFilter === "active") return now >= start && now <= end;
+          if (data.statusFilter === "upcoming") return now < start;
+          return now > end; // "ended"
+        });
+      }
+
+      const total = enriched.length;
+      const totalPages = Math.max(1, Math.ceil(total / data.pageSize));
+      // Borner la page demandée plutôt que de renvoyer une grille vide : un filtre qui réduit le
+      // résultat pendant que l'admin est sur une page lointaine afficherait sinon un écran vide
+      // sans expliquer pourquoi (même garde-fou que listSponsorshipsAdmin).
+      const page = Math.min(data.page, totalPages);
+      const from = (page - 1) * data.pageSize;
+
+      return {
+        data: enriched.slice(from, from + data.pageSize),
+        total,
+        page,
+        pageSize: data.pageSize,
+        totalPages,
+      } as PaginatedCampaigns;
     } catch (err) {
       console.error("Error in listCampaignsAdmin:", err);
-      return [] as Campaign[];
+      return empty;
     }
   });
 
@@ -350,11 +413,14 @@ export const listCampaignTokensAdmin = createServerFn({ method: "POST" })
       .parse(input)
   )
   .handler(async ({ data }) => {
+    // Départage par id : un lot de codes est inséré en masse et partage la même horodate, sans
+    // quoi l'ordre d'affichage change d'un chargement à l'autre pour les mêmes données.
     const { data: tokens, error } = await (supabaseAdmin as any)
       .from("sponsorship_tokens")
       .select("*, child_profiles:redeemed_by_child_id(id, name, user_id)")
       .eq("campaign_id", data.campaignId)
-      .order("created_at", { ascending: false });
+      .order("created_at", { ascending: false })
+      .order("id", { ascending: false });
 
     if (error) {
       console.error("Error fetching campaign tokens:", error);
@@ -422,7 +488,8 @@ export const listCampaignTokensForManager = createServerFn({ method: "POST" })
       .from("sponsorship_tokens")
       .select("id, code, is_redeemed, redeemed_at, created_at")
       .eq("campaign_id", data.campaignId)
-      .order("created_at", { ascending: false });
+      .order("created_at", { ascending: false })
+      .order("id", { ascending: false });
 
     if (error) throw new Error(error.message);
 

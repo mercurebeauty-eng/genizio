@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
-import { Plus, Building2, Loader2, Key, X, FileText, Download, Copy, Link as LinkIcon } from "lucide-react";
+import { Plus, Building2, Loader2, Key, X, FileText, Download, Copy, Link as LinkIcon, Search } from "lucide-react";
+import { AdminPagination } from "./AdminPagination";
 import { useServerFn } from "@tanstack/react-start";
 import { useSession } from "@/hooks/use-session";
 import {
@@ -17,14 +18,32 @@ import { toast } from "sonner";
 export function AdminCampaignsTab() {
   const { session } = useSession();
   const [campaigns, setCampaigns] = useState<Campaign[]>([]);
+  const [meta, setMeta] = useState({ total: 0, page: 1, pageSize: 50, totalPages: 1 });
   const [loading, setLoading] = useState(true);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [isGenerateModalOpen, setIsGenerateModalOpen] = useState(false);
   const [isTokensModalOpen, setIsTokensModalOpen] = useState(false);
   const [isLinkModalOpen, setIsLinkModalOpen] = useState(false);
   const [selectedCampaign, setSelectedCampaign] = useState<Campaign | null>(null);
-  
+
+  const [search, setSearch] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
+  const [statusFilter, setStatusFilter] = useState<"all" | "active" | "upcoming" | "ended">("all");
+  const [page, setPage] = useState(1);
+
   const listCampaignsFn = useServerFn(listCampaignsAdmin);
+
+  // Sans ce délai, chaque frappe déclencherait une requête serveur complète.
+  useEffect(() => {
+    const t = setTimeout(() => setDebouncedSearch(search), 350);
+    return () => clearTimeout(t);
+  }, [search]);
+
+  // Revenir en page 1 dès qu'un filtre change : rester en page 3 d'un résultat qui n'en compte
+  // plus qu'une afficherait une grille vide sans expliquer pourquoi.
+  useEffect(() => {
+    setPage(1);
+  }, [debouncedSearch, statusFilter]);
 
   const fetchCampaigns = async () => {
     const opts = session?.access_token
@@ -33,8 +52,12 @@ export function AdminCampaignsTab() {
 
     try {
       setLoading(true);
-      const data = await listCampaignsFn({ data: undefined, ...opts });
-      setCampaigns(data || []);
+      const res = await listCampaignsFn({
+        data: { search: debouncedSearch || undefined, page, pageSize: 50, statusFilter },
+        ...opts,
+      });
+      setCampaigns(res.data || []);
+      setMeta({ total: res.total, page: res.page, pageSize: res.pageSize, totalPages: res.totalPages });
     } catch (err: any) {
       toast.error(err.message || "Erreur lors du chargement des campagnes.");
     } finally {
@@ -44,11 +67,14 @@ export function AdminCampaignsTab() {
 
   useEffect(() => {
     fetchCampaigns();
-  }, [session]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [session, debouncedSearch, statusFilter, page]);
 
   const handleCampaignUpdated = (updated: Campaign) => {
     setCampaigns((prev) => prev.map((c) => (c.id === updated.id ? updated : c)));
   };
+
+  const hasActiveFilter = debouncedSearch !== "" || statusFilter !== "all";
 
   return (
     <div className="space-y-6">
@@ -66,6 +92,31 @@ export function AdminCampaignsTab() {
         </button>
       </div>
 
+      <div className="flex flex-wrap items-center gap-2">
+        <div className="relative flex-1 min-w-[14rem]">
+          <Search className="size-4 text-ink/40 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+          <input
+            type="search"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Rechercher une campagne, une description, un gestionnaire…"
+            aria-label="Rechercher une campagne"
+            className="w-full rounded-2xl border border-ink/10 bg-surface pl-9 pr-4 py-2.5 text-sm font-medium text-ink outline-none focus:ring-2 focus:ring-brand/30"
+          />
+        </div>
+        <select
+          value={statusFilter}
+          onChange={(e) => setStatusFilter(e.target.value as typeof statusFilter)}
+          aria-label="Filtrer par période de la campagne"
+          className="rounded-2xl border border-ink/10 bg-white px-3 py-2.5 text-xs font-bold text-ink outline-none focus:ring-2 focus:ring-brand/30 cursor-pointer"
+        >
+          <option value="all">Période : toutes</option>
+          <option value="active">En cours</option>
+          <option value="upcoming">À venir</option>
+          <option value="ended">Terminées</option>
+        </select>
+      </div>
+
       {loading ? (
         <div className="flex justify-center py-12">
           <Loader2 className="size-8 animate-spin text-brand" />
@@ -73,9 +124,13 @@ export function AdminCampaignsTab() {
       ) : campaigns.length === 0 ? (
         <div className="bg-surface rounded-3xl p-12 text-center border border-ink/5">
           <Building2 className="size-12 text-ink/20 mx-auto mb-4" />
-          <h3 className="text-lg font-bold text-ink">Aucune campagne</h3>
+          <h3 className="text-lg font-bold text-ink">
+            {hasActiveFilter ? "Aucun résultat" : "Aucune campagne"}
+          </h3>
           <p className="text-ink/60 mt-1 max-w-sm mx-auto">
-            Créez une campagne pour permettre à une ONG de piloter une cohorte d'enfants.
+            {hasActiveFilter
+              ? "Aucune campagne ne correspond à cette recherche."
+              : "Créez une campagne pour permettre à une ONG de piloter une cohorte d'enfants."}
           </p>
         </div>
       ) : (
@@ -137,6 +192,15 @@ export function AdminCampaignsTab() {
           ))}
         </div>
       )}
+
+      <AdminPagination
+        page={meta.page}
+        totalPages={meta.totalPages}
+        total={meta.total}
+        pageSize={meta.pageSize}
+        onPageChange={setPage}
+        label="campagne"
+      />
 
       {isCreateModalOpen && (
         <CreateCampaignModal 

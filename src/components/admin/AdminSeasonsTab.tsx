@@ -1,7 +1,8 @@
 import { useEffect, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { useSession } from "@/hooks/use-session";
-import { Calendar, Gift, Users, CheckCircle, Sparkles, Link as LinkIcon, Plus, Copy, Check, ShieldCheck, Loader2, Pencil, Trash2, BellRing, Phone } from "lucide-react";
+import { Calendar, Gift, Users, CheckCircle, Sparkles, Link as LinkIcon, Plus, Copy, Check, ShieldCheck, Loader2, Pencil, Trash2, BellRing, Phone, Search } from "lucide-react";
+import { AdminPagination } from "./AdminPagination";
 import { listSeasonsAdmin, listSponsorshipsAdmin, updateSeasonStatusAdmin, deleteSeasonAdmin, confirmSponsorshipPaymentAdmin, getUpcomingExpirationsAdmin, DEFAULT_FALLBACK_SEASON, type Season, type SponsorshipToken } from "@/lib/seasons.functions";
 import { toast } from "sonner";
 import { confirmDialog } from "@/components/ui/confirm-dialog";
@@ -35,6 +36,7 @@ export function AdminSeasonsTab() {
 
   const [seasons, setSeasons] = useState<Season[]>([DEFAULT_FALLBACK_SEASON]);
   const [sponsorships, setSponsorships] = useState<SponsorshipToken[]>([]);
+  const [sponsorshipsMeta, setSponsorshipsMeta] = useState({ total: 0, page: 1, pageSize: 50, totalPages: 1 });
   const [upcomingExpirations, setUpcomingExpirations] = useState<UpcomingExpiration[]>([]);
   const [loading, setLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -42,6 +44,26 @@ export function AdminSeasonsTab() {
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [copiedCode, setCopiedCode] = useState<string | null>(null);
   const [confirmingId, setConfirmingId] = useState<string | null>(null);
+
+  // Filtres de l'historique des parrainages — appliqués côté serveur (avant pagination), pas sur
+  // la page déjà chargée.
+  const [search, setSearch] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
+  const [paymentFilter, setPaymentFilter] = useState<"all" | "confirmed" | "unconfirmed">("all");
+  const [redeemedFilter, setRedeemedFilter] = useState<"all" | "redeemed" | "unredeemed">("all");
+  const [page, setPage] = useState(1);
+
+  // Sans ce délai, chaque frappe déclencherait une requête serveur complète.
+  useEffect(() => {
+    const t = setTimeout(() => setDebouncedSearch(search), 350);
+    return () => clearTimeout(t);
+  }, [search]);
+
+  // Revenir en page 1 dès qu'un filtre change : rester en page 4 d'un résultat qui n'en compte
+  // plus que 2 afficherait un écran vide sans expliquer pourquoi.
+  useEffect(() => {
+    setPage(1);
+  }, [debouncedSearch, paymentFilter, redeemedFilter]);
 
   // Promise.all échoue tout-ou-rien : si UNE seule des 3 requêtes lève une erreur, les 2 autres
   // sont jetées même si elles ont réussi, et l'état reste bloqué sur ses valeurs initiales
@@ -57,11 +79,17 @@ export function AdminSeasonsTab() {
     try {
       const [sList, tList, eList] = await Promise.all([
         getSeasonsFn({ data: undefined, ...opts }).catch((err) => { console.error("Error loading seasons:", err); return null; }),
-        getSponsorshipsFn({ data: undefined, ...opts }).catch((err) => { console.error("Error loading sponsorships:", err); return null; }),
+        getSponsorshipsFn({
+          data: { search: debouncedSearch || undefined, page, pageSize: 50, paymentFilter, redeemedFilter },
+          ...opts,
+        }).catch((err) => { console.error("Error loading sponsorships:", err); return null; }),
         getUpcomingExpirationsFn({ data: undefined, ...opts }).catch((err) => { console.error("Error loading upcoming expirations:", err); return null; }),
       ]);
       if (sList && sList.length > 0) setSeasons(sList);
-      if (tList) setSponsorships(tList);
+      if (tList) {
+        setSponsorships(tList.data);
+        setSponsorshipsMeta({ total: tList.total, page: tList.page, pageSize: tList.pageSize, totalPages: tList.totalPages });
+      }
       if (eList) setUpcomingExpirations(eList as UpcomingExpiration[]);
     } finally {
       setLoading(false);
@@ -71,7 +99,7 @@ export function AdminSeasonsTab() {
   useEffect(() => {
     loadData();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [session]);
+  }, [session, debouncedSearch, paymentFilter, redeemedFilter, page]);
 
   // seasons est trié par created_at desc (listSeasonsAdmin) — seasons[0] est donc la plus
   // récemment créée, pas forcément la saison active. Sans ce find, créer une "Saison 2" à
@@ -176,10 +204,13 @@ export function AdminSeasonsTab() {
             </span>
           </div>
           <h3 className="font-display text-2xl font-black text-ink">
-            {sponsorships.length} <span className="text-sm font-normal text-ink/60">Parrainages</span>
+            {sponsorshipsMeta.total} <span className="text-sm font-normal text-ink/60">Parrainages</span>
           </h3>
+          {/* Répartition calculée sur la page affichée uniquement — le total ci-dessus vient du
+              serveur et couvre tout le résultat filtré, pas seulement les 50 lignes chargées. */}
           <p className="text-xs text-emerald-600 font-bold mt-1">
             {sponsorships.filter((s) => s.is_redeemed).length} Utilisés · {sponsorships.filter((s) => !s.is_redeemed).length} En attente
+            <span className="text-ink/40 font-medium"> (page affichée)</span>
           </p>
         </div>
 
@@ -366,9 +397,45 @@ export function AdminSeasonsTab() {
           Historique des Parrainages Diaspora & RSE
         </h3>
 
+        <div className="flex flex-wrap items-center gap-2 mb-5">
+          <div className="relative flex-1 min-w-[14rem]">
+            <Search className="size-4 text-ink/40 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+            <input
+              type="search"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="Rechercher un code, un parrain, un email, un filleul…"
+              aria-label="Rechercher un parrainage"
+              className="w-full rounded-2xl border border-ink/10 bg-surface pl-9 pr-4 py-2.5 text-sm font-medium text-ink outline-none focus:ring-2 focus:ring-brand/30"
+            />
+          </div>
+          <select
+            value={paymentFilter}
+            onChange={(e) => setPaymentFilter(e.target.value as typeof paymentFilter)}
+            aria-label="Filtrer par statut de paiement"
+            className="rounded-2xl border border-ink/10 bg-white px-3 py-2.5 text-xs font-bold text-ink outline-none focus:ring-2 focus:ring-brand/30 cursor-pointer"
+          >
+            <option value="all">Paiement : tous</option>
+            <option value="confirmed">Paiement confirmé</option>
+            <option value="unconfirmed">Paiement en attente</option>
+          </select>
+          <select
+            value={redeemedFilter}
+            onChange={(e) => setRedeemedFilter(e.target.value as typeof redeemedFilter)}
+            aria-label="Filtrer par utilisation du code"
+            className="rounded-2xl border border-ink/10 bg-white px-3 py-2.5 text-xs font-bold text-ink outline-none focus:ring-2 focus:ring-brand/30 cursor-pointer"
+          >
+            <option value="all">Code : tous</option>
+            <option value="redeemed">Code utilisé</option>
+            <option value="unredeemed">Code non utilisé</option>
+          </select>
+        </div>
+
         {sponsorships.length === 0 ? (
           <div className="rounded-2xl border border-dashed border-ink/20 bg-surface p-8 text-center text-ink/60 text-sm font-medium">
-            Aucun parrainage enregistré pour le moment. Les parrainages effectués depuis la page `/parrainage` s'afficheront ici en temps réel.
+            {debouncedSearch || paymentFilter !== "all" || redeemedFilter !== "all"
+              ? "Aucun parrainage ne correspond à cette recherche."
+              : "Aucun parrainage enregistré pour le moment. Les parrainages effectués depuis la page `/parrainage` s'afficheront ici en temps réel."}
           </div>
         ) : (
           <div className="overflow-x-auto">
@@ -438,6 +505,15 @@ export function AdminSeasonsTab() {
             </table>
           </div>
         )}
+
+        <AdminPagination
+          page={sponsorshipsMeta.page}
+          totalPages={sponsorshipsMeta.totalPages}
+          total={sponsorshipsMeta.total}
+          pageSize={sponsorshipsMeta.pageSize}
+          onPageChange={setPage}
+          label="parrainage"
+        />
       </div>
 
       {(isModalOpen || editingSeason) && (
