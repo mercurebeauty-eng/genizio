@@ -25,6 +25,12 @@
   </url>
 
   <url>
+    <loc>https://genizio.vercel.app/guides/potentiel-haut-potentiel-enfant</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+
+  <url>
     <loc>https://genizio.vercel.app/guides/enfant-agite-concentration</loc>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
@@ -49,9 +55,27 @@
   </url>
 
   <url>
+    <loc>https://genizio.vercel.app/guides/education-enfants-afrique-francophone</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+
+  <url>
+    <loc>https://genizio.vercel.app/guides/ia-apprentissage-enfant</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+
+  <url>
     <loc>https://genizio.vercel.app/parrainage</loc>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
+  </url>
+
+  <url>
+    <loc>https://genizio.vercel.app/a-propos</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.4</priority>
   </url>
 
   <url>

@@ -76,6 +76,7 @@ function Guide() {
       updated="27 juillet 2026"
       readingTime="7 min"
       related={[
+        { label: "Haut potentiel : les vrais signes", to: "/guides/potentiel-haut-potentiel-enfant" },
         { label: "24 activités éducatives (6-12 ans)", to: "/guides/activites-educatives-enfant" },
         { label: "Les intelligences multiples expliquées simplement", to: "/guides/intelligences-multiples-gardner" },
       ]}

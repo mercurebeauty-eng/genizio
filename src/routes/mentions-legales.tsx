@@ -1,7 +1,15 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { ArrowLeft } from "lucide-react";
+import { pageMeta } from "@/lib/seo";
 
 export const Route = createFileRoute("/mentions-legales")({
+  head: () =>
+    pageMeta({
+      title: "Mentions légales — Génizio",
+      description:
+        "Informations légales sur l'éditeur de l'application Génizio : identité, hébergement et contact.",
+      path: "/mentions-legales",
+    }),
   component: MentionsLegalesPage,
 });
 

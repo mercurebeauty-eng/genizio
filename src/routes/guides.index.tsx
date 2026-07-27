@@ -1,8 +1,16 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { ArrowRight, Compass, Puzzle, Rocket, Brain } from "lucide-react";
+import { ArrowRight, Compass, Puzzle, Rocket, Brain, Sparkles, Globe2, Bot } from "lucide-react";
 import { pageMeta, jsonLdScript, breadcrumbJsonLd } from "@/lib/seo";
 
 const GUIDES = [
+  {
+    to: "/guides/potentiel-haut-potentiel-enfant",
+    Icon: Sparkles,
+    eyebrow: "Potentiel & talents",
+    title: "Comment savoir si mon enfant a un haut potentiel",
+    desc:
+      "Les vrais signes à observer, ce que seul un professionnel peut diagnostiquer, et pourquoi le potentiel dépasse largement ce que l'école mesure.",
+  },
   {
     to: "/guides/enfant-agite-concentration",
     Icon: Compass,
@@ -35,6 +43,22 @@ const GUIDES = [
     desc:
       "Les 9 formes d'intelligence, ce que la théorie dit vraiment, ses limites reconnues, et comment s'en servir concrètement avec son enfant.",
   },
+  {
+    to: "/guides/education-enfants-afrique-francophone",
+    Icon: Globe2,
+    eyebrow: "Afrique & diaspora",
+    title: "Révéler le potentiel d'un enfant en Afrique francophone",
+    desc:
+      "Ce que l'éducation en Côte d'Ivoire, au Sénégal et dans la diaspora a de spécifique, et comment faire avec ce qu'on a déjà à la maison.",
+  },
+  {
+    to: "/guides/ia-apprentissage-enfant",
+    Icon: Bot,
+    eyebrow: "IA & apprentissage",
+    title: "Comment utiliser l'IA pour aider son enfant à apprendre",
+    desc:
+      "Ce qu'une IA bien conçue apporte réellement, les risques d'un usage non cadré, et les principes pour l'utiliser sans danger.",
+  },
 ];
 
 export const Route = createFileRoute("/guides/")({
@@ -44,7 +68,7 @@ export const Route = createFileRoute("/guides/")({
       // et ce sont les mots de fin — donc souvent le mot-clé — qui disparaissent du résultat.
       title: "Guides pour les parents | Génizio",
       description:
-        "Comprendre son enfant sans jargon : agitation et concentration, activités éducatives à la maison, défis pour adolescents, intelligences multiples.",
+        "Comprendre son enfant sans jargon : potentiel, intelligences multiples, activités éducatives, IA et contexte africain.",
       path: "/guides",
     });
     return {
@@ -120,6 +144,7 @@ function GuidesIndex() {
         <div className="mx-auto flex max-w-5xl flex-col items-center justify-between gap-4 text-xs font-bold text-ink/50 md:flex-row">
           <span>© {new Date().getFullYear()} Génizio — Abidjan, Côte d'Ivoire</span>
           <div className="flex flex-wrap justify-center gap-5 uppercase tracking-wider">
+            <Link to="/a-propos" className="hover:text-brand">À propos</Link>
             <Link to="/privacy" className="hover:text-brand">Confidentialité</Link>
             <Link to="/terms" className="hover:text-brand">CGU</Link>
             <Link to="/mentions-legales" className="hover:text-brand">Mentions légales</Link>

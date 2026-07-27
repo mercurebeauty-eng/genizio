@@ -81,6 +81,7 @@ function Guide() {
       updated="27 juillet 2026"
       readingTime="7 min"
       related={[
+        { label: "Haut potentiel : les vrais signes", to: "/guides/potentiel-haut-potentiel-enfant" },
         { label: "30 activités éducatives à faire à la maison", to: "/guides/activites-educatives-enfant" },
         { label: "Les intelligences multiples expliquées simplement", to: "/guides/intelligences-multiples-gardner" },
       ]}

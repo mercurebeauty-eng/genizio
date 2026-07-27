@@ -901,6 +901,9 @@ function Footer() {
           GÉNIZIO
         </div>
         <div className="flex flex-wrap justify-center gap-6 text-xs font-bold text-ink/60 uppercase tracking-wider">
+          <Link to="/a-propos" className="hover:text-brand">
+            À propos
+          </Link>
           <Link to="/privacy" className="hover:text-brand">
             Confidentialité
           </Link>
