@@ -41,7 +41,12 @@ export function AdminSeasonEnrollmentModal({
 
     Promise.all([
       listSeasonsFn({ data: undefined, ...opts }).catch(() => [] as Season[]),
-      listCampaignsFn({ data: undefined, ...opts }).catch(() => [] as Campaign[]),
+      // Ce sélecteur a besoin de TOUTES les campagnes, pas d'une page : on demande explicitement
+      // la taille de page maximale plutôt que de subir la pagination par défaut (50) ajoutée pour
+      // l'écran de liste.
+      listCampaignsFn({ data: { pageSize: 200 }, ...opts })
+        .then((r) => r.data)
+        .catch(() => [] as Campaign[]),
     ])
       .then(([fetchedSeasons, fetchedCampaigns]) => {
         setSeasons(fetchedSeasons);

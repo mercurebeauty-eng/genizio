@@ -327,23 +327,98 @@ export const listSeasonsAdmin = createServerFn({ method: "GET" })
     }
   });
 
+export interface PaginatedResult<T> {
+  data: T[];
+  total: number;
+  page: number;
+  pageSize: number;
+  totalPages: number;
+}
+
+const ListSponsorshipsInput = z.object({
+  search: z.string().optional(),
+  page: z.number().int().min(1).default(1),
+  pageSize: z.number().int().min(1).max(200).default(50),
+  paymentFilter: z.enum(["all", "confirmed", "unconfirmed"]).default("all"),
+  redeemedFilter: z.enum(["all", "redeemed", "unredeemed"]).default("all"),
+});
+
 // Alimente "Historique des Parrainages Diaspora & RSE" — un parrainage individuel (page publique
 // /parrainage, sans campagne). Les lots B2B (generateCampaignTokensAdmin) ont leur propre écran
 // dédié par campagne (AdminCampaignsTab → ViewCampaignTokensModal, avec filtre + export CSV) :
 // sans ce filtre, cette liste se noyait sous 280+ codes de campagne (99%+ du total réel en
 // prod), le vrai parrainage diaspora/RSE (campaign_id NULL) ne représentant qu'une poignée de
-// lignes — le plafond de 50 masquait même certains d'entre eux derrière le bruit B2B.
+// lignes.
+//
+// Pagination + recherche côté serveur (2026-07-27, décision utilisateur) : la limite de 50
+// jetait silencieusement tout ce qui dépassait, sans aucun moyen de voir le reste — remplacée
+// par une vraie pagination (.range) + un total exact, pour qu'au-delà de 50 lignes l'admin bascule
+// entre les pages plutôt que de perdre des données invisiblement. La recherche (nom/email
+// parrain, code, enfant ciblé) et les filtres (paiement confirmé, code utilisé) sont appliqués
+// AVANT la pagination, pas après — sinon une recherche ne porterait que sur la page déjà chargée.
 export const listSponsorshipsAdmin = createServerFn({ method: "GET" })
   .middleware([requireAdmin])
-  .handler(async () => {
-    const { data: tokens } = await (supabaseAdmin as any)
-      .from("sponsorship_tokens")
-      .select("*")
-      .is("campaign_id", null)
-      .order("created_at", { ascending: false })
-      .limit(50);
+  .validator((input: unknown) => ListSponsorshipsInput.parse(input ?? {}))
+  .handler(async ({ data }) => {
+    // Les mêmes filtres sont appliqués deux fois (comptage puis page) : PostgREST renvoie une
+    // erreur 416 "Requested range not satisfiable" dès qu'on demande une page au-delà du volume
+    // réel — vérifié en direct contre la base. Compter d'abord permet de borner la page demandée
+    // au lieu de faire échouer l'écran (cas réel : un filtre qui réduit le résultat pendant que
+    // l'admin est sur une page lointaine, ou des lignes supprimées entre deux chargements).
+    const applyFilters = (q: any) => {
+      const term = data.search?.trim();
+      if (term) {
+        // Virgules/parenthèses retirées : ce sont les séparateurs du format .or() de PostgREST,
+        // les laisser passer casserait la syntaxe du filtre plutôt que de simplement rater la
+        // recherche.
+        const safe = term.replace(/[,()]/g, "");
+        const like = `%${safe}%`;
+        q = q.or(`sponsor_name.ilike.${like},sponsor_email.ilike.${like},code.ilike.${like},target_child_name.ilike.${like}`);
+      }
+      if (data.paymentFilter === "confirmed") q = q.eq("payment_confirmed", true);
+      if (data.paymentFilter === "unconfirmed") q = q.eq("payment_confirmed", false);
+      if (data.redeemedFilter === "redeemed") q = q.eq("is_redeemed", true);
+      if (data.redeemedFilter === "unredeemed") q = q.eq("is_redeemed", false);
+      return q;
+    };
 
-    return (tokens as SponsorshipToken[]) || [];
+    const { count, error: countError } = await applyFilters(
+      (supabaseAdmin as any).from("sponsorship_tokens").select("id", { count: "exact", head: true }).is("campaign_id", null)
+    );
+    if (countError) throw new Error(countError.message);
+
+    const total = count ?? 0;
+    const totalPages = Math.max(1, Math.ceil(total / data.pageSize));
+    const page = Math.min(data.page, totalPages);
+
+    if (total === 0) {
+      return { data: [], total: 0, page: 1, pageSize: data.pageSize, totalPages: 1 } as PaginatedResult<SponsorshipToken>;
+    }
+
+    const from = (page - 1) * data.pageSize;
+
+    // `id` en second critère de tri : created_at N'EST PAS unique (les lots de codes sont insérés
+    // en masse et partagent la même horodate à la seconde près), donc trier dessus seul laisse
+    // l'ordre indéterminé entre deux requêtes. Vérifié en direct sur les 282 codes de campagne :
+    // parcourir les 6 pages ne remontait que 253 lignes uniques — 29 dupliquées d'une page à
+    // l'autre et 29 jamais affichées. Un tri total (clé primaire en départage) rend la pagination
+    // déterministe.
+    const { data: tokens, error } = await applyFilters(
+      (supabaseAdmin as any).from("sponsorship_tokens").select("*").is("campaign_id", null)
+    )
+      .order("created_at", { ascending: false })
+      .order("id", { ascending: false })
+      .range(from, from + data.pageSize - 1);
+
+    if (error) throw new Error(error.message);
+
+    return {
+      data: (tokens as SponsorshipToken[]) || [],
+      total,
+      page,
+      pageSize: data.pageSize,
+      totalPages,
+    } as PaginatedResult<SponsorshipToken>;
   });
 
 // Sans ceci, aucun code de parrainage ne pouvait jamais devenir légitimement utilisable une
