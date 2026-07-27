@@ -43,13 +43,12 @@ export function AdminSeasonsTab() {
   const [copiedCode, setCopiedCode] = useState<string | null>(null);
   const [confirmingId, setConfirmingId] = useState<string | null>(null);
 
-  // Ce fichier était le seul onglet admin encore jamais passé au fix "en-tête Authorization
-  // explicite" (admin.index.tsx / AdminCampaignsTab.tsx l'ont déjà) — sans ça, requireAdmin
-  // s'appuie uniquement sur le repli cookie, qui échoue silencieusement dans certains
-  // contextes. Les 3 requêtes échouaient alors ensemble (Promise.all), l'erreur atterrissait
-  // dans le catch, et l'état restait bloqué sur ses valeurs initiales ([] pour sponsorships)
-  // pour toujours — d'où "Historique des Parrainages" qui semble figé sur "Aucun parrainage
-  // enregistré" alors que 101 lignes existent réellement en base.
+  // Promise.all échoue tout-ou-rien : si UNE seule des 3 requêtes lève une erreur, les 2 autres
+  // sont jetées même si elles ont réussi, et l'état reste bloqué sur ses valeurs initiales
+  // ([] pour sponsorships) pour toujours, sans retry — c'est le vrai mécanisme derrière
+  // "Historique des Parrainages" qui semblait figé sur "Aucun parrainage enregistré". Chaque
+  // appel a maintenant son propre .catch (même patron que admin.index.tsx), pour qu'un échec
+  // isolé n'efface pas les données des 2 autres.
   const loadData = async () => {
     const opts = session?.access_token
       ? { headers: { Authorization: `Bearer ${session.access_token}` } }
@@ -57,15 +56,13 @@ export function AdminSeasonsTab() {
     setLoading(true);
     try {
       const [sList, tList, eList] = await Promise.all([
-        getSeasonsFn({ data: undefined, ...opts }),
-        getSponsorshipsFn({ data: undefined, ...opts }),
-        getUpcomingExpirationsFn({ data: undefined, ...opts }),
+        getSeasonsFn({ data: undefined, ...opts }).catch((err) => { console.error("Error loading seasons:", err); return null; }),
+        getSponsorshipsFn({ data: undefined, ...opts }).catch((err) => { console.error("Error loading sponsorships:", err); return null; }),
+        getUpcomingExpirationsFn({ data: undefined, ...opts }).catch((err) => { console.error("Error loading upcoming expirations:", err); return null; }),
       ]);
       if (sList && sList.length > 0) setSeasons(sList);
       if (tList) setSponsorships(tList);
       if (eList) setUpcomingExpirations(eList as UpcomingExpiration[]);
-    } catch (err) {
-      console.error("Error loading seasons admin data:", err);
     } finally {
       setLoading(false);
     }

@@ -258,3 +258,12 @@
   }
 }
 
+/* Isole un rapport imprimable (ex: Rapport d'Impact B2B) du reste de l'app au moment de
+   l'impression/export PDF — technique standard : tout devient invisible sauf .print-report,
+   qui repasse en position fixe pour ignorer l'espace laissé par ses ancêtres masqués. */
+@media print {
+  body * { visibility: hidden; }
+  .print-report, .print-report * { visibility: visible; }
+  .print-report { position: fixed; inset: 0; overflow: visible; }
+}
+

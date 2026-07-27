@@ -186,7 +186,7 @@ function ProfilePage() {
                 )}
                 {isManager && (
                   <Link
-                    to="/b2b"
+                    to="/organisation"
                     className="flex items-center gap-2.5 rounded-xl px-3 py-2.5 text-sm font-bold text-emerald-700 hover:bg-emerald-50"
                   >
                     <Building2 className="size-4" /> Espace Partenaire ONG & B2B

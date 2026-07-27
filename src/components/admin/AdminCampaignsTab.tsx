@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Plus, Building2, Loader2, Key, X, FileText, Download, Copy } from "lucide-react";
+import { Plus, Building2, Loader2, Key, X, FileText, Download, Copy, Link as LinkIcon } from "lucide-react";
 import { useServerFn } from "@tanstack/react-start";
 import { useSession } from "@/hooks/use-session";
 import {
@@ -11,6 +11,7 @@ import {
   type Campaign,
   type CampaignTokenDetail,
 } from "@/lib/campaigns.functions";
+import { CampaignLinkCard } from "@/components/campaigns/CampaignLinkCard";
 import { toast } from "sonner";
 
 export function AdminCampaignsTab() {
@@ -20,6 +21,7 @@ export function AdminCampaignsTab() {
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [isGenerateModalOpen, setIsGenerateModalOpen] = useState(false);
   const [isTokensModalOpen, setIsTokensModalOpen] = useState(false);
+  const [isLinkModalOpen, setIsLinkModalOpen] = useState(false);
   const [selectedCampaign, setSelectedCampaign] = useState<Campaign | null>(null);
   
   const listCampaignsFn = useServerFn(listCampaignsAdmin);
@@ -106,13 +108,21 @@ export function AdminCampaignsTab() {
                 <CampaignQuotaEditor campaign={c} onUpdated={handleCampaignUpdated} />
               </div>
 
-              <div className="grid grid-cols-2 gap-2 pt-2 border-t border-ink/5">
+              <div className="grid grid-cols-3 gap-2 pt-2 border-t border-ink/5">
+                <button
+                  onClick={() => { setSelectedCampaign(c); setIsLinkModalOpen(true); }}
+                  className="w-full flex items-center justify-center gap-1.5 bg-ink text-white hover:bg-ink/90 px-3 py-2 rounded-xl font-bold transition-colors text-xs"
+                >
+                  <LinkIcon className="size-3.5" />
+                  <span>Lien / QR</span>
+                </button>
+
                 <button
                   onClick={() => { setSelectedCampaign(c); setIsGenerateModalOpen(true); }}
                   className="w-full flex items-center justify-center gap-1.5 bg-surface text-ink hover:bg-ink hover:text-white px-3 py-2 rounded-xl font-bold transition-colors text-xs"
                 >
                   <Key className="size-3.5" />
-                  <span>Générer</span>
+                  <span>Codes</span>
                 </button>
 
                 <button
@@ -120,7 +130,7 @@ export function AdminCampaignsTab() {
                   className="w-full flex items-center justify-center gap-1.5 bg-brand/10 text-brand hover:bg-brand hover:text-white px-3 py-2 rounded-xl font-bold transition-colors text-xs"
                 >
                   <FileText className="size-3.5" />
-                  <span>📋 Voir les codes</span>
+                  <span>Voir</span>
                 </button>
               </div>
             </div>
@@ -148,6 +158,20 @@ export function AdminCampaignsTab() {
             campaign={selectedCampaign}
             onClose={() => setIsTokensModalOpen(false)}
         />
+      )}
+
+      {isLinkModalOpen && selectedCampaign && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-ink/40 backdrop-blur-sm">
+          <div className="w-full max-w-lg relative animate-in fade-in zoom-in-95 duration-200">
+            <button
+              onClick={() => setIsLinkModalOpen(false)}
+              className="absolute -top-3 -right-3 p-2 bg-white rounded-full text-ink/60 hover:text-ink transition-colors shadow-md cursor-pointer z-10"
+            >
+              <X className="size-5" />
+            </button>
+            <CampaignLinkCard campaignId={selectedCampaign.id} campaignName={selectedCampaign.name} />
+          </div>
+        </div>
       )}
     </div>
   );
@@ -291,10 +315,28 @@ function CreateCampaignModal({ onClose, onSuccess }: { onClose: () => void, onSu
 }
 
 function GenerateTokensModal({ campaign, onClose, onSuccess }: { campaign: Campaign, onClose: () => void, onSuccess: () => void }) {
+  const [existingCount, setExistingCount] = useState<number | null>(null);
   const [count, setCount] = useState(campaign.target_count);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const generateFn = useServerFn(generateCampaignTokensAdmin);
+  const listTokensFn = useServerFn(listCampaignTokensAdmin);
+
+  // Affiche ce qui existe déjà avant de générer — sans ça, rien ne distingue "premier lot" de
+  // "deuxième lot par erreur" (double-clic, page rouverte) : c'est exactement ce qui a produit
+  // 82 codes pour un objectif de 41 sur la campagne LIBA.
+  useEffect(() => {
+    listTokensFn({ data: { campaignId: campaign.id } })
+      .then((tokens) => {
+        const existing = tokens?.length ?? 0;
+        setExistingCount(existing);
+        setCount(Math.max(0, campaign.target_count - existing));
+      })
+      .catch(() => setExistingCount(0));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [campaign.id]);
+
+  const remaining = existingCount === null ? null : campaign.target_count - existingCount;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -326,6 +368,12 @@ function GenerateTokensModal({ campaign, onClose, onSuccess }: { campaign: Campa
         <p className="text-sm font-medium text-ink/70">
           Générer un lot de codes d'inscription pour la campagne <strong>{campaign.name}</strong>. Ces codes seront pré-payés et rattachés à cette campagne.
         </p>
+        {existingCount !== null && existingCount > 0 && (
+          <p className={`text-xs font-bold rounded-xl px-3 py-2 ${remaining !== null && remaining <= 0 ? "bg-red-50 text-red-600" : "bg-amber-50 text-amber-700"}`}>
+            {existingCount} code(s) déjà généré(s) pour un objectif de {campaign.target_count}
+            {remaining !== null && remaining > 0 ? ` — ${remaining} restant(s).` : " — objectif déjà atteint."}
+          </p>
+        )}
         <div>
           <label className="block text-sm font-bold text-ink mb-1">Nombre de tokens</label>
           <input required type="number" min={1} max={500} value={count} onChange={e => setCount(parseInt(e.target.value))} className="w-full bg-surface border-none rounded-2xl p-4 font-medium" />

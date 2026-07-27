@@ -251,6 +251,32 @@ export const redeemSponsorshipToken = createServerFn({ method: "POST" })
       throw new Error("Ce parrainage est en attente de confirmation de paiement par l'équipe Génizio. Vous recevrez une notification dès son activation.");
     }
 
+    // Décision utilisateur (2026-07-26) : le code se lie à sa saison au moment de l'ACTIVATION,
+    // pas de sa génération — token.season_id n'est qu'indicatif (voir createSponsorshipToken /
+    // generateCampaignTokensAdmin). Un lot de 100 codes B2B distribué sur 3 mois doit faire
+    // démarrer chaque enfant sur la vraie saison en cours à SON activation, pas sur celle qui
+    // était active le jour où l'admin a généré le lot.
+    const activeSeason = await getActiveSeason({ data: undefined });
+
+    // L'inscription doit réussir AVANT que le code soit marqué utilisé — dans l'ordre inverse
+    // (précédemment en place), un échec de cet insert brûlait quand même le code : la famille
+    // voyait un écran de succès et l'enfant n'était inscrit nulle part, sans recours possible.
+    const { error: enrollErr } = await (supabaseAdmin as any).from("season_enrollments").insert({
+      season_id: activeSeason.id,
+      child_id: data.childId,
+      user_id: userId,
+      sponsor_name: token.sponsor_name,
+      sponsor_email: token.sponsor_email,
+      sponsor_message: token.sponsor_message,
+      payment_status: "sponsored",
+      campaign_id: token.campaign_id || null,
+    });
+
+    if (enrollErr) {
+      console.error("Error creating season_enrollment on redeem:", enrollErr);
+      throw new Error("Erreur lors de l'inscription. Le code n'a pas été consommé, réessayez.");
+    }
+
     const { error: updateErr } = await (supabaseAdmin as any)
       .from("sponsorship_tokens")
       .update({
@@ -261,26 +287,11 @@ export const redeemSponsorshipToken = createServerFn({ method: "POST" })
       .eq("id", token.id);
 
     if (updateErr) {
-      throw new Error("Erreur lors de la validation du code.");
+      // L'enfant est déjà inscrit à ce stade — ne pas jeter une erreur qui ferait croire à un
+      // échec total au parent. On journalise pour intervention manuelle (marquer le code utilisé)
+      // plutôt que de bloquer une inscription par ailleurs réussie.
+      console.error("Error marking sponsorship token as redeemed (enrollment already created):", updateErr);
     }
-
-    // Décision utilisateur (2026-07-26) : le code se lie à sa saison au moment de l'ACTIVATION,
-    // pas de sa génération — token.season_id n'est qu'indicatif (voir createSponsorshipToken /
-    // generateCampaignTokensAdmin). Un lot de 100 codes B2B distribué sur 3 mois doit faire
-    // démarrer chaque enfant sur la vraie saison en cours à SON activation, pas sur celle qui
-    // était active le jour où l'admin a généré le lot.
-    const activeSeason = await getActiveSeason({ data: undefined });
-
-    await (supabaseAdmin as any).from("season_enrollments").insert({
-      season_id: activeSeason.id,
-      child_id: data.childId,
-      user_id: userId,
-      sponsor_name: token.sponsor_name,
-      sponsor_email: token.sponsor_email,
-      sponsor_message: token.sponsor_message,
-      payment_status: "sponsored",
-      campaign_id: token.campaign_id || null,
-    });
 
     return { success: true, token };
   });
@@ -316,12 +327,19 @@ export const listSeasonsAdmin = createServerFn({ method: "GET" })
     }
   });
 
+// Alimente "Historique des Parrainages Diaspora & RSE" — un parrainage individuel (page publique
+// /parrainage, sans campagne). Les lots B2B (generateCampaignTokensAdmin) ont leur propre écran
+// dédié par campagne (AdminCampaignsTab → ViewCampaignTokensModal, avec filtre + export CSV) :
+// sans ce filtre, cette liste se noyait sous 280+ codes de campagne (99%+ du total réel en
+// prod), le vrai parrainage diaspora/RSE (campaign_id NULL) ne représentant qu'une poignée de
+// lignes — le plafond de 50 masquait même certains d'entre eux derrière le bruit B2B.
 export const listSponsorshipsAdmin = createServerFn({ method: "GET" })
   .middleware([requireAdmin])
   .handler(async () => {
     const { data: tokens } = await (supabaseAdmin as any)
       .from("sponsorship_tokens")
       .select("*")
+      .is("campaign_id", null)
       .order("created_at", { ascending: false })
       .limit(50);
 

@@ -4,28 +4,43 @@ import { supabase } from "@/integrations/supabase/client";
 import { useSession } from "@/hooks/use-session";
 import { toast } from "sonner";
 
+interface AuthSearchParams {
+  redirect?: string;
+}
+
 export const Route = createFileRoute("/auth")({
+  validateSearch: (search: Record<string, unknown>): AuthSearchParams => ({
+    // Whitelist: uniquement un chemin interne commençant par "/" — jamais une URL externe
+    // (protection open-redirect basique sur un paramètre venant de l'URL).
+    redirect: typeof search.redirect === "string" && search.redirect.startsWith("/") ? search.redirect : undefined,
+  }),
   component: AuthPage,
 });
 
 function AuthPage() {
   const navigate = useNavigate();
+  const { redirect } = Route.useSearch();
   const { session, loading } = useSession();
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const target = redirect || "/profiles";
 
   useEffect(() => {
-    if (!loading && session) navigate({ to: "/profiles", replace: true });
+    if (!loading && session) navigate({ to: target, replace: true });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [session, loading, navigate]);
 
   const google = async () => {
     setError(null);
     setBusy(true);
     try {
+      // Le lien/QR d'inscription à une campagne (/rejoindre/$campaignId) redirige ici avec
+      // ?redirect=/rejoindre/xxx pour que la famille revienne exactement où elle a scanné le QR,
+      // au lieu d'atterrir sur /profiles et de perdre son intention d'inscription.
       const { error } = await supabase.auth.signInWithOAuth({
         provider: "google",
         options: {
-          redirectTo: window.location.origin + "/profiles",
+          redirectTo: window.location.origin + target,
         },
       });
       if (error) {

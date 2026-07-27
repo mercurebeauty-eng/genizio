@@ -141,6 +141,23 @@ export const generateCampaignTokensAdmin = createServerFn({ method: "POST" })
 
     if (!campaign) throw new Error("Campagne introuvable.");
 
+    // Rien ne comparait la taille du lot demandé à l'objectif de la campagne — un admin qui
+    // valide deux fois (double-clic, page rechargée puis soumise à nouveau) double le lot en
+    // silence. Trouvé en prod : campagne LIBA à 82 codes pour un objectif de 41. On bloque tout
+    // dépassement plutôt que de deviner une intention de "top-up" — augmenter l'objectif de la
+    // campagne reste le geste explicite si plus de codes sont réellement nécessaires.
+    const { count: existingCount } = await (supabaseAdmin as any)
+      .from("sponsorship_tokens")
+      .select("id", { count: "exact", head: true })
+      .eq("campaign_id", data.campaignId);
+
+    if ((existingCount ?? 0) + data.count > campaign.target_count) {
+      throw new Error(
+        `Cette campagne a déjà ${existingCount ?? 0} code(s) pour un objectif de ${campaign.target_count}. ` +
+        `Générer ${data.count} de plus dépasserait l'objectif — ajustez le nombre demandé, ou augmentez l'objectif de la campagne si c'est voulu.`
+      );
+    }
+
     // Décision utilisateur (2026-07-26) : un code se lie à sa saison à l'ACTIVATION
     // (redeemSponsorshipToken résout la saison active à ce moment-là), jamais à la génération —
     // un lot distribué sur 3 mois ferait sinon démarrer les derniers enfants sur un thème déjà
@@ -192,6 +209,121 @@ export const checkIsCampaignManager = createServerFn({ method: "GET" })
       .select("id", { count: "exact", head: true })
       .eq("manager_user_id", userId);
     return { isManager: (count ?? 0) > 0 };
+  });
+
+export interface CampaignPublicInfo {
+  id: string;
+  name: string;
+  description: string | null;
+  startDate: string;
+  endDate: string;
+  spotsRemaining: number;
+  isFull: boolean;
+  isWithinWindow: boolean;
+}
+
+// Point d'entrée du lien/QR partagé par une ONG (2026-07-27) — remplace la distribution de 100
+// codes alphanumériques par lot : la famille scanne un QR ou clique un lien, sans jamais avoir à
+// saisir/copier un code. Volontairement SANS middleware d'auth : cette page doit s'afficher
+// avant même que la famille se connecte (c'est le tout premier écran du parcours). Ne renvoie
+// que des métadonnées non sensibles — jamais manager_email, jamais de donnée d'enfant.
+export const getCampaignPublicInfo = createServerFn({ method: "GET" })
+  .validator((input: unknown) => z.object({ campaignId: z.string().uuid() }).parse(input))
+  .handler(async ({ data }) => {
+    const { data: campaign, error } = await (supabaseAdmin as any)
+      .from("campaigns")
+      .select("id, name, description, target_count, start_date, end_date")
+      .eq("id", data.campaignId)
+      .maybeSingle();
+
+    if (error || !campaign) throw new Error("Programme introuvable.");
+
+    const { count } = await (supabaseAdmin as any)
+      .from("season_enrollments")
+      .select("id", { count: "exact", head: true })
+      .eq("campaign_id", data.campaignId);
+
+    const enrolledCount = count ?? 0;
+    const now = new Date();
+
+    return {
+      id: campaign.id,
+      name: campaign.name,
+      description: campaign.description ?? null,
+      startDate: campaign.start_date,
+      endDate: campaign.end_date,
+      spotsRemaining: Math.max(0, campaign.target_count - enrolledCount),
+      isFull: enrolledCount >= campaign.target_count,
+      isWithinWindow: now >= new Date(campaign.start_date) && now <= new Date(campaign.end_date),
+    } as CampaignPublicInfo;
+  });
+
+// Inscription directe via le lien/QR — AUCUN sponsorship_token créé ici (contrairement à
+// redeemSponsorshipToken) : ce chemin remplace le code, il ne le complète pas. La contrainte
+// réelle de capacité vit dans le trigger check_campaign_capacity (migration
+// 20260727090000_campaign_enrollment_capacity_trigger) ; le pré-check ci-dessous n'est qu'un
+// message d'erreur clair avant d'atteindre la base.
+const EnrollViaCampaignLinkInput = z.object({
+  campaignId: z.string().uuid(),
+  childId: z.string().uuid(),
+});
+
+export const enrollChildViaCampaignLink = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .validator((input: unknown) => EnrollViaCampaignLinkInput.parse(input))
+  .handler(async ({ data, context }) => {
+    const userId = (context as any).claims?.sub;
+
+    const { data: child } = await (supabaseAdmin as any)
+      .from("child_profiles")
+      .select("id, user_id")
+      .eq("id", data.childId)
+      .maybeSingle();
+    if (!child || child.user_id !== userId) {
+      throw new Error("Ce profil enfant ne vous appartient pas.");
+    }
+
+    const { data: campaign } = await (supabaseAdmin as any)
+      .from("campaigns")
+      .select("id, name, target_count")
+      .eq("id", data.campaignId)
+      .maybeSingle();
+    if (!campaign) throw new Error("Programme introuvable.");
+
+    const { data: existingForChild } = await (supabaseAdmin as any)
+      .from("season_enrollments")
+      .select("id")
+      .eq("child_id", data.childId)
+      .eq("campaign_id", data.campaignId)
+      .maybeSingle();
+    if (existingForChild) throw new Error("Cet enfant est déjà inscrit à ce programme.");
+
+    const { count } = await (supabaseAdmin as any)
+      .from("season_enrollments")
+      .select("id", { count: "exact", head: true })
+      .eq("campaign_id", data.campaignId);
+    if ((count ?? 0) >= campaign.target_count) {
+      throw new Error("Ce programme a atteint sa capacité maximale de places.");
+    }
+
+    const activeSeason = await getActiveSeason({ data: undefined });
+
+    const { error } = await (supabaseAdmin as any).from("season_enrollments").insert({
+      season_id: activeSeason.id,
+      child_id: data.childId,
+      user_id: userId,
+      sponsor_name: campaign.name,
+      sponsor_email: "b2b@genizio.com",
+      payment_status: "sponsored",
+      campaign_id: data.campaignId,
+    });
+
+    if (error) {
+      if (error.code === "P0001") throw new Error("Ce programme a atteint sa capacité maximale de places.");
+      throw new Error(error.message);
+    }
+
+    return { success: true };
   });
 
 export interface CampaignTokenDetail {
@@ -257,6 +389,45 @@ export const listCampaignTokensAdmin = createServerFn({ method: "POST" })
     }) as CampaignTokenDetail[];
   });
 
+export interface ManagerTokenDetail {
+  id: string;
+  code: string;
+  is_redeemed: boolean;
+  redeemed_at: string | null;
+  created_at: string;
+}
+
+// Sans ceci, un partenaire ONG n'a AUCUN moyen de récupérer les codes qu'il a payés — la seule
+// liste existante (listCampaignTokensAdmin ci-dessus) est réservée à l'admin Génizio. Constaté en
+// prod : 280 codes sur 283 jamais activés, sur des campagnes dont le gestionnaire n'a jamais pu
+// voir un seul code. Jamais child_name/parent_email ici (contrairement à la variante admin) —
+// même règle de non-identification que getNgoDashboardData : le gestionnaire ne voit jamais
+// quel enfant précis a activé quoi.
+export const listCampaignTokensForManager = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .validator((input: any) => z.object({ campaignId: z.string().uuid() }).parse(input))
+  .handler(async ({ data, context }) => {
+    const userId = (context as any).claims?.sub;
+
+    const { data: campaign } = await (supabaseAdmin as any)
+      .from("campaigns")
+      .select("id")
+      .eq("id", data.campaignId)
+      .eq("manager_user_id", userId)
+      .maybeSingle();
+
+    if (!campaign) throw new Error("Vous n'avez pas les droits sur cette campagne.");
+
+    const { data: tokens, error } = await (supabaseAdmin as any)
+      .from("sponsorship_tokens")
+      .select("id, code, is_redeemed, redeemed_at, created_at")
+      .eq("campaign_id", data.campaignId)
+      .order("created_at", { ascending: false });
+
+    if (error) throw new Error(error.message);
+
+    return (tokens ?? []) as ManagerTokenDetail[];
+  });
 
 // ────────────────────────────────────────────────────────────
 // B2B Dashboard (Project Manager)
@@ -267,9 +438,16 @@ export const listCampaignTokensAdmin = createServerFn({ method: "POST" })
 // d'impact agrégé. C'est ce qui rend inutile tout consentement parental spécifique au B2B :
 // aucune donnée personnelle d'enfant ne remonte jamais à ce compte. Ne JAMAIS réintroduire
 // child_profiles.name/city/interests ou un lien vers /profiles/$profileId dans cette réponse.
+//
+// Scope explicite sur UNE campagne (celle choisie côté client, ou la première par défaut) —
+// avant, les stats sommaient TOUTES les campagnes du gestionnaire mais le titre/dates affichés
+// venaient de campaigns[0] seul : un gestionnaire avec 2 programmes verrait les chiffres des
+// deux sous le nom d'un seul, sans moyen de les distinguer. Invisible tant que chaque
+// gestionnaire n'a qu'une seule campagne (le cas aujourd'hui), mais faux dès le 2e contrat.
 export const getNgoDashboardData = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
-  .handler(async ({ context }) => {
+  .validator((input: unknown) => z.object({ campaignId: z.string().uuid().optional() }).parse(input ?? {}))
+  .handler(async ({ data, context }) => {
     const userId = (context as any).claims?.sub;
 
     const { data: campaigns, error: campErr } = await (supabaseAdmin as any)
@@ -279,15 +457,16 @@ export const getNgoDashboardData = createServerFn({ method: "GET" })
 
     if (campErr) throw new Error(campErr.message);
     if (!campaigns || campaigns.length === 0) {
-      return { campaigns: [], stats: null, supervisors: [] };
+      return { campaigns: [], activeCampaignId: null, stats: null, supervisors: [], narratives: [] };
     }
 
-    const campaignIds = campaigns.map((c: any) => c.id);
+    const selected = campaigns.find((c: any) => c.id === data.campaignId) ?? campaigns[0];
+    const campaignId = selected.id as string;
 
     const { data: enrollments, error: enrErr } = await (supabaseAdmin as any)
       .from("season_enrollments")
       .select("child_id")
-      .in("campaign_id", campaignIds);
+      .eq("campaign_id", campaignId);
     if (enrErr) throw new Error(enrErr.message);
 
     const childIds = [...new Set((enrollments ?? []).map((e: any) => e.child_id as string))];
@@ -295,7 +474,7 @@ export const getNgoDashboardData = createServerFn({ method: "GET" })
     const { data: tokens } = await (supabaseAdmin as any)
       .from("sponsorship_tokens")
       .select("id, is_redeemed")
-      .in("campaign_id", campaignIds);
+      .eq("campaign_id", campaignId);
 
     const totalTokens = tokens?.length || 0;
     const redeemedTokens = tokens?.filter((t: any) => t.is_redeemed).length || 0;
@@ -305,11 +484,15 @@ export const getNgoDashboardData = createServerFn({ method: "GET" })
     // cœur du "Rapport d'Impact" que voit le chargé de projet, sans jamais exposer qui a quel
     // talent.
     const talentTotals: Record<string, number> = {};
+    // Récits pour le rapport d'impact exportable : titre + domaine + observation de Naya, jamais
+    // child_id ni aucun identifiant — seule matière que ce marché n'a pas ailleurs, donc seule
+    // chose qui rend un rapport ONG défendable devant un bailleur plutôt qu'un graphique nu.
+    const narratives: { domain: string; title: string; observation: string }[] = [];
     if (childIds.length > 0) {
       const [{ data: ch }, { data: profiles }] = await Promise.all([
         (supabaseAdmin as any)
           .from("challenges")
-          .select("id, status, domain, child_id")
+          .select("id, status, domain, child_id, title, ai_observations")
           .in("child_id", childIds),
         (supabaseAdmin as any).from("child_profiles").select("talents").in("id", childIds),
       ]);
@@ -320,23 +503,30 @@ export const getNgoDashboardData = createServerFn({ method: "GET" })
           talentTotals[key] = (talentTotals[key] ?? 0) + (Number(val) || 0);
         }
       }
+      for (const c of challenges) {
+        if (narratives.length >= 3) break;
+        if (c.status === "completed" && c.ai_observations && String(c.ai_observations).trim().length > 0) {
+          narratives.push({ domain: c.domain, title: c.title, observation: c.ai_observations });
+        }
+      }
     }
 
-    // Superviseurs de ces campagnes : compte assigné seulement, jamais quels enfants précis.
+    // Superviseurs de CETTE campagne : compte assigné seulement, jamais quels enfants précis.
     const { data: supervisorRows } = await (supabaseAdmin as any)
       .from("supervisors")
       .select("supervisor_user_id")
-      .in("campaign_id", campaignIds);
+      .eq("campaign_id", campaignId);
 
     const usersMap = new Map((await listAllUsers(supabaseAdmin)).map((u) => [u.id, u.email]));
     const supervisorCounts = new Map<string, number>();
     for (const row of supervisorRows ?? []) {
       supervisorCounts.set(row.supervisor_user_id, (supervisorCounts.get(row.supervisor_user_id) ?? 0) + 1);
     }
-    const totalSupervisorQuota = campaigns.reduce((sum: number, c: any) => sum + 5 + (c.extra_supervisors_quota ?? 0), 0);
+    const totalSupervisorQuota = 5 + (selected.extra_supervisors_quota ?? 0);
 
     return {
       campaigns: campaigns as Campaign[],
+      activeCampaignId: campaignId,
       stats: {
         totalTokens,
         redeemedTokens,
@@ -351,6 +541,7 @@ export const getNgoDashboardData = createServerFn({ method: "GET" })
         email: usersMap.get(supervisorUserId) || "Inconnu",
         assignedCount: count,
       })),
+      narratives,
     };
   });
 

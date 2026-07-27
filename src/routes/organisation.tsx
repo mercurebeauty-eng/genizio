@@ -4,17 +4,17 @@ import { AppHeader } from "@/components/AppHeader";
 import { useSession } from "@/hooks/use-session";
 import { Loader2 } from "lucide-react";
 
-export const Route = createFileRoute("/b2b")({
-  component: B2bLayout,
+export const Route = createFileRoute("/organisation")({
+  component: OrganisationLayout,
 });
 
-function B2bLayout() {
+function OrganisationLayout() {
   const { session, loading } = useSession();
   const navigate = useNavigate();
 
   // Affichait une page blanche silencieuse quand non connecté au lieu de rediriger vers /auth
-  // (seul écran protégé de l'app à ne pas suivre ce pattern) — invisible tant que /b2b n'avait
-  // aucun point d'entrée dans la nav, redevenu un vrai piège maintenant que le lien existe.
+  // (seul écran protégé de l'app à ne pas suivre ce pattern) — invisible tant que cette route
+  // n'avait aucun point d'entrée dans la nav, redevenu un vrai piège maintenant que le lien existe.
   useEffect(() => {
     if (!loading && !session) navigate({ to: "/auth", replace: true });
   }, [session, loading, navigate]);

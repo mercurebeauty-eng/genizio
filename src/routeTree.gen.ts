@@ -15,18 +15,19 @@ import { Route as ProfilesRouteImport } from './routes/profiles'
 import { Route as ProfileRouteImport } from './routes/profile'
 import { Route as PrivacyRouteImport } from './routes/privacy'
 import { Route as ParrainageRouteImport } from './routes/parrainage'
+import { Route as OrganisationRouteImport } from './routes/organisation'
 import { Route as NouveautesRouteImport } from './routes/nouveautes'
 import { Route as MentionsLegalesRouteImport } from './routes/mentions-legales'
 import { Route as LaboratoryRouteImport } from './routes/laboratory'
 import { Route as BoutiqueRouteImport } from './routes/boutique'
-import { Route as B2bRouteImport } from './routes/b2b'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AdminRouteImport } from './routes/admin'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as ProfilesIndexRouteImport } from './routes/profiles.index'
-import { Route as B2bIndexRouteImport } from './routes/b2b.index'
+import { Route as OrganisationIndexRouteImport } from './routes/organisation.index'
 import { Route as AdminIndexRouteImport } from './routes/admin.index'
 import { Route as STokenRouteImport } from './routes/s.$token'
+import { Route as RejoindreCampaignIdRouteImport } from './routes/rejoindre.$campaignId'
 import { Route as ProfilesManageRouteImport } from './routes/profiles.manage'
 import { Route as AdminSupervisorsRouteImport } from './routes/admin.supervisors'
 import { Route as AdminProductsRouteImport } from './routes/admin.products'
@@ -67,6 +68,11 @@ const ParrainageRoute = ParrainageRouteImport.update({
   path: '/parrainage',
   getParentRoute: () => rootRouteImport,
 } as any)
+const OrganisationRoute = OrganisationRouteImport.update({
+  id: '/organisation',
+  path: '/organisation',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const NouveautesRoute = NouveautesRouteImport.update({
   id: '/nouveautes',
   path: '/nouveautes',
@@ -85,11 +91,6 @@ const LaboratoryRoute = LaboratoryRouteImport.update({
 const BoutiqueRoute = BoutiqueRouteImport.update({
   id: '/boutique',
   path: '/boutique',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const B2bRoute = B2bRouteImport.update({
-  id: '/b2b',
-  path: '/b2b',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AuthRoute = AuthRouteImport.update({
@@ -112,10 +113,10 @@ const ProfilesIndexRoute = ProfilesIndexRouteImport.update({
   path: '/',
   getParentRoute: () => ProfilesRoute,
 } as any)
-const B2bIndexRoute = B2bIndexRouteImport.update({
+const OrganisationIndexRoute = OrganisationIndexRouteImport.update({
   id: '/',
   path: '/',
-  getParentRoute: () => B2bRoute,
+  getParentRoute: () => OrganisationRoute,
 } as any)
 const AdminIndexRoute = AdminIndexRouteImport.update({
   id: '/',
@@ -125,6 +126,11 @@ const AdminIndexRoute = AdminIndexRouteImport.update({
 const STokenRoute = STokenRouteImport.update({
   id: '/s/$token',
   path: '/s/$token',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const RejoindreCampaignIdRoute = RejoindreCampaignIdRouteImport.update({
+  id: '/rejoindre/$campaignId',
+  path: '/rejoindre/$campaignId',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ProfilesManageRoute = ProfilesManageRouteImport.update({
@@ -181,11 +187,11 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/admin': typeof AdminRouteWithChildren
   '/auth': typeof AuthRoute
-  '/b2b': typeof B2bRouteWithChildren
   '/boutique': typeof BoutiqueRoute
   '/laboratory': typeof LaboratoryRoute
   '/mentions-legales': typeof MentionsLegalesRoute
   '/nouveautes': typeof NouveautesRoute
+  '/organisation': typeof OrganisationRouteWithChildren
   '/parrainage': typeof ParrainageRoute
   '/privacy': typeof PrivacyRoute
   '/profile': typeof ProfileRoute
@@ -195,9 +201,10 @@ export interface FileRoutesByFullPath {
   '/admin/products': typeof AdminProductsRoute
   '/admin/supervisors': typeof AdminSupervisorsRoute
   '/profiles/manage': typeof ProfilesManageRoute
+  '/rejoindre/$campaignId': typeof RejoindreCampaignIdRoute
   '/s/$token': typeof STokenRoute
   '/admin/': typeof AdminIndexRoute
-  '/b2b/': typeof B2bIndexRoute
+  '/organisation/': typeof OrganisationIndexRoute
   '/profiles/': typeof ProfilesIndexRoute
   '/profiles/$profileId/challenges': typeof ProfilesProfileIdChallengesRoute
   '/profiles/$profileId/guild': typeof ProfilesProfileIdGuildRoute
@@ -221,9 +228,10 @@ export interface FileRoutesByTo {
   '/admin/products': typeof AdminProductsRoute
   '/admin/supervisors': typeof AdminSupervisorsRoute
   '/profiles/manage': typeof ProfilesManageRoute
+  '/rejoindre/$campaignId': typeof RejoindreCampaignIdRoute
   '/s/$token': typeof STokenRoute
   '/admin': typeof AdminIndexRoute
-  '/b2b': typeof B2bIndexRoute
+  '/organisation': typeof OrganisationIndexRoute
   '/profiles': typeof ProfilesIndexRoute
   '/profiles/$profileId/challenges': typeof ProfilesProfileIdChallengesRoute
   '/profiles/$profileId/guild': typeof ProfilesProfileIdGuildRoute
@@ -237,11 +245,11 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/admin': typeof AdminRouteWithChildren
   '/auth': typeof AuthRoute
-  '/b2b': typeof B2bRouteWithChildren
   '/boutique': typeof BoutiqueRoute
   '/laboratory': typeof LaboratoryRoute
   '/mentions-legales': typeof MentionsLegalesRoute
   '/nouveautes': typeof NouveautesRoute
+  '/organisation': typeof OrganisationRouteWithChildren
   '/parrainage': typeof ParrainageRoute
   '/privacy': typeof PrivacyRoute
   '/profile': typeof ProfileRoute
@@ -251,9 +259,10 @@ export interface FileRoutesById {
   '/admin/products': typeof AdminProductsRoute
   '/admin/supervisors': typeof AdminSupervisorsRoute
   '/profiles/manage': typeof ProfilesManageRoute
+  '/rejoindre/$campaignId': typeof RejoindreCampaignIdRoute
   '/s/$token': typeof STokenRoute
   '/admin/': typeof AdminIndexRoute
-  '/b2b/': typeof B2bIndexRoute
+  '/organisation/': typeof OrganisationIndexRoute
   '/profiles/': typeof ProfilesIndexRoute
   '/profiles/$profileId/challenges': typeof ProfilesProfileIdChallengesRoute
   '/profiles/$profileId/guild': typeof ProfilesProfileIdGuildRoute
@@ -268,11 +277,11 @@ export interface FileRouteTypes {
     | '/'
     | '/admin'
     | '/auth'
-    | '/b2b'
     | '/boutique'
     | '/laboratory'
     | '/mentions-legales'
     | '/nouveautes'
+    | '/organisation'
     | '/parrainage'
     | '/privacy'
     | '/profile'
@@ -282,9 +291,10 @@ export interface FileRouteTypes {
     | '/admin/products'
     | '/admin/supervisors'
     | '/profiles/manage'
+    | '/rejoindre/$campaignId'
     | '/s/$token'
     | '/admin/'
-    | '/b2b/'
+    | '/organisation/'
     | '/profiles/'
     | '/profiles/$profileId/challenges'
     | '/profiles/$profileId/guild'
@@ -308,9 +318,10 @@ export interface FileRouteTypes {
     | '/admin/products'
     | '/admin/supervisors'
     | '/profiles/manage'
+    | '/rejoindre/$campaignId'
     | '/s/$token'
     | '/admin'
-    | '/b2b'
+    | '/organisation'
     | '/profiles'
     | '/profiles/$profileId/challenges'
     | '/profiles/$profileId/guild'
@@ -323,11 +334,11 @@ export interface FileRouteTypes {
     | '/'
     | '/admin'
     | '/auth'
-    | '/b2b'
     | '/boutique'
     | '/laboratory'
     | '/mentions-legales'
     | '/nouveautes'
+    | '/organisation'
     | '/parrainage'
     | '/privacy'
     | '/profile'
@@ -337,9 +348,10 @@ export interface FileRouteTypes {
     | '/admin/products'
     | '/admin/supervisors'
     | '/profiles/manage'
+    | '/rejoindre/$campaignId'
     | '/s/$token'
     | '/admin/'
-    | '/b2b/'
+    | '/organisation/'
     | '/profiles/'
     | '/profiles/$profileId/challenges'
     | '/profiles/$profileId/guild'
@@ -353,17 +365,18 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AdminRoute: typeof AdminRouteWithChildren
   AuthRoute: typeof AuthRoute
-  B2bRoute: typeof B2bRouteWithChildren
   BoutiqueRoute: typeof BoutiqueRoute
   LaboratoryRoute: typeof LaboratoryRoute
   MentionsLegalesRoute: typeof MentionsLegalesRoute
   NouveautesRoute: typeof NouveautesRoute
+  OrganisationRoute: typeof OrganisationRouteWithChildren
   ParrainageRoute: typeof ParrainageRoute
   PrivacyRoute: typeof PrivacyRoute
   ProfileRoute: typeof ProfileRoute
   ProfilesRoute: typeof ProfilesRouteWithChildren
   SupervisorRoute: typeof SupervisorRoute
   TermsRoute: typeof TermsRoute
+  RejoindreCampaignIdRoute: typeof RejoindreCampaignIdRoute
   STokenRoute: typeof STokenRoute
 }
 
@@ -411,6 +424,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ParrainageRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/organisation': {
+      id: '/organisation'
+      path: '/organisation'
+      fullPath: '/organisation'
+      preLoaderRoute: typeof OrganisationRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/nouveautes': {
       id: '/nouveautes'
       path: '/nouveautes'
@@ -437,13 +457,6 @@ declare module '@tanstack/react-router' {
       path: '/boutique'
       fullPath: '/boutique'
       preLoaderRoute: typeof BoutiqueRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/b2b': {
-      id: '/b2b'
-      path: '/b2b'
-      fullPath: '/b2b'
-      preLoaderRoute: typeof B2bRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/auth': {
@@ -474,12 +487,12 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ProfilesIndexRouteImport
       parentRoute: typeof ProfilesRoute
     }
-    '/b2b/': {
-      id: '/b2b/'
+    '/organisation/': {
+      id: '/organisation/'
       path: '/'
-      fullPath: '/b2b/'
-      preLoaderRoute: typeof B2bIndexRouteImport
-      parentRoute: typeof B2bRoute
+      fullPath: '/organisation/'
+      preLoaderRoute: typeof OrganisationIndexRouteImport
+      parentRoute: typeof OrganisationRoute
     }
     '/admin/': {
       id: '/admin/'
@@ -493,6 +506,13 @@ declare module '@tanstack/react-router' {
       path: '/s/$token'
       fullPath: '/s/$token'
       preLoaderRoute: typeof STokenRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/rejoindre/$campaignId': {
+      id: '/rejoindre/$campaignId'
+      path: '/rejoindre/$campaignId'
+      fullPath: '/rejoindre/$campaignId'
+      preLoaderRoute: typeof RejoindreCampaignIdRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/profiles/manage': {
@@ -575,15 +595,17 @@ const AdminRouteChildren: AdminRouteChildren = {
 
 const AdminRouteWithChildren = AdminRoute._addFileChildren(AdminRouteChildren)
 
-interface B2bRouteChildren {
-  B2bIndexRoute: typeof B2bIndexRoute
+interface OrganisationRouteChildren {
+  OrganisationIndexRoute: typeof OrganisationIndexRoute
 }
 
-const B2bRouteChildren: B2bRouteChildren = {
-  B2bIndexRoute: B2bIndexRoute,
+const OrganisationRouteChildren: OrganisationRouteChildren = {
+  OrganisationIndexRoute: OrganisationIndexRoute,
 }
 
-const B2bRouteWithChildren = B2bRoute._addFileChildren(B2bRouteChildren)
+const OrganisationRouteWithChildren = OrganisationRoute._addFileChildren(
+  OrganisationRouteChildren,
+)
 
 interface ProfilesRouteChildren {
   ProfilesManageRoute: typeof ProfilesManageRoute
@@ -615,17 +637,18 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AdminRoute: AdminRouteWithChildren,
   AuthRoute: AuthRoute,
-  B2bRoute: B2bRouteWithChildren,
   BoutiqueRoute: BoutiqueRoute,
   LaboratoryRoute: LaboratoryRoute,
   MentionsLegalesRoute: MentionsLegalesRoute,
   NouveautesRoute: NouveautesRoute,
+  OrganisationRoute: OrganisationRouteWithChildren,
   ParrainageRoute: ParrainageRoute,
   PrivacyRoute: PrivacyRoute,
   ProfileRoute: ProfileRoute,
   ProfilesRoute: ProfilesRouteWithChildren,
   SupervisorRoute: SupervisorRoute,
   TermsRoute: TermsRoute,
+  RejoindreCampaignIdRoute: RejoindreCampaignIdRoute,
   STokenRoute: STokenRoute,
 }
 export const routeTree = rootRouteImport
