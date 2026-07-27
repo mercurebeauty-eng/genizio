@@ -93,6 +93,7 @@ function Guide() {
       updated="27 juillet 2026"
       readingTime="9 min"
       related={[
+        { label: "Haut potentiel : les vrais signes", to: "/guides/potentiel-haut-potentiel-enfant" },
         { label: "24 activités éducatives (6-12 ans)", to: "/guides/activites-educatives-enfant" },
         { label: "Mon enfant ne tient pas en place", to: "/guides/enfant-agite-concentration" },
       ]}

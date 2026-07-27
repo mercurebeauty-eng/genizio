@@ -133,6 +133,7 @@ function Guide() {
       updated="27 juillet 2026"
       readingTime="8 min"
       related={[
+        { label: "Haut potentiel : les vrais signes", to: "/guides/potentiel-haut-potentiel-enfant" },
         { label: "Mon enfant ne tient pas en place", to: "/guides/enfant-agite-concentration" },
         { label: "Quels défis pour un adolescent de 12 à 16 ans ?", to: "/guides/defis-pour-adolescents" },
       ]}
