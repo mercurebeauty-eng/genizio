@@ -12,14 +12,13 @@
 // pas le JavaScript de la même façon qu'un navigateur).
 // ────────────────────────────────────────────────────────────
 
-// Domaine canonique — genizio.vercel.app en attendant l'achat d'un nom de domaine propre
-// (confirmé par le porteur du projet, 2026-07-27).
+// Domaine canonique — www.genizio.com, DNS propagé et validé sur Vercel le 2026-07-29
+// (genizio.com sans www redirige en 308 vers www.genizio.com).
 //
-// Surchargeable par VITE_SITE_URL au moment du build : le jour où le vrai domaine arrive, il
-// suffit de définir cette variable, sans retoucher le code. Attention en revanche à poser une
-// redirection 301 de vercel.app vers le nouveau domaine ce jour-là — sinon les deux adresses
-// coexistent dans l'index et se cannibalisent.
-export const SITE_URL = (import.meta.env.VITE_SITE_URL as string | undefined)?.replace(/\/$/, "") || "https://genizio.vercel.app";
+// Surchargeable par VITE_SITE_URL au moment du build, si besoin ponctuel (preview, test).
+// Reste à faire : poser une redirection depuis genizio.vercel.app vers ce domaine, sinon
+// les deux adresses coexistent dans l'index et se cannibalisent.
+export const SITE_URL = (import.meta.env.VITE_SITE_URL as string | undefined)?.replace(/\/$/, "") || "https://www.genizio.com";
 
 export const SITE_NAME = "Génizio";
 export const SITE_NAME_LONG = "Génizio — Révélez le potentiel unique de votre enfant";
