@@ -17,6 +17,11 @@
 // Étendue aux 9 domaines le 2026-07-22 (même jour que trait_subform) — chaque liste de pistes
 // est une construction raisonnable de l'agent, pas une recherche sourcée (à la différence du
 // référentiel académique #39) : à traiter comme un premier jet révisable.
+//
+// Compétences numériques ajoutées le 2026-07-29 (demande utilisateur) : programmation, outils
+// d'IA et bureautique avancée manquaient alors qu'elles comptent surtout pour la tranche 12-16
+// ans (préparation aux études/à l'emploi, pas découverte de talent inné par le jeu — d'où leur
+// place ici plutôt que dans trait_subform/TALENT_SUBFORMS).
 
 export const OPPORTUNITY_COMPASS_VERSION = "Vision 2026";
 export const OPPORTUNITY_COMPASS_DISCLAIMER =
@@ -47,7 +52,7 @@ export const TALENT_SUBFORM_OPPORTUNITIES: Record<string, string[]> = {
   negociation: ["Commerce/vente", "Achats & négociation fournisseurs", "Droit des affaires", "Diplomatie"],
   prise_de_risque: ["Création d'entreprise", "Investissement", "Recherche & innovation", "Sports à risque encadrés"],
   sens_du_client: ["Marketing", "Vente/commerce", "Design de service", "Hôtellerie-restauration"],
-  gestion_ressources: ["Gestion de projet", "Finance/comptabilité", "Logistique", "Gestion d'exploitation agricole"],
+  gestion_ressources: ["Gestion de projet", "Bureautique avancée (tableurs, outils numériques)", "Finance/comptabilité", "Logistique", "Gestion d'exploitation agricole"],
 
   // creative
   invention_visuelle: ["Arts plastiques", "Design graphique/mode", "Architecture", "Illustration/animation"],
@@ -70,7 +75,7 @@ export const TALENT_SUBFORM_OPPORTUNITIES: Record<string, string[]> = {
   // logico_mathematique
   raisonnement_abstrait: ["Mathématiques/recherche", "Philosophie", "Informatique théorique", "Droit (raisonnement juridique)"],
   calcul: ["Comptabilité/finance", "Ingénierie", "Statistiques/data science", "Sciences de laboratoire"],
-  resolution_problemes: ["Programmation informatique", "Ingénierie", "Médecine (diagnostic)", "Jeux stratégiques (échecs)"],
+  resolution_problemes: ["Programmation informatique", "Développement web/mobile", "Automatisation & outils d'IA", "Ingénierie", "Médecine (diagnostic)", "Jeux stratégiques (échecs)"],
   reconnaissance_motifs: ["Data science/IA", "Composition musicale", "Cryptographie/sécurité informatique", "Sciences (biologie, astronomie)"],
 
   // linguistique

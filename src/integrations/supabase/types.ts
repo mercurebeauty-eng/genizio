@@ -300,6 +300,7 @@ export type Database = {
           ai_synthesis: string | null
           ai_synthesis_generated_at: string | null
           avatar_color: string
+          birthdate: string | null
           city: string | null
           completed_challenges: string[]
           country: string | null
@@ -324,6 +325,7 @@ export type Database = {
           ai_synthesis?: string | null
           ai_synthesis_generated_at?: string | null
           avatar_color?: string
+          birthdate?: string | null
           city?: string | null
           completed_challenges?: string[]
           country?: string | null
@@ -348,6 +350,7 @@ export type Database = {
           ai_synthesis?: string | null
           ai_synthesis_generated_at?: string | null
           avatar_color?: string
+          birthdate?: string | null
           city?: string | null
           completed_challenges?: string[]
           country?: string | null
@@ -1005,7 +1008,7 @@ export type Database = {
           {
             foreignKeyName: "supervisors_child_profile_id_fkey"
             columns: ["child_profile_id"]
-            isOneToOne: false
+            isOneToOne: true
             referencedRelation: "child_profiles"
             referencedColumns: ["id"]
           },
