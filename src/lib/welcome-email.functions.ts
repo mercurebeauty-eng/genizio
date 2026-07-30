@@ -404,7 +404,10 @@ export const sendWelcomeEmailIfNeeded = createServerFn({ method: "POST" })
     }
 
     const siteUrl = (process.env.VITE_SITE_URL as string | undefined)?.replace(/\/$/, "") || "https://www.genizio.com";
-    const appLink = `${siteUrl}/profiles`;
+    // "?new=true" ouvre directement le formulaire de création sur /profiles (cf.
+    // profiles.index.tsx) — cohérent avec le texte du bouton "Créer le profil de mon
+    // enfant" plutôt que de faire atterrir sur le tableau de bord sans rien ouvrir.
+    const appLink = `${siteUrl}/profiles?new=true`;
     const whatsappNumber = (process.env.VITE_WHATSAPP_NUMBER as string | undefined)?.replace(/\D/g, "") || "33606433148";
     const whatsappLink = `https://wa.me/${whatsappNumber}?text=${encodeURIComponent("Bonjour, j'ai une question sur Génizio.")}`;
     const firstName = resolveFirstName(data.firstName) || "";
