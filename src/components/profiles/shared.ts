@@ -76,6 +76,7 @@ export type ChildProfile = {
   user_id: string;
   name: string;
   age: number;
+  birthdate: string | null;
   interests: string[];
   city: string | null;
   country: string | null;
@@ -97,6 +98,7 @@ export type ProfileDraft = Omit<
 export const emptyProfileDraft = (): ProfileDraft => ({
   name: "",
   age: 10,
+  birthdate: null,
   interests: [],
   city: "",
   country: "",

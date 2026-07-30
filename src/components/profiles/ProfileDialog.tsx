@@ -1,8 +1,10 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { useServerFn } from "@tanstack/react-start";
 import { supabase } from "@/integrations/supabase/client";
 import { INTERESTS_BY_TALENT, AVATAR_COLORS, emptyProfileDraft, type ChildProfile, type ProfileDraft } from "./shared";
 import { toast } from "sonner";
 import { useSession } from "@/hooks/use-session";
+import { getGeoHint } from "@/lib/geo.functions";
 
 // Pivot confirmé par l'utilisateur (2026-07-22) : le paywall par slot (2 gratuits + slots
 // payants à 5000 FCFA, commit b87488c du 2026-07-17) est retiré — la monétisation passe
@@ -34,6 +36,7 @@ export function ProfileDialog({
       ? {
           name: initial.name,
           age: initial.age,
+          birthdate: initial.birthdate ?? null,
           interests: initial.interests,
           city: initial.city ?? "",
           country: initial.country ?? "",
@@ -61,6 +64,23 @@ export function ProfileDialog({
     initial && initial.interests.length > 0 ? "tags" : "universes"
   );
 
+  // Pré-remplissage Ville/Pays par IP (2026-07-29, demande utilisateur) : uniquement à la
+  // création d'un profil, jamais sur un profil existant, et jamais si le parent a déjà
+  // commencé à taper — juste une suggestion de départ, toujours modifiable/effaçable.
+  const geoHintFn = useServerFn(getGeoHint);
+  useEffect(() => {
+    if (initial) return;
+    geoHintFn()
+      .then((hint) => {
+        setDraft((d) => ({
+          ...d,
+          city: d.city ? d.city : hint.city ?? d.city,
+          country: d.country ? d.country : hint.country ?? d.country,
+        }));
+      })
+      .catch(() => {});
+  }, []);
+
   const toggle = (i: string) =>
     setDraft((d) => ({
       ...d,
@@ -79,6 +99,7 @@ export function ProfileDialog({
         user_id: userId,
         name: draft.name.trim().slice(0, 40),
         age: draft.age,
+        birthdate: draft.birthdate || null,
         interests: draft.interests,
         city: draft.city?.trim() || null,
         country: draft.country?.trim() || null,
@@ -175,6 +196,17 @@ export function ProfileDialog({
               onChange={(e) => setDraft({ ...draft, age: Number(e.target.value) })}
               className="w-full accent-brand"
             />
+            <div className="mt-2 flex flex-wrap items-center gap-2">
+              <input
+                type="date"
+                value={draft.birthdate ?? ""}
+                onChange={(e) => setDraft({ ...draft, birthdate: e.target.value || null })}
+                className="rounded-xl border border-ink/10 px-3 py-2 text-xs outline-none focus:ring-2 focus:ring-brand shadow-sm"
+              />
+              <p className="text-[11px] text-ink/50 leading-snug">
+                Optionnel — avec la date de naissance, l'âge se met à jour tout seul chaque année.
+              </p>
+            </div>
           </div>
 
           <div className="grid grid-cols-2 gap-3">
