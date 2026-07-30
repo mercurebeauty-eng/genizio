@@ -5,7 +5,7 @@ import type { Database } from "@/integrations/supabase/types";
 
 // Email de bienvenue (2026-07-30, demande utilisateur) : envoyé une seule fois, juste
 // après la toute première connexion Google — avant même la création d'un profil enfant,
-// puisque le contenu (CTA "Créer le profil de mon enfant", étapes 1-2-3) est justement
+// puisque le contenu (CTA "Créer le profil de l'enfant", étapes 1-2-3) est justement
 // pensé pour amener vers cette première création. D'où l'absence volontaire d'un prénom
 // d'enfant dans le corps du mail : à ce stade, aucun profil n'existe encore.
 //
@@ -101,12 +101,12 @@ function buildWelcomeEmailHtml(firstName: string, appLink: string, whatsappLink:
                     <!--[if mso]>
                     <v:roundrect xmlns:v="urn:schemas-microsoft-com:vml" xmlns:w="urn:schemas-microsoft-com:office:word" href="${appLink}" style="height:52px;v-text-anchor:middle;width:280px;" arcsize="50%" stroke="f" fillcolor="#FE8212">
                     <w:anchorlock/>
-                    <center style="color:#ffffff;font-family:Arial,sans-serif;font-size:16px;font-weight:bold;">Créer le profil de mon enfant</center>
+                    <center style="color:#ffffff;font-family:Arial,sans-serif;font-size:16px;font-weight:bold;">Créer le profil de l'enfant</center>
                     </v:roundrect>
                     <![endif]-->
                     <!--[if !mso]><!-->
                     <a href="${appLink}" target="_blank" style="display:inline-block; padding:16px 32px; font-family:Arial, Helvetica, sans-serif; font-size:16px; font-weight:700; color:#FFFFFF; text-decoration:none; border-radius:999px;">
-                      Créer le profil de mon enfant
+                      Créer le profil de l'enfant
                     </a>
                     <!--<![endif]-->
                   </td>

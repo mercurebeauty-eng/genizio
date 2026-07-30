@@ -11,6 +11,7 @@ import { ConsentLedger } from "@/components/settings/ConsentLedger";
 import { ExportDataButton } from "@/components/settings/ExportDataButton";
 import { DeleteAccountDialog } from "@/components/settings/DeleteAccountDialog";
 import { COUNTRIES } from "@/lib/countries";
+import { RELATIONSHIP_TYPES } from "@/lib/relationship-types";
 import { GenizioLoader } from "@/components/GenizioLoader";
 import { checkAdminStatus } from "@/lib/admin.functions";
 import { checkIsCampaignManager } from "@/lib/campaigns.functions";
@@ -26,6 +27,9 @@ function ProfilePage() {
   const [phoneNumber, setPhoneNumber] = useState("");
   const [selectedCountry, setSelectedCountry] = useState(COUNTRIES[0]);
   const [savingPhone, setSavingPhone] = useState(false);
+
+  const [relationshipType, setRelationshipType] = useState("");
+  const [savingRelationship, setSavingRelationship] = useState(false);
 
   // Parent Stats
   const [childCount, setChildCount] = useState(0);
@@ -49,6 +53,8 @@ function ProfilePage() {
         .select("id", { count: "exact", head: true })
         .eq("supervisor_user_id", session.user.id)
         .then(({ count }) => setIsSupervisor((count ?? 0) > 0));
+      setRelationshipType(session.user.user_metadata?.relationship_type ?? "");
+
       // Load saved phone
       const savedPhone = session.user.user_metadata?.phone;
       if (savedPhone) {
@@ -104,6 +110,20 @@ function ProfilePage() {
       toast.error(err instanceof Error ? err.message : "Erreur d'enregistrement.");
     } finally {
       setSavingPhone(false);
+    }
+  };
+
+  const handleSaveRelationshipType = async () => {
+    if (!relationshipType) return;
+    setSavingRelationship(true);
+    try {
+      const { error } = await supabase.auth.updateUser({ data: { relationship_type: relationshipType } });
+      if (error) throw error;
+      toast.success("Lien avec l'enfant mis à jour.");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Erreur d'enregistrement.");
+    } finally {
+      setSavingRelationship(false);
     }
   };
 
@@ -221,6 +241,42 @@ function ProfilePage() {
 
         {/* Right Column: Settings Sections */}
         <div className="md:col-span-2 space-y-6">
+          {/* Relationship type */}
+          <div className="rounded-3xl border border-ink/10 bg-white p-6 shadow-xl md:p-8">
+            <h3 className="font-display text-balance text-lg font-bold flex items-center gap-2 mb-2">
+              <Users className="size-5 text-brand" />
+              Votre lien avec l'enfant
+            </h3>
+            <p className="text-xs text-ink/60 leading-relaxed mb-6">
+              Parent, tuteur, éducateur d'une structure d'accueil... Modifiable à tout moment.
+            </p>
+            <div className="flex flex-col gap-3 sm:flex-row">
+              <select
+                value={relationshipType}
+                onChange={(e) => setRelationshipType(e.target.value)}
+                className="flex-1 rounded-xl border border-ink/10 bg-white px-4 py-3 text-sm font-bold outline-none focus:ring-2 focus:ring-brand cursor-pointer shadow-sm"
+              >
+                <option value="" disabled>
+                  Sélectionnez votre lien
+                </option>
+                {RELATIONSHIP_TYPES.map((r) => (
+                  <option key={r.value} value={r.value}>
+                    {r.label}
+                  </option>
+                ))}
+              </select>
+              <button
+                type="button"
+                onClick={handleSaveRelationshipType}
+                disabled={savingRelationship || !relationshipType}
+                className="press-brand rounded-xl bg-brand px-6 py-2.5 text-sm font-bold text-white disabled:opacity-50 flex items-center justify-center gap-2"
+              >
+                {savingRelationship ? <Loader2 className="size-4 animate-spin" /> : <Check className="size-4" />}
+                <span>Enregistrer</span>
+              </button>
+            </div>
+          </div>
+
           {/* Phone Settings */}
           <div className="rounded-3xl border border-ink/10 bg-white p-6 shadow-xl md:p-8">
             <h3 className="font-display text-balance text-lg font-bold flex items-center gap-2 mb-2">

@@ -29,6 +29,7 @@ export const recommendChallengesForChild = createServerFn({ method: "POST" })
       .select("id, name, age, interests, talents")
       .eq("id", data.childId)
       .eq("user_id", userId)
+      .is("access_locked_at", null)
       .maybeSingle();
 
     if (childErr || !child) throw new Error("Profil enfant introuvable.");

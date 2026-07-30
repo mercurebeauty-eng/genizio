@@ -243,19 +243,23 @@ export function AdminCampaignsTab() {
 
 function CampaignQuotaEditor({ campaign, onUpdated }: { campaign: Campaign; onUpdated: (c: Campaign) => void }) {
   const [value, setValue] = useState(campaign.extra_supervisors_quota);
+  const [maxEducators, setMaxEducators] = useState(campaign.max_educators ?? 0);
   const [saving, setSaving] = useState(false);
   const updateFn = useServerFn(updateCampaignExtraQuotaAdmin);
 
   useEffect(() => {
     setValue(campaign.extra_supervisors_quota);
-  }, [campaign.extra_supervisors_quota]);
+    setMaxEducators(campaign.max_educators ?? 0);
+  }, [campaign.extra_supervisors_quota, campaign.max_educators]);
 
-  const dirty = value !== campaign.extra_supervisors_quota;
+  const dirty = value !== campaign.extra_supervisors_quota || maxEducators !== (campaign.max_educators ?? 0);
 
   const handleSave = async () => {
     setSaving(true);
     try {
-      const updated = await updateFn({ data: { campaignId: campaign.id, extraSupervisorsQuota: value } });
+      const updated = await updateFn({
+        data: { campaignId: campaign.id, extraSupervisorsQuota: value, maxEducators },
+      });
       onUpdated(updated);
       toast.success("Quota mis à jour.");
     } catch (err: any) {
@@ -266,28 +270,47 @@ function CampaignQuotaEditor({ campaign, onUpdated }: { campaign: Campaign; onUp
   };
 
   return (
-    <div className="bg-surface p-3 rounded-2xl mb-3">
-      <div className="text-xs font-bold text-ink/50 mb-1.5 uppercase tracking-wider">Quota superviseurs</div>
-      <div className="flex items-center gap-2 flex-wrap">
-        <span className="text-sm font-medium text-ink/60 shrink-0">5 de base +</span>
-        <input
-          type="number"
-          min={0}
-          max={50}
-          value={value}
-          onChange={(e) => setValue(Math.max(0, parseInt(e.target.value) || 0))}
-          className="w-16 bg-white border border-ink/10 rounded-xl px-2 py-1.5 text-sm font-bold text-ink text-center"
-        />
-        <span className="text-sm font-medium text-ink/60 shrink-0">= {5 + value} enfants max/superviseur</span>
-        {dirty && (
-          <button
-            onClick={handleSave}
-            disabled={saving}
-            className="ml-auto flex items-center gap-1.5 bg-ink text-white px-3 py-1.5 rounded-xl text-xs font-bold hover:bg-ink/90 transition-colors shrink-0 disabled:opacity-50"
-          >
-            {saving ? <Loader2 className="size-3.5 animate-spin" /> : "Enregistrer"}
-          </button>
-        )}
+    <div className="bg-surface p-3 rounded-2xl mb-3 space-y-2">
+      <div>
+        <div className="text-xs font-bold text-ink/50 mb-1.5 uppercase tracking-wider">Quota superviseurs</div>
+        <div className="flex items-center gap-2 flex-wrap">
+          <span className="text-sm font-medium text-ink/60 shrink-0">5 de base +</span>
+          <input
+            type="number"
+            min={0}
+            max={50}
+            value={value}
+            onChange={(e) => setValue(Math.max(0, parseInt(e.target.value) || 0))}
+            className="w-16 bg-white border border-ink/10 rounded-xl px-2 py-1.5 text-sm font-bold text-ink text-center"
+          />
+          <span className="text-sm font-medium text-ink/60 shrink-0">= {5 + value} enfants max/superviseur</span>
+        </div>
+      </div>
+      <div>
+        <div className="text-xs font-bold text-ink/50 mb-1.5 uppercase tracking-wider">
+          Éducateurs vouchés (7000 FCFA/éducateur — payé hors-app, ajuster ici après confirmation)
+        </div>
+        <div className="flex items-center gap-2 flex-wrap">
+          <span className="text-sm font-medium text-ink/60 shrink-0">Capacité :</span>
+          <input
+            type="number"
+            min={0}
+            max={50}
+            value={maxEducators}
+            onChange={(e) => setMaxEducators(Math.max(0, parseInt(e.target.value) || 0))}
+            className="w-16 bg-white border border-ink/10 rounded-xl px-2 py-1.5 text-sm font-bold text-ink text-center"
+          />
+          <span className="text-sm font-medium text-ink/60 shrink-0">éducateurs max pour cette campagne</span>
+          {dirty && (
+            <button
+              onClick={handleSave}
+              disabled={saving}
+              className="ml-auto flex items-center gap-1.5 bg-ink text-white px-3 py-1.5 rounded-xl text-xs font-bold hover:bg-ink/90 transition-colors shrink-0 disabled:opacity-50"
+            >
+              {saving ? <Loader2 className="size-3.5 animate-spin" /> : "Enregistrer"}
+            </button>
+          )}
+        </div>
       </div>
     </div>
   );

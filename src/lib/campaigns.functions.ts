@@ -15,6 +15,7 @@ export interface Campaign {
   manager_email?: string | null;
   target_count: number;
   extra_supervisors_quota: number;
+  max_educators: number;
   start_date: string;
   end_date: string;
   created_at: string;
@@ -78,13 +79,16 @@ export const updateCampaignExtraQuotaAdmin = createServerFn({ method: "POST" })
       .object({
         campaignId: z.string().uuid(),
         extraSupervisorsQuota: z.number().int().min(0).max(50),
+        // Capacité d'éducateurs vouchés (2026-07-30) — mirroir du quota superviseurs ci-dessus,
+        // même levier "réglé par l'admin après paiement hors-app" (cf. check_campaign_educator_capacity).
+        maxEducators: z.number().int().min(0).max(50).default(0),
       })
       .parse(input)
   )
   .handler(async ({ data }) => {
     const { data: campaign, error } = await (supabaseAdmin as any)
       .from("campaigns")
-      .update({ extra_supervisors_quota: data.extraSupervisorsQuota })
+      .update({ extra_supervisors_quota: data.extraSupervisorsQuota, max_educators: data.maxEducators })
       .eq("id", data.campaignId)
       .select()
       .single();
@@ -693,4 +697,154 @@ export const assignCampaignSupervisor = createServerFn({ method: "POST" })
     });
 
     return { success: true, assignedCount: toAssign };
+  });
+
+// Éducateurs vouchés par campagne (2026-07-30) — même self-service gestionnaire
+// qu'assignCampaignSupervisor ci-dessus, mais plus simple : pas de pioche automatique dans une
+// cohorte, on voucher un email précis. L'auto-déclaration seule (relationship_type =
+// "educateur") ne suffit jamais — il faut en plus être ajouté ici, par un gestionnaire qui
+// connaît déjà cette personne. Le trigger DB check_campaign_educator_capacity (migration
+// 20260730100000) fait foi sur la limite, ce check est juste un message d'erreur plus clair.
+export const addCampaignEducator = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .validator((input: any) =>
+    z
+      .object({
+        campaignId: z.string().uuid(),
+        educatorEmail: z.string().email(),
+      })
+      .parse(input)
+  )
+  .handler(async ({ data, context }) => {
+    const managerId = (context as any).claims?.sub;
+
+    const { data: campaign } = await (supabaseAdmin as any)
+      .from("campaigns")
+      .select("*")
+      .eq("id", data.campaignId)
+      .eq("manager_user_id", managerId)
+      .maybeSingle();
+    if (!campaign) {
+      throw new Error("Vous n'avez pas les droits sur cette campagne.");
+    }
+
+    const users = await listAllUsers(supabaseAdmin);
+    const educator = users.find((u) => u.email === data.educatorEmail);
+    if (!educator) {
+      throw new Error(`Aucun compte trouvé pour l'email: ${data.educatorEmail}`);
+    }
+    if ((educator as any).user_metadata?.relationship_type !== "educateur") {
+      throw new Error(
+        `${data.educatorEmail} doit d'abord choisir "Éducateur" comme lien avec l'enfant dans son compte (Réglages) avant de pouvoir être ajouté ici.`
+      );
+    }
+
+    const { count: currentCount } = await (supabaseAdmin as any)
+      .from("campaign_educators")
+      .select("id", { count: "exact", head: true })
+      .eq("campaign_id", data.campaignId)
+      .is("removed_at", null);
+    if ((currentCount ?? 0) >= (campaign.max_educators ?? 0)) {
+      throw new Error(
+        `Capacité éducateurs atteinte (${currentCount} / ${campaign.max_educators}). Contactez le support pour l'augmenter.`
+      );
+    }
+
+    const { error } = await (supabaseAdmin as any)
+      .from("campaign_educators")
+      .insert({ campaign_id: data.campaignId, educator_user_id: educator.id, added_by: managerId })
+      .select()
+      .single();
+    if (error) {
+      if (error.code === "23505") throw new Error(`${data.educatorEmail} est déjà éducateur sur cette campagne.`);
+      throw new Error(error.message);
+    }
+
+    return { success: true };
+  });
+
+export interface CampaignEducator {
+  id: string;
+  educator_user_id: string;
+  email: string;
+  added_at: string;
+}
+
+export const listCampaignEducators = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .validator((input: any) => z.object({ campaignId: z.string().uuid() }).parse(input))
+  .handler(async ({ data, context }) => {
+    const managerId = (context as any).claims?.sub;
+    const { data: campaign } = await (supabaseAdmin as any)
+      .from("campaigns")
+      .select("id")
+      .eq("id", data.campaignId)
+      .eq("manager_user_id", managerId)
+      .maybeSingle();
+    if (!campaign) throw new Error("Vous n'avez pas les droits sur cette campagne.");
+
+    const { data: rows } = await (supabaseAdmin as any)
+      .from("campaign_educators")
+      .select("id, educator_user_id, added_at")
+      .eq("campaign_id", data.campaignId)
+      .is("removed_at", null)
+      .order("added_at", { ascending: false });
+
+    const users = await listAllUsers(supabaseAdmin);
+    const usersMap = new Map(users.map((u) => [u.id, u.email as string]));
+
+    return (rows ?? []).map((r: any) => ({
+      id: r.id,
+      educator_user_id: r.educator_user_id,
+      email: usersMap.get(r.educator_user_id) || "Inconnu",
+      added_at: r.added_at,
+    })) as CampaignEducator[];
+  });
+
+// Au retrait, verrouille l'accès aux enfants VENUS DE CETTE CAMPAGNE PRÉCISÉMENT et possédés par
+// cet éducateur — jamais tout son compte (il peut avoir ses propres enfants hors campagne), et
+// jamais les données de l'enfant (talents/xp/défis restent intacts, seul access_locked_at
+// change). L'échappatoire (devenir Superviseur) est un lien WhatsApp côté UI, pas géré ici.
+export const removeCampaignEducator = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .validator((input: any) =>
+    z.object({ campaignId: z.string().uuid(), educatorUserId: z.string().uuid() }).parse(input)
+  )
+  .handler(async ({ data, context }) => {
+    const managerId = (context as any).claims?.sub;
+    const { data: campaign } = await (supabaseAdmin as any)
+      .from("campaigns")
+      .select("id")
+      .eq("id", data.campaignId)
+      .eq("manager_user_id", managerId)
+      .maybeSingle();
+    if (!campaign) throw new Error("Vous n'avez pas les droits sur cette campagne.");
+
+    const { error: removeError } = await (supabaseAdmin as any)
+      .from("campaign_educators")
+      .update({ removed_at: new Date().toISOString() })
+      .eq("campaign_id", data.campaignId)
+      .eq("educator_user_id", data.educatorUserId)
+      .is("removed_at", null);
+    if (removeError) throw new Error(removeError.message);
+
+    const { data: enrollments } = await (supabaseAdmin as any)
+      .from("season_enrollments")
+      .select("child_id")
+      .eq("campaign_id", data.campaignId);
+    const childIds: string[] = [...new Set<string>((enrollments ?? []).map((e: any) => e.child_id as string))];
+
+    let lockedCount = 0;
+    if (childIds.length > 0) {
+      const { data: lockedRows, error: lockError } = await (supabaseAdmin as any)
+        .from("child_profiles")
+        .update({ access_locked_at: new Date().toISOString() })
+        .in("id", childIds)
+        .eq("user_id", data.educatorUserId)
+        .select("id");
+      if (lockError) throw new Error(lockError.message);
+      lockedCount = lockedRows?.length ?? 0;
+    }
+
+    return { success: true, lockedChildrenCount: lockedCount };
   });

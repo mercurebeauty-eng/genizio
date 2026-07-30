@@ -1255,6 +1255,7 @@ export const generateChallenges = createServerFn({ method: "POST" })
       .select("*")
       .eq("id", data.childId)
       .eq("user_id", userId)
+      .is("access_locked_at", null)
       .maybeSingle();
     if (childErr || !child) throw new Error("Profil enfant introuvable");
 
@@ -1467,6 +1468,19 @@ export const updateChallenge = createServerFn({ method: "POST" })
     }
     if (data.notes !== undefined) patch.notes = data.notes;
 
+    // Verrouillage (2026-07-30) : cette mutation touche directement `challenges`, pas
+    // `child_profiles` — donc pas de colonne access_locked_at à filtrer dans l'update lui-même,
+    // d'où ce pré-check explicite plutôt qu'un .eq() supplémentaire comme pour les autres.
+    const { data: existing } = await context.supabase
+      .from("challenges")
+      .select("child_id, child_profiles(access_locked_at)")
+      .eq("id", data.id)
+      .eq("user_id", context.userId)
+      .maybeSingle();
+    if ((existing as any)?.child_profiles?.access_locked_at) {
+      throw new Error("Ce profil est verrouillé.");
+    }
+
     // Ownership is enforced by RLS too, but every other mutation in this file
     // checks it explicitly — do the same here instead of relying solely on RLS.
     const { data: row, error } = await context.supabase
@@ -1500,6 +1514,16 @@ export const deleteChallenge = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .validator((input: unknown) => z.object({ id: z.string().uuid() }).parse(input))
   .handler(async ({ data, context }) => {
+    const { data: existing } = await context.supabase
+      .from("challenges")
+      .select("child_id, child_profiles(access_locked_at)")
+      .eq("id", data.id)
+      .eq("user_id", context.userId)
+      .maybeSingle();
+    if ((existing as any)?.child_profiles?.access_locked_at) {
+      throw new Error("Ce profil est verrouillé.");
+    }
+
     const { error } = await context.supabase
       .from("challenges")
       .delete()
@@ -1533,6 +1557,7 @@ export const validateChallengeProof = createServerFn({ method: "POST" })
 
     if (challengeErr || !challenge) throw new Error("Défi introuvable");
     if (challenge.user_id !== userId) throw new Error("Accès refusé.");
+    if (challenge.child_profiles?.access_locked_at) throw new Error("Ce profil est verrouillé.");
 
     const prompt = `Tu es un mentor pédagogique et un expert en psychologie de l'enfant (Inspiré par Howard Gardner et les intelligences multiples).
 L'enfant (Prénom: ${challenge.child_profiles.name}, Âge: ${challenge.child_profiles.age}) vient de terminer le défi : "${challenge.title}".
@@ -1763,6 +1788,7 @@ export const submitDeclarativeProof = createServerFn({ method: "POST" })
 
     if (challengeErr || !challenge) throw new Error("Défi introuvable");
     if (challenge.user_id !== userId) throw new Error("Accès refusé.");
+    if (challenge.child_profiles?.access_locked_at) throw new Error("Ce profil est verrouillé.");
     if (challenge.proof_mode !== "declarative") {
       throw new Error("Ce défi ne se valide pas par déclaration.");
     }
@@ -1892,6 +1918,7 @@ export const assignTemplateChallenge = createServerFn({ method: "POST" })
       .select("id, age")
       .eq("id", data.childId)
       .eq("user_id", userId)
+      .is("access_locked_at", null)
       .maybeSingle();
 
     if (childErr || !child) throw new Error("Profil enfant introuvable ou accès refusé.");
@@ -2079,6 +2106,7 @@ export const generateAcademicHomeworkChallenge = createServerFn({ method: "POST"
       .select("*")
       .eq("id", data.childId)
       .eq("user_id", userId)
+      .is("access_locked_at", null)
       .maybeSingle();
     if (childErr || !child) throw new Error("Profil enfant introuvable");
 
@@ -2249,6 +2277,7 @@ export const generateSingleChallenge = createServerFn({ method: "POST" })
       .select("*")
       .eq("id", data.childId)
       .eq("user_id", userId)
+      .is("access_locked_at", null)
       .maybeSingle();
     if (childErr || !child) throw new Error("Profil enfant introuvable");
 
@@ -2429,6 +2458,7 @@ export const getChildAISynthesis = createServerFn({ method: "POST" })
       .select("*")
       .eq("id", data.childId)
       .eq("user_id", userId)
+      .is("access_locked_at", null)
       .single();
 
     if (!child) throw new Error("Profil introuvable");
@@ -2515,6 +2545,7 @@ export const getPassportLetter = createServerFn({ method: "POST" })
       .select("*")
       .eq("id", data.childId)
       .eq("user_id", userId)
+      .is("access_locked_at", null)
       .single();
 
     if (!child) throw new Error("Profil introuvable");

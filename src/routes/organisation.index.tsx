@@ -1,9 +1,19 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
-import { getNgoDashboardData, assignCampaignSupervisor, listCampaignTokensForManager, type Campaign, type ManagerTokenDetail } from "@/lib/campaigns.functions";
+import {
+  getNgoDashboardData,
+  assignCampaignSupervisor,
+  listCampaignTokensForManager,
+  addCampaignEducator,
+  removeCampaignEducator,
+  listCampaignEducators,
+  type Campaign,
+  type ManagerTokenDetail,
+  type CampaignEducator,
+} from "@/lib/campaigns.functions";
 import { TALENT_KEY_LABELS } from "@/lib/talent-buckets";
-import { Building2, Users, Target, ShieldCheck, Loader2, UserPlus, AlertCircle, Rocket, X, Sparkles, Key, Download, Copy, ChevronDown, FileDown, Printer, Quote } from "lucide-react";
+import { Building2, Users, Target, ShieldCheck, Loader2, UserPlus, AlertCircle, Rocket, X, Sparkles, Key, Download, Copy, ChevronDown, FileDown, Printer, Quote, GraduationCap, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { GenizioLoader } from "@/components/GenizioLoader";
 import { CampaignLinkCard } from "@/components/campaigns/CampaignLinkCard";
@@ -293,6 +303,8 @@ function OrganisationDashboard() {
         </div>
       </div>
 
+      <EducatorsSection campaignId={activeCampaign.id} maxEducators={activeCampaign.max_educators ?? 0} />
+
       {isAssignModalOpen && (
         <AssignSupervisorModal
           campaignId={activeCampaign.id}
@@ -504,6 +516,193 @@ function AssignSupervisorModal({ campaignId, onClose, onSuccess }: { campaignId:
           <div>
             <label className="block text-xs font-extrabold uppercase tracking-widest text-ink/50 mb-1.5">Nombre d'enfants à confier (max 5)</label>
             <input required type="number" min={1} max={5} value={count} onChange={e => setCount(parseInt(e.target.value) || 1)} className="w-full bg-surface border border-ink/10 rounded-2xl p-3.5 text-sm font-bold text-ink focus:outline-none focus:ring-2 focus:ring-brand/30" />
+          </div>
+          <div className="flex gap-3 pt-4 border-t border-ink/5">
+            <button type="button" onClick={onClose} className="flex-1 px-4 py-3 bg-surface hover:bg-ink/5 text-ink rounded-2xl font-extrabold text-sm transition-colors cursor-pointer">Annuler</button>
+            <button type="submit" disabled={isSubmitting} className="flex-1 px-4 py-3 bg-brand hover:bg-brand/90 text-white rounded-2xl font-black text-sm transition-colors flex items-center justify-center gap-2 cursor-pointer shadow-xs">
+              {isSubmitting ? <Loader2 className="size-5 animate-spin" /> : <span>Confirmer</span>}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+}
+
+// Éducateurs vouchés (2026-07-30) — self-service gestionnaire, même esprit que la section
+// Superviseurs ci-dessus, mais un statut différent : un éducateur EST le compte propriétaire
+// des profils (comme un parent), pas un simple regard en lecture seule. D'où le prérequis
+// affiché : la personne doit d'abord avoir choisi "Éducateur" comme lien avec l'enfant dans son
+// propre compte (Réglages) avant de pouvoir être ajoutée ici — addCampaignEducator refuse sinon.
+function EducatorsSection({ campaignId, maxEducators }: { campaignId: string; maxEducators: number }) {
+  const [educators, setEducators] = useState<CampaignEducator[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const listFn = useServerFn(listCampaignEducators);
+  const removeFn = useServerFn(removeCampaignEducator);
+
+  const load = async () => {
+    setLoading(true);
+    try {
+      const result = await listFn({ data: { campaignId } });
+      setEducators(result as CampaignEducator[]);
+    } catch (err: any) {
+      toast.error(err.message || "Erreur de chargement des éducateurs.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    load();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [campaignId]);
+
+  const handleRemove = async (educatorUserId: string, email: string) => {
+    if (!window.confirm(`Retirer ${email} de cette campagne ? Son accès aux enfants de cette campagne sera verrouillé.`)) return;
+    try {
+      const res = await removeFn({ data: { campaignId, educatorUserId } });
+      toast.success(`${email} retiré — ${res.lockedChildrenCount} profil(s) verrouillé(s).`);
+      load();
+    } catch (err: any) {
+      toast.error(err.message || "Erreur lors du retrait.");
+    }
+  };
+
+  return (
+    <div className="bg-white rounded-[2rem] border border-ink/10 overflow-hidden shadow-xs">
+      <div className="p-5 sm:p-8 border-b border-ink/5 flex items-center justify-between flex-wrap gap-4">
+        <div>
+          <h2 className="text-xl sm:text-2xl font-display font-black text-ink">Éducateurs</h2>
+          <p className="text-xs sm:text-sm text-ink/60 font-medium mt-1">
+            Un éducateur vouché gère lui-même jusqu'à 10 profils enfants, comme un parent. Capacité de cette campagne : {educators.length} / {maxEducators}.
+          </p>
+        </div>
+        <button
+          onClick={() => setIsAddModalOpen(true)}
+          disabled={educators.length >= maxEducators}
+          className="w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-brand text-white px-5 py-3 rounded-2xl font-black text-sm hover:bg-brand/90 transition-colors shadow-xs cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
+        >
+          <GraduationCap className="size-4" />
+          <span>Ajouter un éducateur</span>
+        </button>
+      </div>
+
+      <div className="p-4 sm:p-0">
+        {loading ? (
+          <div className="p-8 text-center"><Loader2 className="size-5 animate-spin mx-auto text-ink/40" /></div>
+        ) : (
+          <>
+            <div className="sm:hidden space-y-2.5">
+              {educators.map((e) => (
+                <div key={e.id} className="p-4 rounded-2xl bg-surface/70 border border-ink/5 flex items-center justify-between">
+                  <div>
+                    <p className="text-xs font-black text-ink">{e.email}</p>
+                    <p className="text-[10px] text-ink/50 font-bold mt-0.5">Depuis le {new Date(e.added_at).toLocaleDateString("fr-FR")}</p>
+                  </div>
+                  <button onClick={() => handleRemove(e.educator_user_id, e.email)} className="p-2 text-red-500 hover:bg-red-50 rounded-xl cursor-pointer">
+                    <Trash2 className="size-4" />
+                  </button>
+                </div>
+              ))}
+              {educators.length === 0 && (
+                <div className="p-6 text-center text-xs font-bold text-ink/40">Aucun éducateur vouché.</div>
+              )}
+            </div>
+
+            <div className="hidden sm:block overflow-x-auto">
+              <table className="w-full text-left">
+                <thead className="bg-surface/50 border-b border-ink/5">
+                  <tr>
+                    <th className="p-4 px-6 text-xs font-extrabold uppercase tracking-widest text-ink/50">Éducateur</th>
+                    <th className="p-4 px-6 text-xs font-extrabold uppercase tracking-widest text-ink/50">Depuis</th>
+                    <th className="p-4 px-6 text-xs font-extrabold uppercase tracking-widest text-ink/50 text-right">Action</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-ink/5">
+                  {educators.map((e) => (
+                    <tr key={e.id} className="hover:bg-surface/30 transition-colors">
+                      <td className="p-4 px-6 font-bold text-sm text-ink">{e.email}</td>
+                      <td className="p-4 px-6 text-sm text-ink/60">{new Date(e.added_at).toLocaleDateString("fr-FR")}</td>
+                      <td className="p-4 px-6 text-right">
+                        <button onClick={() => handleRemove(e.educator_user_id, e.email)} className="p-2 text-red-500 hover:bg-red-50 rounded-xl cursor-pointer">
+                          <Trash2 className="size-4" />
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                  {educators.length === 0 && (
+                    <tr>
+                      <td colSpan={3} className="p-8 text-center text-ink/50 font-medium text-sm">
+                        Aucun éducateur vouché pour l'instant.
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </>
+        )}
+      </div>
+
+      {isAddModalOpen && (
+        <AddEducatorModal
+          campaignId={campaignId}
+          onClose={() => setIsAddModalOpen(false)}
+          onSuccess={() => { setIsAddModalOpen(false); load(); }}
+        />
+      )}
+    </div>
+  );
+}
+
+function AddEducatorModal({ campaignId, onClose, onSuccess }: { campaignId: string; onClose: () => void; onSuccess: () => void }) {
+  const [email, setEmail] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const addFn = useServerFn(addCampaignEducator);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsSubmitting(true);
+    try {
+      await addFn({ data: { campaignId, educatorEmail: email } });
+      toast.success(`${email} ajouté comme éducateur !`);
+      onSuccess();
+    } catch (err: any) {
+      toast.error(err.message || "Erreur lors de l'ajout.");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-ink/40 backdrop-blur-sm animate-in fade-in duration-200">
+      <div className="bg-white rounded-[2.5rem] w-full max-w-md p-6 sm:p-8 shadow-2xl relative flex flex-col max-h-[90vh] overflow-y-auto">
+        <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center gap-3">
+            <div className="size-10 rounded-2xl bg-brand/10 text-brand flex items-center justify-center">
+              <GraduationCap className="size-5" />
+            </div>
+            <h3 className="font-display font-black text-xl text-ink">Ajouter un éducateur</h3>
+          </div>
+          <button onClick={onClose} className="p-2 bg-surface rounded-full text-ink/60 hover:text-ink transition-colors cursor-pointer">
+            <X className="size-5" />
+          </button>
+        </div>
+
+        <form onSubmit={handleSubmit} className="space-y-4 mt-2">
+          <p className="text-xs sm:text-sm font-medium text-ink/70 leading-relaxed">
+            Entrez l'adresse email d'un compte Génizio ayant déjà choisi "Éducateur" comme lien avec l'enfant (Réglages). Il pourra alors gérer jusqu'à 10 profils enfants lui-même, comme un parent.
+          </p>
+          <div className="bg-amber-50 border border-amber-200/80 rounded-2xl p-4 flex gap-3">
+            <AlertCircle className="size-5 text-amber-600 shrink-0 mt-0.5" />
+            <p className="text-xs font-bold text-amber-900 leading-relaxed">
+              Un supplément de 7 000 FCFA / éducateur s'applique. Si vous retirez un éducateur plus tard, l'accès aux enfants de cette campagne se verrouille — leur progression reste intacte.
+            </p>
+          </div>
+          <div>
+            <label className="block text-xs font-extrabold uppercase tracking-widest text-ink/50 mb-1.5">Email de l'éducateur</label>
+            <input required type="email" value={email} onChange={(e) => setEmail(e.target.value)} className="w-full bg-surface border border-ink/10 rounded-2xl p-3.5 text-sm font-bold text-ink focus:outline-none focus:ring-2 focus:ring-brand/30" placeholder="educateur@structure.org" />
           </div>
           <div className="flex gap-3 pt-4 border-t border-ink/5">
             <button type="button" onClick={onClose} className="flex-1 px-4 py-3 bg-surface hover:bg-ink/5 text-ink rounded-2xl font-extrabold text-sm transition-colors cursor-pointer">Annuler</button>
