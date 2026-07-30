@@ -25,6 +25,7 @@ export const getGuildCommunity = createServerFn({ method: "POST" })
       .select("id, name, age, talents, guild_participation_opt_in")
       .eq("id", data.childId)
       .eq("user_id", userId)
+      .is("access_locked_at", null)
       .maybeSingle();
     if (childErr || !child) throw new Error("Profil enfant introuvable");
 
@@ -90,7 +91,8 @@ export const setGuildParticipation = createServerFn({ method: "POST" })
       .from("child_profiles")
       .update({ guild_participation_opt_in: data.optIn })
       .eq("id", data.childId)
-      .eq("user_id", userId);
+      .eq("user_id", userId)
+      .is("access_locked_at", null);
     if (error) throw new Error(error.message);
     return { optIn: data.optIn };
   });

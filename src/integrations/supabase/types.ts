@@ -39,6 +39,41 @@ export type Database = {
   }
   public: {
     Tables: {
+      campaign_educators: {
+        Row: {
+          added_at: string
+          added_by: string | null
+          campaign_id: string
+          educator_user_id: string
+          id: string
+          removed_at: string | null
+        }
+        Insert: {
+          added_at?: string
+          added_by?: string | null
+          campaign_id: string
+          educator_user_id: string
+          id?: string
+          removed_at?: string | null
+        }
+        Update: {
+          added_at?: string
+          added_by?: string | null
+          campaign_id?: string
+          educator_user_id?: string
+          id?: string
+          removed_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "campaign_educators_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: false
+            referencedRelation: "campaigns"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       campaigns: {
         Row: {
           created_at: string | null
@@ -47,6 +82,7 @@ export type Database = {
           extra_supervisors_quota: number
           id: string
           manager_user_id: string | null
+          max_educators: number
           name: string
           start_date: string
           target_count: number
@@ -58,6 +94,7 @@ export type Database = {
           extra_supervisors_quota?: number
           id?: string
           manager_user_id?: string | null
+          max_educators?: number
           name: string
           start_date?: string
           target_count?: number
@@ -69,6 +106,7 @@ export type Database = {
           extra_supervisors_quota?: number
           id?: string
           manager_user_id?: string | null
+          max_educators?: number
           name?: string
           start_date?: string
           target_count?: number
@@ -296,6 +334,7 @@ export type Database = {
       }
       child_profiles: {
         Row: {
+          access_locked_at: string | null
           age: number
           ai_synthesis: string | null
           ai_synthesis_generated_at: string | null
@@ -321,6 +360,7 @@ export type Database = {
           xp: number
         }
         Insert: {
+          access_locked_at?: string | null
           age: number
           ai_synthesis?: string | null
           ai_synthesis_generated_at?: string | null
@@ -346,6 +386,7 @@ export type Database = {
           xp?: number
         }
         Update: {
+          access_locked_at?: string | null
           age?: number
           ai_synthesis?: string | null
           ai_synthesis_generated_at?: string | null

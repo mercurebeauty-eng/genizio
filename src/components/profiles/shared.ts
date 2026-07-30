@@ -88,11 +88,12 @@ export type ChildProfile = {
   xp: number;
   streak: number;
   last_activity_date: string | null;
+  access_locked_at: string | null;
 };
 
 export type ProfileDraft = Omit<
   ChildProfile,
-  "id" | "user_id" | "favorite_challenges" | "completed_challenges" | "talents" | "pdf_unlocked"
+  "id" | "user_id" | "favorite_challenges" | "completed_challenges" | "talents" | "pdf_unlocked" | "access_locked_at"
 >;
 
 export const emptyProfileDraft = (): ProfileDraft => ({

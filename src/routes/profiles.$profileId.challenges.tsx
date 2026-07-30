@@ -4,7 +4,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { supabase } from "@/integrations/supabase/client";
 import { useSession } from "@/hooks/use-session";
 import { toast } from "sonner";
-import { Brain, Award, Trash2, Calendar, CheckCircle2, ArrowLeft, Sparkles, Upload, Loader2, Play, Check, X, MessageCircle, Beaker, Trophy, BookOpen } from "lucide-react";
+import { Brain, Award, Trash2, Calendar, CheckCircle2, ArrowLeft, Sparkles, Upload, Loader2, Play, Check, X, MessageCircle, Beaker, Trophy, BookOpen, Lock } from "lucide-react";
 import {
   generateChallenges,
   updateChallenge,
@@ -123,6 +123,7 @@ type Child = {
   city: string | null;
   country: string | null;
   talents: Record<string, number>;
+  access_locked_at?: string | null;
 };
 
 const COLORS: Record<string, string> = {
@@ -587,6 +588,38 @@ function ChallengesPage() {
         <div className="text-center">
           <p className="mb-4 text-ink/60">Profil introuvable.</p>
           <Link to="/profiles" className="rounded-full bg-brand px-5 py-2 text-sm font-bold text-white">
+            Retour
+          </Link>
+        </div>
+      </div>
+    );
+  }
+
+  if (child.access_locked_at) {
+    const whatsappNumber = (import.meta.env.VITE_WHATSAPP_NUMBER as string | undefined) || "33606433148";
+    const whatsappText = encodeURIComponent(
+      `Bonjour, je voudrais devenir superviseur de ${child.name} suite à la fin de mon rôle d'éducateur.`
+    );
+    return (
+      <div className="grid min-h-dvh place-items-center bg-surface px-6">
+        <div className="max-w-sm rounded-3xl border border-ink/10 bg-white p-8 text-center shadow-md">
+          <div className="mx-auto mb-4 flex size-14 items-center justify-center rounded-2xl bg-ink/5 text-ink/60">
+            <Lock className="size-6" />
+          </div>
+          <h2 className="font-display text-balance text-xl font-extrabold">Profil verrouillé</h2>
+          <p className="mt-2 text-sm text-ink/60 leading-relaxed">
+            L'accès à {child.name} a été suspendu suite à la fin de votre rôle d'éducateur pour cette organisation.
+            Sa progression (défis, talents, XP) reste intacte.
+          </p>
+          <a
+            href={`https://wa.me/${whatsappNumber}?text=${whatsappText}`}
+            target="_blank"
+            rel="noreferrer"
+            className="press-brand mt-6 inline-flex items-center justify-center gap-2 rounded-2xl bg-brand px-6 py-3 text-sm font-bold text-white"
+          >
+            Demander à devenir superviseur
+          </a>
+          <Link to="/profiles" className="mt-4 block text-xs font-bold text-ink/60 underline">
             Retour
           </Link>
         </div>

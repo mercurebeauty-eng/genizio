@@ -26,6 +26,7 @@ import { KitSuggestion } from "@/components/challenges/KitSuggestion";
 import { DifficultyBadge } from "@/components/challenges/DifficultyBadge";
 import { MarkdownContent } from "@/components/ui/markdown-content";
 import { COUNTRIES } from "@/lib/countries";
+import { RELATIONSHIP_TYPES } from "@/lib/relationship-types";
 import { GenizioLoader } from "@/components/GenizioLoader";
 import { toast } from "sonner";
 
@@ -107,6 +108,33 @@ function DashboardPage() {
     );
   };
 
+  // Relationship-type onboarding (2026-07-30) : posé avant le modal téléphone, même principe —
+  // un booléen gaté sur un champ user_metadata manquant. Sert au quota éducateur (voir
+  // check_child_profile_quota), pas à une refonte de copy.
+  const [showRelationshipModal, setShowRelationshipModal] = useState(false);
+  const [relationshipType, setRelationshipType] = useState<string>("");
+  const [savingRelationship, setSavingRelationship] = useState(false);
+
+  useEffect(() => {
+    if (session && !session.user.user_metadata?.relationship_type) {
+      setShowRelationshipModal(true);
+    }
+  }, [session]);
+
+  const handleSaveRelationship = async () => {
+    if (!relationshipType) return;
+    setSavingRelationship(true);
+    try {
+      const { error } = await supabase.auth.updateUser({ data: { relationship_type: relationshipType } });
+      if (error) throw error;
+      setShowRelationshipModal(false);
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Erreur d'enregistrement.");
+    } finally {
+      setSavingRelationship(false);
+    }
+  };
+
   // Phone Onboarding States
   const [showPhoneModal, setShowPhoneModal] = useState(false);
   const [phoneNumber, setPhoneNumber] = useState("");
@@ -115,7 +143,9 @@ function DashboardPage() {
   const [phoneError, setPhoneError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (session && !session.user.user_metadata?.phone) {
+    // Séquencé après le choix du lien (relationship_type) : évite d'empiler les deux modales
+    // de première connexion en même temps.
+    if (session && session.user.user_metadata?.relationship_type && !session.user.user_metadata?.phone) {
       setShowPhoneModal(true);
     }
   }, [session]);
@@ -318,6 +348,38 @@ function DashboardPage() {
                 const quota = Math.max(BASE_FREE_LIMIT, LEGACY_FREE_SLOTS + extraSlots);
                 const atQuota = profiles.length >= quota;
 
+                // Verrouillage (2026-07-30) : posé par removeCampaignEducator quand la relation
+                // organisation↔éducateur se termine — jamais les données de l'enfant, qui
+                // restent intactes en dessous (talents/xp/défis), seul l'accès change.
+                if (selected.access_locked_at) {
+                  const whatsappNumber = (import.meta.env.VITE_WHATSAPP_NUMBER as string | undefined) || "33606433148";
+                  const whatsappText = encodeURIComponent(
+                    `Bonjour, je voudrais devenir superviseur de ${selected.name} suite à la fin de mon rôle d'éducateur.`
+                  );
+                  return (
+                    <div className="animate-in fade-in slide-in-from-bottom-4 duration-300 ease-out md:mx-auto max-w-[414px] w-full">
+                      <div className="rounded-3xl border border-ink/10 bg-white p-8 text-center shadow-md">
+                        <div className="mx-auto mb-4 flex size-14 items-center justify-center rounded-2xl bg-ink/5 text-ink/60">
+                          <Lock className="size-6" />
+                        </div>
+                        <h2 className="font-display text-balance text-xl font-extrabold">Profil verrouillé</h2>
+                        <p className="mt-2 text-sm text-ink/60 leading-relaxed">
+                          L'accès à {selected.name} a été suspendu suite à la fin de votre rôle d'éducateur pour cette
+                          organisation. Sa progression (défis, talents, XP) reste intacte.
+                        </p>
+                        <a
+                          href={`https://wa.me/${whatsappNumber}?text=${whatsappText}`}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="press-brand mt-6 inline-flex items-center justify-center gap-2 rounded-2xl bg-brand px-6 py-3 text-sm font-bold text-white"
+                        >
+                          Demander à devenir superviseur
+                        </a>
+                      </div>
+                    </div>
+                  );
+                }
+
                 return (
                   <div className="animate-in fade-in slide-in-from-bottom-4 duration-300 ease-out md:mx-auto max-w-[414px] w-full">
                     
@@ -511,6 +573,50 @@ function DashboardPage() {
           }}
           userId={session.user.id}
         />
+      )}
+
+      {showRelationshipModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-black/60 p-4 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="w-full max-w-md rounded-[2rem] border border-ink/10 bg-white/95 backdrop-blur-md p-6 shadow-xl animate-in zoom-in-95 duration-200 md:p-8">
+            <div className="text-center">
+              <div className="mx-auto flex size-14 items-center justify-center rounded-[1.2rem] bg-brand/10 text-brand">
+                <Check className="size-6" />
+              </div>
+              <h2 className="mt-4 font-display text-balance text-2xl font-extrabold leading-tight">
+                Une dernière étape !
+              </h2>
+              <p className="mt-2 text-sm text-ink/60">
+                Quel est votre lien avec l'enfant que vous allez accompagner sur Génizio ?
+              </p>
+            </div>
+
+            <div className="mt-6">
+              <select
+                value={relationshipType}
+                onChange={(e) => setRelationshipType(e.target.value)}
+                className="w-full rounded-xl border border-ink/10 px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-brand shadow-sm"
+              >
+                <option value="" disabled>
+                  Sélectionnez votre lien
+                </option>
+                {RELATIONSHIP_TYPES.map((r) => (
+                  <option key={r.value} value={r.value}>
+                    {r.label}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <button
+              type="button"
+              onClick={handleSaveRelationship}
+              disabled={!relationshipType || savingRelationship}
+              className="press-brand mt-6 w-full rounded-2xl bg-brand py-3 text-sm font-bold text-white disabled:opacity-60"
+            >
+              {savingRelationship ? "…" : "Continuer"}
+            </button>
+          </div>
+        </div>
       )}
 
       {showPhoneModal && (
