@@ -90,7 +90,7 @@ function buildWelcomeEmailHtml(firstName: string, appLink: string, whatsappLink:
                 Bienvenue chez Génizio${firstName ? `, ${firstName}` : ""} 👋
               </h1>
               <p style="margin:0; font-family:Arial, Helvetica, sans-serif; font-size:15px; line-height:24px; color:#4A4768;">
-                Vous venez de rejoindre des parents qui aident leur enfant à découvrir qui il est vraiment —
+                Vous venez de faire le premier pas pour aider votre enfant à découvrir qui il est vraiment —
                 au-delà des notes et des bulletins scolaires.
               </p>
 
