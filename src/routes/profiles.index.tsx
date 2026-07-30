@@ -30,6 +30,12 @@ import { GenizioLoader } from "@/components/GenizioLoader";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/profiles/")({
+  // "new=true" vient du CTA du mail de bienvenue ("Créer le profil de mon enfant") : ouvre
+  // directement le formulaire de création plutôt que de laisser le parent recliquer un
+  // deuxième bouton une fois arrivé sur le tableau de bord.
+  validateSearch: (search: Record<string, unknown>): { new?: boolean } => ({
+    new: search.new === "true" || search.new === true ? true : undefined,
+  }),
   component: DashboardPage,
 });
 
@@ -52,6 +58,7 @@ type Challenge = {
 function DashboardPage() {
   const { session, loading } = useSession();
   const navigate = useNavigate();
+  const { new: openCreateOnLoad } = Route.useSearch();
   const [profiles, setProfiles] = useState<ChildProfile[]>([]);
   const [fetching, setFetching] = useState(true);
   const [selectedId, setSelectedId] = useState<string | null>(null);
@@ -145,8 +152,21 @@ function DashboardPage() {
   };
 
   useEffect(() => {
-    if (!loading && !session) navigate({ to: "/auth", replace: true });
-  }, [session, loading, navigate]);
+    if (!loading && !session) {
+      // Préserve "?new=true" (venu du mail de bienvenue) à travers l'aller-retour de
+      // connexion, sinon un parent pas encore connecté perd l'ouverture automatique du
+      // formulaire de création une fois revenu sur /profiles après s'être authentifié.
+      navigate({
+        to: "/auth",
+        search: openCreateOnLoad ? { redirect: "/profiles?new=true" } : undefined,
+        replace: true,
+      });
+    }
+  }, [session, loading, navigate, openCreateOnLoad]);
+
+  useEffect(() => {
+    if (!fetching && openCreateOnLoad) setCreating(true);
+  }, [fetching, openCreateOnLoad]);
 
   const refetch = async () => {
     if (!session) return;
