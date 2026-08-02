@@ -29,7 +29,7 @@ type ChildWithChallenges = {
     id: string;
     title: string;
     domain: string;
-    status: "todo" | "in_progress" | "completed";
+    status: "todo" | "in_progress" | "completed" | "not_completed";
     created_at: string;
   }[];
 };
@@ -238,9 +238,10 @@ function SupervisorDashboardPage() {
                             <span className={`rounded-full px-2.5 py-1 text-[10px] font-black uppercase tracking-widest border border-ink/10 ${
                               c.status === "completed" ? "bg-emerald-100 text-emerald-800" :
                               c.status === "in_progress" ? "bg-brand/10 text-brand" :
+                              c.status === "not_completed" ? "bg-rose-100 text-rose-800" :
                               "bg-surface text-ink/60"
                             }`}>
-                              {c.status === "completed" ? "✅ Complété" : c.status === "in_progress" ? "⚡ En cours" : "📋 À faire"}
+                              {c.status === "completed" ? "✅ Complété" : c.status === "in_progress" ? "⚡ En cours" : c.status === "not_completed" ? "❌ Non réussi" : "📋 À faire"}
                             </span>
                           </button>
                         ))}
@@ -267,9 +268,10 @@ function SupervisorDashboardPage() {
                   <span className={`rounded-full border border-ink/10 px-2.5 py-0.5 text-[10px] font-black uppercase tracking-widest ${
                     selectedChallenge.status === "completed" ? "bg-emerald-100 text-emerald-800" :
                     selectedChallenge.status === "in_progress" ? "bg-brand/10 text-brand" :
+                    selectedChallenge.status === "not_completed" ? "bg-rose-100 text-rose-800" :
                     "bg-stone-100 text-stone-700"
                   }`}>
-                    {selectedChallenge.status === "completed" ? "✅ Complété" : selectedChallenge.status === "in_progress" ? "⚡ En cours" : "📋 À faire"}
+                    {selectedChallenge.status === "completed" ? "✅ Complété" : selectedChallenge.status === "in_progress" ? "⚡ En cours" : selectedChallenge.status === "not_completed" ? "❌ Non réussi" : "📋 À faire"}
                   </span>
                   {selectedChallenge.difficulty && (
                     <span className="rounded-full border border-ink/10 bg-orange-100 px-2.5 py-0.5 text-[10px] font-black uppercase tracking-widest text-orange-800">

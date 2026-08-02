@@ -1533,6 +1533,17 @@ export const deleteChallenge = createServerFn({ method: "POST" })
     return { ok: true };
   });
 
+// Étape 1 — "preuve visuelle obligatoire" (brainstorm produit, 2026-08-02) : avant ce
+// changement, un commentaire texte seul suffisait à valider un défi et à obtenir
+// XP/badges/points, exactement comme une photo — aucune distinction. Les défis
+// proof_mode="declarative" (ex: "combien de fois as-tu jonglé") ne passent jamais par
+// validateChallengeProof (voir submitDeclarativeProof plus bas), donc aucun cas
+// particulier à gérer ici : toute soumission qui arrive dans cette fonction doit
+// apporter une photo pour pouvoir être notée.
+export function hasSufficientProof(proofImageBase64: string | undefined): boolean {
+  return !!proofImageBase64;
+}
+
 const ValidateInput = z.object({
   id: z.string().uuid(),
   proofText: z.string().max(2000).optional(),
@@ -1558,6 +1569,42 @@ export const validateChallengeProof = createServerFn({ method: "POST" })
     if (challengeErr || !challenge) throw new Error("Défi introuvable");
     if (challenge.user_id !== userId) throw new Error("Accès refusé.");
     if (challenge.child_profiles?.access_locked_at) throw new Error("Ce profil est verrouillé.");
+
+    // Étape 1 — preuve visuelle obligatoire (2026-08-02) : refusé avant l'appel IA (pas
+    // seulement côté UI, sinon contournable) — aucun coût IA pour une soumission qui ne
+    // peut de toute façon rien rapporter. Même event de friction que le rejet IA plus bas
+    // (PROOF_REJECTED) pour que le Jumeau Pédagogique voie ce signal lui aussi.
+    if (!hasSufficientProof(data.proofImageBase64)) {
+      try {
+        const { error: evtErr } = await supabase.from("observation_events").insert({
+          child_id: challenge.child_id,
+          user_id: userId,
+          type: "PROOF_REJECTED",
+          source: "app",
+          payload: {
+            challenge_id: challenge.id,
+            domain: challenge.domain,
+            had_image: false,
+            image_analyzed: false,
+            reason: "no_image",
+          },
+        });
+        if (evtErr) console.error("PROOF_REJECTED event insert failed (non-fatal):", evtErr);
+      } catch (err) {
+        console.error("PROOF_REJECTED event insert failed (non-fatal):", err);
+      }
+
+      return {
+        challenge,
+        observations:
+          "Pour valider ce défi et débloquer les points, il me faut une photo qui montre ce qui a été fait ! Ajoute une photo et soumets à nouveau.",
+        awarded_points: {},
+        imageAnalyzed: false,
+        relevant: false,
+        levelUp: null,
+        badgeUnlocked: null,
+      };
+    }
 
     const prompt = `Tu es un mentor pédagogique et un expert en psychologie de l'enfant (Inspiré par Howard Gardner et les intelligences multiples).
 L'enfant (Prénom: ${challenge.child_profiles.name}, Âge: ${challenge.child_profiles.age}) vient de terminer le défi : "${challenge.title}".
@@ -1737,6 +1784,15 @@ Réponds STRICTEMENT en JSON valide avec ce format :
         console.error("Non-fatal: processDiscriminantResult failed", err);
       }
 
+      // Étape 4 : si ce défi était un défi de retest de soutien renforcé, met à jour
+      // hypothesis_cycles.support_active — no-op sûr si ce n'en est pas un.
+      try {
+        const { processSupportRetestResult } = await import("@/lib/hypotheses.functions");
+        void processSupportRetestResult(data.id, "COMPLETED");
+      } catch (err) {
+        console.error("Non-fatal: processSupportRetestResult failed", err);
+      }
+
       // Pré-génération de la prochaine mission (2026-07-26, review produit) : sans ça, le
       // parent retrouve "aucun défi en cours" à sa prochaine visite et attend l'appel IA à ce
       // moment-là. Fire-and-forget, même pattern que processDiscriminantResult ci-dessus —
@@ -1760,6 +1816,130 @@ Réponds STRICTEMENT en JSON valide avec ce format :
       levelUp,
       badgeUnlocked,
     };
+  });
+
+// Étape 3 — "classer automatiquement le commentaire du parent" (brainstorm produit,
+// 2026-08-02). Réutilise EXACTEMENT le vocabulaire de causes du moteur de diagnostic NAYA
+// (cf. hypotheses.functions.ts, ALLOWED_CAUSES) — READY_FOR_MORE exclu, il ne s'applique
+// qu'à un écart "en avance", jamais à un défi non réussi. Un classement individuel ne
+// déclenche jamais rien seul : c'est ensureHypothesesForChild qui décide si un motif
+// répété (même cause, même domaine, plusieurs fois) mérite d'ouvrir un cycle.
+export const NOT_COMPLETED_CAUSES = [
+  "METHOD_MISMATCH",
+  "PERFORMANCE_ANXIETY",
+  "LACK_OF_ENGAGEMENT",
+  "CONCEPTUAL_GAP",
+  "OTHER",
+] as const;
+export type NotCompletedCause = (typeof NOT_COMPLETED_CAUSES)[number];
+
+async function classifyNotCompletedReason(reason: string): Promise<NotCompletedCause | null> {
+  const prompt = `Un parent explique pourquoi un défi pédagogique pour enfant n'a pas pu être terminé. Classe cette explication dans EXACTEMENT une des catégories suivantes :
+- METHOD_MISMATCH : l'enfant a probablement les capacités, mais la présentation/le format du défi ne lui convenait pas (ex : consigne trop scolaire/théorique pour lui).
+- PERFORMANCE_ANXIETY : l'enfant a montré du stress, une peur de mal faire, une pression ressentie.
+- LACK_OF_ENGAGEMENT : l'enfant n'était pas intéressé, a refusé d'essayer, s'est vite désintéressé.
+- CONCEPTUAL_GAP : l'enfant a essayé mais une notion de base lui manquait pour réussir.
+- OTHER : raison externe à l'enfant et aux consignes (fatigue, matériel manquant, parent absent, manque de temps, imprévu).
+
+Explication du parent : "${reason.slice(0, 2000)}"
+
+Réponds EXCLUSIVEMENT avec un JSON de cette forme, sans texte autour : {"cause": "UNE_DES_5_ETIQUETTES"}`;
+
+  try {
+    const raw = await callClaude(prompt, true, undefined, 200, 2);
+    const parsed = JSON.parse(extractJsonFromLLMResponse(raw));
+    const cause = parsed?.cause;
+    return (NOT_COMPLETED_CAUSES as readonly string[]).includes(cause) ? (cause as NotCompletedCause) : null;
+  } catch (err) {
+    // Non-fatal par conception, comme narrateForParent : une classification manquée
+    // laisse simplement not_completed_cause à null, jamais d'échec de la soumission.
+    console.error("classifyNotCompletedReason failed (non-fatal):", err);
+    return null;
+  }
+}
+
+const NotCompletedInput = z.object({
+  id: z.string().uuid(),
+  reason: z.string().trim().min(1).max(2000),
+});
+
+// Étape 2 — "un vrai statut non réussi" (brainstorm produit, 2026-08-02) : jusqu'ici,
+// aucun chemin ne permettait de dire "l'enfant n'a pas pu faire ce défi" — le défi
+// restait à todo/in_progress indéfiniment, ou obtenait des points via un texte seul
+// (corrigé à l'étape 1). Cette fonction ne donne jamais aucun point/XP/badge — c'est
+// tout son rôle : acter honnêtement un non-aboutissement plutôt que de le déguiser.
+export const submitChallengeNotCompleted = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .validator((input: unknown) => NotCompletedInput.parse(input))
+  .handler(async ({ data, context }) => {
+    const { supabase, userId } = context;
+
+    const { data: challenge, error: challengeErr } = await supabase
+      .from("challenges")
+      .select("*, child_profiles(*)")
+      .eq("id", data.id)
+      .single();
+
+    if (challengeErr || !challenge) throw new Error("Défi introuvable");
+    if (challenge.user_id !== userId) throw new Error("Accès refusé.");
+    if (challenge.child_profiles?.access_locked_at) throw new Error("Ce profil est verrouillé.");
+
+    const { data: updated, error } = await supabase
+      .from("challenges")
+      .update({
+        status: "not_completed" as const,
+        not_completed_reason: data.reason,
+        not_completed_at: new Date().toISOString(),
+      })
+      .eq("id", data.id)
+      .select("*")
+      .single();
+
+    if (error) throw new Error(error.message);
+
+    // Étape 3 : classification en arrière-plan, après la réponse au parent — pas de latence
+    // supplémentaire pour lui, et un échec de classification ne doit jamais faire échouer la
+    // soumission elle-même (déjà enregistrée ci-dessus).
+    (async () => {
+      const cause = await classifyNotCompletedReason(data.reason);
+      if (!cause) return;
+      const { error: causeErr } = await supabase
+        .from("challenges")
+        .update({ not_completed_cause: cause })
+        .eq("id", data.id);
+      if (causeErr) console.error("Non-fatal: écriture de not_completed_cause échouée", causeErr);
+    })().catch((err) => console.error("Non-fatal: classifyNotCompletedReason failed", err));
+
+    // Même intégration que validateChallengeProof pour un défi discriminant, avec l'issue
+    // opposée — processDiscriminantResult gère déjà "ABANDONED" depuis sa création (cf.
+    // hypotheses.functions.ts) et ne fait rien si le défi n'est pas discriminant (no-op sûr).
+    try {
+      const { processDiscriminantResult } = await import("@/lib/hypotheses.functions");
+      void processDiscriminantResult(data.id, "ABANDONED");
+    } catch (err) {
+      console.error("Non-fatal: processDiscriminantResult failed", err);
+    }
+
+    // Étape 4 : si ce défi était un défi de retest de soutien renforcé et qu'il n'a pas
+    // été réussi, on redémarre le compteur plutôt que de conclure que le soutien n'est
+    // plus nécessaire (cf. processSupportRetestResult) — no-op sûr si ce n'en est pas un.
+    try {
+      const { processSupportRetestResult } = await import("@/lib/hypotheses.functions");
+      void processSupportRetestResult(data.id, "ABANDONED");
+    } catch (err) {
+      console.error("Non-fatal: processSupportRetestResult failed", err);
+    }
+
+    // Même pré-génération que validateChallengeProof/submitDeclarativeProof — sans ça, le
+    // parent retrouve "aucun défi en cours" à sa prochaine visite.
+    try {
+      const { recommendChallengesForChild } = await import("@/lib/recommendations.functions");
+      void recommendChallengesForChild({ data: { childId: challenge.child_id } });
+    } catch (err) {
+      console.error("Non-fatal: pré-génération de la prochaine mission a échoué", err);
+    }
+
+    return { challenge: updated };
   });
 
 const SubmitDeclarativeInput = z.object({
@@ -1870,6 +2050,15 @@ export const submitDeclarativeProof = createServerFn({ method: "POST" })
       void processDiscriminantResult(data.id, "COMPLETED", true);
     } catch (err) {
       console.error("Non-fatal: processDiscriminantResult failed", err);
+    }
+
+    // Étape 4 : même point d'entrée que validateChallengeProof pour un éventuel défi de
+    // retest de soutien renforcé — no-op sûr si ce n'en est pas un.
+    try {
+      const { processSupportRetestResult } = await import("@/lib/hypotheses.functions");
+      void processSupportRetestResult(data.id, "COMPLETED");
+    } catch (err) {
+      console.error("Non-fatal: processSupportRetestResult failed", err);
     }
 
     // Pré-génération de la prochaine mission — même mécanisme que validateChallengeProof,

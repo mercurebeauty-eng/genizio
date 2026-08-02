@@ -10,6 +10,7 @@ import {
   updateChallenge,
   deleteChallenge,
   validateChallengeProof,
+  submitChallengeNotCompleted,
   getChildAISynthesis,
   generateSingleChallenge,
   generateAcademicHomeworkChallenge,
@@ -94,10 +95,11 @@ type Challenge = {
   steps: string[];
   materials: string[];
   material_tags?: string[] | null;
-  status: "todo" | "in_progress" | "completed";
+  status: "todo" | "in_progress" | "completed" | "not_completed";
   progress: number;
   notes: string | null;
   completed_at: string | null;
+  not_completed_reason?: string | null;
   pedagogical_context?: string | null;
   target_intelligences?: string[] | null;
   trait_subform?: string | null;
@@ -137,14 +139,16 @@ const STATUS_LABEL: Record<Challenge["status"], string> = {
   todo: "À faire",
   in_progress: "En cours",
   completed: "Terminé",
+  not_completed: "Non réussi",
 };
 
-const CHALLENGE_STATUSES: Challenge["status"][] = ["todo", "in_progress", "completed"];
+const CHALLENGE_STATUSES: Challenge["status"][] = ["todo", "in_progress", "completed", "not_completed"];
 
 const STATUS_STYLE: Record<Challenge["status"], string> = {
   todo: "bg-stone-100 text-stone-700 border-stone-200",
   in_progress: "bg-sky-50 text-sky-700 border-sky-200",
   completed: "bg-emerald-50 text-emerald-700 border-emerald-200",
+  not_completed: "bg-rose-50 text-rose-700 border-rose-200",
 };
 
 function ChallengesPage() {
@@ -229,6 +233,7 @@ function ChallengesPage() {
 
   const generate = useServerFn(generateChallenges);
   const update = useServerFn(updateChallenge);
+  const markNotCompleted = useServerFn(submitChallengeNotCompleted);
   const del = useServerFn(deleteChallenge);
   const fetchSynthesis = useServerFn(getChildAISynthesis);
   const generateSingle = useServerFn(generateSingleChallenge);
@@ -541,6 +546,22 @@ function ChallengesPage() {
     } catch (e) {
       setChallenges(previous);
       toast.error(e instanceof Error ? e.message : "Erreur lors de la mise à jour du statut.");
+    }
+  };
+
+  // Étape 2 — "un vrai statut non réussi" (brainstorm produit, 2026-08-02) : chemin
+  // séparé de setStatus, qui ne donne jamais de points/XP/badge — juste un constat honnête,
+  // avec la raison du parent, pour nourrir la compréhension de l'enfant plutôt que le noter.
+  const markChallengeNotCompleted = async (id: string, reason: string) => {
+    const previous = challenges;
+    setChallenges((prev) =>
+      prev.map((c) => (c.id === id ? { ...c, status: "not_completed", not_completed_reason: reason } : c)),
+    );
+    try {
+      await markNotCompleted({ data: { id, reason } });
+    } catch (e) {
+      setChallenges(previous);
+      toast.error(e instanceof Error ? e.message : "Erreur lors de l'enregistrement.");
     }
   };
 
@@ -1180,6 +1201,7 @@ function ChallengesPage() {
                                 hasKit={hasKit(c.material_tags)}
                                 onToggle={() => setOpenId((v) => (v === c.id ? null : c.id))}
                                 onStatus={(s) => setStatus(c.id, s)}
+                                onNotCompleted={(reason) => markChallengeNotCompleted(c.id, reason)}
                                 onProgress={(p) => setProgress(c.id, p)}
                                 onNotes={(n) => saveNotes(c.id, n)}
                                 onDelete={() => remove(c.id)}
@@ -1403,6 +1425,7 @@ function ChallengeCard({
   open,
   onToggle,
   onStatus,
+  onNotCompleted,
   onProgress,
   onNotes,
   onDelete,
@@ -1415,6 +1438,7 @@ function ChallengeCard({
   open: boolean;
   onToggle: () => void;
   onStatus: (s: Challenge["status"]) => void;
+  onNotCompleted: (reason: string) => void;
   onProgress: (p: number) => void;
   onNotes: (n: string) => void;
   onDelete: () => void;
@@ -1543,12 +1567,33 @@ function ChallengeCard({
               Commencer le défi
             </button>
           ) : c.status === "in_progress" ? (
-            <button
-              onClick={() => onStatus("completed")}
-              className="w-full flex items-center justify-center bg-leaf text-white font-bold h-[56px] text-[16px] rounded-full cursor-pointer shadow-sm hover:bg-leaf/90 transition-all"
-            >
-              Terminer le défi
-            </button>
+            <div className="flex flex-col gap-2">
+              <button
+                onClick={() => onStatus("completed")}
+                className="w-full flex items-center justify-center bg-leaf text-white font-bold h-[56px] text-[16px] rounded-full cursor-pointer shadow-sm hover:bg-leaf/90 transition-all"
+              >
+                Terminer le défi
+              </button>
+              <button
+                onClick={() => {
+                  if (!notesDraft.trim()) {
+                    toast.error("Écris d'abord ce qui s'est passé dans le journal d'apprentissage ci-dessous, pour que Naya comprenne pourquoi.");
+                    return;
+                  }
+                  onNotCompleted(notesDraft.trim());
+                }}
+                className="w-full flex items-center justify-center bg-transparent text-ink/50 font-bold h-[40px] text-[13px] rounded-full cursor-pointer hover:text-rose-600 transition-all"
+              >
+                Le défi n'a pas pu être fait
+              </button>
+            </div>
+          ) : c.status === "not_completed" ? (
+            <div className="flex flex-col items-center justify-center gap-1 bg-rose-50 text-rose-700 font-bold py-3 text-[16px] rounded-2xl px-4">
+              <span className="flex items-center gap-2"><X className="size-5" /> Défi non réussi</span>
+              {c.not_completed_reason && (
+                <span className="text-[12px] font-medium text-rose-700/80 text-center">{c.not_completed_reason}</span>
+              )}
+            </div>
           ) : (
             <div className="flex items-center justify-center gap-2 bg-emerald-50 text-emerald-700 font-bold h-[56px] text-[16px] rounded-full">
               <CheckCircle2 className="size-5" /> Défi accompli !

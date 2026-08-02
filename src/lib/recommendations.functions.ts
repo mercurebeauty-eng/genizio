@@ -1,7 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
-import { generateDiscriminantChallenge } from "@/lib/hypotheses.functions";
-import { callClaude, finalizeChallenge, PROOF_MODE_INSTRUCTION, ACADEMIC_REFERENTIAL_INSTRUCTION, STEPS_INSTRUCTION, INTELLIGENCES_FIELD_INSTRUCTION, TRAIT_SUBFORM_INSTRUCTION, formatChildInterestsPayload, extractJsonFromLLMResponse, getLeastExploredTalentLabels } from "@/lib/challenges.functions";
+import { generateDiscriminantChallenge, generateSupportRetestChallenge } from "@/lib/hypotheses.functions";
+import { callClaude, finalizeChallenge, PROOF_MODE_INSTRUCTION, ACADEMIC_REFERENTIAL_INSTRUCTION, ACADEMIC_DOMAIN_LABELS, STEPS_INSTRUCTION, INTELLIGENCES_FIELD_INSTRUCTION, TRAIT_SUBFORM_INSTRUCTION, formatChildInterestsPayload, extractJsonFromLLMResponse, getLeastExploredTalentLabels } from "@/lib/challenges.functions";
 import { z } from "zod";
 
 const RecommendInput = z.object({
@@ -72,6 +72,148 @@ export const recommendChallengesForChild = createServerFn({ method: "POST" })
           pedagogicalReason: "Naya a conçu ce défi spécialement pour tester une hypothèse d'apprentissage adaptée à l'enfant.",
           challenge: discResult.challenge,
         };
+      }
+    }
+
+    // 2.5. Étape 4 — Soutien renforcé actif suite à une cause confirmée (brainstorm produit,
+    // 2026-08-02). Différence avec l'Investigation ci-dessus : ici la cause est déjà résolue
+    // ("resolved", plus "open"), mais l'accompagnement reste utile un moment avant de retester
+    // — cf. ACCOMMODATION_CAUSES et processDiscriminantResult dans hypotheses.functions.ts.
+    const { data: supportCycle } = await supabase
+      .from("hypothesis_cycles")
+      .select("id, trigger_domain, final_diagnosis, support_checkpoint_at, resolved_at")
+      .eq("child_id", data.childId)
+      .eq("status", "resolved")
+      .eq("support_active", true)
+      .order("resolved_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    if (supportCycle?.trigger_domain) {
+      const since = supportCycle.support_checkpoint_at ?? supportCycle.resolved_at;
+      const { count: completedSince } = await supabase
+        .from("challenges")
+        .select("id", { count: "exact", head: true })
+        .eq("child_id", data.childId)
+        .eq("status", "completed")
+        .or(`domain.eq.${supportCycle.trigger_domain},academic_domain.eq.${supportCycle.trigger_domain}`)
+        .gt("completed_at", since);
+
+      // 5 défis réussis en mode soutenu avant de retester (décision utilisateur explicite,
+      // cf. brainstorm étape 4 — assez pour laisser l'accompagnement porter ses fruits, pas
+      // assez pour devenir une béquille permanente).
+      const SUPPORT_RETEST_AFTER = 5;
+
+      if ((completedSince ?? 0) >= SUPPORT_RETEST_AFTER) {
+        const retestResult = await generateSupportRetestChallenge({
+          data: { childId: data.childId, cycleId: supportCycle.id },
+        });
+        if (retestResult.ok && retestResult.challenge) {
+          return {
+            recommendationType: "INVESTIGATION",
+            badgeLabel: "🔎 Mission d'investigation Naya",
+            pedagogicalReason: "Naya vérifie discrètement si l'accompagnement renforcé récent est encore nécessaire.",
+            challenge: retestResult.challenge,
+          };
+        }
+      } else {
+        const subject = ACADEMIC_DOMAIN_LABELS[supportCycle.trigger_domain] ?? supportCycle.trigger_domain;
+        const formattedInterests = formatChildInterestsPayload(child.interests);
+        const prompt = `Tu es Naya, mentore IA. Conçois un micro-défi de STABILISATION pour ${child.name}, ${child.age} ans, spécifiquement en ${subject} — un défi "doudou" au succès quasi garanti.
+
+Principe : ${child.name} bénéficie actuellement d'un accompagnement renforcé en ${subject} suite à une observation récente de Naya. Ce défi doit RASSURER, pas challenger : structure très détaillée, étapes ultra-simples et peu nombreuses, aucune surprise, dans ce domaine précis. La réussite doit être quasi certaine.
+
+Modes d'engagement et leviers comportementaux observés par le parent :
+${formattedInterests}
+
+${STEPS_INSTRUCTION}
+
+${INTELLIGENCES_FIELD_INSTRUCTION}
+
+${TRAIT_SUBFORM_INSTRUCTION}
+
+${PROOF_MODE_INSTRUCTION}
+Pour ce défi de stabilisation en particulier, une cible "declarative" doit rester trivialement atteignable (ex: 5 répétitions, pas 20) — le but est une réussite garantie, pas un défi physique.
+
+${ACADEMIC_REFERENTIAL_INSTRUCTION}
+
+Format JSON strict :
+{
+  "title": "Titre chaleureux et rassurant",
+  "domain": "${subject}",
+  "description": "Consigne très simple et encourageante",
+  "duration": "10 min",
+  "steps": ["Étape 1 très simple", "Étape 2 très simple"],
+  "materials": ["Matériel 1"],
+  "material_tags": ["tag1"],
+  "intelligences": ["creative"],
+  "trait_subform": "..." (voir liste par intelligence ci-dessus) ou null,
+  "difficulty": "facile",
+  "proof_mode": "photo" ou "declarative",
+  "proof_target": {"metric": "...", "value": 5} (uniquement si declarative),
+  "declarative_award": {"corporelle": 2} (uniquement si declarative),
+  "academic_domain": "mathematiques" | "langage" | "sciences" | "corporelle" | "sociale" | "emotionnelle" | "entrepreneuriale" | "artisanale" | "spatiale" | null,
+  "academic_level_age": 14 (uniquement si academic_domain non null),
+  "academic_reference_note": "..." (uniquement si academic_domain non null)
+}`;
+
+        try {
+          const rawJson = await callClaude(prompt, true, undefined, 1000, 2);
+          const parsed = JSON.parse(extractJsonFromLLMResponse(rawJson));
+
+          const safeTitle = (parsed.title || "Petit défi tranquille avec Naya") as string;
+          const safeDescription = (parsed.description || "") as string;
+          const safeSteps = (parsed.steps || []) as string[];
+          const safeMaterials = (parsed.materials || []) as string[];
+
+          const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+          const { data: challenge } = await supabaseAdmin
+            .from("challenges")
+            .insert({
+              child_id: data.childId,
+              user_id: userId,
+              domain: parsed.domain || subject,
+              description: safeDescription,
+              duration: parsed.duration || "10 min",
+              steps: safeSteps,
+              materials: safeMaterials,
+              status: "todo",
+              progress: 0,
+              pedagogical_context: JSON.stringify({ is_recommendation: true, type: "STABILISATION" }),
+              ...finalizeChallenge(
+                {
+                  title: safeTitle,
+                  description: safeDescription,
+                  steps: safeSteps,
+                  materials: safeMaterials,
+                  material_tags: parsed.material_tags,
+                  intelligences: parsed.intelligences,
+                  trait_subform: parsed.trait_subform,
+                  difficulty: "facile",
+                  proof_mode: parsed.proof_mode,
+                  proof_target: parsed.proof_target,
+                  declarative_award: parsed.declarative_award,
+                  academic_domain: parsed.academic_domain,
+                  academic_level_age: parsed.academic_level_age,
+                  academic_reference_note: parsed.academic_reference_note,
+                },
+                child.age
+              ),
+            })
+            .select("*")
+            .single();
+
+          if (challenge) {
+            return {
+              recommendationType: "STABILISATION",
+              badgeLabel: "🛡️ Défi d'ancrage Naya",
+              pedagogicalReason: `Un défi rassurant, ciblé sur ${subject} où Naya a récemment observé une difficulté, pour consolider la confiance avant de reprendre normalement.`,
+              challenge,
+            };
+          }
+        } catch (err) {
+          console.error("Error generating cause-targeted stabilisation challenge:", err);
+        }
       }
     }
 

@@ -25,6 +25,12 @@ const ALLOWED_CAUSES = [
   "OTHER",
 ] as const;
 
+// Étape 4 — "faire redescendre le soutien renforcé, pas rester figé" (brainstorm produit,
+// 2026-08-02). Causes pour lesquelles un accompagnement renforcé (défis "Stabilisation")
+// a du sens une fois confirmées — READY_FOR_MORE va dans l'autre sens (plus de défi, pas
+// plus de soutien) et OTHER est trop vague pour justifier une accommodation ciblée.
+const ACCOMMODATION_CAUSES = ["METHOD_MISMATCH", "PERFORMANCE_ANXIETY", "LACK_OF_ENGAGEMENT", "CONCEPTUAL_GAP"] as const;
+
 // NAYA 2.0 Phase 3a, reconstruit (cf. genizio-decisions #38) : le déclencheur d'origine
 // (note scolaire anormale) a été retiré en décision #37 — remplacé par un écart RÉPÉTÉ entre
 // le référentiel académique interne et l'âge réel de l'enfant, mesuré sur ses défis
@@ -33,6 +39,35 @@ const ALLOWED_CAUSES = [
 // pour raisonner sur le POURQUOI.
 const GAP_WINDOW = 4; // nombre de défis consécutifs requis dans le même sens (décision utilisateur)
 const GAP_THRESHOLD_YEARS = 1; // écart minimal (en années) pour compter comme "en retard"/"en avance"
+
+// Étape 3 — "classer automatiquement le commentaire du parent" (brainstorm produit,
+// 2026-08-02) : détecte si, pour un domaine donné, les GAP_WINDOW derniers défis non
+// réussis partagent tous la même cause classée — même seuil et même discipline
+// "consécutif" que l'écart âge/référentiel ci-dessus (décision utilisateur explicite de
+// garder 4, pas 2, pour ce chantier aussi). Pure et testable indépendamment de la requête
+// DB et de l'appel IA qui l'entourent dans ensureHypothesesForChild.
+export function findRepeatedNotCompletedCause(
+  recentNotCompleted: { domain: string | null; cause: string | null; title: string | null }[],
+  openDomains: Set<string>
+): { domain: string; cause: string; evidence: { cause: string; title: string }[] } | null {
+  const byDomainCause = new Map<string, { cause: string; title: string }[]>();
+  for (const c of recentNotCompleted) {
+    if (!c.domain || !c.cause) continue;
+    const arr = byDomainCause.get(c.domain) ?? [];
+    if (arr.length < GAP_WINDOW) arr.push({ cause: c.cause, title: c.title ?? "" });
+    byDomainCause.set(c.domain, arr);
+  }
+
+  for (const [domain, entries] of byDomainCause.entries()) {
+    if (entries.length < GAP_WINDOW || openDomains.has(domain)) continue;
+    const first = entries[0].cause;
+    if (entries.every((e) => e.cause === first)) {
+      return { domain, cause: first, evidence: entries };
+    }
+  }
+
+  return null;
+}
 
 async function narrateForParent(
   childName: string,
@@ -221,7 +256,81 @@ export const ensureHypothesesForChild = createServerFn({ method: "POST" })
       }
     }
 
-    if (!triggerDomain || !direction) return { generated: false as const };
+    if (!triggerDomain || !direction) {
+      // Étape 3 — "classer automatiquement le commentaire du parent" (brainstorm produit,
+      // 2026-08-02) : seconde stratégie de détection, même esprit que l'écart âge/référentiel
+      // ci-dessus (0 raisonnement IA pour la détection elle-même — ici la preuve est déjà
+      // directe, la cause déjà classée par défi au moment de la soumission, cf.
+      // classifyNotCompletedReason dans challenges.functions.ts). Motif retenu : les
+      // GAP_WINDOW derniers défis non réussis d'un même domaine partagent tous la même cause
+      // classée — même seuil que l'écart académique (décision utilisateur explicite de garder
+      // 4, pas 2, pour ce chantier aussi).
+      const { data: recentNotCompleted } = await supabase
+        .from("challenges")
+        .select("domain, not_completed_cause, title, not_completed_at")
+        .eq("child_id", data.childId)
+        .eq("status", "not_completed")
+        .not("not_completed_cause", "is", null)
+        .order("not_completed_at", { ascending: false })
+        .limit(30);
+
+      const pattern = findRepeatedNotCompletedCause(
+        (recentNotCompleted ?? []).map((c) => ({
+          domain: c.domain,
+          cause: c.not_completed_cause,
+          title: c.title,
+        })),
+        openDomains
+      );
+
+      if (!pattern) return { generated: false as const };
+      const { domain: ncDomain, cause: ncCause, evidence: ncEvidence } = pattern;
+
+      // Le témoignage du parent est une preuve plus faible qu'une observation IA sur photo
+      // (cf. brainstorm) : le cycle s'ouvre "open" (0.6 < seuil de résolution 0.65), jamais
+      // directement "resolved" — un vrai défi discriminant doit encore tester l'hypothèse
+      // avant que Naya ne la considère confirmée.
+      const ncHypotheses = [
+        {
+          cause: ncCause,
+          prior_probability: 0.6,
+          current_probability: 0.6,
+          rationale: `Les ${GAP_WINDOW} derniers défis non réussis de ce domaine ont tous été classés par l'IA comme relevant de cette cause, à partir de l'explication donnée par le parent.`,
+          evidence_log: ncEvidence.map((e) => ({
+            source_node: "not_completed_reason",
+            fact: `Défi "${e.title}" non réussi (cause classée : ${e.cause})`,
+            weight_impact: "NEGATIVE",
+          })),
+        },
+        {
+          cause: "OTHER",
+          prior_probability: 0.4,
+          current_probability: 0.4,
+          rationale: "Part réservée à d'autres facteurs non encore identifiés.",
+          evidence_log: [],
+        },
+      ];
+
+      const ncNarrative = await narrateForParent(child.name, child.age, ncDomain, "BEHIND", ncHypotheses);
+
+      const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+      const { data: ncCycleRow, error: ncInsertErr } = await supabaseAdmin
+        .from("hypothesis_cycles")
+        .insert({
+          child_id: data.childId,
+          user_id: userId,
+          trigger_domain: ncDomain,
+          hypotheses: ncHypotheses,
+          model: "deterministic:not_completed_pattern",
+          status: "open",
+          parent_narrative: ncNarrative,
+        })
+        .select("*")
+        .single();
+
+      if (ncInsertErr) throw new Error(ncInsertErr.message);
+      return { generated: true as const, cycle: ncCycleRow };
+    }
 
     const domainLabel = ACADEMIC_DOMAIN_LABELS[triggerDomain] ?? triggerDomain;
 
@@ -604,6 +713,15 @@ export async function processDiscriminantResult(
     // Manquait dans la version d'origine : resolved_at existe dans le schéma
     // (Phase 3a) précisément pour marquer ce moment, jamais renseigné jusqu'ici.
     updatePayload.resolved_at = new Date().toISOString();
+
+    // Étape 4 : une cause confirmée qui justifie un accompagnement ne doit pas retomber
+    // instantanément à zéro (cf. brainstorm) — le soutien reste actif, recommendChallengesForChild
+    // continue de proposer des défis "Stabilisation" ciblés sur ce domaine jusqu'à ce qu'un
+    // défi de retest (sans accommodation) confirme que ce n'est plus nécessaire.
+    if ((ACCOMMODATION_CAUSES as readonly string[]).includes(topHypothesis.cause)) {
+      updatePayload.support_active = true;
+      updatePayload.support_checkpoint_at = new Date().toISOString();
+    }
   }
 
   // Correctif (2026-07-20, décision #34) : cet update échouait silencieusement sur
@@ -623,5 +741,188 @@ export async function processDiscriminantResult(
   }
 
   return { processed: true, resolved: isResolved, finalDiagnosis: topHypothesis.cause };
+}
+
+// ── Étape 4 — Défi de retest & sortie du soutien renforcé (brainstorm produit, 2026-08-02) ──
+
+const SupportRetestInput = z.object({
+  childId: z.string().uuid(),
+  cycleId: z.string().uuid(),
+});
+
+// Contrairement à generateDiscriminantChallenge, qui applique délibérément l'accommodation
+// de la cause pour la CONFIRMER, ce défi teste l'inverse : un défi standard (ni facilité, ni
+// durci), pour vérifier si l'enfant réussit encore sans le soutien renforcé. Voir
+// processSupportRetestResult pour ce que son résultat déclenche.
+export const generateSupportRetestChallenge = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .validator((input: unknown) => SupportRetestInput.parse(input))
+  .handler(async ({ data, context }) => {
+    const { supabase, userId } = context;
+
+    const { data: child, error: childErr } = await supabase
+      .from("child_profiles")
+      .select("id, name, age, interests")
+      .eq("id", data.childId)
+      .eq("user_id", userId)
+      .is("access_locked_at", null)
+      .maybeSingle();
+    if (childErr || !child) throw new Error("Profil enfant introuvable.");
+
+    const { data: cycle, error: cycleErr } = await supabase
+      .from("hypothesis_cycles")
+      .select("id, trigger_domain, final_diagnosis")
+      .eq("id", data.cycleId)
+      .eq("child_id", data.childId)
+      .maybeSingle();
+    if (cycleErr || !cycle || !cycle.trigger_domain) {
+      return { ok: false as const, reason: "NO_CYCLE" as const };
+    }
+
+    const subject = ACADEMIC_DOMAIN_LABELS[cycle.trigger_domain] ?? cycle.trigger_domain;
+    const formattedInterests = formatChildInterestsPayload(child.interests);
+
+    const prompt = `Tu es Naya, la mentore IA. Conçois un défi NORMAL et STANDARD pour ${child.name}, ${child.age} ans, en ${subject}.
+
+Contexte interne (ne JAMAIS le transposer dans le défi visible par l'enfant/le parent) : cet enfant a bénéficié récemment d'un accompagnement renforcé dans ce domaine ; ce défi sert à vérifier discrètement s'il en a encore besoin. Le défi doit donc être un défi NORMAL de ce domaine — ni délibérément facilité/rassurant, ni délibérément durci — présenté exactement comme n'importe quel autre défi, sans aucune indication qu'il s'agit d'un test.
+
+Modes d'engagement et leviers comportementaux observés par le parent :
+${formattedInterests}
+
+${STEPS_INSTRUCTION}
+
+${INTELLIGENCES_FIELD_INSTRUCTION}
+
+${TRAIT_SUBFORM_INSTRUCTION}
+
+${PROOF_MODE_INSTRUCTION}
+
+${ACADEMIC_REFERENTIAL_INSTRUCTION}
+
+Réponds EXCLUSIVEMENT avec un objet JSON strict au format suivant :
+{
+  "title": "Titre stimulant",
+  "domain": "Domaine (ex: Logique, Créativité, Sciences, etc.)",
+  "description": "Consigne claire, adaptée à l'âge de l'enfant",
+  "duration": "15 min",
+  "steps": ["Étape 1", "Étape 2", "Étape 3"],
+  "materials": ["Matériel 1", "Matériel 2"],
+  "material_tags": ["tag1", "tag2"],
+  "intelligences": ["creative"],
+  "trait_subform": "..." (voir liste par intelligence ci-dessus) ou null,
+  "difficulty": "moyen",
+  "proof_mode": "photo" ou "declarative",
+  "proof_target": {"metric": "...", "value": 20} (uniquement si declarative),
+  "declarative_award": {"corporelle": 2} (uniquement si declarative),
+  "academic_domain": "mathematiques" | "langage" | "sciences" | "corporelle" | "sociale" | "emotionnelle" | "entrepreneuriale" | "artisanale" | "spatiale" | null,
+  "academic_level_age": 14 (uniquement si academic_domain non null),
+  "academic_reference_note": "..." (uniquement si academic_domain non null)
+}`;
+
+    const rawJson = await callClaude(prompt, true, undefined, 1000, 2);
+    let parsed: any;
+    try {
+      parsed = JSON.parse(extractJsonFromLLMResponse(rawJson));
+    } catch (err) {
+      console.error("Error parsing support retest challenge LLM response:", err, "Raw:", rawJson);
+      throw new Error("Erreur de génération du défi de retest.");
+    }
+
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const pedagogicalContext = JSON.stringify({
+      is_support_retest: true,
+      cycle_id: cycle.id,
+      target_cause: cycle.final_diagnosis,
+    });
+
+    const safeTitle = (parsed.title || `Mission Naya : ${subject}`) as string;
+    const safeDescription = (parsed.description || "") as string;
+    const safeSteps = (parsed.steps || []) as string[];
+    const safeMaterials = (parsed.materials || []) as string[];
+
+    const { data: challenge, error: insertErr } = await supabaseAdmin
+      .from("challenges")
+      .insert({
+        child_id: data.childId,
+        user_id: userId,
+        domain: parsed.domain || "Exploration",
+        description: safeDescription,
+        duration: parsed.duration || "15 min",
+        steps: safeSteps,
+        materials: safeMaterials,
+        status: "todo",
+        progress: 0,
+        pedagogical_context: pedagogicalContext,
+        ...finalizeChallenge(
+          {
+            title: safeTitle,
+            description: safeDescription,
+            steps: safeSteps,
+            materials: safeMaterials,
+            material_tags: parsed.material_tags,
+            intelligences: parsed.intelligences,
+            trait_subform: parsed.trait_subform,
+            difficulty: parsed.difficulty,
+            proof_mode: parsed.proof_mode,
+            proof_target: parsed.proof_target,
+            declarative_award: parsed.declarative_award,
+            academic_domain: parsed.academic_domain,
+            academic_level_age: parsed.academic_level_age,
+            academic_reference_note: parsed.academic_reference_note,
+          },
+          child.age
+        ),
+      })
+      .select("*")
+      .single();
+
+    if (insertErr) throw new Error(insertErr.message);
+
+    return { ok: true as const, challenge };
+  });
+
+// Symétrique de processDiscriminantResult, mais inversé : ici, RÉUSSIR sans accommodation
+// est un signal CONTRE le maintien du soutien renforcé (pas une confirmation de la cause).
+export async function processSupportRetestResult(
+  challengeId: string,
+  action: "COMPLETED" | "ABANDONED"
+): Promise<{ processed: boolean }> {
+  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+
+  const { data: challenge } = await supabaseAdmin
+    .from("challenges")
+    .select("id, pedagogical_context")
+    .eq("id", challengeId)
+    .maybeSingle();
+
+  if (!challenge?.pedagogical_context) return { processed: false };
+
+  let context: any;
+  try {
+    context = JSON.parse(challenge.pedagogical_context);
+  } catch {
+    return { processed: false };
+  }
+
+  if (!context?.is_support_retest || !context?.cycle_id) return { processed: false };
+
+  const updatePayload =
+    action === "COMPLETED"
+      ? { support_active: false }
+      // Encore besoin de soutien : on redémarre le compteur de 5 défis depuis maintenant,
+      // plutôt que de retenter un retest à chaque prochaine génération.
+      : { support_checkpoint_at: new Date().toISOString() };
+
+  const { error } = await supabaseAdmin
+    .from("hypothesis_cycles")
+    .update(updatePayload)
+    .eq("id", context.cycle_id);
+
+  if (error) {
+    console.error("processSupportRetestResult: échec de la mise à jour:", error);
+    return { processed: false };
+  }
+
+  return { processed: true };
 }
 
