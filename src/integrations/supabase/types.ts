@@ -136,6 +136,9 @@ export type Database = {
           id: string
           material_tags: string[]
           materials: Json
+          not_completed_at: string | null
+          not_completed_cause: string | null
+          not_completed_reason: string | null
           notes: string | null
           pedagogical_context: string | null
           progress: number
@@ -176,6 +179,9 @@ export type Database = {
           id?: string
           material_tags?: string[]
           materials?: Json
+          not_completed_at?: string | null
+          not_completed_cause?: string | null
+          not_completed_reason?: string | null
           notes?: string | null
           pedagogical_context?: string | null
           progress?: number
@@ -216,6 +222,9 @@ export type Database = {
           id?: string
           material_tags?: string[]
           materials?: Json
+          not_completed_at?: string | null
+          not_completed_cause?: string | null
+          not_completed_reason?: string | null
           notes?: string | null
           pedagogical_context?: string | null
           progress?: number
@@ -494,6 +503,8 @@ export type Database = {
           parent_narrative: string | null
           resolved_at: string | null
           status: string
+          support_active: boolean | null
+          support_checkpoint_at: string | null
           trigger_domain: string | null
           updated_at: string
           user_id: string
@@ -508,6 +519,8 @@ export type Database = {
           parent_narrative?: string | null
           resolved_at?: string | null
           status?: string
+          support_active?: boolean | null
+          support_checkpoint_at?: string | null
           trigger_domain?: string | null
           updated_at?: string
           user_id: string
@@ -522,6 +535,8 @@ export type Database = {
           parent_narrative?: string | null
           resolved_at?: string | null
           status?: string
+          support_active?: boolean | null
+          support_checkpoint_at?: string | null
           trigger_domain?: string | null
           updated_at?: string
           user_id?: string
@@ -1148,7 +1163,7 @@ export type Database = {
       }
     }
     Enums: {
-      challenge_status: "todo" | "in_progress" | "completed"
+      challenge_status: "todo" | "in_progress" | "completed" | "not_completed"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -1279,7 +1294,7 @@ export const Constants = {
   },
   public: {
     Enums: {
-      challenge_status: ["todo", "in_progress", "completed"],
+      challenge_status: ["todo", "in_progress", "completed", "not_completed"],
     },
   },
 } as const

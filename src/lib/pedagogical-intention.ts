@@ -49,5 +49,12 @@ export function formatPedagogicalIntention(rawContext: string | null | undefined
     return RECOMMENDATION_TYPE_LABELS[parsed.type] ?? null;
   }
 
+  // Étape 4 — défi de retest de soutien renforcé (brainstorm produit, 2026-08-02) : un défi
+  // volontairement standard, présenté comme n'importe quel autre — l'intention réelle reste
+  // interne à Naya, jamais montrée comme un "test" à l'enfant/au parent.
+  if (parsed?.is_support_retest) {
+    return "Naya vérifie discrètement si un accompagnement renforcé récent est encore nécessaire ici.";
+  }
+
   return null;
 }

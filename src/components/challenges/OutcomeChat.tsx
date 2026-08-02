@@ -13,7 +13,7 @@ type Challenge = {
   domain: string;
   title: string;
   description: string;
-  status: "todo" | "in_progress" | "completed";
+  status: "todo" | "in_progress" | "completed" | "not_completed";
   // Génizio — mode de preuve déclaratif (cf. genizio-decisions #35) : absent sur
   // tout défi antérieur à cette fonctionnalité, d'où l'optionnalité.
   proof_mode?: string;

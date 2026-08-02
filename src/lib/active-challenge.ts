@@ -1,4 +1,4 @@
-export type ChallengeStatus = "todo" | "in_progress" | "completed";
+export type ChallengeStatus = "todo" | "in_progress" | "completed" | "not_completed";
 
 export type ChallengeLike = {
   id: string;
