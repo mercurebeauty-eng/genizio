@@ -525,6 +525,10 @@ function ChallengesPage() {
 
   const setStatus = async (id: string, status: Challenge["status"]) => {
     const previous = challenges;
+    const targetChallenge = previous.find((c) => c.id === id);
+    if (status === "in_progress" && statusFilter === "todo" && targetChallenge?.status === "todo") {
+      toast.success("Le défi a été démarré et déplacé dans l'onglet 'En cours'.");
+    }
     setChallenges((prev) =>
       prev.map((c) =>
         c.id === id
@@ -1554,21 +1558,13 @@ function ChallengeCard({
         )}
 
         <div className="pb-5">
-          {c.status === "todo" ? (
-            <button
-              onClick={() => onStatus("in_progress")}
-              className="w-full flex items-center justify-center bg-brand text-white font-bold h-[56px] text-[16px] rounded-full cursor-pointer shadow-sm hover:bg-brand/90 transition-all"
-            >
-              Commencer le défi
-            </button>
-          ) : c.status === "in_progress" ? (
-            <div className="flex flex-col gap-2">
-              <button
-                onClick={() => onStatus("completed")}
-                className="w-full flex items-center justify-center bg-leaf text-white font-bold h-[56px] text-[16px] rounded-full cursor-pointer shadow-sm hover:bg-leaf/90 transition-all"
-              >
-                Terminer le défi
-              </button>
+          {(() => {
+            // Correctif (2026-08-02) : ce bouton n'apparaissait qu'une fois le défi "en
+            // cours" — un défi tout juste assigné/généré (statut "todo", jamais démarré)
+            // n'avait aucun moyen de le signaler non réussi (matériel manquant, pas
+            // adapté...) avant même d'avoir cliqué "Commencer". Extrait ici pour être
+            // proposé dans les deux statuts sans dupliquer la logique.
+            const notCompletedButton = (
               <button
                 onClick={() => {
                   if (!notesDraft.trim()) {
@@ -1581,19 +1577,44 @@ function ChallengeCard({
               >
                 Le défi n'a pas pu être fait
               </button>
-            </div>
-          ) : c.status === "not_completed" ? (
+            );
+
+            if (c.status === "todo") {
+              return (
+                <div className="flex flex-col gap-2">
+                  <button
+                    onClick={() => onStatus("in_progress")}
+                    className="w-full flex items-center justify-center bg-brand text-white font-bold h-[56px] text-[16px] rounded-full cursor-pointer shadow-sm hover:bg-brand/90 transition-all"
+                  >
+                    Commencer le défi
+                  </button>
+                  {notCompletedButton}
+                </div>
+              );
+            }
+            
+            if (c.status === "in_progress") {
+              return (
+                <div className="flex flex-col gap-2">
+                  {/* Bouton "Terminer le défi" retiré pour forcer l'usage du Mode Enfant (qui valide les preuves) */}
+                  {notCompletedButton}
+                </div>
+              );
+            }
+            return null;
+          })()}
+          {c.status === "not_completed" ? (
             <div className="flex flex-col items-center justify-center gap-1 bg-rose-50 text-rose-700 font-bold py-3 text-[16px] rounded-2xl px-4">
               <span className="flex items-center gap-2"><X className="size-5" /> Défi non réussi</span>
               {c.not_completed_reason && (
                 <span className="text-[12px] font-medium text-rose-700/80 text-center">{c.not_completed_reason}</span>
               )}
             </div>
-          ) : (
+          ) : c.status === "completed" ? (
             <div className="flex items-center justify-center gap-2 bg-emerald-50 text-emerald-700 font-bold h-[56px] text-[16px] rounded-full">
               <CheckCircle2 className="size-5" /> Défi accompli !
             </div>
-          )}
+          ) : null}
         </div>
       </div>
       
