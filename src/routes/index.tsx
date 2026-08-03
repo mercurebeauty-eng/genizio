@@ -245,8 +245,9 @@ function Nav() {
       }`}
     >
       <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-4 lg:py-5">
-        <a href="/" className="flex items-center">
-          <img src="/logo-genizio.png" alt="Génizio" className="h-10 w-auto" />
+        <a href="/" className="flex items-center gap-2">
+          <img src="/favicon-96x96.png" alt="" className="h-8 w-8" />
+          <span className="font-display text-xl font-extrabold tracking-wider text-brand">Génizio</span>
         </a>
 
         <div className="hidden items-center gap-10 lg:flex">
@@ -1164,8 +1165,9 @@ function LandingFooter() {
     <footer className="border-t border-ink/[0.06] bg-white py-12">
       <div className="mx-auto max-w-7xl px-6">
         <div className="flex flex-col items-center justify-between gap-8 md:flex-row">
-          <a href="/" className="flex items-center">
-            <img src="/logo-genizio.png" alt="Génizio" className="h-8 w-auto" />
+          <a href="/" className="flex items-center gap-2">
+            <img src="/favicon-96x96.png" alt="" className="h-7 w-7" />
+            <span className="font-display text-base font-extrabold tracking-wider text-brand">Génizio</span>
           </a>
 
           <div className="flex flex-wrap justify-center gap-6 text-[11px] font-semibold uppercase tracking-wider text-ink/50">
