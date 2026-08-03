@@ -333,23 +333,18 @@ function ChallengesPage() {
         data: {
           childId: profileId,
           template: {
-            title: currentGeneratedChallenge.title,
-            domain: currentGeneratedChallenge.domain,
-            description: currentGeneratedChallenge.description,
-            duration: currentGeneratedChallenge.duration,
-            steps: currentGeneratedChallenge.steps,
-            materials: currentGeneratedChallenge.materials,
+            // Reprend l'intégralité de l'aperçu généré par generateSingleChallenge/
+            // generateAcademicHomeworkChallenge plutôt qu'une liste de champs choisis à la
+            // main — cette liste manquait academic_secret (jamais assigné à aucun défi
+            // "single" ou "devoir" en conséquence, cf. genizio-decisions) ainsi que
+            // academic_domain/academic_level_age/academic_reference_note/proof_mode/
+            // proof_target/declarative_award/trait_subform, silencieusement perdus au
+            // passage client alors même que le serveur les avait générés. Les 3 champs
+            // ci-dessous gardent leur repli explicite, le reste suit tel quel.
+            ...currentGeneratedChallenge,
             material_tags: currentGeneratedChallenge.material_tags ?? [],
             intelligences: currentGeneratedChallenge.intelligences || [currentGeneratedChallenge.domain],
-            pedagogical_context: currentGeneratedChallenge.pedagogical_context,
             requires_supervision: currentGeneratedChallenge.requires_supervision ?? false,
-            supervision_warning: currentGeneratedChallenge.supervision_warning,
-            difficulty: currentGeneratedChallenge.difficulty,
-            academic_subject: currentGeneratedChallenge.academic_subject,
-            academic_grade_level: currentGeneratedChallenge.academic_grade_level,
-            homework_instruction: currentGeneratedChallenge.homework_instruction,
-            behavioral_driver: currentGeneratedChallenge.behavioral_driver,
-            zpa_level: currentGeneratedChallenge.zpa_level,
           }
         }
       });

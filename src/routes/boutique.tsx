@@ -213,18 +213,14 @@ function BoutiquePage() {
         data: {
           childId: selectedChild,
           template: {
-            title: generatedChallenge.title,
-            domain: generatedChallenge.domain,
-            description: generatedChallenge.description,
-            duration: generatedChallenge.duration,
-            steps: generatedChallenge.steps,
-            materials: generatedChallenge.materials,
+            // Reprend l'intégralité de l'aperçu généré par generateSingleChallenge plutôt
+            // qu'une liste de champs choisis à la main — cf. le même correctif sur
+            // profiles.$profileId.challenges.tsx : cette liste perdait silencieusement
+            // academic_secret et plusieurs autres champs déjà générés par le serveur.
+            ...generatedChallenge,
             material_tags: generatedChallenge.material_tags ?? [],
             intelligences: generatedChallenge.intelligences || [generatedChallenge.domain],
-            pedagogical_context: generatedChallenge.pedagogical_context,
             requires_supervision: generatedChallenge.requires_supervision ?? false,
-            supervision_warning: generatedChallenge.supervision_warning,
-            difficulty: generatedChallenge.difficulty,
           },
         },
       });
