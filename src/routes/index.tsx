@@ -165,7 +165,7 @@ export const Route = createFileRoute("/")(({
 function Nav() {
   const [scrolled, setScrolled] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
-  const { data: session } = useSession();
+  const { session } = useSession();
 
   useEffect(() => {
     const h = () => setScrolled(window.scrollY > 40);
@@ -565,7 +565,6 @@ function HowItWorks() {
             <div className="flex flex-col items-start gap-6 md:flex-row md:items-center">
               <NayaAvatar
                 size="lg"
-                dark
                 thoughts={[
                   "Je trace la trajectoire de ton enfant !",
                   "J'observe comment il pense et agit.",
@@ -732,7 +731,6 @@ function SimulatorSection() {
               <div className="rounded-2xl border border-brand/20 p-5 flex items-start gap-4" style={{ background: "rgba(249,115,22,0.1)" }}>
                 <NayaAvatar
                   size="sm"
-                  dark
                   thoughts={[
                     interests.length === 0
                       ? "Sélectionnez les curiosités de votre enfant !"
