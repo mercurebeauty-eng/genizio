@@ -1,6 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
-import { callClaude, finalizeChallenge, PROOF_MODE_INSTRUCTION, ACADEMIC_REFERENTIAL_INSTRUCTION, ACADEMIC_DOMAIN_LABELS, STEPS_INSTRUCTION, INTELLIGENCES_FIELD_INSTRUCTION, TRAIT_SUBFORM_INSTRUCTION, formatChildInterestsPayload, extractJsonFromLLMResponse } from "@/lib/challenges.functions";
+import { callClaude, finalizeChallenge, PROOF_MODE_INSTRUCTION, ACADEMIC_REFERENTIAL_INSTRUCTION, ACADEMIC_SECRET_INSTRUCTION, ACADEMIC_DOMAIN_LABELS, STEPS_INSTRUCTION, INTELLIGENCES_FIELD_INSTRUCTION, TRAIT_SUBFORM_INSTRUCTION, formatChildInterestsPayload, extractJsonFromLLMResponse } from "@/lib/challenges.functions";
 import { TALENT_KEY_LABELS } from "@/lib/talent-buckets";
 import { z } from "zod";
 
@@ -541,6 +541,8 @@ ${PROOF_MODE_INSTRUCTION}
 
 ${ACADEMIC_REFERENTIAL_INSTRUCTION}
 
+${ACADEMIC_SECRET_INSTRUCTION}
+
 Réponds EXCLUSIVEMENT avec un objet JSON strict au format suivant :
 {
   "title": "Titre stimulant et captivant",
@@ -558,7 +560,8 @@ Réponds EXCLUSIVEMENT avec un objet JSON strict au format suivant :
   "declarative_award": {"corporelle": 2} (uniquement si declarative),
   "academic_domain": "mathematiques" | "langage" | "sciences" | "corporelle" | "sociale" | "emotionnelle" | "entrepreneuriale" | "artisanale" | "spatiale" | null,
   "academic_level_age": 14 (uniquement si academic_domain non null),
-  "academic_reference_note": "..." (uniquement si academic_domain non null)
+  "academic_reference_note": "..." (uniquement si academic_domain non null),
+  "academic_secret": "Explication stimulante du secret scientifique/académique avec niveau d'avance..."
 }`;
 
     const rawJson = await callClaude(prompt, true, undefined, 1000, 2);
@@ -601,6 +604,11 @@ Réponds EXCLUSIVEMENT avec un objet JSON strict au format suivant :
         status: "todo",
         progress: 0,
         pedagogical_context: pedagogicalContext,
+        // Même trou que generateChallenges/assignTemplateChallenge à l'origine (avant
+        // correctif) : demandé au prompt (ACADEMIC_SECRET_INSTRUCTION) mais ce chemin
+        // insère directement sans jamais recopier le champ — la carte "Avantage Secret
+        // de Naya" retombait donc sur son texte générique pour tout défi discriminant.
+        academic_secret: parsed.academic_secret ?? null,
         ...finalizeChallenge(
           {
             title: safeTitle,
@@ -799,6 +807,8 @@ ${PROOF_MODE_INSTRUCTION}
 
 ${ACADEMIC_REFERENTIAL_INSTRUCTION}
 
+${ACADEMIC_SECRET_INSTRUCTION}
+
 Réponds EXCLUSIVEMENT avec un objet JSON strict au format suivant :
 {
   "title": "Titre stimulant",
@@ -816,7 +826,8 @@ Réponds EXCLUSIVEMENT avec un objet JSON strict au format suivant :
   "declarative_award": {"corporelle": 2} (uniquement si declarative),
   "academic_domain": "mathematiques" | "langage" | "sciences" | "corporelle" | "sociale" | "emotionnelle" | "entrepreneuriale" | "artisanale" | "spatiale" | null,
   "academic_level_age": 14 (uniquement si academic_domain non null),
-  "academic_reference_note": "..." (uniquement si academic_domain non null)
+  "academic_reference_note": "..." (uniquement si academic_domain non null),
+  "academic_secret": "Explication stimulante du secret scientifique/académique avec niveau d'avance..."
 }`;
 
     const rawJson = await callClaude(prompt, true, undefined, 1000, 2);
@@ -853,6 +864,10 @@ Réponds EXCLUSIVEMENT avec un objet JSON strict au format suivant :
         status: "todo",
         progress: 0,
         pedagogical_context: pedagogicalContext,
+        // Même trou que generateDiscriminantChallenge — voir le commentaire équivalent
+        // là-bas, cause racine identique (insertion directe qui ne recopiait jamais le
+        // champ demandé au prompt).
+        academic_secret: parsed.academic_secret ?? null,
         ...finalizeChallenge(
           {
             title: safeTitle,

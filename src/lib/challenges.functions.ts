@@ -2369,6 +2369,7 @@ RÈGLES DE FUSION ACADÉMIQUE-LUDIQUE STRICTES :
 8. ${PROOF_MODE_INSTRUCTION}
 9. ${INTELLIGENCES_FIELD_INSTRUCTION}
 10. ${TRAIT_SUBFORM_INSTRUCTION}
+11. ${ACADEMIC_SECRET_INSTRUCTION}
 
 Réponds STRICTEMENT en JSON valide avec ce format exact :
 {
@@ -2395,7 +2396,8 @@ Réponds STRICTEMENT en JSON valide avec ce format exact :
   "academic_grade_level": "${data.gradeLevel}",
   "homework_instruction": "${data.homeworkInstruction.replace(/"/g, '\\"')}",
   "behavioral_driver": "${selectedDriver}",
-  "zpa_level": ${zpaResult.level}
+  "zpa_level": ${zpaResult.level},
+  "academic_secret": "Explication stimulante du secret scientifique/académique avec niveau d'avance..."
 }`;
 
     const content = await callClaude(prompt, true, undefined, 1500);

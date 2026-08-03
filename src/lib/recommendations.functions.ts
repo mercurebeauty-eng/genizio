@@ -1,7 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { generateDiscriminantChallenge, generateSupportRetestChallenge } from "@/lib/hypotheses.functions";
-import { callClaude, finalizeChallenge, PROOF_MODE_INSTRUCTION, ACADEMIC_REFERENTIAL_INSTRUCTION, ACADEMIC_DOMAIN_LABELS, STEPS_INSTRUCTION, INTELLIGENCES_FIELD_INSTRUCTION, TRAIT_SUBFORM_INSTRUCTION, formatChildInterestsPayload, extractJsonFromLLMResponse, getLeastExploredTalentLabels } from "@/lib/challenges.functions";
+import { callClaude, finalizeChallenge, PROOF_MODE_INSTRUCTION, ACADEMIC_REFERENTIAL_INSTRUCTION, ACADEMIC_SECRET_INSTRUCTION, ACADEMIC_DOMAIN_LABELS, STEPS_INSTRUCTION, INTELLIGENCES_FIELD_INSTRUCTION, TRAIT_SUBFORM_INSTRUCTION, formatChildInterestsPayload, extractJsonFromLLMResponse, getLeastExploredTalentLabels } from "@/lib/challenges.functions";
 import { z } from "zod";
 
 const RecommendInput = z.object({
@@ -137,6 +137,8 @@ Pour ce défi de stabilisation en particulier, une cible "declarative" doit rest
 
 ${ACADEMIC_REFERENTIAL_INSTRUCTION}
 
+${ACADEMIC_SECRET_INSTRUCTION}
+
 Format JSON strict :
 {
   "title": "Titre chaleureux et rassurant",
@@ -154,7 +156,8 @@ Format JSON strict :
   "declarative_award": {"corporelle": 2} (uniquement si declarative),
   "academic_domain": "mathematiques" | "langage" | "sciences" | "corporelle" | "sociale" | "emotionnelle" | "entrepreneuriale" | "artisanale" | "spatiale" | null,
   "academic_level_age": 14 (uniquement si academic_domain non null),
-  "academic_reference_note": "..." (uniquement si academic_domain non null)
+  "academic_reference_note": "..." (uniquement si academic_domain non null),
+  "academic_secret": "Explication stimulante du secret scientifique/académique avec niveau d'avance..."
 }`;
 
         try {
@@ -180,6 +183,9 @@ Format JSON strict :
               status: "todo",
               progress: 0,
               pedagogical_context: JSON.stringify({ is_recommendation: true, type: "STABILISATION" }),
+              // Même trou que les autres générateurs de recommandation (Essaimage/Stabilisation/
+              // Exploration) : demandé au prompt mais jamais recopié dans l'insertion directe.
+              academic_secret: parsed.academic_secret ?? null,
               ...finalizeChallenge(
                 {
                   title: safeTitle,
@@ -253,6 +259,8 @@ ${PROOF_MODE_INSTRUCTION}
 
 ${ACADEMIC_REFERENTIAL_INSTRUCTION}
 
+${ACADEMIC_SECRET_INSTRUCTION}
+
 Format JSON strict :
 {
   "title": "Titre motivant",
@@ -270,7 +278,8 @@ Format JSON strict :
   "declarative_award": {"corporelle": 2} (uniquement si declarative),
   "academic_domain": "mathematiques" | "langage" | "sciences" | "corporelle" | "sociale" | "emotionnelle" | "entrepreneuriale" | "artisanale" | "spatiale" | null,
   "academic_level_age": 14 (uniquement si academic_domain non null),
-  "academic_reference_note": "..." (uniquement si academic_domain non null)
+  "academic_reference_note": "..." (uniquement si academic_domain non null),
+  "academic_secret": "Explication stimulante du secret scientifique/académique avec niveau d'avance..."
 }`;
 
       try {
@@ -298,6 +307,9 @@ Format JSON strict :
             status: "todo",
             progress: 0,
             pedagogical_context: JSON.stringify({ is_recommendation: true, type: "ESSAIMAGE" }),
+            // Même trou que les autres générateurs de recommandation — voir le commentaire
+            // équivalent sur la branche Stabilisation ci-dessus.
+            academic_secret: parsed.academic_secret ?? null,
             ...finalizeChallenge(
               {
                 title: safeTitle,
@@ -360,6 +372,8 @@ Pour ce défi de stabilisation en particulier, une cible "declarative" doit rest
 
 ${ACADEMIC_REFERENTIAL_INSTRUCTION}
 
+${ACADEMIC_SECRET_INSTRUCTION}
+
 Format JSON strict :
 {
   "title": "Titre chaleureux et rassurant",
@@ -377,7 +391,8 @@ Format JSON strict :
   "declarative_award": {"corporelle": 2} (uniquement si declarative),
   "academic_domain": "mathematiques" | "langage" | "sciences" | "corporelle" | "sociale" | "emotionnelle" | "entrepreneuriale" | "artisanale" | "spatiale" | null,
   "academic_level_age": 14 (uniquement si academic_domain non null),
-  "academic_reference_note": "..." (uniquement si academic_domain non null)
+  "academic_reference_note": "..." (uniquement si academic_domain non null),
+  "academic_secret": "Explication stimulante du secret scientifique/académique avec niveau d'avance..."
 }`;
 
       try {
@@ -403,6 +418,9 @@ Format JSON strict :
             status: "todo",
             progress: 0,
             pedagogical_context: JSON.stringify({ is_recommendation: true, type: "STABILISATION" }),
+            // Même trou que les autres générateurs de recommandation — voir le commentaire
+            // équivalent sur la branche Essaimage ci-dessus.
+            academic_secret: parsed.academic_secret ?? null,
             ...finalizeChallenge(
               {
                 title: safeTitle,
@@ -477,6 +495,8 @@ ${PROOF_MODE_INSTRUCTION}
 
 ${ACADEMIC_REFERENTIAL_INSTRUCTION}
 
+${ACADEMIC_SECRET_INSTRUCTION}
+
 Format JSON strict :
 {
   "title": "Titre motivant",
@@ -494,7 +514,8 @@ Format JSON strict :
   "declarative_award": {"corporelle": 2} (uniquement si declarative),
   "academic_domain": "mathematiques" | "langage" | "sciences" | "corporelle" | "sociale" | "emotionnelle" | "entrepreneuriale" | "artisanale" | "spatiale" | null,
   "academic_level_age": 14 (uniquement si academic_domain non null),
-  "academic_reference_note": "..." (uniquement si academic_domain non null)
+  "academic_reference_note": "..." (uniquement si academic_domain non null),
+  "academic_secret": "Explication stimulante du secret scientifique/académique avec niveau d'avance..."
 }`;
 
       try {
@@ -520,6 +541,9 @@ Format JSON strict :
             status: "todo",
             progress: 0,
             pedagogical_context: JSON.stringify({ is_recommendation: true, type: "EXPLORATION" }),
+            // Même trou que les autres générateurs de recommandation — voir le commentaire
+            // équivalent sur la branche Essaimage ci-dessus.
+            academic_secret: parsed.academic_secret ?? null,
             ...finalizeChallenge(
               {
                 title: safeTitle,
