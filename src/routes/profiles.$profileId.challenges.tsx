@@ -247,7 +247,7 @@ function ChallengesPage() {
     "Naya étudie la carte des talents...",
     "Naya analyse les réalisations passées...",
     "Naya formule un défi croisé auto-correctif...",
-    "Naya rédige le contexte pédagogique...",
+    "Naya rédige l'analyse stratégique...",
     "Finalisation du plan d'expérience...",
   ];
 
@@ -255,7 +255,7 @@ function ChallengesPage() {
     "Naya consulte le programme scolaire...",
     "Naya applique la mécanique de fusion...",
     "Naya calibre les étapes pour le niveau sélectionné...",
-    "Naya rédige l'intention pédagogique...",
+    "Naya rédige l'analyse stratégique...",
     "Finalisation de la quête académique...",
   ];
 
@@ -1061,9 +1061,9 @@ function ChallengesPage() {
 
                         {formatPedagogicalIntention(currentGeneratedChallenge.pedagogical_context) && (
                           <div className="mb-4 rounded-xl bg-amber-50 border border-ink/10 p-4 text-xs leading-relaxed text-amber-800">
-                            <p className="font-bold flex items-center gap-1.5 mb-1 text-amber-900">
-                              💡 Intention pédagogique (Naya)
-                            </p>
+                            <h5 className="text-[13px] font-bold text-ink mb-1.5 flex items-center gap-1.5">
+                              💡 Analyse stratégique (Naya)
+                            </h5>
                             <MarkdownContent content={formatPedagogicalIntention(currentGeneratedChallenge.pedagogical_context)!} inline />
                           </div>
                         )}
@@ -1640,7 +1640,7 @@ function ChallengeCard({
             <Brain className="size-5 text-brand flex-shrink-0 mt-0.5" />
             <div>
               <p className="text-[11px] font-bold uppercase tracking-widest text-brand mb-1">
-                Intention Pédagogique
+                Analyse stratégique de Naya
               </p>
               <p className="text-[13px] text-brand-700 leading-relaxed italic">
                 "<MarkdownContent content={formatPedagogicalIntention(c.pedagogical_context)!} inline />"
