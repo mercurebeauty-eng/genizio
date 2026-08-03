@@ -82,15 +82,15 @@ function StaggerItem({ children, className = "" }: { children: React.ReactNode; 
    DATA
    ============================================================ */
 const TALENTS = [
-  { icon: Compass, label: "Spatiale", color: "from-brand to-brand-light", desc: "Architecture, construction, dessin" },
+  { icon: Compass, label: "Spatiale", color: "from-brand to-brand-dark", desc: "Architecture, construction, dessin" },
   { icon: Activity, label: "Corporelle", color: "from-rose-500 to-pink-400", desc: "Agilité, théâtre, expression" },
-  { icon: Users, label: "Sociale", color: "from-sky to-sky-light", desc: "Leadership, empathie" },
-  { icon: Lightbulb, label: "Entrepreneuriale", color: "from-gold to-brand-light", desc: "Commerce, gestion" },
-  { icon: Palette, label: "Créative", color: "from-violet to-violet-light", desc: "Peinture, musique, contes" },
-  { icon: Hammer, label: "Artisanale", color: "from-leaf to-leaf-light", desc: "Cuisine, couture, bricolage" },
-  { icon: HeartHandshake, label: "Émotionnelle", color: "from-sky to-violet-light", desc: "Confiance, persévérance" },
+  { icon: Users, label: "Sociale", color: "from-sky to-sky-dark", desc: "Leadership, empathie" },
+  { icon: Lightbulb, label: "Entrepreneuriale", color: "from-amber-400 to-orange-500", desc: "Commerce, gestion" },
+  { icon: Palette, label: "Créative", color: "from-purple-500 to-violet-600", desc: "Peinture, musique, contes" },
+  { icon: Hammer, label: "Artisanale", color: "from-leaf to-leaf-dark", desc: "Cuisine, couture, bricolage" },
+  { icon: HeartHandshake, label: "Émotionnelle", color: "from-sky to-purple-500", desc: "Confiance, persévérance" },
   { icon: Brain, label: "Logico-mathématique", color: "from-brand-dark to-brand", desc: "Énigmes, algorithmes" },
-  { icon: MessagesSquare, label: "Linguistique", color: "from-gold to-brand", desc: "Plaidoyer, lecture, écriture" },
+  { icon: MessagesSquare, label: "Linguistique", color: "from-amber-500 to-brand", desc: "Plaidoyer, lecture, écriture" },
 ];
 
 type ToneKey = "leaf" | "brand" | "sky" | "ink" | "violet";
@@ -116,17 +116,17 @@ const CHALLENGES: Challenge[] = [
 ];
 
 const STEPS = [
-  { num: "01", title: "L'enfant fait", desc: "Un défi concret, adapté à son âge et son contexte. Pas un questionnaire — le premier pas de sa trajectoire.", color: "from-brand to-brand-light" },
-  { num: "02", title: "Naya observe", desc: "L'IA analyse la réalisation, pas le résultat. Comment il pense, ce qui l'absorbe — les jalons de la trajectoire.", color: "from-violet to-violet-light" },
-  { num: "03", title: "La trajectoire se dessine", desc: "Le chemin le plus court entre aujourd'hui et demain se construit, défi après défi. Pas un bulletin — une trajectoire.", color: "from-leaf to-leaf-light" },
+  { num: "01", title: "L'enfant fait", desc: "Un défi concret, adapté à son âge et son contexte. Pas un questionnaire — le premier pas de sa trajectoire.", color: "from-brand to-brand-dark" },
+  { num: "02", title: "Naya observe", desc: "L'IA analyse la réalisation, pas le résultat. Comment il pense, ce qui l'absorbe — les jalons de la trajectoire.", color: "from-purple-500 to-violet-600" },
+  { num: "03", title: "La trajectoire se dessine", desc: "Le chemin le plus court entre aujourd'hui et demain se construit, défi après défi. Pas un bulletin — une trajectoire.", color: "from-leaf to-leaf-dark" },
 ];
 
 const VISION = [
-  { n: "01", title: "Application interactive", tagline: "Le catalogue de défis et le carnet de suivi IA.", points: ["Générateur intelligent", "Radar de talents", "Invitations de mentors"], color: "from-leaf to-leaf-light", accent: "leaf" as ToneKey },
-  { n: "02", title: "Boutique de Kits physiques", tagline: "Le matériel pédagogique livré à domicile.", points: ["Ustensiles & composants", "Livraison à Dakar & Abidjan", "Fiches d'expérience"], color: "from-brand to-brand-light", accent: "brand" as ToneKey },
-  { n: "03", title: "Ateliers & Guildes", tagline: "Se retrouver en groupe pour de grands défis.", points: ["Sessions de prototypage", "Encadrement par des superviseurs", "Émulation collaborative"], color: "from-sky to-sky-light", accent: "sky" as ToneKey },
-  { n: "04", title: "Camps d'Innovation", tagline: "Une immersion complète pendant les vacances.", points: ["Agritech & robotique", "Théâtre et expression verbale", "Créations manuelles"], color: "from-violet to-violet-light", accent: "violet" as ToneKey },
-  { n: "05", title: "Écoles Expérimentales", tagline: "Le rêve d'un campus construit autour du potentiel.", points: ["Projets réels", "Intervenants professionnels", "Portfolio certifié"], color: "from-ink to-ink-light", accent: "ink" as ToneKey },
+  { n: "01", title: "Application interactive", tagline: "Le catalogue de défis et le carnet de suivi IA.", points: ["Générateur intelligent", "Radar de talents", "Invitations de mentors"], color: "from-leaf to-leaf-dark", accent: "leaf" as ToneKey },
+  { n: "02", title: "Boutique de Kits physiques", tagline: "Le matériel pédagogique livré à domicile.", points: ["Ustensiles & composants", "Livraison à Dakar & Abidjan", "Fiches d'expérience"], color: "from-brand to-brand-dark", accent: "brand" as ToneKey },
+  { n: "03", title: "Ateliers & Guildes", tagline: "Se retrouver en groupe pour de grands défis.", points: ["Sessions de prototypage", "Encadrement par des superviseurs", "Émulation collaborative"], color: "from-sky to-sky-dark", accent: "sky" as ToneKey },
+  { n: "04", title: "Camps d'Innovation", tagline: "Une immersion complète pendant les vacances.", points: ["Agritech & robotique", "Théâtre et expression verbale", "Créations manuelles"], color: "from-purple-500 to-violet-600", accent: "violet" as ToneKey },
+  { n: "05", title: "Écoles Expérimentales", tagline: "Le rêve d'un campus construit autour du potentiel.", points: ["Projets réels", "Intervenants professionnels", "Portfolio certifié"], color: "from-brand-dark to-ink", accent: "ink" as ToneKey },
 ];
 
 /* ============================================================
