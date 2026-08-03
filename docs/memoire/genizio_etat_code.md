@@ -4,15 +4,77 @@ description: État actuel de l'implémentation — snapshot vérifié contre le 
 metadata:
   type: reference
   status: living-document
-  last_updated: 2026-07-16
+  last_updated: 2026-08-03
 ---
 
 # État du Code
 
-> Vérifié le 2026-07-16, branche `main` @ `561152e` ("Stop tracking .env and ignore secrets
-> going forward") + modifications non commitées ce jour (voir liste ci-dessous). Si `git log -1`
-> montre un commit plus récent que `561152e` au moment de la lecture, re-vérifier avant de
-> croire cette section.
+> Vérifié le 2026-08-03, `origin/main` @ `cef4928` ("Merge pull request #22"). Le reste de ce
+> fichier (à partir de "Chantier 'Génizio v2' en cours" ci-dessous) date du 2026-07-16 et n'a
+> pas été ré-audité depuis — le Status Overview de [[MEMORY]] est la source la plus à jour pour
+> l'historique complet entre ces deux dates. Si `git log -1` montre un commit plus récent que
+> `cef4928`, re-vérifier avant de croire cette section.
+
+## Snapshot du 2026-08-03 — PR #21 + PR #22 mergées et déployées
+
+**Git** : `main` = `2cd451c` (merge PR #21, [[genizio-decisions]] #50) puis `cef4928` (merge PR
+#22, [[genizio-decisions]] #49) — les deux confirmés mergés (`gh pr view`) ET déployés avec
+succès sur Vercel (statut commit GitHub `"Deployment has completed"` vérifié sur les deux
+commits de merge).
+
+**Deux bugs de production découverts en testant après le déploiement de la PR #21** :
+1. **✅ RÉSOLU (voir [[genizio-decisions]] #51)** — Carte "Avantage Secret de Naya"
+   (`AcademicSecretCard`, `profiles.$profileId.challenges.tsx`) retombant sur son texte
+   générique. L'hypothèse initiale ci-dessus ("seulement 2 des ~6 chemins de génération
+   peuplent `academic_secret`") était **incomplète** — elle n'expliquait pas le rapport
+   utilisateur sur un "single défi", justement l'un des 2 chemins censés déjà fonctionner.
+   Cause racine réelle trouvée en traçant la chaîne complète client→serveur (pas seulement le
+   point d'insertion) : les 2 pages qui assignent un défi depuis un aperçu généré
+   (`profiles.$profileId.challenges.tsx` et `boutique.tsx`) reconstruisaient l'objet `template`
+   envoyé à `assignTemplateChallenge` champ par champ, **sans jamais inclure `academic_secret`**
+   (ni `academic_domain`/`academic_level_age`/`academic_reference_note`/`proof_mode`/
+   `proof_target`/`declarative_award`/`trait_subform`) — le vrai secret généré par le serveur ne
+   survivait donc jamais l'aller-retour client, quel que soit le chemin de génération. Corrigé
+   avec les 6 chemins qui, eux, ne demandaient jamais le champ à l'IA en premier lieu. Voir
+   [[genizio-decisions]] #51 pour le détail complet et les alternatives rejetées.
+2. **Bouton "Le défi n'a pas pu être fait" absent au statut `todo`** (n'apparaissait qu'à
+   `in_progress`) — cause confirmée et corrigée en code, mais **le fix n'est toujours pas
+   commité**, toujours dans le même `git stash` qu'au 2026-08-03 (voir état Git ci-dessous, non
+   déplacé lors du travail sur #51). Symptôme distinct et plus grave toujours **NON résolu** :
+   cliquer sur "Commencer le défi" ne produit **aucun effet visible** (pas de changement d'état,
+   pas de message d'erreur). Cause non identifiée. Piste en cours : demander à l'utilisateur si
+   un rechargement complet (F5) fait apparaître "Terminer le défi" (mise à jour serveur réussie
+   mais UI pas rafraîchie) ou si rien ne change même après (échec silencieux plus en amont,
+   potentiellement dans `setStatus`/`updateChallenge`). Aucune requête directe en base n'a pu
+   être faite pour trancher — l'outillage Supabase CLI disponible en session ne permet qu'un
+   export complet de table, pas une requête ciblée (et le connecteur MCP Supabase reste interdit
+   sur ce projet, cf. Key Principle #8).
+
+**État Git local (toujours en attente de reprise propre)** : le correctif du bug #2 ci-dessus
+(bouton visible aussi à `todo`) est toujours dans le même `git stash` non commité mentionné le
+2026-08-03 (`git stash list` → un seul stash, intact, non touché par le travail sur #51 qui s'est
+fait sur sa propre branche dédiée `fix/naya-academic-secret-generation` créée depuis `main` à
+jour). À récupérer sur une nouvelle branche dédiée du même type quand ce bug sera traité.
+
+**Deux découvertes d'outillage à ne pas re-diagnostiquer** :
+- **Identité de déploiement Vercel** : un déploiement échoue si le commit est signé avec l'email
+  noreply GitHub (`mercurebeauty-eng@users.noreply.github.com`, celui utilisé par tous les
+  commits de fonctionnalité sur cette machine) plutôt que `mercurebeauty@gmail.com` (compte
+  Vercel confirmé membre de l'équipe). Les commits de fusion "Merge pull request" créés par le
+  bouton GitHub utilisent toujours le bon email et déploient correctement — c'est spécifiquement
+  la preview d'une PR **avant** fusion qui peut échouer sur ce point. Cause exacte du changement
+  de comportement entre la PR #20 (preview OK) et la PR #21 (preview en échec) non élucidée avec
+  certitude — probablement un changement côté tableau de bord Vercel, hors visibilité de l'agent.
+- **Port du serveur de dev local** : `@lovable.dev/vite-tanstack-config` (résidu de l'outil
+  d'origine du projet, cf. Key Principle sur le code mort Lovable) a sa propre détection de
+  "sandbox" (variables d'env `LOVABLE_SANDBOX`/`DEV_SERVER__PROJECT_PATH`) qui ne reconnaît pas
+  l'environnement Claude Code — force donc systématiquement le port 8080, sans respecter le port
+  assigné par l'outil de preview. Si un autre chat occupe déjà le port 8080, Vite bascule tout
+  seul sur 8081 en interne pendant que l'outil de preview pointe vers un port différent assigné
+  par le harness — navigation impossible tant que ça arrive. Pas de correctif appliqué (hors
+  scope, nécessiterait de modifier/contourner un package tiers).
+
+---
 
 **Chantier "Génizio v2" en cours** — plan complet dans `C:\Users\USER\.claude\plans\refactored-soaring-prism.md`
 (7 phases : dashboard v2 + nav bar persistante, portfolio, détail de défi, capture de résultat en
