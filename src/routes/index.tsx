@@ -246,7 +246,7 @@ function Nav() {
     >
       <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-4 lg:py-5">
         <a href="/" className="flex items-center">
-          <img src="/naya-logo.png" alt="Génizio" className="h-10 w-auto" />
+          <img src="/logo-genizio.png" alt="Génizio" className="h-10 w-auto" />
         </a>
 
         <div className="hidden items-center gap-10 lg:flex">
@@ -1165,7 +1165,7 @@ function LandingFooter() {
       <div className="mx-auto max-w-7xl px-6">
         <div className="flex flex-col items-center justify-between gap-8 md:flex-row">
           <a href="/" className="flex items-center">
-            <img src="/naya-logo.png" alt="Génizio" className="h-8 w-auto" />
+            <img src="/logo-genizio.png" alt="Génizio" className="h-8 w-auto" />
           </a>
 
           <div className="flex flex-wrap justify-center gap-6 text-[11px] font-semibold uppercase tracking-wider text-ink/50">
