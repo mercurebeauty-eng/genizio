@@ -5,9 +5,10 @@ import { NayaAvatar } from "@/components/NayaAvatar";
 import { TalentRadarChart } from "@/components/TalentRadarChart";
 import { INTERESTS_BY_TALENT } from "@/components/profiles/shared";
 import {
-  Users, Brain, Sparkles, BookOpen, Star, ArrowRight,
+  Users, Brain, BookOpen, ArrowRight,
   ShieldCheck, Menu, X, Compass, Activity, Lightbulb, Palette, Hammer, HeartHandshake,
-  MessagesSquare, Zap, Globe, Trophy, CheckCircle2, ArrowDown, ChevronDown, Rocket,
+  MessagesSquare, Zap, Globe, Trophy, CheckCircle2, ArrowDown, ChevronDown,
+  BrainCircuit, Wand2, MapPin,
 } from "lucide-react";
 import { pageMeta, jsonLdScript, faqPageJsonLd, SOFTWARE_APP_JSONLD } from "@/lib/seo";
 import {
@@ -244,11 +245,8 @@ function Nav() {
       }`}
     >
       <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-4 lg:py-5">
-        <a href="/" className="flex items-center gap-2">
-          <div className="flex size-8 items-center justify-center rounded-lg bg-gradient-to-br from-brand to-gold">
-            <Sparkles className="size-4 text-white" />
-          </div>
-          <span className="font-display text-lg font-bold tracking-tight text-brand">GÉNIZIO</span>
+        <a href="/" className="flex items-center">
+          <img src="/naya-logo.png" alt="Génizio" className="h-10 w-auto" />
         </a>
 
         <div className="hidden items-center gap-10 lg:flex">
@@ -261,7 +259,7 @@ function Nav() {
             <a
               key={l.href}
               href={l.href}
-              className="text-[13px] font-semibold text-ink/45 transition-colors hover:text-ink/80 relative after:absolute after:bottom-[-2px] after:left-0 after:w-full after:h-[3px] after:bg-gradient-to-r after:from-brand after:to-gold after:rounded-full after:scale-x-0 after:origin-left after:transition-transform after:duration-400 hover:after:scale-x-100"
+              className="text-[13px] font-semibold text-ink/70 transition-colors hover:text-ink relative after:absolute after:bottom-[-2px] after:left-0 after:w-full after:h-[3px] after:bg-gradient-to-r after:from-brand after:to-gold after:rounded-full after:scale-x-0 after:origin-left after:transition-transform after:duration-400 hover:after:scale-x-100"
             >
               {l.label}
             </a>
@@ -318,7 +316,7 @@ function Nav() {
                 { href: "#defis", label: "Les défis" },
                 { href: "#vision", label: "Vision" },
               ].map((l) => (
-                <a key={l.href} href={l.href} onClick={() => setMenuOpen(false)} className="text-base font-semibold text-ink/50 hover:text-brand">
+                <a key={l.href} href={l.href} onClick={() => setMenuOpen(false)} className="text-base font-semibold text-ink/70 hover:text-brand">
                   {l.label}
                 </a>
               ))}
@@ -360,7 +358,7 @@ function Hero() {
           {/* Left: Text */}
           <div className="text-center lg:text-left">
             <Reveal delay={0.2}>
-              <span className="mb-6 inline-block text-[11px] font-semibold uppercase tracking-[0.25em] text-ink/30">
+              <span className="mb-6 inline-block text-[11px] font-semibold uppercase tracking-[0.25em] text-ink/50">
                 Fabrique de trajectoires
               </span>
             </Reveal>
@@ -398,11 +396,11 @@ function Hero() {
             </Reveal>
 
             <Reveal delay={1.0}>
-              <div className="mt-12 flex items-center justify-center gap-8 text-ink/25 lg:justify-start">
+              <div className="mt-12 flex items-center justify-center gap-8 text-ink/55 lg:justify-start">
                 {[
                   { icon: Compass, text: "Trajectoires personnalisées" },
                   { icon: ShieldCheck, text: "Validation parentale" },
-                  { icon: Brain, text: "9 intelligences" },
+                  { icon: BrainCircuit, text: "9 intelligences" },
                 ].map((item) => (
                   <div key={item.text} className="flex items-center gap-2">
                     <item.icon className="size-3.5" />
@@ -465,7 +463,7 @@ function ProblemSection() {
 
       <div className="relative z-10 mx-auto max-w-4xl px-6">
         <Reveal>
-          <span className="mb-6 block text-[11px] font-bold uppercase tracking-[0.2em] text-ink/25">
+          <span className="mb-6 block text-[11px] font-bold uppercase tracking-[0.2em] text-ink/50">
             Le problème
           </span>
         </Reveal>
@@ -474,7 +472,7 @@ function ProblemSection() {
           <h2 className="font-display text-3xl font-bold leading-[1.15] text-ink md:text-5xl lg:text-6xl">
             L&apos;école mesure les notes.
             <br />
-            <span className="text-ink/30">Mais votre enfant n&apos;est pas une note — il est une trajectoire.</span>
+            <span className="text-ink/40">Mais votre enfant n&apos;est pas une note — il est une trajectoire.</span>
           </h2>
         </Reveal>
 
@@ -515,7 +513,7 @@ function ProblemSection() {
                 </p>
                 <div className="mt-3 flex items-center gap-2">
                   <div className="size-1.5 rounded-full bg-brand" />
-                  <span className="text-[10px] font-semibold text-ink/25">La conviction fondatrice de Génizio</span>
+                  <span className="text-[10px] font-semibold text-ink/45">La conviction fondatrice de Génizio</span>
                 </div>
               </div>
             </div>
@@ -547,7 +545,7 @@ function SolutionSection() {
           <h2 className="font-display text-3xl font-bold leading-[1.15] text-ink md:text-5xl">
             9 intelligences.
             <br />
-            <span className="text-ink/30">9 trajectoires possibles.</span>
+            <span className="text-ink/40">9 trajectoires possibles.</span>
           </h2>
         </Reveal>
 
@@ -880,7 +878,7 @@ function ChallengesSection() {
           <h2 className="font-display text-3xl font-bold leading-[1.15] text-ink md:text-5xl">
             Pas des QCM.
             <br />
-            <span className="text-ink/30">Des projets réels.</span>
+            <span className="text-ink/40">Des projets réels.</span>
           </h2>
         </Reveal>
 
@@ -906,7 +904,7 @@ function ChallengesSection() {
                       <Zap className="size-3" />
                       {c.domain}
                     </span>
-                    <span className="text-[11px] font-medium text-ink/25">{c.duration}</span>
+                    <span className="text-[11px] font-medium text-ink/45">{c.duration}</span>
                   </div>
 
                   <h3 className="mb-2 font-display text-xl font-bold text-ink transition-colors group-hover:text-brand">
@@ -915,7 +913,7 @@ function ChallengesSection() {
                   <p className="text-sm leading-relaxed text-ink/40">{c.desc}</p>
 
                   <div className="mt-6 flex items-center justify-between border-t border-ink/[0.04] pt-4">
-                    <span className="text-[11px] font-medium text-ink/20">Défi adaptatif</span>
+                    <span className="text-[11px] font-medium text-ink/45">Défi adaptatif</span>
                     <span className="inline-flex items-center gap-1 text-sm font-bold text-brand transition-all group-hover:gap-2">
                       Lancer
                       <ArrowRight className="size-3.5" />
@@ -950,7 +948,7 @@ function VisionSection() {
           <h2 className="font-display text-3xl font-bold leading-[1.15] text-ink md:text-5xl">
             5 étapes pour fabriquer
             <br />
-            <span className="text-ink/30">des trajectoires en Afrique.</span>
+            <span className="text-ink/40">des trajectoires en Afrique.</span>
           </h2>
         </Reveal>
 
@@ -1067,7 +1065,7 @@ function FAQSection() {
     <section className="relative py-32 md:py-40 bg-white">
       <div className="relative z-10 mx-auto max-w-3xl px-6">
         <Reveal>
-          <span className="mb-6 block text-[11px] font-bold uppercase tracking-[0.2em] text-ink/25">
+          <span className="mb-6 block text-[11px] font-bold uppercase tracking-[0.2em] text-ink/50">
             Questions fréquentes
           </span>
         </Reveal>
@@ -1149,7 +1147,7 @@ function CTASection() {
         </Reveal>
 
         <Reveal delay={0.4}>
-          <p className="mt-8 text-xs font-medium text-ink/20">
+          <p className="mt-8 text-xs font-medium text-ink/45">
             Gratuit · Aucune carte bancaire demandée
           </p>
         </Reveal>
@@ -1163,24 +1161,21 @@ function CTASection() {
    ============================================================ */
 function LandingFooter() {
   return (
-    <footer className="border-t border-ink/[0.04] bg-white py-12">
+    <footer className="border-t border-ink/[0.06] bg-white py-12">
       <div className="mx-auto max-w-7xl px-6">
         <div className="flex flex-col items-center justify-between gap-8 md:flex-row">
-          <div className="flex items-center gap-2">
-            <div className="flex size-7 items-center justify-center rounded-lg bg-gradient-to-br from-brand to-gold">
-              <Sparkles className="size-3.5 text-white" />
-            </div>
-            <span className="font-display text-sm font-bold text-brand">GÉNIZIO</span>
-          </div>
+          <a href="/" className="flex items-center">
+            <img src="/naya-logo.png" alt="Génizio" className="h-8 w-auto" />
+          </a>
 
-          <div className="flex flex-wrap justify-center gap-6 text-[11px] font-semibold uppercase tracking-wider text-ink/20">
+          <div className="flex flex-wrap justify-center gap-6 text-[11px] font-semibold uppercase tracking-wider text-ink/50">
             <Link to="/a-propos" className="transition-colors hover:text-brand">À propos</Link>
             <Link to="/privacy" className="transition-colors hover:text-brand">Confidentialité</Link>
             <Link to="/terms" className="transition-colors hover:text-brand">CGU</Link>
             <Link to="/mentions-legales" className="transition-colors hover:text-brand">Mentions légales</Link>
           </div>
 
-          <div className="text-[11px] font-medium text-ink/15">
+          <div className="text-[11px] font-medium text-ink/45">
             © {new Date().getFullYear()} Génizio — Abidjan, Côte d&apos;Ivoire
           </div>
         </div>
