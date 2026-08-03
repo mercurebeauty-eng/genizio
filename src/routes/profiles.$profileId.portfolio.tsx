@@ -10,7 +10,6 @@ import { getChildGuild, getTalentAffinities } from "@/lib/guilds";
 import { getChildEnrolledSeason, getActiveSeason, type Season } from "@/lib/seasons.functions";
 import { getChildSupervisorInfo } from "@/lib/supervisors.functions";
 import { AppTabBar } from "@/components/AppTabBar";
-import { SeasonEnrollmentModal } from "@/components/seasons/SeasonEnrollmentModal";
 import { TalentRadarChart } from "@/components/TalentRadarChart";
 import { NayaAvatar } from "@/components/NayaAvatar";
 import { GenizioLoader } from "@/components/GenizioLoader";
@@ -227,7 +226,6 @@ function PortfolioPage() {
   const [enrolledSeason, setEnrolledSeason] = useState<Season | null>(null);
   const [activeSeason, setActiveSeason] = useState<Season | null>(null);
   const [supervisorInfo, setSupervisorInfo] = useState<{ email: string; assignedAt: string } | null>(null);
-  const [isEnrollmentModalOpen, setIsEnrollmentModalOpen] = useState(false);
   const [mentorCount, setMentorCount] = useState(0);
   const [dismissedDiscoveries, setDismissedDiscoveries] = useState<string[]>([]);
   const [expandedMonths, setExpandedMonths] = useState<Set<string>>(new Set());
@@ -741,16 +739,7 @@ function PortfolioPage() {
                   <Star className="size-4 fill-emerald-500 text-emerald-500" />
                   <span>Certificat de Saison (Disponible à la fin)</span>
                 </div>
-                {/* La Saison est désormais incluse automatiquement (2026-08-03) — ce lien reste
-                    le seul point d'entrée pour un don diaspora/RSE (redeemSponsorshipToken),
-                    dont l'unique déclencheur était auparavant la carte "Non Inscrit" supprimée
-                    ci-dessus. */}
-                <button
-                  onClick={() => setIsEnrollmentModalOpen(true)}
-                  className="text-center text-[11px] font-bold text-ink/40 hover:text-ink/70 transition-colors cursor-pointer"
-                >
-                  J'ai un code de parrainage
-                </button>
+
               </div>
             </div>
           ) : null}
@@ -1113,18 +1102,7 @@ function PortfolioPage() {
         </div>
       </main>
 
-      {isEnrollmentModalOpen && activeSeason && (
-        <SeasonEnrollmentModal
-          season={activeSeason}
-          childId={child.id}
-          childName={child.name}
-          onClose={() => setIsEnrollmentModalOpen(false)}
-          onSuccess={() => {
-            setIsEnrollmentModalOpen(false);
-            setEnrolledSeason(activeSeason);
-          }}
-        />
-      )}
+
       
       <AppTabBar profileId={profileId} />
     </div>
