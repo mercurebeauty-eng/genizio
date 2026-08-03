@@ -5,16 +5,7 @@ import { INTERESTS_BY_TALENT, AVATAR_COLORS, emptyProfileDraft, type ChildProfil
 import { toast } from "sonner";
 import { useSession } from "@/hooks/use-session";
 import { getGeoHint } from "@/lib/geo.functions";
-
-// Pivot confirmé par l'utilisateur (2026-07-22) : le paywall par slot (2 gratuits + slots
-// payants à 5000 FCFA, commit b87488c du 2026-07-17) est retiré — la monétisation passe
-// désormais par les Saisons, pas par le nombre d'enfants. Nouvelle limite gratuite généreuse :
-// 5 pour tout le monde. Les slots bonus achetés AVANT ce pivot restent honorés (Math.max)
-// plutôt que d'être silencieusement réduits pour un parent qui a réellement payé pour plus
-// de 5 au total — mais plus aucun moyen d'en acquérir de nouveaux (grantProfileSlot retiré,
-// cf. products.functions.ts). Même règle que profiles.index.tsx/profiles.manage.tsx.
-const BASE_FREE_LIMIT = 5;
-const LEGACY_FREE_SLOTS = 2;
+import { computeChildProfileQuota } from "@/lib/child-profile-quota";
 
 export function ProfileDialog({
   initial,
@@ -28,8 +19,11 @@ export function ProfileDialog({
   onSaved: () => void;
 }) {
   const { session } = useSession();
-  const extraSlots = (session?.user?.app_metadata?.extra_profile_slots as number) ?? 0;
-  const quota = Math.max(BASE_FREE_LIMIT, LEGACY_FREE_SLOTS + extraSlots);
+  // Pré-check local seulement : le trigger check_child_profile_quota fait foi côté base.
+  const quota = computeChildProfileQuota({
+    accountCreatedAt: session?.user?.created_at,
+    extraSlots: (session?.user?.app_metadata?.extra_profile_slots as number) ?? 0,
+  });
 
   const [draft, setDraft] = useState<ProfileDraft>(
     initial

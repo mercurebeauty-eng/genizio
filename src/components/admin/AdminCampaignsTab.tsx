@@ -14,6 +14,8 @@ import {
 } from "@/lib/campaigns.functions";
 import { CampaignLinkCard } from "@/components/campaigns/CampaignLinkCard";
 import { toast } from "sonner";
+import { computeSupervisorQuota } from "@/lib/supervisor-quota";
+import { resolveExtraSlotPrice, formatXof, formatPromoDeadline, STANDARD_PRICE_XOF } from "@/lib/pricing";
 
 export function AdminCampaignsTab() {
   const { session } = useSession();
@@ -246,6 +248,8 @@ function CampaignQuotaEditor({ campaign, onUpdated }: { campaign: Campaign; onUp
   const [maxEducators, setMaxEducators] = useState(campaign.max_educators ?? 0);
   const [saving, setSaving] = useState(false);
   const updateFn = useServerFn(updateCampaignExtraQuotaAdmin);
+  const supervisorFloor = computeSupervisorQuota({ referenceCreatedAt: campaign.created_at, extraQuota: 0 });
+  const slotPrice = resolveExtraSlotPrice(campaign.created_at);
 
   useEffect(() => {
     setValue(campaign.extra_supervisors_quota);
@@ -274,7 +278,7 @@ function CampaignQuotaEditor({ campaign, onUpdated }: { campaign: Campaign; onUp
       <div>
         <div className="text-xs font-bold text-ink/50 mb-1.5 uppercase tracking-wider">Quota superviseurs</div>
         <div className="flex items-center gap-2 flex-wrap">
-          <span className="text-sm font-medium text-ink/60 shrink-0">5 de base +</span>
+          <span className="text-sm font-medium text-ink/60 shrink-0">{supervisorFloor} de base +</span>
           <input
             type="number"
             min={0}
@@ -283,12 +287,12 @@ function CampaignQuotaEditor({ campaign, onUpdated }: { campaign: Campaign; onUp
             onChange={(e) => setValue(Math.max(0, parseInt(e.target.value) || 0))}
             className="w-16 bg-white border border-ink/10 rounded-xl px-2 py-1.5 text-sm font-bold text-ink text-center"
           />
-          <span className="text-sm font-medium text-ink/60 shrink-0">= {5 + value} enfants max/superviseur</span>
+          <span className="text-sm font-medium text-ink/60 shrink-0">= {supervisorFloor + value} enfants max/superviseur</span>
         </div>
       </div>
       <div>
         <div className="text-xs font-bold text-ink/50 mb-1.5 uppercase tracking-wider">
-          Éducateurs vouchés (7000 FCFA/éducateur — payé hors-app, ajuster ici après confirmation)
+          Éducateurs vouchés ({formatXof(slotPrice.priceXof)}/éducateur{slotPrice.isPromo && slotPrice.promoEndsAt ? `, prix de bienvenue jusqu'au ${formatPromoDeadline(slotPrice.promoEndsAt)} puis ${formatXof(STANDARD_PRICE_XOF)}` : ""} — payé hors-app, ajuster ici après confirmation)
         </div>
         <div className="flex items-center gap-2 flex-wrap">
           <span className="text-sm font-medium text-ink/60 shrink-0">Capacité :</span>

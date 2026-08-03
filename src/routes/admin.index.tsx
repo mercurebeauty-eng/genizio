@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { useSession } from "@/hooks/use-session";
 import { AppHeader } from "@/components/AppHeader";
-import { togglePassportUnlock, updateOrderStatus } from "@/lib/products.functions";
+import { togglePassportUnlock, updateOrderStatus, updateExtraProfileSlotsAdmin } from "@/lib/products.functions";
 import {
   getExecutiveKPIsAdmin,
   getTalentCityStatsAdmin,
@@ -57,6 +57,7 @@ function AdminIndexPage() {
   const getCommerceDataFn = useServerFn(getCommercePassportsDataAdmin);
   const toggleUnlockFn = useServerFn(togglePassportUnlock);
   const updateOrderStatusFn = useServerFn(updateOrderStatus);
+  const updateExtraSlotsFn = useServerFn(updateExtraProfileSlotsAdmin);
 
   const loadData = async (showMainLoader = false) => {
     if (showMainLoader) setLoading(true);
@@ -111,6 +112,20 @@ function AdminIndexPage() {
     } catch (err: any) {
       console.error("Erreur lors de la modification du statut passeport:", err);
       toast.error(err?.message || "Erreur lors du déblocage/verrouillage du passeport.");
+      throw err;
+    }
+  };
+
+  const handleUpdateExtraSlots = async (userId: string, extraProfileSlots: number) => {
+    try {
+      const res = await updateExtraSlotsFn({ data: { userId, extraProfileSlots } });
+      if (res.success) {
+        toast.success("Quota de profils supplémentaires mis à jour.");
+        await loadData(false);
+      }
+    } catch (err: any) {
+      console.error("Erreur lors de la mise à jour des slots supplémentaires:", err);
+      toast.error(err?.message || "Erreur lors de la mise à jour du quota.");
       throw err;
     }
   };
@@ -189,6 +204,7 @@ function AdminIndexPage() {
             kpis={kpis}
             parents={parents}
             onTogglePassport={handleTogglePassport}
+            onUpdateExtraSlots={handleUpdateExtraSlots}
             onRefresh={() => loadData(false)}
             isRefreshing={isRefreshing}
           />

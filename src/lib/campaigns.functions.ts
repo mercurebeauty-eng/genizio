@@ -6,6 +6,7 @@ import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { listAllUsers } from "@/integrations/supabase/admin-users";
 import { getActiveSeason } from "./seasons.functions";
 import { insertSupervisorAssignments } from "./supervisors.functions";
+import { computeSupervisorQuota } from "./supervisor-quota";
 
 export interface Campaign {
   id: string;
@@ -593,7 +594,10 @@ export const getNgoDashboardData = createServerFn({ method: "GET" })
     for (const row of supervisorRows ?? []) {
       supervisorCounts.set(row.supervisor_user_id, (supervisorCounts.get(row.supervisor_user_id) ?? 0) + 1);
     }
-    const totalSupervisorQuota = 5 + (selected.extra_supervisors_quota ?? 0);
+    const totalSupervisorQuota = computeSupervisorQuota({
+      referenceCreatedAt: selected.created_at,
+      extraQuota: selected.extra_supervisors_quota,
+    });
 
     return {
       campaigns: campaigns as Campaign[],
@@ -678,7 +682,10 @@ export const assignCampaignSupervisor = createServerFn({ method: "POST" })
       .select("id")
       .eq("supervisor_user_id", supervisor.id);
     const currentCount = existingAssignments?.length ?? 0;
-    const quota = 5 + (campaign.extra_supervisors_quota ?? 0);
+    const quota = computeSupervisorQuota({
+      referenceCreatedAt: campaign.created_at,
+      extraQuota: campaign.extra_supervisors_quota,
+    });
     const slotsLeft = Math.max(0, quota - currentCount);
     const toAssign = Math.min(data.count, slotsLeft, unsupervisedChildIds.length);
 

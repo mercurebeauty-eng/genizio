@@ -885,7 +885,7 @@ function CTASection() {
           </a>
         </div>
         <p className="mt-6 text-[11px] font-semibold text-white/50">
-          Gratuit pour 5 profils enfants · Aucune carte bancaire demandée
+          1 profil enfant gratuit · 5 000 FCFA les 3 premiers mois par profil supplémentaire · Aucune carte bancaire demandée
         </p>
       </div>
     </section>

@@ -62,7 +62,7 @@ function buildWelcomeEmailHtml(firstName: string, appLink: string, whatsappLink:
 
   <!-- Préheader (texte caché, visible seulement dans l'aperçu de la boîte de réception) -->
   <div style="display:none; max-height:0; overflow:hidden; mso-hide:all; font-size:1px; line-height:1px; color:#F3F1FA;">
-    5 profils gratuits, des défis illimités et Naya à ses côtés. On démarre l'aventure ?
+    1 profil gratuit, des défis illimités et Naya à ses côtés. On démarre l'aventure ?
     &#8203;&#847; &#8203;&#847; &#8203;&#847; &#8203;&#847; &#8203;&#847; &#8203;&#847; &#8203;&#847; &#8203;&#847; &#8203;&#847; &#8203;&#847;
   </div>
 
@@ -217,7 +217,7 @@ function buildWelcomeEmailHtml(firstName: string, appLink: string, whatsappLink:
                           </table>
                         </td>
                         <td valign="top" style="padding:0 0 16px 12px; font-family:Arial, Helvetica, sans-serif; font-size:14px; line-height:20px; color:#3B3856;">
-                          Créez le profil de votre enfant <span style="color:#6B6B85;">(gratuit pour les 5 premiers)</span>
+                          Créez le profil de votre enfant <span style="color:#6B6B85;">(le premier est gratuit)</span>
                         </td>
                       </tr>
                       <tr>
@@ -281,7 +281,7 @@ function buildWelcomeEmailHtml(firstName: string, appLink: string, whatsappLink:
                     </p>
                     <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
                       <tr>
-                        <td width="50%" valign="top" style="padding:0 8px 8px 0; font-family:Arial, Helvetica, sans-serif; font-size:13px; line-height:20px; color:#2E5B44;">✓ 5 profils enfants gratuits</td>
+                        <td width="50%" valign="top" style="padding:0 8px 8px 0; font-family:Arial, Helvetica, sans-serif; font-size:13px; line-height:20px; color:#2E5B44;">✓ 1 profil enfant gratuit</td>
                         <td width="50%" valign="top" style="padding:0 0 8px 8px; font-family:Arial, Helvetica, sans-serif; font-size:13px; line-height:20px; color:#2E5B44;">✓ Défis illimités</td>
                       </tr>
                       <tr>
@@ -290,7 +290,7 @@ function buildWelcomeEmailHtml(firstName: string, appLink: string, whatsappLink:
                       </tr>
                     </table>
                     <p style="margin:16px 0 0 0; font-family:Arial, Helvetica, sans-serif; font-size:12px; line-height:18px; color:#4E8064; font-style:italic;">
-                      Parce qu'aucun enfant ne devrait être privé de la chance de découvrir son potentiel.
+                      Besoin de plus d'un profil ? +5 000 FCFA/profil (prix de bienvenue, 3 premiers mois), puis 15 000 FCFA.
                     </p>
                   </td>
                 </tr>

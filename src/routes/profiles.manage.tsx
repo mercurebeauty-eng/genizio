@@ -9,6 +9,8 @@ import { GenizioLoader } from "@/components/GenizioLoader";
 import type { ChildProfile } from "@/components/profiles/shared";
 import { confirmDialog } from "@/components/ui/confirm-dialog";
 import { ArrowLeft, Lock, Phone } from "lucide-react";
+import { computeChildProfileQuota } from "@/lib/child-profile-quota";
+import { resolveExtraSlotPrice, formatXof, formatXofAmount, formatPromoDeadline, STANDARD_PRICE_XOF } from "@/lib/pricing";
 
 export const Route = createFileRoute("/profiles/manage")({
   component: ManageProfilesPage,
@@ -21,6 +23,9 @@ function ManageProfilesPage() {
   const [fetching, setFetching] = useState(true);
   const [editing, setEditing] = useState<ChildProfile | "new" | null>(null);
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
+
+  // Prix de bienvenue (3 premiers mois du compte) puis tarif standard — cf. src/lib/pricing.ts.
+  const slotPrice = resolveExtraSlotPrice(session?.user?.created_at);
 
   useEffect(() => {
     if (!loading && !session) navigate({ to: "/auth", replace: true });
@@ -96,13 +101,10 @@ function ManageProfilesPage() {
             </p>
           </div>
           {(() => {
-            // Pivot confirmé (2026-07-22) : paywall par slot retiré au profit d'une limite
-            // gratuite de 5 pour tous, monétisation via les Saisons. Slots bonus achetés avant
-            // ce pivot honorés via Math.max — cf. ProfileDialog.tsx pour le détail.
-            const BASE_FREE_LIMIT = 5;
-            const LEGACY_FREE_SLOTS = 2;
-            const extraSlots = (session?.user?.app_metadata?.extra_profile_slots as number) ?? 0;
-            const quota = Math.max(BASE_FREE_LIMIT, LEGACY_FREE_SLOTS + extraSlots);
+            const quota = computeChildProfileQuota({
+              accountCreatedAt: session?.user?.created_at,
+              extraSlots: (session?.user?.app_metadata?.extra_profile_slots as number) ?? 0,
+            });
             const atQuota = profiles.length >= quota;
             return (
               <button
@@ -158,12 +160,17 @@ function ManageProfilesPage() {
             </div>
             <div className="mb-6 rounded-2xl border border-ink/10 bg-surface p-5 shadow-sm">
               <p className="text-xs font-black uppercase tracking-widest text-ink/60 mb-1">Profil supplémentaire</p>
-              <p className="font-display text-balance text-3xl font-black text-ink">5 000 <span className="text-lg text-ink/60">FCFA</span></p>
+              <p className="font-display text-balance text-3xl font-black text-ink">{formatXofAmount(slotPrice.priceXof)} <span className="text-lg text-ink/60">FCFA</span></p>
+              {slotPrice.isPromo && slotPrice.promoEndsAt && (
+                <p className="mt-2 inline-flex items-center gap-1.5 rounded-full bg-emerald-100 px-3 py-1 text-[11px] font-black text-emerald-800">
+                  Prix de bienvenue — jusqu'au {formatPromoDeadline(slotPrice.promoEndsAt)}, puis {formatXof(STANDARD_PRICE_XOF)}
+                </p>
+              )}
               <p className="mt-2 text-xs text-ink/60 leading-relaxed">Débloqué manuellement après confirmation du paiement. Accès permanent.</p>
             </div>
             <a
               href={`https://wa.me/${import.meta.env.VITE_WHATSAPP_NUMBER || "33606433148"}?text=${encodeURIComponent(
-                `Bonjour, je souhaite débloquer un profil supplémentaire sur Génizio.\nCompte : ${session?.user?.email}\nMontant : 5 000 FCFA`
+                `Bonjour, je souhaite débloquer un profil supplémentaire sur Génizio.\nCompte : ${session?.user?.email}\nMontant : ${formatXof(slotPrice.priceXof)}`
               )}`}
               target="_blank" rel="noopener noreferrer"
               className="flex w-full items-center justify-center gap-2.5 rounded-2xl border border-ink/10 bg-[#25D366] py-3.5 font-bold text-sm text-white shadow-xl hover:-translate-y-0.5 active:translate-y-0 active:shadow-none transition-all"
