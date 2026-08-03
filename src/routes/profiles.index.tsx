@@ -27,6 +27,8 @@ import { DifficultyBadge } from "@/components/challenges/DifficultyBadge";
 import { MarkdownContent } from "@/components/ui/markdown-content";
 import { COUNTRIES } from "@/lib/countries";
 import { RELATIONSHIP_TYPES } from "@/lib/relationship-types";
+import { computeChildProfileQuota } from "@/lib/child-profile-quota";
+import { resolveExtraSlotPrice, formatXof, formatXofAmount, formatPromoDeadline, STANDARD_PRICE_XOF } from "@/lib/pricing";
 import { GenizioLoader } from "@/components/GenizioLoader";
 import { toast } from "sonner";
 
@@ -68,6 +70,9 @@ function DashboardPage() {
   const [creating, setCreating] = useState(false);
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
   const [activeProducts, setActiveProducts] = useState<any[]>([]);
+
+  // Prix de bienvenue (3 premiers mois du compte) puis tarif standard — cf. src/lib/pricing.ts.
+  const slotPrice = resolveExtraSlotPrice(session?.user?.created_at);
 
   const hasRefreshedSessionRef = useRef(false);
   useEffect(() => {
@@ -339,13 +344,10 @@ function DashboardPage() {
                 const currentLevel = Math.floor(totalXP / 500) + 1;
                 const xpPct = Math.min(100, (totalXP % 500) / 500 * 100);
 
-                // Pivot confirmé (2026-07-22) : paywall par slot retiré au profit d'une limite
-                // gratuite de 5 pour tous, monétisation via les Saisons. Slots bonus achetés
-                // avant ce pivot honorés via Math.max — cf. ProfileDialog.tsx pour le détail.
-                const BASE_FREE_LIMIT = 5;
-                const LEGACY_FREE_SLOTS = 2;
-                const extraSlots = (session?.user?.app_metadata?.extra_profile_slots as number) ?? 0;
-                const quota = Math.max(BASE_FREE_LIMIT, LEGACY_FREE_SLOTS + extraSlots);
+                const quota = computeChildProfileQuota({
+                  accountCreatedAt: session?.user?.created_at,
+                  extraSlots: (session?.user?.app_metadata?.extra_profile_slots as number) ?? 0,
+                });
                 const atQuota = profiles.length >= quota;
 
                 // Verrouillage (2026-07-30) : posé par removeCampaignEducator quand la relation
@@ -746,8 +748,13 @@ function DashboardPage() {
             <div className="mb-6 rounded-2xl border border-ink/10 bg-surface p-5">
               <p className="text-xs font-black uppercase tracking-widest text-ink/60 mb-1">Profil supplémentaire</p>
               <p className="font-display text-balance text-3xl font-black text-ink">
-                5 000 <span className="text-lg text-ink/60">FCFA</span>
+                {formatXofAmount(slotPrice.priceXof)} <span className="text-lg text-ink/60">FCFA</span>
               </p>
+              {slotPrice.isPromo && slotPrice.promoEndsAt && (
+                <p className="mt-2 inline-flex items-center gap-1.5 rounded-full bg-emerald-100 px-3 py-1 text-[11px] font-black text-emerald-800">
+                  Prix de bienvenue — jusqu'au {formatPromoDeadline(slotPrice.promoEndsAt)}, puis {formatXof(STANDARD_PRICE_XOF)}
+                </p>
+              )}
               <p className="mt-2 text-xs text-ink/60 leading-relaxed">
                 Chaque nouveau slot est débloqué manuellement après confirmation du paiement via WhatsApp. Votre accès est permanent.
               </p>
@@ -757,7 +764,7 @@ function DashboardPage() {
             <ol className="mb-6 space-y-2 text-sm font-medium text-ink/80">
               {[
                 "Envoyez le message WhatsApp ci-dessous",
-                "Effectuez le virement de 5 000 FCFA",
+                `Effectuez le virement de ${formatXof(slotPrice.priceXof)}`,
                 "L'administrateur active votre slot dans les 24h",
               ].map((step, i) => (
                 <li key={i} className="flex items-start gap-3">
@@ -772,7 +779,7 @@ function DashboardPage() {
             {/* WhatsApp CTA */}
             <a
               href={`https://wa.me/${import.meta.env.VITE_WHATSAPP_NUMBER || "33606433148"}?text=${encodeURIComponent(
-                `Bonjour, je souhaite débloquer un profil supplémentaire sur Génizio.\nCompte : ${session?.user?.email}\nMontant : 5 000 FCFA`
+                `Bonjour, je souhaite débloquer un profil supplémentaire sur Génizio.\nCompte : ${session?.user?.email}\nMontant : ${formatXof(slotPrice.priceXof)}`
               )}`}
               target="_blank"
               rel="noopener noreferrer"

@@ -86,8 +86,8 @@ function AProposPage() {
           <h2 className="font-display text-xl font-extrabold">Passer de la lecture à la pratique</h2>
           <p className="mt-2 text-sm font-medium leading-relaxed text-ink/70">
             Génizio propose à votre enfant des défis concrets adaptés à son âge et à ses centres d'intérêt, et
-            construit la carte de ses talents à partir de ce qu'il réalise vraiment. Gratuit jusqu'à 5 profils
-            enfants.
+            construit la carte de ses talents à partir de ce qu'il réalise vraiment. 1 profil enfant gratuit, puis
+            5 000 FCFA les 3 premiers mois (ensuite 15 000 FCFA) par profil supplémentaire.
           </p>
           <Link
             to="/auth"

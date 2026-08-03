@@ -23,6 +23,7 @@ interface AdminExecutiveTabProps {
   kpis: ExecutiveKPIs;
   parents: ParentBIRC[];
   onTogglePassport?: (childId: string, unlock: boolean) => Promise<void>;
+  onUpdateExtraSlots?: (userId: string, extraProfileSlots: number) => Promise<void>;
   onRefresh?: () => void;
   isRefreshing?: boolean;
 }
@@ -31,11 +32,33 @@ export function AdminExecutiveTab({
   kpis,
   parents,
   onTogglePassport,
+  onUpdateExtraSlots,
   onRefresh,
   isRefreshing = false,
 }: AdminExecutiveTabProps) {
   const [pendingPassportChildId, setPendingPassportChildId] = useState<string | null>(null);
   const [enrollModalChild, setEnrollModalChild] = useState<{ id: string; name: string; currentCampaignName?: string | null } | null>(null);
+  const [pendingSlotsUserId, setPendingSlotsUserId] = useState<string | null>(null);
+  const [slotsDraft, setSlotsDraft] = useState<Record<string, number>>({});
+
+  const handleSaveExtraSlots = async (userId: string) => {
+    if (!onUpdateExtraSlots || pendingSlotsUserId === userId) return;
+    const value = slotsDraft[userId];
+    if (value === undefined) return;
+    setPendingSlotsUserId(userId);
+    try {
+      await onUpdateExtraSlots(userId, value);
+      setSlotsDraft((prev) => {
+        const next = { ...prev };
+        delete next[userId];
+        return next;
+      });
+    } catch (err: any) {
+      toast.error("Erreur lors de la mise à jour du quota de profils: " + (err?.message || "Erreur inconnue"));
+    } finally {
+      setPendingSlotsUserId(null);
+    }
+  };
 
   const handleTogglePassportClick = async (childId: string, unlock: boolean) => {
     if (!onTogglePassport || pendingPassportChildId === childId) return;
@@ -164,7 +187,8 @@ export function AdminExecutiveTab({
                 <th className="pb-3 pr-4">WhatsApp</th>
                 <th className="pb-3 pr-4">Enfants associés & Passeports</th>
                 <th className="pb-3 pr-4 text-center">Saisons</th>
-                <th className="pb-3 text-center">Défis (Total / Validés)</th>
+                <th className="pb-3 pr-4 text-center">Défis (Total / Validés)</th>
+                <th className="pb-3 text-center">Profils suppl.</th>
               </tr>
             </thead>
             <tbody className="divide-y-2 divide-ink/5">
@@ -318,13 +342,38 @@ export function AdminExecutiveTab({
                     </td>
 
                     {/* Challenges Stats */}
-                    <td className="py-4 text-center whitespace-nowrap">
+                    <td className="py-4 pr-4 text-center whitespace-nowrap">
                       <span className="rounded-full bg-brand/10 px-2.5 py-1 text-xs font-bold text-brand">
                         {parent.challengeCount} total
                       </span>
                       <span className="rounded-full bg-leaf/10 px-2.5 py-1 text-xs font-bold text-leaf ml-1.5">
                         {parent.completedCount} validés
                       </span>
+                    </td>
+
+                    {/* Profils enfants supplémentaires — quota grand-pèré/1-gratuit, cf. src/lib/child-profile-quota.ts */}
+                    <td className="py-4 text-center whitespace-nowrap">
+                      <div className="flex items-center justify-center gap-1.5">
+                        <input
+                          type="number"
+                          min={0}
+                          max={50}
+                          value={slotsDraft[parent.id] ?? parent.extraSlots}
+                          onChange={(e) =>
+                            setSlotsDraft((prev) => ({ ...prev, [parent.id]: Math.max(0, parseInt(e.target.value) || 0) }))
+                          }
+                          className="w-14 bg-surface border border-ink/10 rounded-xl px-2 py-1 text-xs font-bold text-ink text-center"
+                        />
+                        {slotsDraft[parent.id] !== undefined && slotsDraft[parent.id] !== parent.extraSlots && (
+                          <button
+                            onClick={() => handleSaveExtraSlots(parent.id)}
+                            disabled={pendingSlotsUserId === parent.id}
+                            className="inline-flex items-center rounded-xl bg-ink text-white px-2 py-1 text-[10px] font-bold hover:bg-ink/90 transition-colors disabled:opacity-50 cursor-pointer"
+                          >
+                            {pendingSlotsUserId === parent.id ? <Loader2 className="size-3 animate-spin" /> : "OK"}
+                          </button>
+                        )}
+                      </div>
                     </td>
                   </tr>
                 );

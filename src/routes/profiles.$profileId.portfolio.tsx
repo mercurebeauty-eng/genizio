@@ -741,35 +741,15 @@ function PortfolioPage() {
                   <Star className="size-4 fill-emerald-500 text-emerald-500" />
                   <span>Certificat de Saison (Disponible à la fin)</span>
                 </div>
-              </div>
-            </div>
-          ) : activeSeason && activeSeason.id !== "default-fallback-season" ? (
-            <div className="rounded-3xl border border-ink/10 bg-white p-6 shadow-xl flex flex-col items-center justify-between gap-6 relative overflow-hidden group">
-              <div className="absolute inset-0 bg-gradient-to-br from-ink/5 to-transparent z-0"></div>
-              
-              <div className="flex items-start gap-4 relative z-10 w-full opacity-60 grayscale group-hover:grayscale-0 group-hover:opacity-100 transition-all duration-500">
-                <div className="grid size-12 place-items-center rounded-2xl bg-ink/10 border border-ink/20 text-ink shadow-sm shrink-0">
-                  <Rocket className="size-6" />
-                </div>
-                <div className="flex-1">
-                  <div className="flex flex-wrap items-center justify-between gap-2">
-                    <h3 className="font-display text-balance text-lg font-black text-ink">{activeSeason.title}</h3>
-                    <span className="rounded-full border bg-ink/10 border-ink/20 text-ink/60 px-2.5 py-0.5 text-[9px] font-black uppercase tracking-wider flex items-center gap-1">
-                      Non Inscrit
-                    </span>
-                  </div>
-                  <p className="text-xs font-semibold text-ink/70 mt-1 leading-relaxed max-w-xl">
-                    {activeSeason.description || "Inscrivez votre enfant pour débloquer le Portfolio d'Impact et valider ce trimestre !"}
-                  </p>
-                </div>
-              </div>
-              <div className="w-full shrink-0 flex flex-col gap-2 relative z-10">
+                {/* La Saison est désormais incluse automatiquement (2026-08-03) — ce lien reste
+                    le seul point d'entrée pour un don diaspora/RSE (redeemSponsorshipToken),
+                    dont l'unique déclencheur était auparavant la carte "Non Inscrit" supprimée
+                    ci-dessus. */}
                 <button
                   onClick={() => setIsEnrollmentModalOpen(true)}
-                  className="w-full text-center inline-flex items-center justify-center gap-2 rounded-2xl border-none bg-brand px-5 py-3 text-sm font-black text-white shadow-md transition-all hover:bg-brand/90 hover:-translate-y-0.5 cursor-pointer"
+                  className="text-center text-[11px] font-bold text-ink/40 hover:text-ink/70 transition-colors cursor-pointer"
                 >
-                  <Rocket className="size-4" />
-                  <span>Rejoindre la Saison ({activeSeason.price_xof.toLocaleString()} FCFA)</span>
+                  J'ai un code de parrainage
                 </button>
               </div>
             </div>

@@ -17,6 +17,8 @@ import { Building2, Users, Target, ShieldCheck, Loader2, UserPlus, AlertCircle, 
 import { toast } from "sonner";
 import { GenizioLoader } from "@/components/GenizioLoader";
 import { CampaignLinkCard } from "@/components/campaigns/CampaignLinkCard";
+import { computeSupervisorQuota } from "@/lib/supervisor-quota";
+import { resolveExtraSlotPrice, formatXof, formatPromoDeadline, STANDARD_PRICE_XOF } from "@/lib/pricing";
 
 export const Route = createFileRoute("/organisation/")({
   component: OrganisationDashboard,
@@ -244,7 +246,7 @@ function OrganisationDashboard() {
           <div>
             <h2 className="text-xl sm:text-2xl font-display font-black text-ink">Superviseurs</h2>
             <p className="text-xs sm:text-sm text-ink/60 font-medium mt-1">
-              Un superviseur suit jusqu'à 5 enfants de votre cohorte via son propre tableau de bord dédié.
+              Un superviseur suit jusqu'à {computeSupervisorQuota({ referenceCreatedAt: activeCampaign.created_at, extraQuota: 0 })} enfants de votre cohorte via son propre tableau de bord dédié.
             </p>
           </div>
           <button
@@ -266,7 +268,7 @@ function OrganisationDashboard() {
                   <p className="text-[10px] text-ink/50 font-bold mt-0.5">Superviseur référent</p>
                 </div>
                 <span className="px-3 py-1 rounded-xl bg-brand/10 text-brand text-xs font-black">
-                  {s.assignedCount} / 5 enfants
+                  {s.assignedCount} / {stats?.totalSupervisorQuota ?? 0} enfants
                 </span>
               </div>
             ))}
@@ -287,7 +289,7 @@ function OrganisationDashboard() {
                 {supervisors.map((s) => (
                   <tr key={s.email} className="hover:bg-surface/30 transition-colors">
                     <td className="p-4 px-6 font-bold text-sm text-ink">{s.email}</td>
-                    <td className="p-4 px-6 text-right font-black text-sm text-brand">{s.assignedCount} / 5</td>
+                    <td className="p-4 px-6 text-right font-black text-sm text-brand">{s.assignedCount} / {stats?.totalSupervisorQuota ?? 0}</td>
                   </tr>
                 ))}
                 {supervisors.length === 0 && (
@@ -303,11 +305,16 @@ function OrganisationDashboard() {
         </div>
       </div>
 
-      <EducatorsSection campaignId={activeCampaign.id} maxEducators={activeCampaign.max_educators ?? 0} />
+      <EducatorsSection
+        campaignId={activeCampaign.id}
+        campaignCreatedAt={activeCampaign.created_at}
+        maxEducators={activeCampaign.max_educators ?? 0}
+      />
 
       {isAssignModalOpen && (
         <AssignSupervisorModal
           campaignId={activeCampaign.id}
+          campaignCreatedAt={activeCampaign.created_at}
           onClose={() => setIsAssignModalOpen(false)}
           onSuccess={() => { setIsAssignModalOpen(false); loadData(selectedCampaignId); }}
         />
@@ -461,10 +468,22 @@ function ManagerCodesModal({ campaign, onClose }: { campaign: Campaign; onClose:
   );
 }
 
-function AssignSupervisorModal({ campaignId, onClose, onSuccess }: { campaignId: string, onClose: () => void, onSuccess: () => void }) {
+function AssignSupervisorModal({
+  campaignId,
+  campaignCreatedAt,
+  onClose,
+  onSuccess,
+}: {
+  campaignId: string;
+  campaignCreatedAt: string;
+  onClose: () => void;
+  onSuccess: () => void;
+}) {
   const [email, setEmail] = useState("");
   const [count, setCount] = useState(5);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const slotPrice = resolveExtraSlotPrice(campaignCreatedAt);
+  const supervisorFloor = computeSupervisorQuota({ referenceCreatedAt: campaignCreatedAt, extraQuota: 0 });
 
   const assignFn = useServerFn(assignCampaignSupervisor);
 
@@ -506,7 +525,8 @@ function AssignSupervisorModal({ campaignId, onClose, onSuccess }: { campaignId:
           <div className="bg-amber-50 border border-amber-200/80 rounded-2xl p-4 flex gap-3">
             <AlertCircle className="size-5 text-amber-600 shrink-0 mt-0.5" />
             <p className="text-xs font-bold text-amber-900 leading-relaxed">
-              Un superviseur ne peut gérer que 5 enfants maximum. Au-delà, un supplément de 7 000 FCFA / superviseur s'applique.
+              Un superviseur ne peut gérer que {supervisorFloor} enfant{supervisorFloor > 1 ? "s" : ""} maximum. Au-delà, un supplément de {formatXof(slotPrice.priceXof)} / superviseur s'applique
+              {slotPrice.isPromo && slotPrice.promoEndsAt ? ` (prix de bienvenue jusqu'au ${formatPromoDeadline(slotPrice.promoEndsAt)}, puis ${formatXof(STANDARD_PRICE_XOF)})` : ""}.
             </p>
           </div>
           <div>
@@ -534,7 +554,15 @@ function AssignSupervisorModal({ campaignId, onClose, onSuccess }: { campaignId:
 // des profils (comme un parent), pas un simple regard en lecture seule. D'où le prérequis
 // affiché : la personne doit d'abord avoir choisi "Éducateur" comme lien avec l'enfant dans son
 // propre compte (Réglages) avant de pouvoir être ajoutée ici — addCampaignEducator refuse sinon.
-function EducatorsSection({ campaignId, maxEducators }: { campaignId: string; maxEducators: number }) {
+function EducatorsSection({
+  campaignId,
+  campaignCreatedAt,
+  maxEducators,
+}: {
+  campaignId: string;
+  campaignCreatedAt: string;
+  maxEducators: number;
+}) {
   const [educators, setEducators] = useState<CampaignEducator[]>([]);
   const [loading, setLoading] = useState(true);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
@@ -648,6 +676,7 @@ function EducatorsSection({ campaignId, maxEducators }: { campaignId: string; ma
       {isAddModalOpen && (
         <AddEducatorModal
           campaignId={campaignId}
+          campaignCreatedAt={campaignCreatedAt}
           onClose={() => setIsAddModalOpen(false)}
           onSuccess={() => { setIsAddModalOpen(false); load(); }}
         />
@@ -656,10 +685,21 @@ function EducatorsSection({ campaignId, maxEducators }: { campaignId: string; ma
   );
 }
 
-function AddEducatorModal({ campaignId, onClose, onSuccess }: { campaignId: string; onClose: () => void; onSuccess: () => void }) {
+function AddEducatorModal({
+  campaignId,
+  campaignCreatedAt,
+  onClose,
+  onSuccess,
+}: {
+  campaignId: string;
+  campaignCreatedAt: string;
+  onClose: () => void;
+  onSuccess: () => void;
+}) {
   const [email, setEmail] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const addFn = useServerFn(addCampaignEducator);
+  const slotPrice = resolveExtraSlotPrice(campaignCreatedAt);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -697,7 +737,9 @@ function AddEducatorModal({ campaignId, onClose, onSuccess }: { campaignId: stri
           <div className="bg-amber-50 border border-amber-200/80 rounded-2xl p-4 flex gap-3">
             <AlertCircle className="size-5 text-amber-600 shrink-0 mt-0.5" />
             <p className="text-xs font-bold text-amber-900 leading-relaxed">
-              Un supplément de 7 000 FCFA / éducateur s'applique. Si vous retirez un éducateur plus tard, l'accès aux enfants de cette campagne se verrouille — leur progression reste intacte.
+              Un supplément de {formatXof(slotPrice.priceXof)} / éducateur s'applique
+              {slotPrice.isPromo && slotPrice.promoEndsAt ? ` (prix de bienvenue jusqu'au ${formatPromoDeadline(slotPrice.promoEndsAt)}, puis ${formatXof(STANDARD_PRICE_XOF)})` : ""}.
+              Si vous retirez un éducateur plus tard, l'accès aux enfants de cette campagne se verrouille — leur progression reste intacte.
             </p>
           </div>
           <div>

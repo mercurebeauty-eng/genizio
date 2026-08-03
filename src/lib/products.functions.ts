@@ -348,8 +348,38 @@ export const togglePassportUnlock = createServerFn({ method: "POST" })
     return { ok: true, unlocked: data.unlock };
   });
 
-// grantProfileSlot (vente admin de slots à 5000 FCFA) retiré — pivot confirmé (2026-07-22) :
-// le paywall par slot est abandonné au profit d'une limite gratuite de 5 pour tous, la
-// monétisation passant par les Saisons. extra_profile_slots reste lu (ProfileDialog.tsx,
-// profiles.index.tsx, profiles.manage.tsx, check_child_profile_quota) pour honorer les slots
-// déjà achetés avant ce pivot, mais plus aucun moyen d'en accorder de nouveaux.
+// Reconstruit (2026-08-03) — le pivot du 2026-07-22 avait retiré ce mécanisme au profit d'une
+// limite gratuite de 5 pour tous ; le retour à "1 gratuit + slots payants" (cf.
+// child-profile-quota.ts) le rend à nouveau nécessaire. Sans lui, aucune écriture de
+// extra_profile_slots n'existait plus nulle part dans le repo (vérifié) — la modale de paywall
+// (5000 FCFA via WhatsApp) n'avait donc aucune suite possible autrement qu'en éditant
+// raw_app_meta_data à la main dans le tableau Supabase. Mirroir de updateCampaignExtraQuotaAdmin
+// (campaigns.functions.ts), même mécanique manuelle : l'admin ajuste ce chiffre après avoir
+// confirmé le paiement WhatsApp/Mobile Money hors-app.
+export const updateExtraProfileSlotsAdmin = createServerFn({ method: "POST" })
+  .middleware([requireAdmin])
+  .validator((input: unknown) =>
+    z
+      .object({
+        userId: z.string().uuid(),
+        extraProfileSlots: z.number().int().min(0).max(50),
+      })
+      .parse(input)
+  )
+  .handler(async ({ data }) => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+
+    // Lecture avant écriture plutôt qu'un objet partiel : app_metadata peut contenir d'autres
+    // clés posées par GoTrue (provider/providers d'un compte Google) qu'il ne faut pas écraser.
+    const { data: userRes, error: getErr } = await supabaseAdmin.auth.admin.getUserById(data.userId);
+    if (getErr || !userRes?.user) {
+      throw new Error(`Utilisateur introuvable: ${getErr?.message ?? data.userId}`);
+    }
+
+    const { error: updateErr } = await supabaseAdmin.auth.admin.updateUserById(data.userId, {
+      app_metadata: { ...(userRes.user.app_metadata ?? {}), extra_profile_slots: data.extraProfileSlots },
+    });
+    if (updateErr) throw new Error(`Erreur lors de la mise à jour du quota: ${updateErr.message}`);
+
+    return { success: true, userId: data.userId, extraProfileSlots: data.extraProfileSlots };
+  });

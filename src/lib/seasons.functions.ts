@@ -144,8 +144,13 @@ export const getChildEnrolledSeason = createServerFn({ method: "GET" })
 
       if (error || !enrollment || !enrollment.seasons) return null;
 
+      // Pas de check "season.id === DEFAULT_FALLBACK_SEASON.id" ici : cet UUID a été utilisé le
+      // 2026-07-26 pour semer la VRAIE Saison 1 en base (résolution d'une contrainte de clé
+      // étrangère, cf. 20260726120000_b2b_campaigns_schema.sql:10-16) — un tel check nullait à
+      // tort tout enfant réellement inscrit à la saison courante depuis cette date. Le garde-fou
+      // ci-dessus (`!enrollment.seasons`) suffit : la FK season_id garantit qu'une ligne
+      // season_enrollments ne référence jamais une saison inexistante.
       const season = enrollment.seasons as Season;
-      if (season.id === DEFAULT_FALLBACK_SEASON.id) return null;
 
       const { start, end } = resolveEnrollmentWindow(
         enrollment.enrolled_at,

@@ -1384,14 +1384,14 @@ pâtisserie des fractions", mission d'investigation Naya, cause `METHOD_MISMATCH
 maintenant la phrase traduite correcte après le fix — retrouvé et confirmé en direct dans le
 navigateur, pas seulement en théorie. 6 tests dédiés, `tsc`/tests propres.
 
-## D�cision #47 : Int�gration des Saisons Trimestrielles & Fiabilisation Naya
-**D�cision (2026-07-25)** : Introduction des Saisons Trimestrielles (ex: "Saison 1: Les Penseurs & Inventeurs") factur�es � 5 000 FCFA. Ce m�canisme n'est pas qu'une surcouche visuelle mais modifie intrins�quement le fonctionnement de l'IA (le g�n�rateur) en lui ajoutant des instructions de th�matique, SEULEMENT si l'enfant est inscrit.
-**D�tails UI** : Ajout d'un badge "En Cours" pr�s du pr�nom dans le profil (header) ; ajout d'une carte "Certificat Trimestriel" dans le Portfolio, positionn�e au-dessus de la carte du passeport certifi� � 50 000 FCFA. Ajout d'un s�lecteur de "Mat�riel" (Maison, Ext�rieur, Magasin, Mixte) pour filtrer explicitement le mat�riel autoris�.
-**Pourquoi** : Demande explicite de l'utilisateur. Le filtre par "Saison" modifie le g�n�rateur de d�fis de fa�on transparente et ajoute une composante narrative aux d�fis propos�s (en plus du domaine de base).
-**R�solution technique** : 
-- Helper getChildEnrolledSeason cr�� avec createServerFn (TanStack) pour l'API.
-- L'injection JSON pour la g�n�ration des d�fis acad�miques "secrets" a �t� corrig�e pour fusionner toutes les contraintes de contexte.
-- R�solution d'un bug o� ctiveSeason et enrollment �taient d�finis en double via destructuring dans challenges.functions.ts causant un crash local de la compilation TypeScript. Tous les types TypeScript v�rifi�s avec 
+## D�cision #47 : Int�gration des Saisons Trimestrielles & Fiabilisation Naya
+**D�cision (2026-07-25)** : Introduction des Saisons Trimestrielles (ex: "Saison 1: Les Penseurs & Inventeurs") factur�es � 5 000 FCFA. Ce m�canisme n'est pas qu'une surcouche visuelle mais modifie intrins�quement le fonctionnement de l'IA (le g�n�rateur) en lui ajoutant des instructions de th�matique, SEULEMENT si l'enfant est inscrit.
+**D�tails UI** : Ajout d'un badge "En Cours" pr�s du pr�nom dans le profil (header) ; ajout d'une carte "Certificat Trimestriel" dans le Portfolio, positionn�e au-dessus de la carte du passeport certifi� � 50 000 FCFA. Ajout d'un s�lecteur de "Mat�riel" (Maison, Ext�rieur, Magasin, Mixte) pour filtrer explicitement le mat�riel autoris�.
+**Pourquoi** : Demande explicite de l'utilisateur. Le filtre par "Saison" modifie le g�n�rateur de d�fis de fa�on transparente et ajoute une composante narrative aux d�fis propos�s (en plus du domaine de base).
+**R�solution technique** : 
+- Helper getChildEnrolledSeason cr�� avec createServerFn (TanStack) pour l'API.
+- L'injection JSON pour la g�n�ration des d�fis acad�miques "secrets" a �t� corrig�e pour fusionner toutes les contraintes de contexte.
+- R�solution d'un bug o� ctiveSeason et enrollment �taient d�finis en double via destructuring dans challenges.functions.ts causant un crash local de la compilation TypeScript. Tous les types TypeScript v�rifi�s avec 
 px tsc --noEmit.
 
 ## Décision #48 : Modèle "Rolling" pour les Saisons & Inscription Admin Manuelle
@@ -1401,3 +1401,21 @@ px tsc --noEmit.
 - L'UI de la carte Saison affiche désormais "Démarrée le [Date]" et "Fin prévue : [Date]" calculées individuellement.
 - Ajout d'une fonctionnalité dans AdminExecutiveTab permettant à un administrateur d'inscrire manuellement un enfant à une saison en cours sans passer par la boutique, avec une AdminSeasonEnrollmentModal dédiée.
 **Pourquoi** : Favorise l'acquisition en continu, adapté au B2C éducatif (SaaS), tout en maintenant une expérience personnalisée (le chrono de Naya s'adapte à l'enfant).
+
+## Décision #49 : Retour à "1 profil gratuit + slot payant", Saison incluse automatiquement, prix de bienvenue dégressif
+
+**Décision (2026-08-03)** : Inverse le pivot du 2026-07-22 (décision non numérotée à l'époque, documentée dans un commentaire de `products.functions.ts`) qui avait abandonné le paywall par slot au profit de "5 profils gratuits pour tous, monétisation via les Saisons". Nouveau modèle : **1 profil enfant gratuit par compte**, chaque profil supplémentaire coûte **5 000 FCFA pendant les 3 premiers mois du compte** (prix de bienvenue), **15 000 FCFA ensuite** — prix et échéance toujours affichés, jamais implicites. La Saison trimestrielle (thème IA, badge, certificat) devient **incluse automatiquement** avec chaque profil, remplaçant son ancien palier payant séparé (10 000 FCFA). Même bascule côté organisations : la base gratuite des Superviseurs passe de 5 à 1, les tarifs Superviseur/Éducateur passent de 7 000 à 5 000 FCFA (même dégressivité 3 mois → 15 000 FCFA).
+
+**Grand-père** : tout compte (ou campagne) créé avant le 2026-08-04T00:00:00Z garde son ancien plancher de 5 gratuits. Non-rétroactif par construction — les triggers concernés (`check_child_profile_quota`, `check_supervisor_quota`) ne gatent que la création d'une NOUVELLE ligne, jamais les profils/assignations déjà existants.
+
+**Alternatives rejetées** :
+- *Garder le modèle "5 gratuits + Saison payante"* : rejeté par l'utilisateur après avoir lu une analyse tierce sur la confusion "5 prix différents" — l'app en avait déjà 4-5 en circulation (Saison 10k, Passeport 50k, Superviseur/Éducateur 7k, profil supplémentaire dormant à 5k jamais réactivé) sans compter les kits boutique.
+- *`GREATEST(base_floor, 2 + extra_slots)` (juste ajouter un IF à l'ancienne formule)* : rejeté — piège trouvé en concevant le changement : un compte grand-pèré déjà à 5 aurait pu acheter jusqu'à 3 slots sans que son plafond bouge (`2+3=5 ≤ 5`). Remplacé par une forme strictement additive (`base_floor + extra_slots`), qui ne rend jamais moins que l'ancienne formule à personne.
+- *Fenêtre de promo globale (même date limite pour tous)* : rejeté par l'utilisateur au profit d'un compte à rebours personnel par compte (3 mois depuis `created_at`), plus proche d'un vrai "prix de bienvenue" que d'une offre de lancement.
+- *Accès Saison permanent une fois inclus* : rejeté — l'utilisateur a choisi de garder la fenêtre roulante de 3 mois inchangée (elle redémarre simplement sans paiement à chaque réinscription), pour ne pas ajouter un mécanisme de reconduction automatique à un chantier déjà large.
+
+**Bug trouvé et corrigé en marge** (pas demandé, découvert en traçant le mécanisme d'inscription) : `getChildEnrolledSeason` (`seasons.functions.ts`) comparait `season.id` à l'UUID de secours `DEFAULT_FALLBACK_SEASON` pour détecter une saison "fantôme" — sauf que la migration du 26/07 avait délibérément semé la VRAIE Saison 1 sur cet UUID exact (pour résoudre une contrainte de clé étrangère différente). Résultat, depuis cette date : tout enfant réellement inscrit était traité comme "non inscrit" par cette fonction précisément, badge et certificat ne s'affichaient jamais — vérifié en direct en base, 100% des inscriptions existantes étaient affectées. Le check était devenu obsolète et a été retiré.
+
+**Reconstruit dans la foulée** : `updateExtraProfileSlotsAdmin` (aucun outil admin n'existait plus pour accorder `extra_profile_slots` depuis la suppression de `grantProfileSlot` en juillet — vérifié par recherche complète du repo, zéro écriture nulle part) et une nouvelle colonne "Profils suppl." dans `AdminExecutiveTab`.
+
+**Vérifié** : 18 nouveaux tests unitaires (`child-profile-quota.test.ts`, `supervisor-quota.test.ts`, `pricing.test.ts`), suite complète 254 tests verte, `tsc` propre. En base : trigger d'auto-inscription testé par insertion réelle (ligne `season_enrollments` créée avec `payment_status='included'`, nettoyée après coup), backfill confirmé (0 profil sans inscription après migration), et requête directe confirmant que le bug ci-dessus affectait bien 100% des 9 inscriptions existantes en prod avant le fix. Pages marketing publiques (`/`, `/a-propos`) vérifiées en direct dans le navigateur avec le nouveau texte de prix. Écrans authentifiés (modale de mise à niveau, badge Saison, éditeur admin) non vérifiés visuellement faute de compte de test disponible en session — logique validée via DB directe et tests unitaires uniquement.
