@@ -1444,12 +1444,13 @@ export const updateChallenge = createServerFn({ method: "POST" })
       notes?: string | null;
       completed_at?: string | null;
     } = {};
+    if (data.status === "completed" || data.progress === 100) {
+      throw new Error("Un défi ne peut pas être terminé manuellement sans preuve. Utilisez le mode enfant pour soumettre une preuve (photo ou déclarative).");
+    }
+
     if (data.status !== undefined) {
       patch.status = data.status;
-      if (data.status === "completed") {
-        patch.progress = 100;
-        patch.completed_at = new Date().toISOString();
-      } else if (data.status === "todo") {
+      if (data.status === "todo") {
         patch.progress = 0;
         patch.completed_at = null;
       } else {
@@ -1458,10 +1459,7 @@ export const updateChallenge = createServerFn({ method: "POST" })
     }
     if (data.progress !== undefined) {
       patch.progress = data.progress;
-      if (data.progress === 100) {
-        patch.status = "completed";
-        patch.completed_at = new Date().toISOString();
-      } else if (data.progress > 0) {
+      if (data.progress > 0) {
         patch.status = "in_progress";
         patch.completed_at = null;
       }
@@ -1491,21 +1489,6 @@ export const updateChallenge = createServerFn({ method: "POST" })
       .select("*")
       .single();
     if (error) throw new Error(error.message);
-
-    if (patch.status === "completed" && row?.child_id) {
-      await awardCompletionXP(context.supabase, row.child_id);
-
-      // Même pré-génération que validateChallengeProof/submitDeclarativeProof — ce chemin
-      // (bascule manuelle de statut, sans passage par une preuve) est un 3e endroit où un
-      // défi devient "completed" (cf. commentaire awardCompletionXP au-dessus), il doit
-      // déclencher la même mécanique, pas juste les deux autres.
-      try {
-        const { recommendChallengesForChild } = await import("@/lib/recommendations.functions");
-        void recommendChallengesForChild({ data: { childId: row.child_id } });
-      } catch (err) {
-        console.error("Non-fatal: pré-génération de la prochaine mission a échoué", err);
-      }
-    }
 
     return row;
   });
