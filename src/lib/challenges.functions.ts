@@ -1444,7 +1444,7 @@ export const updateChallenge = createServerFn({ method: "POST" })
       notes?: string | null;
       completed_at?: string | null;
     } = {};
-    if (data.status === "completed" || data.progress === 100) {
+    if (data.status === "completed") {
       throw new Error("Un défi ne peut pas être terminé manuellement sans preuve. Utilisez le mode enfant pour soumettre une preuve (photo ou déclarative).");
     }
 

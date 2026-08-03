@@ -526,8 +526,12 @@ function ChallengesPage() {
   const setStatus = async (id: string, status: Challenge["status"]) => {
     const previous = challenges;
     const targetChallenge = previous.find((c) => c.id === id);
-    if (status === "in_progress" && statusFilter === "todo" && targetChallenge?.status === "todo") {
-      toast.success("Le défi a été démarré et déplacé dans l'onglet 'En cours'.");
+    if (status === "in_progress" && targetChallenge?.status === "todo") {
+      if (statusFilter === "todo") {
+        toast.success("Défi débuté ! Retrouvez-le dans l'onglet 'En cours' pour le valider avec l'enfant.");
+      } else {
+        toast.success("Défi débuté ! Validez-le avec l'enfant lorsque vous êtes prêts.");
+      }
     }
     setChallenges((prev) =>
       prev.map((c) =>
@@ -1596,8 +1600,16 @@ function ChallengeCard({
             if (c.status === "in_progress") {
               return (
                 <div className="flex flex-col gap-2">
-                  {/* Bouton "Terminer le défi" retiré pour forcer l'usage du Mode Enfant (qui valide les preuves) */}
-                  {notCompletedButton}
+                  <div className="flex items-center justify-center gap-2 bg-emerald-50 text-emerald-700 font-bold py-3 text-[14px] rounded-2xl px-4 text-center">
+                    <CheckCircle2 className="size-5 flex-shrink-0" /> Défi débuté. Nous attendons vos validations à la fin de ce défi.
+                  </div>
+                  <Link
+                    to="/profiles/$profileId/quest"
+                    params={{ profileId: childId }}
+                    className="w-full inline-flex items-center justify-center gap-2 rounded-full bg-brand text-white font-bold h-[56px] text-[16px] shadow-sm hover:bg-brand/90 transition-all cursor-pointer"
+                  >
+                    Valider le défi (Mode Enfant) 📸
+                  </Link>
                 </div>
               );
             }
@@ -1622,18 +1634,6 @@ function ChallengeCard({
       <div className="px-5 pb-5 mt-2 pt-5 border-t border-border bg-surface">
         <h4 className="font-display text-balance text-[16px] font-bold text-ink/60 uppercase tracking-widest mb-4">Espace Parent</h4>
         
-        {/* Child-oriented Start Quest button */}
-        <div className="mb-6">
-          <Link
-            to="/profiles/$profileId/quest"
-            params={{ profileId: childId }}
-            className="w-full inline-flex items-center justify-center gap-2 rounded-full border border-border bg-white px-4 py-3 text-[14px] font-bold text-ink shadow-sm hover:bg-surface/80 transition-all cursor-pointer"
-          >
-            <Play className="size-4 fill-current" />
-            Lancer le Mode Enfant (Quête) 🎮
-          </Link>
-        </div>
-
         {/* pedagogical context */}
         {formatPedagogicalIntention(c.pedagogical_context) && (
           <div className="rounded-[1rem] bg-brand-50 p-4 flex gap-3 mb-6">
@@ -1689,18 +1689,26 @@ function ChallengeCard({
             </button>
             {savedFlash && <span className="text-[13px] text-emerald-600 font-bold">✓ Enregistré</span>}
           </div>
+
+          {c.status === "in_progress" && (
+            <div className="flex justify-start mt-4">
+              <button
+                onClick={() => {
+                  if (!notesDraft.trim()) {
+                    toast.error("Écris d'abord ce qui s'est passé dans le journal d'apprentissage, pour que Naya comprenne pourquoi.");
+                    return;
+                  }
+                  onNotCompleted(notesDraft.trim());
+                }}
+                className="inline-flex items-center gap-1.5 bg-transparent text-ink/50 font-bold text-[13px] hover:text-rose-600 transition-all cursor-pointer"
+              >
+                Le défi n'a pas pu être fait
+              </button>
+            </div>
+          )}
         </div>
 
-        {/* Validation section */}
-        {c.status === "completed" && !c.ai_observations && (
-          <OutcomeChat
-            challenge={c}
-            childName={childName}
-            notes={notesDraft}
-            onSaveNotes={onNotes}
-            onValidated={onValidated}
-          />
-        )}
+        {/* Validation section is no longer rendered here, AI analysis is triggered in child mode */}
 
         {/* AI Observations feedback */}
         {c.ai_observations && (

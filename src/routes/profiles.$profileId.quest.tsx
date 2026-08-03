@@ -3,7 +3,7 @@ import { useEffect, useState, useMemo } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { supabase } from "@/integrations/supabase/client";
 import { useSession } from "@/hooks/use-session";
-import { updateChallenge } from "@/lib/challenges.functions";
+import { updateChallenge, validateChallengeProof } from "@/lib/challenges.functions";
 import { getActiveChallenge, ChallengeLike } from "@/lib/active-challenge";
 import { ArrowLeft, Play, Check, Circle, Sparkles, Smile, Trophy, X, ChevronRight, MessageCircle, Loader2, Upload } from "lucide-react";
 import { toast } from "sonner";
@@ -49,6 +49,19 @@ const DOMAIN_COLORS: Record<string, string> = {
   Entrepreneuriat: "bg-sky-500 text-white",
 };
 
+function fileToBase64(file: File): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const MAX_SIZE_BYTES = 5 * 1024 * 1024; // 5 Mo
+    if (file.size > MAX_SIZE_BYTES) {
+      return reject(new Error("Image trop volumineuse (max 5 Mo)"));
+    }
+    const reader = new FileReader();
+    reader.onload = () => resolve((reader.result as string).split(",")[1] ?? "");
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+}
+
 function QuestPage() {
   const { profileId } = Route.useParams();
   const { session, loading } = useSession();
@@ -72,6 +85,8 @@ function QuestPage() {
   const [completedChallengeTitle, setCompletedChallengeTitle] = useState("");
   const [uploadingProof, setUploadingProof] = useState(false);
   const [proofUrl, setProofUrl] = useState<string | null>(null);
+  const [aiObservations, setAiObservations] = useState<string | null>(null);
+  const validateAI = useServerFn(validateChallengeProof);
 
   const loadChallenges = async () => {
     setFetching(true);
@@ -172,7 +187,6 @@ function QuestPage() {
       await updateChallengeFn({
         data: {
           id: activeChallenge.id,
-          status: "completed",
           progress: 100,
           notes: updatedNotes || null,
         },
@@ -197,27 +211,30 @@ function QuestPage() {
     if (!file || !targetId) return;
     setUploadingProof(true);
     try {
-      const ext = file.name.split(".").pop() || "jpg";
-      const fileName = `${profileId}/${targetId}-${Date.now()}.${ext}`;
-      const { error: uploadErr } = await supabase.storage
-        .from("proofs")
-        .upload(fileName, file, { contentType: file.type });
-      if (uploadErr) throw uploadErr;
-
-      const { data: publicUrlData } = supabase.storage.from("proofs").getPublicUrl(fileName);
-      const url = publicUrlData.publicUrl;
-
-      await updateChallengeFn({
+      const base64 = await fileToBase64(file);
+      const challengeToValidate = challenges.find((c) => c.id === targetId) || activeChallenge;
+      
+      const result = await validateAI({
         data: {
           id: targetId,
-          proof_image_url: url,
+          proofText: challengeToValidate?.notes || "",
+          proofImageBase64: base64,
+          proofImageMediaType: file.type,
         },
       });
-      setProofUrl(url);
-      toast.success("Photo de preuve enregistrée ! 📸");
+
+      if (!result.relevant) {
+        toast.error(result.observations || "L'image ne semble pas correspondre. Peux-tu réessayer ?");
+        return;
+      }
+
+      setAiObservations(result.observations);
+      setProofUrl(URL.createObjectURL(file)); // Affichage local immédiat
+      toast.success("Preuve validée par Naya ! 📸");
+      void loadChallenges(); // Reload to get updated status and talents
     } catch (err) {
       console.error(err);
-      toast.error("Erreur lors de l'envoi de la photo.");
+      toast.error(err instanceof Error ? err.message : "Erreur lors de l'envoi de la photo.");
     } finally {
       setUploadingProof(false);
     }
@@ -268,9 +285,13 @@ function QuestPage() {
           {/* Mascot Praise */}
           <div className="bg-amber-50 rounded-2xl p-4 border border-amber-200 flex items-center gap-3 text-left">
             <img src={nayaAvatar} alt="Naya" className="size-12 rounded-full border-2 border-amber-400 shrink-0 object-cover" />
-            <p className="text-xs font-bold text-amber-950 leading-relaxed">
-              "Incroyable {child.name} ! Tu as brillamment réussi le défi <strong>'{completedChallengeTitle}'</strong> ! Naya est très fière de toi ! ✨"
-            </p>
+            <div className="text-xs font-bold text-amber-950 leading-relaxed">
+              {aiObservations ? (
+                <MarkdownContent content={aiObservations} inline />
+              ) : (
+                `"Incroyable ${child.name} ! Tu as brillamment réussi les étapes du défi '${completedChallengeTitle}' ! Prends une photo pour me montrer ton chef-d'œuvre ! ✨"`
+              )}
+            </div>
           </div>
 
           {/* Photo Upload Option */}
@@ -284,7 +305,7 @@ function QuestPage() {
               <div className="space-y-2">
                 <img src={proofUrl} alt="Preuve" className="h-36 w-full object-cover rounded-xl border border-ink/10" />
                 <p className="text-[11px] font-bold text-emerald-600 flex items-center gap-1">
-                  ✓ Photo enregistrée ! Naya va pouvoir l'analyser.
+                  ✓ Preuve validée et enregistrée dans tes talents !
                 </p>
               </div>
             ) : (
