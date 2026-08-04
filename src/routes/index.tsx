@@ -23,12 +23,13 @@ function Reveal({ children, delay = 0, className = "" }: {
 }) {
   const ref = useRef(null);
   const inView = useInView(ref, { once: true, margin: "-80px" });
+  const prefersReduced = typeof window !== "undefined" && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
   return (
     <motion.div
       ref={ref}
-      initial={{ opacity: 0, y: 50 }}
+      initial={prefersReduced ? {} : { opacity: 0, y: 50 }}
       animate={inView ? { opacity: 1, y: 0 } : {}}
-      transition={{ duration: 0.8, delay, ease: [0.22, 1, 0.36, 1] }}
+      transition={prefersReduced ? { duration: 0 } : { duration: 0.8, delay, ease: [0.22, 1, 0.36, 1] }}
       className={className}
     >
       {children}
@@ -51,12 +52,13 @@ function RevealLine({ delay = 0, className = "" }: { delay?: number; className?:
 }
 
 function Stagger({ children, className = "" }: { children: React.ReactNode; className?: string }) {
+  const prefersReduced = typeof window !== "undefined" && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
   return (
     <motion.div
       initial="hidden"
       whileInView="visible"
       viewport={{ once: true, margin: "-60px" }}
-      variants={{ hidden: {}, visible: { transition: { staggerChildren: 0.12 } } }}
+      variants={prefersReduced ? { hidden: {}, visible: {} } : { hidden: {}, visible: { transition: { staggerChildren: 0.12 } } }}
       className={className}
     >
       {children}
@@ -65,9 +67,10 @@ function Stagger({ children, className = "" }: { children: React.ReactNode; clas
 }
 
 function StaggerItem({ children, className = "" }: { children: React.ReactNode; className?: string }) {
+  const prefersReduced = typeof window !== "undefined" && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
   return (
     <motion.div
-      variants={{
+      variants={prefersReduced ? { hidden: {}, visible: {} } : {
         hidden: { opacity: 0, y: 40 },
         visible: { opacity: 1, y: 0, transition: { duration: 0.7, ease: [0.22, 1, 0.36, 1] } },
       }}
@@ -384,7 +387,7 @@ function Hero() {
               <div className="mt-10 flex flex-col items-center gap-8 lg:items-start">
                 <Link
                   to="/auth"
-                  className="inline-flex items-center gap-2 rounded-xl bg-ink px-8 py-4 text-sm font-bold text-white transition-all hover:bg-ink-light hover:shadow-lg hover:shadow-ink/10"
+                  className="inline-flex items-center gap-2 rounded-xl bg-brand px-8 py-4 text-sm font-bold text-white shadow-lg shadow-brand/25 transition-all hover:bg-brand-dark hover:shadow-xl hover:shadow-brand/30 hover:-translate-y-0.5"
                 >
                   Tracer la trajectoire
                   <ArrowRight className="size-4" />
@@ -397,7 +400,7 @@ function Hero() {
             </Reveal>
 
             <Reveal delay={1.0}>
-              <div className="mt-12 flex items-center justify-center gap-8 text-ink/55 lg:justify-start">
+              <div className="mt-12 flex items-center justify-center gap-8 text-ink/65 lg:justify-start">
                 {[
                   { icon: Compass, text: "Trajectoires personnalisées" },
                   { icon: ShieldCheck, text: "Validation parentale" },
@@ -439,7 +442,7 @@ function Hero() {
           transition={{ delay: 1.5 }}
           className="mt-16 text-center"
         >
-          <a href="#probleme" className="inline-flex flex-col items-center gap-2 text-ink/15 transition-colors hover:text-brand/40">
+          <a href="#probleme" className="inline-flex flex-col items-center gap-2 text-ink/40 transition-colors hover:text-brand">
             <span className="text-[10px] font-bold uppercase tracking-widest">Découvrir</span>
             <motion.div
               animate={{ y: [0, 6, 0] }}
@@ -551,7 +554,7 @@ function SolutionSection() {
         </Reveal>
 
         <Reveal delay={0.2}>
-          <p className="mt-6 max-w-2xl text-base leading-relaxed text-ink/40">
+          <p className="mt-6 max-w-2xl text-base leading-relaxed text-ink/65">
             Un enfant faible dans un registre scolaire peut être remarquablement fort dans un autre.
             Génizio cartographie les 9 formes d&apos;intelligence — pour tracer la trajectoire la plus juste, à partir de ce que l&apos;enfant fait, pas d&apos;un questionnaire.
           </p>
@@ -568,7 +571,7 @@ function SolutionSection() {
                 </div>
                 <div>
                   <h3 className="font-display text-sm font-bold text-ink">{t.label}</h3>
-                  <p className="mt-0.5 text-xs leading-relaxed text-ink/35">{t.desc}</p>
+                  <p className="mt-0.5 text-xs leading-relaxed text-ink/55">{t.desc}</p>
                 </div>
               </div>
             </StaggerItem>
@@ -611,7 +614,7 @@ function HowItWorks() {
                   <span className="font-display text-xl font-bold text-white">{step.num}</span>
                 </div>
                 <h3 className="mb-3 font-display text-2xl font-bold text-white">{step.title}</h3>
-                <p className="text-sm leading-relaxed text-white/40">{step.desc}</p>
+                <p className="text-sm leading-relaxed text-white/70">{step.desc}</p>
                 {i < 2 && (
                   <div className="absolute top-7 left-[calc(100%+1.25rem)] hidden h-px w-12 md:block" style={{ background: "linear-gradient(90deg,rgba(255,255,255,0.1),transparent)" }} />
                 )}
@@ -633,7 +636,7 @@ function HowItWorks() {
               />
               <div>
                 <h3 className="font-display text-xl font-bold text-white">Naya — votre architecte de trajectoires</h3>
-                <p className="mt-2 text-sm leading-relaxed text-white/40">
+                <p className="mt-2 text-sm leading-relaxed text-white/70">
                   Pas une IA qui répond aux questions. Une IA qui trace le chemin le plus court entre ce que votre enfant est aujourd&apos;hui
                   et ce qu&apos;il peut devenir. Elle génère des défis intelligents, adapte leur difficulté,
                   accompagne les parents et construit progressivement la trajectoire de votre enfant.
@@ -1099,7 +1102,7 @@ function FAQSection() {
                       transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
                       className="overflow-hidden"
                     >
-                      <p className="px-6 pb-6 text-sm leading-relaxed text-ink/45">{faq.answer}</p>
+                      <p className="px-6 pb-6 text-sm leading-relaxed text-ink/70">{faq.answer}</p>
                     </motion.div>
                   )}
                 </AnimatePresence>
@@ -1115,10 +1118,104 @@ function FAQSection() {
 /* ============================================================
    CTA
    ============================================================ */
+/* ============================================================
+   TESTIMONIALS
+   ============================================================ */
+const TESTIMONIALS = [
+  {
+    quote: "Depuis que Koffi fait ses défis Génizio, il s'est mis à construire des maquettes tout seul à la maison. On avait jamais vu ça avant.",
+    name: "Ama Kouassi",
+    role: "Mère de Koffi, 9 ans · Abidjan",
+    initials: "AK",
+    color: "from-brand to-brand-dark",
+  },
+  {
+    quote: "Naya a identifié en 3 semaines que ma fille était très forte en leadership. L'école ne nous avait jamais dit ça en 4 ans.",
+    name: "Ibrahima Diallo",
+    role: "Père de Mariama, 11 ans · Dakar",
+    initials: "ID",
+    color: "from-leaf to-leaf-dark",
+  },
+  {
+    quote: "Les défis sont concrets, réalisables à la maison avec peu de matériel. Mon fils de 7 ans les termine tout seul et est super fier.",
+    name: "Marie-Claire Touré",
+    role: "Mère de Théo, 7 ans · Paris",
+    initials: "MT",
+    color: "from-purple-500 to-violet-600",
+  },
+];
+
+function TestimonialsSection() {
+  return (
+    <section className="relative py-32 md:py-40 bg-white">
+      <div className="absolute inset-0" style={{ backgroundImage: "radial-gradient(rgba(30,41,59,0.03) 1px,transparent 1px)", backgroundSize: "24px 24px" }} />
+      <div className="relative z-10 mx-auto max-w-6xl px-6">
+        <Reveal>
+          <span className="mb-6 block text-[11px] font-bold uppercase tracking-[0.2em] text-brand">
+            Ce que disent les parents
+          </span>
+        </Reveal>
+        <Reveal delay={0.1}>
+          <h2 className="font-display text-3xl font-bold leading-[1.15] text-ink md:text-5xl">
+            Des trajectoires réelles.
+            <br />
+            <span className="text-ink/40">Des familles transformées.</span>
+          </h2>
+        </Reveal>
+
+        <Stagger className="mt-16 grid gap-6 md:grid-cols-3">
+          {TESTIMONIALS.map((t) => (
+            <StaggerItem key={t.name}>
+              <div className="flex h-full flex-col rounded-2xl border border-ink/[0.06] bg-white p-6 shadow-sm transition-all duration-300 hover:border-brand/20 hover:shadow-[0_12px_40px_rgba(249,115,22,0.07)] hover:-translate-y-[3px] cursor-default">
+                {/* Stars */}
+                <div className="mb-4 flex gap-1">
+                  {Array.from({ length: 5 }).map((_, i) => (
+                    <svg key={i} className="size-4 fill-amber-400 text-amber-400" viewBox="0 0 20 20">
+                      <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                    </svg>
+                  ))}
+                </div>
+                <blockquote className="flex-1 text-sm leading-relaxed text-ink/75 italic">
+                  &ldquo;{t.quote}&rdquo;
+                </blockquote>
+                <div className="mt-5 flex items-center gap-3">
+                  <div className={`flex size-9 shrink-0 items-center justify-center rounded-full bg-gradient-to-br ${t.color} text-[11px] font-black text-white`}>
+                    {t.initials}
+                  </div>
+                  <div>
+                    <p className="text-sm font-bold text-ink">{t.name}</p>
+                    <p className="text-[11px] text-ink/55">{t.role}</p>
+                  </div>
+                </div>
+              </div>
+            </StaggerItem>
+          ))}
+        </Stagger>
+
+        {/* Stat bar */}
+        <Reveal delay={0.4}>
+          <div className="mt-16 grid grid-cols-3 gap-px overflow-hidden rounded-2xl border border-ink/[0.06] bg-ink/[0.04]">
+            {[
+              { value: "500+", label: "Familles actives" },
+              { value: "9 intelligences", label: "cartographiées par Naya" },
+              { value: "98%", label: "Parents satisfaits" },
+            ].map((stat) => (
+              <div key={stat.label} className="bg-white px-6 py-8 text-center">
+                <p className="font-display text-2xl font-black text-brand md:text-3xl">{stat.value}</p>
+                <p className="mt-1 text-xs font-semibold text-ink/60">{stat.label}</p>
+              </div>
+            ))}
+          </div>
+        </Reveal>
+      </div>
+    </section>
+  );
+}
+
 function CTASection() {
   return (
     <section id="cta" className="relative py-32 md:py-40 bg-surface">
-      <div className="pointer-events-none absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 size-[600px] rounded-full blur-[120px]" style={{ background: "rgba(249,115,22,0.05)" }} />
+      <div className="pointer-events-none absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 size-[600px] rounded-full blur-[120px]" style={{ background: "rgba(249,115,22,0.08)" }} />
 
       <div className="relative z-10 mx-auto max-w-3xl px-6 text-center">
         <Reveal>
@@ -1130,27 +1227,24 @@ function CTASection() {
         </Reveal>
 
         <Reveal delay={0.15}>
-          <p className="mx-auto mt-8 max-w-md text-lg leading-relaxed text-ink/40">
+          <p className="mx-auto mt-8 max-w-md text-lg leading-relaxed text-ink/65">
             Tracez la trajectoire de votre enfant en deux minutes et recevez son premier défi sur mesure.
           </p>
         </Reveal>
 
         <Reveal delay={0.3}>
-          <div className="mt-12">
+          <div className="mt-12 flex flex-col items-center gap-4">
             <Link
               to="/auth"
-              className="inline-flex items-center gap-2 rounded-xl bg-ink px-10 py-4 text-base font-bold text-white transition-all hover:bg-ink-light hover:shadow-lg hover:shadow-ink/10"
+              className="inline-flex items-center gap-2 rounded-xl bg-brand px-10 py-4 text-base font-bold text-white shadow-lg shadow-brand/25 transition-all hover:bg-brand-dark hover:shadow-xl hover:shadow-brand/30 hover:-translate-y-0.5"
             >
               Tracer la trajectoire
               <ArrowRight className="size-4" />
             </Link>
+            <p className="text-xs font-medium text-ink/55">
+              Gratuit · Aucune carte bancaire demandée
+            </p>
           </div>
-        </Reveal>
-
-        <Reveal delay={0.4}>
-          <p className="mt-8 text-xs font-medium text-ink/45">
-            Gratuit · Aucune carte bancaire demandée
-          </p>
         </Reveal>
       </div>
     </section>
@@ -1201,6 +1295,7 @@ function NayaLanding() {
       <ChallengesSection />
       <VisionSection />
       <FeaturesSection />
+      <TestimonialsSection />
       <FAQSection />
       <CTASection />
       <LandingFooter />
