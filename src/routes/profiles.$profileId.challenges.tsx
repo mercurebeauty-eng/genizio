@@ -4,7 +4,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { supabase } from "@/integrations/supabase/client";
 import { useSession } from "@/hooks/use-session";
 import { toast } from "sonner";
-import { Brain, Award, Trash2, Calendar, CheckCircle2, ArrowLeft, Sparkles, Upload, Loader2, Play, Check, X, MessageCircle, Beaker, Trophy, BookOpen, Lock } from "lucide-react";
+import { Brain, Award, Trash2, Calendar, CalendarDays, CheckCircle2, ArrowLeft, BrainCircuit, Wand2, Upload, Loader2, Play, Check, X, MessageCircle, Beaker, Trophy, BookOpen, Lock } from "lucide-react";
 import {
   generateChallenges,
   updateChallenge,
@@ -711,7 +711,7 @@ function ChallengesPage() {
                       <h1 className="font-display text-balance text-3xl font-extrabold md:text-4xl">{child.name}</h1>
                       {enrolledSeason && (
                         <span className="hidden sm:inline-flex items-center gap-1.5 rounded-full border border-emerald-400 bg-emerald-50 px-3 py-1 text-[11px] font-black uppercase tracking-wider text-emerald-800 shadow-sm">
-                          <Sparkles className="size-3 text-emerald-600" />
+                          <CalendarDays className="size-3 text-emerald-600" />
                           {enrolledSeason.title}
                         </span>
                       )}
@@ -885,7 +885,7 @@ function ChallengesPage() {
                     <div className="rounded-3xl border border-amber-200 bg-gradient-to-br from-amber-100/90 via-amber-50 to-white p-6 shadow-md mb-6 backdrop-blur-md">
                       <div className="flex flex-wrap items-center justify-between gap-3 mb-3">
                         <span className="inline-flex items-center gap-1.5 rounded-full border border-amber-400 bg-amber-300 px-3 py-1 text-xs font-black uppercase tracking-wider text-ink shadow-xs">
-                          <Sparkles className="size-4 text-amber-800 fill-amber-800" />
+                          <BrainCircuit className="size-4 text-amber-800" />
                           {recommendation.badgeLabel}
                         </span>
                         <span className="text-xs font-bold text-ink/50">Recommandation prioritaire Naya 2.0</span>
@@ -1150,7 +1150,7 @@ function ChallengesPage() {
                           disabled={generating}
                           className="rounded-2xl border border-ink/10 bg-brand px-6 py-3.5 text-sm font-bold text-white shadow-xl hover:-translate-y-0.5 disabled:opacity-60 transition-all flex items-center gap-2 cursor-pointer"
                         >
-                          <Sparkles className="size-4 animate-pulse" />
+                          <Wand2 className="size-4 animate-pulse" />
                           ✨ Déposer 4 nouveaux défis Naya
                         </button>
                       </div>
@@ -1741,7 +1741,7 @@ function AcademicSecretCard({ secret, academicGradeLevel }: { secret?: string | 
     <div className="mb-[22px] rounded-3xl bg-gradient-to-br from-amber-500/15 via-amber-400/10 to-cyan-500/15 p-5 border-2 border-amber-400/50 shadow-md relative overflow-hidden">
       <div className="flex items-center gap-2 mb-3 flex-wrap">
         <span className="grid place-items-center rounded-2xl bg-amber-500 p-2 text-white shadow-md">
-          <Sparkles className="size-5" />
+          <BrainCircuit className="size-5" />
         </span>
         <div>
           <span className="text-[10px] font-black uppercase tracking-widest text-amber-800">

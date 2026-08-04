@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { ArrowLeft, Sparkles } from "lucide-react";
+import { ArrowLeft, Newspaper } from "lucide-react";
 
 export const Route = createFileRoute("/nouveautes")({
   component: NouveautesPage,
@@ -48,7 +48,7 @@ function NouveautesPage() {
             className="grid size-11 shrink-0 place-items-center rounded-2xl text-white shadow-md"
             style={{ background: "linear-gradient(120deg, var(--brand), var(--brand-glow))" }}
           >
-            <Sparkles className="size-5" />
+            <Newspaper className="size-5" />
           </div>
           <div>
             <h1 className="font-display text-balance text-2xl font-extrabold">Quoi de neuf</h1>

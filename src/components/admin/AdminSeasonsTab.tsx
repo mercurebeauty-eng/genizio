@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { useSession } from "@/hooks/use-session";
-import { Calendar, Gift, Users, CheckCircle, Sparkles, Link as LinkIcon, Plus, Copy, Check, ShieldCheck, Loader2, Pencil, Trash2, BellRing, Phone, Search } from "lucide-react";
+import { Calendar, CalendarDays, Gift, Users, CheckCircle, Link as LinkIcon, Plus, Copy, Check, ShieldCheck, Loader2, Pencil, Trash2, BellRing, Phone, Search } from "lucide-react";
 import { AdminPagination } from "./AdminPagination";
 import { listSeasonsAdmin, listSponsorshipsAdmin, updateSeasonStatusAdmin, deleteSeasonAdmin, confirmSponsorshipPaymentAdmin, getUpcomingExpirationsAdmin, DEFAULT_FALLBACK_SEASON, type Season, type SponsorshipToken } from "@/lib/seasons.functions";
 import { toast } from "sonner";
@@ -282,7 +282,7 @@ export function AdminSeasonsTab() {
         <div className="flex items-center justify-between mb-6 flex-wrap gap-4">
           <div>
             <h3 className="font-display text-xl font-bold text-ink flex items-center gap-2">
-              <Sparkles className="size-5 text-brand" />
+              <CalendarDays className="size-5 text-brand" />
               Saisons Génizio (Cohortes de 3 Mois)
             </h3>
             <p className="text-xs font-medium text-ink/60">

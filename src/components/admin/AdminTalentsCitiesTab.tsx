@@ -11,7 +11,7 @@ import {
   Building2,
   Users,
   ShoppingBag,
-  Sparkles,
+  LayoutGrid,
   Zap,
   Award,
   Brain,
@@ -98,7 +98,7 @@ export function AdminTalentsCitiesTab({
           <div className="flex items-center justify-between">
             <span className="text-xs font-bold uppercase tracking-wider text-ink/60">Hauts Potentiels</span>
             <div className="size-10 rounded-2xl bg-purple-500/10 text-purple-600 flex items-center justify-center">
-              <Sparkles className="size-5" />
+              <LayoutGrid className="size-5" />
             </div>
           </div>
           <div className="mt-4">

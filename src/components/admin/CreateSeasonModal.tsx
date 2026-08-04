@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { X, Sparkles } from "lucide-react";
+import { X, CalendarDays } from "lucide-react";
 import { useServerFn } from "@tanstack/react-start";
 import { useSession } from "@/hooks/use-session";
 import { createSeasonAdmin, updateSeasonAdmin, type Season } from "@/lib/seasons.functions";
@@ -66,7 +66,7 @@ export function CreateSeasonModal({ initial, onClose, onSuccess }: CreateSeasonM
         <div className="flex items-center justify-between border-b border-ink/10 bg-white px-6 py-4">
           <div className="flex items-center gap-3">
             <div className="grid size-10 place-items-center rounded-2xl bg-brand/10 text-brand">
-              <Sparkles className="size-5" />
+              <CalendarDays className="size-5" />
             </div>
             <h2 className="font-display text-xl font-bold text-ink">{isEditing ? "Modifier la Saison" : "Nouvelle Saison"}</h2>
           </div>

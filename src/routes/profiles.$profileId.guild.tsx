@@ -9,7 +9,7 @@ import { TALENT_KEY_LABELS } from "@/lib/talent-buckets";
 import { AppTabBar } from "@/components/AppTabBar";
 import { AppHeader } from "@/components/AppHeader";
 import { GenizioLoader } from "@/components/GenizioLoader";
-import { Users, Sparkles, Heart } from "lucide-react";
+import { Users, Share2, Heart } from "lucide-react";
 
 export const Route = createFileRoute("/profiles/$profileId/guild")({
   component: GuildPage,
@@ -199,7 +199,7 @@ function GuildPage() {
                 disabled={togglingParticipation}
                 className="press-white w-full rounded-2xl border border-ink/10 bg-white py-3 text-xs font-bold text-ink/60 disabled:opacity-50"
               >
-                <span className="inline-flex items-center gap-1.5"><Sparkles className="size-3.5" />Désactiver le partage de guilde</span>
+                <span className="inline-flex items-center gap-1.5"><Share2 className="size-3.5" />Désactiver le partage de guilde</span>
               </button>
             </>
           )}

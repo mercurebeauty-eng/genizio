@@ -1,5 +1,5 @@
 import React from 'react';
-import { Sparkles, BookOpen } from 'lucide-react';
+import { Wand2, BookOpen } from 'lucide-react';
 
 export type ChallengeMode = 'free' | 'homework';
 
@@ -32,7 +32,7 @@ export function HomeworkModeToggle({
             : 'text-ink/65 hover:text-ink hover:bg-surface'
         }`}
       >
-        <Sparkles className="size-4 shrink-0" />
+        <Wand2 className="size-4 shrink-0" />
         <span>Défis Libres (Éveil)</span>
       </button>
       <button

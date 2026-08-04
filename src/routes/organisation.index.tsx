@@ -13,7 +13,7 @@ import {
   type CampaignEducator,
 } from "@/lib/campaigns.functions";
 import { TALENT_KEY_LABELS } from "@/lib/talent-buckets";
-import { Building2, Users, Target, ShieldCheck, Loader2, UserPlus, AlertCircle, Rocket, X, Sparkles, Key, Download, Copy, ChevronDown, FileDown, Printer, Quote, GraduationCap, Trash2 } from "lucide-react";
+import { Building2, Users, Target, ShieldCheck, Loader2, UserPlus, AlertCircle, Rocket, X, Star, Key, Download, Copy, ChevronDown, FileDown, Printer, Quote, GraduationCap, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { GenizioLoader } from "@/components/GenizioLoader";
 import { CampaignLinkCard } from "@/components/campaigns/CampaignLinkCard";
@@ -201,7 +201,7 @@ function OrganisationDashboard() {
         <div className="flex items-start justify-between gap-4 mb-2 flex-wrap">
           <div className="flex items-center gap-2.5">
             <div className="size-9 rounded-xl bg-brand/10 text-brand flex items-center justify-center shrink-0">
-              <Sparkles className="size-5" />
+              <Star className="size-5" />
             </div>
             <div>
               <h2 className="text-xl sm:text-2xl font-display font-black text-ink">Rapport d'Impact — Cohorte</h2>

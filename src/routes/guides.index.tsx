@@ -1,11 +1,11 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { ArrowRight, Compass, Puzzle, Rocket, Brain, Sparkles, Globe2, Bot } from "lucide-react";
+import { ArrowRight, Compass, Puzzle, Rocket, Brain, BookMarked, Globe2, Bot } from "lucide-react";
 import { pageMeta, jsonLdScript, breadcrumbJsonLd } from "@/lib/seo";
 
 const GUIDES = [
   {
     to: "/guides/potentiel-haut-potentiel-enfant",
-    Icon: Sparkles,
+    Icon: BookMarked,
     eyebrow: "Potentiel & talents",
     title: "Comment savoir si mon enfant a un haut potentiel",
     desc:

@@ -11,7 +11,8 @@ import {
   Printer,
   ExternalLink,
   Phone,
-  Sparkles,
+  Star,
+  KeyRound,
   Filter,
   Brain,
   Truck,
@@ -368,7 +369,7 @@ export function AdminCommerceTab({
 
         {/* Info Box */}
         <div className="mb-6 rounded-2xl bg-gradient-to-r from-sky-50 via-purple-50 to-surface border border-sky-200/60 p-4 flex items-start gap-3">
-          <Sparkles className="size-5 text-sky-600 shrink-0 mt-0.5" />
+          <Star className="size-5 text-sky-600 shrink-0 mt-0.5" />
           <div className="text-xs text-ink/80 leading-relaxed">
             <strong>Activation du Passeport d'Excellence (14 ans et +) :</strong> Le déblocage autorise la génération et l'impression HD du passeport certifiant l'ensemble des compétences et des guildes de l'adolescent. Tarif de validation officiel : <strong>50 000 FCFA</strong>.
           </div>
@@ -463,7 +464,7 @@ export function AdminCommerceTab({
                             </>
                           ) : (
                             <>
-                              <Sparkles className="size-3.5" /> Débloquer (50k FCFA)
+                              <KeyRound className="size-3.5" /> Débloquer (50k FCFA)
                             </>
                           )}
                         </button>

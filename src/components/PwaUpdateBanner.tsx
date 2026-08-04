@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useRegisterSW } from "virtual:pwa-register/react";
 import { Link } from "@tanstack/react-router";
-import { RefreshCw, Sparkles } from "lucide-react";
+import { RefreshCw, Bell } from "lucide-react";
 
 // Sans polling explicite, useRegisterSW ne revérifie une nouvelle version
 // qu'au moment de l'enregistrement initial du service worker — un onglet
@@ -46,7 +46,7 @@ export function PwaUpdateBanner() {
         style={{ background: "linear-gradient(120deg, var(--brand), var(--brand-glow))" }}
       >
         <div className="grid size-9 shrink-0 place-items-center rounded-full bg-white/20 text-white">
-          <Sparkles className="size-4" />
+          <Bell className="size-4" />
         </div>
         <div className="min-w-0 flex-1">
           <p className="text-xs font-black text-white">Nouvelle mise à jour disponible</p>

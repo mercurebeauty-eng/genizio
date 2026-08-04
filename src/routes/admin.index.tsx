@@ -28,7 +28,7 @@ import { AdminSeasonsTab } from "@/components/admin/AdminSeasonsTab";
 import { AdminCampaignsTab } from "@/components/admin/AdminCampaignsTab";
 import { AdminSupervisorsTab } from "@/components/admin/AdminSupervisorsTab";
 import { AdminProductsTab } from "@/components/admin/AdminProductsTab";
-import { Users, ShoppingBag, Brain, Award, Sparkles } from "lucide-react";
+import { Users, ShoppingBag, Brain, Award } from "lucide-react";
 import { toast } from "sonner";
 import { GenizioLoader } from "@/components/GenizioLoader";
 

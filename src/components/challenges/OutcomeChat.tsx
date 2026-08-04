@@ -4,7 +4,7 @@ import { validateChallengeProof, submitDeclarativeProof } from "@/lib/challenges
 import { NayaAvatar } from "@/components/NayaAvatar";
 import { LevelUpCelebration } from "@/components/challenges/LevelUpCelebration";
 import { BadgeUnlockedCelebration } from "@/components/challenges/BadgeUnlockedCelebration";
-import { Loader2, Upload, Check, X, Play, Sparkles, Clock, Target } from "lucide-react";
+import { Loader2, Upload, Check, X, Play, BrainCircuit, Clock, Target } from "lucide-react";
 import { toast } from "sonner";
 import { MarkdownContent } from "@/components/ui/markdown-content";
 
@@ -192,7 +192,7 @@ export function OutcomeChat({ challenge, childName, notes = "", onSaveNotes, onV
 
           <div className="text-center mb-6">
             <div className="inline-flex items-center justify-center p-3 bg-brand/10 rounded-full mb-3">
-              <Sparkles className="size-8 text-brand" />
+              <BrainCircuit className="size-8 text-brand" />
             </div>
             <h3 className="text-xl font-black text-ink">Bulletin de Découverte</h3>
             <p className="text-sm font-semibold text-ink/60">Analyse de Naya</p>

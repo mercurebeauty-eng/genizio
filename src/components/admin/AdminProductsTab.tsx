@@ -12,7 +12,7 @@ import {
   updateOrderStatus,
   getEcosystemStats,
 } from "@/lib/products.functions";
-import { Loader2, Plus, Trash2, ShieldAlert, Package, Sparkles, X, BarChart2, ShoppingCart } from "lucide-react";
+import { Loader2, Plus, Trash2, ShieldAlert, Package, BrainCircuit, X, BarChart2, ShoppingCart } from "lucide-react";
 import { toast } from "sonner";
 import { RadarChart, PolarGrid, PolarAngleAxis, Radar, ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip } from "recharts";
 import { GUILDS } from "@/lib/guilds";
@@ -323,7 +323,7 @@ export function AdminProductsTab() {
               {suggestions.length > 0 && (
                 <div className="mb-8 rounded-3xl border border-ink/10 bg-white p-6 shadow-xl">
                   <div className="mb-4 flex items-center gap-2">
-                    <Sparkles className="size-5 text-brand" />
+                    <BrainCircuit className="size-5 text-brand" />
                     <h3 className="font-display text-balance text-lg font-bold">Matériaux détectés sans produit</h3>
                   </div>
                   <p className="mb-4 text-sm text-ink/60">

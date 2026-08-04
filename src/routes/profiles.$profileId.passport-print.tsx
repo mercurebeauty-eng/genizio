@@ -9,7 +9,7 @@ import { TalentRadarChart } from "@/components/TalentRadarChart";
 import { MarkdownContent } from "@/components/ui/markdown-content";
 import {
   Award,
-  Sparkles,
+  Scroll,
   BookOpen,
   ShieldCheck,
   Printer,
@@ -372,7 +372,7 @@ function PassportPrintPage() {
           <div>
             <div className="border-b-[3px] border-ink pb-4 mb-6">
               <h2 className="font-display text-balance text-xl font-black text-ink uppercase tracking-tight flex items-center gap-2">
-                <Sparkles className="size-5 text-brand" />
+                <Scroll className="size-5 text-brand" />
                 I. Cartographie des intelligences & leviers d'action
               </h2>
             </div>

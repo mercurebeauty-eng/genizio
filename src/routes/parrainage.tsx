@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
-import { Heart, Sparkles, Gift, CheckCircle, ArrowRight, ShieldCheck, Copy, Check, Share2, Award, Users, Phone } from "lucide-react";
+import { Heart, Gift, CheckCircle, ArrowRight, ShieldCheck, Copy, Check, Share2, Award, Users, Phone } from "lucide-react";
 import { createSponsorshipToken, getActiveSeason, DEFAULT_FALLBACK_SEASON, type SponsorshipToken, type Season } from "@/lib/seasons.functions";
 import { toast } from "sonner";
 import { pageMeta } from "@/lib/seo";
@@ -211,7 +211,7 @@ function ParrainagePage() {
         ) : (
           <div className="rounded-3xl border border-ink/10 bg-white p-8 shadow-xl">
             <h2 className="font-display text-2xl font-bold text-ink mb-6 flex items-center gap-2">
-              <Sparkles className="size-6 text-brand" />
+              <Gift className="size-6 text-brand" />
               Formulaire de Parrainage
             </h2>
 

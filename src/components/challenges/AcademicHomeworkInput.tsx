@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Sparkles, Layers, BookOpen, Target, Loader2 } from "lucide-react";
+import { Wand2, Layers, BookOpen, Target, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import {
   GRADE_LEVELS,
@@ -354,7 +354,7 @@ export function AcademicHomeworkInput({
           </>
         ) : (
           <>
-            <Sparkles className="size-5" />
+            <Wand2 className="size-5" />
             <span>Transformer le devoir en défi ludique 🚀</span>
           </>
         )}

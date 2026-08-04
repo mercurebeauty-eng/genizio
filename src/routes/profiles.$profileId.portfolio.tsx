@@ -29,7 +29,6 @@ import {
   Binary,
   BookOpen,
   Search,
-  Sparkles,
   Rocket,
   ChevronRight,
   BellRing,
@@ -485,7 +484,7 @@ function PortfolioPage() {
                   params={{ profileId: child.id }}
                   className="press-white inline-flex items-center justify-center gap-2 rounded-2xl border border-amber-300 bg-amber-300 px-4 py-2 text-xs font-bold text-ink shrink-0 cursor-pointer"
                 >
-                  <Sparkles className="size-3.5 fill-amber-700 text-amber-700" />
+                  <Award className="size-3.5 fill-amber-700 text-amber-700" />
                   <span>Proposer un défi adapté</span>
                 </Link>
               </div>
@@ -997,7 +996,7 @@ function PortfolioPage() {
                   params={{ profileId: child.id }}
                   className="mt-4 inline-flex items-center gap-1.5 rounded-xl bg-brand px-4 py-2 text-xs font-bold text-white shadow-sm"
                 >
-                  <Sparkles className="size-3.5" /> Lancer un défi
+                  <Rocket className="size-3.5" /> Lancer un défi
                 </Link>
               </div>
             ) : (

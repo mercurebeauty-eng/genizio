@@ -5,7 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useSession } from "@/hooks/use-session";
 import { updateChallenge, validateChallengeProof } from "@/lib/challenges.functions";
 import { getActiveChallenge, ChallengeLike } from "@/lib/active-challenge";
-import { ArrowLeft, Play, Check, Circle, Sparkles, Smile, Trophy, X, ChevronRight, MessageCircle, Loader2, Upload } from "lucide-react";
+import { ArrowLeft, Play, Check, Circle, Smile, Trophy, X, ChevronRight, MessageCircle, Loader2, Upload } from "lucide-react";
 import { toast } from "sonner";
 import { NayaAvatar } from "@/components/NayaAvatar";
 import nayaAvatar from "@/assets/naya-avatar.png";

@@ -10,7 +10,7 @@ import {
   XCircle,
   ArrowRight,
   BarChart3,
-  Sparkles,
+  BrainCircuit,
   RefreshCw,
   Route as RouteIcon,
   Image as ImageIcon,
@@ -480,7 +480,7 @@ export function AdminNayaTab({
         <div className="rounded-3xl border border-ink/10 bg-gradient-to-br from-brand/5 via-white to-purple-500/10 p-6 shadow-xl space-y-5 flex flex-col justify-between">
           <div>
             <div className="flex items-center gap-2 mb-2">
-              <Sparkles className="size-5 text-brand" />
+              <BrainCircuit className="size-5 text-brand" />
               <span className="text-xs font-extrabold text-brand uppercase tracking-wider">
                 Run-rate & Simulation
               </span>

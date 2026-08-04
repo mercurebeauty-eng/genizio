@@ -7,7 +7,7 @@ import { AppTabBar } from "@/components/AppTabBar";
 import { supabase } from "@/integrations/supabase/client";
 import { createOrder } from "@/lib/products.functions";
 import { generateSingleChallenge, assignTemplateChallenge } from "@/lib/challenges.functions";
-import { ShoppingBag, Sparkles, Loader2, Trophy, Clock, MapPin, X, Check, Brain, MessageCircle, Search } from "lucide-react";
+import { ShoppingBag, Wand2, Loader2, Trophy, Clock, MapPin, X, Check, Brain, MessageCircle, Search } from "lucide-react";
 import { toast } from "sonner";
 import { NayaAvatar } from "@/components/NayaAvatar";
 import { DifficultyBadge } from "@/components/challenges/DifficultyBadge";
@@ -379,7 +379,7 @@ function BoutiquePage() {
                         onClick={() => setSelectedProduct(p)}
                         className="w-full flex items-center justify-center gap-2 rounded-xl border border-ink/10 bg-brand px-4 py-3 text-xs font-extrabold text-white hover:-translate-y-0.5 active:translate-y-0 shadow-sm transition-all cursor-pointer"
                       >
-                        <Sparkles className="size-4 animate-pulse" />
+                        <Wand2 className="size-4 animate-pulse" />
                         Générer un défi ⚡
                       </button>
                       <button
@@ -419,7 +419,7 @@ function BoutiquePage() {
             </button>
 
             <div className="mb-6 flex items-center gap-3">
-              <Sparkles className="size-6 text-brand" />
+              <Wand2 className="size-6 text-brand" />
               <h2 className="font-display text-balance text-2xl font-black">Naya compose un défi...</h2>
             </div>
 
