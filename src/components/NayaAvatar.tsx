@@ -28,7 +28,9 @@ export function NayaAvatar({ size = "md", thoughts, className = "" }: NayaAvatar
   const [isDragging, setIsDragging] = useState(false);
   const [thoughtIndex, setThoughtIndex] = useState(0);
   const [showThought, setShowThought] = useState(false);
-  const [particles, setParticles] = useState<Array<{ id: number; x: number; y: number; kind: number }>>([]);
+  const [particles, setParticles] = useState<
+    Array<{ id: number; x: number; y: number; kind: number }>
+  >([]);
   const px = SIZES[size];
 
   // Allow all avatars to have thoughts, but position them above the head to avoid colliding with text on the right
@@ -68,7 +70,10 @@ export function NayaAvatar({ size = "md", thoughts, className = "" }: NayaAvatar
   };
 
   return (
-    <div className={`relative inline-flex items-center justify-center ${className}`} style={{ width: px, height: px }}>
+    <div
+      className={`relative inline-flex items-center justify-center ${className}`}
+      style={{ width: px, height: px }}
+    >
       <AnimatePresence>
         {particles.map((p) => (
           <motion.div
@@ -99,13 +104,13 @@ export function NayaAvatar({ size = "md", thoughts, className = "" }: NayaAvatar
             exit={{ opacity: 0, scale: 0.6, y: 15, x: "-50%" }}
             transition={{ type: "spring", stiffness: 300, damping: 20 }}
           >
-            <p className="text-xs font-semibold leading-snug text-ink">{activeThoughts[thoughtIndex]}</p>
+            <p className="text-xs font-semibold leading-snug text-ink">
+              {activeThoughts[thoughtIndex]}
+            </p>
             <div className="absolute -bottom-[7px] left-1/2 -translate-x-1/2 size-3 rotate-45 border-r-[3px] border-b-[3px] border-ink bg-white" />
           </motion.div>
         )}
       </AnimatePresence>
-
-
 
       <motion.div
         drag
@@ -125,7 +130,11 @@ export function NayaAvatar({ size = "md", thoughts, className = "" }: NayaAvatar
         }}
         transition={{
           y: { duration: 2.6, repeat: isDragging ? 0 : Infinity, ease: "easeInOut" },
-          rotate: { duration: 0.6, repeat: isHovered && !isDragging ? Infinity : 0, repeatType: "mirror" },
+          rotate: {
+            duration: 0.6,
+            repeat: isHovered && !isDragging ? Infinity : 0,
+            repeatType: "mirror",
+          },
           scale: { duration: 0.25 },
         }}
         whileTap={{ scale: 0.95 }}

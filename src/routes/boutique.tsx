@@ -7,7 +7,20 @@ import { AppTabBar } from "@/components/AppTabBar";
 import { supabase } from "@/integrations/supabase/client";
 import { createOrder } from "@/lib/products.functions";
 import { generateSingleChallenge, assignTemplateChallenge } from "@/lib/challenges.functions";
-import { ShoppingBag, Sparkles, Loader2, Trophy, Clock, MapPin, X, Check, Brain, MessageCircle, Search } from "lucide-react";
+import {
+  ShoppingBag,
+  Zap,
+  Bot,
+  Loader2,
+  Trophy,
+  Clock,
+  MapPin,
+  X,
+  Check,
+  Brain,
+  MessageCircle,
+  Search,
+} from "lucide-react";
 import { toast } from "sonner";
 import { NayaAvatar } from "@/components/NayaAvatar";
 import { DifficultyBadge } from "@/components/challenges/DifficultyBadge";
@@ -78,7 +91,7 @@ function BoutiquePage() {
   const [selectedChild, setSelectedChild] = useState<string>("");
   const [selectedTime, setSelectedTime] = useState<string>("30 min");
   const [selectedLocation, setSelectedLocation] = useState<string>("Maison (Intérieur)");
-  
+
   const [isGenerating, setIsGenerating] = useState(false);
   const [loadingTextIndex, setLoadingTextIndex] = useState(0);
   const [generatedChallenge, setGeneratedChallenge] = useState<any | null>(null);
@@ -100,7 +113,11 @@ function BoutiquePage() {
     try {
       const [prodsRes, childrenRes] = await Promise.all([
         supabase.from("products").select("*").eq("is_active", true).order("name"),
-        supabase.from("child_profiles").select("id, name, age, avatar_color").eq("user_id", session.user.id).order("name"),
+        supabase
+          .from("child_profiles")
+          .select("id, name, age, avatar_color")
+          .eq("user_id", session.user.id)
+          .order("name"),
       ]);
 
       setProducts((prodsRes.data as Product[]) ?? []);
@@ -143,9 +160,7 @@ function BoutiquePage() {
 
   const getChallengeCount = (tags: string[]) => {
     if (!tags || tags.length === 0) return 0;
-    return challenges.filter((c) =>
-      c.material_tags?.some((t: string) => tags.includes(t))
-    ).length;
+    return challenges.filter((c) => c.material_tags?.some((t: string) => tags.includes(t))).length;
   };
 
   const handleOrder = async (product: Product) => {
@@ -156,7 +171,9 @@ function BoutiquePage() {
     setOrderingId(product.id);
     const whatsappNumber = import.meta.env.VITE_WHATSAPP_NUMBER as string | undefined;
     const message = `Bonjour ! Je souhaite commander ce produit depuis la boutique :\n- ${product.name} (${product.price_xof.toLocaleString("fr-FR")} FCFA)`;
-    const waUrl = whatsappNumber ? `https://wa.me/${whatsappNumber}?text=${encodeURIComponent(message)}` : null;
+    const waUrl = whatsappNumber
+      ? `https://wa.me/${whatsappNumber}?text=${encodeURIComponent(message)}`
+      : null;
 
     try {
       await createOrderFn({
@@ -248,10 +265,11 @@ function BoutiquePage() {
 
   const query = searchQuery.trim().toLowerCase();
   const filteredProducts = query
-    ? products.filter((p) =>
-        p.name.toLowerCase().includes(query) ||
-        (p.description ?? "").toLowerCase().includes(query) ||
-        p.material_tags.some((t) => t.toLowerCase().includes(query))
+    ? products.filter(
+        (p) =>
+          p.name.toLowerCase().includes(query) ||
+          (p.description ?? "").toLowerCase().includes(query) ||
+          p.material_tags.some((t) => t.toLowerCase().includes(query)),
       )
     : products;
 
@@ -268,7 +286,8 @@ function BoutiquePage() {
               La Boutique de Kits Naya 📦
             </h1>
             <p className="mt-3 text-lg text-ink/75 leading-relaxed">
-              Des kits matériels physiques pensés pour débloquer de vrais projets d'apprentissage à la maison.
+              Des kits matériels physiques pensés pour débloquer de vrais projets d'apprentissage à
+              la maison.
             </p>
           </header>
 
@@ -379,7 +398,7 @@ function BoutiquePage() {
                         onClick={() => setSelectedProduct(p)}
                         className="w-full flex items-center justify-center gap-2 rounded-xl border border-ink/10 bg-brand px-4 py-3 text-xs font-extrabold text-white hover:-translate-y-0.5 active:translate-y-0 shadow-sm transition-all cursor-pointer"
                       >
-                        <Sparkles className="size-4 animate-pulse" />
+                        <Zap className="size-4 animate-pulse" />
                         Générer un défi ⚡
                       </button>
                       <button
@@ -419,12 +438,15 @@ function BoutiquePage() {
             </button>
 
             <div className="mb-6 flex items-center gap-3">
-              <Sparkles className="size-6 text-brand" />
-              <h2 className="font-display text-balance text-2xl font-black">Naya compose un défi...</h2>
+              <Bot className="size-6 text-brand" />
+              <h2 className="font-display text-balance text-2xl font-black">
+                Naya compose un défi...
+              </h2>
             </div>
 
             <p className="text-sm text-ink/70 leading-relaxed mb-6">
-              Naya va concevoir une expérience sur-mesure pour votre enfant autour du matériel du kit : <strong className="text-ink">"{selectedProduct.name}"</strong>.
+              Naya va concevoir une expérience sur-mesure pour votre enfant autour du matériel du
+              kit : <strong className="text-ink">"{selectedProduct.name}"</strong>.
             </p>
 
             <div className="space-y-5">
@@ -598,7 +620,9 @@ function BoutiquePage() {
                       <span className="flex size-6 shrink-0 items-center justify-center rounded-full border border-ink/10 bg-brand text-xs font-black text-white shadow-sm">
                         {i + 1}
                       </span>
-                      <p className="text-sm font-bold leading-relaxed pt-0.5"><MarkdownContent content={step} inline /></p>
+                      <p className="text-sm font-bold leading-relaxed pt-0.5">
+                        <MarkdownContent content={step} inline />
+                      </p>
                     </li>
                   ))}
                 </ol>
@@ -612,7 +636,14 @@ function BoutiquePage() {
                       Observation pédagogique de Naya
                     </h5>
                     <p className="text-xs font-bold text-brand leading-relaxed">
-                      "<MarkdownContent content={formatPedagogicalIntention(generatedChallenge.pedagogical_context)!} inline />"
+                      "
+                      <MarkdownContent
+                        content={formatPedagogicalIntention(
+                          generatedChallenge.pedagogical_context,
+                        )!}
+                        inline
+                      />
+                      "
                     </p>
                   </div>
                 </div>
@@ -661,9 +692,12 @@ function BoutiquePage() {
             >
               <X className="size-4" />
             </button>
-            <h3 className="font-display text-balance text-lg font-black pr-8">{tagsModalProduct.name}</h3>
+            <h3 className="font-display text-balance text-lg font-black pr-8">
+              {tagsModalProduct.name}
+            </h3>
             <p className="mt-1 text-xs text-ink/60">
-              {tagsModalProduct.material_tags.length} matériau{tagsModalProduct.material_tags.length > 1 ? "x" : ""}
+              {tagsModalProduct.material_tags.length} matériau
+              {tagsModalProduct.material_tags.length > 1 ? "x" : ""}
             </p>
             <div className="mt-4 flex max-h-72 flex-wrap gap-1.5 overflow-y-auto">
               {tagsModalProduct.material_tags.map((t) => (

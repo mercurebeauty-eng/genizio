@@ -47,7 +47,9 @@ function AdminLayout() {
     return (
       <div className="flex min-h-dvh flex-col items-center justify-center bg-surface p-6 text-center">
         <ShieldAlert className="size-16 text-red-500 mb-4" />
-        <h1 className="font-display text-balance text-2xl font-black text-ink mb-2">Accès Interdit</h1>
+        <h1 className="font-display text-balance text-2xl font-black text-ink mb-2">
+          Accès Interdit
+        </h1>
         <p className="text-sm text-ink/60 max-w-sm mb-6">
           Vous devez être connecté avec un compte administrateur pour accéder à cet espace.
         </p>

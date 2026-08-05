@@ -9,7 +9,7 @@ import { TALENT_KEY_LABELS } from "@/lib/talent-buckets";
 import { AppTabBar } from "@/components/AppTabBar";
 import { AppHeader } from "@/components/AppHeader";
 import { GenizioLoader } from "@/components/GenizioLoader";
-import { Users, Sparkles, Heart } from "lucide-react";
+import { Users, Heart, Share2 } from "lucide-react";
 
 export const Route = createFileRoute("/profiles/$profileId/guild")({
   component: GuildPage,
@@ -24,7 +24,9 @@ function GuildPage() {
 
   const [child, setChild] = useState<Child | null>(null);
   const [fetching, setFetching] = useState(true);
-  const [community, setCommunity] = useState<Awaited<ReturnType<typeof getGuildCommunity>> | null>(null);
+  const [community, setCommunity] = useState<Awaited<ReturnType<typeof getGuildCommunity>> | null>(
+    null,
+  );
   const [togglingParticipation, setTogglingParticipation] = useState(false);
 
   const fetchCommunity = useServerFn(getGuildCommunity);
@@ -51,7 +53,9 @@ function GuildPage() {
 
   useEffect(() => {
     if (!session || !child) return;
-    fetchCommunity({ data: { childId: child.id } }).then(setCommunity).catch(() => {});
+    fetchCommunity({ data: { childId: child.id } })
+      .then(setCommunity)
+      .catch(() => {});
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [session, child?.id]);
 
@@ -80,7 +84,9 @@ function GuildPage() {
       <div className="grid min-h-dvh place-items-center bg-surface text-ink">
         <div className="text-center">
           <p className="mb-4 font-bold">Profil introuvable.</p>
-          <Link to="/profiles" className="underline text-sm opacity-80 hover:opacity-100">Retour</Link>
+          <Link to="/profiles" className="underline text-sm opacity-80 hover:opacity-100">
+            Retour
+          </Link>
         </div>
       </div>
     );
@@ -98,14 +104,22 @@ function GuildPage() {
             <div className="flex items-center gap-4">
               <div className="text-5xl">{guild.emoji}</div>
               <div>
-                <p className={`text-xs font-extrabold uppercase tracking-widest opacity-70 ${guild.color}`}>Ta guilde</p>
+                <p
+                  className={`text-xs font-extrabold uppercase tracking-widest opacity-70 ${guild.color}`}
+                >
+                  Ta guilde
+                </p>
                 <h1 className={`font-display text-2xl font-black ${guild.color}`}>{guild.name}</h1>
               </div>
             </div>
-            <p className={`mt-3 text-sm font-medium opacity-90 ${guild.color}`}>{guild.description}</p>
+            <p className={`mt-3 text-sm font-medium opacity-90 ${guild.color}`}>
+              {guild.description}
+            </p>
             {guild.talentKeys.length > 0 && (
               <div className="mt-4 flex flex-wrap items-center gap-2">
-                <span className={`text-xs font-extrabold opacity-75 ${guild.color}`}>Talents associés :</span>
+                <span className={`text-xs font-extrabold opacity-75 ${guild.color}`}>
+                  Talents associés :
+                </span>
                 {guild.talentKeys.map((key) => (
                   <span
                     key={key}
@@ -125,11 +139,15 @@ function GuildPage() {
                   <Users className="size-5" />
                 </div>
                 <div>
-                  <h2 className="font-display text-lg font-bold">Rejoindre la communauté de guilde</h2>
+                  <h2 className="font-display text-lg font-bold">
+                    Rejoindre la communauté de guilde
+                  </h2>
                   <p className="mt-1.5 text-sm leading-relaxed text-ink/70">
-                    Aujourd'hui, seule votre famille voit les progrès de {child.name}. En activant le partage, le prénom
-                    et l'âge de {child.name} deviennent visibles aux autres familles de la guilde {guild.name}, et {child.name} voit aussi les leurs.
-                    Rien d'autre n'est partagé (ni ville, ni centres d'intérêt, ni notes). Vous pouvez désactiver à tout moment.
+                    Aujourd'hui, seule votre famille voit les progrès de {child.name}. En activant
+                    le partage, le prénom et l'âge de {child.name} deviennent visibles aux autres
+                    familles de la guilde {guild.name}, et {child.name} voit aussi les leurs. Rien
+                    d'autre n'est partagé (ni ville, ni centres d'intérêt, ni notes). Vous pouvez
+                    désactiver à tout moment.
                   </p>
                   <button
                     onClick={() => handleToggle(true)}
@@ -145,24 +163,37 @@ function GuildPage() {
             <>
               <div className="flex gap-3">
                 <div className="flex-1 rounded-2xl border border-ink/10 bg-white p-4 text-center shadow-sm">
-                  <div className="font-display text-2xl font-black text-brand">{community.memberCount}</div>
-                  <div className="text-xs font-semibold text-ink/60">Membres actifs de la guilde</div>
+                  <div className="font-display text-2xl font-black text-brand">
+                    {community.memberCount}
+                  </div>
+                  <div className="text-xs font-semibold text-ink/60">
+                    Membres actifs de la guilde
+                  </div>
                 </div>
                 <div className="flex-1 rounded-2xl border border-ink/10 bg-white p-4 text-center shadow-sm">
-                  <div className="font-display text-2xl font-black text-leaf-dark">{community.completedThisMonth}</div>
-                  <div className="text-xs font-semibold text-ink/60">Défis complétés ce mois-ci</div>
+                  <div className="font-display text-2xl font-black text-leaf-dark">
+                    {community.completedThisMonth}
+                  </div>
+                  <div className="text-xs font-semibold text-ink/60">
+                    Défis complétés ce mois-ci
+                  </div>
                 </div>
               </div>
 
               <div className={`rounded-2xl border border-ink/10 p-4 shadow-sm ${guild.bgColor}`}>
-                <p className={`mb-1 font-display text-sm font-bold ${guild.color}`}>Défi collectif du mois</p>
+                <p className={`mb-1 font-display text-sm font-bold ${guild.color}`}>
+                  Défi collectif du mois
+                </p>
                 <p className={`mb-3 text-xs font-medium opacity-80 ${guild.color}`}>
-                  Ensemble, {guild.name.toLowerCase()} visent {community.monthlyTarget} défis complétés ce mois-ci.
+                  Ensemble, {guild.name.toLowerCase()} visent {community.monthlyTarget} défis
+                  complétés ce mois-ci.
                 </p>
                 <div className="h-2.5 overflow-hidden rounded-full bg-white/60">
                   <div
                     className="h-full rounded-full bg-white transition-all duration-700"
-                    style={{ width: `${Math.min(100, Math.round((community.completedThisMonth / community.monthlyTarget) * 100))}%` }}
+                    style={{
+                      width: `${Math.min(100, Math.round((community.completedThisMonth / community.monthlyTarget) * 100))}%`,
+                    }}
                   />
                 </div>
                 <p className={`mt-2 text-xs font-bold ${guild.color}`}>
@@ -171,7 +202,9 @@ function GuildPage() {
               </div>
 
               <div>
-                <p className="mb-3 text-xs font-extrabold uppercase tracking-widest text-ink/40">À célébrer</p>
+                <p className="mb-3 text-xs font-extrabold uppercase tracking-widest text-ink/40">
+                  À célébrer
+                </p>
                 {community.recentActivity.length === 0 ? (
                   <div className="rounded-2xl border border-ink/10 bg-white p-6 text-center text-sm text-ink/60 shadow-sm">
                     Aucune activité récente dans cette guilde pour le moment.
@@ -179,12 +212,17 @@ function GuildPage() {
                 ) : (
                   <div className="flex flex-col gap-2.5">
                     {community.recentActivity.map((a, i) => (
-                      <div key={i} className="flex items-center gap-3 rounded-2xl border border-ink/10 bg-white p-3.5 shadow-sm">
+                      <div
+                        key={i}
+                        className="flex items-center gap-3 rounded-2xl border border-ink/10 bg-white p-3.5 shadow-sm"
+                      >
                         <div className="grid size-10 shrink-0 place-items-center rounded-full bg-sky-50 font-display font-bold text-sky-dark">
                           {a.childName[0]}
                         </div>
                         <div className="min-w-0 flex-1">
-                          <div className="text-sm font-bold text-ink">{a.childName}, {a.childAge} ans</div>
+                          <div className="text-sm font-bold text-ink">
+                            {a.childName}, {a.childAge} ans
+                          </div>
                           <div className="truncate text-xs text-ink/60">{a.title}</div>
                         </div>
                         <Heart className="size-4 shrink-0 text-brand/40" />
@@ -199,12 +237,13 @@ function GuildPage() {
                 disabled={togglingParticipation}
                 className="press-white w-full rounded-2xl border border-ink/10 bg-white py-3 text-xs font-bold text-ink/60 disabled:opacity-50"
               >
-                <span className="inline-flex items-center gap-1.5"><Sparkles className="size-3.5" />Désactiver le partage de guilde</span>
+                <span className="inline-flex items-center gap-1.5">
+                  <Share2 className="size-3.5" />
+                  Désactiver le partage de guilde
+                </span>
               </button>
             </>
           )}
-
-
         </div>
       </main>
     </div>

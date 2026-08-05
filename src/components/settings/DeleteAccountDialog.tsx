@@ -21,14 +21,14 @@ export function DeleteAccountDialog() {
   const [open, setOpen] = useState(false);
   const [confirmText, setConfirmText] = useState("");
   const [deleting, setDeleting] = useState(false);
-  
+
   const deleteFn = useServerFn(deleteAccountAndData);
   const navigate = useNavigate();
 
   const handleDelete = async () => {
     if (confirmText !== "SUPPRIMER") return;
     setDeleting(true);
-    
+
     try {
       await deleteFn();
       await supabase.auth.signOut();
@@ -42,10 +42,13 @@ export function DeleteAccountDialog() {
   };
 
   return (
-    <AlertDialog open={open} onOpenChange={(val) => {
-      setOpen(val);
-      if (!val) setConfirmText("");
-    }}>
+    <AlertDialog
+      open={open}
+      onOpenChange={(val) => {
+        setOpen(val);
+        if (!val) setConfirmText("");
+      }}
+    >
       <AlertDialogTrigger asChild>
         <button className="flex w-full items-center justify-between rounded-2xl border border-ink/10 bg-[#FF5A5F]/10 p-4 shadow-sm hover:-translate-y-0.5 active:translate-y-0 transition-all">
           <div className="flex items-center gap-3">
@@ -54,7 +57,9 @@ export function DeleteAccountDialog() {
             </div>
             <div className="text-left">
               <p className="text-sm font-bold text-red-700">Supprimer mon compte</p>
-              <p className="text-[11px] text-red-600/70">Efface de façon permanente toutes vos données.</p>
+              <p className="text-[11px] text-red-600/70">
+                Efface de façon permanente toutes vos données.
+              </p>
             </div>
           </div>
         </button>
@@ -66,10 +71,12 @@ export function DeleteAccountDialog() {
             Supprimer le compte
           </AlertDialogTitle>
           <AlertDialogDescription className="text-ink/70">
-            Cette action est <strong>irréversible</strong>. Toutes les données liées à ce compte, y compris les profils d'enfants, l'historique des défis et les accès mentors, seront supprimées.
+            Cette action est <strong>irréversible</strong>. Toutes les données liées à ce compte, y
+            compris les profils d'enfants, l'historique des défis et les accès mentors, seront
+            supprimées.
           </AlertDialogDescription>
         </AlertDialogHeader>
-        
+
         <div className="my-4 space-y-2">
           <label className="text-sm font-bold text-ink">
             Veuillez taper <strong>SUPPRIMER</strong> pour confirmer :
@@ -84,7 +91,9 @@ export function DeleteAccountDialog() {
         </div>
 
         <AlertDialogFooter className="flex-row gap-2 sm:space-x-0">
-          <AlertDialogCancel className="flex-1 mt-0 rounded-xl border border-ink/10 shadow-sm">Annuler</AlertDialogCancel>
+          <AlertDialogCancel className="flex-1 mt-0 rounded-xl border border-ink/10 shadow-sm">
+            Annuler
+          </AlertDialogCancel>
           <AlertDialogAction
             onClick={(e) => {
               e.preventDefault();

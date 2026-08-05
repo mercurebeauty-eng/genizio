@@ -14,7 +14,7 @@ export function ConsentLedger() {
         .from("consent_events")
         .select("*")
         .order("created_at", { ascending: false });
-      
+
       if (data) setEvents(data);
       setLoading(false);
     };
@@ -36,19 +36,27 @@ export function ConsentLedger() {
 
   const getEventIcon = (type: string) => {
     switch (type) {
-      case "data_exported": return <Download className="size-4 text-sky-600" />;
-      case "mentor_invited": return <Share2 className="size-4 text-brand" />;
-      case "mentor_revoked": return <Trash2 className="size-4 text-red-600" />;
-      default: return <KeyRound className="size-4 text-ink/60" />;
+      case "data_exported":
+        return <Download className="size-4 text-sky-600" />;
+      case "mentor_invited":
+        return <Share2 className="size-4 text-brand" />;
+      case "mentor_revoked":
+        return <Trash2 className="size-4 text-red-600" />;
+      default:
+        return <KeyRound className="size-4 text-ink/60" />;
     }
   };
 
   const getEventColor = (type: string) => {
     switch (type) {
-      case "data_exported": return "bg-sky-50";
-      case "mentor_invited": return "bg-brand/10";
-      case "mentor_revoked": return "bg-red-50";
-      default: return "bg-ink/5";
+      case "data_exported":
+        return "bg-sky-50";
+      case "mentor_invited":
+        return "bg-brand/10";
+      case "mentor_revoked":
+        return "bg-red-50";
+      default:
+        return "bg-ink/5";
     }
   };
 
@@ -61,14 +69,20 @@ export function ConsentLedger() {
       <div className="divide-y-2 divide-ink/10 max-h-[300px] overflow-y-auto">
         {events.map((ev) => (
           <div key={ev.id} className="p-4 flex gap-4">
-            <div className={`mt-0.5 flex size-8 shrink-0 items-center justify-center rounded-full border-2 border-ink ${getEventColor(ev.event_type)}`}>
+            <div
+              className={`mt-0.5 flex size-8 shrink-0 items-center justify-center rounded-full border-2 border-ink ${getEventColor(ev.event_type)}`}
+            >
               {getEventIcon(ev.event_type)}
             </div>
             <div className="flex-1 space-y-1">
               <p className="text-sm font-medium text-ink">{ev.description}</p>
               <div className="flex flex-wrap gap-x-3 text-[11px] text-ink/60">
-                <span>{formatDistanceToNow(new Date(ev.created_at), { addSuffix: true, locale: fr })}</span>
-                {ev.metadata?.mentor_id && <span>Mentor ID: {ev.metadata.mentor_id.slice(0, 8)}...</span>}
+                <span>
+                  {formatDistanceToNow(new Date(ev.created_at), { addSuffix: true, locale: fr })}
+                </span>
+                {ev.metadata?.mentor_id && (
+                  <span>Mentor ID: {ev.metadata.mentor_id.slice(0, 8)}...</span>
+                )}
               </div>
             </div>
           </div>

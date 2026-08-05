@@ -253,6 +253,60 @@ export type Database = {
           },
         ]
       }
+      child_access_periods: {
+        Row: {
+          amount_xof: number
+          child_id: string
+          created_at: string
+          currency: string
+          ends_at: string
+          id: string
+          note: string | null
+          source: string
+          starts_at: string
+          token_id: string | null
+        }
+        Insert: {
+          amount_xof?: number
+          child_id: string
+          created_at?: string
+          currency?: string
+          ends_at: string
+          id?: string
+          note?: string | null
+          source?: string
+          starts_at: string
+          token_id?: string | null
+        }
+        Update: {
+          amount_xof?: number
+          child_id?: string
+          created_at?: string
+          currency?: string
+          ends_at?: string
+          id?: string
+          note?: string | null
+          source?: string
+          starts_at?: string
+          token_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "child_access_periods_child_id_fkey"
+            columns: ["child_id"]
+            isOneToOne: false
+            referencedRelation: "child_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "child_access_periods_token_id_fkey"
+            columns: ["token_id"]
+            isOneToOne: false
+            referencedRelation: "sponsorship_tokens"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       child_badges: {
         Row: {
           badge_slug: string
@@ -961,6 +1015,7 @@ export type Database = {
           currency: string
           id: string
           is_redeemed: boolean
+          months_count: number
           payment_confirmed: boolean
           redeemed_at: string | null
           redeemed_by_child_id: string | null
@@ -978,6 +1033,7 @@ export type Database = {
           currency?: string
           id?: string
           is_redeemed?: boolean
+          months_count?: number
           payment_confirmed?: boolean
           redeemed_at?: string | null
           redeemed_by_child_id?: string | null
@@ -995,6 +1051,7 @@ export type Database = {
           currency?: string
           id?: string
           is_redeemed?: boolean
+          months_count?: number
           payment_confirmed?: boolean
           redeemed_at?: string | null
           redeemed_by_child_id?: string | null

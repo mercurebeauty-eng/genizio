@@ -13,9 +13,24 @@ export function AppTabBar({ profileId }: AppTabBarProps) {
   // Portfolio — la promesse centrale du produit ("portfolio vivant") — prend sa place.
   const items = [
     { to: "/profiles" as const, label: "Accueil", icon: Home, needsProfileId: false },
-    { to: "/profiles/$profileId/challenges" as const, label: "Défis", icon: Trophy, needsProfileId: true },
-    { to: "/profiles/$profileId/portfolio" as const, label: "Portfolio", icon: Layers, needsProfileId: true },
-    { to: "/profiles/$profileId/mentors" as const, label: "Mentors", icon: Users, needsProfileId: true },
+    {
+      to: "/profiles/$profileId/challenges" as const,
+      label: "Défis",
+      icon: Trophy,
+      needsProfileId: true,
+    },
+    {
+      to: "/profiles/$profileId/portfolio" as const,
+      label: "Portfolio",
+      icon: Layers,
+      needsProfileId: true,
+    },
+    {
+      to: "/profiles/$profileId/mentors" as const,
+      label: "Mentors",
+      icon: Users,
+      needsProfileId: true,
+    },
     { to: "/profile" as const, label: "Réglages", icon: Settings, needsProfileId: false },
   ];
 
@@ -26,7 +41,7 @@ export function AppTabBar({ profileId }: AppTabBarProps) {
     >
       <div className="flex items-center justify-around w-full">
         {items.map(({ to, label, icon: Icon, needsProfileId }) => {
-          const targetTo = (needsProfileId && !profileId) ? "/profiles" : to;
+          const targetTo = needsProfileId && !profileId ? "/profiles" : to;
           const params = (needsProfileId && profileId ? { profileId } : undefined) as never;
 
           return (
@@ -42,7 +57,9 @@ export function AppTabBar({ profileId }: AppTabBarProps) {
             >
               {({ isActive }) => (
                 <>
-                  <div className={`p-0.5 rounded-full transition-all ${isActive ? "ring-2 ring-brand rounded-full text-brand" : ""}`}>
+                  <div
+                    className={`p-0.5 rounded-full transition-all ${isActive ? "ring-2 ring-brand rounded-full text-brand" : ""}`}
+                  >
                     <Icon className="size-5 stroke-[2.1]" />
                   </div>
                   <span className="text-[10px] font-bold text-balance">{label}</span>

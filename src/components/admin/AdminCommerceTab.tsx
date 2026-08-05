@@ -11,7 +11,7 @@ import {
   Printer,
   ExternalLink,
   Phone,
-  Sparkles,
+  BadgeCheck,
   Filter,
   Brain,
   Truck,
@@ -48,7 +48,11 @@ const ORDER_STATUS_OPTIONS = [
   { value: "pending", label: "En attente", color: "bg-amber-100 text-amber-800 border-amber-300" },
   { value: "confirmed", label: "Confirmé", color: "bg-blue-100 text-blue-800 border-blue-300" },
   { value: "shipped", label: "Expédié", color: "bg-purple-100 text-purple-800 border-purple-300" },
-  { value: "delivered", label: "Livré", color: "bg-emerald-100 text-emerald-800 border-emerald-300" },
+  {
+    value: "delivered",
+    label: "Livré",
+    color: "bg-emerald-100 text-emerald-800 border-emerald-300",
+  },
   { value: "cancelled", label: "Annulé", color: "bg-red-100 text-red-800 border-red-300" },
 ];
 
@@ -71,7 +75,9 @@ export function AdminCommerceTab({
     try {
       await onUpdateOrderStatus(orderId, newStatus);
     } catch (err: any) {
-      toast.error("Erreur lors de la mise à jour du statut: " + (err?.message || "Erreur inconnue"));
+      toast.error(
+        "Erreur lors de la mise à jour du statut: " + (err?.message || "Erreur inconnue"),
+      );
     } finally {
       setUpdatingOrderId(null);
     }
@@ -83,7 +89,10 @@ export function AdminCommerceTab({
     try {
       await onTogglePassport(childId, unlock);
     } catch (err: any) {
-      toast.error("Erreur lors de la modification de l'accès passeport: " + (err?.message || "Erreur inconnue"));
+      toast.error(
+        "Erreur lors de la modification de l'accès passeport: " +
+          (err?.message || "Erreur inconnue"),
+      );
     } finally {
       setPendingPassportChildId(null);
     }
@@ -99,7 +108,9 @@ export function AdminCommerceTab({
       );
     }
     return (
-      <span className={`inline-flex items-center gap-1 rounded-full border px-2.5 py-0.5 text-xs font-extrabold ${option.color}`}>
+      <span
+        className={`inline-flex items-center gap-1 rounded-full border px-2.5 py-0.5 text-xs font-extrabold ${option.color}`}
+      >
         {option.label}
       </span>
     );
@@ -112,11 +123,15 @@ export function AdminCommerceTab({
         {/* Card 1: Total Orders */}
         <div className="rounded-3xl border border-ink/10 bg-white p-5 shadow-sm hover:shadow-md transition-shadow">
           <div className="flex items-center justify-between text-ink/60 mb-2">
-            <span className="text-[11px] font-extrabold uppercase tracking-wider">Commandes Totales</span>
+            <span className="text-[11px] font-extrabold uppercase tracking-wider">
+              Commandes Totales
+            </span>
             <ShoppingBag className="size-4 text-purple-600" />
           </div>
           <div className="flex items-baseline gap-2">
-            <span className="font-display text-3xl font-black text-purple-600">{data.summary.totalOrders}</span>
+            <span className="font-display text-3xl font-black text-purple-600">
+              {data.summary.totalOrders}
+            </span>
             <span className="text-xs font-bold text-ink/50">commandes</span>
           </div>
           <p className="text-xs text-ink/60 mt-2 font-medium">
@@ -131,7 +146,9 @@ export function AdminCommerceTab({
             <Clock className="size-4 text-amber-500" />
           </div>
           <div className="flex items-baseline gap-2">
-            <span className="font-display text-3xl font-black text-amber-500">{data.summary.pendingOrders}</span>
+            <span className="font-display text-3xl font-black text-amber-500">
+              {data.summary.pendingOrders}
+            </span>
             <span className="text-xs font-bold text-ink/50">à traiter</span>
           </div>
           <p className="text-xs text-ink/60 mt-2 font-medium">
@@ -142,26 +159,40 @@ export function AdminCommerceTab({
         {/* Card 3: Delivered Orders */}
         <div className="rounded-3xl border border-ink/10 bg-white p-5 shadow-sm hover:shadow-md transition-shadow">
           <div className="flex items-center justify-between text-ink/60 mb-2">
-            <span className="text-[11px] font-extrabold uppercase tracking-wider">Commandes Livrées</span>
+            <span className="text-[11px] font-extrabold uppercase tracking-wider">
+              Commandes Livrées
+            </span>
             <CheckCircle2 className="size-4 text-emerald-600" />
           </div>
           <div className="flex items-baseline gap-2">
-            <span className="font-display text-3xl font-black text-emerald-600">{data.summary.deliveredOrders}</span>
+            <span className="font-display text-3xl font-black text-emerald-600">
+              {data.summary.deliveredOrders}
+            </span>
             <span className="text-xs font-bold text-ink/50">livrées</span>
           </div>
           <p className="text-xs text-ink/60 mt-2 font-medium">
-            Taux de livraison : <strong className="text-ink">{data.summary.totalOrders > 0 ? Math.round((data.summary.deliveredOrders / data.summary.totalOrders) * 100) : 0}%</strong>
+            Taux de livraison :{" "}
+            <strong className="text-ink">
+              {data.summary.totalOrders > 0
+                ? Math.round((data.summary.deliveredOrders / data.summary.totalOrders) * 100)
+                : 0}
+              %
+            </strong>
           </p>
         </div>
 
         {/* Card 4: Passports 14+ Unlocked */}
         <div className="rounded-3xl border border-ink/10 bg-white p-5 shadow-sm hover:shadow-md transition-shadow">
           <div className="flex items-center justify-between text-ink/60 mb-2">
-            <span className="text-[11px] font-extrabold uppercase tracking-wider">Passeports 14+ Débloqués</span>
+            <span className="text-[11px] font-extrabold uppercase tracking-wider">
+              Passeports 14+ Débloqués
+            </span>
             <Award className="size-4 text-sky-600" />
           </div>
           <div className="flex items-baseline gap-2">
-            <span className="font-display text-3xl font-black text-sky-600">{data.summary.passportsUnlockedCount}</span>
+            <span className="font-display text-3xl font-black text-sky-600">
+              {data.summary.passportsUnlockedCount}
+            </span>
             <span className="text-xs font-bold text-ink/50">/ {data.teenProfiles.length} ados</span>
           </div>
           <p className="text-xs text-ink/60 mt-2 font-medium">
@@ -185,7 +216,8 @@ export function AdminCommerceTab({
               File de Traitement des Commandes de Kits
             </h2>
             <p className="text-xs text-ink/60 font-medium mt-0.5">
-              Gestion de l'expédition et mise à jour en 1-click des statuts de kits commandés par les parents.
+              Gestion de l'expédition et mise à jour en 1-click des statuts de kits commandés par
+              les parents.
             </p>
           </div>
 
@@ -233,8 +265,12 @@ export function AdminCommerceTab({
         {filteredOrders.length === 0 ? (
           <div className="rounded-2xl border border-dashed border-ink/15 p-8 text-center bg-surface/30">
             <ShoppingBag className="size-8 text-ink/30 mx-auto mb-2" />
-            <p className="text-sm font-bold text-ink/70">Aucune commande ne correspond à ce filtre.</p>
-            <p className="text-xs text-ink/50 mt-1">Sélectionnez un autre statut pour afficher les commandes.</p>
+            <p className="text-sm font-bold text-ink/70">
+              Aucune commande ne correspond à ce filtre.
+            </p>
+            <p className="text-xs text-ink/50 mt-1">
+              Sélectionnez un autre statut pour afficher les commandes.
+            </p>
           </div>
         ) : (
           <div className="overflow-x-auto">
@@ -284,7 +320,10 @@ export function AdminCommerceTab({
                         {order.items && order.items.length > 0 ? (
                           <div className="flex flex-col gap-1">
                             {order.items.map((item, idx) => (
-                              <div key={idx} className="text-xs font-medium text-ink flex items-center justify-between gap-2">
+                              <div
+                                key={idx}
+                                className="text-xs font-medium text-ink flex items-center justify-between gap-2"
+                              >
                                 <span className="line-clamp-1">{item.name}</span>
                                 <span className="font-bold text-ink/60 text-[11px] whitespace-nowrap">
                                   {formatXOF(item.price_xof)}
@@ -357,20 +396,25 @@ export function AdminCommerceTab({
               </span>
             </div>
             <p className="text-xs text-ink/60 font-medium">
-              Espace de validation et d'activation des Passeports d'Excellence officiels pour les adolescents âgés de 14 ans et plus.
+              Espace de validation et d'activation des Passeports d'Excellence officiels pour les
+              adolescents âgés de 14 ans et plus.
             </p>
           </div>
 
           <span className="rounded-full bg-sky-500/10 px-3 py-1 text-xs font-bold text-sky-700 self-start md:self-auto">
-            {data.teenProfiles.filter((p) => p.pdfUnlocked).length} / {data.teenProfiles.length} Débloqués
+            {data.teenProfiles.filter((p) => p.pdfUnlocked).length} / {data.teenProfiles.length}{" "}
+            Débloqués
           </span>
         </div>
 
         {/* Info Box */}
         <div className="mb-6 rounded-2xl bg-gradient-to-r from-sky-50 via-purple-50 to-surface border border-sky-200/60 p-4 flex items-start gap-3">
-          <Sparkles className="size-5 text-sky-600 shrink-0 mt-0.5" />
+          <BadgeCheck className="size-5 text-sky-600 shrink-0 mt-0.5" />
           <div className="text-xs text-ink/80 leading-relaxed">
-            <strong>Activation du Passeport d'Excellence (14 ans et +) :</strong> Le déblocage autorise la génération et l'impression HD du passeport certifiant l'ensemble des compétences et des guildes de l'adolescent. Tarif de validation officiel : <strong>50 000 FCFA</strong>.
+            <strong>Activation du Passeport d'Excellence (14 ans et +) :</strong> Le déblocage
+            autorise la génération et l'impression HD du passeport certifiant l'ensemble des
+            compétences et des guildes de l'adolescent. Tarif de validation officiel :{" "}
+            <strong>50 000 FCFA</strong>.
           </div>
         </div>
 
@@ -378,7 +422,9 @@ export function AdminCommerceTab({
         {data.teenProfiles.length === 0 ? (
           <div className="rounded-2xl border border-dashed border-ink/15 p-8 text-center bg-surface/30">
             <Award className="size-8 text-ink/30 mx-auto mb-2" />
-            <p className="text-sm font-bold text-ink/70">Aucun profil adolescent (14 ans et +) enregistré pour le moment.</p>
+            <p className="text-sm font-bold text-ink/70">
+              Aucun profil adolescent (14 ans et +) enregistré pour le moment.
+            </p>
           </div>
         ) : (
           <div className="overflow-x-auto">
@@ -404,9 +450,7 @@ export function AdminCommerceTab({
                       </td>
 
                       {/* Ville */}
-                      <td className="py-4 pr-4 font-medium text-xs text-ink/70">
-                        {teen.city}
-                      </td>
+                      <td className="py-4 pr-4 font-medium text-xs text-ink/70">{teen.city}</td>
 
                       {/* Contact Parent */}
                       <td className="py-4 pr-4">
@@ -463,7 +507,7 @@ export function AdminCommerceTab({
                             </>
                           ) : (
                             <>
-                              <Sparkles className="size-3.5" /> Débloquer (50k FCFA)
+                              <Unlock className="size-3.5" /> Débloquer (50k FCFA)
                             </>
                           )}
                         </button>
@@ -559,7 +603,9 @@ export function AdminCommerceTab({
 
           {data.materialSuggestions.length === 0 ? (
             <div className="rounded-2xl border border-dashed border-ink/10 p-6 text-center">
-              <p className="text-xs text-ink/50 italic">Aucune suggestion de matériel détectée par Naya IA.</p>
+              <p className="text-xs text-ink/50 italic">
+                Aucune suggestion de matériel détectée par Naya IA.
+              </p>
             </div>
           ) : (
             <div className="space-y-3 max-h-80 overflow-y-auto pr-1">
@@ -569,7 +615,9 @@ export function AdminCommerceTab({
                   className="rounded-2xl border border-ink/10 bg-surface/30 p-3 flex items-center justify-between gap-3 hover:bg-surface transition-colors"
                 >
                   <div>
-                    <div className="font-bold text-xs text-ink">{sug.tag || sug.material_name || "Matériel"}</div>
+                    <div className="font-bold text-xs text-ink">
+                      {sug.tag || sug.material_name || "Matériel"}
+                    </div>
                     <div className="text-[10px] text-ink/50 font-medium">
                       Domaine : {sug.domain || "Général"} • Demandé {sug.seen_count} fois
                     </div>

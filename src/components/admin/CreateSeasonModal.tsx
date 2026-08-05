@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { X, Sparkles } from "lucide-react";
+import { CalendarPlus, X } from "lucide-react";
 import { useServerFn } from "@tanstack/react-start";
 import { useSession } from "@/hooks/use-session";
 import { createSeasonAdmin, updateSeasonAdmin, type Season } from "@/lib/seasons.functions";
@@ -58,17 +58,16 @@ export function CreateSeasonModal({ initial, onClose, onSuccess }: CreateSeasonM
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-      <div
-        className="absolute inset-0 bg-ink/40 backdrop-blur-sm"
-        onClick={onClose}
-      />
+      <div className="absolute inset-0 bg-ink/40 backdrop-blur-sm" onClick={onClose} />
       <div className="relative w-full max-w-lg overflow-hidden rounded-[2rem] bg-surface shadow-2xl animate-in fade-in zoom-in-95 duration-200">
         <div className="flex items-center justify-between border-b border-ink/10 bg-white px-6 py-4">
           <div className="flex items-center gap-3">
             <div className="grid size-10 place-items-center rounded-2xl bg-brand/10 text-brand">
-              <Sparkles className="size-5" />
+              <CalendarPlus className="size-5" />
             </div>
-            <h2 className="font-display text-xl font-bold text-ink">{isEditing ? "Modifier la Saison" : "Nouvelle Saison"}</h2>
+            <h2 className="font-display text-xl font-bold text-ink">
+              {isEditing ? "Modifier la Saison" : "Nouvelle Saison"}
+            </h2>
           </div>
           <button
             onClick={onClose}
@@ -94,7 +93,7 @@ export function CreateSeasonModal({ initial, onClose, onSuccess }: CreateSeasonM
                 className="w-full rounded-2xl border border-ink/20 bg-white px-4 py-3 text-sm font-medium text-ink focus:border-brand focus:outline-none focus:ring-4 focus:ring-brand/10"
               />
             </div>
-            
+
             <div>
               <label className="mb-1.5 block text-xs font-bold uppercase tracking-wider text-ink/60">
                 Thème Pédagogique

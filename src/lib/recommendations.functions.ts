@@ -1,6 +1,8 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { generateDiscriminantChallenge, generateSupportRetestChallenge } from "@/lib/hypotheses.functions";
+import { getChildAccessStatus } from "@/lib/child-access";
+import { getInterestHypothesesSnapshot } from "@/lib/interest-confidence";
 import { callClaude, finalizeChallenge, PROOF_MODE_INSTRUCTION, ACADEMIC_REFERENTIAL_INSTRUCTION, ACADEMIC_SECRET_INSTRUCTION, ACADEMIC_DOMAIN_LABELS, STEPS_INSTRUCTION, INTELLIGENCES_FIELD_INSTRUCTION, TRAIT_SUBFORM_INSTRUCTION, formatChildInterestsPayload, extractJsonFromLLMResponse, getLeastExploredTalentLabels } from "@/lib/challenges.functions";
 import { z } from "zod";
 
@@ -33,6 +35,20 @@ export const recommendChallengesForChild = createServerFn({ method: "POST" })
       .maybeSingle();
 
     if (childErr || !child) throw new Error("Profil enfant introuvable.");
+
+    // Gate silencieux (décision 2026-08-05) : cette prégénération est déclenchée en
+    // fire-and-forget après complétion d'un défi — si l'accès mensuel a expiré, on ne
+    // crée pas de nouveaux défis (le flux de complétion, lui, n'est jamais bloqué :
+    // portfolio/acquis restent accessibles). Retour null = la recommandation est
+    // simplement absente, jamais une erreur qui ferait échouer la complétion.
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const access = await getChildAccessStatus(supabaseAdmin as any, userId, data.childId);
+    if (access.kind === "expired") return null;
+
+    // Décision 2026-08-05 : les intérêts déclarés sont des HYPOTHÈSES de travail — leur
+    // confiance est dérivée à la lecture (complétions vs abandons, par groupe de talents).
+    // Un seul snapshot pour les 4 branches de recommandation ci-dessous.
+    const interestHypotheses = await getInterestHypothesesSnapshot(supabase as any, data.childId).catch(() => null);
 
     // 2. NAYA 2.0 Phase 3b : Récupération d'un cycle d'hypothèses ouvert (Priorité 1 — Investigation)
     const { data: openCycle } = await supabase
@@ -118,7 +134,7 @@ export const recommendChallengesForChild = createServerFn({ method: "POST" })
         }
       } else {
         const subject = ACADEMIC_DOMAIN_LABELS[supportCycle.trigger_domain] ?? supportCycle.trigger_domain;
-        const formattedInterests = formatChildInterestsPayload(child.interests);
+        const formattedInterests = formatChildInterestsPayload(child.interests, interestHypotheses);
         const prompt = `Tu es Naya, mentore IA. Conçois un micro-défi de STABILISATION pour ${child.name}, ${child.age} ans, spécifiquement en ${subject} — un défi "doudou" au succès quasi garanti.
 
 Principe : ${child.name} bénéficie actuellement d'un accompagnement renforcé en ${subject} suite à une observation récente de Naya. Ce défi doit RASSURER, pas challenger : structure très détaillée, étapes ultra-simples et peu nombreuses, aucune surprise, dans ce domaine précis. La réussite doit être quasi certaine.
@@ -242,7 +258,7 @@ Format JSON strict :
 
     // 3A. Essaimage (Lever la faiblesse grâce à une force)
     if (weaknessEntry && strengthEntry) {
-      const formattedInterests = formatChildInterestsPayload(child.interests);
+      const formattedInterests = formatChildInterestsPayload(child.interests, interestHypotheses);
       const prompt = `Tu es Naya, mentore IA. Conçois un micro-défi d'ESSAIMAGE pour ${child.name}, ${child.age} ans.
 Principe : Utiliser sa FORCE (${strengthEntry[0]}) et ses leviers comportementaux / postures d'action préférentielles pour développer doucement sa compétence en progression (${weaknessEntry[0]}).
 
@@ -353,7 +369,7 @@ Format JSON strict :
     // recommandation.
     if (fragilityEntry) {
       const comfortSkill = strengthEntry?.[0] ?? fragilityEntry[0];
-      const formattedInterests = formatChildInterestsPayload(child.interests);
+      const formattedInterests = formatChildInterestsPayload(child.interests, interestHypotheses);
       const prompt = `Tu es Naya, mentore IA. Conçois un micro-défi de STABILISATION pour ${child.name}, ${child.age} ans — un défi "doudou" au succès quasi garanti.
 
 Principe : ${child.name} traverse une phase instable sur une compétence (résultats en dents de scie). Ce défi doit RASSURER, pas challenger : structure très détaillée, étapes ultra-simples et peu nombreuses, aucune surprise, appuyé sur ${strengthEntry ? `sa force reconnue (${comfortSkill})` : "quelque chose de familier et confortable"} et ses leviers comportementaux d'action habituels. La réussite doit être quasi certaine.
@@ -477,7 +493,7 @@ Format JSON strict :
 
     if (!pending || pending.length === 0) {
       const targetLabels = getLeastExploredTalentLabels(child.talents as Record<string, number> | null, 1);
-      const formattedInterests = formatChildInterestsPayload(child.interests);
+      const formattedInterests = formatChildInterestsPayload(child.interests, interestHypotheses);
       const prompt = `Tu es Naya, mentore IA. Conçois LE prochain défi d'EXPLORATION pour ${child.name}, ${child.age} ans — un défi terrain concret (pas un exercice abstrait), qui donne à l'enfant l'occasion de révéler un talent encore peu exploré.
 
 Cible en priorité l'intelligence "${targetLabels[0] ?? "polyvalente"}", encore peu explorée dans son profil actuel.

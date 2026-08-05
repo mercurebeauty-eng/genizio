@@ -5,14 +5,28 @@ import { supabase } from "@/integrations/supabase/client";
 import { useSession } from "@/hooks/use-session";
 import { COUNTRIES } from "@/lib/countries";
 import { confirmDialog } from "@/components/ui/confirm-dialog";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 import { Switch } from "@/components/ui/switch";
 import { Loader2, Link as LinkIcon, Check, Plus, Phone } from "lucide-react";
 import { toast } from "sonner";
 
 const DOMAINS = [
-  "Sciences", "Architecture", "Artisanat", "Agriculture", "Sport",
-  "Communication", "Entrepreneuriat", "Arts", "Langues", "Tech & IA",
+  "Sciences",
+  "Architecture",
+  "Artisanat",
+  "Agriculture",
+  "Sport",
+  "Communication",
+  "Entrepreneuriat",
+  "Arts",
+  "Langues",
+  "Tech & IA",
 ];
 
 const EXPIRATION_OPTIONS = [
@@ -22,7 +36,15 @@ const EXPIRATION_OPTIONS = [
   { value: "90", label: "90 jours", days: 90 },
 ] as const;
 
-export function InviteMentorDialog({ childId, childName, customTrigger }: { childId: string, childName: string, customTrigger?: React.ReactNode }) {
+export function InviteMentorDialog({
+  childId,
+  childName,
+  customTrigger,
+}: {
+  childId: string;
+  childName: string;
+  customTrigger?: React.ReactNode;
+}) {
   const { session } = useSession();
   const [open, setOpen] = useState(false);
   const [mentorName, setMentorName] = useState("");
@@ -30,7 +52,8 @@ export function InviteMentorDialog({ childId, childName, customTrigger }: { chil
   const [canViewTimeline, setCanViewTimeline] = useState(true);
   const [canViewRawObservations, setCanViewRawObservations] = useState(false);
   const [scopeDomains, setScopeDomains] = useState<string[]>([]);
-  const [expiration, setExpiration] = useState<(typeof EXPIRATION_OPTIONS)[number]["value"]>("never");
+  const [expiration, setExpiration] =
+    useState<(typeof EXPIRATION_OPTIONS)[number]["value"]>("never");
 
   const [loading, setLoading] = useState(false);
   const [shareUrl, setShareUrl] = useState<string | null>(null);
@@ -48,7 +71,9 @@ export function InviteMentorDialog({ childId, childName, customTrigger }: { chil
 
   const handleSavePhone = async () => {
     if (phoneNumber.length < selectedCountry.limit - 2) {
-      toast.error(`Le numéro de téléphone doit contenir au moins ${selectedCountry.limit - 2} chiffres.`);
+      toast.error(
+        `Le numéro de téléphone doit contenir au moins ${selectedCountry.limit - 2} chiffres.`,
+      );
       return;
     }
     setSavingPhone(true);
@@ -79,11 +104,13 @@ export function InviteMentorDialog({ childId, childName, customTrigger }: { chil
       .eq("status", "active")
       .ilike("mentor_name", name);
     if (existing && existing.length > 0) {
-      if (!(await confirmDialog({
-        title: "Mentor déjà invité",
-        description: `Un mentor nommé "${name}" a déjà un accès actif à ce profil. Créer un lien supplémentaire pour lui quand même ?`,
-        confirmLabel: "Créer quand même",
-      }))) {
+      if (
+        !(await confirmDialog({
+          title: "Mentor déjà invité",
+          description: `Un mentor nommé "${name}" a déjà un accès actif à ce profil. Créer un lien supplémentaire pour lui quand même ?`,
+          confirmLabel: "Créer quand même",
+        }))
+      ) {
         return;
       }
     }
@@ -91,7 +118,9 @@ export function InviteMentorDialog({ childId, childName, customTrigger }: { chil
     setLoading(true);
     try {
       const days = EXPIRATION_OPTIONS.find((o) => o.value === expiration)?.days ?? null;
-      const expiresAt = days ? new Date(Date.now() + days * 24 * 60 * 60 * 1000).toISOString() : null;
+      const expiresAt = days
+        ? new Date(Date.now() + days * 24 * 60 * 60 * 1000).toISOString()
+        : null;
       const res = await inviteFn({
         data: {
           childId,
@@ -101,7 +130,7 @@ export function InviteMentorDialog({ childId, childName, customTrigger }: { chil
           canViewTimeline,
           canViewRawObservations,
           expiresAt,
-        }
+        },
       });
       setShareUrl(res.shareUrl);
     } catch (e) {
@@ -121,27 +150,32 @@ export function InviteMentorDialog({ childId, childName, customTrigger }: { chil
   };
 
   const toggleDomain = (domain: string) => {
-    setScopeDomains(prev => 
-      prev.includes(domain) ? prev.filter(d => d !== domain) : [...prev, domain]
+    setScopeDomains((prev) =>
+      prev.includes(domain) ? prev.filter((d) => d !== domain) : [...prev, domain],
     );
   };
 
   return (
-    <Dialog open={open} onOpenChange={(val) => {
-      setOpen(val);
-      if (!val) {
-        setShareUrl(null);
-        setMentorName("");
-        setScopeDomains([]);
-        setCanViewTalentMap(true);
-        setCanViewTimeline(true);
-        setCanViewRawObservations(false);
-        setExpiration("never");
-        setPhoneNumber("");
-      }
-    }}>
+    <Dialog
+      open={open}
+      onOpenChange={(val) => {
+        setOpen(val);
+        if (!val) {
+          setShareUrl(null);
+          setMentorName("");
+          setScopeDomains([]);
+          setCanViewTalentMap(true);
+          setCanViewTimeline(true);
+          setCanViewRawObservations(false);
+          setExpiration("never");
+          setPhoneNumber("");
+        }
+      }}
+    >
       <DialogTrigger asChild>
-        {customTrigger ? customTrigger : (
+        {customTrigger ? (
+          customTrigger
+        ) : (
           <button className="press-brand flex items-center justify-center gap-2 rounded-2xl bg-brand px-5 py-3 text-sm font-bold text-white">
             <Plus className="size-4" />
             Inviter un mentor
@@ -165,7 +199,8 @@ export function InviteMentorDialog({ childId, childName, customTrigger }: { chil
                 <Phone className="size-4" />
               </div>
               <p className="text-sm text-ink/80 leading-relaxed">
-                Le mentor doit pouvoir vous joindre directement. Renseignez votre numéro avant de générer le lien.
+                Le mentor doit pouvoir vous joindre directement. Renseignez votre numéro avant de
+                générer le lien.
               </p>
             </div>
             <div className="flex gap-2">
@@ -202,7 +237,11 @@ export function InviteMentorDialog({ childId, childName, customTrigger }: { chil
               disabled={savingPhone || !phoneNumber}
               className="press-brand w-full rounded-2xl bg-brand py-3.5 text-sm font-bold text-white disabled:opacity-50 flex items-center justify-center gap-2"
             >
-              {savingPhone ? <Loader2 className="size-5 animate-spin" /> : "Enregistrer et continuer"}
+              {savingPhone ? (
+                <Loader2 className="size-5 animate-spin" />
+              ) : (
+                "Enregistrer et continuer"
+              )}
             </button>
           </div>
         ) : !shareUrl ? (
@@ -228,8 +267,8 @@ export function InviteMentorDialog({ childId, childName, customTrigger }: { chil
                     onClick={() => setExpiration(opt.value)}
                     className={`rounded-full px-3 py-1.5 text-xs font-bold transition-all border-2 ${
                       expiration === opt.value
-                        ? 'bg-brand border-ink text-white'
-                        : 'bg-white border-ink text-ink/60 hover:bg-surface'
+                        ? "bg-brand border-ink text-white"
+                        : "bg-white border-ink text-ink/60 hover:bg-surface"
                     }`}
                   >
                     {opt.label}
@@ -240,7 +279,7 @@ export function InviteMentorDialog({ childId, childName, customTrigger }: { chil
 
             <div className="space-y-4 rounded-2xl border border-ink/10 bg-white p-4 shadow-sm">
               <h4 className="text-sm font-bold text-ink mb-2">Permissions d'accès</h4>
-              
+
               <div className="flex items-center justify-between">
                 <div className="space-y-0.5">
                   <label className="text-sm font-medium text-ink">Carte des talents</label>
@@ -248,7 +287,7 @@ export function InviteMentorDialog({ childId, childName, customTrigger }: { chil
                 </div>
                 <Switch checked={canViewTalentMap} onCheckedChange={setCanViewTalentMap} />
               </div>
-              
+
               <div className="flex items-center justify-between">
                 <div className="space-y-0.5">
                   <label className="text-sm font-medium text-ink">Journal des défis</label>
@@ -264,20 +303,25 @@ export function InviteMentorDialog({ childId, childName, customTrigger }: { chil
                       <label className="text-sm font-medium text-ink">Notes parentales</label>
                       <p className="text-[11px] text-ink/60">Inclure vos observations privées</p>
                     </div>
-                    <Switch checked={canViewRawObservations} onCheckedChange={setCanViewRawObservations} />
+                    <Switch
+                      checked={canViewRawObservations}
+                      onCheckedChange={setCanViewRawObservations}
+                    />
                   </div>
 
                   <div className="space-y-2">
-                    <label className="text-[11px] font-bold text-ink/70 uppercase tracking-wider">Restreindre à certains domaines</label>
+                    <label className="text-[11px] font-bold text-ink/70 uppercase tracking-wider">
+                      Restreindre à certains domaines
+                    </label>
                     <div className="flex flex-wrap gap-2">
-                      {DOMAINS.map(domain => (
+                      {DOMAINS.map((domain) => (
                         <button
                           key={domain}
                           onClick={() => toggleDomain(domain)}
                           className={`rounded-full px-3 py-1 text-[10px] font-bold uppercase transition-all border-2 ${
                             scopeDomains.includes(domain)
-                              ? 'bg-brand border-ink text-white'
-                              : 'bg-white border-ink text-ink/60 hover:bg-surface'
+                              ? "bg-brand border-ink text-white"
+                              : "bg-white border-ink text-ink/60 hover:bg-surface"
                           }`}
                         >
                           {domain}
@@ -304,7 +348,8 @@ export function InviteMentorDialog({ childId, childName, customTrigger }: { chil
             </div>
             <h3 className="text-xl font-bold text-ink">Accès créé !</h3>
             <p className="text-sm text-ink/60 px-4">
-              Transmettez ce lien unique à <strong>{mentorName}</strong>. L'accès peut être révoqué à tout moment.
+              Transmettez ce lien unique à <strong>{mentorName}</strong>. L'accès peut être révoqué
+              à tout moment.
             </p>
 
             <div className="flex items-center gap-2 rounded-xl border border-ink/10 bg-sky p-2">
@@ -321,7 +366,7 @@ export function InviteMentorDialog({ childId, childName, customTrigger }: { chil
                 {copied ? <Check className="size-4" /> : <LinkIcon className="size-4" />}
               </button>
             </div>
-            
+
             <button
               onClick={() => setOpen(false)}
               className="text-sm font-bold text-ink/60 hover:text-ink underline decoration-ink/30 underline-offset-4"

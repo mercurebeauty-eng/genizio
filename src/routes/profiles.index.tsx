@@ -16,7 +16,12 @@ import { AppHeader } from "@/components/AppHeader";
 import { ProfileDialog } from "@/components/profiles/ProfileDialog";
 import { AVATAR_COLORS, type ChildProfile } from "@/components/profiles/shared";
 import { getActiveChallenge, type ChallengeLike } from "@/lib/active-challenge";
-import { getPortfolioPulse, TALENT_KEY_LABELS, getTalentBucket, TALENT_BUCKET_LABEL } from "@/lib/talent-buckets";
+import {
+  getPortfolioPulse,
+  TALENT_KEY_LABELS,
+  getTalentBucket,
+  TALENT_BUCKET_LABEL,
+} from "@/lib/talent-buckets";
 import { calculateXPGain } from "@/lib/challenges.functions";
 import { getChildGuild } from "@/lib/guilds";
 import { InviteMentorDialog } from "@/components/mentors/InviteMentorDialog";
@@ -27,8 +32,14 @@ import { DifficultyBadge } from "@/components/challenges/DifficultyBadge";
 import { MarkdownContent } from "@/components/ui/markdown-content";
 import { COUNTRIES } from "@/lib/countries";
 import { RELATIONSHIP_TYPES } from "@/lib/relationship-types";
-import { computeChildProfileQuota } from "@/lib/child-profile-quota";
-import { resolveExtraSlotPrice, formatXof, formatXofAmount, formatPromoDeadline, STANDARD_PRICE_XOF } from "@/lib/pricing";
+import { computeChildCreationLimit } from "@/lib/child-access";
+import {
+  resolveExtraSlotPrice,
+  formatXof,
+  formatXofAmount,
+  formatPromoDeadline,
+  STANDARD_PRICE_XOF,
+} from "@/lib/pricing";
 import { GenizioLoader } from "@/components/GenizioLoader";
 import { toast } from "sonner";
 
@@ -74,6 +85,12 @@ function DashboardPage() {
   // Prix de bienvenue (3 premiers mois du compte) puis tarif standard — cf. src/lib/pricing.ts.
   const slotPrice = resolveExtraSlotPrice(session?.user?.created_at);
 
+  // Décision 2026-08-05 : l'accès payant est MENSUEL (5 000 F/mois de bienvenue →
+  // 15 000 F/mois). Le parent choisit une durée (1/3/6 mois) ; le montant WhatsApp =
+  // prix mensuel × mois. L'admin prolonge via extendChildAccessAdmin après le virement.
+  const [upgradeMonths, setUpgradeMonths] = useState(3);
+  const upgradeTotal = slotPrice.priceXof * upgradeMonths;
+
   const hasRefreshedSessionRef = useRef(false);
   useEffect(() => {
     // extra_profile_slots lives in the session JWT's app_metadata, cached
@@ -109,7 +126,7 @@ function DashboardPage() {
   const hasKit = (materialTags?: string[] | null) => {
     if (!materialTags || materialTags.length === 0) return false;
     return activeProducts.some((product) =>
-      product.material_tags?.some((t: string) => materialTags.includes(t))
+      product.material_tags?.some((t: string) => materialTags.includes(t)),
     );
   };
 
@@ -130,7 +147,9 @@ function DashboardPage() {
     if (!relationshipType) return;
     setSavingRelationship(true);
     try {
-      const { error } = await supabase.auth.updateUser({ data: { relationship_type: relationshipType } });
+      const { error } = await supabase.auth.updateUser({
+        data: { relationship_type: relationshipType },
+      });
       if (error) throw error;
       setShowRelationshipModal(false);
     } catch (err) {
@@ -150,7 +169,11 @@ function DashboardPage() {
   useEffect(() => {
     // Séquencé après le choix du lien (relationship_type) : évite d'empiler les deux modales
     // de première connexion en même temps.
-    if (session && session.user.user_metadata?.relationship_type && !session.user.user_metadata?.phone) {
+    if (
+      session &&
+      session.user.user_metadata?.relationship_type &&
+      !session.user.user_metadata?.phone
+    ) {
       setShowPhoneModal(true);
     }
   }, [session]);
@@ -250,7 +273,9 @@ function DashboardPage() {
       try {
         const { data, error } = await supabase
           .from("challenges")
-          .select("id, status, created_at, updated_at, domain, title, description, duration, materials, material_tags, steps, proof_image_url, difficulty")
+          .select(
+            "id, status, created_at, updated_at, domain, title, description, duration, materials, material_tags, steps, proof_image_url, difficulty",
+          )
           .eq("child_id", selectedId);
 
         if (!isMounted) return;
@@ -327,239 +352,371 @@ function DashboardPage() {
             </div>
           ) : (
             <>
-              {selected && (() => {
-                const guild = getChildGuild(selected.talents);
-                const dateStr = new Date().toLocaleDateString('fr-FR', { weekday: 'long' });
-                const capitalizedDate = dateStr.charAt(0).toUpperCase() + dateStr.slice(1);
-                const avatarColor = AVATAR_COLORS[profiles.findIndex(p=>p.id===selected.id)%AVATAR_COLORS.length] || AVATAR_COLORS[0];
-                // Calculé sur les 9 domaines réels (selected.talents), pas sur `pulse` qui
-                // est plafonné à 5 entrées — pulse.filter(...) sous-comptait dès qu'un
-                // enfant avait plus de 5 domaines actifs.
-                const activeDomains = Object.entries(selected.talents || {})
-                  .filter(([, score]) => (score || 0) > 0)
-                  .sort(([, a], [, b]) => (b || 0) - (a || 0))
-                  .map(([key, score]) => ({ key, label: TALENT_KEY_LABELS[key] ?? key, score: score || 0, bucket: getTalentBucket(score || 0) }));
-                const activeTalents = activeDomains.length;
-                const totalXP = selected.xp || 0;
-                const currentLevel = Math.floor(totalXP / 500) + 1;
-                const xpPct = Math.min(100, (totalXP % 500) / 500 * 100);
+              {selected &&
+                (() => {
+                  const guild = getChildGuild(selected.talents);
+                  const dateStr = new Date().toLocaleDateString("fr-FR", { weekday: "long" });
+                  const capitalizedDate = dateStr.charAt(0).toUpperCase() + dateStr.slice(1);
+                  const avatarColor =
+                    AVATAR_COLORS[
+                      profiles.findIndex((p) => p.id === selected.id) % AVATAR_COLORS.length
+                    ] || AVATAR_COLORS[0];
+                  // Calculé sur les 9 domaines réels (selected.talents), pas sur `pulse` qui
+                  // est plafonné à 5 entrées — pulse.filter(...) sous-comptait dès qu'un
+                  // enfant avait plus de 5 domaines actifs.
+                  const activeDomains = Object.entries(selected.talents || {})
+                    .filter(([, score]) => (score || 0) > 0)
+                    .sort(([, a], [, b]) => (b || 0) - (a || 0))
+                    .map(([key, score]) => ({
+                      key,
+                      label: TALENT_KEY_LABELS[key] ?? key,
+                      score: score || 0,
+                      bucket: getTalentBucket(score || 0),
+                    }));
+                  const activeTalents = activeDomains.length;
+                  const totalXP = selected.xp || 0;
+                  const currentLevel = Math.floor(totalXP / 500) + 1;
+                  const xpPct = Math.min(100, ((totalXP % 500) / 500) * 100);
 
-                const quota = computeChildProfileQuota({
-                  accountCreatedAt: session?.user?.created_at,
-                  extraSlots: (session?.user?.app_metadata?.extra_profile_slots as number) ?? 0,
-                });
-                const atQuota = profiles.length >= quota;
-
-                // Verrouillage (2026-07-30) : posé par removeCampaignEducator quand la relation
-                // organisation↔éducateur se termine — jamais les données de l'enfant, qui
-                // restent intactes en dessous (talents/xp/défis), seul l'accès change.
-                if (selected.access_locked_at) {
-                  const whatsappNumber = (import.meta.env.VITE_WHATSAPP_NUMBER as string | undefined) || "33606433148";
-                  const whatsappText = encodeURIComponent(
-                    `Bonjour, je voudrais devenir superviseur de ${selected.name} suite à la fin de mon rôle d'éducateur.`
+                  // Décision 2026-08-05 : le plancher couvre le profil gratuit (+ slots
+                  // grand-pérés), le "+1" autorise la création du premier profil MENSUEL
+                  // (en cours de première mise en paiement) — miroir du trigger
+                  // check_child_profile_quota (migration 20260805100000).
+                  const quota = computeChildCreationLimit(
+                    session?.user?.created_at,
+                    (session?.user?.app_metadata?.extra_profile_slots as number) ?? 0,
                   );
+                  const atQuota = profiles.length >= quota;
+
+                  // Verrouillage (2026-07-30) : posé par removeCampaignEducator quand la relation
+                  // organisation↔éducateur se termine — jamais les données de l'enfant, qui
+                  // restent intactes en dessous (talents/xp/défis), seul l'accès change.
+                  if (selected.access_locked_at) {
+                    const whatsappNumber =
+                      (import.meta.env.VITE_WHATSAPP_NUMBER as string | undefined) || "33606433148";
+                    const whatsappText = encodeURIComponent(
+                      `Bonjour, je voudrais devenir superviseur de ${selected.name} suite à la fin de mon rôle d'éducateur.`,
+                    );
+                    return (
+                      <div className="animate-in fade-in slide-in-from-bottom-4 duration-300 ease-out md:mx-auto max-w-[414px] w-full">
+                        <div className="rounded-3xl border border-ink/10 bg-white p-8 text-center shadow-md">
+                          <div className="mx-auto mb-4 flex size-14 items-center justify-center rounded-2xl bg-ink/5 text-ink/60">
+                            <Lock className="size-6" />
+                          </div>
+                          <h2 className="font-display text-balance text-xl font-extrabold">
+                            Profil verrouillé
+                          </h2>
+                          <p className="mt-2 text-sm text-ink/60 leading-relaxed">
+                            L'accès à {selected.name} a été suspendu suite à la fin de votre rôle
+                            d'éducateur pour cette organisation. Sa progression (défis, talents, XP)
+                            reste intacte.
+                          </p>
+                          <a
+                            href={`https://wa.me/${whatsappNumber}?text=${whatsappText}`}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="press-brand mt-6 inline-flex items-center justify-center gap-2 rounded-2xl bg-brand px-6 py-3 text-sm font-bold text-white"
+                          >
+                            Demander à devenir superviseur
+                          </a>
+                        </div>
+                      </div>
+                    );
+                  }
+
                   return (
                     <div className="animate-in fade-in slide-in-from-bottom-4 duration-300 ease-out md:mx-auto max-w-[414px] w-full">
-                      <div className="rounded-3xl border border-ink/10 bg-white p-8 text-center shadow-md">
-                        <div className="mx-auto mb-4 flex size-14 items-center justify-center rounded-2xl bg-ink/5 text-ink/60">
-                          <Lock className="size-6" />
-                        </div>
-                        <h2 className="font-display text-balance text-xl font-extrabold">Profil verrouillé</h2>
-                        <p className="mt-2 text-sm text-ink/60 leading-relaxed">
-                          L'accès à {selected.name} a été suspendu suite à la fin de votre rôle d'éducateur pour cette
-                          organisation. Sa progression (défis, talents, XP) reste intacte.
-                        </p>
-                        <a
-                          href={`https://wa.me/${whatsappNumber}?text=${whatsappText}`}
-                          target="_blank"
-                          rel="noreferrer"
-                          className="press-brand mt-6 inline-flex items-center justify-center gap-2 rounded-2xl bg-brand px-6 py-3 text-sm font-bold text-white"
-                        >
-                          Demander à devenir superviseur
-                        </a>
-                      </div>
-                    </div>
-                  );
-                }
-
-                return (
-                  <div className="animate-in fade-in slide-in-from-bottom-4 duration-300 ease-out md:mx-auto max-w-[414px] w-full">
-                    
-                    {/* Top Header Prototype */}
-                    <div className="flex items-center justify-between mb-5">
-                      <div className="flex items-center gap-3">
-                        <div className={`size-11 rounded-full object-cover shadow-sm flex items-center justify-center text-white font-bold text-lg ${avatarColor.bg} ${avatarColor.text}`}>
-                          {selected.name.charAt(0).toUpperCase()}
-                        </div>
-                        <div>
-                          <div className="text-xs text-ink/60 font-semibold">{capitalizedDate} · bonjour</div>
-                          <DropdownMenu>
-                            <DropdownMenuTrigger className="focus:outline-none flex items-center gap-1 group cursor-pointer">
-                              <div className="font-display text-balance font-bold text-[20px] leading-none group-hover:text-brand transition-colors">{selected.name}, {selected.age ?? 9} ans</div>
-                              <ChevronDown className="size-4 text-ink/60 group-hover:text-brand transition-colors" />
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align="start" className="w-[220px] rounded-3xl shadow-xl border border-ink/10 p-2 bg-white/95 backdrop-blur-md">
-                              {profiles.map(p => (
-                                <DropdownMenuItem 
-                                  key={p.id} 
-                                  className={`rounded-xl py-2.5 px-3 mb-1 cursor-pointer font-bold outline-none ${p.id === selected.id ? 'bg-brand/10 text-brand' : 'text-ink focus:bg-ink/5'}`}
-                                  onClick={() => setSelectedId(p.id)}
-                                >
-                                  {p.name}
-                                  {p.id === selected.id && <Check className="size-4 ml-auto" />}
-                                </DropdownMenuItem>
-                              ))}
-                              <DropdownMenuSeparator className="my-1 border-border/60" />
-                              <DropdownMenuItem 
-                                className="rounded-xl py-2.5 px-3 cursor-pointer font-bold text-brand outline-none focus:bg-brand/5"
-                                onClick={() => atQuota ? setShowUpgradeModal(true) : setCreating(true)}
-                              >
-                                <Plus className="size-4 mr-2" /> Nouveau profil
-                              </DropdownMenuItem>
-                            </DropdownMenuContent>
-                          </DropdownMenu>
-                        </div>
-                      </div>
-                      <div className="flex gap-2">
-                        <Popover>
-                          <PopoverTrigger className="inline-flex items-center gap-[5px] px-3 py-2 bg-glow-100 rounded-full font-display text-balance font-bold text-[14px] text-brand-700 shadow-sm cursor-pointer outline-none">
-                            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.07-2.14-.22-4.05 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.15.43-2.29 1-3a2.5 2.5 0 0 0 2.5 2.5z"/></svg>
-                            {selected.streak || 0}
-                          </PopoverTrigger>
-                          <PopoverContent align="end" className="w-64 rounded-2xl border border-ink/10 bg-white p-4 shadow-xl">
-                            <p className="font-display text-balance text-sm font-bold text-ink">
-                              {selected.streak ? `🔥 ${selected.streak} semaine${selected.streak > 1 ? "s" : ""} d'affilée` : "Pas encore de série"}
-                            </p>
-                            <p className="mt-1 text-xs leading-relaxed text-ink/60">
-                              {selected.streak
-                                ? "Termine un défi cette semaine pour continuer ta série."
-                                : "Termine un défi cette semaine pour démarrer ta série !"}
-                            </p>
-                          </PopoverContent>
-                        </Popover>
-                      </div>
-                    </div>
-
-                    {/* Naya daily bubble */}
-                    <div className="flex gap-3 items-start bg-card rounded-3xl p-[15px] shadow-md mb-[18px] border border-border">
-                      <img src="/naya-mascot.png" alt="Naya" className="size-11 rounded-full object-cover shrink-0 animate-[gzDots_4s_ease-in-out_infinite]" style={{ animation: "gz-float 4s ease-in-out infinite" }} />
-                      <div>
-                        <div className="font-display text-balance font-semibold text-[13px] text-brand">Naya</div>
-                        <div className="text-[15px] leading-[1.4] text-ink mt-[2px]">Prête pour ton défi de la semaine, {selected.name}&nbsp;? On construit&nbsp;— pour de vrai&nbsp;!</div>
-                      </div>
-                    </div>
-
-                    {/* "Ton défi de la semaine" */}
-                    <div className="font-display text-balance font-bold text-[13px] tracking-[.06em] uppercase text-ink/40 mx-1 mb-[10px]">Ton défi de la semaine</div>
-                    
-                    {fetchingChallenges ? (
-                      <div className="rounded-[1.5rem] border border-dashed border-ink/20 bg-white/60 p-12 text-center flex justify-center shadow-lg backdrop-blur-md mb-5">
-                        <Loader2 className="size-6 animate-spin text-brand" />
-                      </div>
-                    ) : activeChallenge ? (
-                      <div className="relative rounded-[1.5rem] overflow-hidden shadow-lg mb-5">
-                        <div className="absolute inset-0" style={{ background: `linear-gradient(150deg, var(--guild-${guild.key === 'aucune' ? 'batisseurs' : guild.key}), oklch(0.6 0.15 45))` }}></div>
-                        <div className="absolute -top-10 -right-7 w-[180px] h-[180px]" style={{ background: "radial-gradient(circle,rgba(255,255,255,.28),transparent 70%)" }}></div>
-                        <div className="relative p-5">
-                          <div className="flex gap-[7px] mb-3">
-                            <span className="inline-flex items-center gap-[5px] px-[11px] py-[5px] bg-white/20 rounded-full text-white text-[12px] font-bold">{activeChallenge.domain}</span>
-                            <DifficultyBadge difficulty={activeChallenge.difficulty} />
+                      {/* Top Header Prototype */}
+                      <div className="flex items-center justify-between mb-5">
+                        <div className="flex items-center gap-3">
+                          <div
+                            className={`size-11 rounded-full object-cover shadow-sm flex items-center justify-center text-white font-bold text-lg ${avatarColor.bg} ${avatarColor.text}`}
+                          >
+                            {selected.name.charAt(0).toUpperCase()}
                           </div>
-                          <div className="font-display text-balance font-bold text-[26px] text-white leading-[1.05]">{activeChallenge.title}</div>
-                          <div className="text-white/90 text-[14px] mt-[6px] leading-[1.4] line-clamp-2">
-                            {activeChallenge.description}
-                          </div>
-                          <div className="mt-4">
-                            <div className="flex justify-between text-white text-[12px] font-bold mb-[6px]">
-                              <span>+{calculateXPGain(selected.age ?? 9)} XP à gagner</span>
-                              <span>{activeChallenge.steps?.length ?? 0} étapes</span>
+                          <div>
+                            <div className="text-xs text-ink/60 font-semibold">
+                              {capitalizedDate} · bonjour
                             </div>
-                            <Link to="/profiles/$profileId/challenges" params={{ profileId: selected.id }} className="w-full flex items-center justify-center bg-white text-ink font-bold h-[44px] rounded-full cursor-pointer shadow-sm">
-                              Voir le défi →
-                            </Link>
+                            <DropdownMenu>
+                              <DropdownMenuTrigger className="focus:outline-none flex items-center gap-1 group cursor-pointer">
+                                <div className="font-display text-balance font-bold text-[20px] leading-none group-hover:text-brand transition-colors">
+                                  {selected.name}, {selected.age ?? 9} ans
+                                </div>
+                                <ChevronDown className="size-4 text-ink/60 group-hover:text-brand transition-colors" />
+                              </DropdownMenuTrigger>
+                              <DropdownMenuContent
+                                align="start"
+                                className="w-[220px] rounded-3xl shadow-xl border border-ink/10 p-2 bg-white/95 backdrop-blur-md"
+                              >
+                                {profiles.map((p) => (
+                                  <DropdownMenuItem
+                                    key={p.id}
+                                    className={`rounded-xl py-2.5 px-3 mb-1 cursor-pointer font-bold outline-none ${p.id === selected.id ? "bg-brand/10 text-brand" : "text-ink focus:bg-ink/5"}`}
+                                    onClick={() => setSelectedId(p.id)}
+                                  >
+                                    {p.name}
+                                    {p.id === selected.id && <Check className="size-4 ml-auto" />}
+                                  </DropdownMenuItem>
+                                ))}
+                                <DropdownMenuSeparator className="my-1 border-border/60" />
+                                <DropdownMenuItem
+                                  className="rounded-xl py-2.5 px-3 cursor-pointer font-bold text-brand outline-none focus:bg-brand/5"
+                                  onClick={() =>
+                                    atQuota ? setShowUpgradeModal(true) : setCreating(true)
+                                  }
+                                >
+                                  <Plus className="size-4 mr-2" /> Nouveau profil
+                                </DropdownMenuItem>
+                              </DropdownMenuContent>
+                            </DropdownMenu>
+                          </div>
+                        </div>
+                        <div className="flex gap-2">
+                          <Popover>
+                            <PopoverTrigger className="inline-flex items-center gap-[5px] px-3 py-2 bg-glow-100 rounded-full font-display text-balance font-bold text-[14px] text-brand-700 shadow-sm cursor-pointer outline-none">
+                              <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                                <path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.07-2.14-.22-4.05 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.15.43-2.29 1-3a2.5 2.5 0 0 0 2.5 2.5z" />
+                              </svg>
+                              {selected.streak || 0}
+                            </PopoverTrigger>
+                            <PopoverContent
+                              align="end"
+                              className="w-64 rounded-2xl border border-ink/10 bg-white p-4 shadow-xl"
+                            >
+                              <p className="font-display text-balance text-sm font-bold text-ink">
+                                {selected.streak
+                                  ? `🔥 ${selected.streak} semaine${selected.streak > 1 ? "s" : ""} d'affilée`
+                                  : "Pas encore de série"}
+                              </p>
+                              <p className="mt-1 text-xs leading-relaxed text-ink/60">
+                                {selected.streak
+                                  ? "Termine un défi cette semaine pour continuer ta série."
+                                  : "Termine un défi cette semaine pour démarrer ta série !"}
+                              </p>
+                            </PopoverContent>
+                          </Popover>
+                        </div>
+                      </div>
+
+                      {/* Naya daily bubble */}
+                      <div className="flex gap-3 items-start bg-card rounded-3xl p-[15px] shadow-md mb-[18px] border border-border">
+                        <img
+                          src="/naya-mascot.png"
+                          alt="Naya"
+                          className="size-11 rounded-full object-cover shrink-0 animate-[gzDots_4s_ease-in-out_infinite]"
+                          style={{ animation: "gz-float 4s ease-in-out infinite" }}
+                        />
+                        <div>
+                          <div className="font-display text-balance font-semibold text-[13px] text-brand">
+                            Naya
+                          </div>
+                          <div className="text-[15px] leading-[1.4] text-ink mt-[2px]">
+                            Prête pour ton défi de la semaine, {selected.name}&nbsp;? On
+                            construit&nbsp;— pour de vrai&nbsp;!
                           </div>
                         </div>
                       </div>
-                    ) : (
-                      <div className="rounded-[1.5rem] border border-dashed border-ink/20 bg-white/60 p-8 text-center shadow-lg backdrop-blur-md mb-5">
-                        <span className="inline-block text-4xl mb-2">🌟</span>
-                        <p className="text-[14px] text-ink/80 font-bold mb-4">
-                          Aucun défi en cours pour {selected.name}.
-                        </p>
-                        <Link
-                          to="/profiles/$profileId/challenges"
-                          params={{ profileId: selected.id }}
-                          className="w-full inline-flex items-center justify-center bg-brand text-white font-bold h-[44px] rounded-full cursor-pointer shadow-sm"
-                        >
-                          Générer un défi
-                        </Link>
-                      </div>
-                    )}
 
-                    {/* Compact Cards: Niveau / Talents */}
-                    <div className="flex gap-3 mb-5">
-                      {/* Niveau/XP → Ma Guilde (la carte affiche déjà le nom de la guilde ;
+                      {/* "Ton défi de la semaine" */}
+                      <div className="font-display text-balance font-bold text-[13px] tracking-[.06em] uppercase text-ink/40 mx-1 mb-[10px]">
+                        Ton défi de la semaine
+                      </div>
+
+                      {fetchingChallenges ? (
+                        <div className="rounded-[1.5rem] border border-dashed border-ink/20 bg-white/60 p-12 text-center flex justify-center shadow-lg backdrop-blur-md mb-5">
+                          <Loader2 className="size-6 animate-spin text-brand" />
+                        </div>
+                      ) : activeChallenge ? (
+                        <div className="relative rounded-[1.5rem] overflow-hidden shadow-lg mb-5">
+                          <div
+                            className="absolute inset-0"
+                            style={{
+                              background: `linear-gradient(150deg, var(--guild-${guild.key === "aucune" ? "batisseurs" : guild.key}), oklch(0.6 0.15 45))`,
+                            }}
+                          ></div>
+                          <div
+                            className="absolute -top-10 -right-7 w-[180px] h-[180px]"
+                            style={{
+                              background:
+                                "radial-gradient(circle,rgba(255,255,255,.28),transparent 70%)",
+                            }}
+                          ></div>
+                          <div className="relative p-5">
+                            <div className="flex gap-[7px] mb-3">
+                              <span className="inline-flex items-center gap-[5px] px-[11px] py-[5px] bg-white/20 rounded-full text-white text-[12px] font-bold">
+                                {activeChallenge.domain}
+                              </span>
+                              <DifficultyBadge difficulty={activeChallenge.difficulty} />
+                            </div>
+                            <div className="font-display text-balance font-bold text-[26px] text-white leading-[1.05]">
+                              {activeChallenge.title}
+                            </div>
+                            <div className="text-white/90 text-[14px] mt-[6px] leading-[1.4] line-clamp-2">
+                              {activeChallenge.description}
+                            </div>
+                            <div className="mt-4">
+                              <div className="flex justify-between text-white text-[12px] font-bold mb-[6px]">
+                                <span>+{calculateXPGain(selected.age ?? 9)} XP à gagner</span>
+                                <span>{activeChallenge.steps?.length ?? 0} étapes</span>
+                              </div>
+                              <Link
+                                to="/profiles/$profileId/challenges"
+                                params={{ profileId: selected.id }}
+                                className="w-full flex items-center justify-center bg-white text-ink font-bold h-[44px] rounded-full cursor-pointer shadow-sm"
+                              >
+                                Voir le défi →
+                              </Link>
+                            </div>
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="rounded-[1.5rem] border border-dashed border-ink/20 bg-white/60 p-8 text-center shadow-lg backdrop-blur-md mb-5">
+                          <span className="inline-block text-4xl mb-2">🌟</span>
+                          <p className="text-[14px] text-ink/80 font-bold mb-4">
+                            Aucun défi en cours pour {selected.name}.
+                          </p>
+                          <Link
+                            to="/profiles/$profileId/challenges"
+                            params={{ profileId: selected.id }}
+                            className="w-full inline-flex items-center justify-center bg-brand text-white font-bold h-[44px] rounded-full cursor-pointer shadow-sm"
+                          >
+                            Générer un défi
+                          </Link>
+                        </div>
+                      )}
+
+                      {/* Compact Cards: Niveau / Talents */}
+                      <div className="flex gap-3 mb-5">
+                        {/* Niveau/XP → Ma Guilde (la carte affiche déjà le nom de la guilde ;
                           "Mon parcours" ci-dessous couvre déjà la vue XP/progression détaillée,
                           donc cette carte pointe ailleurs plutôt que de dupliquer ce lien). */}
-                      <Link
-                        to="/profiles/$profileId/guild"
-                        params={{ profileId: selected.id }}
-                        className="flex-1 bg-card rounded-[1rem] p-[14px] shadow-sm border border-border cursor-pointer"
-                      >
-                        <div className="text-[12px] text-ink/60 font-semibold mb-2">Niveau {currentLevel} · {guild.name.replace('Les ', '')}</div>
-                        <div className="h-[9px] bg-ink/5 rounded-full overflow-hidden">
-                          <div className="h-full rounded-full transition-all duration-700 ease-out origin-left animate-[gzGrowBar_.7s_ease-out]" style={{ width: `${xpPct}%`, background: "linear-gradient(90deg, var(--brand), oklch(0.6 0.15 45))" }}></div>
-                        </div>
-                        <div className="text-[12px] text-ink/40 font-bold text-right mt-[5px]">{totalXP} XP</div>
-                      </Link>
+                        <Link
+                          to="/profiles/$profileId/guild"
+                          params={{ profileId: selected.id }}
+                          className="flex-1 bg-card rounded-[1rem] p-[14px] shadow-sm border border-border cursor-pointer"
+                        >
+                          <div className="text-[12px] text-ink/60 font-semibold mb-2">
+                            Niveau {currentLevel} · {guild.name.replace("Les ", "")}
+                          </div>
+                          <div className="h-[9px] bg-ink/5 rounded-full overflow-hidden">
+                            <div
+                              className="h-full rounded-full transition-all duration-700 ease-out origin-left animate-[gzGrowBar_.7s_ease-out]"
+                              style={{
+                                width: `${xpPct}%`,
+                                background:
+                                  "linear-gradient(90deg, var(--brand), oklch(0.6 0.15 45))",
+                              }}
+                            ></div>
+                          </div>
+                          <div className="text-[12px] text-ink/40 font-bold text-right mt-[5px]">
+                            {totalXP} XP
+                          </div>
+                        </Link>
 
-                      {/* Talents actifs → pas de page dédiée aujourd'hui (Parcours et Portfolio
+                        {/* Talents actifs → pas de page dédiée aujourd'hui (Parcours et Portfolio
                           sont déjà pris par les liens "Continuer à explorer" ci-dessous) : un
                           Popover inline liste les domaines actifs sans quitter le dashboard,
                           même pattern que le Popover de série déjà utilisé plus haut sur cette page. */}
-                      <Popover>
-                        <PopoverTrigger className="flex-1 bg-card rounded-[1rem] p-[14px] shadow-sm border border-border cursor-pointer text-left outline-none">
-                          <div className="text-[12px] text-ink/60 font-semibold mb-2">Talents actifs</div>
-                          <div className="flex items-baseline gap-[5px]">
-                            <span className="font-display text-balance font-bold text-[26px]" style={{ color: `var(--guild-${guild.key === 'aucune' ? 'batisseurs' : guild.key})` }}>{activeTalents}</span>
-                            <span className="text-[12px] text-ink/60">domaines</span>
-                          </div>
-                        </PopoverTrigger>
-                        <PopoverContent align="start" className="w-72 rounded-2xl border border-ink/10 bg-white p-4 shadow-xl">
-                          <p className="mb-3 font-display text-balance text-sm font-bold text-ink">Domaines actifs de {selected.name}</p>
-                          {activeDomains.length === 0 ? (
-                            <p className="text-xs leading-relaxed text-ink/60">Aucun domaine encore actif — le premier défi complété lancera la carte des talents.</p>
-                          ) : (
-                            <ul className="space-y-2">
-                              {activeDomains.map((d) => (
-                                <li key={d.key} className="flex items-center justify-between gap-2 text-xs">
-                                  <span className="font-bold text-ink">{d.label}</span>
-                                  <span className="text-ink/50">{TALENT_BUCKET_LABEL[d.bucket]}</span>
-                                </li>
-                              ))}
-                            </ul>
-                          )}
-                        </PopoverContent>
-                      </Popover>
-                    </div>
+                        <Popover>
+                          <PopoverTrigger className="flex-1 bg-card rounded-[1rem] p-[14px] shadow-sm border border-border cursor-pointer text-left outline-none">
+                            <div className="text-[12px] text-ink/60 font-semibold mb-2">
+                              Talents actifs
+                            </div>
+                            <div className="flex items-baseline gap-[5px]">
+                              <span
+                                className="font-display text-balance font-bold text-[26px]"
+                                style={{
+                                  color: `var(--guild-${guild.key === "aucune" ? "batisseurs" : guild.key})`,
+                                }}
+                              >
+                                {activeTalents}
+                              </span>
+                              <span className="text-[12px] text-ink/60">domaines</span>
+                            </div>
+                          </PopoverTrigger>
+                          <PopoverContent
+                            align="start"
+                            className="w-72 rounded-2xl border border-ink/10 bg-white p-4 shadow-xl"
+                          >
+                            <p className="mb-3 font-display text-balance text-sm font-bold text-ink">
+                              Domaines actifs de {selected.name}
+                            </p>
+                            {activeDomains.length === 0 ? (
+                              <p className="text-xs leading-relaxed text-ink/60">
+                                Aucun domaine encore actif — le premier défi complété lancera la
+                                carte des talents.
+                              </p>
+                            ) : (
+                              <ul className="space-y-2">
+                                {activeDomains.map((d) => (
+                                  <li
+                                    key={d.key}
+                                    className="flex items-center justify-between gap-2 text-xs"
+                                  >
+                                    <span className="font-bold text-ink">{d.label}</span>
+                                    <span className="text-ink/50">
+                                      {TALENT_BUCKET_LABEL[d.bucket]}
+                                    </span>
+                                  </li>
+                                ))}
+                              </ul>
+                            )}
+                          </PopoverContent>
+                        </Popover>
+                      </div>
 
-                    {/* Continuer à explorer */}
-                    <div className="font-display text-balance font-bold text-[13px] tracking-[.06em] uppercase text-ink/40 mx-1 mb-[10px]">Continuer à explorer</div>
-                    <div className="grid grid-cols-2 gap-3 mb-6">
-                      <Link to="/profiles/$profileId/portfolio" params={{ profileId: selected.id }} className="text-left border border-border bg-leaf-50 rounded-[1rem] p-[15px] cursor-pointer shadow-sm">
-                        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--leaf-dark)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><path d="m16.24 7.76-2.12 6.36-6.36 2.12 2.12-6.36 6.36-2.12z"/></svg>
-                        <div className="font-display text-balance font-bold text-[15px] mt-[8px] text-ink">Mon parcours</div>
-                        <div className="text-[12px] text-ink/60 mt-[2px]">Ton chemin de talents</div>
-                      </Link>
-                      <Link to="/boutique" className="text-left border border-border bg-amber-50 rounded-[1rem] p-[15px] cursor-pointer shadow-sm">
-                        <ShoppingBag width="22" height="22" strokeWidth={2} className="text-amber-700" />
-                        <div className="font-display text-balance font-bold text-[15px] mt-[8px] text-ink">Boutique</div>
-                        <div className="text-[12px] text-ink/60 mt-[2px]">Kits pour ses défis</div>
-                      </Link>
+                      {/* Continuer à explorer */}
+                      <div className="font-display text-balance font-bold text-[13px] tracking-[.06em] uppercase text-ink/40 mx-1 mb-[10px]">
+                        Continuer à explorer
+                      </div>
+                      <div className="grid grid-cols-2 gap-3 mb-6">
+                        <Link
+                          to="/profiles/$profileId/portfolio"
+                          params={{ profileId: selected.id }}
+                          className="text-left border border-border bg-leaf-50 rounded-[1rem] p-[15px] cursor-pointer shadow-sm"
+                        >
+                          <svg
+                            width="22"
+                            height="22"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="var(--leaf-dark)"
+                            strokeWidth="2"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                          >
+                            <circle cx="12" cy="12" r="10" />
+                            <path d="m16.24 7.76-2.12 6.36-6.36 2.12 2.12-6.36 6.36-2.12z" />
+                          </svg>
+                          <div className="font-display text-balance font-bold text-[15px] mt-[8px] text-ink">
+                            Mon parcours
+                          </div>
+                          <div className="text-[12px] text-ink/60 mt-[2px]">
+                            Ton chemin de talents
+                          </div>
+                        </Link>
+                        <Link
+                          to="/boutique"
+                          className="text-left border border-border bg-amber-50 rounded-[1rem] p-[15px] cursor-pointer shadow-sm"
+                        >
+                          <ShoppingBag
+                            width="22"
+                            height="22"
+                            strokeWidth={2}
+                            className="text-amber-700"
+                          />
+                          <div className="font-display text-balance font-bold text-[15px] mt-[8px] text-ink">
+                            Boutique
+                          </div>
+                          <div className="text-[12px] text-ink/60 mt-[2px]">
+                            Kits pour ses défis
+                          </div>
+                        </Link>
+                      </div>
                     </div>
-                  </div>
-                );
-              })()}
+                  );
+                })()}
             </>
           )}
         </div>
@@ -681,7 +838,9 @@ function DashboardPage() {
                 </div>
                 <div className="mt-1 flex items-center justify-between text-[11px] font-medium text-ink/60">
                   <span>Pays : {selectedCountry.name}</span>
-                  <span>{phoneNumber.length} / {selectedCountry.limit} chiffres</span>
+                  <span>
+                    {phoneNumber.length} / {selectedCountry.limit} chiffres
+                  </span>
                 </div>
               </div>
 
@@ -724,7 +883,10 @@ function DashboardPage() {
 
       {/* ── Upgrade Modal — Profil supplémentaire ────────────────────── */}
       {showUpgradeModal && (
-        <div className="fixed inset-0 z-50 grid place-items-center overflow-y-auto bg-ink/70 p-4 backdrop-blur-sm" onClick={() => setShowUpgradeModal(false)}>
+        <div
+          className="fixed inset-0 z-50 grid place-items-center overflow-y-auto bg-ink/70 p-4 backdrop-blur-sm"
+          onClick={() => setShowUpgradeModal(false)}
+        >
           <div
             onClick={(e) => e.stopPropagation()}
             className="w-full max-w-md rounded-[2rem] border border-ink/10 bg-white/95 backdrop-blur-md p-8 shadow-xl"
@@ -746,17 +908,41 @@ function DashboardPage() {
 
             {/* Pricing */}
             <div className="mb-6 rounded-2xl border border-ink/10 bg-surface p-5">
-              <p className="text-xs font-black uppercase tracking-widest text-ink/60 mb-1">Profil supplémentaire</p>
+              <p className="text-xs font-black uppercase tracking-widest text-ink/60 mb-1">
+                Accès mensuel — profil supplémentaire
+              </p>
               <p className="font-display text-balance text-3xl font-black text-ink">
-                {formatXofAmount(slotPrice.priceXof)} <span className="text-lg text-ink/60">FCFA</span>
+                {formatXofAmount(upgradeTotal)} <span className="text-lg text-ink/60">FCFA</span>
+                <span className="ml-2 align-middle text-sm font-bold text-ink/50">
+                  soit {formatXof(slotPrice.priceXof)}/mois
+                </span>
               </p>
               {slotPrice.isPromo && slotPrice.promoEndsAt && (
                 <p className="mt-2 inline-flex items-center gap-1.5 rounded-full bg-emerald-100 px-3 py-1 text-[11px] font-black text-emerald-800">
-                  Prix de bienvenue — jusqu'au {formatPromoDeadline(slotPrice.promoEndsAt)}, puis {formatXof(STANDARD_PRICE_XOF)}
+                  Prix de bienvenue — jusqu'au {formatPromoDeadline(slotPrice.promoEndsAt)}, puis{" "}
+                  {formatXof(STANDARD_PRICE_XOF)}/mois
                 </p>
               )}
+              {/* Choix de durée (1 à 6 mois, même barème que le parrainage) */}
+              <div className="mt-4 flex gap-2">
+                {[1, 3, 6].map((m) => (
+                  <button
+                    key={m}
+                    type="button"
+                    onClick={() => setUpgradeMonths(m)}
+                    className={`flex-1 rounded-xl border px-3 py-2 text-sm font-extrabold transition-all cursor-pointer ${
+                      upgradeMonths === m
+                        ? "border-brand bg-brand text-white shadow-sm"
+                        : "border-ink/10 bg-white text-ink/70"
+                    }`}
+                  >
+                    {m} mois
+                  </button>
+                ))}
+              </div>
               <p className="mt-2 text-xs text-ink/60 leading-relaxed">
-                Chaque nouveau slot est débloqué manuellement après confirmation du paiement via WhatsApp. Votre accès est permanent.
+                Accès débloqué manuellement après confirmation du paiement via WhatsApp, puis
+                renouvelable chaque mois.
               </p>
             </div>
 
@@ -764,8 +950,8 @@ function DashboardPage() {
             <ol className="mb-6 space-y-2 text-sm font-medium text-ink/80">
               {[
                 "Envoyez le message WhatsApp ci-dessous",
-                `Effectuez le virement de ${formatXof(slotPrice.priceXof)}`,
-                "L'administrateur active votre slot dans les 24h",
+                `Effectuez le virement de ${formatXof(upgradeTotal)} (${upgradeMonths} mois)`,
+                "L'administrateur active votre accès dans les 24h",
               ].map((step, i) => (
                 <li key={i} className="flex items-start gap-3">
                   <span className="flex size-5 shrink-0 items-center justify-center rounded-full bg-brand text-[10px] font-black text-white shadow-sm">
@@ -779,7 +965,7 @@ function DashboardPage() {
             {/* WhatsApp CTA */}
             <a
               href={`https://wa.me/${import.meta.env.VITE_WHATSAPP_NUMBER || "33606433148"}?text=${encodeURIComponent(
-                `Bonjour, je souhaite débloquer un profil supplémentaire sur Génizio.\nCompte : ${session?.user?.email}\nMontant : ${formatXof(slotPrice.priceXof)}`
+                `Bonjour, je souhaite débloquer un profil supplémentaire sur Génizio.\nCompte : ${session?.user?.email}\nDurée : ${upgradeMonths} mois\nMontant : ${formatXof(upgradeTotal)}`,
               )}`}
               target="_blank"
               rel="noopener noreferrer"

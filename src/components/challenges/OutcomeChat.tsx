@@ -4,7 +4,7 @@ import { validateChallengeProof, submitDeclarativeProof } from "@/lib/challenges
 import { NayaAvatar } from "@/components/NayaAvatar";
 import { LevelUpCelebration } from "@/components/challenges/LevelUpCelebration";
 import { BadgeUnlockedCelebration } from "@/components/challenges/BadgeUnlockedCelebration";
-import { Loader2, Upload, Check, X, Play, Sparkles, Clock, Target } from "lucide-react";
+import { Loader2, Upload, Check, X, Play, BotMessageSquare, Clock, Target } from "lucide-react";
 import { toast } from "sonner";
 import { MarkdownContent } from "@/components/ui/markdown-content";
 
@@ -71,7 +71,13 @@ type OutcomeChatProps = {
   onValidated: () => void;
 };
 
-export function OutcomeChat({ challenge, childName, notes = "", onSaveNotes, onValidated }: OutcomeChatProps) {
+export function OutcomeChat({
+  challenge,
+  childName,
+  notes = "",
+  onSaveNotes,
+  onValidated,
+}: OutcomeChatProps) {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [reportedValue, setReportedValue] = useState("");
   const [validating, setValidating] = useState(false);
@@ -131,7 +137,9 @@ export function OutcomeChat({ challenge, childName, notes = "", onSaveNotes, onV
       if (result.levelUp?.leveledUp) setCelebrationStep("levelup");
       else if (result.badgeUnlocked) setCelebrationStep("badge");
       if (file && !result.imageAnalyzed) {
-        toast.warning("Naya n'a pas pu analyser la photo — son observation se base uniquement sur vos notes.");
+        toast.warning(
+          "Naya n'a pas pu analyser la photo — son observation se base uniquement sur vos notes.",
+        );
       }
       toast.success("Analyse terminée !");
     } catch (err) {
@@ -192,29 +200,35 @@ export function OutcomeChat({ challenge, childName, notes = "", onSaveNotes, onV
 
           <div className="text-center mb-6">
             <div className="inline-flex items-center justify-center p-3 bg-brand/10 rounded-full mb-3">
-              <Sparkles className="size-8 text-brand" />
+              <BotMessageSquare className="size-8 text-brand" />
             </div>
             <h3 className="text-xl font-black text-ink">Bulletin de Découverte</h3>
             <p className="text-sm font-semibold text-ink/60">Analyse de Naya</p>
           </div>
 
           <div className="bg-white rounded-2xl p-6 shadow-md mb-6 border border-ink/10 relative">
-            <p className="text-sm italic text-ink/80 leading-relaxed font-medium">"<MarkdownContent content={report.challenge.ai_observations} inline /></p>
+            <p className="text-sm italic text-ink/80 leading-relaxed font-medium">
+              "<MarkdownContent content={report.challenge.ai_observations} inline />
+            </p>
 
-            {report.challenge.estimated_duration_minutes && report.challenge.started_at && report.challenge.completed_at && (
-              <div className="mt-5 pt-5 border-t-2 border-ink/20">
-                <p className="text-[10px] font-extrabold uppercase tracking-widest text-brand mb-3 flex items-center gap-1.5">
-                  <Clock className="size-3.5" />
-                  L'Atelier du Temps
-                </p>
-                <p className="text-sm font-semibold text-ink/80 leading-relaxed">
-                  {getTimeReflection(
-                    report.challenge.estimated_duration_minutes,
-                    (new Date(report.challenge.completed_at).getTime() - new Date(report.challenge.started_at).getTime()) / 60000
-                  )}
-                </p>
-              </div>
-            )}
+            {report.challenge.estimated_duration_minutes &&
+              report.challenge.started_at &&
+              report.challenge.completed_at && (
+                <div className="mt-5 pt-5 border-t-2 border-ink/20">
+                  <p className="text-[10px] font-extrabold uppercase tracking-widest text-brand mb-3 flex items-center gap-1.5">
+                    <Clock className="size-3.5" />
+                    L'Atelier du Temps
+                  </p>
+                  <p className="text-sm font-semibold text-ink/80 leading-relaxed">
+                    {getTimeReflection(
+                      report.challenge.estimated_duration_minutes,
+                      (new Date(report.challenge.completed_at).getTime() -
+                        new Date(report.challenge.started_at).getTime()) /
+                        60000,
+                    )}
+                  </p>
+                </div>
+              )}
 
             <div className="mt-5 pt-5 border-t-2 border-ink/20">
               <p className="text-[10px] font-extrabold uppercase tracking-widest text-brand mb-3">
@@ -222,13 +236,22 @@ export function OutcomeChat({ challenge, childName, notes = "", onSaveNotes, onV
               </p>
               <div className="flex flex-wrap gap-2">
                 {Object.entries(report.awarded_points || {}).map(([key, points]) => (
-                  <div key={key} className="flex items-center gap-1.5 bg-white border border-ink/10 px-3 py-1.5 rounded-full shadow-sm">
-                    <span className="text-xs font-bold text-brand capitalize">{key.replace('_', ' ')}</span>
-                    <span className="text-xs font-black text-brand bg-brand/10 px-1.5 rounded-md">+{String(points)}</span>
+                  <div
+                    key={key}
+                    className="flex items-center gap-1.5 bg-white border border-ink/10 px-3 py-1.5 rounded-full shadow-sm"
+                  >
+                    <span className="text-xs font-bold text-brand capitalize">
+                      {key.replace("_", " ")}
+                    </span>
+                    <span className="text-xs font-black text-brand bg-brand/10 px-1.5 rounded-md">
+                      +{String(points)}
+                    </span>
                   </div>
                 ))}
                 {Object.keys(report.awarded_points || {}).length === 0 && (
-                  <span className="text-xs text-ink/60 italic">Aucune intelligence spécifique détectée.</span>
+                  <span className="text-xs text-ink/60 italic">
+                    Aucune intelligence spécifique détectée.
+                  </span>
                 )}
               </div>
             </div>
@@ -284,7 +307,8 @@ export function OutcomeChat({ challenge, childName, notes = "", onSaveNotes, onV
                 />
               </label>
               <p className="mt-2 text-xs text-ink/60 italic">
-                Ce défi se valide par déclaration : indiquez le résultat réellement obtenu, sans photo.
+                Ce défi se valide par déclaration : indiquez le résultat réellement obtenu, sans
+                photo.
               </p>
             </div>
           ) : (
@@ -293,7 +317,9 @@ export function OutcomeChat({ challenge, childName, notes = "", onSaveNotes, onV
                 <label className="flex flex-col items-center justify-center gap-2 rounded-2xl border-2 border-dashed border-ink/20 bg-white/50 p-6 hover:-translate-y-0.5 shadow-sm transition-all cursor-pointer text-center w-full">
                   <Upload className="size-6 text-brand animate-pulse" />
                   <span className="text-xs font-black text-brand">Sélectionner une photo</span>
-                  <span className="text-[10px] text-ink/60 font-bold">Formats acceptés : PNG, JPG</span>
+                  <span className="text-[10px] text-ink/60 font-bold">
+                    Formats acceptés : PNG, JPG
+                  </span>
                   <input
                     type="file"
                     accept="image/*"
@@ -317,7 +343,8 @@ export function OutcomeChat({ challenge, childName, notes = "", onSaveNotes, onV
               )}
               {!notes.trim() && (
                 <p className="mt-2 text-xs text-ink/60 italic">
-                  Astuce : remplissez le journal d'apprentissage ci-dessus pour une analyse plus précise.
+                  Astuce : remplissez le journal d'apprentissage ci-dessus pour une analyse plus
+                  précise.
                 </p>
               )}
             </div>

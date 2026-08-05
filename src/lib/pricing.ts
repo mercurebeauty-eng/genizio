@@ -10,12 +10,21 @@
 // MOIS DU COMPTE (compte à rebours personnel, pas une fenêtre de lancement globale), puis
 // 15 000 FCFA. Même barème côté organisations, où la référence est la date de création de la
 // campagne plutôt que celle d'un compte.
+//
+// Décision utilisateur (2026-08-05) : ce barème mensuel devient LE modèle d'accès — chaque
+// enfant au-delà du 1er profil gratuit coûte 5 000 F/mois (3 premiers mois du compte) puis
+// 15 000 F/mois. Le parrainage suit le même barème. Équivalents EUR à la parité de la saison
+// (10 000 F = 15 €) : 5 000 F ≈ 7,50 €, 15 000 F ≈ 22,50 €.
 export const PROMO_PRICE_XOF = 5000;
+export const PROMO_PRICE_EUR = 7.5;
 export const STANDARD_PRICE_XOF = 15000;
+export const STANDARD_PRICE_EUR = 22.5;
 export const PROMO_DURATION_MONTHS = 3;
 
 export interface ExtraSlotPrice {
   priceXof: number;
+  /** Équivalent EUR à la parité saison (10 000 F = 15 €). */
+  priceEur: number;
   isPromo: boolean;
   /** Fin du prix de bienvenue. `null` dès que la promo est passée ou la référence inconnue. */
   promoEndsAt: Date | null;
@@ -28,11 +37,11 @@ export function resolveExtraSlotPrice(
   now: Date = new Date()
 ): ExtraSlotPrice {
   if (!referenceCreatedAt) {
-    return { priceXof: STANDARD_PRICE_XOF, isPromo: false, promoEndsAt: null };
+    return { priceXof: STANDARD_PRICE_XOF, priceEur: STANDARD_PRICE_EUR, isPromo: false, promoEndsAt: null };
   }
   const created = new Date(referenceCreatedAt);
   if (Number.isNaN(created.getTime())) {
-    return { priceXof: STANDARD_PRICE_XOF, isPromo: false, promoEndsAt: null };
+    return { priceXof: STANDARD_PRICE_XOF, priceEur: STANDARD_PRICE_EUR, isPromo: false, promoEndsAt: null };
   }
 
   const endsAt = new Date(created);
@@ -41,6 +50,7 @@ export function resolveExtraSlotPrice(
   const isPromo = now.getTime() < endsAt.getTime();
   return {
     priceXof: isPromo ? PROMO_PRICE_XOF : STANDARD_PRICE_XOF,
+    priceEur: isPromo ? PROMO_PRICE_EUR : STANDARD_PRICE_EUR,
     isPromo,
     promoEndsAt: isPromo ? endsAt : null,
   };

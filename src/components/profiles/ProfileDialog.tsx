@@ -5,7 +5,7 @@ import { INTERESTS_BY_TALENT, AVATAR_COLORS, emptyProfileDraft, type ChildProfil
 import { toast } from "sonner";
 import { useSession } from "@/hooks/use-session";
 import { getGeoHint } from "@/lib/geo.functions";
-import { computeChildProfileQuota } from "@/lib/child-profile-quota";
+import { computeChildCreationLimit } from "@/lib/child-access";
 
 export function ProfileDialog({
   initial,
@@ -20,10 +20,12 @@ export function ProfileDialog({
 }) {
   const { session } = useSession();
   // Pré-check local seulement : le trigger check_child_profile_quota fait foi côté base.
-  const quota = computeChildProfileQuota({
-    accountCreatedAt: session?.user?.created_at,
-    extraSlots: (session?.user?.app_metadata?.extra_profile_slots as number) ?? 0,
-  });
+  // Décision 2026-08-05 : +1 autorisé pour le premier profil MENSUEL (en cours de mise en
+  // paiement) — miroir du trigger (migration 20260805100000).
+  const quota = computeChildCreationLimit(
+    session?.user?.created_at,
+    (session?.user?.app_metadata?.extra_profile_slots as number) ?? 0,
+  );
 
   const [draft, setDraft] = useState<ProfileDraft>(
     initial

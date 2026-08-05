@@ -5,12 +5,25 @@ import { useSession } from "@/hooks/use-session";
 import { AppHeader } from "@/components/AppHeader";
 import { getSupervisorDashboard } from "@/lib/supervisors.functions";
 import { getChildGuild } from "@/lib/guilds";
-import { Loader2, Users, Trophy, CheckSquare, Eye, ClipboardList, Zap, CheckCircle2, X, Clock, AlertTriangle, Brain, Phone } from "lucide-react";
+import {
+  Loader2,
+  Users,
+  Trophy,
+  CheckSquare,
+  Eye,
+  ClipboardList,
+  Zap,
+  CheckCircle2,
+  X,
+  Clock,
+  AlertTriangle,
+  Brain,
+  Phone,
+} from "lucide-react";
 import { NayaAvatar } from "@/components/NayaAvatar";
 import { MarkdownContent } from "@/components/ui/markdown-content";
 import { GenizioLoader } from "@/components/GenizioLoader";
 import { formatPedagogicalIntention } from "@/lib/pedagogical-intention";
-
 
 export const Route = createFileRoute("/supervisor")({
   component: SupervisorDashboardPage,
@@ -84,11 +97,19 @@ function SupervisorDashboardPage() {
       <main className="mx-auto max-w-5xl px-6 py-10">
         {/* Header */}
         <div className="mb-8">
-          <div className="mb-3 flex items-end gap-3" style={{ paddingTop: "3.5rem", marginTop: "-3.5rem" }}>
-            <NayaAvatar size="sm" thoughts={["Bonjour Superviseur ! Voici vos enfants à accompagner."]} />
+          <div
+            className="mb-3 flex items-end gap-3"
+            style={{ paddingTop: "3.5rem", marginTop: "-3.5rem" }}
+          >
+            <NayaAvatar
+              size="sm"
+              thoughts={["Bonjour Superviseur ! Voici vos enfants à accompagner."]}
+            />
             <p className="text-sm text-ink/60 mb-0.5">Espace Superviseur</p>
           </div>
-          <h1 className="font-display text-balance text-3xl font-extrabold">Tableau de Bord Superviseur</h1>
+          <h1 className="font-display text-balance text-3xl font-extrabold">
+            Tableau de Bord Superviseur
+          </h1>
         </div>
 
         {fetching ? (
@@ -98,7 +119,9 @@ function SupervisorDashboardPage() {
         ) : loadError ? (
           <div className="rounded-3xl border border-dashed border-red-400 bg-red-50 p-16 text-center shadow-sm">
             <AlertTriangle className="size-16 text-red-400 mx-auto mb-4" />
-            <p className="font-display text-balance text-xl font-bold mb-2 text-red-700">Impossible de charger votre tableau de bord</p>
+            <p className="font-display text-balance text-xl font-bold mb-2 text-red-700">
+              Impossible de charger votre tableau de bord
+            </p>
             <p className="text-sm text-ink/60">
               Une erreur est survenue. Vérifiez votre connexion et réessayez, ou rechargez la page.
             </p>
@@ -108,7 +131,8 @@ function SupervisorDashboardPage() {
             <Users className="size-16 text-ink/30 mx-auto mb-4" />
             <p className="font-display text-balance text-xl font-bold mb-2">Aucun enfant assigné</p>
             <p className="text-sm text-ink/60">
-              Un administrateur Génizio doit vous assigner des profils d'enfants pour que vous puissiez les accompagner.
+              Un administrateur Génizio doit vous assigner des profils d'enfants pour que vous
+              puissiez les accompagner.
             </p>
           </div>
         ) : (
@@ -116,8 +140,12 @@ function SupervisorDashboardPage() {
             {/* Child Selector — Horizontal scroll bar on Mobile, grid on Desktop */}
             <div className="space-y-3">
               <div className="flex items-center justify-between">
-                <h2 className="text-xs font-black uppercase tracking-widest text-ink/60">Enfants assignés ({children.length})</h2>
-                <span className="text-[10px] font-bold text-ink/40 sm:hidden">Glissez pour voir tous</span>
+                <h2 className="text-xs font-black uppercase tracking-widest text-ink/60">
+                  Enfants assignés ({children.length})
+                </h2>
+                <span className="text-[10px] font-bold text-ink/40 sm:hidden">
+                  Glissez pour voir tous
+                </span>
               </div>
               <div className="flex overflow-x-auto sm:grid sm:grid-cols-2 md:grid-cols-3 gap-3 pb-2 no-scrollbar scroll-smooth">
                 {children.map((child) => {
@@ -126,20 +154,25 @@ function SupervisorDashboardPage() {
                   const isActive = child.id === selectedId;
                   // Seul signal de "nouveau" disponible : pas de notification à l'assignation
                   // (aucune infra email/SMS dans ce projet) — l'accueil.assignedAt sert de proxy.
-                  const daysSinceAssigned = (Date.now() - new Date(child.assignedAt).getTime()) / 86400000;
+                  const daysSinceAssigned =
+                    (Date.now() - new Date(child.assignedAt).getTime()) / 86400000;
                   const isNew = daysSinceAssigned <= 7;
                   return (
                     <button
                       key={child.id}
                       onClick={() => setSelectedId(child.id)}
                       className={`relative min-w-[200px] sm:min-w-0 text-left rounded-2xl border border-ink/10 p-3.5 shadow-2xs transition-all cursor-pointer ${
-                        isActive ? "bg-brand text-white border-brand scale-[1.01]" : "bg-white text-ink hover:bg-surface hover:border-ink/20"
+                        isActive
+                          ? "bg-brand text-white border-brand scale-[1.01]"
+                          : "bg-white text-ink hover:bg-surface hover:border-ink/20"
                       }`}
                     >
                       {isNew && (
-                        <span className={`absolute -top-2 -right-2 rounded-full px-2 py-0.5 text-[9px] font-black uppercase tracking-wider shadow-sm ${
-                          isActive ? "bg-white text-brand" : "bg-brand text-white"
-                        }`}>
+                        <span
+                          className={`absolute -top-2 -right-2 rounded-full px-2 py-0.5 text-[9px] font-black uppercase tracking-wider shadow-sm ${
+                            isActive ? "bg-white text-brand" : "bg-brand text-white"
+                          }`}
+                        >
                           Nouveau
                         </span>
                       )}
@@ -147,12 +180,24 @@ function SupervisorDashboardPage() {
                         <span className="text-lg">{guild.emoji}</span>
                         <div className="font-display font-black text-sm truncate">{child.name}</div>
                       </div>
-                      <div className={`text-[11px] font-bold ${isActive ? "text-white/80" : "text-ink/60"}`}>
+                      <div
+                        className={`text-[11px] font-bold ${isActive ? "text-white/80" : "text-ink/60"}`}
+                      >
                         {child.age} ans · {guild.name}
                       </div>
-                      <div className={`text-[11px] mt-1 font-semibold flex items-center justify-between ${isActive ? "text-white/90" : "text-brand"}`}>
-                        <span>{completed} / {child.challenges.length} défis</span>
-                        {completed > 0 && <span className={`text-[9px] px-1.5 py-0.5 rounded-full font-black ${isActive ? "bg-white/20 text-white" : "bg-brand/10 text-brand"}`}>Active</span>}
+                      <div
+                        className={`text-[11px] mt-1 font-semibold flex items-center justify-between ${isActive ? "text-white/90" : "text-brand"}`}
+                      >
+                        <span>
+                          {completed} / {child.challenges.length} défis
+                        </span>
+                        {completed > 0 && (
+                          <span
+                            className={`text-[9px] px-1.5 py-0.5 rounded-full font-black ${isActive ? "bg-white/20 text-white" : "bg-brand/10 text-brand"}`}
+                          >
+                            Active
+                          </span>
+                        )}
                       </div>
                     </button>
                   );
@@ -161,96 +206,153 @@ function SupervisorDashboardPage() {
             </div>
 
             {/* Main — profil de l'enfant sélectionné */}
-            {selected && (() => {
-              const guild = getChildGuild(selected.talents);
-              const completed = selected.challenges.filter((c) => c.status === "completed");
-              const inProgress = selected.challenges.filter((c) => c.status === "in_progress");
-              const todo = selected.challenges.filter((c) => c.status === "todo");
+            {selected &&
+              (() => {
+                const guild = getChildGuild(selected.talents);
+                const completed = selected.challenges.filter((c) => c.status === "completed");
+                const inProgress = selected.challenges.filter((c) => c.status === "in_progress");
+                const todo = selected.challenges.filter((c) => c.status === "todo");
 
-              return (
-                <div className="md:col-span-2 space-y-6">
-                  {/* Guild Banner */}
-                  <div className={`rounded-3xl border border-ink/10 p-5 shadow-xl flex items-center gap-4 ${guild.bgColor}`}>
-                    <div className="text-5xl">{guild.emoji}</div>
-                    <div>
-                      <p className={`text-[11px] font-extrabold uppercase tracking-widest mb-0.5 ${guild.color} opacity-70`}>Guilde</p>
-                      <h2 className={`font-display text-balance text-2xl font-black ${guild.color}`}>{selected.name} — {guild.name}</h2>
-                      <p className={`text-sm font-medium italic mt-1 ${guild.color} opacity-80`}>« {guild.tagline} »</p>
+                return (
+                  <div className="md:col-span-2 space-y-6">
+                    {/* Guild Banner */}
+                    <div
+                      className={`rounded-3xl border border-ink/10 p-5 shadow-xl flex items-center gap-4 ${guild.bgColor}`}
+                    >
+                      <div className="text-5xl">{guild.emoji}</div>
+                      <div>
+                        <p
+                          className={`text-[11px] font-extrabold uppercase tracking-widest mb-0.5 ${guild.color} opacity-70`}
+                        >
+                          Guilde
+                        </p>
+                        <h2
+                          className={`font-display text-balance text-2xl font-black ${guild.color}`}
+                        >
+                          {selected.name} — {guild.name}
+                        </h2>
+                        <p className={`text-sm font-medium italic mt-1 ${guild.color} opacity-80`}>
+                          « {guild.tagline} »
+                        </p>
+                      </div>
                     </div>
-                  </div>
 
-                  {/* Contact parent */}
-                  <div className="rounded-2xl border border-ink/10 bg-white p-4 shadow-sm flex items-center gap-3">
-                    <div className="grid size-9 shrink-0 place-items-center rounded-full bg-brand/10 text-brand">
-                      <Phone className="size-4" />
+                    {/* Contact parent */}
+                    <div className="rounded-2xl border border-ink/10 bg-white p-4 shadow-sm flex items-center gap-3">
+                      <div className="grid size-9 shrink-0 place-items-center rounded-full bg-brand/10 text-brand">
+                        <Phone className="size-4" />
+                      </div>
+                      <div className="min-w-0">
+                        <p className="text-[10px] font-extrabold uppercase tracking-widest text-ink/40">
+                          Contacter le parent
+                        </p>
+                        {selected.parentPhone ? (
+                          <a
+                            href={`tel:${selected.parentPhone}`}
+                            className="text-sm font-bold text-ink hover:text-brand"
+                          >
+                            {selected.parentPhone}
+                          </a>
+                        ) : (
+                          <p className="text-sm font-semibold text-ink/50 italic">Non renseigné</p>
+                        )}
+                      </div>
                     </div>
-                    <div className="min-w-0">
-                      <p className="text-[10px] font-extrabold uppercase tracking-widest text-ink/40">Contacter le parent</p>
-                      {selected.parentPhone ? (
-                        <a href={`tel:${selected.parentPhone}`} className="text-sm font-bold text-ink hover:text-brand">
-                          {selected.parentPhone}
-                        </a>
+
+                    {/* Stats rapides */}
+                    <div className="grid grid-cols-3 gap-4">
+                      {[
+                        {
+                          label: "À faire",
+                          count: todo.length,
+                          icon: ClipboardList,
+                          color: "bg-surface",
+                          iconColor: "text-ink/60",
+                        },
+                        {
+                          label: "En cours",
+                          count: inProgress.length,
+                          icon: Zap,
+                          color: "bg-brand/10",
+                          iconColor: "text-brand",
+                        },
+                        {
+                          label: "Complétés",
+                          count: completed.length,
+                          icon: CheckCircle2,
+                          color: "bg-emerald-50",
+                          iconColor: "text-emerald-600",
+                        },
+                      ].map((stat) => {
+                        const Icon = stat.icon;
+                        return (
+                          <div
+                            key={stat.label}
+                            className={`rounded-2xl border border-ink/10 p-4 text-center shadow-sm ${stat.color} flex flex-col items-center justify-center`}
+                          >
+                            <Icon className={`size-6 mb-1.5 ${stat.iconColor}`} />
+                            <div className="font-display text-balance text-2xl font-black">
+                              {stat.count}
+                            </div>
+                            <p className="text-[10px] font-bold uppercase tracking-widest text-ink/60 mt-1">
+                              {stat.label}
+                            </p>
+                          </div>
+                        );
+                      })}
+                    </div>
+
+                    {/* Timeline des défis */}
+                    <div className="rounded-3xl border border-ink/10 bg-white p-6 shadow-xl">
+                      <h3 className="font-display text-balance text-lg font-black mb-4 flex items-center gap-2">
+                        <Trophy className="size-5 text-brand" />
+                        Défis de {selected.name}
+                      </h3>
+                      {selected.challenges.length === 0 ? (
+                        <p className="text-sm text-ink/60 italic">
+                          Aucun défi assigné pour le moment.
+                        </p>
                       ) : (
-                        <p className="text-sm font-semibold text-ink/50 italic">Non renseigné</p>
+                        <ul className="space-y-3">
+                          {selected.challenges.map((c) => (
+                            <button
+                              key={c.id}
+                              onClick={() => setSelectedChallenge(c)}
+                              className="w-full flex items-center justify-between rounded-2xl border border-ink/10 bg-surface px-4 py-3 hover:bg-stone-50 transition-all text-left cursor-pointer"
+                            >
+                              <div>
+                                <p className="text-sm font-bold text-ink hover:text-brand transition-colors">
+                                  {c.title}
+                                </p>
+                                <p className="text-xs text-ink/60">{c.domain}</p>
+                              </div>
+                              <span
+                                className={`rounded-full px-2.5 py-1 text-[10px] font-black uppercase tracking-widest border border-ink/10 ${
+                                  c.status === "completed"
+                                    ? "bg-emerald-100 text-emerald-800"
+                                    : c.status === "in_progress"
+                                      ? "bg-brand/10 text-brand"
+                                      : c.status === "not_completed"
+                                        ? "bg-rose-100 text-rose-800"
+                                        : "bg-surface text-ink/60"
+                                }`}
+                              >
+                                {c.status === "completed"
+                                  ? "✅ Complété"
+                                  : c.status === "in_progress"
+                                    ? "⚡ En cours"
+                                    : c.status === "not_completed"
+                                      ? "❌ Non réussi"
+                                      : "📋 À faire"}
+                              </span>
+                            </button>
+                          ))}
+                        </ul>
                       )}
                     </div>
                   </div>
-
-                  {/* Stats rapides */}
-                  <div className="grid grid-cols-3 gap-4">
-                    {[
-                      { label: "À faire", count: todo.length, icon: ClipboardList, color: "bg-surface", iconColor: "text-ink/60" },
-                      { label: "En cours", count: inProgress.length, icon: Zap, color: "bg-brand/10", iconColor: "text-brand" },
-                      { label: "Complétés", count: completed.length, icon: CheckCircle2, color: "bg-emerald-50", iconColor: "text-emerald-600" },
-                    ].map((stat) => {
-                      const Icon = stat.icon;
-                      return (
-                        <div key={stat.label} className={`rounded-2xl border border-ink/10 p-4 text-center shadow-sm ${stat.color} flex flex-col items-center justify-center`}>
-                          <Icon className={`size-6 mb-1.5 ${stat.iconColor}`} />
-                          <div className="font-display text-balance text-2xl font-black">{stat.count}</div>
-                          <p className="text-[10px] font-bold uppercase tracking-widest text-ink/60 mt-1">{stat.label}</p>
-                        </div>
-                      );
-                    })}
-                  </div>
-
-
-                  {/* Timeline des défis */}
-                  <div className="rounded-3xl border border-ink/10 bg-white p-6 shadow-xl">
-                    <h3 className="font-display text-balance text-lg font-black mb-4 flex items-center gap-2">
-                      <Trophy className="size-5 text-brand" />
-                      Défis de {selected.name}
-                    </h3>
-                    {selected.challenges.length === 0 ? (
-                      <p className="text-sm text-ink/60 italic">Aucun défi assigné pour le moment.</p>
-                    ) : (
-                      <ul className="space-y-3">
-                        {selected.challenges.map((c) => (
-                          <button
-                            key={c.id}
-                            onClick={() => setSelectedChallenge(c)}
-                            className="w-full flex items-center justify-between rounded-2xl border border-ink/10 bg-surface px-4 py-3 hover:bg-stone-50 transition-all text-left cursor-pointer"
-                          >
-                            <div>
-                              <p className="text-sm font-bold text-ink hover:text-brand transition-colors">{c.title}</p>
-                              <p className="text-xs text-ink/60">{c.domain}</p>
-                            </div>
-                            <span className={`rounded-full px-2.5 py-1 text-[10px] font-black uppercase tracking-widest border border-ink/10 ${
-                              c.status === "completed" ? "bg-emerald-100 text-emerald-800" :
-                              c.status === "in_progress" ? "bg-brand/10 text-brand" :
-                              c.status === "not_completed" ? "bg-rose-100 text-rose-800" :
-                              "bg-surface text-ink/60"
-                            }`}>
-                              {c.status === "completed" ? "✅ Complété" : c.status === "in_progress" ? "⚡ En cours" : c.status === "not_completed" ? "❌ Non réussi" : "📋 À faire"}
-                            </span>
-                          </button>
-                        ))}
-                      </ul>
-                    )}
-                  </div>
-                </div>
-              );
-            })()}
+                );
+              })()}
           </div>
         )}
       </main>
@@ -265,13 +367,24 @@ function SupervisorDashboardPage() {
                   <span className="rounded-full border border-ink/10 bg-brand px-2.5 py-0.5 text-[10px] font-black uppercase tracking-widest text-white">
                     {selectedChallenge.domain}
                   </span>
-                  <span className={`rounded-full border border-ink/10 px-2.5 py-0.5 text-[10px] font-black uppercase tracking-widest ${
-                    selectedChallenge.status === "completed" ? "bg-emerald-100 text-emerald-800" :
-                    selectedChallenge.status === "in_progress" ? "bg-brand/10 text-brand" :
-                    selectedChallenge.status === "not_completed" ? "bg-rose-100 text-rose-800" :
-                    "bg-stone-100 text-stone-700"
-                  }`}>
-                    {selectedChallenge.status === "completed" ? "✅ Complété" : selectedChallenge.status === "in_progress" ? "⚡ En cours" : selectedChallenge.status === "not_completed" ? "❌ Non réussi" : "📋 À faire"}
+                  <span
+                    className={`rounded-full border border-ink/10 px-2.5 py-0.5 text-[10px] font-black uppercase tracking-widest ${
+                      selectedChallenge.status === "completed"
+                        ? "bg-emerald-100 text-emerald-800"
+                        : selectedChallenge.status === "in_progress"
+                          ? "bg-brand/10 text-brand"
+                          : selectedChallenge.status === "not_completed"
+                            ? "bg-rose-100 text-rose-800"
+                            : "bg-stone-100 text-stone-700"
+                    }`}
+                  >
+                    {selectedChallenge.status === "completed"
+                      ? "✅ Complété"
+                      : selectedChallenge.status === "in_progress"
+                        ? "⚡ En cours"
+                        : selectedChallenge.status === "not_completed"
+                          ? "❌ Non réussi"
+                          : "📋 À faire"}
                   </span>
                   {selectedChallenge.difficulty && (
                     <span className="rounded-full border border-ink/10 bg-orange-100 px-2.5 py-0.5 text-[10px] font-black uppercase tracking-widest text-orange-800">
@@ -285,7 +398,9 @@ function SupervisorDashboardPage() {
                     </span>
                   )}
                 </div>
-                <h3 className="font-display text-balance text-xl font-black text-ink">{selectedChallenge.title}</h3>
+                <h3 className="font-display text-balance text-xl font-black text-ink">
+                  {selectedChallenge.title}
+                </h3>
               </div>
               <button
                 onClick={() => setSelectedChallenge(null)}
@@ -302,15 +417,22 @@ function SupervisorDashboardPage() {
                 <div className="rounded-2xl border border-ink/10 bg-amber-50 p-4 flex gap-3 text-amber-900">
                   <AlertTriangle className="size-6 text-amber-600 shrink-0" />
                   <div>
-                    <p className="text-xs font-black uppercase tracking-wider mb-0.5 text-amber-800">Attention - Supervision requise</p>
-                    <p className="text-sm font-medium leading-relaxed">{selectedChallenge.supervision_warning || "La présence d'un adulte est nécessaire pour cette activité."}</p>
+                    <p className="text-xs font-black uppercase tracking-wider mb-0.5 text-amber-800">
+                      Attention - Supervision requise
+                    </p>
+                    <p className="text-sm font-medium leading-relaxed">
+                      {selectedChallenge.supervision_warning ||
+                        "La présence d'un adulte est nécessaire pour cette activité."}
+                    </p>
                   </div>
                 </div>
               )}
 
               {/* Description */}
               <div>
-                <h4 className="text-xs font-black uppercase tracking-widest text-ink/60 mb-2">Description du défi</h4>
+                <h4 className="text-xs font-black uppercase tracking-widest text-ink/60 mb-2">
+                  Description du défi
+                </h4>
                 <div className="text-sm text-ink/80 leading-relaxed font-medium">
                   <MarkdownContent content={selectedChallenge.description} />
                 </div>
@@ -319,54 +441,74 @@ function SupervisorDashboardPage() {
               {/* Pedagogical context */}
               {formatPedagogicalIntention(selectedChallenge.pedagogical_context) && (
                 <div className="rounded-2xl border border-ink/10 bg-stone-50 p-4">
-                  <p className="text-xs font-black uppercase tracking-wider text-ink/60 mb-1">Objectif Pédagogique (Naya)</p>
-                  <p className="text-xs text-ink/70 leading-relaxed font-medium">{formatPedagogicalIntention(selectedChallenge.pedagogical_context)}</p>
+                  <p className="text-xs font-black uppercase tracking-wider text-ink/60 mb-1">
+                    Objectif Pédagogique (Naya)
+                  </p>
+                  <p className="text-xs text-ink/70 leading-relaxed font-medium">
+                    {formatPedagogicalIntention(selectedChallenge.pedagogical_context)}
+                  </p>
                 </div>
               )}
 
               {/* Materials */}
-              {selectedChallenge.materials && Array.isArray(selectedChallenge.materials) && selectedChallenge.materials.length > 0 && (
-                <div>
-                  <h4 className="text-xs font-black uppercase tracking-widest text-ink/60 mb-2">Matériel nécessaire</h4>
-                  <ul className="grid gap-2 ">
-                    {selectedChallenge.materials.map((m: string, i: number) => (
-                      <li key={i} className="flex items-center gap-2 text-sm font-bold text-ink">
-                        <span className="size-2 rounded-full bg-brand shrink-0"></span>
-                        <span>{m}</span>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              )}
+              {selectedChallenge.materials &&
+                Array.isArray(selectedChallenge.materials) &&
+                selectedChallenge.materials.length > 0 && (
+                  <div>
+                    <h4 className="text-xs font-black uppercase tracking-widest text-ink/60 mb-2">
+                      Matériel nécessaire
+                    </h4>
+                    <ul className="grid gap-2 ">
+                      {selectedChallenge.materials.map((m: string, i: number) => (
+                        <li key={i} className="flex items-center gap-2 text-sm font-bold text-ink">
+                          <span className="size-2 rounded-full bg-brand shrink-0"></span>
+                          <span>{m}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
 
               {/* Steps */}
-              {selectedChallenge.steps && Array.isArray(selectedChallenge.steps) && selectedChallenge.steps.length > 0 && (
-                <div>
-                  <h4 className="text-xs font-black uppercase tracking-widest text-ink/60 mb-3">Étapes de réalisation</h4>
-                  <ol className="space-y-3">
-                    {selectedChallenge.steps.map((s: string, i: number) => (
-                      <li key={i} className="flex gap-3 text-sm">
-                        <span className="grid size-6 place-items-center rounded-lg border border-ink/10 bg-white font-mono text-xs font-bold text-ink shrink-0">
-                          {i + 1}
-                        </span>
-                        <span className="leading-relaxed font-semibold text-ink/80">{s}</span>
-                      </li>
-                    ))}
-                  </ol>
-                </div>
-              )}
+              {selectedChallenge.steps &&
+                Array.isArray(selectedChallenge.steps) &&
+                selectedChallenge.steps.length > 0 && (
+                  <div>
+                    <h4 className="text-xs font-black uppercase tracking-widest text-ink/60 mb-3">
+                      Étapes de réalisation
+                    </h4>
+                    <ol className="space-y-3">
+                      {selectedChallenge.steps.map((s: string, i: number) => (
+                        <li key={i} className="flex gap-3 text-sm">
+                          <span className="grid size-6 place-items-center rounded-lg border border-ink/10 bg-white font-mono text-xs font-bold text-ink shrink-0">
+                            {i + 1}
+                          </span>
+                          <span className="leading-relaxed font-semibold text-ink/80">{s}</span>
+                        </li>
+                      ))}
+                    </ol>
+                  </div>
+                )}
 
               {/* Proof / Observations if completed */}
               {selectedChallenge.status === "completed" && (
                 <div className="border-t-2 border-ink pt-6 space-y-6">
-                  <h4 className="font-display text-balance text-base font-extrabold text-ink">Retour sur la réalisation</h4>
+                  <h4 className="font-display text-balance text-base font-extrabold text-ink">
+                    Retour sur la réalisation
+                  </h4>
 
                   {/* Proof Image */}
                   {selectedChallenge.proof_image_url && (
                     <div>
-                      <p className="text-xs font-black uppercase tracking-widest text-ink/60 mb-2">Preuve de réalisation</p>
+                      <p className="text-xs font-black uppercase tracking-widest text-ink/60 mb-2">
+                        Preuve de réalisation
+                      </p>
                       <div className="rounded-2xl overflow-hidden border border-ink/10 bg-surface max-w-md">
-                        <img src={selectedChallenge.proof_image_url} alt="Preuve" className="w-full max-h-64 object-contain" />
+                        <img
+                          src={selectedChallenge.proof_image_url}
+                          alt="Preuve"
+                          className="w-full max-h-64 object-contain"
+                        />
                       </div>
                     </div>
                   )}

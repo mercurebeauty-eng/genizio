@@ -9,7 +9,7 @@ import { TalentRadarChart } from "@/components/TalentRadarChart";
 import { MarkdownContent } from "@/components/ui/markdown-content";
 import {
   Award,
-  Sparkles,
+  BrainCircuit,
   BookOpen,
   ShieldCheck,
   Printer,
@@ -118,7 +118,9 @@ function PassportPrintPage() {
         .maybeSingle(),
       supabase
         .from("challenges")
-        .select("id, title, domain, status, completed_at, proof_image_url, description, ai_observations, notes, difficulty")
+        .select(
+          "id, title, domain, status, completed_at, proof_image_url, description, ai_observations, notes, difficulty",
+        )
         .eq("child_id", profileId)
         .eq("status", "completed")
         .order("completed_at", { ascending: false }),
@@ -186,7 +188,9 @@ function PassportPrintPage() {
       <div className="grid min-h-dvh place-items-center bg-stone-50 text-ink">
         <div className="text-center p-6 border-2 border-ink bg-white rounded-3xl max-w-sm">
           <p className="font-bold text-red-500 mb-2">Accès refusé ou profil introuvable.</p>
-          <p className="text-xs text-ink/60 mb-4">Ce document est sécurisé et réservé au compte parent propriétaire.</p>
+          <p className="text-xs text-ink/60 mb-4">
+            Ce document est sécurisé et réservé au compte parent propriétaire.
+          </p>
           <Link to="/profiles" className="text-xs font-bold text-brand hover:underline">
             Retour
           </Link>
@@ -204,7 +208,8 @@ function PassportPrintPage() {
             Passeport d'Excellence Verrouillé
           </h2>
           <p className="text-sm font-semibold text-ink/75 leading-relaxed mb-6">
-            Le Passeport d'Excellence pour {child.name} n'a pas encore été débloqué par l'administration. Veuillez procéder à son activation ou contacter le support.
+            Le Passeport d'Excellence pour {child.name} n'a pas encore été débloqué par
+            l'administration. Veuillez procéder à son activation ou contacter le support.
           </p>
           <Link
             to="/profiles/$profileId/portfolio"
@@ -253,7 +258,9 @@ function PassportPrintPage() {
           </Link>
           <div>
             <h1 className="font-bold text-sm">Passeport d'Excellence • {child.name}</h1>
-            <p className="text-xs text-ink/60 font-semibold">Le dialogue d'impression va s'ouvrir automatiquement.</p>
+            <p className="text-xs text-ink/60 font-semibold">
+              Le dialogue d'impression va s'ouvrir automatiquement.
+            </p>
           </div>
         </div>
         <button
@@ -323,7 +330,9 @@ function PassportPrintPage() {
             </p>
 
             <div className="pt-6 space-y-3">
-              <p className="text-3xl font-display text-balance font-extrabold text-brand">{child.name}</p>
+              <p className="text-3xl font-display text-balance font-extrabold text-brand">
+                {child.name}
+              </p>
               <div className="flex items-center justify-center gap-3 text-xs font-bold text-ink/75 flex-wrap">
                 <span>Âge : {child.age} ans</span>
                 {locationStr && (
@@ -352,16 +361,24 @@ function PassportPrintPage() {
           {/* Footer Cover */}
           <div className="border-t-[3px] border-ink pt-6 flex justify-between items-end">
             <div className="space-y-1">
-              <p className="text-[10px] font-black text-ink/60 uppercase tracking-wider">Délivré par</p>
-              <p className="text-xs font-bold text-ink/80">Laboratoire d'Innovation Pédagogique Génizio</p>
+              <p className="text-[10px] font-black text-ink/60 uppercase tracking-wider">
+                Délivré par
+              </p>
+              <p className="text-xs font-bold text-ink/80">
+                Laboratoire d'Innovation Pédagogique Génizio
+              </p>
               <p className="text-[10px] font-medium text-ink/60">Dakar · Abidjan · Yaoundé</p>
             </div>
 
             <div className="flex items-center gap-2 border border-emerald-300 bg-emerald-50 text-emerald-800 rounded-xl px-3 py-2 text-xs font-bold shadow-sm">
               <ShieldCheck className="size-4 shrink-0 text-emerald-600" />
               <div>
-                <p className="text-[8px] font-black uppercase tracking-wider leading-none">Généré par l'IA Naya</p>
-                <p className="text-[10px] leading-tight mt-0.5 font-bold">Référence : {child.id.slice(0, 8).toUpperCase()}</p>
+                <p className="text-[8px] font-black uppercase tracking-wider leading-none">
+                  Généré par l'IA Naya
+                </p>
+                <p className="text-[10px] leading-tight mt-0.5 font-bold">
+                  Référence : {child.id.slice(0, 8).toUpperCase()}
+                </p>
               </div>
             </div>
           </div>
@@ -372,7 +389,7 @@ function PassportPrintPage() {
           <div>
             <div className="border-b-[3px] border-ink pb-4 mb-6">
               <h2 className="font-display text-balance text-xl font-black text-ink uppercase tracking-tight flex items-center gap-2">
-                <Sparkles className="size-5 text-brand" />
+                <BrainCircuit className="size-5 text-brand" />
                 I. Cartographie des intelligences & leviers d'action
               </h2>
             </div>
@@ -383,7 +400,12 @@ function PassportPrintPage() {
                 <h3 className="text-xs font-black uppercase tracking-wider text-ink/60 mb-2 self-start">
                   Radar des 9 Intelligences (Howard Gardner)
                 </h3>
-                <TalentRadarChart talents={child.talents} name={child.name} className="h-60 w-full" age={child.age} />
+                <TalentRadarChart
+                  talents={child.talents}
+                  name={child.name}
+                  className="h-60 w-full"
+                  age={child.age}
+                />
               </div>
 
               {/* Forces majeures */}
@@ -483,11 +505,18 @@ function PassportPrintPage() {
                   <div className="space-y-2">
                     {affinities.map((a) => (
                       <div key={a.key} className="flex items-center gap-3">
-                        <span className="w-40 shrink-0 text-[11px] font-bold text-ink/80">{a.label}</span>
+                        <span className="w-40 shrink-0 text-[11px] font-bold text-ink/80">
+                          {a.label}
+                        </span>
                         <div className="h-2 flex-1 overflow-hidden rounded-full bg-white border border-ink/10">
-                          <div className="h-full rounded-full" style={{ width: `${a.pct}%`, background: `var(--guild-${a.key})` }} />
+                          <div
+                            className="h-full rounded-full"
+                            style={{ width: `${a.pct}%`, background: `var(--guild-${a.key})` }}
+                          />
                         </div>
-                        <span className="w-8 shrink-0 text-right text-[10px] font-black text-sky-800">{a.pct}%</span>
+                        <span className="w-8 shrink-0 text-right text-[10px] font-black text-sky-800">
+                          {a.pct}%
+                        </span>
                       </div>
                     ))}
                   </div>
@@ -510,7 +539,9 @@ function PassportPrintPage() {
                     return (
                       <div key={slug} className="rounded-xl border border-amber-200 bg-white p-2.5">
                         <p className="text-[11px] font-black text-amber-900">{badge.title}</p>
-                        <p className="text-[9px] text-ink/60 leading-snug mt-0.5">{badge.description}</p>
+                        <p className="text-[9px] text-ink/60 leading-snug mt-0.5">
+                          {badge.description}
+                        </p>
                       </div>
                     );
                   })}
@@ -569,97 +600,111 @@ function PassportPrintPage() {
         )}
 
         {/* ── PAGES 4+: DETAILED LOG OF COMPLETED CHALLENGES ── */}
-        {challenges.length > 0 && (() => {
-          const chunks: Challenge[][] = [];
-          for (let i = 0; i < challenges.length; i += 2) {
-            chunks.push(challenges.slice(i, i + 2));
-          }
+        {challenges.length > 0 &&
+          (() => {
+            const chunks: Challenge[][] = [];
+            for (let i = 0; i < challenges.length; i += 2) {
+              chunks.push(challenges.slice(i, i + 2));
+            }
 
-          const startPage = synthesis ? 4 : 3;
+            const startPage = synthesis ? 4 : 3;
 
-          return chunks.map((chunk, chunkIdx) => (
-            <div key={chunkIdx} className="page-break flex-1 flex flex-col justify-between min-h-[26cm] pt-8">
-              <div>
-                <div className="border-b-[3px] border-ink pb-4 mb-8">
-                  <h2 className="font-display text-balance text-xl font-black text-ink uppercase tracking-tight">
-                    {synthesis ? "III" : "II"}. Réalisations Pratiques & Épreuves ({chunkIdx * 2 + 1} - {Math.min(challenges.length, chunkIdx * 2 + 2)})
-                  </h2>
-                </div>
+            return chunks.map((chunk, chunkIdx) => (
+              <div
+                key={chunkIdx}
+                className="page-break flex-1 flex flex-col justify-between min-h-[26cm] pt-8"
+              >
+                <div>
+                  <div className="border-b-[3px] border-ink pb-4 mb-8">
+                    <h2 className="font-display text-balance text-xl font-black text-ink uppercase tracking-tight">
+                      {synthesis ? "III" : "II"}. Réalisations Pratiques & Épreuves (
+                      {chunkIdx * 2 + 1} - {Math.min(challenges.length, chunkIdx * 2 + 2)})
+                    </h2>
+                  </div>
 
-                <div className="space-y-10">
-                  {chunk.map((c) => (
-                    <div key={c.id} className="no-print-break border border-ink/10 rounded-3xl p-6 bg-white shadow-md space-y-4">
-                      {/* Challenge header */}
-                      <div className="flex justify-between items-start gap-4">
-                        <div>
-                          <span className="rounded-full border-2 border-ink bg-brand/10 text-brand px-2.5 py-0.5 text-[9px] font-black uppercase tracking-wider">
-                            {c.domain}
-                          </span>
-                          <h3 className="font-display text-balance text-base font-extrabold text-ink mt-1.5 leading-tight">
-                            {c.title}
-                          </h3>
-                        </div>
-                        {c.completed_at && (
-                          <span className="text-[10px] font-bold text-ink/60 uppercase tracking-wider shrink-0 mt-0.5">
-                            Validé le {new Date(c.completed_at).toLocaleDateString("fr-FR")}
-                          </span>
-                        )}
-                      </div>
-
-                      {/* Description */}
-                      <div className="text-xs text-ink/70 leading-relaxed font-semibold">
-                        <p className="text-[9px] font-black uppercase tracking-wider text-ink/60 mb-1">
-                          Description de la mission
-                        </p>
-                        <MarkdownContent content={c.description} />
-                      </div>
-
-                      {/* Split photo and observations if photo exists */}
-                      <div className="grid gap-4">
-                        {/* Proof image */}
-                        {c.proof_image_url && (
-                          <div className="rounded-xl overflow-hidden border-2 border-ink bg-stone-50 aspect-[4/3] flex items-center justify-center">
-                            <img src={c.proof_image_url} alt={c.title} className="max-h-full max-w-full object-contain" />
+                  <div className="space-y-10">
+                    {chunk.map((c) => (
+                      <div
+                        key={c.id}
+                        className="no-print-break border border-ink/10 rounded-3xl p-6 bg-white shadow-md space-y-4"
+                      >
+                        {/* Challenge header */}
+                        <div className="flex justify-between items-start gap-4">
+                          <div>
+                            <span className="rounded-full border-2 border-ink bg-brand/10 text-brand px-2.5 py-0.5 text-[9px] font-black uppercase tracking-wider">
+                              {c.domain}
+                            </span>
+                            <h3 className="font-display text-balance text-base font-extrabold text-ink mt-1.5 leading-tight">
+                              {c.title}
+                            </h3>
                           </div>
-                        )}
-
-                        {/* Naya & Parent Notes */}
-                        <div className="space-y-3 flex flex-col justify-between">
-                          {c.ai_observations && (
-                            <div className="rounded-xl border border-ink/20 bg-emerald-50/50 p-3 text-xs leading-relaxed">
-                              <p className="text-[8px] font-black uppercase tracking-wider text-emerald-800 mb-0.5 flex items-center gap-1">
-                                <CheckCircle className="size-3 text-emerald-600" />
-                                Observation pédagogique
-                              </p>
-                              <p className="italic font-semibold text-emerald-950">"{c.ai_observations}"</p>
-                            </div>
-                          )}
-
-                          {c.notes && (
-                            <div className="rounded-xl border border-ink/20 bg-sky-50/50 p-3 text-xs leading-relaxed">
-                              <p className="text-[8px] font-black uppercase tracking-wider text-sky-850 mb-0.5">
-                                Note de réalisation
-                              </p>
-                              <p className="font-semibold text-sky-950">{c.notes}</p>
-                            </div>
+                          {c.completed_at && (
+                            <span className="text-[10px] font-bold text-ink/60 uppercase tracking-wider shrink-0 mt-0.5">
+                              Validé le {new Date(c.completed_at).toLocaleDateString("fr-FR")}
+                            </span>
                           )}
                         </div>
+
+                        {/* Description */}
+                        <div className="text-xs text-ink/70 leading-relaxed font-semibold">
+                          <p className="text-[9px] font-black uppercase tracking-wider text-ink/60 mb-1">
+                            Description de la mission
+                          </p>
+                          <MarkdownContent content={c.description} />
+                        </div>
+
+                        {/* Split photo and observations if photo exists */}
+                        <div className="grid gap-4">
+                          {/* Proof image */}
+                          {c.proof_image_url && (
+                            <div className="rounded-xl overflow-hidden border-2 border-ink bg-stone-50 aspect-[4/3] flex items-center justify-center">
+                              <img
+                                src={c.proof_image_url}
+                                alt={c.title}
+                                className="max-h-full max-w-full object-contain"
+                              />
+                            </div>
+                          )}
+
+                          {/* Naya & Parent Notes */}
+                          <div className="space-y-3 flex flex-col justify-between">
+                            {c.ai_observations && (
+                              <div className="rounded-xl border border-ink/20 bg-emerald-50/50 p-3 text-xs leading-relaxed">
+                                <p className="text-[8px] font-black uppercase tracking-wider text-emerald-800 mb-0.5 flex items-center gap-1">
+                                  <CheckCircle className="size-3 text-emerald-600" />
+                                  Observation pédagogique
+                                </p>
+                                <p className="italic font-semibold text-emerald-950">
+                                  "{c.ai_observations}"
+                                </p>
+                              </div>
+                            )}
+
+                            {c.notes && (
+                              <div className="rounded-xl border border-ink/20 bg-sky-50/50 p-3 text-xs leading-relaxed">
+                                <p className="text-[8px] font-black uppercase tracking-wider text-sky-850 mb-0.5">
+                                  Note de réalisation
+                                </p>
+                                <p className="font-semibold text-sky-950">{c.notes}</p>
+                              </div>
+                            )}
+                          </div>
+                        </div>
                       </div>
-                    </div>
-                  ))}
+                    ))}
+                  </div>
+                </div>
+
+                {/* Page Footer */}
+                <div className="border-t border-ink/10 pt-4 flex justify-between text-[9px] font-bold text-ink/60 uppercase tracking-wider">
+                  <span>Passeport d'Excellence • {child.name}</span>
+                  <span>
+                    Page {startPage + chunkIdx} / {totalPages}
+                  </span>
                 </div>
               </div>
-
-              {/* Page Footer */}
-              <div className="border-t border-ink/10 pt-4 flex justify-between text-[9px] font-bold text-ink/60 uppercase tracking-wider">
-                <span>Passeport d'Excellence • {child.name}</span>
-                <span>
-                  Page {startPage + chunkIdx} / {totalPages}
-                </span>
-              </div>
-            </div>
-          ));
-        })()}
+            ));
+          })()}
       </div>
     </div>
   );

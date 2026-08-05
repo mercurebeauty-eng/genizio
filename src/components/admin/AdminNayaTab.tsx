@@ -10,7 +10,6 @@ import {
   XCircle,
   ArrowRight,
   BarChart3,
-  Sparkles,
   RefreshCw,
   Route as RouteIcon,
   Image as ImageIcon,
@@ -86,7 +85,8 @@ export function AdminNayaTab({
               Telemetry & Diagnostics de Consommation
             </h2>
             <p className="text-xs text-ink/60 font-medium">
-              Suivi en temps réel du volume de requêtes, de la répartition des tokens et des coûts estimatifs (DeepSeek vs Sonnet vision).
+              Suivi en temps réel du volume de requêtes, de la répartition des tokens et des coûts
+              estimatifs (DeepSeek vs Sonnet vision).
             </p>
           </div>
         </div>
@@ -97,7 +97,9 @@ export function AdminNayaTab({
             disabled={isRefreshing}
             className="press-white rounded-2xl border border-ink/10 bg-white px-4 py-2.5 text-xs font-extrabold text-ink flex items-center gap-2 shadow-sm hover:shadow-md transition-all self-start md:self-auto cursor-pointer"
           >
-            <RefreshCw className={`size-3.5 ${isRefreshing ? "animate-spin text-brand" : "text-ink/60"}`} />
+            <RefreshCw
+              className={`size-3.5 ${isRefreshing ? "animate-spin text-brand" : "text-ink/60"}`}
+            />
             <span>Actualiser la télémétrie</span>
           </button>
         )}
@@ -126,7 +128,9 @@ export function AdminNayaTab({
           <div className="rounded-2xl border border-sky/20 bg-sky/5 p-4">
             <div className="flex items-center gap-2 mb-1.5">
               <MessageSquare className="size-4 text-sky-600" />
-              <span className="text-[10px] font-extrabold uppercase tracking-wider text-sky-600">Texte général</span>
+              <span className="text-[10px] font-extrabold uppercase tracking-wider text-sky-600">
+                Texte général
+              </span>
             </div>
             <p className="text-sm font-black text-ink">DeepSeek Chat</p>
             <p className="text-[11px] text-ink/60 mt-0.5">Défis, synthèses, recommandations</p>
@@ -134,7 +138,9 @@ export function AdminNayaTab({
           <div className="rounded-2xl border border-amber-500/20 bg-amber-500/5 p-4">
             <div className="flex items-center gap-2 mb-1.5">
               <Brain className="size-4 text-amber-600" />
-              <span className="text-[10px] font-extrabold uppercase tracking-wider text-amber-700">Raisonnement</span>
+              <span className="text-[10px] font-extrabold uppercase tracking-wider text-amber-700">
+                Raisonnement
+              </span>
             </div>
             <p className="text-sm font-black text-ink">DeepSeek Reasoner</p>
             <p className="text-[11px] text-ink/60 mt-0.5">Diagnostic bayésien NAYA (hypothèses)</p>
@@ -142,7 +148,9 @@ export function AdminNayaTab({
           <div className="rounded-2xl border border-purple-500/20 bg-purple-500/5 p-4">
             <div className="flex items-center gap-2 mb-1.5">
               <ImageIcon className="size-4 text-purple-600" />
-              <span className="text-[10px] font-extrabold uppercase tracking-wider text-purple-700">Vision (photos)</span>
+              <span className="text-[10px] font-extrabold uppercase tracking-wider text-purple-700">
+                Vision (photos)
+              </span>
             </div>
             <p className="text-sm font-black text-ink">Claude Sonnet 5</p>
             <p className="text-[11px] text-ink/60 mt-0.5">Seul cas encore sur Anthropic</p>
@@ -151,7 +159,9 @@ export function AdminNayaTab({
 
         {aiProviderStatus && (
           <div className="flex flex-wrap items-center gap-3 pt-3 border-t border-ink/5">
-            <span className="text-[10px] font-extrabold uppercase tracking-wider text-ink/50">Clés API sur cet environnement :</span>
+            <span className="text-[10px] font-extrabold uppercase tracking-wider text-ink/50">
+              Clés API sur cet environnement :
+            </span>
             {[
               { label: "DeepSeek", ok: aiProviderStatus.deepseekConfigured },
               { label: "Anthropic (vision)", ok: aiProviderStatus.anthropicConfigured },
@@ -187,7 +197,9 @@ export function AdminNayaTab({
                 Santé de la Progression par Domaine
               </h3>
               <p className="text-xs text-ink/60 font-medium">
-                Valide le calibrage du moteur de progression (zone proximale d'apprentissage) : un défi complété vite est un bon signal, un domaine avec beaucoup de défis bloqués (14j+ sans avancer) mérite un regard.
+                Valide le calibrage du moteur de progression (zone proximale d'apprentissage) : un
+                défi complété vite est un bon signal, un domaine avec beaucoup de défis bloqués
+                (14j+ sans avancer) mérite un regard.
               </p>
             </div>
           </div>
@@ -233,7 +245,9 @@ export function AdminNayaTab({
         {/* Card 1: API Volume */}
         <div className="rounded-3xl border border-ink/10 bg-white p-6 shadow-sm hover:shadow-md transition-shadow">
           <div className="flex items-center justify-between text-ink/60 mb-2">
-            <span className="text-[11px] font-extrabold uppercase tracking-wider">Volume d'Appels API</span>
+            <span className="text-[11px] font-extrabold uppercase tracking-wider">
+              Volume d'Appels API
+            </span>
             <Zap className="size-4 text-sky-600" />
           </div>
           <div className="flex items-baseline gap-2">
@@ -251,7 +265,9 @@ export function AdminNayaTab({
         {/* Card 2: Token Usage */}
         <div className="rounded-3xl border border-ink/10 bg-white p-6 shadow-sm hover:shadow-md transition-shadow">
           <div className="flex items-center justify-between text-ink/60 mb-2">
-            <span className="text-[11px] font-extrabold uppercase tracking-wider">Consommation Tokens</span>
+            <span className="text-[11px] font-extrabold uppercase tracking-wider">
+              Consommation Tokens
+            </span>
             <Cpu className="size-4 text-purple-600" />
           </div>
           <div className="flex items-baseline gap-2">
@@ -261,7 +277,22 @@ export function AdminNayaTab({
             <span className="text-xs font-bold text-ink/50">tokens</span>
           </div>
           <p className="text-xs text-ink/60 mt-2 font-medium">
-            Entrée : <strong className="text-ink">{(tokenUsage.deepseekChatInputTokens + tokenUsage.deepseekReasonerInputTokens + tokenUsage.visionSonnetInputTokens).toLocaleString("fr-FR")}</strong> | Sortie : <strong className="text-ink">{(tokenUsage.deepseekChatOutputTokens + tokenUsage.deepseekReasonerOutputTokens + tokenUsage.visionSonnetOutputTokens).toLocaleString("fr-FR")}</strong>
+            Entrée :{" "}
+            <strong className="text-ink">
+              {(
+                tokenUsage.deepseekChatInputTokens +
+                tokenUsage.deepseekReasonerInputTokens +
+                tokenUsage.visionSonnetInputTokens
+              ).toLocaleString("fr-FR")}
+            </strong>{" "}
+            | Sortie :{" "}
+            <strong className="text-ink">
+              {(
+                tokenUsage.deepseekChatOutputTokens +
+                tokenUsage.deepseekReasonerOutputTokens +
+                tokenUsage.visionSonnetOutputTokens
+              ).toLocaleString("fr-FR")}
+            </strong>
           </p>
         </div>
 
@@ -287,16 +318,17 @@ export function AdminNayaTab({
         {/* Card 4: Challenge Conversion Rate % */}
         <div className="rounded-3xl border border-ink/10 bg-white p-6 shadow-sm hover:shadow-md transition-shadow">
           <div className="flex items-center justify-between text-ink/60 mb-2">
-            <span className="text-[11px] font-extrabold uppercase tracking-wider">Taux de Conversion Défis</span>
+            <span className="text-[11px] font-extrabold uppercase tracking-wider">
+              Taux de Conversion Défis
+            </span>
             <TrendingUp className="size-4 text-leaf" />
           </div>
           <div className="flex items-baseline gap-2">
-            <span className="font-display text-3xl font-black text-leaf">
-              {conversionRatePct}%
-            </span>
+            <span className="font-display text-3xl font-black text-leaf">{conversionRatePct}%</span>
           </div>
           <p className="text-xs text-ink/60 mt-2 font-medium">
-            Défis complétés (<strong className="text-ink">{funnel.completed}</strong>) / Générés (<strong className="text-ink">{funnel.generated}</strong>)
+            Défis complétés (<strong className="text-ink">{funnel.completed}</strong>) / Générés (
+            <strong className="text-ink">{funnel.generated}</strong>)
           </p>
         </div>
       </div>
@@ -354,7 +386,9 @@ export function AdminNayaTab({
                     </td>
                     <td className="py-3 text-right">
                       <div className="font-bold text-ink">${item.costUsd.toFixed(4)}</div>
-                      <div className="text-[10px] font-semibold text-ink/50">{item.costXof.toLocaleString("fr-FR")} FCFA</div>
+                      <div className="text-[10px] font-semibold text-ink/50">
+                        {item.costXof.toLocaleString("fr-FR")} FCFA
+                      </div>
                     </td>
                   </tr>
                 ))}
@@ -413,15 +447,21 @@ export function AdminNayaTab({
                 <div className="grid grid-cols-3 gap-2 text-center text-xs pt-1">
                   <div className="bg-white p-2 rounded-xl border border-ink/5">
                     <div className="text-[10px] text-ink/50 font-bold uppercase">Entrée</div>
-                    <div className="font-extrabold text-ink">{model.inputTokens.toLocaleString("fr-FR")}</div>
+                    <div className="font-extrabold text-ink">
+                      {model.inputTokens.toLocaleString("fr-FR")}
+                    </div>
                   </div>
                   <div className="bg-white p-2 rounded-xl border border-ink/5">
                     <div className="text-[10px] text-ink/50 font-bold uppercase">Sortie</div>
-                    <div className="font-extrabold text-ink">{model.outputTokens.toLocaleString("fr-FR")}</div>
+                    <div className="font-extrabold text-ink">
+                      {model.outputTokens.toLocaleString("fr-FR")}
+                    </div>
                   </div>
                   <div className="bg-white p-2 rounded-xl border border-ink/5">
                     <div className="text-[10px] text-ink/50 font-bold uppercase">Total Tokens</div>
-                    <div className="font-black text-ink">{model.totalTokens.toLocaleString("fr-FR")}</div>
+                    <div className="font-black text-ink">
+                      {model.totalTokens.toLocaleString("fr-FR")}
+                    </div>
                   </div>
                 </div>
               </div>
@@ -451,23 +491,30 @@ export function AdminNayaTab({
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 relative">
             {/* Step 1: Générés */}
             <div className="rounded-2xl border border-sky/20 bg-sky/5 p-5 text-center relative space-y-2">
-              <div className="text-[10px] font-extrabold uppercase tracking-wider text-sky-600">1. Défis Générés</div>
+              <div className="text-[10px] font-extrabold uppercase tracking-wider text-sky-600">
+                1. Défis Générés
+              </div>
               <div className="font-display text-3xl font-black text-ink">{funnel.generated}</div>
               <p className="text-xs font-medium text-ink/60">Générés par Naya IA</p>
             </div>
 
             {/* Step 2: Démarrés */}
             <div className="rounded-2xl border border-amber-500/20 bg-amber-500/5 p-5 text-center relative space-y-2">
-              <div className="text-[10px] font-extrabold uppercase tracking-wider text-amber-600">2. Défis Démarrés</div>
+              <div className="text-[10px] font-extrabold uppercase tracking-wider text-amber-600">
+                2. Défis Démarrés
+              </div>
               <div className="font-display text-3xl font-black text-ink">{funnel.started}</div>
               <p className="text-xs font-medium text-ink/60">
-                {funnel.generated > 0 ? Math.round((funnel.started / funnel.generated) * 100) : 0}% de mise en action
+                {funnel.generated > 0 ? Math.round((funnel.started / funnel.generated) * 100) : 0}%
+                de mise en action
               </p>
             </div>
 
             {/* Step 3: Complétés */}
             <div className="rounded-2xl border border-leaf/20 bg-leaf/5 p-5 text-center relative space-y-2">
-              <div className="text-[10px] font-extrabold uppercase tracking-wider text-leaf">3. Défis Complétés</div>
+              <div className="text-[10px] font-extrabold uppercase tracking-wider text-leaf">
+                3. Défis Complétés
+              </div>
               <div className="font-display text-3xl font-black text-leaf">{funnel.completed}</div>
               <p className="text-xs font-medium text-ink/60">
                 Taux final : <strong className="text-leaf">{funnel.conversionRatePct}%</strong>
@@ -480,27 +527,30 @@ export function AdminNayaTab({
         <div className="rounded-3xl border border-ink/10 bg-gradient-to-br from-brand/5 via-white to-purple-500/10 p-6 shadow-xl space-y-5 flex flex-col justify-between">
           <div>
             <div className="flex items-center gap-2 mb-2">
-              <Sparkles className="size-5 text-brand" />
+              <TrendingUp className="size-5 text-brand" />
               <span className="text-xs font-extrabold text-brand uppercase tracking-wider">
                 Run-rate & Simulation
               </span>
             </div>
-            <h3 className="font-display text-xl font-black text-ink">
-              Projection Mensuelle
-            </h3>
+            <h3 className="font-display text-xl font-black text-ink">Projection Mensuelle</h3>
             <p className="text-xs text-ink/60 font-medium mt-1">
-              Estimation du volume d'appels et du coût mensuel récurrent basé sur la cadence actuelle.
+              Estimation du volume d'appels et du coût mensuel récurrent basé sur la cadence
+              actuelle.
             </p>
           </div>
 
           <div className="space-y-3 bg-white/80 p-4 rounded-2xl border border-ink/10 shadow-sm">
             <div className="flex items-center justify-between text-xs">
               <span className="font-medium text-ink/70">Appels / mois estimés</span>
-              <span className="font-black text-ink text-sm">{projection.projectedCallsMonthly.toLocaleString("fr-FR")}</span>
+              <span className="font-black text-ink text-sm">
+                {projection.projectedCallsMonthly.toLocaleString("fr-FR")}
+              </span>
             </div>
             <div className="flex items-center justify-between text-xs">
               <span className="font-medium text-ink/70">Coût estimé (USD)</span>
-              <span className="font-black text-purple-600 text-sm">${projection.projectedCostUsdMonthly.toFixed(2)}</span>
+              <span className="font-black text-purple-600 text-sm">
+                ${projection.projectedCostUsdMonthly.toFixed(2)}
+              </span>
             </div>
             <div className="flex items-center justify-between text-xs border-t border-ink/5 pt-2">
               <span className="font-bold text-ink">Coût estimé (XOF)</span>
@@ -511,7 +561,8 @@ export function AdminNayaTab({
           </div>
 
           <div className="text-[11px] text-ink/50 italic text-center">
-            * Basé sur les tarifs indicatifs DeepSeek Chat/Reasoner + Claude Sonnet 5 (vision), 1 USD = 600 XOF — à ajuster si les tarifs DeepSeek changent.
+            * Basé sur les tarifs indicatifs DeepSeek Chat/Reasoner + Claude Sonnet 5 (vision), 1
+            USD = 600 XOF — à ajuster si les tarifs DeepSeek changent.
           </div>
         </div>
       </div>
