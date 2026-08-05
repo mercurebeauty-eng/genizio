@@ -1,5 +1,5 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { supabase } from "@/integrations/supabase/client";
 import { useSession } from "@/hooks/use-session";
@@ -98,6 +98,10 @@ function PassportPrintPage() {
   const [fetchingSynthesis, setFetchingSynthesis] = useState(false);
   const [letter, setLetter] = useState("");
   const [fetchingLetter, setFetchingLetter] = useState(false);
+  const [preparingPrint, setPreparingPrint] = useState(false);
+  // Anti-double : le dialogue d'impression ne doit s'ouvrir qu'une fois par chargement de
+  // page, que ce soit via le déclenchement automatique ou le bouton manuel.
+  const printFiredRef = useRef(false);
 
   const fetchSynthesis = useServerFn(getChildAISynthesis);
   const fetchLetter = useServerFn(getPassportLetter);
@@ -163,15 +167,54 @@ function PassportPrintPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [session, profileId, child?.pdf_unlocked]);
 
-  // Automatically trigger print dialog when data is loaded (only if PDF is unlocked)
+  // Ouverture automatique du dialogue d'impression une fois le document réellement prêt :
+  // polices chargées (document.fonts.ready) et photos de preuve décodées (img.decode()).
+  // Un timer fixe de 1,5 s sortait des PDF aux cadres photo vides sur les appareils
+  // Android d'entrée de gamme (images Storage encore en cours de chargement), et l'ancienne
+  // condition (challenges.length > 0 && synthesis) empêchait l'ouverture pour un Passeport
+  // sans défi terminé alors que l'UI l'annonçait. Filet de sécurité : 8 s max avant ouverture.
   useEffect(() => {
-    if (!fetching && child && child.pdf_unlocked && challenges.length > 0 && synthesis) {
-      const timer = setTimeout(() => {
-        window.print();
-      }, 1500); // Allow charts and fonts to fully render
-      return () => clearTimeout(timer);
+    if (
+      !child?.pdf_unlocked ||
+      fetching ||
+      fetchingSynthesis ||
+      fetchingLetter ||
+      printFiredRef.current
+    ) {
+      return;
     }
-  }, [fetching, child, challenges, synthesis]);
+    setPreparingPrint(true);
+
+    let cancelled = false;
+    const fire = () => {
+      if (cancelled || printFiredRef.current) return;
+      printFiredRef.current = true;
+      window.print();
+      setPreparingPrint(false);
+    };
+
+    const waitForReadiness = async () => {
+      try {
+        await Promise.race([
+          (async () => {
+            await document.fonts.ready;
+            await Promise.all(
+              Array.from(document.images).map((img) => img.decode().catch(() => undefined)),
+            );
+          })(),
+          new Promise((resolve) => setTimeout(resolve, 8000)),
+        ]);
+      } catch {
+        // Fontes ou images non décodables : on imprime quand même plutôt que de bloquer.
+      }
+      if (!cancelled) fire();
+    };
+
+    void waitForReadiness();
+    return () => {
+      cancelled = true;
+    };
+  }, [child, fetching, fetchingSynthesis, fetchingLetter]);
 
   if (loading || !session || fetching) {
     return (
@@ -253,11 +296,19 @@ function PassportPrintPage() {
           </Link>
           <div>
             <h1 className="font-bold text-sm">Passeport d'Excellence • {child.name}</h1>
-            <p className="text-xs text-ink/60 font-semibold">Le dialogue d'impression va s'ouvrir automatiquement.</p>
+            <p className="text-xs text-ink/60 font-semibold">
+              {preparingPrint
+                ? "Préparation du document (photos, polices)… le dialogue d'impression va s'ouvrir automatiquement."
+                : "Le dialogue d'impression s'ouvre automatiquement ; sinon, utilisez le bouton ci-contre."}
+            </p>
           </div>
         </div>
         <button
-          onClick={() => window.print()}
+          onClick={() => {
+            printFiredRef.current = true;
+            setPreparingPrint(false);
+            window.print();
+          }}
           className="press-brand inline-flex items-center gap-2 rounded-xl bg-brand px-4 py-2 text-xs font-bold text-white cursor-pointer"
         >
           <Printer className="size-4" />
@@ -266,7 +317,7 @@ function PassportPrintPage() {
       </div>
 
       {/* 📄 PDF CONTENT PAGE CONTAINER */}
-      <div className="max-w-[21cm] mx-auto bg-white border border-ink/10 print:border-0 shadow-2xl print:shadow-none p-[1.5cm] min-h-[29.7cm] flex flex-col justify-between relative overflow-hidden">
+      <div className="passport-document max-w-[21cm] mx-auto bg-white border border-ink/10 print:border-0 shadow-2xl print:shadow-none p-[1.5cm] min-h-[29.7cm] flex flex-col justify-between relative overflow-hidden">
         {/* Style block for print-specific tweaks */}
         <style
           dangerouslySetInnerHTML={{
@@ -276,6 +327,11 @@ function PassportPrintPage() {
               background-color: white !important;
               color: black !important;
             }
+            /* Immunité contre la règle d'isolation d'impression globale de styles.css
+               (body:has(.print-report) * { visibility: hidden }) : le Passeport n'utilise
+               pas .print-report, mais on rétablit explicitement la visibilité pour ne
+               plus jamais dépendre de cette règle (cf. audit 2026-08-05, PDF blanc). */
+            .passport-document, .passport-document * { visibility: visible; }
             .page-break {
               page-break-before: always;
               break-before: page;
@@ -537,7 +593,7 @@ function PassportPrintPage() {
                 </h2>
               </div>
 
-              <div className="rounded-3xl border-2 border-brand/20 bg-brand/5 p-8 shadow-md">
+              <div className="no-print-break rounded-3xl border-2 border-brand/20 bg-brand/5 p-8 shadow-md">
                 <p className="text-xs font-black uppercase tracking-widest text-brand mb-4">
                   Rapport de bilan personnalisé
                 </p>

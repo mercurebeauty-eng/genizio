@@ -309,10 +309,16 @@
 
 /* Isole un rapport imprimable (ex: Rapport d'Impact B2B) du reste de l'app au moment de
    l'impression/export PDF — technique standard : tout devient invisible sauf .print-report,
-   qui repasse en position fixe pour ignorer l'espace laissé par ses ancêtres masqués. */
+   qui repasse en position fixe pour ignorer l'espace laissé par ses ancêtres masqués.
+   L'isolation est conditionnée à la présence de .print-report (body:has) : non conditionnée,
+   elle masquerait toutes les autres pages imprimables — le Passeport d'Excellence sortait
+   ainsi en PDF entièrement blanc (cf. audit 2026-08-05). */
 @media print {
-  body * { visibility: hidden; }
+  body:has(.print-report) * { visibility: hidden; }
   .print-report, .print-report * { visibility: visible; }
   .print-report { position: fixed; inset: 0; overflow: visible; }
+  /* Sans print-color-adjust, la plupart des navigateurs retirent les couleurs de fond à
+     l'impression/export PDF (encadrés ambre/émeraude, guilde, radar des talents). */
+  * { print-color-adjust: exact; -webkit-print-color-adjust: exact; }
 }
 
