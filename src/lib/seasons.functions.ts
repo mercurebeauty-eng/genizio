@@ -3,6 +3,8 @@ import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { requireAdmin } from "@/integrations/supabase/admin-middleware";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
+import { PROMO_PRICE_XOF, PROMO_PRICE_EUR } from "@/lib/pricing";
+import { computeAccessPeriodWindow } from "@/lib/child-access";
 
 export interface Season {
   id: string;
@@ -28,11 +30,13 @@ export interface SponsorshipToken {
   sponsor_email: string;
   sponsor_message?: string | null;
   target_child_name?: string | null;
+  months_count?: number | null;
   amount_paid: number;
   currency: string;
   payment_confirmed: boolean;
   is_redeemed: boolean;
   redeemed_by_child_id?: string | null;
+  redeemed_at?: string | null;
   created_at: string;
 }
 
@@ -179,7 +183,10 @@ export const createSponsorshipToken = createServerFn({ method: "POST" })
         sponsorEmail: z.string().email("Adresse email invalide"),
         sponsorMessage: z.string().optional(),
         targetChildName: z.string().optional(),
-        amountPaid: z.number().default(5000),
+        // Décision utilisateur (2026-08-05) : le parrain choisit 1 à 6 mois ; le code vaut
+        // exactement ce nombre de mois d'accès à la rédemption. Le montant est RECALCULÉ
+        // côté serveur (mois × tarif promo) — la valeur du client n'est qu'un affichage.
+        months: z.number().int().min(1).max(6).default(3),
         currency: z.string().default("XOF"),
       })
       .parse(input)
@@ -187,10 +194,15 @@ export const createSponsorshipToken = createServerFn({ method: "POST" })
   .handler(async ({ data }: { data: any }) => {
     const code = `GENIZIO-PARRAIN-${Math.random().toString(36).substring(2, 8).toUpperCase()}`;
 
-    // Décision utilisateur (2026-07-26) : un code se lie à sa saison à l'ACTIVATION
-    // (redeemSponsorshipToken), pas à la génération — le season_id ici n'est qu'indicatif
-    // (saison en cours au moment de l'achat, pour affichage admin), jamais utilisé pour
-    // déterminer l'inscription réelle de l'enfant.
+    // Décision utilisateur (2026-08-05) : le parrain paie au tarif de bienvenue (5 000 F/mois)
+    // — MÊME BARÈME que la famille. Si le compte cible est hors période de bienvenue à la
+    // rédemption, l'admin ajuste le montant à 15 000 F/mois lors de la confirmation du paiement
+    // (confirmSponsorshipPaymentAdmin) — le code vaut months_count mois dans tous les cas.
+    const monthly = data.currency === "EUR" ? PROMO_PRICE_EUR : PROMO_PRICE_XOF;
+    const amountPaid = data.months * monthly;
+
+    // Le season_id reste indicatif (saison en cours pour l'affichage admin) — l'accès réel
+    // est porté par child_access_periods à la rédemption, jamais par cette valeur.
     const activeSeason = await getActiveSeason({ data: undefined });
 
     const { data: token, error } = await (supabaseAdmin as any)
@@ -201,7 +213,8 @@ export const createSponsorshipToken = createServerFn({ method: "POST" })
         sponsor_email: data.sponsorEmail,
         sponsor_message: data.sponsorMessage || null,
         target_child_name: data.targetChildName || null,
-        amount_paid: data.amountPaid,
+        months_count: data.months,
+        amount_paid: amountPaid,
         currency: data.currency,
         season_id: activeSeason.id,
       })
@@ -256,6 +269,20 @@ export const redeemSponsorshipToken = createServerFn({ method: "POST" })
       throw new Error("Ce parrainage est en attente de confirmation de paiement par l'équipe Génizio. Vous recevrez une notification dès son activation.");
     }
 
+    // Décision utilisateur (2026-08-05) : on ne peut rédimer un code que sur un enfant de SON
+    // compte (même garde que enrollChildViaCampaignLink) — pas d'offre/réclamation croisée.
+    const { data: child, error: childErr } = await (supabaseAdmin as any)
+      .from("child_profiles")
+      .select("id")
+      .eq("id", data.childId)
+      .eq("user_id", userId)
+      .maybeSingle();
+    if (childErr || !child) {
+      throw new Error("Profil enfant introuvable ou non rattaché à votre compte.");
+    }
+
+    const months = token.months_count ?? 3;
+
     // Décision utilisateur (2026-07-26) : le code se lie à sa saison au moment de l'ACTIVATION,
     // pas de sa génération — token.season_id n'est qu'indicatif (voir createSponsorshipToken /
     // generateCampaignTokensAdmin). Un lot de 100 codes B2B distribué sur 3 mois doit faire
@@ -263,23 +290,58 @@ export const redeemSponsorshipToken = createServerFn({ method: "POST" })
     // était active le jour où l'admin a généré le lot.
     const activeSeason = await getActiveSeason({ data: undefined });
 
-    // L'inscription doit réussir AVANT que le code soit marqué utilisé — dans l'ordre inverse
-    // (précédemment en place), un échec de cet insert brûlait quand même le code : la famille
-    // voyait un écran de succès et l'enfant n'était inscrit nulle part, sans recours possible.
-    const { error: enrollErr } = await (supabaseAdmin as any).from("season_enrollments").insert({
-      season_id: activeSeason.id,
-      child_id: data.childId,
-      user_id: userId,
-      sponsor_name: token.sponsor_name,
-      sponsor_email: token.sponsor_email,
-      sponsor_message: token.sponsor_message,
-      payment_status: "sponsored",
-      campaign_id: token.campaign_id || null,
-    });
+    if (token.campaign_id) {
+      // Token B2B (lot de campagne) : comportement historique inchangé — inscription de saison
+      // liée à la campagne (fenêtre fixe de cohorte), hors périmètre du modèle mensuel famille.
+      // L'inscription doit réussir AVANT que le code soit marqué utilisé — dans l'ordre inverse
+      // (précédemment en place), un échec de cet insert brûlait quand même le code.
+      const { error: enrollErr } = await (supabaseAdmin as any).from("season_enrollments").insert({
+        season_id: activeSeason.id,
+        child_id: data.childId,
+        user_id: userId,
+        sponsor_name: token.sponsor_name,
+        sponsor_email: token.sponsor_email,
+        sponsor_message: token.sponsor_message,
+        payment_status: "sponsored",
+        campaign_id: token.campaign_id,
+      });
 
-    if (enrollErr) {
-      console.error("Error creating season_enrollment on redeem:", enrollErr);
-      throw new Error("Erreur lors de l'inscription. Le code n'a pas été consommé, réessayez.");
+      if (enrollErr) {
+        console.error("Error creating season_enrollment on redeem:", enrollErr);
+        throw new Error("Erreur lors de l'inscription. Le code n'a pas été consommé, réessayez.");
+      }
+    } else {
+      // Parrainage individuel (2026-08-05) : le code vaut `months` mois d'accès payant — on
+      // crée une child_access_periods (source sponsor) qui démarre au plus tard entre maintenant
+      // et la fin de la période courante (aucune perte en cas de cumul).
+      const { data: existing, error: existingErr } = await (supabaseAdmin as any)
+        .from("child_access_periods")
+        .select("ends_at")
+        .eq("child_id", data.childId)
+        .order("ends_at", { ascending: false })
+        .limit(1);
+      if (existingErr) throw new Error(existingErr.message);
+
+      // Fenêtre partagée avec extendChildAccessAdmin (child-access.ts) — même logique de
+      // cumul (démarre au plus tard entre maintenant et la fin courante) : un code parrain
+      // posé sur une période existante la prolonge, il ne la coupe jamais.
+      const { startsAt, endsAt } = computeAccessPeriodWindow(existing?.[0]?.ends_at ?? null, months);
+
+      const { error: periodErr } = await (supabaseAdmin as any).from("child_access_periods").insert({
+        child_id: data.childId,
+        starts_at: startsAt,
+        ends_at: endsAt,
+        source: "sponsor",
+        token_id: token.id,
+        amount_xof: token.amount_paid,
+        currency: token.currency,
+        note: `Parrain : ${token.sponsor_name}`,
+      });
+
+      if (periodErr) {
+        console.error("Error creating child_access_period on redeem:", periodErr);
+        throw new Error("Erreur lors de l'inscription. Le code n'a pas été consommé, réessayez.");
+      }
     }
 
     const { error: updateErr } = await (supabaseAdmin as any)
@@ -664,12 +726,34 @@ const EXPIRATION_REMINDER_WINDOW_DAYS = 14;
 export const getUpcomingExpirationsAdmin = createServerFn({ method: "GET" })
   .middleware([requireAdmin])
   .handler(async () => {
-    const { data: enrollments, error } = await (supabaseAdmin as any)
+    const { resolveExtraSlotPrice } = await import("@/lib/pricing");
+    const now = new Date();
+    const windowEnd = new Date(now.getTime() + EXPIRATION_REMINDER_WINDOW_DAYS * 86_400_000);
+
+    const results: Array<{
+      childId: string;
+      childName: string;
+      parentPhone: string | null;
+      campaignName: string | null;
+      endDate: string;
+      daysLeft: number;
+      source: "season" | "access";
+      renewalAmountXof: number;
+    }> = [];
+
+    const { listAllUsers } = await import("@/integrations/supabase/admin-users");
+    const users = await listAllUsers(supabaseAdmin);
+    const userById = new Map(users.map((u) => [u.id, u]));
+
+    // ── Source 1 : fenêtres de saison (inscriptions en cours, rolling individuel ou
+    // cohorte B2B). La saison est gratuite depuis 2026-08-03 — renewalAmountXof = 0, la
+    // relance WhatsApp reste générique.
+    const { data: enrollments, error: enrollErr } = await (supabaseAdmin as any)
       .from("season_enrollments")
       .select("child_id, enrolled_at, campaign_id, child_profiles(name, user_id), seasons(duration_months), campaigns(name, start_date, end_date)")
       .order("enrolled_at", { ascending: false });
 
-    if (error) throw new Error(error.message);
+    if (enrollErr) throw new Error(enrollErr.message);
 
     // Ne garder que l'inscription la plus RÉCENTE de chaque enfant (déjà trié desc par
     // enrolled_at) — un enfant peut avoir des inscriptions historiques d'anciennes saisons qui ne
@@ -678,20 +762,6 @@ export const getUpcomingExpirationsAdmin = createServerFn({ method: "GET" })
     for (const e of enrollments ?? []) {
       if (!latestByChild.has(e.child_id)) latestByChild.set(e.child_id, e);
     }
-
-    const { listAllUsers } = await import("@/integrations/supabase/admin-users");
-    const users = await listAllUsers(supabaseAdmin);
-    const phoneByUserId = new Map(users.map((u) => [u.id, (u.user_metadata as any)?.phone as string | undefined]));
-
-    const now = new Date();
-    const results: Array<{
-      childId: string;
-      childName: string;
-      parentPhone: string | null;
-      campaignName: string | null;
-      endDate: string;
-      daysLeft: number;
-    }> = [];
 
     for (const e of latestByChild.values()) {
       if (!e.seasons) continue;
@@ -705,12 +775,47 @@ export const getUpcomingExpirationsAdmin = createServerFn({ method: "GET" })
         results.push({
           childId: e.child_id,
           childName: e.child_profiles?.name ?? "?",
-          parentPhone: phoneByUserId.get(e.child_profiles?.user_id) ?? null,
+          parentPhone: userById.get(e.child_profiles?.user_id)?.user_metadata?.phone ?? null,
           campaignName: e.campaigns?.name ?? null,
           endDate: end.toISOString(),
           daysLeft,
+          source: "season",
+          renewalAmountXof: 0,
         });
       }
+    }
+
+    // ── Source 2 : périodes d'accès MENSUEL payant (child_access_periods, modèle 2026-08-05).
+    // C'est le vrai rappel de renouvellement monétisé : montant = barème mensuel du compte
+    // (5 000 promo → 15 000 standard, pricing.ts) pré-rempli dans la relance WhatsApp.
+    const { data: periods, error: periodsErr } = await (supabaseAdmin as any)
+      .from("child_access_periods")
+      .select("child_id, ends_at, child_profiles(name, user_id)")
+      .gte("ends_at", now.toISOString())
+      .lte("ends_at", windowEnd.toISOString())
+      .order("ends_at", { ascending: false });
+
+    if (periodsErr) throw new Error(periodsErr.message);
+
+    const seenChildren = new Set<string>();
+    for (const p of periods ?? []) {
+      if (seenChildren.has(p.child_id)) continue; // période la plus récente par enfant
+      seenChildren.add(p.child_id);
+
+      const daysLeft = Math.ceil((new Date(p.ends_at).getTime() - now.getTime()) / 86_400_000);
+      const parent = userById.get(p.child_profiles?.user_id);
+      const rate = resolveExtraSlotPrice(parent?.created_at ?? null, now);
+
+      results.push({
+        childId: p.child_id,
+        childName: p.child_profiles?.name ?? "?",
+        parentPhone: parent?.user_metadata?.phone ?? null,
+        campaignName: null,
+        endDate: p.ends_at,
+        daysLeft,
+        source: "access",
+        renewalAmountXof: rate.priceXof,
+      });
     }
 
     return results.sort((a, b) => a.daysLeft - b.daysLeft);

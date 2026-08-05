@@ -1,63 +1,56 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { ArrowRight, Compass, Puzzle, Rocket, Brain, Sparkles, Globe2, Bot } from "lucide-react";
-import { pageMeta, jsonLdScript, breadcrumbJsonLd } from "@/lib/seo";
+import { ArrowRight, Compass, Puzzle, Rocket, Brain, Gem, Globe2, Bot } from "lucide-react";
+import { pageMeta, jsonLdScript, breadcrumbJsonLd, absoluteUrl } from "@/lib/seo";
 
 const GUIDES = [
   {
     to: "/guides/potentiel-haut-potentiel-enfant",
-    Icon: Sparkles,
+    Icon: Gem,
     eyebrow: "Potentiel & talents",
     title: "Comment savoir si mon enfant a un haut potentiel",
-    desc:
-      "Les vrais signes à observer, ce que seul un professionnel peut diagnostiquer, et pourquoi le potentiel dépasse largement ce que l'école mesure.",
+    desc: "Les vrais signes à observer, ce que seul un professionnel peut diagnostiquer, et pourquoi le potentiel dépasse largement ce que l'école mesure.",
   },
   {
     to: "/guides/enfant-agite-concentration",
     Icon: Compass,
     eyebrow: "Attention & concentration",
     title: "Mon enfant ne tient pas en place : comprendre avant de s'inquiéter",
-    desc:
-      "Pourquoi l'agitation n'est pas toujours un problème d'attention, comment observer votre enfant sur plusieurs semaines, et à quel moment consulter un professionnel.",
+    desc: "Pourquoi l'agitation n'est pas toujours un problème d'attention, comment observer votre enfant sur plusieurs semaines, et à quel moment consulter un professionnel.",
   },
   {
     to: "/guides/activites-educatives-enfant",
     Icon: Puzzle,
     eyebrow: "Activités & jeux",
     title: "30 activités éducatives à faire à la maison avec un enfant de 6 à 12 ans",
-    desc:
-      "Des activités concrètes avec du matériel du quotidien, classées par type d'intelligence sollicitée, et ce que chacune révèle de votre enfant.",
+    desc: "Des activités concrètes avec du matériel du quotidien, classées par type d'intelligence sollicitée, et ce que chacune révèle de votre enfant.",
   },
   {
     to: "/guides/defis-pour-adolescents",
     Icon: Rocket,
     eyebrow: "Adolescents",
     title: "Quels défis proposer à un adolescent de 12 à 16 ans ?",
-    desc:
-      "Ce qui motive réellement un adolescent, pourquoi les activités « pour enfants » ne fonctionnent plus, et comment lui proposer des projets à sa mesure.",
+    desc: "Ce qui motive réellement un adolescent, pourquoi les activités « pour enfants » ne fonctionnent plus, et comment lui proposer des projets à sa mesure.",
   },
   {
     to: "/guides/intelligences-multiples-gardner",
     Icon: Brain,
     eyebrow: "Théorie",
     title: "Les intelligences multiples de Howard Gardner, expliquées simplement",
-    desc:
-      "Les 9 formes d'intelligence, ce que la théorie dit vraiment, ses limites reconnues, et comment s'en servir concrètement avec son enfant.",
+    desc: "Les 9 formes d'intelligence, ce que la théorie dit vraiment, ses limites reconnues, et comment s'en servir concrètement avec son enfant.",
   },
   {
     to: "/guides/education-enfants-afrique-francophone",
     Icon: Globe2,
     eyebrow: "Afrique & diaspora",
     title: "Révéler le potentiel d'un enfant en Afrique francophone",
-    desc:
-      "Ce que l'éducation en Côte d'Ivoire, au Sénégal et dans la diaspora a de spécifique, et comment faire avec ce qu'on a déjà à la maison.",
+    desc: "Ce que l'éducation en Côte d'Ivoire, au Sénégal et dans la diaspora a de spécifique, et comment faire avec ce qu'on a déjà à la maison.",
   },
   {
     to: "/guides/ia-apprentissage-enfant",
     Icon: Bot,
     eyebrow: "IA & apprentissage",
     title: "Comment utiliser l'IA pour aider son enfant à apprendre",
-    desc:
-      "Ce qu'une IA bien conçue apporte réellement, les risques d'un usage non cadré, et les principes pour l'utiliser sans danger.",
+    desc: "Ce qu'une IA bien conçue apporte réellement, les risques d'un usage non cadré, et les principes pour l'utiliser sans danger.",
   },
 ];
 
@@ -78,8 +71,22 @@ export const Route = createFileRoute("/guides/")({
           breadcrumbJsonLd([
             { name: "Accueil", path: "/" },
             { name: "Guides", path: "/guides" },
-          ])
+          ]),
         ),
+        jsonLdScript({
+          "@context": "https://schema.org",
+          "@type": "ItemList",
+          name: "Guides pour les parents — Génizio",
+          description:
+            "Comprendre son enfant sans jargon : potentiel, intelligences multiples, activités éducatives, IA et contexte africain.",
+          numberOfItems: GUIDES.length,
+          itemListElement: GUIDES.map((g, i) => ({
+            "@type": "ListItem",
+            position: i + 1,
+            name: g.title,
+            url: absoluteUrl(g.to),
+          })),
+        }),
       ],
     };
   },
@@ -91,24 +98,37 @@ function GuidesIndex() {
     <div className="min-h-dvh bg-surface text-ink antialiased">
       <header className="border-b border-ink/10 bg-surface/90 backdrop-blur-md">
         <div className="mx-auto flex max-w-5xl items-center justify-between px-6 py-4">
-          <Link to="/" className="flex items-center gap-2 font-display text-xl font-extrabold tracking-tight text-brand">
+          <Link
+            to="/"
+            className="flex items-center gap-2 font-display text-xl font-extrabold tracking-tight text-brand"
+          >
             <img src="/favicon-96x96.png" alt="" className="h-7 w-7" />
             GÉNIZIO
           </Link>
-          <Link to="/auth" className="press-brand rounded-full bg-brand px-5 py-2.5 text-xs font-bold text-white">
+          <Link
+            to="/auth"
+            className="press-brand rounded-full bg-brand px-5 py-2.5 text-xs font-bold text-white"
+          >
             Créer un compte
           </Link>
         </div>
       </header>
 
       <main className="mx-auto max-w-5xl px-6 py-12 md:py-20">
-        <nav aria-label="Fil d'Ariane" className="mb-8 flex items-center gap-1.5 text-xs font-bold text-ink/50">
-          <Link to="/" className="hover:text-brand">Accueil</Link>
+        <nav
+          aria-label="Fil d'Ariane"
+          className="mb-8 flex items-center gap-1.5 text-xs font-bold text-ink/50"
+        >
+          <Link to="/" className="hover:text-brand">
+            Accueil
+          </Link>
           <span aria-hidden>/</span>
           <span className="text-ink/70">Guides</span>
         </nav>
 
-        <p className="mb-3 text-xs font-black uppercase tracking-widest text-brand">Ressources pour les parents</p>
+        <p className="mb-3 text-xs font-black uppercase tracking-widest text-brand">
+          Ressources pour les parents
+        </p>
         <h1 className="max-w-2xl font-display text-balance text-3xl font-extrabold leading-[1.1] md:text-5xl">
           Comprendre son enfant, sans jargon et sans verdict.
         </h1>
@@ -128,12 +148,19 @@ function GuidesIndex() {
               <span className="mb-4 grid size-11 place-items-center rounded-2xl bg-brand/8 text-brand transition-colors group-hover:bg-brand group-hover:text-white">
                 <Icon className="size-5" aria-hidden />
               </span>
-              <p className="mb-2 text-[11px] font-black uppercase tracking-widest text-brand">{eyebrow}</p>
-              <h2 className="font-display text-balance text-lg font-extrabold leading-snug">{title}</h2>
+              <p className="mb-2 text-[11px] font-black uppercase tracking-widest text-brand">
+                {eyebrow}
+              </p>
+              <h2 className="font-display text-balance text-lg font-extrabold leading-snug">
+                {title}
+              </h2>
               <p className="mt-3 flex-1 text-sm font-medium leading-relaxed text-ink/65">{desc}</p>
               <span className="mt-5 inline-flex items-center gap-2 text-sm font-bold text-brand">
                 Lire le guide
-                <ArrowRight className="size-4 transition-transform group-hover:translate-x-0.5" aria-hidden />
+                <ArrowRight
+                  className="size-4 transition-transform group-hover:translate-x-0.5"
+                  aria-hidden
+                />
               </span>
             </Link>
           ))}
@@ -144,10 +171,18 @@ function GuidesIndex() {
         <div className="mx-auto flex max-w-5xl flex-col items-center justify-between gap-4 text-xs font-bold text-ink/50 md:flex-row">
           <span>© {new Date().getFullYear()} Génizio — Abidjan, Côte d'Ivoire</span>
           <div className="flex flex-wrap justify-center gap-5 uppercase tracking-wider">
-            <Link to="/a-propos" className="hover:text-brand">À propos</Link>
-            <Link to="/privacy" className="hover:text-brand">Confidentialité</Link>
-            <Link to="/terms" className="hover:text-brand">CGU</Link>
-            <Link to="/mentions-legales" className="hover:text-brand">Mentions légales</Link>
+            <Link to="/a-propos" className="hover:text-brand">
+              À propos
+            </Link>
+            <Link to="/privacy" className="hover:text-brand">
+              Confidentialité
+            </Link>
+            <Link to="/terms" className="hover:text-brand">
+              CGU
+            </Link>
+            <Link to="/mentions-legales" className="hover:text-brand">
+              Mentions légales
+            </Link>
           </div>
         </div>
       </footer>

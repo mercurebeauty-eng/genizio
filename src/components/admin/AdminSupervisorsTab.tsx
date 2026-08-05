@@ -14,7 +14,9 @@ import { confirmDialog } from "@/components/ui/confirm-dialog";
 export function AdminSupervisorsTab() {
   const { session, loading } = useSession();
   const [supervisors, setSupervisors] = useState<any[]>([]);
-  const [childProfiles, setChildProfiles] = useState<{ id: string; name: string; age: number }[]>([]);
+  const [childProfiles, setChildProfiles] = useState<{ id: string; name: string; age: number }[]>(
+    [],
+  );
   const [fetching, setFetching] = useState(true);
   const [forbidden, setForbidden] = useState(false);
   const [email, setEmail] = useState("");
@@ -44,7 +46,9 @@ export function AdminSupervisorsTab() {
       const isForbidden =
         err?.status === 403 ||
         err?.statusCode === 403 ||
-        String(err?.message || "").toLowerCase().includes("forbidden") ||
+        String(err?.message || "")
+          .toLowerCase()
+          .includes("forbidden") ||
         String(err?.message || "").includes("403") ||
         String(err?.message || "").includes("Accès refusé");
       if (isForbidden) {
@@ -97,7 +101,14 @@ export function AdminSupervisorsTab() {
   };
 
   const handleRemove = async (id: string) => {
-    if (!(await confirmDialog({ title: "Retirer ce superviseur ?", confirmLabel: "Retirer", variant: "danger" }))) return;
+    if (
+      !(await confirmDialog({
+        title: "Retirer ce superviseur ?",
+        confirmLabel: "Retirer",
+        variant: "danger",
+      }))
+    )
+      return;
     const opts = session?.access_token
       ? { headers: { Authorization: `Bearer ${session.access_token}` } }
       : {};
@@ -130,7 +141,9 @@ export function AdminSupervisorsTab() {
         </div>
         <div>
           <h2 className="text-xl font-display font-black text-ink">Gestion des Superviseurs</h2>
-          <p className="text-sm font-medium text-ink/60">Assigner des superviseurs aux profils d'enfants et cohortes B2B.</p>
+          <p className="text-sm font-medium text-ink/60">
+            Assigner des superviseurs aux profils d'enfants et cohortes B2B.
+          </p>
         </div>
       </div>
 
@@ -152,7 +165,9 @@ export function AdminSupervisorsTab() {
         <div className="space-y-8">
           {/* Formulaire d'assignation */}
           <div className="rounded-3xl border border-ink/10 bg-white p-6 shadow-xl">
-            <h3 className="font-display text-balance text-lg font-black mb-5">Assigner un nouveau superviseur</h3>
+            <h3 className="font-display text-balance text-lg font-black mb-5">
+              Assigner un nouveau superviseur
+            </h3>
             <div className="grid gap-4 md:grid-cols-3">
               <div className="md:col-span-1">
                 <label className="mb-1.5 block text-xs font-extrabold uppercase tracking-widest text-ink/60">
@@ -177,7 +192,9 @@ export function AdminSupervisorsTab() {
                 >
                   <option value="">Sélectionner un enfant…</option>
                   {unsupervisedChildProfiles.map((p) => (
-                    <option key={p.id} value={p.id}>{p.name} ({p.age} ans)</option>
+                    <option key={p.id} value={p.id}>
+                      {p.name} ({p.age} ans)
+                    </option>
                   ))}
                 </select>
                 {/* Un enfant ne peut avoir qu'un seul superviseur (contrainte base, migration
@@ -185,7 +202,9 @@ export function AdminSupervisorsTab() {
                     plutôt que de laisser l'admin choisir puis échouer sur une erreur en base. */}
                 {supervisedCount > 0 && (
                   <p className="mt-1.5 text-[11px] text-ink/50">
-                    {supervisedCount} enfant{supervisedCount > 1 ? "s" : ""} déjà supervisé{supervisedCount > 1 ? "s" : ""} — non listé{supervisedCount > 1 ? "s" : ""} ici.
+                    {supervisedCount} enfant{supervisedCount > 1 ? "s" : ""} déjà supervisé
+                    {supervisedCount > 1 ? "s" : ""} — non listé{supervisedCount > 1 ? "s" : ""}{" "}
+                    ici.
                   </p>
                 )}
               </div>
@@ -195,7 +214,11 @@ export function AdminSupervisorsTab() {
                   disabled={saving || !email.trim() || !childProfileId}
                   className="press-ink w-full flex items-center justify-center gap-2 rounded-2xl bg-ink py-3 text-sm font-bold text-white disabled:opacity-50 cursor-pointer"
                 >
-                  {saving ? <Loader2 className="size-4 animate-spin" /> : <Plus className="size-4" />}
+                  {saving ? (
+                    <Loader2 className="size-4 animate-spin" />
+                  ) : (
+                    <Plus className="size-4" />
+                  )}
                   Assigner
                 </button>
               </div>
@@ -204,19 +227,27 @@ export function AdminSupervisorsTab() {
 
           {/* Liste des superviseurs actuels */}
           <div className="rounded-3xl border border-ink/10 bg-white p-6 shadow-xl">
-            <h3 className="font-display text-balance text-lg font-black mb-5">Superviseurs actifs ({supervisors.length})</h3>
+            <h3 className="font-display text-balance text-lg font-black mb-5">
+              Superviseurs actifs ({supervisors.length})
+            </h3>
             {supervisors.length === 0 ? (
-              <p className="text-sm text-ink/60 italic">Aucun superviseur assigné pour le moment.</p>
+              <p className="text-sm text-ink/60 italic">
+                Aucun superviseur assigné pour le moment.
+              </p>
             ) : (
               <ul className="space-y-3">
                 {supervisors.map((s) => (
-                  <li key={s.id} className="flex items-center justify-between rounded-2xl border border-ink/10 bg-surface px-4 py-3">
+                  <li
+                    key={s.id}
+                    className="flex items-center justify-between rounded-2xl border border-ink/10 bg-surface px-4 py-3"
+                  >
                     <div>
                       <p className="text-sm font-bold text-ink">
                         {(s.supervisor as any)?.email ?? "—"}
                       </p>
                       <p className="text-xs text-ink/60">
-                        Supervise : {(s.child_profiles as any)?.name ?? "—"} ({(s.child_profiles as any)?.age ?? "?"} ans)
+                        Supervise : {(s.child_profiles as any)?.name ?? "—"} (
+                        {(s.child_profiles as any)?.age ?? "?"} ans)
                       </p>
                     </div>
                     <button

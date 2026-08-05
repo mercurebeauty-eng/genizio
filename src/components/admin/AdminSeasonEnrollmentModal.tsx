@@ -2,7 +2,12 @@ import { useState, useEffect } from "react";
 import { X, Calendar, Loader2, Building2, UserX } from "lucide-react";
 import { useServerFn } from "@tanstack/react-start";
 import { useSession } from "@/hooks/use-session";
-import { enrollChildAdmin, unenrollCampaignAdmin, listSeasonsAdmin, type Season } from "@/lib/seasons.functions";
+import {
+  enrollChildAdmin,
+  unenrollCampaignAdmin,
+  listSeasonsAdmin,
+  type Season,
+} from "@/lib/seasons.functions";
 import { listCampaignsAdmin, type Campaign } from "@/lib/campaigns.functions";
 import { toast } from "sonner";
 
@@ -26,7 +31,7 @@ export function AdminSeasonEnrollmentModal({
   const unenrollCampaignFn = useServerFn(unenrollCampaignAdmin);
   const listSeasonsFn = useServerFn(listSeasonsAdmin);
   const listCampaignsFn = useServerFn(listCampaignsAdmin);
-  
+
   const [seasons, setSeasons] = useState<Season[]>([]);
   const [campaigns, setCampaigns] = useState<Campaign[]>([]);
   const [loadingSeasons, setLoadingSeasons] = useState(true);
@@ -55,7 +60,7 @@ export function AdminSeasonEnrollmentModal({
           setSelectedSeasonId(fetchedSeasons[0].id);
         }
       })
-      .catch(err => {
+      .catch((err) => {
         console.error(err);
       })
       .finally(() => setLoadingSeasons(false));
@@ -63,7 +68,7 @@ export function AdminSeasonEnrollmentModal({
 
   const handleEnroll = async () => {
     if (!selectedSeasonId) return;
-    
+
     setEnrolling(true);
     const opts = session?.access_token
       ? { headers: { Authorization: `Bearer ${session.access_token}` } }
@@ -123,7 +128,8 @@ export function AdminSeasonEnrollmentModal({
           </div>
           <h2 className="font-display text-2xl font-black text-ink">Inscrire un enfant</h2>
           <p className="text-sm font-medium text-ink/70 mt-1">
-            Sélectionnez une saison pour inscrire manuellement <strong className="text-ink">{childName}</strong>.
+            Sélectionnez une saison pour inscrire manuellement{" "}
+            <strong className="text-ink">{childName}</strong>.
           </p>
         </div>
 
@@ -135,8 +141,12 @@ export function AdminSeasonEnrollmentModal({
                   <Building2 className="size-4" />
                 </div>
                 <div className="min-w-0">
-                  <p className="text-[10px] font-extrabold uppercase tracking-wider text-amber-700/80">Campagne active</p>
-                  <p className="text-xs font-black text-amber-900 truncate">{currentCampaignName}</p>
+                  <p className="text-[10px] font-extrabold uppercase tracking-wider text-amber-700/80">
+                    Campagne active
+                  </p>
+                  <p className="text-xs font-black text-amber-900 truncate">
+                    {currentCampaignName}
+                  </p>
                 </div>
               </div>
               <button
@@ -157,14 +167,16 @@ export function AdminSeasonEnrollmentModal({
             </div>
           ) : seasons.length === 0 ? (
             <div className="text-center py-6">
-              <p className="text-sm font-bold text-ink/60">Aucune saison active ou à venir trouvée.</p>
+              <p className="text-sm font-bold text-ink/60">
+                Aucune saison active ou à venir trouvée.
+              </p>
             </div>
           ) : (
             <div className="space-y-4">
               <label className="block text-xs font-extrabold uppercase tracking-widest text-ink/50 mb-1">
                 Saisons disponibles
               </label>
-              {seasons.map(season => (
+              {seasons.map((season) => (
                 <div
                   key={season.id}
                   onClick={() => setSelectedSeasonId(season.id)}
@@ -174,18 +186,26 @@ export function AdminSeasonEnrollmentModal({
                       : "border-ink/10 bg-white hover:bg-surface"
                   }`}
                 >
-                  <div className={`mt-0.5 size-4 rounded-full border-2 flex items-center justify-center shrink-0 ${
-                    selectedSeasonId === season.id ? "border-brand" : "border-ink/20"
-                  }`}>
-                    {selectedSeasonId === season.id && <div className="size-2 rounded-full bg-brand" />}
+                  <div
+                    className={`mt-0.5 size-4 rounded-full border-2 flex items-center justify-center shrink-0 ${
+                      selectedSeasonId === season.id ? "border-brand" : "border-ink/20"
+                    }`}
+                  >
+                    {selectedSeasonId === season.id && (
+                      <div className="size-2 rounded-full bg-brand" />
+                    )}
                   </div>
                   <div>
                     <h3 className="font-bold text-sm text-ink">{season.title}</h3>
                     <p className="text-xs text-ink/60 mt-1">{season.theme}</p>
                     <div className="flex gap-2 mt-2">
-                      <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase ${
-                        season.status === "active" ? "bg-emerald-100 text-emerald-800" : "bg-sky text-brand"
-                      }`}>
+                      <span
+                        className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase ${
+                          season.status === "active"
+                            ? "bg-emerald-100 text-emerald-800"
+                            : "bg-sky text-brand"
+                        }`}
+                      >
                         {season.status === "active" ? "En cours" : "À venir"}
                       </span>
                     </div>

@@ -1,7 +1,7 @@
-import React from 'react';
-import { Sparkles, BookOpen } from 'lucide-react';
+import React from "react";
+import { BookOpen, Sprout } from "lucide-react";
 
-export type ChallengeMode = 'free' | 'homework';
+export type ChallengeMode = "free" | "homework";
 
 export interface HomeworkModeToggleProps {
   mode: ChallengeMode;
@@ -12,7 +12,7 @@ export interface HomeworkModeToggleProps {
 export function HomeworkModeToggle({
   mode,
   onModeChange,
-  className = '',
+  className = "",
 }: HomeworkModeToggleProps) {
   return (
     <div
@@ -23,27 +23,27 @@ export function HomeworkModeToggle({
     >
       <button
         type="button"
-        onClick={() => onModeChange('free')}
-        data-active={mode === 'free'}
-        aria-pressed={mode === 'free'}
+        onClick={() => onModeChange("free")}
+        data-active={mode === "free"}
+        aria-pressed={mode === "free"}
         className={`flex-1 rounded-xl py-2.5 px-3 text-xs font-display font-black transition-all cursor-pointer flex items-center justify-center gap-2 ${
-          mode === 'free'
-            ? 'bg-brand text-white shadow-sm scale-[1.01]'
-            : 'text-ink/65 hover:text-ink hover:bg-surface'
+          mode === "free"
+            ? "bg-brand text-white shadow-sm scale-[1.01]"
+            : "text-ink/65 hover:text-ink hover:bg-surface"
         }`}
       >
-        <Sparkles className="size-4 shrink-0" />
+        <Sprout className="size-4 shrink-0" />
         <span>Défis Libres (Éveil)</span>
       </button>
       <button
         type="button"
-        onClick={() => onModeChange('homework')}
-        data-active={mode === 'homework'}
-        aria-pressed={mode === 'homework'}
+        onClick={() => onModeChange("homework")}
+        data-active={mode === "homework"}
+        aria-pressed={mode === "homework"}
         className={`flex-1 rounded-xl py-2.5 px-3 text-xs font-display font-black transition-all cursor-pointer flex items-center justify-center gap-2 ${
-          mode === 'homework'
-            ? 'bg-brand text-white shadow-sm scale-[1.01]'
-            : 'text-ink/65 hover:text-ink hover:bg-surface'
+          mode === "homework"
+            ? "bg-brand text-white shadow-sm scale-[1.01]"
+            : "text-ink/65 hover:text-ink hover:bg-surface"
         }`}
       >
         <BookOpen className="size-4 shrink-0" />

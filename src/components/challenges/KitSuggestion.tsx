@@ -58,7 +58,9 @@ export function KitSuggestion({
   const message = `Bonjour ! Je souhaite commander le kit pour le défi "${challengeTitle}" de ${childName} :\n${products
     .map((p) => `- ${p.name} (${p.price_xof.toLocaleString("fr-FR")} FCFA)`)
     .join("\n")}\nTotal : ${total.toLocaleString("fr-FR")} FCFA`;
-  const waUrl = whatsappNumber ? `https://wa.me/${whatsappNumber}?text=${encodeURIComponent(message)}` : null;
+  const waUrl = whatsappNumber
+    ? `https://wa.me/${whatsappNumber}?text=${encodeURIComponent(message)}`
+    : null;
 
   const handleOrder = async () => {
     setOrdering(true);
@@ -96,7 +98,9 @@ export function KitSuggestion({
     <div className="rounded-2xl border border-ink/10 bg-sky p-4 shadow-sm">
       <div className="mb-2 flex items-center gap-2">
         <ShoppingBag className="size-4 text-ink" />
-        <p className="text-xs font-black uppercase tracking-widest text-ink">Kit suggéré par Naya</p>
+        <p className="text-xs font-black uppercase tracking-widest text-ink">
+          Kit suggéré par Naya
+        </p>
       </div>
       <ul className="mb-3 space-y-1">
         {products.map((p) => (

@@ -8,11 +8,18 @@ import { toast } from "sonner";
 // imprimables sur un flyer. La famille scanne/clique et atterrit directement sur /rejoindre/$id
 // (page publique, cf. campaigns.functions.ts:getCampaignPublicInfo). Généré côté client
 // (librairie "qrcode") — pas d'appel serveur, pas de dépendance à un service externe.
-export function CampaignLinkCard({ campaignId, campaignName }: { campaignId: string; campaignName: string }) {
+export function CampaignLinkCard({
+  campaignId,
+  campaignName,
+}: {
+  campaignId: string;
+  campaignName: string;
+}) {
   const [qrDataUrl, setQrDataUrl] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
 
-  const url = typeof window !== "undefined" ? `${window.location.origin}/rejoindre/${campaignId}` : "";
+  const url =
+    typeof window !== "undefined" ? `${window.location.origin}/rejoindre/${campaignId}` : "";
 
   useEffect(() => {
     if (!url) return;
@@ -48,14 +55,20 @@ export function CampaignLinkCard({ campaignId, campaignName }: { campaignId: str
         </div>
         <div>
           <h3 className="font-display font-black text-lg text-ink">Lien d'inscription</h3>
-          <p className="text-xs text-ink/60 font-medium">Partagez ce lien ou ce QR — aucun code à distribuer.</p>
+          <p className="text-xs text-ink/60 font-medium">
+            Partagez ce lien ou ce QR — aucun code à distribuer.
+          </p>
         </div>
       </div>
 
       <div className="flex flex-col sm:flex-row gap-5 items-start">
         {qrDataUrl && (
           <div className="shrink-0 mx-auto sm:mx-0 rounded-2xl border border-ink/10 p-2 bg-white">
-            <img src={qrDataUrl} alt={`QR code d'inscription pour ${campaignName}`} className="size-32 sm:size-36" />
+            <img
+              src={qrDataUrl}
+              alt={`QR code d'inscription pour ${campaignName}`}
+              className="size-32 sm:size-36"
+            />
           </div>
         )}
         <div className="flex-1 w-full min-w-0">

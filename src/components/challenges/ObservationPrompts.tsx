@@ -6,7 +6,7 @@ export function ObservationPrompts({ className }: { className?: string }) {
     "Par quoi l'enfant a-t-il commencé ?",
     "Où a-t-il rencontré des difficultés ?",
     "Qu'est-ce qui a semblé le captiver ?",
-    "A-t-il trouvé une solution inattendue ?"
+    "A-t-il trouvé une solution inattendue ?",
   ];
 
   return (

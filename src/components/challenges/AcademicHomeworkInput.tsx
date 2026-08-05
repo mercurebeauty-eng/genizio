@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Sparkles, Layers, BookOpen, Target, Loader2 } from "lucide-react";
+import { Layers, BookOpen, Target, Loader2, WandSparkles } from "lucide-react";
 import { toast } from "sonner";
 import {
   GRADE_LEVELS,
@@ -62,9 +62,7 @@ export function AcademicHomeworkInput({
   isGenerating,
   className = "",
 }: AcademicHomeworkInputProps) {
-  const [gradeLevel, setGradeLevel] = useState<GradeLevel>(() =>
-    getDefaultGradeLevel(childAge)
-  );
+  const [gradeLevel, setGradeLevel] = useState<GradeLevel>(() => getDefaultGradeLevel(childAge));
   const [subject, setSubject] = useState<AcademicSubject>("maths");
   const [instruction, setInstruction] = useState("");
   const [driver, setDriver] = useState<BehavioralDriver | "auto">("auto");
@@ -120,7 +118,10 @@ export function AcademicHomeworkInput({
       {/* 1. Grade Level Selector Pills */}
       <div>
         <div className="flex items-center justify-between mb-2">
-          <label htmlFor="grade-level-selector" className="text-xs font-display font-black uppercase tracking-wider text-ink">
+          <label
+            htmlFor="grade-level-selector"
+            className="text-xs font-display font-black uppercase tracking-wider text-ink"
+          >
             1. Classe de {childName}
           </label>
           <span className="text-[11px] font-bold text-ink/60">
@@ -162,7 +163,10 @@ export function AcademicHomeworkInput({
 
       {/* 2. Subject Grid Buttons */}
       <div>
-        <label htmlFor="subject-grid" className="block text-xs font-display font-black uppercase tracking-wider text-ink mb-2">
+        <label
+          htmlFor="subject-grid"
+          className="block text-xs font-display font-black uppercase tracking-wider text-ink mb-2"
+        >
           2. Matière du Devoir
         </label>
         <div
@@ -210,7 +214,10 @@ export function AcademicHomeworkInput({
       {/* 3. Dynamic Curriculum Topic Chips */}
       <div>
         <div className="flex items-center justify-between mb-2">
-          <label htmlFor="curriculum-topics" className="text-[11px] font-bold uppercase tracking-wider text-ink/60">
+          <label
+            htmlFor="curriculum-topics"
+            className="text-[11px] font-bold uppercase tracking-wider text-ink/60"
+          >
             Sujets du programme au {GRADE_LEVEL_METADATA[gradeLevel]?.label}
           </label>
           {activeGap !== undefined && (
@@ -252,7 +259,10 @@ export function AcademicHomeworkInput({
 
       {/* 4. Explicit Homework Text Input Field */}
       <div>
-        <label htmlFor="homework-instruction-input" className="block text-xs font-display font-black uppercase tracking-wider text-ink mb-2">
+        <label
+          htmlFor="homework-instruction-input"
+          className="block text-xs font-display font-black uppercase tracking-wider text-ink mb-2"
+        >
           3. Consigne précise du devoir
         </label>
         <textarea
@@ -354,7 +364,7 @@ export function AcademicHomeworkInput({
           </>
         ) : (
           <>
-            <Sparkles className="size-5" />
+            <WandSparkles className="size-5" />
             <span>Transformer le devoir en défi ludique 🚀</span>
           </>
         )}

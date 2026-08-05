@@ -1,5 +1,16 @@
 import { useState, useEffect } from "react";
-import { Plus, Building2, Loader2, Key, X, FileText, Download, Copy, Link as LinkIcon, Search } from "lucide-react";
+import {
+  Plus,
+  Building2,
+  Loader2,
+  Key,
+  X,
+  FileText,
+  Download,
+  Copy,
+  Link as LinkIcon,
+  Search,
+} from "lucide-react";
 import { AdminPagination } from "./AdminPagination";
 import { useServerFn } from "@tanstack/react-start";
 import { useSession } from "@/hooks/use-session";
@@ -15,7 +26,12 @@ import {
 import { CampaignLinkCard } from "@/components/campaigns/CampaignLinkCard";
 import { toast } from "sonner";
 import { computeSupervisorQuota } from "@/lib/supervisor-quota";
-import { resolveExtraSlotPrice, formatXof, formatPromoDeadline, STANDARD_PRICE_XOF } from "@/lib/pricing";
+import {
+  resolveExtraSlotPrice,
+  formatXof,
+  formatPromoDeadline,
+  STANDARD_PRICE_XOF,
+} from "@/lib/pricing";
 
 export function AdminCampaignsTab() {
   const { session } = useSession();
@@ -59,7 +75,12 @@ export function AdminCampaignsTab() {
         ...opts,
       });
       setCampaigns(res.data || []);
-      setMeta({ total: res.total, page: res.page, pageSize: res.pageSize, totalPages: res.totalPages });
+      setMeta({
+        total: res.total,
+        page: res.page,
+        pageSize: res.pageSize,
+        totalPages: res.totalPages,
+      });
     } catch (err: any) {
       toast.error(err.message || "Erreur lors du chargement des campagnes.");
     } finally {
@@ -83,7 +104,9 @@ export function AdminCampaignsTab() {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h2 className="text-xl font-display font-black text-ink">Campagnes B2B (ONG / Écoles)</h2>
-          <p className="text-sm font-medium text-ink/60">Gérez les cohortes financées par des partenaires externes.</p>
+          <p className="text-sm font-medium text-ink/60">
+            Gérez les cohortes financées par des partenaires externes.
+          </p>
         </div>
         <button
           onClick={() => setIsCreateModalOpen(true)}
@@ -137,29 +160,50 @@ export function AdminCampaignsTab() {
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {campaigns.map(c => (
-            <div key={c.id} className="bg-white rounded-3xl p-6 border border-ink/10 shadow-sm hover:shadow-md transition-shadow flex flex-col justify-between">
+          {campaigns.map((c) => (
+            <div
+              key={c.id}
+              className="bg-white rounded-3xl p-6 border border-ink/10 shadow-sm hover:shadow-md transition-shadow flex flex-col justify-between"
+            >
               <div>
                 <div className="flex items-start justify-between mb-4">
                   <div className="size-10 rounded-2xl bg-brand/10 text-brand flex items-center justify-center shrink-0">
                     <Building2 className="size-5" />
                   </div>
                   <div className="text-right">
-                     <div className="text-xs font-bold text-ink/40 uppercase tracking-wider mb-1">Cible</div>
-                     <div className="text-lg font-black text-ink">{c.target_count} <span className="text-sm font-bold text-ink/50">enfants</span></div>
+                    <div className="text-xs font-bold text-ink/40 uppercase tracking-wider mb-1">
+                      Cible
+                    </div>
+                    <div className="text-lg font-black text-ink">
+                      {c.target_count}{" "}
+                      <span className="text-sm font-bold text-ink/50">enfants</span>
+                    </div>
                   </div>
                 </div>
-                <h3 className="font-display font-bold text-lg text-ink truncate mb-1" title={c.name}>{c.name}</h3>
-                <p className="text-sm text-ink/60 line-clamp-2 mb-4 h-10">{c.description || "Aucune description"}</p>
-                
+                <h3
+                  className="font-display font-bold text-lg text-ink truncate mb-1"
+                  title={c.name}
+                >
+                  {c.name}
+                </h3>
+                <p className="text-sm text-ink/60 line-clamp-2 mb-4 h-10">
+                  {c.description || "Aucune description"}
+                </p>
+
                 <div className="bg-surface p-3 rounded-2xl mb-3">
-                    <div className="text-xs font-bold text-ink/50 mb-1 uppercase tracking-wider">Chargé de projet (Propriétaire)</div>
-                    <div className="text-sm font-medium text-ink truncate" title={c.manager_email || ""}>
-                        {c.manager_email || <span className="text-ink/40 italic">Non assigné</span>}
-                    </div>
+                  <div className="text-xs font-bold text-ink/50 mb-1 uppercase tracking-wider">
+                    Chargé de projet (Propriétaire)
+                  </div>
+                  <div
+                    className="text-sm font-medium text-ink truncate"
+                    title={c.manager_email || ""}
+                  >
+                    {c.manager_email || <span className="text-ink/40 italic">Non assigné</span>}
+                  </div>
                 </div>
                 <div className="text-xs font-bold text-ink/50 mb-3">
-                    Programme : {new Date(c.start_date).toLocaleDateString("fr-FR")} → {new Date(c.end_date).toLocaleDateString("fr-FR")}
+                  Programme : {new Date(c.start_date).toLocaleDateString("fr-FR")} →{" "}
+                  {new Date(c.end_date).toLocaleDateString("fr-FR")}
                 </div>
 
                 <CampaignQuotaEditor campaign={c} onUpdated={handleCampaignUpdated} />
@@ -167,7 +211,10 @@ export function AdminCampaignsTab() {
 
               <div className="grid grid-cols-3 gap-2 pt-2 border-t border-ink/5">
                 <button
-                  onClick={() => { setSelectedCampaign(c); setIsLinkModalOpen(true); }}
+                  onClick={() => {
+                    setSelectedCampaign(c);
+                    setIsLinkModalOpen(true);
+                  }}
                   className="w-full flex items-center justify-center gap-1.5 bg-ink text-white hover:bg-ink/90 px-3 py-2 rounded-xl font-bold transition-colors text-xs"
                 >
                   <LinkIcon className="size-3.5" />
@@ -175,7 +222,10 @@ export function AdminCampaignsTab() {
                 </button>
 
                 <button
-                  onClick={() => { setSelectedCampaign(c); setIsGenerateModalOpen(true); }}
+                  onClick={() => {
+                    setSelectedCampaign(c);
+                    setIsGenerateModalOpen(true);
+                  }}
                   className="w-full flex items-center justify-center gap-1.5 bg-surface text-ink hover:bg-ink hover:text-white px-3 py-2 rounded-xl font-bold transition-colors text-xs"
                 >
                   <Key className="size-3.5" />
@@ -183,7 +233,10 @@ export function AdminCampaignsTab() {
                 </button>
 
                 <button
-                  onClick={() => { setSelectedCampaign(c); setIsTokensModalOpen(true); }}
+                  onClick={() => {
+                    setSelectedCampaign(c);
+                    setIsTokensModalOpen(true);
+                  }}
                   className="w-full flex items-center justify-center gap-1.5 bg-brand/10 text-brand hover:bg-brand hover:text-white px-3 py-2 rounded-xl font-bold transition-colors text-xs"
                 >
                   <FileText className="size-3.5" />
@@ -205,24 +258,29 @@ export function AdminCampaignsTab() {
       />
 
       {isCreateModalOpen && (
-        <CreateCampaignModal 
-            onClose={() => setIsCreateModalOpen(false)} 
-            onSuccess={() => { setIsCreateModalOpen(false); fetchCampaigns(); }} 
+        <CreateCampaignModal
+          onClose={() => setIsCreateModalOpen(false)}
+          onSuccess={() => {
+            setIsCreateModalOpen(false);
+            fetchCampaigns();
+          }}
         />
       )}
 
       {isGenerateModalOpen && selectedCampaign && (
-        <GenerateTokensModal 
-            campaign={selectedCampaign} 
-            onClose={() => setIsGenerateModalOpen(false)} 
-            onSuccess={() => { setIsGenerateModalOpen(false); }} 
+        <GenerateTokensModal
+          campaign={selectedCampaign}
+          onClose={() => setIsGenerateModalOpen(false)}
+          onSuccess={() => {
+            setIsGenerateModalOpen(false);
+          }}
         />
       )}
 
       {isTokensModalOpen && selectedCampaign && (
         <ViewCampaignTokensModal
-            campaign={selectedCampaign}
-            onClose={() => setIsTokensModalOpen(false)}
+          campaign={selectedCampaign}
+          onClose={() => setIsTokensModalOpen(false)}
         />
       )}
 
@@ -235,7 +293,10 @@ export function AdminCampaignsTab() {
             >
               <X className="size-5" />
             </button>
-            <CampaignLinkCard campaignId={selectedCampaign.id} campaignName={selectedCampaign.name} />
+            <CampaignLinkCard
+              campaignId={selectedCampaign.id}
+              campaignName={selectedCampaign.name}
+            />
           </div>
         </div>
       )}
@@ -243,12 +304,21 @@ export function AdminCampaignsTab() {
   );
 }
 
-function CampaignQuotaEditor({ campaign, onUpdated }: { campaign: Campaign; onUpdated: (c: Campaign) => void }) {
+function CampaignQuotaEditor({
+  campaign,
+  onUpdated,
+}: {
+  campaign: Campaign;
+  onUpdated: (c: Campaign) => void;
+}) {
   const [value, setValue] = useState(campaign.extra_supervisors_quota);
   const [maxEducators, setMaxEducators] = useState(campaign.max_educators ?? 0);
   const [saving, setSaving] = useState(false);
   const updateFn = useServerFn(updateCampaignExtraQuotaAdmin);
-  const supervisorFloor = computeSupervisorQuota({ referenceCreatedAt: campaign.created_at, extraQuota: 0 });
+  const supervisorFloor = computeSupervisorQuota({
+    referenceCreatedAt: campaign.created_at,
+    extraQuota: 0,
+  });
   const slotPrice = resolveExtraSlotPrice(campaign.created_at);
 
   useEffect(() => {
@@ -256,7 +326,8 @@ function CampaignQuotaEditor({ campaign, onUpdated }: { campaign: Campaign; onUp
     setMaxEducators(campaign.max_educators ?? 0);
   }, [campaign.extra_supervisors_quota, campaign.max_educators]);
 
-  const dirty = value !== campaign.extra_supervisors_quota || maxEducators !== (campaign.max_educators ?? 0);
+  const dirty =
+    value !== campaign.extra_supervisors_quota || maxEducators !== (campaign.max_educators ?? 0);
 
   const handleSave = async () => {
     setSaving(true);
@@ -276,9 +347,13 @@ function CampaignQuotaEditor({ campaign, onUpdated }: { campaign: Campaign; onUp
   return (
     <div className="bg-surface p-3 rounded-2xl mb-3 space-y-2">
       <div>
-        <div className="text-xs font-bold text-ink/50 mb-1.5 uppercase tracking-wider">Quota superviseurs</div>
+        <div className="text-xs font-bold text-ink/50 mb-1.5 uppercase tracking-wider">
+          Quota superviseurs
+        </div>
         <div className="flex items-center gap-2 flex-wrap">
-          <span className="text-sm font-medium text-ink/60 shrink-0">{supervisorFloor} de base +</span>
+          <span className="text-sm font-medium text-ink/60 shrink-0">
+            {supervisorFloor} de base +
+          </span>
           <input
             type="number"
             min={0}
@@ -287,12 +362,18 @@ function CampaignQuotaEditor({ campaign, onUpdated }: { campaign: Campaign; onUp
             onChange={(e) => setValue(Math.max(0, parseInt(e.target.value) || 0))}
             className="w-16 bg-white border border-ink/10 rounded-xl px-2 py-1.5 text-sm font-bold text-ink text-center"
           />
-          <span className="text-sm font-medium text-ink/60 shrink-0">= {supervisorFloor + value} enfants max/superviseur</span>
+          <span className="text-sm font-medium text-ink/60 shrink-0">
+            = {supervisorFloor + value} enfants max/superviseur
+          </span>
         </div>
       </div>
       <div>
         <div className="text-xs font-bold text-ink/50 mb-1.5 uppercase tracking-wider">
-          Éducateurs vouchés ({formatXof(slotPrice.priceXof)}/éducateur{slotPrice.isPromo && slotPrice.promoEndsAt ? `, prix de bienvenue jusqu'au ${formatPromoDeadline(slotPrice.promoEndsAt)} puis ${formatXof(STANDARD_PRICE_XOF)}` : ""} — payé hors-app, ajuster ici après confirmation)
+          Éducateurs vouchés ({formatXof(slotPrice.priceXof)}/éducateur
+          {slotPrice.isPromo && slotPrice.promoEndsAt
+            ? `, prix de bienvenue jusqu'au ${formatPromoDeadline(slotPrice.promoEndsAt)} puis ${formatXof(STANDARD_PRICE_XOF)}`
+            : ""}{" "}
+          — payé hors-app, ajuster ici après confirmation)
         </div>
         <div className="flex items-center gap-2 flex-wrap">
           <span className="text-sm font-medium text-ink/60 shrink-0">Capacité :</span>
@@ -304,7 +385,9 @@ function CampaignQuotaEditor({ campaign, onUpdated }: { campaign: Campaign; onUp
             onChange={(e) => setMaxEducators(Math.max(0, parseInt(e.target.value) || 0))}
             className="w-16 bg-white border border-ink/10 rounded-xl px-2 py-1.5 text-sm font-bold text-ink text-center"
           />
-          <span className="text-sm font-medium text-ink/60 shrink-0">éducateurs max pour cette campagne</span>
+          <span className="text-sm font-medium text-ink/60 shrink-0">
+            éducateurs max pour cette campagne
+          </span>
           {dirty && (
             <button
               onClick={handleSave}
@@ -327,7 +410,13 @@ const threeMonthsFromNowISO = () => {
   return d.toISOString().slice(0, 10);
 };
 
-function CreateCampaignModal({ onClose, onSuccess }: { onClose: () => void, onSuccess: () => void }) {
+function CreateCampaignModal({
+  onClose,
+  onSuccess,
+}: {
+  onClose: () => void;
+  onSuccess: () => void;
+}) {
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
   const [managerEmail, setManagerEmail] = useState("");
@@ -342,7 +431,9 @@ function CreateCampaignModal({ onClose, onSuccess }: { onClose: () => void, onSu
     e.preventDefault();
     setIsSubmitting(true);
     try {
-      await createFn({ data: { name, description, managerEmail, targetCount, startDate, endDate } });
+      await createFn({
+        data: { name, description, managerEmail, targetCount, startDate, endDate },
+      });
       toast.success("Campagne créée avec succès !");
       onSuccess();
     } catch (err: any) {
@@ -360,52 +451,124 @@ function CreateCampaignModal({ onClose, onSuccess }: { onClose: () => void, onSu
             <Building2 className="size-6 text-brand" />
             Nouvelle Campagne B2B
           </h3>
-          <button onClick={onClose} className="p-2 bg-surface rounded-full text-ink/60 hover:text-ink transition-colors">
+          <button
+            onClick={onClose}
+            className="p-2 bg-surface rounded-full text-ink/60 hover:text-ink transition-colors"
+          >
             <X className="size-5" />
           </button>
         </div>
-      <form onSubmit={handleSubmit} className="space-y-4">
-        <div>
-          <label className="block text-sm font-bold text-ink mb-1">Nom de la campagne</label>
-          <input required type="text" value={name} onChange={e => setName(e.target.value)} className="w-full bg-surface border-none rounded-2xl p-4 font-medium" placeholder="Ex: Cohorte UNICEF 2026" />
-        </div>
-        <div>
-          <label className="block text-sm font-bold text-ink mb-1">Email du chargé de projet (Client)</label>
-          <input required type="email" value={managerEmail} onChange={e => setManagerEmail(e.target.value)} className="w-full bg-surface border-none rounded-2xl p-4 font-medium" placeholder="responsable@ong.org" />
-          <p className="text-xs text-ink/50 mt-1 font-medium">L'utilisateur doit déjà avoir un compte sur Génizio.</p>
-        </div>
-        <div>
-          <label className="block text-sm font-bold text-ink mb-1">Nombre d'enfants ciblés</label>
-          <input required type="number" min={1} value={targetCount} onChange={e => setTargetCount(parseInt(e.target.value))} className="w-full bg-surface border-none rounded-2xl p-4 font-medium" />
-        </div>
-        <div className="grid grid-cols-2 gap-3">
+        <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="block text-sm font-bold text-ink mb-1">Début du programme</label>
-            <input required type="date" value={startDate} onChange={e => setStartDate(e.target.value)} className="w-full bg-surface border-none rounded-2xl p-4 font-medium" />
+            <label className="block text-sm font-bold text-ink mb-1">Nom de la campagne</label>
+            <input
+              required
+              type="text"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              className="w-full bg-surface border-none rounded-2xl p-4 font-medium"
+              placeholder="Ex: Cohorte UNICEF 2026"
+            />
           </div>
           <div>
-            <label className="block text-sm font-bold text-ink mb-1">Fin du programme</label>
-            <input required type="date" value={endDate} onChange={e => setEndDate(e.target.value)} className="w-full bg-surface border-none rounded-2xl p-4 font-medium" />
+            <label className="block text-sm font-bold text-ink mb-1">
+              Email du chargé de projet (Client)
+            </label>
+            <input
+              required
+              type="email"
+              value={managerEmail}
+              onChange={(e) => setManagerEmail(e.target.value)}
+              className="w-full bg-surface border-none rounded-2xl p-4 font-medium"
+              placeholder="responsable@ong.org"
+            />
+            <p className="text-xs text-ink/50 mt-1 font-medium">
+              L'utilisateur doit déjà avoir un compte sur Génizio.
+            </p>
           </div>
-        </div>
-        <p className="text-xs text-ink/50 -mt-2 font-medium">Fenêtre fixe et partagée par toute la cohorte — contrairement à un enfant isolé, ses enfants ne démarrent pas chacun leur propre chrono individuel.</p>
-        <div>
-          <label className="block text-sm font-bold text-ink mb-1">Description (Optionnelle)</label>
-          <textarea value={description} onChange={e => setDescription(e.target.value)} className="w-full bg-surface border-none rounded-2xl p-4 font-medium min-h-[100px]" placeholder="Détails du programme..." />
-        </div>
-        <div className="flex gap-3 pt-4">
-          <button type="button" onClick={onClose} className="flex-1 px-4 py-3 bg-surface hover:bg-ink/5 text-ink rounded-2xl font-bold transition-colors">Annuler</button>
-          <button type="submit" disabled={isSubmitting} className="flex-1 px-4 py-3 bg-brand hover:bg-brand/90 text-white rounded-2xl font-bold transition-colors flex items-center justify-center gap-2">
-            {isSubmitting ? <Loader2 className="size-5 animate-spin" /> : <span>Créer la campagne</span>}
-          </button>
-        </div>
-      </form>
+          <div>
+            <label className="block text-sm font-bold text-ink mb-1">Nombre d'enfants ciblés</label>
+            <input
+              required
+              type="number"
+              min={1}
+              value={targetCount}
+              onChange={(e) => setTargetCount(parseInt(e.target.value))}
+              className="w-full bg-surface border-none rounded-2xl p-4 font-medium"
+            />
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="block text-sm font-bold text-ink mb-1">Début du programme</label>
+              <input
+                required
+                type="date"
+                value={startDate}
+                onChange={(e) => setStartDate(e.target.value)}
+                className="w-full bg-surface border-none rounded-2xl p-4 font-medium"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-bold text-ink mb-1">Fin du programme</label>
+              <input
+                required
+                type="date"
+                value={endDate}
+                onChange={(e) => setEndDate(e.target.value)}
+                className="w-full bg-surface border-none rounded-2xl p-4 font-medium"
+              />
+            </div>
+          </div>
+          <p className="text-xs text-ink/50 -mt-2 font-medium">
+            Fenêtre fixe et partagée par toute la cohorte — contrairement à un enfant isolé, ses
+            enfants ne démarrent pas chacun leur propre chrono individuel.
+          </p>
+          <div>
+            <label className="block text-sm font-bold text-ink mb-1">
+              Description (Optionnelle)
+            </label>
+            <textarea
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              className="w-full bg-surface border-none rounded-2xl p-4 font-medium min-h-[100px]"
+              placeholder="Détails du programme..."
+            />
+          </div>
+          <div className="flex gap-3 pt-4">
+            <button
+              type="button"
+              onClick={onClose}
+              className="flex-1 px-4 py-3 bg-surface hover:bg-ink/5 text-ink rounded-2xl font-bold transition-colors"
+            >
+              Annuler
+            </button>
+            <button
+              type="submit"
+              disabled={isSubmitting}
+              className="flex-1 px-4 py-3 bg-brand hover:bg-brand/90 text-white rounded-2xl font-bold transition-colors flex items-center justify-center gap-2"
+            >
+              {isSubmitting ? (
+                <Loader2 className="size-5 animate-spin" />
+              ) : (
+                <span>Créer la campagne</span>
+              )}
+            </button>
+          </div>
+        </form>
       </div>
     </div>
   );
 }
 
-function GenerateTokensModal({ campaign, onClose, onSuccess }: { campaign: Campaign, onClose: () => void, onSuccess: () => void }) {
+function GenerateTokensModal({
+  campaign,
+  onClose,
+  onSuccess,
+}: {
+  campaign: Campaign;
+  onClose: () => void;
+  onSuccess: () => void;
+}) {
   const [existingCount, setExistingCount] = useState<number | null>(null);
   const [count, setCount] = useState(campaign.target_count);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -451,38 +614,73 @@ function GenerateTokensModal({ campaign, onClose, onSuccess }: { campaign: Campa
             <Key className="size-6 text-brand" />
             Générer des Tokens
           </h3>
-          <button onClick={onClose} className="p-2 bg-surface rounded-full text-ink/60 hover:text-ink transition-colors">
+          <button
+            onClick={onClose}
+            className="p-2 bg-surface rounded-full text-ink/60 hover:text-ink transition-colors"
+          >
             <X className="size-5" />
           </button>
         </div>
-      <form onSubmit={handleSubmit} className="space-y-4">
-        <p className="text-sm font-medium text-ink/70">
-          Générer un lot de codes d'inscription pour la campagne <strong>{campaign.name}</strong>. Ces codes seront pré-payés et rattachés à cette campagne.
-        </p>
-        {existingCount !== null && existingCount > 0 && (
-          <p className={`text-xs font-bold rounded-xl px-3 py-2 ${remaining !== null && remaining <= 0 ? "bg-red-50 text-red-600" : "bg-amber-50 text-amber-700"}`}>
-            {existingCount} code(s) déjà généré(s) pour un objectif de {campaign.target_count}
-            {remaining !== null && remaining > 0 ? ` — ${remaining} restant(s).` : " — objectif déjà atteint."}
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <p className="text-sm font-medium text-ink/70">
+            Générer un lot de codes d'inscription pour la campagne <strong>{campaign.name}</strong>.
+            Ces codes seront pré-payés et rattachés à cette campagne.
           </p>
-        )}
-        <div>
-          <label className="block text-sm font-bold text-ink mb-1">Nombre de tokens</label>
-          <input required type="number" min={1} max={500} value={count} onChange={e => setCount(parseInt(e.target.value))} className="w-full bg-surface border-none rounded-2xl p-4 font-medium" />
-          <p className="text-xs text-ink/50 mt-1 font-medium">Chaque code se lie à la saison réellement en cours au moment où le parent l'active, pas à aujourd'hui.</p>
-        </div>
-        <div className="flex gap-3 pt-4">
-          <button type="button" onClick={onClose} className="flex-1 px-4 py-3 bg-surface hover:bg-ink/5 text-ink rounded-2xl font-bold transition-colors">Annuler</button>
-          <button type="submit" disabled={isSubmitting} className="flex-1 px-4 py-3 bg-ink hover:bg-ink/90 text-white rounded-2xl font-bold transition-colors flex items-center justify-center gap-2">
-            {isSubmitting ? <Loader2 className="size-5 animate-spin" /> : <span>Générer</span>}
-          </button>
-        </div>
-      </form>
+          {existingCount !== null && existingCount > 0 && (
+            <p
+              className={`text-xs font-bold rounded-xl px-3 py-2 ${remaining !== null && remaining <= 0 ? "bg-red-50 text-red-600" : "bg-amber-50 text-amber-700"}`}
+            >
+              {existingCount} code(s) déjà généré(s) pour un objectif de {campaign.target_count}
+              {remaining !== null && remaining > 0
+                ? ` — ${remaining} restant(s).`
+                : " — objectif déjà atteint."}
+            </p>
+          )}
+          <div>
+            <label className="block text-sm font-bold text-ink mb-1">Nombre de tokens</label>
+            <input
+              required
+              type="number"
+              min={1}
+              max={500}
+              value={count}
+              onChange={(e) => setCount(parseInt(e.target.value))}
+              className="w-full bg-surface border-none rounded-2xl p-4 font-medium"
+            />
+            <p className="text-xs text-ink/50 mt-1 font-medium">
+              Chaque code se lie à la saison réellement en cours au moment où le parent l'active,
+              pas à aujourd'hui.
+            </p>
+          </div>
+          <div className="flex gap-3 pt-4">
+            <button
+              type="button"
+              onClick={onClose}
+              className="flex-1 px-4 py-3 bg-surface hover:bg-ink/5 text-ink rounded-2xl font-bold transition-colors"
+            >
+              Annuler
+            </button>
+            <button
+              type="submit"
+              disabled={isSubmitting}
+              className="flex-1 px-4 py-3 bg-ink hover:bg-ink/90 text-white rounded-2xl font-bold transition-colors flex items-center justify-center gap-2"
+            >
+              {isSubmitting ? <Loader2 className="size-5 animate-spin" /> : <span>Générer</span>}
+            </button>
+          </div>
+        </form>
       </div>
     </div>
   );
 }
 
-function ViewCampaignTokensModal({ campaign, onClose }: { campaign: Campaign; onClose: () => void }) {
+function ViewCampaignTokensModal({
+  campaign,
+  onClose,
+}: {
+  campaign: Campaign;
+  onClose: () => void;
+}) {
   const { session } = useSession();
   const [tokens, setTokens] = useState<CampaignTokenDetail[]>([]);
   const [loading, setLoading] = useState(true);
@@ -515,7 +713,14 @@ function ViewCampaignTokensModal({ campaign, onClose }: { campaign: Campaign; on
       toast.error("Aucun code à exporter.");
       return;
     }
-    const headers = ["Code", "Statut", "Date d'activation", "Nom Enfant", "Email Parent", "Date de création"];
+    const headers = [
+      "Code",
+      "Statut",
+      "Date d'activation",
+      "Nom Enfant",
+      "Email Parent",
+      "Date de création",
+    ];
     const rows = tokens.map((t) => [
       t.code,
       t.is_redeemed ? "Activé" : "Non activé",
@@ -575,10 +780,14 @@ function ViewCampaignTokensModal({ campaign, onClose }: { campaign: Campaign; on
               Codes de la campagne : {campaign.name}
             </h3>
             <p className="text-xs font-medium text-ink/60 mt-0.5">
-              Total: {tokens.length} code(s) · Activés: {redeemedCount} · Non-activés: {unredeemedCount}
+              Total: {tokens.length} code(s) · Activés: {redeemedCount} · Non-activés:{" "}
+              {unredeemedCount}
             </p>
           </div>
-          <button onClick={onClose} className="p-2 bg-surface rounded-full text-ink/60 hover:text-ink transition-colors">
+          <button
+            onClick={onClose}
+            className="p-2 bg-surface rounded-full text-ink/60 hover:text-ink transition-colors"
+          >
             <X className="size-5" />
           </button>
         </div>
@@ -597,7 +806,9 @@ function ViewCampaignTokensModal({ campaign, onClose }: { campaign: Campaign; on
             <button
               onClick={() => setFilter("unactive")}
               className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-colors ${
-                filter === "unactive" ? "bg-amber-600 text-white" : "bg-surface text-ink/70 hover:bg-ink/10"
+                filter === "unactive"
+                  ? "bg-amber-600 text-white"
+                  : "bg-surface text-ink/70 hover:bg-ink/10"
               }`}
             >
               Non-activés ({unredeemedCount})
@@ -605,7 +816,9 @@ function ViewCampaignTokensModal({ campaign, onClose }: { campaign: Campaign; on
             <button
               onClick={() => setFilter("active")}
               className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-colors ${
-                filter === "active" ? "bg-emerald-600 text-white" : "bg-surface text-ink/70 hover:bg-ink/10"
+                filter === "active"
+                  ? "bg-emerald-600 text-white"
+                  : "bg-surface text-ink/70 hover:bg-ink/10"
               }`}
             >
               Activés ({redeemedCount})
@@ -669,15 +882,18 @@ function ViewCampaignTokensModal({ campaign, onClose }: { campaign: Campaign; on
                     {t.is_redeemed ? (
                       <>
                         <span className="font-bold text-ink">
-                          Enfant: {t.child_name || "Anonyme"} {t.parent_email ? `(${t.parent_email})` : ""}
+                          Enfant: {t.child_name || "Anonyme"}{" "}
+                          {t.parent_email ? `(${t.parent_email})` : ""}
                         </span>
                         <span className="text-ink/50">
-                          Activé le: {t.redeemed_at ? new Date(t.redeemed_at).toLocaleString("fr-FR") : "-"}
+                          Activé le:{" "}
+                          {t.redeemed_at ? new Date(t.redeemed_at).toLocaleString("fr-FR") : "-"}
                         </span>
                       </>
                     ) : (
                       <span className="text-ink/50">
-                        Créé le: {t.created_at ? new Date(t.created_at).toLocaleDateString("fr-FR") : "-"}
+                        Créé le:{" "}
+                        {t.created_at ? new Date(t.created_at).toLocaleDateString("fr-FR") : "-"}
                       </span>
                     )}
                   </div>
@@ -690,4 +906,3 @@ function ViewCampaignTokensModal({ campaign, onClose }: { campaign: Campaign; on
     </div>
   );
 }
-

@@ -13,9 +13,9 @@ interface SeasonEnrollmentModalProps {
 }
 
 // La Saison est incluse automatiquement avec chaque profil depuis 2026-08-03 (cf.
-// auto_enroll_new_child_in_active_season) — l'ancien choix "Payer via WhatsApp" a disparu, ce
-// qui ne laisse que la rédemption d'un code de parrainage (dons diaspora/RSE, /parrainage),
-// hors-sujet de ce changement de tarification.
+// auto_enroll_new_child_in_active_season) — cette modale ne sert plus qu'à la rédemption d'un
+// code de parrainage (dons diaspora/RSE, /parrainage) : le code vaut 1 à 6 mois d'accès payant
+// (child_access_periods, modèle mensuel 2026-08-05).
 export function SeasonEnrollmentModal({
   season,
   childId,
@@ -47,10 +47,7 @@ export function SeasonEnrollmentModal({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-      <div
-        className="absolute inset-0 bg-ink/40 backdrop-blur-sm"
-        onClick={onClose}
-      />
+      <div className="absolute inset-0 bg-ink/40 backdrop-blur-sm" onClick={onClose} />
       <div className="relative w-full max-w-md overflow-hidden rounded-[2rem] bg-surface shadow-2xl animate-in fade-in zoom-in-95 duration-200">
         <div className="flex items-center justify-between border-b border-ink/10 bg-white px-6 py-4">
           <div className="flex items-center gap-3">
@@ -71,7 +68,9 @@ export function SeasonEnrollmentModal({
           <div className="text-center space-y-2">
             <h3 className="font-display text-lg font-bold text-ink">{season.title}</h3>
             <p className="text-sm text-ink/70">
-              Un parrain (diaspora ou bourse RSE) vous a donné un code pour <span className="font-bold text-ink">{childName}</span> ? Saisissez-le ici.
+              Un parrain (diaspora ou bourse RSE) vous a donné un code pour{" "}
+              <span className="font-bold text-ink">{childName}</span> ? Saisissez-le ici — il ajoute
+              1 à 6 mois d'accès à son profil.
             </p>
           </div>
 
@@ -85,7 +84,7 @@ export function SeasonEnrollmentModal({
                 required
                 value={code}
                 onChange={(e) => setCode(e.target.value.toUpperCase())}
-                placeholder="Ex: G-2X9T"
+                placeholder="Ex: GENIZIO-PARRAIN-X9K2"
                 className="w-full rounded-2xl border border-ink/20 bg-white px-4 py-3 font-mono text-lg font-bold text-ink text-center tracking-widest focus:border-brand focus:outline-none focus:ring-4 focus:ring-brand/10"
               />
             </div>

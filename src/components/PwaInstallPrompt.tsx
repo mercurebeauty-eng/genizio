@@ -8,7 +8,9 @@ export function PwaInstallPrompt() {
 
   useEffect(() => {
     // 1. Check if already running in standalone mode (installed)
-    const isStandalone = window.matchMedia("(display-mode: standalone)").matches || (window.navigator as any).standalone;
+    const isStandalone =
+      window.matchMedia("(display-mode: standalone)").matches ||
+      (window.navigator as any).standalone;
     if (isStandalone) return;
 
     // 2. Check if user dismissed prompt recently (hide for 7 days)
@@ -80,9 +82,12 @@ export function PwaInstallPrompt() {
           <Smartphone className="size-6" />
         </div>
         <div>
-          <h4 className="font-display text-balance text-base font-black text-ink">Installer Génizio</h4>
+          <h4 className="font-display text-balance text-base font-black text-ink">
+            Installer Génizio
+          </h4>
           <p className="text-xs font-semibold text-ink/60 mt-0.5 leading-relaxed">
-            Installez l'application sur votre écran d'accueil pour l'ouvrir en plein écran et accéder rapidement à Naya.
+            Installez l'application sur votre écran d'accueil pour l'ouvrir en plein écran et
+            accéder rapidement à Naya.
           </p>
         </div>
       </div>
@@ -93,21 +98,41 @@ export function PwaInstallPrompt() {
           <div className="space-y-3">
             <div className="flex items-center gap-2 rounded-xl bg-amber-50 border-2 border-ink p-3 text-xs text-amber-950 font-semibold leading-relaxed">
               <Info className="size-4 text-amber-600 shrink-0" />
-              <span>Sur iPhone / iPad, l'installation automatique n'est pas autorisée par Apple.</span>
+              <span>
+                Sur iPhone / iPad, l'installation automatique n'est pas autorisée par Apple.
+              </span>
             </div>
-            <p className="text-xs font-bold text-ink/80">Suivez ces étapes simples pour l'installer :</p>
+            <p className="text-xs font-bold text-ink/80">
+              Suivez ces étapes simples pour l'installer :
+            </p>
             <ol className="space-y-2 text-xs font-medium text-ink/75">
               <li className="flex items-center gap-2">
-                <span className="grid size-5 place-items-center rounded bg-stone-100 border border-ink text-[10px] font-black font-mono">1</span>
-                <span>Touchez le bouton de partage <Share className="size-3.5 inline mx-1 text-brand" /> dans Safari.</span>
+                <span className="grid size-5 place-items-center rounded bg-stone-100 border border-ink text-[10px] font-black font-mono">
+                  1
+                </span>
+                <span>
+                  Touchez le bouton de partage <Share className="size-3.5 inline mx-1 text-brand" />{" "}
+                  dans Safari.
+                </span>
               </li>
               <li className="flex items-center gap-2">
-                <span className="grid size-5 place-items-center rounded bg-stone-100 border border-ink text-[10px] font-black font-mono">2</span>
-                <span>Faites défiler et touchez <strong className="font-extrabold text-ink">Sur l'écran d'accueil</strong> <PlusSquare className="size-3.5 inline mx-1 text-brand" />.</span>
+                <span className="grid size-5 place-items-center rounded bg-stone-100 border border-ink text-[10px] font-black font-mono">
+                  2
+                </span>
+                <span>
+                  Faites défiler et touchez{" "}
+                  <strong className="font-extrabold text-ink">Sur l'écran d'accueil</strong>{" "}
+                  <PlusSquare className="size-3.5 inline mx-1 text-brand" />.
+                </span>
               </li>
               <li className="flex items-center gap-2">
-                <span className="grid size-5 place-items-center rounded bg-stone-100 border border-ink text-[10px] font-black font-mono">3</span>
-                <span>Validez en cliquant sur <strong className="font-extrabold text-ink">Ajouter</strong> en haut à droite.</span>
+                <span className="grid size-5 place-items-center rounded bg-stone-100 border border-ink text-[10px] font-black font-mono">
+                  3
+                </span>
+                <span>
+                  Validez en cliquant sur{" "}
+                  <strong className="font-extrabold text-ink">Ajouter</strong> en haut à droite.
+                </span>
               </li>
             </ol>
           </div>
@@ -131,7 +156,8 @@ export function PwaInstallPrompt() {
               </button>
             </div>
             <p className="text-[10px] text-center text-ink/60 font-bold mt-3 leading-relaxed">
-              * Android crée automatiquement un fichier d'installation natif (WebAPK) pour une intégration système parfaite.
+              * Android crée automatiquement un fichier d'installation natif (WebAPK) pour une
+              intégration système parfaite.
             </p>
           </div>
         )}

@@ -1,9 +1,38 @@
 import { useEffect, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { useSession } from "@/hooks/use-session";
-import { Calendar, Gift, Users, CheckCircle, Sparkles, Link as LinkIcon, Plus, Copy, Check, ShieldCheck, Loader2, Pencil, Trash2, BellRing, Phone, Search } from "lucide-react";
+import {
+  Calendar,
+  CalendarClock,
+  Gift,
+  Users,
+  CheckCircle,
+  Link as LinkIcon,
+  Plus,
+  Copy,
+  Check,
+  ShieldCheck,
+  Loader2,
+  Pencil,
+  Trash2,
+  BellRing,
+  Phone,
+  Search,
+} from "lucide-react";
 import { AdminPagination } from "./AdminPagination";
-import { listSeasonsAdmin, listSponsorshipsAdmin, updateSeasonStatusAdmin, deleteSeasonAdmin, confirmSponsorshipPaymentAdmin, getUpcomingExpirationsAdmin, DEFAULT_FALLBACK_SEASON, type Season, type SponsorshipToken } from "@/lib/seasons.functions";
+import {
+  listSeasonsAdmin,
+  listSponsorshipsAdmin,
+  updateSeasonStatusAdmin,
+  deleteSeasonAdmin,
+  confirmSponsorshipPaymentAdmin,
+  getUpcomingExpirationsAdmin,
+  DEFAULT_FALLBACK_SEASON,
+  type Season,
+  type SponsorshipToken,
+} from "@/lib/seasons.functions";
+import { extendChildAccessAdmin } from "@/lib/child-access";
+import { formatXof } from "@/lib/pricing";
 import { toast } from "sonner";
 import { confirmDialog } from "@/components/ui/confirm-dialog";
 import { CreateSeasonModal } from "./CreateSeasonModal";
@@ -15,6 +44,8 @@ interface UpcomingExpiration {
   campaignName: string | null;
   endDate: string;
   daysLeft: number;
+  source: "season" | "access";
+  renewalAmountXof: number;
 }
 
 const SEASON_STATUS_LABELS: Record<string, string> = {
@@ -33,10 +64,16 @@ export function AdminSeasonsTab() {
   const deleteSeasonFn = useServerFn(deleteSeasonAdmin);
   const confirmPaymentFn = useServerFn(confirmSponsorshipPaymentAdmin);
   const getUpcomingExpirationsFn = useServerFn(getUpcomingExpirationsAdmin);
+  const extendAccessFn = useServerFn(extendChildAccessAdmin);
 
   const [seasons, setSeasons] = useState<Season[]>([DEFAULT_FALLBACK_SEASON]);
   const [sponsorships, setSponsorships] = useState<SponsorshipToken[]>([]);
-  const [sponsorshipsMeta, setSponsorshipsMeta] = useState({ total: 0, page: 1, pageSize: 50, totalPages: 1 });
+  const [sponsorshipsMeta, setSponsorshipsMeta] = useState({
+    total: 0,
+    page: 1,
+    pageSize: 50,
+    totalPages: 1,
+  });
   const [upcomingExpirations, setUpcomingExpirations] = useState<UpcomingExpiration[]>([]);
   const [loading, setLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -44,6 +81,7 @@ export function AdminSeasonsTab() {
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [copiedCode, setCopiedCode] = useState<string | null>(null);
   const [confirmingId, setConfirmingId] = useState<string | null>(null);
+  const [extendingId, setExtendingId] = useState<string | null>(null);
 
   // Filtres de l'historique des parrainages — appliqués côté serveur (avant pagination), pas sur
   // la page déjà chargée.
@@ -78,17 +116,37 @@ export function AdminSeasonsTab() {
     setLoading(true);
     try {
       const [sList, tList, eList] = await Promise.all([
-        getSeasonsFn({ data: undefined, ...opts }).catch((err) => { console.error("Error loading seasons:", err); return null; }),
+        getSeasonsFn({ data: undefined, ...opts }).catch((err) => {
+          console.error("Error loading seasons:", err);
+          return null;
+        }),
         getSponsorshipsFn({
-          data: { search: debouncedSearch || undefined, page, pageSize: 50, paymentFilter, redeemedFilter },
+          data: {
+            search: debouncedSearch || undefined,
+            page,
+            pageSize: 50,
+            paymentFilter,
+            redeemedFilter,
+          },
           ...opts,
-        }).catch((err) => { console.error("Error loading sponsorships:", err); return null; }),
-        getUpcomingExpirationsFn({ data: undefined, ...opts }).catch((err) => { console.error("Error loading upcoming expirations:", err); return null; }),
+        }).catch((err) => {
+          console.error("Error loading sponsorships:", err);
+          return null;
+        }),
+        getUpcomingExpirationsFn({ data: undefined, ...opts }).catch((err) => {
+          console.error("Error loading upcoming expirations:", err);
+          return null;
+        }),
       ]);
       if (sList && sList.length > 0) setSeasons(sList);
       if (tList) {
         setSponsorships(tList.data);
-        setSponsorshipsMeta({ total: tList.total, page: tList.page, pageSize: tList.pageSize, totalPages: tList.totalPages });
+        setSponsorshipsMeta({
+          total: tList.total,
+          page: tList.page,
+          pageSize: tList.pageSize,
+          totalPages: tList.totalPages,
+        });
       }
       if (eList) setUpcomingExpirations(eList as UpcomingExpiration[]);
     } finally {
@@ -123,12 +181,15 @@ export function AdminSeasonsTab() {
   };
 
   const handleDelete = async (season: Season) => {
-    if (!(await confirmDialog({
-      title: "Supprimer cette saison ?",
-      description: `"${season.title}" sera définitivement supprimée. Impossible si des inscriptions ou parrainages y sont déjà liés — archivez-la dans ce cas.`,
-      confirmLabel: "Supprimer",
-      variant: "danger",
-    }))) return;
+    if (
+      !(await confirmDialog({
+        title: "Supprimer cette saison ?",
+        description: `"${season.title}" sera définitivement supprimée. Impossible si des inscriptions ou parrainages y sont déjà liés — archivez-la dans ce cas.`,
+        confirmLabel: "Supprimer",
+        variant: "danger",
+      }))
+    )
+      return;
 
     const opts = session?.access_token
       ? { headers: { Authorization: `Bearer ${session.access_token}` } }
@@ -173,6 +234,30 @@ export function AdminSeasonsTab() {
     }
   };
 
+  // Prolonge l'accès mensuel d'un enfant de N mois (paiement WhatsApp/Mobile Money reçu
+  // hors-app, décision 2026-08-05 : renouvellement manuel confirmé par l'admin). La
+  // nouvelle période démarre au plus tard entre maintenant et la fin de la période courante.
+  const handleExtendAccess = async (childId: string, months: number) => {
+    if (extendingId === childId) return;
+    const opts = session?.access_token
+      ? { headers: { Authorization: `Bearer ${session.access_token}` } }
+      : {};
+    setExtendingId(childId);
+    try {
+      const res = await extendAccessFn({ data: { childId, months }, ...opts });
+      if (res.success) {
+        toast.success(
+          `Accès prolongé de ${months} mois — nouvelle échéance : ${new Date(res.endsAt).toLocaleDateString("fr-FR")}.`,
+        );
+        loadData();
+      }
+    } catch (err: any) {
+      toast.error(err.message || "Erreur lors de la prolongation d'accès");
+    } finally {
+      setExtendingId(null);
+    }
+  };
+
   return (
     <div className="space-y-8 animate-in fade-in duration-300">
       {/* Overview Cards */}
@@ -204,12 +289,14 @@ export function AdminSeasonsTab() {
             </span>
           </div>
           <h3 className="font-display text-2xl font-black text-ink">
-            {sponsorshipsMeta.total} <span className="text-sm font-normal text-ink/60">Parrainages</span>
+            {sponsorshipsMeta.total}{" "}
+            <span className="text-sm font-normal text-ink/60">Parrainages</span>
           </h3>
           {/* Répartition calculée sur la page affichée uniquement — le total ci-dessus vient du
               serveur et couvre tout le résultat filtré, pas seulement les 50 lignes chargées. */}
           <p className="text-xs text-emerald-600 font-bold mt-1">
-            {sponsorships.filter((s) => s.is_redeemed).length} Utilisés · {sponsorships.filter((s) => !s.is_redeemed).length} En attente
+            {sponsorships.filter((s) => s.is_redeemed).length} Utilisés ·{" "}
+            {sponsorships.filter((s) => !s.is_redeemed).length} En attente
             <span className="text-ink/40 font-medium"> (page affichée)</span>
           </p>
         </div>
@@ -224,11 +311,12 @@ export function AdminSeasonsTab() {
             </span>
           </div>
           <h3 className="font-display text-2xl font-black text-ink">
-            {(activeSeason?.price_xof ?? 10000).toLocaleString()} FCFA <span className="text-sm text-ink/60 font-medium">/ {activeSeason?.price_eur ?? 15} €</span>
+            {(activeSeason?.price_xof ?? 10000).toLocaleString()} FCFA{" "}
+            <span className="text-sm text-ink/60 font-medium">
+              / {activeSeason?.price_eur ?? 15} €
+            </span>
           </h3>
-          <p className="text-xs text-ink/60 font-medium mt-1">
-            100% Zero Pay-To-Win
-          </p>
+          <p className="text-xs text-ink/60 font-medium mt-1">100% Zero Pay-To-Win</p>
         </div>
       </div>
 
@@ -244,33 +332,97 @@ export function AdminSeasonsTab() {
             </h3>
           </div>
           <p className="text-xs font-medium text-amber-800/70 mb-4">
-            Ces familles arrivent en fin de fenêtre d'accès. Aucun rappel automatique n'existe — contactez-les manuellement pour éviter une coupure surprise.
+            Ces familles arrivent en fin de fenêtre d'accès. Aucun rappel automatique n'existe —
+            contactez-les manuellement pour éviter une coupure surprise.
           </p>
           <div className="space-y-2">
             {upcomingExpirations.map((exp) => (
-              <div key={exp.childId} className="flex items-center justify-between gap-3 rounded-2xl bg-white border border-amber-200/60 px-4 py-3">
-                <div>
-                  <span className="font-bold text-sm text-ink">{exp.childName}</span>
-                  {exp.campaignName && (
-                    <span className="ml-2 text-[10px] font-bold uppercase tracking-wider text-ink/40">{exp.campaignName}</span>
-                  )}
+              <div
+                key={exp.childId}
+                className="flex items-center justify-between gap-3 rounded-2xl bg-white border border-amber-200/60 px-4 py-3"
+              >
+                <div className="min-w-0">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <span className="font-bold text-sm text-ink">{exp.childName}</span>
+                    <span
+                      className={`rounded-full px-2 py-0.5 text-[9px] font-black uppercase tracking-wider ${
+                        exp.source === "access"
+                          ? "bg-brand/10 text-brand border border-brand/20"
+                          : "bg-indigo-50 text-indigo-700 border border-indigo-200"
+                      }`}
+                    >
+                      {exp.source === "access" ? "Abonnement mensuel" : "Saison"}
+                    </span>
+                    {exp.campaignName && (
+                      <span className="text-[10px] font-bold uppercase tracking-wider text-ink/40">
+                        {exp.campaignName}
+                      </span>
+                    )}
+                  </div>
                   <p className="text-xs text-ink/60 font-medium">
-                    {exp.daysLeft === 0 ? "Expire aujourd'hui" : `Expire dans ${exp.daysLeft} jour${exp.daysLeft > 1 ? "s" : ""}`} ({new Date(exp.endDate).toLocaleDateString("fr-FR")})
+                    {exp.daysLeft === 0
+                      ? "Expire aujourd'hui"
+                      : `Expire dans ${exp.daysLeft} jour${exp.daysLeft > 1 ? "s" : ""}`}{" "}
+                    ({new Date(exp.endDate).toLocaleDateString("fr-FR")})
+                    {exp.source === "access" && exp.renewalAmountXof > 0 && (
+                      <>
+                        {" "}
+                        · renouvellement : <strong>{formatXof(exp.renewalAmountXof)}/mois</strong>
+                      </>
+                    )}
                   </p>
                 </div>
-                {exp.parentPhone ? (
-                  <a
-                    href={`https://wa.me/${exp.parentPhone.replace(/[^0-9]/g, "")}?text=${encodeURIComponent(`Bonjour, l'accès Génizio de votre enfant se termine bientôt (${new Date(exp.endDate).toLocaleDateString("fr-FR")}). Souhaitez-vous renouveler ?`)}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="shrink-0 rounded-xl bg-[#25D366] px-3 py-2 text-[11px] font-bold text-white shadow-sm hover:brightness-95 transition-all flex items-center gap-1.5"
-                  >
-                    <Phone className="size-3.5" />
-                    Relancer
-                  </a>
-                ) : (
-                  <span className="shrink-0 text-[11px] font-bold text-ink/40 italic">Pas de téléphone</span>
-                )}
+                <div className="flex items-center gap-2 shrink-0">
+                  {exp.source === "access" && (
+                    <>
+                      <button
+                        onClick={() => handleExtendAccess(exp.childId, 1)}
+                        disabled={extendingId === exp.childId}
+                        title="Prolonger l'accès de 1 mois (paiement reçu)"
+                        className="rounded-xl border border-brand/30 bg-brand/5 px-2.5 py-2 text-[11px] font-bold text-brand hover:bg-brand/10 transition-all disabled:opacity-50 flex items-center gap-1 cursor-pointer"
+                      >
+                        {extendingId === exp.childId ? (
+                          <Loader2 className="size-3 animate-spin" />
+                        ) : (
+                          <Plus className="size-3" />
+                        )}
+                        +1 mois
+                      </button>
+                      <button
+                        onClick={() => handleExtendAccess(exp.childId, 3)}
+                        disabled={extendingId === exp.childId}
+                        title="Prolonger l'accès de 3 mois (paiement reçu)"
+                        className="rounded-xl border border-brand/30 bg-brand/5 px-2.5 py-2 text-[11px] font-bold text-brand hover:bg-brand/10 transition-all disabled:opacity-50 flex items-center gap-1 cursor-pointer"
+                      >
+                        {extendingId === exp.childId ? (
+                          <Loader2 className="size-3 animate-spin" />
+                        ) : (
+                          <Plus className="size-3" />
+                        )}
+                        +3 mois
+                      </button>
+                    </>
+                  )}
+                  {exp.parentPhone ? (
+                    <a
+                      href={`https://wa.me/${exp.parentPhone.replace(/[^0-9]/g, "")}?text=${encodeURIComponent(
+                        exp.source === "access" && exp.renewalAmountXof > 0
+                          ? `Bonjour, l'accès Génizio de votre enfant se termine bientôt (${new Date(exp.endDate).toLocaleDateString("fr-FR")}). Renouvellement : ${formatXof(exp.renewalAmountXof)}/mois. Souhaitez-vous renouveler ?`
+                          : `Bonjour, l'accès Génizio de votre enfant se termine bientôt (${new Date(exp.endDate).toLocaleDateString("fr-FR")}). Souhaitez-vous renouveler ?`,
+                      )}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="shrink-0 rounded-xl bg-[#25D366] px-3 py-2 text-[11px] font-bold text-white shadow-sm hover:brightness-95 transition-all flex items-center gap-1.5"
+                    >
+                      <Phone className="size-3.5" />
+                      Relancer
+                    </a>
+                  ) : (
+                    <span className="shrink-0 text-[11px] font-bold text-ink/40 italic">
+                      Pas de téléphone
+                    </span>
+                  )}
+                </div>
               </div>
             ))}
           </div>
@@ -282,11 +434,12 @@ export function AdminSeasonsTab() {
         <div className="flex items-center justify-between mb-6 flex-wrap gap-4">
           <div>
             <h3 className="font-display text-xl font-bold text-ink flex items-center gap-2">
-              <Sparkles className="size-5 text-brand" />
+              <CalendarClock className="size-5 text-brand" />
               Saisons Génizio (Cohortes de 3 Mois)
             </h3>
             <p className="text-xs font-medium text-ink/60">
-              Chaque saison est un trimestre thématique débouchant sur la livraison du Portfolio d'Impact certifié.
+              Chaque saison est un trimestre thématique débouchant sur la livraison du Portfolio
+              d'Impact certifié.
             </p>
           </div>
           <div className="flex items-center gap-3">
@@ -311,7 +464,10 @@ export function AdminSeasonsTab() {
 
         <div className="space-y-4">
           {seasons.map((season) => (
-            <div key={season.id} className="rounded-2xl border border-ink/10 bg-surface p-5 flex items-center justify-between flex-wrap gap-4">
+            <div
+              key={season.id}
+              className="rounded-2xl border border-ink/10 bg-surface p-5 flex items-center justify-between flex-wrap gap-4"
+            >
               <div>
                 <div className="flex items-center gap-2 mb-1">
                   <span className="rounded-full bg-brand/15 px-3 py-0.5 text-[10px] font-black uppercase text-brand border border-brand/20">
@@ -329,7 +485,9 @@ export function AdminSeasonsTab() {
                   <span className="font-display text-lg font-black text-ink">
                     {season.price_xof.toLocaleString()} FCFA
                   </span>
-                  <span className="block text-xs text-ink/60 font-bold">({season.price_eur} €)</span>
+                  <span className="block text-xs text-ink/60 font-bold">
+                    ({season.price_eur} €)
+                  </span>
                 </div>
                 <div className="flex flex-wrap items-center gap-2 border-l border-ink/10 pl-6">
                   {season.id === DEFAULT_FALLBACK_SEASON.id ? (
@@ -379,7 +537,11 @@ export function AdminSeasonsTab() {
                         title="Supprimer"
                         className="grid size-7 place-items-center rounded-lg border border-red-200 bg-red-50 text-red-600 hover:bg-red-100 transition-colors cursor-pointer disabled:opacity-50"
                       >
-                        {deletingId === season.id ? <Loader2 className="size-3.5 animate-spin" /> : <Trash2 className="size-3.5" />}
+                        {deletingId === season.id ? (
+                          <Loader2 className="size-3.5 animate-spin" />
+                        ) : (
+                          <Trash2 className="size-3.5" />
+                        )}
                       </button>
                     </>
                   )}
@@ -445,6 +607,7 @@ export function AdminSeasonsTab() {
                   <th className="py-3 px-4">Code</th>
                   <th className="py-3 px-4">Parrain / Entreprise</th>
                   <th className="py-3 px-4">Filleul</th>
+                  <th className="py-3 px-4">Durée</th>
                   <th className="py-3 px-4">Montant</th>
                   <th className="py-3 px-4">Statut</th>
                   <th className="py-3 px-4">Action</th>
@@ -458,7 +621,10 @@ export function AdminSeasonsTab() {
                       <span className="font-bold text-ink">{token.sponsor_name}</span>
                       <span className="block text-[10px] text-ink/50">{token.sponsor_email}</span>
                     </td>
-                    <td className="py-3 px-4 font-bold text-ink">{token.target_child_name || "Non spécifié"}</td>
+                    <td className="py-3 px-4 font-bold text-ink">
+                      {token.target_child_name || "Non spécifié"}
+                    </td>
+                    <td className="py-3 px-4 font-bold text-ink">{token.months_count ?? 3} mois</td>
                     <td className="py-3 px-4 font-bold">
                       {token.amount_paid} {token.currency}
                     </td>
@@ -486,7 +652,11 @@ export function AdminSeasonsTab() {
                             title="Confirmer que le paiement WhatsApp/Mobile Money a bien été reçu"
                             className="rounded-xl border border-emerald-300 bg-emerald-50 px-3 py-1 text-[11px] font-bold text-emerald-800 hover:bg-emerald-100 transition-all flex items-center gap-1 cursor-pointer shadow-xs disabled:opacity-50"
                           >
-                            {confirmingId === token.id ? <Loader2 className="size-3 animate-spin" /> : <ShieldCheck className="size-3" />}
+                            {confirmingId === token.id ? (
+                              <Loader2 className="size-3 animate-spin" />
+                            ) : (
+                              <ShieldCheck className="size-3" />
+                            )}
                             Confirmer paiement
                           </button>
                         )}
@@ -494,7 +664,11 @@ export function AdminSeasonsTab() {
                           onClick={() => copyCode(token.code)}
                           className="rounded-xl border border-ink/10 bg-white px-3 py-1 text-[11px] font-bold hover:bg-surface transition-all flex items-center gap-1 cursor-pointer shadow-xs"
                         >
-                          {copiedCode === token.code ? <Check className="size-3 text-emerald-600" /> : <Copy className="size-3" />}
+                          {copiedCode === token.code ? (
+                            <Check className="size-3 text-emerald-600" />
+                          ) : (
+                            <Copy className="size-3" />
+                          )}
                           Copier
                         </button>
                       </div>
