@@ -55,6 +55,8 @@ export const Route = createFileRoute("/guides/defis-pour-adolescents")({
           mainEntityOfPage: absoluteUrl(PATH),
           publisher: { "@id": `${SITE_URL}/#organization` },
           author: { "@type": "Organization", name: "Génizio" },
+          datePublished: "2026-07-27",
+          dateModified: "2026-07-27",
           about: [
             { "@type": "Thing", name: "Motivation des adolescents" },
             { "@type": "Thing", name: "Défis pour jeunes" },
