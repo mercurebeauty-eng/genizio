@@ -60,6 +60,8 @@ export const Route = createFileRoute("/guides/potentiel-haut-potentiel-enfant")(
           mainEntityOfPage: absoluteUrl(PATH),
           publisher: { "@id": `${SITE_URL}/#organization` },
           author: { "@type": "Organization", name: "Génizio" },
+          datePublished: "2026-07-27",
+          dateModified: "2026-07-27",
           about: [
             { "@type": "Thing", name: "Haut potentiel intellectuel" },
             { "@type": "Thing", name: "Développement du potentiel de l'enfant" },

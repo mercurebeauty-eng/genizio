@@ -55,6 +55,8 @@ export const Route = createFileRoute("/guides/education-enfants-afrique-francoph
           mainEntityOfPage: absoluteUrl(PATH),
           publisher: { "@id": `${SITE_URL}/#organization` },
           author: { "@type": "Organization", name: "Génizio" },
+          datePublished: "2026-07-27",
+          dateModified: "2026-07-27",
           about: [
             { "@type": "Thing", name: "Éducation en Afrique francophone" },
             { "@type": "Thing", name: "Développement du potentiel de l'enfant" },

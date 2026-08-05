@@ -44,7 +44,7 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import { TALENT_KEY_LABELS } from "@/lib/talent-buckets";
-import { pageMeta, jsonLdScript, faqPageJsonLd, SOFTWARE_APP_JSONLD } from "@/lib/seo";
+import { pageMeta, jsonLdScript, faqPageJsonLd, SOFTWARE_APP_JSONLD, howToJsonLd } from "@/lib/seo";
 
 // Questions réellement tapées par des parents francophones, avec des réponses qui se
 // suffisent à elles-mêmes : c'est le format que Google affiche en réponse directe et que les
@@ -109,7 +109,21 @@ export const Route = createFileRoute("/")({
     });
     return {
       ...meta,
-      scripts: [jsonLdScript(SOFTWARE_APP_JSONLD), jsonLdScript(faqPageJsonLd(LANDING_FAQ))],
+      scripts: [
+        jsonLdScript(SOFTWARE_APP_JSONLD),
+        jsonLdScript(faqPageJsonLd(LANDING_FAQ)),
+        // Méthode en trois actes, visible dans la section « Trois actes. Zéro
+        // questionnaire. » (METHOD_STEPS) — le HowTo doit rester synchronisé avec
+        // les étapes affichées.
+        jsonLdScript(
+          howToJsonLd({
+            name: "Comment révéler les talents de votre enfant avec Génizio",
+            description:
+              "La méthode Génizio en trois actes : l'enfant réalise un défi concret, le parent photographie la réalisation, et l'IA Naya met à jour la carte des 9 intelligences.",
+            steps: METHOD_STEPS.map(({ title, desc }) => ({ name: title, text: desc })),
+          }),
+        ),
+      ],
     };
   },
   component: NayaLanding,

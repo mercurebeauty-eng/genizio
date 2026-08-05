@@ -72,6 +72,8 @@ export const Route = createFileRoute("/guides/intelligences-multiples-gardner")(
           mainEntityOfPage: absoluteUrl(PATH),
           publisher: { "@id": `${SITE_URL}/#organization` },
           author: { "@type": "Organization", name: "Génizio" },
+          datePublished: "2026-07-27",
+          dateModified: "2026-07-27",
           about: [
             { "@type": "Thing", name: "Théorie des intelligences multiples" },
             { "@type": "Person", name: "Howard Gardner" },
