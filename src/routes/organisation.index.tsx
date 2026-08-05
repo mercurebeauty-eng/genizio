@@ -13,12 +13,37 @@ import {
   type CampaignEducator,
 } from "@/lib/campaigns.functions";
 import { TALENT_KEY_LABELS } from "@/lib/talent-buckets";
-import { Building2, Users, Target, ShieldCheck, Loader2, UserPlus, AlertCircle, Rocket, X, Sparkles, Key, Download, Copy, ChevronDown, FileDown, Printer, Quote, GraduationCap, Trash2 } from "lucide-react";
+import {
+  Building2,
+  Users,
+  Target,
+  ShieldCheck,
+  Loader2,
+  UserPlus,
+  AlertCircle,
+  Rocket,
+  X,
+  Key,
+  FileBarChart,
+  Download,
+  Copy,
+  ChevronDown,
+  FileDown,
+  Printer,
+  Quote,
+  GraduationCap,
+  Trash2,
+} from "lucide-react";
 import { toast } from "sonner";
 import { GenizioLoader } from "@/components/GenizioLoader";
 import { CampaignLinkCard } from "@/components/campaigns/CampaignLinkCard";
 import { computeSupervisorQuota } from "@/lib/supervisor-quota";
-import { resolveExtraSlotPrice, formatXof, formatPromoDeadline, STANDARD_PRICE_XOF } from "@/lib/pricing";
+import {
+  resolveExtraSlotPrice,
+  formatXof,
+  formatPromoDeadline,
+  STANDARD_PRICE_XOF,
+} from "@/lib/pricing";
 
 export const Route = createFileRoute("/organisation/")({
   component: OrganisationDashboard,
@@ -79,7 +104,12 @@ function OrganisationDashboard() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  if (loading) return <div className="min-h-[50vh] flex items-center justify-center"><GenizioLoader /></div>;
+  if (loading)
+    return (
+      <div className="min-h-[50vh] flex items-center justify-center">
+        <GenizioLoader />
+      </div>
+    );
 
   if (!data || data.campaigns.length === 0) {
     return (
@@ -88,9 +118,12 @@ function OrganisationDashboard() {
           <div className="size-20 rounded-full bg-brand/10 text-brand flex items-center justify-center mx-auto mb-6">
             <Building2 className="size-10" />
           </div>
-          <h1 className="text-3xl font-display font-black text-ink mb-4">Aucune Campagne Associée</h1>
+          <h1 className="text-3xl font-display font-black text-ink mb-4">
+            Aucune Campagne Associée
+          </h1>
           <p className="text-lg text-ink/70 max-w-lg mx-auto">
-            Votre compte n'est actuellement associé à aucune campagne active. Veuillez contacter l'équipe Génizio pour activer votre espace partenaire.
+            Votre compte n'est actuellement associé à aucune campagne active. Veuillez contacter
+            l'équipe Génizio pour activer votre espace partenaire.
           </p>
         </div>
       </main>
@@ -98,9 +131,15 @@ function OrganisationDashboard() {
   }
 
   const { campaigns, stats, supervisors, narratives } = data;
-  const activeCampaign = (campaigns.find((c) => c.id === selectedCampaignId) ?? campaigns[0]) as Campaign;
-  const completionRate = stats && stats.totalChallenges > 0 ? Math.round((stats.completedChallenges / stats.totalChallenges) * 100) : 0;
-  const talentEntries = stats ? Object.entries(stats.talentDistribution).sort((a, b) => b[1] - a[1]) : [];
+  const activeCampaign = (campaigns.find((c) => c.id === selectedCampaignId) ??
+    campaigns[0]) as Campaign;
+  const completionRate =
+    stats && stats.totalChallenges > 0
+      ? Math.round((stats.completedChallenges / stats.totalChallenges) * 100)
+      : 0;
+  const talentEntries = stats
+    ? Object.entries(stats.talentDistribution).sort((a, b) => b[1] - a[1])
+    : [];
   const talentMax = talentEntries.length > 0 ? talentEntries[0][1] : 1;
 
   return (
@@ -116,11 +155,16 @@ function OrganisationDashboard() {
             <div className="relative inline-block">
               <select
                 value={activeCampaign.id}
-                onChange={(e) => { setSelectedCampaignId(e.target.value); loadData(e.target.value); }}
+                onChange={(e) => {
+                  setSelectedCampaignId(e.target.value);
+                  loadData(e.target.value);
+                }}
                 className="appearance-none text-3xl sm:text-4xl md:text-5xl font-display font-black text-ink tracking-tight bg-transparent border-none pr-9 cursor-pointer focus:outline-none"
               >
                 {campaigns.map((c) => (
-                  <option key={c.id} value={c.id}>{c.name}</option>
+                  <option key={c.id} value={c.id}>
+                    {c.name}
+                  </option>
                 ))}
               </select>
               <ChevronDown className="size-6 text-ink/40 absolute right-0 top-1/2 -translate-y-1/2 pointer-events-none" />
@@ -136,7 +180,8 @@ function OrganisationDashboard() {
           <div className="inline-flex items-center gap-2 mt-3 px-3 py-1 bg-surface rounded-xl text-xs font-bold text-ink/60 border border-ink/5">
             <span>Période :</span>
             <strong className="text-ink">
-              {new Date(activeCampaign.start_date).toLocaleDateString("fr-FR")} → {new Date(activeCampaign.end_date).toLocaleDateString("fr-FR")}
+              {new Date(activeCampaign.start_date).toLocaleDateString("fr-FR")} →{" "}
+              {new Date(activeCampaign.end_date).toLocaleDateString("fr-FR")}
             </strong>
           </div>
         </div>
@@ -155,44 +200,63 @@ function OrganisationDashboard() {
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <div className="bg-white rounded-3xl p-5 sm:p-6 shadow-2xs border border-brand/15 bg-gradient-to-br from-brand/5 via-white to-white relative overflow-hidden">
           <div className="flex items-center justify-between text-brand font-black text-xs uppercase tracking-wider mb-2">
-            <span className="flex items-center gap-2"><Target className="size-4" /> Enrôlement</span>
+            <span className="flex items-center gap-2">
+              <Target className="size-4" /> Enrôlement
+            </span>
             <span className="px-2 py-0.5 rounded-full bg-brand/10 text-[10px]">Codes</span>
           </div>
           <div className="text-3xl sm:text-4xl font-black text-ink mt-1">
-            {stats?.redeemedTokens ?? 0} <span className="text-lg text-ink/40 font-bold">/ {stats?.totalTokens ?? 0}</span>
+            {stats?.redeemedTokens ?? 0}{" "}
+            <span className="text-lg text-ink/40 font-bold">/ {stats?.totalTokens ?? 0}</span>
           </div>
           <div className="text-xs font-medium text-ink/60 mt-1">Codes d'inscription activés</div>
         </div>
 
         <div className="bg-white rounded-3xl p-5 sm:p-6 shadow-2xs border border-emerald-500/15 bg-gradient-to-br from-emerald-500/5 via-white to-white relative overflow-hidden">
           <div className="flex items-center justify-between text-emerald-700 font-black text-xs uppercase tracking-wider mb-2">
-            <span className="flex items-center gap-2"><Users className="size-4" /> Cohorte</span>
+            <span className="flex items-center gap-2">
+              <Users className="size-4" /> Cohorte
+            </span>
             <span className="px-2 py-0.5 rounded-full bg-emerald-500/10 text-[10px]">Actifs</span>
           </div>
-          <div className="text-3xl sm:text-4xl font-black text-emerald-700 mt-1">{stats?.cohortSize ?? 0}</div>
+          <div className="text-3xl sm:text-4xl font-black text-emerald-700 mt-1">
+            {stats?.cohortSize ?? 0}
+          </div>
           <div className="text-xs font-medium text-ink/60 mt-1">Enfants inscrits et suivis</div>
         </div>
 
         <div className="bg-white rounded-3xl p-5 sm:p-6 shadow-2xs border border-sky-500/15 bg-gradient-to-br from-sky-500/5 via-white to-white relative overflow-hidden">
           <div className="flex items-center justify-between text-sky-700 font-black text-xs uppercase tracking-wider mb-2">
-            <span className="flex items-center gap-2"><Rocket className="size-4" /> Défis Réalisés</span>
-            <span className="px-2 py-0.5 rounded-full bg-sky-500/10 text-[10px]">{completionRate}%</span>
+            <span className="flex items-center gap-2">
+              <Rocket className="size-4" /> Défis Réalisés
+            </span>
+            <span className="px-2 py-0.5 rounded-full bg-sky-500/10 text-[10px]">
+              {completionRate}%
+            </span>
           </div>
           <div className="text-3xl sm:text-4xl font-black text-sky-700 mt-1">
-            {stats?.completedChallenges ?? 0} <span className="text-lg text-ink/40 font-bold">/ {stats?.totalChallenges ?? 0}</span>
+            {stats?.completedChallenges ?? 0}{" "}
+            <span className="text-lg text-ink/40 font-bold">/ {stats?.totalChallenges ?? 0}</span>
           </div>
           <div className="text-xs font-medium text-ink/60 mt-1">Taux de réalisation cohorte</div>
         </div>
 
         <div className="bg-white rounded-3xl p-5 sm:p-6 shadow-2xs border border-amber-500/15 bg-gradient-to-br from-amber-500/5 via-white to-white relative overflow-hidden">
           <div className="flex items-center justify-between text-amber-800 font-black text-xs uppercase tracking-wider mb-2">
-            <span className="flex items-center gap-2"><AlertCircle className="size-4" /> Supervision</span>
-            <span className="px-2 py-0.5 rounded-full bg-amber-500/10 text-[10px]">Superviseurs</span>
+            <span className="flex items-center gap-2">
+              <AlertCircle className="size-4" /> Supervision
+            </span>
+            <span className="px-2 py-0.5 rounded-full bg-amber-500/10 text-[10px]">
+              Superviseurs
+            </span>
           </div>
           <div className="text-3xl sm:text-4xl font-black text-amber-900 mt-1">
-            {stats?.supervisedChildren ?? 0} <span className="text-lg text-ink/40 font-bold">/ {stats?.cohortSize ?? 0}</span>
+            {stats?.supervisedChildren ?? 0}{" "}
+            <span className="text-lg text-ink/40 font-bold">/ {stats?.cohortSize ?? 0}</span>
           </div>
-          <div className="text-xs font-medium text-ink/60 mt-1">Capacité : {stats?.totalSupervisorQuota ?? 0} enfants supervisés</div>
+          <div className="text-xs font-medium text-ink/60 mt-1">
+            Capacité : {stats?.totalSupervisorQuota ?? 0} enfants supervisés
+          </div>
         </div>
       </div>
 
@@ -201,12 +265,15 @@ function OrganisationDashboard() {
         <div className="flex items-start justify-between gap-4 mb-2 flex-wrap">
           <div className="flex items-center gap-2.5">
             <div className="size-9 rounded-xl bg-brand/10 text-brand flex items-center justify-center shrink-0">
-              <Sparkles className="size-5" />
+              <FileBarChart className="size-5" />
             </div>
             <div>
-              <h2 className="text-xl sm:text-2xl font-display font-black text-ink">Rapport d'Impact — Cohorte</h2>
+              <h2 className="text-xl sm:text-2xl font-display font-black text-ink">
+                Rapport d'Impact — Cohorte
+              </h2>
               <p className="text-xs sm:text-sm text-ink/60 font-medium">
-                Répartition agrégée des 9 intelligences éveillées chez les enfants de votre cohorte. Aucune donnée individuelle n'est partagée.
+                Répartition agrégée des 9 intelligences éveillées chez les enfants de votre cohorte.
+                Aucune donnée individuelle n'est partagée.
               </p>
             </div>
           </div>
@@ -222,17 +289,30 @@ function OrganisationDashboard() {
         <div className="mt-6 pt-4 border-t border-ink/5">
           {talentEntries.length === 0 ? (
             <div className="p-8 text-center bg-surface/50 rounded-2xl border border-dashed border-ink/10">
-              <p className="text-sm text-ink/50 font-medium italic">Pas encore assez de données — les premiers défis complétés alimenteront ce rapport d'impact.</p>
+              <p className="text-sm text-ink/50 font-medium italic">
+                Pas encore assez de données — les premiers défis complétés alimenteront ce rapport
+                d'impact.
+              </p>
             </div>
           ) : (
             <div className="space-y-3.5">
               {talentEntries.map(([key, value]) => (
-                <div key={key} className="flex flex-col sm:flex-row sm:items-center gap-1.5 sm:gap-3">
-                  <span className="w-full sm:w-44 shrink-0 text-xs font-black text-ink">{TALENT_KEY_LABELS[key] || key}</span>
+                <div
+                  key={key}
+                  className="flex flex-col sm:flex-row sm:items-center gap-1.5 sm:gap-3"
+                >
+                  <span className="w-full sm:w-44 shrink-0 text-xs font-black text-ink">
+                    {TALENT_KEY_LABELS[key] || key}
+                  </span>
                   <div className="flex-1 h-3.5 rounded-full bg-surface overflow-hidden border border-ink/5 p-0.5">
-                    <div className="h-full bg-brand rounded-full transition-all duration-500" style={{ width: `${Math.max(5, (value / talentMax) * 100)}%` }} />
+                    <div
+                      className="h-full bg-brand rounded-full transition-all duration-500"
+                      style={{ width: `${Math.max(5, (value / talentMax) * 100)}%` }}
+                    />
                   </div>
-                  <span className="w-12 text-right text-xs font-black text-brand shrink-0">{value} pts</span>
+                  <span className="w-12 text-right text-xs font-black text-brand shrink-0">
+                    {value} pts
+                  </span>
                 </div>
               ))}
             </div>
@@ -246,7 +326,12 @@ function OrganisationDashboard() {
           <div>
             <h2 className="text-xl sm:text-2xl font-display font-black text-ink">Superviseurs</h2>
             <p className="text-xs sm:text-sm text-ink/60 font-medium mt-1">
-              Un superviseur suit jusqu'à {computeSupervisorQuota({ referenceCreatedAt: activeCampaign.created_at, extraQuota: 0 })} enfants de votre cohorte via son propre tableau de bord dédié.
+              Un superviseur suit jusqu'à{" "}
+              {computeSupervisorQuota({
+                referenceCreatedAt: activeCampaign.created_at,
+                extraQuota: 0,
+              })}{" "}
+              enfants de votre cohorte via son propre tableau de bord dédié.
             </p>
           </div>
           <button
@@ -262,7 +347,10 @@ function OrganisationDashboard() {
         <div className="p-4 sm:p-0">
           <div className="sm:hidden space-y-2.5">
             {supervisors.map((s) => (
-              <div key={s.email} className="p-4 rounded-2xl bg-surface/70 border border-ink/5 flex items-center justify-between">
+              <div
+                key={s.email}
+                className="p-4 rounded-2xl bg-surface/70 border border-ink/5 flex items-center justify-between"
+              >
                 <div>
                   <p className="text-xs font-black text-ink">{s.email}</p>
                   <p className="text-[10px] text-ink/50 font-bold mt-0.5">Superviseur référent</p>
@@ -273,7 +361,9 @@ function OrganisationDashboard() {
               </div>
             ))}
             {supervisors.length === 0 && (
-              <div className="p-6 text-center text-xs font-bold text-ink/40">Aucun superviseur assigné.</div>
+              <div className="p-6 text-center text-xs font-bold text-ink/40">
+                Aucun superviseur assigné.
+              </div>
             )}
           </div>
 
@@ -281,15 +371,21 @@ function OrganisationDashboard() {
             <table className="w-full text-left">
               <thead className="bg-surface/50 border-b border-ink/5">
                 <tr>
-                  <th className="p-4 px-6 text-xs font-extrabold uppercase tracking-widest text-ink/50">Superviseur</th>
-                  <th className="p-4 px-6 text-xs font-extrabold uppercase tracking-widest text-ink/50 text-right">Enfants assignés</th>
+                  <th className="p-4 px-6 text-xs font-extrabold uppercase tracking-widest text-ink/50">
+                    Superviseur
+                  </th>
+                  <th className="p-4 px-6 text-xs font-extrabold uppercase tracking-widest text-ink/50 text-right">
+                    Enfants assignés
+                  </th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-ink/5">
                 {supervisors.map((s) => (
                   <tr key={s.email} className="hover:bg-surface/30 transition-colors">
                     <td className="p-4 px-6 font-bold text-sm text-ink">{s.email}</td>
-                    <td className="p-4 px-6 text-right font-black text-sm text-brand">{s.assignedCount} / {stats?.totalSupervisorQuota ?? 0}</td>
+                    <td className="p-4 px-6 text-right font-black text-sm text-brand">
+                      {s.assignedCount} / {stats?.totalSupervisorQuota ?? 0}
+                    </td>
                   </tr>
                 ))}
                 {supervisors.length === 0 && (
@@ -316,15 +412,15 @@ function OrganisationDashboard() {
           campaignId={activeCampaign.id}
           campaignCreatedAt={activeCampaign.created_at}
           onClose={() => setIsAssignModalOpen(false)}
-          onSuccess={() => { setIsAssignModalOpen(false); loadData(selectedCampaignId); }}
+          onSuccess={() => {
+            setIsAssignModalOpen(false);
+            loadData(selectedCampaignId);
+          }}
         />
       )}
 
       {isCodesModalOpen && (
-        <ManagerCodesModal
-          campaign={activeCampaign}
-          onClose={() => setIsCodesModalOpen(false)}
-        />
+        <ManagerCodesModal campaign={activeCampaign} onClose={() => setIsCodesModalOpen(false)} />
       )}
 
       {isReportModalOpen && stats && (
@@ -376,7 +472,10 @@ function ManagerCodesModal({ campaign, onClose }: { campaign: Campaign; onClose:
     ]);
     const csvContent =
       "﻿" +
-      [headers.join(";"), ...rows.map((row) => row.map((val) => `"${String(val).replace(/"/g, '""')}"`).join(";"))].join("\n");
+      [
+        headers.join(";"),
+        ...rows.map((row) => row.map((val) => `"${String(val).replace(/"/g, '""')}"`).join(";")),
+      ].join("\n");
     const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
@@ -410,31 +509,50 @@ function ManagerCodesModal({ campaign, onClose }: { campaign: Campaign; onClose:
               Codes de la campagne : {campaign.name}
             </h3>
             <p className="text-xs font-medium text-ink/60 mt-0.5">
-              Total : {tokens.length} code(s) · Activés : {redeemedCount} · Non-activés : {unredeemedCount}
+              Total : {tokens.length} code(s) · Activés : {redeemedCount} · Non-activés :{" "}
+              {unredeemedCount}
             </p>
           </div>
-          <button onClick={onClose} className="p-2 bg-surface rounded-full text-ink/60 hover:text-ink transition-colors cursor-pointer">
+          <button
+            onClick={onClose}
+            className="p-2 bg-surface rounded-full text-ink/60 hover:text-ink transition-colors cursor-pointer"
+          >
             <X className="size-5" />
           </button>
         </div>
 
         <div className="flex flex-wrap items-center justify-between gap-3 py-4 border-b border-ink/10">
           <div className="flex gap-2">
-            <button onClick={() => setFilter("all")} className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-colors ${filter === "all" ? "bg-ink text-white" : "bg-surface text-ink/70 hover:bg-ink/10"}`}>
+            <button
+              onClick={() => setFilter("all")}
+              className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-colors ${filter === "all" ? "bg-ink text-white" : "bg-surface text-ink/70 hover:bg-ink/10"}`}
+            >
               Tous ({tokens.length})
             </button>
-            <button onClick={() => setFilter("unactive")} className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-colors ${filter === "unactive" ? "bg-ink text-white" : "bg-surface text-ink/70 hover:bg-ink/10"}`}>
+            <button
+              onClick={() => setFilter("unactive")}
+              className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-colors ${filter === "unactive" ? "bg-ink text-white" : "bg-surface text-ink/70 hover:bg-ink/10"}`}
+            >
               Non-activés ({unredeemedCount})
             </button>
-            <button onClick={() => setFilter("active")} className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-colors ${filter === "active" ? "bg-ink text-white" : "bg-surface text-ink/70 hover:bg-ink/10"}`}>
+            <button
+              onClick={() => setFilter("active")}
+              className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-colors ${filter === "active" ? "bg-ink text-white" : "bg-surface text-ink/70 hover:bg-ink/10"}`}
+            >
               Activés ({redeemedCount})
             </button>
           </div>
           <div className="flex gap-2">
-            <button onClick={handleCopyUnactivated} className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold bg-surface text-ink/70 hover:bg-ink/10 transition-colors cursor-pointer">
+            <button
+              onClick={handleCopyUnactivated}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold bg-surface text-ink/70 hover:bg-ink/10 transition-colors cursor-pointer"
+            >
               <Copy className="size-3.5" /> Copier non-activés
             </button>
-            <button onClick={handleExportCSV} className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold bg-brand text-white hover:bg-brand/90 transition-colors cursor-pointer">
+            <button
+              onClick={handleExportCSV}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold bg-brand text-white hover:bg-brand/90 transition-colors cursor-pointer"
+            >
               <Download className="size-3.5" /> Export CSV
             </button>
           </div>
@@ -442,20 +560,31 @@ function ManagerCodesModal({ campaign, onClose }: { campaign: Campaign; onClose:
 
         <div className="flex-1 overflow-y-auto -mx-6 px-6 mt-2">
           {loading ? (
-            <div className="flex justify-center py-16"><Loader2 className="size-8 animate-spin text-brand" /></div>
+            <div className="flex justify-center py-16">
+              <Loader2 className="size-8 animate-spin text-brand" />
+            </div>
           ) : filteredTokens.length === 0 ? (
-            <p className="text-center text-sm text-ink/50 font-medium py-16">Aucun code dans cette catégorie.</p>
+            <p className="text-center text-sm text-ink/50 font-medium py-16">
+              Aucun code dans cette catégorie.
+            </p>
           ) : (
             <ul className="space-y-2 py-2">
               {filteredTokens.map((t) => (
-                <li key={t.id} className="flex items-center justify-between rounded-2xl border border-ink/10 bg-surface/50 px-4 py-3">
+                <li
+                  key={t.id}
+                  className="flex items-center justify-between rounded-2xl border border-ink/10 bg-surface/50 px-4 py-3"
+                >
                   <div>
                     <p className="font-mono text-sm font-bold text-ink">{t.code}</p>
                     {t.is_redeemed && t.redeemed_at && (
-                      <p className="text-xs text-ink/50 mt-0.5">Activé le {new Date(t.redeemed_at).toLocaleDateString("fr-FR")}</p>
+                      <p className="text-xs text-ink/50 mt-0.5">
+                        Activé le {new Date(t.redeemed_at).toLocaleDateString("fr-FR")}
+                      </p>
                     )}
                   </div>
-                  <span className={`px-3 py-1 rounded-xl text-xs font-black ${t.is_redeemed ? "bg-emerald-500/10 text-emerald-700" : "bg-surface text-ink/50 border border-ink/10"}`}>
+                  <span
+                    className={`px-3 py-1 rounded-xl text-xs font-black ${t.is_redeemed ? "bg-emerald-500/10 text-emerald-700" : "bg-surface text-ink/50 border border-ink/10"}`}
+                  >
                     {t.is_redeemed ? "Activé" : "Non activé"}
                   </span>
                 </li>
@@ -483,7 +612,10 @@ function AssignSupervisorModal({
   const [count, setCount] = useState(5);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const slotPrice = resolveExtraSlotPrice(campaignCreatedAt);
-  const supervisorFloor = computeSupervisorQuota({ referenceCreatedAt: campaignCreatedAt, extraQuota: 0 });
+  const supervisorFloor = computeSupervisorQuota({
+    referenceCreatedAt: campaignCreatedAt,
+    extraQuota: 0,
+  });
 
   const assignFn = useServerFn(assignCampaignSupervisor);
 
@@ -509,37 +641,73 @@ function AssignSupervisorModal({
             <div className="size-10 rounded-2xl bg-brand/10 text-brand flex items-center justify-center">
               <UserPlus className="size-5" />
             </div>
-            <h3 className="font-display font-black text-xl text-ink">
-              Assigner un superviseur
-            </h3>
+            <h3 className="font-display font-black text-xl text-ink">Assigner un superviseur</h3>
           </div>
-          <button onClick={onClose} className="p-2 bg-surface rounded-full text-ink/60 hover:text-ink transition-colors cursor-pointer">
+          <button
+            onClick={onClose}
+            className="p-2 bg-surface rounded-full text-ink/60 hover:text-ink transition-colors cursor-pointer"
+          >
             <X className="size-5" />
           </button>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4 mt-2">
           <p className="text-xs sm:text-sm font-medium text-ink/70 leading-relaxed">
-            Entrez l'adresse email d'un superviseur (compte Génizio). L'application lui confie automatiquement des enfants de votre cohorte qui n'ont pas encore de superviseur.
+            Entrez l'adresse email d'un superviseur (compte Génizio). L'application lui confie
+            automatiquement des enfants de votre cohorte qui n'ont pas encore de superviseur.
           </p>
           <div className="bg-amber-50 border border-amber-200/80 rounded-2xl p-4 flex gap-3">
             <AlertCircle className="size-5 text-amber-600 shrink-0 mt-0.5" />
             <p className="text-xs font-bold text-amber-900 leading-relaxed">
-              Un superviseur ne peut gérer que {supervisorFloor} enfant{supervisorFloor > 1 ? "s" : ""} maximum. Au-delà, un supplément de {formatXof(slotPrice.priceXof)} / superviseur s'applique
-              {slotPrice.isPromo && slotPrice.promoEndsAt ? ` (prix de bienvenue jusqu'au ${formatPromoDeadline(slotPrice.promoEndsAt)}, puis ${formatXof(STANDARD_PRICE_XOF)})` : ""}.
+              Un superviseur ne peut gérer que {supervisorFloor} enfant
+              {supervisorFloor > 1 ? "s" : ""} maximum. Au-delà, un supplément de{" "}
+              {formatXof(slotPrice.priceXof)} / superviseur s'applique
+              {slotPrice.isPromo && slotPrice.promoEndsAt
+                ? ` (prix de bienvenue jusqu'au ${formatPromoDeadline(slotPrice.promoEndsAt)}, puis ${formatXof(STANDARD_PRICE_XOF)})`
+                : ""}
+              .
             </p>
           </div>
           <div>
-            <label className="block text-xs font-extrabold uppercase tracking-widest text-ink/50 mb-1.5">Email du superviseur</label>
-            <input required type="email" value={email} onChange={e => setEmail(e.target.value)} className="w-full bg-surface border border-ink/10 rounded-2xl p-3.5 text-sm font-bold text-ink focus:outline-none focus:ring-2 focus:ring-brand/30" placeholder="superviseur@ong.org" />
+            <label className="block text-xs font-extrabold uppercase tracking-widest text-ink/50 mb-1.5">
+              Email du superviseur
+            </label>
+            <input
+              required
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              className="w-full bg-surface border border-ink/10 rounded-2xl p-3.5 text-sm font-bold text-ink focus:outline-none focus:ring-2 focus:ring-brand/30"
+              placeholder="superviseur@ong.org"
+            />
           </div>
           <div>
-            <label className="block text-xs font-extrabold uppercase tracking-widest text-ink/50 mb-1.5">Nombre d'enfants à confier (max 5)</label>
-            <input required type="number" min={1} max={5} value={count} onChange={e => setCount(parseInt(e.target.value) || 1)} className="w-full bg-surface border border-ink/10 rounded-2xl p-3.5 text-sm font-bold text-ink focus:outline-none focus:ring-2 focus:ring-brand/30" />
+            <label className="block text-xs font-extrabold uppercase tracking-widest text-ink/50 mb-1.5">
+              Nombre d'enfants à confier (max 5)
+            </label>
+            <input
+              required
+              type="number"
+              min={1}
+              max={5}
+              value={count}
+              onChange={(e) => setCount(parseInt(e.target.value) || 1)}
+              className="w-full bg-surface border border-ink/10 rounded-2xl p-3.5 text-sm font-bold text-ink focus:outline-none focus:ring-2 focus:ring-brand/30"
+            />
           </div>
           <div className="flex gap-3 pt-4 border-t border-ink/5">
-            <button type="button" onClick={onClose} className="flex-1 px-4 py-3 bg-surface hover:bg-ink/5 text-ink rounded-2xl font-extrabold text-sm transition-colors cursor-pointer">Annuler</button>
-            <button type="submit" disabled={isSubmitting} className="flex-1 px-4 py-3 bg-brand hover:bg-brand/90 text-white rounded-2xl font-black text-sm transition-colors flex items-center justify-center gap-2 cursor-pointer shadow-xs">
+            <button
+              type="button"
+              onClick={onClose}
+              className="flex-1 px-4 py-3 bg-surface hover:bg-ink/5 text-ink rounded-2xl font-extrabold text-sm transition-colors cursor-pointer"
+            >
+              Annuler
+            </button>
+            <button
+              type="submit"
+              disabled={isSubmitting}
+              className="flex-1 px-4 py-3 bg-brand hover:bg-brand/90 text-white rounded-2xl font-black text-sm transition-colors flex items-center justify-center gap-2 cursor-pointer shadow-xs"
+            >
               {isSubmitting ? <Loader2 className="size-5 animate-spin" /> : <span>Confirmer</span>}
             </button>
           </div>
@@ -587,7 +755,12 @@ function EducatorsSection({
   }, [campaignId]);
 
   const handleRemove = async (educatorUserId: string, email: string) => {
-    if (!window.confirm(`Retirer ${email} de cette campagne ? Son accès aux enfants de cette campagne sera verrouillé.`)) return;
+    if (
+      !window.confirm(
+        `Retirer ${email} de cette campagne ? Son accès aux enfants de cette campagne sera verrouillé.`,
+      )
+    )
+      return;
     try {
       const res = await removeFn({ data: { campaignId, educatorUserId } });
       toast.success(`${email} retiré — ${res.lockedChildrenCount} profil(s) verrouillé(s).`);
@@ -603,7 +776,8 @@ function EducatorsSection({
         <div>
           <h2 className="text-xl sm:text-2xl font-display font-black text-ink">Éducateurs</h2>
           <p className="text-xs sm:text-sm text-ink/60 font-medium mt-1">
-            Un éducateur vouché gère lui-même jusqu'à 10 profils enfants, comme un parent. Capacité de cette campagne : {educators.length} / {maxEducators}.
+            Un éducateur vouché gère lui-même jusqu'à 10 profils enfants, comme un parent. Capacité
+            de cette campagne : {educators.length} / {maxEducators}.
           </p>
         </div>
         <button
@@ -618,23 +792,35 @@ function EducatorsSection({
 
       <div className="p-4 sm:p-0">
         {loading ? (
-          <div className="p-8 text-center"><Loader2 className="size-5 animate-spin mx-auto text-ink/40" /></div>
+          <div className="p-8 text-center">
+            <Loader2 className="size-5 animate-spin mx-auto text-ink/40" />
+          </div>
         ) : (
           <>
             <div className="sm:hidden space-y-2.5">
               {educators.map((e) => (
-                <div key={e.id} className="p-4 rounded-2xl bg-surface/70 border border-ink/5 flex items-center justify-between">
+                <div
+                  key={e.id}
+                  className="p-4 rounded-2xl bg-surface/70 border border-ink/5 flex items-center justify-between"
+                >
                   <div>
                     <p className="text-xs font-black text-ink">{e.email}</p>
-                    <p className="text-[10px] text-ink/50 font-bold mt-0.5">Depuis le {new Date(e.added_at).toLocaleDateString("fr-FR")}</p>
+                    <p className="text-[10px] text-ink/50 font-bold mt-0.5">
+                      Depuis le {new Date(e.added_at).toLocaleDateString("fr-FR")}
+                    </p>
                   </div>
-                  <button onClick={() => handleRemove(e.educator_user_id, e.email)} className="p-2 text-red-500 hover:bg-red-50 rounded-xl cursor-pointer">
+                  <button
+                    onClick={() => handleRemove(e.educator_user_id, e.email)}
+                    className="p-2 text-red-500 hover:bg-red-50 rounded-xl cursor-pointer"
+                  >
                     <Trash2 className="size-4" />
                   </button>
                 </div>
               ))}
               {educators.length === 0 && (
-                <div className="p-6 text-center text-xs font-bold text-ink/40">Aucun éducateur vouché.</div>
+                <div className="p-6 text-center text-xs font-bold text-ink/40">
+                  Aucun éducateur vouché.
+                </div>
               )}
             </div>
 
@@ -642,18 +828,29 @@ function EducatorsSection({
               <table className="w-full text-left">
                 <thead className="bg-surface/50 border-b border-ink/5">
                   <tr>
-                    <th className="p-4 px-6 text-xs font-extrabold uppercase tracking-widest text-ink/50">Éducateur</th>
-                    <th className="p-4 px-6 text-xs font-extrabold uppercase tracking-widest text-ink/50">Depuis</th>
-                    <th className="p-4 px-6 text-xs font-extrabold uppercase tracking-widest text-ink/50 text-right">Action</th>
+                    <th className="p-4 px-6 text-xs font-extrabold uppercase tracking-widest text-ink/50">
+                      Éducateur
+                    </th>
+                    <th className="p-4 px-6 text-xs font-extrabold uppercase tracking-widest text-ink/50">
+                      Depuis
+                    </th>
+                    <th className="p-4 px-6 text-xs font-extrabold uppercase tracking-widest text-ink/50 text-right">
+                      Action
+                    </th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-ink/5">
                   {educators.map((e) => (
                     <tr key={e.id} className="hover:bg-surface/30 transition-colors">
                       <td className="p-4 px-6 font-bold text-sm text-ink">{e.email}</td>
-                      <td className="p-4 px-6 text-sm text-ink/60">{new Date(e.added_at).toLocaleDateString("fr-FR")}</td>
+                      <td className="p-4 px-6 text-sm text-ink/60">
+                        {new Date(e.added_at).toLocaleDateString("fr-FR")}
+                      </td>
                       <td className="p-4 px-6 text-right">
-                        <button onClick={() => handleRemove(e.educator_user_id, e.email)} className="p-2 text-red-500 hover:bg-red-50 rounded-xl cursor-pointer">
+                        <button
+                          onClick={() => handleRemove(e.educator_user_id, e.email)}
+                          className="p-2 text-red-500 hover:bg-red-50 rounded-xl cursor-pointer"
+                        >
                           <Trash2 className="size-4" />
                         </button>
                       </td>
@@ -678,7 +875,10 @@ function EducatorsSection({
           campaignId={campaignId}
           campaignCreatedAt={campaignCreatedAt}
           onClose={() => setIsAddModalOpen(false)}
-          onSuccess={() => { setIsAddModalOpen(false); load(); }}
+          onSuccess={() => {
+            setIsAddModalOpen(false);
+            load();
+          }}
         />
       )}
     </div>
@@ -725,30 +925,57 @@ function AddEducatorModal({
             </div>
             <h3 className="font-display font-black text-xl text-ink">Ajouter un éducateur</h3>
           </div>
-          <button onClick={onClose} className="p-2 bg-surface rounded-full text-ink/60 hover:text-ink transition-colors cursor-pointer">
+          <button
+            onClick={onClose}
+            className="p-2 bg-surface rounded-full text-ink/60 hover:text-ink transition-colors cursor-pointer"
+          >
             <X className="size-5" />
           </button>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4 mt-2">
           <p className="text-xs sm:text-sm font-medium text-ink/70 leading-relaxed">
-            Entrez l'adresse email d'un compte Génizio ayant déjà choisi "Éducateur" comme lien avec l'enfant (Réglages). Il pourra alors gérer jusqu'à 10 profils enfants lui-même, comme un parent.
+            Entrez l'adresse email d'un compte Génizio ayant déjà choisi "Éducateur" comme lien avec
+            l'enfant (Réglages). Il pourra alors gérer jusqu'à 10 profils enfants lui-même, comme un
+            parent.
           </p>
           <div className="bg-amber-50 border border-amber-200/80 rounded-2xl p-4 flex gap-3">
             <AlertCircle className="size-5 text-amber-600 shrink-0 mt-0.5" />
             <p className="text-xs font-bold text-amber-900 leading-relaxed">
               Un supplément de {formatXof(slotPrice.priceXof)} / éducateur s'applique
-              {slotPrice.isPromo && slotPrice.promoEndsAt ? ` (prix de bienvenue jusqu'au ${formatPromoDeadline(slotPrice.promoEndsAt)}, puis ${formatXof(STANDARD_PRICE_XOF)})` : ""}.
-              Si vous retirez un éducateur plus tard, l'accès aux enfants de cette campagne se verrouille — leur progression reste intacte.
+              {slotPrice.isPromo && slotPrice.promoEndsAt
+                ? ` (prix de bienvenue jusqu'au ${formatPromoDeadline(slotPrice.promoEndsAt)}, puis ${formatXof(STANDARD_PRICE_XOF)})`
+                : ""}
+              . Si vous retirez un éducateur plus tard, l'accès aux enfants de cette campagne se
+              verrouille — leur progression reste intacte.
             </p>
           </div>
           <div>
-            <label className="block text-xs font-extrabold uppercase tracking-widest text-ink/50 mb-1.5">Email de l'éducateur</label>
-            <input required type="email" value={email} onChange={(e) => setEmail(e.target.value)} className="w-full bg-surface border border-ink/10 rounded-2xl p-3.5 text-sm font-bold text-ink focus:outline-none focus:ring-2 focus:ring-brand/30" placeholder="educateur@structure.org" />
+            <label className="block text-xs font-extrabold uppercase tracking-widest text-ink/50 mb-1.5">
+              Email de l'éducateur
+            </label>
+            <input
+              required
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              className="w-full bg-surface border border-ink/10 rounded-2xl p-3.5 text-sm font-bold text-ink focus:outline-none focus:ring-2 focus:ring-brand/30"
+              placeholder="educateur@structure.org"
+            />
           </div>
           <div className="flex gap-3 pt-4 border-t border-ink/5">
-            <button type="button" onClick={onClose} className="flex-1 px-4 py-3 bg-surface hover:bg-ink/5 text-ink rounded-2xl font-extrabold text-sm transition-colors cursor-pointer">Annuler</button>
-            <button type="submit" disabled={isSubmitting} className="flex-1 px-4 py-3 bg-brand hover:bg-brand/90 text-white rounded-2xl font-black text-sm transition-colors flex items-center justify-center gap-2 cursor-pointer shadow-xs">
+            <button
+              type="button"
+              onClick={onClose}
+              className="flex-1 px-4 py-3 bg-surface hover:bg-ink/5 text-ink rounded-2xl font-extrabold text-sm transition-colors cursor-pointer"
+            >
+              Annuler
+            </button>
+            <button
+              type="submit"
+              disabled={isSubmitting}
+              className="flex-1 px-4 py-3 bg-brand hover:bg-brand/90 text-white rounded-2xl font-black text-sm transition-colors flex items-center justify-center gap-2 cursor-pointer shadow-xs"
+            >
               {isSubmitting ? <Loader2 className="size-5 animate-spin" /> : <span>Confirmer</span>}
             </button>
           </div>
@@ -773,10 +1000,17 @@ function ImpactReportModal({
   narratives: Narrative[];
   onClose: () => void;
 }) {
-  const completionRate = stats.totalChallenges > 0 ? Math.round((stats.completedChallenges / stats.totalChallenges) * 100) : 0;
+  const completionRate =
+    stats.totalChallenges > 0
+      ? Math.round((stats.completedChallenges / stats.totalChallenges) * 100)
+      : 0;
   const talentEntries = Object.entries(stats.talentDistribution).sort((a, b) => b[1] - a[1]);
   const talentMax = talentEntries.length > 0 ? talentEntries[0][1] : 1;
-  const generatedOn = new Date().toLocaleDateString("fr-FR", { day: "numeric", month: "long", year: "numeric" });
+  const generatedOn = new Date().toLocaleDateString("fr-FR", {
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+  });
 
   return (
     <div className="fixed inset-0 z-50 flex items-start sm:items-center justify-center p-0 sm:p-4 bg-ink/40 backdrop-blur-sm print:bg-white print:p-0">
@@ -791,7 +1025,10 @@ function ImpactReportModal({
             >
               <Printer className="size-4" /> Imprimer / Exporter en PDF
             </button>
-            <button onClick={onClose} className="p-2 bg-surface rounded-full text-ink/60 hover:text-ink transition-colors cursor-pointer">
+            <button
+              onClick={onClose}
+              className="p-2 bg-surface rounded-full text-ink/60 hover:text-ink transition-colors cursor-pointer"
+            >
               <X className="size-5" />
             </button>
           </div>
@@ -801,10 +1038,15 @@ function ImpactReportModal({
         <div className="print-report overflow-y-auto p-6 sm:p-10 print:p-0 print:overflow-visible">
           <div className="flex items-start justify-between gap-4 pb-6 mb-6 border-b-2 border-ink">
             <div>
-              <div className="text-xs font-black uppercase tracking-widest text-brand mb-1">Rapport d'Impact</div>
-              <h1 className="text-2xl sm:text-3xl font-display font-black text-ink">{campaign.name}</h1>
+              <div className="text-xs font-black uppercase tracking-widest text-brand mb-1">
+                Rapport d'Impact
+              </div>
+              <h1 className="text-2xl sm:text-3xl font-display font-black text-ink">
+                {campaign.name}
+              </h1>
               <p className="text-sm text-ink/60 font-medium mt-1">
-                {new Date(campaign.start_date).toLocaleDateString("fr-FR")} — {new Date(campaign.end_date).toLocaleDateString("fr-FR")}
+                {new Date(campaign.start_date).toLocaleDateString("fr-FR")} —{" "}
+                {new Date(campaign.end_date).toLocaleDateString("fr-FR")}
               </p>
             </div>
             <div className="text-right shrink-0">
@@ -816,30 +1058,50 @@ function ImpactReportModal({
           <div className="grid grid-cols-3 gap-3 sm:gap-4 mb-8">
             <div className="rounded-2xl border border-ink/10 p-4 text-center">
               <div className="text-2xl sm:text-3xl font-black text-ink">{stats.cohortSize}</div>
-              <div className="text-[11px] font-bold uppercase tracking-wide text-ink/50 mt-1">Enfants suivis</div>
+              <div className="text-[11px] font-bold uppercase tracking-wide text-ink/50 mt-1">
+                Enfants suivis
+              </div>
             </div>
             <div className="rounded-2xl border border-ink/10 p-4 text-center">
               <div className="text-2xl sm:text-3xl font-black text-ink">{completionRate}%</div>
-              <div className="text-[11px] font-bold uppercase tracking-wide text-ink/50 mt-1">Taux de réalisation</div>
+              <div className="text-[11px] font-bold uppercase tracking-wide text-ink/50 mt-1">
+                Taux de réalisation
+              </div>
             </div>
             <div className="rounded-2xl border border-ink/10 p-4 text-center">
-              <div className="text-2xl sm:text-3xl font-black text-ink">{stats.redeemedTokens}<span className="text-sm text-ink/40">/{stats.totalTokens}</span></div>
-              <div className="text-[11px] font-bold uppercase tracking-wide text-ink/50 mt-1">Accès activés</div>
+              <div className="text-2xl sm:text-3xl font-black text-ink">
+                {stats.redeemedTokens}
+                <span className="text-sm text-ink/40">/{stats.totalTokens}</span>
+              </div>
+              <div className="text-[11px] font-bold uppercase tracking-wide text-ink/50 mt-1">
+                Accès activés
+              </div>
             </div>
           </div>
 
-          <h2 className="font-display font-black text-base text-ink mb-3">Les 9 intelligences éveillées</h2>
+          <h2 className="font-display font-black text-base text-ink mb-3">
+            Les 9 intelligences éveillées
+          </h2>
           {talentEntries.length === 0 ? (
-            <p className="text-sm text-ink/50 italic mb-8">Pas encore assez de données sur cette cohorte.</p>
+            <p className="text-sm text-ink/50 italic mb-8">
+              Pas encore assez de données sur cette cohorte.
+            </p>
           ) : (
             <div className="space-y-2.5 mb-8">
               {talentEntries.map(([key, value]) => (
                 <div key={key} className="flex items-center gap-3">
-                  <span className="w-40 shrink-0 text-xs font-black text-ink">{TALENT_KEY_LABELS[key] || key}</span>
+                  <span className="w-40 shrink-0 text-xs font-black text-ink">
+                    {TALENT_KEY_LABELS[key] || key}
+                  </span>
                   <div className="flex-1 h-3 rounded-full bg-surface overflow-hidden border border-ink/5">
-                    <div className="h-full bg-brand rounded-full" style={{ width: `${Math.max(5, (value / talentMax) * 100)}%` }} />
+                    <div
+                      className="h-full bg-brand rounded-full"
+                      style={{ width: `${Math.max(5, (value / talentMax) * 100)}%` }}
+                    />
                   </div>
-                  <span className="w-10 text-right text-xs font-black text-brand shrink-0">{value}</span>
+                  <span className="w-10 text-right text-xs font-black text-brand shrink-0">
+                    {value}
+                  </span>
                 </div>
               ))}
             </div>
@@ -847,15 +1109,22 @@ function ImpactReportModal({
 
           <h2 className="font-display font-black text-base text-ink mb-3">Ce que Naya observe</h2>
           {narratives.length === 0 ? (
-            <p className="text-sm text-ink/50 italic">Aucun défi complété pour l'instant — cette section s'alimentera au fil de la cohorte.</p>
+            <p className="text-sm text-ink/50 italic">
+              Aucun défi complété pour l'instant — cette section s'alimentera au fil de la cohorte.
+            </p>
           ) : (
             <div className="space-y-3">
               {narratives.map((n, i) => (
-                <div key={i} className="rounded-2xl bg-surface/60 border border-ink/5 p-4 break-inside-avoid">
+                <div
+                  key={i}
+                  className="rounded-2xl bg-surface/60 border border-ink/5 p-4 break-inside-avoid"
+                >
                   <div className="flex items-start gap-2.5">
                     <Quote className="size-4 text-brand shrink-0 mt-0.5" />
                     <div>
-                      <p className="text-xs font-black uppercase tracking-wide text-brand mb-1">{n.title}</p>
+                      <p className="text-xs font-black uppercase tracking-wide text-brand mb-1">
+                        {n.title}
+                      </p>
                       <p className="text-sm text-ink/80 leading-relaxed">{n.observation}</p>
                     </div>
                   </div>
@@ -865,7 +1134,8 @@ function ImpactReportModal({
           )}
 
           <p className="mt-10 pt-4 border-t border-ink/10 text-[11px] text-ink/40 text-center">
-            Données agrégées et anonymisées — aucune identité d'enfant n'est partagée dans ce document. Génizio.
+            Données agrégées et anonymisées — aucune identité d'enfant n'est partagée dans ce
+            document. Génizio.
           </p>
         </div>
       </div>

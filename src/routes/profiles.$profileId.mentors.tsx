@@ -55,7 +55,9 @@ function MentorsPage() {
       <div className="grid min-h-dvh place-items-center bg-surface text-ink">
         <div className="text-center">
           <p className="mb-4 font-bold">Profil introuvable.</p>
-          <Link to="/profiles" className="underline text-sm opacity-80 hover:opacity-100">Retour</Link>
+          <Link to="/profiles" className="underline text-sm opacity-80 hover:opacity-100">
+            Retour
+          </Link>
         </div>
       </div>
     );

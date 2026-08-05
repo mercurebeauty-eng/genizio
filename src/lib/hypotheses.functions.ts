@@ -2,6 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { callClaude, finalizeChallenge, PROOF_MODE_INSTRUCTION, ACADEMIC_REFERENTIAL_INSTRUCTION, ACADEMIC_SECRET_INSTRUCTION, ACADEMIC_DOMAIN_LABELS, STEPS_INSTRUCTION, INTELLIGENCES_FIELD_INSTRUCTION, TRAIT_SUBFORM_INSTRUCTION, formatChildInterestsPayload, extractJsonFromLLMResponse } from "@/lib/challenges.functions";
 import { TALENT_KEY_LABELS } from "@/lib/talent-buckets";
+import { getInterestHypothesesSnapshot } from "@/lib/interest-confidence";
 import { z } from "zod";
 
 // NAYA 2.0 Phase 3a — moteur de génération d'hypothèses causales (cf. genizio-decisions #32).
@@ -488,6 +489,10 @@ export const generateDiscriminantChallenge = createServerFn({ method: "POST" })
       .maybeSingle();
     if (childErr || !child) throw new Error("Profil enfant introuvable.");
 
+    // Décision 2026-08-05 : les intérêts déclarés sont des HYPOTHÈSES de travail — leur
+    // confiance est dérivée à la lecture (complétions vs abandons, par groupe de talents).
+    const interestHypotheses = await getInterestHypothesesSnapshot(supabase as any, data.childId).catch(() => null);
+
     // 2. Récupère le cycle ouvert le plus récent
     const { data: cycle, error: cycleErr } = await supabase
       .from("hypothesis_cycles")
@@ -514,7 +519,7 @@ export const generateDiscriminantChallenge = createServerFn({ method: "POST" })
     const subject = ACADEMIC_DOMAIN_LABELS[cycle.trigger_domain ?? ""] ?? "apprentissage";
 
     // 3. Prompt d'IA pour concevoir le défi discriminant
-    const formattedInterests = formatChildInterestsPayload(child.interests);
+    const formattedInterests = formatChildInterestsPayload(child.interests, interestHypotheses);
     const objective = isReadyForMore
       ? `vérifier si ${child.name} est vraiment prêt·e pour un niveau plus avancé en ${subject}`
       : `tester l'hypothèse causale "${topHypothesis.cause}" concernant des difficultés récentes en ${subject}`;
@@ -777,6 +782,10 @@ export const generateSupportRetestChallenge = createServerFn({ method: "POST" })
       .maybeSingle();
     if (childErr || !child) throw new Error("Profil enfant introuvable.");
 
+    // Décision 2026-08-05 : les intérêts déclarés sont des HYPOTHÈSES de travail — leur
+    // confiance est dérivée à la lecture (complétions vs abandons, par groupe de talents).
+    const interestHypotheses = await getInterestHypothesesSnapshot(supabase as any, data.childId).catch(() => null);
+
     const { data: cycle, error: cycleErr } = await supabase
       .from("hypothesis_cycles")
       .select("id, trigger_domain, final_diagnosis")
@@ -788,7 +797,7 @@ export const generateSupportRetestChallenge = createServerFn({ method: "POST" })
     }
 
     const subject = ACADEMIC_DOMAIN_LABELS[cycle.trigger_domain] ?? cycle.trigger_domain;
-    const formattedInterests = formatChildInterestsPayload(child.interests);
+    const formattedInterests = formatChildInterestsPayload(child.interests, interestHypotheses);
 
     const prompt = `Tu es Naya, la mentore IA. Conçois un défi NORMAL et STANDARD pour ${child.name}, ${child.age} ans, en ${subject}.
 

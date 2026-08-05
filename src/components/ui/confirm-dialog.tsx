@@ -58,15 +58,24 @@ export function ConfirmDialogHost() {
   const danger = pending?.variant === "danger";
 
   return (
-    <AlertDialog open={!!pending} onOpenChange={(open) => { if (!open) close(false); }}>
+    <AlertDialog
+      open={!!pending}
+      onOpenChange={(open) => {
+        if (!open) close(false);
+      }}
+    >
       <AlertDialogContent className="rounded-3xl max-w-sm border border-ink/10 shadow-xl">
         <AlertDialogHeader>
-          <AlertDialogTitle className={`flex items-center gap-2 ${danger ? "text-red-600" : "text-ink"}`}>
+          <AlertDialogTitle
+            className={`flex items-center gap-2 ${danger ? "text-red-600" : "text-ink"}`}
+          >
             <AlertTriangle className="size-5" />
             {pending?.title}
           </AlertDialogTitle>
           {pending?.description && (
-            <AlertDialogDescription className="text-ink/70">{pending.description}</AlertDialogDescription>
+            <AlertDialogDescription className="text-ink/70">
+              {pending.description}
+            </AlertDialogDescription>
           )}
         </AlertDialogHeader>
         <AlertDialogFooter className="flex-row gap-2 sm:space-x-0">
@@ -82,7 +91,9 @@ export function ConfirmDialogHost() {
               close(true);
             }}
             className={`flex-1 rounded-xl border border-ink/10 shadow-sm ${
-              danger ? "bg-red-600 text-white hover:bg-red-700" : "bg-brand text-white hover:bg-brand-dark"
+              danger
+                ? "bg-red-600 text-white hover:bg-red-700"
+                : "bg-brand text-white hover:bg-brand-dark"
             }`}
           >
             {pending?.confirmLabel ?? "Confirmer"}

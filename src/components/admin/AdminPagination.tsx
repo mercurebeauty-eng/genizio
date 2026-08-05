@@ -27,7 +27,8 @@ export function AdminPagination({
   return (
     <div className="flex flex-wrap items-center justify-between gap-3 pt-4 mt-4 border-t border-ink/5">
       <p className="text-xs font-bold text-ink/50">
-        {from}–{to} sur {total} {label}{total > 1 ? "s" : ""}
+        {from}–{to} sur {total} {label}
+        {total > 1 ? "s" : ""}
       </p>
 
       {totalPages > 1 && (

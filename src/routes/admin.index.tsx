@@ -3,7 +3,11 @@ import { useEffect, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { useSession } from "@/hooks/use-session";
 import { AppHeader } from "@/components/AppHeader";
-import { togglePassportUnlock, updateOrderStatus, updateExtraProfileSlotsAdmin } from "@/lib/products.functions";
+import {
+  togglePassportUnlock,
+  updateOrderStatus,
+  updateExtraProfileSlotsAdmin,
+} from "@/lib/products.functions";
 import {
   getExecutiveKPIsAdmin,
   getTalentCityStatsAdmin,
@@ -44,7 +48,9 @@ function AdminIndexPage() {
   const [talentStats, setTalentStats] = useState<TalentCityStatsResponse | null>(null);
   const [nayaTelemetry, setNayaTelemetry] = useState<NayaTelemetryResponse | null>(null);
   const [aiProviderStatus, setAiProviderStatus] = useState<AiProviderStatus | null>(null);
-  const [progressionHealth, setProgressionHealth] = useState<ProgressionHealthResponse | null>(null);
+  const [progressionHealth, setProgressionHealth] = useState<ProgressionHealthResponse | null>(
+    null,
+  );
   const [commerceData, setCommerceData] = useState<CommercePassportsDataResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
@@ -68,14 +74,33 @@ function AdminIndexPage() {
       : {};
 
     try {
-      const [execData, talentData, nayaData, aiStatus, progressionData, commData] = await Promise.all([
-        getExecutiveKPIsFn({ data: undefined, ...opts }).catch((err) => { console.error("execData error", err); return null; }),
-        getTalentStatsFn({ data: undefined, ...opts }).catch((err) => { console.error("talentData error", err); return null; }),
-        getNayaTelemetryFn({ data: undefined, ...opts }).catch((err) => { console.error("nayaData error", err); return null; }),
-        getAiProviderStatusFn({ data: undefined, ...opts }).catch((err) => { console.error("aiStatus error", err); return null; }),
-        getProgressionHealthFn({ data: undefined, ...opts }).catch((err) => { console.error("progressionData error", err); return null; }),
-        getCommerceDataFn({ data: undefined, ...opts }).catch((err) => { console.error("commData error", err); return null; }),
-      ]);
+      const [execData, talentData, nayaData, aiStatus, progressionData, commData] =
+        await Promise.all([
+          getExecutiveKPIsFn({ data: undefined, ...opts }).catch((err) => {
+            console.error("execData error", err);
+            return null;
+          }),
+          getTalentStatsFn({ data: undefined, ...opts }).catch((err) => {
+            console.error("talentData error", err);
+            return null;
+          }),
+          getNayaTelemetryFn({ data: undefined, ...opts }).catch((err) => {
+            console.error("nayaData error", err);
+            return null;
+          }),
+          getAiProviderStatusFn({ data: undefined, ...opts }).catch((err) => {
+            console.error("aiStatus error", err);
+            return null;
+          }),
+          getProgressionHealthFn({ data: undefined, ...opts }).catch((err) => {
+            console.error("progressionData error", err);
+            return null;
+          }),
+          getCommerceDataFn({ data: undefined, ...opts }).catch((err) => {
+            console.error("commData error", err);
+            return null;
+          }),
+        ]);
       if (execData) {
         setKpis(execData.kpis);
         setParents(execData.parents ?? []);
@@ -104,7 +129,9 @@ function AdminIndexPage() {
     try {
       const res = await toggleUnlockFn({ data: { childId, unlock } });
       if (res.ok) {
-        toast.success(unlock ? "Passeport d'Excellence débloqué !" : "Passeport d'Excellence reverrouillé.");
+        toast.success(
+          unlock ? "Passeport d'Excellence débloqué !" : "Passeport d'Excellence reverrouillé.",
+        );
         await loadData(false);
       } else {
         toast.error("Échec de la modification du statut passeport.");
@@ -172,7 +199,8 @@ function AdminIndexPage() {
               Navigation & Vue Exécutive
             </h1>
             <p className="text-sm font-medium text-ink/60 mt-1">
-              Pilotage en temps réel de la croissance, du CRM parent, du commerce, des passeports et des talents.
+              Pilotage en temps réel de la croissance, du CRM parent, du commerce, des passeports et
+              des talents.
             </p>
           </div>
 

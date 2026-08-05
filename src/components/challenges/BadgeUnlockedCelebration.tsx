@@ -9,11 +9,17 @@ type BadgeUnlockedCelebrationProps = {
 // Écran plein écran déclenché quand checkAndAwardBadge (challenges.functions.ts)
 // débloque un nouveau badge — cf. écran 8 du prototype (Génizio Learning
 // Experience Design).
-export function BadgeUnlockedCelebration({ title, description, onContinue }: BadgeUnlockedCelebrationProps) {
+export function BadgeUnlockedCelebration({
+  title,
+  description,
+  onContinue,
+}: BadgeUnlockedCelebrationProps) {
   return (
     <div
       className="fixed inset-0 z-100 flex flex-col items-center justify-center overflow-hidden px-8 py-10 text-center animate-in fade-in duration-300"
-      style={{ background: "radial-gradient(110% 60% at 50% 20%, var(--glow-100), var(--surface))" }}
+      style={{
+        background: "radial-gradient(110% 60% at 50% 20%, var(--glow-100), var(--surface))",
+      }}
     >
       <p className="text-xs font-black uppercase tracking-[0.1em] text-brand">Nouveau badge</p>
 

@@ -37,7 +37,11 @@ export function AdminExecutiveTab({
   isRefreshing = false,
 }: AdminExecutiveTabProps) {
   const [pendingPassportChildId, setPendingPassportChildId] = useState<string | null>(null);
-  const [enrollModalChild, setEnrollModalChild] = useState<{ id: string; name: string; currentCampaignName?: string | null } | null>(null);
+  const [enrollModalChild, setEnrollModalChild] = useState<{
+    id: string;
+    name: string;
+    currentCampaignName?: string | null;
+  } | null>(null);
   const [pendingSlotsUserId, setPendingSlotsUserId] = useState<string | null>(null);
   const [slotsDraft, setSlotsDraft] = useState<Record<string, number>>({});
 
@@ -54,7 +58,9 @@ export function AdminExecutiveTab({
         return next;
       });
     } catch (err: any) {
-      toast.error("Erreur lors de la mise à jour du quota de profils: " + (err?.message || "Erreur inconnue"));
+      toast.error(
+        "Erreur lors de la mise à jour du quota de profils: " + (err?.message || "Erreur inconnue"),
+      );
     } finally {
       setPendingSlotsUserId(null);
     }
@@ -66,7 +72,9 @@ export function AdminExecutiveTab({
     try {
       await onTogglePassport(childId, unlock);
     } catch (err: any) {
-      toast.error("Erreur lors du changement d'accès passeport: " + (err?.message || "Erreur inconnue"));
+      toast.error(
+        "Erreur lors du changement d'accès passeport: " + (err?.message || "Erreur inconnue"),
+      );
     } finally {
       setPendingPassportChildId(null);
     }
@@ -79,11 +87,15 @@ export function AdminExecutiveTab({
         {/* Card 1: Active Children 7d/30d */}
         <div className="rounded-3xl border border-ink/10 bg-white p-5 shadow-sm hover:shadow-md transition-shadow">
           <div className="flex items-center justify-between text-ink/60 mb-2">
-            <span className="text-[11px] font-extrabold uppercase tracking-wider">Enfants Actifs</span>
+            <span className="text-[11px] font-extrabold uppercase tracking-wider">
+              Enfants Actifs
+            </span>
             <UserCheck className="size-4 text-brand" />
           </div>
           <div className="flex items-baseline gap-2">
-            <span className="font-display text-3xl font-black text-brand">{kpis.activeChildren7d}</span>
+            <span className="font-display text-3xl font-black text-brand">
+              {kpis.activeChildren7d}
+            </span>
             <span className="text-xs font-bold text-ink/50">/ 7 jours</span>
           </div>
           <p className="text-xs text-ink/60 mt-2 font-medium flex items-center gap-1">
@@ -95,7 +107,9 @@ export function AdminExecutiveTab({
         {/* Card 2: Registered Parents & Children */}
         <div className="rounded-3xl border border-ink/10 bg-white p-5 shadow-sm hover:shadow-md transition-shadow">
           <div className="flex items-center justify-between text-ink/60 mb-2">
-            <span className="text-[11px] font-extrabold uppercase tracking-wider">Parents & Enfants</span>
+            <span className="text-[11px] font-extrabold uppercase tracking-wider">
+              Parents & Enfants
+            </span>
             <Users className="size-4 text-leaf" />
           </div>
           <div className="flex items-baseline gap-2">
@@ -110,36 +124,50 @@ export function AdminExecutiveTab({
         {/* Card 3: Completed Challenges */}
         <div className="rounded-3xl border border-ink/10 bg-white p-5 shadow-sm hover:shadow-md transition-shadow">
           <div className="flex items-center justify-between text-ink/60 mb-2">
-            <span className="text-[11px] font-extrabold uppercase tracking-wider">Défis Validés</span>
+            <span className="text-[11px] font-extrabold uppercase tracking-wider">
+              Défis Validés
+            </span>
             <CheckCircle2 className="size-4 text-sky-600" />
           </div>
           <div className="flex items-baseline gap-2">
-            <span className="font-display text-3xl font-black text-sky-600">{kpis.completedChallenges}</span>
+            <span className="font-display text-3xl font-black text-sky-600">
+              {kpis.completedChallenges}
+            </span>
             <span className="text-xs font-bold text-ink/50">/ {kpis.totalChallenges}</span>
           </div>
           <p className="text-xs text-ink/60 mt-2 font-medium">
-            Taux de succès : <strong className="text-ink">{kpis.totalChallenges > 0 ? Math.round((kpis.completedChallenges / kpis.totalChallenges) * 100) : 0}%</strong>
+            Taux de succès :{" "}
+            <strong className="text-ink">
+              {kpis.totalChallenges > 0
+                ? Math.round((kpis.completedChallenges / kpis.totalChallenges) * 100)
+                : 0}
+              %
+            </strong>
           </p>
         </div>
 
         {/* Card 4: Retention Rate % */}
         <div className="rounded-3xl border border-ink/10 bg-white p-5 shadow-sm hover:shadow-md transition-shadow">
           <div className="flex items-center justify-between text-ink/60 mb-2">
-            <span className="text-[11px] font-extrabold uppercase tracking-wider">Taux de Rétention</span>
+            <span className="text-[11px] font-extrabold uppercase tracking-wider">
+              Taux de Rétention
+            </span>
             <TrendingUp className="size-4 text-purple-600" />
           </div>
           <div className="flex items-baseline gap-2">
-            <span className="font-display text-3xl font-black text-purple-600">{kpis.retentionRatePct}%</span>
+            <span className="font-display text-3xl font-black text-purple-600">
+              {kpis.retentionRatePct}%
+            </span>
           </div>
-          <p className="text-xs text-ink/60 mt-2 font-medium">
-            Actifs (30j) / Total Enfants
-          </p>
+          <p className="text-xs text-ink/60 mt-2 font-medium">Actifs (30j) / Total Enfants</p>
         </div>
 
         {/* Card 5: Age Breakdown */}
         <div className="rounded-3xl border border-ink/10 bg-white p-5 shadow-sm hover:shadow-md transition-shadow">
           <div className="flex items-center justify-between text-ink/60 mb-2">
-            <span className="text-[11px] font-extrabold uppercase tracking-wider">Répartition Âges</span>
+            <span className="text-[11px] font-extrabold uppercase tracking-wider">
+              Répartition Âges
+            </span>
             <PieChart className="size-4 text-amber-500" />
           </div>
           <div className="space-y-1 mt-1">
@@ -193,7 +221,9 @@ export function AdminExecutiveTab({
             </thead>
             <tbody className="divide-y-2 divide-ink/5">
               {parents.map((parent) => {
-                const whatsappUrl = parent.whatsappUrl || (parent.phone ? `https://wa.me/${parent.phone.replace(/[^0-9]/g, "")}` : null);
+                const whatsappUrl =
+                  parent.whatsappUrl ||
+                  (parent.phone ? `https://wa.me/${parent.phone.replace(/[^0-9]/g, "")}` : null);
 
                 return (
                   <tr key={parent.id} className="hover:bg-surface/40 transition-colors">
@@ -214,7 +244,9 @@ export function AdminExecutiveTab({
 
                     {/* Phone */}
                     <td className="py-4 pr-4 font-mono text-xs text-ink/70">
-                      {parent.phone || <span className="text-ink/30 italic text-xs">Non renseigné</span>}
+                      {parent.phone || (
+                        <span className="text-ink/30 italic text-xs">Non renseigné</span>
+                      )}
                     </td>
 
                     {/* WhatsApp */}
@@ -260,14 +292,20 @@ export function AdminExecutiveTab({
                               </div>
 
                               <button
-                                onClick={() => handleTogglePassportClick(child.id, !child.pdfUnlocked)}
+                                onClick={() =>
+                                  handleTogglePassportClick(child.id, !child.pdfUnlocked)
+                                }
                                 disabled={pendingPassportChildId === child.id}
                                 className={`inline-flex items-center gap-1.5 rounded-xl border px-2.5 py-1 text-[10px] font-black uppercase tracking-wider transition-all cursor-pointer shrink-0 shadow-2xs ${
                                   child.pdfUnlocked
                                     ? "bg-emerald-500/10 border-emerald-500/20 text-emerald-700 hover:bg-emerald-500/20"
                                     : "bg-amber-500/10 border-amber-500/20 text-amber-700 hover:bg-amber-500/20"
                                 } disabled:opacity-50`}
-                                title={child.pdfUnlocked ? "Passeport PDF Débloqué — Clic pour verrouiller" : "Passeport PDF Verrouillé — Clic pour débloquer"}
+                                title={
+                                  child.pdfUnlocked
+                                    ? "Passeport PDF Débloqué — Clic pour verrouiller"
+                                    : "Passeport PDF Verrouillé — Clic pour débloquer"
+                                }
                               >
                                 {pendingPassportChildId === child.id ? (
                                   <>
@@ -307,15 +345,23 @@ export function AdminExecutiveTab({
                                 {child.isEnrolledActive ? (
                                   <div
                                     className="flex items-center gap-1 mt-0.5"
-                                    title={child.campaignName ? `Campagne ONG : ${child.campaignName}` : `Saison : ${child.activeSeasonTitle}`}
+                                    title={
+                                      child.campaignName
+                                        ? `Campagne ONG : ${child.campaignName}`
+                                        : `Saison : ${child.activeSeasonTitle}`
+                                    }
                                   >
                                     <span className="size-1.5 rounded-full bg-emerald-500 animate-pulse shrink-0" />
                                     <span className="text-[10px] font-extrabold text-emerald-700 truncate max-w-[120px]">
-                                      {child.campaignName ? `ONG: ${child.campaignName}` : child.activeSeasonTitle || "Actif"}
+                                      {child.campaignName
+                                        ? `ONG: ${child.campaignName}`
+                                        : child.activeSeasonTitle || "Actif"}
                                     </span>
                                   </div>
                                 ) : (
-                                  <span className="text-[10px] font-medium text-ink/40 mt-0.5">Inactif</span>
+                                  <span className="text-[10px] font-medium text-ink/40 mt-0.5">
+                                    Inactif
+                                  </span>
                                 )}
                               </div>
 
@@ -360,19 +406,27 @@ export function AdminExecutiveTab({
                           max={50}
                           value={slotsDraft[parent.id] ?? parent.extraSlots}
                           onChange={(e) =>
-                            setSlotsDraft((prev) => ({ ...prev, [parent.id]: Math.max(0, parseInt(e.target.value) || 0) }))
+                            setSlotsDraft((prev) => ({
+                              ...prev,
+                              [parent.id]: Math.max(0, parseInt(e.target.value) || 0),
+                            }))
                           }
                           className="w-14 bg-surface border border-ink/10 rounded-xl px-2 py-1 text-xs font-bold text-ink text-center"
                         />
-                        {slotsDraft[parent.id] !== undefined && slotsDraft[parent.id] !== parent.extraSlots && (
-                          <button
-                            onClick={() => handleSaveExtraSlots(parent.id)}
-                            disabled={pendingSlotsUserId === parent.id}
-                            className="inline-flex items-center rounded-xl bg-ink text-white px-2 py-1 text-[10px] font-bold hover:bg-ink/90 transition-colors disabled:opacity-50 cursor-pointer"
-                          >
-                            {pendingSlotsUserId === parent.id ? <Loader2 className="size-3 animate-spin" /> : "OK"}
-                          </button>
-                        )}
+                        {slotsDraft[parent.id] !== undefined &&
+                          slotsDraft[parent.id] !== parent.extraSlots && (
+                            <button
+                              onClick={() => handleSaveExtraSlots(parent.id)}
+                              disabled={pendingSlotsUserId === parent.id}
+                              className="inline-flex items-center rounded-xl bg-ink text-white px-2 py-1 text-[10px] font-bold hover:bg-ink/90 transition-colors disabled:opacity-50 cursor-pointer"
+                            >
+                              {pendingSlotsUserId === parent.id ? (
+                                <Loader2 className="size-3 animate-spin" />
+                              ) : (
+                                "OK"
+                              )}
+                            </button>
+                          )}
                       </div>
                     </td>
                   </tr>

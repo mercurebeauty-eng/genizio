@@ -9,6 +9,9 @@ import { ensureHypothesesForChild } from "@/lib/hypotheses.functions";
 import { getChildGuild, getTalentAffinities } from "@/lib/guilds";
 import { getChildEnrolledSeason, getActiveSeason, type Season } from "@/lib/seasons.functions";
 import { getChildSupervisorInfo } from "@/lib/supervisors.functions";
+import { getChildAccessStatusFn, type ChildAccessStatus } from "@/lib/child-access";
+import { formatXof } from "@/lib/pricing";
+import { SeasonEnrollmentModal } from "@/components/seasons/SeasonEnrollmentModal";
 import { AppTabBar } from "@/components/AppTabBar";
 import { TalentRadarChart } from "@/components/TalentRadarChart";
 import { NayaAvatar } from "@/components/NayaAvatar";
@@ -40,6 +43,7 @@ import {
   ChevronDown,
   CheckCircle2,
   Target,
+  Gift,
 } from "lucide-react";
 import { InviteMentorDialog } from "@/components/mentors/InviteMentorDialog";
 import { AppHeader } from "@/components/AppHeader";
@@ -226,6 +230,10 @@ function PortfolioPage() {
   const [enrolledSeason, setEnrolledSeason] = useState<Season | null>(null);
   const [activeSeason, setActiveSeason] = useState<Season | null>(null);
   const [supervisorInfo, setSupervisorInfo] = useState<{ email: string; assignedAt: string } | null>(null);
+  // Accès mensuel payant (modèle 2026-08-05) : status free/permanent/monthly/expired +
+  // montant de renouvellement applicable au compte.
+  const [accessState, setAccessState] = useState<{ status: ChildAccessStatus; renewalAmountXof: number } | null>(null);
+  const [showSponsorModal, setShowSponsorModal] = useState(false);
   const [mentorCount, setMentorCount] = useState(0);
   const [dismissedDiscoveries, setDismissedDiscoveries] = useState<string[]>([]);
   const [expandedMonths, setExpandedMonths] = useState<Set<string>>(new Set());
@@ -370,6 +378,10 @@ function PortfolioPage() {
 
     getChildSupervisorInfo({ data: { childId: profileId } })
       .then(info => setSupervisorInfo(info))
+      .catch(console.error);
+
+    getChildAccessStatusFn({ data: { childId: profileId } })
+      .then((res) => setAccessState(res))
       .catch(console.error);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [session, profileId]);
@@ -672,6 +684,79 @@ function PortfolioPage() {
               </div>
             </div>
           )}
+
+          {/* Accès mensuel payant (modèle 2026-08-05) : bannière "accès expiré" */}
+          {accessState && accessState.status.kind === "expired" && (
+            <div className="rounded-3xl border border-red-300 bg-red-50/70 p-5 shadow-sm flex flex-wrap items-center gap-3">
+              <div className="grid size-10 place-items-center rounded-2xl bg-red-600 text-white shrink-0">
+                <BellRing className="size-5" />
+              </div>
+              <div className="flex-1 min-w-48">
+                <p className="text-sm font-black text-red-800">Accès expiré — renouvelez pour continuer les défis</p>
+                <p className="text-xs text-ink/60 mt-0.5">
+                  Les défis passés et le portfolio restent visibles. Renouvellement :{" "}
+                  <strong>{formatXof(accessState.renewalAmountXof)}/mois</strong>.
+                </p>
+              </div>
+              <a
+                href={`https://wa.me/${import.meta.env.VITE_WHATSAPP_NUMBER || "33606433148"}?text=${encodeURIComponent(
+                  `Bonjour, l'accès Génizio de ${child.name} est expiré. Je souhaite renouveler (${formatXof(accessState.renewalAmountXof)}/mois).`
+                )}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="shrink-0 inline-flex items-center gap-1.5 rounded-xl bg-[#25D366] px-3 py-2 text-[11px] font-bold text-white shadow-sm hover:brightness-95 transition-all"
+              >
+                <Phone className="size-3.5" />
+                Renouveler via WhatsApp
+              </a>
+            </div>
+          )}
+
+          {/* Accès mensuel payant : bannière d'expiration ≤ 14 jours (cohérente avec le panneau admin) */}
+          {accessState && accessState.status.kind === "monthly" && accessState.status.daysLeft <= 14 && (
+            <div className="rounded-3xl border border-amber-300 bg-amber-50/70 p-5 shadow-sm flex flex-wrap items-center gap-3">
+              <div className="grid size-10 place-items-center rounded-2xl bg-amber-500 text-white shrink-0">
+                <BellRing className="size-5" />
+              </div>
+              <div className="flex-1 min-w-48">
+                <p className="text-sm font-black text-amber-900">
+                  {accessState.status.daysLeft === 0
+                    ? "Votre accès se termine aujourd'hui !"
+                    : `Votre accès se termine dans ${accessState.status.daysLeft} jour${accessState.status.daysLeft > 1 ? "s" : ""}.`}
+                </p>
+                <p className="text-xs text-ink/60 mt-0.5">
+                  Fin le {new Date(accessState.status.endsAt).toLocaleDateString("fr-FR")} — renouvellement :{" "}
+                  <strong>{formatXof(accessState.renewalAmountXof)}/mois</strong>.
+                </p>
+              </div>
+              <a
+                href={`https://wa.me/${import.meta.env.VITE_WHATSAPP_NUMBER || "33606433148"}?text=${encodeURIComponent(
+                  `Bonjour, l'accès Génizio de ${child.name} se termine bientôt (${new Date(accessState.status.endsAt).toLocaleDateString("fr-FR")}). Je souhaite renouveler (${formatXof(accessState.renewalAmountXof)}/mois).`
+                )}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="shrink-0 inline-flex items-center gap-1.5 rounded-xl bg-[#25D366] px-3 py-2 text-[11px] font-bold text-white shadow-sm hover:brightness-95 transition-all"
+              >
+                <Phone className="size-3.5" />
+                Renouveler via WhatsApp
+              </a>
+            </div>
+          )}
+
+          {/* Rédemption d'un code de parrainage (dons diaspora/RSE, /parrainage) */}
+          <button
+            onClick={() => setShowSponsorModal(true)}
+            className="rounded-3xl border border-brand/20 bg-brand/5 p-4 shadow-sm flex items-center gap-3 text-left hover:bg-brand/10 transition-colors cursor-pointer w-full"
+          >
+            <div className="grid size-10 place-items-center rounded-2xl bg-brand text-white shrink-0">
+              <Gift className="size-5" />
+            </div>
+            <div className="flex-1">
+              <p className="text-sm font-black text-brand">Activer un code de parrainage</p>
+              <p className="text-xs text-ink/60">Un parrain (diaspora ou RSE) vous a donné un code ? Il ajoute 1 à 6 mois d'accès.</p>
+            </div>
+            <ChevronRight className="size-5 text-brand" />
+          </button>
 
           {/* Card: Saison Trimestrielle Actuelle */}
           {enrolledSeason ? (
@@ -1102,8 +1187,22 @@ function PortfolioPage() {
         </div>
       </main>
 
+      {/* Modale de rédemption d'un code de parrainage (dons diaspora/RSE, /parrainage) */}
+      {showSponsorModal && activeSeason && (
+        <SeasonEnrollmentModal
+          season={activeSeason}
+          childId={profileId}
+          childName={child.name}
+          onClose={() => setShowSponsorModal(false)}
+          onSuccess={() => {
+            setShowSponsorModal(false);
+            getChildAccessStatusFn({ data: { childId: profileId } })
+              .then((res) => setAccessState(res))
+              .catch(console.error);
+          }}
+        />
+      )}
 
-      
       <AppTabBar profileId={profileId} />
     </div>
   );

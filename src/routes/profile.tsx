@@ -6,7 +6,21 @@ import { useSession } from "@/hooks/use-session";
 import { AppHeader } from "@/components/AppHeader";
 import { AppTabBar } from "@/components/AppTabBar";
 import { toast } from "sonner";
-import { User, Phone, ArrowLeft, Check, Loader2, Users, Calendar, Shield, LogOut, Eye, LayoutDashboard, ShoppingBag, Building2 } from "lucide-react";
+import {
+  User,
+  Phone,
+  ArrowLeft,
+  Check,
+  Loader2,
+  Users,
+  Calendar,
+  Shield,
+  LogOut,
+  Eye,
+  LayoutDashboard,
+  ShoppingBag,
+  Building2,
+} from "lucide-react";
 import { ConsentLedger } from "@/components/settings/ConsentLedger";
 import { ExportDataButton } from "@/components/settings/ExportDataButton";
 import { DeleteAccountDialog } from "@/components/settings/DeleteAccountDialog";
@@ -66,24 +80,40 @@ function ProfilePage() {
       }
 
       // Fetch stats
-      supabase.from("child_profiles").select("id", { count: "exact" }).eq("user_id", session.user.id).then(({ count }) => {
-        setChildCount(count || 0);
-      });
-      supabase.from("child_mentors").select("id", { count: "exact" }).then(({ count }) => {
-        setMentorCount(count || 0);
-      });
-      supabase.from("consent_events").select("id", { count: "exact" }).then(({ count }) => {
-        setConsentEventsCount(count || 0);
-      });
-      supabase.from("challenges").select("status, proof_image_url").eq("user_id", session.user.id).then(({ data }) => {
-        if (data) {
-          setChallengeStats({
-            total: data.length,
-            completed: data.filter((c) => c.status === "completed").length,
-          });
-          setArtifactsCount(data.filter((c) => c.status === "completed" && c.proof_image_url).length);
-        }
-      });
+      supabase
+        .from("child_profiles")
+        .select("id", { count: "exact" })
+        .eq("user_id", session.user.id)
+        .then(({ count }) => {
+          setChildCount(count || 0);
+        });
+      supabase
+        .from("child_mentors")
+        .select("id", { count: "exact" })
+        .then(({ count }) => {
+          setMentorCount(count || 0);
+        });
+      supabase
+        .from("consent_events")
+        .select("id", { count: "exact" })
+        .then(({ count }) => {
+          setConsentEventsCount(count || 0);
+        });
+      supabase
+        .from("challenges")
+        .select("status, proof_image_url")
+        .eq("user_id", session.user.id)
+        .then(({ data }) => {
+          if (data) {
+            setChallengeStats({
+              total: data.length,
+              completed: data.filter((c) => c.status === "completed").length,
+            });
+            setArtifactsCount(
+              data.filter((c) => c.status === "completed" && c.proof_image_url).length,
+            );
+          }
+        });
     }
   }, [session, loading, navigate]);
 
@@ -95,7 +125,9 @@ function ProfilePage() {
   const handleSavePhone = async (e: React.FormEvent) => {
     e.preventDefault();
     if (phoneNumber.length < selectedCountry.limit - 2) {
-      toast.error(`Le numéro de téléphone doit contenir au moins ${selectedCountry.limit - 2} chiffres.`);
+      toast.error(
+        `Le numéro de téléphone doit contenir au moins ${selectedCountry.limit - 2} chiffres.`,
+      );
       return;
     }
     setSavingPhone(true);
@@ -117,7 +149,9 @@ function ProfilePage() {
     if (!relationshipType) return;
     setSavingRelationship(true);
     try {
-      const { error } = await supabase.auth.updateUser({ data: { relationship_type: relationshipType } });
+      const { error } = await supabase.auth.updateUser({
+        data: { relationship_type: relationshipType },
+      });
       if (error) throw error;
       toast.success("Lien avec l'enfant mis à jour.");
     } catch (err) {
@@ -148,7 +182,9 @@ function ProfilePage() {
               <User className="size-8" />
             </div>
             <h2 className="mt-4 font-display text-balance text-xl font-bold truncate">
-              {session.user.user_metadata?.full_name || session.user.user_metadata?.name || session.user.email}
+              {session.user.user_metadata?.full_name ||
+                session.user.user_metadata?.name ||
+                session.user.email}
             </h2>
             <p className="text-xs text-ink/60 font-semibold mt-1">Compte Parent</p>
             <div className="mt-6 border-t border-ink/5 pt-6 text-left space-y-4">
@@ -162,13 +198,17 @@ function ProfilePage() {
                 <span className="font-medium text-ink/60 flex items-center gap-2">
                   <Check className="size-4 text-emerald-600" /> Défis complétés
                 </span>
-                <span className="font-bold text-emerald-600">{challengeStats.completed} / {challengeStats.total}</span>
+                <span className="font-bold text-emerald-600">
+                  {challengeStats.completed} / {challengeStats.total}
+                </span>
               </div>
               <div className="flex items-center justify-between text-sm">
                 <span className="font-medium text-ink/60 flex items-center gap-2">
                   <Calendar className="size-4 text-amber-600" /> Créé le
                 </span>
-                <span className="font-bold text-xs">{new Date(session.user.created_at).toLocaleDateString()}</span>
+                <span className="font-bold text-xs">
+                  {new Date(session.user.created_at).toLocaleDateString()}
+                </span>
               </div>
             </div>
             <div className="mt-6 border-t border-ink/5 pt-4 space-y-2">
@@ -271,7 +311,11 @@ function ProfilePage() {
                 disabled={savingRelationship || !relationshipType}
                 className="press-brand rounded-xl bg-brand px-6 py-2.5 text-sm font-bold text-white disabled:opacity-50 flex items-center justify-center gap-2"
               >
-                {savingRelationship ? <Loader2 className="size-4 animate-spin" /> : <Check className="size-4" />}
+                {savingRelationship ? (
+                  <Loader2 className="size-4 animate-spin" />
+                ) : (
+                  <Check className="size-4" />
+                )}
                 <span>Enregistrer</span>
               </button>
             </div>
@@ -284,7 +328,8 @@ function ProfilePage() {
               Numéro de téléphone
             </h3>
             <p className="text-xs text-ink/60 leading-relaxed mb-6">
-              Renseignez votre numéro pour recevoir des synthèses personnalisées et des notifications sur le potentiel de vos enfants.
+              Renseignez votre numéro pour recevoir des synthèses personnalisées et des
+              notifications sur le potentiel de vos enfants.
             </p>
             <form onSubmit={handleSavePhone} className="space-y-4">
               <div className="flex gap-2">
@@ -325,14 +370,20 @@ function ProfilePage() {
               </div>
               <div className="flex items-center justify-between text-xs text-ink/60 font-medium">
                 <span>Pays actuel : {selectedCountry.name}</span>
-                <span>{phoneNumber.length} / {selectedCountry.limit} chiffres</span>
+                <span>
+                  {phoneNumber.length} / {selectedCountry.limit} chiffres
+                </span>
               </div>
               <button
                 type="submit"
                 disabled={savingPhone || !phoneNumber}
                 className="press-brand rounded-xl bg-brand px-6 py-2.5 text-sm font-bold text-white disabled:opacity-50 flex items-center gap-2"
               >
-                {savingPhone ? <Loader2 className="size-4 animate-spin" /> : <Check className="size-4" />}
+                {savingPhone ? (
+                  <Loader2 className="size-4 animate-spin" />
+                ) : (
+                  <Check className="size-4" />
+                )}
                 <span>Enregistrer le numéro</span>
               </button>
             </form>
@@ -346,31 +397,40 @@ function ProfilePage() {
                 Confidentialité & Consentement
               </h3>
               <p className="text-xs text-ink/60 leading-relaxed">
-                Consultez l'historique d'accès à vos données, exportez vos informations ou supprimez définitivement votre compte.
+                Consultez l'historique d'accès à vos données, exportez vos informations ou supprimez
+                définitivement votre compte.
               </p>
             </div>
 
             {/* Privacy Dashboard from Wireframe 1n */}
             <div className="space-y-3">
-              <p className="text-[10px] font-extrabold uppercase tracking-widest text-ink/60">Vos données en un coup d'œil</p>
+              <p className="text-[10px] font-extrabold uppercase tracking-widest text-ink/60">
+                Vos données en un coup d'œil
+              </p>
               <div className="grid grid-cols-3 gap-3">
                 <div className="rounded-2xl border-2 border-ink bg-surface p-4 text-center">
                   <p className="text-2xl font-black text-ink">{mentorCount}</p>
-                  <p className="mt-1 text-[9px] font-bold text-ink/60 uppercase leading-snug">Mentors connectés</p>
+                  <p className="mt-1 text-[9px] font-bold text-ink/60 uppercase leading-snug">
+                    Mentors connectés
+                  </p>
                 </div>
                 <div className="rounded-2xl border-2 border-ink bg-surface p-4 text-center">
                   <p className="text-2xl font-black text-brand">{artifactsCount}</p>
-                  <p className="mt-1 text-[9px] font-bold text-ink/60 uppercase leading-snug">Réalisations privées</p>
+                  <p className="mt-1 text-[9px] font-bold text-ink/60 uppercase leading-snug">
+                    Réalisations privées
+                  </p>
                 </div>
                 <div className="rounded-2xl border-2 border-ink bg-surface p-4 text-center">
                   <p className="text-2xl font-black text-emerald-600">{consentEventsCount}</p>
-                  <p className="mt-1 text-[9px] font-bold text-ink/60 uppercase leading-snug">Événements enregistrés</p>
+                  <p className="mt-1 text-[9px] font-bold text-ink/60 uppercase leading-snug">
+                    Événements enregistrés
+                  </p>
                 </div>
               </div>
             </div>
-            
+
             <ConsentLedger />
-            
+
             <div className="pt-4 border-t-[3px] border-ink space-y-4">
               <ExportDataButton />
               <DeleteAccountDialog />

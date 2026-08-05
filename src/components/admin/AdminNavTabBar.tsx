@@ -1,15 +1,17 @@
 import React from "react";
-import { BarChart3, Award, Brain, ShoppingBag, Calendar, Building2, Users, Package } from "lucide-react";
+import {
+  BarChart3,
+  Award,
+  Brain,
+  ShoppingBag,
+  Calendar,
+  Building2,
+  Users,
+  Package,
+} from "lucide-react";
 
 export type AdminTab =
-  | "executive"
-  | "b2b"
-  | "supervisors"
-  | "products"
-  | "talents"
-  | "naya"
-  | "commerce"
-  | "seasons";
+  "executive" | "b2b" | "supervisors" | "products" | "talents" | "naya" | "commerce" | "seasons";
 
 interface AdminNavTabBarProps {
   activeTab: AdminTab;
@@ -102,7 +104,10 @@ export const ADMIN_TABS: Array<{
 export function AdminNavTabBar({ activeTab, onTabChange }: AdminNavTabBarProps) {
   return (
     <div className="w-full overflow-x-auto bg-surface/80 backdrop-blur-md border border-ink/10 p-1.5 sm:p-2 rounded-3xl shadow-sm mb-6 sm:mb-8 no-scrollbar scroll-smooth">
-      <nav className="flex min-w-max gap-2 sm:grid sm:min-w-0 sm:grid-cols-2 md:grid-cols-4 lg:grid-cols-8" aria-label="Navigation Admin OS">
+      <nav
+        className="flex min-w-max gap-2 sm:grid sm:min-w-0 sm:grid-cols-2 md:grid-cols-4 lg:grid-cols-8"
+        aria-label="Navigation Admin OS"
+      >
         {ADMIN_TABS.map((tab) => {
           const Icon = tab.icon;
           const isActive = activeTab === tab.id;
@@ -122,7 +127,9 @@ export function AdminNavTabBar({ activeTab, onTabChange }: AdminNavTabBarProps) 
               <div className="flex items-center justify-between w-full mb-2 gap-1">
                 <div
                   className={`p-1.5 sm:p-2 rounded-xl transition-colors ${
-                    isActive ? `${tab.badgeBgClass} ${tab.badgeTextClass}` : "bg-ink/5 text-ink/50 group-hover:text-ink"
+                    isActive
+                      ? `${tab.badgeBgClass} ${tab.badgeTextClass}`
+                      : "bg-ink/5 text-ink/50 group-hover:text-ink"
                   }`}
                 >
                   <Icon className="size-4 sm:size-5 stroke-[2.2]" />

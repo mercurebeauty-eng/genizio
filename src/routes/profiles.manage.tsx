@@ -9,8 +9,14 @@ import { GenizioLoader } from "@/components/GenizioLoader";
 import type { ChildProfile } from "@/components/profiles/shared";
 import { confirmDialog } from "@/components/ui/confirm-dialog";
 import { ArrowLeft, Lock, Phone } from "lucide-react";
-import { computeChildProfileQuota } from "@/lib/child-profile-quota";
-import { resolveExtraSlotPrice, formatXof, formatXofAmount, formatPromoDeadline, STANDARD_PRICE_XOF } from "@/lib/pricing";
+import { computeChildCreationLimit } from "@/lib/child-access";
+import {
+  resolveExtraSlotPrice,
+  formatXof,
+  formatXofAmount,
+  formatPromoDeadline,
+  STANDARD_PRICE_XOF,
+} from "@/lib/pricing";
 
 export const Route = createFileRoute("/profiles/manage")({
   component: ManageProfilesPage,
@@ -26,6 +32,12 @@ function ManageProfilesPage() {
 
   // Prix de bienvenue (3 premiers mois du compte) puis tarif standard — cf. src/lib/pricing.ts.
   const slotPrice = resolveExtraSlotPrice(session?.user?.created_at);
+
+  // Décision 2026-08-05 : l'accès payant est MENSUEL (5 000 F/mois de bienvenue →
+  // 15 000 F/mois). Le parent choisit une durée (1/3/6 mois) ; le montant WhatsApp =
+  // prix mensuel × mois. L'admin prolonge via extendChildAccessAdmin après le virement.
+  const [upgradeMonths, setUpgradeMonths] = useState(3);
+  const upgradeTotal = slotPrice.priceXof * upgradeMonths;
 
   useEffect(() => {
     if (!loading && !session) navigate({ to: "/auth", replace: true });
@@ -66,12 +78,16 @@ function ManageProfilesPage() {
   }, [session]);
 
   const remove = async (id: string) => {
-    if (!(await confirmDialog({
-      title: "Supprimer ce profil ?",
-      description: "Cette action est irréversible et supprimera aussi tout l'historique de défis associé.",
-      confirmLabel: "Supprimer",
-      variant: "danger",
-    }))) return;
+    if (
+      !(await confirmDialog({
+        title: "Supprimer ce profil ?",
+        description:
+          "Cette action est irréversible et supprimera aussi tout l'historique de défis associé.",
+        confirmLabel: "Supprimer",
+        variant: "danger",
+      }))
+    )
+      return;
     await supabase.from("child_profiles").delete().eq("id", id);
     void refetch();
   };
@@ -89,26 +105,34 @@ function ManageProfilesPage() {
       <AppHeader />
 
       <main className="mx-auto max-w-6xl px-6 py-12">
-        <Link to="/profile" className="mb-6 inline-flex items-center gap-2 text-sm font-bold text-ink/60 hover:text-brand">
+        <Link
+          to="/profile"
+          className="mb-6 inline-flex items-center gap-2 text-sm font-bold text-ink/60 hover:text-brand"
+        >
           <ArrowLeft className="size-4" /> Retour aux réglages
         </Link>
 
         <div className="mb-10 flex flex-col justify-between gap-4  md:items-end">
           <div>
-            <h1 className="font-display text-balance text-4xl font-extrabold md:text-5xl">Mes profils enfants</h1>
+            <h1 className="font-display text-balance text-4xl font-extrabold md:text-5xl">
+              Mes profils enfants
+            </h1>
             <p className="mt-2 text-ink/60">
               Sauvegardez le questionnaire de chaque enfant pour retrouver ses défis en un clic.
             </p>
           </div>
           {(() => {
-            const quota = computeChildProfileQuota({
-              accountCreatedAt: session?.user?.created_at,
-              extraSlots: (session?.user?.app_metadata?.extra_profile_slots as number) ?? 0,
-            });
+            // Décision 2026-08-05 : le plancher couvre le profil gratuit (+ slots grand-pérés),
+            // le "+1" autorise la création du premier profil MENSUEL (en cours de première mise
+            // en paiement) — miroir du trigger check_child_profile_quota (migration 20260805100000).
+            const quota = computeChildCreationLimit(
+              session?.user?.created_at,
+              (session?.user?.app_metadata?.extra_profile_slots as number) ?? 0,
+            );
             const atQuota = profiles.length >= quota;
             return (
               <button
-                onClick={() => atQuota ? setShowUpgradeModal(true) : setEditing("new")}
+                onClick={() => (atQuota ? setShowUpgradeModal(true) : setEditing("new"))}
                 className={`rounded-2xl border border-ink/10 px-6 py-3 text-sm font-bold shadow-xl hover:-translate-y-0.5 active:translate-y-0 active:shadow-none transition-all flex items-center gap-2 ${
                   atQuota ? "bg-amber-100 text-amber-800" : "bg-brand text-white"
                 }`}
@@ -129,7 +153,12 @@ function ManageProfilesPage() {
         ) : (
           <div className="grid gap-6  ">
             {profiles.map((p) => (
-              <ProfileCard key={p.id} profile={p} onEdit={() => setEditing(p)} onDelete={() => remove(p.id)} />
+              <ProfileCard
+                key={p.id}
+                profile={p}
+                onEdit={() => setEditing(p)}
+                onDelete={() => remove(p.id)}
+              />
             ))}
           </div>
         )}
@@ -149,36 +178,82 @@ function ManageProfilesPage() {
 
       {/* ── Upgrade Modal ─────────────────────────────────────────────── */}
       {showUpgradeModal && (
-        <div className="fixed inset-0 z-50 grid place-items-center overflow-y-auto bg-ink/70 p-4 backdrop-blur-sm" onClick={() => setShowUpgradeModal(false)}>
-          <div onClick={(e) => e.stopPropagation()} className="w-full max-w-md rounded-3xl border border-ink/10 bg-white p-8 shadow-xl">
+        <div
+          className="fixed inset-0 z-50 grid place-items-center overflow-y-auto bg-ink/70 p-4 backdrop-blur-sm"
+          onClick={() => setShowUpgradeModal(false)}
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            className="w-full max-w-md rounded-3xl border border-ink/10 bg-white p-8 shadow-xl"
+          >
             <div className="mb-6 flex items-start gap-4">
-              <div className="grid size-14 shrink-0 place-items-center rounded-2xl border border-ink/10 bg-amber-100 text-3xl shadow-sm">🔒</div>
+              <div className="grid size-14 shrink-0 place-items-center rounded-2xl border border-ink/10 bg-amber-100 text-3xl shadow-sm">
+                🔒
+              </div>
               <div>
-                <h2 className="font-display text-balance text-2xl font-extrabold text-ink">Quota gratuit atteint</h2>
-                <p className="mt-1 text-sm text-ink/60">Vous avez {profiles.length} profils enregistrés.</p>
+                <h2 className="font-display text-balance text-2xl font-extrabold text-ink">
+                  Quota gratuit atteint
+                </h2>
+                <p className="mt-1 text-sm text-ink/60">
+                  Vous avez {profiles.length} profils enregistrés.
+                </p>
               </div>
             </div>
             <div className="mb-6 rounded-2xl border border-ink/10 bg-surface p-5 shadow-sm">
-              <p className="text-xs font-black uppercase tracking-widest text-ink/60 mb-1">Profil supplémentaire</p>
-              <p className="font-display text-balance text-3xl font-black text-ink">{formatXofAmount(slotPrice.priceXof)} <span className="text-lg text-ink/60">FCFA</span></p>
+              <p className="text-xs font-black uppercase tracking-widest text-ink/60 mb-1">
+                Accès mensuel — profil supplémentaire
+              </p>
+              <p className="font-display text-balance text-3xl font-black text-ink">
+                {formatXofAmount(upgradeTotal)} <span className="text-lg text-ink/60">FCFA</span>
+                <span className="ml-2 align-middle text-sm font-bold text-ink/50">
+                  soit {formatXof(slotPrice.priceXof)}/mois
+                </span>
+              </p>
               {slotPrice.isPromo && slotPrice.promoEndsAt && (
                 <p className="mt-2 inline-flex items-center gap-1.5 rounded-full bg-emerald-100 px-3 py-1 text-[11px] font-black text-emerald-800">
-                  Prix de bienvenue — jusqu'au {formatPromoDeadline(slotPrice.promoEndsAt)}, puis {formatXof(STANDARD_PRICE_XOF)}
+                  Prix de bienvenue — jusqu'au {formatPromoDeadline(slotPrice.promoEndsAt)}, puis{" "}
+                  {formatXof(STANDARD_PRICE_XOF)}/mois
                 </p>
               )}
-              <p className="mt-2 text-xs text-ink/60 leading-relaxed">Débloqué manuellement après confirmation du paiement. Accès permanent.</p>
+              {/* Choix de durée (1 à 6 mois, même barème que le parrainage) */}
+              <div className="mt-4 flex gap-2">
+                {[1, 3, 6].map((m) => (
+                  <button
+                    key={m}
+                    type="button"
+                    onClick={() => setUpgradeMonths(m)}
+                    className={`flex-1 rounded-xl border px-3 py-2 text-sm font-extrabold transition-all cursor-pointer ${
+                      upgradeMonths === m
+                        ? "border-brand bg-brand text-white shadow-sm"
+                        : "border-ink/10 bg-white text-ink/70"
+                    }`}
+                  >
+                    {m} mois
+                  </button>
+                ))}
+              </div>
+              <p className="mt-2 text-xs text-ink/60 leading-relaxed">
+                Accès débloqué manuellement après confirmation du paiement, puis renouvelable chaque
+                mois.
+              </p>
             </div>
             <a
               href={`https://wa.me/${import.meta.env.VITE_WHATSAPP_NUMBER || "33606433148"}?text=${encodeURIComponent(
-                `Bonjour, je souhaite débloquer un profil supplémentaire sur Génizio.\nCompte : ${session?.user?.email}\nMontant : ${formatXof(slotPrice.priceXof)}`
+                `Bonjour, je souhaite débloquer un profil supplémentaire sur Génizio.\nCompte : ${session?.user?.email}\nDurée : ${upgradeMonths} mois\nMontant : ${formatXof(upgradeTotal)}`,
               )}`}
-              target="_blank" rel="noopener noreferrer"
+              target="_blank"
+              rel="noopener noreferrer"
               className="flex w-full items-center justify-center gap-2.5 rounded-2xl border border-ink/10 bg-[#25D366] py-3.5 font-bold text-sm text-white shadow-xl hover:-translate-y-0.5 active:translate-y-0 active:shadow-none transition-all"
             >
               <Phone className="size-4 fill-white" />
               Contacter l'administrateur sur WhatsApp
             </a>
-            <button onClick={() => setShowUpgradeModal(false)} className="mt-3 w-full py-2 text-center text-xs font-bold text-ink/60 hover:text-ink transition-all">Fermer</button>
+            <button
+              onClick={() => setShowUpgradeModal(false)}
+              className="mt-3 w-full py-2 text-center text-xs font-bold text-ink/60 hover:text-ink transition-all"
+            >
+              Fermer
+            </button>
           </div>
         </div>
       )}

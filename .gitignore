@@ -51,3 +51,6 @@ supabase/.temp/
 .agents/teamwork_preview_reviewer_*/
 .agents/teamwork_preview_worker_*/
 .agents/ORIGINAL_REQUEST.md
+
+# ZCode workspace artifacts (plans/diagnostics - tooling only)
+.zcode/

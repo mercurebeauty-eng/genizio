@@ -11,7 +11,6 @@ import {
   Building2,
   Users,
   ShoppingBag,
-  Sparkles,
   Zap,
   Award,
   Brain,
@@ -20,6 +19,7 @@ import {
   TrendingUp,
   RefreshCw,
   Crown,
+  Flame,
   CheckCircle2,
 } from "lucide-react";
 
@@ -50,7 +50,8 @@ export function AdminTalentsCitiesTab({
             Cartographie des Guildes & Intelligence par Ville
           </h2>
           <p className="text-sm font-medium text-ink/60 mt-0.5">
-            Analyse comparative de l'empreinte géographique, répartition des intelligences Gardner et détection des hauts potentiels.
+            Analyse comparative de l'empreinte géographique, répartition des intelligences Gardner
+            et détection des hauts potentiels.
           </p>
         </div>
 
@@ -70,7 +71,9 @@ export function AdminTalentsCitiesTab({
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         <div className="rounded-3xl border border-ink/10 bg-white p-6 shadow-sm flex flex-col justify-between">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-bold uppercase tracking-wider text-ink/60">Total Enfants</span>
+            <span className="text-xs font-bold uppercase tracking-wider text-ink/60">
+              Total Enfants
+            </span>
             <div className="size-10 rounded-2xl bg-brand/10 text-brand flex items-center justify-center">
               <Users className="size-5" />
             </div>
@@ -83,7 +86,9 @@ export function AdminTalentsCitiesTab({
 
         <div className="rounded-3xl border border-ink/10 bg-white p-6 shadow-sm flex flex-col justify-between">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-bold uppercase tracking-wider text-ink/60">Villes Actives</span>
+            <span className="text-xs font-bold uppercase tracking-wider text-ink/60">
+              Villes Actives
+            </span>
             <div className="size-10 rounded-2xl bg-leaf/10 text-leaf flex items-center justify-center">
               <Building2 className="size-5" />
             </div>
@@ -96,20 +101,26 @@ export function AdminTalentsCitiesTab({
 
         <div className="rounded-3xl border border-ink/10 bg-white p-6 shadow-sm flex flex-col justify-between">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-bold uppercase tracking-wider text-ink/60">Hauts Potentiels</span>
+            <span className="text-xs font-bold uppercase tracking-wider text-ink/60">
+              Hauts Potentiels
+            </span>
             <div className="size-10 rounded-2xl bg-purple-500/10 text-purple-600 flex items-center justify-center">
-              <Sparkles className="size-5" />
+              <Flame className="size-5" />
             </div>
           </div>
           <div className="mt-4">
-            <div className="font-display text-3xl font-black text-ink">{summary.highPotentialCount}</div>
+            <div className="font-display text-3xl font-black text-ink">
+              {summary.highPotentialCount}
+            </div>
             <p className="text-xs font-medium text-ink/50 mt-1">Alertes talent (Score ≥ 70)</p>
           </div>
         </div>
 
         <div className="rounded-3xl border border-ink/10 bg-white p-6 shadow-sm flex flex-col justify-between">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-bold uppercase tracking-wider text-ink/60">Commandes Boutique</span>
+            <span className="text-xs font-bold uppercase tracking-wider text-ink/60">
+              Commandes Boutique
+            </span>
             <div className="size-10 rounded-2xl bg-sky/10 text-sky-600 flex items-center justify-center">
               <ShoppingBag className="size-5" />
             </div>
@@ -153,7 +164,8 @@ export function AdminTalentsCitiesTab({
                     <span>{item.city}</span>
                   </h4>
                   <span className="text-xs font-medium text-ink/60">
-                    {item.childrenCount} enfant{item.childrenCount > 1 ? "s" : ""} ({item.percentage}%)
+                    {item.childrenCount} enfant{item.childrenCount > 1 ? "s" : ""} (
+                    {item.percentage}%)
                   </span>
                 </div>
                 <span className="text-xs font-bold rounded-full bg-white border border-ink/10 px-2.5 py-1 text-ink/70">
@@ -190,13 +202,17 @@ export function AdminTalentsCitiesTab({
                     <MapPin className="size-4 text-ink/40" />
                     <span>{item.city}</span>
                   </td>
-                  <td className="px-5 py-3.5 text-center font-bold text-ink">{item.childrenCount}</td>
+                  <td className="px-5 py-3.5 text-center font-bold text-ink">
+                    {item.childrenCount}
+                  </td>
                   <td className="px-5 py-3.5 text-center">
                     <span className="inline-block rounded-full bg-brand/10 text-brand px-2.5 py-0.5 text-xs font-extrabold">
                       {item.percentage}%
                     </span>
                   </td>
-                  <td className="px-5 py-3.5 text-center font-bold text-ink/80">{item.ordersCount}</td>
+                  <td className="px-5 py-3.5 text-center font-bold text-ink/80">
+                    {item.ordersCount}
+                  </td>
                 </tr>
               ))}
               {cityStats.length === 0 && (
@@ -259,7 +275,8 @@ export function AdminTalentsCitiesTab({
           </div>
 
           <div className="rounded-2xl bg-leaf/5 border border-leaf/20 p-3.5 text-xs text-leaf/90 font-medium">
-            💡 <strong>Règle des Guildes :</strong> L'algorithme attribue la guilde à partir du score cumulé des talents dominants (ex. Bâtisseurs = Spatiale + Artisanale).
+            💡 <strong>Règle des Guildes :</strong> L'algorithme attribue la guilde à partir du
+            score cumulé des talents dominants (ex. Bâtisseurs = Spatiale + Artisanale).
           </div>
         </div>
 
@@ -304,7 +321,8 @@ export function AdminTalentsCitiesTab({
           </div>
 
           <div className="rounded-2xl bg-purple-50 border border-purple-200 p-3.5 text-xs text-purple-800 font-medium">
-            🎯 <strong>Modèle Gardner :</strong> Évaluation holistique couvrant de la logique et du langage jusqu'à l'empathie sociale et l'intelligence spatiale.
+            🎯 <strong>Modèle Gardner :</strong> Évaluation holistique couvrant de la logique et du
+            langage jusqu'à l'empathie sociale et l'intelligence spatiale.
           </div>
         </div>
       </div>
@@ -320,7 +338,8 @@ export function AdminTalentsCitiesTab({
               </h3>
             </div>
             <p className="text-xs font-medium text-ink/60 mt-0.5">
-              Identification en temps réel des profils ayant atteint un score d'excellence (Score ≥ 70/100).
+              Identification en temps réel des profils ayant atteint un score d'excellence (Score ≥
+              70/100).
             </p>
           </div>
           <span className="text-xs font-extrabold text-amber-800 bg-amber-100 px-3 py-1 rounded-full border border-amber-300">
@@ -335,7 +354,8 @@ export function AdminTalentsCitiesTab({
               Aucune alerte haut potentiel active
             </p>
             <p className="text-xs text-ink/60 max-w-sm mx-auto">
-              Les profils d'enfants apparaîtront automatiquement ici dès qu'ils auront cumulé un score de 70+ dans l'une des intelligences Gardner.
+              Les profils d'enfants apparaîtront automatiquement ici dès qu'ils auront cumulé un
+              score de 70+ dans l'une des intelligences Gardner.
             </p>
           </div>
         ) : (
@@ -364,7 +384,9 @@ export function AdminTalentsCitiesTab({
                     </div>
                   </div>
 
-                  <span className={`text-xs font-extrabold px-3 py-1 rounded-full border ${alert.badgeColor}`}>
+                  <span
+                    className={`text-xs font-extrabold px-3 py-1 rounded-full border ${alert.badgeColor}`}
+                  >
                     {alert.score} / 100
                   </span>
                 </div>

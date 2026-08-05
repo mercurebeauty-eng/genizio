@@ -4,6 +4,8 @@ import { VALID_TALENT_KEYS, TALENT_KEY_LABELS } from "@/lib/talent-buckets";
 import { INTERESTS_BY_TALENT } from "@/components/profiles/shared";
 import { normalizeChildInterests } from "@/lib/interest-migration";
 import { resolveEnrollmentWindow } from "@/lib/seasons.functions";
+import { getChildAccessStatus } from "@/lib/child-access";
+import { getInterestHypothesesSnapshot, type InterestHypotheses } from "@/lib/interest-confidence";
 import { z } from "zod";
 
 import {
@@ -592,7 +594,10 @@ export function finalizeChallenge<T extends {
  * Helper mapping child.interests tags (from INTERESTS_BY_TALENT in src/components/profiles/shared.ts)
  * into rich cognitive posture descriptors and behavioral drivers for AI prompt payloads.
  */
-export function formatChildInterestsPayload(interests?: string[] | null): string {
+export function formatChildInterestsPayload(
+  interests?: string[] | null,
+  hypotheses?: InterestHypotheses | null
+): string {
   const normalized = normalizeChildInterests(interests);
   if (normalized.length === 0) {
     return "Aucun levier spécifique renseigné — explorer et expérimenter avec différentes postures d'apprentissage.";
@@ -603,6 +608,44 @@ export function formatChildInterestsPayload(interests?: string[] | null): string
     for (const tag of talentGroup.tags) {
       tagMap.set(tag, talentGroup.label);
     }
+  }
+
+  // Décision 2026-08-05 : avec un snapshot de confiance, les intérêts déclarés sont des
+  // HYPOTHÈSES DE TRAVAIL — les confirmés sont crédités, les non testés marqués comme à
+  // valider en priorité, les écartés retirés du prompt (l'expérience a montré que ce
+  // n'est pas un moteur d'engagement pour cet enfant). Sans snapshot : comportement
+  // historique inchangé (fallback ci-dessous).
+  if (hypotheses) {
+    const influencePct = Math.round(hypotheses.parentInfluence * 100);
+    const lines: string[] = [
+      `Déclaration du parent, hypothèse de travail — l'expérience réelle prime (influence parentale actuelle : ${influencePct} %).`,
+    ];
+    const refutedNotes: string[] = [];
+
+    for (const tag of normalized) {
+      const label = tagMap.get(tag) ?? "Levier d'action";
+      const h = hypotheses.byTag[tag];
+      if (h?.status === "refuted") {
+        refutedNotes.push(
+          `Intérêt déclaré non confirmé : "${tag}" — ne pas l'utiliser comme moteur d'engagement, explorer d'autres pistes.`
+        );
+        continue;
+      }
+      if (h?.status === "confirmed") {
+        lines.push(`- [${label}] "${tag}" — confirmé par l'expérience`);
+      } else if (h?.status === "untested") {
+        lines.push(`- [${label}] "${tag}" — hypothèse du parent à confirmer (à tester en priorité)`);
+      } else {
+        lines.push(`- [${label}] "${tag}"`);
+      }
+    }
+
+    const active =
+      lines.length > 1
+        ? lines.join("\n")
+        : `- (aucun levier déclaré encore crédité${hypotheses.refutedTags.length > 0 ? " — tous les leviers déclarés ont été écartés par l'expérience" : ""})`;
+    const refutedBlock = refutedNotes.length > 0 ? `\n${refutedNotes.join("\n")}` : "";
+    return `${active}${refutedBlock}`;
   }
 
   return normalized
@@ -1239,6 +1282,21 @@ export async function callClaude(
   return callDeepSeekText(prompt, jsonMode, maxOutputTokens, maxRetries, modelOverride ?? DEEPSEEK_CHAT_MODEL);
 }
 
+// Gate "accès mensuel expiré" (décision 2026-08-05) : à l'expiration, la génération de
+// NOUVEAUX défis est bloquée — le portfolio, l'historique et le passeport restent
+// accessibles. child_access_periods n'a aucune policy RLS : le statut se lit donc via le
+// service-role (même pattern d'import dynamique que le reste du fichier).
+async function assertChildAccessActive(userId: string, childId: string) {
+  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+  const access = await getChildAccessStatus(supabaseAdmin as any, userId, childId);
+  if (access.kind !== "expired") return;
+  throw new Error(
+    access.endsAt
+      ? `L'accès mensuel de cet enfant a expiré le ${new Date(access.endsAt).toLocaleDateString("fr-FR")}. Renouvelez pour générer de nouveaux défis.`
+      : "L'accès de cet enfant n'est pas actif. Renouvelez pour générer de nouveaux défis.",
+  );
+}
+
 const GenerateInput = z.object({
   childId: z.string().uuid(),
   count: z.number().int().min(1).max(6).default(4),
@@ -1258,6 +1316,13 @@ export const generateChallenges = createServerFn({ method: "POST" })
       .is("access_locked_at", null)
       .maybeSingle();
     if (childErr || !child) throw new Error("Profil enfant introuvable");
+
+    await assertChildAccessActive(userId, data.childId);
+
+    // Décision 2026-08-05 : les intérêts déclarés sont des HYPOTHÈSES de travail — leur
+    // confiance est dérivée à la lecture (complétions vs abandons, par groupe de
+    // talents). Échec → null → formatage brut, la génération ne casse jamais.
+    const interestHypotheses = await getInterestHypothesesSnapshot(supabase as any, data.childId).catch(() => null);
 
     // Domains repeatedly generated but never even started are a real signal
     // that's currently thrown away: the prompt only ever sees *completed*
@@ -1346,7 +1411,7 @@ Profil :
 - Âge : ${child.age} ans
 - Ville / pays : ${[child.city, child.country].filter(Boolean).join(", ") || "non précisé"}
 - Modes d'engagement et leviers comportementaux observés par le parent :
-${formatChildInterestsPayload(child.interests)}
+${formatChildInterestsPayload(child.interests, interestHypotheses)}
 - Scores de talents actuels (Radar Chart de Howard Gardner, sur les 9 intelligences) : ${JSON.stringify(child.talents || {})}
 
 Défis déjà accomplis par l'enfant et observations de Naya :
@@ -2282,6 +2347,12 @@ export const generateAcademicHomeworkChallenge = createServerFn({ method: "POST"
       .maybeSingle();
     if (childErr || !child) throw new Error("Profil enfant introuvable");
 
+    await assertChildAccessActive(userId, data.childId);
+
+    // Décision 2026-08-05 : les intérêts déclarés sont des HYPOTHÈSES de travail — leur
+    // confiance est dérivée à la lecture (complétions vs abandons, par groupe de talents).
+    const interestHypotheses = await getInterestHypothesesSnapshot(supabase as any, data.childId).catch(() => null);
+
     const { data: existing } = await supabase
       .from("challenges")
       .select("title")
@@ -2323,7 +2394,7 @@ Profil de l'enfant :
 - Classe actuelle : ${gradeInfo.label} (${gradeInfo.cycle})
 - Ville / pays : ${[child.city, child.country].filter(Boolean).join(", ") || "non précisé"}
 - Modes d'engagement et leviers comportementaux observés par le parent :
-${formatChildInterestsPayload(child.interests)}
+${formatChildInterestsPayload(child.interests, interestHypotheses)}
 
 CONSIGNE DE SOUTIEN SCOLAIRE / DEVOIR À FUSIONNER :
 - Matière : ${subjectLabel} (${data.subject})
@@ -2455,6 +2526,12 @@ export const generateSingleChallenge = createServerFn({ method: "POST" })
       .maybeSingle();
     if (childErr || !child) throw new Error("Profil enfant introuvable");
 
+    await assertChildAccessActive(userId, data.childId);
+
+    // Décision 2026-08-05 : les intérêts déclarés sont des HYPOTHÈSES de travail — leur
+    // confiance est dérivée à la lecture (complétions vs abandons, par groupe de talents).
+    const interestHypotheses = await getInterestHypothesesSnapshot(supabase as any, data.childId).catch(() => null);
+
     // Unlike generateChallenges (the batch generator), this on-demand single-défi
     // path never checked recent titles at all — a parent clicking "Composer un défi
     // ciblé" repeatedly could get literal duplicates. Fetching both in parallel
@@ -2528,7 +2605,7 @@ Profil de l'enfant :
 - Âge : ${child.age} ans
 - Ville / pays : ${[child.city, child.country].filter(Boolean).join(", ") || "non précisé"}
 - Modes d'engagement et leviers comportementaux observés par le parent :
-${formatChildInterestsPayload(child.interests)}
+${formatChildInterestsPayload(child.interests, interestHypotheses)}
 - Scores de talents actuels (Radar Chart de Howard Gardner) : ${JSON.stringify(child.talents || {})}
 
 ${AGE_DEVELOPMENT_GUIDANCE}
@@ -2663,7 +2740,10 @@ export const getChildAISynthesis = createServerFn({ method: "POST" })
       .map((c) => `- Défi "${c.title}" (${c.domain}) : "${c.ai_observations ?? 'Pas d\'observation'}"`)
       .join("\n");
 
-    const formattedInterests = formatChildInterestsPayload(child.interests);
+    // Décision 2026-08-05 : les intérêts déclarés sont des HYPOTHÈSES de travail — leur
+    // confiance est dérivée à la lecture (complétions vs abandons, par groupe de talents).
+    const interestHypotheses = await getInterestHypothesesSnapshot(supabase as any, data.childId).catch(() => null);
+    const formattedInterests = formatChildInterestsPayload(child.interests, interestHypotheses);
 
     const prompt = `Tu es Naya, une IA mentore pédagogique.
 Analyse les accomplissements suivants de l'enfant ${child.name} (${child.age} ans) :

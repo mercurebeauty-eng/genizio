@@ -5,7 +5,19 @@ import { supabase } from "@/integrations/supabase/client";
 import { useSession } from "@/hooks/use-session";
 import { updateChallenge, validateChallengeProof } from "@/lib/challenges.functions";
 import { getActiveChallenge, ChallengeLike } from "@/lib/active-challenge";
-import { ArrowLeft, Play, Check, Circle, Sparkles, Smile, Trophy, X, ChevronRight, MessageCircle, Loader2, Upload } from "lucide-react";
+import {
+  ArrowLeft,
+  Play,
+  Check,
+  Circle,
+  Smile,
+  Trophy,
+  X,
+  ChevronRight,
+  MessageCircle,
+  Loader2,
+  Upload,
+} from "lucide-react";
 import { toast } from "sonner";
 import { NayaAvatar } from "@/components/NayaAvatar";
 import nayaAvatar from "@/assets/naya-avatar.png";
@@ -91,8 +103,13 @@ function QuestPage() {
   const loadChallenges = async () => {
     setFetching(true);
     const [c, ch] = await Promise.all([
-      supabase.from("child_profiles").select("id, name, avatar_color").eq("id", profileId).eq("user_id", session!.user.id).maybeSingle(),
-      supabase.from("challenges").select("*").eq("child_id", profileId)
+      supabase
+        .from("child_profiles")
+        .select("id, name, avatar_color")
+        .eq("id", profileId)
+        .eq("user_id", session!.user.id)
+        .maybeSingle(),
+      supabase.from("challenges").select("*").eq("child_id", profileId),
     ]);
     setChild((c.data as Child) ?? null);
     if (ch.data) {
@@ -151,13 +168,15 @@ function QuestPage() {
   const mapNodes = useMemo(() => {
     const completed = challenges
       .filter((c) => c.status === "completed")
-      .sort((a, b) => new Date(a.completed_at || 0).getTime() - new Date(b.completed_at || 0).getTime());
-    
+      .sort(
+        (a, b) => new Date(a.completed_at || 0).getTime() - new Date(b.completed_at || 0).getTime(),
+      );
+
     const active = activeChallenge;
     const todos = challenges.filter((c) => c.status === "todo" && c.id !== active?.id);
 
     const nodes: { type: "completed" | "active" | "upcoming"; challenge: Challenge }[] = [];
-    
+
     // Take up to last 2 completed
     const recentCompleted = completed.slice(-2);
     recentCompleted.forEach((c) => {
@@ -213,7 +232,7 @@ function QuestPage() {
     try {
       const base64 = await fileToBase64(file);
       const challengeToValidate = challenges.find((c) => c.id === targetId) || activeChallenge;
-      
+
       const result = await validateAI({
         data: {
           id: targetId,
@@ -224,7 +243,9 @@ function QuestPage() {
       });
 
       if (!result.relevant) {
-        toast.error(result.observations || "L'image ne semble pas correspondre. Peux-tu réessayer ?");
+        toast.error(
+          result.observations || "L'image ne semble pas correspondre. Peux-tu réessayer ?",
+        );
         return;
       }
 
@@ -253,7 +274,9 @@ function QuestPage() {
       <div className="grid min-h-dvh place-items-center bg-surface text-ink">
         <div className="text-center">
           <p className="mb-4 font-bold">Profil introuvable.</p>
-          <Link to="/profiles" className="underline text-sm opacity-80 hover:opacity-100">Retour</Link>
+          <Link to="/profiles" className="underline text-sm opacity-80 hover:opacity-100">
+            Retour
+          </Link>
         </div>
       </div>
     );
@@ -284,7 +307,11 @@ function QuestPage() {
 
           {/* Mascot Praise */}
           <div className="bg-amber-50 rounded-2xl p-4 border border-amber-200 flex items-center gap-3 text-left">
-            <img src={nayaAvatar} alt="Naya" className="size-12 rounded-full border-2 border-amber-400 shrink-0 object-cover" />
+            <img
+              src={nayaAvatar}
+              alt="Naya"
+              className="size-12 rounded-full border-2 border-amber-400 shrink-0 object-cover"
+            />
             <div className="text-xs font-bold text-amber-950 leading-relaxed">
               {aiObservations ? (
                 <MarkdownContent content={aiObservations} inline />
@@ -298,12 +325,18 @@ function QuestPage() {
           <div className="bg-surface rounded-2xl p-4 border border-ink/10 text-left space-y-3">
             <div className="flex items-center gap-2">
               <Upload className="size-4 text-brand" />
-              <span className="text-xs font-extrabold text-ink">Ajouter une photo souvenir (preuve)</span>
+              <span className="text-xs font-extrabold text-ink">
+                Ajouter une photo souvenir (preuve)
+              </span>
             </div>
 
             {proofUrl ? (
               <div className="space-y-2">
-                <img src={proofUrl} alt="Preuve" className="h-36 w-full object-cover rounded-xl border border-ink/10" />
+                <img
+                  src={proofUrl}
+                  alt="Preuve"
+                  className="h-36 w-full object-cover rounded-xl border border-ink/10"
+                />
                 <p className="text-[11px] font-bold text-emerald-600 flex items-center gap-1">
                   ✓ Preuve validée et enregistrée dans tes talents !
                 </p>
@@ -388,7 +421,9 @@ function QuestPage() {
               Mode Quête
             </span>
             <span className="text-sm font-bold text-ink/60">
-              {isCompletedScreen ? "Fin de mission" : `Étape ${currentStepIndex + 1} sur ${steps.length}`}
+              {isCompletedScreen
+                ? "Fin de mission"
+                : `Étape ${currentStepIndex + 1} sur ${steps.length}`}
             </span>
           </div>
           <button
@@ -427,7 +462,7 @@ function QuestPage() {
               <div className="relative size-32 md:size-40 rounded-full border-[4px] border-ink shadow-xl flex items-center justify-center animate-bounce duration-1000 overflow-hidden bg-white shrink-0">
                 <img src={nayaAvatar} alt="Naya" className="h-full w-full object-cover" />
               </div>
-              
+
               {/* Speech bubble */}
               <div className="bg-white border border-ink/10 p-4 rounded-3xl shadow-sm max-w-xs text-sm font-black text-ink leading-relaxed relative">
                 {getCompanionSpeech()}
@@ -438,13 +473,14 @@ function QuestPage() {
           {/* Right Column: Interaction Card */}
           <div className="md:col-span-3 w-full">
             <div className="bg-white rounded-3xl p-8 border border-ink/10 shadow-xl min-h-[340px] flex flex-col justify-between relative overflow-hidden">
-
               {!isCompletedScreen ? (
                 <>
                   <div className="space-y-4">
                     <div className="flex items-center gap-2">
                       <span className="text-xl">🚀</span>
-                      <span className="text-xs font-black uppercase tracking-widest text-brand">Étape en cours</span>
+                      <span className="text-xs font-black uppercase tracking-widest text-brand">
+                        Étape en cours
+                      </span>
                     </div>
                     <h3 className="font-display text-balance text-2xl font-black text-ink leading-tight">
                       {currentStepText}
@@ -465,12 +501,18 @@ function QuestPage() {
                           : "bg-white border-ink shadow-sm text-ink"
                       }`}
                     >
-                      <span>{stepChecked[currentStepIndex] ? "✓ C'est fait !" : "J'ai terminé cette étape !"}</span>
-                      <div className={`size-8 rounded-full border flex items-center justify-center transition-all ${
-                        stepChecked[currentStepIndex]
-                          ? "border-ink bg-white text-ink"
-                          : "border-ink bg-surface"
-                      }`}>
+                      <span>
+                        {stepChecked[currentStepIndex]
+                          ? "✓ C'est fait !"
+                          : "J'ai terminé cette étape !"}
+                      </span>
+                      <div
+                        className={`size-8 rounded-full border flex items-center justify-center transition-all ${
+                          stepChecked[currentStepIndex]
+                            ? "border-ink bg-white text-ink"
+                            : "border-ink bg-surface"
+                        }`}
+                      >
                         {stepChecked[currentStepIndex] && <Check className="size-5 stroke-[3px]" />}
                       </div>
                     </button>
@@ -500,7 +542,9 @@ function QuestPage() {
                   <div className="space-y-4">
                     <div className="flex items-center gap-2">
                       <Trophy className="size-6 text-amber-500" />
-                      <span className="text-xs font-black uppercase tracking-widest text-amber-600">Félicitations !</span>
+                      <span className="text-xs font-black uppercase tracking-widest text-amber-600">
+                        Félicitations !
+                      </span>
                     </div>
                     <h3 className="font-display text-balance text-2xl font-black text-ink leading-tight">
                       Tu as achevé toute la mission avec succès !
@@ -558,8 +602,8 @@ function QuestPage() {
         <h1 className="font-display text-balance text-2xl font-black text-ink tracking-tight">
           La Carte des Quêtes
         </h1>
-        <Link 
-          to="/profiles" 
+        <Link
+          to="/profiles"
           className="inline-flex items-center gap-2 rounded-full bg-white px-4 py-2 text-xs font-extrabold text-ink/60 hover:text-ink/80 hover:bg-white shadow-sm border border-ink/10 transition-all"
         >
           <ArrowLeft className="size-3.5" />
@@ -568,13 +612,13 @@ function QuestPage() {
       </header>
 
       <main className="flex-1 flex flex-col items-center justify-center p-6 max-w-2xl mx-auto w-full relative z-10 text-center">
-        
         {/* Quest Map Node Tree (Screen 1j) */}
         {mapNodes.length > 0 && (
           <div className="w-full mb-12 py-8 bg-white rounded-3xl border border-ink/10 p-6 shadow-xl">
-            <h2 className="font-display text-balance text-xs font-black text-ink/60 mb-8 uppercase tracking-widest">Mon chemin de découverte</h2>
+            <h2 className="font-display text-balance text-xs font-black text-ink/60 mb-8 uppercase tracking-widest">
+              Mon chemin de découverte
+            </h2>
             <div className="flex items-center justify-between px-4 md:px-12 relative max-w-md mx-auto">
-              
               {/* Connector Lines */}
               <div className="absolute left-[15%] right-[15%] top-1/2 -translate-y-1/2 h-0.5 border-t-2 border-dashed border-ink/20 z-0" />
 
@@ -584,33 +628,50 @@ function QuestPage() {
 
                 if (node.type === "completed") {
                   return (
-                    <div key={node.challenge.id} className={`flex flex-col items-center gap-2 relative z-10 ${offset}`}>
+                    <div
+                      key={node.challenge.id}
+                      className={`flex flex-col items-center gap-2 relative z-10 ${offset}`}
+                    >
                       <div className="size-11 rounded-full bg-emerald-500 text-white border border-ink/10 shadow-sm flex items-center justify-center font-bold text-sm">
                         <Check className="size-5 stroke-[3px]" />
                       </div>
-                      <span className="text-[10px] font-black text-emerald-600 uppercase tracking-wider">Fait</span>
+                      <span className="text-[10px] font-black text-emerald-600 uppercase tracking-wider">
+                        Fait
+                      </span>
                     </div>
                   );
                 }
 
                 if (node.type === "active") {
                   return (
-                    <div key={node.challenge.id} className={`flex flex-col items-center gap-2 relative z-10 ${offset}`}>
-                      <div className={`size-14 rounded-full ${color} border border-ink/10 shadow-xl flex items-center justify-center font-bold text-base animate-pulse`}>
+                    <div
+                      key={node.challenge.id}
+                      className={`flex flex-col items-center gap-2 relative z-10 ${offset}`}
+                    >
+                      <div
+                        className={`size-14 rounded-full ${color} border border-ink/10 shadow-xl flex items-center justify-center font-bold text-base animate-pulse`}
+                      >
                         ★
                       </div>
-                      <span className="text-[11px] font-black text-ink uppercase tracking-wider max-w-[120px] truncate">{node.challenge.title}</span>
+                      <span className="text-[11px] font-black text-ink uppercase tracking-wider max-w-[120px] truncate">
+                        {node.challenge.title}
+                      </span>
                     </div>
                   );
                 }
 
                 // Upcoming
                 return (
-                  <div key={node.challenge.id} className={`flex flex-col items-center gap-2 relative z-10 ${offset} opacity-40`}>
+                  <div
+                    key={node.challenge.id}
+                    className={`flex flex-col items-center gap-2 relative z-10 ${offset} opacity-40`}
+                  >
                     <div className="size-10 rounded-full bg-white border border-dashed border-ink/20 flex items-center justify-center text-ink">
                       <Circle className="size-4 fill-current opacity-20" />
                     </div>
-                    <span className="text-[10px] font-black text-ink uppercase tracking-wider">Prochain</span>
+                    <span className="text-[10px] font-black text-ink uppercase tracking-wider">
+                      Prochain
+                    </span>
                   </div>
                 );
               })}
@@ -618,7 +679,11 @@ function QuestPage() {
           </div>
         )}
 
-        <NayaAvatar size="md" className="mb-6" thoughts={activeChallenge ? ["Hop, on s'y met !"] : ["Bientôt de nouveaux défis !"]} />
+        <NayaAvatar
+          size="md"
+          className="mb-6"
+          thoughts={activeChallenge ? ["Hop, on s'y met !"] : ["Bientôt de nouveaux défis !"]}
+        />
 
         {activeChallenge ? (
           <div className="bg-white rounded-3xl p-8 border border-ink/10 shadow-xl w-full animate-in zoom-in-95 duration-500 relative overflow-hidden text-left">
@@ -640,10 +705,15 @@ function QuestPage() {
 
             {materials.length > 0 && (
               <div className="mb-8">
-                <p className="text-[10px] font-black uppercase tracking-widest text-ink/60 mb-3">Matériel à rassembler :</p>
+                <p className="text-[10px] font-black uppercase tracking-widest text-ink/60 mb-3">
+                  Matériel à rassembler :
+                </p>
                 <div className="flex flex-wrap gap-2">
                   {materials.map((m, i) => (
-                    <span key={i} className="inline-flex items-center gap-1.5 rounded-full border border-ink/10 bg-white px-3.5 py-1.5 text-xs font-bold text-ink shadow-sm">
+                    <span
+                      key={i}
+                      className="inline-flex items-center gap-1.5 rounded-full border border-ink/10 bg-white px-3.5 py-1.5 text-xs font-bold text-ink shadow-sm"
+                    >
                       📦 {m}
                     </span>
                   ))}
@@ -662,7 +732,8 @@ function QuestPage() {
         ) : (
           <div className="bg-white rounded-3xl p-8 border border-ink/10 shadow-xl w-full text-center">
             <p className="text-ink/65 text-lg font-bold">
-              Tu n'as pas de mission active pour le moment ! Demande à tes parents de t'en attribuer une. 😊
+              Tu n'as pas de mission active pour le moment ! Demande à tes parents de t'en attribuer
+              une. 😊
             </p>
           </div>
         )}

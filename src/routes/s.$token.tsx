@@ -14,7 +14,7 @@ export const Route = createFileRoute("/s/$token")({
 function SharedChildView() {
   const { token } = Route.useParams();
   const getSharedView = useServerFn(getSharedChildView);
-  
+
   const [data, setData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -48,7 +48,9 @@ function SharedChildView() {
           <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full border border-ink/10 bg-red-50 text-red-500 mb-4">
             <ShieldAlert className="size-8" />
           </div>
-          <h1 className="font-display text-balance text-2xl font-extrabold text-ink mb-2">Accès restreint</h1>
+          <h1 className="font-display text-balance text-2xl font-extrabold text-ink mb-2">
+            Accès restreint
+          </h1>
           <p className="text-ink/60 leading-relaxed">
             Ce lien est invalide ou a expiré. Veuillez demander un nouveau lien d'accès.
           </p>
@@ -63,7 +65,10 @@ function SharedChildView() {
         <div className="max-w-4xl mx-auto px-6 py-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="flex -space-x-2">
-              <div className="size-10 rounded-full flex items-center justify-center font-extrabold text-white border border-ink/10" style={{ backgroundColor: data.childColor }}>
+              <div
+                className="size-10 rounded-full flex items-center justify-center font-extrabold text-white border border-ink/10"
+                style={{ backgroundColor: data.childColor }}
+              >
                 {data.childName.charAt(0)}
               </div>
               <div className="size-10 rounded-full flex items-center justify-center bg-brand/10 text-brand font-extrabold border border-ink/10">
@@ -72,9 +77,14 @@ function SharedChildView() {
             </div>
             <div>
               <p className="text-xs font-bold text-ink/60 uppercase tracking-widest">
-                Partage privé • {data.scopeDomains && data.scopeDomains.length > 0 ? `Domaines : ${data.scopeDomains.join(", ")}` : "Tous les domaines"}
+                Partage privé •{" "}
+                {data.scopeDomains && data.scopeDomains.length > 0
+                  ? `Domaines : ${data.scopeDomains.join(", ")}`
+                  : "Tous les domaines"}
               </p>
-              <h1 className="font-bold text-ink">{data.childName} & {data.mentorName}</h1>
+              <h1 className="font-bold text-ink">
+                {data.childName} & {data.mentorName}
+              </h1>
             </div>
           </div>
           <div className="rounded-full border border-ink/10 bg-leaf px-3 py-1 text-[10px] font-bold text-white flex items-center gap-1.5 hidden sm:flex">
@@ -85,15 +95,19 @@ function SharedChildView() {
       </header>
 
       <main className="max-w-4xl mx-auto px-4 md:px-6 py-8 space-y-8">
-
         {data.parentPhone && (
           <div className="rounded-2xl border border-ink/10 bg-white p-4 shadow-sm flex items-center gap-3">
             <div className="grid size-9 shrink-0 place-items-center rounded-full bg-brand/10 text-brand">
               <Phone className="size-4" />
             </div>
             <div className="min-w-0">
-              <p className="text-[10px] font-extrabold uppercase tracking-widest text-ink/40">Contacter le parent de {data.childName}</p>
-              <a href={`tel:${data.parentPhone}`} className="text-sm font-bold text-ink hover:text-brand">
+              <p className="text-[10px] font-extrabold uppercase tracking-widest text-ink/40">
+                Contacter le parent de {data.childName}
+              </p>
+              <a
+                href={`tel:${data.parentPhone}`}
+                className="text-sm font-bold text-ink hover:text-brand"
+              >
                 {data.parentPhone}
               </a>
             </div>
@@ -107,15 +121,22 @@ function SharedChildView() {
               Carte des Talents de {data.childName}
             </h3>
             <div className="max-w-lg mx-auto">
-              <TalentRadarChart talents={data.talents} name={data.childName} className="h-72 w-full" age={data.childAge} />
+              <TalentRadarChart
+                talents={data.talents}
+                name={data.childName}
+                className="h-72 w-full"
+                age={data.childAge}
+              />
             </div>
           </div>
         )}
 
         {data.timeline && data.timeline.length > 0 && (
           <div className="space-y-6">
-            <h3 className="font-display text-balance text-xl font-bold px-2">Journal d'apprentissage</h3>
-            
+            <h3 className="font-display text-balance text-xl font-bold px-2">
+              Journal d'apprentissage
+            </h3>
+
             <div className="space-y-4">
               {data.timeline.map((c: any) => (
                 <div key={c.id} className="rounded-3xl bg-white p-6 border border-ink/10 shadow-xl">
@@ -128,14 +149,20 @@ function SharedChildView() {
                     </span>
                   </div>
 
-                  <h4 className="font-display text-balance text-lg font-extrabold text-ink mb-2">{c.title}</h4>
+                  <h4 className="font-display text-balance text-lg font-extrabold text-ink mb-2">
+                    {c.title}
+                  </h4>
                   <div className="text-sm text-ink/70 leading-relaxed mb-6">
                     <MarkdownContent content={c.description} />
                   </div>
 
                   {c.proof_image_url && (
                     <div className="mb-6 rounded-2xl overflow-hidden border border-ink/10 bg-surface">
-                      <img src={c.proof_image_url} alt="Preuve" className="w-full max-h-64 object-contain" />
+                      <img
+                        src={c.proof_image_url}
+                        alt="Preuve"
+                        className="w-full max-h-64 object-contain"
+                      />
                     </div>
                   )}
 
@@ -145,7 +172,9 @@ function SharedChildView() {
                         <Brain className="size-4" />
                         Analyse
                       </p>
-                      <p className="text-sm text-ink/80 leading-relaxed italic">"<MarkdownContent content={c.ai_observations} inline />"</p>
+                      <p className="text-sm text-ink/80 leading-relaxed italic">
+                        "<MarkdownContent content={c.ai_observations} inline />"
+                      </p>
                     </div>
                   )}
 
@@ -165,7 +194,9 @@ function SharedChildView() {
 
         {(!data.timeline || data.timeline.length === 0) && !data.talents && (
           <div className="text-center py-12">
-            <p className="text-ink/60 font-medium">Ce profil ne contient aucune donnée visible pour le moment.</p>
+            <p className="text-ink/60 font-medium">
+              Ce profil ne contient aucune donnée visible pour le moment.
+            </p>
           </div>
         )}
       </main>

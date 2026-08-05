@@ -4,7 +4,31 @@ import { useServerFn } from "@tanstack/react-start";
 import { supabase } from "@/integrations/supabase/client";
 import { useSession } from "@/hooks/use-session";
 import { toast } from "sonner";
-import { Brain, Award, Trash2, Calendar, CheckCircle2, ArrowLeft, Sparkles, Upload, Loader2, Play, Check, X, MessageCircle, Beaker, Trophy, BookOpen, Lock } from "lucide-react";
+import {
+  Brain,
+  Award,
+  Trash2,
+  Calendar,
+  CheckCircle2,
+  ArrowLeft,
+  BookMarked,
+  Star,
+  WandSparkles,
+  KeyRound,
+  Upload,
+  Loader2,
+  Play,
+  Check,
+  X,
+  MessageCircle,
+  Beaker,
+  Trophy,
+  BookOpen,
+  Lock,
+  Phone,
+} from "lucide-react";
+import { getChildAccessStatusFn, type ChildAccessStatus } from "@/lib/child-access";
+import { formatXof } from "@/lib/pricing";
 import {
   generateChallenges,
   updateChallenge,
@@ -29,7 +53,10 @@ import {
 import { HomeworkModeToggle, type ChallengeMode } from "@/components/challenges/HomeworkModeToggle";
 import { AcademicHomeworkInput } from "@/components/challenges/AcademicHomeworkInput";
 import { TALENT_KEY_LABELS } from "@/lib/talent-buckets";
-import { recommendChallengesForChild, type RecommendedChallengeResult } from "@/lib/recommendations.functions";
+import {
+  recommendChallengesForChild,
+  type RecommendedChallengeResult,
+} from "@/lib/recommendations.functions";
 import { createOrder } from "@/lib/products.functions";
 import { NayaAvatar } from "@/components/NayaAvatar";
 import { TalentRadarChart } from "@/components/TalentRadarChart";
@@ -79,7 +106,7 @@ type ChallengesSearchParams = {
 export const Route = createFileRoute("/profiles/$profileId/challenges")({
   validateSearch: (search: Record<string, unknown>): ChallengesSearchParams => {
     return {
-      mode: (search.mode === "child" || search.mode === "parent") ? search.mode : undefined,
+      mode: search.mode === "child" || search.mode === "parent" ? search.mode : undefined,
     };
   },
   component: ChallengesPage,
@@ -142,7 +169,12 @@ const STATUS_LABEL: Record<Challenge["status"], string> = {
   not_completed: "Non réussi",
 };
 
-const CHALLENGE_STATUSES: Challenge["status"][] = ["todo", "in_progress", "completed", "not_completed"];
+const CHALLENGE_STATUSES: Challenge["status"][] = [
+  "todo",
+  "in_progress",
+  "completed",
+  "not_completed",
+];
 
 const STATUS_STYLE: Record<Challenge["status"], string> = {
   todo: "bg-stone-100 text-stone-700 border-stone-200",
@@ -184,8 +216,16 @@ function ChallengesPage() {
   const [openId, setOpenId] = useState<string | null>(null);
   const [statusFilter, setStatusFilter] = useState<"all" | Challenge["status"]>("all");
   const [activeProducts, setActiveProducts] = useState<any[]>([]);
-  const [assignedChallengeForKit, setAssignedChallengeForKit] = useState<{ id: string; title: string; products: any[] } | null>(null);
+  const [assignedChallengeForKit, setAssignedChallengeForKit] = useState<{
+    id: string;
+    title: string;
+    products: any[];
+  } | null>(null);
   const [orderingKit, setOrderingKit] = useState(false);
+  const [accessState, setAccessState] = useState<{
+    status: ChildAccessStatus;
+    renewalAmountXof: number;
+  } | null>(null);
 
   useEffect(() => {
     supabase
@@ -210,7 +250,7 @@ function ChallengesPage() {
   const hasKit = (materialTags?: string[] | null) => {
     if (!materialTags || materialTags.length === 0) return false;
     return activeProducts.some((product) =>
-      product.material_tags?.some((t: string) => materialTags.includes(t))
+      product.material_tags?.some((t: string) => materialTags.includes(t)),
     );
   };
 
@@ -241,6 +281,11 @@ function ChallengesPage() {
   const getAcademicGaps = useServerFn(getAcademicGapsForChild);
   const assignSingle = useServerFn(assignTemplateChallenge);
   const createOrderFn = useServerFn(createOrder);
+
+  // Gate UI "accès mensuel expiré" (décision 2026-08-05) : la génération de NOUVEAUX défis
+  // est bloquée côté client ET côté serveur (assertChildAccessActive) ; le portfolio,
+  // l'historique et les défis déjà émis restent accessibles.
+  const accessExpired = accessState?.status.kind === "expired";
   const recommendFn = useServerFn(recommendChallengesForChild);
 
   const LOADING_STEPS = [
@@ -273,6 +318,10 @@ function ChallengesPage() {
 
   const handleGenerateSingle = async () => {
     if (isGeneratingSingle) return;
+    if (accessExpired) {
+      toast.error("Accès expiré — renouvelez pour générer de nouveaux défis.");
+      return;
+    }
     setIsGeneratingSingle(true);
     setCurrentGeneratedChallenge(null);
     try {
@@ -281,7 +330,7 @@ function ChallengesPage() {
           childId: profileId,
           domain: selectedCategory,
           materialScope,
-        }
+        },
       });
       setCurrentGeneratedChallenge(resp);
       toast.success("Nouveau défi composé avec succès !");
@@ -301,6 +350,10 @@ function ChallengesPage() {
     suggestedTopicId?: string;
   }) => {
     if (isGeneratingAcademic) return;
+    if (accessExpired) {
+      toast.error("Accès expiré — renouvelez pour générer de nouveaux défis.");
+      return;
+    }
     setIsGeneratingAcademic(true);
     setCurrentGeneratedChallenge(null);
     try {
@@ -343,16 +396,20 @@ function ChallengesPage() {
             // ci-dessous gardent leur repli explicite, le reste suit tel quel.
             ...currentGeneratedChallenge,
             material_tags: currentGeneratedChallenge.material_tags ?? [],
-            intelligences: currentGeneratedChallenge.intelligences || [currentGeneratedChallenge.domain],
+            intelligences: currentGeneratedChallenge.intelligences || [
+              currentGeneratedChallenge.domain,
+            ],
             requires_supervision: currentGeneratedChallenge.requires_supervision ?? false,
-          }
-        }
+          },
+        },
       });
       toast.success("Défi assigné avec succès !");
       setCurrentGeneratedChallenge(null);
       await refetch();
 
-      const matching = activeProducts.filter(p => p.material_tags?.some((t: string) => currentGeneratedChallenge.material_tags?.includes(t)));
+      const matching = activeProducts.filter((p) =>
+        p.material_tags?.some((t: string) => currentGeneratedChallenge.material_tags?.includes(t)),
+      );
       if (matching.length > 0) {
         setAssignedChallengeForKit({
           id: resp.id,
@@ -376,7 +433,9 @@ function ChallengesPage() {
     const message = `Bonjour ! Je souhaite commander le kit pour le défi "${assignedChallengeForKit.title}" de ${child.name} :\n${assignedChallengeForKit.products
       .map((p) => `- ${p.name} (${p.price_xof.toLocaleString("fr-FR")} FCFA)`)
       .join("\n")}\nTotal : ${total.toLocaleString("fr-FR")} FCFA`;
-    const waUrl = whatsappNumber ? `https://wa.me/${whatsappNumber}?text=${encodeURIComponent(message)}` : null;
+    const waUrl = whatsappNumber
+      ? `https://wa.me/${whatsappNumber}?text=${encodeURIComponent(message)}`
+      : null;
 
     try {
       const orderItems = assignedChallengeForKit.products.map((p) => ({
@@ -414,15 +473,22 @@ function ChallengesPage() {
 
   const refetch = async () => {
     setFetching(true);
-    const [c, ch] = await Promise.all([
-      supabase.from("child_profiles").select("*").eq("id", profileId).eq("user_id", session!.user.id).maybeSingle(),
+    const [c, ch, accessRes] = await Promise.all([
+      supabase
+        .from("child_profiles")
+        .select("*")
+        .eq("id", profileId)
+        .eq("user_id", session!.user.id)
+        .maybeSingle(),
       supabase
         .from("challenges")
         .select("*")
         .eq("child_id", profileId)
         .order("created_at", { ascending: false }),
+      getChildAccessStatusFn({ data: { childId: profileId } }).catch(() => null),
     ]);
     setChild((c.data as Child) ?? null);
+    setAccessState(accessRes);
     const list = (ch.data ?? []) as Challenge[];
     setChallenges(list);
 
@@ -437,7 +503,9 @@ function ChallengesPage() {
       sessionStorage.removeItem("genizio:highlightChallenge");
       setOpenId(highlightId);
       setTimeout(() => {
-        document.getElementById(`challenge-${highlightId}`)?.scrollIntoView({ behavior: "smooth", block: "center" });
+        document
+          .getElementById(`challenge-${highlightId}`)
+          ?.scrollIntoView({ behavior: "smooth", block: "center" });
       }, 150);
     } else {
       const active = getActiveChallenge(list);
@@ -510,6 +578,10 @@ function ChallengesPage() {
 
   const handleGenerate = async () => {
     setError(null);
+    if (accessExpired) {
+      toast.error("Accès expiré — renouvelez pour générer de nouveaux défis.");
+      return;
+    }
     setGenerating(true);
     try {
       await generate({ data: { childId: profileId, count: 4 } });
@@ -533,7 +605,9 @@ function ChallengesPage() {
         // effet" (seul un toast passait). On suit le filtre sur "En cours" au moment du clic,
         // comme l'annonce déjà le toast, pour que la carte reste visible dans son nouvel état.
         setStatusFilter("in_progress");
-        toast.success("Défi débuté ! Retrouvez-le dans l'onglet 'En cours' pour le valider avec l'enfant.");
+        toast.success(
+          "Défi débuté ! Retrouvez-le dans l'onglet 'En cours' pour le valider avec l'enfant.",
+        );
       } else {
         toast.success("Défi débuté ! Validez-le avec l'enfant lorsque vous êtes prêts.");
       }
@@ -569,7 +643,9 @@ function ChallengesPage() {
       setStatusFilter("not_completed");
     }
     setChallenges((prev) =>
-      prev.map((c) => (c.id === id ? { ...c, status: "not_completed", not_completed_reason: reason } : c)),
+      prev.map((c) =>
+        c.id === id ? { ...c, status: "not_completed", not_completed_reason: reason } : c,
+      ),
     );
     try {
       await markNotCompleted({ data: { id, reason } });
@@ -586,7 +662,9 @@ function ChallengesPage() {
       await update({ data: { id, progress } });
     } catch (e) {
       setChallenges(previous);
-      toast.error(e instanceof Error ? e.message : "Erreur lors de la mise à jour de la progression.");
+      toast.error(
+        e instanceof Error ? e.message : "Erreur lors de la mise à jour de la progression.",
+      );
     }
   };
 
@@ -600,7 +678,14 @@ function ChallengesPage() {
   };
 
   const remove = async (id: string) => {
-    if (!(await confirmDialog({ title: "Supprimer ce défi ?", confirmLabel: "Supprimer", variant: "danger" }))) return;
+    if (
+      !(await confirmDialog({
+        title: "Supprimer ce défi ?",
+        confirmLabel: "Supprimer",
+        variant: "danger",
+      }))
+    )
+      return;
     try {
       await del({ data: { id } });
       setChallenges((prev) => prev.filter((c) => c.id !== id));
@@ -622,7 +707,10 @@ function ChallengesPage() {
       <div className="grid min-h-dvh place-items-center bg-surface">
         <div className="text-center">
           <p className="mb-4 text-ink/60">Profil introuvable.</p>
-          <Link to="/profiles" className="rounded-full bg-brand px-5 py-2 text-sm font-bold text-white">
+          <Link
+            to="/profiles"
+            className="rounded-full bg-brand px-5 py-2 text-sm font-bold text-white"
+          >
             Retour
           </Link>
         </div>
@@ -631,9 +719,10 @@ function ChallengesPage() {
   }
 
   if (child.access_locked_at) {
-    const whatsappNumber = (import.meta.env.VITE_WHATSAPP_NUMBER as string | undefined) || "33606433148";
+    const whatsappNumber =
+      (import.meta.env.VITE_WHATSAPP_NUMBER as string | undefined) || "33606433148";
     const whatsappText = encodeURIComponent(
-      `Bonjour, je voudrais devenir superviseur de ${child.name} suite à la fin de mon rôle d'éducateur.`
+      `Bonjour, je voudrais devenir superviseur de ${child.name} suite à la fin de mon rôle d'éducateur.`,
     );
     return (
       <div className="grid min-h-dvh place-items-center bg-surface px-6">
@@ -643,8 +732,8 @@ function ChallengesPage() {
           </div>
           <h2 className="font-display text-balance text-xl font-extrabold">Profil verrouillé</h2>
           <p className="mt-2 text-sm text-ink/60 leading-relaxed">
-            L'accès à {child.name} a été suspendu suite à la fin de votre rôle d'éducateur pour cette organisation.
-            Sa progression (défis, talents, XP) reste intacte.
+            L'accès à {child.name} a été suspendu suite à la fin de votre rôle d'éducateur pour
+            cette organisation. Sa progression (défis, talents, XP) reste intacte.
           </p>
           <a
             href={`https://wa.me/${whatsappNumber}?text=${whatsappText}`}
@@ -704,6 +793,69 @@ function ChallengesPage() {
             </div>
           </div>
 
+          {/* Gate accès mensuel (décision 2026-08-05) : à expiration, la génération de
+              nouveaux défis est bloquée ; les défis déjà émis restent jouables et visibles. */}
+          {accessState && accessState.status.kind === "expired" && (
+            <div className="mb-6 rounded-3xl border border-red-300 bg-red-50/70 p-5 shadow-sm flex flex-wrap items-center gap-3">
+              <div className="grid size-10 place-items-center rounded-2xl bg-red-600 text-white shrink-0">
+                <Lock className="size-5" />
+              </div>
+              <div className="flex-1 min-w-48">
+                <p className="text-sm font-black text-red-800">
+                  Accès expiré — renouvelez pour générer de nouveaux défis
+                </p>
+                <p className="text-xs text-ink/60 mt-0.5">
+                  Les défis déjà émis restent jouables. Renouvellement :{" "}
+                  <strong>{formatXof(accessState.renewalAmountXof)}/mois</strong>.
+                </p>
+              </div>
+              <a
+                href={`https://wa.me/${import.meta.env.VITE_WHATSAPP_NUMBER || "33606433148"}?text=${encodeURIComponent(
+                  `Bonjour, l'accès Génizio de ${child.name} est expiré. Je souhaite renouveler (${formatXof(accessState.renewalAmountXof)}/mois).`,
+                )}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="shrink-0 inline-flex items-center gap-1.5 rounded-xl bg-[#25D366] px-3 py-2 text-[11px] font-bold text-white shadow-sm hover:brightness-95 transition-all"
+              >
+                <Phone className="size-3.5" />
+                Renouveler via WhatsApp
+              </a>
+            </div>
+          )}
+
+          {accessState &&
+            accessState.status.kind === "monthly" &&
+            accessState.status.daysLeft <= 14 && (
+              <div className="mb-6 rounded-3xl border border-amber-300 bg-amber-50/70 p-5 shadow-sm flex flex-wrap items-center gap-3">
+                <div className="grid size-10 place-items-center rounded-2xl bg-amber-500 text-white shrink-0">
+                  <Calendar className="size-5" />
+                </div>
+                <div className="flex-1 min-w-48">
+                  <p className="text-sm font-black text-amber-900">
+                    {accessState.status.daysLeft === 0
+                      ? "Votre accès se termine aujourd'hui !"
+                      : `Votre accès se termine dans ${accessState.status.daysLeft} jour${accessState.status.daysLeft > 1 ? "s" : ""}.`}
+                  </p>
+                  <p className="text-xs text-ink/60 mt-0.5">
+                    Fin le {new Date(accessState.status.endsAt).toLocaleDateString("fr-FR")} —
+                    renouvellement : <strong>{formatXof(accessState.renewalAmountXof)}/mois</strong>
+                    .
+                  </p>
+                </div>
+                <a
+                  href={`https://wa.me/${import.meta.env.VITE_WHATSAPP_NUMBER || "33606433148"}?text=${encodeURIComponent(
+                    `Bonjour, l'accès Génizio de ${child.name} se termine bientôt (${new Date(accessState.status.endsAt).toLocaleDateString("fr-FR")}). Je souhaite renouveler (${formatXof(accessState.renewalAmountXof)}/mois).`,
+                  )}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="shrink-0 inline-flex items-center gap-1.5 rounded-xl bg-[#25D366] px-3 py-2 text-[11px] font-bold text-white shadow-sm hover:brightness-95 transition-all"
+                >
+                  <Phone className="size-3.5" />
+                  Renouveler via WhatsApp
+                </a>
+              </div>
+            )}
+
           {viewMode === "parent" ? (
             <>
               {/* Child Header Profile */}
@@ -719,10 +871,12 @@ function ChallengesPage() {
                       Tableau de bord de
                     </p>
                     <div className="flex items-center gap-3">
-                      <h1 className="font-display text-balance text-3xl font-extrabold md:text-4xl">{child.name}</h1>
+                      <h1 className="font-display text-balance text-3xl font-extrabold md:text-4xl">
+                        {child.name}
+                      </h1>
                       {enrolledSeason && (
                         <span className="hidden sm:inline-flex items-center gap-1.5 rounded-full border border-emerald-400 bg-emerald-50 px-3 py-1 text-[11px] font-black uppercase tracking-wider text-emerald-800 shadow-sm">
-                          <Sparkles className="size-3 text-emerald-600" />
+                          <BookMarked className="size-3 text-emerald-600" />
                           {enrolledSeason.title}
                         </span>
                       )}
@@ -733,7 +887,7 @@ function ChallengesPage() {
                     </p>
                     {enrolledSeason && (
                       <div className="mt-2 sm:hidden inline-flex items-center gap-1.5 rounded-full border border-emerald-400 bg-emerald-50 px-3 py-1 text-[11px] font-black uppercase tracking-wider text-emerald-800 shadow-sm">
-                        <Sparkles className="size-3 text-emerald-600" />
+                        <BookMarked className="size-3 text-emerald-600" />
                         {enrolledSeason.title}
                       </div>
                     )}
@@ -742,7 +896,9 @@ function ChallengesPage() {
                 <div className="flex flex-wrap gap-3">
                   <button
                     onClick={() => {
-                      document.getElementById("genizio-lab")?.scrollIntoView({ behavior: "smooth" });
+                      document
+                        .getElementById("genizio-lab")
+                        ?.scrollIntoView({ behavior: "smooth" });
                     }}
                     className="rounded-2xl border border-ink/10 bg-white px-5 py-3 text-sm font-bold text-ink shadow-sm hover:-translate-y-0.5 active:translate-y-0 transition-all flex items-center gap-2 cursor-pointer"
                   >
@@ -751,7 +907,7 @@ function ChallengesPage() {
                   </button>
                   <button
                     onClick={handleGenerate}
-                    disabled={generating}
+                    disabled={generating || accessExpired}
                     className="rounded-2xl border border-ink/10 bg-white px-5 py-3 text-sm font-bold text-ink shadow-sm hover:-translate-y-0.5 active:translate-y-0 transition-all disabled:opacity-60 disabled:cursor-wait flex items-center gap-2"
                   >
                     {generating ? (
@@ -777,17 +933,21 @@ function ChallengesPage() {
 
               {/* Dashboard Grid Layout */}
               <div className="grid grid-cols-1 gap-8 ">
-                
                 {/* LEFT COLUMN: Radar chart & AI Synthesis */}
                 <div className="lg:col-span-1 space-y-6">
-                  
                   {/* Radar Chart Card */}
                   <div className="rounded-3xl border border-ink/10 bg-ink text-white p-6 shadow-xl flex flex-col">
                     <h3 className="font-display text-balance text-lg font-bold flex items-center gap-2 mb-4">
                       <Award className="size-5 text-brand" />
                       Carte des Talents
                     </h3>
-                    <TalentRadarChart talents={child.talents} name={child.name} className="h-64 w-full" age={child.age} dark />
+                    <TalentRadarChart
+                      talents={child.talents}
+                      name={child.name}
+                      className="h-64 w-full"
+                      age={child.age}
+                      dark
+                    />
                     <p className="text-[11px] text-center text-ink/60 font-medium">
                       Cette carte s'affine et se développe à mesure que l'enfant réalise ses défis.
                     </p>
@@ -801,7 +961,8 @@ function ChallengesPage() {
                       const domain = TALENT_SUBFORM_TO_DOMAIN[c.trait_subform];
                       if (!domain) continue;
                       subformCountsByDomain[domain] ??= {};
-                      subformCountsByDomain[domain][c.trait_subform] = (subformCountsByDomain[domain][c.trait_subform] ?? 0) + 1;
+                      subformCountsByDomain[domain][c.trait_subform] =
+                        (subformCountsByDomain[domain][c.trait_subform] ?? 0) + 1;
                     }
                     const domainsPresent = Object.keys(subformCountsByDomain);
                     if (domainsPresent.length === 0) return null;
@@ -809,45 +970,67 @@ function ChallengesPage() {
                     return (
                       <div className="space-y-4">
                         {domainsPresent.map((domain) => {
-                          const entries = Object.entries(subformCountsByDomain[domain]).sort((a, b) => b[1] - a[1]);
+                          const entries = Object.entries(subformCountsByDomain[domain]).sort(
+                            (a, b) => b[1] - a[1],
+                          );
 
                           return (
-                            <div key={domain} className="rounded-3xl border border-ink/10 bg-white p-5 shadow-sm">
+                            <div
+                              key={domain}
+                              className="rounded-3xl border border-ink/10 bg-white p-5 shadow-sm"
+                            >
                               <h4 className="text-[11px] font-bold uppercase tracking-widest text-ink/60 mb-3">
                                 Au sein de {TALENT_KEY_LABELS[domain] ?? domain}
                               </h4>
                               <div className="space-y-2">
                                 {entries.map(([key, count]) => (
-                                  <div key={key} className="flex items-center justify-between text-sm">
-                                    <span className="font-bold text-ink">{TALENT_SUBFORM_LABELS[key] ?? key}</span>
-                                    <span className="text-ink/60 font-medium">{count} défi{count > 1 ? "s" : ""}</span>
+                                  <div
+                                    key={key}
+                                    className="flex items-center justify-between text-sm"
+                                  >
+                                    <span className="font-bold text-ink">
+                                      {TALENT_SUBFORM_LABELS[key] ?? key}
+                                    </span>
+                                    <span className="text-ink/60 font-medium">
+                                      {count} défi{count > 1 ? "s" : ""}
+                                    </span>
                                   </div>
                                 ))}
                               </div>
 
-                              {child.age >= OPPORTUNITY_COMPASS_MIN_AGE && entries.some(([key]) => TALENT_SUBFORM_OPPORTUNITIES[key]) && (
-                                <div className="mt-4 pt-4 border-t border-dashed border-ink/15">
-                                  <div className="flex items-center justify-between mb-2">
-                                    <h5 className="text-[10px] font-bold uppercase tracking-widest text-ink/50">
-                                      Boussole d'Opportunités
-                                    </h5>
-                                    <span className="text-[9px] font-bold text-ink/40 uppercase">{OPPORTUNITY_COMPASS_VERSION}</span>
+                              {child.age >= OPPORTUNITY_COMPASS_MIN_AGE &&
+                                entries.some(([key]) => TALENT_SUBFORM_OPPORTUNITIES[key]) && (
+                                  <div className="mt-4 pt-4 border-t border-dashed border-ink/15">
+                                    <div className="flex items-center justify-between mb-2">
+                                      <h5 className="text-[10px] font-bold uppercase tracking-widest text-ink/50">
+                                        Boussole d'Opportunités
+                                      </h5>
+                                      <span className="text-[9px] font-bold text-ink/40 uppercase">
+                                        {OPPORTUNITY_COMPASS_VERSION}
+                                      </span>
+                                    </div>
+                                    <div className="space-y-2">
+                                      {entries.map(([key]) => {
+                                        const pistes = TALENT_SUBFORM_OPPORTUNITIES[key];
+                                        if (!pistes) return null;
+                                        return (
+                                          <p
+                                            key={key}
+                                            className="text-xs text-ink/70 leading-relaxed"
+                                          >
+                                            <span className="font-bold text-ink">
+                                              {TALENT_SUBFORM_LABELS[key] ?? key} :
+                                            </span>{" "}
+                                            {pistes.join(", ")}
+                                          </p>
+                                        );
+                                      })}
+                                    </div>
+                                    <p className="text-[10px] text-ink/40 italic mt-2">
+                                      {OPPORTUNITY_COMPASS_DISCLAIMER}
+                                    </p>
                                   </div>
-                                  <div className="space-y-2">
-                                    {entries.map(([key]) => {
-                                      const pistes = TALENT_SUBFORM_OPPORTUNITIES[key];
-                                      if (!pistes) return null;
-                                      return (
-                                        <p key={key} className="text-xs text-ink/70 leading-relaxed">
-                                          <span className="font-bold text-ink">{TALENT_SUBFORM_LABELS[key] ?? key} :</span>{" "}
-                                          {pistes.join(", ")}
-                                        </p>
-                                      );
-                                    })}
-                                  </div>
-                                  <p className="text-[10px] text-ink/40 italic mt-2">{OPPORTUNITY_COMPASS_DISCLAIMER}</p>
-                                </div>
-                              )}
+                                )}
                             </div>
                           );
                         })}
@@ -877,29 +1060,37 @@ function ChallengesPage() {
                   {/* Micro stats */}
                   <div className="grid grid-cols-2 gap-3">
                     <div className="bg-white rounded-2xl border border-ink/10 shadow-sm p-4 text-center">
-                      <span className="text-[10px] font-bold uppercase tracking-wider text-ink/60">Défis Terminés</span>
-                      <p className="mt-1 font-display text-balance text-2xl font-extrabold text-brand">{done}</p>
+                      <span className="text-[10px] font-bold uppercase tracking-wider text-ink/60">
+                        Défis Terminés
+                      </span>
+                      <p className="mt-1 font-display text-balance text-2xl font-extrabold text-brand">
+                        {done}
+                      </p>
                     </div>
                     <div className="bg-white rounded-2xl border border-ink/10 shadow-sm p-4 text-center">
-                      <span className="text-[10px] font-bold uppercase tracking-wider text-ink/60">Progression</span>
-                      <p className="mt-1 font-display text-balance text-2xl font-extrabold text-brand">{totalProgress}%</p>
+                      <span className="text-[10px] font-bold uppercase tracking-wider text-ink/60">
+                        Progression
+                      </span>
+                      <p className="mt-1 font-display text-balance text-2xl font-extrabold text-brand">
+                        {totalProgress}%
+                      </p>
                     </div>
                   </div>
-
                 </div>
 
                 {/* RIGHT COLUMN: Challenges List */}
                 <div className="lg:col-span-2 space-y-6">
-
                   {/* NAYA 2.0 Phase 5 — Recommandation Prioritaire */}
                   {recommendation && (
                     <div className="rounded-3xl border border-amber-200 bg-gradient-to-br from-amber-100/90 via-amber-50 to-white p-6 shadow-md mb-6 backdrop-blur-md">
                       <div className="flex flex-wrap items-center justify-between gap-3 mb-3">
                         <span className="inline-flex items-center gap-1.5 rounded-full border border-amber-400 bg-amber-300 px-3 py-1 text-xs font-black uppercase tracking-wider text-ink shadow-xs">
-                          <Sparkles className="size-4 text-amber-800 fill-amber-800" />
+                          <Star className="size-4 text-amber-800 fill-amber-800" />
                           {recommendation.badgeLabel}
                         </span>
-                        <span className="text-xs font-bold text-ink/50">Recommandation prioritaire Naya 2.0</span>
+                        <span className="text-xs font-bold text-ink/50">
+                          Recommandation prioritaire Naya 2.0
+                        </span>
                       </div>
                       <p className="text-sm font-semibold text-ink/80 mb-4">
                         {recommendation.pedagogicalReason}
@@ -907,9 +1098,15 @@ function ChallengesPage() {
                       {recommendation.challenge && (
                         <div className="rounded-2xl border border-amber-200 bg-white p-4 flex flex-col  sm:items-center justify-between gap-4 shadow-sm">
                           <div>
-                            <span className="text-[10px] font-black uppercase text-brand tracking-widest">{recommendation.challenge.domain}</span>
-                            <h4 className="font-display text-balance text-lg font-black text-ink">{recommendation.challenge.title}</h4>
-                            <p className="text-xs text-ink/70 line-clamp-2 mt-0.5">{recommendation.challenge.description}</p>
+                            <span className="text-[10px] font-black uppercase text-brand tracking-widest">
+                              {recommendation.challenge.domain}
+                            </span>
+                            <h4 className="font-display text-balance text-lg font-black text-ink">
+                              {recommendation.challenge.title}
+                            </h4>
+                            <p className="text-xs text-ink/70 line-clamp-2 mt-0.5">
+                              {recommendation.challenge.description}
+                            </p>
                           </div>
                           <div className="flex items-center gap-2 shrink-0">
                             {recommendation.recommendationType === "EXPLORATION" && (
@@ -918,7 +1115,11 @@ function ChallengesPage() {
                                 disabled={isRerolling}
                                 className="inline-flex items-center justify-center gap-2 rounded-xl border border-ink/10 bg-white px-4 py-2.5 text-xs font-bold text-ink/60 shrink-0 cursor-pointer disabled:opacity-50 hover:bg-surface transition-colors"
                               >
-                                {isRerolling ? <Loader2 className="size-4 animate-spin" /> : "Pas celui-ci"}
+                                {isRerolling ? (
+                                  <Loader2 className="size-4 animate-spin" />
+                                ) : (
+                                  "Pas celui-ci"
+                                )}
                               </button>
                             )}
                             <button
@@ -937,17 +1138,24 @@ function ChallengesPage() {
                       )}
                     </div>
                   )}
-                  
+
                   {/* 🧪 Unified Lab Panel */}
-                  <div id="genizio-lab" className="rounded-3xl border border-ink/10 bg-sky-50/80 p-6 shadow-md md:p-8 backdrop-blur-md">
+                  <div
+                    id="genizio-lab"
+                    className="rounded-3xl border border-ink/10 bg-sky-50/80 p-6 shadow-md md:p-8 backdrop-blur-md"
+                  >
                     <div className="mb-4 flex items-center justify-between">
                       <div className="flex items-center gap-3">
                         <span className="grid place-items-center rounded-2xl bg-brand p-2.5 text-white border border-ink/10 shadow-sm">
                           <Beaker className="size-6" />
                         </span>
                         <div>
-                          <h3 className="font-display text-balance text-xl font-bold">Composer un défi ciblé</h3>
-                          <p className="text-xs font-bold text-ink/60">Générez un défi d'apprentissage ou fusionnez un devoir pour {child.name}</p>
+                          <h3 className="font-display text-balance text-xl font-bold">
+                            Composer un défi ciblé
+                          </h3>
+                          <p className="text-xs font-bold text-ink/60">
+                            Générez un défi d'apprentissage ou fusionnez un devoir pour {child.name}
+                          </p>
                         </div>
                       </div>
                     </div>
@@ -1000,7 +1208,7 @@ function ChallengesPage() {
                         <div>
                           <button
                             onClick={handleGenerateSingle}
-                            disabled={isGeneratingSingle}
+                            disabled={isGeneratingSingle || accessExpired}
                             className="w-full rounded-2xl border border-ink/10 bg-brand px-5 py-3 text-sm font-bold text-white shadow-xl hover:-translate-y-0.5 active:translate-y-0 transition-all disabled:opacity-50 disabled:cursor-wait flex items-center justify-center gap-2 cursor-pointer"
                           >
                             {isGeneratingSingle ? (
@@ -1039,7 +1247,9 @@ function ChallengesPage() {
                         />
                         <p className="text-sm font-bold text-indigo-600 animate-pulse">
                           {isGeneratingAcademic
-                            ? ACADEMIC_LOADING_STEPS[loadingTextIndex % ACADEMIC_LOADING_STEPS.length]
+                            ? ACADEMIC_LOADING_STEPS[
+                                loadingTextIndex % ACADEMIC_LOADING_STEPS.length
+                              ]
                             : LOADING_STEPS[loadingTextIndex]}
                         </p>
                       </div>
@@ -1056,12 +1266,23 @@ function ChallengesPage() {
                             {currentGeneratedChallenge.academic_grade_level && (
                               <span className="rounded-full bg-amber-100 text-amber-900 border border-amber-300 px-3 py-1 text-[10px] font-extrabold uppercase tracking-wider inline-flex items-center gap-1">
                                 <BookOpen className="size-3" />
-                                Devoir • {GRADE_LEVEL_METADATA[currentGeneratedChallenge.academic_grade_level as GradeLevel]?.label ?? currentGeneratedChallenge.academic_grade_level} • {ACADEMIC_SUBJECT_LABELS[currentGeneratedChallenge.academic_subject as AcademicSubject] ?? currentGeneratedChallenge.academic_subject ?? ""}
+                                Devoir •{" "}
+                                {GRADE_LEVEL_METADATA[
+                                  currentGeneratedChallenge.academic_grade_level as GradeLevel
+                                ]?.label ?? currentGeneratedChallenge.academic_grade_level}{" "}
+                                •{" "}
+                                {ACADEMIC_SUBJECT_LABELS[
+                                  currentGeneratedChallenge.academic_subject as AcademicSubject
+                                ] ??
+                                  currentGeneratedChallenge.academic_subject ??
+                                  ""}
                               </span>
                             )}
                             <DifficultyBadge difficulty={currentGeneratedChallenge.difficulty} />
                           </div>
-                          <span className="text-xs text-ink/60 font-semibold">🕒 {currentGeneratedChallenge.duration}</span>
+                          <span className="text-xs text-ink/60 font-semibold">
+                            🕒 {currentGeneratedChallenge.duration}
+                          </span>
                         </div>
                         <h4 className="font-display text-balance text-xl font-extrabold leading-tight text-ink mb-2">
                           {currentGeneratedChallenge.title}
@@ -1070,18 +1291,27 @@ function ChallengesPage() {
                           <MarkdownContent content={currentGeneratedChallenge.description} />
                         </div>
 
-                        {formatPedagogicalIntention(currentGeneratedChallenge.pedagogical_context) && (
+                        {formatPedagogicalIntention(
+                          currentGeneratedChallenge.pedagogical_context,
+                        ) && (
                           <div className="mb-4 rounded-xl bg-amber-50 border border-ink/10 p-4 text-xs leading-relaxed text-amber-800">
                             <h5 className="text-[13px] font-bold text-ink mb-1.5 flex items-center gap-1.5">
                               💡 Analyse stratégique (Naya)
                             </h5>
-                            <MarkdownContent content={formatPedagogicalIntention(currentGeneratedChallenge.pedagogical_context)!} inline />
+                            <MarkdownContent
+                              content={formatPedagogicalIntention(
+                                currentGeneratedChallenge.pedagogical_context,
+                              )!}
+                              inline
+                            />
                           </div>
                         )}
 
                         <div className="grid gap-4  mb-6">
                           <div>
-                            <h5 className="text-[10px] font-bold uppercase tracking-wider text-ink/60 mb-2">Étapes du défi</h5>
+                            <h5 className="text-[10px] font-bold uppercase tracking-wider text-ink/60 mb-2">
+                              Étapes du défi
+                            </h5>
                             <ol className="text-xs space-y-2 text-ink/80 list-decimal pl-4 break-words">
                               {currentGeneratedChallenge.steps.map((step: string, idx: number) => (
                                 <li key={idx} className="break-words leading-relaxed">
@@ -1091,11 +1321,17 @@ function ChallengesPage() {
                             </ol>
                           </div>
                           <div>
-                            <h5 className="text-[10px] font-bold uppercase tracking-wider text-ink/60 mb-2">Matériel requis</h5>
+                            <h5 className="text-[10px] font-bold uppercase tracking-wider text-ink/60 mb-2">
+                              Matériel requis
+                            </h5>
                             <ul className="text-xs space-y-1.5 text-ink/80 list-disc pl-4 break-words">
-                              {currentGeneratedChallenge.materials.map((mat: string, idx: number) => (
-                                <li key={idx} className="break-words leading-relaxed">{mat}</li>
-                              ))}
+                              {currentGeneratedChallenge.materials.map(
+                                (mat: string, idx: number) => (
+                                  <li key={idx} className="break-words leading-relaxed">
+                                    {mat}
+                                  </li>
+                                ),
+                              )}
                             </ul>
                           </div>
                         </div>
@@ -1129,7 +1365,7 @@ function ChallengesPage() {
                           </button>
                           <button
                             onClick={handleGenerateSingle}
-                            disabled={isGeneratingSingle}
+                            disabled={isGeneratingSingle || accessExpired}
                             className="rounded-xl border border-ink/10 bg-white px-4 py-2.5 text-xs font-bold text-ink/60 shadow-sm hover:-translate-y-0.5 transition-all disabled:opacity-50 cursor-pointer"
                           >
                             Relancer
@@ -1137,7 +1373,6 @@ function ChallengesPage() {
                         </div>
                       </div>
                     )}
-
                   </div>
 
                   <h3 className="font-display text-balance text-xl font-bold flex items-center gap-2">
@@ -1146,23 +1381,26 @@ function ChallengesPage() {
                   </h3>
 
                   {error && (
-                    <p className="rounded-2xl bg-red-50 border border-red-100 px-4 py-3 text-sm text-red-700 font-bold">{error}</p>
+                    <p className="rounded-2xl bg-red-50 border border-red-100 px-4 py-3 text-sm text-red-700 font-bold">
+                      {error}
+                    </p>
                   )}
 
                   {challenges.length === 0 ? (
                     <div className="rounded-3xl border border-dashed border-ink/20 bg-white/40 p-16 text-center shadow-sm">
                       <p className="mb-2 text-lg font-bold">Aucune expérience entamée</p>
                       <p className="mb-6 text-sm text-ink/70 font-medium max-w-sm mx-auto">
-                        Démarrez des expériences sur-mesure pour {child.name} via le générateur IA ou laissez Naya composer une première liste de base.
+                        Démarrez des expériences sur-mesure pour {child.name} via le générateur IA
+                        ou laissez Naya composer une première liste de base.
                       </p>
                       <div className="flex justify-center gap-3">
                         <button
                           onClick={handleGenerate}
-                          disabled={generating}
+                          disabled={generating || accessExpired}
                           className="rounded-2xl border border-ink/10 bg-brand px-6 py-3.5 text-sm font-bold text-white shadow-xl hover:-translate-y-0.5 disabled:opacity-60 transition-all flex items-center gap-2 cursor-pointer"
                         >
-                          <Sparkles className="size-4 animate-pulse" />
-                          ✨ Déposer 4 nouveaux défis Naya
+                          <WandSparkles className="size-4 animate-pulse" />✨ Déposer 4 nouveaux
+                          défis Naya
                         </button>
                       </div>
                     </div>
@@ -1172,7 +1410,9 @@ function ChallengesPage() {
                         <button
                           onClick={() => setStatusFilter("all")}
                           className={`rounded-xl border border-ink/10 px-3 py-1.5 text-xs font-bold transition-all ${
-                            statusFilter === "all" ? "bg-ink text-white shadow-sm" : "bg-white text-ink/65 hover:bg-surface"
+                            statusFilter === "all"
+                              ? "bg-ink text-white shadow-sm"
+                              : "bg-white text-ink/65 hover:bg-surface"
                           }`}
                         >
                           Tous ({challenges.length})
@@ -1184,7 +1424,9 @@ function ChallengesPage() {
                               key={s}
                               onClick={() => setStatusFilter(s)}
                               className={`rounded-xl border border-ink/10 px-3 py-1.5 text-xs font-bold transition-all ${
-                                statusFilter === s ? "bg-ink text-white shadow-sm" : "bg-white text-ink/65 hover:bg-surface"
+                                statusFilter === s
+                                  ? "bg-ink text-white shadow-sm"
+                                  : "bg-white text-ink/65 hover:bg-surface"
                               }`}
                             >
                               {STATUS_LABEL[s]} ({count})
@@ -1195,7 +1437,9 @@ function ChallengesPage() {
 
                       {(() => {
                         const filteredChallenges =
-                          statusFilter === "all" ? challenges : challenges.filter((c) => c.status === statusFilter);
+                          statusFilter === "all"
+                            ? challenges
+                            : challenges.filter((c) => c.status === statusFilter);
                         if (filteredChallenges.length === 0) {
                           return (
                             <div className="rounded-3xl border border-dashed border-ink/20 bg-white/40 p-10 text-center shadow-sm">
@@ -1230,7 +1474,6 @@ function ChallengesPage() {
                       })()}
                     </>
                   )}
-
                 </div>
               </div>
             </>
@@ -1239,7 +1482,11 @@ function ChallengesPage() {
             <div className="space-y-6">
               <div className="rounded-3xl border border-brand/20 bg-gradient-to-br from-amber-50 via-sky-50 to-emerald-50 p-6 md:p-10 shadow-xl text-center relative overflow-hidden">
                 <div className="flex flex-col items-center justify-center max-w-lg mx-auto">
-                  <NayaAvatar size="md" className="mb-3" thoughts={[`Prêt pour l'aventure, ${child.name} ?`]} />
+                  <NayaAvatar
+                    size="md"
+                    className="mb-3"
+                    thoughts={[`Prêt pour l'aventure, ${child.name} ?`]}
+                  />
                   <h2 className="font-display text-balance text-2xl md:text-3xl font-black text-ink mb-2">
                     Mode Quête 🎮
                   </h2>
@@ -1252,8 +1499,14 @@ function ChallengesPage() {
                     const stepsList = Array.isArray(active?.steps)
                       ? active.steps
                       : typeof active?.steps === "string"
-                      ? (() => { try { return JSON.parse(active.steps); } catch { return []; } })()
-                      : [];
+                        ? (() => {
+                            try {
+                              return JSON.parse(active.steps);
+                            } catch {
+                              return [];
+                            }
+                          })()
+                        : [];
 
                     if (active) {
                       return (
@@ -1262,7 +1515,9 @@ function ChallengesPage() {
                             <span className="rounded-full bg-brand px-3.5 py-1 text-[11px] font-black uppercase tracking-wider text-white">
                               Mission active : {active.domain}
                             </span>
-                            <span className="text-xs font-bold text-ink/60">⏱ {active.duration}</span>
+                            <span className="text-xs font-bold text-ink/60">
+                              ⏱ {active.duration}
+                            </span>
                           </div>
                           <div>
                             <h3 className="font-display text-balance text-xl font-black text-ink leading-tight">
@@ -1276,8 +1531,12 @@ function ChallengesPage() {
                           {/* Progress bar / step info */}
                           <div className="bg-surface rounded-2xl p-4 border border-ink/5 space-y-2">
                             <div className="flex items-center justify-between text-xs font-bold">
-                              <span className="text-ink/70">Étapes à réaliser : {stepsList.length}</span>
-                              <span className="text-brand font-black">{active.progress || 0}% complété</span>
+                              <span className="text-ink/70">
+                                Étapes à réaliser : {stepsList.length}
+                              </span>
+                              <span className="text-brand font-black">
+                                {active.progress || 0}% complété
+                              </span>
                             </div>
                             <div className="w-full bg-stone-200 h-3 rounded-full overflow-hidden border border-ink/5">
                               <div
@@ -1305,7 +1564,8 @@ function ChallengesPage() {
                           Tu n'as pas de mission active pour l'instant ! 🌟
                         </p>
                         <p className="text-xs text-ink/60 font-medium">
-                          Demande à tes parents de t'en attribuer une nouvelle depuis l'Espace Parent, ou accède à la Carte des Quêtes.
+                          Demande à tes parents de t'en attribuer une nouvelle depuis l'Espace
+                          Parent, ou accède à la Carte des Quêtes.
                         </p>
                         <div className="pt-2">
                           <Link
@@ -1324,81 +1584,84 @@ function ChallengesPage() {
             </div>
           )}
         </div>
-    </main>
+      </main>
 
-    {/* Modal Recommandation de Kit Post-Assignation */}
-    {assignedChallengeForKit && (
-      <div className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-ink/55 backdrop-blur-sm p-4 animate-in fade-in duration-200">
-        <div className="relative w-full max-w-md rounded-3xl border border-ink/10 bg-white p-6 shadow-xl md:p-8">
-          <button
-            onClick={() => setAssignedChallengeForKit(null)}
-            className="absolute right-4 top-4 rounded-xl border border-ink/10 bg-stone-100 p-1.5 hover:bg-stone-200 transition-colors"
-          >
-            <X className="size-4" />
-          </button>
-
-          <div className="mb-4 flex items-center gap-2">
-            <ShoppingBag className="size-6 text-brand" />
-            <h2 className="font-display text-balance text-2xl font-black">Défi assigné avec succès ! 🎉</h2>
-          </div>
-
-          <p className="text-sm text-ink/75 leading-relaxed mb-6">
-            Naya a préparé le défi <strong className="text-ink">"{assignedChallengeForKit.title}"</strong>.
-            Souhaitez-vous commander le kit matériel associé maintenant ?
-          </p>
-
-          <div className="rounded-2xl border border-ink/10 bg-sky/15 p-4 mb-6">
-            <ul className="space-y-1.5 mb-3">
-              {assignedChallengeForKit.products.map((p) => (
-                <li key={p.id} className="flex justify-between text-sm font-bold text-ink">
-                  <span>{p.name}</span>
-                  <span>{p.price_xof.toLocaleString("fr-FR")} FCFA</span>
-                </li>
-              ))}
-            </ul>
-            <div className="flex justify-between border-t border-ink/20 pt-2 text-sm font-black text-ink">
-              <span>Total</span>
-              <span>
-                {assignedChallengeForKit.products
-                  .reduce((sum, p) => sum + p.price_xof, 0)
-                  .toLocaleString("fr-FR")}{" "}
-                FCFA
-              </span>
-            </div>
-          </div>
-
-          <div className="flex gap-3">
+      {/* Modal Recommandation de Kit Post-Assignation */}
+      {assignedChallengeForKit && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-ink/55 backdrop-blur-sm p-4 animate-in fade-in duration-200">
+          <div className="relative w-full max-w-md rounded-3xl border border-ink/10 bg-white p-6 shadow-xl md:p-8">
             <button
               onClick={() => setAssignedChallengeForKit(null)}
-              className="flex-1 rounded-xl border border-ink/10 bg-stone-100 py-3 text-sm font-bold hover:bg-stone-200 transition-all cursor-pointer text-center"
+              className="absolute right-4 top-4 rounded-xl border border-ink/10 bg-stone-100 p-1.5 hover:bg-stone-200 transition-colors"
             >
-              Faire sans kit
+              <X className="size-4" />
             </button>
-            <button
-              onClick={handleOrderKit}
-              disabled={orderingKit}
-              className="flex-1 flex items-center justify-center gap-2 rounded-xl border border-ink/10 bg-leaf py-3 text-sm font-bold text-white shadow-sm hover:-translate-y-0.5 active:translate-y-0 transition-all cursor-pointer disabled:opacity-50"
-            >
-              {orderingKit ? (
-                <>
-                  <Loader2 className="size-4 animate-spin" />
-                  Envoi...
-                </>
-              ) : (
-                <>Commander le kit</>
-              )}
-            </button>
+
+            <div className="mb-4 flex items-center gap-2">
+              <ShoppingBag className="size-6 text-brand" />
+              <h2 className="font-display text-balance text-2xl font-black">
+                Défi assigné avec succès ! 🎉
+              </h2>
+            </div>
+
+            <p className="text-sm text-ink/75 leading-relaxed mb-6">
+              Naya a préparé le défi{" "}
+              <strong className="text-ink">"{assignedChallengeForKit.title}"</strong>.
+              Souhaitez-vous commander le kit matériel associé maintenant ?
+            </p>
+
+            <div className="rounded-2xl border border-ink/10 bg-sky/15 p-4 mb-6">
+              <ul className="space-y-1.5 mb-3">
+                {assignedChallengeForKit.products.map((p) => (
+                  <li key={p.id} className="flex justify-between text-sm font-bold text-ink">
+                    <span>{p.name}</span>
+                    <span>{p.price_xof.toLocaleString("fr-FR")} FCFA</span>
+                  </li>
+                ))}
+              </ul>
+              <div className="flex justify-between border-t border-ink/20 pt-2 text-sm font-black text-ink">
+                <span>Total</span>
+                <span>
+                  {assignedChallengeForKit.products
+                    .reduce((sum, p) => sum + p.price_xof, 0)
+                    .toLocaleString("fr-FR")}{" "}
+                  FCFA
+                </span>
+              </div>
+            </div>
+
+            <div className="flex gap-3">
+              <button
+                onClick={() => setAssignedChallengeForKit(null)}
+                className="flex-1 rounded-xl border border-ink/10 bg-stone-100 py-3 text-sm font-bold hover:bg-stone-200 transition-all cursor-pointer text-center"
+              >
+                Faire sans kit
+              </button>
+              <button
+                onClick={handleOrderKit}
+                disabled={orderingKit}
+                className="flex-1 flex items-center justify-center gap-2 rounded-xl border border-ink/10 bg-leaf py-3 text-sm font-bold text-white shadow-sm hover:-translate-y-0.5 active:translate-y-0 transition-all cursor-pointer disabled:opacity-50"
+              >
+                {orderingKit ? (
+                  <>
+                    <Loader2 className="size-4 animate-spin" />
+                    Envoi...
+                  </>
+                ) : (
+                  <>Commander le kit</>
+                )}
+              </button>
+            </div>
           </div>
         </div>
-      </div>
-    )}
-  </div>
+      )}
+    </div>
   );
 }
 
 function MaterialsChecklist({ materials }: { materials: string[] }) {
   const [checked, setChecked] = useState<boolean[]>(new Array(materials.length).fill(false));
-  
+
   return (
     <div>
       <p className="mb-2.5 text-[10px] font-extrabold uppercase tracking-widest text-ink/60">
@@ -1419,9 +1682,11 @@ function MaterialsChecklist({ materials }: { materials: string[] }) {
                 : "bg-white border-ink text-ink/70 hover:bg-surface"
             }`}
           >
-            <div className={`size-3.5 rounded flex items-center justify-center border ${
-              checked[i] ? "border-white bg-white text-leaf" : "border-ink/30"
-            }`}>
+            <div
+              className={`size-3.5 rounded flex items-center justify-center border ${
+                checked[i] ? "border-white bg-white text-leaf" : "border-ink/30"
+              }`}
+            >
               {checked[i] && <Check className="size-2 stroke-[3px]" />}
             </div>
             <span>{m}</span>
@@ -1466,7 +1731,10 @@ function ChallengeCard({
   if (!open) {
     // Unexpanded state: A clean compact card that feels like the prototype
     return (
-      <div id={`challenge-${c.id}`} className="rounded-[1.5rem] bg-white p-5 shadow-sm border border-border transition-all flex flex-col gap-4">
+      <div
+        id={`challenge-${c.id}`}
+        className="rounded-[1.5rem] bg-white p-5 shadow-sm border border-border transition-all flex flex-col gap-4"
+      >
         <div className="flex flex-wrap items-center justify-between gap-2">
           <div className="flex items-center gap-2 flex-wrap">
             <span className="rounded-full bg-surface px-[11px] py-[5px] text-[12px] font-bold text-ink border border-border">
@@ -1475,17 +1743,27 @@ function ChallengeCard({
             {c.academic_grade_level && (
               <span className="rounded-full bg-amber-100 text-amber-900 border border-amber-300 px-[11px] py-[5px] text-[12px] font-bold inline-flex items-center gap-1">
                 <BookOpen className="size-3 shrink-0" />
-                Devoir • {GRADE_LEVEL_METADATA[c.academic_grade_level as GradeLevel]?.label ?? c.academic_grade_level} • {ACADEMIC_SUBJECT_LABELS[c.academic_subject as AcademicSubject] ?? c.academic_subject ?? ""}
+                Devoir •{" "}
+                {GRADE_LEVEL_METADATA[c.academic_grade_level as GradeLevel]?.label ??
+                  c.academic_grade_level}{" "}
+                •{" "}
+                {ACADEMIC_SUBJECT_LABELS[c.academic_subject as AcademicSubject] ??
+                  c.academic_subject ??
+                  ""}
               </span>
             )}
             <DifficultyBadge difficulty={c.difficulty} />
           </div>
-          <span className={`rounded-full px-[11px] py-[5px] text-[12px] font-bold ${STATUS_STYLE[c.status]}`}>
+          <span
+            className={`rounded-full px-[11px] py-[5px] text-[12px] font-bold ${STATUS_STYLE[c.status]}`}
+          >
             {STATUS_LABEL[c.status]}
           </span>
         </div>
         <div>
-          <h3 className="font-display text-balance text-[20px] font-bold text-ink leading-tight mb-1">{c.title}</h3>
+          <h3 className="font-display text-balance text-[20px] font-bold text-ink leading-tight mb-1">
+            {c.title}
+          </h3>
           <div className="text-[14px] text-ink/60 line-clamp-2">
             <MarkdownContent content={c.description} />
           </div>
@@ -1502,39 +1780,75 @@ function ChallengeCard({
 
   // Expanded state: The exact prototype "DÉFI — DÉTAIL" layout
   return (
-    <div id={`challenge-${c.id}`} className="rounded-[26px] overflow-hidden bg-surface shadow-md transition-all border border-border">
-      
+    <div
+      id={`challenge-${c.id}`}
+      className="rounded-[26px] overflow-hidden bg-surface shadow-md transition-all border border-border"
+    >
       {/* 2. DÉFI — DÉTAIL (Prototype equivalent) */}
       <div className="relative px-5 pt-3 pb-7 overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-br from-[#df8f3e] to-[#a35e16]"></div>
-        <div className="absolute -top-[30px] -right-[20px] w-[170px] h-[170px]" style={{ background: "radial-gradient(circle,rgba(255,255,255,.3),transparent 70%)" }}></div>
+        <div
+          className="absolute -top-[30px] -right-[20px] w-[170px] h-[170px]"
+          style={{ background: "radial-gradient(circle,rgba(255,255,255,.3),transparent 70%)" }}
+        ></div>
         <div className="relative">
-          <button onClick={onToggle} className="w-[38px] h-[38px] border-none rounded-full bg-white/25 text-white flex items-center justify-center cursor-pointer mb-[14px]">
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round"><path d="m15 18-6-6 6-6"/></svg>
+          <button
+            onClick={onToggle}
+            className="w-[38px] h-[38px] border-none rounded-full bg-white/25 text-white flex items-center justify-center cursor-pointer mb-[14px]"
+          >
+            <svg
+              width="22"
+              height="22"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2.6"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <path d="m15 18-6-6 6-6" />
+            </svg>
           </button>
           <div className="flex flex-wrap gap-[7px] mb-3 items-center">
-            <span className="px-[11px] py-[5px] bg-white/20 rounded-full text-white text-[12px] font-bold">{c.domain}</span>
+            <span className="px-[11px] py-[5px] bg-white/20 rounded-full text-white text-[12px] font-bold">
+              {c.domain}
+            </span>
             {c.academic_grade_level && (
               <span className="inline-flex items-center gap-1 px-[11px] py-[5px] bg-amber-400/90 text-amber-950 rounded-full text-[12px] font-extrabold">
                 <BookOpen className="size-3 shrink-0" />
-                Devoir • {GRADE_LEVEL_METADATA[c.academic_grade_level as GradeLevel]?.label ?? c.academic_grade_level} • {ACADEMIC_SUBJECT_LABELS[c.academic_subject as AcademicSubject] ?? c.academic_subject ?? ""}
+                Devoir •{" "}
+                {GRADE_LEVEL_METADATA[c.academic_grade_level as GradeLevel]?.label ??
+                  c.academic_grade_level}{" "}
+                •{" "}
+                {ACADEMIC_SUBJECT_LABELS[c.academic_subject as AcademicSubject] ??
+                  c.academic_subject ??
+                  ""}
               </span>
             )}
             <DifficultyBadge difficulty={c.difficulty} />
             <span className="inline-flex items-center gap-1 px-[11px] py-[5px] bg-white/20 rounded-full text-white text-[12px] font-bold">
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M11.5 2.3a.5.5 0 0 1 1 0l2.3 4.6 5.1.75a.5.5 0 0 1 .3.86l-3.7 3.6.87 5.1a.5.5 0 0 1-.77.53L12 15.9l-4.6 2.4a.5.5 0 0 1-.77-.53l.88-5.1-3.7-3.6a.5.5 0 0 1 .29-.86l5.1-.75z"/></svg>
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M11.5 2.3a.5.5 0 0 1 1 0l2.3 4.6 5.1.75a.5.5 0 0 1 .3.86l-3.7 3.6.87 5.1a.5.5 0 0 1-.77.53L12 15.9l-4.6 2.4a.5.5 0 0 1-.77-.53l.88-5.1-3.7-3.6a.5.5 0 0 1 .29-.86l5.1-.75z" />
+              </svg>
               180 XP
             </span>
           </div>
-          <div className="font-display text-balance font-bold text-[30px] text-white leading-[1.02]">{c.title}</div>
+          <div className="font-display text-balance font-bold text-[30px] text-white leading-[1.02]">
+            {c.title}
+          </div>
         </div>
       </div>
 
       <div className="px-5 pt-5 pb-0 -mt-[14px] bg-surface rounded-t-[26px] relative">
         <div className="flex gap-3 items-start bg-brand-50 rounded-[1rem] p-[14px] mb-5">
-          <img src="/naya-mascot.png" alt="Naya" className="w-[40px] h-[40px] rounded-full object-cover shrink-0" />
+          <img
+            src="/naya-mascot.png"
+            alt="Naya"
+            className="w-[40px] h-[40px] rounded-full object-cover shrink-0"
+          />
           <div className="text-[14px] leading-[1.45] text-ink">
-            <b className="text-brand">Naya&nbsp;:</b> J'ai préparé ce défi spécialement pour toi. Montre-moi de quoi tu es capable !
+            <b className="text-brand">Naya&nbsp;:</b> J'ai préparé ce défi spécialement pour toi.
+            Montre-moi de quoi tu es capable !
           </div>
         </div>
 
@@ -1544,27 +1858,45 @@ function ChallengeCard({
         </div>
 
         {c.status === "completed" ? (
-          <AcademicSecretCard secret={c.academic_secret} academicGradeLevel={c.academic_grade_level} />
+          <AcademicSecretCard
+            secret={c.academic_secret}
+            academicGradeLevel={c.academic_grade_level}
+          />
         ) : c.steps && c.steps.length > 0 ? (
           <div className="mb-[22px]">
             <StepAccordion steps={c.steps} />
           </div>
         ) : null}
 
-        <div className="font-display text-balance font-bold text-[16px] mb-[10px]">Ce que tu développes</div>
+        <div className="font-display text-balance font-bold text-[16px] mb-[10px]">
+          Ce que tu développes
+        </div>
         <div className="flex flex-wrap gap-[9px] mb-[22px]">
-          <span className="px-[14px] py-[9px] bg-brand-50 text-brand-700 rounded-full font-bold text-[13px]">{c.domain}</span>
-          <span className="px-[14px] py-[9px] bg-leaf-50 text-leaf-dark rounded-full font-bold text-[13px]">Créativité</span>
-          <span className="px-[14px] py-[9px] bg-sky-50 text-sky-dark rounded-full font-bold text-[13px]">Persévérance</span>
+          <span className="px-[14px] py-[9px] bg-brand-50 text-brand-700 rounded-full font-bold text-[13px]">
+            {c.domain}
+          </span>
+          <span className="px-[14px] py-[9px] bg-leaf-50 text-leaf-dark rounded-full font-bold text-[13px]">
+            Créativité
+          </span>
+          <span className="px-[14px] py-[9px] bg-sky-50 text-sky-dark rounded-full font-bold text-[13px]">
+            Persévérance
+          </span>
         </div>
 
         {c.materials && c.materials.length > 0 && (
           <>
-            <div className="font-display text-balance font-bold text-[16px] mb-[10px]">Le matériel</div>
+            <div className="font-display text-balance font-bold text-[16px] mb-[10px]">
+              Le matériel
+            </div>
             <div className="grid grid-cols-2 gap-[10px] mb-[24px]">
               {c.materials.map((m, i) => (
-                <div key={i} className="flex items-center gap-[9px] bg-card border border-border rounded-[12px] px-[13px] py-[11px] text-[14px] font-semibold">
-                  <span className={`w-[8px] h-[8px] rounded-full ${['bg-brand', 'bg-leaf', 'bg-sky-dark', 'bg-pink-500'][i % 4]}`}></span>
+                <div
+                  key={i}
+                  className="flex items-center gap-[9px] bg-card border border-border rounded-[12px] px-[13px] py-[11px] text-[14px] font-semibold"
+                >
+                  <span
+                    className={`w-[8px] h-[8px] rounded-full ${["bg-brand", "bg-leaf", "bg-sky-dark", "bg-pink-500"][i % 4]}`}
+                  ></span>
                   <span className="truncate">{m}</span>
                 </div>
               ))}
@@ -1583,7 +1915,9 @@ function ChallengeCard({
               <button
                 onClick={() => {
                   if (!notesDraft.trim()) {
-                    toast.error("Écris d'abord ce qui s'est passé dans le journal d'apprentissage ci-dessous, pour que Naya comprenne pourquoi.");
+                    toast.error(
+                      "Écris d'abord ce qui s'est passé dans le journal d'apprentissage ci-dessous, pour que Naya comprenne pourquoi.",
+                    );
                     return;
                   }
                   onNotCompleted(notesDraft.trim());
@@ -1607,12 +1941,13 @@ function ChallengeCard({
                 </div>
               );
             }
-            
+
             if (c.status === "in_progress") {
               return (
                 <div className="flex flex-col gap-2">
                   <div className="flex items-center justify-center gap-2 bg-emerald-50 text-emerald-700 font-bold py-3 text-[14px] rounded-2xl px-4 text-center">
-                    <CheckCircle2 className="size-5 flex-shrink-0" /> Défi débuté. Nous attendons vos validations à la fin de ce défi.
+                    <CheckCircle2 className="size-5 flex-shrink-0" /> Défi débuté. Nous attendons
+                    vos validations à la fin de ce défi.
                   </div>
                   <Link
                     to="/profiles/$profileId/quest"
@@ -1628,9 +1963,13 @@ function ChallengeCard({
           })()}
           {c.status === "not_completed" ? (
             <div className="flex flex-col items-center justify-center gap-1 bg-rose-50 text-rose-700 font-bold py-3 text-[16px] rounded-2xl px-4">
-              <span className="flex items-center gap-2"><X className="size-5" /> Défi non réussi</span>
+              <span className="flex items-center gap-2">
+                <X className="size-5" /> Défi non réussi
+              </span>
               {c.not_completed_reason && (
-                <span className="text-[12px] font-medium text-rose-700/80 text-center">{c.not_completed_reason}</span>
+                <span className="text-[12px] font-medium text-rose-700/80 text-center">
+                  {c.not_completed_reason}
+                </span>
               )}
             </div>
           ) : c.status === "completed" ? (
@@ -1640,11 +1979,13 @@ function ChallengeCard({
           ) : null}
         </div>
       </div>
-      
+
       {/* 3. DÉFI EN COURS (Parent pane + details) */}
       <div className="px-5 pb-5 mt-2 pt-5 border-t border-border bg-surface">
-        <h4 className="font-display text-balance text-[16px] font-bold text-ink/60 uppercase tracking-widest mb-4">Espace Parent</h4>
-        
+        <h4 className="font-display text-balance text-[16px] font-bold text-ink/60 uppercase tracking-widest mb-4">
+          Espace Parent
+        </h4>
+
         {/* pedagogical context */}
         {formatPedagogicalIntention(c.pedagogical_context) && (
           <div className="rounded-[1rem] bg-brand-50 p-4 flex gap-3 mb-6">
@@ -1654,7 +1995,12 @@ function ChallengeCard({
                 Analyse stratégique de Naya
               </p>
               <p className="text-[13px] text-brand-700 leading-relaxed italic">
-                "<MarkdownContent content={formatPedagogicalIntention(c.pedagogical_context)!} inline />"
+                "
+                <MarkdownContent
+                  content={formatPedagogicalIntention(c.pedagogical_context)!}
+                  inline
+                />
+                "
               </p>
             </div>
           </div>
@@ -1698,7 +2044,9 @@ function ChallengeCard({
               {isSavingNotes ? <Loader2 className="size-4 animate-spin" /> : null}
               Enregistrer les notes
             </button>
-            {savedFlash && <span className="text-[13px] text-emerald-600 font-bold">✓ Enregistré</span>}
+            {savedFlash && (
+              <span className="text-[13px] text-emerald-600 font-bold">✓ Enregistré</span>
+            )}
           </div>
 
           {c.status === "in_progress" && (
@@ -1706,7 +2054,9 @@ function ChallengeCard({
               <button
                 onClick={() => {
                   if (!notesDraft.trim()) {
-                    toast.error("Écris d'abord ce qui s'est passé dans le journal d'apprentissage, pour que Naya comprenne pourquoi.");
+                    toast.error(
+                      "Écris d'abord ce qui s'est passé dans le journal d'apprentissage, pour que Naya comprenne pourquoi.",
+                    );
                     return;
                   }
                   onNotCompleted(notesDraft.trim());
@@ -1728,8 +2078,12 @@ function ChallengeCard({
               <Brain className="size-4 text-leaf-dark" />
               Analyse de Naya (IA)
             </p>
-            <p className="text-[14px] italic text-ink/80 leading-relaxed mb-3">"<MarkdownContent content={c.ai_observations} inline />"</p>
-            <p className="text-[10px] font-extrabold text-leaf-dark uppercase tracking-wider">✓ La Carte des Talents de l'enfant a été enrichie !</p>
+            <p className="text-[14px] italic text-ink/80 leading-relaxed mb-3">
+              "<MarkdownContent content={c.ai_observations} inline />"
+            </p>
+            <p className="text-[10px] font-extrabold text-leaf-dark uppercase tracking-wider">
+              ✓ La Carte des Talents de l'enfant a été enrichie !
+            </p>
           </div>
         )}
 
@@ -1747,12 +2101,18 @@ function ChallengeCard({
   );
 }
 
-function AcademicSecretCard({ secret, academicGradeLevel }: { secret?: string | null; academicGradeLevel?: string | null }) {
+function AcademicSecretCard({
+  secret,
+  academicGradeLevel,
+}: {
+  secret?: string | null;
+  academicGradeLevel?: string | null;
+}) {
   return (
     <div className="mb-[22px] rounded-3xl bg-gradient-to-br from-amber-500/15 via-amber-400/10 to-cyan-500/15 p-5 border-2 border-amber-400/50 shadow-md relative overflow-hidden">
       <div className="flex items-center gap-2 mb-3 flex-wrap">
         <span className="grid place-items-center rounded-2xl bg-amber-500 p-2 text-white shadow-md">
-          <Sparkles className="size-5" />
+          <KeyRound className="size-5" />
         </span>
         <div>
           <span className="text-[10px] font-black uppercase tracking-widest text-amber-800">
@@ -1774,7 +2134,9 @@ function AcademicSecretCard({ secret, academicGradeLevel }: { secret?: string | 
           <MarkdownContent content={secret} />
         ) : (
           <p>
-            Bravo pour la réalisation de ce défi ! En accomplissant ces gestes concrets sur le terrain, tu as développé une intuition physique et logique qui te donnera une longueur d'avance en classe !
+            Bravo pour la réalisation de ce défi ! En accomplissant ces gestes concrets sur le
+            terrain, tu as développé une intuition physique et logique qui te donnera une longueur
+            d'avance en classe !
           </p>
         )}
       </div>

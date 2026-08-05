@@ -18,7 +18,9 @@
 // Surchargeable par VITE_SITE_URL au moment du build, si besoin ponctuel (preview, test).
 // Reste à faire : poser une redirection depuis genizio.vercel.app vers ce domaine, sinon
 // les deux adresses coexistent dans l'index et se cannibalisent.
-export const SITE_URL = (import.meta.env.VITE_SITE_URL as string | undefined)?.replace(/\/$/, "") || "https://www.genizio.com";
+export const SITE_URL =
+  (import.meta.env.VITE_SITE_URL as string | undefined)?.replace(/\/$/, "") ||
+  "https://www.genizio.com";
 
 export const SITE_NAME = "Génizio";
 export const SITE_NAME_LONG = "Génizio — Révélez le potentiel unique de votre enfant";
@@ -61,6 +63,7 @@ export function pageMeta(opts: {
     meta: [
       { title: opts.title },
       { name: "description", content: opts.description },
+      { name: "robots", content: "index, follow" },
       { property: "og:title", content: opts.title },
       { property: "og:description", content: opts.description },
       { property: "og:url", content: url },
