@@ -528,6 +528,11 @@ function ChallengesPage() {
     const targetChallenge = previous.find((c) => c.id === id);
     if (status === "in_progress" && targetChallenge?.status === "todo") {
       if (statusFilter === "todo") {
+        // Correctif (2026-08-05) : la mise à jour optimiste ci-dessous retire la carte de la
+        // liste filtrée "À faire" avant la réponse serveur — le clic semblait donc "sans
+        // effet" (seul un toast passait). On suit le filtre sur "En cours" au moment du clic,
+        // comme l'annonce déjà le toast, pour que la carte reste visible dans son nouvel état.
+        setStatusFilter("in_progress");
         toast.success("Défi débuté ! Retrouvez-le dans l'onglet 'En cours' pour le valider avec l'enfant.");
       } else {
         toast.success("Défi débuté ! Validez-le avec l'enfant lorsque vous êtes prêts.");
@@ -557,6 +562,12 @@ function ChallengesPage() {
   // avec la raison du parent, pour nourrir la compréhension de l'enfant plutôt que le noter.
   const markChallengeNotCompleted = async (id: string, reason: string) => {
     const previous = challenges;
+    // Correctif (2026-08-05) : même motif que setStatus — la mise à jour optimiste retire la
+    // carte de la vue filtrée "À faire"/"En cours" avant la réponse serveur. On suit le filtre
+    // sur "Non réussi" pour garder la carte visible dans son nouvel état.
+    if (statusFilter === "todo" || statusFilter === "in_progress") {
+      setStatusFilter("not_completed");
+    }
     setChallenges((prev) =>
       prev.map((c) => (c.id === id ? { ...c, status: "not_completed", not_completed_reason: reason } : c)),
     );
