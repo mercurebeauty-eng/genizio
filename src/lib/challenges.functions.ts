@@ -20,6 +20,47 @@ import {
   findCurriculumTopic,
 } from "@/lib/academic-homework.functions";
 
+// ============================================================================
+// CONSTITUTION & PERSONA NAYA — module pur de prompts partagés (chantier 1
+// « Naya 3.0 »). Ces constantes vivaient historiquement ici, dispersées dans les
+// 16 sites d'appel IA (copies collées qui dérivaient, cf. genizio-decisions) ;
+// elles sont désormais centralisées dans src/lib/naya-prompts.ts. Ce fichier
+// importe (pour son usage interne) et ré-exporte telles quelles — les importeurs
+// existants (hypotheses.functions.ts, recommendations.functions.ts,
+// admin-os.functions.ts, tests…) ne changent pas d'un seul caractère.
+// ============================================================================
+import {
+  GENIZIO_PRINCIPLES,
+  SAFETY_INSTRUCTION,
+  PROOF_MODE_INSTRUCTION,
+  ACADEMIC_REFERENTIAL_INSTRUCTION,
+  ACADEMIC_SECRET_INSTRUCTION,
+  AGE_DEVELOPMENT_GUIDANCE,
+  MATERIAL_TAGS_INSTRUCTION,
+  INTELLIGENCES_FIELD_INSTRUCTION,
+  TRAIT_SUBFORM_INSTRUCTION,
+  STEPS_INSTRUCTION,
+  buildAvoidRepeatsInstruction,
+  NAYA_SYSTEM_PROMPT,
+  NAYA_SYSTEM_PROMPT_JSON,
+  buildChallengePrompt,
+  buildSingleChallengePrompt,
+  buildHomeworkPrompt,
+} from "@/lib/naya-prompts";
+
+export {
+  GENIZIO_PRINCIPLES,
+  SAFETY_INSTRUCTION,
+  PROOF_MODE_INSTRUCTION,
+  ACADEMIC_REFERENTIAL_INSTRUCTION,
+  ACADEMIC_SECRET_INSTRUCTION,
+  AGE_DEVELOPMENT_GUIDANCE,
+  MATERIAL_TAGS_INSTRUCTION,
+  INTELLIGENCES_FIELD_INSTRUCTION,
+  TRAIT_SUBFORM_INSTRUCTION,
+  STEPS_INSTRUCTION,
+} from "@/lib/naya-prompts";
+
 // Domaines couverts par le référentiel académique (cf. genizio-decisions #39). "creative"
 // exclue volontairement (développement non linéaire par âge, cf. ACADEMIC_REFERENTIAL_INSTRUCTION
 // ci-dessous) — ne jamais l'ajouter ici sans revoir le mécanisme de détection d'écart.
@@ -739,114 +780,14 @@ function formatProgressionInstruction(targets: ProgressionTarget[]): string {
   return `PROGRESSION MESURÉE (zone proximale d'apprentissage — reflète le niveau réel déjà démontré par cet enfant sur ses défis complétés, pas une estimation) :\n${lines.join("\n")}`;
 }
 
-// Shared constitution injected into every challenge-generation prompt (bulk
-// and single). Written dense and numbered on purpose: the text-only calls
-// run on DeepSeek Chat (lightweight model), which needs explicit,
-// unambiguous rules rather than loose guidance to reliably avoid
-// generic/unrealistic output.
-const GENIZIO_PRINCIPLES = `PRINCIPES DE GÉNÉRATION GÉNIZIO (règles d'excellence strictes, à respecter impérativement) :
-- CONCRET & HAUTE VALEUR COGNITIVE : chaque défi doit produire un résultat observable et vérifiable (expérience réalisée, mécanisme construit, anomalie décelée, calcul/méthode optimisé, argumentation développée) — jamais du bricolage passif ni du coloriage/découpage sans analyse.
-- INTERDICTION DU BRICOLAGE PASSIF : ne fais JAMAIS d'un simple assemblage de carton/bouteille le cœur du défi. Les objets du quotidien (maison ou extérieur : eau, sel, miroir, ficelle, chronomètre, ombres, plantes, architecture du quartier) ne sont que des instruments de mesure ou de laboratoire, pas de la décoration.
-- 5 ARCHÉTYPES DE QUÊTES D'ÉLITE (alterner rigoureusement d'un défi à l'autre) :
-  1. 🔬 Laboratoire d'Expérimentation & Physique : tester une loi ou une hypothèse mesurable (densité, gravité, réfraction, équilibre, réactions).
-  2. 🕵️ Autopsie & Inversion Logique : analyser un texte, une équation, une carte ou un énoncé volontairement piégé par Naya et identifier les anomalies.
-  3. ⚙️ Ingénierie & Prototype Fonctionnel : construire un mécanisme physique (levier, rampe, poulie, pont) qui résout un problème précis sous contrainte de ressources.
-  4. ⏱️ Sprint d'Optimisation & Algorithme Mental : découvrir une méthode d'efficacité pour accomplir un calcul ou une tâche 2x plus vite et battre un record.
-  5. 🏛️ Plaidoyer & Stratégie Sociale : construire une argumentation structurée avec 3 preuves pour mener une enquête ou défendre une position lors d'un mini-débat.
-- PRÉCOCITÉ GUIDÉE (Méthode Singapour) : ne te contente pas de vérifier passivement les acquis basiques de l'âge de l'enfant. Propose un défi qui introduit un concept du niveau supérieur (N+1), tout en le rendant manipulable et compréhensible par l'action concrète.
-- CENTRES D'INTÉRÊT = LEVIERS COMPORTEMENTAUX ET MODES COGNITIFS PROFONDS : Ne traite jamais un centre d'intérêt comme un simple thème ou un hobby décoratif (ex: "football", "dinosaures"). Décode et exploite le LEVIER COMPORTEMENTAL ET LE MODE OPÉRATOIRE MENTAL sous-jacent de l'enfant (ex: "Démonte pour comprendre", "Négocie toujours", "A besoin de bouger pour réfléchir"). Utilise ces traits comme MÉCANIQUE ET POSTURE D'APPRENTISSAGE. Si l'enfant "démonte pour comprendre", propose un défi de déconstruction/analyse inverse. Chaque défi doit employer la mécanique d'action préférée de l'enfant (démonter, schématiser, simuler, optimiser, enquêter).
-- HARMONIE INTÉRIEUR & EXTÉRIEUR : alterne entre le laboratoire de la maison et le terrain d'investigation extérieur (jardin, cour, quartier, parc, architecture locale) selon le sujet.
-- INTERDIT : défi irréalisable concrètement, matériel inaccessible, exercice creux sans valeur pédagogique réelle, tâche trop abstraite déconnectée du quotidien, formulation générique déjà vue mille fois ("dessine ce que tu veux", "imagine une histoire" sans ancrage réel).
-- Cible explicitement 1 à 2 compétences précises et nomme-les dans "pedagogical_context" : Cognitives (logique, esprit critique, curiosité scientifique, créativité) · Pratiques (autonomie, débrouillardise/ingéniosité, méthode et rigueur, gestion du temps) · Sociales (communication, leadership, collaboration, empathie) · Personnelles (résilience face à la frustration, confiance en soi, esprit d'initiative, adaptabilité).
-- Ne vise pas systématiquement le format le plus court : plus l'enfant grandit (8 ans et +), plus des formats longs et immersifs (au-delà d'une heure, voire un projet sur plusieurs jours) construisent une vraie résilience — une alternative constructive aux écrans, tant que ça reste réaliste pour le temps disponible indiqué.
-- AUCUNE syntaxe Markdown dans les champs texte (pas de #, ##, **, tirets de liste) — phrases en texte brut uniquement. Les étapes vont exclusivement dans le tableau "steps", jamais mises en forme dans "description".
-- "difficulty" ("facile" | "moyen" | "difficile") : évalue selon le temps nécessaire, le niveau d'autonomie requis, la complexité cognitive, la quantité de matériel, et le niveau de créativité/analyse demandé — reste cohérent avec la tranche d'âge.
-- RELECTURE OBLIGATOIRE : avant de répondre, relis chaque champ texte et corrige toute faute d'orthographe, d'accent ou de grammaire. Zéro faute tolérée dans le JSON final.
-- CLARTÉ POUR L'ENFANT : le titre et la description doivent être compréhensibles directement par l'enfant de cet âge, sans qu'un adulte ait besoin de les lui expliquer. Évite le jargon technique ou adulte — si un mot technique est indispensable, explique-le simplement dans la même phrase.`;
-
-// Was hand-copied into both prompts below and had already drifted once
-// (one copy had an extra clarifying example the other lacked) — a single
-// shared string, like GENIZIO_PRINCIPLES above, means a future wording
-// tweak only has to be made once. Each call site prefixes its own list
-// marker ("- " or "N. ") since the two prompts use different list styles.
-const SAFETY_INSTRUCTION = `SÉCURITÉ ET SUPERVISION, sans excès de prudence : analyse si le défi comporte des risques réels (feu, cuisine avec source de chaleur — plaque, four, eau ou huile chaude —, objets coupants, produits chimiques, électricité, extérieur non sécurisé — eau profonde, hauteur, circulation, animaux dangereux). Si OUI, règle "requires_supervision" à true. Adapte le ton de "supervision_warning" à l'âge : avant 12 ans, précise qu'un adulte doit être présent pour cette étape ; à partir de 12 ans, un enfant peut réaliser l'étape lui-même — donne des mesures de sécurité concrètes à suivre plutôt que d'exiger la présence d'un adulte (ex: manipuler un briquet loin de matières inflammables, avec de l'eau à proximité). Ne signale pas de risque pour des activités quotidiennes sans danger réel (cuisine froide/sans cuisson, mélanger des ingrédients, extérieur familier, etc.).`;
-
-// Partagée entre les 5 générateurs de défis IA de l'app (cf. genizio-decisions #35) —
-// même raison que SAFETY_INSTRUCTION ci-dessus : un seul texte source, pas de copies
-// qui dérivent. "declarative" retire tout jugement IA à la soumission (voir
-// submitDeclarativeProof) : aucune photo n'a le pouvoir de prouver un comptage ou une
-// durée, donc autant ne pas prétendre le vérifier — la déclaration du parent fait foi.
-export const PROOF_MODE_INSTRUCTION = `MODE DE PREUVE : détermine "proof_mode" selon la nature du défi.
-- "photo" (par défaut, le cas le plus courant) : le défi produit un résultat final visible (objet construit, dessin, expérience montée, texte écrit) — une photo suffit à en juger. N'inclus alors ni "proof_target" ni "declarative_award".
-- "declarative" : le défi consiste en une action comptable, chronométrée ou physique en direct qu'une seule photo ne peut structurellement pas prouver (répétitions, durée, distance — ex: "20 jongles", "courir 10 minutes sans s'arrêter"). Dans ce cas UNIQUEMENT, fournis aussi :
-  - "proof_target": {"metric": "unité comptée en 2-4 mots, ex: jongles réussis / minutes de course", "value": nombre cible}
-  - "declarative_award": objet {"clé":points} avec des points de 1 à 3, clés EXCLUSIVEMENT parmi : spatial, corporelle, sociale, entrepreneuriale, creative, artisanale, emotionnelle, logico_mathematique, linguistique — les intelligences réellement mobilisées si le défi est réussi.`;
-
-// Référentiel académique interne Génizio (cf. genizio-decisions #37/#39, docs/memoire/
-// genizio_referentiel_academique.md — version condensée pour prompt, sans le détail des
-// sources). Remplace les notes scolaires comme signal de calibrage : indépendant de l'école
-// réelle de l'enfant, volontairement calé sur des standards internationaux exigeants
-// (Common Core US, Singapore Math, NGSS, SHAPE America, CASEL, NFEC selon le domaine — niveaux
-// de confiance inégaux, cf. le document source). Sert à étiqueter le CONTENU réel d'un défi
-// par âge — jamais à afficher un verdict au parent (§1 du plan NAYA). "creative" est
-// délibérément absente : son développement documenté n'est pas linéaire par âge (creux normaux
-// à certains âges), incompatible avec ce mécanisme de comparaison — ne JAMAIS l'étiqueter.
-export const ACADEMIC_REFERENTIAL_INSTRUCTION = `RÉFÉRENTIEL ACADÉMIQUE : si le défi relève d'un des domaines ci-dessous, détermine "academic_domain" ("mathematiques" | "langage" | "sciences" | "corporelle" | "sociale" | "emotionnelle" | "entrepreneuriale" | "artisanale" | "spatiale"), "academic_level_age" (nombre entier = l'âge auquel correspond RÉELLEMENT le contenu du défi que tu viens de concevoir, d'après ce référentiel — PAS forcément l'âge de l'enfant), et "academic_reference_note" (1 phrase courte citant la ligne précise du référentiel sur laquelle tu t'es basé, ex: "toutes les tables à un chiffre mémorisées vers 8 ans" — pas juste "niveau 8 ans"). Pour "creative" (créativité pure, imaginaire libre) ou tout domaine hors de cette liste, omets les trois champs.
-
-MATHÉMATIQUES / LOGIQUE :
-5 ans : compter à 100 par 1 et 10, écrire les nombres 0-20. 6 ans : addition/soustraction dans les 20. 7 ans : tables de multiplication 2,3,4,5,10 mémorisées, mesures standard, figures géométriques. 8 ans : TOUTES les tables à un chiffre (2-9) mémorisées, fractions comme quantité (1/b, a/b). 9 ans : multiplication à plusieurs chiffres, division avec reste, fractions équivalentes. 10 ans : multiplication/division à 2 chiffres, nombres décimaux. 11 ans : équations à une inconnue simples (x+p=q, px=q), inégalités simples. 12 ans : équations plus complexes (px+q=r), inégalités. 13 ans : exposants, racines, systèmes de 2 équations, notion de fonction. 14 ans : théorème de Pythagore, statistiques descriptives, algèbre avancée.
-
-LANGAGE (lecture/écriture) :
-5 ans : isole les sons d'un mot de 3 sons, débute le décodage syllabe par syllabe. 6 ans : lit un texte de son niveau à voix haute avec précision et expression, se corrige seul. 7 ans : même fluidité sur un texte plus avancé, décode des mots à plusieurs syllabes. 8-10 ans : décode des mots complexes, résume un texte, utilise des connecteurs logiques (parce que, donc, ensuite). 11-14 ans : rédige des textes structurés en plusieurs paragraphes, argumente avec plusieurs arguments organisés, analyse un texte (intention de l'auteur, point de vue).
-
-SCIENCES / DÉCOUVERTE DU MONDE :
-5-7 ans : propriétés de base des matériaux (ex: ce qui flotte/coule), besoins de base des êtres vivants. 8-10 ans : états et changements de la matière (fusion, évaporation...), systèmes du corps humain, cycle de la matière entre êtres vivants et environnement. 11-14 ans : cycle de l'eau complet (évaporation, condensation, précipitation), rôle de la photosynthèse, écosystèmes, énergie et forces.
-
-CORPORELLE (motricité) :
-3-5 ans : motricité globale en développement rapide (courir, sauter, grimper avec plus de contrôle). 6-10 ans : compétence dans une variété d'habiletés motrices (lancer, attraper, dribbler), concepts de mouvement de base, notions de condition physique. 11-14 ans : stratégies/tactiques dans des situations de jeu complexes, autonomie dans l'activité physique.
-
-SOCIALE (relations) :
-5-7 ans : partage, tour de rôle, reconnaît les émotions d'autrui simplement. 8-10 ans : comprend les perspectives d'autrui, empathie, communique et coopère, résout des conflits simples. 11-14 ans : négociation, résiste à la pression sociale négative, travail d'équipe dans des groupes plus larges/moins familiers.
-
-EMOTIONNELLE (conscience et gestion de soi) :
-5-7 ans : reconnaît et nomme ses émotions de base, autorégulation simple avec aide d'un adulte. 8-10 ans : reconnaît l'influence de ses émotions sur son comportement, autorégulation plus autonome, fixe de petits objectifs. 11-14 ans : gestion du stress plus complexe, prise de décision responsable tenant compte de plusieurs facteurs.
-
-ENTREPRENEURIALE :
-5-7 ans : notions d'argent de base (compter, épargner, différence besoin/envie). 8-10 ans : budget simple, idée de gagner de l'argent par un petit service, comprend qu'un choix a un coût. 11-14 ans : notions de base d'un petit projet (coût, prix, marge), planifie un budget sur plusieurs semaines.
-
-ARTISANALE (habileté manuelle) :
-6-7 ans : écriture fluide et contrôlée, maniement précis ciseaux/colle. 8-9 ans : motricité fine raffinée, tâches demandant une concentration prolongée. 10-14 ans : motricité fine proche de l'adulte, projets complexes en plusieurs séances, recherche un résultat "professionnel".
-
-SPATIALE :
-3 ans : vocabulaire spatial de base (dessus/dessous, dedans/dehors). 4-9 ans : perçoit des objets sous différents points de vue, notion de perspective en développement. 5 ans : réussit une tâche simple de "pliage mental" (imaginer un objet après pliage). 7-8 ans : pliage mental plus avancé, plafonne généralement vers cet âge.`;
-
-export const ACADEMIC_SECRET_INSTRUCTION = `SECRET ACADÉMIQUE DE NAYA ("academic_secret") : Génère obligatoirement un paragraphe captivant de 3 à 5 phrases à destination de l'enfant, en trois temps :
-1. Nomme le concept théorique précis derrière l'action concrète qu'il vient de réaliser (ex: Effet Magnus, frottements de l'air, parallélisme, oxydation, réfraction, angle d'incidence...) et explique en une phrase simple pourquoi cette théorie explique ce qu'il vient d'observer sur le terrain.
-2. Indique le niveau précis (un seul, jamais une fourchette — 6ème, 5ème, 4ème, 3ème, seconde, première, terminale, ou, seulement si la théorie ne s'enseigne formellement qu'à ce stade, "classe préparatoire" ou "à l'université" — selon le concept réel, choisis le plus juste) où cette théorie est formellement enseignée en France. Le champ d'application est large : aussi bien des théorèmes et notions mathématiques que des lois physiques, chimiques, biologiques ou des principes d'ingénierie — ne te limite pas aux sciences expérimentales classiques.
-3. Termine par une ouverture concrète : un exemple de défi ou de projet plus ambitieux qu'il pourra réussir une fois cette théorie apprise à l'école — pour montrer que l'école débloque la suite plutôt que d'être coupée de ce qu'il vient de faire.
-Présente l'ensemble comme un superpouvoir secret ou un avantage tactique qu'il maîtrise déjà sur le terrain, avant même de l'avoir vu en classe. Ne mentionne jamais de métier ni de domaine professionnel — ce n'est pas le rôle de ce champ (cf. Boussole d'Opportunités, réservée 12 ans+).`;
-
-// Dupliquée mot pour mot dans generateChallenges et generateSingleChallenge avant
-// extraction (2026-07-22) — avait déjà dérivé silencieusement (une copie disait
-// "Adapte strictly" au lieu de "strictement"), même risque que GENIZIO_PRINCIPLES
-// et SAFETY_INSTRUCTION ci-dessus, même remède : un seul texte source.
-const AGE_DEVELOPMENT_GUIDANCE = `CONSIGNES DE DÉVELOPPEMENT LIÉES À L'ÂGE :
-Adapte strictement la forme, la complexité intellectuelle et la motricité requise pour le défi à l'âge exact de l'enfant :
-- De 1 à 3 ans (Exploration sensorielle et motrice) : Activités purement sensorielles (toucher, manipuler, transvaser, trier des couleurs/objets simples, textures, eau, sable). Aucune règle complexe, aucune consigne de motricité fine avancée (pas de découpage précis, pas d'écriture). Étape ultra-simple en 1 action à la fois.
-- De 4 à 7 ans (Phase exploratoire et imaginative) : Activités intégrant de l'imagination, des petits jeux de rôle ("fait semblant de"), du dessin, des petites manipulations de cause à effet guidées par le plaisir immédiat. L'action pratique doit primer sur la théorie.
-- De 8 à 11 ans (Phase structurée et concrète) : Proposer des projets de fabrication concrets (maquettes, expériences scientifiques simples, recettes simples, bricolage) avec des règles claires, des étapes méthodiques, et de l'observation logique ou sociale.
-- De 12 ans et + (Phase d'abstraction et d'analyse) : Permettre de la pensée critique, de la stratégie, des projets plus autonomes et complexes, de la logique conceptuelle (ex: coder un algorithme sur papier, déchiffrer des énigmes ou concevoir des objets élaborés).`;
-
-// Idem — dupliquée dans les deux mêmes prompts, indentation cosmétique différente
-// à chaque site (alignée sur "- " ou "N. ") mais texte identique. Chaque site
-// garde son propre préfixe de liste, comme SAFETY_INSTRUCTION ci-dessus.
-const MATERIAL_TAGS_INSTRUCTION = `Pour "material_tags" : un tag court en minuscules, sans accent, par matériau physique achetable (ex: "carton", "cutter", "colle", "ampoule") — pas les objets déjà présents chez tout le monde (eau, table, papier). Un tableau vide si rien d'achetable n'est nécessaire.`;
-
-// Ajoutée le 2026-07-22 : avant, "intelligences" acceptait n'importe quel texte
-// libre (ex: "Créativité"), qui ne correspondait jamais aux 9 clés réelles de
-// VALID_TALENT_KEYS — resolveTargetIntelligences filtre désormais ce qui ne
-// matche pas, mais encore faut-il que l'IA vise juste dès le départ.
-export const INTELLIGENCES_FIELD_INSTRUCTION = `Pour "intelligences" : 1 à 2 clés EXACTES parmi "spatial", "corporelle", "sociale", "entrepreneuriale", "creative", "artisanale", "emotionnelle", "logico_mathematique", "linguistique" — jamais un mot libre ou un nom français ("Créativité", "Logique") : uniquement ces clés techniques, celles réellement sollicitées par ce défi.`;
+// — GENIZIO_PRINCIPLES, SAFETY_INSTRUCTION, PROOF_MODE_INSTRUCTION,
+// ACADEMIC_REFERENTIAL_INSTRUCTION, ACADEMIC_SECRET_INSTRUCTION,
+// AGE_DEVELOPMENT_GUIDANCE, MATERIAL_TAGS_INSTRUCTION, INTELLIGENCES_FIELD_INSTRUCTION,
+// TRAIT_SUBFORM_INSTRUCTION, STEPS_INSTRUCTION et buildAvoidRepeatsInstruction sont
+// désormais centralisées dans src/lib/naya-prompts.ts (chantier 1 « Naya 3.0 »),
+// importées ci-dessus et ré-exportées telles quelles. Historiquement dupliquées dans
+// chaque prompt de génération, elles avaient déjà dérivé à plusieurs reprises
+// (cf. genizio-decisions #35, commentaires d'origine supprimés ici).
 
 // V1 "sous-formes de talent" (2026-07-22, cf. genizio-decisions #40, étendu aux 9 domaines le
 // même jour) : savoir qu'un défi sollicite l'intelligence "corporelle" ne dit rien de la
@@ -916,34 +857,6 @@ export const TALENT_SUBFORM_LABELS: Record<string, string> = {
 export const TALENT_SUBFORM_TO_DOMAIN: Record<string, string> = Object.fromEntries(
   Object.entries(TALENT_SUBFORMS).flatMap(([domain, forms]) => forms.map((f) => [f, domain]))
 );
-export const TRAIT_SUBFORM_INSTRUCTION = `Ajoute aussi "trait_subform" : EXACTEMENT une valeur parmi celles listées pour l'intelligence choisie ci-dessus (jamais une valeur d'une autre intelligence) — celle que ce défi précis sollicite le plus :
-- corporelle : "endurance" (effort prolongé) | "explosivite" (saut, sprint, puissance brève) | "coordination_fine" (précision main/œil) | "coordination_collective" (jeu d'équipe, synchronisation) | "precision" (viser, ajuster, répéter un geste exact)
-- spatial : "orientation" (se repérer, naviguer) | "visualisation_3d" (imaginer un objet sous différents angles) | "representation_graphique" (dessiner, schématiser) | "organisation_espace" (agencer, ranger un espace)
-- sociale : "leadership" (prendre l'initiative pour le groupe) | "mediation" (résoudre un désaccord) | "collaboration" (travailler à plusieurs vers un but commun) | "ecoute_empathique" (comprendre ce que ressent l'autre)
-- entrepreneuriale : "negociation" (persuader, obtenir un accord) | "prise_de_risque" (tenter une idée incertaine) | "sens_du_client" (deviner un besoin, adapter une offre) | "gestion_ressources" (optimiser un budget/temps limité)
-- creative : "invention_visuelle" (dessin, design original) | "narration" (inventer une histoire) | "improvisation" (créer sans plan préétabli) | "detournement" (réutiliser un objet de façon inattendue)
-- artisanale : "dexterite_fine" (précision manuelle répétée) | "assemblage" (construire, monter des pièces) | "reparation" (remettre en état un objet cassé) | "finition_esthetique" (souci du détail, rendu soigné)
-- emotionnelle : "autoregulation" (se calmer, gérer sa frustration) | "expression" (mettre des mots sur ce qu'on ressent) | "empathie" (percevoir l'émotion d'un autre) | "resilience" (rebondir après un échec)
-- logico_mathematique : "raisonnement_abstrait" (déduire sans support concret) | "calcul" (manipuler des nombres) | "resolution_problemes" (décomposer un problème en étapes) | "reconnaissance_motifs" (repérer une régularité)
-- linguistique : "expression_ecrite" (rédiger clairement) | "expression_orale" (parler devant un groupe) | "argumentation" (convaincre par le raisonnement) | "memorisation_lexicale" (vocabulaire riche)
-Si aucune sous-forme ne correspond clairement à l'intelligence choisie, omets ce champ (null).`;
-
-// Ajoutée le 2026-07-22 suite à un retour parent concret (défi de baromètre aux
-// étapes trop vagues, sautant des sous-actions implicites que seul un adulte
-// connaissant déjà l'expérience pouvait deviner). Avant ça, seule generateChallenges
-// avait "Étapes claires (3 à 6)" — aucune indication sur le niveau de granularité,
-// et les 4 autres générateurs de défis n'avaient même pas ça. Partagée entre les 5
-// (comme PROOF_MODE_INSTRUCTION/ACADEMIC_REFERENTIAL_INSTRUCTION), pas seulement
-// generateChallenges/generateSingleChallenge comme les fragments précédents.
-export const STEPS_INSTRUCTION = `Pour "steps" (3 à 6 étapes) : chaque étape est UN SEUL geste concret et complet, sans sous-action implicite laissée à deviner. Décompose ce qu'un adulte qui ne connaît pas déjà l'expérience ne saurait pas reconstituer seul (ex: pas "prépare le baromètre" mais "verse de l'eau colorée dans la bouteille jusqu'à mi-hauteur", puis "enfonce la paille dans le bouchon sans qu'elle touche le fond"). Teste mentalement : si on ne lisait QUE la liste des étapes, sans le titre ni la description, pourrait-on réaliser le défi du début à la fin sans se poser de question ? Si non, ajoute l'étape manquante plutôt que de la sous-entendre.`;
-
-// Idem — dupliquée avec une variation mineure ("déjà proposés" vs "déjà proposés à
-// cet enfant"). Fonction plutôt que constante puisque paramétrée par existingTitles ;
-// garde la formulation la plus complète des deux anciennes copies.
-function buildAvoidRepeatsInstruction(existingTitles: string[]): string {
-  return `Ne répète pas ces titres déjà proposés à cet enfant (${existingTitles.join(" | ") || "(aucun)"}) — et si tu remarques que plusieurs d'entre eux suivent la même mécanique de fond (ex: "récupère des matériaux et construis un objet"), varie consciemment vers une autre approche (observation, expérimentation, résolution de problème, performance...) plutôt que de prolonger ce schéma.`;
-}
-
 const ALLOWED_IMAGE_MEDIA_TYPES = ["image/jpeg", "image/png", "image/gif", "image/webp"];
 
 // Extraction robuste du JSON dans une réponse LLM brute. Remplace les regex
@@ -1056,9 +969,13 @@ async function callAnthropicVision(
     text: prompt,
   });
 
-  const systemPrompt = jsonMode
-    ? "Tu es un assistant IA précis. Tu dois impérativement répondre au format JSON demandé, sous forme de JSON brut, sans bloc de code Markdown, sans préambule ni explications."
-    : undefined;
+  // Identité experte Naya branchée comme vrai rôle system (chantier 1 « Naya 3.0 ») :
+  // l'ancien placeholder « Tu es un assistant IA précis… » ne portait aucune expertise.
+  // La constitution dense (GENIZIO_PRINCIPLES etc.) reste dans le contexte utilisateur
+  // au lancement (modèle léger DeepSeek v4-flash) ; elle passera ici en system avec le
+  // cache de prompt au chantier 4. Le mode vision non-JSON garde son ancien comportement
+  // (pas de system du tout) — seule la sortie contrainte reçoit l'identité.
+  const systemPrompt = jsonMode ? NAYA_SYSTEM_PROMPT_JSON : undefined;
 
   let attempt = 0;
   while (attempt < maxRetries) {
@@ -1152,9 +1069,13 @@ async function callDeepSeekText(
     throw new Error("Clé API DeepSeek non configurée dans .env (DEEPSEEK_API_KEY)");
   }
 
-  const systemPrompt = jsonMode
-    ? "Tu es un assistant IA précis. Tu dois impérativement répondre au format JSON demandé, sous forme de JSON brut, sans bloc de code Markdown, sans préambule ni explications."
-    : "Tu es un assistant IA précis et utile.";
+  // Identité experte Naya en rôle system (chantier 1 « Naya 3.0 ») : remplace le
+  // placeholder générique (« Tu es un assistant IA précis et utile ») par le persona
+  // mentor d'éveil des talents — le modèle (deepseek-v4-flash par défaut) reçoit
+  // désormais une posture et une expertise explicites en plus des règles de contenu
+  // du message utilisateur. En mode JSON, NAYA_SYSTEM_PROMPT_JSON ajoute la contrainte
+  // de format brut que le paramètre response_format json_object exige côté système.
+  const systemPrompt = jsonMode ? NAYA_SYSTEM_PROMPT_JSON : NAYA_SYSTEM_PROMPT;
 
   // deepseek-chat / deepseek-reasoner sont dépréciés le 2026-07-24 15:59 UTC — on
   // traduit donc ici nos anciens noms logiques ("model" reçu du routage de
@@ -1403,44 +1324,24 @@ export const generateChallenges = createServerFn({ method: "POST" })
       ? `- THÉMATIQUE DE SAISON ("${enrolledSeason!.title}") : Utilise le fil rouge narratif et la métaphore de cette saison ("${enrolledSeason!.theme}") pour scénariser au moins la moitié des défis. Le domaine d'apprentissage ciblé reste la priorité, mais l'habillage narratif donne l'impression à l'enfant d'être le héros de cette thématique.`
       : "";
 
-    const prompt = `Tu es Naya, un mentor pédagogique pour enfants en Afrique francophone, sur la plateforme Génizio.
-Génère ${data.count} défis d'apprentissage sur mesure pour cet enfant.
-
-Profil :
-- Prénom : ${child.name}
-- Âge : ${child.age} ans
-- Ville / pays : ${[child.city, child.country].filter(Boolean).join(", ") || "non précisé"}
-- Modes d'engagement et leviers comportementaux observés par le parent :
-${formatChildInterestsPayload(child.interests, interestHypotheses)}
-- Scores de talents actuels (Radar Chart de Howard Gardner, sur les 9 intelligences) : ${JSON.stringify(child.talents || {})}
-
-Défis déjà accomplis par l'enfant et observations de Naya :
-${completedSummary || "(Aucun défi complété pour le moment)"}
-
-${AGE_DEVELOPMENT_GUIDANCE}
-
-${formatProgressionInstruction(progressionTargets)}
-
-${GENIZIO_PRINCIPLES}
-
-Contraintes :
-- SYNTHÈSE PÉDAGOGIQUE ET APPRENTISSAGE ÉQUILIBRÉ : Associe les leviers comportementaux observés par le parent (posture cognitive) avec la cartographie des talents de l'enfant. Les intelligences actuellement les moins explorées chez cet enfant sont ${leastExplored.join(" et ")}. Sauf si le contexte les rend peu réalistes, au moins un des ${data.count} défis DOIT utiliser la posture ou mécanique d'action préférentielle de l'enfant comme passerelle naturelle pour explorer l'une de ces intelligences moins travaillées — c'est ainsi que Naya révèle des talents cachés en s'appuyant sur ses moteurs d'action naturels.
-- Ancre les défis dans le contexte africain (matériaux locaux, réalités du quotidien, langues, marchés, agriculture, artisanat, culture).
-- Choisis parmi ces domaines : ${shuffle(DOMAINS).join(", ")}.${ignoredDomains.length > 0 ? `\n- Cet enfant a déjà reçu plusieurs défis dans ${ignoredDomains.length > 1 ? "ces domaines" : "ce domaine"} (${ignoredDomains.join(", ")}) sans jamais les commencer : évite de reproposer ${ignoredDomains.length > 1 ? "ces domaines" : "ce domaine"}, sauf sous un angle radicalement différent de ce qui a déjà été proposé.` : ""}
-- Chaque défi doit être concret, réalisable à la maison ou dans le quartier, adapté à l'âge, avec des matériaux simples et accessibles.
-- ${STEPS_INSTRUCTION}
-- ${buildAvoidRepeatsInstruction(existingTitles)}
-- ${MATERIAL_TAGS_INSTRUCTION}
-- ${INTELLIGENCES_FIELD_INSTRUCTION}
-- ${TRAIT_SUBFORM_INSTRUCTION}
-- ${SAFETY_INSTRUCTION}
-- ${PROOF_MODE_INSTRUCTION}
-- ${ACADEMIC_REFERENTIAL_INSTRUCTION}
-- ${ACADEMIC_SECRET_INSTRUCTION}
-${seasonInstruction}
-
-Réponds STRICTEMENT en JSON valide avec ce format, pour chaque défi :
-{"challenges":[{"domain":"...","title":"...","description":"...","duration":"...","steps":["...","..."],"materials":["...","..."],"material_tags":["..."],"pedagogical_context":"Ce que Naya observe via cette activité","intelligences":["creative"],"trait_subform":"..." (voir liste par intelligence ci-dessus) ou null,"requires_supervision":true ou false,"supervision_warning":"..." (ou null si false),"difficulty":"facile"|"moyen"|"difficile","proof_mode":"photo"|"declarative","proof_target":{"metric":"...","value":20} (uniquement si declarative),"declarative_award":{"corporelle":2} (uniquement si declarative),"academic_domain":"mathematiques"|"langage"|"sciences"|"corporelle"|"sociale"|"emotionnelle"|"entrepreneuriale"|"artisanale"|"spatiale"|null,"academic_level_age":14 (uniquement si academic_domain non null),"academic_reference_note":"..." (uniquement si academic_domain non null),"academic_secret":"Explication stimulante du secret scientifique/physique..."}]}`;
+    // Assemblage délégué au builder pur buildChallengePrompt (chantier 1 « Naya 3.0 ») :
+    // le template string vivait ici et pouvait dériver des rubriques partagées — la
+    // couverture des rubriques est désormais testée unitairement dans naya-prompts.test.ts.
+    const prompt = buildChallengePrompt({
+      count: data.count,
+      childName: child.name,
+      childAge: child.age,
+      location: [child.city, child.country].filter(Boolean).join(", ") || "non précisé",
+      interestsPayload: formatChildInterestsPayload(child.interests, interestHypotheses),
+      talentsJson: JSON.stringify(child.talents || {}),
+      completedSummary,
+      progressionInstruction: formatProgressionInstruction(progressionTargets),
+      leastExplored,
+      domainsText: shuffle(DOMAINS).join(", "),
+      ignoredDomains,
+      existingTitles,
+      seasonInstruction,
+    });
 
     // Up to 6 full défis in one response, each now carrying the academic
     // referential fields (domain/level/citation) added on top of the original
@@ -2385,74 +2286,31 @@ export const generateAcademicHomeworkChallenge = createServerFn({ method: "POST"
       ? `- Thème de programme suggéré : "${topic.name}" (Accroche : ${topic.hook})`
       : "";
 
-    const prompt = `Tu es Naya, un mentor pédagogique d'élite spécialisé dans l'apprentissage ludique et l'ancrage concret des devoirs scolaires en Afrique francophone.
-Ta mission est de transformer une CONSEIGNE DE DEVOIR SCOLAIRE sous forme d'un DÉFI PHYSIQUE, CAPTIVANT ET CONCRET.
-
-Profil de l'enfant :
-- Prénom : ${child.name}
-- Âge chronologique : ${child.age} ans
-- Classe actuelle : ${gradeInfo.label} (${gradeInfo.cycle})
-- Ville / pays : ${[child.city, child.country].filter(Boolean).join(", ") || "non précisé"}
-- Modes d'engagement et leviers comportementaux observés par le parent :
-${formatChildInterestsPayload(child.interests, interestHypotheses)}
-
-CONSIGNE DE SOUTIEN SCOLAIRE / DEVOIR À FUSIONNER :
-- Matière : ${subjectLabel} (${data.subject})
-- Niveau scolaire visé : ${gradeInfo.label} (âge académique cible : ${targetAge} ans)
-- Consigne / Devoir explicite du parent : "${data.homeworkInstruction}"
-${topicContext}
-- Temps disponible : ${timeAvailable}
-${data.homeMaterials ? `- Matériaux disponibles à la maison : ${data.homeMaterials}` : ""}
-
-ZPA ET CALIBRAGE DE DIFFICULTÉ :
-- Niveau ZPA calculé (1 à 5) : Niveau ${zpaResult.level} (${zpaResult.supportMode})
-- Rationale ZPA : ${zpaResult.rationale}
-${zpaResult.isAnxietyDamped ? "- CONTEXTE D'ANXIÉTÉ DÉTECTÉ : Propose un soutien renforcé, rassurant et très guidé (mode HIGH_SUPPORT)." : ""}
-
-LEVIER COMPORTEMENTAL DE FUSION OBLIGATOIRE :
-${driverGuidance}
-
-RÈGLES DE FUSION ACADÉMIQUE-LUDIQUE STRICTES :
-1. LE DEVOIR DOIT ÊTRE RÉELLEMENT RÉVISÉ/APPRIS : La réussite du défi doit garantir que l'enfant a pratiqué ou assimilé la consigne scolaire ("${data.homeworkInstruction}"). Le défi ne doit PAS détourner l'enfant du devoir, mais en faire la mécanique centrale du jeu.
-2. PAS DE FICHE PAPIER NI DE QUIZ PASSIFS : Interdiction de proposer de simples QCM, fiches d'exercices ou récitations passives. L'apprentissage doit passer par une action physique avec les objets de la maison ou du quartier.
-3. RESPECT STRICT DU NIVEAU ${gradeInfo.label} : Le contenu académique doit correspondre exactement aux exigences de la classe de ${gradeInfo.label} (environ ${targetAge} ans).
-4. ${GENIZIO_PRINCIPLES}
-5. ${buildAvoidRepeatsInstruction(existingTitles)}
-6. ${STEPS_INSTRUCTION}
-7. ${SAFETY_INSTRUCTION}
-8. ${PROOF_MODE_INSTRUCTION}
-9. ${INTELLIGENCES_FIELD_INSTRUCTION}
-10. ${TRAIT_SUBFORM_INSTRUCTION}
-11. ${ACADEMIC_SECRET_INSTRUCTION}
-
-Réponds STRICTEMENT en JSON valide avec ce format exact :
-{
-  "domain": "${data.subject === 'maths' ? 'Sciences' : data.subject === 'francais' || data.subject === 'anglais' ? 'Langues' : 'Sciences'}",
-  "title": "Titre accrocheur du défi ludique",
-  "description": "Pitch du défi pour l'enfant intégrant la révision de ${data.homeworkInstruction}",
-  "duration": "${timeAvailable}",
-  "steps": ["Étape 1", "Étape 2..."],
-  "materials": ["Matériau 1", "Matériau 2..."],
-  "material_tags": ["materiau-1"],
-  "pedagogical_context": "Ce que Naya observe via cette activité de révision ludique",
-  "intelligences": ["${data.subject === 'maths' ? 'logico_mathematique' : data.subject === 'francais' || data.subject === 'anglais' ? 'linguistique' : 'creative'}"],
-  "trait_subform": null,
-  "requires_supervision": false,
-  "supervision_warning": null,
-  "difficulty": "moyen",
-  "proof_mode": "photo",
-  "proof_target": null,
-  "declarative_award": null,
-  "academic_domain": "${data.subject === 'maths' ? 'mathematiques' : data.subject === 'francais' || data.subject === 'anglais' ? 'langage' : 'sciences'}",
-  "academic_level_age": ${targetAge},
-  "academic_reference_note": "Consigne scolaire ${gradeInfo.label} : ${data.homeworkInstruction.slice(0, 100)}",
-  "academic_subject": "${data.subject}",
-  "academic_grade_level": "${data.gradeLevel}",
-  "homework_instruction": "${data.homeworkInstruction.replace(/"/g, '\\"')}",
-  "behavioral_driver": "${selectedDriver}",
-  "zpa_level": ${zpaResult.level},
-  "academic_secret": "Explication stimulante du secret scientifique/académique avec niveau d'avance..."
-}`;
+    const prompt = buildHomeworkPrompt({
+      childName: child.name,
+      childAge: child.age,
+      gradeInfoLabel: gradeInfo.label,
+      gradeInfoCycle: gradeInfo.cycle,
+      profileLocation: [child.city, child.country].filter(Boolean).join(", ") || "non précisé",
+      interestsPayload: formatChildInterestsPayload(child.interests, interestHypotheses),
+      subjectLabel,
+      subject: data.subject,
+      gradeLevelKey: data.gradeLevel,
+      targetAge,
+      homeworkInstruction: data.homeworkInstruction,
+      topicContext,
+      timeAvailable,
+      homeMaterialsLine: data.homeMaterials ? `- Matériaux disponibles à la maison : ${data.homeMaterials}` : "",
+      zpaLevel: zpaResult.level,
+      zpaSupportMode: zpaResult.supportMode,
+      zpaRationale: zpaResult.rationale,
+      anxietyLine: zpaResult.isAnxietyDamped
+        ? "- CONTEXTE D'ANXIÉTÉ DÉTECTÉ : Propose un soutien renforcé, rassurant et très guidé (mode HIGH_SUPPORT)."
+        : "",
+      driverGuidance,
+      selectedDriver,
+      existingTitles,
+    });
 
     const content = await callClaude(prompt, true, undefined, 1500);
     let parsed: unknown;
@@ -2597,76 +2455,25 @@ export const generateSingleChallenge = createServerFn({ method: "POST" })
       ? `\n3b. THÉMATIQUE DE SAISON ("${enrolledSeason!.title}") : Utilise le fil rouge narratif et la métaphore de cette saison ("${enrolledSeason!.theme}") pour scénariser le défi.`
       : "";
 
-    const prompt = `Tu es Naya, un mentor pédagogique d'élite spécialisé dans la psychologie de l'enfant et les Intelligences Multiples d'Howard Gardner, opérant en Afrique francophone.
-Génère un défi d'apprentissage sur-mesure, hautement interactif et passionnant pour cet enfant, en respectant son contexte immédiat.
-
-Profil de l'enfant :
-- Prénom : ${child.name}
-- Âge : ${child.age} ans
-- Ville / pays : ${[child.city, child.country].filter(Boolean).join(", ") || "non précisé"}
-- Modes d'engagement et leviers comportementaux observés par le parent :
-${formatChildInterestsPayload(child.interests, interestHypotheses)}
-- Scores de talents actuels (Radar Chart de Howard Gardner) : ${JSON.stringify(child.talents || {})}
-
-${AGE_DEVELOPMENT_GUIDANCE}
-
-${formatProgressionInstruction(progressionTargets)}
-
-${GENIZIO_PRINCIPLES}
-
-Défis déjà accomplis par l'enfant et observations de Naya :
-${completedSummary || "(Aucun défi complété pour le moment)"}
-
-${buildAvoidRepeatsInstruction(existingTitles)}
-
-Contexte immédiat (TRÈS IMPORTANT) :
-- Temps disponible : ${timeAvailable}
-- Lieu / Environnement : ${location}
-${data.homeMaterials ? `- Matériaux/objets disponibles à la maison : ${data.homeMaterials}` : ""}
-
-Ta mission (Synthèse Pédagogique) :
-1. Analyse la carte des talents (Radar Chart), les leviers comportementaux observés par le parent (posture cognitive), ET les observations des défis passés.
-2. Synthèse pédagogique : Utilise les postures cognitives et mécaniques d'action préférées de l'enfant comme levier d'entrée pour aborder le domaine cible. Si les observations passées indiquent une évolution ou des points de blocage, adapte la mécanique d'action pour créer une passerelle d'apprentissage stimulante.
-${domainInstruction}${seasonInstruction}
-4. Le défi doit s'adapter EXACTEMENT au temps disponible. S'il n'y a que 10 minutes, propose un "mini-défi" immédiat. Si c'est 1h+, propose un projet structuré.
-${materialScopeInstruction}
-${
-  data.homeMaterials
-    ? `6. UTILISATION DES MATÉRIAUX MENTIONNÉS : Tu DOIS concevoir un défi qui utilise en priorité ou exclusivement les matériaux indiqués par le parent ("${data.homeMaterials}"). Si ces matériaux ne suffisent pas, tu PEUX inclure d'autres ustensiles en fonction de la consigne (MAISON/EXTÉRIEUR/ACHAT/MIXTE).`
-    : ""
-}
-7. ${SAFETY_INSTRUCTION}
-8. ${MATERIAL_TAGS_INSTRUCTION}
-9. ${INTELLIGENCES_FIELD_INSTRUCTION}
-10. ${TRAIT_SUBFORM_INSTRUCTION}
-11. ${STEPS_INSTRUCTION}
-12. ${PROOF_MODE_INSTRUCTION}
-13. ${ACADEMIC_REFERENTIAL_INSTRUCTION}
-14. ${ACADEMIC_SECRET_INSTRUCTION}
-
-Réponds STRICTEMENT en JSON valide avec ce format exact :
-{
-  "domain": "Domaine choisi",
-  "title": "Titre accrocheur du défi",
-  "description": "Pitch pour l'enfant",
-  "duration": "Durée estimée",
-  "steps": ["Étape 1", "Étape 2..."],
-  "materials": ["Outil 1", "Matériau 2..."],
-  "material_tags": ["outil-1", "materiau-2"],
-  "pedagogical_context": "Ce que Naya observe via cette activité",
-  "intelligences": ["creative"],
-  "trait_subform": "..." (voir liste par intelligence ci-dessus) ou null,
-  "requires_supervision": true ou false,
-  "supervision_warning": "Attention: Manipulez le couteau avec l'enfant" (ou null si false),
-  "difficulty": "facile" | "moyen" | "difficile",
-  "proof_mode": "photo" | "declarative",
-  "proof_target": {"metric": "...", "value": 20} (uniquement si declarative),
-  "declarative_award": {"corporelle": 2} (uniquement si declarative),
-  "academic_domain": "mathematiques" | "langage" | "sciences" | "corporelle" | "sociale" | "emotionnelle" | "entrepreneuriale" | "artisanale" | "spatiale" | null,
-  "academic_level_age": 14 (uniquement si academic_domain non null),
-  "academic_reference_note": "..." (uniquement si academic_domain non null),
-  "academic_secret": "Explication stimulante du secret scientifique/physique avec niveau d'avance 4ème/3ème..."
-}`;
+    const prompt = buildSingleChallengePrompt({
+      childName: child.name,
+      childAge: child.age,
+      profileLocation: [child.city, child.country].filter(Boolean).join(", ") || "non précisé",
+      interestsPayload: formatChildInterestsPayload(child.interests, interestHypotheses),
+      talentsJson: JSON.stringify(child.talents || {}),
+      completedSummary,
+      existingTitles,
+      timeAvailable,
+      immediateLocation: location,
+      homeMaterialsLine: data.homeMaterials ? `- Matériaux/objets disponibles à la maison : ${data.homeMaterials}` : "",
+      progressionInstruction: formatProgressionInstruction(progressionTargets),
+      domainInstruction,
+      seasonInstruction,
+      materialScopeInstruction,
+      homeMaterialsUseLine: data.homeMaterials
+        ? `6. UTILISATION DES MATÉRIAUX MENTIONNÉS : Tu DOIS concevoir un défi qui utilise en priorité ou exclusivement les matériaux indiqués par le parent ("${data.homeMaterials}"). Si ces matériaux ne suffisent pas, tu PEUX inclure d'autres ustensiles en fonction de la consigne (MAISON/EXTÉRIEUR/ACHAT/MIXTE).`
+        : "",
+    });
 
     // A single défi, not a batch — the 4000 default (sized for up to 6 défis
     // in generateChallenges) would needlessly reserve most of the org's

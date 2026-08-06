@@ -1,6 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { callClaude, finalizeChallenge, PROOF_MODE_INSTRUCTION, ACADEMIC_REFERENTIAL_INSTRUCTION, ACADEMIC_SECRET_INSTRUCTION, ACADEMIC_DOMAIN_LABELS, STEPS_INSTRUCTION, INTELLIGENCES_FIELD_INSTRUCTION, TRAIT_SUBFORM_INSTRUCTION, formatChildInterestsPayload, extractJsonFromLLMResponse } from "@/lib/challenges.functions";
+import { buildHypothesisPrompt } from "@/lib/naya-prompts";
 import { TALENT_KEY_LABELS } from "@/lib/talent-buckets";
 import { getInterestHypothesesSnapshot } from "@/lib/interest-confidence";
 import { z } from "zod";
@@ -343,53 +344,29 @@ export const ensureHypothesesForChild = createServerFn({ method: "POST" })
       .eq("child_id", data.childId)
       .maybeSingle();
 
-    const snapshot = {
-      enfant: { prenom: child.name, age: child.age },
-      ecart_referentiel: {
-        domaine: domainLabel,
-        direction: direction === "BEHIND" ? "en retard sur le référentiel" : "en avance sur le référentiel",
-        niveaux_recents_observes: byDomain.get(triggerDomain),
-      },
-      jumeau_pedagogique: {
-        moteurs: twin?.drivers ?? {},
-        competences_gardner: twin?.competencies ?? {},
-        interets: twin?.interests ?? {},
-      },
-    };
-
-    const systemReminders = `Tu es le moteur de diagnostic de Naya, l'IA mentore de Génizio. Tu opères selon le PARADIGME D'INVESTIGATION : un écart au référentiel n'est JAMAIS un verdict, c'est un signal dont tu dois rechercher la cause profonde. Tu génères un arbre d'hypothèses causales pondérées, jamais une conclusion définitive.
-
-RÈGLE ABSOLUE : raisonne UNIQUEMENT à partir des données fournies dans le snapshot. Si un signal est absent, ne l'invente pas.
-
-LES CAUSES POSSIBLES (utilise ces libellés exacts) :
-- METHOD_MISMATCH : la méthode/le format des défis ne convient pas ; la connaissance existe mais ne s'exprime pas dans ce format. Pertinent uniquement si direction = "en retard".
-- PERFORMANCE_ANXIETY : stress/pression face aux défis. Pertinent uniquement si direction = "en retard" ET un indice contextuel existe (moteurs bas, persévérance en chute) — sinon ne pas surpondérer.
-- LACK_OF_ENGAGEMENT : désintérêt pour le domaine, déconnexion des centres d'intérêt. Pertinent dans les deux directions (un enfant "en avance" peut aussi s'ennuyer par manque d'intérêt réel pour le sujet, pas seulement par facilité).
-- CONCEPTUAL_GAP : lacune conceptuelle réelle sur des prérequis. Pertinent UNIQUEMENT si direction = "en retard". ATTENTION : c'est l'hypothèse la plus proche d'un verdict — ne l'attribue une probabilité élevée QUE si aucun signal de compétence liée forte n'existe.
-- READY_FOR_MORE : l'enfant a réellement les moyens d'aller plus loin dans ce domaine. Pertinent UNIQUEMENT si direction = "en avance" — dans ce cas, c'est presque toujours l'hypothèse dominante, sauf indice contraire clair.
-- OTHER : uniquement si aucune des causes ci-dessus ne colle ; explique alors précisément.
-
-DIRECTIVES DE SPÉCIALISTE DOCTORAL (PRÉVENTION DES ÉTIQUETTES LÉGÈRES) :
-- Ne nomme JAMAIS un trouble d'apprentissage ou neuro-développemental (TDAH, Dyslexie, Dyscalculie) à la légère. Naya privilégie la description comportementale factuelle et les leviers d'action.
-- Seul un indice de certitude bayésienne supérieur ou égal à 85% basé sur un faisceau d'au moins 6 observations convergentes peut motiver une suggestion d'orientation clinique, formulée avec réserve et bienveillance (ex: "Certitude bayésienne 87% — Un bilan d'évaluations complémentaires auprès d'un professionnel spécialisé pourrait offrir un accompagnement sur-mesure").
-
-DIRECTIVES DE SORTIE STRICTES :
-- Génère 1 à 3 hypothèses cohérentes avec la direction indiquée (n'invente pas de cause "en retard" pour un écart "en avance", et inversement), classées de la plus probable à la moins probable.
-- La somme des "prior_probability" DOIT valoir 1.0.
-- Chaque hypothèse cite dans "evidence_log" les nœuds réels du snapshot qui la justifient.
-- "rationale" : explique en français clair le mécanisme psychopédagogique suspecté, en 1-2 phrases.
-- Réponds EXCLUSIVEMENT en JSON brut valide selon ce schéma, sans texte autour, sans bloc Markdown :
-{"hypotheses":[{"cause":"READY_FOR_MORE","prior_probability":0.7,"rationale":"...","evidence_log":[{"source_node":"...","fact":"...","weight_impact":"POSITIVE_HIGH"}]}]}
-"weight_impact" ∈ {"POSITIVE_HIGH","POSITIVE_LOW","NEGATIVE"}.`;
-
-    const userContent = `Voici le cas à diagnostiquer :\n${JSON.stringify(snapshot, null, 2)}`;
+    // Snapshot du Jumeau Pédagogique pour le débruitage (même logique qu'avant le retrait
+    // des notes : une compétence Gardner déjà forte dans le domaine change la lecture).
+    // Assemblage du prompt délégué au builder pur buildHypothesisPrompt (chantier 1
+    // « Naya 3.0 ») : rappels du rôle system + snapshot, testé unitairement.
 
     // DeepSeek Reasoner (R1) remplace Claude Sonnet 5 pour ce rôle de raisonnement
     // depuis le passage à DeepSeek (2026-07-21) — Sonnet est désormais réservé à
     // la vision uniquement (cf. callClaude dans challenges.functions.ts).
     const NAYA_REASONING_MODEL = "deepseek-reasoner";
     const raw = await callClaude(
-      `${systemReminders}\n\n${userContent}`,
+      buildHypothesisPrompt({
+        enfant: { prenom: child.name, age: child.age },
+        ecartReferentiel: {
+          domaine: domainLabel,
+          direction: direction === "BEHIND" ? "en retard sur le référentiel" : "en avance sur le référentiel",
+          niveaux_recents_observes: byDomain.get(triggerDomain),
+        },
+        jumeauPedagogique: {
+          moteurs: twin?.drivers ?? {},
+          competences_gardner: twin?.competencies ?? {},
+          interets: twin?.interests ?? {},
+        },
+      }),
       true,
       undefined,
       4000,
