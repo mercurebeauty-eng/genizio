@@ -4,7 +4,11 @@ import { generateDiscriminantChallenge, generateSupportRetestChallenge } from "@
 import { getChildAccessStatus } from "@/lib/child-access";
 import { getInterestHypothesesSnapshot } from "@/lib/interest-confidence";
 import { callClaude, finalizeChallenge, PROOF_MODE_INSTRUCTION, ACADEMIC_REFERENTIAL_INSTRUCTION, ACADEMIC_SECRET_INSTRUCTION, ACADEMIC_DOMAIN_LABELS, STEPS_INSTRUCTION, INTELLIGENCES_FIELD_INSTRUCTION, TRAIT_SUBFORM_INSTRUCTION, formatChildInterestsPayload, extractJsonFromLLMResponse, getLeastExploredTalentLabels } from "@/lib/challenges.functions";
+import { buildRecommendationPrompt } from "@/lib/naya-prompts";
 import { z } from "zod";
+// « Le Loup de Naya » (chantier 2, Naya 3.0) : audit shadow non-bloquant des
+// recommandations (stabilisation, essaimage, exploration).
+import { verifyAndLog } from "@/lib/naya-verifier.functions";
 
 const RecommendInput = z.object({
   childId: z.string().uuid(),
@@ -135,50 +139,27 @@ export const recommendChallengesForChild = createServerFn({ method: "POST" })
       } else {
         const subject = ACADEMIC_DOMAIN_LABELS[supportCycle.trigger_domain] ?? supportCycle.trigger_domain;
         const formattedInterests = formatChildInterestsPayload(child.interests, interestHypotheses);
-        const prompt = `Tu es Naya, mentore IA. Conçois un micro-défi de STABILISATION pour ${child.name}, ${child.age} ans, spécifiquement en ${subject} — un défi "doudou" au succès quasi garanti.
+        const prompt = buildRecommendationPrompt({
+        mode: "stabilisation_cycle",
+        childName: child.name,
+        childAge: child.age,
+        interestsPayload: formattedInterests,
+        subject,
+      });
 
-Principe : ${child.name} bénéficie actuellement d'un accompagnement renforcé en ${subject} suite à une observation récente de Naya. Ce défi doit RASSURER, pas challenger : structure très détaillée, étapes ultra-simples et peu nombreuses, aucune surprise, dans ce domaine précis. La réussite doit être quasi certaine.
+      try {
+        const rawJson = await callClaude(prompt, true, undefined, 1000, 2);
+        const parsed = JSON.parse(extractJsonFromLLMResponse(rawJson));
 
-Modes d'engagement et leviers comportementaux observés par le parent :
-${formattedInterests}
-
-${STEPS_INSTRUCTION}
-
-${INTELLIGENCES_FIELD_INSTRUCTION}
-
-${TRAIT_SUBFORM_INSTRUCTION}
-
-${PROOF_MODE_INSTRUCTION}
-Pour ce défi de stabilisation en particulier, une cible "declarative" doit rester trivialement atteignable (ex: 5 répétitions, pas 20) — le but est une réussite garantie, pas un défi physique.
-
-${ACADEMIC_REFERENTIAL_INSTRUCTION}
-
-${ACADEMIC_SECRET_INSTRUCTION}
-
-Format JSON strict :
-{
-  "title": "Titre chaleureux et rassurant",
-  "domain": "${subject}",
-  "description": "Consigne très simple et encourageante",
-  "duration": "10 min",
-  "steps": ["Étape 1 très simple", "Étape 2 très simple"],
-  "materials": ["Matériel 1"],
-  "material_tags": ["tag1"],
-  "intelligences": ["creative"],
-  "trait_subform": "..." (voir liste par intelligence ci-dessus) ou null,
-  "difficulty": "facile",
-  "proof_mode": "photo" ou "declarative",
-  "proof_target": {"metric": "...", "value": 5} (uniquement si declarative),
-  "declarative_award": {"corporelle": 2} (uniquement si declarative),
-  "academic_domain": "mathematiques" | "langage" | "sciences" | "corporelle" | "sociale" | "emotionnelle" | "entrepreneuriale" | "artisanale" | "spatiale" | null,
-  "academic_level_age": 14 (uniquement si academic_domain non null),
-  "academic_reference_note": "..." (uniquement si academic_domain non null),
-  "academic_secret": "Explication stimulante du secret scientifique/académique avec niveau d'avance..."
-}`;
-
-        try {
-          const rawJson = await callClaude(prompt, true, undefined, 1000, 2);
-          const parsed = JSON.parse(extractJsonFromLLMResponse(rawJson));
+        // Le Loup (chantier 2, Naya 3.0) : audit shadow non-bloquant de la sortie brute.
+        void verifyAndLog({
+          kind: "recommendation",
+          output: parsed,
+          context: { childAge: child.age, childName: child.name, requiresStabilisation: true },
+          sourceFunction: "recommendChallengesForChild/stabilisation_cycle",
+          childId: data.childId,
+          model: "deepseek-v4-flash",
+        });
 
           const safeTitle = (parsed.title || "Petit défi tranquille avec Naya") as string;
           const safeDescription = (parsed.description || "") as string;
@@ -259,48 +240,28 @@ Format JSON strict :
     // 3A. Essaimage (Lever la faiblesse grâce à une force)
     if (weaknessEntry && strengthEntry) {
       const formattedInterests = formatChildInterestsPayload(child.interests, interestHypotheses);
-      const prompt = `Tu es Naya, mentore IA. Conçois un micro-défi d'ESSAIMAGE pour ${child.name}, ${child.age} ans.
-Principe : Utiliser sa FORCE (${strengthEntry[0]}) et ses leviers comportementaux / postures d'action préférentielles pour développer doucement sa compétence en progression (${weaknessEntry[0]}).
-
-Modes d'engagement et leviers comportementaux observés par le parent :
-${formattedInterests}
-
-${STEPS_INSTRUCTION}
-
-${INTELLIGENCES_FIELD_INSTRUCTION}
-
-${TRAIT_SUBFORM_INSTRUCTION}
-
-${PROOF_MODE_INSTRUCTION}
-
-${ACADEMIC_REFERENTIAL_INSTRUCTION}
-
-${ACADEMIC_SECRET_INSTRUCTION}
-
-Format JSON strict :
-{
-  "title": "Titre motivant",
-  "domain": "Domaine lié",
-  "description": "Consigne très motivante",
-  "duration": "15 min",
-  "steps": ["Étape 1", "Étape 2"],
-  "materials": ["Matériel 1"],
-  "material_tags": ["tag1"],
-  "intelligences": ["creative"],
-  "trait_subform": "..." (voir liste par intelligence ci-dessus) ou null,
-  "difficulty": "facile",
-  "proof_mode": "photo" ou "declarative",
-  "proof_target": {"metric": "...", "value": 20} (uniquement si declarative),
-  "declarative_award": {"corporelle": 2} (uniquement si declarative),
-  "academic_domain": "mathematiques" | "langage" | "sciences" | "corporelle" | "sociale" | "emotionnelle" | "entrepreneuriale" | "artisanale" | "spatiale" | null,
-  "academic_level_age": 14 (uniquement si academic_domain non null),
-  "academic_reference_note": "..." (uniquement si academic_domain non null),
-  "academic_secret": "Explication stimulante du secret scientifique/académique avec niveau d'avance..."
-}`;
+      const prompt = buildRecommendationPrompt({
+        mode: "essaimage",
+        childName: child.name,
+        childAge: child.age,
+        interestsPayload: formattedInterests,
+        strengthLabel: strengthEntry[0],
+        weaknessLabel: weaknessEntry[0],
+      });
 
       try {
         const rawJson = await callClaude(prompt, true, undefined, 1000, 2);
         const parsed = JSON.parse(extractJsonFromLLMResponse(rawJson));
+
+        // Le Loup (chantier 2, Naya 3.0) : audit shadow non-bloquant de la sortie brute.
+        void verifyAndLog({
+          kind: "recommendation",
+          output: parsed,
+          context: { childAge: child.age, childName: child.name },
+          sourceFunction: "recommendChallengesForChild/essaimage",
+          childId: data.childId,
+          model: "deepseek-v4-flash",
+        });
 
         // Correctif (2026-07-20, décision #34) : contournait finalizeChallenge — même
         // problème que generateDiscriminantChallenge, même fix.
@@ -370,50 +331,27 @@ Format JSON strict :
     if (fragilityEntry) {
       const comfortSkill = strengthEntry?.[0] ?? fragilityEntry[0];
       const formattedInterests = formatChildInterestsPayload(child.interests, interestHypotheses);
-      const prompt = `Tu es Naya, mentore IA. Conçois un micro-défi de STABILISATION pour ${child.name}, ${child.age} ans — un défi "doudou" au succès quasi garanti.
-
-Principe : ${child.name} traverse une phase instable sur une compétence (résultats en dents de scie). Ce défi doit RASSURER, pas challenger : structure très détaillée, étapes ultra-simples et peu nombreuses, aucune surprise, appuyé sur ${strengthEntry ? `sa force reconnue (${comfortSkill})` : "quelque chose de familier et confortable"} et ses leviers comportementaux d'action habituels. La réussite doit être quasi certaine.
-
-Modes d'engagement et leviers comportementaux observés par le parent :
-${formattedInterests}
-
-${STEPS_INSTRUCTION}
-
-${INTELLIGENCES_FIELD_INSTRUCTION}
-
-${TRAIT_SUBFORM_INSTRUCTION}
-
-${PROOF_MODE_INSTRUCTION}
-Pour ce défi de stabilisation en particulier, une cible "declarative" doit rester trivialement atteignable (ex: 5 répétitions, pas 20) — le but est une réussite garantie, pas un défi physique.
-
-${ACADEMIC_REFERENTIAL_INSTRUCTION}
-
-${ACADEMIC_SECRET_INSTRUCTION}
-
-Format JSON strict :
-{
-  "title": "Titre chaleureux et rassurant",
-  "domain": "Domaine lié",
-  "description": "Consigne très simple et encourageante",
-  "duration": "10 min",
-  "steps": ["Étape 1 très simple", "Étape 2 très simple"],
-  "materials": ["Matériel 1"],
-  "material_tags": ["tag1"],
-  "intelligences": ["creative"],
-  "trait_subform": "..." (voir liste par intelligence ci-dessus) ou null,
-  "difficulty": "facile",
-  "proof_mode": "photo" ou "declarative",
-  "proof_target": {"metric": "...", "value": 5} (uniquement si declarative),
-  "declarative_award": {"corporelle": 2} (uniquement si declarative),
-  "academic_domain": "mathematiques" | "langage" | "sciences" | "corporelle" | "sociale" | "emotionnelle" | "entrepreneuriale" | "artisanale" | "spatiale" | null,
-  "academic_level_age": 14 (uniquement si academic_domain non null),
-  "academic_reference_note": "..." (uniquement si academic_domain non null),
-  "academic_secret": "Explication stimulante du secret scientifique/académique avec niveau d'avance..."
-}`;
+      const prompt = buildRecommendationPrompt({
+        mode: "stabilisation_fragilite",
+        childName: child.name,
+        childAge: child.age,
+        interestsPayload: formattedInterests,
+        comfortSkillText: strengthEntry ? `sa force reconnue (${comfortSkill})` : undefined,
+      });
 
       try {
         const rawJson = await callClaude(prompt, true, undefined, 1000, 2);
         const parsed = JSON.parse(extractJsonFromLLMResponse(rawJson));
+
+        // Le Loup (chantier 2, Naya 3.0) : audit shadow non-bloquant de la sortie brute.
+        void verifyAndLog({
+          kind: "recommendation",
+          output: parsed,
+          context: { childAge: child.age, childName: child.name, requiresStabilisation: true },
+          sourceFunction: "recommendChallengesForChild/stabilisation_fragilite",
+          childId: data.childId,
+          model: "deepseek-v4-flash",
+        });
 
         const safeTitle = (parsed.title || "Petit défi tranquille avec Naya") as string;
         const safeDescription = (parsed.description || "") as string;
@@ -494,49 +432,27 @@ Format JSON strict :
     if (!pending || pending.length === 0) {
       const targetLabels = getLeastExploredTalentLabels(child.talents as Record<string, number> | null, 1);
       const formattedInterests = formatChildInterestsPayload(child.interests, interestHypotheses);
-      const prompt = `Tu es Naya, mentore IA. Conçois LE prochain défi d'EXPLORATION pour ${child.name}, ${child.age} ans — un défi terrain concret (pas un exercice abstrait), qui donne à l'enfant l'occasion de révéler un talent encore peu exploré.
-
-Cible en priorité l'intelligence "${targetLabels[0] ?? "polyvalente"}", encore peu explorée dans son profil actuel.
-
-Modes d'engagement et leviers comportementaux observés par le parent :
-${formattedInterests}
-
-${STEPS_INSTRUCTION}
-
-${INTELLIGENCES_FIELD_INSTRUCTION}
-
-${TRAIT_SUBFORM_INSTRUCTION}
-
-${PROOF_MODE_INSTRUCTION}
-
-${ACADEMIC_REFERENTIAL_INSTRUCTION}
-
-${ACADEMIC_SECRET_INSTRUCTION}
-
-Format JSON strict :
-{
-  "title": "Titre motivant",
-  "domain": "Domaine lié",
-  "description": "Consigne concrète et motivante",
-  "duration": "30 min",
-  "steps": ["Étape 1", "Étape 2"],
-  "materials": ["Matériel 1"],
-  "material_tags": ["tag1"],
-  "intelligences": ["creative"],
-  "trait_subform": "..." (voir liste par intelligence ci-dessus) ou null,
-  "difficulty": "moyen",
-  "proof_mode": "photo" ou "declarative",
-  "proof_target": {"metric": "...", "value": 20} (uniquement si declarative),
-  "declarative_award": {"corporelle": 2} (uniquement si declarative),
-  "academic_domain": "mathematiques" | "langage" | "sciences" | "corporelle" | "sociale" | "emotionnelle" | "entrepreneuriale" | "artisanale" | "spatiale" | null,
-  "academic_level_age": 14 (uniquement si academic_domain non null),
-  "academic_reference_note": "..." (uniquement si academic_domain non null),
-  "academic_secret": "Explication stimulante du secret scientifique/académique avec niveau d'avance..."
-}`;
+      const prompt = buildRecommendationPrompt({
+        mode: "exploration",
+        childName: child.name,
+        childAge: child.age,
+        interestsPayload: formattedInterests,
+        targetLabel: targetLabels[0] ?? "polyvalente",
+      });
 
       try {
         const rawJson = await callClaude(prompt, true, undefined, 1000, 2);
         const parsed = JSON.parse(extractJsonFromLLMResponse(rawJson));
+
+        // Le Loup (chantier 2, Naya 3.0) : audit shadow non-bloquant de la sortie brute.
+        void verifyAndLog({
+          kind: "recommendation",
+          output: parsed,
+          context: { childAge: child.age, childName: child.name },
+          sourceFunction: "recommendChallengesForChild/exploration",
+          childId: data.childId,
+          model: "deepseek-v4-flash",
+        });
 
         const safeTitle = (parsed.title || "Prochaine exploration Naya") as string;
         const safeDescription = (parsed.description || "") as string;

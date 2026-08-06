@@ -1,4 +1,5 @@
 import React from "react";
+import { toast } from "sonner";
 import {
   Brain,
   Cpu,
@@ -16,9 +17,21 @@ import {
   MessageSquare,
   Target,
   AlertTriangle,
+  Loader2,
+  Copy,
+  Eye,
+  X,
 } from "lucide-react";
 import type { NayaTelemetryResponse } from "@/lib/naya-telemetry";
 import type { AiProviderStatus, ProgressionHealthResponse } from "@/lib/admin-os.functions";
+import {
+  LOUP_DECISION_LABELS,
+  ruleKeyOf,
+  type ConstitutionSuggestionsResponse,
+  type LoupDecision,
+  type RecurringRule,
+  type RuleDecision,
+} from "@/lib/naya-constitution.functions";
 
 interface AdminNayaTabProps {
   telemetry: NayaTelemetryResponse;
@@ -26,6 +39,14 @@ interface AdminNayaTabProps {
   progressionHealth?: ProgressionHealthResponse | null;
   isRefreshing?: boolean;
   onRefresh?: () => void;
+  /** « Le Loup qui apprend » (Décision #56) : suggestions, journal, état. */
+  constitution?: ConstitutionSuggestionsResponse | null;
+  /** Clés `kind|domaine|règle` en cours de décision (spinner par carte). */
+  decidingRuleKeys?: string[];
+  onDecideSuggestion?: (
+    ruleKey: string,
+    decision: "valide" | "a_revoir" | "rejete"
+  ) => Promise<void>;
 }
 
 // Couleur par modèle — 3 fournisseurs depuis le passage à DeepSeek (2026-07-21) :
@@ -48,6 +69,9 @@ export function AdminNayaTab({
   progressionHealth,
   isRefreshing = false,
   onRefresh,
+  constitution,
+  decidingRuleKeys = [],
+  onDecideSuggestion,
 }: AdminNayaTabProps) {
   const {
     totalApiCalls,
@@ -333,6 +357,214 @@ export function AdminNayaTab({
         </div>
       </div>
 
+      {/* 🐺 Le Loup de Naya — vérification sémantique (chantier 2-4). Taux de
+          conformité des générations, recadrage et top violations récurrentes ;
+          ces agrégats alimentent le chantier 3 (apprentissage par règles apprises). */}
+      <div className="rounded-3xl border border-ink/10 bg-white p-6 shadow-xl space-y-5">
+        <div className="flex items-center gap-3">
+          <div className="p-2.5 rounded-2xl bg-amber-500/10 text-amber-600">
+            <AlertTriangle className="size-5" />
+          </div>
+          <div>
+            <h3 className="font-display text-lg font-extrabold text-ink">Le Loup de Naya — Vérification sémantique</h3>
+            <p className="text-xs text-ink/60 font-medium">
+              Conformité des générations IA (audits <code className="bg-surface px-1 rounded">generation_audits</code>), recadrage en mode
+              enforce, top violations récurrentes.
+            </p>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <div className="rounded-2xl border border-leaf/20 bg-leaf/5 p-4">
+            <div className="text-[10px] font-extrabold uppercase tracking-wider text-leaf">Conformes</div>
+            <div className="font-display text-2xl font-black text-leaf mt-1">
+              {telemetry.wolf.conformityRatePct}%
+            </div>
+            <div className="text-[11px] text-ink/60 font-medium">des {telemetry.wolf.totalAudits} audits</div>
+          </div>
+          <div className="rounded-2xl border border-amber-500/20 bg-amber-500/5 p-4">
+            <div className="text-[10px] font-extrabold uppercase tracking-wider text-amber-600">Mineures</div>
+            <div className="font-display text-2xl font-black text-amber-600 mt-1">{telemetry.wolf.minorRatePct}%</div>
+            <div className="text-[11px] text-ink/60 font-medium">écarts mineurs détectés</div>
+          </div>
+          <div className="rounded-2xl border border-red-500/20 bg-red-500/5 p-4">
+            <div className="text-[10px] font-extrabold uppercase tracking-wider text-red-600">Majeures</div>
+            <div className="font-display text-2xl font-black text-red-600 mt-1">{telemetry.wolf.majorRatePct}%</div>
+            <div className="text-[11px] text-ink/60 font-medium">manquements majeurs</div>
+          </div>
+          <div className="rounded-2xl border border-sky/20 bg-sky/5 p-4">
+            <div className="text-[10px] font-extrabold uppercase tracking-wider text-sky-600">Coût du Loup</div>
+            <div className="font-display text-2xl font-black text-sky-600 mt-1">${telemetry.wolf.loupCostUsd.toFixed(4)}</div>
+            <div className="text-[11px] text-ink/60 font-medium">{telemetry.wolf.loupCostXof.toLocaleString("fr-FR")} FCFA (sémantique)</div>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <div className="rounded-2xl border border-ink/10 bg-surface/30 p-4 space-y-3">
+            <div className="text-[11px] font-extrabold uppercase tracking-wider text-ink/60">
+              Surveillance & Recadrage
+            </div>
+            <div className="grid grid-cols-3 gap-2 text-center text-xs">
+              <div className="bg-white p-3 rounded-xl border border-ink/5">
+                <div className="text-[10px] text-ink/50 font-bold uppercase">Vérif. sémantique</div>
+                <div className="font-extrabold text-ink">
+                  {telemetry.wolf.semanticChecked} <span className="font-medium text-ink/50">({telemetry.wolf.semanticCheckedRatePct}%)</span>
+                </div>
+              </div>
+              <div className="bg-white p-3 rounded-xl border border-ink/5">
+                <div className="text-[10px] text-ink/50 font-bold uppercase">Recadrages (enforce)</div>
+                <div className="font-extrabold text-ink">
+                  {telemetry.wolf.regenerated} <span className="font-medium text-ink/50">({telemetry.wolf.recadrageRatePct}%)</span>
+                </div>
+              </div>
+              <div className="bg-white p-3 rounded-xl border border-ink/5">
+                <div className="text-[10px] text-ink/50 font-bold uppercase">Violations / audit</div>
+                <div className="font-extrabold text-ink">{telemetry.wolf.avgViolationsPerAudit}</div>
+              </div>
+            </div>
+          </div>
+
+          <div className="rounded-2xl border border-ink/10 bg-surface/30 p-4 space-y-2">
+            <div className="text-[11px] font-extrabold uppercase tracking-wider text-ink/60">
+              Top violations récurrentes (apprentissage, chantier 3)
+            </div>
+            {telemetry.wolf.topViolations.length === 0 ? (
+              <p className="text-xs text-ink/50 italic">Aucune violation enregistrée pour l'instant.</p>
+            ) : (
+              <ul className="space-y-1.5">
+                {telemetry.wolf.topViolations.slice(0, 5).map((v) => (
+                  <li key={v.rule} className="flex items-center justify-between text-xs gap-3">
+                    <code className="bg-white px-1.5 py-0.5 rounded border border-ink/5 text-ink font-mono truncate">
+                      {v.rule}
+                    </code>
+                    <span className="font-black text-ink whitespace-nowrap">×{v.count}</span>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* 🐺 Le Loup qui apprend — validation hybride (Décision #56). Suggestions
+          de règles apprises (auto-acquittées par seuil de confiance) + décisions
+          humaines (Intégrer / À revoir / Rejeter) + journal des décisions. Tout
+          se tranche ici, dans l'admin — aucun doc externe à lire. */}
+      <div className="rounded-3xl border border-ink/10 bg-white p-6 shadow-xl space-y-5">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
+          <div className="flex items-center gap-3">
+            <div className="p-2.5 rounded-2xl bg-leaf/10 text-leaf">
+              <Brain className="size-5" />
+            </div>
+            <div>
+              <h3 className="font-display text-lg font-extrabold text-ink">
+                Le Loup qui apprend — Validation des règles apprises
+              </h3>
+              <p className="text-xs text-ink/60 font-medium">
+                Règles récurrentes (audits <code className="bg-surface px-1 rounded">generation_audits</code>) auto-acquittées par
+                seuil, puis décisions humaines — la promotion dans la constitution reste volontaire.
+              </p>
+            </div>
+          </div>
+          {constitution?.learnedRulesBlock ? (
+            <button
+              type="button"
+              onClick={() => {
+                navigator.clipboard
+                  .writeText(constitution.learnedRulesBlock)
+                  .then(
+                    () => toast.success("Bloc LEARNED_RULES copié — à coller dans la constitution (promotion finale volontaire)."),
+                    () => toast.error("Impossible de copier le bloc LEARNED_RULES.")
+                  );
+              }}
+              className="press-sky rounded-2xl border border-ink/10 bg-sky/10 px-4 py-2 text-xs font-extrabold text-ink flex items-center gap-2"
+            >
+              <Copy className="size-3.5" />
+              <span>Copier le bloc LEARNED_RULES</span>
+            </button>
+          ) : null}
+        </div>
+
+        {/* État du Loup — mode, échantillonnage, seuils (lus en live côté serveur) */}
+        {constitution ? (
+          <div className="grid grid-cols-2 md:grid-cols-5 gap-2 text-center text-xs">
+            <div className="bg-surface/30 p-3 rounded-xl border border-ink/5">
+              <div className="text-[10px] text-ink/50 font-bold uppercase">Mode</div>
+              <div className={`font-extrabold ${constitution.wolfState.enforce ? "text-red-600" : "text-sky-600"}`}>
+                {constitution.wolfState.enforce ? "ENFORCE (recadre)" : "OBSERVATION (shadow)"}
+              </div>
+            </div>
+            <div className="bg-surface/30 p-3 rounded-xl border border-ink/5">
+              <div className="text-[10px] text-ink/50 font-bold uppercase">Échantillonnage sémantique</div>
+              <div className="font-extrabold text-ink">{constitution.wolfState.semanticRatePct}%</div>
+            </div>
+            <div className="bg-surface/30 p-3 rounded-xl border border-ink/5">
+              <div className="text-[10px] text-ink/50 font-bold uppercase">Vérif. activée</div>
+              <div className={`font-extrabold ${constitution.wolfState.enabled ? "text-leaf" : "text-red-600"}`}>
+                {constitution.wolfState.enabled ? "Oui" : "NON (kill-switch)"}
+              </div>
+            </div>
+            <div className="bg-surface/30 p-3 rounded-xl border border-ink/5">
+              <div className="text-[10px] text-ink/50 font-bold uppercase">Seuils suggestions</div>
+              <div className="font-extrabold text-ink">
+                ≥{constitution.wolfState.suggestThresholds.minCount} occ. · ≥{constitution.wolfState.suggestThresholds.minChildren} enf.
+              </div>
+            </div>
+            <div className="bg-surface/30 p-3 rounded-xl border border-ink/5">
+              <div className="text-[10px] text-ink/50 font-bold uppercase">Seuils auto-acquittement</div>
+              <div className="font-extrabold text-ink">
+                ≥{constitution.wolfState.autoAckThresholds.minCount} occ. · ≥{constitution.wolfState.autoAckThresholds.minChildren} enf.
+              </div>
+            </div>
+          </div>
+        ) : null}
+
+        {/* Suggestions en attente */}
+        <div className="rounded-2xl border border-ink/10 bg-surface/30 p-4 space-y-3">
+          <div className="text-[11px] font-extrabold uppercase tracking-wider text-ink/60">
+            En attente — {constitution ? `${constitution.suggestions.length} règle(s) proposée(s)` : "…"}
+          </div>
+          {!constitution ? (
+            <p className="text-xs text-ink/50 italic">Chargement des suggestions…</p>
+          ) : constitution.suggestions.length === 0 ? (
+            <p className="text-xs text-ink/50 italic">
+              Aucune règle en attente — le Loup observe et n'a rien à soumettre pour l'instant.
+            </p>
+          ) : (
+            <ul className="space-y-3">
+              {constitution.suggestions.map((s) => (
+                <SuggestionRow
+                  key={ruleKeyOf(s.kind, s.domain, s.rule)}
+                  suggestion={s}
+                  busy={decidingRuleKeys.includes(ruleKeyOf(s.kind, s.domain, s.rule))}
+                  onDecide={onDecideSuggestion}
+                />
+              ))}
+            </ul>
+          )}
+        </div>
+
+        {/* Journal des décisions (auto + humaines) */}
+        <div className="rounded-2xl border border-ink/10 bg-surface/30 p-4 space-y-3">
+          <div className="text-[11px] font-extrabold uppercase tracking-wider text-ink/60">
+            Journal des décisions — {constitution ? `${constitution.journal.length} règle(s) décidée(s)` : "…"}
+          </div>
+          {!constitution ? (
+            <p className="text-xs text-ink/50 italic">Chargement du journal…</p>
+          ) : constitution.journal.length === 0 ? (
+            <p className="text-xs text-ink/50 italic">
+              Aucune décision enregistrée — le Loup n'a encore rien auto-acquitté ni validé.
+            </p>
+          ) : (
+            <ul className="space-y-2">
+              {constitution.journal.slice(0, 12).map((j) => (
+                <JournalRow key={j.ruleKey} decision={j} />
+              ))}
+            </ul>
+          )}
+        </div>
+      </div>
+
       {/* 🧩 Breakdown Grid: Features & Models */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
         {/* Feature Breakdown Panel */}
@@ -567,5 +799,123 @@ export function AdminNayaTab({
         </div>
       </div>
     </div>
+  );
+}
+
+// ── « Le Loup qui apprend » (Décision #56) — sous-composants du panneau ──────
+
+function decisionBadgeClass(decision: LoupDecision): string {
+  switch (decision) {
+    case "valide":
+      return "bg-leaf/10 text-leaf";
+    case "a_revoir":
+      return "bg-amber-500/10 text-amber-600";
+    case "rejete":
+      return "bg-red-500/10 text-red-600";
+    case "auto":
+      return "bg-sky/10 text-sky-600";
+  }
+}
+
+function formatDecisionDate(iso: string | null): string {
+  if (!iso) return "—";
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return "—";
+  return (
+    d.toLocaleDateString("fr-FR", { day: "2-digit", month: "short", year: "numeric" }) +
+    " " +
+    d.toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" })
+  );
+}
+
+/** Une règle apprise proposée, avec les 3 décisions humaines possibles. */
+function SuggestionRow({
+  suggestion,
+  busy,
+  onDecide,
+}: {
+  suggestion: RecurringRule;
+  busy: boolean;
+  onDecide?: AdminNayaTabProps["onDecideSuggestion"];
+}) {
+  const constat = suggestion.sampleDetails[0];
+  const correctif = suggestion.sampleSuggestions[0];
+  return (
+    <li className="bg-white rounded-xl border border-ink/5 p-3 space-y-2">
+      <div className="flex items-start justify-between gap-3">
+        <div className="min-w-0">
+          <code className="bg-surface px-1.5 py-0.5 rounded border border-ink/5 text-ink font-mono text-[11px] block truncate">
+            {suggestion.rule}
+          </code>
+          <div className="text-[10px] text-ink/50 font-semibold mt-1">
+            {suggestion.kind}
+            {suggestion.domain !== "general" ? ` · ${suggestion.domain}` : ""} — ×{suggestion.count} occ. ·{" "}
+            {suggestion.childCount} enfant(s)
+          </div>
+        </div>
+        {suggestion.severity === "majeur" ? (
+          <span className="shrink-0 text-[10px] font-extrabold uppercase text-red-600 bg-red-500/10 px-2 py-0.5 rounded-full">
+            majeur
+          </span>
+        ) : null}
+      </div>
+      {constat ? <p className="text-[11px] text-ink/70 font-medium">Constat : {constat}</p> : null}
+      {correctif ? <p className="text-[11px] text-ink/60">Correctif proposé : {correctif}</p> : null}
+      <div className="flex items-center gap-2 pt-1">
+        <button
+          type="button"
+          disabled={busy}
+          onClick={() => void onDecide?.(ruleKeyOf(suggestion.kind, suggestion.domain, suggestion.rule), "valide")}
+          className="press-leaf rounded-lg bg-leaf px-3 py-1.5 text-[11px] font-extrabold text-white flex items-center gap-1.5 disabled:opacity-50"
+        >
+          {busy ? <Loader2 className="size-3 animate-spin" /> : <CheckCircle2 className="size-3" />}
+          Intégrer
+        </button>
+        <button
+          type="button"
+          disabled={busy}
+          onClick={() => void onDecide?.(ruleKeyOf(suggestion.kind, suggestion.domain, suggestion.rule), "a_revoir")}
+          className="press-white rounded-lg border border-amber-500/30 bg-amber-500/5 px-3 py-1.5 text-[11px] font-extrabold text-amber-600 flex items-center gap-1.5 disabled:opacity-50"
+        >
+          {busy ? <Loader2 className="size-3 animate-spin" /> : <Eye className="size-3" />}
+          À revoir
+        </button>
+        <button
+          type="button"
+          disabled={busy}
+          onClick={() => void onDecide?.(ruleKeyOf(suggestion.kind, suggestion.domain, suggestion.rule), "rejete")}
+          className="press-white rounded-lg border border-red-500/30 bg-red-500/5 px-3 py-1.5 text-[11px] font-extrabold text-red-600 flex items-center gap-1.5 disabled:opacity-50"
+        >
+          {busy ? <Loader2 className="size-3 animate-spin" /> : <X className="size-3" />}
+          Rejeter
+        </button>
+      </div>
+    </li>
+  );
+}
+
+/** Une ligne du journal des décisions (auto-acquittées + décisions humaines). */
+function JournalRow({ decision }: { decision: RuleDecision }) {
+  return (
+    <li className="flex items-center justify-between gap-3 bg-white rounded-lg border border-ink/5 px-3 py-2">
+      <div className="min-w-0 flex items-center gap-2">
+        <span className={`shrink-0 text-[10px] font-extrabold uppercase px-2 py-0.5 rounded-full ${decisionBadgeClass(decision.decision)}`}>
+          {LOUP_DECISION_LABELS[decision.decision]}
+        </span>
+        <div className="min-w-0">
+          <code className="text-ink font-mono text-[11px] block truncate">{decision.rule}</code>
+          <div className="text-[10px] text-ink/50 font-medium">
+            {decision.kind}
+            {decision.domain !== "general" ? ` · ${decision.domain}` : ""} — ×{decision.count} occ. ·{" "}
+            {decision.childCount} enfant(s)
+            {decision.note ? ` — « ${decision.note} »` : ""}
+          </div>
+        </div>
+      </div>
+      <div className="shrink-0 text-right text-[10px] text-ink/50 font-medium">
+        <div>{formatDecisionDate(decision.decidedAt)}</div>
+        <div className="truncate max-w-[140px]">{decision.decidedBy}</div>
+      </div>
+    </li>
   );
 }

@@ -19,6 +19,13 @@ export const NAYA_PRICING = {
   SONNET_INPUT_PER_M: 3.00,
   SONNET_OUTPUT_PER_M: 15.00,
   USD_TO_XOF_RATE: 600,
+  // « Le Loup » (chantiers 2-4, Naya 3.0) : la vérification sémantique tourne sur
+  // le modèle économique par défaut (deepseek-v4-flash, via callClaude) et son
+  // coût est borné par NAYA_VERIFY_MAX_TOKENS (garde-fou ~800, cf. naya-verifier).
+  // Volume estimé par appel : prompt + sortie à vérifier (tronquée) ≈ 2 500 tokens
+  // d'entrée, 800 de sortie — chiffres d'ordre de grandeur, pas de la facturation.
+  LOUP_SEMANTIC_INPUT_PER_CALL: 2500,
+  LOUP_SEMANTIC_OUTPUT_PER_CALL: 800,
 } as const;
 
 export interface NayaTokenUsage {
@@ -86,6 +93,109 @@ export interface NayaTelemetryResponse {
   modelBreakdown: ModelUsageBreakdown[];
   funnel: ConversionFunnel;
   projection: MonthlyProjection;
+  /** Télémétrie du Loup (chantiers 2-4) — conformité, recadrage, coût propre. */
+  wolf: WolfTelemetry;
+}
+
+// ── Télémétrie « Le Loup » (chantier 4, C4.1) ───────────────────────────────
+
+/** Une ligne d'audit telle que produite par verifyAndLog (generation_audits). */
+export interface WolfAuditSample {
+  kind: string;
+  verdict: string | null;
+  violations: Array<{ rule?: string; severity?: string }> | null;
+  semantic_checked: boolean | null;
+  regenerated: boolean | null;
+}
+
+export interface WolfTelemetry {
+  totalAudits: number;
+  byVerdict: Record<string, number>;
+  conformityRatePct: number;
+  minorRatePct: number;
+  majorRatePct: number;
+  semanticChecked: number;
+  semanticCheckedRatePct: number;
+  regenerated: number;
+  /** Taux de recadrage : audits régénérés / audits totaux (enforce actif). */
+  recadrageRatePct: number;
+  totalViolations: number;
+  avgViolationsPerAudit: number;
+  topViolations: Array<{ rule: string; count: number }>;
+  byKind: Record<string, { total: number; majeur: number }>;
+  /** Coût propre du Loup (couche sémantique échantillonnée uniquement). */
+  loupCostUsd: number;
+  loupCostXof: number;
+}
+
+const LOUP_SEMANTIC_COST_PER_CALL = calculateDeepSeekChatCost(
+  NAYA_PRICING.LOUP_SEMANTIC_INPUT_PER_CALL,
+  NAYA_PRICING.LOUP_SEMANTIC_OUTPUT_PER_CALL
+);
+
+/**
+ * Télémétrie du Loup : conformité globale des générations, taux de recadrage,
+ * top violations récurrentes (alimente le chantier 3) et coût propre de la
+ * vérification sémantique. Fonction pure — les appels la nourrissent depuis
+ * `getNayaTelemetryAdmin` avec les lignes non traitées de generation_audits.
+ */
+export function calculateNayaWolfTelemetry(audits: WolfAuditSample[]): WolfTelemetry {
+  const totalAudits = audits.length;
+  const byVerdict: Record<string, number> = {};
+  const byKind: Record<string, { total: number; majeur: number }> = {};
+  const violationCounts = new Map<string, number>();
+  let totalViolations = 0;
+  let semanticChecked = 0;
+  let regenerated = 0;
+
+  for (const audit of audits) {
+    const verdict = audit.verdict ?? "inconnu";
+    byVerdict[verdict] = (byVerdict[verdict] ?? 0) + 1;
+
+    const kindStats = byKind[audit.kind] ?? { total: 0, majeur: 0 };
+    kindStats.total += 1;
+    if (verdict === "majeur") kindStats.majeur += 1;
+    byKind[audit.kind] = kindStats;
+
+    if (audit.semantic_checked) semanticChecked += 1;
+    if (audit.regenerated) regenerated += 1;
+
+    if (Array.isArray(audit.violations)) {
+      for (const v of audit.violations) {
+        if (!v || typeof v.rule !== "string") continue;
+        totalViolations += 1;
+        violationCounts.set(v.rule, (violationCounts.get(v.rule) ?? 0) + 1);
+      }
+    }
+  }
+
+  const pct = (n: number): number => (totalAudits > 0 ? Math.round((n / totalAudits) * 1000) / 10 : 0);
+
+  const topViolations = [...violationCounts.entries()]
+    .map(([rule, count]) => ({ rule, count }))
+    .sort((a, b) => b.count - a.count)
+    .slice(0, 10);
+
+  const loupCostUsd = round4(LOUP_SEMANTIC_COST_PER_CALL.costUsd * semanticChecked);
+  const loupCostXof = Math.round(LOUP_SEMANTIC_COST_PER_CALL.costXof * semanticChecked);
+
+  return {
+    totalAudits,
+    byVerdict,
+    conformityRatePct: pct(byVerdict["conforme"] ?? 0),
+    minorRatePct: pct(byVerdict["mineur"] ?? 0),
+    majorRatePct: pct(byVerdict["majeur"] ?? 0),
+    semanticChecked,
+    semanticCheckedRatePct: pct(semanticChecked),
+    regenerated,
+    recadrageRatePct: pct(regenerated),
+    totalViolations,
+    avgViolationsPerAudit: totalAudits > 0 ? Math.round((totalViolations / totalAudits) * 100) / 100 : 0,
+    topViolations,
+    byKind,
+    loupCostUsd,
+    loupCostXof,
+  };
 }
 
 function round4(n: number): number {
@@ -305,5 +415,8 @@ export function calculateNayaTelemetry(raw: {
       projectedCostUsdMonthly,
       projectedCostXofMonthly,
     },
+    // Remplacé par getNayaTelemetryAdmin avec les audits réels (C4.1) — ici
+    // l'état vide garantit que le type reste satisfait hors endpoint admin.
+    wolf: calculateNayaWolfTelemetry([]),
   };
 }

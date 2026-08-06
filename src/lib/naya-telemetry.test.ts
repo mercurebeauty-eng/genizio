@@ -5,6 +5,7 @@ import {
   calculateVisionSonnetCost,
   calculateNayaConversionRate,
   calculateNayaTelemetry,
+  calculateNayaWolfTelemetry,
   NAYA_PRICING,
 } from "./naya-telemetry";
 
@@ -150,5 +151,72 @@ describe("Naya Telemetry & Pricing Functions", () => {
       );
       expect(telemetry.projection.projectedCallsMonthly).toBe(telemetry.totalApiCalls * 4);
     });
+  });
+});
+
+// ============================================================================
+// « Le Loup » — télémétrie du Loup (chantier 4, C4.1) : conformité, recadrage,
+// coût propre de la vérification sémantique. Fonction pure.
+// ============================================================================
+
+describe("calculateNayaWolfTelemetry", () => {
+  it("calcule les taux de conformité et le recadrage sur un échantillon d'audits", () => {
+    const audits = [
+      { kind: "challenge_single", verdict: "conforme", violations: null, semantic_checked: false, regenerated: false },
+      { kind: "challenge_single", verdict: "mineur", violations: [{ rule: "challenge.no_markdown", severity: "mineur" }], semantic_checked: true, regenerated: false },
+      { kind: "challenge_bulk", verdict: "majeur", violations: [{ rule: "challenge.intelligences_valid", severity: "majeur" }], semantic_checked: true, regenerated: true },
+      { kind: "challenge_bulk", verdict: "majeur", violations: [{ rule: "challenge.intelligences_valid", severity: "majeur" }], semantic_checked: true, regenerated: false },
+    ];
+    const wolf = calculateNayaWolfTelemetry(audits as any);
+    expect(wolf.totalAudits).toBe(4);
+    expect(wolf.conformityRatePct).toBe(25); // 1/4
+    expect(wolf.minorRatePct).toBe(25);
+    expect(wolf.majorRatePct).toBe(50);
+    expect(wolf.semanticChecked).toBe(3);
+    expect(wolf.semanticCheckedRatePct).toBe(75);
+    expect(wolf.regenerated).toBe(1);
+    expect(wolf.recadrageRatePct).toBe(25);
+    expect(wolf.totalViolations).toBe(3);
+  });
+
+  it("classe les top violations par fréquence décroissante", () => {
+    const audits = [
+      { kind: "k", verdict: "majeur", violations: [{ rule: "a" }, { rule: "b" }, { rule: "b" }, { rule: "b" }], semantic_checked: null, regenerated: null },
+      { kind: "k", verdict: "mineur", violations: [{ rule: "a" }], semantic_checked: null, regenerated: null },
+    ];
+    const wolf = calculateNayaWolfTelemetry(audits as any);
+    expect(wolf.topViolations[0]).toEqual({ rule: "b", count: 3 });
+    expect(wolf.topViolations[1]).toEqual({ rule: "a", count: 2 });
+  });
+
+  it("ventile par type de génération avec les compteurs majeurs", () => {
+    const audits = [
+      { kind: "homework", verdict: "majeur", violations: [{ rule: "r" }], semantic_checked: null, regenerated: null },
+      { kind: "homework", verdict: "conforme", violations: null, semantic_checked: null, regenerated: null },
+      { kind: "narrative", verdict: "majeur", violations: [{ rule: "r" }], semantic_checked: null, regenerated: null },
+    ];
+    const wolf = calculateNayaWolfTelemetry(audits as any);
+    expect(wolf.byKind["homework"]).toEqual({ total: 2, majeur: 1 });
+    expect(wolf.byKind["narrative"]).toEqual({ total: 1, majeur: 1 });
+  });
+
+  it("estime le coût propre du Loup à partir des seules vérifications sémantiques", () => {
+    const audits = [
+      { kind: "k", verdict: "conforme", violations: null, semantic_checked: true, regenerated: false },
+      { kind: "k", verdict: "conforme", violations: null, semantic_checked: true, regenerated: false },
+      { kind: "k", verdict: "conforme", violations: null, semantic_checked: false, regenerated: false },
+    ];
+    const wolf = calculateNayaWolfTelemetry(audits as any);
+    // 2 vérifications sémantiques × (2500 tokens entrée @0.14/M + 800 sortie @0.28/M)
+    const perCall = calculateDeepSeekChatCost(2500, 800).costUsd;
+    expect(wolf.loupCostUsd).toBeCloseTo(perCall * 2, 6);
+  });
+
+  it("retourne un état vide sûr sans audit", () => {
+    const wolf = calculateNayaWolfTelemetry([]);
+    expect(wolf.totalAudits).toBe(0);
+    expect(wolf.conformityRatePct).toBe(0);
+    expect(wolf.topViolations).toEqual([]);
+    expect(wolf.loupCostUsd).toBe(0);
   });
 });
