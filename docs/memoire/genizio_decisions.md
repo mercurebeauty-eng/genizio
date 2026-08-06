@@ -1542,10 +1542,12 @@ px tsc --noEmit.
 **Ce qui a été fait** : remplacement de **toutes** les occurrences (liens `mailto:` **et** texte affiché, `className="text-brand underline"`) dans les deux pages concernées :
 - `src/routes/mentions-legales.tsx` — 4 occurrences (section « Éditeur du site » + section « Contact ») ;
 - `src/routes/privacy.tsx` — 4 occurrences (section « 1. Qui sommes-nous ? » + section DPO/contact).
-Soit 8 occurrences au total. Un balayage exhaustif de `src/routes/` a confirmé qu'aucun autre email n'est mis en évidence côté pages (les seuls autres emails du dépôt sont des placeholders de formulaires ou des emails back-end, hors périmètre).
+Soit 8 occurrences au total. Un balayage exhaustif de `src/routes/` a confirmé qu'aucun autre email n'est mis en évidence côté pages (les seuls autres emails du dépôt sont des placeholders de formulaires ou des emails back-end).
+
+À la revue, l'utilisateur a étendu le périmètre aux **emails sponsor back-end** (les adresses enregistrées dans `season_enrollments`/`sponsorship_tokens` quand un enfant est inscrit par parrainage B2B ou par attribution admin) : `b2b@genizio.com` (`campaigns.functions.ts`, 2 occurrences) et `admin@genizio.com` (`seasons.functions.ts`, 1 occurrence) passent eux aussi à `serviceclient@genizio.com`. L'email de décision `admin@genizio.com` présent comme fixture dans `naya-constitution.test.ts` est conservé (donnée de test du journal, sans lien avec les sponsors).
 
 **Pourquoi cette forme** : une adresse de service plutôt que personnelle pour tout contact visible du public — c'est l'adresse que les parents verront sur les pages légales et qu'ils contacteront ; l'email personnel reste tracé dans l'historique des décisions (D-01) sans être édité (un journal de décisions ne se réécrit pas).
 
-**Hors périmètre (à trancher séparément si besoin)** : les emails back-end non affichés dans les pages — expéditeur des emails de bienvenue `hello@genizio.com` (`welcome-email.functions.ts`), emails sponsor par défaut `b2b@genizio.com` (`campaigns.functions.ts`) et `admin@genizio.com` (`seasons.functions.ts`), liste admin `ADMIN_EMAILS` (env). Aucun n'est « mis en évidence dans les pages ».
+**Hors périmètre (à trancher séparément si besoin)** : expéditeur des emails de bienvenue `hello@genizio.com` (`welcome-email.functions.ts`) et liste admin `ADMIN_EMAILS` (env).
 
-**Vérifié** : `tsc --noEmit` propre, plus aucune occurrence de `traorecheikkh@gmail.com` dans `src/`, 8 occurrences de `serviceclient@genizio.com` en place. Travaillé sur `feat/contact-email-serviceclient` (créée depuis `origin/main`).
+**Vérifié** : `tsc --noEmit` propre, plus aucune occurrence de `traorecheikkh@gmail.com`/`b2b@genizio.com`/`admin@genizio.com` (hors fixture de test Naya) dans `src/`, 11 occurrences de `serviceclient@genizio.com` en place (8 pages légales + 3 sponsors). Travaillé sur `feat/contact-email-serviceclient` (créée depuis `origin/main`).
