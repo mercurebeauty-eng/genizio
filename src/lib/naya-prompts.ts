@@ -22,8 +22,14 @@
 // Remplace le placeholder de format « Tu es un assistant IA précis… » qui ne
 // portait aucune identité. La constitution dense (GENIZIO_PRINCIPLES etc.) reste
 // dans le contexte utilisateur au lancement (modèle léger DeepSeek v4-flash qui
-// la lit mieux dans le message principal) ; elle sera déplacée ici avec le cache
-// de prompt au chantier 4.
+// la lit mieux dans le message principal).
+//
+// CACHE DE PROMPT (chantier 4, C4.2) : NAYA_SYSTEM_PROMPT / NAYA_SYSTEM_PROMPT_JSON
+// sont des constantes byte-identiques passées en premier message (rôle system)
+// sur CHAQUE appel DeepSeek — le préfixe de contexte est donc stable par
+// construction et DeepSeek applique automatiquement son context caching (tarif
+// cache hit) sur ce segment, sans changement de code. Côté Anthropic (vision,
+// callAnthropicVision), le même bloc system reçoit un cache_control ephemeral.
 export const NAYA_SYSTEM_PROMPT = `Tu es Naya, l'IA mentore pédagogique de Génizio, une plateforme d'éveil des talents pour enfants de 5 à 16 ans en Afrique francophone et dans la diaspora.
 
 Ton expertise : la théorie des intelligences multiples de Howard Gardner, la Zone Proximale d'Apprentissage de Vygotski, la pédagogie par projets concrets, et le contexte réel des familles africaines (matériaux du quotidien, réalités économiques locales, langues, marchés, agriculture, artisanat).

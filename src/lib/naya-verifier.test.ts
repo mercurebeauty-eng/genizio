@@ -7,6 +7,9 @@ import {
   semanticRubricFor,
   NAYA_LOCAL_TALENT_KEYS,
   NAYA_LOCAL_SUBFORMS,
+  boundSemanticMaxTokens,
+  truncateJsonForLoup,
+  verifierEnabled,
   type VerifyVerdict,
 } from "@/lib/naya-verifier.functions";
 import { VALID_TALENT_KEYS } from "@/lib/talent-buckets";
@@ -320,5 +323,36 @@ describe("non-régression : finalizeChallenge reste compatible avec le Loup", ()
     const finalized = { ...rawLLMOutput, ...finalizeChallenge(rawLLMOutput, 8) };
     const verdict = verifyGeneration("challenge_single", finalized, { childAge: 8 });
     expect(verdict.conformity).not.toBe("majeur");
+  });
+});
+
+// ============================================================================
+// « Le Loup » — garde-fous coût (chantier 4, C4.3)
+// ============================================================================
+
+describe("garde-fous coût du Loup (C4.3)", () => {
+  it("boundSemanticMaxTokens plafonne entre 300 et 800", () => {
+    expect(boundSemanticMaxTokens("999")).toBe(800);
+    expect(boundSemanticMaxTokens("250")).toBe(300);
+    expect(boundSemanticMaxTokens("800")).toBe(800);
+    expect(boundSemanticMaxTokens("60")).toBe(300);
+    expect(boundSemanticMaxTokens("abc")).toBe(800); // défaut
+    expect(boundSemanticMaxTokens("")).toBe(800); // défaut
+  });
+
+  it("truncateJsonForLoup garde intacte une sortie courte", () => {
+    const out = { title: "défi", steps: ["a", "b"] };
+    expect(truncateJsonForLoup(out, 10_000)).toBe(JSON.stringify(out));
+  });
+
+  it("truncateJsonForLoup borne la taille envoyée au Loup", () => {
+    const big = { items: Array.from({ length: 500 }, (_, i) => `défi numéro ${i} avec une description plutôt longue pour gonfler le payload`) };
+    const truncated = truncateJsonForLoup(big, 500);
+    expect(truncated.length).toBeLessThanOrEqual(500 + 100);
+    expect(truncated).toContain("[tronqué par le Louveteau");
+  });
+
+  it("verifierEnabled est actif par défaut (kill-switch off)", () => {
+    expect(verifierEnabled()).toBe(true);
   });
 });

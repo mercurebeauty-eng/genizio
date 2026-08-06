@@ -333,6 +333,95 @@ export function AdminNayaTab({
         </div>
       </div>
 
+      {/* 🐺 Le Loup de Naya — vérification sémantique (chantier 2-4). Taux de
+          conformité des générations, recadrage et top violations récurrentes ;
+          ces agrégats alimentent le chantier 3 (apprentissage par règles apprises). */}
+      <div className="rounded-3xl border border-ink/10 bg-white p-6 shadow-xl space-y-5">
+        <div className="flex items-center gap-3">
+          <div className="p-2.5 rounded-2xl bg-amber-500/10 text-amber-600">
+            <AlertTriangle className="size-5" />
+          </div>
+          <div>
+            <h3 className="font-display text-lg font-extrabold text-ink">Le Loup de Naya — Vérification sémantique</h3>
+            <p className="text-xs text-ink/60 font-medium">
+              Conformité des générations IA (audits <code className="bg-surface px-1 rounded">generation_audits</code>), recadrage en mode
+              enforce, top violations récurrentes.
+            </p>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <div className="rounded-2xl border border-leaf/20 bg-leaf/5 p-4">
+            <div className="text-[10px] font-extrabold uppercase tracking-wider text-leaf">Conformes</div>
+            <div className="font-display text-2xl font-black text-leaf mt-1">
+              {telemetry.wolf.conformityRatePct}%
+            </div>
+            <div className="text-[11px] text-ink/60 font-medium">des {telemetry.wolf.totalAudits} audits</div>
+          </div>
+          <div className="rounded-2xl border border-amber-500/20 bg-amber-500/5 p-4">
+            <div className="text-[10px] font-extrabold uppercase tracking-wider text-amber-600">Mineures</div>
+            <div className="font-display text-2xl font-black text-amber-600 mt-1">{telemetry.wolf.minorRatePct}%</div>
+            <div className="text-[11px] text-ink/60 font-medium">écarts mineurs détectés</div>
+          </div>
+          <div className="rounded-2xl border border-red-500/20 bg-red-500/5 p-4">
+            <div className="text-[10px] font-extrabold uppercase tracking-wider text-red-600">Majeures</div>
+            <div className="font-display text-2xl font-black text-red-600 mt-1">{telemetry.wolf.majorRatePct}%</div>
+            <div className="text-[11px] text-ink/60 font-medium">manquements majeurs</div>
+          </div>
+          <div className="rounded-2xl border border-sky/20 bg-sky/5 p-4">
+            <div className="text-[10px] font-extrabold uppercase tracking-wider text-sky-600">Coût du Loup</div>
+            <div className="font-display text-2xl font-black text-sky-600 mt-1">${telemetry.wolf.loupCostUsd.toFixed(4)}</div>
+            <div className="text-[11px] text-ink/60 font-medium">{telemetry.wolf.loupCostXof.toLocaleString("fr-FR")} FCFA (sémantique)</div>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <div className="rounded-2xl border border-ink/10 bg-surface/30 p-4 space-y-3">
+            <div className="text-[11px] font-extrabold uppercase tracking-wider text-ink/60">
+              Surveillance & Recadrage
+            </div>
+            <div className="grid grid-cols-3 gap-2 text-center text-xs">
+              <div className="bg-white p-3 rounded-xl border border-ink/5">
+                <div className="text-[10px] text-ink/50 font-bold uppercase">Vérif. sémantique</div>
+                <div className="font-extrabold text-ink">
+                  {telemetry.wolf.semanticChecked} <span className="font-medium text-ink/50">({telemetry.wolf.semanticCheckedRatePct}%)</span>
+                </div>
+              </div>
+              <div className="bg-white p-3 rounded-xl border border-ink/5">
+                <div className="text-[10px] text-ink/50 font-bold uppercase">Recadrages (enforce)</div>
+                <div className="font-extrabold text-ink">
+                  {telemetry.wolf.regenerated} <span className="font-medium text-ink/50">({telemetry.wolf.recadrageRatePct}%)</span>
+                </div>
+              </div>
+              <div className="bg-white p-3 rounded-xl border border-ink/5">
+                <div className="text-[10px] text-ink/50 font-bold uppercase">Violations / audit</div>
+                <div className="font-extrabold text-ink">{telemetry.wolf.avgViolationsPerAudit}</div>
+              </div>
+            </div>
+          </div>
+
+          <div className="rounded-2xl border border-ink/10 bg-surface/30 p-4 space-y-2">
+            <div className="text-[11px] font-extrabold uppercase tracking-wider text-ink/60">
+              Top violations récurrentes (apprentissage, chantier 3)
+            </div>
+            {telemetry.wolf.topViolations.length === 0 ? (
+              <p className="text-xs text-ink/50 italic">Aucune violation enregistrée pour l'instant.</p>
+            ) : (
+              <ul className="space-y-1.5">
+                {telemetry.wolf.topViolations.slice(0, 5).map((v) => (
+                  <li key={v.rule} className="flex items-center justify-between text-xs gap-3">
+                    <code className="bg-white px-1.5 py-0.5 rounded border border-ink/5 text-ink font-mono truncate">
+                      {v.rule}
+                    </code>
+                    <span className="font-black text-ink whitespace-nowrap">×{v.count}</span>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+        </div>
+      </div>
+
       {/* 🧩 Breakdown Grid: Features & Models */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
         {/* Feature Breakdown Panel */}

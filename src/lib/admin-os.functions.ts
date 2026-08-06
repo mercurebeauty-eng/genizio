@@ -3,7 +3,7 @@ import { requireAdmin } from "@/integrations/supabase/admin-middleware";
 import { listAllUsers } from "@/integrations/supabase/admin-users";
 import { getChildGuild, GUILDS, NO_GUILD_YET, GuildInfo } from "@/lib/guilds";
 import { TALENT_KEY_LABELS } from "@/lib/talent-buckets";
-import { calculateNayaTelemetry, NayaTelemetryResponse } from "@/lib/naya-telemetry";
+import { calculateNayaTelemetry, calculateNayaWolfTelemetry, NayaTelemetryResponse, WolfAuditSample } from "@/lib/naya-telemetry";
 import { ACADEMIC_DOMAINS, ACADEMIC_DOMAIN_LABELS } from "@/lib/challenges.functions";
 
 export type AgeBracketKey = "3-6 ans" | "7-10 ans" | "11-13 ans" | "14+ ans";
@@ -870,7 +870,7 @@ export const getNayaTelemetryAdmin = createServerFn({ method: "GET" })
   .handler(async (): Promise<NayaTelemetryResponse> => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
-    const [challengesRes, hypothesisRes, childrenRes] = await Promise.all([
+    const [challengesRes, hypothesisRes, childrenRes, auditsRes] = await Promise.all([
       supabaseAdmin
         .from("challenges")
         .select("id, status, proof_mode"),
@@ -880,11 +880,17 @@ export const getNayaTelemetryAdmin = createServerFn({ method: "GET" })
       supabaseAdmin
         .from("child_profiles")
         .select("id, ai_synthesis"),
+      // « Le Loup » (chantier 4) : audits de génération — conformité, recadrage,
+      // coût propre de la vérification sémantique (cf. calculateNayaWolfTelemetry).
+      supabaseAdmin
+        .from("generation_audits")
+        .select("kind, verdict, violations, semantic_checked, regenerated"),
     ]);
 
     if (challengesRes.error) throw new Error(challengesRes.error.message);
     if (hypothesisRes.error) throw new Error(hypothesisRes.error.message);
     if (childrenRes.error) throw new Error(childrenRes.error.message);
+    if (auditsRes.error) throw new Error(auditsRes.error.message);
 
     const challenges = challengesRes.data ?? [];
     const hypothesisCycles = hypothesisRes.data ?? [];
@@ -902,7 +908,7 @@ export const getNayaTelemetryAdmin = createServerFn({ method: "GET" })
     const hypothesesCycles = hypothesisCycles.length;
     const recommendationsCount = children.filter((c) => Boolean(c.ai_synthesis)).length;
 
-    return calculateNayaTelemetry({
+    const telemetry = calculateNayaTelemetry({
       challengesGenerated,
       challengesStarted,
       challengesCompleted,
@@ -910,6 +916,19 @@ export const getNayaTelemetryAdmin = createServerFn({ method: "GET" })
       hypothesesCycles,
       recommendationsCount,
     });
+
+    // Remplace l'état vide de calculateNayaTelemetry par les audits réels du Loup.
+    telemetry.wolf = calculateNayaWolfTelemetry(
+      (auditsRes.data ?? []).map((a) => ({
+        kind: a.kind,
+        verdict: a.verdict,
+        violations: (Array.isArray(a.violations) ? a.violations : []) as WolfAuditSample["violations"],
+        semantic_checked: a.semantic_checked,
+        regenerated: a.regenerated,
+      }))
+    );
+
+    return telemetry;
   });
 
 export const getCommercePassportsDataAdmin = createServerFn({ method: "GET" })

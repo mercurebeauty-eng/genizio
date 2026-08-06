@@ -978,10 +978,16 @@ async function callAnthropicVision(
   // Identité experte Naya branchée comme vrai rôle system (chantier 1 « Naya 3.0 ») :
   // l'ancien placeholder « Tu es un assistant IA précis… » ne portait aucune expertise.
   // La constitution dense (GENIZIO_PRINCIPLES etc.) reste dans le contexte utilisateur
-  // au lancement (modèle léger DeepSeek v4-flash) ; elle passera ici en system avec le
-  // cache de prompt au chantier 4. Le mode vision non-JSON garde son ancien comportement
-  // (pas de system du tout) — seule la sortie contrainte reçoit l'identité.
+  // au lancement (modèle léger DeepSeek v4-flash). Côté Anthropic, le bloc system est
+  // marqué cache_control ephemeral (chantier 4, C4.2) : la constante NAYA_SYSTEM_PROMPT_JSON
+  // étant byte-identique à chaque appel vision, ce préfixe est mis en cache de contexte
+  // Anthropic (tarif réduit sur les appels suivants). Le mode vision non-JSON garde son
+  // ancien comportement (pas de system du tout) — seule la sortie contrainte reçoit
+  // l'identité et le cache.
   const systemPrompt = jsonMode ? NAYA_SYSTEM_PROMPT_JSON : undefined;
+  const systemBlock = systemPrompt
+    ? [{ type: "text", text: systemPrompt, cache_control: { type: "ephemeral" } }]
+    : undefined;
 
   let attempt = 0;
   while (attempt < maxRetries) {
@@ -999,7 +1005,7 @@ async function callAnthropicVision(
         body: JSON.stringify({
           model,
           max_tokens: maxOutputTokens,
-          system: systemPrompt,
+          system: systemBlock,
           messages: [
             {
               role: "user",

@@ -485,6 +485,42 @@ export function verifyGeneration(kind: GenerationKind, output: unknown, context:
 
 // ── Couche 2 — vérification sémantique IA (échantillonnée) ───────────────────
 
+// ── Garde-fous coût (C4.3) ───────────────────────────────────────────────────
+// Le Loup sémantique est un poste de coût volontairement borné : modèle
+// économique par défaut (deepseek-v4-flash), sortie plafonnée à ~800 tokens et
+// entrée tronquée — un défi bulk entier passe en UNE vérification (vérification
+// par lot naturelle, pas un appel par défi), et l'échantillonnage
+// (NAYA_VERIFY_SEMANTIC_RATE) borne le volume. `NAYA_VERIFY_ENABLED=false`
+// coupe tout le Loup (déterministe + sémantique + journalisation) en un flag.
+
+/** Borne pure du maxTokens sémantique : toujours entre 300 et 800. */
+export function boundSemanticMaxTokens(raw: string): number {
+  const n = Number.parseInt(raw, 10);
+  const parsed = Number.isFinite(n) ? n : 800;
+  return Math.max(300, Math.min(800, parsed));
+}
+
+function semanticMaxTokens(): number {
+  return boundSemanticMaxTokens(process.env.NAYA_VERIFY_MAX_TOKENS ?? "800");
+}
+
+/**
+ * Sérialise l'output pour l'envoi au Loup et le tronque au-delà de maxChars :
+ * une génération bulk (6 défis complets) peut faire plusieurs dizaines de Ko —
+ * on borne la taille de l'entrée sémantique plutôt que de payer des tokens de
+ * contexte pour une sortie déjà vérifiée structurellement par la couche 1.
+ */
+export function truncateJsonForLoup(output: unknown, maxChars: number = 40_000): string {
+  const serialized = JSON.stringify(output);
+  if (serialized.length <= maxChars) return serialized;
+  return `${serialized.slice(0, maxChars)}…[tronqué par le Louveteau — limite ${maxChars} caractères]`;
+}
+
+/** Kill-switch global du Loup (déterministe + sémantique + journalisation). */
+export function verifierEnabled(): boolean {
+  return process.env.NAYA_VERIFY_ENABLED !== "false";
+}
+
 export function semanticRubricFor(kind: GenerationKind): string {
   switch (kind) {
     case "challenge_bulk":
@@ -565,13 +601,13 @@ export async function verifyGenerationSemantic(kind: GenerationKind, output: unk
     const prompt = `Tu es « Le Loup de Naya », le vérificateur sémantique de Génizio. Tu contrôles si une génération IA respecte des règles pédagogiques, pour lutter contre les hallucinations et les sorties génériques. Ne sois pas tatillon : ne signale que ce qui est réellement problématique.
 
 GÉNÉRATION À VÉRIFIER (type ${kind}) :
-${JSON.stringify(output, null, 2)}
+${truncateJsonForLoup(output)}
 
 RÈGLES À CONTRÔLER :
 ${rubric}
 
 ${extra}Réponds UNIQUEMENT en JSON brut, sans bloc Markdown ni préambule : {"violations":[{"rule":"nom_canonique_de_la_regle","severity":"mineur|majeur","detail":"contexte factuel précis","suggestion":"recadrage court"}]} — tableau vide si tout est conforme. Ne signale jamais une violation hors des règles listées.`;
-    const raw = await callClaude(prompt, true, undefined, 600, 1);
+    const raw = await callClaude(prompt, true, undefined, semanticMaxTokens(), 1);
     const parsed = SEMANTIC_SCHEMA.parse(JSON.parse(extractJsonFromLLMResponse(raw)));
     return parsed.violations;
   } catch (err) {
@@ -605,6 +641,11 @@ export interface VerifyAndLogOptions {
  * ni ralentir l'appelant.
  */
 export async function verifyAndLog(options: VerifyAndLogOptions): Promise<VerifyVerdict> {
+  // Kill-switch opérationnel (C4.3) : `NAYA_VERIFY_ENABLED=false` neutralise le
+  // Loup en un flag, sans code à retirer — retour conforme sans aucune écriture.
+  if (!verifierEnabled()) {
+    return { conformity: "conforme", violations: [] };
+  }
   let verdict: VerifyVerdict;
   try {
     const deterministic = verifyGeneration(options.kind, options.output, options.context ?? {});
