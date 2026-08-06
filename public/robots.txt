@@ -1,6 +1,7 @@
 # Génizio — règles d'exploration
 # Principe : tout ce qui est vitrine est ouvert, tout ce qui est compte ou
 # donnée d'enfant est fermé.
+# (régénéré le 2026-08-06)
 
 User-agent: *
 Allow: /$
