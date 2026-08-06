@@ -1,5 +1,5 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { supabase } from "@/integrations/supabase/client";
 import { useSession } from "@/hooks/use-session";
@@ -104,10 +104,6 @@ function PassportPrintPage() {
   const [letter, setLetter] = useState("");
   const [fetchingLetter, setFetchingLetter] = useState(false);
   const [downloading, setDownloading] = useState(false);
-  // Préparation de l'impression : le dialogue ne doit s'ouvrir qu'une fois par chargement de
-  // page, que ce soit via le déclenchement automatique ou le bouton manuel.
-  const [preparingPrint, setPreparingPrint] = useState(false);
-  const printFiredRef = useRef(false);
 
   const fetchSynthesis = useServerFn(getChildAISynthesis);
   const fetchLetter = useServerFn(getPassportLetter);
@@ -233,56 +229,6 @@ function PassportPrintPage() {
     }
   };
 
-  // Ouverture automatique du dialogue d'impression (secours navigateur) une fois le
-  // document réellement prêt : polices chargées (document.fonts.ready) et photos de preuve
-  // décodées (img.decode()). Un timer fixe de 1,5 s sortait des PDF aux cadres photo vides
-  // sur les appareils Android d'entrée de gamme (images Storage encore en cours de
-  // chargement), et l'ancienne condition (challenges.length > 0 && synthesis) empêchait
-  // l'ouverture pour un Passeport sans défi terminé alors que l'UI l'annonçait. Filet de
-  // sécurité : 8 s max avant ouverture.
-  useEffect(() => {
-    if (
-      !child?.pdf_unlocked ||
-      fetching ||
-      fetchingSynthesis ||
-      fetchingLetter ||
-      printFiredRef.current
-    ) {
-      return;
-    }
-    setPreparingPrint(true);
-
-    let cancelled = false;
-    const fire = () => {
-      if (cancelled || printFiredRef.current) return;
-      printFiredRef.current = true;
-      window.print();
-      setPreparingPrint(false);
-    };
-
-    const waitForReadiness = async () => {
-      try {
-        await Promise.race([
-          (async () => {
-            await document.fonts.ready;
-            await Promise.all(
-              Array.from(document.images).map((img) => img.decode().catch(() => undefined)),
-            );
-          })(),
-          new Promise((resolve) => setTimeout(resolve, 8000)),
-        ]);
-      } catch {
-        // Fontes ou images non décodables : on imprime quand même plutôt que de bloquer.
-      }
-      if (!cancelled) fire();
-    };
-
-    void waitForReadiness();
-    return () => {
-      cancelled = true;
-    };
-  }, [child, fetching, fetchingSynthesis, fetchingLetter]);
-
   if (loading || !session || fetching) {
     return (
       <div className="grid min-h-dvh place-items-center bg-stone-50">
@@ -367,9 +313,7 @@ function PassportPrintPage() {
           <div>
             <h1 className="font-bold text-sm">Passeport d'Excellence • {child.name}</h1>
             <p className="text-xs text-ink/60 font-semibold">
-              {preparingPrint
-                ? "Préparation du document (photos, polices)…"
-                : "Le document se télécharge en PDF A4, directement depuis votre appareil."}
+              Le document se télécharge en PDF A4, directement depuis votre appareil.
             </p>
           </div>
         </div>
@@ -383,11 +327,7 @@ function PassportPrintPage() {
             {downloading ? "Génération…" : "Télécharger le PDF"}
           </button>
           <button
-            onClick={() => {
-              printFiredRef.current = true;
-              setPreparingPrint(false);
-              window.print();
-            }}
+            onClick={() => window.print()}
             className="hidden sm:inline-flex items-center gap-2 rounded-xl border border-ink/10 px-4 py-2 text-xs font-bold text-ink/70 hover:bg-stone-100 transition-all cursor-pointer"
             aria-label="Imprimer (secours)"
           >
