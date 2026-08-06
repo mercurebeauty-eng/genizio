@@ -5,6 +5,9 @@ import { buildHypothesisPrompt } from "@/lib/naya-prompts";
 import { TALENT_KEY_LABELS } from "@/lib/talent-buckets";
 import { getInterestHypothesesSnapshot } from "@/lib/interest-confidence";
 import { z } from "zod";
+// « Le Loup de Naya » (chantier 2, Naya 3.0) : audit shadow non-bloquant des
+// générations (narrations, hypothèses, discriminants, retests).
+import { verifyAndLog } from "@/lib/naya-verifier.functions";
 
 // NAYA 2.0 Phase 3a — moteur de génération d'hypothèses causales (cf. genizio-decisions #32).
 // Premier point IA du pipeline NAYA. Rôle *raisonnement* → Sonnet (décision #27 : on paie le
@@ -125,6 +128,14 @@ Réponds uniquement avec le texte final, sans guillemets, sans préambule, sans 
       console.warn("narrateForParent: chiffre détecté malgré la consigne, narration rejetée:", cleaned);
       return null;
     }
+    // Le Loup (chantier 2, Naya 3.0) : audit shadow non-bloquant du texte final livré.
+    void verifyAndLog({
+      kind: "narrative",
+      output: cleaned,
+      context: { childAge, direction, domain: domainLabel },
+      sourceFunction: "narrateForParent",
+      model: "deepseek-v4-flash",
+    });
     return cleaned;
   } catch (err) {
     console.error("narrateForParent failed (non-fatal, cycle stocké sans narration):", err);
@@ -383,6 +394,17 @@ export const ensureHypothesesForChild = createServerFn({ method: "POST" })
       throw new Error("Réponse IA invalide (JSON non parsable).");
     }
 
+    // Le Loup (chantier 2, Naya 3.0) : audit shadow non-bloquant de la sortie brute
+    // (avant normalisation bayésienne — on audite ce que l'IA a réellement produit).
+    void verifyAndLog({
+      kind: "hypothesis",
+      output: parsed,
+      context: { childAge: child.age, childName: child.name, direction },
+      sourceFunction: "runHypothesisEngine",
+      childId: data.childId,
+      model: NAYA_REASONING_MODEL,
+    });
+
     const HypothesisSchema = z.object({
       cause: z.string(),
       prior_probability: z.number(),
@@ -554,6 +576,16 @@ Réponds EXCLUSIVEMENT avec un objet JSON strict au format suivant :
       console.error("Error parsing discriminant challenge LLM response:", err, "Raw:", rawJson);
       throw new Error("Erreur de génération du défi discriminant.");
     }
+
+    // Le Loup (chantier 2, Naya 3.0) : audit shadow non-bloquant de la sortie brute.
+    void verifyAndLog({
+      kind: "discriminant",
+      output: parsed,
+      context: { childAge: child.age, childName: child.name, domain: subject },
+      sourceFunction: "generateDiscriminantChallenge",
+      childId: data.childId,
+      model: "deepseek-v4-flash",
+    });
 
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const pedagogicalContext = JSON.stringify({
@@ -824,6 +856,16 @@ Réponds EXCLUSIVEMENT avec un objet JSON strict au format suivant :
       console.error("Error parsing support retest challenge LLM response:", err, "Raw:", rawJson);
       throw new Error("Erreur de génération du défi de retest.");
     }
+
+    // Le Loup (chantier 2, Naya 3.0) : audit shadow non-bloquant de la sortie brute.
+    void verifyAndLog({
+      kind: "support_retest",
+      output: parsed,
+      context: { childAge: child.age, childName: child.name, domain: subject },
+      sourceFunction: "generateSupportRetestChallenge",
+      childId: data.childId,
+      model: "deepseek-v4-flash",
+    });
 
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const pedagogicalContext = JSON.stringify({

@@ -546,6 +546,62 @@ export type Database = {
           },
         ]
       }
+      generation_audits: {
+        Row: {
+          child_id: string | null
+          context: Json
+          created_at: string
+          estimated_cost: number | null
+          id: string
+          kind: string
+          model: string | null
+          processed: boolean
+          regenerated: boolean
+          semantic_checked: boolean
+          source_function: string
+          verdict: string
+          violations: Json
+        }
+        Insert: {
+          child_id?: string | null
+          context?: Json
+          created_at?: string
+          estimated_cost?: number | null
+          id?: string
+          kind: string
+          model?: string | null
+          processed?: boolean
+          regenerated?: boolean
+          semantic_checked?: boolean
+          source_function: string
+          verdict: string
+          violations?: Json
+        }
+        Update: {
+          child_id?: string | null
+          context?: Json
+          created_at?: string
+          estimated_cost?: number | null
+          id?: string
+          kind?: string
+          model?: string | null
+          processed?: boolean
+          regenerated?: boolean
+          semantic_checked?: boolean
+          source_function?: string
+          verdict?: string
+          violations?: Json
+        }
+        Relationships: [
+          {
+            foreignKeyName: "generation_audits_child_id_fkey"
+            columns: ["child_id"]
+            isOneToOne: false
+            referencedRelation: "child_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       hypothesis_cycles: {
         Row: {
           child_id: string

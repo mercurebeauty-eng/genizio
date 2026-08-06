@@ -61,6 +61,12 @@ export {
   STEPS_INSTRUCTION,
 } from "@/lib/naya-prompts";
 
+// « Le Loup de Naya » (chantier 2, Naya 3.0) : vérification sémantique shadow de
+// chaque génération. Import statique sûr — naya-verifier ne référence ce module
+// que par import dynamique dans les corps de fonctions (pas de cycle ES au char-
+// gement). Le Loup est strictement non-bloquant : jamais de throw vers l'appelant.
+import { verifyAndLog } from "@/lib/naya-verifier.functions";
+
 // Domaines couverts par le référentiel académique (cf. genizio-decisions #39). "creative"
 // exclue volontairement (développement non linéaire par âge, cf. ACADEMIC_REFERENTIAL_INSTRUCTION
 // ci-dessous) — ne jamais l'ajouter ici sans revoir le mécanisme de détection d'écart.
@@ -1357,6 +1363,17 @@ export const generateChallenges = createServerFn({ method: "POST" })
       throw new Error("Réponse IA invalide");
     }
 
+    // Le Loup (chantier 2, Naya 3.0) : audit shadow non-bloquant de la sortie brute
+    // (avant finalizeChallenge — on audite ce que l'IA a réellement produit).
+    void verifyAndLog({
+      kind: "challenge_bulk",
+      output: parsed,
+      context: { childAge: child.age, childName: child.name, existingTitles },
+      sourceFunction: "generateChallenges",
+      childId: data.childId,
+      model: "deepseek-v4-flash",
+    });
+
     let list: z.infer<typeof ChallengeSchema>[];
     try {
       list = z.array(ChallengeSchema).parse(parsed.challenges ?? []);
@@ -1615,6 +1632,16 @@ Réponds STRICTEMENT en JSON valide avec ce format :
       throw new Error("Réponse IA invalide — réessayez dans quelques instants.");
     }
 
+    // Le Loup (chantier 2, Naya 3.0) : audit shadow non-bloquant de la sortie brute.
+    void verifyAndLog({
+      kind: "proof_validation",
+      output: parsed,
+      context: { childAge: challenge.child_profiles?.age, childName: challenge.child_profiles?.name },
+      sourceFunction: "validateChallengeProof",
+      childId: challenge.child_profiles?.id,
+      model: imageAnalyzed ? "claude-sonnet-5" : "deepseek-v4-flash",
+    });
+
     const observations = parsed.observations ?? "Bravo pour cette belle réalisation !";
     const awarded = parsed.talents_awarded ?? {};
 
@@ -1797,6 +1824,13 @@ Réponds EXCLUSIVEMENT avec un JSON de cette forme, sans texte autour : {"cause"
   try {
     const raw = await callClaude(prompt, true, undefined, 200, 2);
     const parsed = JSON.parse(extractJsonFromLLMResponse(raw));
+    // Le Loup (chantier 2, Naya 3.0) : audit shadow non-bloquant de la classification.
+    void verifyAndLog({
+      kind: "not_completed_classification",
+      output: parsed,
+      sourceFunction: "classifyNotCompletedReason",
+      model: "deepseek-v4-flash",
+    });
     const cause = parsed?.cause;
     return (NOT_COMPLETED_CAUSES as readonly string[]).includes(cause) ? (cause as NotCompletedCause) : null;
   } catch (err) {
@@ -2321,6 +2355,16 @@ export const generateAcademicHomeworkChallenge = createServerFn({ method: "POST"
       throw new Error("Réponse IA invalide");
     }
 
+    // Le Loup (chantier 2, Naya 3.0) : audit shadow non-bloquant de la sortie brute.
+    void verifyAndLog({
+      kind: "homework",
+      output: parsed,
+      context: { childAge: child.age, childName: child.name, anxietyDamped: zpaResult.isAnxietyDamped, existingTitles },
+      sourceFunction: "generateAcademicHomeworkChallenge",
+      childId: data.childId,
+      model: "deepseek-v4-flash",
+    });
+
     let c: z.infer<typeof ChallengeSchema>;
     try {
       c = ChallengeSchema.parse(parsed);
@@ -2488,6 +2532,16 @@ export const generateSingleChallenge = createServerFn({ method: "POST" })
       throw new Error("Réponse IA invalide");
     }
 
+    // Le Loup (chantier 2, Naya 3.0) : audit shadow non-bloquant de la sortie brute.
+    void verifyAndLog({
+      kind: "challenge_single",
+      output: parsed,
+      context: { childAge: child.age, childName: child.name, existingTitles },
+      sourceFunction: "generateSingleChallenge",
+      childId: data.childId,
+      model: "deepseek-v4-flash",
+    });
+
     let c: z.infer<typeof ChallengeSchema>;
     try {
       c = ChallengeSchema.parse(parsed);
@@ -2567,6 +2621,14 @@ Mets en lumière ses formes d'intelligence dominantes qui ressortent de ses acti
     try {
       // 2 short paragraphs, not a batch of défis.
       const synthesis = await callClaude(prompt, false, undefined, 700);
+      // Le Loup (chantier 2, Naya 3.0) : audit shadow non-bloquant.
+      void verifyAndLog({
+        kind: "synthesis",
+        output: synthesis,
+        sourceFunction: "getChildAISynthesis",
+        childId: data.childId,
+        model: "deepseek-v4-flash",
+      });
       // Only refresh the cache on a genuine success — a transient
       // quota/API failure must not lock in the fallback message as "the"
       // synthesis for the next 7 days.
@@ -2652,6 +2714,14 @@ Texte brut uniquement, aucune syntaxe Markdown.`;
 
     try {
       const letter = await callClaude(prompt, false, undefined, 400);
+      // Le Loup (chantier 2, Naya 3.0) : audit shadow non-bloquant.
+      void verifyAndLog({
+        kind: "letter",
+        output: letter,
+        sourceFunction: "getPassportLetter",
+        childId: data.childId,
+        model: "deepseek-v4-flash",
+      });
       await supabase
         .from("child_profiles")
         .update({ passport_letter: letter, passport_letter_generated_at: new Date().toISOString() })
@@ -2683,5 +2753,12 @@ NE mets PAS de guillemets autour de ta réponse.`;
     // One short sentence, capped at 150 chars below — 4000 was ~25x more
     // budget than this could ever use.
     const tag = await callClaude(prompt, false, data.imageUrl, 200);
+    // Le Loup (chantier 2, Naya 3.0) : audit shadow non-bloquant.
+    void verifyAndLog({
+      kind: "proof_tampon",
+      output: { tampon: tag },
+      sourceFunction: "analyzePostProof",
+      model: "claude-sonnet-5",
+    });
     return tag.trim().slice(0, 150); // safety cap
   });

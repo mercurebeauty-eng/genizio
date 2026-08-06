@@ -6,6 +6,9 @@ import { getInterestHypothesesSnapshot } from "@/lib/interest-confidence";
 import { callClaude, finalizeChallenge, PROOF_MODE_INSTRUCTION, ACADEMIC_REFERENTIAL_INSTRUCTION, ACADEMIC_SECRET_INSTRUCTION, ACADEMIC_DOMAIN_LABELS, STEPS_INSTRUCTION, INTELLIGENCES_FIELD_INSTRUCTION, TRAIT_SUBFORM_INSTRUCTION, formatChildInterestsPayload, extractJsonFromLLMResponse, getLeastExploredTalentLabels } from "@/lib/challenges.functions";
 import { buildRecommendationPrompt } from "@/lib/naya-prompts";
 import { z } from "zod";
+// « Le Loup de Naya » (chantier 2, Naya 3.0) : audit shadow non-bloquant des
+// recommandations (stabilisation, essaimage, exploration).
+import { verifyAndLog } from "@/lib/naya-verifier.functions";
 
 const RecommendInput = z.object({
   childId: z.string().uuid(),
@@ -137,16 +140,26 @@ export const recommendChallengesForChild = createServerFn({ method: "POST" })
         const subject = ACADEMIC_DOMAIN_LABELS[supportCycle.trigger_domain] ?? supportCycle.trigger_domain;
         const formattedInterests = formatChildInterestsPayload(child.interests, interestHypotheses);
         const prompt = buildRecommendationPrompt({
-          mode: "stabilisation_cycle",
-          childName: child.name,
-          childAge: child.age,
-          interestsPayload: formattedInterests,
-          subject,
-        });
+        mode: "stabilisation_cycle",
+        childName: child.name,
+        childAge: child.age,
+        interestsPayload: formattedInterests,
+        subject,
+      });
 
-        try {
-          const rawJson = await callClaude(prompt, true, undefined, 1000, 2);
-          const parsed = JSON.parse(extractJsonFromLLMResponse(rawJson));
+      try {
+        const rawJson = await callClaude(prompt, true, undefined, 1000, 2);
+        const parsed = JSON.parse(extractJsonFromLLMResponse(rawJson));
+
+        // Le Loup (chantier 2, Naya 3.0) : audit shadow non-bloquant de la sortie brute.
+        void verifyAndLog({
+          kind: "recommendation",
+          output: parsed,
+          context: { childAge: child.age, childName: child.name, requiresStabilisation: true },
+          sourceFunction: "recommendChallengesForChild/stabilisation_cycle",
+          childId: data.childId,
+          model: "deepseek-v4-flash",
+        });
 
           const safeTitle = (parsed.title || "Petit défi tranquille avec Naya") as string;
           const safeDescription = (parsed.description || "") as string;
@@ -240,6 +253,16 @@ export const recommendChallengesForChild = createServerFn({ method: "POST" })
         const rawJson = await callClaude(prompt, true, undefined, 1000, 2);
         const parsed = JSON.parse(extractJsonFromLLMResponse(rawJson));
 
+        // Le Loup (chantier 2, Naya 3.0) : audit shadow non-bloquant de la sortie brute.
+        void verifyAndLog({
+          kind: "recommendation",
+          output: parsed,
+          context: { childAge: child.age, childName: child.name },
+          sourceFunction: "recommendChallengesForChild/essaimage",
+          childId: data.childId,
+          model: "deepseek-v4-flash",
+        });
+
         // Correctif (2026-07-20, décision #34) : contournait finalizeChallenge — même
         // problème que generateDiscriminantChallenge, même fix.
         const safeTitle = (parsed.title || "Mission d'Essaimage Naya") as string;
@@ -319,6 +342,16 @@ export const recommendChallengesForChild = createServerFn({ method: "POST" })
       try {
         const rawJson = await callClaude(prompt, true, undefined, 1000, 2);
         const parsed = JSON.parse(extractJsonFromLLMResponse(rawJson));
+
+        // Le Loup (chantier 2, Naya 3.0) : audit shadow non-bloquant de la sortie brute.
+        void verifyAndLog({
+          kind: "recommendation",
+          output: parsed,
+          context: { childAge: child.age, childName: child.name, requiresStabilisation: true },
+          sourceFunction: "recommendChallengesForChild/stabilisation_fragilite",
+          childId: data.childId,
+          model: "deepseek-v4-flash",
+        });
 
         const safeTitle = (parsed.title || "Petit défi tranquille avec Naya") as string;
         const safeDescription = (parsed.description || "") as string;
@@ -410,6 +443,16 @@ export const recommendChallengesForChild = createServerFn({ method: "POST" })
       try {
         const rawJson = await callClaude(prompt, true, undefined, 1000, 2);
         const parsed = JSON.parse(extractJsonFromLLMResponse(rawJson));
+
+        // Le Loup (chantier 2, Naya 3.0) : audit shadow non-bloquant de la sortie brute.
+        void verifyAndLog({
+          kind: "recommendation",
+          output: parsed,
+          context: { childAge: child.age, childName: child.name },
+          sourceFunction: "recommendChallengesForChild/exploration",
+          childId: data.childId,
+          model: "deepseek-v4-flash",
+        });
 
         const safeTitle = (parsed.title || "Prochaine exploration Naya") as string;
         const safeDescription = (parsed.description || "") as string;
