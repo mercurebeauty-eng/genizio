@@ -248,7 +248,7 @@ export const generateCampaignTokensAdmin = createServerFn({ method: "POST" })
       campaign_id: campaign.id,
       season_id: activeSeason.id,
       sponsor_name: campaign.name,
-      sponsor_email: "b2b@genizio.com",
+      sponsor_email: "serviceclient@genizio.com",
       amount_paid: activeSeason.price_xof,
       currency: "XOF",
       payment_confirmed: true, // Pré-payé par contrat/facture ONG — confirmé par l'admin qui génère le lot après réception du paiement, même logique que le reste de l'app (WhatsApp/Mobile Money manuel).
@@ -381,7 +381,7 @@ export const enrollChildViaCampaignLink = createServerFn({ method: "POST" })
       child_id: data.childId,
       user_id: userId,
       sponsor_name: campaign.name,
-      sponsor_email: "b2b@genizio.com",
+      sponsor_email: "serviceclient@genizio.com",
       payment_status: "sponsored",
       campaign_id: data.campaignId,
     });

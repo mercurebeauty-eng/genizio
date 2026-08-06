@@ -683,7 +683,7 @@ export const enrollChildAdmin = createServerFn({ method: "POST" })
       user_id: childProfile.user_id,
       campaign_id: data.campaignId || null,
       sponsor_name: data.campaignId ? "Attribution Campagne Admin" : "Admin Enrollment",
-      sponsor_email: "admin@genizio.com",
+      sponsor_email: "serviceclient@genizio.com",
       payment_status: "admin_granted",
     });
 

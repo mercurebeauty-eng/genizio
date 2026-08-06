@@ -86,8 +86,8 @@ function MentionsLegalesPage() {
           </p>
           <p>
             Contact :{" "}
-            <a href="mailto:traorecheikkh@gmail.com" className="text-brand underline">
-              traorecheikkh@gmail.com
+            <a href="mailto:serviceclient@genizio.com" className="text-brand underline">
+              serviceclient@genizio.com
             </a>
           </p>
           <p>
@@ -113,8 +113,8 @@ function MentionsLegalesPage() {
           <p>
             Pour toute question relative à ces mentions légales, à la Politique de confidentialité
             ou aux Conditions d'utilisation, écrivez à{" "}
-            <a href="mailto:traorecheikkh@gmail.com" className="text-brand underline">
-              traorecheikkh@gmail.com
+            <a href="mailto:serviceclient@genizio.com" className="text-brand underline">
+              serviceclient@genizio.com
             </a>
             .
           </p>
