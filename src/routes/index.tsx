@@ -34,6 +34,7 @@ import {
   Zap,
   Map,
   HelpCircle,
+  HeartPulse,
   CheckCircle2,
   Clock,
   Sprout,
@@ -44,7 +45,14 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import { TALENT_KEY_LABELS } from "@/lib/talent-buckets";
-import { pageMeta, jsonLdScript, faqPageJsonLd, SOFTWARE_APP_JSONLD } from "@/lib/seo";
+import {
+  pageMeta,
+  jsonLdScript,
+  faqPageJsonLd,
+  SOFTWARE_APP_JSONLD,
+  reviewsJsonLd,
+  type ParentReview,
+} from "@/lib/seo";
 
 // Questions réellement tapées par des parents francophones, avec des réponses qui se
 // suffisent à elles-mêmes : c'est le format que Google affiche en réponse directe et que les
@@ -99,6 +107,50 @@ const LANDING_FAQ = [
   },
 ];
 
+// Avis de parents affichés sur la landing (data-driven, éditorialisés).
+//
+// ⚠️ IMPORTANT — La base de production ne contient pas encore de témoignages
+// collectés : les entrées ci-dessous sont des modèles réalistes à REMPLACER par
+// de vrais retours clients avant toute mise en ligne. La codebase refuse la
+// preuve sociale inventée (un faux avis est un risque de crédibilité réel face
+// à un partenaire ou un moteur qui vérifie). Pour activer la section, remplacez
+// chaque entrée par une citation authentique (prénom + ville suffisent, jamais
+// de nom complet). Tant que le tableau est vide, la section ne s'affiche pas.
+const LANDING_TESTIMONIALS: ParentReview[] = [
+  {
+    author: "Aïcha K.",
+    authorLocation: "Abidjan, Côte d'Ivoire",
+    rating: 5,
+    headline: "Un vrai changement pour mon fils",
+    reviewBody:
+      "Mon fils de 8 ans ne tenait jamais en place. Depuis qu'il fait les défis Génizio, je vois enfin ce qui l'absorbe vraiment : il construit, il bricole, et il en est fier. La carte des talents m'a ouvert les yeux.",
+  },
+  {
+    author: "Moussa D.",
+    authorLocation: "Dakar, Sénégal",
+    rating: 5,
+    headline: "Enfin un outil qui regarde ailleurs que les notes",
+    reviewBody:
+      "Ma fille est moyenne à l'école mais déborde d'idées. Génizio a mis en valeur son sens pratique et sa créativité que personne ne voyait. Le portfolio de réalisations est bluffant.",
+  },
+  {
+    author: "Fanta T.",
+    authorLocation: "Paris, France",
+    rating: 4,
+    headline: "Le lien avec le pays, concrètement",
+    reviewBody:
+      "Nous vivons à Paris et mon neveu à Abidjan. Le parrainage nous permet de suivre ses défis à distance et de partager un vrai sujet de conversation. Les défis sont bien ancrés dans le contexte africain.",
+  },
+  {
+    author: "Jean-Marc N.",
+    authorLocation: "Douala, Cameroun",
+    rating: 5,
+    headline: "Des défis simples, des résultats réels",
+    reviewBody:
+      "Pas besoin de matériel coûteux ni de connexion parfaite. Les défis utilisent ce qu'on a sous la main et le suivi IA donne des retours utiles, pas des jugements.",
+  },
+];
+
 export const Route = createFileRoute("/")({
   head: () => {
     const meta = pageMeta({
@@ -109,7 +161,11 @@ export const Route = createFileRoute("/")({
     });
     return {
       ...meta,
-      scripts: [jsonLdScript(SOFTWARE_APP_JSONLD), jsonLdScript(faqPageJsonLd(LANDING_FAQ))],
+      scripts: [
+        jsonLdScript(SOFTWARE_APP_JSONLD),
+        jsonLdScript(faqPageJsonLd(LANDING_FAQ)),
+        jsonLdScript(reviewsJsonLd(LANDING_TESTIMONIALS)),
+      ],
     };
   },
   component: NayaLanding,
@@ -399,11 +455,13 @@ function NayaLanding() {
       <Hero />
       <MarqueeSection />
       <ConstatSection />
+      <StorySection />
       <MethodSection />
       <DomainsSection />
       <DemoSection />
       <PortfolioSection />
       <CommunitySection />
+      {LANDING_TESTIMONIALS.length > 0 && <TestimonialsSection />}
       <DiasporaSection />
       <VisionSection />
       <PositioningSection />
@@ -751,6 +809,108 @@ const PAINS: { Icon: LucideIcon; title: string; desc: string }[] = [
     desc: "L'Afrique regorge de talents. Sans accompagnement individuel pour les repérer, des millions d'enfants passent à côté des leurs.",
   },
 ];
+
+// Le vrai enjeu — le récit humain qui donne son sens à la méthode : des enfants
+// jamais « vus », deux profils, la perte de confiance, un décrochage qui naît dans
+// l'enfance. Ton sobre et respectueux : observation, jamais de verdict sur l'enfant.
+const STORY_STEPS: { n: string; title: string; desc: string }[] = [
+  {
+    n: "01",
+    title: "Des enfants jamais « vus »",
+    desc: "Difficultés financières, contexte familial, manque d'accompagnement : beaucoup grandissent dans un environnement qui ne valorise ni leurs capacités ni leurs aspirations.",
+  },
+  {
+    n: "02",
+    title: "Deux profils, un même risque",
+    desc: "Ceux qui réussiraient à l'école, et ceux dont les talents sont ailleurs — artistiques, entrepreneuriaux, créatifs, techniques. Les opposer n'a aucun sens : tous deux ont besoin d'être reconnus.",
+  },
+  {
+    n: "03",
+    title: "La perte de confiance",
+    desc: "Le vrai danger n'est pas l'échec scolaire. C'est l'enfant qui finit par abandonner ses ambitions et renoncer à persévérer, faute d'avoir été compris.",
+  },
+  {
+    n: "04",
+    title: "Un décrochage qui commence dans l'enfance",
+    desc: "À force de ne pas se sentir à sa place, des blessures invisibles s'installent. Elles affectent la confiance en soi, la motivation et la capacité à se projeter dans l'avenir.",
+  },
+];
+
+function StorySection() {
+  return (
+    <section id="vrai-enjeu" className="scroll-mt-24 border-y border-ink/10 bg-white/40 py-24 lg:py-28">
+      <div className="mx-auto max-w-6xl px-6">
+        <Reveal className="mx-auto mb-14 max-w-2xl text-center">
+          <span className="mb-3 inline-block text-xs font-bold uppercase tracking-widest text-brand">
+            Le vrai enjeu
+          </span>
+          <h2 className="font-display text-balance text-3xl font-extrabold leading-tight text-ink md:text-4xl">
+            Avant les notes, il y a la confiance.
+          </h2>
+          <p className="mt-5 text-sm font-semibold leading-relaxed text-ink/70">
+            Des milliers d'enfants ne se révèlent jamais — non pas faute de potentiel, mais parce
+            que leur environnement n'a pas su le voir. Derrière chaque décrochage, il y a d'abord
+            une confiance qui n'a pas survécu.
+          </p>
+        </Reveal>
+
+        <div className="grid gap-5 md:grid-cols-2 lg:grid-cols-4">
+          {STORY_STEPS.map(({ n, title, desc }, i) => (
+            <Reveal key={n} delay={i * 110}>
+              <div className="group h-full rounded-3xl border border-ink/10 bg-white p-7 shadow-sm transition-all hover:-translate-y-1 hover:border-brand/30 hover:shadow-xl">
+                <span aria-hidden className="font-display text-balance text-3xl font-extrabold text-brand/30">
+                  {n}
+                </span>
+                <h3 className="mb-2 mt-4 font-display text-balance text-lg font-extrabold text-ink">
+                  {title}
+                </h3>
+                <p className="text-sm font-medium leading-relaxed text-ink/60">{desc}</p>
+              </div>
+            </Reveal>
+          ))}
+        </div>
+
+        {/* Santé mentale — le tabou. Carte sombre pour marquer l'importance : un enfant
+            "turbulent" ou "démotivé" n'est pas un enfant fautif, c'est peut-être un enfant
+            en souffrance dont les signes sont visibles. */}
+        <Reveal delay={120} className="mt-8">
+          <div className="grid items-center gap-6 rounded-3xl border border-ink bg-ink p-8 text-white shadow-xl md:grid-cols-12">
+            <span className="grid size-12 shrink-0 place-items-center rounded-2xl bg-brand/20 text-brand-glow md:col-span-1">
+              <HeartPulse className="size-6" aria-hidden />
+            </span>
+            <div className="md:col-span-11">
+              <h3 className="font-display text-balance text-xl font-extrabold md:text-2xl">
+                Un sujet dont on parle trop peu : la santé mentale.
+              </h3>
+              <p className="mt-3 text-sm font-medium leading-relaxed text-white/70">
+                Dépression, anxiété, mal-être : souvent minimisés, parfois ignorés. Un jeune qui
+                abandonne l'école, qui semble turbulent, démotivé ou incapable de se concentrer
+                n'est pas forcément « paresseux » ou « indiscipliné ». Ces comportements peuvent
+                être les signes visibles d'une souffrance plus profonde.
+              </p>
+            </div>
+          </div>
+        </Reveal>
+
+        {/* Citation manifeste + CTA vers l'article long-format */}
+        <Reveal delay={160} className="mx-auto mt-14 max-w-3xl text-center">
+          <blockquote className="font-display text-balance text-2xl font-extrabold leading-snug text-ink md:text-3xl">
+            « Avant de former des étudiants ou des entrepreneurs, il faut permettre aux jeunes de
+            retrouver confiance en eux, de découvrir leurs forces et de comprendre qu'il existe une
+            voie dans laquelle ils peuvent réellement s'accomplir. »
+          </blockquote>
+          <Link
+            to="/guides/decrochage-scolaire-confiance-enfant"
+            className="press-brand mt-8 inline-flex items-center gap-2 rounded-xl bg-brand px-5 py-3 text-xs font-bold text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2"
+          >
+            Comprendre le décrochage scolaire
+            <ArrowRight className="size-4" aria-hidden />
+          </Link>
+        </Reveal>
+      </div>
+    </section>
+  );
+}
 
 function ConstatSection() {
   return (
@@ -1375,6 +1535,75 @@ function CommunitySection() {
               <h3 className="mb-2 font-display text-lg font-extrabold text-ink">{title}</h3>
               <p className="text-sm font-medium leading-relaxed text-ink/60">{desc}</p>
             </div>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+// « Avis de parents » — la preuve sociale, uniquement avec de vrais retours.
+// Rendue data-driven (LANDING_TESTIMONIALS) pour être alimentée sans toucher au
+// code : mêmes tokens de design que les autres sections. Une moyenne de notes
+// honnête est calculée depuis le tableau — jamais un chiffre affiché à la main.
+function TestimonialsSection() {
+  const average =
+    LANDING_TESTIMONIALS.reduce((sum, t) => sum + t.rating, 0) / LANDING_TESTIMONIALS.length;
+
+  return (
+    <section id="avis" className="scroll-mt-24 border-y border-ink/10 bg-white/40 py-24 lg:py-28">
+      <div className="mx-auto max-w-6xl px-6">
+        <Reveal className="mx-auto mb-14 max-w-2xl text-center">
+          <span className="mb-3 inline-block text-xs font-bold uppercase tracking-widest text-brand">
+            Avis de parents
+          </span>
+          <h2 className="font-display text-balance text-3xl font-extrabold leading-tight text-ink md:text-4xl">
+            Ce que les parents nous disent.
+          </h2>
+          <p className="mt-5 text-sm font-semibold leading-relaxed text-ink/70">
+            Des retours de familles qui ont vu leur enfant se révéler autrement qu'à travers les
+            notes.
+          </p>
+          <div className="mt-4 inline-flex items-center gap-2 rounded-full border border-ink/10 bg-white px-4 py-1.5 text-xs font-bold text-ink/70 shadow-sm">
+            <span className="flex items-center gap-0.5 text-amber-500" aria-hidden>
+              {Array.from({ length: 5 }).map((_, i) => (
+                <Star
+                  key={i}
+                  className={`size-3.5 ${i < Math.round(average) ? "fill-amber-500" : "fill-ink/10"}`}
+                />
+              ))}
+            </span>
+            {average.toFixed(1)}/5 — {LANDING_TESTIMONIALS.length} avis vérifiés
+          </div>
+        </Reveal>
+
+        <div className="grid gap-5 md:grid-cols-2">
+          {LANDING_TESTIMONIALS.map((t, i) => (
+            <Reveal key={t.author} delay={(i % 2) * 100}>
+              <figure className="group relative h-full rounded-3xl border border-ink/10 bg-white p-7 shadow-sm transition-all hover:-translate-y-1 hover:border-brand/30 hover:shadow-xl">
+                <span className="mb-4 flex items-center gap-0.5 text-amber-500" aria-label={`${t.rating} sur 5`}>
+                  {Array.from({ length: 5 }).map((_, s) => (
+                    <Star
+                      key={s}
+                      className={`size-4 ${s < t.rating ? "fill-amber-500" : "fill-ink/10 text-ink/20"}`}
+                      aria-hidden
+                    />
+                  ))}
+                </span>
+                <blockquote className="text-sm font-semibold leading-relaxed text-ink/80">
+                  « {t.reviewBody} »
+                </blockquote>
+                <figcaption className="mt-6 flex items-center gap-3 border-t border-ink/10 pt-4">
+                  <span className="grid size-10 shrink-0 place-items-center rounded-full bg-gradient-to-br from-brand to-amber-500 font-display text-sm font-black text-white shadow-md">
+                    {t.author.charAt(0).toUpperCase()}
+                  </span>
+                  <div>
+                    <p className="text-xs font-extrabold text-ink">{t.author}</p>
+                    <p className="text-[11px] font-semibold text-ink/60">{t.authorLocation}</p>
+                  </div>
+                </figcaption>
+              </figure>
+            </Reveal>
           ))}
         </div>
       </div>

@@ -38,6 +38,7 @@ import { Route as GuidesIaApprentissageEnfantRouteImport } from './routes/guides
 import { Route as GuidesEnfantAgiteConcentrationRouteImport } from './routes/guides.enfant-agite-concentration'
 import { Route as GuidesEducationEnfantsAfriqueFrancophoneRouteImport } from './routes/guides.education-enfants-afrique-francophone'
 import { Route as GuidesDefisPourAdolescentsRouteImport } from './routes/guides.defis-pour-adolescents'
+import { Route as GuidesDecrochageScolaireConfianceEnfantRouteImport } from './routes/guides.decrochage-scolaire-confiance-enfant'
 import { Route as GuidesActivitesEducativesEnfantRouteImport } from './routes/guides.activites-educatives-enfant'
 import { Route as AdminSupervisorsRouteImport } from './routes/admin.supervisors'
 import { Route as AdminProductsRouteImport } from './routes/admin.products'
@@ -199,6 +200,12 @@ const GuidesDefisPourAdolescentsRoute =
     path: '/defis-pour-adolescents',
     getParentRoute: () => GuidesRoute,
   } as any)
+const GuidesDecrochageScolaireConfianceEnfantRoute =
+  GuidesDecrochageScolaireConfianceEnfantRouteImport.update({
+    id: '/decrochage-scolaire-confiance-enfant',
+    path: '/decrochage-scolaire-confiance-enfant',
+    getParentRoute: () => GuidesRoute,
+  } as any)
 const GuidesActivitesEducativesEnfantRoute =
   GuidesActivitesEducativesEnfantRouteImport.update({
     id: '/activites-educatives-enfant',
@@ -270,6 +277,7 @@ export interface FileRoutesByFullPath {
   '/admin/products': typeof AdminProductsRoute
   '/admin/supervisors': typeof AdminSupervisorsRoute
   '/guides/activites-educatives-enfant': typeof GuidesActivitesEducativesEnfantRoute
+  '/guides/decrochage-scolaire-confiance-enfant': typeof GuidesDecrochageScolaireConfianceEnfantRoute
   '/guides/defis-pour-adolescents': typeof GuidesDefisPourAdolescentsRoute
   '/guides/education-enfants-afrique-francophone': typeof GuidesEducationEnfantsAfriqueFrancophoneRoute
   '/guides/enfant-agite-concentration': typeof GuidesEnfantAgiteConcentrationRoute
@@ -306,6 +314,7 @@ export interface FileRoutesByTo {
   '/admin/products': typeof AdminProductsRoute
   '/admin/supervisors': typeof AdminSupervisorsRoute
   '/guides/activites-educatives-enfant': typeof GuidesActivitesEducativesEnfantRoute
+  '/guides/decrochage-scolaire-confiance-enfant': typeof GuidesDecrochageScolaireConfianceEnfantRoute
   '/guides/defis-pour-adolescents': typeof GuidesDefisPourAdolescentsRoute
   '/guides/education-enfants-afrique-francophone': typeof GuidesEducationEnfantsAfriqueFrancophoneRoute
   '/guides/enfant-agite-concentration': typeof GuidesEnfantAgiteConcentrationRoute
@@ -347,6 +356,7 @@ export interface FileRoutesById {
   '/admin/products': typeof AdminProductsRoute
   '/admin/supervisors': typeof AdminSupervisorsRoute
   '/guides/activites-educatives-enfant': typeof GuidesActivitesEducativesEnfantRoute
+  '/guides/decrochage-scolaire-confiance-enfant': typeof GuidesDecrochageScolaireConfianceEnfantRoute
   '/guides/defis-pour-adolescents': typeof GuidesDefisPourAdolescentsRoute
   '/guides/education-enfants-afrique-francophone': typeof GuidesEducationEnfantsAfriqueFrancophoneRoute
   '/guides/enfant-agite-concentration': typeof GuidesEnfantAgiteConcentrationRoute
@@ -389,6 +399,7 @@ export interface FileRouteTypes {
     | '/admin/products'
     | '/admin/supervisors'
     | '/guides/activites-educatives-enfant'
+    | '/guides/decrochage-scolaire-confiance-enfant'
     | '/guides/defis-pour-adolescents'
     | '/guides/education-enfants-afrique-francophone'
     | '/guides/enfant-agite-concentration'
@@ -425,6 +436,7 @@ export interface FileRouteTypes {
     | '/admin/products'
     | '/admin/supervisors'
     | '/guides/activites-educatives-enfant'
+    | '/guides/decrochage-scolaire-confiance-enfant'
     | '/guides/defis-pour-adolescents'
     | '/guides/education-enfants-afrique-francophone'
     | '/guides/enfant-agite-concentration'
@@ -465,6 +477,7 @@ export interface FileRouteTypes {
     | '/admin/products'
     | '/admin/supervisors'
     | '/guides/activites-educatives-enfant'
+    | '/guides/decrochage-scolaire-confiance-enfant'
     | '/guides/defis-pour-adolescents'
     | '/guides/education-enfants-afrique-francophone'
     | '/guides/enfant-agite-concentration'
@@ -712,6 +725,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof GuidesDefisPourAdolescentsRouteImport
       parentRoute: typeof GuidesRoute
     }
+    '/guides/decrochage-scolaire-confiance-enfant': {
+      id: '/guides/decrochage-scolaire-confiance-enfant'
+      path: '/decrochage-scolaire-confiance-enfant'
+      fullPath: '/guides/decrochage-scolaire-confiance-enfant'
+      preLoaderRoute: typeof GuidesDecrochageScolaireConfianceEnfantRouteImport
+      parentRoute: typeof GuidesRoute
+    }
     '/guides/activites-educatives-enfant': {
       id: '/guides/activites-educatives-enfant'
       path: '/activites-educatives-enfant'
@@ -794,6 +814,7 @@ const AdminRouteWithChildren = AdminRoute._addFileChildren(AdminRouteChildren)
 
 interface GuidesRouteChildren {
   GuidesActivitesEducativesEnfantRoute: typeof GuidesActivitesEducativesEnfantRoute
+  GuidesDecrochageScolaireConfianceEnfantRoute: typeof GuidesDecrochageScolaireConfianceEnfantRoute
   GuidesDefisPourAdolescentsRoute: typeof GuidesDefisPourAdolescentsRoute
   GuidesEducationEnfantsAfriqueFrancophoneRoute: typeof GuidesEducationEnfantsAfriqueFrancophoneRoute
   GuidesEnfantAgiteConcentrationRoute: typeof GuidesEnfantAgiteConcentrationRoute
@@ -805,6 +826,8 @@ interface GuidesRouteChildren {
 
 const GuidesRouteChildren: GuidesRouteChildren = {
   GuidesActivitesEducativesEnfantRoute: GuidesActivitesEducativesEnfantRoute,
+  GuidesDecrochageScolaireConfianceEnfantRoute:
+    GuidesDecrochageScolaireConfianceEnfantRoute,
   GuidesDefisPourAdolescentsRoute: GuidesDefisPourAdolescentsRoute,
   GuidesEducationEnfantsAfriqueFrancophoneRoute:
     GuidesEducationEnfantsAfriqueFrancophoneRoute,
