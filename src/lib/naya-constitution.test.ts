@@ -5,12 +5,19 @@ import {
   buildLearnedRuleText,
   buildDecisionDraft,
   buildLearnings,
+  computeAutoAckRules,
+  clampAutoAckThresholds,
+  ruleKeyOf,
+  buildRuleJournal,
   type AuditRow,
+  type DecidedAuditRow,
+  type LoupDecision,
 } from "@/lib/naya-constitution.functions";
 
 // ============================================================================
-// Naya 3.0 « Le Loup » — chantier 3 (C3 Tests)
-// Agrégation des audits, seuils de récurrence, rédaction LEARNED_RULES.
+// Naya 3.0 « Le Loup » — chantier 3 (C3 Tests) + Décision #56
+// Agrégation des audits, seuils de récurrence, rédaction LEARNED_RULES,
+// auto-acquittement par seuil et journal des décisions (validation hybride).
 // Fonctions pures uniquement — aucun mock IA ni base de données.
 // ============================================================================
 
@@ -20,6 +27,22 @@ function auditRow(overrides: Partial<AuditRow>): AuditRow {
     child_id: "child-1",
     violations: null,
     created_at: "2026-08-06T00:00:00Z",
+    ...overrides,
+  };
+}
+
+function decidedRow(overrides: Partial<DecidedAuditRow>): DecidedAuditRow {
+  return {
+    id: "audit-1",
+    kind: "challenge_single",
+    child_id: "child-1",
+    violations: null,
+    context: { domain: "spatial" },
+    created_at: "2026-08-06T00:00:00Z",
+    decision: "auto" as LoupDecision,
+    decision_at: "2026-08-06T12:00:00Z",
+    decision_by: "système",
+    decision_note: null,
     ...overrides,
   };
 }
@@ -152,5 +175,74 @@ describe("rédaction LEARNED_RULES (C3.2)", () => {
     expect(learnedRulesBlock).toContain("## LEARNED_RULES");
     expect(learnedRulesBlock).toContain("LEARNED_RULE 2.");
     expect(decisionDrafts).toContain("Règle apprise du Loup");
+  });
+});
+
+describe("auto-acquittement par seuil (Décision #56)", () => {
+  const aggregates = [
+    { rule: "a", kind: "challenge_single", domain: "general", severity: "mineur" as const, count: 6, childCount: 4, sampleDetails: [], sampleSuggestions: [] },
+    { rule: "b", kind: "challenge_single", domain: "general", severity: "majeur" as const, count: 5, childCount: 3, sampleDetails: [], sampleSuggestions: [] },
+    { rule: "c", kind: "challenge_single", domain: "general", severity: "majeur" as const, count: 5, childCount: 2, sampleDetails: [], sampleSuggestions: [] },
+  ];
+
+  it("ne franchit le seuil auto que sur occurrences ET enfants distincts élevés (5/3)", () => {
+    const auto = computeAutoAckRules(aggregates, { minCount: 5, minChildren: 3 });
+    expect(auto.map((r) => r.rule)).toEqual(["a", "b"]);
+  });
+
+  it("sous le seuil auto (3/2), la même règle reste une simple suggestion", () => {
+    const auto = computeAutoAckRules(aggregates, { minCount: 3, minChildren: 2 });
+    expect(auto.map((r) => r.rule)).toEqual(["a", "b", "c"]);
+  });
+
+  it("clampAutoAckThresholds borne les seuils auto au-dessus des seuils de suggestion", () => {
+    const clamped = clampAutoAckThresholds({ minCount: 5, minChildren: 3 }, { minCount: 3, minChildren: 2 });
+    expect(clamped).toEqual({ minCount: 5, minChildren: 3 });
+  });
+
+  it("ruleKeyOf produit la clé canonique kind|domaine|règle", () => {
+    expect(ruleKeyOf("challenge_single", "spatial", "challenge.no_markdown")).toBe(
+      "challenge_single|spatial|challenge.no_markdown"
+    );
+  });
+});
+
+describe("buildRuleJournal (journal des décisions, Décision #56)", () => {
+  const violation = { rule: "challenge.no_markdown", severity: "majeur" as const, detail: "Markdown détecté." };
+
+  it("agrège les décisions par règle avec enfants distincts", () => {
+    const rows: DecidedAuditRow[] = [
+      decidedRow({ id: "a1", child_id: "c1", decision: "auto", decision_by: "système", violations: [violation] }),
+      decidedRow({ id: "a2", child_id: "c1", decision: "auto", decision_by: "système", violations: [violation] }),
+      decidedRow({ id: "a3", child_id: "c2", decision: "auto", decision_by: "système", violations: [violation] }),
+    ];
+    const journal = buildRuleJournal(rows);
+    expect(journal).toHaveLength(1);
+    expect(journal[0].ruleKey).toBe("challenge_single|spatial|challenge.no_markdown");
+    expect(journal[0].count).toBe(3);
+    expect(journal[0].childCount).toBe(2);
+    expect(journal[0].decision).toBe("auto");
+  });
+
+  it("la décision la plus récente prime et son auteur est conservé", () => {
+    const rows: DecidedAuditRow[] = [
+      decidedRow({ id: "a1", decision: "auto", decision_at: "2026-08-06T10:00:00Z", decision_by: "système", violations: [violation] }),
+      decidedRow({ id: "a2", decision: "valide", decision_at: "2026-08-06T14:00:00Z", decision_by: "admin@genizio.com", violations: [violation] }),
+    ];
+    const journal = buildRuleJournal(rows);
+    expect(journal[0].decision).toBe("valide");
+    expect(journal[0].decidedAt).toBe("2026-08-06T14:00:00Z");
+    expect(journal[0].decidedBy).toBe("admin@genizio.com");
+  });
+
+  it("ignore les audits encore en attente et porte le commentaire", () => {
+    const rows: DecidedAuditRow[] = [
+      decidedRow({ id: "a1", decision: "en_attente", violations: [violation] }),
+      decidedRow({ id: "a2", decision: "rejete", decision_note: "Faux positif : matériau local réel.", violations: [violation] }),
+    ];
+    const journal = buildRuleJournal(rows);
+    expect(journal).toHaveLength(1);
+    expect(journal[0].decision).toBe("rejete");
+    expect(journal[0].note).toBe("Faux positif : matériau local réel.");
   });
 });

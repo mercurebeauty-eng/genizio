@@ -23,6 +23,12 @@ import {
   ProgressionHealthResponse,
 } from "@/lib/admin-os.functions";
 import { NayaTelemetryResponse } from "@/lib/naya-telemetry";
+import {
+  decideLoupSuggestionsAdmin,
+  getConstitutionSuggestionsAdmin,
+  runLoupAutoAcknowledgementAdmin,
+  type ConstitutionSuggestionsResponse,
+} from "@/lib/naya-constitution.functions";
 import { AdminNavTabBar, AdminTab } from "@/components/admin/AdminNavTabBar";
 import { AdminExecutiveTab } from "@/components/admin/AdminExecutiveTab";
 import { AdminTalentsCitiesTab } from "@/components/admin/AdminTalentsCitiesTab";
@@ -52,6 +58,8 @@ function AdminIndexPage() {
     null,
   );
   const [commerceData, setCommerceData] = useState<CommercePassportsDataResponse | null>(null);
+  const [loupConstitution, setLoupConstitution] = useState<ConstitutionSuggestionsResponse | null>(null);
+  const [decidingRuleKeys, setDecidingRuleKeys] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
 
@@ -64,6 +72,9 @@ function AdminIndexPage() {
   const toggleUnlockFn = useServerFn(togglePassportUnlock);
   const updateOrderStatusFn = useServerFn(updateOrderStatus);
   const updateExtraSlotsFn = useServerFn(updateExtraProfileSlotsAdmin);
+  const runLoupAutoAckFn = useServerFn(runLoupAutoAcknowledgementAdmin);
+  const getConstitutionFn = useServerFn(getConstitutionSuggestionsAdmin);
+  const decideLoupFn = useServerFn(decideLoupSuggestionsAdmin);
 
   const loadData = async (showMainLoader = false) => {
     if (showMainLoader) setLoading(true);
@@ -110,6 +121,20 @@ function AdminIndexPage() {
       if (aiStatus) setAiProviderStatus(aiStatus);
       if (progressionData) setProgressionHealth(progressionData);
       if (commData) setCommerceData(commData);
+
+      // « Le Loup qui apprend » (Décision #56) : l'auto-acquittement paresseux
+      // par seuil de confiance s'exécute AVANT la lecture des suggestions, pour
+      // que le GET reflète les règles déjà décidées automatiquement. L'étape
+      // est idempotente : une seconde exécution ne retrouve plus rien à faire.
+      await runLoupAutoAckFn({ data: undefined, ...opts }).catch((err) => {
+        console.error("loupAutoAck error", err);
+        return null;
+      });
+      const loupConstitution = await getConstitutionFn({ data: undefined, ...opts }).catch((err) => {
+        console.error("loupConstitution error", err);
+        return null;
+      });
+      if (loupConstitution) setLoupConstitution(loupConstitution);
     } catch (err: any) {
       console.error("Error fetching executive data:", err);
       toast.error("Erreur lors du chargement des données Admin OS.");
@@ -170,6 +195,27 @@ function AdminIndexPage() {
       console.error("Erreur lors de la mise à jour de la commande:", err);
       toast.error(err?.message || "Erreur lors de la mise à jour de la commande.");
       throw err;
+    }
+  };
+
+  const handleDecideSuggestion = async (
+    ruleKey: string,
+    decision: "valide" | "a_revoir" | "rejete",
+  ) => {
+    setDecidingRuleKeys((prev) => (prev.includes(ruleKey) ? prev : [...prev, ruleKey]));
+    try {
+      const res = await decideLoupFn({ data: { decisions: [{ ruleKey, decision }] } });
+      toast.success(
+        res.decided > 0
+          ? "Décision enregistrée — la règle sort des suggestions et passe au journal."
+          : "Aucun audit en attente ne correspond à cette règle.",
+      );
+      await loadData(false);
+    } catch (err: any) {
+      console.error("Erreur lors de la décision du Loup:", err);
+      toast.error(err?.message || "Erreur lors de l'enregistrement de la décision.");
+    } finally {
+      setDecidingRuleKeys((prev) => prev.filter((k) => k !== ruleKey));
     }
   };
 
@@ -253,6 +299,9 @@ function AdminIndexPage() {
             progressionHealth={progressionHealth}
             isRefreshing={isRefreshing}
             onRefresh={() => loadData(false)}
+            constitution={loupConstitution}
+            decidingRuleKeys={decidingRuleKeys}
+            onDecideSuggestion={handleDecideSuggestion}
           />
         )}
 

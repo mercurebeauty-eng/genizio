@@ -551,6 +551,10 @@ export type Database = {
           child_id: string | null
           context: Json
           created_at: string
+          decision: string
+          decision_at: string | null
+          decision_by: string | null
+          decision_note: string | null
           estimated_cost: number | null
           id: string
           kind: string
@@ -566,6 +570,10 @@ export type Database = {
           child_id?: string | null
           context?: Json
           created_at?: string
+          decision?: string
+          decision_at?: string | null
+          decision_by?: string | null
+          decision_note?: string | null
           estimated_cost?: number | null
           id?: string
           kind: string
@@ -581,6 +589,10 @@ export type Database = {
           child_id?: string | null
           context?: Json
           created_at?: string
+          decision?: string
+          decision_at?: string | null
+          decision_by?: string | null
+          decision_note?: string | null
           estimated_cost?: number | null
           id?: string
           kind?: string
