@@ -187,6 +187,65 @@ export function breadcrumbJsonLd(items: { name: string; path: string }[]) {
 }
 
 /**
+ * Un avis de parent publié sur la landing. `reviewBody` doit être un vrai
+ * retour client (jamais inventé) : c'est le format que Google et les LLM
+ * reprennent le plus facilement, et une citation fabriquée est un risque de
+ * crédibilité réel face à un partenaire qui vérifie (cf. le commentaire du
+ * hero de la landing, qui a déjà retiré une preuve sociale inventée).
+ */
+export type ParentReview = {
+  /** Prénom du parent (ou pseudonyme). Ne jamais publier un nom complet. */
+  author: string;
+  /** Ville / pays d'origine — renforce la crédibilité locale. */
+  authorLocation: string;
+  /** Note de 1 à 5. */
+  rating: number;
+  /** Court titre de l'avis (ex. « Un vrai changement pour mon fils »). */
+  headline: string;
+  /** Corps de l'avis, 1 à 3 phrases autonomes. */
+  reviewBody: string;
+};
+
+/**
+ * Construit le schéma `Review` + `aggregateRating` sur la `SoftwareApplication`
+ * Génizio. Injecté en JSON-LD dans le `<head>` de la landing : c'est ce qui rend
+ * les avis citables par les moteurs de réponse (AEO) et les assistants IA (GEO).
+ */
+export function reviewsJsonLd(reviews: ParentReview[]) {
+  return {
+    "@context": "https://schema.org",
+    "@type": "SoftwareApplication",
+    "@id": `${SITE_URL}/#software-reviews`,
+    name: SITE_NAME,
+    applicationCategory: "EducationalApplication",
+    inLanguage: "fr-FR",
+    publisher: { "@id": `${SITE_URL}/#organization` },
+    aggregateRating: {
+      "@type": "AggregateRating",
+      ratingValue: (() => {
+        if (reviews.length === 0) return "0";
+        const avg = reviews.reduce((sum, r) => sum + r.rating, 0) / reviews.length;
+        return avg.toFixed(1);
+      })(),
+      bestRating: 5,
+      worstRating: 1,
+      reviewCount: reviews.length,
+    },
+    review: reviews.map((r) => ({
+      "@type": "Review",
+      reviewRating: { "@type": "Rating", ratingValue: r.rating, bestRating: 5 },
+      author: {
+        "@type": "Person",
+        name: r.author,
+        address: { "@type": "PostalAddress", addressLocality: r.authorLocation },
+      },
+      headline: r.headline,
+      reviewBody: r.reviewBody,
+    })),
+  };
+}
+
+/**
  * HowTo — les moteurs de réponse et les LLM extraient plus facilement une
  * procédure explicite (positions numérotées) qu'un paragraphe narratif.
  * Utilisé sur la landing pour la méthode en trois actes, dont les étapes sont

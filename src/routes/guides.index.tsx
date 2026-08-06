@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { ArrowRight, Compass, Puzzle, Rocket, Brain, Gem, Globe2, Bot } from "lucide-react";
+import { ArrowRight, Compass, Puzzle, Rocket, Brain, Gem, Globe2, Bot, HeartPulse } from "lucide-react";
 import { pageMeta, jsonLdScript, breadcrumbJsonLd, absoluteUrl } from "@/lib/seo";
 
 const GUIDES = [
@@ -51,6 +51,13 @@ const GUIDES = [
     eyebrow: "IA & apprentissage",
     title: "Comment utiliser l'IA pour aider son enfant à apprendre",
     desc: "Ce qu'une IA bien conçue apporte réellement, les risques d'un usage non cadré, et les principes pour l'utiliser sans danger.",
+  },
+  {
+    to: "/guides/decrochage-scolaire-confiance-enfant",
+    Icon: HeartPulse,
+    eyebrow: "Confiance & bien-être",
+    title: "Décrochage scolaire : la confiance se joue avant l'école",
+    desc: "Pourquoi le décrochage commence dès l'enfance, comment repérer les signaux de mal-être, et ce que les parents peuvent faire à la maison.",
   },
 ];
 

@@ -1,5 +1,5 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { supabase } from "@/integrations/supabase/client";
 import { useSession } from "@/hooks/use-session";
@@ -7,6 +7,10 @@ import { getChildAISynthesis, getPassportLetter, BADGE_CATALOG } from "@/lib/cha
 import { getChildGuild, getTalentAffinities } from "@/lib/guilds";
 import { TalentRadarChart } from "@/components/TalentRadarChart";
 import { MarkdownContent } from "@/components/ui/markdown-content";
+import { pdf } from "@react-pdf/renderer";
+import { PassportPdf } from "@/components/passport/PassportPdf";
+import { passportFileName } from "@/lib/passport-pdf";
+import { toast } from "sonner";
 import {
   Award,
   BrainCircuit,
@@ -21,6 +25,7 @@ import {
   Target,
   Medal,
   Rocket,
+  Download,
 } from "lucide-react";
 import { GenizioLoader } from "@/components/GenizioLoader";
 import { TALENT_KEY_LABELS } from "@/lib/talent-buckets";
@@ -98,10 +103,7 @@ function PassportPrintPage() {
   const [fetchingSynthesis, setFetchingSynthesis] = useState(false);
   const [letter, setLetter] = useState("");
   const [fetchingLetter, setFetchingLetter] = useState(false);
-  const [preparingPrint, setPreparingPrint] = useState(false);
-  // Anti-double : le dialogue d'impression ne doit s'ouvrir qu'une fois par chargement de
-  // page, que ce soit via le déclenchement automatique ou le bouton manuel.
-  const printFiredRef = useRef(false);
+  const [downloading, setDownloading] = useState(false);
 
   const fetchSynthesis = useServerFn(getChildAISynthesis);
   const fetchLetter = useServerFn(getPassportLetter);
@@ -169,54 +171,63 @@ function PassportPrintPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [session, profileId, child?.pdf_unlocked]);
 
-  // Ouverture automatique du dialogue d'impression une fois le document réellement prêt :
-  // polices chargées (document.fonts.ready) et photos de preuve décodées (img.decode()).
-  // Un timer fixe de 1,5 s sortait des PDF aux cadres photo vides sur les appareils
-  // Android d'entrée de gamme (images Storage encore en cours de chargement), et l'ancienne
-  // condition (challenges.length > 0 && synthesis) empêchait l'ouverture pour un Passeport
-  // sans défi terminé alors que l'UI l'annonçait. Filet de sécurité : 8 s max avant ouverture.
-  useEffect(() => {
-    if (
-      !child?.pdf_unlocked ||
-      fetching ||
-      fetchingSynthesis ||
-      fetchingLetter ||
-      printFiredRef.current
-    ) {
-      return;
+  // Téléchargement natif : le Passeport est généré en vrai PDF vectoriel A4 par
+  // @react-pdf/renderer (texte réel, pas un scan navigateur), puis téléchargé
+  // directement — même rendu sur mobile et desktop. Les photos de preuve sont
+  // converties en data-URL d'abord pour éviter tout souci CORS au moteur PDF.
+  const handleDownloadPdf = async () => {
+    if (!child) return;
+    setDownloading(true);
+    try {
+      const proofImages: Record<string, string> = {};
+      await Promise.all(
+        challenges.map(async (c) => {
+          if (!c.proof_image_url) return;
+          try {
+            const res = await fetch(c.proof_image_url);
+            if (!res.ok) return;
+            const blob = await res.blob();
+            proofImages[c.id] = await new Promise<string>((resolve, reject) => {
+              const reader = new FileReader();
+              reader.onloadend = () => resolve(reader.result as string);
+              reader.onerror = reject;
+              reader.readAsDataURL(blob);
+            });
+          } catch {
+            // Une photo illisible ne bloque pas le téléchargement du document.
+          }
+        }),
+      );
+
+      const blob = await pdf(
+        <PassportPdf
+          data={{
+            child,
+            challenges,
+            earnedBadges,
+            synthesis,
+            letter,
+            proofImages,
+          }}
+        />,
+      ).toBlob();
+
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = passportFileName(child.name);
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+      toast.success(`Passeport d'Excellence téléchargé pour ${child.name}.`);
+    } catch (err) {
+      console.error("Erreur génération du PDF:", err);
+      toast.error("Impossible de générer le PDF. Réessayez dans un instant.");
+    } finally {
+      setDownloading(false);
     }
-    setPreparingPrint(true);
-
-    let cancelled = false;
-    const fire = () => {
-      if (cancelled || printFiredRef.current) return;
-      printFiredRef.current = true;
-      window.print();
-      setPreparingPrint(false);
-    };
-
-    const waitForReadiness = async () => {
-      try {
-        await Promise.race([
-          (async () => {
-            await document.fonts.ready;
-            await Promise.all(
-              Array.from(document.images).map((img) => img.decode().catch(() => undefined)),
-            );
-          })(),
-          new Promise((resolve) => setTimeout(resolve, 8000)),
-        ]);
-      } catch {
-        // Fontes ou images non décodables : on imprime quand même plutôt que de bloquer.
-      }
-      if (!cancelled) fire();
-    };
-
-    void waitForReadiness();
-    return () => {
-      cancelled = true;
-    };
-  }, [child, fetching, fetchingSynthesis, fetchingLetter]);
+  };
 
   if (loading || !session || fetching) {
     return (
@@ -290,7 +301,7 @@ function PassportPrintPage() {
   return (
     <div className="min-h-dvh bg-stone-100 py-10 print:py-0 print:bg-white text-ink">
       {/* Print Controls / Alert for Screen View */}
-      <div className="max-w-[21cm] mx-auto mb-8 px-6 py-4 bg-white border border-ink/10 rounded-2xl flex items-center justify-between shadow-md print:hidden">
+      <div className="w-full mx-auto mb-8 px-6 py-4 bg-white border border-ink/10 rounded-2xl flex flex-wrap items-center justify-between gap-4 shadow-md print:hidden max-w-full lg:max-w-[21cm]">
         <div className="flex items-center gap-3">
           <Link
             to="/profiles/$profileId/portfolio"
@@ -302,27 +313,35 @@ function PassportPrintPage() {
           <div>
             <h1 className="font-bold text-sm">Passeport d'Excellence • {child.name}</h1>
             <p className="text-xs text-ink/60 font-semibold">
-              {preparingPrint
-                ? "Préparation du document (photos, polices)… le dialogue d'impression va s'ouvrir automatiquement."
-                : "Le dialogue d'impression s'ouvre automatiquement ; sinon, utilisez le bouton ci-contre."}
+              Le document se télécharge en PDF A4, directement depuis votre appareil.
             </p>
           </div>
         </div>
-        <button
-          onClick={() => {
-            printFiredRef.current = true;
-            setPreparingPrint(false);
-            window.print();
-          }}
-          className="press-brand inline-flex items-center gap-2 rounded-xl bg-brand px-4 py-2 text-xs font-bold text-white cursor-pointer"
-        >
-          <Printer className="size-4" />
-          Imprimer / Enregistrer en PDF
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={handleDownloadPdf}
+            disabled={downloading}
+            className="press-brand inline-flex items-center gap-2 rounded-xl bg-brand px-4 py-2 text-xs font-bold text-white cursor-pointer disabled:opacity-60"
+          >
+            <Download className="size-4" />
+            {downloading ? "Génération…" : "Télécharger le PDF"}
+          </button>
+          <button
+            onClick={() => window.print()}
+            className="hidden sm:inline-flex items-center gap-2 rounded-xl border border-ink/10 px-4 py-2 text-xs font-bold text-ink/70 hover:bg-stone-100 transition-all cursor-pointer"
+            aria-label="Imprimer (secours)"
+          >
+            <Printer className="size-4" />
+            Imprimer
+          </button>
+        </div>
       </div>
 
-      {/* 📄 PDF CONTENT PAGE CONTAINER */}
-      <div className="passport-document max-w-[21cm] mx-auto bg-white border border-ink/10 print:border-0 shadow-2xl print:shadow-none p-[1.5cm] min-h-[29.7cm] flex flex-col justify-between relative overflow-hidden">
+      {/* 📄 PDF CONTENT PAGE CONTAINER
+          En vue écran : plein largeur (aucun débordement horizontal sur mobile).
+          Les dimensions A4 (21 cm / 29,7 cm, marges 1,5 cm) ne s'appliquent que
+          sous @media print — l'export PDF professionnel passe par @react-pdf. */}
+      <div className="passport-document w-full mx-auto bg-white border border-ink/10 print:border-0 shadow-2xl print:shadow-none px-4 py-8 sm:px-8 print:p-[1.5cm] min-h-dvh print:min-h-[29.7cm] flex flex-col print:justify-between relative overflow-hidden max-w-full lg:max-w-[21cm] print:max-w-[21cm]">
         {/* Style block for print-specific tweaks */}
         <style
           dangerouslySetInnerHTML={{
