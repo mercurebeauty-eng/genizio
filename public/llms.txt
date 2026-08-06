@@ -2,6 +2,8 @@
 
 > Révéler les talents naturels de votre enfant à travers des défis concrets à faire à la maison, fondés sur les 9 intelligences de Howard Gardner. Conçu pour les familles d'Afrique francophone et la diaspora. L'IA Naya génère des défis, le parent photographie la réalisation, et la carte des talents se construit preuve après preuve.
 
+<!-- à jour au 6 août 2026 -->
+
 ## Essentiel
 
 - [Accueil](https://www.genizio.com/) : présentation de Génizio, simulateur de carte des talents, tarifs et FAQ.
