@@ -1534,3 +1534,18 @@ px tsc --noEmit.
 **Alternatives rejetées** : *vrai `pg_cron` quotidien* (casse la convention documentée du projet pour un gain nul sur un panneau consulté par l'admin lui-même — l'étape paresseuse couvre le cas) ; *table dédiée `constitution_suggestions`* (confirmé #54 : le calcul live + `processed`/`decision` suffit) ; *acquittement binaire seul* (l'ancien `acknowledge…` ne permettait pas de distinguer intégrée/à revoir/rejetée — le journal serait muet et le pouvoir de décision demandé par l'utilisateur absent).
 
 **Vérifié** : `tsc --noEmit` propre, suite complète **388 tests verte** (dont 7 nouveaux Décision #56), `npm run build` OK, migration appliquée à la base distante (dry-run puis push). Travaillé sur `feat/naya-le-loup` (à la suite des chantiers 2-4).
+
+## Décision #57 : Email de contact mis en évidence dans les pages — passage à `serviceclient@genizio.com`
+
+**Contexte** : le mail de contact mis en évidence dans les pages légales était l'email personnel historique de l'éditeur, `traorecheikkh@gmail.com` (défini en D-01 lors de la création des pages légales). L'utilisateur a demandé son remplacement par une adresse de service : **`serviceclient@genizio.com`** — le contact opérationnel devient une adresse dédiée, l'identité juridique de l'éditeur (nom et statut) restant inchangée dans les mentions légales.
+
+**Ce qui a été fait** : remplacement de **toutes** les occurrences (liens `mailto:` **et** texte affiché, `className="text-brand underline"`) dans les deux pages concernées :
+- `src/routes/mentions-legales.tsx` — 4 occurrences (section « Éditeur du site » + section « Contact ») ;
+- `src/routes/privacy.tsx` — 4 occurrences (section « 1. Qui sommes-nous ? » + section DPO/contact).
+Soit 8 occurrences au total. Un balayage exhaustif de `src/routes/` a confirmé qu'aucun autre email n'est mis en évidence côté pages (les seuls autres emails du dépôt sont des placeholders de formulaires ou des emails back-end, hors périmètre).
+
+**Pourquoi cette forme** : une adresse de service plutôt que personnelle pour tout contact visible du public — c'est l'adresse que les parents verront sur les pages légales et qu'ils contacteront ; l'email personnel reste tracé dans l'historique des décisions (D-01) sans être édité (un journal de décisions ne se réécrit pas).
+
+**Hors périmètre (à trancher séparément si besoin)** : les emails back-end non affichés dans les pages — expéditeur des emails de bienvenue `hello@genizio.com` (`welcome-email.functions.ts`), emails sponsor par défaut `b2b@genizio.com` (`campaigns.functions.ts`) et `admin@genizio.com` (`seasons.functions.ts`), liste admin `ADMIN_EMAILS` (env). Aucun n'est « mis en évidence dans les pages ».
+
+**Vérifié** : `tsc --noEmit` propre, plus aucune occurrence de `traorecheikkh@gmail.com` dans `src/`, 8 occurrences de `serviceclient@genizio.com` en place. Travaillé sur `feat/contact-email-serviceclient` (créée depuis `origin/main`).

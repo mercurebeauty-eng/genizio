@@ -85,8 +85,8 @@ function PrivacyPage() {
               mentions légales
             </Link>
             ), responsable du traitement des données décrites ci-dessous. Contact :{" "}
-            <a href="mailto:traorecheikkh@gmail.com" className="text-brand underline">
-              traorecheikkh@gmail.com
+            <a href="mailto:serviceclient@genizio.com" className="text-brand underline">
+              serviceclient@genizio.com
             </a>
             .
           </p>
@@ -195,8 +195,8 @@ function PrivacyPage() {
           <p>
             Pour toute autre demande (rectification, limitation du traitement, opposition),
             contactez{" "}
-            <a href="mailto:traorecheikkh@gmail.com" className="text-brand underline">
-              traorecheikkh@gmail.com
+            <a href="mailto:serviceclient@genizio.com" className="text-brand underline">
+              serviceclient@genizio.com
             </a>
             .
           </p>
