@@ -1,5 +1,5 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { supabase } from "@/integrations/supabase/client";
 import { useSession } from "@/hooks/use-session";
@@ -104,6 +104,10 @@ function PassportPrintPage() {
   const [letter, setLetter] = useState("");
   const [fetchingLetter, setFetchingLetter] = useState(false);
   const [downloading, setDownloading] = useState(false);
+  // Préparation de l'impression : le dialogue ne doit s'ouvrir qu'une fois par chargement de
+  // page, que ce soit via le déclenchement automatique ou le bouton manuel.
+  const [preparingPrint, setPreparingPrint] = useState(false);
+  const printFiredRef = useRef(false);
 
   const fetchSynthesis = useServerFn(getChildAISynthesis);
   const fetchLetter = useServerFn(getPassportLetter);
@@ -229,6 +233,56 @@ function PassportPrintPage() {
     }
   };
 
+  // Ouverture automatique du dialogue d'impression (secours navigateur) une fois le
+  // document réellement prêt : polices chargées (document.fonts.ready) et photos de preuve
+  // décodées (img.decode()). Un timer fixe de 1,5 s sortait des PDF aux cadres photo vides
+  // sur les appareils Android d'entrée de gamme (images Storage encore en cours de
+  // chargement), et l'ancienne condition (challenges.length > 0 && synthesis) empêchait
+  // l'ouverture pour un Passeport sans défi terminé alors que l'UI l'annonçait. Filet de
+  // sécurité : 8 s max avant ouverture.
+  useEffect(() => {
+    if (
+      !child?.pdf_unlocked ||
+      fetching ||
+      fetchingSynthesis ||
+      fetchingLetter ||
+      printFiredRef.current
+    ) {
+      return;
+    }
+    setPreparingPrint(true);
+
+    let cancelled = false;
+    const fire = () => {
+      if (cancelled || printFiredRef.current) return;
+      printFiredRef.current = true;
+      window.print();
+      setPreparingPrint(false);
+    };
+
+    const waitForReadiness = async () => {
+      try {
+        await Promise.race([
+          (async () => {
+            await document.fonts.ready;
+            await Promise.all(
+              Array.from(document.images).map((img) => img.decode().catch(() => undefined)),
+            );
+          })(),
+          new Promise((resolve) => setTimeout(resolve, 8000)),
+        ]);
+      } catch {
+        // Fontes ou images non décodables : on imprime quand même plutôt que de bloquer.
+      }
+      if (!cancelled) fire();
+    };
+
+    void waitForReadiness();
+    return () => {
+      cancelled = true;
+    };
+  }, [child, fetching, fetchingSynthesis, fetchingLetter]);
+
   if (loading || !session || fetching) {
     return (
       <div className="grid min-h-dvh place-items-center bg-stone-50">
@@ -313,7 +367,9 @@ function PassportPrintPage() {
           <div>
             <h1 className="font-bold text-sm">Passeport d'Excellence • {child.name}</h1>
             <p className="text-xs text-ink/60 font-semibold">
-              Le document se télécharge en PDF A4, directement depuis votre appareil.
+              {preparingPrint
+                ? "Préparation du document (photos, polices)…"
+                : "Le document se télécharge en PDF A4, directement depuis votre appareil."}
             </p>
           </div>
         </div>
@@ -327,7 +383,11 @@ function PassportPrintPage() {
             {downloading ? "Génération…" : "Télécharger le PDF"}
           </button>
           <button
-            onClick={() => window.print()}
+            onClick={() => {
+              printFiredRef.current = true;
+              setPreparingPrint(false);
+              window.print();
+            }}
             className="hidden sm:inline-flex items-center gap-2 rounded-xl border border-ink/10 px-4 py-2 text-xs font-bold text-ink/70 hover:bg-stone-100 transition-all cursor-pointer"
             aria-label="Imprimer (secours)"
           >
@@ -341,7 +401,7 @@ function PassportPrintPage() {
           En vue écran : plein largeur (aucun débordement horizontal sur mobile).
           Les dimensions A4 (21 cm / 29,7 cm, marges 1,5 cm) ne s'appliquent que
           sous @media print — l'export PDF professionnel passe par @react-pdf. */}
-      <div className="w-full mx-auto bg-white border border-ink/10 print:border-0 shadow-2xl print:shadow-none px-4 py-8 sm:px-8 print:p-[1.5cm] min-h-dvh print:min-h-[29.7cm] flex flex-col print:justify-between relative overflow-hidden max-w-full lg:max-w-[21cm] print:max-w-[21cm]">
+      <div className="passport-document w-full mx-auto bg-white border border-ink/10 print:border-0 shadow-2xl print:shadow-none px-4 py-8 sm:px-8 print:p-[1.5cm] min-h-dvh print:min-h-[29.7cm] flex flex-col print:justify-between relative overflow-hidden max-w-full lg:max-w-[21cm] print:max-w-[21cm]">
         {/* Style block for print-specific tweaks */}
         <style
           dangerouslySetInnerHTML={{
@@ -351,6 +411,11 @@ function PassportPrintPage() {
               background-color: white !important;
               color: black !important;
             }
+            /* Immunité contre la règle d'isolation d'impression globale de styles.css
+               (body:has(.print-report) * { visibility: hidden }) : le Passeport n'utilise
+               pas .print-report, mais on rétablit explicitement la visibilité pour ne
+               plus jamais dépendre de cette règle (cf. audit 2026-08-05, PDF blanc). */
+            .passport-document, .passport-document * { visibility: visible; }
             .page-break {
               page-break-before: always;
               break-before: page;
@@ -636,7 +701,7 @@ function PassportPrintPage() {
                 </h2>
               </div>
 
-              <div className="rounded-3xl border-2 border-brand/20 bg-brand/5 p-8 shadow-md">
+              <div className="no-print-break rounded-3xl border-2 border-brand/20 bg-brand/5 p-8 shadow-md">
                 <p className="text-xs font-black uppercase tracking-widest text-brand mb-4">
                   Rapport de bilan personnalisé
                 </p>

@@ -51,6 +51,7 @@ import {
   faqPageJsonLd,
   SOFTWARE_APP_JSONLD,
   reviewsJsonLd,
+  howToJsonLd,
   type ParentReview,
 } from "@/lib/seo";
 
@@ -165,6 +166,17 @@ export const Route = createFileRoute("/")({
         jsonLdScript(SOFTWARE_APP_JSONLD),
         jsonLdScript(faqPageJsonLd(LANDING_FAQ)),
         jsonLdScript(reviewsJsonLd(LANDING_TESTIMONIALS)),
+        // Méthode en trois actes, visible dans la section « Trois actes. Zéro
+        // questionnaire. » (METHOD_STEPS) — le HowTo doit rester synchronisé avec
+        // les étapes affichées.
+        jsonLdScript(
+          howToJsonLd({
+            name: "Comment révéler les talents de votre enfant avec Génizio",
+            description:
+              "La méthode Génizio en trois actes : l'enfant réalise un défi concret, le parent photographie la réalisation, et l'IA Naya met à jour la carte des 9 intelligences.",
+            steps: METHOD_STEPS.map(({ title, desc }) => ({ name: title, text: desc })),
+          }),
+        ),
       ],
     };
   },

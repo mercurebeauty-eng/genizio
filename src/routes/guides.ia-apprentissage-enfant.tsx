@@ -55,6 +55,8 @@ export const Route = createFileRoute("/guides/ia-apprentissage-enfant")({
           mainEntityOfPage: absoluteUrl(PATH),
           publisher: { "@id": `${SITE_URL}/#organization` },
           author: { "@type": "Organization", name: "Génizio" },
+          datePublished: "2026-07-27",
+          dateModified: "2026-07-27",
           about: [
             { "@type": "Thing", name: "Intelligence artificielle et éducation" },
             { "@type": "Thing", name: "Apprentissage personnalisé" },

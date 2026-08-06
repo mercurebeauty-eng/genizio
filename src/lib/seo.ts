@@ -100,6 +100,15 @@ export const ORGANIZATION_JSONLD = {
     { "@type": "Country", name: "Sénégal" },
     { "@type": "Country", name: "France" },
   ],
+  // Contact vérifiable (WhatsApp business) — renforce la confiance des moteurs de
+  // réponse. Un `sameAs` vers de vrais profils sociaux sera ajouté quand ils
+  // existeront (aucun profil public constaté dans le repo au 2026-08-05).
+  contactPoint: {
+    "@type": "ContactPoint",
+    contactType: "customer support",
+    url: `https://wa.me/${(import.meta.env.VITE_WHATSAPP_NUMBER as string | undefined) ?? "33606433148"}`,
+    availableLanguage: ["French"],
+  },
   knowsAbout: [
     "Intelligences multiples",
     "Théorie de Howard Gardner",
@@ -232,6 +241,33 @@ export function reviewsJsonLd(reviews: ParentReview[]) {
       },
       headline: r.headline,
       reviewBody: r.reviewBody,
+    })),
+  };
+}
+
+/**
+ * HowTo — les moteurs de réponse et les LLM extraient plus facilement une
+ * procédure explicite (positions numérotées) qu'un paragraphe narratif.
+ * Utilisé sur la landing pour la méthode en trois actes, dont les étapes sont
+ * réellement visibles dans la section « Trois actes. Zéro questionnaire. ».
+ * Les étapes doivent rester synchronisées avec le contenu affiché.
+ */
+export function howToJsonLd(opts: {
+  name: string;
+  description: string;
+  steps: { name: string; text: string }[];
+}) {
+  return {
+    "@context": "https://schema.org",
+    "@type": "HowTo",
+    name: opts.name,
+    description: opts.description,
+    inLanguage: "fr-FR",
+    step: opts.steps.map((s, i) => ({
+      "@type": "HowToStep",
+      position: i + 1,
+      name: s.name,
+      text: s.text,
     })),
   };
 }
