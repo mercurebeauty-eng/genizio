@@ -43,6 +43,8 @@ export default defineConfig({
           name: 'Génizio',
           short_name: 'Génizio',
           description: 'Révélez le potentiel de vos enfants',
+          start_url: '/profiles',
+          scope: '/',
           theme_color: '#ffffff',
           background_color: '#ffffff',
           display: 'standalone',
