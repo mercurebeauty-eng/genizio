@@ -73,12 +73,6 @@ import { GenizioLoader } from "@/components/GenizioLoader";
 import { getActiveChallenge } from "@/lib/active-challenge";
 import { formatPedagogicalIntention } from "@/lib/pedagogical-intention";
 import { getChildEnrolledSeason, type Season } from "@/lib/seasons.functions";
-import {
-  OPPORTUNITY_COMPASS_VERSION,
-  OPPORTUNITY_COMPASS_DISCLAIMER,
-  OPPORTUNITY_COMPASS_MIN_AGE,
-  TALENT_SUBFORM_OPPORTUNITIES,
-} from "@/lib/opportunity-compass";
 import { ShoppingBag } from "lucide-react";
 
 // "Mathématiques" et "Émotions et relations sociales" ajoutées (décision #39, item 3) : le
@@ -997,40 +991,6 @@ function ChallengesPage() {
                                   </div>
                                 ))}
                               </div>
-
-                              {child.age >= OPPORTUNITY_COMPASS_MIN_AGE &&
-                                entries.some(([key]) => TALENT_SUBFORM_OPPORTUNITIES[key]) && (
-                                  <div className="mt-4 pt-4 border-t border-dashed border-ink/15">
-                                    <div className="flex items-center justify-between mb-2">
-                                      <h5 className="text-[10px] font-bold uppercase tracking-widest text-ink/50">
-                                        Boussole d'Opportunités
-                                      </h5>
-                                      <span className="text-[9px] font-bold text-ink/40 uppercase">
-                                        {OPPORTUNITY_COMPASS_VERSION}
-                                      </span>
-                                    </div>
-                                    <div className="space-y-2">
-                                      {entries.map(([key]) => {
-                                        const pistes = TALENT_SUBFORM_OPPORTUNITIES[key];
-                                        if (!pistes) return null;
-                                        return (
-                                          <p
-                                            key={key}
-                                            className="text-xs text-ink/70 leading-relaxed"
-                                          >
-                                            <span className="font-bold text-ink">
-                                              {TALENT_SUBFORM_LABELS[key] ?? key} :
-                                            </span>{" "}
-                                            {pistes.join(", ")}
-                                          </p>
-                                        );
-                                      })}
-                                    </div>
-                                    <p className="text-[10px] text-ink/40 italic mt-2">
-                                      {OPPORTUNITY_COMPASS_DISCLAIMER}
-                                    </p>
-                                  </div>
-                                )}
                             </div>
                           );
                         })}

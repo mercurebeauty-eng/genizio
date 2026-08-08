@@ -4,13 +4,19 @@ import { useServerFn } from "@tanstack/react-start";
 import { supabase } from "@/integrations/supabase/client";
 import { useSession } from "@/hooks/use-session";
 import { toast } from "sonner";
-import { getChildAISynthesis } from "@/lib/challenges.functions";
+import { getChildAISynthesis, TALENT_SUBFORM_LABELS } from "@/lib/challenges.functions";
 import { ensureHypothesesForChild } from "@/lib/hypotheses.functions";
 import { getChildGuild, getTalentAffinities } from "@/lib/guilds";
 import { getChildEnrolledSeason, getActiveSeason, type Season } from "@/lib/seasons.functions";
 import { getChildSupervisorInfo } from "@/lib/supervisors.functions";
 import { getChildAccessStatusFn, type ChildAccessStatus } from "@/lib/child-access";
 import { formatXof } from "@/lib/pricing";
+import {
+  OPPORTUNITY_COMPASS_VERSION,
+  OPPORTUNITY_COMPASS_DISCLAIMER,
+  OPPORTUNITY_COMPASS_MIN_AGE,
+  TALENT_SUBFORM_OPPORTUNITIES,
+} from "@/lib/opportunity-compass";
 import { SeasonEnrollmentModal } from "@/components/seasons/SeasonEnrollmentModal";
 import { AppTabBar } from "@/components/AppTabBar";
 import { TalentRadarChart } from "@/components/TalentRadarChart";
@@ -948,6 +954,39 @@ function PortfolioPage() {
                   </div>
                 ))}
               </div>
+            </div>
+          )}
+
+          {/* Boussole d'Opportunités & Métiers d'Avenir (12 ans et +) */}
+          {child.age >= OPPORTUNITY_COMPASS_MIN_AGE && (
+            <div className="rounded-3xl border border-brand/20 bg-gradient-to-br from-brand/5 via-white to-sky/5 p-6 shadow-xl space-y-4">
+              <div className="flex items-center justify-between">
+                <h3 className="flex items-center gap-2 font-display text-balance text-lg font-bold text-ink">
+                  <Compass className="size-5 text-brand" />
+                  Boussole d'Opportunités & Pistes d'Avenir
+                </h3>
+                <span className="rounded-full border border-brand/20 bg-brand/10 px-2.5 py-0.5 text-[9px] font-black uppercase tracking-wider text-brand">
+                  {OPPORTUNITY_COMPASS_VERSION}
+                </span>
+              </div>
+              <p className="text-xs font-medium leading-relaxed text-ink/70">
+                Pistes d'exploration d'avenir basées sur les sous-domaines de compétences dans lesquels {child.name} s'est illustré(e).
+              </p>
+              <div className="grid gap-3 sm:grid-cols-2 pt-2">
+                {Object.entries(TALENT_SUBFORM_OPPORTUNITIES).map(([key, pistes]) => (
+                  <div key={key} className="rounded-2xl border border-ink/10 bg-white p-4 shadow-sm">
+                    <h4 className="text-xs font-black text-brand uppercase tracking-wider mb-1">
+                      {TALENT_SUBFORM_LABELS[key] ?? key}
+                    </h4>
+                    <p className="text-xs font-medium text-ink/75 leading-relaxed">
+                      {pistes.join(" · ")}
+                    </p>
+                  </div>
+                ))}
+              </div>
+              <p className="text-[10px] text-ink/50 italic pt-2 border-t border-dashed border-ink/10">
+                {OPPORTUNITY_COMPASS_DISCLAIMER}
+              </p>
             </div>
           )}
 
