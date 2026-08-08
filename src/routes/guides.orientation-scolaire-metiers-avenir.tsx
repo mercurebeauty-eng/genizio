@@ -29,6 +29,7 @@ export const Route = createFileRoute("/guides/orientation-scolaire-metiers-aveni
       description:
         "Comment identifier les forces de votre enfant et le préparer aux métiers de demain grâce à la théorie des 9 intelligences.",
       path: PATH,
+      image: "/guides/og-orientation.jpg",
       type: "article",
     });
     return {
@@ -48,6 +49,7 @@ export const Route = createFileRoute("/guides/orientation-scolaire-metiers-aveni
             description:
               "Méthode pour cartographier le potentiel unique de l'enfant et l'orienter vers les compétences de demain.",
             path: PATH,
+            image: "/guides/og-orientation.jpg",
             datePublished: "2026-08-08",
           })
         ),
@@ -66,6 +68,12 @@ function Guide() {
       updated="8 août 2026"
       readingTime="6 min"
     >
+      <img
+        src="/guides/og-orientation.jpg"
+        alt="Jeune élève découvrant un projet scientifique et technologique avec son père"
+        className="my-6 aspect-video w-full rounded-3xl border border-ink/10 object-cover shadow-lg"
+      />
+
       <h2>Pourquoi les notes scolaires seules ne suffisent plus à prédire la réussite</h2>
       <p>
         L'école traditionnelle mesure principalement l'intelligence <strong>linguistique</strong> et <strong>logico-mathématique</strong> abstraite. Pourtant, les métiers qui émergent dans l'économie numérique, la transition énergétique ou la création valorisent tout autant l'intelligence <strong>interpersonnelle</strong> (leadership, négociation), <strong>spatiale</strong> (design, modélisation 3D) et <strong>naturaliste/systémique</strong> (gestion des ressources).

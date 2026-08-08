@@ -29,6 +29,7 @@ export const Route = createFileRoute("/guides/timidite-confiance-prise-de-parole
       description:
         "Comment aider un enfant réservé à prendre confiance en lui et s'exprimer avec aisance sans le forcer ni le mettre mal à l'aise.",
       path: PATH,
+      image: "/guides/og-timidite.jpg",
       type: "article",
     });
     return {
@@ -48,6 +49,7 @@ export const Route = createFileRoute("/guides/timidite-confiance-prise-de-parole
             description:
               "Méthodes douces et activités concrètes pour stimuler la confiance et la prise de parole chez l'enfant.",
             path: PATH,
+            image: "/guides/og-timidite.jpg",
             datePublished: "2026-08-08",
           })
         ),
@@ -66,6 +68,12 @@ function Guide() {
       updated="8 août 2026"
       readingTime="5 min"
     >
+      <img
+        src="/guides/og-timidite.jpg"
+        alt="Jeune fille s'exprimant joyeusement avec assurance devant sa famille"
+        className="my-6 aspect-video w-full rounded-3xl border border-ink/10 object-cover shadow-lg"
+      />
+
       <h2>Re-framing : La réserve est un super-pouvoir d'analyse</h2>
       <p>
         Dans la théorie des intelligences multiples de Howard Gardner, l'intelligence <strong>intrapersonnelle</strong> correspond à la capacité de bien se connaître, d'analyser ses propres émotions et d'observer son environnement. Les enfants d'apparence "timide" sont très souvent des observateurs hors-pair.

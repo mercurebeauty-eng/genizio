@@ -29,6 +29,7 @@ export const Route = createFileRoute("/guides/ecrans-addiction-alternatives-enfa
       description:
         "Comment canaliser l'attrait des écrans chez l'enfant en transformant le jeu virtuel en défis de création réelle à la maison.",
       path: PATH,
+      image: "/guides/og-ecrans.jpg",
       type: "article",
     });
     return {
@@ -48,6 +49,7 @@ export const Route = createFileRoute("/guides/ecrans-addiction-alternatives-enfa
             description:
               "Guide complet pour remplacer la fascination virtuelle par des projets d'action concrets fondés sur les intelligences multiples.",
             path: PATH,
+            image: "/guides/og-ecrans.jpg",
             datePublished: "2026-08-08",
           })
         ),
@@ -66,6 +68,12 @@ function Guide() {
       updated="8 août 2026"
       readingTime="6 min"
     >
+      <img
+        src="/guides/og-ecrans.jpg"
+        alt="Enfant africain construisant une maquette en carton à la maison sans écran"
+        className="my-6 aspect-video w-full rounded-3xl border border-ink/10 object-cover shadow-lg"
+      />
+
       <MedicalDisclaimer>
         <strong>Note éducative :</strong> Ce guide propose des leviers pédagogiques et d'action créative pour accompagner la parentalité au quotidien. En cas de troubles sévères du comportement ou d'addiction numérique handicapante, consultez un pédiatre ou un spécialiste.
       </MedicalDisclaimer>

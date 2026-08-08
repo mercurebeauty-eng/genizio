@@ -29,6 +29,7 @@ export const Route = createFileRoute("/guides/autonomie-responsabilite-maison")(
       description:
         "Comment développer la responsabilité et l'autonomie de votre enfant au quotidien en remplaçant la répétition d'ordres par des projets engageants.",
       path: PATH,
+      image: "/guides/og-autonomie.jpg",
       type: "article",
     });
     return {
@@ -48,6 +49,7 @@ export const Route = createFileRoute("/guides/autonomie-responsabilite-maison")(
             description:
               "Méthode concrète pour développer le sens de l'organisation et l'initiative personnelle chez l'enfant.",
             path: PATH,
+            image: "/guides/og-autonomie.jpg",
             datePublished: "2026-08-08",
           })
         ),
@@ -66,6 +68,12 @@ function Guide() {
       updated="8 août 2026"
       readingTime="6 min"
     >
+      <img
+        src="/guides/og-autonomie.jpg"
+        alt="Enfant cochant fièrement son tableau d'accomplissement d'autonomie à la maison"
+        className="my-6 aspect-video w-full rounded-3xl border border-ink/10 object-cover shadow-lg"
+      />
+
       <h2>La différence entre exécuter un ordre et gérer une mission</h2>
       <p>
         Lorsqu'on dit à un enfant <em>"Range ta chambre !"</em>, il perçoit une corvée imposée. Lorsqu'on lui confie la mission <strong>"Chef de l'Organisation de la Chambre"</strong> avec un objectif visuel clair, il bascule dans la posture de gestionnaire.

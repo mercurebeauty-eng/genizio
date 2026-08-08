@@ -29,6 +29,7 @@ export const Route = createFileRoute("/guides/fratrie-rivalite-cooperation")({
       description:
         "Comment apaiser les tensions dans la fratrie et développer l'entraide grâce à des projets collaboratifs basés sur la complémentarité des talents.",
       path: PATH,
+      image: "/guides/og-fratrie.jpg",
       type: "article",
     });
     return {
@@ -48,6 +49,7 @@ export const Route = createFileRoute("/guides/fratrie-rivalite-cooperation")({
             description:
               "Méthode pour développer l'intelligence interpersonnelle et l'esprit d'équipe chez les frères et sœurs.",
             path: PATH,
+            image: "/guides/og-fratrie.jpg",
             datePublished: "2026-08-08",
           })
         ),
@@ -66,6 +68,12 @@ function Guide() {
       updated="8 août 2026"
       readingTime="5 min"
     >
+      <img
+        src="/guides/og-fratrie.jpg"
+        alt="Frère et sœur collaborant joyeusement sur un projet créatif commun"
+        className="my-6 aspect-video w-full rounded-3xl border border-ink/10 object-cover shadow-lg"
+      />
+
       <h2>Pourquoi la comparaison est le pire ennemi de la paix familiale</h2>
       <p>
         Dans beaucoup de familles, les enfants sont comparés sans qu'on s'en rende compte : l'un est vu comme "l'intellectuel", l'autre comme "le créatif" ou "le turbulent". Cette étiquette pousse les enfants à s'affronter pour obtenir l'exclusivité de l'attention parentale.
