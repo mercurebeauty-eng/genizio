@@ -524,7 +524,7 @@ function Nav() {
             solid ? "text-brand" : "text-brand-glow"
           }`}
         >
-          <img src="/favicon-96x96.png" alt="" className="h-8 w-8" />
+          <img src="/favicon-96x96.png" alt="Logo Génizio" className="h-8 w-8" />
           GÉNIZIO
         </Link>
         <div className="hidden gap-8 font-bold text-sm lg:flex">
@@ -2158,7 +2158,7 @@ function Footer() {
     <footer className="border-t border-white/10 bg-ink px-6 py-12 text-white/60">
       <div className="mx-auto flex max-w-6xl flex-col items-center justify-between gap-8 md:flex-row">
         <div className="flex items-center gap-2 font-display text-balance text-xl font-extrabold text-brand-glow">
-          <img src="/favicon-96x96.png" alt="" className="h-7 w-7" />
+          <img src="/favicon-96x96.png" alt="Logo Génizio" className="h-7 w-7" />
           GÉNIZIO
         </div>
         <div className="flex flex-wrap justify-center gap-6 text-xs font-bold uppercase tracking-wider">

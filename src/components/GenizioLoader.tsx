@@ -21,7 +21,7 @@ export function GenizioLoader({ size = "md", label, className = "" }: GenizioLoa
         <div className="absolute inset-0 rounded-full bg-gradient-to-tr from-brand/10 via-transparent to-sky/10 blur-sm animate-pulse motion-reduce:animate-none" />
         <img
           src="/favicon-96x96.png"
-          alt=""
+          alt="Logo Génizio"
           className="absolute inset-0 z-10 h-full w-full object-contain p-2 drop-shadow-sm"
           draggable={false}
         />

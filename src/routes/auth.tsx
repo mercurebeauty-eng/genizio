@@ -61,7 +61,7 @@ function AuthPage() {
     <div className="min-h-dvh bg-surface px-6 py-16 text-ink">
       <div className="mx-auto max-w-md">
         <Link to="/" className="mb-8 flex items-center gap-2 font-display text-balance text-2xl font-extrabold text-brand">
-          <img src="/favicon-96x96.png" alt="" className="h-8 w-8" />
+          <img src="/favicon-96x96.png" alt="Logo Génizio" className="h-8 w-8" />
           GÉNIZIO
         </Link>
         <div className="rounded-3xl border border-ink/10 bg-white p-8 shadow-xl">

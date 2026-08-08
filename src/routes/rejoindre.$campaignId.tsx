@@ -117,7 +117,7 @@ function JoinCampaignPage() {
           to="/"
           className="mb-8 flex items-center gap-2 font-display text-2xl font-extrabold text-brand"
         >
-          <img src="/favicon-96x96.png" alt="" className="h-8 w-8" />
+          <img src="/favicon-96x96.png" alt="Logo Génizio" className="h-8 w-8" />
           GÉNIZIO
         </Link>
 

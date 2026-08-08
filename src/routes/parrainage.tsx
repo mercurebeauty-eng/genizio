@@ -83,7 +83,7 @@ function ParrainagePage() {
       <header className="border-b border-ink/10 bg-white/80 backdrop-blur-md sticky top-0 z-40">
         <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
           <Link to="/" className="flex items-center gap-2 font-display text-2xl font-extrabold text-brand">
-            <img src="/favicon-96x96.png" alt="" className="h-8 w-8" />
+            <img src="/favicon-96x96.png" alt="Logo Génizio" className="h-8 w-8" />
             GÉNIZIO
           </Link>
           <Link
