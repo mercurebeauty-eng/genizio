@@ -412,6 +412,8 @@ export const sendWelcomeEmailIfNeeded = createServerFn({ method: "POST" })
     const whatsappLink = `https://wa.me/${whatsappNumber}?text=${encodeURIComponent("Bonjour, j'ai une question sur Génizio.")}`;
     const firstName = resolveFirstName(data.firstName) || "";
 
+    const senderEmail = process.env.BREVO_FROM_EMAIL || "serviceclient@genizio.com";
+
     const transporter = nodemailer.createTransport({
       host: smtpHost,
       port: smtpPort,
@@ -421,7 +423,8 @@ export const sendWelcomeEmailIfNeeded = createServerFn({ method: "POST" })
 
     try {
       await transporter.sendMail({
-        from: '"Génizio" <hello@genizio.com>',
+        from: `"Génizio" <${senderEmail}>`,
+        replyTo: senderEmail,
         to: data.email,
         subject: "🎉 Bienvenue chez Génizio — votre aventure commence maintenant",
         html: buildWelcomeEmailHtml(firstName, appLink, whatsappLink),
