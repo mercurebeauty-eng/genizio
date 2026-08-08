@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { ArrowRight, Compass, Puzzle, Rocket, Brain, Gem, Globe2, Bot, HeartPulse } from "lucide-react";
+import { ArrowRight, Compass, Puzzle, Rocket, Brain, Gem, Globe2, Bot, HeartPulse, Tv, Mic, CheckSquare, Briefcase, Users } from "lucide-react";
 import { pageMeta, jsonLdScript, breadcrumbJsonLd, absoluteUrl } from "@/lib/seo";
 
 const GUIDES = [
@@ -18,11 +18,46 @@ const GUIDES = [
     desc: "Pourquoi l'agitation n'est pas toujours un problème d'attention, comment observer votre enfant sur plusieurs semaines, et à quel moment consulter un professionnel.",
   },
   {
+    to: "/guides/ecrans-addiction-alternatives-enfant",
+    Icon: Tv,
+    eyebrow: "Écrans & Créativité",
+    title: "Réduire les écrans sans crise : transformer le virtuel en action réelle",
+    desc: "Comment remplacer la fascination pour les écrans par des projets de création concrète fondés sur les 9 intelligences de Gardner.",
+  },
+  {
     to: "/guides/activites-educatives-enfant",
     Icon: Puzzle,
     eyebrow: "Activités & jeux",
     title: "30 activités éducatives à faire à la maison avec un enfant de 6 à 12 ans",
     desc: "Des activités concrètes avec du matériel du quotidien, classées par type d'intelligence sollicitée, et ce que chacune révèle de votre enfant.",
+  },
+  {
+    to: "/guides/timidite-confiance-prise-de-parole",
+    Icon: Mic,
+    eyebrow: "Confiance & Expression",
+    title: "Enfant timide ou réservé : 4 activités pour développer l'assurance orale",
+    desc: "Comment aider un enfant réservé à porter sa voix avec assurance sans le forcer ni créer de pression sociale.",
+  },
+  {
+    to: "/guides/autonomie-responsabilite-maison",
+    Icon: CheckSquare,
+    eyebrow: "Autonomie & Projets",
+    title: "Rendre son enfant autonome à la maison sans crier",
+    desc: "La méthode du projet responsabilisant pour remplacer la répétition d'ordres par l'initiative personnelle de l'enfant.",
+  },
+  {
+    to: "/guides/orientation-scolaire-metiers-avenir",
+    Icon: Briefcase,
+    eyebrow: "Orientation & Métiers",
+    title: "Découvrir les talents et métiers d'avenir dès 10 ans",
+    desc: "Comment identifier les compétences dominantes de votre enfant et le préparer aux métiers de demain.",
+  },
+  {
+    to: "/guides/fratrie-rivalite-cooperation",
+    Icon: Users,
+    eyebrow: "Fratrie & Coopération",
+    title: "Rivalité dans la fratrie : transformer les disputes en coopération",
+    desc: "Développer l'esprit d'équipe chez les frères et sœurs grâce à des projets collaboratifs basés sur la complémentarité.",
   },
   {
     to: "/guides/defis-pour-adolescents",

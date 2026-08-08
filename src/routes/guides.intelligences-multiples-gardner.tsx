@@ -73,7 +73,7 @@ export const Route = createFileRoute("/guides/intelligences-multiples-gardner")(
           publisher: { "@id": `${SITE_URL}/#organization` },
           author: { "@type": "Organization", name: "Génizio" },
           datePublished: "2026-07-27",
-          dateModified: "2026-07-27",
+          dateModified: "2026-08-08",
           about: [
             { "@type": "Thing", name: "Théorie des intelligences multiples" },
             { "@type": "Person", name: "Howard Gardner" },
@@ -168,6 +168,22 @@ function Guide() {
         kinesthésique », et orienter toutes les activités en conséquence. C'est exactement l'inverse
         de l'intention de départ, et Gardner l'a dénoncé.
       </p>
+
+      <div className="my-8 rounded-2xl bg-brand-50 p-6 border border-brand/20">
+        <h3 className="font-bold text-brand text-base mb-2">💡 Le Défi d'Observation Parentale sur 3 Jours</h3>
+        <p className="text-sm text-ink/80 leading-relaxed mb-3">
+          Ne faites passer aucun QCM théorique à votre enfant. Pendant 3 jours, observez simplement ce qu'il fait <strong>quand personne ne lui donne de consignes</strong> :
+        </p>
+        <ul className="text-sm text-ink/80 leading-relaxed space-y-1">
+          <li>• Se met-il à fredonner ou taper un rythme ? (Intelligence Musicale)</li>
+          <li>• Dessine-t-il les plans de son jeu ? (Intelligence Spatiale)</li>
+          <li>• Organise-t-il les règles pour les autres enfants ? (Intelligence Interpersonnelle)</li>
+        </ul>
+        <p className="text-sm text-ink/80 leading-relaxed mt-3">
+          Notez ces 3 faits réels. Ce sont vos meilleurs repères pour lui proposer des défis adaptés sur Génizio.
+        </p>
+      </div>
+
       <p>Trois principes plus utiles :</p>
       <ol>
         <li>

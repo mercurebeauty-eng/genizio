@@ -32,13 +32,18 @@ import { Route as AdminIndexRouteImport } from './routes/admin.index'
 import { Route as STokenRouteImport } from './routes/s.$token'
 import { Route as RejoindreCampaignIdRouteImport } from './routes/rejoindre.$campaignId'
 import { Route as ProfilesManageRouteImport } from './routes/profiles.manage'
+import { Route as GuidesTimiditeConfiancePriseDeParoleRouteImport } from './routes/guides.timidite-confiance-prise-de-parole'
 import { Route as GuidesPotentielHautPotentielEnfantRouteImport } from './routes/guides.potentiel-haut-potentiel-enfant'
+import { Route as GuidesOrientationScolaireMetiersAvenirRouteImport } from './routes/guides.orientation-scolaire-metiers-avenir'
 import { Route as GuidesIntelligencesMultiplesGardnerRouteImport } from './routes/guides.intelligences-multiples-gardner'
 import { Route as GuidesIaApprentissageEnfantRouteImport } from './routes/guides.ia-apprentissage-enfant'
+import { Route as GuidesFratrieRivaliteCooperationRouteImport } from './routes/guides.fratrie-rivalite-cooperation'
 import { Route as GuidesEnfantAgiteConcentrationRouteImport } from './routes/guides.enfant-agite-concentration'
 import { Route as GuidesEducationEnfantsAfriqueFrancophoneRouteImport } from './routes/guides.education-enfants-afrique-francophone'
+import { Route as GuidesEcransAddictionAlternativesEnfantRouteImport } from './routes/guides.ecrans-addiction-alternatives-enfant'
 import { Route as GuidesDefisPourAdolescentsRouteImport } from './routes/guides.defis-pour-adolescents'
 import { Route as GuidesDecrochageScolaireConfianceEnfantRouteImport } from './routes/guides.decrochage-scolaire-confiance-enfant'
+import { Route as GuidesAutonomieResponsabiliteMaisonRouteImport } from './routes/guides.autonomie-responsabilite-maison'
 import { Route as GuidesActivitesEducativesEnfantRouteImport } from './routes/guides.activites-educatives-enfant'
 import { Route as AdminSupervisorsRouteImport } from './routes/admin.supervisors'
 import { Route as AdminProductsRouteImport } from './routes/admin.products'
@@ -164,10 +169,22 @@ const ProfilesManageRoute = ProfilesManageRouteImport.update({
   path: '/manage',
   getParentRoute: () => ProfilesRoute,
 } as any)
+const GuidesTimiditeConfiancePriseDeParoleRoute =
+  GuidesTimiditeConfiancePriseDeParoleRouteImport.update({
+    id: '/timidite-confiance-prise-de-parole',
+    path: '/timidite-confiance-prise-de-parole',
+    getParentRoute: () => GuidesRoute,
+  } as any)
 const GuidesPotentielHautPotentielEnfantRoute =
   GuidesPotentielHautPotentielEnfantRouteImport.update({
     id: '/potentiel-haut-potentiel-enfant',
     path: '/potentiel-haut-potentiel-enfant',
+    getParentRoute: () => GuidesRoute,
+  } as any)
+const GuidesOrientationScolaireMetiersAvenirRoute =
+  GuidesOrientationScolaireMetiersAvenirRouteImport.update({
+    id: '/orientation-scolaire-metiers-avenir',
+    path: '/orientation-scolaire-metiers-avenir',
     getParentRoute: () => GuidesRoute,
   } as any)
 const GuidesIntelligencesMultiplesGardnerRoute =
@@ -182,6 +199,12 @@ const GuidesIaApprentissageEnfantRoute =
     path: '/ia-apprentissage-enfant',
     getParentRoute: () => GuidesRoute,
   } as any)
+const GuidesFratrieRivaliteCooperationRoute =
+  GuidesFratrieRivaliteCooperationRouteImport.update({
+    id: '/fratrie-rivalite-cooperation',
+    path: '/fratrie-rivalite-cooperation',
+    getParentRoute: () => GuidesRoute,
+  } as any)
 const GuidesEnfantAgiteConcentrationRoute =
   GuidesEnfantAgiteConcentrationRouteImport.update({
     id: '/enfant-agite-concentration',
@@ -194,6 +217,12 @@ const GuidesEducationEnfantsAfriqueFrancophoneRoute =
     path: '/education-enfants-afrique-francophone',
     getParentRoute: () => GuidesRoute,
   } as any)
+const GuidesEcransAddictionAlternativesEnfantRoute =
+  GuidesEcransAddictionAlternativesEnfantRouteImport.update({
+    id: '/ecrans-addiction-alternatives-enfant',
+    path: '/ecrans-addiction-alternatives-enfant',
+    getParentRoute: () => GuidesRoute,
+  } as any)
 const GuidesDefisPourAdolescentsRoute =
   GuidesDefisPourAdolescentsRouteImport.update({
     id: '/defis-pour-adolescents',
@@ -204,6 +233,12 @@ const GuidesDecrochageScolaireConfianceEnfantRoute =
   GuidesDecrochageScolaireConfianceEnfantRouteImport.update({
     id: '/decrochage-scolaire-confiance-enfant',
     path: '/decrochage-scolaire-confiance-enfant',
+    getParentRoute: () => GuidesRoute,
+  } as any)
+const GuidesAutonomieResponsabiliteMaisonRoute =
+  GuidesAutonomieResponsabiliteMaisonRouteImport.update({
+    id: '/autonomie-responsabilite-maison',
+    path: '/autonomie-responsabilite-maison',
     getParentRoute: () => GuidesRoute,
   } as any)
 const GuidesActivitesEducativesEnfantRoute =
@@ -277,13 +312,18 @@ export interface FileRoutesByFullPath {
   '/admin/products': typeof AdminProductsRoute
   '/admin/supervisors': typeof AdminSupervisorsRoute
   '/guides/activites-educatives-enfant': typeof GuidesActivitesEducativesEnfantRoute
+  '/guides/autonomie-responsabilite-maison': typeof GuidesAutonomieResponsabiliteMaisonRoute
   '/guides/decrochage-scolaire-confiance-enfant': typeof GuidesDecrochageScolaireConfianceEnfantRoute
   '/guides/defis-pour-adolescents': typeof GuidesDefisPourAdolescentsRoute
+  '/guides/ecrans-addiction-alternatives-enfant': typeof GuidesEcransAddictionAlternativesEnfantRoute
   '/guides/education-enfants-afrique-francophone': typeof GuidesEducationEnfantsAfriqueFrancophoneRoute
   '/guides/enfant-agite-concentration': typeof GuidesEnfantAgiteConcentrationRoute
+  '/guides/fratrie-rivalite-cooperation': typeof GuidesFratrieRivaliteCooperationRoute
   '/guides/ia-apprentissage-enfant': typeof GuidesIaApprentissageEnfantRoute
   '/guides/intelligences-multiples-gardner': typeof GuidesIntelligencesMultiplesGardnerRoute
+  '/guides/orientation-scolaire-metiers-avenir': typeof GuidesOrientationScolaireMetiersAvenirRoute
   '/guides/potentiel-haut-potentiel-enfant': typeof GuidesPotentielHautPotentielEnfantRoute
+  '/guides/timidite-confiance-prise-de-parole': typeof GuidesTimiditeConfiancePriseDeParoleRoute
   '/profiles/manage': typeof ProfilesManageRoute
   '/rejoindre/$campaignId': typeof RejoindreCampaignIdRoute
   '/s/$token': typeof STokenRoute
@@ -314,13 +354,18 @@ export interface FileRoutesByTo {
   '/admin/products': typeof AdminProductsRoute
   '/admin/supervisors': typeof AdminSupervisorsRoute
   '/guides/activites-educatives-enfant': typeof GuidesActivitesEducativesEnfantRoute
+  '/guides/autonomie-responsabilite-maison': typeof GuidesAutonomieResponsabiliteMaisonRoute
   '/guides/decrochage-scolaire-confiance-enfant': typeof GuidesDecrochageScolaireConfianceEnfantRoute
   '/guides/defis-pour-adolescents': typeof GuidesDefisPourAdolescentsRoute
+  '/guides/ecrans-addiction-alternatives-enfant': typeof GuidesEcransAddictionAlternativesEnfantRoute
   '/guides/education-enfants-afrique-francophone': typeof GuidesEducationEnfantsAfriqueFrancophoneRoute
   '/guides/enfant-agite-concentration': typeof GuidesEnfantAgiteConcentrationRoute
+  '/guides/fratrie-rivalite-cooperation': typeof GuidesFratrieRivaliteCooperationRoute
   '/guides/ia-apprentissage-enfant': typeof GuidesIaApprentissageEnfantRoute
   '/guides/intelligences-multiples-gardner': typeof GuidesIntelligencesMultiplesGardnerRoute
+  '/guides/orientation-scolaire-metiers-avenir': typeof GuidesOrientationScolaireMetiersAvenirRoute
   '/guides/potentiel-haut-potentiel-enfant': typeof GuidesPotentielHautPotentielEnfantRoute
+  '/guides/timidite-confiance-prise-de-parole': typeof GuidesTimiditeConfiancePriseDeParoleRoute
   '/profiles/manage': typeof ProfilesManageRoute
   '/rejoindre/$campaignId': typeof RejoindreCampaignIdRoute
   '/s/$token': typeof STokenRoute
@@ -356,13 +401,18 @@ export interface FileRoutesById {
   '/admin/products': typeof AdminProductsRoute
   '/admin/supervisors': typeof AdminSupervisorsRoute
   '/guides/activites-educatives-enfant': typeof GuidesActivitesEducativesEnfantRoute
+  '/guides/autonomie-responsabilite-maison': typeof GuidesAutonomieResponsabiliteMaisonRoute
   '/guides/decrochage-scolaire-confiance-enfant': typeof GuidesDecrochageScolaireConfianceEnfantRoute
   '/guides/defis-pour-adolescents': typeof GuidesDefisPourAdolescentsRoute
+  '/guides/ecrans-addiction-alternatives-enfant': typeof GuidesEcransAddictionAlternativesEnfantRoute
   '/guides/education-enfants-afrique-francophone': typeof GuidesEducationEnfantsAfriqueFrancophoneRoute
   '/guides/enfant-agite-concentration': typeof GuidesEnfantAgiteConcentrationRoute
+  '/guides/fratrie-rivalite-cooperation': typeof GuidesFratrieRivaliteCooperationRoute
   '/guides/ia-apprentissage-enfant': typeof GuidesIaApprentissageEnfantRoute
   '/guides/intelligences-multiples-gardner': typeof GuidesIntelligencesMultiplesGardnerRoute
+  '/guides/orientation-scolaire-metiers-avenir': typeof GuidesOrientationScolaireMetiersAvenirRoute
   '/guides/potentiel-haut-potentiel-enfant': typeof GuidesPotentielHautPotentielEnfantRoute
+  '/guides/timidite-confiance-prise-de-parole': typeof GuidesTimiditeConfiancePriseDeParoleRoute
   '/profiles/manage': typeof ProfilesManageRoute
   '/rejoindre/$campaignId': typeof RejoindreCampaignIdRoute
   '/s/$token': typeof STokenRoute
@@ -399,13 +449,18 @@ export interface FileRouteTypes {
     | '/admin/products'
     | '/admin/supervisors'
     | '/guides/activites-educatives-enfant'
+    | '/guides/autonomie-responsabilite-maison'
     | '/guides/decrochage-scolaire-confiance-enfant'
     | '/guides/defis-pour-adolescents'
+    | '/guides/ecrans-addiction-alternatives-enfant'
     | '/guides/education-enfants-afrique-francophone'
     | '/guides/enfant-agite-concentration'
+    | '/guides/fratrie-rivalite-cooperation'
     | '/guides/ia-apprentissage-enfant'
     | '/guides/intelligences-multiples-gardner'
+    | '/guides/orientation-scolaire-metiers-avenir'
     | '/guides/potentiel-haut-potentiel-enfant'
+    | '/guides/timidite-confiance-prise-de-parole'
     | '/profiles/manage'
     | '/rejoindre/$campaignId'
     | '/s/$token'
@@ -436,13 +491,18 @@ export interface FileRouteTypes {
     | '/admin/products'
     | '/admin/supervisors'
     | '/guides/activites-educatives-enfant'
+    | '/guides/autonomie-responsabilite-maison'
     | '/guides/decrochage-scolaire-confiance-enfant'
     | '/guides/defis-pour-adolescents'
+    | '/guides/ecrans-addiction-alternatives-enfant'
     | '/guides/education-enfants-afrique-francophone'
     | '/guides/enfant-agite-concentration'
+    | '/guides/fratrie-rivalite-cooperation'
     | '/guides/ia-apprentissage-enfant'
     | '/guides/intelligences-multiples-gardner'
+    | '/guides/orientation-scolaire-metiers-avenir'
     | '/guides/potentiel-haut-potentiel-enfant'
+    | '/guides/timidite-confiance-prise-de-parole'
     | '/profiles/manage'
     | '/rejoindre/$campaignId'
     | '/s/$token'
@@ -477,13 +537,18 @@ export interface FileRouteTypes {
     | '/admin/products'
     | '/admin/supervisors'
     | '/guides/activites-educatives-enfant'
+    | '/guides/autonomie-responsabilite-maison'
     | '/guides/decrochage-scolaire-confiance-enfant'
     | '/guides/defis-pour-adolescents'
+    | '/guides/ecrans-addiction-alternatives-enfant'
     | '/guides/education-enfants-afrique-francophone'
     | '/guides/enfant-agite-concentration'
+    | '/guides/fratrie-rivalite-cooperation'
     | '/guides/ia-apprentissage-enfant'
     | '/guides/intelligences-multiples-gardner'
+    | '/guides/orientation-scolaire-metiers-avenir'
     | '/guides/potentiel-haut-potentiel-enfant'
+    | '/guides/timidite-confiance-prise-de-parole'
     | '/profiles/manage'
     | '/rejoindre/$campaignId'
     | '/s/$token'
@@ -683,11 +748,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ProfilesManageRouteImport
       parentRoute: typeof ProfilesRoute
     }
+    '/guides/timidite-confiance-prise-de-parole': {
+      id: '/guides/timidite-confiance-prise-de-parole'
+      path: '/timidite-confiance-prise-de-parole'
+      fullPath: '/guides/timidite-confiance-prise-de-parole'
+      preLoaderRoute: typeof GuidesTimiditeConfiancePriseDeParoleRouteImport
+      parentRoute: typeof GuidesRoute
+    }
     '/guides/potentiel-haut-potentiel-enfant': {
       id: '/guides/potentiel-haut-potentiel-enfant'
       path: '/potentiel-haut-potentiel-enfant'
       fullPath: '/guides/potentiel-haut-potentiel-enfant'
       preLoaderRoute: typeof GuidesPotentielHautPotentielEnfantRouteImport
+      parentRoute: typeof GuidesRoute
+    }
+    '/guides/orientation-scolaire-metiers-avenir': {
+      id: '/guides/orientation-scolaire-metiers-avenir'
+      path: '/orientation-scolaire-metiers-avenir'
+      fullPath: '/guides/orientation-scolaire-metiers-avenir'
+      preLoaderRoute: typeof GuidesOrientationScolaireMetiersAvenirRouteImport
       parentRoute: typeof GuidesRoute
     }
     '/guides/intelligences-multiples-gardner': {
@@ -704,6 +783,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof GuidesIaApprentissageEnfantRouteImport
       parentRoute: typeof GuidesRoute
     }
+    '/guides/fratrie-rivalite-cooperation': {
+      id: '/guides/fratrie-rivalite-cooperation'
+      path: '/fratrie-rivalite-cooperation'
+      fullPath: '/guides/fratrie-rivalite-cooperation'
+      preLoaderRoute: typeof GuidesFratrieRivaliteCooperationRouteImport
+      parentRoute: typeof GuidesRoute
+    }
     '/guides/enfant-agite-concentration': {
       id: '/guides/enfant-agite-concentration'
       path: '/enfant-agite-concentration'
@@ -718,6 +804,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof GuidesEducationEnfantsAfriqueFrancophoneRouteImport
       parentRoute: typeof GuidesRoute
     }
+    '/guides/ecrans-addiction-alternatives-enfant': {
+      id: '/guides/ecrans-addiction-alternatives-enfant'
+      path: '/ecrans-addiction-alternatives-enfant'
+      fullPath: '/guides/ecrans-addiction-alternatives-enfant'
+      preLoaderRoute: typeof GuidesEcransAddictionAlternativesEnfantRouteImport
+      parentRoute: typeof GuidesRoute
+    }
     '/guides/defis-pour-adolescents': {
       id: '/guides/defis-pour-adolescents'
       path: '/defis-pour-adolescents'
@@ -730,6 +823,13 @@ declare module '@tanstack/react-router' {
       path: '/decrochage-scolaire-confiance-enfant'
       fullPath: '/guides/decrochage-scolaire-confiance-enfant'
       preLoaderRoute: typeof GuidesDecrochageScolaireConfianceEnfantRouteImport
+      parentRoute: typeof GuidesRoute
+    }
+    '/guides/autonomie-responsabilite-maison': {
+      id: '/guides/autonomie-responsabilite-maison'
+      path: '/autonomie-responsabilite-maison'
+      fullPath: '/guides/autonomie-responsabilite-maison'
+      preLoaderRoute: typeof GuidesAutonomieResponsabiliteMaisonRouteImport
       parentRoute: typeof GuidesRoute
     }
     '/guides/activites-educatives-enfant': {
@@ -814,29 +914,43 @@ const AdminRouteWithChildren = AdminRoute._addFileChildren(AdminRouteChildren)
 
 interface GuidesRouteChildren {
   GuidesActivitesEducativesEnfantRoute: typeof GuidesActivitesEducativesEnfantRoute
+  GuidesAutonomieResponsabiliteMaisonRoute: typeof GuidesAutonomieResponsabiliteMaisonRoute
   GuidesDecrochageScolaireConfianceEnfantRoute: typeof GuidesDecrochageScolaireConfianceEnfantRoute
   GuidesDefisPourAdolescentsRoute: typeof GuidesDefisPourAdolescentsRoute
+  GuidesEcransAddictionAlternativesEnfantRoute: typeof GuidesEcransAddictionAlternativesEnfantRoute
   GuidesEducationEnfantsAfriqueFrancophoneRoute: typeof GuidesEducationEnfantsAfriqueFrancophoneRoute
   GuidesEnfantAgiteConcentrationRoute: typeof GuidesEnfantAgiteConcentrationRoute
+  GuidesFratrieRivaliteCooperationRoute: typeof GuidesFratrieRivaliteCooperationRoute
   GuidesIaApprentissageEnfantRoute: typeof GuidesIaApprentissageEnfantRoute
   GuidesIntelligencesMultiplesGardnerRoute: typeof GuidesIntelligencesMultiplesGardnerRoute
+  GuidesOrientationScolaireMetiersAvenirRoute: typeof GuidesOrientationScolaireMetiersAvenirRoute
   GuidesPotentielHautPotentielEnfantRoute: typeof GuidesPotentielHautPotentielEnfantRoute
+  GuidesTimiditeConfiancePriseDeParoleRoute: typeof GuidesTimiditeConfiancePriseDeParoleRoute
   GuidesIndexRoute: typeof GuidesIndexRoute
 }
 
 const GuidesRouteChildren: GuidesRouteChildren = {
   GuidesActivitesEducativesEnfantRoute: GuidesActivitesEducativesEnfantRoute,
+  GuidesAutonomieResponsabiliteMaisonRoute:
+    GuidesAutonomieResponsabiliteMaisonRoute,
   GuidesDecrochageScolaireConfianceEnfantRoute:
     GuidesDecrochageScolaireConfianceEnfantRoute,
   GuidesDefisPourAdolescentsRoute: GuidesDefisPourAdolescentsRoute,
+  GuidesEcransAddictionAlternativesEnfantRoute:
+    GuidesEcransAddictionAlternativesEnfantRoute,
   GuidesEducationEnfantsAfriqueFrancophoneRoute:
     GuidesEducationEnfantsAfriqueFrancophoneRoute,
   GuidesEnfantAgiteConcentrationRoute: GuidesEnfantAgiteConcentrationRoute,
+  GuidesFratrieRivaliteCooperationRoute: GuidesFratrieRivaliteCooperationRoute,
   GuidesIaApprentissageEnfantRoute: GuidesIaApprentissageEnfantRoute,
   GuidesIntelligencesMultiplesGardnerRoute:
     GuidesIntelligencesMultiplesGardnerRoute,
+  GuidesOrientationScolaireMetiersAvenirRoute:
+    GuidesOrientationScolaireMetiersAvenirRoute,
   GuidesPotentielHautPotentielEnfantRoute:
     GuidesPotentielHautPotentielEnfantRoute,
+  GuidesTimiditeConfiancePriseDeParoleRoute:
+    GuidesTimiditeConfiancePriseDeParoleRoute,
   GuidesIndexRoute: GuidesIndexRoute,
 }
 

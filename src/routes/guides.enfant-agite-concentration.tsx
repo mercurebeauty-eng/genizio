@@ -61,7 +61,7 @@ export const Route = createFileRoute("/guides/enfant-agite-concentration")({
           publisher: { "@id": `${SITE_URL}/#organization` },
           author: { "@type": "Organization", name: "Génizio" },
           datePublished: "2026-07-27",
-          dateModified: "2026-07-27",
+          dateModified: "2026-08-08",
           about: [
             { "@type": "Thing", name: "Attention de l'enfant" },
             { "@type": "Thing", name: "Concentration" },
@@ -183,6 +183,17 @@ function Guide() {
         <li><strong>Un objectif à la fois.</strong> Les listes découragent ; une seule mission tenue jusqu'au bout construit la confiance.</li>
         <li><strong>Valoriser le fini, pas le parfait.</strong> Ce qui se consolide, c'est l'expérience d'avoir terminé quelque chose.</li>
       </ul>
+
+      <div className="my-8 rounded-2xl bg-amber-50 p-6 border border-amber-200">
+        <h3 className="font-bold text-amber-950 text-base mb-2">⚡ Le Défi 10 Min à tester ce soir : 'La Mission Chronomètre Inversé'</h3>
+        <p className="text-sm text-amber-900 leading-relaxed mb-3">
+          Au lieu de demander à votre enfant de "se concentrer sagement", proposez-lui ce défi kinezthésique : <strong>Construire la plus haute tour en livres et rouleaux de papier en exactement 7 minutes.</strong>
+        </p>
+        <p className="text-sm text-amber-900 leading-relaxed">
+          Il doit manipuler, ajuster l'équilibre et anticiper l'effondrement. À la fin des 7 minutes, prenez la photo de sa tour pour son portfolio. Vous constaterez une attention à 100 % parce que son corps et son cerveau étaient engagés ensemble.
+        </p>
+      </div>
+
 
       <h2>Où Génizio intervient — et où il n'intervient pas</h2>
       <p>
