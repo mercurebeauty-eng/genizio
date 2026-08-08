@@ -2,6 +2,8 @@ import { Link } from "@tanstack/react-router";
 import type { ReactNode } from "react";
 import { ArrowLeft, ArrowRight } from "lucide-react";
 
+import { SocialShareBar } from "./SocialShareBar";
+
 /**
  * Coquille éditoriale partagée par les pages de guide.
  *
@@ -71,17 +73,26 @@ export function GuideLayout({
         </h1>
         <p className="mt-6 text-lg font-medium leading-relaxed text-ink/70">{intro}</p>
 
-        <div className="mt-6 flex flex-wrap items-center gap-x-4 gap-y-2 border-y border-ink/10 py-3 text-xs font-bold text-ink/50">
-          <span>Mis à jour le {updated}</span>
-          <span aria-hidden>·</span>
-          <span>{readingTime} de lecture</span>
-          <span aria-hidden>·</span>
-          <span>Par l'équipe Génizio</span>
+        <div className="mt-6 flex flex-wrap items-center justify-between gap-x-4 gap-y-3 border-y border-ink/10 py-3 text-xs font-bold text-ink/50">
+          <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
+            <span>Mis à jour le {updated}</span>
+            <span aria-hidden>·</span>
+            <span>{readingTime} de lecture</span>
+            <span aria-hidden>·</span>
+            <span>Par l'équipe Génizio</span>
+          </div>
+          <SocialShareBar title={title} />
         </div>
 
         {/* `prose-genizio` est défini dans styles.css — la mise en forme du corps de texte
             vit là plutôt qu'en classes utilitaires répétées sur chaque paragraphe. */}
         <div className="prose-genizio mt-10">{children}</div>
+
+        <div className="mt-8 flex items-center justify-between border-t border-ink/10 pt-4">
+          <span className="text-xs font-bold text-ink/60">Vous avez aimé ce guide ?</span>
+          <SocialShareBar title={title} />
+        </div>
+
 
         <aside className="mt-16 rounded-3xl border border-ink/10 bg-white p-8 shadow-sm">
           <h2 className="font-display text-xl font-extrabold">
