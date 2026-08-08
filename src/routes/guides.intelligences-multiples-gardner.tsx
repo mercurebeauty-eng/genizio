@@ -51,6 +51,7 @@ export const Route = createFileRoute("/guides/intelligences-multiples-gardner")(
       description:
         "Les 9 formes d'intelligence, ce que la théorie de Gardner dit vraiment, ses limites reconnues, et comment s'en servir sans étiqueter son enfant.",
       path: PATH,
+      image: "/guides/og-gardner.jpg",
       type: "article",
     });
     return {
@@ -70,6 +71,7 @@ export const Route = createFileRoute("/guides/intelligences-multiples-gardner")(
           headline: "Les intelligences multiples de Howard Gardner, expliquées simplement",
           inLanguage: "fr-FR",
           mainEntityOfPage: absoluteUrl(PATH),
+          image: absoluteUrl("/guides/og-gardner.jpg"),
           publisher: { "@id": `${SITE_URL}/#organization` },
           author: { "@type": "Organization", name: "Génizio" },
           datePublished: "2026-07-27",
@@ -92,7 +94,7 @@ function Guide() {
       eyebrow="Théorie"
       title="Les intelligences multiples de Howard Gardner, expliquées simplement"
       intro="Une théorie très citée, souvent mal utilisée. Voici ce qu'elle affirme réellement, ce que la recherche lui reproche, et comment s'en servir avec son enfant sans tomber dans l'étiquetage."
-      updated="27 juillet 2026"
+      updated="8 août 2026"
       readingTime="9 min"
       related={[
         { label: "Haut potentiel : les vrais signes", to: "/guides/potentiel-haut-potentiel-enfant" },
@@ -100,6 +102,11 @@ function Guide() {
         { label: "Mon enfant ne tient pas en place", to: "/guides/enfant-agite-concentration" },
       ]}
     >
+      <img
+        src="/guides/og-gardner.jpg"
+        alt="Enfants africains explorant différentes formes de créativité et d'intelligences multiples"
+        className="my-6 aspect-video w-full rounded-3xl border border-ink/10 object-cover shadow-lg"
+      />
       <h2>D'où vient la théorie</h2>
       <p>
         En 1983, le psychologue américain <strong>Howard Gardner</strong>, alors professeur à

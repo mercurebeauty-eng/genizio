@@ -34,6 +34,7 @@ export const Route = createFileRoute("/guides/defis-pour-adolescents")({
       description:
         "Ce qui motive vraiment un adolescent, pourquoi les activités « éducatives » ne marchent plus, et 12 défis concrets qui tiennent la route.",
       path: PATH,
+      image: "/guides/og-ados.jpg",
       type: "article",
     });
     return {
@@ -53,10 +54,11 @@ export const Route = createFileRoute("/guides/defis-pour-adolescents")({
           headline: "Quels défis proposer à un adolescent de 12 à 16 ans ?",
           inLanguage: "fr-FR",
           mainEntityOfPage: absoluteUrl(PATH),
+          image: absoluteUrl("/guides/og-ados.jpg"),
           publisher: { "@id": `${SITE_URL}/#organization` },
           author: { "@type": "Organization", name: "Génizio" },
           datePublished: "2026-07-27",
-          dateModified: "2026-07-27",
+          dateModified: "2026-08-08",
           about: [
             { "@type": "Thing", name: "Motivation des adolescents" },
             { "@type": "Thing", name: "Défis pour jeunes" },
@@ -75,7 +77,7 @@ function Guide() {
       eyebrow="Adolescents"
       title="Quels défis proposer à un adolescent de 12 à 16 ans ?"
       intro="À partir de 12 ans, la plupart des activités « éducatives » cessent de fonctionner — non parce que l'adolescent est démotivé, mais parce qu'il repère l'intention pédagogique et n'y croit plus. Voici ce qui prend le relais."
-      updated="27 juillet 2026"
+      updated="8 août 2026"
       readingTime="7 min"
       related={[
         { label: "Haut potentiel : les vrais signes", to: "/guides/potentiel-haut-potentiel-enfant" },
@@ -83,6 +85,11 @@ function Guide() {
         { label: "Les intelligences multiples expliquées simplement", to: "/guides/intelligences-multiples-gardner" },
       ]}
     >
+      <img
+        src="/guides/og-ados.jpg"
+        alt="Adolescent africain concentré sur son ordinateur travaillant sur un projet ambitieux"
+        className="my-6 aspect-video w-full rounded-3xl border border-ink/10 object-cover shadow-lg"
+      />
       <h2>Ce qui change vers 12 ans</h2>
       <p>
         Un enfant de 8 ans accepte volontiers une activité parce qu'un adulte la propose. Un

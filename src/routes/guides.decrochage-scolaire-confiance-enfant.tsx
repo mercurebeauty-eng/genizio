@@ -42,6 +42,7 @@ export const Route = createFileRoute("/guides/decrochage-scolaire-confiance-enfa
       description:
         "Perte de confiance, abandon des ambitions, santé mentale : pourquoi le décrochage commence dès l'enfance, et comment agir à la maison.",
       path: PATH,
+      image: "/guides/og-decrochage.jpg",
       type: "article",
     });
     return {
@@ -61,6 +62,7 @@ export const Route = createFileRoute("/guides/decrochage-scolaire-confiance-enfa
           headline: "Décrochage scolaire : la confiance se joue avant l'école",
           inLanguage: "fr-FR",
           mainEntityOfPage: absoluteUrl(PATH),
+          image: absoluteUrl("/guides/og-decrochage.jpg"),
           publisher: { "@id": `${SITE_URL}/#organization` },
           author: { "@type": "Organization", name: "Génizio" },
           about: [
@@ -82,7 +84,7 @@ function Guide() {
       eyebrow="Confiance & bien-être"
       title="Décrochage scolaire : la confiance se joue avant l'école"
       intro="« Il a tout pour réussir, mais il ne croit plus en lui. » Combien de parents ont entendu cette phrase ? Le décrochage n'est presque jamais un événement soudain : il commence des années plus tôt, en silence, dans l'enfance. Voici pourquoi — et ce que vous pouvez faire, dès aujourd'hui, à la maison."
-      updated="6 août 2026"
+      updated="8 août 2026"
       readingTime="9 min"
       related={[
         { label: "Agitation et concentration : comprendre avant de s'inquiéter", to: "/guides/enfant-agite-concentration" },
@@ -90,6 +92,11 @@ function Guide() {
         { label: "Quels défis proposer à un adolescent ?", to: "/guides/defis-pour-adolescents" },
       ]}
     >
+      <img
+        src="/guides/og-decrochage.jpg"
+        alt="Mère encourageant chaleureusement son enfant dans ses apprentissages à la maison"
+        className="my-6 aspect-video w-full rounded-3xl border border-ink/10 object-cover shadow-lg"
+      />
       <MedicalDisclaimer>
         Ce guide est un contenu éducatif destiné aux parents. Il ne constitue pas un avis médical
         et ne permet pas d'évaluer ou de diagnostiquer un trouble. Si votre enfant semble en

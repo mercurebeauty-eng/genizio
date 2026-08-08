@@ -39,6 +39,7 @@ export const Route = createFileRoute("/guides/enfant-agite-concentration")({
       description:
         "Agitation et concentration : comment observer votre enfant, distinguer l'ennui d'une vraie difficulté d'attention, et savoir quand consulter.",
       path: PATH,
+      image: "/guides/og-agite.jpg",
       type: "article",
     });
     return {
@@ -58,6 +59,7 @@ export const Route = createFileRoute("/guides/enfant-agite-concentration")({
           headline: "Mon enfant ne tient pas en place : comprendre avant de s'inquiéter",
           inLanguage: "fr-FR",
           mainEntityOfPage: absoluteUrl(PATH),
+          image: absoluteUrl("/guides/og-agite.jpg"),
           publisher: { "@id": `${SITE_URL}/#organization` },
           author: { "@type": "Organization", name: "Génizio" },
           datePublished: "2026-07-27",
@@ -80,7 +82,7 @@ function Guide() {
       eyebrow="Attention & concentration"
       title="Mon enfant ne tient pas en place : comprendre avant de s'inquiéter"
       intro="« Il ne se concentre sur rien. » C'est l'une des phrases que les parents nous disent le plus souvent. Dans une grande partie des cas, l'enfant se concentre très bien — mais pas sur ce qu'on lui demande, ni de la façon dont on l'attend. Voici comment faire la différence."
-      updated="27 juillet 2026"
+      updated="8 août 2026"
       readingTime="7 min"
       related={[
         { label: "Haut potentiel : les vrais signes", to: "/guides/potentiel-haut-potentiel-enfant" },
@@ -88,6 +90,11 @@ function Guide() {
         { label: "Les intelligences multiples expliquées simplement", to: "/guides/intelligences-multiples-gardner" },
       ]}
     >
+      <img
+        src="/guides/og-agite.jpg"
+        alt="Enfant africain canalisant son énergie dans une construction de blocs à la maison"
+        className="my-6 aspect-video w-full rounded-3xl border border-ink/10 object-cover shadow-lg"
+      />
       <MedicalDisclaimer>
         Ce guide est un contenu éducatif destiné aux parents. Il ne constitue pas un avis médical
         et ne permet pas de dépister un trouble. Si l'agitation ou les difficultés d'attention de

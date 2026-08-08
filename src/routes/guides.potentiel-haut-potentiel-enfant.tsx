@@ -39,6 +39,7 @@ export const Route = createFileRoute("/guides/potentiel-haut-potentiel-enfant")(
       description:
         "Les vrais signes à observer, ce que seul un professionnel peut diagnostiquer, et pourquoi le potentiel d'un enfant dépasse largement ce que l'école mesure.",
       path: PATH,
+      image: "/guides/og-haut-potentiel.jpg",
       type: "article",
     });
     return {
@@ -58,10 +59,11 @@ export const Route = createFileRoute("/guides/potentiel-haut-potentiel-enfant")(
           headline: "Comment savoir si mon enfant a un haut potentiel ou un don particulier",
           inLanguage: "fr-FR",
           mainEntityOfPage: absoluteUrl(PATH),
+          image: absoluteUrl("/guides/og-haut-potentiel.jpg"),
           publisher: { "@id": `${SITE_URL}/#organization` },
           author: { "@type": "Organization", name: "Génizio" },
           datePublished: "2026-07-27",
-          dateModified: "2026-07-27",
+          dateModified: "2026-08-08",
           about: [
             { "@type": "Thing", name: "Haut potentiel intellectuel" },
             { "@type": "Thing", name: "Développement du potentiel de l'enfant" },
@@ -79,7 +81,7 @@ function Guide() {
       eyebrow="Potentiel & talents"
       title="Comment savoir si mon enfant a un haut potentiel ou un don particulier"
       intro="La question revient chez presque tous les parents à un moment ou un autre. Voici ce qui relève de l'observation à la maison, ce qui relève d'un diagnostic professionnel, et pourquoi le potentiel réel d'un enfant dépasse largement ce que l'école mesure."
-      updated="27 juillet 2026"
+      updated="8 août 2026"
       readingTime="10 min"
       related={[
         { label: "Les intelligences multiples de Gardner", to: "/guides/intelligences-multiples-gardner" },
@@ -88,6 +90,11 @@ function Guide() {
         { label: "Quels défis pour un adolescent ?", to: "/guides/defis-pour-adolescents" },
       ]}
     >
+      <img
+        src="/guides/og-haut-potentiel.jpg"
+        alt="Jeune élève africain plongé dans la réflexion d'un casse-tête stimulant"
+        className="my-6 aspect-video w-full rounded-3xl border border-ink/10 object-cover shadow-lg"
+      />
       <h2>Deux questions qu'on confond souvent</h2>
       <p>
         « Mon enfant a-t-il un don ? » recouvre en réalité deux questions très différentes. La

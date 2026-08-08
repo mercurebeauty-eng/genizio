@@ -91,6 +91,7 @@ export const Route = createFileRoute("/guides/activites-educatives-enfant")({
       description:
         "Des activités éducatives concrètes avec du matériel du quotidien, classées par forme d'intelligence, et ce que chacune révèle de votre enfant.",
       path: PATH,
+      image: "/guides/og-activites.jpg",
       type: "article",
     });
     return {
@@ -110,10 +111,11 @@ export const Route = createFileRoute("/guides/activites-educatives-enfant")({
           headline: "24 activités éducatives à faire à la maison avec un enfant de 6 à 12 ans",
           inLanguage: "fr-FR",
           mainEntityOfPage: absoluteUrl(PATH),
+          image: absoluteUrl("/guides/og-activites.jpg"),
           publisher: { "@id": `${SITE_URL}/#organization` },
           author: { "@type": "Organization", name: "Génizio" },
           datePublished: "2026-07-27",
-          dateModified: "2026-07-27",
+          dateModified: "2026-08-08",
           about: [
             { "@type": "Thing", name: "Activités éducatives pour enfants" },
             { "@type": "Thing", name: "Jeux éducatifs" },
@@ -132,7 +134,7 @@ function Guide() {
       eyebrow="Activités & jeux"
       title="24 activités éducatives à faire à la maison avec un enfant de 6 à 12 ans"
       intro="Pas de matériel coûteux, pas d'écran, pas de fiche à imprimer. Des activités qui produisent un résultat visible — et qui, mises bout à bout, révèlent ce que votre enfant sait faire."
-      updated="27 juillet 2026"
+      updated="8 août 2026"
       readingTime="8 min"
       related={[
         { label: "Haut potentiel : les vrais signes", to: "/guides/potentiel-haut-potentiel-enfant" },
@@ -140,6 +142,11 @@ function Guide() {
         { label: "Quels défis pour un adolescent de 12 à 16 ans ?", to: "/guides/defis-pour-adolescents" },
       ]}
     >
+      <img
+        src="/guides/og-activites.jpg"
+        alt="Famille africaine engagée dans des activités éducatives manuelles à la maison"
+        className="my-6 aspect-video w-full rounded-3xl border border-ink/10 object-cover shadow-lg"
+      />
       <h2>Pourquoi le résultat visible change tout</h2>
       <p>
         Une activité qui se termine par un objet, une photo, un plat ou un score tient un enfant

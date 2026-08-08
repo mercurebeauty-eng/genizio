@@ -34,6 +34,7 @@ export const Route = createFileRoute("/guides/ia-apprentissage-enfant")({
       description:
         "Ce qu'une IA bien conçue apporte réellement à l'apprentissage d'un enfant, les risques d'un usage non cadré, et les principes pour l'utiliser sans danger.",
       path: PATH,
+      image: "/guides/og-ia.jpg",
       type: "article",
     });
     return {
@@ -53,10 +54,11 @@ export const Route = createFileRoute("/guides/ia-apprentissage-enfant")({
           headline: "Comment utiliser l'intelligence artificielle pour aider son enfant à apprendre",
           inLanguage: "fr-FR",
           mainEntityOfPage: absoluteUrl(PATH),
+          image: absoluteUrl("/guides/og-ia.jpg"),
           publisher: { "@id": `${SITE_URL}/#organization` },
           author: { "@type": "Organization", name: "Génizio" },
           datePublished: "2026-07-27",
-          dateModified: "2026-07-27",
+          dateModified: "2026-08-08",
           about: [
             { "@type": "Thing", name: "Intelligence artificielle et éducation" },
             { "@type": "Thing", name: "Apprentissage personnalisé" },
@@ -74,14 +76,19 @@ function Guide() {
       eyebrow="IA & apprentissage"
       title="Comment utiliser l'intelligence artificielle pour aider son enfant à apprendre"
       intro="L'IA générative s'invite dans l'apprentissage des enfants, pour le meilleur et pour le pire. Voici ce qu'elle apporte réellement, ce qui pose problème quand elle est mal utilisée, et les principes pour en tirer parti sans risque."
-      updated="27 juillet 2026"
+      updated="8 août 2026"
       readingTime="8 min"
       related={[
         { label: "Haut potentiel : les vrais signes", to: "/guides/potentiel-haut-potentiel-enfant" },
+        { label: "Les intelligences multiples de Gardner", to: "/guides/intelligences-multiples-gardner" },
         { label: "30 activités éducatives (6-12 ans)", to: "/guides/activites-educatives-enfant" },
-        { label: "Quels défis pour un adolescent ?", to: "/guides/defis-pour-adolescents" },
       ]}
     >
+      <img
+        src="/guides/og-ia.jpg"
+        alt="Père guidant avec bienveillance sa fille découvrant une application d'apprentissage interactif par IA"
+        className="my-6 aspect-video w-full rounded-3xl border border-ink/10 object-cover shadow-lg"
+      />
       <h2>Ce que l'IA fait réellement mieux qu'un parent seul</h2>
       <p>
         Un parent, aussi investi soit-il, ne peut pas générer chaque semaine une activité inédite,

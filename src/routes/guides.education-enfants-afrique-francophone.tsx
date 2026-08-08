@@ -34,6 +34,7 @@ export const Route = createFileRoute("/guides/education-enfants-afrique-francoph
       description:
         "Ce que l'éducation en Côte d'Ivoire, au Sénégal et dans la diaspora a de spécifique, et comment révéler le potentiel d'un enfant avec ce qu'on a à la maison.",
       path: PATH,
+      image: "/guides/og-afrique.jpg",
       type: "article",
     });
     return {
@@ -53,10 +54,11 @@ export const Route = createFileRoute("/guides/education-enfants-afrique-francoph
           headline: "Révéler le potentiel d'un enfant en Afrique francophone et dans la diaspora",
           inLanguage: "fr-FR",
           mainEntityOfPage: absoluteUrl(PATH),
+          image: absoluteUrl("/guides/og-afrique.jpg"),
           publisher: { "@id": `${SITE_URL}/#organization` },
           author: { "@type": "Organization", name: "Génizio" },
           datePublished: "2026-07-27",
-          dateModified: "2026-07-27",
+          dateModified: "2026-08-08",
           about: [
             { "@type": "Thing", name: "Éducation en Afrique francophone" },
             { "@type": "Thing", name: "Développement du potentiel de l'enfant" },
@@ -74,7 +76,7 @@ function Guide() {
       eyebrow="Afrique & diaspora"
       title="Révéler le potentiel d'un enfant en Afrique francophone et dans la diaspora"
       intro="La plupart des contenus sur le développement de l'enfant sont écrits pour un contexte occidental — écoles bien dotées, clubs extrascolaires à chaque coin de rue. Voici une lecture pensée depuis la Côte d'Ivoire, le Sénégal et la diaspora."
-      updated="27 juillet 2026"
+      updated="8 août 2026"
       readingTime="8 min"
       related={[
         { label: "Haut potentiel : les vrais signes", to: "/guides/potentiel-haut-potentiel-enfant" },
@@ -82,6 +84,11 @@ function Guide() {
         { label: "30 activités éducatives (6-12 ans)", to: "/guides/activites-educatives-enfant" },
       ]}
     >
+      <img
+        src="/guides/og-afrique.jpg"
+        alt="Famille et enfants apprenant ensemble dans une cour de maison en Afrique francophone"
+        className="my-6 aspect-video w-full rounded-3xl border border-ink/10 object-cover shadow-lg"
+      />
       <h2>Un contexte différent, pas un contexte en manque</h2>
       <p>
         La plupart des guides sur le développement de l'enfant supposent un accès facile à des
