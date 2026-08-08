@@ -206,6 +206,7 @@ type Challenge = {
   id: string;
   title: string;
   domain: string;
+  trait_subform?: string | null;
   status: "todo" | "in_progress" | "completed";
   completed_at: string | null;
   proof_image_url: string | null;
@@ -258,7 +259,7 @@ function PortfolioPage() {
       supabase.from("child_profiles").select("id, name, age, talents, interests, pdf_unlocked, xp").eq("id", profileId).eq("user_id", session!.user.id).maybeSingle(),
       supabase
         .from("challenges")
-        .select("id, title, domain, status, completed_at, proof_image_url, ai_observations, created_at")
+        .select("id, title, domain, trait_subform, status, completed_at, proof_image_url, ai_observations, created_at")
         .eq("child_id", profileId)
         .order("completed_at", { ascending: false, nullsFirst: false }),
       supabase
@@ -958,37 +959,53 @@ function PortfolioPage() {
           )}
 
           {/* Boussole d'Opportunités & Métiers d'Avenir (12 ans et +) */}
-          {child.age >= OPPORTUNITY_COMPASS_MIN_AGE && (
-            <div className="rounded-3xl border border-brand/20 bg-gradient-to-br from-brand/5 via-white to-sky/5 p-6 shadow-xl space-y-4">
-              <div className="flex items-center justify-between">
-                <h3 className="flex items-center gap-2 font-display text-balance text-lg font-bold text-ink">
-                  <Compass className="size-5 text-brand" />
-                  Boussole d'Opportunités & Pistes d'Avenir
-                </h3>
-                <span className="rounded-full border border-brand/20 bg-brand/10 px-2.5 py-0.5 text-[9px] font-black uppercase tracking-wider text-brand">
-                  {OPPORTUNITY_COMPASS_VERSION}
-                </span>
+          {child.age >= OPPORTUNITY_COMPASS_MIN_AGE && (() => {
+            const completedSubforms = Array.from(
+              new Set(
+                completed
+                  .map((c) => c.trait_subform)
+                  .filter((sub): sub is string => Boolean(sub) && Boolean(TALENT_SUBFORM_OPPORTUNITIES[sub]))
+              )
+            );
+
+            if (completedSubforms.length === 0) return null;
+
+            return (
+              <div className="rounded-3xl border border-brand/20 bg-gradient-to-br from-brand/5 via-white to-sky/5 p-6 shadow-xl space-y-4">
+                <div className="flex items-center justify-between">
+                  <h3 className="flex items-center gap-2 font-display text-balance text-lg font-bold text-ink">
+                    <Compass className="size-5 text-brand" />
+                    Boussole d'Opportunités & Pistes d'Avenir
+                  </h3>
+                  <span className="rounded-full border border-brand/20 bg-brand/10 px-2.5 py-0.5 text-[9px] font-black uppercase tracking-wider text-brand">
+                    {OPPORTUNITY_COMPASS_VERSION}
+                  </span>
+                </div>
+                <p className="text-xs font-medium leading-relaxed text-ink/70">
+                  Pistes d'exploration d'avenir basées sur les sous-domaines de compétences spécifiques analysés lors des défis de {child.name}.
+                </p>
+                <div className="grid gap-3 sm:grid-cols-2 pt-2">
+                  {completedSubforms.map((key) => {
+                    const pistes = TALENT_SUBFORM_OPPORTUNITIES[key];
+                    if (!pistes) return null;
+                    return (
+                      <div key={key} className="rounded-2xl border border-ink/10 bg-white p-4 shadow-sm">
+                        <h4 className="text-xs font-black text-brand uppercase tracking-wider mb-1">
+                          {TALENT_SUBFORM_LABELS[key] ?? key}
+                        </h4>
+                        <p className="text-xs font-medium text-ink/75 leading-relaxed">
+                          {pistes.join(" · ")}
+                        </p>
+                      </div>
+                    );
+                  })}
+                </div>
+                <p className="text-[10px] text-ink/50 italic pt-2 border-t border-dashed border-ink/10">
+                  {OPPORTUNITY_COMPASS_DISCLAIMER}
+                </p>
               </div>
-              <p className="text-xs font-medium leading-relaxed text-ink/70">
-                Pistes d'exploration d'avenir basées sur les sous-domaines de compétences dans lesquels {child.name} s'est illustré(e).
-              </p>
-              <div className="grid gap-3 sm:grid-cols-2 pt-2">
-                {Object.entries(TALENT_SUBFORM_OPPORTUNITIES).map(([key, pistes]) => (
-                  <div key={key} className="rounded-2xl border border-ink/10 bg-white p-4 shadow-sm">
-                    <h4 className="text-xs font-black text-brand uppercase tracking-wider mb-1">
-                      {TALENT_SUBFORM_LABELS[key] ?? key}
-                    </h4>
-                    <p className="text-xs font-medium text-ink/75 leading-relaxed">
-                      {pistes.join(" · ")}
-                    </p>
-                  </div>
-                ))}
-              </div>
-              <p className="text-[10px] text-ink/50 italic pt-2 border-t border-dashed border-ink/10">
-                {OPPORTUNITY_COMPASS_DISCLAIMER}
-              </p>
-            </div>
-          )}
+            );
+          })()}
 
           {/* 🃏 Collectible Talent Cards Grid */}
           <div className="rounded-3xl border border-ink/10 bg-white p-6 shadow-xl space-y-6">
