@@ -423,7 +423,7 @@ export const sendWelcomeEmailIfNeeded = createServerFn({ method: "POST" })
 
     try {
       await transporter.sendMail({
-        from: `"Génizio" <${senderEmail}>`,
+        from: `"L'équipe Génizio" <${senderEmail}>`,
         replyTo: senderEmail,
         to: data.email,
         subject: "🎉 Bienvenue chez Génizio — votre aventure commence maintenant",
