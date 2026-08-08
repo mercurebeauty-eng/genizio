@@ -186,6 +186,41 @@ export function breadcrumbJsonLd(items: { name: string; path: string }[]) {
   };
 }
 
+/** Schéma d'Article pour les guides et articles de blog (SEO/AEO). */
+export function articleJsonLd(opts: {
+  headline: string;
+  description: string;
+  path: string;
+  datePublished: string;
+  dateModified?: string;
+  image?: string;
+  authorName?: string;
+}) {
+  return {
+    "@context": "https://schema.org",
+    "@type": "Article",
+    headline: opts.headline,
+    description: opts.description,
+    mainEntityOfPage: {
+      "@type": "WebPage",
+      "@id": absoluteUrl(opts.path),
+    },
+    image: absoluteUrl(opts.image ?? OG_IMAGE_PATH),
+    datePublished: opts.datePublished,
+    dateModified: opts.dateModified ?? opts.datePublished,
+    author: {
+      "@type": "Organization",
+      name: opts.authorName ?? SITE_NAME,
+      url: SITE_URL,
+    },
+    publisher: {
+      "@id": `${SITE_URL}/#organization`,
+    },
+    inLanguage: "fr-FR",
+  };
+}
+
+
 /**
  * Un avis de parent publié sur la landing. `reviewBody` doit être un vrai
  * retour client (jamais inventé) : c'est le format que Google et les LLM
