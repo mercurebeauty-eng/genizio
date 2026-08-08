@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Sparkles, Star, Heart } from "lucide-react";
-import nayaAvatar from "@/assets/naya-avatar.png";
+import nayaAvatar from "@/assets/naya-avatar.webp";
 
 const SIZES = {
   sm: 72,

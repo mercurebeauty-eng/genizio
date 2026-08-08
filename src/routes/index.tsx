@@ -1,8 +1,8 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { useSession } from "@/hooks/use-session";
-import constatImage from "@/assets/landing-constat.jpg";
-import communauteImage from "@/assets/landing-communaute.jpg";
+import constatImage from "@/assets/landing-constat.webp";
+import communauteImage from "@/assets/landing-communaute.webp";
 import { NayaAvatar } from "@/components/NayaAvatar";
 import { TalentRadarChart } from "@/components/TalentRadarChart";
 import { INTERESTS_BY_TALENT } from "@/components/profiles/shared";
@@ -1206,10 +1206,11 @@ function DemoSection() {
                   {name.charAt(0).toUpperCase() || "?"}
                 </div>
                 <div className="flex-1">
-                  <label className="block text-[10px] font-bold uppercase tracking-widest text-white/60 mb-1">
+                  <label htmlFor="landing-child-name" className="block text-[10px] font-bold uppercase tracking-widest text-white/60 mb-1">
                     Prénom de l'enfant
                   </label>
                   <input
+                    id="landing-child-name"
                     value={name}
                     onChange={(e) => setName(e.target.value.slice(0, 20))}
                     className="w-full border-b-2 border-white/20 bg-transparent pb-1 text-base font-bold text-white outline-none focus:border-brand-glow transition-all"
@@ -1218,10 +1219,11 @@ function DemoSection() {
               </div>
 
               <div>
-                <label className="block text-[10px] font-bold uppercase tracking-widest text-white/60 mb-2">
+                <label htmlFor="landing-child-age" className="block text-[10px] font-bold uppercase tracking-widest text-white/60 mb-2">
                   Âge : {age} ans
                 </label>
                 <input
+                  id="landing-child-age"
                   type="range"
                   min={4}
                   max={16}
@@ -1259,9 +1261,9 @@ function DemoSection() {
 
             {/* LIVE RADAR CHART */}
             <div className="rounded-3xl border border-white/10 bg-white/5 p-6 flex flex-col items-center backdrop-blur-sm">
-              <h4 className="text-xs font-bold uppercase tracking-wider text-white/60 mb-4 self-start">
+              <h3 className="text-xs font-bold uppercase tracking-wider text-white/60 mb-4 self-start">
                 Profil en temps réel (Radar des intelligences)
-              </h4>
+              </h3>
               <TalentRadarChart
                 talents={mockTalents}
                 name={name}
@@ -1279,9 +1281,9 @@ function DemoSection() {
                 <WandSparkles className="size-5" />
               </div>
               <div>
-                <h4 className="font-display text-balance font-extrabold text-white text-base">
+                <h3 className="font-display text-balance font-extrabold text-white text-base">
                   Recommandation IA pour {name}
-                </h4>
+                </h3>
                 <p className="text-xs text-white/70 leading-relaxed font-semibold mt-1">
                   Basé sur les centres d'intérêt sélectionnés, {name} présente un profil axé sur
                   l'expérimentation active. Nous suggérons des défis qui allient observation
@@ -1310,9 +1312,9 @@ function DemoSection() {
                         {c.domain}
                       </span>
                     </div>
-                    <h4 className="font-display text-balance text-base font-extrabold text-white mb-2 leading-tight group-hover:text-brand-glow transition-colors">
+                    <h3 className="font-display text-balance text-base font-extrabold text-white mb-2 leading-tight group-hover:text-brand-glow transition-colors">
                       {c.title}
-                    </h4>
+                    </h3>
                     <p className="text-xs text-white/60 leading-relaxed font-medium mb-6">
                       {c.desc}
                     </p>
@@ -1593,7 +1595,7 @@ function TestimonialsSection() {
           {LANDING_TESTIMONIALS.map((t, i) => (
             <Reveal key={t.author} delay={(i % 2) * 100}>
               <figure className="group relative h-full rounded-3xl border border-ink/10 bg-white p-7 shadow-sm transition-all hover:-translate-y-1 hover:border-brand/30 hover:shadow-xl">
-                <span className="mb-4 flex items-center gap-0.5 text-amber-500" aria-label={`${t.rating} sur 5`}>
+                <span role="img" className="mb-4 flex items-center gap-0.5 text-amber-500" aria-label={`${t.rating} sur 5`}>
                   {Array.from({ length: 5 }).map((_, s) => (
                     <Star
                       key={s}
@@ -1670,8 +1672,8 @@ function DiasporaSection() {
 
         <ol className="space-y-8 lg:col-span-7 lg:pt-2">
           {DIASPORA_POINTS.map(({ n, title, desc }, i) => (
-            <Reveal key={n} delay={i * 100}>
-              <li className="flex gap-5 border-b border-ink/10 pb-8 last:border-b-0 last:pb-0">
+            <li key={n} className="border-b border-ink/10 pb-8 last:border-b-0 last:pb-0">
+              <Reveal delay={i * 100} className="flex gap-5">
                 <span className="font-display text-balance text-2xl font-black leading-none text-brand">
                   {n}
                 </span>
@@ -1679,8 +1681,8 @@ function DiasporaSection() {
                   <h3 className="mb-1.5 text-base font-extrabold text-ink">{title}</h3>
                   <p className="text-sm font-medium leading-relaxed text-ink/60">{desc}</p>
                 </div>
-              </li>
-            </Reveal>
+              </Reveal>
+            </li>
           ))}
         </ol>
       </div>
