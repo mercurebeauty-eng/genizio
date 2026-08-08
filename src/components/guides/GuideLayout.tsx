@@ -94,23 +94,45 @@ export function GuideLayout({
         </div>
 
 
-        <aside className="mt-16 rounded-3xl border border-ink/10 bg-white p-8 shadow-sm">
-          <h2 className="font-display text-xl font-extrabold">
-            Passer de la lecture à la pratique
+        <aside className="mt-16 rounded-3xl border border-brand/20 bg-gradient-to-br from-brand/5 via-white to-sky/5 p-8 shadow-md">
+          <div className="inline-flex items-center gap-2 rounded-full bg-brand/10 px-3.5 py-1 text-xs font-black uppercase tracking-wider text-brand">
+            ✨ Jumeau Pédagogique & Défis Maison
+          </div>
+          <h2 className="mt-4 font-display text-2xl font-black text-ink">
+            Passez de la théorie à l'action avec Génizio
           </h2>
           <p className="mt-2 text-sm font-medium leading-relaxed text-ink/70">
-            Génizio propose à votre enfant des défis concrets adaptés à son âge et à ses centres
-            d'intérêt, et construit la carte de ses talents à partir de ce qu'il réalise vraiment. 1
-            profil enfant gratuit, puis 5 000 FCFA les 3 premiers mois (ensuite 15 000 FCFA) par
-            profil supplémentaire.
+            Ne laissez pas les talents de votre enfant dans l'ombre. Génizio accompagne chaque enfant de 5 à 16 ans avec des défis concrets à faire à la maison, guidés par son jumeau pédagogique Naya.
           </p>
-          <Link
-            to="/auth"
-            className="press-brand mt-5 inline-flex items-center gap-2 rounded-2xl bg-brand px-6 py-3 text-sm font-bold text-white"
-          >
-            Créer le profil de mon enfant
-            <ArrowRight className="size-4" aria-hidden />
-          </Link>
+
+          <div className="mt-6 grid gap-4 sm:grid-cols-3 border-y border-ink/10 py-5">
+            <div className="flex flex-col gap-1">
+              <span className="text-sm font-extrabold text-brand">🧠 9 Intelligences</span>
+              <span className="text-xs text-ink/70">Cartographie précise basée sur ses réalisations concrètes.</span>
+            </div>
+            <div className="flex flex-col gap-1">
+              <span className="text-sm font-extrabold text-brand">🤖 Naya (IA Mentor)</span>
+              <span className="text-xs text-ink/70">Défis 10 min personnalisés selon ses passions.</span>
+            </div>
+            <div className="flex flex-col gap-1">
+              <span className="text-sm font-extrabold text-brand">📜 Passeport Talents</span>
+              <span className="text-xs text-ink/70">Un portfolio valorisant pour renforcer sa confiance.</span>
+            </div>
+          </div>
+
+          <div className="mt-6 flex flex-wrap items-center justify-between gap-4">
+            <div>
+              <span className="block text-xs font-bold text-ink/50">1er profil enfant 100 % gratuit</span>
+              <span className="text-xs font-medium text-ink/70">Puis 5 000 FCFA / 3 mois par profil supplémentaire.</span>
+            </div>
+            <Link
+              to="/auth"
+              className="press-brand inline-flex items-center gap-2 rounded-2xl bg-brand px-6 py-3.5 text-sm font-bold text-white shadow-md hover:bg-brand/90 transition-all"
+            >
+              Créer le profil de mon enfant
+              <ArrowRight className="size-4" aria-hidden />
+            </Link>
+          </div>
         </aside>
 
         {related && related.length > 0 && (
