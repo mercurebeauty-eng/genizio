@@ -123,7 +123,8 @@ export function GuideLayout({
           <div className="mt-6 flex flex-wrap items-center justify-between gap-4">
             <div>
               <span className="block text-xs font-bold text-ink/50">1er profil enfant 100 % gratuit</span>
-              <span className="text-xs font-medium text-ink/70">Puis 5 000 FCFA / 3 mois par profil supplémentaire.</span>
+              <span className="text-xs font-medium text-ink/70">Puis 5 000 FCFA / 3 mois* par profil supplémentaire.</span>
+              <span className="block text-[10px] text-ink/50 mt-0.5 leading-tight">* Offre de 5 000 FCFA valable pour les 3 premiers mois (puis 15 000 FCFA / 3 mois par profil).</span>
             </div>
             <Link
               to="/auth"
