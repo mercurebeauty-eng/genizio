@@ -850,7 +850,10 @@ const STORY_STEPS: { n: string; title: string; desc: string }[] = [
 
 function StorySection() {
   return (
-    <section id="vrai-enjeu" className="scroll-mt-24 border-y border-ink/10 bg-white/40 py-24 lg:py-28">
+    <section
+      id="vrai-enjeu"
+      className="scroll-mt-24 border-y border-ink/10 bg-white/40 py-24 lg:py-28"
+    >
       <div className="mx-auto max-w-6xl px-6">
         <Reveal className="mx-auto mb-14 max-w-2xl text-center">
           <span className="mb-3 inline-block text-xs font-bold uppercase tracking-widest text-brand">
@@ -870,7 +873,10 @@ function StorySection() {
           {STORY_STEPS.map(({ n, title, desc }, i) => (
             <Reveal key={n} delay={i * 110}>
               <div className="group h-full rounded-3xl border border-ink/10 bg-white p-7 shadow-sm transition-all hover:-translate-y-1 hover:border-brand/30 hover:shadow-xl">
-                <span aria-hidden className="font-display text-balance text-3xl font-extrabold text-brand/30">
+                <span
+                  aria-hidden
+                  className="font-display text-balance text-3xl font-extrabold text-brand/30"
+                >
                   {n}
                 </span>
                 <h3 className="mb-2 mt-4 font-display text-balance text-lg font-extrabold text-ink">
@@ -1206,7 +1212,10 @@ function DemoSection() {
                   {name.charAt(0).toUpperCase() || "?"}
                 </div>
                 <div className="flex-1">
-                  <label htmlFor="landing-child-name" className="block text-[10px] font-bold uppercase tracking-widest text-white/60 mb-1">
+                  <label
+                    htmlFor="landing-child-name"
+                    className="block text-[10px] font-bold uppercase tracking-widest text-white/60 mb-1"
+                  >
                     Prénom de l'enfant
                   </label>
                   <input
@@ -1219,7 +1228,10 @@ function DemoSection() {
               </div>
 
               <div>
-                <label htmlFor="landing-child-age" className="block text-[10px] font-bold uppercase tracking-widest text-white/60 mb-2">
+                <label
+                  htmlFor="landing-child-age"
+                  className="block text-[10px] font-bold uppercase tracking-widest text-white/60 mb-2"
+                >
                   Âge : {age} ans
                 </label>
                 <input
@@ -1595,7 +1607,11 @@ function TestimonialsSection() {
           {LANDING_TESTIMONIALS.map((t, i) => (
             <Reveal key={t.author} delay={(i % 2) * 100}>
               <figure className="group relative h-full rounded-3xl border border-ink/10 bg-white p-7 shadow-sm transition-all hover:-translate-y-1 hover:border-brand/30 hover:shadow-xl">
-                <span role="img" className="mb-4 flex items-center gap-0.5 text-amber-500" aria-label={`${t.rating} sur 5`}>
+                <span
+                  role="img"
+                  className="mb-4 flex items-center gap-0.5 text-amber-500"
+                  aria-label={`${t.rating} sur 5`}
+                >
                   {Array.from({ length: 5 }).map((_, s) => (
                     <Star
                       key={s}
@@ -1801,7 +1817,9 @@ function VisionSection() {
                 </div>
               </div>
               <div className="text-center">
-                <div className="font-display text-balance text-2xl font-extrabold text-sky">3</div>
+                <div className="font-display text-balance text-2xl font-extrabold text-sky-dark">
+                  3
+                </div>
                 <div className="text-[10px] font-bold uppercase tracking-widest text-ink/60">
                   Mentors actifs
                 </div>
@@ -1911,7 +1929,7 @@ const LEVEL_TONES: Record<
 > = {
   leaf: {
     card: "bg-white border border-ink/10 shadow-md",
-    badge: "bg-leaf/10 text-leaf border-leaf/20",
+    badge: "bg-leaf/10 text-leaf-dark border-leaf/20",
     num: "text-leaf",
   },
   brand: {
@@ -1921,8 +1939,8 @@ const LEVEL_TONES: Record<
   },
   sky: {
     card: "bg-white border border-ink/10 shadow-md",
-    badge: "bg-sky/10 text-sky border-sky/20",
-    num: "text-sky",
+    badge: "bg-sky/10 text-sky-dark border-sky/20",
+    num: "text-sky-dark",
   },
   glow: {
     card: "bg-white border border-ink/10 shadow-md",
@@ -2084,7 +2102,7 @@ function FAQSection() {
             Lire tous les guides
             <ArrowRight className="size-4" aria-hidden />
           </Link>
-          <p className="mt-3 text-xs font-semibold text-ink/50">
+          <p className="mt-3 text-xs font-semibold text-ink/60">
             Potentiel, intelligences multiples, activités à la maison : des articles pour les
             parents.
           </p>

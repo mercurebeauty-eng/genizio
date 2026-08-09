@@ -315,37 +315,38 @@ function SupervisorDashboardPage() {
                       ) : (
                         <ul className="space-y-3">
                           {selected.challenges.map((c) => (
-                            <button
-                              key={c.id}
-                              onClick={() => setSelectedChallenge(c)}
-                              className="w-full flex items-center justify-between rounded-2xl border border-ink/10 bg-surface px-4 py-3 hover:bg-stone-50 transition-all text-left cursor-pointer"
-                            >
-                              <div>
-                                <p className="text-sm font-bold text-ink hover:text-brand transition-colors">
-                                  {c.title}
-                                </p>
-                                <p className="text-xs text-ink/60">{c.domain}</p>
-                              </div>
-                              <span
-                                className={`rounded-full px-2.5 py-1 text-[10px] font-black uppercase tracking-widest border border-ink/10 ${
-                                  c.status === "completed"
-                                    ? "bg-emerald-100 text-emerald-800"
-                                    : c.status === "in_progress"
-                                      ? "bg-brand/10 text-brand"
-                                      : c.status === "not_completed"
-                                        ? "bg-rose-100 text-rose-800"
-                                        : "bg-surface text-ink/60"
-                                }`}
+                            <li key={c.id}>
+                              <button
+                                onClick={() => setSelectedChallenge(c)}
+                                className="w-full flex items-center justify-between rounded-2xl border border-ink/10 bg-surface px-4 py-3 hover:bg-stone-50 transition-all text-left cursor-pointer"
                               >
-                                {c.status === "completed"
-                                  ? "✅ Complété"
-                                  : c.status === "in_progress"
-                                    ? "⚡ En cours"
-                                    : c.status === "not_completed"
-                                      ? "❌ Non réussi"
-                                      : "📋 À faire"}
-                              </span>
-                            </button>
+                                <div>
+                                  <p className="text-sm font-bold text-ink hover:text-brand transition-colors">
+                                    {c.title}
+                                  </p>
+                                  <p className="text-xs text-ink/60">{c.domain}</p>
+                                </div>
+                                <span
+                                  className={`rounded-full px-2.5 py-1 text-[10px] font-black uppercase tracking-widest border border-ink/10 ${
+                                    c.status === "completed"
+                                      ? "bg-emerald-100 text-emerald-800"
+                                      : c.status === "in_progress"
+                                        ? "bg-brand/10 text-brand"
+                                        : c.status === "not_completed"
+                                          ? "bg-rose-100 text-rose-800"
+                                          : "bg-surface text-ink/60"
+                                  }`}
+                                >
+                                  {c.status === "completed"
+                                    ? "✅ Complété"
+                                    : c.status === "in_progress"
+                                      ? "⚡ En cours"
+                                      : c.status === "not_completed"
+                                        ? "❌ Non réussi"
+                                        : "📋 À faire"}
+                                </span>
+                              </button>
+                            </li>
                           ))}
                         </ul>
                       )}
