@@ -26,22 +26,51 @@ describe("getChildGuild", () => {
     expect(Object.values(GUILDS)).not.toContainEqual(NO_GUILD_YET);
   });
 
-  it("picks the guild whose talent keys sum to the highest score", () => {
-    // corporelle is explorateurs' only talent key.
+  it("picks the guild with the highest mean score", () => {
+    // corporelle is explorateurs' only talent key — mean = raw score.
     expect(getChildGuild({ corporelle: 10 }).key).toBe("explorateurs");
   });
 
-  it("sums multiple talent keys belonging to the same guild", () => {
-    // strateges = entrepreneuriale + sociale + emotionnelle
+  it("averages multiple talent keys of the same guild", () => {
+    // strateges = entrepreneuriale + sociale + emotionnelle, mean 5.
     expect(getChildGuild({ entrepreneuriale: 5, sociale: 5, emotionnelle: 5 }).key).toBe("strateges");
-    // 15 beats any single-key guild scoring at most 12 in this scenario
-    expect(getChildGuild({ entrepreneuriale: 5, sociale: 5, emotionnelle: 5, corporelle: 12 }).key).toBe("strateges");
   });
 
-  it("breaks ties by earliest-declared guild in GUILDS (batisseurs first)", () => {
-    // spatial (batisseurs) and logico_mathematique (inventeurs) tied at 10 —
-    // strict ">" means the first guild to reach that score wins ties.
-    expect(getChildGuild({ spatial: 10, logico_mathematique: 10 }).key).toBe("batisseurs");
+  // Refonte 2026-08-09 : comportement VOLONTAIREMENT changé par rapport à l'ancienne
+  // somme brute — une guilde à 1 talent dominant l'emporte désormais sur une guilde
+  // large mais équilibrée (corporelle 12 > moyenne 5 des Stratèges). C'est le biais
+  // "multi-clés" corrigé : avant, additionner 3 talents moyens (15) battait un seul
+  // talent fort (12), ce qui éloignait la guilde de l'affinité réelle.
+  it("prefers a dominant single talent over a broad balanced profile", () => {
+    expect(
+      getChildGuild({ entrepreneuriale: 5, sociale: 5, emotionnelle: 5, corporelle: 12 }).key,
+    ).toBe("explorateurs");
+  });
+
+  // Refonte 2026-08-09 : la moyenne corrige l'avantage des guildes à 2-3 clés.
+  // Ancienne somme : createurs (50+50=100) > inventeurs (90). Nouvelle moyenne :
+  // inventeurs (90) > createurs (50). Le talent dominant est mieux reconnu.
+  it("mean corrects the multi-key advantage (dominant talent wins)", () => {
+    expect(getChildGuild({ logico_mathematique: 90, creative: 50, linguistique: 50 }).key).toBe(
+      "inventeurs",
+    );
+  });
+
+  it("breaks ties by the strongest single talent of the guild", () => {
+    // batisseurs avg (3+1)/2 = 2 avec pic 3 ; createurs avg (2+2)/2 = 2 avec pic 2 →
+    // batisseurs gagne par le pic, pas par l'ordre de déclaration.
+    expect(getChildGuild({ spatial: 3, artisanale: 1, creative: 2, linguistique: 2 }).key).toBe(
+      "batisseurs",
+    );
+  });
+
+  it("falls back to declaration order when avg AND peak are tied", () => {
+    // spatial+artisanale (batisseurs) et logico_mathematique (inventeurs) : moyenne 10
+    // ET pic 10 partout — dernier recours déterministe = ordre de déclaration
+    // (batisseurs déclarée en premier).
+    expect(
+      getChildGuild({ spatial: 10, artisanale: 10, logico_mathematique: 10 }).key,
+    ).toBe("batisseurs");
   });
 
   it("every GuildInfo.talentKeys entry is a real talent key covered exactly once", () => {

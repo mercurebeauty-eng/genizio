@@ -276,7 +276,8 @@ export function AdminTalentsCitiesTab({
 
           <div className="rounded-2xl bg-leaf/5 border border-leaf/20 p-3.5 text-xs text-leaf/90 font-medium">
             💡 <strong>Règle des Guildes :</strong> L'algorithme attribue la guilde à partir du
-            score cumulé des talents dominants (ex. Bâtisseurs = Spatiale + Artisanale).
+            score moyen des talents de chaque guilde (ex. Bâtisseurs = moyenne Spatiale + Artisanale),
+            égalités départagées par le talent le plus fort.
           </div>
         </div>
 

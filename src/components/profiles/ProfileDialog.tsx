@@ -7,6 +7,7 @@ import { useSession } from "@/hooks/use-session";
 import { useFamilyCoverage } from "@/hooks/use-family-coverage";
 import { getGeoHint } from "@/lib/geo.functions";
 import { computeChildCreationLimit } from "@/lib/child-access";
+import { seedTalentsFromInterests } from "@/lib/talent-seed";
 
 export function ProfileDialog({
   initial,
@@ -105,6 +106,11 @@ export function ProfileDialog({
         city: draft.city?.trim() || null,
         country: draft.country?.trim() || null,
         avatar_color: draft.avatar_color,
+        // Guilde provisoire (refonte 2026-08-09) : à la CRÉATION uniquement, les intérêts
+        // déclarés dérivent une baseline de talents (1-4 pts → "signal_precoce", sous les
+        // seuils 40/70) — l'enfant a une guilde dès le premier jour. Sur l'édition, on ne
+        // touche jamais aux talents gagnés par les défis (undefined = clé ignorée).
+        talents: initial ? undefined : seedTalentsFromInterests(draft.interests),
       };
       if (initial) {
         const { error } = await supabase.from("child_profiles").update(payload).eq("id", initial.id);

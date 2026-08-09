@@ -192,5 +192,18 @@ export async function markPaymentSuccessAndFulfill(
     .update({ status: "success", paid_at: now, updated_at: now })
     .eq("id", payment.id);
   if (error) throw new Error(`Erreur lors de la mise à jour du paiement: ${error.message}`);
+
+  // Reçu email (2026-08-09, demande utilisateur) : fire-and-forget, jamais bloquant
+  // pour la réponse de paiement (webhook/page de retour). Idempotent côté serveur
+  // par référence Paystack (consent_events), donc double déclenchement sûr.
+  void (async () => {
+    try {
+      const { sendPaymentConfirmationEmail } = await import("@/lib/payment-email.functions");
+      await sendPaymentConfirmationEmail(supabaseAdmin, payment);
+    } catch (err) {
+      console.error("Non-fatal: envoi de l'email de confirmation a échoué", err);
+    }
+  })();
+
   return result;
 }
