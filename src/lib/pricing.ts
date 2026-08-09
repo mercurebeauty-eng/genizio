@@ -21,6 +21,26 @@ export const STANDARD_PRICE_XOF = 15000;
 export const STANDARD_PRICE_EUR = 22.5;
 export const PROMO_DURATION_MONTHS = 3;
 
+// Parrainage (décision utilisateur 2026-08-08) : les 3 PREMIERS MOIS sont OFFERTS pour
+// l'enfant parrainé, puis 15 000 F/mois au-delà — « 3 mois gratuit puis le passage à
+// 15 000 ». Les mois offerts sont un cadeau, découplés de la fenêtre de bienvenue du compte
+// (5 000 F) : le parrain paie max(0, months − 3) × tarif standard.
+export const SPONSORSHIP_FREE_MONTHS = 3;
+
+export function resolveSponsorshipPrice(
+  months: number,
+  currency: "EUR" | "XOF" = "XOF",
+): { paidMonths: number; amountPaid: number; totalMonths: number } {
+  const paidMonths = Math.max(0, months - SPONSORSHIP_FREE_MONTHS);
+  const monthly = currency === "EUR" ? STANDARD_PRICE_EUR : STANDARD_PRICE_XOF;
+  return { paidMonths, amountPaid: paidMonths * monthly, totalMonths: months };
+}
+
+// Passeport d'Excellence (déblocage pdf_unlocked) — prix unique affiché côté admin et
+// utilisé par le paiement en ligne Paystack (initializePassportPayment). 50 000 FCFA.
+export const PASSPORT_PRICE_XOF = 50000;
+export const PASSPORT_PRICE_EUR = 75;
+
 export interface ExtraSlotPrice {
   priceXof: number;
   /** Équivalent EUR à la parité saison (10 000 F = 15 €). */

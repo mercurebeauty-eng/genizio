@@ -63,7 +63,7 @@ describe("resolveChildAccessStatus", () => {
   });
 });
 
-describe("computeChildCreationLimit (miroir du trigger : plancher + extra + 1)", () => {
+describe("computeChildCreationLimit (miroir du trigger : plancher + extra + 1, plafonné à 5)", () => {
   it("compte neuf sans slot : 1 + 0 + 1 = 2 — le premier profil MENSUEL est créable (en cours de mise en paiement)", () => {
     expect(computeChildCreationLimit("2026-08-10T00:00:00.000Z", 0)).toBe(2);
   });
@@ -72,9 +72,14 @@ describe("computeChildCreationLimit (miroir du trigger : plancher + extra + 1)",
     expect(computeChildCreationLimit("2026-08-10T00:00:00.000Z", 2)).toBe(4);
   });
 
-  it("compte grand-péré : 5 + extra + 1", () => {
-    expect(computeChildCreationLimit("2026-07-01T00:00:00.000Z", 0)).toBe(6);
-    expect(computeChildCreationLimit("2026-07-01T00:00:00.000Z", 3)).toBe(9);
+  it("compte grand-péré : plafonné à 5 — le plafond de 5 enfants est voulu, au-delà on crée un nouveau compte", () => {
+    expect(computeChildCreationLimit("2026-07-01T00:00:00.000Z", 0)).toBe(5);
+    expect(computeChildCreationLimit("2026-07-01T00:00:00.000Z", 3)).toBe(5);
+  });
+
+  it("compte couvert (abonnement famille ou crédit parrainage) : création possible jusqu'au plafond de 5", () => {
+    expect(computeChildCreationLimit("2026-08-10T00:00:00.000Z", 0, true)).toBe(5);
+    expect(computeChildCreationLimit("2026-07-01T00:00:00.000Z", 0, true)).toBe(5);
   });
 });
 
@@ -99,52 +104,67 @@ describe("computeAccessPeriodWindow (fenêtre partagée admin/parrain — la pro
 });
 
 describe("getChildAccessStatus (client fake, mêmes tables que le vrai)", () => {
-  const mkDb = (overrides: { children?: any[]; periods?: any[]; enrollments?: any[]; user?: any } = {}) => ({
-    from: (table: string) => {
-      const rows =
-        table === "child_profiles"
-          ? overrides.children ?? [
-              { id: "c1", user_id: "u1", created_at: "2026-07-01T00:00:00Z" },
-              { id: "c2", user_id: "u1", created_at: "2026-07-10T00:00:00Z" },
-            ]
-          : table === "child_access_periods"
-            ? overrides.periods ?? []
-            : table === "season_enrollments"
-              ? overrides.enrollments ?? []
-              : [];
-      return {
-        select: () => ({
-          eq: (col: string, val: string) => ({
-            // Thenable avec .limit : la requête child_profiles n'a PAS de .limit (résolue
-            // telle quelle), la requête child_access_periods en a un — les deux chaînages
-            // existent dans getChildAccessStatus.
+  const mkDb = (overrides: {
+    children?: any[];
+    periods?: any[];
+    enrollments?: any[];
+    subscriptions?: any[];
+    credits?: any[];
+    user?: any;
+  } = {}) => {
+    const rowsFor = (table: string): any[] => {
+      if (table === "child_profiles")
+        return (
+          overrides.children ?? [
+            { id: "c1", user_id: "u1", created_at: "2026-07-01T00:00:00Z" },
+            { id: "c2", user_id: "u1", created_at: "2026-07-10T00:00:00Z" },
+          ]
+        );
+      if (table === "child_access_periods") return overrides.periods ?? [];
+      if (table === "season_enrollments") return overrides.enrollments ?? [];
+      if (table === "subscriptions") return overrides.subscriptions ?? [];
+      if (table === "sponsorship_credits") return overrides.credits ?? [];
+      return [];
+    };
+
+    // Query builder minimal : select().eq() → { order (avec .limit), maybeSingle } couvre les
+    // chaînages de getChildAccessStatus + getFamilyCoverage (subscriptions/sponsorship_credits).
+    const from = (table: string) => ({
+      select: () => ({
+        eq: (col: string, val: string) => {
+          const filtered = rowsFor(table).filter((r: any) => r[col] === val);
+          return {
             order: (col2: string, o: { ascending: boolean }) => {
-              const filtered = rows
-                .filter((r: any) => r[col] === val)
-                .sort((a: any, b: any) =>
-                  o.ascending ? (a[col2] > b[col2] ? 1 : -1) : a[col2] < b[col2] ? 1 : -1
-                );
-              const res = { data: filtered, error: null };
+              const sorted = [...filtered].sort((a: any, b: any) =>
+                o.ascending ? (a[col2] > b[col2] ? 1 : -1) : a[col2] < b[col2] ? 1 : -1
+              );
+              const res = { data: sorted, error: null };
               return Object.assign(Promise.resolve(res), {
-                limit: (n: number) => Promise.resolve({ data: filtered.slice(0, n), error: null }),
+                limit: (n: number) => Promise.resolve({ data: sorted.slice(0, n), error: null }),
               });
             },
+            maybeSingle: () => Promise.resolve({ data: filtered[0] ?? null, error: null }),
+          };
+        },
+      }),
+    });
+
+    return {
+      from,
+      auth: {
+        admin: {
+          getUserById: async (id: string) => ({
+            data: {
+              user:
+                overrides.user ??
+                { id, created_at: "2026-08-10T00:00:00Z", app_metadata: { extra_profile_slots: 0 } },
+            },
+            error: null,
           }),
-        }),
-      };
-    },
-    auth: {
-      admin: {
-        getUserById: async (id: string) => ({
-          data: {
-            user:
-              overrides.user ?? { id, created_at: "2026-08-10T00:00:00Z", app_metadata: { extra_profile_slots: 0 } },
-          },
-          error: null,
-        }),
+        },
       },
-    },
-  });
+    };
+  };
 
   it("profil 2 d'un compte neuf sans période → expired", async () => {
     const status = await getChildAccessStatus(mkDb() as any, "u1", "c2");
@@ -182,6 +202,53 @@ describe("getChildAccessStatus (client fake, mêmes tables que le vrai)", () => 
       "c6"
     );
     expect(status.kind).toBe("expired");
+  });
+
+  it("enfant au-delà du plancher, famille couverte par abonnement actif → permanent", async () => {
+    const future = new Date(Date.now() + 30 * 86_400_000).toISOString();
+    const status = await getChildAccessStatus(
+      mkDb({
+        subscriptions: [{ id: "s1", user_id: "u1", status: "active", current_period_end: future }],
+      }) as any,
+      "u1",
+      "c2"
+    );
+    expect(status.kind).toBe("permanent");
+  });
+
+  it("enfant au-delà du plancher, famille couverte par crédit de parrainage → permanent", async () => {
+    const future = new Date(Date.now() + 30 * 86_400_000).toISOString();
+    const status = await getChildAccessStatus(
+      mkDb({
+        credits: [{ id: "k1", user_id: "u1", ends_at: future }],
+      }) as any,
+      "u1",
+      "c2"
+    );
+    expect(status.kind).toBe("permanent");
+  });
+
+  it("abonnement résilié → coupure immédiate : l'enfant au-delà du plancher retombe en expired", async () => {
+    const status = await getChildAccessStatus(
+      mkDb({
+        subscriptions: [{ id: "s1", user_id: "u1", status: "cancelled", current_period_end: null }],
+      }) as any,
+      "u1",
+      "c2"
+    );
+    expect(status.kind).toBe("expired");
+  });
+
+  it("profil du plancher : reste free même avec une famille couverte (la couverture ne change rien en dessous du plancher)", async () => {
+    const future = new Date(Date.now() + 30 * 86_400_000).toISOString();
+    const status = await getChildAccessStatus(
+      mkDb({
+        subscriptions: [{ id: "s1", user_id: "u1", status: "active", current_period_end: future }],
+      }) as any,
+      "u1",
+      "c1"
+    );
+    expect(status.kind).toBe("free");
   });
 
   it("enfant inconnu du compte → free (l'ownership est vérifié par chaque appelant)", async () => {

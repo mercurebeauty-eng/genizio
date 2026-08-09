@@ -8,10 +8,19 @@ import {
   Building2,
   Users,
   Package,
+  Repeat,
 } from "lucide-react";
 
 export type AdminTab =
-  "executive" | "b2b" | "supervisors" | "products" | "talents" | "naya" | "commerce" | "seasons";
+  | "executive"
+  | "b2b"
+  | "supervisors"
+  | "products"
+  | "talents"
+  | "naya"
+  | "commerce"
+  | "seasons"
+  | "subscriptions";
 
 interface AdminNavTabBarProps {
   activeTab: AdminTab;
@@ -99,13 +108,22 @@ export const ADMIN_TABS: Array<{
     badgeBgClass: "bg-amber-500/10",
     badgeTextClass: "text-amber-600",
   },
+  {
+    id: "subscriptions",
+    label: "Abonnements",
+    sublabel: "Familles & MRR",
+    icon: Repeat,
+    badge: "MRR",
+    badgeBgClass: "bg-teal-500/10",
+    badgeTextClass: "text-teal-600",
+  },
 ];
 
 export function AdminNavTabBar({ activeTab, onTabChange }: AdminNavTabBarProps) {
   return (
     <div className="w-full overflow-x-auto bg-surface/80 backdrop-blur-md border border-ink/10 p-1.5 sm:p-2 rounded-3xl shadow-sm mb-6 sm:mb-8 no-scrollbar scroll-smooth">
       <nav
-        className="flex min-w-max gap-2 sm:grid sm:min-w-0 sm:grid-cols-2 md:grid-cols-4 lg:grid-cols-8"
+        className="flex min-w-max gap-2 sm:grid sm:min-w-0 sm:grid-cols-2 md:grid-cols-4 lg:grid-cols-9"
         aria-label="Navigation Admin OS"
       >
         {ADMIN_TABS.map((tab) => {

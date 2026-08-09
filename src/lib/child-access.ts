@@ -17,23 +17,27 @@ import { z } from "zod";
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { requireAdmin } from "@/integrations/supabase/admin-middleware";
-import { isGrandfatheredAccount } from "@/lib/child-profile-quota";
+import { isGrandfatheredAccount, MAX_CHILDREN_PER_ACCOUNT } from "@/lib/child-profile-quota";
 import { resolveExtraSlotPrice } from "@/lib/pricing";
 
 export type ChildAccessStatus =
   | { kind: "free" } // profil du plancher gratuit — jamais expiré
-  | { kind: "permanent" } // slot payant grand-péré (acheté avant le modèle mensuel)
+  | { kind: "permanent" } // slot payant grand-péré, couverture famille (abonnement/crédit) ou campagne B2B
   | { kind: "monthly"; endsAt: string; daysLeft: number } // période payée active
   | { kind: "expired"; endsAt: string | null }; // payant mais période écoulée (ou jamais payée)
 
 // Limite de CRÉATION de profils côté UI : plancher + slots + 1 (le profil mensuel en
-// cours de première mise en paiement). Miroir du trigger check_child_profile_quota.
+// cours de première mise en paiement), borné au plafond de 5. Un compte couvert (abonnement
+// famille actif ou crédit de parrainage valide) peut créer jusqu'au plafond, comme le
+// trigger check_child_profile_quota (migration 20260809120000).
 export function computeChildCreationLimit(
   accountCreatedAt: string | null | undefined,
   extraSlots: number | null | undefined,
+  familyCovered = false,
 ): number {
+  if (familyCovered) return MAX_CHILDREN_PER_ACCOUNT;
   const floor = isGrandfatheredAccount(accountCreatedAt) ? 5 : 1;
-  return floor + (extraSlots ?? 0) + 1;
+  return Math.min(floor + (extraSlots ?? 0) + 1, MAX_CHILDREN_PER_ACCOUNT);
 }
 
 // Résolveur pur (testable sans base) : position 1-based de l'enfant parmi les profils
@@ -62,8 +66,9 @@ export function resolveChildAccessStatus(params: {
 
 // Fenêtre d'une nouvelle période d'accès : démarre au plus tard entre maintenant et la fin
 // de la période courante (aucune perte en cas de cumul), dure `months` mois. Partagé par
-// extendChildAccessAdmin et redeemSponsorshipToken (parrainage individuel) — la fenêtre
-// doit rester identique des deux côtés, c'est le cœur de la promesse "le code vaut N mois".
+// extendChildAccessAdmin, redeemSponsorshipToken (parrainage individuel) et le crédit de
+// parrainage famille — la fenêtre doit rester identique des deux côtés, c'est le cœur de la
+// promesse "le code vaut N mois".
 export function computeAccessPeriodWindow(
   currentEnd: string | null,
   months: number,
@@ -80,6 +85,62 @@ export function computeAccessPeriodWindow(
   const end = new Date(start);
   end.setMonth(end.getMonth() + months);
   return { startsAt: start.toISOString(), endsAt: end.toISOString() };
+}
+
+// Couverture FAMILLE (décision utilisateur 2026-08-08 — forfait famille + parrainage) :
+// l'abonnement Paystack du compte et les crédits de parrainage rédimés se cumulent, la
+// couverture effective s'étend jusqu'au plus tard des deux. Un abonnement 'past_due' reste
+// couvrant jusqu'à sa fin de période (aucun retry Paystack — la grâce est la période déjà
+// payée), puis la coupure est immédiate et purement calculée : résilier ou épuiser le
+// crédit retire la couverture sans aucune mutation de masse sur les enfants.
+export type FamilyCoverage = {
+  /** Date jusqu'à laquelle la famille est couverte (abonnement OU crédit), si valide à l'instant T. */
+  coveredUntil: string | null;
+  subscriptionStatus: "initiated" | "active" | "past_due" | "cancelled" | "expired" | null;
+};
+
+export async function getFamilyCoverage(
+  db: { from: (table: string) => any },
+  userId: string,
+): Promise<FamilyCoverage> {
+  const now = Date.now();
+
+  const { data: sub, error: subErr } = await db
+    .from("subscriptions")
+    .select("status, current_period_end")
+    .eq("user_id", userId)
+    .maybeSingle();
+  if (subErr) throw new Error(subErr.message);
+
+  const { data: credit, error: credErr } = await db
+    .from("sponsorship_credits")
+    .select("ends_at")
+    .eq("user_id", userId)
+    .order("ends_at", { ascending: false })
+    .limit(1);
+  if (credErr) throw new Error(credErr.message);
+
+  let coveredUntil: string | null = null;
+
+  // 'active' comme 'past_due' ne couvrent QUE jusqu'à la fin de la période déjà payée :
+  // un abonnement actif dont la période est dépassée (anomalie de sync) ne couvre rien.
+  const periodEndTs = sub?.current_period_end ? new Date(sub.current_period_end).getTime() : null;
+  const subCovers =
+    (sub?.status === "active" || sub?.status === "past_due") &&
+    !!periodEndTs &&
+    periodEndTs > now;
+  if (subCovers && sub?.current_period_end) coveredUntil = sub.current_period_end;
+
+  const creditEnd = credit?.[0]?.ends_at ?? null;
+  if (
+    creditEnd &&
+    new Date(creditEnd).getTime() > now &&
+    (!coveredUntil || new Date(creditEnd).getTime() > new Date(coveredUntil).getTime())
+  ) {
+    coveredUntil = creditEnd;
+  }
+
+  return { coveredUntil, subscriptionStatus: sub?.status ?? null };
 }
 
 // Version asynchrone côté serveur : résout l'accès réel d'un enfant depuis la base.
@@ -142,6 +203,15 @@ export async function getChildAccessStatus(
     ) {
       return { kind: "permanent" };
     }
+  }
+
+  // Couverture FAMILLE (abonnement forfait ou crédit de parrainage) : un enfant au-delà du
+  // plancher gratuit est couvert tant que la famille l'est. Résilier l'abonnement (ou
+  // épuiser le crédit) retire la couverture et fait tomber tous ces profils en 'expired' —
+  // la coupure est immédiate et calculée, aucune mutation de masse requise.
+  const coverage = await getFamilyCoverage(db, userId);
+  if (coverage.coveredUntil && new Date(coverage.coveredUntil).getTime() > Date.now() && position > floor) {
+    return { kind: "permanent" };
   }
 
   return resolveChildAccessStatus({

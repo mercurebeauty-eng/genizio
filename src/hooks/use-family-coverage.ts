@@ -1,0 +1,59 @@
+import { useCallback, useEffect, useState } from "react";
+import { useServerFn } from "@tanstack/react-start";
+import { getFamilySubscriptionStatus } from "@/lib/subscriptions.functions";
+
+export type FamilyCoverageInfo = {
+  /** La famille est couverte (abonnement actif/past_due ou crédit de parrainage valide). */
+  covered: boolean;
+  /** Date maximale de couverture effective, si couverte. */
+  coveredUntil: string | null;
+  loading: boolean;
+  refresh: () => Promise<void>;
+};
+
+// Couverture FAMILLE côté client — miroir de getFamilyCoverage (child-access.ts) : un
+// abonnement 'active' ou 'past_due' couvre jusqu'à la fin de période payée, un crédit de
+// parrainage jusqu'à ends_at, le tout prend la valeur la plus tardive. Utilisé par les
+// écrans de quota (profiles.index / profiles.manage / ProfileDialog) pour permettre la
+// création de profils jusqu'au plafond de 5 dès que la famille est couverte (même logique
+// que le trigger check_child_profile_quota, migration 20260809120000).
+export function useFamilyCoverage(): FamilyCoverageInfo {
+  const getStatusFn = useServerFn(getFamilySubscriptionStatus);
+  const [covered, setCovered] = useState(false);
+  const [coveredUntil, setCoveredUntil] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  const refresh = useCallback(async () => {
+    try {
+      const res = await getStatusFn();
+      const now = Date.now();
+      const subCovers =
+        (res.status === "active" || res.status === "past_due") &&
+        !!res.currentPeriodEnd &&
+        new Date(res.currentPeriodEnd).getTime() > now;
+      const creditCovers =
+        !!res.sponsoredUntil && new Date(res.sponsoredUntil).getTime() > now;
+
+      const endTimes = [
+        subCovers ? new Date(res.currentPeriodEnd as string).getTime() : null,
+        creditCovers ? new Date(res.sponsoredUntil as string).getTime() : null,
+      ].filter((t): t is number => t !== null);
+
+      setCovered(endTimes.length > 0);
+      setCoveredUntil(endTimes.length > 0 ? new Date(Math.max(...endTimes)).toISOString() : null);
+    } catch {
+      // Tables d'abonnement absentes (migration pas encore appliquée) ou session absente :
+      // défaut = non couverte, le comportement legacy prévaut.
+      setCovered(false);
+      setCoveredUntil(null);
+    } finally {
+      setLoading(false);
+    }
+  }, [getStatusFn]);
+
+  useEffect(() => {
+    refresh();
+  }, [refresh]);
+
+  return { covered, coveredUntil, loading, refresh };
+}

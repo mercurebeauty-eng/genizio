@@ -26,6 +26,7 @@ import {
 import { CampaignLinkCard } from "@/components/campaigns/CampaignLinkCard";
 import { toast } from "sonner";
 import { computeSupervisorQuota } from "@/lib/supervisor-quota";
+import { MAX_CHILDREN_PER_ACCOUNT } from "@/lib/child-profile-quota";
 import {
   resolveExtraSlotPrice,
   formatXof,
@@ -319,6 +320,12 @@ function CampaignQuotaEditor({
     referenceCreatedAt: campaign.created_at,
     extraQuota: 0,
   });
+  // Le plafond absolu de 5 (« 5 par 5 », décision 2026-08-08) s'applique aussi aux
+  // superviseurs : le trigger check_supervisor_quota fait foi, ce calcul est l'affichage.
+  const supervisorQuota = computeSupervisorQuota({
+    referenceCreatedAt: campaign.created_at,
+    extraQuota: value,
+  });
   const slotPrice = resolveExtraSlotPrice(campaign.created_at);
 
   useEffect(() => {
@@ -363,8 +370,13 @@ function CampaignQuotaEditor({
             className="w-16 bg-white border border-ink/10 rounded-xl px-2 py-1.5 text-sm font-bold text-ink text-center"
           />
           <span className="text-sm font-medium text-ink/60 shrink-0">
-            = {supervisorFloor + value} enfants max/superviseur
+            = {supervisorQuota} enfants max/superviseur
           </span>
+          {value > 0 && supervisorQuota === MAX_CHILDREN_PER_ACCOUNT && (
+            <span className="rounded-full bg-brand/10 px-2.5 py-0.5 text-[10px] font-black uppercase tracking-wider text-brand">
+              5 max — au-delà, assigner un 2ᵉ superviseur
+            </span>
+          )}
         </div>
       </div>
       <div>

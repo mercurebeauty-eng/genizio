@@ -35,6 +35,7 @@ import { AdminTalentsCitiesTab } from "@/components/admin/AdminTalentsCitiesTab"
 import { AdminNayaTab } from "@/components/admin/AdminNayaTab";
 import { AdminCommerceTab } from "@/components/admin/AdminCommerceTab";
 import { AdminSeasonsTab } from "@/components/admin/AdminSeasonsTab";
+import { AdminSubscriptionsTab } from "@/components/admin/AdminSubscriptionsTab";
 import { AdminCampaignsTab } from "@/components/admin/AdminCampaignsTab";
 import { AdminSupervisorsTab } from "@/components/admin/AdminSupervisorsTab";
 import { AdminProductsTab } from "@/components/admin/AdminProductsTab";
@@ -58,7 +59,9 @@ function AdminIndexPage() {
     null,
   );
   const [commerceData, setCommerceData] = useState<CommercePassportsDataResponse | null>(null);
-  const [loupConstitution, setLoupConstitution] = useState<ConstitutionSuggestionsResponse | null>(null);
+  const [loupConstitution, setLoupConstitution] = useState<ConstitutionSuggestionsResponse | null>(
+    null,
+  );
   const [decidingRuleKeys, setDecidingRuleKeys] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
@@ -130,10 +133,12 @@ function AdminIndexPage() {
         console.error("loupAutoAck error", err);
         return null;
       });
-      const loupConstitution = await getConstitutionFn({ data: undefined, ...opts }).catch((err) => {
-        console.error("loupConstitution error", err);
-        return null;
-      });
+      const loupConstitution = await getConstitutionFn({ data: undefined, ...opts }).catch(
+        (err) => {
+          console.error("loupConstitution error", err);
+          return null;
+        },
+      );
       if (loupConstitution) setLoupConstitution(loupConstitution);
     } catch (err: any) {
       console.error("Error fetching executive data:", err);
@@ -316,6 +321,7 @@ function AdminIndexPage() {
         )}
 
         {activeTab === "seasons" && <AdminSeasonsTab />}
+        {activeTab === "subscriptions" && <AdminSubscriptionsTab />}
         {activeTab === "b2b" && <AdminCampaignsTab />}
         {activeTab === "supervisors" && <AdminSupervisorsTab />}
         {activeTab === "products" && <AdminProductsTab />}

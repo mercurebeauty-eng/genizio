@@ -6,6 +6,7 @@ import { AppHeader } from "@/components/AppHeader";
 import { AppTabBar } from "@/components/AppTabBar";
 import { supabase } from "@/integrations/supabase/client";
 import { createOrder } from "@/lib/products.functions";
+import { initializeOrderPayment } from "@/lib/payments.functions";
 import { generateSingleChallenge, assignTemplateChallenge } from "@/lib/challenges.functions";
 import {
   ShoppingBag,
@@ -20,6 +21,7 @@ import {
   Brain,
   MessageCircle,
   Search,
+  CreditCard,
 } from "lucide-react";
 import { toast } from "sonner";
 import { NayaAvatar } from "@/components/NayaAvatar";
@@ -97,9 +99,11 @@ function BoutiquePage() {
   const [generatedChallenge, setGeneratedChallenge] = useState<any | null>(null);
   const [isAssigning, setIsAssigning] = useState(false);
   const [orderingId, setOrderingId] = useState<string | null>(null);
+  const [payingId, setPayingId] = useState<string | null>(null);
   const [tagsModalProduct, setTagsModalProduct] = useState<Product | null>(null);
 
   const createOrderFn = useServerFn(createOrder);
+  const initializeOrderPaymentFn = useServerFn(initializeOrderPayment);
   const generateSingleFn = useServerFn(generateSingleChallenge);
   const assignTemplateFn = useServerFn(assignTemplateChallenge);
 
@@ -195,6 +199,36 @@ function BoutiquePage() {
       toast.error("Erreur lors de la création de la commande.");
     } finally {
       setOrderingId(null);
+    }
+  };
+
+  // Paiement en ligne Paystack : le serveur recrée la commande à partir du catalogue,
+  // initialise la transaction et on redirige vers la page hébergée Paystack. La
+  // confirmation (webhook ou page de retour) passe la commande en `confirmed`.
+  const handlePay = async (product: Product) => {
+    if (children.length === 0) {
+      toast.error("Veuillez d'abord créer un profil enfant dans votre compte.");
+      return;
+    }
+    setPayingId(product.id);
+    try {
+      const callbackUrl = `${window.location.origin}/paiement-retour`;
+      const { authorizationUrl } = await initializeOrderPaymentFn({
+        data: {
+          child_id: selectedChild || children[0].id,
+          challenge_id: null,
+          items: [{ id: product.id, name: product.name, price_xof: product.price_xof }],
+          delivery_notes: `Commande directe boutique`,
+          callbackUrl,
+        },
+      });
+      toast.success("Redirection vers le paiement sécurisé Paystack…");
+      window.location.href = authorizationUrl;
+    } catch (err) {
+      console.error(err);
+      toast.error("Impossible d'initier le paiement. Réessayez ou passez par WhatsApp.");
+    } finally {
+      setPayingId(null);
     }
   };
 
@@ -402,19 +436,38 @@ function BoutiquePage() {
                         Générer un défi ⚡
                       </button>
                       <button
+                        onClick={() => handlePay(p)}
+                        disabled={payingId === p.id || outOfStock}
+                        className="w-full flex items-center justify-center gap-2 rounded-xl border border-ink/10 bg-emerald-600 px-4 py-3 text-xs font-extrabold text-white hover:-translate-y-0.5 active:translate-y-0 shadow-sm transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        {payingId === p.id ? (
+                          <>
+                            <Loader2 className="size-4 animate-spin" />
+                            Paiement en cours...
+                          </>
+                        ) : outOfStock ? (
+                          <>Rupture de stock</>
+                        ) : (
+                          <>
+                            <CreditCard className="size-4" />
+                            Payer en ligne
+                          </>
+                        )}
+                      </button>
+                      <button
                         onClick={() => handleOrder(p)}
                         disabled={orderingId === p.id || outOfStock}
-                        className="w-full flex items-center justify-center gap-2 rounded-xl border border-ink/10 bg-white px-4 py-3 text-xs font-bold text-ink hover:bg-surface active:translate-y-0 transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                        className="w-full flex items-center justify-center gap-2 rounded-xl border border-ink/10 bg-white px-4 py-2.5 text-[11px] font-bold text-ink/60 hover:bg-surface active:translate-y-0 transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                       >
                         {orderingId === p.id ? (
                           <>
-                            <Loader2 className="size-4 animate-spin" />
+                            <Loader2 className="size-3.5 animate-spin" />
                             Commande en cours...
                           </>
                         ) : outOfStock ? (
                           <>Rupture de stock</>
                         ) : (
-                          <>Commander via WhatsApp</>
+                          <>ou commander via WhatsApp</>
                         )}
                       </button>
                     </div>

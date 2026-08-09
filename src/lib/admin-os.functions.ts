@@ -80,6 +80,8 @@ export interface KitOrder {
   updated_at?: string;
   child_profiles?: { name: string; age?: number; city?: string } | null;
   challenges?: { title: string } | null;
+  /** Référence Paystack si la commande a été payée en ligne (sinon null — WhatsApp). */
+  payment_reference?: string | null;
 }
 
 export interface ProductItem {
@@ -1003,6 +1005,7 @@ export const getCommercePassportsDataAdmin = createServerFn({ method: "GET" })
       updated_at: o.updated_at,
       child_profiles: o.child_profiles || null,
       challenges: o.challenges || null,
+      payment_reference: o.payment_reference || null,
     }));
 
     const products: ProductItem[] = productsRes.data ?? [];

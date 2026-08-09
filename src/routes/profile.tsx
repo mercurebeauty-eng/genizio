@@ -24,6 +24,7 @@ import {
 import { ConsentLedger } from "@/components/settings/ConsentLedger";
 import { ExportDataButton } from "@/components/settings/ExportDataButton";
 import { DeleteAccountDialog } from "@/components/settings/DeleteAccountDialog";
+import { SubscriptionCard } from "@/components/settings/SubscriptionCard";
 import { COUNTRIES } from "@/lib/countries";
 import { RELATIONSHIP_TYPES } from "@/lib/relationship-types";
 import { GenizioLoader } from "@/components/GenizioLoader";
@@ -281,6 +282,9 @@ function ProfilePage() {
 
         {/* Right Column: Settings Sections */}
         <div className="md:col-span-2 space-y-6">
+          {/* Family subscription (self-service) */}
+          <SubscriptionCard />
+
           {/* Relationship type */}
           <div className="rounded-3xl border border-ink/10 bg-white p-6 shadow-xl md:p-8">
             <h3 className="font-display text-balance text-lg font-bold flex items-center gap-2 mb-2">

@@ -37,11 +37,13 @@ describe("computeChildProfileQuota", () => {
     expect(computeChildProfileQuota({ accountCreatedAt: "2026-08-10T00:00:00.000Z", extraSlots: 2 })).toBe(3);
   });
 
-  // Le piège que la forme additive corrige : sous l'ancienne formule GREATEST(5, 2+extra),
-  // un compte grand-pèré achetant 1 à 3 slots ne voyait AUCUN changement de plafond.
-  it("un compte grand-pèré qui achète des slots voit son plafond augmenter (contrairement à l'ancienne formule)", () => {
-    expect(computeChildProfileQuota({ accountCreatedAt: "2026-07-01T00:00:00.000Z", extraSlots: 1 })).toBe(6);
-    expect(computeChildProfileQuota({ accountCreatedAt: "2026-07-01T00:00:00.000Z", extraSlots: 3 })).toBe(8);
+  // Décision utilisateur (2026-08-08) : le plafond de 5 enfants par compte est VOULU — un
+  // compte grand-pèré qui achète des slots reste plafonné à 5 (miroir du LEAST(quota, 5) du
+  // trigger check_child_profile_quota, migration 20260809120000). Au-delà de 5 → nouveau
+  // compte. La couverture famille (abonnement/parrainage) octroie exactement 5, pas plus.
+  it("un compte grand-pèré qui achète des slots reste plafonné à 5 (le plafond de 5 est voulu)", () => {
+    expect(computeChildProfileQuota({ accountCreatedAt: "2026-07-01T00:00:00.000Z", extraSlots: 1 })).toBe(5);
+    expect(computeChildProfileQuota({ accountCreatedAt: "2026-07-01T00:00:00.000Z", extraSlots: 3 })).toBe(5);
   });
 
   it("le cutover exact est bien exclu du côté grand-père (>= cutover = nouvelle règle)", () => {

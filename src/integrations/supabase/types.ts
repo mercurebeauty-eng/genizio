@@ -766,6 +766,7 @@ export type Database = {
           delivery_notes: string | null
           id: string
           items: Json
+          payment_reference: string | null
           status: string
           total_price_xof: number
           updated_at: string
@@ -778,6 +779,7 @@ export type Database = {
           delivery_notes?: string | null
           id?: string
           items?: Json
+          payment_reference?: string | null
           status?: string
           total_price_xof: number
           updated_at?: string
@@ -790,6 +792,7 @@ export type Database = {
           delivery_notes?: string | null
           id?: string
           items?: Json
+          payment_reference?: string | null
           status?: string
           total_price_xof?: number
           updated_at?: string
@@ -808,6 +811,56 @@ export type Database = {
             columns: ["child_id"]
             isOneToOne: false
             referencedRelation: "child_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      payments: {
+        Row: {
+          amount_xof: number
+          created_at: string
+          currency: string
+          id: string
+          metadata: Json
+          paid_at: string | null
+          provider: string
+          reference: string
+          status: string
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          amount_xof: number
+          created_at?: string
+          currency?: string
+          id?: string
+          metadata?: Json
+          paid_at?: string | null
+          provider?: string
+          reference: string
+          status?: string
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          amount_xof?: number
+          created_at?: string
+          currency?: string
+          id?: string
+          metadata?: Json
+          paid_at?: string | null
+          provider?: string
+          reference?: string
+          status?: string
+          updated_at?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "payments_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
             referencedColumns: ["id"]
           },
         ]
@@ -1085,6 +1138,7 @@ export type Database = {
           is_redeemed: boolean
           months_count: number
           payment_confirmed: boolean
+          paystack_reference: string | null
           redeemed_at: string | null
           redeemed_by_child_id: string | null
           season_id: string | null
@@ -1103,6 +1157,7 @@ export type Database = {
           is_redeemed?: boolean
           months_count?: number
           payment_confirmed?: boolean
+          paystack_reference?: string | null
           redeemed_at?: string | null
           redeemed_by_child_id?: string | null
           season_id?: string | null
@@ -1121,6 +1176,7 @@ export type Database = {
           is_redeemed?: boolean
           months_count?: number
           payment_confirmed?: boolean
+          paystack_reference?: string | null
           redeemed_at?: string | null
           redeemed_by_child_id?: string | null
           season_id?: string | null
@@ -1152,6 +1208,143 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      subscriptions: {
+        Row: {
+          cancelled_at: string | null
+          created_at: string
+          currency: string
+          current_period_end: string | null
+          current_period_start: string | null
+          id: string
+          paystack_customer_code: string | null
+          paystack_reference: string | null
+          paystack_subscription_code: string | null
+          plan_code: string | null
+          price_xof: number | null
+          started_at: string | null
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          cancelled_at?: string | null
+          created_at?: string
+          currency?: string
+          current_period_end?: string | null
+          current_period_start?: string | null
+          id?: string
+          paystack_customer_code?: string | null
+          paystack_reference?: string | null
+          paystack_subscription_code?: string | null
+          plan_code?: string | null
+          price_xof?: number | null
+          started_at?: string | null
+          status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          cancelled_at?: string | null
+          created_at?: string
+          currency?: string
+          current_period_end?: string | null
+          current_period_start?: string | null
+          id?: string
+          paystack_customer_code?: string | null
+          paystack_reference?: string | null
+          paystack_subscription_code?: string | null
+          plan_code?: string | null
+          price_xof?: number | null
+          started_at?: string | null
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "subscriptions_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: true
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      sponsorship_credits: {
+        Row: {
+          created_at: string
+          ends_at: string
+          id: string
+          months_count: number
+          token_id: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          ends_at: string
+          id?: string
+          months_count: number
+          token_id?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          ends_at?: string
+          id?: string
+          months_count?: number
+          token_id?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sponsorship_credits_token_id_fkey"
+            columns: ["token_id"]
+            isOneToOne: false
+            referencedRelation: "sponsorship_tokens"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sponsorship_credits_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      paystack_plans: {
+        Row: {
+          amount_xof: number
+          created_at: string
+          currency: string
+          id: string
+          interval: string
+          name: string
+          plan_code: string
+          plan_key: string
+        }
+        Insert: {
+          amount_xof: number
+          created_at?: string
+          currency?: string
+          id?: string
+          interval?: string
+          name: string
+          plan_code: string
+          plan_key: string
+        }
+        Update: {
+          amount_xof?: number
+          created_at?: string
+          currency?: string
+          id?: string
+          interval?: string
+          name?: string
+          plan_code?: string
+          plan_key?: string
+        }
+        Relationships: []
       }
       supervisors: {
         Row: {

@@ -1,15 +1,20 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
+import { useServerFn } from "@tanstack/react-start";
 import { supabase } from "@/integrations/supabase/client";
 import { useSession } from "@/hooks/use-session";
+import { useFamilyCoverage } from "@/hooks/use-family-coverage";
+import { FamilySubscribeButton } from "@/components/settings/FamilySubscribeButton";
 import { AppHeader } from "@/components/AppHeader";
 import { ProfileCard } from "@/components/profiles/ProfileCard";
 import { ProfileDialog } from "@/components/profiles/ProfileDialog";
 import { GenizioLoader } from "@/components/GenizioLoader";
 import type { ChildProfile } from "@/components/profiles/shared";
 import { confirmDialog } from "@/components/ui/confirm-dialog";
-import { ArrowLeft, Lock, Phone } from "lucide-react";
+import { ArrowLeft, Lock, Phone, CreditCard, Loader2, Sparkles } from "lucide-react";
+import { toast } from "sonner";
 import { computeChildCreationLimit } from "@/lib/child-access";
+import { initializeUpgradePayment } from "@/lib/payments.functions";
 import {
   resolveExtraSlotPrice,
   formatXof,
@@ -32,12 +37,38 @@ function ManageProfilesPage() {
 
   // Prix de bienvenue (3 premiers mois du compte) puis tarif standard — cf. src/lib/pricing.ts.
   const slotPrice = resolveExtraSlotPrice(session?.user?.created_at);
+  // Compte couvert (abonnement famille actif ou crédit de parrainage) → création possible
+  // jusqu'au plafond de 5 — miroir du trigger check_child_profile_quota (20260809120000).
+  const { covered: familyCovered } = useFamilyCoverage();
 
   // Décision 2026-08-05 : l'accès payant est MENSUEL (5 000 F/mois de bienvenue →
   // 15 000 F/mois). Le parent choisit une durée (1/3/6 mois) ; le montant WhatsApp =
   // prix mensuel × mois. L'admin prolonge via extendChildAccessAdmin après le virement.
   const [upgradeMonths, setUpgradeMonths] = useState(3);
   const upgradeTotal = slotPrice.priceXof * upgradeMonths;
+  const initializeUpgradePaymentFn = useServerFn(initializeUpgradePayment);
+  const [payingUpgrade, setPayingUpgrade] = useState(false);
+
+  // Paiement en ligne Paystack : le serveur calcule le montant (barème du compte × mois),
+  // crée la payment et on redirige vers la page hébergée. Le webhook/retour octroie
+  // automatiquement le slot (extra_profile_slots) — miroir de updateExtraProfileSlotsAdmin.
+  const handlePayUpgrade = async () => {
+    if (!session) return;
+    setPayingUpgrade(true);
+    try {
+      const callbackUrl = `${window.location.origin}/paiement-retour`;
+      const { authorizationUrl } = await initializeUpgradePaymentFn({
+        data: { months: upgradeMonths, callbackUrl },
+      });
+      toast.success("Redirection vers le paiement sécurisé Paystack…");
+      window.location.href = authorizationUrl;
+    } catch (err) {
+      console.error(err);
+      toast.error("Impossible d'initier le paiement. Réessayez ou passez par WhatsApp.");
+    } finally {
+      setPayingUpgrade(false);
+    }
+  };
 
   useEffect(() => {
     if (!loading && !session) navigate({ to: "/auth", replace: true });
@@ -128,6 +159,7 @@ function ManageProfilesPage() {
             const quota = computeChildCreationLimit(
               session?.user?.created_at,
               (session?.user?.app_metadata?.extra_profile_slots as number) ?? 0,
+              familyCovered,
             );
             const atQuota = profiles.length >= quota;
             return (
@@ -195,10 +227,45 @@ function ManageProfilesPage() {
                   Quota gratuit atteint
                 </h2>
                 <p className="mt-1 text-sm text-ink/60">
-                  Vous avez {profiles.length} profils enregistrés.
+                  Vous avez {profiles.length} profils enregistrés
+                  {familyCovered ? " — couverts par votre abonnement famille." : "."}
                 </p>
               </div>
             </div>
+
+            {/* Forfait famille — recommandé (couvre TOUS les enfants jusqu'au plafond de 5) */}
+            <div className="mb-6 rounded-2xl border-2 border-brand/40 bg-brand/5 p-5">
+              <div className="flex items-center justify-between mb-1">
+                <p className="text-xs font-black uppercase tracking-widest text-brand">
+                  <Sparkles className="size-3.5 inline-block -mt-0.5 mr-1" />
+                  Forfait famille — recommandé
+                </p>
+                <span className="rounded-full bg-brand px-2.5 py-0.5 text-[10px] font-black uppercase tracking-wide text-white">
+                  {familyCovered ? "Actif" : "1 tarif = tous vos enfants"}
+                </span>
+              </div>
+              <p className="font-display text-balance text-2xl font-black text-ink">
+                {formatXofAmount(slotPrice.priceXof)}{" "}
+                <span className="text-base font-bold text-ink/50">FCFA / mois</span>
+              </p>
+              {slotPrice.isPromo && slotPrice.promoEndsAt && (
+                <p className="mt-1 text-[11px] font-semibold text-ink/60">
+                  Prix de bienvenue jusqu'au {formatPromoDeadline(slotPrice.promoEndsAt)}, puis{" "}
+                  {formatXof(STANDARD_PRICE_XOF)}/mois.
+                </p>
+              )}
+              <p className="mt-2 text-xs text-ink/70 leading-relaxed">
+                Un seul abonnement couvre tous vos profils jusqu'à{" "}
+                <strong>5 enfants</strong> (au-delà, créez un nouveau compte). Résiliable à tout
+                moment.
+              </p>
+              {!familyCovered && (
+                <div className="mt-4">
+                  <FamilySubscribeButton />
+                </div>
+              )}
+            </div>
+
             <div className="mb-6 rounded-2xl border border-ink/10 bg-surface p-5 shadow-sm">
               <p className="text-xs font-black uppercase tracking-widest text-ink/60 mb-1">
                 Accès mensuel — profil supplémentaire
@@ -233,20 +300,37 @@ function ManageProfilesPage() {
                 ))}
               </div>
               <p className="mt-2 text-xs text-ink/60 leading-relaxed">
-                Accès débloqué manuellement après confirmation du paiement, puis renouvelable chaque
-                mois.
+                Accès débloqué automatiquement après le paiement en ligne, ou manuellement après
+                confirmation WhatsApp, puis renouvelable chaque mois.
               </p>
             </div>
+            <button
+              onClick={handlePayUpgrade}
+              disabled={payingUpgrade}
+              className="flex w-full items-center justify-center gap-2.5 rounded-2xl bg-emerald-600 py-3.5 font-bold text-sm text-white shadow-xl hover:-translate-y-0.5 active:translate-y-0 active:shadow-none transition-all disabled:opacity-60 disabled:cursor-not-allowed"
+            >
+              {payingUpgrade ? (
+                <>
+                  <Loader2 className="size-4 animate-spin" />
+                  Paiement en cours...
+                </>
+              ) : (
+                <>
+                  <CreditCard className="size-4" />
+                  Payer en ligne par Paystack
+                </>
+              )}
+            </button>
             <a
               href={`https://wa.me/${import.meta.env.VITE_WHATSAPP_NUMBER || "33606433148"}?text=${encodeURIComponent(
                 `Bonjour, je souhaite débloquer un profil supplémentaire sur Génizio.\nCompte : ${session?.user?.email}\nDurée : ${upgradeMonths} mois\nMontant : ${formatXof(upgradeTotal)}`,
               )}`}
               target="_blank"
               rel="noopener noreferrer"
-              className="flex w-full items-center justify-center gap-2.5 rounded-2xl border border-ink/10 bg-[#25D366] py-3.5 font-bold text-sm text-white shadow-xl hover:-translate-y-0.5 active:translate-y-0 active:shadow-none transition-all"
+              className="mt-3 flex w-full items-center justify-center gap-2 rounded-2xl border border-ink/10 bg-white py-3 text-xs font-bold text-ink/70 hover:bg-surface transition-all"
             >
-              <Phone className="size-4 fill-white" />
-              Contacter l'administrateur sur WhatsApp
+              <Phone className="size-4 fill-ink/50" />
+              ou contacter l'administrateur sur WhatsApp
             </a>
             <button
               onClick={() => setShowUpgradeModal(false)}

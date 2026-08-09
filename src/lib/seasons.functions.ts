@@ -3,7 +3,7 @@ import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { requireAdmin } from "@/integrations/supabase/admin-middleware";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
-import { PROMO_PRICE_XOF, PROMO_PRICE_EUR } from "@/lib/pricing";
+import { resolveSponsorshipPrice } from "@/lib/pricing";
 import { computeAccessPeriodWindow } from "@/lib/child-access";
 
 export interface Season {
@@ -61,9 +61,9 @@ export const DEFAULT_FALLBACK_SEASON: Season = {
 // marque 'completed' et on active la prochaine saison 'upcoming' en attente. Appelée au moment
 // de la lecture plutôt que sur une tâche planifiée — suffisant pour un besoin qui tolère un délai
 // de quelques heures, et évite d'ajouter de l'infra pour ça.
-async function rotateExpiredActiveSeason(): Promise<void> {
+async function rotateExpiredActiveSeason(supabaseAdmin: any): Promise<void> {
   try {
-    const { data: current } = await (supabaseAdmin as any)
+    const { data: current } = await supabaseAdmin
       .from("seasons")
       .select("id, end_date")
       .eq("status", "active")
@@ -71,7 +71,7 @@ async function rotateExpiredActiveSeason(): Promise<void> {
 
     if (!current || new Date(current.end_date) > new Date()) return;
 
-    const { data: next } = await (supabaseAdmin as any)
+    const { data: next } = await supabaseAdmin
       .from("seasons")
       .select("id")
       .eq("status", "upcoming")
@@ -81,22 +81,26 @@ async function rotateExpiredActiveSeason(): Promise<void> {
       .maybeSingle();
 
     if (next) {
-      await (supabaseAdmin as any).rpc("activate_season", { target_id: next.id });
+      await supabaseAdmin.rpc("activate_season", { target_id: next.id });
     } else {
       // Personne en attente : on clôture quand même la saison expirée plutôt que de la laisser
       // "active" indéfiniment après sa date de fin.
-      await (supabaseAdmin as any).from("seasons").update({ status: "completed" }).eq("id", current.id);
+      await supabaseAdmin.from("seasons").update({ status: "completed" }).eq("id", current.id);
     }
   } catch (err) {
     console.error("Error rotating expired season:", err);
   }
 }
 
-export const getActiveSeason = createServerFn({ method: "GET" }).handler(async () => {
+// Lecture de la saison active, découplée du createServerFn : la logique est partagée entre
+// getActiveSeason (endpoint client) et createSponsorshipTokenRecord (rédemption/création de
+// code) — ce dernier reçoit supabaseAdmin en paramètre, donc testable sans passer par le
+// middleware TanStack Start.
+async function fetchActiveSeasonFromDb(supabaseAdmin: any): Promise<Season> {
   try {
-    await rotateExpiredActiveSeason();
+    await rotateExpiredActiveSeason(supabaseAdmin);
 
-    const { data: season } = await (supabaseAdmin as any)
+    const { data: season } = await supabaseAdmin
       .from("seasons")
       .select("*")
       .eq("status", "active")
@@ -109,6 +113,10 @@ export const getActiveSeason = createServerFn({ method: "GET" }).handler(async (
     console.error("Error fetching active season:", err);
     return DEFAULT_FALLBACK_SEASON;
   }
+}
+
+export const getActiveSeason = createServerFn({ method: "GET" }).handler(async () => {
+  return fetchActiveSeasonFromDb(supabaseAdmin);
 });
 
 // Fenêtre d'accès d'une inscription : rolling individuel par défaut (enrolled_at +
@@ -175,6 +183,61 @@ export const getChildEnrolledSeason = createServerFn({ method: "GET" })
     }
   });
 
+// Création d'un token de parrainage — source unique partagée par :
+//   • createSponsorshipToken (endpoint public legacy, page /parrainage) ;
+//   • le webhook/paiement en ligne Paystack (intent 'sponsorship', payment_confirmed=true
+//     d'office — le paiement en ligne remplace la confirmation admin WhatsApp).
+// Le season_id reste indicatif (saison en cours pour l'affichage admin) — l'accès réel est
+// porté par le crédit de couverture famille (sponsorship_credits) ou child_access_periods
+// (flux legacy) à la rédemption, jamais par cette valeur.
+export async function createSponsorshipTokenRecord(
+  supabaseAdmin: any,
+  fields: {
+    sponsorName: string;
+    sponsorEmail: string;
+    sponsorMessage?: string | null;
+    targetChildName?: string | null;
+    months: number;
+    amountPaid: number;
+    currency: string;
+    paystackReference?: string | null;
+    paymentConfirmed?: boolean;
+  },
+): Promise<SponsorshipToken> {
+  const code = `GENIZIO-PARRAIN-${Math.random().toString(36).substring(2, 8).toUpperCase()}`;
+
+  const activeSeason = await fetchActiveSeasonFromDb(supabaseAdmin);
+
+  const { data: token, error } = await supabaseAdmin
+    .from("sponsorship_tokens")
+    .insert({
+      code,
+      sponsor_name: fields.sponsorName,
+      sponsor_email: fields.sponsorEmail,
+      sponsor_message: fields.sponsorMessage || null,
+      target_child_name: fields.targetChildName || null,
+      months_count: fields.months,
+      amount_paid: fields.amountPaid,
+      currency: fields.currency,
+      season_id: activeSeason.id,
+      paystack_reference: fields.paystackReference ?? null,
+      payment_confirmed: fields.paymentConfirmed ?? false,
+    })
+    .select("*")
+    .single();
+
+  // Fabriquer un faux succès ici masquerait une écriture DB réellement échouée derrière un
+  // écran de confirmation identique — le parrain croirait son code enregistré alors qu'il
+  // n'existe nulle part (trouvé en auditant ce chemin : c'était le cas jusqu'ici, la table
+  // seasons étant vide, chaque appel violait sponsorship_tokens_season_id_fkey en silence).
+  if (error) {
+    console.error("Error creating sponsorship token:", error);
+    throw new Error("Erreur lors de l'enregistrement du parrainage. Veuillez réessayer.");
+  }
+
+  return token as SponsorshipToken;
+}
+
 export const createSponsorshipToken = createServerFn({ method: "POST" })
   .validator((input: unknown) =>
     z
@@ -183,52 +246,32 @@ export const createSponsorshipToken = createServerFn({ method: "POST" })
         sponsorEmail: z.string().email("Adresse email invalide"),
         sponsorMessage: z.string().optional(),
         targetChildName: z.string().optional(),
-        // Décision utilisateur (2026-08-05) : le parrain choisit 1 à 6 mois ; le code vaut
-        // exactement ce nombre de mois d'accès à la rédemption. Le montant est RECALCULÉ
-        // côté serveur (mois × tarif promo) — la valeur du client n'est qu'un affichage.
-        months: z.number().int().min(1).max(6).default(3),
-        currency: z.string().default("XOF"),
+        // Décision utilisateur (2026-08-08) : 1 à 12 mois ; les 3 premiers sont OFFERTS,
+        // au-delà 15 000 F/mois (resolveSponsorshipPrice). Le montant est RECALCULÉ côté
+        // serveur — la valeur du client n'est qu'un affichage.
+        months: z.number().int().min(1).max(12).default(3),
+        currency: z.enum(["EUR", "XOF"]).default("XOF"),
       })
       .parse(input)
   )
   .handler(async ({ data }: { data: any }) => {
-    const code = `GENIZIO-PARRAIN-${Math.random().toString(36).substring(2, 8).toUpperCase()}`;
+    // Corrige le bug historique « le parrainage ne prend en charge que le 5 000 F » : le
+    // calcul gère désormais la transition complète — 3 mois offerts, puis 15 000 F/mois.
+    const pricing = resolveSponsorshipPrice(data.months, data.currency);
 
-    // Décision utilisateur (2026-08-05) : le parrain paie au tarif de bienvenue (5 000 F/mois)
-    // — MÊME BARÈME que la famille. Si le compte cible est hors période de bienvenue à la
-    // rédemption, l'admin ajuste le montant à 15 000 F/mois lors de la confirmation du paiement
-    // (confirmSponsorshipPaymentAdmin) — le code vaut months_count mois dans tous les cas.
-    const monthly = data.currency === "EUR" ? PROMO_PRICE_EUR : PROMO_PRICE_XOF;
-    const amountPaid = data.months * monthly;
-
-    // Le season_id reste indicatif (saison en cours pour l'affichage admin) — l'accès réel
-    // est porté par child_access_periods à la rédemption, jamais par cette valeur.
-    const activeSeason = await getActiveSeason({ data: undefined });
-
-    const { data: token, error } = await (supabaseAdmin as any)
-      .from("sponsorship_tokens")
-      .insert({
-        code,
-        sponsor_name: data.sponsorName,
-        sponsor_email: data.sponsorEmail,
-        sponsor_message: data.sponsorMessage || null,
-        target_child_name: data.targetChildName || null,
-        months_count: data.months,
-        amount_paid: amountPaid,
-        currency: data.currency,
-        season_id: activeSeason.id,
-      })
-      .select("*")
-      .single();
-
-    // Fabriquer un faux succès ici masquerait une écriture DB réellement échouée derrière un
-    // écran de confirmation identique — le parrain croirait son code enregistré alors qu'il
-    // n'existe nulle part (trouvé en auditant ce chemin : c'était le cas jusqu'ici, la table
-    // seasons étant vide, chaque appel violait sponsorship_tokens_season_id_fkey en silence).
-    if (error) {
-      console.error("Error creating sponsorship token:", error);
-      throw new Error("Erreur lors de l'enregistrement du parrainage. Veuillez réessayer.");
-    }
+    const token = await createSponsorshipTokenRecord(supabaseAdmin, {
+      sponsorName: data.sponsorName,
+      sponsorEmail: data.sponsorEmail,
+      sponsorMessage: data.sponsorMessage,
+      targetChildName: data.targetChildName,
+      months: data.months,
+      amountPaid: pricing.amountPaid,
+      currency: data.currency,
+      // 3 premiers mois offerts → rien à payer, le code est actif d'office. Sinon il reste
+      // en attente de confirmation (l'admin confirme après réception du paiement WhatsApp,
+      // flux legacy) — le flux en ligne Paystack le valide automatiquement côté webhook.
+      paymentConfirmed: pricing.amountPaid <= 0,
+    });
 
     return token as SponsorshipToken;
   });
@@ -375,7 +418,7 @@ export const listSeasonsAdmin = createServerFn({ method: "GET" })
   .middleware([requireAdmin])
   .handler(async () => {
     try {
-      await rotateExpiredActiveSeason();
+      await rotateExpiredActiveSeason(supabaseAdmin);
 
       const { data: seasons, error } = await (supabaseAdmin as any)
         .from("seasons")
@@ -737,7 +780,7 @@ export const getUpcomingExpirationsAdmin = createServerFn({ method: "GET" })
       campaignName: string | null;
       endDate: string;
       daysLeft: number;
-      source: "season" | "access";
+      source: "season" | "access" | "family";
       renewalAmountXof: number;
     }> = [];
 
@@ -815,6 +858,64 @@ export const getUpcomingExpirationsAdmin = createServerFn({ method: "GET" })
         daysLeft,
         source: "access",
         renewalAmountXof: rate.priceXof,
+      });
+    }
+
+    // ── Source 3 : abonnements famille (forfait Paystack, modèle 2026-08-08) + crédits de
+    // parrainage arrivant à échéance. Un prélèvement en échec (past_due, aucun retry
+    // Paystack) ou une fin de période proche = relance manuelle — l'accès est coupé dès la
+    // fin de la période déjà payée (résolveur, aucune intervention requise pour bloquer).
+    const { data: subs, error: subsErr } = await (supabaseAdmin as any)
+      .from("subscriptions")
+      .select("id, status, price_xof, current_period_end, user_id")
+      .in("status", ["active", "past_due"]);
+    if (subsErr) throw new Error(subsErr.message);
+
+    for (const s of subs ?? []) {
+      if (s.status === "initiated") continue;
+      const end = s.current_period_end ? new Date(s.current_period_end) : null;
+      if (s.status === "active" && (!end || end.getTime() > windowEnd.getTime() || end.getTime() < now.getTime())) {
+        continue; // actif avec période hors fenêtre des 14 jours (ou déjà dépassée : anomalie) — pas un rappel à venir
+      }
+      const daysLeft = Math.max(
+        0,
+        Math.ceil(((end?.getTime() ?? now.getTime()) - now.getTime()) / 86_400_000),
+      );
+      const parent = userById.get(s.user_id);
+      results.push({
+        childId: `sub-${s.id}`, // pas un enfant : la clé d'affichage est l'abonnement famille
+        childName: parent?.email ?? "Compte inconnu",
+        parentPhone: parent?.user_metadata?.phone ?? null,
+        campaignName: s.status === "past_due" ? "Paiement en échec" : null,
+        endDate: end?.toISOString() ?? now.toISOString(),
+        daysLeft,
+        source: "family",
+        renewalAmountXof: s.price_xof ?? 0,
+      });
+    }
+
+    // Crédits de parrainage (couverture famille) qui expirent dans la fenêtre : à la
+    // différence d'un abonnement, pas de renouvellement automatique — la famille doit
+    // réactiver un code ou souscrire avant la date, sinon coupure immédiate.
+    const { data: credits, error: creditsErr } = await (supabaseAdmin as any)
+      .from("sponsorship_credits")
+      .select("id, ends_at, user_id")
+      .gte("ends_at", now.toISOString())
+      .lte("ends_at", windowEnd.toISOString());
+    if (creditsErr) throw new Error(creditsErr.message);
+
+    for (const c of credits ?? []) {
+      const daysLeft = Math.ceil((new Date(c.ends_at).getTime() - now.getTime()) / 86_400_000);
+      const parent = userById.get(c.user_id);
+      results.push({
+        childId: `credit-${c.id}`,
+        childName: parent?.email ?? "Compte inconnu",
+        parentPhone: parent?.user_metadata?.phone ?? null,
+        campaignName: "Crédit parrainage",
+        endDate: c.ends_at,
+        daysLeft,
+        source: "family",
+        renewalAmountXof: 0,
       });
     }
 

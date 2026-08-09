@@ -15,6 +15,7 @@ import { Route as ProfilesRouteImport } from './routes/profiles'
 import { Route as ProfileRouteImport } from './routes/profile'
 import { Route as PrivacyRouteImport } from './routes/privacy'
 import { Route as ParrainageRouteImport } from './routes/parrainage'
+import { Route as PaiementRetourRouteImport } from './routes/paiement-retour'
 import { Route as OrganisationRouteImport } from './routes/organisation'
 import { Route as NouveautesRouteImport } from './routes/nouveautes'
 import { Route as MentionsLegalesRouteImport } from './routes/mentions-legales'
@@ -53,6 +54,7 @@ import { Route as ProfilesProfileIdPassportPrintRouteImport } from './routes/pro
 import { Route as ProfilesProfileIdMentorsRouteImport } from './routes/profiles.$profileId.mentors'
 import { Route as ProfilesProfileIdGuildRouteImport } from './routes/profiles.$profileId.guild'
 import { Route as ProfilesProfileIdChallengesRouteImport } from './routes/profiles.$profileId.challenges'
+import { Route as ApiPaystackWebhookRouteImport } from './routes/api/paystack/webhook'
 
 const TermsRoute = TermsRouteImport.update({
   id: '/terms',
@@ -82,6 +84,11 @@ const PrivacyRoute = PrivacyRouteImport.update({
 const ParrainageRoute = ParrainageRouteImport.update({
   id: '/parrainage',
   path: '/parrainage',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PaiementRetourRoute = PaiementRetourRouteImport.update({
+  id: '/paiement-retour',
+  path: '/paiement-retour',
   getParentRoute: () => rootRouteImport,
 } as any)
 const OrganisationRoute = OrganisationRouteImport.update({
@@ -291,6 +298,11 @@ const ProfilesProfileIdChallengesRoute =
     path: '/$profileId/challenges',
     getParentRoute: () => ProfilesRoute,
   } as any)
+const ApiPaystackWebhookRoute = ApiPaystackWebhookRouteImport.update({
+  id: '/api/paystack/webhook',
+  path: '/api/paystack/webhook',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -303,6 +315,7 @@ export interface FileRoutesByFullPath {
   '/mentions-legales': typeof MentionsLegalesRoute
   '/nouveautes': typeof NouveautesRoute
   '/organisation': typeof OrganisationRouteWithChildren
+  '/paiement-retour': typeof PaiementRetourRoute
   '/parrainage': typeof ParrainageRoute
   '/privacy': typeof PrivacyRoute
   '/profile': typeof ProfileRoute
@@ -331,6 +344,7 @@ export interface FileRoutesByFullPath {
   '/guides/': typeof GuidesIndexRoute
   '/organisation/': typeof OrganisationIndexRoute
   '/profiles/': typeof ProfilesIndexRoute
+  '/api/paystack/webhook': typeof ApiPaystackWebhookRoute
   '/profiles/$profileId/challenges': typeof ProfilesProfileIdChallengesRoute
   '/profiles/$profileId/guild': typeof ProfilesProfileIdGuildRoute
   '/profiles/$profileId/mentors': typeof ProfilesProfileIdMentorsRoute
@@ -346,6 +360,7 @@ export interface FileRoutesByTo {
   '/laboratory': typeof LaboratoryRoute
   '/mentions-legales': typeof MentionsLegalesRoute
   '/nouveautes': typeof NouveautesRoute
+  '/paiement-retour': typeof PaiementRetourRoute
   '/parrainage': typeof ParrainageRoute
   '/privacy': typeof PrivacyRoute
   '/profile': typeof ProfileRoute
@@ -373,6 +388,7 @@ export interface FileRoutesByTo {
   '/guides': typeof GuidesIndexRoute
   '/organisation': typeof OrganisationIndexRoute
   '/profiles': typeof ProfilesIndexRoute
+  '/api/paystack/webhook': typeof ApiPaystackWebhookRoute
   '/profiles/$profileId/challenges': typeof ProfilesProfileIdChallengesRoute
   '/profiles/$profileId/guild': typeof ProfilesProfileIdGuildRoute
   '/profiles/$profileId/mentors': typeof ProfilesProfileIdMentorsRoute
@@ -392,6 +408,7 @@ export interface FileRoutesById {
   '/mentions-legales': typeof MentionsLegalesRoute
   '/nouveautes': typeof NouveautesRoute
   '/organisation': typeof OrganisationRouteWithChildren
+  '/paiement-retour': typeof PaiementRetourRoute
   '/parrainage': typeof ParrainageRoute
   '/privacy': typeof PrivacyRoute
   '/profile': typeof ProfileRoute
@@ -420,6 +437,7 @@ export interface FileRoutesById {
   '/guides/': typeof GuidesIndexRoute
   '/organisation/': typeof OrganisationIndexRoute
   '/profiles/': typeof ProfilesIndexRoute
+  '/api/paystack/webhook': typeof ApiPaystackWebhookRoute
   '/profiles/$profileId/challenges': typeof ProfilesProfileIdChallengesRoute
   '/profiles/$profileId/guild': typeof ProfilesProfileIdGuildRoute
   '/profiles/$profileId/mentors': typeof ProfilesProfileIdMentorsRoute
@@ -440,6 +458,7 @@ export interface FileRouteTypes {
     | '/mentions-legales'
     | '/nouveautes'
     | '/organisation'
+    | '/paiement-retour'
     | '/parrainage'
     | '/privacy'
     | '/profile'
@@ -468,6 +487,7 @@ export interface FileRouteTypes {
     | '/guides/'
     | '/organisation/'
     | '/profiles/'
+    | '/api/paystack/webhook'
     | '/profiles/$profileId/challenges'
     | '/profiles/$profileId/guild'
     | '/profiles/$profileId/mentors'
@@ -483,6 +503,7 @@ export interface FileRouteTypes {
     | '/laboratory'
     | '/mentions-legales'
     | '/nouveautes'
+    | '/paiement-retour'
     | '/parrainage'
     | '/privacy'
     | '/profile'
@@ -510,6 +531,7 @@ export interface FileRouteTypes {
     | '/guides'
     | '/organisation'
     | '/profiles'
+    | '/api/paystack/webhook'
     | '/profiles/$profileId/challenges'
     | '/profiles/$profileId/guild'
     | '/profiles/$profileId/mentors'
@@ -528,6 +550,7 @@ export interface FileRouteTypes {
     | '/mentions-legales'
     | '/nouveautes'
     | '/organisation'
+    | '/paiement-retour'
     | '/parrainage'
     | '/privacy'
     | '/profile'
@@ -556,6 +579,7 @@ export interface FileRouteTypes {
     | '/guides/'
     | '/organisation/'
     | '/profiles/'
+    | '/api/paystack/webhook'
     | '/profiles/$profileId/challenges'
     | '/profiles/$profileId/guild'
     | '/profiles/$profileId/mentors'
@@ -575,6 +599,7 @@ export interface RootRouteChildren {
   MentionsLegalesRoute: typeof MentionsLegalesRoute
   NouveautesRoute: typeof NouveautesRoute
   OrganisationRoute: typeof OrganisationRouteWithChildren
+  PaiementRetourRoute: typeof PaiementRetourRoute
   ParrainageRoute: typeof ParrainageRoute
   PrivacyRoute: typeof PrivacyRoute
   ProfileRoute: typeof ProfileRoute
@@ -583,6 +608,7 @@ export interface RootRouteChildren {
   TermsRoute: typeof TermsRoute
   RejoindreCampaignIdRoute: typeof RejoindreCampaignIdRoute
   STokenRoute: typeof STokenRoute
+  ApiPaystackWebhookRoute: typeof ApiPaystackWebhookRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -627,6 +653,13 @@ declare module '@tanstack/react-router' {
       path: '/parrainage'
       fullPath: '/parrainage'
       preLoaderRoute: typeof ParrainageRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/paiement-retour': {
+      id: '/paiement-retour'
+      path: '/paiement-retour'
+      fullPath: '/paiement-retour'
+      preLoaderRoute: typeof PaiementRetourRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/organisation': {
@@ -895,6 +928,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ProfilesProfileIdChallengesRouteImport
       parentRoute: typeof ProfilesRoute
     }
+    '/api/paystack/webhook': {
+      id: '/api/paystack/webhook'
+      path: '/api/paystack/webhook'
+      fullPath: '/api/paystack/webhook'
+      preLoaderRoute: typeof ApiPaystackWebhookRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -1006,6 +1046,7 @@ const rootRouteChildren: RootRouteChildren = {
   MentionsLegalesRoute: MentionsLegalesRoute,
   NouveautesRoute: NouveautesRoute,
   OrganisationRoute: OrganisationRouteWithChildren,
+  PaiementRetourRoute: PaiementRetourRoute,
   ParrainageRoute: ParrainageRoute,
   PrivacyRoute: PrivacyRoute,
   ProfileRoute: ProfileRoute,
@@ -1014,6 +1055,7 @@ const rootRouteChildren: RootRouteChildren = {
   TermsRoute: TermsRoute,
   RejoindreCampaignIdRoute: RejoindreCampaignIdRoute,
   STokenRoute: STokenRoute,
+  ApiPaystackWebhookRoute: ApiPaystackWebhookRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

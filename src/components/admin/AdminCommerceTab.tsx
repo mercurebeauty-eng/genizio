@@ -301,6 +301,12 @@ export function AdminCommerceTab({
                             year: "numeric",
                           })}
                         </div>
+                        {order.payment_reference && (
+                          <div className="mt-1.5 inline-flex items-center gap-1 rounded-full bg-emerald-100 border border-emerald-300 px-2 py-0.5 text-[10px] font-extrabold text-emerald-800">
+                            <BadgeCheck className="size-3" />
+                            Payé · {order.payment_reference.slice(0, 12)}
+                          </div>
+                        )}
                       </td>
 
                       {/* Beneficiary */}

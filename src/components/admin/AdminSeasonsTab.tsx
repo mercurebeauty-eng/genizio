@@ -44,7 +44,7 @@ interface UpcomingExpiration {
   campaignName: string | null;
   endDate: string;
   daysLeft: number;
-  source: "season" | "access";
+  source: "season" | "access" | "family";
   renewalAmountXof: number;
 }
 
@@ -348,10 +348,16 @@ export function AdminSeasonsTab() {
                       className={`rounded-full px-2 py-0.5 text-[9px] font-black uppercase tracking-wider ${
                         exp.source === "access"
                           ? "bg-brand/10 text-brand border border-brand/20"
-                          : "bg-indigo-50 text-indigo-700 border border-indigo-200"
+                          : exp.source === "family"
+                            ? "bg-amber-50 text-amber-800 border border-amber-200"
+                            : "bg-indigo-50 text-indigo-700 border border-indigo-200"
                       }`}
                     >
-                      {exp.source === "access" ? "Abonnement mensuel" : "Saison"}
+                      {exp.source === "access"
+                        ? "Abonnement mensuel"
+                        : exp.source === "family"
+                          ? "Famille"
+                          : "Saison"}
                     </span>
                     {exp.campaignName && (
                       <span className="text-[10px] font-bold uppercase tracking-wider text-ink/40">
@@ -406,9 +412,11 @@ export function AdminSeasonsTab() {
                   {exp.parentPhone ? (
                     <a
                       href={`https://wa.me/${exp.parentPhone.replace(/[^0-9]/g, "")}?text=${encodeURIComponent(
-                        exp.source === "access" && exp.renewalAmountXof > 0
-                          ? `Bonjour, l'accès Génizio de votre enfant se termine bientôt (${new Date(exp.endDate).toLocaleDateString("fr-FR")}). Renouvellement : ${formatXof(exp.renewalAmountXof)}/mois. Souhaitez-vous renouveler ?`
-                          : `Bonjour, l'accès Génizio de votre enfant se termine bientôt (${new Date(exp.endDate).toLocaleDateString("fr-FR")}). Souhaitez-vous renouveler ?`,
+                        exp.source === "family"
+                          ? `Bonjour, votre couverture famille Génizio se termine bientôt (${new Date(exp.endDate).toLocaleDateString("fr-FR")}).${exp.renewalAmountXof > 0 ? ` Renouvellement : ${formatXof(exp.renewalAmountXof)}/mois.` : ""} Souhaitez-vous continuer ?`
+                          : exp.source === "access" && exp.renewalAmountXof > 0
+                            ? `Bonjour, l'accès Génizio de votre enfant se termine bientôt (${new Date(exp.endDate).toLocaleDateString("fr-FR")}). Renouvellement : ${formatXof(exp.renewalAmountXof)}/mois. Souhaitez-vous renouveler ?`
+                            : `Bonjour, l'accès Génizio de votre enfant se termine bientôt (${new Date(exp.endDate).toLocaleDateString("fr-FR")}). Souhaitez-vous renouveler ?`,
                       )}`}
                       target="_blank"
                       rel="noopener noreferrer"

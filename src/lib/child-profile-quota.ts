@@ -12,6 +12,11 @@ export const FREE_FLOOR_CUTOVER = "2026-08-04T00:00:00.000Z";
 export const GRANDFATHERED_FREE_FLOOR = 5;
 export const NEW_FREE_FLOOR = 1;
 
+// Plafond ABSOLU d'enfants par compte (décision utilisateur 2026-08-08) : au-delà →
+// nouveau compte. Doit rester identique au LEAST(quota, 5) de check_child_profile_quota()
+// (migration 20260809120000). Même limite côté superviseurs (supervisor-quota.ts).
+export const MAX_CHILDREN_PER_ACCOUNT = 5;
+
 export function isGrandfatheredAccount(createdAt: string | null | undefined): boolean {
   if (!createdAt) return false;
   const created = new Date(createdAt).getTime();
@@ -26,11 +31,11 @@ export function isGrandfatheredAccount(createdAt: string | null | undefined): bo
 // piège : un compte grand-pèré déjà à 5 pourrait acheter 1, 2 ou 3 slots sans que son plafond
 // bouge (2+3 = 5, toujours ≤ 5). La forme additive ne rend jamais MOINS que l'ancienne à
 // personne (5 + extra ≥ GREATEST(5, 2 + extra) pour tout extra ≥ 0).
-// Doit rester identique à check_child_profile_quota() (migration 20260803100000).
+// Doit rester identique à check_child_profile_quota() (migration 20260809120000).
 export function computeChildProfileQuota(params: {
   accountCreatedAt: string | null | undefined;
   extraSlots: number | null | undefined;
 }): number {
   const base = isGrandfatheredAccount(params.accountCreatedAt) ? GRANDFATHERED_FREE_FLOOR : NEW_FREE_FLOOR;
-  return base + (params.extraSlots ?? 0);
+  return Math.min(base + (params.extraSlots ?? 0), MAX_CHILDREN_PER_ACCOUNT);
 }

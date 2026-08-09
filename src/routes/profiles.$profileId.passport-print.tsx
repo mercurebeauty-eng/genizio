@@ -4,6 +4,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { supabase } from "@/integrations/supabase/client";
 import { useSession } from "@/hooks/use-session";
 import { getChildAISynthesis, getPassportLetter, BADGE_CATALOG } from "@/lib/challenges.functions";
+import { initializePassportPayment } from "@/lib/payments.functions";
 import { getChildGuild, getTalentAffinities } from "@/lib/guilds";
 import { TalentRadarChart } from "@/components/TalentRadarChart";
 import { MarkdownContent } from "@/components/ui/markdown-content";
@@ -26,6 +27,10 @@ import {
   Medal,
   Rocket,
   Download,
+  CreditCard,
+  Loader2,
+  Lock,
+  Phone,
 } from "lucide-react";
 import { GenizioLoader } from "@/components/GenizioLoader";
 import { TALENT_KEY_LABELS } from "@/lib/talent-buckets";
@@ -104,9 +109,31 @@ function PassportPrintPage() {
   const [letter, setLetter] = useState("");
   const [fetchingLetter, setFetchingLetter] = useState(false);
   const [downloading, setDownloading] = useState(false);
+  const [payingUnlock, setPayingUnlock] = useState(false);
 
   const fetchSynthesis = useServerFn(getChildAISynthesis);
   const fetchLetter = useServerFn(getPassportLetter);
+  const initializePassportPaymentFn = useServerFn(initializePassportPayment);
+
+  // Paiement en ligne Paystack : le serveur crée la payment, on redirige vers la page
+  // hébergée. Le webhook/retour passe child_profiles.pdf_unlocked = true.
+  const handlePayUnlock = async () => {
+    if (!session || !child) return;
+    setPayingUnlock(true);
+    try {
+      const callbackUrl = `${window.location.origin}/paiement-retour`;
+      const { authorizationUrl } = await initializePassportPaymentFn({
+        data: { childId: child.id, callbackUrl },
+      });
+      toast.success("Redirection vers le paiement sécurisé Paystack…");
+      window.location.href = authorizationUrl;
+    } catch (err) {
+      console.error(err);
+      toast.error("Impossible d'initier le paiement. Réessayez ou contactez le support.");
+    } finally {
+      setPayingUnlock(false);
+    }
+  };
 
   useEffect(() => {
     if (!loading && !session) navigate({ to: "/auth", replace: true });
@@ -258,17 +285,48 @@ function PassportPrintPage() {
     return (
       <div className="grid min-h-dvh place-items-center bg-stone-50 text-ink">
         <div className="text-center p-8 border border-ink/10 bg-white rounded-3xl max-w-md shadow-xl">
+          <div className="mx-auto mb-4 grid size-14 place-items-center rounded-2xl bg-amber-100">
+            <Lock className="size-6 text-amber-700" />
+          </div>
           <h2 className="font-display text-balance text-xl font-black text-brand mb-2">
             Passeport d'Excellence Verrouillé
           </h2>
           <p className="text-sm font-semibold text-ink/75 leading-relaxed mb-6">
-            Le Passeport d'Excellence pour {child.name} n'a pas encore été débloqué par
-            l'administration. Veuillez procéder à son activation ou contacter le support.
+            Débloquez le Passeport d'Excellence de {child.name} pour télécharger son document
+            PDF officiel et sa lettre d'orientation IA.
           </p>
+          <button
+            onClick={handlePayUnlock}
+            disabled={payingUnlock}
+            className="w-full flex items-center justify-center gap-2 rounded-2xl bg-emerald-600 px-5 py-3 text-sm font-bold text-white shadow-xl hover:-translate-y-0.5 active:translate-y-0 transition-all disabled:opacity-60 disabled:cursor-not-allowed"
+          >
+            {payingUnlock ? (
+              <>
+                <Loader2 className="size-4 animate-spin" />
+                Paiement en cours...
+              </>
+            ) : (
+              <>
+                <CreditCard className="size-4" />
+                Débloquer en ligne par Paystack
+              </>
+            )}
+          </button>
+          <a
+            href={`https://wa.me/${import.meta.env.VITE_WHATSAPP_NUMBER || "33606433148"}?text=${encodeURIComponent(
+              `Bonjour, je souhaite débloquer le Passeport d'Excellence de ${child.name}.`,
+            )}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="mt-3 w-full flex items-center justify-center gap-2 rounded-2xl border border-ink/10 bg-white py-2.5 text-xs font-bold text-ink/70 hover:bg-surface transition-all"
+          >
+            <Phone className="size-4 fill-ink/50" />
+            ou déblocage manuel via WhatsApp
+          </a>
           <Link
             to="/profiles/$profileId/portfolio"
             params={{ profileId: child.id }}
-            className="press-brand rounded-xl bg-brand px-5 py-2 text-xs font-bold text-white cursor-pointer"
+            className="mt-4 inline-block rounded-xl border border-ink/10 px-5 py-2 text-xs font-bold text-ink/60 hover:text-ink cursor-pointer"
           >
             Retour au Portfolio
           </Link>

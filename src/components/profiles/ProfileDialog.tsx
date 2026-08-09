@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { INTERESTS_BY_TALENT, AVATAR_COLORS, emptyProfileDraft, type ChildProfile, type ProfileDraft } from "./shared";
 import { toast } from "sonner";
 import { useSession } from "@/hooks/use-session";
+import { useFamilyCoverage } from "@/hooks/use-family-coverage";
 import { getGeoHint } from "@/lib/geo.functions";
 import { computeChildCreationLimit } from "@/lib/child-access";
 
@@ -19,12 +20,16 @@ export function ProfileDialog({
   onSaved: () => void;
 }) {
   const { session } = useSession();
+  // Compte couvert (abonnement famille actif ou crédit de parrainage) → création possible
+  // jusqu'au plafond de 5 — miroir du trigger check_child_profile_quota (20260809120000).
+  const { covered: familyCovered } = useFamilyCoverage();
   // Pré-check local seulement : le trigger check_child_profile_quota fait foi côté base.
   // Décision 2026-08-05 : +1 autorisé pour le premier profil MENSUEL (en cours de mise en
   // paiement) — miroir du trigger (migration 20260805100000).
   const quota = computeChildCreationLimit(
     session?.user?.created_at,
     (session?.user?.app_metadata?.extra_profile_slots as number) ?? 0,
+    familyCovered,
   );
 
   const [draft, setDraft] = useState<ProfileDraft>(
