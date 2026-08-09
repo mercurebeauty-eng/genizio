@@ -964,7 +964,7 @@ function PortfolioPage() {
               new Set(
                 completed
                   .map((c) => c.trait_subform)
-                  .filter((sub): sub is string => Boolean(sub) && Boolean(TALENT_SUBFORM_OPPORTUNITIES[sub]))
+                  .filter((sub): sub is string => typeof sub === "string" && Boolean(TALENT_SUBFORM_OPPORTUNITIES[sub]))
               )
             );
 

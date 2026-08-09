@@ -101,6 +101,8 @@ const SAMPLE_DATA = {
 };
 
 describe("PassportPdf", () => {
+  // Rendu PDF lourd (~4 s seul) : timeout généreux pour ne pas flaker quand la
+  // suite complète tourne en parallèle (contention CPU).
   it("génère un PDF A4 valide et paginé", async () => {
     const instance = pdf(<PassportPdf data={SAMPLE_DATA as never} />);
     const stream = (await instance.toBuffer()) as unknown as {
@@ -121,5 +123,5 @@ describe("PassportPdf", () => {
     // (l'arbre "/Type /Pages" est exclu avec le regard négatif).
     const pageEntries = (bytes.toString("latin1").match(/\/Type \/Page(?![s])/g) ?? []).length;
     expect(pageEntries).toBe(4);
-  });
+  }, 15_000);
 });

@@ -665,7 +665,8 @@ export const getExecutiveKPIsAdmin = createServerFn({ method: "GET" })
     // 3. Fetch challenges
     const { data: challenges, error: challengesErr } = await supabaseAdmin
       .from("challenges")
-      .select("id, status, child_id, user_id, created_at, updated_at, completed_at");
+      .select("id, status, child_id, user_id, created_at, updated_at, completed_at")
+      .is("deleted_at", null);
     if (challengesErr) throw new Error(challengesErr.message);
 
     const safeChildren = children ?? [];
@@ -824,12 +825,14 @@ export const getProgressionHealthAdmin = createServerFn({ method: "GET" })
         .from("challenges")
         .select("academic_domain, created_at, completed_at")
         .eq("status", "completed")
+        .is("deleted_at", null)
         .not("academic_domain", "is", null)
         .not("completed_at", "is", null),
       supabaseAdmin
         .from("challenges")
         .select("academic_domain")
         .in("status", ["todo", "in_progress"])
+        .is("deleted_at", null)
         .not("academic_domain", "is", null)
         .lt("created_at", cutoff),
     ]);
@@ -875,7 +878,8 @@ export const getNayaTelemetryAdmin = createServerFn({ method: "GET" })
     const [challengesRes, hypothesisRes, childrenRes, auditsRes] = await Promise.all([
       supabaseAdmin
         .from("challenges")
-        .select("id, status, proof_mode"),
+        .select("id, status, proof_mode")
+        .is("deleted_at", null),
       supabaseAdmin
         .from("hypothesis_cycles")
         .select("id, status"),

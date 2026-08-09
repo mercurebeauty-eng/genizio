@@ -565,7 +565,8 @@ export const getNgoDashboardData = createServerFn({ method: "GET" })
         (supabaseAdmin as any)
           .from("challenges")
           .select("id, status, domain, child_id, title, ai_observations")
-          .in("child_id", childIds),
+          .in("child_id", childIds)
+          .is("deleted_at", null),
         (supabaseAdmin as any).from("child_profiles").select("talents").in("id", childIds),
       ]);
       challenges = ch || [];

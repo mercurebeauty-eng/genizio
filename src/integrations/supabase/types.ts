@@ -127,6 +127,7 @@ export type Database = {
           completed_at: string | null
           created_at: string
           declarative_award: Json | null
+          deleted_at: string | null
           description: string
           difficulty: string | null
           domain: string
@@ -170,6 +171,7 @@ export type Database = {
           completed_at?: string | null
           created_at?: string
           declarative_award?: Json | null
+          deleted_at?: string | null
           description: string
           difficulty?: string | null
           domain: string
@@ -213,6 +215,7 @@ export type Database = {
           completed_at?: string | null
           created_at?: string
           declarative_award?: Json | null
+          deleted_at?: string | null
           description?: string
           difficulty?: string | null
           domain?: string
@@ -246,6 +249,60 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "challenges_child_id_fkey"
+            columns: ["child_id"]
+            isOneToOne: false
+            referencedRelation: "child_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      challenge_outcomes: {
+        Row: {
+          challenge_id: string
+          child_id: string
+          created_at: string
+          domain: string
+          id: string
+          kind: string
+          pending_duration_days: number
+          reason_chip: string | null
+          reason_note: string | null
+          status_when_deleted: string
+        }
+        Insert: {
+          challenge_id: string
+          child_id: string
+          created_at?: string
+          domain: string
+          id?: string
+          kind: string
+          pending_duration_days?: number
+          reason_chip?: string | null
+          reason_note?: string | null
+          status_when_deleted: string
+        }
+        Update: {
+          challenge_id?: string
+          child_id?: string
+          created_at?: string
+          domain?: string
+          id?: string
+          kind?: string
+          pending_duration_days?: number
+          reason_chip?: string | null
+          reason_note?: string | null
+          status_when_deleted?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "challenge_outcomes_challenge_id_fkey"
+            columns: ["challenge_id"]
+            isOneToOne: false
+            referencedRelation: "challenges"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "challenge_outcomes_child_id_fkey"
             columns: ["child_id"]
             isOneToOne: false
             referencedRelation: "child_profiles"

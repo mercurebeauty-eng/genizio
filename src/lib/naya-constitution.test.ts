@@ -9,9 +9,12 @@ import {
   clampAutoAckThresholds,
   ruleKeyOf,
   buildRuleJournal,
+  aggregateOutcomeSignals,
   type AuditRow,
   type DecidedAuditRow,
   type LoupDecision,
+  type ChallengeOutcomeRow,
+  type OutcomeKind,
 } from "@/lib/naya-constitution.functions";
 
 // ============================================================================
@@ -43,6 +46,19 @@ function decidedRow(overrides: Partial<DecidedAuditRow>): DecidedAuditRow {
     decision_at: "2026-08-06T12:00:00Z",
     decision_by: "système",
     decision_note: null,
+    ...overrides,
+  };
+}
+
+function outcomeRow(overrides: Partial<ChallengeOutcomeRow>): ChallengeOutcomeRow {
+  return {
+    child_id: "child-1",
+    kind: "deleted_uncompleted" as OutcomeKind,
+    reason_chip: "pas_le_bon_moment",
+    domain: "spatial",
+    status_when_deleted: "todo",
+    pending_duration_days: 3,
+    created_at: "2026-08-09T00:00:00Z",
     ...overrides,
   };
 }
@@ -244,5 +260,51 @@ describe("buildRuleJournal (journal des décisions, Décision #56)", () => {
     expect(journal).toHaveLength(1);
     expect(journal[0].decision).toBe("rejete");
     expect(journal[0].note).toBe("Faux positif : matériau local réel.");
+  });
+});
+
+describe("aggregateOutcomeSignals (signaux d'abandon, Décision #58)", () => {
+  it("groupe par (raison, type, domaine) et compte les enfants distincts", () => {
+    const rows: ChallengeOutcomeRow[] = [
+      outcomeRow({ child_id: "c1", reason_chip: "pas_le_bon_moment", kind: "deleted_uncompleted", domain: "spatial" }),
+      outcomeRow({ child_id: "c1", reason_chip: "pas_le_bon_moment", kind: "deleted_uncompleted", domain: "spatial" }),
+      outcomeRow({ child_id: "c2", reason_chip: "pas_le_bon_moment", kind: "deleted_uncompleted", domain: "spatial" }),
+      outcomeRow({ child_id: "c3", reason_chip: "pas_interesse", kind: "deleted_uncompleted", domain: "spatial" }),
+    ];
+    const signals = aggregateOutcomeSignals(rows);
+    expect(signals).toHaveLength(2);
+    const pasLeBonMoment = signals.find((s) => s.reasonKey === "pas_le_bon_moment");
+    expect(pasLeBonMoment?.count).toBe(3);
+    expect(pasLeBonMoment?.childCount).toBe(2);
+  });
+
+  it("calcule la durée moyenne d'attente avant suppression", () => {
+    const rows: ChallengeOutcomeRow[] = [
+      outcomeRow({ pending_duration_days: 2 }),
+      outcomeRow({ pending_duration_days: 4 }),
+    ];
+    const signals = aggregateOutcomeSignals(rows);
+    expect(signals[0].avgPendingDays).toBe(3);
+  });
+
+  it("bascule une raison NULL en 'sans_raison'", () => {
+    const rows: ChallengeOutcomeRow[] = [outcomeRow({ reason_chip: null }), outcomeRow({ reason_chip: null })];
+    const signals = aggregateOutcomeSignals(rows);
+    expect(signals).toHaveLength(1);
+    expect(signals[0].reasonKey).toBe("sans_raison");
+    expect(signals[0].count).toBe(2);
+  });
+
+  it("ignore les kinds inconnus (défensif) et trie par occurrences décroissantes", () => {
+    const rows: ChallengeOutcomeRow[] = [
+      outcomeRow({ kind: "deleted_completed" as OutcomeKind, domain: "musical" }),
+      outcomeRow({ kind: "deleted_uncompleted", domain: "musical" }),
+      outcomeRow({ kind: "deleted_uncompleted", domain: "musical" }),
+      outcomeRow({ kind: "inconnu" as OutcomeKind, domain: "musical" }),
+    ];
+    const signals = aggregateOutcomeSignals(rows);
+    expect(signals).toHaveLength(2);
+    expect(signals[0].count).toBe(2);
+    expect(signals[0].kind).toBe("deleted_uncompleted");
   });
 });

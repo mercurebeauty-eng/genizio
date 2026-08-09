@@ -1482,26 +1482,82 @@ export const updateChallenge = createServerFn({ method: "POST" })
     return row;
   });
 
+const DeleteChallengeInput = z.object({
+  id: z.string().uuid(),
+  /** Code du chip de raison (Décision #58) : pas_le_bon_moment | deja_fait_autrement | pas_interesse | doublon. */
+  reason: z.string().min(1).max(40).optional(),
+  /** Note libre optionnelle. */
+  note: z.string().max(500).optional(),
+});
+
+/**
+ * Journalise en arrière-plan le signal d'issue (Décision #58) dans
+ * challenge_outcomes — la trace que le Loup agrège pour apprendre des abandons.
+ * Jamais bloquant pour l'appelant (pattern verifyAndLog).
+ */
+async function logChallengeOutcome(params: {
+  challengeId: string;
+  childId: string;
+  kind: "deleted_uncompleted" | "deleted_completed";
+  reason: string | null;
+  note: string | null;
+  domain: string;
+  statusWhenDeleted: string;
+  pendingDays: number;
+}): Promise<void> {
+  try {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    await supabaseAdmin.from("challenge_outcomes").insert({
+      challenge_id: params.challengeId,
+      child_id: params.childId,
+      kind: params.kind,
+      reason_chip: params.reason,
+      reason_note: params.note,
+      domain: params.domain,
+      status_when_deleted: params.statusWhenDeleted,
+      pending_duration_days: params.pendingDays,
+    });
+  } catch (err) {
+    console.error("Naya challenge_outcomes log failed (non-fatal):", err);
+  }
+}
+
 export const deleteChallenge = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .validator((input: unknown) => z.object({ id: z.string().uuid() }).parse(input))
+  .validator((input: unknown) => DeleteChallengeInput.parse(input))
   .handler(async ({ data, context }) => {
     const { data: existing } = await context.supabase
       .from("challenges")
-      .select("child_id, child_profiles(access_locked_at)")
+      .select("id, child_id, domain, title, status, created_at, child_profiles(access_locked_at)")
       .eq("id", data.id)
       .eq("user_id", context.userId)
       .maybeSingle();
+    if (!existing) return { ok: true }; // Déjà supprimé ou inexistant — idempotent.
     if ((existing as any)?.child_profiles?.access_locked_at) {
       throw new Error("Ce profil est verrouillé.");
     }
 
+    // Soft-delete (Décision #58) : la ligne reste en base (deleted_at) — elle
+    // devient invisible à toutes les lectures via RLS et conserve la preuve
+    // (proof_image_url) ; seules les traces d'apprentissage la survivent.
+    const now = new Date().toISOString();
     const { error } = await context.supabase
       .from("challenges")
-      .delete()
+      .update({ deleted_at: now })
       .eq("id", data.id)
       .eq("user_id", context.userId);
     if (error) throw new Error(error.message);
+
+    void logChallengeOutcome({
+      challengeId: existing.id,
+      childId: existing.child_id,
+      kind: existing.status === "completed" ? "deleted_completed" : "deleted_uncompleted",
+      reason: data.reason ?? null,
+      note: data.note ?? null,
+      domain: existing.domain,
+      statusWhenDeleted: existing.status,
+      pendingDays: Math.round((Date.now() - Date.parse(existing.created_at)) / 86400000 * 100) / 100,
+    });
     return { ok: true };
   });
 

@@ -139,6 +139,7 @@ export const createOrder = createServerFn({ method: "POST" })
         .select("id")
         .eq("id", data.challenge_id)
         .eq("child_id", data.child_id)
+        .is("deleted_at", null)
         .maybeSingle();
       if (challengeErr || !challenge) throw new Error("Défi introuvable ou n'appartenant pas à cet enfant.");
     }
@@ -235,13 +236,14 @@ export const getEcosystemStats = createServerFn({ method: "GET" })
     ] = await Promise.all([
       supabaseAdmin.from("child_profiles").select("*", { count: "exact", head: true }),
       listAllUsers(supabaseAdmin),
-      supabaseAdmin.from("challenges").select("*", { count: "exact", head: true }),
-      supabaseAdmin.from("challenges").select("*", { count: "exact", head: true }).eq("status", "completed"),
+      supabaseAdmin.from("challenges").select("*", { count: "exact", head: true }).is("deleted_at", null),
+      supabaseAdmin.from("challenges").select("*", { count: "exact", head: true }).eq("status", "completed").is("deleted_at", null),
       supabaseAdmin.from("orders").select("*", { count: "exact", head: true }),
       supabaseAdmin.from("child_profiles").select("talents"),
       supabaseAdmin
         .from("challenges")
         .select("title, domain, status")
+        .is("deleted_at", null)
         .order("created_at", { ascending: false })
         .limit(200),
     ]);
@@ -296,7 +298,8 @@ export const listParentsBI = createServerFn({ method: "GET" })
     // 3. Fetch challenge statistics grouped by user_id
     const { data: challenges, error: challengesErr } = await supabaseAdmin
       .from("challenges")
-      .select("id, status, user_id");
+      .select("id, status, user_id")
+      .is("deleted_at", null);
     if (challengesErr) throw new Error(challengesErr.message);
 
     // 4. Correlate data
