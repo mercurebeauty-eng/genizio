@@ -30,7 +30,6 @@ import {
   CreditCard,
   Loader2,
   Lock,
-  Phone,
 } from "lucide-react";
 import { GenizioLoader } from "@/components/GenizioLoader";
 import { TALENT_KEY_LABELS } from "@/lib/talent-buckets";
@@ -312,17 +311,6 @@ function PassportPrintPage() {
               </>
             )}
           </button>
-          <a
-            href={`https://wa.me/${import.meta.env.VITE_WHATSAPP_NUMBER || "33606433148"}?text=${encodeURIComponent(
-              `Bonjour, je souhaite débloquer le Passeport d'Excellence de ${child.name}.`,
-            )}`}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="mt-3 w-full flex items-center justify-center gap-2 rounded-2xl border border-ink/10 bg-white py-2.5 text-xs font-bold text-ink/70 hover:bg-surface transition-all"
-          >
-            <Phone className="size-4 fill-ink/50" />
-            ou déblocage manuel via WhatsApp
-          </a>
           <Link
             to="/profiles/$profileId/portfolio"
             params={{ profileId: child.id }}
