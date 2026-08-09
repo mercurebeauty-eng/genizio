@@ -11,6 +11,7 @@ import { getChildEnrolledSeason, getActiveSeason, type Season } from "@/lib/seas
 import { getChildSupervisorInfo } from "@/lib/supervisors.functions";
 import { getChildAccessStatusFn, type ChildAccessStatus } from "@/lib/child-access";
 import { formatXof } from "@/lib/pricing";
+import { initializePassportPayment } from "@/lib/payments.functions";
 import {
   OPPORTUNITY_COMPASS_VERSION,
   OPPORTUNITY_COMPASS_DISCLAIMER,
@@ -18,6 +19,7 @@ import {
   TALENT_SUBFORM_OPPORTUNITIES,
 } from "@/lib/opportunity-compass";
 import { SeasonEnrollmentModal } from "@/components/seasons/SeasonEnrollmentModal";
+import { RenewChildAccessButton } from "@/components/settings/RenewChildAccessButton";
 import { AppTabBar } from "@/components/AppTabBar";
 import { TalentRadarChart } from "@/components/TalentRadarChart";
 import { NayaAvatar } from "@/components/NayaAvatar";
@@ -41,7 +43,8 @@ import {
   Rocket,
   ChevronRight,
   BellRing,
-  Phone,
+  CreditCard,
+  Loader2,
   Zap,
   MapPin,
   Clock,
@@ -237,11 +240,34 @@ function PortfolioPage() {
   // montant de renouvellement applicable au compte.
   const [accessState, setAccessState] = useState<{ status: ChildAccessStatus; renewalAmountXof: number } | null>(null);
   const [showSponsorModal, setShowSponsorModal] = useState(false);
+  const [payingPassport, setPayingPassport] = useState(false);
   const [mentorCount, setMentorCount] = useState(0);
   const [dismissedDiscoveries, setDismissedDiscoveries] = useState<string[]>([]);
   const [expandedMonths, setExpandedMonths] = useState<Set<string>>(new Set());
 
   const ensureHypotheses = useServerFn(ensureHypothesesForChild);
+  const initializePassportPaymentFn = useServerFn(initializePassportPayment);
+
+  // Paiement en ligne Paystack du Passeport d'Excellence (50 000 FCFA) : le serveur crée
+  // la payment, on redirige vers le checkout hébergé. Le webhook/retour passe
+  // child_profiles.pdf_unlocked = true — fini l'activation manuelle via WhatsApp.
+  const handlePayPassport = async () => {
+    if (!session || !child) return;
+    setPayingPassport(true);
+    try {
+      const callbackUrl = `${window.location.origin}/paiement-retour`;
+      const { authorizationUrl } = await initializePassportPaymentFn({
+        data: { childId: child.id, callbackUrl },
+      });
+      toast.success("Redirection vers le paiement sécurisé Paystack…");
+      window.location.href = authorizationUrl;
+    } catch (err) {
+      console.error(err);
+      toast.error("Impossible d'initier le paiement. Réessayez.");
+    } finally {
+      setPayingPassport(false);
+    }
+  };
 
   useEffect(() => {
     if (!loading && !session) navigate({ to: "/auth", replace: true });
@@ -701,17 +727,10 @@ function PortfolioPage() {
                   <strong>{formatXof(accessState.renewalAmountXof)}/mois</strong>.
                 </p>
               </div>
-              <a
-                href={`https://wa.me/${import.meta.env.VITE_WHATSAPP_NUMBER || "33606433148"}?text=${encodeURIComponent(
-                  `Bonjour, l'accès Génizio de ${child.name} est expiré. Je souhaite renouveler (${formatXof(accessState.renewalAmountXof)}/mois).`
-                )}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="shrink-0 inline-flex items-center gap-1.5 rounded-xl bg-[#25D366] px-3 py-2 text-[11px] font-bold text-white shadow-sm hover:brightness-95 transition-all"
-              >
-                <Phone className="size-3.5" />
-                Renouveler via WhatsApp
-              </a>
+              <RenewChildAccessButton
+                childId={child.id}
+                monthlyPriceXof={accessState.renewalAmountXof}
+              />
             </div>
           )}
 
@@ -732,17 +751,10 @@ function PortfolioPage() {
                   <strong>{formatXof(accessState.renewalAmountXof)}/mois</strong>.
                 </p>
               </div>
-              <a
-                href={`https://wa.me/${import.meta.env.VITE_WHATSAPP_NUMBER || "33606433148"}?text=${encodeURIComponent(
-                  `Bonjour, l'accès Génizio de ${child.name} se termine bientôt (${new Date(accessState.status.endsAt).toLocaleDateString("fr-FR")}). Je souhaite renouveler (${formatXof(accessState.renewalAmountXof)}/mois).`
-                )}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="shrink-0 inline-flex items-center gap-1.5 rounded-xl bg-[#25D366] px-3 py-2 text-[11px] font-bold text-white shadow-sm hover:brightness-95 transition-all"
-              >
-                <Phone className="size-3.5" />
-                Renouveler via WhatsApp
-              </a>
+              <RenewChildAccessButton
+                childId={child.id}
+                monthlyPriceXof={accessState.renewalAmountXof}
+              />
             </div>
           )}
 
@@ -806,17 +818,10 @@ function PortfolioPage() {
                             ? "Votre accès à la Saison se termine aujourd'hui !"
                             : `Votre accès à la Saison se termine dans ${daysLeft} jour${daysLeft > 1 ? "s" : ""}.`}
                         </p>
-                        <a
-                          href={`https://wa.me/${import.meta.env.VITE_WHATSAPP_NUMBER || "33606433148"}?text=${encodeURIComponent(
-                            `Bonjour, mon accès Génizio se termine bientôt (${new Date(rawEnd).toLocaleDateString("fr-FR")}). Je souhaite renouveler.`
-                          )}`}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="shrink-0 inline-flex items-center gap-1.5 rounded-xl bg-[#25D366] px-3 py-2 text-[11px] font-bold text-white shadow-sm hover:brightness-95 transition-all"
-                        >
-                          <Phone className="size-3.5" />
-                          Renouveler
-                        </a>
+                        <RenewChildAccessButton
+                          childId={child.id}
+                          monthlyPriceXof={accessState?.renewalAmountXof ?? 0}
+                        />
                       </div>
                     );
                   })()}
@@ -835,13 +840,6 @@ function PortfolioPage() {
           {/* Card: Le Passeport d'Excellence (uniquement pour 14 ans et plus) */}
           {child.age >= 14 && (() => {
             const isUnlocked = child.pdf_unlocked === true;
-            
-            // Build the WhatsApp redirection message
-            const whatsappNumber = import.meta.env.VITE_WHATSAPP_NUMBER || "33606433148";
-            const whatsappText = encodeURIComponent(
-              `Bonjour Génizio, je souhaite commander le Passeport d'Excellence pour mon enfant ${child.name} (ID: ${child.id}). J'ai procédé au règlement de 50.000 FCFA.`
-            );
-            const whatsappUrl = `https://wa.me/${whatsappNumber}?text=${whatsappText}`;
 
             return (
               <div className="rounded-3xl border border-ink/10 bg-amber-50 p-6 shadow-xl flex flex-col  items-center justify-between gap-6">
@@ -876,17 +874,21 @@ function PortfolioPage() {
                       <span>Télécharger le Passeport</span>
                     </Link>
                   ) : (
-                    <a
-                      href={whatsappUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="w-full md:w-auto text-center inline-flex items-center justify-center gap-2 rounded-2xl border border-ink/10 bg-brand px-5 py-3 text-xs font-black text-white shadow-sm hover:-translate-y-0.5 active:translate-y-0 transition-all cursor-pointer"
+                    <button
+                      onClick={handlePayPassport}
+                      disabled={payingPassport}
+                      className="w-full md:w-auto text-center inline-flex items-center justify-center gap-2 rounded-2xl border border-ink/10 bg-brand px-5 py-3 text-xs font-black text-white shadow-sm hover:-translate-y-0.5 active:translate-y-0 transition-all cursor-pointer disabled:opacity-60"
                     >
+                      {payingPassport ? (
+                        <Loader2 className="size-3.5 animate-spin" />
+                      ) : (
+                        <CreditCard className="size-3.5" />
+                      )}
                       <span>Activer le Passeport (50 000 FCFA)</span>
-                    </a>
+                    </button>
                   )}
                   <p className="text-[9px] text-center text-ink/60 font-bold">
-                    * Activation par l'administration après règlement WhatsApp.
+                    * Déblocage immédiat après paiement en ligne sécurisé.
                   </p>
                 </div>
               </div>

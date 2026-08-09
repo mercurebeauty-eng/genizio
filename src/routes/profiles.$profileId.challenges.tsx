@@ -22,12 +22,10 @@ import {
   X,
   XCircle,
   Eraser,
-  MessageCircle,
   Beaker,
   Trophy,
   BookOpen,
   Lock,
-  Phone,
 } from "lucide-react";
 import { getChildAccessStatusFn, type ChildAccessStatus } from "@/lib/child-access";
 import { formatXof } from "@/lib/pricing";
@@ -59,13 +57,14 @@ import {
   recommendChallengesForChild,
   type RecommendedChallengeResult,
 } from "@/lib/recommendations.functions";
-import { createOrder } from "@/lib/products.functions";
+import { initializeOrderPayment } from "@/lib/payments.functions";
 import { NayaAvatar } from "@/components/NayaAvatar";
 import { TalentRadarChart } from "@/components/TalentRadarChart";
 import { StepAccordion } from "@/components/challenges/StepAccordion";
 import { ObservationPrompts } from "@/components/challenges/ObservationPrompts";
 import { OutcomeChat } from "@/components/challenges/OutcomeChat";
 import { KitSuggestion } from "@/components/challenges/KitSuggestion";
+import { RenewChildAccessButton } from "@/components/settings/RenewChildAccessButton";
 import { DifficultyBadge } from "@/components/challenges/DifficultyBadge";
 import { MarkdownContent } from "@/components/ui/markdown-content";
 import {
@@ -297,7 +296,7 @@ function ChallengesPage() {
   const generateAcademicHomework = useServerFn(generateAcademicHomeworkChallenge);
   const getAcademicGaps = useServerFn(getAcademicGapsForChild);
   const assignSingle = useServerFn(assignTemplateChallenge);
-  const createOrderFn = useServerFn(createOrder);
+  const initializeOrderPaymentFn = useServerFn(initializeOrderPayment);
 
   // Gate UI "accès mensuel expiré" (décision 2026-08-05) : la génération de NOUVEAUX défis
   // est bloquée côté client ET côté serveur (assertChildAccessActive) ; le portfolio,
@@ -445,15 +444,6 @@ function ChallengesPage() {
   const handleOrderKit = async () => {
     if (!assignedChallengeForKit || !child) return;
     setOrderingKit(true);
-    const total = assignedChallengeForKit.products.reduce((sum, p) => sum + p.price_xof, 0);
-    const whatsappNumber = import.meta.env.VITE_WHATSAPP_NUMBER as string | undefined;
-    const message = `Bonjour ! Je souhaite commander le kit pour le défi "${assignedChallengeForKit.title}" de ${child.name} :\n${assignedChallengeForKit.products
-      .map((p) => `- ${p.name} (${p.price_xof.toLocaleString("fr-FR")} FCFA)`)
-      .join("\n")}\nTotal : ${total.toLocaleString("fr-FR")} FCFA`;
-    const waUrl = whatsappNumber
-      ? `https://wa.me/${whatsappNumber}?text=${encodeURIComponent(message)}`
-      : null;
-
     try {
       const orderItems = assignedChallengeForKit.products.map((p) => ({
         id: p.id,
@@ -461,20 +451,22 @@ function ChallengesPage() {
         price_xof: p.price_xof,
       }));
 
-      await createOrderFn({
+      // Paiement en ligne Paystack : le serveur recrée la commande à partir du
+      // catalogue, initialise la transaction et on redirige vers le checkout hébergé
+      // (même mécanique que la boutique / KitSuggestion) — fini la relance WhatsApp.
+      const callbackUrl = `${window.location.origin}/paiement-retour`;
+      const { authorizationUrl } = await initializeOrderPaymentFn({
         data: {
           child_id: profileId,
           challenge_id: assignedChallengeForKit.id,
-          total_price_xof: total,
           items: orderItems,
           delivery_notes: `Commande post-Labo (Challenges Page) pour le défi: ${assignedChallengeForKit.title}`,
+          callbackUrl,
         },
       });
 
-      toast.success("Commande enregistrée ! Ouverture de WhatsApp...");
-      if (waUrl) {
-        window.open(waUrl, "_blank", "noopener,noreferrer");
-      }
+      toast.success("Redirection vers le paiement sécurisé Paystack…");
+      window.location.href = authorizationUrl;
       setAssignedChallengeForKit(null);
     } catch (err) {
       console.error(err);
@@ -850,17 +842,10 @@ function ChallengesPage() {
                   <strong>{formatXof(accessState.renewalAmountXof)}/mois</strong>.
                 </p>
               </div>
-              <a
-                href={`https://wa.me/${import.meta.env.VITE_WHATSAPP_NUMBER || "33606433148"}?text=${encodeURIComponent(
-                  `Bonjour, l'accès Génizio de ${child.name} est expiré. Je souhaite renouveler (${formatXof(accessState.renewalAmountXof)}/mois).`,
-                )}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="shrink-0 inline-flex items-center gap-1.5 rounded-xl bg-[#25D366] px-3 py-2 text-[11px] font-bold text-white shadow-sm hover:brightness-95 transition-all"
-              >
-                <Phone className="size-3.5" />
-                Renouveler via WhatsApp
-              </a>
+              <RenewChildAccessButton
+                childId={profileId}
+                monthlyPriceXof={accessState.renewalAmountXof}
+              />
             </div>
           )}
 
@@ -883,17 +868,10 @@ function ChallengesPage() {
                     .
                   </p>
                 </div>
-                <a
-                  href={`https://wa.me/${import.meta.env.VITE_WHATSAPP_NUMBER || "33606433148"}?text=${encodeURIComponent(
-                    `Bonjour, l'accès Génizio de ${child.name} se termine bientôt (${new Date(accessState.status.endsAt).toLocaleDateString("fr-FR")}). Je souhaite renouveler (${formatXof(accessState.renewalAmountXof)}/mois).`,
-                  )}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="shrink-0 inline-flex items-center gap-1.5 rounded-xl bg-[#25D366] px-3 py-2 text-[11px] font-bold text-white shadow-sm hover:brightness-95 transition-all"
-                >
-                  <Phone className="size-3.5" />
-                  Renouveler via WhatsApp
-                </a>
+                <RenewChildAccessButton
+                  childId={profileId}
+                  monthlyPriceXof={accessState.renewalAmountXof}
+                />
               </div>
             )}
 
@@ -1652,10 +1630,10 @@ function ChallengesPage() {
                 {orderingKit ? (
                   <>
                     <Loader2 className="size-4 animate-spin" />
-                    Envoi...
+                    Redirection...
                   </>
                 ) : (
-                  <>Commander le kit</>
+                  <>Commander le kit en ligne</>
                 )}
               </button>
             </div>

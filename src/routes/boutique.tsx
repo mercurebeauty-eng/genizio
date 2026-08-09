@@ -5,7 +5,6 @@ import { useSession } from "@/hooks/use-session";
 import { AppHeader } from "@/components/AppHeader";
 import { AppTabBar } from "@/components/AppTabBar";
 import { supabase } from "@/integrations/supabase/client";
-import { createOrder } from "@/lib/products.functions";
 import { initializeOrderPayment } from "@/lib/payments.functions";
 import { generateSingleChallenge, assignTemplateChallenge } from "@/lib/challenges.functions";
 import {
@@ -19,7 +18,6 @@ import {
   X,
   Check,
   Brain,
-  MessageCircle,
   Search,
   CreditCard,
 } from "lucide-react";
@@ -98,11 +96,9 @@ function BoutiquePage() {
   const [loadingTextIndex, setLoadingTextIndex] = useState(0);
   const [generatedChallenge, setGeneratedChallenge] = useState<any | null>(null);
   const [isAssigning, setIsAssigning] = useState(false);
-  const [orderingId, setOrderingId] = useState<string | null>(null);
   const [payingId, setPayingId] = useState<string | null>(null);
   const [tagsModalProduct, setTagsModalProduct] = useState<Product | null>(null);
 
-  const createOrderFn = useServerFn(createOrder);
   const initializeOrderPaymentFn = useServerFn(initializeOrderPayment);
   const generateSingleFn = useServerFn(generateSingleChallenge);
   const assignTemplateFn = useServerFn(assignTemplateChallenge);
@@ -167,41 +163,6 @@ function BoutiquePage() {
     return challenges.filter((c) => c.material_tags?.some((t: string) => tags.includes(t))).length;
   };
 
-  const handleOrder = async (product: Product) => {
-    if (children.length === 0) {
-      toast.error("Veuillez d'abord créer un profil enfant dans votre compte.");
-      return;
-    }
-    setOrderingId(product.id);
-    const whatsappNumber = import.meta.env.VITE_WHATSAPP_NUMBER as string | undefined;
-    const message = `Bonjour ! Je souhaite commander ce produit depuis la boutique :\n- ${product.name} (${product.price_xof.toLocaleString("fr-FR")} FCFA)`;
-    const waUrl = whatsappNumber
-      ? `https://wa.me/${whatsappNumber}?text=${encodeURIComponent(message)}`
-      : null;
-
-    try {
-      await createOrderFn({
-        data: {
-          child_id: selectedChild || children[0].id,
-          challenge_id: null,
-          total_price_xof: product.price_xof,
-          items: [{ id: product.id, name: product.name, price_xof: product.price_xof }],
-          delivery_notes: `Commande directe boutique`,
-        },
-      });
-
-      toast.success("Commande enregistrée ! Ouverture de WhatsApp...");
-      if (waUrl) {
-        window.open(waUrl, "_blank", "noopener,noreferrer");
-      }
-    } catch (err) {
-      console.error(err);
-      toast.error("Erreur lors de la création de la commande.");
-    } finally {
-      setOrderingId(null);
-    }
-  };
-
   // Paiement en ligne Paystack : le serveur recrée la commande à partir du catalogue,
   // initialise la transaction et on redirige vers la page hébergée Paystack. La
   // confirmation (webhook ou page de retour) passe la commande en `confirmed`.
@@ -226,7 +187,7 @@ function BoutiquePage() {
       window.location.href = authorizationUrl;
     } catch (err) {
       console.error(err);
-      toast.error("Impossible d'initier le paiement. Réessayez ou passez par WhatsApp.");
+      toast.error("Impossible d'initier le paiement. Réessayez.");
     } finally {
       setPayingId(null);
     }
@@ -452,22 +413,6 @@ function BoutiquePage() {
                             <CreditCard className="size-4" />
                             Payer en ligne
                           </>
-                        )}
-                      </button>
-                      <button
-                        onClick={() => handleOrder(p)}
-                        disabled={orderingId === p.id || outOfStock}
-                        className="w-full flex items-center justify-center gap-2 rounded-xl border border-ink/10 bg-white px-4 py-2.5 text-[11px] font-bold text-ink/60 hover:bg-surface active:translate-y-0 transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
-                      >
-                        {orderingId === p.id ? (
-                          <>
-                            <Loader2 className="size-3.5 animate-spin" />
-                            Commande en cours...
-                          </>
-                        ) : outOfStock ? (
-                          <>Rupture de stock</>
-                        ) : (
-                          <>ou commander via WhatsApp</>
                         )}
                       </button>
                     </div>
