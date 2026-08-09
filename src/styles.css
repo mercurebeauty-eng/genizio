@@ -143,6 +143,11 @@
   --guild-strateges-bg: oklch(0.95 0.03 165);
   --guild-protecteurs: oklch(0.5 0.13 135);
   --guild-protecteurs-bg: oklch(0.95 0.03 135);
+  /* "Guilde à découvrir" (key "aucune") : gris-bleu distinct — avant, les surfaces
+     retombaient sur la couleur ambre des Bâtisseurs, ce qui faisait lire "Bâtisseurs"
+     à des enfants sans guilde encore déterminée (refonte 2026-08-09). */
+  --guild-aucune: oklch(0.52 0.02 260);
+  --guild-aucune-bg: oklch(0.96 0.01 260);
 
   /* Tactile Pressable Keycap Depths */
   --press-brand: 0 4px 0 0 var(--brand-dark);

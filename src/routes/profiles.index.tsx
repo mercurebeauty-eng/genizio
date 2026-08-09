@@ -574,7 +574,7 @@ function DashboardPage() {
                           <div
                             className="absolute inset-0"
                             style={{
-                              background: `linear-gradient(150deg, var(--guild-${guild.key === "aucune" ? "batisseurs" : guild.key}), oklch(0.6 0.15 45))`,
+                              background: `linear-gradient(150deg, var(--guild-${guild.key}), oklch(0.6 0.15 45))`,
                             }}
                           ></div>
                           <div
@@ -669,7 +669,7 @@ function DashboardPage() {
                               <span
                                 className="font-display text-balance font-bold text-[26px]"
                                 style={{
-                                  color: `var(--guild-${guild.key === "aucune" ? "batisseurs" : guild.key})`,
+                                  color: `var(--guild-${guild.key})`,
                                 }}
                               >
                                 {activeTalents}

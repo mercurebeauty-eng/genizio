@@ -1903,9 +1903,17 @@ Réponds EXCLUSIVEMENT avec un JSON de cette forme, sans texte autour : {"cause"
   }
 }
 
+// raison : note libre du parent (journal), au moins 1 caractère — la carte envoie
+// "Sans raison précisée" quand le journal est vide, donc la contrainte reste.
+// reasonChip : chip structuré du dialog (Décision #58, même vocabulaire que la
+// suppression) — signal exploitable par le Loup sans classification IA.
+const NOT_COMPLETED_CHIPS = ["pas_le_bon_moment", "deja_fait_autrement", "pas_interesse", "doublon"] as const;
+type NotCompletedChip = (typeof NOT_COMPLETED_CHIPS)[number];
+
 const NotCompletedInput = z.object({
   id: z.string().uuid(),
   reason: z.string().trim().min(1).max(2000),
+  reasonChip: z.enum(NOT_COMPLETED_CHIPS).optional(),
 });
 
 // Étape 2 — "un vrai statut non réussi" (brainstorm produit, 2026-08-02) : jusqu'ici,
@@ -1934,6 +1942,7 @@ export const submitChallengeNotCompleted = createServerFn({ method: "POST" })
       .update({
         status: "not_completed" as const,
         not_completed_reason: data.reason,
+        not_completed_reason_chip: data.reasonChip ?? null,
         not_completed_at: new Date().toISOString(),
       })
       .eq("id", data.id)

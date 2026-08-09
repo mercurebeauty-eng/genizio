@@ -145,6 +145,18 @@ export function getTalentAffinities(
 /** Retourne l'info de la Guilde dominante d'un enfant à partir de ses scores
  *  de talents, ou NO_GUILD_YET si aucun talent n'a encore de score positif —
  *  on ne force plus une guilde arbitraire sur un enfant qui n'a rien fait.
+ *
+ *  Refonte (2026-08-09) : deux biais corrigés.
+ *   • MOYENNE par guilde au lieu de la somme brute — une guilde à 1 talent
+ *     (ex. Inventeurs) ne perd plus face à une guilde à 2-3 talents qui
+ *     additionne des scores moyens. Aligne getChildGuild sur
+ *     getTalentAffinities (qui moyennait déjà) : plus de contradiction entre
+ *     la guilde affichée et les barres "Là où ses talents pourraient l'emmener".
+ *   • TIE-BREAK par le talent le plus fort de la guilde — fini le biais
+ *     systématique vers Bâtisseurs (déclarée en premier) sur les matchs nuls.
+ *     Dernier recours : ordre de déclaration (déterministe).
+ *  Protecteurs (talentKeys: []) reste hors course par design — aucune voie
+ *  d'atteinte par les 9 talents actuels (chantier séparé).
  */
 export function getChildGuild(
   talents: Record<string, number> | null | undefined
@@ -152,15 +164,17 @@ export function getChildGuild(
   const raw = talents ?? {};
 
   let bestGuildKey: GuildKey | null = null;
-  let bestScore = 0;
+  let bestAvg = 0;
+  let bestPeak = 0;
 
   for (const [guildKey, guild] of Object.entries(GUILDS) as [GuildKey, GuildInfo][]) {
-    const guildScore = guild.talentKeys.reduce(
-      (sum, talentKey) => sum + (raw[talentKey] ?? 0),
-      0,
-    );
-    if (guildScore > bestScore) {
-      bestScore = guildScore;
+    if (guild.talentKeys.length === 0) continue;
+    const scores = guild.talentKeys.map((talentKey) => raw[talentKey] ?? 0);
+    const avg = scores.reduce((a, b) => a + b, 0) / scores.length;
+    const peak = Math.max(...scores);
+    if (avg > bestAvg || (avg === bestAvg && peak > bestPeak)) {
+      bestAvg = avg;
+      bestPeak = peak;
       bestGuildKey = guildKey;
     }
   }

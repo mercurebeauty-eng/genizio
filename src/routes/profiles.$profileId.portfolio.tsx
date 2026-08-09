@@ -4,7 +4,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { supabase } from "@/integrations/supabase/client";
 import { useSession } from "@/hooks/use-session";
 import { toast } from "sonner";
-import { getChildAISynthesis, TALENT_SUBFORM_LABELS } from "@/lib/challenges.functions";
+import { TALENT_SUBFORM_LABELS } from "@/lib/challenges.functions";
 import { ensureHypothesesForChild } from "@/lib/hypotheses.functions";
 import { getChildGuild, getTalentAffinities } from "@/lib/guilds";
 import { getChildEnrolledSeason, getActiveSeason, type Season } from "@/lib/seasons.functions";
@@ -26,7 +26,6 @@ import {
   Award,
   Calendar,
   ImageIcon,
-  Loader2,
   Star,
   Compass,
   Activity,
@@ -53,9 +52,8 @@ import {
 } from "lucide-react";
 import { InviteMentorDialog } from "@/components/mentors/InviteMentorDialog";
 import { AppHeader } from "@/components/AppHeader";
-import { MarkdownContent } from "@/components/ui/markdown-content";
 import { INTERESTS_BY_TALENT } from "@/components/profiles/shared";
-import { TALENT_KEY_LABELS, getTalentBucket } from "@/lib/talent-buckets";
+import { getPortfolioPulse, TALENT_BUCKET_LABEL, TALENT_KEY_LABELS, getTalentBucket } from "@/lib/talent-buckets";
 import { normalizeChildInterests } from "@/lib/interest-migration";
 
 function getLevelInfo(totalXP: number) {
@@ -232,8 +230,6 @@ function PortfolioPage() {
   const [challenges, setChallenges] = useState<Challenge[]>([]);
   const [openCycle, setOpenCycle] = useState<OpenHypothesisCycle | null>(null);
   const [fetching, setFetching] = useState(true);
-  const [synthesis, setSynthesis] = useState<string>("");
-  const [fetchingSynthesis, setFetchingSynthesis] = useState(false);
   const [enrolledSeason, setEnrolledSeason] = useState<Season | null>(null);
   const [activeSeason, setActiveSeason] = useState<Season | null>(null);
   const [supervisorInfo, setSupervisorInfo] = useState<{ email: string; assignedAt: string } | null>(null);
@@ -245,7 +241,6 @@ function PortfolioPage() {
   const [dismissedDiscoveries, setDismissedDiscoveries] = useState<string[]>([]);
   const [expandedMonths, setExpandedMonths] = useState<Set<string>>(new Set());
 
-  const fetchSynthesis = useServerFn(getChildAISynthesis);
   const ensureHypotheses = useServerFn(ensureHypothesesForChild);
 
   useEffect(() => {
@@ -349,19 +344,6 @@ function PortfolioPage() {
       .then(({ data }) => setOpenCycle((data as OpenHypothesisCycle) ?? null));
   };
 
-  useEffect(() => {
-    if (!session) return;
-    setFetchingSynthesis(true);
-    fetchSynthesis({ data: { childId: profileId } })
-      .then((resp) => setSynthesis(resp || ""))
-      .catch((err) => {
-        console.error("Erreur lors de la récupération de la synthèse:", err);
-        setSynthesis("");
-      })
-      .finally(() => setFetchingSynthesis(false));
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [session, profileId]);
-
   // NAYA 2.0 Phase 3a/4, déclencheur reconstruit (cf. genizio-decisions #38) : plus
   // d'anomalie de note, mais un écart répété entre le référentiel académique et l'âge
   // réel de l'enfant sur ses défis complétés. Fire-and-forget, idempotent côté serveur
@@ -415,6 +397,20 @@ function PortfolioPage() {
   const completed = challenges.filter((c) => c.status === "completed");
   const artifacts = completed.filter((c) => c.proof_image_url);
 
+  // Portrait structuré (2026-08-09) : déterministe et instantané — plus le doublon
+  // de la synthèse LLM "Rapport de Naya" (qui vit sur la page Défis). Construit à
+  // partir des talents + défis complétés, aucune donnée inventée, aucun appel IA.
+  const inProgress = challenges.filter((c) => c.status === "in_progress");
+  const hasPortraitSignal = completed.length > 0;
+  const portraitPulse = getPortfolioPulse(child.talents, 3).filter((p) => p.score > 0);
+  const domainCounts = new Map<string, number>();
+  for (const c of completed) {
+    domainCounts.set(c.domain, (domainCounts.get(c.domain) ?? 0) + 1);
+  }
+  const portraitDomains = [...domainCounts.entries()]
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 6);
+
   return (
     <div className="min-h-dvh bg-surface pb-24 text-ink ">
       <AppHeader />
@@ -443,7 +439,7 @@ function PortfolioPage() {
                     </p>
                     <span
                       className="text-[10px] font-black uppercase tracking-wider px-2.5 py-0.5 rounded-full border bg-white/80"
-                      style={{ color: `var(--guild-${guild.key === "aucune" ? "batisseurs" : guild.key}, #7C3AED)` }}
+                      style={{ color: `var(--guild-${guild.key}, #7C3AED)` }}
                     >
                       Niveau {level}
                     </span>
@@ -914,14 +910,74 @@ function PortfolioPage() {
                 <NayaAvatar size="sm" thoughts={[`J'observe les progrès de ${child.name} !`]} />
                 <h3 className="font-display text-balance text-lg font-bold text-ink">Portrait de {child.name}</h3>
               </div>
-              {fetchingSynthesis ? (
-                <div className="flex items-center gap-2 py-8 text-sm text-ink/60 font-bold">
-                  <Loader2 className="size-4 animate-spin" />
-                  Naya prépare le portrait...
-                </div>
+
+              {!hasPortraitSignal ? (
+                <p className="text-sm leading-relaxed text-ink/80 font-medium">
+                  Naya apprend à connaître {child.name} au fil de ses défis. Les premières couleurs
+                  de son portrait apparaîtront dès ses premières validations — chaque défi réussi
+                  affûte ce portrait.
+                </p>
               ) : (
-                <div className="text-sm leading-relaxed text-ink font-medium">
-                  <MarkdownContent content={synthesis} />
+                <div className="space-y-5 text-sm">
+                  {portraitPulse.length > 0 && (
+                    <div>
+                      <p className="mb-2 text-[11px] font-black uppercase tracking-wider text-ink/60">
+                        Ses points forts en ce moment
+                      </p>
+                      <div className="space-y-2.5">
+                        {portraitPulse.map((p) => (
+                          <div
+                            key={p.key}
+                            className="rounded-xl border border-ink/10 bg-white/80 p-3"
+                          >
+                            <div className="flex items-center justify-between gap-2">
+                              <span className="font-bold text-ink">{p.label}</span>
+                              <span className="rounded-full bg-brand/10 px-2 py-0.5 text-[10px] font-bold text-brand-700">
+                                {TALENT_BUCKET_LABEL[p.bucket]}
+                              </span>
+                            </div>
+                            <p className="mt-0.5 text-xs font-medium text-ink/70 italic">
+                              {p.phrase}
+                            </p>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {portraitDomains.length > 0 && (
+                    <div>
+                      <p className="mb-2 text-[11px] font-black uppercase tracking-wider text-ink/60">
+                        Ses domaines explorés
+                      </p>
+                      <div className="flex flex-wrap gap-2">
+                        {portraitDomains.map(([domain, count]) => (
+                          <span
+                            key={domain}
+                            className="rounded-full border border-ink/10 bg-white/80 px-3 py-1 text-xs font-bold text-ink"
+                          >
+                            {domain}
+                            {count > 1 ? ` · ${count}` : ""}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  <div className="flex gap-3">
+                    <div className="flex-1 rounded-xl border border-ink/10 bg-white/80 p-3 text-center">
+                      <p className="text-xl font-black text-ink">{completed.length}</p>
+                      <p className="text-[10px] font-bold uppercase tracking-wider text-ink/50">
+                        Défis réussis
+                      </p>
+                    </div>
+                    <div className="flex-1 rounded-xl border border-ink/10 bg-white/80 p-3 text-center">
+                      <p className="text-xl font-black text-ink">{inProgress.length}</p>
+                      <p className="text-[10px] font-bold uppercase tracking-wider text-ink/50">
+                        En cours
+                      </p>
+                    </div>
+                  </div>
                 </div>
               )}
             </div>
