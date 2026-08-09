@@ -54,3 +54,7 @@ supabase/.temp/
 
 # ZCode workspace artifacts (plans/diagnostics - tooling only)
 .zcode/
+
+# SEO / audit artifacts (rapports générés localement, non suivis)
+docs/
+lighthouse-report.json
