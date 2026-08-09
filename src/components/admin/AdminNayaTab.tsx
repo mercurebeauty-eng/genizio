@@ -26,9 +26,12 @@ import type { NayaTelemetryResponse } from "@/lib/naya-telemetry";
 import type { AiProviderStatus, ProgressionHealthResponse } from "@/lib/admin-os.functions";
 import {
   LOUP_DECISION_LABELS,
+  OUTCOME_KIND_LABELS,
+  OUTCOME_REASON_LABELS,
   ruleKeyOf,
   type ConstitutionSuggestionsResponse,
   type LoupDecision,
+  type OutcomeSignal,
   type RecurringRule,
   type RuleDecision,
 } from "@/lib/naya-constitution.functions";
@@ -563,6 +566,31 @@ export function AdminNayaTab({
             </ul>
           )}
         </div>
+
+        {/* 📉 Signaux d'abandon (Décision #58) — défis supprimés : le Loup
+            apprend « ce type de défi n'est pas mené à terme ». Signal faible
+            par conception : il informe Naya sans jamais condamner un domaine. */}
+        <div className="rounded-2xl border border-ink/10 bg-surface/30 p-4 space-y-3">
+          <div className="text-[11px] font-extrabold uppercase tracking-wider text-ink/60">
+            Signaux d'abandon — {constitution ? `${constitution.outcomeSignals.length} signal(aux)` : "…"}
+          </div>
+          {!constitution ? (
+            <p className="text-xs text-ink/50 italic">Chargement des signaux…</p>
+          ) : constitution.outcomeSignals.length === 0 ? (
+            <p className="text-xs text-ink/50 italic">
+              Aucun défi supprimé pour l'instant — les abandons alimenteront Naya ici.
+            </p>
+          ) : (
+            <ul className="space-y-2">
+              {constitution.outcomeSignals.slice(0, 12).map((s) => (
+                <OutcomeSignalRow key={`${s.reasonKey}|${s.kind}|${s.domain}`} signal={s} />
+              ))}
+            </ul>
+          )}
+          <p className="text-[10px] text-ink/40 italic">
+            Signal faible à décroissance : il informe Naya sans jamais condamner un domaine.
+          </p>
+        </div>
       </div>
 
       {/* 🧩 Breakdown Grid: Features & Models */}
@@ -915,6 +943,32 @@ function JournalRow({ decision }: { decision: RuleDecision }) {
       <div className="shrink-0 text-right text-[10px] text-ink/50 font-medium">
         <div>{formatDecisionDate(decision.decidedAt)}</div>
         <div className="truncate max-w-[140px]">{decision.decidedBy}</div>
+      </div>
+    </li>
+  );
+}
+
+/** Un signal d'abandon agrégé (Décision #58) : raison, type, domaine, comptes. */
+function OutcomeSignalRow({ signal }: { signal: OutcomeSignal }) {
+  const kindClass =
+    signal.kind === "deleted_completed"
+      ? "bg-leaf/10 text-leaf"
+      : "bg-amber-500/10 text-amber-600";
+  return (
+    <li className="flex items-center justify-between gap-3 bg-white rounded-lg border border-ink/5 px-3 py-2">
+      <div className="min-w-0 flex items-center gap-2">
+        <span className={`shrink-0 text-[10px] font-extrabold uppercase px-2 py-0.5 rounded-full ${kindClass}`}>
+          {OUTCOME_KIND_LABELS[signal.kind]}
+        </span>
+        <div className="min-w-0">
+          <div className="text-[11px] font-bold text-ink truncate">
+            {OUTCOME_REASON_LABELS[signal.reasonKey] ?? signal.reasonKey}
+            {signal.domain !== "general" ? ` · ${signal.domain}` : ""}
+          </div>
+          <div className="text-[10px] text-ink/50 font-medium">
+            ×{signal.count} suppr. · {signal.childCount} enfant(s) · Ø {signal.avgPendingDays} j d'attente
+          </div>
+        </div>
       </div>
     </li>
   );

@@ -66,7 +66,10 @@ import { OutcomeChat } from "@/components/challenges/OutcomeChat";
 import { KitSuggestion } from "@/components/challenges/KitSuggestion";
 import { DifficultyBadge } from "@/components/challenges/DifficultyBadge";
 import { MarkdownContent } from "@/components/ui/markdown-content";
-import { confirmDialog } from "@/components/ui/confirm-dialog";
+import {
+  ChallengeDeleteDialog,
+  type ChallengeDeletePayload,
+} from "@/components/challenges/ChallengeDeleteDialog";
 import { AppHeader } from "@/components/AppHeader";
 import { AppTabBar } from "@/components/AppTabBar";
 import { GenizioLoader } from "@/components/GenizioLoader";
@@ -264,6 +267,11 @@ function ChallengesPage() {
   const [recommendation, setRecommendation] = useState<RecommendedChallengeResult | null>(null);
   const [isRerolling, setIsRerolling] = useState(false);
   const [academicGaps, setAcademicGaps] = useState<Record<string, number>>({});
+  // Suppression différenciée (Décision #58) : le défi en cours de suppression +
+  // l'état de l'appel — terminé → modal danger (saisie du titre) ; non terminé
+  // → chips de raison en 1 tap (le signal alimente le Loup).
+  const [deleteDialog, setDeleteDialog] = useState<Challenge | null>(null);
+  const [deletingChallenge, setDeletingChallenge] = useState(false);
 
   const generate = useServerFn(generateChallenges);
   const update = useServerFn(updateChallenge);
@@ -541,7 +549,7 @@ function ChallengesPage() {
     if (!recommendation?.challenge?.id) return;
     setIsRerolling(true);
     try {
-      await del({ data: { id: recommendation.challenge.id } });
+      await del({ data: { id: recommendation.challenge.id, reason: "pas_interesse" } });
       setRecommendation(null);
       await loadRecommendation();
     } catch (e) {
@@ -671,20 +679,23 @@ function ChallengesPage() {
     }
   };
 
-  const remove = async (id: string) => {
-    if (
-      !(await confirmDialog({
-        title: "Supprimer ce défi ?",
-        confirmLabel: "Supprimer",
-        variant: "danger",
-      }))
-    )
-      return;
+  const openDeleteDialog = (id: string) => {
+    const challenge = challenges.find((c) => c.id === id);
+    if (challenge) setDeleteDialog(challenge);
+  };
+
+  const handleDeleteChallenge = async (payload: ChallengeDeletePayload = {}) => {
+    if (!deleteDialog) return;
+    setDeletingChallenge(true);
     try {
-      await del({ data: { id } });
-      setChallenges((prev) => prev.filter((c) => c.id !== id));
+      await del({ data: { id: deleteDialog.id, reason: payload.reason, note: payload.note } });
+      setChallenges((prev) => prev.filter((c) => c.id !== deleteDialog.id));
+      toast.success("Défi supprimé.");
+      setDeleteDialog(null);
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Erreur lors de la suppression du défi.");
+    } finally {
+      setDeletingChallenge(false);
     }
   };
 
@@ -1422,7 +1433,7 @@ function ChallengesPage() {
                                 onNotCompleted={(reason) => markChallengeNotCompleted(c.id, reason)}
                                 onProgress={(p) => setProgress(c.id, p)}
                                 onNotes={(n) => saveNotes(c.id, n)}
-                                onDelete={() => remove(c.id)}
+                                onDelete={() => openDeleteDialog(c.id)}
                                 onValidated={async () => {
                                   await refetch();
                                   await loadAISynthesis();
@@ -1615,6 +1626,17 @@ function ChallengesPage() {
           </div>
         </div>
       )}
+
+      {/* Suppression différenciée (Décision #58) : défi terminé → modal danger
+          + saisie du titre ; non terminé → chips de raison en 1 tap (le signal
+          alimente le Loup via challenge_outcomes). */}
+      <ChallengeDeleteDialog
+        challenge={deleteDialog}
+        open={!!deleteDialog}
+        deleting={deletingChallenge}
+        onClose={() => setDeleteDialog(null)}
+        onDelete={handleDeleteChallenge}
+      />
     </div>
   );
 }

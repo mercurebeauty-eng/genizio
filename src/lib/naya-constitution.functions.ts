@@ -133,6 +133,53 @@ export interface RuleDecision {
   note?: string | null;
 }
 
+// ── Signaux d'issue des défis supprimés (Décision #58) ──────────────────────
+
+/** Type d'issue d'un défi supprimé (challenge_outcomes). */
+export type OutcomeKind = "deleted_uncompleted" | "deleted_completed";
+
+/** Une ligne de challenge_outcomes (signal d'issue, écriture service role). */
+export interface ChallengeOutcomeRow {
+  id?: string;
+  child_id: string;
+  kind: OutcomeKind;
+  reason_chip: string | null;
+  reason_note?: string | null;
+  domain: string;
+  status_when_deleted: string;
+  pending_duration_days: number;
+  created_at: string;
+}
+
+/**
+ * Signal agrégé par (raison, type, domaine) : « ce type de défi n'est pas mené
+ * à terme ». Raison = chip de l'utilisateur ou 'sans_raison'. Enfants distincts
+ * (Set, pattern existant) pour ne pas gonfler le signal avec un enfant unique.
+ */
+export interface OutcomeSignal {
+  reasonKey: string;
+  kind: OutcomeKind;
+  domain: string;
+  count: number;
+  childCount: number;
+  /** Durée moyenne d'attente du défi avant suppression, en jours. */
+  avgPendingDays: number;
+}
+
+/** Libellés des chips de raison (challenge_outcomes) pour l'UI admin. */
+export const OUTCOME_REASON_LABELS: Record<string, string> = {
+  pas_le_bon_moment: "Pas le bon moment",
+  deja_fait_autrement: "Déjà fait autrement",
+  pas_interesse: "Pas intéressé·e",
+  doublon: "Doublon",
+  sans_raison: "Sans raison",
+};
+
+export const OUTCOME_KIND_LABELS: Record<OutcomeKind, string> = {
+  deleted_uncompleted: "Non terminé",
+  deleted_completed: "Terminé",
+};
+
 // ── Agrégation pure (C3.1) ───────────────────────────────────────────────────
 
 function extractDomain(context: AuditRow["context"]): string {
@@ -310,6 +357,57 @@ export function buildRuleJournal(rows: DecidedAuditRow[]): RuleDecision[] {
     .sort((a, b) => (b.decidedAt ?? "").localeCompare(a.decidedAt ?? ""));
 }
 
+/**
+ * Agrège les signaux d'issue des défis supprimés (Décision #58) par
+ * (raison, type, domaine) : « ce type de défi n'est pas mené à terme ».
+ * childCount compte les enfants DISTINCTS (Set), la raison NULL bascule en
+ * 'sans_raison', avgPendingDays = durée moyenne d'attente avant suppression.
+ * Signal faible par conception : il informe Naya sans jamais condamner un domaine.
+ */
+export function aggregateOutcomeSignals(rows: ChallengeOutcomeRow[]): OutcomeSignal[] {
+  interface Acc {
+    reasonKey: string;
+    kind: OutcomeKind;
+    domain: string;
+    childIds: Set<string>;
+    count: number;
+    pendingSum: number;
+  }
+  const map = new Map<string, Acc>();
+
+  for (const row of rows) {
+    if (row.kind !== "deleted_uncompleted" && row.kind !== "deleted_completed") continue;
+    const reasonKey = row.reason_chip?.trim() ? row.reason_chip : "sans_raison";
+    const key = `${reasonKey}|${row.kind}|${row.domain}`;
+    const existing = map.get(key);
+    if (existing) {
+      existing.count += 1;
+      if (row.child_id) existing.childIds.add(row.child_id);
+      existing.pendingSum += Number(row.pending_duration_days) || 0;
+    } else {
+      map.set(key, {
+        reasonKey,
+        kind: row.kind,
+        domain: row.domain,
+        childIds: new Set(row.child_id ? [row.child_id] : []),
+        count: 1,
+        pendingSum: Number(row.pending_duration_days) || 0,
+      });
+    }
+  }
+
+  return [...map.values()]
+    .map((a) => ({
+      reasonKey: a.reasonKey,
+      kind: a.kind,
+      domain: a.domain,
+      count: a.count,
+      childCount: a.childIds.size,
+      avgPendingDays: Math.round((a.pendingSum / a.count) * 10) / 10,
+    }))
+    .sort((a, b) => b.count - a.count);
+}
+
 // ── Rédaction des suggestions (C3.2) ────────────────────────────────────────
 
 /**
@@ -441,6 +539,8 @@ export interface ConstitutionSuggestionsResponse {
   suggestions: RecurringRule[];
   /** Journal des décisions déjà posées (auto + humaines). */
   journal: RuleDecision[];
+  /** Signaux d'issue des défis supprimés (Décision #58), par raison/type/domaine. */
+  outcomeSignals: OutcomeSignal[];
   learnedRulesBlock: string;
   decisionDrafts: string;
 }
@@ -455,7 +555,7 @@ export const getConstitutionSuggestionsAdmin = createServerFn({ method: "GET" })
   .handler(async (): Promise<ConstitutionSuggestionsResponse> => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
-    const [pendingRes, decidedRes] = await Promise.all([
+    const [pendingRes, decidedRes, outcomesRes] = await Promise.all([
       supabaseAdmin
         .from("generation_audits")
         .select("kind, child_id, violations, context, created_at")
@@ -466,9 +566,16 @@ export const getConstitutionSuggestionsAdmin = createServerFn({ method: "GET" })
         .neq("decision", "en_attente")
         .order("decision_at", { ascending: false })
         .limit(2000),
+      // Décision #58 : signaux d'issue des défis supprimés (challenge_outcomes).
+      supabaseAdmin
+        .from("challenge_outcomes")
+        .select("child_id, kind, reason_chip, domain, status_when_deleted, pending_duration_days, created_at")
+        .order("created_at", { ascending: false })
+        .limit(2000),
     ]);
     if (pendingRes.error) throw new Error(pendingRes.error.message);
     if (decidedRes.error) throw new Error(decidedRes.error.message);
+    if (outcomesRes.error) throw new Error(outcomesRes.error.message);
 
     const suggest = defaultThresholds();
     const rows = (pendingRes.data ?? []).map(toAuditRow);
@@ -491,11 +598,24 @@ export const getConstitutionSuggestionsAdmin = createServerFn({ method: "GET" })
       }))
     );
 
+    const outcomeSignals = aggregateOutcomeSignals(
+      (outcomesRes.data ?? []).map((r) => ({
+        child_id: r.child_id,
+        kind: r.kind as OutcomeKind,
+        reason_chip: r.reason_chip,
+        domain: r.domain,
+        status_when_deleted: r.status_when_deleted,
+        pending_duration_days: r.pending_duration_days,
+        created_at: r.created_at,
+      }))
+    );
+
     return {
       auditsConsidered: rows.length,
       wolfState: defaultWolfState(suggest),
       suggestions: recurringRules,
       journal,
+      outcomeSignals,
       learnedRulesBlock,
       decisionDrafts,
     };

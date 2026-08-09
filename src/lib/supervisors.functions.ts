@@ -178,6 +178,7 @@ export const getSupervisorDashboard = createServerFn({ method: "GET" })
       .from("challenges")
       .select("child_id, id, title, domain, status, created_at, description, duration, steps, materials, proof_image_url, ai_observations, notes, difficulty, pedagogical_context, requires_supervision, supervision_warning")
       .in("child_id", childIds)
+      .is("deleted_at", null)
       .order("created_at", { ascending: false });
 
     // Le numéro de téléphone du parent vit dans auth.users.user_metadata, pas
