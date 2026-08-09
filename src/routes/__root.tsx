@@ -25,6 +25,8 @@ import { WhatsAppFAB } from "../components/WhatsAppFAB";
 import { ConfirmDialogHost } from "../components/ui/confirm-dialog";
 import { PwaInstallPrompt } from "../components/PwaInstallPrompt";
 import { PwaUpdateBanner } from "../components/PwaUpdateBanner";
+import { Analytics } from "@vercel/analytics/react";
+import { SpeedInsights } from "@vercel/speed-insights/react";
 
 
 function NotFoundComponent() {
@@ -160,6 +162,8 @@ function RootShell({ children }: { children: ReactNode }) {
       </head>
       <body>
         {children}
+        <Analytics />
+        <SpeedInsights />
         <Scripts />
       </body>
     </html>
