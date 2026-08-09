@@ -103,13 +103,16 @@ function ParrainagePage() {
       {/* Header Navigation */}
       <header className="border-b border-ink/10 bg-white/80 backdrop-blur-md sticky top-0 z-40">
         <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
-          <Link to="/" className="flex items-center gap-2 font-display text-2xl font-extrabold text-brand">
+          <Link
+            to="/"
+            className="flex items-center gap-2 font-display text-2xl font-extrabold text-brand"
+          >
             <img src="/favicon-96x96.png" alt="Logo Génizio" className="h-8 w-8" />
             GÉNIZIO
           </Link>
           <Link
             to="/profiles"
-            className="rounded-full bg-brand px-5 py-2 text-xs font-bold text-white shadow-sm hover:bg-brand/90 transition-all"
+            className="press-brand rounded-full bg-brand px-5 py-2.5 text-xs font-bold text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 cursor-pointer"
           >
             Accéder à l'Espace Parent →
           </Link>
@@ -128,8 +131,8 @@ function ParrainagePage() {
           </h1>
           <p className="text-lg text-ink/75 font-medium leading-relaxed max-w-2xl mx-auto mb-8">
             Financez jusqu'à 12 mois d'apprentissage immersif pour un enfant nommé — les{" "}
-            <strong>3 premiers mois sont offerts</strong>. Recevez à la fin le Portfolio
-            d'Impact certifié de l'enfant.
+            <strong>3 premiers mois sont offerts</strong>. Recevez à la fin le Portfolio d'Impact
+            certifié de l'enfant.
           </p>
 
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-left max-w-2xl mx-auto mb-8">
@@ -149,7 +152,9 @@ function ParrainagePage() {
               </div>
               <div>
                 <h4 className="font-bold text-sm text-ink">Zero Pay-to-Win</h4>
-                <p className="text-xs text-ink/60">Seule l'action réelle de l'enfant donne des XP</p>
+                <p className="text-xs text-ink/60">
+                  Seule l'action réelle de l'enfant donne des XP
+                </p>
               </div>
             </div>
 
@@ -177,9 +182,9 @@ function ParrainagePage() {
               Merci pour votre générosité, {createdToken.sponsor_name} ! 🎉
             </h2>
             <p className="text-ink/70 font-medium mb-6 max-w-md mx-auto">
-              Votre parrainage de <strong>{createdToken.months_count ?? 3} mois</strong> est
-              actif. Transmettez ce code à la famille de l'enfant : elle l'activera dans
-              Paramètres → Abonnement famille.
+              Votre parrainage de <strong>{createdToken.months_count ?? 3} mois</strong> est actif.
+              Transmettez ce code à la famille de l'enfant : elle l'activera dans Paramètres →
+              Abonnement famille.
             </p>
 
             <div className="mx-auto max-w-md rounded-2xl bg-surface p-6 border border-ink/10 mb-6 relative">
@@ -191,9 +196,13 @@ function ParrainagePage() {
               </div>
               <button
                 onClick={copyCode}
-                className="w-full rounded-xl bg-ink px-4 py-3 text-sm font-bold text-white shadow-md hover:bg-ink/90 transition-all flex items-center justify-center gap-2 cursor-pointer"
+                className="press-ink w-full rounded-xl bg-ink px-4 py-3 text-sm font-bold text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 flex items-center justify-center gap-2 cursor-pointer"
               >
-                {copied ? <Check className="size-4 text-emerald-400" /> : <Copy className="size-4" />}
+                {copied ? (
+                  <Check className="size-4 text-emerald-400" />
+                ) : (
+                  <Copy className="size-4" />
+                )}
                 {copied ? "Code copié !" : "Copier le code"}
               </button>
             </div>
@@ -208,13 +217,13 @@ function ParrainagePage() {
             <div className="flex flex-wrap justify-center gap-4">
               <button
                 onClick={() => setCreatedToken(null)}
-                className="rounded-2xl border border-ink/10 bg-surface px-6 py-3 text-sm font-bold text-ink hover:bg-white transition-all cursor-pointer"
+                className="press-white rounded-2xl border border-ink/10 bg-white px-6 py-3 text-sm font-bold text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-glow focus-visible:ring-offset-2 cursor-pointer"
               >
                 Parrainer un autre enfant
               </button>
               <Link
                 to="/profiles"
-                className="rounded-2xl bg-brand px-6 py-3 text-sm font-bold text-white shadow-lg hover:bg-brand/90 transition-all flex items-center gap-2"
+                className="press-brand rounded-2xl bg-brand px-6 py-3 text-sm font-bold text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-glow focus-visible:ring-offset-2 flex items-center gap-2"
               >
                 Accéder aux Profils →
               </Link>
@@ -282,8 +291,10 @@ function ParrainagePage() {
                         key={m}
                         type="button"
                         onClick={() => setMonths(m)}
-                        className={`rounded-2xl border px-2 py-3 text-sm font-black transition-all cursor-pointer ${
-                          months === m ? "border-brand bg-brand text-white shadow-xs" : "border-ink/10 bg-surface text-ink/70"
+                        className={`rounded-2xl border px-2 py-3 text-sm font-black transition-all cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-glow focus-visible:ring-offset-2 ${
+                          months === m
+                            ? "press-brand border-brand bg-brand text-white"
+                            : "press-white border-ink/10 bg-white text-ink/70"
                         }`}
                       >
                         {m}
@@ -299,15 +310,19 @@ function ParrainagePage() {
                       </>
                     ) : (
                       <>
-                        {pricing.paidMonths} mois × {formatXofAmount(STANDARD_PRICE_XOF)} FCFA/mois ={" "}
-                        <strong className="text-brand">{formatXofAmount(pricing.amountPaid)} FCFA</strong>
+                        {pricing.paidMonths} mois × {formatXofAmount(STANDARD_PRICE_XOF)} FCFA/mois
+                        ={" "}
+                        <strong className="text-brand">
+                          {formatXofAmount(pricing.amountPaid)} FCFA
+                        </strong>
                         {eurHint > 0 && <> (≈ {eurHint} €)</>}
                       </>
                     )}
                   </p>
                   <p className="mt-1 text-[11px] text-ink/45">
-                    Les 3 premiers mois sont offerts, puis {formatXofAmount(STANDARD_PRICE_XOF)} FCFA/mois
-                    (≈ 22,50 €/mois). Paiement sécurisé en ligne, le code est généré automatiquement.
+                    Les 3 premiers mois sont offerts, puis {formatXofAmount(STANDARD_PRICE_XOF)}{" "}
+                    FCFA/mois (≈ 22,50 €/mois). Paiement sécurisé en ligne, le code est généré
+                    automatiquement.
                   </p>
                 </div>
               </div>
@@ -337,7 +352,7 @@ function ParrainagePage() {
               <button
                 type="submit"
                 disabled={isSubmitting}
-                className="w-full rounded-2xl bg-brand px-6 py-4 text-base font-black text-white shadow-xl hover:bg-brand/90 transition-all disabled:opacity-50 flex items-center justify-center gap-2 cursor-pointer"
+                className="press-brand w-full rounded-2xl bg-brand px-8 py-4 text-base font-bold text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-glow focus-visible:ring-offset-2 disabled:opacity-50 flex items-center justify-center gap-2 cursor-pointer"
               >
                 {isSubmitting ? (
                   <>
@@ -346,7 +361,9 @@ function ParrainagePage() {
                   </>
                 ) : (
                   <>
-                    <span>{isFree ? "Générer mon code (Offert)" : `Payer le parrainage (${totalLabel})`}</span>
+                    <span>
+                      {isFree ? "Générer mon code (Offert)" : `Payer le parrainage (${totalLabel})`}
+                    </span>
                     <ArrowRight className="size-5" />
                   </>
                 )}

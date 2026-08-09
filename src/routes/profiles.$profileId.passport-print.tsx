@@ -292,13 +292,13 @@ function PassportPrintPage() {
             Passeport d'Excellence Verrouillé
           </h2>
           <p className="text-sm font-semibold text-ink/75 leading-relaxed mb-6">
-            Débloquez le Passeport d'Excellence de {child.name} pour télécharger son document
-            PDF officiel et sa lettre d'orientation IA.
+            Débloquez le Passeport d'Excellence de {child.name} pour télécharger son document PDF
+            officiel et sa lettre d'orientation IA.
           </p>
           <button
             onClick={handlePayUnlock}
             disabled={payingUnlock}
-            className="w-full flex items-center justify-center gap-2 rounded-2xl bg-emerald-600 px-5 py-3 text-sm font-bold text-white shadow-xl hover:-translate-y-0.5 active:translate-y-0 transition-all disabled:opacity-60 disabled:cursor-not-allowed"
+            className="press-brand w-full flex items-center justify-center gap-2 rounded-xl bg-brand px-5 py-3 text-sm font-bold text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-glow focus-visible:ring-offset-2 disabled:opacity-60 disabled:cursor-not-allowed"
           >
             {payingUnlock ? (
               <>

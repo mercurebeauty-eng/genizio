@@ -2,21 +2,10 @@ import { createFileRoute, Link, useNavigate, useSearch } from "@tanstack/react-r
 import { useEffect, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { useSession } from "@/hooks/use-session";
-import {
-  verifyPaymentByReference,
-  verifySponsorshipPayment,
-} from "@/lib/payments.functions";
+import { verifyPaymentByReference, verifySponsorshipPayment } from "@/lib/payments.functions";
 import type { SponsorshipToken } from "@/lib/seasons.functions";
 import { GenizioLoader } from "@/components/GenizioLoader";
-import {
-  CheckCircle2,
-  XCircle,
-  Loader2,
-  ArrowRight,
-  CreditCard,
-  Copy,
-  Check,
-} from "lucide-react";
+import { CheckCircle2, XCircle, Loader2, ArrowRight, CreditCard, Copy, Check } from "lucide-react";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/paiement-retour")({
@@ -85,12 +74,18 @@ function PaymentReturnPage() {
     let cancelled = false;
     setState({ kind: "checking" });
 
-    const handleSuccess = (
-      resp: { paymentStatus: string; entitlement?: string | null; token?: unknown },
-    ) => {
+    const handleSuccess = (resp: {
+      paymentStatus: string;
+      entitlement?: string | null;
+      token?: unknown;
+    }) => {
       if (cancelled) return;
       if (resp.paymentStatus === "success") {
-        setState({ kind: "success", entitlement: resp.entitlement ?? null, token: (resp.token as SponsorshipToken | null) ?? null });
+        setState({
+          kind: "success",
+          entitlement: resp.entitlement ?? null,
+          token: (resp.token as SponsorshipToken | null) ?? null,
+        });
       } else if (resp.paymentStatus === "abandoned") {
         setState({ kind: "abandoned" });
       } else if (resp.paymentStatus === "failed") {
@@ -107,14 +102,12 @@ function PaymentReturnPage() {
       ? verifySponsorshipFn({ data: { reference } })
       : verifyFn({ data: { reference } });
 
-    verify
-      .then(handleSuccess)
-      .catch((err) => {
-        console.error("Erreur vérification paiement:", err);
-        if (!cancelled) {
-          setState({ kind: "error", message: err?.message ?? "Erreur lors de la vérification." });
-        }
-      });
+    verify.then(handleSuccess).catch((err) => {
+      console.error("Erreur vérification paiement:", err);
+      if (!cancelled) {
+        setState({ kind: "error", message: err?.message ?? "Erreur lors de la vérification." });
+      }
+    });
     return () => {
       cancelled = true;
     };
@@ -169,9 +162,13 @@ function PaymentReturnPage() {
                       toast.success("Code de parrainage copié !");
                       setTimeout(() => setCopied(false), 2000);
                     }}
-                    className="w-full rounded-xl bg-ink px-4 py-3 text-sm font-bold text-white shadow-md hover:bg-ink/90 transition-all flex items-center justify-center gap-2 cursor-pointer"
+                    className="press-ink w-full rounded-xl bg-ink px-4 py-3 text-sm font-bold text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 flex items-center justify-center gap-2 cursor-pointer"
                   >
-                    {copied ? <Check className="size-4 text-emerald-400" /> : <Copy className="size-4" />}
+                    {copied ? (
+                      <Check className="size-4 text-emerald-400" />
+                    ) : (
+                      <Copy className="size-4" />
+                    )}
                     {copied ? "Code copié !" : "Copier le code"}
                   </button>
                 </div>
@@ -180,7 +177,7 @@ function PaymentReturnPage() {
                 </p>
                 <Link
                   to="/parrainage"
-                  className="mt-6 inline-flex items-center justify-center gap-2 rounded-xl border border-ink/10 bg-brand px-6 py-3 text-sm font-bold text-white shadow-sm hover:-translate-y-0.5 transition-all"
+                  className="press-brand mt-6 inline-flex items-center justify-center gap-2 rounded-xl bg-brand px-6 py-3 text-sm font-bold text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-glow focus-visible:ring-offset-2"
                 >
                   Parrainer un autre enfant
                   <ArrowRight className="size-4" />
@@ -196,7 +193,7 @@ function PaymentReturnPage() {
                 </p>
                 <Link
                   to={ENTITLEMENT_COPY[state.entitlement ?? ""]?.href ?? "/profiles"}
-                  className="mt-6 inline-flex items-center justify-center gap-2 rounded-xl border border-ink/10 bg-brand px-6 py-3 text-sm font-bold text-white shadow-sm hover:-translate-y-0.5 transition-all"
+                  className="press-brand mt-6 inline-flex items-center justify-center gap-2 rounded-xl bg-brand px-6 py-3 text-sm font-bold text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-glow focus-visible:ring-offset-2"
                 >
                   {ENTITLEMENT_COPY[state.entitlement ?? ""]?.cta ?? "Retour à l'accueil"}
                   <ArrowRight className="size-4" />
@@ -222,7 +219,7 @@ function PaymentReturnPage() {
             <div className="mt-6 flex flex-col gap-2">
               <Link
                 to={isSponsorship ? "/parrainage" : "/profiles"}
-                className="inline-flex items-center justify-center gap-2 rounded-xl border border-ink/10 bg-brand px-6 py-3 text-sm font-bold text-white shadow-sm hover:-translate-y-0.5 transition-all"
+                className="press-brand inline-flex items-center justify-center gap-2 rounded-xl bg-brand px-6 py-3 text-sm font-bold text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-glow focus-visible:ring-offset-2"
               >
                 {isSponsorship ? "Retour au parrainage" : "Retour aux profils"}
               </Link>
@@ -251,7 +248,7 @@ function PaymentReturnPage() {
             </p>
             <Link
               to={isSponsorship ? "/parrainage" : "/profiles"}
-              className="mt-6 inline-flex items-center justify-center gap-2 rounded-xl border border-ink/10 bg-brand px-6 py-3 text-sm font-bold text-white shadow-sm hover:-translate-y-0.5 transition-all"
+              className="press-brand mt-6 inline-flex items-center justify-center gap-2 rounded-xl bg-brand px-6 py-3 text-sm font-bold text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-glow focus-visible:ring-offset-2"
             >
               {isSponsorship ? "Retour au parrainage" : "Retour aux profils"}
               <ArrowRight className="size-4" />
