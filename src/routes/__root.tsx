@@ -230,6 +230,8 @@ function RootComponent() {
         <Toaster />
         {!internal && <WhatsAppFAB />}
         <ConfirmDialogHost />
+        <Analytics />
+        <SpeedInsights />
       </QueryClientProvider>
     );
   }
@@ -255,6 +257,8 @@ function RootComponent() {
       <ConfirmDialogHost />
       <PwaInstallPrompt />
       <PwaUpdateBanner />
+      <Analytics />
+      <SpeedInsights />
     </QueryClientProvider>
   );
 }
