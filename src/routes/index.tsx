@@ -533,7 +533,7 @@ function Nav() {
               key={link.href}
               href={link.href}
               className={`transition-colors ${
-                solid ? "text-ink/60 hover:text-brand" : "text-white/75 hover:text-white"
+                solid ? "text-ink/70 hover:text-brand" : "text-white/85 hover:text-white"
               }`}
             >
               {link.label}
@@ -542,7 +542,7 @@ function Nav() {
           <Link
             to="/guides"
             className={`transition-colors ${
-              solid ? "text-ink/60 hover:text-brand" : "text-white/75 hover:text-white"
+              solid ? "text-ink/70 hover:text-brand" : "text-white/85 hover:text-white"
             }`}
           >
             Guides
@@ -586,7 +586,7 @@ function Nav() {
                 key={link.href}
                 href={link.href}
                 onClick={() => setIsOpen(false)}
-                className="text-ink/60 hover:text-brand transition-colors"
+                className="text-ink/70 hover:text-brand transition-colors"
               >
                 {link.label}
               </a>
@@ -594,7 +594,7 @@ function Nav() {
             <Link
               to="/guides"
               onClick={() => setIsOpen(false)}
-              className="text-ink/60 hover:text-brand transition-colors"
+              className="text-ink/70 hover:text-brand transition-colors"
             >
               Guides
             </Link>
@@ -645,7 +645,7 @@ function Hero() {
             </span>{" "}
             naturelles de votre enfant.
           </h1>
-          <p className="mb-9 max-w-xl text-base font-medium leading-relaxed text-white/70">
+          <p className="mb-9 max-w-xl text-base font-medium leading-relaxed text-white/85">
             Bien plus qu'un soutien scolaire. Génizio propose à votre enfant d'expérimenter le monde
             réel grâce à des défis d'apprentissage sur-mesure validés par l'IA et accompagnés par
             des mentors.
@@ -683,19 +683,19 @@ function Hero() {
           <div className="mt-12 flex flex-wrap items-center gap-x-6 gap-y-3 border-t border-white/15 pt-6">
             <div className="flex items-center gap-2">
               <Brain className="size-4 text-brand-glow" aria-hidden />
-              <span className="text-xs font-bold text-white/70">
+              <span className="text-xs font-bold text-white/85">
                 9 formes d'intelligence cartographiées
               </span>
             </div>
             <div className="flex items-center gap-2">
               <BookOpen className="size-4 text-leaf-50" aria-hidden />
-              <span className="text-xs font-bold text-white/70">
+              <span className="text-xs font-bold text-white/85">
                 Défis ancrés dans le contexte africain
               </span>
             </div>
             <div className="flex items-center gap-2">
               <ShieldCheck className="size-4 text-sky-50" aria-hidden />
-              <span className="text-xs font-bold text-white/70">
+              <span className="text-xs font-bold text-white/85">
                 Validation parentale à chaque étape
               </span>
             </div>
@@ -882,7 +882,7 @@ function StorySection() {
                 <h3 className="mb-2 mt-4 font-display text-balance text-lg font-extrabold text-ink">
                   {title}
                 </h3>
-                <p className="text-sm font-medium leading-relaxed text-ink/60">{desc}</p>
+                <p className="text-sm font-medium leading-relaxed text-ink/70">{desc}</p>
               </div>
             </Reveal>
           ))}
@@ -958,7 +958,7 @@ function ConstatSection() {
                 <h3 className="mb-2 font-display text-balance text-lg font-extrabold text-ink">
                   {title}
                 </h3>
-                <p className="text-sm font-medium leading-relaxed text-ink/60">{desc}</p>
+                <p className="text-sm font-medium leading-relaxed text-ink/70">{desc}</p>
               </div>
             </Reveal>
           ))}
@@ -1026,7 +1026,7 @@ function MethodSection() {
           <h2 className="font-display text-balance text-3xl font-extrabold leading-tight text-white md:text-4xl">
             Trois actes. Zéro questionnaire.
           </h2>
-          <p className="mt-5 text-sm font-semibold leading-relaxed text-white/60">
+          <p className="mt-5 text-sm font-semibold leading-relaxed text-white/85">
             La richesse d'un enfant ne se lit pas dans un formulaire. Elle se lit dans ce qu'il
             fabrique, ce qu'il organise, ce qu'il raconte.
           </p>
@@ -1045,7 +1045,7 @@ function MethodSection() {
                 <h3 className="mb-2 font-display text-balance text-lg font-extrabold text-white">
                   {title}
                 </h3>
-                <p className="text-sm font-medium leading-relaxed text-white/60">{desc}</p>
+                <p className="text-sm font-medium leading-relaxed text-white/80">{desc}</p>
               </div>
             </Reveal>
           ))}
@@ -1089,7 +1089,7 @@ function DomainsSection() {
           <h2 className="font-display text-balance text-3xl font-extrabold text-ink md:text-4xl">
             Neuf formes d'intelligence, aucune supérieure aux autres.
           </h2>
-          <p className="mt-4 text-sm font-semibold leading-relaxed text-ink/60">
+          <p className="mt-4 text-sm font-semibold leading-relaxed text-ink/70">
             Un enfant peut être très fort dans l'une et moyen dans les autres : c'est une force, pas
             un classement. Génizio s'appuie sur le cadre des intelligences multiples de Howard
             Gardner pour cartographier chaque profil — manuel, scientifique, relationnel ou créatif.
@@ -1110,7 +1110,7 @@ function DomainsSection() {
                     {label}
                   </h3>
                 </div>
-                <p className="text-xs font-semibold leading-relaxed text-ink/60">{desc}</p>
+                <p className="text-xs font-semibold leading-relaxed text-ink/70">{desc}</p>
               </div>
             </Reveal>
           ))}
@@ -1192,7 +1192,7 @@ function DemoSection() {
             <h2 className="font-display text-balance text-3xl font-extrabold text-white md:text-4xl">
               Essayez la carte des talents de votre enfant.
             </h2>
-            <p className="mt-3 text-sm text-white/60 leading-relaxed font-semibold">
+            <p className="mt-3 text-sm text-white/85 leading-relaxed font-semibold">
               Sélectionnez ci-dessous les comportements et activités de votre enfant pour voir son
               potentiel se cartographier en temps réel et générer des défis adaptés.
             </p>
@@ -1214,7 +1214,7 @@ function DemoSection() {
                 <div className="flex-1">
                   <label
                     htmlFor="landing-child-name"
-                    className="block text-[10px] font-bold uppercase tracking-widest text-white/60 mb-1"
+                    className="block text-[10px] font-bold uppercase tracking-widest text-white/80 mb-1"
                   >
                     Prénom de l'enfant
                   </label>
@@ -1230,7 +1230,7 @@ function DemoSection() {
               <div>
                 <label
                   htmlFor="landing-child-age"
-                  className="block text-[10px] font-bold uppercase tracking-widest text-white/60 mb-2"
+                  className="block text-[10px] font-bold uppercase tracking-widest text-white/80 mb-2"
                 >
                   Âge : {age} ans
                 </label>
@@ -1246,10 +1246,18 @@ function DemoSection() {
               </div>
 
               <div>
-                <label className="block text-[10px] font-bold uppercase tracking-widest text-white/60 mb-3">
+                <label
+                  htmlFor="landing-child-interests"
+                  className="block text-[10px] font-bold uppercase tracking-widest text-white/80 mb-3"
+                >
                   Sélectionner ses curiosités & forces
                 </label>
-                <div className="flex flex-wrap gap-2 max-h-48 overflow-y-auto pr-1">
+                <div
+                  id="landing-child-interests"
+                  className="flex flex-wrap gap-2 max-h-48 overflow-y-auto pr-1"
+                  role="group"
+                  aria-label="Sélectionner les curiosités et forces de l'enfant"
+                >
                   {allInterestTags.map((tag) => {
                     const active = interests.includes(tag);
                     return (
@@ -1273,7 +1281,7 @@ function DemoSection() {
 
             {/* LIVE RADAR CHART */}
             <div className="rounded-3xl border border-white/10 bg-white/5 p-6 flex flex-col items-center backdrop-blur-sm">
-              <h3 className="text-xs font-bold uppercase tracking-wider text-white/60 mb-4 self-start">
+              <h3 className="text-xs font-bold uppercase tracking-wider text-white/80 mb-4 self-start">
                 Profil en temps réel (Radar des intelligences)
               </h3>
               <TalentRadarChart
@@ -1296,7 +1304,7 @@ function DemoSection() {
                 <h3 className="font-display text-balance font-extrabold text-white text-base">
                   Recommandation IA pour {name}
                 </h3>
-                <p className="text-xs text-white/70 leading-relaxed font-semibold mt-1">
+                <p className="text-xs text-white/80 leading-relaxed font-semibold mt-1">
                   Basé sur les centres d'intérêt sélectionnés, {name} présente un profil axé sur
                   l'expérimentation active. Nous suggérons des défis qui allient observation
                   méthodique et mise en œuvre manuelle de projets.
@@ -1327,13 +1335,13 @@ function DemoSection() {
                     <h3 className="font-display text-balance text-base font-extrabold text-white mb-2 leading-tight group-hover:text-brand-glow transition-colors">
                       {c.title}
                     </h3>
-                    <p className="text-xs text-white/60 leading-relaxed font-medium mb-6">
+                    <p className="text-xs text-white/80 leading-relaxed font-medium mb-6">
                       {c.desc}
                     </p>
                   </div>
 
                   <div className="flex items-center justify-between border-t border-white/10 pt-3 mt-4">
-                    <span className="inline-flex items-center gap-1.5 text-[10px] font-bold text-white/60">
+                    <span className="inline-flex items-center gap-1.5 text-[10px] font-bold text-white/80">
                       <Clock className="size-3.5" aria-hidden />
                       {c.duration}
                     </span>
@@ -1559,7 +1567,7 @@ function CommunitySection() {
                 </span>
               </div>
               <h3 className="mb-2 font-display text-lg font-extrabold text-ink">{title}</h3>
-              <p className="text-sm font-medium leading-relaxed text-ink/60">{desc}</p>
+              <p className="text-sm font-medium leading-relaxed text-ink/70">{desc}</p>
             </div>
           ))}
         </div>
@@ -1629,7 +1637,7 @@ function TestimonialsSection() {
                   </span>
                   <div>
                     <p className="text-xs font-extrabold text-ink">{t.author}</p>
-                    <p className="text-[11px] font-semibold text-ink/60">{t.authorLocation}</p>
+                    <p className="text-[11px] font-semibold text-ink/70">{t.authorLocation}</p>
                   </div>
                 </figcaption>
               </figure>
@@ -1689,15 +1697,18 @@ function DiasporaSection() {
         <ol className="space-y-8 lg:col-span-7 lg:pt-2">
           {DIASPORA_POINTS.map(({ n, title, desc }, i) => (
             <li key={n} className="border-b border-ink/10 pb-8 last:border-b-0 last:pb-0">
-              <Reveal delay={i * 100} className="flex gap-5">
+              <div
+                style={{ transitionDelay: `${i * 100}ms` }}
+                className="flex gap-5 transition-all duration-700 ease-out motion-reduce:transition-none"
+              >
                 <span className="font-display text-balance text-2xl font-black leading-none text-brand">
                   {n}
                 </span>
                 <div>
                   <h3 className="mb-1.5 text-base font-extrabold text-ink">{title}</h3>
-                  <p className="text-sm font-medium leading-relaxed text-ink/60">{desc}</p>
+                  <p className="text-sm font-medium leading-relaxed text-ink/70">{desc}</p>
                 </div>
-              </Reveal>
+              </div>
             </li>
           ))}
         </ol>
@@ -1743,7 +1754,7 @@ function VisionSection() {
           <h2 className="font-display text-balance text-3xl font-extrabold leading-tight text-white md:text-4xl">
             L'IA n'est pas un examinateur. C'est un observateur bienveillant.
           </h2>
-          <p className="mt-6 text-sm font-semibold leading-relaxed text-white/70">
+          <p className="mt-6 text-sm font-semibold leading-relaxed text-white/85">
             Chez Génizio, nous croyons qu'un enfant n'est pas réductible à des notes d'examen. À
             chaque défi complété, le parent photographie la réalisation, et notre IA déduit
             l'émergence des talents associés. C'est ainsi que se dresse, au fil des mois, une
@@ -1806,13 +1817,13 @@ function VisionSection() {
                 <div className="font-display text-balance text-2xl font-extrabold text-brand">
                   27
                 </div>
-                <div className="text-[10px] font-bold uppercase tracking-widest text-ink/60">
+                <div className="text-[10px] font-bold uppercase tracking-widest text-ink/70">
                   Défis complétés
                 </div>
               </div>
               <div className="text-center">
                 <div className="font-display text-balance text-2xl font-extrabold text-leaf">9</div>
-                <div className="text-[10px] font-bold uppercase tracking-widest text-ink/60">
+                <div className="text-[10px] font-bold uppercase tracking-widest text-ink/70">
                   Talents cartographiés
                 </div>
               </div>
@@ -1820,7 +1831,7 @@ function VisionSection() {
                 <div className="font-display text-balance text-2xl font-extrabold text-sky-dark">
                   3
                 </div>
-                <div className="text-[10px] font-bold uppercase tracking-widest text-ink/60">
+                <div className="text-[10px] font-bold uppercase tracking-widest text-ink/70">
                   Mentors actifs
                 </div>
               </div>
@@ -1929,22 +1940,22 @@ const LEVEL_TONES: Record<
 > = {
   leaf: {
     card: "bg-white border border-ink/10 shadow-md",
-    badge: "bg-leaf/10 text-leaf-dark border-leaf/20",
-    num: "text-leaf",
+    badge: "bg-leaf/20 text-leaf-dark border-leaf/30",
+    num: "text-leaf-dark",
   },
   brand: {
     card: "bg-white border border-ink/10 shadow-md",
-    badge: "bg-brand/10 text-brand border-brand/20",
-    num: "text-brand",
+    badge: "bg-brand/15 text-brand-dark border-brand/25",
+    num: "text-brand-dark",
   },
   sky: {
     card: "bg-white border border-ink/10 shadow-md",
-    badge: "bg-sky/10 text-sky-dark border-sky/20",
+    badge: "bg-sky/15 text-sky-dark border-sky/25",
     num: "text-sky-dark",
   },
   glow: {
     card: "bg-white border border-ink/10 shadow-md",
-    badge: "bg-brand-glow/20 text-brand-dark border-brand-glow/30",
+    badge: "bg-brand-glow/25 text-brand-dark border-brand-glow/35",
     num: "text-brand-dark",
   },
   ink: {
@@ -1965,7 +1976,7 @@ function ModelSection() {
           <h2 className="font-display text-balance text-3xl font-extrabold leading-tight md:text-4xl">
             Une vision d'avenir en 5 étapes.
           </h2>
-          <p className="mt-4 text-sm font-semibold text-ink/60">
+          <p className="mt-4 text-sm font-semibold text-ink/70">
             Génizio se déploie progressivement. Chaque jalon pose les fondations du suivant pour
             construire, pas à pas, l'école adaptée aux défis africains du 21e siècle.
           </p>
@@ -1992,7 +2003,7 @@ function ModelSection() {
                   </span>
                   <span
                     className={
-                      "rounded-full border px-3 py-1 text-[9px] font-black uppercase tracking-widest " +
+                      "rounded-full border px-3 py-1 text-[10px] font-black uppercase tracking-widest " +
                       t.badge
                     }
                   >
@@ -2004,7 +2015,7 @@ function ModelSection() {
                 </h3>
                 <p
                   className={
-                    "mb-6 text-xs italic font-medium " + (isDark ? "text-white/70" : "text-ink/60")
+                    "mb-6 text-xs italic font-medium " + (isDark ? "text-white/80" : "text-ink/70")
                   }
                 >
                   {lvl.tagline}
@@ -2037,7 +2048,7 @@ function FAQSection() {
   const [openIndex, setOpenIndex] = useState<number | null>(0);
 
   return (
-    <section id="faq" className="scroll-mt-24 border-t border-ink/10 bg-white/40 py-20 lg:py-24">
+    <section id="faq" className="scroll-mt-24 border-t border-ink/10 bg-white py-20 lg:py-24">
       <div className="mx-auto max-w-3xl px-6">
         <div className="mb-12 text-center">
           <span className="mb-3 inline-block text-xs font-bold uppercase tracking-widest text-brand">
@@ -2046,7 +2057,7 @@ function FAQSection() {
           <h2 className="font-display text-balance text-3xl font-extrabold text-ink md:text-4xl">
             Questions fréquentes
           </h2>
-          <p className="mt-3 text-sm font-semibold text-ink/60">
+          <p className="mt-3 text-sm font-semibold text-ink/70">
             Les réponses que les parents nous demandent vraiment.
           </p>
         </div>
@@ -2102,7 +2113,7 @@ function FAQSection() {
             Lire tous les guides
             <ArrowRight className="size-4" aria-hidden />
           </Link>
-          <p className="mt-3 text-xs font-semibold text-ink/60">
+          <p className="mt-3 text-xs font-semibold text-ink/70">
             Potentiel, intelligences multiples, activités à la maison : des articles pour les
             parents.
           </p>
@@ -2144,7 +2155,7 @@ function CTASection() {
             <h2 className="mb-4 font-display text-balance text-3xl font-extrabold leading-tight md:text-4xl">
               Révélez le potentiel de vos enfants dès aujourd'hui.
             </h2>
-            <p className="mx-auto mb-10 max-w-md text-sm font-semibold leading-relaxed text-white/70">
+            <p className="mx-auto mb-10 max-w-md text-sm font-semibold leading-relaxed text-white/85">
               Créez le profil de votre enfant en deux minutes et recevez son premier défi sur
               mesure.
             </p>
@@ -2175,7 +2186,7 @@ function CTASection() {
 
 function Footer() {
   return (
-    <footer className="border-t border-white/10 bg-ink px-6 py-12 text-white/60">
+    <footer className="border-t border-white/10 bg-ink px-6 py-12 text-white/80">
       <div className="mx-auto flex max-w-6xl flex-col items-center justify-between gap-8 md:flex-row">
         <div className="flex items-center gap-2 font-display text-balance text-xl font-extrabold text-brand-glow">
           <img src="/favicon-96x96.png" alt="Logo Génizio" className="h-7 w-7" />
@@ -2201,7 +2212,7 @@ function Footer() {
             Mentions légales
           </Link>
         </div>
-        <div className="text-xs font-bold text-white/60">
+        <div className="text-xs font-bold text-white/80">
           © {new Date().getFullYear()} Génizio — Abidjan, Côte d'Ivoire
         </div>
       </div>
