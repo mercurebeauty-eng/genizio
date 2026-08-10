@@ -16,6 +16,7 @@ import {
   ShoppingBag,
   CreditCard,
   Sparkles,
+  Globe,
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -36,7 +37,8 @@ import {
   getTalentBucket,
   TALENT_BUCKET_LABEL,
 } from "@/lib/talent-buckets";
-import { calculateXPGain } from "@/lib/challenges.functions";
+import { calculateXPGain, ACADEMIC_DOMAIN_LABELS } from "@/lib/challenges.functions";
+import { lastAcademicLevelByDomain } from "@/lib/academic-levels";
 import { getChildGuild } from "@/lib/guilds";
 import { InviteMentorDialog } from "@/components/mentors/InviteMentorDialog";
 import { TalentRadarChart } from "@/components/TalentRadarChart";
@@ -82,6 +84,9 @@ type Challenge = {
   steps?: string[] | null;
   proof_image_url?: string | null;
   difficulty?: string | null;
+  completed_at?: string | null;
+  academic_domain?: string | null;
+  academic_level_age?: number | null;
 };
 
 function DashboardPage() {
@@ -315,7 +320,7 @@ function DashboardPage() {
         const { data, error } = await supabase
           .from("challenges")
           .select(
-            "id, status, created_at, updated_at, domain, title, description, duration, materials, material_tags, steps, proof_image_url, difficulty",
+            "id, status, created_at, updated_at, completed_at, domain, title, description, duration, materials, material_tags, steps, proof_image_url, difficulty, academic_domain, academic_level_age",
           )
           .eq("child_id", selectedId);
 
@@ -707,6 +712,36 @@ function DashboardPage() {
                           </PopoverContent>
                         </Popover>
                       </div>
+
+                      {/* Niveau international atteint par domaine */}
+                      {(() => {
+                        const levels = lastAcademicLevelByDomain(challenges);
+                        if (levels.length === 0) return null;
+                        return (
+                          <div className="bg-card rounded-[1rem] p-[14px] shadow-sm border border-border mb-5">
+                            <div className="flex items-center justify-between mb-2">
+                              <span className="text-[12px] text-ink/60 font-semibold">
+                                Niveau international par domaine
+                              </span>
+                              <Globe className="size-4 text-cyan-700" />
+                            </div>
+                            <div className="flex flex-wrap gap-[6px]">
+                              {levels.map((l) => (
+                                <span
+                                  key={l.domain}
+                                  className="inline-flex items-center gap-1 rounded-full bg-cyan-100 text-cyan-900 px-[9px] py-[4px] text-[11px] font-bold"
+                                >
+                                  {ACADEMIC_DOMAIN_LABELS[l.domain] ?? l.domain} · {l.grade}
+                                </span>
+                              ))}
+                            </div>
+                            <p className="text-[11px] text-ink/40 font-medium mt-2 leading-relaxed">
+                              Calibré sur les standards des meilleurs systèmes éducatifs du
+                              monde (Common Core USA · Singapore Math · NGSS).
+                            </p>
+                          </div>
+                        );
+                      })()}
 
                       {/* Continuer à explorer */}
                       <div className="font-display text-balance font-bold text-[13px] tracking-[.06em] uppercase text-ink/40 mx-1 mb-[10px]">
