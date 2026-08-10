@@ -1616,6 +1616,7 @@ function TestimonialsSection() {
             <Reveal key={t.author} delay={(i % 2) * 100}>
               <figure className="group relative h-full rounded-3xl border border-ink/10 bg-white p-7 shadow-sm transition-all hover:-translate-y-1 hover:border-brand/30 hover:shadow-xl">
                 <span
+                  role="img"
                   className="mb-4 flex items-center gap-0.5 text-amber-500"
                   aria-label={`${t.rating} sur 5`}
                 >
@@ -1696,7 +1697,10 @@ function DiasporaSection() {
         <ol className="space-y-8 lg:col-span-7 lg:pt-2">
           {DIASPORA_POINTS.map(({ n, title, desc }, i) => (
             <li key={n} className="border-b border-ink/10 pb-8 last:border-b-0 last:pb-0">
-              <Reveal delay={i * 100} className="flex gap-5">
+              <div
+                style={{ transitionDelay: `${i * 100}ms` }}
+                className="flex gap-5 transition-all duration-700 ease-out motion-reduce:transition-none"
+              >
                 <span className="font-display text-balance text-2xl font-black leading-none text-brand">
                   {n}
                 </span>
@@ -1704,7 +1708,7 @@ function DiasporaSection() {
                   <h3 className="mb-1.5 text-base font-extrabold text-ink">{title}</h3>
                   <p className="text-sm font-medium leading-relaxed text-ink/70">{desc}</p>
                 </div>
-              </Reveal>
+              </div>
             </li>
           ))}
         </ol>
@@ -1936,22 +1940,22 @@ const LEVEL_TONES: Record<
 > = {
   leaf: {
     card: "bg-white border border-ink/10 shadow-md",
-    badge: "bg-leaf/10 text-leaf-dark border-leaf/20",
-    num: "text-leaf",
+    badge: "bg-leaf/20 text-leaf-dark border-leaf/30",
+    num: "text-leaf-dark",
   },
   brand: {
     card: "bg-white border border-ink/10 shadow-md",
-    badge: "bg-brand/10 text-brand border-brand/20",
-    num: "text-brand",
+    badge: "bg-brand/15 text-brand-dark border-brand/25",
+    num: "text-brand-dark",
   },
   sky: {
     card: "bg-white border border-ink/10 shadow-md",
-    badge: "bg-sky/10 text-sky-dark border-sky/20",
+    badge: "bg-sky/15 text-sky-dark border-sky/25",
     num: "text-sky-dark",
   },
   glow: {
     card: "bg-white border border-ink/10 shadow-md",
-    badge: "bg-brand-glow/20 text-brand-dark border-brand-glow/30",
+    badge: "bg-brand-glow/25 text-brand-dark border-brand-glow/35",
     num: "text-brand-dark",
   },
   ink: {
@@ -1999,7 +2003,7 @@ function ModelSection() {
                   </span>
                   <span
                     className={
-                      "rounded-full border px-3 py-1 text-[9px] font-black uppercase tracking-widest " +
+                      "rounded-full border px-3 py-1 text-[10px] font-black uppercase tracking-widest " +
                       t.badge
                     }
                   >
@@ -2044,7 +2048,7 @@ function FAQSection() {
   const [openIndex, setOpenIndex] = useState<number | null>(0);
 
   return (
-    <section id="faq" className="scroll-mt-24 border-t border-ink/10 bg-white/40 py-20 lg:py-24">
+    <section id="faq" className="scroll-mt-24 border-t border-ink/10 bg-white py-20 lg:py-24">
       <div className="mx-auto max-w-3xl px-6">
         <div className="mb-12 text-center">
           <span className="mb-3 inline-block text-xs font-bold uppercase tracking-widest text-brand">
