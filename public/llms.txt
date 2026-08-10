@@ -2,7 +2,7 @@
 
 > Révéler les talents naturels de votre enfant à travers des défis concrets à faire à la maison, fondés sur les 9 intelligences de Howard Gardner. Conçu pour les familles d'Afrique francophone et la diaspora. L'IA Naya génère des défis, le parent photographie la réalisation, et la carte des talents se construit preuve après preuve.
 
-<!-- à jour au 6 août 2026 -->
+<!-- à jour au 10 août 2026 -->
 
 ## Essentiel
 
@@ -14,11 +14,21 @@
 
 - [Comment savoir si mon enfant a un haut potentiel ou un don particulier](https://www.genizio.com/guides/potentiel-haut-potentiel-enfant)
 - [Mon enfant ne tient pas en place : comprendre avant de s'inquiéter](https://www.genizio.com/guides/enfant-agite-concentration)
+- [Gérer la colère de son enfant : 5 outils concrets pour l'apaiser](https://www.genizio.com/guides/gestion-colere-emotions-enfant)
+- [Réduire les écrans sans crise : transformer la fascination virtuelle en action réelle](https://www.genizio.com/guides/ecrans-addiction-alternatives-enfant)
 - [24 activités éducatives à faire à la maison avec un enfant de 6 à 12 ans](https://www.genizio.com/guides/activites-educatives-enfant)
-- [Quels défis proposer à un adolescent de 12 à 16 ans ?](https://www.genizio.com/guides/defis-pour-adolescents)
+- [Activités manuelles pour enfants : 15 idées concrètes (4-12 ans)](https://www.genizio.com/guides/activites-manuelles-enfant)
+- [Enfant timide ou réservé : 4 activités pour développer l'assurance orale](https://www.genizio.com/guides/timidite-confiance-prise-de-parole)
+- [Rendre son enfant autonome à la maison sans crier : la méthode du projet responsabilisant](https://www.genizio.com/guides/autonomie-responsabilite-maison)
+- [Discipline positive : éduquer sans crier ni punir](https://www.genizio.com/guides/discipline-positive-sans-punition)
+- [Découvrir les talents et métiers d'avenir dès 10 ans : le guide du parent éclairé](https://www.genizio.com/guides/orientation-scolaire-metiers-avenir)
+- [Rivalité dans la fratrie : transformer les disputes en projets de coopération](https://www.genizio.com/guides/fratrie-rivalite-cooperation)
+- [Motiver un adolescent de 12 à 16 ans : les défis qui marchent](https://www.genizio.com/guides/defis-pour-adolescents)
 - [Les intelligences multiples de Howard Gardner, expliquées simplement](https://www.genizio.com/guides/intelligences-multiples-gardner)
 - [Révéler le potentiel d'un enfant en Afrique francophone et dans la diaspora](https://www.genizio.com/guides/education-enfants-afrique-francophone)
 - [Comment utiliser l'IA pour aider son enfant à apprendre](https://www.genizio.com/guides/ia-apprentissage-enfant)
+- [Décrochage scolaire : la confiance se joue avant l'école](https://www.genizio.com/guides/decrochage-scolaire-confiance-enfant)
+- [Aider son enfant à réussir à l'école sans pression](https://www.genizio.com/guides/reussite-scolaire-aider-enfant)
 
 ## Tarifs
 

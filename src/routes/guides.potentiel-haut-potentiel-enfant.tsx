@@ -86,8 +86,9 @@ function Guide() {
       related={[
         { label: "Les intelligences multiples de Gardner", to: "/guides/intelligences-multiples-gardner" },
         { label: "Mon enfant ne tient pas en place", to: "/guides/enfant-agite-concentration" },
-        { label: "30 activités éducatives (6-12 ans)", to: "/guides/activites-educatives-enfant" },
-        { label: "Quels défis pour un adolescent ?", to: "/guides/defis-pour-adolescents" },
+        { label: "24 activités éducatives (6-12 ans)", to: "/guides/activites-educatives-enfant" },
+        { label: "Motiver un adolescent (12-16 ans)", to: "/guides/defis-pour-adolescents" },
+        { label: "Révéler le potentiel en Afrique francophone", to: "/guides/education-enfants-afrique-francophone" },
       ]}
     >
       <img

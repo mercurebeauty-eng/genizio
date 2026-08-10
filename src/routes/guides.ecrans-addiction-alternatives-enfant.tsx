@@ -25,7 +25,7 @@ const FAQ = [
 export const Route = createFileRoute("/guides/ecrans-addiction-alternatives-enfant")({
   head: () => {
     const meta = pageMeta({
-      title: "Réduire les écrans sans crise : 3 alternatives concrètes (6-12 ans)",
+      title: "Réduire les écrans sans crise : 3 alternatives (6-12 ans)",
       description:
         "Comment canaliser l'attrait des écrans chez l'enfant en transformant le jeu virtuel en défis de création réelle à la maison.",
       path: PATH,
@@ -67,6 +67,12 @@ function Guide() {
       intro="La crise au moment d'éteindre la télévision ou la tablette n'est pas un refus d'autorité : c'est un choc dopaminergique. Pour sevrer un enfant sans conflit répétitif, il faut lui proposer une alternative qui stimule le même désir d'accomplissement, mais dans le monde réel."
       updated="8 août 2026"
       readingTime="6 min"
+      related={[
+        { label: "24 activités éducatives (6-12 ans)", to: "/guides/activites-educatives-enfant" },
+        { label: "Mon enfant ne tient pas en place", to: "/guides/enfant-agite-concentration" },
+        { label: "L'IA pour aider son enfant à apprendre", to: "/guides/ia-apprentissage-enfant" },
+        { label: "Activités manuelles (4-12 ans)", to: "/guides/activites-manuelles-enfant" },
+      ]}
     >
       <img
         src="/guides/og-ecrans.jpg"

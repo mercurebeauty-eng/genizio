@@ -29,6 +29,12 @@ import { GenizioLoader } from "@/components/GenizioLoader";
 import { formatPedagogicalIntention } from "@/lib/pedagogical-intention";
 
 export const Route = createFileRoute("/boutique")({
+  head: () => ({
+    meta: [
+      { title: "Boutique Génizio" },
+      { name: "robots", content: "noindex, follow" },
+    ],
+  }),
   component: BoutiquePage,
 });
 
