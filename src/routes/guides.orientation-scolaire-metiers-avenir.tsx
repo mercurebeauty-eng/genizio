@@ -25,7 +25,7 @@ const FAQ = [
 export const Route = createFileRoute("/guides/orientation-scolaire-metiers-avenir")({
   head: () => {
     const meta = pageMeta({
-      title: "Découvrir les métiers d'avenir dès 10 ans : guide d'orientation (10-16 ans)",
+      title: "Faire découvrir les métiers à son enfant dès 10 ans",
       description:
         "Comment identifier les forces de votre enfant et le préparer aux métiers de demain grâce à la théorie des 9 intelligences.",
       path: PATH,
@@ -67,6 +67,11 @@ function Guide() {
       intro="Le monde du travail évolue à une vitesse sans précédent. Préparer son enfant pour l'avenir ne consiste plus à lui imposer un parcours académique classique rigide, mais à déceler ses intelligences dominantes pour développer son adaptabilité et sa confiance créative."
       updated="8 août 2026"
       readingTime="6 min"
+      related={[
+        { label: "Motiver un adolescent (12-16 ans)", to: "/guides/defis-pour-adolescents" },
+        { label: "Les intelligences multiples de Gardner", to: "/guides/intelligences-multiples-gardner" },
+        { label: "L'IA pour aider son enfant à apprendre", to: "/guides/ia-apprentissage-enfant" },
+      ]}
     >
       <img
         src="/guides/og-orientation.jpg"

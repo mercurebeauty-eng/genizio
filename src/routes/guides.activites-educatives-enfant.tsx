@@ -139,7 +139,8 @@ function Guide() {
       related={[
         { label: "Haut potentiel : les vrais signes", to: "/guides/potentiel-haut-potentiel-enfant" },
         { label: "Mon enfant ne tient pas en place", to: "/guides/enfant-agite-concentration" },
-        { label: "Quels défis pour un adolescent de 12 à 16 ans ?", to: "/guides/defis-pour-adolescents" },
+        { label: "Motiver un adolescent (12-16 ans)", to: "/guides/defis-pour-adolescents" },
+        { label: "Activités manuelles (4-12 ans)", to: "/guides/activites-manuelles-enfant" },
       ]}
     >
       <img

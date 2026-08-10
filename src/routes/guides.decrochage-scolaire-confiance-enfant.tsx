@@ -89,7 +89,9 @@ function Guide() {
       related={[
         { label: "Agitation et concentration : comprendre avant de s'inquiéter", to: "/guides/enfant-agite-concentration" },
         { label: "Révéler le potentiel d'un enfant en Afrique francophone", to: "/guides/education-enfants-afrique-francophone" },
-        { label: "Quels défis proposer à un adolescent ?", to: "/guides/defis-pour-adolescents" },
+        { label: "Enfant timide : libérer la parole", to: "/guides/timidite-confiance-prise-de-parole" },
+        { label: "Motiver un adolescent (12-16 ans)", to: "/guides/defis-pour-adolescents" },
+        { label: "Aider son enfant à réussir à l'école", to: "/guides/reussite-scolaire-aider-enfant" },
       ]}
     >
       <img

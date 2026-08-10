@@ -15,6 +15,8 @@ Allow: /mentions-legales
 # /rejoindre/* contient les liens d'inscription des campagnes partenaires —
 # ils sont destinés à être partagés par l'organisation à ses familles, pas
 # trouvés par un moteur de recherche.
+# /boutique, /laboratory et /nouveautes sont des pages d'application (hors vitrine) :
+# elles restent explorables mais portent un <meta noindex> — voir leurs routes.
 Disallow: /admin
 Disallow: /organisation
 Disallow: /supervisor
@@ -22,9 +24,6 @@ Disallow: /profiles
 Disallow: /profile
 Disallow: /auth
 Disallow: /rejoindre
-Disallow: /boutique
-Disallow: /laboratory
-Disallow: /nouveautes
 Disallow: /s/
 
 # Robots des moteurs de réponse et des assistants IA.
