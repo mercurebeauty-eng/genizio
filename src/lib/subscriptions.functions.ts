@@ -174,6 +174,30 @@ export async function activateFamilySubscription(
     return end.toISOString();
   };
 
+  // Reçu email (2026-08-09, demande utilisateur) : fire-and-forget, jamais bloquant
+  // pour la réponse de paiement. Idempotent par référence Paystack (consent_events)
+  // — webhook et page de retour peuvent déclencher, un seul email part.
+  const fireSubscriptionEmail = (
+    userId: string | null | undefined,
+    periodEnd: string | null | undefined,
+  ) => {
+    void (async () => {
+      try {
+        const { sendSubscriptionConfirmationEmail } = await import(
+          "@/lib/payment-email.functions"
+        );
+        await sendSubscriptionConfirmationEmail(supabaseAdmin, {
+          userId,
+          reference: params.reference,
+          priceXof: params.priceXof,
+          periodEnd,
+        });
+      } catch (err) {
+        console.error("Non-fatal: envoi de l'email d'abonnement a échoué", err);
+      }
+    })();
+  };
+
   if (!sub) {
     // Abonnement créé en dehors de notre checkout (page de gestion Paystack, etc.) : on
     // recrée la ligne depuis la charge réussie si on connaît l'utilisateur.
@@ -191,6 +215,7 @@ export async function activateFamilySubscription(
       current_period_end: plusOneMonth(paidAt),
       started_at: now.toISOString(),
     });
+    fireSubscriptionEmail(params.userId, plusOneMonth(paidAt));
     return;
   }
 
@@ -246,6 +271,8 @@ export async function activateFamilySubscription(
       updated_at: now.toISOString(),
     })
     .eq("id", sub.id);
+
+  fireSubscriptionEmail(sub.user_id ?? params.userId, nextPeriodEnd);
 }
 
 // ── Statut de l'abonnement famille (page Paramètres) ───────────────────────────

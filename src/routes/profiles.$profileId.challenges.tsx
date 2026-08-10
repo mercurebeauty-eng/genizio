@@ -20,12 +20,12 @@ import {
   Play,
   Check,
   X,
-  MessageCircle,
+  XCircle,
+  Eraser,
   Beaker,
   Trophy,
   BookOpen,
   Lock,
-  Phone,
   Globe,
 } from "lucide-react";
 import { getChildAccessStatusFn, type ChildAccessStatus } from "@/lib/child-access";
@@ -63,19 +63,25 @@ import {
   recommendChallengesForChild,
   type RecommendedChallengeResult,
 } from "@/lib/recommendations.functions";
-import { createOrder } from "@/lib/products.functions";
+import { initializeOrderPayment } from "@/lib/payments.functions";
 import { NayaAvatar } from "@/components/NayaAvatar";
 import { TalentRadarChart } from "@/components/TalentRadarChart";
 import { StepAccordion } from "@/components/challenges/StepAccordion";
 import { ObservationPrompts } from "@/components/challenges/ObservationPrompts";
 import { OutcomeChat } from "@/components/challenges/OutcomeChat";
 import { KitSuggestion } from "@/components/challenges/KitSuggestion";
+import { RenewChildAccessButton } from "@/components/settings/RenewChildAccessButton";
 import { DifficultyBadge } from "@/components/challenges/DifficultyBadge";
 import { MarkdownContent } from "@/components/ui/markdown-content";
 import {
   ChallengeDeleteDialog,
   type ChallengeDeletePayload,
 } from "@/components/challenges/ChallengeDeleteDialog";
+import {
+  ChallengeNotCompletedDialog,
+  NOT_COMPLETED_CHIP_LABELS,
+  type NotCompletedPayload,
+} from "@/components/challenges/ChallengeNotCompletedDialog";
 import { AppHeader } from "@/components/AppHeader";
 import { AppTabBar } from "@/components/AppTabBar";
 import { GenizioLoader } from "@/components/GenizioLoader";
@@ -130,6 +136,7 @@ type Challenge = {
   notes: string | null;
   completed_at: string | null;
   not_completed_reason?: string | null;
+  not_completed_reason_chip?: string | null;
   pedagogical_context?: string | null;
   target_intelligences?: string[] | null;
   trait_subform?: string | null;
@@ -278,6 +285,13 @@ function ChallengesPage() {
   // → chips de raison en 1 tap (le signal alimente le Loup).
   const [deleteDialog, setDeleteDialog] = useState<Challenge | null>(null);
   const [deletingChallenge, setDeletingChallenge] = useState(false);
+  // Reframe abandon : dialog chips de raison, la note de journal du parent part
+  // comme reason libre — { challenge, reason } capturés à l'ouverture du dialog.
+  const [notCompletedDialog, setNotCompletedDialog] = useState<{
+    challenge: Challenge;
+    reason: string;
+  } | null>(null);
+  const [submittingNotCompleted, setSubmittingNotCompleted] = useState(false);
 
   const generate = useServerFn(generateChallenges);
   const update = useServerFn(updateChallenge);
@@ -288,7 +302,7 @@ function ChallengesPage() {
   const generateAcademicHomework = useServerFn(generateAcademicHomeworkChallenge);
   const getAcademicGaps = useServerFn(getAcademicGapsForChild);
   const assignSingle = useServerFn(assignTemplateChallenge);
-  const createOrderFn = useServerFn(createOrder);
+  const initializeOrderPaymentFn = useServerFn(initializeOrderPayment);
 
   // Gate UI "accès mensuel expiré" (décision 2026-08-05) : la génération de NOUVEAUX défis
   // est bloquée côté client ET côté serveur (assertChildAccessActive) ; le portfolio,
@@ -436,15 +450,6 @@ function ChallengesPage() {
   const handleOrderKit = async () => {
     if (!assignedChallengeForKit || !child) return;
     setOrderingKit(true);
-    const total = assignedChallengeForKit.products.reduce((sum, p) => sum + p.price_xof, 0);
-    const whatsappNumber = import.meta.env.VITE_WHATSAPP_NUMBER as string | undefined;
-    const message = `Bonjour ! Je souhaite commander le kit pour le défi "${assignedChallengeForKit.title}" de ${child.name} :\n${assignedChallengeForKit.products
-      .map((p) => `- ${p.name} (${p.price_xof.toLocaleString("fr-FR")} FCFA)`)
-      .join("\n")}\nTotal : ${total.toLocaleString("fr-FR")} FCFA`;
-    const waUrl = whatsappNumber
-      ? `https://wa.me/${whatsappNumber}?text=${encodeURIComponent(message)}`
-      : null;
-
     try {
       const orderItems = assignedChallengeForKit.products.map((p) => ({
         id: p.id,
@@ -452,20 +457,22 @@ function ChallengesPage() {
         price_xof: p.price_xof,
       }));
 
-      await createOrderFn({
+      // Paiement en ligne Paystack : le serveur recrée la commande à partir du
+      // catalogue, initialise la transaction et on redirige vers le checkout hébergé
+      // (même mécanique que la boutique / KitSuggestion) — fini la relance WhatsApp.
+      const callbackUrl = `${window.location.origin}/paiement-retour`;
+      const { authorizationUrl } = await initializeOrderPaymentFn({
         data: {
           child_id: profileId,
           challenge_id: assignedChallengeForKit.id,
-          total_price_xof: total,
           items: orderItems,
           delivery_notes: `Commande post-Labo (Challenges Page) pour le défi: ${assignedChallengeForKit.title}`,
+          callbackUrl,
         },
       });
 
-      toast.success("Commande enregistrée ! Ouverture de WhatsApp...");
-      if (waUrl) {
-        window.open(waUrl, "_blank", "noopener,noreferrer");
-      }
+      toast.success("Redirection vers le paiement sécurisé Paystack…");
+      window.location.href = authorizationUrl;
       setAssignedChallengeForKit(null);
     } catch (err) {
       console.error(err);
@@ -642,8 +649,12 @@ function ChallengesPage() {
   // Étape 2 — "un vrai statut non réussi" (brainstorm produit, 2026-08-02) : chemin
   // séparé de setStatus, qui ne donne jamais de points/XP/badge — juste un constat honnête,
   // avec la raison du parent, pour nourrir la compréhension de l'enfant plutôt que le noter.
-  const markChallengeNotCompleted = async (id: string, reason: string) => {
+  const handleNotCompletedConfirm = async (payload: NotCompletedPayload) => {
+    if (!notCompletedDialog) return;
+    const { challenge, reason } = notCompletedDialog;
     const previous = challenges;
+    const finalReason = reason.trim() || "Sans raison précisée";
+    setSubmittingNotCompleted(true);
     // Correctif (2026-08-05) : même motif que setStatus — la mise à jour optimiste retire la
     // carte de la vue filtrée "À faire"/"En cours" avant la réponse serveur. On suit le filtre
     // sur "Non réussi" pour garder la carte visible dans son nouvel état.
@@ -652,15 +663,32 @@ function ChallengesPage() {
     }
     setChallenges((prev) =>
       prev.map((c) =>
-        c.id === id ? { ...c, status: "not_completed", not_completed_reason: reason } : c,
+        c.id === challenge.id
+          ? {
+              ...c,
+              status: "not_completed" as const,
+              not_completed_reason: finalReason,
+              not_completed_reason_chip: payload.reasonChip ?? null,
+            }
+          : c,
       ),
     );
     try {
-      await markNotCompleted({ data: { id, reason } });
+      await markNotCompleted({
+        data: { id: challenge.id, reason: finalReason, reasonChip: payload.reasonChip },
+      });
+      setNotCompletedDialog(null);
+      toast.success("C'est noté. Chaque défi est une étape — Naya prépare une mission plus adaptée.");
     } catch (e) {
       setChallenges(previous);
       toast.error(e instanceof Error ? e.message : "Erreur lors de l'enregistrement.");
+    } finally {
+      setSubmittingNotCompleted(false);
     }
+  };
+
+  const openNotCompletedDialog = (challenge: Challenge, reason: string) => {
+    setNotCompletedDialog({ challenge, reason });
   };
 
   const setProgress = async (id: string, progress: number) => {
@@ -820,17 +848,10 @@ function ChallengesPage() {
                   <strong>{formatXof(accessState.renewalAmountXof)}/mois</strong>.
                 </p>
               </div>
-              <a
-                href={`https://wa.me/${import.meta.env.VITE_WHATSAPP_NUMBER || "33606433148"}?text=${encodeURIComponent(
-                  `Bonjour, l'accès Génizio de ${child.name} est expiré. Je souhaite renouveler (${formatXof(accessState.renewalAmountXof)}/mois).`,
-                )}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="shrink-0 inline-flex items-center gap-1.5 rounded-xl bg-[#25D366] px-3 py-2 text-[11px] font-bold text-white shadow-sm hover:brightness-95 transition-all"
-              >
-                <Phone className="size-3.5" />
-                Renouveler via WhatsApp
-              </a>
+              <RenewChildAccessButton
+                childId={profileId}
+                monthlyPriceXof={accessState.renewalAmountXof}
+              />
             </div>
           )}
 
@@ -853,17 +874,10 @@ function ChallengesPage() {
                     .
                   </p>
                 </div>
-                <a
-                  href={`https://wa.me/${import.meta.env.VITE_WHATSAPP_NUMBER || "33606433148"}?text=${encodeURIComponent(
-                    `Bonjour, l'accès Génizio de ${child.name} se termine bientôt (${new Date(accessState.status.endsAt).toLocaleDateString("fr-FR")}). Je souhaite renouveler (${formatXof(accessState.renewalAmountXof)}/mois).`,
-                  )}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="shrink-0 inline-flex items-center gap-1.5 rounded-xl bg-[#25D366] px-3 py-2 text-[11px] font-bold text-white shadow-sm hover:brightness-95 transition-all"
-                >
-                  <Phone className="size-3.5" />
-                  Renouveler via WhatsApp
-                </a>
+                <RenewChildAccessButton
+                  childId={profileId}
+                  monthlyPriceXof={accessState.renewalAmountXof}
+                />
               </div>
             )}
 
@@ -1469,7 +1483,7 @@ function ChallengesPage() {
                                 hasKit={hasKit(c.material_tags)}
                                 onToggle={() => setOpenId((v) => (v === c.id ? null : c.id))}
                                 onStatus={(s) => setStatus(c.id, s)}
-                                onNotCompleted={(reason) => markChallengeNotCompleted(c.id, reason)}
+                                onNotCompleted={(reason) => openNotCompletedDialog(c, reason)}
                                 onProgress={(p) => setProgress(c.id, p)}
                                 onNotes={(n) => saveNotes(c.id, n)}
                                 onDelete={() => openDeleteDialog(c.id)}
@@ -1655,10 +1669,10 @@ function ChallengesPage() {
                 {orderingKit ? (
                   <>
                     <Loader2 className="size-4 animate-spin" />
-                    Envoi...
+                    Redirection...
                   </>
                 ) : (
-                  <>Commander le kit</>
+                  <>Commander le kit en ligne</>
                 )}
               </button>
             </div>
@@ -1675,6 +1689,14 @@ function ChallengesPage() {
         deleting={deletingChallenge}
         onClose={() => setDeleteDialog(null)}
         onDelete={handleDeleteChallenge}
+      />
+
+      <ChallengeNotCompletedDialog
+        challenge={notCompletedDialog?.challenge ?? null}
+        open={!!notCompletedDialog}
+        submitting={submittingNotCompleted}
+        onClose={() => setNotCompletedDialog(null)}
+        onConfirm={handleNotCompletedConfirm}
       />
     </div>
   );
@@ -1748,6 +1770,19 @@ function ChallengeCard({
   const [notesDraft, setNotesDraft] = useState(c.notes ?? "");
   const [savedFlash, setSavedFlash] = useState(false);
   const [isSavingNotes, setIsSavingNotes] = useState(false);
+
+  // Vider le journal (2026-08-09) : contrairement à "Enregistrer les notes" (bloqué
+  // si vide, pour ne pas sauvegarder du vide par erreur), ceci est une action
+  // EXPLICITE d'effacement — elle persiste le champ vide côté serveur.
+  const clearNotes = async () => {
+    setNotesDraft("");
+    try {
+      await onNotes("");
+      toast.success("Journal vidé.");
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Impossible de vider le journal.");
+    }
+  };
 
   if (!open) {
     // Unexpanded state: A clean compact card that feels like the prototype
@@ -1944,20 +1979,16 @@ function ChallengeCard({
             // n'avait aucun moyen de le signaler non réussi (matériel manquant, pas
             // adapté...) avant même d'avoir cliqué "Commencer". Extrait ici pour être
             // proposé dans les deux statuts sans dupliquer la logique.
+            // Reframe (2026-08-09) : l'abandon devient un dialogue assumé — bouton
+            // rose visible (plus de gris 50%), le chip de raison est collecté dans le
+            // dialog. La note de journal (si écrite) part comme contexte libre.
             const notCompletedButton = (
               <button
-                onClick={() => {
-                  if (!notesDraft.trim()) {
-                    toast.error(
-                      "Écris d'abord ce qui s'est passé dans le journal d'apprentissage ci-dessous, pour que Naya comprenne pourquoi.",
-                    );
-                    return;
-                  }
-                  onNotCompleted(notesDraft.trim());
-                }}
-                className="w-full flex items-center justify-center bg-transparent text-ink/50 font-bold h-[40px] text-[13px] rounded-full cursor-pointer hover:text-rose-600 transition-all"
+                onClick={() => onNotCompleted(notesDraft.trim())}
+                className="w-full flex items-center justify-center gap-2 bg-transparent border-2 border-rose-200 text-rose-600 font-bold h-[44px] text-[14px] rounded-full cursor-pointer hover:bg-rose-50 hover:border-rose-400 transition-all"
               >
-                Le défi n'a pas pu être fait
+                <XCircle className="size-4" />
+                Ce défi n'a pas pu être fait
               </button>
             );
 
@@ -1995,15 +2026,26 @@ function ChallengeCard({
             return null;
           })()}
           {c.status === "not_completed" ? (
-            <div className="flex flex-col items-center justify-center gap-1 bg-rose-50 text-rose-700 font-bold py-3 text-[16px] rounded-2xl px-4">
+            <div className="flex flex-col items-center justify-center gap-1.5 bg-rose-50 text-rose-700 font-bold py-3 text-[16px] rounded-2xl px-4">
               <span className="flex items-center gap-2">
                 <X className="size-5" /> Défi non réussi
               </span>
-              {c.not_completed_reason && (
-                <span className="text-[12px] font-medium text-rose-700/80 text-center">
-                  {c.not_completed_reason}
-                </span>
-              )}
+              {c.not_completed_reason_chip &&
+                NOT_COMPLETED_CHIP_LABELS[c.not_completed_reason_chip] && (
+                  <span className="text-[12px] font-bold text-rose-700 bg-rose-100 rounded-full px-3 py-1">
+                    {NOT_COMPLETED_CHIP_LABELS[c.not_completed_reason_chip]}
+                  </span>
+                )}
+              {c.not_completed_reason &&
+                c.not_completed_reason !== "Sans raison précisée" && (
+                  <span className="text-[12px] font-medium text-rose-700/80 text-center">
+                    {c.not_completed_reason}
+                  </span>
+                )}
+              <span className="text-[12px] font-semibold text-rose-800/90 text-center leading-relaxed">
+                Naya l'a bien noté. Chaque défi est une étape — elle prépare une mission plus
+                adaptée. 💜
+              </span>
             </div>
           ) : c.status === "completed" ? (
             <div className="flex items-center justify-center gap-2 bg-emerald-50 text-emerald-700 font-bold h-[56px] text-[16px] rounded-full">
@@ -2059,9 +2101,17 @@ function ChallengeCard({
             placeholder="Écrivez ce que l'enfant a fait, ses réussites et difficultés..."
             className="w-full rounded-[1rem] border border-border bg-white px-4 py-3 text-[14px] outline-none focus:ring-2 focus:ring-brand transition-all resize-none shadow-sm"
           />
-          <div className="flex items-center justify-between">
+          <div className="flex flex-wrap items-center gap-2">
             <button
               onClick={async () => {
+                // 2026-08-09 : un journal vide n'est pas une note — ne pas afficher
+                // le faux "✓ Enregistré" (constat utilisateur) et ne rien sauvegarder.
+                if (!notesDraft.trim()) {
+                  toast.error(
+                    "Écrivez d'abord ce qui s'est passé dans le journal d'apprentissage — même quelques mots aident Naya à comprendre.",
+                  );
+                  return;
+                }
                 setIsSavingNotes(true);
                 try {
                   await onNotes(notesDraft);
@@ -2077,26 +2127,29 @@ function ChallengeCard({
               {isSavingNotes ? <Loader2 className="size-4 animate-spin" /> : null}
               Enregistrer les notes
             </button>
+            {notesDraft.trim() && (
+              <button
+                onClick={clearNotes}
+                disabled={isSavingNotes}
+                className="inline-flex items-center gap-1.5 rounded-full border border-ink/15 bg-transparent px-4 py-2.5 text-[12px] font-bold text-ink/50 hover:text-rose-600 hover:border-rose-300 transition-all cursor-pointer disabled:opacity-60"
+              >
+                <Eraser className="size-3.5" />
+                Vider
+              </button>
+            )}
             {savedFlash && (
-              <span className="text-[13px] text-emerald-600 font-bold">✓ Enregistré</span>
+              <span className="ml-auto text-[13px] text-emerald-600 font-bold">✓ Enregistré</span>
             )}
           </div>
 
           {c.status === "in_progress" && (
             <div className="flex justify-start mt-4">
               <button
-                onClick={() => {
-                  if (!notesDraft.trim()) {
-                    toast.error(
-                      "Écris d'abord ce qui s'est passé dans le journal d'apprentissage, pour que Naya comprenne pourquoi.",
-                    );
-                    return;
-                  }
-                  onNotCompleted(notesDraft.trim());
-                }}
-                className="inline-flex items-center gap-1.5 bg-transparent text-ink/50 font-bold text-[13px] hover:text-rose-600 transition-all cursor-pointer"
+                onClick={() => onNotCompleted(notesDraft.trim())}
+                className="inline-flex items-center gap-2 rounded-full border-2 border-rose-200 bg-white px-4 py-2 text-[13px] font-bold text-rose-600 hover:bg-rose-50 hover:border-rose-400 transition-all cursor-pointer"
               >
-                Le défi n'a pas pu être fait
+                <XCircle className="size-4" />
+                Ce défi n'a pas pu être fait
               </button>
             </div>
           )}

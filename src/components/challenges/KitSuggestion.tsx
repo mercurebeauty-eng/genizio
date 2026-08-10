@@ -1,8 +1,8 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { ShoppingBag, Loader2 } from "lucide-react";
+import { ShoppingBag, CreditCard, Loader2 } from "lucide-react";
 import { useServerFn } from "@tanstack/react-start";
-import { createOrder } from "@/lib/products.functions";
+import { initializeOrderPayment } from "@/lib/payments.functions";
 import { toast } from "sonner";
 
 type Product = { id: string; name: string; price_xof: number };
@@ -25,7 +25,7 @@ export function KitSuggestion({
   const [ordering, setOrdering] = useState(false);
   const tagsKey = (materialTags ?? []).join(",");
 
-  const createOrderFn = useServerFn(createOrder);
+  const initializeOrderPaymentFn = useServerFn(initializeOrderPayment);
 
   useEffect(() => {
     if (!tagsKey) {
@@ -54,38 +54,33 @@ export function KitSuggestion({
   if (loading || products.length === 0) return null;
 
   const total = products.reduce((sum, p) => sum + p.price_xof, 0);
-  const whatsappNumber = import.meta.env.VITE_WHATSAPP_NUMBER as string | undefined;
-  const message = `Bonjour ! Je souhaite commander le kit pour le défi "${challengeTitle}" de ${childName} :\n${products
-    .map((p) => `- ${p.name} (${p.price_xof.toLocaleString("fr-FR")} FCFA)`)
-    .join("\n")}\nTotal : ${total.toLocaleString("fr-FR")} FCFA`;
-  const waUrl = whatsappNumber
-    ? `https://wa.me/${whatsappNumber}?text=${encodeURIComponent(message)}`
-    : null;
 
+  // Commande en ligne Paystack : le serveur recrée la commande à partir du catalogue,
+  // initialise la transaction et on redirige vers la page hébergée Paystack (même
+  // mécanique que la boutique). La confirmation (webhook ou page de retour) passe la
+  // commande en `confirmed` — fini la relance WhatsApp manuelle.
   const handleOrder = async () => {
     setOrdering(true);
     try {
+      const callbackUrl = `${window.location.origin}/paiement-retour`;
       const orderItems = products.map((p) => ({
         id: p.id,
         name: p.name,
         price_xof: p.price_xof,
       }));
 
-      await createOrderFn({
+      const { authorizationUrl } = await initializeOrderPaymentFn({
         data: {
           child_id: childId,
           challenge_id: challengeId || null,
-          total_price_xof: total,
           items: orderItems,
-          delivery_notes: `Commande pour le défi: ${challengeTitle}`,
+          delivery_notes: `Commande pour le défi: ${challengeTitle} (${childName})`,
+          callbackUrl,
         },
       });
 
-      toast.success("Commande enregistrée ! Ouverture de WhatsApp...");
-
-      if (waUrl) {
-        window.open(waUrl, "_blank", "noopener,noreferrer");
-      }
+      toast.success("Redirection vers le paiement sécurisé Paystack…");
+      window.location.href = authorizationUrl;
     } catch (err) {
       console.error(err);
       toast.error("Erreur lors de la création de la commande.");
@@ -117,15 +112,18 @@ export function KitSuggestion({
       <button
         onClick={handleOrder}
         disabled={ordering}
-        className="press-leaf w-full flex items-center justify-center gap-2 rounded-xl bg-leaf px-4 py-2.5 text-sm font-bold text-white transition-all cursor-pointer disabled:opacity-50"
+        className="press-leaf w-full flex items-center justify-center gap-2 rounded-xl bg-emerald-600 px-4 py-2.5 text-sm font-bold text-white transition-all cursor-pointer disabled:opacity-50"
       >
         {ordering ? (
           <>
             <Loader2 className="size-4 animate-spin" />
-            Enregistrement...
+            Redirection...
           </>
         ) : (
-          <>Commander via WhatsApp</>
+          <>
+            <CreditCard className="size-4" />
+            Passer la commande directement
+          </>
         )}
       </button>
     </div>

@@ -140,6 +140,7 @@ export type Database = {
           not_completed_at: string | null
           not_completed_cause: string | null
           not_completed_reason: string | null
+          not_completed_reason_chip: string | null
           notes: string | null
           pedagogical_context: string | null
           progress: number
@@ -184,6 +185,7 @@ export type Database = {
           not_completed_at?: string | null
           not_completed_cause?: string | null
           not_completed_reason?: string | null
+          not_completed_reason_chip?: string | null
           notes?: string | null
           pedagogical_context?: string | null
           progress?: number
@@ -228,6 +230,7 @@ export type Database = {
           not_completed_at?: string | null
           not_completed_cause?: string | null
           not_completed_reason?: string | null
+          not_completed_reason_chip?: string | null
           notes?: string | null
           pedagogical_context?: string | null
           progress?: number

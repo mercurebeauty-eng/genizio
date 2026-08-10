@@ -24,6 +24,7 @@ function GuildPage() {
 
   const [child, setChild] = useState<Child | null>(null);
   const [fetching, setFetching] = useState(true);
+  const [completedCount, setCompletedCount] = useState(0);
   const [community, setCommunity] = useState<Awaited<ReturnType<typeof getGuildCommunity>> | null>(
     null,
   );
@@ -39,16 +40,23 @@ function GuildPage() {
   useEffect(() => {
     if (!session) return;
     setFetching(true);
-    supabase
-      .from("child_profiles")
-      .select("id, name, age, talents")
-      .eq("id", profileId)
-      .eq("user_id", session.user.id)
-      .maybeSingle()
-      .then(({ data }) => {
-        setChild((data as Child) ?? null);
-        setFetching(false);
-      });
+    Promise.all([
+      supabase
+        .from("child_profiles")
+        .select("id, name, age, talents")
+        .eq("id", profileId)
+        .eq("user_id", session.user.id)
+        .maybeSingle(),
+      supabase
+        .from("challenges")
+        .select("id", { count: "exact", head: true })
+        .eq("child_id", profileId)
+        .eq("status", "completed"),
+    ]).then(([childRes, countRes]) => {
+      setChild((childRes.data as Child) ?? null);
+      setCompletedCount(countRes.count ?? 0);
+      setFetching(false);
+    });
   }, [session, profileId]);
 
   useEffect(() => {
@@ -115,6 +123,15 @@ function GuildPage() {
             <p className={`mt-3 text-sm font-medium opacity-90 ${guild.color}`}>
               {guild.description}
             </p>
+            {/* Guilde provisoire (refonte 2026-08-09) : aucun défi complété → la guilde
+                vient des intérêts déclarés à la création (seed). Hypothèse assumée, jamais
+                présentée comme un verdict — elle s'affine avec les validations réelles. */}
+            {completedCount === 0 && guild.key !== "aucune" && (
+              <p className={`mt-2 text-xs italic opacity-80 ${guild.color}`}>
+                Cette guilde est basée sur les intérêts déclarés — elle s'affinera au fil des
+                défis réalisés.
+              </p>
+            )}
             {guild.talentKeys.length > 0 && (
               <div className="mt-4 flex flex-wrap items-center gap-2">
                 <span className={`text-xs font-extrabold opacity-75 ${guild.color}`}>

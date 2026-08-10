@@ -1,0 +1,3 @@
+# Fichier généré par TanStack Router à chaque build : force les fins de ligne LF
+# pour que Windows (CRLF) ne le marque plus comme modifié à tort dans git status.
+src/routeTree.gen.ts text eol=lf

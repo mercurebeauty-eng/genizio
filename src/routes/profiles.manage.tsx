@@ -11,7 +11,7 @@ import { ProfileDialog } from "@/components/profiles/ProfileDialog";
 import { GenizioLoader } from "@/components/GenizioLoader";
 import type { ChildProfile } from "@/components/profiles/shared";
 import { confirmDialog } from "@/components/ui/confirm-dialog";
-import { ArrowLeft, Lock, Phone, CreditCard, Loader2, Sparkles } from "lucide-react";
+import { ArrowLeft, Lock, CreditCard, Loader2, Sparkles } from "lucide-react";
 import { toast } from "sonner";
 import { computeChildCreationLimit } from "@/lib/child-access";
 import { initializeUpgradePayment } from "@/lib/payments.functions";
@@ -42,7 +42,7 @@ function ManageProfilesPage() {
   const { covered: familyCovered } = useFamilyCoverage();
 
   // Décision 2026-08-05 : l'accès payant est MENSUEL (5 000 F/mois de bienvenue →
-  // 15 000 F/mois). Le parent choisit une durée (1/3/6 mois) ; le montant WhatsApp =
+  // 15 000 F/mois). Le parent choisit une durée (1/3/6 mois) ; le montant =
   // prix mensuel × mois. L'admin prolonge via extendChildAccessAdmin après le virement.
   const [upgradeMonths, setUpgradeMonths] = useState(3);
   const upgradeTotal = slotPrice.priceXof * upgradeMonths;
@@ -64,7 +64,7 @@ function ManageProfilesPage() {
       window.location.href = authorizationUrl;
     } catch (err) {
       console.error(err);
-      toast.error("Impossible d'initier le paiement. Réessayez ou passez par WhatsApp.");
+      toast.error("Impossible d'initier le paiement. Réessayez.");
     } finally {
       setPayingUpgrade(false);
     }
@@ -300,8 +300,8 @@ function ManageProfilesPage() {
                 ))}
               </div>
               <p className="mt-2 text-xs text-ink/60 leading-relaxed">
-                Accès débloqué automatiquement après le paiement en ligne, ou manuellement après
-                confirmation WhatsApp, puis renouvelable chaque mois.
+                Accès débloqué automatiquement après le paiement en ligne, puis renouvelable
+                chaque mois.
               </p>
             </div>
             <button
@@ -321,17 +321,6 @@ function ManageProfilesPage() {
                 </>
               )}
             </button>
-            <a
-              href={`https://wa.me/${import.meta.env.VITE_WHATSAPP_NUMBER || "33606433148"}?text=${encodeURIComponent(
-                `Bonjour, je souhaite débloquer un profil supplémentaire sur Génizio.\nCompte : ${session?.user?.email}\nDurée : ${upgradeMonths} mois\nMontant : ${formatXof(upgradeTotal)}`,
-              )}`}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="mt-3 flex w-full items-center justify-center gap-2 rounded-2xl border border-ink/10 bg-white py-3 text-xs font-bold text-ink/70 hover:bg-surface transition-all"
-            >
-              <Phone className="size-4 fill-ink/50" />
-              ou contacter l'administrateur sur WhatsApp
-            </a>
             <button
               onClick={() => setShowUpgradeModal(false)}
               className="mt-3 w-full py-2 text-center text-xs font-bold text-ink/60 hover:text-ink transition-all"
