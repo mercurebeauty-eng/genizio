@@ -39,6 +39,7 @@ import { AdminSubscriptionsTab } from "@/components/admin/AdminSubscriptionsTab"
 import { AdminCampaignsTab } from "@/components/admin/AdminCampaignsTab";
 import { AdminSupervisorsTab } from "@/components/admin/AdminSupervisorsTab";
 import { AdminProductsTab } from "@/components/admin/AdminProductsTab";
+import { AdminProfilesTab } from "@/components/admin/AdminProfilesTab";
 import { Users, ShoppingBag, Brain, Award, Sparkles } from "lucide-react";
 import { toast } from "sonner";
 import { GenizioLoader } from "@/components/GenizioLoader";
@@ -325,6 +326,7 @@ function AdminIndexPage() {
         {activeTab === "b2b" && <AdminCampaignsTab />}
         {activeTab === "supervisors" && <AdminSupervisorsTab />}
         {activeTab === "products" && <AdminProductsTab />}
+        {activeTab === "profiles" && <AdminProfilesTab />}
       </main>
     </div>
   );

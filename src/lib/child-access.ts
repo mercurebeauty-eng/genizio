@@ -9,9 +9,10 @@
 //     puis 15 000 FCFA/mois (pricing.ts). L'accès est porté par child_access_periods
 //     (table), la période la plus récente fait foi.
 //   • À expiration : génération de défis bloquée (gate), portfolio/acquis accessibles.
-//     Doit rester cohérent avec check_child_profile_quota() (migration
-//     20260805100000 : création autorisée jusqu'à plancher + extra + 1 — l'enfant
-//     mensuel "en cours de première mise en paiement").
+//     Doit rester cohérent avec check_child_profile_quota() (migration 20260809120000 :
+//     création autorisée jusqu'à plancher + extra, couverture famille → 5, plafond 5).
+//     N'ajoute JAMAIS de marge arbitraire par-dessus le trigger : l'UI promet au
+//     parent exactement ce que la base acceptera (chantier « porte d'entrée », 2026-08-12).
 
 import { z } from "zod";
 import { createServerFn } from "@tanstack/react-start";
@@ -26,10 +27,10 @@ export type ChildAccessStatus =
   | { kind: "monthly"; endsAt: string; daysLeft: number } // période payée active
   | { kind: "expired"; endsAt: string | null }; // payant mais période écoulée (ou jamais payée)
 
-// Limite de CRÉATION de profils côté UI : plancher + slots + 1 (le profil mensuel en
-// cours de première mise en paiement), borné au plafond de 5. Un compte couvert (abonnement
-// famille actif ou crédit de parrainage valide) peut créer jusqu'au plafond, comme le
-// trigger check_child_profile_quota (migration 20260809120000).
+// Limite de CRÉATION de profils côté UI : plancher + slots achetés, borné au plafond de 5
+// (aucun « +1 » : le trigger check_child_profile_quota — migration 20260809120000 — n'en
+// accorde pas, l'ajouter ici promettait un profil que la base rejetait). Un compte couvert
+// (abonnement famille actif ou crédit de parrainage valide) peut créer jusqu'au plafond.
 export function computeChildCreationLimit(
   accountCreatedAt: string | null | undefined,
   extraSlots: number | null | undefined,
@@ -37,7 +38,7 @@ export function computeChildCreationLimit(
 ): number {
   if (familyCovered) return MAX_CHILDREN_PER_ACCOUNT;
   const floor = isGrandfatheredAccount(accountCreatedAt) ? 5 : 1;
-  return Math.min(floor + (extraSlots ?? 0) + 1, MAX_CHILDREN_PER_ACCOUNT);
+  return Math.min(floor + (extraSlots ?? 0), MAX_CHILDREN_PER_ACCOUNT);
 }
 
 // Résolveur pur (testable sans base) : position 1-based de l'enfant parmi les profils

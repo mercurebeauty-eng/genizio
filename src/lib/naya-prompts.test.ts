@@ -81,7 +81,8 @@ describe("buildChallengePrompt — contrat (C1.3)", () => {
     domainsText: "sciences, mathematiques",
     ignoredDomains: ["langage"],
     existingTitles: ["Défi déjà vu"],
-    seasonInstruction: '- THÉMATIQUE DE SAISON ("Safari") : scénarise.',
+    timePressureNote: "- Durée : donne une durée estimée honnête (le chrono du défi se base dessus).",
+    profileContextNote: "- Niveau scolaire déclaré : CM2.",
   };
 
   it("injecte le profil, les observations et la progression", () => {
@@ -97,6 +98,8 @@ describe("buildChallengePrompt — contrat (C1.3)", () => {
     expect(p).toContain("artisanale et spatiale");
     expect(p).toContain(input.domainsText);
     expect(p).toContain("Défi déjà vu");
+    expect(p).toContain(input.timePressureNote);
+    expect(p).toContain(input.profileContextNote);
   });
 
   it("couvre toutes les rubriques partagées (couverture des rubriques)", () => {
@@ -119,8 +122,9 @@ describe("buildChallengePrompt — contrat (C1.3)", () => {
     }
   });
 
-  it("scénarise la saison et gère la note des domaines ignorés", () => {
-    expect(buildChallengePrompt(input)).toContain(input.seasonInstruction);
+  // Saison retirée des prompts (2026-08-12, chantier « porte d'entrée ») : la saison
+  // est une étiquette, elle ne scénarise plus les défis — aucun biais thématique.
+  it("gère la note des domaines ignorés", () => {
     expect(buildChallengePrompt(input)).toContain("sans jamais les commencer");
 
     const sansIgnorés = buildChallengePrompt({ ...input, ignoredDomains: [] });
@@ -148,9 +152,10 @@ describe("buildSingleChallengePrompt — contrat (C1.3)", () => {
     homeMaterialsLine: "- Matériaux/objets disponibles à la maison : bouteilles",
     progressionInstruction: "PROGRESSION MESURÉE : aucune mesure.",
     domainInstruction: '3. Tu DOIS générer un défi spécifiquement dans le domaine : "corporelle".',
-    seasonInstruction: "",
     materialScopeInstruction: "5. MATÉRIEL (MIXTE) : Libre à toi !",
     homeMaterialsUseLine: "6. UTILISATION DES MATÉRIAUX MENTIONNÉS : Tu DOIS concevoir un défi...",
+    timePressureNote: "- Durée : donne une durée estimée honnête (le chrono du défi se base dessus).",
+    profileContextNote: "- Aspiration(s) déclarée(s) : Menuiserie — HYPOTHÈSE À EXPLORER.",
   };
 
   it("injecte profil, contexte immédiat et instructions conditionnelles", () => {

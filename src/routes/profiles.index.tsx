@@ -280,7 +280,7 @@ function DashboardPage() {
       .select("*")
       .eq("user_id", session.user.id)
       .order("created_at", { ascending: false });
-    const list = (data ?? []) as ChildProfile[];
+    const list = (data ?? []) as unknown as ChildProfile[];
     setProfiles(list);
     // Keep the current selection only if it's still in the refetched list —
     // it may have been deleted elsewhere (another tab, /profiles/manage)
@@ -1020,7 +1020,7 @@ function DashboardPage() {
             {/* Pricing */}
             <div className="mb-6 rounded-2xl border border-ink/10 bg-surface p-5">
               <p className="text-xs font-black uppercase tracking-widest text-ink/60 mb-1">
-                Accès mensuel — profil supplémentaire
+                Profil supplémentaire permanent
               </p>
               <p className="font-display text-balance text-3xl font-black text-ink">
                 {formatXofAmount(upgradeTotal)} <span className="text-lg text-ink/60">FCFA</span>
@@ -1034,7 +1034,7 @@ function DashboardPage() {
                   {formatXof(STANDARD_PRICE_XOF)}/mois
                 </p>
               )}
-              {/* Choix de durée (1 à 6 mois, même barème que le parrainage) */}
+              {/* Montant du paiement unique (1, 3 ou 6 mois au barème mensuel, même grille que le parrainage) */}
               <div className="mt-4 flex gap-2">
                 {[1, 3, 6].map((m) => (
                   <button
@@ -1052,8 +1052,9 @@ function DashboardPage() {
                 ))}
               </div>
               <p className="mt-2 text-xs text-ink/60 leading-relaxed">
-                Accès débloqué automatiquement après le paiement en ligne, puis renouvelable
-                chaque mois.
+                Un profil enfant supplémentaire, débloqué définitivement pour ce compte après
+                le paiement en ligne (paiement unique — le nombre de mois choisit le montant,
+                l'accès ne s'interrompt jamais).
               </p>
             </div>
 

@@ -72,6 +72,7 @@ import { OutcomeChat } from "@/components/challenges/OutcomeChat";
 import { KitSuggestion } from "@/components/challenges/KitSuggestion";
 import { RenewChildAccessButton } from "@/components/settings/RenewChildAccessButton";
 import { DifficultyBadge } from "@/components/challenges/DifficultyBadge";
+import { ChallengeCountdown } from "@/components/challenges/ChallengeCountdown";
 import { MarkdownContent } from "@/components/ui/markdown-content";
 import {
   ChallengeDeleteDialog,
@@ -151,6 +152,8 @@ type Challenge = {
   behavioral_driver?: string | null;
   zpa_level?: number | null;
   academic_secret?: string | null;
+  started_at?: string | null;
+  time_limit_minutes?: number | null;
 };
 
 type Child = {
@@ -1539,8 +1542,15 @@ function ChallengesPage() {
                             <span className="rounded-full bg-brand px-3.5 py-1 text-[11px] font-black uppercase tracking-wider text-white">
                               Mission active : {active.domain}
                             </span>
-                            <span className="text-xs font-bold text-ink/60">
-                              ⏱ {active.duration}
+                            <span className="flex items-center gap-2">
+                              <span className="text-xs font-bold text-ink/60">
+                                ⏱ {active.duration}
+                              </span>
+                              <ChallengeCountdown
+                                challengeId={active.id}
+                                startedAt={active.started_at ?? null}
+                                timeLimitMinutes={active.time_limit_minutes ?? null}
+                              />
                             </span>
                           </div>
                           <div>

@@ -3,8 +3,9 @@ import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { VALID_TALENT_KEYS, TALENT_KEY_LABELS } from "@/lib/talent-buckets";
 import { INTERESTS_BY_TALENT } from "@/components/profiles/shared";
 import { normalizeChildInterests } from "@/lib/interest-migration";
-import { resolveEnrollmentWindow } from "@/lib/seasons.functions";
 import { getChildAccessStatus } from "@/lib/child-access";
+import { formatTimePressureNote, resolveTimeLimitMinutes, type TimePressure } from "@/lib/time-limit";
+import { formatChildProfileContext } from "@/lib/profile-context";
 import { getInterestHypothesesSnapshot, type InterestHypotheses } from "@/lib/interest-confidence";
 import { z } from "zod";
 
@@ -1247,6 +1248,7 @@ export const generateChallenges = createServerFn({ method: "POST" })
       .eq("id", data.childId)
       .eq("user_id", userId)
       .is("access_locked_at", null)
+      .eq("is_active", true)
       .maybeSingle();
     if (childErr || !child) throw new Error("Profil enfant introuvable");
 
@@ -1265,7 +1267,7 @@ export const generateChallenges = createServerFn({ method: "POST" })
     // not "hasn't gotten to it yet this week".
     const STALE_DOMAIN_CUTOFF = new Date(Date.now() - 14 * 24 * 60 * 60 * 1000).toISOString();
 
-    const [{ data: existing }, { data: completedChallenges }, { data: staleChallenges }, progressionTargets, { data: enrollment }] = await Promise.all([
+    const [{ data: existing }, { data: completedChallenges }, { data: staleChallenges }, progressionTargets] = await Promise.all([
       supabase
         .from("challenges")
         .select("title")
@@ -1292,17 +1294,6 @@ export const generateChallenges = createServerFn({ method: "POST" })
         .eq("status", "todo")
         .lt("created_at", STALE_DOMAIN_CUTOFF),
       computeProgressionTargets(supabase, data.childId),
-      // Décision utilisateur (2026-07-26) : la thématique de saison de cet enfant se lit sur
-      // SA propre inscription (+ la saison qu'elle référence), jamais en comparant à "la saison
-      // active du moment" — sinon une rotation globale de saison casserait rétroactivement le
-      // thème narratif de chaque enfant déjà inscrit ailleurs, même encore dans sa fenêtre payée.
-      supabase
-        .from("season_enrollments")
-        .select("id, enrolled_at, campaign_id, seasons(title, theme, duration_months), campaigns(start_date, end_date)")
-        .eq("child_id", data.childId)
-        .order("enrolled_at", { ascending: false })
-        .limit(1)
-        .maybeSingle(),
     ]);
     const existingTitles = (existing ?? []).map((c) => c.title);
     const completedSummary = (completedChallenges ?? [])
@@ -1322,20 +1313,6 @@ export const generateChallenges = createServerFn({ method: "POST" })
 
     const leastExplored = getLeastExploredTalentLabels(child.talents as Record<string, number> | null);
 
-    const enrolledSeason = (enrollment as any)?.seasons as { title: string; theme: string; duration_months: number } | null;
-    let isEnrolledInActiveSeason = false;
-    if (enrollment && enrolledSeason) {
-      const { end } = resolveEnrollmentWindow(
-        enrollment.enrolled_at,
-        enrolledSeason.duration_months,
-        (enrollment as any).campaign_id ? (enrollment as any).campaigns : null
-      );
-      isEnrolledInActiveSeason = new Date() <= end;
-    }
-    const seasonInstruction = isEnrolledInActiveSeason
-      ? `- THÉMATIQUE DE SAISON ("${enrolledSeason!.title}") : Utilise le fil rouge narratif et la métaphore de cette saison ("${enrolledSeason!.theme}") pour scénariser au moins la moitié des défis. Le domaine d'apprentissage ciblé reste la priorité, mais l'habillage narratif donne l'impression à l'enfant d'être le héros de cette thématique.`
-      : "";
-
     // Assemblage délégué au builder pur buildChallengePrompt (chantier 1 « Naya 3.0 ») :
     // le template string vivait ici et pouvait dériver des rubriques partagées — la
     // couverture des rubriques est désormais testée unitairement dans naya-prompts.test.ts.
@@ -1352,7 +1329,8 @@ export const generateChallenges = createServerFn({ method: "POST" })
       domainsText: shuffle(DOMAINS).join(", "),
       ignoredDomains,
       existingTitles,
-      seasonInstruction,
+      timePressureNote: formatTimePressureNote(child.time_pressure as TimePressure | null | undefined),
+      profileContextNote: formatChildProfileContext(child as any),
     });
 
     // Up to 6 full défis in one response, each now carrying the academic
@@ -1432,6 +1410,7 @@ export const updateChallenge = createServerFn({ method: "POST" })
       progress?: number;
       notes?: string | null;
       completed_at?: string | null;
+      time_limit_minutes?: number | null;
     } = {};
     if (data.status === "completed") {
       throw new Error("Un défi ne peut pas être terminé manuellement sans preuve. Utilisez le mode enfant pour soumettre une preuve (photo ou déclarative).");
@@ -1460,12 +1439,33 @@ export const updateChallenge = createServerFn({ method: "POST" })
     // d'où ce pré-check explicite plutôt qu'un .eq() supplémentaire comme pour les autres.
     const { data: existing } = await context.supabase
       .from("challenges")
-      .select("child_id, child_profiles(access_locked_at)")
+      .select("child_id, time_limit_minutes, difficulty, estimated_duration_minutes, child_profiles(access_locked_at, is_active, age, time_pressure)")
       .eq("id", data.id)
       .eq("user_id", context.userId)
       .maybeSingle();
     if ((existing as any)?.child_profiles?.access_locked_at) {
       throw new Error("Ce profil est verrouillé.");
+    }
+    if ((existing as any)?.child_profiles?.is_active === false) {
+      throw new Error("Ce profil est désactivé par l'administrateur.");
+    }
+
+    // Temps adaptatif (2026-08-12) : repli au démarrage — un défi assigné sans
+    // estimation (ex. génération en lot) n'a pas de time_limit_minutes à l'insertion ;
+    // au premier passage en cours, on en calcule un (repli par difficulté × âge ×
+    // pression temporelle) pour que le chrono existe aussi sur ce chemin. `none` → NULL.
+    if (
+      patch.status === "in_progress" &&
+      existing &&
+      !existing.time_limit_minutes &&
+      (existing.child_profiles as any)?.time_pressure !== "none"
+    ) {
+      patch.time_limit_minutes = resolveTimeLimitMinutes({
+        estimatedMinutes: existing.estimated_duration_minutes,
+        age: (existing.child_profiles as any)?.age ?? 10,
+        timePressure: (existing.child_profiles as any)?.time_pressure ?? "standard",
+        difficulty: existing.difficulty,
+      });
     }
 
     // Ownership is enforced by RLS too, but every other mutation in this file
@@ -1480,6 +1480,50 @@ export const updateChallenge = createServerFn({ method: "POST" })
     if (error) throw new Error(error.message);
 
     return row;
+  });
+
+// Temps adaptatif (2026-08-12) : le chrono a expiré → événement TIME_OVER journalisé
+// (append-only, source 'app'). Jamais punitif : l'enfant peut continuer ; ce signal
+// alimente le driver time_awareness du Jumeau Pédagogique (même canal que
+// CHALLENGE_COMPLETED/ABANDONED). Émis UNE fois par défi (idempotent).
+const TimeOverInput = z.object({ challengeId: z.string().uuid() });
+
+export const recordChallengeTimeOver = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .validator((input: unknown) => TimeOverInput.parse(input))
+  .handler(async ({ data, context }) => {
+    const { data: existing } = await context.supabase
+      .from("challenges")
+      .select("id, child_id, user_id, time_limit_minutes, domain, title")
+      .eq("id", data.challengeId)
+      .eq("user_id", context.userId)
+      .maybeSingle();
+    if (!existing) return { ok: true }; // Défi inconnu ou déjà supprimé — idempotent.
+
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: already } = await supabaseAdmin
+      .from("observation_events")
+      .select("id")
+      .eq("child_id", existing.child_id)
+      .eq("type", "TIME_OVER")
+      .eq("payload->>challenge_id", existing.id)
+      .limit(1);
+    if (already && already.length > 0) return { ok: true };
+
+    const { error } = await supabaseAdmin.from("observation_events").insert({
+      child_id: existing.child_id,
+      user_id: context.userId,
+      type: "TIME_OVER",
+      source: "app",
+      payload: {
+        challenge_id: existing.id,
+        domain: existing.domain,
+        title: existing.title,
+        time_limit_minutes: existing.time_limit_minutes,
+      },
+    });
+    if (error) throw new Error(error.message);
+    return { ok: true };
   });
 
 const DeleteChallengeInput = z.object({
@@ -1528,13 +1572,16 @@ export const deleteChallenge = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     const { data: existing } = await context.supabase
       .from("challenges")
-      .select("id, child_id, domain, title, status, created_at, child_profiles(access_locked_at)")
+      .select("id, child_id, domain, title, status, created_at, child_profiles(access_locked_at, is_active)")
       .eq("id", data.id)
       .eq("user_id", context.userId)
       .maybeSingle();
     if (!existing) return { ok: true }; // Déjà supprimé ou inexistant — idempotent.
     if ((existing as any)?.child_profiles?.access_locked_at) {
       throw new Error("Ce profil est verrouillé.");
+    }
+    if ((existing as any)?.child_profiles?.is_active === false) {
+      throw new Error("Ce profil est désactivé par l'administrateur.");
     }
 
     // Soft-delete (Décision #58) : la ligne reste en base (deleted_at) — elle
@@ -1597,6 +1644,7 @@ export const validateChallengeProof = createServerFn({ method: "POST" })
     if (challengeErr || !challenge) throw new Error("Défi introuvable");
     if (challenge.user_id !== userId) throw new Error("Accès refusé.");
     if (challenge.child_profiles?.access_locked_at) throw new Error("Ce profil est verrouillé.");
+    if (challenge.child_profiles?.is_active === false) throw new Error("Ce profil est désactivé par l'administrateur.");
 
     // Étape 1 — preuve visuelle obligatoire (2026-08-02) : refusé avant l'appel IA (pas
     // seulement côté UI, sinon contournable) — aucun coût IA pour une soumission qui ne
@@ -1936,6 +1984,7 @@ export const submitChallengeNotCompleted = createServerFn({ method: "POST" })
     if (challengeErr || !challenge) throw new Error("Défi introuvable");
     if (challenge.user_id !== userId) throw new Error("Accès refusé.");
     if (challenge.child_profiles?.access_locked_at) throw new Error("Ce profil est verrouillé.");
+    if (challenge.child_profiles?.is_active === false) throw new Error("Ce profil est désactivé par l'administrateur.");
 
     const { data: updated, error } = await supabase
       .from("challenges")
@@ -2023,6 +2072,7 @@ export const submitDeclarativeProof = createServerFn({ method: "POST" })
     if (challengeErr || !challenge) throw new Error("Défi introuvable");
     if (challenge.user_id !== userId) throw new Error("Accès refusé.");
     if (challenge.child_profiles?.access_locked_at) throw new Error("Ce profil est verrouillé.");
+    if (challenge.child_profiles?.is_active === false) throw new Error("Ce profil est désactivé par l'administrateur.");
     if (challenge.proof_mode !== "declarative") {
       throw new Error("Ce défi ne se valide pas par déclaration.");
     }
@@ -2158,10 +2208,11 @@ export const assignTemplateChallenge = createServerFn({ method: "POST" })
 
     const { data: child, error: childErr } = await supabase
       .from("child_profiles")
-      .select("id, age")
+      .select("id, age, time_pressure")
       .eq("id", data.childId)
       .eq("user_id", userId)
       .is("access_locked_at", null)
+      .eq("is_active", true)
       .maybeSingle();
 
     if (childErr || !child) throw new Error("Profil enfant introuvable ou accès refusé.");
@@ -2190,6 +2241,15 @@ export const assignTemplateChallenge = createServerFn({ method: "POST" })
         // équivalent là-bas.
         academic_secret: template.academic_secret ?? null,
         estimated_duration_minutes: data.estimated_duration_minutes ?? null,
+        // Temps adaptatif (2026-08-12) : limite calculée à l'assignation à partir de
+        // l'estimation (ou repli par difficulté), facteurs d'âge et de pression
+        // temporelle du profil. `none` → NULL → pas de chrono.
+        time_limit_minutes: resolveTimeLimitMinutes({
+          estimatedMinutes: data.estimated_duration_minutes,
+          age: child.age,
+          timePressure: (child.time_pressure as TimePressure) ?? "standard",
+          difficulty: template.difficulty,
+        }),
         academic_subject: template.academic_subject ?? null,
         academic_grade_level: template.academic_grade_level ?? null,
         homework_instruction: template.homework_instruction ?? null,
@@ -2350,6 +2410,7 @@ export const generateAcademicHomeworkChallenge = createServerFn({ method: "POST"
       .eq("id", data.childId)
       .eq("user_id", userId)
       .is("access_locked_at", null)
+      .eq("is_active", true)
       .maybeSingle();
     if (childErr || !child) throw new Error("Profil enfant introuvable");
 
@@ -2496,6 +2557,7 @@ export const generateSingleChallenge = createServerFn({ method: "POST" })
       .eq("id", data.childId)
       .eq("user_id", userId)
       .is("access_locked_at", null)
+      .eq("is_active", true)
       .maybeSingle();
     if (childErr || !child) throw new Error("Profil enfant introuvable");
 
@@ -2509,7 +2571,7 @@ export const generateSingleChallenge = createServerFn({ method: "POST" })
     // path never checked recent titles at all — a parent clicking "Composer un défi
     // ciblé" repeatedly could get literal duplicates. Fetching both in parallel
     // matches generateChallenges' existing pattern instead of inventing a new one.
-    const [{ data: completedChallenges }, { data: existing }, progressionTargets, { data: enrollment }] = await Promise.all([
+    const [{ data: completedChallenges }, { data: existing }, progressionTargets] = await Promise.all([
       supabase
         .from("challenges")
         .select("title, domain, ai_observations")
@@ -2524,15 +2586,6 @@ export const generateSingleChallenge = createServerFn({ method: "POST" })
         .order("created_at", { ascending: false })
         .limit(30),
       computeProgressionTargets(supabase, data.childId),
-      // Cf. generateChallenges : accès/thématique lus sur la propre inscription de l'enfant,
-      // jamais sur "la saison active du moment" (une rotation ne doit rien casser rétroactivement).
-      supabase
-        .from("season_enrollments")
-        .select("id, enrolled_at, campaign_id, seasons(title, theme, duration_months), campaigns(start_date, end_date)")
-        .eq("child_id", data.childId)
-        .order("enrolled_at", { ascending: false })
-        .limit(1)
-        .maybeSingle(),
     ]);
 
     const completedSummary = (completedChallenges ?? [])
@@ -2556,20 +2609,6 @@ export const generateSingleChallenge = createServerFn({ method: "POST" })
       ? "5. MATÉRIEL (À ACHETER) : Le défi peut impliquer d'aller acheter du petit matériel en grande surface, quincaillerie ou papeterie (abordable)."
       : "5. MATÉRIEL (MIXTE) : Libre à toi ! Tu peux mixer du matériel de maison, des éléments trouvés dehors dans la nature, ou du petit matériel abordable à acheter (ex: colle spéciale, peinture).";
 
-    const enrolledSeason = (enrollment as any)?.seasons as { title: string; theme: string; duration_months: number } | null;
-    let isEnrolledInActiveSeason = false;
-    if (enrollment && enrolledSeason) {
-      const { end } = resolveEnrollmentWindow(
-        enrollment.enrolled_at,
-        enrolledSeason.duration_months,
-        (enrollment as any).campaign_id ? (enrollment as any).campaigns : null
-      );
-      isEnrolledInActiveSeason = new Date() <= end;
-    }
-    const seasonInstruction = isEnrolledInActiveSeason
-      ? `\n3b. THÉMATIQUE DE SAISON ("${enrolledSeason!.title}") : Utilise le fil rouge narratif et la métaphore de cette saison ("${enrolledSeason!.theme}") pour scénariser le défi.`
-      : "";
-
     const prompt = buildSingleChallengePrompt({
       childName: child.name,
       childAge: child.age,
@@ -2583,11 +2622,12 @@ export const generateSingleChallenge = createServerFn({ method: "POST" })
       homeMaterialsLine: data.homeMaterials ? `- Matériaux/objets disponibles à la maison : ${data.homeMaterials}` : "",
       progressionInstruction: formatProgressionInstruction(progressionTargets),
       domainInstruction,
-      seasonInstruction,
       materialScopeInstruction,
       homeMaterialsUseLine: data.homeMaterials
         ? `6. UTILISATION DES MATÉRIAUX MENTIONNÉS : Tu DOIS concevoir un défi qui utilise en priorité ou exclusivement les matériaux indiqués par le parent ("${data.homeMaterials}"). Si ces matériaux ne suffisent pas, tu PEUX inclure d'autres ustensiles en fonction de la consigne (MAISON/EXTÉRIEUR/ACHAT/MIXTE).`
         : "",
+      timePressureNote: formatTimePressureNote(child.time_pressure as TimePressure | null | undefined),
+      profileContextNote: formatChildProfileContext(child as any),
     });
 
     // A single défi, not a batch — the 4000 default (sized for up to 6 défis
@@ -2642,6 +2682,7 @@ export const getChildAISynthesis = createServerFn({ method: "POST" })
       .eq("id", data.childId)
       .eq("user_id", userId)
       .is("access_locked_at", null)
+      .eq("is_active", true)
       .single();
 
     if (!child) throw new Error("Profil introuvable");
@@ -2740,6 +2781,7 @@ export const getPassportLetter = createServerFn({ method: "POST" })
       .eq("id", data.childId)
       .eq("user_id", userId)
       .is("access_locked_at", null)
+      .eq("is_active", true)
       .single();
 
     if (!child) throw new Error("Profil introuvable");
