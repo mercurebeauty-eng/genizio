@@ -38,6 +38,7 @@ export type GenerationKind =
   | "recommendation"
   | "discriminant"
   | "support_retest"
+  | "reformulation"
   | "hypothesis"
   | "proof_validation"
   | "not_completed_classification"
@@ -76,6 +77,9 @@ export interface VerifyContext {
   existingTitles?: string[];
   /** Défi-pont (chantier Naya V4) : libellé de l'aspiration explorée. */
   aspirationLabel?: string;
+  /** Reformulation (chantier 3, modalités) : titre du défi original à reformuler —
+   * le Loup vérifie que l'objectif pédagogique reste identique. */
+  originalTitle?: string;
 }
 
 // ── Constantes de référence (copies locales, verrouillées par test) ─────────
@@ -537,6 +541,10 @@ export function semanticRubricFor(kind: GenerationKind): string {
 6. coherence-academic-level : si academic_level_age est renseigné, le contenu doit réellement correspondre à ce niveau (ni sous-calibré ni sur-calibré).
 7. proof-mode-coherent : le mode de preuve doit correspondre à la nature du défi (photo pour un résultat visible, declarative pour une action comptable).
 8. supervision-coherent : requires_supervision doit être true si le défi comporte un risque réel (feu, chaleur, coupant, produit chimique, électricité).`;
+    case "reformulation":
+      return `1. reformulation-meme-objectif : le défi doit viser le MÊME objectif pédagogique que le défi original (même compétence, niveau équivalent — jamais plus difficile).
+2. reformulation-modalite : la modalité imposée (presentation_mode) doit réellement imprégner le défi — le format correspond à ce que la modalité promet (manipulation → gestes concrets, histoire → récit, etc.).
+3. reformulation-fraiche : le défi ne doit ni mentionner l'échec précédent ni révéler qu'il s'agit d'une reformulation — présenté comme un défi neuf et stimulant.`;
     case "homework":
       return `1. fusion-consigne : le défi doit réellement faire réviser/apprendre la consigne scolaire fournie, pas la contourner.
 2. zpa-coherent : la difficulté doit correspondre au niveau ZPA indiqué (soutien renforcé → très guidé).

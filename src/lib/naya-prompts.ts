@@ -948,3 +948,97 @@ Réponds STRICTEMENT en JSON valide avec ce format exact :
   "guidance_level": 3 (entier 1 à 5)
 }`;
 }
+
+// ── Reformulation d'un défi échoué dans une autre modalité (chantier 3, §22-26) ──
+// Le défi original n'a pas été terminé — Naya ne conclut rien : elle re-présente le
+// MÊME objectif pédagogique avec une autre manière de le montrer (jusqu'à 3 essais,
+// cf. §36 : « l'enfant ne sait-il pas faire, ou n'avons-nous pas trouvé la bonne
+// manière de lui faire démontrer qu'il sait faire ? »). Vocabulaire fermé des
+// modalités — le moteur de priorisation vit dans src/lib/modalities.functions.ts.
+
+/** Sémantique pédagogique de chaque modalité (injectée au prompt pour que la modalité
+ *  imprègne réellement le défi, pas seulement l'étiquette). */
+export const MODALITY_SEMANTICS: Record<string, string> = {
+  texte: "l'enfant lit une consigne claire et la met en pratique — le support est l'écrit.",
+  image: "l'enfant découvre par des images, des schémas, des dessins à observer ou à compléter.",
+  demonstration: "quelqu'un montre d'abord le geste ou le procédé, puis l'enfant le reproduit.",
+  manipulation: "l'enfant fait avec ses mains : découper, plier, assembler, mesurer, construire.",
+  histoire: "le savoir est porté par un récit (personnages, marché, atelier) — l'enfant vit l'histoire.",
+  analogie: "le savoir est comparé à quelque chose que l'enfant connaît déjà très bien (un jeu, un objet du quotidien).",
+  conversation: "l'enfant découvre en parlant : questions, échanges, expliquer à quelqu'un.",
+  projet: "l'enfant construit ou conçoit quelque chose de concret qui a une utilité pour lui.",
+  situation_concrete: "le savoir est mis en scène dans une situation réelle du quotidien (marché, cuisine, quartier, atelier).",
+};
+
+export interface ReformulationPromptInput {
+  childName: string;
+  childAge: number;
+  location: string;
+  originalTitle: string;
+  originalDomain: string;
+  originalObjective: string;
+  presentationMode: string;
+  interestsPayload: string;
+  talentsJson: string;
+  timePressureNote: string;
+  existingTitles: string[];
+}
+
+export function buildReformulationPrompt(input: ReformulationPromptInput): string {
+  const semantics = MODALITY_SEMANTICS[input.presentationMode] ?? "une autre manière de présenter le savoir.";
+  return `Tu es Naya, la mentore IA. Le défi « ${input.originalTitle} » (${input.originalDomain}) n'a pas été terminé par ${input.childName}, ${input.childAge} ans.
+N'ABANDONNE PAS ce que cet enfant doit apprendre : reformule le MÊME objectif pédagogique avec une AUTRE manière de le lui montrer.
+
+OBJECTIF PÉDAGOGIQUE (à conserver strictement identique — même compétence, même niveau, jamais plus difficile) :
+${input.originalObjective}
+
+MODALITÉ IMPOSÉE — "presentation_mode": "${input.presentationMode}" : ${semantics}
+Conçois TOUT le défi dans cette modalité : le titre, la description, les étapes, les matériaux. La modalité n'est pas décorative : elle doit imprégner chaque partie du défi.
+
+CONTEXTE :
+- Ville / pays : ${input.location}
+- Intérêts et leviers d'engagement : ${input.interestsPayload}
+- Profil de talents : ${input.talentsJson}
+${input.timePressureNote}
+- Titres déjà utilisés (ne pas reprendre) : ${input.existingTitles.join(", ") || "(aucun)"}
+
+RÈGLES ABSOLUES :
+- Même domaine (${input.originalDomain}), même compétence, difficulté équivalente ou plus douce — l'objectif pédagogique ne change pas.
+- Ne mentionne JAMAIS que ce défi est un second essai, une reformulation ou un défi « raté » : ${input.childName} doit découvrir un défi frais et stimulant.
+- La motivation naît de la finalité : relie chaque étape à un gain concret et immédiat pour ${input.childName}.
+- ${STEPS_INSTRUCTION}
+- ${MATERIAL_TAGS_INSTRUCTION}
+- ${INTELLIGENCES_FIELD_INSTRUCTION}
+- ${TRAIT_SUBFORM_INSTRUCTION}
+- ${PROOF_MODE_INSTRUCTION}
+- ${SAFETY_INSTRUCTION}
+- ${ACADEMIC_REFERENTIAL_INSTRUCTION}
+- ${ACADEMIC_SECRET_INSTRUCTION}
+- ${GENIZIO_PRINCIPLES}
+
+Réponds EXCLUSIVEMENT avec un objet JSON strict au format suivant :
+{
+  "title": "Titre stimulant et captivant",
+  "domain": "${input.originalDomain}",
+  "description": "Consigne claire, encourageante et adaptée à l'âge de l'enfant",
+  "duration": "15 min",
+  "steps": ["Étape 1", "Étape 2", "Étape 3"],
+  "materials": ["Matériel 1", "Matériel 2"],
+  "material_tags": ["tag1", "tag2"],
+  "intelligences": ["creative"],
+  "trait_subform": "..." (voir liste par intelligence ci-dessus) ou null,
+  "difficulty": "facile" ou "moyen",
+  "proof_mode": "photo" ou "declarative",
+  "proof_target": {"metric": "...", "value": 20} (uniquement si declarative),
+  "declarative_award": {"corporelle": 2} (uniquement si declarative),
+  "academic_domain": "mathematiques" | "langage" | "sciences" | "corporelle" | "sociale" | "emotionnelle" | "entrepreneuriale" | "artisanale" | "spatiale" | null,
+  "academic_level_age": 14 (uniquement si academic_domain non null),
+  "academic_reference_note": "..." (uniquement si academic_domain non null),
+  "academic_secret": "Explication stimulante du secret scientifique/académique...",
+  "requires_supervision": true ou false,
+  "supervision_warning": "..." (ou null si false),
+  "kind": "micro",
+  "guidance_level": 4,
+  "presentation_mode": "${input.presentationMode}"
+}`;
+}

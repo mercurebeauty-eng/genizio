@@ -47,12 +47,16 @@ profils vulnérables (décision utilisateur).
 
 ## 🚧 Chantiers 3 à 7 (feuille de route — ordre d'exécution)
 
-### Chantier 3 — Modes d'apprentissage : boucle de réévaluation des modalités (§22-26, §35, §38, Loup)
+### Chantier 3 — Modes d'apprentissage : boucle de réévaluation des modalités (§22-26, §35, §38, Loup) — ✅ IMPLÉMENTÉ (décision #66, branche `feat/naya-v4-modalites-apprentissage`, PR en cours)
 
 **Objectif** : un échec n'est jamais un verdict — jusqu'à 3 modalités différentes testées
 avant conclusion, et la plateforme apprend « comment enseigner à cet enfant ».
-État actuel : pas de notion de modalité, `not_completed` terminal, pas de reformulation,
-canal échec → Jumeau troué (le trigger `log_challenge_observation` ignore `not_completed`).
+Livré : migration `20260812170000` (presentation_mode + CHALLENGE_NOT_COMPLETED +
+presentation_signals), `modalities.functions.ts` (resolveNextModality, reformulation,
+filiation, résumé), `buildReformulationPrompt`, Loup kind `reformulation`, intégration
+submitChallengeNotCompleted, intention parent qualitative. 529 tests verts, tsc, build.
+Reste pour la boucle complète (orchestration §36, comparaison, garde-fou §35) :
+chantier 5 ci-dessous.
 
 1. **Migration** :
    - `challenges.presentation_mode text NULL CHECK` (texte/image/demonstration/manipulation/histoire/analogie/conversation/projet/situation_concrete) ;

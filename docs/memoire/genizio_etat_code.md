@@ -9,7 +9,19 @@ metadata:
 
 # État du Code
 
-> Vérifié le 2026-08-12, branche `feat/naya-v4-aspirations-projets` (empilée sur `feat/porte-entree-fondations-naya-v4`, aucune des deux mergées — main @ `6ab51ee`).
+> Vérifié le 2026-08-12, branche `feat/naya-v4-modalites-apprentissage` (depuis `main` — PR #43 et #44 mergées, chantiers 1-2 en production).
+
+## Snapshot du 2026-08-12 — Chantier 3 « Modes d'apprentissage » : boucle de réévaluation des modalités (décision #66, analyse §22-26, §35, §38)
+
+**Branche** : `feat/naya-v4-modalites-apprentissage` (depuis `main` @ merges #43+#44). Contenu complet dans le Status Overview de [[MEMORY]].
+
+**Migration appliquée et vérifiée** : `20260812170000_modality_reevaluation.sql` — `challenges.presentation_mode` (CHECK 9 modalités), événement `CHALLENGE_NOT_COMPLETED` (CHECK + trigger `log_challenge_observation` : branche not_completed + `presentation_mode` dans les payloads ASSIGNED/COMPLETED), `pedagogical_twins.presentation_signals` (branches échec/réussite dans `apply_observation_to_twin`). Probe fonctionnel réel : profil de test créé puis nettoyé par cascade, événement émis avec payload complet, Jumeau alimenté (persévérance 0.15 + `manipulation.failed=1`).
+
+**Nouveaux modules** : `modalities.functions.ts` (PRESENTATION_MODES fermé, `canReformulate`, `resolveNextModality`, `parseReformulationContext`, `summarizeModalityAttempts`, `processModalityReformulation`, server fn `reformulateChallenge`), `modalities.test.ts` (22 tests).
+
+**Modifiés** : `challenges.functions.ts` (submitChallengeNotCompleted — étape 5 : reformulation comme prochaine mission si cause accommodable, repli recommandation sinon), `naya-prompts.ts` (`MODALITY_SEMANTICS`, `buildReformulationPrompt`), `naya-verifier.functions.ts` (kind `reformulation`, rubrique 3 règles, `originalTitle` dans VerifyContext), `pedagogical-intention.ts` (traduction parent qualitative), types régénérés.
+
+**Vérifié** : 529 tests verts (44 fichiers), `tsc --noEmit` propre, build OK.
 
 ## Snapshot du 2026-08-12 — Chantier 2 « Naya V4 » : aspirations + défis-projets (décisions #64-65)
 
