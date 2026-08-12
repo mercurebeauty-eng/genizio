@@ -3,8 +3,12 @@ import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { generateDiscriminantChallenge, generateSupportRetestChallenge } from "@/lib/hypotheses.functions";
 import { getChildAccessStatus } from "@/lib/child-access";
 import { getInterestHypothesesSnapshot } from "@/lib/interest-confidence";
-import { callClaude, finalizeChallenge, PROOF_MODE_INSTRUCTION, ACADEMIC_REFERENTIAL_INSTRUCTION, ACADEMIC_SECRET_INSTRUCTION, ACADEMIC_DOMAIN_LABELS, STEPS_INSTRUCTION, INTELLIGENCES_FIELD_INSTRUCTION, TRAIT_SUBFORM_INSTRUCTION, formatChildInterestsPayload, extractJsonFromLLMResponse, getLeastExploredTalentLabels } from "@/lib/challenges.functions";
-import { buildRecommendationPrompt } from "@/lib/naya-prompts";
+import { callClaude, finalizeChallenge, PROOF_MODE_INSTRUCTION, ACADEMIC_REFERENTIAL_INSTRUCTION, ACADEMIC_SECRET_INSTRUCTION, ACADEMIC_DOMAIN_LABELS, STEPS_INSTRUCTION, INTELLIGENCES_FIELD_INSTRUCTION, TRAIT_SUBFORM_INSTRUCTION, formatChildInterestsPayload, extractJsonFromLLMResponse, getLeastExploredTalentLabels, computeProgressionTargets, formatProgressionInstruction } from "@/lib/challenges.functions";
+import { buildRecommendationPrompt, buildAspirationBridgePrompt } from "@/lib/naya-prompts";
+import { getAspirationHypothesesSnapshot } from "@/lib/aspiration-confidence";
+import { formatChildProfileContext, VULNERABLE_LIFE_CONTEXTS } from "@/lib/profile-context";
+import { formatTimePressureNote } from "@/lib/time-limit";
+import { biasLabelsByDeclaredDifficulties, rankByDeclaredDifficulties } from "@/lib/difficulty-map";
 import { z } from "zod";
 // « Le Loup de Naya » (chantier 2, Naya 3.0) : audit shadow non-bloquant des
 // recommandations (stabilisation, essaimage, exploration).
@@ -14,7 +18,7 @@ const RecommendInput = z.object({
   childId: z.string().uuid(),
 });
 
-export type RecommendationType = "INVESTIGATION" | "ESSAIMAGE" | "STABILISATION" | "EXPLORATION";
+export type RecommendationType = "INVESTIGATION" | "ASPIRATION" | "ESSAIMAGE" | "STABILISATION" | "EXPLORATION";
 
 export type RecommendedChallengeResult = {
   recommendationType: RecommendationType;
@@ -32,7 +36,7 @@ export const recommendChallengesForChild = createServerFn({ method: "POST" })
     // 1. Profil Enfant
     const { data: child, error: childErr } = await supabase
       .from("child_profiles")
-      .select("id, name, age, interests, talents")
+      .select("id, name, age, interests, talents, life_context, school_relation, ability_profile, aspirations, city, country, time_pressure")
       .eq("id", data.childId)
       .eq("user_id", userId)
       .is("access_locked_at", null)
@@ -93,6 +97,166 @@ export const recommendChallengesForChild = createServerFn({ method: "POST" })
           pedagogicalReason: "Naya a conçu ce défi spécialement pour tester une hypothèse d'apprentissage adaptée à l'enfant.",
           challenge: discResult.challenge,
         };
+      }
+    }
+
+    // 2.4. Chantier Naya V4 (2026-08-12, analyse §10-16) : PONT D'ASPIRATION — une
+    // aspiration déclarée non encore testée (ou en cours d'exploration) ouvre un défi
+    // scénarisé dans SON univers mais ciblant les compétences que cet univers exige
+    // (ex. menuiserie → mesurer, compter, proportions — §11). L'aspiration reste une
+    // HYPOTHÈSE à explorer, jamais un verdict (§10, §16). Idempotent : un seul
+    // défi-pont en attente par aspiration, et pas de nouveau pont si un défi récent
+    // (< 14 j) touche déjà ses domaines mappés.
+    const aspirationSnapshot = await getAspirationHypothesesSnapshot(supabase as any, data.childId).catch(() => null);
+    if (aspirationSnapshot) {
+      const candidateLabel = [...aspirationSnapshot.untestedLabels, ...aspirationSnapshot.exploringLabels][0];
+      if (candidateLabel) {
+        const hypothesis = aspirationSnapshot.byLabel[candidateLabel];
+        const STALE_CUTOFF = new Date(Date.now() - 14 * 86_400_000).toISOString();
+
+        const [{ data: pendingBridge }, recentInDomains, completedRes, titlesRes, progressionTargets] = await Promise.all([
+          supabase
+            .from("challenges")
+            .select("id")
+            .eq("child_id", data.childId)
+            .eq("status", "todo")
+            .eq("aspiration_label", hypothesis.label)
+            .limit(1)
+            .maybeSingle(),
+          hypothesis.bridge.domains.length > 0
+            ? supabase
+                .from("challenges")
+                .select("id")
+                .eq("child_id", data.childId)
+                .gt("created_at", STALE_CUTOFF)
+                .in("domain", hypothesis.bridge.domains)
+                .limit(1)
+                .maybeSingle()
+            : Promise.resolve({ data: null }),
+          supabase
+            .from("challenges")
+            .select("title, domain, ai_observations")
+            .eq("child_id", data.childId)
+            .eq("status", "completed")
+            .order("completed_at", { ascending: false })
+            .limit(6),
+          supabase
+            .from("challenges")
+            .select("title")
+            .eq("child_id", data.childId)
+            .order("created_at", { ascending: false })
+            .limit(30),
+          computeProgressionTargets(supabase, data.childId),
+        ]);
+
+        if (!pendingBridge && !recentInDomains?.data) {
+          const vulnerable =
+            ((child as any).life_context ?? []).some((c: string) => VULNERABLE_LIFE_CONTEXTS.includes(c)) ||
+            (child as any).school_relation === "conflit" ||
+            (child as any).school_relation === "non_scolarise";
+
+          const completedSummary = (completedRes.data ?? [])
+            .map((c: any) => `- Défi "${c.title}" (${c.domain}) : "${c.ai_observations ?? ''}"`)
+            .join("\n");
+          const completedByDomain: Record<string, number> = {};
+          for (const c of completedRes.data ?? []) completedByDomain[c.domain] = (completedByDomain[c.domain] ?? 0) + 1;
+          const completedInAspirationDomains = hypothesis.bridge.domains.reduce(
+            (sum, d) => sum + (completedByDomain[d] ?? 0),
+            0
+          );
+
+          const prompt = buildAspirationBridgePrompt({
+            childName: child.name,
+            childAge: child.age,
+            profileLocation: [child.city, child.country].filter(Boolean).join(", ") || "non précisé",
+            interestsPayload: formatChildInterestsPayload(child.interests, interestHypotheses),
+            talentsJson: JSON.stringify(child.talents || {}),
+            completedSummary,
+            existingTitles: (titlesRes.data ?? []).map((c: any) => c.title),
+            progressionInstruction: formatProgressionInstruction(progressionTargets),
+            timePressureNote: formatTimePressureNote((child as any).time_pressure),
+            profileContextNote: formatChildProfileContext(child as any),
+            aspirationLabel: hypothesis.label,
+            bridge: hypothesis.bridge,
+            source: hypothesis.source,
+            vulnerable,
+          });
+
+          try {
+            const rawJson = await callClaude(prompt, true, undefined, 1200, 2);
+            const parsed = JSON.parse(extractJsonFromLLMResponse(rawJson));
+
+            // Le Loup (chantier 2, Naya 3.0) : audit shadow non-bloquant de la sortie brute.
+            void verifyAndLog({
+              kind: "recommendation",
+              output: parsed,
+              context: { childAge: child.age, childName: child.name, aspirationLabel: hypothesis.label },
+              sourceFunction: "recommendChallengesForChild/aspiration",
+              childId: data.childId,
+              model: "deepseek-v4-flash",
+            });
+
+            const safeTitle = (parsed.title || `Première mission ${hypothesis.label}`) as string;
+            const safeDescription = (parsed.description || "") as string;
+            const safeSteps = (parsed.steps || []) as string[];
+            const safeMaterials = (parsed.materials || []) as string[];
+
+            const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+            const { data: challenge } = await supabaseAdmin
+              .from("challenges")
+              .insert({
+                child_id: data.childId,
+                user_id: userId,
+                domain: parsed.domain || hypothesis.bridge.domains[0] || "Exploration",
+                description: safeDescription,
+                duration: parsed.duration || "30 min",
+                steps: safeSteps,
+                materials: safeMaterials,
+                status: "todo",
+                progress: 0,
+                pedagogical_context: JSON.stringify({ is_recommendation: true, type: "ASPIRATION" }),
+                academic_secret: parsed.academic_secret ?? null,
+                aspiration_label: hypothesis.label,
+                ...finalizeChallenge(
+                  {
+                    title: safeTitle,
+                    description: safeDescription,
+                    steps: safeSteps,
+                    materials: safeMaterials,
+                    material_tags: parsed.material_tags,
+                    intelligences: parsed.intelligences,
+                    trait_subform: parsed.trait_subform,
+                    difficulty: parsed.difficulty || "moyen",
+                    proof_mode: parsed.proof_mode,
+                    proof_target: parsed.proof_target,
+                    declarative_award: parsed.declarative_award,
+                    academic_domain: parsed.academic_domain,
+                    academic_level_age: parsed.academic_level_age,
+                    academic_reference_note: parsed.academic_reference_note,
+                    kind: parsed.kind,
+                    guidance_level: parsed.guidance_level,
+                  },
+                  child.age,
+                  { completedInDomain: completedInAspirationDomains }
+                ),
+              })
+              .select("*")
+              .single();
+
+            if (challenge) {
+              return {
+                recommendationType: "ASPIRATION",
+                badgeLabel: "🧭 Pont d'exploration Naya",
+                pedagogicalReason: `${child.name} a dit vouloir ${hypothesis.label} — Naya explore cet univers avec lui, pour découvrir ce qu'il sait vraiment faire.`,
+                challenge,
+              };
+            }
+          } catch (err) {
+            console.error("Error generating aspiration bridge challenge:", err);
+            // Pas de recommandation dégradée si la génération échoue — les autres
+            // branches (Essaimage/Exploration) prennent le relais au tour suivant.
+          }
+        }
       }
     }
 
@@ -234,7 +398,13 @@ export const recommendChallengesForChild = createServerFn({ method: "POST" })
     const competencies = (twin?.competencies as Record<string, { value: number; category: string }>) || {};
     const entries = Object.entries(competencies);
 
-    const weaknessEntry = entries.find(([, v]) => v.category === "RISQUE" || v.category === "FAIBLESSE");
+    // §8 (2026-08-12) : les difficultés DÉCLARÉES par le parent (ability_profile)
+    // biaisent doucement le choix de la faiblesse à entraîner — une difficulté n'est
+    // pas compensée, elle est entraînée (priorité douce, jamais dure).
+    const weaknessCandidates = entries
+      .filter(([, v]) => v.category === "RISQUE" || v.category === "FAIBLESSE")
+      .map(([key, v]) => ({ key, v }));
+    const weaknessEntry = rankByDeclaredDifficulties(weaknessCandidates, (child as any).ability_profile)[0];
     const strengthEntry = entries.find(([, v]) => v.category === "FORCE");
     const fragilityEntry = entries.find(([, v]) => v.category === "FRAGILITE");
 
@@ -247,7 +417,7 @@ export const recommendChallengesForChild = createServerFn({ method: "POST" })
         childAge: child.age,
         interestsPayload: formattedInterests,
         strengthLabel: strengthEntry[0],
-        weaknessLabel: weaknessEntry[0],
+        weaknessLabel: weaknessEntry.key,
       });
 
       try {
@@ -431,7 +601,12 @@ export const recommendChallengesForChild = createServerFn({ method: "POST" })
       .limit(1);
 
     if (!pending || pending.length === 0) {
-      const targetLabels = getLeastExploredTalentLabels(child.talents as Record<string, number> | null, 1);
+      // §8 (2026-08-12) : les difficultés déclarées passent en tête des candidats
+      // d'exploration (biais doux — stimuler progressivement, jamais d'échec forcé).
+      const targetLabels = biasLabelsByDeclaredDifficulties(
+        getLeastExploredTalentLabels(child.talents as Record<string, number> | null, 1),
+        (child as any).ability_profile
+      );
       const formattedInterests = formatChildInterestsPayload(child.interests, interestHypotheses);
       const prompt = buildRecommendationPrompt({
         mode: "exploration",

@@ -117,6 +117,10 @@ const ChallengeSchema = z.object({
   behavioral_driver: z.enum(["deconstruire", "schematiser", "simuler", "enqueter", "optimiser"]).nullable().optional(),
   zpa_level: z.number().int().min(1).max(5).nullable().optional(),
   academic_secret: z.string().nullable().optional(),
+  // Défis-projets (2026-08-12, analyse §27-28) : kind (micro/projet) + niveau de
+  // guidage 1-5 — le filet déterministe resolveKind/resolveGuidanceLevel borne tout.
+  kind: z.enum(["micro", "projet"]).optional(),
+  guidance_level: z.number().int().min(1).max(5).optional(),
 });
 
 // Shop Phase 1: log material tags that don't match any active product yet, so the
@@ -599,6 +603,31 @@ function resolveAcademicLevel(
 // (recommendChallengesForChild) had each re-implemented insertion by hand and
 // skipped this choke point entirely — exactly the failure mode this comment
 // already warned about. Import this instead of duplicating the checks again.
+
+// Défis-projets (2026-08-12, analyse §27) : un « projet » n'est accepté que si l'IA
+// le demande ET que le défi a assez d'étapes pour être un vrai projet (construire,
+// concevoir, planifier → résultat observable) — anti-hallucination, fallback micro.
+export function resolveKind(
+  iaKind: string | null | undefined,
+  steps: string[],
+  title: string
+): "micro" | "projet" {
+  if (iaKind === "projet" && steps.length >= 3) return "projet";
+  return "micro";
+}
+
+// Autonomie progressive (analyse §28) : plus l'enfant complète dans un domaine,
+// moins le système fait le travail à sa place — le niveau de guidage demandé par
+// l'IA (1 = pas-à-pas détaillé → 5 = « voici l'objectif, trouve ta méthode ») est
+// réduit d'un cran tous les 4 défis complétés dans le domaine. Borné 1-5.
+export function resolveGuidanceLevel(
+  iaLevel: number | null | undefined,
+  completedInDomain = 0
+): number {
+  const clamped = Math.min(5, Math.max(1, Math.round(iaLevel ?? 3)));
+  return Math.max(1, clamped - Math.floor(completedInDomain / 4));
+}
+
 export function finalizeChallenge<T extends {
   title: string;
   description: string;
@@ -616,7 +645,9 @@ export function finalizeChallenge<T extends {
   academic_domain?: string | null;
   academic_level_age?: number | null;
   academic_reference_note?: string | null;
-}>(c: T, age: number) {
+  kind?: string | null;
+  guidance_level?: number | null;
+}>(c: T, age: number, context?: { completedInDomain?: number }) {
   const safety = applySafetyNet(c, age);
   const proof = resolveProofMode(c.proof_mode, c.proof_target, c.declarative_award, c.title);
   const academic = resolveAcademicLevel(c.academic_domain, c.academic_level_age, c.academic_reference_note, c.title);
@@ -635,6 +666,8 @@ export function finalizeChallenge<T extends {
     academic_domain: academic.academic_domain,
     academic_level_age: academic.academic_level_age,
     academic_reference_note: academic.academic_reference_note,
+    kind: resolveKind(c.kind, c.steps, c.title),
+    guidance_level: resolveGuidanceLevel(c.guidance_level, context?.completedInDomain ?? 0),
   };
 }
 
@@ -770,7 +803,7 @@ export async function computeProgressionTargets(supabase: any, childId: string):
   });
 }
 
-function formatProgressionInstruction(targets: ProgressionTarget[]): string {
+export function formatProgressionInstruction(targets: ProgressionTarget[]): string {
   if (targets.length === 0) {
     return "PROGRESSION MESURÉE : aucun niveau académique mesuré pour l'instant chez cet enfant — calibre uniquement sur son âge chronologique (cf. consignes de développement ci-dessus).";
   }
@@ -1300,6 +1333,14 @@ export const generateChallenges = createServerFn({ method: "POST" })
       .map((c) => `- Défi "${c.title}" (${c.domain}) : "${c.ai_observations ?? ''}"`)
       .join("\n");
 
+    // Autonomie progressive (analyse §28) : compteur de défis complétés par domaine,
+    // injecté dans finalizeChallenge pour réduire le guidage à mesure que l'enfant
+    // progresse dans son domaine.
+    const completedByDomain: Record<string, number> = {};
+    for (const c of completedChallenges ?? []) {
+      completedByDomain[c.domain] = (completedByDomain[c.domain] ?? 0) + 1;
+    }
+
     // A single unstarted challenge in a domain proves nothing (parents get
     // busy) — only flag a domain once it's happened at least twice, so this
     // is a real repeated pattern rather than noise from one busy week.
@@ -1382,7 +1423,7 @@ export const generateChallenges = createServerFn({ method: "POST" })
       // qui filtre le champ "intelligences" du JSON contre VALID_TALENT_KEYS — plus
       // de fallback silencieux vers [c.domain], le prompt demande maintenant
       // explicitement les 9 clés exactes (cf. INTELLIGENCES_FIELD_INSTRUCTION).
-      ...finalizeChallenge(c, child.age),
+      ...finalizeChallenge(c, child.age, { completedInDomain: completedByDomain[c.domain] ?? 0 }),
     }));
 
     const { data: inserted, error: insErr } = await supabase

@@ -70,7 +70,34 @@ export const ASPIRATION_SUGGESTIONS = [
 
 export type AbilityValue = "facile" | "neutre" | "difficulte";
 
-export type Aspiration = { label: string; type: "metier" | "exploration" };
+export type Aspiration = { label: string; type: "metier" | "exploration"; source?: "parent" | "enfant" };
+
+// Contextes de parcours qui signalent un profil vulnérable — pour ces enfants, la
+// déclaration d'aspiration est une boussole (analyse §10, §14 : rapport à l'argent,
+// méfiance des adultes → la déclaration est une HYPOTHÈSE que Naya explore par
+// l'expérience). Pour les autres, pas besoin de choix d'aspiration (décision
+// utilisateur 2026-08-12).
+export const VULNERABLE_LIFE_CONTEXTS = ["parcours_rue", "environnement_precaire", "famille_eloignee"];
+
+/**
+ * Faut-il demander les aspirations à l'onboarding ?
+ * - Oui si le contexte indique un profil vulnérable (parcours rue, environnement
+ *   précaire, famille éloignée/délaissé) ou un rapport à l'école conflictuel/non
+ *   scolarisé ;
+ * - Oui si des aspirations existent déjà (on ne cache jamais des données) ;
+ * - Non sinon (l'exploration passe par les intérêts/talents).
+ */
+export function shouldAskAspirations(context: {
+  life_context?: string[] | null;
+  school_relation?: string | null;
+  existingAspirations?: Aspiration[] | null;
+}): boolean {
+  const lifeContext = context.life_context ?? [];
+  if (lifeContext.some((c) => VULNERABLE_LIFE_CONTEXTS.includes(c))) return true;
+  if (context.school_relation === "conflit" || context.school_relation === "non_scolarise") return true;
+  if (context.existingAspirations && context.existingAspirations.length > 0) return true;
+  return false;
+}
 
 // Contexte doux injecté dans les prompts de génération — jamais une règle dure :
 // l'IA adapte la FORME et l'entrée pédagogique, pas le jugement. L'aspiration est
@@ -123,8 +150,11 @@ export function formatChildProfileContext(profile: {
 
   if (profile.aspirations && profile.aspirations.length > 0) {
     const list = profile.aspirations.map((a) => a.label).join(", ");
+    const sourceNote = profile.aspirations.some((a) => a.source === "enfant")
+      ? " (déclarée(s) par l'enfant lui-même, rapportées par le parent)"
+      : "";
     lines.push(
-      `- Aspiration(s) déclarée(s) : ${list} — HYPOTHÈSE À EXPLORER, jamais un verdict : propose des expériences liées à cet univers, observe les aptitudes réelles, et si une divergence apparaît, cherche « qu'est-ce que cet enfant sait réellement bien faire » pour orienter (analyse §10-16).`
+      `- Aspiration(s) déclarée(s)${sourceNote} : ${list} — HYPOTHÈSE À EXPLORER, jamais un verdict : propose des expériences liées à cet univers, observe les aptitudes réelles, et si une divergence apparaît, cherche « qu'est-ce que cet enfant sait réellement bien faire » pour orienter (analyse §10-16).`
     );
   }
 
