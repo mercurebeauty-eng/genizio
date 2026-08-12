@@ -91,26 +91,16 @@ Livré : migration `20260812180000` (branche TIME_OVER dans `apply_observation_t
 `applyGentleTimeProposal` idempotent), carte « Plus de temps pour {enfant} ? » dans le
 portfolio (pattern « Une découverte de Naya », rejet en localStorage). 535 tests verts.
 
-### Chantier 5 — Boucle de réévaluation complète (§36)
+### Chantier 5 — Boucle de réévaluation complète (§36) — ✅ IMPLÉMENTÉ (décision #68, branche `feat/naya-v4-modalites-apprentissage`, PR #45)
 
 **Objectif** : l'orchestration de bout en bout — question directrice : *« L'enfant ne
 sait-il pas faire, ou n'avons-nous pas trouvé la bonne manière de lui faire démontrer
-qu'il sait faire ? »* — et la règle d'or « personne n'est nul » (§35) : avant de
-conclure qu'une capacité est absente, au moins 2 modalités doivent avoir été testées.
-
-1. **Orchestration** `evaluateFailureSequence(childId, challengeId)` : échec → analyse de
-   la réponse (existant) → analyse de la compréhension de la consigne (modification de la
-   formulation = reformulation du chantier 3) → nouvelle tentative dans un nouveau support
-   → **comparaison des résultats entre tentatives** → **identification du facteur explicatif**
-   → mise à jour du profil (final_diagnosis enrichi + drivers + narration parent).
-2. **Garde-fou §35** : un cycle ne peut conclure « capacité absente » qu'après ≥ 2 modalités
-   testées ; sinon il reste ouvert (« encore à explorer ») — jamais de verdict.
-3. **Loup** : kind `failure_sequence` — audit de la cohérence tentatives → facteur.
-4. **UI** : carte parent « Ce que Naya a compris » (Portfolio), qualitative, 0 chiffre.
-5. **Tests** : séquence complète simulée (échec → reformulation → succès → facteur =
-   modalité), garde-fou §35, narration sans verdict.
-6. **Critères de complétion** : la séquence complète §36 est exécutée et observée côté
-   parent ; aucune conclusion « capacité absente » sous 2 modalités.
+qu'il sait faire ? »* — et la règle d'or « personne n'est nul » (§35).
+Livré : `failure-sequence.functions.ts` (`evaluateFailureSequence` pure avec comparaison
+des tentatives et garde-fou §35 — aucune conclusion sous 2 modalités testées,
+`buildFailureNarrative` 0 chiffre / 0 verdict, `getLatestFailureSequence` GET dérivée à
+la lecture), carte « Ce que Naya a compris » au Portfolio, Loup kind `failure_sequence`
+(rubrique zero-verdict / garde-fou-35 / zero-chiffre). 544 tests verts.
 
 ### Chantier 6 — Double contextualisation local → global (§30-31) + interdisciplinarité (§32)
 

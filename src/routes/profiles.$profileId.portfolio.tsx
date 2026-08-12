@@ -13,6 +13,7 @@ import { getChildAccessStatusFn, type ChildAccessStatus } from "@/lib/child-acce
 import { formatXof } from "@/lib/pricing";
 import { initializePassportPayment } from "@/lib/payments.functions";
 import { getGentleTimeSuggestion, applyGentleTimeProposal, type GentleSuggestion } from "@/lib/time-calibration.functions";
+import { getLatestFailureSequence, type FailureSequenceSnapshot } from "@/lib/failure-sequence.functions";
 import { TIME_PRESSURE_LABELS } from "@/lib/time-limit";
 import {
   OPPORTUNITY_COMPASS_VERSION,
@@ -253,11 +254,15 @@ function PortfolioPage() {
   // le parent reste décideur (le rejet est mémorisé en local).
   const [gentleSuggestion, setGentleSuggestion] = useState<GentleSuggestion | null>(null);
   const [gentleDismissed, setGentleDismissed] = useState(false);
+  // Boucle de réévaluation complète (chantier 5, §36) : conclusion qualitative de la
+  // dernière séquence de reformulations — jamais de verdict (garde-fou §35).
+  const [failureSequence, setFailureSequence] = useState<FailureSequenceSnapshot | null>(null);
 
   const ensureHypotheses = useServerFn(ensureHypothesesForChild);
   const initializePassportPaymentFn = useServerFn(initializePassportPayment);
   const getGentleSuggestionFn = useServerFn(getGentleTimeSuggestion);
   const applyGentleFn = useServerFn(applyGentleTimeProposal);
+  const getFailureSequenceFn = useServerFn(getLatestFailureSequence);
 
   // Paiement en ligne Paystack du Passeport d'Excellence (50 000 FCFA) : le serveur crée
   // la payment, on redirige vers le checkout hébergé. Le webhook/retour passe
@@ -373,10 +378,15 @@ function PortfolioPage() {
         if (!cancelled) setGentleSuggestion(res);
       })
       .catch(() => {});
+    getFailureSequenceFn({ data: { childId: profileId } })
+      .then((res) => {
+        if (!cancelled) setFailureSequence(res);
+      })
+      .catch(() => {});
     return () => {
       cancelled = true;
     };
-  }, [session, profileId, getGentleSuggestionFn]);
+  }, [session, profileId, getGentleSuggestionFn, getFailureSequenceFn]);
 
   const dismissGentleProposal = () => {
     setGentleDismissed(true);
@@ -635,6 +645,30 @@ function PortfolioPage() {
               </div>
             );
           })()}
+
+          {/* Boucle de réévaluation complète (chantier 5, §36) : « Ce que Naya a
+              compris » — conclusion qualitative de la dernière séquence de
+              reformulations. Narration 100 % déterministe (0 IA, 0 chiffre) et
+              jamais un verdict : soit la modalité gagnante est nommée, soit la
+              compétence « reste encore à explorer » (garde-fou §35 : jamais
+              « il ne peut pas »). Absente tant que la séquence n'est pas concluante. */}
+          {failureSequence?.hasSequence && failureSequence.narrative && (
+            <div className="rounded-3xl border border-emerald-200 bg-emerald-50/90 p-6 shadow-md">
+              <div className="mb-3 flex items-center gap-3">
+                <NayaAvatar size="sm" thoughts={[`Je comprends mieux comment apprend ${child.name}...`]} />
+                <div>
+                  <span className="inline-flex items-center gap-1.5 rounded-full border border-emerald-300 bg-emerald-200 px-2.5 py-0.5 text-[10px] font-black uppercase tracking-wider text-emerald-900 shadow-xs">
+                    <Search className="size-3" />
+                    Ce que Naya a compris
+                  </span>
+                  <h3 className="mt-1 font-display text-balance text-lg font-bold text-ink">
+                    Une manière d'apprendre se précise
+                  </h3>
+                </div>
+              </div>
+              <p className="text-sm font-medium leading-relaxed text-ink">{failureSequence.narrative}</p>
+            </div>
+          )}
 
           {/* Success card dashboard: Profil Actuel de l'Enfant */}
           {(() => {

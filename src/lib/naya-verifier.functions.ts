@@ -39,6 +39,7 @@ export type GenerationKind =
   | "discriminant"
   | "support_retest"
   | "reformulation"
+  | "failure_sequence"
   | "hypothesis"
   | "proof_validation"
   | "not_completed_classification"
@@ -545,6 +546,14 @@ export function semanticRubricFor(kind: GenerationKind): string {
       return `1. reformulation-meme-objectif : le défi doit viser le MÊME objectif pédagogique que le défi original (même compétence, niveau équivalent — jamais plus difficile).
 2. reformulation-modalite : la modalité imposée (presentation_mode) doit réellement imprégner le défi — le format correspond à ce que la modalité promet (manipulation → gestes concrets, histoire → récit, etc.).
 3. reformulation-fraiche : le défi ne doit ni mentionner l'échec précédent ni révéler qu'il s'agit d'une reformulation — présenté comme un défi neuf et stimulant.`;
+    case "failure_sequence":
+      // Chantier 5 (§36) : la narration de séquence est aujourd'hui 100 % déterministe
+      // (evaluateFailureSequence, 0 IA) — la rubrique est le garde-fou de référence
+      // pour toute évolution future vers un facteur explicatif assisté par IA :
+      // jamais de verdict, jamais de conclusion avant ≥ 2 modalités testées (§35).
+      return `1. sequence-zero-verdict : la conclusion ne doit JAMAIS dire que l'enfant « ne peut pas » ou est « nul » — la compétence reste « encore à explorer » ou la modalité gagnante est nommée.
+2. sequence-garde-fou-35 : aucune conclusion de séquence avant au moins 2 modalités testées (ou une réussite) — sinon la boucle reste ouverte.
+3. sequence-zero-chiffre : aucune donnée quantitative (nombre d'essais, scores) dans la narration parent.`;
     case "homework":
       return `1. fusion-consigne : le défi doit réellement faire réviser/apprendre la consigne scolaire fournie, pas la contourner.
 2. zpa-coherent : la difficulté doit correspondre au niveau ZPA indiqué (soutien renforcé → très guidé).
