@@ -1745,3 +1745,19 @@ fichier ne porte plus que les constantes partagées.
 **Alternatives rejetées** : *matériaux par IA à chaque génération* (coût + invraisemblance — le déterministe est plus fiable et gratuit) ; *base de données des matériaux par pays* (13 clés en dur suffisent, vocabulaire fermé) ; *injecter aussi dans les recommandations* (l'input `buildRecommendationPrompt` ne porte pas la localisation — périmètre v1 : bulk/single/pont ; à étendre si besoin).
 
 **Vérifié** : **554 tests verts** (44 fichiers, +10 tests), `tsc --noEmit` propre, build OK. Même branche (`feat/naya-v4-modalites-apprentissage`) — PR #45.
+
+## Décision #70 : Monde réel hors-app — fondations de données (chantier 7, analyse §19, §29)
+
+**Contexte** : la vision fondatrice fait de l'application « une interface entre l'enfant, son potentiel et le monde réel — jamais un univers fermé ». Les rencontres réelles (mécanicien, atelier de menuiserie, camps, labs) restent **hors de l'application** (phase ultérieure) ; ce chantier pose les fondations : la règle de non-exploitation des données et l'infrastructure qui prépare la réponse à « quels environnements favorisent quels talents ? ».
+
+**Ce qui a été fait** :
+1. **Migration `20260812190000`** : vue interne `talent_environment_signals` — complétions **validées par l'IA** (`ai_observations` non nul, règle « pas de score sans preuve réelle ») agrégées par environnement (pays, ville, domaine) × talent observé (`target_intelligences` déplié par `CROSS JOIN LATERAL`, garde `jsonb_typeof` contre les valeurs décoratives des vieux défis). `REVOKE ALL ... FROM PUBLIC, anon, authenticated` + `COMMENT ON VIEW` documentant la finalité : données au service du développement des enfants, jamais d'exploitation commerciale.
+2. **Documentation vision** : spec NAYA V4 (chantier 7) + cette décision — le principe de non-exploitation est inscrit au référentiel.
+
+**Pourquoi cette forme** : une vue (pas une table) — aucune donnée dupliquée, toujours à jour, zéro code ; `REVOKE` explicite — même défense en profondeur que les fonctions SECURITY DEFINER (leçon des décisions #22) ; l'agrégation par environnement est la première brique de la question « quels environnements favorisent quels talents ? », sans jamais exposer de données individuelles d'enfants (agrégats uniquement, accès service role seul).
+
+**Alternatives rejetées** : *table de statistiques maintenue par le code* (état dupliqué à désynchroniser — la vue est dérivée par construction) ; *exposer la vue aux parents* (des agrégats croisés multi-familles sont sensibles même anonymisés — strictement interne pour l'instant) ; *fonction RPC d'agrégation* (équivalent, mais la vue est plus simple à auditer).
+
+**Vérifié** : migration poussée + probe réel — le service role lit la vue (5 lignes d'échantillon existantes), **anon est bloqué** (« permission denied for view talent_environment_signals »). Aucun test unitaire (pas de code applicatif). Branche `feat/naya-v4-modalites-apprentissage` — PR #45 (chantiers 3-7).
+
+**Clôture de la feuille de route (étape 0 du 2026-08-12)** : chantiers 3 (modalités), 4 (calibration du temps), 5 (boucle complète §36), 6 (double contextualisation), 7 (fondations monde réel) — tous livrés et poussés. 554 tests verts, tsc propre, build OK. Il reste, hors PR : les deux bugs antérieurs (bouton « Commencer le défi », fix « bouton non réussi » dans un stash) et les rencontres réelles (phase ultérieure).

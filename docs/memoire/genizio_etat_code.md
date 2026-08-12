@@ -29,6 +29,10 @@ metadata:
 
 **+ Chantier 6 « Double contextualisation local → global » (décision #69, même branche, PR #45)** : `contextualization.ts` (0 IA — `normalizeCountryKey`, `localMaterialsForCountry` mapping 14 pays, `buildContextualizationInstruction` escalier), injection dans bulk + single + pont aspiration (`naya-prompts.ts`), `INTELLIGENCES_FIELD_INSTRUCTION` étendue (projet → 2 clés complémentaires). Aucune migration. 554 tests verts, tsc propre, build OK.
 
+**+ Chantier 7 « Monde réel hors-app » — fondations (décision #70, même branche, PR #45)** : migration `20260812190000_talent_environment_signals.sql` — vue interne `talent_environment_signals` (complétions validées par l'IA par environnement × talent, `CROSS JOIN LATERAL` jsonb + garde `jsonb_typeof`), `REVOKE` pour anon/authenticated, `COMMENT ON VIEW` (non-exploitation). Probe vérifié : service role lit (5 lignes échantillon), anon bloqué. Aucun code applicatif.
+
+**Clôture de la feuille de route Phase 4 restante** : les 5 chantiers (3-7) sont livrés sur `feat/naya-v4-modalites-apprentissage` (PR #45). 554 tests verts (44 fichiers), tsc propre, build OK. Migrations 2026081217/18/1900 poussées et vérifiées.
+
 ## Snapshot du 2026-08-12 — Chantier 2 « Naya V4 » : aspirations + défis-projets (décisions #64-65)
 
 **Branche** : `feat/naya-v4-aspirations-projets` (depuis `feat/porte-entree-fondations-naya-v4`), contenu complet dans le Status Overview de [[MEMORY]].

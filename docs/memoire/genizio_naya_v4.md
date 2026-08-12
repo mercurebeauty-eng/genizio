@@ -3,7 +3,7 @@ name: genizio-naya-v4
 description: Spec NAYA V4 — feuille de route de la phase 4 restante : chantiers 3 à 7 (boucle de modalités d'apprentissage, calibration du temps, boucle complète §36, double contextualisation, monde réel)
 metadata:
   type: project
-  status: feuille de route (chantiers 1-2 livrés, 3-7 planifiés — approuvée le 2026-08-12)
+  status: feuille de route COMPLÈTE — chantiers 1-2 livrés (mergés), chantiers 3-7 livrés (PR #45, 2026-08-12)
   last_updated: 2026-08-12
 ---
 
@@ -112,17 +112,19 @@ Livré : `contextualization.ts` (mapping déterministe 14 pays → matériaux lo
 `INTELLIGENCES_FIELD_INSTRUCTION` étendue (projet → 2 clés complémentaires). Aucune
 migration. 554 tests verts. Reste éventuel (v2) : localisation dans les recommandations.
 
-### Chantier 7 — Monde réel hors-app : fondations (§19, §29)
+### Chantier 7 — Monde réel hors-app : fondations (§19, §29) — ✅ IMPLÉMENTÉ (décision #70, branche `feat/naya-v4-modalites-apprentissage`, PR #45)
 
 **Périmètre honnête** : les rencontres réelles (mécanicien, atelier de menuiserie, camps,
 labs) restent **hors de l'application** — l'app est une interface entre l'enfant, son
 potentiel et le monde réel, jamais un univers fermé. Ce chantier pose les fondations :
-
-1. **Documentation vision** (spec + décision mémoire) : les données d'usage servent au
-   développement des enfants, jamais à une exploitation commerciale (vision fondatrice).
-2. **Vue d'agrégation SQL (interne)** : environnement de défi (domaine + localisation) ×
-   talents observés — prépare la réponse « quels environnements favorisent quels talents ? ».
-3. **Probe SQL + documentation**. Aucune dépendance — peut être déplacé en fin de phase.
+1. **Documentation vision** : les données d'usage servent au développement des enfants,
+   jamais à une exploitation commerciale (vision fondatrice) — inscrite dans la spec
+   et la décision #70.
+2. **Vue d'agrégation SQL interne** `talent_environment_signals` (migration
+   `20260812190000`) : complétions validées par l'IA par environnement (pays, ville,
+   domaine) × talent observé — prépare la réponse « quels environnements favorisent
+   quels talents ? ». `REVOKE` pour anon/authenticated (service role seul).
+3. **Probe vérifié** : service role lit la vue, anon bloqué.
 
 ---
 
