@@ -102,26 +102,15 @@ des tentatives et garde-fou §35 — aucune conclusion sous 2 modalités testée
 la lecture), carte « Ce que Naya a compris » au Portfolio, Loup kind `failure_sequence`
 (rubrique zero-verdict / garde-fou-35 / zero-chiffre). 544 tests verts.
 
-### Chantier 6 — Double contextualisation local → global (§30-31) + interdisciplinarité (§32)
+### Chantier 6 — Double contextualisation local → global (§30-31) + interdisciplinarité (§32) — ✅ IMPLÉMENTÉ (décision #69, branche `feat/naya-v4-modalites-apprentissage`, PR #45)
 
 **Objectif** : le défi part des matériaux et réalités locaux, puis escalier vers outils
 technologiques et standards internationaux — **jamais d'enfermement dans l'environnement
 immédiat** ; un projet mobilise plusieurs compétences sans que l'enfant en ait conscience.
-
-1. **`src/lib/contextualization.ts`** : mapping déterministe pays → matériaux locaux
-   (bambou, bois, textile, recyclé, argile…) — 0 IA ; enrichissement de
-   `MATERIAL_TAGS_INSTRUCTION` + nouvelle `CONTEXTUALIZATION_INSTRUCTION` (escalier
-   local → outil technologique simple → numérique/standard international, interdiction
-   d'enfermement) ; pont explicite avec `ACADEMIC_REFERENTIAL_INSTRUCTION` (standards
-   internationaux déjà utilisés).
-2. **Interdisciplinarité** : `INTELLIGENCES_FIELD_INSTRUCTION` étendue (projet → 2 clés
-   complémentaires explicites ; micro → 1-2) — le pipeline résout déjà les
-   multi-intelligences et la validation distribue déjà les points multi.
-3. **BDD** : rien (material_tags existe). **UI** : rien de lourd.
-4. **Tests** : mapping pays → matériaux, prompt contient l'escalier et l'interdiction,
-   specs projet avec 2 intelligences résolues par finalizeChallenge.
-5. **Critères de complétion** : tout défi généré part d'un ancrage local du pays et
-   contient une marche vers le global ; les projets ciblent 2 intelligences au plus.
+Livré : `contextualization.ts` (mapping déterministe 14 pays → matériaux locaux,
+`buildContextualizationInstruction` escalier), injection dans bulk/single/pont aspiration,
+`INTELLIGENCES_FIELD_INSTRUCTION` étendue (projet → 2 clés complémentaires). Aucune
+migration. 554 tests verts. Reste éventuel (v2) : localisation dans les recommandations.
 
 ### Chantier 7 — Monde réel hors-app : fondations (§19, §29)
 

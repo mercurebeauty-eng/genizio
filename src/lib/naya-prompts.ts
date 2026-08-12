@@ -19,6 +19,10 @@
 // Import type-only (effacé à la compilation) — le contrat runtime « constantes
 // pures » est préservé.
 import type { AspirationBridge } from "@/lib/aspiration-map";
+// Double contextualisation local → global (chantier 6, analyse §30-31) : mapping
+// déterministe pays → matériaux locaux + instruction d'escalier. Module pur sans
+// dépendance — aucun cycle.
+import { buildContextualizationInstruction } from "@/lib/contextualization";
 
 // ---------------------------------------------------------------------------
 // IDENTITÉ EXPERT — rôle system
@@ -177,7 +181,7 @@ export const KIND_GUIDANCE_INSTRUCTION = `TYPE DE DÉFI ("kind") ET GUIDAGE ("gu
 // libre (ex: "Créativité"), qui ne correspondait jamais aux 9 clés réelles de
 // VALID_TALENT_KEYS — resolveTargetIntelligences filtre désormais ce qui ne
 // matche pas, mais encore faut-il que l'IA vise juste dès le départ.
-export const INTELLIGENCES_FIELD_INSTRUCTION = `Pour "intelligences" : 1 à 2 clés EXACTES parmi "spatial", "corporelle", "sociale", "entrepreneuriale", "creative", "artisanale", "emotionnelle", "logico_mathematique", "linguistique" — jamais un mot libre ou un nom français ("Créativité", "Logique") : uniquement ces clés techniques, celles réellement sollicitées par ce défi.`;
+export const INTELLIGENCES_FIELD_INSTRUCTION = `Pour "intelligences" : 1 à 2 clés EXACTES parmi "spatial", "corporelle", "sociale", "entrepreneuriale", "creative", "artisanale", "emotionnelle", "logico_mathematique", "linguistique" — jamais un mot libre ou un nom français ("Créativité", "Logique") : uniquement ces clés techniques, celles réellement sollicitées par ce défi. Pour un PROJET (kind "projet"), choisis de préférence 2 clés COMPLÉMENTAIRES quand le projet mobilise réellement deux compétences (ex. un mobile géométrique : "spatial" + "logico_mathematique" ; une saynète scientifique : "linguistique" + "logico_mathematique") — l'interdisciplinarité est assumée, l'enfant n'a pas à en avoir conscience (analyse §32).`;
 
 // V1 "sous-formes de talent" (2026-07-22, cf. genizio-decisions #40, étendu aux 9 domaines le
 // même jour) : savoir qu'un défi sollicite l'intelligence "corporelle" ne dit rien de la
@@ -312,6 +316,7 @@ export function buildChallengePrompt(input: BuildChallengePromptInput): string {
     ignoredDomains.length > 0
       ? `\n- Cet enfant a déjà reçu plusieurs défis dans ${ignoredDomains.length > 1 ? "ces domaines" : "ce domaine"} (${ignoredDomains.join(", ")}) sans jamais les commencer : évite de reproposer ${ignoredDomains.length > 1 ? "ces domaines" : "ce domaine"}, sauf sous un angle radicalement différent de ce qui a déjà été proposé.`
       : "";
+  const contextualizationInstruction = buildContextualizationInstruction(location);
 
   return `Tu es Naya, un mentor pédagogique pour enfants en Afrique francophone, sur la plateforme Génizio.
 Génère ${count} défis d'apprentissage sur mesure pour cet enfant.
@@ -339,6 +344,7 @@ ${timePressureNote}
 Contraintes :
 - SYNTHÈSE PÉDAGOGIQUE ET APPRENTISSAGE ÉQUILIBRÉ : Associe les leviers comportementaux observés par le parent (posture cognitive) avec la cartographie des talents de l'enfant. Les intelligences actuellement les moins explorées chez cet enfant sont ${leastExplored.join(" et ")}. Sauf si le contexte les rend peu réalistes, au moins un des ${count} défis DOIT utiliser la posture ou mécanique d'action préférentielle de l'enfant comme passerelle naturelle pour explorer l'une de ces intelligences moins travaillées — c'est ainsi que Naya révèle des talents cachés en s'appuyant sur ses moteurs d'action naturels.
 - Ancre les défis dans le contexte africain (matériaux locaux, réalités du quotidien, langues, marchés, agriculture, artisanat, culture).
+- ${contextualizationInstruction}
 - Choisis parmi ces domaines : ${domainsText}.${ignoredDomainsNote}
 - Chaque défi doit être concret, réalisable à la maison ou dans le quartier, adapté à l'âge, avec des matériaux simples et accessibles.
 - ${STEPS_INSTRUCTION}
@@ -404,6 +410,7 @@ export function buildSingleChallengePrompt(input: BuildSingleChallengePromptInpu
     timePressureNote,
     profileContextNote,
   } = input;
+  const contextualizationInstruction = buildContextualizationInstruction(profileLocation);
 
   return `Tu es Naya, un mentor pédagogique d'élite spécialisé dans la psychologie de l'enfant et les Intelligences Multiples d'Howard Gardner, opérant en Afrique francophone.
 Génère un défi d'apprentissage sur-mesure, hautement interactif et passionnant pour cet enfant, en respectant son contexte immédiat.
@@ -434,6 +441,7 @@ Contexte immédiat (TRÈS IMPORTANT) :
 - Temps disponible : ${timeAvailable}
 - Lieu / Environnement : ${immediateLocation}
 ${homeMaterialsLine}
+${contextualizationInstruction}
 
 Ta mission (Synthèse Pédagogique) :
 1. Analyse la carte des talents (Radar Chart), les leviers comportementaux observés par le parent (posture cognitive), ET les observations des défis passés.
@@ -873,6 +881,8 @@ export function buildAspirationBridgePrompt(input: BuildAspirationBridgePromptIn
       ? `Ancrage dans le réel : ${bridge.worldAnchor}`
       : "Ancre le défi dans la réalité du quartier et de la maison (matériaux locaux, objets du quotidien).";
 
+  const contextualizationInstruction = buildContextualizationInstruction(profileLocation);
+
   const vulnerableLine = vulnerable
     ? `CONTEXTE PARTICULIER (à respecter absolument) : cet enfant vient d'un parcours difficile — entre d'abord dans SON monde (argent, marché, débrouillardise, autonomie) avant de lui demander d'entrer dans le nôtre. Relie chaque savoir à un gain CONCRET et immédiat pour lui ; ne demande ni argent dépensé d'avance, ni cadre scolaire. OBJECTIF DE FOND (décision utilisateur) : qu'il apprenne, à son rythme, à faire confiance à un adulte — qu'il découvre qu'on est là pour lui donner ce qui lui a manqué. Construis la mission en escalier : (1) l'adulte est d'abord en retrait, simple présence fiable ; (2) l'adulte DONNE d'abord (un outil, une démonstration, du temps, de l'attention) sans rien exiger en retour ; (3) l'adulte tient une promesse simple que le défi rend vérifiable (être là à l'heure, montrer une fois, fournir le matériel) ; (4) seulement ensuite, une petite collaboration où l'enfant garde l'initiative. Ne force JAMAIS la proximité : c'est l'enfant qui fait le pas, l'adulte reste prévisible et généreux.`
     : "";
@@ -912,6 +922,7 @@ LA MISSION (défi-pont) :
 3b. OBSERVE les aptitudes réelles à travers ce défi : c'est une exploration, pas une épreuve — ne conclus jamais sur la seule déclaration. Si un autre talent apparaît plus fort, c'est une information précieuse, pas un échec.
 4. ${anchorLine}
 ${vulnerableLine}
+${contextualizationInstruction}
 5. ${KIND_GUIDANCE_INSTRUCTION}
 6. ${STEPS_INSTRUCTION}
 7. ${MATERIAL_TAGS_INSTRUCTION}

@@ -27,6 +27,8 @@ metadata:
 
 **+ Chantier 5 « Boucle de réévaluation complète » (décision #68, même branche, PR #45)** : `failure-sequence.functions.ts` (`evaluateFailureSequence` pure — facteur = modalité gagnante ou « encore à explorer », garde-fou §35 ≥ 2 modalités ; `buildFailureNarrative` 0 chiffre / 0 verdict ; `getLatestFailureSequence` GET dérivée à la lecture), carte « Ce que Naya a compris » au Portfolio, Loup kind `failure_sequence` (rubrique 3 règles). 544 tests verts, tsc propre, build OK.
 
+**+ Chantier 6 « Double contextualisation local → global » (décision #69, même branche, PR #45)** : `contextualization.ts` (0 IA — `normalizeCountryKey`, `localMaterialsForCountry` mapping 14 pays, `buildContextualizationInstruction` escalier), injection dans bulk + single + pont aspiration (`naya-prompts.ts`), `INTELLIGENCES_FIELD_INSTRUCTION` étendue (projet → 2 clés complémentaires). Aucune migration. 554 tests verts, tsc propre, build OK.
+
 ## Snapshot du 2026-08-12 — Chantier 2 « Naya V4 » : aspirations + défis-projets (décisions #64-65)
 
 **Branche** : `feat/naya-v4-aspirations-projets` (depuis `feat/porte-entree-fondations-naya-v4`), contenu complet dans le Status Overview de [[MEMORY]].
