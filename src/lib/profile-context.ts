@@ -144,7 +144,7 @@ export function formatChildProfileContext(profile: {
   if (profile.life_context && profile.life_context.length > 0) {
     const labels = profile.life_context.map((c) => LIFE_CONTEXT_OPTIONS[c] ?? c).join(", ");
     lines.push(
-      `- Contexte de parcours (déclaré par le parent) : ${labels} — entre dans son monde avant de lui demander d'entrer dans le nôtre : des expériences concrètes, utiles, respectueuses de sa réalité.`
+      `- Contexte de parcours (déclaré par le parent) : ${labels} — entre dans son monde avant de lui demander d'entrer dans le nôtre : des expériences concrètes, utiles, respectueuses de sa réalité. Objectif de fond (décision utilisateur) : qu'il apprenne progressivement à faire confiance à un adulte — propose des interactions PRÉVISIBLES et GÉNÉREUSES (l'adulte donne d'abord : temps, matériel, attention), sans jamais forcer la proximité.`
     );
   }
 

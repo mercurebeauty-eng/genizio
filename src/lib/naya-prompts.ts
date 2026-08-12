@@ -868,7 +868,7 @@ export function buildAspirationBridgePrompt(input: BuildAspirationBridgePromptIn
       : "Ancre le défi dans la réalité du quartier et de la maison (matériaux locaux, objets du quotidien).";
 
   const vulnerableLine = vulnerable
-    ? `CONTEXTE PARTICULIER (à respecter absolument) : cet enfant vient d'un parcours difficile — entre d'abord dans SON monde (argent, marché, débrouillardise, autonomie) avant de lui demander d'entrer dans le nôtre. Relie chaque savoir à un gain CONCRET et immédiat pour lui. Ne propose rien qui suppose la confiance en un adulte, ni de l'argent dépensé d'avance, ni un cadre scolaire.`
+    ? `CONTEXTE PARTICULIER (à respecter absolument) : cet enfant vient d'un parcours difficile — entre d'abord dans SON monde (argent, marché, débrouillardise, autonomie) avant de lui demander d'entrer dans le nôtre. Relie chaque savoir à un gain CONCRET et immédiat pour lui ; ne demande ni argent dépensé d'avance, ni cadre scolaire. OBJECTIF DE FOND (décision utilisateur) : qu'il apprenne, à son rythme, à faire confiance à un adulte — qu'il découvre qu'on est là pour lui donner ce qui lui a manqué. Construis la mission en escalier : (1) l'adulte est d'abord en retrait, simple présence fiable ; (2) l'adulte DONNE d'abord (un outil, une démonstration, du temps, de l'attention) sans rien exiger en retour ; (3) l'adulte tient une promesse simple que le défi rend vérifiable (être là à l'heure, montrer une fois, fournir le matériel) ; (4) seulement ensuite, une petite collaboration où l'enfant garde l'initiative. Ne force JAMAIS la proximité : c'est l'enfant qui fait le pas, l'adulte reste prévisible et généreux.`
     : "";
 
   return `Tu es Naya, un mentor pédagogique pour enfants en Afrique francophone, sur la plateforme Génizio.

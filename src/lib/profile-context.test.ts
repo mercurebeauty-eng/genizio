@@ -43,6 +43,13 @@ describe("formatChildProfileContext", () => {
     expect(out).toContain("entre dans son monde");
   });
 
+  it("contexte de parcours : objectif de fond = apprendre à faire confiance à un adulte (décision utilisateur)", () => {
+    const out = formatChildProfileContext({ life_context: ["parcours_rue"] });
+    expect(out).toContain("faire confiance à un adulte");
+    expect(out).toContain("l'adulte donne d'abord");
+    expect(out).toContain("sans jamais forcer la proximité");
+  });
+
   it("rapport à l'école", () => {
     const out = formatChildProfileContext({ school_relation: "conflit" });
     expect(out).toContain("En conflit avec l'école");

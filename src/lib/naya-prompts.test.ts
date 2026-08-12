@@ -379,6 +379,14 @@ describe("buildAspirationBridgePrompt — pont d'aspiration (chantier Naya V4)",
     expect(p).toContain("argent");
   });
 
+  it("profil vulnérable : objectif de fond = construire la confiance en l'adulte (décision utilisateur)", () => {
+    const p = buildAspirationBridgePrompt(input);
+    expect(p).toContain("faire confiance à un adulte");
+    expect(p).toContain("donner ce qui lui a manqué");
+    expect(p).toContain("l'adulte DONNE d'abord");
+    expect(p).toContain("Ne force JAMAIS la proximité");
+  });
+
   it("profil non vulnérable : pas d'instruction d'ancrage renforcée", () => {
     const p = buildAspirationBridgePrompt({ ...input, vulnerable: false });
     expect(p).not.toContain("SON monde");
