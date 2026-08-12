@@ -67,6 +67,7 @@ import { KitSuggestion } from "@/components/challenges/KitSuggestion";
 import { RenewChildAccessButton } from "@/components/settings/RenewChildAccessButton";
 import { DifficultyBadge } from "@/components/challenges/DifficultyBadge";
 import { ChallengeCountdown } from "@/components/challenges/ChallengeCountdown";
+import { ChallengeKindBadge } from "@/components/challenges/ChallengeKindBadge";
 import { MarkdownContent } from "@/components/ui/markdown-content";
 import {
   ChallengeDeleteDialog,
@@ -148,6 +149,7 @@ type Challenge = {
   academic_secret?: string | null;
   started_at?: string | null;
   time_limit_minutes?: number | null;
+  kind?: string | null;
 };
 
 type Child = {
@@ -1267,6 +1269,7 @@ function ChallengesPage() {
                               </span>
                             )}
                             <DifficultyBadge difficulty={currentGeneratedChallenge.difficulty} />
+            <ChallengeKindBadge kind={currentGeneratedChallenge.kind} />
                           </div>
                           <span className="text-xs text-ink/60 font-semibold">
                             🕒 {currentGeneratedChallenge.duration}
@@ -1780,6 +1783,7 @@ function ChallengeCard({
               </span>
             )}
             <DifficultyBadge difficulty={c.difficulty} />
+            <ChallengeKindBadge kind={c.kind} />
           </div>
           <span
             className={`rounded-full px-[11px] py-[5px] text-[12px] font-bold ${STATUS_STYLE[c.status]}`}
@@ -1853,6 +1857,7 @@ function ChallengeCard({
               </span>
             )}
             <DifficultyBadge difficulty={c.difficulty} />
+            <ChallengeKindBadge kind={c.kind} />
             <span className="inline-flex items-center gap-1 px-[11px] py-[5px] bg-white/20 rounded-full text-white text-[12px] font-bold">
               <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor">
                 <path d="M11.5 2.3a.5.5 0 0 1 1 0l2.3 4.6 5.1.75a.5.5 0 0 1 .3.86l-3.7 3.6.87 5.1a.5.5 0 0 1-.77.53L12 15.9l-4.6 2.4a.5.5 0 0 1-.77-.53l.88-5.1-3.7-3.6a.5.5 0 0 1 .29-.86l5.1-.75z" />
