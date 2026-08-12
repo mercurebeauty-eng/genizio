@@ -1569,3 +1569,79 @@ Soit 8 occurrences au total. Un balayage exhaustif de `src/routes/` a confirmé 
 **Alternatives rejetées** : *hard-delete maintenu* (orphelins Storage, aucun signal, contexte IA perdu) ; *champ de raison obligatoire sur le chemin léger* (contredit la légèreté voulue — les chips 1 tap capturent le signal sans frappe) ; *injection directe des signaux dans les prompts de génération dès maintenant* (changerait le comportement des 16 sites sans volume réel — Phase 2, après observation) ; *table `constitution_suggestions` dédiée* (le calcul live + `challenge_outcomes` suffit, cohérent #54).
 
 **Vérifié** : `tsc --noEmit` propre, **424 tests verts** (dont 4 nouveaux Décision #58 ; timeout du test PDF porté à 15 s car il flake sous charge parallèle), build OK, migration `20260809130000_challenge_soft_delete_and_outcomes.sql` appliquée à la base distante. Travaillé sur `feat/challenge-soft-delete-outcomes` (créée depuis `origin/main`).
+
+## Décision #59 : Porte d'entrée — l'âge 5-16 devient une contrainte serveur
+
+**Contexte** : analyse utilisateur « Évolution de Génizio » §2 — la limite « jusqu'à 16 ans » n'existait que dans le slider UI (`min=5 max=16`) ; en base, le CHECK acceptait 3-20 et l'insertion passant par le client (RLS `auth.uid() = user_id` uniquement), n'importe quel client authentifié pouvait créer un profil hors limite (l'utilisateur l'avait reproduit : un profil à 19 ans). L'âge est destiné à devenir une **donnée structurante** (défis accessibles, difficulté, attentes pédagogiques, recommandations).
+
+**Ce qui a été fait** :
+1. Audit PostgREST avant migration : **1 profil hors bornes** (19 ans, profil de test créé le jour même de l'analyse, birthdate 2007-05-21) — ramené à 16 ans avec birthdate effacée dans la migration elle-même, sans quoi le trigger `sync_child_age_from_birthdate` recalculerait 19 à chaque UPDATE et ferait échouer toutes les mises à jour de cette ligne.
+2. Migration `20260812120000_enforce_age_limit_5_16.sql` : `CHECK (age BETWEEN 5 AND 16)` (nom explicite `child_profiles_age_check`).
+3. `ProfileDialog` : bornes min/max sur l'input date (aujourd'hui −16 ans … aujourd'hui −5 ans) + message explicite « l'âge doit être compris entre 5 et 16 ans » si la date donne un âge hors fenêtre.
+4. Alignements : slider démo de la landing 4→5, bandes `AGE_DEVELOPMENT_GUIDANCE` recalées sur 5-7/8-11/12-16 (la bande 1-3 ans, hors périmètre produit, disparaît).
+
+**Pourquoi** : la seule barrière serveur honnête pour une donnée structurante est une contrainte en base ; l'UI seule était contournable et la base seule (3-20) acceptait l'illégal produit.
+
+**Alternatives rejetées** : *garder le CHECK 3-20 et seulement le slider* (contournable, c'est le bug signalé) ; *laisser le profil à 19 ans tel quel* (chaque UPDATE échouerait — le profil deviendrait inutilisable) ; *supprimer le profil de test* (destructif inutile — le clamp conserve les données).
+
+**Vérifié** : migration appliquée, probe SQL directe : insertion age=17 **refusée** (code 23514 check_violation), profil « essaie2 » passé à 16/birthdate null, 447 tests verts, `tsc` propre, build OK.
+
+## Décision #60 : Saison → étiquette ; campagnes 100 % indépendantes
+
+**Contexte** : analyse §3 — l'utilisateur doute de la pertinence des saisons (« si la saison cadre les défis, tous les défis seront biaisés par la saison ») et demande explicitement l'avis : **mon avis rendu** — le rôle commercial de la saison est mort (monétisation passée sur abonnement famille / accès mensuel / parrainage), son rôle structurel restant (fenêtre d'accès, thème narratif) est soit absorbé par les campagnes, soit exactement le biais redouté. Décision utilisateur : **dégrader en étiquette**.
+
+**Ce qui a été fait** :
+1. Migration `20260812130000_seasons_as_label_and_campaigns_independent.sql` : `DROP TRIGGER trg_child_profiles_auto_enroll_season` + `DROP FUNCTION auto_enroll_new_child_in_active_season()` (plus d'auto-inscription de tout enfant à la saison active) ; `season_enrollments.season_id` passe en **nullable** (les inscriptions existantes restent : historique/certificat).
+2. Retrait total du thème de saison des prompts de génération (`challenges.functions.ts`, 2 sites : `generateChallenges` et `generateSingleChallenge`) — suppression de la lecture `season_enrollments`, du calcul `seasonInstruction` et du paramètre des builders purs (`buildChallengePrompt`/`buildSingleChallengePrompt`) + tests mis à jour. **Plus aucun biais de saison sur les défis.**
+3. `DEFAULT_FALLBACK_SEASON` reste pour l'information (Admin, tokens de parrainage) — plus rien ne gâte l'accès ni la génération dessus.
+
+**Conservé en l'état** : table `seasons`, onglet Admin « Trimestres & Diaspora », inscription manuelle admin (opt-in), certificat de saison (seulement si inscription explicite), parrainage diaspora (tokens, `season_id` déjà nullable), fenêtre cohorte des campagnes portée par `campaigns.start_date/end_date` (la couverture B2B « permanent » de `getChildAccessStatus` repose sur `campaign_id`, inchangée).
+
+**Pourquoi** : supprimer entièrement les saisons aurait détruit le parrainage diaspora et le certificat pour un gain marginal ; les garder comme étiquette préserve ces surfaces sans aucun effet sur les défis ni l'accès.
+
+**Alternatives rejetées** : *suppression totale des saisons* (destructif, perte diaspora/certificat) ; *statut quo avec documentation* (le biais thématique demeure — c'est le risque identifié par l'utilisateur).
+
+## Décision #61 : Temps adaptatif — le temps devient une composante pédagogique du défi
+
+**Contexte** : analyse §5 — sans contrainte temporelle, un défi peut être interrompu et repris des heures plus tard : le défi devient une activité de loisir et ne travaille ni l'attention, ni la persévérance, ni la gestion du temps. MAIS le chrono ne doit jamais être une règle rigide : paramètre pédagogique configurable, adapté au profil (jamais punitif — non-négociable du produit).
+
+**Ce qui a été fait** :
+1. Migration `20260812140000_adaptive_time_pressure.sql` : `child_profiles.time_pressure` (`standard` / `gentle` ×1,5 / `none` sans chrono, défaut standard), `challenges.time_limit_minutes int NULL`, type `TIME_OVER` ajouté au CHECK de `observation_events`.
+2. Module pur `src/lib/time-limit.ts` : `resolveTimeLimitMinutes` (estimation ou repli par difficulté 15/25/40 × facteur d'âge 5-7 ans ×1,5 / 8-12 ×1,25 / 13-16 ×1 × facteur de pression, borné 3-120 min ; `none` → null) + `formatTimePressureNote` (injectée dans les prompts — l'IA adapte la durée indicative).
+3. Câblage : limite calculée à l'assignation (`assignTemplateChallenge`) et **en repli au démarrage** (`updateChallenge` au passage `in_progress` pour les défis générés en lot, sans estimation).
+4. UI : composant `ChallengeCountdown` sur la carte « Mission active » — compte à rebours depuis `started_at`, **à expiration : bannière douce « Naya te laisse continuer », jamais d'auto-échec**, et un événement `TIME_OVER` journalisé UNE fois par défi (fonction serveur `recordChallengeTimeOver`, idempotente) → nourrit le driver `time_awareness` du Jumeau Pédagogique.
+5. Tests : `time-limit.test.ts` ×12 (facteurs, bornes, replis, notes de prompt).
+
+**Pourquoi cette forme** : la résolution pure et bornée rend le chrono déterministe et testable ; le repli au démarrage garantit que le chrono existe aussi sur le chemin le plus courant (lot) ; le signal `TIME_OVER` réutilise le canal append-only existant sans nouvelle table.
+
+**Alternatives rejetées** : *deadline dure avec auto-échec* (violerait le non-négociable « Naya ne juge pas ») ; *chrono strict sans adaptation* (contredit §5 — certains profils nécessitent du temps rallongé ou aucun chrono) ; *parsing de la durée texte de l'IA* (fragile, non testable — l'estimation et le repli par difficulté suffisent).
+
+## Décision #62 : Quotas — l'UI promet exactement ce que la base accepte (+ offre legacy honnête)
+
+**Contexte** : analyse §4 — l'utilisateur croyait que « tout le monde peut créer plusieurs comptes gratuitement ». **Réalité vérifiée** : le trigger base bloque bien (plancher 5 pour les comptes créés avant 2026-08-04 — grand-pérés — sinon 1) ; le vrai bug était l'inverse : `computeChildCreationLimit` ajoutait un « +1 » (profil mensuel « en cours de première mise en paiement », modèle 2026-08-05) que le trigger final `20260809120000` **n'a pas** — un compte neuf croyait pouvoir créer un 2ᵉ enfant, la base le rejetait avec « Quota de profils atteint (1 / 1 profils) ».
+
+**Ce qui a été fait** :
+1. `computeChildCreationLimit` (child-access.ts) : **suppression du « +1 »** — miroir exact du trigger (plancher + slots, couverture famille → 5, plafond 5). Tests mis à jour (1+0=1, 1+2=3).
+2. Unification : `computeChildProfileQuota` (formule orpheline dans child-profile-quota.ts) supprimée au profit de l'unique source ; le
+fichier ne porte plus que les constantes partagées.
+3. Modale legacy honnête : « Accès mensuel — profil supplémentaire » (intent `extra_slots`) octroie en réalité un **slot permanent** — le texte promettait un renouvellement mensuel. Renommée « Profil supplémentaire permanent » (paiement unique ; le nombre de mois choisit le montant, l'accès ne s'interrompt jamais). Fulfillment inchangé.
+
+**Pourquoi** : une promesse d'UI que la base rejette est un bug de confiance ; le modèle « 1 gratuit + profils payants » de l'analyse §4 est exactement la règle du trigger, il suffisait d'aligner le client.
+
+**Alternatives rejetées** : *réintroduire le +1 dans le trigger* (ressuscite un parcours « créer puis payer » déjà remplacé par l'abonnement famille, et élargit le plancher de fait) ; *masquer l'offre slot* (elle est la traduction directe de « profils supplémentaires payants » de l'analyse).
+
+## Décision #63 : Pouvoir administratif exceptionnel sur les profils (is_active, déverrouillage, onglet Admin « Profils »)
+
+**Contexte** : analyse §4 — la règle commerciale par défaut ne doit jamais empêcher l'administrateur de gérer un cas particulier. À l'état du code : aucun concept d'activation/désactivation d'un profil ; `access_locked_at` (verrou B2B) n'avait **aucun déverrouillage programmatique** ; aucun outil admin dédié aux profils.
+
+**Ce qui a été fait** :
+1. `child_profiles.is_active boolean NOT NULL DEFAULT true` (migration `20260812150000`).
+2. **Gating complet** : tous les sites de génération/validation/recommandation/hypothèses/guildes qui filtrent `access_locked_at` gagnent `is_active = true` (challenges ×9, hypotheses ×3, guilds ×2, recommendations ×1) + pré-checks explicites dans `updateChallenge`/`deleteChallenge`/validation de preuve (« Ce profil est désactivé par l'administrateur »). Un profil désactivé = plus de génération/validation, données intactes, réactivation immédiate.
+3. Fonctions admin (`admin-os.functions.ts`) : `searchChildProfilesAdmin` (recherche par prénom + email parent), `setChildProfileActiveAdmin`, `unlockChildAccessAdmin` (seul chemin d'écriture sur `access_locked_at`), `setChildTimePressureAdmin`. Le « dépassement temporaire de limite » reste `updateExtraProfileSlotsAdmin` (Exécutif).
+4. Nouvel onglet Admin OS « Profils » (10e onglet, `AdminProfilesTab.tsx`) : recherche, statut actif/désactivé/verrou B2B, pression temporelle, actions Désactiver/Réactiver/Déverrouiller. Test `admin-route.test.ts` mis à jour (10 onglets).
+
+**Pourquoi** : distinguer nettement la règle par défaut (trigger/quota) du pouvoir exceptionnel (admin) — un bouton par action, aucune réécriture des règles commerciales nécessaire.
+
+**Alternatives rejetées** : *réutiliser `access_locked_at` comme désactivation manuelle* (confondrait verrou B2B automatique et décision admin — le déverrouillage serait ambigu) ; *hard-delete du profil désactivé* (contre la philosophie « on ne supprime jamais vraiment », décision #58).
+
+**Vérifié** : migrations appliquées et vérifiées en base (CHECK 5-16 actif, clamp du profil 19 ans, colonnes présentes), 447 tests verts, `tsc` propre, build OK. Travaillé sur `feat/porte-entree-fondations-naya-v4` (depuis `origin/main`).

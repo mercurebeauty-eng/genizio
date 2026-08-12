@@ -9,11 +9,27 @@ metadata:
 
 # État du Code
 
-> Vérifié le 2026-08-03, `origin/main` @ `cef4928` ("Merge pull request #22"). Le reste de ce
-> fichier (à partir de "Chantier 'Génizio v2' en cours" ci-dessous) date du 2026-07-16 et n'a
-> pas été ré-audité depuis — le Status Overview de [[MEMORY]] est la source la plus à jour pour
-> l'historique complet entre ces deux dates. Si `git log -1` montre un commit plus récent que
-> `cef4928`, re-vérifier avant de croire cette section.
+> Vérifié le 2026-08-12, branche `feat/porte-entree-fondations-naya-v4` (non mergée, main @ `6ab51ee`).
+
+## Snapshot du 2026-08-12 — Chantier « Porte d'entrée » (décisions #59-63)
+
+**Branche** : `feat/porte-entree-fondations-naya-v4` (depuis `main` @ `6ab51ee`), non mergée — contenu complet dans le Status Overview de [[MEMORY]].
+
+**Migrations appliquées et vérifiées en base** (probe SQL directe) :
+- `20260812120000_enforce_age_limit_5_16.sql` — CHECK `child_profiles_age_check` (5-16) actif : insertion probe age=17 refusée (23514) ; le profil de test « essaie2 » (19 ans, créé le jour de l'analyse) clampé à 16/birthdate null.
+- `20260812130000_seasons_as_label_and_campaigns_independent.sql` — trigger d'auto-inscription supprimé, `season_enrollments.season_id` nullable.
+- `20260812140000_adaptive_time_pressure.sql` — `time_pressure`, `time_limit_minutes`, type `TIME_OVER`.
+- `20260812150000_multidimensional_child_profile.sql` — `school_level` (+CHECK), `languages`, `ability_profile`, `school_relation` (+CHECK), `life_context`, `aspirations`, `is_active`.
+
+**Types régénérés** : `src/integrations/supabase/types.ts` via `supabase gen types --linked` (CLI local, jamais MCP — Key Principle #8).
+
+**Nouveaux modules** : `src/lib/time-limit.ts` (résolution pure + note prompt), `src/lib/profile-context.ts` (vocabulaire fermé + `formatChildProfileContext`), `src/components/challenges/ChallengeCountdown.tsx` (chrono doux non-punitif), `src/components/admin/AdminProfilesTab.tsx` (10ᵉ onglet Admin).
+
+**Modifiés en profondeur** : `challenges.functions.ts` (thème saison retiré des 2 générateurs, `time_limit_minutes` à l'assignation + repli au démarrage, `recordChallengeTimeOver`, gating `is_active` ×9 + pré-checks ×5), `naya-prompts.ts` (paramètres `timePressureNote`/`profileContextNote`), `ProfileDialog.tsx` (bornes âge + section « Contexte & aptitudes »), `admin-os.functions.ts` (4 fonctions admin), `child-access.ts` (fin du « +1 » fantôme), `child-profile-quota.ts` (formule orpheline supprimée).
+
+**Bugs de production antérieurs toujours ouverts** (non touchés par ce chantier) : « Commencer le défi sans effet visible » (cause inconnue, décision #51) ; fix « bouton non réussi à todo » toujours dans un `git stash` non commité.
+
+> La section historique ci-dessous (à partir de « Snapshot du 2026-08-03 ») reste valable pour le contexte antérieur — le Status Overview de [[MEMORY]] est la source la plus à jour pour l'historique complet.
 
 ## Snapshot du 2026-08-03 — PR #21 + PR #22 mergées et déployées
 
