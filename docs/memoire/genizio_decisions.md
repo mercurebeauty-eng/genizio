@@ -1645,3 +1645,38 @@ fichier ne porte plus que les constantes partagées.
 **Alternatives rejetées** : *réutiliser `access_locked_at` comme désactivation manuelle* (confondrait verrou B2B automatique et décision admin — le déverrouillage serait ambigu) ; *hard-delete du profil désactivé* (contre la philosophie « on ne supprime jamais vraiment », décision #58).
 
 **Vérifié** : migrations appliquées et vérifiées en base (CHECK 5-16 actif, clamp du profil 19 ans, colonnes présentes), 447 tests verts, `tsc` propre, build OK. Travaillé sur `feat/porte-entree-fondations-naya-v4` (depuis `origin/main`).
+
+## Décision #64 : Onboarding orienté profil — « À quel enfant avons-nous affaire ? » + déclaration de l'enfant
+
+**Contexte** : analyse §6-7, §10, §17 — relecture complète du document directeur demandée par l'utilisateur après un premier plan trop étroit. Deux corrections produit structurantes : (1) la question « à quel enfant avons-nous affaire ? » (contexte de parcours, handicaps, facilités/difficultés, niveau scolaire, langues) se pose **en tout début** d'onboarding — pas repliée en section optionnelle ; (2) le **choix d'aspiration est conditionnel au type de profil** : central pour les profils délaissés/rue/précaire (rapport à l'argent, méfiance des adultes — la déclaration est une boussole), **pas nécessaire pour les autres** (l'exploration passe par les intérêts/talents). La déclaration enregistre **les mots de l'enfant** (source « enfant »), saisie par le parent à l'onboarding — pas d'UI en mode Quête (décision utilisateur).
+
+**Ce qui a été fait** :
+1. `ProfileDialog` restructuré en parcours à étapes visibles : Qui → Comment il est → **À quel enfant avons-nous affaire ?** → **Ce qu'il veut devenir (conditionnelle)**. L'étape contexte (vie privée, consentement `context_declared`) remplace le repliable du chantier 1.
+2. `shouldAskAspirations(context)` (pur, testé) : vraie si `life_context` ∩ {parcours_rue, environnement_precaire, famille_eloignee} ≠ ∅, ou rapport à l'école ∈ {conflit, non_scolarise}, ou des aspirations existent déjà (on ne cache jamais des données). Sinon l'étape 4 disparaît (3 étapes).
+3. Étape 4 : « Ce que **votre enfant dit** vouloir faire — ses propres mots, même s'ils vous surprennent », chips + saisie libre, **source `enfant`** (rétrocompat : les aspirations du chantier 1 sans source sont lues `parent`).
+4. `formatChildProfileContext` mentionne la source (« déclarée(s) par l'enfant lui-même »).
+
+**Pourquoi** : un enfant de rue n'aborde pas l'aspiration comme un enfant scolarisé — sa déclaration (souvent motivée par l'argent, la survie) doit être explorée par l'expérience ; demander des aspirations à tous les parents serait du bruit pour les profils standards. La voix de l'enfant se collecte là où il est présent : à l'onboarding.
+
+**Alternatives rejetées** : *section aspiration visible pour tous* (contredit « pas besoin de choix d'aspiration ») ; *déclaration en mode Quête* (l'enfant n'a pas de compte propre — décision utilisateur) ; *texte libre pour le contexte* (données sensibles de mineurs — préréglages uniquement, chantier 1).
+
+**Vérifié** : `tsc` propre, tests `shouldAskAspirations` ×6, 492 tests verts au total, build OK.
+
+## Décision #65 : Moteur d'aspirations + défis-projets (chantier Naya V4, analyse §8, §10-16, §27-28)
+
+**Contexte** : la boucle §20 (PROFIL → HYPOTHÈSE → DÉFI → OBSERVATION → MISE À JOUR) appliquée aux aspirations. L'aspiration n'est ni une vérité ni un mensonge : un terrain d'exploration testé par l'expérience, jamais un verdict affiché (§10, §16). Et un défi n'est pas qu'un exercice : il peut être un véritable projet (§27) dont le guidage se réduit à mesure que l'enfant progresse (§28).
+
+**Ce qui a été fait** :
+1. **Migration `20260812160000`** : `challenges.kind` (micro/projet), `challenges.guidance_level` (1-5), `challenges.aspiration_label` (marqueur lisible de défi-pont).
+2. **`aspiration-map.ts`** : ponts curés aspiration → {talentKeys, domains, skillsHint, worldAnchor} (Menuiserie → artisanale/spatiale/logico, mesurer/compter/proportions…), matching tolérant (tokens, accents, préfixes courts), fallback générique — ne casse jamais.
+3. **`aspiration-confidence.ts`** : statuts dérivés à la lecture (pattern `interest-confidence`), seuils identiques aux intérêts (8 essais, engagement net 0,65/0,35) ; comptage par chevauchement domaines/talents mappés + marqueur `aspiration_label` ; `getAspirationHypothesesSnapshot` ne jette jamais.
+4. **Branche de recommandation `ASPIRATION`** (priorité INVESTIGATION → ASPIRATION → STABILISATION → ESSAIMAGE → EXPLORATION) : génère un défi-pont via `buildAspirationBridgePrompt` — scénarisé dans l'univers visé mais ciblant les compétences fondamentales (« la motivation naît de la finalité »), **ancrage monde réel renforcé pour profils vulnérables** (§14-15 : argent, marché, débrouillardise, « entre dans son monde »), « observe les aptitudes réelles, ne conclus jamais sur la seule déclaration ». Idempotent (un seul pont en attente par aspiration, pas de pont si défi récent < 14 j dans les domaines mappés).
+5. **§8 — entraînement des difficultés** : `difficulty-map.ts` mappe les difficultés déclarées sur les clés Gardner et **biaise doucement** (jamais durement) le choix de la faiblesse à entraîner (ESSAIMAGE) et les cibles d'EXPLORATION.
+6. **Défis-projets** : consigne `kind`/`guidance_level` dans toutes les specs JSON des builders ; filets déterministes `resolveKind` (projet seulement si l'IA le demande ET ≥ 3 étapes) et `resolveGuidanceLevel` (clamp 1-5 + **retrait progressif** : −1 cran tous les 4 défis complétés dans le domaine, câblé dans `generateChallenges` via `completedInDomain`).
+7. **UI** : badge « 🏗️ Projet » sur les cartes (Quête + parent) ; « 🧭 La boussole de Naya » en mode Quête et « Univers explorés » au Portfolio — narration qualitative déterministe (`aspiration-narrative.ts`, 0 IA, jamais de chiffres ni de verdict, règles de sanitisation de `narrateForParent` en code) : « Tu dis aimer X. Explorons cela ! » → « Naya cherche ce qui te motive vraiment ».
+
+**Pourquoi cette forme** : la détection reste en code pur (0 IA), l'IA n'intervient qu'au point de raisonnement (génération du pont) ; le statut dérivé à la lecture évite une table dédiée et ses risques de désynchronisation ; la narration par statut garantit le non-négociable « Naya enquête, elle ne juge pas ».
+
+**Alternatives rejetées** : *réutiliser `hypothesis_cycles` pour les aspirations* (machinerie de diagnostic causal d'échec, sémantique différente — après lecture du schéma, un motif léger dérivé à la lecture est plus propre) ; *narration IA pour la réorientation* (coût + risque de dérive — le déterministe suffit pour l'instant) ; *biais dur des difficultés* (placerait l'enfant en échec forcé — priorité douce uniquement).
+
+**Vérifié** : migration appliquée et probe SQL (colonnes présentes), types régénérés, **492 tests verts** (42 fichiers, +45 tests), `tsc` propre, build OK. Branche empilée `feat/naya-v4-aspirations-projets` (depuis `feat/porte-entree-fondations-naya-v4`).
