@@ -81,24 +81,15 @@ chantier 5 ci-dessous.
 6. **Critères de complétion** : échec → ≥1 reformulation générée automatiquement ; 3 essais max ;
    le Jumeau reçoit l'échec ; Loup audite la reformulation ; 0 chiffre/0 verdict.
 
-### Chantier 4 — Calibration du temps par les observations (§5 suite)
+### Chantier 4 — Calibration du temps par les observations (§5 suite) — ✅ IMPLÉMENTÉ (décision #67, branche `feat/naya-v4-modalites-apprentissage`, PR #45)
 
-**Objectif** : `time_pressure` devient appris, jamais imposé — N répétitions de `TIME_OVER`
-dans un domaine → **proposition** de passage en `gentle`, le parent valide.
-
-1. **Logique** : `getGentleTimeSuggestion` (server fn GET) — compte les `TIME_OVER` des 30
-   derniers jours groupés par domaine (`payload->>'domain'`), seuil 3 → suggestion si
-   `time_pressure = "standard"` ; `applyGentleTimeProposal` (POST, calqué sur
-   `setChildTimePressureAdmin` sans `requireAdmin`) ; dismissal localStorage
-   `genizio_dismissed_gentle_proposal_${profileId}` (pattern `dismissDiscovery`).
-2. **Migration (mineure)** : branche TIME_OVER dans `apply_observation_to_twin`
-   (signal time_awareness faible) pour que la calibration nourrisse le Jumeau.
-3. **UI** : carte « Naya propose le mode doux » dans le portfolio, insérée après
-   « Ce que Naya a remarqué » (pattern « Une découverte de Naya » : 2 boutons) ;
-   ajout de `time_pressure` au select du portfolio.
-4. **Tests** : seuil (2 vs 3), pas de suggestion si gentle/none, idempotence, validation parent.
-5. **Critères de complétion** : 3 TIME_OVER → carte visible ; validation → gentle ;
-   dismissal → carte masquée ; admin déjà opérationnel (onglet Profils).
+**Objectif** : `time_pressure` devient appris, jamais imposé — 3 répétitions de `TIME_OVER`
+dans un même domaine (fenêtre 30 jours) → **proposition** de passage en `gentle`, le
+parent valide (l'admin surmodule déjà via l'onglet Profils).
+Livré : migration `20260812180000` (branche TIME_OVER dans `apply_observation_to_twin`),
+`time-calibration.functions.ts` (`suggestTimePressureChange` pure, `getGentleTimeSuggestion`,
+`applyGentleTimeProposal` idempotent), carte « Plus de temps pour {enfant} ? » dans le
+portfolio (pattern « Une découverte de Naya », rejet en localStorage). 535 tests verts.
 
 ### Chantier 5 — Boucle de réévaluation complète (§36)
 

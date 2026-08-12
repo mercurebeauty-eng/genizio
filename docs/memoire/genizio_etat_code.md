@@ -23,6 +23,8 @@ metadata:
 
 **Vérifié** : 529 tests verts (44 fichiers), `tsc --noEmit` propre, build OK.
 
+**+ Chantier 4 « Calibration du temps » (décision #67, même branche, PR #45)** : migration `20260812180000_time_calibration.sql` (branche TIME_OVER dans `apply_observation_to_twin` — time_awareness faible), `time-calibration.functions.ts` (`suggestTimePressureChange` pure seuil 3/30 j, `getGentleTimeSuggestion` GET, `applyGentleTimeProposal` POST idempotent), carte « Plus de temps pour {enfant} ? » dans le portfolio (pattern « Une découverte de Naya », rejet localStorage, `time_pressure` ajouté au select). 535 tests verts, tsc propre, build OK.
+
 ## Snapshot du 2026-08-12 — Chantier 2 « Naya V4 » : aspirations + défis-projets (décisions #64-65)
 
 **Branche** : `feat/naya-v4-aspirations-projets` (depuis `feat/porte-entree-fondations-naya-v4`), contenu complet dans le Status Overview de [[MEMORY]].
