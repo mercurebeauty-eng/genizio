@@ -37,7 +37,19 @@
   </url>
 
   <url>
+    <loc>https://www.genizio.com/guides/gestion-colere-emotions-enfant</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+
+  <url>
     <loc>https://www.genizio.com/guides/activites-educatives-enfant</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+
+  <url>
+    <loc>https://www.genizio.com/guides/activites-manuelles-enfant</loc>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
@@ -73,6 +85,12 @@
   </url>
 
   <url>
+    <loc>https://www.genizio.com/guides/reussite-scolaire-aider-enfant</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+
+  <url>
     <loc>https://www.genizio.com/guides/ecrans-addiction-alternatives-enfant</loc>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
@@ -86,6 +104,12 @@
 
   <url>
     <loc>https://www.genizio.com/guides/autonomie-responsabilite-maison</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+
+  <url>
+    <loc>https://www.genizio.com/guides/discipline-positive-sans-punition</loc>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>

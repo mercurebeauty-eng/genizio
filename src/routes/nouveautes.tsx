@@ -2,6 +2,15 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { ArrowLeft, Sparkle } from "lucide-react";
 
 export const Route = createFileRoute("/nouveautes")({
+  // Page d'application (journal des mises à jour) : hors vitrine, jamais indexée.
+  // noindex plutôt que robots Disallow : les crawlers voient la directive et
+  // cessent de signaler une « page bloquée ».
+  head: () => ({
+    meta: [
+      { title: "Nouveautés — Génizio" },
+      { name: "robots", content: "noindex, follow" },
+    ],
+  }),
   component: NouveautesPage,
 });
 

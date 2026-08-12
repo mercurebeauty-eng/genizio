@@ -26,6 +26,7 @@ import {
   Trophy,
   BookOpen,
   Lock,
+  Globe,
 } from "lucide-react";
 import { getChildAccessStatusFn, type ChildAccessStatus } from "@/lib/child-access";
 import { formatXof } from "@/lib/pricing";
@@ -42,7 +43,12 @@ import {
   assignTemplateChallenge,
   TALENT_SUBFORM_LABELS,
   TALENT_SUBFORM_TO_DOMAIN,
+  ACADEMIC_DOMAIN_LABELS,
 } from "@/lib/challenges.functions";
+import {
+  internationalLevelLabel,
+  lastAcademicLevelByDomain,
+} from "@/lib/academic-levels";
 import {
   GRADE_LEVEL_METADATA,
   ACADEMIC_SUBJECT_LABELS,
@@ -977,6 +983,39 @@ function ChallengesPage() {
                     </p>
                   </div>
 
+                  {/* Niveau international atteint par domaine */}
+                  {(() => {
+                    const domainLevels = lastAcademicLevelByDomain(challenges);
+                    if (domainLevels.length === 0) return null;
+                    return (
+                      <div className="rounded-3xl border border-ink/10 bg-white p-6 shadow-xl">
+                        <h3 className="font-display text-balance text-lg font-bold flex items-center gap-2 text-ink mb-1">
+                          <Globe className="size-5 text-brand" />
+                          Niveau international par domaine
+                        </h3>
+                        <p className="text-[12px] text-ink/60 font-medium mb-4 leading-relaxed">
+                          Dernier niveau atteint, calibré sur les standards des meilleurs
+                          systèmes éducatifs du monde (Common Core USA · Singapore Math · NGSS).
+                        </p>
+                        <div className="space-y-2">
+                          {domainLevels.map((d) => (
+                            <div
+                              key={d.domain}
+                              className="flex items-center justify-between gap-2 rounded-2xl bg-surface border border-border px-4 py-3"
+                            >
+                              <span className="text-[13px] font-bold text-ink">
+                                {ACADEMIC_DOMAIN_LABELS[d.domain] ?? d.domain}
+                              </span>
+                              <span className="text-[13px] font-extrabold text-cyan-900 bg-cyan-100 rounded-full px-3 py-1 shrink-0">
+                                {d.grade}
+                              </span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    );
+                  })()}
+
                   {/* Sous-formes de talent */}
                   {(() => {
                     const subformCountsByDomain: Record<string, Record<string, number>> = {};
@@ -1782,6 +1821,12 @@ function ChallengeCard({
                   ""}
               </span>
             )}
+            {c.academic_level_age != null && c.academic_domain && (
+              <span className="rounded-full bg-cyan-100 text-cyan-900 border border-cyan-300 px-[11px] py-[5px] text-[12px] font-bold inline-flex items-center gap-1">
+                <Globe className="size-3 shrink-0" />
+                {internationalLevelLabel(c.academic_level_age)}
+              </span>
+            )}
             <DifficultyBadge difficulty={c.difficulty} />
             <ChallengeKindBadge kind={c.kind} />
           </div>
@@ -1854,6 +1899,12 @@ function ChallengeCard({
                 {ACADEMIC_SUBJECT_LABELS[c.academic_subject as AcademicSubject] ??
                   c.academic_subject ??
                   ""}
+              </span>
+            )}
+            {c.academic_level_age != null && c.academic_domain && (
+              <span className="inline-flex items-center gap-1 px-[11px] py-[5px] bg-cyan-400/90 text-cyan-950 rounded-full text-[12px] font-extrabold">
+                <Globe className="size-3 shrink-0" />
+                {internationalLevelLabel(c.academic_level_age)}
               </span>
             )}
             <DifficultyBadge difficulty={c.difficulty} />

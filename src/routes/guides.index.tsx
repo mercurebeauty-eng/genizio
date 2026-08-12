@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { ArrowRight, Compass, Puzzle, Rocket, Brain, Gem, Globe2, Bot, HeartPulse, Tv, Mic, CheckSquare, Briefcase, Users } from "lucide-react";
+import { ArrowRight, Compass, Puzzle, Rocket, Brain, Gem, Globe2, Bot, HeartPulse, Tv, Mic, CheckSquare, Briefcase, Users, Palette, ShieldCheck, HeartHandshake, GraduationCap } from "lucide-react";
 import { pageMeta, jsonLdScript, breadcrumbJsonLd, absoluteUrl } from "@/lib/seo";
 
 const GUIDES = [
@@ -18,6 +18,13 @@ const GUIDES = [
     desc: "Pourquoi l'agitation n'est pas toujours un problème d'attention, comment observer votre enfant sur plusieurs semaines, et à quel moment consulter un professionnel.",
   },
   {
+    to: "/guides/gestion-colere-emotions-enfant",
+    Icon: HeartHandshake,
+    eyebrow: "Émotions & bien-être",
+    title: "Gérer la colère de son enfant : 5 outils pour l'apaiser",
+    desc: "Pourquoi l'enfant explose, comment accueillir la colère sans céder ni crier, et les outils concrets pour la traverser.",
+  },
+  {
     to: "/guides/ecrans-addiction-alternatives-enfant",
     Icon: Tv,
     eyebrow: "Écrans & Créativité",
@@ -28,8 +35,15 @@ const GUIDES = [
     to: "/guides/activites-educatives-enfant",
     Icon: Puzzle,
     eyebrow: "Activités & jeux",
-    title: "30 activités éducatives à faire à la maison avec un enfant de 6 à 12 ans",
+    title: "24 activités éducatives à faire à la maison avec un enfant de 6 à 12 ans",
     desc: "Des activités concrètes avec du matériel du quotidien, classées par type d'intelligence sollicitée, et ce que chacune révèle de votre enfant.",
+  },
+  {
+    to: "/guides/activites-manuelles-enfant",
+    Icon: Palette,
+    eyebrow: "Activités & jeux",
+    title: "Activités manuelles pour enfants : 15 idées (4-12 ans)",
+    desc: "Couper, coller, modeler, réparer : 15 activités manuelles avec du matériel du quotidien qui développent la motricité fine et la confiance.",
   },
   {
     to: "/guides/timidite-confiance-prise-de-parole",
@@ -44,6 +58,13 @@ const GUIDES = [
     eyebrow: "Autonomie & Projets",
     title: "Rendre son enfant autonome à la maison sans crier",
     desc: "La méthode du projet responsabilisant pour remplacer la répétition d'ordres par l'initiative personnelle de l'enfant.",
+  },
+  {
+    to: "/guides/discipline-positive-sans-punition",
+    Icon: ShieldCheck,
+    eyebrow: "Éducation & limites",
+    title: "Discipline positive : éduquer sans crier ni punir",
+    desc: "Poser des limites fermes sans humiliation : choix limités, conséquences logiques et réparation en pratique.",
   },
   {
     to: "/guides/orientation-scolaire-metiers-avenir",
@@ -63,7 +84,7 @@ const GUIDES = [
     to: "/guides/defis-pour-adolescents",
     Icon: Rocket,
     eyebrow: "Adolescents",
-    title: "Quels défis proposer à un adolescent de 12 à 16 ans ?",
+    title: "Motiver un adolescent : 12 défis qui marchent (12-16 ans)",
     desc: "Ce qui motive réellement un adolescent, pourquoi les activités « pour enfants » ne fonctionnent plus, et comment lui proposer des projets à sa mesure.",
   },
   {
@@ -93,6 +114,13 @@ const GUIDES = [
     eyebrow: "Confiance & bien-être",
     title: "Décrochage scolaire : la confiance se joue avant l'école",
     desc: "Pourquoi le décrochage commence dès l'enfance, comment repérer les signaux de mal-être, et ce que les parents peuvent faire à la maison.",
+  },
+  {
+    to: "/guides/reussite-scolaire-aider-enfant",
+    Icon: GraduationCap,
+    eyebrow: "Réussite & motivation",
+    title: "Aider son enfant à réussir à l'école sans pression",
+    desc: "Ce qui prédit vraiment la réussite scolaire, comment réagir aux mauvaises notes et les leviers à installer à la maison.",
   },
 ];
 
