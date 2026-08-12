@@ -176,6 +176,7 @@ export type Database = {
           academic_secret: string | null
           academic_subject: string | null
           ai_observations: string | null
+          aspiration_label: string | null
           behavioral_driver: string | null
           child_id: string
           completed_at: string | null
@@ -187,8 +188,10 @@ export type Database = {
           domain: string
           duration: string
           estimated_duration_minutes: number | null
+          guidance_level: number
           homework_instruction: string | null
           id: string
+          kind: string
           material_tags: string[]
           materials: Json
           not_completed_at: string | null
@@ -222,6 +225,7 @@ export type Database = {
           academic_secret?: string | null
           academic_subject?: string | null
           ai_observations?: string | null
+          aspiration_label?: string | null
           behavioral_driver?: string | null
           child_id: string
           completed_at?: string | null
@@ -233,8 +237,10 @@ export type Database = {
           domain: string
           duration: string
           estimated_duration_minutes?: number | null
+          guidance_level?: number
           homework_instruction?: string | null
           id?: string
+          kind?: string
           material_tags?: string[]
           materials?: Json
           not_completed_at?: string | null
@@ -268,6 +274,7 @@ export type Database = {
           academic_secret?: string | null
           academic_subject?: string | null
           ai_observations?: string | null
+          aspiration_label?: string | null
           behavioral_driver?: string | null
           child_id?: string
           completed_at?: string | null
@@ -279,8 +286,10 @@ export type Database = {
           domain?: string
           duration?: string
           estimated_duration_minutes?: number | null
+          guidance_level?: number
           homework_instruction?: string | null
           id?: string
+          kind?: string
           material_tags?: string[]
           materials?: Json
           not_completed_at?: string | null

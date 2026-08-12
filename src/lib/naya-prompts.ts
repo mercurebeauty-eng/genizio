@@ -16,6 +16,10 @@
 // Chantier 1 « Naya 3.0 — Le Loup » : identité + vérification sémantique + apprentissage.
 // ============================================================================
 
+// Import type-only (effacé à la compilation) — le contrat runtime « constantes
+// pures » est préservé.
+import type { AspirationBridge } from "@/lib/aspiration-map";
+
 // ---------------------------------------------------------------------------
 // IDENTITÉ EXPERT — rôle system
 // ---------------------------------------------------------------------------
@@ -160,6 +164,14 @@ Adapte strictement la forme, la complexité intellectuelle et la motricité requ
 // à chaque site (alignée sur "- " ou "N. ") mais texte identique. Chaque site
 // garde son propre préfixe de liste, comme SAFETY_INSTRUCTION ci-dessus.
 export const MATERIAL_TAGS_INSTRUCTION = `Pour "material_tags" : un tag court en minuscules, sans accent, par matériau physique achetable (ex: "carton", "cutter", "colle", "ampoule") — pas les objets déjà présents chez tout le monde (eau, table, papier). Un tableau vide si rien d'achetable n'est nécessaire.`;
+
+// Défis-projets (2026-08-12, analyse §27-28, §40) : un défi n'est pas qu'un exercice —
+// il peut être une micro-activité d'entraînement ou un véritable projet. L'IA PROPOSE
+// kind/guidance_level, les filets déterministes resolveKind/resolveGuidanceLevel
+// décident (anti-hallucination, retrait progressif du guidage avec le niveau).
+export const KIND_GUIDANCE_INSTRUCTION = `TYPE DE DÉFI ("kind") ET GUIDAGE ("guidance_level") :
+- "kind":"micro" = activité brève (quelques minutes) à résultat simple ; "kind":"projet" = véritable projet : construire, concevoir, rechercher, planifier, expérimenter, fabriquer → résultat observable (jamais un exercice passif ni une fiche). Un "projet" exige au moins 3 étapes.
+- "guidance_level" (entier 1 à 5) : 1 = consignes très détaillées pas-à-pas (étapes, outils, exemples) ; 5 = « voici l'objectif, trouve ta méthode ». Donne d'autant plus de liberté que l'enfant a déjà complété des défis dans ce domaine.`;
 
 // Ajoutée le 2026-07-22 : avant, "intelligences" acceptait n'importe quel texte
 // libre (ex: "Créativité"), qui ne correspondait jamais aux 9 clés réelles de
@@ -338,9 +350,10 @@ Contraintes :
 - ${PROOF_MODE_INSTRUCTION}
 - ${ACADEMIC_REFERENTIAL_INSTRUCTION}
 - ${ACADEMIC_SECRET_INSTRUCTION}
+- ${KIND_GUIDANCE_INSTRUCTION}
 
 Réponds STRICTEMENT en JSON valide avec ce format, pour chaque défi :
-{"challenges":[{"domain":"...","title":"...","description":"...","duration":"...","steps":["...","..."],"materials":["...","..."],"material_tags":["..."],"pedagogical_context":"Ce que Naya observe via cette activité","intelligences":["creative"],"trait_subform":"..." (voir liste par intelligence ci-dessus) ou null,"requires_supervision":true ou false,"supervision_warning":"..." (ou null si false),"difficulty":"facile"|"moyen"|"difficile","proof_mode":"photo"|"declarative","proof_target":{"metric":"...","value":20} (uniquement si declarative),"declarative_award":{"corporelle":2} (uniquement si declarative),"academic_domain":"mathematiques"|"langage"|"sciences"|"corporelle"|"sociale"|"emotionnelle"|"entrepreneuriale"|"artisanale"|"spatiale"|null,"academic_level_age":14 (uniquement si academic_domain non null),"academic_reference_note":"..." (uniquement si academic_domain non null),"academic_secret":"Explication stimulante du secret scientifique/physique..."}]}`;
+{"challenges":[{"domain":"...","title":"...","description":"...","duration":"...","steps":["...","..."],"materials":["...","..."],"material_tags":["..."],"pedagogical_context":"Ce que Naya observe via cette activité","intelligences":["creative"],"trait_subform":"..." (voir liste par intelligence ci-dessus) ou null,"requires_supervision":true ou false,"supervision_warning":"..." (ou null si false),"difficulty":"facile"|"moyen"|"difficile","proof_mode":"photo"|"declarative","proof_target":{"metric":"...","value":20} (uniquement si declarative),"declarative_award":{"corporelle":2} (uniquement si declarative),"academic_domain":"mathematiques"|"langage"|"sciences"|"corporelle"|"sociale"|"emotionnelle"|"entrepreneuriale"|"artisanale"|"spatiale"|null,"academic_level_age":14 (uniquement si academic_domain non null),"academic_reference_note":"..." (uniquement si academic_domain non null),"academic_secret":"Explication stimulante du secret scientifique/physique...","kind":"micro"|"projet","guidance_level":3 (entier 1 à 5)}]}`;
 }
 
 export interface BuildSingleChallengePromptInput {
@@ -437,6 +450,7 @@ ${homeMaterialsUseLine}
 12. ${PROOF_MODE_INSTRUCTION}
 13. ${ACADEMIC_REFERENTIAL_INSTRUCTION}
 14. ${ACADEMIC_SECRET_INSTRUCTION}
+15. ${KIND_GUIDANCE_INSTRUCTION}
 
 Réponds STRICTEMENT en JSON valide avec ce format exact :
 {
@@ -459,7 +473,9 @@ Réponds STRICTEMENT en JSON valide avec ce format exact :
   "academic_domain": "mathematiques" | "langage" | "sciences" | "corporelle" | "sociale" | "emotionnelle" | "entrepreneuriale" | "artisanale" | "spatiale" | null,
   "academic_level_age": 14 (uniquement si academic_domain non null),
   "academic_reference_note": "..." (uniquement si academic_domain non null),
-  "academic_secret": "Explication stimulante du secret scientifique/physique avec niveau d'avance 4ème/3ème..."
+  "academic_secret": "Explication stimulante du secret scientifique/physique avec niveau d'avance 4ème/3ème...",
+  "kind": "micro" | "projet",
+  "guidance_level": 3 (entier 1 à 5)
 }`;
 }
 
@@ -599,7 +615,9 @@ Réponds STRICTEMENT en JSON valide avec ce format exact :
   "homework_instruction": "${homeworkInstruction.replace(/"/g, '\\"')}",
   "behavioral_driver": "${selectedDriver}",
   "zpa_level": ${zpaLevel},
-  "academic_secret": "Explication stimulante du secret scientifique/académique avec niveau d'avance..."
+  "academic_secret": "Explication stimulante du secret scientifique/académique avec niveau d'avance...",
+  "kind": "micro" | "projet",
+  "guidance_level": 3 (entier 1 à 5)
 }`;
 }
 
@@ -673,7 +691,9 @@ ${pied}"Titre chaleureux et rassurant",
   "academic_domain": "mathematiques" | "langage" | "sciences" | "corporelle" | "sociale" | "emotionnelle" | "entrepreneuriale" | "artisanale" | "spatiale" | null,
   "academic_level_age": 14 (uniquement si academic_domain non null),
   "academic_reference_note": "..." (uniquement si academic_domain non null),
-  "academic_secret": "Explication stimulante du secret scientifique/académique avec niveau d'avance..."
+  "academic_secret": "Explication stimulante du secret scientifique/académique avec niveau d'avance...",
+  "kind": "micro" | "projet",
+  "guidance_level": 3 (entier 1 à 5)
 }`;
     }
 
@@ -701,7 +721,9 @@ ${pied}"Titre motivant",
   "academic_domain": "mathematiques" | "langage" | "sciences" | "corporelle" | "sociale" | "emotionnelle" | "entrepreneuriale" | "artisanale" | "spatiale" | null,
   "academic_level_age": 14 (uniquement si academic_domain non null),
   "academic_reference_note": "..." (uniquement si academic_domain non null),
-  "academic_secret": "Explication stimulante du secret scientifique/académique avec niveau d'avance..."
+  "academic_secret": "Explication stimulante du secret scientifique/académique avec niveau d'avance...",
+  "kind": "micro" | "projet",
+  "guidance_level": 3 (entier 1 à 5)
 }`;
     }
 
@@ -730,7 +752,9 @@ ${pied}"Titre chaleureux et rassurant",
   "academic_domain": "mathematiques" | "langage" | "sciences" | "corporelle" | "sociale" | "emotionnelle" | "entrepreneuriale" | "artisanale" | "spatiale" | null,
   "academic_level_age": 14 (uniquement si academic_domain non null),
   "academic_reference_note": "..." (uniquement si academic_domain non null),
-  "academic_secret": "Explication stimulante du secret scientifique/académique avec niveau d'avance..."
+  "academic_secret": "Explication stimulante du secret scientifique/académique avec niveau d'avance...",
+  "kind": "micro" | "projet",
+  "guidance_level": 3 (entier 1 à 5)
 }`;
     }
 
@@ -758,7 +782,9 @@ ${pied}"Titre motivant",
   "academic_domain": "mathematiques" | "langage" | "sciences" | "corporelle" | "sociale" | "emotionnelle" | "entrepreneuriale" | "artisanale" | "spatiale" | null,
   "academic_level_age": 14 (uniquement si academic_domain non null),
   "academic_reference_note": "..." (uniquement si academic_domain non null),
-  "academic_secret": "Explication stimulante du secret scientifique/académique avec niveau d'avance..."
+  "academic_secret": "Explication stimulante du secret scientifique/académique avec niveau d'avance...",
+  "kind": "micro" | "projet",
+  "guidance_level": 3 (entier 1 à 5)
 }`;
     }
   }
@@ -777,4 +803,148 @@ export interface BuildHypothesisPromptInput {
 export function buildHypothesisPrompt(input: BuildHypothesisPromptInput): string {
   const snapshot = { enfant: input.enfant, ecart_referentiel: input.ecartReferentiel, jumeau_pedagogique: input.jumeauPedagogique };
   return `${NAYA_DIAGNOSIS_SYSTEM_REMINDERS}\n\nVoici le cas à diagnostiquer :\n${JSON.stringify(snapshot, null, 2)}`;
+}
+
+// ── Pont d'aspiration (chantier Naya V4, 2026-08-12, analyse §10-16) ─────────────
+// Le défi-pont est scénarisé DANS l'univers de l'aspiration déclarée mais cible les
+// compétences fondamentales que cet univers exige (ex. menuiserie → mesurer, compter,
+// proportions, séquence) : l'enfant découvre « si je veux réellement faire ce métier,
+// certaines compétences sont nécessaires » — la motivation naît de la finalité (§11).
+// L'aspiration reste une HYPOTHÈSE à explorer : observe les aptitudes réelles, ne
+// conclus jamais sur la seule déclaration (§10, §16). Pour un profil vulnérable,
+// l'ancrage monde réel est renforcé (§14-15 : argent, marché, débrouillardise,
+// autonomie, méfiance des adultes).
+
+export interface BuildAspirationBridgePromptInput {
+  childName: string;
+  childAge: number;
+  /** "Ville, Pays" ou "non précisé" */
+  profileLocation: string;
+  interestsPayload: string;
+  /** JSON.stringify(child.talents || {}) */
+  talentsJson: string;
+  /** Résumé des défis complétés ("" si aucun) */
+  completedSummary: string;
+  existingTitles: string[];
+  progressionInstruction: string;
+  timePressureNote: string;
+  /** Contexte déclaré par le parent (formatChildProfileContext) — "" si rien */
+  profileContextNote: string;
+  /** Libellé exact de l'aspiration déclarée (ex. "Menuiserie"). */
+  aspirationLabel: string;
+  /** Pont mappé (aspiration-map.ts). */
+  bridge: AspirationBridge;
+  /** Qui a formulé la déclaration : l'enfant (via le parent à l'onboarding) ou le parent. */
+  source: "parent" | "enfant";
+  /** Profil vulnérable (parcours rue, précarité...) → ancrage monde réel renforcé. */
+  vulnerable: boolean;
+}
+
+export function buildAspirationBridgePrompt(input: BuildAspirationBridgePromptInput): string {
+  const {
+    childName,
+    childAge,
+    profileLocation,
+    interestsPayload,
+    talentsJson,
+    completedSummary,
+    existingTitles,
+    progressionInstruction,
+    timePressureNote,
+    profileContextNote,
+    aspirationLabel,
+    bridge,
+    source,
+    vulnerable,
+  } = input;
+
+  const sourceNote =
+    source === "enfant"
+      ? ` (déclarée par ${childName} lui-même, rapportée par le parent)`
+      : " (déclarée par le parent)";
+
+  const skillsLine =
+    bridge.skillsHint.length > 0
+      ? `Ce que cet univers exige réellement (à solliciter sans le dire frontalement) : ${bridge.skillsHint.join(", ")}.`
+      : "Sollicite les compétences fondamentales que cet univers exige (mesurer, compter, raisonner, suivre une séquence) sans le dire frontalement.";
+
+  const anchorLine =
+    bridge.worldAnchor.length > 0
+      ? `Ancrage dans le réel : ${bridge.worldAnchor}`
+      : "Ancre le défi dans la réalité du quartier et de la maison (matériaux locaux, objets du quotidien).";
+
+  const vulnerableLine = vulnerable
+    ? `CONTEXTE PARTICULIER (à respecter absolument) : cet enfant vient d'un parcours difficile — entre d'abord dans SON monde (argent, marché, débrouillardise, autonomie) avant de lui demander d'entrer dans le nôtre. Relie chaque savoir à un gain CONCRET et immédiat pour lui ; ne demande ni argent dépensé d'avance, ni cadre scolaire. OBJECTIF DE FOND (décision utilisateur) : qu'il apprenne, à son rythme, à faire confiance à un adulte — qu'il découvre qu'on est là pour lui donner ce qui lui a manqué. Construis la mission en escalier : (1) l'adulte est d'abord en retrait, simple présence fiable ; (2) l'adulte DONNE d'abord (un outil, une démonstration, du temps, de l'attention) sans rien exiger en retour ; (3) l'adulte tient une promesse simple que le défi rend vérifiable (être là à l'heure, montrer une fois, fournir le matériel) ; (4) seulement ensuite, une petite collaboration où l'enfant garde l'initiative. Ne force JAMAIS la proximité : c'est l'enfant qui fait le pas, l'adulte reste prévisible et généreux.`
+    : "";
+
+  return `Tu es Naya, un mentor pédagogique pour enfants en Afrique francophone, sur la plateforme Génizio.
+
+Génère UN défi-pont pour ${childName}, ${childAge} ans.
+
+Profil :
+- Prénom : ${childName}
+- Âge : ${childAge} ans
+- Ville / pays : ${profileLocation}
+- Modes d'engagement et leviers comportementaux observés par le parent :
+${interestsPayload}
+- Scores de talents actuels (Radar Chart de Howard Gardner) : ${talentsJson}
+${profileContextNote}
+
+Aspiration déclarée : « ${aspirationLabel} »${sourceNote} — C'EST UNE HYPOTHÈSE À EXPLORER, jamais un verdict, jamais une étiquette. ${childName} peut vouloir cela par envie réelle, par mimétisme, ou parce qu'il pense que ça rapporte : ton travail est d'OBSERVER ses aptitudes réelles à travers ce défi, pas de confirmer la déclaration.
+
+${AGE_DEVELOPMENT_GUIDANCE}
+
+${progressionInstruction}
+
+${GENIZIO_PRINCIPLES}
+
+${timePressureNote}
+
+Défis déjà accomplis par l'enfant et observations de Naya :
+${completedSummary || "(Aucun défi complété pour le moment)"}
+
+${buildAvoidRepeatsInstruction(existingTitles)}
+
+LA MISSION (défi-pont) :
+1. Scénarise le défi DANS l'univers de « ${aspirationLabel} » — l'enfant doit avoir l'impression de faire réellement ce métier / cette activité (atelier, chantier, marché, répétition...).
+2. ${skillsLine}
+3. La motivation naît de la finalité : l'enfant doit découvrir par lui-même « si je veux réellement faire ce métier, certaines compétences sont nécessaires » — ne donne JAMAIS de leçon frontale (« tu dois apprendre les mathématiques »).
+3b. OBSERVE les aptitudes réelles à travers ce défi : c'est une exploration, pas une épreuve — ne conclus jamais sur la seule déclaration. Si un autre talent apparaît plus fort, c'est une information précieuse, pas un échec.
+4. ${anchorLine}
+${vulnerableLine}
+5. ${KIND_GUIDANCE_INSTRUCTION}
+6. ${STEPS_INSTRUCTION}
+7. ${MATERIAL_TAGS_INSTRUCTION}
+8. ${INTELLIGENCES_FIELD_INSTRUCTION}
+9. ${TRAIT_SUBFORM_INSTRUCTION}
+10. ${PROOF_MODE_INSTRUCTION}
+11. ${SAFETY_INSTRUCTION}
+12. ${ACADEMIC_REFERENTIAL_INSTRUCTION}
+13. ${ACADEMIC_SECRET_INSTRUCTION}
+
+Réponds STRICTEMENT en JSON valide avec ce format exact :
+{
+  "domain": "Domaine choisi (de préférence parmi : ${bridge.domains.join(", ") || "les plus proches de l'univers visé"})",
+  "title": "Titre accrocheur du défi",
+  "description": "Pitch pour l'enfant",
+  "duration": "Durée estimée",
+  "steps": ["Étape 1", "Étape 2..."],
+  "materials": ["Outil 1", "Matériau 2..."],
+  "material_tags": ["outil-1", "materiau-2"],
+  "pedagogical_context": "Ce que Naya observe via cette activité",
+  "intelligences": ["creative"],
+  "trait_subform": "..." (voir liste par intelligence ci-dessus) ou null,
+  "requires_supervision": true ou false,
+  "supervision_warning": "..." (ou null si false),
+  "difficulty": "facile" | "moyen" | "difficile",
+  "proof_mode": "photo" | "declarative",
+  "proof_target": {"metric": "...", "value": 20} (uniquement si declarative),
+  "declarative_award": {"corporelle": 2} (uniquement si declarative),
+  "academic_domain": "mathematiques" | "langage" | "sciences" | "corporelle" | "sociale" | "emotionnelle" | "entrepreneuriale" | "artisanale" | "spatiale" | null,
+  "academic_level_age": 14 (uniquement si academic_domain non null),
+  "academic_reference_note": "..." (uniquement si academic_domain non null),
+  "academic_secret": "Explication stimulante du secret scientifique/physique avec niveau d'avance 4ème/3ème...",
+  "kind": "projet",
+  "guidance_level": 3 (entier 1 à 5)
+}`;
 }

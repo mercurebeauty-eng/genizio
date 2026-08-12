@@ -9,7 +9,23 @@ metadata:
 
 # État du Code
 
-> Vérifié le 2026-08-12, branche `feat/porte-entree-fondations-naya-v4` (non mergée, main @ `6ab51ee`).
+> Vérifié le 2026-08-12, branche `feat/naya-v4-aspirations-projets` (empilée sur `feat/porte-entree-fondations-naya-v4`, aucune des deux mergées — main @ `6ab51ee`).
+
+## Snapshot du 2026-08-12 — Chantier 2 « Naya V4 » : aspirations + défis-projets (décisions #64-65)
+
+**Branche** : `feat/naya-v4-aspirations-projets` (depuis `feat/porte-entree-fondations-naya-v4`), contenu complet dans le Status Overview de [[MEMORY]].
+
+**Migration appliquée et vérifiée** : `20260812160000_aspirations_engine_and_challenge_kind.sql` — `challenges.kind` (micro/projet), `challenges.guidance_level` (1-5), `challenges.aspiration_label`. Probe SQL : colonnes présentes.
+
+**Nouveaux modules** : `aspiration-map.ts` (ponts curés + matching tolérant), `aspiration-confidence.ts` (statuts dérivés à la lecture), `aspiration-narrative.ts` (narration qualitative enfant/parent, 0 IA), `aspiration.functions.ts` (getAspirationCompass), `difficulty-map.ts` (biais §8), `ChallengeKindBadge.tsx`, `AspirationCompassCard.tsx`.
+
+**Modifiés en profondeur** : `ProfileDialog.tsx` (parcours en 4 étapes, étape aspiration conditionnelle `shouldAskAspirations`, source « enfant »), `recommendations.functions.ts` (branche ASPIRATION, biais difficultés ESSAIMAGE/EXPLORATION), `challenges.functions.ts` (`resolveKind`/`resolveGuidanceLevel` dans finalizeChallenge, `formatProgressionInstruction` exportée), `naya-prompts.ts` (`buildAspirationBridgePrompt`, `KIND_GUIDANCE_INSTRUCTION`, specs JSON enrichies), `naya-verifier.functions.ts` (contexte aspirationLabel), Quête (boussole + badge), Portfolio (Univers explorés + badge), cartes de défi (badge Projet).
+
+**Types régénérés** après migration (CLI local, jamais MCP — Key Principle #8).
+
+**Tests** : 492 verts (42 fichiers), `tsc --noEmit` propre, build OK.
+
+> La section historique ci-dessous (chantier 1 puis 2026-08-03) reste valable pour le contexte antérieur — le Status Overview de [[MEMORY]] est la source la plus à jour.
 
 ## Snapshot du 2026-08-12 — Chantier « Porte d'entrée » (décisions #59-63)
 

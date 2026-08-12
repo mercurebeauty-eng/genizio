@@ -74,6 +74,8 @@ export interface VerifyContext {
   requiresStabilisation?: boolean;
   anxietyDamped?: boolean;
   existingTitles?: string[];
+  /** Défi-pont (chantier Naya V4) : libellé de l'aspiration explorée. */
+  aspirationLabel?: string;
 }
 
 // ── Constantes de référence (copies locales, verrouillées par test) ─────────

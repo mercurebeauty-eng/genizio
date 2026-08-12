@@ -7,14 +7,16 @@ metadata:
   last_updated: 2026-08-12
 ---
 
-# NAYA V4 — Spec du chantier 2 (planifié, NON implémenté)
+# NAYA V4 — Spec du chantier 2
 
 > Source de référence : analyse utilisateur « Évolution de Génizio » §6 à §41.
+> **STATUT (2026-08-12) : sections 1 (moteur d'aspirations) et 2 (défis-projets)
+> LIVRÉES** (décisions #64-65, branche `feat/naya-v4-aspirations-projets`) ;
+> **sections 3 à 5 planifiées** (non implémentées).
 > Le **chantier 1 « Porte d'entrée »** (décisions #59-63, 2026-08-12) est livré :
 > âge 5-16 serveur, saison-étiquette, temps adaptatif (time_pressure/time_limit_minutes),
 > profil multidimensionnel (school_level, languages, ability_profile, school_relation,
-> life_context, aspirations), pouvoir admin (is_active, onglet Profils). **Ce document
-> décrit ce que le chantier 2 doit construire** — rien ici n'est encore écrit dans le code.
+> life_context, aspirations), pouvoir admin (is_active, onglet Profils).
 
 ## Principe directeur (non-négociable)
 
@@ -24,7 +26,7 @@ metadata:
 > NOUVEAU DÉFI (analyse §20). Naya enquête, elle ne juge jamais : pas de verdict, pas
 > de probabilité affichée (règle mémoire, décision #27).
 
-## 1. Moteur d'aspirations (hypothèses, pas verdicts) — analyse §10-16
+## 1. Moteur d'aspirations (hypothèses, pas verdicts) — analyse §10-16 — ✅ LIVRÉ (décision #65)
 
 **État chantier 1** : `child_profiles.aspirations` collecte `[{label, type: metier|exploration}]`
 et les prompts reçoivent « HYPOTHÈSE À EXPLORER » (contexte doux).
@@ -44,9 +46,9 @@ et les prompts reçoivent « HYPOTHÈSE À EXPLORER » (contexte doux).
 4. Les intérêts déclarés restent des hypothèses à confiance dérivée
    (`interest-confidence.ts`, chantier déjà livré) — l'aspiration suit le même modèle.
 
-## 2. Défi-projet + échelle d'autonomie progressive — analyse §27-29, §40
+## 2. Défi-projet + échelle d'autonomie progressive — analyse §27-29, §40 — ✅ LIVRÉ v1 (décision #65)
 
-**À construire** :
+**Livré (v1)** : typologie `kind` (micro/projet) + `guidance_level` 1-5 (filets déterministes `resolveKind`/`resolveGuidanceLevel`, retrait progressif −1 cran/4 défis complétés dans le domaine), consigne dans les specs JSON, badge 🏗️ Projet. **Reste (chantier suivant)** :
 1. **Typologie défi** : distinguer micro-activité d'entraînement (quelques minutes) et
    **projet réel** (construire, concevoir, rechercher, planifier, expérimenter, fabriquer,
    corriger → résultat observable). Nouveau champ `challenges.kind` (`micro` | `projet`)

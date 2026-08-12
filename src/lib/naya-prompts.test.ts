@@ -19,7 +19,9 @@ import {
   buildHomeworkPrompt,
   buildRecommendationPrompt,
   buildHypothesisPrompt,
+  buildAspirationBridgePrompt,
 } from "@/lib/naya-prompts";
+import { findAspirationBridge } from "@/lib/aspiration-map";
 import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { dirname, resolve } from "node:path";
@@ -339,6 +341,89 @@ describe("fragments partagés — source unique (C1.1)", () => {
   });
 });
 
+describe("buildAspirationBridgePrompt — pont d'aspiration (chantier Naya V4)", () => {
+  const input = {
+    childName: "Moussa",
+    childAge: 12,
+    profileLocation: "Abidjan, Côte d'Ivoire",
+    interestsPayload: "Aime démonter pour comprendre.",
+    talentsJson: '{"spatiale": 2}',
+    completedSummary: "",
+    existingTitles: [] as string[],
+    progressionInstruction: "PROGRESSION MESURÉE : aucune mesure.",
+    timePressureNote: "- Durée : donne une durée estimée honnête.",
+    profileContextNote: "",
+    aspirationLabel: "Menuiserie",
+    bridge: findAspirationBridge("Menuiserie"),
+    source: "enfant" as const,
+    vulnerable: true,
+  };
+
+  it("scénarise dans l'univers de l'aspiration et injecte les compétences mappées (§11)", () => {
+    const p = buildAspirationBridgePrompt(input);
+    expect(p).toContain("Menuiserie");
+    expect(p).toContain("mesurer");
+    expect(p).toContain("La motivation naît de la finalité");
+  });
+
+  it("l'aspiration reste une HYPOTHÈSE à explorer, jamais un verdict (§10)", () => {
+    const p = buildAspirationBridgePrompt(input);
+    expect(p).toContain("HYPOTHÈSE À EXPLORER");
+    expect(p).toContain("ne conclus jamais sur la seule déclaration");
+  });
+
+  it("mentionne la source enfant et l'ancrage monde réel vulnérable (§14-15)", () => {
+    const p = buildAspirationBridgePrompt(input);
+    expect(p).toContain("déclarée par Moussa lui-même");
+    expect(p).toContain("SON monde");
+    expect(p).toContain("argent");
+  });
+
+  it("profil vulnérable : objectif de fond = construire la confiance en l'adulte (décision utilisateur)", () => {
+    const p = buildAspirationBridgePrompt(input);
+    expect(p).toContain("faire confiance à un adulte");
+    expect(p).toContain("donner ce qui lui a manqué");
+    expect(p).toContain("l'adulte DONNE d'abord");
+    expect(p).toContain("Ne force JAMAIS la proximité");
+  });
+
+  it("profil non vulnérable : pas d'instruction d'ancrage renforcée", () => {
+    const p = buildAspirationBridgePrompt({ ...input, vulnerable: false });
+    expect(p).not.toContain("SON monde");
+  });
+
+  it("exige kind projet dans le JSON de sortie et couvre les rubriques partagées", () => {
+    const p = buildAspirationBridgePrompt(input);
+    expect(p).toContain('"kind": "projet"');
+    expect(p).toContain(STEPS_INSTRUCTION.slice(0, 20));
+    expect(p).toContain(SAFETY_INSTRUCTION.slice(0, 20));
+    expect(p).toContain(PROOF_MODE_INSTRUCTION.slice(0, 20));
+  });
+});
+
+describe("consigne kind/guidance dans les specs JSON partagées", () => {
+  it("bulk et single challenge exposent kind et guidance_level", () => {
+    const bulk = buildChallengePrompt({
+      count: 2,
+      childName: "Awa",
+      childAge: 9,
+      location: "Dakar",
+      interestsPayload: "x",
+      talentsJson: "{}",
+      completedSummary: "",
+      progressionInstruction: "",
+      leastExplored: ["spatiale"],
+      domainsText: "sciences",
+      ignoredDomains: [],
+      existingTitles: [],
+      timePressureNote: "- Durée : honnête.",
+      profileContextNote: "",
+    });
+    expect(bulk).toContain('"kind":"micro"|"projet"');
+    expect(bulk).toContain('"guidance_level"');
+  });
+});
+
 describe("Décision #59 — chiffres/mesures réels et benchmark international (2026-08-10)", () => {
   const input = {
     count: 2,
@@ -353,7 +438,8 @@ describe("Décision #59 — chiffres/mesures réels et benchmark international (
     domainsText: "mathematiques, sciences",
     ignoredDomains: [],
     existingTitles: [],
-    seasonInstruction: "",
+    timePressureNote: "- Durée : honnête.",
+    profileContextNote: "",
   };
 
   it("GENIZIO_PRINCIPLES impose des chiffres et mesures réels dans les étapes", () => {

@@ -22,6 +22,7 @@ import { SeasonEnrollmentModal } from "@/components/seasons/SeasonEnrollmentModa
 import { RenewChildAccessButton } from "@/components/settings/RenewChildAccessButton";
 import { AppTabBar } from "@/components/AppTabBar";
 import { TalentRadarChart } from "@/components/TalentRadarChart";
+import { AspirationCompassCard } from "@/components/aspirations/AspirationCompassCard";
 import { NayaAvatar } from "@/components/NayaAvatar";
 import { GenizioLoader } from "@/components/GenizioLoader";
 import {
@@ -906,6 +907,10 @@ function PortfolioPage() {
                 Cette carte s'affine et se développe à mesure que {child.name} réalise ses défis.
               </p>
             </div>
+
+            {/* Univers explorés (2026-08-12, analyse §16) : narration qualitative des
+                aspirations — jamais un verdict, jamais de chiffres. */}
+            <AspirationCompassCard childId={profileId} mode="parent" />
 
             <div className="rounded-3xl border border-ink/10 bg-sky p-6 shadow-xl">
               <div className="mb-4 flex items-center gap-3">

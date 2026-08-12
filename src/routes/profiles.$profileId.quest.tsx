@@ -23,6 +23,8 @@ import { NayaAvatar } from "@/components/NayaAvatar";
 import nayaAvatar from "@/assets/naya-avatar.png";
 import { confirmDialog } from "@/components/ui/confirm-dialog";
 import { DifficultyBadge } from "@/components/challenges/DifficultyBadge";
+import { ChallengeKindBadge } from "@/components/challenges/ChallengeKindBadge";
+import { AspirationCompassCard } from "@/components/aspirations/AspirationCompassCard";
 import { MarkdownContent } from "@/components/ui/markdown-content";
 import { GenizioLoader } from "@/components/GenizioLoader";
 
@@ -49,6 +51,7 @@ type Challenge = ChallengeLike & {
   progress: number;
   duration: string;
   difficulty?: string | null;
+  kind?: string | null;
 };
 
 const DOMAIN_COLORS: Record<string, string> = {
@@ -685,6 +688,10 @@ function QuestPage() {
           thoughts={activeChallenge ? ["Hop, on s'y met !"] : ["Bientôt de nouveaux défis !"]}
         />
 
+        {/* Boussole de Naya (2026-08-12, analyse §16) : la séquence « Explorons cela →
+            voici ce que Naya observe » — jamais un verdict, jamais de chiffres. */}
+        <AspirationCompassCard childId={profileId} mode="child" />
+
         {activeChallenge ? (
           <div className="bg-white rounded-3xl p-8 border border-ink/10 shadow-xl w-full animate-in zoom-in-95 duration-500 relative overflow-hidden text-left">
             <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
@@ -693,6 +700,7 @@ function QuestPage() {
                   Mission : {activeChallenge.domain}
                 </span>
                 <DifficultyBadge difficulty={activeChallenge.difficulty} />
+                <ChallengeKindBadge kind={activeChallenge.kind} />
               </div>
               <span className="text-xs font-black text-ink/60">⏱ {activeChallenge.duration}</span>
             </div>

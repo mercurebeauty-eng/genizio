@@ -14,6 +14,7 @@ import {
   LIFE_CONTEXT_OPTIONS,
   SCHOOL_LEVELS,
   SCHOOL_RELATIONS,
+  shouldAskAspirations,
   type AbilityValue,
 } from "@/lib/profile-context";
 import { TIME_PRESSURE_LABELS, type TimePressure } from "@/lib/time-limit";
@@ -104,9 +105,20 @@ export function ProfileDialog({
     initial && initial.interests.length > 0 ? "tags" : "universes"
   );
 
-  // Section optionnelle « Contexte & aptitudes » (2026-08-12)
-  const [showContext, setShowContext] = useState(false);
+  // Parcours d'onboarding « Qui est cet enfant ? » (2026-08-12, analyse §6-7, §10) :
+  // Qui → Comment il est → À quel enfant ? → (conditionnelle) Ce qu'il veut devenir.
+  const [wizardStep, setWizardStep] = useState(0);
   const [aspirationInput, setAspirationInput] = useState("");
+
+  // Étape 4 conditionnelle : on demande les aspirations pour les profils vulnérables
+  // (parcours rue, précarité, famille éloignée, conflit avec l'école — analyse §10),
+  // ou si des aspirations existent déjà (on ne cache jamais des données).
+  const askAspirations = shouldAskAspirations({
+    life_context: draft.life_context,
+    school_relation: draft.school_relation,
+    existingAspirations: draft.aspirations,
+  });
+  const wizardSteps = askAspirations ? 4 : 3;
 
   const languagesText = draft.languages.join(", ");
   const setLanguagesText = (text: string) =>
@@ -128,7 +140,7 @@ export function ProfileDialog({
     setDraft((d) =>
       d.aspirations.some((a) => a.label.toLowerCase() === clean.toLowerCase())
         ? d
-        : { ...d, aspirations: [...d.aspirations, { label: clean, type: "metier" as const }] }
+        : { ...d, aspirations: [...d.aspirations, { label: clean, type: "metier" as const, source: "enfant" as const }] }
     );
     setAspirationInput("");
   };
@@ -284,6 +296,26 @@ export function ProfileDialog({
         </div>
 
         <div className="space-y-5">
+          {/* Parcours d'onboarding en étapes (2026-08-12, analyse §6-7, §10) */}
+          <div className="flex items-center justify-between gap-1 rounded-xl bg-ink/5 p-1 text-xs font-bold">
+            {["Qui", "Comment il est", "À quel enfant ?", "Ce qu'il veut devenir"]
+              .slice(0, wizardSteps)
+              .map((label, i) => (
+                <button
+                  key={label}
+                  type="button"
+                  onClick={() => setWizardStep(i)}
+                  className={`flex-1 rounded-lg py-1.5 transition-all ${
+                    wizardStep === i ? "bg-white text-ink shadow-sm" : "text-ink/60 hover:text-ink"
+                  }`}
+                >
+                  {i + 1}. {label}
+                </button>
+              ))}
+          </div>
+
+          {wizardStep === 0 && (
+            <div className="space-y-5">
           <div>
             <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-ink/60">
               Prénom
@@ -366,7 +398,11 @@ export function ProfileDialog({
               ))}
             </div>
           </div>
+            </div>
+          )}
 
+          {wizardStep === 1 && (
+            <div className="space-y-5">
           <div>
             <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-ink/60">
               Leviers & Moteurs d'engagement
@@ -491,28 +527,22 @@ export function ProfileDialog({
               </div>
             )}
           </div>
+            </div>
+          )}
 
-          {/* Contexte & aptitudes (optionnel) — profil multidimensionnel (2026-08-12) */}
+          {wizardStep === 2 && (
+            <div className="space-y-5">
+          {/* Étape « À quel enfant avons-nous affaire ? » (2026-08-12, analyse §6-7) */}
           <div>
-            <button
-              type="button"
-              onClick={() => setShowContext((s) => !s)}
-              className="flex w-full items-center justify-between rounded-2xl border border-ink/10 bg-surface px-4 py-3 transition-all hover:border-ink/25"
-            >
-              <span className="text-xs font-black uppercase tracking-widest text-ink/70">
-                Contexte & aptitudes <span className="text-ink/40">(optionnel)</span>
-              </span>
-              <span className="text-xs font-bold text-ink/50">{showContext ? "▲" : "▼"}</span>
-            </button>
-
-            {showContext && (
-              <div className="mt-3 space-y-4 rounded-2xl border border-ink/10 bg-white p-4 shadow-sm">
-                <p className="text-[11px] text-ink/60 leading-relaxed">
-                  Aidez Naya à adapter les défis à votre enfant : niveau scolaire, langues, points
-                  forts & difficultés, rapport à l'école et ce qu'il veut explorer. Tout est
-                  facultatif, modifiable à tout moment, et reste privé — ces informations servent
-                  uniquement à personnaliser les activités.
-                </p>
+            <p className="mb-1 text-xs font-black uppercase tracking-widest text-ink/70">
+              À quel enfant avons-nous affaire ?
+            </p>
+            <p className="text-[11px] text-ink/60 leading-relaxed">
+              Contexte de parcours, handicaps, points forts & difficultés, niveau scolaire,
+              langues. Tout est facultatif, modifiable à tout moment, et reste privé — ces
+              informations servent uniquement à personnaliser les activités.
+            </p>
+            <div className="mt-3 space-y-4 rounded-2xl border border-ink/10 bg-white p-4 shadow-sm">
 
                 {/* Niveau scolaire */}
                 <div>
@@ -666,83 +696,6 @@ export function ProfileDialog({
                   </div>
                 </div>
 
-                {/* Aspirations — hypothèses à explorer */}
-                <div>
-                  <label className="mb-1 block text-[10px] font-black uppercase tracking-widest text-ink/60">
-                    Ce qu'il veut devenir / explorer
-                  </label>
-                  <p className="mb-2 text-[11px] text-ink/50">
-                    Naya s'en servira comme terrain d'exploration — sans jamais en faire un verdict.
-                  </p>
-                  <div className="flex flex-wrap gap-1.5">
-                    {ASPIRATION_SUGGESTIONS.map((s) => {
-                      const on = draft.aspirations.some((a) => a.label === s);
-                      return (
-                        <button
-                          key={s}
-                          type="button"
-                          onClick={() =>
-                            on
-                              ? setDraft((d) => ({ ...d, aspirations: d.aspirations.filter((a) => a.label !== s) }))
-                              : addAspiration(s)
-                          }
-                          className={
-                            "rounded-full px-3 py-1 text-[11px] font-bold border-2 transition-all " +
-                            (on
-                              ? "bg-sky-100 border-sky-500 text-sky-800"
-                              : "bg-white border-ink/15 text-ink/60 hover:border-ink/40")
-                          }
-                        >
-                          {s}
-                        </button>
-                      );
-                    })}
-                  </div>
-                  <div className="mt-2 flex gap-2">
-                    <input
-                      value={aspirationInput}
-                      onChange={(e) => setAspirationInput(e.target.value)}
-                      onKeyDown={(e) => {
-                        if (e.key === "Enter") {
-                          e.preventDefault();
-                          addAspiration(aspirationInput);
-                        }
-                      }}
-                      placeholder="Autre métier ou envie…"
-                      className="flex-1 rounded-xl border border-ink/10 px-3 py-2 text-xs outline-none focus:ring-2 focus:ring-brand"
-                    />
-                    <button
-                      type="button"
-                      onClick={() => addAspiration(aspirationInput)}
-                      className="rounded-xl bg-ink px-3 py-2 text-xs font-bold text-white hover:bg-ink/90"
-                    >
-                      +
-                    </button>
-                  </div>
-                  {draft.aspirations.length > 0 && (
-                    <div className="mt-2 flex flex-wrap gap-1.5">
-                      {draft.aspirations.map((a) => (
-                        <span
-                          key={a.label}
-                          className="inline-flex items-center gap-1 rounded-full bg-sky-50 border border-sky-200 px-2.5 py-1 text-[11px] font-bold text-sky-800"
-                        >
-                          {a.label}
-                          <button
-                            type="button"
-                            onClick={() =>
-                              setDraft((d) => ({ ...d, aspirations: d.aspirations.filter((x) => x.label !== a.label) }))
-                            }
-                            className="text-sky-600 hover:text-sky-900"
-                            aria-label={`Retirer ${a.label}`}
-                          >
-                            ✕
-                          </button>
-                        </span>
-                      ))}
-                    </div>
-                  )}
-                </div>
-
                 {/* Pression temporelle */}
                 <div>
                   <label className="mb-1 block text-[10px] font-black uppercase tracking-widest text-ink/60">
@@ -774,26 +727,130 @@ export function ProfileDialog({
                   </p>
                 </div>
               </div>
-            )}
-          </div>
+            </div>
+            </div>
+          )}
+
+          {askAspirations && wizardStep === 3 && (
+            <div className="space-y-4">
+              <div>
+                <p className="mb-1 text-xs font-black uppercase tracking-widest text-ink/70">
+                  Ce qu'il veut devenir
+                </p>
+                <p className="mb-2 text-[11px] text-ink/60 leading-relaxed">
+                  Ce que <strong>votre enfant dit</strong> vouloir faire — ses propres mots, même
+                  s'ils vous surprennent. Pour ces enfants, la déclaration est une boussole : Naya
+                  l'explorera par l'expérience, sans jamais en faire un verdict.
+                </p>
+                <div className="flex flex-wrap gap-1.5">
+                  {ASPIRATION_SUGGESTIONS.map((s) => {
+                    const on = draft.aspirations.some((a) => a.label === s);
+                    return (
+                      <button
+                        key={s}
+                        type="button"
+                        onClick={() =>
+                          on
+                            ? setDraft((d) => ({ ...d, aspirations: d.aspirations.filter((a) => a.label !== s) }))
+                            : addAspiration(s)
+                        }
+                        className={
+                          "rounded-full px-3 py-1 text-[11px] font-bold border-2 transition-all " +
+                          (on
+                            ? "bg-sky-100 border-sky-500 text-sky-800"
+                            : "bg-white border-ink/15 text-ink/60 hover:border-ink/40")
+                        }
+                      >
+                        {s}
+                      </button>
+                    );
+                  })}
+                </div>
+                <div className="mt-2 flex gap-2">
+                  <input
+                    value={aspirationInput}
+                    onChange={(e) => setAspirationInput(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") {
+                        e.preventDefault();
+                        addAspiration(aspirationInput);
+                      }
+                    }}
+                    placeholder="Autre métier ou envie…"
+                    className="flex-1 rounded-xl border border-ink/10 px-3 py-2 text-xs outline-none focus:ring-2 focus:ring-brand"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => addAspiration(aspirationInput)}
+                    className="rounded-xl bg-ink px-3 py-2 text-xs font-bold text-white hover:bg-ink/90"
+                  >
+                    +
+                  </button>
+                </div>
+                {draft.aspirations.length > 0 && (
+                  <div className="mt-2 flex flex-wrap gap-1.5">
+                    {draft.aspirations.map((a) => (
+                      <span
+                        key={a.label}
+                        className="inline-flex items-center gap-1 rounded-full bg-sky-50 border border-sky-200 px-2.5 py-1 text-[11px] font-bold text-sky-800"
+                      >
+                        {a.label}
+                        <button
+                          type="button"
+                          onClick={() =>
+                            setDraft((d) => ({ ...d, aspirations: d.aspirations.filter((x) => x.label !== a.label) }))
+                          }
+                          className="text-sky-600 hover:text-sky-900"
+                          aria-label={`Retirer ${a.label}`}
+                        >
+                          ✕
+                        </button>
+                      </span>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
 
           {error && <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">{error}</p>}
         </div>
 
-        <div className="mt-8 flex justify-end gap-3">
+        <div className="mt-8 flex items-center justify-between gap-3">
           <button
             onClick={onClose}
             className="press-white rounded-2xl border border-ink/10 bg-white px-5 py-2.5 text-sm font-bold"
           >
             Annuler
           </button>
-          <button
-            onClick={save}
-            disabled={busy}
-            className="press-brand rounded-2xl bg-brand px-6 py-2.5 text-sm font-bold text-white disabled:opacity-60"
-          >
-            {busy ? "…" : "Enregistrer"}
-          </button>
+          <div className="flex gap-3">
+            {wizardStep > 0 && (
+              <button
+                type="button"
+                onClick={() => setWizardStep((s) => s - 1)}
+                className="press-white rounded-2xl border border-ink/10 bg-white px-5 py-2.5 text-sm font-bold"
+              >
+                ← Précédent
+              </button>
+            )}
+            {wizardStep < wizardSteps - 1 ? (
+              <button
+                type="button"
+                onClick={() => setWizardStep((s) => s + 1)}
+                className="press-brand rounded-2xl bg-brand px-6 py-2.5 text-sm font-bold text-white"
+              >
+                Suivant →
+              </button>
+            ) : (
+              <button
+                onClick={save}
+                disabled={busy}
+                className="press-brand rounded-2xl bg-brand px-6 py-2.5 text-sm font-bold text-white disabled:opacity-60"
+              >
+                {busy ? "…" : "Enregistrer"}
+              </button>
+            )}
+          </div>
         </div>
       </div>
     </div>

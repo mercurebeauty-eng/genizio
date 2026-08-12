@@ -71,3 +71,43 @@ describe("finalizeChallenge — trait_subform", () => {
     expect(result.trait_subform).toBeNull();
   });
 });
+
+// Défis-projets + autonomie progressive (2026-08-12, analyse §27-28) : les filets
+// déterministes resolveKind/resolveGuidanceLevel bornent ce que l'IA propose.
+describe("resolveKind / resolveGuidanceLevel — filets déterministes", () => {
+  const base = {
+    title: "Défi test",
+    description: "desc",
+    steps: ["Étape 1"],
+    materials: [] as string[],
+  };
+
+  it("kind absent → micro (défaut sûr)", () => {
+    const result = finalizeChallenge(base, 10);
+    expect(result.kind).toBe("micro");
+  });
+
+  it("projet refusé si moins de 3 étapes (anti-hallucination)", () => {
+    const result = finalizeChallenge({ ...base, kind: "projet" }, 10);
+    expect(result.kind).toBe("micro");
+  });
+
+  it("projet accepté si l'IA le demande ET ≥ 3 étapes", () => {
+    const result = finalizeChallenge({ ...base, steps: ["Étape 1", "Étape 2", "Étape 3"], kind: "projet" }, 10);
+    expect(result.kind).toBe("projet");
+  });
+
+  it("guidance_level borné 1-5", () => {
+    expect(finalizeChallenge({ ...base, guidance_level: 9 }, 10).guidance_level).toBe(5);
+    expect(finalizeChallenge({ ...base, guidance_level: 0 }, 10).guidance_level).toBe(1);
+    expect(finalizeChallenge({ ...base, guidance_level: 3 }, 10).guidance_level).toBe(3);
+    expect(finalizeChallenge(base, 10).guidance_level).toBe(3);
+  });
+
+  it("retrait progressif : 1 cran de moins tous les 4 défis complétés dans le domaine (§28)", () => {
+    expect(finalizeChallenge({ ...base, guidance_level: 4 }, 10, { completedInDomain: 4 }).guidance_level).toBe(3);
+    expect(finalizeChallenge({ ...base, guidance_level: 4 }, 10, { completedInDomain: 8 }).guidance_level).toBe(2);
+    expect(finalizeChallenge({ ...base, guidance_level: 1 }, 10, { completedInDomain: 12 }).guidance_level).toBe(1);
+    expect(finalizeChallenge({ ...base, guidance_level: 3 }, 10).guidance_level).toBe(3);
+  });
+});
