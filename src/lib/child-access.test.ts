@@ -63,13 +63,13 @@ describe("resolveChildAccessStatus", () => {
   });
 });
 
-describe("computeChildCreationLimit (miroir du trigger : plancher + extra + 1, plafonné à 5)", () => {
-  it("compte neuf sans slot : 1 + 0 + 1 = 2 — le premier profil MENSUEL est créable (en cours de mise en paiement)", () => {
-    expect(computeChildCreationLimit("2026-08-10T00:00:00.000Z", 0)).toBe(2);
+describe("computeChildCreationLimit (miroir du trigger : plancher + extra, plafonné à 5, sans +1)", () => {
+  it("compte neuf sans slot : 1 + 0 = 1 — la base refuse le 2e profil sans slot/abonnement (plus de promesse UI que la base rejette)", () => {
+    expect(computeChildCreationLimit("2026-08-10T00:00:00.000Z", 0)).toBe(1);
   });
 
-  it("compte neuf avec 2 slots : 1 + 2 + 1 = 4", () => {
-    expect(computeChildCreationLimit("2026-08-10T00:00:00.000Z", 2)).toBe(4);
+  it("compte neuf avec 2 slots : 1 + 2 = 3", () => {
+    expect(computeChildCreationLimit("2026-08-10T00:00:00.000Z", 2)).toBe(3);
   });
 
   it("compte grand-péré : plafonné à 5 — le plafond de 5 enfants est voulu, au-delà on crée un nouveau compte", () => {

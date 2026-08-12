@@ -3,10 +3,10 @@ import { ADMIN_TABS, AdminTab } from "@/components/admin/AdminNavTabBar";
 import fs from "node:fs";
 import path from "node:path";
 
-describe("Milestone 3 Admin Route Safety & Unified 9-Tab Navigation Hub", () => {
-  it("defines all 9 tabs in ADMIN_TABS with valid metadata", () => {
+describe("Milestone 3 Admin Route Safety & Unified 10-Tab Navigation Hub", () => {
+  it("defines all 10 tabs in ADMIN_TABS with valid metadata", () => {
     const tabIds = ADMIN_TABS.map((t) => t.id);
-    expect(tabIds).toHaveLength(9);
+    expect(tabIds).toHaveLength(10);
     expect(tabIds).toEqual([
       "executive",
       "b2b",
@@ -17,6 +17,7 @@ describe("Milestone 3 Admin Route Safety & Unified 9-Tab Navigation Hub", () => 
       "commerce",
       "seasons",
       "subscriptions",
+      "profiles",
     ]);
 
     const execTab = ADMIN_TABS.find((t) => t.id === "executive");
