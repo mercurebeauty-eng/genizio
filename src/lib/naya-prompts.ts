@@ -145,11 +145,10 @@ Présente l'ensemble comme un superpouvoir secret ou un avantage tactique qu'il 
 // "Adapte strictly" au lieu de "strictement"), même risque que GENIZIO_PRINCIPLES
 // et SAFETY_INSTRUCTION ci-dessus, même remède : un seul texte source.
 export const AGE_DEVELOPMENT_GUIDANCE = `CONSIGNES DE DÉVELOPPEMENT LIÉES À L'ÂGE :
-Adapte strictement la forme, la complexité intellectuelle et la motricité requise pour le défi à l'âge exact de l'enfant :
-- De 1 à 3 ans (Exploration sensorielle et motrice) : Activités purement sensorielles (toucher, manipuler, transvaser, trier des couleurs/objets simples, textures, eau, sable). Aucune règle complexe, aucune consigne de motricité fine avancée (pas de découpage précis, pas d'écriture). Étape ultra-simple en 1 action à la fois.
-- De 4 à 7 ans (Phase exploratoire et imaginative) : Activités intégrant de l'imagination, des petits jeux de rôle ("fait semblant de"), du dessin, des petites manipulations de cause à effet guidées par le plaisir immédiat. L'action pratique doit primer sur la théorie.
+Adapte strictement la forme, la complexité intellectuelle et la motricité requise pour le défi à l'âge exact de l'enfant (5 à 16 ans, limite produit) :
+- De 5 à 7 ans (Phase exploratoire et imaginative) : Activités intégrant de l'imagination, des petits jeux de rôle ("fait semblant de"), du dessin, des petites manipulations de cause à effet guidées par le plaisir immédiat. L'action pratique doit primer sur la théorie.
 - De 8 à 11 ans (Phase structurée et concrète) : Proposer des projets de fabrication concrets (maquettes, expériences scientifiques simples, recettes simples, bricolage) avec des règles claires, des étapes méthodiques, et de l'observation logique ou sociale.
-- De 12 ans et + (Phase d'abstraction et d'analyse) : Permettre de la pensée critique, de la stratégie, des projets plus autonomes et complexes, de la logique conceptuelle (ex: coder un algorithme sur papier, déchiffrer des énigmes ou concevoir des objets élaborés).`;
+- De 12 à 16 ans (Phase d'abstraction et d'analyse) : Permettre de la pensée critique, de la stratégie, des projets plus autonomes et complexes, de la logique conceptuelle (ex: coder un algorithme sur papier, déchiffrer des énigmes ou concevoir des objets élaborés).`;
 
 // Idem — dupliquée dans les deux mêmes prompts, indentation cosmétique différente
 // à chaque site (alignée sur "- " ou "N. ") mais texte identique. Chaque site
@@ -268,8 +267,10 @@ export interface BuildChallengePromptInput {
   /** Domaines déjà proposés maintes fois sans être commencés (évite de les reproposer) */
   ignoredDomains: string[];
   existingTitles: string[];
-  /** "" ou ligne "- THÉMATIQUE DE SAISON (...)" */
-  seasonInstruction: string;
+  /** Ligne "- Durée : ..." — préférence temporelle du profil (formatTimePressureNote) */
+  timePressureNote: string;
+  /** Contexte déclaré par le parent (formatChildProfileContext) — "" si rien de renseigné */
+  profileContextNote: string;
 }
 
 export function buildChallengePrompt(input: BuildChallengePromptInput): string {
@@ -286,7 +287,8 @@ export function buildChallengePrompt(input: BuildChallengePromptInput): string {
     domainsText,
     ignoredDomains,
     existingTitles,
-    seasonInstruction,
+    timePressureNote,
+    profileContextNote,
   } = input;
   const ignoredDomainsNote =
     ignoredDomains.length > 0
@@ -303,6 +305,7 @@ Profil :
 - Modes d'engagement et leviers comportementaux observés par le parent :
 ${interestsPayload}
 - Scores de talents actuels (Radar Chart de Howard Gardner, sur les 9 intelligences) : ${talentsJson}
+${profileContextNote}
 
 Défis déjà accomplis par l'enfant et observations de Naya :
 ${completedSummary || "(Aucun défi complété pour le moment)"}
@@ -312,6 +315,8 @@ ${AGE_DEVELOPMENT_GUIDANCE}
 ${progressionInstruction}
 
 ${GENIZIO_PRINCIPLES}
+
+${timePressureNote}
 
 Contraintes :
 - SYNTHÈSE PÉDAGOGIQUE ET APPRENTISSAGE ÉQUILIBRÉ : Associe les leviers comportementaux observés par le parent (posture cognitive) avec la cartographie des talents de l'enfant. Les intelligences actuellement les moins explorées chez cet enfant sont ${leastExplored.join(" et ")}. Sauf si le contexte les rend peu réalistes, au moins un des ${count} défis DOIT utiliser la posture ou mécanique d'action préférentielle de l'enfant comme passerelle naturelle pour explorer l'une de ces intelligences moins travaillées — c'est ainsi que Naya révèle des talents cachés en s'appuyant sur ses moteurs d'action naturels.
@@ -327,7 +332,6 @@ Contraintes :
 - ${PROOF_MODE_INSTRUCTION}
 - ${ACADEMIC_REFERENTIAL_INSTRUCTION}
 - ${ACADEMIC_SECRET_INSTRUCTION}
-${seasonInstruction}
 
 Réponds STRICTEMENT en JSON valide avec ce format, pour chaque défi :
 {"challenges":[{"domain":"...","title":"...","description":"...","duration":"...","steps":["...","..."],"materials":["...","..."],"material_tags":["..."],"pedagogical_context":"Ce que Naya observe via cette activité","intelligences":["creative"],"trait_subform":"..." (voir liste par intelligence ci-dessus) ou null,"requires_supervision":true ou false,"supervision_warning":"..." (ou null si false),"difficulty":"facile"|"moyen"|"difficile","proof_mode":"photo"|"declarative","proof_target":{"metric":"...","value":20} (uniquement si declarative),"declarative_award":{"corporelle":2} (uniquement si declarative),"academic_domain":"mathematiques"|"langage"|"sciences"|"corporelle"|"sociale"|"emotionnelle"|"entrepreneuriale"|"artisanale"|"spatiale"|null,"academic_level_age":14 (uniquement si academic_domain non null),"academic_reference_note":"..." (uniquement si academic_domain non null),"academic_secret":"Explication stimulante du secret scientifique/physique..."}]}`;
@@ -352,12 +356,14 @@ export interface BuildSingleChallengePromptInput {
   progressionInstruction: string;
   /** Ligne "3. ..." (domaine ciblé ou intelligences les moins explorées) */
   domainInstruction: string;
-  /** "" ou "\n3b. THÉMATIQUE DE SAISON (...)" */
-  seasonInstruction: string;
   /** Ligne "5. MATÉRIEL (...)" */
   materialScopeInstruction: string;
   /** "" ou "6. UTILISATION DES MATÉRIAUX MENTIONNÉS : ..." */
   homeMaterialsUseLine: string;
+  /** Ligne "- Durée : ..." — préférence temporelle du profil (formatTimePressureNote) */
+  timePressureNote: string;
+  /** Contexte déclaré par le parent (formatChildProfileContext) — "" si rien de renseigné */
+  profileContextNote: string;
 }
 
 export function buildSingleChallengePrompt(input: BuildSingleChallengePromptInput): string {
@@ -374,9 +380,10 @@ export function buildSingleChallengePrompt(input: BuildSingleChallengePromptInpu
     homeMaterialsLine,
     progressionInstruction,
     domainInstruction,
-    seasonInstruction,
     materialScopeInstruction,
     homeMaterialsUseLine,
+    timePressureNote,
+    profileContextNote,
   } = input;
 
   return `Tu es Naya, un mentor pédagogique d'élite spécialisé dans la psychologie de l'enfant et les Intelligences Multiples d'Howard Gardner, opérant en Afrique francophone.
@@ -389,12 +396,15 @@ Profil de l'enfant :
 - Modes d'engagement et leviers comportementaux observés par le parent :
 ${interestsPayload}
 - Scores de talents actuels (Radar Chart de Howard Gardner) : ${talentsJson}
+${profileContextNote}
 
 ${AGE_DEVELOPMENT_GUIDANCE}
 
 ${progressionInstruction}
 
 ${GENIZIO_PRINCIPLES}
+
+${timePressureNote}
 
 Défis déjà accomplis par l'enfant et observations de Naya :
 ${completedSummary || "(Aucun défi complété pour le moment)"}
@@ -409,7 +419,7 @@ ${homeMaterialsLine}
 Ta mission (Synthèse Pédagogique) :
 1. Analyse la carte des talents (Radar Chart), les leviers comportementaux observés par le parent (posture cognitive), ET les observations des défis passés.
 2. Synthèse pédagogique : Utilise les postures cognitives et mécaniques d'action préférées de l'enfant comme levier d'entrée pour aborder le domaine cible. Si les observations passées indiquent une évolution ou des points de blocage, adapte la mécanique d'action pour créer une passerelle d'apprentissage stimulante.
-${domainInstruction}${seasonInstruction}
+${domainInstruction}
 4. Le défi doit s'adapter EXACTEMENT au temps disponible. S'il n'y a que 10 minutes, propose un "mini-défi" immédiat. Si c'est 1h+, propose un projet structuré.
 ${materialScopeInstruction}
 ${homeMaterialsUseLine}

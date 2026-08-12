@@ -198,6 +198,7 @@ export const ensureHypothesesForChild = createServerFn({ method: "POST" })
       .eq("id", data.childId)
       .eq("user_id", userId)
       .is("access_locked_at", null)
+      .eq("is_active", true)
       .maybeSingle();
     if (childErr || !child) throw new Error("Profil enfant introuvable ou accès refusé.");
 
@@ -485,6 +486,7 @@ export const generateDiscriminantChallenge = createServerFn({ method: "POST" })
       .eq("id", data.childId)
       .eq("user_id", userId)
       .is("access_locked_at", null)
+      .eq("is_active", true)
       .maybeSingle();
     if (childErr || !child) throw new Error("Profil enfant introuvable.");
 
@@ -788,6 +790,7 @@ export const generateSupportRetestChallenge = createServerFn({ method: "POST" })
       .eq("id", data.childId)
       .eq("user_id", userId)
       .is("access_locked_at", null)
+      .eq("is_active", true)
       .maybeSingle();
     if (childErr || !child) throw new Error("Profil enfant introuvable.");
 
