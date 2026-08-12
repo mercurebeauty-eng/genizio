@@ -4,7 +4,7 @@ import { pageMeta, jsonLdScript, breadcrumbJsonLd } from "@/lib/seo";
 export const Route = createFileRoute("/mentions-legales")({
   head: () => {
     const meta = pageMeta({
-      title: "Mentions légales — Génizio",
+      title: "Mentions légales — Génizio, Abidjan (Côte d'Ivoire)",
       description:
         "Informations légales sur l'éditeur de l'application Génizio : identité, hébergement et contact.",
       path: "/mentions-legales",

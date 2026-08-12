@@ -338,3 +338,51 @@ describe("fragments partagés — source unique (C1.1)", () => {
     expect(STEPS_INSTRUCTION).toContain("UN SEUL geste concret");
   });
 });
+
+describe("Décision #59 — chiffres/mesures réels et benchmark international (2026-08-10)", () => {
+  const input = {
+    count: 2,
+    childName: "Awa",
+    childAge: 9,
+    location: "Abidjan, Côte d'Ivoire",
+    interestsPayload: "Aime mesurer et comparer.",
+    talentsJson: '{"logico_mathematique": 3}',
+    completedSummary: "",
+    progressionInstruction: "PROGRESSION MESURÉE : mathématiques → 10 ans.",
+    leastExplored: ["langage"],
+    domainsText: "mathematiques, sciences",
+    ignoredDomains: [],
+    existingTitles: [],
+    seasonInstruction: "",
+  };
+
+  it("GENIZIO_PRINCIPLES impose des chiffres et mesures réels dans les étapes", () => {
+    expect(GENIZIO_PRINCIPLES).toContain("CHIFFRES ET MESURES RÉELS OBLIGATOIRES");
+    expect(GENIZIO_PRINCIPLES).toContain("VALEURS EXACTES");
+    expect(GENIZIO_PRINCIPLES).toContain("calcule le périmètre du potager");
+    expect(GENIZIO_PRINCIPLES).toContain("méthode Singapour, Common Core US");
+    expect(GENIZIO_PRINCIPLES).toContain("matière exacte que Naya nommera");
+  });
+
+  it("le benchmark international est une règle exécutée, pas une note en commentaire", () => {
+    expect(ACADEMIC_REFERENTIAL_INSTRUCTION).toContain("calibrage international, pas une échelle maison");
+    expect(ACADEMIC_REFERENTIAL_INSTRUCTION).toContain("Common Core US");
+    expect(ACADEMIC_REFERENTIAL_INSTRUCTION).toContain("Singapore Math");
+    expect(ACADEMIC_REFERENTIAL_INSTRUCTION).toContain("Chine");
+    expect(ACADEMIC_REFERENTIAL_INSTRUCTION).toContain("niveau international attendu pour son âge");
+  });
+
+  it("le secret académique est ancré sur la mesure réelle et invite à la recherche personnelle", () => {
+    expect(ACADEMIC_SECRET_INSTRUCTION).toContain("quatre temps");
+    expect(ACADEMIC_SECRET_INSTRUCTION).toContain("Ancre le concept sur le geste et le chiffre réels");
+    expect(ACADEMIC_SECRET_INSTRUCTION).toContain("périmètre");
+    expect(ACADEMIC_SECRET_INSTRUCTION).toContain("invitation à la recherche personnelle adaptée à son âge");
+    expect(ACADEMIC_SECRET_INSTRUCTION).toContain("8 à 11 ans");
+    expect(ACADEMIC_SECRET_INSTRUCTION).toContain("mini-recherche autonome");
+  });
+
+  it("la règle de mesures réelles est injectée dans le prompt bulk", () => {
+    expect(buildChallengePrompt(input)).toContain("CHIFFRES ET MESURES RÉELS OBLIGATOIRES");
+    expect(buildChallengePrompt(input)).toContain("calibrage international, pas une échelle maison");
+  });
+});

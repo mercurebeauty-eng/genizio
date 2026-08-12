@@ -25,7 +25,7 @@ const FAQ = [
 export const Route = createFileRoute("/guides/fratrie-rivalite-cooperation")({
   head: () => {
     const meta = pageMeta({
-      title: "Rivalité frères et sœurs : transformer les disputes en coopération (5-12 ans)",
+      title: "Rivalité frères et sœurs : les transformer en coopération",
       description:
         "Comment apaiser les tensions dans la fratrie et développer l'entraide grâce à des projets collaboratifs basés sur la complémentarité des talents.",
       path: PATH,
@@ -67,6 +67,11 @@ function Guide() {
       intro="Les conflits entre frères et sœurs fatiguent énormément les parents. Pourtant, la fratrie est le tout premier laboratoire d'intelligence sociale. En remplaçant la compétition par des projets coopératifs où les talents de chacun se complètent, on transforme les disputes en esprit d'équipe."
       updated="8 août 2026"
       readingTime="5 min"
+      related={[
+        { label: "24 activités éducatives (6-12 ans)", to: "/guides/activites-educatives-enfant" },
+        { label: "Enfant timide : libérer la parole", to: "/guides/timidite-confiance-prise-de-parole" },
+        { label: "Rendre son enfant autonome sans crier", to: "/guides/autonomie-responsabilite-maison" },
+      ]}
     >
       <img
         src="/guides/og-fratrie.jpg"
@@ -79,7 +84,7 @@ function Guide() {
         Dans beaucoup de familles, les enfants sont comparés sans qu'on s'en rende compte : l'un est vu comme "l'intellectuel", l'autre comme "le créatif" ou "le turbulent". Cette étiquette pousse les enfants à s'affronter pour obtenir l'exclusivité de l'attention parentale.
       </p>
       <p>
-        Grâce aux 9 intelligences de Howard Gardner, on apprend à montrer à l'enfant que **chaque être humain possède une combinaison unique de forces**. L'aîné a peut-être une intelligence logique plus avancée, tandis que le cadet fait preuve d'une intelligence kinezthésique ou sociale remarquable. Ils ne sont pas rivaux : ils sont **coéquipiers**.
+        Grâce aux 9 intelligences de Howard Gardner, on apprend à montrer à l'enfant que <strong>chaque être humain possède une combinaison unique de forces</strong>. L'aîné a peut-être une intelligence logique plus avancée, tandis que le cadet fait preuve d'une intelligence <strong>kinesthésique</strong> ou sociale remarquable. Ils ne sont pas rivaux : ils sont <strong>coéquipiers</strong>.
       </p>
 
       <h2>3 défis d'équipe à réaliser à 2 ou plus</h2>

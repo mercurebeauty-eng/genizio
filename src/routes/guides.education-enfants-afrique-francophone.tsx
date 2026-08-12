@@ -81,7 +81,7 @@ function Guide() {
       related={[
         { label: "Haut potentiel : les vrais signes", to: "/guides/potentiel-haut-potentiel-enfant" },
         { label: "Les intelligences multiples de Gardner", to: "/guides/intelligences-multiples-gardner" },
-        { label: "30 activités éducatives (6-12 ans)", to: "/guides/activites-educatives-enfant" },
+        { label: "24 activités éducatives (6-12 ans)", to: "/guides/activites-educatives-enfant" },
       ]}
     >
       <img

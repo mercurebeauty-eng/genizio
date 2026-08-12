@@ -1,0 +1,87 @@
+{
+  "audit_date": "2026-08-10",
+  "last_updated": "2026-08-10 (post-corrections)",
+  "domain": "https://www.genizio.com",
+  "total_posts": 17,
+  "average_score": 89,
+  "health_overview": {
+    "excellent_90_plus": 8,
+    "good_70_89": 9,
+    "needs_work_50_69": 0,
+    "poor_below_50": 0,
+    "orphan_pages": 0,
+    "dead_end_pages": 0,
+    "cannibalization_issues": 0,
+    "stale_content": 0,
+    "visible_rendering_bugs": 0,
+    "typos": 0,
+    "titles_over_60_chars": 0,
+    "titles_too_short_indexable": 0,
+    "blocked_app_pages_without_noindex": 0
+  },
+  "corrections_applied": [
+    "literal_markdown_asterisks_fixed_fratrie",
+    "typo_kinezthésique_fixed_x3",
+    "anchor_30_24_activities_aligned",
+    "5_titles_shortened_under_60_chars",
+    "related_blocks_added_to_5_dead_end_articles",
+    "cross_links_clusters_confiance_potentiel",
+    "keyword_defis_pour_adolescents_retargeted_to_motiver_un_adolescent",
+    "4_new_gap_articles_created_and_integrated_index_sitemap_llms",
+    "noindex_meta_added_to_nouveautes_laboratory_boutique",
+    "robots_txt_unblocked_app_pages",
+    "a_propos_content_enriched",
+    "short_titles_fixed_a_propos_mentions_legales"
+  ],
+  "ubersuggest": {
+    "blocked_pages": {
+      "before": 3,
+      "after": 0,
+      "pages": ["/nouveautes", "/laboratory", "/boutique"],
+      "fix": "robots.txt Disallow remplacé par <meta robots=noindex> sur chaque page"
+    },
+    "low_word_count_pages": {
+      "before": 3,
+      "after": 0,
+      "fix": "/a-propos enrichie (~2x texte); nouveautes+laboratory déclarées noindex"
+    },
+    "titles_too_long": {
+      "before": 4,
+      "after": 0,
+      "pages": ["fratrie(77)", "orientation(75)", "autonomie(70)", "ecrans(67)"],
+      "note": "corrigées en local — visible sur le live après déploiement"
+    },
+    "titles_too_short": {
+      "before": 2,
+      "after": 0,
+      "pages": ["/a-propos (19 chars)", "/mentions-legales (25 chars)"]
+    },
+    "poorly_formatted_urls": {
+      "before": 4,
+      "after": 4,
+      "urls": [
+        "/guides/potentiel-haut-potentiel-enfant",
+        "/guides/decrochage-scolaire-confiance-enfant",
+        "/guides/education-enfants-afrique-francophone",
+        "/guides/orientation-scolaire-metiers-avenir"
+      ],
+      "decision": "conservées — URLs propres, seuil Ubersuggest (4+ tirets) trop strict, aucune infrastructure de redirect serveur 301 dans le projet; le renommage coûterait plus qu'il n'apporte"
+    }
+  },
+  "new_posts": [
+    {"file": "guides.activites-manuelles-enfant.tsx", "path": "/guides/activites-manuelles-enfant", "score": 89, "keyword": "activités manuelles enfants"},
+    {"file": "guides.discipline-positive-sans-punition.tsx", "path": "/guides/discipline-positive-sans-punition", "score": 89, "keyword": "discipline positive"},
+    {"file": "guides.gestion-colere-emotions-enfant.tsx", "path": "/guides/gestion-colere-emotions-enfant", "score": 89, "keyword": "colère enfant / émotions"},
+    {"file": "guides.reussite-scolaire-aider-enfant.tsx", "path": "/guides/reussite-scolaire-aider-enfant", "score": 90, "keyword": "réussite scolaire enfant"}
+  ],
+  "technical": {
+    "sitemap": "ok_24_urls_17_guides_valid_xml",
+    "robots": "ok_vitrine_ouverte_app_pages_noindex_meta_sensitive_areas_blocked",
+    "llms_txt": "ok_17_guides_listed",
+    "og_images": "ok_17_images_1376x768_4_generated_placeholder",
+    "schema": "article_faq_breadcrumb_present_all_17_guides",
+    "broken_links": "none",
+    "typecheck": "ok_no_errors_in_edited_files_2_preexisting_in_portfolio_tsx",
+    "notes": "SKIPPED: credentials unavailable (GSC/GA4/keyword volumes). 2 erreurs TS pré-existantes dans profiles.$profileId.portfolio.tsx hors périmètre."
+  }
+}

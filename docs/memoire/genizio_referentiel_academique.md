@@ -7,6 +7,15 @@
 > ci-dessous reste la référence pour juger la fiabilité de chaque repère — un repère marqué
 > "estimation raisonnée non vérifiée" peut donc influencer une vraie investigation Phase 3 ou le
 > calibrage d'un défi ; à garder en tête pour une future passe de vérification plus complète.
+>
+> **Mise à jour 2026-08-10 (décision #59)** — le benchmark international est désormais une
+> **règle explicite dans le prompt** : `ACADEMIC_REFERENTIAL_INSTRUCTION` déclare que le
+> référentiel est calé sur les standards des meilleurs systèmes éducatifs du monde (Common Core
+> US, Singapore Math, NGSS, SHAPE America, CASEL, NFEC — États-Unis, Singapour, Chine) et que
+> l'ambition est que chaque enfant atteigne au minimum le niveau international de son âge. Le
+> mapping **âge → Grade international** (convention US : Kindergarten à 5 ans, Grade 1 à 6 ans)
+> vit maintenant dans `src/lib/academic-levels.ts`, qui alimente l'affichage « Niveau
+> international » de l'app (badge par défi + bloc par domaine sur le tableau de bord).
 
 ## 0. Pourquoi ce document (cf. décision #37)
 

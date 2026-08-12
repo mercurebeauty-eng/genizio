@@ -86,8 +86,9 @@ function Guide() {
       readingTime="7 min"
       related={[
         { label: "Haut potentiel : les vrais signes", to: "/guides/potentiel-haut-potentiel-enfant" },
-        { label: "30 activités éducatives à faire à la maison", to: "/guides/activites-educatives-enfant" },
+        { label: "24 activités éducatives à faire à la maison", to: "/guides/activites-educatives-enfant" },
         { label: "Les intelligences multiples expliquées simplement", to: "/guides/intelligences-multiples-gardner" },
+        { label: "Gérer la colère de son enfant", to: "/guides/gestion-colere-emotions-enfant" },
       ]}
     >
       <img
@@ -194,7 +195,7 @@ function Guide() {
       <div className="my-8 rounded-2xl bg-amber-50 p-6 border border-amber-200">
         <h3 className="font-bold text-amber-950 text-base mb-2">⚡ Le Défi 10 Min à tester ce soir : 'La Mission Chronomètre Inversé'</h3>
         <p className="text-sm text-amber-900 leading-relaxed mb-3">
-          Au lieu de demander à votre enfant de "se concentrer sagement", proposez-lui ce défi kinezthésique : <strong>Construire la plus haute tour en livres et rouleaux de papier en exactement 7 minutes.</strong>
+          Au lieu de demander à votre enfant de "se concentrer sagement", proposez-lui ce défi kinesthésique : <strong>Construire la plus haute tour en livres et rouleaux de papier en exactement 7 minutes.</strong>
         </p>
         <p className="text-sm text-amber-900 leading-relaxed">
           Il doit manipuler, ajuster l'équilibre et anticiper l'effondrement. À la fin des 7 minutes, prenez la photo de sa tour pour son portfolio. Vous constaterez une attention à 100 % parce que son corps et son cerveau étaient engagés ensemble.

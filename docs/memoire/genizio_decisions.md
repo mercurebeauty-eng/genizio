@@ -4,7 +4,7 @@ description: Décisions d'architecture et produit — quoi, pourquoi, alternativ
 metadata:
   type: project
   status: living-document
-  last_updated: 2026-08-03
+  last_updated: 2026-08-10
 ---
 
 ## Décision #1 : Nom du projet — Geniusio

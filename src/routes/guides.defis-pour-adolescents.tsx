@@ -30,9 +30,9 @@ const FAQ = [
 export const Route = createFileRoute("/guides/defis-pour-adolescents")({
   head: () => {
     const meta = pageMeta({
-      title: "Quels défis pour un adolescent de 12 à 16 ans ?",
+      title: "Motiver un adolescent : 12 défis qui marchent (12-16 ans)",
       description:
-        "Ce qui motive vraiment un adolescent, pourquoi les activités « éducatives » ne marchent plus, et 12 défis concrets qui tiennent la route.",
+        "Ce qui motive vraiment un adolescent de 12 à 16 ans, pourquoi les activités « pour enfants » ne marchent plus, et 12 défis concrets qui tiennent la route.",
       path: PATH,
       image: "/guides/og-ados.jpg",
       type: "article",
@@ -51,7 +51,7 @@ export const Route = createFileRoute("/guides/defis-pour-adolescents")({
         jsonLdScript({
           "@context": "https://schema.org",
           "@type": "Article",
-          headline: "Quels défis proposer à un adolescent de 12 à 16 ans ?",
+          headline: "Motiver un adolescent de 12 à 16 ans : les défis qui marchent",
           inLanguage: "fr-FR",
           mainEntityOfPage: absoluteUrl(PATH),
           image: absoluteUrl("/guides/og-ados.jpg"),
@@ -75,7 +75,7 @@ function Guide() {
   return (
     <GuideLayout
       eyebrow="Adolescents"
-      title="Quels défis proposer à un adolescent de 12 à 16 ans ?"
+      title="Motiver un adolescent de 12 à 16 ans : les défis qui marchent"
       intro="À partir de 12 ans, la plupart des activités « éducatives » cessent de fonctionner — non parce que l'adolescent est démotivé, mais parce qu'il repère l'intention pédagogique et n'y croit plus. Voici ce qui prend le relais."
       updated="8 août 2026"
       readingTime="7 min"

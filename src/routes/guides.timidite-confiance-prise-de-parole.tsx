@@ -25,7 +25,7 @@ const FAQ = [
 export const Route = createFileRoute("/guides/timidite-confiance-prise-de-parole")({
   head: () => {
     const meta = pageMeta({
-      title: "Enfant timide : 4 activités pour libérer la parole (6-12 ans)",
+      title: "Enfant timide : 4 activités pour libérer la parole (6-12)",
       description:
         "Comment aider un enfant réservé à prendre confiance en lui et s'exprimer avec aisance sans le forcer ni le mettre mal à l'aise.",
       path: PATH,
@@ -67,6 +67,11 @@ function Guide() {
       intro="La timidité chez l'enfant est souvent perçue comme un obstacle à corriger. En réalité, un enfant réservé possède généralement un sens aigu de l'observation et une réflexion profonde. L'objectif n'est pas de le transformer en extraverti, mais de lui donner les clés pour porter sa voix quand il le souhaite."
       updated="8 août 2026"
       readingTime="5 min"
+      related={[
+        { label: "Décrochage scolaire : la confiance avant l'école", to: "/guides/decrochage-scolaire-confiance-enfant" },
+        { label: "Mon enfant ne tient pas en place", to: "/guides/enfant-agite-concentration" },
+        { label: "24 activités éducatives (6-12 ans)", to: "/guides/activites-educatives-enfant" },
+      ]}
     >
       <img
         src="/guides/og-timidite.jpg"

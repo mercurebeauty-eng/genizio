@@ -25,7 +25,7 @@ const FAQ = [
 export const Route = createFileRoute("/guides/autonomie-responsabilite-maison")({
   head: () => {
     const meta = pageMeta({
-      title: "Rendre son enfant autonome sans crier : méthode en 3 étapes (6-12 ans)",
+      title: "Rendre son enfant autonome sans crier (6-12 ans)",
       description:
         "Comment développer la responsabilité et l'autonomie de votre enfant au quotidien en remplaçant la répétition d'ordres par des projets engageants.",
       path: PATH,
@@ -67,6 +67,11 @@ function Guide() {
       intro="Répéter dix fois les mêmes consignes le soir est épuisant pour les parents et démotivant pour l'enfant. L'autonomie ne s'obtient pas par la contrainte répétée, mais en confiant à l'enfant de vraies responsabilités où il mesure l'impact direct de ses décisions."
       updated="8 août 2026"
       readingTime="6 min"
+      related={[
+        { label: "24 activités éducatives (6-12 ans)", to: "/guides/activites-educatives-enfant" },
+        { label: "Rivalité frères et sœurs : coopérer", to: "/guides/fratrie-rivalite-cooperation" },
+        { label: "Motiver un adolescent (12-16 ans)", to: "/guides/defis-pour-adolescents" },
+      ]}
     >
       <img
         src="/guides/og-autonomie.jpg"
@@ -79,7 +84,7 @@ function Guide() {
         Lorsqu'on dit à un enfant <em>"Range ta chambre !"</em>, il perçoit une corvée imposée. Lorsqu'on lui confie la mission <strong>"Chef de l'Organisation de la Chambre"</strong> avec un objectif visuel clair, il bascule dans la posture de gestionnaire.
       </p>
       <p>
-        Dans la théorie des intelligences multiples, la gestion de son environnement sollicite l'intelligence <strong>logique-mathématique</strong> (rangement par catégories) et l'intelligence <strong>kinezthésique</strong> (action physique).
+        Dans la théorie des intelligences multiples, la gestion de son environnement sollicite l'intelligence <strong>logique-mathématique</strong> (rangement par catégories) et l'intelligence <strong>kinesthésique</strong> (action physique).
       </p>
 
       <h2>Les 3 étapes pour installer l'autonomie sereine</h2>
