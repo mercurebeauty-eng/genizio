@@ -1237,7 +1237,7 @@ function DemoSection() {
                 <input
                   id="landing-child-age"
                   type="range"
-                  min={4}
+                  min={5}
                   max={16}
                   value={age}
                   onChange={(e) => setAge(Number(e.target.value))}

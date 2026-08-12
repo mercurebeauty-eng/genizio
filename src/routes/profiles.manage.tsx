@@ -99,7 +99,7 @@ function ManageProfilesPage() {
       .select("*")
       .eq("user_id", session.user.id)
       .order("created_at", { ascending: false });
-    setProfiles((data ?? []) as ChildProfile[]);
+    setProfiles((data ?? []) as unknown as ChildProfile[]);
     setFetching(false);
   };
 
@@ -268,7 +268,7 @@ function ManageProfilesPage() {
 
             <div className="mb-6 rounded-2xl border border-ink/10 bg-surface p-5 shadow-sm">
               <p className="text-xs font-black uppercase tracking-widest text-ink/60 mb-1">
-                Accès mensuel — profil supplémentaire
+                Profil supplémentaire permanent
               </p>
               <p className="font-display text-balance text-3xl font-black text-ink">
                 {formatXofAmount(upgradeTotal)} <span className="text-lg text-ink/60">FCFA</span>
@@ -282,7 +282,7 @@ function ManageProfilesPage() {
                   {formatXof(STANDARD_PRICE_XOF)}/mois
                 </p>
               )}
-              {/* Choix de durée (1 à 6 mois, même barème que le parrainage) */}
+              {/* Montant du paiement unique (1, 3 ou 6 mois au barème mensuel, même grille que le parrainage) */}
               <div className="mt-4 flex gap-2">
                 {[1, 3, 6].map((m) => (
                   <button
@@ -300,8 +300,9 @@ function ManageProfilesPage() {
                 ))}
               </div>
               <p className="mt-2 text-xs text-ink/60 leading-relaxed">
-                Accès débloqué automatiquement après le paiement en ligne, puis renouvelable
-                chaque mois.
+                Un profil enfant supplémentaire, débloqué définitivement pour ce compte après
+                le paiement en ligne (paiement unique — le nombre de mois choisit le montant,
+                l'accès ne s'interrompt jamais).
               </p>
             </div>
             <button

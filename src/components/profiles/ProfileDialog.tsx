@@ -8,6 +8,15 @@ import { useFamilyCoverage } from "@/hooks/use-family-coverage";
 import { getGeoHint } from "@/lib/geo.functions";
 import { computeChildCreationLimit } from "@/lib/child-access";
 import { seedTalentsFromInterests } from "@/lib/talent-seed";
+import {
+  ABILITY_AXES,
+  ASPIRATION_SUGGESTIONS,
+  LIFE_CONTEXT_OPTIONS,
+  SCHOOL_LEVELS,
+  SCHOOL_RELATIONS,
+  type AbilityValue,
+} from "@/lib/profile-context";
+import { TIME_PRESSURE_LABELS, type TimePressure } from "@/lib/time-limit";
 
 export function ProfileDialog({
   initial,
@@ -46,9 +55,38 @@ export function ProfileDialog({
           xp: initial.xp ?? 0,
           streak: initial.streak ?? 0,
           last_activity_date: initial.last_activity_date ?? null,
+          school_level: initial.school_level ?? null,
+          languages: initial.languages ?? [],
+          ability_profile: initial.ability_profile ?? {},
+          school_relation: initial.school_relation ?? null,
+          life_context: initial.life_context ?? [],
+          aspirations: initial.aspirations ?? [],
+          time_pressure: initial.time_pressure ?? "standard",
+          is_active: initial.is_active ?? true,
         }
       : emptyProfileDraft(),
   );
+
+  // Bornes d'âge produit : 5 à 16 ans (contrainte serveur child_profiles_age_check,
+  // migration 20260812120000). La date de naissance doit produire un âge dans cette
+  // fenêtre — sinon le trigger sync_child_age_from_birthdate recalcule un âge que la
+  // base refuse, avec un message opaque.
+  const today = new Date();
+  const maxBirthdate = new Date(today.getFullYear() - 5, today.getMonth(), today.getDate())
+    .toISOString()
+    .slice(0, 10);
+  const minBirthdate = new Date(today.getFullYear() - 16, today.getMonth(), today.getDate())
+    .toISOString()
+    .slice(0, 10);
+  const ageFromBirthdate = (birthdate: string | null): number | null => {
+    if (!birthdate) return null;
+    const b = new Date(birthdate);
+    if (Number.isNaN(b.getTime())) return null;
+    let age = today.getFullYear() - b.getFullYear();
+    const m = today.getMonth() - b.getMonth();
+    if (m < 0 || (m === 0 && today.getDate() < b.getDate())) age -= 1;
+    return age;
+  };
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -65,6 +103,35 @@ export function ProfileDialog({
   const [step, setStep] = useState<"universes" | "tags">(
     initial && initial.interests.length > 0 ? "tags" : "universes"
   );
+
+  // Section optionnelle « Contexte & aptitudes » (2026-08-12)
+  const [showContext, setShowContext] = useState(false);
+  const [aspirationInput, setAspirationInput] = useState("");
+
+  const languagesText = draft.languages.join(", ");
+  const setLanguagesText = (text: string) =>
+    setDraft((d) => ({
+      ...d,
+      languages: text
+        .split(",")
+        .map((l) => l.trim())
+        .filter(Boolean)
+        .slice(0, 6),
+    }));
+
+  const setAbility = (axis: string, value: AbilityValue) =>
+    setDraft((d) => ({ ...d, ability_profile: { ...d.ability_profile, [axis]: value } }));
+
+  const addAspiration = (label: string) => {
+    const clean = label.trim().slice(0, 60);
+    if (!clean) return;
+    setDraft((d) =>
+      d.aspirations.some((a) => a.label.toLowerCase() === clean.toLowerCase())
+        ? d
+        : { ...d, aspirations: [...d.aspirations, { label: clean, type: "metier" as const }] }
+    );
+    setAspirationInput("");
+  };
 
   // Pré-remplissage Ville/Pays par IP (2026-07-29, demande utilisateur) : uniquement à la
   // création d'un profil, jamais sur un profil existant, et jamais si le parent a déjà
@@ -95,8 +162,16 @@ export function ProfileDialog({
       setError("Le prénom est obligatoire");
       return;
     }
+    const birthdateAge = ageFromBirthdate(draft.birthdate);
+    if (birthdateAge !== null && (birthdateAge < 5 || birthdateAge > 16)) {
+      const msg = `L'âge doit être compris entre 5 et 16 ans (cette date de naissance donne ${birthdateAge} ans).`;
+      setError(msg);
+      toast.error(msg);
+      return;
+    }
     setBusy(true);
     try {
+      let savedId: string | null = initial?.id ?? null;
       const payload = {
         user_id: userId,
         name: draft.name.trim().slice(0, 40),
@@ -106,6 +181,16 @@ export function ProfileDialog({
         city: draft.city?.trim() || null,
         country: draft.country?.trim() || null,
         avatar_color: draft.avatar_color,
+        // Profil multidimensionnel (2026-08-12) : tout est optionnel et déclaré par
+        // le parent ; vocabulaire borné par les CHECKs en base (school_level,
+        // school_relation) — le dialogue ne propose que des préréglages.
+        school_level: draft.school_level || null,
+        languages: draft.languages,
+        ability_profile: draft.ability_profile,
+        school_relation: draft.school_relation || null,
+        life_context: draft.life_context,
+        aspirations: draft.aspirations,
+        time_pressure: draft.time_pressure,
         // Guilde provisoire (refonte 2026-08-09) : à la CRÉATION uniquement, les intérêts
         // déclarés dérivent une baseline de talents (1-4 pts → "signal_precoce", sous les
         // seuils 40/70) — l'enfant a une guilde dès le premier jour. Sur l'édition, on ne
@@ -139,6 +224,7 @@ export function ProfileDialog({
           return;
         }
         if (created) {
+          savedId = created.id;
           await supabase.from("consent_events").insert({
             user_id: userId,
             child_id: created.id,
@@ -146,6 +232,24 @@ export function ProfileDialog({
             description: `Profil créé pour ${payload.name}`,
           });
         }
+      }
+      // Consentement « Contexte & aptitudes » (2026-08-12) : dès qu'une donnée du
+      // profil multidimensionnel est déclarée (ou modifiée), on le trace — le parent
+      // reste maître des données sensibles de son enfant.
+      const contextDeclared =
+        (draft.school_level ||
+          draft.languages.length > 0 ||
+          Object.values(draft.ability_profile).some((v) => v !== "neutre") ||
+          draft.school_relation ||
+          draft.life_context.length > 0 ||
+          draft.aspirations.length > 0);
+      if (contextDeclared && savedId) {
+        await supabase.from("consent_events").insert({
+          user_id: userId,
+          child_id: savedId,
+          event_type: "context_declared",
+          description: "Contexte, aptitudes et aspirations déclarés par le parent (section optionnelle du profil).",
+        });
       }
       onSaved();
     } catch (err: any) {
@@ -207,11 +311,14 @@ export function ProfileDialog({
               <input
                 type="date"
                 value={draft.birthdate ?? ""}
+                min={minBirthdate}
+                max={maxBirthdate}
                 onChange={(e) => setDraft({ ...draft, birthdate: e.target.value || null })}
                 className="rounded-xl border border-ink/10 px-3 py-2 text-xs outline-none focus:ring-2 focus:ring-brand shadow-sm"
               />
               <p className="text-[11px] text-ink/50 leading-snug">
-                Optionnel — avec la date de naissance, l'âge se met à jour tout seul chaque année.
+                Optionnel — avec la date de naissance, l'âge se met à jour tout seul chaque année
+                (entre 5 et 16 ans).
               </p>
             </div>
           </div>
@@ -381,6 +488,291 @@ export function ProfileDialog({
                       </div>
                     ))
                 )}
+              </div>
+            )}
+          </div>
+
+          {/* Contexte & aptitudes (optionnel) — profil multidimensionnel (2026-08-12) */}
+          <div>
+            <button
+              type="button"
+              onClick={() => setShowContext((s) => !s)}
+              className="flex w-full items-center justify-between rounded-2xl border border-ink/10 bg-surface px-4 py-3 transition-all hover:border-ink/25"
+            >
+              <span className="text-xs font-black uppercase tracking-widest text-ink/70">
+                Contexte & aptitudes <span className="text-ink/40">(optionnel)</span>
+              </span>
+              <span className="text-xs font-bold text-ink/50">{showContext ? "▲" : "▼"}</span>
+            </button>
+
+            {showContext && (
+              <div className="mt-3 space-y-4 rounded-2xl border border-ink/10 bg-white p-4 shadow-sm">
+                <p className="text-[11px] text-ink/60 leading-relaxed">
+                  Aidez Naya à adapter les défis à votre enfant : niveau scolaire, langues, points
+                  forts & difficultés, rapport à l'école et ce qu'il veut explorer. Tout est
+                  facultatif, modifiable à tout moment, et reste privé — ces informations servent
+                  uniquement à personnaliser les activités.
+                </p>
+
+                {/* Niveau scolaire */}
+                <div>
+                  <label className="mb-1 block text-[10px] font-black uppercase tracking-widest text-ink/60">
+                    Niveau scolaire
+                  </label>
+                  <select
+                    value={draft.school_level ?? ""}
+                    onChange={(e) => setDraft({ ...draft, school_level: e.target.value || null })}
+                    className="w-full rounded-xl border border-ink/10 px-3 py-2.5 text-sm outline-none focus:ring-2 focus:ring-brand"
+                  >
+                    <option value="">Non renseigné</option>
+                    {Object.entries(SCHOOL_LEVELS).map(([k, label]) => (
+                      <option key={k} value={k}>
+                        {label}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                {/* Langues */}
+                <div>
+                  <label className="mb-1 block text-[10px] font-black uppercase tracking-widest text-ink/60">
+                    Langues parlées à la maison
+                  </label>
+                  <input
+                    value={languagesText}
+                    onChange={(e) => setLanguagesText(e.target.value)}
+                    placeholder="ex. français, wolof, dioula"
+                    className="w-full rounded-xl border border-ink/10 px-3 py-2.5 text-sm outline-none focus:ring-2 focus:ring-brand"
+                  />
+                </div>
+
+                {/* Facilités / difficultés par axe */}
+                <div>
+                  <p className="mb-1 text-[10px] font-black uppercase tracking-widest text-ink/60">
+                    Points forts & difficultés
+                  </p>
+                  <p className="mb-2 text-[11px] text-ink/50">
+                    Touchez un axe pour le classer — une difficulté est un axe d'entraînement,
+                    jamais une étiquette.
+                  </p>
+                  <div className="space-y-3">
+                    <div>
+                      <p className="mb-1.5 text-[11px] font-bold text-emerald-700">✓ Facilités</p>
+                      <div className="flex flex-wrap gap-1.5">
+                        {Object.entries(ABILITY_AXES).map(([k, label]) => {
+                          const on = draft.ability_profile[k] === "facile";
+                          return (
+                            <button
+                              key={k}
+                              type="button"
+                              onClick={() => setAbility(k, on ? "neutre" : "facile")}
+                              className={
+                                "rounded-full px-3 py-1 text-[11px] font-bold border-2 transition-all " +
+                                (on
+                                  ? "bg-emerald-100 border-emerald-500 text-emerald-800"
+                                  : "bg-white border-ink/15 text-ink/60 hover:border-ink/40")
+                              }
+                            >
+                              {label}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+                    <div>
+                      <p className="mb-1.5 text-[11px] font-bold text-amber-700">● Difficultés à stimuler</p>
+                      <div className="flex flex-wrap gap-1.5">
+                        {Object.entries(ABILITY_AXES).map(([k, label]) => {
+                          const on = draft.ability_profile[k] === "difficulte";
+                          return (
+                            <button
+                              key={k}
+                              type="button"
+                              onClick={() => setAbility(k, on ? "neutre" : "difficulte")}
+                              className={
+                                "rounded-full px-3 py-1 text-[11px] font-bold border-2 transition-all " +
+                                (on
+                                  ? "bg-amber-100 border-amber-500 text-amber-800"
+                                  : "bg-white border-ink/15 text-ink/60 hover:border-ink/40")
+                              }
+                            >
+                              {label}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Rapport à l'école */}
+                <div>
+                  <label className="mb-1 block text-[10px] font-black uppercase tracking-widest text-ink/60">
+                    Rapport à l'école
+                  </label>
+                  <div className="flex flex-wrap gap-1.5">
+                    {Object.entries(SCHOOL_RELATIONS).map(([k, label]) => {
+                      const on = draft.school_relation === k;
+                      return (
+                        <button
+                          key={k}
+                          type="button"
+                          onClick={() => setDraft({ ...draft, school_relation: on ? null : k })}
+                          className={
+                            "rounded-full px-3 py-1 text-[11px] font-bold border-2 transition-all " +
+                            (on
+                              ? "bg-brand text-white border-ink"
+                              : "bg-white border-ink/15 text-ink/60 hover:border-ink/40")
+                          }
+                        >
+                          {label}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {/* Contexte de parcours (préréglages uniquement) */}
+                <div>
+                  <label className="mb-1 block text-[10px] font-black uppercase tracking-widest text-ink/60">
+                    Contexte de parcours
+                  </label>
+                  <div className="flex flex-wrap gap-1.5">
+                    {Object.entries(LIFE_CONTEXT_OPTIONS).map(([k, label]) => {
+                      const on = draft.life_context.includes(k);
+                      return (
+                        <button
+                          key={k}
+                          type="button"
+                          onClick={() =>
+                            setDraft((d) => ({
+                              ...d,
+                              life_context: on
+                                ? d.life_context.filter((x) => x !== k)
+                                : [...d.life_context, k],
+                            }))
+                          }
+                          className={
+                            "rounded-full px-3 py-1 text-[11px] font-bold border-2 transition-all " +
+                            (on
+                              ? "bg-ink text-white border-ink"
+                              : "bg-white border-ink/15 text-ink/60 hover:border-ink/40")
+                          }
+                        >
+                          {label}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {/* Aspirations — hypothèses à explorer */}
+                <div>
+                  <label className="mb-1 block text-[10px] font-black uppercase tracking-widest text-ink/60">
+                    Ce qu'il veut devenir / explorer
+                  </label>
+                  <p className="mb-2 text-[11px] text-ink/50">
+                    Naya s'en servira comme terrain d'exploration — sans jamais en faire un verdict.
+                  </p>
+                  <div className="flex flex-wrap gap-1.5">
+                    {ASPIRATION_SUGGESTIONS.map((s) => {
+                      const on = draft.aspirations.some((a) => a.label === s);
+                      return (
+                        <button
+                          key={s}
+                          type="button"
+                          onClick={() =>
+                            on
+                              ? setDraft((d) => ({ ...d, aspirations: d.aspirations.filter((a) => a.label !== s) }))
+                              : addAspiration(s)
+                          }
+                          className={
+                            "rounded-full px-3 py-1 text-[11px] font-bold border-2 transition-all " +
+                            (on
+                              ? "bg-sky-100 border-sky-500 text-sky-800"
+                              : "bg-white border-ink/15 text-ink/60 hover:border-ink/40")
+                          }
+                        >
+                          {s}
+                        </button>
+                      );
+                    })}
+                  </div>
+                  <div className="mt-2 flex gap-2">
+                    <input
+                      value={aspirationInput}
+                      onChange={(e) => setAspirationInput(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter") {
+                          e.preventDefault();
+                          addAspiration(aspirationInput);
+                        }
+                      }}
+                      placeholder="Autre métier ou envie…"
+                      className="flex-1 rounded-xl border border-ink/10 px-3 py-2 text-xs outline-none focus:ring-2 focus:ring-brand"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => addAspiration(aspirationInput)}
+                      className="rounded-xl bg-ink px-3 py-2 text-xs font-bold text-white hover:bg-ink/90"
+                    >
+                      +
+                    </button>
+                  </div>
+                  {draft.aspirations.length > 0 && (
+                    <div className="mt-2 flex flex-wrap gap-1.5">
+                      {draft.aspirations.map((a) => (
+                        <span
+                          key={a.label}
+                          className="inline-flex items-center gap-1 rounded-full bg-sky-50 border border-sky-200 px-2.5 py-1 text-[11px] font-bold text-sky-800"
+                        >
+                          {a.label}
+                          <button
+                            type="button"
+                            onClick={() =>
+                              setDraft((d) => ({ ...d, aspirations: d.aspirations.filter((x) => x.label !== a.label) }))
+                            }
+                            className="text-sky-600 hover:text-sky-900"
+                            aria-label={`Retirer ${a.label}`}
+                          >
+                            ✕
+                          </button>
+                        </span>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                {/* Pression temporelle */}
+                <div>
+                  <label className="mb-1 block text-[10px] font-black uppercase tracking-widest text-ink/60">
+                    Gestion du temps
+                  </label>
+                  <div className="flex gap-1.5">
+                    {(Object.keys(TIME_PRESSURE_LABELS) as TimePressure[]).map((tp) => {
+                      const on = draft.time_pressure === tp;
+                      return (
+                        <button
+                          key={tp}
+                          type="button"
+                          onClick={() => setDraft({ ...draft, time_pressure: tp })}
+                          className={
+                            "flex-1 rounded-xl border px-2 py-2 text-[11px] font-bold transition-all " +
+                            (on
+                              ? "border-brand bg-brand/10 text-brand"
+                              : "border-ink/10 bg-white text-ink/60 hover:border-ink/30")
+                          }
+                        >
+                          {TIME_PRESSURE_LABELS[tp]}
+                        </button>
+                      );
+                    })}
+                  </div>
+                  <p className="mt-1.5 text-[10px] text-ink/50">
+                    Temps standard : chrono doux. Temps généreux : ×1,5. Sans chronomètre : aucune
+                    contrainte temporelle.
+                  </p>
+                </div>
               </div>
             )}
           </div>

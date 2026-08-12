@@ -1,4 +1,6 @@
 import { TALENT_KEY_LABELS } from "@/lib/talent-buckets";
+import type { AbilityValue, Aspiration } from "@/lib/profile-context";
+import type { TimePressure } from "@/lib/time-limit";
 
 // Centres d'intérêt organisés par clé de talent Gardner (les mêmes 9 clés que
 // child_profiles.talents et TALENT_KEY_LABELS dans talent-buckets.ts) plutôt
@@ -89,6 +91,16 @@ export type ChildProfile = {
   streak: number;
   last_activity_date: string | null;
   access_locked_at: string | null;
+  // Profil multidimensionnel (2026-08-12, chantier « porte d'entrée ») — tout est
+  // optionnel et déclaré par le parent ; les CHECKs en base bornent le vocabulaire.
+  school_level: string | null;
+  languages: string[];
+  ability_profile: Record<string, AbilityValue>;
+  school_relation: string | null;
+  life_context: string[];
+  aspirations: Aspiration[];
+  time_pressure: TimePressure;
+  is_active: boolean;
 };
 
 export type ProfileDraft = Omit<
@@ -107,4 +119,12 @@ export const emptyProfileDraft = (): ProfileDraft => ({
   xp: 0,
   streak: 0,
   last_activity_date: null,
+  school_level: null,
+  languages: [],
+  ability_profile: {},
+  school_relation: null,
+  life_context: [],
+  aspirations: [],
+  time_pressure: "standard",
+  is_active: true,
 });
