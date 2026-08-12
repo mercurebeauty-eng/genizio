@@ -113,152 +113,6 @@ export type Database = {
         }
         Relationships: []
       }
-      challenges: {
-        Row: {
-          academic_domain: string | null
-          academic_grade_level: string | null
-          academic_level_age: number | null
-          academic_reference_note: string | null
-          academic_secret: string | null
-          academic_subject: string | null
-          ai_observations: string | null
-          behavioral_driver: string | null
-          child_id: string
-          completed_at: string | null
-          created_at: string
-          declarative_award: Json | null
-          deleted_at: string | null
-          description: string
-          difficulty: string | null
-          domain: string
-          duration: string
-          estimated_duration_minutes: number | null
-          homework_instruction: string | null
-          id: string
-          material_tags: string[]
-          materials: Json
-          not_completed_at: string | null
-          not_completed_cause: string | null
-          not_completed_reason: string | null
-          not_completed_reason_chip: string | null
-          notes: string | null
-          pedagogical_context: string | null
-          progress: number
-          proof_image_url: string | null
-          proof_mode: string
-          proof_target: Json | null
-          requires_supervision: boolean | null
-          started_at: string | null
-          status: Database["public"]["Enums"]["challenge_status"]
-          steps: Json
-          supervision_warning: string | null
-          target_intelligences: Json
-          title: string
-          trait_subform: string | null
-          updated_at: string
-          user_id: string
-          zpa_level: number | null
-        }
-        Insert: {
-          academic_domain?: string | null
-          academic_grade_level?: string | null
-          academic_level_age?: number | null
-          academic_reference_note?: string | null
-          academic_secret?: string | null
-          academic_subject?: string | null
-          ai_observations?: string | null
-          behavioral_driver?: string | null
-          child_id: string
-          completed_at?: string | null
-          created_at?: string
-          declarative_award?: Json | null
-          deleted_at?: string | null
-          description: string
-          difficulty?: string | null
-          domain: string
-          duration: string
-          estimated_duration_minutes?: number | null
-          homework_instruction?: string | null
-          id?: string
-          material_tags?: string[]
-          materials?: Json
-          not_completed_at?: string | null
-          not_completed_cause?: string | null
-          not_completed_reason?: string | null
-          not_completed_reason_chip?: string | null
-          notes?: string | null
-          pedagogical_context?: string | null
-          progress?: number
-          proof_image_url?: string | null
-          proof_mode?: string
-          proof_target?: Json | null
-          requires_supervision?: boolean | null
-          started_at?: string | null
-          status?: Database["public"]["Enums"]["challenge_status"]
-          steps?: Json
-          supervision_warning?: string | null
-          target_intelligences?: Json
-          title: string
-          trait_subform?: string | null
-          updated_at?: string
-          user_id: string
-          zpa_level?: number | null
-        }
-        Update: {
-          academic_domain?: string | null
-          academic_grade_level?: string | null
-          academic_level_age?: number | null
-          academic_reference_note?: string | null
-          academic_secret?: string | null
-          academic_subject?: string | null
-          ai_observations?: string | null
-          behavioral_driver?: string | null
-          child_id?: string
-          completed_at?: string | null
-          created_at?: string
-          declarative_award?: Json | null
-          deleted_at?: string | null
-          description?: string
-          difficulty?: string | null
-          domain?: string
-          duration?: string
-          estimated_duration_minutes?: number | null
-          homework_instruction?: string | null
-          id?: string
-          material_tags?: string[]
-          materials?: Json
-          not_completed_at?: string | null
-          not_completed_cause?: string | null
-          not_completed_reason?: string | null
-          not_completed_reason_chip?: string | null
-          notes?: string | null
-          pedagogical_context?: string | null
-          progress?: number
-          proof_image_url?: string | null
-          proof_mode?: string
-          proof_target?: Json | null
-          requires_supervision?: boolean | null
-          started_at?: string | null
-          status?: Database["public"]["Enums"]["challenge_status"]
-          steps?: Json
-          supervision_warning?: string | null
-          target_intelligences?: Json
-          title?: string
-          trait_subform?: string | null
-          updated_at?: string
-          user_id?: string
-          zpa_level?: number | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "challenges_child_id_fkey"
-            columns: ["child_id"]
-            isOneToOne: false
-            referencedRelation: "child_profiles"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       challenge_outcomes: {
         Row: {
           challenge_id: string
@@ -306,6 +160,155 @@ export type Database = {
           },
           {
             foreignKeyName: "challenge_outcomes_child_id_fkey"
+            columns: ["child_id"]
+            isOneToOne: false
+            referencedRelation: "child_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      challenges: {
+        Row: {
+          academic_domain: string | null
+          academic_grade_level: string | null
+          academic_level_age: number | null
+          academic_reference_note: string | null
+          academic_secret: string | null
+          academic_subject: string | null
+          ai_observations: string | null
+          behavioral_driver: string | null
+          child_id: string
+          completed_at: string | null
+          created_at: string
+          declarative_award: Json | null
+          deleted_at: string | null
+          description: string
+          difficulty: string | null
+          domain: string
+          duration: string
+          estimated_duration_minutes: number | null
+          homework_instruction: string | null
+          id: string
+          material_tags: string[]
+          materials: Json
+          not_completed_at: string | null
+          not_completed_cause: string | null
+          not_completed_reason: string | null
+          not_completed_reason_chip: string | null
+          notes: string | null
+          pedagogical_context: string | null
+          progress: number
+          proof_image_url: string | null
+          proof_mode: string
+          proof_target: Json | null
+          requires_supervision: boolean | null
+          started_at: string | null
+          status: Database["public"]["Enums"]["challenge_status"]
+          steps: Json
+          supervision_warning: string | null
+          target_intelligences: Json
+          time_limit_minutes: number | null
+          title: string
+          trait_subform: string | null
+          updated_at: string
+          user_id: string
+          zpa_level: number | null
+        }
+        Insert: {
+          academic_domain?: string | null
+          academic_grade_level?: string | null
+          academic_level_age?: number | null
+          academic_reference_note?: string | null
+          academic_secret?: string | null
+          academic_subject?: string | null
+          ai_observations?: string | null
+          behavioral_driver?: string | null
+          child_id: string
+          completed_at?: string | null
+          created_at?: string
+          declarative_award?: Json | null
+          deleted_at?: string | null
+          description: string
+          difficulty?: string | null
+          domain: string
+          duration: string
+          estimated_duration_minutes?: number | null
+          homework_instruction?: string | null
+          id?: string
+          material_tags?: string[]
+          materials?: Json
+          not_completed_at?: string | null
+          not_completed_cause?: string | null
+          not_completed_reason?: string | null
+          not_completed_reason_chip?: string | null
+          notes?: string | null
+          pedagogical_context?: string | null
+          progress?: number
+          proof_image_url?: string | null
+          proof_mode?: string
+          proof_target?: Json | null
+          requires_supervision?: boolean | null
+          started_at?: string | null
+          status?: Database["public"]["Enums"]["challenge_status"]
+          steps?: Json
+          supervision_warning?: string | null
+          target_intelligences?: Json
+          time_limit_minutes?: number | null
+          title: string
+          trait_subform?: string | null
+          updated_at?: string
+          user_id: string
+          zpa_level?: number | null
+        }
+        Update: {
+          academic_domain?: string | null
+          academic_grade_level?: string | null
+          academic_level_age?: number | null
+          academic_reference_note?: string | null
+          academic_secret?: string | null
+          academic_subject?: string | null
+          ai_observations?: string | null
+          behavioral_driver?: string | null
+          child_id?: string
+          completed_at?: string | null
+          created_at?: string
+          declarative_award?: Json | null
+          deleted_at?: string | null
+          description?: string
+          difficulty?: string | null
+          domain?: string
+          duration?: string
+          estimated_duration_minutes?: number | null
+          homework_instruction?: string | null
+          id?: string
+          material_tags?: string[]
+          materials?: Json
+          not_completed_at?: string | null
+          not_completed_cause?: string | null
+          not_completed_reason?: string | null
+          not_completed_reason_chip?: string | null
+          notes?: string | null
+          pedagogical_context?: string | null
+          progress?: number
+          proof_image_url?: string | null
+          proof_mode?: string
+          proof_target?: Json | null
+          requires_supervision?: boolean | null
+          started_at?: string | null
+          status?: Database["public"]["Enums"]["challenge_status"]
+          steps?: Json
+          supervision_warning?: string | null
+          target_intelligences?: Json
+          time_limit_minutes?: number | null
+          title?: string
+          trait_subform?: string | null
+          updated_at?: string
+          user_id?: string
+          zpa_level?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "challenges_child_id_fkey"
             columns: ["child_id"]
             isOneToOne: false
             referencedRelation: "child_profiles"
@@ -457,10 +460,12 @@ export type Database = {
       }
       child_profiles: {
         Row: {
+          ability_profile: Json
           access_locked_at: string | null
           age: number
           ai_synthesis: string | null
           ai_synthesis_generated_at: string | null
+          aspirations: Json
           avatar_color: string
           birthdate: string | null
           city: string | null
@@ -471,22 +476,30 @@ export type Database = {
           guild_participation_opt_in: boolean
           id: string
           interests: string[]
+          is_active: boolean
+          languages: string[]
           last_activity_date: string | null
+          life_context: string[]
           name: string
           passport_letter: string | null
           passport_letter_generated_at: string | null
           pdf_unlocked: boolean
+          school_level: string | null
+          school_relation: string | null
           streak: number
           talents: Json
+          time_pressure: string
           updated_at: string
           user_id: string
           xp: number
         }
         Insert: {
+          ability_profile?: Json
           access_locked_at?: string | null
           age: number
           ai_synthesis?: string | null
           ai_synthesis_generated_at?: string | null
+          aspirations?: Json
           avatar_color?: string
           birthdate?: string | null
           city?: string | null
@@ -497,22 +510,30 @@ export type Database = {
           guild_participation_opt_in?: boolean
           id?: string
           interests?: string[]
+          is_active?: boolean
+          languages?: string[]
           last_activity_date?: string | null
+          life_context?: string[]
           name: string
           passport_letter?: string | null
           passport_letter_generated_at?: string | null
           pdf_unlocked?: boolean
+          school_level?: string | null
+          school_relation?: string | null
           streak?: number
           talents?: Json
+          time_pressure?: string
           updated_at?: string
           user_id: string
           xp?: number
         }
         Update: {
+          ability_profile?: Json
           access_locked_at?: string | null
           age?: number
           ai_synthesis?: string | null
           ai_synthesis_generated_at?: string | null
+          aspirations?: Json
           avatar_color?: string
           birthdate?: string | null
           city?: string | null
@@ -523,13 +544,19 @@ export type Database = {
           guild_participation_opt_in?: boolean
           id?: string
           interests?: string[]
+          is_active?: boolean
+          languages?: string[]
           last_activity_date?: string | null
+          life_context?: string[]
           name?: string
           passport_letter?: string | null
           passport_letter_generated_at?: string | null
           pdf_unlocked?: boolean
+          school_level?: string | null
+          school_relation?: string | null
           streak?: number
           talents?: Json
+          time_pressure?: string
           updated_at?: string
           user_id?: string
           xp?: number
@@ -915,15 +942,40 @@ export type Database = {
           updated_at?: string
           user_id?: string | null
         }
-        Relationships: [
-          {
-            foreignKeyName: "payments_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "users"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
+      }
+      paystack_plans: {
+        Row: {
+          amount_xof: number
+          created_at: string
+          currency: string
+          id: string
+          interval: string
+          name: string
+          plan_code: string
+          plan_key: string
+        }
+        Insert: {
+          amount_xof: number
+          created_at?: string
+          currency?: string
+          id?: string
+          interval?: string
+          name: string
+          plan_code: string
+          plan_key: string
+        }
+        Update: {
+          amount_xof?: number
+          created_at?: string
+          currency?: string
+          id?: string
+          interval?: string
+          name?: string
+          plan_code?: string
+          plan_key?: string
+        }
+        Relationships: []
       }
       pedagogical_twins: {
         Row: {
@@ -1086,7 +1138,7 @@ export type Database = {
           enrolled_at: string
           id: string
           payment_status: string
-          season_id: string
+          season_id: string | null
           sponsor_email: string | null
           sponsor_message: string | null
           sponsor_name: string | null
@@ -1099,7 +1151,7 @@ export type Database = {
           enrolled_at?: string
           id?: string
           payment_status?: string
-          season_id: string
+          season_id?: string | null
           sponsor_email?: string | null
           sponsor_message?: string | null
           sponsor_name?: string | null
@@ -1112,7 +1164,7 @@ export type Database = {
           enrolled_at?: string
           id?: string
           payment_status?: string
-          season_id?: string
+          season_id?: string | null
           sponsor_email?: string | null
           sponsor_message?: string | null
           sponsor_name?: string | null
@@ -1186,6 +1238,41 @@ export type Database = {
           title?: string
         }
         Relationships: []
+      }
+      sponsorship_credits: {
+        Row: {
+          created_at: string
+          ends_at: string
+          id: string
+          months_count: number
+          token_id: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          ends_at: string
+          id?: string
+          months_count?: number
+          token_id?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          ends_at?: string
+          id?: string
+          months_count?: number
+          token_id?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sponsorship_credits_token_id_fkey"
+            columns: ["token_id"]
+            isOneToOne: false
+            referencedRelation: "sponsorship_tokens"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       sponsorship_tokens: {
         Row: {
@@ -1320,89 +1407,6 @@ export type Database = {
           status?: string
           updated_at?: string
           user_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "subscriptions_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: true
-            referencedRelation: "users"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      sponsorship_credits: {
-        Row: {
-          created_at: string
-          ends_at: string
-          id: string
-          months_count: number
-          token_id: string | null
-          user_id: string
-        }
-        Insert: {
-          created_at?: string
-          ends_at: string
-          id?: string
-          months_count: number
-          token_id?: string | null
-          user_id: string
-        }
-        Update: {
-          created_at?: string
-          ends_at?: string
-          id?: string
-          months_count?: number
-          token_id?: string | null
-          user_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "sponsorship_credits_token_id_fkey"
-            columns: ["token_id"]
-            isOneToOne: false
-            referencedRelation: "sponsorship_tokens"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "sponsorship_credits_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "users"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      paystack_plans: {
-        Row: {
-          amount_xof: number
-          created_at: string
-          currency: string
-          id: string
-          interval: string
-          name: string
-          plan_code: string
-          plan_key: string
-        }
-        Insert: {
-          amount_xof: number
-          created_at?: string
-          currency?: string
-          id?: string
-          interval?: string
-          name: string
-          plan_code: string
-          plan_key: string
-        }
-        Update: {
-          amount_xof?: number
-          created_at?: string
-          currency?: string
-          id?: string
-          interval?: string
-          name?: string
-          plan_code?: string
-          plan_key?: string
         }
         Relationships: []
       }
