@@ -1,4 +1,5 @@
 import { createServerFn } from "@tanstack/react-start";
+import { z } from "zod";
 import { requireAdmin } from "@/integrations/supabase/admin-middleware";
 import { listAllUsers } from "@/integrations/supabase/admin-users";
 import { getChildGuild, GUILDS, NO_GUILD_YET, GuildInfo } from "@/lib/guilds";
@@ -1035,3 +1036,102 @@ export const getCommercePassportsDataAdmin = createServerFn({ method: "GET" })
   });
 
 
+
+// ── Pouvoir administratif exceptionnel sur les profils (2026-08-12, analyse
+// « Évolution de Génizio » §4) ──────────────────────────────────────────────────
+// La règle commerciale (quotas, accès) ne prime jamais sur le pouvoir admin : un
+// profil peut être désactivé/activé manuellement (is_active), un verrou B2B
+// (access_locked_at) peut être levé, la pression temporelle surmodulée — et les
+// extra_profile_slots par compte restent l'outil du « dépassement temporaire »
+// (updateExtraProfileSlotsAdmin, products.functions.ts).
+
+const ChildProfileSearchInput = z.object({ query: z.string().max(60).default("") });
+
+// Recherche d'enfants pour l'onglet Admin « Profils » (nom, email du parent).
+// Borné à 200 lignes — un outil de gestion, pas un export.
+export const searchChildProfilesAdmin = createServerFn({ method: "GET" })
+  .middleware([requireAdmin])
+  .validator((input: unknown) => ChildProfileSearchInput.parse(input))
+  .handler(async ({ data }) => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const clean = data.query.trim().replace(/[%_]/g, "");
+    let q = supabaseAdmin
+      .from("child_profiles")
+      .select("id, user_id, name, age, city, country, is_active, access_locked_at, time_pressure, created_at")
+      .order("created_at", { ascending: false })
+      .limit(200);
+    if (clean) q = q.ilike("name", `%${clean}%`);
+    const { data: children, error } = await q;
+    if (error) throw new Error(error.message);
+
+    const userIds = [...new Set((children ?? []).map((c: any) => c.user_id))];
+    const emailById = new Map<string, string>();
+    if (userIds.length > 0) {
+      const { data: users } = await supabaseAdmin.auth.admin.listUsers({ page: 1, perPage: 200 });
+      for (const u of users?.users ?? []) emailById.set(u.id, u.email ?? "");
+    }
+
+    return (children ?? []).map((c: any) => ({
+      id: c.id,
+      user_id: c.user_id,
+      name: c.name,
+      age: c.age,
+      city: c.city,
+      country: c.country,
+      is_active: c.is_active,
+      access_locked_at: c.access_locked_at,
+      time_pressure: c.time_pressure,
+      created_at: c.created_at,
+      parentEmail: emailById.get(c.user_id) ?? "",
+    }));
+  });
+
+const SetChildActiveInput = z.object({ childId: z.string().uuid(), isActive: z.boolean() });
+
+export const setChildProfileActiveAdmin = createServerFn({ method: "POST" })
+  .middleware([requireAdmin])
+  .validator((input: unknown) => SetChildActiveInput.parse(input))
+  .handler(async ({ data }) => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { error } = await supabaseAdmin
+      .from("child_profiles")
+      .update({ is_active: data.isActive })
+      .eq("id", data.childId);
+    if (error) throw new Error(error.message);
+    return { ok: true, childId: data.childId, isActive: data.isActive };
+  });
+
+const UnlockChildInput = z.object({ childId: z.string().uuid() });
+
+// Déverrouille un profil verrouillé par le B2B (retrait d'éducateur de campagne) —
+// seul chemin programmatique d'écriture sur access_locked_at côté admin.
+export const unlockChildAccessAdmin = createServerFn({ method: "POST" })
+  .middleware([requireAdmin])
+  .validator((input: unknown) => UnlockChildInput.parse(input))
+  .handler(async ({ data }) => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { error } = await supabaseAdmin
+      .from("child_profiles")
+      .update({ access_locked_at: null })
+      .eq("id", data.childId);
+    if (error) throw new Error(error.message);
+    return { ok: true, childId: data.childId };
+  });
+
+const SetTimePressureInput = z.object({
+  childId: z.string().uuid(),
+  timePressure: z.enum(["standard", "gentle", "none"]),
+});
+
+export const setChildTimePressureAdmin = createServerFn({ method: "POST" })
+  .middleware([requireAdmin])
+  .validator((input: unknown) => SetTimePressureInput.parse(input))
+  .handler(async ({ data }) => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { error } = await supabaseAdmin
+      .from("child_profiles")
+      .update({ time_pressure: data.timePressure })
+      .eq("id", data.childId);
+    if (error) throw new Error(error.message);
+    return { ok: true, childId: data.childId, timePressure: data.timePressure };
+  });

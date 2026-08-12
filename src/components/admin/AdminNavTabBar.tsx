@@ -9,6 +9,7 @@ import {
   Users,
   Package,
   Repeat,
+  ShieldCheck,
 } from "lucide-react";
 
 export type AdminTab =
@@ -20,7 +21,8 @@ export type AdminTab =
   | "naya"
   | "commerce"
   | "seasons"
-  | "subscriptions";
+  | "subscriptions"
+  | "profiles";
 
 interface AdminNavTabBarProps {
   activeTab: AdminTab;
@@ -117,13 +119,22 @@ export const ADMIN_TABS: Array<{
     badgeBgClass: "bg-teal-500/10",
     badgeTextClass: "text-teal-600",
   },
+  {
+    id: "profiles",
+    label: "Profils",
+    sublabel: "Pouvoir Admin",
+    icon: ShieldCheck,
+    badge: "Admin",
+    badgeBgClass: "bg-rose-500/10",
+    badgeTextClass: "text-rose-600",
+  },
 ];
 
 export function AdminNavTabBar({ activeTab, onTabChange }: AdminNavTabBarProps) {
   return (
     <div className="w-full overflow-x-auto bg-surface/80 backdrop-blur-md border border-ink/10 p-1.5 sm:p-2 rounded-3xl shadow-sm mb-6 sm:mb-8 no-scrollbar scroll-smooth">
       <nav
-        className="flex min-w-max gap-2 sm:grid sm:min-w-0 sm:grid-cols-2 md:grid-cols-4 lg:grid-cols-9"
+        className="flex min-w-max gap-2 sm:grid sm:min-w-0 sm:grid-cols-2 md:grid-cols-4 lg:grid-cols-10"
         aria-label="Navigation Admin OS"
       >
         {ADMIN_TABS.map((tab) => {
