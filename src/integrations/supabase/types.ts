@@ -83,7 +83,9 @@ export type Database = {
           id: string
           manager_user_id: string | null
           max_educators: number
+          mode: string
           name: string
+          price_per_token_xof: number | null
           start_date: string
           target_count: number
         }
@@ -95,7 +97,9 @@ export type Database = {
           id?: string
           manager_user_id?: string | null
           max_educators?: number
+          mode?: string
           name: string
+          price_per_token_xof?: number | null
           start_date?: string
           target_count?: number
         }
@@ -107,7 +111,9 @@ export type Database = {
           id?: string
           manager_user_id?: string | null
           max_educators?: number
+          mode?: string
           name?: string
+          price_per_token_xof?: number | null
           start_date?: string
           target_count?: number
         }
@@ -1517,7 +1523,16 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      talent_environment_signals: {
+        Row: {
+          city: string | null
+          country: string | null
+          domain: string | null
+          talent_key: string | null
+          validated_completions: number | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       activate_season: { Args: { target_id: string }; Returns: undefined }
