@@ -29,18 +29,18 @@ import {
   runLoupAutoAcknowledgementAdmin,
   type ConstitutionSuggestionsResponse,
 } from "@/lib/naya-constitution.functions";
-import { AdminNavTabBar, AdminTab } from "@/components/admin/AdminNavTabBar";
+import { AdminNavTabBar, ADMIN_TABS, type AdminRoute } from "@/components/admin/AdminNavTabBar";
 import { AdminExecutiveTab } from "@/components/admin/AdminExecutiveTab";
 import { AdminTalentsCitiesTab } from "@/components/admin/AdminTalentsCitiesTab";
 import { AdminNayaTab } from "@/components/admin/AdminNayaTab";
 import { AdminCommerceTab } from "@/components/admin/AdminCommerceTab";
-import { AdminSeasonsTab } from "@/components/admin/AdminSeasonsTab";
-import { AdminSubscriptionsTab } from "@/components/admin/AdminSubscriptionsTab";
+import { AdminPaymentsTab } from "@/components/admin/AdminPaymentsTab";
 import { AdminCampaignsTab } from "@/components/admin/AdminCampaignsTab";
 import { AdminSupervisorsTab } from "@/components/admin/AdminSupervisorsTab";
 import { AdminProductsTab } from "@/components/admin/AdminProductsTab";
 import { AdminProfilesTab } from "@/components/admin/AdminProfilesTab";
-import { Users, ShoppingBag, Brain, Award, Sparkles } from "lucide-react";
+import { getPaymentsPendingCountAdmin } from "@/lib/payments-admin.functions";
+import { Users, ShoppingBag, Brain, Award, Sparkles, ChevronRight } from "lucide-react";
 import { toast } from "sonner";
 import { GenizioLoader } from "@/components/GenizioLoader";
 
@@ -50,7 +50,10 @@ export const Route = createFileRoute("/admin/")({
 
 function AdminIndexPage() {
   const { session } = useSession();
-  const [activeTab, setActiveTab] = useState<AdminTab>("executive");
+  // Refonte UI/UX (2026-08-13) : l'écran d'accueil est une grille de cartes ; un
+  // onglet ouvert affiche la barre de pills persistante (bouton Accueil pour revenir).
+  const [activeTab, setActiveTab] = useState<AdminRoute>("home");
+  const [pendingPayments, setPendingPayments] = useState(0);
   const [kpis, setKpis] = useState<ExecutiveKPIs | null>(null);
   const [parents, setParents] = useState<ParentBIRC[]>([]);
   const [talentStats, setTalentStats] = useState<TalentCityStatsResponse | null>(null);
@@ -73,6 +76,7 @@ function AdminIndexPage() {
   const getAiProviderStatusFn = useServerFn(getAiProviderStatusAdmin);
   const getProgressionHealthFn = useServerFn(getProgressionHealthAdmin);
   const getCommerceDataFn = useServerFn(getCommercePassportsDataAdmin);
+  const getPendingPaymentsFn = useServerFn(getPaymentsPendingCountAdmin);
   const toggleUnlockFn = useServerFn(togglePassportUnlock);
   const updateOrderStatusFn = useServerFn(updateOrderStatus);
   const updateExtraSlotsFn = useServerFn(updateExtraProfileSlotsAdmin);
@@ -125,6 +129,10 @@ function AdminIndexPage() {
       if (aiStatus) setAiProviderStatus(aiStatus);
       if (progressionData) setProgressionHealth(progressionData);
       if (commData) setCommerceData(commData);
+
+      // Comptage des paiements en attente (badge de la carte « Paiements & Accès »).
+      const pending = await getPendingPaymentsFn({ data: undefined, ...opts }).catch(() => null);
+      if (pending) setPendingPayments(pending.pendingCount);
 
       // « Le Loup qui apprend » (Décision #56) : l'auto-acquittement paresseux
       // par seuil de confiance s'exécute AVANT la lecture des suggestions, pour
@@ -241,92 +249,111 @@ function AdminIndexPage() {
       <AppHeader />
 
       <main className="mx-auto max-w-6xl px-6 py-10">
-        {/* Title Header & Sub-route Links */}
-        <div className="mb-8 flex flex-col justify-between gap-6 md:flex-row md:items-center">
-          <div>
-            <span className="rounded-full bg-brand/10 px-3 py-1 text-xs font-bold text-brand uppercase tracking-wider">
-              Génizio Admin OS • Milestone 4
-            </span>
-            <h1 className="font-display text-balance text-3xl font-extrabold md:text-4xl mt-1 text-ink">
-              Navigation & Vue Exécutive
-            </h1>
-            <p className="text-sm font-medium text-ink/60 mt-1">
-              Pilotage en temps réel de la croissance, du CRM parent, du commerce, des passeports et
-              des talents.
-            </p>
-          </div>
-
-          {/* Quick links maintaining sub-routes compatibility */}
-          <div className="flex flex-wrap gap-3">
-            <Link
-              to="/admin/products"
-              className="press-white rounded-2xl border border-ink/10 bg-white px-5 py-3 text-sm font-bold text-ink flex items-center gap-2 cursor-pointer shadow-sm hover:shadow-md transition-all"
-            >
-              <ShoppingBag className="size-4 text-purple-600" />
-              <span>Gérer les Kits Boutique</span>
-            </Link>
-            <Link
-              to="/admin/supervisors"
-              className="press-white rounded-2xl border border-ink/10 bg-white px-5 py-3 text-sm font-bold text-ink flex items-center gap-2 cursor-pointer shadow-sm hover:shadow-md transition-all"
-            >
-              <Users className="size-4 text-emerald-600" />
-              <span>Gérer les Superviseurs</span>
-            </Link>
-          </div>
+        {/* Title Header */}
+        <div className="mb-8">
+          <span className="rounded-full bg-brand/10 px-3 py-1 text-xs font-bold text-brand uppercase tracking-wider">
+            Génizio Admin OS
+          </span>
+          <h1 className="font-display text-balance text-3xl font-extrabold md:text-4xl mt-1 text-ink">
+            {activeTab === "home" ? "Pilotage Génizio" : "Panneau de pilotage"}
+          </h1>
+          <p className="text-sm font-medium text-ink/60 mt-1">
+            Croissance, familles, paiements, commerce, talents et pouvoir admin — avec les
+            secours manuels pour tout ce qui ne se déclenche pas tout seul.
+          </p>
         </div>
 
-        {/* 🎛️ Admin OS Navigation Tab Bar */}
-        <AdminNavTabBar activeTab={activeTab} onTabChange={setActiveTab} />
+        {/* Écran d'accueil : grille de cartes (refonte UI/UX 2026-08-13) */}
+        {activeTab === "home" ? (
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {ADMIN_TABS.map((tab) => {
+              const Icon = tab.icon;
+              return (
+                <button
+                  key={tab.id}
+                  type="button"
+                  onClick={() => setActiveTab(tab.id)}
+                  className="group relative overflow-hidden rounded-3xl border border-ink/10 bg-white p-5 text-left shadow-sm transition-all hover:-translate-y-0.5 hover:border-brand/30 hover:shadow-md cursor-pointer"
+                >
+                  <div className="flex items-start justify-between">
+                    <div className={`grid size-11 place-items-center rounded-2xl ${tab.badgeBgClass} ${tab.badgeTextClass}`}>
+                      <Icon className="size-5" />
+                    </div>
+                    {tab.id === "payments" && pendingPayments > 0 && (
+                      <span className="inline-flex items-center gap-1 rounded-full bg-amber-500 px-2.5 py-1 text-[10px] font-black uppercase tracking-wider text-white shadow-sm">
+                        ● {pendingPayments} en attente
+                      </span>
+                    )}
+                  </div>
+                  <h3 className="mt-3 font-display text-lg font-black text-ink">{tab.label}</h3>
+                  <p className="text-xs font-medium text-ink/60">{tab.sublabel}</p>
+                  <span className="mt-3 inline-flex items-center gap-1 text-[11px] font-bold text-brand opacity-0 transition-opacity group-hover:opacity-100">
+                    Ouvrir
+                    <ChevronRight className="size-3" />
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+        ) : (
+          <>
+            {/* Barre de pills persistante */}
+            <AdminNavTabBar
+              activeTab={activeTab}
+              onTabChange={setActiveTab}
+              onGoHome={() => setActiveTab("home")}
+            />
 
-        {/* Tab Content Display */}
-        {activeTab === "executive" && kpis && (
-          <AdminExecutiveTab
-            kpis={kpis}
-            parents={parents}
-            onTogglePassport={handleTogglePassport}
-            onUpdateExtraSlots={handleUpdateExtraSlots}
-            onRefresh={() => loadData(false)}
-            isRefreshing={isRefreshing}
-          />
+            {/* Tab Content Display */}
+            {activeTab === "executive" && kpis && (
+              <AdminExecutiveTab
+                kpis={kpis}
+                parents={parents}
+                onTogglePassport={handleTogglePassport}
+                onUpdateExtraSlots={handleUpdateExtraSlots}
+                onRefresh={() => loadData(false)}
+                isRefreshing={isRefreshing}
+              />
+            )}
+
+            {activeTab === "talents" && talentStats && (
+              <AdminTalentsCitiesTab
+                data={talentStats}
+                isRefreshing={isRefreshing}
+                onRefresh={() => loadData(false)}
+              />
+            )}
+
+            {activeTab === "naya" && nayaTelemetry && (
+              <AdminNayaTab
+                telemetry={nayaTelemetry}
+                aiProviderStatus={aiProviderStatus}
+                progressionHealth={progressionHealth}
+                isRefreshing={isRefreshing}
+                onRefresh={() => loadData(false)}
+                constitution={loupConstitution}
+                decidingRuleKeys={decidingRuleKeys}
+                onDecideSuggestion={handleDecideSuggestion}
+              />
+            )}
+
+            {activeTab === "commerce" && commerceData && (
+              <AdminCommerceTab
+                data={commerceData}
+                isRefreshing={isRefreshing}
+                onRefresh={() => loadData(false)}
+                onUpdateOrderStatus={handleUpdateOrderStatus}
+                onTogglePassport={handleTogglePassport}
+              />
+            )}
+
+            {activeTab === "payments" && <AdminPaymentsTab />}
+            {activeTab === "b2b" && <AdminCampaignsTab />}
+            {activeTab === "supervisors" && <AdminSupervisorsTab />}
+            {activeTab === "products" && <AdminProductsTab />}
+            {activeTab === "profiles" && <AdminProfilesTab />}
+          </>
         )}
-
-        {activeTab === "talents" && talentStats && (
-          <AdminTalentsCitiesTab
-            data={talentStats}
-            isRefreshing={isRefreshing}
-            onRefresh={() => loadData(false)}
-          />
-        )}
-
-        {activeTab === "naya" && nayaTelemetry && (
-          <AdminNayaTab
-            telemetry={nayaTelemetry}
-            aiProviderStatus={aiProviderStatus}
-            progressionHealth={progressionHealth}
-            isRefreshing={isRefreshing}
-            onRefresh={() => loadData(false)}
-            constitution={loupConstitution}
-            decidingRuleKeys={decidingRuleKeys}
-            onDecideSuggestion={handleDecideSuggestion}
-          />
-        )}
-
-        {activeTab === "commerce" && commerceData && (
-          <AdminCommerceTab
-            data={commerceData}
-            isRefreshing={isRefreshing}
-            onRefresh={() => loadData(false)}
-            onUpdateOrderStatus={handleUpdateOrderStatus}
-            onTogglePassport={handleTogglePassport}
-          />
-        )}
-
-        {activeTab === "seasons" && <AdminSeasonsTab />}
-        {activeTab === "subscriptions" && <AdminSubscriptionsTab />}
-        {activeTab === "b2b" && <AdminCampaignsTab />}
-        {activeTab === "supervisors" && <AdminSupervisorsTab />}
-        {activeTab === "products" && <AdminProductsTab />}
-        {activeTab === "profiles" && <AdminProfilesTab />}
       </main>
     </div>
   );

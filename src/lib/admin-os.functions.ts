@@ -1027,7 +1027,7 @@ export const searchChildProfilesAdmin = createServerFn({ method: "GET" })
     const clean = data.query.trim().replace(/[%_]/g, "");
     let q = supabaseAdmin
       .from("child_profiles")
-      .select("id, user_id, name, age, city, country, is_active, access_locked_at, time_pressure, created_at")
+      .select("id, user_id, name, age, city, country, is_active, access_locked_at, time_pressure, pdf_unlocked, created_at")
       .order("created_at", { ascending: false })
       .limit(200);
     if (clean) q = q.ilike("name", `%${clean}%`);
@@ -1051,6 +1051,7 @@ export const searchChildProfilesAdmin = createServerFn({ method: "GET" })
       is_active: c.is_active,
       access_locked_at: c.access_locked_at,
       time_pressure: c.time_pressure,
+      pdf_unlocked: c.pdf_unlocked === true,
       created_at: c.created_at,
       parentEmail: emailById.get(c.user_id) ?? "",
     }));
