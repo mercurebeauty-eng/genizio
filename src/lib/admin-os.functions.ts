@@ -1025,23 +1025,39 @@ export const searchChildProfilesAdmin = createServerFn({ method: "GET" })
   .handler(async ({ data }) => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const clean = data.query.trim().replace(/[%_]/g, "");
-    let q = supabaseAdmin
-      .from("child_profiles")
-      .select("id, user_id, name, age, city, country, is_active, access_locked_at, time_pressure, pdf_unlocked, created_at")
-      .order("created_at", { ascending: false })
-      .limit(200);
-    if (clean) q = q.ilike("name", `%${clean}%`);
-    const { data: children, error } = await q;
-    if (error) throw new Error(error.message);
+    const q = clean.toLowerCase();
 
-    const userIds = [...new Set((children ?? []).map((c: any) => c.user_id))];
+    // Tous les comptes une fois (review 2026-08-12, P2) : l'ancien listUsers page 1/200
+    // laissait l'email vide au-delà des 200 premiers comptes — listAllUsers itère tout.
+    const { listAllUsers } = await import("@/integrations/supabase/admin-users");
+    const users = await listAllUsers(supabaseAdmin);
     const emailById = new Map<string, string>();
-    if (userIds.length > 0) {
-      const { data: users } = await supabaseAdmin.auth.admin.listUsers({ page: 1, perPage: 200 });
-      for (const u of users?.users ?? []) emailById.set(u.id, u.email ?? "");
+    const emailMatchIds = new Set<string>();
+    for (const u of users) {
+      emailById.set(u.id, u.email ?? "");
+      if (q && (u.email ?? "").toLowerCase().includes(q)) emailMatchIds.add(u.id);
     }
 
-    return (children ?? []).map((c: any) => ({
+    // Recherche par NOM et/ou par EMAIL du parent (le commentaire le promettait déjà,
+    // seul le nom était cherché — review 2026-08-12, P2).
+    const SELECT =
+      "id, user_id, name, age, city, country, is_active, access_locked_at, time_pressure, pdf_unlocked, created_at";
+    const base = () =>
+      supabaseAdmin.from("child_profiles").select(SELECT).order("created_at", { ascending: false }).limit(200);
+    let children: any[] = [];
+    if (clean) {
+      const [byName, byEmail] = await Promise.all([
+        base().ilike("name", `%${clean}%`),
+        emailMatchIds.size > 0 ? base().in("user_id", [...emailMatchIds]) : Promise.resolve({ data: null }),
+      ]);
+      children = [...(byName.data ?? []), ...(byEmail?.data ?? [])];
+    } else {
+      children = (await base()).data ?? [];
+    }
+    // Déduplication (un enfant peut matcher par nom ET par email) + borne.
+    const unique = [...new Map(children.map((c: any) => [c.id, c])).values()].slice(0, 200);
+
+    return unique.map((c: any) => ({
       id: c.id,
       user_id: c.user_id,
       name: c.name,

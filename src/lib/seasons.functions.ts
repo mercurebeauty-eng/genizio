@@ -139,9 +139,21 @@ export function resolveEnrollmentWindow(
 }
 
 export const getChildEnrolledSeason = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
   .validator((input: unknown) => z.object({ childId: z.string().uuid() }).parse(input))
-  .handler(async ({ data }) => {
+  .handler(async ({ data, context }) => {
+    const { supabase, userId } = context;
     try {
+      // Ownership (review 2026-08-12, P2) : un parent ne lit que l'inscription de SES
+      // enfants — le GET était public (sans auth) et lisible pour n'importe quel childId.
+      const { data: owned } = await supabase
+        .from("child_profiles")
+        .select("id")
+        .eq("id", data.childId)
+        .eq("user_id", userId)
+        .maybeSingle();
+      if (!owned) return null;
+
       // Décision utilisateur (2026-07-26) : l'accès individuel d'un enfant ne doit jamais être
       // cassé rétroactivement par une rotation de la saison globale. On ne compare donc plus
       // à getActiveSeason() — on lit directement la saison référencée par la propre inscription
@@ -333,6 +345,24 @@ export const redeemSponsorshipToken = createServerFn({ method: "POST" })
     // était active le jour où l'admin a généré le lot.
     const activeSeason = await getActiveSeason({ data: undefined });
 
+    // Consommation atomique du code (review 2026-08-12, P2) : deux demandes concurrentes
+    // (double-clic, deux onglets) lisent toutes deux is_redeemed=false — le claim
+    // compare-and-swap ne laisse passer qu'une seule, l'autre reçoit « déjà utilisé »
+    // AVANT d'inscrire quoi que ce soit (jamais deux octrois sur le même code).
+    const { data: claimed, error: claimErr } = await (supabaseAdmin as any)
+      .from("sponsorship_tokens")
+      .update({
+        is_redeemed: true,
+        redeemed_by_child_id: data.childId,
+        redeemed_at: new Date().toISOString(),
+      })
+      .eq("id", token.id)
+      .eq("is_redeemed", false)
+      .select("id")
+      .maybeSingle();
+    if (claimErr) throw new Error("Erreur lors de l'activation du code. Réessayez.");
+    if (!claimed) throw new Error("Ce code de parrainage a déjà été utilisé.");
+
     if (token.campaign_id) {
       // Token B2B (lot de campagne) : comportement historique inchangé — inscription de saison
       // liée à la campagne (fenêtre fixe de cohorte), hors périmètre du modèle mensuel famille.
@@ -350,6 +380,12 @@ export const redeemSponsorshipToken = createServerFn({ method: "POST" })
       });
 
       if (enrollErr) {
+        // Rollback best-effort du claim : un échec ne brûle jamais le code.
+        await (supabaseAdmin as any)
+          .from("sponsorship_tokens")
+          .update({ is_redeemed: false, redeemed_by_child_id: null, redeemed_at: null })
+          .eq("id", token.id)
+          .eq("is_redeemed", true);
         console.error("Error creating season_enrollment on redeem:", enrollErr);
         throw new Error("Erreur lors de l'inscription. Le code n'a pas été consommé, réessayez.");
       }
@@ -382,25 +418,15 @@ export const redeemSponsorshipToken = createServerFn({ method: "POST" })
       });
 
       if (periodErr) {
+        // Rollback best-effort du claim : un échec ne brûle jamais le code.
+        await (supabaseAdmin as any)
+          .from("sponsorship_tokens")
+          .update({ is_redeemed: false, redeemed_by_child_id: null, redeemed_at: null })
+          .eq("id", token.id)
+          .eq("is_redeemed", true);
         console.error("Error creating child_access_period on redeem:", periodErr);
         throw new Error("Erreur lors de l'inscription. Le code n'a pas été consommé, réessayez.");
       }
-    }
-
-    const { error: updateErr } = await (supabaseAdmin as any)
-      .from("sponsorship_tokens")
-      .update({
-        is_redeemed: true,
-        redeemed_by_child_id: data.childId,
-        redeemed_at: new Date().toISOString(),
-      })
-      .eq("id", token.id);
-
-    if (updateErr) {
-      // L'enfant est déjà inscrit à ce stade — ne pas jeter une erreur qui ferait croire à un
-      // échec total au parent. On journalise pour intervention manuelle (marquer le code utilisé)
-      // plutôt que de bloquer une inscription par ailleurs réussie.
-      console.error("Error marking sponsorship token as redeemed (enrollment already created):", updateErr);
     }
 
     return { success: true, token };

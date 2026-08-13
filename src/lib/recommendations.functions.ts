@@ -36,7 +36,7 @@ export const recommendChallengesForChild = createServerFn({ method: "POST" })
     // 1. Profil Enfant
     const { data: child, error: childErr } = await supabase
       .from("child_profiles")
-      .select("id, name, age, interests, talents, life_context, school_relation, ability_profile, aspirations, city, country, time_pressure")
+      .select("id, name, age, interests, talents, life_context, school_relation, ability_profile, aspirations, city, country, time_pressure, school_level, languages")
       .eq("id", data.childId)
       .eq("user_id", userId)
       .is("access_locked_at", null)
@@ -114,7 +114,7 @@ export const recommendChallengesForChild = createServerFn({ method: "POST" })
         const hypothesis = aspirationSnapshot.byLabel[candidateLabel];
         const STALE_CUTOFF = new Date(Date.now() - 14 * 86_400_000).toISOString();
 
-        const [{ data: pendingBridge }, recentInDomains, completedRes, titlesRes, progressionTargets] = await Promise.all([
+        const [{ data: pendingBridge }, recentInDomains, completedRes, completedInDomainsCount, titlesRes, progressionTargets] = await Promise.all([
           supabase
             .from("challenges")
             .select("id")
@@ -143,6 +143,15 @@ export const recommendChallengesForChild = createServerFn({ method: "POST" })
             .eq("status", "completed")
             .order("completed_at", { ascending: false })
             .limit(6),
+          // Comptage DÉDIÉ non tronqué (review 2026-08-12, P2) : completedRes est limité
+          // aux 6 derniers défis pour le résumé du prompt — s'en servir pour compter les
+          // complétions du domaine plafonnait l'autonomie progressive à 6.
+          supabase
+            .from("challenges")
+            .select("domain", { count: "exact", head: true })
+            .eq("child_id", data.childId)
+            .eq("status", "completed")
+            .in("domain", hypothesis.bridge.domains),
           supabase
             .from("challenges")
             .select("title")
@@ -161,12 +170,7 @@ export const recommendChallengesForChild = createServerFn({ method: "POST" })
           const completedSummary = (completedRes.data ?? [])
             .map((c: any) => `- Défi "${c.title}" (${c.domain}) : "${c.ai_observations ?? ''}"`)
             .join("\n");
-          const completedByDomain: Record<string, number> = {};
-          for (const c of completedRes.data ?? []) completedByDomain[c.domain] = (completedByDomain[c.domain] ?? 0) + 1;
-          const completedInAspirationDomains = hypothesis.bridge.domains.reduce(
-            (sum, d) => sum + (completedByDomain[d] ?? 0),
-            0
-          );
+          const completedInAspirationDomains = completedInDomainsCount.count ?? 0;
 
           const prompt = buildAspirationBridgePrompt({
             childName: child.name,
@@ -284,7 +288,10 @@ export const recommendChallengesForChild = createServerFn({ method: "POST" })
         .select("id", { count: "exact", head: true })
         .eq("child_id", data.childId)
         .eq("status", "completed")
-        .or(`domain.eq.${supportCycle.trigger_domain},academic_domain.eq.${supportCycle.trigger_domain}`)
+        // Valeurs entre guillemets (review 2026-08-12, P2) : trigger_domain est un
+        // libellé libre (ex. « Tech & IA ») — sans quoting, le filtre PostgREST .or()
+        // cassait en 400 sur les &/espaces.
+        .or(`domain.eq."${supportCycle.trigger_domain}",academic_domain.eq."${supportCycle.trigger_domain}"`)
         .gt("completed_at", since);
 
       // 5 défis réussis en mode soutenu avant de retester (décision utilisateur explicite,

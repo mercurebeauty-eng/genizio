@@ -511,7 +511,13 @@ function resolveProofMode(
   }
 
   const metric = typeof proofTarget?.metric === "string" ? proofTarget.metric.trim().slice(0, 60) : "";
-  const value = typeof proofTarget?.value === "number" ? proofTarget.value : NaN;
+  // Cible bornée (review 2026-08-12, P2) : une valeur flottante ou hallucinée
+  // (ex. 1e9) rendrait le défi déclaratif infranchissable — clamp [1, 1000]
+  // unités (même esprit que declarative_award clampé [1,3]).
+  const value =
+    typeof proofTarget?.value === "number"
+      ? Math.min(1000, Math.max(1, Math.round(proofTarget.value)))
+      : NaN;
 
   const award: Record<string, number> = {};
   const validTalentKeys = new Set(VALID_TALENT_KEYS);

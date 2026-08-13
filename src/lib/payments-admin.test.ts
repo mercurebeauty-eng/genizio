@@ -31,6 +31,20 @@ describe("computeSubscriptionExtensionWindow — prolongation d'abonnement", () 
     const { start, end } = computeSubscriptionExtensionWindow(null, 1);
     expect(new Date(end).getTime() - new Date(start).getTime()).toBeGreaterThan(0);
   });
+
+  it("fin de mois : ne déborde jamais sur le mois suivant (31 janv 2027 + 1 mois → 28 févr 2027)", () => {
+    const jan31 = new Date(2027, 0, 31).toISOString();
+    const { end } = computeSubscriptionExtensionWindow(jan31, 1);
+    const d = new Date(end);
+    expect(d.getMonth()).toBe(1); // février
+    expect(d.getDate()).toBe(28); // 2027 non bissextile
+  });
+
+  it("milieu de mois : inchangé (15 → 15)", () => {
+    const mid = new Date(2027, 2, 15).toISOString();
+    const { end } = computeSubscriptionExtensionWindow(mid, 1);
+    expect(new Date(end).getDate()).toBe(15);
+  });
 });
 
 describe("campaignTokenCount — codes créés par un paiement de campagne", () => {
