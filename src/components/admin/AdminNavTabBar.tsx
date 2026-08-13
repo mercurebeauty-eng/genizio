@@ -39,6 +39,13 @@ export interface AdminTabDef {
   badge: string;
   badgeBgClass: string;
   badgeTextClass: string;
+  /** Carte d'accueil : fond dégradé + bordure + ombre colorée au hover (classes
+   *  statiques complètes — purge Tailwind, jamais composées à la volée). */
+  cardClass: string;
+  /** Pastille d'icône : dégradé plein + ombre colorée (icône blanche dessus). */
+  iconClass: string;
+  /** Halo décoratif en coin de carte (dégradé flouté). */
+  haloClass: string;
 }
 
 export const ADMIN_TABS: AdminTabDef[] = [
@@ -50,6 +57,10 @@ export const ADMIN_TABS: AdminTabDef[] = [
     badge: "KPIs",
     badgeBgClass: "bg-brand/10",
     badgeTextClass: "text-brand",
+    cardClass:
+      "bg-gradient-to-br from-violet-500/10 via-white to-white border-violet-500/20 hover:shadow-violet-500/25",
+    iconClass: "from-violet-500 to-indigo-600 shadow-violet-500/40",
+    haloClass: "from-violet-400/50 to-indigo-400/10",
   },
   {
     id: "b2b",
@@ -59,6 +70,10 @@ export const ADMIN_TABS: AdminTabDef[] = [
     badge: "B2B",
     badgeBgClass: "bg-ink/10",
     badgeTextClass: "text-ink",
+    cardClass:
+      "bg-gradient-to-br from-slate-500/10 via-white to-white border-slate-400/30 hover:shadow-slate-500/25",
+    iconClass: "from-slate-700 to-slate-900 shadow-slate-500/40",
+    haloClass: "from-slate-400/50 to-slate-600/10",
   },
   {
     id: "supervisors",
@@ -68,6 +83,10 @@ export const ADMIN_TABS: AdminTabDef[] = [
     badge: "Super",
     badgeBgClass: "bg-emerald-500/10",
     badgeTextClass: "text-emerald-600",
+    cardClass:
+      "bg-gradient-to-br from-emerald-500/10 via-white to-white border-emerald-500/20 hover:shadow-emerald-500/25",
+    iconClass: "from-emerald-500 to-teal-600 shadow-emerald-500/40",
+    haloClass: "from-emerald-400/50 to-teal-400/10",
   },
   {
     id: "products",
@@ -77,6 +96,10 @@ export const ADMIN_TABS: AdminTabDef[] = [
     badge: "Kits",
     badgeBgClass: "bg-indigo-500/10",
     badgeTextClass: "text-indigo-600",
+    cardClass:
+      "bg-gradient-to-br from-indigo-500/10 via-white to-white border-indigo-500/20 hover:shadow-indigo-500/25",
+    iconClass: "from-indigo-500 to-blue-700 shadow-indigo-500/40",
+    haloClass: "from-indigo-400/50 to-blue-400/10",
   },
   {
     id: "talents",
@@ -86,6 +109,10 @@ export const ADMIN_TABS: AdminTabDef[] = [
     badge: "Radar",
     badgeBgClass: "bg-leaf/10",
     badgeTextClass: "text-leaf",
+    cardClass:
+      "bg-gradient-to-br from-green-500/10 via-white to-white border-green-500/20 hover:shadow-green-500/25",
+    iconClass: "from-green-600 to-emerald-700 shadow-green-500/40",
+    haloClass: "from-green-400/50 to-emerald-400/10",
   },
   {
     id: "naya",
@@ -95,6 +122,10 @@ export const ADMIN_TABS: AdminTabDef[] = [
     badge: "IA",
     badgeBgClass: "bg-sky/10",
     badgeTextClass: "text-sky-600",
+    cardClass:
+      "bg-gradient-to-br from-sky-500/10 via-white to-white border-sky-500/20 hover:shadow-sky-500/25",
+    iconClass: "from-sky-500 to-blue-600 shadow-sky-500/40",
+    haloClass: "from-sky-400/50 to-blue-400/10",
   },
   {
     id: "payments",
@@ -104,6 +135,10 @@ export const ADMIN_TABS: AdminTabDef[] = [
     badge: "Secours",
     badgeBgClass: "bg-amber-500/10",
     badgeTextClass: "text-amber-600",
+    cardClass:
+      "bg-gradient-to-br from-amber-500/10 via-white to-white border-amber-500/20 hover:shadow-amber-500/25",
+    iconClass: "from-amber-500 to-orange-600 shadow-amber-500/40",
+    haloClass: "from-amber-400/50 to-orange-400/10",
   },
   {
     id: "commerce",
@@ -113,6 +148,10 @@ export const ADMIN_TABS: AdminTabDef[] = [
     badge: "Ventes",
     badgeBgClass: "bg-purple-500/10",
     badgeTextClass: "text-purple-600",
+    cardClass:
+      "bg-gradient-to-br from-purple-500/10 via-white to-white border-purple-500/20 hover:shadow-purple-500/25",
+    iconClass: "from-purple-500 to-fuchsia-600 shadow-purple-500/40",
+    haloClass: "from-purple-400/50 to-fuchsia-400/10",
   },
   {
     id: "profiles",
@@ -122,6 +161,10 @@ export const ADMIN_TABS: AdminTabDef[] = [
     badge: "Admin",
     badgeBgClass: "bg-rose-500/10",
     badgeTextClass: "text-rose-600",
+    cardClass:
+      "bg-gradient-to-br from-rose-500/10 via-white to-white border-rose-500/20 hover:shadow-rose-500/25",
+    iconClass: "from-rose-500 to-red-600 shadow-rose-500/40",
+    haloClass: "from-rose-400/50 to-red-400/10",
   },
 ];
 
