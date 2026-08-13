@@ -7,6 +7,7 @@ import { BadgeUnlockedCelebration } from "@/components/challenges/BadgeUnlockedC
 import { Loader2, Upload, Check, X, Play, BotMessageSquare, Clock, Target } from "lucide-react";
 import { toast } from "sonner";
 import { MarkdownContent } from "@/components/ui/markdown-content";
+import { fileToCompressedProof } from "@/lib/image-proof";
 
 type Challenge = {
   id: string;
@@ -41,19 +42,8 @@ function getTimeReflection(estimatedMinutes: number, actualMinutes: number): str
 // Reads a File as base64 in the browser and sends the bytes directly to the
 // server — no Supabase Storage upload happens until after the AI confirms
 // the photo is actually relevant (see validateChallengeProof), instead of
-// uploading on every attempt regardless of outcome.
-function fileToBase64(file: File): Promise<string> {
-  return new Promise((resolve, reject) => {
-    const MAX_SIZE_BYTES = 5 * 1024 * 1024; // 5 Mo
-    if (file.size > MAX_SIZE_BYTES) {
-      return reject(new Error("Image trop volumineuse (max 5 Mo)"));
-    }
-    const reader = new FileReader();
-    reader.onload = () => resolve((reader.result as string).split(",")[1] ?? "");
-    reader.onerror = reject;
-    reader.readAsDataURL(file);
-  });
-}
+// uploading on every attempt regardless of outcome. La compression sans perte
+// de qualité visible (D-04, 2026-08-13) vit dans image-proof.ts (partagé /quest).
 
 type OutcomeChatProps = {
   challenge: Challenge;
@@ -116,14 +106,21 @@ export function OutcomeChat({
       if (trimmedNotes) await onSaveNotes(trimmedNotes);
 
       const file = selectedFile;
-      const proofImageBase64 = file ? await fileToBase64(file) : undefined;
+      let proofImageBase64: string | undefined;
+      let proofImageMediaType: string | undefined;
+      if (file) {
+        // D-04 : compression sans perte de qualité visible (module partagé /quest).
+        const proof = await fileToCompressedProof(file);
+        proofImageBase64 = proof.base64;
+        proofImageMediaType = proof.mediaType;
+      }
 
       const result = await validateAI({
         data: {
           id: challenge.id,
           proofText: trimmedNotes.slice(0, 2000),
           proofImageBase64,
-          proofImageMediaType: file?.type,
+          proofImageMediaType,
         },
       });
 
