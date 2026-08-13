@@ -29,6 +29,7 @@ import {
   Globe,
 } from "lucide-react";
 import { getChildAccessStatusFn, type ChildAccessStatus } from "@/lib/child-access";
+import { followFilterAfterStart } from "@/lib/challenge-list-filters";
 import { formatXof } from "@/lib/pricing";
 import {
   generateChallenges,
@@ -619,18 +620,18 @@ function ChallengesPage() {
     const previous = challenges;
     const targetChallenge = previous.find((c) => c.id === id);
     if (status === "in_progress" && targetChallenge?.status === "todo") {
-      if (statusFilter === "todo") {
-        // Correctif (2026-08-05) : la mise à jour optimiste ci-dessous retire la carte de la
-        // liste filtrée "À faire" avant la réponse serveur — le clic semblait donc "sans
-        // effet" (seul un toast passait). On suit le filtre sur "En cours" au moment du clic,
-        // comme l'annonce déjà le toast, pour que la carte reste visible dans son nouvel état.
-        setStatusFilter("in_progress");
-        toast.success(
-          "Défi débuté ! Retrouvez-le dans l'onglet 'En cours' pour le valider avec l'enfant.",
-        );
-      } else {
-        toast.success("Défi débuté ! Validez-le avec l'enfant lorsque vous êtes prêts.");
-      }
+      // Correctif (2026-08-05, clôture décision #51) : la mise à jour optimiste ci-dessous
+      // retire la carte de la liste filtrée "À faire" avant la réponse serveur — le clic
+      // semblait donc "sans effet" (seul un toast passait). On suit le filtre sur "En cours"
+      // au moment du clic, comme l'annonce déjà le toast, pour que la carte reste visible
+      // dans son nouvel état (logique extraite et testée : challenge-list-filters.ts).
+      const nextFilter = followFilterAfterStart(statusFilter, targetChallenge.status, status);
+      if (nextFilter !== statusFilter) setStatusFilter(nextFilter);
+      toast.success(
+        statusFilter === "todo"
+          ? "Défi débuté ! Retrouvez-le dans l'onglet 'En cours' pour le valider avec l'enfant."
+          : "Défi débuté ! Validez-le avec l'enfant lorsque vous êtes prêts.",
+      );
     }
     setChallenges((prev) =>
       prev.map((c) =>
