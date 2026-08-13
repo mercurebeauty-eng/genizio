@@ -5,6 +5,7 @@ import {
   ASPIRATION_REFUTE_THRESHOLD,
   resolveAspirationHypotheses,
 } from "@/lib/aspiration-confidence";
+import { findAspirationBridge } from "@/lib/aspiration-map";
 
 // Aspirations = hypothèses testées par l'expérience (2026-08-12, analyse §10-16) —
 // mêmes seuils que les intérêts (fenêtre 8 essais, engagement net 0.65/0.35).
@@ -88,5 +89,24 @@ describe("resolveAspirationHypotheses", () => {
     expect(ASPIRATION_MIN_TRIALS).toBe(8);
     expect(ASPIRATION_CONFIRM_THRESHOLD).toBe(0.65);
     expect(ASPIRATION_REFUTE_THRESHOLD).toBe(0.35);
+  });
+});
+
+describe("avis GPT Codex — P2 clé Gardner canonique (spatial)", () => {
+  it("le pont Menuiserie compte un défi validé avec target_intelligences [\"spatial\"]", () => {
+    const res = resolveAspirationHypotheses({
+      aspirations: [{ label: "Menuiserie", type: "metier" }],
+      completed: [{ domain: "Artisanat", target_intelligences: ["spatial"], aspiration_label: null }],
+      abandoned: [],
+    });
+    expect(res.byLabel["Menuiserie"].completions).toBe(1);
+  });
+
+  it("les bridges art/mécanique/informatique/couture portent la clé spatial (pas spatiale)", () => {
+    for (const label of ["Art", "Mécanique", "Informatique", "Couture"]) {
+      const bridge = findAspirationBridge(label);
+      expect(bridge.talentKeys).toContain("spatial");
+      expect(bridge.talentKeys).not.toContain("spatiale");
+    }
   });
 });

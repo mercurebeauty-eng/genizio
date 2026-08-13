@@ -119,7 +119,10 @@ export const recommendChallengesForChild = createServerFn({ method: "POST" })
             .from("challenges")
             .select("id")
             .eq("child_id", data.childId)
-            .eq("status", "todo")
+            // Avis GPT Codex P2 : un pont DÉMARRÉ (in_progress) est aussi un pont en
+            // attente d'issue — sans lui, un second pont dupliqué pouvait être inséré
+            // pour la même aspiration pendant que le premier est en cours.
+            .in("status", ["todo", "in_progress"])
             .eq("aspiration_label", hypothesis.label)
             .limit(1)
             .maybeSingle(),
@@ -364,6 +367,12 @@ export const recommendChallengesForChild = createServerFn({ method: "POST" })
                   academic_domain: parsed.academic_domain,
                   academic_level_age: parsed.academic_level_age,
                   academic_reference_note: parsed.academic_reference_note,
+                  // Avis GPT Codex P2 : kind/guidance_level étaient demandés au prompt
+                  // mais jamais passés à finalizeChallenge dans ces branches — le défi
+                  // retombait toujours sur micro/3 par défaut (badge Projet et autonomie
+                  // progressive inopérants pour les recommandations).
+                  kind: parsed.kind,
+                  guidance_level: parsed.guidance_level,
                 },
                 child.age
               ),
@@ -474,6 +483,10 @@ export const recommendChallengesForChild = createServerFn({ method: "POST" })
                 academic_domain: parsed.academic_domain,
                 academic_level_age: parsed.academic_level_age,
                 academic_reference_note: parsed.academic_reference_note,
+                // Avis GPT Codex P2 : kind/guidance_level demandés au prompt mais jamais
+                // passés à finalizeChallenge — voir commentaire branche Essaimage.
+                kind: parsed.kind,
+                guidance_level: parsed.guidance_level,
               },
               child.age
             ),
@@ -562,6 +575,10 @@ export const recommendChallengesForChild = createServerFn({ method: "POST" })
                 academic_domain: parsed.academic_domain,
                 academic_level_age: parsed.academic_level_age,
                 academic_reference_note: parsed.academic_reference_note,
+                // Avis GPT Codex P2 : kind/guidance_level demandés au prompt mais jamais
+                // passés à finalizeChallenge — voir commentaire branche Essaimage.
+                kind: parsed.kind,
+                guidance_level: parsed.guidance_level,
               },
               child.age
             ),
@@ -668,6 +685,10 @@ export const recommendChallengesForChild = createServerFn({ method: "POST" })
                 academic_domain: parsed.academic_domain,
                 academic_level_age: parsed.academic_level_age,
                 academic_reference_note: parsed.academic_reference_note,
+                // Avis GPT Codex P2 : kind/guidance_level demandés au prompt mais jamais
+                // passés à finalizeChallenge — voir commentaire branche Essaimage.
+                kind: parsed.kind,
+                guidance_level: parsed.guidance_level,
               },
               child.age
             ),
