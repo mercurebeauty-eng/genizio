@@ -105,11 +105,8 @@ export function AdminProductsTab() {
   const { session, loading } = useSession();
   const [products, setProducts] = useState<Product[]>([]);
   const [suggestions, setSuggestions] = useState<MaterialSuggestion[]>([]);
-  const [orders, setOrders] = useState<any[]>([]);
   const [ecosystemStats, setEcosystemStats] = useState<EcosystemStats>(null);
-  const [activeTab, setActiveTab] = useState<"products" | "orders" | "stats">("products");
-  const [orderStatusFilter, setOrderStatusFilter] = useState<string>("all");
-  const [updatingOrderId, setUpdatingOrderId] = useState<string | null>(null);
+  const [activeTab, setActiveTab] = useState<"products" | "stats">("products");
   const [fetching, setFetching] = useState(true);
   const [forbidden, setForbidden] = useState(false);
   const [draft, setDraft] = useState(emptyDraft);
@@ -123,29 +120,23 @@ export function AdminProductsTab() {
   const deleteFn = useServerFn(deleteProduct);
   const listSuggestionsFn = useServerFn(listMaterialSuggestions);
   const ignoreSuggestionFn = useServerFn(ignoreMaterialSuggestion);
-  const listOrdersFn = useServerFn(listOrdersAdmin);
-  const updateStatusFn = useServerFn(updateOrderStatus);
   const getStatsFn = useServerFn(getEcosystemStats);
 
-  // Seul onglet admin (avec AdminSupervisorsTab et CreateSeasonModal) encore jamais passé au
-  // fix "en-tête Authorization explicite" — sans lui, requireAdmin s'appuie uniquement sur le
-  // repli cookie, qui échoue silencieusement dans certains contextes (même classe de bug que
-  // AdminSeasonsTab, cf. commentaire là-bas).
+  // Refonte Admin OS (2026-08-13) : les commandes sont gérées dans l'onglet Commerce
+  // (source unique) — ce onglet reste le catalogue + les stats.
   const refetch = async () => {
     const opts = session?.access_token
       ? { headers: { Authorization: `Bearer ${session.access_token}` } }
       : {};
     setFetching(true);
     try {
-      const [productsData, suggestionsData, ordersData, statsData] = await Promise.all([
+      const [productsData, suggestionsData, statsData] = await Promise.all([
         listFn({ data: undefined, ...opts }),
         listSuggestionsFn({ data: undefined, ...opts }),
-        listOrdersFn({ data: undefined, ...opts }),
         getStatsFn({ data: undefined, ...opts }),
       ]);
       setProducts((productsData as Product[]) ?? []);
       setSuggestions((suggestionsData as MaterialSuggestion[]) ?? []);
-      setOrders(ordersData ?? []);
       setEcosystemStats(statsData as EcosystemStats);
     } catch (err: any) {
       console.error("Error fetching admin products data:", err);
@@ -164,22 +155,6 @@ export function AdminProductsTab() {
       }
     } finally {
       setFetching(false);
-    }
-  };
-
-  const handleUpdateStatus = async (orderId: string, status: string) => {
-    const opts = session?.access_token
-      ? { headers: { Authorization: `Bearer ${session.access_token}` } }
-      : {};
-    setUpdatingOrderId(orderId);
-    try {
-      await updateStatusFn({ data: { id: orderId, status: status as any }, ...opts });
-      toast.success("Statut de la commande mis à jour.");
-      void refetch();
-    } catch (err) {
-      toast.error("Erreur lors de la mise à jour.");
-    } finally {
-      setUpdatingOrderId(null);
     }
   };
 
@@ -325,17 +300,6 @@ export function AdminProductsTab() {
             >
               <Package className="size-4" />
               <span>Catalogue</span>
-            </button>
-            <button
-              onClick={() => setActiveTab("orders")}
-              className={`flex-1 py-2.5 text-xs font-black uppercase tracking-wider rounded-xl transition-all flex items-center justify-center gap-1.5 ${
-                activeTab === "orders"
-                  ? "bg-brand text-white border border-white/20 shadow-md"
-                  : "text-ink/65 hover:bg-surface"
-              }`}
-            >
-              <ShoppingCart className="size-4" />
-              <span>Commandes ({orders.length})</span>
             </button>
             <button
               onClick={() => setActiveTab("stats")}
@@ -524,156 +488,6 @@ export function AdminProductsTab() {
             </>
           )}
 
-          {activeTab === "orders" && (
-            <>
-              {orders.length === 0 ? (
-                <div className="rounded-3xl border border-dashed border-ink/20 bg-white/40 p-10 text-center shadow-sm">
-                  <p className="text-ink/65 font-bold">Aucune commande pour le moment.</p>
-                </div>
-              ) : (
-                <>
-                  <div className="mb-4 flex flex-wrap gap-2">
-                    <button
-                      onClick={() => setOrderStatusFilter("all")}
-                      className={`rounded-xl border border-ink/10 px-3 py-1.5 text-xs font-bold transition-all ${
-                        orderStatusFilter === "all"
-                          ? "bg-ink text-white shadow-md"
-                          : "bg-white text-ink/65 hover:bg-surface"
-                      }`}
-                    >
-                      Toutes ({orders.length})
-                    </button>
-                    {ORDER_STATUSES.map((status) => {
-                      const count = orders.filter((o) => o.status === status).length;
-                      return (
-                        <button
-                          key={status}
-                          onClick={() => setOrderStatusFilter(status)}
-                          className={`rounded-xl border border-ink/10 px-3 py-1.5 text-xs font-bold transition-all ${
-                            orderStatusFilter === status
-                              ? "bg-ink text-white shadow-md"
-                              : "bg-white text-ink/65 hover:bg-surface"
-                          }`}
-                        >
-                          {ORDER_STATUS_LABEL[status]} ({count})
-                        </button>
-                      );
-                    })}
-                  </div>
-
-                  {(() => {
-                    const filteredOrders =
-                      orderStatusFilter === "all"
-                        ? orders
-                        : orders.filter((o) => o.status === orderStatusFilter);
-                    if (filteredOrders.length === 0) {
-                      return (
-                        <div className="rounded-3xl border border-dashed border-ink/20 bg-white/40 p-10 text-center shadow-sm">
-                          <p className="text-ink/65 font-bold">Aucune commande avec ce statut.</p>
-                        </div>
-                      );
-                    }
-                    return (
-                      <div className="space-y-4">
-                        {filteredOrders.map((o) => (
-                          <div
-                            key={o.id}
-                            className={`rounded-3xl border border-ink/10 p-6 shadow-xl flex flex-col gap-4 transition-colors ${
-                              ORDER_STATUS_CARD[o.status] ?? "bg-white"
-                            }`}
-                          >
-                            <div className="flex justify-between items-start border-b border-ink/10 pb-4">
-                              <div>
-                                <div className="flex items-center gap-2">
-                                  <span className="text-sm font-black text-ink">
-                                    Commande #{o.id.slice(0, 8)}
-                                  </span>
-                                  <span className="text-xs text-ink/60">
-                                    · {new Date(o.created_at).toLocaleString("fr-FR")}
-                                  </span>
-                                </div>
-                                <p className="mt-1 text-xs text-ink/65">
-                                  Enfant :{" "}
-                                  <span className="font-bold text-ink">
-                                    {o.child_profiles?.name || "Inconnu"}
-                                  </span>
-                                </p>
-                                {o.challenges?.title && (
-                                  <p className="text-xs text-ink/65">
-                                    Défi :{" "}
-                                    <span className="font-bold text-ink">{o.challenges.title}</span>
-                                  </p>
-                                )}
-                              </div>
-                              <div className="flex items-center gap-2">
-                                {updatingOrderId === o.id && (
-                                  <Loader2 className="size-4 animate-spin text-brand" />
-                                )}
-                                <span
-                                  className={`rounded-full border px-2.5 py-1 text-[10px] font-black uppercase tracking-wider ${
-                                    ORDER_STATUS_PILL[o.status] ??
-                                    "bg-stone-100 text-stone-600 border-stone-300"
-                                  }`}
-                                >
-                                  {ORDER_STATUS_LABEL[o.status] ?? o.status}
-                                </span>
-                                <select
-                                  value={o.status}
-                                  disabled={updatingOrderId === o.id}
-                                  onChange={(e) => handleUpdateStatus(o.id, e.target.value)}
-                                  className="rounded-xl border border-ink/10 px-3 py-1 text-xs font-bold outline-none focus:ring-2 focus:ring-brand bg-surface shadow-sm cursor-pointer"
-                                >
-                                  <option value="pending">En attente</option>
-                                  <option value="confirmed">Confirmé</option>
-                                  <option value="shipped">Expédié</option>
-                                  <option value="delivered">Livré</option>
-                                  <option value="cancelled">Annulé</option>
-                                </select>
-                              </div>
-                            </div>
-
-                            <div>
-                              <h4 className="text-xs font-black uppercase tracking-widest text-ink/60 mb-2">
-                                Produits commandés :
-                              </h4>
-                              <ul className="space-y-1">
-                                {((Array.isArray(o.items) ? o.items : []) as any[]).map(
-                                  (item, idx) => (
-                                    <li
-                                      key={idx}
-                                      className="flex justify-between text-sm font-semibold text-ink"
-                                    >
-                                      <span>- {item.name}</span>
-                                      <span>
-                                        {Number(item.price_xof).toLocaleString("fr-FR")} FCFA
-                                      </span>
-                                    </li>
-                                  ),
-                                )}
-                              </ul>
-                              <div className="mt-3 flex justify-between border-t border-dashed border-ink/10 pt-3 text-sm font-black text-ink">
-                                <span>Total payé</span>
-                                <span>
-                                  {Number(o.total_price_xof).toLocaleString("fr-FR")} FCFA
-                                </span>
-                              </div>
-                            </div>
-
-                            {o.delivery_notes && (
-                              <div className="rounded-xl bg-surface p-3 border border-ink/10 text-xs font-medium text-ink/80 leading-relaxed">
-                                <span className="font-bold text-ink">Notes admin/livraison :</span>{" "}
-                                {o.delivery_notes}
-                              </div>
-                            )}
-                          </div>
-                        ))}
-                      </div>
-                    );
-                  })()}
-                </>
-              )}
-            </>
-          )}
 
           {activeTab === "stats" && ecosystemStats && (
             <div className="space-y-8">

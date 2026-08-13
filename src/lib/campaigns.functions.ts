@@ -20,6 +20,10 @@ export interface Campaign {
   start_date: string;
   end_date: string;
   created_at: string;
+  /** Mode test/paid (refonte Admin OS, décision #72) — 'test' par défaut. */
+  mode?: string;
+  /** Prix unitaire par code (campagnes payantes — lien de paiement partageable). */
+  price_per_token_xof?: number | null;
 }
 
 export const createCampaignAdmin = createServerFn({ method: "POST" })
@@ -68,6 +72,32 @@ export const createCampaignAdmin = createServerFn({ method: "POST" })
     }
 
     return campaign as Campaign;
+  });
+
+// ── Mode test/paid + prix unitaire (refonte Admin OS, 2026-08-13, décision #72) ─
+// mode 'test' : codes confirmés d'office (valider le workflow sans facturation) ;
+// mode 'paid' : lien de paiement partageable (generateCampaignPaymentLinkAdmin) —
+// le prix unitaire par code doit être défini avant de générer le lien.
+const CampaignBillingInput = z.object({
+  campaignId: z.string().uuid(),
+  mode: z.enum(["test", "paid"]),
+  pricePerTokenXof: z.number().int().min(0).nullable().optional(),
+});
+
+export const updateCampaignBillingAdmin = createServerFn({ method: "POST" })
+  .middleware([requireAdmin])
+  .validator((input: unknown) => CampaignBillingInput.parse(input))
+  .handler(async ({ data }) => {
+    const patch: Record<string, unknown> = { mode: data.mode };
+    if (data.pricePerTokenXof !== undefined) {
+      patch.price_per_token_xof = data.pricePerTokenXof;
+    }
+    const { error } = await (supabaseAdmin as any)
+      .from("campaigns")
+      .update(patch)
+      .eq("id", data.campaignId);
+    if (error) throw new Error(error.message);
+    return { success: true };
   });
 
 // Le quota de base (5 enfants/superviseur) est fixé dans le trigger DB check_supervisor_quota
@@ -261,6 +291,73 @@ export const generateCampaignTokensAdmin = createServerFn({ method: "POST" })
     if (error) throw new Error(error.message);
 
     return { success: true, count: data.count };
+  });
+
+// ── Lien de paiement partageable (mode payé, décision #72, 2026-08-13) ─────────
+// Campagne en mode 'paid' : l'admin génère un lien Paystack que l'ONG diffuse ;
+// quand le paiement aboutit, le webhook (case 'campaign_b2b' du fulfillment) crée
+// un lot de codes B2B confirmés — count = montant / price_per_token_xof.
+const CampaignPaymentLinkInput = z.object({
+  campaignId: z.string().uuid(),
+  tokenCount: z.number().int().min(1).max(200),
+  email: z.string().email(),
+  callbackUrl: z.string().url(),
+});
+
+export const generateCampaignPaymentLinkAdmin = createServerFn({ method: "POST" })
+  .middleware([requireAdmin])
+  .validator((input: unknown) => CampaignPaymentLinkInput.parse(input))
+  .handler(async ({ data }) => {
+    const { data: campaign, error: campErr } = await (supabaseAdmin as any)
+      .from("campaigns")
+      .select("id, name, mode, price_per_token_xof, target_count")
+      .eq("id", data.campaignId)
+      .maybeSingle();
+    if (campErr) throw new Error(campErr.message);
+    if (!campaign) throw new Error("Campagne introuvable.");
+    if (campaign.mode !== "paid") {
+      throw new Error("Cette campagne n'est pas en mode payé — passez-la en mode payé d'abord.");
+    }
+    if (!campaign.price_per_token_xof || campaign.price_per_token_xof <= 0) {
+      throw new Error("Définissez un prix unitaire par code avant de générer le lien.");
+    }
+
+    // Même garde anti-dépassement que generateCampaignTokensAdmin : le lot payé ne
+    // doit jamais dépasser l'objectif de la campagne.
+    const { count: existingCount } = await (supabaseAdmin as any)
+      .from("sponsorship_tokens")
+      .select("id", { count: "exact", head: true })
+      .eq("campaign_id", campaign.id);
+    if ((existingCount ?? 0) + data.tokenCount > campaign.target_count) {
+      throw new Error(
+        `Cette campagne a déjà ${existingCount ?? 0} code(s) pour un objectif de ${campaign.target_count} — ` +
+          `un paiement de ${data.tokenCount} code(s) dépasserait l'objectif.`
+      );
+    }
+
+    const amountXof = campaign.price_per_token_xof * data.tokenCount;
+    const { initializePaystackTransaction } = await import("@/lib/paystack.server");
+    const reference = `GENIZIO-CAMP-${Date.now().toString(36).toUpperCase()}-${Math.random()
+      .toString(36)
+      .substring(2, 6)
+      .toUpperCase()}`;
+    const result = await initializePaystackTransaction({
+      email: data.email,
+      amountXof,
+      reference,
+      callbackUrl: data.callbackUrl,
+      metadata: {
+        type: "campaign_b2b",
+        campaign_id: campaign.id,
+        token_count: data.tokenCount,
+      },
+    });
+    return {
+      authorizationUrl: result.authorizationUrl,
+      reference,
+      amountXof,
+      tokenCount: data.tokenCount,
+    };
   });
 
 // Jusqu'ici, rien dans la nav ne signalait à un chargé de projet ONG que son compte avait un

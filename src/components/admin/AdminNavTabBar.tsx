@@ -1,16 +1,21 @@
 import React from "react";
 import {
   BarChart3,
-  Award,
-  Brain,
-  ShoppingBag,
-  Calendar,
   Building2,
   Users,
   Package,
-  Repeat,
+  Award,
+  Brain,
+  CreditCard,
+  ShoppingBag,
   ShieldCheck,
+  Home,
 } from "lucide-react";
+
+// Refonte Admin OS (2026-08-13, décision #71) : 9 onglets — « Seasons » supprimé
+// (vestige de la dégradation des saisons), « Abonnements » fusionné dans le nouvel
+// onglet « Paiements & Accès ». ADMIN_TABS est la source unique partagée par la
+// grille d'accueil (admin.index) et la barre de navigation persistante.
 
 export type AdminTab =
   | "executive"
@@ -19,17 +24,14 @@ export type AdminTab =
   | "products"
   | "talents"
   | "naya"
+  | "payments"
   | "commerce"
-  | "seasons"
-  | "subscriptions"
   | "profiles";
 
-interface AdminNavTabBarProps {
-  activeTab: AdminTab;
-  onTabChange: (tab: AdminTab) => void;
-}
+/** Écran d'accueil (grille de cartes) ou onglet ouvert. */
+export type AdminRoute = AdminTab | "home";
 
-export const ADMIN_TABS: Array<{
+export interface AdminTabDef {
   id: AdminTab;
   label: string;
   sublabel: string;
@@ -37,13 +39,15 @@ export const ADMIN_TABS: Array<{
   badge: string;
   badgeBgClass: string;
   badgeTextClass: string;
-}> = [
+}
+
+export const ADMIN_TABS: AdminTabDef[] = [
   {
     id: "executive",
     label: "Exécutif",
-    sublabel: "KPIs & CRM",
+    sublabel: "KPIs & Annuaire",
     icon: BarChart3,
-    badge: "BI CRM",
+    badge: "KPIs",
     badgeBgClass: "bg-brand/10",
     badgeTextClass: "text-brand",
   },
@@ -52,23 +56,23 @@ export const ADMIN_TABS: Array<{
     label: "Campagnes B2B",
     sublabel: "ONG & Cohortes",
     icon: Building2,
-    badge: "BI B2B",
+    badge: "B2B",
     badgeBgClass: "bg-ink/10",
     badgeTextClass: "text-ink",
   },
   {
     id: "supervisors",
     label: "Superviseurs",
-    sublabel: "Mentors & Quotas",
+    sublabel: "Assignations",
     icon: Users,
-    badge: "Mentors",
+    badge: "Super",
     badgeBgClass: "bg-emerald-500/10",
     badgeTextClass: "text-emerald-600",
   },
   {
     id: "products",
-    label: "Produits",
-    sublabel: "Kits & Stock",
+    label: "Produits & Stock",
+    sublabel: "Catalogue & Kits",
     icon: Package,
     badge: "Kits",
     badgeBgClass: "bg-indigo-500/10",
@@ -86,38 +90,29 @@ export const ADMIN_TABS: Array<{
   {
     id: "naya",
     label: "IA Naya",
-    sublabel: "Diagnostics & Prompts",
+    sublabel: "Diagnostics & Loup",
     icon: Brain,
     badge: "IA",
     badgeBgClass: "bg-sky/10",
     badgeTextClass: "text-sky-600",
   },
   {
-    id: "commerce",
-    label: "Commerce",
-    sublabel: "Boutique & Orders",
-    icon: ShoppingBag,
-    badge: "Ventes",
-    badgeBgClass: "bg-purple-500/10",
-    badgeTextClass: "text-purple-600",
-  },
-  {
-    id: "seasons",
-    label: "Seasons",
-    sublabel: "Trimestres & Diaspora",
-    icon: Calendar,
-    badge: "3 Mois",
+    id: "payments",
+    label: "Paiements & Accès",
+    sublabel: "Secours & Abonnements",
+    icon: CreditCard,
+    badge: "Secours",
     badgeBgClass: "bg-amber-500/10",
     badgeTextClass: "text-amber-600",
   },
   {
-    id: "subscriptions",
-    label: "Abonnements",
-    sublabel: "Familles & MRR",
-    icon: Repeat,
-    badge: "MRR",
-    badgeBgClass: "bg-teal-500/10",
-    badgeTextClass: "text-teal-600",
+    id: "commerce",
+    label: "Commerce",
+    sublabel: "Commandes & Passeports",
+    icon: ShoppingBag,
+    badge: "Ventes",
+    badgeBgClass: "bg-purple-500/10",
+    badgeTextClass: "text-purple-600",
   },
   {
     id: "profiles",
@@ -130,58 +125,48 @@ export const ADMIN_TABS: Array<{
   },
 ];
 
-export function AdminNavTabBar({ activeTab, onTabChange }: AdminNavTabBarProps) {
+interface AdminNavTabBarProps {
+  activeTab: AdminTab;
+  onTabChange: (tab: AdminTab) => void;
+  onGoHome: () => void;
+}
+
+/** Barre de pills persistante (affichée quand un onglet est ouvert) : bouton
+ *  Accueil + 9 onglets compacts — scroll horizontal sur mobile, wrap sur desktop. */
+export function AdminNavTabBar({ activeTab, onTabChange, onGoHome }: AdminNavTabBarProps) {
   return (
-    <div className="w-full overflow-x-auto bg-surface/80 backdrop-blur-md border border-ink/10 p-1.5 sm:p-2 rounded-3xl shadow-sm mb-6 sm:mb-8 no-scrollbar scroll-smooth">
+    <div className="w-full rounded-2xl border border-ink/10 bg-surface/80 p-1.5 shadow-sm backdrop-blur-md mb-6 sm:mb-8">
       <nav
-        className="flex min-w-max gap-2 sm:grid sm:min-w-0 sm:grid-cols-2 md:grid-cols-4 lg:grid-cols-10"
+        className="flex flex-wrap items-center gap-1.5 no-scrollbar"
         aria-label="Navigation Admin OS"
       >
+        <button
+          type="button"
+          onClick={onGoHome}
+          className="inline-flex items-center gap-1.5 rounded-xl border border-ink/10 bg-white px-3 py-2 text-xs font-bold text-ink/70 transition-all hover:border-ink/25 hover:text-ink cursor-pointer"
+          title="Retour à l'accueil"
+        >
+          <Home className="size-3.5" />
+          <span className="hidden sm:inline">Accueil</span>
+        </button>
+
         {ADMIN_TABS.map((tab) => {
           const Icon = tab.icon;
           const isActive = activeTab === tab.id;
-
           return (
             <button
               key={tab.id}
               type="button"
               onClick={() => onTabChange(tab.id)}
               aria-current={isActive ? "page" : undefined}
-              className={`group relative flex flex-col items-start p-3 sm:p-4 rounded-2xl transition-all duration-200 text-left cursor-pointer border min-w-[140px] sm:min-w-0 flex-1 ${
+              className={`inline-flex items-center gap-1.5 rounded-xl px-3 py-2 text-xs font-bold transition-all cursor-pointer border ${
                 isActive
-                  ? "bg-white border-ink/15 shadow-md scale-[1.01]"
-                  : "bg-white/40 border-transparent hover:bg-white/80 hover:border-ink/5 text-ink/70"
+                  ? "border-ink bg-ink text-white shadow-sm"
+                  : "border-transparent bg-white/60 text-ink/60 hover:bg-white hover:text-ink"
               }`}
             >
-              <div className="flex items-center justify-between w-full mb-2 gap-1">
-                <div
-                  className={`p-1.5 sm:p-2 rounded-xl transition-colors ${
-                    isActive
-                      ? `${tab.badgeBgClass} ${tab.badgeTextClass}`
-                      : "bg-ink/5 text-ink/50 group-hover:text-ink"
-                  }`}
-                >
-                  <Icon className="size-4 sm:size-5 stroke-[2.2]" />
-                </div>
-                <span
-                  className={`text-[9px] sm:text-[10px] font-extrabold uppercase tracking-wider px-2 py-0.5 rounded-full whitespace-nowrap ${
-                    tab.badgeBgClass
-                  } ${tab.badgeTextClass}`}
-                >
-                  {tab.badge}
-                </span>
-              </div>
-
-              <span className="font-display font-extrabold text-xs sm:text-sm text-ink leading-tight truncate w-full">
-                {tab.label}
-              </span>
-              <span className="text-[10px] sm:text-xs font-medium text-ink/60 mt-0.5 line-clamp-1 w-full">
-                {tab.sublabel}
-              </span>
-
-              {isActive && (
-                <div className="absolute bottom-1.5 left-1/2 -translate-x-1/2 h-1 w-6 bg-brand rounded-full" />
-              )}
+              <Icon className={`size-3.5 ${isActive ? "" : "opacity-70"}`} />
+              <span className="truncate">{tab.label}</span>
             </button>
           );
         })}

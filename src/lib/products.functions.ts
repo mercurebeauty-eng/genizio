@@ -118,85 +118,6 @@ const OrderInput = z.object({
   delivery_notes: z.string().optional().nullable(),
 });
 
-export const createOrder = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
-  .validator((input: unknown) => OrderInput.parse(input))
-  .handler(async ({ data, context }) => {
-    const userId = context.claims.sub;
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-
-    const { data: child, error: childErr } = await supabaseAdmin
-      .from("child_profiles")
-      .select("id")
-      .eq("id", data.child_id)
-      .eq("user_id", userId)
-      .maybeSingle();
-    if (childErr || !child) throw new Error("Profil enfant introuvable ou accès refusé.");
-
-    if (data.challenge_id) {
-      const { data: challenge, error: challengeErr } = await supabaseAdmin
-        .from("challenges")
-        .select("id")
-        .eq("id", data.challenge_id)
-        .eq("child_id", data.child_id)
-        .is("deleted_at", null)
-        .maybeSingle();
-      if (challengeErr || !challenge) throw new Error("Défi introuvable ou n'appartenant pas à cet enfant.");
-    }
-
-    // Price and item names come from the client, so they're only a hint —
-    // recompute both from the real catalog before persisting. Prevents a
-    // tampered request from recording a falsified total_price_xof/items.
-    const productIds = data.items.map((i) => i.id).filter((id): id is string => !!id);
-    if (productIds.length !== data.items.length) {
-      throw new Error("Commande invalide : un article ne référence aucun produit.");
-    }
-
-    const { data: products, error: productsErr } = await supabaseAdmin
-      .from("products")
-      .select("id, name, price_xof, is_active")
-      .in("id", productIds);
-    if (productsErr) throw new Error(productsErr.message);
-
-    const productById = new Map((products ?? []).map((p) => [p.id, p]));
-    const items = productIds.map((id) => {
-      const product = productById.get(id);
-      if (!product) throw new Error("Un des produits commandés n'existe plus.");
-      if (!product.is_active) throw new Error(`Produit indisponible actuellement : ${product.name}`);
-      return { id: product.id, name: product.name, price_xof: product.price_xof };
-    });
-    const total_price_xof = items.reduce((sum, item) => sum + item.price_xof, 0);
-
-    const { data: row, error } = await supabaseAdmin
-      .from("orders")
-      .insert({
-        user_id: userId,
-        child_id: data.child_id,
-        challenge_id: data.challenge_id || null,
-        total_price_xof,
-        items,
-        delivery_notes: data.delivery_notes || null,
-        status: "pending",
-      })
-      .select("*")
-      .single();
-
-    if (error) throw new Error(error.message);
-    return row;
-  });
-
-export const listOrdersAdmin = createServerFn({ method: "GET" })
-  .middleware([requireAdmin])
-  .handler(async () => {
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const { data, error } = await supabaseAdmin
-      .from("orders")
-      .select("*, child_profiles(name), challenges(title)")
-      .order("created_at", { ascending: false });
-    if (error) throw new Error(error.message);
-    return data;
-  });
-
 const UpdateOrderStatusInput = z.object({
   id: z.string().uuid(),
   status: z.enum(["pending", "confirmed", "shipped", "delivered", "cancelled"]),
@@ -218,6 +139,20 @@ export const updateOrderStatus = createServerFn({ method: "POST" })
       .single();
     if (error) throw new Error(error.message);
     return row;
+  });
+
+/** File des commandes (onglet Commerce — source unique depuis la refonte Admin OS). */
+export const listOrdersAdmin = createServerFn({ method: "GET" })
+  .middleware([requireAdmin])
+  .handler(async () => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data, error } = await supabaseAdmin
+      .from("orders")
+      .select("*")
+      .order("created_at", { ascending: false })
+      .limit(100);
+    if (error) throw new Error(error.message);
+    return (data ?? []) as any[];
   });
 
 export const getEcosystemStats = createServerFn({ method: "GET" })
@@ -279,58 +214,6 @@ export const getEcosystemStats = createServerFn({ method: "GET" })
       talentTotals,
       topDomains,
     };
-  });
-
-export const listParentsBI = createServerFn({ method: "GET" })
-  .middleware([requireAdmin])
-  .handler(async () => {
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-
-    // 1. Fetch all users from Supabase Auth admin API
-    const users = await listAllUsers(supabaseAdmin);
-
-    // 2. Fetch children profile statistics grouped by user_id
-    const { data: children, error: childrenErr } = await supabaseAdmin
-      .from("child_profiles")
-      .select("id, name, age, user_id, talents, pdf_unlocked");
-    if (childrenErr) throw new Error(childrenErr.message);
-
-    // 3. Fetch challenge statistics grouped by user_id
-    const { data: challenges, error: challengesErr } = await supabaseAdmin
-      .from("challenges")
-      .select("id, status, user_id")
-      .is("deleted_at", null);
-    if (challengesErr) throw new Error(challengesErr.message);
-
-    // 4. Correlate data
-    const parents = users.map(user => {
-      const parentChildren = children.filter(c => c.user_id === user.id);
-      const parentChallenges = challenges.filter(c => c.user_id === user.id);
-      const completedChallenges = parentChallenges.filter(c => c.status === "completed");
-
-      return {
-        id: user.id,
-        email: user.email,
-        phone: user.user_metadata?.phone || null,
-        createdAt: user.created_at,
-        childCount: parentChildren.length,
-        childNames: parentChildren.map(c => `${c.name} (${c.age} ans)`).join(", "),
-        children: parentChildren.map(c => ({
-          id: c.id,
-          name: c.name,
-          age: c.age,
-          pdfUnlocked: c.pdf_unlocked === true
-        })),
-        challengeCount: parentChallenges.length,
-        completedCount: completedChallenges.length,
-        extraSlots: (user.app_metadata?.extra_profile_slots as number) ?? 0,
-      };
-    });
-
-    // Sort parents by creation date (newest first)
-    parents.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
-
-    return parents;
   });
 
 export const togglePassportUnlock = createServerFn({ method: "POST" })

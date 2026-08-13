@@ -109,7 +109,7 @@ export function AdminNayaTab({
               )}
             </div>
             <h2 className="font-display text-2xl font-black text-ink mt-0.5">
-              Telemetry & Diagnostics de Consommation
+              Télémétrie & Diagnostics de Consommation
             </h2>
             <p className="text-xs text-ink/60 font-medium">
               Suivi en temps réel du volume de requêtes, de la répartition des tokens et des coûts

@@ -1,13 +1,14 @@
 import { useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
-import { Loader2, Search, Unlock, Power, CalendarClock, X } from "lucide-react";
+import { Loader2, Search, Unlock, Power, CalendarClock, X, Award } from "lucide-react";
 import {
   searchChildProfilesAdmin,
   setChildProfileActiveAdmin,
   setChildTimePressureAdmin,
   unlockChildAccessAdmin,
 } from "@/lib/admin-os.functions";
+import { togglePassportUnlock } from "@/lib/products.functions";
 import { extendChildAccessAdmin } from "@/lib/child-access";
 import { TIME_PRESSURE_LABELS, type TimePressure } from "@/lib/time-limit";
 
@@ -25,6 +26,7 @@ type ChildRow = {
   is_active: boolean;
   access_locked_at: string | null;
   time_pressure: TimePressure;
+  pdf_unlocked: boolean;
   created_at: string;
   parentEmail: string;
 };
@@ -34,6 +36,7 @@ export function AdminProfilesTab() {
   const setActiveFn = useServerFn(setChildProfileActiveAdmin);
   const setTimeFn = useServerFn(setChildTimePressureAdmin);
   const unlockFn = useServerFn(unlockChildAccessAdmin);
+  const passportFn = useServerFn(togglePassportUnlock);
   const extendAccessFn = useServerFn(extendChildAccessAdmin);
 
   const [query, setQuery] = useState("");
@@ -91,6 +94,21 @@ export function AdminProfilesTab() {
       toast.error(err?.message ?? "Impossible de prolonger l'accès.");
     } finally {
       setExtending(false);
+    }
+  };
+
+  // Passeport d'Excellence : vrai toggle Bloqué/Débloqué (décision admin — contourne
+  // le paiement Paystack intent 'passport' quand le webhook n'est pas passé).
+  const togglePassport = async (child: ChildRow) => {
+    setBusyId(child.id);
+    try {
+      await passportFn({ data: { childId: child.id, unlock: !child.pdf_unlocked } });
+      toast.success(child.pdf_unlocked ? "Passeport reverrouillé." : "Passeport débloqué.");
+      await runSearch(query);
+    } catch (err: any) {
+      toast.error(err?.message ?? "Erreur lors du changement de statut du passeport.");
+    } finally {
+      setBusyId(null);
     }
   };
 
@@ -250,11 +268,26 @@ export function AdminProfilesTab() {
                           setExtendMonths(1);
                           setExtendNote("");
                         }}
-                        className="inline-flex items-center gap-1 rounded-xl border border-sky-200 bg-sky-50 px-2.5 py-1.5 text-[11px] font-bold text-sky-700 transition-all hover:bg-sky-100 disabled:opacity-50"
+                        className="inline-flex items-center gap-1 rounded-xl border border-sky-200 bg-sky-50 px-2.5 py-1.5 text-[11px] font-bold text-sky-700 transition-all hover:bg-sky-100 disabled:opacity-50 cursor-pointer"
                         title="Accorder/prolonger l'accès manuellement (période réelle child_access_periods)"
                       >
                         <CalendarClock className="size-3" />
                         Prolonger l'accès
+                      </button>
+                      <button
+                        type="button"
+                        disabled={busyId === c.id}
+                        onClick={() => void togglePassport(c)}
+                        className={
+                          "inline-flex items-center gap-1 rounded-xl border px-2.5 py-1.5 text-[11px] font-bold transition-all disabled:opacity-50 cursor-pointer " +
+                          (c.pdf_unlocked
+                            ? "border-amber-200 bg-amber-50 text-amber-700 hover:bg-amber-100"
+                            : "border-emerald-200 bg-emerald-50 text-emerald-700 hover:bg-emerald-100")
+                        }
+                        title="Passeport d'Excellence : bloquer/débloquer manuellement (secours du webhook Paystack)"
+                      >
+                        <Award className="size-3" />
+                        {c.pdf_unlocked ? "Bloquer passeport" : "Débloquer passeport"}
                       </button>
                     </div>
                   </td>
