@@ -29,13 +29,13 @@ export interface AspirationBridge {
 // générique (findAspirationBridge) — le système ne casse jamais.
 export const ASPIRATION_BRIDGES: Record<string, AspirationBridge> = {
   menuiserie: {
-    talentKeys: ["artisanale", "spatiale", "logico_mathematique"],
+    talentKeys: ["artisanale", "spatial", "logico_mathematique"],
     domains: ["Artisanat", "Architecture & Construction"],
     skillsHint: ["mesurer", "compter", "comprendre les proportions", "visualiser l'espace", "suivre une séquence", "être précis"],
     worldAnchor: "Commence par un objet utile et réparable du quotidien (tabouret, étagère, jouet cassé) — l'enfant doit voir l'utilité immédiate du résultat avant tout savoir.",
   },
   mecanique: {
-    talentKeys: ["spatiale", "logico_mathematique", "artisanale"],
+    talentKeys: ["spatial", "logico_mathematique", "artisanale"],
     domains: ["Sciences & Ingénierie", "Technologie & IA"],
     skillsHint: ["démonter et remonter", "diagnostiquer une panne", "cause et effet", "précision", "outils"],
     worldAnchor: "Ancre dans le débrouillage du quotidien (vélo, mobylette, appareil cassé) et le lien avec l'argent : réparer vaut, comprendre vaut mieux.",
@@ -59,7 +59,7 @@ export const ASPIRATION_BRIDGES: Record<string, AspirationBridge> = {
     worldAnchor: "L'argent est déjà son terrain : partir de la vente réelle (petite caisse, marché) et transformer la débrouillardise existante en rigueur de gestion.",
   },
   art: {
-    talentKeys: ["creative", "spatiale", "emotionnelle"],
+    talentKeys: ["creative", "spatial", "emotionnelle"],
     domains: ["Arts & Créativité", "Communication & Leadership"],
     skillsHint: ["observer", "composer", "traduire une émotion", "persévérer sur un détail"],
     worldAnchor: "Partir de ce qu'il sait déjà dessiner/représenter et montrer que l'art peut être un métier et une voix — pas un loisir réservé.",
@@ -71,7 +71,7 @@ export const ASPIRATION_BRIDGES: Record<string, AspirationBridge> = {
     worldAnchor: "Ancrer dans les matchs de rue et la fierté physique : le sport comme discipline de vie qui mène à l'organisation et à la rigueur.",
   },
   informatique: {
-    talentKeys: ["logico_mathematique", "spatiale", "creative"],
+    talentKeys: ["logico_mathematique", "spatial", "creative"],
     domains: ["Technologie & IA", "Sciences & Ingénierie"],
     skillsHint: ["logique", "séquences", "résoudre un problème", "créer un résultat visible"],
     worldAnchor: "Relier à une machine ou un téléphone réellement disponible : ce qu'un code permet de faire concrètement (réparer, organiser, gagner du temps).",
@@ -83,7 +83,7 @@ export const ASPIRATION_BRIDGES: Record<string, AspirationBridge> = {
     worldAnchor: "La musique est souvent déjà présente dans le quartier : partir des rythmes connus pour révéler les maths cachées (mesures, fractions du temps).",
   },
   couture: {
-    talentKeys: ["artisanale", "spatiale", "entrepreneuriale"],
+    talentKeys: ["artisanale", "spatial", "entrepreneuriale"],
     domains: ["Artisanat", "Entrepreneuriat"],
     skillsHint: ["mesurer", "géométrie des coupes", "précision", "suivre un patron", "vendre son travail"],
     worldAnchor: "Ancrer dans le tissu local et le marché : coudre utile puis coudre pour vendre — le geste précis comme source de revenu.",
