@@ -24,8 +24,20 @@ export function useSession() {
     });
     supabase.auth
       .getSession()
-      .then(({ data }) => {
-        setSession(data.session);
+      .then(async ({ data }) => {
+        if (data.session) {
+          // Claims frais (2026-08-13, revue quota) : le JWT embarque app_metadata
+          // (ex. extra_profile_slots ajusté par l'admin) — sans refresh au montage,
+          // le nouveau quota n'apparaissait qu'au prochain refresh naturel du token
+          // (jusqu'à ~1 h après l'ajustement). Le refresh tourne le token à chaque
+          // chargement de page : l'ajustement admin est visible dès la page suivante.
+          const { data: refreshed } = await supabase.auth.refreshSession().catch(() => ({
+            data: null,
+          }));
+          setSession(refreshed?.session ?? data.session);
+        } else {
+          setSession(null);
+        }
         setLoading(false);
       })
       .catch((err) => {
