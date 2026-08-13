@@ -47,6 +47,9 @@ function makeDb(
 ) {
   const inserts: Array<{ table: string; value: any }> = [];
   const updates: Array<{ table: string; value: any }> = [];
+  // Sémantique CAS (review 2026-08-12) : le premier update payments → success est
+  // remporté ; les suivants ne trouvent plus rien (already_fulfilled).
+  let paymentsSuccessClaims = 0;
 
   const adminUser = overrides.adminUser ?? { app_metadata: { extra_profile_slots: 2 } };
   const tableData: Record<string, any[]> = {
@@ -71,12 +74,21 @@ function makeDb(
       }),
       update: vi.fn((value: any) => {
         updates.push({ table, value });
+        if (table === "payments" && value.status === "success") paymentsSuccessClaims += 1;
         return builder;
       }),
       eq: vi.fn(() => builder),
+      neq: vi.fn(() => builder),
       order: vi.fn(() => builder),
       limit: vi.fn(() => builder),
       single: vi.fn(() => Promise.resolve({ data: {}, error: null })),
+      maybeSingle: vi.fn(() =>
+        Promise.resolve(
+          table === "payments" && paymentsSuccessClaims > 1
+            ? { data: null, error: null }
+            : { data: { id: "p1" }, error: null },
+        ),
+      ),
       then: (resolve: (v: unknown) => void, reject?: (e: unknown) => void) =>
         Promise.resolve({ data: tableData[table] ?? [], error: null }).then(resolve, reject),
     };
@@ -205,7 +217,7 @@ describe("applyPaystackEntitlement", () => {
 });
 
 describe("markPaymentSuccessAndFulfill", () => {
-  it("marque success (paid_at) après avoir appliqué le bénéfice", async () => {
+  it("CAS : marque success (paid_at) puis applique le bénéfice", async () => {
     const { db, updates } = makeDb();
     const payment = makePayment({ metadata: { type: "order", order_id: "order-1" } });
 
@@ -215,5 +227,18 @@ describe("markPaymentSuccessAndFulfill", () => {
     const paymentUpdate = updates.find((u) => u.table === "payments");
     expect(paymentUpdate?.value).toMatchObject({ status: "success" });
     expect(paymentUpdate?.value.paid_at).toBeTruthy();
+  });
+
+  it("idempotence CAS : un second appel concurrent ne ré-applique pas le bénéfice", async () => {
+    const { db, updates } = makeDb();
+    const payment = makePayment({ metadata: { type: "order", order_id: "order-1" } });
+
+    // Webhook + page de retour lus 'initiated' tous les deux → deux appels.
+    await markPaymentSuccessAndFulfill(db, payment);
+    const second = await markPaymentSuccessAndFulfill(db, payment);
+
+    expect(second.entitlement).toBe("already_fulfilled");
+    const orderUpdates = updates.filter((u) => u.table === "orders");
+    expect(orderUpdates).toHaveLength(1); // bénéfice appliqué EXACTEMENT une fois
   });
 });

@@ -5,6 +5,7 @@ import {
   GENERIC_ASPIRATION_BRIDGE,
   normalizeAspirationLabel,
 } from "@/lib/aspiration-map";
+import { DOMAINS } from "@/lib/challenges.functions";
 
 // Ponts d'aspiration (2026-08-12, analyse §11-12) : le mapping curé relie une
 // aspiration à ses compétences fondamentales — le système ne casse jamais.
@@ -45,6 +46,17 @@ describe("findAspirationBridge", () => {
       expect(bridge.domains.length, key).toBeGreaterThan(0);
       expect(bridge.skillsHint.length, key).toBeGreaterThan(0);
       expect(bridge.worldAnchor.length, key).toBeGreaterThan(0);
+    }
+  });
+
+  it("chaque domaine d'un pont appartient au vocabulaire fermé DOMAINS (review 2026-08-12, P1)", () => {
+    // 16/20 domaines étaient des libellés d'affichage (« Sciences & Ingénierie »…) alors
+    // que challenges.domain stocke les valeurs canoniques — le comptage d'essais, la
+    // garde « défi récent » et le vocabulaire inséré en base étaient tous faussés.
+    for (const [key, bridge] of Object.entries(ASPIRATION_BRIDGES)) {
+      for (const domain of bridge.domains) {
+        expect(DOMAINS, `${key} → ${domain}`).toContain(domain);
+      }
     }
   });
 });
