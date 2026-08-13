@@ -10,6 +10,7 @@
 //   • extra_slots  → +1 extra_profile_slots (modale d'upgrade, legacy)
 //   • sponsorship  → création du code de parrainage (payment_confirmed=true d'office :
 //                     le paiement en ligne remplace la confirmation admin WhatsApp)
+//   • campaign_b2b → lot de codes B2B confirmés (lien partageable d'une campagne payée)
 //
 // Serveur uniquement — jamais importé côté client (même pattern que paystack.server.ts).
 
@@ -17,7 +18,7 @@ import { computeAccessPeriodWindow } from "@/lib/child-access";
 import { createSponsorshipTokenRecord, getActiveSeason } from "@/lib/seasons.functions";
 // Import runtime de la fonction pure (payments-admin n'importe ce module que
 // dynamiquement dans ses handlers — aucun cycle d'exécution).
-import { campaignTokenCount, resolveCampaignTokenLot } from "@/lib/payments-admin.functions";
+import { campaignLotDiscrepancy, resolveCampaignTokenLot } from "@/lib/payments-admin.functions";
 
 export type PaymentMetadata = {
   type: "order" | "child_access" | "passport" | "extra_slots" | "sponsorship" | "campaign_b2b";
@@ -31,6 +32,8 @@ export type PaymentMetadata = {
   target_child_name?: string;
   // campaign_b2b — paiement du lien partageable d'une campagne (mode payé).
   campaign_id?: string;
+  /** Nombre de codes payés par le lien (écrit à la génération du lien, décision #72). */
+  token_count?: number;
   currency?: string;
 };
 
@@ -177,8 +180,10 @@ export async function applyPaystackEntitlement(
 
     // Campagne B2B payante (refonte Admin OS, 2026-08-13, décision #72) : le paiement du
     // lien partageable crée un lot de codes B2B CONFIRMÉS — count = montant payé / prix
-    // unitaire, plafonné au target_count restant (garde anti-dépassement identique à
-    // generateCampaignTokensAdmin). Idempotent par paystack_reference (UNIQUE).
+    // unitaire. Idempotence (même pattern que le case sponsorship) : la référence Paystack
+    // est portée par le PREMIER code du lot — les suivants laissent paystack_reference NULL,
+    // car la colonne est UNIQUE en base (une référence partagée par N lignes violerait la
+    // contrainte dès 2 codes — review 2026-08-12).
     case "campaign_b2b": {
       if (!metadata.campaign_id) throw new Error("Payment 'campaign_b2b' sans campaign_id.");
       const { data: campaign, error: campErr } = await supabaseAdmin
@@ -188,6 +193,19 @@ export async function applyPaystackEntitlement(
         .maybeSingle();
       if (campErr) throw new Error(campErr.message);
       if (!campaign) throw new Error("Campagne introuvable.");
+
+      const { data: existing, error: existErr } = await supabaseAdmin
+        .from("sponsorship_tokens")
+        .select("code")
+        .eq("paystack_reference", payment.reference)
+        .maybeSingle();
+      if (existErr) throw new Error(existErr.message);
+      if (existing) {
+        return {
+          entitlement: "campaign_b2b",
+          detail: `Lot B2B déjà créé pour ce paiement (code ${existing.code})`,
+        };
+      }
 
       const { count: existingCount, error: countErr } = await supabaseAdmin
         .from("sponsorship_tokens")
@@ -201,6 +219,21 @@ export async function applyPaystackEntitlement(
         existingCount ?? 0,
         campaign.target_count ?? 0,
       );
+      // Jamais de plafonnement silencieux : le lien a été émis pour metadata.token_count
+      // codes à un prix donné. Si le lot livrable diffère du lot payé (capacité restante
+      // épuisée entre la génération du lien et le paiement, prix unitaire modifié
+      // entre-temps), on BLOQUE — la payment reste en attente, visible dans l'onglet
+      // Paiements, et l'admin traite (remboursement, extension d'objectif, relance).
+      if (campaignLotDiscrepancy(metadata.token_count, toCreate) !== 0) {
+        const paidXof = campaign.price_per_token_xof * (metadata.token_count ?? toCreate);
+        const deliverableXof = campaign.price_per_token_xof * toCreate;
+        const remaining = Math.max(0, (campaign.target_count ?? 0) - (existingCount ?? 0));
+        throw new Error(
+          `Campagne « ${campaign.name} » : ${metadata.token_count ?? toCreate} code(s) payés (` +
+            `${paidXof} FCFA) mais ${toCreate} délivrable(s) (${deliverableXof} FCFA, capacité ` +
+            `restante ${remaining}). Anomalie à traiter manuellement — lot non créé.`
+        );
+      }
       if (toCreate <= 0) {
         throw new Error("Capacité de la campagne atteinte — aucun code à créer.");
       }
@@ -210,15 +243,16 @@ export async function applyPaystackEntitlement(
       while (codes.size < toCreate) {
         codes.add(`GENIZIO-B2B-${Math.random().toString(36).substring(2, 8).toUpperCase()}`);
       }
-      const tokens = Array.from(codes).map((code) => ({
+      const tokens = Array.from(codes).map((code, i) => ({
         code,
         campaign_id: campaign.id,
         season_id: activeSeason.id,
         sponsor_name: campaign.name,
         sponsor_email: "serviceclient@genizio.com",
-        amount_paid: payment.amount_xof,
+        amount_paid: campaign.price_per_token_xof, // prix unitaire par code (pas le total du lot)
         currency: payment.currency,
-        paystack_reference: payment.reference,
+        // Seul le premier code porte la référence Paystack (idempotence + UNIQUE).
+        paystack_reference: i === 0 ? payment.reference : null,
         payment_confirmed: true, // Payé via le lien partageable — confirmation par le paiement.
       }));
 

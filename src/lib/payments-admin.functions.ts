@@ -223,6 +223,20 @@ export function resolveCampaignTokenLot(
   return Math.min(count, remaining);
 }
 
+/** Écart entre le lot livré et le lot payé (pur) : 0 = conforme. Un écart ≠ 0 est une
+ *  anomalie (trop-perçu si négatif — capacité restante réduite entre la génération du
+ *  lien et le paiement ; sur-livraison si positif — prix unitaire modifié entre-temps).
+ *  Le fulfillment BLOQUE sur tout écart : jamais de plafonnement muet qui ferait perdre
+ *  de l'argent à l'ONG sans aucune trace (review 2026-08-12). Un lien ancien sans
+ *  token_count enregistré ne permet aucune inférence → 0. */
+export function campaignLotDiscrepancy(
+  requestedCount: number | null | undefined,
+  deliverableCount: number
+): number {
+  if (requestedCount == null) return 0;
+  return deliverableCount - requestedCount;
+}
+
 /** Renouvellement manuel : extension de current_period_end (fenêtre cumulée, jamais
  *  de découpe — la base est le plus tard entre la fin courante et maintenant). */
 export const extendSubscriptionPeriodAdmin = createServerFn({ method: "POST" })
