@@ -338,7 +338,7 @@ function shuffle<T>(items: readonly T[]): T[] {
   return [...items].sort(() => Math.random() - 0.5);
 }
 
-const DOMAINS = [
+export const DOMAINS = [
   "Sciences",
   "Architecture",
   "Artisanat",
@@ -2035,6 +2035,17 @@ export const submitChallengeNotCompleted = createServerFn({ method: "POST" })
     if (challenge.user_id !== userId) throw new Error("Accès refusé.");
     if (challenge.child_profiles?.access_locked_at) throw new Error("Ce profil est verrouillé.");
     if (challenge.child_profiles?.is_active === false) throw new Error("Ce profil est désactivé par l'administrateur.");
+
+    // Garde de statut (review 2026-08-12, P1) : un re-clic, une race ou un client
+    // obsolète ne doit jamais faire basculer un défi déjà completed en not_completed
+    // (perte de complétion, XP/badges déjà attribués), ni re-déclencher la chaîne de
+    // post-traitement (reformulation, discriminants) sur un défi déjà abandonné.
+    if (challenge.status === "completed") {
+      throw new Error("Ce défi est déjà terminé — il ne peut pas être marqué non réussi.");
+    }
+    if (challenge.status === "not_completed") {
+      throw new Error("Ce défi est déjà marqué non réussi.");
+    }
 
     const { data: updated, error } = await supabase
       .from("challenges")

@@ -620,8 +620,11 @@ export const recommendChallengesForChild = createServerFn({ method: "POST" })
     if (!pending || pending.length === 0) {
       // §8 (2026-08-12) : les difficultés déclarées passent en tête des candidats
       // d'exploration (biais doux — stimuler progressivement, jamais d'échec forcé).
+      // Plusieurs candidats (3) : biasLabelsByDeclaredDifficulties ne fait que
+      // RÉORDONNER son entrée — avec un seul candidat, le biais était un no-op
+      // (review 2026-08-12, P1). La difficulté ciblée n'était jamais choisie.
       const targetLabels = biasLabelsByDeclaredDifficulties(
-        getLeastExploredTalentLabels(child.talents as Record<string, number> | null, 1),
+        getLeastExploredTalentLabels(child.talents as Record<string, number> | null, 3),
         (child as any).ability_profile
       );
       const formattedInterests = formatChildInterestsPayload(child.interests, interestHypotheses);

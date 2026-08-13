@@ -1,7 +1,8 @@
 // Application des bénéfices d'un paiement Paystack réussi — partagé entre la page de
 // retour (vérification immédiate via verifyPaymentByReference) et le webhook
-// (confirmation asynchrone de référence). Les deux chemins sont idempotents : l'appelant
-// garantit que payment.status n'est pas déjà 'success' avant d'invoquer ce module.
+// (confirmation asynchrone de référence). Idempotence EXACTEMENT-une-fois garantie par
+// un compare-and-swap en base (status ≠ success → success), pas par un simple check
+// côté appelant (TOCTOU — review 2026-08-12, P1).
 //
 // Intents (payments.metadata) :
 //   • order        → orders.status = 'confirmed' + payment_reference
@@ -236,22 +237,35 @@ export async function applyPaystackEntitlement(
 }
 
 /**
- * Marque la payment comme success (paid_at/updated_at) PUIS applique le bénéfice.
- * Ordre volontaire : si l'application du bénéfice échoue, le webhook Paystack relancera
- * la requête (retries) et le fulfillment reprendra — une payment déjà success est
- * idempotente côté appelant (aucun re-fulfillment, le bénéfice est appliqué une fois).
+ * Applique le bénéfice d'un paiement EXACTEMENT une fois. Compare-and-swap : la payment
+ * est d'abord passée de tout statut non-success à 'success' (atomique en base) — seul
+ * l'appelant qui remporte ce CAS applique le bénéfice. Le webhook, la page de retour et
+ * le retry admin, déclenchés quasi simultanément dans le flux nominal, ne peuvent plus
+ * appliquer deux fois (review 2026-08-12, P1 — l'ancien garde `status !== 'success'`
+ * côté appelant était un read-check non atomique, TOCTOU). Une payment déjà success →
+ * retour immédiat sans re-fulfillment ; un échec du bénéfice après le CAS est visible
+ * (payment success sans bénéfice) et se répare via les outils manuels AdminOS.
  */
 export async function markPaymentSuccessAndFulfill(
   supabaseAdmin: any,
   payment: PaymentRow,
 ): Promise<FulfillmentResult> {
-  const result = await applyPaystackEntitlement(supabaseAdmin, payment);
   const now = new Date().toISOString();
-  const { error } = await supabaseAdmin
+  const { data: claimed, error } = await supabaseAdmin
     .from("payments")
     .update({ status: "success", paid_at: now, updated_at: now })
-    .eq("id", payment.id);
+    .eq("id", payment.id)
+    .neq("status", "success")
+    .select("id")
+    .maybeSingle();
   if (error) throw new Error(`Erreur lors de la mise à jour du paiement: ${error.message}`);
+  if (!claimed) {
+    // Un autre chemin (webhook/page de retour/retry concurrents) a déjà consommé ce
+    // paiement — bénéfice déjà appliqué, rien à refaire.
+    return { entitlement: "already_fulfilled", detail: "Paiement déjà traité." };
+  }
+
+  const result = await applyPaystackEntitlement(supabaseAdmin, payment);
 
   // Reçu email (2026-08-09, demande utilisateur) : fire-and-forget, jamais bloquant
   // pour la réponse de paiement (webhook/page de retour). Idempotent côté serveur
