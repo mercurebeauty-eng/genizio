@@ -17,7 +17,6 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import type { ExecutiveKPIs, ParentBIRC } from "@/lib/admin-os.functions";
-import { AdminSeasonEnrollmentModal } from "./AdminSeasonEnrollmentModal";
 
 interface AdminExecutiveTabProps {
   kpis: ExecutiveKPIs;
@@ -37,11 +36,6 @@ export function AdminExecutiveTab({
   isRefreshing = false,
 }: AdminExecutiveTabProps) {
   const [pendingPassportChildId, setPendingPassportChildId] = useState<string | null>(null);
-  const [enrollModalChild, setEnrollModalChild] = useState<{
-    id: string;
-    name: string;
-    currentCampaignName?: string | null;
-  } | null>(null);
   const [pendingSlotsUserId, setPendingSlotsUserId] = useState<string | null>(null);
   const [slotsDraft, setSlotsDraft] = useState<Record<string, number>>({});
 
@@ -214,7 +208,6 @@ export function AdminExecutiveTab({
                 <th className="pb-3 pr-4">Téléphone</th>
                 <th className="pb-3 pr-4">WhatsApp</th>
                 <th className="pb-3 pr-4">Enfants associés & Passeports</th>
-                <th className="pb-3 pr-4 text-center">Saisons</th>
                 <th className="pb-3 pr-4 text-center">Défis (Total / Validés)</th>
                 <th className="pb-3 text-center">Profils suppl.</th>
               </tr>
@@ -329,63 +322,10 @@ export function AdminExecutiveTab({
                       )}
                     </td>
 
-                    {/* Saisons & Campagnes */}
-                    <td className="py-3 px-3">
-                      {parent.children && parent.children.length > 0 ? (
-                        <div className="space-y-1.5 min-w-[210px]">
-                          {parent.children.map((child) => (
-                            <div
-                              key={child.id}
-                              className="flex items-center justify-between gap-2 p-2 rounded-2xl bg-surface/70 border border-ink/5 hover:border-ink/10 transition-colors"
-                            >
-                              <div className="flex flex-col text-left min-w-0">
-                                <span className="text-xs font-black text-ink truncate">
-                                  {child.name}
-                                </span>
-                                {child.isEnrolledActive ? (
-                                  <div
-                                    className="flex items-center gap-1 mt-0.5"
-                                    title={
-                                      child.campaignName
-                                        ? `Campagne ONG : ${child.campaignName}`
-                                        : `Saison : ${child.activeSeasonTitle}`
-                                    }
-                                  >
-                                    <span className="size-1.5 rounded-full bg-emerald-500 animate-pulse shrink-0" />
-                                    <span className="text-[10px] font-extrabold text-emerald-700 truncate max-w-[120px]">
-                                      {child.campaignName
-                                        ? `ONG: ${child.campaignName}`
-                                        : child.activeSeasonTitle || "Actif"}
-                                    </span>
-                                  </div>
-                                ) : (
-                                  <span className="text-[10px] font-medium text-ink/40 mt-0.5">
-                                    Inactif
-                                  </span>
-                                )}
-                              </div>
-
-                              <button
-                                onClick={() =>
-                                  setEnrollModalChild({
-                                    id: child.id,
-                                    name: child.name,
-                                    currentCampaignName: child.campaignName,
-                                  })
-                                }
-                                className="inline-flex items-center gap-1 rounded-xl border border-brand/20 bg-brand/5 px-2.5 py-1 text-[10px] font-extrabold text-brand hover:bg-brand hover:text-white transition-all cursor-pointer shrink-0 shadow-2xs"
-                                title="Gérer la saison / campagne"
-                              >
-                                <Calendar className="size-3" />
-                                Gérer
-                              </button>
-                            </div>
-                          ))}
-                        </div>
-                      ) : (
-                        <span className="text-ink/30 italic text-xs">---</span>
-                      )}
-                    </td>
+                    {/* Saisons & Campagnes — retiré (2026-08-12, décision #60 : la saison
+                        n'est plus qu'une étiquette ; l'inscription manuelle à une saison
+                        n'accorde plus aucun accès — l'ajustement d'accès réel vit dans
+                        l'onglet Profils, « Prolonger l'accès » via child_access_periods). */}
 
                     {/* Challenges Stats */}
                     <td className="py-4 pr-4 text-center whitespace-nowrap">
@@ -436,19 +376,6 @@ export function AdminExecutiveTab({
           </table>
         </div>
       </div>
-
-      {enrollModalChild && (
-        <AdminSeasonEnrollmentModal
-          childId={enrollModalChild.id}
-          childName={enrollModalChild.name}
-          currentCampaignName={enrollModalChild.currentCampaignName}
-          onClose={() => setEnrollModalChild(null)}
-          onSuccess={() => {
-            setEnrollModalChild(null);
-            onRefresh?.();
-          }}
-        />
-      )}
     </div>
   );
 }
