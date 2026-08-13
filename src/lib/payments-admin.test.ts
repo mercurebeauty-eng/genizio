@@ -2,6 +2,7 @@ import { describe, it, expect } from "vitest";
 import {
   computeSubscriptionExtensionWindow,
   campaignTokenCount,
+  campaignLotDiscrepancy,
   resolveCampaignTokenLot,
 } from "@/lib/payments-admin.functions";
 
@@ -55,5 +56,24 @@ describe("resolveCampaignTokenLot — plafond à l'objectif restant", () => {
   it("lève une erreur si la campagne n'a pas de prix unitaire", () => {
     expect(() => resolveCampaignTokenLot(30000, null, 0, 10)).toThrow(/prix unitaire/);
     expect(() => resolveCampaignTokenLot(30000, 0, 0, 10)).toThrow(/prix unitaire/);
+  });
+});
+
+describe("campaignLotDiscrepancy — jamais de plafonnement silencieux (review 2026-08-12)", () => {
+  it("écart zéro quand le lot livrable égale le count payé par le lien", () => {
+    expect(campaignLotDiscrepancy(10, 10)).toBe(0);
+  });
+
+  it("écart négatif = sous-livraison (trop-perçu) → anomalie détectée", () => {
+    expect(campaignLotDiscrepancy(10, 3)).toBe(-7);
+  });
+
+  it("écart positif = sur-livraison (prix modifié entre génération et paiement)", () => {
+    expect(campaignLotDiscrepancy(5, 8)).toBe(3);
+  });
+
+  it("lien ancien sans token_count enregistré → aucune inférence (0)", () => {
+    expect(campaignLotDiscrepancy(null, 4)).toBe(0);
+    expect(campaignLotDiscrepancy(undefined, 4)).toBe(0);
   });
 });

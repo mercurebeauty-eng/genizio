@@ -27,7 +27,7 @@ async function getPaystackUserEmail(supabaseAdmin: any, userId: string): Promise
   return data.user.email;
 }
 
-async function createPaystackPayment(params: {
+export async function createPaystackPayment(params: {
   supabaseAdmin: any;
   userId: string | null; // null = payeur non connecté (parrainage public)
   reference: string;
