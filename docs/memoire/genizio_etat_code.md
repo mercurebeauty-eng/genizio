@@ -4,12 +4,25 @@ description: État actuel de l'implémentation — snapshot vérifié contre le 
 metadata:
   type: reference
   status: living-document
-  last_updated: 2026-08-03
+  last_updated: 2026-08-13
 ---
 
 # État du Code
 
-> Vérifié le 2026-08-12, branche `feat/naya-v4-modalites-apprentissage` (depuis `main` — PR #43 et #44 mergées, chantiers 1-2 en production).
+> Vérifié le 2026-08-13, `main` @ merges #50-57 (revue de code approfondie + clôture décision #51). Statut complet dans le Status Overview de [[MEMORY]] ; le détail des correctifs dans la décision #73 de [[genizio-decisions]].
+
+## Snapshot du 2026-08-13 — Revue de code approfondie (décision #73, PR #50-57)
+
+**Branche** : `main` — après le merge des chantiers 3-7 (PR #45) et de la refonte Admin OS (PR #47/#49), puis des 8 PR de revue : #50 (stash `autoPort`), #51 (argent campagne), #52 (filiation modalités), #53 (P1), #54 (imports dynamiques), #55 (P2), #56 (clôture #51 — régression), #57 (mémoire).
+
+**Contenu** : voir la décision #73 pour les 3 P0 / 7 P1 / 13 P2 et leurs fixes. Points d'architecture à retenir :
+- **Exactly-une-fois au niveau base** : `markPaymentSuccessAndFulfill` passe la payment de tout statut non-success à `success` en une UPDATE atomique (CAS) — le webhook, la page de retour et le retry admin ne peuvent plus appliquer un bénéfice deux fois.
+- **Fonctions pures extraites et testées** (pattern du projet) : `resolveReformulationRoot`, `campaignLotDiscrepancy`, `followFilterAfterStart`, `computeSubscriptionExtensionWindow` (clamp fin de mois), `resolveCampaignTokenLot`, `campaignTokenCount`.
+- **Frontière service-role** : plus AUCUN import statique de `@/integrations/supabase/client.server` dans les `*.functions.ts` (tous dynamiques dans les handlers — 25 conversions).
+- **Redemptions atomiques** : claim CAS `is_redeemed` avant l'octroi + rollback best-effort (les deux flux : crédit famille et inscription/période).
+- **Vocabulaire fermé** : `challenges.domain` ne reçoit que les valeurs canoniques `DOMAINS` (ponts d'aspiration corrigés, test d'appartenance).
+
+**Vérifié** : **585 tests verts (49 fichiers)**, `tsc --noEmit` propre, build OK. Branches de revue supprimées (locales + distantes) — `main` seul, propre et synchro.
 
 ## Snapshot du 2026-08-12 — Chantier 3 « Modes d'apprentissage » : boucle de réévaluation des modalités (décision #66, analyse §22-26, §35, §38)
 
