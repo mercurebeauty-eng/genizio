@@ -1799,3 +1799,41 @@ fichier ne porte plus que les constantes partagées.
 **Alternatives rejetées** : *onglet Seasons conservé* (vestige — l'utile migre) ; *paiement manuel sans journal* (une payment `initiated` doit toujours finir `success` avec `paid_at` — l'admin agit sur la payment, jamais à côté) ; *rejouer sans vérifier Paystack en mode verify* (divergence de montant = refus, même règle que le webhook) ; *nav tabs horizontales conservées* (choix utilisateur : grille d'accueil).
 
 **Vérifié** : migration `20260813100000` poussée, types régénérés (CLI local, jamais MCP), **562 tests verts** (45 fichiers, +8), `tsc --noEmit` propre, build OK. Branche `feat/adminos-refonte-vision` (empilée sur `feat/naya-v4-modalites-apprentissage` — les migrations 2026081217/18/1900 des chantiers 3-7 sont présentes pour la cohérence du suivi distant ; le fix admin de la PR #46 est fusionné dedans).
+
+## Décision #72 : Campagnes B2B — mode test vs payé + lien de paiement partageable (2026-08-13, refonte Admin OS)
+
+**Contexte** : deux workflows manquaient à la section Campagnes (exigence utilisateur pendant la refonte Admin OS, décision #71) : définir une campagne **test** sans facturation (tokens confirmés d'office pour valider tout le workflow) ou une campagne **payée** avec un lien de paiement partageable pour l'ONG.
+
+**Ce qui a été fait** :
+1. **Migration `20260813100000_campaigns_test_paid_mode.sql`** : `campaigns.mode` (`text CHECK ('test','paid')`, défaut `'test'`) + `campaigns.price_per_token_xof` (`integer`).
+2. **Mode test** : `generateCampaignTokensAdmin` — tokens confirmés d'office, aucun paiement.
+3. **Mode payé** : `generateCampaignPaymentLinkAdmin` (POST, `requireAdmin`) → Paystack `initialize` (montant = count × prix, référence `GENIZIO-CAMP-…`, metadata `{type:"campaign_b2b", campaign_id, token_count}`) → **URL partageable** (modale copie, `AdminCampaignsTab`). Webhook : case `campaign_b2b` dans `applyPaystackEntitlement` — lot de codes B2B confirmés (`count = montant / prix`, plafonné au `target_count` restant via `resolveCampaignTokenLot`, pure testée).
+4. **Garde anti-dépassement** à la génération du lien : `existingCount + tokenCount ≤ target_count`.
+
+**Alternatives rejetées** : *tokens confirmés même en mode payé* (la facturation doit être réelle pour une ONG) ; *lien sans garde de capacité* (dépassement d'objectif silencieux).
+
+**⚠️ Corrections ultérieures (revue de code, décision #73, PR #51)** : à la livraison, le flux payé était en réalité **cassé de bout en bout** — aucune ligne `payments` créée à la génération du lien (le webhook ne retrouvait jamais la référence → ONG débitée, zéro code), et le lot multi-codes violait la contrainte `UNIQUE` sur `paystack_reference`. Voir #73 pour le détail.
+
+## Décision #73 : Revue de code approfondie 2026-08-12/13 — 3 P0, 7 P1, 13 P2 vérifiés et corrigés (PR #51-55)
+
+**Contexte** : demande utilisateur — « fais comme Codex, des review suggestions, c'est important d'avoir le code et les fonctions/workflow les plus optimaux. » Méthode retenue : **4 revues parallèles par sous-système** (chemin argent · boucle d'apprentissage · recommandations/aspirations/difficultés · Admin OS/routes), puis **chaque trouvaille P0/P1 relue dans le code réel avant correction** — zéro faux positif livré (leçon des 5 avis Codex vérifiés en session précédente).
+
+**Les 3 P0 (critiques)** :
+1. **Lien de campagne : l'ONG était débitée sans qu'aucun code soit créé** — `generateCampaignPaymentLinkAdmin` n'insérait aucune ligne `payments` ; le webhook ne retrouvait jamais la référence `GENIZIO-CAMP-…` et répondait 200 sans fulfillment ; le paiement était invisible même dans l'onglet Paiements. **Fix (PR #51)** : ligne `payments` (`initiated`, metadata `campaign_b2b` + `token_count`) créée avant l'initialisation Paystack, via `createPaystackPayment` (exporté — point de passage unique des 6 intents).
+2. **Lot B2B multi-codes impossible** — `paystack_reference` (colonne **UNIQUE**) était posée sur chaque code du lot → violation dès 2 codes → webhook 500 + retries infinis. **Fix (PR #51)** : seul le **premier** code porte la référence (idempotence = pattern `sponsorship`), les suivants `NULL` ; `amount_paid` = prix unitaire par code.
+3. **Boucle de modalités jamais bornée, même modalité re-servie** — `processModalityReformulation` groupait les tentatives par parent immédiat : au 2ᵉ échec, `modality_attempt` restait à 1, `MAX_MODALITY_ATTEMPTS` jamais atteint, `resolveNextModality` re-choisissait la 1ʳᵉ priorité, et la carte « Ce que Naya a compris » (chantier 5) ne s'affichait jamais. **Fix (PR #52)** : `resolveReformulationRoot` (pure testée) — filiation par la **racine** de la chaîne ; + tri déterministe des siblings, + `existingTitles` de toute la chaîne.
+
+**Les 7 P1 + #10** :
+4. **Double application du bénéfice en course webhook/page de retour** (flux nominal !) — garde `status !== success` non atomique (TOCTOU). **Fix (PR #53)** : **compare-and-swap** dans `markPaymentSuccessAndFulfill` (UPDATE `status = success` où `status ≠ success`, seul le vainqueur applique le bénéfice, les suivants reçoivent `already_fulfilled`) — exactement-une-fois au niveau base.
+5. **Domaines des ponts d'aspiration non canoniques (16/20)** — libellés d'affichage (« Sciences & Ingénierie »…) vs vocabulaire fermé `challenges.domain` → comptage d'essais, garde « défi récent » et vocabulaire inséré en base faussés. **Fix (PR #53)** : valeurs canoniques + test « chaque `bridge.domains[i] ∈ DOMAINS` » (`DOMAINS` exporté).
+6. **Biais « difficultés déclarées » inerte sur l'Exploration** — `getLeastExploredTalentLabels(..., 1)` : un seul candidat = re-tri sans effet. **Fix (PR #53)** : 3 candidats.
+7. **Imports statiques du client service-role** (`seasons` + `campaigns`) — frontière documentée franchie (bundle client). **Fix (PR #54)** : imports dynamiques dans les 25 handlers (script + revue du diff, tsc propre).
+8. **`submitChallengeNotCompleted` sans garde de statut** — un re-clic pouvait faire basculer un `completed` en `not_completed`. **Fix (PR #53)** : refus si `completed` ou déjà `not_completed`.
+9. **Plafonnement silencieux du lot de campagne** — trop-perçu possible (capacité réduite entre génération du lien et paiement). **Fix (PR #51)** : `campaignLotDiscrepancy` (pure testée) — tout écart payé/livré **bloque** avec message explicite ; la payment reste en attente pour traitement admin.
+10. **État React non synchronisé entre les onglets Admin** — un passeport débloqué dans Profils restait verrouillé dans Commerce/Exécutif. **Fix (PR #55)** : callback `onDataChanged` remonté (Profils + Produits).
+
+**Les 13 P2 (PR #55, résumé)** : redemptions de code atomiques (claim CAS + rollback best-effort, 2 flux), clamp fin de mois `setMonth` (+2 tests), `getChildEnrolledSeason` sans auth → `requireSupabaseAuth` + ownership, comptage `completedInAspirationDomains` dédié (le `.limit(6)` tronquait), `school_level`/`languages` manquants au select, cible `proof_target` bornée [1,1000], `applyGentleTimeProposal` refus si `none`, override « pas de N+1 » dans le prompt de reformulation, `findUserIdByEmail` paginé (listAllUsers), valeurs `.or()` PostgREST entre guillemets, `searchChildProfilesAdmin` cherche enfin l'email du parent (tous les comptes), double toast d'erreur supprimé, code mort retiré (`listOrdersAdmin`, imports inutilisés).
+
+**Laissés volontairement** (documentés, pas des bugs ouverts) : `suggestTimePressureChange` non pure (refactor d'API), contraintes DB `UNIQUE` sur `token_id` des crédits/périodes (couche la plus robuste — migration optionnelle, le CAS applicatif couvre déjà le double-clic), rencontres réelles (phase ultérieure, vue `talent_environment_signals` prête).
+
+**Vérifié** : 585 tests verts (49 fichiers, +27 depuis la refonte), `tsc --noEmit` propre, build OK à chaque étape ; merge des 5 PR (une résolution de conflit trivial « garder les deux » sur #54 vs main) ; branches nettoyées (locales + distantes). **Clôture décision #51** (PR #56 + #57) : le bug « Commencer le défi sans effet visible » était un bug de **filtre** (cause identifiée, correctif 2026-08-05 confirmé, régression verrouillée par `challenge-list-filters.ts` + 5 tests) ; le stash « bouton non réussi » résorbé (PR #50, `autoPort`).
