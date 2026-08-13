@@ -9,7 +9,29 @@ metadata:
 
 # État du Code
 
-> Vérifié le 2026-08-12, branche `feat/naya-v4-aspirations-projets` (empilée sur `feat/porte-entree-fondations-naya-v4`, aucune des deux mergées — main @ `6ab51ee`).
+> Vérifié le 2026-08-12, branche `feat/naya-v4-modalites-apprentissage` (depuis `main` — PR #43 et #44 mergées, chantiers 1-2 en production).
+
+## Snapshot du 2026-08-12 — Chantier 3 « Modes d'apprentissage » : boucle de réévaluation des modalités (décision #66, analyse §22-26, §35, §38)
+
+**Branche** : `feat/naya-v4-modalites-apprentissage` (depuis `main` @ merges #43+#44). Contenu complet dans le Status Overview de [[MEMORY]].
+
+**Migration appliquée et vérifiée** : `20260812170000_modality_reevaluation.sql` — `challenges.presentation_mode` (CHECK 9 modalités), événement `CHALLENGE_NOT_COMPLETED` (CHECK + trigger `log_challenge_observation` : branche not_completed + `presentation_mode` dans les payloads ASSIGNED/COMPLETED), `pedagogical_twins.presentation_signals` (branches échec/réussite dans `apply_observation_to_twin`). Probe fonctionnel réel : profil de test créé puis nettoyé par cascade, événement émis avec payload complet, Jumeau alimenté (persévérance 0.15 + `manipulation.failed=1`).
+
+**Nouveaux modules** : `modalities.functions.ts` (PRESENTATION_MODES fermé, `canReformulate`, `resolveNextModality`, `parseReformulationContext`, `summarizeModalityAttempts`, `processModalityReformulation`, server fn `reformulateChallenge`), `modalities.test.ts` (22 tests).
+
+**Modifiés** : `challenges.functions.ts` (submitChallengeNotCompleted — étape 5 : reformulation comme prochaine mission si cause accommodable, repli recommandation sinon), `naya-prompts.ts` (`MODALITY_SEMANTICS`, `buildReformulationPrompt`), `naya-verifier.functions.ts` (kind `reformulation`, rubrique 3 règles, `originalTitle` dans VerifyContext), `pedagogical-intention.ts` (traduction parent qualitative), types régénérés.
+
+**Vérifié** : 529 tests verts (44 fichiers), `tsc --noEmit` propre, build OK.
+
+**+ Chantier 4 « Calibration du temps » (décision #67, même branche, PR #45)** : migration `20260812180000_time_calibration.sql` (branche TIME_OVER dans `apply_observation_to_twin` — time_awareness faible), `time-calibration.functions.ts` (`suggestTimePressureChange` pure seuil 3/30 j, `getGentleTimeSuggestion` GET, `applyGentleTimeProposal` POST idempotent), carte « Plus de temps pour {enfant} ? » dans le portfolio (pattern « Une découverte de Naya », rejet localStorage, `time_pressure` ajouté au select). 535 tests verts, tsc propre, build OK.
+
+**+ Chantier 5 « Boucle de réévaluation complète » (décision #68, même branche, PR #45)** : `failure-sequence.functions.ts` (`evaluateFailureSequence` pure — facteur = modalité gagnante ou « encore à explorer », garde-fou §35 ≥ 2 modalités ; `buildFailureNarrative` 0 chiffre / 0 verdict ; `getLatestFailureSequence` GET dérivée à la lecture), carte « Ce que Naya a compris » au Portfolio, Loup kind `failure_sequence` (rubrique 3 règles). 544 tests verts, tsc propre, build OK.
+
+**+ Chantier 6 « Double contextualisation local → global » (décision #69, même branche, PR #45)** : `contextualization.ts` (0 IA — `normalizeCountryKey`, `localMaterialsForCountry` mapping 14 pays, `buildContextualizationInstruction` escalier), injection dans bulk + single + pont aspiration (`naya-prompts.ts`), `INTELLIGENCES_FIELD_INSTRUCTION` étendue (projet → 2 clés complémentaires). Aucune migration. 554 tests verts, tsc propre, build OK.
+
+**+ Chantier 7 « Monde réel hors-app » — fondations (décision #70, même branche, PR #45)** : migration `20260812190000_talent_environment_signals.sql` — vue interne `talent_environment_signals` (complétions validées par l'IA par environnement × talent, `CROSS JOIN LATERAL` jsonb + garde `jsonb_typeof`), `REVOKE` pour anon/authenticated, `COMMENT ON VIEW` (non-exploitation). Probe vérifié : service role lit (5 lignes échantillon), anon bloqué. Aucun code applicatif.
+
+**Clôture de la feuille de route Phase 4 restante** : les 5 chantiers (3-7) sont livrés sur `feat/naya-v4-modalites-apprentissage` (PR #45). 554 tests verts (44 fichiers), tsc propre, build OK. Migrations 2026081217/18/1900 poussées et vérifiées.
 
 ## Snapshot du 2026-08-12 — Chantier 2 « Naya V4 » : aspirations + défis-projets (décisions #64-65)
 

@@ -2046,42 +2046,62 @@ export const submitChallengeNotCompleted = createServerFn({ method: "POST" })
     // soumission elle-même (déjà enregistrée ci-dessus).
     (async () => {
       const cause = await classifyNotCompletedReason(data.reason);
-      if (!cause) return;
-      const { error: causeErr } = await supabase
-        .from("challenges")
-        .update({ not_completed_cause: cause })
-        .eq("id", data.id);
-      if (causeErr) console.error("Non-fatal: écriture de not_completed_cause échouée", causeErr);
-    })().catch((err) => console.error("Non-fatal: classifyNotCompletedReason failed", err));
+      if (cause) {
+        const { error: causeErr } = await supabase
+          .from("challenges")
+          .update({ not_completed_cause: cause })
+          .eq("id", data.id);
+        if (causeErr) console.error("Non-fatal: écriture de not_completed_cause échouée", causeErr);
+      }
 
-    // Même intégration que validateChallengeProof pour un défi discriminant, avec l'issue
-    // opposée — processDiscriminantResult gère déjà "ABANDONED" depuis sa création (cf.
-    // hypotheses.functions.ts) et ne fait rien si le défi n'est pas discriminant (no-op sûr).
-    try {
-      const { processDiscriminantResult } = await import("@/lib/hypotheses.functions");
-      void processDiscriminantResult(data.id, "ABANDONED");
-    } catch (err) {
-      console.error("Non-fatal: processDiscriminantResult failed", err);
-    }
+      // Même intégration que validateChallengeProof pour un défi discriminant, avec l'issue
+      // opposée — processDiscriminantResult gère déjà "ABANDONED" depuis sa création (cf.
+      // hypotheses.functions.ts) et ne fait rien si le défi n'est pas discriminant (no-op sûr).
+      try {
+        const { processDiscriminantResult } = await import("@/lib/hypotheses.functions");
+        void processDiscriminantResult(data.id, "ABANDONED");
+      } catch (err) {
+        console.error("Non-fatal: processDiscriminantResult failed", err);
+      }
 
-    // Étape 4 : si ce défi était un défi de retest de soutien renforcé et qu'il n'a pas
-    // été réussi, on redémarre le compteur plutôt que de conclure que le soutien n'est
-    // plus nécessaire (cf. processSupportRetestResult) — no-op sûr si ce n'en est pas un.
-    try {
-      const { processSupportRetestResult } = await import("@/lib/hypotheses.functions");
-      void processSupportRetestResult(data.id, "ABANDONED");
-    } catch (err) {
-      console.error("Non-fatal: processSupportRetestResult failed", err);
-    }
+      // Étape 4 : si ce défi était un défi de retest de soutien renforcé et qu'il n'a pas
+      // été réussi, on redémarre le compteur plutôt que de conclure que le soutien n'est
+      // plus nécessaire (cf. processSupportRetestResult) — no-op sûr si ce n'en est pas un.
+      try {
+        const { processSupportRetestResult } = await import("@/lib/hypotheses.functions");
+        void processSupportRetestResult(data.id, "ABANDONED");
+      } catch (err) {
+        console.error("Non-fatal: processSupportRetestResult failed", err);
+      }
 
-    // Même pré-génération que validateChallengeProof/submitDeclarativeProof — sans ça, le
-    // parent retrouve "aucun défi en cours" à sa prochaine visite.
-    try {
-      const { recommendChallengesForChild } = await import("@/lib/recommendations.functions");
-      void recommendChallengesForChild({ data: { childId: challenge.child_id } });
-    } catch (err) {
-      console.error("Non-fatal: pré-génération de la prochaine mission a échoué", err);
-    }
+      // Étape 5 — boucle de réévaluation des modalités (chantier 3, §22-26) : si la cause
+      // est accommodable, la PROCHAINE mission est une reformulation du MÊME objectif
+      // pédagogique dans une autre modalité (jamais une conclusion — jusqu'à 3 essais).
+      // Sinon (cause absente ou OTHER), ou si la reformulation est impossible, on retombe
+      // sur la recommandation classique pour que le parent ne reste jamais sans mission.
+      const { canReformulate } = await import("@/lib/modalities.functions");
+      if (canReformulate(cause)) {
+        try {
+          const { processModalityReformulation } = await import("@/lib/modalities.functions");
+          const outcome = await processModalityReformulation(supabase, userId, data.id);
+          if (outcome.ok) return; // la reformulation devient la mission suivante
+          console.error(
+            `Non-fatal: reformulation impossible (${outcome.reason}) — repli sur la recommandation`
+          );
+        } catch (err) {
+          console.error("Non-fatal: reformulation failed", err);
+        }
+      }
+
+      // Même pré-génération que validateChallengeProof/submitDeclarativeProof — sans ça, le
+      // parent retrouve "aucun défi en cours" à sa prochaine visite.
+      try {
+        const { recommendChallengesForChild } = await import("@/lib/recommendations.functions");
+        void recommendChallengesForChild({ data: { childId: challenge.child_id } });
+      } catch (err) {
+        console.error("Non-fatal: pré-génération de la prochaine mission a échoué", err);
+      }
+    })().catch((err) => console.error("Non-fatal: traitement post-échec failed", err));
 
     return { challenge: updated };
   });

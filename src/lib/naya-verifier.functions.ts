@@ -38,6 +38,8 @@ export type GenerationKind =
   | "recommendation"
   | "discriminant"
   | "support_retest"
+  | "reformulation"
+  | "failure_sequence"
   | "hypothesis"
   | "proof_validation"
   | "not_completed_classification"
@@ -76,6 +78,9 @@ export interface VerifyContext {
   existingTitles?: string[];
   /** Défi-pont (chantier Naya V4) : libellé de l'aspiration explorée. */
   aspirationLabel?: string;
+  /** Reformulation (chantier 3, modalités) : titre du défi original à reformuler —
+   * le Loup vérifie que l'objectif pédagogique reste identique. */
+  originalTitle?: string;
 }
 
 // ── Constantes de référence (copies locales, verrouillées par test) ─────────
@@ -537,6 +542,18 @@ export function semanticRubricFor(kind: GenerationKind): string {
 6. coherence-academic-level : si academic_level_age est renseigné, le contenu doit réellement correspondre à ce niveau (ni sous-calibré ni sur-calibré).
 7. proof-mode-coherent : le mode de preuve doit correspondre à la nature du défi (photo pour un résultat visible, declarative pour une action comptable).
 8. supervision-coherent : requires_supervision doit être true si le défi comporte un risque réel (feu, chaleur, coupant, produit chimique, électricité).`;
+    case "reformulation":
+      return `1. reformulation-meme-objectif : le défi doit viser le MÊME objectif pédagogique que le défi original (même compétence, niveau équivalent — jamais plus difficile).
+2. reformulation-modalite : la modalité imposée (presentation_mode) doit réellement imprégner le défi — le format correspond à ce que la modalité promet (manipulation → gestes concrets, histoire → récit, etc.).
+3. reformulation-fraiche : le défi ne doit ni mentionner l'échec précédent ni révéler qu'il s'agit d'une reformulation — présenté comme un défi neuf et stimulant.`;
+    case "failure_sequence":
+      // Chantier 5 (§36) : la narration de séquence est aujourd'hui 100 % déterministe
+      // (evaluateFailureSequence, 0 IA) — la rubrique est le garde-fou de référence
+      // pour toute évolution future vers un facteur explicatif assisté par IA :
+      // jamais de verdict, jamais de conclusion avant ≥ 2 modalités testées (§35).
+      return `1. sequence-zero-verdict : la conclusion ne doit JAMAIS dire que l'enfant « ne peut pas » ou est « nul » — la compétence reste « encore à explorer » ou la modalité gagnante est nommée.
+2. sequence-garde-fou-35 : aucune conclusion de séquence avant au moins 2 modalités testées (ou une réussite) — sinon la boucle reste ouverte.
+3. sequence-zero-chiffre : aucune donnée quantitative (nombre d'essais, scores) dans la narration parent.`;
     case "homework":
       return `1. fusion-consigne : le défi doit réellement faire réviser/apprendre la consigne scolaire fournie, pas la contourner.
 2. zpa-coherent : la difficulté doit correspondre au niveau ZPA indiqué (soutien renforcé → très guidé).

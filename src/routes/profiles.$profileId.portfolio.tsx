@@ -12,6 +12,9 @@ import { getChildSupervisorInfo } from "@/lib/supervisors.functions";
 import { getChildAccessStatusFn, type ChildAccessStatus } from "@/lib/child-access";
 import { formatXof } from "@/lib/pricing";
 import { initializePassportPayment } from "@/lib/payments.functions";
+import { getGentleTimeSuggestion, applyGentleTimeProposal, type GentleSuggestion } from "@/lib/time-calibration.functions";
+import { getLatestFailureSequence, type FailureSequenceSnapshot } from "@/lib/failure-sequence.functions";
+import { TIME_PRESSURE_LABELS } from "@/lib/time-limit";
 import {
   OPPORTUNITY_COMPASS_VERSION,
   OPPORTUNITY_COMPASS_DISCLAIMER,
@@ -202,6 +205,7 @@ type Child = {
   interests: string[];
   pdf_unlocked: boolean;
   xp: number | null;
+  time_pressure?: string | null;
 };
 
 type Challenge = {
@@ -245,9 +249,20 @@ function PortfolioPage() {
   const [mentorCount, setMentorCount] = useState(0);
   const [dismissedDiscoveries, setDismissedDiscoveries] = useState<string[]>([]);
   const [expandedMonths, setExpandedMonths] = useState<Set<string>>(new Set());
+  // Calibration du temps (chantier 4, §5 suite) : proposition de temps généreux
+  // dérivée des TIME_OVER (30 jours, seuil par domaine) — jamais automatique,
+  // le parent reste décideur (le rejet est mémorisé en local).
+  const [gentleSuggestion, setGentleSuggestion] = useState<GentleSuggestion | null>(null);
+  const [gentleDismissed, setGentleDismissed] = useState(false);
+  // Boucle de réévaluation complète (chantier 5, §36) : conclusion qualitative de la
+  // dernière séquence de reformulations — jamais de verdict (garde-fou §35).
+  const [failureSequence, setFailureSequence] = useState<FailureSequenceSnapshot | null>(null);
 
   const ensureHypotheses = useServerFn(ensureHypothesesForChild);
   const initializePassportPaymentFn = useServerFn(initializePassportPayment);
+  const getGentleSuggestionFn = useServerFn(getGentleTimeSuggestion);
+  const applyGentleFn = useServerFn(applyGentleTimeProposal);
+  const getFailureSequenceFn = useServerFn(getLatestFailureSequence);
 
   // Paiement en ligne Paystack du Passeport d'Excellence (50 000 FCFA) : le serveur crée
   // la payment, on redirige vers le checkout hébergé. Le webhook/retour passe
@@ -278,7 +293,7 @@ function PortfolioPage() {
     if (!session) return;
     setFetching(true);
     Promise.all([
-      supabase.from("child_profiles").select("id, name, age, talents, interests, pdf_unlocked, xp").eq("id", profileId).eq("user_id", session!.user.id).maybeSingle(),
+      supabase.from("child_profiles").select("id, name, age, talents, interests, pdf_unlocked, xp, time_pressure").eq("id", profileId).eq("user_id", session!.user.id).maybeSingle(),
       supabase
         .from("challenges")
         .select("id, title, domain, trait_subform, status, completed_at, proof_image_url, ai_observations, created_at")
@@ -340,6 +355,57 @@ function PortfolioPage() {
       console.error("Erreur sauvegarde découverte masquée:", err);
       // Stockage local indisponible (navigation privée, quota...) — la
       // suggestion réapparaîtra au prochain chargement, sans gravité.
+    }
+  };
+
+  // Calibration du temps (chantier 4) : rejet mémorisé en local, même philosophie
+  // que les découvertes — pas de colonne DB pour un simple « ne re-propose pas ça ».
+  useEffect(() => {
+    if (!profileId) return;
+    try {
+      setGentleDismissed(localStorage.getItem(`genizio_dismissed_gentle_proposal_${profileId}`) === "1");
+    } catch (err) {
+      console.error("Erreur lecture proposition masquée:", err);
+      setGentleDismissed(false);
+    }
+  }, [profileId]);
+
+  useEffect(() => {
+    if (!session || !profileId) return;
+    let cancelled = false;
+    getGentleSuggestionFn({ data: { childId: profileId } })
+      .then((res) => {
+        if (!cancelled) setGentleSuggestion(res);
+      })
+      .catch(() => {});
+    getFailureSequenceFn({ data: { childId: profileId } })
+      .then((res) => {
+        if (!cancelled) setFailureSequence(res);
+      })
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+  }, [session, profileId, getGentleSuggestionFn, getFailureSequenceFn]);
+
+  const dismissGentleProposal = () => {
+    setGentleDismissed(true);
+    try {
+      localStorage.setItem(`genizio_dismissed_gentle_proposal_${profileId}`, "1");
+    } catch (err) {
+      console.error("Erreur sauvegarde proposition masquée:", err);
+    }
+  };
+
+  const acceptGentleProposal = async () => {
+    if (!child) return;
+    try {
+      await applyGentleFn({ data: { childId: profileId } });
+      setChild((prev) => (prev ? { ...prev, time_pressure: "gentle" } : prev));
+      toast.success(`${TIME_PRESSURE_LABELS.gentle} activé — ${child.name} a plus de temps pour ses défis.`);
+    } catch (err) {
+      console.error("Erreur activation temps généreux:", err);
+      toast.error("Impossible d'activer le temps généreux.");
     }
   };
 
@@ -531,6 +597,76 @@ function PortfolioPage() {
                   <span>Proposer un défi adapté</span>
                 </Link>
               </div>
+            </div>
+          )}
+
+          {/* Calibration du temps (chantier 4, §5 suite) : proposition de temps
+              généreux dérivée des TIME_OVER — jamais automatique, le parent tranche.
+              Même cluster visuel que les autres propositions de Naya (sky + badge
+              ambre), pattern de la carte « Une découverte de Naya » : deux boutons,
+              rejet mémorisé en local. */}
+          {child.time_pressure === "standard" && gentleSuggestion?.suggested && !gentleDismissed && (() => {
+            const domain = gentleSuggestion.domains[0];
+            const domainNote = domain && domain !== "domaine inconnu" ? `, surtout dans ${domain}` : "";
+            return (
+              <div className="rounded-3xl border border-sky-200 bg-sky-50/90 p-6 shadow-md">
+                <div className="mb-3 flex items-center gap-3">
+                  <NayaAvatar size="sm" thoughts={[`J'observe le rythme de ${child.name}...`]} />
+                  <div>
+                    <span className="inline-flex items-center gap-1.5 rounded-full border border-amber-300 bg-amber-200 px-2.5 py-0.5 text-[10px] font-black uppercase tracking-wider text-amber-900 shadow-xs">
+                      <Clock className="size-3" />
+                      Naya propose
+                    </span>
+                    <h3 className="mt-1 font-display text-balance text-lg font-bold text-ink">
+                      Plus de temps pour {child.name} ?
+                    </h3>
+                  </div>
+                </div>
+                <p className="text-sm font-medium leading-relaxed text-ink">
+                  {child.name} a dépassé le temps de plusieurs défis récents{domainNote}. Naya
+                  propose d'activer le <strong>temps généreux</strong> — les chronos durent
+                  alors nettement plus longtemps. C'est votre décision.
+                </p>
+                <div className="mt-4 flex items-center justify-end gap-2 pt-3 border-t border-dashed border-sky-200">
+                  <button
+                    onClick={dismissGentleProposal}
+                    className="rounded-2xl border border-ink/10 px-4 py-2 text-xs font-bold text-ink/60 hover:bg-ink/5 transition-colors cursor-pointer"
+                  >
+                    Pas maintenant
+                  </button>
+                  <button
+                    onClick={acceptGentleProposal}
+                    className="press-white inline-flex items-center justify-center gap-2 rounded-2xl border border-sky-300 bg-sky-300 px-4 py-2 text-xs font-bold text-ink shrink-0 cursor-pointer"
+                  >
+                    <Clock className="size-3.5 fill-sky-700 text-sky-700" />
+                    <span>Activer le {TIME_PRESSURE_LABELS.gentle}</span>
+                  </button>
+                </div>
+              </div>
+            );
+          })()}
+
+          {/* Boucle de réévaluation complète (chantier 5, §36) : « Ce que Naya a
+              compris » — conclusion qualitative de la dernière séquence de
+              reformulations. Narration 100 % déterministe (0 IA, 0 chiffre) et
+              jamais un verdict : soit la modalité gagnante est nommée, soit la
+              compétence « reste encore à explorer » (garde-fou §35 : jamais
+              « il ne peut pas »). Absente tant que la séquence n'est pas concluante. */}
+          {failureSequence?.hasSequence && failureSequence.narrative && (
+            <div className="rounded-3xl border border-emerald-200 bg-emerald-50/90 p-6 shadow-md">
+              <div className="mb-3 flex items-center gap-3">
+                <NayaAvatar size="sm" thoughts={[`Je comprends mieux comment apprend ${child.name}...`]} />
+                <div>
+                  <span className="inline-flex items-center gap-1.5 rounded-full border border-emerald-300 bg-emerald-200 px-2.5 py-0.5 text-[10px] font-black uppercase tracking-wider text-emerald-900 shadow-xs">
+                    <Search className="size-3" />
+                    Ce que Naya a compris
+                  </span>
+                  <h3 className="mt-1 font-display text-balance text-lg font-bold text-ink">
+                    Une manière d'apprendre se précise
+                  </h3>
+                </div>
+              </div>
+              <p className="text-sm font-medium leading-relaxed text-ink">{failureSequence.narrative}</p>
             </div>
           )}
 

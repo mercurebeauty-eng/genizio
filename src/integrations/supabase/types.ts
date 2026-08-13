@@ -200,6 +200,7 @@ export type Database = {
           not_completed_reason_chip: string | null
           notes: string | null
           pedagogical_context: string | null
+          presentation_mode: string | null
           progress: number
           proof_image_url: string | null
           proof_mode: string
@@ -249,6 +250,7 @@ export type Database = {
           not_completed_reason_chip?: string | null
           notes?: string | null
           pedagogical_context?: string | null
+          presentation_mode?: string | null
           progress?: number
           proof_image_url?: string | null
           proof_mode?: string
@@ -298,6 +300,7 @@ export type Database = {
           not_completed_reason_chip?: string | null
           notes?: string | null
           pedagogical_context?: string | null
+          presentation_mode?: string | null
           progress?: number
           proof_image_url?: string | null
           proof_mode?: string
@@ -995,6 +998,7 @@ export type Database = {
           id: string
           interests: Json
           last_computed_at: string
+          presentation_signals: Json
           updated_at: string
           user_id: string
         }
@@ -1006,6 +1010,7 @@ export type Database = {
           id?: string
           interests?: Json
           last_computed_at?: string
+          presentation_signals?: Json
           updated_at?: string
           user_id: string
         }
@@ -1017,6 +1022,7 @@ export type Database = {
           id?: string
           interests?: Json
           last_computed_at?: string
+          presentation_signals?: Json
           updated_at?: string
           user_id?: string
         }

@@ -5,6 +5,12 @@
 // brut au parent ("Intention Pédagogique" : {"cycle_id":"...","target_cause":"..."}).
 // Cette fonction traduit ce JSON en phrase lisible ; le texte humain existant continue
 // de passer tel quel.
+//
+// Chantier 3 (modalités, §22-26) : les reformulations portent aussi un JSON interne
+// { is_reformulation, presentation_mode, ... } — traduit ici en phrase qualitative
+// pour le parent (jamais de chiffres, jamais de mention de l'échec précédent).
+
+import { PRESENTATION_MODE_LABELS, type PresentationMode } from "@/lib/modalities.functions";
 
 const DISCRIMINANT_CAUSE_LABELS: Record<string, string> = {
   METHOD_MISMATCH:
@@ -54,6 +60,17 @@ export function formatPedagogicalIntention(rawContext: string | null | undefined
   // interne à Naya, jamais montrée comme un "test" à l'enfant/au parent.
   if (parsed?.is_support_retest) {
     return "Naya vérifie discrètement si un accompagnement renforcé récent est encore nécessaire ici.";
+  }
+
+  // Chantier 3 — reformulation de modalité (§22-26) : la même compétence, présentée
+  // autrement. L'enfant, lui, ne voit qu'un défi frais (le prompt l'exige) ; le parent
+  // voit que Naya a changé de manière d'enseigner — jamais de mention de l'échec,
+  // jamais de chiffres ni de verdict.
+  if (parsed?.is_reformulation && typeof parsed.presentation_mode === "string") {
+    const label = PRESENTATION_MODE_LABELS[parsed.presentation_mode as PresentationMode];
+    return label
+      ? `Naya présente cette compétence autrement — par ${label} cette fois — pour trouver la manière qui lui parle.`
+      : "Naya présente cette compétence autrement, avec une nouvelle manière d'enseigner.";
   }
 
   return null;
