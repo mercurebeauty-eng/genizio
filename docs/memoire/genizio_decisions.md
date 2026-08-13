@@ -1439,7 +1439,21 @@ px tsc --noEmit.
 - ❌ *Fusionner le niveau de soutien dans `zpa_level`* (un seul chiffre) : risque de signaux contradictoires (contenu difficile + instructions bébé). Finalement, aucun nouveau champ "niveau" séparé n'a été créé du tout — le soutien renforcé est piloté par la réutilisation directe du mécanisme Stabilisation/Investigation existant, pas par un nouveau dial numérique.
 - ❌ *Seuil de motif à 2 occurrences* (proposition initiale de l'utilisateur) : tranché explicitement à **4**, pour rester cohérent avec le seuil déjà utilisé par le déclencheur âge/référentiel (décision #38) plutôt que d'avoir deux disciplines différentes dans le même moteur.
 
-**⚠️ État vérifié (2026-08-03), PAS entièrement résolu** : voir [[genizio-etat-code]] pour l'état complet. Deux bugs de production découverts en testant après déploiement — la carte "Avantage Secret de Naya" est **résolue**, voir décision #51 ; le bouton "non réussi" absent au statut `todo` est corrigé (fix non commité, cf. [[genizio-etat-code]]) mais un clic sur "Commencer le défi" ne produisant aucun effet visible reste **NON résolu**, cause non identifiée à ce jour.
+**✅ État vérifié et CLÔTURÉ (2026-08-13)** : voir [[genizio-etat-code]] pour l'état complet et l'addendum ci-dessous. Les deux bugs de production découverts en testant après déploiement sont résolus : la carte "Avantage Secret de Naya" (ci-dessous) ; le bouton "non réussi" absent au statut `todo` (déjà en production via le reframe 2026-08-09, stash résorbé en PR #50) ; et le clic "Commencer le défi" sans effet visible — **cause identifiée et clôturée**, voir addendum.
+
+## Décision #51 — Addendum (2026-08-13) : clôture du bug « Commencer le défi sans effet visible »
+
+**Symptôme historique (signalé ~2026-08-03, après déploiement PR #21/#22)** : cliquer "Commencer le défi" ne produisait aucun effet visible — pas de changement d'état, pas de message d'erreur.
+
+**Cause racine identifiée (2026-08-13, vérifiée dans le code)** : le bug était dans le **filtre de liste**, pas dans la mutation.
+- La mutation fonctionnait : `setStatus` → mise à jour optimiste + `updateChallenge` (pré-checks verrouillage/désactivation, ownership, repli `time_limit_minutes`) → `in_progress` en base.
+- Mais la mise à jour optimiste **retirait la carte du filtre « À faire » avant la réponse serveur** — et le filtre restait sur « À faire » → le défi disparaissait sans qu'on voie où il était allé. « Aucun effet visible » = la carte n'était plus nulle part, seul un toast passait.
+
+**Correctif (déjà en place depuis le 2026-08-05, confirmé)** : au clic depuis « À faire », le filtre **suit la carte vers « En cours »** — elle reste visible dans son nouvel état (bloc « Défi débuté. Nous attendons vos validations… » + lien « Valider le défi (Mode Enfant) 📸 ») + toast explicite. Angles morts vérifiés : filtre « Tous » (carte visible dans les deux états), filtre « En cours » (déjà affichée), échec serveur (rollback + toast d'erreur), un seul CTA « Commencer » dans toute l'app.
+
+**Garantie de non-régression (PR #56, mergée)** : logique extraite en fonction pure `followFilterAfterStart` (`src/lib/challenge-list-filters.ts`, pattern du projet) + 5 tests de régression.
+
+**Reste (manuel)** : test navigateur réel — clic sur un défi « À faire » → la carte bascule en « En cours » avec le bloc « Défi débuté… » + lien Mode Enfant, toast, `in_progress` en base.
 
 ## Décision #51 : Correctif du secret académique de Naya — la cause racine réelle était côté client, pas seulement côté génération
 
