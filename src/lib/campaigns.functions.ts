@@ -2,7 +2,6 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireAdmin } from "@/integrations/supabase/admin-middleware";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
-import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { listAllUsers } from "@/integrations/supabase/admin-users";
 import { getActiveSeason } from "./seasons.functions";
 import { insertSupervisorAssignments } from "./supervisors.functions";
@@ -45,6 +44,7 @@ export const createCampaignAdmin = createServerFn({ method: "POST" })
       .parse(input)
   )
   .handler(async ({ data }) => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     // 1. Resolve manager email to user ID
     const users = await listAllUsers(supabaseAdmin);
     const manager = users.find((u) => u.email === data.managerEmail);
@@ -88,6 +88,7 @@ export const updateCampaignBillingAdmin = createServerFn({ method: "POST" })
   .middleware([requireAdmin])
   .validator((input: unknown) => CampaignBillingInput.parse(input))
   .handler(async ({ data }) => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const patch: Record<string, unknown> = { mode: data.mode };
     if (data.pricePerTokenXof !== undefined) {
       patch.price_per_token_xof = data.pricePerTokenXof;
@@ -117,6 +118,7 @@ export const updateCampaignExtraQuotaAdmin = createServerFn({ method: "POST" })
       .parse(input)
   )
   .handler(async ({ data }) => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { data: campaign, error } = await (supabaseAdmin as any)
       .from("campaigns")
       .update({ extra_supervisors_quota: data.extraSupervisorsQuota, max_educators: data.maxEducators })
@@ -153,6 +155,7 @@ export const listCampaignsAdmin = createServerFn({ method: "GET" })
   .middleware([requireAdmin])
   .validator((input: unknown) => ListCampaignsInput.parse(input ?? {}))
   .handler(async ({ data }) => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const empty: PaginatedCampaigns = { data: [], total: 0, page: data.page, pageSize: data.pageSize, totalPages: 1 };
     try {
       // `id` en départage : la pagination ci-dessous découpe ce tableau à chaque requête, donc un
@@ -230,6 +233,7 @@ export const generateCampaignTokensAdmin = createServerFn({ method: "POST" })
       .parse(input)
   )
   .handler(async ({ data }) => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     // Fetch campaign
     const { data: campaign } = await (supabaseAdmin as any)
       .from("campaigns")
@@ -308,6 +312,7 @@ export const generateCampaignPaymentLinkAdmin = createServerFn({ method: "POST" 
   .middleware([requireAdmin])
   .validator((input: unknown) => CampaignPaymentLinkInput.parse(input))
   .handler(async ({ data, context }) => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { data: campaign, error: campErr } = await (supabaseAdmin as any)
       .from("campaigns")
       .select("id, name, mode, price_per_token_xof, target_count")
@@ -389,6 +394,7 @@ export const generateCampaignPaymentLinkAdmin = createServerFn({ method: "POST" 
 export const checkIsCampaignManager = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const userId = (context as any).claims?.sub;
     const { count } = await (supabaseAdmin as any)
       .from("campaigns")
@@ -416,6 +422,7 @@ export interface CampaignPublicInfo {
 export const getCampaignPublicInfo = createServerFn({ method: "GET" })
   .validator((input: unknown) => z.object({ campaignId: z.string().uuid() }).parse(input))
   .handler(async ({ data }) => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { data: campaign, error } = await (supabaseAdmin as any)
       .from("campaigns")
       .select("id, name, description, target_count, start_date, end_date")
@@ -458,6 +465,7 @@ export const enrollChildViaCampaignLink = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .validator((input: unknown) => EnrollViaCampaignLinkInput.parse(input))
   .handler(async ({ data, context }) => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const userId = (context as any).claims?.sub;
 
     const { data: child } = await (supabaseAdmin as any)
@@ -536,6 +544,7 @@ export const listCampaignTokensAdmin = createServerFn({ method: "POST" })
       .parse(input)
   )
   .handler(async ({ data }) => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     // Départage par id : un lot de codes est inséré en masse et partage la même horodate, sans
     // quoi l'ordre d'affichage change d'un chargement à l'autre pour les mêmes données.
     const { data: tokens, error } = await (supabaseAdmin as any)
@@ -596,6 +605,7 @@ export const listCampaignTokensForManager = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .validator((input: any) => z.object({ campaignId: z.string().uuid() }).parse(input))
   .handler(async ({ data, context }) => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const userId = (context as any).claims?.sub;
 
     const { data: campaign } = await (supabaseAdmin as any)
@@ -638,6 +648,7 @@ export const getNgoDashboardData = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .validator((input: unknown) => z.object({ campaignId: z.string().uuid().optional() }).parse(input ?? {}))
   .handler(async ({ data, context }) => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const userId = (context as any).claims?.sub;
 
     const { data: campaigns, error: campErr } = await (supabaseAdmin as any)
@@ -754,6 +765,7 @@ export const assignCampaignSupervisor = createServerFn({ method: "POST" })
       .parse(input)
   )
   .handler(async ({ data, context }) => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const managerId = (context as any).claims?.sub;
 
     const { data: campaign } = await (supabaseAdmin as any)
@@ -842,6 +854,7 @@ export const addCampaignEducator = createServerFn({ method: "POST" })
       .parse(input)
   )
   .handler(async ({ data, context }) => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const managerId = (context as any).claims?.sub;
 
     const { data: campaign } = await (supabaseAdmin as any)
@@ -900,6 +913,7 @@ export const listCampaignEducators = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .validator((input: any) => z.object({ campaignId: z.string().uuid() }).parse(input))
   .handler(async ({ data, context }) => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const managerId = (context as any).claims?.sub;
     const { data: campaign } = await (supabaseAdmin as any)
       .from("campaigns")
@@ -937,6 +951,7 @@ export const removeCampaignEducator = createServerFn({ method: "POST" })
     z.object({ campaignId: z.string().uuid(), educatorUserId: z.string().uuid() }).parse(input)
   )
   .handler(async ({ data, context }) => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const managerId = (context as any).claims?.sub;
     const { data: campaign } = await (supabaseAdmin as any)
       .from("campaigns")
