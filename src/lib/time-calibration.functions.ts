@@ -110,6 +110,12 @@ export const applyGentleTimeProposal = createServerFn({ method: "POST" })
     if (!child) throw new Error("Profil enfant introuvable.");
     if (child.access_locked_at) throw new Error("Ce profil est verrouillé.");
     if (child.is_active === false) throw new Error("Ce profil est désactivé par l'administrateur.");
+    // Garde (review 2026-08-12, P2) : un profil 'none' (chrono désactivé par l'admin)
+    // ne doit pas pouvoir être basculé en mode doux par un simple appel POST — la
+    // suggestion n'est proposée qu'en mode 'standard'.
+    if (child.time_pressure === "none") {
+      throw new Error("Le chrono est désactivé pour ce profil — le mode doux n'est pas applicable.");
+    }
     if (child.time_pressure === "gentle") return { ok: true, timePressure: "gentle" as const };
 
     const { data: updated, error } = await supabase

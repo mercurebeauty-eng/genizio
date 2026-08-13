@@ -1015,6 +1015,7 @@ ${input.timePressureNote}
 
 RÈGLES ABSOLUES :
 - Même domaine (${input.originalDomain}), même compétence, difficulté équivalente ou plus douce — l'objectif pédagogique ne change pas.
+- OVERRIDE (review 2026-08-12, P2) : la clause « PRÉCOCITÉ GUIDÉE (N+1) » des principes Génizio ci-dessous NE S'APPLIQUE PAS à une reformulation — difficulté strictement égale ou plus douce (remise en confiance, jamais une épreuve).
 - Ne mentionne JAMAIS que ce défi est un second essai, une reformulation ou un défi « raté » : ${input.childName} doit découvrir un défi frais et stimulant.
 - La motivation naît de la finalité : relie chaque étape à un gain concret et immédiat pour ${input.childName}.
 - ${STEPS_INSTRUCTION}

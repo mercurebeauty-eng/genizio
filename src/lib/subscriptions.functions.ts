@@ -170,7 +170,12 @@ export async function activateFamilySubscription(
 
   const plusOneMonth = (from: Date) => {
     const end = new Date(from);
+    const day = end.getDate();
     end.setMonth(end.getMonth() + 1);
+    // Fin de mois (review 2026-08-12, P2) : ne déborde jamais sur le mois suivant
+    // (31 janv + 1 mois → fin février, pas 3 mars) — setDate(0) = dernier jour
+    // du mois précédent, donc du mois cible.
+    if (end.getDate() < day) end.setDate(0);
     return end.toISOString();
   };
 
@@ -489,6 +494,20 @@ export const redeemSponsorshipCode = createServerFn({ method: "POST" })
 
     const months = token.months_count ?? 3;
 
+    // Consommation atomique du code (review 2026-08-12, P2) : deux demandes concurrentes
+    // (double-clic, deux onglets) lisent toutes deux is_redeemed=false — le claim
+    // compare-and-swap ne laisse passer qu'une seule, l'autre reçoit « déjà utilisé »
+    // AVANT de poser le crédit (jamais deux crédits sur le même code).
+    const { data: claimed, error: claimErr } = await supabaseAdmin
+      .from("sponsorship_tokens")
+      .update({ is_redeemed: true, redeemed_at: new Date().toISOString() })
+      .eq("id", token.id)
+      .eq("is_redeemed", false)
+      .select("id")
+      .maybeSingle();
+    if (claimErr) throw new Error("Erreur lors de l'activation du code. Réessayez.");
+    if (!claimed) throw new Error("Ce code de parrainage a déjà été utilisé.");
+
     // Crédit de COUVERTURE FAMILLE : démarre au plus tard entre maintenant et la fin de la
     // couverture parrainage actuelle (extension sans découpe, computeAccessPeriodWindow) —
     // un code posé sur une couverture existante la prolonge, il ne la coupe jamais.
@@ -509,19 +528,15 @@ export const redeemSponsorshipCode = createServerFn({ method: "POST" })
       ends_at: endsAt,
     });
     if (credErr) {
+      // Rollback best-effort du claim : un échec ne brûle jamais le code.
+      await supabaseAdmin
+        .from("sponsorship_tokens")
+        .update({ is_redeemed: false, redeemed_at: null })
+        .eq("id", token.id)
+        .eq("is_redeemed", true);
       throw new Error(
         "Erreur lors de l'activation du code. Le code n'a pas été consommé, réessayez.",
       );
-    }
-
-    // Marque le code utilisé APRÈS l'insert réussi (même ordre que redeemSponsorshipToken) :
-    // un échec ne brûle jamais le code.
-    const { error: updErr } = await supabaseAdmin
-      .from("sponsorship_tokens")
-      .update({ is_redeemed: true, redeemed_at: new Date().toISOString() })
-      .eq("id", token.id);
-    if (updErr) {
-      console.error("[subscriptions] Token marqué utilisé en échec (crédit déjà posé):", updErr);
     }
 
     return { success: true, endsAt, months };

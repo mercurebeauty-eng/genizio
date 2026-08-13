@@ -8,8 +8,6 @@ import {
   deleteProduct,
   listMaterialSuggestions,
   ignoreMaterialSuggestion,
-  listOrdersAdmin,
-  updateOrderStatus,
   getEcosystemStats,
 } from "@/lib/products.functions";
 import {
@@ -21,7 +19,6 @@ import {
   PackageSearch,
   X,
   BarChart2,
-  ShoppingCart,
 } from "lucide-react";
 import { toast } from "sonner";
 import {
@@ -101,7 +98,7 @@ const ORDER_STATUS_PILL: Record<string, string> = {
   cancelled: "bg-stone-200 text-stone-600 border-stone-300",
 };
 
-export function AdminProductsTab() {
+export function AdminProductsTab({ onDataChanged }: { onDataChanged?: () => void }) {
   const { session, loading } = useSession();
   const [products, setProducts] = useState<Product[]>([]);
   const [suggestions, setSuggestions] = useState<MaterialSuggestion[]>([]);
@@ -192,6 +189,9 @@ export function AdminProductsTab() {
       setDraft(emptyDraft);
       setPendingSuggestionId(null);
       void refetch();
+      // Synchronisation du parent (review 2026-08-12, P1) : le catalogue Commerce
+      // (commerceData) doit voir le nouveau produit sans rechargement manuel.
+      onDataChanged?.();
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Erreur lors de l'ajout.");
     } finally {
@@ -224,6 +224,7 @@ export function AdminProductsTab() {
     try {
       await updateFn({ data: { id: p.id, is_active: !p.is_active }, ...opts });
       void refetch();
+      onDataChanged?.();
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Erreur lors de la mise à jour du produit.");
     }
@@ -245,6 +246,7 @@ export function AdminProductsTab() {
       await deleteFn({ data: { id }, ...opts });
       toast.success("Produit supprimé.");
       void refetch();
+      onDataChanged?.();
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Erreur lors de la suppression du produit.");
     }

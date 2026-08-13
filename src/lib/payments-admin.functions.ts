@@ -187,7 +187,9 @@ const ExtendSubscriptionInput = z.object({
 });
 
 /** Fenêtre d'extension pure : la base est le plus tard entre la fin courante et
- *  maintenant (jamais de découpe de période), puis +months. Testable sans base. */
+ *  maintenant (jamais de découpe de période), puis +months. Testable sans base.
+ *  Fin de mois clampée (review 2026-08-12, P2) : 31 janv + 1 mois → fin février,
+ *  jamais de débordement JS sur le mois suivant (3 mars). */
 export function computeSubscriptionExtensionWindow(
   currentEnd: string | null,
   months: number
@@ -196,7 +198,9 @@ export function computeSubscriptionExtensionWindow(
   const base =
     currentEnd && new Date(currentEnd).getTime() > now.getTime() ? new Date(currentEnd) : now;
   const end = new Date(base);
+  const day = end.getDate();
   end.setMonth(end.getMonth() + months);
+  if (end.getDate() < day) end.setDate(0); // dernier jour du mois cible
   return { start: base.toISOString(), end: end.toISOString() };
 }
 
