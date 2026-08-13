@@ -31,7 +31,7 @@ type ChildRow = {
   parentEmail: string;
 };
 
-export function AdminProfilesTab() {
+export function AdminProfilesTab({ onDataChanged }: { onDataChanged?: () => void }) {
   const searchFn = useServerFn(searchChildProfilesAdmin);
   const setActiveFn = useServerFn(setChildProfileActiveAdmin);
   const setTimeFn = useServerFn(setChildTimePressureAdmin);
@@ -69,6 +69,9 @@ export function AdminProfilesTab() {
       await fn();
       toast.success("Profil mis à jour");
       await runSearch(query);
+      // Synchronisation du parent (review 2026-08-12, P1) : Exécutif/Commerce
+      // affichent l'état partagé (pdf_unlocked, is_active) — les rafraîchir.
+      onDataChanged?.();
     } catch (err: any) {
       toast.error(err?.message ?? "Mise à jour impossible");
     } finally {
@@ -105,6 +108,10 @@ export function AdminProfilesTab() {
       await passportFn({ data: { childId: child.id, unlock: !child.pdf_unlocked } });
       toast.success(child.pdf_unlocked ? "Passeport reverrouillé." : "Passeport débloqué.");
       await runSearch(query);
+      // Synchronisation du parent (review 2026-08-12, P1) : le toggle passeport doit
+      // se refléter dans Commerce/Exécutif — sans ça, un passeport débloqué ici
+      // restait affiché verrouillé dans les autres onglets.
+      onDataChanged?.();
     } catch (err: any) {
       toast.error(err?.message ?? "Erreur lors du changement de statut du passeport.");
     } finally {

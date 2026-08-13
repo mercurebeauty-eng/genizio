@@ -141,20 +141,6 @@ export const updateOrderStatus = createServerFn({ method: "POST" })
     return row;
   });
 
-/** File des commandes (onglet Commerce — source unique depuis la refonte Admin OS). */
-export const listOrdersAdmin = createServerFn({ method: "GET" })
-  .middleware([requireAdmin])
-  .handler(async () => {
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const { data, error } = await supabaseAdmin
-      .from("orders")
-      .select("*")
-      .order("created_at", { ascending: false })
-      .limit(100);
-    if (error) throw new Error(error.message);
-    return (data ?? []) as any[];
-  });
-
 export const getEcosystemStats = createServerFn({ method: "GET" })
   .middleware([requireAdmin])
   .handler(async () => {

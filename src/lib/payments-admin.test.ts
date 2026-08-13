@@ -2,6 +2,7 @@ import { describe, it, expect } from "vitest";
 import {
   computeSubscriptionExtensionWindow,
   campaignTokenCount,
+  campaignLotDiscrepancy,
   resolveCampaignTokenLot,
 } from "@/lib/payments-admin.functions";
 
@@ -30,6 +31,20 @@ describe("computeSubscriptionExtensionWindow — prolongation d'abonnement", () 
     const { start, end } = computeSubscriptionExtensionWindow(null, 1);
     expect(new Date(end).getTime() - new Date(start).getTime()).toBeGreaterThan(0);
   });
+
+  it("fin de mois : ne déborde jamais sur le mois suivant (31 janv 2027 + 1 mois → 28 févr 2027)", () => {
+    const jan31 = new Date(2027, 0, 31).toISOString();
+    const { end } = computeSubscriptionExtensionWindow(jan31, 1);
+    const d = new Date(end);
+    expect(d.getMonth()).toBe(1); // février
+    expect(d.getDate()).toBe(28); // 2027 non bissextile
+  });
+
+  it("milieu de mois : inchangé (15 → 15)", () => {
+    const mid = new Date(2027, 2, 15).toISOString();
+    const { end } = computeSubscriptionExtensionWindow(mid, 1);
+    expect(new Date(end).getDate()).toBe(15);
+  });
 });
 
 describe("campaignTokenCount — codes créés par un paiement de campagne", () => {
@@ -55,5 +70,24 @@ describe("resolveCampaignTokenLot — plafond à l'objectif restant", () => {
   it("lève une erreur si la campagne n'a pas de prix unitaire", () => {
     expect(() => resolveCampaignTokenLot(30000, null, 0, 10)).toThrow(/prix unitaire/);
     expect(() => resolveCampaignTokenLot(30000, 0, 0, 10)).toThrow(/prix unitaire/);
+  });
+});
+
+describe("campaignLotDiscrepancy — jamais de plafonnement silencieux (review 2026-08-12)", () => {
+  it("écart zéro quand le lot livrable égale le count payé par le lien", () => {
+    expect(campaignLotDiscrepancy(10, 10)).toBe(0);
+  });
+
+  it("écart négatif = sous-livraison (trop-perçu) → anomalie détectée", () => {
+    expect(campaignLotDiscrepancy(10, 3)).toBe(-7);
+  });
+
+  it("écart positif = sur-livraison (prix modifié entre génération et paiement)", () => {
+    expect(campaignLotDiscrepancy(5, 8)).toBe(3);
+  });
+
+  it("lien ancien sans token_count enregistré → aucune inférence (0)", () => {
+    expect(campaignLotDiscrepancy(null, 4)).toBe(0);
+    expect(campaignLotDiscrepancy(undefined, 4)).toBe(0);
   });
 });

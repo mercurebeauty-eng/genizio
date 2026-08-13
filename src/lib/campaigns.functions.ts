@@ -311,7 +311,7 @@ const CampaignPaymentLinkInput = z.object({
 export const generateCampaignPaymentLinkAdmin = createServerFn({ method: "POST" })
   .middleware([requireAdmin])
   .validator((input: unknown) => CampaignPaymentLinkInput.parse(input))
-  .handler(async ({ data }) => {
+  .handler(async ({ data, context }) => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { data: campaign, error: campErr } = await (supabaseAdmin as any)
       .from("campaigns")
@@ -346,6 +346,27 @@ export const generateCampaignPaymentLinkAdmin = createServerFn({ method: "POST" 
       .toString(36)
       .substring(2, 6)
       .toUpperCase()}`;
+
+    // Ligne payments AVANT l'initialisation Paystack (même pattern que les autres
+    // intents — initializeOrderPayment/initializeSponsorshipPayment) : le webhook et la
+    // page de retour retrouvent la payment par référence et exécutent le fulfillment
+    // campaign_b2b. Sans cette ligne, le paiement encaissé n'avait AUCUNE trace côté
+    // Génizio — l'ONG était débitée sans qu'aucun code soit créé et sans ligne dans
+    // l'onglet Paiements (review 2026-08-12, P0).
+    const { createPaystackPayment } = await import("@/lib/payments.functions");
+    await createPaystackPayment({
+      supabaseAdmin,
+      userId: context.userId ?? null,
+      reference,
+      amountXof,
+      metadata: {
+        type: "campaign_b2b",
+        campaign_id: campaign.id,
+        token_count: data.tokenCount,
+        currency: "XOF",
+      },
+    });
+
     const result = await initializePaystackTransaction({
       email: data.email,
       amountXof,

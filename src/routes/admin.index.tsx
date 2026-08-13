@@ -40,7 +40,7 @@ import { AdminSupervisorsTab } from "@/components/admin/AdminSupervisorsTab";
 import { AdminProductsTab } from "@/components/admin/AdminProductsTab";
 import { AdminProfilesTab } from "@/components/admin/AdminProfilesTab";
 import { getPaymentsPendingCountAdmin } from "@/lib/payments-admin.functions";
-import { Users, ShoppingBag, Brain, Award, Sparkles, ChevronRight } from "lucide-react";
+import { ChevronRight } from "lucide-react";
 import { toast } from "sonner";
 import { GenizioLoader } from "@/components/GenizioLoader";
 
@@ -177,7 +177,8 @@ function AdminIndexPage() {
       }
     } catch (err: any) {
       console.error("Erreur lors de la modification du statut passeport:", err);
-      toast.error(err?.message || "Erreur lors du déblocage/verrouillage du passeport.");
+      // Pas de toast ici : le composant appelant (Exécutif/Commerce) attrape et affiche
+      // le message — un double toast partait sinon (review 2026-08-12, P2).
       throw err;
     }
   };
@@ -191,7 +192,6 @@ function AdminIndexPage() {
       }
     } catch (err: any) {
       console.error("Erreur lors de la mise à jour des slots supplémentaires:", err);
-      toast.error(err?.message || "Erreur lors de la mise à jour du quota.");
       throw err;
     }
   };
@@ -207,7 +207,6 @@ function AdminIndexPage() {
       }
     } catch (err: any) {
       console.error("Erreur lors de la mise à jour de la commande:", err);
-      toast.error(err?.message || "Erreur lors de la mise à jour de la commande.");
       throw err;
     }
   };
@@ -350,8 +349,12 @@ function AdminIndexPage() {
             {activeTab === "payments" && <AdminPaymentsTab />}
             {activeTab === "b2b" && <AdminCampaignsTab />}
             {activeTab === "supervisors" && <AdminSupervisorsTab />}
-            {activeTab === "products" && <AdminProductsTab />}
-            {activeTab === "profiles" && <AdminProfilesTab />}
+            {activeTab === "products" && (
+              <AdminProductsTab onDataChanged={() => loadData(false)} />
+            )}
+            {activeTab === "profiles" && (
+              <AdminProfilesTab onDataChanged={() => loadData(false)} />
+            )}
           </>
         )}
       </main>

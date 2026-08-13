@@ -132,6 +132,19 @@ export function parseReformulationContext(
   }
 }
 
+/** Racine de la chaîne de reformulation (pure) : si le défi échoué est lui-même une
+ *  reformulation, la chaîne s'ancre sur l'ORIGINAL (sa propre filiation), pas sur le
+ *  parent immédiat — sinon le défi EST l'original. Sans cette résolution, chaque
+ *  reformulation démarrée sur un parent ouvrait une sous-chaîne vide : les tentatives
+ *  précédentes étaient invisibles (modality_attempt toujours 1, boucle jamais bornée,
+ *  même modalité re-choisie — review 2026-08-12, P0). */
+export function resolveReformulationRoot(
+  failedChallengeContext: string | null | undefined,
+  challengeId: string
+): string {
+  return parseReformulationContext(failedChallengeContext)?.originalChallengeId ?? challengeId;
+}
+
 export interface ModalityAttemptSummary {
   total: number;
   /** Reformulation encore en cours (todo/in_progress) — la boucle attend son issue. */
@@ -199,18 +212,23 @@ export async function processModalityReformulation(
   const cause = challenge.not_completed_cause as string | null;
   if (!canReformulate(cause)) return { ok: false, reason: "CAUSE_NOT_ACCOMMODABLE" };
 
-  // 2. Chaîne de reformulations déjà existante pour CE défi original.
+  // 2. Chaîne de reformulations du défi ORIGINAL. Filiation par la RACINE (jamais par
+  //    le parent immédiat — review 2026-08-12, P0) : sans cette résolution, chaque
+  //    reformulation démarrée sur un parent ne retrouvait aucun sibling, modality_attempt
+  //    restait à 1, la boucle n'était jamais bornée et la même modalité était re-choisie.
+  const rootChallengeId = resolveReformulationRoot(challenge.pedagogical_context, challengeId);
   const { data: siblings } = await supabase
     .from("challenges")
-    .select("id, status, pedagogical_context, presentation_mode")
+    .select("id, status, title, pedagogical_context, presentation_mode")
     .eq("child_id", child.id)
     .like("pedagogical_context", "%is_reformulation%")
+    .order("created_at", { ascending: false })
     .limit(50);
   const attempts = ((siblings ?? []) as any[])
     .map((s) => {
       const ctx = parseReformulationContext(s.pedagogical_context);
-      return ctx && ctx.originalChallengeId === challengeId
-        ? { ...ctx, status: s.status as string }
+      return ctx && ctx.originalChallengeId === rootChallengeId
+        ? { ...ctx, status: s.status as string, title: s.title as string | undefined }
         : null;
     })
     .filter((a): a is NonNullable<typeof a> => a !== null);
@@ -224,6 +242,9 @@ export async function processModalityReformulation(
 
   // 3. Génération IA — même compétence cible, modalité imposée.
   const location = [child.city, child.country].filter(Boolean).join(", ") || "non précisé";
+  const reformulationTitles = attempts
+    .map((a) => a.title)
+    .filter((t): t is string => !!t);
   const prompt = buildReformulationPrompt({
     childName: child.name,
     childAge: child.age,
@@ -235,7 +256,9 @@ export async function processModalityReformulation(
     interestsPayload: formatChildInterestsPayload(child.interests),
     talentsJson: JSON.stringify(child.talents ?? {}),
     timePressureNote: formatTimePressureNote(child.time_pressure ?? "standard"),
-    existingTitles: [challenge.title],
+    // Titres de TOUTE la chaîne (pas seulement le parent) : l'IA ne répète jamais un
+    // titre déjà proposé dans une reformulation antérieure de la même racine.
+    existingTitles: [challenge.title, ...reformulationTitles],
   });
 
   let parsed: any;
@@ -312,7 +335,7 @@ export async function processModalityReformulation(
       academic_secret: parsed.academic_secret ?? null,
       pedagogical_context: JSON.stringify({
         is_reformulation: true,
-        original_challenge_id: challengeId,
+        original_challenge_id: rootChallengeId,
         modality_attempt: summary.total + 1,
         presentation_mode: nextMode,
       }),

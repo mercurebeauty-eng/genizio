@@ -150,15 +150,12 @@ async function findUserIdByEmail(
 ): Promise<string | null> {
   if (!email) return null;
   try {
-    const { data, error } = await supabaseAdmin.auth.admin.listUsers({
-      page: 1,
-      perPage: 100,
-      filter: email,
-    });
-    if (error) return null;
-    const match = (data?.users ?? []).find(
-      (u: any) => u.email?.toLowerCase() === email.toLowerCase(),
-    );
+    // Pagination complète (review 2026-08-12, P2) : l'ancien listUsers page 1/100
+    // ne retrouvait jamais un compte au-delà de la 100ᵉ position → l'activation
+    // d'abonnement échouait silencieusement. listAllUsers itère toutes les pages.
+    const { listAllUsers } = await import("@/integrations/supabase/admin-users");
+    const users = await listAllUsers(supabaseAdmin);
+    const match = users.find((u) => u.email?.toLowerCase() === email.toLowerCase());
     return match?.id ?? null;
   } catch {
     return null;
