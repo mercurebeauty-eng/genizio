@@ -4,6 +4,7 @@ import {
   resolveNextModality,
   canReformulate,
   parseReformulationContext,
+  resolveReformulationRoot,
   summarizeModalityAttempts,
   MAX_MODALITY_ATTEMPTS,
   type PresentationMode,
@@ -212,5 +213,58 @@ describe("PRESENTATION_MODES — vocabulaire fermé partagé", () => {
       "projet",
       "situation_concrete",
     ]);
+  });
+});
+
+describe("resolveReformulationRoot — filiation par la racine, jamais par le parent (P0 review 2026-08-12)", () => {
+  const reformulationCtx = JSON.stringify({
+    is_reformulation: true,
+    original_challenge_id: "O",
+    modality_attempt: 1,
+    presentation_mode: "histoire",
+  });
+
+  it("un défi original est sa propre racine", () => {
+    expect(resolveReformulationRoot(null, "O")).toBe("O");
+    expect(resolveReformulationRoot('{"pedagogical_intention":"x"}', "O")).toBe("O");
+  });
+
+  it("une reformulation s'ancre sur son original, pas sur le parent immédiat", () => {
+    expect(resolveReformulationRoot(reformulationCtx, "R1")).toBe("O");
+  });
+
+  it("contexte illisible → repli sur le défi lui-même (jamais d'erreur)", () => {
+    expect(resolveReformulationRoot("pas du json", "R1")).toBe("R1");
+  });
+});
+
+describe("chaîne de reformulation — accumulation des tentatives sur la racine (P0 review 2026-08-12)", () => {
+  it("la 2e reformulation voit la 1re : modalité différente, attempt 2", () => {
+    const attempts = [{ presentationMode: "manipulation" as const, status: "not_completed" }];
+    const summary = summarizeModalityAttempts(attempts);
+    expect(summary.total).toBe(1);
+    expect(resolveNextModality("METHOD_MISMATCH", summary.triedModes)).toBe("demonstration");
+    expect(summary.total + 1).toBe(2); // modality_attempt écrit sur la nouvelle reformulation
+  });
+
+  it("3 tentatives échouées → boucle bornée (MAX_MODALITY_ATTEMPTS) et plus de modalité", () => {
+    const attempts = [
+      { presentationMode: "manipulation" as const, status: "not_completed" },
+      { presentationMode: "demonstration" as const, status: "not_completed" },
+      { presentationMode: "situation_concrete" as const, status: "not_completed" },
+    ];
+    const summary = summarizeModalityAttempts(attempts);
+    expect(summary.total).toBe(3);
+    expect(summary.total >= MAX_MODALITY_ATTEMPTS).toBe(true);
+    expect(resolveNextModality("METHOD_MISMATCH", summary.triedModes)).toBeNull();
+  });
+
+  it("une tentative en cours gèle la boucle (REFORMULATION_PENDING)", () => {
+    const attempts = [
+      { presentationMode: "manipulation" as const, status: "todo" },
+      { presentationMode: "demonstration" as const, status: "not_completed" },
+    ];
+    const summary = summarizeModalityAttempts(attempts);
+    expect(summary.pending).toBe(1);
   });
 });
