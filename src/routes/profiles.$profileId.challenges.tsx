@@ -27,6 +27,8 @@ import {
   BookOpen,
   Lock,
   Globe,
+  Clock,
+  Timer,
 } from "lucide-react";
 import { getChildAccessStatusFn, type ChildAccessStatus } from "@/lib/child-access";
 import { followFilterAfterStart } from "@/lib/challenge-list-filters";
@@ -1830,6 +1832,21 @@ function ChallengeCard({
             )}
             <DifficultyBadge difficulty={c.difficulty} />
             <ChallengeKindBadge kind={c.kind} />
+            {/* Temps (2026-08-13) : la durée estimée et le temps limite (chrono doux,
+                quand le défi en a un) sont enfin visibles sur la carte, pas seulement
+                dans le détail ouvert. */}
+            {c.duration && (
+              <span className="rounded-full bg-cyan-50 text-cyan-800 border border-cyan-200 px-[11px] py-[5px] text-[12px] font-bold inline-flex items-center gap-1">
+                <Clock className="size-3 shrink-0" />
+                {c.duration}
+              </span>
+            )}
+            {c.time_limit_minutes != null && (
+              <span className="rounded-full bg-orange-50 text-orange-700 border border-orange-200 px-[11px] py-[5px] text-[12px] font-bold inline-flex items-center gap-1">
+                <Timer className="size-3 shrink-0" />
+                {c.time_limit_minutes} min
+              </span>
+            )}
           </div>
           <span
             className={`rounded-full px-[11px] py-[5px] text-[12px] font-bold ${STATUS_STYLE[c.status]}`}
@@ -1910,6 +1927,18 @@ function ChallengeCard({
             )}
             <DifficultyBadge difficulty={c.difficulty} />
             <ChallengeKindBadge kind={c.kind} />
+            {c.duration && (
+              <span className="inline-flex items-center gap-1 px-[11px] py-[5px] bg-white/20 rounded-full text-white text-[12px] font-bold">
+                <Clock className="size-3 shrink-0" />
+                {c.duration}
+              </span>
+            )}
+            {c.time_limit_minutes != null && (
+              <span className="inline-flex items-center gap-1 px-[11px] py-[5px] bg-white/20 rounded-full text-white text-[12px] font-bold">
+                <Timer className="size-3 shrink-0" />
+                {c.time_limit_minutes} min
+              </span>
+            )}
             <span className="inline-flex items-center gap-1 px-[11px] py-[5px] bg-white/20 rounded-full text-white text-[12px] font-bold">
               <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor">
                 <path d="M11.5 2.3a.5.5 0 0 1 1 0l2.3 4.6 5.1.75a.5.5 0 0 1 .3.86l-3.7 3.6.87 5.1a.5.5 0 0 1-.77.53L12 15.9l-4.6 2.4a.5.5 0 0 1-.77-.53l.88-5.1-3.7-3.6a.5.5 0 0 1 .29-.86l5.1-.75z" />

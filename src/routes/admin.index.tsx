@@ -262,7 +262,9 @@ function AdminIndexPage() {
           </p>
         </div>
 
-        {/* Écran d'accueil : grille de cartes (refonte UI/UX 2026-08-13) */}
+        {/* Écran d'accueil : grille de cartes (refonte UI/UX 2026-08-13 ; rehaussée
+            2026-08-13 — fond dégradé par onglet, pastille d'icône pleine, halo coloré,
+            ombre portée au survol : fini les cartes blanches et fades). */}
         {activeTab === "home" ? (
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {ADMIN_TABS.map((tab) => {
@@ -272,21 +274,31 @@ function AdminIndexPage() {
                   key={tab.id}
                   type="button"
                   onClick={() => setActiveTab(tab.id)}
-                  className="group relative overflow-hidden rounded-3xl border border-ink/10 bg-white p-5 text-left shadow-sm transition-all hover:-translate-y-0.5 hover:border-brand/30 hover:shadow-md cursor-pointer"
+                  className={`group relative overflow-hidden rounded-3xl border p-5 text-left shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-xl ${tab.cardClass} cursor-pointer`}
                 >
-                  <div className="flex items-start justify-between">
-                    <div className={`grid size-11 place-items-center rounded-2xl ${tab.badgeBgClass} ${tab.badgeTextClass}`}>
-                      <Icon className="size-5" />
+                  {/* Halo décoratif (coin supérieur droit) : s'intensifie au survol. */}
+                  <div
+                    className={`pointer-events-none absolute -right-12 -top-12 size-32 rounded-full bg-gradient-to-br ${tab.haloClass} opacity-70 blur-2xl transition-all duration-300 group-hover:scale-125 group-hover:opacity-100`}
+                  />
+                  <div className="relative flex items-start justify-between">
+                    <div
+                      className={`grid size-12 place-items-center rounded-2xl bg-gradient-to-br ${tab.iconClass} text-white shadow-md`}
+                    >
+                      <Icon className="size-6" />
                     </div>
                     {tab.id === "payments" && pendingPayments > 0 && (
-                      <span className="inline-flex items-center gap-1 rounded-full bg-amber-500 px-2.5 py-1 text-[10px] font-black uppercase tracking-wider text-white shadow-sm">
+                      <span className="inline-flex items-center gap-1 rounded-full bg-amber-500 px-2.5 py-1 text-[10px] font-black uppercase tracking-wider text-white shadow-sm animate-pulse">
                         ● {pendingPayments} en attente
                       </span>
                     )}
                   </div>
-                  <h3 className="mt-3 font-display text-lg font-black text-ink">{tab.label}</h3>
-                  <p className="text-xs font-medium text-ink/60">{tab.sublabel}</p>
-                  <span className="mt-3 inline-flex items-center gap-1 text-[11px] font-bold text-brand opacity-0 transition-opacity group-hover:opacity-100">
+                  <div className="relative mt-4">
+                    <h3 className="font-display text-lg font-black text-ink">{tab.label}</h3>
+                    <p className="text-xs font-semibold text-ink/55 mt-0.5">{tab.sublabel}</p>
+                  </div>
+                  <span
+                    className={`relative mt-4 inline-flex items-center gap-1 text-[11px] font-black uppercase tracking-wider opacity-0 transition-all duration-300 group-hover:translate-x-1 group-hover:opacity-100 ${tab.badgeTextClass}`}
+                  >
                     Ouvrir
                     <ChevronRight className="size-3" />
                   </span>
