@@ -2,7 +2,6 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { requireAdmin } from "@/integrations/supabase/admin-middleware";
-import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { resolveSponsorshipPrice } from "@/lib/pricing";
 import { computeAccessPeriodWindow } from "@/lib/child-access";
 
@@ -116,6 +115,7 @@ async function fetchActiveSeasonFromDb(supabaseAdmin: any): Promise<Season> {
 }
 
 export const getActiveSeason = createServerFn({ method: "GET" }).handler(async () => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
   return fetchActiveSeasonFromDb(supabaseAdmin);
 });
 
@@ -141,6 +141,7 @@ export function resolveEnrollmentWindow(
 export const getChildEnrolledSeason = createServerFn({ method: "GET" })
   .validator((input: unknown) => z.object({ childId: z.string().uuid() }).parse(input))
   .handler(async ({ data }) => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     try {
       // Décision utilisateur (2026-07-26) : l'accès individuel d'un enfant ne doit jamais être
       // cassé rétroactivement par une rotation de la saison globale. On ne compare donc plus
@@ -255,6 +256,7 @@ export const createSponsorshipToken = createServerFn({ method: "POST" })
       .parse(input)
   )
   .handler(async ({ data }: { data: any }) => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     // Corrige le bug historique « le parrainage ne prend en charge que le 5 000 F » : le
     // calcul gère désormais la transition complète — 3 mois offerts, puis 15 000 F/mois.
     const pricing = resolveSponsorshipPrice(data.months, data.currency);
@@ -287,6 +289,7 @@ export const redeemSponsorshipToken = createServerFn({ method: "POST" })
       .parse(input)
   )
   .handler(async ({ data, context }: { data: any; context: any }) => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { userId } = context;
 
     const { data: token, error: tokenErr } = await (supabaseAdmin as any)
@@ -447,6 +450,7 @@ export const listSponsorshipsAdmin = createServerFn({ method: "GET" })
   .middleware([requireAdmin])
   .validator((input: unknown) => ListSponsorshipsInput.parse(input ?? {}))
   .handler(async ({ data }) => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     // Les mêmes filtres sont appliqués deux fois (comptage puis page) : PostgREST renvoie une
     // erreur 416 "Requested range not satisfiable" dès qu'on demande une page au-delà du volume
     // réel — vérifié en direct contre la base. Compter d'abord permet de borner la page demandée
@@ -515,6 +519,7 @@ export const confirmSponsorshipPaymentAdmin = createServerFn({ method: "POST" })
   .middleware([requireAdmin])
   .validator((input: any) => z.object({ tokenId: z.string().uuid() }).parse(input))
   .handler(async ({ data }) => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { error } = await (supabaseAdmin as any)
       .from("sponsorship_tokens")
       .update({ payment_confirmed: true })
@@ -538,6 +543,7 @@ export const enrollChildAdmin = createServerFn({ method: "POST" })
       .parse(input)
   )
   .handler(async ({ data }) => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     // 1. Fetch child profile to get the parent user_id
     const { data: childProfile, error: childErr } = await (supabaseAdmin as any)
       .from("child_profiles")
@@ -602,6 +608,7 @@ export const unenrollCampaignAdmin = createServerFn({ method: "POST" })
       .parse(input)
   )
   .handler(async ({ data }) => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { error } = await (supabaseAdmin as any)
       .from("season_enrollments")
       .update({ campaign_id: null })
@@ -625,6 +632,7 @@ const EXPIRATION_REMINDER_WINDOW_DAYS = 14;
 export const getUpcomingExpirationsAdmin = createServerFn({ method: "GET" })
   .middleware([requireAdmin])
   .handler(async () => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { resolveExtraSlotPrice } = await import("@/lib/pricing");
     const now = new Date();
     const windowEnd = new Date(now.getTime() + EXPIRATION_REMINDER_WINDOW_DAYS * 86_400_000);
