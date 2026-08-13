@@ -831,10 +831,26 @@ export const getNgoDashboardData = createServerFn({ method: "GET" })
       .select("supervisor_user_id")
       .eq("campaign_id", campaignId);
 
-    const usersMap = new Map((await listAllUsers(supabaseAdmin)).map((u) => [u.id, u.email]));
+    // Emails des superviseurs — résolution CIBLÉE (review 2026-08-13) : l'ancien
+    // listAllUsers paginait TOUT l'annuaire du projet à chaque visite du dashboard
+    // (coûteux et lent à mesure que Génizio grandit) pour résoudre quelques emails.
+    // getUserById en parallèle ne lit que les superviseurs réellement assignés.
     const supervisorCounts = new Map<string, number>();
     for (const row of supervisorRows ?? []) {
       supervisorCounts.set(row.supervisor_user_id, (supervisorCounts.get(row.supervisor_user_id) ?? 0) + 1);
+    }
+    const usersMap = new Map<string, string>();
+    const supervisorIds = [...supervisorCounts.keys()];
+    if (supervisorIds.length > 0) {
+      const resolved = await Promise.all(
+        supervisorIds.map(async (id: string) => {
+          const { data } = await (supabaseAdmin as any).auth.admin
+            .getUserById(id)
+            .catch(() => ({ data: null }));
+          return [id, (data?.user?.email as string) ?? "Inconnu"] as const;
+        })
+      );
+      for (const [id, email] of resolved) usersMap.set(id, email);
     }
     const totalSupervisorQuota = computeSupervisorQuota({
       referenceCreatedAt: selected.created_at,

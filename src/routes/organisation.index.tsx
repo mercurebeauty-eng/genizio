@@ -34,6 +34,20 @@ import {
   GraduationCap,
   Trash2,
 } from "lucide-react";
+
+// Barres du rapport d'impact (refonte 2026-08-13) : dégradés cyclés par talent —
+// lisibilité immédiate au lieu d'une barre uniforme.
+const TALENT_BAR_GRADIENTS = [
+  "bg-gradient-to-r from-violet-500 to-indigo-500",
+  "bg-gradient-to-r from-emerald-500 to-teal-500",
+  "bg-gradient-to-r from-sky-500 to-blue-500",
+  "bg-gradient-to-r from-amber-500 to-orange-500",
+  "bg-gradient-to-r from-rose-500 to-pink-500",
+  "bg-gradient-to-r from-purple-500 to-fuchsia-500",
+  "bg-gradient-to-r from-green-500 to-emerald-600",
+  "bg-gradient-to-r from-cyan-500 to-sky-600",
+  "bg-gradient-to-r from-orange-500 to-red-500",
+];
 import { toast } from "sonner";
 import { GenizioLoader } from "@/components/GenizioLoader";
 import { CampaignLinkCard } from "@/components/campaigns/CampaignLinkCard";
@@ -144,117 +158,134 @@ function OrganisationDashboard() {
 
   return (
     <main className="max-w-7xl mx-auto px-4 sm:px-6 py-6 md:py-10 space-y-6 sm:space-y-8">
-      {/* Header */}
-      <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 bg-white p-6 sm:p-8 rounded-[2.5rem] border border-ink/10 shadow-xs">
-        <div>
-          <div className="inline-flex items-center gap-2 px-3 py-1 bg-brand/10 text-brand rounded-full text-xs font-black uppercase tracking-wider mb-3">
-            <ShieldCheck className="size-4 text-brand" />
-            Espace Partenaire ONG & B2B
-          </div>
-          {campaigns.length > 1 ? (
-            <div className="relative inline-block">
-              <select
-                value={activeCampaign.id}
-                onChange={(e) => {
-                  setSelectedCampaignId(e.target.value);
-                  loadData(e.target.value);
-                }}
-                className="appearance-none text-3xl sm:text-4xl md:text-5xl font-display font-black text-ink tracking-tight bg-transparent border-none pr-9 cursor-pointer focus:outline-none"
-              >
-                {campaigns.map((c) => (
-                  <option key={c.id} value={c.id}>
-                    {c.name}
-                  </option>
-                ))}
-              </select>
-              <ChevronDown className="size-6 text-ink/40 absolute right-0 top-1/2 -translate-y-1/2 pointer-events-none" />
+      {/* Header — refonte 2026-08-13 : fond vivant, halo, périodes et CTA affirmés */}
+      <div className="relative overflow-hidden rounded-[2.5rem] border border-brand/15 bg-gradient-to-br from-brand/10 via-white to-white p-6 sm:p-8 shadow-sm">
+        <div className="pointer-events-none absolute -right-16 -top-16 size-52 rounded-full bg-gradient-to-br from-brand/30 to-indigo-400/10 opacity-70 blur-3xl" />
+        <div className="relative flex flex-col md:flex-row md:items-end justify-between gap-6">
+          <div>
+            <div className="inline-flex items-center gap-2 px-3 py-1 bg-brand/10 text-brand rounded-full text-xs font-black uppercase tracking-wider mb-3">
+              <ShieldCheck className="size-4 text-brand" />
+              Espace Partenaire ONG & B2B
             </div>
-          ) : (
-            <h1 className="text-3xl sm:text-4xl md:text-5xl font-display font-black text-ink tracking-tight">
-              {activeCampaign.name}
-            </h1>
-          )}
-          <p className="text-sm sm:text-base text-ink/70 font-medium mt-2 max-w-2xl">
-            {activeCampaign.description || "Suivi de la cohorte et des performances d'impact."}
-          </p>
-          <div className="inline-flex items-center gap-2 mt-3 px-3 py-1 bg-surface rounded-xl text-xs font-bold text-ink/60 border border-ink/5">
-            <span>Période :</span>
-            <strong className="text-ink">
-              {new Date(activeCampaign.start_date).toLocaleDateString("fr-FR")} →{" "}
-              {new Date(activeCampaign.end_date).toLocaleDateString("fr-FR")}
-            </strong>
+            {campaigns.length > 1 ? (
+              <div className="relative inline-block">
+                <select
+                  value={activeCampaign.id}
+                  onChange={(e) => {
+                    setSelectedCampaignId(e.target.value);
+                    loadData(e.target.value);
+                  }}
+                  className="appearance-none text-3xl sm:text-4xl md:text-5xl font-display font-black text-ink tracking-tight bg-transparent border-none pr-9 cursor-pointer focus:outline-none"
+                >
+                  {campaigns.map((c) => (
+                    <option key={c.id} value={c.id}>
+                      {c.name}
+                    </option>
+                  ))}
+                </select>
+                <ChevronDown className="size-6 text-ink/40 absolute right-0 top-1/2 -translate-y-1/2 pointer-events-none" />
+              </div>
+            ) : (
+              <h1 className="text-3xl sm:text-4xl md:text-5xl font-display font-black text-ink tracking-tight">
+                {activeCampaign.name}
+              </h1>
+            )}
+            <p className="text-sm sm:text-base text-ink/70 font-medium mt-2 max-w-2xl">
+              {activeCampaign.description || "Suivi de la cohorte et des performances d'impact."}
+            </p>
+            <div className="inline-flex items-center gap-2 mt-3 px-3 py-1 bg-white rounded-xl text-xs font-bold text-ink/60 border border-brand/10 shadow-xs">
+              <span>Période :</span>
+              <strong className="text-ink">
+                {new Date(activeCampaign.start_date).toLocaleDateString("fr-FR")} →{" "}
+                {new Date(activeCampaign.end_date).toLocaleDateString("fr-FR")}
+              </strong>
+            </div>
           </div>
+          <button
+            onClick={() => setIsCodesModalOpen(true)}
+            className="w-full md:w-auto inline-flex items-center justify-center gap-2 bg-ink text-white px-5 py-3 rounded-2xl font-black text-sm hover:bg-ink/90 transition-colors shadow-sm cursor-pointer"
+          >
+            <Key className="size-4" />
+            <span>Voir mes codes</span>
+          </button>
         </div>
-        <button
-          onClick={() => setIsCodesModalOpen(true)}
-          className="w-full md:w-auto inline-flex items-center justify-center gap-2 bg-ink text-white px-5 py-3 rounded-2xl font-black text-sm hover:bg-ink/90 transition-colors shadow-xs cursor-pointer"
-        >
-          <Key className="size-4" />
-          <span>Voir mes codes</span>
-        </button>
       </div>
 
       <CampaignLinkCard campaignId={activeCampaign.id} campaignName={activeCampaign.name} />
 
-      {/* KPIs Grid */}
+      {/* KPIs Grid — refonte 2026-08-13 : pastilles pleines, halos, ombres colorées */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <div className="bg-white rounded-3xl p-5 sm:p-6 shadow-2xs border border-brand/15 bg-gradient-to-br from-brand/5 via-white to-white relative overflow-hidden">
-          <div className="flex items-center justify-between text-brand font-black text-xs uppercase tracking-wider mb-2">
-            <span className="flex items-center gap-2">
-              <Target className="size-4" /> Enrôlement
+        <div className="relative overflow-hidden rounded-3xl border border-brand/20 bg-gradient-to-br from-brand/10 via-white to-white p-5 sm:p-6 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-xl hover:shadow-brand/20">
+          <div className="pointer-events-none absolute -right-10 -top-10 size-28 rounded-full bg-gradient-to-br from-brand/40 to-indigo-400/10 opacity-60 blur-2xl" />
+          <div className="relative flex items-center justify-between">
+            <div className="grid size-11 place-items-center rounded-2xl bg-gradient-to-br from-violet-500 to-indigo-600 text-white shadow-md shadow-violet-500/40">
+              <Target className="size-5" />
+            </div>
+            <span className="rounded-full bg-brand/10 px-2 py-0.5 text-[10px] font-black uppercase tracking-wider text-brand">
+              Codes
             </span>
-            <span className="px-2 py-0.5 rounded-full bg-brand/10 text-[10px]">Codes</span>
           </div>
-          <div className="text-3xl sm:text-4xl font-black text-ink mt-1">
+          <div className="relative mt-3 text-3xl sm:text-4xl font-black text-ink">
             {stats?.redeemedTokens ?? 0}{" "}
             <span className="text-lg text-ink/40 font-bold">/ {stats?.totalTokens ?? 0}</span>
           </div>
-          <div className="text-xs font-medium text-ink/60 mt-1">Codes d'inscription activés</div>
+          <div className="relative mt-1 text-xs font-semibold text-ink/60">
+            Codes d'inscription activés
+          </div>
         </div>
 
-        <div className="bg-white rounded-3xl p-5 sm:p-6 shadow-2xs border border-emerald-500/15 bg-gradient-to-br from-emerald-500/5 via-white to-white relative overflow-hidden">
-          <div className="flex items-center justify-between text-emerald-700 font-black text-xs uppercase tracking-wider mb-2">
-            <span className="flex items-center gap-2">
-              <Users className="size-4" /> Cohorte
+        <div className="relative overflow-hidden rounded-3xl border border-emerald-500/20 bg-gradient-to-br from-emerald-500/10 via-white to-white p-5 sm:p-6 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-xl hover:shadow-emerald-500/20">
+          <div className="pointer-events-none absolute -right-10 -top-10 size-28 rounded-full bg-gradient-to-br from-emerald-400/40 to-teal-400/10 opacity-60 blur-2xl" />
+          <div className="relative flex items-center justify-between">
+            <div className="grid size-11 place-items-center rounded-2xl bg-gradient-to-br from-emerald-500 to-teal-600 text-white shadow-md shadow-emerald-500/40">
+              <Users className="size-5" />
+            </div>
+            <span className="rounded-full bg-emerald-500/10 px-2 py-0.5 text-[10px] font-black uppercase tracking-wider text-emerald-700">
+              Actifs
             </span>
-            <span className="px-2 py-0.5 rounded-full bg-emerald-500/10 text-[10px]">Actifs</span>
           </div>
-          <div className="text-3xl sm:text-4xl font-black text-emerald-700 mt-1">
+          <div className="relative mt-3 text-3xl sm:text-4xl font-black text-emerald-700">
             {stats?.cohortSize ?? 0}
           </div>
-          <div className="text-xs font-medium text-ink/60 mt-1">Enfants inscrits et suivis</div>
+          <div className="relative mt-1 text-xs font-semibold text-ink/60">
+            Enfants inscrits et suivis
+          </div>
         </div>
 
-        <div className="bg-white rounded-3xl p-5 sm:p-6 shadow-2xs border border-sky-500/15 bg-gradient-to-br from-sky-500/5 via-white to-white relative overflow-hidden">
-          <div className="flex items-center justify-between text-sky-700 font-black text-xs uppercase tracking-wider mb-2">
-            <span className="flex items-center gap-2">
-              <Rocket className="size-4" /> Défis Réalisés
-            </span>
-            <span className="px-2 py-0.5 rounded-full bg-sky-500/10 text-[10px]">
+        <div className="relative overflow-hidden rounded-3xl border border-sky-500/20 bg-gradient-to-br from-sky-500/10 via-white to-white p-5 sm:p-6 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-xl hover:shadow-sky-500/20">
+          <div className="pointer-events-none absolute -right-10 -top-10 size-28 rounded-full bg-gradient-to-br from-sky-400/40 to-blue-400/10 opacity-60 blur-2xl" />
+          <div className="relative flex items-center justify-between">
+            <div className="grid size-11 place-items-center rounded-2xl bg-gradient-to-br from-sky-500 to-blue-600 text-white shadow-md shadow-sky-500/40">
+              <Rocket className="size-5" />
+            </div>
+            <span className="rounded-full bg-sky-500/10 px-2 py-0.5 text-[10px] font-black uppercase tracking-wider text-sky-700">
               {completionRate}%
             </span>
           </div>
-          <div className="text-3xl sm:text-4xl font-black text-sky-700 mt-1">
+          <div className="relative mt-3 text-3xl sm:text-4xl font-black text-sky-700">
             {stats?.completedChallenges ?? 0}{" "}
             <span className="text-lg text-ink/40 font-bold">/ {stats?.totalChallenges ?? 0}</span>
           </div>
-          <div className="text-xs font-medium text-ink/60 mt-1">Taux de réalisation cohorte</div>
+          <div className="relative mt-1 text-xs font-semibold text-ink/60">
+            Taux de réalisation cohorte
+          </div>
         </div>
 
-        <div className="bg-white rounded-3xl p-5 sm:p-6 shadow-2xs border border-amber-500/15 bg-gradient-to-br from-amber-500/5 via-white to-white relative overflow-hidden">
-          <div className="flex items-center justify-between text-amber-800 font-black text-xs uppercase tracking-wider mb-2">
-            <span className="flex items-center gap-2">
-              <AlertCircle className="size-4" /> Supervision
-            </span>
-            <span className="px-2 py-0.5 rounded-full bg-amber-500/10 text-[10px]">
+        <div className="relative overflow-hidden rounded-3xl border border-amber-500/20 bg-gradient-to-br from-amber-500/10 via-white to-white p-5 sm:p-6 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-xl hover:shadow-amber-500/20">
+          <div className="pointer-events-none absolute -right-10 -top-10 size-28 rounded-full bg-gradient-to-br from-amber-400/40 to-orange-400/10 opacity-60 blur-2xl" />
+          <div className="relative flex items-center justify-between">
+            <div className="grid size-11 place-items-center rounded-2xl bg-gradient-to-br from-amber-500 to-orange-600 text-white shadow-md shadow-amber-500/40">
+              <AlertCircle className="size-5" />
+            </div>
+            <span className="rounded-full bg-amber-500/10 px-2 py-0.5 text-[10px] font-black uppercase tracking-wider text-amber-700">
               Superviseurs
             </span>
           </div>
-          <div className="text-3xl sm:text-4xl font-black text-amber-900 mt-1">
+          <div className="relative mt-3 text-3xl sm:text-4xl font-black text-amber-900">
             {stats?.supervisedChildren ?? 0}{" "}
             <span className="text-lg text-ink/40 font-bold">/ {stats?.cohortSize ?? 0}</span>
           </div>
-          <div className="text-xs font-medium text-ink/60 mt-1">
+          <div className="relative mt-1 text-xs font-semibold text-ink/60">
             Capacité : {stats?.totalSupervisorQuota ?? 0} enfants supervisés
           </div>
         </div>
@@ -296,7 +327,7 @@ function OrganisationDashboard() {
             </div>
           ) : (
             <div className="space-y-3.5">
-              {talentEntries.map(([key, value]) => (
+              {talentEntries.map(([key, value], i) => (
                 <div
                   key={key}
                   className="flex flex-col sm:flex-row sm:items-center gap-1.5 sm:gap-3"
@@ -306,12 +337,13 @@ function OrganisationDashboard() {
                   </span>
                   <div className="flex-1 h-3.5 rounded-full bg-surface overflow-hidden border border-ink/5 p-0.5">
                     <div
-                      className="h-full bg-brand rounded-full transition-all duration-500"
+                      className={`h-full rounded-full transition-all duration-500 ${TALENT_BAR_GRADIENTS[i % TALENT_BAR_GRADIENTS.length]}`}
                       style={{ width: `${Math.max(5, (value / talentMax) * 100)}%` }}
                     />
                   </div>
-                  <span className="w-12 text-right text-xs font-black text-brand shrink-0">
-                    {value} pts
+                  <span className="w-14 text-right text-xs font-black text-ink shrink-0">
+                    {Math.round((value / talentMax) * 100)}%
+                    <span className="text-ink/40 font-bold ml-1">{value} pts</span>
                   </span>
                 </div>
               ))}
@@ -319,6 +351,49 @@ function OrganisationDashboard() {
           )}
         </div>
       </div>
+
+      {/* Récits de la cohorte (refonte 2026-08-13) : les narrations n'étaient visibles
+          que dans la modale d'export — le chargé de projet ne voyait jamais la matière
+          du rapport. Toujours agrégé : titre + domaine + observation de Naya, jamais
+          d'identifiant d'enfant. */}
+      {narratives.length > 0 && (
+        <div className="bg-white rounded-[2rem] border border-ink/10 overflow-hidden shadow-sm">
+          <div className="p-5 sm:p-8 border-b border-ink/5">
+            <div className="flex items-center gap-2.5">
+              <div className="size-9 rounded-xl bg-brand/10 text-brand flex items-center justify-center shrink-0">
+                <Quote className="size-5" />
+              </div>
+              <div>
+                <h2 className="text-xl sm:text-2xl font-display font-black text-ink">
+                  Récits de la cohorte
+                </h2>
+                <p className="text-xs sm:text-sm text-ink/60 font-medium mt-0.5">
+                  Ce que Naya a observé chez les enfants de votre cohorte — matière première du
+                  rapport d'impact, jamais nominatif.
+                </p>
+              </div>
+            </div>
+          </div>
+          <div className="p-5 sm:p-8 grid gap-4 md:grid-cols-3">
+            {narratives.map((n, i) => (
+              <figure
+                key={i}
+                className="rounded-2xl border border-ink/5 bg-gradient-to-br from-surface/80 to-white p-4 flex flex-col"
+              >
+                <blockquote className="text-sm text-ink/80 italic leading-relaxed flex-1">
+                  « {n.observation} »
+                </blockquote>
+                <figcaption className="mt-3 pt-3 border-t border-ink/5 flex items-center justify-between gap-2">
+                  <span className="text-xs font-black text-brand truncate">{n.title}</span>
+                  <span className="rounded-full bg-surface px-2 py-0.5 text-[10px] font-black uppercase tracking-wider text-ink/50 shrink-0">
+                    {n.domain}
+                  </span>
+                </figcaption>
+              </figure>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Superviseurs — gestion de capacité */}
       <div className="bg-white rounded-[2rem] border border-ink/10 overflow-hidden shadow-xs">
@@ -343,26 +418,35 @@ function OrganisationDashboard() {
           </button>
         </div>
 
-        {/* Dynamic Card view on Mobile & Table view on Desktop */}
+        {/* Dynamic Card view on Mobile & Table view on Desktop — refonte 2026-08-13 :
+            avatars initials + barres de capacité, états vides soignés */}
         <div className="p-4 sm:p-0">
           <div className="sm:hidden space-y-2.5">
             {supervisors.map((s) => (
               <div
                 key={s.email}
-                className="p-4 rounded-2xl bg-surface/70 border border-ink/5 flex items-center justify-between"
+                className="p-4 rounded-2xl bg-surface/70 border border-ink/5 flex items-center justify-between gap-3"
               >
-                <div>
-                  <p className="text-xs font-black text-ink">{s.email}</p>
-                  <p className="text-[10px] text-ink/50 font-bold mt-0.5">Superviseur référent</p>
+                <div className="flex items-center gap-3 min-w-0">
+                  <div className="grid size-10 place-items-center rounded-full bg-gradient-to-br from-brand to-indigo-600 text-white font-black text-sm shrink-0">
+                    {(s.email.charAt(0) || "?").toUpperCase()}
+                  </div>
+                  <div className="min-w-0">
+                    <p className="text-xs font-black text-ink truncate">{s.email}</p>
+                    <p className="text-[10px] text-ink/50 font-bold mt-0.5">Superviseur référent</p>
+                  </div>
                 </div>
-                <span className="px-3 py-1 rounded-xl bg-brand/10 text-brand text-xs font-black">
+                <span className="px-3 py-1 rounded-xl bg-brand/10 text-brand text-xs font-black shrink-0">
                   {s.assignedCount} / {stats?.totalSupervisorQuota ?? 0} enfants
                 </span>
               </div>
             ))}
             {supervisors.length === 0 && (
-              <div className="p-6 text-center text-xs font-bold text-ink/40">
-                Aucun superviseur assigné.
+              <div className="p-6 text-center rounded-2xl border border-dashed border-ink/10 bg-white/40">
+                <p className="text-xs font-bold text-ink/50">
+                  Aucun superviseur assigné — cliquez sur « Assigner un superviseur » pour confier
+                  des enfants de la cohorte.
+                </p>
               </div>
             )}
           </div>
@@ -382,16 +466,45 @@ function OrganisationDashboard() {
               <tbody className="divide-y divide-ink/5">
                 {supervisors.map((s) => (
                   <tr key={s.email} className="hover:bg-surface/30 transition-colors">
-                    <td className="p-4 px-6 font-bold text-sm text-ink">{s.email}</td>
-                    <td className="p-4 px-6 text-right font-black text-sm text-brand">
-                      {s.assignedCount} / {stats?.totalSupervisorQuota ?? 0}
+                    <td className="p-4 px-6">
+                      <div className="flex items-center gap-3">
+                        <div className="grid size-9 place-items-center rounded-full bg-gradient-to-br from-brand to-indigo-600 text-white font-black text-sm shrink-0">
+                          {(s.email.charAt(0) || "?").toUpperCase()}
+                        </div>
+                        <span className="font-bold text-sm text-ink">{s.email}</span>
+                      </div>
+                    </td>
+                    <td className="p-4 px-6 text-right">
+                      <div className="flex items-center justify-end gap-2.5">
+                        <div className="w-28 h-2 rounded-full bg-surface overflow-hidden border border-ink/5">
+                          <div
+                            className="h-full bg-gradient-to-r from-brand to-indigo-500 rounded-full transition-all duration-500"
+                            style={{
+                              width: `${Math.min(
+                                100,
+                                (s.assignedCount / Math.max(1, stats?.totalSupervisorQuota ?? 1)) * 100,
+                              )}%`,
+                            }}
+                          />
+                        </div>
+                        <span className="font-black text-sm text-brand w-16">
+                          {s.assignedCount} / {stats?.totalSupervisorQuota ?? 0}
+                        </span>
+                      </div>
                     </td>
                   </tr>
                 ))}
                 {supervisors.length === 0 && (
                   <tr>
-                    <td colSpan={2} className="p-8 text-center text-ink/50 font-medium text-sm">
-                      Aucun superviseur assigné pour l'instant.
+                    <td colSpan={2} className="p-8 text-center">
+                      <div className="inline-flex flex-col items-center gap-2">
+                        <span className="grid size-12 place-items-center rounded-full bg-surface border border-dashed border-ink/10">
+                          <UserPlus className="size-5 text-ink/30" />
+                        </span>
+                        <p className="text-ink/50 font-medium text-sm">
+                          Aucun superviseur assigné pour l'instant.
+                        </p>
+                      </div>
                     </td>
                   </tr>
                 )}
