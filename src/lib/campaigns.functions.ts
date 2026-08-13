@@ -23,6 +23,9 @@ export interface Campaign {
   mode?: string;
   /** Prix unitaire par code (campagnes payantes — lien de paiement partageable). */
   price_per_token_xof?: number | null;
+  /** Fermeture douce (2026-08-13) : 'archived' = disparue des flux actifs,
+   *  historique intact (codes générés, inscriptions). */
+  status?: "active" | "archived" | null;
 }
 
 export const createCampaignAdmin = createServerFn({ method: "POST" })
@@ -89,6 +92,16 @@ export const updateCampaignBillingAdmin = createServerFn({ method: "POST" })
   .validator((input: unknown) => CampaignBillingInput.parse(input))
   .handler(async ({ data }) => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    // Garde d'archivage (2026-08-13) : une campagne fermée ne se ré-édite pas.
+    const { data: existing } = await (supabaseAdmin as any)
+      .from("campaigns")
+      .select("status")
+      .eq("id", data.campaignId)
+      .maybeSingle();
+    if (!existing) throw new Error("Campagne introuvable.");
+    if (existing.status === "archived") {
+      throw new Error("Campagne archivée — restaurez-la avant de la modifier.");
+    }
     const patch: Record<string, unknown> = { mode: data.mode };
     if (data.pricePerTokenXof !== undefined) {
       patch.price_per_token_xof = data.pricePerTokenXof;
@@ -119,6 +132,16 @@ export const updateCampaignExtraQuotaAdmin = createServerFn({ method: "POST" })
   )
   .handler(async ({ data }) => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    // Garde d'archivage (2026-08-13) : une campagne fermée ne se ré-édite pas.
+    const { data: existing } = await (supabaseAdmin as any)
+      .from("campaigns")
+      .select("status")
+      .eq("id", data.campaignId)
+      .maybeSingle();
+    if (!existing) throw new Error("Campagne introuvable.");
+    if (existing.status === "archived") {
+      throw new Error("Campagne archivée — restaurez-la avant de la modifier.");
+    }
     const { data: campaign, error } = await (supabaseAdmin as any)
       .from("campaigns")
       .update({ extra_supervisors_quota: data.extraSupervisorsQuota, max_educators: data.maxEducators })
@@ -243,6 +266,11 @@ export const generateCampaignTokensAdmin = createServerFn({ method: "POST" })
 
     if (!campaign) throw new Error("Campagne introuvable.");
 
+    // Garde d'archivage (2026-08-13) : une campagne fermée ne génère plus de codes.
+    if (campaign.status === "archived") {
+      throw new Error("Campagne archivée — restaurez-la pour générer des codes.");
+    }
+
     // Rien ne comparait la taille du lot demandé à l'objectif de la campagne — un admin qui
     // valide deux fois (double-clic, page rechargée puis soumise à nouveau) double le lot en
     // silence. Trouvé en prod : campagne LIBA à 82 codes pour un objectif de 41. On bloque tout
@@ -315,11 +343,15 @@ export const generateCampaignPaymentLinkAdmin = createServerFn({ method: "POST" 
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { data: campaign, error: campErr } = await (supabaseAdmin as any)
       .from("campaigns")
-      .select("id, name, mode, price_per_token_xof, target_count")
+      .select("id, name, mode, price_per_token_xof, target_count, status")
       .eq("id", data.campaignId)
       .maybeSingle();
     if (campErr) throw new Error(campErr.message);
     if (!campaign) throw new Error("Campagne introuvable.");
+    // Garde d'archivage (2026-08-13) : une campagne fermée ne génère plus de lien payant.
+    if (campaign.status === "archived") {
+      throw new Error("Campagne archivée — restaurez-la pour générer un lien de paiement.");
+    }
     if (campaign.mode !== "paid") {
       throw new Error("Cette campagne n'est pas en mode payé — passez-la en mode payé d'abord.");
     }
@@ -386,6 +418,83 @@ export const generateCampaignPaymentLinkAdmin = createServerFn({ method: "POST" 
     };
   });
 
+// ── Fermeture douce & suppression (2026-08-13, demande utilisateur) ────────────
+// Avant : aucune suppression ni fermeture possible — une campagne restait visible à
+// vie. Désormais : ARCHIVER (fermeture douce, historique intact, restauration
+// possible) puis éventuellement SUPPRIMER (physique, uniquement si archivée ET sans
+// aucun token généré ni enfant inscrit — jamais de cascade destructive).
+
+const CampaignActionInput = z.object({ campaignId: z.string().uuid() });
+
+/** Bascule archive/restauration — la campagne disparaît des flux actifs (public,
+ *  génération, paiement, édition) mais tout son historique reste consultable. */
+export const archiveCampaignAdmin = createServerFn({ method: "POST" })
+  .middleware([requireAdmin])
+  .validator((input: unknown) => CampaignActionInput.parse(input))
+  .handler(async ({ data }) => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: campaign, error } = await (supabaseAdmin as any)
+      .from("campaigns")
+      .select("id, status")
+      .eq("id", data.campaignId)
+      .maybeSingle();
+    if (error) throw new Error(error.message);
+    if (!campaign) throw new Error("Campagne introuvable.");
+    const nextStatus = campaign.status === "archived" ? "active" : "archived";
+    const { error: updErr } = await (supabaseAdmin as any)
+      .from("campaigns")
+      .update({ status: nextStatus })
+      .eq("id", data.campaignId);
+    if (updErr) throw new Error(updErr.message);
+    return { ok: true, status: nextStatus };
+  });
+
+/** Suppression PHYSIQUE — refusée tant que la campagne n'est pas archivée, et refusée
+ *  si des codes ont été générés ou des enfants inscrits (l'historique appartient aux
+ *  familles, pas à l'outil de gestion). */
+export const deleteCampaignAdmin = createServerFn({ method: "POST" })
+  .middleware([requireAdmin])
+  .validator((input: unknown) => CampaignActionInput.parse(input))
+  .handler(async ({ data }) => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: campaign, error } = await (supabaseAdmin as any)
+      .from("campaigns")
+      .select("id, status")
+      .eq("id", data.campaignId)
+      .maybeSingle();
+    if (error) throw new Error(error.message);
+    if (!campaign) throw new Error("Campagne introuvable.");
+    if (campaign.status !== "archived") {
+      throw new Error("Archivez d'abord la campagne (fermeture douce) avant de la supprimer définitivement.");
+    }
+
+    const [tokensRes, enrollmentsRes] = await Promise.all([
+      (supabaseAdmin as any)
+        .from("sponsorship_tokens")
+        .select("id", { count: "exact", head: true })
+        .eq("campaign_id", data.campaignId),
+      (supabaseAdmin as any)
+        .from("season_enrollments")
+        .select("id", { count: "exact", head: true })
+        .eq("campaign_id", data.campaignId),
+    ]);
+    const tokens = tokensRes?.count ?? 0;
+    const enrollments = enrollmentsRes?.count ?? 0;
+    if (tokens > 0 || enrollments > 0) {
+      throw new Error(
+        `Suppression impossible : la campagne a ${tokens} code(s) généré(s) et ` +
+          `${enrollments} enfant(s) inscrit(s). Conservez-la archivée — l'historique ne se supprime pas.`
+      );
+    }
+
+    const { error: delErr } = await (supabaseAdmin as any)
+      .from("campaigns")
+      .delete()
+      .eq("id", data.campaignId);
+    if (delErr) throw new Error(delErr.message);
+    return { ok: true };
+  });
+
 // Jusqu'ici, rien dans la nav ne signalait à un chargé de projet ONG que son compte avait un
 // dashboard B2B — /b2b n'apparaît nulle part (ni AppHeader, ni AppTabBar, ni /profile), contrairement
 // à /supervisor et /admin qui sont déjà surfacés conditionnellement dans /profile. Seul moyen
@@ -427,6 +536,9 @@ export const getCampaignPublicInfo = createServerFn({ method: "GET" })
       .from("campaigns")
       .select("id, name, description, target_count, start_date, end_date")
       .eq("id", data.campaignId)
+      // Archivée = introuvable pour le public (2026-08-13) : le lien/QR de l'ONG
+      // cesse de fonctionner proprement, sans erreur incompréhensible.
+      .eq("status", "active")
       .maybeSingle();
 
     if (error || !campaign) throw new Error("Programme introuvable.");

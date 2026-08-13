@@ -11,10 +11,13 @@ import {
   Link as LinkIcon,
   Search,
   CreditCard,
+  Archive,
+  Trash2,
 } from "lucide-react";
 import { AdminPagination } from "./AdminPagination";
 import { useServerFn } from "@tanstack/react-start";
 import { useSession } from "@/hooks/use-session";
+import { confirmDialog } from "@/components/ui/confirm-dialog";
 import {
   listCampaignsAdmin,
   createCampaignAdmin,
@@ -22,6 +25,8 @@ import {
   updateCampaignExtraQuotaAdmin,
   updateCampaignBillingAdmin,
   generateCampaignPaymentLinkAdmin,
+  archiveCampaignAdmin,
+  deleteCampaignAdmin,
   listCampaignTokensAdmin,
   type Campaign,
   type CampaignTokenDetail,
@@ -65,6 +70,45 @@ export function AdminCampaignsTab() {
   const listCampaignsFn = useServerFn(listCampaignsAdmin);
   const updateBillingFn = useServerFn(updateCampaignBillingAdmin);
   const generateLinkFn = useServerFn(generateCampaignPaymentLinkAdmin);
+  const archiveFn = useServerFn(archiveCampaignAdmin);
+  const deleteCampaignFn = useServerFn(deleteCampaignAdmin);
+
+  // Fermeture douce / suppression (2026-08-13) : archiver = disparaît des flux actifs
+  // (lien public, génération, paiement, édition) sans toucher à l'historique ;
+  // supprimer = physique, uniquement archivée et sans codes/inscriptions.
+  const handleToggleArchive = async (c: Campaign) => {
+    try {
+      const res = await archiveFn({ data: { campaignId: c.id } });
+      toast.success(
+        res.status === "archived"
+          ? `Campagne « ${c.name} » archivée — lien public fermé, historique conservé.`
+          : `Campagne « ${c.name} » restaurée.`,
+      );
+      await fetchCampaigns();
+    } catch (err: any) {
+      toast.error(err?.message ?? "Erreur lors de l'archivage.");
+    }
+  };
+
+  const handleDeleteCampaign = async (c: Campaign) => {
+    if (
+      !(await confirmDialog({
+        title: "Supprimer définitivement cette campagne ?",
+        description:
+          "Uniquement possible si elle est archivée et sans codes générés ni enfants inscrits — l'historique ne se supprime pas.",
+        confirmLabel: "Supprimer",
+        variant: "danger",
+      }))
+    )
+      return;
+    try {
+      await deleteCampaignFn({ data: { campaignId: c.id } });
+      toast.success("Campagne supprimée définitivement.");
+      await fetchCampaigns();
+    } catch (err: any) {
+      toast.error(err?.message ?? "Erreur lors de la suppression.");
+    }
+  };
 
   // Sans ce délai, chaque frappe déclencherait une requête serveur complète.
   useEffect(() => {
@@ -259,6 +303,11 @@ export function AdminCampaignsTab() {
                 >
                   {c.name}
                 </h3>
+                {c.status === "archived" && (
+                  <span className="inline-flex items-center gap-1 rounded-full border border-stone-300 bg-stone-100 px-2.5 py-1 text-[10px] font-black uppercase tracking-wider text-stone-600 mb-2">
+                    <Archive className="size-3" /> Archivée
+                  </span>
+                )}
                 <p className="text-sm text-ink/60 line-clamp-2 mb-4 h-10">
                   {c.description || "Aucune description"}
                 </p>
@@ -387,7 +436,7 @@ export function AdminCampaignsTab() {
                 <CampaignQuotaEditor campaign={c} onUpdated={handleCampaignUpdated} />
               </div>
 
-              <div className="grid grid-cols-3 gap-2 pt-2 border-t border-ink/5">
+              <div className="grid grid-cols-5 gap-2 pt-2 border-t border-ink/5">
                 <button
                   onClick={() => {
                     setSelectedCampaign(c);
@@ -419,6 +468,32 @@ export function AdminCampaignsTab() {
                 >
                   <FileText className="size-3.5" />
                   <span>Voir</span>
+                </button>
+
+                <button
+                  onClick={() => void handleToggleArchive(c)}
+                  className={`w-full flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl font-bold transition-colors text-xs cursor-pointer ${
+                    c.status === "archived"
+                      ? "bg-emerald-50 text-emerald-700 hover:bg-emerald-100"
+                      : "bg-stone-100 text-stone-600 hover:bg-stone-200"
+                  }`}
+                  title={
+                    c.status === "archived"
+                      ? "Restaure la campagne (flux actifs rouverts)"
+                      : "Ferme la campagne : lien public coupé, plus de génération ni de paiement"
+                  }
+                >
+                  <Archive className="size-3.5" />
+                  <span>{c.status === "archived" ? "Restaurer" : "Archiver"}</span>
+                </button>
+
+                <button
+                  onClick={() => void handleDeleteCampaign(c)}
+                  className="w-full flex items-center justify-center gap-1.5 bg-rose-50 text-rose-600 hover:bg-rose-100 px-3 py-2 rounded-xl font-bold transition-colors text-xs cursor-pointer"
+                  title="Suppression physique — uniquement si archivée et sans codes/inscriptions"
+                >
+                  <Trash2 className="size-3.5" />
+                  <span>Suppr.</span>
                 </button>
               </div>
             </div>
