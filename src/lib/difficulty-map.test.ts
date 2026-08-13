@@ -75,3 +75,16 @@ describe("shouldAskAspirations", () => {
     expect(shouldAskAspirations({ life_context: ["besoins_specifiques"] })).toBe(false);
   });
 });
+
+describe("avis GPT Codex — P2 « Perception spatiale » → clé canonique spatial", () => {
+  it("la difficulté Perception spatiale cible bien la clé spatial (pas spatiale)", () => {
+    expect(difficultyTalentTargets({ perception_spatiale: "difficulte" })).toEqual(["spatial"]);
+  });
+
+  it("rankByDeclaredDifficulties reconnaît un candidat spatial", () => {
+    const candidates = [{ key: "linguistique" }, { key: "spatial" }, { key: "corporelle" }];
+    const ranked = rankByDeclaredDifficulties(candidates, { perception_spatiale: "difficulte" });
+    expect(ranked[0].key).toBe("spatial");
+    expect(ranked.slice(1).map((c) => c.key)).toEqual(["linguistique", "corporelle"]);
+  });
+});

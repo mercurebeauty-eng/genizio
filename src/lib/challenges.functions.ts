@@ -1300,7 +1300,7 @@ export const generateChallenges = createServerFn({ method: "POST" })
     // not "hasn't gotten to it yet this week".
     const STALE_DOMAIN_CUTOFF = new Date(Date.now() - 14 * 24 * 60 * 60 * 1000).toISOString();
 
-    const [{ data: existing }, { data: completedChallenges }, { data: staleChallenges }, progressionTargets] = await Promise.all([
+    const [{ data: existing }, { data: completedChallenges }, { data: staleChallenges }, { data: domainCounts }, progressionTargets] = await Promise.all([
       supabase
         .from("challenges")
         .select("title")
@@ -1326,6 +1326,15 @@ export const generateChallenges = createServerFn({ method: "POST" })
         .eq("child_id", data.childId)
         .eq("status", "todo")
         .lt("created_at", STALE_DOMAIN_CUTOFF),
+      // Comptage SÉPARÉ non tronqué des complétions par domaine (avis GPT Codex P2) :
+      // completedChallenges ci-dessus est limité à 6 pour le contexte du prompt — s'il
+      // servait aussi au comptage, la réduction du guidage (completedInDomain) serait
+      // sous-estimée pour les enfants avec beaucoup d'historique.
+      supabase
+        .from("challenges")
+        .select("domain")
+        .eq("child_id", data.childId)
+        .eq("status", "completed"),
       computeProgressionTargets(supabase, data.childId),
     ]);
     const existingTitles = (existing ?? []).map((c) => c.title);
@@ -1335,9 +1344,9 @@ export const generateChallenges = createServerFn({ method: "POST" })
 
     // Autonomie progressive (analyse §28) : compteur de défis complétés par domaine,
     // injecté dans finalizeChallenge pour réduire le guidage à mesure que l'enfant
-    // progresse dans son domaine.
+    // progresse dans son domaine. Comptage réel (non tronqué), cf. commentaire ci-dessus.
     const completedByDomain: Record<string, number> = {};
-    for (const c of completedChallenges ?? []) {
+    for (const c of domainCounts ?? []) {
       completedByDomain[c.domain] = (completedByDomain[c.domain] ?? 0) + 1;
     }
 

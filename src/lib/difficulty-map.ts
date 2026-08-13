@@ -19,7 +19,7 @@ export const DIFFICULTY_TALENT_KEYS: Record<string, string[]> = {
   concentration: ["logico_mathematique"],
   raisonnement: ["logico_mathematique"],
   logique: ["logico_mathematique"],
-  perception_spatiale: ["spatiale"],
+  perception_spatiale: ["spatial"],
   coordination: ["corporelle"],
   communication: ["linguistique", "sociale"],
   autonomie: ["entrepreneuriale"],
