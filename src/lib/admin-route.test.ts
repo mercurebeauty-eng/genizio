@@ -3,10 +3,10 @@ import { ADMIN_TABS, AdminTab } from "@/components/admin/AdminNavTabBar";
 import fs from "node:fs";
 import path from "node:path";
 
-describe("Milestone 3 Admin Route Safety & Unified 10-Tab Navigation Hub", () => {
-  it("defines all 10 tabs in ADMIN_TABS with valid metadata", () => {
+describe("Refonte Admin OS — Navigation & grille d'accueil (9 onglets)", () => {
+  it("définit les 9 onglets de la refonte dans ADMIN_TABS avec leurs métadonnées", () => {
     const tabIds = ADMIN_TABS.map((t) => t.id);
-    expect(tabIds).toHaveLength(10);
+    expect(tabIds).toHaveLength(9);
     expect(tabIds).toEqual([
       "executive",
       "b2b",
@@ -14,15 +14,14 @@ describe("Milestone 3 Admin Route Safety & Unified 10-Tab Navigation Hub", () =>
       "products",
       "talents",
       "naya",
+      "payments",
       "commerce",
-      "seasons",
-      "subscriptions",
       "profiles",
     ]);
 
     const execTab = ADMIN_TABS.find((t) => t.id === "executive");
     expect(execTab?.label).toBe("Exécutif");
-    expect(execTab?.badge).toBe("BI CRM");
+    expect(execTab?.badge).toBe("KPIs");
 
     const b2bTab = ADMIN_TABS.find((t) => t.id === "b2b");
     expect(b2bTab?.label).toBe("Campagnes B2B");
@@ -31,15 +30,19 @@ describe("Milestone 3 Admin Route Safety & Unified 10-Tab Navigation Hub", () =>
     expect(supTab?.label).toBe("Superviseurs");
 
     const prodTab = ADMIN_TABS.find((t) => t.id === "products");
-    expect(prodTab?.label).toBe("Produits");
+    expect(prodTab?.label).toBe("Produits & Stock");
 
     const talentsTab = ADMIN_TABS.find((t) => t.id === "talents");
     expect(talentsTab?.label).toBe("Talents & Villes");
     expect(talentsTab?.badge).toBe("Radar");
 
-    const subsTab = ADMIN_TABS.find((t) => t.id === "subscriptions");
-    expect(subsTab?.label).toBe("Abonnements");
-    expect(subsTab?.badge).toBe("MRR");
+    // Les onglets « Seasons » (vestige) et « Abonnements » (fusionné) ont disparu
+    // au profit de « Paiements & Accès » (secours webhook + abonnements).
+    const paymentsTab = ADMIN_TABS.find((t) => t.id === "payments");
+    expect(paymentsTab?.label).toBe("Paiements & Accès");
+    expect(paymentsTab?.badge).toBe("Secours");
+    expect(tabIds).not.toContain("seasons");
+    expect(tabIds).not.toContain("subscriptions");
   });
 
   it("handles tab change callback seamlessly when switching tabs", () => {

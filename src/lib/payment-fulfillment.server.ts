@@ -14,10 +14,13 @@
 // Serveur uniquement — jamais importé côté client (même pattern que paystack.server.ts).
 
 import { computeAccessPeriodWindow } from "@/lib/child-access";
-import { createSponsorshipTokenRecord } from "@/lib/seasons.functions";
+import { createSponsorshipTokenRecord, getActiveSeason } from "@/lib/seasons.functions";
+// Import runtime de la fonction pure (payments-admin n'importe ce module que
+// dynamiquement dans ses handlers — aucun cycle d'exécution).
+import { campaignTokenCount, resolveCampaignTokenLot } from "@/lib/payments-admin.functions";
 
 export type PaymentMetadata = {
-  type: "order" | "child_access" | "passport" | "extra_slots" | "sponsorship";
+  type: "order" | "child_access" | "passport" | "extra_slots" | "sponsorship" | "campaign_b2b";
   order_id?: string;
   child_id?: string;
   months?: number;
@@ -26,6 +29,8 @@ export type PaymentMetadata = {
   sponsor_email?: string;
   sponsor_message?: string;
   target_child_name?: string;
+  // campaign_b2b — paiement du lien partageable d'une campagne (mode payé).
+  campaign_id?: string;
   currency?: string;
 };
 
@@ -168,6 +173,61 @@ export async function applyPaystackEntitlement(
         paymentConfirmed: true,
       });
       return { entitlement: "sponsorship", detail: `Code de parrainage ${token.code}` };
+    }
+
+    // Campagne B2B payante (refonte Admin OS, 2026-08-13, décision #72) : le paiement du
+    // lien partageable crée un lot de codes B2B CONFIRMÉS — count = montant payé / prix
+    // unitaire, plafonné au target_count restant (garde anti-dépassement identique à
+    // generateCampaignTokensAdmin). Idempotent par paystack_reference (UNIQUE).
+    case "campaign_b2b": {
+      if (!metadata.campaign_id) throw new Error("Payment 'campaign_b2b' sans campaign_id.");
+      const { data: campaign, error: campErr } = await supabaseAdmin
+        .from("campaigns")
+        .select("id, name, target_count, price_per_token_xof")
+        .eq("id", metadata.campaign_id)
+        .maybeSingle();
+      if (campErr) throw new Error(campErr.message);
+      if (!campaign) throw new Error("Campagne introuvable.");
+
+      const { count: existingCount, error: countErr } = await supabaseAdmin
+        .from("sponsorship_tokens")
+        .select("id", { count: "exact", head: true })
+        .eq("campaign_id", campaign.id);
+      if (countErr) throw new Error(countErr.message);
+
+      const toCreate = resolveCampaignTokenLot(
+        payment.amount_xof,
+        campaign.price_per_token_xof,
+        existingCount ?? 0,
+        campaign.target_count ?? 0,
+      );
+      if (toCreate <= 0) {
+        throw new Error("Capacité de la campagne atteinte — aucun code à créer.");
+      }
+
+      const activeSeason = await getActiveSeason({ data: undefined });
+      const codes = new Set<string>();
+      while (codes.size < toCreate) {
+        codes.add(`GENIZIO-B2B-${Math.random().toString(36).substring(2, 8).toUpperCase()}`);
+      }
+      const tokens = Array.from(codes).map((code) => ({
+        code,
+        campaign_id: campaign.id,
+        season_id: activeSeason.id,
+        sponsor_name: campaign.name,
+        sponsor_email: "serviceclient@genizio.com",
+        amount_paid: payment.amount_xof,
+        currency: payment.currency,
+        paystack_reference: payment.reference,
+        payment_confirmed: true, // Payé via le lien partageable — confirmation par le paiement.
+      }));
+
+      const { error: insertErr } = await supabaseAdmin.from("sponsorship_tokens").insert(tokens);
+      if (insertErr) throw new Error(insertErr.message);
+      return {
+        entitlement: "campaign_b2b",
+        detail: `${toCreate} code(s) B2B créé(s) pour « ${campaign.name} »`,
+      };
     }
 
     default:

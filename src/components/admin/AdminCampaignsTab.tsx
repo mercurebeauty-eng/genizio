@@ -10,6 +10,7 @@ import {
   Copy,
   Link as LinkIcon,
   Search,
+  CreditCard,
 } from "lucide-react";
 import { AdminPagination } from "./AdminPagination";
 import { useServerFn } from "@tanstack/react-start";
@@ -19,6 +20,8 @@ import {
   createCampaignAdmin,
   generateCampaignTokensAdmin,
   updateCampaignExtraQuotaAdmin,
+  updateCampaignBillingAdmin,
+  generateCampaignPaymentLinkAdmin,
   listCampaignTokensAdmin,
   type Campaign,
   type CampaignTokenDetail,
@@ -50,7 +53,18 @@ export function AdminCampaignsTab() {
   const [statusFilter, setStatusFilter] = useState<"all" | "active" | "upcoming" | "ended">("all");
   const [page, setPage] = useState(1);
 
+  // Mode test/paid + lien de paiement (refonte Admin OS, décision #72).
+  const [billingDraft, setBillingDraft] = useState<Record<string, { mode: "test" | "paid"; price: string }>>({});
+  const [savingBillingId, setSavingBillingId] = useState<string | null>(null);
+  const [linkCampaign, setLinkCampaign] = useState<Campaign | null>(null);
+  const [linkTokenCount, setLinkTokenCount] = useState(10);
+  const [linkResult, setLinkResult] = useState<{ authorizationUrl: string; amountXof: number } | null>(null);
+  const [generatingLink, setGeneratingLink] = useState(false);
+  const [copiedLink, setCopiedLink] = useState(false);
+
   const listCampaignsFn = useServerFn(listCampaignsAdmin);
+  const updateBillingFn = useServerFn(updateCampaignBillingAdmin);
+  const generateLinkFn = useServerFn(generateCampaignPaymentLinkAdmin);
 
   // Sans ce délai, chaque frappe déclencherait une requête serveur complète.
   useEffect(() => {
@@ -96,6 +110,64 @@ export function AdminCampaignsTab() {
 
   const handleCampaignUpdated = (updated: Campaign) => {
     setCampaigns((prev) => prev.map((c) => (c.id === updated.id ? updated : c)));
+  };
+
+  // Mode test/paid : sauvegarde du mode + prix unitaire par code.
+  const handleUpdateBilling = async (campaign: Campaign) => {
+    const draft = billingDraft[campaign.id];
+    if (!draft) return;
+    setSavingBillingId(campaign.id);
+    const opts = session?.access_token
+      ? { headers: { Authorization: `Bearer ${session.access_token}` } }
+      : {};
+    try {
+      const price = draft.price === "" ? null : Math.max(0, parseInt(draft.price) || 0);
+      await updateBillingFn({
+        data: { campaignId: campaign.id, mode: draft.mode, pricePerTokenXof: price },
+        ...opts,
+      });
+      toast.success(
+        draft.mode === "paid"
+          ? `Campagne en mode payé — ${price ? `${formatXof(price)} par code` : "prix à définir"}.`
+          : "Campagne en mode test — codes gratuits confirmés d'office."
+      );
+      setBillingDraft((prev) => {
+        const next = { ...prev };
+        delete next[campaign.id];
+        return next;
+      });
+      await fetchCampaigns();
+    } catch (err: any) {
+      toast.error(err?.message || "Erreur lors de la mise à jour de la campagne.");
+    } finally {
+      setSavingBillingId(null);
+    }
+  };
+
+  // Lien de paiement partageable (mode payé) : Paystack initialize → URL à diffuser.
+  const handleGenerateLink = async () => {
+    if (!linkCampaign) return;
+    setGeneratingLink(true);
+    setLinkResult(null);
+    const opts = session?.access_token
+      ? { headers: { Authorization: `Bearer ${session.access_token}` } }
+      : {};
+    try {
+      const res = await generateLinkFn({
+        data: {
+          campaignId: linkCampaign.id,
+          tokenCount: linkTokenCount,
+          email: session?.user?.email ?? "admin@genizio.com",
+          callbackUrl: window.location.origin,
+        },
+        ...opts,
+      });
+      setLinkResult({ authorizationUrl: res.authorizationUrl, amountXof: res.amountXof });
+    } catch (err: any) {
+      toast.error(err?.message || "Erreur lors de la génération du lien de paiement.");
+    } finally {
+      setGeneratingLink(false);
+    }
   };
 
   const hasActiveFilter = debouncedSearch !== "" || statusFilter !== "all";
@@ -207,6 +279,111 @@ export function AdminCampaignsTab() {
                   {new Date(c.end_date).toLocaleDateString("fr-FR")}
                 </div>
 
+                {/* Mode test/paid + lien de paiement (refonte Admin OS, décision #72) */}
+                <div className="rounded-2xl border border-ink/10 bg-white p-3 mb-3">
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-[10px] font-black uppercase tracking-wider text-ink/50">
+                      Mode & tarification
+                    </span>
+                    {(c.mode ?? "test") === "paid" ? (
+                      <span className="rounded-full border border-emerald-200 bg-emerald-50 px-2 py-0.5 text-[10px] font-black uppercase tracking-wider text-emerald-700">
+                        💳 Payé
+                      </span>
+                    ) : (
+                      <span className="rounded-full border border-sky-200 bg-sky-50 px-2 py-0.5 text-[10px] font-black uppercase tracking-wider text-sky-700">
+                        🧪 Test
+                      </span>
+                    )}
+                  </div>
+
+                  {(() => {
+                    const draft = billingDraft[c.id] ?? {
+                      mode: (c.mode ?? "test") as "test" | "paid",
+                      price: c.price_per_token_xof != null ? String(c.price_per_token_xof) : "",
+                    };
+                    const isDirty =
+                      draft.mode !== (c.mode ?? "test") ||
+                      (draft.mode === "paid" &&
+                        draft.price !== String(c.price_per_token_xof ?? ""));
+                    return (
+                      <>
+                        <div className="flex gap-1.5 mb-2">
+                          {(["test", "paid"] as const).map((m) => (
+                            <button
+                              key={m}
+                              type="button"
+                              onClick={() =>
+                                setBillingDraft((prev) => ({
+                                  ...prev,
+                                  [c.id]: { ...draft, mode: m },
+                                }))
+                              }
+                              className={
+                                "flex-1 rounded-xl border px-2 py-1.5 text-[11px] font-bold transition-all cursor-pointer " +
+                                (draft.mode === m
+                                  ? "border-ink bg-ink text-white"
+                                  : "border-ink/10 bg-surface text-ink/60 hover:border-ink/25")
+                              }
+                            >
+                              {m === "test" ? "Test (gratuit)" : "Payé"}
+                            </button>
+                          ))}
+                        </div>
+
+                        {draft.mode === "paid" && (
+                          <div className="flex items-center gap-1.5 mb-2">
+                            <input
+                              type="number"
+                              min={0}
+                              value={draft.price}
+                              onChange={(e) =>
+                                setBillingDraft((prev) => ({
+                                  ...prev,
+                                  [c.id]: { ...draft, price: e.target.value },
+                                }))
+                              }
+                              placeholder="Prix par code (XOF)"
+                              className="w-full rounded-xl border border-ink/10 bg-surface px-2.5 py-1.5 text-xs font-bold text-ink outline-none focus:ring-2 focus:ring-brand/30"
+                            />
+                          </div>
+                        )}
+
+                        <div className="flex gap-1.5">
+                          {isDirty && (
+                            <button
+                              type="button"
+                              disabled={savingBillingId === c.id}
+                              onClick={() => void handleUpdateBilling(c)}
+                              className="flex-1 inline-flex items-center justify-center gap-1 rounded-xl bg-brand px-2 py-1.5 text-[11px] font-bold text-white hover:bg-brand/90 disabled:opacity-50 transition-colors cursor-pointer"
+                            >
+                              {savingBillingId === c.id ? (
+                                <Loader2 className="size-3 animate-spin" />
+                              ) : (
+                                "Enregistrer"
+                              )}
+                            </button>
+                          )}
+                          {(c.mode ?? "test") === "paid" && c.price_per_token_xof ? (
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setLinkCampaign(c);
+                                setLinkTokenCount(10);
+                                setLinkResult(null);
+                              }}
+                              className="flex-1 inline-flex items-center justify-center gap-1 rounded-xl border border-emerald-200 bg-emerald-50 px-2 py-1.5 text-[11px] font-bold text-emerald-700 hover:bg-emerald-100 transition-colors cursor-pointer"
+                              title="Génère un lien Paystack partageable — le paiement crée les codes automatiquement"
+                            >
+                              <CreditCard className="size-3" />
+                              Lien de paiement
+                            </button>
+                          ) : null}
+                        </div>
+                      </>
+                    );
+                  })()}
+                </div>
+
                 <CampaignQuotaEditor campaign={c} onUpdated={handleCampaignUpdated} />
               </div>
 
@@ -298,6 +475,108 @@ export function AdminCampaignsTab() {
               campaignId={selectedCampaign.id}
               campaignName={selectedCampaign.name}
             />
+          </div>
+        </div>
+      )}
+
+      {/* ── Modale : lien de paiement partageable (mode payé, décision #72) ── */}
+      {linkCampaign && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-ink/40 p-4"
+          onClick={() => !generatingLink && setLinkCampaign(null)}
+        >
+          <div
+            className="w-full max-w-md rounded-3xl border border-ink/10 bg-white p-6 shadow-2xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="mb-4">
+              <p className="text-[10px] font-black uppercase tracking-widest text-brand">
+                Lien de paiement partageable
+              </p>
+              <h3 className="mt-1 font-display text-lg font-black text-ink">
+                Financer des codes — {linkCampaign.name}
+              </h3>
+              <p className="mt-1 text-xs text-ink/60">
+                Diffusez ce lien (WhatsApp, email, QR) : quand le paiement aboutit, les codes B2B
+                confirmés sont créés automatiquement (montant ÷ prix unitaire, plafonné à
+                l'objectif restant de la campagne).
+              </p>
+            </div>
+
+            {!linkResult ? (
+              <>
+                <div className="flex items-center gap-4">
+                  <div>
+                    <p className="mb-1 text-xs font-bold text-ink/70">Codes à financer</p>
+                    <input
+                      type="number"
+                      min={1}
+                      max={200}
+                      value={linkTokenCount}
+                      onChange={(e) =>
+                        setLinkTokenCount(Math.max(1, Math.min(200, parseInt(e.target.value) || 1)))
+                      }
+                      className="w-28 rounded-xl border border-ink/10 bg-surface px-3 py-2 text-sm font-bold outline-none focus:ring-2 focus:ring-brand"
+                    />
+                  </div>
+                  <div className="text-xs text-ink/60">
+                    <p className="font-black text-ink">
+                      {formatXof((linkCampaign.price_per_token_xof ?? 0) * linkTokenCount)}
+                    </p>
+                    <p>
+                      {linkTokenCount} code(s) × {formatXof(linkCampaign.price_per_token_xof ?? 0)}
+                    </p>
+                  </div>
+                </div>
+
+                <div className="mt-6 flex justify-end gap-2">
+                  <button
+                    disabled={generatingLink}
+                    onClick={() => setLinkCampaign(null)}
+                    className="rounded-xl border border-ink/10 px-4 py-2 text-xs font-bold text-ink/60 hover:bg-ink/5 disabled:opacity-50 cursor-pointer"
+                  >
+                    Annuler
+                  </button>
+                  <button
+                    disabled={generatingLink}
+                    onClick={() => void handleGenerateLink()}
+                    className="inline-flex items-center gap-2 rounded-xl bg-brand px-4 py-2 text-xs font-bold text-white hover:bg-brand/90 disabled:opacity-50 cursor-pointer"
+                  >
+                    {generatingLink ? (
+                      <Loader2 className="size-3.5 animate-spin" />
+                    ) : (
+                      <CreditCard className="size-3.5" />
+                    )}
+                    Générer le lien
+                  </button>
+                </div>
+              </>
+            ) : (
+              <div className="rounded-2xl border border-emerald-200 bg-emerald-50 p-4">
+                <p className="text-xs font-bold text-emerald-800 mb-2">
+                  Lien prêt à diffuser — {formatXof(linkResult.amountXof)} :
+                </p>
+                <a
+                  href={linkResult.authorizationUrl}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="block break-all font-mono text-[11px] font-bold text-emerald-800 underline mb-3"
+                >
+                  {linkResult.authorizationUrl}
+                </a>
+                <button
+                  onClick={() => {
+                    navigator.clipboard?.writeText(linkResult.authorizationUrl).catch(() => {});
+                    setCopiedLink(true);
+                    setTimeout(() => setCopiedLink(false), 1500);
+                  }}
+                  className="inline-flex items-center gap-1.5 rounded-xl bg-emerald-600 px-3 py-2 text-xs font-bold text-white hover:bg-emerald-700 transition-colors cursor-pointer"
+                >
+                  <Copy className="size-3.5" />
+                  {copiedLink ? "Copié !" : "Copier le lien"}
+                </button>
+              </div>
+            )}
           </div>
         </div>
       )}

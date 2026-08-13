@@ -31,9 +31,6 @@ export interface ChildBIRC {
   name: string;
   age: number;
   pdfUnlocked: boolean;
-  activeSeasonTitle?: string | null;
-  campaignName?: string | null;
-  isEnrolledActive?: boolean;
 }
 
 export interface ParentBIRC {
@@ -631,37 +628,14 @@ export const getExecutiveKPIsAdmin = createServerFn({ method: "GET" })
     // 1. Fetch users from Supabase Auth admin
     const users = await listAllUsers(supabaseAdmin);
 
-    // 2. Fetch children profiles & season enrollments
-    const [{ data: children, error: childrenErr }, { data: enrollments }] = await Promise.all([
+    // 2. Fetch children profiles (la saison n'est plus qu'une étiquette depuis la
+    // dégradation des saisons, 20260812130000 — plus aucun rôle structurel ici)
+    const [{ data: children, error: childrenErr }] = await Promise.all([
       supabaseAdmin
         .from("child_profiles")
         .select("id, name, age, user_id, last_activity_date, updated_at, created_at, pdf_unlocked"),
-      supabaseAdmin
-        .from("season_enrollments")
-        .select("id, child_id, enrolled_at, campaign_id, seasons(title, duration_months), campaigns(name)")
-        .order("enrolled_at", { ascending: false }),
     ]);
     if (childrenErr) throw new Error(childrenErr.message);
-
-    // Map most recent enrollment per child
-    const enrollmentMap = new Map<string, { seasonTitle: string; campaignName: string | null; isActive: boolean }>();
-    if (enrollments) {
-      for (const enr of enrollments as any[]) {
-        if (!enrollmentMap.has(enr.child_id)) {
-          const enrolledAt = new Date(enr.enrolled_at);
-          const durationMonths = enr.seasons?.duration_months || 3;
-          const endDate = new Date(enrolledAt);
-          endDate.setMonth(endDate.getMonth() + durationMonths);
-          const isActive = new Date() <= endDate;
-
-          enrollmentMap.set(enr.child_id, {
-            seasonTitle: enr.seasons?.title || "Saison",
-            campaignName: enr.campaigns?.name || null,
-            isActive,
-          });
-        }
-      }
-    }
 
     // 3. Fetch challenges
     const { data: challenges, error: challengesErr } = await supabaseAdmin
@@ -699,15 +673,11 @@ export const getExecutiveKPIsAdmin = createServerFn({ method: "GET" })
         childCount: userChildren.length,
         childNames: userChildren.map((c) => `${c.name} (${c.age} ans)`).join(", "),
         children: userChildren.map((c) => {
-          const enr = enrollmentMap.get(c.id);
           return {
             id: c.id,
             name: c.name,
             age: c.age,
             pdfUnlocked: c.pdf_unlocked === true,
-            activeSeasonTitle: enr?.seasonTitle || null,
-            campaignName: enr?.campaignName || null,
-            isEnrolledActive: enr?.isActive ?? false,
           };
         }),
         challengeCount: userChallenges.length,
@@ -1057,7 +1027,7 @@ export const searchChildProfilesAdmin = createServerFn({ method: "GET" })
     const clean = data.query.trim().replace(/[%_]/g, "");
     let q = supabaseAdmin
       .from("child_profiles")
-      .select("id, user_id, name, age, city, country, is_active, access_locked_at, time_pressure, created_at")
+      .select("id, user_id, name, age, city, country, is_active, access_locked_at, time_pressure, pdf_unlocked, created_at")
       .order("created_at", { ascending: false })
       .limit(200);
     if (clean) q = q.ilike("name", `%${clean}%`);
@@ -1081,6 +1051,7 @@ export const searchChildProfilesAdmin = createServerFn({ method: "GET" })
       is_active: c.is_active,
       access_locked_at: c.access_locked_at,
       time_pressure: c.time_pressure,
+      pdf_unlocked: c.pdf_unlocked === true,
       created_at: c.created_at,
       parentEmail: emailById.get(c.user_id) ?? "",
     }));

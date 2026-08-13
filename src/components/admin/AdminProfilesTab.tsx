@@ -1,13 +1,15 @@
 import { useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
-import { Loader2, Search, Unlock, Power } from "lucide-react";
+import { Loader2, Search, Unlock, Power, CalendarClock, X, Award } from "lucide-react";
 import {
   searchChildProfilesAdmin,
   setChildProfileActiveAdmin,
   setChildTimePressureAdmin,
   unlockChildAccessAdmin,
 } from "@/lib/admin-os.functions";
+import { togglePassportUnlock } from "@/lib/products.functions";
+import { extendChildAccessAdmin } from "@/lib/child-access";
 import { TIME_PRESSURE_LABELS, type TimePressure } from "@/lib/time-limit";
 
 // Onglet Admin OS « Profils » (2026-08-12, analyse « Évolution de Génizio » §4) :
@@ -24,6 +26,7 @@ type ChildRow = {
   is_active: boolean;
   access_locked_at: string | null;
   time_pressure: TimePressure;
+  pdf_unlocked: boolean;
   created_at: string;
   parentEmail: string;
 };
@@ -33,11 +36,20 @@ export function AdminProfilesTab() {
   const setActiveFn = useServerFn(setChildProfileActiveAdmin);
   const setTimeFn = useServerFn(setChildTimePressureAdmin);
   const unlockFn = useServerFn(unlockChildAccessAdmin);
+  const passportFn = useServerFn(togglePassportUnlock);
+  const extendAccessFn = useServerFn(extendChildAccessAdmin);
 
   const [query, setQuery] = useState("");
   const [rows, setRows] = useState<ChildRow[] | null>(null);
   const [loading, setLoading] = useState(false);
   const [busyId, setBusyId] = useState<string | null>(null);
+  // Ajustement manuel d'accès (remplace l'ancienne « inscription à une saison » qui
+  // n'accordait plus rien depuis la dégradation des saisons, décision #60) : une vraie
+  // période child_access_periods, le mécanisme que getChildAccessStatus résout.
+  const [extendChild, setExtendChild] = useState<ChildRow | null>(null);
+  const [extendMonths, setExtendMonths] = useState(1);
+  const [extendNote, setExtendNote] = useState("");
+  const [extending, setExtending] = useState(false);
 
   const runSearch = async (q: string) => {
     setLoading(true);
@@ -59,6 +71,42 @@ export function AdminProfilesTab() {
       await runSearch(query);
     } catch (err: any) {
       toast.error(err?.message ?? "Mise à jour impossible");
+    } finally {
+      setBusyId(null);
+    }
+  };
+
+  const handleExtendAccess = async () => {
+    if (!extendChild) return;
+    setExtending(true);
+    try {
+      const res = await extendAccessFn({
+        data: { childId: extendChild.id, months: extendMonths, note: extendNote || undefined },
+      });
+      toast.success(
+        `Accès de ${extendChild.name} prolongé de ${extendMonths} mois — nouvelle échéance : ${new Date(res.endsAt).toLocaleDateString("fr-FR")}.`
+      );
+      setExtendChild(null);
+      setExtendNote("");
+      setExtendMonths(1);
+      await runSearch(query);
+    } catch (err: any) {
+      toast.error(err?.message ?? "Impossible de prolonger l'accès.");
+    } finally {
+      setExtending(false);
+    }
+  };
+
+  // Passeport d'Excellence : vrai toggle Bloqué/Débloqué (décision admin — contourne
+  // le paiement Paystack intent 'passport' quand le webhook n'est pas passé).
+  const togglePassport = async (child: ChildRow) => {
+    setBusyId(child.id);
+    try {
+      await passportFn({ data: { childId: child.id, unlock: !child.pdf_unlocked } });
+      toast.success(child.pdf_unlocked ? "Passeport reverrouillé." : "Passeport débloqué.");
+      await runSearch(query);
+    } catch (err: any) {
+      toast.error(err?.message ?? "Erreur lors du changement de statut du passeport.");
     } finally {
       setBusyId(null);
     }
@@ -212,12 +260,130 @@ export function AdminProfilesTab() {
                           Déverrouiller
                         </button>
                       )}
+                      <button
+                        type="button"
+                        disabled={busyId === c.id}
+                        onClick={() => {
+                          setExtendChild(c);
+                          setExtendMonths(1);
+                          setExtendNote("");
+                        }}
+                        className="inline-flex items-center gap-1 rounded-xl border border-sky-200 bg-sky-50 px-2.5 py-1.5 text-[11px] font-bold text-sky-700 transition-all hover:bg-sky-100 disabled:opacity-50 cursor-pointer"
+                        title="Accorder/prolonger l'accès manuellement (période réelle child_access_periods)"
+                      >
+                        <CalendarClock className="size-3" />
+                        Prolonger l'accès
+                      </button>
+                      <button
+                        type="button"
+                        disabled={busyId === c.id}
+                        onClick={() => void togglePassport(c)}
+                        className={
+                          "inline-flex items-center gap-1 rounded-xl border px-2.5 py-1.5 text-[11px] font-bold transition-all disabled:opacity-50 cursor-pointer " +
+                          (c.pdf_unlocked
+                            ? "border-amber-200 bg-amber-50 text-amber-700 hover:bg-amber-100"
+                            : "border-emerald-200 bg-emerald-50 text-emerald-700 hover:bg-emerald-100")
+                        }
+                        title="Passeport d'Excellence : bloquer/débloquer manuellement (secours du webhook Paystack)"
+                      >
+                        <Award className="size-3" />
+                        {c.pdf_unlocked ? "Bloquer passeport" : "Débloquer passeport"}
+                      </button>
                     </div>
                   </td>
                 </tr>
               ))}
             </tbody>
           </table>
+        </div>
+      )}
+
+      {extendChild && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-ink/40 p-4"
+          onClick={() => !extending && setExtendChild(null)}
+        >
+          <div
+            className="w-full max-w-md rounded-3xl border border-ink/10 bg-white p-6 shadow-2xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="mb-4 flex items-start justify-between gap-3">
+              <div>
+                <p className="text-[10px] font-black uppercase tracking-widest text-brand">
+                  Ajustement manuel d'accès
+                </p>
+                <h3 className="mt-1 font-display text-lg font-black text-ink">
+                  Prolonger l'accès de {extendChild.name}
+                </h3>
+                <p className="mt-1 text-xs text-ink/60">
+                  Accorde une vraie période d'accès (child_access_periods) — le même mécanisme
+                  que les paiements. L'accès est prolongé, jamais découpé.
+                </p>
+              </div>
+              <button
+                type="button"
+                disabled={extending}
+                onClick={() => setExtendChild(null)}
+                className="rounded-xl p-1.5 text-ink/50 hover:bg-ink/5 disabled:opacity-50 cursor-pointer"
+              >
+                <X className="size-4" />
+              </button>
+            </div>
+
+            <div className="space-y-4">
+              <div>
+                <p className="mb-2 text-xs font-bold text-ink/70">Durée</p>
+                <div className="flex gap-2">
+                  {[1, 3, 6, 12].map((m) => (
+                    <button
+                      key={m}
+                      type="button"
+                      onClick={() => setExtendMonths(m)}
+                      className={
+                        "flex-1 rounded-xl border px-2 py-2 text-sm font-bold transition-all cursor-pointer " +
+                        (extendMonths === m
+                          ? "border-brand bg-brand text-white shadow-sm"
+                          : "border-ink/10 bg-surface text-ink/70 hover:border-ink/25")
+                      }
+                    >
+                      {m} mois
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div>
+                <p className="mb-2 text-xs font-bold text-ink/70">Note (interne, optionnelle)</p>
+                <input
+                  value={extendNote}
+                  onChange={(e) => setExtendNote(e.target.value)}
+                  placeholder="ex. paiement reçu par virement — décision admin"
+                  maxLength={200}
+                  className="w-full rounded-xl border border-ink/10 bg-surface px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-brand"
+                />
+              </div>
+            </div>
+
+            <div className="mt-6 flex justify-end gap-2">
+              <button
+                type="button"
+                disabled={extending}
+                onClick={() => setExtendChild(null)}
+                className="rounded-xl border border-ink/10 px-4 py-2 text-xs font-bold text-ink/60 hover:bg-ink/5 disabled:opacity-50 cursor-pointer"
+              >
+                Annuler
+              </button>
+              <button
+                type="button"
+                disabled={extending}
+                onClick={() => void handleExtendAccess()}
+                className="inline-flex items-center gap-2 rounded-xl bg-brand px-4 py-2 text-xs font-bold text-white hover:bg-brand/90 disabled:opacity-50 cursor-pointer"
+              >
+                {extending ? <Loader2 className="size-3.5 animate-spin" /> : <CalendarClock className="size-3.5" />}
+                Prolonger {extendMonths} mois
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </div>

@@ -26,6 +26,7 @@ import {
   filterOrdersByStatus,
   formatXOF,
 } from "@/lib/admin-os.functions";
+import { PASSPORT_PRICE_XOF } from "@/lib/pricing";
 
 interface AdminCommerceTabProps {
   data: CommercePassportsDataResponse;
@@ -282,7 +283,7 @@ export function AdminCommerceTab({
                   <th className="pb-3 pr-4">Détails du Kit</th>
                   <th className="pb-3 pr-4">Montant XOF</th>
                   <th className="pb-3 pr-4">Statut Actuel</th>
-                  <th className="pb-3 text-center">Action 1-Click Status</th>
+                  <th className="pb-3 text-center">Action</th>
                 </tr>
               </thead>
               <tbody className="divide-y-2 divide-ink/5">
@@ -398,7 +399,7 @@ export function AdminCommerceTab({
                 Passeports d'Excellence 14+ (Validation 1-Click)
               </h2>
               <span className="rounded-full bg-purple-600 px-3 py-1 text-xs font-black text-white shadow-sm">
-                50 000 FCFA
+                {formatXOF(PASSPORT_PRICE_XOF)}
               </span>
             </div>
             <p className="text-xs text-ink/60 font-medium">
@@ -420,7 +421,7 @@ export function AdminCommerceTab({
             <strong>Activation du Passeport d'Excellence (14 ans et +) :</strong> Le déblocage
             autorise la génération et l'impression HD du passeport certifiant l'ensemble des
             compétences et des guildes de l'adolescent. Tarif de validation officiel :{" "}
-            <strong>50 000 FCFA</strong>.
+            <strong>{formatXOF(PASSPORT_PRICE_XOF)}</strong>.
           </div>
         </div>
 
@@ -441,7 +442,7 @@ export function AdminCommerceTab({
                   <th className="pb-3 pr-4">Ville</th>
                   <th className="pb-3 pr-4">Contact Parent & WhatsApp</th>
                   <th className="pb-3 pr-4">Statut Passeport</th>
-                  <th className="pb-3 text-center">Action 1-Click</th>
+                  <th className="pb-3 text-center">Action</th>
                   <th className="pb-3 text-center">Impression</th>
                 </tr>
               </thead>
@@ -487,7 +488,7 @@ export function AdminCommerceTab({
                         ) : (
                           <span className="inline-flex items-center gap-1.5 rounded-full border border-amber-400 bg-amber-100 px-3 py-1 text-xs font-black text-amber-800">
                             <Lock className="size-3 text-amber-600" />
-                            Verrouillé (50 000 FCFA)
+                            Verrouillé ({formatXOF(PASSPORT_PRICE_XOF)})
                           </span>
                         )}
                       </td>
