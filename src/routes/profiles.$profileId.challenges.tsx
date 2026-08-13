@@ -286,6 +286,9 @@ function ChallengesPage() {
   const [currentGeneratedChallenge, setCurrentGeneratedChallenge] = useState<any | null>(null);
   const [loadingTextIndex, setLoadingTextIndex] = useState(0);
   const [recommendation, setRecommendation] = useState<RecommendedChallengeResult | null>(null);
+  // D-07 (review 2026-08-13) : l'échec de génération de mission n'est plus avalé en
+  // silence — un encart avec « Réessayer » remplace la page muette.
+  const [recommendationFailed, setRecommendationFailed] = useState(false);
   const [isRerolling, setIsRerolling] = useState(false);
   const [academicGaps, setAcademicGaps] = useState<Record<string, number>>({});
   // Suppression différenciée (Décision #58) : le défi en cours de suppression +
@@ -554,11 +557,13 @@ function ChallengesPage() {
   };
 
   const loadRecommendation = async () => {
+    setRecommendationFailed(false);
     try {
       const res = await recommendFn({ data: { childId: profileId } });
       setRecommendation(res || null);
     } catch (e) {
       console.error("Failed to load recommendation:", e);
+      setRecommendationFailed(true);
     }
   };
 
@@ -598,6 +603,32 @@ function ChallengesPage() {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [session, profileId]);
+
+  // D-06/D-08 (review 2026-08-13) : l'enfant vient de valider dans /quest → au retour
+  // (montage ou retour de focus), le parent est notifié et les données sont rechargées
+  // — fin du stale state entre la quête et la page Défis, et de la boucle de retour
+  // coupée (le succès de l'enfant était invisible sans rechargement manuel). Même
+  // appareil (localStorage) — un vrai canal multi-appareils demanderait une table.
+  useEffect(() => {
+    const consumeCelebration = () => {
+      try {
+        const raw = localStorage.getItem("genizio:celebrate");
+        if (!raw) return;
+        const evt = JSON.parse(raw);
+        localStorage.removeItem("genizio:celebrate");
+        if (evt?.childId !== profileId) return;
+        if (Date.now() - Number(evt.at ?? 0) > 10 * 60_000) return;
+        toast.success(`🎉 ${child?.name ?? "Ton enfant"} a validé « ${evt.title} » !`);
+        void refetch();
+      } catch {
+        /* stockage indisponible — jamais bloquant */
+      }
+    };
+    consumeCelebration();
+    window.addEventListener("focus", consumeCelebration);
+    return () => window.removeEventListener("focus", consumeCelebration);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [profileId]);
 
   const handleGenerate = async () => {
     setError(null);
@@ -1168,6 +1199,22 @@ function ChallengesPage() {
                           </div>
                         </div>
                       )}
+                    </div>
+                  )}
+
+                  {/* D-07 : échec de génération de mission → encart explicite + réessayer
+                      (plus de page silencieusement vide). */}
+                  {!recommendation && recommendationFailed && (
+                    <div className="rounded-3xl border border-dashed border-ink/20 bg-white/40 p-6 text-center shadow-sm mb-6">
+                      <p className="text-sm font-bold text-ink/70">
+                        Naya n'a pas pu préparer de mission pour le moment.
+                      </p>
+                      <button
+                        onClick={() => void loadRecommendation()}
+                        className="mt-3 inline-flex items-center gap-2 rounded-xl bg-brand px-4 py-2 text-xs font-bold text-white cursor-pointer hover:bg-brand/90 transition-colors"
+                      >
+                        <Loader2 className="size-3" /> Réessayer
+                      </button>
                     </div>
                   )}
 

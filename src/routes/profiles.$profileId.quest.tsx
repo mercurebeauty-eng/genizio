@@ -27,6 +27,7 @@ import { ChallengeKindBadge } from "@/components/challenges/ChallengeKindBadge";
 import { AspirationCompassCard } from "@/components/aspirations/AspirationCompassCard";
 import { MarkdownContent } from "@/components/ui/markdown-content";
 import { GenizioLoader } from "@/components/GenizioLoader";
+import { fileToCompressedProof } from "@/lib/image-proof";
 
 export const Route = createFileRoute("/profiles/$profileId/quest")({
   component: QuestPage,
@@ -63,19 +64,6 @@ const DOMAIN_COLORS: Record<string, string> = {
   Agriculture: "bg-lime-600 text-white",
   Entrepreneuriat: "bg-sky-500 text-white",
 };
-
-function fileToBase64(file: File): Promise<string> {
-  return new Promise((resolve, reject) => {
-    const MAX_SIZE_BYTES = 5 * 1024 * 1024; // 5 Mo
-    if (file.size > MAX_SIZE_BYTES) {
-      return reject(new Error("Image trop volumineuse (max 5 Mo)"));
-    }
-    const reader = new FileReader();
-    reader.onload = () => resolve((reader.result as string).split(",")[1] ?? "");
-    reader.onerror = reject;
-    reader.readAsDataURL(file);
-  });
-}
 
 function QuestPage() {
   const { profileId } = Route.useParams();
@@ -230,30 +218,57 @@ function QuestPage() {
   const handleUploadProof = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     const targetId = completedChallengeId || activeChallenge?.id;
-    if (!file || !targetId) return;
+    if (!file) return; // le sélecteur n'émet rien sans fichier
+    if (!targetId) {
+      // D-03 (review 2026-08-13) : plus de clic silencieux — l'enfant sait pourquoi
+      // rien ne part au lieu de voir un bouton « mort ».
+      toast.error("Aucun défi à valider pour le moment — termine d'abord les étapes de ta quête.");
+      return;
+    }
     setUploadingProof(true);
     try {
-      const base64 = await fileToBase64(file);
+      // D-04 : compression SANS PERTE DE QUALITÉ VISIBLE (1920 px max + WebP 0.92,
+      // PNG lossless) — la photo brute du téléphone ne part plus telle quelle.
+      const proof = await fileToCompressedProof(file);
       const challengeToValidate = challenges.find((c) => c.id === targetId) || activeChallenge;
 
       const result = await validateAI({
         data: {
           id: targetId,
           proofText: challengeToValidate?.notes || "",
-          proofImageBase64: base64,
-          proofImageMediaType: file.type,
+          proofImageBase64: proof.base64,
+          proofImageMediaType: proof.mediaType,
         },
       });
 
       if (!result.relevant) {
-        toast.error(
-          result.observations || "L'image ne semble pas correspondre. Peux-tu réessayer ?",
-        );
+        // D-05 : ton Naya — jamais de verdict sec pour un enfant (même règle que le
+        // chantier 5) ; l'observation IA reste utile en complément.
+        toast("Naya ne reconnaît pas encore tout sur cette photo… 📸", {
+          description:
+            "Prends-la plus près de ton travail et réessaie — elle veut voir ce que tu as fait !",
+        });
         return;
       }
 
       setAiObservations(result.observations);
       setProofUrl(URL.createObjectURL(file)); // Affichage local immédiat
+
+      // D-06 : signal de célébration pour le parent — consommé par la page Défis au
+      // retour/focus (toast 🎉 + rechargement), sans infrastructure de push.
+      try {
+        localStorage.setItem(
+          "genizio:celebrate",
+          JSON.stringify({
+            childId: child?.id ?? "",
+            title: challengeToValidate?.title ?? "un défi",
+            at: Date.now(),
+          }),
+        );
+      } catch {
+        /* stockage indisponible — jamais bloquant */
+      }
+
       toast.success("Preuve validée par Naya ! 📸");
       void loadChallenges(); // Reload to get updated status and talents
     } catch (err) {
