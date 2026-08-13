@@ -174,6 +174,14 @@ export function ProfileDialog({
       setError("Le prénom est obligatoire");
       return;
     }
+    // Date de naissance = source unique de l'âge (2026-08-13) : le sélecteur d'âge a
+    // été supprimé de l'onboarding — sans date, l'âge n'a plus de source fiable.
+    if (!draft.birthdate) {
+      const msg = "La date de naissance est obligatoire (l'âge en est dérivé).";
+      setError(msg);
+      toast.error(msg);
+      return;
+    }
     const birthdateAge = ageFromBirthdate(draft.birthdate);
     if (birthdateAge !== null && (birthdateAge < 5 || birthdateAge > 16)) {
       const msg = `L'âge doit être compris entre 5 et 16 ans (cette date de naissance donne ${birthdateAge} ans).`;
@@ -187,7 +195,10 @@ export function ProfileDialog({
       const payload = {
         user_id: userId,
         name: draft.name.trim().slice(0, 40),
-        age: draft.age,
+        // Âge dérivé de la date de naissance (2026-08-13) : plus aucun sélecteur d'âge
+        // dans l'onboarding — la date est la source unique (le trigger serveur
+        // sync_child_age_from_birthdate aligne la base quoi qu'il arrive).
+        age: ageFromBirthdate(draft.birthdate) ?? draft.age,
         birthdate: draft.birthdate || null,
         interests: draft.interests,
         city: draft.city?.trim() || null,
@@ -329,17 +340,9 @@ export function ProfileDialog({
 
           <div>
             <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-ink/60">
-              Âge : {draft.age} ans
+              Date de naissance *
             </label>
-            <input
-              type="range"
-              min={5}
-              max={16}
-              value={draft.age}
-              onChange={(e) => setDraft({ ...draft, age: Number(e.target.value) })}
-              className="w-full accent-brand"
-            />
-            <div className="mt-2 flex flex-wrap items-center gap-2">
+            <div className="flex flex-wrap items-center gap-2">
               <input
                 type="date"
                 value={draft.birthdate ?? ""}
@@ -349,8 +352,7 @@ export function ProfileDialog({
                 className="rounded-xl border border-ink/10 px-3 py-2 text-xs outline-none focus:ring-2 focus:ring-brand shadow-sm"
               />
               <p className="text-[11px] text-ink/50 leading-snug">
-                Optionnel — avec la date de naissance, l'âge se met à jour tout seul chaque année
-                (entre 5 et 16 ans).
+                L'âge se calcule automatiquement et se met à jour chaque année (5 à 16 ans).
               </p>
             </div>
           </div>
