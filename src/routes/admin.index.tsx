@@ -189,8 +189,8 @@ function AdminIndexPage() {
       if (res.success) {
         toast.success(
           quota > 0
-            ? `Quota de profils défini sur ${quota} (0 = auto pour revenir à la règle standard).`
-            : "Quota de profils remis sur la règle standard automatique.",
+            ? `Couverture de profils définie sur ${quota} (0 = auto pour revenir à la règle standard).`
+            : "Couverture de profils remise sur la règle standard automatique.",
         );
         await loadData(false);
       }
@@ -261,8 +261,8 @@ function AdminIndexPage() {
             {activeTab === "home" ? "Pilotage Génizio" : "Panneau de pilotage"}
           </h1>
           <p className="text-sm font-medium text-ink/60 mt-1">
-            Croissance, familles, paiements, commerce, talents et pouvoir admin — avec les
-            secours manuels pour tout ce qui ne se déclenche pas tout seul.
+            Croissance, familles, paiements, commerce, talents et pouvoir admin — avec les secours
+            manuels pour tout ce qui ne se déclenche pas tout seul.
           </p>
         </div>
 
@@ -365,12 +365,8 @@ function AdminIndexPage() {
             {activeTab === "payments" && <AdminPaymentsTab />}
             {activeTab === "b2b" && <AdminCampaignsTab />}
             {activeTab === "supervisors" && <AdminSupervisorsTab />}
-            {activeTab === "products" && (
-              <AdminProductsTab onDataChanged={() => loadData(false)} />
-            )}
-            {activeTab === "profiles" && (
-              <AdminProfilesTab onDataChanged={() => loadData(false)} />
-            )}
+            {activeTab === "products" && <AdminProductsTab onDataChanged={() => loadData(false)} />}
+            {activeTab === "profiles" && <AdminProfilesTab onDataChanged={() => loadData(false)} />}
           </>
         )}
       </main>

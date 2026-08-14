@@ -89,16 +89,16 @@ function AProposPage() {
           </p>
           <p>
             C'est une approche du potentiel par la preuve plutôt que par l'intuition : ce que
-            l'enfant choisit, ce qu'il persévère à terminer, ce vers quoi il revient spontanément
-            en dit plus long que n'importe quel test.
+            l'enfant choisit, ce qu'il persévère à terminer, ce vers quoi il revient spontanément en
+            dit plus long que n'importe quel test.
           </p>
 
           <h2>Ce que Génizio n'est pas</h2>
           <p>
             Génizio ne pose aucun diagnostic, ne mesure aucun QI et ne remplace ni un psychologue,
             ni un enseignant, ni un médecin. Il n'est pas non plus un cours particulier déguisé ni
-            un outil de classement des enfants entre eux. C'est un outil d'observation et de mise
-            en confiance : il crée des occasions de réussir et documente ce qui est réussi.
+            un outil de classement des enfants entre eux. C'est un outil d'observation et de mise en
+            confiance : il crée des occasions de réussir et documente ce qui est réussi.
           </p>
 
           <h2>Le fondateur</h2>
@@ -149,7 +149,8 @@ function AProposPage() {
             Génizio propose à votre enfant des défis concrets adaptés à son âge et à ses centres
             d'intérêt, et construit la carte de ses talents à partir de ce qu'il réalise vraiment. 1
             profil enfant gratuit, puis 5 000 FCFA les 3 premiers mois (ensuite 15 000 FCFA) par
-            profil supplémentaire.
+            profil supplémentaire. Pour un accompagnement plus poussé, un superviseur formé suit
+            votre enfant en séances hebdomadaires (12 séances × 5 000 F/mois/enfant).
           </p>
           <Link
             to="/auth"

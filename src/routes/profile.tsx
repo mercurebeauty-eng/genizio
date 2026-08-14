@@ -30,6 +30,7 @@ import { RELATIONSHIP_TYPES } from "@/lib/relationship-types";
 import { GenizioLoader } from "@/components/GenizioLoader";
 import { checkAdminStatus } from "@/lib/admin.functions";
 import { checkIsCampaignManager } from "@/lib/campaigns.functions";
+import { checkIsActiveSupervisor } from "@/lib/supervisors.functions";
 
 export const Route = createFileRoute("/profile")({
   component: ProfilePage,
@@ -57,6 +58,7 @@ function ProfilePage() {
   const [isManager, setIsManager] = useState(false);
   const checkAdmin = useServerFn(checkAdminStatus);
   const checkManager = useServerFn(checkIsCampaignManager);
+  const checkSupervisor = useServerFn(checkIsActiveSupervisor);
 
   // Navigation et données séparées (2026-08-14) : la navigation dépend de la
   // présence de la session, mais les 8 requêtes ci-dessous sont keyées sur
@@ -64,9 +66,7 @@ function ProfilePage() {
   // identité que sur changement réel du token/claims, et on ne rejoue pas
   // toutes ces requêtes pour un simple refresh.
   const userId = session?.user.id;
-  const relationshipMeta = session?.user.user_metadata?.relationship_type as
-    | string
-    | undefined;
+  const relationshipMeta = session?.user.user_metadata?.relationship_type as string | undefined;
   const savedPhone = session?.user.user_metadata?.phone as string | undefined;
 
   useEffect(() => {
@@ -77,11 +77,10 @@ function ProfilePage() {
     if (!userId) return;
     checkAdmin().then(({ isAdmin }) => setIsAdmin(isAdmin));
     checkManager().then(({ isManager }) => setIsManager(isManager));
-    supabase
-      .from("supervisors")
-      .select("id", { count: "exact", head: true })
-      .eq("supervisor_user_id", userId)
-      .then(({ count }) => setIsSupervisor((count ?? 0) > 0));
+    // Superviseur ACTIF (V1) : l'ancienne détection comptait toute ligne `supervisors`,
+    // y compris un superviseur retiré ou banni — l'espace /supervisor restait visible.
+    // checkIsActiveSupervisor vérifie removed_at IS NULL + statut != banned.
+    checkSupervisor().then(({ isSupervisor }) => setIsSupervisor(isSupervisor));
     setRelationshipType(relationshipMeta ?? "");
 
     // Load saved phone

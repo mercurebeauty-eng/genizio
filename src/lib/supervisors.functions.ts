@@ -4,6 +4,7 @@ import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { listAllUsers } from "@/integrations/supabase/admin-users";
 import { z } from "zod";
 import { computeSupervisorQuota } from "./supervisor-quota";
+import { computeExpectedSessions, computeSupervisorScore } from "./supervisor-score";
 
 // ────────────────────────────────────────────────────────────
 // Superviseurs — Fonctions serveur
@@ -43,6 +44,10 @@ export interface SupervisorGroup {
   totalChildren: number;
   /** Quota effectif (plancher + extra, borné 5) — même calcul que check_supervisor_quota. */
   quota: number;
+  /** Score de fiabilité /100 (V1) — 60% tenue des séances + 40% progression (supervisor-score.ts). */
+  score: number;
+  /** Statut du compte superviseur (supervisor_profiles) — active|warning|suspended|banned. */
+  status: string;
   children: SupervisorAssignmentDetail[];
 }
 
@@ -79,6 +84,9 @@ export const listSupervisorsAdmin = createServerFn({ method: "GET" })
       .select(
         "id, supervisor_user_id, child_profile_id, campaign_id, created_at, child_profiles(name, age), campaigns(name, created_at, extra_supervisors_quota)",
       )
+      // Soft-retire (V1) : un superviseur retiré disparaît des flux actifs (liste admin,
+      // assignation, quota) — son historique (séances, score) reste en base.
+      .is("removed_at", null)
       .order("created_at", { ascending: false })
       .order("id", { ascending: false });
     if (data.campaignId) {
@@ -117,6 +125,8 @@ export const listSupervisorsAdmin = createServerFn({ method: "GET" })
           email: "…",
           totalChildren: 1,
           quota: 5,
+          score: 0,
+          status: "active",
           children: [detail],
         });
       }
@@ -146,6 +156,66 @@ export const listSupervisorsAdmin = createServerFn({ method: "GET" })
     );
     for (const [id, info] of resolved) emailMap.set(id, info);
 
+    // Score de fiabilité (V1) — chargement groupé une fois pour tous les superviseurs de
+    // la page : statut (supervisor_profiles), séances déclarées ce mois (supervisor_sessions)
+    // et défis de leurs enfants (progression). Même fenêtre « mois courant » des deux côtés.
+    const { data: profiles } = await (supabaseAdmin as any)
+      .from("supervisor_profiles")
+      .select("supervisor_user_id, status")
+      .in("supervisor_user_id", supervisorIds);
+    const statusMap = new Map<string, string>(
+      (profiles ?? []).map((p: any) => [p.supervisor_user_id as string, p.status as string]),
+    );
+
+    const now = new Date();
+    const monthStart = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
+    const monthEnd = new Date(now.getFullYear(), now.getMonth() + 1, 1).toISOString();
+    const { data: sessions } = await (supabaseAdmin as any)
+      .from("supervisor_sessions")
+      .select("supervisor_user_id")
+      .in("supervisor_user_id", supervisorIds)
+      .gte("occurred_at", monthStart)
+      .lt("occurred_at", monthEnd);
+    const sessionsBySupervisor = new Map<string, number>();
+    for (const s of sessions ?? []) {
+      sessionsBySupervisor.set(
+        s.supervisor_user_id,
+        (sessionsBySupervisor.get(s.supervisor_user_id) ?? 0) + 1,
+      );
+    }
+
+    const childIdsOfPage = [...groups.values()].flatMap((g) =>
+      g.children.map((c) => c.child_profile_id),
+    );
+    const { data: challenges } = await (supabaseAdmin as any)
+      .from("challenges")
+      .select("child_id, status")
+      .in("child_id", childIdsOfPage)
+      .is("deleted_at", null);
+    const childBySupervisor = new Map<string, Set<string>>();
+    for (const g of groups.values()) {
+      childBySupervisor.set(
+        g.supervisor_user_id,
+        new Set(g.children.map((c) => c.child_profile_id)),
+      );
+    }
+    const completedBySupervisor = new Map<string, number>();
+    const totalBySupervisor = new Map<string, number>();
+    for (const c of challenges ?? []) {
+      for (const [supId, childSet] of childBySupervisor) {
+        if (!childSet.has(c.child_id)) continue;
+        totalBySupervisor.set(supId, (totalBySupervisor.get(supId) ?? 0) + 1);
+        if (c.status === "completed") {
+          completedBySupervisor.set(supId, (completedBySupervisor.get(supId) ?? 0) + 1);
+        }
+      }
+    }
+
+    // Fraction du mois écoulé : au premier jour le score serait à 0 sans déclaration —
+    // on proratise l'attendu (12 séances/mois/enfant) sur les jours écoulés.
+    const daysInMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
+    const elapsedDays = Math.max(1, now.getDate());
+
     const term = data.search?.trim().toLowerCase();
     const list = [...groups.values()].filter((g) => {
       const email = emailMap.get(g.supervisor_user_id)?.email ?? "Inconnu";
@@ -166,6 +236,13 @@ export const listSupervisorsAdmin = createServerFn({ method: "GET" })
         );
       }
       g.quota = quota;
+      g.status = statusMap.get(g.supervisor_user_id) ?? "active";
+      g.score = computeSupervisorScore({
+        expectedSessions: computeExpectedSessions(g.totalChildren, daysInMonth, elapsedDays),
+        declaredSessions: sessionsBySupervisor.get(g.supervisor_user_id) ?? 0,
+        completedChallenges: completedBySupervisor.get(g.supervisor_user_id) ?? 0,
+        totalChallenges: totalBySupervisor.get(g.supervisor_user_id) ?? 0,
+      });
       return !term || email.toLowerCase().includes(term);
     });
 
@@ -221,6 +298,23 @@ export async function insertSupervisorAssignments(
   },
 ) {
   if (params.childProfileIds.length === 0) return [];
+
+  // Statut du compte superviseur (V1) : un superviseur suspendu ou banni ne reçoit plus
+  // d'assignation — le ban est structurel, pas une décision après coup.
+  const { data: profile } = await (supabaseAdmin as any)
+    .from("supervisor_profiles")
+    .select("status")
+    .eq("supervisor_user_id", params.supervisorUserId)
+    .maybeSingle();
+  const status = (profile?.status as string | undefined) ?? "active";
+  if (status === "suspended" || status === "banned") {
+    throw new Error(
+      status === "banned"
+        ? "Ce superviseur est banni — restaurez-le avant de l'assigner."
+        : "Ce superviseur est suspendu — restaurez-le avant de l'assigner.",
+    );
+  }
+
   const rows = params.childProfileIds.map((childId) => ({
     supervisor_user_id: params.supervisorUserId,
     child_profile_id: childId,
@@ -329,11 +423,13 @@ export const assignSupervisorToCampaignAdmin = createServerFn({ method: "POST" }
     }
 
     // Pré-check informatif seulement — le trigger DB check_supervisor_quota (migration
-    // 20260726120000) fait foi, comme sur le chemin ONG.
+    // 20260726120000) fait foi, comme sur le chemin ONG. Ne compte que les assignations
+    // ACTIVES (soft-retire V1) : un superviseur retiré libère sa place.
     const { data: existingAssignments } = await (supabaseAdmin as any)
       .from("supervisors")
       .select("id")
-      .eq("supervisor_user_id", supervisor.id);
+      .eq("supervisor_user_id", supervisor.id)
+      .is("removed_at", null);
     const currentCount = existingAssignments?.length ?? 0;
     const quota = computeSupervisorQuota({
       referenceCreatedAt: campaign.created_at,
@@ -359,12 +455,135 @@ export const assignSupervisorToCampaignAdmin = createServerFn({ method: "POST" }
     return { success: true, assignedCount: toAssign };
   });
 
+// ── Système de confiance (V1, décision « score auto ») ─────────────────────────
+// Le superviseur déclare ses séances en app (date + compte-rendu) ; le score de
+// fiabilité se calcule tout seul (supervisor-score.ts). La déclaration est la preuve
+// qui alimentera la facturation (supervisor_payout, V2) — d'où la rigueur : la séance
+// doit concerner un enfant assigné ACTIF, et le superviseur ne doit pas être suspendu/banni.
+
+const DeclareSessionInput = z.object({
+  childProfileId: z.string().uuid(),
+  occurredAt: z.string().datetime().optional(),
+  notes: z.string().max(2000).optional(),
+});
+
+export const declareSessionSupervisor = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .validator((input: unknown) => DeclareSessionInput.parse(input))
+  .handler(async ({ data, context }) => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const userId = (context as any).claims?.sub;
+
+    // Statut du superviseur : un suspendu/banni ne peut pas déclarer de séance.
+    const { data: profile } = await (supabaseAdmin as any)
+      .from("supervisor_profiles")
+      .select("status")
+      .eq("supervisor_user_id", userId)
+      .maybeSingle();
+    const status = (profile?.status as string | undefined) ?? "active";
+    if (status === "suspended" || status === "banned") {
+      throw new Error(
+        status === "banned"
+          ? "Votre compte superviseur est banni — contactez l'équipe Génizio."
+          : "Votre compte superviseur est suspendu — contactez l'équipe Génizio.",
+      );
+    }
+
+    // La séance doit concerner un enfant assigné à CE superviseur, encore actif.
+    const { data: assignment } = await (supabaseAdmin as any)
+      .from("supervisors")
+      .select("id")
+      .eq("supervisor_user_id", userId)
+      .eq("child_profile_id", data.childProfileId)
+      .is("removed_at", null)
+      .maybeSingle();
+    if (!assignment) {
+      throw new Error("Cet enfant n'est pas (plus) assigné à votre suivi.");
+    }
+
+    const { error } = await (supabaseAdmin as any).from("supervisor_sessions").insert({
+      supervisor_user_id: userId,
+      child_profile_id: data.childProfileId,
+      occurred_at: data.occurredAt ?? new Date().toISOString(),
+      notes: data.notes ?? null,
+    });
+    if (error) throw new Error(`Erreur lors de la déclaration: ${error.message}`);
+
+    return { success: true };
+  });
+
+export const listSupervisorSessions = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const userId = (context as any).claims?.sub;
+
+    const { data, error } = await (supabaseAdmin as any)
+      .from("supervisor_sessions")
+      .select("id, child_profile_id, occurred_at, notes, created_at, child_profiles(name)")
+      .eq("supervisor_user_id", userId)
+      .order("occurred_at", { ascending: false })
+      .limit(50);
+    if (error) throw new Error(error.message);
+
+    return (data ?? []).map((s: any) => ({
+      id: s.id,
+      child_profile_id: s.child_profile_id,
+      child_name: (s.child_profiles as any)?.name ?? "Enfant",
+      occurred_at: s.occurred_at as string,
+      notes: s.notes as string | null,
+    }));
+  });
+
+const UpdateSupervisorStatusInput = z.object({
+  supervisorUserId: z.string().uuid(),
+  status: z.enum(["active", "warning", "suspended", "banned"]),
+});
+
+export const updateSupervisorStatusAdmin = createServerFn({ method: "POST" })
+  .middleware([requireAdmin])
+  .validator((input: unknown) => UpdateSupervisorStatusInput.parse(input))
+  .handler(async ({ data }) => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+
+    // Upsert : un compte sans ligne supervisor_profiles (assigné avant la V1) est
+    // implicitement 'active' — on crée la ligne au premier changement de statut.
+    const { data: existing } = await (supabaseAdmin as any)
+      .from("supervisor_profiles")
+      .select("supervisor_user_id")
+      .eq("supervisor_user_id", data.supervisorUserId)
+      .maybeSingle();
+
+    if (existing) {
+      const { error } = await (supabaseAdmin as any)
+        .from("supervisor_profiles")
+        .update({ status: data.status })
+        .eq("supervisor_user_id", data.supervisorUserId);
+      if (error) throw new Error(error.message);
+    } else {
+      const { error } = await (supabaseAdmin as any)
+        .from("supervisor_profiles")
+        .insert({ supervisor_user_id: data.supervisorUserId, status: data.status });
+      if (error) throw new Error(error.message);
+    }
+
+    return { success: true, status: data.status };
+  });
+
 export const removeSupervisor = createServerFn({ method: "POST" })
   .middleware([requireAdmin])
   .validator((input: unknown) => z.object({ id: z.string().uuid() }).parse(input))
   .handler(async ({ data }) => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const { error } = await supabaseAdmin.from("supervisors").delete().eq("id", data.id);
+    // Soft-retire (V1) : poser removed_at au lieu d'un DELETE physique — l'historique du
+    // superviseur (séances, score) reste en base et l'enfant devient réassignable (l'index
+    // partiel UNIQUE(child_profile_id) WHERE removed_at IS NULL l'autorise).
+    // (supabaseAdmin as any) : colonne removed_at ajoutée par la migration 20260814170000,
+    // pas encore dans les types régénérés.
+    const { error } = await (supabaseAdmin as any)
+      .from("supervisors")
+      .update({ removed_at: new Date().toISOString() })
+      .eq("id", data.id);
     if (error) throw new Error(error.message);
     return { ok: true };
   });
@@ -393,6 +612,7 @@ export const getChildSupervisorInfo = createServerFn({ method: "GET" })
       .from("supervisors")
       .select("supervisor_user_id, created_at")
       .eq("child_profile_id", data.childId)
+      .is("removed_at", null)
       .order("created_at", { ascending: false })
       .limit(1)
       .maybeSingle();
@@ -416,10 +636,13 @@ export const getSupervisorDashboard = createServerFn({ method: "GET" })
       .select(
         "child_profile_id, created_at, child_profiles(id, name, age, talents, city, interests, user_id)",
       )
-      .eq("supervisor_user_id", userId);
+      .eq("supervisor_user_id", userId)
+      .is("removed_at", null);
     if (error) throw new Error(error.message);
 
-    if (!assignments || assignments.length === 0) return { children: [] };
+    if (!assignments || assignments.length === 0) {
+      return { children: [], score: null, sessionsThisMonth: 0, expectedSessions: 0 };
+    }
 
     const childIds = assignments.map((a) => a.child_profile_id);
 
@@ -432,6 +655,28 @@ export const getSupervisorDashboard = createServerFn({ method: "GET" })
       .is("deleted_at", null)
       .order("created_at", { ascending: false });
 
+    // Score de fiabilité (V1) : séances déclarées ce mois + progression des défis —
+    // même fenêtre et même pondération que listSupervisorsAdmin (supervisor-score.ts).
+    const now = new Date();
+    const monthStart = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
+    const monthEnd = new Date(now.getFullYear(), now.getMonth() + 1, 1).toISOString();
+    const { data: monthSessions } = await (supabaseAdmin as any)
+      .from("supervisor_sessions")
+      .select("id")
+      .eq("supervisor_user_id", userId)
+      .gte("occurred_at", monthStart)
+      .lt("occurred_at", monthEnd);
+    const daysInMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
+    const elapsedDays = Math.max(1, now.getDate());
+    const completed = (challenges ?? []).filter((c) => c.status === "completed").length;
+    const total = (challenges ?? []).length;
+    const score = computeSupervisorScore({
+      expectedSessions: computeExpectedSessions(assignments.length, daysInMonth, elapsedDays),
+      declaredSessions: monthSessions?.length ?? 0,
+      completedChallenges: completed,
+      totalChallenges: total,
+    });
+
     // Le numéro de téléphone du parent vit dans auth.users.user_metadata, pas
     // dans child_profiles — le superviseur doit pouvoir contacter le parent
     // directement, donc jointure manuelle via l'API admin.
@@ -442,6 +687,9 @@ export const getSupervisorDashboard = createServerFn({ method: "GET" })
     );
 
     return {
+      score,
+      sessionsThisMonth: monthSessions?.length ?? 0,
+      expectedSessions: computeExpectedSessions(assignments.length, daysInMonth, elapsedDays),
       children: assignments.map((a) => {
         const child = a.child_profiles as any;
         return {
@@ -452,4 +700,31 @@ export const getSupervisorDashboard = createServerFn({ method: "GET" })
         };
       }),
     };
+  });
+
+// Permet à tout utilisateur connecté de savoir s'il est superviseur ACTIF (pour afficher
+// ou non l'espace /supervisor) — miroir de checkAdminStatus (admin.functions.ts). Un
+// superviseur retiré (removed_at) ou banni ne voit plus l'espace. La vérification
+// d'autorisation réelle des actions passe par requireSupabaseAuth + la présence de
+// l'assignation (declareSessionSupervisor vérifie la propriété et le statut).
+export const checkIsActiveSupervisor = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const userId = (context as any).claims?.sub;
+
+    const { count } = await supabaseAdmin
+      .from("supervisors")
+      .select("id", { count: "exact", head: true })
+      .eq("supervisor_user_id", userId)
+      .is("removed_at", null);
+    if ((count ?? 0) === 0) return { isSupervisor: false };
+
+    const { data: profile } = await (supabaseAdmin as any)
+      .from("supervisor_profiles")
+      .select("status")
+      .eq("supervisor_user_id", userId)
+      .maybeSingle();
+    const status = (profile?.status as string | undefined) ?? "active";
+    return { isSupervisor: status !== "banned" };
   });

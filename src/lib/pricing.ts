@@ -41,6 +41,16 @@ export function resolveSponsorshipPrice(
 export const PASSPORT_PRICE_XOF = 50000;
 export const PASSPORT_PRICE_EUR = 75;
 
+// ── Accompagnement (V1, décisions porteur 2026-08-14) ───────────────────────────
+// Le pack d'accompagnement est PAR ENFANT : 12 séances × 5 000 F = 60 000 F/mois/enfant.
+// Pendant le pilote le paiement est manuel (WhatsApp/Mobile Money) — le bouton de la
+// modale ouvre un lien WhatsApp pré-rempli, pas Paystack. Ces constantes sont la source
+// unique de l'affichage (modale parent, future facturation supervisor_payout en V2).
+export const SESSION_PRICE_XOF = 5000;
+export const BILAN_PRICE_XOF = 25000;
+export const PACK_SESSIONS = 12;
+export const PACK_PRICE_XOF = SESSION_PRICE_XOF * PACK_SESSIONS; // 60 000 F/mois/enfant
+
 export interface ExtraSlotPrice {
   priceXof: number;
   /** Équivalent EUR à la parité saison (10 000 F = 15 €). */

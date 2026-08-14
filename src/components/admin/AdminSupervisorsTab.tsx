@@ -6,6 +6,7 @@ import {
   assignSupervisor,
   assignSupervisorToCampaignAdmin,
   removeSupervisor,
+  updateSupervisorStatusAdmin,
   listChildProfilesAdmin,
   listCampaignsLightAdmin,
   type SupervisorGroup,
@@ -23,6 +24,8 @@ import {
   X,
   UserPlus,
   Info,
+  Ban,
+  RotateCcw,
 } from "lucide-react";
 import { toast } from "sonner";
 import { confirmDialog } from "@/components/ui/confirm-dialog";
@@ -149,6 +152,54 @@ export function AdminSupervisorsTab() {
       void refetch();
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Erreur lors du retrait du superviseur.");
+    }
+  };
+
+  // Système de confiance (V1) : suspendre/bannir/restaurer un compte superviseur — le ban
+  // est structurel : un superviseur banni ne reçoit plus d'assignation ni ne peut déclarer
+  // de séance (vérifié dans insertSupervisorAssignments et declareSessionSupervisor).
+  const updateStatusFn = useServerFn(updateSupervisorStatusAdmin);
+  const [updatingStatusId, setUpdatingStatusId] = useState<string | null>(null);
+
+  const handleUpdateStatus = async (supervisorUserId: string, status: string) => {
+    const label =
+      status === "banned"
+        ? "Bannir"
+        : status === "suspended"
+          ? "Suspendre"
+          : status === "warning"
+            ? "Avertir"
+            : "Restaurer";
+    const isRestore = status === "active";
+    if (
+      !(await confirmDialog({
+        title: `${label} ce superviseur ?`,
+        description: isRestore
+          ? "Le superviseur retrouve son accès : il peut de nouveau recevoir des assignations et déclarer des séances."
+          : status === "banned"
+            ? "Banni, le superviseur perd tout accès : plus d'assignation, plus de déclaration de séance. Ses enfants deviennent réassignables."
+            : status === "suspended"
+              ? "Suspendu, le superviseur est bloqué temporairement : plus d'assignation ni de déclaration, mais ses enfants restent assignés."
+              : "Avertissement : le superviseur garde son accès, mais son statut est signalé à l'équipe et aux organisations.",
+        confirmLabel: label,
+        variant: status === "banned" ? "danger" : "default",
+      }))
+    )
+      return;
+    setUpdatingStatusId(supervisorUserId);
+    const opts = session?.access_token
+      ? { headers: { Authorization: `Bearer ${session.access_token}` } }
+      : {};
+    try {
+      await updateStatusFn({ data: { supervisorUserId, status }, ...opts });
+      toast.success(
+        `Superviseur ${isRestore ? "restauré" : label.toLowerCase()} — statut mis à jour.`,
+      );
+      void refetch();
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Erreur lors de la mise à jour du statut.");
+    } finally {
+      setUpdatingStatusId(null);
     }
   };
 
@@ -303,8 +354,76 @@ export function AdminSupervisorsTab() {
                         >
                           {g.totalChildren} / {g.quota}
                         </span>
+                        {/* Score de fiabilité (V1) + statut : le quota ne dit plus rien de la
+                            qualité — le score (séances déclarées + progression) et le statut
+                            (ban/suspension) sont les vrais signaux. */}
+                        <span
+                          title="Score de fiabilité (séances tenues + progression des enfants)"
+                          className={`rounded-full px-2.5 py-0.5 text-[10px] font-black uppercase tracking-wider ${
+                            g.score >= 75
+                              ? "bg-emerald-100 text-emerald-700"
+                              : g.score >= 50
+                                ? "bg-amber-100 text-amber-700"
+                                : "bg-rose-100 text-rose-700"
+                          }`}
+                        >
+                          {g.score}/100
+                        </span>
+                        {g.status !== "active" && (
+                          <span
+                            className={`rounded-full px-2.5 py-0.5 text-[10px] font-black uppercase tracking-wider ${
+                              g.status === "banned"
+                                ? "bg-rose-600 text-white"
+                                : g.status === "suspended"
+                                  ? "bg-rose-100 text-rose-700"
+                                  : "bg-amber-100 text-amber-700"
+                            }`}
+                          >
+                            {g.status === "banned"
+                              ? "Banni"
+                              : g.status === "suspended"
+                                ? "Suspendu"
+                                : "Averti"}
+                          </span>
+                        )}
                       </div>
                     </div>
+                  </div>
+
+                  {/* Actions de statut (V1) : suspendre/bannir/restaurer le compte superviseur. */}
+                  <div className="flex flex-wrap items-center gap-2 mb-4">
+                    {g.status === "banned" ? (
+                      <button
+                        onClick={() => void handleUpdateStatus(g.supervisor_user_id, "active")}
+                        disabled={updatingStatusId === g.supervisor_user_id}
+                        className="inline-flex items-center gap-1.5 rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-1.5 text-xs font-bold text-emerald-700 hover:bg-emerald-100 transition-all cursor-pointer disabled:opacity-50"
+                      >
+                        {updatingStatusId === g.supervisor_user_id ? (
+                          <Loader2 className="size-3.5 animate-spin" />
+                        ) : (
+                          <RotateCcw className="size-3.5" />
+                        )}
+                        Restaurer
+                      </button>
+                    ) : (
+                      <>
+                        <button
+                          onClick={() => void handleUpdateStatus(g.supervisor_user_id, "suspended")}
+                          disabled={updatingStatusId === g.supervisor_user_id}
+                          className="inline-flex items-center gap-1.5 rounded-xl border border-amber-200 bg-amber-50 px-3 py-1.5 text-xs font-bold text-amber-700 hover:bg-amber-100 transition-all cursor-pointer disabled:opacity-50"
+                        >
+                          Suspendre
+                        </button>
+                        <button
+                          onClick={() => void handleUpdateStatus(g.supervisor_user_id, "banned")}
+                          disabled={updatingStatusId === g.supervisor_user_id}
+                          className="inline-flex items-center gap-1.5 rounded-xl border border-rose-200 bg-rose-50 px-3 py-1.5 text-xs font-bold text-rose-600 hover:bg-rose-100 transition-all cursor-pointer disabled:opacity-50"
+                        >
+                          <Ban className="size-3.5" />
+                          Bannir
+                        </button>
+                      </>
+                    )}
                   </div>
 
                   <ul className="space-y-2">

@@ -209,8 +209,11 @@ export function AdminExecutiveTab({
                 <th className="pb-3 pr-4">WhatsApp</th>
                 <th className="pb-3 pr-4">Enfants associés & Passeports</th>
                 <th className="pb-3 pr-4 text-center">Défis (Total / Validés)</th>
-                <th className="pb-3 text-center" title="0 = règle standard automatique (plancher + couverture famille → 5) ; N = quota total accordé">
-                  Quota profils (0 = auto)
+                <th
+                  className="pb-3 text-center"
+                  title="0 = règle standard automatique (plancher + couverture famille/campagne → 5) ; N = couverture totale accordée"
+                >
+                  Couverture profils (0 = auto)
                 </th>
               </tr>
             </thead>
@@ -339,7 +342,7 @@ export function AdminExecutiveTab({
                       </span>
                     </td>
 
-                    {/* Quota profils — 0 = règle standard auto ; N = quota total accordé (quota +), cf. child-profile-quota.ts */}
+                    {/* Couverture profils — 0 = règle standard auto ; N = couverture totale accordée (quota +), cf. child-profile-quota.ts */}
                     <td className="py-4 text-center whitespace-nowrap">
                       <div className="flex items-center justify-center gap-1.5">
                         <input

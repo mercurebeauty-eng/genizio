@@ -253,7 +253,7 @@ export function ProfileDialog({
           .eq("user_id", userId);
 
         if ((count ?? 0) >= quota) {
-          const limitMsg = `Vous avez atteint la limite de ${quota} profils enfants maximum par compte parent.`;
+          const limitMsg = `Vous avez atteint la couverture de ${quota} profils enfants maximum par compte parent.`;
           setError(limitMsg);
           toast.error(limitMsg);
           return;
