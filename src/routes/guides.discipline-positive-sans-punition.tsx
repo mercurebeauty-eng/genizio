@@ -6,19 +6,24 @@ const PATH = "/guides/discipline-positive-sans-punition";
 
 const FAQ = [
   {
+    question: "Comment se faire obéir sans crier ni frapper ?",
+    answer:
+      "Trois étapes suffisent souvent : accueillir l'émotion d'abord (« tu es en colère parce que je coupe la télévision »), rappeler la limite ensuite (« le cadre est : pas d'écran après 19 h »), et appliquer une conséquence logique plutôt qu'une punition arbitraire (« on ne regarde pas la télé ce soir, on le fera demain »). Si vous sentez que vous allez crier, mettez-vous en pause avant d'agir : un parent calme est une condition, pas un luxe. La régularité compte plus que la sévérité : une limite appliquée dix fois avec calme est plus efficace qu'une limite criée une fois.",
+  },
+  {
     question: "Qu'est-ce que la discipline positive exactement ?",
     answer:
-      "C'est une approche éducative fondée sur les travaux d'Alfred Adler et de Rudolf Dreikurs, popularisée par Jane Nelsen : l'idée qu'un enfant se comporte mieux quand il se sent relié et capable, et non quand il a peur. En pratique, elle combine trois choses : des limites claires et stables, des conséquences logiques plutôt que des punitions humiliantes, et des outils qui rendent l'enfant acteur de ses choix. Elle n'est ni permissive (tout est permis) ni punitive : elle vise à enseigner, pas à faire souffrir.",
+      "C'est une approche éducative fondée sur une observation simple : un enfant se comporte mieux quand il se sent compris et capable, et non quand il a peur. En pratique, elle combine trois choses : des limites claires et stables, des conséquences liées à l'acte plutôt que des punitions humiliantes, et des outils qui rendent l'enfant acteur de ses choix. Elle n'est ni permissive (tout est permis) ni punitive : elle vise à enseigner, pas à faire souffrir.",
   },
   {
     question: "La discipline positive, est-ce laisser l'enfant faire ce qu'il veut ?",
     answer:
-      "Non, c'est l'inverse de l'abandon éducatif. La discipline positive insiste au contraire sur des limites fermes, mais posées sans humiliation. La différence avec l'éducation classique tient au comment : on ne punit pas pour faire peur, on associe l'enfant à des conséquences qu'il peut comprendre (« tu as déchiré le livre, tu le répareras »), et on lui offre des choix dans un cadre décidé par l'adulte (« tu ranges maintenant ou dans cinq minutes ? »). L'autorité reste celle du parent ; c'est sa forme qui change.",
+      "Non, c'est l'inverse de l'abandon éducatif. Elle insiste au contraire sur des limites fermes, mais posées sans humiliation. La différence avec l'éducation classique tient au comment : on ne punit pas pour faire peur, on associe l'enfant à des conséquences qu'il peut comprendre (« tu as déchiré le livre, tu le répareras »), et on lui offre des choix dans un cadre décidé par l'adulte (« tu ranges maintenant ou dans cinq minutes ? »). L'autorité reste celle du parent ; c'est sa forme qui change.",
   },
   {
-    question: "Comment réagir quand mon enfant dépasse une limite sans crier ni frapper ?",
+    question: "La fessée est-elle une bonne façon de faire obéir ?",
     answer:
-      "Trois étapes suffisent souvent : accueillir l'émotion d'abord (« tu es en colère parce que je coupe la télévision »), rappeler la limite ensuite (« le cadre est : pas d'écran après 19 h »), et appliquer une conséquence logique plutôt qu'une punition arbitraire (« on ne regarde pas la télé ce soir, on le fera demain »). Si vous sentez que vous allez crier, mettez-vous en pause avant d'agir : un parent calme est une condition, pas un luxe. La régularité compte plus que la sévérité : une limite appliquée dix fois avec calme est plus efficace qu'une limite criée une fois.",
+      "Non. La fessée fait obéir sur le moment, mais elle apprend à l'enfant que la force règle les problèmes et que les adultes peuvent frapper quand ils sont en colère. Un enfant qui a peur de son parent obéit en apparence, mais il n'apprend ni la règle ni le respect — il apprend à éviter d'être pris. Il existe des alternatives qui font obéir aussi vite et qui apprennent en plus : la conséquence logique, le choix limité, le temps de recul. Et contrairement à ce qu'on croit, un enfant qui n'est jamais frappé ne devient pas plus indiscipliné : il devient plus capable de comprendre les règles.",
   },
   {
     question: "À partir de quel âge la discipline positive fonctionne-t-elle ?",
@@ -28,16 +33,16 @@ const FAQ = [
   {
     question: "La discipline positive est-elle en lien avec Génizio ?",
     answer:
-      "Génizio s'appuie sur le même socle psychologique : donner à l'enfant des projets concrets à sa mesure, le laisser faire des choix, et valoriser ce qu'il a réellement accompli plutôt que de le comparer ou de l'étiqueter. Les défis de l'application sont conçus pour être des responsabilités responsabilisantes, pas des récompenses : l'enfant choisit, agit, et la carte de ses talents se construit à partir de ses réalisations réelles.",
+      "Génizio s'appuie sur le même socle : donner à l'enfant des projets concrets à sa mesure, le laisser faire des choix, et valoriser ce qu'il a réellement accompli plutôt que de le comparer ou de l'étiqueter. Les défis de l'application sont conçus comme des responsabilités confiées, pas des récompenses : l'enfant choisit, agit, et la carte de ses talents se construit à partir de ses réalisations réelles.",
   },
 ];
 
 export const Route = createFileRoute("/guides/discipline-positive-sans-punition")({
   head: () => {
     const meta = pageMeta({
-      title: "Discipline positive : éduquer sans crier ni punir",
+      title: "Se faire obéir sans crier ni frapper : la méthode",
       description:
-        "La discipline positive en pratique : poser des limites claires sans crier ni punir, et faire grandir l'autonomie de l'enfant.",
+        "Poser des limites claires et se faire obéir sans crier ni frapper : compter jusqu'à 3 ne suffit pas, voici la méthode concrète, adaptée à l'éducation africaine.",
       path: PATH,
       image: "/guides/og-discipline.jpg",
       type: "article",
@@ -56,18 +61,19 @@ export const Route = createFileRoute("/guides/discipline-positive-sans-punition"
         jsonLdScript({
           "@context": "https://schema.org",
           "@type": "Article",
-          headline: "Discipline positive : éduquer sans crier ni punir",
+          headline: "Comment poser des limites et se faire obéir sans crier ni frapper",
           inLanguage: "fr-FR",
           mainEntityOfPage: absoluteUrl(PATH),
           image: absoluteUrl("/guides/og-discipline.jpg"),
           publisher: { "@id": `${SITE_URL}/#organization` },
           author: { "@type": "Organization", name: "Génizio" },
           datePublished: "2026-08-10",
-          dateModified: "2026-08-10",
+          dateModified: "2026-08-14",
           about: [
             { "@type": "Thing", name: "Discipline positive" },
             { "@type": "Thing", name: "Éducation sans punition" },
             { "@type": "Thing", name: "Autorité parentale" },
+            { "@type": "Thing", name: "Se faire obéir sans frapper" },
           ],
         }),
       ],
@@ -80,9 +86,9 @@ function Guide() {
   return (
     <GuideLayout
       eyebrow="Éducation & limites"
-      title="Discipline positive : éduquer sans crier ni punir"
-      intro="Crier fonctionne quelques minutes, puis il faut crier plus fort. La discipline positive propose une autre voie : des limites fermes, posées sans humiliation, qui apprennent à l'enfant à se réguler lui-même au lieu de le faire par peur. Voici comment elle fonctionne concrètement."
-      updated="10 août 2026"
+      title="Comment poser des limites et se faire obéir sans crier ni frapper"
+      intro="Crier fonctionne quelques minutes, puis il faut crier plus fort. La fessée fait obéir sur le moment, puis il faut frapper plus fort. Il existe une autre voie, que nos familles connaissent déjà en partie : l'autorité ferme posée sans humiliation, celle qui s'appuie sur la communauté plutôt que sur la peur. Voici comment la mettre en pratique, au quotidien."
+      updated="14 août 2026"
       readingTime="8 min"
       related={[
         { label: "Rendre son enfant autonome sans crier", to: "/guides/autonomie-responsabilite-maison" },
@@ -95,34 +101,40 @@ function Guide() {
         alt="Parent posant une limite avec bienveillance et fermeté à son enfant à la maison"
         className="my-6 aspect-video w-full rounded-3xl border border-ink/10 object-cover shadow-lg"
       />
-      <h2>Ce que la discipline positive n'est pas</h2>
+      <h2>Ce que « poser des limites » veut dire, ici</h2>
       <p>
-        Avant tout, levons les deux malentendus les plus fréquents. La discipline positive{" "}
-        <strong>n'est pas la permissivité</strong> : elle ne dit pas « laisse faire, il va
-        comprendre tout seul ». Elle dit le contraire — l'enfant a besoin de limites pour se sentir
-        en sécurité, et les poser fait partie du rôle de parent.
+        Dans beaucoup de familles d'Afrique francophone, l'autorité n'a jamais été une affaire
+        privée entre un parent et un enfant : le tonton, la tata, la grand-mère, le maître d'école
+        participent tous à l'éducation. Un enfant sait que ses actes se savent, que sa conduite
+        rejaillit sur la famille. C'est une <strong>force immense</strong>, que la discipline moderne
+        redécouvre sous le nom de « village qui éduque » — et vous l'avez déjà.
       </p>
       <p>
-        Elle n'est pas non plus une méthode « douce » qui ne fonctionnerait que sur les enfants
-        calmes. Ses outils sont exigeants : ils demandent au parent de se réguler lui-même avant de
-        réguler l'enfant. Le but n'est pas d'éviter les conflits, mais de les transformer en
-        apprentissages.
-      </p>
-
-      <h2>Le principe : relier avant de corriger</h2>
-      <p>
-        Le point de départ de la discipline positive est une observation simple : un enfant qui se
-        sent en sécurité et relié à ses parents se comporte mieux qu'un enfant qui a peur. Quand un
-        comportement dérape, la première question n'est pas « comment punir ? » mais{" "}
-        <strong>« de quoi cet enfant a-t-il besoin ? »</strong> — d'attention, de limites, de
-        mouvement, de reconnaissance ?
-      </p>
-      <p>
-        Cela ne signifie pas excuser un mauvais comportement. Cela signifie le corriger au bon
-        niveau : le besoin d'abord, le comportement ensuite.
+        Le problème n'est donc pas l'autorité : c'est sa forme. Quand l'autorité passe par la
+        violence ou l'humiliation (fessée, coups de ceinture, injures, moquerie devant les autres),
+        l'enfant obéit par peur — et la peur n'apprend rien. Elle apprend seulement à éviter d'être
+        pris. Les limites doivent être <strong>fermes dans le fond et respectueuses dans la
+        forme</strong> : c'est exactement ce que nos grands-mères savaient faire quand elles
+        corrigeaient sans écraser.
       </p>
 
-      <h2>Quatre techniques concrètes</h2>
+      <h2>Comprendre avant de corriger : la question qui change tout</h2>
+      <p>
+        Quand un comportement dérape, la première question n'est pas « comment punir ? » mais{" "}
+        <strong>« de quoi cet enfant a-t-il besoin ? »</strong> — d'attention, de mouvement, de
+        reconnaissance, d'une limite claire ? Un enfant qui fait le clown à table cherche souvent
+        l'attention qu'il n'a pas eue dans la journée. Un enfant qui refuse de s'asseoir pour les
+        devoirs a peut-être besoin de bouger dix minutes avant. Un enfant qui « répond » teste
+        simplement où sont les limites.
+      </p>
+      <p>
+        Comprendre ne signifie pas excuser : cela signifie corriger au bon niveau — le besoin
+        d'abord, le comportement ensuite. Et cela change aussi votre ton : on ne corrige pas de la
+        même façon un enfant fatigué, un enfant vexé et un enfant qui provoque. C'est ce discernement
+        qui fait la différence entre une correction qui apprend et une correction qui blesse.
+      </p>
+
+      <h2>Quatre techniques concrètes qui remplacent la fessée et les cris</h2>
       <ol>
         <li>
           <strong>Les choix limités.</strong> Offrir deux options que l'adulte accepte vraiment :
@@ -138,16 +150,36 @@ function Guide() {
         <li>
           <strong>La réparation.</strong> Plutôt que de punir, demander à l'enfant de réparer ce
           qu'il a abîmé — matériellement ou relationnellement (présenter des excuses précises,
-          refaire une tâche). La réparation construit le sens des responsabilités ; la punition
-          construit la rancune.
+          refaire une tâche, aider la personne qu'il a dérangée). La réparation construit le sens
+          des responsabilités ; la punition construit la rancune.
         </li>
         <li>
           <strong>Le temps de recul partagé.</strong> Quand l'émotion est trop forte, proposer un
-          temps calme choisi par l'enfant (aller dans sa chambre, dessiner sa colère) plutôt qu'un
-          coin punitif imposé. La différence : on ne l'exclut pas, on lui offre un outil pour se
-          calmer, et on revient vers lui ensuite.
+          temps calme choisi par l'enfant (aller respirer dans la cour, dessiner sa colère) plutôt
+          qu'un coin punitif imposé. La différence : on ne l'exclut pas, on lui offre un outil pour
+          se calmer, et on revient vers lui ensuite.
         </li>
       </ol>
+
+      <h2>Des situations réelles, des paroles exactes</h2>
+      <div className="my-6 rounded-2xl bg-amber-50 p-5 border border-amber-200">
+        <h3 className="font-bold text-amber-950 text-base mb-2">Au marché : l'enfant crie pour avoir un jouet</h3>
+        <p className="text-sm text-amber-900 leading-relaxed">
+          <em>« Tu es déçu, je comprends. Le jouet ne fait pas partie du marché aujourd'hui. Tu peux le mettre sur ta liste de souhaits, et on en reparle à la maison. »</em> Puis on s'accroupit à sa hauteur, on ne cède pas, et on change d'activité (l'aider à choisir les tomates). La crise s'éteint en quelques minutes si elle ne trouve pas de public.
+        </p>
+      </div>
+      <div className="my-6 rounded-2xl bg-sky-50 p-5 border border-sky-200">
+        <h3 className="font-bold text-sky-950 text-base mb-2">À la maison : il refuse de ranger ses affaires</h3>
+        <p className="text-sm text-sky-900 leading-relaxed">
+          <em>« Tu préfères ranger tes jouets maintenant, ou dans cinq minutes avec le minuteur ? »</em> S'il refuse les deux : <em>« D'accord, je range les jouets dans le panier des objets à retrouver, et tu les retrouveras demain. »</em> Le jouet confisqué devient une conséquence qu'il peut comprendre — pas un vol punitif, un rangement logique.
+        </p>
+      </div>
+      <div className="my-6 rounded-2xl bg-emerald-50 p-5 border border-emerald-200">
+        <h3 className="font-bold text-emerald-950 text-base mb-2">À l'école : la maîtresse se plaint de son comportement</h3>
+        <p className="text-sm text-emerald-900 leading-relaxed">
+          On ne punit pas deux fois. À la maison, on écoute la version de l'enfant, on reconnaît son émotion, puis on définit ensemble une réparation : <em>« Tu présenteras des excuses à ta maîtresse, et tu aideras un camarade cette semaine. »</em> Et surtout, on garde l'école comme alliée, pas comme menace (« tu vas voir, je vais le dire à ton père » ne crée que de la peur).
+        </p>
+      </div>
 
       <h2>Les pièges qui font échouer la méthode</h2>
       <ul>
@@ -158,6 +190,11 @@ function Guide() {
         <li>
           <strong>Comparer.</strong> « Prends exemple sur ta sœur » n'apprend rien et attise la
           rivalité. On compare l'enfant à lui-même, jamais aux autres.
+        </li>
+        <li>
+          <strong>Humilier en public.</strong> Gronder un enfant devant les voisins, les cousins ou
+          ses amis humilie plus qu'il n'éduque. La honte publique n'apprend pas la règle — elle
+          apprend la ruse. Corrigez en privé, valorisez en public.
         </li>
         <li>
           <strong>Punir collectivement.</strong> Priver toute la fratrie à cause d'un seul construit
@@ -174,12 +211,15 @@ function Guide() {
         Aucune technique ne change un comportement en une fois. Un enfant teste une limite
         plusieurs dizaines de fois avant de l'intégrer — c'est son travail. Le vôtre est de tenir la
         même limite, avec le même calme, assez longtemps pour qu'elle devienne prévisible. La
-        répétition sereine fait la différence entre une règle comprise et une règle subie.
+        répétition sereine fait la différence entre une règle comprise et une règle subie. Et si
+        vous criez ou frappez un jour de fatigue, ne vous flagellez pas : reprenez la règle le
+        lendemain, présentez des excuses si besoin, et recommencez. C'est la constance dans le temps
+        qui éduque, pas la perfection d'une journée.
       </p>
       <p>
         Génizio applique le même principe à sa manière : chaque défi proposé à l'enfant lui donne un
         choix dans un cadre, un objectif clair, et une reconnaissance basée sur ce qu'il a
-        réellement fait — une responsabilité responsabilisante, jamais une récompense arbitraire.
+        réellement fait — une responsabilité confiée, jamais une récompense arbitraire.
       </p>
 
       <h2>Questions fréquentes</h2>
