@@ -119,7 +119,9 @@ async function handleChargeSuccess(data: ChargeSuccessData | undefined) {
   }
 
   await markPaymentSuccessAndFulfill(supabaseAdmin, payment as any);
-  console.log(`[paystack-webhook] Paiement ${data.reference} confirmé (${payment.amount_xof} FCFA).`);
+  console.log(
+    `[paystack-webhook] Paiement ${data.reference} confirmé (${payment.amount_xof} FCFA).`,
+  );
 }
 
 async function handleTransactionFailed(data: { reference?: string } | undefined) {
@@ -173,7 +175,7 @@ async function handleSubscriptionCharge(data: SubscriptionChargeData | undefined
   const { activateFamilySubscription } = await import("@/lib/subscriptions.functions");
 
   const plan = data.plan;
-  const planCode = typeof plan === "object" && plan ? plan.plan_code ?? null : null;
+  const planCode = typeof plan === "object" && plan ? (plan.plan_code ?? null) : null;
   const userId = await findUserIdByEmail(supabaseAdmin, data.customer?.email);
 
   await activateFamilySubscription(supabaseAdmin, {
@@ -190,7 +192,9 @@ async function handleSubscriptionCharge(data: SubscriptionChargeData | undefined
 
 // Aucun retry Paystack sur les échecs de prélèvement : on passe en past_due, l'accès est
 // conservé jusqu'à current_period_end (grâce du résolveur), puis coupé sans intervention.
-async function handleSubscriptionPaymentFailed(data: { subscription_code?: string | null } | undefined) {
+async function handleSubscriptionPaymentFailed(
+  data: { subscription_code?: string | null } | undefined,
+) {
   if (!data?.subscription_code) return;
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
   const { error } = await supabaseAdmin
@@ -203,10 +207,14 @@ async function handleSubscriptionPaymentFailed(data: { subscription_code?: strin
 // Synchronisation : un abonnement créé via la page de gestion Paystack (sans passer par
 // notre checkout) n'a pas de ligne locale — on la crée si on retrouve l'utilisateur par
 // email. La période sera posée par le charge.success qui accompagne la création.
-async function handleSubscriptionCreate(data: {
-  subscription_code?: string | null;
-  customer?: { customer_code?: string; email?: string } | null;
-} | undefined) {
+async function handleSubscriptionCreate(
+  data:
+    | {
+        subscription_code?: string | null;
+        customer?: { customer_code?: string; email?: string } | null;
+      }
+    | undefined,
+) {
   if (!data?.subscription_code) return;
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
@@ -220,7 +228,9 @@ async function handleSubscriptionCreate(data: {
 
   const userId = await findUserIdByEmail(supabaseAdmin, data.customer?.email);
   if (!userId) {
-    console.error(`[paystack-webhook] subscription.create sans utilisateur connu: ${data.subscription_code}`);
+    console.error(
+      `[paystack-webhook] subscription.create sans utilisateur connu: ${data.subscription_code}`,
+    );
     return;
   }
 
@@ -258,6 +268,16 @@ async function handleSubscriptionCreate(data: {
 async function handleSubscriptionDisabled(data: { subscription_code?: string | null } | undefined) {
   if (!data?.subscription_code) return;
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+  const { revokeFamilyCoverage } = await import("@/lib/family-coverages");
+
+  // V4 (Vague A) : on a besoin de l'utilisateur pour révoquer la couverture family_coverages.
+  const { data: row, error: rowErr } = await supabaseAdmin
+    .from("subscriptions")
+    .select("user_id")
+    .eq("paystack_subscription_code", data.subscription_code)
+    .maybeSingle();
+  if (rowErr) throw rowErr;
+
   const { error } = await supabaseAdmin
     .from("subscriptions")
     .update({
@@ -267,11 +287,24 @@ async function handleSubscriptionDisabled(data: { subscription_code?: string | n
     })
     .eq("paystack_subscription_code", data.subscription_code);
   if (error) throw error;
+
+  if (row?.user_id) {
+    await revokeFamilyCoverage(supabaseAdmin, { userId: row.user_id, source: "subscription" });
+  }
 }
 
 async function handleSubscriptionEnabled(data: { subscription_code?: string | null } | undefined) {
   if (!data?.subscription_code) return;
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+  const { syncFamilyCoverage } = await import("@/lib/family-coverages");
+
+  const { data: row, error: rowErr } = await supabaseAdmin
+    .from("subscriptions")
+    .select("id, user_id, current_period_start, current_period_end, price_xof")
+    .eq("paystack_subscription_code", data.subscription_code)
+    .maybeSingle();
+  if (rowErr) throw rowErr;
+
   const { error } = await supabaseAdmin
     .from("subscriptions")
     .update({
@@ -281,4 +314,18 @@ async function handleSubscriptionEnabled(data: { subscription_code?: string | nu
     })
     .eq("paystack_subscription_code", data.subscription_code);
   if (error) throw error;
+
+  // Réactivation : la couverture family_coverages redevient active — uniquement si une
+  // fenêtre existe déjà (le charge.success qui suit étendra la période si nécessaire).
+  if (row?.user_id && row.current_period_end) {
+    await syncFamilyCoverage(supabaseAdmin, {
+      userId: row.user_id,
+      source: "subscription",
+      sourceRef: row.id ?? null,
+      startsAt: row.current_period_start ?? null,
+      endsAt: row.current_period_end,
+      priceXof: row.price_xof ?? null,
+      status: "active",
+    });
+  }
 }

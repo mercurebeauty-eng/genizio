@@ -11,6 +11,10 @@ export type FamilyCoverageInfo = {
   campaignCovered: boolean;
   /** Date maximale de couverture effective, si couverte. */
   coveredUntil: string | null;
+  /** Limite de CRÉATION de profils (V4, Vague A) : calculée côté serveur depuis
+   *  family_coverages (computeAppQuota — miroir du trigger V10, migration 20260814200000).
+   *  L'UI affiche la jauge X/N avec cette valeur. */
+  creationLimit: number;
   loading: boolean;
   refresh: () => Promise<void>;
 };
@@ -26,6 +30,7 @@ export function useFamilyCoverage(): FamilyCoverageInfo {
   const [covered, setCovered] = useState(false);
   const [campaignCovered, setCampaignCovered] = useState(false);
   const [coveredUntil, setCoveredUntil] = useState<string | null>(null);
+  const [creationLimit, setCreationLimit] = useState(5);
   const [loading, setLoading] = useState(true);
 
   const refresh = useCallback(async () => {
@@ -46,12 +51,14 @@ export function useFamilyCoverage(): FamilyCoverageInfo {
       setCovered(endTimes.length > 0);
       setCampaignCovered(!!res.campaignCovered);
       setCoveredUntil(endTimes.length > 0 ? new Date(Math.max(...endTimes)).toISOString() : null);
+      setCreationLimit(res.creationLimit);
     } catch {
       // Tables d'abonnement absentes (migration pas encore appliquée) ou session absente :
       // défaut = non couverte, le comportement legacy prévaut.
       setCovered(false);
       setCampaignCovered(false);
       setCoveredUntil(null);
+      setCreationLimit(5);
     } finally {
       setLoading(false);
     }
@@ -61,5 +68,5 @@ export function useFamilyCoverage(): FamilyCoverageInfo {
     refresh();
   }, [refresh]);
 
-  return { covered, campaignCovered, coveredUntil, loading, refresh };
+  return { covered, campaignCovered, coveredUntil, creationLimit, loading, refresh };
 }

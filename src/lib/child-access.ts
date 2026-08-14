@@ -1,18 +1,20 @@
 // Accès payant par enfant — source unique de l'état d'accès d'un profil.
 //
-// Modèle (2026-08-05, décisions utilisateur, UNIFIÉ le 2026-08-14) :
+// Modèle V4 « Pass Enfant » (2026-08-14, Vague A) :
 //   • 1er profil du compte : GRATUIT (jamais expiré) — le plancher (1, ou 5 pour les
 //     comptes grand-pérés créés avant 2026-08-04, cf. child-profile-quota.ts).
-//   • Quota + par compte (quota_override, quota TOTAL accordé) : les profils jusqu'à ce
-//     quota sont "permanent" (jamais expirés) — remplace l'ancienne clé
-//     extra_profile_slots (accès vendu "permanent", grand-péré).
+//   • Quota + par compte (quota_override, outil ADMIN, quota TOTAL accordé) : les profils
+//     jusqu'à ce quota sont "permanent" (jamais expirés).
+//   • Couverture V4 (family_coverages, source unique) : abonnement, campagne, parrainage →
+//     5 profils ; paliers achetés → +5 chacun (décision 5, cap 50). Les profils jusqu'au
+//     quota app calculé (computeAppQuota) sont "permanent".
 //   • Enfants au-delà : accès MENSUEL — 5 000 FCFA/mois les 3 premiers mois du compte,
 //     puis 15 000 FCFA/mois (pricing.ts). L'accès est porté par child_access_periods
 //     (table), la période la plus récente fait foi.
 //   • À expiration : génération de défis bloquée (gate), portfolio/acquis accessibles.
-//     Doit rester cohérent avec check_child_profile_quota() (migration 20260814140000 :
-//     quota_override > 0 → quota accordé borné 50 ; sinon plancher, couverture famille
-//     → 5, plafond 5).
+//     Doit rester cohérent avec check_child_profile_quota() (migration 20260814200000,
+//     V10 : quota_override > 0 → quota accordé borné 50 ; sinon plancher, éducateur 10,
+//     couverture family_coverages → 5, + paliers, cap 50).
 //     N'ajoute JAMAIS de marge arbitraire par-dessus le trigger : l'UI promet au
 //     parent exactement ce que la base acceptera (chantier « porte d'entrée », 2026-08-12).
 
@@ -20,37 +22,20 @@ import { z } from "zod";
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { requireAdmin } from "@/integrations/supabase/admin-middleware";
-import {
-  isGrandfatheredAccount,
-  MAX_CHILDREN_PER_ACCOUNT,
-  MAX_QUOTA_OVERRIDE,
-} from "@/lib/child-profile-quota";
+import { isGrandfatheredAccount } from "@/lib/child-profile-quota";
+import { computeAppQuota } from "@/lib/child-profile-quota";
+import { resolveCoverageState } from "@/lib/family-coverages";
 import { resolveExtraSlotPrice } from "@/lib/pricing";
 
 export type ChildAccessStatus =
   | { kind: "free" } // profil du plancher gratuit — jamais expiré
-  | { kind: "permanent" } // slot payant grand-péré, couverture famille (abonnement/crédit) ou campagne B2B
+  | { kind: "permanent" } // slot payant grand-péré, couverture family_coverages (abonnement/campagne/parrainage/palier) ou campagne B2B
   | { kind: "monthly"; endsAt: string; daysLeft: number } // période payée active
   | { kind: "expired"; endsAt: string | null }; // payant mais période écoulée (ou jamais payée)
 
-// Limite de CRÉATION de profils côté UI — modèle UNIFIÉ (2026-08-14) : une seule clé
-// quota_override = quota TOTAL accordé au compte (0 = règle standard automatique).
-//   • quotaOverride > 0 → le compte peut créer jusqu'à quotaOverride profils (borné 50,
-//     miroir du LEAST(quota_override, 50) du trigger, migration 20260814140000) ;
-//   • sinon → règle standard : plancher grand-péré/neuf, couvert (abonnement famille,
-//     crédit de parrainage, OU enfant inscrit à une campagne active — migration
-//     20260814160000) → plafond 5 (aucun « +1 » : le trigger n'en accorde pas).
-export function computeChildCreationLimit(
-  accountCreatedAt: string | null | undefined,
-  familyCovered = false,
-  quotaOverride = 0,
-  campaignCovered = false,
-): number {
-  if (quotaOverride > 0) return Math.min(quotaOverride, MAX_QUOTA_OVERRIDE);
-  if (familyCovered || campaignCovered) return MAX_CHILDREN_PER_ACCOUNT;
-  const floor = isGrandfatheredAccount(accountCreatedAt) ? 5 : 1;
-  return Math.min(floor, MAX_CHILDREN_PER_ACCOUNT);
-}
+// La limite de CRÉATION de profils côté UI est désormais calculée côté serveur
+// (getFamilySubscriptionStatus → creationLimit, via computeAppQuota dans
+// child-profile-quota.ts) — l'UI promet exactement ce que le trigger V10 accepte.
 
 // Résolveur pur (testable sans base) : position 1-based de l'enfant parmi les profils
 // du compte (ordre de création), plancher, quota + (quota total accordé), période la plus
@@ -101,14 +86,14 @@ export function computeAccessPeriodWindow(
   return { startsAt: start.toISOString(), endsAt: end.toISOString() };
 }
 
-// Couverture FAMILLE (décision utilisateur 2026-08-08 — forfait famille + parrainage) :
-// l'abonnement Paystack du compte et les crédits de parrainage rédimés se cumulent, la
-// couverture effective s'étend jusqu'au plus tard des deux. Un abonnement 'past_due' reste
-// couvrant jusqu'à sa fin de période (aucun retry Paystack — la grâce est la période déjà
-// payée), puis la coupure est immédiate et purement calculée : résilier ou épuiser le
-// crédit retire la couverture sans aucune mutation de masse sur les enfants.
+// Couverture FAMILLE (V4, 2026-08-14) : lue depuis family_coverages (source unique) — une
+// ligne child_id NULL active d'une source app (abonnement, campagne, parrainage, palier)
+// couvre la famille jusqu'à ends_at. La coupure est immédiate et purement calculée :
+// révoquer/épuiser la couverture retire le champ sans aucune mutation de masse sur les
+// enfants. L'abonnement Paystack (table subscriptions) reste lu pour le statut d'affichage,
+// mais n'est PLUS une source de couverture : c'est family_coverages qui fait foi.
 export type FamilyCoverage = {
-  /** Date jusqu'à laquelle la famille est couverte (abonnement OU crédit), si valide à l'instant T. */
+  /** Date jusqu'à laquelle la famille est couverte (couverture family_coverages effective). */
   coveredUntil: string | null;
   subscriptionStatus: "initiated" | "active" | "past_due" | "cancelled" | "expired" | null;
 };
@@ -117,42 +102,19 @@ export async function getFamilyCoverage(
   db: { from: (table: string) => any },
   userId: string,
 ): Promise<FamilyCoverage> {
-  const now = Date.now();
+  const state = await resolveCoverageState(db, userId);
 
   const { data: sub, error: subErr } = await db
     .from("subscriptions")
-    .select("status, current_period_end")
+    .select("status")
     .eq("user_id", userId)
     .maybeSingle();
   if (subErr) throw new Error(subErr.message);
 
-  const { data: credit, error: credErr } = await db
-    .from("sponsorship_credits")
-    .select("ends_at")
-    .eq("user_id", userId)
-    .order("ends_at", { ascending: false })
-    .limit(1);
-  if (credErr) throw new Error(credErr.message);
-
-  let coveredUntil: string | null = null;
-
-  // 'active' comme 'past_due' ne couvrent QUE jusqu'à la fin de la période déjà payée :
-  // un abonnement actif dont la période est dépassée (anomalie de sync) ne couvre rien.
-  const periodEndTs = sub?.current_period_end ? new Date(sub.current_period_end).getTime() : null;
-  const subCovers =
-    (sub?.status === "active" || sub?.status === "past_due") && !!periodEndTs && periodEndTs > now;
-  if (subCovers && sub?.current_period_end) coveredUntil = sub.current_period_end;
-
-  const creditEnd = credit?.[0]?.ends_at ?? null;
-  if (
-    creditEnd &&
-    new Date(creditEnd).getTime() > now &&
-    (!coveredUntil || new Date(creditEnd).getTime() > new Date(coveredUntil).getTime())
-  ) {
-    coveredUntil = creditEnd;
-  }
-
-  return { coveredUntil, subscriptionStatus: sub?.status ?? null };
+  return {
+    coveredUntil: state.coveredUntil,
+    subscriptionStatus: (sub?.status as FamilyCoverage["subscriptionStatus"]) ?? null,
+  };
 }
 
 // Version asynchrone côté serveur : résout l'accès réel d'un enfant depuis la base.
@@ -223,18 +185,20 @@ export async function getChildAccessStatus(
     }
   }
 
-  // Couverture FAMILLE (abonnement forfait ou crédit de parrainage) : un enfant au-delà du
-  // plancher gratuit est couvert tant que la famille l'est. Résilier l'abonnement (ou
-  // épuiser le crédit) retire la couverture et fait tomber tous ces profils en 'expired' —
-  // la coupure est immédiate et calculée, aucune mutation de masse requise.
-  const coverage = await getFamilyCoverage(db, userId);
-  if (
-    coverage.coveredUntil &&
-    new Date(coverage.coveredUntil).getTime() > Date.now() &&
-    position > floor
-  ) {
-    return { kind: "permanent" };
-  }
+  // Couverture V4 (family_coverages, source unique) : un enfant dans le quota app calculé
+  // (plancher + couverture de base 5 + paliers achetés, cap 50 — computeAppQuota, miroir du
+  // trigger 20260814200000) est "permanent" : jamais expiré. Révoquer/épuiser la couverture
+  // retire le champ et fait tomber ces profils en 'expired' — coupure immédiate calculée.
+  const coverage = await resolveCoverageState(db, userId);
+  const appQuota = computeAppQuota({
+    accountCreatedAt: userRes.user.created_at,
+    quotaOverride,
+    hasBaseCoverage: coverage.hasBaseCoverage,
+    sumPurchases: coverage.sumPurchases,
+  });
+  // Seuls les profils AU-DELÀ du plancher gratuit passent « permanent » (couverture payée) —
+  // les profils du plancher restent « free » (la promesse gratuite ne change jamais).
+  if (position > floor && position <= appQuota) return { kind: "permanent" };
 
   return resolveChildAccessStatus({
     position,
