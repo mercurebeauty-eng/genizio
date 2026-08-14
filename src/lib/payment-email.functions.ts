@@ -43,7 +43,9 @@ function formatDate(date: string | null | undefined): string {
   });
 }
 
-function resolveFirstName(user: { user_metadata?: Record<string, unknown> } | null | undefined): string {
+function resolveFirstName(
+  user: { user_metadata?: Record<string, unknown> } | null | undefined,
+): string {
   const full = user?.user_metadata?.full_name;
   if (typeof full === "string" && full.trim()) return full.trim().split(/\s+/)[0];
   return "";
@@ -435,7 +437,8 @@ export async function sendPaymentConfirmationEmail(
           }
         }
       }
-      if (order?.total_price_xof) purchaseTitle = `Votre commande Génizio — ${formatAmount(order.total_price_xof)}`;
+      if (order?.total_price_xof)
+        purchaseTitle = `Votre commande Génizio — ${formatAmount(order.total_price_xof)}`;
       nextSteps = [
         "Notre équipe prépare votre commande.",
         "Le suivi de livraison se fait directement sur WhatsApp.",
@@ -448,19 +451,39 @@ export async function sendPaymentConfirmationEmail(
         childName ? `✓ Accès de ${childName} prolongé` : "✓ Accès mensuel prolongé",
         metadata.months ? `✓ Durée : ${metadata.months} mois` : "",
       ].filter(Boolean);
-      nextSteps = ["L'accès est actif immédiatement.", "Reprenez vos défis là où vous les aviez laissés."];
+      nextSteps = [
+        "L'accès est actif immédiatement.",
+        "Reprenez vos défis là où vous les aviez laissés.",
+      ];
       break;
     }
     case "passport": {
-      purchaseTitle = childName ? `Passeport d'Excellence de ${childName}` : "Passeport d'Excellence";
+      purchaseTitle = childName
+        ? `Passeport d'Excellence de ${childName}`
+        : "Passeport d'Excellence";
       items = ["✓ Passeport d'Excellence débloqué"];
       nextSteps = ["Téléchargez le Passeport depuis l'onglet Portfolio de votre enfant."];
       break;
     }
     case "extra_slots": {
-      purchaseTitle = "Slot de profil supplémentaire";
-      items = ["✓ Un profil enfant supplémentaire a été ajouté à votre compte"];
-      nextSteps = ["Créez le nouveau profil enfant depuis votre tableau de bord."];
+      purchaseTitle = "Palier supplémentaire";
+      items = ["✓ Un palier de 5 profils supplémentaires a été ajouté à votre compte"];
+      nextSteps = [
+        "Vous pouvez désormais enregistrer jusqu'à 5 enfants de plus.",
+        "Créez le nouveau profil enfant depuis votre tableau de bord.",
+      ];
+      break;
+    }
+    case "accompaniment_pack": {
+      purchaseTitle = childName ? `Pack Accompagnement de ${childName}` : "Pack Accompagnement";
+      items = [
+        childName ? `✓ ${metadata.months ?? 1} mois d'accompagnement pour ${childName}` : "",
+        `✓ ${(metadata.months ?? 1) * 12} séances créditées (12 séances/mois)`,
+      ].filter(Boolean);
+      nextSteps = [
+        "Un superviseur formé prend contact avec vous pour planifier les séances.",
+        "Le bilan initial est inclus dans le premier mois.",
+      ];
       break;
     }
     case "sponsorship": {
@@ -529,9 +552,7 @@ export async function sendSubscriptionConfirmationEmail(
     return { sent: false, reason: "already_sent" };
   }
 
-  const periodEndLabel = params.periodEnd
-    ? formatDate(params.periodEnd)
-    : "";
+  const periodEndLabel = params.periodEnd ? formatDate(params.periodEnd) : "";
   const amountLabel = params.priceXof ? formatAmount(params.priceXof) : "";
 
   const html = buildPaymentEmailHtml({

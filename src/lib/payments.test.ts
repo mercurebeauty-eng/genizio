@@ -10,6 +10,7 @@ import {
   markPaymentSuccessAndFulfill,
   type PaymentRow,
 } from "@/lib/payment-fulfillment.server";
+import { initializeAccompanimentPackPayment } from "@/lib/payments.functions";
 import { computeAccessPeriodWindow } from "@/lib/child-access";
 
 const TEST_SECRET = "sk_test_secret_for_these_tests";
@@ -43,6 +44,7 @@ function makeDb(
   overrides: {
     periods?: Array<{ ends_at: string }>;
     adminUser?: { app_metadata?: Record<string, unknown> };
+    tables?: Record<string, any[]>;
   } = {},
 ) {
   const inserts: Array<{ table: string; value: any }> = [];
@@ -54,6 +56,7 @@ function makeDb(
   const adminUser = overrides.adminUser ?? { app_metadata: { quota_override: 2 } };
   const tableData: Record<string, any[]> = {
     child_access_periods: overrides.periods ?? [],
+    ...overrides.tables,
   };
 
   const db: any = {
@@ -86,7 +89,9 @@ function makeDb(
         Promise.resolve(
           table === "payments" && paymentsSuccessClaims > 1
             ? { data: null, error: null }
-            : { data: { id: "p1" }, error: null },
+            : table in tableData
+              ? { data: tableData[table]?.[0] ?? null, error: null }
+              : { data: { id: "p1" }, error: null },
         ),
       ),
       then: (resolve: (v: unknown) => void, reject?: (e: unknown) => void) =>
@@ -135,6 +140,11 @@ describe("paystack.server — conversions & signature", () => {
 });
 
 describe("applyPaystackEntitlement", () => {
+  it("expose initializeAccompanimentPackPayment (intent Vague B : pack par enfant)", () => {
+    expect(initializeAccompanimentPackPayment).toBeDefined();
+    expect(typeof initializeAccompanimentPackPayment).toBe("function");
+  });
+
   it("order → confirme la commande + payment_reference", async () => {
     const { db, updates } = makeDb();
     const payment = makePayment({
@@ -189,39 +199,88 @@ describe("applyPaystackEntitlement", () => {
     });
   });
 
-  it("extra_slots → incrémente quota_override dans app_metadata (depuis le quota existant, sans écraser les autres clés)", async () => {
-    const { db, inserts } = makeDb({
-      adminUser: { created_at: "2026-08-10T00:00:00.000Z", app_metadata: { quota_override: 2, provider: "google" } },
-    });
-    void inserts;
+  it("extra_slots (V4, décision 5) → octroie un palier de +5 enfants en family_coverages (source purchase, une ligne par achat)", async () => {
+    const { db, inserts } = makeDb();
     const payment = makePayment({
       user_id: "user-1",
+      amount_xof: 15000,
       metadata: { type: "extra_slots", months: 3 },
     });
     const result = await applyPaystackEntitlement(db, payment);
 
     expect(result.entitlement).toBe("extra_slots");
-    expect(db.auth.admin.getUserById).toHaveBeenCalledWith("user-1");
-    expect(db.auth.admin.updateUserById).toHaveBeenCalledWith("user-1", {
-      app_metadata: { quota_override: 3, provider: "google" },
+    const insert = inserts.find((i) => i.table === "family_coverages");
+    expect(insert).toBeDefined();
+    expect(insert!.value).toMatchObject({
+      user_id: "user-1",
+      child_id: null,
+      source: "purchase",
+      max_children: 5,
+      sessions: 0,
+      sessions_used: 0,
+      price_xof: 15000,
+      status: "active",
     });
+    expect(insert!.value.ends_at).toBeTruthy(); // fenêtre = now + months (computeAccessPeriodWindow)
   });
 
-  it("extra_slots sans quota + existant → part du plancher du compte (grand-péré 5 → 6)", async () => {
-    const { db, inserts } = makeDb({
-      adminUser: { created_at: "2026-07-01T00:00:00.000Z", app_metadata: { provider: "google" } },
-    });
-    void inserts;
+  it("extra_slots sans months → rejeté (le palier ne s'octroie jamais à l'aveugle)", async () => {
+    const { db } = makeDb();
+    const payment = makePayment({ user_id: "user-1", metadata: { type: "extra_slots" } });
+    await expect(applyPaystackEntitlement(db, payment)).rejects.toThrow(/sans months/);
+  });
+
+  it("accompaniment_pack → crédite 12×months séances en family_coverages (insert par enfant, décision 2)", async () => {
+    const { db, inserts } = makeDb({ tables: { family_coverages: [] } });
     const payment = makePayment({
       user_id: "user-1",
-      metadata: { type: "extra_slots", months: 3 },
+      amount_xof: 180000,
+      metadata: { type: "accompaniment_pack", child_id: "child-1", months: 3 },
     });
     const result = await applyPaystackEntitlement(db, payment);
 
-    expect(result.entitlement).toBe("extra_slots");
-    expect(db.auth.admin.updateUserById).toHaveBeenCalledWith("user-1", {
-      app_metadata: { quota_override: 6, provider: "google" },
+    expect(result.entitlement).toBe("accompaniment_pack");
+    const insert = inserts.find((i) => i.table === "family_coverages");
+    expect(insert).toBeDefined();
+    expect(insert!.value).toMatchObject({
+      user_id: "user-1",
+      child_id: "child-1",
+      source: "accompaniment_pack",
+      sessions: 36, // 12 × 3 mois
+      sessions_used: 0,
+      max_children: 0, // le pack est un budget de séances, pas de la couverture app
+      price_xof: 180000,
+      status: "active",
     });
+    expect(insert!.value.ends_at).toBeTruthy();
+  });
+
+  it("accompaniment_pack avec pack existant → étend la fenêtre et ajoute les séances (jamais de découpe)", async () => {
+    const { db, updates } = makeDb({
+      tables: {
+        family_coverages: [{ id: "pack-1", sessions: 12, ends_at: "2026-09-08T12:00:00.000Z" }],
+      },
+    });
+    const payment = makePayment({
+      user_id: "user-1",
+      amount_xof: 60000,
+      metadata: { type: "accompaniment_pack", child_id: "child-1", months: 1 },
+    });
+    const result = await applyPaystackEntitlement(db, payment);
+
+    expect(result.entitlement).toBe("accompaniment_pack");
+    const upd = updates.find((u) => u.table === "family_coverages");
+    expect(upd).toBeDefined();
+    expect(upd!.value).toMatchObject({ sessions: 24, price_xof: 60000, status: "active" });
+  });
+
+  it("accompaniment_pack sans child_id/months → rejeté", async () => {
+    const { db } = makeDb();
+    const payment = makePayment({
+      user_id: "user-1",
+      metadata: { type: "accompaniment_pack", child_id: "child-1" },
+    });
+    await expect(applyPaystackEntitlement(db, payment)).rejects.toThrow(/sans child_id\/months/);
   });
 
   it("rejette un intent inconnu", async () => {

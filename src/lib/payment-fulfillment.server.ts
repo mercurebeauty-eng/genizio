@@ -8,7 +8,9 @@
 //   • order        → orders.status = 'confirmed' + payment_reference
 //   • child_access → insertion child_access_periods (extension, jamais de découpe)
 //   • passport     → child_profiles.pdf_unlocked = true
-//   • extra_slots  → +1 quota_override, quota TOTAL (modale d'upgrade, legacy)
+//   • extra_slots  → PALIER acheté (V4, décision 5 : +5 enfants par palier, cap 50 —
+//                     remplace le legacy +1 quota_override de l'ancienne modale d'upgrade)
+//   • accompaniment_pack → crédit de 12×months séances sur family_coverages (PAR ENFANT)
 //   • sponsorship  → création du code de parrainage (payment_confirmed=true d'office :
 //                     le paiement en ligne remplace la confirmation admin WhatsApp)
 //   • campaign_b2b → lot de codes B2B confirmés (lien partageable d'une campagne payée)
@@ -16,14 +18,22 @@
 // Serveur uniquement — jamais importé côté client (même pattern que paystack.server.ts).
 
 import { computeAccessPeriodWindow } from "@/lib/child-access";
-import { isGrandfatheredAccount } from "@/lib/child-profile-quota";
+import { PALIER_CHILDREN } from "@/lib/child-profile-quota";
+import { PACK_SESSIONS } from "@/lib/pricing";
 import { createSponsorshipTokenRecord, getActiveSeason } from "@/lib/seasons.functions";
 // Import runtime de la fonction pure (payments-admin n'importe ce module que
 // dynamiquement dans ses handlers — aucun cycle d'exécution).
 import { campaignLotDiscrepancy, resolveCampaignTokenLot } from "@/lib/payments-admin.functions";
 
 export type PaymentMetadata = {
-  type: "order" | "child_access" | "passport" | "extra_slots" | "sponsorship" | "campaign_b2b";
+  type:
+    | "order"
+    | "child_access"
+    | "passport"
+    | "extra_slots"
+    | "accompaniment_pack"
+    | "sponsorship"
+    | "campaign_b2b";
   order_id?: string;
   child_id?: string;
   months?: number;
@@ -124,33 +134,87 @@ export async function applyPaystackEntitlement(
       return { entitlement: "passport", detail: `Passeport débloqué (${metadata.child_id})` };
     }
 
-    // Modale d'upgrade (quota atteint) : la modale n'a pas d'enfant cible — elle finance un
-    // slot de capacité supplémentaire. Miroir automatique de updateProfileQuotaAdmin
-    // (products.functions.ts) : lecture-modification-écriture de quota_override dans
-    // app_metadata, sans écraser les autres clés posées par GoTrue. Quota + unifié
-    // (2026-08-14) : quota_override = quota TOTAL ; un slot payé l'élève d'un cran, en
-    // partant du plancher du compte s'il n'y avait pas encore de quota +.
+    // PALIER (V4, DÉCISION 5, 2026-08-14) : un paiement « palier » octroie +5 enfants au
+    // compte (au lieu du legacy +1 quota_override de l'ancienne modale d'upgrade) — même
+    // tarif mensuel famille (resolveExtraSlotPrice × mois), une ligne family_coverages
+    // source='purchase' par achat (elles s'empilent, cap 50 côté trigger V10). L'outil
+    // ADMIN updateProfileQuotaAdmin (app_metadata) reste inchangé — c'est un chemin séparé.
     case "extra_slots": {
       if (!payment.user_id) throw new Error("Payment 'extra_slots' sans user_id.");
-      const { data: userRes, error: getErr } = await supabaseAdmin.auth.admin.getUserById(
-        payment.user_id,
-      );
-      if (getErr || !userRes?.user) {
-        throw new Error(`Utilisateur introuvable: ${getErr?.message ?? payment.user_id}`);
+      if (!metadata.months || metadata.months < 1) {
+        throw new Error("Payment 'extra_slots' sans months valides.");
       }
-      const floor = isGrandfatheredAccount(userRes.user.created_at) ? 5 : 1;
-      const current = Number((userRes.user.app_metadata as any)?.quota_override ?? 0) || 0;
-      const next = Math.min(Math.max(current, floor) + 1, 50);
-      const { error: updateErr } = await supabaseAdmin.auth.admin.updateUserById(payment.user_id, {
-        app_metadata: {
-          ...(userRes.user.app_metadata ?? {}),
-          quota_override: next,
-        },
+      const { startsAt, endsAt } = computeAccessPeriodWindow(null, metadata.months);
+      const { error: insErr } = await (supabaseAdmin as any).from("family_coverages").insert({
+        user_id: payment.user_id,
+        child_id: null,
+        source: "purchase",
+        starts_at: startsAt,
+        ends_at: endsAt,
+        max_children: PALIER_CHILDREN,
+        sessions: 0,
+        sessions_used: 0,
+        price_xof: payment.amount_xof,
+        status: "active",
       });
-      if (updateErr) {
-        throw new Error(`Erreur lors de l'octroi du slot: ${updateErr.message}`);
+      if (insErr) throw new Error(`Erreur lors de l'octroi du palier: ${insErr.message}`);
+      return {
+        entitlement: "extra_slots",
+        detail: `Palier de +${PALIER_CHILDREN} profils octroyé (${metadata.months} mois)`,
+      };
+    }
+
+    // Pack Accompagnement (V4, Vague B) : paiement en ligne MENSUEL — 12 séances × mois
+    // créditées sur family_coverages (source='accompaniment_pack', PAR ENFANT — décision
+    // 2). Un rachat étend la fenêtre (computeAccessPeriodWindow, jamais de découpe) et
+    // ajoute les séances. Le solde est consommé au fil des déclarations de séance (Vague C).
+    case "accompaniment_pack": {
+      if (!payment.user_id) throw new Error("Payment 'accompaniment_pack' sans user_id.");
+      if (!metadata.child_id || !metadata.months || metadata.months < 1) {
+        throw new Error("Payment 'accompaniment_pack' sans child_id/months valides.");
       }
-      return { entitlement: "extra_slots", detail: `Slot de profil supplémentaire octroyé (+1 → quota ${next})` };
+      const { data: existing, error: getErr } = await (supabaseAdmin as any)
+        .from("family_coverages")
+        .select("id, sessions, ends_at")
+        .eq("child_id", metadata.child_id)
+        .eq("source", "accompaniment_pack")
+        .maybeSingle();
+      if (getErr) throw new Error(getErr.message);
+
+      const { endsAt } = computeAccessPeriodWindow(existing?.ends_at ?? null, metadata.months);
+      const totalSessions = (existing?.sessions ?? 0) + PACK_SESSIONS * metadata.months;
+      const nowIso = new Date().toISOString();
+
+      if (existing?.id) {
+        const { error: updErr } = await (supabaseAdmin as any)
+          .from("family_coverages")
+          .update({
+            sessions: totalSessions,
+            ends_at: endsAt,
+            price_xof: payment.amount_xof,
+            status: "active",
+          })
+          .eq("id", existing.id);
+        if (updErr) throw new Error(updErr.message);
+      } else {
+        const { error: insErr } = await (supabaseAdmin as any).from("family_coverages").insert({
+          user_id: payment.user_id,
+          child_id: metadata.child_id,
+          source: "accompaniment_pack",
+          starts_at: nowIso,
+          ends_at: endsAt,
+          max_children: 0, // le pack est un budget de séances, pas de la couverture app
+          sessions: totalSessions,
+          sessions_used: 0,
+          price_xof: payment.amount_xof,
+          status: "active",
+        });
+        if (insErr) throw new Error(insErr.message);
+      }
+      return {
+        entitlement: "accompaniment_pack",
+        detail: `${PACK_SESSIONS * metadata.months} séances d'accompagnement créditées pour l'enfant`,
+      };
     }
 
     // Parrainage en ligne (décision 2026-08-08) : le token est créé PAR le paiement Paystack
@@ -167,7 +231,10 @@ export async function applyPaystackEntitlement(
         .maybeSingle();
       if (existErr) throw new Error(existErr.message);
       if (existing) {
-        return { entitlement: "sponsorship", detail: `Code de parrainage existant (${existing.code})` };
+        return {
+          entitlement: "sponsorship",
+          detail: `Code de parrainage existant (${existing.code})`,
+        };
       }
 
       const token = await createSponsorshipTokenRecord(supabaseAdmin, {
@@ -237,7 +304,7 @@ export async function applyPaystackEntitlement(
         throw new Error(
           `Campagne « ${campaign.name} » : ${metadata.token_count ?? toCreate} code(s) payés (` +
             `${paidXof} FCFA) mais ${toCreate} délivrable(s) (${deliverableXof} FCFA, capacité ` +
-            `restante ${remaining}). Anomalie à traiter manuellement — lot non créé.`
+            `restante ${remaining}). Anomalie à traiter manuellement — lot non créé.`,
         );
       }
       if (toCreate <= 0) {

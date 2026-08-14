@@ -907,6 +907,7 @@ function DashboardPage() {
           campaignCovered={campaignCovered}
           coveredUntil={coveredUntil}
           creationLimit={quota}
+          children={profiles}
           onClose={() => setShowUpgradeModal(false)}
         />
       )}

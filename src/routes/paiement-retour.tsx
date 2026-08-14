@@ -46,6 +46,16 @@ const ENTITLEMENT_COPY: Record<string, { title: string; href: string; cta: strin
     href: "/profiles",
     cta: "Voir le Passeport",
   },
+  extra_slots: {
+    title: "Palier ajouté !",
+    href: "/profiles",
+    cta: "Retour aux profils",
+  },
+  accompaniment_pack: {
+    title: "Pack Accompagnement activé !",
+    href: "/profiles",
+    cta: "Retour aux profils",
+  },
 };
 
 function PaymentReturnPage() {

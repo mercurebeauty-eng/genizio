@@ -12,7 +12,12 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { z } from "zod";
-import { resolveExtraSlotPrice, resolveSponsorshipPrice, PASSPORT_PRICE_XOF } from "@/lib/pricing";
+import {
+  resolveExtraSlotPrice,
+  resolveSponsorshipPrice,
+  PASSPORT_PRICE_XOF,
+  PACK_PRICE_XOF,
+} from "@/lib/pricing";
 import type { PaymentMetadata, PaymentRow } from "@/lib/payment-fulfillment.server";
 
 // callbackUrl est construit côté client (window.location.origin) et transmis ici : c'est
@@ -285,7 +290,57 @@ export const initializeUpgradePayment = createServerFn({ method: "POST" })
     return { authorizationUrl, reference, amountXof, months: data.months };
   });
 
-// ── Vérification depuis la page de retour ─────────────────────────────────────
+// ── Pack Accompagnement (V4, Vague B) ──────────────────────────────────────────
+// Paiement en ligne MENSUEL du pack, PAR ENFANT (décision 2) : 12 séances × 5 000 F =
+// 60 000 F/mois, achat de 1 à 6 mois d'un coup. Le fulfilment crédite les séances sur
+// family_coverages (source='accompaniment_pack') — le solde est consommé au fil des
+// déclarations de séance (Vague C). Décision utilisateur : achat mensuel unique Paystack
+// (PAS d'abonnement récurrent) — le parent rachète le mois suivant ; WhatsApp reste le
+// secours manuel de la modale.
+const AccompanimentPackInput = z.object({
+  childId: z.string().uuid(),
+  months: z.number().int().min(1).max(6),
+  callbackUrl: callbackUrlSchema,
+});
+
+export const initializeAccompanimentPackPayment = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .validator((input: unknown) => AccompanimentPackInput.parse(input))
+  .handler(async ({ data, context }) => {
+    const userId = context.userId;
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { initializePaystackTransaction, createPaystackReference } =
+      await import("@/lib/paystack.server");
+
+    const { data: child, error: childErr } = await supabaseAdmin
+      .from("child_profiles")
+      .select("id")
+      .eq("id", data.childId)
+      .eq("user_id", userId)
+      .maybeSingle();
+    if (childErr || !child) throw new Error("Profil enfant introuvable ou accès refusé.");
+
+    const amountXof = PACK_PRICE_XOF * data.months;
+
+    const reference = createPaystackReference("PACK");
+    await createPaystackPayment({
+      supabaseAdmin,
+      userId,
+      reference,
+      amountXof,
+      metadata: { type: "accompaniment_pack", child_id: data.childId, months: data.months },
+    });
+
+    const { authorizationUrl } = await initializePaystackTransaction({
+      email: await getPaystackUserEmail(supabaseAdmin, userId),
+      amountXof,
+      reference,
+      callbackUrl: data.callbackUrl,
+      metadata: { intent: "accompaniment_pack", child_id: data.childId, months: data.months },
+    });
+
+    return { authorizationUrl, reference, amountXof, months: data.months };
+  });
 // Appelée par /paiement-retour après la redirection Paystack. Si le webhook est déjà
 // passé (payment success), retourne tel quel (idempotent). Sinon vérifie la transaction,
 // marque success et applique le bénéfice immédiatement — le webhook reste la confirmation
