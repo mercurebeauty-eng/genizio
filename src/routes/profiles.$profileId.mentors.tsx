@@ -26,21 +26,31 @@ function MentorsPage() {
     if (!loading && !session) navigate({ to: "/auth", replace: true });
   }, [session, loading, navigate]);
 
+  const userId = session?.user.id;
+
   useEffect(() => {
-    if (!session) return;
+    // Keyé sur userId (string stable), pas sur l'objet session : le store de
+    // useSession ne propage une nouvelle identité que sur changement réel du
+    // token/claims — mais un rejeu ici réafficherait le loader. (2026-08-14)
+    if (!userId) return;
     setFetchingChild(true);
-    supabase
-      .from("child_profiles")
-      .select("name")
-      .eq("id", profileId)
-      .eq("user_id", session.user.id)
-      .maybeSingle()
-      .then(({ data }) => {
+    (async () => {
+      try {
+        const { data } = await supabase
+          .from("child_profiles")
+          .select("name")
+          .eq("id", profileId)
+          .eq("user_id", userId)
+          .maybeSingle();
         setChildFound(!!data);
         if (data) setChildName(data.name);
+      } catch (err) {
+        console.error("Erreur de chargement du profil enfant:", err);
+      } finally {
         setFetchingChild(false);
-      });
-  }, [session, profileId]);
+      }
+    })();
+  }, [userId, profileId]);
 
   if (loading || !session || fetchingChild) {
     return (

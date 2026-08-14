@@ -35,17 +35,22 @@ export function KitSuggestion({
     }
     let cancelled = false;
     setLoading(true);
-    supabase
-      .from("products")
-      .select("id, name, price_xof")
-      .overlaps("material_tags", tagsKey.split(","))
-      .eq("is_active", true)
-      .then(({ data }) => {
+    (async () => {
+      try {
+        const { data } = await supabase
+          .from("products")
+          .select("id, name, price_xof")
+          .overlaps("material_tags", tagsKey.split(","))
+          .eq("is_active", true);
         if (!cancelled) {
           setProducts(data ?? []);
           setLoading(false);
         }
-      });
+      } catch (err) {
+        console.error("Erreur de chargement des produits du kit:", err);
+        if (!cancelled) setLoading(false);
+      }
+    })();
     return () => {
       cancelled = true;
     };

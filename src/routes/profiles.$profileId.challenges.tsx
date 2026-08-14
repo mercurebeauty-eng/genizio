@@ -205,6 +205,10 @@ function ChallengesPage() {
   const { profileId } = Route.useParams();
   const search = Route.useSearch();
   const { session, loading } = useSession();
+  // Keyé sur userId (string stable), pas sur l'objet session : le store de
+  // useSession ne propage une nouvelle identité que sur changement réel du
+  // token/claims — mais un rejeu ici réafficherait le loader. (2026-08-14)
+  const userId = session?.user.id;
   const navigate = useNavigate();
   const routeNavigate = Route.useNavigate();
 
@@ -498,50 +502,55 @@ function ChallengesPage() {
   }, [session, loading, navigate]);
 
   const refetch = async () => {
+    if (!userId) return;
     setFetching(true);
-    const [c, ch, accessRes] = await Promise.all([
-      supabase
-        .from("child_profiles")
-        .select("*")
-        .eq("id", profileId)
-        .eq("user_id", session!.user.id)
-        .maybeSingle(),
-      supabase
-        .from("challenges")
-        .select("*")
-        .eq("child_id", profileId)
-        .order("created_at", { ascending: false }),
-      getChildAccessStatusFn({ data: { childId: profileId } }).catch(() => null),
-    ]);
-    setChild((c.data as Child) ?? null);
-    setAccessState(accessRes);
-    const list = (ch.data ?? []) as Challenge[];
-    setChallenges(list);
+    try {
+      const [c, ch, accessRes] = await Promise.all([
+        supabase
+          .from("child_profiles")
+          .select("*")
+          .eq("id", profileId)
+          .eq("user_id", userId)
+          .maybeSingle(),
+        supabase
+          .from("challenges")
+          .select("*")
+          .eq("child_id", profileId)
+          .order("created_at", { ascending: false }),
+        getChildAccessStatusFn({ data: { childId: profileId } }).catch(() => null),
+      ]);
+      setChild((c.data as Child) ?? null);
+      setAccessState(accessRes);
+      const list = (ch.data ?? []) as Challenge[];
+      setChallenges(list);
 
-    // A just-completed challenge is never picked by getActiveChallenge below
-    // (it only surfaces in_progress/todo) — arriving here from the Quest
-    // page's "Ajouter une preuve" toast used to drop the parent on this list
-    // with no indication of which (collapsed) card was theirs, so the
-    // proof/validation step was effectively undiscoverable. Honor a
-    // one-shot deep link set by that toast instead.
-    const highlightId = sessionStorage.getItem("genizio:highlightChallenge");
-    if (highlightId && list.some((item) => item.id === highlightId)) {
-      sessionStorage.removeItem("genizio:highlightChallenge");
-      setOpenId(highlightId);
-      setTimeout(() => {
-        document
-          .getElementById(`challenge-${highlightId}`)
-          ?.scrollIntoView({ behavior: "smooth", block: "center" });
-      }, 150);
-    } else {
-      const active = getActiveChallenge(list);
-      if (active && !openId) {
-        setOpenId(active.id);
+      // A just-completed challenge is never picked by getActiveChallenge below
+      // (it only surfaces in_progress/todo) — arriving here from the Quest
+      // page's "Ajouter une preuve" toast used to drop the parent on this list
+      // with no indication of which (collapsed) card was theirs, so the
+      // proof/validation step was effectively undiscoverable. Honor a
+      // one-shot deep link set by that toast instead.
+      const highlightId = sessionStorage.getItem("genizio:highlightChallenge");
+      if (highlightId && list.some((item) => item.id === highlightId)) {
+        sessionStorage.removeItem("genizio:highlightChallenge");
+        setOpenId(highlightId);
+        setTimeout(() => {
+          document
+            .getElementById(`challenge-${highlightId}`)
+            ?.scrollIntoView({ behavior: "smooth", block: "center" });
+        }, 150);
+      } else {
+        const active = getActiveChallenge(list);
+        if (active && !openId) {
+          setOpenId(active.id);
+        }
       }
+    } catch (err) {
+      console.error("Erreur de chargement des défis:", err);
+    } finally {
+      setFetching(false);
+      setInitialLoad(false);
     }
-
-    setFetching(false);
-    setInitialLoad(false);
   };
 
   const loadAISynthesis = async () => {
@@ -595,14 +604,14 @@ function ChallengesPage() {
   };
 
   useEffect(() => {
-    if (session) {
+    if (userId) {
       void refetch();
       void loadAISynthesis();
       void loadRecommendation();
       void loadEnrolledSeason();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [session, profileId]);
+  }, [userId, profileId]);
 
   // D-06/D-08 (review 2026-08-13) : l'enfant vient de valider dans /quest → au retour
   // (montage ou retour de focus), le parent est notifié et les données sont rechargées

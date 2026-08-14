@@ -138,15 +138,20 @@ function PassportPrintPage() {
     if (!loading && !session) navigate({ to: "/auth", replace: true });
   }, [session, loading, navigate]);
 
+  // Keyé sur userId (string stable), pas sur l'objet session : le store de
+  // useSession ne propage une nouvelle identité que sur changement réel du
+  // token/claims — mais un rejeu ici réafficherait le loader. (2026-08-14)
+  const userId = session?.user.id;
+
   useEffect(() => {
-    if (!session) return;
+    if (!userId) return;
     setFetching(true);
     Promise.all([
       supabase
         .from("child_profiles")
         .select("id, name, age, talents, interests, city, country, xp, pdf_unlocked")
         .eq("id", profileId)
-        .eq("user_id", session!.user.id)
+        .eq("user_id", userId)
         .maybeSingle(),
       supabase
         .from("challenges")
@@ -161,13 +166,15 @@ function PassportPrintPage() {
         .select("badge_slug")
         .eq("child_id", profileId)
         .order("earned_at", { ascending: true }),
-    ]).then(([c, ch, b]) => {
-      setChild((c.data as Child) ?? null);
-      setChallenges((ch.data ?? []) as Challenge[]);
-      setEarnedBadges((b.data ?? []).map((row) => row.badge_slug));
-      setFetching(false);
-    });
-  }, [session, profileId]);
+    ])
+      .then(([c, ch, b]) => {
+        setChild((c.data as Child) ?? null);
+        setChallenges((ch.data ?? []) as Challenge[]);
+        setEarnedBadges((b.data ?? []).map((row) => row.badge_slug));
+      })
+      .catch((err) => console.error("Erreur de chargement du passeport:", err))
+      .finally(() => setFetching(false));
+  }, [userId, profileId]);
 
   useEffect(() => {
     if (!session) return;

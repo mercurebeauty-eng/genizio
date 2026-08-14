@@ -91,22 +91,33 @@ function QuestPage() {
   const [aiObservations, setAiObservations] = useState<string | null>(null);
   const validateAI = useServerFn(validateChallengeProof);
 
+  // Keyé sur userId (string stable), pas sur l'objet session : le store de
+  // useSession ne propage une nouvelle identité que sur changement réel du
+  // token/claims — mais un rejeu ici réafficherait le loader. (2026-08-14)
+  const userId = session?.user.id;
+
   const loadChallenges = async () => {
+    if (!userId) return;
     setFetching(true);
-    const [c, ch] = await Promise.all([
-      supabase
-        .from("child_profiles")
-        .select("id, name, avatar_color")
-        .eq("id", profileId)
-        .eq("user_id", session!.user.id)
-        .maybeSingle(),
-      supabase.from("challenges").select("*").eq("child_id", profileId),
-    ]);
-    setChild((c.data as Child) ?? null);
-    if (ch.data) {
-      setChallenges(ch.data as Challenge[]);
+    try {
+      const [c, ch] = await Promise.all([
+        supabase
+          .from("child_profiles")
+          .select("id, name, avatar_color")
+          .eq("id", profileId)
+          .eq("user_id", userId)
+          .maybeSingle(),
+        supabase.from("challenges").select("*").eq("child_id", profileId),
+      ]);
+      setChild((c.data as Child) ?? null);
+      if (ch.data) {
+        setChallenges(ch.data as Challenge[]);
+      }
+    } catch (err) {
+      console.error("Erreur de chargement de la quête:", err);
+    } finally {
+      setFetching(false);
     }
-    setFetching(false);
   };
 
   useEffect(() => {
@@ -114,10 +125,11 @@ function QuestPage() {
   }, [session, loading, navigate]);
 
   useEffect(() => {
-    if (session) {
+    if (userId) {
       void loadChallenges();
     }
-  }, [session, profileId]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [userId, profileId]);
 
   const activeChallenge = useMemo(() => getActiveChallenge(challenges), [challenges]);
 

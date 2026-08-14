@@ -1,5 +1,5 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { supabase } from "@/integrations/supabase/client";
 import { useSession } from "@/hooks/use-session";
@@ -74,33 +74,27 @@ function ManageProfilesPage() {
     if (!loading && !session) navigate({ to: "/auth", replace: true });
   }, [session, loading, navigate]);
 
-  const hasRefreshedSessionRef = useRef(false);
-  useEffect(() => {
-    // See profiles.index.tsx: extra_profile_slots lives in the session
-    // JWT's app_metadata, cached client-side. Refresh once on mount so a
-    // recently-granted slot is reflected before the quota gate below runs.
-    //
-    // Guarded with a ref, not just `if (session)`: refreshSession() itself
-    // produces a new session object via onAuthStateChange, which with
-    // `[session]` as the only dependency re-fired this effect and called
-    // refreshSession() again forever — that infinite loop is what showed up
-    // as this page endlessly flickering on load.
-    if (!loading && session && !hasRefreshedSessionRef.current) {
-      hasRefreshedSessionRef.current = true;
-      void supabase.auth.refreshSession();
-    }
-  }, [loading, session]);
+  // Note (2026-08-14) : le refresh unique du token (claims extra_profile_slots)
+  // est désormais assuré par le store singleton de useSession() au premier
+  // chargement de l'app — plus besoin de refresh par page ici (le refresh par
+  // page provoquait des cascades de TOKEN_REFRESHED qui re-déclenchaient tous
+  // les effets [session] : la page se rechargeait en boucle).
 
   const refetch = async () => {
     if (!session) return;
     setFetching(true);
-    const { data } = await supabase
-      .from("child_profiles")
-      .select("*")
-      .eq("user_id", session.user.id)
-      .order("created_at", { ascending: false });
-    setProfiles((data ?? []) as unknown as ChildProfile[]);
-    setFetching(false);
+    try {
+      const { data } = await supabase
+        .from("child_profiles")
+        .select("*")
+        .eq("user_id", session.user.id)
+        .order("created_at", { ascending: false });
+      setProfiles((data ?? []) as unknown as ChildProfile[]);
+    } catch (err) {
+      console.error("Erreur de chargement des profils:", err);
+    } finally {
+      setFetching(false);
+    }
   };
 
   useEffect(() => {

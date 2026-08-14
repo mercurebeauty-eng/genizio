@@ -1,5 +1,5 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { supabase } from "@/integrations/supabase/client";
 import { useSession } from "@/hooks/use-session";
@@ -137,27 +137,11 @@ function DashboardPage() {
     }
   };
 
-  const hasRefreshedSessionRef = useRef(false);
-  useEffect(() => {
-    // extra_profile_slots lives in the session JWT's app_metadata, cached
-    // client-side since login/last token refresh. When an admin grants a
-    // slot, this session doesn't see it until the token refreshes, which
-    // can silently block "+ Nouveau profil" below even though the DB-side
-    // quota (enforced by the enforce_child_profile_quota trigger, which
-    // reads auth.users live) was actually raised. Refresh once on mount so
-    // the quota gate reflects the real current slot count.
-    //
-    // Guarded with a ref, not just `if (session)`: refreshSession() itself
-    // triggers onAuthStateChange, which gives useSession() a new session
-    // object — with `[session]` as the only dependency, that re-fired this
-    // effect, which called refreshSession() again, which produced another
-    // new session object, forever. That infinite refresh loop is what
-    // showed up as the profiles page endlessly flickering on load.
-    if (!loading && session && !hasRefreshedSessionRef.current) {
-      hasRefreshedSessionRef.current = true;
-      void supabase.auth.refreshSession();
-    }
-  }, [loading, session]);
+  // Note (2026-08-14) : le refresh unique du token (claims extra_profile_slots)
+  // est désormais assuré par le store singleton de useSession() au premier
+  // chargement de l'app — plus besoin de refresh par page ici (le refresh par
+  // page provoquait des cascades de TOKEN_REFRESHED qui re-déclenchaient tous
+  // les effets [session] : la page se rechargeait en boucle).
 
   useEffect(() => {
     supabase

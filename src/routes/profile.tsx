@@ -58,65 +58,77 @@ function ProfilePage() {
   const checkAdmin = useServerFn(checkAdminStatus);
   const checkManager = useServerFn(checkIsCampaignManager);
 
+  // Navigation et données séparées (2026-08-14) : la navigation dépend de la
+  // présence de la session, mais les 8 requêtes ci-dessous sont keyées sur
+  // userId (string stable) — le store de useSession ne propage une nouvelle
+  // identité que sur changement réel du token/claims, et on ne rejoue pas
+  // toutes ces requêtes pour un simple refresh.
+  const userId = session?.user.id;
+  const relationshipMeta = session?.user.user_metadata?.relationship_type as
+    | string
+    | undefined;
+  const savedPhone = session?.user.user_metadata?.phone as string | undefined;
+
   useEffect(() => {
     if (!loading && !session) navigate({ to: "/auth", replace: true });
-    if (session) {
-      checkAdmin().then(({ isAdmin }) => setIsAdmin(isAdmin));
-      checkManager().then(({ isManager }) => setIsManager(isManager));
-      supabase
-        .from("supervisors")
-        .select("id", { count: "exact", head: true })
-        .eq("supervisor_user_id", session.user.id)
-        .then(({ count }) => setIsSupervisor((count ?? 0) > 0));
-      setRelationshipType(session.user.user_metadata?.relationship_type ?? "");
-
-      // Load saved phone
-      const savedPhone = session.user.user_metadata?.phone;
-      if (savedPhone) {
-        const foundCountry = COUNTRIES.find((c) => savedPhone.startsWith(c.code));
-        if (foundCountry) {
-          setSelectedCountry(foundCountry);
-          setPhoneNumber(savedPhone.replace(foundCountry.code, ""));
-        }
-      }
-
-      // Fetch stats
-      supabase
-        .from("child_profiles")
-        .select("id", { count: "exact" })
-        .eq("user_id", session.user.id)
-        .then(({ count }) => {
-          setChildCount(count || 0);
-        });
-      supabase
-        .from("child_mentors")
-        .select("id", { count: "exact" })
-        .then(({ count }) => {
-          setMentorCount(count || 0);
-        });
-      supabase
-        .from("consent_events")
-        .select("id", { count: "exact" })
-        .then(({ count }) => {
-          setConsentEventsCount(count || 0);
-        });
-      supabase
-        .from("challenges")
-        .select("status, proof_image_url")
-        .eq("user_id", session.user.id)
-        .then(({ data }) => {
-          if (data) {
-            setChallengeStats({
-              total: data.length,
-              completed: data.filter((c) => c.status === "completed").length,
-            });
-            setArtifactsCount(
-              data.filter((c) => c.status === "completed" && c.proof_image_url).length,
-            );
-          }
-        });
-    }
   }, [session, loading, navigate]);
+
+  useEffect(() => {
+    if (!userId) return;
+    checkAdmin().then(({ isAdmin }) => setIsAdmin(isAdmin));
+    checkManager().then(({ isManager }) => setIsManager(isManager));
+    supabase
+      .from("supervisors")
+      .select("id", { count: "exact", head: true })
+      .eq("supervisor_user_id", userId)
+      .then(({ count }) => setIsSupervisor((count ?? 0) > 0));
+    setRelationshipType(relationshipMeta ?? "");
+
+    // Load saved phone
+    if (savedPhone) {
+      const foundCountry = COUNTRIES.find((c) => savedPhone.startsWith(c.code));
+      if (foundCountry) {
+        setSelectedCountry(foundCountry);
+        setPhoneNumber(savedPhone.replace(foundCountry.code, ""));
+      }
+    }
+
+    // Fetch stats
+    supabase
+      .from("child_profiles")
+      .select("id", { count: "exact" })
+      .eq("user_id", userId)
+      .then(({ count }) => {
+        setChildCount(count || 0);
+      });
+    supabase
+      .from("child_mentors")
+      .select("id", { count: "exact" })
+      .then(({ count }) => {
+        setMentorCount(count || 0);
+      });
+    supabase
+      .from("consent_events")
+      .select("id", { count: "exact" })
+      .then(({ count }) => {
+        setConsentEventsCount(count || 0);
+      });
+    supabase
+      .from("challenges")
+      .select("status, proof_image_url")
+      .eq("user_id", userId)
+      .then(({ data }) => {
+        if (data) {
+          setChallengeStats({
+            total: data.length,
+            completed: data.filter((c) => c.status === "completed").length,
+          });
+          setArtifactsCount(
+            data.filter((c) => c.status === "completed" && c.proof_image_url).length,
+          );
+        }
+      });
+  }, [userId, relationshipMeta, savedPhone, checkAdmin, checkManager]);
 
   const handleSignOut = async () => {
     await supabase.auth.signOut();
