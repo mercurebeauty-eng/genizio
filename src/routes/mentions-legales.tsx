@@ -64,7 +64,7 @@ function MentionsLegalesPage() {
           Mentions légales
         </h1>
         <p className="mt-4 text-sm font-semibold text-ink/60">
-          Dernière mise à jour : 17 juillet 2026
+          Dernière mise à jour : 14 août 2026
         </p>
 
         <div className="not-prose my-8 rounded-2xl border-l-4 border-amber-500 bg-amber-50 p-5">
@@ -89,6 +89,10 @@ function MentionsLegalesPage() {
             <a href="mailto:serviceclient@genizio.com" className="text-brand underline">
               serviceclient@genizio.com
             </a>
+          </p>
+          <p>
+            Adresse : <strong>ABOBO 29 Q, rue Ousso N'Guéssan, Abidjan, Lacs Region, Côte
+            d'Ivoire</strong>
           </p>
           <p>
             Génizio opère à destination de familles situées principalement au Sénégal, en Côte

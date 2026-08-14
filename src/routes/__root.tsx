@@ -198,6 +198,8 @@ const FULL_BLEED_EXACT = new Set([
   "/terms",
   "/privacy",
   "/mentions-legales",
+  "/tarifs",
+  "/remboursements",
   "/a-propos",
 ]);
 

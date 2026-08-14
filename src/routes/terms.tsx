@@ -194,6 +194,12 @@ function TermsPage() {
             <Link to="/a-propos" className="hover:text-brand">
               À propos
             </Link>
+            <Link to="/tarifs" className="hover:text-brand">
+              Tarifs
+            </Link>
+            <Link to="/remboursements" className="hover:text-brand">
+              Remboursements
+            </Link>
             <Link to="/privacy" className="hover:text-brand">
               Confidentialité
             </Link>
