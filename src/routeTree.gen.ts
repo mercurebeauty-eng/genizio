@@ -10,7 +10,9 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as TermsRouteImport } from './routes/terms'
+import { Route as TarifsRouteImport } from './routes/tarifs'
 import { Route as SupervisorRouteImport } from './routes/supervisor'
+import { Route as RemboursementsRouteImport } from './routes/remboursements'
 import { Route as ProfilesRouteImport } from './routes/profiles'
 import { Route as ProfileRouteImport } from './routes/profile'
 import { Route as PrivacyRouteImport } from './routes/privacy'
@@ -65,9 +67,19 @@ const TermsRoute = TermsRouteImport.update({
   path: '/terms',
   getParentRoute: () => rootRouteImport,
 } as any)
+const TarifsRoute = TarifsRouteImport.update({
+  id: '/tarifs',
+  path: '/tarifs',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const SupervisorRoute = SupervisorRouteImport.update({
   id: '/supervisor',
   path: '/supervisor',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const RemboursementsRoute = RemboursementsRouteImport.update({
+  id: '/remboursements',
+  path: '/remboursements',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ProfilesRoute = ProfilesRouteImport.update({
@@ -348,7 +360,9 @@ export interface FileRoutesByFullPath {
   '/privacy': typeof PrivacyRoute
   '/profile': typeof ProfileRoute
   '/profiles': typeof ProfilesRouteWithChildren
+  '/remboursements': typeof RemboursementsRoute
   '/supervisor': typeof SupervisorRoute
+  '/tarifs': typeof TarifsRoute
   '/terms': typeof TermsRoute
   '/admin/products': typeof AdminProductsRoute
   '/admin/supervisors': typeof AdminSupervisorsRoute
@@ -396,7 +410,9 @@ export interface FileRoutesByTo {
   '/parrainage': typeof ParrainageRoute
   '/privacy': typeof PrivacyRoute
   '/profile': typeof ProfileRoute
+  '/remboursements': typeof RemboursementsRoute
   '/supervisor': typeof SupervisorRoute
+  '/tarifs': typeof TarifsRoute
   '/terms': typeof TermsRoute
   '/admin/products': typeof AdminProductsRoute
   '/admin/supervisors': typeof AdminSupervisorsRoute
@@ -449,7 +465,9 @@ export interface FileRoutesById {
   '/privacy': typeof PrivacyRoute
   '/profile': typeof ProfileRoute
   '/profiles': typeof ProfilesRouteWithChildren
+  '/remboursements': typeof RemboursementsRoute
   '/supervisor': typeof SupervisorRoute
+  '/tarifs': typeof TarifsRoute
   '/terms': typeof TermsRoute
   '/admin/products': typeof AdminProductsRoute
   '/admin/supervisors': typeof AdminSupervisorsRoute
@@ -503,7 +521,9 @@ export interface FileRouteTypes {
     | '/privacy'
     | '/profile'
     | '/profiles'
+    | '/remboursements'
     | '/supervisor'
+    | '/tarifs'
     | '/terms'
     | '/admin/products'
     | '/admin/supervisors'
@@ -551,7 +571,9 @@ export interface FileRouteTypes {
     | '/parrainage'
     | '/privacy'
     | '/profile'
+    | '/remboursements'
     | '/supervisor'
+    | '/tarifs'
     | '/terms'
     | '/admin/products'
     | '/admin/supervisors'
@@ -603,7 +625,9 @@ export interface FileRouteTypes {
     | '/privacy'
     | '/profile'
     | '/profiles'
+    | '/remboursements'
     | '/supervisor'
+    | '/tarifs'
     | '/terms'
     | '/admin/products'
     | '/admin/supervisors'
@@ -656,7 +680,9 @@ export interface RootRouteChildren {
   PrivacyRoute: typeof PrivacyRoute
   ProfileRoute: typeof ProfileRoute
   ProfilesRoute: typeof ProfilesRouteWithChildren
+  RemboursementsRoute: typeof RemboursementsRoute
   SupervisorRoute: typeof SupervisorRoute
+  TarifsRoute: typeof TarifsRoute
   TermsRoute: typeof TermsRoute
   RejoindreCampaignIdRoute: typeof RejoindreCampaignIdRoute
   STokenRoute: typeof STokenRoute
@@ -672,11 +698,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof TermsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/tarifs': {
+      id: '/tarifs'
+      path: '/tarifs'
+      fullPath: '/tarifs'
+      preLoaderRoute: typeof TarifsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/supervisor': {
       id: '/supervisor'
       path: '/supervisor'
       fullPath: '/supervisor'
       preLoaderRoute: typeof SupervisorRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/remboursements': {
+      id: '/remboursements'
+      path: '/remboursements'
+      fullPath: '/remboursements'
+      preLoaderRoute: typeof RemboursementsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/profiles': {
@@ -1142,7 +1182,9 @@ const rootRouteChildren: RootRouteChildren = {
   PrivacyRoute: PrivacyRoute,
   ProfileRoute: ProfileRoute,
   ProfilesRoute: ProfilesRouteWithChildren,
+  RemboursementsRoute: RemboursementsRoute,
   SupervisorRoute: SupervisorRoute,
+  TarifsRoute: TarifsRoute,
   TermsRoute: TermsRoute,
   RejoindreCampaignIdRoute: RejoindreCampaignIdRoute,
   STokenRoute: STokenRoute,

@@ -58,8 +58,13 @@ import {
 // Questions réellement tapées par des parents francophones, avec des réponses qui se
 // suffisent à elles-mêmes : c'est le format que Google affiche en réponse directe et que les
 // assistants IA (ChatGPT, Perplexity, Gemini) citent. Une réponse qui renvoie à « voir
-// ci-dessus » n'est jamais reprise.
-const LANDING_FAQ = [
+// ci-dessus » n'est jamais reprise. La propriété optionnelle `link` ajoute un renvoi sous la
+// réponse (affiché dans l'accordéon, ignoré du JSON-LD FAQ).
+const LANDING_FAQ: {
+  question: string;
+  answer: string;
+  link?: { to: "/tarifs"; label: string };
+}[] = [
   {
     question: "Comment révéler les talents cachés de son enfant ?",
     answer:
@@ -93,7 +98,8 @@ const LANDING_FAQ = [
   {
     question: "Combien coûte Génizio ?",
     answer:
-      "Génizio démarre gratuitement : le premier profil enfant est offert, sans carte bancaire demandée, et le premier défi sur mesure arrive dès la création du profil. Les profils supplémentaires coûtent 5 000 FCFA pour les trois premiers mois. Le renouvellement d'une saison et les tarifs exacts sont communiqués directement par l'équipe Génizio.",
+      "Génizio démarre gratuitement : le premier profil enfant est offert, sans carte bancaire demandée, et le premier défi sur mesure arrive dès la création du profil. Les profils supplémentaires coûtent 5 000 FCFA pour les trois premiers mois du compte, puis 15 000 FCFA par mois. L'abonnement famille couvre jusqu'à 5 profils, le Passeport d'Excellence se paie en une fois et les kits pédagogiques sont vendus à l'unité. Tous les plans, produits et tarifs détaillés figurent sur la page Tarifs.",
+    link: { to: "/tarifs", label: "Voir tous les tarifs" },
   },
   {
     question: "Comment le parrainage fonctionne-t-il pour la diaspora africaine ?",
@@ -2095,9 +2101,20 @@ function FAQSection() {
                   }`}
                 >
                   <div className="overflow-hidden">
-                    <p className="border-t border-ink/10 px-6 py-5 text-sm font-medium leading-relaxed text-ink/70">
-                      {faq.answer}
-                    </p>
+                    <div className="border-t border-ink/10 px-6 py-5">
+                      <p className="text-sm font-medium leading-relaxed text-ink/70">
+                        {faq.answer}
+                      </p>
+                      {faq.link && (
+                        <Link
+                          to={faq.link.to}
+                          className="mt-3 inline-flex items-center gap-1.5 text-xs font-bold text-brand underline hover:text-ink"
+                        >
+                          {faq.link.label}
+                          <ArrowRight className="size-3.5" aria-hidden />
+                        </Link>
+                      )}
+                    </div>
                   </div>
                 </div>
               </div>
@@ -2197,11 +2214,17 @@ function Footer() {
           <Link to="/a-propos" className="transition-colors hover:text-white">
             À propos
           </Link>
+          <Link to="/tarifs" className="transition-colors hover:text-white">
+            Tarifs
+          </Link>
           <Link to="/parrainage" className="transition-colors hover:text-white">
             Parrainage
           </Link>
           <Link to="/guides" className="transition-colors hover:text-white">
             Guides
+          </Link>
+          <Link to="/remboursements" className="transition-colors hover:text-white">
+            Remboursements
           </Link>
           <Link to="/privacy" className="transition-colors hover:text-white">
             Confidentialité

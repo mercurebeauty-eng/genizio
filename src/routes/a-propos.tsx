@@ -169,6 +169,12 @@ function AProposPage() {
             <Link to="/guides" className="hover:text-brand">
               Guides
             </Link>
+            <Link to="/tarifs" className="hover:text-brand">
+              Tarifs
+            </Link>
+            <Link to="/remboursements" className="hover:text-brand">
+              Remboursements
+            </Link>
             <Link to="/privacy" className="hover:text-brand">
               Confidentialité
             </Link>
