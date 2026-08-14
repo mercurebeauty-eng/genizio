@@ -51,7 +51,7 @@ function makeDb(
   // remporté ; les suivants ne trouvent plus rien (already_fulfilled).
   let paymentsSuccessClaims = 0;
 
-  const adminUser = overrides.adminUser ?? { app_metadata: { extra_profile_slots: 2 } };
+  const adminUser = overrides.adminUser ?? { app_metadata: { quota_override: 2 } };
   const tableData: Record<string, any[]> = {
     child_access_periods: overrides.periods ?? [],
   };
@@ -189,9 +189,9 @@ describe("applyPaystackEntitlement", () => {
     });
   });
 
-  it("extra_slots → incrémente extra_profile_slots dans app_metadata (sans écraser les autres clés)", async () => {
+  it("extra_slots → incrémente quota_override dans app_metadata (depuis le quota existant, sans écraser les autres clés)", async () => {
     const { db, inserts } = makeDb({
-      adminUser: { app_metadata: { extra_profile_slots: 2, provider: "google" } },
+      adminUser: { created_at: "2026-08-10T00:00:00.000Z", app_metadata: { quota_override: 2, provider: "google" } },
     });
     void inserts;
     const payment = makePayment({
@@ -203,7 +203,24 @@ describe("applyPaystackEntitlement", () => {
     expect(result.entitlement).toBe("extra_slots");
     expect(db.auth.admin.getUserById).toHaveBeenCalledWith("user-1");
     expect(db.auth.admin.updateUserById).toHaveBeenCalledWith("user-1", {
-      app_metadata: { extra_profile_slots: 3, provider: "google" },
+      app_metadata: { quota_override: 3, provider: "google" },
+    });
+  });
+
+  it("extra_slots sans quota + existant → part du plancher du compte (grand-péré 5 → 6)", async () => {
+    const { db, inserts } = makeDb({
+      adminUser: { created_at: "2026-07-01T00:00:00.000Z", app_metadata: { provider: "google" } },
+    });
+    void inserts;
+    const payment = makePayment({
+      user_id: "user-1",
+      metadata: { type: "extra_slots", months: 3 },
+    });
+    const result = await applyPaystackEntitlement(db, payment);
+
+    expect(result.entitlement).toBe("extra_slots");
+    expect(db.auth.admin.updateUserById).toHaveBeenCalledWith("user-1", {
+      app_metadata: { quota_override: 6, provider: "google" },
     });
   });
 

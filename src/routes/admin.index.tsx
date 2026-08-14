@@ -6,7 +6,7 @@ import { AppHeader } from "@/components/AppHeader";
 import {
   togglePassportUnlock,
   updateOrderStatus,
-  updateExtraProfileSlotsAdmin,
+  updateProfileQuotaAdmin,
 } from "@/lib/products.functions";
 import {
   getExecutiveKPIsAdmin,
@@ -79,7 +79,7 @@ function AdminIndexPage() {
   const getPendingPaymentsFn = useServerFn(getPaymentsPendingCountAdmin);
   const toggleUnlockFn = useServerFn(togglePassportUnlock);
   const updateOrderStatusFn = useServerFn(updateOrderStatus);
-  const updateExtraSlotsFn = useServerFn(updateExtraProfileSlotsAdmin);
+  const updateProfileQuotaFn = useServerFn(updateProfileQuotaAdmin);
   const runLoupAutoAckFn = useServerFn(runLoupAutoAcknowledgementAdmin);
   const getConstitutionFn = useServerFn(getConstitutionSuggestionsAdmin);
   const decideLoupFn = useServerFn(decideLoupSuggestionsAdmin);
@@ -183,15 +183,19 @@ function AdminIndexPage() {
     }
   };
 
-  const handleUpdateExtraSlots = async (userId: string, extraProfileSlots: number) => {
+  const handleUpdateQuota = async (userId: string, quota: number) => {
     try {
-      const res = await updateExtraSlotsFn({ data: { userId, extraProfileSlots } });
+      const res = await updateProfileQuotaFn({ data: { userId, quota } });
       if (res.success) {
-        toast.success("Quota de profils supplémentaires mis à jour.");
+        toast.success(
+          quota > 0
+            ? `Quota de profils défini sur ${quota} (0 = auto pour revenir à la règle standard).`
+            : "Quota de profils remis sur la règle standard automatique.",
+        );
         await loadData(false);
       }
     } catch (err: any) {
-      console.error("Erreur lors de la mise à jour des slots supplémentaires:", err);
+      console.error("Erreur lors de la mise à jour du quota de profils:", err);
       throw err;
     }
   };
@@ -321,7 +325,7 @@ function AdminIndexPage() {
                 kpis={kpis}
                 parents={parents}
                 onTogglePassport={handleTogglePassport}
-                onUpdateExtraSlots={handleUpdateExtraSlots}
+                onUpdateQuota={handleUpdateQuota}
                 onRefresh={() => loadData(false)}
                 isRefreshing={isRefreshing}
               />

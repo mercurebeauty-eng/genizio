@@ -43,7 +43,7 @@ function emit() {
  * recréé à chaque TOKEN_REFRESHED même quand rien d'utile ne change, or une
  * nouvelle identité re-déclenche tous les effets [session] des pages. On ne
  * propage donc que les changements réels : utilisateur, token, expiration,
- * claims app_metadata (les ajustements admin, ex. extra_profile_slots, ne
+ * claims app_metadata (les ajustements admin, ex. quota_override, ne
  * deviennent visibles qu'au refresh du token).
  */
 function sessionIdentity(s: Session | null): string | null {
@@ -77,7 +77,7 @@ function init() {
     .then(async ({ data }) => {
       if (data.session) {
         // Claims frais (2026-08-13, revue quota) : le JWT embarque app_metadata
-        // (ex. extra_profile_slots ajusté par l'admin) — sans refresh au premier
+        // (ex. quota_override ajusté par l'admin) — sans refresh au premier
         // chargement, le nouveau quota n'apparaissait qu'au prochain refresh
         // naturel du token. Le refresh tourne le token UNE seule fois par
         // chargement d'app (plus par page ni par instance : les 2-4 refresh

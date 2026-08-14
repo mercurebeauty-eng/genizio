@@ -43,7 +43,8 @@ export interface ParentBIRC {
   children: ChildBIRC[];
   challengeCount: number;
   completedCount: number;
-  extraSlots: number;
+  // Quota + unifié (2026-08-14) : quota TOTAL de profils accordé au compte (0 = auto).
+  quotaOverride: number;
   whatsappUrl: string | null;
 }
 
@@ -682,7 +683,7 @@ export const getExecutiveKPIsAdmin = createServerFn({ method: "GET" })
         }),
         challengeCount: userChallenges.length,
         completedCount: userCompleted.length,
-        extraSlots: (user.app_metadata?.extra_profile_slots as number) ?? 0,
+        quotaOverride: (user.app_metadata?.quota_override as number) ?? 0,
       };
     });
 
@@ -1011,9 +1012,9 @@ export const getCommercePassportsDataAdmin = createServerFn({ method: "GET" })
 // « Évolution de Génizio » §4) ──────────────────────────────────────────────────
 // La règle commerciale (quotas, accès) ne prime jamais sur le pouvoir admin : un
 // profil peut être désactivé/activé manuellement (is_active), un verrou B2B
-// (access_locked_at) peut être levé, la pression temporelle surmodulée — et les
-// extra_profile_slots par compte restent l'outil du « dépassement temporaire »
-// (updateExtraProfileSlotsAdmin, products.functions.ts).
+// (access_locked_at) peut être levé, la pression temporelle surmodulée — et le
+// quota_override par compte (quota TOTAL accordé, 0 = auto) est l'outil du
+// « quota + » (updateProfileQuotaAdmin, products.functions.ts).
 
 const ChildProfileSearchInput = z.object({ query: z.string().max(60).default("") });
 

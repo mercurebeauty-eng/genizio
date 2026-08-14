@@ -242,9 +242,9 @@ export const initializePassportPayment = createServerFn({ method: "POST" })
 
 // ── Modale d'upgrade (quota atteint) ─────────────────────────────────────────
 // La modale « Quota gratuit atteint » n'a pas d'enfant cible : elle finance un slot de
-// capacité supplémentaire (extra_profile_slots). Même barème que l'accès mensuel
-// (pricing.ts × mois) — l'octroi automatise ce que l'admin fait aujourd'hui à la main
-// via updateExtraProfileSlotsAdmin après confirmation WhatsApp.
+// capacité supplémentaire (quota_override, quota TOTAL accordé). Même barème que
+// l'accès mensuel (pricing.ts × mois) — l'octroi automatise ce que l'admin fait
+// aujourd'hui à la main via updateProfileQuotaAdmin après confirmation WhatsApp.
 const UpgradePaymentInput = z.object({
   months: z.number().int().min(1).max(12),
   callbackUrl: callbackUrlSchema,
