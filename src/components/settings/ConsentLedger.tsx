@@ -10,13 +10,18 @@ export function ConsentLedger() {
 
   useEffect(() => {
     const fetchEvents = async () => {
-      const { data } = await supabase
-        .from("consent_events")
-        .select("*")
-        .order("created_at", { ascending: false });
+      try {
+        const { data } = await supabase
+          .from("consent_events")
+          .select("*")
+          .order("created_at", { ascending: false });
 
-      if (data) setEvents(data);
-      setLoading(false);
+        if (data) setEvents(data);
+      } catch (err) {
+        console.error("Erreur de chargement du registre de consentement:", err);
+      } finally {
+        setLoading(false);
+      }
     };
 
     fetchEvents();

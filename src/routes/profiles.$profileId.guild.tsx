@@ -37,7 +37,10 @@ function GuildPage() {
     if (!loading && !session) navigate({ to: "/auth", replace: true });
   }, [session, loading, navigate]);
 
-  const userId = session?.user?.id;
+  // Keyé sur userId (string stable), pas sur l'objet session : le store de
+  // useSession ne propage une nouvelle identité que sur changement réel du
+  // token/claims — mais un rejeu ici réafficherait le loader. (2026-08-14)
+  const userId = session?.user.id;
 
   useEffect(() => {
     if (!userId) return;
@@ -54,20 +57,22 @@ function GuildPage() {
         .select("id", { count: "exact", head: true })
         .eq("child_id", profileId)
         .eq("status", "completed"),
-    ]).then(([childRes, countRes]) => {
-      setChild((childRes.data as Child) ?? null);
-      setCompletedCount(countRes.count ?? 0);
-      setFetching(false);
-    });
+    ])
+      .then(([childRes, countRes]) => {
+        setChild((childRes.data as Child) ?? null);
+        setCompletedCount(countRes.count ?? 0);
+      })
+      .catch((err) => console.error("Erreur de chargement de la guilde:", err))
+      .finally(() => setFetching(false));
   }, [userId, profileId]);
 
   useEffect(() => {
-    if (!userId || !child) return;
+    if (!session || !child) return;
     fetchCommunity({ data: { childId: child.id } })
       .then(setCommunity)
       .catch(() => {});
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [userId, child?.id]);
+  }, [session, child?.id]);
 
   const handleToggle = async (optIn: boolean) => {
     if (!child) return;

@@ -40,6 +40,9 @@ export function WhatsAppFAB({ phoneNumber }: WhatsAppFABProps) {
   const phone = phoneNumber ?? DEFAULT_PHONE;
   const { session } = useSession();
   const { profileId } = useParams({ strict: false }) as { profileId?: string };
+  // Keyé sur userId (string stable), pas sur l'objet session : évite de
+  // re-fetcher le contexte à chaque nouvelle identité de session. (2026-08-14)
+  const userId = session?.user.id;
   const [context, setContext] = useState<ChildContext | null>(null);
   const [visible, setVisible] = useState(true);
 
@@ -62,8 +65,6 @@ export function WhatsAppFAB({ phoneNumber }: WhatsAppFABProps) {
     };
   }, []);
 
-  const userId = session?.user?.id;
-
   useEffect(() => {
     if (!userId || !profileId) {
       setContext(null);
@@ -82,24 +83,25 @@ export function WhatsAppFAB({ phoneNumber }: WhatsAppFABProps) {
         .select("id", { count: "exact", head: true })
         .eq("child_id", profileId)
         .eq("status", "completed"),
-    ]).then(([childRes, countRes]) => {
-      if (cancelled) return;
-      if (!childRes.data) {
-        setContext(null);
-        return;
-      }
-      setContext({
-        name: childRes.data.name,
-        age: childRes.data.age,
-        guild: getChildGuild(childRes.data.talents as Record<string, number>).name,
-        completedCount: countRes.count ?? 0,
-      });
-    });
+    ])
+      .then(([childRes, countRes]) => {
+        if (cancelled) return;
+        if (!childRes.data) {
+          setContext(null);
+          return;
+        }
+        setContext({
+          name: childRes.data.name,
+          age: childRes.data.age,
+          guild: getChildGuild(childRes.data.talents as Record<string, number>).name,
+          completedCount: countRes.count ?? 0,
+        });
+      })
+      .catch((err) => console.error("Erreur de chargement du contexte WhatsApp:", err));
     return () => {
       cancelled = true;
     };
   }, [userId, profileId]);
-
   const url = buildWhatsAppUrl(phone, context);
 
   return (

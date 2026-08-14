@@ -138,7 +138,10 @@ function PassportPrintPage() {
     if (!loading && !session) navigate({ to: "/auth", replace: true });
   }, [session, loading, navigate]);
 
-  const userId = session?.user?.id;
+  // Keyé sur userId (string stable), pas sur l'objet session : le store de
+  // useSession ne propage une nouvelle identité que sur changement réel du
+  // token/claims — mais un rejeu ici réafficherait le loader. (2026-08-14)
+  const userId = session?.user.id;
 
   useEffect(() => {
     if (!userId) return;
@@ -163,16 +166,18 @@ function PassportPrintPage() {
         .select("badge_slug")
         .eq("child_id", profileId)
         .order("earned_at", { ascending: true }),
-    ]).then(([c, ch, b]) => {
-      setChild((c.data as Child) ?? null);
-      setChallenges((ch.data ?? []) as Challenge[]);
-      setEarnedBadges((b.data ?? []).map((row) => row.badge_slug));
-      setFetching(false);
-    });
+    ])
+      .then(([c, ch, b]) => {
+        setChild((c.data as Child) ?? null);
+        setChallenges((ch.data ?? []) as Challenge[]);
+        setEarnedBadges((b.data ?? []).map((row) => row.badge_slug));
+      })
+      .catch((err) => console.error("Erreur de chargement du passeport:", err))
+      .finally(() => setFetching(false));
   }, [userId, profileId]);
 
   useEffect(() => {
-    if (!userId) return;
+    if (!session) return;
     setFetchingSynthesis(true);
     fetchSynthesis({ data: { childId: profileId } })
       .then((resp) => setSynthesis(resp || ""))
@@ -181,13 +186,13 @@ function PassportPrintPage() {
         setSynthesis("");
       })
       .finally(() => setFetchingSynthesis(false));
-  }, [userId, profileId]);
+  }, [session, profileId]);
 
   // Lettre d'orientation IA — uniquement pour un Passeport déjà débloqué (gate
   // côté serveur aussi, cf. getPassportLetter) : pas d'appel avant que le
   // parent ait payé/activé le document.
   useEffect(() => {
-    if (!userId || !child?.pdf_unlocked) return;
+    if (!session || !child?.pdf_unlocked) return;
     setFetchingLetter(true);
     fetchLetter({ data: { childId: profileId } })
       .then((resp) => setLetter(resp || ""))
@@ -196,7 +201,8 @@ function PassportPrintPage() {
         setLetter("");
       })
       .finally(() => setFetchingLetter(false));
-  }, [userId, profileId, child?.pdf_unlocked]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [session, profileId, child?.pdf_unlocked]);
 
   // Téléchargement natif : le Passeport est généré en vrai PDF vectoriel A4 par
   // @react-pdf/renderer (texte réel, pas un scan navigateur), puis téléchargé

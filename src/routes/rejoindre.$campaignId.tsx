@@ -55,24 +55,34 @@ function JoinCampaignPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [campaignId]);
 
+  // Keyé sur userId (string stable), pas sur l'objet session : le store de
+  // useSession ne propage une nouvelle identité que sur changement réel du
+  // token/claims — mais un rejeu ici réafficherait le loader. (2026-08-14)
+  const userId = session?.user.id;
+
   const loadChildren = async () => {
-    if (!session) return;
+    if (!userId) return;
     setLoadingChildren(true);
-    const { data } = await supabase
-      .from("child_profiles")
-      .select("id, name, age")
-      .eq("user_id", session.user.id)
-      .order("name");
-    const list = (data as ChildOption[]) ?? [];
-    setChildren(list);
-    if (list.length > 0 && !selectedChildId) setSelectedChildId(list[0].id);
-    setLoadingChildren(false);
+    try {
+      const { data } = await supabase
+        .from("child_profiles")
+        .select("id, name, age")
+        .eq("user_id", userId)
+        .order("name");
+      const list = (data as ChildOption[]) ?? [];
+      setChildren(list);
+      if (list.length > 0 && !selectedChildId) setSelectedChildId(list[0].id);
+    } catch (err) {
+      console.error("Erreur de chargement des profils:", err);
+    } finally {
+      setLoadingChildren(false);
+    }
   };
 
   useEffect(() => {
     loadChildren();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [session]);
+  }, [userId]);
 
   const handleEnroll = async () => {
     if (!selectedChildId) return;

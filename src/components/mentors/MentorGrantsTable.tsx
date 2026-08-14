@@ -34,14 +34,19 @@ export function MentorGrantsTable({ childId }: { childId: string }) {
 
   const loadMentors = async () => {
     setLoading(true);
-    const { data } = await supabase
-      .from("child_mentors")
-      .select("*")
-      .eq("child_id", childId)
-      .order("created_at", { ascending: false });
+    try {
+      const { data } = await supabase
+        .from("child_mentors")
+        .select("*")
+        .eq("child_id", childId)
+        .order("created_at", { ascending: false });
 
-    setMentors(data || []);
-    setLoading(false);
+      setMentors(data || []);
+    } catch (err) {
+      console.error("Erreur de chargement des mentors:", err);
+    } finally {
+      setLoading(false);
+    }
   };
 
   useEffect(() => {
