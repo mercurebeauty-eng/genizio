@@ -21,7 +21,6 @@ import {
   OPPORTUNITY_COMPASS_MIN_AGE,
   TALENT_SUBFORM_OPPORTUNITIES,
 } from "@/lib/opportunity-compass";
-import { SeasonEnrollmentModal } from "@/components/seasons/SeasonEnrollmentModal";
 import { RenewChildAccessButton } from "@/components/settings/RenewChildAccessButton";
 import { AppTabBar } from "@/components/AppTabBar";
 import { TalentRadarChart } from "@/components/TalentRadarChart";
@@ -252,7 +251,6 @@ function PortfolioPage() {
   // Accès mensuel payant (modèle 2026-08-05) : status free/permanent/monthly/expired +
   // montant de renouvellement applicable au compte.
   const [accessState, setAccessState] = useState<{ status: ChildAccessStatus; renewalAmountXof: number } | null>(null);
-  const [showSponsorModal, setShowSponsorModal] = useState(false);
   const [payingPassport, setPayingPassport] = useState(false);
   const [mentorCount, setMentorCount] = useState(0);
   const [dismissedDiscoveries, setDismissedDiscoveries] = useState<string[]>([]);
@@ -987,20 +985,25 @@ function PortfolioPage() {
             </div>
           )}
 
-          {/* Rédemption d'un code de parrainage (dons diaspora/RSE, /parrainage) */}
-          <button
-            onClick={() => setShowSponsorModal(true)}
-            className="rounded-3xl border border-brand/20 bg-brand/5 p-4 shadow-sm flex items-center gap-3 text-left hover:bg-brand/10 transition-colors cursor-pointer w-full"
+          {/* Rédemption d'un code de parrainage (dons diaspora/RSE, /parrainage) — V4, fusion :
+              un code accorde une couverture FAMILLE, il se rédime depuis les paramètres
+              (SubscriptionCard) — l'ancienne modale par-enfant est retirée. */}
+          <Link
+            to="/profile"
+            className="rounded-3xl border border-brand/20 bg-brand/5 p-4 shadow-sm flex items-center gap-3 text-left hover:bg-brand/10 transition-colors w-full"
           >
             <div className="grid size-10 place-items-center rounded-2xl bg-brand text-white shrink-0">
               <Gift className="size-5" />
             </div>
             <div className="flex-1">
               <p className="text-sm font-black text-brand">Activer un code de parrainage</p>
-              <p className="text-xs text-ink/60">Un parrain (diaspora ou RSE) vous a donné un code ? Il ajoute 1 à 6 mois d'accès.</p>
+              <p className="text-xs text-ink/60">
+                Un parrain (diaspora ou RSE) vous a donné un code ? Il couvre toute votre famille —
+                activez-le depuis vos paramètres.
+              </p>
             </div>
             <ChevronRight className="size-5 text-brand" />
-          </button>
+          </Link>
 
           {/* Card: Saison Trimestrielle Actuelle */}
           {enrolledSeason ? (
@@ -1533,22 +1536,6 @@ function PortfolioPage() {
           </div>
         </div>
       </main>
-
-      {/* Modale de rédemption d'un code de parrainage (dons diaspora/RSE, /parrainage) */}
-      {showSponsorModal && activeSeason && (
-        <SeasonEnrollmentModal
-          season={activeSeason}
-          childId={profileId}
-          childName={child.name}
-          onClose={() => setShowSponsorModal(false)}
-          onSuccess={() => {
-            setShowSponsorModal(false);
-            getChildAccessStatusFn({ data: { childId: profileId } })
-              .then((res) => setAccessState(res))
-              .catch(console.error);
-          }}
-        />
-      )}
 
       <AppTabBar profileId={profileId} />
     </div>

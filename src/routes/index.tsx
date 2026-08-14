@@ -2174,9 +2174,9 @@ function CTASection() {
               </a>
             </div>
             <p className="mt-6 text-[11px] font-semibold text-white/50">
-              1 profil enfant gratuit · 5 000 FCFA les 3 premiers mois par profil supplémentaire ·
-              Accompagnement humain par un superviseur (12 séances × 5 000 F/mois/enfant) · Aucune
-              carte bancaire demandée
+              1 profil enfant gratuit · forfait famille 5 000 → 15 000 F/mois · paliers de +5
+              enfants au même tarif · Accompagnement humain par un superviseur (12 séances × 5 000
+              F/mois/enfant) · Aucune carte bancaire demandée
             </p>
           </div>
         </div>

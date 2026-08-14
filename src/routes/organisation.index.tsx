@@ -72,6 +72,9 @@ interface Stats {
   talentDistribution: Record<string, number>;
   supervisedChildren: number;
   totalSupervisorQuota: number;
+  // V4, DÉCISION 3 : compartiment SÉANCES (2 compteurs distincts).
+  sessionsTarget: number;
+  sessionsUsed: number;
 }
 
 interface Narrative {
@@ -250,6 +253,13 @@ function OrganisationDashboard() {
           <div className="relative mt-1 text-xs font-semibold text-ink/60">
             Enfants inscrits et suivis
           </div>
+          {/* V4, DÉCISION 3 : compartiment SÉANCES — le rapport d'impact affiche
+              « N enfants + M séances financés » (2 compteurs distincts, exigence bailleur). */}
+          {(stats?.sessionsTarget ?? 0) > 0 && (
+            <div className="relative mt-1.5 inline-flex items-center gap-1 rounded-full bg-sky-100 px-2.5 py-0.5 text-[11px] font-black text-sky-800">
+              + {stats?.sessionsUsed ?? 0} / {stats?.sessionsTarget ?? 0} séances financées
+            </div>
+          )}
         </div>
 
         <div className="relative overflow-hidden rounded-3xl border border-sky-500/20 bg-gradient-to-br from-sky-500/10 via-white to-white p-5 sm:p-6 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-xl hover:shadow-sky-500/20">
@@ -482,7 +492,8 @@ function OrganisationDashboard() {
                             style={{
                               width: `${Math.min(
                                 100,
-                                (s.assignedCount / Math.max(1, stats?.totalSupervisorQuota ?? 1)) * 100,
+                                (s.assignedCount / Math.max(1, stats?.totalSupervisorQuota ?? 1)) *
+                                  100,
                               )}%`,
                             }}
                           />
