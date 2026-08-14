@@ -9,8 +9,12 @@ import {
   updateSupervisorStatusAdmin,
   listChildProfilesAdmin,
   listCampaignsLightAdmin,
+  listSupervisorSessionsAdmin,
+  approveSupervisorSessionAdmin,
+  markSupervisorSessionsPaidAdmin,
   type SupervisorGroup,
 } from "@/lib/supervisors.functions";
+import { formatXof } from "@/lib/pricing";
 import { AdminPagination } from "./AdminPagination";
 import {
   Loader2,
@@ -26,6 +30,8 @@ import {
   Info,
   Ban,
   RotateCcw,
+  ListChecks,
+  Banknote,
 } from "lucide-react";
 import { toast } from "sonner";
 import { confirmDialog } from "@/components/ui/confirm-dialog";
@@ -58,6 +64,24 @@ export function AdminSupervisorsTab() {
   const removeFn = useServerFn(removeSupervisor);
   const listChildrenFn = useServerFn(listChildProfilesAdmin);
   const listCampaignsFn = useServerFn(listCampaignsLightAdmin);
+  const listSessionsFn = useServerFn(listSupervisorSessionsAdmin);
+  const approveSessionFn = useServerFn(approveSupervisorSessionAdmin);
+  const markPaidFn = useServerFn(markSupervisorSessionsPaidAdmin);
+
+  // Ledger payout (Vague C) : séances d'un superviseur + actions Approuver / Marquer payé.
+  const [payoutModalFor, setPayoutModalFor] = useState<string | null>(null);
+  const [sessionsRows, setSessionsRows] = useState<
+    Array<{
+      id: string;
+      child_name: string;
+      occurred_at: string;
+      status: string;
+      funding: string;
+      payout_xof: number;
+    }>
+  >([]);
+  const [sessionsLoading, setSessionsLoading] = useState(false);
+  const [markingPaidFor, setMarkingPaidFor] = useState<string | null>(null);
 
   // Sans ce délai, chaque frappe déclencherait une requête serveur complète (même
   // pattern que AdminCampaignsTab).
@@ -200,6 +224,66 @@ export function AdminSupervisorsTab() {
       toast.error(err instanceof Error ? err.message : "Erreur lors de la mise à jour du statut.");
     } finally {
       setUpdatingStatusId(null);
+    }
+  };
+
+  // ── Ledger payout (Vague C) ───────────────────────────────────────────────────
+  const openPayoutModal = async (supervisorUserId: string) => {
+    setPayoutModalFor(supervisorUserId);
+    setSessionsLoading(true);
+    try {
+      const opts = session?.access_token
+        ? { headers: { Authorization: `Bearer ${session.access_token}` } }
+        : {};
+      const rows = await listSessionsFn({ data: { supervisorUserId }, ...opts });
+      setSessionsRows((rows as any[]) ?? []);
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Erreur de chargement des séances.");
+      setPayoutModalFor(null);
+    } finally {
+      setSessionsLoading(false);
+    }
+  };
+
+  const handleApproveSession = async (sessionId: string) => {
+    const opts = session?.access_token
+      ? { headers: { Authorization: `Bearer ${session.access_token}` } }
+      : {};
+    try {
+      await approveSessionFn({ data: { sessionId }, ...opts });
+      toast.success("Séance approuvée — elle entre dans le payout dû.");
+      if (payoutModalFor) void openPayoutModal(payoutModalFor);
+      void refetch();
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Erreur lors de l'approbation.");
+    }
+  };
+
+  const handleMarkPaid = async (supervisorUserId: string) => {
+    if (
+      !(await confirmDialog({
+        title: "Marquer le payout comme payé ?",
+        description:
+          "Confirmez après avoir viré le superviseur (WhatsApp/Mobile Money). Les séances approuvées passent en « payé » — cette action n'est pas réversible.",
+        confirmLabel: "Marquer payé",
+        variant: "default",
+      }))
+    )
+      return;
+    setMarkingPaidFor(supervisorUserId);
+    const opts = session?.access_token
+      ? { headers: { Authorization: `Bearer ${session.access_token}` } }
+      : {};
+    try {
+      const res = await markPaidFn({ data: { supervisorUserId }, ...opts });
+      toast.success(
+        `${(res as any)?.paidCount ?? 0} séance(s) marquée(s) payée(s) — payout soldé.`,
+      );
+      void refetch();
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Erreur lors du paiement.");
+    } finally {
+      setMarkingPaidFor(null);
     }
   };
 
@@ -426,6 +510,43 @@ export function AdminSupervisorsTab() {
                     )}
                   </div>
 
+                  {/* Ledger payout (Vague C) : dû des séances approuvées + gestion. */}
+                  <div className="mb-4 flex flex-wrap items-center gap-2 rounded-2xl border border-emerald-200/60 bg-emerald-50/60 px-3 py-2.5">
+                    <div className="min-w-0 flex-1">
+                      <p className="text-[10px] font-black uppercase tracking-widest text-emerald-800">
+                        Payout dû
+                      </p>
+                      <p className="text-sm font-black text-emerald-900">
+                        {formatXof(g.duePayoutXof)}
+                        <span className="ml-1.5 text-[11px] font-bold text-emerald-700/70">
+                          ({g.approvedSessions} séance{g.approvedSessions > 1 ? "s" : ""} approuvée
+                          {g.approvedSessions > 1 ? "s" : ""})
+                        </span>
+                      </p>
+                    </div>
+                    <button
+                      onClick={() => void openPayoutModal(g.supervisor_user_id)}
+                      className="inline-flex items-center gap-1.5 rounded-xl border border-emerald-300 bg-white px-3 py-1.5 text-xs font-bold text-emerald-800 hover:bg-emerald-100 transition-all cursor-pointer"
+                    >
+                      <ListChecks className="size-3.5" />
+                      Séances
+                    </button>
+                    {g.approvedSessions > 0 && (
+                      <button
+                        onClick={() => void handleMarkPaid(g.supervisor_user_id)}
+                        disabled={markingPaidFor === g.supervisor_user_id}
+                        className="inline-flex items-center gap-1.5 rounded-xl bg-emerald-600 px-3 py-1.5 text-xs font-bold text-white hover:bg-emerald-700 transition-all cursor-pointer disabled:opacity-50"
+                      >
+                        {markingPaidFor === g.supervisor_user_id ? (
+                          <Loader2 className="size-3.5 animate-spin" />
+                        ) : (
+                          <Banknote className="size-3.5" />
+                        )}
+                        Marquer payé
+                      </button>
+                    )}
+                  </div>
+
                   <ul className="space-y-2">
                     {g.children.map((child) => (
                       <li
@@ -493,6 +614,84 @@ export function AdminSupervisorsTab() {
             void refetch();
           }}
         />
+      )}
+
+      {/* Modal ledger payout (Vague C) : les séances du superviseur + approbation. */}
+      {payoutModalFor && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-ink/40 p-4 backdrop-blur-sm">
+          <div className="w-full max-w-lg max-h-[85vh] overflow-y-auto bg-white rounded-3xl border border-ink/10 p-6 shadow-xl animate-in zoom-in-95 duration-200">
+            <div className="flex items-start justify-between gap-4 border-b-2 border-ink pb-4 mb-4">
+              <div>
+                <h3 className="font-display text-balance text-xl font-black text-ink">
+                  Séances & Payout
+                </h3>
+                <p className="text-sm text-ink/60 mt-0.5">
+                  Approuvez les séances déclarées — elles entrent dans le payout dû (70% × séance =
+                  3 500 F). Le funding (pack/campagne) est indicatif.
+                </p>
+              </div>
+              <button
+                onClick={() => setPayoutModalFor(null)}
+                className="rounded-xl border border-ink/10 p-1.5 hover:bg-stone-100 transition-all cursor-pointer"
+              >
+                <X className="size-5" />
+              </button>
+            </div>
+
+            {sessionsLoading ? (
+              <div className="flex justify-center py-10">
+                <Loader2 className="size-7 animate-spin text-brand" />
+              </div>
+            ) : sessionsRows.length === 0 ? (
+              <p className="py-10 text-center text-sm font-semibold text-ink/50">
+                Aucune séance déclarée pour ce superviseur.
+              </p>
+            ) : (
+              <ul className="space-y-2">
+                {sessionsRows.map((s) => (
+                  <li
+                    key={s.id}
+                    className="flex items-center justify-between gap-3 rounded-2xl border border-ink/10 bg-surface px-4 py-3"
+                  >
+                    <div className="min-w-0">
+                      <p className="text-sm font-bold text-ink truncate">{s.child_name}</p>
+                      <p className="text-[11px] font-semibold text-ink/50">
+                        {new Date(s.occurred_at).toLocaleDateString("fr-FR", {
+                          day: "numeric",
+                          month: "long",
+                        })}{" "}
+                        · {formatXof(s.payout_xof)} ·{" "}
+                        {s.funding === "pack"
+                          ? "Pack"
+                          : s.funding === "campaign"
+                            ? "Campagne"
+                            : "Sans financement"}
+                      </p>
+                    </div>
+                    {s.status === "declared" ? (
+                      <button
+                        onClick={() => void handleApproveSession(s.id)}
+                        className="rounded-xl bg-brand px-3 py-1.5 text-xs font-bold text-white hover:bg-brand/90 transition-all cursor-pointer"
+                      >
+                        Approuver
+                      </button>
+                    ) : (
+                      <span
+                        className={`rounded-full px-2.5 py-0.5 text-[10px] font-black uppercase tracking-wider ${
+                          s.status === "paid"
+                            ? "bg-emerald-100 text-emerald-700"
+                            : "bg-amber-100 text-amber-700"
+                        }`}
+                      >
+                        {s.status === "paid" ? "Payé" : "Approuvé"}
+                      </span>
+                    )}
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+        </div>
       )}
     </div>
   );

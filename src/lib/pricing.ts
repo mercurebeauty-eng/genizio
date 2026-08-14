@@ -51,6 +51,11 @@ export const BILAN_PRICE_XOF = 25000;
 export const PACK_SESSIONS = 12;
 export const PACK_PRICE_XOF = SESSION_PRICE_XOF * PACK_SESSIONS; // 60 000 F/mois/enfant
 
+// Payout superviseur (Vague C, 2026-08-14) : 70% de la séance sur preuve (CR en app +
+// déclaration). La part est calculée au fil des séances approuvées par l'admin (ledger).
+export const SUPERVISOR_SHARE = 0.7;
+export const SUPERVISOR_SESSION_PAYOUT_XOF = Math.round(SESSION_PRICE_XOF * SUPERVISOR_SHARE); // 3 500 F/séance
+
 export interface ExtraSlotPrice {
   priceXof: number;
   /** Équivalent EUR à la parité saison (10 000 F = 15 €). */
@@ -64,14 +69,24 @@ export interface ExtraSlotPrice {
 // Référence absente/illisible → tarif standard, jamais une promo offerte par erreur.
 export function resolveExtraSlotPrice(
   referenceCreatedAt: string | null | undefined,
-  now: Date = new Date()
+  now: Date = new Date(),
 ): ExtraSlotPrice {
   if (!referenceCreatedAt) {
-    return { priceXof: STANDARD_PRICE_XOF, priceEur: STANDARD_PRICE_EUR, isPromo: false, promoEndsAt: null };
+    return {
+      priceXof: STANDARD_PRICE_XOF,
+      priceEur: STANDARD_PRICE_EUR,
+      isPromo: false,
+      promoEndsAt: null,
+    };
   }
   const created = new Date(referenceCreatedAt);
   if (Number.isNaN(created.getTime())) {
-    return { priceXof: STANDARD_PRICE_XOF, priceEur: STANDARD_PRICE_EUR, isPromo: false, promoEndsAt: null };
+    return {
+      priceXof: STANDARD_PRICE_XOF,
+      priceEur: STANDARD_PRICE_EUR,
+      isPromo: false,
+      promoEndsAt: null,
+    };
   }
 
   const endsAt = new Date(created);

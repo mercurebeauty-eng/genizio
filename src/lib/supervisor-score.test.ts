@@ -1,8 +1,9 @@
 import { describe, it, expect } from "vitest";
 import { computeSupervisorScore, computeExpectedSessions } from "./supervisor-score";
 
-// Score de fiabilité superviseur (V1) — pondération décidée avec le porteur :
-// 60% tenue des séances + 40% progression des défis (feedback famille en V2).
+// Score de fiabilité superviseur (V2, 2026-08-14) — pondération décidée avec le porteur :
+// 50% tenue des séances + 25% feedback famille (1-5) + 25% progression des défis. Sans
+// feedback posé, la moyenne est renormalisée sur les composantes disponibles (0.75).
 describe("computeSupervisorScore", () => {
   it("0 séance et 0 défi : score 0", () => {
     expect(
@@ -15,7 +16,7 @@ describe("computeSupervisorScore", () => {
     ).toBe(0);
   });
 
-  it("toutes les séances tenues et tous les défis complétés : score 100", () => {
+  it("toutes les séances tenues et tous les défis complétés, sans feedback : 100 (renormalisé)", () => {
     expect(
       computeSupervisorScore({
         expectedSessions: 12,
@@ -26,7 +27,7 @@ describe("computeSupervisorScore", () => {
     ).toBe(100);
   });
 
-  it("partiel : 6/12 séances + 2/4 défis → 0.6×50 + 0.4×50 = 50", () => {
+  it("partiel sans feedback : 6/12 séances + 2/4 défis → (50×0.5 + 50×0.25)/0.75 = 50", () => {
     expect(
       computeSupervisorScore({
         expectedSessions: 12,
@@ -37,7 +38,7 @@ describe("computeSupervisorScore", () => {
     ).toBe(50);
   });
 
-  it("séances pleines mais progression nulle : 60 (0.6×100 + 0.4×0)", () => {
+  it("séances pleines mais progression nulle, sans feedback : (100×0.5)/0.75 ≈ 67", () => {
     expect(
       computeSupervisorScore({
         expectedSessions: 12,
@@ -45,10 +46,10 @@ describe("computeSupervisorScore", () => {
         completedChallenges: 0,
         totalChallenges: 4,
       }),
-    ).toBe(60);
+    ).toBe(67);
   });
 
-  it("progression pleine mais aucune séance : 40 (0.6×0 + 0.4×100)", () => {
+  it("progression pleine mais aucune séance, sans feedback : (100×0.25)/0.75 ≈ 33", () => {
     expect(
       computeSupervisorScore({
         expectedSessions: 12,
@@ -56,7 +57,43 @@ describe("computeSupervisorScore", () => {
         completedChallenges: 4,
         totalChallenges: 4,
       }),
-    ).toBe(40);
+    ).toBe(33);
+  });
+
+  it("feedback 5/5 + séances pleines + progression pleine : 100", () => {
+    expect(
+      computeSupervisorScore({
+        expectedSessions: 12,
+        declaredSessions: 12,
+        completedChallenges: 4,
+        totalChallenges: 4,
+        avgFeedback: 5,
+      }),
+    ).toBe(100);
+  });
+
+  it("feedback 1/5 avec le reste parfait : (50 + 25×20 + 25)/1 = 80 — la mauvaise note fait baisser", () => {
+    expect(
+      computeSupervisorScore({
+        expectedSessions: 12,
+        declaredSessions: 12,
+        completedChallenges: 4,
+        totalChallenges: 4,
+        avgFeedback: 1,
+      }),
+    ).toBe(80);
+  });
+
+  it("feedback 5/5 sans séance ni progression : (0 + 25×100 + 0)/1 = 25", () => {
+    expect(
+      computeSupervisorScore({
+        expectedSessions: 12,
+        declaredSessions: 0,
+        completedChallenges: 0,
+        totalChallenges: 4,
+        avgFeedback: 5,
+      }),
+    ).toBe(25);
   });
 
   it("séances plafonnées à 100 (déclarées > attendues) : 100 côté séances", () => {
@@ -70,7 +107,7 @@ describe("computeSupervisorScore", () => {
     ).toBe(100);
   });
 
-  it("expectedSessions 0 (début de mois) : séances non pénalisantes, seules les défis comptent", () => {
+  it("expectedSessions 0 (début de mois) : séances non pénalisantes, progression seule renormalisée", () => {
     expect(
       computeSupervisorScore({
         expectedSessions: 0,
@@ -78,7 +115,19 @@ describe("computeSupervisorScore", () => {
         completedChallenges: 5,
         totalChallenges: 5,
       }),
-    ).toBe(40);
+    ).toBe(33);
+  });
+
+  it("expectedSessions 0 avec feedback 4/5 : (25×80 + 25×100)/1 = 45", () => {
+    expect(
+      computeSupervisorScore({
+        expectedSessions: 0,
+        declaredSessions: 0,
+        completedChallenges: 5,
+        totalChallenges: 5,
+        avgFeedback: 4,
+      }),
+    ).toBe(45);
   });
 });
 

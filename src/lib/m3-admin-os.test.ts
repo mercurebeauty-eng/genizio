@@ -7,6 +7,9 @@ import {
   listCampaignsLightAdmin,
   declareSessionSupervisor,
   updateSupervisorStatusAdmin,
+  listSupervisorSessionsAdmin,
+  approveSupervisorSessionAdmin,
+  markSupervisorSessionsPaidAdmin,
 } from "@/lib/supervisors.functions";
 
 describe("Milestone 3 — R4, R5, R6 Server & UI Logic Tests", () => {
@@ -145,6 +148,22 @@ describe("Milestone 3 — R4, R5, R6 Server & UI Logic Tests", () => {
     it("exports updateSupervisorStatusAdmin server function definition", () => {
       expect(updateSupervisorStatusAdmin).toBeDefined();
       expect(typeof updateSupervisorStatusAdmin).toBe("function");
+    });
+
+    // Ledger payout superviseur (Vague C) : approbation des séances + marquage payé.
+    it("exports listSupervisorSessionsAdmin server function definition", () => {
+      expect(listSupervisorSessionsAdmin).toBeDefined();
+      expect(typeof listSupervisorSessionsAdmin).toBe("function");
+    });
+
+    it("exports approveSupervisorSessionAdmin server function definition", () => {
+      expect(approveSupervisorSessionAdmin).toBeDefined();
+      expect(typeof approveSupervisorSessionAdmin).toBe("function");
+    });
+
+    it("exports markSupervisorSessionsPaidAdmin server function definition", () => {
+      expect(markSupervisorSessionsPaidAdmin).toBeDefined();
+      expect(typeof markSupervisorSessionsPaidAdmin).toBe("function");
     });
   });
 });
