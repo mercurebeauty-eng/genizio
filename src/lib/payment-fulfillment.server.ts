@@ -8,7 +8,7 @@
 //   • order        → orders.status = 'confirmed' + payment_reference
 //   • child_access → insertion child_access_periods (extension, jamais de découpe)
 //   • passport     → child_profiles.pdf_unlocked = true
-//   • extra_slots  → +1 extra_profile_slots (modale d'upgrade, legacy)
+//   • extra_slots  → +1 quota_override, quota TOTAL (modale d'upgrade, legacy)
 //   • sponsorship  → création du code de parrainage (payment_confirmed=true d'office :
 //                     le paiement en ligne remplace la confirmation admin WhatsApp)
 //   • campaign_b2b → lot de codes B2B confirmés (lien partageable d'une campagne payée)
@@ -124,9 +124,11 @@ export async function applyPaystackEntitlement(
     }
 
     // Modale d'upgrade (quota atteint) : la modale n'a pas d'enfant cible — elle finance un
-    // slot de capacité supplémentaire. Miroir automatique de updateExtraProfileSlotsAdmin
-    // (products.functions.ts) : lecture-modification-écriture de extra_profile_slots dans
-    // app_metadata, sans écraser les autres clés posées par GoTrue.
+    // slot de capacité supplémentaire. Miroir automatique de updateProfileQuotaAdmin
+    // (products.functions.ts) : lecture-modification-écriture de quota_override dans
+    // app_metadata, sans écraser les autres clés posées par GoTrue. Quota + unifié
+    // (2026-08-14) : quota_override = quota TOTAL ; un slot payé l'élève d'un cran, en
+    // partant du plancher du compte s'il n'y avait pas encore de quota +.
     case "extra_slots": {
       if (!payment.user_id) throw new Error("Payment 'extra_slots' sans user_id.");
       const { data: userRes, error: getErr } = await supabaseAdmin.auth.admin.getUserById(
@@ -135,17 +137,22 @@ export async function applyPaystackEntitlement(
       if (getErr || !userRes?.user) {
         throw new Error(`Utilisateur introuvable: ${getErr?.message ?? payment.user_id}`);
       }
-      const current = Number((userRes.user.app_metadata as any)?.extra_profile_slots ?? 0) || 0;
+      const floor =
+        userRes.user.created_at && new Date(userRes.user.created_at).getTime() < new Date("2026-08-04T00:00:00.000Z").getTime()
+          ? 5
+          : 1;
+      const current = Number((userRes.user.app_metadata as any)?.quota_override ?? 0) || 0;
+      const next = Math.min(Math.max(current, floor) + 1, 50);
       const { error: updateErr } = await supabaseAdmin.auth.admin.updateUserById(payment.user_id, {
         app_metadata: {
           ...(userRes.user.app_metadata ?? {}),
-          extra_profile_slots: current + 1,
+          quota_override: next,
         },
       });
       if (updateErr) {
         throw new Error(`Erreur lors de l'octroi du slot: ${updateErr.message}`);
       }
-      return { entitlement: "extra_slots", detail: "Slot de profil supplémentaire octroyé (+1)" };
+      return { entitlement: "extra_slots", detail: `Slot de profil supplémentaire octroyé (+1 → quota ${next})` };
     }
 
     // Parrainage en ligne (décision 2026-08-08) : le token est créé PAR le paiement Paystack

@@ -220,21 +220,21 @@ export const togglePassportUnlock = createServerFn({ method: "POST" })
     return { ok: true, unlocked: data.unlock };
   });
 
-// Reconstruit (2026-08-03) — le pivot du 2026-07-22 avait retiré ce mécanisme au profit d'une
-// limite gratuite de 5 pour tous ; le retour à "1 gratuit + slots payants" (cf.
-// child-profile-quota.ts) le rend à nouveau nécessaire. Sans lui, aucune écriture de
-// extra_profile_slots n'existait plus nulle part dans le repo (vérifié) — la modale de paywall
-// (5000 FCFA via WhatsApp) n'avait donc aucune suite possible autrement qu'en éditant
-// raw_app_meta_data à la main dans le tableau Supabase. Mirroir de updateCampaignExtraQuotaAdmin
-// (campaigns.functions.ts), même mécanique manuelle : l'admin ajuste ce chiffre après avoir
-// confirmé le paiement WhatsApp/Mobile Money hors-app.
-export const updateExtraProfileSlotsAdmin = createServerFn({ method: "POST" })
+// Reconstruit (2026-08-03) puis UNIFIÉ (2026-08-14) — une seule clé quota_override =
+// quota TOTAL de profils accordé au compte (0 = règle standard automatique : plancher
+// grand-péré/neuf + couverture famille → 5). Remplaçant de l'ancienne
+// updateExtraProfileSlotsAdmin (qui écrivait extra_profile_slots, désormais inerte).
+// Mirroir de updateCampaignExtraQuotaAdmin (campaigns.functions.ts), même mécanique
+// manuelle : l'admin ajuste ce chiffre après avoir confirmé le paiement WhatsApp/Mobile
+// Money hors-app, ou pour accorder un « quota + » à un compte.
+export const updateProfileQuotaAdmin = createServerFn({ method: "POST" })
   .middleware([requireAdmin])
   .validator((input: unknown) =>
     z
       .object({
         userId: z.string().uuid(),
-        extraProfileSlots: z.number().int().min(0).max(50),
+        // 0 = règle standard automatique (la clé est retirée) ; > 0 = quota TOTAL accordé.
+        quota: z.number().int().min(0).max(50),
       })
       .parse(input)
   )
@@ -248,10 +248,18 @@ export const updateExtraProfileSlotsAdmin = createServerFn({ method: "POST" })
       throw new Error(`Utilisateur introuvable: ${getErr?.message ?? data.userId}`);
     }
 
+    const metadata = { ...(userRes.user.app_metadata ?? {}) };
+    if (data.quota > 0) {
+      metadata.quota_override = data.quota;
+    } else {
+      delete metadata.quota_override; // retour au mode auto
+    }
+
     const { error: updateErr } = await supabaseAdmin.auth.admin.updateUserById(data.userId, {
-      app_metadata: { ...(userRes.user.app_metadata ?? {}), extra_profile_slots: data.extraProfileSlots },
+      app_metadata: metadata,
     });
     if (updateErr) throw new Error(`Erreur lors de la mise à jour du quota: ${updateErr.message}`);
 
-    return { success: true, userId: data.userId, extraProfileSlots: data.extraProfileSlots };
+    return { success: true, userId: data.userId, quota: data.quota };
   });
+

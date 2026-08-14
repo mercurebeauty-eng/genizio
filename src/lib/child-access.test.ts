@@ -8,14 +8,14 @@ import {
 
 // Modèle d'accès mensuel par enfant (2026-08-05) — décisions utilisateur :
 //  • plancher gratuit (1, ou 5 pour les comptes grand-pérés < 2026-08-04) : jamais expiré ;
-//  • slots achetés avant le modèle mensuel (extra_profile_slots) : permanent, grand-pérés ;
+//  • quota + unifié (quota_override) : quota TOTAL accordé → permanent jusqu'à N ;
 //  • au-delà : accès MENSUEL porté par child_access_periods — actif si la période la plus
 //    récente est dans le futur, sinon expired (génération de défis bloquée, reste visible).
 
 const NOW = new Date("2026-08-05T12:00:00.000Z");
 
 describe("resolveChildAccessStatus", () => {
-  const base = { floor: 1, extraSlots: 0 };
+  const base = { floor: 1, quotaOverride: 0 };
 
   it("position ≤ plancher → free, même sans période payée", () => {
     expect(resolveChildAccessStatus({ position: 1, ...base, latestPeriod: null, now: NOW }).kind).toBe("free");
@@ -23,9 +23,13 @@ describe("resolveChildAccessStatus", () => {
     expect(resolveChildAccessStatus({ position: 1, ...base, latestPeriod: { endsAt: "2020-01-01T00:00:00Z" }, now: NOW }).kind).toBe("free");
   });
 
-  it("position ≤ plancher + slots grand-pérés → permanent, même sans période", () => {
-    const st = resolveChildAccessStatus({ position: 3, floor: 1, extraSlots: 2, latestPeriod: null, now: NOW });
+  it("quota + (quotaOverride) : tous les profils jusqu'au quota accordé → permanent, même sans période", () => {
+    // Position 3 ≤ quota_override 3 → permanent (ex-slots grand-pérés unifiés)
+    const st = resolveChildAccessStatus({ position: 3, floor: 1, quotaOverride: 3, latestPeriod: null, now: NOW });
     expect(st.kind).toBe("permanent");
+    // Position 4 > quota_override 3 → expired (hors quota accordé)
+    const st2 = resolveChildAccessStatus({ position: 4, floor: 1, quotaOverride: 3, latestPeriod: null, now: NOW });
+    expect(st2.kind).toBe("expired");
   });
 
   it("position au-delà, sans période → expired (jamais payé) avec endsAt null", () => {
@@ -58,28 +62,41 @@ describe("resolveChildAccessStatus", () => {
   });
 
   it("compte grand-péré (plancher 5) : les 5 premiers profils sont gratuits, le 6e est payant", () => {
-    expect(resolveChildAccessStatus({ position: 5, floor: 5, extraSlots: 0, latestPeriod: null, now: NOW }).kind).toBe("free");
-    expect(resolveChildAccessStatus({ position: 6, floor: 5, extraSlots: 0, latestPeriod: null, now: NOW }).kind).toBe("expired");
+    expect(resolveChildAccessStatus({ position: 5, floor: 5, quotaOverride: 0, latestPeriod: null, now: NOW }).kind).toBe("free");
+    expect(resolveChildAccessStatus({ position: 6, floor: 5, quotaOverride: 0, latestPeriod: null, now: NOW }).kind).toBe("expired");
   });
 });
 
-describe("computeChildCreationLimit (miroir du trigger : plancher + extra, plafonné à 5, sans +1)", () => {
-  it("compte neuf sans slot : 1 + 0 = 1 — la base refuse le 2e profil sans slot/abonnement (plus de promesse UI que la base rejette)", () => {
-    expect(computeChildCreationLimit("2026-08-10T00:00:00.000Z", 0)).toBe(1);
-  });
-
-  it("compte neuf avec 2 slots : 1 + 2 = 3", () => {
-    expect(computeChildCreationLimit("2026-08-10T00:00:00.000Z", 2)).toBe(3);
+describe("computeChildCreationLimit (miroir du trigger unifié : 0 = règle standard auto, N = quota total, borné 50)", () => {
+  it("compte neuf sans quota + : plancher 1 — la base refuse le 2e profil sans slot/abonnement (plus de promesse UI que la base rejette)", () => {
+    expect(computeChildCreationLimit("2026-08-10T00:00:00.000Z", false)).toBe(1);
+    expect(computeChildCreationLimit("2026-08-10T00:00:00.000Z", false, 0)).toBe(1);
   });
 
   it("compte grand-péré : plafonné à 5 — le plafond de 5 enfants est voulu, au-delà on crée un nouveau compte", () => {
-    expect(computeChildCreationLimit("2026-07-01T00:00:00.000Z", 0)).toBe(5);
-    expect(computeChildCreationLimit("2026-07-01T00:00:00.000Z", 3)).toBe(5);
+    expect(computeChildCreationLimit("2026-07-01T00:00:00.000Z", false)).toBe(5);
   });
 
   it("compte couvert (abonnement famille ou crédit parrainage) : création possible jusqu'au plafond de 5", () => {
-    expect(computeChildCreationLimit("2026-08-10T00:00:00.000Z", 0, true)).toBe(5);
-    expect(computeChildCreationLimit("2026-07-01T00:00:00.000Z", 0, true)).toBe(5);
+    expect(computeChildCreationLimit("2026-08-10T00:00:00.000Z", true)).toBe(5);
+    expect(computeChildCreationLimit("2026-07-01T00:00:00.000Z", true)).toBe(5);
+  });
+
+  it("quota + (quotaOverride) : N = quota TOTAL accordé, pour n'importe quel compte", () => {
+    // Mercurebeauty : quota_override 15 → 15 profils max (couvert ou non)
+    expect(computeChildCreationLimit("2026-07-01T00:00:00.000Z", false, 15)).toBe(15);
+    expect(computeChildCreationLimit("2026-07-01T00:00:00.000Z", true, 15)).toBe(15);
+    // Compte neuf avec quota + : même sémantique
+    expect(computeChildCreationLimit("2026-08-10T00:00:00.000Z", false, 15)).toBe(15);
+  });
+
+  it("quota + borné à 50 (miroir du LEAST(quota_override, 50) du trigger)", () => {
+    expect(computeChildCreationLimit("2026-08-10T00:00:00.000Z", false, 60)).toBe(50);
+  });
+
+  it("sans quota_override, le plafond de 5 reste la règle (les autres comptes ne changent pas)", () => {
+    expect(computeChildCreationLimit("2026-08-10T00:00:00.000Z", false)).toBe(1);
+    expect(computeChildCreationLimit("2026-07-01T00:00:00.000Z", true)).toBe(5);
   });
 });
 
@@ -157,7 +174,7 @@ describe("getChildAccessStatus (client fake, mêmes tables que le vrai)", () => 
             data: {
               user:
                 overrides.user ??
-                { id, created_at: "2026-08-10T00:00:00Z", app_metadata: { extra_profile_slots: 0 } },
+                { id, created_at: "2026-08-10T00:00:00Z", app_metadata: { quota_override: 0 } },
             },
             error: null,
           }),
@@ -196,7 +213,7 @@ describe("getChildAccessStatus (client fake, mêmes tables que le vrai)", () => 
           { id: "c5", user_id: "u1", created_at: "2026-07-05T00:00:00Z" },
           { id: "c6", user_id: "u1", created_at: "2026-07-06T00:00:00Z" },
         ],
-        user: { id: "u1", created_at: "2026-07-01T00:00:00Z", app_metadata: { extra_profile_slots: 0 } },
+        user: { id: "u1", created_at: "2026-07-01T00:00:00Z", app_metadata: { quota_override: 0 } },
       }) as any,
       "u1",
       "c6"

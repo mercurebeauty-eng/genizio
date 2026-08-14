@@ -51,7 +51,7 @@ function ManageProfilesPage() {
 
   // Paiement en ligne Paystack : le serveur calcule le montant (barème du compte × mois),
   // crée la payment et on redirige vers la page hébergée. Le webhook/retour octroie
-  // automatiquement le slot (extra_profile_slots) — miroir de updateExtraProfileSlotsAdmin.
+  // automatiquement le slot (quota_override, quota TOTAL) — miroir de updateProfileQuotaAdmin.
   const handlePayUpgrade = async () => {
     if (!session) return;
     setPayingUpgrade(true);
@@ -74,7 +74,7 @@ function ManageProfilesPage() {
     if (!loading && !session) navigate({ to: "/auth", replace: true });
   }, [session, loading, navigate]);
 
-  // Note (2026-08-14) : le refresh unique du token (claims extra_profile_slots)
+  // Note (2026-08-14) : le refresh unique du token (claims quota_override)
   // est désormais assuré par le store singleton de useSession() au premier
   // chargement de l'app — plus besoin de refresh par page ici (le refresh par
   // page provoquait des cascades de TOKEN_REFRESHED qui re-déclenchaient tous
@@ -150,10 +150,12 @@ function ManageProfilesPage() {
             // Décision 2026-08-05 : le plancher couvre le profil gratuit (+ slots grand-pérés),
             // le "+1" autorise la création du premier profil MENSUEL (en cours de première mise
             // en paiement) — miroir du trigger check_child_profile_quota (migration 20260805100000).
+            // Quota + unifié (2026-08-14) : quota_override = quota TOTAL accordé
+            // (0 = règle standard auto), miroir du trigger (migration 20260814140000).
             const quota = computeChildCreationLimit(
               session?.user?.created_at,
-              (session?.user?.app_metadata?.extra_profile_slots as number) ?? 0,
               familyCovered,
+              (session?.user?.app_metadata?.quota_override as number) ?? 0,
             );
             const atQuota = profiles.length >= quota;
             return (

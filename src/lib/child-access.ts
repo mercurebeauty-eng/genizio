@@ -1,16 +1,18 @@
 // Accès payant par enfant — source unique de l'état d'accès d'un profil.
 //
-// Modèle (2026-08-05, décisions utilisateur) :
+// Modèle (2026-08-05, décisions utilisateur, UNIFIÉ le 2026-08-14) :
 //   • 1er profil du compte : GRATUIT (jamais expiré) — le plancher (1, ou 5 pour les
 //     comptes grand-pérés créés avant 2026-08-04, cf. child-profile-quota.ts).
-//   • Slots achetés AVANT le modèle mensuel (extra_profile_slots, accès vendu
-//     "permanent") : grand-pérés, valables à vie.
+//   • Quota + par compte (quota_override, quota TOTAL accordé) : les profils jusqu'à ce
+//     quota sont "permanent" (jamais expirés) — remplace l'ancienne clé
+//     extra_profile_slots (accès vendu "permanent", grand-péré).
 //   • Enfants au-delà : accès MENSUEL — 5 000 FCFA/mois les 3 premiers mois du compte,
 //     puis 15 000 FCFA/mois (pricing.ts). L'accès est porté par child_access_periods
 //     (table), la période la plus récente fait foi.
 //   • À expiration : génération de défis bloquée (gate), portfolio/acquis accessibles.
-//     Doit rester cohérent avec check_child_profile_quota() (migration 20260809120000 :
-//     création autorisée jusqu'à plancher + extra, couverture famille → 5, plafond 5).
+//     Doit rester cohérent avec check_child_profile_quota() (migration 20260814140000 :
+//     quota_override > 0 → quota accordé borné 50 ; sinon plancher, couverture famille
+//     → 5, plafond 5).
 //     N'ajoute JAMAIS de marge arbitraire par-dessus le trigger : l'UI promet au
 //     parent exactement ce que la base acceptera (chantier « porte d'entrée », 2026-08-12).
 
@@ -18,7 +20,7 @@ import { z } from "zod";
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { requireAdmin } from "@/integrations/supabase/admin-middleware";
-import { isGrandfatheredAccount, MAX_CHILDREN_PER_ACCOUNT } from "@/lib/child-profile-quota";
+import { isGrandfatheredAccount, MAX_CHILDREN_PER_ACCOUNT, MAX_QUOTA_OVERRIDE } from "@/lib/child-profile-quota";
 import { resolveExtraSlotPrice } from "@/lib/pricing";
 
 export type ChildAccessStatus =
@@ -27,34 +29,39 @@ export type ChildAccessStatus =
   | { kind: "monthly"; endsAt: string; daysLeft: number } // période payée active
   | { kind: "expired"; endsAt: string | null }; // payant mais période écoulée (ou jamais payée)
 
-// Limite de CRÉATION de profils côté UI : plancher + slots achetés, borné au plafond de 5
-// (aucun « +1 » : le trigger check_child_profile_quota — migration 20260809120000 — n'en
-// accorde pas, l'ajouter ici promettait un profil que la base rejetait). Un compte couvert
-// (abonnement famille actif ou crédit de parrainage valide) peut créer jusqu'au plafond.
+// Limite de CRÉATION de profils côté UI — modèle UNIFIÉ (2026-08-14) : une seule clé
+// quota_override = quota TOTAL accordé au compte (0 = règle standard automatique).
+//   • quotaOverride > 0 → le compte peut créer jusqu'à quotaOverride profils (borné 50,
+//     miroir du LEAST(quota_override, 50) du trigger, migration 20260814140000) ;
+//   • sinon → règle standard : plancher grand-péré/neuf, couvert (abonnement famille ou
+//     crédit de parrainage) → plafond 5 (aucun « +1 » : le trigger n'en accorde pas).
 export function computeChildCreationLimit(
   accountCreatedAt: string | null | undefined,
-  extraSlots: number | null | undefined,
   familyCovered = false,
+  quotaOverride = 0,
 ): number {
+  if (quotaOverride > 0) return Math.min(quotaOverride, MAX_QUOTA_OVERRIDE);
   if (familyCovered) return MAX_CHILDREN_PER_ACCOUNT;
   const floor = isGrandfatheredAccount(accountCreatedAt) ? 5 : 1;
-  return Math.min(floor + (extraSlots ?? 0), MAX_CHILDREN_PER_ACCOUNT);
+  return Math.min(floor, MAX_CHILDREN_PER_ACCOUNT);
 }
 
 // Résolveur pur (testable sans base) : position 1-based de l'enfant parmi les profils
-// du compte (ordre de création), plancher, slots grand-pérés, période la plus récente.
+// du compte (ordre de création), plancher, quota + (quota total accordé), période la plus
+// récente. Un compte avec quotaOverride > 0 voit tous ses profils jusqu'à ce quota en
+// accès « permanent » (jamais expirés) — c'est la sémantique « quota accordé ».
 export function resolveChildAccessStatus(params: {
   position: number;
   floor: number;
-  extraSlots: number;
+  quotaOverride: number;
   latestPeriod: { endsAt: string } | null;
   now?: Date;
 }): ChildAccessStatus {
-  const { position, floor, extraSlots, latestPeriod } = params;
+  const { position, floor, quotaOverride, latestPeriod } = params;
   const now = params.now ?? new Date();
 
   if (position <= floor) return { kind: "free" };
-  if (position <= floor + extraSlots) return { kind: "permanent" };
+  if (quotaOverride > 0 && position <= quotaOverride) return { kind: "permanent" };
   if (!latestPeriod) return { kind: "expired", endsAt: null };
 
   const endsAt = new Date(latestPeriod.endsAt);
@@ -171,7 +178,9 @@ export async function getChildAccessStatus(
   if (userErr || !userRes?.user) throw new Error(`Utilisateur introuvable: ${userErr?.message ?? userId}`);
 
   const floor = isGrandfatheredAccount(userRes.user.created_at) ? 5 : 1;
-  const extraSlots = Number((userRes.user.app_metadata as any)?.extra_profile_slots ?? 0) || 0;
+  // Quota + unifié (2026-08-14) : quota_override = quota TOTAL accordé au compte
+  // (0 = règle standard auto). L'ancienne clé extra_profile_slots n'est plus lue.
+  const quotaOverride = Number((userRes.user.app_metadata as any)?.quota_override ?? 0) || 0;
 
   const { data: periods, error: periodsErr } = await db
     .from("child_access_periods")
@@ -218,7 +227,7 @@ export async function getChildAccessStatus(
   return resolveChildAccessStatus({
     position,
     floor,
-    extraSlots,
+    quotaOverride,
     latestPeriod: periods?.[0] ? { endsAt: periods[0].ends_at } : null,
   });
 }
@@ -239,7 +248,7 @@ export const getChildAccessStatusFn = createServerFn({ method: "GET" })
   });
 
 // Prolonge l'accès mensuel d'un enfant de N mois (paiement WhatsApp/Mobile Money
-// confirmé hors-app). Miroir de updateExtraProfileSlotsAdmin (products.functions.ts) :
+// confirmé hors-app). Miroir de updateProfileQuotaAdmin (products.functions.ts) :
 // l'admin ajuste après réception du virement. La nouvelle période démarre au plus tard
 // entre maintenant et la fin de la période courante (pas de chevauchement perdu).
 export const extendChildAccessAdmin = createServerFn({ method: "POST" })

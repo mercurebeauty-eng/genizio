@@ -22,7 +22,7 @@ interface AdminExecutiveTabProps {
   kpis: ExecutiveKPIs;
   parents: ParentBIRC[];
   onTogglePassport?: (childId: string, unlock: boolean) => Promise<void>;
-  onUpdateExtraSlots?: (userId: string, extraProfileSlots: number) => Promise<void>;
+  onUpdateQuota?: (userId: string, quota: number) => Promise<void>;
   onRefresh?: () => void;
   isRefreshing?: boolean;
 }
@@ -31,22 +31,22 @@ export function AdminExecutiveTab({
   kpis,
   parents,
   onTogglePassport,
-  onUpdateExtraSlots,
+  onUpdateQuota,
   onRefresh,
   isRefreshing = false,
 }: AdminExecutiveTabProps) {
   const [pendingPassportChildId, setPendingPassportChildId] = useState<string | null>(null);
-  const [pendingSlotsUserId, setPendingSlotsUserId] = useState<string | null>(null);
-  const [slotsDraft, setSlotsDraft] = useState<Record<string, number>>({});
+  const [pendingQuotaUserId, setPendingQuotaUserId] = useState<string | null>(null);
+  const [quotaDraft, setQuotaDraft] = useState<Record<string, number>>({});
 
-  const handleSaveExtraSlots = async (userId: string) => {
-    if (!onUpdateExtraSlots || pendingSlotsUserId === userId) return;
-    const value = slotsDraft[userId];
+  const handleSaveQuota = async (userId: string) => {
+    if (!onUpdateQuota || pendingQuotaUserId === userId) return;
+    const value = quotaDraft[userId];
     if (value === undefined) return;
-    setPendingSlotsUserId(userId);
+    setPendingQuotaUserId(userId);
     try {
-      await onUpdateExtraSlots(userId, value);
-      setSlotsDraft((prev) => {
+      await onUpdateQuota(userId, value);
+      setQuotaDraft((prev) => {
         const next = { ...prev };
         delete next[userId];
         return next;
@@ -56,7 +56,7 @@ export function AdminExecutiveTab({
         "Erreur lors de la mise à jour du quota de profils: " + (err?.message || "Erreur inconnue"),
       );
     } finally {
-      setPendingSlotsUserId(null);
+      setPendingQuotaUserId(null);
     }
   };
 
@@ -209,7 +209,9 @@ export function AdminExecutiveTab({
                 <th className="pb-3 pr-4">WhatsApp</th>
                 <th className="pb-3 pr-4">Enfants associés & Passeports</th>
                 <th className="pb-3 pr-4 text-center">Défis (Total / Validés)</th>
-                <th className="pb-3 text-center">Profils suppl.</th>
+                <th className="pb-3 text-center" title="0 = règle standard automatique (plancher + couverture famille → 5) ; N = quota total accordé">
+                  Quota profils (0 = auto)
+                </th>
               </tr>
             </thead>
             <tbody className="divide-y-2 divide-ink/5">
@@ -337,30 +339,31 @@ export function AdminExecutiveTab({
                       </span>
                     </td>
 
-                    {/* Profils enfants supplémentaires — quota grand-pèré/1-gratuit, cf. src/lib/child-profile-quota.ts */}
+                    {/* Quota profils — 0 = règle standard auto ; N = quota total accordé (quota +), cf. child-profile-quota.ts */}
                     <td className="py-4 text-center whitespace-nowrap">
                       <div className="flex items-center justify-center gap-1.5">
                         <input
                           type="number"
                           min={0}
                           max={50}
-                          value={slotsDraft[parent.id] ?? parent.extraSlots}
+                          placeholder="0 = auto"
+                          value={quotaDraft[parent.id] ?? parent.quotaOverride}
                           onChange={(e) =>
-                            setSlotsDraft((prev) => ({
+                            setQuotaDraft((prev) => ({
                               ...prev,
                               [parent.id]: Math.max(0, parseInt(e.target.value) || 0),
                             }))
                           }
                           className="w-14 bg-surface border border-ink/10 rounded-xl px-2 py-1 text-xs font-bold text-ink text-center"
                         />
-                        {slotsDraft[parent.id] !== undefined &&
-                          slotsDraft[parent.id] !== parent.extraSlots && (
+                        {quotaDraft[parent.id] !== undefined &&
+                          quotaDraft[parent.id] !== parent.quotaOverride && (
                             <button
-                              onClick={() => handleSaveExtraSlots(parent.id)}
-                              disabled={pendingSlotsUserId === parent.id}
+                              onClick={() => handleSaveQuota(parent.id)}
+                              disabled={pendingQuotaUserId === parent.id}
                               className="inline-flex items-center rounded-xl bg-ink text-white px-2 py-1 text-[10px] font-bold hover:bg-ink/90 transition-colors disabled:opacity-50 cursor-pointer"
                             >
-                              {pendingSlotsUserId === parent.id ? (
+                              {pendingQuotaUserId === parent.id ? (
                                 <Loader2 className="size-3 animate-spin" />
                               ) : (
                                 "OK"
