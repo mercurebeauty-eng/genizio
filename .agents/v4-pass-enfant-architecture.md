@@ -152,16 +152,16 @@ ni paiement superviseur n'existe. Tout se résume à : assignation + quota + das
 
 | Fichier | Rôle | Impact V4 |
 |---|---|---|
-| `src/lib/supervisors.functions.ts` | 9 fns | `insertSupervisorAssignments` vérifie le statut (pas d'assignation à un superviseur suspendu/banni). `removeSupervisor` (hard DELETE) → soft-retire (`removed_at`). Nouvelle fn `updateSupervisorMetricsAdmin` (calcul du score). |
+| `src/lib/supervisors.functions.ts` | 9 fns | `insertSupervisorAssignments` vérifie le statut (pas d'assignation à un superviseur suspendu/banni). `removeSupervisor` (hard DELETE) → soft-retire (`removed_at`). Nouvelles fns : `declareSessionSupervisor` (le superviseur déclare ses séances en app) + `computeSupervisorScore` (calcul auto du score). |
 | `src/components/admin/AdminSupervisorsTab.tsx` | liste groupée, quota badge, assign modal | Colonnes **Score /100, statut (badge vert/ambre/rouge), bouton Suspension/Ban**, récompense « Superviseur d'or » (75/25). ⚠ Cette section, récemment refaite, change : le quota « 5 par 5 » devient le score + le statut. |
-| `src/routes/supervisor.tsx` | dashboard superviseur | Affiche SON score, ses séances du mois, l'argent qu'il va recevoir (transparence motivante), les preuves de séance à valider. |
+| `src/routes/supervisor.tsx` | dashboard superviseur | **⚠ V1 : nouvelle UI « Déclarer une séance »** (décision 4 : score AUTO dès la V1) — le superviseur déclare ses séances en app (date, enfant, CR), le score se calcule tout seul. Affiche SON score, ses séances du mois, l'argent à venir. |
 | `src/routes/organisation.index.tsx` (section Superviseurs) | assignation ONG | L'ONG voit le score/statut des superviseurs avant de choisir (argument de marque B2B). |
 | `src/routes/profiles.$profileId.portfolio.tsx` | « Suivi par un superviseur » | Affiche le score du superviseur (confiance parent). |
 | `src/routes/profile.tsx` | détection statut superviseur | ⚠ Le statut « superviseur » (count > 0) doit devenir « superviseur **actif** » (removed_at NULL + status != banned). |
 | `src/lib/payment-fulfillment.server.ts` | intents | Nouveau intent `supervisor_payout` (la plateforme paie 70% sur preuve de séance). |
 | `src/lib/payments.functions.ts` | init paiements | Nouvelle fn `initializeSupervisorPayout`. |
 | `src/lib/pricing.ts` | barème | Ajouter `SESSION_PRICE_XOF = 5000`, `BILAN_PRICE_XOF = 25000`, `SUPERVISOR_SHARE = 0.70` (et `0.75` top). ⚠ Le plancher grand-péré `"2026-08-04"` est hardcodé 4× (trigger, child-profile-quota.ts:10, payment-fulfillment.server.ts:141, commentaires) — centraliser. |
-| Migration | `supervisors` table | Ajouter `removed_at`, `status`, `rating_avg` + table `supervisor_metrics`. |
+| Migration | `supervisors` table | Ajouter `removed_at`, `status`, `rating_avg` + table `supervisor_metrics` + table `supervisor_sessions` (déclarations de séance : supervisor_user_id, child_profile_id, occurred_at, notes, status pending|done). |
 
 **Règle de ban/récompense (systémique)** :
 1. Paiement détenu par la plateforme → reverse 70% sur **preuve de séance** (CR en app + point Naya).
@@ -250,10 +250,10 @@ réellement reversés.
 
 | Vague | Contenu | Effort | Risque |
 |---|---|---|---|
-| **V0 (cette semaine)** | Lancer le pilote manuellement (bilan + pack sur WhatsApp/Mobile Money, admin accorde). Corriger le **bug `childrenCount`**. Centraliser le cutover grand-péré (constante unique). | Faible | Faible |
-| **V1 (semaines)** | Écran « Accès & Accompagnement » (jauge unique parent) + renommer « Quota »→« Couverture » partout. Score superviseur + soft-retire + badges (sans toucher au modèle de données de couverture). | Moyen | Faible |
-| **V2 (trimestres)** | Table `family_coverages` en parallèle + migration des données (`quota_override`→admin, crédits→lignes, campagnes→lignes). Trigger consolidé. Paiement `accompaniment_pack` + `supervisor_payout`. Supprimer le plafond de 5 comme règle de compte (borne par-palier). | Fort | Moyen |
-| **V3 (12-18 mois)** | Campagne = portefeuille 2 compartiments (mix app/acc). Fusion des 2 flux de parrainage. `extra_slots`/`extra_profile_slots` définitivement retirés. | Fort | Fort |
+| **V0 (fait, 2026-08-14)** | Bug `childrenCount` corrigé. Cutover grand-péré centralisé (`isGrandfatheredAccount`). 5 décisions tranchées. | Faible | Faible |
+| **V1 (semaines)** | **Écran « Accès & Accompagnement »** (jauge unique parent) + renommer « Quota »→« Couverture » partout. **Score superviseur AUTO dès la V1** (décision 4) : table `supervisor_sessions` + UI « Déclarer une séance » dans `/supervisor` + calcul auto du score + soft-retire (`removed_at`) + badges statut. | Moyen | Faible |
+| **V2 (trimestres)** | Table `family_coverages` en parallèle + migration des données (`quota_override`→admin, crédits→source `sponsorship`, campagnes→lignes). Trigger consolidé. Paiement `accompaniment_pack` + `supervisor_payout`. **Plafond 5 par palier, cap 50** (décision 5 : fin du « créez un nouveau compte », UI + trigger). | Fort | Moyen |
+| **V3 (12-18 mois)** | Campagne = portefeuille 2 compartiments (mix app/acc — décision 3). Fusion des 2 flux de parrainage vers source `sponsorship` (décision 1). `extra_slots`/`extra_profile_slots` définitivement retirés. | Fort | Fort |
 | **V4** | Pass Enfant complet : l'unité enfant×mois/séance est LA monnaie ; tout est une source de couverture ; la campagne est un compte prépayé institutionnel. | Très fort | Très fort |
 
 **Fondamental** : chaque vague laisse le système utilisable et laisse le grand-père intact.
@@ -275,13 +275,13 @@ Les vagues sont indépendantes — on peut s'arrêter après V1 si le pilote dit
 
 ---
 
-## 7. Décisions (état : 2 tranchées, 3 restantes pour V2+)
+## 7. Décisions (état : 5 TRANCHÉES — aucune bloquante)
 
-1. **Crédit parrainage → quelle source ?** `source='campaign'` (parrain=institution) ou une source dédiée `source='sponsorship'` ? Recommandation : garder 4 sources (subscription|accompaniment_pack|campaign|admin), le parrainage individuel devient une couverture app (comme aujourd'hui) + séances si achetées. — **À trancher**
+1. **Crédit parrainage → quelle source ?** → **TRANCHÉ (2026-08-14) : SOURCE DÉDIÉE `'sponsorship'`**. Le parrainage individuel (parrain diaspora, proche) est une couverture comme les autres : `source='sponsorship'`, `max_children=5` pendant la durée. 5 sources homogènes (subscription | accompaniment_pack | campaign | sponsorship | admin), reporting qui distingue « parrain proche » vs « institution ».
 2. **Le pack accompagnement** : s'applique-t-il à UN enfant précis (child_id) ou à la famille ? → **TRANCHÉ (2026-08-14) : PAR ENFANT** (modèle du psychologue : un suivi = un patient). `family_coverages.child_id` est non-null pour `source='accompaniment_pack'`, null pour les couvertures famille/app. Conséquence : 3 enfants = 3 packs (60 000 F/mois chacun), progression d'un enfant mesurable.
 3. **La campagne mixte** : le portefeuille est-il un solde FCFA à répartir, ou deux quotas distincts ? → **TRANCHÉ (2026-08-14) : 2 COMPTEURS DISTINCTS** — `campaigns.target_count` (APP, existant) + `campaigns.sessions_target` (SÉANCES, nouveau). L'ONG choisit le mix à la création ; le rapport d'impact affiche « N enfants + M séances financés » (exigence bailleur).
-4. **Le score superviseur** : qui le calcule (admin manuel hebdo pendant le pilote, automatisé ensuite) ?
-5. **Le plafond de 5** : supprimé comme règle de compte (V2) mais la borne par-palier est quoi ? Recommandation : 5 par palier, borne absolue 50 (l'ex-override admin).
+4. **Le score superviseur : qui le calcule ?** → **TRANCHÉ (2026-08-14) : AUTO DÈS LA V1**. Pas d'admin manuel hebdo : le superviseur **déclare ses séances en app** (avant/après) et le score se calcule automatiquement (séances tenues/planifiées, ponctualité, feedback famille, progression enfant). ⚠ Conséquence V1 : il faut construire l'UI « Déclarer une séance » dans l'espace superviseur dès la V1.
+5. **Le plafond de 5** : → **TRANCHÉ (2026-08-14) : 5 PAR PALIER, CAP ABSOLU 50**. Un forfait/pack couvre 5 enfants ; au-delà on achète un autre palier (même tarif) ; cap absolu 50 (l'ex-override admin). Le parent avec 6+ enfants ne crée plus un 2e compte — il achète un palier. ⚠ La règle « créez un nouveau compte » disparaît (UI + trigger).
 
 ---
 
