@@ -8,12 +8,17 @@ const FAQ = [
   {
     question: "Comment révéler le potentiel d'un enfant sans accès à des activités extrascolaires organisées ?",
     answer:
-      "L'essentiel du potentiel d'un enfant se révèle avec ce qu'il a déjà sous la main, pas avec un abonnement à un club coûteux. Un enfant qui aide à tenir les comptes d'un petit commerce familial développe une intelligence entrepreneuriale réelle. Un enfant qui négocie entre cousins développe une intelligence sociale réelle. Le manque d'activités structurées à l'occidentale n'est pas un manque de potentiel — c'est souvent un potentiel qui se développe ailleurs, moins visible parce qu'il n'a pas de diplôme ou de club associé.",
+      "L'essentiel du potentiel d'un enfant se révèle avec ce qu'il a déjà sous la main, pas avec un abonnement à un club coûteux. Un enfant qui aide à tenir les comptes d'un petit commerce familial développe un esprit d'initiative et le sens des chiffres. Un enfant qui négocie entre cousins développe une intelligence sociale réelle. Le manque d'activités structurées à l'occidentale n'est pas un manque de potentiel — c'est souvent un potentiel qui se développe ailleurs, moins visible parce qu'il n'a pas de diplôme ou de club associé. Le carnet des petites réussites, l'enquête du quartier et l'heure du conte inversée décrits dans ce guide sont trois méthodes gratuites pour le faire apparaître.",
   },
   {
     question: "Le multilinguisme freine-t-il ou aide-t-il le développement d'un enfant ?",
     answer:
       "La recherche en psychologie du développement est aujourd'hui assez nette sur ce point : grandir avec plusieurs langues (langue locale, français, parfois une troisième) n'est pas un handicap cognitif, et serait plutôt associé à une meilleure flexibilité mentale et à une capacité accrue à basculer d'un cadre de pensée à un autre. Un enfant qui parle deux ou trois langues à la maison ne part pas avec un retard à combler, mais avec une compétence cognitive supplémentaire, rarement reconnue comme telle par l'école.",
+  },
+  {
+    question: "Comment aider mon enfant à réussir à l'école quand les classes sont surchargées et qu'il n'y a pas de suivi à la maison ?",
+    answer:
+      "D'abord, ne pas transformer la pression scolaire en pression familiale : l'enfant n'est pas responsable de la taille de sa classe. Ensuite, viser des rituels courts et réguliers plutôt que de longues heures : 20 minutes de devoirs à heure fixe, avec une question posée à l'enfant (« qu'as-tu appris aujourd'hui ? ») qui l'oblige à reformuler. Si l'école coranique ou religieuse occupe une partie de la journée, c'est un atout de discipline et de mémorisation — pas un concurrent des devoirs. Et ce que l'école ne peut pas donner, la maison peut le compenser autrement : le carnet des petites réussites montre à l'enfant qu'il progresse, même quand les notes ne le disent pas.",
   },
   {
     question: "Comment accompagner un enfant de la diaspora qui grandit loin du pays d'origine ?",
@@ -30,9 +35,9 @@ const FAQ = [
 export const Route = createFileRoute("/guides/education-enfants-afrique-francophone")({
   head: () => {
     const meta = pageMeta({
-      title: "Révéler le potentiel d'un enfant en Afrique francophone",
+      title: "Développer les talents de son enfant en Afrique (sans argent)",
       description:
-        "Ce que l'éducation en Côte d'Ivoire, au Sénégal et dans la diaspora a de spécifique, et comment révéler le potentiel d'un enfant avec ce qu'on a à la maison.",
+        "3 méthodes gratuites pour révéler les talents de votre enfant avec les moyens du bord : carnet des réussites, enquête du quartier, heure du conte inversée. Côte d'Ivoire, Sénégal, diaspora.",
       path: PATH,
       image: "/guides/og-afrique.jpg",
       type: "article",
@@ -51,17 +56,18 @@ export const Route = createFileRoute("/guides/education-enfants-afrique-francoph
         jsonLdScript({
           "@context": "https://schema.org",
           "@type": "Article",
-          headline: "Révéler le potentiel d'un enfant en Afrique francophone et dans la diaspora",
+          headline: "Comment développer les talents de son enfant en Afrique avec les moyens du bord",
           inLanguage: "fr-FR",
           mainEntityOfPage: absoluteUrl(PATH),
           image: absoluteUrl("/guides/og-afrique.jpg"),
           publisher: { "@id": `${SITE_URL}/#organization` },
           author: { "@type": "Organization", name: "Génizio" },
           datePublished: "2026-07-27",
-          dateModified: "2026-08-08",
+          dateModified: "2026-08-14",
           about: [
             { "@type": "Thing", name: "Éducation en Afrique francophone" },
             { "@type": "Thing", name: "Développement du potentiel de l'enfant" },
+            { "@type": "Thing", name: "Activités sans argent" },
           ],
         }),
       ],
@@ -74,9 +80,9 @@ function Guide() {
   return (
     <GuideLayout
       eyebrow="Afrique & diaspora"
-      title="Révéler le potentiel d'un enfant en Afrique francophone et dans la diaspora"
-      intro="La plupart des contenus sur le développement de l'enfant sont écrits pour un contexte occidental — écoles bien dotées, clubs extrascolaires à chaque coin de rue. Voici une lecture pensée depuis la Côte d'Ivoire, le Sénégal et la diaspora."
-      updated="8 août 2026"
+      title="Comment développer les talents de son enfant en Afrique avec les moyens du bord"
+      intro="Pas de club de robotique, pas d'atelier d'art le mercredi, des classes chargées et peu de suivi : pourtant, votre enfant développe des talents tous les jours — au marché, entre cousins, dans la cour, à l'école coranique. Voici 3 méthodes gratuites, avec ce que vous avez déjà à la maison, pour les faire apparaître et les faire grandir."
+      updated="14 août 2026"
       readingTime="8 min"
       related={[
         { label: "Haut potentiel : les vrais signes", to: "/guides/potentiel-haut-potentiel-enfant" },
@@ -95,26 +101,58 @@ function Guide() {
         activités extrascolaires organisées : cours de musique, club de robotique, atelier d'art le
         mercredi après-midi. Ce n'est pas la réalité de la majorité des familles en Côte d'Ivoire, au
         Sénégal, ou plus largement en Afrique francophone — et ce n'est pas non plus, en soi, un
-        problème à résoudre à tout prix. C'est un contexte différent, avec ses propres forces, qui
-        mérite d'être regardé pour ce qu'il est plutôt que comparé en creux à un modèle occidental.
+        problème à résoudre à tout prix. C'est un contexte différent, avec ses propres forces : la
+        famille élargie, le petit commerce, les responsabilités confiées tôt, le multilinguisme.
+        L'objectif n'est pas de copier un modèle occidental, mais de <strong>faire apparaître ce qui
+        se développe déjà sous vos yeux</strong>.
       </p>
 
-      <h2>Des formes de potentiel qui se développent hors des sentiers classiques</h2>
+      <h2>Méthode 1 — Le carnet des petites réussites</h2>
       <p>
-        Un enfant qui grandit dans une famille tenant un petit commerce apprend, souvent sans qu'on
-        le lui enseigne formellement, à évaluer la valeur d'un objet, à négocier, à gérer un petit
-        stock. C'est très exactement ce que la théorie des intelligences multiples de Gardner range
-        sous l'<strong>intelligence entrepreneuriale</strong> — détaillée dans{" "}
-        <a href="/guides/intelligences-multiples-gardner">notre guide sur les 9 intelligences</a>.
-        Cette compétence ne figure sur aucun bulletin scolaire, mais elle est réelle, transférable, et
-        recherchée plus tard dans la vie professionnelle.
+        Prenez un cahier — même un vieux cahier de classe en reste — et notez, chaque semaine, une
+        réussite concrète de votre enfant. Pas une note : un fait. <em>« Aujourd'hui, il a calculé
+        la monnaie au marché sans se tromper »</em>, <em>« elle a aidé sa petite sœur à s'habiller
+        sans qu'on le lui demande »</em>, <em>« il a récité sa sourate sans hésiter »</em>. Lisez le
+        carnet ensemble un soir par semaine.
       </p>
       <p>
-        De la même manière, un enfant qui grandit entouré de cousins, de voisins et d'une famille
-        élargie très présente développe souvent une intelligence sociale précoce : il apprend à
-        s'ajuster à des adultes différents, à désamorcer des tensions entre enfants d'âges variés, à
-        se faire une place dans un groupe nombreux. Ce sont des compétences réelles, simplement
-        acquises ailleurs que dans un club structuré.
+        <strong>Pourquoi ça marche :</strong> dans des classes surchargées, un enfant n'entend
+        parler de lui qu'à travers les notes et les reproches. Le carnet lui montre qu'il progresse
+        ailleurs — et il crée le réflexe d'observation chez le parent : on finit par voir ce que
+        l'enfant fait bien, au lieu de ne voir que ce qu'il rate. C'est aussi la base d'une
+        conversation avec le maître ou la maîtresse : vous arrivez avec des faits, pas avec des
+        plaintes.
+      </p>
+
+      <h2>Méthode 2 — L'enquête du quartier</h2>
+      <p>
+        Chaque semaine, confiez à votre enfant une « mission d'enquête » sur le quartier, à préparer
+        puis à raconter : <em>« Demande au vendeur de fruits comment il choisit ses mangues »</em>,{" "}
+        <em>« Compte les métiers qu'on croise entre la maison et l'école »</em>, <em>« Demande à
+        tonton ce qu'il faisait comme travaux à ton âge »</em>. L'enfant doit ensuite vous faire son
+        rapport — à l'oral, ou dans son carnet.
+      </p>
+      <p>
+        <strong>Pourquoi ça marche :</strong> l'enquête transforme le quartier en terrain
+        d'apprentissage. Elle développe la curiosité, l'observation, le vocabulaire et l'aisance à
+        parler avec des adultes — des compétences que l'école ne mesure pas, mais qui servent toute
+        la vie. Et elle valorise les savoirs locaux : l'enfant découvre que les métiers et les
+        savoir-faire autour de lui valent la peine d'être compris.
+      </p>
+
+      <h2>Méthode 3 — L'heure du conte inversée</h2>
+      <p>
+        Dans nos cultures, l'adulte raconte et l'enfant écoute. Une fois par semaine, inversez les
+        rôles : c'est l'enfant qui raconte — une histoire qu'il a inventée, ce qu'il a appris en
+        classe, un événement de sa journée — et l'adulte écoute sans corriger, puis pose des
+        questions. Dix minutes suffisent, au moment du repas ou avant le coucher.
+      </p>
+      <p>
+        <strong>Pourquoi ça marche :</strong> raconter oblige l'enfant à organiser ses idées, à
+        choisir ses mots, à tenir l'attention d'un auditeur : c'est de la prise de parole en
+        conditions réelles. Les enfants qui racontent régulièrement à la maison arrivent plus à
+        l'aise devant un exposé ou une récitation. Et vous, parent, vous apprenez à écouter — ce qui
+        change la qualité de toute la relation.
       </p>
 
       <h2>Le multilinguisme : une force cognitive, pas un retard à combler</h2>
@@ -124,7 +162,25 @@ function Guide() {
         communautés. L'école a parfois tendance à traiter cela comme une source de confusion. La
         recherche sur le bilinguisme précoce va plutôt dans le sens inverse : les enfants
         multilingues développent tôt une flexibilité cognitive — la capacité à basculer rapidement
-        d'un système de règles à un autre — qui reste utile bien au-delà du langage.
+        d'un système de règles à un autre — qui reste utile bien au-delà du langage. Ne freinez pas
+        la langue de la maison pour « aider » le français de l'école : les deux se renforcent.
+      </p>
+
+      <h2>Réussir à l'école quand la classe est surchargée</h2>
+      <p>
+        La réalité de beaucoup de classes en Afrique francophone : 60, 80, parfois 100 élèves pour
+        un enseignant. Dans ce contexte, l'enfant qui réussit n'est pas celui qui est le plus
+        « doué », c'est souvent celui qui a <strong>un rituel de travail à la maison</strong> :
+        même heure, même table, 20 à 30 minutes, chaque soir. Ajoutez la question rituelle — «
+        qu'as-tu appris aujourd'hui ? » — qui oblige l'enfant à reformuler sa leçon : reformuler,
+        c'est comprendre.
+      </p>
+      <p>
+        Et si l'enfant fréquente une école coranique ou religieuse en plus de l'école publique,
+        considérez cela comme un atout, pas une charge : la mémorisation, la discipline et le
+        respect des horaires qu'elle exerce se transfèrent aux devoirs. La pression scolaire existe ;
+        elle ne doit pas devenir de la pression familiale. Le carnet des réussites est là pour
+        rappeler à tous — et d'abord à l'enfant — qu'il vaut plus que ses notes.
       </p>
 
       <h2>La diaspora : accompagner à distance sans comparer à distance</h2>
