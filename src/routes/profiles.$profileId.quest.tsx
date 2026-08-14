@@ -91,6 +91,8 @@ function QuestPage() {
   const [aiObservations, setAiObservations] = useState<string | null>(null);
   const validateAI = useServerFn(validateChallengeProof);
 
+  const userId = session?.user?.id;
+
   const loadChallenges = async () => {
     setFetching(true);
     const [c, ch] = await Promise.all([
@@ -98,7 +100,7 @@ function QuestPage() {
         .from("child_profiles")
         .select("id, name, avatar_color")
         .eq("id", profileId)
-        .eq("user_id", session!.user.id)
+        .eq("user_id", userId)
         .maybeSingle(),
       supabase.from("challenges").select("*").eq("child_id", profileId),
     ]);
@@ -114,10 +116,10 @@ function QuestPage() {
   }, [session, loading, navigate]);
 
   useEffect(() => {
-    if (session) {
+    if (userId) {
       void loadChallenges();
     }
-  }, [session, profileId]);
+  }, [userId, profileId]);
 
   const activeChallenge = useMemo(() => getActiveChallenge(challenges), [challenges]);
 

@@ -289,11 +289,13 @@ function PortfolioPage() {
     if (!loading && !session) navigate({ to: "/auth", replace: true });
   }, [session, loading, navigate]);
 
+  const userId = session?.user?.id;
+
   useEffect(() => {
-    if (!session) return;
+    if (!userId) return;
     setFetching(true);
     Promise.all([
-      supabase.from("child_profiles").select("id, name, age, talents, interests, pdf_unlocked, xp, time_pressure").eq("id", profileId).eq("user_id", session!.user.id).maybeSingle(),
+      supabase.from("child_profiles").select("id, name, age, talents, interests, pdf_unlocked, xp, time_pressure").eq("id", profileId).eq("user_id", userId).maybeSingle(),
       supabase
         .from("challenges")
         .select("id, title, domain, trait_subform, status, completed_at, proof_image_url, ai_observations, created_at")
@@ -329,7 +331,7 @@ function PortfolioPage() {
       .finally(() => {
         setFetching(false);
       });
-  }, [session, profileId]);
+  }, [userId, profileId]);
 
   // Découverte de centre d'intérêt (cf. discussion produit) : un talent fort
   // jamais déclaré par le parent est une vraie surprise, pas une routine —
@@ -371,7 +373,7 @@ function PortfolioPage() {
   }, [profileId]);
 
   useEffect(() => {
-    if (!session || !profileId) return;
+    if (!userId || !profileId) return;
     let cancelled = false;
     getGentleSuggestionFn({ data: { childId: profileId } })
       .then((res) => {
@@ -386,7 +388,7 @@ function PortfolioPage() {
     return () => {
       cancelled = true;
     };
-  }, [session, profileId, getGentleSuggestionFn, getFailureSequenceFn]);
+  }, [userId, profileId, getGentleSuggestionFn, getFailureSequenceFn]);
 
   const dismissGentleProposal = () => {
     setGentleDismissed(true);
@@ -443,7 +445,7 @@ function PortfolioPage() {
   // (ne coûte un appel IA que si un écart est confirmé ou qu'un cycle attend sa narration),
   // même pattern qu'avant le retrait des notes.
   useEffect(() => {
-    if (!session) return;
+    if (!userId) return;
     ensureHypothesesForChild({ data: { childId: profileId } })
       .then((res) => { if (res.generated) refetchOpenCycle(); })
       .catch((err) => {
@@ -466,7 +468,7 @@ function PortfolioPage() {
       .then((res) => setAccessState(res))
       .catch(console.error);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [session, profileId]);
+  }, [userId, profileId]);
 
   if (loading || !session || fetching) {
     return (

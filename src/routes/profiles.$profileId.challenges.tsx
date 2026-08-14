@@ -594,15 +594,17 @@ function ChallengesPage() {
     }
   };
 
+  const userId = session?.user?.id;
+
   useEffect(() => {
-    if (session) {
+    if (userId) {
       void refetch();
       void loadAISynthesis();
       void loadRecommendation();
       void loadEnrolledSeason();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [session, profileId]);
+  }, [userId, profileId]);
 
   // D-06/D-08 (review 2026-08-13) : l'enfant vient de valider dans /quest → au retour
   // (montage ou retour de focus), le parent est notifié et les données sont rechargées
