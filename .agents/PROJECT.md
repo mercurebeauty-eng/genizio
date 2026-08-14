@@ -30,3 +30,18 @@
 - Async UX Safety: Double-click prevention, loading indicators, empty states, and error fallbacks.
 - Automated Checks: `npx tsc --noEmit` must pass with 0 errors. `npx vitest run` must pass with 100% green tests.
 - Integrity: CLEAN verdict required from Forensic Auditor.
+
+## Optimisation SEO & Contenu — Guides Landing Page
+
+### Historique des interventions
+
+| Date | Guide | Action | Détails |
+|------|-------|--------|---------|
+| 2026-08-14 | `ecrans-addiction-alternatives-enfant` | Réécriture SEO complète | Titre H1, meta title, meta description, tous les H2, intro, corps enrichi (blocs "Pourquoi ça marche"), FAQ élargie à 4 questions. Injection mots-clés : "accro aux écrans", "temps d'écran", "activité sans écran", "limiter les écrans", "sevrage numérique". Mise à jour cohérente dans `guides.index.tsx` et `llms.txt`. |
+
+### Principes éditoriaux appliqués
+- **Langage parental direct** : pas de jargon pseudo-scientifique ("choc dopaminergique"), formulations que les parents tapent réellement dans Google.
+- **Mots-clés à fort volume** injectés dans titre, H2 et corps — sans sur-optimisation.
+- **Enrichissement du corps** par des blocs explicatifs "Pourquoi ça marche" sur chaque activité proposée.
+- **FAQ élargie** avec des questions correspondant aux requêtes longue traîne réelles.
+- **Cohérence cross-fichiers** : tout changement de titre dans un guide doit être propagé dans `guides.index.tsx`, `llms.txt`, et les `related` des autres guides.
