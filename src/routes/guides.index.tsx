@@ -28,8 +28,8 @@ const GUIDES = [
     to: "/guides/ecrans-addiction-alternatives-enfant",
     Icon: Tv,
     eyebrow: "Écrans & Créativité",
-    title: "Réduire les écrans sans crise : transformer le virtuel en action réelle",
-    desc: "Comment remplacer la fascination pour les écrans par des projets de création concrète fondés sur les 9 intelligences de Gardner.",
+    title: "Mon enfant est accro aux écrans : 3 activités pour décrocher",
+    desc: "Votre enfant ne lâche pas la tablette ? 3 activités concrètes sans écran pour remplacer l'habitude sans crise ni punition (6-12 ans).",
   },
   {
     to: "/guides/activites-educatives-enfant",
