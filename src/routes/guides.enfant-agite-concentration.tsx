@@ -18,7 +18,12 @@ const FAQ = [
   {
     question: "Comment aider un enfant à se concentrer à la maison ?",
     answer:
-      "Quatre leviers ont fait leurs preuves auprès des familles : découper les tâches en étapes courtes et visibles pour que l'enfant sache où il en est ; autoriser le mouvement pendant l'activité plutôt que le réprimer ; proposer des activités qui produisent un résultat concret et visible, car la récompense tangible soutient l'effort mieux qu'une consigne abstraite ; et fixer un seul objectif à la fois plutôt qu'une liste. Ces leviers aident tous les enfants, qu'il y ait un trouble diagnostiqué ou non.",
+      "Quatre habitudes ont fait leurs preuves auprès des familles : découper les tâches en étapes courtes et visibles pour que l'enfant sache où il en est ; autoriser le mouvement pendant l'activité plutôt que le réprimer (beaucoup d'enfants réfléchissent mieux debout ou en manipulant) ; proposer des activités qui produisent un résultat concret et visible, car la récompense tangible soutient l'effort mieux qu'une consigne abstraite ; et fixer un seul objectif à la fois plutôt qu'une liste. Ces habitudes aident tous les enfants, qu'il y ait un trouble diagnostiqué ou non.",
+  },
+  {
+    question: "Le sommeil, le sucre et le sport influencent-ils l'agitation de mon enfant ?",
+    answer:
+      "Oui, énormément, et c'est souvent le premier levier à vérifier avant de s'inquiéter. Un enfant qui dort moins que son besoin (10 à 13 heures entre 3 et 6 ans, 9 à 12 heures entre 6 et 12 ans) est plus agité, plus impulsif et moins concentré le lendemain — la fatigue ressemble à de l'hyperactivité. Une alimentation trop sucrée (sodas, bonbons, jus industriels) provoque des montées et des chutes d'énergie qui amplifient l'agitation. Et un enfant qui n'a pas dépensé son énergie physique dans la journée la dépensera en classe : une heure de jeu libre ou de sport avant les devoirs fait souvent des merveilles. Ces trois leviers — sommeil, sucre, mouvement — sont à ajuster avant toute autre démarche.",
   },
   {
     question: "À quel âge s'inquiéter de l'agitation d'un enfant ?",
@@ -35,9 +40,9 @@ const FAQ = [
 export const Route = createFileRoute("/guides/enfant-agite-concentration")({
   head: () => {
     const meta = pageMeta({
-      title: "Mon enfant ne tient pas en place : que faire ?",
+      title: "Enfant agité ou hyperactif : l'aider à se concentrer",
       description:
-        "Agitation et concentration : comment observer votre enfant, distinguer l'ennui d'une vraie difficulté d'attention, et savoir quand consulter.",
+        "Agitation, hyperactivité, concentration : comment observer votre enfant, l'aider à faire ses devoirs, et savoir quand consulter pour un TDAH.",
       path: PATH,
       image: "/guides/og-agite.jpg",
       type: "article",
@@ -56,14 +61,14 @@ export const Route = createFileRoute("/guides/enfant-agite-concentration")({
         jsonLdScript({
           "@context": "https://schema.org",
           "@type": "Article",
-          headline: "Mon enfant ne tient pas en place : comprendre avant de s'inquiéter",
+          headline: "Mon enfant est agité ou hyperactif : comment l'aider à se concentrer à la maison et à l'école",
           inLanguage: "fr-FR",
           mainEntityOfPage: absoluteUrl(PATH),
           image: absoluteUrl("/guides/og-agite.jpg"),
           publisher: { "@id": `${SITE_URL}/#organization` },
           author: { "@type": "Organization", name: "Génizio" },
           datePublished: "2026-07-27",
-          dateModified: "2026-08-08",
+          dateModified: "2026-08-14",
           about: [
             { "@type": "Thing", name: "Attention de l'enfant" },
             { "@type": "Thing", name: "Concentration" },
@@ -80,14 +85,14 @@ function Guide() {
   return (
     <GuideLayout
       eyebrow="Attention & concentration"
-      title="Mon enfant ne tient pas en place : comprendre avant de s'inquiéter"
-      intro="« Il ne se concentre sur rien. » C'est l'une des phrases que les parents nous disent le plus souvent. Dans une grande partie des cas, l'enfant se concentre très bien — mais pas sur ce qu'on lui demande, ni de la façon dont on l'attend. Voici comment faire la différence."
-      updated="8 août 2026"
+      title="Mon enfant est agité ou hyperactif : comment l'aider à se concentrer à la maison et à l'école"
+      intro="« Il ne se concentre sur rien. » C'est l'une des phrases que les parents nous disent le plus souvent. Dans une grande partie des cas, l'enfant se concentre très bien — mais pas sur ce qu'on lui demande, ni de la façon dont on l'attend. Voici comment faire la différence, et comment adapter les devoirs à un enfant qui bouge."
+      updated="14 août 2026"
       readingTime="7 min"
       related={[
         { label: "Haut potentiel : les vrais signes", to: "/guides/potentiel-haut-potentiel-enfant" },
-        { label: "24 activités éducatives à faire à la maison", to: "/guides/activites-educatives-enfant" },
-        { label: "Les intelligences multiples expliquées simplement", to: "/guides/intelligences-multiples-gardner" },
+        { label: "24 activités éducatives sans écran (6-12 ans)", to: "/guides/activites-educatives-enfant" },
+        { label: "Les 9 formes d'intelligence de l'enfant", to: "/guides/intelligences-multiples-gardner" },
         { label: "Gérer la colère de son enfant", to: "/guides/gestion-colere-emotions-enfant" },
       ]}
     >
@@ -181,8 +186,8 @@ function Guide() {
 
       <h2>Ce qui aide, indépendamment de tout diagnostic</h2>
       <p>
-        Les leviers ci-dessous améliorent l'engagement de la plupart des enfants, qu'un trouble soit
-        présent ou non. Ils ne remplacent pas une prise en charge quand elle est nécessaire.
+        Les habitudes ci-dessous améliorent l'engagement de la plupart des enfants, qu'un trouble soit
+        présent ou non. Elles ne remplacent pas une prise en charge quand elle est nécessaire.
       </p>
       <ul>
         <li><strong>Découper.</strong> Une tâche de trente minutes devient trois tâches de dix, avec un point d'arrivée visible à chaque fois.</li>
@@ -198,10 +203,28 @@ function Guide() {
           Au lieu de demander à votre enfant de "se concentrer sagement", proposez-lui ce défi kinesthésique : <strong>Construire la plus haute tour en livres et rouleaux de papier en exactement 7 minutes.</strong>
         </p>
         <p className="text-sm text-amber-900 leading-relaxed">
-          Il doit manipuler, ajuster l'équilibre et anticiper l'effondrement. À la fin des 7 minutes, prenez la photo de sa tour pour son portfolio. Vous constaterez une attention à 100 % parce que son corps et son cerveau étaient engagés ensemble.
+          Il doit manipuler, ajuster l'équilibre et anticiper l'effondrement. À la fin des 7 minutes, prenez la photo de sa tour pour son cahier des réussites. Vous constaterez une attention à 100 % parce que son corps et son cerveau étaient engagés ensemble.
         </p>
       </div>
 
+
+      <h2>Les devoirs avec un enfant qui bouge</h2>
+      <p>
+        Le moment des devoirs est le plus dur pour un enfant agité : on lui demande précisément ce
+        qu'il ne sait pas faire — rester assis et concentré longtemps. La solution n'est pas de
+        forcer la posture, mais d'adapter le format :
+      </p>
+      <ul>
+        <li><strong>Le format chronomètre :</strong> 10 minutes de travail, 3 minutes de pause active (sauter, marcher, s'étirer), puis 10 minutes. Trois blocs courts valent mieux qu'une heure d'affilée — et l'enfant voit le temps passer, ce qui rend l'effort tenable.</li>
+        <li><strong>La position debout autorisée :</strong> beaucoup d'enfants réfléchissent mieux debout, en marchant ou en manipulant un objet. Laissez-le faire ses exercices en bougeant, tant que le travail avance.</li>
+        <li><strong>Le devoir « à voix haute » :</strong> au lieu de lire et d'écrire en silence, l'enfant explique à voix haute ce qu'il vient de lire. La parole engage le corps autrement et aide la concentration.</li>
+        <li><strong>Dépenser avant de travailler :</strong> 15 minutes de jeu libre ou de sport avant les devoirs vident l'excès d'énergie — un enfant qui a bougé se concentre mieux qu'un enfant qu'on a forcé à rester immobile.</li>
+        <li><strong>Une seule consigne à la fois :</strong> « sors ton cahier » puis « ouvre-le à la page 12 » puis « lis l'exercice 1 » — plutôt qu'une liste de quatre tâches qui décourage d'avance.</li>
+      </ul>
+      <p>
+        Ces adaptations aident tous les enfants, qu'il y ait un diagnostic ou non — et elles
+        transforment le moment des devoirs en expérience de réussite plutôt qu'en champ de bataille.
+      </p>
 
       <h2>Où Génizio intervient — et où il n'intervient pas</h2>
       <p>

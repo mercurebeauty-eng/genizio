@@ -6,14 +6,24 @@ const PATH = "/guides/potentiel-haut-potentiel-enfant";
 
 const FAQ = [
   {
-    question: "Comment savoir si mon enfant a un haut potentiel ?",
+    question: "Comment savoir si mon enfant est surdoué, HPI ou précoce ?",
     answer:
-      "Aucun signe isolé ne suffit à le dire — le haut potentiel intellectuel (HPI) est un diagnostic psychologique, posé par un psychologue à l'aide de tests standardisés (comme le WISC), pas une observation qu'un parent ou une application peut établir seule. Ce qu'un parent peut en revanche repérer, c'est un ensemble d'indices qui justifient de consulter : une soif de comprendre le « pourquoi » qui dépasse largement les réponses données à l'école, une facilité à faire des liens entre des domaines sans rapport apparent, un décalage entre une intelligence verbale très développée et une maladresse émotionnelle ou sociale, ou au contraire un ennui profond et un désinvestissement scolaire malgré des capacités par ailleurs évidentes.",
+      "Aucun signe isolé ne suffit à le dire — le haut potentiel intellectuel (HPI) est un diagnostic psychologique, posé par un psychologue à l'aide de tests spécialisés, pas une observation qu'un parent ou une application peut établir seule. Ce qu'un parent peut en revanche repérer, c'est un ensemble d'indices qui justifient de consulter : une soif de comprendre le « pourquoi » qui dépasse largement les réponses données à l'école, une facilité à faire des liens entre des domaines sans rapport apparent, un décalage entre une intelligence verbale très développée et une maladresse émotionnelle ou sociale, ou au contraire un ennui profond et un désinvestissement scolaire malgré des capacités par ailleurs évidentes.",
+  },
+  {
+    question: "Qu'est-ce qu'un enfant « zèbre » ?",
+    answer:
+      "« Zèbre » est un surnom utilisé en France depuis les années 2000 pour désigner les enfants à haut potentiel intellectuel : comme le zèbre, l'enfant HPI n'est ni un cheval blanc ni un cheval noir, mais un animal à part, qui pense autrement. Le mot est devenu courant dans les groupes de parents et sur Internet, mais il n'a aucune valeur clinique : ce qui compte n'est pas le surnom, mais de savoir si les signes que vous observez gênent réellement votre enfant au quotidien. Si c'est le cas, la démarche est toujours la même : en parler à l'école et consulter un professionnel qui pourra évaluer la situation.",
   },
   {
     question: "Mon enfant est intelligent mais n'aime pas l'école : est-ce lié ?",
     answer:
       "C'est une configuration fréquente, et pas seulement chez les enfants à haut potentiel. L'école mesure surtout deux formes d'intelligence — linguistique et logico-mathématique — dans un format standardisé qui avantage la rapidité d'exécution et l'obéissance à la consigne. Un enfant dont les forces sont ailleurs (spatiales, corporelles, entrepreneuriales) peut s'y ennuyer ou s'y sentir incompris sans qu'il y ait le moindre problème cognitif. Un enfant réellement à haut potentiel peut, lui, s'ennuyer pour la raison inverse : le rythme est trop lent. Dans les deux cas, le désintérêt scolaire n'est pas une information suffisante en soi — il faut regarder ce que l'enfant fait quand on le laisse choisir.",
+  },
+  {
+    question: "Faut-il demander un saut de classe pour un enfant précoce qui s'ennuie ?",
+    answer:
+      "Le saut de classe est une décision qui se prend avec l'école et un professionnel, jamais seul : il aide certains enfants précoces dont l'ennui scolaire est réel, mais il peut aussi isoler socialement un enfant qui saute une année. Avant d'y penser, les pistes moins radicales sont souvent essayées en premier : des exercices plus difficiles dans la même classe, un club ou un projet à son niveau, un accompagnement à la maison. Le critère décisif reste l'enfant : est-ce que sa scolarité actuelle le fait souffrir ? Un enfant qui s'ennuie mais reste épanoui socialement peut très bien continuer dans sa classe avec des aménagements simples.",
   },
   {
     question: "Le potentiel d'un enfant se limite-t-il à ce qui est utile à l'école ?",
@@ -35,9 +45,9 @@ const FAQ = [
 export const Route = createFileRoute("/guides/potentiel-haut-potentiel-enfant")({
   head: () => {
     const meta = pageMeta({
-      title: "Comment savoir si mon enfant a un haut potentiel",
+      title: "Enfant surdoué, HPI ou précoce : comment le reconnaître",
       description:
-        "Les vrais signes à observer, ce que seul un professionnel peut diagnostiquer, et pourquoi le potentiel d'un enfant dépasse largement ce que l'école mesure.",
+        "Surdoué, HPI, précoce ou zèbre : les vrais signes à observer, ce que seul un professionnel peut diagnostiquer, et comment accompagner un enfant qui s'ennuie à l'école.",
       path: PATH,
       image: "/guides/og-haut-potentiel.jpg",
       type: "article",
@@ -56,14 +66,14 @@ export const Route = createFileRoute("/guides/potentiel-haut-potentiel-enfant")(
         jsonLdScript({
           "@context": "https://schema.org",
           "@type": "Article",
-          headline: "Comment savoir si mon enfant a un haut potentiel ou un don particulier",
+          headline: "Enfant surdoué, HPI ou précoce : comment le reconnaître et l'accompagner",
           inLanguage: "fr-FR",
           mainEntityOfPage: absoluteUrl(PATH),
           image: absoluteUrl("/guides/og-haut-potentiel.jpg"),
           publisher: { "@id": `${SITE_URL}/#organization` },
           author: { "@type": "Organization", name: "Génizio" },
           datePublished: "2026-07-27",
-          dateModified: "2026-08-08",
+          dateModified: "2026-08-14",
           about: [
             { "@type": "Thing", name: "Haut potentiel intellectuel" },
             { "@type": "Thing", name: "Développement du potentiel de l'enfant" },
@@ -79,16 +89,16 @@ function Guide() {
   return (
     <GuideLayout
       eyebrow="Potentiel & talents"
-      title="Comment savoir si mon enfant a un haut potentiel ou un don particulier"
-      intro="La question revient chez presque tous les parents à un moment ou un autre. Voici ce qui relève de l'observation à la maison, ce qui relève d'un diagnostic professionnel, et pourquoi le potentiel réel d'un enfant dépasse largement ce que l'école mesure."
-      updated="8 août 2026"
+      title="Enfant surdoué, HPI ou précoce : comment le reconnaître et l'accompagner"
+      intro="« Mon enfant est-il surdoué ? » La question revient chez presque tous les parents à un moment ou un autre — surtout quand l'enfant s'ennuie à l'école ou montre des capacités étonnantes à la maison. Voici ce qui relève de l'observation à la maison, ce qui relève d'un diagnostic professionnel, et pourquoi le potentiel réel d'un enfant dépasse largement ce que l'école mesure."
+      updated="14 août 2026"
       readingTime="10 min"
       related={[
         { label: "Les intelligences multiples de Gardner", to: "/guides/intelligences-multiples-gardner" },
         { label: "Mon enfant ne tient pas en place", to: "/guides/enfant-agite-concentration" },
         { label: "24 activités éducatives (6-12 ans)", to: "/guides/activites-educatives-enfant" },
         { label: "Motiver un adolescent (12-16 ans)", to: "/guides/defis-pour-adolescents" },
-        { label: "Révéler le potentiel en Afrique francophone", to: "/guides/education-enfants-afrique-francophone" },
+        { label: "Développer les talents en Afrique", to: "/guides/education-enfants-afrique-francophone" },
       ]}
     >
       <img
@@ -125,8 +135,8 @@ function Guide() {
       </p>
       <ul>
         <li>
-          <strong>Une pensée en arborescence.</strong> L'enfant part d'une question et enchaîne
-          spontanément vers des domaines sans rapport apparent, avec une vitesse qui peut
+          <strong>Une pensée qui part dans tous les sens.</strong> L'enfant part d'une question et
+          enchaîne spontanément vers des domaines sans rapport apparent, avec une vitesse qui peut
           désorganiser son propre discours.
         </li>
         <li>
@@ -170,7 +180,8 @@ function Guide() {
       <h2>Pourquoi le désintérêt scolaire ne prouve rien à lui seul</h2>
       <p>
         « Mon enfant est intelligent mais n'aime pas l'école » est l'une des phrases les plus
-        entendues par les psychologues scolaires, et elle peut avoir deux origines opposées :
+        entendues par les psychologues scolaires, et elle peut avoir deux origines opposées — dans
+        les deux cas, l'ennui en classe peut mener à l'échec scolaire si rien n'est fait :
       </p>
       <ol>
         <li>
