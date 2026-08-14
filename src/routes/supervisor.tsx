@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { useSession } from "@/hooks/use-session";
 import { AppHeader } from "@/components/AppHeader";
-import { getSupervisorDashboard } from "@/lib/supervisors.functions";
+import { getSupervisorDashboard, declareSessionSupervisor } from "@/lib/supervisors.functions";
 import { getChildGuild } from "@/lib/guilds";
 import {
   Loader2,
@@ -19,11 +19,13 @@ import {
   AlertTriangle,
   Brain,
   Phone,
+  CalendarCheck,
 } from "lucide-react";
 import { NayaAvatar } from "@/components/NayaAvatar";
 import { MarkdownContent } from "@/components/ui/markdown-content";
 import { GenizioLoader } from "@/components/GenizioLoader";
 import { formatPedagogicalIntention } from "@/lib/pedagogical-intention";
+import { toast } from "sonner";
 
 export const Route = createFileRoute("/supervisor")({
   component: SupervisorDashboardPage,
@@ -55,30 +57,69 @@ function SupervisorDashboardPage() {
   const [loadError, setLoadError] = useState(false);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [selectedChallenge, setSelectedChallenge] = useState<any | null>(null);
+  // Score de fiabilité (V1) : renvoyé par getSupervisorDashboard, affiché dans l'en-tête.
+  const [score, setScore] = useState<number | null>(null);
+  const [sessionsThisMonth, setSessionsThisMonth] = useState(0);
+  const [expectedSessions, setExpectedSessions] = useState(0);
+  const [declaringFor, setDeclaringFor] = useState<string | null>(null);
+  const [sessionDate, setSessionDate] = useState(() => new Date().toISOString().slice(0, 10));
+  const [sessionNotes, setSessionNotes] = useState("");
+  const [declaring, setDeclaring] = useState(false);
 
   const getDashboardFn = useServerFn(getSupervisorDashboard);
+  const declareFn = useServerFn(declareSessionSupervisor);
 
   useEffect(() => {
     if (!loading && !session) navigate({ to: "/auth", replace: true });
   }, [session, loading, navigate]);
 
-  useEffect(() => {
-    if (!session) return;
+  const loadDashboard = async () => {
     setFetching(true);
     setLoadError(false);
-    getDashboardFn()
-      .then((res) => {
-        const kids = (res.children ?? []) as ChildWithChallenges[];
-        setChildren(kids);
-        setSelectedId(kids[0]?.id ?? null);
-      })
-      .catch(() => {
-        setChildren([]);
-        setLoadError(true);
-      })
-      .finally(() => setFetching(false));
+    try {
+      const res = await getDashboardFn();
+      const kids = (res.children ?? []) as ChildWithChallenges[];
+      setChildren(kids);
+      setSelectedId((prev) => prev ?? kids[0]?.id ?? null);
+      setScore((res as any).score ?? null);
+      setSessionsThisMonth((res as any).sessionsThisMonth ?? 0);
+      setExpectedSessions((res as any).expectedSessions ?? 0);
+    } catch {
+      setChildren([]);
+      setLoadError(true);
+    } finally {
+      setFetching(false);
+    }
+  };
+
+  useEffect(() => {
+    if (!session) return;
+    void loadDashboard();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [session]);
+
+  const handleDeclareSession = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!declaringFor) return;
+    setDeclaring(true);
+    try {
+      await declareFn({
+        data: {
+          childProfileId: declaringFor,
+          occurredAt: new Date(sessionDate).toISOString(),
+          notes: sessionNotes.trim() || undefined,
+        },
+      });
+      toast.success("Séance déclarée — votre score est mis à jour.");
+      setDeclaringFor(null);
+      setSessionNotes("");
+      await loadDashboard();
+    } catch (err: any) {
+      toast.error(err.message || "Erreur lors de la déclaration.");
+    } finally {
+      setDeclaring(false);
+    }
+  };
 
   const selected = children.find((c) => c.id === selectedId) ?? null;
 
@@ -107,9 +148,37 @@ function SupervisorDashboardPage() {
             />
             <p className="text-sm text-ink/60 mb-0.5">Espace Superviseur</p>
           </div>
-          <h1 className="font-display text-balance text-3xl font-extrabold">
-            Tableau de Bord Superviseur
-          </h1>
+          <div className="flex flex-wrap items-end justify-between gap-4">
+            <h1 className="font-display text-balance text-3xl font-extrabold">
+              Tableau de Bord Superviseur
+            </h1>
+            {/* Score de fiabilité (V1) : déclarez vos séances en app, le score se calcule
+                tout seul (séances tenues + progression des enfants). */}
+            {score !== null && (
+              <div className="flex items-center gap-3 rounded-2xl border border-ink/10 bg-white px-4 py-2.5 shadow-sm">
+                <div className="text-right">
+                  <p className="text-[10px] font-black uppercase tracking-widest text-ink/50">
+                    Score de fiabilité
+                  </p>
+                  <p className="text-xs font-bold text-ink/60">
+                    {sessionsThisMonth} séance{sessionsThisMonth > 1 ? "s" : ""} ce mois
+                    {expectedSessions > 0 ? ` / ${expectedSessions} attendues` : ""}
+                  </p>
+                </div>
+                <span
+                  className={`grid size-11 place-items-center rounded-xl font-black text-sm ${
+                    score >= 75
+                      ? "bg-emerald-100 text-emerald-700"
+                      : score >= 50
+                        ? "bg-amber-100 text-amber-700"
+                        : "bg-rose-100 text-rose-700"
+                  }`}
+                >
+                  {score}/100
+                </span>
+              </div>
+            )}
+          </div>
         </div>
 
         {fetching ? (
@@ -258,6 +327,20 @@ function SupervisorDashboardPage() {
                         )}
                       </div>
                     </div>
+
+                    {/* Déclarer une séance (V1) : chaque séance réalisée alimente le score
+                        de fiabilité — et, en V2, la facturation du superviseur. */}
+                    <button
+                      onClick={() => {
+                        setDeclaringFor(selected.id);
+                        setSessionDate(new Date().toISOString().slice(0, 10));
+                        setSessionNotes("");
+                      }}
+                      className="w-full flex items-center justify-center gap-2 rounded-2xl bg-ink py-3 text-sm font-bold text-white hover:bg-ink/90 transition-colors cursor-pointer"
+                    >
+                      <CalendarCheck className="size-4" />
+                      Déclarer une séance
+                    </button>
 
                     {/* Stats rapides */}
                     <div className="grid grid-cols-3 gap-4">
@@ -554,6 +637,87 @@ function SupervisorDashboardPage() {
           </div>
         </div>
       )}
+
+      {/* Modal — Déclarer une séance (V1) */}
+      {declaringFor &&
+        (() => {
+          const child = children.find((c) => c.id === declaringFor);
+          return (
+            <div className="fixed inset-0 z-50 flex items-center justify-center bg-ink/40 p-4 backdrop-blur-sm">
+              <div className="w-full max-w-md max-h-[85vh] overflow-y-auto bg-white rounded-3xl border border-ink/10 p-6 md:p-8 shadow-xl animate-in zoom-in-95 duration-200">
+                <div className="flex items-start justify-between gap-4 border-b-2 border-ink pb-4 mb-6">
+                  <div>
+                    <h3 className="font-display text-balance text-xl font-black text-ink">
+                      Déclarer une séance
+                    </h3>
+                    <p className="text-sm text-ink/60 mt-0.5">
+                      {child?.name ?? "Cet enfant"} — la séance alimente votre score de fiabilité.
+                    </p>
+                  </div>
+                  <button
+                    onClick={() => setDeclaringFor(null)}
+                    className="rounded-xl border border-ink/10 p-1.5 hover:bg-stone-100 transition-all cursor-pointer"
+                  >
+                    <X className="size-5" />
+                  </button>
+                </div>
+
+                <form onSubmit={handleDeclareSession} className="space-y-5">
+                  <div>
+                    <label className="text-xs font-black uppercase tracking-widest text-ink/60 mb-2 block">
+                      Date de la séance
+                    </label>
+                    <input
+                      type="date"
+                      required
+                      max={new Date().toISOString().slice(0, 10)}
+                      value={sessionDate}
+                      onChange={(e) => setSessionDate(e.target.value)}
+                      className="w-full rounded-xl border border-ink/10 bg-surface px-4 py-3 text-sm font-bold text-ink outline-none focus:ring-2 focus:ring-brand"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="text-xs font-black uppercase tracking-widest text-ink/60 mb-2 block">
+                      Compte-rendu de la séance{" "}
+                      <span className="normal-case font-bold text-ink/40">(optionnel)</span>
+                    </label>
+                    <textarea
+                      value={sessionNotes}
+                      onChange={(e) => setSessionNotes(e.target.value)}
+                      rows={4}
+                      maxLength={2000}
+                      placeholder="Ce qui a été fait, ce que vous avez observé chez l'enfant…"
+                      className="w-full rounded-xl border border-ink/10 bg-surface px-4 py-3 text-sm font-medium text-ink outline-none focus:ring-2 focus:ring-brand"
+                    />
+                  </div>
+
+                  <div className="border-t-2 border-ink pt-4 flex justify-end gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setDeclaringFor(null)}
+                      className="rounded-2xl border border-ink/10 px-6 py-2.5 text-xs font-bold text-ink/60 hover:bg-stone-100 transition-all cursor-pointer"
+                    >
+                      Annuler
+                    </button>
+                    <button
+                      type="submit"
+                      disabled={declaring}
+                      className="inline-flex items-center gap-2 rounded-2xl bg-ink px-6 py-2.5 text-xs font-bold text-white shadow-sm hover:-translate-y-0.5 transition-all disabled:opacity-50 cursor-pointer"
+                    >
+                      {declaring ? (
+                        <Loader2 className="size-4 animate-spin" />
+                      ) : (
+                        <CalendarCheck className="size-4" />
+                      )}
+                      Valider la séance
+                    </button>
+                  </div>
+                </form>
+              </div>
+            </div>
+          );
+        })()}
     </div>
   );
 }
