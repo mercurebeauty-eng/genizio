@@ -26,6 +26,11 @@ export interface Campaign {
   /** Fermeture douce (2026-08-13) : 'archived' = disparue des flux actifs,
    *  historique intact (codes générés, inscriptions). */
   status?: "active" | "archived" | null;
+  /** V4, DÉCISION 3 (2026-08-14) : compartiment SÉANCES — budget d'accompagnement financé
+   *  (2 compteurs distincts : target_count pour l'app, sessions_target pour les séances). */
+  sessions_target?: number;
+  /** Séances financées déjà consommées (débit au fil des déclarations des superviseurs). */
+  sessions_used?: number;
 }
 
 export const createCampaignAdmin = createServerFn({ method: "POST" })
@@ -37,6 +42,12 @@ export const createCampaignAdmin = createServerFn({ method: "POST" })
         description: z.string().optional(),
         managerEmail: z.string().email(),
         targetCount: z.number().int().positive().default(100),
+        // V4, DÉCISION 3 (2026-08-14) : la campagne a 2 COMPTEURS DISTINCTS — target_count
+        // (compartiment APP, enfants financés) + sessionsTarget (compartiment SÉANCES, budget
+        // d'accompagnement financé). L'ONG choisit le mix à la création ; le rapport d'impact
+        // affiche « N enfants + M séances financés » (exigence bailleur). Les séances sont
+        // débitées au fil des déclarations des superviseurs (compteur sessions_used).
+        sessionsTarget: z.number().int().min(0).default(0),
         // Décision utilisateur (2026-07-26) : une campagne a sa propre fenêtre fixe, partagée par
         // tous ses enfants — contrairement au rolling individuel par défaut (chaque enfant démarre
         // son propre chrono à sa date d'inscription), une cohorte ONG a besoin d'un vrai début et
@@ -63,6 +74,7 @@ export const createCampaignAdmin = createServerFn({ method: "POST" })
         description: data.description,
         manager_user_id: manager.id,
         target_count: data.targetCount,
+        sessions_target: data.sessionsTarget,
         extra_supervisors_quota: 0,
         start_date: data.startDate,
         end_date: data.endDate,
@@ -885,6 +897,10 @@ export const getNgoDashboardData = createServerFn({ method: "GET" })
         talentDistribution: talentTotals,
         supervisedChildren: [...supervisorCounts.values()].reduce((a, b) => a + b, 0),
         totalSupervisorQuota,
+        // V4, DÉCISION 3 : compartiment SÉANCES (2 compteurs distincts) — l'ONG finance un
+        // budget de séances, consommé au fil des déclarations des superviseurs.
+        sessionsTarget: (selected as any).sessions_target ?? 0,
+        sessionsUsed: (selected as any).sessions_used ?? 0,
       },
       supervisors: Array.from(supervisorCounts.entries()).map(([supervisorUserId, count]) => ({
         email: usersMap.get(supervisorUserId) || "Inconnu",

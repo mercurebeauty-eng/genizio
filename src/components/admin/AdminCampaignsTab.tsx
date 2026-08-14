@@ -307,6 +307,13 @@ export function AdminCampaignsTab() {
                     <div className="text-lg font-black text-ink">
                       {c.target_count}{" "}
                       <span className="text-sm font-bold text-ink/50">enfants</span>
+                      {/* V4, DÉCISION 3 : compartiment SÉANCES — le mix app/acc choisi à la
+                          création ; le compteur consommé est affiché pour le suivi bailleur. */}
+                      {(c.sessions_target ?? 0) > 0 && (
+                        <span className="ml-1.5 text-sm font-bold text-sky-700">
+                          + {c.sessions_used ?? 0}/{c.sessions_target} séances
+                        </span>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -810,6 +817,10 @@ function CreateCampaignModal({
   const [description, setDescription] = useState("");
   const [managerEmail, setManagerEmail] = useState("");
   const [targetCount, setTargetCount] = useState(100);
+  // V4, DÉCISION 3 : 2 compteurs distincts — le compartiment SÉANCES (budget d'accompagnement
+  // financé, débité au fil des déclarations des superviseurs). 0 = la campagne ne finance que
+  // l'app.
+  const [sessionsTarget, setSessionsTarget] = useState(0);
   const [startDate, setStartDate] = useState(todayISO());
   const [endDate, setEndDate] = useState(threeMonthsFromNowISO());
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -821,7 +832,15 @@ function CreateCampaignModal({
     setIsSubmitting(true);
     try {
       await createFn({
-        data: { name, description, managerEmail, targetCount, startDate, endDate },
+        data: {
+          name,
+          description,
+          managerEmail,
+          targetCount,
+          sessionsTarget,
+          startDate,
+          endDate,
+        },
       });
       toast.success("Campagne créée avec succès !");
       onSuccess();
@@ -885,6 +904,23 @@ function CreateCampaignModal({
               onChange={(e) => setTargetCount(parseInt(e.target.value))}
               className="w-full bg-surface border-none rounded-2xl p-4 font-medium"
             />
+          </div>
+          <div>
+            <label className="block text-sm font-bold text-ink mb-1">
+              Séances d'accompagnement financées (optionnel)
+            </label>
+            <input
+              type="number"
+              min={0}
+              value={sessionsTarget}
+              onChange={(e) => setSessionsTarget(parseInt(e.target.value) || 0)}
+              className="w-full bg-surface border-none rounded-2xl p-4 font-medium"
+            />
+            <p className="text-xs text-ink/50 mt-1 font-medium">
+              V4 — 2 compteurs distincts : en plus des enfants (app), l'ONG peut financer un budget
+              de séances d'accompagnement (12 séances/enfant/mois). Le rapport d'impact affichera «
+              N enfants + M séances financés ».
+            </p>
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div>

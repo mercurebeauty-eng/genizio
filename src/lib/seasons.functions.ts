@@ -392,44 +392,73 @@ export const redeemSponsorshipToken = createServerFn({ method: "POST" })
         console.error("Error creating season_enrollment on redeem:", enrollErr);
         throw new Error("Erreur lors de l'inscription. Le code n'a pas été consommé, réessayez.");
       }
+
+      // V4 (Vague A) : la couverture famille liée à la campagne est synchronisée (même que
+      // enrollChildViaCampaignLink) — le trigger V10 et le résolveur lisent family_coverages.
+      const { data: campaign } = await (supabaseAdmin as any)
+        .from("campaigns")
+        .select("start_date, end_date")
+        .eq("id", token.campaign_id)
+        .maybeSingle();
+      const { syncFamilyCoverage } = await import("@/lib/family-coverages");
+      if (campaign) {
+        await syncFamilyCoverage(supabaseAdmin, {
+          userId,
+          source: "campaign",
+          sourceRef: token.campaign_id,
+          startsAt: campaign.start_date ?? null,
+          endsAt: campaign.end_date ?? null,
+          maxChildren: 5,
+          status: "active",
+        });
+      }
     } else {
-      // Parrainage individuel (2026-08-05) : le code vaut `months` mois d'accès payant — on
-      // crée une child_access_periods (source sponsor) qui démarre au plus tard entre maintenant
-      // et la fin de la période courante (aucune perte en cas de cumul).
-      const { data: existing, error: existingErr } = await (supabaseAdmin as any)
-        .from("child_access_periods")
+      // V4, DÉCISION 1 — FUSION des 2 flux de parrainage (2026-08-14) : un code de parrainage
+      // INDIVIDUEL accorde une couverture FAMILLE (sponsorship_credits + family_coverages
+      // source='sponsorship'), exactement comme redeemSponsorshipCode (Paramètres) — fini le
+      // chemin per-enfant child_access_periods qui faisait agir un même code différemment
+      // selon le point de rédemption. La fenêtre s'étend sur la couverture courante sans
+      // découpe (computeAccessPeriodWindow) ; l'historique child_access_periods source=sponsor
+      // déjà posé reste valide (rien à migrer).
+      const { data: current, error: curErr } = await (supabaseAdmin as any)
+        .from("sponsorship_credits")
         .select("ends_at")
-        .eq("child_id", data.childId)
+        .eq("user_id", userId)
         .order("ends_at", { ascending: false })
         .limit(1);
-      if (existingErr) throw new Error(existingErr.message);
+      if (curErr) throw new Error(curErr.message);
 
-      // Fenêtre partagée avec extendChildAccessAdmin (child-access.ts) — même logique de
-      // cumul (démarre au plus tard entre maintenant et la fin courante) : un code parrain
-      // posé sur une période existante la prolonge, il ne la coupe jamais.
-      const { startsAt, endsAt } = computeAccessPeriodWindow(existing?.[0]?.ends_at ?? null, months);
+      const { endsAt } = computeAccessPeriodWindow(current?.[0]?.ends_at ?? null, months);
 
-      const { error: periodErr } = await (supabaseAdmin as any).from("child_access_periods").insert({
-        child_id: data.childId,
-        starts_at: startsAt,
-        ends_at: endsAt,
-        source: "sponsor",
+      const { error: credErr } = await (supabaseAdmin as any).from("sponsorship_credits").insert({
+        user_id: userId,
         token_id: token.id,
-        amount_xof: token.amount_paid,
-        currency: token.currency,
-        note: `Parrain : ${token.sponsor_name}`,
+        months_count: months,
+        ends_at: endsAt,
       });
 
-      if (periodErr) {
+      if (credErr) {
         // Rollback best-effort du claim : un échec ne brûle jamais le code.
         await (supabaseAdmin as any)
           .from("sponsorship_tokens")
           .update({ is_redeemed: false, redeemed_by_child_id: null, redeemed_at: null })
           .eq("id", token.id)
           .eq("is_redeemed", true);
-        console.error("Error creating child_access_period on redeem:", periodErr);
-        throw new Error("Erreur lors de l'inscription. Le code n'a pas été consommé, réessayez.");
+        console.error("Error creating sponsorship credit on redeem:", credErr);
+        throw new Error("Erreur lors de l'activation du code. Le code n'a pas été consommé, réessayez.");
       }
+
+      // V4 (Vague A) : la couverture family_coverages suit la même fenêtre (upsert idempotent).
+      const { syncFamilyCoverage } = await import("@/lib/family-coverages");
+      await syncFamilyCoverage(supabaseAdmin, {
+        userId,
+        source: "sponsorship",
+        sourceRef: token.id,
+        startsAt: new Date().toISOString(),
+        endsAt,
+        maxChildren: 5,
+        status: "active",
+      });
     }
 
     return { success: true, token };

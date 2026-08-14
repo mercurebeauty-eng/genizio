@@ -1,5 +1,9 @@
 import { describe, it, expect } from "vitest";
-import { listCampaignTokensAdmin, type CampaignTokenDetail } from "@/lib/campaigns.functions";
+import {
+  listCampaignTokensAdmin,
+  createCampaignAdmin,
+  type CampaignTokenDetail,
+} from "@/lib/campaigns.functions";
 import {
   assignSupervisor,
   assignSupervisorToCampaignAdmin,
@@ -11,6 +15,11 @@ import {
 
 describe("Milestone 3 — R4, R5, R6 Server & UI Logic Tests", () => {
   describe("R4: Export B2B Campaign Tokens", () => {
+    it("exports createCampaignAdmin server function definition (V4, décision 3 : sessionsTarget)", () => {
+      expect(createCampaignAdmin).toBeDefined();
+      expect(typeof createCampaignAdmin).toBe("function");
+    });
+
     it("exports listCampaignTokensAdmin server function definition", () => {
       expect(listCampaignTokensAdmin).toBeDefined();
       expect(typeof listCampaignTokensAdmin).toBe("function");
