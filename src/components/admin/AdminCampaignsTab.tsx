@@ -13,7 +13,15 @@ import {
   CreditCard,
   Archive,
   Trash2,
+  MoreHorizontal,
 } from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+} from "@/components/ui/dropdown-menu";
 import { AdminPagination } from "./AdminPagination";
 import { useServerFn } from "@tanstack/react-start";
 import { useSession } from "@/hooks/use-session";
@@ -59,11 +67,16 @@ export function AdminCampaignsTab() {
   const [page, setPage] = useState(1);
 
   // Mode test/paid + lien de paiement (refonte Admin OS, décision #72).
-  const [billingDraft, setBillingDraft] = useState<Record<string, { mode: "test" | "paid"; price: string }>>({});
+  const [billingDraft, setBillingDraft] = useState<
+    Record<string, { mode: "test" | "paid"; price: string }>
+  >({});
   const [savingBillingId, setSavingBillingId] = useState<string | null>(null);
   const [linkCampaign, setLinkCampaign] = useState<Campaign | null>(null);
   const [linkTokenCount, setLinkTokenCount] = useState(10);
-  const [linkResult, setLinkResult] = useState<{ authorizationUrl: string; amountXof: number } | null>(null);
+  const [linkResult, setLinkResult] = useState<{
+    authorizationUrl: string;
+    amountXof: number;
+  } | null>(null);
   const [generatingLink, setGeneratingLink] = useState(false);
   const [copiedLink, setCopiedLink] = useState(false);
 
@@ -173,7 +186,7 @@ export function AdminCampaignsTab() {
       toast.success(
         draft.mode === "paid"
           ? `Campagne en mode payé — ${price ? `${formatXof(price)} par code` : "prix à définir"}.`
-          : "Campagne en mode test — codes gratuits confirmés d'office."
+          : "Campagne en mode test — codes gratuits confirmés d'office.",
       );
       setBillingDraft((prev) => {
         const next = { ...prev };
@@ -436,13 +449,16 @@ export function AdminCampaignsTab() {
                 <CampaignQuotaEditor campaign={c} onUpdated={handleCampaignUpdated} />
               </div>
 
-              <div className="grid grid-cols-5 gap-2 pt-2 border-t border-ink/5">
+              {/* Actions de la carte (2026-08-14) : les 2 actions les plus fréquentes
+                  (Lien/QR, Codes) restent des boutons visibles ; le reste passe dans un
+                  menu ⋯ pour que la carte ne soit plus écrasée par 5 boutons identiques. */}
+              <div className="flex items-center gap-2 pt-2 border-t border-ink/5">
                 <button
                   onClick={() => {
                     setSelectedCampaign(c);
                     setIsLinkModalOpen(true);
                   }}
-                  className="w-full flex items-center justify-center gap-1.5 bg-ink text-white hover:bg-ink/90 px-3 py-2 rounded-xl font-bold transition-colors text-xs"
+                  className="flex-1 flex items-center justify-center gap-1.5 bg-ink text-white hover:bg-ink/90 px-3 py-2 rounded-xl font-bold transition-colors text-xs"
                 >
                   <LinkIcon className="size-3.5" />
                   <span>Lien / QR</span>
@@ -453,48 +469,55 @@ export function AdminCampaignsTab() {
                     setSelectedCampaign(c);
                     setIsGenerateModalOpen(true);
                   }}
-                  className="w-full flex items-center justify-center gap-1.5 bg-surface text-ink hover:bg-ink hover:text-white px-3 py-2 rounded-xl font-bold transition-colors text-xs"
+                  className="flex-1 flex items-center justify-center gap-1.5 bg-surface text-ink hover:bg-ink hover:text-white px-3 py-2 rounded-xl font-bold transition-colors text-xs"
                 >
                   <Key className="size-3.5" />
                   <span>Codes</span>
                 </button>
 
-                <button
-                  onClick={() => {
-                    setSelectedCampaign(c);
-                    setIsTokensModalOpen(true);
-                  }}
-                  className="w-full flex items-center justify-center gap-1.5 bg-brand/10 text-brand hover:bg-brand hover:text-white px-3 py-2 rounded-xl font-bold transition-colors text-xs"
-                >
-                  <FileText className="size-3.5" />
-                  <span>Voir</span>
-                </button>
-
-                <button
-                  onClick={() => void handleToggleArchive(c)}
-                  className={`w-full flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl font-bold transition-colors text-xs cursor-pointer ${
-                    c.status === "archived"
-                      ? "bg-emerald-50 text-emerald-700 hover:bg-emerald-100"
-                      : "bg-stone-100 text-stone-600 hover:bg-stone-200"
-                  }`}
-                  title={
-                    c.status === "archived"
-                      ? "Restaure la campagne (flux actifs rouverts)"
-                      : "Ferme la campagne : lien public coupé, plus de génération ni de paiement"
-                  }
-                >
-                  <Archive className="size-3.5" />
-                  <span>{c.status === "archived" ? "Restaurer" : "Archiver"}</span>
-                </button>
-
-                <button
-                  onClick={() => void handleDeleteCampaign(c)}
-                  className="w-full flex items-center justify-center gap-1.5 bg-rose-50 text-rose-600 hover:bg-rose-100 px-3 py-2 rounded-xl font-bold transition-colors text-xs cursor-pointer"
-                  title="Suppression physique — uniquement si archivée et sans codes/inscriptions"
-                >
-                  <Trash2 className="size-3.5" />
-                  <span>Suppr.</span>
-                </button>
+                <DropdownMenu>
+                  <DropdownMenuTrigger
+                    className="shrink-0 inline-flex items-center justify-center gap-1.5 bg-ink/5 text-ink/70 hover:bg-ink hover:text-white size-9 rounded-xl font-bold transition-colors cursor-pointer"
+                    title="Plus d'actions"
+                  >
+                    <MoreHorizontal className="size-4" />
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent
+                    align="end"
+                    className="w-[220px] rounded-3xl shadow-xl border border-ink/10 p-2 bg-white/95 backdrop-blur-md"
+                  >
+                    <DropdownMenuItem
+                      className="rounded-xl py-2.5 px-3 mb-1 cursor-pointer font-bold text-xs text-ink outline-none focus:bg-ink/5"
+                      onClick={() => {
+                        setSelectedCampaign(c);
+                        setIsTokensModalOpen(true);
+                      }}
+                    >
+                      <FileText className="size-4 mr-2" />
+                      Voir les codes
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator className="my-1 border-border/60" />
+                    <DropdownMenuItem
+                      className={`rounded-xl py-2.5 px-3 mb-1 cursor-pointer font-bold text-xs outline-none ${
+                        c.status === "archived"
+                          ? "text-emerald-700 focus:bg-emerald-50"
+                          : "text-stone-600 focus:bg-stone-50"
+                      }`}
+                      onClick={() => void handleToggleArchive(c)}
+                    >
+                      <Archive className="size-4 mr-2" />
+                      {c.status === "archived" ? "Restaurer" : "Archiver"}
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator className="my-1 border-border/60" />
+                    <DropdownMenuItem
+                      className="rounded-xl py-2.5 px-3 cursor-pointer font-bold text-xs text-rose-600 outline-none focus:bg-rose-50"
+                      onClick={() => void handleDeleteCampaign(c)}
+                    >
+                      <Trash2 className="size-4 mr-2" />
+                      Supprimer
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
               </div>
             </div>
           ))}
@@ -573,8 +596,8 @@ export function AdminCampaignsTab() {
               </h3>
               <p className="mt-1 text-xs text-ink/60">
                 Diffusez ce lien (WhatsApp, email, QR) : quand le paiement aboutit, les codes B2B
-                confirmés sont créés automatiquement (montant ÷ prix unitaire, plafonné à
-                l'objectif restant de la campagne).
+                confirmés sont créés automatiquement (montant ÷ prix unitaire, plafonné à l'objectif
+                restant de la campagne).
               </p>
             </div>
 

@@ -106,7 +106,9 @@ function DashboardPage() {
   const slotPrice = resolveExtraSlotPrice(session?.user?.created_at);
   // Compte couvert (abonnement famille actif ou crédit de parrainage) → création possible
   // jusqu'au plafond de 5 — miroir du trigger check_child_profile_quota (20260809120000).
-  const { covered: familyCovered } = useFamilyCoverage();
+  // Couverture campagne (2026-08-14) : un enfant inscrit à une campagne active → la
+  // famille est soutenue par l'institution, même droit de création (migration 20260814160000).
+  const { covered: familyCovered, campaignCovered } = useFamilyCoverage();
 
   // Décision 2026-08-05 : l'accès payant est MENSUEL (5 000 F/mois de bienvenue →
   // 15 000 F/mois). Le parent choisit une durée (1/3/6 mois) ; le montant =
@@ -418,6 +420,7 @@ function DashboardPage() {
                     session?.user?.created_at,
                     familyCovered,
                     (session?.user?.app_metadata?.quota_override as number) ?? 0,
+                    campaignCovered,
                   );
                   const atQuota = profiles.length >= quota;
 
@@ -722,8 +725,8 @@ function DashboardPage() {
                               ))}
                             </div>
                             <p className="text-[11px] text-ink/40 font-medium mt-2 leading-relaxed">
-                              Calibré sur les standards des meilleurs systèmes éducatifs du
-                              monde (Common Core USA · Singapore Math · NGSS).
+                              Calibré sur les standards des meilleurs systèmes éducatifs du monde
+                              (Common Core USA · Singapore Math · NGSS).
                             </p>
                           </div>
                         );
@@ -992,9 +995,8 @@ function DashboardPage() {
                 </p>
               )}
               <p className="mt-2 text-xs text-ink/70 leading-relaxed">
-                Un seul abonnement couvre tous vos profils jusqu'à{" "}
-                <strong>5 enfants</strong> (au-delà, créez un nouveau compte). Résiliable à tout
-                moment.
+                Un seul abonnement couvre tous vos profils jusqu'à <strong>5 enfants</strong>{" "}
+                (au-delà, créez un nouveau compte). Résiliable à tout moment.
               </p>
               {!familyCovered && (
                 <div className="mt-4">
@@ -1038,9 +1040,9 @@ function DashboardPage() {
                 ))}
               </div>
               <p className="mt-2 text-xs text-ink/60 leading-relaxed">
-                Un profil enfant supplémentaire, débloqué définitivement pour ce compte après
-                le paiement en ligne (paiement unique — le nombre de mois choisit le montant,
-                l'accès ne s'interrompt jamais).
+                Un profil enfant supplémentaire, débloqué définitivement pour ce compte après le
+                paiement en ligne (paiement unique — le nombre de mois choisit le montant, l'accès
+                ne s'interrompt jamais).
               </p>
             </div>
 

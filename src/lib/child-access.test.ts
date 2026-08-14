@@ -18,17 +18,38 @@ describe("resolveChildAccessStatus", () => {
   const base = { floor: 1, quotaOverride: 0 };
 
   it("position ≤ plancher → free, même sans période payée", () => {
-    expect(resolveChildAccessStatus({ position: 1, ...base, latestPeriod: null, now: NOW }).kind).toBe("free");
+    expect(
+      resolveChildAccessStatus({ position: 1, ...base, latestPeriod: null, now: NOW }).kind,
+    ).toBe("free");
     // Une période périmée n'a aucune incidence sur un profil du plancher
-    expect(resolveChildAccessStatus({ position: 1, ...base, latestPeriod: { endsAt: "2020-01-01T00:00:00Z" }, now: NOW }).kind).toBe("free");
+    expect(
+      resolveChildAccessStatus({
+        position: 1,
+        ...base,
+        latestPeriod: { endsAt: "2020-01-01T00:00:00Z" },
+        now: NOW,
+      }).kind,
+    ).toBe("free");
   });
 
   it("quota + (quotaOverride) : tous les profils jusqu'au quota accordé → permanent, même sans période", () => {
     // Position 3 ≤ quota_override 3 → permanent (ex-slots grand-pérés unifiés)
-    const st = resolveChildAccessStatus({ position: 3, floor: 1, quotaOverride: 3, latestPeriod: null, now: NOW });
+    const st = resolveChildAccessStatus({
+      position: 3,
+      floor: 1,
+      quotaOverride: 3,
+      latestPeriod: null,
+      now: NOW,
+    });
     expect(st.kind).toBe("permanent");
     // Position 4 > quota_override 3 → expired (hors quota accordé)
-    const st2 = resolveChildAccessStatus({ position: 4, floor: 1, quotaOverride: 3, latestPeriod: null, now: NOW });
+    const st2 = resolveChildAccessStatus({
+      position: 4,
+      floor: 1,
+      quotaOverride: 3,
+      latestPeriod: null,
+      now: NOW,
+    });
     expect(st2.kind).toBe("expired");
   });
 
@@ -39,31 +60,67 @@ describe("resolveChildAccessStatus", () => {
   });
 
   it("période future → monthly avec daysLeft exact", () => {
-    const st = resolveChildAccessStatus({ position: 2, ...base, latestPeriod: { endsAt: "2026-08-20T12:00:00.000Z" }, now: NOW });
+    const st = resolveChildAccessStatus({
+      position: 2,
+      ...base,
+      latestPeriod: { endsAt: "2026-08-20T12:00:00.000Z" },
+      now: NOW,
+    });
     expect(st.kind).toBe("monthly");
     if (st.kind === "monthly") expect(st.daysLeft).toBe(15);
   });
 
   it("période écoulée → expired en conservant la date (affichée dans la bannière)", () => {
-    const st = resolveChildAccessStatus({ position: 2, ...base, latestPeriod: { endsAt: "2026-08-01T00:00:00.000Z" }, now: NOW });
+    const st = resolveChildAccessStatus({
+      position: 2,
+      ...base,
+      latestPeriod: { endsAt: "2026-08-01T00:00:00.000Z" },
+      now: NOW,
+    });
     expect(st.kind).toBe("expired");
     if (st.kind === "expired") expect(st.endsAt).toBe("2026-08-01T00:00:00.000Z");
   });
 
   it("période qui expire exactement maintenant → expired (<= now)", () => {
-    const st = resolveChildAccessStatus({ position: 2, ...base, latestPeriod: { endsAt: NOW.toISOString() }, now: NOW });
+    const st = resolveChildAccessStatus({
+      position: 2,
+      ...base,
+      latestPeriod: { endsAt: NOW.toISOString() },
+      now: NOW,
+    });
     expect(st.kind).toBe("expired");
   });
 
   it("date illisible → expired plutôt qu'un crash", () => {
-    const st = resolveChildAccessStatus({ position: 2, ...base, latestPeriod: { endsAt: "pas-une-date" }, now: NOW });
+    const st = resolveChildAccessStatus({
+      position: 2,
+      ...base,
+      latestPeriod: { endsAt: "pas-une-date" },
+      now: NOW,
+    });
     expect(st.kind).toBe("expired");
     if (st.kind === "expired") expect(st.endsAt).toBe("pas-une-date");
   });
 
   it("compte grand-péré (plancher 5) : les 5 premiers profils sont gratuits, le 6e est payant", () => {
-    expect(resolveChildAccessStatus({ position: 5, floor: 5, quotaOverride: 0, latestPeriod: null, now: NOW }).kind).toBe("free");
-    expect(resolveChildAccessStatus({ position: 6, floor: 5, quotaOverride: 0, latestPeriod: null, now: NOW }).kind).toBe("expired");
+    expect(
+      resolveChildAccessStatus({
+        position: 5,
+        floor: 5,
+        quotaOverride: 0,
+        latestPeriod: null,
+        now: NOW,
+      }).kind,
+    ).toBe("free");
+    expect(
+      resolveChildAccessStatus({
+        position: 6,
+        floor: 5,
+        quotaOverride: 0,
+        latestPeriod: null,
+        now: NOW,
+      }).kind,
+    ).toBe("expired");
   });
 });
 
@@ -80,6 +137,19 @@ describe("computeChildCreationLimit (miroir du trigger unifié : 0 = règle stan
   it("compte couvert (abonnement famille ou crédit parrainage) : création possible jusqu'au plafond de 5", () => {
     expect(computeChildCreationLimit("2026-08-10T00:00:00.000Z", true)).toBe(5);
     expect(computeChildCreationLimit("2026-07-01T00:00:00.000Z", true)).toBe(5);
+  });
+
+  it("couverture CAMPAGNE (enfant inscrit à une campagne active) : même droit de création que la couverture famille — l'institution soutient le parent, pas d'abonnement exigé", () => {
+    // Compte neuf, non couvert, mais un enfant est inscrit à une campagne active → 5
+    expect(computeChildCreationLimit("2026-08-10T00:00:00.000Z", false, 0, true)).toBe(5);
+    // Grand-péré : inchangé (déjà 5 par le plancher)
+    expect(computeChildCreationLimit("2026-07-01T00:00:00.000Z", false, 0, true)).toBe(5);
+    // Couvert + campagne : toujours 5 (plafond absolu)
+    expect(computeChildCreationLimit("2026-08-10T00:00:00.000Z", true, 0, true)).toBe(5);
+  });
+
+  it("sans couverture famille NI campagne : le plancher reste la règle", () => {
+    expect(computeChildCreationLimit("2026-08-10T00:00:00.000Z", false, 0, false)).toBe(1);
   });
 
   it("quota + (quotaOverride) : N = quota TOTAL accordé, pour n'importe quel compte", () => {
@@ -121,14 +191,16 @@ describe("computeAccessPeriodWindow (fenêtre partagée admin/parrain — la pro
 });
 
 describe("getChildAccessStatus (client fake, mêmes tables que le vrai)", () => {
-  const mkDb = (overrides: {
-    children?: any[];
-    periods?: any[];
-    enrollments?: any[];
-    subscriptions?: any[];
-    credits?: any[];
-    user?: any;
-  } = {}) => {
+  const mkDb = (
+    overrides: {
+      children?: any[];
+      periods?: any[];
+      enrollments?: any[];
+      subscriptions?: any[];
+      credits?: any[];
+      user?: any;
+    } = {},
+  ) => {
     const rowsFor = (table: string): any[] => {
       if (table === "child_profiles")
         return (
@@ -153,7 +225,7 @@ describe("getChildAccessStatus (client fake, mêmes tables que le vrai)", () => 
           return {
             order: (col2: string, o: { ascending: boolean }) => {
               const sorted = [...filtered].sort((a: any, b: any) =>
-                o.ascending ? (a[col2] > b[col2] ? 1 : -1) : a[col2] < b[col2] ? 1 : -1
+                o.ascending ? (a[col2] > b[col2] ? 1 : -1) : a[col2] < b[col2] ? 1 : -1,
               );
               const res = { data: sorted, error: null };
               return Object.assign(Promise.resolve(res), {
@@ -172,9 +244,11 @@ describe("getChildAccessStatus (client fake, mêmes tables que le vrai)", () => 
         admin: {
           getUserById: async (id: string) => ({
             data: {
-              user:
-                overrides.user ??
-                { id, created_at: "2026-08-10T00:00:00Z", app_metadata: { quota_override: 0 } },
+              user: overrides.user ?? {
+                id,
+                created_at: "2026-08-10T00:00:00Z",
+                app_metadata: { quota_override: 0 },
+              },
             },
             error: null,
           }),
@@ -193,7 +267,11 @@ describe("getChildAccessStatus (client fake, mêmes tables que le vrai)", () => 
     // "maintenant" réel (contrairement aux tests purs de resolveChildAccessStatus qui
     // injectent now), une date fixe rendrait ce test dépendant de l'horloge du runner.
     const future = new Date(Date.now() + 30 * 86_400_000).toISOString();
-    const status = await getChildAccessStatus(mkDb({ periods: [{ child_id: "c2", ends_at: future }] }) as any, "u1", "c2");
+    const status = await getChildAccessStatus(
+      mkDb({ periods: [{ child_id: "c2", ends_at: future }] }) as any,
+      "u1",
+      "c2",
+    );
     expect(status.kind).toBe("monthly");
   });
 
@@ -216,7 +294,7 @@ describe("getChildAccessStatus (client fake, mêmes tables que le vrai)", () => 
         user: { id: "u1", created_at: "2026-07-01T00:00:00Z", app_metadata: { quota_override: 0 } },
       }) as any,
       "u1",
-      "c6"
+      "c6",
     );
     expect(status.kind).toBe("expired");
   });
@@ -228,7 +306,7 @@ describe("getChildAccessStatus (client fake, mêmes tables que le vrai)", () => 
         subscriptions: [{ id: "s1", user_id: "u1", status: "active", current_period_end: future }],
       }) as any,
       "u1",
-      "c2"
+      "c2",
     );
     expect(status.kind).toBe("permanent");
   });
@@ -240,7 +318,7 @@ describe("getChildAccessStatus (client fake, mêmes tables que le vrai)", () => 
         credits: [{ id: "k1", user_id: "u1", ends_at: future }],
       }) as any,
       "u1",
-      "c2"
+      "c2",
     );
     expect(status.kind).toBe("permanent");
   });
@@ -251,7 +329,7 @@ describe("getChildAccessStatus (client fake, mêmes tables que le vrai)", () => 
         subscriptions: [{ id: "s1", user_id: "u1", status: "cancelled", current_period_end: null }],
       }) as any,
       "u1",
-      "c2"
+      "c2",
     );
     expect(status.kind).toBe("expired");
   });
@@ -263,7 +341,7 @@ describe("getChildAccessStatus (client fake, mêmes tables que le vrai)", () => 
         subscriptions: [{ id: "s1", user_id: "u1", status: "active", current_period_end: future }],
       }) as any,
       "u1",
-      "c1"
+      "c1",
     );
     expect(status.kind).toBe("free");
   });
@@ -288,7 +366,7 @@ describe("getChildAccessStatus (client fake, mêmes tables que le vrai)", () => 
         ],
       }) as any,
       "u1",
-      "c2"
+      "c2",
     );
     expect(status.kind).toBe("permanent");
   });
@@ -308,7 +386,7 @@ describe("getChildAccessStatus (client fake, mêmes tables que le vrai)", () => 
         ],
       }) as any,
       "u1",
-      "c2"
+      "c2",
     );
     expect(status.kind).toBe("expired");
   });
