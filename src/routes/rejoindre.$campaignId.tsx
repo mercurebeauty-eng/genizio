@@ -46,6 +46,12 @@ function JoinCampaignPage() {
   const [isCreatingProfile, setIsCreatingProfile] = useState(false);
   const [isEnrolling, setIsEnrolling] = useState(false);
   const [enrolledChildName, setEnrolledChildName] = useState<string | null>(null);
+  // Enfants du compte déjà inscrits à CETTE campagne (2026-08-14) : ils restaient
+  // listés et sélectionnables, puis échouaient au clic avec « déjà inscrit » — une
+  // famille qui revenait sur le lien/QR ne voyait plus comment ajouter un enfant.
+  // RLS autorise la lecture (policy « Users can view their own child enrollments »),
+  // donc la requête passe côté client comme celle des profils.
+  const [enrolledChildIds, setEnrolledChildIds] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     getCampaignInfoFn({ data: { campaignId } })
@@ -64,12 +70,22 @@ function JoinCampaignPage() {
     if (!userId) return;
     setLoadingChildren(true);
     try {
-      const { data } = await supabase
-        .from("child_profiles")
-        .select("id, name, age")
-        .eq("user_id", userId)
-        .order("name");
-      const list = (data as ChildOption[]) ?? [];
+      const [profilesRes, enrollmentsRes] = await Promise.all([
+        supabase.from("child_profiles").select("id, name, age").eq("user_id", userId).order("name"),
+        // Enfants déjà inscrits à cette campagne — masqués de la liste de choix :
+        // le serveur refuse de toute façon une seconde inscription (enrollChildViaCampaignLink),
+        // autant ne jamais les proposer (2026-08-14).
+        supabase
+          .from("season_enrollments")
+          .select("child_id")
+          .eq("user_id", userId)
+          .eq("campaign_id", campaignId),
+      ]);
+      const enrolled = new Set(
+        ((enrollmentsRes.data ?? []) as { child_id: string }[]).map((e) => e.child_id),
+      );
+      setEnrolledChildIds(enrolled);
+      const list = ((profilesRes.data ?? []) as ChildOption[]).filter((c) => !enrolled.has(c.id));
       setChildren(list);
       if (list.length > 0 && !selectedChildId) setSelectedChildId(list[0].id);
     } catch (err) {
@@ -91,6 +107,9 @@ function JoinCampaignPage() {
       await enrollFn({ data: { campaignId, childId: selectedChildId } });
       const child = children.find((c) => c.id === selectedChildId);
       setEnrolledChildName(child?.name ?? "votre enfant");
+      // L'enfant inscrit ne doit plus apparaître dans la liste de choix : on rafraîchit
+      // l'état immédiatement, pas seulement à la prochaine visite (2026-08-14).
+      await loadChildren();
     } catch (err: any) {
       toast.error(err.message || "Erreur lors de l'inscription.");
     } finally {
@@ -170,6 +189,16 @@ function JoinCampaignPage() {
                 >
                   Voir son profil
                 </Link>
+                {/* Après inscription, l'enfant disparaît de la liste — ce bouton rouvre le
+                    choix pour inscrire un autre enfant sans repasser par le QR/lien (2026-08-14). */}
+                {children.length > 0 && (
+                  <button
+                    onClick={() => setEnrolledChildName(null)}
+                    className="inline-block mt-2 w-full rounded-2xl border border-ink/10 py-3 text-sm font-bold text-ink/70 hover:bg-surface transition-colors cursor-pointer"
+                  >
+                    Inscrire un autre enfant
+                  </button>
+                )}
               </div>
             ) : campaign.isFull ? (
               <p className="text-center text-sm font-medium text-ink/60">
@@ -223,9 +252,20 @@ function JoinCampaignPage() {
               </div>
             ) : children.length === 0 ? (
               <div className="text-center">
-                <p className="text-sm text-ink/70 mb-4">
-                  Créez d'abord le profil de votre enfant pour l'inscrire à ce programme.
-                </p>
+                {enrolledChildIds.size > 0 ? (
+                  <>
+                    <p className="text-sm text-ink/70 mb-1">
+                      Tous vos enfants sont déjà inscrits à ce programme.
+                    </p>
+                    <p className="text-xs text-ink/50 mb-4 font-medium">
+                      Vous pouvez aussi créer un nouveau profil pour inscrire un autre enfant.
+                    </p>
+                  </>
+                ) : (
+                  <p className="text-sm text-ink/70 mb-4">
+                    Créez d'abord le profil de votre enfant pour l'inscrire à ce programme.
+                  </p>
+                )}
                 <button
                   onClick={() => setIsCreatingProfile(true)}
                   className="inline-flex items-center justify-center gap-2 w-full rounded-2xl bg-ink py-3 text-sm font-bold text-white hover:bg-ink/90 transition-colors cursor-pointer"
@@ -235,6 +275,13 @@ function JoinCampaignPage() {
               </div>
             ) : (
               <div>
+                {enrolledChildIds.size > 0 && (
+                  <p className="text-xs font-bold text-emerald-700 bg-emerald-50 rounded-xl px-3 py-2 mb-3">
+                    ✓ {enrolledChildIds.size} enfant{enrolledChildIds.size > 1 ? "s" : ""} déjà
+                    inscrit{enrolledChildIds.size > 1 ? "s" : ""} à ce programme — non listé
+                    {enrolledChildIds.size > 1 ? "s" : ""} ici.
+                  </p>
+                )}
                 <p className="text-xs font-bold uppercase tracking-wide text-ink/50 mb-2">
                   Quel enfant inscrire ?
                 </p>

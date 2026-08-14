@@ -28,7 +28,7 @@ function AdminSupervisorsPage() {
   return (
     <div className="min-h-dvh bg-surface pb-24 text-ink">
       <AppHeader />
-      <main className="mx-auto max-w-4xl px-6 py-10">
+      <main className="mx-auto max-w-6xl px-6 py-10">
         <AdminSupervisorsTab />
       </main>
     </div>

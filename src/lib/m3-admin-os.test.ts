@@ -1,6 +1,11 @@
 import { describe, it, expect } from "vitest";
 import { listCampaignTokensAdmin, type CampaignTokenDetail } from "@/lib/campaigns.functions";
-import { assignSupervisor } from "@/lib/supervisors.functions";
+import {
+  assignSupervisor,
+  assignSupervisorToCampaignAdmin,
+  listSupervisorsAdmin,
+  listCampaignsLightAdmin,
+} from "@/lib/supervisors.functions";
 
 describe("Milestone 3 — R4, R5, R6 Server & UI Logic Tests", () => {
   describe("R4: Export B2B Campaign Tokens", () => {
@@ -100,6 +105,24 @@ describe("Milestone 3 — R4, R5, R6 Server & UI Logic Tests", () => {
     it("exports assignSupervisor server function definition", () => {
       expect(assignSupervisor).toBeDefined();
       expect(typeof assignSupervisor).toBe("function");
+    });
+
+    // Refonte Gestion des Superviseurs (2026-08-14) : les nouvelles fonctions de
+    // l'Admin OS (liste groupée/paginée, assignation directe à une campagne, liste
+    // légère des campagnes) doivent être exposées comme le reste de la milestone.
+    it("exports listSupervisorsAdmin server function definition", () => {
+      expect(listSupervisorsAdmin).toBeDefined();
+      expect(typeof listSupervisorsAdmin).toBe("function");
+    });
+
+    it("exports assignSupervisorToCampaignAdmin server function definition", () => {
+      expect(assignSupervisorToCampaignAdmin).toBeDefined();
+      expect(typeof assignSupervisorToCampaignAdmin).toBe("function");
+    });
+
+    it("exports listCampaignsLightAdmin server function definition", () => {
+      expect(listCampaignsLightAdmin).toBeDefined();
+      expect(typeof listCampaignsLightAdmin).toBe("function");
     });
   });
 });
