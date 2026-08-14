@@ -33,6 +33,8 @@ export function ProfileDialog({
   const { session } = useSession();
   // Compte couvert (abonnement famille actif ou crédit de parrainage) → création possible
   // jusqu'au plafond de 5 — miroir du trigger check_child_profile_quota (20260809120000).
+  // Quota + par compte (2026-08-14) : quota_override dans app_metadata remplace le plafond
+  // de 5 pour ce compte (miroir du trigger, migration 20260814120000).
   const { covered: familyCovered } = useFamilyCoverage();
   // Pré-check local seulement : le trigger check_child_profile_quota fait foi côté base.
   // Décision 2026-08-05 : +1 autorisé pour le premier profil MENSUEL (en cours de mise en
@@ -41,6 +43,7 @@ export function ProfileDialog({
     session?.user?.created_at,
     (session?.user?.app_metadata?.extra_profile_slots as number) ?? 0,
     familyCovered,
+    (session?.user?.app_metadata?.quota_override as number) ?? 0,
   );
 
   const [draft, setDraft] = useState<ProfileDraft>(

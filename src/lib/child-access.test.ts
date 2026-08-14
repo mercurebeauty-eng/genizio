@@ -81,6 +81,22 @@ describe("computeChildCreationLimit (miroir du trigger : plancher + extra, plafo
     expect(computeChildCreationLimit("2026-08-10T00:00:00.000Z", 0, true)).toBe(5);
     expect(computeChildCreationLimit("2026-07-01T00:00:00.000Z", 0, true)).toBe(5);
   });
+
+  it("quota + par compte (quota_override) : le plafond de 5 est remplacé pour CE compte uniquement", () => {
+    // Mercurebeauty : grand-péré (plancher 5) + 10 slots de dépassement + override 15
+    expect(computeChildCreationLimit("2026-07-01T00:00:00.000Z", 10, false, 15)).toBe(15);
+    // Même compte couvert : l'override prime sur le plafond de 5
+    expect(computeChildCreationLimit("2026-07-01T00:00:00.000Z", 10, true, 15)).toBe(15);
+    // Compte neuf avec override : l'override borne aussi (1 + 4 = 5 < 15, on prend le max réel)
+    expect(computeChildCreationLimit("2026-08-10T00:00:00.000Z", 4, false, 15)).toBe(5);
+    // Compte neuf avec override et beaucoup de slots : borné par l'override
+    expect(computeChildCreationLimit("2026-08-10T00:00:00.000Z", 20, false, 15)).toBe(15);
+  });
+
+  it("sans quota_override, le plafond de 5 reste la règle (les autres comptes ne changent pas)", () => {
+    expect(computeChildCreationLimit("2026-08-10T00:00:00.000Z", 20)).toBe(5);
+    expect(computeChildCreationLimit("2026-07-01T00:00:00.000Z", 20, true)).toBe(5);
+  });
 });
 
 describe("computeAccessPeriodWindow (fenêtre partagée admin/parrain — la promesse 'le code vaut N mois')", () => {

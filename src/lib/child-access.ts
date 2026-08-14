@@ -31,14 +31,19 @@ export type ChildAccessStatus =
 // (aucun « +1 » : le trigger check_child_profile_quota — migration 20260809120000 — n'en
 // accorde pas, l'ajouter ici promettait un profil que la base rejetait). Un compte couvert
 // (abonnement famille actif ou crédit de parrainage valide) peut créer jusqu'au plafond.
+// Quota + par compte (2026-08-14) : quotaOverride > 0 remplace le plafond de 5 pour CE
+// compte uniquement — miroir du trigger (migration 20260814120000, clé
+// raw_app_meta_data.quota_override). La règle des autres comptes ne change pas.
 export function computeChildCreationLimit(
   accountCreatedAt: string | null | undefined,
   extraSlots: number | null | undefined,
   familyCovered = false,
+  quotaOverride = 0,
 ): number {
-  if (familyCovered) return MAX_CHILDREN_PER_ACCOUNT;
+  const cap = quotaOverride > 0 ? quotaOverride : MAX_CHILDREN_PER_ACCOUNT;
+  if (familyCovered) return cap;
   const floor = isGrandfatheredAccount(accountCreatedAt) ? 5 : 1;
-  return Math.min(floor + (extraSlots ?? 0), MAX_CHILDREN_PER_ACCOUNT);
+  return Math.min(floor + (extraSlots ?? 0), cap);
 }
 
 // Résolveur pur (testable sans base) : position 1-based de l'enfant parmi les profils

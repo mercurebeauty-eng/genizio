@@ -412,10 +412,13 @@ function DashboardPage() {
                   // grand-pérés), le "+1" autorise la création du premier profil MENSUEL
                   // (en cours de première mise en paiement) — miroir du trigger
                   // check_child_profile_quota (migration 20260805100000).
+                  // Quota + par compte (2026-08-14) : quota_override remplace le plafond
+                  // de 5 pour ce compte (miroir du trigger, migration 20260814120000).
                   const quota = computeChildCreationLimit(
                     session?.user?.created_at,
                     (session?.user?.app_metadata?.extra_profile_slots as number) ?? 0,
                     familyCovered,
+                    (session?.user?.app_metadata?.quota_override as number) ?? 0,
                   );
                   const atQuota = profiles.length >= quota;
 
