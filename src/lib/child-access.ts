@@ -20,7 +20,11 @@ import { z } from "zod";
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { requireAdmin } from "@/integrations/supabase/admin-middleware";
-import { isGrandfatheredAccount, MAX_CHILDREN_PER_ACCOUNT, MAX_QUOTA_OVERRIDE } from "@/lib/child-profile-quota";
+import {
+  isGrandfatheredAccount,
+  MAX_CHILDREN_PER_ACCOUNT,
+  MAX_QUOTA_OVERRIDE,
+} from "@/lib/child-profile-quota";
 import { resolveExtraSlotPrice } from "@/lib/pricing";
 
 export type ChildAccessStatus =
@@ -33,15 +37,17 @@ export type ChildAccessStatus =
 // quota_override = quota TOTAL accordé au compte (0 = règle standard automatique).
 //   • quotaOverride > 0 → le compte peut créer jusqu'à quotaOverride profils (borné 50,
 //     miroir du LEAST(quota_override, 50) du trigger, migration 20260814140000) ;
-//   • sinon → règle standard : plancher grand-péré/neuf, couvert (abonnement famille ou
-//     crédit de parrainage) → plafond 5 (aucun « +1 » : le trigger n'en accorde pas).
+//   • sinon → règle standard : plancher grand-péré/neuf, couvert (abonnement famille,
+//     crédit de parrainage, OU enfant inscrit à une campagne active — migration
+//     20260814160000) → plafond 5 (aucun « +1 » : le trigger n'en accorde pas).
 export function computeChildCreationLimit(
   accountCreatedAt: string | null | undefined,
   familyCovered = false,
   quotaOverride = 0,
+  campaignCovered = false,
 ): number {
   if (quotaOverride > 0) return Math.min(quotaOverride, MAX_QUOTA_OVERRIDE);
-  if (familyCovered) return MAX_CHILDREN_PER_ACCOUNT;
+  if (familyCovered || campaignCovered) return MAX_CHILDREN_PER_ACCOUNT;
   const floor = isGrandfatheredAccount(accountCreatedAt) ? 5 : 1;
   return Math.min(floor, MAX_CHILDREN_PER_ACCOUNT);
 }
@@ -134,9 +140,7 @@ export async function getFamilyCoverage(
   // un abonnement actif dont la période est dépassée (anomalie de sync) ne couvre rien.
   const periodEndTs = sub?.current_period_end ? new Date(sub.current_period_end).getTime() : null;
   const subCovers =
-    (sub?.status === "active" || sub?.status === "past_due") &&
-    !!periodEndTs &&
-    periodEndTs > now;
+    (sub?.status === "active" || sub?.status === "past_due") && !!periodEndTs && periodEndTs > now;
   if (subCovers && sub?.current_period_end) coveredUntil = sub.current_period_end;
 
   const creditEnd = credit?.[0]?.ends_at ?? null;
@@ -175,7 +179,8 @@ export async function getChildAccessStatus(
   if (position === 0) return { kind: "free" };
 
   const { data: userRes, error: userErr } = await db.auth.admin.getUserById(userId);
-  if (userErr || !userRes?.user) throw new Error(`Utilisateur introuvable: ${userErr?.message ?? userId}`);
+  if (userErr || !userRes?.user)
+    throw new Error(`Utilisateur introuvable: ${userErr?.message ?? userId}`);
 
   const floor = isGrandfatheredAccount(userRes.user.created_at) ? 5 : 1;
   // Quota + unifié (2026-08-14) : quota_override = quota TOTAL accordé au compte
@@ -204,7 +209,10 @@ export async function getChildAccessStatus(
     .limit(1);
   if (enrollmentErr) throw new Error(enrollmentErr.message);
 
-  const campaign = enrollment?.[0]?.campaigns as { start_date: string | null; end_date: string | null } | null;
+  const campaign = enrollment?.[0]?.campaigns as {
+    start_date: string | null;
+    end_date: string | null;
+  } | null;
   if (campaign?.start_date && campaign?.end_date) {
     const nowTs = Date.now();
     if (
@@ -220,7 +228,11 @@ export async function getChildAccessStatus(
   // épuiser le crédit) retire la couverture et fait tomber tous ces profils en 'expired' —
   // la coupure est immédiate et calculée, aucune mutation de masse requise.
   const coverage = await getFamilyCoverage(db, userId);
-  if (coverage.coveredUntil && new Date(coverage.coveredUntil).getTime() > Date.now() && position > floor) {
+  if (
+    coverage.coveredUntil &&
+    new Date(coverage.coveredUntil).getTime() > Date.now() &&
+    position > floor
+  ) {
     return { kind: "permanent" };
   }
 
@@ -276,7 +288,10 @@ export const extendChildAccessAdmin = createServerFn({ method: "POST" })
       .limit(1);
     if (getErr) throw new Error(getErr.message);
 
-    const { startsAt, endsAt } = computeAccessPeriodWindow(existing?.[0]?.ends_at ?? null, data.months);
+    const { startsAt, endsAt } = computeAccessPeriodWindow(
+      existing?.[0]?.ends_at ?? null,
+      data.months,
+    );
 
     const { error: insertErr } = await (supabaseAdmin as any).from("child_access_periods").insert({
       child_id: data.childId,

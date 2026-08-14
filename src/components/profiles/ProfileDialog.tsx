@@ -1,7 +1,13 @@
 import { useEffect, useMemo, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { supabase } from "@/integrations/supabase/client";
-import { INTERESTS_BY_TALENT, AVATAR_COLORS, emptyProfileDraft, type ChildProfile, type ProfileDraft } from "./shared";
+import {
+  INTERESTS_BY_TALENT,
+  AVATAR_COLORS,
+  emptyProfileDraft,
+  type ChildProfile,
+  type ProfileDraft,
+} from "./shared";
 import { toast } from "sonner";
 import { useSession } from "@/hooks/use-session";
 import { useFamilyCoverage } from "@/hooks/use-family-coverage";
@@ -31,11 +37,12 @@ export function ProfileDialog({
   onSaved: () => void;
 }) {
   const { session } = useSession();
-  // Compte couvert (abonnement famille actif ou crédit de parrainage) → création possible
-  // jusqu'au plafond de 5 — miroir du trigger check_child_profile_quota (20260809120000).
+  // Compte couvert (abonnement famille actif, crédit de parrainage, ou enfant inscrit à
+  // une campagne active — migration 20260814160000) → création possible jusqu'au plafond
+  // de 5 — miroir du trigger check_child_profile_quota (20260814160000).
   // Quota + unifié (2026-08-14) : quota_override = quota TOTAL accordé au compte
   // (0 = règle standard auto), miroir du trigger (migration 20260814140000).
-  const { covered: familyCovered } = useFamilyCoverage();
+  const { covered: familyCovered, campaignCovered } = useFamilyCoverage();
   // Pré-check local seulement : le trigger check_child_profile_quota fait foi côté base.
   // Décision 2026-08-05 : +1 autorisé pour le premier profil MENSUEL (en cours de mise en
   // paiement) — miroir du trigger (migration 20260805100000).
@@ -43,6 +50,7 @@ export function ProfileDialog({
     session?.user?.created_at,
     familyCovered,
     (session?.user?.app_metadata?.quota_override as number) ?? 0,
+    campaignCovered,
   );
 
   const [draft, setDraft] = useState<ProfileDraft>(
@@ -104,7 +112,7 @@ export function ProfileDialog({
   });
 
   const [step, setStep] = useState<"universes" | "tags">(
-    initial && initial.interests.length > 0 ? "tags" : "universes"
+    initial && initial.interests.length > 0 ? "tags" : "universes",
   );
 
   // Parcours d'onboarding « Qui est cet enfant ? » (2026-08-12, analyse §6-7, §10) :
@@ -142,7 +150,13 @@ export function ProfileDialog({
     setDraft((d) =>
       d.aspirations.some((a) => a.label.toLowerCase() === clean.toLowerCase())
         ? d
-        : { ...d, aspirations: [...d.aspirations, { label: clean, type: "metier" as const, source: "enfant" as const }] }
+        : {
+            ...d,
+            aspirations: [
+              ...d.aspirations,
+              { label: clean, type: "metier" as const, source: "enfant" as const },
+            ],
+          },
     );
     setAspirationInput("");
   };
@@ -157,8 +171,8 @@ export function ProfileDialog({
       .then((hint) => {
         setDraft((d) => ({
           ...d,
-          city: d.city ? d.city : hint.city ?? d.city,
-          country: d.country ? d.country : hint.country ?? d.country,
+          city: d.city ? d.city : (hint.city ?? d.city),
+          country: d.country ? d.country : (hint.country ?? d.country),
         }));
       })
       .catch(() => {});
@@ -223,7 +237,10 @@ export function ProfileDialog({
         talents: initial ? undefined : seedTalentsFromInterests(draft.interests),
       };
       if (initial) {
-        const { error } = await supabase.from("child_profiles").update(payload).eq("id", initial.id);
+        const { error } = await supabase
+          .from("child_profiles")
+          .update(payload)
+          .eq("id", initial.id);
         if (error) {
           setError(error.message);
           toast.error(error.message);
@@ -242,7 +259,11 @@ export function ProfileDialog({
           return;
         }
 
-        const { data: created, error } = await supabase.from("child_profiles").insert(payload).select("id").single();
+        const { data: created, error } = await supabase
+          .from("child_profiles")
+          .insert(payload)
+          .select("id")
+          .single();
         if (error) {
           setError(error.message);
           toast.error(error.message);
@@ -262,18 +283,19 @@ export function ProfileDialog({
       // profil multidimensionnel est déclarée (ou modifiée), on le trace — le parent
       // reste maître des données sensibles de son enfant.
       const contextDeclared =
-        (draft.school_level ||
-          draft.languages.length > 0 ||
-          Object.values(draft.ability_profile).some((v) => v !== "neutre") ||
-          draft.school_relation ||
-          draft.life_context.length > 0 ||
-          draft.aspirations.length > 0);
+        draft.school_level ||
+        draft.languages.length > 0 ||
+        Object.values(draft.ability_profile).some((v) => v !== "neutre") ||
+        draft.school_relation ||
+        draft.life_context.length > 0 ||
+        draft.aspirations.length > 0;
       if (contextDeclared && savedId) {
         await supabase.from("consent_events").insert({
           user_id: userId,
           child_id: savedId,
           event_type: "context_declared",
-          description: "Contexte, aptitudes et aspirations déclarés par le parent (section optionnelle du profil).",
+          description:
+            "Contexte, aptitudes et aspirations déclarés par le parent (section optionnelle du profil).",
         });
       }
       onSaved();
@@ -292,7 +314,10 @@ export function ProfileDialog({
   );
 
   return (
-    <div className="fixed inset-0 z-50 grid place-items-center overflow-y-auto bg-ink/60 p-4" onClick={onClose}>
+    <div
+      className="fixed inset-0 z-50 grid place-items-center overflow-y-auto bg-ink/60 p-4"
+      onClick={onClose}
+    >
       <div
         onClick={(e) => e.stopPropagation()}
         className="max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-3xl border border-ink/10 bg-white p-8 shadow-xl"
@@ -329,409 +354,422 @@ export function ProfileDialog({
 
           {wizardStep === 0 && (
             <div className="space-y-5">
-          <div>
-            <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-ink/60">
-              Prénom
-            </label>
-            <input
-              value={draft.name}
-              onChange={(e) => setDraft({ ...draft, name: e.target.value.slice(0, 40) })}
-              className="w-full rounded-xl border border-ink/10 px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-brand shadow-sm"
-            />
-          </div>
-
-          <div>
-            <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-ink/60">
-              Date de naissance *
-            </label>
-            <div className="flex flex-wrap items-center gap-2">
-              <input
-                type="date"
-                value={draft.birthdate ?? ""}
-                min={minBirthdate}
-                max={maxBirthdate}
-                onChange={(e) => setDraft({ ...draft, birthdate: e.target.value || null })}
-                className="rounded-xl border border-ink/10 px-3 py-2 text-xs outline-none focus:ring-2 focus:ring-brand shadow-sm"
-              />
-              <p className="text-[11px] text-ink/50 leading-snug">
-                L'âge se calcule automatiquement et se met à jour chaque année (5 à 16 ans).
-              </p>
-            </div>
-          </div>
-
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-ink/60">
-                Ville
-              </label>
-              <input
-                value={draft.city ?? ""}
-                onChange={(e) => setDraft({ ...draft, city: e.target.value.slice(0, 60) })}
-                placeholder="Abidjan"
-                className="w-full rounded-xl border border-ink/10 px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-brand shadow-sm"
-              />
-            </div>
-            <div>
-              <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-ink/60">
-                Pays
-              </label>
-              <input
-                value={draft.country ?? ""}
-                onChange={(e) => setDraft({ ...draft, country: e.target.value.slice(0, 60) })}
-                placeholder="Côte d'Ivoire"
-                className="w-full rounded-xl border border-ink/10 px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-brand shadow-sm"
-              />
-            </div>
-          </div>
-
-          <div>
-            <label className="mb-2 block text-xs font-semibold uppercase tracking-wider text-ink/60">
-              Couleur d'avatar
-            </label>
-            <div className="flex gap-3">
-              {AVATAR_COLORS.map((c) => (
-                <button
-                  key={c.key}
-                  type="button"
-                  onClick={() => setDraft({ ...draft, avatar_color: c.key })}
-                  aria-label={c.key}
-                  className={`size-10 rounded-full ${c.cls} transition-all ${
-                    draft.avatar_color === c.key ? "border-2 border-ink shadow-sm" : "opacity-70 border-2 border-transparent"
-                  }`}
+              <div>
+                <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-ink/60">
+                  Prénom
+                </label>
+                <input
+                  value={draft.name}
+                  onChange={(e) => setDraft({ ...draft, name: e.target.value.slice(0, 40) })}
+                  className="w-full rounded-xl border border-ink/10 px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-brand shadow-sm"
                 />
-              ))}
-            </div>
-          </div>
+              </div>
+
+              <div>
+                <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-ink/60">
+                  Date de naissance *
+                </label>
+                <div className="flex flex-wrap items-center gap-2">
+                  <input
+                    type="date"
+                    value={draft.birthdate ?? ""}
+                    min={minBirthdate}
+                    max={maxBirthdate}
+                    onChange={(e) => setDraft({ ...draft, birthdate: e.target.value || null })}
+                    className="rounded-xl border border-ink/10 px-3 py-2 text-xs outline-none focus:ring-2 focus:ring-brand shadow-sm"
+                  />
+                  <p className="text-[11px] text-ink/50 leading-snug">
+                    L'âge se calcule automatiquement et se met à jour chaque année (5 à 16 ans).
+                  </p>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-ink/60">
+                    Ville
+                  </label>
+                  <input
+                    value={draft.city ?? ""}
+                    onChange={(e) => setDraft({ ...draft, city: e.target.value.slice(0, 60) })}
+                    placeholder="Abidjan"
+                    className="w-full rounded-xl border border-ink/10 px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-brand shadow-sm"
+                  />
+                </div>
+                <div>
+                  <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-ink/60">
+                    Pays
+                  </label>
+                  <input
+                    value={draft.country ?? ""}
+                    onChange={(e) => setDraft({ ...draft, country: e.target.value.slice(0, 60) })}
+                    placeholder="Côte d'Ivoire"
+                    className="w-full rounded-xl border border-ink/10 px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-brand shadow-sm"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="mb-2 block text-xs font-semibold uppercase tracking-wider text-ink/60">
+                  Couleur d'avatar
+                </label>
+                <div className="flex gap-3">
+                  {AVATAR_COLORS.map((c) => (
+                    <button
+                      key={c.key}
+                      type="button"
+                      onClick={() => setDraft({ ...draft, avatar_color: c.key })}
+                      aria-label={c.key}
+                      className={`size-10 rounded-full ${c.cls} transition-all ${
+                        draft.avatar_color === c.key
+                          ? "border-2 border-ink shadow-sm"
+                          : "opacity-70 border-2 border-transparent"
+                      }`}
+                    />
+                  ))}
+                </div>
+              </div>
             </div>
           )}
 
           {wizardStep === 1 && (
             <div className="space-y-5">
-          <div>
-            <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-ink/60">
-              Leviers & Moteurs d'engagement
-            </label>
-            <p className="mb-3 text-[11px] text-ink/60 leading-relaxed">
-              Sélectionnez d'abord les univers dominants de votre enfant, puis affinez ses postures d'apprentissage.
-            </p>
-            
-            {/* Navigation par étapes */}
-            <div className="mb-4 flex items-center justify-between rounded-xl bg-ink/5 p-1 text-xs font-bold">
-              <button
-                type="button"
-                onClick={() => setStep("universes")}
-                className={`flex-1 rounded-lg py-1.5 transition-all ${
-                  step === "universes" ? "bg-white text-ink shadow-sm" : "text-ink/60 hover:text-ink"
-                }`}
-              >
-                1. Univers ({selectedTalentKeys.length})
-              </button>
-              <button
-                type="button"
-                onClick={() => setStep("tags")}
-                className={`flex-1 rounded-lg py-1.5 transition-all ${
-                  step === "tags" ? "bg-white text-ink shadow-sm" : "text-ink/60 hover:text-ink"
-                }`}
-              >
-                2. Comportements ({draft.interests.length})
-              </button>
-            </div>
-
-            {step === "universes" ? (
-              <div className="space-y-3">
-                <p className="text-[11px] font-medium text-ink/70">
-                  Choisissez les univers dans lesquels votre enfant s'épanouit le plus :
+              <div>
+                <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-ink/60">
+                  Leviers & Moteurs d'engagement
+                </label>
+                <p className="mb-3 text-[11px] text-ink/60 leading-relaxed">
+                  Sélectionnez d'abord les univers dominants de votre enfant, puis affinez ses
+                  postures d'apprentissage.
                 </p>
-                <div className="grid grid-cols-2 gap-2">
-                  {Object.entries(INTERESTS_BY_TALENT).map(([key, group]) => {
-                    const selected = selectedTalentKeys.includes(key);
-                    return (
-                      <button
-                        key={key}
-                        type="button"
-                        onClick={() => {
-                          if (selected) {
-                            setSelectedTalentKeys((prev) => prev.filter((k) => k !== key));
-                            // Purge tags from deselected universe
-                            setDraft((d) => ({
-                              ...d,
-                              interests: d.interests.filter((tag) => !group.tags.includes(tag)),
-                            }));
-                          } else {
-                            setSelectedTalentKeys((prev) => [...prev, key]);
-                          }
-                        }}
-                        className={
-                          "flex flex-col items-start rounded-2xl p-3 text-left border-2 transition-all " +
-                          (selected
-                            ? "bg-brand/10 border-brand text-brand"
-                            : "bg-white border-ink/10 text-ink/70 hover:border-ink/30")
-                        }
-                      >
-                        <span className="text-xs font-extrabold">{group.label}</span>
-                        <span className="mt-1 text-[10px] opacity-75">{group.tags.length} postures</span>
-                      </button>
-                    );
-                  })}
-                </div>
-                {selectedTalentKeys.length > 0 && (
+
+                {/* Navigation par étapes */}
+                <div className="mb-4 flex items-center justify-between rounded-xl bg-ink/5 p-1 text-xs font-bold">
+                  <button
+                    type="button"
+                    onClick={() => setStep("universes")}
+                    className={`flex-1 rounded-lg py-1.5 transition-all ${
+                      step === "universes"
+                        ? "bg-white text-ink shadow-sm"
+                        : "text-ink/60 hover:text-ink"
+                    }`}
+                  >
+                    1. Univers ({selectedTalentKeys.length})
+                  </button>
                   <button
                     type="button"
                     onClick={() => setStep("tags")}
-                    className="mt-3 w-full rounded-xl bg-ink p-2.5 text-center text-xs font-bold text-white transition-all hover:bg-ink/90"
+                    className={`flex-1 rounded-lg py-1.5 transition-all ${
+                      step === "tags" ? "bg-white text-ink shadow-sm" : "text-ink/60 hover:text-ink"
+                    }`}
                   >
-                    Suivant : Affiner les comportements ({selectedTalentKeys.length} univers) →
+                    2. Comportements ({draft.interests.length})
                   </button>
-                )}
-              </div>
-            ) : (
-              <div className="space-y-4">
-                {selectedTalentKeys.length === 0 ? (
-                  <div className="rounded-xl border border-dashed border-ink/20 p-4 text-center">
-                    <p className="text-xs text-ink/60">Aucun univers sélectionné à l'étape 1.</p>
-                    <button
-                      type="button"
-                      onClick={() => setStep("universes")}
-                      className="mt-2 text-xs font-bold text-brand hover:underline"
-                    >
-                      ← Sélectionner des univers
-                    </button>
+                </div>
+
+                {step === "universes" ? (
+                  <div className="space-y-3">
+                    <p className="text-[11px] font-medium text-ink/70">
+                      Choisissez les univers dans lesquels votre enfant s'épanouit le plus :
+                    </p>
+                    <div className="grid grid-cols-2 gap-2">
+                      {Object.entries(INTERESTS_BY_TALENT).map(([key, group]) => {
+                        const selected = selectedTalentKeys.includes(key);
+                        return (
+                          <button
+                            key={key}
+                            type="button"
+                            onClick={() => {
+                              if (selected) {
+                                setSelectedTalentKeys((prev) => prev.filter((k) => k !== key));
+                                // Purge tags from deselected universe
+                                setDraft((d) => ({
+                                  ...d,
+                                  interests: d.interests.filter((tag) => !group.tags.includes(tag)),
+                                }));
+                              } else {
+                                setSelectedTalentKeys((prev) => [...prev, key]);
+                              }
+                            }}
+                            className={
+                              "flex flex-col items-start rounded-2xl p-3 text-left border-2 transition-all " +
+                              (selected
+                                ? "bg-brand/10 border-brand text-brand"
+                                : "bg-white border-ink/10 text-ink/70 hover:border-ink/30")
+                            }
+                          >
+                            <span className="text-xs font-extrabold">{group.label}</span>
+                            <span className="mt-1 text-[10px] opacity-75">
+                              {group.tags.length} postures
+                            </span>
+                          </button>
+                        );
+                      })}
+                    </div>
+                    {selectedTalentKeys.length > 0 && (
+                      <button
+                        type="button"
+                        onClick={() => setStep("tags")}
+                        className="mt-3 w-full rounded-xl bg-ink p-2.5 text-center text-xs font-bold text-white transition-all hover:bg-ink/90"
+                      >
+                        Suivant : Affiner les comportements ({selectedTalentKeys.length} univers) →
+                      </button>
+                    )}
                   </div>
                 ) : (
-                  Object.entries(INTERESTS_BY_TALENT)
-                    .filter(([key]) => selectedTalentKeys.includes(key))
-                    .map(([key, group]) => (
-                      <div key={key} className="rounded-2xl border border-ink/10 p-3 bg-surface/50">
-                        <p className="mb-2 text-[10px] font-extrabold uppercase tracking-widest text-brand">
-                          {group.label}
+                  <div className="space-y-4">
+                    {selectedTalentKeys.length === 0 ? (
+                      <div className="rounded-xl border border-dashed border-ink/20 p-4 text-center">
+                        <p className="text-xs text-ink/60">
+                          Aucun univers sélectionné à l'étape 1.
                         </p>
-                        <div className="flex flex-wrap gap-1.5">
-                          {group.tags.map((i) => {
-                            const on = draft.interests.includes(i);
-                            return (
-                              <button
-                                key={i}
-                                type="button"
-                                onClick={() => toggle(i)}
-                                className={
-                                  "rounded-full px-3 py-1 text-xs font-bold border-2 transition-all " +
-                                  (on
-                                    ? "bg-brand border-ink text-white"
-                                    : "bg-white border-ink/20 text-ink/70 hover:border-ink")
-                                }
-                              >
-                                {i}
-                              </button>
-                            );
-                          })}
-                        </div>
+                        <button
+                          type="button"
+                          onClick={() => setStep("universes")}
+                          className="mt-2 text-xs font-bold text-brand hover:underline"
+                        >
+                          ← Sélectionner des univers
+                        </button>
                       </div>
-                    ))
+                    ) : (
+                      Object.entries(INTERESTS_BY_TALENT)
+                        .filter(([key]) => selectedTalentKeys.includes(key))
+                        .map(([key, group]) => (
+                          <div
+                            key={key}
+                            className="rounded-2xl border border-ink/10 p-3 bg-surface/50"
+                          >
+                            <p className="mb-2 text-[10px] font-extrabold uppercase tracking-widest text-brand">
+                              {group.label}
+                            </p>
+                            <div className="flex flex-wrap gap-1.5">
+                              {group.tags.map((i) => {
+                                const on = draft.interests.includes(i);
+                                return (
+                                  <button
+                                    key={i}
+                                    type="button"
+                                    onClick={() => toggle(i)}
+                                    className={
+                                      "rounded-full px-3 py-1 text-xs font-bold border-2 transition-all " +
+                                      (on
+                                        ? "bg-brand border-ink text-white"
+                                        : "bg-white border-ink/20 text-ink/70 hover:border-ink")
+                                    }
+                                  >
+                                    {i}
+                                  </button>
+                                );
+                              })}
+                            </div>
+                          </div>
+                        ))
+                    )}
+                  </div>
                 )}
               </div>
-            )}
-          </div>
             </div>
           )}
 
           {wizardStep === 2 && (
             <div className="space-y-5">
-          {/* Étape « À quel enfant avons-nous affaire ? » (2026-08-12, analyse §6-7) */}
-          <div>
-            <p className="mb-1 text-xs font-black uppercase tracking-widest text-ink/70">
-              À quel enfant avons-nous affaire ?
-            </p>
-            <p className="text-[11px] text-ink/60 leading-relaxed">
-              Contexte de parcours, handicaps, points forts & difficultés, niveau scolaire,
-              langues. Tout est facultatif, modifiable à tout moment, et reste privé — ces
-              informations servent uniquement à personnaliser les activités.
-            </p>
-            <div className="mt-3 space-y-4 rounded-2xl border border-ink/10 bg-white p-4 shadow-sm">
+              {/* Étape « À quel enfant avons-nous affaire ? » (2026-08-12, analyse §6-7) */}
+              <div>
+                <p className="mb-1 text-xs font-black uppercase tracking-widest text-ink/70">
+                  À quel enfant avons-nous affaire ?
+                </p>
+                <p className="text-[11px] text-ink/60 leading-relaxed">
+                  Contexte de parcours, handicaps, points forts & difficultés, niveau scolaire,
+                  langues. Tout est facultatif, modifiable à tout moment, et reste privé — ces
+                  informations servent uniquement à personnaliser les activités.
+                </p>
+                <div className="mt-3 space-y-4 rounded-2xl border border-ink/10 bg-white p-4 shadow-sm">
+                  {/* Niveau scolaire */}
+                  <div>
+                    <label className="mb-1 block text-[10px] font-black uppercase tracking-widest text-ink/60">
+                      Niveau scolaire
+                    </label>
+                    <select
+                      value={draft.school_level ?? ""}
+                      onChange={(e) => setDraft({ ...draft, school_level: e.target.value || null })}
+                      className="w-full rounded-xl border border-ink/10 px-3 py-2.5 text-sm outline-none focus:ring-2 focus:ring-brand"
+                    >
+                      <option value="">Non renseigné</option>
+                      {Object.entries(SCHOOL_LEVELS).map(([k, label]) => (
+                        <option key={k} value={k}>
+                          {label}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
 
-                {/* Niveau scolaire */}
-                <div>
-                  <label className="mb-1 block text-[10px] font-black uppercase tracking-widest text-ink/60">
-                    Niveau scolaire
-                  </label>
-                  <select
-                    value={draft.school_level ?? ""}
-                    onChange={(e) => setDraft({ ...draft, school_level: e.target.value || null })}
-                    className="w-full rounded-xl border border-ink/10 px-3 py-2.5 text-sm outline-none focus:ring-2 focus:ring-brand"
-                  >
-                    <option value="">Non renseigné</option>
-                    {Object.entries(SCHOOL_LEVELS).map(([k, label]) => (
-                      <option key={k} value={k}>
-                        {label}
-                      </option>
-                    ))}
-                  </select>
-                </div>
+                  {/* Langues */}
+                  <div>
+                    <label className="mb-1 block text-[10px] font-black uppercase tracking-widest text-ink/60">
+                      Langues parlées à la maison
+                    </label>
+                    <input
+                      value={languagesText}
+                      onChange={(e) => setLanguagesText(e.target.value)}
+                      placeholder="ex. français, wolof, dioula"
+                      className="w-full rounded-xl border border-ink/10 px-3 py-2.5 text-sm outline-none focus:ring-2 focus:ring-brand"
+                    />
+                  </div>
 
-                {/* Langues */}
-                <div>
-                  <label className="mb-1 block text-[10px] font-black uppercase tracking-widest text-ink/60">
-                    Langues parlées à la maison
-                  </label>
-                  <input
-                    value={languagesText}
-                    onChange={(e) => setLanguagesText(e.target.value)}
-                    placeholder="ex. français, wolof, dioula"
-                    className="w-full rounded-xl border border-ink/10 px-3 py-2.5 text-sm outline-none focus:ring-2 focus:ring-brand"
-                  />
-                </div>
-
-                {/* Facilités / difficultés par axe */}
-                <div>
-                  <p className="mb-1 text-[10px] font-black uppercase tracking-widest text-ink/60">
-                    Points forts & difficultés
-                  </p>
-                  <p className="mb-2 text-[11px] text-ink/50">
-                    Touchez un axe pour le classer — une difficulté est un axe d'entraînement,
-                    jamais une étiquette.
-                  </p>
-                  <div className="space-y-3">
-                    <div>
-                      <p className="mb-1.5 text-[11px] font-bold text-emerald-700">✓ Facilités</p>
-                      <div className="flex flex-wrap gap-1.5">
-                        {Object.entries(ABILITY_AXES).map(([k, label]) => {
-                          const on = draft.ability_profile[k] === "facile";
-                          return (
-                            <button
-                              key={k}
-                              type="button"
-                              onClick={() => setAbility(k, on ? "neutre" : "facile")}
-                              className={
-                                "rounded-full px-3 py-1 text-[11px] font-bold border-2 transition-all " +
-                                (on
-                                  ? "bg-emerald-100 border-emerald-500 text-emerald-800"
-                                  : "bg-white border-ink/15 text-ink/60 hover:border-ink/40")
-                              }
-                            >
-                              {label}
-                            </button>
-                          );
-                        })}
+                  {/* Facilités / difficultés par axe */}
+                  <div>
+                    <p className="mb-1 text-[10px] font-black uppercase tracking-widest text-ink/60">
+                      Points forts & difficultés
+                    </p>
+                    <p className="mb-2 text-[11px] text-ink/50">
+                      Touchez un axe pour le classer — une difficulté est un axe d'entraînement,
+                      jamais une étiquette.
+                    </p>
+                    <div className="space-y-3">
+                      <div>
+                        <p className="mb-1.5 text-[11px] font-bold text-emerald-700">✓ Facilités</p>
+                        <div className="flex flex-wrap gap-1.5">
+                          {Object.entries(ABILITY_AXES).map(([k, label]) => {
+                            const on = draft.ability_profile[k] === "facile";
+                            return (
+                              <button
+                                key={k}
+                                type="button"
+                                onClick={() => setAbility(k, on ? "neutre" : "facile")}
+                                className={
+                                  "rounded-full px-3 py-1 text-[11px] font-bold border-2 transition-all " +
+                                  (on
+                                    ? "bg-emerald-100 border-emerald-500 text-emerald-800"
+                                    : "bg-white border-ink/15 text-ink/60 hover:border-ink/40")
+                                }
+                              >
+                                {label}
+                              </button>
+                            );
+                          })}
+                        </div>
+                      </div>
+                      <div>
+                        <p className="mb-1.5 text-[11px] font-bold text-amber-700">
+                          ● Difficultés à stimuler
+                        </p>
+                        <div className="flex flex-wrap gap-1.5">
+                          {Object.entries(ABILITY_AXES).map(([k, label]) => {
+                            const on = draft.ability_profile[k] === "difficulte";
+                            return (
+                              <button
+                                key={k}
+                                type="button"
+                                onClick={() => setAbility(k, on ? "neutre" : "difficulte")}
+                                className={
+                                  "rounded-full px-3 py-1 text-[11px] font-bold border-2 transition-all " +
+                                  (on
+                                    ? "bg-amber-100 border-amber-500 text-amber-800"
+                                    : "bg-white border-ink/15 text-ink/60 hover:border-ink/40")
+                                }
+                              >
+                                {label}
+                              </button>
+                            );
+                          })}
+                        </div>
                       </div>
                     </div>
-                    <div>
-                      <p className="mb-1.5 text-[11px] font-bold text-amber-700">● Difficultés à stimuler</p>
-                      <div className="flex flex-wrap gap-1.5">
-                        {Object.entries(ABILITY_AXES).map(([k, label]) => {
-                          const on = draft.ability_profile[k] === "difficulte";
-                          return (
-                            <button
-                              key={k}
-                              type="button"
-                              onClick={() => setAbility(k, on ? "neutre" : "difficulte")}
-                              className={
-                                "rounded-full px-3 py-1 text-[11px] font-bold border-2 transition-all " +
-                                (on
-                                  ? "bg-amber-100 border-amber-500 text-amber-800"
-                                  : "bg-white border-ink/15 text-ink/60 hover:border-ink/40")
-                              }
-                            >
-                              {label}
-                            </button>
-                          );
-                        })}
-                      </div>
+                  </div>
+
+                  {/* Rapport à l'école */}
+                  <div>
+                    <label className="mb-1 block text-[10px] font-black uppercase tracking-widest text-ink/60">
+                      Rapport à l'école
+                    </label>
+                    <div className="flex flex-wrap gap-1.5">
+                      {Object.entries(SCHOOL_RELATIONS).map(([k, label]) => {
+                        const on = draft.school_relation === k;
+                        return (
+                          <button
+                            key={k}
+                            type="button"
+                            onClick={() => setDraft({ ...draft, school_relation: on ? null : k })}
+                            className={
+                              "rounded-full px-3 py-1 text-[11px] font-bold border-2 transition-all " +
+                              (on
+                                ? "bg-brand text-white border-ink"
+                                : "bg-white border-ink/15 text-ink/60 hover:border-ink/40")
+                            }
+                          >
+                            {label}
+                          </button>
+                        );
+                      })}
                     </div>
                   </div>
-                </div>
 
-                {/* Rapport à l'école */}
-                <div>
-                  <label className="mb-1 block text-[10px] font-black uppercase tracking-widest text-ink/60">
-                    Rapport à l'école
-                  </label>
-                  <div className="flex flex-wrap gap-1.5">
-                    {Object.entries(SCHOOL_RELATIONS).map(([k, label]) => {
-                      const on = draft.school_relation === k;
-                      return (
-                        <button
-                          key={k}
-                          type="button"
-                          onClick={() => setDraft({ ...draft, school_relation: on ? null : k })}
-                          className={
-                            "rounded-full px-3 py-1 text-[11px] font-bold border-2 transition-all " +
-                            (on
-                              ? "bg-brand text-white border-ink"
-                              : "bg-white border-ink/15 text-ink/60 hover:border-ink/40")
-                          }
-                        >
-                          {label}
-                        </button>
-                      );
-                    })}
+                  {/* Contexte de parcours (préréglages uniquement) */}
+                  <div>
+                    <label className="mb-1 block text-[10px] font-black uppercase tracking-widest text-ink/60">
+                      Contexte de parcours
+                    </label>
+                    <div className="flex flex-wrap gap-1.5">
+                      {Object.entries(LIFE_CONTEXT_OPTIONS).map(([k, label]) => {
+                        const on = draft.life_context.includes(k);
+                        return (
+                          <button
+                            key={k}
+                            type="button"
+                            onClick={() =>
+                              setDraft((d) => ({
+                                ...d,
+                                life_context: on
+                                  ? d.life_context.filter((x) => x !== k)
+                                  : [...d.life_context, k],
+                              }))
+                            }
+                            className={
+                              "rounded-full px-3 py-1 text-[11px] font-bold border-2 transition-all " +
+                              (on
+                                ? "bg-ink text-white border-ink"
+                                : "bg-white border-ink/15 text-ink/60 hover:border-ink/40")
+                            }
+                          >
+                            {label}
+                          </button>
+                        );
+                      })}
+                    </div>
                   </div>
-                </div>
 
-                {/* Contexte de parcours (préréglages uniquement) */}
-                <div>
-                  <label className="mb-1 block text-[10px] font-black uppercase tracking-widest text-ink/60">
-                    Contexte de parcours
-                  </label>
-                  <div className="flex flex-wrap gap-1.5">
-                    {Object.entries(LIFE_CONTEXT_OPTIONS).map(([k, label]) => {
-                      const on = draft.life_context.includes(k);
-                      return (
-                        <button
-                          key={k}
-                          type="button"
-                          onClick={() =>
-                            setDraft((d) => ({
-                              ...d,
-                              life_context: on
-                                ? d.life_context.filter((x) => x !== k)
-                                : [...d.life_context, k],
-                            }))
-                          }
-                          className={
-                            "rounded-full px-3 py-1 text-[11px] font-bold border-2 transition-all " +
-                            (on
-                              ? "bg-ink text-white border-ink"
-                              : "bg-white border-ink/15 text-ink/60 hover:border-ink/40")
-                          }
-                        >
-                          {label}
-                        </button>
-                      );
-                    })}
+                  {/* Pression temporelle */}
+                  <div>
+                    <label className="mb-1 block text-[10px] font-black uppercase tracking-widest text-ink/60">
+                      Gestion du temps
+                    </label>
+                    <div className="flex gap-1.5">
+                      {(Object.keys(TIME_PRESSURE_LABELS) as TimePressure[]).map((tp) => {
+                        const on = draft.time_pressure === tp;
+                        return (
+                          <button
+                            key={tp}
+                            type="button"
+                            onClick={() => setDraft({ ...draft, time_pressure: tp })}
+                            className={
+                              "flex-1 rounded-xl border px-2 py-2 text-[11px] font-bold transition-all " +
+                              (on
+                                ? "border-brand bg-brand/10 text-brand"
+                                : "border-ink/10 bg-white text-ink/60 hover:border-ink/30")
+                            }
+                          >
+                            {TIME_PRESSURE_LABELS[tp]}
+                          </button>
+                        );
+                      })}
+                    </div>
+                    <p className="mt-1.5 text-[10px] text-ink/50">
+                      Temps standard : chrono doux. Temps généreux : ×1,5. Sans chronomètre : aucune
+                      contrainte temporelle.
+                    </p>
                   </div>
-                </div>
-
-                {/* Pression temporelle */}
-                <div>
-                  <label className="mb-1 block text-[10px] font-black uppercase tracking-widest text-ink/60">
-                    Gestion du temps
-                  </label>
-                  <div className="flex gap-1.5">
-                    {(Object.keys(TIME_PRESSURE_LABELS) as TimePressure[]).map((tp) => {
-                      const on = draft.time_pressure === tp;
-                      return (
-                        <button
-                          key={tp}
-                          type="button"
-                          onClick={() => setDraft({ ...draft, time_pressure: tp })}
-                          className={
-                            "flex-1 rounded-xl border px-2 py-2 text-[11px] font-bold transition-all " +
-                            (on
-                              ? "border-brand bg-brand/10 text-brand"
-                              : "border-ink/10 bg-white text-ink/60 hover:border-ink/30")
-                          }
-                        >
-                          {TIME_PRESSURE_LABELS[tp]}
-                        </button>
-                      );
-                    })}
-                  </div>
-                  <p className="mt-1.5 text-[10px] text-ink/50">
-                    Temps standard : chrono doux. Temps généreux : ×1,5. Sans chronomètre : aucune
-                    contrainte temporelle.
-                  </p>
                 </div>
               </div>
-            </div>
             </div>
           )}
 
@@ -755,7 +793,10 @@ export function ProfileDialog({
                         type="button"
                         onClick={() =>
                           on
-                            ? setDraft((d) => ({ ...d, aspirations: d.aspirations.filter((a) => a.label !== s) }))
+                            ? setDraft((d) => ({
+                                ...d,
+                                aspirations: d.aspirations.filter((a) => a.label !== s),
+                              }))
                             : addAspiration(s)
                         }
                         className={
@@ -802,7 +843,10 @@ export function ProfileDialog({
                         <button
                           type="button"
                           onClick={() =>
-                            setDraft((d) => ({ ...d, aspirations: d.aspirations.filter((x) => x.label !== a.label) }))
+                            setDraft((d) => ({
+                              ...d,
+                              aspirations: d.aspirations.filter((x) => x.label !== a.label),
+                            }))
                           }
                           className="text-sky-600 hover:text-sky-900"
                           aria-label={`Retirer ${a.label}`}

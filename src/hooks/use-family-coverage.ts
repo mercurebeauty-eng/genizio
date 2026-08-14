@@ -5,6 +5,10 @@ import { getFamilySubscriptionStatus } from "@/lib/subscriptions.functions";
 export type FamilyCoverageInfo = {
   /** La famille est couverte (abonnement actif/past_due ou crédit de parrainage valide). */
   covered: boolean;
+  /** Couverture CAMPAGNE (2026-08-14) : un enfant du compte est inscrit à une campagne
+   *  active → l'institution soutient la famille, la création de profils n'exige pas
+   *  d'abonnement (miroir du trigger check_child_profile_quota, migration 20260814160000). */
+  campaignCovered: boolean;
   /** Date maximale de couverture effective, si couverte. */
   coveredUntil: string | null;
   loading: boolean;
@@ -20,6 +24,7 @@ export type FamilyCoverageInfo = {
 export function useFamilyCoverage(): FamilyCoverageInfo {
   const getStatusFn = useServerFn(getFamilySubscriptionStatus);
   const [covered, setCovered] = useState(false);
+  const [campaignCovered, setCampaignCovered] = useState(false);
   const [coveredUntil, setCoveredUntil] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -31,8 +36,7 @@ export function useFamilyCoverage(): FamilyCoverageInfo {
         (res.status === "active" || res.status === "past_due") &&
         !!res.currentPeriodEnd &&
         new Date(res.currentPeriodEnd).getTime() > now;
-      const creditCovers =
-        !!res.sponsoredUntil && new Date(res.sponsoredUntil).getTime() > now;
+      const creditCovers = !!res.sponsoredUntil && new Date(res.sponsoredUntil).getTime() > now;
 
       const endTimes = [
         subCovers ? new Date(res.currentPeriodEnd as string).getTime() : null,
@@ -40,11 +44,13 @@ export function useFamilyCoverage(): FamilyCoverageInfo {
       ].filter((t): t is number => t !== null);
 
       setCovered(endTimes.length > 0);
+      setCampaignCovered(!!res.campaignCovered);
       setCoveredUntil(endTimes.length > 0 ? new Date(Math.max(...endTimes)).toISOString() : null);
     } catch {
       // Tables d'abonnement absentes (migration pas encore appliquée) ou session absente :
       // défaut = non couverte, le comportement legacy prévaut.
       setCovered(false);
+      setCampaignCovered(false);
       setCoveredUntil(null);
     } finally {
       setLoading(false);
@@ -55,5 +61,5 @@ export function useFamilyCoverage(): FamilyCoverageInfo {
     refresh();
   }, [refresh]);
 
-  return { covered, coveredUntil, loading, refresh };
+  return { covered, campaignCovered, coveredUntil, loading, refresh };
 }

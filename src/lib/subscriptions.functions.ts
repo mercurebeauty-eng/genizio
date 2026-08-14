@@ -188,9 +188,7 @@ export async function activateFamilySubscription(
   ) => {
     void (async () => {
       try {
-        const { sendSubscriptionConfirmationEmail } = await import(
-          "@/lib/payment-email.functions"
-        );
+        const { sendSubscriptionConfirmationEmail } = await import("@/lib/payment-email.functions");
         await sendSubscriptionConfirmationEmail(supabaseAdmin, {
           userId,
           reference: params.reference,
@@ -290,6 +288,11 @@ export type FamilySubscriptionStatus = {
   promoEndsAt: string | null;
   currentPeriodEnd: string | null;
   sponsoredUntil: string | null;
+  /** Couverture CAMPAGNE (2026-08-14) : un enfant du compte est inscrit à une campagne
+   *  active (fenêtre fixe en cours) → la famille est soutenue par l'institution, elle
+   *  peut créer plusieurs profils sans abonnement. Miroir du trigger
+   *  check_child_profile_quota (migration 20260814160000). */
+  campaignCovered: boolean;
   childrenCount: number;
 };
 
@@ -317,6 +320,23 @@ export const getFamilySubscriptionStatus = createServerFn({ method: "GET" })
       .limit(1);
     if (credErr) throw new Error(credErr.message);
 
+    // Couverture CAMPAGNE (2026-08-14) : un enfant du compte inscrit à une campagne
+    // active (fenêtre fixe en cours) — l'institution finance la famille, la création de
+    // profils ne doit pas exiger d'abonnement. Même fenêtre que getChildAccessStatus.
+    const { data: campaignEnrollments, error: campErr } = await supabaseAdmin
+      .from("season_enrollments")
+      .select("campaign_id, campaigns(start_date, end_date)")
+      .eq("user_id", userId)
+      .not("campaign_id", "is", null);
+    if (campErr) throw new Error(campErr.message);
+
+    const now = Date.now();
+    const campaignCovered = ((campaignEnrollments ?? []) as any[]).some((e) => {
+      const c = e.campaigns as { start_date: string | null; end_date: string | null } | null;
+      if (!c?.start_date || !c?.end_date) return false;
+      return new Date(c.start_date).getTime() <= now && now <= new Date(c.end_date).getTime();
+    });
+
     const { count: childrenCount } = await supabaseAdmin
       .from("child_profiles")
       .select("id", { count: "exact", head: true })
@@ -336,7 +356,7 @@ export const getFamilySubscriptionStatus = createServerFn({ method: "GET" })
       promoEndsAt: rate.promoEndsAt ? rate.promoEndsAt.toISOString() : null,
       currentPeriodEnd: sub?.current_period_end ?? null,
       sponsoredUntil: credit?.[0]?.ends_at ?? null,
-      childrenCount: childrenCount ?? 0,
+      campaignCovered,
     } satisfies FamilySubscriptionStatus;
   });
 
