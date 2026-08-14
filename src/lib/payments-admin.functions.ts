@@ -23,7 +23,8 @@ const PAYMENT_INTENT_LABELS: Record<string, string> = {
   order: "Commande",
   child_access: "Accès enfant",
   passport: "Passeport",
-  extra_slots: "Slot supplémentaire",
+  extra_slots: "Palier supplémentaire", // V4, décision 5 : +5 enfants par palier
+  accompaniment_pack: "Pack Accompagnement",
   sponsorship: "Parrainage",
   campaign_b2b: "Campagne B2B",
 };
