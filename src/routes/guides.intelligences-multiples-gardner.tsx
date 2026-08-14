@@ -18,12 +18,17 @@ const FAQ = [
   {
     question: "La théorie des intelligences multiples est-elle scientifiquement validée ?",
     answer:
-      "Elle est largement diffusée dans le monde éducatif mais reste débattue dans la recherche en psychologie cognitive. Les critiques principales portent sur l'absence de preuves neurologiques d'intelligences réellement indépendantes, et sur le fait que les différentes aptitudes mesurées tendent à corréler entre elles. Gardner lui-même a mis en garde contre deux dérives : confondre ses intelligences avec des « styles d'apprentissage » (une notion, elle, contredite par les études), et étiqueter durablement un enfant. Utilisée comme grille d'observation pour élargir le regard, la théorie est utile ; utilisée comme test de classement, elle ne l'est pas.",
+      "Elle est largement diffusée dans le monde éducatif mais reste débattue dans la recherche en psychologie cognitive. Les critiques principales portent sur l'absence de preuves neurologiques d'intelligences réellement indépendantes, et sur le fait que les différentes aptitudes mesurées tendent à corréler entre elles. Utilisée comme grille d'observation pour élargir le regard, la théorie est utile ; utilisée comme test de classement, elle ne l'est pas. Ce point est développé dans la section « Les limites » de ce guide.",
   },
   {
     question: "Comment identifier l'intelligence dominante de mon enfant ?",
     answer:
       "La question est mal posée, et Gardner le soulignait lui-même : chaque personne combine plusieurs intelligences, et ces combinaisons évoluent avec l'âge et les occasions rencontrées. Ce qui est utile n'est pas de désigner une dominante, mais de repérer sur plusieurs mois vers quelles activités l'enfant revient spontanément, dans lesquelles il persévère malgré la difficulté, et lesquelles il n'a jamais eu l'occasion d'essayer. Cette troisième catégorie est souvent la plus instructive : on ne peut pas repérer un talent dans un domaine auquel l'enfant n'a jamais été exposé.",
+  },
+  {
+    question: "Mon enfant est-il surdoué ou précoce si toutes ses intelligences sont fortes ?",
+    answer:
+      "Pas forcément. La théorie des intelligences multiples ne dit rien du haut potentiel intellectuel : un enfant surdoué ou précoce se repère à d'autres signes (avance dans les apprentissages, questionnement intense, sensibilité particulière) et se diagnostique par un bilan spécialisé avec un professionnel. Les deux démarches ne se recouvrent pas : observer les forces de son enfant à travers les intelligences multiples, et s'interroger sur un éventuel haut potentiel, sont deux questions différentes — la première est accessible à tous les parents, la seconde demande un professionnel.",
   },
   {
     question: "Comment Génizio utilise-t-il la théorie de Gardner ?",
@@ -47,9 +52,9 @@ const INTELLIGENCES = [
 export const Route = createFileRoute("/guides/intelligences-multiples-gardner")({
   head: () => {
     const meta = pageMeta({
-      title: "Les 9 intelligences multiples de Gardner, expliquées",
+      title: "Les 9 formes d'intelligence : identifier les talents de votre enfant",
       description:
-        "Les 9 formes d'intelligence, ce que la théorie de Gardner dit vraiment, ses limites reconnues, et comment s'en servir sans étiqueter son enfant.",
+        "Comment repérer les talents de votre enfant avec les 9 formes d'intelligence : signes concrets à observer à la maison, liens avec le surdouement, sans étiqueter.",
       path: PATH,
       image: "/guides/og-gardner.jpg",
       type: "article",
@@ -68,18 +73,18 @@ export const Route = createFileRoute("/guides/intelligences-multiples-gardner")(
         jsonLdScript({
           "@context": "https://schema.org",
           "@type": "Article",
-          headline: "Les intelligences multiples de Howard Gardner, expliquées simplement",
+          headline: "Les 9 formes d'intelligence : comment identifier les talents de votre enfant",
           inLanguage: "fr-FR",
           mainEntityOfPage: absoluteUrl(PATH),
           image: absoluteUrl("/guides/og-gardner.jpg"),
           publisher: { "@id": `${SITE_URL}/#organization` },
           author: { "@type": "Organization", name: "Génizio" },
           datePublished: "2026-07-27",
-          dateModified: "2026-08-08",
+          dateModified: "2026-08-14",
           about: [
             { "@type": "Thing", name: "Théorie des intelligences multiples" },
             { "@type": "Person", name: "Howard Gardner" },
-            { "@type": "Thing", name: "Psychologie du développement" },
+            { "@type": "Thing", name: "Talent de l'enfant" },
           ],
         }),
       ],
@@ -91,11 +96,11 @@ export const Route = createFileRoute("/guides/intelligences-multiples-gardner")(
 function Guide() {
   return (
     <GuideLayout
-      eyebrow="Théorie"
-      title="Les intelligences multiples de Howard Gardner, expliquées simplement"
-      intro="Une théorie très citée, souvent mal utilisée. Voici ce qu'elle affirme réellement, ce que la recherche lui reproche, et comment s'en servir avec son enfant sans tomber dans l'étiquetage."
-      updated="8 août 2026"
-      readingTime="9 min"
+      eyebrow="Talents de l'enfant"
+      title="Les 9 formes d'intelligence : comment identifier les talents de votre enfant"
+      intro="Votre enfant ne réussit pas en classe, mais il répare, négocie, chante ou organise ? Ce n'est pas une contradiction : c'est la théorie des intelligences multiples de Howard Gardner — il n'existe pas une seule intelligence mesurée par les notes, mais plusieurs, qui se repèrent à la maison. Voici comment les observer sans étiqueter votre enfant."
+      updated="14 août 2026"
+      readingTime="8 min"
       related={[
         { label: "Haut potentiel : les vrais signes", to: "/guides/potentiel-haut-potentiel-enfant" },
         { label: "24 activités éducatives (6-12 ans)", to: "/guides/activites-educatives-enfant" },
@@ -118,15 +123,17 @@ function Guide() {
         Il propose sept intelligences, en ajoute une huitième (naturaliste) en 1995, et évoque sans
         jamais la valider une intelligence existentielle. Sa proposition n'est pas que « tout le
         monde est intelligent à sa manière » — formule sympathique mais vide — mais que{" "}
-        <strong>plusieurs systèmes cognitifs relativement autonomes coexistent</strong>, chacun avec
-        ses opérations propres.
+        <strong>plusieurs formes d'intelligence coexistent</strong>, chacune avec ses opérations
+        propres.
       </p>
 
-      <h2>Les 9 formes retenues par Génizio</h2>
+      <h2>Les 9 formes d'intelligence et comment les repérer chez votre enfant</h2>
       <p>
         La liste ci-dessous est l'adaptation pratique utilisée par Génizio : les huit intelligences
         de Gardner, plus une dimension entrepreneuriale, particulièrement présente dans les
-        contextes où les enfants côtoient très tôt le commerce et l'artisanat.
+        contextes où les enfants côtoient très tôt le commerce et l'artisanat. Pour chaque forme,
+        voici ce qu'elle recouvre et les signes concrets à observer à la maison — sans questionnaire,
+        sans test : juste ce que votre enfant fait spontanément.
       </p>
 
       {INTELLIGENCES.map((i) => (
@@ -140,31 +147,30 @@ function Guide() {
         </div>
       ))}
 
-      <h2>Ce que la recherche reproche à cette théorie</h2>
+      <h2>Mon enfant est-il surdoué, HPI ou précoce ?</h2>
+      <p>
+        La question revient souvent quand on découvre que son enfant a des forces peu visibles à
+        l'école. Réponse courte : <strong>les intelligences multiples ne sont pas un test de haut
+        potentiel</strong>. Un enfant surdoué, HPI ou précoce se repère à d'autres signes — avance
+        dans les apprentissages, questionnement intense, sensibilité particulière, ennui en classe —
+        et se confirme par un bilan avec un professionnel. Si vous vous posez cette question, notre{" "}
+        <a href="/guides/potentiel-haut-potentiel-enfant">guide sur les signes du haut potentiel</a>{" "}
+        vous donne les repères d'observation ; mais dans les deux cas, l'observation quotidienne des
+        forces de l'enfant reste le meilleur point de départ.
+      </p>
+
+      <h2>Les limites : ce qu'il faut savoir pour ne pas se tromper</h2>
       <MedicalDisclaimer>
         Point d'honnêteté : la théorie des intelligences multiples est très répandue dans le monde
         éducatif, mais elle reste <strong>contestée en psychologie cognitive</strong>. La présenter
         comme un fait établi serait inexact.
       </MedicalDisclaimer>
-      <p>Les objections les plus sérieuses :</p>
-      <ul>
-        <li>
-          <strong>Peu de preuves d'indépendance réelle.</strong> Les aptitudes mesurées corrèlent
-          entre elles davantage que la théorie ne le prédirait.
-        </li>
-        <li>
-          <strong>Pas de substrat neurologique clairement établi</strong> correspondant à chaque
-          intelligence distincte.
-        </li>
-        <li>
-          <strong>La confusion avec les « styles d'apprentissage ».</strong> L'idée qu'un enfant
-          « visuel » apprendrait mieux avec des images est, elle, assez nettement contredite par les
-          études. Gardner s'est lui-même désolidarisé de cette lecture.
-        </li>
-      </ul>
       <p>
-        Notre position est donc précise : nous utilisons ce cadre comme{" "}
-        <strong>grille d'observation et de couverture</strong> — s'assurer qu'un enfant a
+        En résumé : les critiques portent sur l'absence de preuves d'indépendance neurologique entre
+        les intelligences, et sur la confusion fréquente avec les « styles d'apprentissage » (l'idée
+        qu'un enfant « visuel » apprendrait mieux avec des images — contredite par les études, et
+        désavouée par Gardner lui-même). Notre position est donc précise : nous utilisons ce cadre
+        comme <strong>grille d'observation et de couverture</strong> — s'assurer qu'un enfant a
         l'occasion de se frotter à des domaines variés — et non comme instrument de mesure ou de
         classement.
       </p>

@@ -8,7 +8,7 @@ const FAQ = [
   {
     question: "Quels défis proposer à un adolescent de 12 à 16 ans ?",
     answer:
-      "Les défis qui fonctionnent à cet âge ont trois caractéristiques : ils produisent quelque chose de montrable à d'autres qu'aux parents, ils comportent une vraie difficulté (un adolescent repère immédiatement une tâche conçue pour l'occuper), et ils laissent la méthode ouverte. Concrètement : monter une micro-activité commerciale sur un week-end et en calculer la marge réelle, produire un mini-documentaire de 3 minutes sur un métier du quartier, réparer un objet en panne, coder un petit outil utile à la famille, organiser un événement pour des plus jeunes.",
+      "Les défis qui fonctionnent à cet âge ont trois caractéristiques : ils produisent quelque chose de montrable à d'autres qu'aux parents, ils comportent une vraie difficulté (un adolescent repère immédiatement une tâche conçue pour l'occuper), et ils laissent la méthode ouverte. Concrètement : monter une petite activité commerciale sur un week-end et en calculer la marge réelle, produire un mini-documentaire de 3 minutes sur un métier du quartier, réparer un objet en panne, organiser un événement pour des plus jeunes.",
   },
   {
     question: "Comment motiver un adolescent qui ne s'intéresse à rien ?",
@@ -16,14 +16,24 @@ const FAQ = [
       "« Ne s'intéresse à rien » signifie presque toujours « ne s'intéresse à rien de ce que je lui propose ». Le levier le plus efficace n'est pas de trouver l'activité parfaite mais de transférer le pouvoir de décision : laisser choisir le sujet, la méthode et le rendu, et ne garder que la contrainte de terminer. Un adolescent qui exécute une consigne d'adulte fournit le minimum ; le même, responsable d'un projet qu'il a choisi, y passe ses soirées. Commencer petit — un défi d'une heure qu'il choisit — rétablit plus sûrement l'engagement qu'un grand projet imposé.",
   },
   {
+    question: "Mon fils ne fait que jouer aux jeux vidéo ou scroller les réseaux sociaux, que faire ?",
+    answer:
+      "D'abord, ne diabolisez pas l'écran : le jeu vidéo et les réseaux sociaux sont son espace social, celui où il retrouve ses amis — c'est pour cela qu'ils sont si difficiles à remplacer. Ensuite, négociez un contrat clair plutôt qu'une interdiction : un temps d'écran défini (par exemple après les devoirs, une durée fixe), et des moments sans téléphone non négociables (repas, nuit). Enfin, proposez des projets qui concurrencent l'écran sur son propre terrain : un défi qui se montre en ligne (une vidéo, une création à poster) a beaucoup plus de chances de l'accrocher qu'une activité « pour enfants ». Le jeu vidéo n'est pas l'ennemi : c'est un rival que l'on ne bat qu'avec des projets aussi engageants que lui.",
+  },
+  {
     question: "Pourquoi les activités « éducatives » ne marchent plus à l'adolescence ?",
     answer:
       "Parce qu'à partir de 12 ans environ, l'adolescent identifie l'intention pédagogique derrière l'activité, et une activité perçue comme un exercice déguisé perd sa crédibilité. Ce qui la remplace, c'est l'utilité réelle : un projet qui sert à quelqu'un, rapporte de l'argent, résout un problème concret ou peut être montré à ses pairs. Le contenu d'apprentissage peut être identique — c'est le cadrage et l'enjeu qui changent.",
   },
   {
+    question: "Comment gérer l'argent de poche et la pression scolaire d'un adolescent ?",
+    answer:
+      "L'argent de poche est un excellent terrain d'apprentissage, à condition d'en faire un outil de gestion, pas une récompense pour chaque action : un montant fixe chaque mois, que l'adolescent répartit lui-même (sorties, économies, imprévus), avec un petit carnet de comptes. Quant à la pression scolaire, elle est souvent plus forte chez les parents que chez l'adolescent lui-même : distinguez ce qui relève de l'école (les notes, le travail) de ce qui relève de la vie (son humeur, ses amis, ses projets). Un adolescent qui sent que sa valeur ne se réduit pas à son bulletin parle plus facilement de ses difficultés — et la pression diminue des deux côtés.",
+  },
+  {
     question: "Un adolescent peut-il utiliser Génizio ?",
     answer:
-      "Oui, Génizio couvre les 5-16 ans et les défis sont générés selon l'âge précis. Pour un adolescent, cela donne des projets structurés sur plusieurs jours plutôt que des manipulations courtes, avec une vraie exigence de résultat. Le portfolio prend aussi un autre sens à cet âge : il devient une trace de réalisations concrètes, utile au moment de l'orientation, quand il faut montrer autre chose qu'un bulletin.",
+      "Oui, Génizio couvre les 5-16 ans et les défis sont générés selon l'âge précis. Pour un adolescent, cela donne des projets structurés sur plusieurs jours plutôt que des manipulations courtes, avec une vraie exigence de résultat. Le dossier de réalisations prend aussi un autre sens à cet âge : il devient une trace de réalisations concrètes, utile au moment de l'orientation, quand il faut montrer autre chose qu'un bulletin.",
   },
 ];
 
@@ -32,7 +42,7 @@ export const Route = createFileRoute("/guides/defis-pour-adolescents")({
     const meta = pageMeta({
       title: "Motiver un adolescent : 12 défis qui marchent (12-16 ans)",
       description:
-        "Ce qui motive vraiment un adolescent de 12 à 16 ans, pourquoi les activités « pour enfants » ne marchent plus, et 12 défis concrets qui tiennent la route.",
+        "Ce qui motive vraiment un adolescent de 12 à 16 ans, comment proposer un défi sans conflit (téléphone, jeux vidéo), et 12 défis concrets qui tiennent la route.",
       path: PATH,
       image: "/guides/og-ados.jpg",
       type: "article",
@@ -58,7 +68,7 @@ export const Route = createFileRoute("/guides/defis-pour-adolescents")({
           publisher: { "@id": `${SITE_URL}/#organization` },
           author: { "@type": "Organization", name: "Génizio" },
           datePublished: "2026-07-27",
-          dateModified: "2026-08-08",
+          dateModified: "2026-08-14",
           about: [
             { "@type": "Thing", name: "Motivation des adolescents" },
             { "@type": "Thing", name: "Défis pour jeunes" },
@@ -76,9 +86,9 @@ function Guide() {
     <GuideLayout
       eyebrow="Adolescents"
       title="Motiver un adolescent de 12 à 16 ans : les défis qui marchent"
-      intro="À partir de 12 ans, la plupart des activités « éducatives » cessent de fonctionner — non parce que l'adolescent est démotivé, mais parce qu'il repère l'intention pédagogique et n'y croit plus. Voici ce qui prend le relais."
-      updated="8 août 2026"
-      readingTime="7 min"
+      intro="À partir de 12 ans, la plupart des activités « éducatives » cessent de fonctionner — non parce que l'adolescent est démotivé, mais parce qu'il repère l'intention pédagogique et n'y croit plus. Voici ce qui prend le relais, et surtout comment le lui proposer sans déclencher un conflit."
+      updated="14 août 2026"
+      readingTime="8 min"
       related={[
         { label: "Haut potentiel : les vrais signes", to: "/guides/potentiel-haut-potentiel-enfant" },
         { label: "24 activités éducatives (6-12 ans)", to: "/guides/activites-educatives-enfant" },
@@ -100,6 +110,9 @@ function Guide() {
       <p>
         Ce n'est pas de la démotivation. C'est un déplacement de ce qui donne de la valeur à une
         tâche : du plaisir de faire vers <strong>la reconnaissance et l'utilité réelle</strong>.
+        C'est aussi l'âge où le téléphone, les jeux vidéo et les réseaux sociaux captent l'essentiel
+        de son attention — un concurrent redoutable, qu'on ne bat pas en l'interdisant, mais en
+        proposant des projets aussi engageants.
       </p>
 
       <h3>Les trois conditions d'un défi crédible</h3>
@@ -118,6 +131,35 @@ function Guide() {
           chemin. C'est la marge de décision qui fait la différence entre exécuter et s'engager.
         </li>
       </ul>
+
+      <h2>Comment introduire un défi sans conflit</h2>
+      <p>
+        Le meilleur défi du monde échoue si la proposition arrive mal. Voici les quatre règles qui
+        évitent la porte qui claque :
+      </p>
+      <ol>
+        <li>
+          <strong>Ne proposez jamais pendant qu'il est sur son téléphone.</strong> L'écran capte
+          toute son attention ; toute proposition faite à ce moment est reçue comme une
+          interruption. Choisissez un moment neutre — un repas, un trajet, une corvée partagée.
+        </li>
+        <li>
+          <strong>Proposez deux options, pas une mission.</strong> « J'ai deux idées de projets pour
+          toi, dis-moi laquelle t'attire : filmer un mini-documentaire sur le métier du quartier, ou
+          monter une petite vente de jus le week-end. » L'adolescent n'a plus à accepter une
+          consigne, il a à choisir — et choisir, c'est déjà s'engager.
+        </li>
+        <li>
+          <strong>Laissez-le fixer la date de lancement.</strong> « Tu veux commencer samedi ou la
+          semaine prochaine ? » C'est lui qui décide du moment ; vous gardez la contrainte de la
+          date de fin. Une échéance qu'il a choisie est une échéance qu'il respecte.
+        </li>
+        <li>
+          <strong>Ne dites jamais « c'est éducatif ».</strong> Le mot est rédhibitoire à cet âge.
+          Parlez du résultat : « ce sera à montrer à papa le week-end », « tu pourras le vendre »,
+          « tu seras le seul de ta classe à savoir faire ça ».
+        </li>
+      </ol>
 
       <h2>12 défis qui tiennent la route</h2>
 
@@ -161,7 +203,7 @@ function Guide() {
         négociable. Le sujet, la méthode, le format, le rythme.
       </p>
 
-      <h2>Le portfolio prend son vrai sens à cet âge</h2>
+      <h2>Le dossier de réalisations prend son vrai sens à cet âge</h2>
       <p>
         Entre 12 et 16 ans arrivent les premières décisions d'orientation, et avec elles une
         difficulté concrète : un adolescent n'a souvent rien d'autre à montrer que des notes. Une
@@ -170,7 +212,7 @@ function Guide() {
       </p>
       <p>
         Génizio génère ce type de défis selon l'âge et les centres d'intérêt du jeune, et conserve
-        la preuve de chaque réalisation dans un portfolio qui lui appartient.
+        la preuve de chaque réalisation dans un dossier de réalisations qui lui appartient.
       </p>
 
       <h2>Questions fréquentes</h2>

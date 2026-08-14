@@ -14,14 +14,24 @@ const FAQ = [
       "Quand un enfant répète qu'il « est nul », il exprime souvent un sentiment accumulé plutôt qu'un constat objectif. Observez : cela dure-t-il depuis plusieurs semaines ? Cela s'étend-il aussi aux activités qu'il aime ? Refuse-t-il de plus en plus d'essayer de nouvelles choses ? Une parole isolée ne suffit pas à s'inquiéter ; ce qui compte, c'est la persistance et l'effet sur sa vie quotidienne. Parlez-en avec lui, avec l'école, et si le mal-être se confirme, consultez un professionnel — psychologue ou médecin — qui pourra évaluer la situation sereinement.",
   },
   {
+    question: "Mauvaises notes ou redoublement : comment réagir sans casser la confiance ?",
+    answer:
+      "D'abord, ne faites pas des notes le miroir de la valeur de l'enfant : une mauvaise note est une information, pas un verdict. Demandez-lui ce qu'il a compris de son erreur, travaillez une seule difficulté à la fois, et valorisez les progrès même minimes (« la semaine dernière tu avais 4 fautes, aujourd'hui 2 »). En cas de redoublement, présentez-le comme une deuxième chance, pas comme une punition : beaucoup d'enfants refont une année avec plus d'assurance. Et si les mauvaises notes s'accompagnent de repli ou de découragement durable, c'est ce signal-là qu'il faut traiter en priorité, avant les notes.",
+  },
+  {
     question: "Un enfant qui décroche ou abandonne l'école est-il forcément en souffrance ?",
     answer:
       "Pas nécessairement, mais le décrochage n'est presque jamais un choix simple. C'est souvent le terme d'un long chemin de découragement accumulé. L'agitation, le repli ou la démotivation peuvent être les signes visibles d'une souffrance plus profonde. Plutôt que de coller une étiquette (« paresseux », « indiscipliné »), la question utile est : que cherche à nous dire ce comportement ? Quand le décrochage s'accompagne de mal-être durable, une évaluation par un professionnel de santé est la démarche la plus juste.",
   },
   {
+    question: "Mon enfant est victime de harcèlement scolaire et ne veut plus aller à l'école, que faire ?",
+    answer:
+      "Le harcèlement scolaire est l'une des causes les plus fréquentes du refus d'aller à l'école. Si votre enfant se plaint de moqueries répétées, rentre avec des affaires abîmées ou des maux de ventre le matin, prenez-le au sérieux dès la première alerte : écoutez sans minimiser, notez les faits (dates, paroles, témoins), puis parlez-en à l'école en demandant une action précise et un suivi. Ne laissez pas l'enfant « se débrouiller seul » — c'est le rôle de l'adulte de protéger. Et s'il refuse catégoriquement d'aller en classe, c'est un signal d'alerte majeur : le harcèlement doit être traité par l'école et, si besoin, par un professionnel.",
+  },
+  {
     question: "Comment aider un enfant qui a perdu confiance en lui ?",
     answer:
-      "La confiance se reconstruit par des expériences concrètes de réussite, pas par des encouragements généraux. Six leviers aident : nommer des forces précises (« tu as tenu bon jusqu'au bout » plutôt que « tu es intelligent ») ; créer des occasions de réussite qui produisent un résultat visible (une construction, un plat, une histoire terminée) ; valoriser l'effort et le progrès plutôt que les notes ; garder des routines stables qui sécurisent ; écouter sans moraliser pour que l'enfant ose dire ce qu'il ressent ; et demander de l'aide quand le besoin se fait sentir. Ces habitudes aident tous les enfants, qu'il y ait ou non une difficulté particulière.",
+      "La confiance se reconstruit par des expériences concrètes de réussite, pas par des encouragements généraux. Six habitudes aident : nommer des forces précises (« tu as tenu bon jusqu'au bout » plutôt que « tu es intelligent ») ; créer des occasions de réussite qui produisent un résultat visible (une construction, un plat, une histoire terminée) ; valoriser l'effort et le progrès plutôt que les notes ; garder des routines stables qui sécurisent ; écouter sans moraliser pour que l'enfant ose dire ce qu'il ressent ; et demander de l'aide quand le besoin se fait sentir. Ces habitudes aident tous les enfants, qu'il y ait ou non une difficulté particulière.",
   },
   {
     question: "La santé mentale des enfants est-elle vraiment un sujet en Afrique ?",
@@ -38,9 +48,9 @@ const FAQ = [
 export const Route = createFileRoute("/guides/decrochage-scolaire-confiance-enfant")({
   head: () => {
     const meta = pageMeta({
-      title: "Décrochage scolaire : la confiance se joue avant l'école",
+      title: "Enfant qui perd confiance ou décroche à l'école : comment l'aider",
       description:
-        "Perte de confiance, abandon des ambitions, santé mentale : pourquoi le décrochage commence dès l'enfance, et comment agir à la maison.",
+        "Signaux d'alerte du décrochage scolaire, harcèlement, mauvaises notes, perte de confiance : ce que les parents peuvent faire à la maison, et quand consulter.",
       path: PATH,
       image: "/guides/og-decrochage.jpg",
       type: "article",
@@ -59,17 +69,19 @@ export const Route = createFileRoute("/guides/decrochage-scolaire-confiance-enfa
         jsonLdScript({
           "@context": "https://schema.org",
           "@type": "Article",
-          headline: "Décrochage scolaire : la confiance se joue avant l'école",
+          headline: "Comment aider un enfant qui perd confiance et se décourage à l'école",
           inLanguage: "fr-FR",
           mainEntityOfPage: absoluteUrl(PATH),
           image: absoluteUrl("/guides/og-decrochage.jpg"),
           publisher: { "@id": `${SITE_URL}/#organization` },
           author: { "@type": "Organization", name: "Génizio" },
+          datePublished: "2026-07-27",
+          dateModified: "2026-08-14",
           about: [
             { "@type": "Thing", name: "Décrochage scolaire" },
             { "@type": "Thing", name: "Confiance en soi de l'enfant" },
+            { "@type": "Thing", name: "Harcèlement scolaire" },
             { "@type": "Thing", name: "Santé mentale de l'enfant" },
-            { "@type": "Thing", name: "Épanouissement de l'enfant" },
           ],
         }),
       ],
@@ -82,13 +94,13 @@ function Guide() {
   return (
     <GuideLayout
       eyebrow="Confiance & bien-être"
-      title="Décrochage scolaire : la confiance se joue avant l'école"
-      intro="« Il a tout pour réussir, mais il ne croit plus en lui. » Combien de parents ont entendu cette phrase ? Le décrochage n'est presque jamais un événement soudain : il commence des années plus tôt, en silence, dans l'enfance. Voici pourquoi — et ce que vous pouvez faire, dès aujourd'hui, à la maison."
-      updated="8 août 2026"
+      title="Comment aider un enfant qui perd confiance et se décourage à l'école"
+      intro="« Il a tout pour réussir, mais il ne croit plus en lui. » Le décrochage n'est presque jamais un événement soudain : il commence des années plus tôt, en silence, par des signaux que l'on peut apprendre à repérer. Voici comment observer, agir à la maison, et savoir quand demander de l'aide."
+      updated="14 août 2026"
       readingTime="9 min"
       related={[
         { label: "Agitation et concentration : comprendre avant de s'inquiéter", to: "/guides/enfant-agite-concentration" },
-        { label: "Révéler le potentiel d'un enfant en Afrique francophone", to: "/guides/education-enfants-afrique-francophone" },
+        { label: "Développer les talents de son enfant en Afrique", to: "/guides/education-enfants-afrique-francophone" },
         { label: "Enfant timide : libérer la parole", to: "/guides/timidite-confiance-prise-de-parole" },
         { label: "Motiver un adolescent (12-16 ans)", to: "/guides/defis-pour-adolescents" },
         { label: "Aider son enfant à réussir à l'école", to: "/guides/reussite-scolaire-aider-enfant" },
@@ -107,7 +119,7 @@ function Guide() {
         peuvent évaluer une situation.
       </MedicalDisclaimer>
 
-      <h2>Le décrochage commence avant le décrochage</h2>
+      <h2>Le découragement se construit longtemps avant le décrochage</h2>
       <p>
         Quand un jeune quitte l'école, on a l'impression d'un événement soudain. Dans la grande
         majorité des cas, c'est l'étape visible d'un chemin commencé des années plus tôt — souvent
@@ -127,62 +139,83 @@ function Guide() {
         <li>l'habitude de se taire, pour ne pas risquer d'être jugé une fois de plus.</li>
       </ul>
 
-      <h2>Deux profils, un même risque</h2>
+      <h2>Les signaux d'alerte à observer (tableau pratique)</h2>
       <p>
-        Certains enfants possèdent toutes les qualités pour réussir un parcours académique. D'autres
-        ne s'épanouissent pas dans le système scolaire traditionnel, mais disposent de talents
-        différents : <strong>artistiques, entrepreneuriaux, créatifs ou techniques</strong>. L'erreur
-        serait d'opposer ces deux profils.
+        Ce qui suit n'est pas une grille de diagnostic, mais des repères d'observation. Ce qui
+        compte, ce n'est pas un signe isolé, c'est son <strong>évolution dans le temps</strong> et
+        son impact sur la vie quotidienne.
       </p>
-      <p>
-        Le risque, lui, est commun : la <strong>perte de confiance</strong>. Qu'on soit « bon à
-        l'école » ou non, quand l'environnement ne reconnaît jamais ce qui nous anime réellement, on
-        peut finir par croire qu'on n'a rien à offrir. C'est cette conviction qui fait abandonner les
-        ambitions et renoncer à persévérer — pas le niveau scolaire.
-      </p>
-      <blockquote>
-        Un enfant qui « échoue » n'apprend pas toujours à mieux travailler. Il apprend parfois, tout
-        simplement, à ne plus essayer.
-      </blockquote>
-
-      <h2>La santé mentale des enfants, un sujet encore tabou en Afrique</h2>
-      <p>
-        La dépression, l'anxiété, le mal-être ou la perte de sens existent chez les enfants et les
-        adolescents du continent, comme partout dans le monde. Ils prennent simplement des formes que
-        l'on ne reconnaît pas toujours.
-      </p>
-      <p>
-        Ces réalités sont souvent minimisées, voire ignorées. Pourtant, un jeune qui abandonne
-        l'école, qui devient turbulent, qui semble démotivé, agressif ou incapable de rester concentré
-        n'est pas forcément « paresseux » ou « indiscipliné ». Ces comportements peuvent être les
-        manifestations visibles d'une <strong>souffrance beaucoup plus profonde</strong>.
-      </p>
-      <p>
-        Quand une personne évolue dans un environnement qui l'empêche d'exprimer ce qui l'anime, ou
-        lorsqu'elle ne trouve aucun sens à ce qu'elle fait au quotidien, elle peut progressivement
-        sombrer dans un état de détresse psychologique. Cette réalité est largement sous-estimée —
-        alors qu'elle est sous nos yeux.
-      </p>
-
-      <h2>Observer sans étiqueter : les signaux qui méritent votre attention</h2>
-      <p>
-        Ce qui suit n'est pas une grille de diagnostic, mais des repères d'observation. Ce qui compte,
-        ce n'est pas un signe isolé, c'est son <strong>évolution dans le temps</strong> et son impact
-        sur la vie quotidienne.
-      </p>
-      <ul>
-        <li>un <strong>changement durable</strong> de comportement : un enfant ouvert qui devient renfermé, ou l'inverse ;</li>
-        <li>la <strong>perte de plaisir</strong> dans des activités qu'il aimait auparavant ;</li>
-        <li>un <strong>repli sur soi</strong>, moins d'envie de voir les amis ou la famille ;</li>
-        <li>des <strong>troubles du sommeil ou de l'appétit</strong> qui persistent ;</li>
-        <li>des paroles d'<strong>estime de soi en chute</strong> (« je suis nul », « ça ne sert à rien ») ;</li>
-        <li>des signes de détresse à l'idée d'aller à l'école : maux de ventre, refus, angoisse le dimanche soir.</li>
-      </ul>
+      <div className="my-6 overflow-hidden rounded-2xl border border-ink/10">
+        <table className="w-full text-sm">
+          <thead>
+            <tr className="bg-brand/8 text-left text-xs font-black uppercase tracking-widest text-brand">
+              <th className="px-4 py-3">Ce que vous observez</th>
+              <th className="px-4 py-3">Ce que ça peut signaler</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-ink/10">
+            <tr>
+              <td className="px-4 py-3">Un changement durable de comportement : un enfant ouvert qui devient renfermé, ou l'inverse</td>
+              <td className="px-4 py-3">Un malaise qui s'installe, parfois un événement précis (une humiliation, un conflit)</td>
+            </tr>
+            <tr>
+              <td className="px-4 py-3">La perte de plaisir dans des activités qu'il aimait auparavant</td>
+              <td className="px-4 py-3">Un découragement qui dépasse la simple mauvaise passe</td>
+            </tr>
+            <tr>
+              <td className="px-4 py-3">Des troubles du sommeil ou de l'appétit qui persistent</td>
+              <td className="px-4 py-3">Une anxiété qui se manifeste par le corps — à prendre au sérieux</td>
+            </tr>
+            <tr>
+              <td className="px-4 py-3">Des paroles d'estime de soi en chute (« je suis nul », « ça ne sert à rien »)</td>
+              <td className="px-4 py-3">Une confiance érodée par des échecs répétés, des moqueries ou des comparaisons</td>
+            </tr>
+            <tr>
+              <td className="px-4 py-3">Des signes de détresse à l'idée d'aller à l'école : maux de ventre, refus, angoisse le dimanche soir</td>
+              <td className="px-4 py-3">Une peur liée à l'école : difficultés, pression, ou harcèlement scolaire</td>
+            </tr>
+            <tr>
+              <td className="px-4 py-3">Des affaires abîmées, des « pertes » répétées, des moqueries qu'il raconte à contrecœur</td>
+              <td className="px-4 py-3">Un possible harcèlement scolaire — à traiter dès la première alerte</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
       <p>
         Un seul signe, ponctuel, n'a rien d'alarmant : tous les enfants ont des mauvaises semaines. Ce
         qui mérite l'attention, c'est la <strong>persistance sur plusieurs semaines</strong> et
         l'effet réel sur le quotidien. Dans le doute, parlez-en à l'enfant, à l'école, puis à un
         professionnel.
+      </p>
+
+      <h2>Mauvaises notes et redoublement : réagir sans casser la confiance</h2>
+      <p>
+        Les mauvaises notes sont souvent le premier signal visible — et le plus mal interprété. Une
+        note n'est pas un miroir de la valeur de l'enfant : c'est une information sur un apprentissage
+        précis, à un moment donné. Voici comment la traiter sans drame :
+      </p>
+      <ul>
+        <li><strong>Demandez-lui d'abord son analyse :</strong> « Qu'est-ce qui t'a semblé difficile dans ce contrôle ? » — l'enfant qui met des mots sur sa difficulté commence à la régler.</li>
+        <li><strong>Travaillez une seule difficulté à la fois :</strong> on ne corrige pas dix lacunes en une semaine ; on en choisit une, on la travaille, on vérifie la progression.</li>
+        <li><strong>Valorisez le progrès, pas le classement :</strong> « la semaine dernière tu avais 4 fautes, aujourd'hui 2 » — c'est cette comparaison à lui-même qui motive.</li>
+        <li><strong>En cas de redoublement, changez de discours :</strong> c'est une deuxième chance, pas une punition. Beaucoup d'enfants refont une année avec plus d'assurance.</li>
+        <li><strong>Si les notes dégringolent brutalement</strong> chez un enfant qui travaillait bien, demandez-vous ce qui a changé : une difficulté nouvelle, un conflit avec un camarade ou un enseignant, un événement familial. La chute de notes est souvent un symptôme.</li>
+      </ul>
+
+      <h2>La santé mentale des enfants, un sujet encore tabou en Afrique</h2>
+      <p>
+        La dépression, l'anxiété, le mal-être ou la perte de sens existent chez les enfants et les
+        adolescents du continent, comme partout dans le monde. Ils prennent simplement des formes que
+        l'on ne reconnaît pas toujours : un enfant « turbulent » ou « rêveur » peut être un enfant en
+        souffrance.
+      </p>
+      <p>
+        Ces réalités sont souvent minimisées, voire ignorées. Pourtant, un jeune qui abandonne
+        l'école, qui devient agité, démotivé ou agressif n'est pas forcément « paresseux » ou «
+        indiscipliné » : ces comportements peuvent être les manifestations visibles d'une{" "}
+        <strong>souffrance beaucoup plus profonde</strong>. La crainte du jugement pousse encore
+        beaucoup de familles à taire ces difficultés. En parler ouvertement, sans honte, est la
+        première étape de la prise en charge.
       </p>
 
       <h2>Ce que les parents peuvent faire au quotidien</h2>
