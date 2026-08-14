@@ -37,15 +37,17 @@ function GuildPage() {
     if (!loading && !session) navigate({ to: "/auth", replace: true });
   }, [session, loading, navigate]);
 
+  const userId = session?.user?.id;
+
   useEffect(() => {
-    if (!session) return;
+    if (!userId) return;
     setFetching(true);
     Promise.all([
       supabase
         .from("child_profiles")
         .select("id, name, age, talents")
         .eq("id", profileId)
-        .eq("user_id", session.user.id)
+        .eq("user_id", userId)
         .maybeSingle(),
       supabase
         .from("challenges")
@@ -57,15 +59,15 @@ function GuildPage() {
       setCompletedCount(countRes.count ?? 0);
       setFetching(false);
     });
-  }, [session, profileId]);
+  }, [userId, profileId]);
 
   useEffect(() => {
-    if (!session || !child) return;
+    if (!userId || !child) return;
     fetchCommunity({ data: { childId: child.id } })
       .then(setCommunity)
       .catch(() => {});
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [session, child?.id]);
+  }, [userId, child?.id]);
 
   const handleToggle = async (optIn: boolean) => {
     if (!child) return;

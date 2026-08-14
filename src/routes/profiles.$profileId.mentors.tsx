@@ -22,25 +22,30 @@ function MentorsPage() {
   const [fetchingChild, setFetchingChild] = useState(true);
   const [childFound, setChildFound] = useState(false);
 
+  // Stable reference: user ID doesn't change across token refreshes,
+  // whereas the `session` object gets a new identity on every refresh,
+  // which was causing the fetch effect below to re-fire in a loop.
+  const userId = session?.user?.id;
+
   useEffect(() => {
     if (!loading && !session) navigate({ to: "/auth", replace: true });
   }, [session, loading, navigate]);
 
   useEffect(() => {
-    if (!session) return;
+    if (!userId) return;
     setFetchingChild(true);
     supabase
       .from("child_profiles")
       .select("name")
       .eq("id", profileId)
-      .eq("user_id", session.user.id)
+      .eq("user_id", userId)
       .maybeSingle()
       .then(({ data }) => {
         setChildFound(!!data);
         if (data) setChildName(data.name);
         setFetchingChild(false);
       });
-  }, [session, profileId]);
+  }, [userId, profileId]);
 
   if (loading || !session || fetchingChild) {
     return (

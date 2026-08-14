@@ -138,15 +138,17 @@ function PassportPrintPage() {
     if (!loading && !session) navigate({ to: "/auth", replace: true });
   }, [session, loading, navigate]);
 
+  const userId = session?.user?.id;
+
   useEffect(() => {
-    if (!session) return;
+    if (!userId) return;
     setFetching(true);
     Promise.all([
       supabase
         .from("child_profiles")
         .select("id, name, age, talents, interests, city, country, xp, pdf_unlocked")
         .eq("id", profileId)
-        .eq("user_id", session!.user.id)
+        .eq("user_id", userId)
         .maybeSingle(),
       supabase
         .from("challenges")
@@ -167,10 +169,10 @@ function PassportPrintPage() {
       setEarnedBadges((b.data ?? []).map((row) => row.badge_slug));
       setFetching(false);
     });
-  }, [session, profileId]);
+  }, [userId, profileId]);
 
   useEffect(() => {
-    if (!session) return;
+    if (!userId) return;
     setFetchingSynthesis(true);
     fetchSynthesis({ data: { childId: profileId } })
       .then((resp) => setSynthesis(resp || ""))
@@ -179,13 +181,13 @@ function PassportPrintPage() {
         setSynthesis("");
       })
       .finally(() => setFetchingSynthesis(false));
-  }, [session, profileId]);
+  }, [userId, profileId]);
 
   // Lettre d'orientation IA — uniquement pour un Passeport déjà débloqué (gate
   // côté serveur aussi, cf. getPassportLetter) : pas d'appel avant que le
   // parent ait payé/activé le document.
   useEffect(() => {
-    if (!session || !child?.pdf_unlocked) return;
+    if (!userId || !child?.pdf_unlocked) return;
     setFetchingLetter(true);
     fetchLetter({ data: { childId: profileId } })
       .then((resp) => setLetter(resp || ""))
@@ -194,8 +196,7 @@ function PassportPrintPage() {
         setLetter("");
       })
       .finally(() => setFetchingLetter(false));
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [session, profileId, child?.pdf_unlocked]);
+  }, [userId, profileId, child?.pdf_unlocked]);
 
   // Téléchargement natif : le Passeport est généré en vrai PDF vectoriel A4 par
   // @react-pdf/renderer (texte réel, pas un scan navigateur), puis téléchargé

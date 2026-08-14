@@ -62,8 +62,10 @@ export function WhatsAppFAB({ phoneNumber }: WhatsAppFABProps) {
     };
   }, []);
 
+  const userId = session?.user?.id;
+
   useEffect(() => {
-    if (!session || !profileId) {
+    if (!userId || !profileId) {
       setContext(null);
       return;
     }
@@ -73,7 +75,7 @@ export function WhatsAppFAB({ phoneNumber }: WhatsAppFABProps) {
         .from("child_profiles")
         .select("name, age, talents")
         .eq("id", profileId)
-        .eq("user_id", session.user.id)
+        .eq("user_id", userId)
         .maybeSingle(),
       supabase
         .from("challenges")
@@ -96,7 +98,7 @@ export function WhatsAppFAB({ phoneNumber }: WhatsAppFABProps) {
     return () => {
       cancelled = true;
     };
-  }, [session, profileId]);
+  }, [userId, profileId]);
 
   const url = buildWhatsAppUrl(phone, context);
 
