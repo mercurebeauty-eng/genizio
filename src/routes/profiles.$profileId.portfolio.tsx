@@ -8,7 +8,7 @@ import { TALENT_SUBFORM_LABELS } from "@/lib/challenges.functions";
 import { ensureHypothesesForChild } from "@/lib/hypotheses.functions";
 import { getChildGuild, getTalentAffinities } from "@/lib/guilds";
 import { getChildEnrolledSeason, getActiveSeason, type Season } from "@/lib/seasons.functions";
-import { getChildSupervisorInfo } from "@/lib/supervisors.functions";
+import { getChildSupervisorInfo, listChildSessionsForFeedback, submitSupervisorFeedback } from "@/lib/supervisors.functions";
 import { getChildAccessStatusFn, type ChildAccessStatus } from "@/lib/child-access";
 import { formatXof } from "@/lib/pricing";
 import { initializePassportPayment } from "@/lib/payments.functions";
@@ -241,6 +241,14 @@ function PortfolioPage() {
   const [enrolledSeason, setEnrolledSeason] = useState<Season | null>(null);
   const [activeSeason, setActiveSeason] = useState<Season | null>(null);
   const [supervisorInfo, setSupervisorInfo] = useState<{ email: string; assignedAt: string } | null>(null);
+  // Feedback famille (Vague C) : séances récentes de l'enfant + note 1-5 à poser.
+  const [feedbackSessions, setFeedbackSessions] = useState<
+    Array<{ id: string; occurred_at: string; rated: boolean; rating: number | null }>
+  >([]);
+  const [feedbackRating, setFeedbackRating] = useState(5);
+  const [feedbackComment, setFeedbackComment] = useState("");
+  const [submittingFeedback, setSubmittingFeedback] = useState(false);
+  const feedbackFn = useServerFn(submitSupervisorFeedback);
   // Accès mensuel payant (modèle 2026-08-05) : status free/permanent/monthly/expired +
   // montant de renouvellement applicable au compte.
   const [accessState, setAccessState] = useState<{ status: ChildAccessStatus; renewalAmountXof: number } | null>(null);
@@ -463,6 +471,12 @@ function PortfolioPage() {
     getChildSupervisorInfo({ data: { childId: profileId } })
       .then(info => setSupervisorInfo(info))
       .catch(console.error);
+
+    // Vague C : séances récentes pour le widget « Noter la dernière séance » (feedback 1-5,
+    // composante 25% du score superviseur V2).
+    listChildSessionsForFeedback({ data: { childId: profileId } })
+      .then((sessions) => setFeedbackSessions((sessions as any[]) ?? []))
+      .catch(() => setFeedbackSessions([]));
 
     getChildAccessStatusFn({ data: { childId: profileId } })
       .then((res) => setAccessState(res))
@@ -852,6 +866,82 @@ function PortfolioPage() {
               </div>
             </div>
           )}
+
+          {/* Feedback famille (Vague C) : noter la dernière séance de suivi — composante
+              25% du score superviseur (V2). Widget discret, seulement si une séance
+              non notée existe. */}
+          {supervisorInfo &&
+            feedbackSessions.filter((s) => !s.rated).length > 0 &&
+            (() => {
+              const session = feedbackSessions.find((s) => !s.rated);
+              if (!session) return null;
+              return (
+                <div className="rounded-3xl border border-ink/10 bg-white p-5 shadow-sm">
+                  <p className="text-xs font-black uppercase tracking-widest text-ink/70">
+                    Comment s'est passée la séance du{" "}
+                    {new Date(session.occurred_at).toLocaleDateString("fr-FR", {
+                      day: "numeric",
+                      month: "long",
+                    })}{" "}
+                    ?
+                  </p>
+                  <p className="mt-1 text-xs text-ink/60">
+                    Votre note aide à valoriser les bons superviseurs et à repérer ceux qui
+                    manquent de sérieux.
+                  </p>
+                  <div className="mt-3 flex items-center gap-1">
+                    {[1, 2, 3, 4, 5].map((n) => (
+                      <button
+                        key={n}
+                        type="button"
+                        onClick={() => setFeedbackRating(n)}
+                        className={`text-2xl transition-all cursor-pointer ${
+                          n <= feedbackRating ? "text-amber-400" : "text-ink/15 hover:text-amber-200"
+                        }`}
+                        aria-label={`${n} étoiles`}
+                      >
+                        ★
+                      </button>
+                    ))}
+                  </div>
+                  <input
+                    value={feedbackComment}
+                    onChange={(e) => setFeedbackComment(e.target.value)}
+                    placeholder="Un commentaire (optionnel)…"
+                    maxLength={500}
+                    className="mt-3 w-full rounded-xl border border-ink/10 bg-surface px-4 py-2.5 text-sm outline-none focus:ring-2 focus:ring-brand"
+                  />
+                  <button
+                    onClick={async () => {
+                      setSubmittingFeedback(true);
+                      try {
+                        await feedbackFn({
+                          data: {
+                            sessionId: session.id,
+                            rating: feedbackRating,
+                            comment: feedbackComment.trim() || undefined,
+                          },
+                        });
+                        toast.success("Merci ! Votre note est enregistrée.");
+                        setFeedbackComment("");
+                        const refreshed = await listChildSessionsForFeedback({
+                          data: { childId: profileId },
+                        });
+                        setFeedbackSessions((refreshed as any[]) ?? []);
+                      } catch (err: any) {
+                        toast.error(err.message || "Erreur lors de l'envoi.");
+                      } finally {
+                        setSubmittingFeedback(false);
+                      }
+                    }}
+                    disabled={submittingFeedback}
+                    className="mt-3 rounded-xl bg-brand px-5 py-2 text-xs font-bold text-white hover:bg-brand/90 transition-all cursor-pointer disabled:opacity-50"
+                  >
+                    {submittingFeedback ? "Envoi…" : "Envoyer ma note"}
+                  </button>
+                </div>
+              );
+            })()}
 
           {/* Accès mensuel payant (modèle 2026-08-05) : bannière "accès expiré" */}
           {accessState && accessState.status.kind === "expired" && (

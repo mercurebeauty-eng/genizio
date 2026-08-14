@@ -57,10 +57,11 @@ function SupervisorDashboardPage() {
   const [loadError, setLoadError] = useState(false);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [selectedChallenge, setSelectedChallenge] = useState<any | null>(null);
-  // Score de fiabilité (V1) : renvoyé par getSupervisorDashboard, affiché dans l'en-tête.
+  // Score de fiabilité (V2) : renvoyé par getSupervisorDashboard, affiché dans l'en-tête.
   const [score, setScore] = useState<number | null>(null);
   const [sessionsThisMonth, setSessionsThisMonth] = useState(0);
   const [expectedSessions, setExpectedSessions] = useState(0);
+  const [pendingPayoutXof, setPendingPayoutXof] = useState(0);
   const [declaringFor, setDeclaringFor] = useState<string | null>(null);
   const [sessionDate, setSessionDate] = useState(() => new Date().toISOString().slice(0, 10));
   const [sessionNotes, setSessionNotes] = useState("");
@@ -84,6 +85,7 @@ function SupervisorDashboardPage() {
       setScore((res as any).score ?? null);
       setSessionsThisMonth((res as any).sessionsThisMonth ?? 0);
       setExpectedSessions((res as any).expectedSessions ?? 0);
+      setPendingPayoutXof((res as any).pendingPayoutXof ?? 0);
     } catch {
       setChildren([]);
       setLoadError(true);
@@ -103,14 +105,21 @@ function SupervisorDashboardPage() {
     if (!declaringFor) return;
     setDeclaring(true);
     try {
-      await declareFn({
+      const res = await declareFn({
         data: {
           childProfileId: declaringFor,
           occurredAt: new Date(sessionDate).toISOString(),
           notes: sessionNotes.trim() || undefined,
         },
       });
-      toast.success("Séance déclarée — votre score est mis à jour.");
+      const funding = (res as any)?.funding as "pack" | "campaign" | "none" | undefined;
+      toast.success(
+        funding === "pack"
+          ? "Séance déclarée et débitée de votre Pack Accompagnement."
+          : funding === "campaign"
+            ? "Séance déclarée — financée par le programme partenaire."
+            : "Séance déclarée — votre score est mis à jour.",
+      );
       setDeclaringFor(null);
       setSessionNotes("");
       await loadDashboard();
@@ -164,6 +173,11 @@ function SupervisorDashboardPage() {
                     {sessionsThisMonth} séance{sessionsThisMonth > 1 ? "s" : ""} ce mois
                     {expectedSessions > 0 ? ` / ${expectedSessions} attendues` : ""}
                   </p>
+                  {pendingPayoutXof > 0 && (
+                    <p className="text-[10px] font-bold text-emerald-700">
+                      ≈ {pendingPayoutXof.toLocaleString("fr-FR")} F à venir ce mois
+                    </p>
+                  )}
                 </div>
                 <span
                   className={`grid size-11 place-items-center rounded-xl font-black text-sm ${

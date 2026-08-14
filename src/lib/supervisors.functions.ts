@@ -5,6 +5,7 @@ import { listAllUsers } from "@/integrations/supabase/admin-users";
 import { z } from "zod";
 import { computeSupervisorQuota } from "./supervisor-quota";
 import { computeExpectedSessions, computeSupervisorScore } from "./supervisor-score";
+import { SUPERVISOR_SESSION_PAYOUT_XOF } from "@/lib/pricing";
 
 // ────────────────────────────────────────────────────────────
 // Superviseurs — Fonctions serveur
@@ -44,10 +45,14 @@ export interface SupervisorGroup {
   totalChildren: number;
   /** Quota effectif (plancher + extra, borné 5) — même calcul que check_supervisor_quota. */
   quota: number;
-  /** Score de fiabilité /100 (V1) — 60% tenue des séances + 40% progression (supervisor-score.ts). */
+  /** Score de fiabilité /100 (V2) — 50% séances + 25% feedback famille + 25% progression (supervisor-score.ts). */
   score: number;
   /** Statut du compte superviseur (supervisor_profiles) — active|warning|suspended|banned. */
   status: string;
+  /** Payout DÛ (Vague C, ledger admin) : somme des payout_xof des séances approuvées non encore payées. */
+  duePayoutXof: number;
+  /** Nombre de séances approuvées en attente de paiement (ledger admin). */
+  approvedSessions: number;
   children: SupervisorAssignmentDetail[];
 }
 
@@ -127,6 +132,8 @@ export const listSupervisorsAdmin = createServerFn({ method: "GET" })
           quota: 5,
           score: 0,
           status: "active",
+          duePayoutXof: 0,
+          approvedSessions: 0,
           children: [detail],
         });
       }
@@ -172,16 +179,52 @@ export const listSupervisorsAdmin = createServerFn({ method: "GET" })
     const monthEnd = new Date(now.getFullYear(), now.getMonth() + 1, 1).toISOString();
     const { data: sessions } = await (supabaseAdmin as any)
       .from("supervisor_sessions")
-      .select("supervisor_user_id")
+      .select("id, supervisor_user_id")
       .in("supervisor_user_id", supervisorIds)
       .gte("occurred_at", monthStart)
       .lt("occurred_at", monthEnd);
     const sessionsBySupervisor = new Map<string, number>();
+    const sessionSupervisor = new Map<string, string>();
     for (const s of sessions ?? []) {
       sessionsBySupervisor.set(
         s.supervisor_user_id,
         (sessionsBySupervisor.get(s.supervisor_user_id) ?? 0) + 1,
       );
+      sessionSupervisor.set(s.id as string, s.supervisor_user_id as string);
+    }
+
+    // Feedback famille (Vague C, V2) : moyenne des notes posées sur les séances DU MOIS des
+    // superviseurs de la page — alimente la composante 25% du score. Sans note, le score est
+    // renormalisé (supervisor-score.ts).
+    const ratingsBySupervisor = new Map<string, { sum: number; count: number }>();
+    const sessionIds = [...sessionSupervisor.keys()];
+    if (sessionIds.length > 0) {
+      const { data: feedback } = await (supabaseAdmin as any)
+        .from("supervisor_feedback")
+        .select("supervisor_session_id, rating")
+        .in("supervisor_session_id", sessionIds);
+      for (const f of feedback ?? []) {
+        const supId = sessionSupervisor.get(f.supervisor_session_id as string);
+        if (!supId) continue;
+        const cur = ratingsBySupervisor.get(supId) ?? { sum: 0, count: 0 };
+        cur.sum += Number(f.rating);
+        cur.count += 1;
+        ratingsBySupervisor.set(supId, cur);
+      }
+    }
+
+    // Ledger payout (Vague C) : séances APPROUVÉES non encore payées → « Payout dû ».
+    const { data: approved } = await (supabaseAdmin as any)
+      .from("supervisor_sessions")
+      .select("supervisor_user_id, payout_xof")
+      .in("supervisor_user_id", supervisorIds)
+      .eq("status", "approved");
+    const approvedBySupervisor = new Map<string, { xof: number; count: number }>();
+    for (const a of approved ?? []) {
+      const cur = approvedBySupervisor.get(a.supervisor_user_id) ?? { xof: 0, count: 0 };
+      cur.xof += Number(a.payout_xof ?? 0);
+      cur.count += 1;
+      approvedBySupervisor.set(a.supervisor_user_id, cur);
     }
 
     const childIdsOfPage = [...groups.values()].flatMap((g) =>
@@ -237,12 +280,17 @@ export const listSupervisorsAdmin = createServerFn({ method: "GET" })
       }
       g.quota = quota;
       g.status = statusMap.get(g.supervisor_user_id) ?? "active";
+      const fb = ratingsBySupervisor.get(g.supervisor_user_id);
       g.score = computeSupervisorScore({
         expectedSessions: computeExpectedSessions(g.totalChildren, daysInMonth, elapsedDays),
         declaredSessions: sessionsBySupervisor.get(g.supervisor_user_id) ?? 0,
         completedChallenges: completedBySupervisor.get(g.supervisor_user_id) ?? 0,
         totalChallenges: totalBySupervisor.get(g.supervisor_user_id) ?? 0,
+        avgFeedback: fb && fb.count > 0 ? fb.sum / fb.count : 0,
       });
+      const due = approvedBySupervisor.get(g.supervisor_user_id);
+      g.duePayoutXof = due?.xof ?? 0;
+      g.approvedSessions = due?.count ?? 0;
       return !term || email.toLowerCase().includes(term);
     });
 
@@ -492,7 +540,7 @@ export const declareSessionSupervisor = createServerFn({ method: "POST" })
     // La séance doit concerner un enfant assigné à CE superviseur, encore actif.
     const { data: assignment } = await (supabaseAdmin as any)
       .from("supervisors")
-      .select("id")
+      .select("id, campaign_id")
       .eq("supervisor_user_id", userId)
       .eq("child_profile_id", data.childProfileId)
       .is("removed_at", null)
@@ -501,15 +549,89 @@ export const declareSessionSupervisor = createServerFn({ method: "POST" })
       throw new Error("Cet enfant n'est pas (plus) assigné à votre suivi.");
     }
 
+    // Vague C — financement de la séance (décision utilisateur « débit au fil des séances ») :
+    //   1. Pack Accompagnement actif de l'enfant avec séances restantes → débit atomique
+    //      (sessions_used+1, garde `sessions_used < sessions` en base) ;
+    //   2. Sinon campagne active de l'enfant avec compteur restant → débit atomique du
+    //      compartiment SÉANCES (campaigns.sessions_used+1, garde `sessions_used <
+    //      sessions_target`) ;
+    //   3. Sinon séance « none » (déclarée quand même — le fondateur voit le funding dans
+    //      le ledger et décide). Le payout (3 500 F) s'accumule dans tous les cas, le statut
+    //      declared → approved → paid est validé par l'admin (ledger).
+    let funding: "pack" | "campaign" | "none" = "none";
+    let campaignId: string | null = null;
+
+    const nowIso = new Date().toISOString();
+    const { data: pack } = await (supabaseAdmin as any)
+      .from("family_coverages")
+      .select("id, sessions_used, sessions")
+      .eq("child_id", data.childProfileId)
+      .eq("source", "accompaniment_pack")
+      .eq("status", "active")
+      .gt("ends_at", nowIso)
+      .maybeSingle();
+    if (pack && (pack.sessions_used ?? 0) < (pack.sessions ?? 0)) {
+      const { data: claimed } = await (supabaseAdmin as any)
+        .from("family_coverages")
+        .update({ sessions_used: (pack.sessions_used ?? 0) + 1 })
+        .eq("id", pack.id)
+        .lt("sessions_used", pack.sessions)
+        .select("id")
+        .maybeSingle();
+      if (claimed) funding = "pack";
+    }
+
+    if (funding === "none") {
+      const { data: enrollment } = await (supabaseAdmin as any)
+        .from("season_enrollments")
+        .select("campaign_id, campaigns(id, sessions_target, sessions_used, start_date, end_date)")
+        .eq("child_id", data.childProfileId)
+        .not("campaign_id", "is", null)
+        .order("enrolled_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      const c = enrollment?.campaigns as {
+        id: string;
+        sessions_target: number;
+        sessions_used: number;
+        start_date: string | null;
+        end_date: string | null;
+      } | null;
+      const inWindow =
+        c?.start_date &&
+        c.end_date &&
+        new Date(c.start_date).getTime() <= Date.now() &&
+        Date.now() <= new Date(c.end_date).getTime();
+      if (c && inWindow && (c.sessions_used ?? 0) < (c.sessions_target ?? 0)) {
+        const { data: claimed } = await (supabaseAdmin as any)
+          .from("campaigns")
+          .update({ sessions_used: (c.sessions_used ?? 0) + 1 })
+          .eq("id", c.id)
+          .lt("sessions_used", c.sessions_target)
+          .select("id")
+          .maybeSingle();
+        if (claimed) {
+          funding = "campaign";
+          campaignId = c.id;
+        }
+      }
+    }
+
     const { error } = await (supabaseAdmin as any).from("supervisor_sessions").insert({
       supervisor_user_id: userId,
       child_profile_id: data.childProfileId,
-      occurred_at: data.occurredAt ?? new Date().toISOString(),
+      occurred_at: data.occurredAt ?? nowIso,
       notes: data.notes ?? null,
+      campaign_id: campaignId,
+      funding,
+      // 70% de la séance sur preuve (décision porteur) — posé à la déclaration, validé par
+      // l'admin (ledger) : le montant du payout ne change jamais après coup.
+      payout_xof: SUPERVISOR_SESSION_PAYOUT_XOF,
+      status: "declared",
     });
     if (error) throw new Error(`Erreur lors de la déclaration: ${error.message}`);
 
-    return { success: true };
+    return { success: true, funding };
   });
 
 export const listSupervisorSessions = createServerFn({ method: "GET" })
@@ -655,7 +777,7 @@ export const getSupervisorDashboard = createServerFn({ method: "GET" })
       .is("deleted_at", null)
       .order("created_at", { ascending: false });
 
-    // Score de fiabilité (V1) : séances déclarées ce mois + progression des défis —
+    // Score de fiabilité (V2) : séances déclarées ce mois + feedback famille + progression —
     // même fenêtre et même pondération que listSupervisorsAdmin (supervisor-score.ts).
     const now = new Date();
     const monthStart = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
@@ -666,6 +788,18 @@ export const getSupervisorDashboard = createServerFn({ method: "GET" })
       .eq("supervisor_user_id", userId)
       .gte("occurred_at", monthStart)
       .lt("occurred_at", monthEnd);
+    const monthSessionIds = (monthSessions ?? []).map((s: any) => s.id as string);
+    let avgFeedback = 0;
+    if (monthSessionIds.length > 0) {
+      const { data: feedback } = await (supabaseAdmin as any)
+        .from("supervisor_feedback")
+        .select("rating")
+        .in("supervisor_session_id", monthSessionIds);
+      const ratings = (feedback ?? []).map((f: any) => Number(f.rating));
+      if (ratings.length > 0) {
+        avgFeedback = ratings.reduce((a: number, b: number) => a + b, 0) / ratings.length;
+      }
+    }
     const daysInMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
     const elapsedDays = Math.max(1, now.getDate());
     const completed = (challenges ?? []).filter((c) => c.status === "completed").length;
@@ -675,6 +809,7 @@ export const getSupervisorDashboard = createServerFn({ method: "GET" })
       declaredSessions: monthSessions?.length ?? 0,
       completedChallenges: completed,
       totalChallenges: total,
+      avgFeedback,
     });
 
     // Le numéro de téléphone du parent vit dans auth.users.user_metadata, pas
@@ -690,6 +825,9 @@ export const getSupervisorDashboard = createServerFn({ method: "GET" })
       score,
       sessionsThisMonth: monthSessions?.length ?? 0,
       expectedSessions: computeExpectedSessions(assignments.length, daysInMonth, elapsedDays),
+      // Payout à venir (Vague C) : 70% de la séance × séances déclarées ce mois — indicatif
+      // tant que l'admin n'a pas approuvé (ledger). Le superviseur voit l'argent en route.
+      pendingPayoutXof: (monthSessions?.length ?? 0) * SUPERVISOR_SESSION_PAYOUT_XOF,
       children: assignments.map((a) => {
         const child = a.child_profiles as any;
         return {
@@ -727,4 +865,169 @@ export const checkIsActiveSupervisor = createServerFn({ method: "GET" })
       .maybeSingle();
     const status = (profile?.status as string | undefined) ?? "active";
     return { isSupervisor: status !== "banned" };
+  });
+
+// ── Ledger payout superviseur (Vague C, décision « ledger admin ») ─────────────
+// Le superviseur déclare ses séances (payout_xof posé à la déclaration) ; l'ADMIN valide :
+//   • declared → approved : la séance est reconnue, elle entre dans le « Payout dû » ;
+//   • approved → paid : le fondateur a viré (WhatsApp/Mobile Money), la séance est soldée.
+// Le funding (pack/campagne/none) est visible pour la comptabilité de la plateforme.
+
+export const listSupervisorSessionsAdmin = createServerFn({ method: "GET" })
+  .middleware([requireAdmin])
+  .validator((input: unknown) =>
+    z.object({ supervisorUserId: z.string().uuid().optional() }).parse(input ?? {}),
+  )
+  .handler(async ({ data }) => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+
+    let query = (supabaseAdmin as any)
+      .from("supervisor_sessions")
+      .select(
+        "id, supervisor_user_id, child_profile_id, occurred_at, notes, status, funding, payout_xof, created_at, child_profiles(name)",
+      )
+      .order("occurred_at", { ascending: false })
+      .limit(200);
+    if (data.supervisorUserId) {
+      query = query.eq("supervisor_user_id", data.supervisorUserId);
+    }
+    const { data: rows, error } = await query;
+    if (error) throw new Error(error.message);
+
+    return (rows ?? []).map((s: any) => ({
+      id: s.id,
+      supervisor_user_id: s.supervisor_user_id,
+      child_name: (s.child_profiles as any)?.name ?? "Enfant",
+      occurred_at: s.occurred_at as string,
+      notes: s.notes as string | null,
+      status: s.status as string,
+      funding: s.funding as string,
+      payout_xof: Number(s.payout_xof ?? 0),
+    }));
+  });
+
+export const approveSupervisorSessionAdmin = createServerFn({ method: "POST" })
+  .middleware([requireAdmin])
+  .validator((input: unknown) => z.object({ sessionId: z.string().uuid() }).parse(input))
+  .handler(async ({ data }) => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+
+    // CAS sur le statut : une séance n'est approuvée qu'une fois (jamais de double pay).
+    const { data: claimed } = await (supabaseAdmin as any)
+      .from("supervisor_sessions")
+      .update({ status: "approved" })
+      .eq("id", data.sessionId)
+      .eq("status", "declared")
+      .select("id")
+      .maybeSingle();
+    if (!claimed) throw new Error("Séance introuvable ou déjà approuvée.");
+
+    return { success: true };
+  });
+
+export const markSupervisorSessionsPaidAdmin = createServerFn({ method: "POST" })
+  .middleware([requireAdmin])
+  .validator((input: unknown) => z.object({ supervisorUserId: z.string().uuid() }).parse(input))
+  .handler(async ({ data }) => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+
+    const { data: res, error } = await (supabaseAdmin as any)
+      .from("supervisor_sessions")
+      .update({ status: "paid" })
+      .eq("supervisor_user_id", data.supervisorUserId)
+      .eq("status", "approved")
+      .select("id");
+    if (error) throw new Error(error.message);
+
+    return { success: true, paidCount: (res ?? []).length };
+  });
+
+// ── Feedback famille (Vague C, V2) ─────────────────────────────────────────────
+// Le parent note 1-5 la séance de suivi de son enfant (composante 25% du score). Une seule
+// note par (séance, famille) — l'index unique supervise_feedback_session_user_key garantit
+// l'upsert applicatif (la famille peut corriger sa note, jamais dupliquer).
+
+const SubmitFeedbackInput = z.object({
+  sessionId: z.string().uuid(),
+  rating: z.number().int().min(1).max(5),
+  comment: z.string().max(500).optional(),
+});
+
+export const submitSupervisorFeedback = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .validator((input: unknown) => SubmitFeedbackInput.parse(input))
+  .handler(async ({ data, context }) => {
+    const userId = (context as any).claims?.sub;
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+
+    // La séance doit appartenir à un enfant DU COMPTE qui note.
+    const { data: session } = await (supabaseAdmin as any)
+      .from("supervisor_sessions")
+      .select("child_profile_id, child_profiles(user_id)")
+      .eq("id", data.sessionId)
+      .maybeSingle();
+    if (!session) throw new Error("Séance introuvable.");
+    const childOwner = (session.child_profiles as any)?.user_id as string | undefined;
+    if (!childOwner || childOwner !== userId) {
+      throw new Error("Cette séance ne concerne pas un de vos enfants.");
+    }
+
+    const { data: existing } = await (supabaseAdmin as any)
+      .from("supervisor_feedback")
+      .select("id")
+      .eq("supervisor_session_id", data.sessionId)
+      .eq("user_id", userId)
+      .maybeSingle();
+
+    if (existing) {
+      const { error } = await (supabaseAdmin as any)
+        .from("supervisor_feedback")
+        .update({ rating: data.rating, comment: data.comment ?? null })
+        .eq("id", existing.id);
+      if (error) throw new Error(error.message);
+    } else {
+      const { error } = await (supabaseAdmin as any).from("supervisor_feedback").insert({
+        supervisor_session_id: data.sessionId,
+        user_id: userId,
+        rating: data.rating,
+        comment: data.comment ?? null,
+      });
+      if (error) throw new Error(error.message);
+    }
+
+    return { success: true, rating: data.rating };
+  });
+
+// Séances récentes d'un enfant (pour le widget « Noter la dernière séance » du portfolio).
+// Retourne aussi l'état de notation (upsert applicatif : on peut corriger, pas dupliquer).
+const ChildSessionsForFeedbackInput = z.object({ childId: z.string().uuid() });
+
+export const listChildSessionsForFeedback = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .validator((input: unknown) => ChildSessionsForFeedbackInput.parse(input))
+  .handler(async ({ data, context }) => {
+    const userId = (context as any).claims?.sub;
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+
+    const { data: child } = await supabaseAdmin
+      .from("child_profiles")
+      .select("id, user_id")
+      .eq("id", data.childId)
+      .maybeSingle();
+    if (!child || child.user_id !== userId) throw new Error("Profil enfant introuvable.");
+
+    const { data: sessions, error } = await (supabaseAdmin as any)
+      .from("supervisor_sessions")
+      .select("id, occurred_at, supervisor_user_id, supervisor_feedback(rating)")
+      .eq("child_profile_id", data.childId)
+      .order("occurred_at", { ascending: false })
+      .limit(20);
+    if (error) throw new Error(error.message);
+
+    return (sessions ?? []).map((s: any) => ({
+      id: s.id as string,
+      occurred_at: s.occurred_at as string,
+      rated: (s.supervisor_feedback ?? []).length > 0,
+      rating: (s.supervisor_feedback ?? [])[0]?.rating ?? null,
+    }));
   });
