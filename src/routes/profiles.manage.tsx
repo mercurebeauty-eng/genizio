@@ -12,7 +12,6 @@ import type { ChildProfile } from "@/components/profiles/shared";
 import { confirmDialog } from "@/components/ui/confirm-dialog";
 import { ArrowLeft, Lock, Loader2 } from "lucide-react";
 import { toast } from "sonner";
-import { computeChildCreationLimit } from "@/lib/child-access";
 
 export const Route = createFileRoute("/profiles/manage")({
   component: ManageProfilesPage,
@@ -26,10 +25,15 @@ function ManageProfilesPage() {
   const [editing, setEditing] = useState<ChildProfile | "new" | null>(null);
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
 
-  // Compte couvert (abonnement famille actif, crédit de parrainage, ou enfant inscrit à
-  // une campagne active — migration 20260814160000) → création possible jusqu'au plafond
-  // de 5 — miroir du trigger check_child_profile_quota (20260814160000).
-  const { covered: familyCovered, campaignCovered, coveredUntil } = useFamilyCoverage();
+  // Limite de CRÉATION (V4, Vague A) : calculée côté serveur depuis family_coverages
+  // (creationLimit, miroir du trigger V10 — migration 20260814200000). familyCovered/
+  // campaignCovered/coveredUntil restent pour la modale AccessUpgradeModal.
+  const {
+    creationLimit: quota,
+    covered: familyCovered,
+    campaignCovered,
+    coveredUntil,
+  } = useFamilyCoverage();
 
   useEffect(() => {
     if (!loading && !session) navigate({ to: "/auth", replace: true });
@@ -108,17 +112,8 @@ function ManageProfilesPage() {
             </p>
           </div>
           {(() => {
-            // Décision 2026-08-05 : le plancher couvre le profil gratuit (+ slots grand-pérés),
-            // le "+1" autorise la création du premier profil MENSUEL (en cours de première mise
-            // en paiement) — miroir du trigger check_child_profile_quota (migration 20260805100000).
-            // Quota + unifié (2026-08-14) : quota_override = quota TOTAL accordé
-            // (0 = règle standard auto), miroir du trigger (migration 20260814140000).
-            const quota = computeChildCreationLimit(
-              session?.user?.created_at,
-              familyCovered,
-              (session?.user?.app_metadata?.quota_override as number) ?? 0,
-              campaignCovered,
-            );
+            // La limite de création vient du serveur (creationLimit, miroir du trigger V10)
+            // — le bouton bascule entre « + Nouveau profil » et « Couverture atteinte ».
             const atQuota = profiles.length >= quota;
             return (
               <button
@@ -174,6 +169,7 @@ function ManageProfilesPage() {
           familyCovered={familyCovered}
           campaignCovered={campaignCovered}
           coveredUntil={coveredUntil}
+          creationLimit={quota}
           onClose={() => setShowUpgradeModal(false)}
         />
       )}

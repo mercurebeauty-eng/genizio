@@ -32,12 +32,16 @@ export function AccessUpgradeModal({
   familyCovered,
   campaignCovered,
   coveredUntil,
+  creationLimit = 5,
   onClose,
 }: {
   profileCount: number;
   familyCovered: boolean;
   campaignCovered: boolean;
   coveredUntil: string | null;
+  /** Limite de création (V4, Vague A) : miroir du trigger V10 — 5 avec couverture, plus
+   *  les paliers achetés, cap 50. La jauge affiche X/N au lieu de X/5. */
+  creationLimit?: number;
   onClose: () => void;
 }) {
   const { session } = useSession();
@@ -108,11 +112,11 @@ export function AccessUpgradeModal({
               <div className="flex-1 h-2 rounded-full bg-surface overflow-hidden border border-ink/5">
                 <div
                   className="h-full bg-gradient-to-r from-brand to-indigo-500 rounded-full transition-all duration-500"
-                  style={{ width: `${Math.min(100, (profileCount / 5) * 100)}%` }}
+                  style={{ width: `${Math.min(100, (profileCount / creationLimit) * 100)}%` }}
                 />
               </div>
               <span className="text-[11px] font-black text-ink/60 whitespace-nowrap">
-                {profileCount} / 5 enfants
+                {profileCount} / {creationLimit} enfants
               </span>
             </div>
             {coveredUntil && (

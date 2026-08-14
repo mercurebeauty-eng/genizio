@@ -591,7 +591,7 @@ export const enrollChildViaCampaignLink = createServerFn({ method: "POST" })
 
     const { data: campaign } = await (supabaseAdmin as any)
       .from("campaigns")
-      .select("id, name, target_count")
+      .select("id, name, target_count, start_date, end_date")
       .eq("id", data.campaignId)
       .maybeSingle();
     if (!campaign) throw new Error("Programme introuvable.");
@@ -628,6 +628,22 @@ export const enrollChildViaCampaignLink = createServerFn({ method: "POST" })
       if (error.code === "P0001") throw new Error("Ce programme a atteint sa capacité maximale de places.");
       throw new Error(error.message);
     }
+
+    // V4 (Vague A) : la couverture family_coverages source='campaign' suit la fenêtre FIXE de
+    // la campagne (start_date/end_date) — une ligne par (compte, campagne), upsert idempotent.
+    // C'est elle que le trigger V10 et le résolveur lisent désormais (plus la lecture directe
+    // de season_enrollments pour la création). starts_at = début de fenêtre : une famille
+    // inscrite avant le début de la campagne n'est couverte qu'à partir du début effectif.
+    const { syncFamilyCoverage } = await import("@/lib/family-coverages");
+    await syncFamilyCoverage(supabaseAdmin as any, {
+      userId,
+      source: "campaign",
+      sourceRef: data.campaignId,
+      startsAt: campaign.start_date ?? null,
+      endsAt: campaign.end_date ?? null,
+      maxChildren: 5,
+      status: "active",
+    });
 
     return { success: true };
   });

@@ -1,14 +1,16 @@
 import { describe, it, expect } from "vitest";
 import {
   computeAccessPeriodWindow,
-  computeChildCreationLimit,
   getChildAccessStatus,
   resolveChildAccessStatus,
 } from "@/lib/child-access";
+import { computeAppQuota } from "@/lib/child-profile-quota";
 
-// Modèle d'accès mensuel par enfant (2026-08-05) — décisions utilisateur :
+// Modèle V4 « Pass Enfant » (2026-08-14, Vague A) — décisions utilisateur :
 //  • plancher gratuit (1, ou 5 pour les comptes grand-pérés < 2026-08-04) : jamais expiré ;
-//  • quota + unifié (quota_override) : quota TOTAL accordé → permanent jusqu'à N ;
+//  • quota + (quota_override, outil ADMIN) : quota TOTAL accordé → permanent jusqu'à N ;
+//  • couverture family_coverages (abonnement/campagne/parrainage) → 5 profils ;
+//  • paliers achetés (décision 5) : +5 par palier, cap 50 ;
 //  • au-delà : accès MENSUEL porté par child_access_periods — actif si la période la plus
 //    récente est dans le futur, sinon expired (génération de défis bloquée, reste visible).
 
@@ -124,49 +126,98 @@ describe("resolveChildAccessStatus", () => {
   });
 });
 
-describe("computeChildCreationLimit (miroir du trigger unifié : 0 = règle standard auto, N = quota total, borné 50)", () => {
+describe("computeAppQuota (miroir du trigger V10 : 0 = règle standard auto, N = quota total, borné 50)", () => {
   it("compte neuf sans quota + : plancher 1 — la base refuse le 2e profil sans slot/abonnement (plus de promesse UI que la base rejette)", () => {
-    expect(computeChildCreationLimit("2026-08-10T00:00:00.000Z", false)).toBe(1);
-    expect(computeChildCreationLimit("2026-08-10T00:00:00.000Z", false, 0)).toBe(1);
+    expect(computeAppQuota({ accountCreatedAt: "2026-08-10T00:00:00.000Z" })).toBe(1);
+    expect(
+      computeAppQuota({ accountCreatedAt: "2026-08-10T00:00:00.000Z", quotaOverride: 0 }),
+    ).toBe(1);
   });
 
-  it("compte grand-péré : plafonné à 5 — le plafond de 5 enfants est voulu, au-delà on crée un nouveau compte", () => {
-    expect(computeChildCreationLimit("2026-07-01T00:00:00.000Z", false)).toBe(5);
+  it("compte grand-péré : plafonné à 5 — le plancher est la couverture gratuite de base", () => {
+    expect(computeAppQuota({ accountCreatedAt: "2026-07-01T00:00:00.000Z" })).toBe(5);
   });
 
-  it("compte couvert (abonnement famille ou crédit parrainage) : création possible jusqu'au plafond de 5", () => {
-    expect(computeChildCreationLimit("2026-08-10T00:00:00.000Z", true)).toBe(5);
-    expect(computeChildCreationLimit("2026-07-01T00:00:00.000Z", true)).toBe(5);
+  it("compte couvert (abonnement famille, campagne ou parrainage — hasBaseCoverage) : création possible jusqu'au plafond de 5", () => {
+    expect(
+      computeAppQuota({ accountCreatedAt: "2026-08-10T00:00:00.000Z", hasBaseCoverage: true }),
+    ).toBe(5);
+    expect(
+      computeAppQuota({ accountCreatedAt: "2026-07-01T00:00:00.000Z", hasBaseCoverage: true }),
+    ).toBe(5);
   });
 
-  it("couverture CAMPAGNE (enfant inscrit à une campagne active) : même droit de création que la couverture famille — l'institution soutient le parent, pas d'abonnement exigé", () => {
-    // Compte neuf, non couvert, mais un enfant est inscrit à une campagne active → 5
-    expect(computeChildCreationLimit("2026-08-10T00:00:00.000Z", false, 0, true)).toBe(5);
-    // Grand-péré : inchangé (déjà 5 par le plancher)
-    expect(computeChildCreationLimit("2026-07-01T00:00:00.000Z", false, 0, true)).toBe(5);
-    // Couvert + campagne : toujours 5 (plafond absolu)
-    expect(computeChildCreationLimit("2026-08-10T00:00:00.000Z", true, 0, true)).toBe(5);
+  it("sans couverture NI palier : le plancher reste la règle", () => {
+    expect(computeAppQuota({ accountCreatedAt: "2026-08-10T00:00:00.000Z" })).toBe(1);
+    expect(
+      computeAppQuota({
+        accountCreatedAt: "2026-08-10T00:00:00.000Z",
+        hasBaseCoverage: false,
+        sumPurchases: 0,
+      }),
+    ).toBe(1);
   });
 
-  it("sans couverture famille NI campagne : le plancher reste la règle", () => {
-    expect(computeChildCreationLimit("2026-08-10T00:00:00.000Z", false, 0, false)).toBe(1);
-  });
-
-  it("quota + (quotaOverride) : N = quota TOTAL accordé, pour n'importe quel compte", () => {
-    // Mercurebeauty : quota_override 15 → 15 profils max (couvert ou non)
-    expect(computeChildCreationLimit("2026-07-01T00:00:00.000Z", false, 15)).toBe(15);
-    expect(computeChildCreationLimit("2026-07-01T00:00:00.000Z", true, 15)).toBe(15);
-    // Compte neuf avec quota + : même sémantique
-    expect(computeChildCreationLimit("2026-08-10T00:00:00.000Z", false, 15)).toBe(15);
+  it("quota + (quotaOverride, outil ADMIN) : N = quota TOTAL accordé, pour n'importe quel compte", () => {
+    expect(
+      computeAppQuota({ accountCreatedAt: "2026-07-01T00:00:00.000Z", quotaOverride: 15 }),
+    ).toBe(15);
+    expect(
+      computeAppQuota({ accountCreatedAt: "2026-08-10T00:00:00.000Z", quotaOverride: 15 }),
+    ).toBe(15);
   });
 
   it("quota + borné à 50 (miroir du LEAST(quota_override, 50) du trigger)", () => {
-    expect(computeChildCreationLimit("2026-08-10T00:00:00.000Z", false, 60)).toBe(50);
+    expect(
+      computeAppQuota({ accountCreatedAt: "2026-08-10T00:00:00.000Z", quotaOverride: 60 }),
+    ).toBe(50);
   });
 
-  it("sans quota_override, le plafond de 5 reste la règle (les autres comptes ne changent pas)", () => {
-    expect(computeChildCreationLimit("2026-08-10T00:00:00.000Z", false)).toBe(1);
-    expect(computeChildCreationLimit("2026-07-01T00:00:00.000Z", true)).toBe(5);
+  it("DÉCISION 5 : un palier acheté = +5 enfants, quel que soit le plancher (6e enfant → on achète un palier)", () => {
+    // Compte neuf (plancher 1) + palier → 1 + 5 = 6
+    expect(computeAppQuota({ accountCreatedAt: "2026-08-10T00:00:00.000Z", sumPurchases: 5 })).toBe(
+      6,
+    );
+    // Grand-péré (5 gratuits) + palier → 5 + 5 = 10
+    expect(computeAppQuota({ accountCreatedAt: "2026-07-01T00:00:00.000Z", sumPurchases: 5 })).toBe(
+      10,
+    );
+    // Couvert (5) + palier → 5 + 5 = 10
+    expect(
+      computeAppQuota({
+        accountCreatedAt: "2026-08-10T00:00:00.000Z",
+        hasBaseCoverage: true,
+        sumPurchases: 5,
+      }),
+    ).toBe(10);
+  });
+
+  it("DÉCISION 5 : plusieurs paliers s'empilent, cap absolu 50", () => {
+    // 9 paliers (45) sur un compte couvert → 5 + 45 = 50 (cap)
+    expect(
+      computeAppQuota({
+        accountCreatedAt: "2026-08-10T00:00:00.000Z",
+        hasBaseCoverage: true,
+        sumPurchases: 45,
+      }),
+    ).toBe(50);
+    // 10 paliers (50) sur compte neuf → 1 + 50 = 51 → cap 50
+    expect(
+      computeAppQuota({ accountCreatedAt: "2026-08-10T00:00:00.000Z", sumPurchases: 50 }),
+    ).toBe(50);
+  });
+
+  it("palier éducateur vouché : 10 (le cap absolu 5 de 2026-08-08 est remplacé par le cap 50)", () => {
+    expect(
+      computeAppQuota({ accountCreatedAt: "2026-08-10T00:00:00.000Z", isVouchedEducator: true }),
+    ).toBe(10);
+    expect(
+      computeAppQuota({
+        accountCreatedAt: "2026-08-10T00:00:00.000Z",
+        isVouchedEducator: true,
+        hasBaseCoverage: true,
+      }),
+    ).toBe(10);
   });
 });
 
@@ -198,6 +249,7 @@ describe("getChildAccessStatus (client fake, mêmes tables que le vrai)", () => 
       enrollments?: any[];
       subscriptions?: any[];
       credits?: any[];
+      coverages?: any[];
       user?: any;
     } = {},
   ) => {
@@ -213,16 +265,19 @@ describe("getChildAccessStatus (client fake, mêmes tables que le vrai)", () => 
       if (table === "season_enrollments") return overrides.enrollments ?? [];
       if (table === "subscriptions") return overrides.subscriptions ?? [];
       if (table === "sponsorship_credits") return overrides.credits ?? [];
+      if (table === "family_coverages") return overrides.coverages ?? [];
       return [];
     };
 
     // Query builder minimal : select().eq() → { order (avec .limit), maybeSingle } couvre les
-    // chaînages de getChildAccessStatus + getFamilyCoverage (subscriptions/sponsorship_credits).
+    // chaînages de getChildAccessStatus + resolveCoverageState (family_coverages, où .eq() est
+    // la fin de chaîne — le builder est alors awaitable directement).
     const from = (table: string) => ({
       select: () => ({
         eq: (col: string, val: string) => {
           const filtered = rowsFor(table).filter((r: any) => r[col] === val);
-          return {
+          const result = Promise.resolve({ data: filtered, error: null });
+          return Object.assign(result, {
             order: (col2: string, o: { ascending: boolean }) => {
               const sorted = [...filtered].sort((a: any, b: any) =>
                 o.ascending ? (a[col2] > b[col2] ? 1 : -1) : a[col2] < b[col2] ? 1 : -1,
@@ -233,7 +288,7 @@ describe("getChildAccessStatus (client fake, mêmes tables que le vrai)", () => 
               });
             },
             maybeSingle: () => Promise.resolve({ data: filtered[0] ?? null, error: null }),
-          };
+          });
         },
       }),
     });
@@ -299,11 +354,21 @@ describe("getChildAccessStatus (client fake, mêmes tables que le vrai)", () => 
     expect(status.kind).toBe("expired");
   });
 
-  it("enfant au-delà du plancher, famille couverte par abonnement actif → permanent", async () => {
+  it("enfant au-delà du plancher, famille couverte par abonnement (family_coverages) → permanent", async () => {
     const future = new Date(Date.now() + 30 * 86_400_000).toISOString();
     const status = await getChildAccessStatus(
       mkDb({
-        subscriptions: [{ id: "s1", user_id: "u1", status: "active", current_period_end: future }],
+        coverages: [
+          {
+            id: "fc1",
+            user_id: "u1",
+            source: "subscription",
+            max_children: 5,
+            starts_at: new Date(Date.now() - 30 * 86_400_000).toISOString(),
+            ends_at: future,
+            status: "active",
+          },
+        ],
       }) as any,
       "u1",
       "c2",
@@ -311,11 +376,21 @@ describe("getChildAccessStatus (client fake, mêmes tables que le vrai)", () => 
     expect(status.kind).toBe("permanent");
   });
 
-  it("enfant au-delà du plancher, famille couverte par crédit de parrainage → permanent", async () => {
+  it("enfant au-delà du plancher, famille couverte par crédit de parrainage (family_coverages) → permanent", async () => {
     const future = new Date(Date.now() + 30 * 86_400_000).toISOString();
     const status = await getChildAccessStatus(
       mkDb({
-        credits: [{ id: "k1", user_id: "u1", ends_at: future }],
+        coverages: [
+          {
+            id: "fc2",
+            user_id: "u1",
+            source: "sponsorship",
+            max_children: 5,
+            starts_at: new Date(Date.now() - 30 * 86_400_000).toISOString(),
+            ends_at: future,
+            status: "active",
+          },
+        ],
       }) as any,
       "u1",
       "c2",
@@ -323,10 +398,42 @@ describe("getChildAccessStatus (client fake, mêmes tables que le vrai)", () => 
     expect(status.kind).toBe("permanent");
   });
 
-  it("abonnement résilié → coupure immédiate : l'enfant au-delà du plancher retombe en expired", async () => {
+  it("DÉCISION 5 : un palier acheté couvre l'enfant au-delà du plancher → permanent", async () => {
+    const future = new Date(Date.now() + 30 * 86_400_000).toISOString();
     const status = await getChildAccessStatus(
       mkDb({
-        subscriptions: [{ id: "s1", user_id: "u1", status: "cancelled", current_period_end: null }],
+        coverages: [
+          {
+            id: "fc3",
+            user_id: "u1",
+            source: "purchase",
+            max_children: 5,
+            starts_at: new Date(Date.now() - 30 * 86_400_000).toISOString(),
+            ends_at: future,
+            status: "active",
+          },
+        ],
+      }) as any,
+      "u1",
+      "c2",
+    );
+    expect(status.kind).toBe("permanent");
+  });
+
+  it("abonnement résilié (couverture révoquée) → coupure immédiate : l'enfant au-delà du plancher retombe en expired", async () => {
+    const status = await getChildAccessStatus(
+      mkDb({
+        coverages: [
+          {
+            id: "fc4",
+            user_id: "u1",
+            source: "subscription",
+            max_children: 5,
+            starts_at: new Date(Date.now() - 60 * 86_400_000).toISOString(),
+            ends_at: new Date(Date.now() + 30 * 86_400_000).toISOString(),
+            status: "revoked",
+          },
+        ],
       }) as any,
       "u1",
       "c2",
@@ -338,7 +445,17 @@ describe("getChildAccessStatus (client fake, mêmes tables que le vrai)", () => 
     const future = new Date(Date.now() + 30 * 86_400_000).toISOString();
     const status = await getChildAccessStatus(
       mkDb({
-        subscriptions: [{ id: "s1", user_id: "u1", status: "active", current_period_end: future }],
+        coverages: [
+          {
+            id: "fc5",
+            user_id: "u1",
+            source: "subscription",
+            max_children: 5,
+            starts_at: new Date(Date.now() - 30 * 86_400_000).toISOString(),
+            ends_at: future,
+            status: "active",
+          },
+        ],
       }) as any,
       "u1",
       "c1",

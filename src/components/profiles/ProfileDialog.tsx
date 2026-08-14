@@ -9,10 +9,8 @@ import {
   type ProfileDraft,
 } from "./shared";
 import { toast } from "sonner";
-import { useSession } from "@/hooks/use-session";
 import { useFamilyCoverage } from "@/hooks/use-family-coverage";
 import { getGeoHint } from "@/lib/geo.functions";
-import { computeChildCreationLimit } from "@/lib/child-access";
 import { seedTalentsFromInterests } from "@/lib/talent-seed";
 import {
   ABILITY_AXES,
@@ -36,22 +34,11 @@ export function ProfileDialog({
   onClose: () => void;
   onSaved: () => void;
 }) {
-  const { session } = useSession();
-  // Compte couvert (abonnement famille actif, crédit de parrainage, ou enfant inscrit à
-  // une campagne active — migration 20260814160000) → création possible jusqu'au plafond
-  // de 5 — miroir du trigger check_child_profile_quota (20260814160000).
-  // Quota + unifié (2026-08-14) : quota_override = quota TOTAL accordé au compte
-  // (0 = règle standard auto), miroir du trigger (migration 20260814140000).
-  const { covered: familyCovered, campaignCovered } = useFamilyCoverage();
-  // Pré-check local seulement : le trigger check_child_profile_quota fait foi côté base.
-  // Décision 2026-08-05 : +1 autorisé pour le premier profil MENSUEL (en cours de mise en
-  // paiement) — miroir du trigger (migration 20260805100000).
-  const quota = computeChildCreationLimit(
-    session?.user?.created_at,
-    familyCovered,
-    (session?.user?.app_metadata?.quota_override as number) ?? 0,
-    campaignCovered,
-  );
+  // Limite de CRÉATION (V4, Vague A) : calculée côté serveur depuis family_coverages
+  // (getFamilySubscriptionStatus → creationLimit, miroir du trigger V10 — migration
+  // 20260814200000). Pré-check local seulement : le trigger check_child_profile_quota
+  // fait foi côté base.
+  const { creationLimit: quota } = useFamilyCoverage();
 
   const [draft, setDraft] = useState<ProfileDraft>(
     initial

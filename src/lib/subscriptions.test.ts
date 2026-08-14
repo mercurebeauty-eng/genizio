@@ -192,47 +192,67 @@ describe("activateFamilySubscription", () => {
       priceXof: 5000,
     });
 
-    expect(inserts).toHaveLength(0);
+    // Aucun insert sur subscriptions (idempotent) ; la synchro family_coverages (V4, Vague A)
+    // est le SEUL insert — la couverture suit la fenêtre existante sans la prolonger.
+    expect(inserts.filter((i) => i.table === "subscriptions")).toHaveLength(0);
     const upd = updates.find((u) => u.table === "subscriptions");
     expect(upd?.value).toMatchObject({ plan_code: "PLN_1" });
     expect(upd?.value.current_period_end).toBeUndefined(); // pas de prolongation
   });
 });
 
-// ── getFamilyCoverage : couverture = abonnement (actif/past_due) OU crédit parrainage ─
-describe("getFamilyCoverage (résolveur : abonnement OU crédit de parrainage)", () => {
+// ── getFamilyCoverage : couverture = family_coverages (source unique V4) ─────────
+// L'abonnement Paystack (table subscriptions) ne fournit plus que le statut d'affichage ;
+// la couverture effective est portée par family_coverages (abonnement/campagne/parrainage/
+// palier — le max des ends_at des lignes child_id NULL actives fait foi).
+describe("getFamilyCoverage (résolveur V4 : family_coverages)", () => {
   const future = new Date(Date.now() + 30 * 86_400_000).toISOString();
   const later = new Date(Date.now() + 60 * 86_400_000).toISOString();
   const past = new Date(Date.now() - 5 * 86_400_000).toISOString();
+  const start = new Date(Date.now() - 30 * 86_400_000).toISOString();
+  const coverageRow = (source: string, endsAt: string, status = "active") => ({
+    id: `fc-${source}`,
+    user_id: "u1",
+    source,
+    child_id: null,
+    max_children: 5,
+    starts_at: start,
+    ends_at: endsAt,
+    status,
+  });
 
-  it("abonnement actif → couverture jusqu'à current_period_end", async () => {
+  it("abonnement actif → couverture jusqu'à la fin de la fenêtre family_coverages", async () => {
     const { db } = makeFakeDb({
       subscriptions: [{ id: "s1", user_id: "u1", status: "active", current_period_end: future }],
+      family_coverages: [coverageRow("subscription", future)],
     });
     const cov = await getFamilyCoverage(db, "u1");
     expect(cov.coveredUntil).toBe(future);
     expect(cov.subscriptionStatus).toBe("active");
   });
 
-  it("abonnement past_due avec période encore valide → couvre (grâce) jusqu'à la fin de période", async () => {
+  it("abonnement past_due avec fenêtre encore valide → couvre (grâce) jusqu'à la fin de la fenêtre", async () => {
     const { db } = makeFakeDb({
       subscriptions: [{ id: "s1", user_id: "u1", status: "past_due", current_period_end: future }],
+      family_coverages: [coverageRow("subscription", future)],
     });
     const cov = await getFamilyCoverage(db, "u1");
     expect(cov.coveredUntil).toBe(future);
   });
 
-  it("abonnement résilié → aucune couverture (coupure immédiate, aucun retry Paystack)", async () => {
+  it("abonnement résilié (couverture révoquée) → aucune couverture (coupure immédiate)", async () => {
     const { db } = makeFakeDb({
       subscriptions: [{ id: "s1", user_id: "u1", status: "cancelled", current_period_end: null }],
+      family_coverages: [coverageRow("subscription", future, "revoked")],
     });
     const cov = await getFamilyCoverage(db, "u1");
     expect(cov.coveredUntil).toBeNull();
   });
 
-  it("abonnement actif mais période passée → plus de couverture (fin de période payée dépassée)", async () => {
+  it("fenêtre déjà passée → plus de couverture (fin de période payée dépassée)", async () => {
     const { db } = makeFakeDb({
       subscriptions: [{ id: "s1", user_id: "u1", status: "active", current_period_end: past }],
+      family_coverages: [coverageRow("subscription", past)],
     });
     const cov = await getFamilyCoverage(db, "u1");
     expect(cov.coveredUntil).toBeNull();
@@ -241,16 +261,16 @@ describe("getFamilyCoverage (résolveur : abonnement OU crédit de parrainage)",
   it("crédit de parrainage valide → couverture jusqu'à ends_at, indépendamment de l'abonnement", async () => {
     const { db } = makeFakeDb({
       subscriptions: [{ id: "s1", user_id: "u1", status: "cancelled", current_period_end: null }],
-      sponsorship_credits: [{ id: "k1", user_id: "u1", ends_at: later }],
+      family_coverages: [coverageRow("sponsorship", later)],
     });
     const cov = await getFamilyCoverage(db, "u1");
     expect(cov.coveredUntil).toBe(later);
   });
 
-  it("prend la date la plus tardive entre abonnement et crédit (max, pas de somme)", async () => {
+  it("prend la date la plus tardive entre les lignes de couverture (max, pas de somme)", async () => {
     const { db } = makeFakeDb({
       subscriptions: [{ id: "s1", user_id: "u1", status: "active", current_period_end: future }],
-      sponsorship_credits: [{ id: "k1", user_id: "u1", ends_at: later }],
+      family_coverages: [coverageRow("subscription", future), coverageRow("sponsorship", later)],
     });
     const cov = await getFamilyCoverage(db, "u1");
     expect(cov.coveredUntil).toBe(later);

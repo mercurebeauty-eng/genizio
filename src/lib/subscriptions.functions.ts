@@ -20,6 +20,12 @@ import { requireAdmin } from "@/integrations/supabase/admin-middleware";
 import { z } from "zod";
 import { PROMO_PRICE_XOF, STANDARD_PRICE_XOF, resolveExtraSlotPrice } from "@/lib/pricing";
 import { computeAccessPeriodWindow } from "@/lib/child-access";
+import { computeAppQuota } from "@/lib/child-profile-quota";
+import {
+  syncFamilyCoverage,
+  revokeFamilyCoverage,
+  resolveCoverageState,
+} from "@/lib/family-coverages";
 
 // ── Plans famille (auto-créés chez Paystack, cachés dans paystack_plans) ───────
 export const FAMILY_PLAN_KEYS = {
@@ -135,6 +141,29 @@ async function findSubscriptionByRefOrCode(
   return (byRef.data as SubscriptionRow | null) ?? (byCode.data as SubscriptionRow | null) ?? null;
 }
 
+// V4 (Vague A) : synchronise la ligne family_coverages source='subscription' depuis la ligne
+// billing — la couverture famille app suit exactement la fenêtre déjà payée ('active' comme
+// 'past_due' couvrent jusqu'à current_period_end, la grâce du résolveur). Toute mutation du
+// statut/période d'abonnement passe par ici pour ne jamais laisser les deux sources diverger.
+async function syncSubscriptionCoverage(supabaseAdmin: any, sub: any): Promise<void> {
+  if (!sub?.user_id) return;
+  const covering =
+    (sub.status === "active" || sub.status === "past_due") && !!sub.current_period_end;
+  if (covering) {
+    await syncFamilyCoverage(supabaseAdmin, {
+      userId: sub.user_id,
+      source: "subscription",
+      sourceRef: sub.id ?? null,
+      startsAt: sub.current_period_start ?? sub.started_at ?? null,
+      endsAt: sub.current_period_end,
+      priceXof: sub.price_xof ?? null,
+      status: "active",
+    });
+  } else {
+    await revokeFamilyCoverage(supabaseAdmin, { userId: sub.user_id, source: "subscription" });
+  }
+}
+
 /**
  * Active/renouvelle la ligne d'abonnement d'une famille à partir d'une charge Paystack
  * réussie (charge.success). Partagé entre le webhook et la page de retour — idempotent :
@@ -218,6 +247,15 @@ export async function activateFamilySubscription(
       current_period_end: plusOneMonth(paidAt),
       started_at: now.toISOString(),
     });
+    // V4 (Vague A) : la couverture family_coverages suit la fenêtre posée.
+    await syncFamilyCoverage(supabaseAdmin, {
+      userId: params.userId,
+      source: "subscription",
+      startsAt: paidAt.toISOString(),
+      endsAt: plusOneMonth(paidAt),
+      priceXof: params.priceXof ?? null,
+      status: "active",
+    });
     fireSubscriptionEmail(params.userId, plusOneMonth(paidAt));
     return;
   }
@@ -238,6 +276,9 @@ export async function activateFamilySubscription(
         .update({ ...patch, updated_at: now.toISOString() })
         .eq("id", sub.id);
     }
+    // Même paiement déjà traité : la couverture est déjà posée, mais resynchroniser est
+    // gratuit et répare toute divergence (ligne posée avant la V4, etc.).
+    await syncSubscriptionCoverage(supabaseAdmin, sub);
     return;
   }
 
@@ -275,6 +316,16 @@ export async function activateFamilySubscription(
     })
     .eq("id", sub.id);
 
+  // V4 (Vague A) : la couverture family_coverages suit la fenêtre étendue (renouvellement
+  // ou premier paiement) — jamais de découpe, même règle que la période billing.
+  await syncSubscriptionCoverage(supabaseAdmin, {
+    ...sub,
+    status: "active",
+    current_period_start: nextPeriodStart,
+    current_period_end: nextPeriodEnd,
+    price_xof: params.priceXof ?? sub.price_xof,
+  });
+
   fireSubscriptionEmail(sub.user_id ?? params.userId, nextPeriodEnd);
 }
 
@@ -294,6 +345,11 @@ export type FamilySubscriptionStatus = {
    *  check_child_profile_quota (migration 20260814160000). */
   campaignCovered: boolean;
   childrenCount: number;
+  /** Limite de CRÉATION de profils (V4, Vague A) : calculée côté serveur via computeAppQuota
+   *  (child-profile-quota.ts) depuis family_coverages — miroir exact du trigger V10
+   *  (migration 20260814200000). L'UI (profiles.index/manage/ProfileDialog) affiche la jauge
+   *  X/N avec cette valeur, au lieu de recalculer les règles en client. */
+  creationLimit: number;
 };
 
 export const getFamilySubscriptionStatus = createServerFn({ method: "GET" })
@@ -342,6 +398,21 @@ export const getFamilySubscriptionStatus = createServerFn({ method: "GET" })
       .select("id", { count: "exact", head: true })
       .eq("user_id", userId);
 
+    // V4 (Vague A) : couverture family_coverages → limite de création (miroir trigger V10).
+    // quota_override reste lu depuis app_metadata (outil ADMIN, borné 50).
+    const coverage = await resolveCoverageState(supabaseAdmin as any, userId);
+    const { data: educatorRes } = await (supabaseAdmin as any)
+      .from("campaign_educators")
+      .select("id", { count: "exact", head: true })
+      .eq("educator_user_id", userId)
+      .is("removed_at", null);
+    const creationLimit = computeAppQuota({
+      accountCreatedAt: userRes?.user?.created_at ?? null,
+      quotaOverride: Number((userRes?.user?.app_metadata as any)?.quota_override ?? 0) || 0,
+      hasBaseCoverage: coverage.hasBaseCoverage,
+      sumPurchases: coverage.sumPurchases,
+      isVouchedEducator: (educatorRes?.count ?? 0) > 0,
+    });
     let planKey: FamilyPlanKey | null = null;
     if (sub?.price_xof) {
       planKey = sub.price_xof === PROMO_PRICE_XOF ? "family_promo" : "family_standard";
@@ -360,6 +431,7 @@ export const getFamilySubscriptionStatus = createServerFn({ method: "GET" })
       // Champ déclaré dans le type mais omis du retour — SubscriptionCard affichait
       // « undefined profils actifs » (bug latent, corrigé 2026-08-14).
       childrenCount: childrenCount ?? 0,
+      creationLimit,
     } satisfies FamilySubscriptionStatus;
   });
 
@@ -483,6 +555,10 @@ export const cancelFamilySubscription = createServerFn({ method: "POST" })
       .eq("user_id", userId);
     if (updErr) throw new Error(updErr.message);
 
+    // V4 (Vague A) : coupure IMMÉDIATE de la couverture family_coverages — le résolveur
+    // cesse de compter la ligne, tous les profils hors le 1er gratuit passent 'expired'.
+    await revokeFamilyCoverage(supabaseAdmin, { userId, source: "subscription" });
+
     return { success: true, alreadyCancelled: false };
   });
 
@@ -561,6 +637,18 @@ export const redeemSponsorshipCode = createServerFn({ method: "POST" })
         "Erreur lors de l'activation du code. Le code n'a pas été consommé, réessayez.",
       );
     }
+
+    // V4 (Vague A) : la couverture family_coverages source='sponsorship' suit la même fenêtre
+    // (extension sans découpe) — l'écriture est idempotente (une ligne par compte+source).
+    await syncFamilyCoverage(supabaseAdmin, {
+      userId,
+      source: "sponsorship",
+      sourceRef: token.id,
+      startsAt: new Date().toISOString(),
+      endsAt,
+      maxChildren: 5,
+      status: "active",
+    });
 
     return { success: true, endsAt, months };
   });

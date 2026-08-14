@@ -12,10 +12,17 @@ export const FREE_FLOOR_CUTOVER = "2026-08-04T00:00:00.000Z";
 export const GRANDFATHERED_FREE_FLOOR = 5;
 export const NEW_FREE_FLOOR = 1;
 
-// Plafond ABSOLU d'enfants par compte (décision utilisateur 2026-08-08) : au-delà →
-// nouveau compte. Doit rester identique au LEAST(quota, 5) de check_child_profile_quota()
-// (migration 20260809120000). Même limite côté superviseurs (supervisor-quota.ts).
-// C'est la règle STANDARD : elle s'applique aux comptes sans quota +.
+// DÉCISION 5 (2026-08-14) : « 5 par palier, cap 50 ». Une couverture de base (abonnement,
+// campagne, parrainage) couvre 5 enfants ; au-delà on ACHÈTE un palier (+5 enfants, même
+// tarif que le forfait) ; cap absolu 50 (l'ex-quota_override admin). Le plafond absolu par
+// compte passe donc de 5 (décision 2026-08-08) à 50 — le parent avec 6+ enfants n'a plus à
+// créer un nouveau compte, il achète un palier.
+export const PALIER_CHILDREN = 5;
+
+// Plafond de supervision par superviseur (5, cf. supervisor-quota.ts) — le plafond d'enfants
+// PAR COMPTE est désormais porté par computeAppQuota (cap 50, décision 5). La constante reste
+// nommée MAX_CHILDREN_PER_ACCOUNT pour ne pas casser supervisor-quota.ts, mais sa sémantique
+// « plafond absolu de création » est remplacée par MAX_QUOTA_OVERRIDE côté app.
 export const MAX_CHILDREN_PER_ACCOUNT = 5;
 
 // Quota + par compte (2026-08-14, unification) : UNE seule clé
@@ -31,4 +38,42 @@ export function isGrandfatheredAccount(createdAt: string | null | undefined): bo
   const created = new Date(createdAt).getTime();
   if (Number.isNaN(created)) return false;
   return created < new Date(FREE_FLOOR_CUTOVER).getTime();
+}
+
+// Quota de CRÉATION de profils d'un compte — Miroir TS pur du trigger consolidé
+// check_child_profile_quota (migration 20260814200000, V10). L'UI promet exactement ce que
+// la base acceptera :
+//   • quota_override > 0 (outil ADMIN, app_metadata) → quota TOTAL accordé, borné 50 ;
+//   • sinon : plancher (grand-péré 5 | neuf 1) → palier éducateur vouché (10) → couverture de
+//     base family_coverages (5) → + Σ(max_children des paliers 'purchase' actifs) → cap 50.
+export function computeAppQuota(opts: {
+  accountCreatedAt: string | null | undefined;
+  quotaOverride?: number;
+  hasBaseCoverage?: boolean;
+  sumPurchases?: number;
+  isVouchedEducator?: boolean;
+}): number {
+  const {
+    quotaOverride = 0,
+    hasBaseCoverage = false,
+    sumPurchases = 0,
+    isVouchedEducator = false,
+  } = opts;
+
+  if (quotaOverride > 0) return Math.min(quotaOverride, MAX_QUOTA_OVERRIDE);
+
+  let quota = isGrandfatheredAccount(opts.accountCreatedAt)
+    ? GRANDFATHERED_FREE_FLOOR
+    : NEW_FREE_FLOOR;
+
+  // Palier éducateur vouché (20260730100000) — plus ramené à 5 par le cap (décision 5).
+  if (isVouchedEducator) quota = Math.max(quota, 10);
+
+  // Couverture de base (abonnement/campagne/parrainage) → 5 profils.
+  if (hasBaseCoverage) quota = Math.max(quota, PALIER_CHILDREN);
+
+  // Paliers achetés : +5 par palier (décision 5).
+  quota += Math.max(0, sumPurchases);
+
+  return Math.min(quota, MAX_QUOTA_OVERRIDE);
 }

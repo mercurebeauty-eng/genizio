@@ -45,7 +45,6 @@ import { DifficultyBadge } from "@/components/challenges/DifficultyBadge";
 import { MarkdownContent } from "@/components/ui/markdown-content";
 import { COUNTRIES } from "@/lib/countries";
 import { RELATIONSHIP_TYPES } from "@/lib/relationship-types";
-import { computeChildCreationLimit } from "@/lib/child-access";
 import { GenizioLoader } from "@/components/GenizioLoader";
 import { toast } from "sonner";
 
@@ -91,12 +90,15 @@ function DashboardPage() {
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
   const [activeProducts, setActiveProducts] = useState<any[]>([]);
 
-  // Prix de bienvenue (3 premiers mois du compte) puis tarif standard — cf. src/lib/pricing.ts.
-  // Compte couvert (abonnement famille actif ou crédit de parrainage) → création possible
-  // jusqu'au plafond de 5 — miroir du trigger check_child_profile_quota (20260809120000).
-  // Couverture campagne (2026-08-14) : un enfant inscrit à une campagne active → la
-  // famille est soutenue par l'institution, même droit de création (migration 20260814160000).
-  const { covered: familyCovered, campaignCovered, coveredUntil } = useFamilyCoverage();
+  // Limite de CRÉATION (V4, Vague A) : calculée côté serveur depuis family_coverages
+  // (creationLimit, miroir du trigger V10 — migration 20260814200000). familyCovered/
+  // campaignCovered/coveredUntil restent pour la modale AccessUpgradeModal.
+  const {
+    creationLimit: quota,
+    covered: familyCovered,
+    campaignCovered,
+    coveredUntil,
+  } = useFamilyCoverage();
 
   // Note (2026-08-14) : le refresh unique du token (claims quota_override)
   // est désormais assuré par le store singleton de useSession() au premier
@@ -369,18 +371,8 @@ function DashboardPage() {
                   const currentLevel = Math.floor(totalXP / 500) + 1;
                   const xpPct = Math.min(100, ((totalXP % 500) / 500) * 100);
 
-                  // Décision 2026-08-05 : le plancher couvre le profil gratuit (+ slots
-                  // grand-pérés), le "+1" autorise la création du premier profil MENSUEL
-                  // (en cours de première mise en paiement) — miroir du trigger
-                  // check_child_profile_quota (migration 20260805100000).
-                  // Quota + unifié (2026-08-14) : quota_override = quota TOTAL accordé
-                  // (0 = règle standard auto), miroir du trigger (migration 20260814140000).
-                  const quota = computeChildCreationLimit(
-                    session?.user?.created_at,
-                    familyCovered,
-                    (session?.user?.app_metadata?.quota_override as number) ?? 0,
-                    campaignCovered,
-                  );
+                  // La limite de création vient du serveur (creationLimit, miroir du trigger
+                  // V10) — le bouton bascule entre création et « Couverture atteinte ».
                   const atQuota = profiles.length >= quota;
 
                   // Verrouillage (2026-07-30) : posé par removeCampaignEducator quand la relation
@@ -914,6 +906,7 @@ function DashboardPage() {
           familyCovered={familyCovered}
           campaignCovered={campaignCovered}
           coveredUntil={coveredUntil}
+          creationLimit={quota}
           onClose={() => setShowUpgradeModal(false)}
         />
       )}
