@@ -28,8 +28,8 @@ const GUIDES = [
     to: "/guides/ecrans-addiction-alternatives-enfant",
     Icon: Tv,
     eyebrow: "Écrans & Créativité",
-    title: "Mon enfant est accro aux écrans : 3 activités pour décrocher",
-    desc: "Votre enfant ne lâche pas la tablette ? 3 activités concrètes sans écran pour remplacer l'habitude sans crise ni punition (6-12 ans).",
+    title: "Mon enfant est accro aux écrans : le sevrage en douceur",
+    desc: "Comment en parler avec lui, puis réduire le temps d'écran par paliers progressifs, sans crise : méthode + 3 activités concrètes (6-12 ans).",
   },
   {
     to: "/guides/activites-educatives-enfant",
