@@ -1,6 +1,8 @@
 # Génizio V4 — « Pass Enfant » : architecture produit & carte d'impact systémique
 
 > **Statut** : design en cours (2026-08-14) — aucune implémentation commencée.
+> **V0 livrée (2026-08-14)** : bug `childrenCount` corrigé, cutover grand-péré centralisé
+> (`isGrandfatheredAccount`), décisions 1-2 tranchées (pack PAR ENFANT, campagne 2 COMPTEURS).
 > **Porteur** : fondateur. **Références** : discussion pricing (80-100k F/séance marché),
 > clarifications : campagne = portefeuille (app ET/OU accompagnement), séance 5 000 F,
 > bilan 25 000 F, partage 70/30 (65-75 selon score), prix app inchangé.
@@ -40,6 +42,9 @@ deux règles, pas trente.
 family_coverages(
   id            uuid PK,
   user_id       uuid FK auth.users,           -- famille couverte
+  child_id      uuid NULL FK child_profiles,  -- DÉCISION 2026-08-14 : non-null pour
+                                              -- source='accompaniment_pack' (le pack est PAR
+                                              -- ENFANT) ; null pour les couvertures famille/app
   source        text CHECK (subscription|accompaniment_pack|campaign|admin),
   source_ref    uuid,                          -- abonnement_id / pack_id / campagne_id / NULL
   starts_at     timestamptz,
@@ -83,8 +88,10 @@ supervisor_metrics(
 - `supervisors` : `removed_at timestamptz NULL` (soft-retire, pattern `campaign_educators`),
   `rating_avg`, `status` (active|warning|suspended|banned)
 - `payments.metadata` : nouveaux intents `accompaniment_pack`, `supervisor_payout`
-- `campaigns` : rien de neuf — le « portefeuille 2 compartiments » est une lecture
-  combinée (`campaigns` + `family_coverages WHERE source='campaign' AND source_ref=campaign.id`)
+- `campaigns` : **DÉCISION 2026-08-14 — 2 compteurs distincts** : `target_count` = compartiment
+  APP (existant) + nouvelle colonne `sessions_target int NOT NULL DEFAULT 0` = compartiment
+  SÉANCES. L'ONG choisit le mix à la création ; le rapport d'impact affiche
+  « N enfants + M séances financés ». (Pas un solde FCFA unique : reporting bailleur impossible.)
 
 ---
 
@@ -206,11 +213,13 @@ ni paiement superviseur n'existe. Tout se résume à : assignation + quota + das
 
 ### 4.2 Périmètre
 - 3 superviseurs formés × 4-5 enfants = 12-15 enfants.
-- 1 campagne pilote en mode « mixte » (app + accompagnement).
+- **Pack PAR ENFANT** (décision 2026-08-14) : chaque enfant accompagné a son pack de
+  12 séances × 5 000 F = 60 000 F/mois. Un superviseur suit 4-5 enfants = 4-5 packs.
+- 1 campagne pilote en mode « mixte » (compartiments APP + SÉANCES distincts).
 - 1 ville/quartier.
 
 ### 4.3 Contrat superviseur (à faire signer)
-- Engagement : 12 séances/mois/enfant, CR après chaque séance, respect du scoring.
+- Engagement : 12 séances/mois/**ENFANT**, CR après chaque séance, respect du scoring.
 - Rémunération : 70% × séance sur preuve ; 75% si score top 20%.
 - Sanctions : avertissement < 60% sur 2 semaines ; ban à 2 avertissements.
 - Confidentialité (données enfants).
@@ -254,23 +263,23 @@ Les vagues sont indépendantes — on peut s'arrêter après V1 si le pilote dit
 
 ## 6. Pièges & bugs déjà repérés (à traiter dans la V4)
 
-1. **Bug `childrenCount`** : `getFamilySubscriptionStatus` déclare le champ (subscriptions.functions.ts:296) mais ne le retourne pas → `SubscriptionCard.tsx:166` affiche « undefined profil(s) ».
+1. **Bug `childrenCount`** : `getFamilySubscriptionStatus` déclarait le champ (subscriptions.functions.ts:296) sans le retourner → `SubscriptionCard.tsx:166` affichait « undefined profil(s) ». ✅ **CORRIGÉ (V0, 2026-08-14)** — `childrenCount` ajouté au retour.
 2. **Double flux de parrainage** : `redeemSponsorshipToken` (par-enfant) et `redeemSponsorshipCode` (crédit famille) coexistent avec des effets différents — à fusionner.
 3. **`getActiveSeason()`** appelée à tort pour `season_id` (saisons label-only depuis `20260812130000`).
 4. **`types.ts` stale** : `campaigns` Row manque `status` (types.ts:77-121).
 5. **Asymétrie résolveur/trigger** : `getChildAccessStatus` rend permanent au-delà du plancher, le trigger accorde jusqu'à 5 ; `getChildAccessStatus` ne borne pas `quotaOverride` par 50 (le trigger oui).
-6. **Cutover grand-péré hardcodé 4×** — à centraliser (constante partagée TS/SQL).
+6. **Cutover grand-péré hardcodé** : ✅ **CORRIGÉ (V0, 2026-08-14)** dans `payment-fulfillment.server.ts` (utilisation de `isGrandfatheredAccount`, source unique TS). Reste hardcodé dans le SQL des migrations (par nature) et les commentaires.
 7. **`removeSupervisor` en hard DELETE** (pas d'historique) vs `campaign_educators.removed_at`.
 8. **Aucune infra notification** (pas d'email/SMS hors reçus de paiement) — le score/ban devra se voir passivement (dashboard, portfolio) comme le reste.
 9. **`sponsorship_tokens` dual-purpose** (diaspora vs B2B) — `listSponsorshipsAdmin` filtre `campaign_id IS NULL`.
 
 ---
 
-## 7. Décisions à trancher (bloquantes pour V2+)
+## 7. Décisions (état : 2 tranchées, 3 restantes pour V2+)
 
-1. **Crédit parrainage → quelle source ?** `source='campaign'` (parrain=institution) ou une source dédiée `source='sponsorship'` ? Recommandation : garder 4 sources (subscription|accompaniment_pack|campaign|admin), le parrainage individuel devient une couverture app (comme aujourd'hui) + séances si achetées.
-2. **Le pack accompagnement** : s'applique-t-il à UN enfant précis (child_id) ou à la famille ? Recommandation : par enfant (c'est lui qu'on accompagne) — `family_coverages` gagne un `child_id` nullable.
-3. **La campagne mixte** : le portefeuille est-il un solde FCFA à répartir, ou deux quotas distincts (N places app + M séances) ? Recommandation : deux quotas distincts (plus simple à opérer, l'ONG choisit à la création).
+1. **Crédit parrainage → quelle source ?** `source='campaign'` (parrain=institution) ou une source dédiée `source='sponsorship'` ? Recommandation : garder 4 sources (subscription|accompaniment_pack|campaign|admin), le parrainage individuel devient une couverture app (comme aujourd'hui) + séances si achetées. — **À trancher**
+2. **Le pack accompagnement** : s'applique-t-il à UN enfant précis (child_id) ou à la famille ? → **TRANCHÉ (2026-08-14) : PAR ENFANT** (modèle du psychologue : un suivi = un patient). `family_coverages.child_id` est non-null pour `source='accompaniment_pack'`, null pour les couvertures famille/app. Conséquence : 3 enfants = 3 packs (60 000 F/mois chacun), progression d'un enfant mesurable.
+3. **La campagne mixte** : le portefeuille est-il un solde FCFA à répartir, ou deux quotas distincts ? → **TRANCHÉ (2026-08-14) : 2 COMPTEURS DISTINCTS** — `campaigns.target_count` (APP, existant) + `campaigns.sessions_target` (SÉANCES, nouveau). L'ONG choisit le mix à la création ; le rapport d'impact affiche « N enfants + M séances financés » (exigence bailleur).
 4. **Le score superviseur** : qui le calcule (admin manuel hebdo pendant le pilote, automatisé ensuite) ?
 5. **Le plafond de 5** : supprimé comme règle de compte (V2) mais la borne par-palier est quoi ? Recommandation : 5 par palier, borne absolue 50 (l'ex-override admin).
 

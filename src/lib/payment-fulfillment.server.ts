@@ -16,6 +16,7 @@
 // Serveur uniquement — jamais importé côté client (même pattern que paystack.server.ts).
 
 import { computeAccessPeriodWindow } from "@/lib/child-access";
+import { isGrandfatheredAccount } from "@/lib/child-profile-quota";
 import { createSponsorshipTokenRecord, getActiveSeason } from "@/lib/seasons.functions";
 // Import runtime de la fonction pure (payments-admin n'importe ce module que
 // dynamiquement dans ses handlers — aucun cycle d'exécution).
@@ -137,10 +138,7 @@ export async function applyPaystackEntitlement(
       if (getErr || !userRes?.user) {
         throw new Error(`Utilisateur introuvable: ${getErr?.message ?? payment.user_id}`);
       }
-      const floor =
-        userRes.user.created_at && new Date(userRes.user.created_at).getTime() < new Date("2026-08-04T00:00:00.000Z").getTime()
-          ? 5
-          : 1;
+      const floor = isGrandfatheredAccount(userRes.user.created_at) ? 5 : 1;
       const current = Number((userRes.user.app_metadata as any)?.quota_override ?? 0) || 0;
       const next = Math.min(Math.max(current, floor) + 1, 50);
       const { error: updateErr } = await supabaseAdmin.auth.admin.updateUserById(payment.user_id, {

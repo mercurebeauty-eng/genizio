@@ -357,6 +357,9 @@ export const getFamilySubscriptionStatus = createServerFn({ method: "GET" })
       currentPeriodEnd: sub?.current_period_end ?? null,
       sponsoredUntil: credit?.[0]?.ends_at ?? null,
       campaignCovered,
+      // Champ déclaré dans le type mais omis du retour — SubscriptionCard affichait
+      // « undefined profils actifs » (bug latent, corrigé 2026-08-14).
+      childrenCount: childrenCount ?? 0,
     } satisfies FamilySubscriptionStatus;
   });
 
