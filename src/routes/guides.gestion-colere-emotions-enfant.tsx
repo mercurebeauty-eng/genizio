@@ -8,7 +8,7 @@ const FAQ = [
   {
     question: "Pourquoi mon enfant se met-il si facilement en colère ?",
     answer:
-      "Parce que le cerveau qui régule les émotions (le cortex préfrontal) est le dernier à mûrir chez l'enfant : il se développe jusque vers 20-25 ans. Avant cela, une frustration déclenche une réaction émotionnelle immédiate, sans le filtre qui permet à un adulte de prendre du recul. Ajoutez à cela la fatigue, la faim ou un changement de rythme, et la colère devient vite une soupape. Ce n'est pas un caprice ni une mauvaise volonté : c'est un cerveau en construction qui a besoin d'être accompagné, pas puni, pour apprendre à se réguler.",
+      "Parce que le cerveau qui régule les émotions est le dernier à mûrir chez l'enfant : il se développe jusque vers 20-25 ans. Avant cela, une frustration déclenche une réaction émotionnelle immédiate, sans le filtre qui permet à un adulte de prendre du recul. Ajoutez à cela la fatigue, la faim ou un changement de rythme, et la colère devient vite une soupape. Ce n'est pas un caprice ni une mauvaise volonté : c'est un cerveau en construction qui a besoin d'être accompagné, pas puni, pour apprendre à se réguler.",
   },
   {
     question: "Comment réagir quand mon enfant fait une crise de colère ?",
@@ -16,9 +16,19 @@ const FAQ = [
       "Quatre réflexes aident : rester calme (votre calme est contagieux, votre colère aussi) ; accueillir l'émotion sans la juger (« tu es très en colère parce que... ») — nommer l'émotion aide le cerveau à la traiter ; ne pas céder sur la limite qui a déclenché la crise, sinon la crise devient un moyen d'obtenir ; et offrir un exutoire physique (courir, taper dans un coussin, déchirer un papier) plutôt que de demander de se taire. Une fois la crise passée, on reparle de ce qui s'est passé, brièvement, sans sermon.",
   },
   {
+    question: "Que dire pendant une crise de colère ? Et que ne jamais dire ?",
+    answer:
+      "Ce qui aide, à dire à voix basse, phrases courtes : « je suis là », « tu es en colère, c'est normal », « je ne te laisserai pas te faire mal », « on va trouver une solution ensemble ». Ce qui aggrave, à éviter absolument : « arrête de pleurer », « tu es ridicule », « tu fais exprès », « si tu continues, tu vas voir », et toute menace ou moquerie. La règle simple : on accueille le ressenti, on tient la limite, et on garde un ton calme même si l'enfant crie. Ce que vous dites compte moins que le calme avec lequel vous le dites.",
+  },
+  {
     question: "Faut-il punir un enfant pour sa colère ?",
     answer:
       "Punir la colère elle-même est contre-productif : elle est une émotion, pas un comportement, et l'enfant n'en est pas plus responsable que de sa faim. On peut en revanche poser des limites sur les comportements qui accompagnent la colère (frapper, casser, insulter) avec des conséquences claires. La distinction est importante : accueillir la colère (« je vois que tu es en colère ») n'est pas tolérer les actes (« tu as le droit d'être en colère, pas de frapper »). Un enfant qui peut exprimer sa colère sans être jugé apprend à la traverser ; un enfant puni pour l'avoir ressentie apprend seulement à la cacher.",
+  },
+  {
+    question: "Les écrans rendent-ils mon enfant plus colérique ?",
+    answer:
+      "Le lien est indirect mais réel. Un enfant qui passe beaucoup de temps devant un écran fait moins d'activités physiques, dort parfois moins, et subit des transitions brutales quand on éteint — trois ingrédients classiques des crises. Sans diaboliser l'écran, deux réflexes réduisent les crises liées aux écrans : prévenir avant d'éteindre (« encore 5 minutes, ensuite on éteint ensemble ») et remplacer le temps d'écran retiré par une activité concrète plutôt que par du vide. Beaucoup de parents constatent une baisse nette des crises après quelques semaines de réduction progressive du temps d'écran.",
   },
   {
     question: "La colère de mon enfant est-elle normale ou faut-il consulter ?",
@@ -35,9 +45,9 @@ const FAQ = [
 export const Route = createFileRoute("/guides/gestion-colere-emotions-enfant")({
   head: () => {
     const meta = pageMeta({
-      title: "Gérer la colère de son enfant : 5 outils pour l'apaiser",
+      title: "Crise de colère enfant : 5 outils pour l'apaiser",
       description:
-        "Crise, explosion, colère : pourquoi l'enfant s'énerve, comment accueillir l'émotion sans céder ni crier, et 5 outils concrets à la maison.",
+        "Crise de colère, explosion, frustration : pourquoi l'enfant s'énerve, que dire pendant la crise, et 5 outils concrets pour l'apaiser sans céder ni crier.",
       path: PATH,
       image: "/guides/og-colere.jpg",
       type: "article",
@@ -56,14 +66,14 @@ export const Route = createFileRoute("/guides/gestion-colere-emotions-enfant")({
         jsonLdScript({
           "@context": "https://schema.org",
           "@type": "Article",
-          headline: "Gérer la colère de son enfant : 5 outils concrets pour l'apaiser",
+          headline: "Gérer la crise de colère de son enfant : 5 outils pour l'apaiser",
           inLanguage: "fr-FR",
           mainEntityOfPage: absoluteUrl(PATH),
           image: absoluteUrl("/guides/og-colere.jpg"),
           publisher: { "@id": `${SITE_URL}/#organization` },
           author: { "@type": "Organization", name: "Génizio" },
           datePublished: "2026-08-10",
-          dateModified: "2026-08-10",
+          dateModified: "2026-08-14",
           about: [
             { "@type": "Thing", name: "Colère de l'enfant" },
             { "@type": "Thing", name: "Gestion des émotions" },
@@ -80,14 +90,14 @@ function Guide() {
   return (
     <GuideLayout
       eyebrow="Émotions & bien-être"
-      title="Gérer la colère de son enfant : 5 outils concrets pour l'apaiser"
+      title="Gérer la crise de colère de son enfant : 5 outils pour l'apaiser"
       intro="Une crise de colère à 18 h dans la cuisine, et c'est toute la maison qui tangue. Avant de chercher à « faire taire » cette colère, il faut comprendre ce qu'elle est : une émotion réelle, pas une attaque contre vous. Voici comment la traverser sans céder, sans crier, et en apprenant quelque chose à l'enfant."
-      updated="10 août 2026"
+      updated="14 août 2026"
       readingTime="7 min"
       related={[
         { label: "Mon enfant ne tient pas en place", to: "/guides/enfant-agite-concentration" },
-        { label: "Discipline positive : sans crier ni punir", to: "/guides/discipline-positive-sans-punition" },
-        { label: "Décrochage scolaire : la confiance avant l'école", to: "/guides/decrochage-scolaire-confiance-enfant" },
+        { label: "Se faire obéir sans crier ni frapper", to: "/guides/discipline-positive-sans-punition" },
+        { label: "Enfant qui perd confiance : l'aider", to: "/guides/decrochage-scolaire-confiance-enfant" },
       ]}
     >
       <img
@@ -105,14 +115,17 @@ function Guide() {
       <h2>La colère n'est pas un caprice</h2>
       <p>
         Le cerveau qui permet de se calmer, de réfléchir avant d'agir et de tolérer la frustration
-        — le cortex préfrontal — est le <strong>dernier à se développer</strong> chez l'être humain.
-        Chez un enfant de 4 ans comme chez un préadolescent, une frustration déclenche une réaction
-        émotionnelle immédiate, sans le filtre qu'un adulte a appris à poser.
+        est le <strong>dernier à se développer</strong> chez l'être humain. Chez un enfant de 4 ans
+        comme chez un préadolescent, une frustration déclenche une réaction émotionnelle immédiate,
+        sans le filtre qu'un adulte a appris à poser.
       </p>
       <p>
         Ajoutez la fatigue, la faim, un changement de rythme ou le besoin d'attention, et la colère
         devient une soupape de sécurité. La comprendre ainsi change la question : ce n'est plus
-        « comment la faire taire ? » mais « de quoi cette colère est-elle le signal ? ».
+        « comment la faire taire ? » mais « de quoi cette colère est-elle le signal ? ». Chez les
+        enfants hypersensibles — qui ressentent tout plus fort — la colère est souvent la pointe
+        émergée d'une sensibilité débordante : il faut alors moins la réprimer que lui apprendre à
+        la reconnaître avant qu'elle ne déborde.
       </p>
 
       <h2>Les trois erreurs parentales les plus fréquentes</h2>
@@ -126,8 +139,8 @@ function Guide() {
           devient une stratégie efficace — et elle reviendra, plus forte.
         </li>
         <li>
-          <strong>Se mettre en colère en retour.</strong> Deux cerveaux en panne de régulation ne
-          s'apaisent pas mutuellement. Votre calme est l'outil le plus important de la pièce.
+          <strong>Se mettre en colère en retour.</strong> Deux personnes en colère ne s'apaisent pas
+          mutuellement. Votre calme est l'outil le plus important de la pièce.
         </li>
       </ul>
 
@@ -160,6 +173,45 @@ function Guide() {
           colère.
         </li>
       </ol>
+
+      <h2>Que dire pendant la crise, et que ne jamais dire</h2>
+      <p>
+        Les mots comptent moins que le calme avec lequel on les dit — mais certains aident, d'autres
+        enflamment.
+      </p>
+      <div className="my-6 overflow-hidden rounded-2xl border border-ink/10">
+        <table className="w-full text-sm">
+          <thead>
+            <tr className="bg-brand/8 text-left text-xs font-black uppercase tracking-widest text-brand">
+              <th className="px-4 py-3">À dire, à voix basse</th>
+              <th className="px-4 py-3">À éviter absolument</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-ink/10">
+            <tr>
+              <td className="px-4 py-3">« Je suis là. »</td>
+              <td className="px-4 py-3">« Arrête de pleurer. »</td>
+            </tr>
+            <tr>
+              <td className="px-4 py-3">« Tu es en colère, c'est normal. »</td>
+              <td className="px-4 py-3">« Tu es ridicule. »</td>
+            </tr>
+            <tr>
+              <td className="px-4 py-3">« Je ne te laisserai pas te faire mal. »</td>
+              <td className="px-4 py-3">« Tu fais exprès pour m'énerver. »</td>
+            </tr>
+            <tr>
+              <td className="px-4 py-3">« On va trouver une solution ensemble. »</td>
+              <td className="px-4 py-3">« Si tu continues, tu vas voir. »</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <p>
+        On accueille le ressenti, on tient la limite, et on garde un ton calme même si l'enfant
+        crie. La menace et la moquerie ne calment jamais une crise : elles l'allongent, et
+        apprennent à l'enfant que ses émotions font peur.
+      </p>
 
       <h2>Prévenir vaut mieux que calmer</h2>
       <p>

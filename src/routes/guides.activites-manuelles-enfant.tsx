@@ -13,12 +13,17 @@ const FAQ = [
   {
     question: "Les activités manuelles sont-elles vraiment utiles pour le développement de l'enfant ?",
     answer:
-      "Oui, sur plusieurs plans à la fois. La motricité fine (couper, nouer, enfiler) prépare directement l'écriture et la précision du geste. Une activité manuelle qui se termine par un objet demande de planifier, de suivre des étapes, de tolérer l'erreur et de recommencer — ce sont des compétences exécutives transférables à l'école. Enfin, un résultat visible et manipulable construit la confiance en soi d'une façon qu'aucun exercice abstrait ne peut égaler.",
+      "Oui, sur plusieurs plans à la fois. La motricité fine (couper, nouer, enfiler) prépare directement l'écriture et la précision du geste. Une activité manuelle qui se termine par un objet apprend à l'enfant à se concentrer, à suivre des étapes et à finir ce qu'il commence — exactement ce qui fait réussir à l'école, mais entraîné ici sans note ni pression. Enfin, un résultat visible et manipulable construit la confiance en soi d'une façon qu'aucun exercice abstrait ne peut égaler.",
   },
   {
     question: "Comment occuper un enfant avec des activités manuelles sans dépenser d'argent ?",
     answer:
       "Le matériel le plus riche est le plus courant : carton, bouteilles en plastique, bouchons, tissus usés, ficelle, farine et eau pour la pâte, feuilles et fleurs pour les pigments, papier journal. Dressez une boîte « trésor » où l'enfant range ce qu'il veut réutiliser, et laissez-le choisir son projet dedans. L'argent n'est pas un facteur : c'est l'autonomie de choix et la liberté d'expérimenter qui font la qualité de l'activité.",
+  },
+  {
+    question: "Comment installer un atelier à la maison en 10 minutes ?",
+    answer:
+      "Une boîte en carton suffit : dedans, une paire de ciseaux, un bâton de colle, du papier (vieux journaux, cahiers terminés), de la ficelle, des bouchons et des tissus usés. Posez la boîte sur un coin de table fixe — pas besoin de plus pour commencer. Ensuite, deux règles font toute la différence : un créneau régulier (par exemple le samedi matin ou après l'école, 20 à 30 minutes) et l'interdiction de finir à sa place : un résultat imparfait mais fait par l'enfant vaut toujours mieux qu'un bel objet fait par vous.",
   },
   {
     question: "Comment Génizio utilise-t-il les activités manuelles ?",
@@ -132,17 +137,17 @@ function Guide() {
         plus loin.
       </p>
       <p>
-        Une activité qui se termine par un objet oblige l'enfant à <strong>planifier</strong> (par
-        où commencer ?), à <strong>suivre des étapes</strong>, à <strong>tolérer l'erreur</strong>{" "}
-        (la pièce tombe, la colle ne prend pas) et à <strong>recommencer</strong>. Ce sont des
-        compétences exécutives — les mêmes que celles qui font réussir à l'école — mais elles
-        s'entraînent ici sans note, sans pression, avec les mains.
+        Une activité qui se termine par un objet apprend à l'enfant à <strong>se concentrer</strong>{" "}
+        (par où commencer ?), à <strong>suivre des étapes</strong> et à <strong>finir ce qu'il a
+        commencé</strong>, même quand la pièce tombe ou que la colle ne prend pas. Ce sont les mêmes
+        habitudes qui font réussir à l'école — mais elles s'entraînent ici sans note, sans pression,
+        avec les mains.
       </p>
       <p>
         Enfin, il y a la confiance. Un exercice de cahier rempli disparaît. Une boîte décorée, un
         collier ou une maquette restent : l'enfant peut la montrer, la donner, la garder. Cette
-        preuve visible de ce qu'il sait faire est un des leviers de confiance les plus directs qui
-        existent.
+        preuve visible de ce qu'il sait faire est l'un des moyens les plus directs de lui donner
+        confiance en lui.
       </p>
 
       <h2>15 activités classées par âge</h2>
@@ -161,6 +166,36 @@ function Guide() {
           </ul>
         </div>
       ))}
+
+      <h2>3 activités phares, pas à pas</h2>
+      <p>
+        Pour bien démarrer, voici trois activités complètes, avec le déroulé précis — du matériel au
+        résultat fini.
+      </p>
+      <div className="my-6 rounded-2xl bg-amber-50 p-5 border border-amber-200">
+        <h3 className="font-bold text-amber-950 text-base mb-2">1. La boîte à trésors décorée (4-7 ans, 20 min)</h3>
+        <p className="text-sm text-amber-900 leading-relaxed">
+          <strong>Matériel :</strong> une boîte à chaussures, du papier découpé en petits morceaux (vieux journaux, emballages), de la colle, des bouchons ou tissus.
+          <br />
+          <strong>Étapes :</strong> 1. L'enfant choisit ce qu'il colle (laissez-le décider seul). 2. Il enduit la boîte de colle par petites zones et applique les morceaux — sans modèle imposé. 3. Il ajoute les bouchons ou tissus où il veut. 4. On laisse sécher et on expose la boîte dans le salon : « c'est la boîte où tu rangeras tes petites réussites ».
+        </p>
+      </div>
+      <div className="my-6 rounded-2xl bg-sky-50 p-5 border border-sky-200">
+        <h3 className="font-bold text-sky-950 text-base mb-2">2. Le collier de perles en pâtes (4-8 ans, 15 min)</h3>
+        <p className="text-sm text-sky-900 leading-relaxed">
+          <strong>Matériel :</strong> des pâtes (macaronis, penne), un fil solide ou une ficelle, des ciseaux.
+          <br />
+          <strong>Étapes :</strong> 1. L'enfant crée son motif : il alterne les formes ou les couleurs de pâtes sur le fil (c'est de la logique en action). 2. Il enfile jusqu'à la longueur voulue. 3. On noue ensemble les deux bouts — c'est là que le parent aide si besoin. 4. Le collier se porte ou se donne : la fierté du résultat est immédiate.
+        </p>
+      </div>
+      <div className="my-6 rounded-2xl bg-emerald-50 p-5 border border-emerald-200">
+        <h3 className="font-bold text-emerald-950 text-base mb-2">3. Le cadre photo en carton (7-12 ans, 30 min)</h3>
+        <p className="text-sm text-emerald-900 leading-relaxed">
+          <strong>Matériel :</strong> un carton rigide, des ciseaux, une photo, de la colle, des décorations (bouchons, ficelle, pigments).
+          <br />
+          <strong>Étapes :</strong> 1. Découper un rectangle de carton plus grand que la photo, puis une fenêtre au centre (l'enfant mesure et trace d'abord). 2. Coller la photo derrière la fenêtre. 3. Décorer le pourtour avec le matériel choisi. 4. Fixer un support derrière (un bout de carton plié) et offrir ou exposer le cadre — la photo peut être celle d'une réussite de l'enfant.
+        </p>
+      </div>
 
       <h2>Comment installer l'atelier sans se ruiner</h2>
       <ul>

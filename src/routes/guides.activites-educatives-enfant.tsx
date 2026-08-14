@@ -16,9 +16,14 @@ const FAQ = [
       "Les jeux les plus riches sur le plan éducatif sont souvent ceux qui n'ont pas été conçus comme éducatifs : construction libre, cuisine avec pesée et conversion, jeux de stratégie à deux, parcours d'obstacles chronométrés, marchand avec de la vraie monnaie. Ils demandent peu de matériel et sollicitent à la fois la logique, la motricité, la négociation et la planification. L'important est que l'enfant décide de sa méthode plutôt que d'exécuter une procédure.",
   },
   {
+    question: "Que faire pendant les vacances quand l'enfant s'ennuie et réclame les écrans ?",
+    answer:
+      "Les vacances sont le moment idéal pour les activités sans écran, à condition de ne pas les présenter comme un « programme » : proposez un défi par jour, à heure fixe (le matin ou après la sieste), et laissez l'enfant choisir parmi deux ou trois options. Un grand projet de vacances — une maquette du quartier, un journal de vacances illustré, un stand de jus qui fonctionne toute la semaine — tient un enfant plusieurs jours. Et ne remplissez pas chaque minute : l'ennui fait partie du processus, c'est lui qui déclenche l'imagination. Prévoyez une activité courte toujours prête (bouteilles, cartons, monnaie) pour les moments creux.",
+  },
+  {
     question: "Combien de temps doit durer une activité éducative ?",
     answer:
-      "Cela dépend beaucoup plus de l'âge et du format que d'une règle générale. En pratique : 15 à 20 minutes suffisent pour un enfant de 5 à 7 ans, 30 à 45 minutes conviennent de 8 à 11 ans, et un projet peut s'étaler sur plusieurs jours à partir de 12 ans. Le meilleur indicateur reste l'enfant lui-même : une activité qu'il prolonge spontanément est bien calibrée ; une activité qu'il abandonne à mi-parcours est souvent trop longue, trop abstraite, ou trop dirigée.",
+      "Cela dépend beaucoup plus de l'âge et du format que d'une règle générale. En pratique : 15 à 20 minutes suffisent pour un enfant de 5 à 7 ans, 30 à 45 minutes conviennent de 8 à 11 ans, et un projet peut s'étaler sur plusieurs jours à partir de 12 ans. Entre deux devoirs, 10 minutes d'activité manuelle suffisent pour couper l'ennui et relancer la concentration. Le meilleur indicateur reste l'enfant lui-même : une activité qu'il prolonge spontanément est bien calibrée ; une activité qu'il abandonne à mi-parcours est souvent trop longue, trop abstraite, ou trop dirigée.",
   },
   {
     question: "Comment savoir si une activité a vraiment appris quelque chose à mon enfant ?",
@@ -87,9 +92,9 @@ const ACTIVITIES = [
 export const Route = createFileRoute("/guides/activites-educatives-enfant")({
   head: () => {
     const meta = pageMeta({
-      title: "24 activités éducatives à la maison (6-12 ans)",
+      title: "24 activités éducatives sans écran à la maison (6-12 ans)",
       description:
-        "Des activités éducatives concrètes avec du matériel du quotidien, classées par forme d'intelligence, et ce que chacune révèle de votre enfant.",
+        "24 activités éducatives sans écran avec du matériel du quotidien, pour occuper l'enfant à la maison, entre deux devoirs ou pendant les vacances.",
       path: PATH,
       image: "/guides/og-activites.jpg",
       type: "article",
@@ -108,14 +113,14 @@ export const Route = createFileRoute("/guides/activites-educatives-enfant")({
         jsonLdScript({
           "@context": "https://schema.org",
           "@type": "Article",
-          headline: "24 activités éducatives à faire à la maison avec un enfant de 6 à 12 ans",
+          headline: "24 activités éducatives sans écran à faire à la maison avec un enfant de 6 à 12 ans",
           inLanguage: "fr-FR",
           mainEntityOfPage: absoluteUrl(PATH),
           image: absoluteUrl("/guides/og-activites.jpg"),
           publisher: { "@id": `${SITE_URL}/#organization` },
           author: { "@type": "Organization", name: "Génizio" },
           datePublished: "2026-07-27",
-          dateModified: "2026-08-08",
+          dateModified: "2026-08-14",
           about: [
             { "@type": "Thing", name: "Activités éducatives pour enfants" },
             { "@type": "Thing", name: "Jeux éducatifs" },
@@ -132,9 +137,9 @@ function Guide() {
   return (
     <GuideLayout
       eyebrow="Activités & jeux"
-      title="24 activités éducatives à faire à la maison avec un enfant de 6 à 12 ans"
-      intro="Pas de matériel coûteux, pas d'écran, pas de fiche à imprimer. Des activités qui produisent un résultat visible — et qui, mises bout à bout, révèlent ce que votre enfant sait faire."
-      updated="8 août 2026"
+      title="24 activités éducatives sans écran à faire à la maison avec un enfant de 6 à 12 ans"
+      intro="Pas de matériel coûteux, pas d'écran, pas de fiche à imprimer. Des activités qui produisent un résultat visible — et qui, mises bout à bout, révèlent ce que votre enfant sait faire. Pour le soir des devoirs, le week-end ou les vacances."
+      updated="14 août 2026"
       readingTime="8 min"
       related={[
         { label: "Haut potentiel : les vrais signes", to: "/guides/potentiel-haut-potentiel-enfant" },
@@ -207,6 +212,23 @@ function Guide() {
         <li><strong>Enchaîner.</strong> Une activité par jour, terminée, vaut mieux que trois commencées.</li>
         <li><strong>Transformer en évaluation.</strong> Dès qu'il y a une note, l'enfant optimise pour la note et arrête d'explorer.</li>
       </ul>
+
+      <h2>10 minutes d'activité entre deux devoirs</h2>
+      <p>
+        Le moment le plus difficile pour un enfant, c'est la bascule entre l'école et les devoirs —
+        et entre deux exercices longs. Dix minutes d'activité manuelle coupent l'ennui, remettent le
+        corps en mouvement et relancent la concentration :
+      </p>
+      <ul>
+        <li><strong>Le chronomètre inversé :</strong> « Je te donne 10 minutes pour construire la tour la plus haute avec ce que tu trouves dans la cuisine. » On photographie le résultat, on range, on reprend les devoirs.</li>
+        <li><strong>La monnaie du jour :</strong> comptez la monnaie de la journée ensemble, à voix haute — 3 minutes de calcul réel valent une page d'exercices.</li>
+        <li><strong>Le tirage surprise :</strong> un bocal avec des défis courts écrits sur des papiers (« nomme 5 fruits qui poussent dans notre région », « raconte ta journée en 3 phrases »). L'enfant tire un papier, répond, et retourne travailler.</li>
+      </ul>
+      <p>
+        La règle : <strong>court, terminé, rangé</strong>. Dix minutes qui finissent par une photo ou
+        une case cochée laissent l'enfant avec le sentiment d'avoir réussi — et les devoirs d'après
+        se font dans un meilleur état d'esprit.
+      </p>
 
       <h2>Garder une trace</h2>
       <p>
