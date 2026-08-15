@@ -111,7 +111,7 @@ const PRODUCTS: { name: string; price: string; desc: string; href?: "/boutique" 
   {
     name: "Pack Accompagnement",
     price: `${PACK_SESSIONS} séances × ${formatXof(SESSION_PRICE_XOF)} = ${formatXof(PACK_PRICE_XOF)}/mois/enfant`,
-    desc: "Suivi hebdomadaire par un superviseur formé : bilan, séances et comptes rendus directement dans l'application.",
+    desc: "Suivi hebdomadaire par un mentor formé : bilan, séances et comptes rendus directement dans l'application.",
   },
   {
     name: "Kits pédagogiques",

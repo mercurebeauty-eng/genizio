@@ -1,7 +1,7 @@
 import { describe, it, expect } from "vitest";
-import { nextReportStatus, isOpenReport } from "@/lib/supervisor-reports";
+import { nextReportStatus, isOpenReport } from "@/lib/mentor-reports";
 
-// Superviseur Copilote (décision #74) — machine à états du bilan de fin : le parent
+// Mentor Copilote (décision #74) — machine à états du bilan de fin : le parent
 // valide explicitement le bilan ; un rejet renvoie en édition.
 
 describe("nextReportStatus", () => {

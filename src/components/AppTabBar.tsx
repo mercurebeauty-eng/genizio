@@ -27,7 +27,7 @@ export function AppTabBar({ profileId }: AppTabBarProps) {
     },
     {
       to: "/profiles/$profileId/mentors" as const,
-      label: "Mentors",
+      label: "Mentor",
       icon: Users,
       needsProfileId: true,
     },

@@ -481,7 +481,7 @@ export async function sendPaymentConfirmationEmail(
         `✓ ${(metadata.months ?? 1) * 12} séances créditées (12 séances/mois)`,
       ].filter(Boolean);
       nextSteps = [
-        "Un superviseur formé prend contact avec vous pour planifier les séances.",
+        "Un mentor formé prend contact avec vous pour planifier les séances.",
         "Le bilan initial est inclus dans le premier mois.",
       ];
       break;

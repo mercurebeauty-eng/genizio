@@ -1,9 +1,9 @@
 import { describe, it, expect, vi } from "vitest";
 import { resolveChildAccompaniment } from "@/lib/child-accompaniment";
 
-// Superviseur Copilote (décision #74) — résolveur d'accompagnement : pack actif avec
+// Mentor Copilote (décision #74) — résolveur d'accompagnement : pack actif avec
 // séances restantes → campagne en fenêtre avec compteur restant → none. Miroir LECTURE
-// de la chaîne de financement de declareSessionSupervisor.
+// de la chaîne de financement de declareSessionMentor.
 
 // Fake DB capable de .gt()/.not()/.order()/.limit()/.maybeSingle() (le résolveur suit la
 // chaîne de requête réelle). Les jointures (campaigns(...)) sont fournies pré-jointées

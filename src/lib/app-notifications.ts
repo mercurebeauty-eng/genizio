@@ -1,7 +1,7 @@
-// Superviseur Copilote (décision #74) — notifications parent (canal cross-appareil minimal).
+// Mentor Copilote (décision #74) — notifications parent (canal cross-appareil minimal).
 //
 // Pas de push : le parent PULL les notifications à l'ouverture (badge + liste) et les
-// marque lues. Écriture par les server functions superviseur (défi complété, abandon,
+// marque lues. Écriture par les server functions mentor (défi complété, abandon,
 // bilan soumis/validé) — non-bloquant, même pattern que le journal.
 
 export async function notifyUser(params: {

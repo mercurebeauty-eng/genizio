@@ -1,4 +1,4 @@
-// Superviseur Copilote (décision #74, 2026-08-15) — résolution de l'accompagnement d'un enfant.
+// Mentor Copilote (décision #74, 2026-08-15) — résolution de l'accompagnement d'un enfant.
 //
 // Un enfant est « accompagné » s'il a un budget de séances financé :
 //   1. Pack Accompagnement actif (family_coverages source='accompaniment_pack', child_id
@@ -8,8 +8,8 @@
 //      compteur SÉANCES restant (sessions_used < sessions_target) ;
 //   3. Sinon « none ».
 //
-// Miroir LECTURE SEULE de la chaîne de financement inline de declareSessionSupervisor
-// (supervisors.functions.ts, lignes 561-618) — la différence est assumée : le déclarateur
+// Miroir LECTURE SEULE de la chaîne de financement inline de declareSessionMentor
+// (mentors.functions.ts, lignes 561-618) — la différence est assumée : le déclarateur
 // fait un débit ATOMIQUE (update avec garde .lt(), le retour = le claim), le résolveur
 // d'autorisation ne fait que lire l'état courant. La consolidation des deux est possible
 // plus tard ; aujourd'hui on ne touche pas au chemin argent.
@@ -30,7 +30,7 @@ export async function resolveChildAccompaniment(
 ): Promise<ChildAccompaniment> {
   const nowIso = new Date(now).toISOString();
 
-  // 1. Pack Accompagnement par enfant — même filtre que declareSessionSupervisor.
+  // 1. Pack Accompagnement par enfant — même filtre que declareSessionMentor.
   const { data: pack } = await db
     .from("family_coverages")
     .select("id, sessions_used, sessions")

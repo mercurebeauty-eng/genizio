@@ -4,8 +4,8 @@ import { requireAdmin } from "@/integrations/supabase/admin-middleware";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { listAllUsers } from "@/integrations/supabase/admin-users";
 import { getActiveSeason } from "./seasons.functions";
-import { insertSupervisorAssignments } from "./supervisors.functions";
-import { computeSupervisorQuota } from "./supervisor-quota";
+import { insertMentorAssignments } from "./mentors.functions";
+import { computeMentorQuota } from "./mentor-quota";
 
 export interface Campaign {
   id: string;
@@ -14,7 +14,7 @@ export interface Campaign {
   manager_user_id?: string;
   manager_email?: string | null;
   target_count: number;
-  extra_supervisors_quota: number;
+  extra_mentors_quota: number;
   max_educators: number;
   start_date: string;
   end_date: string;
@@ -29,7 +29,7 @@ export interface Campaign {
   /** V4, DÉCISION 3 (2026-08-14) : compartiment SÉANCES — budget d'accompagnement financé
    *  (2 compteurs distincts : target_count pour l'app, sessions_target pour les séances). */
   sessions_target?: number;
-  /** Séances financées déjà consommées (débit au fil des déclarations des superviseurs). */
+  /** Séances financées déjà consommées (débit au fil des déclarations des mentors). */
   sessions_used?: number;
 }
 
@@ -46,7 +46,7 @@ export const createCampaignAdmin = createServerFn({ method: "POST" })
         // (compartiment APP, enfants financés) + sessionsTarget (compartiment SÉANCES, budget
         // d'accompagnement financé). L'ONG choisit le mix à la création ; le rapport d'impact
         // affiche « N enfants + M séances financés » (exigence bailleur). Les séances sont
-        // débitées au fil des déclarations des superviseurs (compteur sessions_used).
+        // débitées au fil des déclarations des mentors (compteur sessions_used).
         sessionsTarget: z.number().int().min(0).default(0),
         // Décision utilisateur (2026-07-26) : une campagne a sa propre fenêtre fixe, partagée par
         // tous ses enfants — contrairement au rolling individuel par défaut (chaque enfant démarre
@@ -75,7 +75,7 @@ export const createCampaignAdmin = createServerFn({ method: "POST" })
         manager_user_id: manager.id,
         target_count: data.targetCount,
         sessions_target: data.sessionsTarget,
-        extra_supervisors_quota: 0,
+        extra_mentors_quota: 0,
         start_date: data.startDate,
         end_date: data.endDate,
       })
@@ -126,7 +126,7 @@ export const updateCampaignBillingAdmin = createServerFn({ method: "POST" })
     return { success: true };
   });
 
-// Le quota de base (5 enfants/superviseur) est fixé dans le trigger DB check_supervisor_quota
+// Le quota de base (5 enfants/mentor) est fixé dans le trigger DB check_mentor_quota
 // (migration 20260726120000) — ce champ est le seul levier d'ajustement PAR CAMPAGNE, mais
 // n'avait jusqu'ici aucune UI pour le modifier après création (toujours figé à 0 à l'insert).
 export const updateCampaignExtraQuotaAdmin = createServerFn({ method: "POST" })
@@ -135,8 +135,8 @@ export const updateCampaignExtraQuotaAdmin = createServerFn({ method: "POST" })
     z
       .object({
         campaignId: z.string().uuid(),
-        extraSupervisorsQuota: z.number().int().min(0).max(50),
-        // Capacité d'éducateurs vouchés (2026-07-30) — mirroir du quota superviseurs ci-dessus,
+        extraMentorsQuota: z.number().int().min(0).max(50),
+        // Capacité d'éducateurs vouchés (2026-07-30) — mirroir du quota mentors ci-dessus,
         // même levier "réglé par l'admin après paiement hors-app" (cf. check_campaign_educator_capacity).
         maxEducators: z.number().int().min(0).max(50).default(0),
       })
@@ -156,7 +156,7 @@ export const updateCampaignExtraQuotaAdmin = createServerFn({ method: "POST" })
     }
     const { data: campaign, error } = await (supabaseAdmin as any)
       .from("campaigns")
-      .update({ extra_supervisors_quota: data.extraSupervisorsQuota, max_educators: data.maxEducators })
+      .update({ extra_mentors_quota: data.extraMentorsQuota, max_educators: data.maxEducators })
       .eq("id", data.campaignId)
       .select()
       .single();
@@ -509,9 +509,9 @@ export const deleteCampaignAdmin = createServerFn({ method: "POST" })
 
 // Jusqu'ici, rien dans la nav ne signalait à un chargé de projet ONG que son compte avait un
 // dashboard B2B — /b2b n'apparaît nulle part (ni AppHeader, ni AppTabBar, ni /profile), contrairement
-// à /supervisor et /admin qui sont déjà surfacés conditionnellement dans /profile. Seul moyen
+// à /mentor et /admin qui sont déjà surfacés conditionnellement dans /profile. Seul moyen
 // d'y arriver aujourd'hui : quelqu'un chez Génizio communique l'URL à la main. Ce check permet
-// à /profile d'afficher le même genre de lien conditionnel que pour superviseur/admin.
+// à /profile d'afficher le même genre de lien conditionnel que pour mentor/admin.
 export const checkIsCampaignManager = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
@@ -774,7 +774,7 @@ export const listCampaignTokensForManager = createServerFn({ method: "POST" })
 // ────────────────────────────────────────────────────────────
 
 // Décision utilisateur (2026-07-26) : le chargé de projet ONG ne voit JAMAIS l'identité d'un
-// enfant (ni nom, ni portfolio) — son rôle se limite à la gestion des superviseurs et au suivi
+// enfant (ni nom, ni portfolio) — son rôle se limite à la gestion des mentors et au suivi
 // d'impact agrégé. C'est ce qui rend inutile tout consentement parental spécifique au B2B :
 // aucune donnée personnelle d'enfant ne remonte jamais à ce compte. Ne JAMAIS réintroduire
 // child_profiles.name/city/interests ou un lien vers /profiles/$profileId dans cette réponse.
@@ -798,7 +798,7 @@ export const getNgoDashboardData = createServerFn({ method: "GET" })
 
     if (campErr) throw new Error(campErr.message);
     if (!campaigns || campaigns.length === 0) {
-      return { campaigns: [], activeCampaignId: null, stats: null, supervisors: [], narratives: [] };
+      return { campaigns: [], activeCampaignId: null, stats: null, mentors: [], narratives: [] };
     }
 
     const selected = campaigns.find((c: any) => c.id === data.campaignId) ?? campaigns[0];
@@ -853,25 +853,25 @@ export const getNgoDashboardData = createServerFn({ method: "GET" })
       }
     }
 
-    // Superviseurs de CETTE campagne : compte assigné seulement, jamais quels enfants précis.
-    const { data: supervisorRows } = await (supabaseAdmin as any)
-      .from("supervisors")
-      .select("supervisor_user_id")
+    // Mentors de CETTE campagne : compte assigné seulement, jamais quels enfants précis.
+    const { data: mentorRows } = await (supabaseAdmin as any)
+      .from("mentors")
+      .select("mentor_user_id")
       .eq("campaign_id", campaignId);
 
-    // Emails des superviseurs — résolution CIBLÉE (review 2026-08-13) : l'ancien
+    // Emails des mentors — résolution CIBLÉE (review 2026-08-13) : l'ancien
     // listAllUsers paginait TOUT l'annuaire du projet à chaque visite du dashboard
     // (coûteux et lent à mesure que Génizio grandit) pour résoudre quelques emails.
-    // getUserById en parallèle ne lit que les superviseurs réellement assignés.
-    const supervisorCounts = new Map<string, number>();
-    for (const row of supervisorRows ?? []) {
-      supervisorCounts.set(row.supervisor_user_id, (supervisorCounts.get(row.supervisor_user_id) ?? 0) + 1);
+    // getUserById en parallèle ne lit que les mentors réellement assignés.
+    const mentorCounts = new Map<string, number>();
+    for (const row of mentorRows ?? []) {
+      mentorCounts.set(row.mentor_user_id, (mentorCounts.get(row.mentor_user_id) ?? 0) + 1);
     }
     const usersMap = new Map<string, string>();
-    const supervisorIds = [...supervisorCounts.keys()];
-    if (supervisorIds.length > 0) {
+    const mentorIds = [...mentorCounts.keys()];
+    if (mentorIds.length > 0) {
       const resolved = await Promise.all(
-        supervisorIds.map(async (id: string) => {
+        mentorIds.map(async (id: string) => {
           const { data } = await (supabaseAdmin as any).auth.admin
             .getUserById(id)
             .catch(() => ({ data: null }));
@@ -880,9 +880,9 @@ export const getNgoDashboardData = createServerFn({ method: "GET" })
       );
       for (const [id, email] of resolved) usersMap.set(id, email);
     }
-    const totalSupervisorQuota = computeSupervisorQuota({
+    const totalMentorQuota = computeMentorQuota({
       referenceCreatedAt: selected.created_at,
-      extraQuota: selected.extra_supervisors_quota,
+      extraQuota: selected.extra_mentors_quota,
     });
 
     return {
@@ -895,31 +895,31 @@ export const getNgoDashboardData = createServerFn({ method: "GET" })
         totalChallenges: challenges.length,
         completedChallenges: challenges.filter((c: any) => c.status === "completed").length,
         talentDistribution: talentTotals,
-        supervisedChildren: [...supervisorCounts.values()].reduce((a, b) => a + b, 0),
-        totalSupervisorQuota,
+        mentoredChildren: [...mentorCounts.values()].reduce((a, b) => a + b, 0),
+        totalMentorQuota,
         // V4, DÉCISION 3 : compartiment SÉANCES (2 compteurs distincts) — l'ONG finance un
-        // budget de séances, consommé au fil des déclarations des superviseurs.
+        // budget de séances, consommé au fil des déclarations des mentors.
         sessionsTarget: (selected as any).sessions_target ?? 0,
         sessionsUsed: (selected as any).sessions_used ?? 0,
       },
-      supervisors: Array.from(supervisorCounts.entries()).map(([supervisorUserId, count]) => ({
-        email: usersMap.get(supervisorUserId) || "Inconnu",
+      mentors: Array.from(mentorCounts.entries()).map(([mentorUserId, count]) => ({
+        email: usersMap.get(mentorUserId) || "Inconnu",
         assignedCount: count,
       })),
       narratives,
     };
   });
 
-// Le chargé de projet choisit un superviseur et un NOMBRE d'enfants à lui confier — jamais un
+// Le chargé de projet choisit un mentor et un NOMBRE d'enfants à lui confier — jamais un
 // enfant précis (cf. note ci-dessus). Le système pioche automatiquement, dans sa propre cohorte,
-// parmi les enfants qui n'ont encore aucun superviseur.
-export const assignCampaignSupervisor = createServerFn({ method: "POST" })
+// parmi les enfants qui n'ont encore aucun mentor.
+export const assignCampaignMentor = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .validator((input: any) =>
     z
       .object({
         campaignId: z.string().uuid(),
-        supervisorEmail: z.string().email(),
+        mentorEmail: z.string().email(),
         count: z.number().int().min(1).max(5).default(5),
       })
       .parse(input)
@@ -940,9 +940,9 @@ export const assignCampaignSupervisor = createServerFn({ method: "POST" })
     }
 
     const users = await listAllUsers(supabaseAdmin);
-    const supervisor = users.find((u) => u.email === data.supervisorEmail);
-    if (!supervisor) {
-      throw new Error(`Aucun compte trouvé pour l'email: ${data.supervisorEmail}`);
+    const mentor = users.find((u) => u.email === data.mentorEmail);
+    if (!mentor) {
+      throw new Error(`Aucun compte trouvé pour l'email: ${data.mentorEmail}`);
     }
 
     const { data: enrollments } = await (supabaseAdmin as any)
@@ -955,41 +955,41 @@ export const assignCampaignSupervisor = createServerFn({ method: "POST" })
     }
 
     const { data: existingSup } = await (supabaseAdmin as any)
-      .from("supervisors")
+      .from("mentors")
       .select("child_profile_id")
       .in("child_profile_id", cohortChildIds);
-    const alreadySupervised = new Set((existingSup ?? []).map((s: any) => s.child_profile_id as string));
-    const unsupervisedChildIds = cohortChildIds.filter((id) => !alreadySupervised.has(id));
+    const alreadyMentored = new Set((existingSup ?? []).map((s: any) => s.child_profile_id as string));
+    const unmentoredChildIds = cohortChildIds.filter((id) => !alreadyMentored.has(id));
 
-    if (unsupervisedChildIds.length === 0) {
-      throw new Error("Tous les enfants de cette campagne ont déjà un superviseur.");
+    if (unmentoredChildIds.length === 0) {
+      throw new Error("Tous les enfants de cette campagne ont déjà un mentor.");
     }
 
-    // Pré-check informatif seulement — le trigger DB check_supervisor_quota (migration
-    // 20260726120000) fait foi, y compris pour le chemin admin direct (assignSupervisor) qui ne
+    // Pré-check informatif seulement — le trigger DB check_mentor_quota (migration
+    // 20260726120000) fait foi, y compris pour le chemin admin direct (assignMentor) qui ne
     // vérifiait jusqu'ici aucun quota du tout.
     const { data: existingAssignments } = await (supabaseAdmin as any)
-      .from("supervisors")
+      .from("mentors")
       .select("id")
-      .eq("supervisor_user_id", supervisor.id);
+      .eq("mentor_user_id", mentor.id);
     const currentCount = existingAssignments?.length ?? 0;
-    const quota = computeSupervisorQuota({
+    const quota = computeMentorQuota({
       referenceCreatedAt: campaign.created_at,
-      extraQuota: campaign.extra_supervisors_quota,
+      extraQuota: campaign.extra_mentors_quota,
     });
     const slotsLeft = Math.max(0, quota - currentCount);
-    const toAssign = Math.min(data.count, slotsLeft, unsupervisedChildIds.length);
+    const toAssign = Math.min(data.count, slotsLeft, unmentoredChildIds.length);
 
     if (toAssign === 0) {
-      throw new Error(`Le superviseur ${data.supervisorEmail} a atteint sa limite de ${quota} enfants. Contactez le support pour augmenter son quota.`);
+      throw new Error(`Le mentor ${data.mentorEmail} a atteint sa limite de ${quota} enfants. Contactez le support pour augmenter son quota.`);
     }
 
-    // Insertion centralisée (supervisors.functions.ts) — même point de passage que le chemin
+    // Insertion centralisée (mentors.functions.ts) — même point de passage que le chemin
     // admin manuel, donc la contrainte UNIQUE(child_profile_id) et le message d'erreur sont
     // gérés à un seul endroit pour les deux chemins.
-    await insertSupervisorAssignments(supabaseAdmin, {
-      supervisorUserId: supervisor.id,
-      childProfileIds: unsupervisedChildIds.slice(0, toAssign),
+    await insertMentorAssignments(supabaseAdmin, {
+      mentorUserId: mentor.id,
+      childProfileIds: unmentoredChildIds.slice(0, toAssign),
       campaignId: data.campaignId,
       assignedBy: managerId,
     });
@@ -998,7 +998,7 @@ export const assignCampaignSupervisor = createServerFn({ method: "POST" })
   });
 
 // Éducateurs vouchés par campagne (2026-07-30) — même self-service gestionnaire
-// qu'assignCampaignSupervisor ci-dessus, mais plus simple : pas de pioche automatique dans une
+// qu'assignCampaignMentor ci-dessus, mais plus simple : pas de pioche automatique dans une
 // cohorte, on voucher un email précis. L'auto-déclaration seule (relationship_type =
 // "educateur") ne suffit jamais — il faut en plus être ajouté ici, par un gestionnaire qui
 // connaît déjà cette personne. Le trigger DB check_campaign_educator_capacity (migration
@@ -1104,7 +1104,7 @@ export const listCampaignEducators = createServerFn({ method: "GET" })
 // Au retrait, verrouille l'accès aux enfants VENUS DE CETTE CAMPAGNE PRÉCISÉMENT et possédés par
 // cet éducateur — jamais tout son compte (il peut avoir ses propres enfants hors campagne), et
 // jamais les données de l'enfant (talents/xp/défis restent intacts, seul access_locked_at
-// change). L'échappatoire (devenir Superviseur) est un lien WhatsApp côté UI, pas géré ici.
+// change). L'échappatoire (devenir Mentor) est un lien WhatsApp côté UI, pas géré ici.
 export const removeCampaignEducator = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .validator((input: any) =>

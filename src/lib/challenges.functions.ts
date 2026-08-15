@@ -1400,13 +1400,13 @@ const GenerateInput = z.object({
   count: z.number().int().min(1).max(6).default(4),
 });
 
-// Cœur partagé de la génération bulk (Superviseur Copilote, décision #74) : la chaîne
-// IA est identique pour le parent et le superviseur — seul l'auteur change. `ownerUserId`
+// Cœur partagé de la génération bulk (Mentor Copilote, décision #74) : la chaîne
+// IA est identique pour le parent et le mentor — seul l'auteur change. `ownerUserId`
 // EST TOUJOURS le parent (challenges.user_id reste la clé d'ownership) ; `createdByUserId`
-// est le superviseur quand il génère (attribution, jamais ownership). `child` est passé
-// DÉJÀ chargé et autorisé (parent : ownership + assertChildAccessActive ; superviseur :
-// assertSupervisorOperator). Les lectures passent par `db` (context.supabase côté parent,
-// supabaseAdmin côté superviseur).
+// est le mentor quand il génère (attribution, jamais ownership). `child` est passé
+// DÉJÀ chargé et autorisé (parent : ownership + assertChildAccessActive ; mentor :
+// assertMentorOperator). Les lectures passent par `db` (context.supabase côté parent,
+// supabaseAdmin côté mentor).
 export async function generateChallengesCore(params: {
   db: any;
   child: any;
@@ -1560,8 +1560,8 @@ export async function generateChallengesCore(params: {
   }
 
   const rows = list.map((c) => ({
-    // Décision #74 (Superviseur Copilote) : user_id EST TOUJOURS le parent — l'ownership
-    // et la RLS restent intacts ; created_by_user_id trace l'auteur réel (superviseur).
+    // Décision #74 (Mentor Copilote) : user_id EST TOUJOURS le parent — l'ownership
+    // et la RLS restent intacts ; created_by_user_id trace l'auteur réel (mentor).
     user_id: ownerUserId,
     created_by_user_id: createdByUserId ?? null,
     child_id: childId,
@@ -1863,17 +1863,17 @@ const ValidateInput = z.object({
   proofImageMediaType: z.string().optional(),
 });
 
-// Cœur partagé de la validation de preuve photo (Superviseur Copilote, décision #74) :
-// la chaîne IA est STRICTEMENT la même pour le parent et pour le superviseur — seul
-// l'acteur qui soumet change (le superviseur prend la photo en séance et la soumet,
+// Cœur partagé de la validation de preuve photo (Mentor Copilote, décision #74) :
+// la chaîne IA est STRICTEMENT la même pour le parent et pour le mentor — seul
+// l'acteur qui soumet change (le mentor prend la photo en séance et la soumet,
 // c'est lui l'adulte présent). `db` est le client d'écriture : context.supabase côté
 // parent (RLS + increment_child_talents re-vérifie auth.uid()), supabaseAdmin côté
-// superviseur APRÈS assertSupervisorOperator. Le challenge est passé DÉJÀ chargé et
+// mentor APRÈS assertMentorOperator. Le challenge est passé DÉJÀ chargé et
 // DÉJÀ autorisé par l'appelant — jamais d'ownership dans le cœur.
 export async function validateChallengeProofCore(params: {
   db: any;
   challenge: any;
-  /** Identité qui soumet (pour l'événement observation) — le parent ou le superviseur. */
+  /** Identité qui soumet (pour l'événement observation) — le parent ou le mentor. */
   actingUserId: string;
   id: string;
   proofText?: string;
@@ -2374,10 +2374,10 @@ const SubmitDeclarativeInput = z.object({
   reportedValue: z.number().finite(),
 });
 
-// Cœur partagé de la preuve déclarative (décision #36 + Superviseur Copilote #74) : 0
+// Cœur partagé de la preuve déclarative (décision #36 + Mentor Copilote #74) : 0
 // appel IA par design — on compare la déclaration à la cible fixée à la génération. Même
-// principe que validateChallengeProofCore : `db` = client d'écriture (parent | superviseur
-// après assertSupervisorOperator), challenge DÉJÀ chargé et autorisé par l'appelant.
+// principe que validateChallengeProofCore : `db` = client d'écriture (parent | mentor
+// après assertMentorOperator), challenge DÉJÀ chargé et autorisé par l'appelant.
 export async function submitDeclarativeProofCore(params: {
   db: any;
   challenge: any;
@@ -2554,9 +2554,9 @@ export const AssignTemplateInput = z.object({
   estimated_duration_minutes: z.number().int().positive().max(1440).optional(),
 });
 
-// Cœur partagé de l'assignation de template (Superviseur Copilote, décision #74) : même
+// Cœur partagé de l'assignation de template (Mentor Copilote, décision #74) : même
 // principe que generateChallengesCore — `ownerUserId` EST TOUJOURS le parent (ownership),
-// `createdByUserId` est le superviseur quand il assigne (attribution). `child` passé DÉJÀ
+// `createdByUserId` est le mentor quand il assigne (attribution). `child` passé DÉJÀ
 // chargé et autorisé.
 export async function assignTemplateChallengeCore(params: {
   db: any;
@@ -2581,7 +2581,7 @@ export async function assignTemplateChallengeCore(params: {
   const { data: inserted, error } = await db
     .from("challenges")
     .insert({
-      // Décision #74 : user_id = parent, created_by_user_id = auteur réel (superviseur).
+      // Décision #74 : user_id = parent, created_by_user_id = auteur réel (mentor).
       user_id: ownerUserId,
       created_by_user_id: createdByUserId ?? null,
       child_id: childId,

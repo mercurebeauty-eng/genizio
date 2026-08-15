@@ -173,7 +173,7 @@ function RootShell({ children }: { children: ReactNode }) {
 // Routes rendues pleine largeur, hors du cadre-téléphone de 414px.
 //
 // Deux familles distinctes, même besoin :
-//  1. Outils internes (Admin OS, superviseur, espace organisation) — mises en
+//  1. Outils internes (Admin OS, mentor, espace organisation) — mises en
 //     page multi-colonnes conçues pour un écran d'ordinateur.
 //  2. Pages publiques (accueil, mentions légales, parrainage, contenus, page
 //     d'inscription à une campagne) — ce sont des pages vitrine. Les afficher
@@ -186,7 +186,7 @@ function RootShell({ children }: { children: ReactNode }) {
 // vraiment : /profiles, /profile, /boutique, /laboratory, /auth.
 const FULL_BLEED_PREFIXES = [
   "/admin",
-  "/supervisor",
+  "/mentor",
   "/organisation",
   "/rejoindre",
   "/guides",
@@ -211,7 +211,7 @@ function isFullBleedRoute(pathname: string): boolean {
 // Outils internes : pas de bouton WhatsApp flottant (le support public n'a rien
 // à faire sur un tableau de bord admin), contrairement aux pages vitrine où il
 // reste le canal de contact principal.
-const INTERNAL_TOOL_PREFIXES = ["/admin", "/supervisor", "/organisation"];
+const INTERNAL_TOOL_PREFIXES = ["/admin", "/mentor", "/organisation"];
 
 function isInternalTool(pathname: string): boolean {
   return INTERNAL_TOOL_PREFIXES.some((p) => pathname === p || pathname.startsWith(`${p}/`));

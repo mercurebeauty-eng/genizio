@@ -10,7 +10,7 @@ describe("Refonte Admin OS — Navigation & grille d'accueil (9 onglets)", () =>
     expect(tabIds).toEqual([
       "executive",
       "b2b",
-      "supervisors",
+      "mentors",
       "products",
       "talents",
       "naya",
@@ -26,8 +26,8 @@ describe("Refonte Admin OS — Navigation & grille d'accueil (9 onglets)", () =>
     const b2bTab = ADMIN_TABS.find((t) => t.id === "b2b");
     expect(b2bTab?.label).toBe("Campagnes B2B");
 
-    const supTab = ADMIN_TABS.find((t) => t.id === "supervisors");
-    expect(supTab?.label).toBe("Superviseurs");
+    const supTab = ADMIN_TABS.find((t) => t.id === "mentors");
+    expect(supTab?.label).toBe("Mentors");
 
     const prodTab = ADMIN_TABS.find((t) => t.id === "products");
     expect(prodTab?.label).toBe("Produits & Stock");
@@ -51,9 +51,9 @@ describe("Refonte Admin OS — Navigation & grille d'accueil (9 onglets)", () =>
       currentTab = newTab;
     });
 
-    onTabChange("supervisors");
-    expect(onTabChange).toHaveBeenCalledWith("supervisors");
-    expect(currentTab).toBe("supervisors");
+    onTabChange("mentors");
+    expect(onTabChange).toHaveBeenCalledWith("mentors");
+    expect(currentTab).toBe("mentors");
 
     onTabChange("products");
     expect(onTabChange).toHaveBeenCalledWith("products");
@@ -64,7 +64,7 @@ describe("Refonte Admin OS — Navigation & grille d'accueil (9 onglets)", () =>
     expect(currentTab).toBe("executive");
   });
 
-  it("verifies sub-routes /admin/products and /admin/supervisors and /admin/ are registered in routeTree.gen.ts", () => {
+  it("verifies sub-routes /admin/products and /admin/mentors and /admin/ are registered in routeTree.gen.ts", () => {
     const routeTreePath = path.resolve(__dirname, "../routeTree.gen.ts");
     const content = fs.readFileSync(routeTreePath, "utf-8");
 
@@ -74,7 +74,7 @@ describe("Refonte Admin OS — Navigation & grille d'accueil (9 onglets)", () =>
       "import { Route as AdminIndexRouteImport } from './routes/admin.index'",
     );
     expect(content).toContain(
-      "import { Route as AdminSupervisorsRouteImport } from './routes/admin.supervisors'",
+      "import { Route as AdminMentorsRouteImport } from './routes/admin.mentors'",
     );
     expect(content).toContain(
       "import { Route as AdminProductsRouteImport } from './routes/admin.products'",
@@ -82,12 +82,12 @@ describe("Refonte Admin OS — Navigation & grille d'accueil (9 onglets)", () =>
 
     // Verify full paths in FileRoutesByFullPath
     expect(content).toContain("'/admin/products': typeof AdminProductsRoute");
-    expect(content).toContain("'/admin/supervisors': typeof AdminSupervisorsRoute");
+    expect(content).toContain("'/admin/mentors': typeof AdminMentorsRoute");
     expect(content).toContain("'/admin/': typeof AdminIndexRoute");
 
     // Verify AdminRouteChildren definition
     expect(content).toContain("AdminProductsRoute: typeof AdminProductsRoute");
-    expect(content).toContain("AdminSupervisorsRoute: typeof AdminSupervisorsRoute");
+    expect(content).toContain("AdminMentorsRoute: typeof AdminMentorsRoute");
     expect(content).toContain("AdminIndexRoute: typeof AdminIndexRoute");
   });
 });

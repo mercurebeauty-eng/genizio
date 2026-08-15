@@ -1,26 +1,26 @@
-// Superviseur Copilote (décision #74, 2026-08-15) — autorisation « opérateur ».
+// Mentor Copilote (décision #74, 2026-08-15) — autorisation « opérateur ».
 //
-// Un superviseur peut opérer (start/progress/notes/abandon/preuve/génération) les défis
+// Un mentor peut opérer (start/progress/notes/abandon/preuve/génération) les défis
 // d'un enfant si TOUTES les conditions tiennent :
-//   1. assignation ACTIVE (supervisors, removed_at IS NULL) sur cet enfant ;
-//   2. statut de compte non suspendu/banni (supervisor_profiles.status) ;
+//   1. assignation ACTIVE (mentors, removed_at IS NULL) sur cet enfant ;
+//   2. statut de compte non suspendu/banni (mentor_profiles.status) ;
 //   3. l'enfant est ACCOMPAGNÉ (pack ou campagne — resolveChildAccompaniment).
 //
 // Le parent, lui, reste l'opérateur par défaut sur les enfants non accompagnés (voie
 // existante challenges.functions.ts). Jamais de suppression ni de publication pour le
-// superviseur, quel que soit ce prédicat.
+// mentor, quel que soit ce prédicat.
 //
-// canOperateSupervisor est PURE (testable) ; assertSupervisorOperator fait les lectures
-// via le db passé (toujours supabaseAdmin — les tables superviseur sont service-role).
+// canOperateMentor est PURE (testable) ; assertMentorOperator fait les lectures
+// via le db passé (toujours supabaseAdmin — les tables mentor sont service-role).
 
 import { resolveChildAccompaniment } from "@/lib/child-accompaniment";
 
-export type SupervisorOperatorStatus = "active" | "warning" | "suspended" | "banned";
+export type MentorOperatorStatus = "active" | "warning" | "suspended" | "banned";
 
-export function canOperateSupervisor(params: {
+export function canOperateMentor(params: {
   hasActiveAssignment: boolean;
-  /** Statut du compte superviseur ; absent = 'active' (profil jamais créé). */
-  status: SupervisorOperatorStatus | null | undefined;
+  /** Statut du compte mentor ; absent = 'active' (profil jamais créé). */
+  status: MentorOperatorStatus | null | undefined;
   accompaniment: "pack" | "campaign" | "none";
 }): boolean {
   if (!params.hasActiveAssignment) return false;
@@ -29,7 +29,7 @@ export function canOperateSupervisor(params: {
   return params.accompaniment !== "none";
 }
 
-export const SUPERVISOR_OPERATOR_DENIED_MESSAGE =
+export const MENTOR_OPERATOR_DENIED_MESSAGE =
   "Les actions opérateur ne sont disponibles que pour les enfants accompagnés (pack ou programme partenaire).";
 
 /**
@@ -57,32 +57,32 @@ export function isLastPayableSession(params: {
 
 /**
  * Vérifie que userId peut opérer les défis de childId. Lève une erreur explicite sinon.
- * Doit être appelé AVANT toute écriture (les fns superviseur écrivent via supabaseAdmin,
+ * Doit être appelé AVANT toute écriture (les fns mentor écrivent via supabaseAdmin,
  * qui by-passe la RLS — cette vérification EST la sécurité).
  */
-export async function assertSupervisorOperator(
+export async function assertMentorOperator(
   db: { from: (table: string) => any },
   userId: string,
   childId: string,
 ): Promise<void> {
   const { data: profile } = await db
-    .from("supervisor_profiles")
+    .from("mentor_profiles")
     .select("status")
-    .eq("supervisor_user_id", userId)
+    .eq("mentor_user_id", userId)
     .maybeSingle();
-  const status = (profile?.status as SupervisorOperatorStatus | undefined) ?? "active";
+  const status = (profile?.status as MentorOperatorStatus | undefined) ?? "active";
   if (status === "suspended" || status === "banned") {
     throw new Error(
       status === "banned"
-        ? "Votre compte superviseur est banni — contactez l'équipe Génizio."
-        : "Votre compte superviseur est suspendu — contactez l'équipe Génizio.",
+        ? "Votre compte mentor est banni — contactez l'équipe Génizio."
+        : "Votre compte mentor est suspendu — contactez l'équipe Génizio.",
     );
   }
 
   const { data: assignment } = await db
-    .from("supervisors")
+    .from("mentors")
     .select("id")
-    .eq("supervisor_user_id", userId)
+    .eq("mentor_user_id", userId)
     .eq("child_profile_id", childId)
     .is("removed_at", null)
     .maybeSingle();
@@ -92,6 +92,6 @@ export async function assertSupervisorOperator(
 
   const accompaniment = await resolveChildAccompaniment(db, childId);
   if (accompaniment.funding === "none") {
-    throw new Error(SUPERVISOR_OPERATOR_DENIED_MESSAGE);
+    throw new Error(MENTOR_OPERATOR_DENIED_MESSAGE);
   }
 }

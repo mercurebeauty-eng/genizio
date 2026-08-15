@@ -1,4 +1,4 @@
-// Superviseur Copilote (décision #74) — export PDF du « Bilan du superviseur ».
+// Mentor Copilote (décision #74) — export PDF du « Bilan du mentor ».
 //
 // Route d'impression/export : charge l'enfant + le bilan (ownership parent vérifiée
 // côté serveur dans getChildBilan), génère le PDF vectoriel via @react-pdf/renderer
@@ -9,7 +9,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { useSession } from "@/hooks/use-session";
-import { getChildBilan } from "@/lib/supervisor-reports.functions";
+import { getChildBilan } from "@/lib/mentor-reports.functions";
 import { supabase } from "@/integrations/supabase/client";
 import { pdf } from "@react-pdf/renderer";
 import { BilanPdf } from "@/components/bilan/BilanPdf";
@@ -74,7 +74,7 @@ function BilanPrintPage() {
             childAge: child.age,
             periodStart: bilan.period_start,
             periodEnd: bilan.period_end,
-            supervisorEmail: (bilan as any).supervisorEmail ?? "superviseur Génizio",
+            mentorEmail: (bilan as any).mentorEmail ?? "mentor Génizio",
             realisations: bilan.realisations,
             competencesObservees: bilan.competences_observees,
             recommandations: bilan.recommandations,

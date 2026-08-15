@@ -3,19 +3,19 @@ import { useEffect, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { useSession } from "@/hooks/use-session";
 import { AppHeader } from "@/components/AppHeader";
-import { getSupervisorDashboard, declareSessionSupervisor } from "@/lib/supervisors.functions";
+import { getMentorDashboard, declareSessionMentor } from "@/lib/mentors.functions";
 import {
-  supervisorUpdateChallenge,
-  supervisorSubmitNotCompleted,
-  supervisorSubmitProof,
-  supervisorSubmitDeclarativeProof,
-  supervisorGenerateChallenges,
-} from "@/lib/supervisor-operator.functions";
+  mentorUpdateChallenge,
+  mentorSubmitNotCompleted,
+  mentorSubmitProof,
+  mentorSubmitDeclarativeProof,
+  mentorGenerateChallenges,
+} from "@/lib/mentor-operator.functions";
 import {
-  getSupervisorReports,
-  saveSupervisorReportDraft,
-  submitSupervisorReport,
-} from "@/lib/supervisor-reports.functions";
+  getMentorReports,
+  saveMentorReportDraft,
+  submitMentorReport,
+} from "@/lib/mentor-reports.functions";
 import { NOT_COMPLETED_CHIPS } from "@/lib/challenges.functions";
 import { fileToCompressedProof } from "@/lib/image-proof";
 import { getChildGuild } from "@/lib/guilds";
@@ -47,8 +47,8 @@ import { GenizioLoader } from "@/components/GenizioLoader";
 import { formatPedagogicalIntention } from "@/lib/pedagogical-intention";
 import { toast } from "sonner";
 
-export const Route = createFileRoute("/supervisor")({
-  component: SupervisorDashboardPage,
+export const Route = createFileRoute("/mentor")({
+  component: MentorDashboardPage,
 });
 
 type ChildWithChallenges = {
@@ -60,10 +60,10 @@ type ChildWithChallenges = {
   talents: Record<string, number>;
   parentPhone: string | null;
   assignedAt: string;
-  /** Superviseur Copilote (décision #74) : pack | campaign = opérateur, none = lecture. */
+  /** Mentor Copilote (décision #74) : pack | campaign = opérateur, none = lecture. */
   accompaniment: "pack" | "campaign" | "none";
-  /** Dernières actions du superviseur sur cet enfant (le journal sert de journal de séance). */
-  supervisorActions: {
+  /** Dernières actions du mentor sur cet enfant (le journal sert de journal de séance). */
+  mentorActions: {
     id: string;
     challenge_id: string | null;
     action: string;
@@ -90,7 +90,7 @@ type ChildWithChallenges = {
   }[];
 };
 
-type SupervisorReport = {
+type MentorReport = {
   id: string;
   status: "draft" | "submitted" | "validated" | "rejected";
   period_start: string;
@@ -102,7 +102,7 @@ type SupervisorReport = {
   updated_at: string;
 };
 
-function SupervisorDashboardPage() {
+function MentorDashboardPage() {
   const { session, loading } = useSession();
   const navigate = useNavigate();
   const [children, setChildren] = useState<ChildWithChallenges[]>([]);
@@ -110,7 +110,7 @@ function SupervisorDashboardPage() {
   const [loadError, setLoadError] = useState(false);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [selectedChallenge, setSelectedChallenge] = useState<any | null>(null);
-  // Score de fiabilité (V2) : renvoyé par getSupervisorDashboard, affiché dans l'en-tête.
+  // Score de fiabilité (V2) : renvoyé par getMentorDashboard, affiché dans l'en-tête.
   const [score, setScore] = useState<number | null>(null);
   const [sessionsThisMonth, setSessionsThisMonth] = useState(0);
   const [expectedSessions, setExpectedSessions] = useState(0);
@@ -120,21 +120,21 @@ function SupervisorDashboardPage() {
   const [sessionNotes, setSessionNotes] = useState("");
   const [declaring, setDeclaring] = useState(false);
 
-  const getDashboardFn = useServerFn(getSupervisorDashboard);
-  const declareFn = useServerFn(declareSessionSupervisor);
-  const supUpdateFn = useServerFn(supervisorUpdateChallenge);
-  const supNotCompletedFn = useServerFn(supervisorSubmitNotCompleted);
-  const supProofFn = useServerFn(supervisorSubmitProof);
-  const supDeclarativeFn = useServerFn(supervisorSubmitDeclarativeProof);
-  const supGenerateFn = useServerFn(supervisorGenerateChallenges);
-  const getReportsFn = useServerFn(getSupervisorReports);
-  const saveReportFn = useServerFn(saveSupervisorReportDraft);
-  const submitReportFn = useServerFn(submitSupervisorReport);
+  const getDashboardFn = useServerFn(getMentorDashboard);
+  const declareFn = useServerFn(declareSessionMentor);
+  const supUpdateFn = useServerFn(mentorUpdateChallenge);
+  const supNotCompletedFn = useServerFn(mentorSubmitNotCompleted);
+  const supProofFn = useServerFn(mentorSubmitProof);
+  const supDeclarativeFn = useServerFn(mentorSubmitDeclarativeProof);
+  const supGenerateFn = useServerFn(mentorGenerateChallenges);
+  const getReportsFn = useServerFn(getMentorReports);
+  const saveReportFn = useServerFn(saveMentorReportDraft);
+  const submitReportFn = useServerFn(submitMentorReport);
 
-  // Superviseur Copilote — onglet de l'enfant sélectionné (Défis | Bilan).
+  // Mentor Copilote — onglet de l'enfant sélectionné (Défis | Bilan).
   const [panelTab, setPanelTab] = useState<"defis" | "bilan">("defis");
   // Bilan de fin (décision #74) — le « bilan inclus » du pack, validé par le parent.
-  const [reportDraft, setReportDraft] = useState<SupervisorReport | null>(null);
+  const [reportDraft, setReportDraft] = useState<MentorReport | null>(null);
   const [reportForm, setReportForm] = useState({
     periodStart: "",
     periodEnd: "",
@@ -156,7 +156,7 @@ function SupervisorDashboardPage() {
   const [submittingProof, setSubmittingProof] = useState(false);
   // Génération de défis.
   const [generatingFor, setGeneratingFor] = useState(false);
-  // Note de séance dans la modale (journal superviseur).
+  // Note de séance dans la modale (journal mentor).
   const [noteDraft, setNoteDraft] = useState("");
 
   const defaultPeriod = () => {
@@ -206,7 +206,7 @@ function SupervisorDashboardPage() {
     getReportsFn({ data: { childId: selectedId } })
       .then((res: any) => {
         if (cancelled) return;
-        const reports = (res.reports ?? []) as SupervisorReport[];
+        const reports = (res.reports ?? []) as MentorReport[];
         const current = reports[0] ?? null;
         setReportDraft(current);
         if (current) {
@@ -266,7 +266,7 @@ function SupervisorDashboardPage() {
     }
   };
 
-  // ── Superviseur Copilote — actions opérateur (décision #74) ──────────────────
+  // ── Mentor Copilote — actions opérateur (décision #74) ──────────────────
 
   const runOperator = async (fn: () => Promise<unknown>, successMsg: string, failMsg: string) => {
     try {
@@ -442,13 +442,13 @@ function SupervisorDashboardPage() {
           >
             <NayaAvatar
               size="sm"
-              thoughts={["Bonjour Superviseur ! Voici vos enfants à accompagner."]}
+              thoughts={["Bonjour Mentor ! Voici vos enfants à accompagner."]}
             />
-            <p className="text-sm text-ink/60 mb-0.5">Espace Superviseur</p>
+            <p className="text-sm text-ink/60 mb-0.5">Espace Mentor</p>
           </div>
           <div className="flex flex-wrap items-end justify-between gap-4">
             <h1 className="font-display text-balance text-3xl font-extrabold">
-              Tableau de Bord Superviseur
+              Tableau de Bord Mentor
             </h1>
             {/* Score de fiabilité (V1) : déclarez vos séances en app, le score se calcule
                 tout seul (séances tenues + progression des enfants). */}
@@ -632,7 +632,7 @@ function SupervisorDashboardPage() {
                     </div>
 
                     {/* Déclarer une séance (V1) : chaque séance réalisée alimente le score
-                        de fiabilité — et, en V2, la facturation du superviseur. */}
+                        de fiabilité — et, en V2, la facturation du mentor. */}
                     <button
                       onClick={() => {
                         setDeclaringFor(selected.id);
@@ -645,7 +645,7 @@ function SupervisorDashboardPage() {
                       Déclarer une séance
                     </button>
 
-                    {/* Superviseur Copilote (décision #74) : onglet Défis (opérateur) | Bilan */}
+                    {/* Mentor Copilote (décision #74) : onglet Défis (opérateur) | Bilan */}
                     <div className="flex rounded-2xl border border-ink/10 bg-white p-1 shadow-sm">
                       {(["defis", "bilan"] as const).map((tab) => (
                         <button
@@ -714,7 +714,7 @@ function SupervisorDashboardPage() {
                               <Trophy className="size-5 text-brand" />
                               Défis de {selected.name}
                             </h3>
-                            {/* Opérateur (enfant accompagné) : le superviseur génère les défis
+                            {/* Opérateur (enfant accompagné) : le mentor génère les défis
                             comme le parent — user_id reste le parent, attribution tracée. */}
                             {selected.accompaniment !== "none" && (
                               <button
@@ -1118,18 +1118,18 @@ function SupervisorDashboardPage() {
                   )}
                 </div>
               )}
-              {/* Notes de séance du superviseur (journal) */}
+              {/* Notes de séance du mentor (journal) */}
               {selected?.accompaniment !== "none" &&
                 selectedChallenge &&
                 (() => {
-                  const notes = (selected?.supervisorActions ?? []).filter(
+                  const notes = (selected?.mentorActions ?? []).filter(
                     (a) => a.action === "notes" && a.challenge_id === selectedChallenge.id,
                   );
                   if (notes.length === 0) return null;
                   return (
                     <div className="rounded-2xl border border-ink/10 bg-brand/5 p-4">
                       <p className="mb-2 text-xs font-extrabold uppercase tracking-widest text-brand">
-                        Notes de séance (superviseur)
+                        Notes de séance (mentor)
                       </p>
                       <ul className="space-y-2">
                         {notes.slice(0, 3).map((n) => (

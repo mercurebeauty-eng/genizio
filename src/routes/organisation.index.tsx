@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import {
   getNgoDashboardData,
-  assignCampaignSupervisor,
+  assignCampaignMentor,
   listCampaignTokensForManager,
   addCampaignEducator,
   removeCampaignEducator,
@@ -51,7 +51,7 @@ const TALENT_BAR_GRADIENTS = [
 import { toast } from "sonner";
 import { GenizioLoader } from "@/components/GenizioLoader";
 import { CampaignLinkCard } from "@/components/campaigns/CampaignLinkCard";
-import { computeSupervisorQuota } from "@/lib/supervisor-quota";
+import { computeMentorQuota } from "@/lib/mentor-quota";
 import {
   resolveExtraSlotPrice,
   formatXof,
@@ -70,8 +70,8 @@ interface Stats {
   totalChallenges: number;
   completedChallenges: number;
   talentDistribution: Record<string, number>;
-  supervisedChildren: number;
-  totalSupervisorQuota: number;
+  mentoredChildren: number;
+  totalMentorQuota: number;
   // V4, DÉCISION 3 : compartiment SÉANCES (2 compteurs distincts).
   sessionsTarget: number;
   sessionsUsed: number;
@@ -87,7 +87,7 @@ interface DashboardData {
   campaigns: Campaign[];
   activeCampaignId: string | null;
   stats: Stats | null;
-  supervisors: { email: string; assignedCount: number }[];
+  mentors: { email: string; assignedCount: number }[];
   narratives: Narrative[];
 }
 
@@ -147,7 +147,7 @@ function OrganisationDashboard() {
     );
   }
 
-  const { campaigns, stats, supervisors, narratives } = data;
+  const { campaigns, stats, mentors, narratives } = data;
   const activeCampaign = (campaigns.find((c) => c.id === selectedCampaignId) ??
     campaigns[0]) as Campaign;
   const completionRate =
@@ -288,15 +288,15 @@ function OrganisationDashboard() {
               <AlertCircle className="size-5" />
             </div>
             <span className="rounded-full bg-amber-500/10 px-2 py-0.5 text-[10px] font-black uppercase tracking-wider text-amber-700">
-              Superviseurs
+              Mentors
             </span>
           </div>
           <div className="relative mt-3 text-3xl sm:text-4xl font-black text-amber-900">
-            {stats?.supervisedChildren ?? 0}{" "}
+            {stats?.mentoredChildren ?? 0}{" "}
             <span className="text-lg text-ink/40 font-bold">/ {stats?.cohortSize ?? 0}</span>
           </div>
           <div className="relative mt-1 text-xs font-semibold text-ink/60">
-            Capacité : {stats?.totalSupervisorQuota ?? 0} enfants supervisés
+            Capacité : {stats?.totalMentorQuota ?? 0} enfants supervisés
           </div>
         </div>
       </div>
@@ -405,14 +405,14 @@ function OrganisationDashboard() {
         </div>
       )}
 
-      {/* Superviseurs — gestion de capacité */}
+      {/* Mentors — gestion de capacité */}
       <div className="bg-white rounded-[2rem] border border-ink/10 overflow-hidden shadow-xs">
         <div className="p-5 sm:p-8 border-b border-ink/5 flex items-center justify-between flex-wrap gap-4">
           <div>
-            <h2 className="text-xl sm:text-2xl font-display font-black text-ink">Superviseurs</h2>
+            <h2 className="text-xl sm:text-2xl font-display font-black text-ink">Mentors</h2>
             <p className="text-xs sm:text-sm text-ink/60 font-medium mt-1">
-              Un superviseur suit jusqu'à{" "}
-              {computeSupervisorQuota({
+              Un mentor suit jusqu'à{" "}
+              {computeMentorQuota({
                 referenceCreatedAt: activeCampaign.created_at,
                 extraQuota: 0,
               })}{" "}
@@ -424,7 +424,7 @@ function OrganisationDashboard() {
             className="w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-brand text-white px-5 py-3 rounded-2xl font-black text-sm hover:bg-brand/90 transition-colors shadow-xs cursor-pointer"
           >
             <UserPlus className="size-4" />
-            <span>Assigner un superviseur</span>
+            <span>Assigner un mentor</span>
           </button>
         </div>
 
@@ -432,7 +432,7 @@ function OrganisationDashboard() {
             avatars initials + barres de capacité, états vides soignés */}
         <div className="p-4 sm:p-0">
           <div className="sm:hidden space-y-2.5">
-            {supervisors.map((s) => (
+            {mentors.map((s) => (
               <div
                 key={s.email}
                 className="p-4 rounded-2xl bg-surface/70 border border-ink/5 flex items-center justify-between gap-3"
@@ -443,18 +443,18 @@ function OrganisationDashboard() {
                   </div>
                   <div className="min-w-0">
                     <p className="text-xs font-black text-ink truncate">{s.email}</p>
-                    <p className="text-[10px] text-ink/50 font-bold mt-0.5">Superviseur référent</p>
+                    <p className="text-[10px] text-ink/50 font-bold mt-0.5">Mentor référent</p>
                   </div>
                 </div>
                 <span className="px-3 py-1 rounded-xl bg-brand/10 text-brand text-xs font-black shrink-0">
-                  {s.assignedCount} / {stats?.totalSupervisorQuota ?? 0} enfants
+                  {s.assignedCount} / {stats?.totalMentorQuota ?? 0} enfants
                 </span>
               </div>
             ))}
-            {supervisors.length === 0 && (
+            {mentors.length === 0 && (
               <div className="p-6 text-center rounded-2xl border border-dashed border-ink/10 bg-white/40">
                 <p className="text-xs font-bold text-ink/50">
-                  Aucun superviseur assigné — cliquez sur « Assigner un superviseur » pour confier
+                  Aucun mentor assigné — cliquez sur « Assigner un mentor » pour confier
                   des enfants de la cohorte.
                 </p>
               </div>
@@ -466,7 +466,7 @@ function OrganisationDashboard() {
               <thead className="bg-surface/50 border-b border-ink/5">
                 <tr>
                   <th className="p-4 px-6 text-xs font-extrabold uppercase tracking-widest text-ink/50">
-                    Superviseur
+                    Mentor
                   </th>
                   <th className="p-4 px-6 text-xs font-extrabold uppercase tracking-widest text-ink/50 text-right">
                     Enfants assignés
@@ -474,7 +474,7 @@ function OrganisationDashboard() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-ink/5">
-                {supervisors.map((s) => (
+                {mentors.map((s) => (
                   <tr key={s.email} className="hover:bg-surface/30 transition-colors">
                     <td className="p-4 px-6">
                       <div className="flex items-center gap-3">
@@ -492,20 +492,20 @@ function OrganisationDashboard() {
                             style={{
                               width: `${Math.min(
                                 100,
-                                (s.assignedCount / Math.max(1, stats?.totalSupervisorQuota ?? 1)) *
+                                (s.assignedCount / Math.max(1, stats?.totalMentorQuota ?? 1)) *
                                   100,
                               )}%`,
                             }}
                           />
                         </div>
                         <span className="font-black text-sm text-brand w-16">
-                          {s.assignedCount} / {stats?.totalSupervisorQuota ?? 0}
+                          {s.assignedCount} / {stats?.totalMentorQuota ?? 0}
                         </span>
                       </div>
                     </td>
                   </tr>
                 ))}
-                {supervisors.length === 0 && (
+                {mentors.length === 0 && (
                   <tr>
                     <td colSpan={2} className="p-8 text-center">
                       <div className="inline-flex flex-col items-center gap-2">
@@ -513,7 +513,7 @@ function OrganisationDashboard() {
                           <UserPlus className="size-5 text-ink/30" />
                         </span>
                         <p className="text-ink/50 font-medium text-sm">
-                          Aucun superviseur assigné pour l'instant.
+                          Aucun mentor assigné pour l'instant.
                         </p>
                       </div>
                     </td>
@@ -532,7 +532,7 @@ function OrganisationDashboard() {
       />
 
       {isAssignModalOpen && (
-        <AssignSupervisorModal
+        <AssignMentorModal
           campaignId={activeCampaign.id}
           campaignCreatedAt={activeCampaign.created_at}
           onClose={() => setIsAssignModalOpen(false)}
@@ -721,7 +721,7 @@ function ManagerCodesModal({ campaign, onClose }: { campaign: Campaign; onClose:
   );
 }
 
-function AssignSupervisorModal({
+function AssignMentorModal({
   campaignId,
   campaignCreatedAt,
   onClose,
@@ -736,18 +736,18 @@ function AssignSupervisorModal({
   const [count, setCount] = useState(5);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const slotPrice = resolveExtraSlotPrice(campaignCreatedAt);
-  const supervisorFloor = computeSupervisorQuota({
+  const mentorFloor = computeMentorQuota({
     referenceCreatedAt: campaignCreatedAt,
     extraQuota: 0,
   });
 
-  const assignFn = useServerFn(assignCampaignSupervisor);
+  const assignFn = useServerFn(assignCampaignMentor);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
     try {
-      const res = await assignFn({ data: { campaignId, supervisorEmail: email, count } });
+      const res = await assignFn({ data: { campaignId, mentorEmail: email, count } });
       toast.success(`${res.assignedCount} enfant(s) confié(s) à ${email} !`);
       onSuccess();
     } catch (err: any) {
@@ -765,7 +765,7 @@ function AssignSupervisorModal({
             <div className="size-10 rounded-2xl bg-brand/10 text-brand flex items-center justify-center">
               <UserPlus className="size-5" />
             </div>
-            <h3 className="font-display font-black text-xl text-ink">Assigner un superviseur</h3>
+            <h3 className="font-display font-black text-xl text-ink">Assigner un mentor</h3>
           </div>
           <button
             onClick={onClose}
@@ -777,15 +777,15 @@ function AssignSupervisorModal({
 
         <form onSubmit={handleSubmit} className="space-y-4 mt-2">
           <p className="text-xs sm:text-sm font-medium text-ink/70 leading-relaxed">
-            Entrez l'adresse email d'un superviseur (compte Génizio). L'application lui confie
-            automatiquement des enfants de votre cohorte qui n'ont pas encore de superviseur.
+            Entrez l'adresse email d'un mentor (compte Génizio). L'application lui confie
+            automatiquement des enfants de votre cohorte qui n'ont pas encore de mentor.
           </p>
           <div className="bg-amber-50 border border-amber-200/80 rounded-2xl p-4 flex gap-3">
             <AlertCircle className="size-5 text-amber-600 shrink-0 mt-0.5" />
             <p className="text-xs font-bold text-amber-900 leading-relaxed">
-              Un superviseur ne peut gérer que {supervisorFloor} enfant
-              {supervisorFloor > 1 ? "s" : ""} maximum. Au-delà, un supplément de{" "}
-              {formatXof(slotPrice.priceXof)} / superviseur s'applique
+              Un mentor ne peut gérer que {mentorFloor} enfant
+              {mentorFloor > 1 ? "s" : ""} maximum. Au-delà, un supplément de{" "}
+              {formatXof(slotPrice.priceXof)} / mentor s'applique
               {slotPrice.isPromo && slotPrice.promoEndsAt
                 ? ` (prix de bienvenue jusqu'au ${formatPromoDeadline(slotPrice.promoEndsAt)}, puis ${formatXof(STANDARD_PRICE_XOF)})`
                 : ""}
@@ -794,7 +794,7 @@ function AssignSupervisorModal({
           </div>
           <div>
             <label className="block text-xs font-extrabold uppercase tracking-widest text-ink/50 mb-1.5">
-              Email du superviseur
+              Email du mentor
             </label>
             <input
               required
@@ -802,7 +802,7 @@ function AssignSupervisorModal({
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               className="w-full bg-surface border border-ink/10 rounded-2xl p-3.5 text-sm font-bold text-ink focus:outline-none focus:ring-2 focus:ring-brand/30"
-              placeholder="superviseur@ong.org"
+              placeholder="mentor@ong.org"
             />
           </div>
           <div>
@@ -842,7 +842,7 @@ function AssignSupervisorModal({
 }
 
 // Éducateurs vouchés (2026-07-30) — self-service gestionnaire, même esprit que la section
-// Superviseurs ci-dessus, mais un statut différent : un éducateur EST le compte propriétaire
+// Mentors ci-dessus, mais un statut différent : un éducateur EST le compte propriétaire
 // des profils (comme un parent), pas un simple regard en lecture seule. D'où le prérequis
 // affiché : la personne doit d'abord avoir choisi "Éducateur" comme lien avec l'enfant dans son
 // propre compte (Réglages) avant de pouvoir être ajoutée ici — addCampaignEducator refuse sinon.
