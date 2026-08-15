@@ -19,6 +19,8 @@ import {
   PackageSearch,
   X,
   BarChart2,
+  Pencil,
+  XCircle,
 } from "lucide-react";
 import { toast } from "sonner";
 import {
@@ -51,7 +53,7 @@ type MaterialSuggestion = {
   id: string;
   tag: string;
   seen_count: number;
-  sample_challenge_title: string | null;
+  sample_challenge_title?: string | null;
 };
 
 const emptyDraft = {
@@ -109,6 +111,8 @@ export function AdminProductsTab({ onDataChanged }: { onDataChanged?: () => void
   const [draft, setDraft] = useState(emptyDraft);
   const [saving, setSaving] = useState(false);
   const [pendingSuggestionId, setPendingSuggestionId] = useState<string | null>(null);
+  /** Produit en cours d'édition (null = mode création). */
+  const [editingId, setEditingId] = useState<string | null>(null);
   const formRef = useRef<HTMLDivElement | null>(null);
 
   const listFn = useServerFn(listProductsAdmin);
@@ -160,7 +164,7 @@ export function AdminProductsTab({ onDataChanged }: { onDataChanged?: () => void
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [session]);
 
-  const handleCreate = async () => {
+  const handleSubmit = async () => {
     if (!draft.name.trim() || draft.price_xof === "" || Number(draft.price_xof) < 0) {
       toast.error("Nom et prix requis.");
       return;
@@ -170,39 +174,80 @@ export function AdminProductsTab({ onDataChanged }: { onDataChanged?: () => void
       : {};
     setSaving(true);
     try {
-      await createFn({
-        data: {
-          name: draft.name.trim(),
-          description: draft.description.trim() || null,
-          price_xof: Number(draft.price_xof),
-          stock_quantity: draft.stock_quantity === "" ? null : Number(draft.stock_quantity),
-          material_tags: draft.material_tags
-            .split(",")
-            .map((t) => t.trim().toLowerCase())
-            .filter(Boolean),
-          is_active: true,
-          fromSuggestionId: pendingSuggestionId ?? undefined,
-        },
-        ...opts,
-      });
-      toast.success("Produit ajouté au catalogue.");
+      if (editingId) {
+        // Édition : toutes les métadonnées du produit (nom, description, prix,
+        // stock, tags) — le formulaire sert à la fois à créer et à modifier.
+        await updateFn({
+          data: {
+            id: editingId,
+            name: draft.name.trim(),
+            description: draft.description.trim() || null,
+            price_xof: Number(draft.price_xof),
+            stock_quantity: draft.stock_quantity === "" ? null : Number(draft.stock_quantity),
+            material_tags: draft.material_tags
+              .split(",")
+              .map((t) => t.trim().toLowerCase())
+              .filter(Boolean),
+          },
+          ...opts,
+        });
+        toast.success("Produit mis à jour.");
+      } else {
+        await createFn({
+          data: {
+            name: draft.name.trim(),
+            description: draft.description.trim() || null,
+            price_xof: Number(draft.price_xof),
+            stock_quantity: draft.stock_quantity === "" ? null : Number(draft.stock_quantity),
+            material_tags: draft.material_tags
+              .split(",")
+              .map((t) => t.trim().toLowerCase())
+              .filter(Boolean),
+            is_active: true,
+            fromSuggestionId: pendingSuggestionId ?? undefined,
+          },
+          ...opts,
+        });
+        toast.success("Produit ajouté au catalogue.");
+      }
       setDraft(emptyDraft);
       setPendingSuggestionId(null);
+      setEditingId(null);
       void refetch();
       // Synchronisation du parent (review 2026-08-12, P1) : le catalogue Commerce
       // (commerceData) doit voir le nouveau produit sans rechargement manuel.
       onDataChanged?.();
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Erreur lors de l'ajout.");
+      toast.error(err instanceof Error ? err.message : "Erreur lors de l'enregistrement.");
     } finally {
       setSaving(false);
     }
   };
 
   const startFromSuggestion = (s: MaterialSuggestion) => {
+    setEditingId(null);
     setDraft({ ...emptyDraft, name: s.tag, material_tags: s.tag });
     setPendingSuggestionId(s.id);
     formRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+  };
+
+  const startEdit = (p: Product) => {
+    setEditingId(p.id);
+    setPendingSuggestionId(null);
+    setDraft({
+      name: p.name,
+      description: p.description ?? "",
+      price_xof: p.price_xof,
+      stock_quantity: p.stock_quantity ?? "",
+      material_tags: p.material_tags.join(", "),
+    });
+    formRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+  };
+
+  const cancelEdit = () => {
+    setEditingId(null);
+    setDraft(emptyDraft);
+    setPendingSuggestionId(null);
   };
 
   const ignoreSuggestion = async (id: string) => {
@@ -374,9 +419,21 @@ export function AdminProductsTab({ onDataChanged }: { onDataChanged?: () => void
                 ref={formRef}
                 className="mb-8 rounded-3xl border border-ink/10 bg-sky/30 p-4 sm:p-6 shadow-xl max-w-full overflow-hidden"
               >
-                <h3 className="mb-4 font-display text-balance text-lg font-bold">
-                  Ajouter un produit
-                </h3>
+                <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
+                  <h3 className="font-display text-balance text-lg font-bold">
+                    {editingId ? "Modifier le produit" : "Ajouter un produit"}
+                  </h3>
+                  {editingId && (
+                    <button
+                      type="button"
+                      onClick={cancelEdit}
+                      className="inline-flex items-center gap-1.5 rounded-xl border border-ink/10 bg-white px-3 py-1.5 text-xs font-bold text-ink/70 hover:bg-surface transition-all cursor-pointer"
+                    >
+                      <XCircle className="size-3.5" />
+                      Annuler la modification
+                    </button>
+                  )}
+                </div>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <input
                     value={draft.name}
@@ -424,16 +481,18 @@ export function AdminProductsTab({ onDataChanged }: { onDataChanged?: () => void
                   />
                 </div>
                 <button
-                  onClick={handleCreate}
+                  onClick={handleSubmit}
                   disabled={saving}
                   className="press-brand mt-4 flex items-center justify-center gap-2 rounded-2xl bg-brand px-5 py-2.5 text-sm font-bold text-white disabled:opacity-50 w-full sm:w-auto"
                 >
                   {saving ? (
                     <Loader2 className="size-4 animate-spin" />
+                  ) : editingId ? (
+                    <Pencil className="size-4" />
                   ) : (
                     <Plus className="size-4" />
                   )}
-                  Ajouter au catalogue
+                  {editingId ? "Enregistrer les modifications" : "Ajouter au catalogue"}
                 </button>
               </div>
 
@@ -470,6 +529,13 @@ export function AdminProductsTab({ onDataChanged }: { onDataChanged?: () => void
                         )}
                       </div>
                       <div className="flex shrink-0 items-center gap-2">
+                        <button
+                          onClick={() => startEdit(p)}
+                          className="inline-flex items-center gap-1 rounded-xl border border-ink/10 bg-white px-3 py-1.5 text-xs font-bold hover:bg-surface transition-all"
+                        >
+                          <Pencil className="size-3.5" />
+                          Modifier
+                        </button>
                         <button
                           onClick={() => toggleActive(p)}
                           className="rounded-xl border border-ink/10 bg-white px-3 py-1.5 text-xs font-bold hover:bg-surface transition-all"

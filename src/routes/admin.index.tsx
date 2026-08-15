@@ -442,6 +442,7 @@ function AdminIndexPage() {
                 onRefresh={() => loadData(false)}
                 onUpdateOrderStatus={handleUpdateOrderStatus}
                 onTogglePassport={handleTogglePassport}
+                onOpenProductsTab={() => setActiveTab("products")}
               />
             )}
 
