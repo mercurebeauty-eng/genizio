@@ -703,8 +703,23 @@ export const listCampaignTokensAdmin = createServerFn({ method: "POST" })
       return [] as CampaignTokenDetail[];
     }
 
-    const users = await listAllUsers(supabaseAdmin).catch(() => []);
-    const emailMap = new Map(users.map((u) => [u.id, u.email]));
+    // Emails des parents des enfants ayant activé un code — via parent_profiles
+    // (Vague 1), fini le scan complet de l'annuaire auth (listAllUsers).
+    const redeemedUserIds = [
+      ...new Set(
+        (tokens as any[])
+          .map((t) => (t.child_profiles as any)?.user_id as string | undefined)
+          .filter((id): id is string => Boolean(id)),
+      ),
+    ];
+    const emailMap = new Map<string, string | null>();
+    if (redeemedUserIds.length > 0) {
+      const { data: contacts } = await supabaseAdmin
+        .from("parent_profiles")
+        .select("user_id, email")
+        .in("user_id", redeemedUserIds);
+      for (const c of contacts ?? []) emailMap.set(c.user_id, c.email);
+    }
 
     return (tokens as any[]).map((t) => {
       const child = t.child_profiles;

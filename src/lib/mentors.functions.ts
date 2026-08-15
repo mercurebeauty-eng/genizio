@@ -1014,7 +1014,10 @@ export const getMentorDashboard = createServerFn({ method: "GET" })
       )
       .in("child_id", childIds)
       .is("deleted_at", null)
-      .order("created_at", { ascending: false });
+      .order("created_at", { ascending: false })
+      // Vague 4 : borne souple — le journal de défis du mentor n'a pas vocation à
+      // grandir sans fin (200 défis récents suffisent pour les actions opérateur).
+      .limit(200);
 
     // Score de fiabilité (V2) : séances déclarées ce mois + feedback famille + progression —
     // même fenêtre et même pondération que listMentorsAdmin (mentor-score.ts).
@@ -1072,17 +1075,17 @@ export const getMentorDashboard = createServerFn({ method: "GET" })
 
     // Mentor Copilote (décision #74) : l'UI n'affiche les actions opérateur que pour
     // les enfants ACCOMPAGNÉS (pack ou campagne) — résolu par le même helper que les
-    // server functions (source unique). Borné par le quota (≤ 5 enfants, 2 requêtes/enfant).
-    const accompanimentByChild = new Map<
-      string,
-      Awaited<ReturnType<typeof resolveChildAccompaniment>>
-    >();
-    for (const a of assignments) {
-      accompanimentByChild.set(
-        a.child_profile_id,
-        await resolveChildAccompaniment(supabaseAdmin as any, a.child_profile_id),
-      );
-    }
+    // server functions (source unique). Borné par le quota (≤ 5 enfants) ; Vague 4 :
+    // résolutions PARALLÈLES (Promise.all) au lieu de la boucle séquentielle.
+    const accompanimentResults = await Promise.all(
+      (assignments ?? []).map(async (a) =>
+        [
+          a.child_profile_id,
+          await resolveChildAccompaniment(supabaseAdmin as any, a.child_profile_id),
+        ] as const,
+      ),
+    );
+    const accompanimentByChild = new Map(accompanimentResults);
 
     // Journal de séance du mentor (action 'notes' et autres) — les dernières actions
     // par enfant, pour l'affichage des notes dans la modale de détail.

@@ -107,7 +107,13 @@ function QuestPage() {
           .eq("id", profileId)
           .eq("user_id", userId)
           .maybeSingle(),
-        supabase.from("challenges").select("*").eq("child_id", profileId),
+        supabase
+          .from("challenges")
+          .select("*")
+          .eq("child_id", profileId)
+          .is("deleted_at", null)
+          .order("created_at", { ascending: false })
+          .limit(100),
       ]);
       setChild((c.data as Child) ?? null);
       if (ch.data) {

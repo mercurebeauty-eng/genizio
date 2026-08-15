@@ -572,7 +572,9 @@ function ChallengesPage() {
           .from("challenges")
           .select("*")
           .eq("child_id", profileId)
-          .order("created_at", { ascending: false }),
+          .is("deleted_at", null)
+          .order("created_at", { ascending: false })
+          .limit(200),
         getChildAccessStatusFn({ data: { childId: profileId } }).catch(() => null),
       ]);
       setChild((c.data as Child) ?? null);

@@ -316,7 +316,9 @@ function PortfolioPage() {
           "id, title, domain, trait_subform, status, completed_at, proof_image_url, ai_observations, created_at",
         )
         .eq("child_id", profileId)
-        .order("completed_at", { ascending: false, nullsFirst: false }),
+        .is("deleted_at", null)
+        .order("completed_at", { ascending: false, nullsFirst: false })
+        .limit(100),
       supabase
         .from("hypothesis_cycles")
         .select("id, parent_narrative")

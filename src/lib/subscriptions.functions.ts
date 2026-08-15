@@ -745,7 +745,6 @@ export const getSubscriptionsDataAdmin = createServerFn({ method: "GET" })
   .middleware([requireAdmin])
   .handler(async (): Promise<SubscriptionsAdminData> => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const { listAllUsers } = await import("@/integrations/supabase/admin-users");
 
     const { data: subs, error: subsErr } = await (supabaseAdmin as any)
       .from("subscriptions")
@@ -758,8 +757,13 @@ export const getSubscriptionsDataAdmin = createServerFn({ method: "GET" })
       .select("user_id, ends_at");
     if (credErr) throw new Error(credErr.message);
 
-    const users = await listAllUsers(supabaseAdmin as any);
-    const userById = new Map(users.map((u) => [u.id, u]));
+    // Contacts parents via parent_profiles (Vague 1) — une requête SQL, fini le scan
+    // paginé de l'annuaire auth (listAllUsers).
+    const { data: contacts, error: contactsErr } = await supabaseAdmin
+      .from("parent_profiles")
+      .select("user_id, email, phone, display_name");
+    if (contactsErr) throw new Error(contactsErr.message);
+    const userById = new Map((contacts ?? []).map((u) => [u.user_id, u]));
 
     // Dernière fin de couverture parrainage par famille (une seule crédit fait foi : la plus
     // longue, getFamilyCoverage prend le max) + nombre de crédits posés.
@@ -784,19 +788,13 @@ export const getSubscriptionsDataAdmin = createServerFn({ method: "GET" })
 
     const subscriptions: AdminSubscriptionRow[] = (subs ?? []).map((s: any) => {
       const user = userById.get(s.user_id);
-      const meta = (user?.user_metadata ?? {}) as Record<string, unknown>;
       const priceXof = s.price_xof ?? null;
       const row: AdminSubscriptionRow = {
         id: s.id,
         userId: s.user_id,
-        parentName:
-          typeof meta.full_name === "string"
-            ? meta.full_name
-            : typeof meta.name === "string"
-              ? meta.name
-              : null,
+        parentName: user?.display_name ?? null,
         parentEmail: user?.email ?? null,
-        parentPhone: typeof meta.phone === "string" ? meta.phone : (user?.phone ?? null),
+        parentPhone: user?.phone ?? null,
         status: s.status,
         priceXof,
         planCode: s.plan_code ?? null,

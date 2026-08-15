@@ -980,7 +980,9 @@ export const getCommercePassportsDataAdmin = createServerFn({ method: "GET" })
   .handler(async (): Promise<CommercePassportsDataResponse> => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
-    const [ordersRes, productsRes, suggestionsRes, childrenRes, users] = await Promise.all([
+    // Contacts parents via parent_profiles (Vague 1) — une requête SQL, fini le scan
+    // paginé de l'annuaire auth (listAllUsers, O(nb comptes) appels API).
+    const [ordersRes, productsRes, suggestionsRes, childrenRes, usersRes] = await Promise.all([
       supabaseAdmin
         .from("orders")
         .select("*, child_profiles(name, age, city), challenges(title)")
@@ -998,19 +1000,20 @@ export const getCommercePassportsDataAdmin = createServerFn({ method: "GET" })
         .from("child_profiles")
         .select("id, name, age, city, user_id, pdf_unlocked, created_at")
         .order("created_at", { ascending: false }),
-      listAllUsers(supabaseAdmin),
+      supabaseAdmin.from("parent_profiles").select("user_id, email, phone"),
     ]);
 
     if (ordersRes.error) throw new Error(ordersRes.error.message);
     if (productsRes.error) throw new Error(productsRes.error.message);
     if (suggestionsRes.error) throw new Error(suggestionsRes.error.message);
     if (childrenRes.error) throw new Error(childrenRes.error.message);
+    if (usersRes.error) throw new Error(usersRes.error.message);
 
     const userMap = new Map<string, { email: string; phone: string | null }>();
-    for (const u of users) {
-      userMap.set(u.id, {
+    for (const u of usersRes.data ?? []) {
+      userMap.set(u.user_id, {
         email: u.email || "",
-        phone: u.user_metadata?.phone || null,
+        phone: u.phone || null,
       });
     }
 
