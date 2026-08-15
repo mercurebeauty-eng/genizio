@@ -2,7 +2,10 @@ import { describe, it, expect, vi } from "vitest";
 import {
   processSessionContest,
   refundSessionDebit,
+  hasValidatedChildWorkNearSession,
   CONTEST_REASONS,
+  CONTEST_BLOCKED_VALIDATED_WORK_MESSAGE,
+  CONTEST_VALIDATED_WORK_WINDOW_DAYS,
 } from "./mentor-contest";
 
 // Contestation de séance (2026-08-15) — cœur db-paramétré (mentor-contest.ts).
@@ -29,6 +32,15 @@ function makeFakeDb(initial: Record<string, any[]> = {}) {
         filters.push((r) => (val === null ? r[col] == null : r[col] === val));
         return readChain;
       }),
+      gte: vi.fn((col: string, val: any) => {
+        filters.push((r) => new Date(r[col]).getTime() >= new Date(val).getTime());
+        return readChain;
+      }),
+      lte: vi.fn((col: string, val: any) => {
+        filters.push((r) => new Date(r[col]).getTime() <= new Date(val).getTime());
+        return readChain;
+      }),
+      limit: vi.fn(() => readChain),
       maybeSingle: vi.fn(() => {
         const data = (tables[table] ?? []).find((r) => filters.every((f) => f(r))) ?? null;
         return Promise.resolve({ data, error: null });
@@ -206,6 +218,132 @@ describe("refundSessionDebit", () => {
       campaign_id: null,
     });
     expect(tables.campaigns[0].sessions_used).toBe(2);
+  });
+});
+
+// ── Garde « travail validé » (anti-faille parent) ─────────────────────────────
+// Si un défi a été complété et validé (preuve IA ou défi déclaratif) le JOUR de la
+// séance ou dans les 7 jours SUIVANTS, le travail a eu lieu : la séance ne peut
+// pas être contestée. Fenêtre à SENS UNIQUE — un défi validé AVANT la date de la
+// séance n'atteste pas celle-ci. La session d'exemple a lieu le 2026-08-15 ; la
+// fenêtre couvre donc du 2026-08-15 (00:00) au 2026-08-22 (23:59).
+
+const completedChallenge = (over: Partial<any> = {}) => ({
+  child_id: "c1",
+  status: "completed",
+  ai_observations: { note: "preuve validée" },
+  proof_mode: "photo",
+  completed_at: "2026-08-15T12:00:00.000Z",
+  ...over,
+});
+
+describe("hasValidatedChildWorkNearSession", () => {
+  it("défi complété avec preuve validée par l'IA dans la fenêtre → vrai", async () => {
+    const { db } = makeFakeDb({ challenges: [completedChallenge()] });
+    await expect(
+      hasValidatedChildWorkNearSession(db, "c1", "2026-08-15T10:00:00.000Z"),
+    ).resolves.toBe(true);
+  });
+
+  it("défi déclaratif complété dans la fenêtre → vrai (valeur atteinte, pas de photo)", async () => {
+    const { db } = makeFakeDb({
+      challenges: [completedChallenge({ ai_observations: null, proof_mode: "declarative" })],
+    });
+    await expect(
+      hasValidatedChildWorkNearSession(db, "c1", "2026-08-15T10:00:00.000Z"),
+    ).resolves.toBe(true);
+  });
+
+  it("défi complété sans preuve validée (ni IA ni déclaratif) → faux", async () => {
+    const { db } = makeFakeDb({
+      challenges: [completedChallenge({ ai_observations: null, proof_mode: "photo" })],
+    });
+    await expect(
+      hasValidatedChildWorkNearSession(db, "c1", "2026-08-15T10:00:00.000Z"),
+    ).resolves.toBe(false);
+  });
+
+  it("défi complété hors fenêtre (avant la séance) → faux", async () => {
+    const { db } = makeFakeDb({
+      challenges: [completedChallenge({ completed_at: "2026-07-01T12:00:00.000Z" })],
+    });
+    await expect(
+      hasValidatedChildWorkNearSession(db, "c1", "2026-08-15T10:00:00.000Z"),
+    ).resolves.toBe(false);
+  });
+
+  it("défi validé AVANT la date de la séance (autre séance ou travail du parent) → faux — la fenêtre est à sens unique", async () => {
+    const { db } = makeFakeDb({
+      challenges: [completedChallenge({ completed_at: "2026-08-10T12:00:00.000Z" })],
+    });
+    await expect(
+      hasValidatedChildWorkNearSession(db, "c1", "2026-08-15T10:00:00.000Z"),
+    ).resolves.toBe(false);
+  });
+
+  it("défi validé APRÈS la séance (soumission en retard du mentor) → vrai", async () => {
+    const { db } = makeFakeDb({
+      challenges: [completedChallenge({ completed_at: "2026-08-20T12:00:00.000Z" })],
+    });
+    await expect(
+      hasValidatedChildWorkNearSession(db, "c1", "2026-08-15T10:00:00.000Z"),
+    ).resolves.toBe(true);
+  });
+
+  it("défi validé au 7e jour après la séance (borne incluse) → vrai", async () => {
+    const { db } = makeFakeDb({
+      challenges: [completedChallenge({ completed_at: "2026-08-22T23:00:00.000Z" })],
+    });
+    await expect(
+      hasValidatedChildWorkNearSession(db, "c1", "2026-08-15T10:00:00.000Z"),
+    ).resolves.toBe(true);
+  });
+
+  it("défi validé au-delà de 7 jours après la séance → faux", async () => {
+    const { db } = makeFakeDb({
+      challenges: [completedChallenge({ completed_at: "2026-08-23T12:00:00.000Z" })],
+    });
+    await expect(
+      hasValidatedChildWorkNearSession(db, "c1", "2026-08-15T10:00:00.000Z"),
+    ).resolves.toBe(false);
+  });
+
+  it("aucun défi complété → faux", async () => {
+    const { db } = makeFakeDb({ challenges: [{ child_id: "c1", status: "in_progress" }] });
+    await expect(
+      hasValidatedChildWorkNearSession(db, "c1", "2026-08-15T10:00:00.000Z"),
+    ).resolves.toBe(false);
+  });
+
+  it("la fenêtre par défaut vaut 7 jours (constante documentée)", () => {
+    expect(CONTEST_VALIDATED_WORK_WINDOW_DAYS).toBe(7);
+  });
+});
+
+describe("processSessionContest — garde travail validé", () => {
+  it("travail validé sur la période : la contestation est REFUSÉE, la séance reste déclarée, le pack n'est pas remboursé", async () => {
+    const { db, tables } = makeFakeDb({
+      mentor_sessions: [session()],
+      family_coverages: [pack()],
+      challenges: [completedChallenge()],
+    });
+    await expect(
+      processSessionContest(db, "s1", "parent-1", "not_done"),
+    ).rejects.toThrow(CONTEST_BLOCKED_VALIDATED_WORK_MESSAGE);
+    expect(tables.mentor_sessions[0].status).toBe("declared");
+    expect(tables.family_coverages[0].sessions_used).toBe(3);
+  });
+
+  it("travail validé HORS période : la contestation est acceptée (cas normal)", async () => {
+    const { db, tables } = makeFakeDb({
+      mentor_sessions: [session()],
+      family_coverages: [pack()],
+      challenges: [completedChallenge({ completed_at: "2026-07-01T12:00:00.000Z" })],
+    });
+    const claimed = await processSessionContest(db, "s1", "parent-1", "not_done");
+    expect(claimed).not.toBeNull();
+    expect(tables.mentor_sessions[0].status).toBe("contested");
+    expect(tables.family_coverages[0].sessions_used).toBe(2);
   });
 });
 
