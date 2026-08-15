@@ -29,6 +29,9 @@ import {
   Globe,
   Clock,
   Timer,
+  RotateCcw,
+  Bell,
+  Users,
 } from "lucide-react";
 import { getChildAccessStatusFn, type ChildAccessStatus } from "@/lib/child-access";
 import { followFilterAfterStart } from "@/lib/challenge-list-filters";
@@ -48,10 +51,9 @@ import {
   TALENT_SUBFORM_TO_DOMAIN,
   ACADEMIC_DOMAIN_LABELS,
 } from "@/lib/challenges.functions";
-import {
-  internationalLevelLabel,
-  lastAcademicLevelByDomain,
-} from "@/lib/academic-levels";
+import { getChildSupervisorInfo } from "@/lib/supervisors.functions";
+import { listMyNotifications, markNotificationsRead } from "@/lib/notifications.functions";
+import { internationalLevelLabel, lastAcademicLevelByDomain } from "@/lib/academic-levels";
 import {
   GRADE_LEVEL_METADATA,
   ACADEMIC_SUBJECT_LABELS,
@@ -268,6 +270,60 @@ function ChallengesPage() {
       .then((gaps) => setAcademicGaps(gaps ?? {}))
       .catch((err) => console.error("Error fetching academic gaps:", err));
   }, [profileId]);
+
+  // Superviseur Copilote (décision #74) : bandeau « Mode accompagnement » + Réouvrir +
+  // activité du superviseur (badge + liste légère, pull — pas de push).
+  const [supervisorInfo, setSupervisorInfo] = useState<{
+    email: string;
+    assignedAt: string;
+  } | null>(null);
+  const [notifications, setNotifications] = useState<any[]>([]);
+  const [showActivity, setShowActivity] = useState(false);
+  const supervisorInfoFn = useServerFn(getChildSupervisorInfo);
+  const notificationsFn = useServerFn(listMyNotifications);
+  const markReadFn = useServerFn(markNotificationsRead);
+
+  useEffect(() => {
+    if (!profileId) return;
+    supervisorInfoFn({ data: { childId: profileId } })
+      .then((info) => setSupervisorInfo(info ?? null))
+      .catch(() => setSupervisorInfo(null));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [profileId]);
+
+  useEffect(() => {
+    if (!profileId) return;
+    notificationsFn()
+      .then((res) => setNotifications((res as any).notifications ?? []))
+      .catch(() => setNotifications([]));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [profileId]);
+
+  const handleReopen = async (c: Challenge) => {
+    try {
+      await update({ data: { id: c.id, status: "in_progress" } });
+      toast.success(
+        `Défi « ${c.title} » rouvert — les points et badges déjà gagnés sont conservés.`,
+      );
+      setChallenges((prev) =>
+        prev.map((ch) =>
+          ch.id === c.id ? { ...ch, status: "in_progress", completed_at: null } : ch,
+        ),
+      );
+    } catch (err: any) {
+      toast.error(err.message || "Impossible de rouvrir le défi.");
+    }
+  };
+
+  const handleMarkAllRead = async () => {
+    try {
+      await markReadFn({ data: { ids: [] } });
+      setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
+      toast.success("Toutes les notifications sont marquées comme lues.");
+    } catch (err: any) {
+      toast.error(err.message || "Erreur.");
+    }
+  };
 
   const hasKit = (materialTags?: string[] | null) => {
     if (!materialTags || materialTags.length === 0) return false;
@@ -726,7 +782,9 @@ function ChallengesPage() {
         data: { id: challenge.id, reason: finalReason, reasonChip: payload.reasonChip },
       });
       setNotCompletedDialog(null);
-      toast.success("C'est noté. Chaque défi est une étape — Naya prépare une mission plus adaptée.");
+      toast.success(
+        "C'est noté. Chaque défi est une étape — Naya prépare une mission plus adaptée.",
+      );
     } catch (e) {
       setChallenges(previous);
       toast.error(e instanceof Error ? e.message : "Erreur lors de l'enregistrement.");
@@ -929,6 +987,93 @@ function ChallengesPage() {
               </div>
             )}
 
+          {/* Mode accompagnement (décision #74) : cet enfant est suivi par un superviseur
+              qui opère les défis — le parent garde le dernier mot (Réouvrir, bilan, pub). */}
+          {supervisorInfo && (
+            <div className="mb-6 rounded-3xl border border-sky-200 bg-sky-50/70 p-5 shadow-sm flex flex-wrap items-center gap-3">
+              <div className="grid size-10 place-items-center rounded-2xl bg-sky-600 text-white shrink-0">
+                <Users className="size-5" />
+              </div>
+              <div className="flex-1 min-w-48">
+                <p className="text-sm font-black text-sky-900">
+                  Mode accompagnement — {child?.name ?? "cet enfant"} est suivi par un superviseur
+                </p>
+                <p className="text-xs text-ink/60 mt-0.5">
+                  Le superviseur opère les défis en séance ({supervisorInfo.email}). Vous gardez le
+                  dernier mot : réouvrez un défi, validez le bilan, gérez la publication.
+                </p>
+              </div>
+              <div className="relative">
+                <button
+                  onClick={() => {
+                    setShowActivity((s) => !s);
+                    if (!showActivity)
+                      void notificationsFn().then((res) =>
+                        setNotifications((res as any).notifications ?? []),
+                      );
+                  }}
+                  className="inline-flex items-center gap-2 rounded-2xl border border-sky-300 bg-white px-4 py-2.5 text-xs font-black text-sky-800 shadow-sm hover:bg-sky-50 transition-all cursor-pointer"
+                >
+                  <Bell className="size-4" />
+                  Activité
+                  {notifications.filter((n) => !n.read).length > 0 && (
+                    <span className="grid size-5 place-items-center rounded-full bg-rose-500 text-[10px] font-black text-white">
+                      {notifications.filter((n) => !n.read).length}
+                    </span>
+                  )}
+                </button>
+                {showActivity && (
+                  <div className="absolute right-0 top-full z-40 mt-2 w-80 rounded-2xl border border-ink/10 bg-white p-3 shadow-2xl">
+                    <div className="flex items-center justify-between mb-2">
+                      <p className="text-xs font-black uppercase tracking-widest text-ink/60">
+                        Activité du superviseur
+                      </p>
+                      <button
+                        onClick={handleMarkAllRead}
+                        className="text-[10px] font-black text-brand hover:underline cursor-pointer"
+                      >
+                        Tout marquer lu
+                      </button>
+                    </div>
+                    {notifications.length === 0 ? (
+                      <p className="text-sm text-ink/50 italic py-4 text-center">
+                        Aucune activité récente.
+                      </p>
+                    ) : (
+                      <ul className="space-y-2 max-h-72 overflow-y-auto">
+                        {notifications.map((n) => (
+                          <li
+                            key={n.id}
+                            className={`rounded-xl border px-3 py-2 text-xs ${
+                              n.read
+                                ? "border-ink/10 bg-surface text-ink/60"
+                                : "border-sky-200 bg-sky-50 text-ink"
+                            }`}
+                          >
+                            {n.type === "supervisor_challenge_completed"
+                              ? `🎉 ${n.payload?.title ?? "Un défi"} complété par le superviseur`
+                              : n.type === "supervisor_abandon"
+                                ? `❌ ${n.payload?.title ?? "Un défi"} marqué non réussi par le superviseur`
+                                : n.type === "supervisor_bilan_submitted"
+                                  ? `📄 Bilan soumis par le superviseur`
+                                  : n.type === "supervisor_bilan_validated"
+                                    ? `✅ Bilan validé par le parent`
+                                    : n.type === "supervisor_bilan_rejected"
+                                      ? `↩️ Bilan renvoyé au superviseur`
+                                      : `🔔 ${n.type}`}
+                            <span className="block text-[10px] font-bold text-ink/40 mt-0.5">
+                              {new Date(n.created_at).toLocaleString("fr-FR")}
+                            </span>
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
           {viewMode === "parent" ? (
             <>
               {/* Child Header Profile */}
@@ -1037,8 +1182,8 @@ function ChallengesPage() {
                           Niveau international par domaine
                         </h3>
                         <p className="text-[12px] text-ink/60 font-medium mb-4 leading-relaxed">
-                          Dernier niveau atteint, calibré sur les standards des meilleurs
-                          systèmes éducatifs du monde (Common Core USA · Singapore Math · NGSS).
+                          Dernier niveau atteint, calibré sur les standards des meilleurs systèmes
+                          éducatifs du monde (Common Core USA · Singapore Math · NGSS).
                         </p>
                         <div className="space-y-2">
                           {domainLevels.map((d) => (
@@ -1367,7 +1512,7 @@ function ChallengesPage() {
                               </span>
                             )}
                             <DifficultyBadge difficulty={currentGeneratedChallenge.difficulty} />
-            <ChallengeKindBadge kind={currentGeneratedChallenge.kind} />
+                            <ChallengeKindBadge kind={currentGeneratedChallenge.kind} />
                           </div>
                           <span className="text-xs text-ink/60 font-semibold">
                             🕒 {currentGeneratedChallenge.duration}
@@ -1556,6 +1701,8 @@ function ChallengesPage() {
                                   await refetch();
                                   await loadAISynthesis();
                                 }}
+                                supervisorActive={!!supervisorInfo}
+                                onReopen={() => handleReopen(c)}
                               />
                             ))}
                           </div>
@@ -1825,6 +1972,8 @@ function ChallengeCard({
   onDelete,
   onValidated,
   hasKit,
+  supervisorActive,
+  onReopen,
 }: {
   c: Challenge;
   childId: string;
@@ -1838,6 +1987,9 @@ function ChallengeCard({
   onDelete: () => void;
   onValidated: () => void;
   hasKit?: boolean;
+  /** Mode accompagnement (décision #74) : le parent peut réouvrir un défi complété. */
+  supervisorActive?: boolean;
+  onReopen?: () => void;
 }) {
   const [notesDraft, setNotesDraft] = useState(c.notes ?? "");
   const [savedFlash, setSavedFlash] = useState(false);
@@ -2137,20 +2289,32 @@ function ChallengeCard({
                     {NOT_COMPLETED_CHIP_LABELS[c.not_completed_reason_chip]}
                   </span>
                 )}
-              {c.not_completed_reason &&
-                c.not_completed_reason !== "Sans raison précisée" && (
-                  <span className="text-[12px] font-medium text-rose-700/80 text-center">
-                    {c.not_completed_reason}
-                  </span>
-                )}
+              {c.not_completed_reason && c.not_completed_reason !== "Sans raison précisée" && (
+                <span className="text-[12px] font-medium text-rose-700/80 text-center">
+                  {c.not_completed_reason}
+                </span>
+              )}
               <span className="text-[12px] font-semibold text-rose-800/90 text-center leading-relaxed">
                 Naya l'a bien noté. Chaque défi est une étape — elle prépare une mission plus
                 adaptée. 💜
               </span>
             </div>
           ) : c.status === "completed" ? (
-            <div className="flex items-center justify-center gap-2 bg-emerald-50 text-emerald-700 font-bold h-[56px] text-[16px] rounded-full">
-              <CheckCircle2 className="size-5" /> Défi accompli !
+            <div className="flex flex-col items-stretch gap-2">
+              <div className="flex items-center justify-center gap-2 bg-emerald-50 text-emerald-700 font-bold h-[56px] text-[16px] rounded-full">
+                <CheckCircle2 className="size-5" /> Défi accompli !
+              </div>
+              {/* Veto éclairé (décision #74) : le parent peut réouvrir un défi complété
+                  par le superviseur — les points et badges déjà gagnés sont conservés. */}
+              {supervisorActive && (
+                <button
+                  onClick={onReopen}
+                  className="inline-flex items-center justify-center gap-2 rounded-full border border-amber-300 bg-amber-50 px-4 py-2 text-[13px] font-black text-amber-800 hover:bg-amber-100 transition-all cursor-pointer"
+                >
+                  <RotateCcw className="size-4" />
+                  Réouvrir (suivi superviseur)
+                </button>
+              )}
             </div>
           ) : null}
         </div>

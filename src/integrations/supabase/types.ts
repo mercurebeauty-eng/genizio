@@ -39,6 +39,44 @@ export type Database = {
   }
   public: {
     Tables: {
+      app_notifications: {
+        Row: {
+          child_profile_id: string | null
+          created_at: string
+          id: string
+          payload: Json
+          read_at: string | null
+          type: string
+          user_id: string
+        }
+        Insert: {
+          child_profile_id?: string | null
+          created_at?: string
+          id?: string
+          payload?: Json
+          read_at?: string | null
+          type: string
+          user_id: string
+        }
+        Update: {
+          child_profile_id?: string | null
+          created_at?: string
+          id?: string
+          payload?: Json
+          read_at?: string | null
+          type?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "app_notifications_child_profile_id_fkey"
+            columns: ["child_profile_id"]
+            isOneToOne: false
+            referencedRelation: "child_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       campaign_educators: {
         Row: {
           added_at: string
@@ -86,7 +124,10 @@ export type Database = {
           mode: string
           name: string
           price_per_token_xof: number | null
+          sessions_target: number
+          sessions_used: number
           start_date: string
+          status: string
           target_count: number
         }
         Insert: {
@@ -100,7 +141,10 @@ export type Database = {
           mode?: string
           name: string
           price_per_token_xof?: number | null
+          sessions_target?: number
+          sessions_used?: number
           start_date?: string
+          status?: string
           target_count?: number
         }
         Update: {
@@ -114,7 +158,10 @@ export type Database = {
           mode?: string
           name?: string
           price_per_token_xof?: number | null
+          sessions_target?: number
+          sessions_used?: number
           start_date?: string
+          status?: string
           target_count?: number
         }
         Relationships: []
@@ -187,6 +234,7 @@ export type Database = {
           child_id: string
           completed_at: string | null
           created_at: string
+          created_by_user_id: string | null
           declarative_award: Json | null
           deleted_at: string | null
           description: string
@@ -237,6 +285,7 @@ export type Database = {
           child_id: string
           completed_at?: string | null
           created_at?: string
+          created_by_user_id?: string | null
           declarative_award?: Json | null
           deleted_at?: string | null
           description: string
@@ -287,6 +336,7 @@ export type Database = {
           child_id?: string
           completed_at?: string | null
           created_at?: string
+          created_by_user_id?: string | null
           declarative_award?: Json | null
           deleted_at?: string | null
           description?: string
@@ -644,6 +694,62 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "consent_events_child_id_fkey"
+            columns: ["child_id"]
+            isOneToOne: false
+            referencedRelation: "child_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      family_coverages: {
+        Row: {
+          child_id: string | null
+          created_at: string
+          ends_at: string | null
+          id: string
+          max_children: number
+          price_xof: number | null
+          sessions: number
+          sessions_used: number
+          source: string
+          source_ref: string | null
+          starts_at: string
+          status: string
+          user_id: string
+        }
+        Insert: {
+          child_id?: string | null
+          created_at?: string
+          ends_at?: string | null
+          id?: string
+          max_children?: number
+          price_xof?: number | null
+          sessions?: number
+          sessions_used?: number
+          source: string
+          source_ref?: string | null
+          starts_at?: string
+          status?: string
+          user_id: string
+        }
+        Update: {
+          child_id?: string | null
+          created_at?: string
+          ends_at?: string | null
+          id?: string
+          max_children?: number
+          price_xof?: number | null
+          sessions?: number
+          sessions_used?: number
+          source?: string
+          source_ref?: string | null
+          starts_at?: string
+          status?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "family_coverages_child_id_fkey"
             columns: ["child_id"]
             isOneToOne: false
             referencedRelation: "child_profiles"
@@ -1431,6 +1537,217 @@ export type Database = {
         }
         Relationships: []
       }
+      supervisor_actions: {
+        Row: {
+          action: string
+          challenge_id: string | null
+          child_profile_id: string
+          created_at: string
+          id: string
+          payload: Json
+          supervisor_user_id: string
+        }
+        Insert: {
+          action: string
+          challenge_id?: string | null
+          child_profile_id: string
+          created_at?: string
+          id?: string
+          payload?: Json
+          supervisor_user_id: string
+        }
+        Update: {
+          action?: string
+          challenge_id?: string | null
+          child_profile_id?: string
+          created_at?: string
+          id?: string
+          payload?: Json
+          supervisor_user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "supervisor_actions_challenge_id_fkey"
+            columns: ["challenge_id"]
+            isOneToOne: false
+            referencedRelation: "challenges"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "supervisor_actions_child_profile_id_fkey"
+            columns: ["child_profile_id"]
+            isOneToOne: false
+            referencedRelation: "child_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      supervisor_feedback: {
+        Row: {
+          comment: string | null
+          created_at: string
+          id: string
+          rating: number
+          supervisor_session_id: string
+          user_id: string
+        }
+        Insert: {
+          comment?: string | null
+          created_at?: string
+          id?: string
+          rating: number
+          supervisor_session_id: string
+          user_id: string
+        }
+        Update: {
+          comment?: string | null
+          created_at?: string
+          id?: string
+          rating?: number
+          supervisor_session_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "supervisor_feedback_supervisor_session_id_fkey"
+            columns: ["supervisor_session_id"]
+            isOneToOne: false
+            referencedRelation: "supervisor_sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      supervisor_profiles: {
+        Row: {
+          created_at: string
+          status: string
+          supervisor_user_id: string
+        }
+        Insert: {
+          created_at?: string
+          status?: string
+          supervisor_user_id: string
+        }
+        Update: {
+          created_at?: string
+          status?: string
+          supervisor_user_id?: string
+        }
+        Relationships: []
+      }
+      supervisor_reports: {
+        Row: {
+          child_profile_id: string
+          competences_observees: string
+          created_at: string
+          id: string
+          parent_feedback: string | null
+          period_end: string
+          period_start: string
+          realisations: string
+          recommandations: string
+          status: string
+          supervisor_user_id: string
+          updated_at: string
+          validated_at: string | null
+          validated_by: string | null
+        }
+        Insert: {
+          child_profile_id: string
+          competences_observees?: string
+          created_at?: string
+          id?: string
+          parent_feedback?: string | null
+          period_end: string
+          period_start: string
+          realisations?: string
+          recommandations?: string
+          status?: string
+          supervisor_user_id: string
+          updated_at?: string
+          validated_at?: string | null
+          validated_by?: string | null
+        }
+        Update: {
+          child_profile_id?: string
+          competences_observees?: string
+          created_at?: string
+          id?: string
+          parent_feedback?: string | null
+          period_end?: string
+          period_start?: string
+          realisations?: string
+          recommandations?: string
+          status?: string
+          supervisor_user_id?: string
+          updated_at?: string
+          validated_at?: string | null
+          validated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "supervisor_reports_child_profile_id_fkey"
+            columns: ["child_profile_id"]
+            isOneToOne: false
+            referencedRelation: "child_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      supervisor_sessions: {
+        Row: {
+          campaign_id: string | null
+          child_profile_id: string
+          created_at: string
+          funding: string
+          id: string
+          notes: string | null
+          occurred_at: string
+          payout_xof: number | null
+          status: string
+          supervisor_user_id: string
+        }
+        Insert: {
+          campaign_id?: string | null
+          child_profile_id: string
+          created_at?: string
+          funding?: string
+          id?: string
+          notes?: string | null
+          occurred_at?: string
+          payout_xof?: number | null
+          status?: string
+          supervisor_user_id: string
+        }
+        Update: {
+          campaign_id?: string | null
+          child_profile_id?: string
+          created_at?: string
+          funding?: string
+          id?: string
+          notes?: string | null
+          occurred_at?: string
+          payout_xof?: number | null
+          status?: string
+          supervisor_user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "supervisor_sessions_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: false
+            referencedRelation: "campaigns"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "supervisor_sessions_child_profile_id_fkey"
+            columns: ["child_profile_id"]
+            isOneToOne: false
+            referencedRelation: "child_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       supervisors: {
         Row: {
           assigned_by: string | null
@@ -1438,6 +1755,7 @@ export type Database = {
           child_profile_id: string
           created_at: string
           id: string
+          removed_at: string | null
           supervisor_user_id: string
         }
         Insert: {
@@ -1446,6 +1764,7 @@ export type Database = {
           child_profile_id: string
           created_at?: string
           id?: string
+          removed_at?: string | null
           supervisor_user_id: string
         }
         Update: {
@@ -1454,6 +1773,7 @@ export type Database = {
           child_profile_id?: string
           created_at?: string
           id?: string
+          removed_at?: string | null
           supervisor_user_id?: string
         }
         Relationships: [
@@ -1467,7 +1787,7 @@ export type Database = {
           {
             foreignKeyName: "supervisors_child_profile_id_fkey"
             columns: ["child_profile_id"]
-            isOneToOne: true
+            isOneToOne: false
             referencedRelation: "child_profiles"
             referencedColumns: ["id"]
           },

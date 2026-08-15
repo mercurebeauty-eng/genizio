@@ -61,6 +61,7 @@ import { Route as ProfilesProfileIdPassportPrintRouteImport } from './routes/pro
 import { Route as ProfilesProfileIdMentorsRouteImport } from './routes/profiles.$profileId.mentors'
 import { Route as ProfilesProfileIdGuildRouteImport } from './routes/profiles.$profileId.guild'
 import { Route as ProfilesProfileIdChallengesRouteImport } from './routes/profiles.$profileId.challenges'
+import { Route as ProfilesProfileIdBilanPrintRouteImport } from './routes/profiles.$profileId.bilan-print'
 import { Route as ApiPaystackWebhookRouteImport } from './routes/api/paystack/webhook'
 
 const TermsRoute = TermsRouteImport.update({
@@ -344,6 +345,12 @@ const ProfilesProfileIdChallengesRoute =
     path: '/$profileId/challenges',
     getParentRoute: () => ProfilesRoute,
   } as any)
+const ProfilesProfileIdBilanPrintRoute =
+  ProfilesProfileIdBilanPrintRouteImport.update({
+    id: '/$profileId/bilan-print',
+    path: '/$profileId/bilan-print',
+    getParentRoute: () => ProfilesRoute,
+  } as any)
 const ApiPaystackWebhookRoute = ApiPaystackWebhookRouteImport.update({
   id: '/api/paystack/webhook',
   path: '/api/paystack/webhook',
@@ -398,6 +405,7 @@ export interface FileRoutesByFullPath {
   '/organisation/': typeof OrganisationIndexRoute
   '/profiles/': typeof ProfilesIndexRoute
   '/api/paystack/webhook': typeof ApiPaystackWebhookRoute
+  '/profiles/$profileId/bilan-print': typeof ProfilesProfileIdBilanPrintRoute
   '/profiles/$profileId/challenges': typeof ProfilesProfileIdChallengesRoute
   '/profiles/$profileId/guild': typeof ProfilesProfileIdGuildRoute
   '/profiles/$profileId/mentors': typeof ProfilesProfileIdMentorsRoute
@@ -449,6 +457,7 @@ export interface FileRoutesByTo {
   '/organisation': typeof OrganisationIndexRoute
   '/profiles': typeof ProfilesIndexRoute
   '/api/paystack/webhook': typeof ApiPaystackWebhookRoute
+  '/profiles/$profileId/bilan-print': typeof ProfilesProfileIdBilanPrintRoute
   '/profiles/$profileId/challenges': typeof ProfilesProfileIdChallengesRoute
   '/profiles/$profileId/guild': typeof ProfilesProfileIdGuildRoute
   '/profiles/$profileId/mentors': typeof ProfilesProfileIdMentorsRoute
@@ -505,6 +514,7 @@ export interface FileRoutesById {
   '/organisation/': typeof OrganisationIndexRoute
   '/profiles/': typeof ProfilesIndexRoute
   '/api/paystack/webhook': typeof ApiPaystackWebhookRoute
+  '/profiles/$profileId/bilan-print': typeof ProfilesProfileIdBilanPrintRoute
   '/profiles/$profileId/challenges': typeof ProfilesProfileIdChallengesRoute
   '/profiles/$profileId/guild': typeof ProfilesProfileIdGuildRoute
   '/profiles/$profileId/mentors': typeof ProfilesProfileIdMentorsRoute
@@ -562,6 +572,7 @@ export interface FileRouteTypes {
     | '/organisation/'
     | '/profiles/'
     | '/api/paystack/webhook'
+    | '/profiles/$profileId/bilan-print'
     | '/profiles/$profileId/challenges'
     | '/profiles/$profileId/guild'
     | '/profiles/$profileId/mentors'
@@ -613,6 +624,7 @@ export interface FileRouteTypes {
     | '/organisation'
     | '/profiles'
     | '/api/paystack/webhook'
+    | '/profiles/$profileId/bilan-print'
     | '/profiles/$profileId/challenges'
     | '/profiles/$profileId/guild'
     | '/profiles/$profileId/mentors'
@@ -668,6 +680,7 @@ export interface FileRouteTypes {
     | '/organisation/'
     | '/profiles/'
     | '/api/paystack/webhook'
+    | '/profiles/$profileId/bilan-print'
     | '/profiles/$profileId/challenges'
     | '/profiles/$profileId/guild'
     | '/profiles/$profileId/mentors'
@@ -1068,6 +1081,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ProfilesProfileIdChallengesRouteImport
       parentRoute: typeof ProfilesRoute
     }
+    '/profiles/$profileId/bilan-print': {
+      id: '/profiles/$profileId/bilan-print'
+      path: '/$profileId/bilan-print'
+      fullPath: '/profiles/$profileId/bilan-print'
+      preLoaderRoute: typeof ProfilesProfileIdBilanPrintRouteImport
+      parentRoute: typeof ProfilesRoute
+    }
     '/api/paystack/webhook': {
       id: '/api/paystack/webhook'
       path: '/api/paystack/webhook'
@@ -1163,6 +1183,7 @@ const OrganisationRouteWithChildren = OrganisationRoute._addFileChildren(
 interface ProfilesRouteChildren {
   ProfilesManageRoute: typeof ProfilesManageRoute
   ProfilesIndexRoute: typeof ProfilesIndexRoute
+  ProfilesProfileIdBilanPrintRoute: typeof ProfilesProfileIdBilanPrintRoute
   ProfilesProfileIdChallengesRoute: typeof ProfilesProfileIdChallengesRoute
   ProfilesProfileIdGuildRoute: typeof ProfilesProfileIdGuildRoute
   ProfilesProfileIdMentorsRoute: typeof ProfilesProfileIdMentorsRoute
@@ -1174,6 +1195,7 @@ interface ProfilesRouteChildren {
 const ProfilesRouteChildren: ProfilesRouteChildren = {
   ProfilesManageRoute: ProfilesManageRoute,
   ProfilesIndexRoute: ProfilesIndexRoute,
+  ProfilesProfileIdBilanPrintRoute: ProfilesProfileIdBilanPrintRoute,
   ProfilesProfileIdChallengesRoute: ProfilesProfileIdChallengesRoute,
   ProfilesProfileIdGuildRoute: ProfilesProfileIdGuildRoute,
   ProfilesProfileIdMentorsRoute: ProfilesProfileIdMentorsRoute,
