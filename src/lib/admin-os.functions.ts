@@ -779,7 +779,9 @@ export const getTalentCityStatsAdmin = createServerFn({ method: "GET" })
       supabaseAdmin
         .from("child_profiles")
         .select("id, name, age, city, talents, user_id, created_at"),
-      supabaseAdmin.from("orders").select("id, child_id, total_price_xof, status, created_at"),
+      // Vague 4 batch 4 : seules les colonnes utiles à calculateCityStats (child_id) —
+      // la table orders peut grossir, les autres colonnes n'étaient jamais lues ici.
+      supabaseAdmin.from("orders").select("child_id"),
     ]);
 
     if (childrenRes.error) throw new Error(childrenRes.error.message);
@@ -856,51 +858,30 @@ export const getProgressionHealthAdmin = createServerFn({ method: "GET" })
   .middleware([requireAdmin])
   .handler(async (): Promise<ProgressionHealthResponse> => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const cutoff = new Date(Date.now() - 14 * 24 * 60 * 60 * 1000).toISOString();
 
-    const [completedRes, staleRes] = await Promise.all([
-      supabaseAdmin
-        .from("challenges")
-        .select("academic_domain, created_at, completed_at")
-        .eq("status", "completed")
-        .is("deleted_at", null)
-        .not("academic_domain", "is", null)
-        .not("completed_at", "is", null),
-      supabaseAdmin
-        .from("challenges")
-        .select("academic_domain")
-        .in("status", ["todo", "in_progress"])
-        .is("deleted_at", null)
-        .not("academic_domain", "is", null)
-        .lt("created_at", cutoff),
-    ]);
+    // Agrégat SQL (compute_progression_health, migration Vague 4 batch 4) — fini le
+    // chargement de TOUS les défis académiques en mémoire à chaque visite.
+    // (supabaseAdmin as any) : RPC ajouté après la dernière régénération des types —
+    // sera typé à la prochaine `supabase gen types`.
+    const { data: raw, error } = await (supabaseAdmin as any).rpc("compute_progression_health");
+    if (error) throw new Error(error.message);
+    const r = (raw ?? {}) as {
+      completed: Array<{ domain: string; completedCount: number; avgDaysToCompletion: number | null }>;
+      stale: Array<{ domain: string; staleCount: number }>;
+    };
 
-    if (completedRes.error) throw new Error(completedRes.error.message);
-    if (staleRes.error) throw new Error(staleRes.error.message);
-
-    const byDomain = new Map<string, { count: number; totalDays: number }>();
-    for (const c of completedRes.data ?? []) {
-      if (!c.academic_domain || !c.completed_at || !c.created_at) continue;
-      const days = (new Date(c.completed_at).getTime() - new Date(c.created_at).getTime()) / (1000 * 60 * 60 * 24);
-      const entry = byDomain.get(c.academic_domain) ?? { count: 0, totalDays: 0 };
-      entry.count += 1;
-      entry.totalDays += Math.max(0, days);
-      byDomain.set(c.academic_domain, entry);
-    }
-
-    const staleByDomain = new Map<string, number>();
-    for (const c of staleRes.data ?? []) {
-      if (!c.academic_domain) continue;
-      staleByDomain.set(c.academic_domain, (staleByDomain.get(c.academic_domain) ?? 0) + 1);
-    }
+    const completedByDomain = new Map(
+      (r.completed ?? []).map((d) => [d.domain, d] as const),
+    );
+    const staleByDomain = new Map((r.stale ?? []).map((d) => [d.domain, d.staleCount] as const));
 
     const domains: ProgressionDomainHealth[] = ACADEMIC_DOMAINS.map((domain) => {
-      const stats = byDomain.get(domain);
+      const stats = completedByDomain.get(domain);
       return {
         domain,
         domainLabel: ACADEMIC_DOMAIN_LABELS[domain] ?? domain,
-        completedCount: stats?.count ?? 0,
-        avgDaysToCompletion: stats && stats.count > 0 ? Math.round((stats.totalDays / stats.count) * 10) / 10 : null,
+        completedCount: stats?.completedCount ?? 0,
+        avgDaysToCompletion: stats?.avgDaysToCompletion ?? null,
         staleCount: staleByDomain.get(domain) ?? 0,
       };
     }).filter((d) => d.completedCount > 0 || d.staleCount > 0);
