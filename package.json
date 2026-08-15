@@ -16,6 +16,7 @@
   "dependencies": {
     "@google/genai": "^2.11.0",
     "@hookform/resolvers": "^5.2.2",
+    "@jsquash/jpeg": "^1.6.0",
     "@radix-ui/react-accordion": "^1.2.12",
     "@radix-ui/react-alert-dialog": "^1.1.15",
     "@radix-ui/react-aspect-ratio": "^1.1.8",
@@ -57,7 +58,9 @@
     "date-fns": "^4.1.0",
     "embla-carousel-react": "^8.6.0",
     "framer-motion": "^12.42.2",
+    "heic2any": "^0.0.4",
     "input-otp": "^1.4.2",
+    "libheif-js": "^1.19.8",
     "lucide-react": "^0.575.0",
     "nodemailer": "^9.0.3",
     "qrcode": "^1.5.4",

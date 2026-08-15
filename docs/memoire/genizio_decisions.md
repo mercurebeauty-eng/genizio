@@ -4,7 +4,7 @@ description: Décisions d'architecture et produit — quoi, pourquoi, alternativ
 metadata:
   type: project
   status: living-document
-  last_updated: 2026-08-10
+  last_updated: 2026-08-15
 ---
 
 ## Décision #1 : Nom du projet — Geniusio
@@ -1898,3 +1898,16 @@ fichier ne porte plus que les constantes partagées.
 **Conséquence UX parent** : l'onglet « Mentors » devient **« Mentor »** et pointe vers un **hub d'accompagnement** (`/profiles/$profileId/mentors`) : mentor assigné + accompagnement (pack/campagne + budget séances, `getChildMentorInfo` enrichi via `resolveChildAccompaniment`) + **bilan de fin** (validation parent, feedback, export PDF, partage WhatsApp — déplacé depuis le portfolio) + note de séance (feedback 1-5) + activité récente (notifications). Le portfolio garde un lien discret vers ce hub.
 
 **Migration** : `20260815120000_supervisor_to_mentor_rename.sql` — **appliquée en prod** (aucune perte : `mentors` = 3 lignes conservées, `child_mentors` = 0 ligne), types régénérés (`supabase gen types typescript --linked`). **Vérifié** : 675 tests verts (55 fichiers), `tsc --noEmit` propre, build OK.
+
+## Décision #77 : Photos iOS (Live Photos HEIC) — conversion client + filet serveur WASM (2026-08-15)
+
+**✅ IMPLÉMENTÉ (2026-08-15)** — constat utilisateur : une photo « live » (Live Photo iPhone) échoue à l'envoi pour valider un défi — il fallait passer par une capture d'écran (PNG). Cause racine : iOS livre les Live Photos en **HEIC**, que le pipeline navigateur (`<img>`/canvas) ne décode pas → `fileToCompressedProof` échouait avec « Image illisible. » **avant** tout envoi (le serveur ne voyait rien). Deuxième constat (doute utilisateur sur la compression, justifié) : Safari n'encode **pas** le WebP via `canvas.toBlob` et retombe **silencieusement** sur un PNG (spec HTMLCanvasElement) — le repli `!blob` ne se déclenchait jamais, la « compression » produisait un PNG de plusieurs Mo sur iOS.
+
+**Livré** :
+- **Client** (`src/lib/image-proof.ts`, partagé /quest + OutcomeChat + mentor) : détection HEIC/HEIF (type MIME normalisé + extension en repli pour le quirk iOS « type vide ») → conversion **heic2any** (libheif WASM, ~1,3 Mo, import dynamique — jamais dans le bundle initial) → pipeline existant. Échec de conversion → envoi **brut** HEIC (le serveur convertit). Encodage durci : après `toBlob`, vérification du `blob.type` réel — une demande WebP qui rend un PNG (Safari) est ré-encodée en **JPEG explicite**.
+- **Serveur** (`src/lib/server-heic.ts` + `validateChallengeProofCore`) : filet — une preuve HEIC qui arrive quand même (client ancien, WASM indisponible, type non reconnu) est détectée (type MIME **et** magie `ftyp` heif/heic) puis convertie en JPEG avant l'appel vision. Échec → analyse **texte seul** (même repli que l'ancien fallback vision, mais sans l'appel Claude gaspillé sur des octets HEIC relabelés JPEG). Le stockage `proofs` enregistre la version normalisée (JPEG).
+- **Pourquoi WASM et pas sharp** : le runtime de production est **Cloudflare Workers** (`src/server.ts`, `.output/server/wrangler.json`, `nodejs_compat`) — sharp embarque des binaires natifs libvips et n'y tourne pas ; il reste cantonné aux scripts d'assets build-time (`scripts/convert-images.js`). Le filet utilise donc `libheif-js` (décodeur HEIC, WASM **embarqué** en base64, aucun fetch/fs) + `@jsquash/jpeg` (mozjpeg, wasm embarqué via `scripts/embed-mozjpeg-wasm.mjs`). Imports dynamiques : le module (~1,7 Mo) ne peut pas entrer dans le bundle client des server functions.
+
+**Vérifié** : 682 tests verts (55 fichiers, dont nouveaux tests de détection HEIC), `tsc --noEmit` propre (hors erreur pré-existante `admin.index.tsx` d'une autre branche), build Nitro/Workers OK (chunks WASM embarqués dans `.output/server/_libs`, **zéro référence `fs`**), conversion testée en réel sur un HEIC de référence (1280×854 → JPEG 474 Ko qualité 92, contenu vérifié au re-décodage).
+
+**Alternatives rejetées** : *sharp côté serveur* (impossible sur Workers) ; *`@jsquash/heic`* (retiré du registry npm — 404) ; *dépendre du CDN pour le WASM* (hors-ligne/CI fragile — on embarque les octets) ; *relabeler HEIC en JPEG et laisser Claude échouer* (appel gaspillé + erreur trompeuse — remplacé par détection + conversion propre).
