@@ -913,44 +913,59 @@ export const getNayaTelemetryAdmin = createServerFn({ method: "GET" })
   .handler(async (): Promise<NayaTelemetryResponse> => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
-    const [challengesRes, hypothesisRes, childrenRes, auditsRes] = await Promise.all([
-      supabaseAdmin
-        .from("challenges")
-        .select("id, status, proof_mode")
-        .is("deleted_at", null),
-      supabaseAdmin
-        .from("hypothesis_cycles")
-        .select("id, status"),
-      supabaseAdmin
-        .from("child_profiles")
-        .select("id, ai_synthesis"),
-      // « Le Loup » (chantier 4) : audits de génération — conformité, recadrage,
-      // coût propre de la vérification sémantique (cf. calculateNayaWolfTelemetry).
-      supabaseAdmin
-        .from("generation_audits")
-        .select("kind, verdict, violations, semantic_checked, regenerated"),
-    ]);
+    // Comptages SQL exacts (Vague 4) — plus de chargement des tables challenges /
+    // hypothesis_cycles / child_profiles en entier pour en compter les lignes.
+    const [genRes, startedRes, completedRes, photoRes, hypoRes, recoRes, auditsRes] =
+      await Promise.all([
+        supabaseAdmin
+          .from("challenges")
+          .select("id", { count: "exact", head: true })
+          .is("deleted_at", null),
+        supabaseAdmin
+          .from("challenges")
+          .select("id", { count: "exact", head: true })
+          .in("status", ["in_progress", "completed"])
+          .is("deleted_at", null),
+        supabaseAdmin
+          .from("challenges")
+          .select("id", { count: "exact", head: true })
+          .eq("status", "completed")
+          .is("deleted_at", null),
+        supabaseAdmin
+          .from("challenges")
+          .select("id", { count: "exact", head: true })
+          .eq("status", "completed")
+          .eq("proof_mode", "photo")
+          .is("deleted_at", null),
+        supabaseAdmin.from("hypothesis_cycles").select("id", { count: "exact", head: true }),
+        supabaseAdmin
+          .from("child_profiles")
+          .select("id", { count: "exact", head: true })
+          .not("ai_synthesis", "is", null)
+          .neq("ai_synthesis", ""),
+        // « Le Loup » (chantier 4) : audits de génération — conformité, recadrage,
+        // coût propre de la vérification sémantique (cf. calculateNayaWolfTelemetry).
+        // Seule source encore chargée en entier (journal append-only du Loup) — à
+        // passer en agrégat SQL si le volume l'exige (plan multicouche, V4 batch 3).
+        supabaseAdmin
+          .from("generation_audits")
+          .select("kind, verdict, violations, semantic_checked, regenerated"),
+      ]);
 
-    if (challengesRes.error) throw new Error(challengesRes.error.message);
-    if (hypothesisRes.error) throw new Error(hypothesisRes.error.message);
-    if (childrenRes.error) throw new Error(childrenRes.error.message);
+    if (genRes.error) throw new Error(genRes.error.message);
+    if (startedRes.error) throw new Error(startedRes.error.message);
+    if (completedRes.error) throw new Error(completedRes.error.message);
+    if (photoRes.error) throw new Error(photoRes.error.message);
+    if (hypoRes.error) throw new Error(hypoRes.error.message);
+    if (recoRes.error) throw new Error(recoRes.error.message);
     if (auditsRes.error) throw new Error(auditsRes.error.message);
 
-    const challenges = challengesRes.data ?? [];
-    const hypothesisCycles = hypothesisRes.data ?? [];
-    const children = childrenRes.data ?? [];
-
-    const challengesGenerated = challenges.length;
-    const challengesStarted = challenges.filter(
-      (c) => c.status === "in_progress" || c.status === "completed"
-    ).length;
-    const challengesCompleted = challenges.filter((c) => c.status === "completed").length;
-    const photoProofCompleted = challenges.filter(
-      (c) => c.status === "completed" && c.proof_mode === "photo"
-    ).length;
-
-    const hypothesesCycles = hypothesisCycles.length;
-    const recommendationsCount = children.filter((c) => Boolean(c.ai_synthesis)).length;
+    const challengesGenerated = genRes.count ?? 0;
+    const challengesStarted = startedRes.count ?? 0;
+    const challengesCompleted = completedRes.count ?? 0;
+    const photoProofCompleted = photoRes.count ?? 0;
+    const hypothesesCycles = hypoRes.count ?? 0;
+    const recommendationsCount = recoRes.count ?? 0;
 
     const telemetry = calculateNayaTelemetry({
       challengesGenerated,
@@ -975,39 +990,77 @@ export const getNayaTelemetryAdmin = createServerFn({ method: "GET" })
     return telemetry;
   });
 
+const CommercePageInput = z.object({
+  page: z.number().int().min(1).default(1),
+  pageSize: z.number().int().min(1).max(100).default(50),
+  /** Statut brut des commandes, ou « Tous ». */
+  status: z.string().max(20).default("Tous"),
+});
+
+export interface PaginatedCommerceResponse
+  extends Omit<CommercePassportsDataResponse, "orders"> {
+  orders: KitOrder[];
+  /** Comptage par statut sur TOUTE l'historique (pas seulement la page) — badges des onglets. */
+  statusCounts: Record<string, number>;
+  total: number;
+  page: number;
+  pageSize: number;
+  totalPages: number;
+}
+
 export const getCommercePassportsDataAdmin = createServerFn({ method: "GET" })
   .middleware([requireAdmin])
-  .handler(async (): Promise<CommercePassportsDataResponse> => {
+  .validator((input: unknown) => CommercePageInput.parse(input ?? {}))
+  .handler(async ({ data }): Promise<PaginatedCommerceResponse> => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
-    // Contacts parents via parent_profiles (Vague 1) — une requête SQL, fini le scan
-    // paginé de l'annuaire auth (listAllUsers, O(nb comptes) appels API).
-    const [ordersRes, productsRes, suggestionsRes, childrenRes, usersRes] = await Promise.all([
-      supabaseAdmin
-        .from("orders")
-        .select("*, child_profiles(name, age, city), challenges(title)")
-        .order("created_at", { ascending: false }),
-      supabaseAdmin
-        .from("products")
-        .select("*")
-        .order("created_at", { ascending: false }),
-      supabaseAdmin
-        .from("material_suggestions")
-        .select("*")
-        .eq("status", "new")
-        .order("seen_count", { ascending: false }),
-      supabaseAdmin
-        .from("child_profiles")
-        .select("id, name, age, city, user_id, pdf_unlocked, created_at")
-        .order("created_at", { ascending: false }),
-      supabaseAdmin.from("parent_profiles").select("user_id, email, phone"),
-    ]);
+    // Commandes paginées (Vague 4) : count exact + range + filtre de statut en SQL.
+    const ORDER_STATUSES = ["pending", "confirmed", "shipped", "delivered", "cancelled"] as const;
+    let ordersQuery = supabaseAdmin
+      .from("orders")
+      .select("*, child_profiles(name, age, city), challenges(title)", { count: "exact" });
+    if (data.status !== "Tous") ordersQuery = ordersQuery.eq("status", data.status);
+
+    // Contacts parents via parent_profiles (Vague 1) — fini le scan paginé de
+    // l'annuaire auth (listAllUsers).
+    const [ordersRes, statusCountsRes, productsRes, suggestionsRes, childrenRes, usersRes] =
+      await Promise.all([
+        ordersQuery
+          .order("created_at", { ascending: false })
+          .range((data.page - 1) * data.pageSize, data.page * data.pageSize - 1),
+        Promise.all(
+          ORDER_STATUSES.map((s) =>
+            supabaseAdmin
+              .from("orders")
+              .select("id", { count: "exact", head: true })
+              .eq("status", s),
+          ),
+        ),
+        supabaseAdmin.from("products").select("*").order("created_at", { ascending: false }),
+        supabaseAdmin
+          .from("material_suggestions")
+          .select("*")
+          .eq("status", "new")
+          .order("seen_count", { ascending: false }),
+        supabaseAdmin
+          .from("child_profiles")
+          .select("id, name, age, city, user_id, pdf_unlocked, created_at")
+          .order("created_at", { ascending: false }),
+        supabaseAdmin.from("parent_profiles").select("user_id, email, phone"),
+      ]);
 
     if (ordersRes.error) throw new Error(ordersRes.error.message);
     if (productsRes.error) throw new Error(productsRes.error.message);
     if (suggestionsRes.error) throw new Error(suggestionsRes.error.message);
     if (childrenRes.error) throw new Error(childrenRes.error.message);
     if (usersRes.error) throw new Error(usersRes.error.message);
+
+    const statusCounts: Record<string, number> = {};
+    let totalOrders = 0;
+    ORDER_STATUSES.forEach((s, i) => {
+      statusCounts[s] = statusCountsRes[i]?.count ?? 0;
+      totalOrders += statusCounts[s];
+    });
 
     const userMap = new Map<string, { email: string; phone: string | null }>();
     for (const u of usersRes.data ?? []) {
@@ -1055,11 +1108,11 @@ export const getCommercePassportsDataAdmin = createServerFn({ method: "GET" })
 
     const products: ProductItem[] = productsRes.data ?? [];
     const materialSuggestions: MaterialSuggestionItem[] = suggestionsRes.data ?? [];
-
-    const totalOrders = orders.length;
-    const pendingOrders = orders.filter((o) => o.status === "pending").length;
-    const deliveredOrders = orders.filter((o) => o.status === "delivered").length;
     const passportsUnlockedCount = teenProfiles.filter((p) => p.pdfUnlocked).length;
+
+    const total = ordersRes.count ?? 0;
+    const totalPages = Math.max(1, Math.ceil(total / data.pageSize));
+    const page = Math.min(data.page, totalPages);
 
     return {
       orders,
@@ -1068,10 +1121,15 @@ export const getCommercePassportsDataAdmin = createServerFn({ method: "GET" })
       teenProfiles,
       summary: {
         totalOrders,
-        pendingOrders,
-        deliveredOrders,
+        pendingOrders: statusCounts.pending ?? 0,
+        deliveredOrders: statusCounts.delivered ?? 0,
         passportsUnlockedCount,
       },
+      statusCounts,
+      total,
+      page,
+      pageSize: data.pageSize,
+      totalPages,
     };
   });
 

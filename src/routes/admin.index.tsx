@@ -18,7 +18,7 @@ import {
   ExecutiveKPIs,
   ParentBIRC,
   TalentCityStatsResponse,
-  CommercePassportsDataResponse,
+  type PaginatedCommerceResponse,
   AiProviderStatus,
   ProgressionHealthResponse,
 } from "@/lib/admin-os.functions";
@@ -62,7 +62,7 @@ function AdminIndexPage() {
   const [progressionHealth, setProgressionHealth] = useState<ProgressionHealthResponse | null>(
     null,
   );
-  const [commerceData, setCommerceData] = useState<CommercePassportsDataResponse | null>(null);
+  const [commerceData, setCommerceData] = useState<PaginatedCommerceResponse | null>(null);
   const [loupConstitution, setLoupConstitution] = useState<ConstitutionSuggestionsResponse | null>(
     null,
   );
@@ -75,6 +75,12 @@ function AdminIndexPage() {
   const [execPage, setExecPage] = useState(1);
   const [execTotal, setExecTotal] = useState(0);
   const [execTotalPages, setExecTotalPages] = useState(1);
+
+  // Pagination & filtre des commandes (Vague 4) — mêmes principes que l'Exécutif.
+  const [commercePage, setCommercePage] = useState(1);
+  const [commerceStatus, setCommerceStatus] = useState("Tous");
+  const [commerceTotal, setCommerceTotal] = useState(0);
+  const [commerceTotalPages, setCommerceTotalPages] = useState(1);
 
   const getExecutiveKPIsFn = useServerFn(getExecutiveKPIsAdmin);
   const getTalentStatsFn = useServerFn(getTalentCityStatsAdmin);
@@ -121,7 +127,10 @@ function AdminIndexPage() {
             console.error("progressionData error", err);
             return null;
           }),
-          getCommerceDataFn({ data: undefined, ...opts }).catch((err) => {
+          getCommerceDataFn({
+            data: { page: commercePage, pageSize: 50, status: commerceStatus },
+            ...opts,
+          }).catch((err) => {
             console.error("commData error", err);
             return null;
           }),
@@ -136,7 +145,11 @@ function AdminIndexPage() {
       if (nayaData) setNayaTelemetry(nayaData);
       if (aiStatus) setAiProviderStatus(aiStatus);
       if (progressionData) setProgressionHealth(progressionData);
-      if (commData) setCommerceData(commData);
+      if (commData) {
+        setCommerceData(commData);
+        setCommerceTotal(commData.total ?? 0);
+        setCommerceTotalPages(commData.totalPages ?? 1);
+      }
 
       // Comptage des paiements en attente (badge de la carte « Paiements & Accès »).
       const pending = await getPendingPaymentsFn({ data: undefined, ...opts }).catch(() => null);
@@ -184,6 +197,27 @@ function AdminIndexPage() {
       }
     } catch (err: any) {
       console.error("Erreur de pagination Exécutif:", err);
+      toast.error("Erreur lors du changement de page.");
+    } finally {
+      setIsRefreshing(false);
+    }
+  };
+
+  // Changement de page / filtre des commandes (Vague 4) — refetch isolé de l'onglet.
+  const loadCommerce = async (page: number, status: string) => {
+    setIsRefreshing(true);
+    const opts = session?.access_token
+      ? { headers: { Authorization: `Bearer ${session.access_token}` } }
+      : {};
+    try {
+      const data = await getCommerceDataFn({ data: { page, pageSize: 50, status }, ...opts });
+      if (data) {
+        setCommerceData(data);
+        setCommerceTotal(data.total ?? 0);
+        setCommerceTotalPages(data.totalPages ?? 1);
+      }
+    } catch (err: any) {
+      console.error("Erreur de pagination Commerce:", err);
       toast.error("Erreur lors du changement de page.");
     } finally {
       setIsRefreshing(false);
@@ -391,6 +425,18 @@ function AdminIndexPage() {
             {activeTab === "commerce" && commerceData && (
               <AdminCommerceTab
                 data={commerceData}
+                total={commerceTotal}
+                totalPages={commerceTotalPages}
+                page={commercePage}
+                onPageChange={(pg) => {
+                  setCommercePage(pg);
+                  void loadCommerce(pg, commerceStatus);
+                }}
+                onStatusChange={(status) => {
+                  setCommerceStatus(status);
+                  setCommercePage(1);
+                  void loadCommerce(1, status);
+                }}
                 isRefreshing={isRefreshing}
                 onRefresh={() => loadData(false)}
                 onUpdateOrderStatus={handleUpdateOrderStatus}
