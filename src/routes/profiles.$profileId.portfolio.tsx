@@ -4,7 +4,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { supabase } from "@/integrations/supabase/client";
 import { useSession } from "@/hooks/use-session";
 import { toast } from "sonner";
-import { TALENT_SUBFORM_LABELS } from "@/lib/challenges.functions";
+import { TALENT_SUBFORM_LABELS, acceptChildInterestDiscovery } from "@/lib/challenges.functions";
 import { ProofImage } from "@/lib/proof-image";
 import { ensureHypothesesForChild } from "@/lib/hypotheses.functions";
 import { getChildGuild, getTalentAffinities } from "@/lib/guilds";
@@ -12,6 +12,8 @@ import { getChildEnrolledSeason, getActiveSeason, type Season } from "@/lib/seas
 import { getChildAccessStatusFn, type ChildAccessStatus } from "@/lib/child-access";
 import { formatXof } from "@/lib/pricing";
 import { initializePassportPayment } from "@/lib/payments.functions";
+import { getMentorChildView } from "@/lib/mentors.functions";
+import { isMentorMode } from "@/lib/mentor-mode";
 import {
   getGentleTimeSuggestion,
   applyGentleTimeProposal,
@@ -244,6 +246,11 @@ function PortfolioPage() {
   const { session, loading } = useSession();
   const navigate = useNavigate();
 
+  // Univers Mentor (décision #81) : le mentor (remplaçant du parent) consulte le
+  // portfolio de ses enfants assignés — chargement via getMentorChildView (la RLS
+  // ne rend pas les défis non-complétés aux mentors).
+  const mentorMode = isMentorMode(session);
+
   const [child, setChild] = useState<Child | null>(null);
   const [challenges, setChallenges] = useState<Challenge[]>([]);
   const [openCycle, setOpenCycle] = useState<OpenHypothesisCycle | null>(null);
@@ -273,6 +280,8 @@ function PortfolioPage() {
   const getGentleSuggestionFn = useServerFn(getGentleTimeSuggestion);
   const applyGentleFn = useServerFn(applyGentleTimeProposal);
   const getFailureSequenceFn = useServerFn(getLatestFailureSequence);
+  const getMentorChildViewFn = useServerFn(getMentorChildView);
+  const acceptDiscoveryFn = useServerFn(acceptChildInterestDiscovery);
 
   // Paiement en ligne Paystack du Passeport d'Excellence (50 000 FCFA) : le serveur crée
   // la payment, on redirige vers le checkout hébergé. Le webhook/retour passe
@@ -304,6 +313,28 @@ function PortfolioPage() {
   useEffect(() => {
     if (!userId) return;
     setFetching(true);
+
+    // Univers Mentor : profil + défis + cycle ouvert via getMentorChildView
+    // (service role — la RLS ne rend pas les défis non-complétés aux mentors).
+    if (mentorMode) {
+      getMentorChildViewFn({ data: { childId: profileId } })
+        .then((view) => {
+          setChild((view.child as Child) ?? null);
+          setChallenges((view.challenges ?? []) as Challenge[]);
+          setOpenCycle((view.openCycle as OpenHypothesisCycle) ?? null);
+        })
+        .catch((err) => {
+          console.error("Erreur lors du chargement du portfolio (mode mentor):", err);
+          setChild(null);
+          setChallenges([]);
+          setOpenCycle(null);
+        })
+        .finally(() => {
+          setFetching(false);
+        });
+      return;
+    }
+
     Promise.all([
       supabase
         .from("child_profiles")
@@ -344,7 +375,8 @@ function PortfolioPage() {
       .finally(() => {
         setFetching(false);
       });
-  }, [userId, profileId]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [userId, profileId, mentorMode]);
 
   // Découverte de centre d'intérêt (cf. discussion produit) : un talent fort
   // jamais déclaré par le parent est une vraie surprise, pas une routine —
@@ -434,6 +466,13 @@ function PortfolioPage() {
     const nextInterests = [...previousInterests, label];
     setChild({ ...child, interests: nextInterests });
     try {
+      if (mentorMode) {
+        // Décision #81 : le mentor valide la découverte via le serveur (la RLS
+        // ne lui donne pas l'écriture directe sur child_profiles).
+        const res = await acceptDiscoveryFn({ data: { childId: child.id, label } });
+        setChild({ ...child, interests: res.interests });
+        return;
+      }
       const { error } = await supabase
         .from("child_profiles")
         .update({ interests: nextInterests })
@@ -447,6 +486,9 @@ function PortfolioPage() {
   };
 
   const refetchOpenCycle = () => {
+    // En mode mentor, le cycle vient de getMentorChildView (la RLS ne rend pas
+    // les cycles d'hypothèses aux mentors) — pas de re-fetch client ici.
+    if (mentorMode) return;
     supabase
       .from("hypothesis_cycles")
       .select("id, parent_narrative")
@@ -1154,6 +1196,12 @@ function PortfolioPage() {
                         </svg>
                         <span>Télécharger le Passeport</span>
                       </Link>
+                    ) : mentorMode ? (
+                      // Acte d'achat réservé au parent (décision #81) — le mentor
+                      // (remplaçant) voit le Passeport mais ne paie pas à sa place.
+                      <p className="w-full md:w-auto text-center rounded-2xl border border-dashed border-ink/20 bg-white/60 px-5 py-3 text-xs font-bold text-ink/60">
+                        Le parent peut activer le Passeport (50 000 FCFA) pour le téléchargement.
+                      </p>
                     ) : (
                       <button
                         onClick={handlePayPassport}

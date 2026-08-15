@@ -1860,6 +1860,8 @@ export const getMentorActivationStatus = createServerFn({ method: "GET" })
       status: (profile?.status as string | undefined) ?? "active",
       mode,
       hasAssignments,
+      // Décision #81 : nombre d'enfants assignés — carte « Compte Mentor » en mode mentor.
+      assignedCount: count ?? 0,
     };
   });
 

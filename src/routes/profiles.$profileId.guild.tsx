@@ -5,6 +5,8 @@ import { useServerFn } from "@tanstack/react-start";
 import { supabase } from "@/integrations/supabase/client";
 import { getGuildCommunity, setGuildParticipation } from "@/lib/guilds.functions";
 import { getChildGuild } from "@/lib/guilds";
+import { getMentorChildView } from "@/lib/mentors.functions";
+import { isMentorMode } from "@/lib/mentor-mode";
 import { TALENT_KEY_LABELS } from "@/lib/talent-buckets";
 import { AppTabBar } from "@/components/AppTabBar";
 import { AppHeader } from "@/components/AppHeader";
@@ -32,6 +34,11 @@ function GuildPage() {
 
   const fetchCommunity = useServerFn(getGuildCommunity);
   const toggleParticipation = useServerFn(setGuildParticipation);
+  // Univers Mentor (décision #81) : la guilde d'un enfant assigné reste lisible
+  // (chargement via getMentorChildView) ; l'opt-in de partage reste une décision
+  // de l'enfant/du parent — masqué en mode mentor.
+  const mentorMode = isMentorMode(session);
+  const getMentorChildViewFn = useServerFn(getMentorChildView);
 
   useEffect(() => {
     if (!loading && !session) navigate({ to: "/auth", replace: true });
@@ -45,6 +52,23 @@ function GuildPage() {
   useEffect(() => {
     if (!userId) return;
     setFetching(true);
+    if (mentorMode) {
+      getMentorChildViewFn({ data: { childId: profileId } })
+        .then((view) => {
+          const c = view.child as Child | null;
+          setChild(c);
+          // Défis complétés : comptés depuis le payload (client bloqué par RLS
+          // pour les défis non-complétés — ici on n'a besoin que des complétés).
+          setCompletedCount(
+            ((view.challenges ?? []) as { status: string }[]).filter(
+              (ch) => ch.status === "completed",
+            ).length,
+          );
+        })
+        .catch((err) => console.error("Erreur de chargement de la guilde (mode mentor):", err))
+        .finally(() => setFetching(false));
+      return;
+    }
     Promise.all([
       supabase
         .from("child_profiles")
@@ -156,118 +180,120 @@ function GuildPage() {
             )}
           </div>
 
-          {!community?.isOptedIn ? (
-            <div className="rounded-3xl border border-ink/10 bg-white p-6 shadow-md">
-              <div className="flex items-start gap-3">
-                <div className="grid size-10 shrink-0 place-items-center rounded-xl bg-sky-50 text-sky-dark">
-                  <Users className="size-5" />
+          {!mentorMode ? (
+            community?.isOptedIn ? (
+              <>
+                <div className="flex gap-3">
+                  <div className="flex-1 rounded-2xl border border-ink/10 bg-white p-4 text-center shadow-sm">
+                    <div className="font-display text-2xl font-black text-brand">
+                      {community.memberCount}
+                    </div>
+                    <div className="text-xs font-semibold text-ink/60">
+                      Membres actifs de la guilde
+                    </div>
+                  </div>
+                  <div className="flex-1 rounded-2xl border border-ink/10 bg-white p-4 text-center shadow-sm">
+                    <div className="font-display text-2xl font-black text-leaf-dark">
+                      {community.completedThisMonth}
+                    </div>
+                    <div className="text-xs font-semibold text-ink/60">
+                      Défis complétés ce mois-ci
+                    </div>
+                  </div>
                 </div>
-                <div>
-                  <h2 className="font-display text-lg font-bold">
-                    Rejoindre la communauté de guilde
-                  </h2>
-                  <p className="mt-1.5 text-sm leading-relaxed text-ink/70">
-                    Aujourd'hui, seule votre famille voit les progrès de {child.name}. En activant
-                    le partage, le prénom et l'âge de {child.name} deviennent visibles aux autres
-                    familles de la guilde {guild.name}, et {child.name} voit aussi les leurs. Rien
-                    d'autre n'est partagé (ni ville, ni centres d'intérêt, ni notes). Vous pouvez
-                    désactiver à tout moment.
+
+                <div className={`rounded-2xl border border-ink/10 p-4 shadow-sm ${guild.bgColor}`}>
+                  <p className={`mb-1 font-display text-sm font-bold ${guild.color}`}>
+                    Défi collectif du mois
                   </p>
-                  <button
-                    onClick={() => handleToggle(true)}
-                    disabled={togglingParticipation}
-                    className="press-brand mt-4 rounded-2xl bg-brand px-5 py-2.5 text-sm font-bold text-white disabled:opacity-50"
-                  >
-                    {togglingParticipation ? "..." : "Activer le partage"}
-                  </button>
+                  <p className={`mb-3 text-xs font-medium opacity-80 ${guild.color}`}>
+                    Ensemble, {guild.name.toLowerCase()} visent {community.monthlyTarget} défis
+                    complétés ce mois-ci.
+                  </p>
+                  <div className="h-2.5 overflow-hidden rounded-full bg-white/60">
+                    <div
+                      className="h-full rounded-full bg-white transition-all duration-700"
+                      style={{
+                        width: `${Math.min(100, Math.round((community.completedThisMonth / community.monthlyTarget) * 100))}%`,
+                      }}
+                    />
+                  </div>
+                  <p className={`mt-2 text-xs font-bold ${guild.color}`}>
+                    {community.completedThisMonth} / {community.monthlyTarget} défis
+                  </p>
                 </div>
-              </div>
-            </div>
-          ) : (
-            <>
-              <div className="flex gap-3">
-                <div className="flex-1 rounded-2xl border border-ink/10 bg-white p-4 text-center shadow-sm">
-                  <div className="font-display text-2xl font-black text-brand">
-                    {community.memberCount}
-                  </div>
-                  <div className="text-xs font-semibold text-ink/60">
-                    Membres actifs de la guilde
-                  </div>
-                </div>
-                <div className="flex-1 rounded-2xl border border-ink/10 bg-white p-4 text-center shadow-sm">
-                  <div className="font-display text-2xl font-black text-leaf-dark">
-                    {community.completedThisMonth}
-                  </div>
-                  <div className="text-xs font-semibold text-ink/60">
-                    Défis complétés ce mois-ci
-                  </div>
-                </div>
-              </div>
 
-              <div className={`rounded-2xl border border-ink/10 p-4 shadow-sm ${guild.bgColor}`}>
-                <p className={`mb-1 font-display text-sm font-bold ${guild.color}`}>
-                  Défi collectif du mois
-                </p>
-                <p className={`mb-3 text-xs font-medium opacity-80 ${guild.color}`}>
-                  Ensemble, {guild.name.toLowerCase()} visent {community.monthlyTarget} défis
-                  complétés ce mois-ci.
-                </p>
-                <div className="h-2.5 overflow-hidden rounded-full bg-white/60">
-                  <div
-                    className="h-full rounded-full bg-white transition-all duration-700"
-                    style={{
-                      width: `${Math.min(100, Math.round((community.completedThisMonth / community.monthlyTarget) * 100))}%`,
-                    }}
-                  />
-                </div>
-                <p className={`mt-2 text-xs font-bold ${guild.color}`}>
-                  {community.completedThisMonth} / {community.monthlyTarget} défis
-                </p>
-              </div>
-
-              <div>
-                <p className="mb-3 text-xs font-extrabold uppercase tracking-widest text-ink/40">
-                  À célébrer
-                </p>
-                {community.recentActivity.length === 0 ? (
-                  <div className="rounded-2xl border border-ink/10 bg-white p-6 text-center text-sm text-ink/60 shadow-sm">
-                    Aucune activité récente dans cette guilde pour le moment.
-                  </div>
-                ) : (
-                  <div className="flex flex-col gap-2.5">
-                    {community.recentActivity.map((a, i) => (
-                      <div
-                        key={i}
-                        className="flex items-center gap-3 rounded-2xl border border-ink/10 bg-white p-3.5 shadow-sm"
-                      >
-                        <div className="grid size-10 shrink-0 place-items-center rounded-full bg-sky-50 font-display font-bold text-sky-dark">
-                          {a.childName[0]}
-                        </div>
-                        <div className="min-w-0 flex-1">
-                          <div className="text-sm font-bold text-ink">
-                            {a.childName}, {a.childAge} ans
+                <div>
+                  <p className="mb-3 text-xs font-extrabold uppercase tracking-widest text-ink/40">
+                    À célébrer
+                  </p>
+                  {community.recentActivity.length === 0 ? (
+                    <div className="rounded-2xl border border-ink/10 bg-white p-6 text-center text-sm text-ink/60 shadow-sm">
+                      Aucune activité récente dans cette guilde pour le moment.
+                    </div>
+                  ) : (
+                    <div className="flex flex-col gap-2.5">
+                      {community.recentActivity.map((a, i) => (
+                        <div
+                          key={i}
+                          className="flex items-center gap-3 rounded-2xl border border-ink/10 bg-white p-3.5 shadow-sm"
+                        >
+                          <div className="grid size-10 shrink-0 place-items-center rounded-full bg-sky-50 font-display font-bold text-sky-dark">
+                            {a.childName[0]}
                           </div>
-                          <div className="truncate text-xs text-ink/60">{a.title}</div>
+                          <div className="min-w-0 flex-1">
+                            <div className="text-sm font-bold text-ink">
+                              {a.childName}, {a.childAge} ans
+                            </div>
+                            <div className="truncate text-xs text-ink/60">{a.title}</div>
+                          </div>
+                          <Heart className="size-4 shrink-0 text-brand/40" />
                         </div>
-                        <Heart className="size-4 shrink-0 text-brand/40" />
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
 
-              <button
-                onClick={() => handleToggle(false)}
-                disabled={togglingParticipation}
-                className="press-white w-full rounded-2xl border border-ink/10 bg-white py-3 text-xs font-bold text-ink/60 disabled:opacity-50"
-              >
-                <span className="inline-flex items-center gap-1.5">
-                  <Share2 className="size-3.5" />
-                  Désactiver le partage de guilde
-                </span>
-              </button>
-            </>
-          )}
+                <button
+                  onClick={() => handleToggle(false)}
+                  disabled={togglingParticipation}
+                  className="press-white w-full rounded-2xl border border-ink/10 bg-white py-3 text-xs font-bold text-ink/60 disabled:opacity-50"
+                >
+                  <span className="inline-flex items-center gap-1.5">
+                    <Share2 className="size-3.5" />
+                    Désactiver le partage de guilde
+                  </span>
+                </button>
+              </>
+            ) : (
+              <div className="rounded-3xl border border-ink/10 bg-white p-6 shadow-md">
+                <div className="flex items-start gap-3">
+                  <div className="grid size-10 shrink-0 place-items-center rounded-xl bg-sky-50 text-sky-dark">
+                    <Users className="size-5" />
+                  </div>
+                  <div>
+                    <h2 className="font-display text-lg font-bold">
+                      Rejoindre la communauté de guilde
+                    </h2>
+                    <p className="mt-1.5 text-sm leading-relaxed text-ink/70">
+                      Aujourd'hui, seule votre famille voit les progrès de {child.name}. En activant
+                      le partage, le prénom et l'âge de {child.name} deviennent visibles aux autres
+                      familles de la guilde {guild.name}, et {child.name} voit aussi les leurs. Rien
+                      d'autre n'est partagé (ni ville, ni centres d'intérêt, ni notes). Vous pouvez
+                      désactiver à tout moment.
+                    </p>
+                    <button
+                      onClick={() => handleToggle(true)}
+                      disabled={togglingParticipation}
+                      className="press-brand mt-4 rounded-2xl bg-brand px-5 py-2.5 text-sm font-bold text-white disabled:opacity-50"
+                    >
+                      {togglingParticipation ? "..." : "Activer le partage"}
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )
+          ) : null}
         </div>
       </main>
     </div>
