@@ -315,7 +315,7 @@ export function OutcomeChat({
                   <Upload className="size-6 text-brand animate-pulse" />
                   <span className="text-xs font-black text-brand">Sélectionner une photo</span>
                   <span className="text-[10px] text-ink/60 font-bold">
-                    Formats acceptés : PNG, JPG
+                    PNG, JPG, WebP — photos iPhone incluses
                   </span>
                   <input
                     type="file"

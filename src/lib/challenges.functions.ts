@@ -1964,10 +1964,29 @@ Réponds STRICTEMENT en JSON valide avec ce format :
 }`;
 
   let aiContent = "";
-  let imageAnalyzed = !!params.proofImageBase64;
-  const imageData = params.proofImageBase64
+  // D-07 : filet serveur — le client convertit déjà HEIC→JPEG (heic2any, image-proof.ts),
+  // mais une preuve HEIC peut arriver ici (client ancien, WASM indisponible, type non
+  // reconnu). Import dynamique : le module de conversion (~1,7 Mo de WASM embarqué) ne
+  // doit jamais entrer dans le bundle client des server functions. Échec de conversion
+  // → analyse texte seul (imageAnalyzed=false), même repli que l'ancien fallback vision
+  // mais sans l'appel Claude gaspillé sur des octets HEIC relabelés JPEG.
+  let imageData = params.proofImageBase64
     ? { base64: params.proofImageBase64, mediaType: params.proofImageMediaType ?? "image/jpeg" }
     : undefined;
+  if (imageData && !ALLOWED_IMAGE_MEDIA_TYPES.includes(imageData.mediaType)) {
+    const { convertHeicProofBase64ToJpeg, isHeifProof } = await import("@/lib/server-heic");
+    if (isHeifProof(imageData.base64, imageData.mediaType)) {
+      const converted = await convertHeicProofBase64ToJpeg(imageData.base64);
+      if (converted) {
+        imageData = { base64: converted, mediaType: "image/jpeg" };
+      } else {
+        console.warn("Preuve HEIC non convertible côté serveur — analyse texte seul.");
+        imageData = undefined;
+      }
+    }
+  }
+  // let : le fallback vision ci-dessous (échec de l'appel Claude) le passe à false.
+  let imageAnalyzed = !!imageData;
   // A short observation + a small talents_awarded object — nowhere near
   // the 4000-token default sized for a batch of full défis. Reserving
   // that much per call was the main way this endpoint could exhaust the
@@ -2099,13 +2118,15 @@ Réponds STRICTEMENT en JSON valide avec ce format :
   let badgeUnlocked: Awaited<ReturnType<typeof checkAndAwardBadge>> = null;
   if (relevant) {
     let proofImageUrl: string | null = null;
-    if (params.proofImageBase64) {
-      const mediaType = params.proofImageMediaType ?? "image/jpeg";
+    // D-07 : on stocke la version normalisée (JPEG converti le cas échéant) — un HEIC
+    // brut ne serait de toute façon pas affichable par les navigateurs du flux.
+    if (imageData) {
+      const mediaType = imageData.mediaType;
       const ext = mediaType.split("/")[1] ?? "jpg";
       const fileName = `${challenge.child_id}/${challenge.id}-${Math.random()}.${ext}`;
       const { error: uploadError } = await db.storage
         .from("proofs")
-        .upload(fileName, Buffer.from(params.proofImageBase64, "base64"), {
+        .upload(fileName, Buffer.from(imageData.base64, "base64"), {
           contentType: mediaType,
         });
       if (uploadError) {

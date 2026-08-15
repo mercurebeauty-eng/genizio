@@ -10,11 +10,59 @@
 //   • JPEG → ré-encodage WebP qualité 0.92 (indistinguable à l'œil) ;
 //   • PNG (captures, schémas) → ré-encodage PNG après redimensionnement (LOSSLESS).
 // Typiquement : une photo de 5 Mo devient 300-600 Ko.
+//
+// D-07 (review 2026-08-15, photos iOS) : les Live Photos iPhone arrivent en HEIC,
+// que <img>/canvas ne décodent pas — l'ancien code échouait avec « Image illisible. »
+// AVANT tout envoi, obligeant à passer par une capture d'écran. Deux correctifs :
+//   • HEIC → conversion WASM côté client (heic2any, chargé à la demande, ~1,3 Mo),
+//     puis pipeline normal ; repli : envoi brut HEIC, le serveur convertit (filet,
+//     voir src/lib/server-heic.ts) ;
+//   • encodage canvas durci : Safari ne sait PAS encoder le WebP via canvas.toBlob
+//     et retombe silencieusement sur un PNG (spec HTMLCanvasElement) — non-null, donc
+//     le repli « !blob » ne partait jamais et la « compression » produisait un PNG de
+//     plusieurs Mo. On vérifie le type réel du blob et on ré-encode en JPEG explicite.
 
 const MAX_DIMENSION = 1920;
 const JPEG_QUALITY = 0.92;
 /** Sous ce poids, on n'y touche jamais (déjà léger — aucune dégradation possible). */
 const MAX_PASSTHROUGH_BYTES = 800 * 1024;
+
+/** Types HEIC/HEIF livrés par les Live Photos iOS (indécodables par <img>/canvas). */
+const HEIC_MEDIA_TYPES = new Set([
+  "image/heic",
+  "image/heif",
+  "image/heic-sequence",
+  "image/heif-sequence",
+]);
+
+/** Type MIME normalisé d'un fichier (sans paramètres, minuscules). iOS livre parfois
+ *  des photos avec un type vide — repli sur l'extension. */
+export function normalizeProofMediaType(type: string, name: string): string {
+  const base = type.split(";")[0]?.trim().toLowerCase() ?? "";
+  if (base) return base;
+  const ext = name.split(".").pop()?.toLowerCase() ?? "";
+  return ext === "heic" || ext === "heif" ? "image/heic" : "";
+}
+
+/** true si le fichier est un HEIC/HEIF (Live Photo iOS). */
+export function isHeicProofFile(type: string, name: string): boolean {
+  return HEIC_MEDIA_TYPES.has(normalizeProofMediaType(type, name));
+}
+
+/** Conversion HEIC→JPEG côté client (heic2any embarque libheif en WASM, ~1,3 Mo,
+ *  import dynamique — jamais dans le bundle initial). null si la conversion échoue
+ *  (navigateur trop ancien) : le serveur a son propre filet (server-heic.ts). */
+async function convertHeicToJpeg(file: File): Promise<File | null> {
+  try {
+    const { default: heic2any } = await import("heic2any");
+    const blob = await heic2any({ blob: file, toType: "image/jpeg", quality: JPEG_QUALITY });
+    const single = Array.isArray(blob) ? blob[0] : blob;
+    if (!single || single.type !== "image/jpeg") return null;
+    return new File([single], "proof.jpg", { type: "image/jpeg" });
+  } catch {
+    return null;
+  }
+}
 
 export type ProofEncodePlan =
   | { action: "passthrough"; mediaType: string }
@@ -89,6 +137,15 @@ function canvasToBlob(
  * (PNG lossless). Replie toujours sur l'original en cas d'échec — jamais bloquant.
  */
 export async function fileToCompressedProof(file: File): Promise<CompressedProofFile> {
+  // D-07 : HEIC (Live Photos iOS) indécodable par <img>/canvas → conversion WASM
+  // client ; si elle échoue, la preuve part en brut et le serveur convertit (filet).
+  // Jamais bloquant.
+  if (isHeicProofFile(file.type, file.name)) {
+    const jpegFile = await convertHeicToJpeg(file);
+    if (jpegFile) return fileToCompressedProof(jpegFile);
+    return { base64: await fileToBase64(file), mediaType: "image/heic", compressed: false };
+  }
+
   const dims = await loadImage(file);
   const plan = resolveProofEncodePlan(
     file.size,
@@ -111,6 +168,13 @@ export async function fileToCompressedProof(file: File): Promise<CompressedProof
   ctx.drawImage(dims, 0, 0, canvas.width, canvas.height);
 
   let blob = await canvasToBlob(canvas, plan.mediaType, plan.quality);
+  if (blob && plan.mediaType === "image/webp" && blob.type !== "image/webp") {
+    // D-07 : Safari n'encode pas le WebP via canvas et retombe SILENCIEUSEMENT sur un
+    // PNG (spec : format non supporté → export image/png) — non-null, donc le repli
+    // « !blob » ci-dessous ne partait jamais et la « compression » produisait un PNG
+    // de plusieurs Mo. Ré-encodage JPEG explicite pour garder le bénéfice réel.
+    blob = await canvasToBlob(canvas, "image/jpeg", JPEG_QUALITY);
+  }
   if (!blob && plan.mediaType === "image/webp") {
     // Repli vieux navigateurs (pas de WebP) : JPEG haute qualité.
     blob = await canvasToBlob(canvas, "image/jpeg", JPEG_QUALITY);
