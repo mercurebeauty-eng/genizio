@@ -70,6 +70,12 @@ function AdminIndexPage() {
   const [loading, setLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
 
+  // Pagination de l'annuaire Exécutif (Vague 4) — un changement de page ne refetch
+  // que l'onglet, pas tout l'Admin OS.
+  const [execPage, setExecPage] = useState(1);
+  const [execTotal, setExecTotal] = useState(0);
+  const [execTotalPages, setExecTotalPages] = useState(1);
+
   const getExecutiveKPIsFn = useServerFn(getExecutiveKPIsAdmin);
   const getTalentStatsFn = useServerFn(getTalentCityStatsAdmin);
   const getNayaTelemetryFn = useServerFn(getNayaTelemetryAdmin);
@@ -95,7 +101,7 @@ function AdminIndexPage() {
     try {
       const [execData, talentData, nayaData, aiStatus, progressionData, commData] =
         await Promise.all([
-          getExecutiveKPIsFn({ data: undefined, ...opts }).catch((err) => {
+          getExecutiveKPIsFn({ data: { page: execPage, pageSize: 20 }, ...opts }).catch((err) => {
             console.error("execData error", err);
             return null;
           }),
@@ -123,6 +129,8 @@ function AdminIndexPage() {
       if (execData) {
         setKpis(execData.kpis);
         setParents(execData.parents ?? []);
+        setExecTotal(execData.total ?? 0);
+        setExecTotalPages(execData.totalPages ?? 1);
       }
       if (talentData) setTalentStats(talentData);
       if (nayaData) setNayaTelemetry(nayaData);
@@ -154,6 +162,30 @@ function AdminIndexPage() {
       toast.error("Erreur lors du chargement des données Admin OS.");
     } finally {
       setLoading(false);
+      setIsRefreshing(false);
+    }
+  };
+
+  // Changement de page de l'annuaire Exécutif — refetch isolé (Vague 4), sans relancer
+  // les 5 autres onglets ni le Loup.
+  const handleExecPageChange = async (page: number) => {
+    setExecPage(page);
+    setIsRefreshing(true);
+    const opts = session?.access_token
+      ? { headers: { Authorization: `Bearer ${session.access_token}` } }
+      : {};
+    try {
+      const execData = await getExecutiveKPIsFn({ data: { page, pageSize: 20 }, ...opts });
+      if (execData) {
+        setKpis(execData.kpis);
+        setParents(execData.parents ?? []);
+        setExecTotal(execData.total ?? 0);
+        setExecTotalPages(execData.totalPages ?? 1);
+      }
+    } catch (err: any) {
+      console.error("Erreur de pagination Exécutif:", err);
+      toast.error("Erreur lors du changement de page.");
+    } finally {
       setIsRefreshing(false);
     }
   };
@@ -324,6 +356,10 @@ function AdminIndexPage() {
               <AdminExecutiveTab
                 kpis={kpis}
                 parents={parents}
+                total={execTotal}
+                totalPages={execTotalPages}
+                page={execPage}
+                onPageChange={(p) => void handleExecPageChange(p)}
                 onTogglePassport={handleTogglePassport}
                 onUpdateQuota={handleUpdateQuota}
                 onRefresh={() => loadData(false)}

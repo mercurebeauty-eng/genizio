@@ -1225,6 +1225,7 @@ export type Database = {
       }
       parent_profiles: {
         Row: {
+          created_at: string | null
           display_name: string | null
           email: string
           phone: string | null
@@ -1232,6 +1233,7 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          created_at?: string | null
           display_name?: string | null
           email: string
           phone?: string | null
@@ -1239,6 +1241,7 @@ export type Database = {
           user_id: string
         }
         Update: {
+          created_at?: string | null
           display_name?: string | null
           email?: string
           phone?: string | null
@@ -1831,6 +1834,7 @@ export type Database = {
         Args: { p_trend: number; p_value: number; p_variance: number }
         Returns: string
       }
+      compute_executive_kpis: { Args: never; Returns: Json }
       increment_child_talents: {
         Args: { p_child_id: string; p_deltas: Json }
         Returns: Json

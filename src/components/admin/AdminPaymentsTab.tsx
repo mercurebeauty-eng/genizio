@@ -39,6 +39,7 @@ import { formatXof } from "@/lib/pricing";
 import { toast } from "sonner";
 import { confirmDialog } from "@/components/ui/confirm-dialog";
 import { GenizioLoader } from "@/components/GenizioLoader";
+import { AdminPagination } from "./AdminPagination";
 
 // Onglet « Paiements & Accès » (refonte Admin OS, 2026-08-13, décision #71) : l'écran
 // de secours des paiements. Le webhook Paystack et la page de retour sont les chemins
@@ -98,10 +99,15 @@ export function AdminPaymentsTab() {
   const createSponsorshipFn = useServerFn(createSponsorshipTokenAdmin);
   const getExpirationsFn = useServerFn(getUpcomingExpirationsAdmin);
   const extendAccessFn = useServerFn(extendChildAccessAdmin);
+  const getPendingPaymentsFn = useServerFn(getPaymentsPendingCountAdmin);
 
   const [section, setSection] = useState<PaymentsSection>("payments");
   const [payments, setPayments] = useState<AdminPaymentRow[] | null>(null);
   const [paymentFilter, setPaymentFilter] = useState<"all" | "initiated">("initiated");
+  const [paymentsPage, setPaymentsPage] = useState(1);
+  const [paymentsTotal, setPaymentsTotal] = useState(0);
+  const [paymentsTotalPages, setPaymentsTotalPages] = useState(1);
+  const [pendingCount, setPendingCount] = useState(0);
   const [subscriptions, setSubscriptions] = useState<AdminSubscriptionRow[] | null>(null);
   const [sponsorships, setSponsorships] = useState<SponsorshipToken[] | null>(null);
   const [expirations, setExpirations] = useState<any[] | null>(null);
@@ -112,16 +118,37 @@ export function AdminPaymentsTab() {
   const [showCreateSponsorship, setShowCreateSponsorship] = useState(false);
   const [copiedCode, setCopiedCode] = useState<string | null>(null);
 
+  // Refetch isolé de la file des paiements (Vague 4) — changement de page ou de filtre
+  // sans recharger abonnements/parrainages/expirations.
+  const loadPayments = async (page: number, status: "all" | "initiated") => {
+    const res = await listPaymentsFn({
+      data: { page, pageSize: 50, status },
+      ...opts,
+    }).catch(() => null);
+    if (res) {
+      setPayments(res.data);
+      setPaymentsTotal(res.total);
+      setPaymentsTotalPages(res.totalPages);
+    }
+  };
+
   const loadAll = async () => {
     setLoading(true);
     try {
-      const [p, subs, sp, exp] = await Promise.all([
-        listPaymentsFn({ data: undefined, ...opts }).catch(() => []),
+      const [p, subs, sp, exp, pending] = await Promise.all([
+        listPaymentsFn({
+          data: { page: paymentsPage, pageSize: 50, status: paymentFilter },
+          ...opts,
+        }).catch(() => null),
         getSubsFn({ data: undefined, ...opts }).catch(() => ({ subscriptions: [] })),
         listSponsorshipsFn({ data: { page: 1, pageSize: 50 }, ...opts }).catch(() => ({ data: [] })),
         getExpirationsFn({ data: undefined, ...opts }).catch(() => []),
+        getPendingPaymentsFn({ data: undefined, ...opts }).catch(() => null),
       ]);
-      setPayments(p);
+      setPayments((p as any)?.data ?? []);
+      setPaymentsTotal((p as any)?.total ?? 0);
+      setPaymentsTotalPages((p as any)?.totalPages ?? 1);
+      setPendingCount((pending as any)?.pendingCount ?? 0);
       setSubscriptions((subs as any)?.subscriptions ?? []);
       setSponsorships((sp as any)?.data ?? []);
       const expList = Array.isArray(exp) ? exp : ((exp as any)?.data ?? []);
@@ -256,9 +283,8 @@ export function AdminPaymentsTab() {
     );
   }
 
-  const filteredPayments =
-    paymentFilter === "all" ? (payments ?? []) : (payments ?? []).filter((p) => p.status === "initiated");
-  const pendingCount = (payments ?? []).filter((p) => p.status === "initiated").length;
+  // Le filtre est appliqué côté serveur (Vague 4) — la page contient déjà les bons paiements.
+  const filteredPayments = payments ?? [];
 
   const SECTIONS: { id: PaymentsSection; label: string }[] = [
     { id: "payments", label: `Paiements ${pendingCount > 0 ? `· ${pendingCount} en attente` : ""}` },
@@ -319,7 +345,11 @@ export function AdminPaymentsTab() {
             {(["initiated", "all"] as const).map((f) => (
               <button
                 key={f}
-                onClick={() => setPaymentFilter(f)}
+                onClick={() => {
+                  setPaymentFilter(f);
+                  setPaymentsPage(1);
+                  void loadPayments(1, f);
+                }}
                 className={
                   "rounded-xl border px-3 py-1.5 text-[11px] font-bold transition-all cursor-pointer " +
                   (paymentFilter === f
@@ -401,6 +431,17 @@ export function AdminPaymentsTab() {
               </tbody>
             </table>
           </div>
+          <AdminPagination
+            page={paymentsPage}
+            totalPages={paymentsTotalPages}
+            total={paymentsTotal}
+            pageSize={50}
+            onPageChange={(pg) => {
+              setPaymentsPage(pg);
+              void loadPayments(pg, paymentFilter);
+            }}
+            label="paiement"
+          />
         </div>
       )}
 

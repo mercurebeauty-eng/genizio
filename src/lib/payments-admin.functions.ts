@@ -14,7 +14,6 @@
 import { z } from "zod";
 import { createServerFn } from "@tanstack/react-start";
 import { requireAdmin } from "@/integrations/supabase/admin-middleware";
-import { listAllUsers } from "@/integrations/supabase/admin-users";
 import type { PaymentRow } from "@/lib/payment-fulfillment.server";
 
 // ── 1. File des paiements ───────────────────────────────────────────────────────
@@ -35,28 +34,61 @@ export interface AdminPaymentRow extends PaymentRow {
   parentEmail: string | null;
 }
 
-/** Dernières payments (100 max) avec email du parent et libellé d'intent. */
+const PaymentsPageInput = z.object({
+  page: z.number().int().min(1).default(1),
+  pageSize: z.number().int().min(1).max(100).default(50),
+  status: z.enum(["all", "initiated"]).default("all"),
+});
+
+export interface PaginatedPaymentsResponse {
+  data: AdminPaymentRow[];
+  total: number;
+  page: number;
+  pageSize: number;
+  totalPages: number;
+}
+
+/** File des paiements paginée (Vague 4) — plus de troncature silencieuse à 100, plus
+ *  de scan complet de l'annuaire : emails via parent_profiles (page uniquement). */
 export const listPaymentsAdmin = createServerFn({ method: "GET" })
   .middleware([requireAdmin])
-  .handler(async () => {
+  .validator((input: unknown) => PaymentsPageInput.parse(input ?? {}))
+  .handler(async ({ data }): Promise<PaginatedPaymentsResponse> => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
-    const [{ data: payments, error }, users] = await Promise.all([
-      supabaseAdmin
-        .from("payments")
-        .select("*")
-        .order("created_at", { ascending: false })
-        .limit(100),
-      listAllUsers(supabaseAdmin).catch(() => [] as { id: string; email: string | null }[]),
-    ]);
+    let query = supabaseAdmin.from("payments").select("*", { count: "exact" });
+    if (data.status === "initiated") query = query.eq("status", "initiated");
+    const { data: payments, error, count } = await query
+      .order("created_at", { ascending: false })
+      .range((data.page - 1) * data.pageSize, data.page * data.pageSize - 1);
     if (error) throw new Error(error.message);
 
-    const emailByUserId = new Map((users ?? []).map((u) => [u.id, u.email]));
-    return ((payments ?? []) as unknown as AdminPaymentRow[]).map((p) => ({
-      ...p,
-      intentLabel: PAYMENT_INTENT_LABELS[(p.metadata as any)?.type] ?? "Inconnu",
-      parentEmail: p.user_id ? (emailByUserId.get(p.user_id) ?? null) : null,
-    }));
+    const total = count ?? 0;
+    const totalPages = Math.max(1, Math.ceil(total / data.pageSize));
+    const page = Math.min(data.page, totalPages);
+
+    const pageRows = (payments ?? []) as unknown as AdminPaymentRow[];
+    const userIds = [...new Set(pageRows.map((p) => p.user_id).filter(Boolean) as string[])];
+    const emailByUserId = new Map<string, string | null>();
+    if (userIds.length > 0) {
+      const { data: contacts } = await supabaseAdmin
+        .from("parent_profiles")
+        .select("user_id, email")
+        .in("user_id", userIds);
+      for (const c of contacts ?? []) emailByUserId.set(c.user_id, c.email);
+    }
+
+    return {
+      data: pageRows.map((p) => ({
+        ...p,
+        intentLabel: PAYMENT_INTENT_LABELS[(p.metadata as any)?.type] ?? "Inconnu",
+        parentEmail: p.user_id ? (emailByUserId.get(p.user_id) ?? null) : null,
+      })),
+      total,
+      page,
+      pageSize: data.pageSize,
+      totalPages,
+    };
   });
 
 /** Comptage des paiements en attente (badges de la grille d'accueil). */

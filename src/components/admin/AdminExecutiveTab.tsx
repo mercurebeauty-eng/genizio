@@ -17,10 +17,15 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import type { ExecutiveKPIs, ParentBIRC } from "@/lib/admin-os.functions";
+import { AdminPagination } from "./AdminPagination";
 
 interface AdminExecutiveTabProps {
   kpis: ExecutiveKPIs;
   parents: ParentBIRC[];
+  total: number;
+  totalPages: number;
+  page: number;
+  onPageChange: (page: number) => void;
   onTogglePassport?: (childId: string, unlock: boolean) => Promise<void>;
   onUpdateQuota?: (userId: string, quota: number) => Promise<void>;
   onRefresh?: () => void;
@@ -30,6 +35,10 @@ interface AdminExecutiveTabProps {
 export function AdminExecutiveTab({
   kpis,
   parents,
+  total,
+  totalPages,
+  page,
+  onPageChange,
   onTogglePassport,
   onUpdateQuota,
   onRefresh,
@@ -195,7 +204,7 @@ export function AdminExecutiveTab({
             </p>
           </div>
           <span className="rounded-full bg-brand/10 px-3 py-1 text-xs font-bold text-brand">
-            {parents.length} Utilisateurs
+            {total} Utilisateurs
           </span>
         </div>
 
@@ -381,6 +390,14 @@ export function AdminExecutiveTab({
             </tbody>
           </table>
         </div>
+        <AdminPagination
+          page={page}
+          totalPages={totalPages}
+          total={total}
+          pageSize={20}
+          onPageChange={onPageChange}
+          label="compte"
+        />
       </div>
     </div>
   );

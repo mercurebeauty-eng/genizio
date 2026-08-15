@@ -621,86 +621,152 @@ export function detectHighPotentialProfiles(
   return alerts;
 }
 
+const ExecutivePageInput = z.object({
+  page: z.number().int().min(1).default(1),
+  pageSize: z.number().int().min(1).max(100).default(20),
+});
+
+export interface PaginatedExecutiveResponse {
+  kpis: ExecutiveKPIs;
+  parents: ParentBIRC[];
+  total: number;
+  page: number;
+  pageSize: number;
+  totalPages: number;
+}
+
 export const getExecutiveKPIsAdmin = createServerFn({ method: "GET" })
   .middleware([requireAdmin])
-  .handler(async (): Promise<ExecutiveDataResponse> => {
+  .validator((input: unknown) => ExecutivePageInput.parse(input ?? {}))
+  .handler(async ({ data }): Promise<PaginatedExecutiveResponse> => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
-    // 1. Fetch users from Supabase Auth admin
-    const users = await listAllUsers(supabaseAdmin);
+    // KPIs en une seule passe SQL (compute_executive_kpis, migration Vague 4) — fini
+    // les tables child_profiles + challenges chargées ENTIÈRES en mémoire à chaque
+    // ouverture de l'onglet Exécutif.
+    const { data: kpiRaw, error: kpiErr } = await supabaseAdmin.rpc("compute_executive_kpis");
+    if (kpiErr) throw new Error(kpiErr.message);
+    const k = (kpiRaw ?? {}) as {
+      totalChildren: number;
+      totalChallenges: number;
+      completedChallenges: number;
+      activeChildren7d: number;
+      activeChildren30d: number;
+      ageBrackets: Array<{ bracket: AgeBracketKey; count: number }>;
+    };
 
-    // 2. Fetch children profiles (la saison n'est plus qu'une étiquette depuis la
-    // dégradation des saisons, 20260812130000 — plus aucun rôle structurel ici)
-    const [{ data: children, error: childrenErr }] = await Promise.all([
+    // Annuaire paginé via parent_profiles (email/téléphone/nom + created_at du compte,
+    // migration Vague 4) — fini le scan complet de l'annuaire auth (listAllUsers).
+    const [{ count: totalParents }, { data: contacts, error: contactsErr }] = await Promise.all([
+      supabaseAdmin.from("parent_profiles").select("user_id", { count: "exact", head: true }),
       supabaseAdmin
-        .from("child_profiles")
-        .select("id, name, age, user_id, last_activity_date, updated_at, created_at, pdf_unlocked"),
+        .from("parent_profiles")
+        .select("user_id, email, phone, display_name, created_at")
+        .order("created_at", { ascending: false })
+        .range((data.page - 1) * data.pageSize, data.page * data.pageSize - 1),
     ]);
-    if (childrenErr) throw new Error(childrenErr.message);
+    if (contactsErr) throw new Error(contactsErr.message);
 
-    // 3. Fetch challenges
-    const { data: challenges, error: challengesErr } = await supabaseAdmin
-      .from("challenges")
-      .select("id, status, child_id, user_id, created_at, updated_at, completed_at")
-      .is("deleted_at", null);
-    if (challengesErr) throw new Error(challengesErr.message);
+    const total = totalParents ?? 0;
+    const totalPages = Math.max(1, Math.ceil(total / data.pageSize));
+    const pageContacts = contacts ?? [];
+    const parentIds = pageContacts.map((c) => c.user_id);
 
-    const safeChildren = children ?? [];
-    const safeChallenges = challenges ?? [];
-    const now = new Date();
+    // Pour la page uniquement : quota_override (app_metadata) via auth admin ciblé.
+    const userMeta = new Map<string, { createdAt: string | null; quotaOverride: number }>();
+    await Promise.all(
+      parentIds.map(async (id: string) => {
+        const { data: u } = await (supabaseAdmin as any).auth.admin
+          .getUserById(id)
+          .catch(() => ({ data: null }));
+        userMeta.set(id, {
+          createdAt: (u?.user?.created_at as string | null) ?? null,
+          quotaOverride: ((u?.user?.app_metadata as any)?.quota_override as number) ?? 0,
+        });
+      }),
+    );
 
-    const totalParents = users.length;
-    const totalChildren = safeChildren.length;
-    const totalChallenges = safeChallenges.length;
-    const completedChallenges = safeChallenges.filter((c) => c.status === "completed").length;
+    // Enfants et défis des parents de la page (borné par la page × cap 50 enfants).
+    const childrenByUser = new Map<string, ChildBIRC[]>(parentIds.map((id) => [id, []]));
+    const countsByUser = new Map<string, { total: number; completed: number }>();
+    if (parentIds.length > 0) {
+      const { data: children } = await supabaseAdmin
+        .from("child_profiles")
+        .select("id, name, age, user_id, pdf_unlocked")
+        .in("user_id", parentIds);
+      for (const c of children ?? []) {
+        childrenByUser.get(c.user_id)?.push({
+          id: c.id,
+          name: c.name,
+          age: c.age ?? 0,
+          pdfUnlocked: c.pdf_unlocked === true,
+        });
+      }
+      const { data: challenges } = await supabaseAdmin
+        .from("challenges")
+        .select("user_id, status")
+        .in("user_id", parentIds)
+        .is("deleted_at", null);
+      for (const ch of challenges ?? []) {
+        const cur = countsByUser.get(ch.user_id) ?? { total: 0, completed: 0 };
+        cur.total += 1;
+        if (ch.status === "completed") cur.completed += 1;
+        countsByUser.set(ch.user_id, cur);
+      }
+    }
 
-    const activeChildren7d = calculateActiveChildren(safeChildren, 7, now, safeChallenges);
-    const activeChildren30d = calculateActiveChildren(safeChildren, 30, now, safeChallenges);
-    const retentionRatePct = calculateRetentionRate(activeChildren30d, totalChildren);
-    const ageDistribution = calculateAgeDistribution(safeChildren);
-
-    const parents: ParentBIRC[] = users.map((user) => {
-      const userChildren = safeChildren.filter((c) => c.user_id === user.id);
-      const userChallenges = safeChallenges.filter((c) => c.user_id === user.id);
-      const userCompleted = userChallenges.filter((c) => c.status === "completed");
-      const phone = user.user_metadata?.phone || null;
-
+    const parents: ParentBIRC[] = pageContacts.map((c) => {
+      const meta = userMeta.get(c.user_id);
+      const userChildren = childrenByUser.get(c.user_id) ?? [];
+      const counts = countsByUser.get(c.user_id) ?? { total: 0, completed: 0 };
       return {
-        id: user.id,
-        email: user.email || "",
-        phone,
-        whatsappUrl: formatWhatsAppUrl(phone),
-        createdAt: user.created_at,
+        id: c.user_id,
+        email: c.email,
+        phone: c.phone,
+        whatsappUrl: formatWhatsAppUrl(c.phone),
+        createdAt: meta?.createdAt ?? c.created_at ?? new Date().toISOString(),
         childCount: userChildren.length,
-        childNames: userChildren.map((c) => `${c.name} (${c.age} ans)`).join(", "),
-        children: userChildren.map((c) => {
-          return {
-            id: c.id,
-            name: c.name,
-            age: c.age,
-            pdfUnlocked: c.pdf_unlocked === true,
-          };
-        }),
-        challengeCount: userChallenges.length,
-        completedCount: userCompleted.length,
-        quotaOverride: (user.app_metadata?.quota_override as number) ?? 0,
+        childNames: userChildren.map((ch) => `${ch.name} (${ch.age} ans)`).join(", "),
+        children: userChildren,
+        challengeCount: counts.total,
+        completedCount: counts.completed,
+        quotaOverride: meta?.quotaOverride ?? 0,
       };
     });
 
-    parents.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+    // Tranches d'âge : comptages bruts du SQL, pourcentage sur le TOTAL des enfants —
+    // même règle que calculateAgeDistribution (miroir documenté dans la migration).
+    const bracketCounts = new Map<AgeBracketKey, number>(
+      (k.ageBrackets ?? []).map((b) => [b.bracket, b.count]),
+    );
+    const bracketKeys: AgeBracketKey[] = ["3-6 ans", "7-10 ans", "11-13 ans", "14+ ans"];
+    const ageDistribution: AgeDistributionItem[] = bracketKeys.map((bracket) => {
+      const count = bracketCounts.get(bracket) ?? 0;
+      return {
+        bracket,
+        count,
+        percentage: (k.totalChildren ?? 0) > 0
+          ? Math.round((count / (k.totalChildren ?? 0)) * 100)
+          : 0,
+      };
+    });
 
     return {
       kpis: {
-        activeChildren7d,
-        activeChildren30d,
-        totalParents,
-        totalChildren,
-        totalChallenges,
-        completedChallenges,
-        retentionRatePct,
+        activeChildren7d: k.activeChildren7d ?? 0,
+        activeChildren30d: k.activeChildren30d ?? 0,
+        totalParents: total,
+        totalChildren: k.totalChildren ?? 0,
+        totalChallenges: k.totalChallenges ?? 0,
+        completedChallenges: k.completedChallenges ?? 0,
+        retentionRatePct: calculateRetentionRate(k.activeChildren30d ?? 0, k.totalChildren ?? 0),
         ageDistribution,
       },
       parents,
+      total,
+      page: data.page,
+      pageSize: data.pageSize,
+      totalPages,
     };
   });
 

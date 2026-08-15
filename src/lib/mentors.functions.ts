@@ -71,6 +71,60 @@ export const listMentorsAdmin = createServerFn({ method: "GET" })
   .handler(async ({ data }) => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
+    // Pagination SQL par MENTOR (Vague 4) : on ne ramène plus TOUTES les assignations
+    // (ni tous les mentors) avant de paginer en mémoire. D'abord la liste ordonnée des
+    // mentors (une colonne, indexée) → on tronque à la page → on n'enrichit que la page.
+    const { data: idRows, error: idsErr } = await (supabaseAdmin as any)
+      .from("mentors")
+      .select("mentor_user_id")
+      .is("removed_at", null)
+      .order("created_at", { ascending: false })
+      .order("id", { ascending: false });
+    if (idsErr) throw new Error(idsErr.message);
+
+    // Ordre = assignation la plus récente (première occurrence), doublons retirés.
+    const allMentorIds: string[] = [];
+    for (const r of idRows ?? []) {
+      if (!allMentorIds.includes(r.mentor_user_id as string)) allMentorIds.push(r.mentor_user_id);
+    }
+    if (allMentorIds.length === 0) {
+      return { data: [], total: 0, page: data.page, pageSize: data.pageSize, totalPages: 1 };
+    }
+
+    // Filtre campagne : seuls les mentors ayant une assignation active sur cette campagne.
+    let baseMentorIds = allMentorIds;
+    if (data.campaignId) {
+      const { data: campaignRows } = await (supabaseAdmin as any)
+        .from("mentors")
+        .select("mentor_user_id")
+        .eq("campaign_id", data.campaignId)
+        .is("removed_at", null);
+      const campaignSet = new Set(
+        (campaignRows ?? []).map((r: any) => r.mentor_user_id as string),
+      );
+      baseMentorIds = allMentorIds.filter((id) => campaignSet.has(id));
+    }
+
+    // Recherche par email en SQL (parent_profiles) — appliquée AVANT la pagination,
+    // comme l'ancien filtre en mémoire (qui, lui, exigeait de tout charger).
+    const term = data.search?.trim().toLowerCase();
+    let filteredMentorIds = baseMentorIds;
+    if (term) {
+      const { data: matches } = await supabaseAdmin
+        .from("parent_profiles")
+        .select("user_id")
+        .in("user_id", baseMentorIds)
+        .ilike("email", `%${term}%`);
+      const matchSet = new Set((matches ?? []).map((m) => m.user_id));
+      filteredMentorIds = baseMentorIds.filter((id) => matchSet.has(id));
+    }
+
+    const total = filteredMentorIds.length;
+    const totalPages = Math.max(1, Math.ceil(total / data.pageSize));
+    const page = Math.min(data.page, totalPages);
+    const pageMentorIds = filteredMentorIds.slice((page - 1) * data.pageSize, page * data.pageSize);
+
+    // Assignations des mentors DE LA PAGE uniquement, groupées par mentor.
     let query = (supabaseAdmin as any)
       .from("mentors")
       .select(
@@ -79,6 +133,7 @@ export const listMentorsAdmin = createServerFn({ method: "GET" })
       // Soft-retire (V1) : un mentor retiré disparaît des flux actifs (liste admin,
       // assignation, quota) — son historique (séances, score) reste en base.
       .is("removed_at", null)
+      .in("mentor_user_id", pageMentorIds)
       .order("created_at", { ascending: false })
       .order("id", { ascending: false });
     if (data.campaignId) {
@@ -87,8 +142,8 @@ export const listMentorsAdmin = createServerFn({ method: "GET" })
     const { data: rows, error } = await query;
     if (error) throw new Error(error.message);
 
-    // Groupement en mémoire par mentor — le volume pertinent est le nombre de
-    // SUPERVISEURS (petit), pas le nombre de lignes d'assignation.
+    // Groupement en mémoire par mentor — volume borné : les mentors de la page × leurs
+    // assignations (le nombre de lignes n'explose plus avec le total des enfants).
     const groups = new Map<string, MentorGroup>();
     const campaignRefs = new Map<string, { createdAt: string | null; extraQuota: number }>();
     for (const row of rows ?? []) {
@@ -127,7 +182,7 @@ export const listMentorsAdmin = createServerFn({ method: "GET" })
     }
 
     if (groups.size === 0) {
-      return { data: [], total: 0, page: data.page, pageSize: data.pageSize, totalPages: 1 };
+      return { data: [], total, page, pageSize: data.pageSize, totalPages };
     }
 
     // Résolution ciblée des emails (et date de création, pour le quota hors campagne) :
@@ -246,8 +301,7 @@ export const listMentorsAdmin = createServerFn({ method: "GET" })
     const daysInMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
     const elapsedDays = Math.max(1, now.getDate());
 
-    const term = data.search?.trim().toLowerCase();
-    const list = [...groups.values()].filter((g) => {
+    const list = [...groups.values()].map((g) => {
       const email = emailMap.get(g.mentor_user_id)?.email ?? "Inconnu";
       g.email = email;
       // Quota effectif : le plus élevé des contextes de ses assignations — plancher
@@ -278,16 +332,13 @@ export const listMentorsAdmin = createServerFn({ method: "GET" })
       const due = approvedByMentor.get(g.mentor_user_id);
       g.duePayoutXof = due?.xof ?? 0;
       g.approvedSessions = due?.count ?? 0;
-      return !term || email.toLowerCase().includes(term);
+      return g;
     });
 
-    const total = list.length;
-    const totalPages = Math.max(1, Math.ceil(total / data.pageSize));
-    const page = Math.min(data.page, totalPages);
-    const from = (page - 1) * data.pageSize;
-
+    // Recherche (email) et pagination déjà appliquées en amont — la liste ne contient
+    // que les mentors de la page demandée.
     return {
-      data: list.slice(from, from + data.pageSize),
+      data: list,
       total,
       page,
       pageSize: data.pageSize,
