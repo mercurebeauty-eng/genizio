@@ -1,11 +1,18 @@
 import { Link } from "@tanstack/react-router";
 import { Home, Trophy, Layers, Users, Settings } from "lucide-react";
+import { useSession } from "@/hooks/use-session";
 
 type AppTabBarProps = {
   profileId: string;
 };
 
 export function AppTabBar({ profileId }: AppTabBarProps) {
+  // Mode actif (décision #79) : en mode Mentor, l'onglet « Mentor » (le hub de
+  // l'enfant) disparaît — on ne se suit pas soi-même. Le mode est un pur
+  // commutateur stocké dans user_metadata, changé depuis Réglages → Mode Mentor.
+  const { session } = useSession();
+  const mentorMode = session?.user.user_metadata?.mode === "mentor";
+
   // Boutique retirée de la nav principale : aucun autre point d'entrée dans l'app ne pointe
   // vers /boutique (le flux de commande de kit est déjà intégré directement dans la carte de
   // défi via handleOrderKit — cf. profiles.$profileId.challenges.tsx), donc elle n'occupait
@@ -33,6 +40,7 @@ export function AppTabBar({ profileId }: AppTabBarProps) {
     },
     { to: "/profile" as const, label: "Réglages", icon: Settings, needsProfileId: false },
   ];
+  const visibleItems = mentorMode ? items.filter((item) => item.label !== "Mentor") : items;
 
   return (
     <nav
@@ -40,7 +48,7 @@ export function AppTabBar({ profileId }: AppTabBarProps) {
       aria-label="Navigation principale"
     >
       <div className="flex items-center justify-around w-full">
-        {items.map(({ to, label, icon: Icon, needsProfileId }) => {
+        {visibleItems.map(({ to, label, icon: Icon, needsProfileId }) => {
           const targetTo = needsProfileId && !profileId ? "/profiles" : to;
           const params = (needsProfileId && profileId ? { profileId } : undefined) as never;
 
