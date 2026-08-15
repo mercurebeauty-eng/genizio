@@ -410,6 +410,7 @@ export const listMentorsAdmin = createServerFn({ method: "GET" })
         userId: g.mentor_user_id,
         type: "mentor_status_changed",
         payload: { from: g.status, to: target, score: rollingScoreByMentor.get(g.mentor_user_id) },
+        channels: { push: true, email: true },
       });
       g.status = target;
     }
@@ -778,6 +779,7 @@ export const declareSessionMentor = createServerFn({ method: "POST" })
         type: "mentor_session_to_validate",
         childId: data.childProfileId,
         payload: { occurred_at: data.occurredAt ?? nowIso },
+        channels: { push: true, email: true },
       });
     }
     // Le statut de confiance est recalculé après chaque déclaration (non-fatal).
@@ -872,6 +874,7 @@ export const confirmMentorSession = createServerFn({ method: "POST" })
       type: "mentor_session_confirmed",
       childId: session.child_profile_id,
       payload: { session_id: session.id, occurred_at: session.occurred_at },
+      channels: { push: true, email: true },
     });
     void syncMentorTrustStatus(supabaseAdmin as any, session.mentor_user_id);
 

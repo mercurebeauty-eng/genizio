@@ -25,6 +25,7 @@ import { WhatsAppFAB } from "../components/WhatsAppFAB";
 import { ConfirmDialogHost } from "../components/ui/confirm-dialog";
 import { PwaInstallPrompt } from "../components/PwaInstallPrompt";
 import { PwaUpdateBanner } from "../components/PwaUpdateBanner";
+import { PushNotificationsSetup } from "../hooks/use-push-notifications";
 import { Analytics } from "@vercel/analytics/react";
 import { SpeedInsights } from "@vercel/speed-insights/react";
 
@@ -259,6 +260,7 @@ function RootComponent() {
       <ConfirmDialogHost />
       <PwaInstallPrompt />
       <PwaUpdateBanner />
+      <PushNotificationsSetup />
       <Analytics />
       <SpeedInsights />
     </QueryClientProvider>

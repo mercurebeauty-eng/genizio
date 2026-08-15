@@ -177,12 +177,14 @@ export async function syncMentorTrustStatus(
       userId: mentorUserId,
       type: "mentor_status_changed",
       payload: { from: current, to: target, score },
+      channels: { push: true, email: true },
     });
     for (const adminId of await listAdminUserIds(db)) {
       void notifyUser({
         userId: adminId,
         type: "mentor_status_changed",
         payload: { mentor_user_id: mentorUserId, from: current, to: target, score },
+        channels: { push: true, email: true },
       });
     }
     return { changed: true, from: current, to: target, score };

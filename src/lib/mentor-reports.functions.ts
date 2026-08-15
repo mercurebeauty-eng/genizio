@@ -137,6 +137,7 @@ export const submitMentorReport = createServerFn({ method: "POST" })
         type: "mentor_bilan_submitted",
         childId: report.child_profile_id,
         payload: { report_id: report.id },
+        channels: { push: true, email: true },
       });
     }
 
@@ -261,6 +262,7 @@ export const validateMentorReport = createServerFn({ method: "POST" })
         data.decision === "validate" ? "mentor_bilan_validated" : "mentor_bilan_rejected",
       childId: report.child_profile_id,
       payload: { report_id: report.id, feedback: data.feedback ?? null },
+      channels: { push: true, email: true },
     });
 
     return { report: updated };
