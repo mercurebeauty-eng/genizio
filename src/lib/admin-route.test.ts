@@ -3,10 +3,10 @@ import { ADMIN_TABS, AdminTab } from "@/components/admin/AdminNavTabBar";
 import fs from "node:fs";
 import path from "node:path";
 
-describe("Refonte Admin OS — Navigation & grille d'accueil (9 onglets)", () => {
-  it("définit les 9 onglets de la refonte dans ADMIN_TABS avec leurs métadonnées", () => {
+describe("Refonte Admin OS — Navigation & grille d'accueil (10 onglets)", () => {
+  it("définit les 10 onglets de la refonte dans ADMIN_TABS avec leurs métadonnées", () => {
     const tabIds = ADMIN_TABS.map((t) => t.id);
-    expect(tabIds).toHaveLength(9);
+    expect(tabIds).toHaveLength(10);
     expect(tabIds).toEqual([
       "executive",
       "b2b",
@@ -17,6 +17,7 @@ describe("Refonte Admin OS — Navigation & grille d'accueil (9 onglets)", () =>
       "payments",
       "commerce",
       "profiles",
+      "testimonials",
     ]);
 
     const execTab = ADMIN_TABS.find((t) => t.id === "executive");
@@ -41,6 +42,13 @@ describe("Refonte Admin OS — Navigation & grille d'accueil (9 onglets)", () =>
     const paymentsTab = ADMIN_TABS.find((t) => t.id === "payments");
     expect(paymentsTab?.label).toBe("Paiements & Accès");
     expect(paymentsTab?.badge).toBe("Secours");
+
+    // Onglet modération des témoignages parents (chantier « Preuve sociale
+    // réelle », 2026-08-15) — la landing n'affiche que les published=true.
+    const testimonialsTab = ADMIN_TABS.find((t) => t.id === "testimonials");
+    expect(testimonialsTab?.label).toBe("Témoignages");
+    expect(testimonialsTab?.badge).toBe("Avis");
+
     expect(tabIds).not.toContain("seasons");
     expect(tabIds).not.toContain("subscriptions");
   });

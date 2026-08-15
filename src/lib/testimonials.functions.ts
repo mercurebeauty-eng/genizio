@@ -16,6 +16,7 @@
 
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { requireAdmin } from "@/integrations/supabase/admin-middleware";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/integrations/supabase/types";
 import { z } from "zod";
@@ -199,3 +200,85 @@ export const listPublishedTestimonials = createServerFn({ method: "GET" }).handl
     createdAt: t.created_at,
   }));
 });
+
+// ── Modération admin (hub Admin OS) ───────────────────────────────────────────
+
+export type AdminTestimonialRow = PublishedTestimonial & {
+  id: string;
+  published: boolean;
+  consentPublish: boolean;
+  childId: string;
+};
+
+/**
+ * Liste TOUS les témoignages (publiés et dépubliés) pour la modération admin.
+ * Réservé à l'admin (middleware requireAdmin) — le service role lit la table.
+ */
+export const listTestimonialsAdmin = createServerFn({ method: "GET" })
+  .middleware([requireAdmin])
+  .handler(async () => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data, error } = await supabaseAdmin
+      .from("parent_testimonials")
+      .select(
+        "id, user_id, child_id, author_name, author_city, rating, headline, review_body, sender_type, children_count, challenges_completed, consent_publish, published, created_at",
+      )
+      .order("created_at", { ascending: false })
+      .limit(200);
+
+    if (error) return [] as AdminTestimonialRow[];
+
+    return (data ?? []).map((t) => ({
+      id: t.id,
+      childId: t.child_id,
+      author: t.author_name,
+      authorLocation: t.author_city,
+      rating: t.rating,
+      headline: t.headline,
+      reviewBody: t.review_body,
+      senderType: (t.sender_type === "mentor" ? "mentor" : "parent") as "parent" | "mentor",
+      childrenCount: t.children_count,
+      challengesCompleted: t.challenges_completed,
+      createdAt: t.created_at,
+      published: t.published,
+      consentPublish: t.consent_publish,
+    }));
+  });
+
+const SetPublishInput = z.object({
+  id: z.string().uuid(),
+  published: z.boolean(),
+});
+
+/**
+ * Publie / dépublic un témoignage depuis le hub admin. La publication n'est
+ * possible que si le consentement existe (published et consent_publish sont
+ * verrouillés ensemble : jamais published=true sans consentement).
+ */
+export const setTestimonialPublishAdmin = createServerFn({ method: "POST" })
+  .middleware([requireAdmin])
+  .validator((input: unknown) => SetPublishInput.parse(input))
+  .handler(async ({ data }) => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+
+    if (data.published) {
+      // Republier exige le consentement — sinon refus (un admin ne peut pas
+      // contourner la volonté du parent).
+      const { data: existing } = await supabaseAdmin
+        .from("parent_testimonials")
+        .select("consent_publish")
+        .eq("id", data.id)
+        .maybeSingle();
+      if (!existing?.consent_publish) {
+        throw new Error("Ce témoignage n'a pas le consentement de publication du parent.");
+      }
+    }
+
+    const { error } = await supabaseAdmin
+      .from("parent_testimonials")
+      .update({ published: data.published })
+      .eq("id", data.id);
+    if (error) throw new Error("Impossible de mettre à jour le témoignage.");
+
+    return { ok: true as const, id: data.id, published: data.published };
+  });

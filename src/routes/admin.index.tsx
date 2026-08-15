@@ -39,6 +39,7 @@ import { AdminCampaignsTab } from "@/components/admin/AdminCampaignsTab";
 import { AdminMentorsTab } from "@/components/admin/AdminMentorsTab";
 import { AdminProductsTab } from "@/components/admin/AdminProductsTab";
 import { AdminProfilesTab } from "@/components/admin/AdminProfilesTab";
+import { AdminTestimonialsTab } from "@/components/admin/AdminTestimonialsTab";
 import { getPaymentsPendingCountAdmin } from "@/lib/payments-admin.functions";
 import { ChevronRight } from "lucide-react";
 import { toast } from "sonner";
@@ -449,6 +450,9 @@ function AdminIndexPage() {
             {activeTab === "mentors" && <AdminMentorsTab />}
             {activeTab === "products" && <AdminProductsTab onDataChanged={() => loadData(false)} />}
             {activeTab === "profiles" && <AdminProfilesTab onDataChanged={() => loadData(false)} />}
+            {activeTab === "testimonials" && (
+              <AdminTestimonialsTab isRefreshing={isRefreshing} onRefresh={() => loadData(false)} />
+            )}
           </>
         )}
       </main>
