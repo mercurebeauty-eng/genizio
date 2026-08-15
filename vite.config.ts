@@ -25,20 +25,17 @@ export default defineConfig({
         // updateServiceWorker() call, which the banner triggers.
         registerType: 'prompt',
         injectRegister: false,
+        // injectManifest (Confiance Mentor, 2026-08-15) : le SW généré par generateSW ne
+        // pouvait pas porter les notifications push — on fournit notre propre SW
+        // (src/sw.ts : pre-cache workbox + handlers push/notificationclick).
+        strategies: 'injectManifest',
+        srcDir: 'src',
+        filename: 'sw.ts',
         outDir: '.output/public',
         includeAssets: ['favicon.ico', 'apple-touch-icon.png', 'mask-icon.svg'],
-        // This app is server-rendered per route (TanStack Start/Nitro) — there is
-        // no single static index.html shell to fall back to. vite-plugin-pwa's
-        // generateSW strategy defaults navigateFallback to 'index.html', which
-        // doesn't exist in .output/public and isn't in the precache manifest,
-        // so every fresh navigation (cold PWA launch, hard refresh, deep link)
-        // was intercepted by the service worker and served a broken response —
-        // the exact "mangled layout" bug reported on iOS. Disabling it lets
-        // navigation requests hit the network/server as normal; static assets
-        // (JS/CSS/images) are still precached below.
-        workbox: {
-          navigateFallback: null,
-        },
+        // Cette app est rendue par le serveur pour chaque route (TanStack Start/Nitro) —
+        // pas de shell index.html statique : notre SW ne gère QUE le pre-cache des assets
+        // et les notifications push, jamais les navigations (voir src/sw.ts).
         manifest: {
           name: 'Génizio',
           short_name: 'Génizio',

@@ -123,6 +123,24 @@ export const submitMentorReport = createServerFn({ method: "POST" })
       .single();
     if (error) throw new Error(error.message);
 
+    // Confiance Mentor (V3) — comble un trou : le type `mentor_bilan_submitted` était
+    // rendu par l'UI parent mais jamais émis. Le parent doit savoir qu'un bilan
+    // l'attend (validation) — notification in-app immédiate.
+    const { data: child } = await (supabaseAdmin as any)
+      .from("child_profiles")
+      .select("user_id")
+      .eq("id", report.child_profile_id)
+      .maybeSingle();
+    if (child?.user_id) {
+      void notifyUser({
+        userId: child.user_id,
+        type: "mentor_bilan_submitted",
+        childId: report.child_profile_id,
+        payload: { report_id: report.id },
+        channels: { push: true, email: true },
+      });
+    }
+
     return { report: updated };
   });
 
@@ -244,6 +262,7 @@ export const validateMentorReport = createServerFn({ method: "POST" })
         data.decision === "validate" ? "mentor_bilan_validated" : "mentor_bilan_rejected",
       childId: report.child_profile_id,
       payload: { report_id: report.id, feedback: data.feedback ?? null },
+      channels: { push: true, email: true },
     });
 
     return { report: updated };

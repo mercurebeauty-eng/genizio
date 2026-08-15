@@ -51,3 +51,86 @@ export function computeExpectedSessions(
   const fraction = periodDays > 0 ? Math.min(1, Math.max(0, elapsedDays / periodDays)) : 1;
   return Math.round(childrenCount * 12 * fraction);
 }
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Confiance Mentor (2026-08-15) — palier de confiance, statut automatique, payout.
+// Helpers PURS (testables sans base) — les server functions chargent les compteurs
+// puis appellent ces calculs (même convention que computeMentorScore).
+//
+//  • Palier de confiance : score ≥ 75 (fenêtre glissante 30 j) → « trusted » — le
+//    mentor passe au partage 75/25 (75 % de la séance, soit 3 750 F au lieu de 3 500 F).
+//  • Statut automatique : score < 40 → warning ; score < 25 → suspended ; au-dessus
+//    des seuils → active. Le ban reste une décision humaine (jamais automatique).
+//  • Payout : snapshot immuable posé À LA DÉCLARATION (palier + bonus points du
+//    moment) — invariant conservé : le montant ne change jamais après coup.
+//  • Points (mentor_points) : séance confirmée +1, défi complété +2, note 5/5 +1 —
+//    paliers : 10 pts → badge Bronze ; 30 pts → +5 % payout ; 60 pts → badge Or +10 %.
+// ─────────────────────────────────────────────────────────────────────────────
+
+export type MentorTrustTier = "standard" | "trusted";
+export type MentorAutoStatus = "active" | "warning" | "suspended";
+
+/** Score à partir duquel un mentor passe au palier « confiance » (75 % de la séance). */
+export const MENTOR_TRUSTED_SCORE_THRESHOLD = 75;
+/** Part du mentor sur une séance, palier standard (historique, cf. pricing.ts). */
+export const MENTOR_STANDARD_SHARE = 0.7;
+/** Part du mentor sur une séance, palier confiance — le « 75/25 » décidé au chantier. */
+export const MENTOR_TRUSTED_SHARE = 0.75;
+/** Sous ce score, le statut passe automatiquement à warning. */
+export const MENTOR_WARNING_SCORE_THRESHOLD = 40;
+/** Sous ce score, le statut passe automatiquement à suspended. */
+export const MENTOR_SUSPENDED_SCORE_THRESHOLD = 25;
+
+export function computeTrustTier(score: number): MentorTrustTier {
+  return score >= MENTOR_TRUSTED_SCORE_THRESHOLD ? "trusted" : "standard";
+}
+
+/** Statut cible automatique pour un score donné — jamais « banned » (décision humaine). */
+export function computeMentorStatusFromScore(score: number): MentorAutoStatus {
+  if (score < MENTOR_SUSPENDED_SCORE_THRESHOLD) return "suspended";
+  if (score < MENTOR_WARNING_SCORE_THRESHOLD) return "warning";
+  return "active";
+}
+
+/**
+ * Payout d'une séance pour un mentor, à la déclaration (snapshot).
+ * basePayoutXof = payout standard (70 % de la séance) ; le palier confiance le
+ * multiplie par 75/70 ; le bonus points s'applique en pourcentage du résultat.
+ */
+export function computeMentorPayoutXof(params: {
+  basePayoutXof: number;
+  tier: MentorTrustTier;
+  pointsBonusPct?: number;
+}): number {
+  const shareRatio = params.tier === "trusted"
+    ? MENTOR_TRUSTED_SHARE / MENTOR_STANDARD_SHARE
+    : 1;
+  const withTier = Math.round(params.basePayoutXof * shareRatio);
+  const bonus = params.pointsBonusPct ?? 0;
+  return Math.round(withTier * (1 + bonus / 100));
+}
+
+export interface MentorPointsRewards {
+  badge: "none" | "bronze" | "gold";
+  payoutBonusPct: number;
+  /** Points manquants pour le prochain palier de bonus payout ; null si atteint. */
+  nextPayoutBonusAt: number | null;
+}
+
+export const MENTOR_POINTS_BRONZE_AT = 10;
+export const MENTOR_POINTS_PAYOUT_BONUS_AT = 30;
+export const MENTOR_POINTS_GOLD_AT = 60;
+
+export function computeMentorPointsRewards(points: number): MentorPointsRewards {
+  const badge =
+    points >= MENTOR_POINTS_GOLD_AT ? "gold" : points >= MENTOR_POINTS_BRONZE_AT ? "bronze" : "none";
+  const payoutBonusPct =
+    points >= MENTOR_POINTS_GOLD_AT ? 10 : points >= MENTOR_POINTS_PAYOUT_BONUS_AT ? 5 : 0;
+  const nextPayoutBonusAt =
+    points < MENTOR_POINTS_PAYOUT_BONUS_AT
+      ? MENTOR_POINTS_PAYOUT_BONUS_AT
+      : points < MENTOR_POINTS_GOLD_AT
+        ? MENTOR_POINTS_GOLD_AT
+        : null;
+  return { badge, payoutBonusPct, nextPayoutBonusAt };
+}
