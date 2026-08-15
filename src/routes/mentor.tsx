@@ -138,6 +138,7 @@ function MentorDashboardPage() {
   const markReadFn = useServerFn(markNotificationsRead);
   const [declaringFor, setDeclaringFor] = useState<string | null>(null);
   const [sessionDate, setSessionDate] = useState(() => new Date().toISOString().slice(0, 10));
+  const [sessionTime, setSessionTime] = useState("");
   const [sessionNotes, setSessionNotes] = useState("");
   const [declaring, setDeclaring] = useState(false);
   // Planification des séances (2026-08-15) : créneau planifié (date + heure) lié
@@ -318,12 +319,19 @@ function MentorDashboardPage() {
   const handleDeclareSession = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!declaringFor) return;
+    if (!sessionTime.trim()) {
+      toast.error("Indiquez l'heure de début de la séance.");
+      return;
+    }
     setDeclaring(true);
     try {
       const res = await declareFn({
         data: {
           childProfileId: declaringFor,
-          occurredAt: new Date(sessionDate).toISOString(),
+          // Heure réelle de début : sans elle (minuit), toute séance liée à un
+          // créneau à 10:00 aurait un écart de 10 h → « en retard » systématique.
+          // La comparaison ±30 min n'est mesurable que si l'heure est déclarée.
+          occurredAt: new Date(`${sessionDate}T${sessionTime}`).toISOString(),
           notes: sessionNotes.trim() || undefined,
           slotId: declaredSlotId || undefined,
         },
@@ -898,6 +906,7 @@ function MentorDashboardPage() {
                         onClick={() => {
                           setDeclaringFor(selected.id);
                           setSessionDate(new Date().toISOString().slice(0, 10));
+                          setSessionTime("");
                           setSessionNotes("");
                           setDeclaredSlotId("");
                         }}
@@ -1721,23 +1730,46 @@ function MentorDashboardPage() {
                 </div>
 
                 <form onSubmit={handleDeclareSession} className="space-y-5">
-                  <div>
-                    <label className="text-xs font-black uppercase tracking-widest text-ink/60 mb-2 block">
-                      Date de la séance
-                    </label>
-                    <input
-                      type="date"
-                      required
-                      max={new Date().toISOString().slice(0, 10)}
-                      value={sessionDate}
-                      onChange={(e) => setSessionDate(e.target.value)}
-                      className="w-full rounded-xl border border-ink/10 bg-surface px-4 py-3 text-sm font-bold text-ink outline-none focus:ring-2 focus:ring-brand"
-                    />
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="text-xs font-black uppercase tracking-widest text-ink/60 mb-2 block">
+                        Date de la séance
+                      </label>
+                      <input
+                        type="date"
+                        required
+                        max={new Date().toISOString().slice(0, 10)}
+                        value={sessionDate}
+                        onChange={(e) => setSessionDate(e.target.value)}
+                        className="w-full rounded-xl border border-ink/10 bg-surface px-4 py-3 text-sm font-bold text-ink outline-none focus:ring-2 focus:ring-brand"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-xs font-black uppercase tracking-widest text-ink/60 mb-2 block">
+                        Heure de début
+                      </label>
+                      <input
+                        type="time"
+                        required
+                        value={sessionTime}
+                        onChange={(e) => setSessionTime(e.target.value)}
+                        className="w-full rounded-xl border border-ink/10 bg-surface px-4 py-3 text-sm font-bold text-ink outline-none focus:ring-2 focus:ring-brand"
+                      />
+                    </div>
                   </div>
+                  <p className="-mt-3 text-[11px] text-ink/50">
+                    L'heure réelle de début est comparée à l'heure planifiée du créneau (±30
+                    min) pour votre ponctualité — c'est elle qui alimente votre score.
+                  </p>
 
                   {(() => {
+                    // Créneaux LIABLES : même enfant, date déjà passée ou aujourd'hui (on ne
+                    // peut lier que des séances réalisées, pas des créneaux à venir).
+                    const todayIso = new Date().toISOString().slice(0, 10);
                     const childSlots = plannedSlots.filter(
-                      (s) => s.child_profile_id === declaringFor,
+                      (s) =>
+                        s.child_profile_id === declaringFor &&
+                        s.planned_at.slice(0, 10) <= todayIso,
                     );
                     if (childSlots.length === 0) return null;
                     return (
@@ -1748,7 +1780,23 @@ function MentorDashboardPage() {
                         </label>
                         <select
                           value={declaredSlotId}
-                          onChange={(e) => setDeclaredSlotId(e.target.value)}
+                          onChange={(e) => {
+                            const slotId = e.target.value;
+                            setDeclaredSlotId(slotId);
+                            const slot = childSlots.find((s) => s.id === slotId);
+                            if (slot) {
+                              // Pré-remplit date + heure réelles avec le créneau prévu :
+                              // le mentor à l'heure n'a qu'à valider ; en retard, il ajuste.
+                              const d = new Date(slot.planned_at);
+                              setSessionDate(d.toLocaleDateString("fr-CA"));
+                              setSessionTime(
+                                d.toLocaleTimeString("fr-FR", {
+                                  hour: "2-digit",
+                                  minute: "2-digit",
+                                }),
+                              );
+                            }
+                          }}
                           className="w-full rounded-xl border border-ink/10 bg-surface px-4 py-3 text-sm font-bold text-ink outline-none focus:ring-2 focus:ring-brand cursor-pointer"
                         >
                           <option value="">Aucun — séance non planifiée</option>
@@ -1764,8 +1812,8 @@ function MentorDashboardPage() {
                           ))}
                         </select>
                         <p className="mt-1.5 text-[11px] text-ink/50">
-                          Liez la séance à son créneau planifié : la ponctualité (écart ±30
-                          min entre l'heure prévue et l'heure réelle) nourrit votre score.
+                          Liez la séance à son créneau planifié : la date et l'heure réelles
+                          sont pré-remplies — ajustez l'heure si vous avez commencé plus tard.
                         </p>
                       </div>
                     );
