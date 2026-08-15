@@ -1,6 +1,8 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import { useServerFn } from "@tanstack/react-start";
 import { useSession } from "@/hooks/use-session";
+import { listPublishedTestimonials } from "@/lib/testimonials.functions";
 import constatImage from "@/assets/landing-constat.webp";
 import communauteImage from "@/assets/landing-communaute.webp";
 import { NayaAvatar } from "@/components/NayaAvatar";
@@ -50,7 +52,6 @@ import {
   jsonLdScript,
   faqPageJsonLd,
   SOFTWARE_APP_JSONLD,
-  reviewsJsonLd,
   howToJsonLd,
   type ParentReview,
 } from "@/lib/seo";
@@ -114,16 +115,12 @@ const LANDING_FAQ: {
   },
 ];
 
-// Avis de parents affichés sur la landing (data-driven, éditorialisés).
-//
-// ⚠️ IMPORTANT — La base de production ne contient pas encore de témoignages
-// collectés : le tableau est volontairement VIDE pour ne jamais afficher de
-// preuve sociale inventée (un faux avis est un risque de crédibilité réel face à
-// un partenaire ou un moteur qui vérifie, et Google déclasse les signaux de
-// confiance fabriqués). Dès qu'un premier retour authentique arrive (prénom +
-// ville suffisent, jamais de nom complet), ajoutez-le ici : la section se
-// réaffiche automatiquement.
-const LANDING_TESTIMONIALS: ParentReview[] = [];
+// Avis de parents affichés sur la landing : la preuve sociale est désormais
+// RÉELLE — les témoignages sont collectés dans l'application (espace parent,
+// après un défi validé) et publiés dans parent_testimonials. La section se
+// charge au montage (TestimonialsSection) et ne montre que les retours consentis
+// + publiés (RLS). Aucun contenu rédigé, jamais : un faux avis est un risque de
+// crédibilité réel face à un partenaire ou un moteur qui vérifie.
 
 export const Route = createFileRoute("/")({
   head: () => {
@@ -138,7 +135,11 @@ export const Route = createFileRoute("/")({
       scripts: [
         jsonLdScript(SOFTWARE_APP_JSONLD),
         jsonLdScript(faqPageJsonLd(LANDING_FAQ)),
-        jsonLdScript(reviewsJsonLd(LANDING_TESTIMONIALS)),
+        // Les avis réels étant chargés côté client (parent_testimonials), le
+        // JSON-LD statique du head ne peut pas les porter — l'agrégat des avis
+        // serait vide et pénaliserait le SEO (reviewCount 0). On ne l'émet pas
+        // ici : Google et les assistants lisent la section visible de la page,
+        // alimentée par les vrais témoignages.
         // Méthode en trois actes, visible dans la section « Trois actes. Zéro
         // questionnaire. » (METHOD_STEPS) — le HowTo doit rester synchronisé avec
         // les étapes affichées.
@@ -446,7 +447,7 @@ function NayaLanding() {
       <DemoSection />
       <PortfolioSection />
       <CommunitySection />
-      {LANDING_TESTIMONIALS.length > 0 && <TestimonialsSection />}
+      <TestimonialsSection />
       <DiasporaSection />
       <VisionSection />
       <PositioningSection />
@@ -1550,13 +1551,30 @@ function CommunitySection() {
   );
 }
 
-// « Avis de parents » — la preuve sociale, uniquement avec de vrais retours.
-// Rendue data-driven (LANDING_TESTIMONIALS) pour être alimentée sans toucher au
-// code : mêmes tokens de design que les autres sections. Une moyenne de notes
-// honnête est calculée depuis le tableau — jamais un chiffre affiché à la main.
+// « Avis de parents » — la preuve sociale, UNIQUEMENT avec de vrais retours.
+// Les témoignages sont collectés dans l'application (espace parent, après un défi
+// validé) et publiés dans parent_testimonials. La section se charge au montage :
+// seuls les témoignages consentis + publiés sont visibles (RLS), jamais de
+// contenu rédigé. Une moyenne honnête est calculée depuis les données réelles.
 function TestimonialsSection() {
-  const average =
-    LANDING_TESTIMONIALS.reduce((sum, t) => sum + t.rating, 0) / LANDING_TESTIMONIALS.length;
+  const [reviews, setReviews] = useState<ParentReview[]>([]);
+  const listTestimonials = useServerFn(listPublishedTestimonials);
+
+  useEffect(() => {
+    let cancelled = false;
+    listTestimonials()
+      .then((rows) => {
+        if (!cancelled) setReviews(rows);
+      })
+      .catch((err) => console.error("Chargement des témoignages:", err));
+    return () => {
+      cancelled = true;
+    };
+  }, [listTestimonials]);
+
+  if (reviews.length === 0) return null;
+
+  const average = reviews.reduce((sum, t) => sum + t.rating, 0) / reviews.length;
 
   return (
     <section id="avis" className="scroll-mt-24 border-y border-ink/10 bg-white/40 py-24 lg:py-28">
@@ -1569,8 +1587,8 @@ function TestimonialsSection() {
             Ce que les parents nous disent.
           </h2>
           <p className="mt-5 text-sm font-semibold leading-relaxed text-ink/70">
-            Des retours de familles qui ont vu leur enfant se révéler autrement qu'à travers les
-            notes.
+            Des retours donnés par les familles directement dans l'application — après avoir vu
+            leur enfant se révéler autrement qu'à travers les notes.
           </p>
           <div className="mt-4 inline-flex items-center gap-2 rounded-full border border-ink/10 bg-white px-4 py-1.5 text-xs font-bold text-ink/70 shadow-sm">
             <span className="flex items-center gap-0.5 text-amber-500" aria-hidden>
@@ -1581,13 +1599,16 @@ function TestimonialsSection() {
                 />
               ))}
             </span>
-            {average.toFixed(1)}/5 — {LANDING_TESTIMONIALS.length} avis vérifiés
+            {average.toFixed(1)}/5 — {reviews.length} avis de parents
           </div>
         </Reveal>
 
         <div className="grid gap-5 md:grid-cols-2">
-          {LANDING_TESTIMONIALS.map((t, i) => (
-            <Reveal key={t.author} delay={(i % 2) * 100}>
+          {reviews.map((t, i) => {
+            const childrenCount = t.childrenCount ?? 0;
+            const challengesCompleted = t.challengesCompleted ?? 0;
+            return (
+            <Reveal key={`${t.author}-${i}`} delay={(i % 2) * 100}>
               <figure className="group relative h-full rounded-3xl border border-ink/10 bg-white p-7 shadow-sm transition-all hover:-translate-y-1 hover:border-brand/30 hover:shadow-xl">
                 <span
                   role="img"
@@ -1605,7 +1626,7 @@ function TestimonialsSection() {
                 <blockquote className="text-sm font-semibold leading-relaxed text-ink/80">
                   « {t.reviewBody} »
                 </blockquote>
-                <figcaption className="mt-6 flex items-center gap-3 border-t border-ink/10 pt-4">
+                <figcaption className="mt-6 flex flex-wrap items-center gap-3 border-t border-ink/10 pt-4">
                   <span className="grid size-10 shrink-0 place-items-center rounded-full bg-gradient-to-br from-brand to-amber-500 font-display text-sm font-black text-white shadow-md">
                     {t.author.charAt(0).toUpperCase()}
                   </span>
@@ -1613,10 +1634,29 @@ function TestimonialsSection() {
                     <p className="text-xs font-extrabold text-ink">{t.author}</p>
                     <p className="text-[11px] font-semibold text-ink/70">{t.authorLocation}</p>
                   </div>
+                  {/* Les petits détails factuels qui donnent de la valeur à l'avis :
+                      le témoignage vient d'un parent réel, avec un vrai usage. */}
+                  <span className="ml-auto flex flex-wrap items-center justify-end gap-1.5">
+                    {childrenCount > 0 && (
+                      <span className="inline-flex items-center gap-1 rounded-full border border-ink/10 bg-surface px-2.5 py-1 text-[10px] font-bold text-ink/60">
+                        <Users className="size-3 text-brand" aria-hidden />
+                        {childrenCount} enfant{childrenCount > 1 ? "s" : ""} inscrit
+                        {childrenCount > 1 ? "s" : ""}
+                      </span>
+                    )}
+                    {challengesCompleted > 0 && (
+                      <span className="inline-flex items-center gap-1 rounded-full border border-ink/10 bg-surface px-2.5 py-1 text-[10px] font-bold text-ink/60">
+                        <Trophy className="size-3 text-leaf" aria-hidden />
+                        {challengesCompleted} défi{challengesCompleted > 1 ? "s" : ""} validé
+                        {challengesCompleted > 1 ? "s" : ""}
+                      </span>
+                    )}
+                  </span>
                 </figcaption>
               </figure>
             </Reveal>
-          ))}
+            );
+          })}
         </div>
       </div>
     </section>

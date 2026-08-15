@@ -239,6 +239,11 @@ export type ParentReview = {
   headline: string;
   /** Corps de l'avis, 1 à 3 phrases autonomes. */
   reviewBody: string;
+  /** Nombre d'enfants inscrits par ce parent au moment du témoignage (métadonnée
+   *  factuelle affichée sur la carte — ce détail concret donne de la valeur). */
+  childrenCount?: number;
+  /** Défis complétés de l'enfant au moment du témoignage (idem). */
+  challengesCompleted?: number;
 };
 
 /**
