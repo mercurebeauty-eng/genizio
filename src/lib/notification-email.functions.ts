@@ -191,6 +191,31 @@ export function emailForEvent(params: {
           { label: "Voir mon tableau de bord", url: "/mentor" },
         ),
       };
+    case "mentor_session_planned":
+      return {
+        subject: "Une séance est planifiée",
+        html: shell(
+          "Séance planifiée par le mentor",
+          [
+            params.childName
+              ? `Votre mentor a planifié une séance pour ${params.childName}${params.date ? ` le ${params.date}` : ""}.`
+              : `Votre mentor a planifié une séance${params.date ? ` le ${params.date}` : ""}.`,
+            "Vous verrez le créneau dans le hub Mentor.",
+          ],
+          { label: "Voir le hub Mentor", url: "/profiles" },
+        ),
+      };
+    case "mentor_session_contested":
+      return {
+        subject: "Une séance a été contestée",
+        html: shell(
+          "Séance contestée par le parent",
+          [
+            "Le parent conteste une séance que vous avez déclarée — elle ne compte ni pour votre score ni pour votre paiement. Contactez la famille si besoin.",
+          ],
+          { label: "Voir mon tableau de bord", url: "/mentor" },
+        ),
+      };
     case "mentor_status_changed": {
       if (typeof params.score !== "number") return null;
       return {

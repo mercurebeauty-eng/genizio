@@ -10,6 +10,7 @@ import {
   ShoppingBag,
   ShieldCheck,
   MessageSquareQuote,
+  Bell,
   Home,
 } from "lucide-react";
 
@@ -28,7 +29,8 @@ export type AdminTab =
   | "payments"
   | "commerce"
   | "profiles"
-  | "testimonials";
+  | "testimonials"
+  | "notifications";
 
 /** Écran d'accueil (grille de cartes) ou onglet ouvert. */
 export type AdminRoute = AdminTab | "home";
@@ -180,6 +182,19 @@ export const ADMIN_TABS: AdminTabDef[] = [
       "bg-gradient-to-br from-amber-500/10 via-white to-white border-amber-500/20 hover:shadow-amber-500/25",
     iconClass: "from-amber-500 to-yellow-600 shadow-amber-500/40",
     haloClass: "from-amber-400/50 to-yellow-400/10",
+  },
+  {
+    id: "notifications",
+    label: "Notifications",
+    sublabel: "Journal des événements",
+    icon: Bell,
+    badge: "Journal",
+    badgeBgClass: "bg-sky/10",
+    badgeTextClass: "text-sky-600",
+    cardClass:
+      "bg-gradient-to-br from-sky-500/10 via-white to-white border-sky-500/20 hover:shadow-sky-500/25",
+    iconClass: "from-sky-600 to-cyan-700 shadow-sky-500/40",
+    haloClass: "from-sky-400/50 to-cyan-400/10",
   },
 ];
 

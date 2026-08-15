@@ -3,10 +3,10 @@ import { ADMIN_TABS, AdminTab } from "@/components/admin/AdminNavTabBar";
 import fs from "node:fs";
 import path from "node:path";
 
-describe("Refonte Admin OS — Navigation & grille d'accueil (10 onglets)", () => {
-  it("définit les 10 onglets de la refonte dans ADMIN_TABS avec leurs métadonnées", () => {
+describe("Refonte Admin OS — Navigation & grille d'accueil (11 onglets)", () => {
+  it("définit les 11 onglets de la refonte dans ADMIN_TABS avec leurs métadonnées", () => {
     const tabIds = ADMIN_TABS.map((t) => t.id);
-    expect(tabIds).toHaveLength(10);
+    expect(tabIds).toHaveLength(11);
     expect(tabIds).toEqual([
       "executive",
       "b2b",
@@ -18,6 +18,7 @@ describe("Refonte Admin OS — Navigation & grille d'accueil (10 onglets)", () =
       "commerce",
       "profiles",
       "testimonials",
+      "notifications",
     ]);
 
     const execTab = ADMIN_TABS.find((t) => t.id === "executive");
@@ -48,6 +49,12 @@ describe("Refonte Admin OS — Navigation & grille d'accueil (10 onglets)", () =
     const testimonialsTab = ADMIN_TABS.find((t) => t.id === "testimonials");
     expect(testimonialsTab?.label).toBe("Témoignages");
     expect(testimonialsTab?.badge).toBe("Avis");
+
+    // Onglet « Notifications » (2026-08-15, panneau admin in-app) — journal global
+    // des app_notifications (bascules de statut, séances, bilans).
+    const notificationsTab = ADMIN_TABS.find((t) => t.id === "notifications");
+    expect(notificationsTab?.label).toBe("Notifications");
+    expect(notificationsTab?.badge).toBe("Journal");
 
     expect(tabIds).not.toContain("seasons");
     expect(tabIds).not.toContain("subscriptions");

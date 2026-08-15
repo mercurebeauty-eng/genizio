@@ -8,9 +8,12 @@ import {
   computeTrustTier,
 } from "./mentor-score";
 
-// Score de fiabilité mentor (V2, 2026-08-14) — pondération décidée avec le porteur :
-// 50% tenue des séances + 25% feedback famille (1-5) + 25% progression des défis. Sans
-// feedback posé, la moyenne est renormalisée sur les composantes disponibles (0.75).
+// Score de fiabilité mentor (V3, 2026-08-15) — grille 40/15/15/30 décidée avec le
+// porteur : 40% tenue des séances (confirmées − contestées) + 15% ponctualité
+// (séances liées à un créneau planifié réalisées à l'heure ±30 min) + 15% feedback
+// famille (1-5) + 30% progression des défis (la valeur recherchée, plus lourde
+// qu'avant). Sans ponctualité (aucun créneau planifié) ni feedback posé, la moyenne
+// est renormalisée sur les composantes disponibles (0.70 sans les deux).
 describe("computeMentorScore", () => {
   it("0 séance et 0 défi : score 0", () => {
     expect(
@@ -23,7 +26,7 @@ describe("computeMentorScore", () => {
     ).toBe(0);
   });
 
-  it("toutes les séances tenues et tous les défis complétés, sans feedback : 100 (renormalisé)", () => {
+  it("toutes les séances tenues et tous les défis complétés, sans feedback ni ponctualité : 100 (renormalisé)", () => {
     expect(
       computeMentorScore({
         expectedSessions: 12,
@@ -34,7 +37,7 @@ describe("computeMentorScore", () => {
     ).toBe(100);
   });
 
-  it("partiel sans feedback : 6/12 séances + 2/4 défis → (50×0.5 + 50×0.25)/0.75 = 50", () => {
+  it("partiel sans feedback ni ponctualité : 6/12 séances + 2/4 défis → (50×0.4 + 50×0.3)/0.7 = 50", () => {
     expect(
       computeMentorScore({
         expectedSessions: 12,
@@ -45,7 +48,7 @@ describe("computeMentorScore", () => {
     ).toBe(50);
   });
 
-  it("séances pleines mais progression nulle, sans feedback : (100×0.5)/0.75 ≈ 67", () => {
+  it("séances pleines mais progression nulle, sans feedback : (100×0.4)/0.7 ≈ 57", () => {
     expect(
       computeMentorScore({
         expectedSessions: 12,
@@ -53,10 +56,10 @@ describe("computeMentorScore", () => {
         completedChallenges: 0,
         totalChallenges: 4,
       }),
-    ).toBe(67);
+    ).toBe(57);
   });
 
-  it("progression pleine mais aucune séance, sans feedback : (100×0.25)/0.75 ≈ 33", () => {
+  it("progression pleine mais aucune séance, sans feedback : (100×0.3)/0.7 ≈ 43 — la progression pèse plus qu'avant (25→30)", () => {
     expect(
       computeMentorScore({
         expectedSessions: 12,
@@ -64,7 +67,7 @@ describe("computeMentorScore", () => {
         completedChallenges: 4,
         totalChallenges: 4,
       }),
-    ).toBe(33);
+    ).toBe(43);
   });
 
   it("feedback 5/5 + séances pleines + progression pleine : 100", () => {
@@ -79,7 +82,7 @@ describe("computeMentorScore", () => {
     ).toBe(100);
   });
 
-  it("feedback 1/5 avec le reste parfait : (50 + 25×20 + 25)/1 = 80 — la mauvaise note fait baisser", () => {
+  it("feedback 1/5 avec le reste parfait : (40 + 15×20 + 30)/0.85 ≈ 86 — la mauvaise note fait baisser", () => {
     expect(
       computeMentorScore({
         expectedSessions: 12,
@@ -88,10 +91,10 @@ describe("computeMentorScore", () => {
         totalChallenges: 4,
         avgFeedback: 1,
       }),
-    ).toBe(80);
+    ).toBe(86);
   });
 
-  it("feedback 5/5 sans séance ni progression : (0 + 25×100 + 0)/1 = 25", () => {
+  it("feedback 5/5 sans séance ni progression : (15×100)/0.85 ≈ 18", () => {
     expect(
       computeMentorScore({
         expectedSessions: 12,
@@ -100,7 +103,7 @@ describe("computeMentorScore", () => {
         totalChallenges: 4,
         avgFeedback: 5,
       }),
-    ).toBe(25);
+    ).toBe(18);
   });
 
   it("séances plafonnées à 100 (déclarées > attendues) : 100 côté séances", () => {
@@ -122,10 +125,10 @@ describe("computeMentorScore", () => {
         completedChallenges: 5,
         totalChallenges: 5,
       }),
-    ).toBe(33);
+    ).toBe(43);
   });
 
-  it("expectedSessions 0 avec feedback 4/5 : (25×80 + 25×100)/1 = 45", () => {
+  it("expectedSessions 0 avec feedback 4/5 : (15×80 + 30×100)/0.85 ≈ 49", () => {
     expect(
       computeMentorScore({
         expectedSessions: 0,
@@ -134,7 +137,72 @@ describe("computeMentorScore", () => {
         totalChallenges: 5,
         avgFeedback: 4,
       }),
-    ).toBe(45);
+    ).toBe(49);
+  });
+
+  it("ponctualité présente (50/100) avec le reste parfait, sans feedback : (40 + 15×50 + 30)/0.85 ≈ 91", () => {
+    expect(
+      computeMentorScore({
+        expectedSessions: 12,
+        declaredSessions: 12,
+        completedChallenges: 4,
+        totalChallenges: 4,
+        punctualityScore: 50,
+      }),
+    ).toBe(91);
+  });
+
+  it("ponctualité à 0 (créneaux planifiés jamais tenus à l'heure) : (40 + 15×0 + 30)/0.85 ≈ 82", () => {
+    expect(
+      computeMentorScore({
+        expectedSessions: 12,
+        declaredSessions: 12,
+        completedChallenges: 4,
+        totalChallenges: 4,
+        punctualityScore: 0,
+      }),
+    ).toBe(82);
+  });
+
+  it("ponctualité absente (null) = renormalisation (comportement identique à l'absence du paramètre)", () => {
+    const withNull = computeMentorScore({
+      expectedSessions: 12,
+      declaredSessions: 12,
+      completedChallenges: 4,
+      totalChallenges: 4,
+      punctualityScore: null,
+    });
+    const without = computeMentorScore({
+      expectedSessions: 12,
+      declaredSessions: 12,
+      completedChallenges: 4,
+      totalChallenges: 4,
+    });
+    expect(withNull).toBe(without);
+  });
+
+  it("compteur NÉGATIF : 12 confirmées − 2 contestées = 10/12 → (40×83.33 + 30×100)/0.7 ≈ 90", () => {
+    expect(
+      computeMentorScore({
+        expectedSessions: 12,
+        declaredSessions: 12,
+        contestedSessions: 2,
+        completedChallenges: 4,
+        totalChallenges: 4,
+      }),
+    ).toBe(90);
+  });
+
+  it("compteur NÉGATIF : plus de contestations que de confirmées → tenue plancher 0", () => {
+    expect(
+      computeMentorScore({
+        expectedSessions: 12,
+        declaredSessions: 5,
+        contestedSessions: 8,
+        completedChallenges: 4,
+        totalChallenges: 4,
+      }),
+    ).toBe(43);
   });
 });
 

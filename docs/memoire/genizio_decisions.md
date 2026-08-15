@@ -109,7 +109,7 @@ ces occurrences seront corrigées au fil des phases qui touchent chaque écran c
   passer au suivant — la Phase 5 (partage mentor) introduit la première route publique
   non-authentifiée de l'app, risque de confidentialité plus élevé que la fuite RLS déjà trouvée et
   corrigée cette session.
-**Statut** : Phase 0 terminée et vérifiée (voir [[genizio-etat-code]]). Phases 1-6 en cours.
+**Statut** : **tout livré** — les 7 phases ont été implémentées puis largement dépassées par les refontes suivantes (Portfolio, Quête, hub Mentor, Admin OS, Naya V4...). Cette décision décrit la refonte « Génizio v2 » d'origine ; elle est conservée pour l'historique, l'état réel du code fait foi (cf. [[genizio-etat-code]]).
 
 ## Décision #12 : Boutique de kits — commande WhatsApp avant vrai paiement in-app
 **Décision** : Le premier jalon du modèle économique "Kits Génizio" (cf. [[genizio-vision]] §
@@ -139,7 +139,8 @@ appliquée en prod avec confirmation explicite de l'utilisateur.
 **Statut** : Phases 0, 1 et 2 terminées et vérifiées de bout en bout le 2026-07-16/17 (génération
 réelle → aucune ligne fantôme → assignation → exactement 1 ligne en base → produit de test matché
 → lien `wa.me` correctement pré-rempli, puis données de test nettoyées). Phase 3 (suivi commandes
-léger) : voir [[genizio-backlog]], pas commencée.
+léger) livrée par la [[#14]] (table `orders` + suivi admin) ; Phase 4 (paiement in-app) différée au
+backlog.
 
 ## Décision #13 : Deux bugs trouvés en vérifiant la Phase 0-2 de la boutique
 **Contexte** : découverts en testant le flux réel de génération de défi pendant l'implémentation
@@ -1384,14 +1385,16 @@ pâtisserie des fractions", mission d'investigation Naya, cause `METHOD_MISMATCH
 maintenant la phrase traduite correcte après le fix — retrouvé et confirmé en direct dans le
 navigateur, pas seulement en théorie. 6 tests dédiés, `tsc`/tests propres.
 
-## D�cision #47 : Int�gration des Saisons Trimestrielles & Fiabilisation Naya
-**D�cision (2026-07-25)** : Introduction des Saisons Trimestrielles (ex: "Saison 1: Les Penseurs & Inventeurs") factur�es � 5 000 FCFA. Ce m�canisme n'est pas qu'une surcouche visuelle mais modifie intrins�quement le fonctionnement de l'IA (le g�n�rateur) en lui ajoutant des instructions de th�matique, SEULEMENT si l'enfant est inscrit.
-**D�tails UI** : Ajout d'un badge "En Cours" pr�s du pr�nom dans le profil (header) ; ajout d'une carte "Certificat Trimestriel" dans le Portfolio, positionn�e au-dessus de la carte du passeport certifi� � 50 000 FCFA. Ajout d'un s�lecteur de "Mat�riel" (Maison, Ext�rieur, Magasin, Mixte) pour filtrer explicitement le mat�riel autoris�.
-**Pourquoi** : Demande explicite de l'utilisateur. Le filtre par "Saison" modifie le g�n�rateur de d�fis de fa�on transparente et ajoute une composante narrative aux d�fis propos�s (en plus du domaine de base).
-**R�solution technique** : 
-- Helper getChildEnrolledSeason cr�� avec createServerFn (TanStack) pour l'API.
-- L'injection JSON pour la g�n�ration des d�fis acad�miques "secrets" a �t� corrig�e pour fusionner toutes les contraintes de contexte.
-- R�solution d'un bug o� ctiveSeason et enrollment �taient d�finis en double via destructuring dans challenges.functions.ts causant un crash local de la compilation TypeScript. Tous les types TypeScript v�rifi�s avec 
+## Décision #47 : Intégration des Saisons Trimestrielles & Fiabilisation Naya
+**Décision (2026-07-25)** : Introduction des Saisons Trimestrielles (ex: "Saison 1: Les Penseurs & Inventeurs") facturées à 5 000 FCFA. Ce mécanisme n'est pas qu'une surcouche visuelle mais modifie intrinsèquement le fonctionnement de l'IA (le générateur) en lui ajoutant des instructions de thématique, SEULEMENT si l'enfant est inscrit.
+**Détails UI** : Ajout d'un badge "En Cours" près du prénom dans le profil (header) ; ajout d'une carte "Certificat Trimestriel" dans le Portfolio, positionnée au-dessus de la carte du passeport certifié à 50 000 FCFA. Ajout d'un sélecteur de "Matériel" (Maison, Extérieur, Magasin, Mixte) pour filtrer explicitement le matériel autorisé.
+**Pourquoi** : Demande explicite de l'utilisateur. Le filtre par "Saison" modifie le générateur de défis de façon transparente et ajoute une composante narrative aux défis proposés (en plus du domaine de base).
+**Résolution technique** :
+- Helper `getChildEnrolledSeason` créé avec createServerFn (TanStack) pour l'API.
+- L'injection JSON pour la génération des défis académiques "secrets" a été corrigée pour fusionner toutes les contraintes de contexte.
+- Résolution d'un bug où `activeSeason` et enrollment étaient définis en double via destructuring dans `challenges.functions.ts` causant un crash local de la compilation TypeScript. Tous les types TypeScript vérifiés avec `tsc --noEmit`.
+**⚠️ Note d'encodage (2026-08-15)** : ce bloc avait été écrit avec des caractères corrompus (mojibake), ce qui le rendait invisible aux recherches (d'où son absence apparente de l'index des décisions). Texte restauré.
+**Statut** : SUPPERSÉDÉ — la Saison payante a été incluse automatiquement puis dégradée en simple étiquette (décisions #49 et #60, 2026-08-03/12) ; `getChildEnrolledSeason` ne sert plus qu'à l'information (étiquette/certificat, inscription explicite).
 px tsc --noEmit.
 
 ## Décision #48 : Modèle "Rolling" pour les Saisons & Inscription Admin Manuelle
@@ -1843,7 +1846,7 @@ fichier ne porte plus que les constantes partagées.
 **✅ IMPLÉMENTÉ (2026-08-15, branche `feat/superviseur-copilote`)** — la décision produit a été posée en session (product-intelligence-architect), puis entièrement implémentée le même jour. Le constat d'origine : la direction de l'app fait du superviseur un copilote, mais le code ne lui donnait qu'un dashboard lecture seule + déclaration de séance, et la V4 (PR 82-87) avait industrialisé l'économie du superviseur-observateur sans toucher à ses droits. Aucune table `supervisor_actions` ni `supervisor_reports` n'existait en base.
 
 **Livré** :
-- **Migration `20260815000000_supervisor_copilot.sql`** (NON appliquée en prod avant revue, convention du repo) : `supervisor_actions` (journal d'audit), `supervisor_reports` (bilan), `app_notifications` (canal parent), `challenges.created_by_user_id` (attribution).
+- **Migration `20260815000000_supervisor_copilot.sql`** (appliquée en prod le 2026-08-15 + types régénérés — voir MEMORY) : `supervisor_actions` (journal d'audit), `supervisor_reports` (bilan), `app_notifications` (canal parent), `challenges.created_by_user_id` (attribution).
 - **Fondations testées** : `child-accompaniment.ts` (`resolveChildAccompaniment` — miroir LECTURE de la chaîne pack→campagne), `supervisor-operator.ts` (`canOperateSupervisor` pur + `assertSupervisorOperator` + `isLastPayableSession`), `supervisor-actions.ts`, `app-notifications.ts`, `supervisor-reports.ts` (machine à états draft→submitted→validated|rejected).
 - **Cœurs IA extraits** (comportement parent byte-identique, suite 660 tests verte au refactor) : `validateChallengeProofCore`, `submitDeclarativeProofCore`, `generateChallengesCore`, `assignTemplateChallengeCore` — la voie superviseur réutilise STRICTEMENT la même chaîne IA, seul l'acteur change.
 - **`supervisor-operator.functions.ts`** (6 fns, toutes via service role APRÈS `assertSupervisorOperator`) : update (start/progress + notes→journal), abandon (motif, même chaîne post-échec), preuve photo en séance, preuve déclarative, génération, assignation (`user_id` reste le parent, `created_by_user_id` = superviseur).
@@ -1852,7 +1855,7 @@ fichier ne porte plus que les constantes partagées.
 - **UI superviseur** (`/supervisor`) : onglet Défis | Bilan, boutons opérateur dans la modale de détail (Commencer / progression / note de séance / non réussi / soumettre la preuve photo ou déclarative), génération de défis, rédaction + soumission du bilan, statut + feedback parent ; `getSupervisorDashboard` annoté (`accompaniment` + `supervisorActions`).
 - **UI parent** : bandeau « Mode accompagnement » (info superviseur + badge d'activité + liste notifications + tout marquer lu), bouton « Réouvrir » sur les défis complétés (points conservés), carte « Bilan du superviseur » au portfolio (valider / demander des modifications / PDF / WhatsApp), route `/profiles/$profileId/bilan-print` + `BilanPdf` (@react-pdf/renderer, polices de marque).
 
-**⚠️ Non livré dans cette tranche** : migrations NON poussées en prod (revue requise, puis `supabase gen types typescript --linked` — le code cast `(supabaseAdmin as any)` pour les nouvelles tables et compile sans regen) ; pas de push cross-appareil (pull + badge, assumé dans la décision).
+**✅ Tout livré dans cette tranche** : migrations poussées en prod + types régénérés (2026-08-15, vérifié dans MEMORY et le backlog) ; pas de push cross-appareil (pull + badge, assumé dans la décision).
 
 **Contexte** : le pack Accompagnement (60 000 F/mois/enfant, 12 séances, bilan inclus) vendu par la V4 paie aujourd'hui un **observateur**. Décision utilisateur : pour les enfants **accompagnés**, le superviseur devient l'**opérateur principal** du cycle de vie des défis ; le parent passe en **validateur** (garde le dernier mot). Le non-négociable fondateur #1 (« le parent valide les défis et publie ») est préservé **par veto** — le parent a choisi le pack, choisi le superviseur, et peut tout annuler — plutôt que par gatekeeping à chaque défi.
 
@@ -1872,7 +1875,7 @@ fichier ne porte plus que les constantes partagées.
 
 **Alternatives rejetées** : *superviseur lecteur + signal « prêt » sans droit de complétion* (copilote sans bouton — rejeté par l'utilisateur : si le superviseur ne valide rien, le pack n'a aucun sens) ; *attestation superviseur sans photo* (casserait la chaîne IA : points/Jumeau/observations indexés sur la preuve) ; *`user_id = superviseur` à l'écriture* (casserait toutes les lectures parent et le modèle d'ownership) ; *validation parent bloquante à chaque défi* (friction insupportable — le parent valide le bilan, pas chaque micro-décision).
 
-**Implémentation à venir** — feuille de route dans [[genizio-backlog]] (couche d'autorisation `canOperate`, UI superviseur, `supervisor_reports`, condition de payout, journal d'audit).
+**✅ Implémentation complète livrée** (2026-08-15, branche `feat/superviseur-copilote` puis renommée Mentor — décision #76) : couche d'autorisation `canOperateSupervisor`/`assertSupervisorOperator`, UI `/supervisor`, `supervisor_reports`, condition de payout (`isLastPayableSession`), journal d'audit `supervisor_actions` — voir les sections « Livré » ci-dessus et [[#76]].
 
 ## Décision #75 : Rétro-documentation des décisions V4 « Pass Enfant » 1-5 (2026-08-15)
 
@@ -1954,4 +1957,32 @@ fichier ne porte plus que les constantes partagées.
 
 **Migration** : `20260815130000_mentor_trust_system.sql` (statut `confirmed` + `confirmed_by/confirmed_at`, `mentor_points`, `push_subscriptions` ; RLS sans policy, service-role) — **appliquée en prod + types régénérés depuis la base** (2026-08-15, jeton Supabase réparé). **Vérifié** : suite complète verte (+22 nouveaux : seuils, palier, payout tier/bonus, paliers points), `tsc --noEmit` propre, build OK (`sw.js` injectManifest généré, handlers push/notificationclick présents).
 
-**Différé au backlog** : « contester une séance » (rejet parent explicite), « cadeau boutique » au palier 60 pts (la boutique/orders existe, l'intégration produit est un chantier à part), notification admin sur bascule de statut via la page admin elle-même (les admins reçoivent push+email, le panneau in-app admin n'existe pas).
+**Différé au backlog** : « contester une séance » (rejet parent explicite — **en cours 2026-08-15**), « cadeau boutique » au palier 60 pts (la boutique/orders existe, l'intégration produit est un chantier à part), notification admin sur bascule de statut via la page admin elle-même (les admins reçoivent push+email, le panneau in-app admin n'existe pas — **en cours 2026-08-15**).
+
+## Décision #81 : Ponctualité/planification des séances · Contester une séance · Panneau admin des notifications (2026-08-15)
+
+**✅ IMPLÉMENTÉ** — trois items du backlog (décisions #75 pt 4 et #79 différés) livrés ensemble sur `main` : la ponctualité (reportée depuis la grille V4 parce qu'elle exigeait la planification), le rejet parent explicite d'une séance déclarée, et le journal admin des notifications. Cadrés par 3 réponses du porteur (grille de score, force de pénalité, emplacement du panneau).
+
+### 1. Planification des séances + ponctualité (décision #75 pt 4)
+
+- **Migration `20260815200000_mentor_session_planning_and_contest.sql`** (NON poussée en prod dans un premier temps — revue, convention du repo) : table `mentor_session_slots` (id, mentor_user_id, child_profile_id, planned_at, notes, status planned/cancelled, cancelled_at/by, created_at, index mentor+enfant, RLS sans policy) ; `mentor_sessions` gagne `scheduled_at` (heure planifiée dénormalisée), `mentor_session_slot_id` (FK SET NULL, index partiel UNIQUE : un créneau ne lie qu'une séance), et le statut `contested` (point 2).
+- **Flux** : le mentor planifie un créneau (`planMentorSessionSlot` — date + heure + note, enfant assigné actif, statut non suspendu/banni) → le parent est notifié (`mentor_session_planned`, push+email). À la déclaration, la séance peut être liée au créneau (`declareSessionMentor` accepte `slotId`, valide l'appartenance/statut du créneau, écrit `scheduled_at`) → **ponctualité = séances planifiées réalisées à l'heure (±30 min, `PUNCTUALITY_WINDOW_MINUTES`) ÷ séances planifiées**. `cancelMentorSessionSlot` (annulation silencieuse), `listMyPlannedSlots` (mentor), `listChildPlannedSlots` (parent, ownership).
+- **Score re-grillé 40/15/15/30** (décision porteur : « la part de la progression doit être plus grande car c'est la valeur qu'on recherche ») — tenue 40 % · ponctualité 15 % · feedback 15 % · **progression 30 %** (était 25 %). Renormalisé sur les composantes mesurables quand la ponctualité (aucun créneau planifié — jamais punitif) ou le feedback manquent. `computeMentorScore` gagne `punctualityScore` et `contestedSessions` ; appelants mis à jour (`listMentorsAdmin` mensuel + roulant, `getMentorDashboard`, `computeRollingScore`). Helper pur `punctualityFromSessions` pour unifier le calcul.
+- **UI** : `/mentor` — bouton « Planifier une séance » + modale (date+heure+note) + liste des créneaux à venir avec annulation + sélecteur « Créneau planifié » dans la modale de déclaration ; hub parent — carte « Séances planifiées ».
+
+### 2. Contester une séance (décision #79 différé)
+
+- **Statut `contested`** ajouté au CHECK de `mentor_sessions` + `contested_by`/`contested_at`/`contest_reason`. Exclu de `CONFIRMED_SESSION_STATUSES` (ni score, ni points, ni payout) et inapprovable par l'admin (transition `.eq("status","confirmed")` inchangée).
+- **`contestMentorSession`** (ownership parent, transition atomique `.eq("status","declared")` — jamais de double contestation) : motif par vocabulaire fermé (`not_done`/`non_compliant`/`not_on_time`/`other`, `CONTEST_REASONS`) + note optionnelle ; **remboursement** de la séance financée (`family_coverages.sessions_used − 1` si pack, `campaigns.sessions_used − 1` si campagne, garde ≥ 0 — cœur `processSessionContest`/`refundSessionDebit` testé avec fake DB) ; journal `mentor_actions` (`session_contested`) ; notifications mentor + admins (`mentor_session_contested`) ; `syncMentorTrustStatus`.
+- **Pénalité « compteur négatif »** (choix porteur) : `sessionsScore = max(0, confirmées − contestées) ÷ attendues` — une contestation retire 1 séance confirmée du numérateur (12 confirmées − 2 contestées = 10/12). Garde anti-abus : chaque contestation est visible dans le journal admin (point 3).
+- **UI parent** : chaque séance de « Séances à valider » gagne un bouton « Contester » (dialogue motif + note) à côté de « Confirmer ».
+
+### 3. Panneau in-app admin des notifications (décision #79 différé)
+
+- **`listAppNotificationsAdmin`** (requireAdmin) : journal global paginé de `app_notifications` (page/pageSize/type/count, tri created_at desc), destinataire résolu — emails parents via `parent_profiles` (indexée), comptes restants via `auth.admin.getUserById` bornés (≤ pageSize, jamais listAllUsers) — rôle dérivé (admin si email dans ADMIN_EMAILS, parent si parent_profiles, sinon mentor).
+- **Trou comblé** : `updateMentorStatusAdmin` (suspend/ban/rétablir MANUEL) n'émettait aucune notification — le journal était muet pour l'action humaine. Il émet désormais `mentor_status_changed` (mentor + admins, push+email), comme les bascules automatiques de `syncMentorTrustStatus`.
+- **UI** : 11ᵉ onglet « Notifications » (`AdminTab` + `ADMIN_TABS`, icône Bell, `AdminNotificationsTab`) — filtre par type, libellés français + payload résumé, `AdminPagination`, lecture seule. Chip « Contestée par le parent » ajouté au ledger de séances de l'onglet Mentors.
+
+**Alternatives rejetées** : *score 50/25/25 inchangé + ponctualité informative* (le porteur a choisi de rééquilibrer avec une progression plus lourde) ; *ponctualité en bonus de points* (le poids de grille était documenté, il se réintègre comme composante) ; *contester une séance déjà confirmée* (contradictoire — le parent a déjà validé ; le chemin « déclarée » couvre le besoin, l'admin garde le levier sur le reste) ; *panneau admin dans l'onglet Mentors* (choix porteur : onglet dédié, le journal couvre toutes les notifications, pas seulement les bascules) ; *statut « contestée » sans remboursement* (la séance n'a pas eu lieu, le budget pack/campagne doit revenir au créneau).
+
+**Vérifié** : 746 tests verts (57 fichiers, dont `mentor-scheduling.test.ts` ×11, `mentor-contest.test.ts` ×11, `mentor-score.test.ts` étendu à 42), `tsc --noEmit` propre, `npm run build` OK (Nitro/Workers). Migration `20260815200000` NON poussée en prod (revue requise, puis `supabase gen types typescript --linked` — le code cast `(supabaseAdmin as any)` pour les colonnes/tables nouvelles et compile sans regen, convention #74).

@@ -14,6 +14,7 @@
 
 import { computeExpectedSessions, computeMentorScore, computeMentorStatusFromScore } from "./mentor-score";
 import { notifyUser } from "./app-notifications";
+import { punctualityFromSessions } from "./mentor-scheduling";
 
 /** Statuts de séance qui comptent comme « confirmées par le parent » (le cycle
  *  declared → confirmed → approved → paid : une fois confirmée, elle reste comptée). */
@@ -82,7 +83,9 @@ export async function creditMentorPoints(
 /**
  * Score de confiance sur les 30 derniers jours pour un mentor : séances CONFIRMÉES
  * (la déclaration seule ne suffit plus) ÷ attendues (12/mois/enfant), progression
- * des défis (cumul) et feedback famille sur les séances de la fenêtre.
+ * des défis (cumul), feedback famille sur les séances de la fenêtre, ponctualité
+ * (séances liées à un créneau planifié réalisées à l'heure) et contestations
+ * (compteur négatif).
  */
 export async function computeRollingScore(
   db: { from: (table: string) => any },
@@ -101,11 +104,19 @@ export async function computeRollingScore(
 
   const { data: sessions } = await db
     .from("mentor_sessions")
-    .select("id")
+    .select("id, occurred_at, scheduled_at")
     .eq("mentor_user_id", mentorUserId)
     .in("status", CONFIRMED_SESSION_STATUSES)
     .gte("occurred_at", windowStart);
   const sessionIds = (sessions ?? []).map((s: any) => s.id as string);
+
+  // Contestations (compteur négatif) : séances contestées par le parent dans la fenêtre.
+  const { data: contested } = await db
+    .from("mentor_sessions")
+    .select("id")
+    .eq("mentor_user_id", mentorUserId)
+    .eq("status", "contested")
+    .gte("contested_at", windowStart);
 
   let avgFeedback = 0;
   if (sessionIds.length > 0) {
@@ -136,9 +147,11 @@ export async function computeRollingScore(
   return computeMentorScore({
     expectedSessions: computeExpectedSessions(childrenCount, TRUST_WINDOW_DAYS, TRUST_WINDOW_DAYS),
     declaredSessions: sessionIds.length,
+    contestedSessions: (contested ?? []).length,
     completedChallenges: completed,
     totalChallenges: total,
     avgFeedback,
+    punctualityScore: punctualityFromSessions(sessions ?? []),
   });
 }
 

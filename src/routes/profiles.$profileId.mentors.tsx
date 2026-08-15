@@ -9,8 +9,12 @@ import {
   listChildSessionsForFeedback,
   listChildSessionsForValidation,
   confirmMentorSession,
+  contestMentorSession,
   submitMentorFeedback,
+  CONTEST_REASONS,
+  type ContestReason,
 } from "@/lib/mentors.functions";
+import { listChildPlannedSlots } from "@/lib/mentor-scheduling.functions";
 import { getChildBilan, validateMentorReport } from "@/lib/mentor-reports.functions";
 import { listMyNotifications, markNotificationsRead } from "@/lib/notifications.functions";
 import { confirmDialog } from "@/components/ui/confirm-dialog";
@@ -27,6 +31,7 @@ import {
   Activity,
   Clock,
   Sparkles,
+  Loader2,
 } from "lucide-react";
 
 export const Route = createFileRoute("/profiles/$profileId/mentors")({
@@ -99,6 +104,26 @@ function MentorHubPage() {
   const [confirmingSessionId, setConfirmingSessionId] = useState<string | null>(null);
   const validationListFn = useServerFn(listChildSessionsForValidation);
   const confirmFn = useServerFn(confirmMentorSession);
+
+  // Contestation (2026-08-15, backlog « Contester une séance ») : au lieu de
+  // confirmer, le parent conteste une séance déclarée (non réalisée, non conforme,
+  // horaires non respectés) — la séance est annulée, la séance de pack remboursée,
+  // le score du mentor pénalisé.
+  const [contestingFor, setContestingFor] = useState<{
+    id: string;
+    date: string;
+  } | null>(null);
+  const [contestReason, setContestReason] = useState<ContestReason>("not_done");
+  const [contestNote, setContestNote] = useState("");
+  const [contesting, setContesting] = useState(false);
+  const contestFn = useServerFn(contestMentorSession);
+
+  // Séances planifiées (2026-08-15, backlog « Ponctualité ») : créneaux à venir du
+  // mentor pour cet enfant — le parent voit ce qui est prévu.
+  const [plannedSlots, setPlannedSlots] = useState<
+    Array<{ id: string; planned_at: string; notes: string | null }>
+  >([]);
+  const plannedSlotsFn = useServerFn(listChildPlannedSlots);
 
   // Activité récente (canal pull + badge, décision #74).
   const [notifications, setNotifications] = useState<any[]>([]);
@@ -183,6 +208,32 @@ function MentorHubPage() {
     }
   };
 
+  // Contestation : la séance déclarée est annulée (séance de pack/campagne
+  // remboursée), le mentor est notifié, son score est pénalisé (compteur négatif).
+  const handleContestSession = async () => {
+    if (!contestingFor) return;
+    setContesting(true);
+    try {
+      await contestFn({
+        data: {
+          sessionId: contestingFor.id,
+          reason: contestReason,
+          note: contestNote.trim() || undefined,
+        },
+      });
+      toast.success("Séance contestée — le mentor est notifié, la séance de pack est remboursée.");
+      setContestingFor(null);
+      setContestNote("");
+      setContestReason("not_done");
+      const refreshed = await validationListFn({ data: { childId: profileId } });
+      setSessionsToValidate((refreshed as any[]) ?? []);
+    } catch (err: any) {
+      toast.error(err.message || "Impossible de contester la séance.");
+    } finally {
+      setContesting(false);
+    }
+  };
+
   const userId = session?.user?.id;
 
   useEffect(() => {
@@ -213,6 +264,9 @@ function MentorHubPage() {
 
         const toValidate = await validationListFn({ data: { childId: profileId } });
         setSessionsToValidate((toValidate as any[]) ?? []);
+
+        const slots = await plannedSlotsFn({ data: { childId: profileId } });
+        setPlannedSlots((slots as any[]) ?? []);
 
         const notifs = await notificationsFn();
         const all = (notifs as any)?.notifications ?? [];
@@ -459,6 +513,53 @@ function MentorHubPage() {
                 </div>
               )}
 
+              {/* Séances planifiées (2026-08-15, backlog « Ponctualité ») : les créneaux
+                  que le mentor a planifiés pour cet enfant — le parent voit ce qui est
+                  prévu et peut vérifier la ponctualité à la déclaration. */}
+              {plannedSlots.length > 0 && (
+                <div className="rounded-3xl border border-cyan-200 bg-cyan-50/50 p-5 shadow-sm space-y-3">
+                  <div className="flex items-center gap-3">
+                    <div className="grid size-11 place-items-center rounded-2xl bg-cyan-600 text-white shrink-0">
+                      <Clock className="size-5" />
+                    </div>
+                    <div>
+                      <p className="text-xs font-black uppercase tracking-widest text-cyan-700">
+                        Séances planifiées
+                      </p>
+                      <p className="text-xs text-ink/50 mt-0.5">
+                        {plannedSlots.length} créneau{plannedSlots.length > 1 ? "x" : ""} à
+                        venir — le mentor est attendu à l'heure prévue.
+                      </p>
+                    </div>
+                  </div>
+                  <ul className="space-y-2">
+                    {plannedSlots.map((slot) => (
+                      <li
+                        key={slot.id}
+                        className="rounded-2xl border border-cyan-200 bg-white px-4 py-3"
+                      >
+                        <p className="text-sm font-bold text-ink">
+                          🗓️{" "}
+                          {new Date(slot.planned_at).toLocaleDateString("fr-FR", {
+                            weekday: "long",
+                            day: "numeric",
+                            month: "long",
+                          })}{" "}
+                          à{" "}
+                          {new Date(slot.planned_at).toLocaleTimeString("fr-FR", {
+                            hour: "2-digit",
+                            minute: "2-digit",
+                          })}
+                        </p>
+                        {slot.notes && (
+                          <p className="text-xs text-ink/60 mt-0.5">{slot.notes}</p>
+                        )}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+
               {/* Séances à valider (V3, Confiance Mentor) : le mentor déclare, le parent
                   confirme. Sans confirmation, la séance ne compte ni score, ni points, ni
                   payout — carte visible uniquement quand des séances attendent. */}
@@ -503,14 +604,32 @@ function MentorHubPage() {
                             </p>
                           )}
                         </div>
-                        <button
-                          onClick={() => void handleConfirmSession(s.id)}
-                          disabled={confirmingSessionId === s.id}
-                          className="inline-flex items-center gap-2 rounded-xl bg-indigo-600 px-4 py-2 text-xs font-black text-white hover:bg-indigo-700 transition-all disabled:opacity-50 cursor-pointer shrink-0"
-                        >
-                          <Check className="size-4" />
-                          {confirmingSessionId === s.id ? "Confirmation…" : "Confirmer"}
-                        </button>
+                        <div className="flex items-center gap-2 shrink-0">
+                          <button
+                            onClick={() =>
+                              setContestingFor({
+                                id: s.id,
+                                date: new Date(s.occurred_at).toLocaleDateString("fr-FR", {
+                                  day: "numeric",
+                                  month: "long",
+                                }),
+                              })
+                            }
+                            disabled={confirmingSessionId === s.id}
+                            className="inline-flex items-center gap-1.5 rounded-xl border border-rose-200 bg-rose-50 px-3 py-2 text-xs font-black text-rose-700 hover:bg-rose-100 transition-all disabled:opacity-50 cursor-pointer"
+                          >
+                            <X className="size-4" />
+                            Contester
+                          </button>
+                          <button
+                            onClick={() => void handleConfirmSession(s.id)}
+                            disabled={confirmingSessionId === s.id}
+                            className="inline-flex items-center gap-2 rounded-xl bg-indigo-600 px-4 py-2 text-xs font-black text-white hover:bg-indigo-700 transition-all disabled:opacity-50 cursor-pointer"
+                          >
+                            <Check className="size-4" />
+                            {confirmingSessionId === s.id ? "Confirmation…" : "Confirmer"}
+                          </button>
+                        </div>
                       </li>
                     ))}
                   </ul>
@@ -625,17 +744,19 @@ function MentorHubPage() {
                           ? `🎉 ${n.payload?.title ?? "Un défi"} complété par le mentor`
                           : n.type === "mentor_abandon"
                             ? `❌ ${n.payload?.title ?? "Un défi"} marqué non réussi par le mentor`
-                            : n.type === "mentor_session_to_validate"
-                              ? `📋 Séance à valider — ${n.payload?.occurred_at ? new Date(n.payload.occurred_at).toLocaleDateString("fr-FR") : ""}`
-                              : n.type === "mentor_session_confirmed"
-                                ? `✅ Séance confirmée par le parent`
-                                : n.type === "mentor_bilan_submitted"
-                                  ? `📄 Bilan soumis par le mentor`
-                                  : n.type === "mentor_bilan_validated"
-                                    ? `✅ Bilan validé par le parent`
-                                    : n.type === "mentor_bilan_rejected"
-                                      ? `↩️ Bilan renvoyé au mentor`
-                                      : `🔔 ${n.type}`}
+                            : n.type === "mentor_session_planned"
+                              ? `🗓️ Séance planifiée — ${n.payload?.planned_at ? new Date(n.payload.planned_at).toLocaleDateString("fr-FR") : ""}`
+                              : n.type === "mentor_session_to_validate"
+                                ? `📋 Séance à valider — ${n.payload?.occurred_at ? new Date(n.payload.occurred_at).toLocaleDateString("fr-FR") : ""}`
+                                : n.type === "mentor_session_confirmed"
+                                  ? `✅ Séance confirmée par le parent`
+                                  : n.type === "mentor_bilan_submitted"
+                                    ? `📄 Bilan soumis par le mentor`
+                                    : n.type === "mentor_bilan_validated"
+                                      ? `✅ Bilan validé par le parent`
+                                      : n.type === "mentor_bilan_rejected"
+                                        ? `↩️ Bilan renvoyé au mentor`
+                                        : `🔔 ${n.type}`}
                         <span className="block text-[10px] font-bold text-ink/40 mt-0.5">
                           {new Date(n.created_at).toLocaleString("fr-FR")}
                         </span>
@@ -656,6 +777,88 @@ function MentorHubPage() {
           </div>
         </div>
       </main>
+
+      {/* Modal — Contester une séance (2026-08-15) : la séance déclarée est annulée,
+          la séance de pack/campagne remboursée, le mentor notifié. */}
+      {contestingFor && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-ink/40 p-4 backdrop-blur-sm">
+          <div className="w-full max-w-md max-h-[85vh] overflow-y-auto bg-white rounded-3xl border border-ink/10 p-6 md:p-8 shadow-xl animate-in zoom-in-95 duration-200">
+            <div className="flex items-start justify-between gap-4 border-b-2 border-ink pb-4 mb-6">
+              <div>
+                <h3 className="font-display text-balance text-xl font-black text-ink">
+                  Contester cette séance ?
+                </h3>
+                <p className="text-sm text-ink/60 mt-0.5">
+                  Séance du {contestingFor.date} — elle sera annulée, la séance de
+                  pack/campagne remboursée, et le score du mentor pénalisé.
+                </p>
+              </div>
+              <button
+                onClick={() => setContestingFor(null)}
+                className="rounded-xl border border-ink/10 p-1.5 hover:bg-stone-100 transition-all cursor-pointer"
+              >
+                <X className="size-5" />
+              </button>
+            </div>
+
+            <div className="space-y-4">
+              <div>
+                <label className="text-xs font-black uppercase tracking-widest text-ink/60 mb-2 block">
+                  Motif
+                </label>
+                <div className="grid grid-cols-1 gap-2">
+                  {(Object.keys(CONTEST_REASONS) as ContestReason[]).map((key) => (
+                    <button
+                      key={key}
+                      type="button"
+                      onClick={() => setContestReason(key)}
+                      className={`rounded-xl border px-4 py-2.5 text-left text-xs font-bold transition-all cursor-pointer ${
+                        contestReason === key
+                          ? "border-rose-400 bg-rose-50 text-rose-800"
+                          : "border-ink/10 bg-surface text-ink/70 hover:border-ink/25"
+                      }`}
+                    >
+                      {CONTEST_REASONS[key]}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div>
+                <label className="text-xs font-black uppercase tracking-widest text-ink/60 mb-2 block">
+                  Précision{" "}
+                  <span className="normal-case font-bold text-ink/40">(optionnelle)</span>
+                </label>
+                <textarea
+                  value={contestNote}
+                  onChange={(e) => setContestNote(e.target.value)}
+                  rows={3}
+                  maxLength={2000}
+                  placeholder="Ex. : le mentor ne s'est pas présenté ce jour-là…"
+                  className="w-full rounded-xl border border-ink/10 bg-surface px-4 py-3 text-sm font-medium text-ink outline-none focus:ring-2 focus:ring-rose-400"
+                />
+              </div>
+
+              <div className="border-t-2 border-ink pt-4 flex justify-end gap-2">
+                <button
+                  onClick={() => setContestingFor(null)}
+                  className="rounded-2xl border border-ink/10 px-6 py-2.5 text-xs font-bold text-ink/60 hover:bg-stone-100 transition-all cursor-pointer"
+                >
+                  Annuler
+                </button>
+                <button
+                  onClick={() => void handleContestSession()}
+                  disabled={contesting}
+                  className="inline-flex items-center gap-2 rounded-2xl bg-rose-600 px-6 py-2.5 text-xs font-bold text-white shadow-sm hover:-translate-y-0.5 transition-all disabled:opacity-50 cursor-pointer"
+                >
+                  {contesting ? <Loader2 className="size-4 animate-spin" /> : <X className="size-4" />}
+                  {contesting ? "Contestation…" : "Contester la séance"}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

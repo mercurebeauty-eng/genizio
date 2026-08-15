@@ -83,6 +83,18 @@ function buildPushPayload(params: {
         body: "Le parent demande des corrections sur votre bilan.",
         url: "/mentor",
       };
+    case "mentor_session_planned":
+      return {
+        title: "Séance planifiée",
+        body: "Votre mentor a planifié une séance — le créneau est visible dans le hub Mentor.",
+        url: parentUrl,
+      };
+    case "mentor_session_contested":
+      return {
+        title: "Séance contestée",
+        body: "Le parent conteste une séance déclarée — elle ne compte ni pour le score ni pour le paiement.",
+        url: "/mentor",
+      };
     case "mentor_status_changed": {
       const to = (p.to as string) ?? "actif";
       return {
@@ -134,7 +146,7 @@ async function sendEmailForEvent(
       to: p.to as string | undefined,
       score: typeof p.score === "number" ? p.score : undefined,
       feedback: p.feedback as string | null | undefined,
-      date: p.occurred_at as string | undefined,
+      date: (p.occurred_at ?? p.planned_at) as string | undefined,
     });
     if (!email) return;
     await sendNotificationEmail({

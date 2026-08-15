@@ -834,14 +834,18 @@ export function AdminMentorsTab() {
                             ? "bg-emerald-100 text-emerald-700"
                             : s.status === "approved"
                               ? "bg-amber-100 text-amber-700"
-                              : "bg-ink/5 text-ink/50"
+                              : s.status === "contested"
+                                ? "bg-rose-100 text-rose-700"
+                                : "bg-ink/5 text-ink/50"
                         }`}
                       >
                         {s.status === "paid"
                           ? "Payé"
                           : s.status === "approved"
                             ? "Approuvé"
-                            : "Déclaré (à confirmer)"}
+                            : s.status === "contested"
+                              ? "Contestée par le parent"
+                              : "Déclaré (à confirmer)"}
                       </span>
                     )}
                   </li>
