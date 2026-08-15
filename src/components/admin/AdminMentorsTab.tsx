@@ -10,6 +10,8 @@ import {
   getChildrenOfParentAdmin,
   searchMentorsAdmin,
   assignMentorToChildAdmin,
+  generateMentorActivationCodesAdmin,
+  listMentorActivationCodesAdmin,
   listCampaignsLightAdmin,
   listMentorSessionsAdmin,
   approveMentorSessionAdmin,
@@ -18,6 +20,7 @@ import {
   type ParentSearchResult,
   type ChildOfParentResult,
   type MentorSearchResult,
+  type MentorActivationCodeRow,
 } from "@/lib/mentors.functions";
 import { formatXof } from "@/lib/pricing";
 import { AdminPagination } from "./AdminPagination";
@@ -37,6 +40,7 @@ import {
   RotateCcw,
   ListChecks,
   Banknote,
+  KeyRound,
 } from "lucide-react";
 import { toast } from "sonner";
 import { confirmDialog } from "@/components/ui/confirm-dialog";
@@ -83,6 +87,44 @@ export function AdminMentorsTab() {
   >([]);
   const [sessionsLoading, setSessionsLoading] = useState(false);
   const [markingPaidFor, setMarkingPaidFor] = useState<string | null>(null);
+
+  // Codes d'activation Mentor (Vague 5, spec §7) : self-service par code.
+  const generateCodesFn = useServerFn(generateMentorActivationCodesAdmin);
+  const listCodesFn = useServerFn(listMentorActivationCodesAdmin);
+  const [codes, setCodes] = useState<MentorActivationCodeRow[]>([]);
+  const [codesTotal, setCodesTotal] = useState(0);
+  const [generatingCodes, setGeneratingCodes] = useState(false);
+
+  const loadCodes = async () => {
+    const opts = session?.access_token
+      ? { headers: { Authorization: `Bearer ${session.access_token}` } }
+      : {};
+    const res = await listCodesFn({ data: undefined, ...opts }).catch(() => null);
+    if (res) {
+      setCodes(res.codes);
+      setCodesTotal(res.total);
+    }
+  };
+
+  const handleGenerateCodes = async (count: number) => {
+    const opts = session?.access_token
+      ? { headers: { Authorization: `Bearer ${session.access_token}` } }
+      : {};
+    setGeneratingCodes(true);
+    try {
+      const res = await generateCodesFn({ data: { count }, ...opts });
+      toast.success(
+        `${res.codes.length} code(s) généré(s) — transmettez-les aux futurs mentors.`,
+      );
+      await loadCodes();
+    } catch (err) {
+      toast.error(
+        err instanceof Error ? err.message : "Erreur lors de la génération des codes.",
+      );
+    } finally {
+      setGeneratingCodes(false);
+    }
+  };
 
   // Sans ce délai, chaque frappe déclencherait une requête serveur complète (même
   // pattern que AdminCampaignsTab).
@@ -147,6 +189,8 @@ export function AdminMentorsTab() {
         console.error("Erreur chargement campagnes admin:", err);
         setCampaigns([]);
       });
+
+    void loadCodes();
 
     void refetch();
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -595,6 +639,97 @@ export function AdminMentorsTab() {
           />
         </div>
       )}
+
+      {/* Codes d'activation Mentor (Vague 5, spec §7) : l'utilisateur active lui-même
+          le mode Mentor avec un code généré ici (Paramètres → Mentor). */}
+      <div className="rounded-3xl border border-ink/10 bg-white p-6 shadow-xl">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-4">
+          <div>
+            <h3 className="font-display text-base font-black text-ink flex items-center gap-2">
+              <KeyRound className="size-5 text-brand" /> Codes d'activation Mentor
+            </h3>
+            <p className="text-xs text-ink/60 mt-0.5 leading-relaxed">
+              Codes à usage unique : un parent/mentor les saisit dans Paramètres → Mentor
+              pour activer le mode Mentor lui-même (spec §7). Sans code, un mentor n'existe
+              que par assignation admin.
+            </p>
+          </div>
+          <button
+            onClick={() => void handleGenerateCodes(5)}
+            disabled={generatingCodes}
+            className="shrink-0 inline-flex items-center gap-1.5 rounded-xl bg-brand hover:bg-brand/90 text-white px-4 py-2 text-xs font-bold transition-all cursor-pointer disabled:opacity-50"
+          >
+            {generatingCodes ? (
+              <Loader2 className="size-3.5 animate-spin" />
+            ) : (
+              <KeyRound className="size-3.5" />
+            )}
+            Générer 5 codes
+          </button>
+        </div>
+
+        {codes.length === 0 ? (
+          <p className="text-xs font-semibold text-ink/50 py-3">
+            Aucun code généré pour l'instant.
+          </p>
+        ) : (
+          <>
+            <div className="overflow-x-auto rounded-2xl border border-ink/10">
+              <table className="w-full text-left text-sm">
+                <thead className="border-b border-ink/10 bg-surface/60 text-[11px] font-black uppercase tracking-wider text-ink/60">
+                  <tr>
+                    <th className="px-4 py-2.5">Code</th>
+                    <th className="px-4 py-2.5">Créé le</th>
+                    <th className="px-4 py-2.5">Valable jusqu'au</th>
+                    <th className="px-4 py-2.5">Statut</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-ink/5">
+                  {codes.map((c) => {
+                    const expired =
+                      c.valid_until && new Date(c.valid_until).getTime() < Date.now();
+                    return (
+                      <tr key={c.id}>
+                        <td className="px-4 py-2.5 font-mono text-xs font-bold text-ink">
+                          {c.code}
+                        </td>
+                        <td className="px-4 py-2.5 text-xs text-ink/60">
+                          {new Date(c.created_at).toLocaleDateString("fr-FR")}
+                        </td>
+                        <td className="px-4 py-2.5 text-xs text-ink/60">
+                          {c.valid_until
+                            ? new Date(c.valid_until).toLocaleDateString("fr-FR")
+                            : "Jamais"}
+                        </td>
+                        <td className="px-4 py-2.5">
+                          {c.used_by_email ? (
+                            <span className="rounded-full bg-emerald-100 text-emerald-800 px-2.5 py-0.5 text-[10px] font-extrabold uppercase tracking-wider">
+                              Utilisé par {c.used_by_email}
+                            </span>
+                          ) : expired ? (
+                            <span className="rounded-full bg-amber-100 text-amber-800 px-2.5 py-0.5 text-[10px] font-extrabold uppercase tracking-wider">
+                              Expiré
+                            </span>
+                          ) : (
+                            <span className="rounded-full bg-ink/5 text-ink/70 px-2.5 py-0.5 text-[10px] font-extrabold uppercase tracking-wider">
+                              Disponible
+                            </span>
+                          )}
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+            {codesTotal > 50 && (
+              <p className="mt-2 text-[11px] font-semibold text-ink/50">
+                Affichage des 50 codes les plus récents ({codesTotal} au total).
+              </p>
+            )}
+          </>
+        )}
+      </div>
 
       {isAssignModalOpen && (
         <AssignMentorModal

@@ -10,6 +10,9 @@ import {
   getChildrenOfParentAdmin,
   searchMentorsAdmin,
   assignMentorToChildAdmin,
+  generateMentorActivationCodesAdmin,
+  listMentorActivationCodesAdmin,
+  activateMentorCode,
   listMentorsAdmin,
   listCampaignsLightAdmin,
   declareSessionMentor,
@@ -149,6 +152,22 @@ describe("Milestone 3 — R4, R5, R6 Server & UI Logic Tests", () => {
     it("exports assignMentorToChildAdmin server function definition", () => {
       expect(assignMentorToChildAdmin).toBeDefined();
       expect(typeof assignMentorToChildAdmin).toBe("function");
+    });
+
+    // Vague 5 (spec §7, décision D1) : activation du mode Mentor par code.
+    it("exports generateMentorActivationCodesAdmin server function definition", () => {
+      expect(generateMentorActivationCodesAdmin).toBeDefined();
+      expect(typeof generateMentorActivationCodesAdmin).toBe("function");
+    });
+
+    it("exports listMentorActivationCodesAdmin server function definition", () => {
+      expect(listMentorActivationCodesAdmin).toBeDefined();
+      expect(typeof listMentorActivationCodesAdmin).toBe("function");
+    });
+
+    it("exports activateMentorCode server function definition", () => {
+      expect(activateMentorCode).toBeDefined();
+      expect(typeof activateMentorCode).toBe("function");
     });
 
     // Refonte Gestion des Mentors (2026-08-14) : les nouvelles fonctions de

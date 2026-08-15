@@ -232,6 +232,7 @@ export type Database = {
           aspiration_label: string | null
           behavioral_driver: string | null
           child_id: string
+          child_question: string | null
           completed_at: string | null
           created_at: string
           created_by_user_id: string | null
@@ -248,6 +249,7 @@ export type Database = {
           kind: string
           material_tags: string[]
           materials: Json
+          naya_hint: string | null
           not_completed_at: string | null
           not_completed_cause: string | null
           not_completed_reason: string | null
@@ -283,6 +285,7 @@ export type Database = {
           aspiration_label?: string | null
           behavioral_driver?: string | null
           child_id: string
+          child_question?: string | null
           completed_at?: string | null
           created_at?: string
           created_by_user_id?: string | null
@@ -299,6 +302,7 @@ export type Database = {
           kind?: string
           material_tags?: string[]
           materials?: Json
+          naya_hint?: string | null
           not_completed_at?: string | null
           not_completed_cause?: string | null
           not_completed_reason?: string | null
@@ -334,6 +338,7 @@ export type Database = {
           aspiration_label?: string | null
           behavioral_driver?: string | null
           child_id?: string
+          child_question?: string | null
           completed_at?: string | null
           created_at?: string
           created_by_user_id?: string | null
@@ -350,6 +355,7 @@ export type Database = {
           kind?: string
           material_tags?: string[]
           materials?: Json
+          naya_hint?: string | null
           not_completed_at?: string | null
           not_completed_cause?: string | null
           not_completed_reason?: string | null
@@ -910,6 +916,36 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      mentor_activation_codes: {
+        Row: {
+          code: string
+          created_at: string
+          created_by: string | null
+          id: string
+          used_at: string | null
+          used_by: string | null
+          valid_until: string | null
+        }
+        Insert: {
+          code: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          used_at?: string | null
+          used_by?: string | null
+          valid_until?: string | null
+        }
+        Update: {
+          code?: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          used_at?: string | null
+          used_by?: string | null
+          valid_until?: string | null
+        }
+        Relationships: []
       }
       mentor_feedback: {
         Row: {
@@ -1823,6 +1859,10 @@ export type Database = {
       }
     }
     Functions: {
+      activate_mentor_code: {
+        Args: { p_code: string; p_user_id: string }
+        Returns: string
+      }
       activate_season: { Args: { target_id: string }; Returns: undefined }
       apply_observation_to_twin: {
         Args: {
@@ -1835,6 +1875,7 @@ export type Database = {
         Returns: string
       }
       compute_executive_kpis: { Args: never; Returns: Json }
+      compute_progression_health: { Args: never; Returns: Json }
       increment_child_talents: {
         Args: { p_child_id: string; p_deltas: Json }
         Returns: Json

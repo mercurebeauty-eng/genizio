@@ -1151,6 +1151,135 @@ export const checkIsActiveMentor = createServerFn({ method: "GET" })
     return { isMentor: status !== "banned" };
   });
 
+// ── Activation du mode Mentor par code (Vague 5, spec §7, décision D1) ──────
+// L'admin génère des codes à usage unique ; l'utilisateur les saisit dans
+// « Paramètres → Mentor » ; la RPC activate_mentor_code (migration 20260815180000)
+// fait l'activation ATOMIQUEMENT (FOR UPDATE + auth.uid() vérifié dans la fonction).
+
+const GenerateCodesInput = z.object({
+  count: z.number().int().min(1).max(50).default(5),
+  /** Nombre de jours de validité (null = jamais expiré). */
+  validDays: z.number().int().min(1).max(365).optional(),
+});
+
+export interface MentorActivationCodeRow {
+  id: string;
+  code: string;
+  valid_until: string | null;
+  used_by_email: string | null;
+  used_at: string | null;
+  created_at: string;
+}
+
+// Alphabet sans caractères ambigus (ni 0/O, 1/I/L) — code tapé à la main.
+const CODE_ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+
+async function generateMentorCode(): Promise<string> {
+  // Import dynamique (pattern du repo pour les modules serveur uniquement).
+  const { randomBytes } = await import("node:crypto");
+  const bytes = randomBytes(8);
+  let code = "MNT-";
+  for (let i = 0; i < 8; i++) code += CODE_ALPHABET[bytes[i] % CODE_ALPHABET.length];
+  return code;
+}
+
+export const generateMentorActivationCodesAdmin = createServerFn({ method: "POST" })
+  .middleware([requireAdmin])
+  .validator((input: unknown) => GenerateCodesInput.parse(input))
+  .handler(async ({ data, context }) => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const validUntil = data.validDays
+      ? new Date(Date.now() + data.validDays * 24 * 60 * 60 * 1000).toISOString()
+      : null;
+
+    // Génération + insertion ; en cas de collision UNIQUE (improbable), on régénère
+    // une fois avant d'abandonner.
+    for (let attempt = 0; attempt < 3; attempt++) {
+      const codes = await Promise.all(
+        Array.from({ length: data.count }, () => generateMentorCode()),
+      );
+      const { data: inserted, error } = await (supabaseAdmin as any)
+        .from("mentor_activation_codes")
+        .insert(
+          codes.map((code) => ({
+            code,
+            created_by: (context as any).claims?.sub ?? null,
+            valid_until: validUntil,
+          })),
+        )
+        .select("code, valid_until, created_at");
+      if (!error) return { codes: (inserted ?? []).map((c: any) => c.code as string) };
+      if (error.code !== "23505") throw new Error(error.message);
+    }
+    throw new Error("Impossible de générer des codes uniques — réessayez.");
+  });
+
+export const listMentorActivationCodesAdmin = createServerFn({ method: "GET" })
+  .middleware([requireAdmin])
+  .handler(async (): Promise<{ codes: MentorActivationCodeRow[]; total: number }> => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+
+    const [{ count }, { data: rows, error }] = await Promise.all([
+      supabaseAdmin
+        .from("mentor_activation_codes")
+        .select("id", { count: "exact", head: true }),
+      (supabaseAdmin as any)
+        .from("mentor_activation_codes")
+        .select("id, code, valid_until, used_by, used_at, created_at")
+        .order("created_at", { ascending: false })
+        .limit(50),
+    ]);
+    if (error) throw new Error(error.message);
+
+    // Email du compte activé via parent_profiles (Vague 1) — une requête groupée.
+    const usedByUserIds = [
+      ...new Set(
+        ((rows ?? []) as Array<{ used_by: string | null }>)
+          .map((r) => r.used_by)
+          .filter((id): id is string => Boolean(id)),
+      ),
+    ];
+    const emailById = new Map<string, string | null>();
+    if (usedByUserIds.length > 0) {
+      const { data: contacts } = await supabaseAdmin
+        .from("parent_profiles")
+        .select("user_id, email")
+        .in("user_id", usedByUserIds);
+      for (const c of contacts ?? []) emailById.set(c.user_id, c.email);
+    }
+
+    return {
+      codes: (rows ?? []).map((r: any) => ({
+        id: r.id,
+        code: r.code,
+        valid_until: r.valid_until ?? null,
+        used_by_email: r.used_by ? (emailById.get(r.used_by) ?? "Inconnu") : null,
+        used_at: r.used_at ?? null,
+        created_at: r.created_at,
+      })),
+      total: count ?? 0,
+    };
+  });
+
+const ActivateMentorCodeInput = z.object({
+  code: z.string().trim().min(1, "Saisissez votre code d'activation.").max(40),
+});
+
+// L'utilisateur active le mode Mentor avec son code — la RPC défenseur vérifie
+// auth.uid() (l'appel passe par le client authentifié, jamais le service role).
+export const activateMentorCode = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .validator((input: unknown) => ActivateMentorCodeInput.parse(input))
+  .handler(async ({ data, context }) => {
+    const { supabase } = context;
+    const { data: status, error } = await supabase.rpc("activate_mentor_code", {
+      p_code: data.code,
+      p_user_id: (context as any).claims?.sub,
+    });
+    if (error) throw new Error(error.message);
+    return { status: status as string };
+  });
+
 // ── Ledger payout mentor (Vague C, décision « ledger admin ») ─────────────
 // Le mentor déclare ses séances (payout_xof posé à la déclaration) ; l'ADMIN valide :
 //   • declared → approved : la séance est reconnue, elle entre dans le « Payout dû » ;
