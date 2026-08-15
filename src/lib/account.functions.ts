@@ -7,11 +7,10 @@ export const exportUserData = createServerFn({ method: "GET" })
     const { supabase, userId } = context;
 
     // Fetch all user data (RLS scoped to owner)
-    const [profilesData, challengesData, consentData, mentorsData] = await Promise.all([
+    const [profilesData, challengesData, consentData] = await Promise.all([
       supabase.from("child_profiles").select("*"),
       supabase.from("challenges").select("*"),
       supabase.from("consent_events").select("*").order("created_at", { ascending: false }),
-      supabase.from("child_mentors").select("*"),
     ]);
 
     const exportObject = {
@@ -19,7 +18,6 @@ export const exportUserData = createServerFn({ method: "GET" })
       user_id: userId,
       child_profiles: profilesData.data || [],
       challenges: challengesData.data || [],
-      child_mentors: mentorsData.data || [],
       consent_events: consentData.data || [],
     };
 
@@ -40,7 +38,7 @@ export const deleteAccountAndData = createServerFn({ method: "POST" })
 
     // We can delete child_profiles via the authenticated client.
     // Due to ON DELETE CASCADE on foreign keys, this automatically drops
-    // associated challenges, child_mentors, and consent_events where child_id is set.
+    // associated challenges and consent_events where child_id is set.
     // However, consent_events without a child_id might remain if not cascaded by user_id.
     // Let's explicitly delete child_profiles first (as an extra step to ensure everything drops cleanly).
     await supabase.from("child_profiles").delete().eq("user_id", userId);

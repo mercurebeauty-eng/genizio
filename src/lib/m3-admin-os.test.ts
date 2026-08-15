@@ -5,16 +5,16 @@ import {
   type CampaignTokenDetail,
 } from "@/lib/campaigns.functions";
 import {
-  assignSupervisor,
-  assignSupervisorToCampaignAdmin,
-  listSupervisorsAdmin,
+  assignMentor,
+  assignMentorToCampaignAdmin,
+  listMentorsAdmin,
   listCampaignsLightAdmin,
-  declareSessionSupervisor,
-  updateSupervisorStatusAdmin,
-  listSupervisorSessionsAdmin,
-  approveSupervisorSessionAdmin,
-  markSupervisorSessionsPaidAdmin,
-} from "@/lib/supervisors.functions";
+  declareSessionMentor,
+  updateMentorStatusAdmin,
+  listMentorSessionsAdmin,
+  approveMentorSessionAdmin,
+  markMentorSessionsPaidAdmin,
+} from "@/lib/mentors.functions";
 
 describe("Milestone 3 — R4, R5, R6 Server & UI Logic Tests", () => {
   describe("R4: Export B2B Campaign Tokens", () => {
@@ -124,23 +124,23 @@ describe("Milestone 3 — R4, R5, R6 Server & UI Logic Tests", () => {
     });
   });
 
-  describe("R5: Harmonize Supervisor Assignment", () => {
-    it("exports assignSupervisor server function definition", () => {
-      expect(assignSupervisor).toBeDefined();
-      expect(typeof assignSupervisor).toBe("function");
+  describe("R5: Harmonize Mentor Assignment", () => {
+    it("exports assignMentor server function definition", () => {
+      expect(assignMentor).toBeDefined();
+      expect(typeof assignMentor).toBe("function");
     });
 
-    // Refonte Gestion des Superviseurs (2026-08-14) : les nouvelles fonctions de
+    // Refonte Gestion des Mentors (2026-08-14) : les nouvelles fonctions de
     // l'Admin OS (liste groupée/paginée, assignation directe à une campagne, liste
     // légère des campagnes) doivent être exposées comme le reste de la milestone.
-    it("exports listSupervisorsAdmin server function definition", () => {
-      expect(listSupervisorsAdmin).toBeDefined();
-      expect(typeof listSupervisorsAdmin).toBe("function");
+    it("exports listMentorsAdmin server function definition", () => {
+      expect(listMentorsAdmin).toBeDefined();
+      expect(typeof listMentorsAdmin).toBe("function");
     });
 
-    it("exports assignSupervisorToCampaignAdmin server function definition", () => {
-      expect(assignSupervisorToCampaignAdmin).toBeDefined();
-      expect(typeof assignSupervisorToCampaignAdmin).toBe("function");
+    it("exports assignMentorToCampaignAdmin server function definition", () => {
+      expect(assignMentorToCampaignAdmin).toBeDefined();
+      expect(typeof assignMentorToCampaignAdmin).toBe("function");
     });
 
     it("exports listCampaignsLightAdmin server function definition", () => {
@@ -148,31 +148,31 @@ describe("Milestone 3 — R4, R5, R6 Server & UI Logic Tests", () => {
       expect(typeof listCampaignsLightAdmin).toBe("function");
     });
 
-    // Système de confiance superviseur (V1) : déclaration de séance + ban/suspension.
-    it("exports declareSessionSupervisor server function definition", () => {
-      expect(declareSessionSupervisor).toBeDefined();
-      expect(typeof declareSessionSupervisor).toBe("function");
+    // Système de confiance mentor (V1) : déclaration de séance + ban/suspension.
+    it("exports declareSessionMentor server function definition", () => {
+      expect(declareSessionMentor).toBeDefined();
+      expect(typeof declareSessionMentor).toBe("function");
     });
 
-    it("exports updateSupervisorStatusAdmin server function definition", () => {
-      expect(updateSupervisorStatusAdmin).toBeDefined();
-      expect(typeof updateSupervisorStatusAdmin).toBe("function");
+    it("exports updateMentorStatusAdmin server function definition", () => {
+      expect(updateMentorStatusAdmin).toBeDefined();
+      expect(typeof updateMentorStatusAdmin).toBe("function");
     });
 
-    // Ledger payout superviseur (Vague C) : approbation des séances + marquage payé.
-    it("exports listSupervisorSessionsAdmin server function definition", () => {
-      expect(listSupervisorSessionsAdmin).toBeDefined();
-      expect(typeof listSupervisorSessionsAdmin).toBe("function");
+    // Ledger payout mentor (Vague C) : approbation des séances + marquage payé.
+    it("exports listMentorSessionsAdmin server function definition", () => {
+      expect(listMentorSessionsAdmin).toBeDefined();
+      expect(typeof listMentorSessionsAdmin).toBe("function");
     });
 
-    it("exports approveSupervisorSessionAdmin server function definition", () => {
-      expect(approveSupervisorSessionAdmin).toBeDefined();
-      expect(typeof approveSupervisorSessionAdmin).toBe("function");
+    it("exports approveMentorSessionAdmin server function definition", () => {
+      expect(approveMentorSessionAdmin).toBeDefined();
+      expect(typeof approveMentorSessionAdmin).toBe("function");
     });
 
-    it("exports markSupervisorSessionsPaidAdmin server function definition", () => {
-      expect(markSupervisorSessionsPaidAdmin).toBeDefined();
-      expect(typeof markSupervisorSessionsPaidAdmin).toBe("function");
+    it("exports markMentorSessionsPaidAdmin server function definition", () => {
+      expect(markMentorSessionsPaidAdmin).toBeDefined();
+      expect(typeof markMentorSessionsPaidAdmin).toBe("function");
     });
   });
 });

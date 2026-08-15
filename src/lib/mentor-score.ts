@@ -1,4 +1,4 @@
-// Score de fiabilité du superviseur (V2, 2026-08-14 — feedback famille intégré).
+// Score de fiabilité du mentor (V2, 2026-08-14 — feedback famille intégré).
 //
 // Pondération décidée avec le porteur (grille V4) :
 //   • 50 % tenue des séances : déclarées ÷ attendues sur la période (attendu = 12 séances
@@ -9,12 +9,12 @@
 // La ponctualité (20% de la grille documentée) est REPORTÉE : elle exige la planification
 // des séances, qui n'existe pas encore dans l'app — le poids est redistribué sur les
 // composantes mesurables. Sans feedback encore posé, la moyenne est RENORMALISÉE sur les
-// composantes disponibles (un superviseur parfait sans aucune note reste à 100 — le
+// composantes disponibles (un mentor parfait sans aucune note reste à 100 — le
 // feedback ne l'écrase pas d'office, il l'ajuste quand il existe).
 //
-// Fonction PURE (testable sans base) — les appelants (listSupervisorsAdmin,
-// getSupervisorDashboard) chargent les compteurs puis appellent ce calcul.
-export function computeSupervisorScore(params: {
+// Fonction PURE (testable sans base) — les appelants (listMentorsAdmin,
+// getMentorDashboard) chargent les compteurs puis appellent ce calcul.
+export function computeMentorScore(params: {
   expectedSessions: number;
   declaredSessions: number;
   completedChallenges: number;
@@ -40,7 +40,7 @@ export function computeSupervisorScore(params: {
   return Math.round(weighted / weightSum);
 }
 
-// Séances attendues sur la période pour un superviseur donné : 12 séances/mois/enfant
+// Séances attendues sur la période pour un mentor donné : 12 séances/mois/enfant
 // (PACK_SESSIONS) × nombre d'enfants assignés actifs × fraction de la période écoulée
 // (au premier mois partiel du pilote, le score ne pénalise pas d'office).
 export function computeExpectedSessions(

@@ -20,7 +20,7 @@ import {
 export type AdminTab =
   | "executive"
   | "b2b"
-  | "supervisors"
+  | "mentors"
   | "products"
   | "talents"
   | "naya"
@@ -76,8 +76,8 @@ export const ADMIN_TABS: AdminTabDef[] = [
     haloClass: "from-slate-400/50 to-slate-600/10",
   },
   {
-    id: "supervisors",
-    label: "Superviseurs",
+    id: "mentors",
+    label: "Mentors",
     sublabel: "Assignations",
     icon: Users,
     badge: "Super",

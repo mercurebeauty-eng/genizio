@@ -41,7 +41,7 @@ import {
 } from "@/lib/campaigns.functions";
 import { CampaignLinkCard } from "@/components/campaigns/CampaignLinkCard";
 import { toast } from "sonner";
-import { computeSupervisorQuota } from "@/lib/supervisor-quota";
+import { computeMentorQuota } from "@/lib/mentor-quota";
 import { MAX_CHILDREN_PER_ACCOUNT } from "@/lib/child-profile-quota";
 import {
   resolveExtraSlotPrice,
@@ -696,35 +696,35 @@ function CampaignQuotaEditor({
   campaign: Campaign;
   onUpdated: (c: Campaign) => void;
 }) {
-  const [value, setValue] = useState(campaign.extra_supervisors_quota);
+  const [value, setValue] = useState(campaign.extra_mentors_quota);
   const [maxEducators, setMaxEducators] = useState(campaign.max_educators ?? 0);
   const [saving, setSaving] = useState(false);
   const updateFn = useServerFn(updateCampaignExtraQuotaAdmin);
-  const supervisorFloor = computeSupervisorQuota({
+  const mentorFloor = computeMentorQuota({
     referenceCreatedAt: campaign.created_at,
     extraQuota: 0,
   });
   // Le plafond absolu de 5 (« 5 par 5 », décision 2026-08-08) s'applique aussi aux
-  // superviseurs : le trigger check_supervisor_quota fait foi, ce calcul est l'affichage.
-  const supervisorQuota = computeSupervisorQuota({
+  // mentors : le trigger check_mentor_quota fait foi, ce calcul est l'affichage.
+  const mentorQuota = computeMentorQuota({
     referenceCreatedAt: campaign.created_at,
     extraQuota: value,
   });
   const slotPrice = resolveExtraSlotPrice(campaign.created_at);
 
   useEffect(() => {
-    setValue(campaign.extra_supervisors_quota);
+    setValue(campaign.extra_mentors_quota);
     setMaxEducators(campaign.max_educators ?? 0);
-  }, [campaign.extra_supervisors_quota, campaign.max_educators]);
+  }, [campaign.extra_mentors_quota, campaign.max_educators]);
 
   const dirty =
-    value !== campaign.extra_supervisors_quota || maxEducators !== (campaign.max_educators ?? 0);
+    value !== campaign.extra_mentors_quota || maxEducators !== (campaign.max_educators ?? 0);
 
   const handleSave = async () => {
     setSaving(true);
     try {
       const updated = await updateFn({
-        data: { campaignId: campaign.id, extraSupervisorsQuota: value, maxEducators },
+        data: { campaignId: campaign.id, extraMentorsQuota: value, maxEducators },
       });
       onUpdated(updated);
       toast.success("Quota mis à jour.");
@@ -739,11 +739,11 @@ function CampaignQuotaEditor({
     <div className="bg-surface p-3 rounded-2xl mb-3 space-y-2">
       <div>
         <div className="text-xs font-bold text-ink/50 mb-1.5 uppercase tracking-wider">
-          Quota superviseurs
+          Quota mentors
         </div>
         <div className="flex items-center gap-2 flex-wrap">
           <span className="text-sm font-medium text-ink/60 shrink-0">
-            {supervisorFloor} de base +
+            {mentorFloor} de base +
           </span>
           <input
             type="number"
@@ -754,11 +754,11 @@ function CampaignQuotaEditor({
             className="w-16 bg-white border border-ink/10 rounded-xl px-2 py-1.5 text-sm font-bold text-ink text-center"
           />
           <span className="text-sm font-medium text-ink/60 shrink-0">
-            = {supervisorQuota} enfants max/superviseur
+            = {mentorQuota} enfants max/mentor
           </span>
-          {value > 0 && supervisorQuota === MAX_CHILDREN_PER_ACCOUNT && (
+          {value > 0 && mentorQuota === MAX_CHILDREN_PER_ACCOUNT && (
             <span className="rounded-full bg-brand/10 px-2.5 py-0.5 text-[10px] font-black uppercase tracking-wider text-brand">
-              5 max — au-delà, assigner un 2ᵉ superviseur
+              5 max — au-delà, assigner un 2ᵉ mentor
             </span>
           )}
         </div>
@@ -818,7 +818,7 @@ function CreateCampaignModal({
   const [managerEmail, setManagerEmail] = useState("");
   const [targetCount, setTargetCount] = useState(100);
   // V4, DÉCISION 3 : 2 compteurs distincts — le compartiment SÉANCES (budget d'accompagnement
-  // financé, débité au fil des déclarations des superviseurs). 0 = la campagne ne finance que
+  // financé, débité au fil des déclarations des mentors). 0 = la campagne ne finance que
   // l'app.
   const [sessionsTarget, setSessionsTarget] = useState(0);
   const [startDate, setStartDate] = useState(todayISO());

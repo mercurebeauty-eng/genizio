@@ -2,18 +2,18 @@ import { useEffect, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { useSession } from "@/hooks/use-session";
 import {
-  listSupervisorsAdmin,
-  assignSupervisor,
-  assignSupervisorToCampaignAdmin,
-  removeSupervisor,
-  updateSupervisorStatusAdmin,
+  listMentorsAdmin,
+  assignMentor,
+  assignMentorToCampaignAdmin,
+  removeMentor,
+  updateMentorStatusAdmin,
   listChildProfilesAdmin,
   listCampaignsLightAdmin,
-  listSupervisorSessionsAdmin,
-  approveSupervisorSessionAdmin,
-  markSupervisorSessionsPaidAdmin,
-  type SupervisorGroup,
-} from "@/lib/supervisors.functions";
+  listMentorSessionsAdmin,
+  approveMentorSessionAdmin,
+  markMentorSessionsPaidAdmin,
+  type MentorGroup,
+} from "@/lib/mentors.functions";
 import { formatXof } from "@/lib/pricing";
 import { AdminPagination } from "./AdminPagination";
 import {
@@ -36,16 +36,16 @@ import {
 import { toast } from "sonner";
 import { confirmDialog } from "@/components/ui/confirm-dialog";
 
-// Refonte « Gestion des Superviseurs » (2026-08-14) — répond aux trois manques signalés :
+// Refonte « Gestion des Mentors » (2026-08-14) — répond aux trois manques signalés :
 //   • « on ne sait pas comment ça fonctionne » → encadré « Comment ça marche » ci-dessous ;
 //   • « comment assigne-t-on directement à une campagne ? » → bouton primaire qui ouvre la
-//     modale d'assignation PAR CAMPAGNE (assignSupervisorToCampaignAdmin), l'admin Génizio
+//     modale d'assignation PAR CAMPAGNE (assignMentorToCampaignAdmin), l'admin Génizio
 //     n'avait jusqu'ici que l'assignation enfant-par-enfant ;
-//   • « ingénierie zéro » → liste GROUPÉE par superviseur, PAGINÉE, avec recherche par
+//   • « ingénierie zéro » → liste GROUPÉE par mentor, PAGINÉE, avec recherche par
 //     email et filtre par campagne (l'ancienne liste plate chargeait toute la table).
-export function AdminSupervisorsTab() {
+export function AdminMentorsTab() {
   const { session, loading } = useSession();
-  const [groups, setGroups] = useState<SupervisorGroup[]>([]);
+  const [groups, setGroups] = useState<MentorGroup[]>([]);
   const [childProfiles, setChildProfiles] = useState<{ id: string; name: string; age: number }[]>(
     [],
   );
@@ -60,15 +60,15 @@ export function AdminSupervisorsTab() {
   const [debouncedSearch, setDebouncedSearch] = useState("");
   const [campaignFilter, setCampaignFilter] = useState("");
 
-  const listFn = useServerFn(listSupervisorsAdmin);
-  const removeFn = useServerFn(removeSupervisor);
+  const listFn = useServerFn(listMentorsAdmin);
+  const removeFn = useServerFn(removeMentor);
   const listChildrenFn = useServerFn(listChildProfilesAdmin);
   const listCampaignsFn = useServerFn(listCampaignsLightAdmin);
-  const listSessionsFn = useServerFn(listSupervisorSessionsAdmin);
-  const approveSessionFn = useServerFn(approveSupervisorSessionAdmin);
-  const markPaidFn = useServerFn(markSupervisorSessionsPaidAdmin);
+  const listSessionsFn = useServerFn(listMentorSessionsAdmin);
+  const approveSessionFn = useServerFn(approveMentorSessionAdmin);
+  const markPaidFn = useServerFn(markMentorSessionsPaidAdmin);
 
-  // Ledger payout (Vague C) : séances d'un superviseur + actions Approuver / Marquer payé.
+  // Ledger payout (Vague C) : séances d'un mentor + actions Approuver / Marquer payé.
   const [payoutModalFor, setPayoutModalFor] = useState<string | null>(null);
   const [sessionsRows, setSessionsRows] = useState<
     Array<{
@@ -116,7 +116,7 @@ export function AdminSupervisorsTab() {
       setTotalPages((data as any)?.totalPages ?? 1);
       setForbidden(false);
     } catch (err: any) {
-      console.error("Error fetching supervisors:", err);
+      console.error("Error fetching mentors:", err);
       const isForbidden =
         err?.status === 403 ||
         err?.statusCode === 403 ||
@@ -128,7 +128,7 @@ export function AdminSupervisorsTab() {
       if (isForbidden) {
         setForbidden(true);
       } else {
-        toast.error("Erreur de chargement des superviseurs.");
+        toast.error("Erreur de chargement des mentors.");
       }
     } finally {
       setFetching(false);
@@ -160,8 +160,8 @@ export function AdminSupervisorsTab() {
   const handleRemove = async (assignmentId: string, childName: string) => {
     if (
       !(await confirmDialog({
-        title: "Retirer ce superviseur ?",
-        description: `L'assignation de « ${childName} » sera supprimée. L'enfant pourra recevoir un nouveau superviseur.`,
+        title: "Retirer ce mentor ?",
+        description: `L'assignation de « ${childName} » sera supprimée. L'enfant pourra recevoir un nouveau mentor.`,
         confirmLabel: "Retirer",
         variant: "danger",
       }))
@@ -172,20 +172,20 @@ export function AdminSupervisorsTab() {
       : {};
     try {
       await removeFn({ data: { id: assignmentId }, ...opts });
-      toast.success("Superviseur retiré.");
+      toast.success("Mentor retiré.");
       void refetch();
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Erreur lors du retrait du superviseur.");
+      toast.error(err instanceof Error ? err.message : "Erreur lors du retrait du mentor.");
     }
   };
 
-  // Système de confiance (V1) : suspendre/bannir/restaurer un compte superviseur — le ban
-  // est structurel : un superviseur banni ne reçoit plus d'assignation ni ne peut déclarer
-  // de séance (vérifié dans insertSupervisorAssignments et declareSessionSupervisor).
-  const updateStatusFn = useServerFn(updateSupervisorStatusAdmin);
+  // Système de confiance (V1) : suspendre/bannir/restaurer un compte mentor — le ban
+  // est structurel : un mentor banni ne reçoit plus d'assignation ni ne peut déclarer
+  // de séance (vérifié dans insertMentorAssignments et declareSessionMentor).
+  const updateStatusFn = useServerFn(updateMentorStatusAdmin);
   const [updatingStatusId, setUpdatingStatusId] = useState<string | null>(null);
 
-  const handleUpdateStatus = async (supervisorUserId: string, status: string) => {
+  const handleUpdateStatus = async (mentorUserId: string, status: string) => {
     const label =
       status === "banned"
         ? "Bannir"
@@ -197,27 +197,27 @@ export function AdminSupervisorsTab() {
     const isRestore = status === "active";
     if (
       !(await confirmDialog({
-        title: `${label} ce superviseur ?`,
+        title: `${label} ce mentor ?`,
         description: isRestore
-          ? "Le superviseur retrouve son accès : il peut de nouveau recevoir des assignations et déclarer des séances."
+          ? "Le mentor retrouve son accès : il peut de nouveau recevoir des assignations et déclarer des séances."
           : status === "banned"
-            ? "Banni, le superviseur perd tout accès : plus d'assignation, plus de déclaration de séance. Ses enfants deviennent réassignables."
+            ? "Banni, le mentor perd tout accès : plus d'assignation, plus de déclaration de séance. Ses enfants deviennent réassignables."
             : status === "suspended"
-              ? "Suspendu, le superviseur est bloqué temporairement : plus d'assignation ni de déclaration, mais ses enfants restent assignés."
-              : "Avertissement : le superviseur garde son accès, mais son statut est signalé à l'équipe et aux organisations.",
+              ? "Suspendu, le mentor est bloqué temporairement : plus d'assignation ni de déclaration, mais ses enfants restent assignés."
+              : "Avertissement : le mentor garde son accès, mais son statut est signalé à l'équipe et aux organisations.",
         confirmLabel: label,
         variant: status === "banned" ? "danger" : "default",
       }))
     )
       return;
-    setUpdatingStatusId(supervisorUserId);
+    setUpdatingStatusId(mentorUserId);
     const opts = session?.access_token
       ? { headers: { Authorization: `Bearer ${session.access_token}` } }
       : {};
     try {
-      await updateStatusFn({ data: { supervisorUserId, status }, ...opts });
+      await updateStatusFn({ data: { mentorUserId, status }, ...opts });
       toast.success(
-        `Superviseur ${isRestore ? "restauré" : label.toLowerCase()} — statut mis à jour.`,
+        `Mentor ${isRestore ? "restauré" : label.toLowerCase()} — statut mis à jour.`,
       );
       void refetch();
     } catch (err) {
@@ -228,14 +228,14 @@ export function AdminSupervisorsTab() {
   };
 
   // ── Ledger payout (Vague C) ───────────────────────────────────────────────────
-  const openPayoutModal = async (supervisorUserId: string) => {
-    setPayoutModalFor(supervisorUserId);
+  const openPayoutModal = async (mentorUserId: string) => {
+    setPayoutModalFor(mentorUserId);
     setSessionsLoading(true);
     try {
       const opts = session?.access_token
         ? { headers: { Authorization: `Bearer ${session.access_token}` } }
         : {};
-      const rows = await listSessionsFn({ data: { supervisorUserId }, ...opts });
+      const rows = await listSessionsFn({ data: { mentorUserId }, ...opts });
       setSessionsRows((rows as any[]) ?? []);
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Erreur de chargement des séances.");
@@ -259,23 +259,23 @@ export function AdminSupervisorsTab() {
     }
   };
 
-  const handleMarkPaid = async (supervisorUserId: string) => {
+  const handleMarkPaid = async (mentorUserId: string) => {
     if (
       !(await confirmDialog({
         title: "Marquer le payout comme payé ?",
         description:
-          "Confirmez après avoir viré le superviseur (WhatsApp/Mobile Money). Les séances approuvées passent en « payé » — cette action n'est pas réversible.",
+          "Confirmez après avoir viré le mentor (WhatsApp/Mobile Money). Les séances approuvées passent en « payé » — cette action n'est pas réversible.",
         confirmLabel: "Marquer payé",
         variant: "default",
       }))
     )
       return;
-    setMarkingPaidFor(supervisorUserId);
+    setMarkingPaidFor(mentorUserId);
     const opts = session?.access_token
       ? { headers: { Authorization: `Bearer ${session.access_token}` } }
       : {};
     try {
-      const res = await markPaidFn({ data: { supervisorUserId }, ...opts });
+      const res = await markPaidFn({ data: { mentorUserId }, ...opts });
       toast.success(
         `${(res as any)?.paidCount ?? 0} séance(s) marquée(s) payée(s) — payout soldé.`,
       );
@@ -302,34 +302,34 @@ export function AdminSupervisorsTab() {
           <Users className="size-6" />
         </div>
         <div>
-          <h2 className="text-xl font-display font-black text-ink">Gestion des Superviseurs</h2>
+          <h2 className="text-xl font-display font-black text-ink">Gestion des Mentors</h2>
           <p className="text-sm font-medium text-ink/60">
-            Assigner des superviseurs aux profils d'enfants et cohortes B2B.
+            Assigner des mentors aux profils d'enfants et cohortes B2B.
           </p>
         </div>
       </div>
 
       {/* « Comment ça marche » (2026-08-14) — le fonctionnement du système n'était documenté
-          nulle part : un compte devient superviseur quand un admin (enfant par enfant) ou un
+          nulle part : un compte devient mentor quand un admin (enfant par enfant) ou un
           gestionnaire de campagne (par cohorte) lui assigne des enfants. Le quota de 5 enfants
-          par superviseur (« 5 par 5 », décision 2026-08-08) est appliqué en base par le trigger
-          check_supervisor_quota. */}
+          par mentor (« 5 par 5 », décision 2026-08-08) est appliqué en base par le trigger
+          check_mentor_quota. */}
       <div className="rounded-3xl border border-sky-200/70 bg-sky-50 p-4 sm:p-5">
         <div className="flex gap-3">
           <Info className="size-5 text-sky-600 shrink-0 mt-0.5" />
           <div className="text-xs sm:text-sm text-sky-900 leading-relaxed space-y-1">
             <p className="font-black text-sky-800">Comment ça marche</p>
             <p>
-              Un compte devient superviseur quand on lui <strong>assigne des enfants</strong> — par
+              Un compte devient mentor quand on lui <strong>assigne des enfants</strong> — par
               un admin (assignation enfant par enfant) ou par un gestionnaire de campagne
               (assignation de toute la cohorte, ici aussi possible via « Assigner à une campagne »).
-              Le superviseur voit alors ces enfants dans son tableau de bord{" "}
-              <code className="font-mono">/supervisor</code>.
+              Le mentor voit alors ces enfants dans son tableau de bord{" "}
+              <code className="font-mono">/mentor</code>.
             </p>
             <p>
-              <strong>Quota :</strong> un superviseur suit au maximum <strong>5 enfants</strong>{" "}
+              <strong>Quota :</strong> un mentor suit au maximum <strong>5 enfants</strong>{" "}
               (plancher grand-péré 5, sinon 1 + suppléments payés, plafond absolu 5 — « 5 par 5 »).
-              Au-delà, assigner un 2ᵉ superviseur.
+              Au-delà, assigner un 2ᵉ mentor.
             </p>
           </div>
         </div>
@@ -346,7 +346,7 @@ export function AdminSupervisorsTab() {
           </div>
           <p className="font-bold text-ink">Accès réservé à l'administrateur.</p>
           <p className="mt-1 text-sm text-ink/60">
-            Ce compte ({session.user.email}) n'est pas autorisé à gérer les superviseurs.
+            Ce compte ({session.user.email}) n'est pas autorisé à gérer les mentors.
           </p>
         </div>
       ) : (
@@ -359,8 +359,8 @@ export function AdminSupervisorsTab() {
                 type="search"
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                placeholder="Rechercher un superviseur par email…"
-                aria-label="Rechercher un superviseur"
+                placeholder="Rechercher un mentor par email…"
+                aria-label="Rechercher un mentor"
                 className="w-full rounded-2xl border border-ink/10 bg-surface pl-9 pr-4 py-2.5 text-sm font-medium text-ink outline-none focus:ring-2 focus:ring-brand/30"
               />
             </div>
@@ -386,24 +386,24 @@ export function AdminSupervisorsTab() {
             </button>
           </div>
 
-          {/* Liste groupée par superviseur */}
+          {/* Liste groupée par mentor */}
           {groups.length === 0 ? (
             <div className="rounded-3xl border border-ink/10 bg-white p-12 text-center shadow-xl">
               <Users className="size-12 text-ink/20 mx-auto mb-4" />
               <p className="font-bold text-ink">
-                {debouncedSearch || campaignFilter ? "Aucun résultat" : "Aucun superviseur assigné"}
+                {debouncedSearch || campaignFilter ? "Aucun résultat" : "Aucun mentor assigné"}
               </p>
               <p className="mt-1 text-sm text-ink/60">
                 {debouncedSearch || campaignFilter
-                  ? "Aucun superviseur ne correspond à ces critères."
-                  : "Assignez des enfants ou une cohorte de campagne pour créer des superviseurs."}
+                  ? "Aucun mentor ne correspond à ces critères."
+                  : "Assignez des enfants ou une cohorte de campagne pour créer des mentors."}
               </p>
             </div>
           ) : (
             <div className="space-y-4">
               {groups.map((g) => (
                 <div
-                  key={g.supervisor_user_id}
+                  key={g.mentor_user_id}
                   className="rounded-3xl border border-ink/10 bg-white p-5 sm:p-6 shadow-sm"
                 >
                   <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
@@ -474,15 +474,15 @@ export function AdminSupervisorsTab() {
                     </div>
                   </div>
 
-                  {/* Actions de statut (V1) : suspendre/bannir/restaurer le compte superviseur. */}
+                  {/* Actions de statut (V1) : suspendre/bannir/restaurer le compte mentor. */}
                   <div className="flex flex-wrap items-center gap-2 mb-4">
                     {g.status === "banned" ? (
                       <button
-                        onClick={() => void handleUpdateStatus(g.supervisor_user_id, "active")}
-                        disabled={updatingStatusId === g.supervisor_user_id}
+                        onClick={() => void handleUpdateStatus(g.mentor_user_id, "active")}
+                        disabled={updatingStatusId === g.mentor_user_id}
                         className="inline-flex items-center gap-1.5 rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-1.5 text-xs font-bold text-emerald-700 hover:bg-emerald-100 transition-all cursor-pointer disabled:opacity-50"
                       >
-                        {updatingStatusId === g.supervisor_user_id ? (
+                        {updatingStatusId === g.mentor_user_id ? (
                           <Loader2 className="size-3.5 animate-spin" />
                         ) : (
                           <RotateCcw className="size-3.5" />
@@ -492,15 +492,15 @@ export function AdminSupervisorsTab() {
                     ) : (
                       <>
                         <button
-                          onClick={() => void handleUpdateStatus(g.supervisor_user_id, "suspended")}
-                          disabled={updatingStatusId === g.supervisor_user_id}
+                          onClick={() => void handleUpdateStatus(g.mentor_user_id, "suspended")}
+                          disabled={updatingStatusId === g.mentor_user_id}
                           className="inline-flex items-center gap-1.5 rounded-xl border border-amber-200 bg-amber-50 px-3 py-1.5 text-xs font-bold text-amber-700 hover:bg-amber-100 transition-all cursor-pointer disabled:opacity-50"
                         >
                           Suspendre
                         </button>
                         <button
-                          onClick={() => void handleUpdateStatus(g.supervisor_user_id, "banned")}
-                          disabled={updatingStatusId === g.supervisor_user_id}
+                          onClick={() => void handleUpdateStatus(g.mentor_user_id, "banned")}
+                          disabled={updatingStatusId === g.mentor_user_id}
                           className="inline-flex items-center gap-1.5 rounded-xl border border-rose-200 bg-rose-50 px-3 py-1.5 text-xs font-bold text-rose-600 hover:bg-rose-100 transition-all cursor-pointer disabled:opacity-50"
                         >
                           <Ban className="size-3.5" />
@@ -525,7 +525,7 @@ export function AdminSupervisorsTab() {
                       </p>
                     </div>
                     <button
-                      onClick={() => void openPayoutModal(g.supervisor_user_id)}
+                      onClick={() => void openPayoutModal(g.mentor_user_id)}
                       className="inline-flex items-center gap-1.5 rounded-xl border border-emerald-300 bg-white px-3 py-1.5 text-xs font-bold text-emerald-800 hover:bg-emerald-100 transition-all cursor-pointer"
                     >
                       <ListChecks className="size-3.5" />
@@ -533,11 +533,11 @@ export function AdminSupervisorsTab() {
                     </button>
                     {g.approvedSessions > 0 && (
                       <button
-                        onClick={() => void handleMarkPaid(g.supervisor_user_id)}
-                        disabled={markingPaidFor === g.supervisor_user_id}
+                        onClick={() => void handleMarkPaid(g.mentor_user_id)}
+                        disabled={markingPaidFor === g.mentor_user_id}
                         className="inline-flex items-center gap-1.5 rounded-xl bg-emerald-600 px-3 py-1.5 text-xs font-bold text-white hover:bg-emerald-700 transition-all cursor-pointer disabled:opacity-50"
                       >
-                        {markingPaidFor === g.supervisor_user_id ? (
+                        {markingPaidFor === g.mentor_user_id ? (
                           <Loader2 className="size-3.5 animate-spin" />
                         ) : (
                           <Banknote className="size-3.5" />
@@ -596,16 +596,16 @@ export function AdminSupervisorsTab() {
             total={total}
             pageSize={20}
             onPageChange={setPage}
-            label="superviseur"
+            label="mentor"
           />
         </div>
       )}
 
       {isAssignModalOpen && (
-        <AssignSupervisorModal
+        <AssignMentorModal
           campaigns={campaigns}
           childProfiles={childProfiles}
-          supervisedChildIds={
+          mentoredChildIds={
             new Set(groups.flatMap((g) => g.children.map((c) => c.child_profile_id)))
           }
           onClose={() => setIsAssignModalOpen(false)}
@@ -616,7 +616,7 @@ export function AdminSupervisorsTab() {
         />
       )}
 
-      {/* Modal ledger payout (Vague C) : les séances du superviseur + approbation. */}
+      {/* Modal ledger payout (Vague C) : les séances du mentor + approbation. */}
       {payoutModalFor && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-ink/40 p-4 backdrop-blur-sm">
           <div className="w-full max-w-lg max-h-[85vh] overflow-y-auto bg-white rounded-3xl border border-ink/10 p-6 shadow-xl animate-in zoom-in-95 duration-200">
@@ -644,7 +644,7 @@ export function AdminSupervisorsTab() {
               </div>
             ) : sessionsRows.length === 0 ? (
               <p className="py-10 text-center text-sm font-semibold text-ink/50">
-                Aucune séance déclarée pour ce superviseur.
+                Aucune séance déclarée pour ce mentor.
               </p>
             ) : (
               <ul className="space-y-2">
@@ -699,20 +699,20 @@ export function AdminSupervisorsTab() {
 
 // Modale d'assignation à deux modes (2026-08-14) :
 //   • « Campagne » (primaire) : campagne + email + nombre d'enfants → le système pioche
-//     automatiquement dans la cohorte parmi les enfants sans superviseur ;
+//     automatiquement dans la cohorte parmi les enfants sans mentor ;
 //   • « Enfant précis » (secondaire) : l'assignation historique email + profil enfant.
-function AssignSupervisorModal({
+function AssignMentorModal({
   campaigns,
   childProfiles,
-  supervisedChildIds,
+  mentoredChildIds,
   onClose,
   onSuccess,
 }: {
   campaigns: { id: string; name: string }[];
   childProfiles: { id: string; name: string; age: number }[];
-  /** Enfants déjà supervisés — non listés dans le mode « enfant précis » (contrainte
+  /** Enfants déjà accompagnés — non listés dans le mode « enfant précis » (contrainte
    *  UNIQUE child_profile_id, mieux vaut ne pas les proposer du tout). */
-  supervisedChildIds: Set<string>;
+  mentoredChildIds: Set<string>;
   onClose: () => void;
   onSuccess: () => void;
 }) {
@@ -729,13 +729,13 @@ function AssignSupervisorModal({
   const [childEmail, setChildEmail] = useState("");
   const [childProfileId, setChildProfileId] = useState("");
 
-  const assignCampaignFn = useServerFn(assignSupervisorToCampaignAdmin);
-  const assignChildFn = useServerFn(assignSupervisor);
+  const assignCampaignFn = useServerFn(assignMentorToCampaignAdmin);
+  const assignChildFn = useServerFn(assignMentor);
 
   const opts = () =>
     session?.access_token ? { headers: { Authorization: `Bearer ${session.access_token}` } } : {};
 
-  const unsupervisedChildProfiles = childProfiles.filter((p) => !supervisedChildIds.has(p.id));
+  const unmentoredChildProfiles = childProfiles.filter((p) => !mentoredChildIds.has(p.id));
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -743,11 +743,11 @@ function AssignSupervisorModal({
     try {
       if (mode === "campaign") {
         if (!campaignId || !email.trim()) {
-          toast.error("Campagne et email du superviseur requis.");
+          toast.error("Campagne et email du mentor requis.");
           return;
         }
         const res = await assignCampaignFn({
-          data: { campaignId, supervisorEmail: email.trim(), count },
+          data: { campaignId, mentorEmail: email.trim(), count },
           ...opts(),
         });
         toast.success(
@@ -762,7 +762,7 @@ function AssignSupervisorModal({
           data: { email: childEmail.trim(), childProfileId },
           ...opts(),
         });
-        toast.success("Superviseur assigné avec succès !");
+        toast.success("Mentor assigné avec succès !");
       }
       onSuccess();
     } catch (err) {
@@ -778,7 +778,7 @@ function AssignSupervisorModal({
         <div className="flex items-center justify-between mb-5">
           <h3 className="font-display font-black text-xl text-ink flex items-center gap-2">
             <UserPlus className="size-6 text-brand" />
-            Assigner un superviseur
+            Assigner un mentor
           </h3>
           <button
             onClick={onClose}
@@ -817,7 +817,7 @@ function AssignSupervisorModal({
             <>
               <p className="text-xs sm:text-sm font-medium text-ink/70 leading-relaxed">
                 L'application confie automatiquement des enfants de la cohorte qui n'ont encore
-                aucun superviseur — jusqu'au nombre demandé, dans la limite du quota du superviseur
+                aucun mentor — jusqu'au nombre demandé, dans la limite du quota du mentor
                 (5 enfants max, « 5 par 5 »).
               </p>
               <div>
@@ -840,14 +840,14 @@ function AssignSupervisorModal({
               </div>
               <div>
                 <label className="block text-xs font-extrabold uppercase tracking-widest text-ink/50 mb-1.5">
-                  Email du superviseur (compte Génizio)
+                  Email du mentor (compte Génizio)
                 </label>
                 <input
                   required
                   type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  placeholder="superviseur@ong.org"
+                  placeholder="mentor@ong.org"
                   className="w-full bg-surface border border-ink/10 rounded-2xl p-3.5 text-sm font-bold text-ink focus:outline-none focus:ring-2 focus:ring-brand/30"
                 />
               </div>
@@ -871,18 +871,18 @@ function AssignSupervisorModal({
           ) : (
             <>
               <p className="text-xs sm:text-sm font-medium text-ink/70 leading-relaxed">
-                Assignation historique : choisissez précisément l'enfant que ce superviseur devra
-                suivre (l'enfant déjà supervisé n'est pas listé).
+                Assignation historique : choisissez précisément l'enfant que ce mentor devra
+                suivre (l'enfant déjà accompagné n'est pas listé).
               </p>
               <div>
                 <label className="block text-xs font-extrabold uppercase tracking-widest text-ink/50 mb-1.5">
-                  Email du superviseur
+                  Email du mentor
                 </label>
                 <input
                   type="email"
                   value={childEmail}
                   onChange={(e) => setChildEmail(e.target.value)}
-                  placeholder="superviseur@exemple.com"
+                  placeholder="mentor@exemple.com"
                   className="w-full bg-surface border border-ink/10 rounded-2xl p-3.5 text-sm font-bold text-ink focus:outline-none focus:ring-2 focus:ring-brand/30"
                 />
               </div>
@@ -896,17 +896,17 @@ function AssignSupervisorModal({
                   className="w-full bg-surface border border-ink/10 rounded-2xl p-3.5 text-sm font-bold text-ink focus:outline-none focus:ring-2 focus:ring-brand/30 cursor-pointer"
                 >
                   <option value="">Sélectionner un enfant…</option>
-                  {unsupervisedChildProfiles.map((p) => (
+                  {unmentoredChildProfiles.map((p) => (
                     <option key={p.id} value={p.id}>
                       {p.name} ({p.age} ans)
                     </option>
                   ))}
                 </select>
-                {supervisedChildIds.size > 0 && (
+                {mentoredChildIds.size > 0 && (
                   <p className="mt-1.5 text-[11px] text-ink/50">
-                    {supervisedChildIds.size} enfant{supervisedChildIds.size > 1 ? "s" : ""} déjà
-                    supervisé{supervisedChildIds.size > 1 ? "s" : ""} — non listé
-                    {supervisedChildIds.size > 1 ? "s" : ""} ici.
+                    {mentoredChildIds.size} enfant{mentoredChildIds.size > 1 ? "s" : ""} déjà
+                    accompagné{mentoredChildIds.size > 1 ? "s" : ""} — non listé
+                    {mentoredChildIds.size > 1 ? "s" : ""} ici.
                   </p>
                 )}
               </div>

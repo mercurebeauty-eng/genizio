@@ -1,4 +1,4 @@
-// Superviseur Copilote (décision #74) — PDF du « Bilan du superviseur ».
+// Mentor Copilote (décision #74) — PDF du « Bilan du mentor ».
 //
 // Export officiel du bilan de fin validé par le parent (@react-pdf/renderer, même
 // infra que le Passeport : polices Fredoka/Inter de la marque, hex OKLCH → sRGB).
@@ -74,7 +74,7 @@ export function BilanPdf({
     childAge: number;
     periodStart: string;
     periodEnd: string;
-    supervisorEmail: string;
+    mentorEmail: string;
     realisations: string;
     competencesObservees: string;
     recommandations: string;
@@ -90,7 +90,7 @@ export function BilanPdf({
     <Document
       title={`Bilan de fin — ${data.childName}`}
       author="Génizio"
-      subject="Bilan de fin du superviseur"
+      subject="Bilan de fin du mentor"
     >
       <Page size="A4" style={styles.page}>
         <View style={styles.header}>
@@ -101,7 +101,7 @@ export function BilanPdf({
             {new Date(data.periodEnd).toLocaleDateString("fr-FR")}
           </Text>
           <Text style={styles.subtitle}>
-            Superviseur : {data.supervisorEmail} · Validé par le parent
+            Mentor : {data.mentorEmail} · Validé par le parent
           </Text>
         </View>
 
@@ -115,7 +115,7 @@ export function BilanPdf({
         )}
 
         <Text style={styles.footer}>
-          Génizio — le laboratoire de découverte des talents · Révélé par le superviseur, validé par
+          Génizio — le laboratoire de découverte des talents · Révélé par le mentor, validé par
           la famille.
         </Text>
       </Page>

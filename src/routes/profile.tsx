@@ -30,7 +30,7 @@ import { RELATIONSHIP_TYPES } from "@/lib/relationship-types";
 import { GenizioLoader } from "@/components/GenizioLoader";
 import { checkAdminStatus } from "@/lib/admin.functions";
 import { checkIsCampaignManager } from "@/lib/campaigns.functions";
-import { checkIsActiveSupervisor } from "@/lib/supervisors.functions";
+import { checkIsActiveMentor } from "@/lib/mentors.functions";
 
 export const Route = createFileRoute("/profile")({
   component: ProfilePage,
@@ -50,15 +50,14 @@ function ProfilePage() {
   // Parent Stats
   const [childCount, setChildCount] = useState(0);
   const [challengeStats, setChallengeStats] = useState({ total: 0, completed: 0 });
-  const [mentorCount, setMentorCount] = useState(0);
   const [artifactsCount, setArtifactsCount] = useState(0);
   const [consentEventsCount, setConsentEventsCount] = useState(0);
-  const [isSupervisor, setIsSupervisor] = useState(false);
+  const [isMentor, setIsMentor] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
   const [isManager, setIsManager] = useState(false);
   const checkAdmin = useServerFn(checkAdminStatus);
   const checkManager = useServerFn(checkIsCampaignManager);
-  const checkSupervisor = useServerFn(checkIsActiveSupervisor);
+  const checkMentor = useServerFn(checkIsActiveMentor);
 
   // Navigation et données séparées (2026-08-14) : la navigation dépend de la
   // présence de la session, mais les 8 requêtes ci-dessous sont keyées sur
@@ -77,10 +76,10 @@ function ProfilePage() {
     if (!userId) return;
     checkAdmin().then(({ isAdmin }) => setIsAdmin(isAdmin));
     checkManager().then(({ isManager }) => setIsManager(isManager));
-    // Superviseur ACTIF (V1) : l'ancienne détection comptait toute ligne `supervisors`,
-    // y compris un superviseur retiré ou banni — l'espace /supervisor restait visible.
-    // checkIsActiveSupervisor vérifie removed_at IS NULL + statut != banned.
-    checkSupervisor().then(({ isSupervisor }) => setIsSupervisor(isSupervisor));
+    // Mentor ACTIF (V1) : l'ancienne détection comptait toute ligne `mentors`,
+    // y compris un mentor retiré ou banni — l'espace /mentor restait visible.
+    // checkIsActiveMentor vérifie removed_at IS NULL + statut != banned.
+    checkMentor().then(({ isMentor }) => setIsMentor(isMentor));
     setRelationshipType(relationshipMeta ?? "");
 
     // Load saved phone
@@ -99,12 +98,6 @@ function ProfilePage() {
       .eq("user_id", userId)
       .then(({ count }) => {
         setChildCount(count || 0);
-      });
-    supabase
-      .from("child_mentors")
-      .select("id", { count: "exact" })
-      .then(({ count }) => {
-        setMentorCount(count || 0);
       });
     supabase
       .from("consent_events")
@@ -241,19 +234,19 @@ function ProfilePage() {
             </div>
           </div>
 
-          {(isSupervisor || isAdmin || isManager) && (
+          {(isMentor || isAdmin || isManager) && (
             <div className="rounded-3xl border border-ink/10 bg-white p-6 shadow-xl">
               <h3 className="font-display text-balance text-base font-bold flex items-center gap-2 mb-3">
                 <Eye className="size-4 text-brand" />
                 Accompagnant & Pro
               </h3>
               <div className="space-y-1">
-                {isSupervisor && (
+                {isMentor && (
                   <Link
-                    to="/supervisor"
+                    to="/mentor"
                     className="flex items-center gap-2.5 rounded-xl px-3 py-2.5 text-sm font-bold text-brand hover:bg-brand/5"
                   >
-                    <Eye className="size-4" /> Superviseur
+                    <Eye className="size-4" /> Mentor
                   </Link>
                 )}
                 {isManager && (
@@ -279,10 +272,10 @@ function ProfilePage() {
                       <ShoppingBag className="size-4" /> Admin Kits
                     </Link>
                     <Link
-                      to="/admin/supervisors"
+                      to="/admin/mentors"
                       className="flex items-center gap-2.5 rounded-xl px-3 py-2.5 text-sm font-bold text-purple-600 hover:bg-purple-50"
                     >
-                      <Users className="size-4" /> Admin Superviseurs
+                      <Users className="size-4" /> Admin Mentors
                     </Link>
                   </>
                 )}
@@ -422,13 +415,7 @@ function ProfilePage() {
               <p className="text-[10px] font-extrabold uppercase tracking-widest text-ink/60">
                 Vos données en un coup d'œil
               </p>
-              <div className="grid grid-cols-3 gap-3">
-                <div className="rounded-2xl border-2 border-ink bg-surface p-4 text-center">
-                  <p className="text-2xl font-black text-ink">{mentorCount}</p>
-                  <p className="mt-1 text-[9px] font-bold text-ink/60 uppercase leading-snug">
-                    Mentors connectés
-                  </p>
-                </div>
+              <div className="grid grid-cols-2 gap-3">
                 <div className="rounded-2xl border-2 border-ink bg-surface p-4 text-center">
                   <p className="text-2xl font-black text-brand">{artifactsCount}</p>
                   <p className="mt-1 text-[9px] font-bold text-ink/60 uppercase leading-snug">

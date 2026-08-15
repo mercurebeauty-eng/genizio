@@ -36,7 +36,7 @@ import { AdminNayaTab } from "@/components/admin/AdminNayaTab";
 import { AdminCommerceTab } from "@/components/admin/AdminCommerceTab";
 import { AdminPaymentsTab } from "@/components/admin/AdminPaymentsTab";
 import { AdminCampaignsTab } from "@/components/admin/AdminCampaignsTab";
-import { AdminSupervisorsTab } from "@/components/admin/AdminSupervisorsTab";
+import { AdminMentorsTab } from "@/components/admin/AdminMentorsTab";
 import { AdminProductsTab } from "@/components/admin/AdminProductsTab";
 import { AdminProfilesTab } from "@/components/admin/AdminProfilesTab";
 import { getPaymentsPendingCountAdmin } from "@/lib/payments-admin.functions";
@@ -364,7 +364,7 @@ function AdminIndexPage() {
 
             {activeTab === "payments" && <AdminPaymentsTab />}
             {activeTab === "b2b" && <AdminCampaignsTab />}
-            {activeTab === "supervisors" && <AdminSupervisorsTab />}
+            {activeTab === "mentors" && <AdminMentorsTab />}
             {activeTab === "products" && <AdminProductsTab onDataChanged={() => loadData(false)} />}
             {activeTab === "profiles" && <AdminProfilesTab onDataChanged={() => loadData(false)} />}
           </>

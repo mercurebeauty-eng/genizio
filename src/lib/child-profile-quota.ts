@@ -1,6 +1,6 @@
 // Quota de profils enfants par compte — constantes et planchers partagés par
 // child-access.ts (computeChildCreationLimit, source unique de la formule) et
-// supervisor-quota.ts.
+// mentor-quota.ts.
 //
 // Le pivot du 2026-07-22 (5 gratuits pour tous, monétisation via les Saisons) est inversé :
 // retour à 1 gratuit + slots payants, la Saison devenant incluse automatiquement. Les comptes
@@ -19,9 +19,9 @@ export const NEW_FREE_FLOOR = 1;
 // créer un nouveau compte, il achète un palier.
 export const PALIER_CHILDREN = 5;
 
-// Plafond de supervision par superviseur (5, cf. supervisor-quota.ts) — le plafond d'enfants
+// Plafond d'enfants par mentor (5, cf. mentor-quota.ts) — le plafond d'enfants
 // PAR COMPTE est désormais porté par computeAppQuota (cap 50, décision 5). La constante reste
-// nommée MAX_CHILDREN_PER_ACCOUNT pour ne pas casser supervisor-quota.ts, mais sa sémantique
+// nommée MAX_CHILDREN_PER_ACCOUNT pour ne pas casser mentor-quota.ts, mais sa sémantique
 // « plafond absolu de création » est remplacée par MAX_QUOTA_OVERRIDE côté app.
 export const MAX_CHILDREN_PER_ACCOUNT = 5;
 

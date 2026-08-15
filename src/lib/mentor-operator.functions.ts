@@ -1,24 +1,24 @@
-// Superviseur Copilote (décision #74, 2026-08-15) — les actions opérateur du superviseur.
+// Mentor Copilote (décision #74, 2026-08-15) — les actions opérateur du mentor.
 //
 // Toutes ces fonctions passent par supabaseAdmin (service role) APRÈS
-// assertSupervisorOperator : la RLS « Parents manage their own challenges »
+// assertMentorOperator : la RLS « Parents manage their own challenges »
 // (auth.uid() = user_id) bloquerait un tiers via le client parent — la vérification
-// explicite EST la sécurité, et les écritures sont tracées dans supervisor_actions.
+// explicite EST la sécurité, et les écritures sont tracées dans mentor_actions.
 //
 // Règles verrouillées (décision #74) :
-//   • le superviseur opère les défis des enfants ACCOMPAGNÉS (pack ou campagne) ;
+//   • le mentor opère les défis des enfants ACCOMPAGNÉS (pack ou campagne) ;
 //   • challenges.user_id reste le parent (ownership) — attribution via created_by_user_id ;
 //   • la chaîne IA (preuve photo/déclarative → points/Jumeau) est INTACTE — les cœurs
 //     partagés de challenges.functions.ts sont réutilisés, seul l'acteur change ;
 //   • jamais de suppression, jamais de publication ;
-//   • les notes du superviseur vont dans le journal (action 'notes'), challenges.notes
+//   • les notes du mentor vont dans le journal (action 'notes'), challenges.notes
 //     reste le journal d'apprentissage du parent.
 
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { z } from "zod";
-import { assertSupervisorOperator } from "@/lib/supervisor-operator";
-import { logSupervisorAction } from "@/lib/supervisor-actions";
+import { assertMentorOperator } from "@/lib/mentor-operator";
+import { logMentorAction } from "@/lib/mentor-actions";
 import { notifyUser } from "@/lib/app-notifications";
 import { resolveTimeLimitMinutes } from "@/lib/time-limit";
 import {
@@ -30,16 +30,16 @@ import {
   AssignTemplateInput,
 } from "@/lib/challenges.functions";
 
-const SupervisorUpdateInput = z.object({
+const MentorUpdateInput = z.object({
   id: z.string().uuid(),
   status: z.enum(["todo", "in_progress", "completed"]).optional(),
   progress: z.number().int().min(0).max(100).optional(),
   notes: z.string().max(2000).nullable().optional(),
 });
 
-export const supervisorUpdateChallenge = createServerFn({ method: "POST" })
+export const mentorUpdateChallenge = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .validator((input: unknown) => SupervisorUpdateInput.parse(input))
+  .validator((input: unknown) => MentorUpdateInput.parse(input))
   .handler(async ({ data, context }) => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const userId = (context as any).claims?.sub;
@@ -52,25 +52,25 @@ export const supervisorUpdateChallenge = createServerFn({ method: "POST" })
     if (challengeErr || !challenge) throw new Error("Défi introuvable");
 
     // L'autorisation opérateur est faite AVANT toute écriture (service role).
-    await assertSupervisorOperator(supabaseAdmin as any, userId, challenge.child_id);
+    await assertMentorOperator(supabaseAdmin as any, userId, challenge.child_id);
 
     if (challenge.child_profiles?.access_locked_at) throw new Error("Ce profil est verrouillé.");
     if (challenge.child_profiles?.is_active === false)
       throw new Error("Ce profil est désactivé par l'administrateur.");
 
-    // Même garde que le parent : jamais de complétion manuelle — le superviseur soumet
-    // la preuve (photo prise en séance ou déclarative) via supervisorSubmitProof.
+    // Même garde que le parent : jamais de complétion manuelle — le mentor soumet
+    // la preuve (photo prise en séance ou déclarative) via mentorSubmitProof.
     if (data.status === "completed") {
       throw new Error(
-        "Un défi ne peut pas être terminé manuellement sans preuve. Le superviseur soumet la preuve (photo ou déclarative) prise en séance.",
+        "Un défi ne peut pas être terminé manuellement sans preuve. Le mentor soumet la preuve (photo ou déclarative) prise en séance.",
       );
     }
 
-    // Les notes du superviseur sont journalisées (action 'notes') — le journal sert de
+    // Les notes du mentor sont journalisées (action 'notes') — le journal sert de
     // journal de séance ; challenges.notes reste le journal d'apprentissage du parent.
     if (data.notes) {
-      void logSupervisorAction({
-        supervisorUserId: userId,
+      void logMentorAction({
+        mentorUserId: userId,
         childId: challenge.child_id,
         challengeId: challenge.id,
         action: "notes",
@@ -122,8 +122,8 @@ export const supervisorUpdateChallenge = createServerFn({ method: "POST" })
       .single();
     if (error) throw new Error(error.message);
 
-    void logSupervisorAction({
-      supervisorUserId: userId,
+    void logMentorAction({
+      mentorUserId: userId,
       childId: challenge.child_id,
       challengeId: challenge.id,
       action: "update",
@@ -133,15 +133,15 @@ export const supervisorUpdateChallenge = createServerFn({ method: "POST" })
     return row;
   });
 
-const SupervisorNotCompletedInput = z.object({
+const MentorNotCompletedInput = z.object({
   id: z.string().uuid(),
   reason: z.string().trim().min(1).max(2000),
   reasonChip: z.string().optional(),
 });
 
-export const supervisorSubmitNotCompleted = createServerFn({ method: "POST" })
+export const mentorSubmitNotCompleted = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .validator((input: unknown) => SupervisorNotCompletedInput.parse(input))
+  .validator((input: unknown) => MentorNotCompletedInput.parse(input))
   .handler(async ({ data, context }) => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const userId = (context as any).claims?.sub;
@@ -153,7 +153,7 @@ export const supervisorSubmitNotCompleted = createServerFn({ method: "POST" })
       .maybeSingle();
     if (challengeErr || !challenge) throw new Error("Défi introuvable");
 
-    await assertSupervisorOperator(supabaseAdmin as any, userId, challenge.child_id);
+    await assertMentorOperator(supabaseAdmin as any, userId, challenge.child_id);
     if (challenge.child_profiles?.access_locked_at) throw new Error("Ce profil est verrouillé.");
     if (challenge.child_profiles?.is_active === false)
       throw new Error("Ce profil est désactivé par l'administrateur.");
@@ -182,7 +182,7 @@ export const supervisorSubmitNotCompleted = createServerFn({ method: "POST" })
     // Traitement post-échec en arrière-plan — même chaîne que le parent (classification,
     // discriminants, retest, reformulation, recommandation). Le userId passé à
     // processModalityReformulation est le PARENT (challenge.user_id) : la reformulation
-    // est un nouveau défi appartenant au parent, pas au superviseur.
+    // est un nouveau défi appartenant au parent, pas au mentor.
     const parentUserId = challenge.user_id;
     (async () => {
       const cause = await classifyNotCompletedReason(data.reason);
@@ -234,8 +234,8 @@ export const supervisorSubmitNotCompleted = createServerFn({ method: "POST" })
       }
     })().catch((err) => console.error("Non-fatal: traitement post-échec failed", err));
 
-    void logSupervisorAction({
-      supervisorUserId: userId,
+    void logMentorAction({
+      mentorUserId: userId,
       childId: challenge.child_id,
       challengeId: challenge.id,
       action: "abandon",
@@ -243,7 +243,7 @@ export const supervisorSubmitNotCompleted = createServerFn({ method: "POST" })
     });
     void notifyUser({
       userId: parentUserId,
-      type: "supervisor_abandon",
+      type: "mentor_abandon",
       childId: challenge.child_id,
       payload: { challenge_id: challenge.id, title: challenge.title },
     });
@@ -251,7 +251,7 @@ export const supervisorSubmitNotCompleted = createServerFn({ method: "POST" })
     return { challenge: updated };
   });
 
-const SupervisorProofInput = z.object({
+const MentorProofInput = z.object({
   challengeId: z.string().uuid(),
   proofText: z.string().max(2000).optional(),
   // Raw bytes — même contrat que validateChallengeProof (upload seulement si l'IA
@@ -260,9 +260,9 @@ const SupervisorProofInput = z.object({
   proofImageMediaType: z.string().optional(),
 });
 
-export const supervisorSubmitProof = createServerFn({ method: "POST" })
+export const mentorSubmitProof = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .validator((input: unknown) => SupervisorProofInput.parse(input))
+  .validator((input: unknown) => MentorProofInput.parse(input))
   .handler(async ({ data, context }) => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const userId = (context as any).claims?.sub;
@@ -274,9 +274,9 @@ export const supervisorSubmitProof = createServerFn({ method: "POST" })
       .maybeSingle();
     if (challengeErr || !challenge) throw new Error("Défi introuvable");
 
-    await assertSupervisorOperator(supabaseAdmin as any, userId, challenge.child_id);
+    await assertMentorOperator(supabaseAdmin as any, userId, challenge.child_id);
 
-    // La photo prise EN SÉANCE par le superviseur (seul adulte présent) traverse la MÊME
+    // La photo prise EN SÉANCE par le mentor (seul adulte présent) traverse la MÊME
     // chaîne IA que la preuve parent : pertinence → points → Jumeau → observations.
     const result = await validateChallengeProofCore({
       db: supabaseAdmin as any,
@@ -288,8 +288,8 @@ export const supervisorSubmitProof = createServerFn({ method: "POST" })
       proofImageMediaType: data.proofImageMediaType,
     });
 
-    void logSupervisorAction({
-      supervisorUserId: userId,
+    void logMentorAction({
+      mentorUserId: userId,
       childId: challenge.child_id,
       challengeId: challenge.id,
       action: result.relevant ? "proof_submitted" : "proof_rejected",
@@ -299,7 +299,7 @@ export const supervisorSubmitProof = createServerFn({ method: "POST" })
       // Veto éclairé du parent : il voit la photo + le résultat IA et peut réouvrir.
       void notifyUser({
         userId: challenge.user_id,
-        type: "supervisor_challenge_completed",
+        type: "mentor_challenge_completed",
         childId: challenge.child_id,
         payload: { challenge_id: challenge.id, title: challenge.title },
       });
@@ -308,14 +308,14 @@ export const supervisorSubmitProof = createServerFn({ method: "POST" })
     return result;
   });
 
-const SupervisorDeclarativeInput = z.object({
+const MentorDeclarativeInput = z.object({
   challengeId: z.string().uuid(),
   reportedValue: z.number().finite(),
 });
 
-export const supervisorSubmitDeclarativeProof = createServerFn({ method: "POST" })
+export const mentorSubmitDeclarativeProof = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .validator((input: unknown) => SupervisorDeclarativeInput.parse(input))
+  .validator((input: unknown) => MentorDeclarativeInput.parse(input))
   .handler(async ({ data, context }) => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const userId = (context as any).claims?.sub;
@@ -327,10 +327,10 @@ export const supervisorSubmitDeclarativeProof = createServerFn({ method: "POST" 
       .maybeSingle();
     if (challengeErr || !challenge) throw new Error("Défi introuvable");
 
-    await assertSupervisorOperator(supabaseAdmin as any, userId, challenge.child_id);
+    await assertMentorOperator(supabaseAdmin as any, userId, challenge.child_id);
 
     // Mode déclaratif (décision #36) : 0 appel IA, confiance en l'adulte présent — le
-    // superviseur remplit la valeur (ex. « 43 jonglages » vs cible 40).
+    // mentor remplit la valeur (ex. « 43 jonglages » vs cible 40).
     const result = await submitDeclarativeProofCore({
       db: supabaseAdmin as any,
       challenge,
@@ -339,8 +339,8 @@ export const supervisorSubmitDeclarativeProof = createServerFn({ method: "POST" 
       reportedValue: data.reportedValue,
     });
 
-    void logSupervisorAction({
-      supervisorUserId: userId,
+    void logMentorAction({
+      mentorUserId: userId,
       childId: challenge.child_id,
       challengeId: challenge.id,
       action: result.relevant ? "proof_submitted" : "proof_rejected",
@@ -349,7 +349,7 @@ export const supervisorSubmitDeclarativeProof = createServerFn({ method: "POST" 
     if (result.relevant) {
       void notifyUser({
         userId: challenge.user_id,
-        type: "supervisor_challenge_completed",
+        type: "mentor_challenge_completed",
         childId: challenge.child_id,
         payload: { challenge_id: challenge.id, title: challenge.title },
       });
@@ -358,14 +358,14 @@ export const supervisorSubmitDeclarativeProof = createServerFn({ method: "POST" 
     return result;
   });
 
-const SupervisorGenerateInput = z.object({
+const MentorGenerateInput = z.object({
   childId: z.string().uuid(),
   count: z.number().int().min(1).max(6).default(4),
 });
 
-export const supervisorGenerateChallenges = createServerFn({ method: "POST" })
+export const mentorGenerateChallenges = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .validator((input: unknown) => SupervisorGenerateInput.parse(input))
+  .validator((input: unknown) => MentorGenerateInput.parse(input))
   .handler(async ({ data, context }) => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const userId = (context as any).claims?.sub;
@@ -379,9 +379,9 @@ export const supervisorGenerateChallenges = createServerFn({ method: "POST" })
       .maybeSingle();
     if (childErr || !child) throw new Error("Profil enfant introuvable");
 
-    await assertSupervisorOperator(supabaseAdmin as any, userId, data.childId);
+    await assertMentorOperator(supabaseAdmin as any, userId, data.childId);
 
-    // user_id = le PARENT (ownership intact) ; created_by_user_id = le superviseur
+    // user_id = le PARENT (ownership intact) ; created_by_user_id = le mentor
     // (attribution). Le cœur IA est strictement le même que pour le parent.
     const inserted = await generateChallengesCore({
       db: supabaseAdmin as any,
@@ -392,8 +392,8 @@ export const supervisorGenerateChallenges = createServerFn({ method: "POST" })
       createdByUserId: userId,
     });
 
-    void logSupervisorAction({
-      supervisorUserId: userId,
+    void logMentorAction({
+      mentorUserId: userId,
       childId: data.childId,
       action: "generate",
       payload: { count: data.count },
@@ -402,7 +402,7 @@ export const supervisorGenerateChallenges = createServerFn({ method: "POST" })
     return inserted;
   });
 
-export const supervisorAssignTemplateChallenge = createServerFn({ method: "POST" })
+export const mentorAssignTemplateChallenge = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .validator((input: unknown) => AssignTemplateInput.parse(input))
   .handler(async ({ data, context }) => {
@@ -418,7 +418,7 @@ export const supervisorAssignTemplateChallenge = createServerFn({ method: "POST"
       .maybeSingle();
     if (childErr || !child) throw new Error("Profil enfant introuvable ou accès refusé.");
 
-    await assertSupervisorOperator(supabaseAdmin as any, userId, data.childId);
+    await assertMentorOperator(supabaseAdmin as any, userId, data.childId);
 
     const inserted = await assignTemplateChallengeCore({
       db: supabaseAdmin as any,
@@ -430,8 +430,8 @@ export const supervisorAssignTemplateChallenge = createServerFn({ method: "POST"
       createdByUserId: userId,
     });
 
-    void logSupervisorAction({
-      supervisorUserId: userId,
+    void logMentorAction({
+      mentorUserId: userId,
       childId: data.childId,
       challengeId: inserted.id,
       action: "assign",

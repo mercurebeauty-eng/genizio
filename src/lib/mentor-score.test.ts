@@ -1,13 +1,13 @@
 import { describe, it, expect } from "vitest";
-import { computeSupervisorScore, computeExpectedSessions } from "./supervisor-score";
+import { computeMentorScore, computeExpectedSessions } from "./mentor-score";
 
-// Score de fiabilité superviseur (V2, 2026-08-14) — pondération décidée avec le porteur :
+// Score de fiabilité mentor (V2, 2026-08-14) — pondération décidée avec le porteur :
 // 50% tenue des séances + 25% feedback famille (1-5) + 25% progression des défis. Sans
 // feedback posé, la moyenne est renormalisée sur les composantes disponibles (0.75).
-describe("computeSupervisorScore", () => {
+describe("computeMentorScore", () => {
   it("0 séance et 0 défi : score 0", () => {
     expect(
-      computeSupervisorScore({
+      computeMentorScore({
         expectedSessions: 12,
         declaredSessions: 0,
         completedChallenges: 0,
@@ -18,7 +18,7 @@ describe("computeSupervisorScore", () => {
 
   it("toutes les séances tenues et tous les défis complétés, sans feedback : 100 (renormalisé)", () => {
     expect(
-      computeSupervisorScore({
+      computeMentorScore({
         expectedSessions: 12,
         declaredSessions: 12,
         completedChallenges: 5,
@@ -29,7 +29,7 @@ describe("computeSupervisorScore", () => {
 
   it("partiel sans feedback : 6/12 séances + 2/4 défis → (50×0.5 + 50×0.25)/0.75 = 50", () => {
     expect(
-      computeSupervisorScore({
+      computeMentorScore({
         expectedSessions: 12,
         declaredSessions: 6,
         completedChallenges: 2,
@@ -40,7 +40,7 @@ describe("computeSupervisorScore", () => {
 
   it("séances pleines mais progression nulle, sans feedback : (100×0.5)/0.75 ≈ 67", () => {
     expect(
-      computeSupervisorScore({
+      computeMentorScore({
         expectedSessions: 12,
         declaredSessions: 12,
         completedChallenges: 0,
@@ -51,7 +51,7 @@ describe("computeSupervisorScore", () => {
 
   it("progression pleine mais aucune séance, sans feedback : (100×0.25)/0.75 ≈ 33", () => {
     expect(
-      computeSupervisorScore({
+      computeMentorScore({
         expectedSessions: 12,
         declaredSessions: 0,
         completedChallenges: 4,
@@ -62,7 +62,7 @@ describe("computeSupervisorScore", () => {
 
   it("feedback 5/5 + séances pleines + progression pleine : 100", () => {
     expect(
-      computeSupervisorScore({
+      computeMentorScore({
         expectedSessions: 12,
         declaredSessions: 12,
         completedChallenges: 4,
@@ -74,7 +74,7 @@ describe("computeSupervisorScore", () => {
 
   it("feedback 1/5 avec le reste parfait : (50 + 25×20 + 25)/1 = 80 — la mauvaise note fait baisser", () => {
     expect(
-      computeSupervisorScore({
+      computeMentorScore({
         expectedSessions: 12,
         declaredSessions: 12,
         completedChallenges: 4,
@@ -86,7 +86,7 @@ describe("computeSupervisorScore", () => {
 
   it("feedback 5/5 sans séance ni progression : (0 + 25×100 + 0)/1 = 25", () => {
     expect(
-      computeSupervisorScore({
+      computeMentorScore({
         expectedSessions: 12,
         declaredSessions: 0,
         completedChallenges: 0,
@@ -98,7 +98,7 @@ describe("computeSupervisorScore", () => {
 
   it("séances plafonnées à 100 (déclarées > attendues) : 100 côté séances", () => {
     expect(
-      computeSupervisorScore({
+      computeMentorScore({
         expectedSessions: 12,
         declaredSessions: 20,
         completedChallenges: 5,
@@ -109,7 +109,7 @@ describe("computeSupervisorScore", () => {
 
   it("expectedSessions 0 (début de mois) : séances non pénalisantes, progression seule renormalisée", () => {
     expect(
-      computeSupervisorScore({
+      computeMentorScore({
         expectedSessions: 0,
         declaredSessions: 0,
         completedChallenges: 5,
@@ -120,7 +120,7 @@ describe("computeSupervisorScore", () => {
 
   it("expectedSessions 0 avec feedback 4/5 : (25×80 + 25×100)/1 = 45", () => {
     expect(
-      computeSupervisorScore({
+      computeMentorScore({
         expectedSessions: 0,
         declaredSessions: 0,
         completedChallenges: 5,

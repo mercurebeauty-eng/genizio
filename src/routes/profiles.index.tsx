@@ -37,7 +37,6 @@ import {
 import { calculateXPGain, ACADEMIC_DOMAIN_LABELS } from "@/lib/challenges.functions";
 import { lastAcademicLevelByDomain } from "@/lib/academic-levels";
 import { getChildGuild } from "@/lib/guilds";
-import { InviteMentorDialog } from "@/components/mentors/InviteMentorDialog";
 import { TalentRadarChart } from "@/components/TalentRadarChart";
 import { NayaAvatar } from "@/components/NayaAvatar";
 import { KitSuggestion } from "@/components/challenges/KitSuggestion";
@@ -382,7 +381,7 @@ function DashboardPage() {
                     const whatsappNumber =
                       (import.meta.env.VITE_WHATSAPP_NUMBER as string | undefined) || "33606433148";
                     const whatsappText = encodeURIComponent(
-                      `Bonjour, je voudrais devenir superviseur de ${selected.name} suite à la fin de mon rôle d'éducateur.`,
+                      `Bonjour, je voudrais devenir mentor de ${selected.name} suite à la fin de mon rôle d'éducateur.`,
                     );
                     return (
                       <div className="animate-in fade-in slide-in-from-bottom-4 duration-300 ease-out md:mx-auto max-w-[414px] w-full">
@@ -404,7 +403,7 @@ function DashboardPage() {
                             rel="noreferrer"
                             className="press-brand mt-6 inline-flex items-center justify-center gap-2 rounded-2xl bg-brand px-6 py-3 text-sm font-bold text-white"
                           >
-                            Demander à devenir superviseur
+                            Demander à devenir mentor
                           </a>
                         </div>
                       </div>

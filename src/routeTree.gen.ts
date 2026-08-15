@@ -11,7 +11,6 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as TermsRouteImport } from './routes/terms'
 import { Route as TarifsRouteImport } from './routes/tarifs'
-import { Route as SupervisorRouteImport } from './routes/supervisor'
 import { Route as RemboursementsRouteImport } from './routes/remboursements'
 import { Route as RemboursementRouteImport } from './routes/remboursement'
 import { Route as ProfilesRouteImport } from './routes/profiles'
@@ -21,6 +20,7 @@ import { Route as ParrainageRouteImport } from './routes/parrainage'
 import { Route as PaiementRetourRouteImport } from './routes/paiement-retour'
 import { Route as OrganisationRouteImport } from './routes/organisation'
 import { Route as NouveautesRouteImport } from './routes/nouveautes'
+import { Route as MentorRouteImport } from './routes/mentor'
 import { Route as MentionsLegalesRouteImport } from './routes/mentions-legales'
 import { Route as LaboratoryRouteImport } from './routes/laboratory'
 import { Route as GuidesRouteImport } from './routes/guides'
@@ -33,7 +33,6 @@ import { Route as ProfilesIndexRouteImport } from './routes/profiles.index'
 import { Route as OrganisationIndexRouteImport } from './routes/organisation.index'
 import { Route as GuidesIndexRouteImport } from './routes/guides.index'
 import { Route as AdminIndexRouteImport } from './routes/admin.index'
-import { Route as STokenRouteImport } from './routes/s.$token'
 import { Route as RejoindreCampaignIdRouteImport } from './routes/rejoindre.$campaignId'
 import { Route as ProfilesManageRouteImport } from './routes/profiles.manage'
 import { Route as GuidesTimiditeConfiancePriseDeParoleRouteImport } from './routes/guides.timidite-confiance-prise-de-parole'
@@ -53,8 +52,8 @@ import { Route as GuidesDecrochageScolaireConfianceEnfantRouteImport } from './r
 import { Route as GuidesAutonomieResponsabiliteMaisonRouteImport } from './routes/guides.autonomie-responsabilite-maison'
 import { Route as GuidesActivitesManuellesEnfantRouteImport } from './routes/guides.activites-manuelles-enfant'
 import { Route as GuidesActivitesEducativesEnfantRouteImport } from './routes/guides.activites-educatives-enfant'
-import { Route as AdminSupervisorsRouteImport } from './routes/admin.supervisors'
 import { Route as AdminProductsRouteImport } from './routes/admin.products'
+import { Route as AdminMentorsRouteImport } from './routes/admin.mentors'
 import { Route as ProfilesProfileIdQuestRouteImport } from './routes/profiles.$profileId.quest'
 import { Route as ProfilesProfileIdPortfolioRouteImport } from './routes/profiles.$profileId.portfolio'
 import { Route as ProfilesProfileIdPassportPrintRouteImport } from './routes/profiles.$profileId.passport-print'
@@ -72,11 +71,6 @@ const TermsRoute = TermsRouteImport.update({
 const TarifsRoute = TarifsRouteImport.update({
   id: '/tarifs',
   path: '/tarifs',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const SupervisorRoute = SupervisorRouteImport.update({
-  id: '/supervisor',
-  path: '/supervisor',
   getParentRoute: () => rootRouteImport,
 } as any)
 const RemboursementsRoute = RemboursementsRouteImport.update({
@@ -122,6 +116,11 @@ const OrganisationRoute = OrganisationRouteImport.update({
 const NouveautesRoute = NouveautesRouteImport.update({
   id: '/nouveautes',
   path: '/nouveautes',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const MentorRoute = MentorRouteImport.update({
+  id: '/mentor',
+  path: '/mentor',
   getParentRoute: () => rootRouteImport,
 } as any)
 const MentionsLegalesRoute = MentionsLegalesRouteImport.update({
@@ -183,11 +182,6 @@ const AdminIndexRoute = AdminIndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => AdminRoute,
-} as any)
-const STokenRoute = STokenRouteImport.update({
-  id: '/s/$token',
-  path: '/s/$token',
-  getParentRoute: () => rootRouteImport,
 } as any)
 const RejoindreCampaignIdRoute = RejoindreCampaignIdRouteImport.update({
   id: '/rejoindre/$campaignId',
@@ -301,14 +295,14 @@ const GuidesActivitesEducativesEnfantRoute =
     path: '/activites-educatives-enfant',
     getParentRoute: () => GuidesRoute,
   } as any)
-const AdminSupervisorsRoute = AdminSupervisorsRouteImport.update({
-  id: '/supervisors',
-  path: '/supervisors',
-  getParentRoute: () => AdminRoute,
-} as any)
 const AdminProductsRoute = AdminProductsRouteImport.update({
   id: '/products',
   path: '/products',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminMentorsRoute = AdminMentorsRouteImport.update({
+  id: '/mentors',
+  path: '/mentors',
   getParentRoute: () => AdminRoute,
 } as any)
 const ProfilesProfileIdQuestRoute = ProfilesProfileIdQuestRouteImport.update({
@@ -366,6 +360,7 @@ export interface FileRoutesByFullPath {
   '/guides': typeof GuidesRouteWithChildren
   '/laboratory': typeof LaboratoryRoute
   '/mentions-legales': typeof MentionsLegalesRoute
+  '/mentor': typeof MentorRoute
   '/nouveautes': typeof NouveautesRoute
   '/organisation': typeof OrganisationRouteWithChildren
   '/paiement-retour': typeof PaiementRetourRoute
@@ -375,11 +370,10 @@ export interface FileRoutesByFullPath {
   '/profiles': typeof ProfilesRouteWithChildren
   '/remboursement': typeof RemboursementRoute
   '/remboursements': typeof RemboursementsRoute
-  '/supervisor': typeof SupervisorRoute
   '/tarifs': typeof TarifsRoute
   '/terms': typeof TermsRoute
+  '/admin/mentors': typeof AdminMentorsRoute
   '/admin/products': typeof AdminProductsRoute
-  '/admin/supervisors': typeof AdminSupervisorsRoute
   '/guides/activites-educatives-enfant': typeof GuidesActivitesEducativesEnfantRoute
   '/guides/activites-manuelles-enfant': typeof GuidesActivitesManuellesEnfantRoute
   '/guides/autonomie-responsabilite-maison': typeof GuidesAutonomieResponsabiliteMaisonRoute
@@ -399,7 +393,6 @@ export interface FileRoutesByFullPath {
   '/guides/timidite-confiance-prise-de-parole': typeof GuidesTimiditeConfiancePriseDeParoleRoute
   '/profiles/manage': typeof ProfilesManageRoute
   '/rejoindre/$campaignId': typeof RejoindreCampaignIdRoute
-  '/s/$token': typeof STokenRoute
   '/admin/': typeof AdminIndexRoute
   '/guides/': typeof GuidesIndexRoute
   '/organisation/': typeof OrganisationIndexRoute
@@ -420,6 +413,7 @@ export interface FileRoutesByTo {
   '/boutique': typeof BoutiqueRoute
   '/laboratory': typeof LaboratoryRoute
   '/mentions-legales': typeof MentionsLegalesRoute
+  '/mentor': typeof MentorRoute
   '/nouveautes': typeof NouveautesRoute
   '/paiement-retour': typeof PaiementRetourRoute
   '/parrainage': typeof ParrainageRoute
@@ -427,11 +421,10 @@ export interface FileRoutesByTo {
   '/profile': typeof ProfileRoute
   '/remboursement': typeof RemboursementRoute
   '/remboursements': typeof RemboursementsRoute
-  '/supervisor': typeof SupervisorRoute
   '/tarifs': typeof TarifsRoute
   '/terms': typeof TermsRoute
+  '/admin/mentors': typeof AdminMentorsRoute
   '/admin/products': typeof AdminProductsRoute
-  '/admin/supervisors': typeof AdminSupervisorsRoute
   '/guides/activites-educatives-enfant': typeof GuidesActivitesEducativesEnfantRoute
   '/guides/activites-manuelles-enfant': typeof GuidesActivitesManuellesEnfantRoute
   '/guides/autonomie-responsabilite-maison': typeof GuidesAutonomieResponsabiliteMaisonRoute
@@ -451,7 +444,6 @@ export interface FileRoutesByTo {
   '/guides/timidite-confiance-prise-de-parole': typeof GuidesTimiditeConfiancePriseDeParoleRoute
   '/profiles/manage': typeof ProfilesManageRoute
   '/rejoindre/$campaignId': typeof RejoindreCampaignIdRoute
-  '/s/$token': typeof STokenRoute
   '/admin': typeof AdminIndexRoute
   '/guides': typeof GuidesIndexRoute
   '/organisation': typeof OrganisationIndexRoute
@@ -475,6 +467,7 @@ export interface FileRoutesById {
   '/guides': typeof GuidesRouteWithChildren
   '/laboratory': typeof LaboratoryRoute
   '/mentions-legales': typeof MentionsLegalesRoute
+  '/mentor': typeof MentorRoute
   '/nouveautes': typeof NouveautesRoute
   '/organisation': typeof OrganisationRouteWithChildren
   '/paiement-retour': typeof PaiementRetourRoute
@@ -484,11 +477,10 @@ export interface FileRoutesById {
   '/profiles': typeof ProfilesRouteWithChildren
   '/remboursement': typeof RemboursementRoute
   '/remboursements': typeof RemboursementsRoute
-  '/supervisor': typeof SupervisorRoute
   '/tarifs': typeof TarifsRoute
   '/terms': typeof TermsRoute
+  '/admin/mentors': typeof AdminMentorsRoute
   '/admin/products': typeof AdminProductsRoute
-  '/admin/supervisors': typeof AdminSupervisorsRoute
   '/guides/activites-educatives-enfant': typeof GuidesActivitesEducativesEnfantRoute
   '/guides/activites-manuelles-enfant': typeof GuidesActivitesManuellesEnfantRoute
   '/guides/autonomie-responsabilite-maison': typeof GuidesAutonomieResponsabiliteMaisonRoute
@@ -508,7 +500,6 @@ export interface FileRoutesById {
   '/guides/timidite-confiance-prise-de-parole': typeof GuidesTimiditeConfiancePriseDeParoleRoute
   '/profiles/manage': typeof ProfilesManageRoute
   '/rejoindre/$campaignId': typeof RejoindreCampaignIdRoute
-  '/s/$token': typeof STokenRoute
   '/admin/': typeof AdminIndexRoute
   '/guides/': typeof GuidesIndexRoute
   '/organisation/': typeof OrganisationIndexRoute
@@ -533,6 +524,7 @@ export interface FileRouteTypes {
     | '/guides'
     | '/laboratory'
     | '/mentions-legales'
+    | '/mentor'
     | '/nouveautes'
     | '/organisation'
     | '/paiement-retour'
@@ -542,11 +534,10 @@ export interface FileRouteTypes {
     | '/profiles'
     | '/remboursement'
     | '/remboursements'
-    | '/supervisor'
     | '/tarifs'
     | '/terms'
+    | '/admin/mentors'
     | '/admin/products'
-    | '/admin/supervisors'
     | '/guides/activites-educatives-enfant'
     | '/guides/activites-manuelles-enfant'
     | '/guides/autonomie-responsabilite-maison'
@@ -566,7 +557,6 @@ export interface FileRouteTypes {
     | '/guides/timidite-confiance-prise-de-parole'
     | '/profiles/manage'
     | '/rejoindre/$campaignId'
-    | '/s/$token'
     | '/admin/'
     | '/guides/'
     | '/organisation/'
@@ -587,6 +577,7 @@ export interface FileRouteTypes {
     | '/boutique'
     | '/laboratory'
     | '/mentions-legales'
+    | '/mentor'
     | '/nouveautes'
     | '/paiement-retour'
     | '/parrainage'
@@ -594,11 +585,10 @@ export interface FileRouteTypes {
     | '/profile'
     | '/remboursement'
     | '/remboursements'
-    | '/supervisor'
     | '/tarifs'
     | '/terms'
+    | '/admin/mentors'
     | '/admin/products'
-    | '/admin/supervisors'
     | '/guides/activites-educatives-enfant'
     | '/guides/activites-manuelles-enfant'
     | '/guides/autonomie-responsabilite-maison'
@@ -618,7 +608,6 @@ export interface FileRouteTypes {
     | '/guides/timidite-confiance-prise-de-parole'
     | '/profiles/manage'
     | '/rejoindre/$campaignId'
-    | '/s/$token'
     | '/admin'
     | '/guides'
     | '/organisation'
@@ -641,6 +630,7 @@ export interface FileRouteTypes {
     | '/guides'
     | '/laboratory'
     | '/mentions-legales'
+    | '/mentor'
     | '/nouveautes'
     | '/organisation'
     | '/paiement-retour'
@@ -650,11 +640,10 @@ export interface FileRouteTypes {
     | '/profiles'
     | '/remboursement'
     | '/remboursements'
-    | '/supervisor'
     | '/tarifs'
     | '/terms'
+    | '/admin/mentors'
     | '/admin/products'
-    | '/admin/supervisors'
     | '/guides/activites-educatives-enfant'
     | '/guides/activites-manuelles-enfant'
     | '/guides/autonomie-responsabilite-maison'
@@ -674,7 +663,6 @@ export interface FileRouteTypes {
     | '/guides/timidite-confiance-prise-de-parole'
     | '/profiles/manage'
     | '/rejoindre/$campaignId'
-    | '/s/$token'
     | '/admin/'
     | '/guides/'
     | '/organisation/'
@@ -698,6 +686,7 @@ export interface RootRouteChildren {
   GuidesRoute: typeof GuidesRouteWithChildren
   LaboratoryRoute: typeof LaboratoryRoute
   MentionsLegalesRoute: typeof MentionsLegalesRoute
+  MentorRoute: typeof MentorRoute
   NouveautesRoute: typeof NouveautesRoute
   OrganisationRoute: typeof OrganisationRouteWithChildren
   PaiementRetourRoute: typeof PaiementRetourRoute
@@ -707,11 +696,9 @@ export interface RootRouteChildren {
   ProfilesRoute: typeof ProfilesRouteWithChildren
   RemboursementRoute: typeof RemboursementRoute
   RemboursementsRoute: typeof RemboursementsRoute
-  SupervisorRoute: typeof SupervisorRoute
   TarifsRoute: typeof TarifsRoute
   TermsRoute: typeof TermsRoute
   RejoindreCampaignIdRoute: typeof RejoindreCampaignIdRoute
-  STokenRoute: typeof STokenRoute
   ApiPaystackWebhookRoute: typeof ApiPaystackWebhookRoute
 }
 
@@ -729,13 +716,6 @@ declare module '@tanstack/react-router' {
       path: '/tarifs'
       fullPath: '/tarifs'
       preLoaderRoute: typeof TarifsRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/supervisor': {
-      id: '/supervisor'
-      path: '/supervisor'
-      fullPath: '/supervisor'
-      preLoaderRoute: typeof SupervisorRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/remboursements': {
@@ -799,6 +779,13 @@ declare module '@tanstack/react-router' {
       path: '/nouveautes'
       fullPath: '/nouveautes'
       preLoaderRoute: typeof NouveautesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/mentor': {
+      id: '/mentor'
+      path: '/mentor'
+      fullPath: '/mentor'
+      preLoaderRoute: typeof MentorRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/mentions-legales': {
@@ -884,13 +871,6 @@ declare module '@tanstack/react-router' {
       fullPath: '/admin/'
       preLoaderRoute: typeof AdminIndexRouteImport
       parentRoute: typeof AdminRoute
-    }
-    '/s/$token': {
-      id: '/s/$token'
-      path: '/s/$token'
-      fullPath: '/s/$token'
-      preLoaderRoute: typeof STokenRouteImport
-      parentRoute: typeof rootRouteImport
     }
     '/rejoindre/$campaignId': {
       id: '/rejoindre/$campaignId'
@@ -1025,18 +1005,18 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof GuidesActivitesEducativesEnfantRouteImport
       parentRoute: typeof GuidesRoute
     }
-    '/admin/supervisors': {
-      id: '/admin/supervisors'
-      path: '/supervisors'
-      fullPath: '/admin/supervisors'
-      preLoaderRoute: typeof AdminSupervisorsRouteImport
-      parentRoute: typeof AdminRoute
-    }
     '/admin/products': {
       id: '/admin/products'
       path: '/products'
       fullPath: '/admin/products'
       preLoaderRoute: typeof AdminProductsRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/mentors': {
+      id: '/admin/mentors'
+      path: '/mentors'
+      fullPath: '/admin/mentors'
+      preLoaderRoute: typeof AdminMentorsRouteImport
       parentRoute: typeof AdminRoute
     }
     '/profiles/$profileId/quest': {
@@ -1099,14 +1079,14 @@ declare module '@tanstack/react-router' {
 }
 
 interface AdminRouteChildren {
+  AdminMentorsRoute: typeof AdminMentorsRoute
   AdminProductsRoute: typeof AdminProductsRoute
-  AdminSupervisorsRoute: typeof AdminSupervisorsRoute
   AdminIndexRoute: typeof AdminIndexRoute
 }
 
 const AdminRouteChildren: AdminRouteChildren = {
+  AdminMentorsRoute: AdminMentorsRoute,
   AdminProductsRoute: AdminProductsRoute,
-  AdminSupervisorsRoute: AdminSupervisorsRoute,
   AdminIndexRoute: AdminIndexRoute,
 }
 
@@ -1217,6 +1197,7 @@ const rootRouteChildren: RootRouteChildren = {
   GuidesRoute: GuidesRouteWithChildren,
   LaboratoryRoute: LaboratoryRoute,
   MentionsLegalesRoute: MentionsLegalesRoute,
+  MentorRoute: MentorRoute,
   NouveautesRoute: NouveautesRoute,
   OrganisationRoute: OrganisationRouteWithChildren,
   PaiementRetourRoute: PaiementRetourRoute,
@@ -1226,11 +1207,9 @@ const rootRouteChildren: RootRouteChildren = {
   ProfilesRoute: ProfilesRouteWithChildren,
   RemboursementRoute: RemboursementRoute,
   RemboursementsRoute: RemboursementsRoute,
-  SupervisorRoute: SupervisorRoute,
   TarifsRoute: TarifsRoute,
   TermsRoute: TermsRoute,
   RejoindreCampaignIdRoute: RejoindreCampaignIdRoute,
-  STokenRoute: STokenRoute,
   ApiPaystackWebhookRoute: ApiPaystackWebhookRoute,
 }
 export const routeTree = rootRouteImport

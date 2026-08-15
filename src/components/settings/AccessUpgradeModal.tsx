@@ -210,7 +210,7 @@ export function AccessUpgradeModal({
               Pack Accompagnement — par enfant
             </p>
             <span className="rounded-full bg-sky-600 px-2.5 py-0.5 text-[10px] font-black uppercase tracking-wide text-white">
-              Superviseur dédié
+              Mentor dédié
             </span>
           </div>
           <p className="font-display text-balance text-2xl font-black text-ink">
@@ -220,7 +220,7 @@ export function AccessUpgradeModal({
           <p className="mt-1 text-[11px] font-semibold text-ink/60">
             {PACK_SESSIONS} séances × {formatXof(SESSION_PRICE_XOF)} = {formatXof(PACK_PRICE_XOF)}
             /mois — <strong>pour un seul enfant</strong> (3 séances/ semaine × 4 semaines). Un
-            superviseur formé rencontre votre enfant, suit sa progression et fait le lien avec les
+            mentor formé rencontre votre enfant, suit sa progression et fait le lien avec les
             défis Naya. Le bilan initial ({formatXof(BILAN_PRICE_XOF)}, une séance) est inclus dans
             le premier mois.
           </p>

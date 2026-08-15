@@ -149,7 +149,7 @@ function AProposPage() {
             Génizio propose à votre enfant des défis concrets adaptés à son âge et à ses centres
             d'intérêt, et construit la carte de ses talents à partir de ce qu'il réalise vraiment. 1
             profil enfant gratuit, forfait famille à partir de 5 000 FCFA/mois (puis 15 000 FCFA) et
-            paliers de +5 enfants au même tarif. Pour un accompagnement plus poussé, un superviseur
+            paliers de +5 enfants au même tarif. Pour un accompagnement plus poussé, un mentor
             formé suit votre enfant en séances hebdomadaires (12 séances × 5 000 F/mois/enfant).
           </p>
           <Link

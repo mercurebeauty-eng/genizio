@@ -1,4 +1,4 @@
-// Prix des extras payants (slot de profil enfant, superviseur ou éducateur supplémentaire).
+// Prix des extras payants (slot de profil enfant, mentor ou éducateur supplémentaire).
 //
 // Aucun paiement n'est traité dans l'app : le prix vit uniquement dans ce qui est AFFICHÉ et
 // dans le message WhatsApp pré-rempli, puis l'admin accorde manuellement après réception du
@@ -45,16 +45,16 @@ export const PASSPORT_PRICE_EUR = 75;
 // Le pack d'accompagnement est PAR ENFANT : 12 séances × 5 000 F = 60 000 F/mois/enfant.
 // Pendant le pilote le paiement est manuel (WhatsApp/Mobile Money) — le bouton de la
 // modale ouvre un lien WhatsApp pré-rempli, pas Paystack. Ces constantes sont la source
-// unique de l'affichage (modale parent, future facturation supervisor_payout en V2).
+// unique de l'affichage (modale parent, future facturation mentor_payout en V2).
 export const SESSION_PRICE_XOF = 5000;
 export const BILAN_PRICE_XOF = 25000;
 export const PACK_SESSIONS = 12;
 export const PACK_PRICE_XOF = SESSION_PRICE_XOF * PACK_SESSIONS; // 60 000 F/mois/enfant
 
-// Payout superviseur (Vague C, 2026-08-14) : 70% de la séance sur preuve (CR en app +
+// Payout mentor (Vague C, 2026-08-14) : 70% de la séance sur preuve (CR en app +
 // déclaration). La part est calculée au fil des séances approuvées par l'admin (ledger).
-export const SUPERVISOR_SHARE = 0.7;
-export const SUPERVISOR_SESSION_PAYOUT_XOF = Math.round(SESSION_PRICE_XOF * SUPERVISOR_SHARE); // 3 500 F/séance
+export const MENTOR_SHARE = 0.7;
+export const MENTOR_SESSION_PAYOUT_XOF = Math.round(SESSION_PRICE_XOF * MENTOR_SHARE); // 3 500 F/séance
 
 export interface ExtraSlotPrice {
   priceXof: number;

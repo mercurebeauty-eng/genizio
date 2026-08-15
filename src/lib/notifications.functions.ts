@@ -1,7 +1,7 @@
-// Superviseur Copilote (décision #74) — notifications parent (canal cross-appareil minimal).
+// Mentor Copilote (décision #74) — notifications parent (canal cross-appareil minimal).
 //
 // Le parent PULL ses notifications à l'ouverture (badge + liste légère) et les marque
-// lues. Écriture par les server functions (supervisor-operator, supervisor-reports) via
+// lues. Écriture par les server functions (mentor-operator, mentor-reports) via
 // notifyUser (app-notifications.ts). Pas de push — le veto parent reste « éclairé à la
 // prochaine visite », le bandeau Mode accompagnement + Réouvrir complètent le dispositif.
 

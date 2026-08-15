@@ -51,7 +51,7 @@ import {
   TALENT_SUBFORM_TO_DOMAIN,
   ACADEMIC_DOMAIN_LABELS,
 } from "@/lib/challenges.functions";
-import { getChildSupervisorInfo } from "@/lib/supervisors.functions";
+import { getChildMentorInfo } from "@/lib/mentors.functions";
 import { listMyNotifications, markNotificationsRead } from "@/lib/notifications.functions";
 import { internationalLevelLabel, lastAcademicLevelByDomain } from "@/lib/academic-levels";
 import {
@@ -271,23 +271,23 @@ function ChallengesPage() {
       .catch((err) => console.error("Error fetching academic gaps:", err));
   }, [profileId]);
 
-  // Superviseur Copilote (décision #74) : bandeau « Mode accompagnement » + Réouvrir +
-  // activité du superviseur (badge + liste légère, pull — pas de push).
-  const [supervisorInfo, setSupervisorInfo] = useState<{
+  // Mentor Copilote (décision #74) : bandeau « Mode accompagnement » + Réouvrir +
+  // activité du mentor (badge + liste légère, pull — pas de push).
+  const [mentorInfo, setMentorInfo] = useState<{
     email: string;
     assignedAt: string;
   } | null>(null);
   const [notifications, setNotifications] = useState<any[]>([]);
   const [showActivity, setShowActivity] = useState(false);
-  const supervisorInfoFn = useServerFn(getChildSupervisorInfo);
+  const mentorInfoFn = useServerFn(getChildMentorInfo);
   const notificationsFn = useServerFn(listMyNotifications);
   const markReadFn = useServerFn(markNotificationsRead);
 
   useEffect(() => {
     if (!profileId) return;
-    supervisorInfoFn({ data: { childId: profileId } })
-      .then((info) => setSupervisorInfo(info ?? null))
-      .catch(() => setSupervisorInfo(null));
+    mentorInfoFn({ data: { childId: profileId } })
+      .then((info) => setMentorInfo(info ?? null))
+      .catch(() => setMentorInfo(null));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [profileId]);
 
@@ -867,7 +867,7 @@ function ChallengesPage() {
     const whatsappNumber =
       (import.meta.env.VITE_WHATSAPP_NUMBER as string | undefined) || "33606433148";
     const whatsappText = encodeURIComponent(
-      `Bonjour, je voudrais devenir superviseur de ${child.name} suite à la fin de mon rôle d'éducateur.`,
+      `Bonjour, je voudrais devenir mentor de ${child.name} suite à la fin de mon rôle d'éducateur.`,
     );
     return (
       <div className="grid min-h-dvh place-items-center bg-surface px-6">
@@ -886,7 +886,7 @@ function ChallengesPage() {
             rel="noreferrer"
             className="press-brand mt-6 inline-flex items-center justify-center gap-2 rounded-2xl bg-brand px-6 py-3 text-sm font-bold text-white"
           >
-            Demander à devenir superviseur
+            Demander à devenir mentor
           </a>
           <Link to="/profiles" className="mt-4 block text-xs font-bold text-ink/60 underline">
             Retour
@@ -987,19 +987,19 @@ function ChallengesPage() {
               </div>
             )}
 
-          {/* Mode accompagnement (décision #74) : cet enfant est suivi par un superviseur
+          {/* Mode accompagnement (décision #74) : cet enfant est suivi par un mentor
               qui opère les défis — le parent garde le dernier mot (Réouvrir, bilan, pub). */}
-          {supervisorInfo && (
+          {mentorInfo && (
             <div className="mb-6 rounded-3xl border border-sky-200 bg-sky-50/70 p-5 shadow-sm flex flex-wrap items-center gap-3">
               <div className="grid size-10 place-items-center rounded-2xl bg-sky-600 text-white shrink-0">
                 <Users className="size-5" />
               </div>
               <div className="flex-1 min-w-48">
                 <p className="text-sm font-black text-sky-900">
-                  Mode accompagnement — {child?.name ?? "cet enfant"} est suivi par un superviseur
+                  Mode accompagnement — {child?.name ?? "cet enfant"} est suivi par un mentor
                 </p>
                 <p className="text-xs text-ink/60 mt-0.5">
-                  Le superviseur opère les défis en séance ({supervisorInfo.email}). Vous gardez le
+                  Le mentor opère les défis en séance ({mentorInfo.email}). Vous gardez le
                   dernier mot : réouvrez un défi, validez le bilan, gérez la publication.
                 </p>
               </div>
@@ -1026,7 +1026,7 @@ function ChallengesPage() {
                   <div className="absolute right-0 top-full z-40 mt-2 w-80 rounded-2xl border border-ink/10 bg-white p-3 shadow-2xl">
                     <div className="flex items-center justify-between mb-2">
                       <p className="text-xs font-black uppercase tracking-widest text-ink/60">
-                        Activité du superviseur
+                        Activité du mentor
                       </p>
                       <button
                         onClick={handleMarkAllRead}
@@ -1050,16 +1050,16 @@ function ChallengesPage() {
                                 : "border-sky-200 bg-sky-50 text-ink"
                             }`}
                           >
-                            {n.type === "supervisor_challenge_completed"
-                              ? `🎉 ${n.payload?.title ?? "Un défi"} complété par le superviseur`
-                              : n.type === "supervisor_abandon"
-                                ? `❌ ${n.payload?.title ?? "Un défi"} marqué non réussi par le superviseur`
-                                : n.type === "supervisor_bilan_submitted"
-                                  ? `📄 Bilan soumis par le superviseur`
-                                  : n.type === "supervisor_bilan_validated"
+                            {n.type === "mentor_challenge_completed"
+                              ? `🎉 ${n.payload?.title ?? "Un défi"} complété par le mentor`
+                              : n.type === "mentor_abandon"
+                                ? `❌ ${n.payload?.title ?? "Un défi"} marqué non réussi par le mentor`
+                                : n.type === "mentor_bilan_submitted"
+                                  ? `📄 Bilan soumis par le mentor`
+                                  : n.type === "mentor_bilan_validated"
                                     ? `✅ Bilan validé par le parent`
-                                    : n.type === "supervisor_bilan_rejected"
-                                      ? `↩️ Bilan renvoyé au superviseur`
+                                    : n.type === "mentor_bilan_rejected"
+                                      ? `↩️ Bilan renvoyé au mentor`
                                       : `🔔 ${n.type}`}
                             <span className="block text-[10px] font-bold text-ink/40 mt-0.5">
                               {new Date(n.created_at).toLocaleString("fr-FR")}
@@ -1701,7 +1701,7 @@ function ChallengesPage() {
                                   await refetch();
                                   await loadAISynthesis();
                                 }}
-                                supervisorActive={!!supervisorInfo}
+                                mentorActive={!!mentorInfo}
                                 onReopen={() => handleReopen(c)}
                               />
                             ))}
@@ -1972,7 +1972,7 @@ function ChallengeCard({
   onDelete,
   onValidated,
   hasKit,
-  supervisorActive,
+  mentorActive,
   onReopen,
 }: {
   c: Challenge;
@@ -1988,7 +1988,7 @@ function ChallengeCard({
   onValidated: () => void;
   hasKit?: boolean;
   /** Mode accompagnement (décision #74) : le parent peut réouvrir un défi complété. */
-  supervisorActive?: boolean;
+  mentorActive?: boolean;
   onReopen?: () => void;
 }) {
   const [notesDraft, setNotesDraft] = useState(c.notes ?? "");
@@ -2305,14 +2305,14 @@ function ChallengeCard({
                 <CheckCircle2 className="size-5" /> Défi accompli !
               </div>
               {/* Veto éclairé (décision #74) : le parent peut réouvrir un défi complété
-                  par le superviseur — les points et badges déjà gagnés sont conservés. */}
-              {supervisorActive && (
+                  par le mentor — les points et badges déjà gagnés sont conservés. */}
+              {mentorActive && (
                 <button
                   onClick={onReopen}
                   className="inline-flex items-center justify-center gap-2 rounded-full border border-amber-300 bg-amber-50 px-4 py-2 text-[13px] font-black text-amber-800 hover:bg-amber-100 transition-all cursor-pointer"
                 >
                   <RotateCcw className="size-4" />
-                  Réouvrir (suivi superviseur)
+                  Réouvrir (suivi mentor)
                 </button>
               )}
             </div>

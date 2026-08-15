@@ -1,21 +1,21 @@
 import { describe, it, expect, vi } from "vitest";
 import {
-  canOperateSupervisor,
-  assertSupervisorOperator,
-  SUPERVISOR_OPERATOR_DENIED_MESSAGE,
+  canOperateMentor,
+  assertMentorOperator,
+  MENTOR_OPERATOR_DENIED_MESSAGE,
   isLastPayableSession,
-} from "@/lib/supervisor-operator";
+} from "@/lib/mentor-operator";
 
-// Superviseur Copilote (décision #74) — prédicat d'autorisation opérateur : assignation
+// Mentor Copilote (décision #74) — prédicat d'autorisation opérateur : assignation
 // active + statut non suspendu/banni + enfant accompagné (pack ou campagne).
 
-describe("canOperateSupervisor (pur)", () => {
+describe("canOperateMentor (pur)", () => {
   it("toutes conditions → vrai", () => {
     expect(
-      canOperateSupervisor({ hasActiveAssignment: true, status: "active", accompaniment: "pack" }),
+      canOperateMentor({ hasActiveAssignment: true, status: "active", accompaniment: "pack" }),
     ).toBe(true);
     expect(
-      canOperateSupervisor({
+      canOperateMentor({
         hasActiveAssignment: true,
         status: "warning",
         accompaniment: "campaign",
@@ -25,20 +25,20 @@ describe("canOperateSupervisor (pur)", () => {
 
   it("pas d'assignation active → faux (même accompagné)", () => {
     expect(
-      canOperateSupervisor({ hasActiveAssignment: false, status: "active", accompaniment: "pack" }),
+      canOperateMentor({ hasActiveAssignment: false, status: "active", accompaniment: "pack" }),
     ).toBe(false);
   });
 
   it("compte suspendu ou banni → faux (même assigné et accompagné)", () => {
     expect(
-      canOperateSupervisor({
+      canOperateMentor({
         hasActiveAssignment: true,
         status: "suspended",
         accompaniment: "pack",
       }),
     ).toBe(false);
     expect(
-      canOperateSupervisor({
+      canOperateMentor({
         hasActiveAssignment: true,
         status: "banned",
         accompaniment: "campaign",
@@ -48,18 +48,18 @@ describe("canOperateSupervisor (pur)", () => {
 
   it("enfant non accompagné → faux (l'observateur reste lecteur)", () => {
     expect(
-      canOperateSupervisor({ hasActiveAssignment: true, status: "active", accompaniment: "none" }),
+      canOperateMentor({ hasActiveAssignment: true, status: "active", accompaniment: "none" }),
     ).toBe(false);
   });
 
   it("statut absent (profil jamais créé) = active", () => {
     expect(
-      canOperateSupervisor({ hasActiveAssignment: true, status: null, accompaniment: "pack" }),
+      canOperateMentor({ hasActiveAssignment: true, status: null, accompaniment: "pack" }),
     ).toBe(true);
   });
 });
 
-// Fake DB minimal pour assertSupervisorOperator : supervisor_profiles + supervisors +
+// Fake DB minimal pour assertMentorOperator : mentor_profiles + mentors +
 // family_coverages/season_enrollments (via resolveChildAccompaniment).
 function makeFakeDb(initial: Record<string, any[]> = {}) {
   const tables: Record<string, any[]> = Object.fromEntries(
@@ -101,7 +101,7 @@ const past = new Date(now - 10 * 86_400_000).toISOString();
 const future = new Date(now + 30 * 86_400_000).toISOString();
 
 const context = (over: Partial<any> = {}) => ({
-  supervisor_user_id: "sup-1",
+  mentor_user_id: "sup-1",
   child_profile_id: "c1",
   removed_at: null,
   ...over,
@@ -118,60 +118,60 @@ const pack = (over: Partial<any> = {}) => ({
   ...over,
 });
 
-describe("assertSupervisorOperator", () => {
-  it("accepte un superviseur actif, assigné, enfant accompagné par pack", async () => {
+describe("assertMentorOperator", () => {
+  it("accepte un mentor actif, assigné, enfant accompagné par pack", async () => {
     const { db } = makeFakeDb({
-      supervisor_profiles: [{ supervisor_user_id: "sup-1", status: "active" }],
-      supervisors: [context()],
+      mentor_profiles: [{ mentor_user_id: "sup-1", status: "active" }],
+      mentors: [context()],
       family_coverages: [pack()],
     });
-    await expect(assertSupervisorOperator(db, "sup-1", "c1")).resolves.toBeUndefined();
+    await expect(assertMentorOperator(db, "sup-1", "c1")).resolves.toBeUndefined();
   });
 
   it("rejette un compte suspendu", async () => {
     const { db } = makeFakeDb({
-      supervisor_profiles: [{ supervisor_user_id: "sup-1", status: "suspended" }],
-      supervisors: [context()],
+      mentor_profiles: [{ mentor_user_id: "sup-1", status: "suspended" }],
+      mentors: [context()],
       family_coverages: [pack()],
     });
-    await expect(assertSupervisorOperator(db, "sup-1", "c1")).rejects.toThrow("suspendu");
+    await expect(assertMentorOperator(db, "sup-1", "c1")).rejects.toThrow("suspendu");
   });
 
   it("rejette un compte banni", async () => {
     const { db } = makeFakeDb({
-      supervisor_profiles: [{ supervisor_user_id: "sup-1", status: "banned" }],
-      supervisors: [context()],
+      mentor_profiles: [{ mentor_user_id: "sup-1", status: "banned" }],
+      mentors: [context()],
       family_coverages: [pack()],
     });
-    await expect(assertSupervisorOperator(db, "sup-1", "c1")).rejects.toThrow("banni");
+    await expect(assertMentorOperator(db, "sup-1", "c1")).rejects.toThrow("banni");
   });
 
   it("rejette sans assignation active", async () => {
     const { db } = makeFakeDb({
-      supervisor_profiles: [{ supervisor_user_id: "sup-1", status: "active" }],
-      supervisors: [],
+      mentor_profiles: [{ mentor_user_id: "sup-1", status: "active" }],
+      mentors: [],
       family_coverages: [pack()],
     });
-    await expect(assertSupervisorOperator(db, "sup-1", "c1")).rejects.toThrow(
+    await expect(assertMentorOperator(db, "sup-1", "c1")).rejects.toThrow(
       "n'est pas (plus) assigné",
     );
   });
 
   it("rejette un enfant non accompagné (l'observateur reste lecteur)", async () => {
     const { db } = makeFakeDb({
-      supervisor_profiles: [{ supervisor_user_id: "sup-1", status: "active" }],
-      supervisors: [context()],
+      mentor_profiles: [{ mentor_user_id: "sup-1", status: "active" }],
+      mentors: [context()],
       family_coverages: [],
     });
-    await expect(assertSupervisorOperator(db, "sup-1", "c1")).rejects.toThrow(
-      SUPERVISOR_OPERATOR_DENIED_MESSAGE,
+    await expect(assertMentorOperator(db, "sup-1", "c1")).rejects.toThrow(
+      MENTOR_OPERATOR_DENIED_MESSAGE,
     );
   });
 
   it("accepte un enfant accompagné par campagne", async () => {
     const { db } = makeFakeDb({
-      supervisor_profiles: [{ supervisor_user_id: "sup-1", status: "active" }],
-      supervisors: [context()],
+      mentor_profiles: [{ mentor_user_id: "sup-1", status: "active" }],
+      mentors: [context()],
       family_coverages: [],
       season_enrollments: [
         {
@@ -187,7 +187,7 @@ describe("assertSupervisorOperator", () => {
         },
       ],
     });
-    await expect(assertSupervisorOperator(db, "sup-1", "c1")).resolves.toBeUndefined();
+    await expect(assertMentorOperator(db, "sup-1", "c1")).resolves.toBeUndefined();
   });
 });
 

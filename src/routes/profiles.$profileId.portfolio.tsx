@@ -8,13 +8,6 @@ import { TALENT_SUBFORM_LABELS } from "@/lib/challenges.functions";
 import { ensureHypothesesForChild } from "@/lib/hypotheses.functions";
 import { getChildGuild, getTalentAffinities } from "@/lib/guilds";
 import { getChildEnrolledSeason, getActiveSeason, type Season } from "@/lib/seasons.functions";
-import {
-  getChildSupervisorInfo,
-  listChildSessionsForFeedback,
-  submitSupervisorFeedback,
-} from "@/lib/supervisors.functions";
-import { getChildBilan, validateSupervisorReport } from "@/lib/supervisor-reports.functions";
-import { confirmDialog } from "@/components/ui/confirm-dialog";
 import { getChildAccessStatusFn, type ChildAccessStatus } from "@/lib/child-access";
 import { formatXof } from "@/lib/pricing";
 import { initializePassportPayment } from "@/lib/payments.functions";
@@ -68,13 +61,7 @@ import {
   CheckCircle2,
   Target,
   Gift,
-  FileText,
-  Check,
-  X,
-  Download,
-  Share2,
 } from "lucide-react";
-import { InviteMentorDialog } from "@/components/mentors/InviteMentorDialog";
 import { AppHeader } from "@/components/AppHeader";
 import { INTERESTS_BY_TALENT } from "@/components/profiles/shared";
 import {
@@ -90,21 +77,6 @@ function getLevelInfo(totalXP: number) {
   const pct = Math.min(100, ((totalXP % 500) / 500) * 100);
   const nextXP = 500 - (totalXP % 500);
   return { level, pct, nextXP };
-}
-
-// Partage WhatsApp du bilan validé (décision #74) — message pré-rempli avec le résumé,
-// même pattern que le WhatsAppFAB (WhatsApp-first du projet).
-function buildBilanWhatsAppUrl(bilan: any, childName?: string | null): string {
-  const phone = import.meta.env.VITE_WHATSAPP_NUMBER?.replace(/\D/g, "") ?? "33606433148";
-  const text = [
-    `📄 Bilan de fin — ${childName ?? "mon enfant"} (Génizio)`,
-    bilan.realisations ? `\n✅ Réalisations : ${bilan.realisations}` : "",
-    bilan.competences_observees
-      ? `\n🌟 Compétences observées : ${bilan.competences_observees}`
-      : "",
-    bilan.recommandations ? `\n🔭 Recommandations : ${bilan.recommandations}` : "",
-  ].join("");
-  return `https://wa.me/${phone}?text=${encodeURIComponent(text)}`;
 }
 
 const DOMAIN_COLORS: Record<string, string> = {
@@ -277,72 +249,6 @@ function PortfolioPage() {
   const [fetching, setFetching] = useState(true);
   const [enrolledSeason, setEnrolledSeason] = useState<Season | null>(null);
   const [activeSeason, setActiveSeason] = useState<Season | null>(null);
-  const [supervisorInfo, setSupervisorInfo] = useState<{
-    email: string;
-    assignedAt: string;
-  } | null>(null);
-  // Bilan du superviseur (décision #74) — le « bilan inclus » du pack, seule pièce à
-  // validation explicite du parent.
-  const [bilan, setBilan] = useState<any | null>(null);
-  const [validatingBilan, setValidatingBilan] = useState(false);
-  const [rejectingBilan, setRejectingBilan] = useState(false);
-  const [bilanFeedback, setBilanFeedback] = useState("");
-  const bilanFn = useServerFn(getChildBilan);
-  const validateBilanFn = useServerFn(validateSupervisorReport);
-
-  const handleValidateBilan = async () => {
-    if (!bilan) return;
-    const ok = await confirmDialog({
-      title: "Valider le bilan du superviseur ?",
-      description:
-        "Ce bilan devient le livrable officiel de la période. Cette action débloque aussi la dernière séance du mois.",
-      confirmLabel: "Valider le bilan",
-      variant: "default",
-    });
-    if (!ok) return;
-    setValidatingBilan(true);
-    try {
-      const res = await validateBilanFn({
-        data: { reportId: bilan.id, decision: "validate" },
-      });
-      setBilan((res as any)?.report ?? null);
-      toast.success("Bilan validé — merci !");
-    } catch (err: any) {
-      toast.error(err.message || "Impossible de valider le bilan.");
-    } finally {
-      setValidatingBilan(false);
-    }
-  };
-
-  const handleRejectBilan = async () => {
-    if (!bilan) return;
-    setValidatingBilan(true);
-    try {
-      const res = await validateBilanFn({
-        data: {
-          reportId: bilan.id,
-          decision: "reject",
-          feedback: bilanFeedback.trim() || "Veuillez compléter le bilan.",
-        },
-      });
-      setBilan((res as any)?.report ?? null);
-      setRejectingBilan(false);
-      setBilanFeedback("");
-      toast.success("Le superviseur est notifié des modifications à apporter.");
-    } catch (err: any) {
-      toast.error(err.message || "Impossible d'envoyer les corrections.");
-    } finally {
-      setValidatingBilan(false);
-    }
-  };
-  // Feedback famille (Vague C) : séances récentes de l'enfant + note 1-5 à poser.
-  const [feedbackSessions, setFeedbackSessions] = useState<
-    Array<{ id: string; occurred_at: string; rated: boolean; rating: number | null }>
-  >([]);
-  const [feedbackRating, setFeedbackRating] = useState(5);
-  const [feedbackComment, setFeedbackComment] = useState("");
-  const [submittingFeedback, setSubmittingFeedback] = useState(false);
-  const feedbackFn = useServerFn(submitSupervisorFeedback);
   // Accès mensuel payant (modèle 2026-08-05) : status free/permanent/monthly/expired +
   // montant de renouvellement applicable au compte.
   const [accessState, setAccessState] = useState<{
@@ -350,7 +256,6 @@ function PortfolioPage() {
     renewalAmountXof: number;
   } | null>(null);
   const [payingPassport, setPayingPassport] = useState(false);
-  const [mentorCount, setMentorCount] = useState(0);
   const [dismissedDiscoveries, setDismissedDiscoveries] = useState<string[]>([]);
   const [expandedMonths, setExpandedMonths] = useState<Set<string>>(new Set());
   // Calibration du temps (chantier 4, §5 suite) : proposition de temps généreux
@@ -413,10 +318,6 @@ function PortfolioPage() {
         .eq("child_id", profileId)
         .order("completed_at", { ascending: false, nullsFirst: false }),
       supabase
-        .from("child_mentors")
-        .select("id", { count: "exact", head: true })
-        .eq("child_id", profileId),
-      supabase
         .from("hypothesis_cycles")
         .select("id, parent_narrative")
         .eq("child_id", profileId)
@@ -426,17 +327,15 @@ function PortfolioPage() {
         .limit(1)
         .maybeSingle(),
     ])
-      .then(([c, ch, cm, hc]) => {
+      .then(([c, ch, hc]) => {
         setChild((c.data as Child) ?? null);
         setChallenges((ch.data ?? []) as Challenge[]);
-        setMentorCount(cm.count ?? 0);
         setOpenCycle((hc.data as OpenHypothesisCycle) ?? null);
       })
       .catch((err) => {
         console.error("Erreur lors du chargement du portfolio:", err);
         setChild(null);
         setChallenges([]);
-        setMentorCount(0);
         setOpenCycle(null);
       })
       .finally(() => {
@@ -579,21 +478,6 @@ function PortfolioPage() {
     getActiveSeason({ data: undefined })
       .then((season) => setActiveSeason(season))
       .catch(console.error);
-
-    getChildSupervisorInfo({ data: { childId: profileId } })
-      .then((info) => setSupervisorInfo(info))
-      .catch(console.error);
-
-    // Bilan de fin (décision #74) : le parent lit, valide ou renvoie le bilan.
-    bilanFn({ data: { childId: profileId } })
-      .then((res) => setBilan((res as any)?.report ?? null))
-      .catch(() => setBilan(null));
-
-    // Vague C : séances récentes pour le widget « Noter la dernière séance » (feedback 1-5,
-    // composante 25% du score superviseur V2).
-    listChildSessionsForFeedback({ data: { childId: profileId } })
-      .then((sessions) => setFeedbackSessions((sessions as any[]) ?? []))
-      .catch(() => setFeedbackSessions([]));
 
     getChildAccessStatusFn({ data: { childId: profileId } })
       .then((res) => setAccessState(res))
@@ -950,7 +834,7 @@ function PortfolioPage() {
                 </div>
 
                 {/* Footer stats */}
-                <div className="grid grid-cols-3 gap-4 text-center mt-2">
+                <div className="grid grid-cols-2 gap-4 text-center mt-2">
                   <div>
                     <div className="font-display text-balance text-2xl font-black text-orange-600">
                       {completed.length}
@@ -965,14 +849,6 @@ function PortfolioPage() {
                     </div>
                     <div className="text-[10px] font-bold uppercase tracking-widest text-ink/60 mt-0.5">
                       Talents cartographiés
-                    </div>
-                  </div>
-                  <div>
-                    <div className="font-display text-balance text-2xl font-black text-sky-600">
-                      {mentorCount}
-                    </div>
-                    <div className="text-[10px] font-bold uppercase tracking-widest text-ink/60 mt-0.5">
-                      Mentors actifs
                     </div>
                   </div>
                 </div>
@@ -1048,258 +924,28 @@ function PortfolioPage() {
             );
           })()}
 
-          {/* Card: Superviseur assigné — jusqu'ici invisible pour le parent, découvert
-              seulement en ouvrant le portfolio (pas de notification, cf. absence d'infra
-              email/SMS dans ce projet) */}
-          {supervisorInfo && (
-            <div className="rounded-3xl border border-sky-200 bg-sky-50/60 p-5 shadow-sm flex items-center gap-4">
+          {/* Suivi par un mentor — le suivi complet (mentor, bilan, activité) vit sur la
+              page « Mentor » (décision #76 : fusion du partage et de l'accompagnement). */}
+          <Link
+            to="/profiles/$profileId/mentors"
+            params={{ profileId }}
+            className="flex items-center justify-between gap-4 rounded-3xl border border-sky-200 bg-sky-50/60 p-5 shadow-sm hover:-translate-y-0.5 transition-all"
+          >
+            <div className="flex items-center gap-4">
               <div className="grid size-11 place-items-center rounded-2xl bg-sky-600 text-white shrink-0">
                 <Users className="size-5" />
               </div>
               <div>
                 <p className="text-xs font-black uppercase tracking-widest text-sky-700">
-                  Suivi par un superviseur
+                  Suivi par un mentor
                 </p>
-                <p className="text-sm font-bold text-ink mt-0.5">{supervisorInfo.email}</p>
-                <p className="text-xs text-ink/50 mt-0.5">
-                  Depuis le {new Date(supervisorInfo.assignedAt).toLocaleDateString("fr-FR")}
+                <p className="text-sm font-medium text-ink/70 mt-0.5">
+                  Consultez l'accompagnement, le bilan de fin de période et l'activité.
                 </p>
               </div>
             </div>
-          )}
-
-          {/* Bilan de fin du superviseur (décision #74) — le « bilan inclus » du pack :
-              seule pièce à validation EXPLICITE du parent. Le parent valide, demande des
-              modifications, télécharge le PDF et partage. */}
-          {supervisorInfo && bilan && (
-            <div className="rounded-3xl border border-emerald-200 bg-emerald-50/50 p-5 shadow-sm space-y-4">
-              <div className="flex flex-wrap items-center justify-between gap-3">
-                <div className="flex items-center gap-3">
-                  <div className="grid size-11 place-items-center rounded-2xl bg-emerald-600 text-white shrink-0">
-                    <FileText className="size-5" />
-                  </div>
-                  <div>
-                    <p className="text-xs font-black uppercase tracking-widest text-emerald-700">
-                      Bilan du superviseur
-                    </p>
-                    <p className="text-xs text-ink/50 mt-0.5">
-                      Période du {new Date(bilan.period_start).toLocaleDateString("fr-FR")} au{" "}
-                      {new Date(bilan.period_end).toLocaleDateString("fr-FR")}
-                    </p>
-                  </div>
-                </div>
-                <span
-                  className={`rounded-full px-2.5 py-1 text-[10px] font-black uppercase tracking-widest border border-ink/10 ${
-                    bilan.status === "validated"
-                      ? "bg-emerald-100 text-emerald-800"
-                      : bilan.status === "submitted"
-                        ? "bg-amber-100 text-amber-800"
-                        : bilan.status === "rejected"
-                          ? "bg-rose-100 text-rose-800"
-                          : "bg-surface text-ink/60"
-                  }`}
-                >
-                  {bilan.status === "validated"
-                    ? "✅ Validé"
-                    : bilan.status === "submitted"
-                      ? "⏳ À valider"
-                      : bilan.status === "rejected"
-                        ? "↩️ Modifications demandées"
-                        : "📝 Brouillon"}
-                </span>
-              </div>
-
-              {bilan.status === "rejected" && bilan.parent_feedback && (
-                <div className="rounded-2xl border border-rose-200 bg-rose-50 p-4 text-sm text-rose-900">
-                  <p className="text-xs font-black uppercase tracking-wider mb-1 text-rose-800">
-                    Vos demandes de modifications
-                  </p>
-                  {bilan.parent_feedback}
-                </div>
-              )}
-
-              {bilan.status === "submitted" ? (
-                <div className="space-y-3">
-                  <p className="text-sm text-ink/70">
-                    Le superviseur a soumis le bilan de fin de période. Validez-le pour en faire le
-                    livrable officiel (il débloque aussi la dernière séance du mois).
-                  </p>
-                  {rejectingBilan ? (
-                    <div className="rounded-2xl border border-ink/10 bg-white p-4 space-y-3">
-                      <p className="text-xs font-black uppercase tracking-widest text-ink/60">
-                        Que doit corriger le superviseur ?
-                      </p>
-                      <textarea
-                        value={bilanFeedback}
-                        onChange={(e) => setBilanFeedback(e.target.value)}
-                        rows={3}
-                        maxLength={2000}
-                        placeholder="Ex. : précisez les compétences observées en séance…"
-                        className="w-full rounded-xl border border-ink/10 bg-surface px-4 py-3 text-sm font-medium text-ink outline-none focus:ring-2 focus:ring-brand"
-                      />
-                      <div className="flex justify-end gap-2">
-                        <button
-                          onClick={() => setRejectingBilan(false)}
-                          className="rounded-xl border border-ink/10 px-4 py-2 text-xs font-bold text-ink/60 hover:bg-stone-100 cursor-pointer"
-                        >
-                          Annuler
-                        </button>
-                        <button
-                          onClick={() => handleRejectBilan()}
-                          disabled={validatingBilan}
-                          className="rounded-xl bg-rose-600 px-4 py-2 text-xs font-black text-white hover:bg-rose-700 disabled:opacity-50 cursor-pointer"
-                        >
-                          {validatingBilan ? "Envoi…" : "Envoyer les corrections"}
-                        </button>
-                      </div>
-                    </div>
-                  ) : (
-                    <div className="flex flex-wrap gap-2">
-                      <button
-                        onClick={() => handleValidateBilan()}
-                        disabled={validatingBilan}
-                        className="inline-flex items-center gap-2 rounded-xl bg-emerald-600 px-4 py-2.5 text-xs font-black text-white shadow-sm hover:-translate-y-0.5 transition-all disabled:opacity-50 cursor-pointer"
-                      >
-                        <Check className="size-4" />
-                        Valider le bilan
-                      </button>
-                      <button
-                        onClick={() => setRejectingBilan(true)}
-                        disabled={validatingBilan}
-                        className="inline-flex items-center gap-2 rounded-xl border border-rose-200 bg-rose-50 px-4 py-2.5 text-xs font-black text-rose-700 hover:bg-rose-100 disabled:opacity-50 cursor-pointer"
-                      >
-                        <X className="size-4" />
-                        Demander des modifications
-                      </button>
-                    </div>
-                  )}
-                </div>
-              ) : bilan.status === "draft" ? (
-                <p className="text-sm text-ink/60 italic">
-                  Le superviseur rédige actuellement le bilan de la période.
-                </p>
-              ) : (
-                bilan.status === "validated" && (
-                  <div className="space-y-3">
-                    {[
-                      ["Réalisations", bilan.realisations],
-                      ["Compétences observées", bilan.competences_observees],
-                      ["Recommandations", bilan.recommandations],
-                    ].map(([label, content]) =>
-                      content ? (
-                        <div key={label as string}>
-                          <p className="text-xs font-black uppercase tracking-widest text-ink/60 mb-1">
-                            {label}
-                          </p>
-                          <p className="text-sm text-ink/80 leading-relaxed whitespace-pre-wrap">
-                            {content}
-                          </p>
-                        </div>
-                      ) : null,
-                    )}
-                    <div className="flex flex-wrap gap-2 pt-2">
-                      <Link
-                        to="/profiles/$profileId/bilan-print"
-                        params={{ profileId }}
-                        target="_blank"
-                        className="inline-flex items-center gap-2 rounded-xl bg-ink px-4 py-2.5 text-xs font-black text-white shadow-sm hover:-translate-y-0.5 transition-all"
-                      >
-                        <Download className="size-4" />
-                        Télécharger le PDF
-                      </Link>
-                      <a
-                        href={buildBilanWhatsAppUrl(bilan, child?.name)}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="inline-flex items-center gap-2 rounded-xl border border-ink/10 bg-white px-4 py-2.5 text-xs font-black text-ink hover:bg-stone-100 transition-all"
-                      >
-                        <Share2 className="size-4" />
-                        Partager sur WhatsApp
-                      </a>
-                    </div>
-                  </div>
-                )
-              )}
-            </div>
-          )}
-
-          {/* Feedback famille (Vague C) : noter la dernière séance de suivi — composante
-              25% du score superviseur (V2). Widget discret, seulement si une séance
-              non notée existe. */}
-          {supervisorInfo &&
-            feedbackSessions.filter((s) => !s.rated).length > 0 &&
-            (() => {
-              const session = feedbackSessions.find((s) => !s.rated);
-              if (!session) return null;
-              return (
-                <div className="rounded-3xl border border-ink/10 bg-white p-5 shadow-sm">
-                  <p className="text-xs font-black uppercase tracking-widest text-ink/70">
-                    Comment s'est passée la séance du{" "}
-                    {new Date(session.occurred_at).toLocaleDateString("fr-FR", {
-                      day: "numeric",
-                      month: "long",
-                    })}{" "}
-                    ?
-                  </p>
-                  <p className="mt-1 text-xs text-ink/60">
-                    Votre note aide à valoriser les bons superviseurs et à repérer ceux qui manquent
-                    de sérieux.
-                  </p>
-                  <div className="mt-3 flex items-center gap-1">
-                    {[1, 2, 3, 4, 5].map((n) => (
-                      <button
-                        key={n}
-                        type="button"
-                        onClick={() => setFeedbackRating(n)}
-                        className={`text-2xl transition-all cursor-pointer ${
-                          n <= feedbackRating
-                            ? "text-amber-400"
-                            : "text-ink/15 hover:text-amber-200"
-                        }`}
-                        aria-label={`${n} étoiles`}
-                      >
-                        ★
-                      </button>
-                    ))}
-                  </div>
-                  <input
-                    value={feedbackComment}
-                    onChange={(e) => setFeedbackComment(e.target.value)}
-                    placeholder="Un commentaire (optionnel)…"
-                    maxLength={500}
-                    className="mt-3 w-full rounded-xl border border-ink/10 bg-surface px-4 py-2.5 text-sm outline-none focus:ring-2 focus:ring-brand"
-                  />
-                  <button
-                    onClick={async () => {
-                      setSubmittingFeedback(true);
-                      try {
-                        await feedbackFn({
-                          data: {
-                            sessionId: session.id,
-                            rating: feedbackRating,
-                            comment: feedbackComment.trim() || undefined,
-                          },
-                        });
-                        toast.success("Merci ! Votre note est enregistrée.");
-                        setFeedbackComment("");
-                        const refreshed = await listChildSessionsForFeedback({
-                          data: { childId: profileId },
-                        });
-                        setFeedbackSessions((refreshed as any[]) ?? []);
-                      } catch (err: any) {
-                        toast.error(err.message || "Erreur lors de l'envoi.");
-                      } finally {
-                        setSubmittingFeedback(false);
-                      }
-                    }}
-                    disabled={submittingFeedback}
-                    className="mt-3 rounded-xl bg-brand px-5 py-2 text-xs font-bold text-white hover:bg-brand/90 transition-all cursor-pointer disabled:opacity-50"
-                  >
-                    {submittingFeedback ? "Envoi…" : "Envoyer ma note"}
-                  </button>
-                </div>
-              );
-            })()}
+            <ChevronRight className="size-5 text-sky-700" />
+          </Link>
 
           {/* Accès mensuel payant (modèle 2026-08-05) : bannière "accès expiré" */}
           {accessState && accessState.status.kind === "expired" && (
@@ -1852,7 +1498,6 @@ function PortfolioPage() {
                 <Clock className="size-5 text-brand" />
                 Timeline & Historique de progression ({completed.length})
               </h3>
-              {child && <InviteMentorDialog childId={child.id} childName={child.name} />}
             </div>
 
             {completed.length === 0 ? (
