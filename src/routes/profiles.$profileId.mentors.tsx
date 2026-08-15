@@ -839,6 +839,12 @@ function MentorHubPage() {
                 />
               </div>
 
+              <p className="text-[11px] leading-relaxed text-ink/50">
+                La contestation est <strong>refusée</strong> si un défi a été complété et
+                validé avec l'enfant sur la période de la séance (travail attesté par une
+                preuve) — dans ce cas, contactez l'équipe Génizio en cas de désaccord.
+              </p>
+
               <div className="border-t-2 border-ink pt-4 flex justify-end gap-2">
                 <button
                   onClick={() => setContestingFor(null)}

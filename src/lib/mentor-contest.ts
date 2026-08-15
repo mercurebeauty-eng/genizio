@@ -29,6 +29,55 @@ export type ContestedSession = {
   contest_reason: string | null;
 };
 
+// ── Garde « travail validé » (anti-faille parent, 2026-08-15) ────────────────
+// Si le mentor a fait un travail ATTESTÉ avec l'enfant sur la période de la
+// séance (défi complété avec preuve validée par l'IA, ou défi déclaratif
+// complété), la séance a nécessairement eu lieu : l'enfant a déjà reçu le
+// bénéfice du travail. Le parent ne peut donc PAS la contester — sinon un parent
+// malveillant laisserait le mentor travailler (défi validé, points à l'enfant)
+// puis contesterait la séance pour ne pas la payer.
+
+/** Fenêtre autour de la date de la séance où un défi validé atteste le travail. */
+export const CONTEST_VALIDATED_WORK_WINDOW_DAYS = 7;
+
+export const CONTEST_BLOCKED_VALIDATED_WORK_MESSAGE =
+  "Cette séance ne peut pas être contestée : un défi a été validé avec l'enfant sur la " +
+  "période de cette séance (travail attesté par une preuve). Si vous constatez un " +
+  "problème, contactez l'équipe Génizio.";
+
+/**
+ * Vrai si l'enfant a un défi COMPLÉTÉ et validé (preuve photo analysée par l'IA —
+ * ai_observations non nul — ou défi déclaratif complété) dont la complétion tombe
+ * dans ±windowDays autour de la date de la séance. C'est la preuve que le travail
+ * a eu lieu : la séance est attestée, elle ne peut pas être contestée.
+ */
+export async function hasValidatedChildWorkNearSession(
+  db: { from: (table: string) => any },
+  childId: string,
+  occurredAt: string,
+  windowDays = CONTEST_VALIDATED_WORK_WINDOW_DAYS,
+): Promise<boolean> {
+  const t = new Date(occurredAt).getTime();
+  const start = new Date(t - windowDays * 86_400_000).toISOString();
+  const end = new Date(t + windowDays * 86_400_000).toISOString();
+  const { data, error } = await db
+    .from("challenges")
+    .select("ai_observations, proof_mode")
+    .eq("child_id", childId)
+    .eq("status", "completed")
+    .gte("completed_at", start)
+    .lte("completed_at", end)
+    .limit(20);
+  if (error) {
+    // Garde fermée : si on ne peut pas vérifier le travail validé, on refuse la
+    // contestation plutôt que d'ouvrir la faille (l'admin reste joignable).
+    throw new Error(`Impossible de vérifier le travail validé: ${error.message}`);
+  }
+  return (data ?? []).some(
+    (c: any) => c.ai_observations != null || c.proof_mode === "declarative",
+  );
+}
+
 /**
  * Rembourse la séance contestée au budget qui l'a financée (pack ou campagne) :
  * la séance n'a pas eu lieu, le créneau est rendu. Garde sessions_used > 0 —
@@ -74,6 +123,10 @@ export async function refundSessionDebit(
  * séance a déjà été traitée : confirmée, contestée, approuvée…). La garde en base
  * `.eq("status","declared")` rend la double contestation impossible, même si deux
  * onglets du parent cliquent en même temps.
+ *
+ * GARDE « travail validé » : si l'enfant a un défi complété + validé sur la
+ * période de la séance (hasValidatedChildWorkNearSession), la séance est attestée
+ * et la contestation est REFUSÉE (throw) — anti-faille parent.
  */
 export async function processSessionContest(
   db: { from: (table: string) => any },
@@ -82,6 +135,24 @@ export async function processSessionContest(
   reason: ContestReason,
   note?: string | null,
 ): Promise<ContestedSession | null> {
+  // Pré-charge la séance pour la garde (child + date). Si introuvable, on laisse
+  // la transition la refuser (null → « déjà traitée »).
+  const { data: sessionRow } = await db
+    .from("mentor_sessions")
+    .select("id, child_profile_id, occurred_at")
+    .eq("id", sessionId)
+    .maybeSingle();
+  if (
+    sessionRow &&
+    (await hasValidatedChildWorkNearSession(
+      db,
+      sessionRow.child_profile_id,
+      sessionRow.occurred_at,
+    ))
+  ) {
+    throw new Error(CONTEST_BLOCKED_VALIDATED_WORK_MESSAGE);
+  }
+
   const { data: claimed } = await db
     .from("mentor_sessions")
     .update({
