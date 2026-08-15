@@ -141,41 +141,46 @@ function RemboursementsPage() {
             demande sous 48 h ouvrées.
           </p>
 
-          <div className="not-prose flex flex-col gap-3 sm:flex-row">
-            <a
-              href="mailto:serviceclient@genizio.com"
-              className="press-brand inline-flex items-center justify-center gap-2 rounded-xl bg-brand px-5 py-3 text-xs font-bold text-white"
-            >
-              <Mail className="size-4" aria-hidden />
-              Contacter par email
-            </a>
-            <a
-              href="https://wa.me/33606433148?text=Bonjour%2C%20j%27ai%20une%20question%20sur%20un%20remboursement%20G%C3%A9nizio."
-              target="_blank"
-              rel="noopener noreferrer"
-              className="press-ink inline-flex items-center justify-center gap-2 rounded-xl bg-ink px-5 py-3 text-xs font-bold text-white"
-            >
-              <MessageCircle className="size-4" aria-hidden />
-              Contacter sur WhatsApp
-            </a>
-          </div>
+        </div>
 
-          <div className="not-prose border-t-2 border-ink/10 pt-4">
-            <p className="text-xs font-semibold text-ink/60">
-              Voir aussi :{" "}
-              <Link to="/tarifs" className="text-brand underline">
-                Tarifs
-              </Link>{" "}
-              ·{" "}
-              <Link to="/terms" className="text-brand underline">
-                Conditions d'utilisation
-              </Link>{" "}
-              ·{" "}
-              <Link to="/mentions-legales" className="text-brand underline">
-                Mentions légales
-              </Link>
-            </p>
-          </div>
+        {/* Boutons de contact placés HORS de .prose-genizio : la règle maison
+            `.prose-genizio a { color: var(--brand) }` (spécificité supérieure, hors des
+            couches Tailwind) écrasait `text-white` des boutons — texte orange sur fond
+            orange. `not-prose` ne neutralise pas cette classe maison. */}
+        <div className="mt-8 flex flex-col gap-3 sm:flex-row">
+          <a
+            href="mailto:serviceclient@genizio.com"
+            className="press-brand inline-flex items-center justify-center gap-2 rounded-xl bg-brand px-5 py-3 text-xs font-bold text-white"
+          >
+            <Mail className="size-4" aria-hidden />
+            Contacter par email
+          </a>
+          <a
+            href="https://wa.me/33606433148?text=Bonjour%2C%20j%27ai%20une%20question%20sur%20un%20remboursement%20G%C3%A9nizio."
+            target="_blank"
+            rel="noopener noreferrer"
+            className="press-ink inline-flex items-center justify-center gap-2 rounded-xl bg-ink px-5 py-3 text-xs font-bold text-white"
+          >
+            <MessageCircle className="size-4" aria-hidden />
+            Contacter sur WhatsApp
+          </a>
+        </div>
+
+        <div className="mt-8 border-t-2 border-ink/10 pt-4">
+          <p className="text-xs font-semibold text-ink/60">
+            Voir aussi :{" "}
+            <Link to="/tarifs" className="text-brand underline">
+              Tarifs
+            </Link>{" "}
+            ·{" "}
+            <Link to="/terms" className="text-brand underline">
+              Conditions d'utilisation
+            </Link>{" "}
+            ·{" "}
+            <Link to="/mentions-legales" className="text-brand underline">
+              Mentions légales
+            </Link>
+          </p>
         </div>
       </article>
 
