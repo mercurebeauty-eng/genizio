@@ -30,7 +30,7 @@ import { RELATIONSHIP_TYPES } from "@/lib/relationship-types";
 import { GenizioLoader } from "@/components/GenizioLoader";
 import { checkAdminStatus } from "@/lib/admin.functions";
 import { checkIsCampaignManager } from "@/lib/campaigns.functions";
-import { checkIsActiveMentor } from "@/lib/mentors.functions";
+import { checkIsActiveMentor, activateMentorCode } from "@/lib/mentors.functions";
 
 export const Route = createFileRoute("/profile")({
   component: ProfilePage,
@@ -58,6 +58,49 @@ function ProfilePage() {
   const checkAdmin = useServerFn(checkAdminStatus);
   const checkManager = useServerFn(checkIsCampaignManager);
   const checkMentor = useServerFn(checkIsActiveMentor);
+
+  // Activation du mode Mentor par code (Vague 5, spec §7) — carte « Paramètres → Mentor ».
+  const activateFn = useServerFn(activateMentorCode);
+  const [activationCode, setActivationCode] = useState("");
+  const [activating, setActivating] = useState(false);
+  const [activationStatus, setActivationStatus] = useState<{
+    ok: boolean;
+    text: string;
+  } | null>(null);
+
+  const handleActivateCode = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!activationCode.trim()) return;
+    setActivating(true);
+    setActivationStatus(null);
+    try {
+      const res = await activateFn({ data: { code: activationCode.trim() } });
+      if (res.status === "ok") {
+        setActivationStatus({
+          ok: true,
+          text: "Mode Mentor activé ! Vous pouvez maintenant ouvrir l'espace Mentor.",
+        });
+        setActivationCode("");
+        setIsMentor(true);
+      } else {
+        const msg =
+          {
+            invalid: "Code invalide. Vérifiez le code fourni par l'administration.",
+            used: "Ce code a déjà été utilisé.",
+            expired: "Ce code a expiré. Demandez-en un nouveau.",
+            forbidden: "Action non autorisée.",
+          }[res.status] ?? "Échec de l'activation du mode Mentor.";
+        setActivationStatus({ ok: false, text: msg });
+      }
+    } catch (err: any) {
+      setActivationStatus({
+        ok: false,
+        text: err?.message ?? "Erreur lors de l'activation du mode Mentor.",
+      });
+    } finally {
+      setActivating(false);
+    }
+  };
 
   // Navigation et données séparées (2026-08-14) : la navigation dépend de la
   // présence de la session, mais les 8 requêtes ci-dessous sont keyées sur
@@ -233,6 +276,49 @@ function ProfilePage() {
               </button>
             </div>
           </div>
+
+          {!isMentor && (
+            <div className="rounded-3xl border border-ink/10 bg-white p-6 shadow-xl">
+              <h3 className="font-display text-balance text-base font-bold flex items-center gap-2 mb-1">
+                <Eye className="size-4 text-brand" /> Mentor
+              </h3>
+              <p className="text-xs text-ink/60 mb-4 leading-relaxed">
+                Le mode Mentor permet d'accompagner les enfants qui vous sont assignés.
+                Activez-le avec le code fourni par votre administration (spec §7).
+              </p>
+              <form onSubmit={handleActivateCode} className="flex gap-2">
+                <input
+                  value={activationCode}
+                  onChange={(e) => setActivationCode(e.target.value)}
+                  placeholder="MNT-XXXXXXXX"
+                  disabled={activating}
+                  className="flex-1 bg-surface border border-ink/10 rounded-2xl p-3 text-sm font-bold text-ink focus:outline-none focus:ring-2 focus:ring-brand/30"
+                />
+                <button
+                  type="submit"
+                  disabled={activating || !activationCode.trim()}
+                  className="rounded-2xl bg-brand hover:bg-brand/90 text-white px-5 py-3 text-sm font-bold flex items-center gap-2 transition-all cursor-pointer disabled:opacity-50"
+                >
+                  {activating ? (
+                    <Loader2 className="size-4 animate-spin" />
+                  ) : (
+                    <Eye className="size-4" />
+                  )}
+                  Activer
+                </button>
+              </form>
+              {activationStatus && (
+                <p
+                  className={
+                    "mt-3 text-xs font-bold " +
+                    (activationStatus.ok ? "text-emerald-700" : "text-red-600")
+                  }
+                >
+                  {activationStatus.text}
+                </p>
+              )}
+            </div>
+          )}
 
           {(isMentor || isAdmin || isManager) && (
             <div className="rounded-3xl border border-ink/10 bg-white p-6 shadow-xl">

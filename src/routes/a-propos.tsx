@@ -7,7 +7,7 @@ export const Route = createFileRoute("/a-propos")({
     const meta = pageMeta({
       title: "À propos de Génizio — révéler les talents de votre enfant",
       description:
-        "Génizio est un projet fondé par Cheick Mohamed TRAORE pour révéler les talents naturels des enfants, du Sénégal à la Côte d'Ivoire.",
+        "Génizio est un projet fondé par Cheick Mohamed TRAORE pour aider chaque enfant à révéler et développer les talents que l'école ne mesure pas, du Sénégal à la Côte d'Ivoire.",
       path: "/a-propos",
     });
     return {
@@ -66,10 +66,11 @@ function AProposPage() {
         <div className="prose-genizio mt-8">
           <h2>Notre mission</h2>
           <p>
-            Génizio révèle les talents naturels de chaque enfant à travers des défis concrets à
-            réaliser à la maison, fondés sur les 9 intelligences de Howard Gardner. L'idée de départ
-            : le programme scolaire ne mesure qu'une petite partie de ce dont un enfant est capable
-            — Génizio cherche le reste.
+            Génizio aide chaque enfant à révéler les talents que l'école ne mesure pas — à travers
+            des défis concrets à réaliser à la maison, fondés sur les 9 intelligences de Howard
+            Gardner — puis à les transformer en compétences, en confiance et en projets. L'idée de
+            départ : le programme scolaire ne mesure qu'une petite partie de ce dont un enfant est
+            capable. Génizio cherche le reste, et lui donne un chemin.
           </p>
           <p>
             Beaucoup d'enfants — surtout en Afrique francophone et dans la diaspora — grandissent
@@ -147,10 +148,11 @@ function AProposPage() {
           </h2>
           <p className="mt-2 text-sm font-medium leading-relaxed text-ink/70">
             Génizio propose à votre enfant des défis concrets adaptés à son âge et à ses centres
-            d'intérêt, et construit la carte de ses talents à partir de ce qu'il réalise vraiment. 1
-            profil enfant gratuit, forfait famille à partir de 5 000 FCFA/mois (puis 15 000 FCFA) et
-            paliers de +5 enfants au même tarif. Pour un accompagnement plus poussé, un mentor
-            formé suit votre enfant en séances hebdomadaires (12 séances × 5 000 F/mois/enfant).
+            d'intérêt, et construit la carte de ses talents à partir de ce qu'il réalise vraiment —
+            un premier défi sur mesure arrive dès la création du profil. Le premier profil enfant
+            est offert pour toujours ; l'abonnement famille démarre à 5 000 F/mois (puis 15 000 F).
+            Pour un accompagnement plus poussé, un mentor formé suit votre enfant en séances
+            hebdomadaires (12 séances × 5 000 F/mois/enfant).
           </p>
           <Link
             to="/auth"

@@ -20,7 +20,7 @@ export const Route = createFileRoute("/tarifs")({
     const meta = pageMeta({
       title: "Tarifs — Génizio",
       description:
-        "Les prix de Génizio en FCFA : 1 profil enfant gratuit, abonnement famille dès 5 000 F/mois, Passeport d'Excellence et kits pédagogiques. Paiement sécurisé Paystack.",
+        "Les prix de Génizio en FCFA : 1 profil enfant gratuit pour toujours, abonnement famille dès 5 000 F/mois, Passeport d'Excellence et kits pédagogiques. Paiement sécurisé Paystack.",
       path: "/tarifs",
     });
     return {
@@ -68,7 +68,7 @@ const PLANS: {
   },
   {
     name: "Abonnement famille",
-    badge: "Le plus choisi",
+    badge: "Recommandé",
     price: `${formatXof(PROMO_PRICE_XOF)}/mois`,
     priceSub: `les 3 premiers mois (${eurHint(PROMO_PRICE_EUR)}), puis ${formatXof(STANDARD_PRICE_XOF)}/mois (${eurHint(STANDARD_PRICE_EUR)})`,
     points: [
@@ -156,12 +156,12 @@ function TarifsPage() {
 
         <p className="mb-3 text-xs font-black uppercase tracking-widest text-brand">Tarifs</p>
         <h1 className="font-display text-balance text-3xl font-extrabold leading-[1.1] md:text-5xl">
-          Des prix simples, sans surprise.
+          Commencez gratuitement, gardez la main.
         </h1>
         <p className="mt-5 max-w-2xl text-sm font-semibold leading-relaxed text-ink/70">
-          Génizio démarre gratuitement : le premier profil enfant est offert, sans carte bancaire.
-          Les offres payantes s'activent en ligne, en toute transparence, par carte bancaire ou
-          Mobile Money.
+          Le premier profil enfant est offert pour toujours, sans carte bancaire. Quand vous êtes
+          prêts, l'abonnement famille s'active en ligne, en toute transparence, par carte bancaire
+          ou Mobile Money.
         </p>
 
         {/* Les trois grandes offres */}

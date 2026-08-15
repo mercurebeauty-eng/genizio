@@ -5,8 +5,14 @@ import {
   type CampaignTokenDetail,
 } from "@/lib/campaigns.functions";
 import {
-  assignMentor,
   assignMentorToCampaignAdmin,
+  searchParentsAdmin,
+  getChildrenOfParentAdmin,
+  searchMentorsAdmin,
+  assignMentorToChildAdmin,
+  generateMentorActivationCodesAdmin,
+  listMentorActivationCodesAdmin,
+  activateMentorCode,
   listMentorsAdmin,
   listCampaignsLightAdmin,
   declareSessionMentor,
@@ -125,9 +131,43 @@ describe("Milestone 3 — R4, R5, R6 Server & UI Logic Tests", () => {
   });
 
   describe("R5: Harmonize Mentor Assignment", () => {
-    it("exports assignMentor server function definition", () => {
-      expect(assignMentor).toBeDefined();
-      expect(typeof assignMentor).toBe("function");
+    // Vague 3 multicouche (spec §2-3, §23) : l'assignation est désormais relationnelle
+    // « Parent → Enfant → Mentor » — recherche du parent (email/téléphone/nom), enfants
+    // du parent, recherche du mentor, assignation vérifiée — jamais une liste plate.
+    it("exports searchParentsAdmin server function definition", () => {
+      expect(searchParentsAdmin).toBeDefined();
+      expect(typeof searchParentsAdmin).toBe("function");
+    });
+
+    it("exports getChildrenOfParentAdmin server function definition", () => {
+      expect(getChildrenOfParentAdmin).toBeDefined();
+      expect(typeof getChildrenOfParentAdmin).toBe("function");
+    });
+
+    it("exports searchMentorsAdmin server function definition", () => {
+      expect(searchMentorsAdmin).toBeDefined();
+      expect(typeof searchMentorsAdmin).toBe("function");
+    });
+
+    it("exports assignMentorToChildAdmin server function definition", () => {
+      expect(assignMentorToChildAdmin).toBeDefined();
+      expect(typeof assignMentorToChildAdmin).toBe("function");
+    });
+
+    // Vague 5 (spec §7, décision D1) : activation du mode Mentor par code.
+    it("exports generateMentorActivationCodesAdmin server function definition", () => {
+      expect(generateMentorActivationCodesAdmin).toBeDefined();
+      expect(typeof generateMentorActivationCodesAdmin).toBe("function");
+    });
+
+    it("exports listMentorActivationCodesAdmin server function definition", () => {
+      expect(listMentorActivationCodesAdmin).toBeDefined();
+      expect(typeof listMentorActivationCodesAdmin).toBe("function");
+    });
+
+    it("exports activateMentorCode server function definition", () => {
+      expect(activateMentorCode).toBeDefined();
+      expect(typeof activateMentorCode).toBe("function");
     });
 
     // Refonte Gestion des Mentors (2026-08-14) : les nouvelles fonctions de

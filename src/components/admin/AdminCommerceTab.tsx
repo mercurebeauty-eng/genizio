@@ -21,15 +21,17 @@ import {
   Loader2,
 } from "lucide-react";
 import { toast } from "sonner";
-import {
-  CommercePassportsDataResponse,
-  filterOrdersByStatus,
-  formatXOF,
-} from "@/lib/admin-os.functions";
+import { type PaginatedCommerceResponse, formatXOF } from "@/lib/admin-os.functions";
 import { PASSPORT_PRICE_XOF } from "@/lib/pricing";
+import { AdminPagination } from "./AdminPagination";
 
 interface AdminCommerceTabProps {
-  data: CommercePassportsDataResponse;
+  data: PaginatedCommerceResponse;
+  total: number;
+  totalPages: number;
+  page: number;
+  onPageChange: (page: number) => void;
+  onStatusChange: (status: string) => void;
   isRefreshing?: boolean;
   onRefresh?: () => Promise<void>;
   onUpdateOrderStatus?: (orderId: string, status: string) => Promise<void>;
@@ -59,6 +61,11 @@ const ORDER_STATUS_OPTIONS = [
 
 export function AdminCommerceTab({
   data,
+  total,
+  totalPages,
+  page,
+  onPageChange,
+  onStatusChange,
   isRefreshing = false,
   onRefresh,
   onUpdateOrderStatus,
@@ -68,7 +75,9 @@ export function AdminCommerceTab({
   const [updatingOrderId, setUpdatingOrderId] = useState<string | null>(null);
   const [pendingPassportChildId, setPendingPassportChildId] = useState<string | null>(null);
 
-  const filteredOrders = filterOrdersByStatus(data.orders, activeFilter);
+  // Le filtre est appliqué côté serveur (Vague 4) — la page ne contient déjà que
+  // les commandes du statut actif.
+  const filteredOrders = data.orders;
 
   const handleStatusChange = async (orderId: string, newStatus: string) => {
     if (!onUpdateOrderStatus || updatingOrderId === orderId) return;
@@ -223,7 +232,7 @@ export function AdminCommerceTab({
           </div>
 
           <span className="rounded-full bg-purple-500/10 px-3 py-1 text-xs font-bold text-purple-600 self-start md:self-auto">
-            {filteredOrders.length} / {data.orders.length} Commandes
+            {total} Commandes
           </span>
         </div>
 
@@ -233,16 +242,21 @@ export function AdminCommerceTab({
             <Filter className="size-3.5" /> Filtrer :
           </span>
           {STATUS_FILTERS.map((f) => {
+            // Comptages globaux (toute l'historique) fournis par le serveur — les
+            // badges restent justes même quand la page n'affiche qu'une tranche.
             const count =
               f.id === "Tous"
-                ? data.orders.length
-                : data.orders.filter((o) => o.status === f.id).length;
+                ? data.summary?.totalOrders ?? 0
+                : data.statusCounts?.[f.id] ?? 0;
             const isActive = activeFilter === f.id;
 
             return (
               <button
                 key={f.id}
-                onClick={() => setActiveFilter(f.id)}
+                onClick={() => {
+                  setActiveFilter(f.id);
+                  onStatusChange(f.id);
+                }}
                 className={`rounded-xl px-3 py-1.5 text-xs font-extrabold transition-all cursor-pointer flex items-center gap-1.5 border ${
                   isActive
                     ? "bg-purple-600 border-purple-600 text-white shadow-sm"
@@ -274,8 +288,9 @@ export function AdminCommerceTab({
             </p>
           </div>
         ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-left border-collapse text-sm">
+          <>
+            <div className="overflow-x-auto">
+              <table className="w-full text-left border-collapse text-sm">
               <thead>
                 <tr className="border-b-[3px] border-ink text-[11px] font-extrabold uppercase tracking-wider text-ink/60">
                   <th className="pb-3 pr-4">Date & Réf</th>
@@ -386,6 +401,15 @@ export function AdminCommerceTab({
               </tbody>
             </table>
           </div>
+          <AdminPagination
+            page={page}
+            totalPages={totalPages}
+            total={total}
+            pageSize={50}
+            onPageChange={onPageChange}
+            label="commande"
+          />
+          </>
         )}
       </div>
 

@@ -4,6 +4,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { supabase } from "@/integrations/supabase/client";
 import { useSession } from "@/hooks/use-session";
 import { getChildAISynthesis, getPassportLetter, BADGE_CATALOG } from "@/lib/challenges.functions";
+import { getProofImageSrc, ProofImage } from "@/lib/proof-image";
 import { initializePassportPayment } from "@/lib/payments.functions";
 import { getChildGuild, getTalentAffinities } from "@/lib/guilds";
 import { TalentRadarChart } from "@/components/TalentRadarChart";
@@ -217,7 +218,11 @@ function PassportPrintPage() {
         challenges.map(async (c) => {
           if (!c.proof_image_url) return;
           try {
-            const res = await fetch(c.proof_image_url);
+            // Preuves privées : on résout d'abord l'URL signée (le path stocké n'est
+            // pas fetchable directement), puis on convertit en data-URL pour le PDF.
+            const src = await getProofImageSrc(c.proof_image_url);
+            if (!src) return;
+            const res = await fetch(src);
             if (!res.ok) return;
             const blob = await res.blob();
             proofImages[c.id] = await new Promise<string>((resolve, reject) => {
@@ -784,8 +789,8 @@ function PassportPrintPage() {
                           {/* Proof image */}
                           {c.proof_image_url && (
                             <div className="rounded-xl overflow-hidden border-2 border-ink bg-stone-50 aspect-[4/3] flex items-center justify-center">
-                              <img
-                                src={c.proof_image_url}
+                              <ProofImage
+                                stored={c.proof_image_url}
                                 alt={c.title}
                                 className="max-h-full max-w-full object-contain"
                               />

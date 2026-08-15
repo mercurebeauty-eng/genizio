@@ -1,3 +1,10 @@
+-- ⚠️ ⚠️ ⚠️ FICHIER PÉRIMÉ — NE PAS UTILISER (2026-08-15) ⚠️ ⚠️ ⚠️
+-- Ce snapshot ne couvre que 2 tables (child_profiles + challenges) de l'état du 2026-07-15.
+-- Le schéma réel compte ~86 migrations dans supabase/migrations/ (mentors, family_coverages,
+-- payments, campaigns, mentor_*…). Toute remise à zéro d'une base doit se faire par
+-- l'historique complet des migrations (`supabase db reset` / `supabase db push`), jamais
+-- par ce fichier. À régénérer ou supprimer (plan multicouche, A2).
+
 -- 1. Create Child Profiles
 CREATE TABLE public.child_profiles (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),

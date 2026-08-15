@@ -20,6 +20,7 @@ import {
   buildRecommendationPrompt,
   buildHypothesisPrompt,
   buildAspirationBridgePrompt,
+  buildJustInTimeHintPrompt,
 } from "@/lib/naya-prompts";
 import { findAspirationBridge } from "@/lib/aspiration-map";
 import { readFileSync } from "node:fs";
@@ -137,6 +138,55 @@ describe("buildChallengePrompt — contrat (C1.3)", () => {
     const p = buildChallengePrompt(input);
     expect(p).toContain('{"challenges":[{"domain":"..."');
     expect(p).toContain('"academic_secret":"Explication stimulante');
+  });
+
+  // Chantier « Deuxième colonne vertébrale » (2026-08-15) : la question posée par
+  // l'enfant devient le fil conducteur de la génération — présente uniquement
+  // quand elle existe, sans jamais remplacer les règles existantes.
+  it("injecte la question de l'enfant comme fil conducteur quand elle existe", () => {
+    const p = buildChallengePrompt({
+      ...input,
+      childQuestionNote: "Pourquoi l'eau monte dans la bouteille ?",
+    });
+    expect(p).toContain("LA QUESTION DE AWA");
+    expect(p).toContain("Pourquoi l'eau monte dans la bouteille ?");
+    expect(p).toContain("jamais par une leçon frontale");
+  });
+
+  it("n'injecte aucune mention de question quand l'enfant n'en a pas posé", () => {
+    const p = buildChallengePrompt(input);
+    expect(p).not.toContain("LA QUESTION DE");
+  });
+});
+
+describe("buildJustInTimeHintPrompt — indice juste-à-temps (chantier 2026-08-15)", () => {
+  const input = {
+    childName: "Awa",
+    childAge: 9,
+    challengeTitle: "Le pont autoportant de Léonard",
+    currentStep: "Assemble les bâtonnets sans colle ni clous.",
+    steps: ["Assemble les bâtonnets sans colle ni clous.", "Teste la charge du pont."],
+  };
+
+  it("ne livre jamais la solution — demande uniquement le concept minimal", () => {
+    const p = buildJustInTimeHintPrompt(input);
+    expect(p).toContain("NE DONNE JAMAIS LA SOLUTION");
+    expect(p).toContain("concept minimal");
+    expect(p).toContain("juste assez pour relancer");
+  });
+
+  it("reformule l'étape bloquante et le contexte du défi", () => {
+    const p = buildJustInTimeHintPrompt(input);
+    expect(p).toContain("Le pont autoportant de Léonard");
+    expect(p).toContain(input.currentStep);
+    expect(p).toContain("1. Assemble les bâtonnets");
+  });
+
+  it("adapte le niveau de guidage à l'âge", () => {
+    const p = buildJustInTimeHintPrompt(input);
+    expect(p).toContain("langage d'un enfant de 9 ans");
+    expect(p).toContain("moins de 8 ans");
+    expect(p).toContain("12 ans et plus");
   });
 });
 
