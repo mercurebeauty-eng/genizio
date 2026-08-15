@@ -18,7 +18,6 @@ import {
   LogOut,
   Eye,
   LayoutDashboard,
-  ShoppingBag,
   Building2,
 } from "lucide-react";
 import { ConsentLedger } from "@/components/settings/ConsentLedger";
@@ -496,18 +495,9 @@ function ProfilePage() {
                     >
                       <LayoutDashboard className="size-4" /> Admin Dashboard
                     </Link>
-                    <Link
-                      to="/admin/products"
-                      className="flex items-center gap-2.5 rounded-xl px-3 py-2.5 text-sm font-bold text-purple-600 hover:bg-purple-50"
-                    >
-                      <ShoppingBag className="size-4" /> Admin Kits
-                    </Link>
-                    <Link
-                      to="/admin/mentors"
-                      className="flex items-center gap-2.5 rounded-xl px-3 py-2.5 text-sm font-bold text-purple-600 hover:bg-purple-50"
-                    >
-                      <Users className="size-4" /> Admin Mentors
-                    </Link>
+                    {/* Raccourcis Admin Kits / Admin Mentors retirés (décision #82) :
+                        la grille d'accueil de l'Admin OS les rend déjà accessibles —
+                        ces doublons n'apportaient rien dans les Réglages. */}
                   </>
                 )}
               </div>
