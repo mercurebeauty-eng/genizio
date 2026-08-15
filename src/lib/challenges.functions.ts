@@ -4,7 +4,11 @@ import { VALID_TALENT_KEYS, TALENT_KEY_LABELS } from "@/lib/talent-buckets";
 import { INTERESTS_BY_TALENT } from "@/components/profiles/shared";
 import { normalizeChildInterests } from "@/lib/interest-migration";
 import { getChildAccessStatus } from "@/lib/child-access";
-import { formatTimePressureNote, resolveTimeLimitMinutes, type TimePressure } from "@/lib/time-limit";
+import {
+  formatTimePressureNote,
+  resolveTimeLimitMinutes,
+  type TimePressure,
+} from "@/lib/time-limit";
 import { formatChildProfileContext } from "@/lib/profile-context";
 import { getInterestHypothesesSnapshot, type InterestHypotheses } from "@/lib/interest-confidence";
 import { z } from "zod";
@@ -72,8 +76,15 @@ import { verifyAndLog } from "@/lib/naya-verifier.functions";
 // exclue volontairement (développement non linéaire par âge, cf. ACADEMIC_REFERENTIAL_INSTRUCTION
 // ci-dessous) — ne jamais l'ajouter ici sans revoir le mécanisme de détection d'écart.
 export const ACADEMIC_DOMAINS = [
-  "mathematiques", "langage", "sciences",
-  "corporelle", "sociale", "emotionnelle", "entrepreneuriale", "artisanale", "spatiale",
+  "mathematiques",
+  "langage",
+  "sciences",
+  "corporelle",
+  "sociale",
+  "emotionnelle",
+  "entrepreneuriale",
+  "artisanale",
+  "spatiale",
 ] as const;
 
 // Déplacée depuis hypotheses.functions.ts (2026-07-22) — utilisée maintenant aussi
@@ -91,7 +102,7 @@ export const ACADEMIC_DOMAIN_LABELS: Record<string, string> = {
   spatiale: "repérage dans l'espace",
 };
 
-const ChallengeSchema = z.object({
+export const ChallengeSchema = z.object({
   domain: z.string(),
   title: z.string(),
   description: z.string(),
@@ -111,10 +122,19 @@ const ChallengeSchema = z.object({
   academic_domain: z.enum(ACADEMIC_DOMAINS).nullable().optional(),
   academic_level_age: z.number().nullable().optional(),
   academic_reference_note: z.string().nullable().optional(),
-  academic_subject: z.enum(["maths", "francais", "sciences", "histoire_geo", "anglais"]).nullable().optional(),
-  academic_grade_level: z.enum(["CP", "CE1", "CE2", "CM1", "CM2", "6eme", "5eme", "4eme", "3eme"]).nullable().optional(),
+  academic_subject: z
+    .enum(["maths", "francais", "sciences", "histoire_geo", "anglais"])
+    .nullable()
+    .optional(),
+  academic_grade_level: z
+    .enum(["CP", "CE1", "CE2", "CM1", "CM2", "6eme", "5eme", "4eme", "3eme"])
+    .nullable()
+    .optional(),
   homework_instruction: z.string().nullable().optional(),
-  behavioral_driver: z.enum(["deconstruire", "schematiser", "simuler", "enqueter", "optimiser"]).nullable().optional(),
+  behavioral_driver: z
+    .enum(["deconstruire", "schematiser", "simuler", "enqueter", "optimiser"])
+    .nullable()
+    .optional(),
   zpa_level: z.number().int().min(1).max(5).nullable().optional(),
   academic_secret: z.string().nullable().optional(),
   // Défis-projets (2026-08-12, analyse §27-28) : kind (micro/projet) + niveau de
@@ -160,7 +180,9 @@ async function trackMaterialSuggestions(items: { material_tags: string[]; title:
           })
           .eq("id", existing.id);
       } else {
-        await supabaseAdmin.from("material_suggestions").insert({ tag, sample_challenge_title: sample });
+        await supabaseAdmin
+          .from("material_suggestions")
+          .insert({ tag, sample_challenge_title: sample });
       }
     }
   } catch (err) {
@@ -174,7 +196,7 @@ export function calculateXPGain(age: number): number {
   // L'XP gagnée diminue à mesure que l'enfant grandit, rendant les niveaux
   // plus exigeants sans toucher au palier mathématique (500) du frontend.
   // ex: 4 ans = 190 XP, 8 ans = 130 XP, 12 ans = 70 XP
-  return Math.max(50, 250 - (age * 15));
+  return Math.max(50, 250 - age * 15);
 }
 // Le niveau vient de la même formule que le tableau de bord (profiles.index.tsx :
 // Math.floor(xp / 500) + 1) — comparer l'avant/après xp permet de détecter un
@@ -219,7 +241,7 @@ async function awardCompletionXP(supabaseClient: any, childId: string) {
       .update({
         xp: newXp,
         streak: newStreak,
-        last_activity_date: now.toISOString()
+        last_activity_date: now.toISOString(),
       })
       .eq("id", childId);
 
@@ -250,19 +272,23 @@ const BADGE_THRESHOLD = 3;
 export const BADGE_CATALOG: Record<string, { title: string; description: string }> = {
   Sciences: {
     title: "Scientifique en herbe",
-    description: "Tu as mené 3 expériences. Tu observes, tu questionnes, tu comprends le monde qui t'entoure.",
+    description:
+      "Tu as mené 3 expériences. Tu observes, tu questionnes, tu comprends le monde qui t'entoure.",
   },
   Architecture: {
     title: "Bâtisseur·se en herbe",
-    description: "Tu as terminé 3 défis de construction. Tu penses déjà comme quelqu'un qui bâtit des choses solides.",
+    description:
+      "Tu as terminé 3 défis de construction. Tu penses déjà comme quelqu'un qui bâtit des choses solides.",
   },
   Artisanat: {
     title: "Artisan·e en herbe",
-    description: "Tu as fabriqué 3 objets de tes propres mains. Le geste précis devient une seconde nature.",
+    description:
+      "Tu as fabriqué 3 objets de tes propres mains. Le geste précis devient une seconde nature.",
   },
   Agriculture: {
     title: "Cultivateur·rice en herbe",
-    description: "Tu as mené 3 défis liés à la nature et au vivant. Tu sais prendre soin de ce qui pousse.",
+    description:
+      "Tu as mené 3 défis liés à la nature et au vivant. Tu sais prendre soin de ce qui pousse.",
   },
   Sport: {
     title: "Athlète en herbe",
@@ -274,7 +300,8 @@ export const BADGE_CATALOG: Record<string, { title: string; description: string 
   },
   Entrepreneuriat: {
     title: "Entrepreneur·se en herbe",
-    description: "Tu as mené 3 projets à la manière d'un vrai petit commerce. Tu sais transformer une idée en réalité.",
+    description:
+      "Tu as mené 3 projets à la manière d'un vrai petit commerce. Tu sais transformer une idée en réalité.",
   },
   Arts: {
     title: "Artiste en herbe",
@@ -282,15 +309,21 @@ export const BADGE_CATALOG: Record<string, { title: string; description: string 
   },
   Langues: {
     title: "Linguiste en herbe",
-    description: "Tu as relevé 3 défis de langue et d'écriture. Les mots deviennent un vrai terrain de jeu.",
+    description:
+      "Tu as relevé 3 défis de langue et d'écriture. Les mots deviennent un vrai terrain de jeu.",
   },
   "Tech & IA": {
     title: "Ingénieur·e numérique en herbe",
-    description: "Tu as relevé 3 défis de logique et de technologie. Tu commences à penser comme la machine — puis mieux qu'elle.",
+    description:
+      "Tu as relevé 3 défis de logique et de technologie. Tu commences à penser comme la machine — puis mieux qu'elle.",
   },
 };
 
-async function checkAndAwardBadge(supabaseClient: any, childId: string, domain: string | null | undefined) {
+async function checkAndAwardBadge(
+  supabaseClient: any,
+  childId: string,
+  domain: string | null | undefined,
+) {
   try {
     if (!domain) return null;
     const badgeDef = BADGE_CATALOG[domain];
@@ -361,18 +394,19 @@ export const DOMAINS = [
 // même logique déterministe que la génération en lot, réutilisée plutôt que dupliquée.
 export function getLeastExploredTalentLabels(
   talents: Record<string, number> | null | undefined,
-  count = 2
+  count = 2,
 ): string[] {
   const raw = talents ?? {};
-  return VALID_TALENT_KEYS
-    .map((key) => ({ key, score: raw[key] ?? 0 }))
-    // Shuffle before the (stable) sort so ties — e.g. a brand-new profile
-    // where every score defaults to 0 — don't always resolve to the same
-    // two talents in VALID_TALENT_KEYS' declared order.
-    .sort(() => Math.random() - 0.5)
-    .sort((a, b) => a.score - b.score)
-    .slice(0, count)
-    .map(({ key }) => TALENT_KEY_LABELS[key]);
+  return (
+    VALID_TALENT_KEYS.map((key) => ({ key, score: raw[key] ?? 0 }))
+      // Shuffle before the (stable) sort so ties — e.g. a brand-new profile
+      // where every score defaults to 0 — don't always resolve to the same
+      // two talents in VALID_TALENT_KEYS' declared order.
+      .sort(() => Math.random() - 0.5)
+      .sort((a, b) => a.score - b.score)
+      .slice(0, count)
+      .map(({ key }) => TALENT_KEY_LABELS[key])
+  );
 }
 
 // V3: a deterministic safety net behind the model's own risk self-assessment.
@@ -396,36 +430,48 @@ const SAFETY_KEYWORDS: { pattern: RegExp; note: { under12: string; from12: strin
   {
     pattern: wordBoundaryPattern("feu|flamme|briquet|allumettes?|bougie"),
     note: {
-      under12: "Cette activité implique du feu : un adulte doit être présent et superviser directement toute la manipulation.",
-      from12: "Mesures de sécurité à prendre : utilise le briquet ou les allumettes dans un endroit dégagé, loin de tissus ou de papier, garde de l'eau ou un linge humide à proximité, et éteins bien la flamme après usage. Informe un parent avant de commencer.",
+      under12:
+        "Cette activité implique du feu : un adulte doit être présent et superviser directement toute la manipulation.",
+      from12:
+        "Mesures de sécurité à prendre : utilise le briquet ou les allumettes dans un endroit dégagé, loin de tissus ou de papier, garde de l'eau ou un linge humide à proximité, et éteins bien la flamme après usage. Informe un parent avant de commencer.",
     },
   },
   {
     pattern: wordBoundaryPattern("couteau|cutter|lame|ciseaux pointus"),
     note: {
-      under12: "Cette activité implique un objet tranchant : un adulte doit couper ou superviser directement cette étape.",
-      from12: "Mesures de sécurité à prendre : coupe toujours en éloignant tes doigts de la lame, travaille sur une surface stable, et range l'outil après usage.",
+      under12:
+        "Cette activité implique un objet tranchant : un adulte doit couper ou superviser directement cette étape.",
+      from12:
+        "Mesures de sécurité à prendre : coupe toujours en éloignant tes doigts de la lame, travaille sur une surface stable, et range l'outil après usage.",
     },
   },
   {
     pattern: wordBoundaryPattern("produits? chimiques?|eau de javel|acide|soude caustique"),
     note: {
-      under12: "Cette activité implique des produits chimiques : un adulte doit manipuler ou superviser directement cette étape.",
-      from12: "Mesures de sécurité à prendre : manipule ces produits dans un endroit ventilé, évite tout contact avec les yeux ou la peau, et lave-toi les mains après usage.",
+      under12:
+        "Cette activité implique des produits chimiques : un adulte doit manipuler ou superviser directement cette étape.",
+      from12:
+        "Mesures de sécurité à prendre : manipule ces produits dans un endroit ventilé, évite tout contact avec les yeux ou la peau, et lave-toi les mains après usage.",
     },
   },
   {
     pattern: wordBoundaryPattern("électricité|prise électrique|courant électrique|fils? dénudés?"),
     note: {
-      under12: "Cette activité implique de l'électricité : un adulte doit superviser directement cette étape.",
-      from12: "Mesures de sécurité à prendre : ne touche jamais une prise ou un fil dénudé avec les mains mouillées, et débranche l'appareil avant toute manipulation.",
+      under12:
+        "Cette activité implique de l'électricité : un adulte doit superviser directement cette étape.",
+      from12:
+        "Mesures de sécurité à prendre : ne touche jamais une prise ou un fil dénudé avec les mains mouillées, et débranche l'appareil avant toute manipulation.",
     },
   },
   {
-    pattern: wordBoundaryPattern("cuisinière|plaque de cuisson|plaque chauffante|four chaud|eau bouillante|huile chaude|casserole|poêle"),
+    pattern: wordBoundaryPattern(
+      "cuisinière|plaque de cuisson|plaque chauffante|four chaud|eau bouillante|huile chaude|casserole|poêle",
+    ),
     note: {
-      under12: "Cette activité implique une source de chaleur en cuisine (cuisinière, four, eau ou huile chaude) : un adulte doit être présent et superviser directement toute la manipulation.",
-      from12: "Mesures de sécurité à prendre : ne laisse jamais une casserole ou une poêle sans surveillance sur le feu, utilise des maniques pour les ustensiles chauds, éloigne les manches des bords de la plaque, et informe un parent avant de commencer.",
+      under12:
+        "Cette activité implique une source de chaleur en cuisine (cuisinière, four, eau ou huile chaude) : un adulte doit être présent et superviser directement toute la manipulation.",
+      from12:
+        "Mesures de sécurité à prendre : ne laisse jamais une casserole ou une poêle sans surveillance sur le feu, utilise des maniques pour les ustensiles chauds, éloigne les manches des bords de la plaque, et informe un parent avant de commencer.",
     },
   },
   {
@@ -439,22 +485,29 @@ const SAFETY_KEYWORDS: { pattern: RegExp; note: { under12: string; from12: strin
     // "réalisable... dans le quartier" — flagging that would be exactly the
     // over-caution this net is designed to avoid.
     pattern: wordBoundaryPattern(
-      "piscine|rivière|fleuve|lac|étang|mer|hauteur|toit|échelle|grimp\\p{L}*|escalad\\p{L}*|falaise|circulation|serpent|scorpion|animal sauvage"
+      "piscine|rivière|fleuve|lac|étang|mer|hauteur|toit|échelle|grimp\\p{L}*|escalad\\p{L}*|falaise|circulation|serpent|scorpion|animal sauvage",
     ),
     note: {
-      under12: "Cette activité se déroule dans un environnement extérieur avec un risque réel (eau profonde, hauteur, circulation ou animal) : un adulte doit être présent et superviser directement toute la manipulation.",
-      from12: "Mesures de sécurité à prendre : reste dans une zone connue de tes parents, ne t'approche jamais seul d'un point d'eau profond, d'une hauteur ou d'une route très fréquentée, et informe un parent avant de commencer.",
+      under12:
+        "Cette activité se déroule dans un environnement extérieur avec un risque réel (eau profonde, hauteur, circulation ou animal) : un adulte doit être présent et superviser directement toute la manipulation.",
+      from12:
+        "Mesures de sécurité à prendre : reste dans une zone connue de tes parents, ne t'approche jamais seul d'un point d'eau profond, d'une hauteur ou d'une route très fréquentée, et informe un parent avant de commencer.",
     },
   },
 ];
 
-function applySafetyNet<T extends {
-  description: string;
-  steps: string[];
-  materials: string[];
-  requires_supervision?: boolean | null;
-  supervision_warning?: string | null;
-}>(challenge: T, age: number): { requires_supervision: boolean; supervision_warning: string | null } {
+function applySafetyNet<
+  T extends {
+    description: string;
+    steps: string[];
+    materials: string[];
+    requires_supervision?: boolean | null;
+    supervision_warning?: string | null;
+  },
+>(
+  challenge: T,
+  age: number,
+): { requires_supervision: boolean; supervision_warning: string | null } {
   const haystack = [challenge.description, ...challenge.steps, ...challenge.materials].join(" \n ");
   const matched = SAFETY_KEYWORDS.find((k) => k.pattern.test(haystack));
 
@@ -478,12 +531,14 @@ function applySafetyNet<T extends {
 // no trace of why.
 function resolveDifficulty(
   difficulty: string | null | undefined,
-  challengeTitle: string
+  challengeTitle: string,
 ): "facile" | "moyen" | "difficile" {
   if (difficulty === "facile" || difficulty === "moyen" || difficulty === "difficile") {
     return difficulty;
   }
-  console.warn(`[challenges] "difficulty" manquant ou invalide pour "${challengeTitle}" — défaut "moyen" appliqué.`);
+  console.warn(
+    `[challenges] "difficulty" manquant ou invalide pour "${challengeTitle}" — défaut "moyen" appliqué.`,
+  );
   return "moyen";
 }
 
@@ -500,7 +555,7 @@ function resolveProofMode(
   proofMode: string | null | undefined,
   proofTarget: { metric?: unknown; value?: unknown } | null | undefined,
   declarativeAward: Record<string, unknown> | null | undefined,
-  challengeTitle: string
+  challengeTitle: string,
 ): {
   proof_mode: "photo" | "declarative";
   proof_target: { metric: string; value: number } | null;
@@ -510,7 +565,8 @@ function resolveProofMode(
     return { proof_mode: "photo", proof_target: null, declarative_award: null };
   }
 
-  const metric = typeof proofTarget?.metric === "string" ? proofTarget.metric.trim().slice(0, 60) : "";
+  const metric =
+    typeof proofTarget?.metric === "string" ? proofTarget.metric.trim().slice(0, 60) : "";
   // Cible bornée (review 2026-08-12, P2) : une valeur flottante ou hallucinée
   // (ex. 1e9) rendrait le défi déclaratif infranchissable — clamp [1, 1000]
   // unités (même esprit que declarative_award clampé [1,3]).
@@ -528,7 +584,9 @@ function resolveProofMode(
   }
 
   if (!metric || !Number.isFinite(value) || value <= 0 || Object.keys(award).length === 0) {
-    console.warn(`[challenges] "proof_mode: declarative" incohérent pour "${challengeTitle}" — repli sur "photo".`);
+    console.warn(
+      `[challenges] "proof_mode: declarative" incohérent pour "${challengeTitle}" — repli sur "photo".`,
+    );
     return { proof_mode: "photo", proof_target: null, declarative_award: null };
   }
 
@@ -554,9 +612,14 @@ function resolveTargetIntelligences(intelligences: string[] | null | undefined):
 // TALENT_SUBFORMS) fait déjà partie des intelligences résolues de ce défi (pas de signal
 // fantôme sur un défi qui ne sollicite pas ce talent, et pas de sous-forme empruntée à un
 // autre domaine que celui réellement choisi) — sinon null.
-function resolveTraitSubform(resolvedIntelligences: string[], subform: string | null | undefined): string | null {
+function resolveTraitSubform(
+  resolvedIntelligences: string[],
+  subform: string | null | undefined,
+): string | null {
   if (!subform) return null;
-  return resolvedIntelligences.some((domain) => TALENT_SUBFORMS[domain]?.includes(subform)) ? subform : null;
+  return resolvedIntelligences.some((domain) => TALENT_SUBFORMS[domain]?.includes(subform))
+    ? subform
+    : null;
 }
 
 // Backstop pour l'étiquetage du référentiel académique (cf. genizio-decisions #38) : un âge
@@ -569,7 +632,7 @@ function resolveAcademicLevel(
   domain: string | null | undefined,
   levelAge: number | null | undefined,
   referenceNote: string | null | undefined,
-  challengeTitle: string
+  challengeTitle: string,
 ): {
   academic_domain: (typeof ACADEMIC_DOMAINS)[number] | null;
   academic_level_age: number | null;
@@ -578,22 +641,32 @@ function resolveAcademicLevel(
   const validDomain = (ACADEMIC_DOMAINS as readonly string[]).includes(domain ?? "")
     ? (domain as (typeof ACADEMIC_DOMAINS)[number])
     : null;
-  const validAge = typeof levelAge === "number" && Number.isFinite(levelAge) && levelAge >= 3 && levelAge <= 18
-    ? Math.round(levelAge)
-    : null;
+  const validAge =
+    typeof levelAge === "number" && Number.isFinite(levelAge) && levelAge >= 3 && levelAge <= 18
+      ? Math.round(levelAge)
+      : null;
 
   if (!validDomain || validAge === null) {
     if (domain || levelAge) {
-      console.warn(`[challenges] étiquetage du référentiel académique incohérent pour "${challengeTitle}" — ignoré.`);
+      console.warn(
+        `[challenges] étiquetage du référentiel académique incohérent pour "${challengeTitle}" — ignoré.`,
+      );
     }
     return { academic_domain: null, academic_level_age: null, academic_reference_note: null };
   }
 
   // La citation est un bonus de traçabilité (décision #39), pas une condition de validité —
   // un domaine/âge cohérents sans citation restent utilisables pour la détection d'écart.
-  const note = typeof referenceNote === "string" && referenceNote.trim() ? referenceNote.trim().slice(0, 200) : null;
+  const note =
+    typeof referenceNote === "string" && referenceNote.trim()
+      ? referenceNote.trim().slice(0, 200)
+      : null;
 
-  return { academic_domain: validDomain, academic_level_age: validAge, academic_reference_note: note };
+  return {
+    academic_domain: validDomain,
+    academic_level_age: validAge,
+    academic_reference_note: note,
+  };
 }
 
 // Single choke point for the checks every challenge must pass through before
@@ -616,7 +689,7 @@ function resolveAcademicLevel(
 export function resolveKind(
   iaKind: string | null | undefined,
   steps: string[],
-  title: string
+  title: string,
 ): "micro" | "projet" {
   if (iaKind === "projet" && steps.length >= 3) return "projet";
   return "micro";
@@ -628,35 +701,42 @@ export function resolveKind(
 // réduit d'un cran tous les 4 défis complétés dans le domaine. Borné 1-5.
 export function resolveGuidanceLevel(
   iaLevel: number | null | undefined,
-  completedInDomain = 0
+  completedInDomain = 0,
 ): number {
   const clamped = Math.min(5, Math.max(1, Math.round(iaLevel ?? 3)));
   return Math.max(1, clamped - Math.floor(completedInDomain / 4));
 }
 
-export function finalizeChallenge<T extends {
-  title: string;
-  description: string;
-  steps: string[];
-  materials: string[];
-  material_tags?: string[] | null;
-  intelligences?: string[] | null;
-  trait_subform?: string | null;
-  requires_supervision?: boolean | null;
-  supervision_warning?: string | null;
-  difficulty?: string | null;
-  proof_mode?: string | null;
-  proof_target?: { metric?: unknown; value?: unknown } | null;
-  declarative_award?: Record<string, unknown> | null;
-  academic_domain?: string | null;
-  academic_level_age?: number | null;
-  academic_reference_note?: string | null;
-  kind?: string | null;
-  guidance_level?: number | null;
-}>(c: T, age: number, context?: { completedInDomain?: number }) {
+export function finalizeChallenge<
+  T extends {
+    title: string;
+    description: string;
+    steps: string[];
+    materials: string[];
+    material_tags?: string[] | null;
+    intelligences?: string[] | null;
+    trait_subform?: string | null;
+    requires_supervision?: boolean | null;
+    supervision_warning?: string | null;
+    difficulty?: string | null;
+    proof_mode?: string | null;
+    proof_target?: { metric?: unknown; value?: unknown } | null;
+    declarative_award?: Record<string, unknown> | null;
+    academic_domain?: string | null;
+    academic_level_age?: number | null;
+    academic_reference_note?: string | null;
+    kind?: string | null;
+    guidance_level?: number | null;
+  },
+>(c: T, age: number, context?: { completedInDomain?: number }) {
   const safety = applySafetyNet(c, age);
   const proof = resolveProofMode(c.proof_mode, c.proof_target, c.declarative_award, c.title);
-  const academic = resolveAcademicLevel(c.academic_domain, c.academic_level_age, c.academic_reference_note, c.title);
+  const academic = resolveAcademicLevel(
+    c.academic_domain,
+    c.academic_level_age,
+    c.academic_reference_note,
+    c.title,
+  );
   const resolvedIntelligences = resolveTargetIntelligences(c.intelligences);
   return {
     title: c.title.slice(0, 120),
@@ -683,7 +763,7 @@ export function finalizeChallenge<T extends {
  */
 export function formatChildInterestsPayload(
   interests?: string[] | null,
-  hypotheses?: InterestHypotheses | null
+  hypotheses?: InterestHypotheses | null,
 ): string {
   const normalized = normalizeChildInterests(interests);
   if (normalized.length === 0) {
@@ -714,14 +794,16 @@ export function formatChildInterestsPayload(
       const h = hypotheses.byTag[tag];
       if (h?.status === "refuted") {
         refutedNotes.push(
-          `Intérêt déclaré non confirmé : "${tag}" — ne pas l'utiliser comme moteur d'engagement, explorer d'autres pistes.`
+          `Intérêt déclaré non confirmé : "${tag}" — ne pas l'utiliser comme moteur d'engagement, explorer d'autres pistes.`,
         );
         continue;
       }
       if (h?.status === "confirmed") {
         lines.push(`- [${label}] "${tag}" — confirmé par l'expérience`);
       } else if (h?.status === "untested") {
-        lines.push(`- [${label}] "${tag}" — hypothèse du parent à confirmer (à tester en priorité)`);
+        lines.push(
+          `- [${label}] "${tag}" — hypothèse du parent à confirmer (à tester en priorité)`,
+        );
       } else {
         lines.push(`- [${label}] "${tag}"`);
       }
@@ -759,7 +841,10 @@ type ProgressionTarget = {
   cause: string | null;
 };
 
-export async function computeProgressionTargets(supabase: any, childId: string): Promise<ProgressionTarget[]> {
+export async function computeProgressionTargets(
+  supabase: any,
+  childId: string,
+): Promise<ProgressionTarget[]> {
   const [{ data: pastChallenges }, { data: openCycle }] = await Promise.all([
     supabase
       .from("challenges")
@@ -784,12 +869,17 @@ export async function computeProgressionTargets(supabase: any, childId: string):
   // décroissant, donc la première occurrence d'un domaine est la bonne.
   const latestPerDomain = new Map<string, number>();
   for (const c of pastChallenges ?? []) {
-    if (c.academic_domain && typeof c.academic_level_age === "number" && !latestPerDomain.has(c.academic_domain)) {
+    if (
+      c.academic_domain &&
+      typeof c.academic_level_age === "number" &&
+      !latestPerDomain.has(c.academic_domain)
+    ) {
       latestPerDomain.set(c.academic_domain, c.academic_level_age);
     }
   }
 
-  const hypotheses = (openCycle?.hypotheses as { cause: string; current_probability: number }[] | null) || [];
+  const hypotheses =
+    (openCycle?.hypotheses as { cause: string; current_probability: number }[] | null) || [];
   const topCause = hypotheses[0]?.cause;
   const causeDomain = openCycle?.trigger_domain as string | undefined;
 
@@ -819,8 +909,8 @@ export function formatProgressionInstruction(targets: ProgressionTarget[]): stri
       t.cause === "READY_FOR_MORE"
         ? " — Naya a diagnostiqué que l'enfant est prêt pour plus difficile ici : vise clairement ce niveau, ne reste pas en dessous."
         : t.cause
-        ? " — Naya a diagnostiqué une difficulté récente ici : reste à ce niveau, mais change d'approche plutôt que de complexifier."
-        : "";
+          ? " — Naya a diagnostiqué une difficulté récente ici : reste à ce niveau, mais change d'approche plutôt que de complexifier."
+          : "";
     return `- ${label} : dernier niveau académique atteint ${t.lastLevelAge} ans → si tu génères un défi dans ce domaine, vise "academic_level_age" ${t.targetLevelAge} ans.${note}`;
   });
   return `PROGRESSION MESURÉE (zone proximale d'apprentissage — reflète le niveau réel déjà démontré par cet enfant sur ses défis complétés, pas une estimation) :\n${lines.join("\n")}`;
@@ -847,14 +937,25 @@ export function formatProgressionInstruction(targets: ProgressionTarget[]): stri
 // domaine" ne s'applique pas ici. Dépend de INTELLIGENCES_FIELD_INSTRUCTION (une sous-forme
 // n'est acceptée que si son intelligence parente est déjà choisie), donc placée juste après.
 export const TALENT_SUBFORMS: Record<string, readonly string[]> = {
-  corporelle: ["endurance", "explosivite", "coordination_fine", "coordination_collective", "precision"],
+  corporelle: [
+    "endurance",
+    "explosivite",
+    "coordination_fine",
+    "coordination_collective",
+    "precision",
+  ],
   spatial: ["orientation", "visualisation_3d", "representation_graphique", "organisation_espace"],
   sociale: ["leadership", "mediation", "collaboration", "ecoute_empathique"],
   entrepreneuriale: ["negociation", "prise_de_risque", "sens_du_client", "gestion_ressources"],
   creative: ["invention_visuelle", "narration", "improvisation", "detournement"],
   artisanale: ["dexterite_fine", "assemblage", "reparation", "finition_esthetique"],
   emotionnelle: ["autoregulation", "expression", "empathie", "resilience"],
-  logico_mathematique: ["raisonnement_abstrait", "calcul", "resolution_problemes", "reconnaissance_motifs"],
+  logico_mathematique: [
+    "raisonnement_abstrait",
+    "calcul",
+    "resolution_problemes",
+    "reconnaissance_motifs",
+  ],
   linguistique: ["expression_ecrite", "expression_orale", "argumentation", "memorisation_lexicale"],
 };
 
@@ -901,7 +1002,7 @@ export const TALENT_SUBFORM_LABELS: Record<string, string> = {
 // Lookup inverse (sous-forme → domaine parent) — construit une fois, utilisé par l'UI pour
 // grouper les défis complétés par domaine sans dupliquer la structure de TALENT_SUBFORMS.
 export const TALENT_SUBFORM_TO_DOMAIN: Record<string, string> = Object.fromEntries(
-  Object.entries(TALENT_SUBFORMS).flatMap(([domain, forms]) => forms.map((f) => [f, domain]))
+  Object.entries(TALENT_SUBFORMS).flatMap(([domain, forms]) => forms.map((f) => [f, domain])),
 );
 const ALLOWED_IMAGE_MEDIA_TYPES = ["image/jpeg", "image/png", "image/gif", "image/webp"];
 
@@ -966,7 +1067,7 @@ async function callAnthropicVision(
   imageData: { base64: string; mediaType: string } | undefined,
   maxOutputTokens: number,
   maxRetries: number,
-  model: string
+  model: string,
 ): Promise<string> {
   const apiKey = process.env.ANTHROPIC_API_KEY;
   if (!apiKey) {
@@ -1053,7 +1154,7 @@ async function callAnthropicVision(
             },
           ],
         }),
-        signal: controller.signal
+        signal: controller.signal,
       });
 
       if (!response.ok) {
@@ -1061,7 +1162,9 @@ async function callAnthropicVision(
         console.error(`Claude API Error Response (Attempt ${attempt + 1}):`, errorText);
 
         if (response.status === 429) {
-          throw new Error("Quota Anthropic atteint (429). Veuillez patienter une minute avant de réessayer.");
+          throw new Error(
+            "Quota Anthropic atteint (429). Veuillez patienter une minute avant de réessayer.",
+          );
         }
         if (response.status === 503 || response.status >= 500) {
           throw new Error(`Erreur Anthropic API (${response.status})`); // Transient error -> trigger retry
@@ -1083,7 +1186,10 @@ async function callAnthropicVision(
       if (jsonMode) {
         textContent = textContent.trim();
         if (textContent.startsWith("```")) {
-          textContent = textContent.replace(/^```[a-z]*\n/, "").replace(/\n```$/, "").trim();
+          textContent = textContent
+            .replace(/^```[a-z]*\n/, "")
+            .replace(/\n```$/, "")
+            .trim();
         }
       }
       clearTimeout(timeoutId);
@@ -1099,7 +1205,7 @@ async function callAnthropicVision(
 
       const delay = Math.pow(2, attempt - 1) * 1000 + Math.random() * 500;
       console.log(`Retrying Anthropic API in ${Math.round(delay)}ms...`);
-      await new Promise(res => setTimeout(res, delay));
+      await new Promise((res) => setTimeout(res, delay));
     }
   }
 
@@ -1114,7 +1220,7 @@ async function callDeepSeekText(
   jsonMode: boolean,
   maxOutputTokens: number,
   maxRetries: number,
-  model: string
+  model: string,
 ): Promise<string> {
   const apiKey = process.env.DEEPSEEK_API_KEY;
   if (!apiKey) {
@@ -1163,7 +1269,7 @@ async function callDeepSeekText(
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "Authorization": `Bearer ${apiKey}`,
+          Authorization: `Bearer ${apiKey}`,
         },
         body: JSON.stringify({
           model: resolvedModel,
@@ -1186,7 +1292,9 @@ async function callDeepSeekText(
         console.error(`DeepSeek API Error Response (Attempt ${attempt + 1}):`, errorText);
 
         if (response.status === 429) {
-          throw new Error("Quota DeepSeek atteint (429). Veuillez patienter une minute avant de réessayer.");
+          throw new Error(
+            "Quota DeepSeek atteint (429). Veuillez patienter une minute avant de réessayer.",
+          );
         }
         if (response.status === 503 || response.status >= 500) {
           throw new Error(`Erreur DeepSeek API (${response.status})`); // Transient error -> trigger retry
@@ -1200,7 +1308,10 @@ async function callDeepSeekText(
       if (jsonMode) {
         textContent = textContent.trim();
         if (textContent.startsWith("```")) {
-          textContent = textContent.replace(/^```[a-z]*\n/, "").replace(/\n```$/, "").trim();
+          textContent = textContent
+            .replace(/^```[a-z]*\n/, "")
+            .replace(/\n```$/, "")
+            .trim();
         }
       }
       clearTimeout(timeoutId);
@@ -1216,7 +1327,7 @@ async function callDeepSeekText(
 
       const delay = Math.pow(2, attempt - 1) * 1000 + Math.random() * 500;
       console.log(`Retrying DeepSeek API in ${Math.round(delay)}ms...`);
-      await new Promise(res => setTimeout(res, delay));
+      await new Promise((res) => setTimeout(res, delay));
     }
   }
 
@@ -1244,15 +1355,29 @@ export async function callClaude(
   // (diagnostic bayésien, decision #27 — "quand le système doit vraiment
   // réfléchir"). Le seul site d'appel qui l'utilise (generateHypotheses) passe
   // désormais "deepseek-reasoner" au lieu de "claude-sonnet-5".
-  modelOverride?: string
+  modelOverride?: string,
 ): Promise<string> {
   const hasImage = !!(imageData || imageUrl);
   if (hasImage) {
     // DeepSeek n'a pas de vision — toute analyse d'image reste sur Claude,
     // quel que soit modelOverride (qui ne s'applique qu'au routage texte).
-    return callAnthropicVision(prompt, jsonMode, imageUrl, imageData, maxOutputTokens, maxRetries, "claude-sonnet-5");
+    return callAnthropicVision(
+      prompt,
+      jsonMode,
+      imageUrl,
+      imageData,
+      maxOutputTokens,
+      maxRetries,
+      "claude-sonnet-5",
+    );
   }
-  return callDeepSeekText(prompt, jsonMode, maxOutputTokens, maxRetries, modelOverride ?? DEEPSEEK_CHAT_MODEL);
+  return callDeepSeekText(
+    prompt,
+    jsonMode,
+    maxOutputTokens,
+    maxRetries,
+    modelOverride ?? DEEPSEEK_CHAT_MODEL,
+  );
 }
 
 // Gate "accès mensuel expiré" (décision 2026-08-05) : à l'expiration, la génération de
@@ -1275,6 +1400,199 @@ const GenerateInput = z.object({
   count: z.number().int().min(1).max(6).default(4),
 });
 
+// Cœur partagé de la génération bulk (Superviseur Copilote, décision #74) : la chaîne
+// IA est identique pour le parent et le superviseur — seul l'auteur change. `ownerUserId`
+// EST TOUJOURS le parent (challenges.user_id reste la clé d'ownership) ; `createdByUserId`
+// est le superviseur quand il génère (attribution, jamais ownership). `child` est passé
+// DÉJÀ chargé et autorisé (parent : ownership + assertChildAccessActive ; superviseur :
+// assertSupervisorOperator). Les lectures passent par `db` (context.supabase côté parent,
+// supabaseAdmin côté superviseur).
+export async function generateChallengesCore(params: {
+  db: any;
+  child: any;
+  childId: string;
+  count: number;
+  ownerUserId: string;
+  createdByUserId?: string | null;
+}) {
+  const { db, child, childId, count, ownerUserId, createdByUserId } = params;
+
+  // Décision 2026-08-05 : les intérêts déclarés sont des HYPOTHÈSES de travail — leur
+  // confiance est dérivée à la lecture (complétions vs abandons, par groupe de
+  // talents). Échec → null → formatage brut, la génération ne casse jamais.
+  const interestHypotheses = await getInterestHypothesesSnapshot(db as any, childId).catch(
+    () => null,
+  );
+
+  // Domains repeatedly generated but never even started are a real signal
+  // that's currently thrown away: the prompt only ever sees *completed*
+  // challenges (below), so a domain the child ignores keeps coming back
+  // just because the rotation/least-explored logic doesn't know it was
+  // ignored. 14 days is long enough that "todo" genuinely means ignored,
+  // not "hasn't gotten to it yet this week".
+  const STALE_DOMAIN_CUTOFF = new Date(Date.now() - 14 * 24 * 60 * 60 * 1000).toISOString();
+
+  const [
+    { data: existing },
+    { data: completedChallenges },
+    { data: staleChallenges },
+    { data: domainCounts },
+    progressionTargets,
+    // `db` est `any` (client parent OU service role) → Promise.all ne peut pas inférer
+    // un tuple typé à partir d'éléments `any` mélangés à Promise<ProgressionTarget[]> ;
+    // le cast est explicite (l'original typé via le client supabase inférait tout seul).
+  ] = (await Promise.all([
+    db
+      .from("challenges")
+      .select("title")
+      .eq("child_id", childId)
+      // Unbounded before: for a long-tenured family this list could grow
+      // into a huge block of text sitting right before the safety
+      // instruction later in the prompt, risking the "lost in the middle"
+      // effect where instructions buried in a long context get followed
+      // less reliably. The 30 most recent titles are enough to avoid
+      // repeats without letting the prompt grow indefinitely.
+      .order("created_at", { ascending: false })
+      .limit(30),
+    db
+      .from("challenges")
+      .select("title, domain, ai_observations")
+      .eq("child_id", childId)
+      .eq("status", "completed")
+      .order("completed_at", { ascending: false })
+      .limit(6),
+    db
+      .from("challenges")
+      .select("domain")
+      .eq("child_id", childId)
+      .eq("status", "todo")
+      .lt("created_at", STALE_DOMAIN_CUTOFF),
+    // Comptage SÉPARÉ non tronqué des complétions par domaine (avis GPT Codex P2) :
+    // completedChallenges ci-dessus est limité à 6 pour le contexte du prompt — s'il
+    // servait aussi au comptage, la réduction du guidage (completedInDomain) serait
+    // sous-estimée pour les enfants avec beaucoup d'historique.
+    db.from("challenges").select("domain").eq("child_id", childId).eq("status", "completed"),
+    computeProgressionTargets(db, childId),
+  ])) as any;
+  const existingTitles = ((existing ?? []) as any[]).map((c) => c.title);
+  const completedSummary = ((completedChallenges ?? []) as any[])
+    .map((c) => `- Défi "${c.title}" (${c.domain}) : "${c.ai_observations ?? ""}"`)
+    .join("\n");
+
+  // Autonomie progressive (analyse §28) : compteur de défis complétés par domaine,
+  // injecté dans finalizeChallenge pour réduire le guidage à mesure que l'enfant
+  // progresse dans son domaine. Comptage réel (non tronqué), cf. commentaire ci-dessus.
+  const completedByDomain: Record<string, number> = {};
+  for (const c of (domainCounts ?? []) as any[]) {
+    completedByDomain[c.domain] = (completedByDomain[c.domain] ?? 0) + 1;
+  }
+
+  // A single unstarted challenge in a domain proves nothing (parents get
+  // busy) — only flag a domain once it's happened at least twice, so this
+  // is a real repeated pattern rather than noise from one busy week.
+  const staleDomainCounts = ((staleChallenges ?? []) as any[]).reduce<Record<string, number>>(
+    (acc, r) => {
+      acc[r.domain] = (acc[r.domain] ?? 0) + 1;
+      return acc;
+    },
+    {},
+  );
+  const ignoredDomains = Object.entries(staleDomainCounts)
+    .filter(([, count]) => count >= 2)
+    .map(([domain]) => domain);
+
+  const leastExplored = getLeastExploredTalentLabels(
+    child.talents as Record<string, number> | null,
+  );
+
+  // Assemblage délégué au builder pur buildChallengePrompt (chantier 1 « Naya 3.0 ») :
+  // le template string vivait ici et pouvait dériver des rubriques partagées — la
+  // couverture des rubriques est désormais testée unitairement dans naya-prompts.test.ts.
+  const prompt = buildChallengePrompt({
+    count,
+    childName: child.name,
+    childAge: child.age,
+    location: [child.city, child.country].filter(Boolean).join(", ") || "non précisé",
+    interestsPayload: formatChildInterestsPayload(child.interests, interestHypotheses),
+    talentsJson: JSON.stringify(child.talents || {}),
+    completedSummary,
+    progressionInstruction: formatProgressionInstruction(progressionTargets),
+    leastExplored,
+    domainsText: shuffle(DOMAINS).join(", "),
+    ignoredDomains,
+    existingTitles,
+    timePressureNote: formatTimePressureNote(
+      child.time_pressure as TimePressure | null | undefined,
+    ),
+    profileContextNote: formatChildProfileContext(child as any),
+  });
+
+  // Up to 6 full défis in one response, each now carrying the academic
+  // referential fields (domain/level/citation) added on top of the original
+  // schema. Measured live: 4 défis alone already uses 3100-3700 of a 4000
+  // cap (78-91%) — a single slightly longer response silently truncates the
+  // JSON and fails the whole batch. 8000 keeps real headroom at count=6 too.
+  const content = await callClaude(prompt, true, undefined, 8000);
+  let parsed: { challenges?: unknown };
+  try {
+    parsed = JSON.parse(extractJsonFromLLMResponse(content));
+  } catch (err) {
+    console.error("Error parsing generateChallenges LLM response:", err, "Raw:", content);
+    throw new Error("Réponse IA invalide");
+  }
+
+  // Le Loup (chantier 2, Naya 3.0) : audit shadow non-bloquant de la sortie brute
+  // (avant finalizeChallenge — on audite ce que l'IA a réellement produit).
+  void verifyAndLog({
+    kind: "challenge_bulk",
+    output: parsed,
+    context: { childAge: child.age, childName: child.name, existingTitles },
+    sourceFunction: "generateChallenges",
+    childId,
+    model: "deepseek-v4-flash",
+  });
+
+  let list: z.infer<typeof ChallengeSchema>[];
+  try {
+    list = z.array(ChallengeSchema).parse(parsed.challenges ?? []);
+  } catch {
+    throw new Error("Réponse IA invalide");
+  }
+
+  const rows = list.map((c) => ({
+    // Décision #74 (Superviseur Copilote) : user_id EST TOUJOURS le parent — l'ownership
+    // et la RLS restent intacts ; created_by_user_id trace l'auteur réel (superviseur).
+    user_id: ownerUserId,
+    created_by_user_id: createdByUserId ?? null,
+    child_id: childId,
+    domain: c.domain,
+    description: c.description,
+    duration: c.duration,
+    steps: c.steps,
+    materials: c.materials,
+    pedagogical_context: c.pedagogical_context || null,
+    // Demandé au prompt (ACADEMIC_SECRET_INSTRUCTION) et validé par ChallengeSchema,
+    // mais jamais recopié jusqu'ici dans la ligne insérée — la carte "Avantage Secret
+    // de Naya" retombait donc systématiquement sur son texte générique par défaut.
+    academic_secret: c.academic_secret || null,
+    // target_intelligences vient de finalizeChallenge (resolveTargetIntelligences),
+    // qui filtre le champ "intelligences" du JSON contre VALID_TALENT_KEYS — plus
+    // de fallback silencieux vers [c.domain], le prompt demande maintenant
+    // explicitement les 9 clés exactes (cf. INTELLIGENCES_FIELD_INSTRUCTION).
+    ...finalizeChallenge(c, child.age, { completedInDomain: completedByDomain[c.domain] ?? 0 }),
+  }));
+
+  const { data: inserted, error: insErr } = await db.from("challenges").insert(rows).select("*");
+  if (insErr) throw new Error(insErr.message);
+  void trackMaterialSuggestions(
+    ((inserted ?? []) as any[]).map((c) => ({
+      material_tags: c.material_tags ?? [],
+      title: c.title,
+    })),
+  );
+  return inserted;
+}
+
 export const generateChallenges = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .validator((input: unknown) => GenerateInput.parse(input))
@@ -1293,164 +1611,17 @@ export const generateChallenges = createServerFn({ method: "POST" })
 
     await assertChildAccessActive(userId, data.childId);
 
-    // Décision 2026-08-05 : les intérêts déclarés sont des HYPOTHÈSES de travail — leur
-    // confiance est dérivée à la lecture (complétions vs abandons, par groupe de
-    // talents). Échec → null → formatage brut, la génération ne casse jamais.
-    const interestHypotheses = await getInterestHypothesesSnapshot(supabase as any, data.childId).catch(() => null);
-
-    // Domains repeatedly generated but never even started are a real signal
-    // that's currently thrown away: the prompt only ever sees *completed*
-    // challenges (below), so a domain the child ignores keeps coming back
-    // just because the rotation/least-explored logic doesn't know it was
-    // ignored. 14 days is long enough that "todo" genuinely means ignored,
-    // not "hasn't gotten to it yet this week".
-    const STALE_DOMAIN_CUTOFF = new Date(Date.now() - 14 * 24 * 60 * 60 * 1000).toISOString();
-
-    const [{ data: existing }, { data: completedChallenges }, { data: staleChallenges }, { data: domainCounts }, progressionTargets] = await Promise.all([
-      supabase
-        .from("challenges")
-        .select("title")
-        .eq("child_id", data.childId)
-        // Unbounded before: for a long-tenured family this list could grow
-        // into a huge block of text sitting right before the safety
-        // instruction later in the prompt, risking the "lost in the middle"
-        // effect where instructions buried in a long context get followed
-        // less reliably. The 30 most recent titles are enough to avoid
-        // repeats without letting the prompt grow indefinitely.
-        .order("created_at", { ascending: false })
-        .limit(30),
-      supabase
-        .from("challenges")
-        .select("title, domain, ai_observations")
-        .eq("child_id", data.childId)
-        .eq("status", "completed")
-        .order("completed_at", { ascending: false })
-        .limit(6),
-      supabase
-        .from("challenges")
-        .select("domain")
-        .eq("child_id", data.childId)
-        .eq("status", "todo")
-        .lt("created_at", STALE_DOMAIN_CUTOFF),
-      // Comptage SÉPARÉ non tronqué des complétions par domaine (avis GPT Codex P2) :
-      // completedChallenges ci-dessus est limité à 6 pour le contexte du prompt — s'il
-      // servait aussi au comptage, la réduction du guidage (completedInDomain) serait
-      // sous-estimée pour les enfants avec beaucoup d'historique.
-      supabase
-        .from("challenges")
-        .select("domain")
-        .eq("child_id", data.childId)
-        .eq("status", "completed"),
-      computeProgressionTargets(supabase, data.childId),
-    ]);
-    const existingTitles = (existing ?? []).map((c) => c.title);
-    const completedSummary = (completedChallenges ?? [])
-      .map((c) => `- Défi "${c.title}" (${c.domain}) : "${c.ai_observations ?? ''}"`)
-      .join("\n");
-
-    // Autonomie progressive (analyse §28) : compteur de défis complétés par domaine,
-    // injecté dans finalizeChallenge pour réduire le guidage à mesure que l'enfant
-    // progresse dans son domaine. Comptage réel (non tronqué), cf. commentaire ci-dessus.
-    const completedByDomain: Record<string, number> = {};
-    for (const c of domainCounts ?? []) {
-      completedByDomain[c.domain] = (completedByDomain[c.domain] ?? 0) + 1;
-    }
-
-    // A single unstarted challenge in a domain proves nothing (parents get
-    // busy) — only flag a domain once it's happened at least twice, so this
-    // is a real repeated pattern rather than noise from one busy week.
-    const staleDomainCounts = (staleChallenges ?? []).reduce<Record<string, number>>((acc, r) => {
-      acc[r.domain] = (acc[r.domain] ?? 0) + 1;
-      return acc;
-    }, {});
-    const ignoredDomains = Object.entries(staleDomainCounts)
-      .filter(([, count]) => count >= 2)
-      .map(([domain]) => domain);
-
-    const leastExplored = getLeastExploredTalentLabels(child.talents as Record<string, number> | null);
-
-    // Assemblage délégué au builder pur buildChallengePrompt (chantier 1 « Naya 3.0 ») :
-    // le template string vivait ici et pouvait dériver des rubriques partagées — la
-    // couverture des rubriques est désormais testée unitairement dans naya-prompts.test.ts.
-    const prompt = buildChallengePrompt({
-      count: data.count,
-      childName: child.name,
-      childAge: child.age,
-      location: [child.city, child.country].filter(Boolean).join(", ") || "non précisé",
-      interestsPayload: formatChildInterestsPayload(child.interests, interestHypotheses),
-      talentsJson: JSON.stringify(child.talents || {}),
-      completedSummary,
-      progressionInstruction: formatProgressionInstruction(progressionTargets),
-      leastExplored,
-      domainsText: shuffle(DOMAINS).join(", "),
-      ignoredDomains,
-      existingTitles,
-      timePressureNote: formatTimePressureNote(child.time_pressure as TimePressure | null | undefined),
-      profileContextNote: formatChildProfileContext(child as any),
-    });
-
-    // Up to 6 full défis in one response, each now carrying the academic
-    // referential fields (domain/level/citation) added on top of the original
-    // schema. Measured live: 4 défis alone already uses 3100-3700 of a 4000
-    // cap (78-91%) — a single slightly longer response silently truncates the
-    // JSON and fails the whole batch. 8000 keeps real headroom at count=6 too.
-    const content = await callClaude(prompt, true, undefined, 8000);
-    let parsed: { challenges?: unknown };
-    try {
-      parsed = JSON.parse(extractJsonFromLLMResponse(content));
-    } catch (err) {
-      console.error("Error parsing generateChallenges LLM response:", err, "Raw:", content);
-      throw new Error("Réponse IA invalide");
-    }
-
-    // Le Loup (chantier 2, Naya 3.0) : audit shadow non-bloquant de la sortie brute
-    // (avant finalizeChallenge — on audite ce que l'IA a réellement produit).
-    void verifyAndLog({
-      kind: "challenge_bulk",
-      output: parsed,
-      context: { childAge: child.age, childName: child.name, existingTitles },
-      sourceFunction: "generateChallenges",
+    return generateChallengesCore({
+      db: supabase,
+      child,
       childId: data.childId,
-      model: "deepseek-v4-flash",
+      count: data.count,
+      ownerUserId: userId,
+      createdByUserId: null,
     });
-
-    let list: z.infer<typeof ChallengeSchema>[];
-    try {
-      list = z.array(ChallengeSchema).parse(parsed.challenges ?? []);
-    } catch {
-      throw new Error("Réponse IA invalide");
-    }
-
-    const rows = list.map((c) => ({
-      user_id: userId,
-      child_id: data.childId,
-      domain: c.domain,
-      description: c.description,
-      duration: c.duration,
-      steps: c.steps,
-      materials: c.materials,
-      pedagogical_context: c.pedagogical_context || null,
-      // Demandé au prompt (ACADEMIC_SECRET_INSTRUCTION) et validé par ChallengeSchema,
-      // mais jamais recopié jusqu'ici dans la ligne insérée — la carte "Avantage Secret
-      // de Naya" retombait donc systématiquement sur son texte générique par défaut.
-      academic_secret: c.academic_secret || null,
-      // target_intelligences vient de finalizeChallenge (resolveTargetIntelligences),
-      // qui filtre le champ "intelligences" du JSON contre VALID_TALENT_KEYS — plus
-      // de fallback silencieux vers [c.domain], le prompt demande maintenant
-      // explicitement les 9 clés exactes (cf. INTELLIGENCES_FIELD_INSTRUCTION).
-      ...finalizeChallenge(c, child.age, { completedInDomain: completedByDomain[c.domain] ?? 0 }),
-    }));
-
-    const { data: inserted, error: insErr } = await supabase
-      .from("challenges")
-      .insert(rows)
-      .select("*");
-    if (insErr) throw new Error(insErr.message);
-    void trackMaterialSuggestions((inserted ?? []).map((c) => ({ material_tags: c.material_tags ?? [], title: c.title })));
-    return inserted;
   });
 
-const UpdateInput = z.object({
+export const UpdateInput = z.object({
   id: z.string().uuid(),
   status: z.enum(["todo", "in_progress", "completed"]).optional(),
   progress: z.number().int().min(0).max(100).optional(),
@@ -1469,7 +1640,9 @@ export const updateChallenge = createServerFn({ method: "POST" })
       time_limit_minutes?: number | null;
     } = {};
     if (data.status === "completed") {
-      throw new Error("Un défi ne peut pas être terminé manuellement sans preuve. Utilisez le mode enfant pour soumettre une preuve (photo ou déclarative).");
+      throw new Error(
+        "Un défi ne peut pas être terminé manuellement sans preuve. Utilisez le mode enfant pour soumettre une preuve (photo ou déclarative).",
+      );
     }
 
     if (data.status !== undefined) {
@@ -1495,7 +1668,9 @@ export const updateChallenge = createServerFn({ method: "POST" })
     // d'où ce pré-check explicite plutôt qu'un .eq() supplémentaire comme pour les autres.
     const { data: existing } = await context.supabase
       .from("challenges")
-      .select("child_id, time_limit_minutes, difficulty, estimated_duration_minutes, child_profiles(access_locked_at, is_active, age, time_pressure)")
+      .select(
+        "child_id, time_limit_minutes, difficulty, estimated_duration_minutes, child_profiles(access_locked_at, is_active, age, time_pressure)",
+      )
       .eq("id", data.id)
       .eq("user_id", context.userId)
       .maybeSingle();
@@ -1628,7 +1803,9 @@ export const deleteChallenge = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     const { data: existing } = await context.supabase
       .from("challenges")
-      .select("id, child_id, domain, title, status, created_at, child_profiles(access_locked_at, is_active)")
+      .select(
+        "id, child_id, domain, title, status, created_at, child_profiles(access_locked_at, is_active)",
+      )
       .eq("id", data.id)
       .eq("user_id", context.userId)
       .maybeSingle();
@@ -1659,7 +1836,8 @@ export const deleteChallenge = createServerFn({ method: "POST" })
       note: data.note ?? null,
       domain: existing.domain,
       statusWhenDeleted: existing.status,
-      pendingDays: Math.round((Date.now() - Date.parse(existing.created_at)) / 86400000 * 100) / 100,
+      pendingDays:
+        Math.round(((Date.now() - Date.parse(existing.created_at)) / 86400000) * 100) / 100,
     });
     return { ok: true };
   });
@@ -1685,67 +1863,69 @@ const ValidateInput = z.object({
   proofImageMediaType: z.string().optional(),
 });
 
-export const validateChallengeProof = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
-  .validator((input: unknown) => ValidateInput.parse(input))
-  .handler(async ({ data, context }) => {
-    const { supabase, userId } = context;
+// Cœur partagé de la validation de preuve photo (Superviseur Copilote, décision #74) :
+// la chaîne IA est STRICTEMENT la même pour le parent et pour le superviseur — seul
+// l'acteur qui soumet change (le superviseur prend la photo en séance et la soumet,
+// c'est lui l'adulte présent). `db` est le client d'écriture : context.supabase côté
+// parent (RLS + increment_child_talents re-vérifie auth.uid()), supabaseAdmin côté
+// superviseur APRÈS assertSupervisorOperator. Le challenge est passé DÉJÀ chargé et
+// DÉJÀ autorisé par l'appelant — jamais d'ownership dans le cœur.
+export async function validateChallengeProofCore(params: {
+  db: any;
+  challenge: any;
+  /** Identité qui soumet (pour l'événement observation) — le parent ou le superviseur. */
+  actingUserId: string;
+  id: string;
+  proofText?: string;
+  proofImageBase64?: string;
+  proofImageMediaType?: string;
+}) {
+  const { db, challenge, actingUserId, id } = params;
 
-    const { data: challenge, error: challengeErr } = await supabase
-      .from("challenges")
-      .select("*, child_profiles(*)")
-      .eq("id", data.id)
-      .single();
-
-    if (challengeErr || !challenge) throw new Error("Défi introuvable");
-    if (challenge.user_id !== userId) throw new Error("Accès refusé.");
-    if (challenge.child_profiles?.access_locked_at) throw new Error("Ce profil est verrouillé.");
-    if (challenge.child_profiles?.is_active === false) throw new Error("Ce profil est désactivé par l'administrateur.");
-
-    // Étape 1 — preuve visuelle obligatoire (2026-08-02) : refusé avant l'appel IA (pas
-    // seulement côté UI, sinon contournable) — aucun coût IA pour une soumission qui ne
-    // peut de toute façon rien rapporter. Même event de friction que le rejet IA plus bas
-    // (PROOF_REJECTED) pour que le Jumeau Pédagogique voie ce signal lui aussi.
-    if (!hasSufficientProof(data.proofImageBase64)) {
-      try {
-        const { error: evtErr } = await supabase.from("observation_events").insert({
-          child_id: challenge.child_id,
-          user_id: userId,
-          type: "PROOF_REJECTED",
-          source: "app",
-          payload: {
-            challenge_id: challenge.id,
-            domain: challenge.domain,
-            had_image: false,
-            image_analyzed: false,
-            reason: "no_image",
-          },
-        });
-        if (evtErr) console.error("PROOF_REJECTED event insert failed (non-fatal):", evtErr);
-      } catch (err) {
-        console.error("PROOF_REJECTED event insert failed (non-fatal):", err);
-      }
-
-      return {
-        challenge,
-        observations:
-          "Pour valider ce défi et débloquer les points, il me faut une photo qui montre ce qui a été fait ! Ajoute une photo et soumets à nouveau.",
-        awarded_points: {},
-        imageAnalyzed: false,
-        relevant: false,
-        levelUp: null,
-        badgeUnlocked: null,
-      };
+  // Étape 1 — preuve visuelle obligatoire (2026-08-02) : refusé avant l'appel IA (pas
+  // seulement côté UI, sinon contournable) — aucun coût IA pour une soumission qui ne
+  // peut de toute façon rien rapporter. Même event de friction que le rejet IA plus bas
+  // (PROOF_REJECTED) pour que le Jumeau Pédagogique voie ce signal lui aussi.
+  if (!hasSufficientProof(params.proofImageBase64)) {
+    try {
+      const { error: evtErr } = await db.from("observation_events").insert({
+        child_id: challenge.child_id,
+        user_id: actingUserId,
+        type: "PROOF_REJECTED",
+        source: "app",
+        payload: {
+          challenge_id: challenge.id,
+          domain: challenge.domain,
+          had_image: false,
+          image_analyzed: false,
+          reason: "no_image",
+        },
+      });
+      if (evtErr) console.error("PROOF_REJECTED event insert failed (non-fatal):", evtErr);
+    } catch (err) {
+      console.error("PROOF_REJECTED event insert failed (non-fatal):", err);
     }
 
-    const prompt = `Tu es un mentor pédagogique et un expert en psychologie de l'enfant (Inspiré par Howard Gardner et les intelligences multiples).
+    return {
+      challenge,
+      observations:
+        "Pour valider ce défi et débloquer les points, il me faut une photo qui montre ce qui a été fait ! Ajoute une photo et soumets à nouveau.",
+      awarded_points: {},
+      imageAnalyzed: false,
+      relevant: false,
+      levelUp: null,
+      badgeUnlocked: null,
+    };
+  }
+
+  const prompt = `Tu es un mentor pédagogique et un expert en psychologie de l'enfant (Inspiré par Howard Gardner et les intelligences multiples).
 L'enfant (Prénom: ${challenge.child_profiles.name}, Âge: ${challenge.child_profiles.age}) vient de terminer le défi : "${challenge.title}".
 Domaine : ${challenge.domain}
 Description du défi : ${challenge.description}
 
 Le parent a soumis cette preuve de réalisation :
-${data.proofText ? `Texte/Notes : "${data.proofText}"` : ""}
-${data.proofImageBase64 ? `Une image a également été fournie (vérifie l'image si possible).` : ""}
+${params.proofText ? `Texte/Notes : "${params.proofText}"` : ""}
+${params.proofImageBase64 ? `Une image a également été fournie (vérifie l'image si possible).` : ""}
 
 Ta mission :
 1. Vérifie D'ABORD si cette preuve correspond réellement à CE défi précis (le texte décrit-il une activité liée au défi ? l'image montre-t-elle quelque chose en rapport ?). Si la preuve est manifestement hors-sujet ou sans rapport avec le défi, n'écris AUCUN message de félicitations : explique poliment et brièvement au parent que la preuve ne semble pas correspondre à ce défi et invite à en soumettre une nouvelle. Dans ce cas, "talents_awarded" doit être un objet vide {}. IMPORTANT : le parent ne peut joindre qu'UNE SEULE photo à la fois (jamais plusieurs) — ne demande jamais "des photos" au pluriel ni plusieurs preuves différentes ; suggère UNE seule photo montrant l'aspect le plus représentatif du défi.
@@ -1761,203 +1941,250 @@ Réponds STRICTEMENT en JSON valide avec ce format :
   }
 }`;
 
-    let aiContent = "";
-    let imageAnalyzed = !!data.proofImageBase64;
-    const imageData = data.proofImageBase64
-      ? { base64: data.proofImageBase64, mediaType: data.proofImageMediaType ?? "image/jpeg" }
-      : undefined;
-    // A short observation + a small talents_awarded object — nowhere near
-    // the 4000-token default sized for a batch of full défis. Reserving
-    // that much per call was the main way this endpoint could exhaust the
-    // org's per-minute output-token budget on a single request.
+  let aiContent = "";
+  let imageAnalyzed = !!params.proofImageBase64;
+  const imageData = params.proofImageBase64
+    ? { base64: params.proofImageBase64, mediaType: params.proofImageMediaType ?? "image/jpeg" }
+    : undefined;
+  // A short observation + a small talents_awarded object — nowhere near
+  // the 4000-token default sized for a batch of full défis. Reserving
+  // that much per call was the main way this endpoint could exhaust the
+  // org's per-minute output-token budget on a single request.
+  try {
+    aiContent = await callClaude(prompt, true, undefined, 500, 3, imageData);
+  } catch (err) {
+    if (
+      err instanceof Error &&
+      (err.message.includes("429") ||
+        err.message.includes("rate_limit") ||
+        err.message.includes("quota"))
+    ) {
+      console.error("Vision model rate limited / quota exceeded:", err);
+      throw new Error(
+        "Service IA temporairement surchargé (limite de débit atteinte). Veuillez réessayer dans un instant.",
+      );
+    }
+    console.warn("Vision model call failed, falling back to text only:", err);
+    imageAnalyzed = false;
     try {
-      aiContent = await callClaude(prompt, true, undefined, 500, 3, imageData);
-    } catch (err) {
-      if (err instanceof Error && (err.message.includes("429") || err.message.includes("rate_limit") || err.message.includes("quota"))) {
-        console.error("Vision model rate limited / quota exceeded:", err);
-        throw new Error("Service IA temporairement surchargé (limite de débit atteinte). Veuillez réessayer dans un instant.");
+      aiContent = await callClaude(prompt, true, undefined, 500);
+    } catch (fallbackErr) {
+      console.error("Text-only fallback model call failed:", fallbackErr);
+      if (
+        fallbackErr instanceof Error &&
+        (fallbackErr.message.includes("429") ||
+          fallbackErr.message.includes("rate_limit") ||
+          fallbackErr.message.includes("quota"))
+      ) {
+        throw new Error(
+          "Service IA temporairement surchargé (limite de débit atteinte). Veuillez réessayer dans un instant.",
+        );
       }
-      console.warn("Vision model call failed, falling back to text only:", err);
-      imageAnalyzed = false;
-      try {
-        aiContent = await callClaude(prompt, true, undefined, 500);
-      } catch (fallbackErr) {
-        console.error("Text-only fallback model call failed:", fallbackErr);
-        if (fallbackErr instanceof Error && (fallbackErr.message.includes("429") || fallbackErr.message.includes("rate_limit") || fallbackErr.message.includes("quota"))) {
-          throw new Error("Service IA temporairement surchargé (limite de débit atteinte). Veuillez réessayer dans un instant.");
-        }
-        throw new Error(`Erreur d'analyse par l'IA : ${fallbackErr instanceof Error ? fallbackErr.message : "Erreur inconnue"}`);
+      throw new Error(
+        `Erreur d'analyse par l'IA : ${fallbackErr instanceof Error ? fallbackErr.message : "Erreur inconnue"}`,
+      );
+    }
+  }
+
+  let parsed: { observations?: string; talents_awarded?: Record<string, number> };
+  try {
+    parsed = JSON.parse(extractJsonFromLLMResponse(aiContent));
+  } catch (parseErr) {
+    console.error("Error parsing vision/text AI response JSON:", parseErr, "Content:", aiContent);
+    throw new Error("Réponse IA invalide — réessayez dans quelques instants.");
+  }
+
+  // Le Loup (chantier 2, Naya 3.0) : audit shadow non-bloquant de la sortie brute.
+  void verifyAndLog({
+    kind: "proof_validation",
+    output: parsed,
+    context: { childAge: challenge.child_profiles?.age, childName: challenge.child_profiles?.name },
+    sourceFunction: "validateChallengeProof",
+    childId: challenge.child_profiles?.id,
+    model: imageAnalyzed ? "claude-sonnet-5" : "deepseek-v4-flash",
+  });
+
+  const observations = parsed.observations ?? "Bravo pour cette belle réalisation !";
+  const awarded = parsed.talents_awarded ?? {};
+
+  const validTalentKeys = new Set(VALID_TALENT_KEYS);
+  const deltas: Record<string, number> = {};
+  let intelligenceKeys: string[] = [];
+  for (const [key, points] of Object.entries(awarded)) {
+    // Drop anything the AI returns outside the 9 known intelligences — a
+    // hallucinated or misspelled key would otherwise pollute talents forever.
+    if (typeof points === "number" && validTalentKeys.has(key)) {
+      // Floor was previously 1 — meaning even when the model correctly
+      // judged a submission irrelevant/low-effort and tried to award 0,
+      // the code silently bumped it back up to 1, guaranteeing every
+      // submission got rewarded regardless of what the AI concluded.
+      // Floor of 0 lets a genuine "no merit" verdict actually result in
+      // no points, instead of masking it.
+      const clamped = Math.max(0, Math.min(3, Math.round(points)));
+      if (clamped > 0) {
+        deltas[key] = clamped;
+        intelligenceKeys.push(key);
       }
     }
+  }
 
-    let parsed: { observations?: string; talents_awarded?: Record<string, number> };
-    try {
-      parsed = JSON.parse(extractJsonFromLLMResponse(aiContent));
-    } catch (parseErr) {
-      console.error("Error parsing vision/text AI response JSON:", parseErr, "Content:", aiContent);
-      throw new Error("Réponse IA invalide — réessayez dans quelques instants.");
-    }
-
-    // Le Loup (chantier 2, Naya 3.0) : audit shadow non-bloquant de la sortie brute.
-    void verifyAndLog({
-      kind: "proof_validation",
-      output: parsed,
-      context: { childAge: challenge.child_profiles?.age, childName: challenge.child_profiles?.name },
-      sourceFunction: "validateChallengeProof",
-      childId: challenge.child_profiles?.id,
-      model: imageAnalyzed ? "claude-sonnet-5" : "deepseek-v4-flash",
+  if (Object.keys(deltas).length > 0) {
+    // Atomic increment (row-locked, see increment_child_talents) instead of a
+    // client-side read-modify-write, so two near-simultaneous validations for
+    // the same child can't silently drop one set of points.
+    const { error: talentsError } = await db.rpc("increment_child_talents", {
+      p_child_id: challenge.child_profiles.id,
+      p_deltas: deltas,
     });
+    if (talentsError) throw new Error(talentsError.message);
+  }
 
-    const observations = parsed.observations ?? "Bravo pour cette belle réalisation !";
-    const awarded = parsed.talents_awarded ?? {};
+  const relevant = Object.keys(deltas).length > 0;
 
-    const validTalentKeys = new Set(VALID_TALENT_KEYS);
-    const deltas: Record<string, number> = {};
-    let intelligenceKeys: string[] = [];
-    for (const [key, points] of Object.entries(awarded)) {
-      // Drop anything the AI returns outside the 9 known intelligences — a
-      // hallucinated or misspelled key would otherwise pollute talents forever.
-      if (typeof points === 'number' && validTalentKeys.has(key)) {
-        // Floor was previously 1 — meaning even when the model correctly
-        // judged a submission irrelevant/low-effort and tried to award 0,
-        // the code silently bumped it back up to 1, guaranteeing every
-        // submission got rewarded regardless of what the AI concluded.
-        // Floor of 0 lets a genuine "no merit" verdict actually result in
-        // no points, instead of masking it.
-        const clamped = Math.max(0, Math.min(3, Math.round(points)));
-        if (clamped > 0) {
-          deltas[key] = clamped;
-          intelligenceKeys.push(key);
-        }
-      }
-    }
-
-    if (Object.keys(deltas).length > 0) {
-      // Atomic increment (row-locked, see increment_child_talents) instead of a
-      // client-side read-modify-write, so two near-simultaneous validations for
-      // the same child can't silently drop one set of points.
-      const { error: talentsError } = await supabase.rpc("increment_child_talents", {
-        p_child_id: challenge.child_profiles.id,
-        p_deltas: deltas,
+  if (!relevant) {
+    // NAYA 2.0 Phase 0 : une soumission jugée hors-sujet ne modifie rien en
+    // base (aucun trigger DB ne peut donc la capter) — c'est pourtant un vrai
+    // signal de friction pour le Jumeau Pédagogique. Émission applicative,
+    // best-effort : un échec de journalisation ne doit jamais casser la
+    // validation elle-même.
+    try {
+      const { error: evtErr } = await db.from("observation_events").insert({
+        child_id: challenge.child_id,
+        user_id: actingUserId,
+        type: "PROOF_REJECTED",
+        source: "app",
+        payload: {
+          challenge_id: challenge.id,
+          domain: challenge.domain,
+          had_image: !!params.proofImageBase64,
+          image_analyzed: imageAnalyzed,
+        },
       });
-      if (talentsError) throw new Error(talentsError.message);
+      if (evtErr) console.error("PROOF_REJECTED event insert failed (non-fatal):", evtErr);
+    } catch (err) {
+      console.error("PROOF_REJECTED event insert failed (non-fatal):", err);
     }
+  }
 
-    const relevant = Object.keys(deltas).length > 0;
-
-    if (!relevant) {
-      // NAYA 2.0 Phase 0 : une soumission jugée hors-sujet ne modifie rien en
-      // base (aucun trigger DB ne peut donc la capter) — c'est pourtant un vrai
-      // signal de friction pour le Jumeau Pédagogique. Émission applicative,
-      // best-effort : un échec de journalisation ne doit jamais casser la
-      // validation elle-même.
-      try {
-        const { error: evtErr } = await supabase.from("observation_events").insert({
-          child_id: challenge.child_id,
-          user_id: userId,
-          type: "PROOF_REJECTED",
-          source: "app",
-          payload: {
-            challenge_id: challenge.id,
-            domain: challenge.domain,
-            had_image: !!data.proofImageBase64,
-            image_analyzed: imageAnalyzed,
-          },
+  // A rejected submission used to still write ai_observations to the DB —
+  // and the UI only ever renders this whole validation card while
+  // ai_observations is null, so writing it here permanently hid the
+  // "submit again" form the AI's own rejection message just promised the
+  // parent. Only persist the outcome (and only upload the photo) once the
+  // AI actually confirms the submission is relevant.
+  let updatedChallenge: any = challenge;
+  let levelUp: Awaited<ReturnType<typeof awardCompletionXP>> = null;
+  let badgeUnlocked: Awaited<ReturnType<typeof checkAndAwardBadge>> = null;
+  if (relevant) {
+    let proofImageUrl: string | null = null;
+    if (params.proofImageBase64) {
+      const mediaType = params.proofImageMediaType ?? "image/jpeg";
+      const ext = mediaType.split("/")[1] ?? "jpg";
+      const fileName = `${challenge.child_id}/${challenge.id}-${Math.random()}.${ext}`;
+      const { error: uploadError } = await db.storage
+        .from("proofs")
+        .upload(fileName, Buffer.from(params.proofImageBase64, "base64"), {
+          contentType: mediaType,
         });
-        if (evtErr) console.error("PROOF_REJECTED event insert failed (non-fatal):", evtErr);
-      } catch (err) {
-        console.error("PROOF_REJECTED event insert failed (non-fatal):", err);
+      if (uploadError) {
+        console.error("Erreur d'upload de la preuve (non bloquant):", uploadError);
+      } else {
+        const { data: publicUrlData } = db.storage.from("proofs").getPublicUrl(fileName);
+        proofImageUrl = publicUrlData.publicUrl;
       }
     }
 
-    // A rejected submission used to still write ai_observations to the DB —
-    // and the UI only ever renders this whole validation card while
-    // ai_observations is null, so writing it here permanently hid the
-    // "submit again" form the AI's own rejection message just promised the
-    // parent. Only persist the outcome (and only upload the photo) once the
-    // AI actually confirms the submission is relevant.
-    let updatedChallenge: any = challenge;
-    let levelUp: Awaited<ReturnType<typeof awardCompletionXP>> = null;
-    let badgeUnlocked: Awaited<ReturnType<typeof checkAndAwardBadge>> = null;
-    if (relevant) {
-      let proofImageUrl: string | null = null;
-      if (data.proofImageBase64) {
-        const mediaType = data.proofImageMediaType ?? "image/jpeg";
-        const ext = mediaType.split("/")[1] ?? "jpg";
-        const fileName = `${challenge.child_id}/${challenge.id}-${Math.random()}.${ext}`;
-        const { error: uploadError } = await supabase.storage
-          .from("proofs")
-          .upload(fileName, Buffer.from(data.proofImageBase64, "base64"), { contentType: mediaType });
-        if (uploadError) {
-          console.error("Erreur d'upload de la preuve (non bloquant):", uploadError);
-        } else {
-          const { data: publicUrlData } = supabase.storage.from("proofs").getPublicUrl(fileName);
-          proofImageUrl = publicUrlData.publicUrl;
-        }
-      }
-
-      const patch = {
-        status: "completed" as const,
-        progress: 100,
-        completed_at: new Date().toISOString(),
-        proof_image_url: proofImageUrl,
-        ai_observations: observations,
-        target_intelligences: intelligenceKeys,
-      };
-
-      const { data: updated, error } = await supabase
-        .from("challenges")
-        .update(patch)
-        .eq("id", data.id)
-        .select("*")
-        .single();
-
-      if (error) throw new Error(error.message);
-      updatedChallenge = updated;
-
-      levelUp = await awardCompletionXP(supabase, challenge.child_id);
-      badgeUnlocked = await checkAndAwardBadge(supabase, challenge.child_id, challenge.domain);
-
-      // NAYA 2.0 Phase 3b : si ce défi était un défi discriminant, met à jour la boucle bayésienne
-      try {
-        const { processDiscriminantResult } = await import("@/lib/hypotheses.functions");
-        void processDiscriminantResult(data.id, "COMPLETED", relevant);
-      } catch (err) {
-        console.error("Non-fatal: processDiscriminantResult failed", err);
-      }
-
-      // Étape 4 : si ce défi était un défi de retest de soutien renforcé, met à jour
-      // hypothesis_cycles.support_active — no-op sûr si ce n'en est pas un.
-      try {
-        const { processSupportRetestResult } = await import("@/lib/hypotheses.functions");
-        void processSupportRetestResult(data.id, "COMPLETED");
-      } catch (err) {
-        console.error("Non-fatal: processSupportRetestResult failed", err);
-      }
-
-      // Pré-génération de la prochaine mission (2026-07-26, review produit) : sans ça, le
-      // parent retrouve "aucun défi en cours" à sa prochaine visite et attend l'appel IA à ce
-      // moment-là. Fire-and-forget, même pattern que processDiscriminantResult ci-dessus —
-      // import dynamique pour éviter le cycle d'imports (recommendations.functions.ts importe
-      // déjà challenges.functions.ts statiquement). Idempotent par construction :
-      // recommendChallengesForChild ne génère que si l'enfant n'a plus aucun défi en attente.
-      try {
-        const { recommendChallengesForChild } = await import("@/lib/recommendations.functions");
-        void recommendChallengesForChild({ data: { childId: challenge.child_id } });
-      } catch (err) {
-        console.error("Non-fatal: pré-génération de la prochaine mission a échoué", err);
-      }
-    }
-
-    return {
-      challenge: updatedChallenge,
-      observations,
-      awarded_points: awarded,
-      imageAnalyzed,
-      relevant,
-      levelUp,
-      badgeUnlocked,
+    const patch = {
+      status: "completed" as const,
+      progress: 100,
+      completed_at: new Date().toISOString(),
+      proof_image_url: proofImageUrl,
+      ai_observations: observations,
+      target_intelligences: intelligenceKeys,
     };
+
+    const { data: updated, error } = await db
+      .from("challenges")
+      .update(patch)
+      .eq("id", id)
+      .select("*")
+      .single();
+
+    if (error) throw new Error(error.message);
+    updatedChallenge = updated;
+
+    levelUp = await awardCompletionXP(db, challenge.child_id);
+    badgeUnlocked = await checkAndAwardBadge(db, challenge.child_id, challenge.domain);
+
+    // NAYA 2.0 Phase 3b : si ce défi était un défi discriminant, met à jour la boucle bayésienne
+    try {
+      const { processDiscriminantResult } = await import("@/lib/hypotheses.functions");
+      void processDiscriminantResult(id, "COMPLETED", relevant);
+    } catch (err) {
+      console.error("Non-fatal: processDiscriminantResult failed", err);
+    }
+
+    // Étape 4 : si ce défi était un défi de retest de soutien renforcé, met à jour
+    // hypothesis_cycles.support_active — no-op sûr si ce n'en est pas un.
+    try {
+      const { processSupportRetestResult } = await import("@/lib/hypotheses.functions");
+      void processSupportRetestResult(id, "COMPLETED");
+    } catch (err) {
+      console.error("Non-fatal: processSupportRetestResult failed", err);
+    }
+
+    // Pré-génération de la prochaine mission (2026-07-26, review produit) : sans ça, le
+    // parent retrouve "aucun défi en cours" à sa prochaine visite et attend l'appel IA à ce
+    // moment-là. Fire-and-forget, même pattern que processDiscriminantResult ci-dessus —
+    // import dynamique pour éviter le cycle d'imports (recommendations.functions.ts importe
+    // déjà challenges.functions.ts statiquement). Idempotent par construction :
+    // recommendChallengesForChild ne génère que si l'enfant n'a plus aucun défi en attente.
+    try {
+      const { recommendChallengesForChild } = await import("@/lib/recommendations.functions");
+      void recommendChallengesForChild({ data: { childId: challenge.child_id } });
+    } catch (err) {
+      console.error("Non-fatal: pré-génération de la prochaine mission a échoué", err);
+    }
+  }
+
+  return {
+    challenge: updatedChallenge,
+    observations,
+    awarded_points: awarded,
+    imageAnalyzed,
+    relevant,
+    levelUp,
+    badgeUnlocked,
+  };
+}
+
+export const validateChallengeProof = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .validator((input: unknown) => ValidateInput.parse(input))
+  .handler(async ({ data, context }) => {
+    const { supabase, userId } = context;
+
+    const { data: challenge, error: challengeErr } = await supabase
+      .from("challenges")
+      .select("*, child_profiles(*)")
+      .eq("id", data.id)
+      .single();
+
+    if (challengeErr || !challenge) throw new Error("Défi introuvable");
+    if (challenge.user_id !== userId) throw new Error("Accès refusé.");
+    if (challenge.child_profiles?.access_locked_at) throw new Error("Ce profil est verrouillé.");
+    if (challenge.child_profiles?.is_active === false)
+      throw new Error("Ce profil est désactivé par l'administrateur.");
+
+    return validateChallengeProofCore({
+      db: supabase,
+      challenge,
+      actingUserId: userId,
+      id: data.id,
+      proofText: data.proofText,
+      proofImageBase64: data.proofImageBase64,
+      proofImageMediaType: data.proofImageMediaType,
+    });
   });
 
 // Étape 3 — "classer automatiquement le commentaire du parent" (brainstorm produit,
@@ -1975,7 +2202,9 @@ export const NOT_COMPLETED_CAUSES = [
 ] as const;
 export type NotCompletedCause = (typeof NOT_COMPLETED_CAUSES)[number];
 
-async function classifyNotCompletedReason(reason: string): Promise<NotCompletedCause | null> {
+export async function classifyNotCompletedReason(
+  reason: string,
+): Promise<NotCompletedCause | null> {
   const prompt = `Un parent explique pourquoi un défi pédagogique pour enfant n'a pas pu être terminé. Classe cette explication dans EXACTEMENT une des catégories suivantes :
 - METHOD_MISMATCH : l'enfant a probablement les capacités, mais la présentation/le format du défi ne lui convenait pas (ex : consigne trop scolaire/théorique pour lui).
 - PERFORMANCE_ANXIETY : l'enfant a montré du stress, une peur de mal faire, une pression ressentie.
@@ -1998,7 +2227,9 @@ Réponds EXCLUSIVEMENT avec un JSON de cette forme, sans texte autour : {"cause"
       model: "deepseek-v4-flash",
     });
     const cause = parsed?.cause;
-    return (NOT_COMPLETED_CAUSES as readonly string[]).includes(cause) ? (cause as NotCompletedCause) : null;
+    return (NOT_COMPLETED_CAUSES as readonly string[]).includes(cause)
+      ? (cause as NotCompletedCause)
+      : null;
   } catch (err) {
     // Non-fatal par conception, comme narrateForParent : une classification manquée
     // laisse simplement not_completed_cause à null, jamais d'échec de la soumission.
@@ -2011,10 +2242,15 @@ Réponds EXCLUSIVEMENT avec un JSON de cette forme, sans texte autour : {"cause"
 // "Sans raison précisée" quand le journal est vide, donc la contrainte reste.
 // reasonChip : chip structuré du dialog (Décision #58, même vocabulaire que la
 // suppression) — signal exploitable par le Loup sans classification IA.
-const NOT_COMPLETED_CHIPS = ["pas_le_bon_moment", "deja_fait_autrement", "pas_interesse", "doublon"] as const;
+export const NOT_COMPLETED_CHIPS = [
+  "pas_le_bon_moment",
+  "deja_fait_autrement",
+  "pas_interesse",
+  "doublon",
+] as const;
 type NotCompletedChip = (typeof NOT_COMPLETED_CHIPS)[number];
 
-const NotCompletedInput = z.object({
+export const NotCompletedInput = z.object({
   id: z.string().uuid(),
   reason: z.string().trim().min(1).max(2000),
   reasonChip: z.enum(NOT_COMPLETED_CHIPS).optional(),
@@ -2040,7 +2276,8 @@ export const submitChallengeNotCompleted = createServerFn({ method: "POST" })
     if (challengeErr || !challenge) throw new Error("Défi introuvable");
     if (challenge.user_id !== userId) throw new Error("Accès refusé.");
     if (challenge.child_profiles?.access_locked_at) throw new Error("Ce profil est verrouillé.");
-    if (challenge.child_profiles?.is_active === false) throw new Error("Ce profil est désactivé par l'administrateur.");
+    if (challenge.child_profiles?.is_active === false)
+      throw new Error("Ce profil est désactivé par l'administrateur.");
 
     // Garde de statut (review 2026-08-12, P1) : un re-clic, une race ou un client
     // obsolète ne doit jamais faire basculer un défi déjà completed en not_completed
@@ -2112,7 +2349,7 @@ export const submitChallengeNotCompleted = createServerFn({ method: "POST" })
           const outcome = await processModalityReformulation(supabase, userId, data.id);
           if (outcome.ok) return; // la reformulation devient la mission suivante
           console.error(
-            `Non-fatal: reformulation impossible (${outcome.reason}) — repli sur la recommandation`
+            `Non-fatal: reformulation impossible (${outcome.reason}) — repli sur la recommandation`,
           );
         } catch (err) {
           console.error("Non-fatal: reformulation failed", err);
@@ -2137,6 +2374,138 @@ const SubmitDeclarativeInput = z.object({
   reportedValue: z.number().finite(),
 });
 
+// Cœur partagé de la preuve déclarative (décision #36 + Superviseur Copilote #74) : 0
+// appel IA par design — on compare la déclaration à la cible fixée à la génération. Même
+// principe que validateChallengeProofCore : `db` = client d'écriture (parent | superviseur
+// après assertSupervisorOperator), challenge DÉJÀ chargé et autorisé par l'appelant.
+export async function submitDeclarativeProofCore(params: {
+  db: any;
+  challenge: any;
+  actingUserId: string;
+  id: string;
+  reportedValue: number;
+}) {
+  const { db, challenge, actingUserId, id, reportedValue } = params;
+
+  if (challenge.proof_mode !== "declarative") {
+    throw new Error("Ce défi ne se valide pas par déclaration.");
+  }
+
+  const target = challenge.proof_target as { metric?: string; value?: number } | null;
+  if (!target?.metric || typeof target.value !== "number") {
+    throw new Error("Cible de déclaration manquante pour ce défi.");
+  }
+
+  const childName = challenge.child_profiles.name as string;
+  const relevant = reportedValue >= target.value;
+
+  if (!relevant) {
+    // Même logique que le rejet côté photo (PROOF_REJECTED) : rien n'est modifié
+    // en base pour le défi, mais c'est un vrai signal de friction pour le Jumeau
+    // Pédagogique — journalisation best-effort, jamais bloquante.
+    try {
+      const { error: evtErr } = await db.from("observation_events").insert({
+        child_id: challenge.child_id,
+        user_id: actingUserId,
+        type: "PROOF_REJECTED",
+        source: "app",
+        payload: {
+          challenge_id: challenge.id,
+          domain: challenge.domain,
+          declarative: true,
+          reported_value: reportedValue,
+          target_value: target.value,
+        },
+      });
+      if (evtErr) console.error("PROOF_REJECTED event insert failed (non-fatal):", evtErr);
+    } catch (err) {
+      console.error("PROOF_REJECTED event insert failed (non-fatal):", err);
+    }
+
+    return {
+      challenge,
+      observations: `Pas encore atteint cette fois (${reportedValue}/${target.value} ${target.metric}) — ce n'est pas grave, ${childName} peut retenter dès que prêt·e !`,
+      awarded_points: {},
+      imageAnalyzed: false,
+      relevant: false,
+      levelUp: null,
+      badgeUnlocked: null,
+    };
+  }
+
+  const award = (challenge.declarative_award as Record<string, number> | null) ?? {};
+  if (Object.keys(award).length > 0) {
+    const { error: talentsError } = await db.rpc("increment_child_talents", {
+      p_child_id: challenge.child_id,
+      p_deltas: award,
+    });
+    if (talentsError) throw new Error(talentsError.message);
+  }
+
+  const observations = `Bravo ! ${childName} a réussi ${reportedValue} ${target.metric} (objectif : ${target.value}). Une belle preuve de persévérance.`;
+
+  const { data: updated, error } = await db
+    .from("challenges")
+    .update({
+      status: "completed" as const,
+      progress: 100,
+      completed_at: new Date().toISOString(),
+      ai_observations: observations,
+      target_intelligences: Object.keys(award),
+    })
+    .eq("id", id)
+    .select("*")
+    .single();
+  if (error) throw new Error(error.message);
+
+  // Manquait ici jusqu'à présent : validateChallengeProof et updateChallenge
+  // l'appellent déjà toutes les deux — un défi validé par déclaration (jongles,
+  // minutes de course...) est une complétion tout aussi réelle et doit compter
+  // pour l'XP/la série au même titre qu'une preuve photo.
+  const levelUp = await awardCompletionXP(db, challenge.child_id);
+  const badgeUnlocked = await checkAndAwardBadge(db, challenge.child_id, challenge.domain);
+
+  // NAYA 2.0 Phase 3b : si ce défi déclaratif était le défi discriminant d'un
+  // cycle d'hypothèses, met à jour la boucle bayésienne — même point d'entrée
+  // que validateChallengeProof, l'origine de la preuve ne doit pas changer le
+  // fonctionnement du moteur bayésien en aval.
+  try {
+    const { processDiscriminantResult } = await import("@/lib/hypotheses.functions");
+    void processDiscriminantResult(id, "COMPLETED", true);
+  } catch (err) {
+    console.error("Non-fatal: processDiscriminantResult failed", err);
+  }
+
+  // Étape 4 : même point d'entrée que validateChallengeProof pour un éventuel défi de
+  // retest de soutien renforcé — no-op sûr si ce n'en est pas un.
+  try {
+    const { processSupportRetestResult } = await import("@/lib/hypotheses.functions");
+    void processSupportRetestResult(id, "COMPLETED");
+  } catch (err) {
+    console.error("Non-fatal: processSupportRetestResult failed", err);
+  }
+
+  // Pré-génération de la prochaine mission — même mécanisme que validateChallengeProof,
+  // même raison de ne pas dupliquer davantage : fire-and-forget, idempotent côté
+  // recommendChallengesForChild (ne se déclenche que si plus aucun défi en attente).
+  try {
+    const { recommendChallengesForChild } = await import("@/lib/recommendations.functions");
+    void recommendChallengesForChild({ data: { childId: challenge.child_id } });
+  } catch (err) {
+    console.error("Non-fatal: pré-génération de la prochaine mission a échoué", err);
+  }
+
+  return {
+    challenge: updated,
+    observations,
+    awarded_points: award,
+    imageAnalyzed: false,
+    relevant: true,
+    levelUp,
+    badgeUnlocked,
+  };
+}
+
 // Chemin de preuve "declarative" (cf. genizio-decisions #35) : 0 appel IA, par
 // design. Une seule photo ne peut pas prouver un comptage/une durée, donc on ne
 // prétend plus le vérifier — on compare la déclaration du parent à la cible fixée
@@ -2159,121 +2528,19 @@ export const submitDeclarativeProof = createServerFn({ method: "POST" })
     if (challengeErr || !challenge) throw new Error("Défi introuvable");
     if (challenge.user_id !== userId) throw new Error("Accès refusé.");
     if (challenge.child_profiles?.access_locked_at) throw new Error("Ce profil est verrouillé.");
-    if (challenge.child_profiles?.is_active === false) throw new Error("Ce profil est désactivé par l'administrateur.");
-    if (challenge.proof_mode !== "declarative") {
-      throw new Error("Ce défi ne se valide pas par déclaration.");
-    }
+    if (challenge.child_profiles?.is_active === false)
+      throw new Error("Ce profil est désactivé par l'administrateur.");
 
-    const target = challenge.proof_target as { metric?: string; value?: number } | null;
-    if (!target?.metric || typeof target.value !== "number") {
-      throw new Error("Cible de déclaration manquante pour ce défi.");
-    }
-
-    const childName = challenge.child_profiles.name as string;
-    const relevant = data.reportedValue >= target.value;
-
-    if (!relevant) {
-      // Même logique que le rejet côté photo (PROOF_REJECTED) : rien n'est modifié
-      // en base pour le défi, mais c'est un vrai signal de friction pour le Jumeau
-      // Pédagogique — journalisation best-effort, jamais bloquante.
-      try {
-        const { error: evtErr } = await supabase.from("observation_events").insert({
-          child_id: challenge.child_id,
-          user_id: userId,
-          type: "PROOF_REJECTED",
-          source: "app",
-          payload: { challenge_id: challenge.id, domain: challenge.domain, declarative: true, reported_value: data.reportedValue, target_value: target.value },
-        });
-        if (evtErr) console.error("PROOF_REJECTED event insert failed (non-fatal):", evtErr);
-      } catch (err) {
-        console.error("PROOF_REJECTED event insert failed (non-fatal):", err);
-      }
-
-      return {
-        challenge,
-        observations: `Pas encore atteint cette fois (${data.reportedValue}/${target.value} ${target.metric}) — ce n'est pas grave, ${childName} peut retenter dès que prêt·e !`,
-        awarded_points: {},
-        imageAnalyzed: false,
-        relevant: false,
-        levelUp: null,
-        badgeUnlocked: null,
-      };
-    }
-
-    const award = (challenge.declarative_award as Record<string, number> | null) ?? {};
-    if (Object.keys(award).length > 0) {
-      const { error: talentsError } = await supabase.rpc("increment_child_talents", {
-        p_child_id: challenge.child_id,
-        p_deltas: award,
-      });
-      if (talentsError) throw new Error(talentsError.message);
-    }
-
-    const observations = `Bravo ! ${childName} a réussi ${data.reportedValue} ${target.metric} (objectif : ${target.value}). Une belle preuve de persévérance.`;
-
-    const { data: updated, error } = await supabase
-      .from("challenges")
-      .update({
-        status: "completed" as const,
-        progress: 100,
-        completed_at: new Date().toISOString(),
-        ai_observations: observations,
-        target_intelligences: Object.keys(award),
-      })
-      .eq("id", data.id)
-      .select("*")
-      .single();
-    if (error) throw new Error(error.message);
-
-    // Manquait ici jusqu'à présent : validateChallengeProof et updateChallenge
-    // l'appellent déjà toutes les deux — un défi validé par déclaration (jongles,
-    // minutes de course...) est une complétion tout aussi réelle et doit compter
-    // pour l'XP/la série au même titre qu'une preuve photo.
-    const levelUp = await awardCompletionXP(supabase, challenge.child_id);
-    const badgeUnlocked = await checkAndAwardBadge(supabase, challenge.child_id, challenge.domain);
-
-    // NAYA 2.0 Phase 3b : si ce défi déclaratif était le défi discriminant d'un
-    // cycle d'hypothèses, met à jour la boucle bayésienne — même point d'entrée
-    // que validateChallengeProof, l'origine de la preuve ne doit pas changer le
-    // fonctionnement du moteur bayésien en aval.
-    try {
-      const { processDiscriminantResult } = await import("@/lib/hypotheses.functions");
-      void processDiscriminantResult(data.id, "COMPLETED", true);
-    } catch (err) {
-      console.error("Non-fatal: processDiscriminantResult failed", err);
-    }
-
-    // Étape 4 : même point d'entrée que validateChallengeProof pour un éventuel défi de
-    // retest de soutien renforcé — no-op sûr si ce n'en est pas un.
-    try {
-      const { processSupportRetestResult } = await import("@/lib/hypotheses.functions");
-      void processSupportRetestResult(data.id, "COMPLETED");
-    } catch (err) {
-      console.error("Non-fatal: processSupportRetestResult failed", err);
-    }
-
-    // Pré-génération de la prochaine mission — même mécanisme que validateChallengeProof,
-    // même raison de ne pas dupliquer davantage : fire-and-forget, idempotent côté
-    // recommendChallengesForChild (ne se déclenche que si plus aucun défi en attente).
-    try {
-      const { recommendChallengesForChild } = await import("@/lib/recommendations.functions");
-      void recommendChallengesForChild({ data: { childId: challenge.child_id } });
-    } catch (err) {
-      console.error("Non-fatal: pré-génération de la prochaine mission a échoué", err);
-    }
-
-    return {
-      challenge: updated,
-      observations,
-      awarded_points: award,
-      imageAnalyzed: false,
-      relevant: true,
-      levelUp,
-      badgeUnlocked,
-    };
+    return submitDeclarativeProofCore({
+      db: supabase,
+      challenge,
+      actingUserId: userId,
+      id: data.id,
+      reportedValue: data.reportedValue,
+    });
   });
 
-const AssignTemplateInput = z.object({
+export const AssignTemplateInput = z.object({
   childId: z.string().uuid(),
   template: ChallengeSchema.extend({
     intelligences: z.array(z.string()).optional(),
@@ -2286,6 +2553,78 @@ const AssignTemplateInput = z.object({
   // aucune carte de comparaison ne s'affichera pour ces défis-là, c'est voulu.
   estimated_duration_minutes: z.number().int().positive().max(1440).optional(),
 });
+
+// Cœur partagé de l'assignation de template (Superviseur Copilote, décision #74) : même
+// principe que generateChallengesCore — `ownerUserId` EST TOUJOURS le parent (ownership),
+// `createdByUserId` est le superviseur quand il assigne (attribution). `child` passé DÉJÀ
+// chargé et autorisé.
+export async function assignTemplateChallengeCore(params: {
+  db: any;
+  child: { id: string; age: number; time_pressure: string | null };
+  childId: string;
+  template: z.infer<typeof ChallengeSchema> & {
+    intelligences?: string[];
+    pedagogical_context?: string;
+  };
+  estimatedDurationMinutes?: number;
+  ownerUserId: string;
+  createdByUserId?: string | null;
+}) {
+  const { db, child, childId, template, estimatedDurationMinutes, ownerUserId, createdByUserId } =
+    params;
+
+  // Re-run the deterministic checks here rather than trusting
+  // template.requires_supervision/supervision_warning/difficulty as-is:
+  // this is a client-supplied value (round-tripped from
+  // generateSingleChallenge's preview) and this insert is the actual
+  // point of truth in the DB.
+  const { data: inserted, error } = await db
+    .from("challenges")
+    .insert({
+      // Décision #74 : user_id = parent, created_by_user_id = auteur réel (superviseur).
+      user_id: ownerUserId,
+      created_by_user_id: createdByUserId ?? null,
+      child_id: childId,
+      domain: template.domain,
+      description: template.description,
+      duration: template.duration,
+      steps: template.steps,
+      materials: template.materials,
+      status: "todo",
+      progress: 0,
+      pedagogical_context: template.pedagogical_context ?? null,
+      // Même bug que dans generateChallenges : demandé au prompt, validé par le
+      // schéma, mais jamais recopié dans l'insertion réelle — voir le commentaire
+      // équivalent là-bas.
+      academic_secret: template.academic_secret ?? null,
+      estimated_duration_minutes: estimatedDurationMinutes ?? null,
+      // Temps adaptatif (2026-08-12) : limite calculée à l'assignation à partir de
+      // l'estimation (ou repli par difficulté), facteurs d'âge et de pression
+      // temporelle du profil. `none` → NULL → pas de chrono.
+      time_limit_minutes: resolveTimeLimitMinutes({
+        estimatedMinutes: estimatedDurationMinutes,
+        age: child.age,
+        timePressure: (child.time_pressure as TimePressure) ?? "standard",
+        difficulty: template.difficulty,
+      }),
+      academic_subject: template.academic_subject ?? null,
+      academic_grade_level: template.academic_grade_level ?? null,
+      homework_instruction: template.homework_instruction ?? null,
+      behavioral_driver: template.behavioral_driver ?? null,
+      zpa_level: template.zpa_level ?? null,
+      // target_intelligences vient de finalizeChallenge (resolveTargetIntelligences)
+      // plutôt que directement de template.intelligences, non filtré.
+      ...finalizeChallenge(template, child.age),
+    })
+    .select()
+    .single();
+
+  if (error) throw new Error(error.message);
+  void trackMaterialSuggestions([
+    { material_tags: inserted.material_tags ?? [], title: inserted.title },
+  ]);
+  return inserted;
+}
 
 export const assignTemplateChallenge = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
@@ -2304,54 +2643,15 @@ export const assignTemplateChallenge = createServerFn({ method: "POST" })
 
     if (childErr || !child) throw new Error("Profil enfant introuvable ou accès refusé.");
 
-    const { template } = data;
-    // Re-run the deterministic checks here rather than trusting
-    // template.requires_supervision/supervision_warning/difficulty as-is:
-    // this is a client-supplied value (round-tripped from
-    // generateSingleChallenge's preview) and this insert is the actual
-    // point of truth in the DB.
-    const { data: inserted, error } = await supabase
-      .from("challenges")
-      .insert({
-        user_id: userId,
-        child_id: data.childId,
-        domain: template.domain,
-        description: template.description,
-        duration: template.duration,
-        steps: template.steps,
-        materials: template.materials,
-        status: "todo",
-        progress: 0,
-        pedagogical_context: template.pedagogical_context ?? null,
-        // Même bug que dans generateChallenges : demandé au prompt, validé par le
-        // schéma, mais jamais recopié dans l'insertion réelle — voir le commentaire
-        // équivalent là-bas.
-        academic_secret: template.academic_secret ?? null,
-        estimated_duration_minutes: data.estimated_duration_minutes ?? null,
-        // Temps adaptatif (2026-08-12) : limite calculée à l'assignation à partir de
-        // l'estimation (ou repli par difficulté), facteurs d'âge et de pression
-        // temporelle du profil. `none` → NULL → pas de chrono.
-        time_limit_minutes: resolveTimeLimitMinutes({
-          estimatedMinutes: data.estimated_duration_minutes,
-          age: child.age,
-          timePressure: (child.time_pressure as TimePressure) ?? "standard",
-          difficulty: template.difficulty,
-        }),
-        academic_subject: template.academic_subject ?? null,
-        academic_grade_level: template.academic_grade_level ?? null,
-        homework_instruction: template.homework_instruction ?? null,
-        behavioral_driver: template.behavioral_driver ?? null,
-        zpa_level: template.zpa_level ?? null,
-        // target_intelligences vient de finalizeChallenge (resolveTargetIntelligences)
-        // plutôt que directement de template.intelligences, non filtré.
-        ...finalizeChallenge(template, child.age),
-      })
-      .select()
-      .single();
-
-    if (error) throw new Error(error.message);
-    void trackMaterialSuggestions([{ material_tags: inserted.material_tags ?? [], title: inserted.title }]);
-    return inserted;
+    return assignTemplateChallengeCore({
+      db: supabase,
+      child,
+      childId: data.childId,
+      template: data.template,
+      estimatedDurationMinutes: data.estimated_duration_minutes,
+      ownerUserId: userId,
+      createdByUserId: null,
+    });
   });
 
 // Correctif (2026-07-22, audit de la branche feat/naya-academic-homework-fusion) :
@@ -2369,7 +2669,10 @@ const GenerateAcademicHomeworkInput = z.object({
   gradeLevel: z.enum(["CP", "CE1", "CE2", "CM1", "CM2", "6eme", "5eme", "4eme", "3eme"]),
   homeworkInstruction: z.string().min(2).max(500),
   suggestedTopicId: z.string().optional().nullable(),
-  behavioralDriver: z.enum(["deconstruire", "schematiser", "simuler", "enqueter", "optimiser"]).optional().nullable(),
+  behavioralDriver: z
+    .enum(["deconstruire", "schematiser", "simuler", "enqueter", "optimiser"])
+    .optional()
+    .nullable(),
   timeAvailable: z.string().optional(),
   homeMaterials: z.string().optional().nullable(),
 });
@@ -2395,8 +2698,13 @@ export async function computeHomeworkZPAContext(
   supabase: any,
   childId: string,
   subject: string,
-  targetGradeAge: number
-): Promise<{ masteryScore: number; hypothesisCauses: string[]; anxietyProb: number; currentLevel?: number }> {
+  targetGradeAge: number,
+): Promise<{
+  masteryScore: number;
+  hypothesisCauses: string[];
+  anxietyProb: number;
+  currentLevel?: number;
+}> {
   const domain = SUBJECT_TO_ACADEMIC_DOMAIN[subject] ?? null;
 
   const [{ data: lastAcademic }, { data: openCycle }, { data: lastHomework }] = await Promise.all([
@@ -2439,10 +2747,13 @@ export async function computeHomeworkZPAContext(
     masteryScore = Math.max(1, Math.min(5, 3 + (lastAcademic.academic_level_age - targetGradeAge)));
   }
 
-  const hypotheses = (openCycle?.hypotheses as { cause: string; current_probability: number }[] | null) || [];
+  const hypotheses =
+    (openCycle?.hypotheses as { cause: string; current_probability: number }[] | null) || [];
   const causeApplies = Boolean(domain) && openCycle?.trigger_domain === domain;
   const hypothesisCauses = causeApplies ? hypotheses.map((h) => h.cause) : [];
-  const anxietyProb = causeApplies ? (hypotheses.find((h) => h.cause === "PERFORMANCE_ANXIETY")?.current_probability ?? 0) : 0;
+  const anxietyProb = causeApplies
+    ? (hypotheses.find((h) => h.cause === "PERFORMANCE_ANXIETY")?.current_probability ?? 0)
+    : 0;
 
   return {
     masteryScore,
@@ -2505,7 +2816,10 @@ export const generateAcademicHomeworkChallenge = createServerFn({ method: "POST"
 
     // Décision 2026-08-05 : les intérêts déclarés sont des HYPOTHÈSES de travail — leur
     // confiance est dérivée à la lecture (complétions vs abandons, par groupe de talents).
-    const interestHypotheses = await getInterestHypothesesSnapshot(supabase as any, data.childId).catch(() => null);
+    const interestHypotheses = await getInterestHypothesesSnapshot(
+      supabase as any,
+      data.childId,
+    ).catch(() => null);
 
     const { data: existing } = await supabase
       .from("challenges")
@@ -2520,12 +2834,17 @@ export const generateAcademicHomeworkChallenge = createServerFn({ method: "POST"
     const targetAge = gradeInfo.nominalAge;
     const timeAvailable = data.timeAvailable || "30 min";
 
-    const zpaContext = await computeHomeworkZPAContext(supabase, data.childId, data.subject, targetAge);
+    const zpaContext = await computeHomeworkZPAContext(
+      supabase,
+      data.childId,
+      data.subject,
+      targetAge,
+    );
     const zpaResult = calculateZPADifficulty(
       zpaContext.masteryScore,
       zpaContext.hypothesisCauses,
       zpaContext.anxietyProb,
-      zpaContext.currentLevel
+      zpaContext.currentLevel,
     );
 
     const selectedDriver: BehavioralDriver = data.behavioralDriver || "deconstruire";
@@ -2553,7 +2872,9 @@ export const generateAcademicHomeworkChallenge = createServerFn({ method: "POST"
       homeworkInstruction: data.homeworkInstruction,
       topicContext,
       timeAvailable,
-      homeMaterialsLine: data.homeMaterials ? `- Matériaux disponibles à la maison : ${data.homeMaterials}` : "",
+      homeMaterialsLine: data.homeMaterials
+        ? `- Matériaux disponibles à la maison : ${data.homeMaterials}`
+        : "",
       zpaLevel: zpaResult.level,
       zpaSupportMode: zpaResult.supportMode,
       zpaRationale: zpaResult.rationale,
@@ -2570,7 +2891,12 @@ export const generateAcademicHomeworkChallenge = createServerFn({ method: "POST"
     try {
       parsed = JSON.parse(extractJsonFromLLMResponse(content));
     } catch (err) {
-      console.error("Error parsing generateAcademicHomeworkChallenge LLM response:", err, "Raw:", content);
+      console.error(
+        "Error parsing generateAcademicHomeworkChallenge LLM response:",
+        err,
+        "Raw:",
+        content,
+      );
       throw new Error("Réponse IA invalide");
     }
 
@@ -2578,7 +2904,12 @@ export const generateAcademicHomeworkChallenge = createServerFn({ method: "POST"
     void verifyAndLog({
       kind: "homework",
       output: parsed,
-      context: { childAge: child.age, childName: child.name, anxietyDamped: zpaResult.isAnxietyDamped, existingTitles },
+      context: {
+        childAge: child.age,
+        childName: child.name,
+        anxietyDamped: zpaResult.isAnxietyDamped,
+        existingTitles,
+      },
       sourceFunction: "generateAcademicHomeworkChallenge",
       childId: data.childId,
       model: "deepseek-v4-flash",
@@ -2652,31 +2983,35 @@ export const generateSingleChallenge = createServerFn({ method: "POST" })
 
     // Décision 2026-08-05 : les intérêts déclarés sont des HYPOTHÈSES de travail — leur
     // confiance est dérivée à la lecture (complétions vs abandons, par groupe de talents).
-    const interestHypotheses = await getInterestHypothesesSnapshot(supabase as any, data.childId).catch(() => null);
+    const interestHypotheses = await getInterestHypothesesSnapshot(
+      supabase as any,
+      data.childId,
+    ).catch(() => null);
 
     // Unlike generateChallenges (the batch generator), this on-demand single-défi
     // path never checked recent titles at all — a parent clicking "Composer un défi
     // ciblé" repeatedly could get literal duplicates. Fetching both in parallel
     // matches generateChallenges' existing pattern instead of inventing a new one.
-    const [{ data: completedChallenges }, { data: existing }, progressionTargets] = await Promise.all([
-      supabase
-        .from("challenges")
-        .select("title, domain, ai_observations")
-        .eq("child_id", data.childId)
-        .eq("status", "completed")
-        .order("completed_at", { ascending: false })
-        .limit(6),
-      supabase
-        .from("challenges")
-        .select("title")
-        .eq("child_id", data.childId)
-        .order("created_at", { ascending: false })
-        .limit(30),
-      computeProgressionTargets(supabase, data.childId),
-    ]);
+    const [{ data: completedChallenges }, { data: existing }, progressionTargets] =
+      await Promise.all([
+        supabase
+          .from("challenges")
+          .select("title, domain, ai_observations")
+          .eq("child_id", data.childId)
+          .eq("status", "completed")
+          .order("completed_at", { ascending: false })
+          .limit(6),
+        supabase
+          .from("challenges")
+          .select("title")
+          .eq("child_id", data.childId)
+          .order("created_at", { ascending: false })
+          .limit(30),
+        computeProgressionTargets(supabase, data.childId),
+      ]);
 
     const completedSummary = (completedChallenges ?? [])
-      .map((c) => `- Défi "${c.title}" (${c.domain}) : "${c.ai_observations ?? ''}"`)
+      .map((c) => `- Défi "${c.title}" (${c.domain}) : "${c.ai_observations ?? ""}"`)
       .join("\n");
     const existingTitles = (existing ?? []).map((c) => c.title);
 
@@ -2688,13 +3023,14 @@ export const generateSingleChallenge = createServerFn({ method: "POST" })
       ? `3. Tu DOIS générer un défi spécifiquement dans le domaine d'intelligence ou la catégorie suivante : "${targetDomain}". Adapte l'activité pour cibler ce domaine précis.`
       : `3. Les intelligences actuellement les moins explorées chez cet enfant sont ${getLeastExploredTalentLabels(child.talents as Record<string, number> | null).join(" et ")}. Sauf si le temps/lieu disponible les rend peu réalistes, choisis un domaine d'intelligence qui cible l'une de ces intelligences plutôt que de renforcer un talent déjà confirmé. Tu peux créer des défis "hybrides" (ex: utiliser l'art pour comprendre les mathématiques).`;
 
-    const materialScopeInstruction = data.materialScope === "home" 
-      ? "5. MATÉRIEL (MAISON) : Le défi doit être réalisable avec les objets trouvés à la maison (intérieur) ou dans la chambre."
-      : data.materialScope === "outdoor"
-      ? "5. MATÉRIEL (NATURE/EXTÉRIEUR) : Le défi doit utiliser principalement des éléments trouvés dans la nature, à l'extérieur (jardin, parc, rue) ou récupérés dehors."
-      : data.materialScope === "buy"
-      ? "5. MATÉRIEL (À ACHETER) : Le défi peut impliquer d'aller acheter du petit matériel en grande surface, quincaillerie ou papeterie (abordable)."
-      : "5. MATÉRIEL (MIXTE) : Libre à toi ! Tu peux mixer du matériel de maison, des éléments trouvés dehors dans la nature, ou du petit matériel abordable à acheter (ex: colle spéciale, peinture).";
+    const materialScopeInstruction =
+      data.materialScope === "home"
+        ? "5. MATÉRIEL (MAISON) : Le défi doit être réalisable avec les objets trouvés à la maison (intérieur) ou dans la chambre."
+        : data.materialScope === "outdoor"
+          ? "5. MATÉRIEL (NATURE/EXTÉRIEUR) : Le défi doit utiliser principalement des éléments trouvés dans la nature, à l'extérieur (jardin, parc, rue) ou récupérés dehors."
+          : data.materialScope === "buy"
+            ? "5. MATÉRIEL (À ACHETER) : Le défi peut impliquer d'aller acheter du petit matériel en grande surface, quincaillerie ou papeterie (abordable)."
+            : "5. MATÉRIEL (MIXTE) : Libre à toi ! Tu peux mixer du matériel de maison, des éléments trouvés dehors dans la nature, ou du petit matériel abordable à acheter (ex: colle spéciale, peinture).";
 
     const prompt = buildSingleChallengePrompt({
       childName: child.name,
@@ -2706,14 +3042,18 @@ export const generateSingleChallenge = createServerFn({ method: "POST" })
       existingTitles,
       timeAvailable,
       immediateLocation: location,
-      homeMaterialsLine: data.homeMaterials ? `- Matériaux/objets disponibles à la maison : ${data.homeMaterials}` : "",
+      homeMaterialsLine: data.homeMaterials
+        ? `- Matériaux/objets disponibles à la maison : ${data.homeMaterials}`
+        : "",
       progressionInstruction: formatProgressionInstruction(progressionTargets),
       domainInstruction,
       materialScopeInstruction,
       homeMaterialsUseLine: data.homeMaterials
         ? `6. UTILISATION DES MATÉRIAUX MENTIONNÉS : Tu DOIS concevoir un défi qui utilise en priorité ou exclusivement les matériaux indiqués par le parent ("${data.homeMaterials}"). Si ces matériaux ne suffisent pas, tu PEUX inclure d'autres ustensiles en fonction de la consigne (MAISON/EXTÉRIEUR/ACHAT/MIXTE).`
         : "",
-      timePressureNote: formatTimePressureNote(child.time_pressure as TimePressure | null | undefined),
+      timePressureNote: formatTimePressureNote(
+        child.time_pressure as TimePressure | null | undefined,
+      ),
       profileContextNote: formatChildProfileContext(child as any),
     });
 
@@ -2791,18 +3131,25 @@ export const getChildAISynthesis = createServerFn({ method: "POST" })
     // calendar boundary — visiting again 8 days after the last regeneration
     // triggers a new one, and the next window starts from that moment.
     const ONE_WEEK_MS = 7 * 24 * 60 * 60 * 1000;
-    const lastGeneratedAt = child.ai_synthesis_generated_at ? new Date(child.ai_synthesis_generated_at).getTime() : 0;
+    const lastGeneratedAt = child.ai_synthesis_generated_at
+      ? new Date(child.ai_synthesis_generated_at).getTime()
+      : 0;
     if (child.ai_synthesis && Date.now() - lastGeneratedAt < ONE_WEEK_MS) {
       return child.ai_synthesis;
     }
 
     const completedSummary = completed
-      .map((c) => `- Défi "${c.title}" (${c.domain}) : "${c.ai_observations ?? 'Pas d\'observation'}"`)
+      .map(
+        (c) => `- Défi "${c.title}" (${c.domain}) : "${c.ai_observations ?? "Pas d'observation"}"`,
+      )
       .join("\n");
 
     // Décision 2026-08-05 : les intérêts déclarés sont des HYPOTHÈSES de travail — leur
     // confiance est dérivée à la lecture (complétions vs abandons, par groupe de talents).
-    const interestHypotheses = await getInterestHypothesesSnapshot(supabase as any, data.childId).catch(() => null);
+    const interestHypotheses = await getInterestHypothesesSnapshot(
+      supabase as any,
+      data.childId,
+    ).catch(() => null);
     const formattedInterests = formatChildInterestsPayload(child.interests, interestHypotheses);
 
     const prompt = `Tu es Naya, une IA mentore pédagogique.
@@ -2885,14 +3232,19 @@ export const getPassportLetter = createServerFn({ method: "POST" })
     }
 
     const ONE_WEEK_MS = 7 * 24 * 60 * 60 * 1000;
-    const lastGeneratedAt = child.passport_letter_generated_at ? new Date(child.passport_letter_generated_at).getTime() : 0;
+    const lastGeneratedAt = child.passport_letter_generated_at
+      ? new Date(child.passport_letter_generated_at).getTime()
+      : 0;
     if (child.passport_letter && Date.now() - lastGeneratedAt < ONE_WEEK_MS) {
       return child.passport_letter;
     }
 
     const domainCounts: Record<string, number> = {};
     for (const c of completed) domainCounts[c.domain] = (domainCounts[c.domain] ?? 0) + 1;
-    const topDomains = Object.entries(domainCounts).sort((a, b) => b[1] - a[1]).slice(0, 3).map(([d]) => d);
+    const topDomains = Object.entries(domainCounts)
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 3)
+      .map(([d]) => d);
 
     const topTalents = Object.entries((child.talents as Record<string, number>) || {})
       .filter(([, v]) => (v ?? 0) > 0)
@@ -2944,12 +3296,12 @@ export const analyzePostProof = createServerFn({ method: "POST" })
   .handler(async ({ data }) => {
     const prompt = `Tu es Naya, une IA experte en développement de l'enfant et intelligences multiples (Howard Gardner).
 Analyse cette photo qui représente une "preuve" d'activité ou une création réalisée par un enfant. 
-Le parent a indiqué que cette activité était liée au domaine : ${data.domain || 'Non spécifié'}.
+Le parent a indiqué que cette activité était liée au domaine : ${data.domain || "Non spécifié"}.
 Ton but est de valider cette preuve et d'y apposer ton "Tampon pédagogique".
 Réponds STRICTEMENT en une seule phrase courte, chaleureuse et valorisante. Ta phrase DOIT mentionner l'intelligence principale que l'enfant a dû utiliser dans cette scène (ex: spatiale, créative, kinesthésique, logico-mathématique, naturaliste, etc.).
 Exemple: "Naya détecte une forte intelligence spatiale et créative dans cette magnifique construction !"
 NE mets PAS de guillemets autour de ta réponse.`;
-    
+
     // One short sentence, capped at 150 chars below — 4000 was ~25x more
     // budget than this could ever use.
     const tag = await callClaude(prompt, false, data.imageUrl, 200);
