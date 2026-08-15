@@ -4,6 +4,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { useSession } from "@/hooks/use-session";
 import { AppHeader } from "@/components/AppHeader";
 import { getMentorDashboard, declareSessionMentor } from "@/lib/mentors.functions";
+import { listMyNotifications, markNotificationsRead } from "@/lib/notifications.functions";
 import {
   mentorUpdateChallenge,
   mentorSubmitNotCompleted,
@@ -40,6 +41,8 @@ import {
   FileText,
   RotateCcw,
   Sparkles,
+  Bell,
+  Activity,
 } from "lucide-react";
 import { NayaAvatar } from "@/components/NayaAvatar";
 import { MarkdownContent } from "@/components/ui/markdown-content";
@@ -115,6 +118,17 @@ function MentorDashboardPage() {
   const [sessionsThisMonth, setSessionsThisMonth] = useState(0);
   const [expectedSessions, setExpectedSessions] = useState(0);
   const [pendingPayoutXof, setPendingPayoutXof] = useState(0);
+  // Confiance Mentor (V3) : statut, palier de confiance, solde de points.
+  const [mentorStatus, setMentorStatus] = useState<string>("active");
+  const [tier, setTier] = useState<"standard" | "trusted">("standard");
+  const [points, setPoints] = useState(0);
+  const [badge, setBadge] = useState<"none" | "bronze" | "gold">("none");
+  const [pointsBonusPct, setPointsBonusPct] = useState(0);
+  // Notifications in-app (canal pull — bilan validé/refusé, séance confirmée, statut).
+  const [notifications, setNotifications] = useState<any[]>([]);
+  const [notifOpen, setNotifOpen] = useState(false);
+  const notificationsFn = useServerFn(listMyNotifications);
+  const markReadFn = useServerFn(markNotificationsRead);
   const [declaringFor, setDeclaringFor] = useState<string | null>(null);
   const [sessionDate, setSessionDate] = useState(() => new Date().toISOString().slice(0, 10));
   const [sessionNotes, setSessionNotes] = useState("");
@@ -184,6 +198,11 @@ function MentorDashboardPage() {
       setSessionsThisMonth((res as any).sessionsThisMonth ?? 0);
       setExpectedSessions((res as any).expectedSessions ?? 0);
       setPendingPayoutXof((res as any).pendingPayoutXof ?? 0);
+      setMentorStatus((res as any).status ?? "active");
+      setTier((res as any).tier ?? "standard");
+      setPoints((res as any).points ?? 0);
+      setBadge((res as any).badge ?? "none");
+      setPointsBonusPct((res as any).pointsBonusPct ?? 0);
     } catch {
       setChildren([]);
       setLoadError(true);
@@ -192,9 +211,28 @@ function MentorDashboardPage() {
     }
   };
 
+  const refreshNotifications = async () => {
+    try {
+      const res = await notificationsFn();
+      setNotifications((res as any)?.notifications ?? []);
+    } catch {
+      // Non bloquant — le panneau reste simplement vide.
+    }
+  };
+
+  const handleMarkAllRead = async () => {
+    try {
+      await markReadFn({ data: { ids: [] } });
+      setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
+    } catch {
+      // Non bloquant.
+    }
+  };
+
   useEffect(() => {
     if (!session) return;
     void loadDashboard();
+    void refreshNotifications();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [session]);
 
@@ -251,10 +289,10 @@ function MentorDashboardPage() {
       const funding = (res as any)?.funding as "pack" | "campaign" | "none" | undefined;
       toast.success(
         funding === "pack"
-          ? "Séance déclarée et débitée de votre Pack Accompagnement."
+          ? "Séance déclarée — le parent doit la confirmer pour qu'elle compte."
           : funding === "campaign"
-            ? "Séance déclarée — financée par le programme partenaire."
-            : "Séance déclarée — votre score est mis à jour.",
+            ? "Séance déclarée — financée par le programme partenaire, en attente de confirmation du parent."
+            : "Séance déclarée — le parent doit la confirmer pour alimenter votre score.",
       );
       setDeclaringFor(null);
       setSessionNotes("");
@@ -451,7 +489,8 @@ function MentorDashboardPage() {
               Tableau de Bord Mentor
             </h1>
             {/* Score de fiabilité (V1) : déclarez vos séances en app, le score se calcule
-                tout seul (séances tenues + progression des enfants). */}
+                tout seul (séances tenues + progression des enfants). Depuis la V3, seules
+                les séances CONFIRMÉES par le parent comptent. */}
             {score !== null && (
               <div className="flex items-center gap-3 rounded-2xl border border-ink/10 bg-white px-4 py-2.5 shadow-sm">
                 <div className="text-right">
@@ -459,12 +498,18 @@ function MentorDashboardPage() {
                     Score de fiabilité
                   </p>
                   <p className="text-xs font-bold text-ink/60">
-                    {sessionsThisMonth} séance{sessionsThisMonth > 1 ? "s" : ""} ce mois
+                    {sessionsThisMonth} séance{sessionsThisMonth > 1 ? "s" : ""} confirmée
+                    {sessionsThisMonth > 1 ? "s" : ""} ce mois
                     {expectedSessions > 0 ? ` / ${expectedSessions} attendues` : ""}
                   </p>
                   {pendingPayoutXof > 0 && (
                     <p className="text-[10px] font-bold text-emerald-700">
                       ≈ {pendingPayoutXof.toLocaleString("fr-FR")} F à venir ce mois
+                    </p>
+                  )}
+                  {pointsBonusPct > 0 && (
+                    <p className="text-[10px] font-bold text-amber-700">
+                      +{pointsBonusPct} % de payout (palier points)
                     </p>
                   )}
                 </div>
@@ -479,6 +524,101 @@ function MentorDashboardPage() {
                 >
                   {score}/100
                 </span>
+                {/* Palier de confiance + badge points (V3) */}
+                <div className="flex flex-col items-end gap-1">
+                  {tier === "trusted" && (
+                    <span className="rounded-full bg-indigo-100 px-2 py-0.5 text-[9px] font-black uppercase tracking-wider text-indigo-700">
+                      ⭐ Mentor de confiance
+                    </span>
+                  )}
+                  {points > 0 && (
+                    <span className="rounded-full bg-surface border border-ink/10 px-2 py-0.5 text-[9px] font-black uppercase tracking-wider text-ink/70">
+                      🏅 {badge === "gold" ? "Or" : badge === "bronze" ? "Bronze" : ""} {points} pts
+                    </span>
+                  )}
+                  {mentorStatus !== "active" && (
+                    <span
+                      className={`rounded-full px-2 py-0.5 text-[9px] font-black uppercase tracking-wider ${
+                        mentorStatus === "suspended"
+                          ? "bg-rose-600 text-white"
+                          : "bg-amber-100 text-amber-700"
+                      }`}
+                    >
+                      {mentorStatus === "suspended"
+                        ? "Suspendu"
+                        : mentorStatus === "banned"
+                          ? "Banni"
+                          : "Averti"}
+                    </span>
+                  )}
+                </div>
+                {/* Cloche de notifications (V3) — bilan validé/refusé, séance confirmée… */}
+                <div className="relative">
+                  <button
+                    onClick={() => {
+                      setNotifOpen((o) => !o);
+                      void refreshNotifications();
+                    }}
+                    aria-label="Notifications"
+                    className="relative grid size-10 place-items-center rounded-xl border border-ink/10 bg-surface text-ink/70 hover:bg-stone-100 transition-all cursor-pointer"
+                  >
+                    <Bell className="size-4" />
+                    {notifications.filter((n) => !n.read).length > 0 && (
+                      <span className="absolute -right-1 -top-1 grid size-4 place-items-center rounded-full bg-rose-500 text-[9px] font-black text-white">
+                        {notifications.filter((n) => !n.read).length}
+                      </span>
+                    )}
+                  </button>
+                  {notifOpen && (
+                    <div className="absolute right-0 top-12 z-50 w-80 max-w-[85vw] rounded-2xl border border-ink/10 bg-white p-3 shadow-xl animate-in fade-in zoom-in-95 duration-150">
+                      <div className="flex items-center justify-between gap-2 mb-2">
+                        <p className="flex items-center gap-1.5 text-[10px] font-black uppercase tracking-widest text-ink/60">
+                          <Activity className="size-3.5 text-brand" />
+                          Notifications
+                        </p>
+                        {notifications.some((n) => !n.read) && (
+                          <button
+                            onClick={() => void handleMarkAllRead()}
+                            className="text-[10px] font-black text-brand hover:underline cursor-pointer"
+                          >
+                            Tout marquer lu
+                          </button>
+                        )}
+                      </div>
+                      {notifications.length === 0 ? (
+                        <p className="py-6 text-center text-xs text-ink/50 italic">
+                          Aucune notification.
+                        </p>
+                      ) : (
+                        <ul className="max-h-64 space-y-1.5 overflow-y-auto">
+                          {notifications.map((n) => (
+                            <li
+                              key={n.id}
+                              className={`rounded-xl border px-3 py-2 text-xs ${
+                                n.read
+                                  ? "border-ink/10 bg-surface text-ink/60"
+                                  : "border-sky-200 bg-sky-50 text-ink"
+                              }`}
+                            >
+                              {n.type === "mentor_bilan_validated"
+                                ? "✅ Bilan validé par le parent"
+                                : n.type === "mentor_bilan_rejected"
+                                  ? `↩️ Bilan renvoyé — ${n.payload?.feedback ?? "modifications demandées"}`
+                                  : n.type === "mentor_session_confirmed"
+                                    ? "✅ Séance confirmée par le parent"
+                                    : n.type === "mentor_status_changed"
+                                      ? `🏷️ Statut passé à ${n.payload?.to === "suspended" ? "« suspendu »" : n.payload?.to === "warning" ? "« averti »" : "« actif »"}`
+                                      : `🔔 ${n.type}`}
+                              <span className="block text-[10px] font-bold text-ink/40 mt-0.5">
+                                {new Date(n.created_at).toLocaleString("fr-FR")}
+                              </span>
+                            </li>
+                          ))}
+                        </ul>
+                      )}
+                    </div>
+                  )}
+                </div>
               </div>
             )}
           </div>

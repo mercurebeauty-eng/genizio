@@ -4,7 +4,22 @@ import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { listAllUsers } from "@/integrations/supabase/admin-users";
 import { z } from "zod";
 import { computeMentorQuota } from "./mentor-quota";
-import { computeExpectedSessions, computeMentorScore } from "./mentor-score";
+import {
+  computeExpectedSessions,
+  computeMentorPayoutXof,
+  computeMentorPointsRewards,
+  computeMentorScore,
+  computeMentorStatusFromScore,
+  computeTrustTier,
+} from "./mentor-score";
+import {
+  CONFIRMED_SESSION_STATUSES,
+  computeRollingScore,
+  creditMentorPoints,
+  getMentorPointsBalance,
+  syncMentorTrustStatus,
+} from "./mentor-trust";
+import { notifyUser } from "./app-notifications";
 import { MENTOR_SESSION_PAYOUT_XOF, PACK_SESSIONS } from "@/lib/pricing";
 import { resolveChildAccompaniment } from "@/lib/child-accompaniment";
 import { isLastPayableSession } from "@/lib/mentor-operator";
@@ -51,6 +66,14 @@ export interface MentorGroup {
   score: number;
   /** Statut du compte mentor (mentor_profiles) — active|warning|suspended|banned. */
   status: string;
+  /** Solde de points (mentor_points) — source des paliers de récompense. */
+  points: number;
+  /** Palier de confiance (score ≥ 75 sur 30 j glissants) — 75/25 du payout pour « trusted ». */
+  tier: "standard" | "trusted";
+  /** Badge de récompense selon le solde de points (none | bronze | gold). */
+  badge: "none" | "bronze" | "gold";
+  /** Bonus payout (%) selon le solde de points (0 | 5 | 10). */
+  pointsBonusPct: number;
   /** Payout DÛ (Vague C, ledger admin) : somme des payout_xof des séances approuvées non encore payées. */
   duePayoutXof: number;
   /** Nombre de séances approuvées en attente de paiement (ledger admin). */
@@ -134,6 +157,10 @@ export const listMentorsAdmin = createServerFn({ method: "GET" })
           quota: 5,
           score: 0,
           status: "active",
+          points: 0,
+          tier: "standard",
+          badge: "none",
+          pointsBonusPct: 0,
           duePayoutXof: 0,
           approvedSessions: 0,
           children: [detail],
@@ -166,8 +193,10 @@ export const listMentorsAdmin = createServerFn({ method: "GET" })
     for (const [id, info] of resolved) emailMap.set(id, info);
 
     // Score de fiabilité (V1) — chargement groupé une fois pour tous les mentors de
-    // la page : statut (mentor_profiles), séances déclarées ce mois (mentor_sessions)
-    // et défis de leurs enfants (progression). Même fenêtre « mois courant » des deux côtés.
+    // la page : statut (mentor_profiles), séances CONFIRMÉES ce mois (mentor_sessions)
+    // et défis de leurs enfants (progression). Même fenêtre « mois courant » des deux
+    // côtés. Depuis la V3 (Confiance Mentor), la déclaration seule ne suffit plus :
+    // seules les séances confirmées par le parent alimentent le score.
     const { data: profiles } = await (supabaseAdmin as any)
       .from("mentor_profiles")
       .select("mentor_user_id, status")
@@ -183,6 +212,7 @@ export const listMentorsAdmin = createServerFn({ method: "GET" })
       .from("mentor_sessions")
       .select("id, mentor_user_id")
       .in("mentor_user_id", mentorIds)
+      .in("status", CONFIRMED_SESSION_STATUSES)
       .gte("occurred_at", monthStart)
       .lt("occurred_at", monthEnd);
     const sessionsByMentor = new Map<string, number>();
@@ -213,6 +243,56 @@ export const listMentorsAdmin = createServerFn({ method: "GET" })
         cur.count += 1;
         ratingsByMentor.set(supId, cur);
       }
+    }
+
+    // Confiance Mentor (V3) — score de CONFIANCE sur fenêtre glissante 30 jours (le
+    // statut ne doit pas repartir de zéro à chaque début de mois) : séances confirmées
+    // des 30 derniers jours + feedback associé. Le score affiché reste mensuel, le
+    // statut automatique se calcule sur cette fenêtre.
+    const rollingStart = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000).toISOString();
+    const { data: rollingSessions } = await (supabaseAdmin as any)
+      .from("mentor_sessions")
+      .select("id, mentor_user_id")
+      .in("mentor_user_id", mentorIds)
+      .in("status", CONFIRMED_SESSION_STATUSES)
+      .gte("occurred_at", rollingStart);
+    const rollingCountByMentor = new Map<string, number>();
+    const rollingSessionMentor = new Map<string, string>();
+    for (const s of rollingSessions ?? []) {
+      rollingCountByMentor.set(
+        s.mentor_user_id,
+        (rollingCountByMentor.get(s.mentor_user_id) ?? 0) + 1,
+      );
+      rollingSessionMentor.set(s.id as string, s.mentor_user_id as string);
+    }
+    const rollingRatingsByMentor = new Map<string, { sum: number; count: number }>();
+    const rollingSessionIds = [...rollingSessionMentor.keys()];
+    if (rollingSessionIds.length > 0) {
+      const { data: feedback } = await (supabaseAdmin as any)
+        .from("mentor_feedback")
+        .select("mentor_session_id, rating")
+        .in("mentor_session_id", rollingSessionIds);
+      for (const f of feedback ?? []) {
+        const supId = rollingSessionMentor.get(f.mentor_session_id as string);
+        if (!supId) continue;
+        const cur = rollingRatingsByMentor.get(supId) ?? { sum: 0, count: 0 };
+        cur.sum += Number(f.rating);
+        cur.count += 1;
+        rollingRatingsByMentor.set(supId, cur);
+      }
+    }
+
+    // Solde de points (mentor_points) — pour l'affichage admin des paliers.
+    const { data: pointsRows } = await (supabaseAdmin as any)
+      .from("mentor_points")
+      .select("mentor_user_id, points")
+      .in("mentor_user_id", mentorIds);
+    const pointsByMentor = new Map<string, number>();
+    for (const p of pointsRows ?? []) {
+      pointsByMentor.set(
+        p.mentor_user_id,
+        (pointsByMentor.get(p.mentor_user_id) ?? 0) + Number(p.points),
+      );
     }
 
     // Ledger payout (Vague C) : séances APPROUVÉES non encore payées → « Payout dû ».
@@ -261,6 +341,8 @@ export const listMentorsAdmin = createServerFn({ method: "GET" })
     const daysInMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
     const elapsedDays = Math.max(1, now.getDate());
 
+    const rollingScoreByMentor = new Map<string, number>();
+
     const term = data.search?.trim().toLowerCase();
     const list = [...groups.values()].filter((g) => {
       const email = emailMap.get(g.mentor_user_id)?.email ?? "Inconnu";
@@ -290,11 +372,47 @@ export const listMentorsAdmin = createServerFn({ method: "GET" })
         totalChallenges: totalByMentor.get(g.mentor_user_id) ?? 0,
         avgFeedback: fb && fb.count > 0 ? fb.sum / fb.count : 0,
       });
+      // Confiance Mentor (V3) : solde de points + palier de confiance (30 j
+      // glissants) — le payout des prochaines déclarations et le statut
+      // automatique en dépendent.
+      g.points = pointsByMentor.get(g.mentor_user_id) ?? 0;
+      const rewards = computeMentorPointsRewards(g.points);
+      g.pointsBonusPct = rewards.payoutBonusPct;
+      g.badge = rewards.badge;
+      const rfb = rollingRatingsByMentor.get(g.mentor_user_id);
+      const rollingScore = computeMentorScore({
+        expectedSessions: computeExpectedSessions(g.totalChildren, 30, 30),
+        declaredSessions: rollingCountByMentor.get(g.mentor_user_id) ?? 0,
+        completedChallenges: completedByMentor.get(g.mentor_user_id) ?? 0,
+        totalChallenges: totalByMentor.get(g.mentor_user_id) ?? 0,
+        avgFeedback: rfb && rfb.count > 0 ? rfb.sum / rfb.count : 0,
+      });
+      g.tier = computeTrustTier(rollingScore);
+      rollingScoreByMentor.set(g.mentor_user_id, rollingScore);
       const due = approvedByMentor.get(g.mentor_user_id);
       g.duePayoutXof = due?.xof ?? 0;
       g.approvedSessions = due?.count ?? 0;
       return !term || email.toLowerCase().includes(term);
     });
+
+    // Statut automatique (2 sens) : si le score de confiance a franchi un seuil, on
+    // bascule — jamais sur « banned » (décision humaine). L'admin voit le nouveau
+    // statut immédiatement, sans attendre le prochain calcul.
+    for (const g of list) {
+      if (g.status === "banned") continue;
+      const target = computeMentorStatusFromScore(rollingScoreByMentor.get(g.mentor_user_id) ?? 0);
+      if (target === g.status) continue;
+      await (supabaseAdmin as any)
+        .from("mentor_profiles")
+        .update({ status: target })
+        .eq("mentor_user_id", g.mentor_user_id);
+      void notifyUser({
+        userId: g.mentor_user_id,
+        type: "mentor_status_changed",
+        payload: { from: g.status, to: target, score: rollingScoreByMentor.get(g.mentor_user_id) },
+      });
+      g.status = target;
+    }
 
     const total = list.length;
     const totalPages = Math.max(1, Math.ceil(total / data.pageSize));
@@ -619,6 +737,22 @@ export const declareSessionMentor = createServerFn({ method: "POST" })
       }
     }
 
+    // Confiance Mentor (V3) — montant du payout SNAPSHOT à la déclaration :
+    //   • palier de confiance (score ≥ 75 sur 30 j glissants) → 75 % de la séance
+    //     (3 750 F) au lieu de 70 % (3 500 F) ;
+    //   • bonus points (solde mentor_points) → +5 % à 30 pts, +10 % à 60 pts.
+    // Invariant conservé : le montant posé ici ne change jamais après coup.
+    const [rollingScore, pointsBalance] = await Promise.all([
+      computeRollingScore(supabaseAdmin as any, userId),
+      getMentorPointsBalance(supabaseAdmin as any, userId),
+    ]);
+    const tier = computeTrustTier(rollingScore);
+    const payoutXof = computeMentorPayoutXof({
+      basePayoutXof: MENTOR_SESSION_PAYOUT_XOF,
+      tier,
+      pointsBonusPct: computeMentorPointsRewards(pointsBalance).payoutBonusPct,
+    });
+
     const { error } = await (supabaseAdmin as any).from("mentor_sessions").insert({
       mentor_user_id: userId,
       child_profile_id: data.childProfileId,
@@ -626,14 +760,30 @@ export const declareSessionMentor = createServerFn({ method: "POST" })
       notes: data.notes ?? null,
       campaign_id: campaignId,
       funding,
-      // 70% de la séance sur preuve (décision porteur) — posé à la déclaration, validé par
-      // l'admin (ledger) : le montant du payout ne change jamais après coup.
-      payout_xof: MENTOR_SESSION_PAYOUT_XOF,
+      payout_xof: payoutXof,
       status: "declared",
     });
     if (error) throw new Error(`Erreur lors de la déclaration: ${error.message}`);
 
-    return { success: true, funding };
+    // La déclaration seule ne suffit plus : le PARENT doit confirmer la séance pour
+    // qu'elle compte (score + points + payout). Notification in-app immédiate.
+    const { data: childOwner } = await (supabaseAdmin as any)
+      .from("child_profiles")
+      .select("user_id")
+      .eq("id", data.childProfileId)
+      .maybeSingle();
+    if (childOwner?.user_id) {
+      void notifyUser({
+        userId: childOwner.user_id,
+        type: "mentor_session_to_validate",
+        childId: data.childProfileId,
+        payload: { occurred_at: data.occurredAt ?? nowIso },
+      });
+    }
+    // Le statut de confiance est recalculé après chaque déclaration (non-fatal).
+    void syncMentorTrustStatus(supabaseAdmin as any, userId);
+
+    return { success: true, funding, payoutXof };
   });
 
 export const listMentorSessions = createServerFn({ method: "GET" })
@@ -657,6 +807,105 @@ export const listMentorSessions = createServerFn({ method: "GET" })
       occurred_at: s.occurred_at as string,
       notes: s.notes as string | null,
     }));
+  });
+
+// ── Validation parent (V3, Confiance Mentor) ─────────────────────────────────
+// La déclaration du mentor ne suffit plus : le parent confirme la séance
+// (declared → confirmed). Sans cette confirmation, la séance ne compte ni pour le
+// score, ni pour les points, ni pour le payout.
+
+const ConfirmSessionInput = z.object({
+  sessionId: z.string().uuid(),
+});
+
+export const confirmMentorSession = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .validator((input: unknown) => ConfirmSessionInput.parse(input))
+  .handler(async ({ data, context }) => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const userId = (context as any).claims?.sub;
+
+    // Ownership parent : seule la famille de l'enfant de la séance peut confirmer.
+    const { data: session } = await (supabaseAdmin as any)
+      .from("mentor_sessions")
+      .select(
+        "id, child_profile_id, mentor_user_id, status, occurred_at, child_profiles(user_id)",
+      )
+      .eq("id", data.sessionId)
+      .maybeSingle();
+    if (!session) throw new Error("Séance introuvable.");
+    const childOwner = (session.child_profiles as any)?.user_id as string | undefined;
+    if (!childOwner || childOwner !== userId) {
+      throw new Error("Cette séance ne concerne pas un de vos enfants.");
+    }
+    if (session.status !== "declared") {
+      throw new Error("Cette séance a déjà été traitée.");
+    }
+
+    // Transition atomique declared → confirmed (garde en base : jamais de double
+    // confirmation, même si deux onglets du parent cliquent en même temps).
+    const { data: claimed } = await (supabaseAdmin as any)
+      .from("mentor_sessions")
+      .update({
+        status: "confirmed",
+        confirmed_by: userId,
+        confirmed_at: new Date().toISOString(),
+      })
+      .eq("id", data.sessionId)
+      .eq("status", "declared")
+      .select("id")
+      .maybeSingle();
+    if (!claimed) throw new Error("Séance déjà traitée.");
+
+    // La séance confirmée crédite +1 point au mentor (idempotent en base) — la
+    // confirmation est l'événement qui « paie » réellement le mentor.
+    await creditMentorPoints(supabaseAdmin as any, {
+      mentorUserId: session.mentor_user_id,
+      childId: session.child_profile_id,
+      sessionId: session.id,
+      kind: "session_confirmed",
+      points: 1,
+      reason: "Séance confirmée par le parent",
+    });
+    void notifyUser({
+      userId: session.mentor_user_id,
+      type: "mentor_session_confirmed",
+      childId: session.child_profile_id,
+      payload: { session_id: session.id, occurred_at: session.occurred_at },
+    });
+    void syncMentorTrustStatus(supabaseAdmin as any, session.mentor_user_id);
+
+    return { success: true };
+  });
+
+// Séances en attente de validation du parent (hub « Mentor ») — les séances
+// déclarées par le mentor pour CET enfant, non encore confirmées.
+const ChildSessionsForValidationInput = z.object({ childId: z.string().uuid() });
+
+export const listChildSessionsForValidation = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .validator((input: unknown) => ChildSessionsForValidationInput.parse(input))
+  .handler(async ({ data, context }) => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const userId = (context as any).claims?.sub;
+
+    const { data: child } = await (supabaseAdmin as any)
+      .from("child_profiles")
+      .select("id, user_id")
+      .eq("id", data.childId)
+      .maybeSingle();
+    if (!child || child.user_id !== userId) throw new Error("Profil enfant introuvable.");
+
+    const { data: sessions, error } = await (supabaseAdmin as any)
+      .from("mentor_sessions")
+      .select("id, occurred_at, notes")
+      .eq("child_profile_id", data.childId)
+      .eq("status", "declared")
+      .order("occurred_at", { ascending: false })
+      .limit(20);
+    if (error) throw new Error(error.message);
+
+    return (sessions ?? []) as { id: string; occurred_at: string; notes: string | null }[];
   });
 
 const UpdateMentorStatusInput = z.object({
@@ -769,7 +1018,23 @@ export const getMentorDashboard = createServerFn({ method: "GET" })
     if (error) throw new Error(error.message);
 
     if (!assignments || assignments.length === 0) {
-      return { children: [], score: null, sessionsThisMonth: 0, expectedSessions: 0 };
+      const { data: emptyProfile } = await (supabaseAdmin as any)
+        .from("mentor_profiles")
+        .select("status")
+        .eq("mentor_user_id", userId)
+        .maybeSingle();
+      return {
+        children: [],
+        score: null,
+        sessionsThisMonth: 0,
+        expectedSessions: 0,
+        status: (emptyProfile?.status as string | undefined) ?? "active",
+        points: 0,
+        tier: "standard",
+        badge: "none",
+        pointsBonusPct: 0,
+        pendingPayoutXof: 0,
+      };
     }
 
     const childIds = assignments.map((a) => a.child_profile_id);
@@ -783,15 +1048,17 @@ export const getMentorDashboard = createServerFn({ method: "GET" })
       .is("deleted_at", null)
       .order("created_at", { ascending: false });
 
-    // Score de fiabilité (V2) : séances déclarées ce mois + feedback famille + progression —
-    // même fenêtre et même pondération que listMentorsAdmin (mentor-score.ts).
+    // Score de fiabilité (V2) : séances CONFIRMÉES ce mois (la déclaration seule ne
+    // suffit plus depuis la V3) + feedback famille + progression — même fenêtre et
+    // même pondération que listMentorsAdmin (mentor-score.ts).
     const now = new Date();
     const monthStart = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
     const monthEnd = new Date(now.getFullYear(), now.getMonth() + 1, 1).toISOString();
     const { data: monthSessions } = await (supabaseAdmin as any)
       .from("mentor_sessions")
-      .select("id")
+      .select("id, payout_xof")
       .eq("mentor_user_id", userId)
+      .in("status", CONFIRMED_SESSION_STATUSES)
       .gte("occurred_at", monthStart)
       .lt("occurred_at", monthEnd);
     const monthSessionIds = (monthSessions ?? []).map((s: any) => s.id as string);
@@ -817,6 +1084,26 @@ export const getMentorDashboard = createServerFn({ method: "GET" })
       totalChallenges: total,
       avgFeedback,
     });
+
+    // Confiance Mentor (V3) — statut automatique (30 j glissants), palier de
+    // confiance et solde de points : le mentor voit sa position et son statut.
+    const { data: profile } = await (supabaseAdmin as any)
+      .from("mentor_profiles")
+      .select("status")
+      .eq("mentor_user_id", userId)
+      .maybeSingle();
+    const status = (profile?.status as string | undefined) ?? "active";
+    const [rollingScore, points] = await Promise.all([
+      computeRollingScore(supabaseAdmin as any, userId),
+      getMentorPointsBalance(supabaseAdmin as any, userId),
+    ]);
+    const tier = computeTrustTier(rollingScore);
+    const rewards = computeMentorPointsRewards(points);
+    // Bascule automatique du statut si le score de confiance a franchi un seuil
+    // (jamais sur « banned ») — non-fatal.
+    if (status !== "banned") {
+      void syncMentorTrustStatus(supabaseAdmin as any, userId);
+    }
 
     // Le numéro de téléphone du parent vit dans auth.users.user_metadata, pas
     // dans child_profiles — le mentor doit pouvoir contacter le parent
@@ -861,9 +1148,19 @@ export const getMentorDashboard = createServerFn({ method: "GET" })
       score,
       sessionsThisMonth: monthSessions?.length ?? 0,
       expectedSessions: computeExpectedSessions(assignments.length, daysInMonth, elapsedDays),
-      // Payout à venir (Vague C) : 70% de la séance × séances déclarées ce mois — indicatif
-      // tant que l'admin n'a pas approuvé (ledger). Le mentor voit l'argent en route.
-      pendingPayoutXof: (monthSessions?.length ?? 0) * MENTOR_SESSION_PAYOUT_XOF,
+      status,
+      points,
+      tier,
+      badge: rewards.badge,
+      pointsBonusPct: rewards.payoutBonusPct,
+      // Payout à venir (Vague C, V3) : somme des payout_xof des séances CONFIRMÉES
+      // ce mois — indicatif tant que l'admin n'a pas approuvé (ledger). La
+      // déclaration seule n'alimente plus l'affichage : seule la confirmation
+      // parent compte. Le mentor voit l'argent en route.
+      pendingPayoutXof: (monthSessions ?? []).reduce(
+        (sum: number, s: any) => sum + Number(s.payout_xof ?? 0),
+        0,
+      ),
       children: assignments.map((a) => {
         const child = a.child_profiles as any;
         return {
@@ -999,14 +1296,16 @@ export const approveMentorSessionAdmin = createServerFn({ method: "POST" })
     }
 
     // CAS sur le statut : une séance n'est approuvée qu'une fois (jamais de double pay).
+    // Depuis la V3 (Confiance Mentor), seule une séance CONFIRMÉE par le parent peut
+    // être approuvée — la déclaration seule ne suffit plus pour déclencher le payout.
     const { data: claimed } = await (supabaseAdmin as any)
       .from("mentor_sessions")
       .update({ status: "approved" })
       .eq("id", data.sessionId)
-      .eq("status", "declared")
+      .eq("status", "confirmed")
       .select("id")
       .maybeSingle();
-    if (!claimed) throw new Error("Séance introuvable ou déjà approuvée.");
+    if (!claimed) throw new Error("Séance introuvable, non confirmée par le parent ou déjà approuvée.");
 
     return { success: true };
   });
@@ -1049,7 +1348,7 @@ export const submitMentorFeedback = createServerFn({ method: "POST" })
     // La séance doit appartenir à un enfant DU COMPTE qui note.
     const { data: session } = await (supabaseAdmin as any)
       .from("mentor_sessions")
-      .select("child_profile_id, child_profiles(user_id)")
+      .select("child_profile_id, mentor_user_id, child_profiles(user_id)")
       .eq("id", data.sessionId)
       .maybeSingle();
     if (!session) throw new Error("Séance introuvable.");
@@ -1080,6 +1379,21 @@ export const submitMentorFeedback = createServerFn({ method: "POST" })
       });
       if (error) throw new Error(error.message);
     }
+
+    // Confiance Mentor (V3) : une note 5/5 crédite +1 point (une seule fois par
+    // séance, l'index unique (session_id, kind) fait foi — un changement de note
+    // vers 5 ne re-crédite pas une séance déjà créditée).
+    if (data.rating === 5 && session.mentor_user_id) {
+      await creditMentorPoints(supabaseAdmin as any, {
+        mentorUserId: session.mentor_user_id,
+        childId: session.child_profile_id,
+        sessionId: data.sessionId,
+        kind: "feedback_5",
+        points: 1,
+        reason: "Note famille 5/5",
+      });
+    }
+    void syncMentorTrustStatus(supabaseAdmin as any, session.mentor_user_id);
 
     return { success: true, rating: data.rating };
   });

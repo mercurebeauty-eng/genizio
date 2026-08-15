@@ -946,6 +946,64 @@ export type Database = {
           },
         ]
       }
+      mentor_points: {
+        Row: {
+          challenge_id: string | null
+          child_profile_id: string | null
+          created_at: string
+          id: string
+          kind: string
+          mentor_user_id: string
+          points: number
+          reason: string | null
+          session_id: string | null
+        }
+        Insert: {
+          challenge_id?: string | null
+          child_profile_id?: string | null
+          created_at?: string
+          id?: string
+          kind: string
+          mentor_user_id: string
+          points: number
+          reason?: string | null
+          session_id?: string | null
+        }
+        Update: {
+          challenge_id?: string | null
+          child_profile_id?: string | null
+          created_at?: string
+          id?: string
+          kind?: string
+          mentor_user_id?: string
+          points?: number
+          reason?: string | null
+          session_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "mentor_points_challenge_id_fkey"
+            columns: ["challenge_id"]
+            isOneToOne: false
+            referencedRelation: "challenges"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "mentor_points_child_profile_id_fkey"
+            columns: ["child_profile_id"]
+            isOneToOne: false
+            referencedRelation: "child_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "mentor_points_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "mentor_sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       mentor_profiles: {
         Row: {
           created_at: string
@@ -1027,6 +1085,8 @@ export type Database = {
         Row: {
           campaign_id: string | null
           child_profile_id: string
+          confirmed_at: string | null
+          confirmed_by: string | null
           created_at: string
           funding: string
           id: string
@@ -1039,6 +1099,8 @@ export type Database = {
         Insert: {
           campaign_id?: string | null
           child_profile_id: string
+          confirmed_at?: string | null
+          confirmed_by?: string | null
           created_at?: string
           funding?: string
           id?: string
@@ -1051,6 +1113,8 @@ export type Database = {
         Update: {
           campaign_id?: string | null
           child_profile_id?: string
+          confirmed_at?: string | null
+          confirmed_by?: string | null
           created_at?: string
           funding?: string
           id?: string
@@ -1451,6 +1515,39 @@ export type Database = {
           price_xof?: number
           stock_quantity?: number | null
           updated_at?: string
+        }
+        Relationships: []
+      }
+      push_subscriptions: {
+        Row: {
+          auth: string
+          created_at: string
+          endpoint: string
+          id: string
+          last_seen_at: string
+          p256dh: string
+          user_agent: string | null
+          user_id: string
+        }
+        Insert: {
+          auth: string
+          created_at?: string
+          endpoint: string
+          id?: string
+          last_seen_at?: string
+          p256dh: string
+          user_agent?: string | null
+          user_id: string
+        }
+        Update: {
+          auth?: string
+          created_at?: string
+          endpoint?: string
+          id?: string
+          last_seen_at?: string
+          p256dh?: string
+          user_agent?: string | null
+          user_id?: string
         }
         Relationships: []
       }

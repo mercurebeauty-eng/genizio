@@ -453,6 +453,30 @@ export function AdminMentorsTab() {
                         >
                           {g.score}/100
                         </span>
+                        {/* Confiance Mentor (V3) : palier de confiance (75% payout) + solde
+                            de points — les vrais signaux de récompense. */}
+                        {g.tier === "trusted" && (
+                          <span
+                            title="Palier confiance : 75% de la séance (3 750 F) au lieu de 70%"
+                            className="rounded-full bg-indigo-100 px-2.5 py-0.5 text-[10px] font-black uppercase tracking-wider text-indigo-700"
+                          >
+                            ⭐ Confiance
+                          </span>
+                        )}
+                        {g.points > 0 && (
+                          <span
+                            title={`Solde de points — bonus payout +${g.pointsBonusPct}%`}
+                            className={`rounded-full px-2.5 py-0.5 text-[10px] font-black uppercase tracking-wider ${
+                              g.badge === "gold"
+                                ? "bg-amber-200 text-amber-800"
+                                : g.badge === "bronze"
+                                  ? "bg-orange-100 text-orange-700"
+                                  : "bg-surface text-ink/60"
+                            }`}
+                          >
+                            🏅 {g.points} pts{g.pointsBonusPct > 0 ? ` +${g.pointsBonusPct}%` : ""}
+                          </span>
+                        )}
                         {g.status !== "active" && (
                           <span
                             className={`rounded-full px-2.5 py-0.5 text-[10px] font-black uppercase tracking-wider ${
@@ -626,8 +650,10 @@ export function AdminMentorsTab() {
                   Séances & Payout
                 </h3>
                 <p className="text-sm text-ink/60 mt-0.5">
-                  Approuvez les séances déclarées — elles entrent dans le payout dû (70% × séance =
-                  3 500 F). Le funding (pack/campagne) est indicatif.
+                  Approuvez les séances <strong>confirmées par le parent</strong> — elles
+                  entrent dans le payout dû (70 % × séance = 3 500 F, 75 % pour un mentor
+                  « confiance »). Une séance déclarée mais non confirmée par la famille
+                  ne peut pas être approuvée.
                 </p>
               </div>
               <button
@@ -668,7 +694,7 @@ export function AdminMentorsTab() {
                             : "Sans financement"}
                       </p>
                     </div>
-                    {s.status === "declared" ? (
+                    {s.status === "confirmed" ? (
                       <button
                         onClick={() => void handleApproveSession(s.id)}
                         className="rounded-xl bg-brand px-3 py-1.5 text-xs font-bold text-white hover:bg-brand/90 transition-all cursor-pointer"
@@ -680,10 +706,16 @@ export function AdminMentorsTab() {
                         className={`rounded-full px-2.5 py-0.5 text-[10px] font-black uppercase tracking-wider ${
                           s.status === "paid"
                             ? "bg-emerald-100 text-emerald-700"
-                            : "bg-amber-100 text-amber-700"
+                            : s.status === "approved"
+                              ? "bg-amber-100 text-amber-700"
+                              : "bg-ink/5 text-ink/50"
                         }`}
                       >
-                        {s.status === "paid" ? "Payé" : "Approuvé"}
+                        {s.status === "paid"
+                          ? "Payé"
+                          : s.status === "approved"
+                            ? "Approuvé"
+                            : "Déclaré (à confirmer)"}
                       </span>
                     )}
                   </li>

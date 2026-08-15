@@ -7,6 +7,8 @@ import { toast } from "sonner";
 import {
   getChildMentorInfo,
   listChildSessionsForFeedback,
+  listChildSessionsForValidation,
+  confirmMentorSession,
   submitMentorFeedback,
 } from "@/lib/mentors.functions";
 import { getChildBilan, validateMentorReport } from "@/lib/mentor-reports.functions";
@@ -89,6 +91,15 @@ function MentorHubPage() {
   const feedbackFn = useServerFn(submitMentorFeedback);
   const listSessionsFn = useServerFn(listChildSessionsForFeedback);
 
+  // Séances à valider (V3, Confiance Mentor) : les séances déclarées par le mentor
+  // attendent la confirmation du parent — sans elle, ni score, ni points, ni payout.
+  const [sessionsToValidate, setSessionsToValidate] = useState<
+    Array<{ id: string; occurred_at: string; notes: string | null }>
+  >([]);
+  const [confirmingSessionId, setConfirmingSessionId] = useState<string | null>(null);
+  const validationListFn = useServerFn(listChildSessionsForValidation);
+  const confirmFn = useServerFn(confirmMentorSession);
+
   // Activité récente (canal pull + badge, décision #74).
   const [notifications, setNotifications] = useState<any[]>([]);
   const notificationsFn = useServerFn(listMyNotifications);
@@ -150,6 +161,28 @@ function MentorHubPage() {
     }
   };
 
+  const handleConfirmSession = async (sessionId: string) => {
+    const ok = await confirmDialog({
+      title: "Confirmer cette séance ?",
+      description:
+        "En confirmant, vous attestez que le mentor a bien réalisé cette séance. Elle entre alors dans le score, les points et le paiement du mentor.",
+      confirmLabel: "Confirmer la séance",
+      variant: "default",
+    });
+    if (!ok) return;
+    setConfirmingSessionId(sessionId);
+    try {
+      await confirmFn({ data: { sessionId } });
+      toast.success("Séance confirmée — merci !");
+      const refreshed = await validationListFn({ data: { childId: profileId } });
+      setSessionsToValidate((refreshed as any[]) ?? []);
+    } catch (err: any) {
+      toast.error(err.message || "Impossible de confirmer la séance.");
+    } finally {
+      setConfirmingSessionId(null);
+    }
+  };
+
   const userId = session?.user?.id;
 
   useEffect(() => {
@@ -177,6 +210,9 @@ function MentorHubPage() {
 
         const sessions = await listSessionsFn({ data: { childId: profileId } });
         setFeedbackSessions((sessions as any[]) ?? []);
+
+        const toValidate = await validationListFn({ data: { childId: profileId } });
+        setSessionsToValidate((toValidate as any[]) ?? []);
 
         const notifs = await notificationsFn();
         const all = (notifs as any)?.notifications ?? [];
@@ -423,6 +459,64 @@ function MentorHubPage() {
                 </div>
               )}
 
+              {/* Séances à valider (V3, Confiance Mentor) : le mentor déclare, le parent
+                  confirme. Sans confirmation, la séance ne compte ni score, ni points, ni
+                  payout — carte visible uniquement quand des séances attendent. */}
+              {sessionsToValidate.length > 0 && (
+                <div className="rounded-3xl border border-indigo-200 bg-indigo-50/60 p-5 shadow-sm space-y-3">
+                  <div className="flex items-center gap-3">
+                    <div className="grid size-11 place-items-center rounded-2xl bg-indigo-600 text-white shrink-0">
+                      <Clock className="size-5" />
+                    </div>
+                    <div>
+                      <p className="text-xs font-black uppercase tracking-widest text-indigo-700">
+                        Séances à valider
+                      </p>
+                      <p className="text-xs text-ink/50 mt-0.5">
+                        Le mentor a déclaré {sessionsToValidate.length} séance
+                        {sessionsToValidate.length > 1 ? "s" : ""} — confirmez qu'elles ont
+                        bien eu lieu.
+                      </p>
+                    </div>
+                  </div>
+                  <ul className="space-y-2">
+                    {sessionsToValidate.map((s) => (
+                      <li
+                        key={s.id}
+                        className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 rounded-2xl border border-indigo-200 bg-white px-4 py-3"
+                      >
+                        <div className="min-w-0">
+                          <p className="text-sm font-bold text-ink">
+                            Séance du{" "}
+                            {new Date(s.occurred_at).toLocaleDateString("fr-FR", {
+                              day: "numeric",
+                              month: "long",
+                            })}
+                          </p>
+                          {s.notes ? (
+                            <p className="text-xs text-ink/60 mt-0.5 line-clamp-2">
+                              {s.notes}
+                            </p>
+                          ) : (
+                            <p className="text-[11px] text-ink/40 italic mt-0.5">
+                              Compte-rendu non renseigné.
+                            </p>
+                          )}
+                        </div>
+                        <button
+                          onClick={() => void handleConfirmSession(s.id)}
+                          disabled={confirmingSessionId === s.id}
+                          className="inline-flex items-center gap-2 rounded-xl bg-indigo-600 px-4 py-2 text-xs font-black text-white hover:bg-indigo-700 transition-all disabled:opacity-50 cursor-pointer shrink-0"
+                        >
+                          <Check className="size-4" />
+                          {confirmingSessionId === s.id ? "Confirmation…" : "Confirmer"}
+                        </button>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+
               {/* Feedback famille (Vague C) : noter la dernière séance de suivi — composante
                   25% du score mentor (V2). Widget discret, seulement si une séance
                   non notée existe. */}
@@ -531,13 +625,17 @@ function MentorHubPage() {
                           ? `🎉 ${n.payload?.title ?? "Un défi"} complété par le mentor`
                           : n.type === "mentor_abandon"
                             ? `❌ ${n.payload?.title ?? "Un défi"} marqué non réussi par le mentor`
-                            : n.type === "mentor_bilan_submitted"
-                              ? `📄 Bilan soumis par le mentor`
-                              : n.type === "mentor_bilan_validated"
-                                ? `✅ Bilan validé par le parent`
-                                : n.type === "mentor_bilan_rejected"
-                                  ? `↩️ Bilan renvoyé au mentor`
-                                  : `🔔 ${n.type}`}
+                            : n.type === "mentor_session_to_validate"
+                              ? `📋 Séance à valider — ${n.payload?.occurred_at ? new Date(n.payload.occurred_at).toLocaleDateString("fr-FR") : ""}`
+                              : n.type === "mentor_session_confirmed"
+                                ? `✅ Séance confirmée par le parent`
+                                : n.type === "mentor_bilan_submitted"
+                                  ? `📄 Bilan soumis par le mentor`
+                                  : n.type === "mentor_bilan_validated"
+                                    ? `✅ Bilan validé par le parent`
+                                    : n.type === "mentor_bilan_rejected"
+                                      ? `↩️ Bilan renvoyé au mentor`
+                                      : `🔔 ${n.type}`}
                         <span className="block text-[10px] font-bold text-ink/40 mt-0.5">
                           {new Date(n.created_at).toLocaleString("fr-FR")}
                         </span>
