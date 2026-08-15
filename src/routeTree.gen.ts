@@ -13,6 +13,7 @@ import { Route as TermsRouteImport } from './routes/terms'
 import { Route as TarifsRouteImport } from './routes/tarifs'
 import { Route as SupervisorRouteImport } from './routes/supervisor'
 import { Route as RemboursementsRouteImport } from './routes/remboursements'
+import { Route as RemboursementRouteImport } from './routes/remboursement'
 import { Route as ProfilesRouteImport } from './routes/profiles'
 import { Route as ProfileRouteImport } from './routes/profile'
 import { Route as PrivacyRouteImport } from './routes/privacy'
@@ -80,6 +81,11 @@ const SupervisorRoute = SupervisorRouteImport.update({
 const RemboursementsRoute = RemboursementsRouteImport.update({
   id: '/remboursements',
   path: '/remboursements',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const RemboursementRoute = RemboursementRouteImport.update({
+  id: '/remboursement',
+  path: '/remboursement',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ProfilesRoute = ProfilesRouteImport.update({
@@ -360,6 +366,7 @@ export interface FileRoutesByFullPath {
   '/privacy': typeof PrivacyRoute
   '/profile': typeof ProfileRoute
   '/profiles': typeof ProfilesRouteWithChildren
+  '/remboursement': typeof RemboursementRoute
   '/remboursements': typeof RemboursementsRoute
   '/supervisor': typeof SupervisorRoute
   '/tarifs': typeof TarifsRoute
@@ -410,6 +417,7 @@ export interface FileRoutesByTo {
   '/parrainage': typeof ParrainageRoute
   '/privacy': typeof PrivacyRoute
   '/profile': typeof ProfileRoute
+  '/remboursement': typeof RemboursementRoute
   '/remboursements': typeof RemboursementsRoute
   '/supervisor': typeof SupervisorRoute
   '/tarifs': typeof TarifsRoute
@@ -465,6 +473,7 @@ export interface FileRoutesById {
   '/privacy': typeof PrivacyRoute
   '/profile': typeof ProfileRoute
   '/profiles': typeof ProfilesRouteWithChildren
+  '/remboursement': typeof RemboursementRoute
   '/remboursements': typeof RemboursementsRoute
   '/supervisor': typeof SupervisorRoute
   '/tarifs': typeof TarifsRoute
@@ -521,6 +530,7 @@ export interface FileRouteTypes {
     | '/privacy'
     | '/profile'
     | '/profiles'
+    | '/remboursement'
     | '/remboursements'
     | '/supervisor'
     | '/tarifs'
@@ -571,6 +581,7 @@ export interface FileRouteTypes {
     | '/parrainage'
     | '/privacy'
     | '/profile'
+    | '/remboursement'
     | '/remboursements'
     | '/supervisor'
     | '/tarifs'
@@ -625,6 +636,7 @@ export interface FileRouteTypes {
     | '/privacy'
     | '/profile'
     | '/profiles'
+    | '/remboursement'
     | '/remboursements'
     | '/supervisor'
     | '/tarifs'
@@ -680,6 +692,7 @@ export interface RootRouteChildren {
   PrivacyRoute: typeof PrivacyRoute
   ProfileRoute: typeof ProfileRoute
   ProfilesRoute: typeof ProfilesRouteWithChildren
+  RemboursementRoute: typeof RemboursementRoute
   RemboursementsRoute: typeof RemboursementsRoute
   SupervisorRoute: typeof SupervisorRoute
   TarifsRoute: typeof TarifsRoute
@@ -717,6 +730,13 @@ declare module '@tanstack/react-router' {
       path: '/remboursements'
       fullPath: '/remboursements'
       preLoaderRoute: typeof RemboursementsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/remboursement': {
+      id: '/remboursement'
+      path: '/remboursement'
+      fullPath: '/remboursement'
+      preLoaderRoute: typeof RemboursementRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/profiles': {
@@ -1182,6 +1202,7 @@ const rootRouteChildren: RootRouteChildren = {
   PrivacyRoute: PrivacyRoute,
   ProfileRoute: ProfileRoute,
   ProfilesRoute: ProfilesRouteWithChildren,
+  RemboursementRoute: RemboursementRoute,
   RemboursementsRoute: RemboursementsRoute,
   SupervisorRoute: SupervisorRoute,
   TarifsRoute: TarifsRoute,
