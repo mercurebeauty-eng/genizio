@@ -853,8 +853,8 @@ function CreateCampaignModal({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-ink/40 backdrop-blur-sm">
-      <div className="bg-white rounded-[2rem] w-full max-w-md p-6 shadow-2xl animate-in fade-in zoom-in-95 duration-200">
-        <div className="flex items-center justify-between mb-6">
+      <div className="bg-white rounded-[2rem] w-full max-w-md shadow-2xl animate-in fade-in zoom-in-95 duration-200 flex flex-col max-h-[90vh]">
+        <div className="flex items-center justify-between p-6 pb-4 shrink-0">
           <h3 className="font-display font-black text-xl text-ink flex items-center gap-2">
             <Building2 className="size-6 text-brand" />
             Nouvelle Campagne B2B
@@ -866,8 +866,9 @@ function CreateCampaignModal({
             <X className="size-5" />
           </button>
         </div>
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
+        <div className="p-6 pt-2 overflow-y-auto">
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div>
             <label className="block text-sm font-bold text-ink mb-1">Nom de la campagne</label>
             <input
               required
@@ -980,6 +981,7 @@ function CreateCampaignModal({
             </button>
           </div>
         </form>
+        </div>
       </div>
     </div>
   );
