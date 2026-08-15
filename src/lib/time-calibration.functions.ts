@@ -14,6 +14,7 @@
 import { z } from "zod";
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { assertChildActor } from "@/lib/child-actor";
 
 /** Nombre de dépassements dans un même domaine (sur la fenêtre) pour proposer. */
 export const GENTLE_SUGGESTION_THRESHOLD = 3;
@@ -65,15 +66,20 @@ export const getGentleTimeSuggestion = createServerFn({ method: "GET" })
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
 
-    const { data: child } = await supabase
+    // Décision #81 : le mentor lit la suggestion comme le parent.
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const actor = await assertChildActor(supabaseAdmin as any, userId, data.childId);
+    const db: any = actor === "mentor" ? (supabaseAdmin as any) : supabase;
+
+    const query = db
       .from("child_profiles")
       .select("id, time_pressure")
-      .eq("id", data.childId)
-      .eq("user_id", userId)
-      .maybeSingle();
+      .eq("id", data.childId);
+    if (actor === "owner") query.eq("user_id", userId);
+    const { data: child } = await query.maybeSingle();
     if (!child) return { suggested: false, domains: [] };
 
-    const { data: events } = await supabase
+    const { data: events } = await db
       .from("observation_events")
       .select("occurred_at, payload")
       .eq("child_id", data.childId)
@@ -86,7 +92,7 @@ export const getGentleTimeSuggestion = createServerFn({ method: "GET" })
       .limit(200);
 
     return suggestTimePressureChange(
-      (events ?? []).map((e) => ({
+      ((events ?? []) as any[]).map((e) => ({
         domain: (e.payload as { domain?: string | null } | null)?.domain ?? null,
         occurredAt: e.occurred_at,
       })),
@@ -101,12 +107,17 @@ export const applyGentleTimeProposal = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
 
-    const { data: child } = await supabase
+    // Décision #81 : le mentor valide la proposition comme le parent.
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const actor = await assertChildActor(supabaseAdmin as any, userId, data.childId);
+    const db: any = actor === "mentor" ? (supabaseAdmin as any) : supabase;
+
+    const query = db
       .from("child_profiles")
       .select("id, access_locked_at, is_active, time_pressure")
-      .eq("id", data.childId)
-      .eq("user_id", userId)
-      .maybeSingle();
+      .eq("id", data.childId);
+    if (actor === "owner") query.eq("user_id", userId);
+    const { data: child } = await query.maybeSingle();
     if (!child) throw new Error("Profil enfant introuvable.");
     if (child.access_locked_at) throw new Error("Ce profil est verrouillé.");
     if (child.is_active === false) throw new Error("Ce profil est désactivé par l'administrateur.");
@@ -118,13 +129,12 @@ export const applyGentleTimeProposal = createServerFn({ method: "POST" })
     }
     if (child.time_pressure === "gentle") return { ok: true, timePressure: "gentle" as const };
 
-    const { data: updated, error } = await supabase
+    const updateQuery = db
       .from("child_profiles")
       .update({ time_pressure: "gentle" })
-      .eq("id", data.childId)
-      .eq("user_id", userId)
-      .select("time_pressure")
-      .single();
+      .eq("id", data.childId);
+    if (actor === "owner") updateQuery.eq("user_id", userId);
+    const { data: updated, error } = await updateQuery.select("time_pressure").single();
     if (error) throw new Error(error.message);
     return { ok: true, timePressure: updated.time_pressure };
   });

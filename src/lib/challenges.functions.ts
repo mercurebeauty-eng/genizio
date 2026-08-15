@@ -4,6 +4,7 @@ import { VALID_TALENT_KEYS, TALENT_KEY_LABELS } from "@/lib/talent-buckets";
 import { INTERESTS_BY_TALENT } from "@/components/profiles/shared";
 import { normalizeChildInterests } from "@/lib/interest-migration";
 import { getChildAccessStatus } from "@/lib/child-access";
+import { assertChildActor } from "@/lib/child-actor";
 import {
   formatTimePressureNote,
   resolveTimeLimitMinutes,
@@ -1615,25 +1616,35 @@ export const generateChallenges = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
 
-    const { data: child, error: childErr } = await supabase
+    // Décision #81 : le mentor agit comme le parent sur ses enfants assignés —
+    // assertChildActor (owner OU mentor assigné actif), lectures service role
+    // dans le chemin mentor (la RLS ne rend pas les défis non-complétés).
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const actor = await assertChildActor(supabaseAdmin as any, userId, data.childId);
+    const db: any = actor === "mentor" ? (supabaseAdmin as any) : supabase;
+
+    const query = db
       .from("child_profiles")
       .select("*")
       .eq("id", data.childId)
-      .eq("user_id", userId)
       .is("access_locked_at", null)
-      .eq("is_active", true)
-      .maybeSingle();
+      .eq("is_active", true);
+    if (actor === "owner") query.eq("user_id", userId);
+    const { data: child, error: childErr } = await query.maybeSingle();
     if (childErr || !child) throw new Error("Profil enfant introuvable");
 
-    await assertChildAccessActive(userId, data.childId);
+    // Gate d'accès payant : vaut pour le parent (l'ownership). Le mentor assigné
+    // n'a pas de position dans le quota famille — son assignation est la preuve
+    // d'accompagnement, la génération ne dépend pas de la facturation famille.
+    if (actor === "owner") await assertChildAccessActive(userId, data.childId);
 
     return generateChallengesCore({
-      db: supabase,
+      db,
       child,
       childId: data.childId,
       count: data.count,
-      ownerUserId: userId,
-      createdByUserId: null,
+      ownerUserId: child.user_id,
+      createdByUserId: actor === "mentor" ? userId : null,
     });
   });
 
@@ -1688,7 +1699,11 @@ export const updateChallenge = createServerFn({ method: "POST" })
     // Verrouillage (2026-07-30) : cette mutation touche directement `challenges`, pas
     // `child_profiles` — donc pas de colonne access_locked_at à filtrer dans l'update lui-même,
     // d'où ce pré-check explicite plutôt qu'un .eq() supplémentaire comme pour les autres.
-    const { data: existing } = await context.supabase
+    let existing: any = null;
+    let db: any = context.supabase;
+    let actor: "owner" | "mentor" | null = null;
+
+    const { data: mine } = await context.supabase
       .from("challenges")
       .select(
         "child_id, time_limit_minutes, difficulty, estimated_duration_minutes, child_profiles(access_locked_at, is_active, age, time_pressure)",
@@ -1696,6 +1711,26 @@ export const updateChallenge = createServerFn({ method: "POST" })
       .eq("id", data.id)
       .eq("user_id", context.userId)
       .maybeSingle();
+    if (mine) {
+      existing = mine;
+      actor = "owner";
+    } else {
+      // Chemin mentor (décision #81) : la RLS ne rend pas les défis non-complétés
+      // aux mentors — lecture service role, puis assertChildActor (owner OU mentor
+      // assigné actif non banni/suspendu) fait office de garde d'autorisation.
+      const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+      db = supabaseAdmin as any;
+      const { data: viaAdmin } = await db
+        .from("challenges")
+        .select(
+          "child_id, time_limit_minutes, difficulty, estimated_duration_minutes, child_profiles(access_locked_at, is_active, age, time_pressure)",
+        )
+        .eq("id", data.id)
+        .maybeSingle();
+      if (!viaAdmin) throw new Error("Défi introuvable");
+      actor = await assertChildActor(db, context.userId, viaAdmin.child_id);
+      existing = viaAdmin;
+    }
     if ((existing as any)?.child_profiles?.access_locked_at) {
       throw new Error("Ce profil est verrouillé.");
     }
@@ -1723,13 +1758,11 @@ export const updateChallenge = createServerFn({ method: "POST" })
 
     // Ownership is enforced by RLS too, but every other mutation in this file
     // checks it explicitly — do the same here instead of relying solely on RLS.
-    const { data: row, error } = await context.supabase
-      .from("challenges")
-      .update(patch)
-      .eq("id", data.id)
-      .eq("user_id", context.userId)
-      .select("*")
-      .single();
+    // (Chemin mentor : le filtre .eq(user_id) est retiré — l'assignation active a
+    // déjà été prouvée par assertChildActor.)
+    const updateQuery = db.from("challenges").update(patch).eq("id", data.id);
+    if (actor === "owner") updateQuery.eq("user_id", context.userId);
+    const { data: row, error } = await updateQuery.select("*").single();
     if (error) throw new Error(error.message);
 
     return row;
@@ -1745,15 +1778,31 @@ export const recordChallengeTimeOver = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .validator((input: unknown) => TimeOverInput.parse(input))
   .handler(async ({ data, context }) => {
-    const { data: existing } = await context.supabase
+    // Chemin mentor (décision #81) : la RLS ne rend pas les défis non-complétés
+    // aux mentors — on tente d'abord la lecture owner, puis le repli service role
+    // avec assertChildActor (idempotent : aucun enregistrement si défi inconnu).
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const sup = supabaseAdmin as any;
+    let existing: any = null;
+    const { data: mine } = await context.supabase
       .from("challenges")
       .select("id, child_id, user_id, time_limit_minutes, domain, title")
       .eq("id", data.challengeId)
       .eq("user_id", context.userId)
       .maybeSingle();
-    if (!existing) return { ok: true }; // Défi inconnu ou déjà supprimé — idempotent.
+    if (mine) {
+      existing = mine;
+    } else {
+      const { data: viaAdmin } = await sup
+        .from("challenges")
+        .select("id, child_id, user_id, time_limit_minutes, domain, title")
+        .eq("id", data.challengeId)
+        .maybeSingle();
+      if (!viaAdmin) return { ok: true }; // Défi inconnu ou déjà supprimé — idempotent.
+      await assertChildActor(sup, context.userId, viaAdmin.child_id);
+      existing = viaAdmin;
+    }
 
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { data: already } = await supabaseAdmin
       .from("observation_events")
       .select("id")
@@ -2311,14 +2360,20 @@ export const submitChallengeNotCompleted = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
 
-    const { data: challenge, error: challengeErr } = await supabase
+    // Décision #81 : lecture service role (la RLS ne rend pas les défis
+    // non-complétés aux mentors) + assertChildActor — owner OU mentor assigné
+    // actif. La suppression, elle, reste owner-only (deleteChallenge).
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const sup = supabaseAdmin as any;
+
+    const { data: challenge, error: challengeErr } = await sup
       .from("challenges")
       .select("*, child_profiles(*)")
       .eq("id", data.id)
       .single();
 
     if (challengeErr || !challenge) throw new Error("Défi introuvable");
-    if (challenge.user_id !== userId) throw new Error("Accès refusé.");
+    await assertChildActor(sup, userId, challenge.child_id);
     if (challenge.child_profiles?.access_locked_at) throw new Error("Ce profil est verrouillé.");
     if (challenge.child_profiles?.is_active === false)
       throw new Error("Ce profil est désactivé par l'administrateur.");
@@ -2334,7 +2389,7 @@ export const submitChallengeNotCompleted = createServerFn({ method: "POST" })
       throw new Error("Ce défi est déjà marqué non réussi.");
     }
 
-    const { data: updated, error } = await supabase
+    const { data: updated, error } = await sup
       .from("challenges")
       .update({
         status: "not_completed" as const,
@@ -2354,7 +2409,7 @@ export const submitChallengeNotCompleted = createServerFn({ method: "POST" })
     (async () => {
       const cause = await classifyNotCompletedReason(data.reason);
       if (cause) {
-        const { error: causeErr } = await supabase
+        const { error: causeErr } = await sup
           .from("challenges")
           .update({ not_completed_cause: cause })
           .eq("id", data.id);
@@ -2390,7 +2445,7 @@ export const submitChallengeNotCompleted = createServerFn({ method: "POST" })
       if (canReformulate(cause)) {
         try {
           const { processModalityReformulation } = await import("@/lib/modalities.functions");
-          const outcome = await processModalityReformulation(supabase, userId, data.id);
+          const outcome = await processModalityReformulation(sup, userId, data.id);
           if (outcome.ok) return; // la reformulation devient la mission suivante
           console.error(
             `Non-fatal: reformulation impossible (${outcome.reason}) — repli sur la recommandation`,
@@ -2676,25 +2731,30 @@ export const assignTemplateChallenge = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
 
-    const { data: child, error: childErr } = await supabase
+    // Décision #81 : le mentor assigne des défis catalogue comme le parent.
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const actor = await assertChildActor(supabaseAdmin as any, userId, data.childId);
+    const db: any = actor === "mentor" ? (supabaseAdmin as any) : supabase;
+
+    const query = db
       .from("child_profiles")
-      .select("id, age, time_pressure")
+      .select("id, user_id, age, time_pressure")
       .eq("id", data.childId)
-      .eq("user_id", userId)
       .is("access_locked_at", null)
-      .eq("is_active", true)
-      .maybeSingle();
+      .eq("is_active", true);
+    if (actor === "owner") query.eq("user_id", userId);
+    const { data: child, error: childErr } = await query.maybeSingle();
 
     if (childErr || !child) throw new Error("Profil enfant introuvable ou accès refusé.");
 
     return assignTemplateChallengeCore({
-      db: supabase,
+      db,
       child,
       childId: data.childId,
       template: data.template,
       estimatedDurationMinutes: data.estimated_duration_minutes,
-      ownerUserId: userId,
-      createdByUserId: null,
+      ownerUserId: child.user_id,
+      createdByUserId: actor === "mentor" ? userId : null,
     });
   });
 
@@ -2827,8 +2887,14 @@ export const getAcademicGapsForChild = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .validator((input: unknown) => GetAcademicGapsInput.parse(input))
   .handler(async ({ data, context }) => {
-    const { supabase } = context;
-    const targets = await computeProgressionTargets(supabase, data.childId);
+    const { supabase, userId } = context;
+
+    // Décision #81 : le mentor voit les lacunes scolaires de ses enfants assignés.
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const actor = await assertChildActor(supabaseAdmin as any, userId, data.childId);
+    const db: any = actor === "mentor" ? (supabaseAdmin as any) : supabase;
+
+    const targets = await computeProgressionTargets(db, data.childId);
 
     const gaps: Record<string, number> = {};
     for (const t of targets) {
@@ -2846,40 +2912,45 @@ export const generateAcademicHomeworkChallenge = createServerFn({ method: "POST"
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
 
-    const { data: child, error: childErr } = await supabase
+    // Décision #81 : le mentor génère des devoirs comme le parent.
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const actor = await assertChildActor(supabaseAdmin as any, userId, data.childId);
+    const db: any = actor === "mentor" ? (supabaseAdmin as any) : supabase;
+
+    const query = db
       .from("child_profiles")
       .select("*")
       .eq("id", data.childId)
-      .eq("user_id", userId)
       .is("access_locked_at", null)
-      .eq("is_active", true)
-      .maybeSingle();
+      .eq("is_active", true);
+    if (actor === "owner") query.eq("user_id", userId);
+    const { data: child, error: childErr } = await query.maybeSingle();
     if (childErr || !child) throw new Error("Profil enfant introuvable");
 
-    await assertChildAccessActive(userId, data.childId);
+    if (actor === "owner") await assertChildAccessActive(userId, data.childId);
 
     // Décision 2026-08-05 : les intérêts déclarés sont des HYPOTHÈSES de travail — leur
     // confiance est dérivée à la lecture (complétions vs abandons, par groupe de talents).
     const interestHypotheses = await getInterestHypothesesSnapshot(
-      supabase as any,
+      db as any,
       data.childId,
     ).catch(() => null);
 
-    const { data: existing } = await supabase
+    const { data: existing } = await db
       .from("challenges")
       .select("title")
       .eq("child_id", data.childId)
       .order("created_at", { ascending: false })
       .limit(30);
 
-    const existingTitles = (existing ?? []).map((c) => c.title);
+    const existingTitles = ((existing ?? []) as any[]).map((c) => c.title);
 
     const gradeInfo = GRADE_LEVEL_METADATA[data.gradeLevel];
     const targetAge = gradeInfo.nominalAge;
     const timeAvailable = data.timeAvailable || "30 min";
 
     const zpaContext = await computeHomeworkZPAContext(
-      supabase,
+      db,
       data.childId,
       data.subject,
       targetAge,
@@ -2970,7 +3041,7 @@ export const generateAcademicHomeworkChallenge = createServerFn({ method: "POST"
     const finalized = finalizeChallenge(c, child.age);
 
     try {
-      await supabase.from("observation_events").insert({
+      await db.from("observation_events").insert({
         child_id: data.childId,
         user_id: userId,
         type: "ACADEMIC_HOMEWORK_GENERATED",
@@ -3013,22 +3084,27 @@ export const generateSingleChallenge = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
 
-    const { data: child, error: childErr } = await supabase
+    // Décision #81 : le mentor compose un défi ciblé comme le parent.
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const actor = await assertChildActor(supabaseAdmin as any, userId, data.childId);
+    const db: any = actor === "mentor" ? (supabaseAdmin as any) : supabase;
+
+    const query = db
       .from("child_profiles")
       .select("*")
       .eq("id", data.childId)
-      .eq("user_id", userId)
       .is("access_locked_at", null)
-      .eq("is_active", true)
-      .maybeSingle();
+      .eq("is_active", true);
+    if (actor === "owner") query.eq("user_id", userId);
+    const { data: child, error: childErr } = await query.maybeSingle();
     if (childErr || !child) throw new Error("Profil enfant introuvable");
 
-    await assertChildAccessActive(userId, data.childId);
+    if (actor === "owner") await assertChildAccessActive(userId, data.childId);
 
     // Décision 2026-08-05 : les intérêts déclarés sont des HYPOTHÈSES de travail — leur
     // confiance est dérivée à la lecture (complétions vs abandons, par groupe de talents).
     const interestHypotheses = await getInterestHypothesesSnapshot(
-      supabase as any,
+      db as any,
       data.childId,
     ).catch(() => null);
 
@@ -3038,23 +3114,23 @@ export const generateSingleChallenge = createServerFn({ method: "POST" })
     // matches generateChallenges' existing pattern instead of inventing a new one.
     const [{ data: completedChallenges }, { data: existing }, progressionTargets, { data: latestChildQuestion }] =
       await Promise.all([
-        supabase
+        db
           .from("challenges")
           .select("title, domain, ai_observations")
           .eq("child_id", data.childId)
           .eq("status", "completed")
           .order("completed_at", { ascending: false })
           .limit(6),
-        supabase
+        db
           .from("challenges")
           .select("title")
           .eq("child_id", data.childId)
           .order("created_at", { ascending: false })
           .limit(30),
-        computeProgressionTargets(supabase, data.childId),
+        computeProgressionTargets(db, data.childId),
         // Question formulée par l'enfant lui-même (chantier « Deuxième colonne
         // vertébrale », 2026-08-15) — fil conducteur de la génération ciblée.
-        supabase
+        db
           .from("challenges")
           .select("child_question")
           .eq("child_id", data.childId)
@@ -3064,10 +3140,10 @@ export const generateSingleChallenge = createServerFn({ method: "POST" })
           .maybeSingle(),
       ]);
 
-    const completedSummary = (completedChallenges ?? [])
+    const completedSummary = ((completedChallenges ?? []) as any[])
       .map((c) => `- Défi "${c.title}" (${c.domain}) : "${c.ai_observations ?? ""}"`)
       .join("\n");
-    const existingTitles = (existing ?? []).map((c) => c.title);
+    const existingTitles = ((existing ?? []) as any[]).map((c) => c.title);
     const childQuestionNote = (latestChildQuestion?.child_question ?? "").trim();
 
     const timeAvailable = data.timeAvailable || "30 min";
@@ -3159,18 +3235,25 @@ export const getChildAISynthesis = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
 
-    const { data: child } = await supabase
+    // Décision #81 : le mentor (remplaçant du parent) lit aussi la synthèse Naya
+    // de ses enfants assignés — assertChildActor, lectures service role si mentor
+    // (la RLS ne rend pas les défis non-complétés).
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const actor = await assertChildActor(supabaseAdmin as any, userId, data.childId);
+    const db: any = actor === "mentor" ? (supabaseAdmin as any) : supabase;
+
+    const query = db
       .from("child_profiles")
       .select("*")
       .eq("id", data.childId)
-      .eq("user_id", userId)
       .is("access_locked_at", null)
-      .eq("is_active", true)
-      .single();
+      .eq("is_active", true);
+    if (actor === "owner") query.eq("user_id", userId);
+    const { data: child } = await query.single();
 
     if (!child) throw new Error("Profil introuvable");
 
-    const { data: completed } = await supabase
+    const { data: completed } = await db
       .from("challenges")
       .select("title, domain, ai_observations")
       .eq("child_id", data.childId)
@@ -3194,7 +3277,7 @@ export const getChildAISynthesis = createServerFn({ method: "POST" })
       return child.ai_synthesis;
     }
 
-    const completedSummary = completed
+    const completedSummary = ((completed ?? []) as any[])
       .map(
         (c) => `- Défi "${c.title}" (${c.domain}) : "${c.ai_observations ?? "Pas d'observation"}"`,
       )
@@ -3203,7 +3286,7 @@ export const getChildAISynthesis = createServerFn({ method: "POST" })
     // Décision 2026-08-05 : les intérêts déclarés sont des HYPOTHÈSES de travail — leur
     // confiance est dérivée à la lecture (complétions vs abandons, par groupe de talents).
     const interestHypotheses = await getInterestHypothesesSnapshot(
-      supabase as any,
+      db as any,
       data.childId,
     ).catch(() => null);
     const formattedInterests = formatChildInterestsPayload(child.interests, interestHypotheses);
@@ -3234,7 +3317,7 @@ Mets en lumière ses formes d'intelligence dominantes qui ressortent de ses acti
       // Only refresh the cache on a genuine success — a transient
       // quota/API failure must not lock in the fallback message as "the"
       // synthesis for the next 7 days.
-      await supabase
+      await db
         .from("child_profiles")
         .update({ ai_synthesis: synthesis, ai_synthesis_generated_at: new Date().toISOString() })
         .eq("id", data.childId);
@@ -3369,4 +3452,42 @@ NE mets PAS de guillemets autour de ta réponse.`;
       model: "claude-sonnet-5",
     });
     return tag.trim().slice(0, 150); // safety cap
+  });
+
+// ── Découverte d'intérêt (décision #81) ────────────────────────────────────
+// Le portfolio propose au parent de confirmer un centre d'intérêt détecté par
+// Naya (écriture child_profiles.interests). Le mentor — remplaçant du parent —
+// peut valider la même découverte sur ses enfants assignés (assertChildActor).
+// Le write passait auparavant par le client (RLS) ; ici il passe par le serveur
+// pour couvrir les deux acteurs sans dépendre de la RLS.
+const AcceptInterestInput = z.object({
+  childId: z.string().uuid(),
+  label: z.string().min(1).max(80),
+});
+
+export const acceptChildInterestDiscovery = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .validator((input: unknown) => AcceptInterestInput.parse(input))
+  .handler(async ({ data, context }) => {
+    const { supabase, userId } = context;
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const actor = await assertChildActor(supabaseAdmin as any, userId, data.childId);
+    const db: any = actor === "mentor" ? (supabaseAdmin as any) : supabase;
+
+    const { data: child } = await db
+      .from("child_profiles")
+      .select("id, interests")
+      .eq("id", data.childId)
+      .maybeSingle();
+    if (!child) throw new Error("Profil enfant introuvable.");
+
+    const interests = Array.from(new Set<string>([...(child.interests ?? []), data.label]));
+    const { data: updated, error } = await db
+      .from("child_profiles")
+      .update({ interests })
+      .eq("id", data.childId)
+      .select("interests")
+      .single();
+    if (error) throw new Error(error.message);
+    return { interests: updated.interests };
   });

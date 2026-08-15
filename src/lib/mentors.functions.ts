@@ -23,6 +23,7 @@ import { notifyUser } from "./app-notifications";
 import { MENTOR_SESSION_PAYOUT_XOF, PACK_SESSIONS } from "@/lib/pricing";
 import { resolveChildAccompaniment } from "@/lib/child-accompaniment";
 import { isLastPayableSession } from "@/lib/mentor-operator";
+import { assertChildActor } from "@/lib/child-actor";
 import { logMentorAction } from "@/lib/mentor-actions";
 import { punctualityFromSessions } from "@/lib/mentor-scheduling";
 import { processSessionContest } from "@/lib/mentor-contest";
@@ -1442,9 +1443,9 @@ export const getMentorDashboard = createServerFn({ method: "GET" })
 
     const { data: assignments, error } = await supabaseAdmin
       .from("mentors")
-      .select(
-        "child_profile_id, created_at, child_profiles(id, name, age, talents, city, interests, user_id)",
-      )
+      // Décision #81 : select(*) — l'accueil en mode mentor affiche les enfants
+      // assignés avec l'UI parent complète (xp, streak, avatar_color…).
+      .select("child_profile_id, created_at, child_profiles(*)")
       .eq("mentor_user_id", userId)
       .is("removed_at", null);
     if (error) throw new Error(error.message);
@@ -1627,6 +1628,58 @@ export const getMentorDashboard = createServerFn({ method: "GET" })
           challenges: (challenges ?? []).filter((c) => c.child_id === a.child_profile_id),
         };
       }),
+    };
+  });
+
+// ── Vue enfant assigné (décision #81) ──────────────────────────────────────
+// L'accueil et les pages enfant (Défis, Portfolio, Quête, Guilde) en mode mentor
+// affichent les enfants ASSIGNÉS : cette fn ramène le profil complet + les défis
+// + le cycle d'hypothèse ouvert d'UN enfant dont l'utilisateur est propriétaire
+// OU mentor assigné actif (assertChildActor). Service role : la RLS ne rend pas
+// les défis non-complétés ni les cycles d'hypothèses aux mentors.
+const MentorChildViewInput = z.object({ childId: z.string().uuid() });
+
+export const getMentorChildView = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .validator((input: unknown) => MentorChildViewInput.parse(input))
+  .handler(async ({ data, context }) => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const userId = (context as any).claims?.sub;
+
+    // Autorisation : parent propriétaire OU mentor assigné actif (jamais banni/suspendu).
+    await assertChildActor(supabaseAdmin as any, userId, data.childId);
+
+    const [childRes, challengesRes, cycleRes] = await Promise.all([
+      supabaseAdmin
+        .from("child_profiles")
+        .select("*")
+        .eq("id", data.childId)
+        .maybeSingle(),
+      (supabaseAdmin as any)
+        .from("challenges")
+        .select("*")
+        .eq("child_id", data.childId)
+        .is("deleted_at", null)
+        .order("created_at", { ascending: false })
+        .limit(200),
+      (supabaseAdmin as any)
+        .from("hypothesis_cycles")
+        .select("id, parent_narrative")
+        .eq("child_id", data.childId)
+        .eq("status", "open")
+        .not("parent_narrative", "is", null)
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .maybeSingle(),
+    ]);
+
+    if (childRes.error) throw new Error(childRes.error.message);
+    if (!childRes.data) throw new Error("Profil enfant introuvable.");
+
+    return {
+      child: childRes.data,
+      challenges: challengesRes.data ?? [],
+      openCycle: cycleRes.data ?? null,
     };
   });
 
