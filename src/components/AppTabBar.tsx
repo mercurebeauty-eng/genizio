@@ -1,17 +1,18 @@
 import { Link } from "@tanstack/react-router";
 import { Home, Trophy, Layers, Users, Settings } from "lucide-react";
 import { useSession } from "@/hooks/use-session";
+import { isMentorMode } from "@/lib/mentor-mode";
 
 type AppTabBarProps = {
   profileId: string;
 };
 
 export function AppTabBar({ profileId }: AppTabBarProps) {
-  // Mode actif (décision #79) : en mode Mentor, l'onglet « Mentor » (le hub de
+  // Mode actif (décision #79-81) : en mode Mentor, l'onglet « Mentor » (le hub de
   // l'enfant) disparaît — on ne se suit pas soi-même. Le mode est un pur
   // commutateur stocké dans user_metadata, changé depuis Réglages → Mode Mentor.
   const { session } = useSession();
-  const mentorMode = session?.user.user_metadata?.mode === "mentor";
+  const mentorMode = isMentorMode(session);
 
   // Boutique retirée de la nav principale : aucun autre point d'entrée dans l'app ne pointe
   // vers /boutique (le flux de commande de kit est déjà intégré directement dans la carte de

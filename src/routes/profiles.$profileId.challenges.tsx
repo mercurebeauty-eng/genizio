@@ -51,7 +51,8 @@ import {
   TALENT_SUBFORM_TO_DOMAIN,
   ACADEMIC_DOMAIN_LABELS,
 } from "@/lib/challenges.functions";
-import { getChildMentorInfo } from "@/lib/mentors.functions";
+import { getChildMentorInfo, getMentorChildView } from "@/lib/mentors.functions";
+import { isMentorMode } from "@/lib/mentor-mode";
 import { listMyNotifications, markNotificationsRead } from "@/lib/notifications.functions";
 import { internationalLevelLabel, lastAcademicLevelByDomain } from "@/lib/academic-levels";
 import {
@@ -215,6 +216,11 @@ function ChallengesPage() {
   const routeNavigate = Route.useNavigate();
 
   const [viewMode, setViewMode] = useState<"parent" | "child">(search.mode || "parent");
+  // Univers Mentor (décision #81) : le mentor voit la vue PARENT (il agit comme
+  // le remplaçant du parent) — le mode enfant (valider sa propre preuve) reste
+  // une action de l'enfant, sans équivalent mentor.
+  const mentorMode = isMentorMode(session);
+  const effectiveViewMode: "parent" | "child" = mentorMode ? "parent" : viewMode;
   // setViewMode seul ne changeait que l'état React local — un rechargement de page (courant sur
   // le device cible réel : Android d'entrée de gamme, PWA en arrière-plan) repassait donc
   // silencieusement en mode Parent, exposant le dashboard complet à l'enfant à qui on venait de
@@ -374,6 +380,7 @@ function ChallengesPage() {
   const getAcademicGaps = useServerFn(getAcademicGapsForChild);
   const assignSingle = useServerFn(assignTemplateChallenge);
   const initializeOrderPaymentFn = useServerFn(initializeOrderPayment);
+  const getMentorChildViewFn = useServerFn(getMentorChildView);
 
   // Gate UI "accès mensuel expiré" (décision 2026-08-05) : la génération de NOUVEAUX défis
   // est bloquée côté client ET côté serveur (assertChildAccessActive) ; le portfolio,
@@ -500,6 +507,8 @@ function ChallengesPage() {
       setCurrentGeneratedChallenge(null);
       await refetch();
 
+      // Commande de kit = acte d'achat de la famille — jamais proposé au mentor.
+      if (mentorMode) return;
       const matching = activeProducts.filter((p) =>
         p.material_tags?.some((t: string) => currentGeneratedChallenge.material_tags?.includes(t)),
       );
@@ -561,6 +570,18 @@ function ChallengesPage() {
     if (!userId) return;
     setFetching(true);
     try {
+      if (mentorMode) {
+        // Univers Mentor (décision #81) : enfant + défis via getMentorChildView
+        // (service role — la RLS ne rend pas les défis non-complétés aux mentors).
+        // Pas de statut d'accès famille : l'assignation est la preuve d'accompagnement.
+        const view = await getMentorChildViewFn({ data: { childId: profileId } });
+        setChild((view.child as Child) ?? null);
+        setAccessState(null);
+        const list = (view.challenges ?? []) as Challenge[];
+        setChallenges(list);
+        return;
+      }
+
       const [c, ch, accessRes] = await Promise.all([
         supabase
           .from("child_profiles")
@@ -912,33 +933,37 @@ function ChallengesPage() {
       <main className="mx-auto max-w-6xl px-6 py-10 md:flex ">
         <AppTabBar profileId={profileId} />
         <div className="min-w-0 flex-1">
-          {/* Mode Switcher Header Toggle */}
-          <div className="mb-6 flex justify-center">
-            <div className="inline-flex rounded-2xl bg-stone-100 p-1.5 border border-ink/10 shadow-inner">
-              <button
-                type="button"
-                onClick={() => setMode("parent")}
-                className={`px-5 py-2.5 rounded-xl text-sm font-extrabold transition-all cursor-pointer flex items-center gap-2 ${
-                  viewMode === "parent"
-                    ? "bg-white text-ink shadow-md border border-ink/10"
-                    : "text-ink/60 hover:text-ink"
-                }`}
-              >
-                <span>Espace Parent 🧑‍🏫</span>
-              </button>
-              <button
-                type="button"
-                onClick={() => setMode("child")}
-                className={`px-5 py-2.5 rounded-xl text-sm font-extrabold transition-all cursor-pointer flex items-center gap-2 ${
-                  viewMode === "child"
-                    ? "bg-brand text-white shadow-md"
-                    : "text-ink/60 hover:text-ink"
-                }`}
-              >
-                <span>Mode Enfant 🎮</span>
-              </button>
+          {/* Mode Switcher Header Toggle — masqué en mode mentor : le mentor voit
+              la vue parent (il agit comme le remplaçant du parent), le mode enfant
+              reste une action de l'enfant. */}
+          {!mentorMode && (
+            <div className="mb-6 flex justify-center">
+              <div className="inline-flex rounded-2xl bg-stone-100 p-1.5 border border-ink/10 shadow-inner">
+                <button
+                  type="button"
+                  onClick={() => setMode("parent")}
+                  className={`px-5 py-2.5 rounded-xl text-sm font-extrabold transition-all cursor-pointer flex items-center gap-2 ${
+                    viewMode === "parent"
+                      ? "bg-white text-ink shadow-md border border-ink/10"
+                      : "text-ink/60 hover:text-ink"
+                  }`}
+                >
+                  <span>Espace Parent 🧑‍🏫</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setMode("child")}
+                  className={`px-5 py-2.5 rounded-xl text-sm font-extrabold transition-all cursor-pointer flex items-center gap-2 ${
+                    viewMode === "child"
+                      ? "bg-brand text-white shadow-md"
+                      : "text-ink/60 hover:text-ink"
+                  }`}
+                >
+                  <span>Mode Enfant 🎮</span>
+                </button>
+              </div>
             </div>
-          </div>
+          )}
 
           {/* Gate accès mensuel (décision 2026-08-05) : à expiration, la génération de
               nouveaux défis est bloquée ; les défis déjà émis restent jouables et visibles. */}
@@ -1080,7 +1105,7 @@ function ChallengesPage() {
             </div>
           )}
 
-          {viewMode === "parent" ? (
+          {effectiveViewMode === "parent" ? (
             <>
               {/* Child Header Profile */}
               <div className="mb-10 rounded-3xl border border-ink/10 bg-white p-6 shadow-xl md:p-8 flex flex-col gap-6  md:items-center md:justify-between">
@@ -1146,12 +1171,14 @@ function ChallengesPage() {
                       </>
                     )}
                   </button>
-                  <button
-                    onClick={() => setMode("child")}
-                    className="rounded-2xl border border-ink/10 bg-sky px-5 py-3 text-sm font-bold text-ink shadow-xl hover:-translate-y-0.5 active:translate-y-0 transition-all flex items-center gap-2 cursor-pointer"
-                  >
-                    Mode Enfant 🎮
-                  </button>
+                  {!mentorMode && (
+                    <button
+                      onClick={() => setMode("child")}
+                      className="rounded-2xl border border-ink/10 bg-sky px-5 py-3 text-sm font-bold text-ink shadow-xl hover:-translate-y-0.5 active:translate-y-0 transition-all flex items-center gap-2 cursor-pointer"
+                    >
+                      Mode Enfant 🎮
+                    </button>
+                  )}
                 </div>
               </div>
 
@@ -1332,7 +1359,7 @@ function ChallengesPage() {
                             </p>
                           </div>
                           <div className="flex items-center gap-2 shrink-0">
-                            {recommendation.recommendationType === "EXPLORATION" && (
+                            {recommendation.recommendationType === "EXPLORATION" && !mentorMode && (
                               <button
                                 onClick={handleRerollRecommendation}
                                 disabled={isRerolling}
@@ -1577,12 +1604,14 @@ function ChallengesPage() {
                         </div>
 
                         <div className="mb-6">
-                          <KitSuggestion
-                            childId={profileId}
-                            materialTags={currentGeneratedChallenge.material_tags}
-                            challengeTitle={currentGeneratedChallenge.title}
-                            childName={child.name}
-                          />
+                          {!mentorMode && (
+                            <KitSuggestion
+                              childId={profileId}
+                              materialTags={currentGeneratedChallenge.material_tags}
+                              challengeTitle={currentGeneratedChallenge.title}
+                              childName={child.name}
+                            />
+                          )}
                         </div>
 
                         <div className="flex gap-2 border-t-[3px] border-ink pt-4">
@@ -1702,13 +1731,14 @@ function ChallengesPage() {
                                 onNotCompleted={(reason) => openNotCompletedDialog(c, reason)}
                                 onProgress={(p) => setProgress(c.id, p)}
                                 onNotes={(n) => saveNotes(c.id, n)}
-                                onDelete={() => openDeleteDialog(c.id)}
+                                onDelete={mentorMode ? undefined : () => openDeleteDialog(c.id)}
                                 onValidated={async () => {
                                   await refetch();
                                   await loadAISynthesis();
                                 }}
                                 mentorActive={!!mentorInfo}
                                 onReopen={() => handleReopen(c)}
+                                isMentorMode={mentorMode}
                               />
                             ))}
                           </div>
@@ -1980,6 +2010,7 @@ function ChallengeCard({
   hasKit,
   mentorActive,
   onReopen,
+  isMentorMode,
 }: {
   c: Challenge;
   childId: string;
@@ -1990,9 +2021,12 @@ function ChallengeCard({
   onNotCompleted: (reason: string) => void;
   onProgress: (p: number) => void;
   onNotes: (n: string) => void;
-  onDelete: () => void;
+  /** Absent en mode mentor : la suppression reste un acte réservé au parent. */
+  onDelete?: () => void;
   onValidated: () => void;
   hasKit?: boolean;
+  /** Mode mentor (décision #81) : masque les suggestions d'achat de kit. */
+  isMentorMode?: boolean;
   /** Mode accompagnement (décision #74) : le parent peut réouvrir un défi complété. */
   mentorActive?: boolean;
   onReopen?: () => void;
@@ -2352,13 +2386,15 @@ function ChallengeCard({
           </div>
         )}
 
-        <KitSuggestion
-          childId={childId}
-          challengeId={c.id}
-          materialTags={c.material_tags}
-          challengeTitle={c.title}
-          childName={childName}
-        />
+        {!isMentorMode && (
+          <KitSuggestion
+            childId={childId}
+            challengeId={c.id}
+            materialTags={c.material_tags}
+            challengeTitle={c.title}
+            childName={childName}
+          />
+        )}
 
         {/* Parent Notes */}
         <div className="space-y-3 mb-6">
@@ -2455,13 +2491,15 @@ function ChallengeCard({
         )}
 
         <div className="flex justify-end pt-5 border-t border-border mt-6">
-          <button
-            onClick={onDelete}
-            className="inline-flex items-center gap-1.5 rounded-full border border-border bg-white px-4 py-2 text-[13px] font-bold text-red-600 hover:bg-red-50 transition-all cursor-pointer"
-          >
-            <Trash2 className="size-4" />
-            Supprimer ce défi
-          </button>
+          {onDelete && (
+            <button
+              onClick={onDelete}
+              className="inline-flex items-center gap-1.5 rounded-full border border-border bg-white px-4 py-2 text-[13px] font-bold text-red-600 hover:bg-red-50 transition-all cursor-pointer"
+            >
+              <Trash2 className="size-4" />
+              Supprimer ce défi
+            </button>
+          )}
         </div>
       </div>
     </div>

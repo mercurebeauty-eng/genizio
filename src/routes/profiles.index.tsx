@@ -3,6 +3,9 @@ import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useSession } from "@/hooks/use-session";
 import { useFamilyCoverage } from "@/hooks/use-family-coverage";
+import { useServerFn } from "@tanstack/react-start";
+import { getMentorDashboard } from "@/lib/mentors.functions";
+import { isMentorMode } from "@/lib/mentor-mode";
 import { AccessUpgradeModal } from "@/components/settings/AccessUpgradeModal";
 import {
   Phone,
@@ -89,6 +92,17 @@ function DashboardPage() {
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
   const [activeProducts, setActiveProducts] = useState<any[]>([]);
 
+  // Univers Mentor (décision #81) : en mode mentor, l'accueil liste les enfants
+  // ASSIGNÉS (getMentorDashboard) — plus jamais les profils du compte. Le mode
+  // vient de user_metadata.mode, le thème indigo/violet est posé dans __root.
+  const mentorMode = isMentorMode(session);
+  const getDashboardFn = useServerFn(getMentorDashboard);
+  // Défis des enfants assignés (payload de getMentorDashboard) — le fetch client
+  // des défis est bloqué par la RLS pour un mentor (défis non-complétés).
+  const [mentorChallengesByChild, setMentorChallengesByChild] = useState<
+    Record<string, Challenge[]>
+  >({});
+
   // Limite de CRÉATION (V4, Vague A) : calculée côté serveur depuis family_coverages
   // (creationLimit, miroir du trigger V10 — migration 20260814200000). familyCovered/
   // campaignCovered/coveredUntil restent pour la modale AccessUpgradeModal.
@@ -130,10 +144,13 @@ function DashboardPage() {
   const [savingRelationship, setSavingRelationship] = useState(false);
 
   useEffect(() => {
+    // Onboarding parent uniquement — le mentor (remplaçant du parent) ne passe
+    // pas par le parcours « votre lien avec l'enfant / numéro de téléphone ».
+    if (mentorMode) return;
     if (session && !session.user.user_metadata?.relationship_type) {
       setShowRelationshipModal(true);
     }
-  }, [session]);
+  }, [session, mentorMode]);
 
   const handleSaveRelationship = async () => {
     if (!relationshipType) return;
@@ -161,6 +178,7 @@ function DashboardPage() {
   useEffect(() => {
     // Séquencé après le choix du lien (relationship_type) : évite d'empiler les deux modales
     // de première connexion en même temps.
+    if (mentorMode) return;
     if (
       session &&
       session.user.user_metadata?.relationship_type &&
@@ -168,7 +186,7 @@ function DashboardPage() {
     ) {
       setShowPhoneModal(true);
     }
-  }, [session]);
+  }, [session, mentorMode]);
 
   useEffect(() => {
     if (showPhoneModal && session?.user?.user_metadata?.phone) {
@@ -215,12 +233,44 @@ function DashboardPage() {
   }, [session, loading, navigate, openCreateOnLoad]);
 
   useEffect(() => {
-    if (!fetching && openCreateOnLoad) setCreating(true);
-  }, [fetching, openCreateOnLoad]);
+    if (!fetching && openCreateOnLoad && !mentorMode) setCreating(true);
+  }, [fetching, openCreateOnLoad, mentorMode]);
 
   const refetch = async () => {
     if (!session) return;
     setFetching(true);
+
+    // Univers Mentor (décision #81) : l'accueil affiche les enfants ASSIGNÉS et
+    // leurs défis (payload de getMentorDashboard) — jamais les profils du compte.
+    if (mentorMode) {
+      try {
+        const res = await getDashboardFn();
+        const kids = ((res as any).children ?? []) as Array<
+          ChildProfile & { challenges?: Challenge[] }
+        >;
+        const list = kids.map(({ challenges: _ch, ...child }) => child as ChildProfile);
+        setProfiles(list);
+        const map: Record<string, Challenge[]> = {};
+        for (const k of kids) map[k.id] = k.challenges ?? [];
+        setMentorChallengesByChild(map);
+        // Garde le sélecteur sur un enfant toujours assigné (pas de localStorage
+        // en mode mentor : la sélection appartient au contexte de suivi).
+        setSelectedId((prev) => {
+          if (prev && list.some((p) => p.id === prev)) return prev;
+          return list[0]?.id ?? null;
+        });
+        return;
+      } catch (err) {
+        console.error("Erreur de chargement du dashboard mentor:", err);
+        setProfiles([]);
+        setMentorChallengesByChild({});
+        setSelectedId(null);
+        return;
+      } finally {
+        setFetching(false);
+      }
+    }
+
     const { data } = await supabase
       .from("child_profiles")
       .select("*")
@@ -255,6 +305,13 @@ function DashboardPage() {
   }, [session, selectedId]);
 
   useEffect(() => {
+    // Univers Mentor : les défis viennent du payload de getMentorDashboard (le
+    // fetch client des défis non-complétés est bloqué par la RLS pour un mentor).
+    if (mentorMode) {
+      setChallenges(mentorChallengesByChild[selectedId ?? ""] ?? []);
+      setFetchingChallenges(false);
+      return;
+    }
     if (!selectedId) {
       setChallenges([]);
       return;
@@ -295,7 +352,8 @@ function DashboardPage() {
     return () => {
       isMounted = false;
     };
-  }, [selectedId]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedId, mentorMode, mentorChallengesByChild]);
 
   const selected = profiles.find((p) => p.id === selectedId) ?? null;
   const activeChallenge = useMemo(() => getActiveChallenge(challenges), [challenges]);
@@ -325,7 +383,7 @@ function DashboardPage() {
           {!selected && (
             <div className="mb-6">
               <h1 className="font-display text-balance text-3xl font-extrabold md:text-4xl">
-                Mes profils enfants
+                {mentorMode ? "Enfants assignés" : "Mes profils enfants"}
               </h1>
             </div>
           )}
@@ -334,13 +392,32 @@ function DashboardPage() {
             <GenizioLoader className="py-8" />
           ) : profiles.length === 0 ? (
             <div className="rounded-3xl border border-dashed border-ink/20 bg-white/60 p-12 text-center shadow-md backdrop-blur-md">
-              <p className="mb-4 text-ink/60">Aucun profil pour l'instant. Créez le premier.</p>
-              <button
-                onClick={() => setCreating(true)}
-                className="press-brand rounded-2xl bg-brand px-6 py-3 text-sm font-bold text-white cursor-pointer"
-              >
-                + Nouveau profil
-              </button>
+              {mentorMode ? (
+                <>
+                  <p className="mb-4 text-ink/60">
+                    Aucun enfant ne vous est assigné pour le moment. Un administrateur Génizio
+                    doit vous assigner des profils pour que vous puissiez les accompagner.
+                  </p>
+                  <Link
+                    to="/mentor"
+                    className="press-brand rounded-2xl bg-brand px-6 py-3 text-sm font-bold text-white cursor-pointer inline-block"
+                  >
+                    Ouvrir l'espace Mentor
+                  </Link>
+                </>
+              ) : (
+                <>
+                  <p className="mb-4 text-ink/60">
+                    Aucun profil pour l'instant. Créez le premier.
+                  </p>
+                  <button
+                    onClick={() => setCreating(true)}
+                    className="press-brand rounded-2xl bg-brand px-6 py-3 text-sm font-bold text-white cursor-pointer"
+                  >
+                    + Nouveau profil
+                  </button>
+                </>
+              )}
             </div>
           ) : (
             <>
@@ -446,14 +523,16 @@ function DashboardPage() {
                                   </DropdownMenuItem>
                                 ))}
                                 <DropdownMenuSeparator className="my-1 border-border/60" />
-                                <DropdownMenuItem
-                                  className="rounded-xl py-2.5 px-3 cursor-pointer font-bold text-brand outline-none focus:bg-brand/5"
-                                  onClick={() =>
-                                    atQuota ? setShowUpgradeModal(true) : setCreating(true)
-                                  }
-                                >
-                                  <Plus className="size-4 mr-2" /> Nouveau profil
-                                </DropdownMenuItem>
+                                {!mentorMode && (
+                                  <DropdownMenuItem
+                                    className="rounded-xl py-2.5 px-3 cursor-pointer font-bold text-brand outline-none focus:bg-brand/5"
+                                    onClick={() =>
+                                      atQuota ? setShowUpgradeModal(true) : setCreating(true)
+                                    }
+                                  >
+                                    <Plus className="size-4 mr-2" /> Nouveau profil
+                                  </DropdownMenuItem>
+                                )}
                               </DropdownMenuContent>
                             </DropdownMenu>
                           </div>

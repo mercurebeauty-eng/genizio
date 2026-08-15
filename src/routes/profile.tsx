@@ -18,7 +18,6 @@ import {
   LogOut,
   Eye,
   LayoutDashboard,
-  ShoppingBag,
   Building2,
 } from "lucide-react";
 import { ConsentLedger } from "@/components/settings/ConsentLedger";
@@ -30,6 +29,7 @@ import { RELATIONSHIP_TYPES } from "@/lib/relationship-types";
 import { GenizioLoader } from "@/components/GenizioLoader";
 import { checkAdminStatus } from "@/lib/admin.functions";
 import { checkIsCampaignManager } from "@/lib/campaigns.functions";
+import { isMentorMode } from "@/lib/mentor-mode";
 import {
   checkIsActiveMentor,
   activateMentorCode,
@@ -44,6 +44,11 @@ export const Route = createFileRoute("/profile")({
 function ProfilePage() {
   const { session, loading } = useSession();
   const navigate = useNavigate();
+
+  // Univers Mentor (décision #81) : la carte résumé bascule « Compte Mentor »
+  // avec le nombre d'enfants assignés ; les actions parent (gérer les profils,
+  // lien avec l'enfant) sont masquées.
+  const mentorMode = isMentorMode(session);
 
   const [phoneNumber, setPhoneNumber] = useState("");
   const [selectedCountry, setSelectedCountry] = useState(COUNTRIES[0]);
@@ -81,6 +86,7 @@ function ProfilePage() {
     certified: boolean;
     status: string;
     mode: "parent" | "mentor";
+    assignedCount?: number;
   } | null>(null);
   const [switchingMode, setSwitchingMode] = useState(false);
 
@@ -287,22 +293,35 @@ function ProfilePage() {
                 session.user.user_metadata?.name ||
                 session.user.email}
             </h2>
-            <p className="text-xs text-ink/60 font-semibold mt-1">Compte Parent</p>
+            <p className="text-xs text-ink/60 font-semibold mt-1">
+              {mentorMode ? "Compte Mentor" : "Compte Parent"}
+            </p>
             <div className="mt-6 border-t border-ink/5 pt-6 text-left space-y-4">
-              <div className="flex items-center justify-between text-sm">
-                <span className="font-medium text-ink/60 flex items-center gap-2">
-                  <Users className="size-4 text-brand" /> Enfants
-                </span>
-                <span className="font-bold">{childCount}</span>
-              </div>
-              <div className="flex items-center justify-between text-sm">
-                <span className="font-medium text-ink/60 flex items-center gap-2">
-                  <Check className="size-4 text-emerald-600" /> Défis complétés
-                </span>
-                <span className="font-bold text-emerald-600">
-                  {challengeStats.completed} / {challengeStats.total}
-                </span>
-              </div>
+              {mentorMode ? (
+                <div className="flex items-center justify-between text-sm">
+                  <span className="font-medium text-ink/60 flex items-center gap-2">
+                    <Users className="size-4 text-brand" /> Enfants assignés
+                  </span>
+                  <span className="font-bold">{mentorStatus?.assignedCount ?? 0}</span>
+                </div>
+              ) : (
+                <>
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="font-medium text-ink/60 flex items-center gap-2">
+                      <Users className="size-4 text-brand" /> Enfants
+                    </span>
+                    <span className="font-bold">{childCount}</span>
+                  </div>
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="font-medium text-ink/60 flex items-center gap-2">
+                      <Check className="size-4 text-emerald-600" /> Défis complétés
+                    </span>
+                    <span className="font-bold text-emerald-600">
+                      {challengeStats.completed} / {challengeStats.total}
+                    </span>
+                  </div>
+                </>
+              )}
               <div className="flex items-center justify-between text-sm">
                 <span className="font-medium text-ink/60 flex items-center gap-2">
                   <Calendar className="size-4 text-amber-600" /> Créé le
@@ -313,13 +332,15 @@ function ProfilePage() {
               </div>
             </div>
             <div className="mt-6 border-t border-ink/5 pt-4 space-y-2">
-              <Link
-                to="/profiles/manage"
-                className="press-white flex w-full items-center justify-center gap-2 rounded-xl border border-ink/10 bg-white px-4 py-2.5 text-xs font-bold text-ink"
-              >
-                <Users className="size-3.5 text-brand" />
-                Gérer mes profils
-              </Link>
+              {!mentorMode && (
+                <Link
+                  to="/profiles/manage"
+                  className="press-white flex w-full items-center justify-center gap-2 rounded-xl border border-ink/10 bg-white px-4 py-2.5 text-xs font-bold text-ink"
+                >
+                  <Users className="size-3.5 text-brand" />
+                  Gérer mes profils
+                </Link>
+              )}
               <button
                 onClick={handleSignOut}
                 className="flex w-full items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-xs font-bold text-red-600 hover:bg-red-50 cursor-pointer"
@@ -474,18 +495,9 @@ function ProfilePage() {
                     >
                       <LayoutDashboard className="size-4" /> Admin Dashboard
                     </Link>
-                    <Link
-                      to="/admin/products"
-                      className="flex items-center gap-2.5 rounded-xl px-3 py-2.5 text-sm font-bold text-purple-600 hover:bg-purple-50"
-                    >
-                      <ShoppingBag className="size-4" /> Admin Kits
-                    </Link>
-                    <Link
-                      to="/admin/mentors"
-                      className="flex items-center gap-2.5 rounded-xl px-3 py-2.5 text-sm font-bold text-purple-600 hover:bg-purple-50"
-                    >
-                      <Users className="size-4" /> Admin Mentors
-                    </Link>
+                    {/* Raccourcis Admin Kits / Admin Mentors retirés (décision #82) :
+                        la grille d'accueil de l'Admin OS les rend déjà accessibles —
+                        ces doublons n'apportaient rien dans les Réglages. */}
                   </>
                 )}
               </div>
@@ -498,45 +510,47 @@ function ProfilePage() {
           {/* Family subscription (self-service) */}
           <SubscriptionCard />
 
-          {/* Relationship type */}
-          <div className="rounded-3xl border border-ink/10 bg-white p-6 shadow-xl md:p-8">
-            <h3 className="font-display text-balance text-lg font-bold flex items-center gap-2 mb-2">
-              <Users className="size-5 text-brand" />
-              Votre lien avec l'enfant
-            </h3>
-            <p className="text-xs text-ink/60 leading-relaxed mb-6">
-              Parent, tuteur, éducateur d'une structure d'accueil... Modifiable à tout moment.
-            </p>
-            <div className="flex flex-col gap-3 sm:flex-row">
-              <select
-                value={relationshipType}
-                onChange={(e) => setRelationshipType(e.target.value)}
-                className="flex-1 rounded-xl border border-ink/10 bg-white px-4 py-3 text-sm font-bold outline-none focus:ring-2 focus:ring-brand cursor-pointer shadow-sm"
-              >
-                <option value="" disabled>
-                  Sélectionnez votre lien
-                </option>
-                {RELATIONSHIP_TYPES.map((r) => (
-                  <option key={r.value} value={r.value}>
-                    {r.label}
+          {/* Relationship type — masqué en mode mentor (sémantique parent) */}
+          {!mentorMode && (
+            <div className="rounded-3xl border border-ink/10 bg-white p-6 shadow-xl md:p-8">
+              <h3 className="font-display text-balance text-lg font-bold flex items-center gap-2 mb-2">
+                <Users className="size-5 text-brand" />
+                Votre lien avec l'enfant
+              </h3>
+              <p className="text-xs text-ink/60 leading-relaxed mb-6">
+                Parent, tuteur, éducateur d'une structure d'accueil... Modifiable à tout moment.
+              </p>
+              <div className="flex flex-col gap-3 sm:flex-row">
+                <select
+                  value={relationshipType}
+                  onChange={(e) => setRelationshipType(e.target.value)}
+                  className="flex-1 rounded-xl border border-ink/10 bg-white px-4 py-3 text-sm font-bold outline-none focus:ring-2 focus:ring-brand cursor-pointer shadow-sm"
+                >
+                  <option value="" disabled>
+                    Sélectionnez votre lien
                   </option>
-                ))}
-              </select>
-              <button
-                type="button"
-                onClick={handleSaveRelationshipType}
-                disabled={savingRelationship || !relationshipType}
-                className="press-brand rounded-xl bg-brand px-6 py-2.5 text-sm font-bold text-white disabled:opacity-50 flex items-center justify-center gap-2"
-              >
-                {savingRelationship ? (
-                  <Loader2 className="size-4 animate-spin" />
-                ) : (
-                  <Check className="size-4" />
-                )}
-                <span>Enregistrer</span>
-              </button>
+                  {RELATIONSHIP_TYPES.map((r) => (
+                    <option key={r.value} value={r.value}>
+                      {r.label}
+                    </option>
+                  ))}
+                </select>
+                <button
+                  type="button"
+                  onClick={handleSaveRelationshipType}
+                  disabled={savingRelationship || !relationshipType}
+                  className="press-brand rounded-xl bg-brand px-6 py-2.5 text-sm font-bold text-white disabled:opacity-50 flex items-center justify-center gap-2"
+                >
+                  {savingRelationship ? (
+                    <Loader2 className="size-4 animate-spin" />
+                  ) : (
+                    <Check className="size-4" />
+                  )}
+                  <span>Enregistrer</span>
+                </button>
+              </div>
             </div>
-          </div>
+          )}
 
           {/* Phone Settings */}
           <div className="rounded-3xl border border-ink/10 bg-white p-6 shadow-xl md:p-8">

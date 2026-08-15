@@ -2,6 +2,7 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useSession } from "@/hooks/use-session";
+import { isMentorMode } from "@/lib/mentor-mode";
 import { useFamilyCoverage } from "@/hooks/use-family-coverage";
 import { AccessUpgradeModal } from "@/components/settings/AccessUpgradeModal";
 import { AppHeader } from "@/components/AppHeader";
@@ -38,6 +39,13 @@ function ManageProfilesPage() {
   useEffect(() => {
     if (!loading && !session) navigate({ to: "/auth", replace: true });
   }, [session, loading, navigate]);
+
+  // Univers Mentor (décision #81) : le mentor ne crée ni ne gère les profils —
+  // il est le remplaçant du parent, pas le propriétaire. Redirection vers l'accueil.
+  const mentorMode = isMentorMode(session);
+  useEffect(() => {
+    if (mentorMode) navigate({ to: "/profiles", replace: true });
+  }, [mentorMode, navigate]);
 
   // Note (2026-08-14) : le refresh unique du token (claims quota_override)
   // est désormais assuré par le store singleton de useSession() au premier

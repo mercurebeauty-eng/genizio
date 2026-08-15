@@ -5,6 +5,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { useSession } from "@/hooks/use-session";
 import { updateChallenge, validateChallengeProof } from "@/lib/challenges.functions";
 import { generateJustInTimeHint } from "@/lib/naya-hint.functions";
+import { getMentorChildView } from "@/lib/mentors.functions";
+import { isMentorMode } from "@/lib/mentor-mode";
 import { getActiveChallenge, ChallengeLike } from "@/lib/active-challenge";
 import {
   ArrowLeft,
@@ -75,6 +77,10 @@ function QuestPage() {
   const { session, loading } = useSession();
   const navigate = useNavigate();
   const updateChallengeFn = useServerFn(updateChallenge);
+  // Univers Mentor (décision #81) : la quête d'un enfant assigné reste lisible
+  // par le mentor (remplaçant du parent) — chargement via getMentorChildView.
+  const mentorMode = isMentorMode(session);
+  const getMentorChildViewFn = useServerFn(getMentorChildView);
 
   const [child, setChild] = useState<Child | null>(null);
   const [challenges, setChallenges] = useState<Challenge[]>([]);
@@ -153,6 +159,12 @@ function QuestPage() {
     if (!userId) return;
     setFetching(true);
     try {
+      if (mentorMode) {
+        const view = await getMentorChildViewFn({ data: { childId: profileId } });
+        setChild((view.child as Child) ?? null);
+        setChallenges((view.challenges ?? []) as Challenge[]);
+        return;
+      }
       const [c, ch] = await Promise.all([
         supabase
           .from("child_profiles")

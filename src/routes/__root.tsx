@@ -11,6 +11,7 @@ import {
 import { useEffect, type ReactNode } from "react";
 
 import appCss from "../styles.css?url";
+import { useSession } from "../hooks/use-session";
 import {
   SITE_NAME_LONG,
   SITE_DESCRIPTION,
@@ -223,11 +224,20 @@ function RootComponent() {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const fullBleed = isFullBleedRoute(pathname);
 
+  // Univers Mentor (décision #81) : data-mode sur <html> → le bloc
+  // :root[data-mode="mentor"] de styles.css rethème toute l'app (palette
+  // indigo/violet + fond de page). Client-only : le mode vit dans la session.
+  const { session } = useSession();
+  const mentorMode = session?.user.user_metadata?.mode === "mentor";
+  useEffect(() => {
+    document.documentElement.dataset.mode = mentorMode ? "mentor" : "parent";
+  }, [mentorMode]);
+
   if (fullBleed) {
     const internal = isInternalTool(pathname);
     return (
       <QueryClientProvider client={queryClient}>
-        <div className="min-h-dvh bg-[radial-gradient(120%_90%_at_15%_0%,#f4eee1,#e7ddca)] font-body">
+        <div className="min-h-dvh bg-[var(--page-bg)] font-body">
           <Outlet />
         </div>
         <Toaster />
@@ -241,7 +251,7 @@ function RootComponent() {
 
   return (
     <QueryClientProvider client={queryClient}>
-      <div className="min-h-dvh bg-[radial-gradient(120%_90%_at_15%_0%,#f4eee1,#e7ddca)] flex justify-center items-center py-0 md:py-8 px-0 md:px-4 relative overflow-x-hidden font-body">
+      <div className="min-h-dvh bg-[var(--page-bg)] flex justify-center items-center py-0 md:py-8 px-0 md:px-4 relative overflow-x-hidden font-body">
         {/* Ambient background glowing blur circles */}
         <div className="hidden md:block absolute -top-24 -left-20 size-[520px] bg-brand-glow/20 blur-3xl pointer-events-none rounded-full" />
         <div className="hidden md:block absolute -bottom-32 -right-24 size-[560px] bg-sky/20 blur-3xl pointer-events-none rounded-full" />

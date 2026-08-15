@@ -2,6 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { generateDiscriminantChallenge, generateSupportRetestChallenge } from "@/lib/hypotheses.functions";
 import { getChildAccessStatus } from "@/lib/child-access";
+import { assertChildActor } from "@/lib/child-actor";
 import { getInterestHypothesesSnapshot } from "@/lib/interest-confidence";
 import { callClaude, finalizeChallenge, PROOF_MODE_INSTRUCTION, ACADEMIC_REFERENTIAL_INSTRUCTION, ACADEMIC_SECRET_INSTRUCTION, ACADEMIC_DOMAIN_LABELS, STEPS_INSTRUCTION, INTELLIGENCES_FIELD_INSTRUCTION, TRAIT_SUBFORM_INSTRUCTION, formatChildInterestsPayload, extractJsonFromLLMResponse, getLeastExploredTalentLabels, computeProgressionTargets, formatProgressionInstruction } from "@/lib/challenges.functions";
 import { buildRecommendationPrompt, buildAspirationBridgePrompt } from "@/lib/naya-prompts";
@@ -31,17 +32,26 @@ export const recommendChallengesForChild = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .validator((input: unknown) => RecommendInput.parse(input))
   .handler(async ({ data, context }): Promise<RecommendedChallengeResult | null> => {
-    const { supabase, userId } = context;
+    const { supabase: supabaseUser, userId } = context;
+
+    // Décision #81 : le mentor (remplaçant du parent) reçoit les recommandations
+    // Naya de ses enfants assignés. La RLS ne rend pas les défis non-complétés ni
+    // les cycles d'hypothèses aux mentors — une fois l'assignation prouvée
+    // (assertChildActor), toutes les lectures rebasculent sur le service role.
+    const supAdmin = (await import("@/integrations/supabase/client.server"))
+      .supabaseAdmin as any;
+    const actor = await assertChildActor(supAdmin, userId, data.childId);
+    const supabase = actor === "mentor" ? supAdmin : supabaseUser;
 
     // 1. Profil Enfant
-    const { data: child, error: childErr } = await supabase
+    const query = supabase
       .from("child_profiles")
       .select("id, name, age, interests, talents, life_context, school_relation, ability_profile, aspirations, city, country, time_pressure, school_level, languages")
       .eq("id", data.childId)
-      .eq("user_id", userId)
       .is("access_locked_at", null)
-      .eq("is_active", true)
-      .maybeSingle();
+      .eq("is_active", true);
+    if (actor === "owner") query.eq("user_id", userId);
+    const { data: child, error: childErr } = await query.maybeSingle();
 
     if (childErr || !child) throw new Error("Profil enfant introuvable.");
 

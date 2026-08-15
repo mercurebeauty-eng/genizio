@@ -17,6 +17,7 @@ import {
 import { listChildPlannedSlots } from "@/lib/mentor-scheduling.functions";
 import { getChildBilan, validateMentorReport } from "@/lib/mentor-reports.functions";
 import { listMyNotifications, markNotificationsRead } from "@/lib/notifications.functions";
+import { isMentorMode } from "@/lib/mentor-mode";
 import { confirmDialog } from "@/components/ui/confirm-dialog";
 import { AppTabBar } from "@/components/AppTabBar";
 import { AppHeader } from "@/components/AppHeader";
@@ -239,6 +240,14 @@ function MentorHubPage() {
   useEffect(() => {
     if (!loading && !session) navigate({ to: "/auth", replace: true });
   }, [session, loading, navigate]);
+
+  // Univers Mentor (décision #81) : ce hub est l'espace du PARENT qui suit le
+  // mentor de son enfant (« on ne se suit pas soi-même », décision #80) — en
+  // mode mentor, l'onglet est déjà masqué ; un accès direct renvoie vers /mentor.
+  const mentorMode = isMentorMode(session);
+  useEffect(() => {
+    if (mentorMode) navigate({ to: "/mentor", replace: true });
+  }, [mentorMode, navigate]);
 
   useEffect(() => {
     if (!userId) return;
