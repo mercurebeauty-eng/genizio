@@ -5,7 +5,9 @@ import { listAllUsers } from "@/integrations/supabase/admin-users";
 import { z } from "zod";
 import { computeSupervisorQuota } from "./supervisor-quota";
 import { computeExpectedSessions, computeSupervisorScore } from "./supervisor-score";
-import { SUPERVISOR_SESSION_PAYOUT_XOF } from "@/lib/pricing";
+import { SUPERVISOR_SESSION_PAYOUT_XOF, PACK_SESSIONS } from "@/lib/pricing";
+import { resolveChildAccompaniment } from "@/lib/child-accompaniment";
+import { isLastPayableSession } from "@/lib/supervisor-operator";
 
 // ────────────────────────────────────────────────────────────
 // Superviseurs — Fonctions serveur
@@ -821,6 +823,36 @@ export const getSupervisorDashboard = createServerFn({ method: "GET" })
       users.map((u) => [u.id, (u.user_metadata as any)?.phone as string | undefined]),
     );
 
+    // Superviseur Copilote (décision #74) : l'UI n'affiche les actions opérateur que pour
+    // les enfants ACCOMPAGNÉS (pack ou campagne) — résolu par le même helper que les
+    // server functions (source unique). Borné par le quota (≤ 5 enfants, 2 requêtes/enfant).
+    const accompanimentByChild = new Map<
+      string,
+      Awaited<ReturnType<typeof resolveChildAccompaniment>>
+    >();
+    for (const a of assignments) {
+      accompanimentByChild.set(
+        a.child_profile_id,
+        await resolveChildAccompaniment(supabaseAdmin as any, a.child_profile_id),
+      );
+    }
+
+    // Journal de séance du superviseur (action 'notes' et autres) — les dernières actions
+    // par enfant, pour l'affichage des notes dans la modale de détail.
+    const { data: recentActions } = await (supabaseAdmin as any)
+      .from("supervisor_actions")
+      .select("id, child_profile_id, challenge_id, action, payload, created_at")
+      .eq("supervisor_user_id", userId)
+      .in("child_profile_id", childIds)
+      .order("created_at", { ascending: false })
+      .limit(60);
+    const actionsByChild = new Map<string, any[]>();
+    for (const act of recentActions ?? []) {
+      const list = actionsByChild.get(act.child_profile_id) ?? [];
+      if (list.length < 10) list.push(act);
+      actionsByChild.set(act.child_profile_id, list);
+    }
+
     return {
       score,
       sessionsThisMonth: monthSessions?.length ?? 0,
@@ -834,6 +866,8 @@ export const getSupervisorDashboard = createServerFn({ method: "GET" })
           ...child,
           parentPhone: phoneByUserId.get(child?.user_id) ?? null,
           assignedAt: a.created_at as string,
+          accompaniment: accompanimentByChild.get(a.child_profile_id)?.funding ?? "none",
+          supervisorActions: actionsByChild.get(a.child_profile_id) ?? [],
           challenges: (challenges ?? []).filter((c) => c.child_id === a.child_profile_id),
         };
       }),
@@ -911,6 +945,54 @@ export const approveSupervisorSessionAdmin = createServerFn({ method: "POST" })
   .validator((input: unknown) => z.object({ sessionId: z.string().uuid() }).parse(input))
   .handler(async ({ data }) => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+
+    // Charger la séance : la condition de paiement a besoin de l'enfant, de la date et du
+    // financement (les champs sont posés à la déclaration, jamais modifiés après coup).
+    const { data: session } = await (supabaseAdmin as any)
+      .from("supervisor_sessions")
+      .select("id, child_profile_id, occurred_at, funding")
+      .eq("id", data.sessionId)
+      .maybeSingle();
+    if (!session) throw new Error("Séance introuvable ou déjà approuvée.");
+
+    // Décision #74 (sous-décision 5) : la dernière séance du mois d'un enfant accompagné
+    // n'est payable que si le bilan de fin de la période est rendu ET validé par le parent.
+    if (session.funding === "pack" || session.funding === "campaign") {
+      const occurred = new Date(session.occurred_at);
+      const monthStart = new Date(occurred.getFullYear(), occurred.getMonth(), 1).toISOString();
+      const monthEnd = new Date(occurred.getFullYear(), occurred.getMonth() + 1, 1).toISOString();
+
+      const { data: approvedInMonth } = await (supabaseAdmin as any)
+        .from("supervisor_sessions")
+        .select("id")
+        .eq("child_profile_id", session.child_profile_id)
+        .in("status", ["approved", "paid"])
+        .gte("occurred_at", monthStart)
+        .lt("occurred_at", monthEnd);
+
+      const { data: validatedReport } = await (supabaseAdmin as any)
+        .from("supervisor_reports")
+        .select("id")
+        .eq("child_profile_id", session.child_profile_id)
+        .eq("status", "validated")
+        .lt("period_start", monthEnd)
+        .gt("period_end", monthStart)
+        .maybeSingle();
+
+      if (
+        isLastPayableSession({
+          // Le contrat d'accompagnement est de 12 séances/mois/enfant (PACK_SESSIONS).
+          monthlyBudget: PACK_SESSIONS,
+          alreadyApprovedOrPaidInMonth: approvedInMonth?.length ?? 0,
+          funded: session.funding as "pack" | "campaign",
+          hasValidatedReportForPeriod: !!validatedReport,
+        })
+      ) {
+        throw new Error(
+          "Dernière séance du mois bloquée : le bilan de fin (validé par le parent) est requis avant de payer la 12e séance de la période.",
+        );
+      }
+    }
 
     // CAS sur le statut : une séance n'est approuvée qu'une fois (jamais de double pay).
     const { data: claimed } = await (supabaseAdmin as any)
