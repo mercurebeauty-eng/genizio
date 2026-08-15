@@ -274,7 +274,7 @@ Documenter la règle : un même moteur fonctionnel, un contexte actif (parent/me
 |---|---|---|
 | **V1 — Fondations DB** | A1 (index) + A2 (sécurité) + A3 + B2 (`parent_profiles` + trigger) en une migration idempotente | Migration revue, types régénérés, probes RLS par rôle, 675+ tests verts |
 | **V2 — RLS mentor** | B1 (policies lecture mentor) + B3 | Probes : mentor lit son enfant assigné, refusé partout ailleurs ; mentor retiré refusé |
-| **V3 — Recherche admin** | C1 + C2 (workflow Parent → Enfant → Mentor) + C4 (fin de `listAllUsers` dans les chemins mentor) | Parcours UI complet ; plus aucun `listAllUsers` dans `getMentorDashboard`/`getChildMentorInfo` |
+| **V3 — Recherche admin** | C1 + C2 (workflow Parent → Enfant → Mentor) + C4 (fin de `listAllUsers` dans les chemins mentor) | **✅ Livrée (2026-08-15, code seul)** : `searchParentsAdmin`/`getChildrenOfParentAdmin`/`searchMentorsAdmin`/`assignMentorToChildAdmin` via `parent_profiles` ; modale refondue en 4 étapes ; `assignMentor`/`listChildProfilesAdmin` supprimés ; fin de `listAllUsers` dans `getMentorDashboard`/`getChildMentorInfo`/`assignMentorToCampaignAdmin` |
 | **V4 — Pagination** | D1 (9 onglets) + D2 (parent) + D3 (mentor) + C3 (filtres avancés) | Aucune liste non bornée restante ; KPIs en SQL ; perf probe < 300 ms |
 | **V5 — Mode Mentor** | E1 + E2 (décision D1) + E3 | Route gardée ; activation par code (si Option A) ; badge de contexte |
 | **V6 — Supervision** | F + G | `pg_stat_statements` vérifié, tests d'intégration RLS, mémoire à jour |
@@ -287,7 +287,7 @@ Contraintes par vague : branche dédiée → PR → migration **non poussée ava
 - **D2 — Policies publiques** : le Mur public est retiré du produit — faut-il (a) restreindre `proofs` à `authenticated` + supprimer la policy « Anyone can view completed challenges », ou (b) les conserver pour un retour futur du mur ?
 - **D3 — `parent_profiles`** : OK pour la table miroir de contact (email/téléphone requêtable) ? C'est le prérequis de la recherche §23 et de la fin des scans d'annuaire.
 
-> **Décisions retenues par défaut le 2026-08-15 (recommandations du plan, appliquées à la Vague 1 — réversibles, à confirmer par le porteur)** : D2 = restreindre les policies publiques « Mur public » (`challenges` + `child_profiles` supprimées dans la migration V1) — **volet bucket `proofs` reporté** : les preuves sont servies par URLs publiques stockées en base, la privatisation exige des URLs signées (vague dédiée) ; D3 = oui, `parent_profiles` créée (migration `20260815130000_multicouche_v1_foundations.sql`) ; D1 = Option A (self-service par code) prévue pour la Vague 5, non implémentée.
+> **Décisions retenues le 2026-08-15** : **D1 confirmée par le porteur = Option A (self-service par code d'activation, spec §7 — Vague 5)** ; D2 = restreindre les policies publiques « Mur public » (appliqué en V1) — **volet bucket `proofs` reporté** : les preuves sont servies par URLs publiques stockées en base, la privatisation exige des URLs signées (vague dédiée) ; D3 = oui, `parent_profiles` créée (migration `20260815130000_multicouche_v1_foundations.sql`).
 
 ## 13. Risques résiduels
 
