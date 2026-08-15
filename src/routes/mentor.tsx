@@ -3,8 +3,13 @@ import { useEffect, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { useSession } from "@/hooks/use-session";
 import { AppHeader } from "@/components/AppHeader";
-import { getMentorDashboard, declareSessionMentor, checkIsActiveMentor } from "@/lib/mentors.functions";
+import { getMentorDashboard, declareSessionMentor, checkIsActiveMentor, CONTEST_REASONS } from "@/lib/mentors.functions";
 import { listMyNotifications, markNotificationsRead } from "@/lib/notifications.functions";
+import {
+  planMentorSessionSlot,
+  cancelMentorSessionSlot,
+  listMyPlannedSlots,
+} from "@/lib/mentor-scheduling.functions";
 import {
   mentorUpdateChallenge,
   mentorSubmitNotCompleted,
@@ -135,9 +140,29 @@ function MentorDashboardPage() {
   const [sessionDate, setSessionDate] = useState(() => new Date().toISOString().slice(0, 10));
   const [sessionNotes, setSessionNotes] = useState("");
   const [declaring, setDeclaring] = useState(false);
+  // Planification des séances (2026-08-15) : créneau planifié (date + heure) lié
+  // facultativement à la déclaration — alimente la ponctualité du score.
+  const [plannedSlots, setPlannedSlots] = useState<
+    {
+      id: string;
+      child_profile_id: string;
+      child_name: string;
+      planned_at: string;
+      notes: string | null;
+    }[]
+  >([]);
+  const [planningFor, setPlanningFor] = useState<string | null>(null);
+  const [planDate, setPlanDate] = useState(() => new Date().toISOString().slice(0, 10));
+  const [planTime, setPlanTime] = useState("10:00");
+  const [planNotes, setPlanNotes] = useState("");
+  const [planning, setPlanning] = useState(false);
+  const [declaredSlotId, setDeclaredSlotId] = useState<string>("");
 
   const getDashboardFn = useServerFn(getMentorDashboard);
   const declareFn = useServerFn(declareSessionMentor);
+  const planSlotFn = useServerFn(planMentorSessionSlot);
+  const cancelSlotFn = useServerFn(cancelMentorSessionSlot);
+  const listSlotsFn = useServerFn(listMyPlannedSlots);
   const supUpdateFn = useServerFn(mentorUpdateChallenge);
   const supNotCompletedFn = useServerFn(mentorSubmitNotCompleted);
   const supProofFn = useServerFn(mentorSubmitProof);
@@ -248,6 +273,7 @@ function MentorDashboardPage() {
     if (!session) return;
     void loadDashboard();
     void refreshNotifications();
+    void refreshPlannedSlots();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [session]);
 
@@ -299,6 +325,7 @@ function MentorDashboardPage() {
           childProfileId: declaringFor,
           occurredAt: new Date(sessionDate).toISOString(),
           notes: sessionNotes.trim() || undefined,
+          slotId: declaredSlotId || undefined,
         },
       });
       const funding = (res as any)?.funding as "pack" | "campaign" | "none" | undefined;
@@ -311,11 +338,61 @@ function MentorDashboardPage() {
       );
       setDeclaringFor(null);
       setSessionNotes("");
+      setDeclaredSlotId("");
       await loadDashboard();
+      await refreshPlannedSlots();
     } catch (err: any) {
       toast.error(err.message || "Erreur lors de la déclaration.");
     } finally {
       setDeclaring(false);
+    }
+  };
+
+  // ── Planification des séances (2026-08-15, backlog « Ponctualité ») ──────────
+  // Le mentor planifie un créneau (date + heure) ; le parent est notifié. À la
+  // déclaration, la séance peut être liée au créneau → la ponctualité = écart
+  // planifié vs réalisé (±30 min) alimente le score.
+
+  const refreshPlannedSlots = async () => {
+    try {
+      const res = await listSlotsFn();
+      setPlannedSlots((res as any) ?? []);
+    } catch {
+      // Non bloquant — la liste reste simplement vide.
+    }
+  };
+
+  const handlePlanSession = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!planningFor) return;
+    setPlanning(true);
+    try {
+      const plannedAt = new Date(`${planDate}T${planTime}`).toISOString();
+      await planSlotFn({
+        data: {
+          childProfileId: planningFor,
+          plannedAt,
+          notes: planNotes.trim() || undefined,
+        },
+      });
+      toast.success("Séance planifiée — le parent est notifié du créneau.");
+      setPlanningFor(null);
+      setPlanNotes("");
+      await refreshPlannedSlots();
+    } catch (err: any) {
+      toast.error(err.message || "Erreur lors de la planification.");
+    } finally {
+      setPlanning(false);
+    }
+  };
+
+  const handleCancelSlot = async (slotId: string) => {
+    try {
+      await cancelSlotFn({ data: { slotId } });
+      toast.success("Créneau annulé.");
+      await refreshPlannedSlots();
+    } catch (err: any) {
+      toast.error(err.message || "Erreur lors de l'annulation.");
     }
   };
 
@@ -647,9 +724,11 @@ function MentorDashboardPage() {
                                   ? `↩️ Bilan renvoyé — ${n.payload?.feedback ?? "modifications demandées"}`
                                   : n.type === "mentor_session_confirmed"
                                     ? "✅ Séance confirmée par le parent"
-                                    : n.type === "mentor_status_changed"
-                                      ? `🏷️ Statut passé à ${n.payload?.to === "suspended" ? "« suspendu »" : n.payload?.to === "warning" ? "« averti »" : "« actif »"}`
-                                      : `🔔 ${n.type}`}
+                                    : n.type === "mentor_session_contested"
+                                      ? `⚠️ Séance contestée — ${n.payload?.reason ? CONTEST_REASONS[n.payload.reason as keyof typeof CONTEST_REASONS] ?? n.payload.reason : "motif à préciser"}`
+                                      : n.type === "mentor_status_changed"
+                                        ? `🏷️ Statut passé à ${n.payload?.to === "suspended" ? "« suspendu »" : n.payload?.to === "warning" ? "« averti »" : "« actif »"}`
+                                        : `🔔 ${n.type}`}
                               <span className="block text-[10px] font-bold text-ink/40 mt-0.5">
                                 {new Date(n.created_at).toLocaleString("fr-FR")}
                               </span>
@@ -812,19 +891,89 @@ function MentorDashboardPage() {
                       </div>
                     </div>
 
-                    {/* Déclarer une séance (V1) : chaque séance réalisée alimente le score
-                        de fiabilité — et, en V2, la facturation du mentor. */}
-                    <button
-                      onClick={() => {
-                        setDeclaringFor(selected.id);
-                        setSessionDate(new Date().toISOString().slice(0, 10));
-                        setSessionNotes("");
-                      }}
-                      className="w-full flex items-center justify-center gap-2 rounded-2xl bg-ink py-3 text-sm font-bold text-white hover:bg-ink/90 transition-colors cursor-pointer"
-                    >
-                      <CalendarCheck className="size-4" />
-                      Déclarer une séance
-                    </button>
+                    {/* Séances (2026-08-15) : déclarer une séance réalisée + planifier un
+                        créneau à venir (le créneau lié alimente la ponctualité du score). */}
+                    <div className="grid grid-cols-2 gap-3">
+                      <button
+                        onClick={() => {
+                          setDeclaringFor(selected.id);
+                          setSessionDate(new Date().toISOString().slice(0, 10));
+                          setSessionNotes("");
+                          setDeclaredSlotId("");
+                        }}
+                        className="flex items-center justify-center gap-2 rounded-2xl bg-ink py-3 text-xs font-bold text-white hover:bg-ink/90 transition-colors cursor-pointer"
+                      >
+                        <CalendarCheck className="size-4" />
+                        Déclarer une séance
+                      </button>
+                      <button
+                        onClick={() => {
+                          setPlanningFor(selected.id);
+                          setPlanDate(new Date().toISOString().slice(0, 10));
+                          setPlanTime("10:00");
+                          setPlanNotes("");
+                        }}
+                        className="flex items-center justify-center gap-2 rounded-2xl border-2 border-ink/15 bg-white py-3 text-xs font-bold text-ink hover:border-brand/40 hover:text-brand transition-colors cursor-pointer"
+                      >
+                        <Clock className="size-4" />
+                        Planifier une séance
+                      </button>
+                    </div>
+
+                    {/* Créneaux planifiés à venir de cet enfant (avec annulation) */}
+                    {(() => {
+                      const childSlots = plannedSlots
+                        .filter((s) => s.child_profile_id === selected.id)
+                        .sort(
+                          (a, b) =>
+                            new Date(a.planned_at).getTime() - new Date(b.planned_at).getTime(),
+                        )
+                        .slice(0, 5);
+                      if (childSlots.length === 0) return null;
+                      return (
+                        <div className="rounded-2xl border border-ink/10 bg-surface/60 p-4 space-y-2">
+                          <p className="flex items-center gap-1.5 text-[10px] font-black uppercase tracking-widest text-ink/50">
+                            <Clock className="size-3.5 text-brand" />
+                            Créneaux planifiés
+                          </p>
+                          <ul className="space-y-1.5">
+                            {childSlots.map((slot) => (
+                              <li
+                                key={slot.id}
+                                className="flex items-center justify-between gap-2 rounded-xl border border-ink/10 bg-white px-3 py-2"
+                              >
+                                <div className="min-w-0">
+                                  <p className="text-xs font-bold text-ink">
+                                    {new Date(slot.planned_at).toLocaleDateString("fr-FR", {
+                                      weekday: "short",
+                                      day: "numeric",
+                                      month: "long",
+                                    })}{" "}
+                                    ·{" "}
+                                    {new Date(slot.planned_at).toLocaleTimeString("fr-FR", {
+                                      hour: "2-digit",
+                                      minute: "2-digit",
+                                    })}
+                                  </p>
+                                  {slot.notes && (
+                                    <p className="text-[11px] text-ink/50 truncate">
+                                      {slot.notes}
+                                    </p>
+                                  )}
+                                </div>
+                                <button
+                                  onClick={() => void handleCancelSlot(slot.id)}
+                                  title="Annuler ce créneau"
+                                  className="shrink-0 rounded-lg border border-ink/10 px-2 py-1 text-[10px] font-bold text-ink/50 hover:bg-rose-50 hover:text-rose-600 transition-all cursor-pointer"
+                                >
+                                  Annuler
+                                </button>
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
+                      );
+                    })()}
 
                     {/* Mentor Copilote (décision #74) : onglet Défis (opérateur) | Bilan */}
                     <div className="flex rounded-2xl border border-ink/10 bg-white p-1 shadow-sm">
@@ -1452,6 +1601,101 @@ function MentorDashboardPage() {
         </div>
       )}
 
+      {/* Modal — Planifier une séance (2026-08-15) : créneau date + heure, le parent
+          est notifié ; la ponctualité se mesure à la déclaration si la séance est liée. */}
+      {planningFor &&
+        (() => {
+          const child = children.find((c) => c.id === planningFor);
+          return (
+            <div className="fixed inset-0 z-50 flex items-center justify-center bg-ink/40 p-4 backdrop-blur-sm">
+              <div className="w-full max-w-md max-h-[85vh] overflow-y-auto bg-white rounded-3xl border border-ink/10 p-6 md:p-8 shadow-xl animate-in zoom-in-95 duration-200">
+                <div className="flex items-start justify-between gap-4 border-b-2 border-ink pb-4 mb-6">
+                  <div>
+                    <h3 className="font-display text-balance text-xl font-black text-ink">
+                      Planifier une séance
+                    </h3>
+                    <p className="text-sm text-ink/60 mt-0.5">
+                      {child?.name ?? "Cet enfant"} — le parent sera notifié du créneau prévu.
+                    </p>
+                  </div>
+                  <button
+                    onClick={() => setPlanningFor(null)}
+                    className="rounded-xl border border-ink/10 p-1.5 hover:bg-stone-100 transition-all cursor-pointer"
+                  >
+                    <X className="size-5" />
+                  </button>
+                </div>
+
+                <form onSubmit={handlePlanSession} className="space-y-5">
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="text-xs font-black uppercase tracking-widest text-ink/60 mb-2 block">
+                        Date
+                      </label>
+                      <input
+                        type="date"
+                        required
+                        value={planDate}
+                        onChange={(e) => setPlanDate(e.target.value)}
+                        className="w-full rounded-xl border border-ink/10 bg-surface px-4 py-3 text-sm font-bold text-ink outline-none focus:ring-2 focus:ring-brand"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-xs font-black uppercase tracking-widest text-ink/60 mb-2 block">
+                        Heure
+                      </label>
+                      <input
+                        type="time"
+                        required
+                        value={planTime}
+                        onChange={(e) => setPlanTime(e.target.value)}
+                        className="w-full rounded-xl border border-ink/10 bg-surface px-4 py-3 text-sm font-bold text-ink outline-none focus:ring-2 focus:ring-brand"
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="text-xs font-black uppercase tracking-widest text-ink/60 mb-2 block">
+                      Note pour le parent{" "}
+                      <span className="normal-case font-bold text-ink/40">(optionnel)</span>
+                    </label>
+                    <textarea
+                      value={planNotes}
+                      onChange={(e) => setPlanNotes(e.target.value)}
+                      rows={3}
+                      maxLength={2000}
+                      placeholder="Ex. : séance d'exploration au parc, matériel à prévoir…"
+                      className="w-full rounded-xl border border-ink/10 bg-surface px-4 py-3 text-sm font-medium text-ink outline-none focus:ring-2 focus:ring-brand"
+                    />
+                  </div>
+
+                  <div className="border-t-2 border-ink pt-4 flex justify-end gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setPlanningFor(null)}
+                      className="rounded-2xl border border-ink/10 px-6 py-2.5 text-xs font-bold text-ink/60 hover:bg-stone-100 transition-all cursor-pointer"
+                    >
+                      Annuler
+                    </button>
+                    <button
+                      type="submit"
+                      disabled={planning}
+                      className="inline-flex items-center gap-2 rounded-2xl bg-ink px-6 py-2.5 text-xs font-bold text-white shadow-sm hover:-translate-y-0.5 transition-all disabled:opacity-50 cursor-pointer"
+                    >
+                      {planning ? (
+                        <Loader2 className="size-4 animate-spin" />
+                      ) : (
+                        <Clock className="size-4" />
+                      )}
+                      Planifier le créneau
+                    </button>
+                  </div>
+                </form>
+              </div>
+            </div>
+          );
+        })()}
+
       {/* Modal — Déclarer une séance (V1) */}
       {declaringFor &&
         (() => {
@@ -1490,6 +1734,42 @@ function MentorDashboardPage() {
                       className="w-full rounded-xl border border-ink/10 bg-surface px-4 py-3 text-sm font-bold text-ink outline-none focus:ring-2 focus:ring-brand"
                     />
                   </div>
+
+                  {(() => {
+                    const childSlots = plannedSlots.filter(
+                      (s) => s.child_profile_id === declaringFor,
+                    );
+                    if (childSlots.length === 0) return null;
+                    return (
+                      <div>
+                        <label className="text-xs font-black uppercase tracking-widest text-ink/60 mb-2 block">
+                          Créneau planifié{" "}
+                          <span className="normal-case font-bold text-ink/40">(optionnel)</span>
+                        </label>
+                        <select
+                          value={declaredSlotId}
+                          onChange={(e) => setDeclaredSlotId(e.target.value)}
+                          className="w-full rounded-xl border border-ink/10 bg-surface px-4 py-3 text-sm font-bold text-ink outline-none focus:ring-2 focus:ring-brand cursor-pointer"
+                        >
+                          <option value="">Aucun — séance non planifiée</option>
+                          {childSlots.map((slot) => (
+                            <option key={slot.id} value={slot.id}>
+                              {new Date(slot.planned_at).toLocaleString("fr-FR", {
+                                day: "numeric",
+                                month: "long",
+                                hour: "2-digit",
+                                minute: "2-digit",
+                              })}
+                            </option>
+                          ))}
+                        </select>
+                        <p className="mt-1.5 text-[11px] text-ink/50">
+                          Liez la séance à son créneau planifié : la ponctualité (écart ±30
+                          min entre l'heure prévue et l'heure réelle) nourrit votre score.
+                        </p>
+                      </div>
+                    );
+                  })()}
 
                   <div>
                     <label className="text-xs font-black uppercase tracking-widest text-ink/60 mb-2 block">

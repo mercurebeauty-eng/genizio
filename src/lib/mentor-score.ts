@@ -1,30 +1,46 @@
-// Score de fiabilité du mentor (V2, 2026-08-14 — feedback famille intégré).
+// Score de fiabilité du mentor (V2, 2026-08-14 — feedback famille intégré ;
+// V3 2026-08-15 — ponctualité + compteur négatif de contestation).
 //
 // Pondération décidée avec le porteur (grille V4) :
-//   • 50 % tenue des séances : déclarées ÷ attendues sur la période (attendu = 12 séances
-//     par mois et par enfant assigné actif, cf. PACK_SESSIONS dans pricing.ts) ;
-//   • 25 % feedback famille : note moyenne (1-5) ÷ 5 ;
-//   • 25 % progression : défis complétés ÷ défis totaux de ses enfants.
+//   • 40 % tenue des séances : séances confirmées − contestées ÷ attendues sur la
+//     période (attendu = 12 séances par mois et par enfant assigné actif,
+//     cf. PACK_SESSIONS dans pricing.ts) — chaque contestation retire 1 séance du
+//     numérateur (compteur négatif, décision porteur 2026-08-15) ;
+//   • 15 % ponctualité : séances liées à un créneau planifié réalisées à l'heure
+//     (±30 min) ÷ séances planifiées — absente si le mentor ne planifie pas ;
+//   • 15 % feedback famille : note moyenne (1-5) ÷ 5 ;
+//   • 30 % progression : défis complétés ÷ défis totaux de ses enfants — la
+//     progression, valeur recherchée, pèse plus lourd qu'avant (25 → 30).
 //
-// La ponctualité (20% de la grille documentée) est REPORTÉE : elle exige la planification
-// des séances, qui n'existe pas encore dans l'app — le poids est redistribué sur les
-// composantes mesurables. Sans feedback encore posé, la moyenne est RENORMALISÉE sur les
-// composantes disponibles (un mentor parfait sans aucune note reste à 100 — le
-// feedback ne l'écrase pas d'office, il l'ajuste quand il existe).
+// Sans ponctualité (aucun créneau planifié) ni feedback encore posé, la moyenne est
+// RENORMALISÉE sur les composantes disponibles (un mentor parfait sans aucune note
+// reste à 100 — le feedback ne l'écrase pas d'office, il l'ajuste quand il existe).
 //
 // Fonction PURE (testable sans base) — les appelants (listMentorsAdmin,
-// getMentorDashboard) chargent les compteurs puis appellent ce calcul.
+// getMentorDashboard, computeRollingScore) chargent les compteurs puis appellent ce
+// calcul.
 export function computeMentorScore(params: {
   expectedSessions: number;
+  /** Séances CONFIRMÉES par le parent sur la période (les contestées n'en font pas partie). */
   declaredSessions: number;
+  /** Séances contestées par le parent sur la période — compteur NÉGATIF (retirées du numérateur). */
+  contestedSessions?: number;
   completedChallenges: number;
   totalChallenges: number;
   /** Note moyenne famille (1-5) sur la période ; 0 ou absente = aucun feedback encore. */
   avgFeedback?: number;
+  /** Score de ponctualité /100 ; null ou absent = aucune séance planifiée (composante absente). */
+  punctualityScore?: number | null;
 }): number {
+  // Tenue des séances — « compteur négatif » : chaque contestation retire 1 séance
+  // confirmée du numérateur, plancher 0 (jamais négatif).
+  const netSessions = Math.max(
+    0,
+    params.declaredSessions - (params.contestedSessions ?? 0),
+  );
   const sessionsScore =
     params.expectedSessions > 0
-      ? Math.min(100, (params.declaredSessions / params.expectedSessions) * 100)
+      ? Math.min(100, (netSessions / params.expectedSessions) * 100)
       : 0;
   const progressScore =
     params.totalChallenges > 0
@@ -32,11 +48,20 @@ export function computeMentorScore(params: {
       : 0;
   const hasFeedback = (params.avgFeedback ?? 0) > 0;
   const feedbackScore = hasFeedback ? Math.min(100, ((params.avgFeedback ?? 0) / 5) * 100) : 0;
+  const hasPunctuality = params.punctualityScore != null;
+  const punctualityScore = hasPunctuality
+    ? Math.min(100, params.punctualityScore as number)
+    : 0;
 
-  // Moyenne pondérée sur les composantes réellement mesurées (0.75 sans feedback, 1 avec).
-  const weightSum = 0.5 + 0.25 + (hasFeedback ? 0.25 : 0);
+  // Grille 40/15/15/30, renormalisée sur les composantes réellement mesurées
+  // (0.70 sans ponctualité ni feedback, 1.00 avec les deux).
+  const weightSum =
+    0.4 + (hasPunctuality ? 0.15 : 0) + (hasFeedback ? 0.15 : 0) + 0.3;
   const weighted =
-    0.5 * sessionsScore + 0.25 * progressScore + (hasFeedback ? 0.25 * feedbackScore : 0);
+    0.4 * sessionsScore +
+    (hasPunctuality ? 0.15 * punctualityScore : 0) +
+    (hasFeedback ? 0.15 * feedbackScore : 0) +
+    0.3 * progressScore;
   return Math.round(weighted / weightSum);
 }
 
