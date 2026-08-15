@@ -9,10 +9,11 @@ import {
   CreditCard,
   ShoppingBag,
   ShieldCheck,
+  MessageSquareQuote,
   Home,
 } from "lucide-react";
 
-// Refonte Admin OS (2026-08-13, décision #71) : 9 onglets — « Seasons » supprimé
+// Refonte Admin OS (2026-08-13, décision #71) : onglets — « Seasons » supprimé
 // (vestige de la dégradation des saisons), « Abonnements » fusionné dans le nouvel
 // onglet « Paiements & Accès ». ADMIN_TABS est la source unique partagée par la
 // grille d'accueil (admin.index) et la barre de navigation persistante.
@@ -26,7 +27,8 @@ export type AdminTab =
   | "naya"
   | "payments"
   | "commerce"
-  | "profiles";
+  | "profiles"
+  | "testimonials";
 
 /** Écran d'accueil (grille de cartes) ou onglet ouvert. */
 export type AdminRoute = AdminTab | "home";
@@ -165,6 +167,19 @@ export const ADMIN_TABS: AdminTabDef[] = [
       "bg-gradient-to-br from-rose-500/10 via-white to-white border-rose-500/20 hover:shadow-rose-500/25",
     iconClass: "from-rose-500 to-red-600 shadow-rose-500/40",
     haloClass: "from-rose-400/50 to-red-400/10",
+  },
+  {
+    id: "testimonials",
+    label: "Témoignages",
+    sublabel: "Avis publiés sur la landing",
+    icon: MessageSquareQuote,
+    badge: "Avis",
+    badgeBgClass: "bg-amber-500/10",
+    badgeTextClass: "text-amber-600",
+    cardClass:
+      "bg-gradient-to-br from-amber-500/10 via-white to-white border-amber-500/20 hover:shadow-amber-500/25",
+    iconClass: "from-amber-500 to-yellow-600 shadow-amber-500/40",
+    haloClass: "from-amber-400/50 to-yellow-400/10",
   },
 ];
 

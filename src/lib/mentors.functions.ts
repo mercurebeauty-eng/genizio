@@ -1,7 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireAdmin } from "@/integrations/supabase/admin-middleware";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
-import { listAllUsers } from "@/integrations/supabase/admin-users";
 import { z } from "zod";
 import { computeMentorQuota } from "./mentor-quota";
 import {
@@ -30,21 +29,7 @@ import { isLastPayableSession } from "@/lib/mentor-operator";
 // Seul l'admin peut assigner des mentors.
 // ────────────────────────────────────────────────────────────
 
-// Utilisée par le sélecteur "Profil enfant" de /admin/mentors — la requête
-// client directe (soumise aux RLS) ne remontait que les enfants du compte admin
-// lui-même plus ceux ayant déjà un défi complété (policy publique du Mur Public),
-// rendant tout enfant nouvellement inscrit invisible pour l'assignation.
-export const listChildProfilesAdmin = createServerFn({ method: "GET" })
-  .middleware([requireAdmin])
-  .handler(async () => {
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const { data, error } = await supabaseAdmin
-      .from("child_profiles")
-      .select("id, name, age")
-      .order("name");
-    if (error) throw new Error(error.message);
-    return data ?? [];
-  });
+// Seul l'admin peut assigner des mentors.
 
 export interface MentorAssignmentDetail {
   id: string;
@@ -109,6 +94,60 @@ export const listMentorsAdmin = createServerFn({ method: "GET" })
   .handler(async ({ data }) => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
+    // Pagination SQL par MENTOR (Vague 4) : on ne ramène plus TOUTES les assignations
+    // (ni tous les mentors) avant de paginer en mémoire. D'abord la liste ordonnée des
+    // mentors (une colonne, indexée) → on tronque à la page → on n'enrichit que la page.
+    const { data: idRows, error: idsErr } = await (supabaseAdmin as any)
+      .from("mentors")
+      .select("mentor_user_id")
+      .is("removed_at", null)
+      .order("created_at", { ascending: false })
+      .order("id", { ascending: false });
+    if (idsErr) throw new Error(idsErr.message);
+
+    // Ordre = assignation la plus récente (première occurrence), doublons retirés.
+    const allMentorIds: string[] = [];
+    for (const r of idRows ?? []) {
+      if (!allMentorIds.includes(r.mentor_user_id as string)) allMentorIds.push(r.mentor_user_id);
+    }
+    if (allMentorIds.length === 0) {
+      return { data: [], total: 0, page: data.page, pageSize: data.pageSize, totalPages: 1 };
+    }
+
+    // Filtre campagne : seuls les mentors ayant une assignation active sur cette campagne.
+    let baseMentorIds = allMentorIds;
+    if (data.campaignId) {
+      const { data: campaignRows } = await (supabaseAdmin as any)
+        .from("mentors")
+        .select("mentor_user_id")
+        .eq("campaign_id", data.campaignId)
+        .is("removed_at", null);
+      const campaignSet = new Set(
+        (campaignRows ?? []).map((r: any) => r.mentor_user_id as string),
+      );
+      baseMentorIds = allMentorIds.filter((id) => campaignSet.has(id));
+    }
+
+    // Recherche par email en SQL (parent_profiles) — appliquée AVANT la pagination,
+    // comme l'ancien filtre en mémoire (qui, lui, exigeait de tout charger).
+    const term = data.search?.trim().toLowerCase();
+    let filteredMentorIds = baseMentorIds;
+    if (term) {
+      const { data: matches } = await supabaseAdmin
+        .from("parent_profiles")
+        .select("user_id")
+        .in("user_id", baseMentorIds)
+        .ilike("email", `%${term}%`);
+      const matchSet = new Set((matches ?? []).map((m) => m.user_id));
+      filteredMentorIds = baseMentorIds.filter((id) => matchSet.has(id));
+    }
+
+    const total = filteredMentorIds.length;
+    const totalPages = Math.max(1, Math.ceil(total / data.pageSize));
+    const page = Math.min(data.page, totalPages);
+    const pageMentorIds = filteredMentorIds.slice((page - 1) * data.pageSize, page * data.pageSize);
+
+    // Assignations des mentors DE LA PAGE uniquement, groupées par mentor.
     let query = (supabaseAdmin as any)
       .from("mentors")
       .select(
@@ -117,6 +156,7 @@ export const listMentorsAdmin = createServerFn({ method: "GET" })
       // Soft-retire (V1) : un mentor retiré disparaît des flux actifs (liste admin,
       // assignation, quota) — son historique (séances, score) reste en base.
       .is("removed_at", null)
+      .in("mentor_user_id", pageMentorIds)
       .order("created_at", { ascending: false })
       .order("id", { ascending: false });
     if (data.campaignId) {
@@ -125,8 +165,8 @@ export const listMentorsAdmin = createServerFn({ method: "GET" })
     const { data: rows, error } = await query;
     if (error) throw new Error(error.message);
 
-    // Groupement en mémoire par mentor — le volume pertinent est le nombre de
-    // SUPERVISEURS (petit), pas le nombre de lignes d'assignation.
+    // Groupement en mémoire par mentor — volume borné : les mentors de la page × leurs
+    // assignations (le nombre de lignes n'explose plus avec le total des enfants).
     const groups = new Map<string, MentorGroup>();
     const campaignRefs = new Map<string, { createdAt: string | null; extraQuota: number }>();
     for (const row of rows ?? []) {
@@ -169,7 +209,7 @@ export const listMentorsAdmin = createServerFn({ method: "GET" })
     }
 
     if (groups.size === 0) {
-      return { data: [], total: 0, page: data.page, pageSize: data.pageSize, totalPages: 1 };
+      return { data: [], total, page, pageSize: data.pageSize, totalPages };
     }
 
     // Résolution ciblée des emails (et date de création, pour le quota hors campagne) :
@@ -343,8 +383,7 @@ export const listMentorsAdmin = createServerFn({ method: "GET" })
 
     const rollingScoreByMentor = new Map<string, number>();
 
-    const term = data.search?.trim().toLowerCase();
-    const list = [...groups.values()].filter((g) => {
+    const list = [...groups.values()].map((g) => {
       const email = emailMap.get(g.mentor_user_id)?.email ?? "Inconnu";
       g.email = email;
       // Quota effectif : le plus élevé des contextes de ses assignations — plancher
@@ -392,7 +431,7 @@ export const listMentorsAdmin = createServerFn({ method: "GET" })
       const due = approvedByMentor.get(g.mentor_user_id);
       g.duePayoutXof = due?.xof ?? 0;
       g.approvedSessions = due?.count ?? 0;
-      return !term || email.toLowerCase().includes(term);
+      return g;
     });
 
     // Statut automatique (2 sens) : si le score de confiance a franchi un seuil, on
@@ -415,13 +454,10 @@ export const listMentorsAdmin = createServerFn({ method: "GET" })
       g.status = target;
     }
 
-    const total = list.length;
-    const totalPages = Math.max(1, Math.ceil(total / data.pageSize));
-    const page = Math.min(data.page, totalPages);
-    const from = (page - 1) * data.pageSize;
-
+    // Recherche (email) et pagination déjà appliquées en amont — la liste ne contient
+    // que les mentors de la page demandée.
     return {
-      data: list.slice(from, from + data.pageSize),
+      data: list,
       total,
       page,
       pageSize: data.pageSize,
@@ -443,11 +479,6 @@ export const listCampaignsLightAdmin = createServerFn({ method: "GET" })
     if (error) throw new Error(error.message);
     return (data ?? []) as { id: string; name: string }[];
   });
-
-const AssignMentorInput = z.object({
-  email: z.string().email("Email invalide"),
-  childProfileId: z.string().uuid("ID de profil invalide"),
-});
 
 // Point d'insertion unique pour les deux chemins d'assignation (admin manuel ici, et B2B dans
 // campaigns.functions.ts) — décision utilisateur (2026-07-26) : "un seul mentor par
@@ -499,31 +530,222 @@ export async function insertMentorAssignments(
   return data ?? [];
 }
 
-export const assignMentor = createServerFn({ method: "POST" })
+// ────────────────────────────────────────────────────────────
+// Recherche & assignation relationnelle (Vague 3 multicouche) — spec §2-3, §22-23 :
+//   « Parent → Enfant → Mentor », jamais une liste plate de milliers d'enfants.
+//   L'annuaire requêtable est parent_profiles (Vague 1) — fini les scans complets
+//   de auth.users (listAllUsers) pour résoudre un email ou un téléphone.
+// ────────────────────────────────────────────────────────────
+
+const SearchAccountInput = z.object({
+  query: z.string().trim().min(1, "Saisissez un email, un téléphone ou un nom."),
+});
+
+export interface ParentSearchResult {
+  user_id: string;
+  email: string;
+  phone: string | null;
+  display_name: string | null;
+  /** Nombre d'enfants du compte — affiché dès l'étape 1 (spec §2). */
+  child_count: number;
+}
+
+// Recherche d'un compte parent par email / téléphone / nom (SQL indexé, bornée 20).
+export const searchParentsAdmin = createServerFn({ method: "GET" })
   .middleware([requireAdmin])
-  .validator((input: unknown) => AssignMentorInput.parse(input))
+  .validator((input: unknown) => SearchAccountInput.parse(input))
+  .handler(async ({ data }) => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    // Caractères sensibles à la syntaxe .or() de PostgREST — retirés pour que la
+    // recherche reste un simple filtre de texte (jamais une injection de filtre).
+    const q = data.query.trim().replace(/[%,]/g, " ");
+    const { data: rows, error } = await supabaseAdmin
+      .from("parent_profiles")
+      .select("user_id, email, phone, display_name")
+      .or(`email.ilike.%${q}%,display_name.ilike.%${q}%,phone.ilike.%${q}%`)
+      .limit(20);
+    if (error) throw new Error(error.message);
+    const parents = rows ?? [];
+
+    // Enfants par parent — une requête groupée en mémoire, bornée par les 20 parents
+    // retournés et par le cap « 50 enfants par compte » (décision #75).
+    const childCountByParent = new Map<string, number>();
+    if (parents.length > 0) {
+      const { data: children } = await supabaseAdmin
+        .from("child_profiles")
+        .select("user_id")
+        .in("user_id", parents.map((p) => p.user_id));
+      for (const c of children ?? []) {
+        childCountByParent.set(c.user_id, (childCountByParent.get(c.user_id) ?? 0) + 1);
+      }
+    }
+
+    return parents.map((p) => ({
+      user_id: p.user_id,
+      email: p.email,
+      phone: p.phone,
+      display_name: p.display_name,
+      child_count: childCountByParent.get(p.user_id) ?? 0,
+    }));
+  });
+
+export interface ChildOfParentResult {
+  id: string;
+  name: string;
+  age: number | null;
+  avatar_color: string;
+  is_active: boolean;
+  /** Email du mentor actif assigné, ou null — l'enfant accompagné reste visible mais non sélectionnable. */
+  current_mentor_email: string | null;
+}
+
+// Enfants d'un parent avec leur mentor actuel (borné 50 = cap quota, décision #75).
+export const getChildrenOfParentAdmin = createServerFn({ method: "GET" })
+  .middleware([requireAdmin])
+  .validator((input: unknown) => z.object({ parentId: z.string().uuid() }).parse(input))
+  .handler(async ({ data }) => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: children, error } = await supabaseAdmin
+      .from("child_profiles")
+      .select("id, name, age, avatar_color, is_active")
+      .eq("user_id", data.parentId)
+      .order("name")
+      .limit(50);
+    if (error) throw new Error(error.message);
+
+    const childIds = (children ?? []).map((c) => c.id);
+    const mentorEmailByChild = new Map<string, string | null>();
+    if (childIds.length > 0) {
+      const { data: assignments } = await supabaseAdmin
+        .from("mentors")
+        .select("child_profile_id, mentor_user_id")
+        .in("child_profile_id", childIds)
+        .is("removed_at", null);
+      const mentorIds = [...new Set((assignments ?? []).map((a) => a.mentor_user_id as string))];
+      const emailByMentor = new Map<string, string>();
+      if (mentorIds.length > 0) {
+        const { data: mentors } = await supabaseAdmin
+          .from("parent_profiles")
+          .select("user_id, email")
+          .in("user_id", mentorIds);
+        for (const m of mentors ?? []) emailByMentor.set(m.user_id, m.email);
+      }
+      for (const a of assignments ?? []) {
+        mentorEmailByChild.set(a.child_profile_id, emailByMentor.get(a.mentor_user_id) ?? null);
+      }
+    }
+
+    return (children ?? []).map((c) => ({
+      id: c.id,
+      name: c.name,
+      age: c.age,
+      avatar_color: c.avatar_color,
+      is_active: c.is_active,
+      current_mentor_email: mentorEmailByChild.get(c.id) ?? null,
+    }));
+  });
+
+export interface MentorSearchResult {
+  user_id: string;
+  email: string;
+  phone: string | null;
+  display_name: string | null;
+  /** Statut de confiance (mentor_profiles) — sans ligne = actif (convention du repo). */
+  status: string;
+  /** Nombre d'assignations actives (removed_at IS NULL). */
+  active_assignments: number;
+}
+
+// Recherche d'un mentor (n'importe quel compte Génizio) par email/téléphone/nom —
+// enrichie du statut de confiance et du nombre d'assignations actives.
+export const searchMentorsAdmin = createServerFn({ method: "GET" })
+  .middleware([requireAdmin])
+  .validator((input: unknown) => SearchAccountInput.parse(input))
+  .handler(async ({ data }) => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const q = data.query.trim().replace(/[%,]/g, " ");
+    const { data: rows, error } = await supabaseAdmin
+      .from("parent_profiles")
+      .select("user_id, email, phone, display_name")
+      .or(`email.ilike.%${q}%,display_name.ilike.%${q}%,phone.ilike.%${q}%`)
+      .limit(20);
+    if (error) throw new Error(error.message);
+    const users = rows ?? [];
+
+    // Statut de confiance + assignations actives — une requête groupée chacun
+    // (borné par les 20 résultats et le quota 5 par mentor).
+    const statusByUser = new Map<string, string>();
+    const activeCountByUser = new Map<string, number>();
+    if (users.length > 0) {
+      const userIds = users.map((u) => u.user_id);
+      const { data: profiles } = await supabaseAdmin
+        .from("mentor_profiles")
+        .select("mentor_user_id, status")
+        .in("mentor_user_id", userIds);
+      for (const p of profiles ?? []) statusByUser.set(p.mentor_user_id, p.status);
+
+      const { data: assignments } = await supabaseAdmin
+        .from("mentors")
+        .select("mentor_user_id")
+        .in("mentor_user_id", userIds)
+        .is("removed_at", null);
+      for (const a of assignments ?? []) {
+        activeCountByUser.set(
+          a.mentor_user_id,
+          (activeCountByUser.get(a.mentor_user_id) ?? 0) + 1,
+        );
+      }
+    }
+
+    return users.map((u) => ({
+      user_id: u.user_id,
+      email: u.email,
+      phone: u.phone,
+      display_name: u.display_name,
+      status: statusByUser.get(u.user_id) ?? "active",
+      active_assignments: activeCountByUser.get(u.user_id) ?? 0,
+    }));
+  });
+
+const AssignMentorToChildInput = z.object({
+  parentId: z.string().uuid("ID parent invalide"),
+  childId: z.string().uuid("ID enfant invalide"),
+  mentorId: z.string().uuid("ID mentor invalide"),
+});
+
+// Assignation relationnelle (spec §2-3) : vérifie que l'enfant appartient bien au
+// parent sélectionné, puis insère via le choke-point unique insertMentorAssignments
+// (statut banni/suspendu, contrainte UNIQUE partielle, trigger quota — autorités finales).
+export const assignMentorToChildAdmin = createServerFn({ method: "POST" })
+  .middleware([requireAdmin])
+  .validator((input: unknown) => AssignMentorToChildInput.parse(input))
   .handler(async ({ data, context }) => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
-    // Chercher l'utilisateur par email via auth admin
-    const users = await listAllUsers(supabaseAdmin);
+    const { data: child } = await supabaseAdmin
+      .from("child_profiles")
+      .select("id")
+      .eq("id", data.childId)
+      .eq("user_id", data.parentId)
+      .maybeSingle();
+    if (!child) {
+      throw new Error("Cet enfant n'appartient pas au parent sélectionné.");
+    }
 
-    const targetUser = users.find((u) => u.email === data.email);
-    if (!targetUser) throw new Error(`Aucun compte trouvé pour l'email : ${data.email}`);
-
-    // Chercher l'inscription à une campagne pour cet enfant si elle existe
+    // Même logique que l'assignation historique : si l'enfant est inscrit à une
+    // campagne, l'assignation porte la référence (budget séances de la campagne).
     const { data: enrollment } = await (supabaseAdmin as any)
       .from("season_enrollments")
       .select("campaign_id")
-      .eq("child_id", data.childProfileId)
+      .eq("child_id", data.childId)
       .not("campaign_id", "is", null)
       .order("enrolled_at", { ascending: false })
       .limit(1)
       .maybeSingle();
 
     const rows = await insertMentorAssignments(supabaseAdmin, {
-      mentorUserId: targetUser.id,
-      childProfileIds: [data.childProfileId],
+      mentorUserId: data.mentorId,
+      childProfileIds: [data.childId],
       campaignId: enrollment?.campaign_id ?? null,
       assignedBy: (context as any).claims?.sub ?? null,
     });
@@ -561,8 +783,13 @@ export const assignMentorToCampaignAdmin = createServerFn({ method: "POST" })
       throw new Error("Campagne archivée — restaurez-la avant d'assigner des mentors.");
     }
 
-    const users = await listAllUsers(supabaseAdmin);
-    const mentor = users.find((u) => u.email === data.mentorEmail);
+    // Résolution du mentor par email via parent_profiles (Vague 1) — fini le scan
+    // complet de l'annuaire auth (listAllUsers) pour un seul compte.
+    const { data: mentor } = await supabaseAdmin
+      .from("parent_profiles")
+      .select("user_id")
+      .eq("email", data.mentorEmail)
+      .maybeSingle();
     if (!mentor) {
       throw new Error(`Aucun compte trouvé pour l'email: ${data.mentorEmail}`);
     }
@@ -597,7 +824,7 @@ export const assignMentorToCampaignAdmin = createServerFn({ method: "POST" })
     const { data: existingAssignments } = await (supabaseAdmin as any)
       .from("mentors")
       .select("id")
-      .eq("mentor_user_id", mentor.id)
+      .eq("mentor_user_id", mentor.user_id)
       .is("removed_at", null);
     const currentCount = existingAssignments?.length ?? 0;
     const quota = computeMentorQuota({
@@ -615,7 +842,7 @@ export const assignMentorToCampaignAdmin = createServerFn({ method: "POST" })
 
     // Insertion centralisée — même point de passage que le chemin admin manuel.
     await insertMentorAssignments(supabaseAdmin, {
-      mentorUserId: mentor.id,
+      mentorUserId: mentor.user_id,
       childProfileIds: unmentoredChildIds.slice(0, toAssign),
       campaignId: data.campaignId,
       assignedBy: (context as any).claims?.sub ?? null,
@@ -994,8 +1221,14 @@ export const getChildMentorInfo = createServerFn({ method: "GET" })
       .maybeSingle();
     if (!assignment) return null;
 
-    const users = await listAllUsers(supabaseAdmin);
-    const email = users.find((u) => u.id === assignment.mentor_user_id)?.email ?? "Inconnu";
+    // Email du mentor via parent_profiles (Vague 1) — une requête indexée au lieu
+    // du scan complet de l'annuaire auth (listAllUsers).
+    const { data: mentorContact } = await supabaseAdmin
+      .from("parent_profiles")
+      .select("email")
+      .eq("user_id", assignment.mentor_user_id)
+      .maybeSingle();
+    const email = mentorContact?.email ?? "Inconnu";
 
     // Accompagnement (décision #76) : la raison d'être du mentor sur cet enfant
     // (pack ou campagne) + budget de séances — affiché dans le hub parent « Mentor ».
@@ -1049,7 +1282,10 @@ export const getMentorDashboard = createServerFn({ method: "GET" })
       )
       .in("child_id", childIds)
       .is("deleted_at", null)
-      .order("created_at", { ascending: false });
+      .order("created_at", { ascending: false })
+      // Vague 4 : borne souple — le journal de défis du mentor n'a pas vocation à
+      // grandir sans fin (200 défis récents suffisent pour les actions opérateur).
+      .limit(200);
 
     // Score de fiabilité (V2) : séances CONFIRMÉES ce mois (la déclaration seule ne
     // suffit plus depuis la V3) + feedback famille + progression — même fenêtre et
@@ -1108,28 +1344,38 @@ export const getMentorDashboard = createServerFn({ method: "GET" })
       void syncMentorTrustStatus(supabaseAdmin as any, userId);
     }
 
-    // Le numéro de téléphone du parent vit dans auth.users.user_metadata, pas
-    // dans child_profiles — le mentor doit pouvoir contacter le parent
-    // directement, donc jointure manuelle via l'API admin.
-    const { listAllUsers } = await import("@/integrations/supabase/admin-users");
-    const users = await listAllUsers(supabaseAdmin);
-    const phoneByUserId = new Map(
-      users.map((u) => [u.id, (u.user_metadata as any)?.phone as string | undefined]),
-    );
+    // Le téléphone du parent est requêtable dans parent_profiles (Vague 1) — une
+    // requête indexée sur les seuls parents concernés, au lieu du scan complet de
+    // l'annuaire auth (listAllUsers) à chaque visite du dashboard.
+    const parentIds = [
+      ...new Set(
+        (assignments ?? [])
+          .map((a: any) => a.child_profiles?.user_id as string | undefined)
+          .filter((id): id is string => Boolean(id)),
+      ),
+    ];
+    const phoneByUserId = new Map<string, string | null>();
+    if (parentIds.length > 0) {
+      const { data: parentContacts } = await supabaseAdmin
+        .from("parent_profiles")
+        .select("user_id, phone")
+        .in("user_id", parentIds);
+      for (const c of parentContacts ?? []) phoneByUserId.set(c.user_id, c.phone);
+    }
 
     // Mentor Copilote (décision #74) : l'UI n'affiche les actions opérateur que pour
     // les enfants ACCOMPAGNÉS (pack ou campagne) — résolu par le même helper que les
-    // server functions (source unique). Borné par le quota (≤ 5 enfants, 2 requêtes/enfant).
-    const accompanimentByChild = new Map<
-      string,
-      Awaited<ReturnType<typeof resolveChildAccompaniment>>
-    >();
-    for (const a of assignments) {
-      accompanimentByChild.set(
-        a.child_profile_id,
-        await resolveChildAccompaniment(supabaseAdmin as any, a.child_profile_id),
-      );
-    }
+    // server functions (source unique). Borné par le quota (≤ 5 enfants) ; Vague 4 :
+    // résolutions PARALLÈLES (Promise.all) au lieu de la boucle séquentielle.
+    const accompanimentResults = await Promise.all(
+      (assignments ?? []).map(async (a) =>
+        [
+          a.child_profile_id,
+          await resolveChildAccompaniment(supabaseAdmin as any, a.child_profile_id),
+        ] as const,
+      ),
+    );
+    const accompanimentByChild = new Map(accompanimentResults);
 
     // Journal de séance du mentor (action 'notes' et autres) — les dernières actions
     // par enfant, pour l'affichage des notes dans la modale de détail.
@@ -1203,6 +1449,135 @@ export const checkIsActiveMentor = createServerFn({ method: "GET" })
       .maybeSingle();
     const status = (profile?.status as string | undefined) ?? "active";
     return { isMentor: status !== "banned" };
+  });
+
+// ── Activation du mode Mentor par code (Vague 5, spec §7, décision D1) ──────
+// L'admin génère des codes à usage unique ; l'utilisateur les saisit dans
+// « Paramètres → Mentor » ; la RPC activate_mentor_code (migration 20260815180000)
+// fait l'activation ATOMIQUEMENT (FOR UPDATE + auth.uid() vérifié dans la fonction).
+
+const GenerateCodesInput = z.object({
+  count: z.number().int().min(1).max(50).default(5),
+  /** Nombre de jours de validité (null = jamais expiré). */
+  validDays: z.number().int().min(1).max(365).optional(),
+});
+
+export interface MentorActivationCodeRow {
+  id: string;
+  code: string;
+  valid_until: string | null;
+  used_by_email: string | null;
+  used_at: string | null;
+  created_at: string;
+}
+
+// Alphabet sans caractères ambigus (ni 0/O, 1/I/L) — code tapé à la main.
+const CODE_ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+
+async function generateMentorCode(): Promise<string> {
+  // Import dynamique (pattern du repo pour les modules serveur uniquement).
+  const { randomBytes } = await import("node:crypto");
+  const bytes = randomBytes(8);
+  let code = "MNT-";
+  for (let i = 0; i < 8; i++) code += CODE_ALPHABET[bytes[i] % CODE_ALPHABET.length];
+  return code;
+}
+
+export const generateMentorActivationCodesAdmin = createServerFn({ method: "POST" })
+  .middleware([requireAdmin])
+  .validator((input: unknown) => GenerateCodesInput.parse(input))
+  .handler(async ({ data, context }) => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const validUntil = data.validDays
+      ? new Date(Date.now() + data.validDays * 24 * 60 * 60 * 1000).toISOString()
+      : null;
+
+    // Génération + insertion ; en cas de collision UNIQUE (improbable), on régénère
+    // une fois avant d'abandonner.
+    for (let attempt = 0; attempt < 3; attempt++) {
+      const codes = await Promise.all(
+        Array.from({ length: data.count }, () => generateMentorCode()),
+      );
+      const { data: inserted, error } = await (supabaseAdmin as any)
+        .from("mentor_activation_codes")
+        .insert(
+          codes.map((code) => ({
+            code,
+            created_by: (context as any).claims?.sub ?? null,
+            valid_until: validUntil,
+          })),
+        )
+        .select("code, valid_until, created_at");
+      if (!error) return { codes: (inserted ?? []).map((c: any) => c.code as string) };
+      if (error.code !== "23505") throw new Error(error.message);
+    }
+    throw new Error("Impossible de générer des codes uniques — réessayez.");
+  });
+
+export const listMentorActivationCodesAdmin = createServerFn({ method: "GET" })
+  .middleware([requireAdmin])
+  .handler(async (): Promise<{ codes: MentorActivationCodeRow[]; total: number }> => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+
+    const [{ count }, { data: rows, error }] = await Promise.all([
+      supabaseAdmin
+        .from("mentor_activation_codes")
+        .select("id", { count: "exact", head: true }),
+      (supabaseAdmin as any)
+        .from("mentor_activation_codes")
+        .select("id, code, valid_until, used_by, used_at, created_at")
+        .order("created_at", { ascending: false })
+        .limit(50),
+    ]);
+    if (error) throw new Error(error.message);
+
+    // Email du compte activé via parent_profiles (Vague 1) — une requête groupée.
+    const usedByUserIds = [
+      ...new Set(
+        ((rows ?? []) as Array<{ used_by: string | null }>)
+          .map((r) => r.used_by)
+          .filter((id): id is string => Boolean(id)),
+      ),
+    ];
+    const emailById = new Map<string, string | null>();
+    if (usedByUserIds.length > 0) {
+      const { data: contacts } = await supabaseAdmin
+        .from("parent_profiles")
+        .select("user_id, email")
+        .in("user_id", usedByUserIds);
+      for (const c of contacts ?? []) emailById.set(c.user_id, c.email);
+    }
+
+    return {
+      codes: (rows ?? []).map((r: any) => ({
+        id: r.id,
+        code: r.code,
+        valid_until: r.valid_until ?? null,
+        used_by_email: r.used_by ? (emailById.get(r.used_by) ?? "Inconnu") : null,
+        used_at: r.used_at ?? null,
+        created_at: r.created_at,
+      })),
+      total: count ?? 0,
+    };
+  });
+
+const ActivateMentorCodeInput = z.object({
+  code: z.string().trim().min(1, "Saisissez votre code d'activation.").max(40),
+});
+
+// L'utilisateur active le mode Mentor avec son code — la RPC défenseur vérifie
+// auth.uid() (l'appel passe par le client authentifié, jamais le service role).
+export const activateMentorCode = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .validator((input: unknown) => ActivateMentorCodeInput.parse(input))
+  .handler(async ({ data, context }) => {
+    const { supabase } = context;
+    const { data: status, error } = await supabase.rpc("activate_mentor_code", {
+      p_code: data.code,
+      p_user_id: (context as any).claims?.sub,
+    });
+    if (error) throw new Error(error.message);
+    return { status: status as string };
   });
 
 // ── Ledger payout mentor (Vague C, décision « ledger admin ») ─────────────

@@ -6,10 +6,11 @@ export const exportUserData = createServerFn({ method: "GET" })
   .handler(async ({ context }) => {
     const { supabase, userId } = context;
 
-    // Fetch all user data (RLS scoped to owner)
+    // Fetch all user data (RLS scoped to owner) — les défis soft-supprimés ne sont
+    // pas des données à exporter.
     const [profilesData, challengesData, consentData] = await Promise.all([
       supabase.from("child_profiles").select("*"),
-      supabase.from("challenges").select("*"),
+      supabase.from("challenges").select("*").is("deleted_at", null),
       supabase.from("consent_events").select("*").order("created_at", { ascending: false }),
     ]);
 

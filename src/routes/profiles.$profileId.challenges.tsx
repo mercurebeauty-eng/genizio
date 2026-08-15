@@ -84,11 +84,11 @@ import {
   ChallengeDeleteDialog,
   type ChallengeDeletePayload,
 } from "@/components/challenges/ChallengeDeleteDialog";
-import {
-  ChallengeNotCompletedDialog,
+import { ChallengeNotCompletedDialog,
   NOT_COMPLETED_CHIP_LABELS,
   type NotCompletedPayload,
 } from "@/components/challenges/ChallengeNotCompletedDialog";
+import { TestimonialPrompt } from "@/components/challenges/TestimonialPrompt";
 import { AppHeader } from "@/components/AppHeader";
 import { AppTabBar } from "@/components/AppTabBar";
 import { GenizioLoader } from "@/components/GenizioLoader";
@@ -572,7 +572,9 @@ function ChallengesPage() {
           .from("challenges")
           .select("*")
           .eq("child_id", profileId)
-          .order("created_at", { ascending: false }),
+          .is("deleted_at", null)
+          .order("created_at", { ascending: false })
+          .limit(200),
         getChildAccessStatusFn({ data: { childId: profileId } }).catch(() => null),
       ]);
       setChild((c.data as Child) ?? null);
@@ -2440,6 +2442,16 @@ function ChallengeCard({
               ✓ La Carte des Talents de l'enfant a été enrichie !
             </p>
           </div>
+        )}
+
+        {/* Preuve sociale réelle : collecte du témoignage parent après un défi validé.
+            Seulement sur un défi complété — c'est là qu'un vrai vécu existe. */}
+        {c.status === "completed" && (
+          <TestimonialPrompt
+            childId={childId}
+            childName={childName}
+            challengeTitle={c.title}
+          />
         )}
 
         <div className="flex justify-end pt-5 border-t border-border mt-6">

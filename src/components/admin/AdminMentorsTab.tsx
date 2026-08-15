@@ -3,16 +3,24 @@ import { useServerFn } from "@tanstack/react-start";
 import { useSession } from "@/hooks/use-session";
 import {
   listMentorsAdmin,
-  assignMentor,
   assignMentorToCampaignAdmin,
   removeMentor,
   updateMentorStatusAdmin,
-  listChildProfilesAdmin,
+  searchParentsAdmin,
+  getChildrenOfParentAdmin,
+  searchMentorsAdmin,
+  assignMentorToChildAdmin,
+  generateMentorActivationCodesAdmin,
+  listMentorActivationCodesAdmin,
   listCampaignsLightAdmin,
   listMentorSessionsAdmin,
   approveMentorSessionAdmin,
   markMentorSessionsPaidAdmin,
   type MentorGroup,
+  type ParentSearchResult,
+  type ChildOfParentResult,
+  type MentorSearchResult,
+  type MentorActivationCodeRow,
 } from "@/lib/mentors.functions";
 import { formatXof } from "@/lib/pricing";
 import { AdminPagination } from "./AdminPagination";
@@ -32,6 +40,7 @@ import {
   RotateCcw,
   ListChecks,
   Banknote,
+  KeyRound,
 } from "lucide-react";
 import { toast } from "sonner";
 import { confirmDialog } from "@/components/ui/confirm-dialog";
@@ -46,9 +55,6 @@ import { confirmDialog } from "@/components/ui/confirm-dialog";
 export function AdminMentorsTab() {
   const { session, loading } = useSession();
   const [groups, setGroups] = useState<MentorGroup[]>([]);
-  const [childProfiles, setChildProfiles] = useState<{ id: string; name: string; age: number }[]>(
-    [],
-  );
   const [campaigns, setCampaigns] = useState<{ id: string; name: string }[]>([]);
   const [fetching, setFetching] = useState(true);
   const [forbidden, setForbidden] = useState(false);
@@ -62,7 +68,6 @@ export function AdminMentorsTab() {
 
   const listFn = useServerFn(listMentorsAdmin);
   const removeFn = useServerFn(removeMentor);
-  const listChildrenFn = useServerFn(listChildProfilesAdmin);
   const listCampaignsFn = useServerFn(listCampaignsLightAdmin);
   const listSessionsFn = useServerFn(listMentorSessionsAdmin);
   const approveSessionFn = useServerFn(approveMentorSessionAdmin);
@@ -82,6 +87,44 @@ export function AdminMentorsTab() {
   >([]);
   const [sessionsLoading, setSessionsLoading] = useState(false);
   const [markingPaidFor, setMarkingPaidFor] = useState<string | null>(null);
+
+  // Codes d'activation Mentor (Vague 5, spec §7) : self-service par code.
+  const generateCodesFn = useServerFn(generateMentorActivationCodesAdmin);
+  const listCodesFn = useServerFn(listMentorActivationCodesAdmin);
+  const [codes, setCodes] = useState<MentorActivationCodeRow[]>([]);
+  const [codesTotal, setCodesTotal] = useState(0);
+  const [generatingCodes, setGeneratingCodes] = useState(false);
+
+  const loadCodes = async () => {
+    const opts = session?.access_token
+      ? { headers: { Authorization: `Bearer ${session.access_token}` } }
+      : {};
+    const res = await listCodesFn({ data: undefined, ...opts }).catch(() => null);
+    if (res) {
+      setCodes(res.codes);
+      setCodesTotal(res.total);
+    }
+  };
+
+  const handleGenerateCodes = async (count: number) => {
+    const opts = session?.access_token
+      ? { headers: { Authorization: `Bearer ${session.access_token}` } }
+      : {};
+    setGeneratingCodes(true);
+    try {
+      const res = await generateCodesFn({ data: { count }, ...opts });
+      toast.success(
+        `${res.codes.length} code(s) généré(s) — transmettez-les aux futurs mentors.`,
+      );
+      await loadCodes();
+    } catch (err) {
+      toast.error(
+        err instanceof Error ? err.message : "Erreur lors de la génération des codes.",
+      );
+    } finally {
+      setGeneratingCodes(false);
+    }
+  };
 
   // Sans ce délai, chaque frappe déclencherait une requête serveur complète (même
   // pattern que AdminCampaignsTab).
@@ -140,18 +183,14 @@ export function AdminMentorsTab() {
     const opts = session?.access_token
       ? { headers: { Authorization: `Bearer ${session.access_token}` } }
       : {};
-    listChildrenFn({ data: undefined, ...opts })
-      .then((data) => setChildProfiles((data as any[]) ?? []))
-      .catch((err) => {
-        console.error("Erreur chargement profils enfants admin:", err);
-        setChildProfiles([]);
-      });
     listCampaignsFn({ data: undefined, ...opts })
       .then((data) => setCampaigns((data as any[]) ?? []))
       .catch((err) => {
         console.error("Erreur chargement campagnes admin:", err);
         setCampaigns([]);
       });
+
+    void loadCodes();
 
     void refetch();
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -625,13 +664,100 @@ export function AdminMentorsTab() {
         </div>
       )}
 
+      {/* Codes d'activation Mentor (Vague 5, spec §7) : l'utilisateur active lui-même
+          le mode Mentor avec un code généré ici (Paramètres → Mentor). */}
+      <div className="rounded-3xl border border-ink/10 bg-white p-6 shadow-xl">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-4">
+          <div>
+            <h3 className="font-display text-base font-black text-ink flex items-center gap-2">
+              <KeyRound className="size-5 text-brand" /> Codes d'activation Mentor
+            </h3>
+            <p className="text-xs text-ink/60 mt-0.5 leading-relaxed">
+              Codes à usage unique : un parent/mentor les saisit dans Paramètres → Mentor
+              pour activer le mode Mentor lui-même (spec §7). Sans code, un mentor n'existe
+              que par assignation admin.
+            </p>
+          </div>
+          <button
+            onClick={() => void handleGenerateCodes(5)}
+            disabled={generatingCodes}
+            className="shrink-0 inline-flex items-center gap-1.5 rounded-xl bg-brand hover:bg-brand/90 text-white px-4 py-2 text-xs font-bold transition-all cursor-pointer disabled:opacity-50"
+          >
+            {generatingCodes ? (
+              <Loader2 className="size-3.5 animate-spin" />
+            ) : (
+              <KeyRound className="size-3.5" />
+            )}
+            Générer 5 codes
+          </button>
+        </div>
+
+        {codes.length === 0 ? (
+          <p className="text-xs font-semibold text-ink/50 py-3">
+            Aucun code généré pour l'instant.
+          </p>
+        ) : (
+          <>
+            <div className="overflow-x-auto rounded-2xl border border-ink/10">
+              <table className="w-full text-left text-sm">
+                <thead className="border-b border-ink/10 bg-surface/60 text-[11px] font-black uppercase tracking-wider text-ink/60">
+                  <tr>
+                    <th className="px-4 py-2.5">Code</th>
+                    <th className="px-4 py-2.5">Créé le</th>
+                    <th className="px-4 py-2.5">Valable jusqu'au</th>
+                    <th className="px-4 py-2.5">Statut</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-ink/5">
+                  {codes.map((c) => {
+                    const expired =
+                      c.valid_until && new Date(c.valid_until).getTime() < Date.now();
+                    return (
+                      <tr key={c.id}>
+                        <td className="px-4 py-2.5 font-mono text-xs font-bold text-ink">
+                          {c.code}
+                        </td>
+                        <td className="px-4 py-2.5 text-xs text-ink/60">
+                          {new Date(c.created_at).toLocaleDateString("fr-FR")}
+                        </td>
+                        <td className="px-4 py-2.5 text-xs text-ink/60">
+                          {c.valid_until
+                            ? new Date(c.valid_until).toLocaleDateString("fr-FR")
+                            : "Jamais"}
+                        </td>
+                        <td className="px-4 py-2.5">
+                          {c.used_by_email ? (
+                            <span className="rounded-full bg-emerald-100 text-emerald-800 px-2.5 py-0.5 text-[10px] font-extrabold uppercase tracking-wider">
+                              Utilisé par {c.used_by_email}
+                            </span>
+                          ) : expired ? (
+                            <span className="rounded-full bg-amber-100 text-amber-800 px-2.5 py-0.5 text-[10px] font-extrabold uppercase tracking-wider">
+                              Expiré
+                            </span>
+                          ) : (
+                            <span className="rounded-full bg-ink/5 text-ink/70 px-2.5 py-0.5 text-[10px] font-extrabold uppercase tracking-wider">
+                              Disponible
+                            </span>
+                          )}
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+            {codesTotal > 50 && (
+              <p className="mt-2 text-[11px] font-semibold text-ink/50">
+                Affichage des 50 codes les plus récents ({codesTotal} au total).
+              </p>
+            )}
+          </>
+        )}
+      </div>
+
       {isAssignModalOpen && (
         <AssignMentorModal
           campaigns={campaigns}
-          childProfiles={childProfiles}
-          mentoredChildIds={
-            new Set(groups.flatMap((g) => g.children.map((c) => c.child_profile_id)))
-          }
           onClose={() => setIsAssignModalOpen(false)}
           onSuccess={() => {
             setIsAssignModalOpen(false);
@@ -729,22 +855,18 @@ export function AdminMentorsTab() {
   );
 }
 
-// Modale d'assignation à deux modes (2026-08-14) :
+// Modale d'assignation à deux modes (Vague 3 multicouche, 2026-08-15) :
 //   • « Campagne » (primaire) : campagne + email + nombre d'enfants → le système pioche
 //     automatiquement dans la cohorte parmi les enfants sans mentor ;
-//   • « Enfant précis » (secondaire) : l'assignation historique email + profil enfant.
+//   • « Parent → Enfant → Mentor » (spec §2-3) : recherche du parent (email/téléphone/nom),
+//     choix de l'enfant parmi SES enfants, choix du mentor, confirmation — jamais une
+//     liste plate de milliers d'enfants à faire défiler.
 function AssignMentorModal({
   campaigns,
-  childProfiles,
-  mentoredChildIds,
   onClose,
   onSuccess,
 }: {
   campaigns: { id: string; name: string }[];
-  childProfiles: { id: string; name: string; age: number }[];
-  /** Enfants déjà accompagnés — non listés dans le mode « enfant précis » (contrainte
-   *  UNIQUE child_profile_id, mieux vaut ne pas les proposer du tout). */
-  mentoredChildIds: Set<string>;
   onClose: () => void;
   onSuccess: () => void;
 }) {
@@ -757,51 +879,141 @@ function AssignMentorModal({
   const [email, setEmail] = useState("");
   const [count, setCount] = useState(5);
 
-  // Mode enfant
-  const [childEmail, setChildEmail] = useState("");
-  const [childProfileId, setChildProfileId] = useState("");
+  // Mode relationnel — étapes : 0 parent, 1 enfant, 2 mentor, 3 confirmation
+  const [step, setStep] = useState<0 | 1 | 2 | 3>(0);
+  const [parentQuery, setParentQuery] = useState("");
+  const [parentResults, setParentResults] = useState<ParentSearchResult[]>([]);
+  const [searchingParents, setSearchingParents] = useState(false);
+  const [parentSearched, setParentSearched] = useState(false);
+  const [selectedParent, setSelectedParent] = useState<ParentSearchResult | null>(null);
+  const [childrenOfParent, setChildrenOfParent] = useState<ChildOfParentResult[]>([]);
+  const [loadingChildren, setLoadingChildren] = useState(false);
+  const [selectedChild, setSelectedChild] = useState<ChildOfParentResult | null>(null);
+  const [mentorQuery, setMentorQuery] = useState("");
+  const [mentorResults, setMentorResults] = useState<MentorSearchResult[]>([]);
+  const [searchingMentors, setSearchingMentors] = useState(false);
+  const [mentorSearched, setMentorSearched] = useState(false);
+  const [selectedMentor, setSelectedMentor] = useState<MentorSearchResult | null>(null);
 
   const assignCampaignFn = useServerFn(assignMentorToCampaignAdmin);
-  const assignChildFn = useServerFn(assignMentor);
+  const searchParentsFn = useServerFn(searchParentsAdmin);
+  const childrenOfParentFn = useServerFn(getChildrenOfParentAdmin);
+  const searchMentorsFn = useServerFn(searchMentorsAdmin);
+  const assignChildFn = useServerFn(assignMentorToChildAdmin);
 
   const opts = () =>
     session?.access_token ? { headers: { Authorization: `Bearer ${session.access_token}` } } : {};
 
-  const unmentoredChildProfiles = childProfiles.filter((p) => !mentoredChildIds.has(p.id));
-
-  const handleSubmit = async (e: React.FormEvent) => {
+  // Étape 0 : recherche du parent
+  const handleSearchParents = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!parentQuery.trim()) return;
+    setSearchingParents(true);
+    try {
+      const res = await searchParentsFn({ data: { query: parentQuery.trim() }, ...opts() });
+      setParentResults((res as any) ?? []);
+      setParentSearched(true);
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Erreur lors de la recherche du parent.");
+    } finally {
+      setSearchingParents(false);
+    }
+  };
+
+  // Étape 0 → 1 : sélection du parent puis chargement de ses enfants
+  const handleSelectParent = async (parent: ParentSearchResult) => {
+    setSelectedParent(parent);
+    setLoadingChildren(true);
+    try {
+      const res = await childrenOfParentFn({
+        data: { parentId: parent.user_id },
+        ...opts(),
+      });
+      setChildrenOfParent((res as any) ?? []);
+      setStep(1);
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Erreur lors du chargement des enfants.");
+    } finally {
+      setLoadingChildren(false);
+    }
+  };
+
+  // Étape 2 : recherche du mentor
+  const handleSearchMentors = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!mentorQuery.trim()) return;
+    setSearchingMentors(true);
+    try {
+      const res = await searchMentorsFn({ data: { query: mentorQuery.trim() }, ...opts() });
+      setMentorResults((res as any) ?? []);
+      setMentorSearched(true);
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Erreur lors de la recherche du mentor.");
+    } finally {
+      setSearchingMentors(false);
+    }
+  };
+
+  // Étape 3 : confirmation + assignation via le choke-point insertMentorAssignments
+  const handleAssign = async () => {
+    if (!selectedParent || !selectedChild || !selectedMentor) return;
     setIsSubmitting(true);
     try {
-      if (mode === "campaign") {
-        if (!campaignId || !email.trim()) {
-          toast.error("Campagne et email du mentor requis.");
-          return;
-        }
-        const res = await assignCampaignFn({
-          data: { campaignId, mentorEmail: email.trim(), count },
-          ...opts(),
-        });
-        toast.success(
-          `${res.assignedCount} enfant(s) confié(s) à ${email.trim()} sur cette campagne !`,
-        );
-      } else {
-        if (!childEmail.trim() || !childProfileId) {
-          toast.error("Email et profil enfant requis.");
-          return;
-        }
-        await assignChildFn({
-          data: { email: childEmail.trim(), childProfileId },
-          ...opts(),
-        });
-        toast.success("Mentor assigné avec succès !");
-      }
+      await assignChildFn({
+        data: {
+          parentId: selectedParent.user_id,
+          childId: selectedChild.id,
+          mentorId: selectedMentor.user_id,
+        },
+        ...opts(),
+      });
+      toast.success(
+        `${selectedChild.name} est maintenant suivi(e) par ${selectedMentor.email} (parent : ${selectedParent.email}).`,
+      );
       onSuccess();
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Erreur lors de l'assignation.");
     } finally {
       setIsSubmitting(false);
     }
+  };
+
+  const handleCampaignSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!campaignId || !email.trim()) {
+      toast.error("Campagne et email du mentor requis.");
+      return;
+    }
+    setIsSubmitting(true);
+    try {
+      const res = await assignCampaignFn({
+        data: { campaignId, mentorEmail: email.trim(), count },
+        ...opts(),
+      });
+      toast.success(
+        `${res.assignedCount} enfant(s) confié(s) à ${email.trim()} sur cette campagne !`,
+      );
+      onSuccess();
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Erreur lors de l'assignation.");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const resetChildFlow = () => {
+    setStep(0);
+    setParentQuery("");
+    setParentResults([]);
+    setParentSearched(false);
+    setSelectedParent(null);
+    setChildrenOfParent([]);
+    setLoadingChildren(false);
+    setSelectedChild(null);
+    setMentorQuery("");
+    setMentorResults([]);
+    setMentorSearched(false);
+    setSelectedMentor(null);
   };
 
   return (
@@ -844,131 +1056,367 @@ function AssignMentorModal({
           ))}
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
-          {mode === "campaign" ? (
-            <>
-              <p className="text-xs sm:text-sm font-medium text-ink/70 leading-relaxed">
-                L'application confie automatiquement des enfants de la cohorte qui n'ont encore
-                aucun mentor — jusqu'au nombre demandé, dans la limite du quota du mentor
-                (5 enfants max, « 5 par 5 »).
-              </p>
-              <div>
-                <label className="block text-xs font-extrabold uppercase tracking-widest text-ink/50 mb-1.5">
-                  Campagne
-                </label>
-                <select
-                  required
-                  value={campaignId}
-                  onChange={(e) => setCampaignId(e.target.value)}
-                  className="w-full bg-surface border border-ink/10 rounded-2xl p-3.5 text-sm font-bold text-ink focus:outline-none focus:ring-2 focus:ring-brand/30 cursor-pointer"
-                >
-                  <option value="">Sélectionner une campagne…</option>
-                  {campaigns.map((c) => (
-                    <option key={c.id} value={c.id}>
-                      {c.name}
-                    </option>
-                  ))}
-                </select>
-              </div>
-              <div>
-                <label className="block text-xs font-extrabold uppercase tracking-widest text-ink/50 mb-1.5">
-                  Email du mentor (compte Génizio)
-                </label>
-                <input
-                  required
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  placeholder="mentor@ong.org"
-                  className="w-full bg-surface border border-ink/10 rounded-2xl p-3.5 text-sm font-bold text-ink focus:outline-none focus:ring-2 focus:ring-brand/30"
-                />
-              </div>
-              <div>
-                <label className="block text-xs font-extrabold uppercase tracking-widest text-ink/50 mb-1.5">
-                  Nombre d'enfants à confier (max 5)
-                </label>
-                <input
-                  required
-                  type="number"
-                  min={1}
-                  max={5}
-                  value={count}
-                  onChange={(e) =>
-                    setCount(Math.max(1, Math.min(5, parseInt(e.target.value) || 1)))
-                  }
-                  className="w-full bg-surface border border-ink/10 rounded-2xl p-3.5 text-sm font-bold text-ink focus:outline-none focus:ring-2 focus:ring-brand/30"
-                />
-              </div>
-            </>
-          ) : (
-            <>
-              <p className="text-xs sm:text-sm font-medium text-ink/70 leading-relaxed">
-                Assignation historique : choisissez précisément l'enfant que ce mentor devra
-                suivre (l'enfant déjà accompagné n'est pas listé).
-              </p>
-              <div>
-                <label className="block text-xs font-extrabold uppercase tracking-widest text-ink/50 mb-1.5">
-                  Email du mentor
-                </label>
-                <input
-                  type="email"
-                  value={childEmail}
-                  onChange={(e) => setChildEmail(e.target.value)}
-                  placeholder="mentor@exemple.com"
-                  className="w-full bg-surface border border-ink/10 rounded-2xl p-3.5 text-sm font-bold text-ink focus:outline-none focus:ring-2 focus:ring-brand/30"
-                />
-              </div>
-              <div>
-                <label className="block text-xs font-extrabold uppercase tracking-widest text-ink/50 mb-1.5">
-                  Profil enfant
-                </label>
-                <select
-                  value={childProfileId}
-                  onChange={(e) => setChildProfileId(e.target.value)}
-                  className="w-full bg-surface border border-ink/10 rounded-2xl p-3.5 text-sm font-bold text-ink focus:outline-none focus:ring-2 focus:ring-brand/30 cursor-pointer"
-                >
-                  <option value="">Sélectionner un enfant…</option>
-                  {unmentoredChildProfiles.map((p) => (
-                    <option key={p.id} value={p.id}>
-                      {p.name} ({p.age} ans)
-                    </option>
-                  ))}
-                </select>
-                {mentoredChildIds.size > 0 && (
-                  <p className="mt-1.5 text-[11px] text-ink/50">
-                    {mentoredChildIds.size} enfant{mentoredChildIds.size > 1 ? "s" : ""} déjà
-                    accompagné{mentoredChildIds.size > 1 ? "s" : ""} — non listé
-                    {mentoredChildIds.size > 1 ? "s" : ""} ici.
+        {mode === "campaign" ? (
+          <form onSubmit={handleCampaignSubmit} className="space-y-4">
+            <p className="text-xs sm:text-sm font-medium text-ink/70 leading-relaxed">
+              L'application confie automatiquement des enfants de la cohorte qui n'ont encore
+              aucun mentor — jusqu'au nombre demandé, dans la limite du quota du mentor
+              (5 enfants max, « 5 par 5 »).
+            </p>
+            <div>
+              <label className="block text-xs font-extrabold uppercase tracking-widest text-ink/50 mb-1.5">
+                Campagne
+              </label>
+              <select
+                required
+                value={campaignId}
+                onChange={(e) => setCampaignId(e.target.value)}
+                className="w-full bg-surface border border-ink/10 rounded-2xl p-3.5 text-sm font-bold text-ink focus:outline-none focus:ring-2 focus:ring-brand/30 cursor-pointer"
+              >
+                <option value="">Sélectionner une campagne…</option>
+                {campaigns.map((c) => (
+                  <option key={c.id} value={c.id}>
+                    {c.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label className="block text-xs font-extrabold uppercase tracking-widest text-ink/50 mb-1.5">
+                Email du mentor (compte Génizio)
+              </label>
+              <input
+                required
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="mentor@ong.org"
+                className="w-full bg-surface border border-ink/10 rounded-2xl p-3.5 text-sm font-bold text-ink focus:outline-none focus:ring-2 focus:ring-brand/30"
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-extrabold uppercase tracking-widest text-ink/50 mb-1.5">
+                Nombre d'enfants à confier (max 5)
+              </label>
+              <input
+                required
+                type="number"
+                min={1}
+                max={5}
+                value={count}
+                onChange={(e) =>
+                  setCount(Math.max(1, Math.min(5, parseInt(e.target.value) || 1)))
+                }
+                className="w-full bg-surface border border-ink/10 rounded-2xl p-3.5 text-sm font-bold text-ink focus:outline-none focus:ring-2 focus:ring-brand/30"
+              />
+            </div>
+
+            <div className="flex gap-3 pt-4 border-t border-ink/5">
+              <button
+                type="button"
+                onClick={onClose}
+                className="flex-1 px-4 py-3 bg-surface hover:bg-ink/5 text-ink rounded-2xl font-bold transition-colors cursor-pointer"
+              >
+                Annuler
+              </button>
+              <button
+                type="submit"
+                disabled={isSubmitting}
+                className="flex-1 px-4 py-3 bg-brand hover:bg-brand/90 text-white rounded-2xl font-bold transition-colors flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
+              >
+                {isSubmitting ? (
+                  <Loader2 className="size-5 animate-spin" />
+                ) : (
+                  <Plus className="size-4" />
+                )}
+                <span>Assigner à la campagne</span>
+              </button>
+            </div>
+          </form>
+        ) : (
+          <div className="space-y-4">
+            {/* Étape 0 — recherche du parent (spec §2-3, §23) */}
+            {step === 0 && (
+              <>
+                <p className="text-xs sm:text-sm font-medium text-ink/70 leading-relaxed">
+                  Trouvez d'abord le parent ou tuteur (email, téléphone ou nom), puis choisissez
+                  parmi ses enfants. La liste complète des enfants n'est jamais parcourue.
+                </p>
+                <form onSubmit={handleSearchParents} className="flex gap-2">
+                  <input
+                    type="text"
+                    value={parentQuery}
+                    onChange={(e) => setParentQuery(e.target.value)}
+                    placeholder="Email, téléphone ou nom du parent…"
+                    className="flex-1 bg-surface border border-ink/10 rounded-2xl p-3.5 text-sm font-bold text-ink focus:outline-none focus:ring-2 focus:ring-brand/30"
+                  />
+                  <button
+                    type="submit"
+                    disabled={searchingParents || !parentQuery.trim()}
+                    className="px-4 py-3 bg-ink hover:bg-ink/90 text-white rounded-2xl font-bold flex items-center gap-2 transition-all cursor-pointer disabled:opacity-50"
+                  >
+                    {searchingParents ? (
+                      <Loader2 className="size-4 animate-spin" />
+                    ) : (
+                      <Search className="size-4" />
+                    )}
+                    Chercher
+                  </button>
+                </form>
+
+                {parentSearched && parentResults.length === 0 && (
+                  <p className="text-sm font-semibold text-ink/50 py-3 text-center">
+                    Aucun compte trouvé pour cette recherche.
                   </p>
                 )}
-              </div>
-            </>
-          )}
+                <ul className="space-y-2">
+                  {parentResults.map((p) => (
+                    <li
+                      key={p.user_id}
+                      className="flex items-center justify-between gap-3 rounded-2xl border border-ink/10 bg-surface px-4 py-3"
+                    >
+                      <div className="min-w-0">
+                        <p className="text-sm font-bold text-ink truncate">{p.email}</p>
+                        <p className="text-[11px] font-semibold text-ink/50 truncate">
+                          {[p.display_name, p.phone && `Tél : ${p.phone}`]
+                            .filter(Boolean)
+                            .join(" · ") || "—"}{" "}
+                          · {p.child_count} enfant{p.child_count > 1 ? "s" : ""}
+                        </p>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => void handleSelectParent(p)}
+                        className="shrink-0 rounded-xl bg-ink px-3 py-1.5 text-xs font-bold text-white hover:bg-ink/90 transition-all cursor-pointer"
+                      >
+                        Choisir
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              </>
+            )}
 
-          <div className="flex gap-3 pt-4 border-t border-ink/5">
-            <button
-              type="button"
-              onClick={onClose}
-              className="flex-1 px-4 py-3 bg-surface hover:bg-ink/5 text-ink rounded-2xl font-bold transition-colors cursor-pointer"
-            >
-              Annuler
-            </button>
-            <button
-              type="submit"
-              disabled={isSubmitting}
-              className="flex-1 px-4 py-3 bg-brand hover:bg-brand/90 text-white rounded-2xl font-bold transition-colors flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
-            >
-              {isSubmitting ? (
-                <Loader2 className="size-5 animate-spin" />
-              ) : mode === "campaign" ? (
-                <Plus className="size-4" />
-              ) : (
-                <UserPlus className="size-4" />
-              )}
-              <span>{mode === "campaign" ? "Assigner à la campagne" : "Assigner"}</span>
-            </button>
+            {/* Étape 1 — choix de l'enfant parmi ceux du parent */}
+            {step === 1 && (
+              <>
+                <div className="flex items-center justify-between gap-2">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setStep(0);
+                      setSelectedParent(null);
+                      setParentResults([]);
+                      setParentSearched(false);
+                    }}
+                    className="text-xs font-bold text-ink/50 hover:text-ink transition-colors cursor-pointer"
+                  >
+                    ← Changer de parent
+                  </button>
+                  <p className="text-xs font-bold text-ink/70 truncate">
+                    {selectedParent?.email} · {childrenOfParent.length} enfant
+                    {childrenOfParent.length > 1 ? "s" : ""}
+                  </p>
+                </div>
+
+                {loadingChildren ? (
+                  <div className="flex justify-center py-8">
+                    <Loader2 className="size-6 animate-spin text-brand" />
+                  </div>
+                ) : childrenOfParent.length === 0 ? (
+                  <p className="text-sm font-semibold text-ink/50 py-3 text-center">
+                    Ce parent n'a pas encore d'enfant inscrit.
+                  </p>
+                ) : (
+                  <ul className="space-y-2">
+                    {childrenOfParent.map((c) => {
+                      const taken = Boolean(c.current_mentor_email);
+                      return (
+                        <li
+                          key={c.id}
+                          className={
+                            "flex items-center justify-between gap-3 rounded-2xl border px-4 py-3 " +
+                            (taken
+                              ? "border-ink/5 bg-surface/50 opacity-60"
+                              : "border-ink/10 bg-surface")
+                          }
+                        >
+                          <div className="min-w-0">
+                            <p className="text-sm font-bold text-ink truncate">
+                              {c.name}{" "}
+                              <span className="font-semibold text-ink/50">
+                                {c.age != null ? `· ${c.age} ans` : ""}
+                              </span>
+                            </p>
+                            <p className="text-[11px] font-semibold text-ink/50 truncate">
+                              {taken
+                                ? `Déjà accompagné par ${c.current_mentor_email}`
+                                : c.is_active
+                                  ? "Disponible pour un mentor"
+                                  : "Profil désactivé"}
+                            </p>
+                          </div>
+                          <button
+                            type="button"
+                            disabled={taken}
+                            onClick={() => {
+                              setSelectedChild(c);
+                              setStep(2);
+                            }}
+                            className="shrink-0 rounded-xl bg-ink px-3 py-1.5 text-xs font-bold text-white hover:bg-ink/90 transition-all cursor-pointer disabled:cursor-not-allowed disabled:opacity-40"
+                          >
+                            Choisir
+                          </button>
+                        </li>
+                      );
+                    })}
+                  </ul>
+                )}
+              </>
+            )}
+
+            {/* Étape 2 — choix du mentor */}
+            {step === 2 && (
+              <>
+                <div className="flex items-center justify-between gap-2">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setStep(1);
+                      setSelectedChild(null);
+                    }}
+                    className="text-xs font-bold text-ink/50 hover:text-ink transition-colors cursor-pointer"
+                  >
+                    ← Changer d'enfant
+                  </button>
+                  <p className="text-xs font-bold text-ink/70 truncate">
+                    Enfant : {selectedChild?.name}
+                  </p>
+                </div>
+
+                <form onSubmit={handleSearchMentors} className="flex gap-2">
+                  <input
+                    type="text"
+                    value={mentorQuery}
+                    onChange={(e) => setMentorQuery(e.target.value)}
+                    placeholder="Email, téléphone ou nom du mentor…"
+                    className="flex-1 bg-surface border border-ink/10 rounded-2xl p-3.5 text-sm font-bold text-ink focus:outline-none focus:ring-2 focus:ring-brand/30"
+                  />
+                  <button
+                    type="submit"
+                    disabled={searchingMentors || !mentorQuery.trim()}
+                    className="px-4 py-3 bg-ink hover:bg-ink/90 text-white rounded-2xl font-bold flex items-center gap-2 transition-all cursor-pointer disabled:opacity-50"
+                  >
+                    {searchingMentors ? (
+                      <Loader2 className="size-4 animate-spin" />
+                    ) : (
+                      <Search className="size-4" />
+                    )}
+                    Chercher
+                  </button>
+                </form>
+
+                {mentorSearched && mentorResults.length === 0 && (
+                  <p className="text-sm font-semibold text-ink/50 py-3 text-center">
+                    Aucun compte trouvé pour cette recherche.
+                  </p>
+                )}
+                <ul className="space-y-2">
+                  {mentorResults.map((m) => {
+                    const banned = m.status === "suspended" || m.status === "banned";
+                    return (
+                      <li
+                        key={m.user_id}
+                        className={
+                          "flex items-center justify-between gap-3 rounded-2xl border px-4 py-3 " +
+                          (banned
+                            ? "border-ink/5 bg-surface/50 opacity-60"
+                            : "border-ink/10 bg-surface")
+                        }
+                      >
+                        <div className="min-w-0">
+                          <p className="text-sm font-bold text-ink truncate">{m.email}</p>
+                          <p className="text-[11px] font-semibold text-ink/50 truncate">
+                            {[m.display_name, m.phone && `Tél : ${m.phone}`]
+                              .filter(Boolean)
+                              .join(" · ") || "—"}{" "}
+                            · {m.active_assignments} assignation
+                            {m.active_assignments > 1 ? "s" : ""} active
+                            {m.status !== "active" && ` · ${m.status}`}
+                          </p>
+                        </div>
+                        <button
+                          type="button"
+                          disabled={banned}
+                          onClick={() => {
+                            setSelectedMentor(m);
+                            setStep(3);
+                          }}
+                          className="shrink-0 rounded-xl bg-ink px-3 py-1.5 text-xs font-bold text-white hover:bg-ink/90 transition-all cursor-pointer disabled:cursor-not-allowed disabled:opacity-40"
+                        >
+                          Choisir
+                        </button>
+                      </li>
+                    );
+                  })}
+                </ul>
+              </>
+            )}
+
+            {/* Étape 3 — confirmation de la relation Parent → Enfant → Mentor */}
+            {step === 3 && (
+              <>
+                <div className="rounded-2xl border border-ink/10 bg-surface p-4 space-y-2.5">
+                  <div className="flex items-center gap-2 text-sm">
+                    <span className="font-black text-ink w-20 shrink-0">Parent</span>
+                    <span className="font-semibold text-ink/70 truncate">
+                      {selectedParent?.email}
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-2 text-sm">
+                    <span className="font-black text-ink w-20 shrink-0">Enfant</span>
+                    <span className="font-semibold text-ink/70 truncate">
+                      {selectedChild?.name}
+                      {selectedChild?.age != null ? ` (${selectedChild.age} ans)` : ""}
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-2 text-sm">
+                    <span className="font-black text-ink w-20 shrink-0">Mentor</span>
+                    <span className="font-semibold text-ink/70 truncate">
+                      {selectedMentor?.email}
+                    </span>
+                  </div>
+                </div>
+
+                <div className="flex gap-3 pt-4 border-t border-ink/5">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setStep(2);
+                      setSelectedMentor(null);
+                    }}
+                    className="flex-1 px-4 py-3 bg-surface hover:bg-ink/5 text-ink rounded-2xl font-bold transition-colors cursor-pointer"
+                  >
+                    Retour
+                  </button>
+                  <button
+                    type="button"
+                    disabled={isSubmitting}
+                    onClick={() => void handleAssign()}
+                    className="flex-1 px-4 py-3 bg-brand hover:bg-brand/90 text-white rounded-2xl font-bold transition-colors flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
+                  >
+                    {isSubmitting ? (
+                      <Loader2 className="size-5 animate-spin" />
+                    ) : (
+                      <UserPlus className="size-4" />
+                    )}
+                    <span>Assigner le mentor</span>
+                  </button>
+                </div>
+              </>
+            )}
           </div>
-        </form>
+        )}
       </div>
     </div>
   );

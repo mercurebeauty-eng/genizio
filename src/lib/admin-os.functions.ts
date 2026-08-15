@@ -621,86 +621,152 @@ export function detectHighPotentialProfiles(
   return alerts;
 }
 
+const ExecutivePageInput = z.object({
+  page: z.number().int().min(1).default(1),
+  pageSize: z.number().int().min(1).max(100).default(20),
+});
+
+export interface PaginatedExecutiveResponse {
+  kpis: ExecutiveKPIs;
+  parents: ParentBIRC[];
+  total: number;
+  page: number;
+  pageSize: number;
+  totalPages: number;
+}
+
 export const getExecutiveKPIsAdmin = createServerFn({ method: "GET" })
   .middleware([requireAdmin])
-  .handler(async (): Promise<ExecutiveDataResponse> => {
+  .validator((input: unknown) => ExecutivePageInput.parse(input ?? {}))
+  .handler(async ({ data }): Promise<PaginatedExecutiveResponse> => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
-    // 1. Fetch users from Supabase Auth admin
-    const users = await listAllUsers(supabaseAdmin);
+    // KPIs en une seule passe SQL (compute_executive_kpis, migration Vague 4) — fini
+    // les tables child_profiles + challenges chargées ENTIÈRES en mémoire à chaque
+    // ouverture de l'onglet Exécutif.
+    const { data: kpiRaw, error: kpiErr } = await supabaseAdmin.rpc("compute_executive_kpis");
+    if (kpiErr) throw new Error(kpiErr.message);
+    const k = (kpiRaw ?? {}) as {
+      totalChildren: number;
+      totalChallenges: number;
+      completedChallenges: number;
+      activeChildren7d: number;
+      activeChildren30d: number;
+      ageBrackets: Array<{ bracket: AgeBracketKey; count: number }>;
+    };
 
-    // 2. Fetch children profiles (la saison n'est plus qu'une étiquette depuis la
-    // dégradation des saisons, 20260812130000 — plus aucun rôle structurel ici)
-    const [{ data: children, error: childrenErr }] = await Promise.all([
+    // Annuaire paginé via parent_profiles (email/téléphone/nom + created_at du compte,
+    // migration Vague 4) — fini le scan complet de l'annuaire auth (listAllUsers).
+    const [{ count: totalParents }, { data: contacts, error: contactsErr }] = await Promise.all([
+      supabaseAdmin.from("parent_profiles").select("user_id", { count: "exact", head: true }),
       supabaseAdmin
-        .from("child_profiles")
-        .select("id, name, age, user_id, last_activity_date, updated_at, created_at, pdf_unlocked"),
+        .from("parent_profiles")
+        .select("user_id, email, phone, display_name, created_at")
+        .order("created_at", { ascending: false })
+        .range((data.page - 1) * data.pageSize, data.page * data.pageSize - 1),
     ]);
-    if (childrenErr) throw new Error(childrenErr.message);
+    if (contactsErr) throw new Error(contactsErr.message);
 
-    // 3. Fetch challenges
-    const { data: challenges, error: challengesErr } = await supabaseAdmin
-      .from("challenges")
-      .select("id, status, child_id, user_id, created_at, updated_at, completed_at")
-      .is("deleted_at", null);
-    if (challengesErr) throw new Error(challengesErr.message);
+    const total = totalParents ?? 0;
+    const totalPages = Math.max(1, Math.ceil(total / data.pageSize));
+    const pageContacts = contacts ?? [];
+    const parentIds = pageContacts.map((c) => c.user_id);
 
-    const safeChildren = children ?? [];
-    const safeChallenges = challenges ?? [];
-    const now = new Date();
+    // Pour la page uniquement : quota_override (app_metadata) via auth admin ciblé.
+    const userMeta = new Map<string, { createdAt: string | null; quotaOverride: number }>();
+    await Promise.all(
+      parentIds.map(async (id: string) => {
+        const { data: u } = await (supabaseAdmin as any).auth.admin
+          .getUserById(id)
+          .catch(() => ({ data: null }));
+        userMeta.set(id, {
+          createdAt: (u?.user?.created_at as string | null) ?? null,
+          quotaOverride: ((u?.user?.app_metadata as any)?.quota_override as number) ?? 0,
+        });
+      }),
+    );
 
-    const totalParents = users.length;
-    const totalChildren = safeChildren.length;
-    const totalChallenges = safeChallenges.length;
-    const completedChallenges = safeChallenges.filter((c) => c.status === "completed").length;
+    // Enfants et défis des parents de la page (borné par la page × cap 50 enfants).
+    const childrenByUser = new Map<string, ChildBIRC[]>(parentIds.map((id) => [id, []]));
+    const countsByUser = new Map<string, { total: number; completed: number }>();
+    if (parentIds.length > 0) {
+      const { data: children } = await supabaseAdmin
+        .from("child_profiles")
+        .select("id, name, age, user_id, pdf_unlocked")
+        .in("user_id", parentIds);
+      for (const c of children ?? []) {
+        childrenByUser.get(c.user_id)?.push({
+          id: c.id,
+          name: c.name,
+          age: c.age ?? 0,
+          pdfUnlocked: c.pdf_unlocked === true,
+        });
+      }
+      const { data: challenges } = await supabaseAdmin
+        .from("challenges")
+        .select("user_id, status")
+        .in("user_id", parentIds)
+        .is("deleted_at", null);
+      for (const ch of challenges ?? []) {
+        const cur = countsByUser.get(ch.user_id) ?? { total: 0, completed: 0 };
+        cur.total += 1;
+        if (ch.status === "completed") cur.completed += 1;
+        countsByUser.set(ch.user_id, cur);
+      }
+    }
 
-    const activeChildren7d = calculateActiveChildren(safeChildren, 7, now, safeChallenges);
-    const activeChildren30d = calculateActiveChildren(safeChildren, 30, now, safeChallenges);
-    const retentionRatePct = calculateRetentionRate(activeChildren30d, totalChildren);
-    const ageDistribution = calculateAgeDistribution(safeChildren);
-
-    const parents: ParentBIRC[] = users.map((user) => {
-      const userChildren = safeChildren.filter((c) => c.user_id === user.id);
-      const userChallenges = safeChallenges.filter((c) => c.user_id === user.id);
-      const userCompleted = userChallenges.filter((c) => c.status === "completed");
-      const phone = user.user_metadata?.phone || null;
-
+    const parents: ParentBIRC[] = pageContacts.map((c) => {
+      const meta = userMeta.get(c.user_id);
+      const userChildren = childrenByUser.get(c.user_id) ?? [];
+      const counts = countsByUser.get(c.user_id) ?? { total: 0, completed: 0 };
       return {
-        id: user.id,
-        email: user.email || "",
-        phone,
-        whatsappUrl: formatWhatsAppUrl(phone),
-        createdAt: user.created_at,
+        id: c.user_id,
+        email: c.email,
+        phone: c.phone,
+        whatsappUrl: formatWhatsAppUrl(c.phone),
+        createdAt: meta?.createdAt ?? c.created_at ?? new Date().toISOString(),
         childCount: userChildren.length,
-        childNames: userChildren.map((c) => `${c.name} (${c.age} ans)`).join(", "),
-        children: userChildren.map((c) => {
-          return {
-            id: c.id,
-            name: c.name,
-            age: c.age,
-            pdfUnlocked: c.pdf_unlocked === true,
-          };
-        }),
-        challengeCount: userChallenges.length,
-        completedCount: userCompleted.length,
-        quotaOverride: (user.app_metadata?.quota_override as number) ?? 0,
+        childNames: userChildren.map((ch) => `${ch.name} (${ch.age} ans)`).join(", "),
+        children: userChildren,
+        challengeCount: counts.total,
+        completedCount: counts.completed,
+        quotaOverride: meta?.quotaOverride ?? 0,
       };
     });
 
-    parents.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+    // Tranches d'âge : comptages bruts du SQL, pourcentage sur le TOTAL des enfants —
+    // même règle que calculateAgeDistribution (miroir documenté dans la migration).
+    const bracketCounts = new Map<AgeBracketKey, number>(
+      (k.ageBrackets ?? []).map((b) => [b.bracket, b.count]),
+    );
+    const bracketKeys: AgeBracketKey[] = ["3-6 ans", "7-10 ans", "11-13 ans", "14+ ans"];
+    const ageDistribution: AgeDistributionItem[] = bracketKeys.map((bracket) => {
+      const count = bracketCounts.get(bracket) ?? 0;
+      return {
+        bracket,
+        count,
+        percentage: (k.totalChildren ?? 0) > 0
+          ? Math.round((count / (k.totalChildren ?? 0)) * 100)
+          : 0,
+      };
+    });
 
     return {
       kpis: {
-        activeChildren7d,
-        activeChildren30d,
-        totalParents,
-        totalChildren,
-        totalChallenges,
-        completedChallenges,
-        retentionRatePct,
+        activeChildren7d: k.activeChildren7d ?? 0,
+        activeChildren30d: k.activeChildren30d ?? 0,
+        totalParents: total,
+        totalChildren: k.totalChildren ?? 0,
+        totalChallenges: k.totalChallenges ?? 0,
+        completedChallenges: k.completedChallenges ?? 0,
+        retentionRatePct: calculateRetentionRate(k.activeChildren30d ?? 0, k.totalChildren ?? 0),
         ageDistribution,
       },
       parents,
+      total,
+      page: data.page,
+      pageSize: data.pageSize,
+      totalPages,
     };
   });
 
@@ -713,7 +779,9 @@ export const getTalentCityStatsAdmin = createServerFn({ method: "GET" })
       supabaseAdmin
         .from("child_profiles")
         .select("id, name, age, city, talents, user_id, created_at"),
-      supabaseAdmin.from("orders").select("id, child_id, total_price_xof, status, created_at"),
+      // Vague 4 batch 4 : seules les colonnes utiles à calculateCityStats (child_id) —
+      // la table orders peut grossir, les autres colonnes n'étaient jamais lues ici.
+      supabaseAdmin.from("orders").select("child_id"),
     ]);
 
     if (childrenRes.error) throw new Error(childrenRes.error.message);
@@ -790,51 +858,30 @@ export const getProgressionHealthAdmin = createServerFn({ method: "GET" })
   .middleware([requireAdmin])
   .handler(async (): Promise<ProgressionHealthResponse> => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const cutoff = new Date(Date.now() - 14 * 24 * 60 * 60 * 1000).toISOString();
 
-    const [completedRes, staleRes] = await Promise.all([
-      supabaseAdmin
-        .from("challenges")
-        .select("academic_domain, created_at, completed_at")
-        .eq("status", "completed")
-        .is("deleted_at", null)
-        .not("academic_domain", "is", null)
-        .not("completed_at", "is", null),
-      supabaseAdmin
-        .from("challenges")
-        .select("academic_domain")
-        .in("status", ["todo", "in_progress"])
-        .is("deleted_at", null)
-        .not("academic_domain", "is", null)
-        .lt("created_at", cutoff),
-    ]);
+    // Agrégat SQL (compute_progression_health, migration Vague 4 batch 4) — fini le
+    // chargement de TOUS les défis académiques en mémoire à chaque visite.
+    // (supabaseAdmin as any) : RPC ajouté après la dernière régénération des types —
+    // sera typé à la prochaine `supabase gen types`.
+    const { data: raw, error } = await (supabaseAdmin as any).rpc("compute_progression_health");
+    if (error) throw new Error(error.message);
+    const r = (raw ?? {}) as {
+      completed: Array<{ domain: string; completedCount: number; avgDaysToCompletion: number | null }>;
+      stale: Array<{ domain: string; staleCount: number }>;
+    };
 
-    if (completedRes.error) throw new Error(completedRes.error.message);
-    if (staleRes.error) throw new Error(staleRes.error.message);
-
-    const byDomain = new Map<string, { count: number; totalDays: number }>();
-    for (const c of completedRes.data ?? []) {
-      if (!c.academic_domain || !c.completed_at || !c.created_at) continue;
-      const days = (new Date(c.completed_at).getTime() - new Date(c.created_at).getTime()) / (1000 * 60 * 60 * 24);
-      const entry = byDomain.get(c.academic_domain) ?? { count: 0, totalDays: 0 };
-      entry.count += 1;
-      entry.totalDays += Math.max(0, days);
-      byDomain.set(c.academic_domain, entry);
-    }
-
-    const staleByDomain = new Map<string, number>();
-    for (const c of staleRes.data ?? []) {
-      if (!c.academic_domain) continue;
-      staleByDomain.set(c.academic_domain, (staleByDomain.get(c.academic_domain) ?? 0) + 1);
-    }
+    const completedByDomain = new Map(
+      (r.completed ?? []).map((d) => [d.domain, d] as const),
+    );
+    const staleByDomain = new Map((r.stale ?? []).map((d) => [d.domain, d.staleCount] as const));
 
     const domains: ProgressionDomainHealth[] = ACADEMIC_DOMAINS.map((domain) => {
-      const stats = byDomain.get(domain);
+      const stats = completedByDomain.get(domain);
       return {
         domain,
         domainLabel: ACADEMIC_DOMAIN_LABELS[domain] ?? domain,
-        completedCount: stats?.count ?? 0,
-        avgDaysToCompletion: stats && stats.count > 0 ? Math.round((stats.totalDays / stats.count) * 10) / 10 : null,
+        completedCount: stats?.completedCount ?? 0,
+        avgDaysToCompletion: stats?.avgDaysToCompletion ?? null,
         staleCount: staleByDomain.get(domain) ?? 0,
       };
     }).filter((d) => d.completedCount > 0 || d.staleCount > 0);
@@ -847,44 +894,59 @@ export const getNayaTelemetryAdmin = createServerFn({ method: "GET" })
   .handler(async (): Promise<NayaTelemetryResponse> => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
-    const [challengesRes, hypothesisRes, childrenRes, auditsRes] = await Promise.all([
-      supabaseAdmin
-        .from("challenges")
-        .select("id, status, proof_mode")
-        .is("deleted_at", null),
-      supabaseAdmin
-        .from("hypothesis_cycles")
-        .select("id, status"),
-      supabaseAdmin
-        .from("child_profiles")
-        .select("id, ai_synthesis"),
-      // « Le Loup » (chantier 4) : audits de génération — conformité, recadrage,
-      // coût propre de la vérification sémantique (cf. calculateNayaWolfTelemetry).
-      supabaseAdmin
-        .from("generation_audits")
-        .select("kind, verdict, violations, semantic_checked, regenerated"),
-    ]);
+    // Comptages SQL exacts (Vague 4) — plus de chargement des tables challenges /
+    // hypothesis_cycles / child_profiles en entier pour en compter les lignes.
+    const [genRes, startedRes, completedRes, photoRes, hypoRes, recoRes, auditsRes] =
+      await Promise.all([
+        supabaseAdmin
+          .from("challenges")
+          .select("id", { count: "exact", head: true })
+          .is("deleted_at", null),
+        supabaseAdmin
+          .from("challenges")
+          .select("id", { count: "exact", head: true })
+          .in("status", ["in_progress", "completed"])
+          .is("deleted_at", null),
+        supabaseAdmin
+          .from("challenges")
+          .select("id", { count: "exact", head: true })
+          .eq("status", "completed")
+          .is("deleted_at", null),
+        supabaseAdmin
+          .from("challenges")
+          .select("id", { count: "exact", head: true })
+          .eq("status", "completed")
+          .eq("proof_mode", "photo")
+          .is("deleted_at", null),
+        supabaseAdmin.from("hypothesis_cycles").select("id", { count: "exact", head: true }),
+        supabaseAdmin
+          .from("child_profiles")
+          .select("id", { count: "exact", head: true })
+          .not("ai_synthesis", "is", null)
+          .neq("ai_synthesis", ""),
+        // « Le Loup » (chantier 4) : audits de génération — conformité, recadrage,
+        // coût propre de la vérification sémantique (cf. calculateNayaWolfTelemetry).
+        // Seule source encore chargée en entier (journal append-only du Loup) — à
+        // passer en agrégat SQL si le volume l'exige (plan multicouche, V4 batch 3).
+        supabaseAdmin
+          .from("generation_audits")
+          .select("kind, verdict, violations, semantic_checked, regenerated"),
+      ]);
 
-    if (challengesRes.error) throw new Error(challengesRes.error.message);
-    if (hypothesisRes.error) throw new Error(hypothesisRes.error.message);
-    if (childrenRes.error) throw new Error(childrenRes.error.message);
+    if (genRes.error) throw new Error(genRes.error.message);
+    if (startedRes.error) throw new Error(startedRes.error.message);
+    if (completedRes.error) throw new Error(completedRes.error.message);
+    if (photoRes.error) throw new Error(photoRes.error.message);
+    if (hypoRes.error) throw new Error(hypoRes.error.message);
+    if (recoRes.error) throw new Error(recoRes.error.message);
     if (auditsRes.error) throw new Error(auditsRes.error.message);
 
-    const challenges = challengesRes.data ?? [];
-    const hypothesisCycles = hypothesisRes.data ?? [];
-    const children = childrenRes.data ?? [];
-
-    const challengesGenerated = challenges.length;
-    const challengesStarted = challenges.filter(
-      (c) => c.status === "in_progress" || c.status === "completed"
-    ).length;
-    const challengesCompleted = challenges.filter((c) => c.status === "completed").length;
-    const photoProofCompleted = challenges.filter(
-      (c) => c.status === "completed" && c.proof_mode === "photo"
-    ).length;
-
-    const hypothesesCycles = hypothesisCycles.length;
-    const recommendationsCount = children.filter((c) => Boolean(c.ai_synthesis)).length;
+    const challengesGenerated = genRes.count ?? 0;
+    const challengesStarted = startedRes.count ?? 0;
+    const challengesCompleted = completedRes.count ?? 0;
+    const photoProofCompleted = photoRes.count ?? 0;
+    const hypothesesCycles = hypoRes.count ?? 0;
+    const recommendationsCount = recoRes.count ?? 0;
 
     const telemetry = calculateNayaTelemetry({
       challengesGenerated,
@@ -909,42 +971,83 @@ export const getNayaTelemetryAdmin = createServerFn({ method: "GET" })
     return telemetry;
   });
 
+const CommercePageInput = z.object({
+  page: z.number().int().min(1).default(1),
+  pageSize: z.number().int().min(1).max(100).default(50),
+  /** Statut brut des commandes, ou « Tous ». */
+  status: z.string().max(20).default("Tous"),
+});
+
+export interface PaginatedCommerceResponse
+  extends Omit<CommercePassportsDataResponse, "orders"> {
+  orders: KitOrder[];
+  /** Comptage par statut sur TOUTE l'historique (pas seulement la page) — badges des onglets. */
+  statusCounts: Record<string, number>;
+  total: number;
+  page: number;
+  pageSize: number;
+  totalPages: number;
+}
+
 export const getCommercePassportsDataAdmin = createServerFn({ method: "GET" })
   .middleware([requireAdmin])
-  .handler(async (): Promise<CommercePassportsDataResponse> => {
+  .validator((input: unknown) => CommercePageInput.parse(input ?? {}))
+  .handler(async ({ data }): Promise<PaginatedCommerceResponse> => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
-    const [ordersRes, productsRes, suggestionsRes, childrenRes, users] = await Promise.all([
-      supabaseAdmin
-        .from("orders")
-        .select("*, child_profiles(name, age, city), challenges(title)")
-        .order("created_at", { ascending: false }),
-      supabaseAdmin
-        .from("products")
-        .select("*")
-        .order("created_at", { ascending: false }),
-      supabaseAdmin
-        .from("material_suggestions")
-        .select("*")
-        .eq("status", "new")
-        .order("seen_count", { ascending: false }),
-      supabaseAdmin
-        .from("child_profiles")
-        .select("id, name, age, city, user_id, pdf_unlocked, created_at")
-        .order("created_at", { ascending: false }),
-      listAllUsers(supabaseAdmin),
-    ]);
+    // Commandes paginées (Vague 4) : count exact + range + filtre de statut en SQL.
+    const ORDER_STATUSES = ["pending", "confirmed", "shipped", "delivered", "cancelled"] as const;
+    let ordersQuery = supabaseAdmin
+      .from("orders")
+      .select("*, child_profiles(name, age, city), challenges(title)", { count: "exact" });
+    if (data.status !== "Tous") ordersQuery = ordersQuery.eq("status", data.status);
+
+    // Contacts parents via parent_profiles (Vague 1) — fini le scan paginé de
+    // l'annuaire auth (listAllUsers).
+    const [ordersRes, statusCountsRes, productsRes, suggestionsRes, childrenRes, usersRes] =
+      await Promise.all([
+        ordersQuery
+          .order("created_at", { ascending: false })
+          .range((data.page - 1) * data.pageSize, data.page * data.pageSize - 1),
+        Promise.all(
+          ORDER_STATUSES.map((s) =>
+            supabaseAdmin
+              .from("orders")
+              .select("id", { count: "exact", head: true })
+              .eq("status", s),
+          ),
+        ),
+        supabaseAdmin.from("products").select("*").order("created_at", { ascending: false }),
+        supabaseAdmin
+          .from("material_suggestions")
+          .select("*")
+          .eq("status", "new")
+          .order("seen_count", { ascending: false }),
+        supabaseAdmin
+          .from("child_profiles")
+          .select("id, name, age, city, user_id, pdf_unlocked, created_at")
+          .order("created_at", { ascending: false }),
+        supabaseAdmin.from("parent_profiles").select("user_id, email, phone"),
+      ]);
 
     if (ordersRes.error) throw new Error(ordersRes.error.message);
     if (productsRes.error) throw new Error(productsRes.error.message);
     if (suggestionsRes.error) throw new Error(suggestionsRes.error.message);
     if (childrenRes.error) throw new Error(childrenRes.error.message);
+    if (usersRes.error) throw new Error(usersRes.error.message);
+
+    const statusCounts: Record<string, number> = {};
+    let totalOrders = 0;
+    ORDER_STATUSES.forEach((s, i) => {
+      statusCounts[s] = statusCountsRes[i]?.count ?? 0;
+      totalOrders += statusCounts[s];
+    });
 
     const userMap = new Map<string, { email: string; phone: string | null }>();
-    for (const u of users) {
-      userMap.set(u.id, {
+    for (const u of usersRes.data ?? []) {
+      userMap.set(u.user_id, {
         email: u.email || "",
-        phone: u.user_metadata?.phone || null,
+        phone: u.phone || null,
       });
     }
 
@@ -986,11 +1089,11 @@ export const getCommercePassportsDataAdmin = createServerFn({ method: "GET" })
 
     const products: ProductItem[] = productsRes.data ?? [];
     const materialSuggestions: MaterialSuggestionItem[] = suggestionsRes.data ?? [];
-
-    const totalOrders = orders.length;
-    const pendingOrders = orders.filter((o) => o.status === "pending").length;
-    const deliveredOrders = orders.filter((o) => o.status === "delivered").length;
     const passportsUnlockedCount = teenProfiles.filter((p) => p.pdfUnlocked).length;
+
+    const total = ordersRes.count ?? 0;
+    const totalPages = Math.max(1, Math.ceil(total / data.pageSize));
+    const page = Math.min(data.page, totalPages);
 
     return {
       orders,
@@ -999,10 +1102,15 @@ export const getCommercePassportsDataAdmin = createServerFn({ method: "GET" })
       teenProfiles,
       summary: {
         totalOrders,
-        pendingOrders,
-        deliveredOrders,
+        pendingOrders: statusCounts.pending ?? 0,
+        deliveredOrders: statusCounts.delivered ?? 0,
         passportsUnlockedCount,
       },
+      statusCounts,
+      total,
+      page,
+      pageSize: data.pageSize,
+      totalPages,
     };
   });
 

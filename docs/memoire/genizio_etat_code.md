@@ -4,12 +4,26 @@ description: État actuel de l'implémentation — snapshot vérifié contre le 
 metadata:
   type: reference
   status: living-document
-  last_updated: 2026-08-13
+  last_updated: 2026-08-15
 ---
 
 # État du Code
 
-> Vérifié le 2026-08-13, `main` @ merges #50-57 (revue de code approfondie + clôture décision #51). Statut complet dans le Status Overview de [[MEMORY]] ; le détail des correctifs dans la décision #73 de [[genizio-decisions]].
+> Vérifié le 2026-08-15 — chantier Admin OS « réalité des coûts IA + dé-doublonnage Commerce » (décision #78). Statut complet dans le Status Overview de [[MEMORY]].
+
+## Snapshot du 2026-08-15 — Admin OS : tarifs IA réels (barème creux/plein DeepSeek), appellations v4, édition produits (décision #78)
+
+**Branche** : `main` — changements **NON COMMITÉS** au moment de l'écriture (vérifier `git status`).
+
+**Contenu** (détail et alternatives dans [[genizio-decisions]] #78) :
+- `src/lib/naya-telemetry.ts` : barème DeepSeek creux/plein (effectif 2026-08-16 16:00 UTC) avec `DEEPSEEK_PEAK` / `DEEPSEEK_OFF_PEAK` (flash 0,44/1,32 $/M pointe et 0,22/0,66 creux ; pro 1,32/3,96 et 0,66/1,98), `DEFAULT_OFF_PEAK_SHARE = 0.7`, helper `isDeepSeekPeakHour` (pointe 01:00-04:00 et 06:00-10:00 UTC), taux pondérés dans `calculateDeepSeekChatCost/ReasonerCost(input, output, offPeakSharePct)`, plafond `peakCeilingCostUsd/Xof` dans la réponse.
+- `src/components/admin/AdminNayaTab.tsx` : libellés `deepseek-v4-flash` / `deepseek-v4-pro` (+ mode réflexion affiché), carte « Coût Estimé » avec heure actuelle pointe/creuse + plafond, note de pied mise à jour.
+- `src/components/admin/AdminCommerceTab.tsx` : panneaux dupliqués « Catalogue Produits Boutique » + « Suggestions Matériel Naya IA » **supprimés** → carte CTA unique (compteurs + « Gérer dans Produits & Stock ») via `onOpenProductsTab`.
+- `src/components/admin/AdminProductsTab.tsx` : **édition des produits** (Modifier / Annuler, formulaire unique création+édition) ; retrait des props `prefillSuggestion`/`onPrefillConsumed` (code mort après dé-doublonnage).
+- `src/routes/admin.index.tsx` : recâblage `onOpenProductsTab` ; retrait de l'état `quickAddSuggestion`.
+- Tests mis à jour : `naya-telemetry.test.ts` (+ `isDeepSeekPeakHour`), `naya-telemetry.stress.test.ts`, `admin-os.test.ts`.
+
+**Vérifié** : 682 tests verts (55 fichiers), `tsc --noEmit` propre, lint sans nouvel apport (bruit CRLF préexistant). Sources tarifaires : api-docs.deepseek.com (pricing + guides/thinking_mode), recoupées presse.
 
 ## Snapshot du 2026-08-13 — Revue de code approfondie (décision #73, PR #50-57)
 

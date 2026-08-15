@@ -1,6 +1,8 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import { useServerFn } from "@tanstack/react-start";
 import { useSession } from "@/hooks/use-session";
+import { listPublishedTestimonials } from "@/lib/testimonials.functions";
 import constatImage from "@/assets/landing-constat.webp";
 import communauteImage from "@/assets/landing-communaute.webp";
 import { NayaAvatar } from "@/components/NayaAvatar";
@@ -50,7 +52,6 @@ import {
   jsonLdScript,
   faqPageJsonLd,
   SOFTWARE_APP_JSONLD,
-  reviewsJsonLd,
   howToJsonLd,
   type ParentReview,
 } from "@/lib/seo";
@@ -114,56 +115,19 @@ const LANDING_FAQ: {
   },
 ];
 
-// Avis de parents affichés sur la landing (data-driven, éditorialisés).
-//
-// ⚠️ IMPORTANT — La base de production ne contient pas encore de témoignages
-// collectés : les entrées ci-dessous sont des modèles réalistes à REMPLACER par
-// de vrais retours clients avant toute mise en ligne. La codebase refuse la
-// preuve sociale inventée (un faux avis est un risque de crédibilité réel face
-// à un partenaire ou un moteur qui vérifie). Pour activer la section, remplacez
-// chaque entrée par une citation authentique (prénom + ville suffisent, jamais
-// de nom complet). Tant que le tableau est vide, la section ne s'affiche pas.
-const LANDING_TESTIMONIALS: ParentReview[] = [
-  {
-    author: "Aïcha K.",
-    authorLocation: "Abidjan, Côte d'Ivoire",
-    rating: 5,
-    headline: "Un vrai changement pour mon fils",
-    reviewBody:
-      "Mon fils de 8 ans ne tenait jamais en place. Depuis qu'il fait les défis Génizio, je vois enfin ce qui l'absorbe vraiment : il construit, il bricole, et il en est fier. La carte des talents m'a ouvert les yeux.",
-  },
-  {
-    author: "Moussa D.",
-    authorLocation: "Dakar, Sénégal",
-    rating: 5,
-    headline: "Enfin un outil qui regarde ailleurs que les notes",
-    reviewBody:
-      "Ma fille est moyenne à l'école mais déborde d'idées. Génizio a mis en valeur son sens pratique et sa créativité que personne ne voyait. Le portfolio de réalisations est bluffant.",
-  },
-  {
-    author: "Fanta T.",
-    authorLocation: "Paris, France",
-    rating: 4,
-    headline: "Le lien avec le pays, concrètement",
-    reviewBody:
-      "Nous vivons à Paris et mon neveu à Abidjan. Le parrainage nous permet de suivre ses défis à distance et de partager un vrai sujet de conversation. Les défis sont bien ancrés dans le contexte africain.",
-  },
-  {
-    author: "Jean-Marc N.",
-    authorLocation: "Douala, Cameroun",
-    rating: 5,
-    headline: "Des défis simples, des résultats réels",
-    reviewBody:
-      "Pas besoin de matériel coûteux ni de connexion parfaite. Les défis utilisent ce qu'on a sous la main et le suivi IA donne des retours utiles, pas des jugements.",
-  },
-];
+// Avis de parents affichés sur la landing : la preuve sociale est désormais
+// RÉELLE — les témoignages sont collectés dans l'application (espace parent,
+// après un défi validé) et publiés dans parent_testimonials. La section se
+// charge au montage (TestimonialsSection) et ne montre que les retours consentis
+// + publiés (RLS). Aucun contenu rédigé, jamais : un faux avis est un risque de
+// crédibilité réel face à un partenaire ou un moteur qui vérifie.
 
 export const Route = createFileRoute("/")({
   head: () => {
     const meta = pageMeta({
-      title: "Génizio — Révéler les talents de votre enfant",
+      title: "Génizio — Les talents que le bulletin ne montre pas",
       description:
-        "Des défis concrets à faire à la maison pour révéler les talents de votre enfant de 5 à 16 ans, fondés sur les 9 intelligences de Howard Gardner.",
+        "Des défis concrets à faire à la maison pour révéler les talents de votre enfant de 5 à 16 ans — et les transformer en compétences, confiance et projets. Fondé sur les 9 intelligences de Howard Gardner.",
       path: "/",
     });
     return {
@@ -171,7 +135,11 @@ export const Route = createFileRoute("/")({
       scripts: [
         jsonLdScript(SOFTWARE_APP_JSONLD),
         jsonLdScript(faqPageJsonLd(LANDING_FAQ)),
-        jsonLdScript(reviewsJsonLd(LANDING_TESTIMONIALS)),
+        // Les avis réels étant chargés côté client (parent_testimonials), le
+        // JSON-LD statique du head ne peut pas les porter — l'agrégat des avis
+        // serait vide et pénaliserait le SEO (reviewCount 0). On ne l'émet pas
+        // ici : Google et les assistants lisent la section visible de la page,
+        // alimentée par les vrais témoignages.
         // Méthode en trois actes, visible dans la section « Trois actes. Zéro
         // questionnaire. » (METHOD_STEPS) — le HowTo doit rester synchronisé avec
         // les étapes affichées.
@@ -479,7 +447,7 @@ function NayaLanding() {
       <DemoSection />
       <PortfolioSection />
       <CommunitySection />
-      {LANDING_TESTIMONIALS.length > 0 && <TestimonialsSection />}
+      <TestimonialsSection />
       <DiasporaSection />
       <VisionSection />
       <PositioningSection />
@@ -494,7 +462,7 @@ function NayaLanding() {
 const NAV_LINKS = [
   { href: "#domaines", label: "Les 9 Talents" },
   { href: "#portfolio", label: "Portfolio de vie" },
-  { href: "#demo", label: "Simulateur" },
+  { href: "#demo", label: "Exemple" },
   { href: "#communaute", label: "Communauté" },
   { href: "#faq", label: "FAQ" },
 ];
@@ -642,19 +610,18 @@ function Hero() {
       <div className="relative mx-auto grid max-w-6xl items-center gap-16 px-6 pt-36 pb-28 lg:grid-cols-[1.05fr_0.95fr] lg:gap-16 lg:pt-44 lg:pb-32">
         <div>
           <span className="mb-5 inline-block rounded-full border border-brand-glow/30 bg-brand/20 px-4 py-1.5 text-xs font-bold uppercase tracking-wider text-brand-glow">
-            Le laboratoire de potentiel par projet
+            Au-delà du bulletin
           </span>
           <h1 className="mb-6 font-display text-balance text-4xl font-extrabold leading-[1.04] md:text-6xl">
-            Révélez les{" "}
+            Votre enfant a des talents que{" "}
             <span className="bg-gradient-to-r from-brand-glow to-amber-300 bg-clip-text text-transparent">
-              intelligences
-            </span>{" "}
-            naturelles de votre enfant.
+              l'école ne voit pas.
+            </span>
           </h1>
           <p className="mb-9 max-w-xl text-base font-medium leading-relaxed text-white/85">
-            Bien plus qu'un soutien scolaire. Génizio propose à votre enfant d'expérimenter le monde
-            réel grâce à des défis d'apprentissage sur-mesure validés par l'IA et accompagnés par
-            des mentors.
+            Génizio les révèle par des défis concrets à la maison — et les transforme en
+            compétences, en confiance et en chemin pour l'avenir. Pas de notes, pas de verdict :
+            des réalisations, observées par l'IA Naya et validées par vous.
           </p>
           <div className="mb-9 flex items-center gap-3.5 rounded-2xl border border-white/15 bg-white/10 p-4 shadow-lg backdrop-blur-md w-fit">
             <NayaAvatar size="sm" thoughts={["Bonjour ! Prêt pour un nouveau défi ?"]} />
@@ -668,18 +635,18 @@ function Hero() {
             </div>
           </div>
           <div className="flex flex-col gap-4 sm:flex-row">
-            <a
-              href="#demo"
-              className="press-brand rounded-2xl bg-brand px-8 py-4 text-center text-base font-bold text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-glow focus-visible:ring-offset-2 focus-visible:ring-offset-ink cursor-pointer"
-            >
-              Tester le Simulateur
-            </a>
             <Link
               to="/auth"
+              className="press-brand rounded-2xl bg-brand px-8 py-4 text-center text-base font-bold text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-glow focus-visible:ring-offset-2 focus-visible:ring-offset-ink cursor-pointer"
+            >
+              Créer mon compte gratuit
+            </Link>
+            <a
+              href="#demo"
               className="press-white rounded-2xl bg-white px-8 py-4 text-center text-base font-bold text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-glow focus-visible:ring-offset-2 focus-visible:ring-offset-ink cursor-pointer"
             >
-              Créer un compte
-            </Link>
+              Voir un exemple de défi
+            </a>
           </div>
           {/* Les anciennes pastilles d'avatars et la mention « familles à Dakar, Abidjan et
             Yaoundé » ont été retirées : la base de production ne contient d'utilisateurs qu'à
@@ -1034,7 +1001,9 @@ function MethodSection() {
           </h2>
           <p className="mt-5 text-sm font-semibold leading-relaxed text-white/85">
             La richesse d'un enfant ne se lit pas dans un formulaire. Elle se lit dans ce qu'il
-            fabrique, ce qu'il organise, ce qu'il raconte.
+            fabrique, ce qu'il organise, ce qu'il raconte. Et chaque défi révèle aussi{" "}
+            <span className="text-brand-glow">pourquoi la connaissance sert</span> — pas seulement
+            ce qu'il faut retenir.
           </p>
         </Reveal>
 
@@ -1582,13 +1551,30 @@ function CommunitySection() {
   );
 }
 
-// « Avis de parents » — la preuve sociale, uniquement avec de vrais retours.
-// Rendue data-driven (LANDING_TESTIMONIALS) pour être alimentée sans toucher au
-// code : mêmes tokens de design que les autres sections. Une moyenne de notes
-// honnête est calculée depuis le tableau — jamais un chiffre affiché à la main.
+// « Avis de parents » — la preuve sociale, UNIQUEMENT avec de vrais retours.
+// Les témoignages sont collectés dans l'application (espace parent, après un défi
+// validé) et publiés dans parent_testimonials. La section se charge au montage :
+// seuls les témoignages consentis + publiés sont visibles (RLS), jamais de
+// contenu rédigé. Une moyenne honnête est calculée depuis les données réelles.
 function TestimonialsSection() {
-  const average =
-    LANDING_TESTIMONIALS.reduce((sum, t) => sum + t.rating, 0) / LANDING_TESTIMONIALS.length;
+  const [reviews, setReviews] = useState<ParentReview[]>([]);
+  const listTestimonials = useServerFn(listPublishedTestimonials);
+
+  useEffect(() => {
+    let cancelled = false;
+    listTestimonials()
+      .then((rows) => {
+        if (!cancelled) setReviews(rows);
+      })
+      .catch((err) => console.error("Chargement des témoignages:", err));
+    return () => {
+      cancelled = true;
+    };
+  }, [listTestimonials]);
+
+  if (reviews.length === 0) return null;
+
+  const average = reviews.reduce((sum, t) => sum + t.rating, 0) / reviews.length;
 
   return (
     <section id="avis" className="scroll-mt-24 border-y border-ink/10 bg-white/40 py-24 lg:py-28">
@@ -1601,8 +1587,8 @@ function TestimonialsSection() {
             Ce que les parents nous disent.
           </h2>
           <p className="mt-5 text-sm font-semibold leading-relaxed text-ink/70">
-            Des retours de familles qui ont vu leur enfant se révéler autrement qu'à travers les
-            notes.
+            Des retours donnés par les familles directement dans l'application — après avoir vu
+            leur enfant se révéler autrement qu'à travers les notes.
           </p>
           <div className="mt-4 inline-flex items-center gap-2 rounded-full border border-ink/10 bg-white px-4 py-1.5 text-xs font-bold text-ink/70 shadow-sm">
             <span className="flex items-center gap-0.5 text-amber-500" aria-hidden>
@@ -1613,13 +1599,16 @@ function TestimonialsSection() {
                 />
               ))}
             </span>
-            {average.toFixed(1)}/5 — {LANDING_TESTIMONIALS.length} avis vérifiés
+            {average.toFixed(1)}/5 — {reviews.length} avis de parents
           </div>
         </Reveal>
 
         <div className="grid gap-5 md:grid-cols-2">
-          {LANDING_TESTIMONIALS.map((t, i) => (
-            <Reveal key={t.author} delay={(i % 2) * 100}>
+          {reviews.map((t, i) => {
+            const childrenCount = t.childrenCount ?? 0;
+            const challengesCompleted = t.challengesCompleted ?? 0;
+            return (
+            <Reveal key={`${t.author}-${i}`} delay={(i % 2) * 100}>
               <figure className="group relative h-full rounded-3xl border border-ink/10 bg-white p-7 shadow-sm transition-all hover:-translate-y-1 hover:border-brand/30 hover:shadow-xl">
                 <span
                   role="img"
@@ -1637,7 +1626,7 @@ function TestimonialsSection() {
                 <blockquote className="text-sm font-semibold leading-relaxed text-ink/80">
                   « {t.reviewBody} »
                 </blockquote>
-                <figcaption className="mt-6 flex items-center gap-3 border-t border-ink/10 pt-4">
+                <figcaption className="mt-6 flex flex-wrap items-center gap-3 border-t border-ink/10 pt-4">
                   <span className="grid size-10 shrink-0 place-items-center rounded-full bg-gradient-to-br from-brand to-amber-500 font-display text-sm font-black text-white shadow-md">
                     {t.author.charAt(0).toUpperCase()}
                   </span>
@@ -1645,10 +1634,40 @@ function TestimonialsSection() {
                     <p className="text-xs font-extrabold text-ink">{t.author}</p>
                     <p className="text-[11px] font-semibold text-ink/70">{t.authorLocation}</p>
                   </div>
+                  {/* La nature de l'émetteur : un avis de parent n'a pas la même
+                      valeur qu'un avis de mentor — on la rend visible. */}
+                  <span
+                    className={`inline-flex items-center rounded-full border px-2.5 py-0.5 text-[10px] font-black uppercase tracking-wider ${
+                      t.senderType === "mentor"
+                        ? "border-sky/30 bg-sky-50 text-sky-dark"
+                        : "border-brand/25 bg-brand/10 text-brand"
+                    }`}
+                  >
+                    {t.senderType === "mentor" ? "Avis de mentor" : "Avis de parent"}
+                  </span>
+                  {/* Les petits détails factuels qui donnent de la valeur à l'avis :
+                      le témoignage vient d'un parent réel, avec un vrai usage. */}
+                  <span className="ml-auto flex flex-wrap items-center justify-end gap-1.5">
+                    {childrenCount > 0 && (
+                      <span className="inline-flex items-center gap-1 rounded-full border border-ink/10 bg-surface px-2.5 py-1 text-[10px] font-bold text-ink/60">
+                        <Users className="size-3 text-brand" aria-hidden />
+                        {childrenCount} enfant{childrenCount > 1 ? "s" : ""} inscrit
+                        {childrenCount > 1 ? "s" : ""}
+                      </span>
+                    )}
+                    {challengesCompleted > 0 && (
+                      <span className="inline-flex items-center gap-1 rounded-full border border-ink/10 bg-surface px-2.5 py-1 text-[10px] font-bold text-ink/60">
+                        <Trophy className="size-3 text-leaf" aria-hidden />
+                        {challengesCompleted} défi{challengesCompleted > 1 ? "s" : ""} validé
+                        {challengesCompleted > 1 ? "s" : ""}
+                      </span>
+                    )}
+                  </span>
                 </figcaption>
               </figure>
             </Reveal>
-          ))}
+            );
+          })}
         </div>
       </div>
     </section>
@@ -1764,7 +1783,7 @@ function VisionSection() {
             Chez Génizio, nous croyons qu'un enfant n'est pas réductible à des notes d'examen. À
             chaque défi complété, le parent photographie la réalisation, et notre IA déduit
             l'émergence des talents associés. C'est ainsi que se dresse, au fil des mois, une
-            cartographie scientifique et vivante de son génie naturel.
+            cartographie vivante de ce qu'il sait vraiment faire.
           </p>
           <ul className="mt-8 space-y-3.5 text-xs font-bold text-white/80">
             <li className="flex items-center gap-3">
@@ -1877,7 +1896,7 @@ function PositioningSection() {
           <blockquote className="rounded-3xl border border-brand/20 bg-brand/10 p-6 md:p-8 shadow-xl">
             <p className="font-display text-balance text-xl font-extrabold leading-snug text-brand md:text-2xl">
               « Le but n'est pas de faire de tous les enfants des ingénieurs ou des artistes, mais
-              de s'assurer qu'aucun ne passe à côté de son génie naturel. »
+              de s'assurer qu'aucun ne passe à côté de ce qu'il est vraiment capable de devenir. »
             </p>
           </blockquote>
         </div>
@@ -2170,7 +2189,7 @@ function CTASection() {
               Inscription libre
             </span>
             <h2 className="mb-4 font-display text-balance text-3xl font-extrabold leading-tight md:text-4xl">
-              Révélez le potentiel de vos enfants dès aujourd'hui.
+              Découvrez les talents que le bulletin ne montre pas.
             </h2>
             <p className="mx-auto mb-10 max-w-md text-sm font-semibold leading-relaxed text-white/85">
               Créez le profil de votre enfant en deux minutes et recevez son premier défi sur

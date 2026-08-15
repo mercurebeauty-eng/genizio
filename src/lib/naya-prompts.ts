@@ -293,6 +293,8 @@ export interface BuildChallengePromptInput {
   timePressureNote: string;
   /** Contexte déclaré par le parent (formatChildProfileContext) — "" si rien de renseigné */
   profileContextNote: string;
+  /** Question formulée par l'enfant lui-même ("L'enfant se demande : …") — "" si aucune */
+  childQuestionNote?: string;
 }
 
 export function buildChallengePrompt(input: BuildChallengePromptInput): string {
@@ -311,12 +313,16 @@ export function buildChallengePrompt(input: BuildChallengePromptInput): string {
     existingTitles,
     timePressureNote,
     profileContextNote,
+    childQuestionNote = "",
   } = input;
   const ignoredDomainsNote =
     ignoredDomains.length > 0
       ? `\n- Cet enfant a déjà reçu plusieurs défis dans ${ignoredDomains.length > 1 ? "ces domaines" : "ce domaine"} (${ignoredDomains.join(", ")}) sans jamais les commencer : évite de reproposer ${ignoredDomains.length > 1 ? "ces domaines" : "ce domaine"}, sauf sous un angle radicalement différent de ce qui a déjà été proposé.`
       : "";
   const contextualizationInstruction = buildContextualizationInstruction(location);
+  const childQuestionBlock = childQuestionNote.trim()
+    ? `\n- LA QUESTION DE ${childName.toUpperCase()} : ${childQuestionNote.trim()} — ${childName} a posé cette question lui-même : c'est le fil conducteur prioritaire. Au moins un des défis doit répondre à cette question par l'action (l'enfant doit découvrir la réponse en expérimentant, jamais par une leçon frontale).`
+    : "";
 
   return `Tu es Naya, un mentor pédagogique pour enfants en Afrique francophone, sur la plateforme Génizio.
 Génère ${count} défis d'apprentissage sur mesure pour cet enfant.
@@ -346,6 +352,7 @@ Contraintes :
 - Ancre les défis dans le contexte africain (matériaux locaux, réalités du quotidien, langues, marchés, agriculture, artisanat, culture).
 - ${contextualizationInstruction}
 - Choisis parmi ces domaines : ${domainsText}.${ignoredDomainsNote}
+${childQuestionBlock}
 - Chaque défi doit être concret, réalisable à la maison ou dans le quartier, adapté à l'âge, avec des matériaux simples et accessibles.
 - ${STEPS_INSTRUCTION}
 - ${buildAvoidRepeatsInstruction(existingTitles)}
@@ -389,6 +396,8 @@ export interface BuildSingleChallengePromptInput {
   timePressureNote: string;
   /** Contexte déclaré par le parent (formatChildProfileContext) — "" si rien de renseigné */
   profileContextNote: string;
+  /** Question formulée par l'enfant lui-même ("L'enfant se demande : …") — "" si aucune */
+  childQuestionNote?: string;
 }
 
 export function buildSingleChallengePrompt(input: BuildSingleChallengePromptInput): string {
@@ -409,8 +418,12 @@ export function buildSingleChallengePrompt(input: BuildSingleChallengePromptInpu
     homeMaterialsUseLine,
     timePressureNote,
     profileContextNote,
+    childQuestionNote = "",
   } = input;
   const contextualizationInstruction = buildContextualizationInstruction(profileLocation);
+  const childQuestionBlock = childQuestionNote.trim()
+    ? `\nQUESTION DE ${childName.toUpperCase()} (fil conducteur prioritaire) : ${childQuestionNote.trim()} — ${childName} a posé cette question lui-même : conçois le défi pour qu'il découvre la réponse par l'action, jamais par une leçon frontale.`
+    : "";
 
   return `Tu es Naya, un mentor pédagogique d'élite spécialisé dans la psychologie de l'enfant et les Intelligences Multiples d'Howard Gardner, opérant en Afrique francophone.
 Génère un défi d'apprentissage sur-mesure, hautement interactif et passionnant pour cet enfant, en respectant son contexte immédiat.
@@ -450,6 +463,7 @@ ${domainInstruction}
 4. Le défi doit s'adapter EXACTEMENT au temps disponible. S'il n'y a que 10 minutes, propose un "mini-défi" immédiat. Si c'est 1h+, propose un projet structuré.
 ${materialScopeInstruction}
 ${homeMaterialsUseLine}
+${childQuestionBlock}
 7. ${SAFETY_INSTRUCTION}
 8. ${MATERIAL_TAGS_INSTRUCTION}
 9. ${INTELLIGENCES_FIELD_INSTRUCTION}
@@ -811,6 +825,53 @@ export interface BuildHypothesisPromptInput {
 export function buildHypothesisPrompt(input: BuildHypothesisPromptInput): string {
   const snapshot = { enfant: input.enfant, ecart_referentiel: input.ecartReferentiel, jumeau_pedagogique: input.jumeauPedagogique };
   return `${NAYA_DIAGNOSIS_SYSTEM_REMINDERS}\n\nVoici le cas à diagnostiquer :\n${JSON.stringify(snapshot, null, 2)}`;
+}
+
+// ── Indice juste-à-temps (chantier « Deuxième colonne vertébrale », 2026-08-15) ──
+// L'enfant bute pendant un défi — Naya livre le concept minimal qui débloque
+// l'étape, JAMAIS la solution. Règle d'or : l'indice doit donner assez de
+// compréhension pour que l'enfant trouve la suite lui-même (connaissance au
+// moment du besoin, pas après coup). Le défi reste celui qu'il avait : on ne
+// reformule pas, on éclaire. La reformulation de modalité (modalities) reste le
+// filet final après échec — l'indice s'insère AVANT.
+export interface BuildJustInTimeHintPromptInput {
+  childName: string;
+  childAge: number;
+  /** Titre du défi en cours. */
+  challengeTitle: string;
+  /** Étape où l'enfant est bloqué (texte brut de l'étape). */
+  currentStep: string;
+  /** Toutes les étapes du défi (contexte, pour ne pas anticiper la suite). */
+  steps: string[];
+  /** Posture/mécanique d'action préférée (sortie de formatChildInterestsPayload) — "" si rien. */
+  interestsPayload?: string;
+}
+
+export function buildJustInTimeHintPrompt(input: BuildJustInTimeHintPromptInput): string {
+  const { childName, childAge, challengeTitle, currentStep, steps } = input;
+  const interestsLine = input.interestsPayload?.trim()
+    ? `Modes d'engagement et leviers comportementaux observés par le parent (à utiliser dans les exemples) :
+${input.interestsPayload.trim()}`
+    : "";
+  const stepsList = steps.length > 0 ? `Toutes les étapes du défi (contexte) :\n${steps.map((s, i) => `${i + 1}. ${s}`).join("\n")}` : "";
+
+  return `Tu es Naya, la mentore IA bienveillante de Génizio. ${childName}, ${childAge} ans, est en train de réaliser le défi « ${challengeTitle} » et vient de se bloquer sur une étape.
+
+Étape où ${childName} est bloqué·e : « ${currentStep} »
+
+${stepsList}
+
+${interestsLine}
+
+RÈGLES ABSOLUES, sans exception :
+- NE DONNE JAMAIS LA SOLUTION ni la réponse complète : ${childName} doit trouver la suite par lui-même.
+- Livre UNIQUEMENT le concept minimal qui débloque CETTE étape : un principe, une astuce de méthode, une façon de regarder le problème autrement — juste assez pour relancer.
+- 2 à 3 phrases maximum, en français simple, dans le langage d'un enfant de ${childAge} ans.
+- Ancre l'indice dans ce que ${childName} a déjà sous les yeux (le geste de l'étape, le matériel du défi) — jamais de théorie générique déconnectée.
+- Si l'enfant est plus petit (moins de 8 ans), donne un indice très concret et actionnable ; s'il est plus grand (12 ans et plus), laisse plus de place à la réflexion.
+- AUCUNE syntaxe Markdown, aucun emoji, aucune question rhétorique, aucun renvoi à l'école.
+
+Réponds UNIQUEMENT avec le texte de l'indice, sans guillemets, sans préambule.`;
 }
 
 // ── Pont d'aspiration (chantier Naya V4, 2026-08-12, analyse §10-16) ─────────────

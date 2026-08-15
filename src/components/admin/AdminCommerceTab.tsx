@@ -13,7 +13,6 @@ import {
   Phone,
   BadgeCheck,
   Filter,
-  Brain,
   Truck,
   XCircle,
   AlertCircle,
@@ -21,19 +20,23 @@ import {
   Loader2,
 } from "lucide-react";
 import { toast } from "sonner";
-import {
-  CommercePassportsDataResponse,
-  filterOrdersByStatus,
-  formatXOF,
-} from "@/lib/admin-os.functions";
+import { type PaginatedCommerceResponse, formatXOF } from "@/lib/admin-os.functions";
 import { PASSPORT_PRICE_XOF } from "@/lib/pricing";
+import { AdminPagination } from "./AdminPagination";
 
 interface AdminCommerceTabProps {
-  data: CommercePassportsDataResponse;
+  data: PaginatedCommerceResponse;
+  total: number;
+  totalPages: number;
+  page: number;
+  onPageChange: (page: number) => void;
+  onStatusChange: (status: string) => void;
   isRefreshing?: boolean;
   onRefresh?: () => Promise<void>;
   onUpdateOrderStatus?: (orderId: string, status: string) => Promise<void>;
   onTogglePassport?: (childId: string, unlock: boolean) => Promise<void>;
+  /** Bascule sur l'onglet Produits & Stock (gestion du catalogue — source unique). */
+  onOpenProductsTab?: () => void;
 }
 
 const STATUS_FILTERS = [
@@ -59,16 +62,24 @@ const ORDER_STATUS_OPTIONS = [
 
 export function AdminCommerceTab({
   data,
+  total,
+  totalPages,
+  page,
+  onPageChange,
+  onStatusChange,
   isRefreshing = false,
   onRefresh,
   onUpdateOrderStatus,
   onTogglePassport,
+  onOpenProductsTab,
 }: AdminCommerceTabProps) {
   const [activeFilter, setActiveFilter] = useState<string>("Tous");
   const [updatingOrderId, setUpdatingOrderId] = useState<string | null>(null);
   const [pendingPassportChildId, setPendingPassportChildId] = useState<string | null>(null);
 
-  const filteredOrders = filterOrdersByStatus(data.orders, activeFilter);
+  // Le filtre est appliqué côté serveur (Vague 4) — la page ne contient déjà que
+  // les commandes du statut actif.
+  const filteredOrders = data.orders;
 
   const handleStatusChange = async (orderId: string, newStatus: string) => {
     if (!onUpdateOrderStatus || updatingOrderId === orderId) return;
@@ -223,7 +234,7 @@ export function AdminCommerceTab({
           </div>
 
           <span className="rounded-full bg-purple-500/10 px-3 py-1 text-xs font-bold text-purple-600 self-start md:self-auto">
-            {filteredOrders.length} / {data.orders.length} Commandes
+            {total} Commandes
           </span>
         </div>
 
@@ -233,16 +244,21 @@ export function AdminCommerceTab({
             <Filter className="size-3.5" /> Filtrer :
           </span>
           {STATUS_FILTERS.map((f) => {
+            // Comptages globaux (toute l'historique) fournis par le serveur — les
+            // badges restent justes même quand la page n'affiche qu'une tranche.
             const count =
               f.id === "Tous"
-                ? data.orders.length
-                : data.orders.filter((o) => o.status === f.id).length;
+                ? data.summary?.totalOrders ?? 0
+                : data.statusCounts?.[f.id] ?? 0;
             const isActive = activeFilter === f.id;
 
             return (
               <button
                 key={f.id}
-                onClick={() => setActiveFilter(f.id)}
+                onClick={() => {
+                  setActiveFilter(f.id);
+                  onStatusChange(f.id);
+                }}
                 className={`rounded-xl px-3 py-1.5 text-xs font-extrabold transition-all cursor-pointer flex items-center gap-1.5 border ${
                   isActive
                     ? "bg-purple-600 border-purple-600 text-white shadow-sm"
@@ -274,8 +290,9 @@ export function AdminCommerceTab({
             </p>
           </div>
         ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-left border-collapse text-sm">
+          <>
+            <div className="overflow-x-auto">
+              <table className="w-full text-left border-collapse text-sm">
               <thead>
                 <tr className="border-b-[3px] border-ink text-[11px] font-extrabold uppercase tracking-wider text-ink/60">
                   <th className="pb-3 pr-4">Date & Réf</th>
@@ -386,6 +403,15 @@ export function AdminCommerceTab({
               </tbody>
             </table>
           </div>
+          <AdminPagination
+            page={page}
+            totalPages={totalPages}
+            total={total}
+            pageSize={50}
+            onPageChange={onPageChange}
+            label="commande"
+          />
+          </>
         )}
       </div>
 
@@ -540,106 +566,43 @@ export function AdminCommerceTab({
         )}
       </div>
 
-      {/* 🛍️ Section 4: Catalog & Naya AI Material Suggestions Overview */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        {/* Sub-section A: Products Catalog */}
-        <div className="rounded-3xl border border-ink/10 bg-white p-6 shadow-xl">
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="font-display text-lg font-bold text-ink flex items-center gap-2">
-              <Tag className="size-5 text-purple-600" />
-              Catalogue Produits Boutique
-            </h3>
-            <Link
-              to="/admin/products"
-              className="text-xs font-bold text-purple-600 hover:underline flex items-center gap-1"
-            >
-              <span>Gérer tout</span>
-              <ExternalLink className="size-3" />
-            </Link>
-          </div>
-
-          {data.products.length === 0 ? (
-            <p className="text-xs text-ink/50 italic py-4">Aucun produit dans le catalogue.</p>
-          ) : (
-            <div className="space-y-3 max-h-80 overflow-y-auto pr-1">
-              {data.products.slice(0, 6).map((product) => (
-                <div
-                  key={product.id}
-                  className="rounded-2xl border border-ink/10 bg-surface/30 p-3 flex items-center justify-between gap-3 hover:bg-surface transition-colors"
-                >
-                  <div>
-                    <div className="font-bold text-xs text-ink">{product.name}</div>
-                    <div className="flex items-center gap-2 mt-0.5">
-                      <span className="text-[11px] font-black text-purple-600">
-                        {formatXOF(product.price_xof)}
-                      </span>
-                      {product.stock_quantity !== null && product.stock_quantity !== undefined && (
-                        <span className="text-[10px] text-ink/50 font-medium">
-                          • Stock : {product.stock_quantity}
-                        </span>
-                      )}
-                    </div>
-                  </div>
-
-                  <span
-                    className={`rounded-full px-2 py-0.5 text-[10px] font-extrabold ${
-                      product.is_active
-                        ? "bg-emerald-100 text-emerald-800"
-                        : "bg-stone-100 text-stone-600"
-                    }`}
-                  >
-                    {product.is_active ? "Actif" : "Masqué"}
-                  </span>
-                </div>
-              ))}
+      {/* 🛍️ Section 4: Catalogue & Suggestions — point d'entrée unique. Les panneaux
+          dupliqués (catalogue + suggestions Naya) ont été supprimés (décision #78) :
+          toute la gestion se fait dans Produits & Stock, source unique. */}
+      <div className="rounded-3xl border border-ink/10 bg-gradient-to-br from-indigo-500/5 via-white to-white p-6 shadow-xl">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div className="flex items-center gap-3">
+            <div className="p-2.5 rounded-2xl bg-indigo-500/10 text-indigo-600">
+              <Tag className="size-5" />
             </div>
-          )}
-        </div>
-
-        {/* Sub-section B: Naya AI Material Suggestions */}
-        <div className="rounded-3xl border border-ink/10 bg-white p-6 shadow-xl">
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="font-display text-lg font-bold text-ink flex items-center gap-2">
-              <Brain className="size-5 text-sky-600" />
-              Suggestions Matériel Naya IA
-            </h3>
-            <span className="rounded-full bg-sky-500/10 px-2.5 py-0.5 text-xs font-bold text-sky-700">
-              {data.materialSuggestions.length} Nouveaux
-            </span>
-          </div>
-
-          {data.materialSuggestions.length === 0 ? (
-            <div className="rounded-2xl border border-dashed border-ink/10 p-6 text-center">
-              <p className="text-xs text-ink/50 italic">
-                Aucune suggestion de matériel détectée par Naya IA.
+            <div>
+              <h3 className="font-display text-lg font-bold text-ink">
+                Catalogue & Suggestions Matériel
+              </h3>
+              <p className="text-xs text-ink/60 font-medium mt-0.5">
+                {data.products.length} produit(s) au catalogue
+                {data.materialSuggestions.length > 0 && (
+                  <>
+                    {" "}
+                    ·{" "}
+                    <strong className="text-sky-700">
+                      {data.materialSuggestions.length} suggestion(s) Naya
+                    </strong>{" "}
+                    à traiter
+                  </>
+                )}
               </p>
             </div>
-          ) : (
-            <div className="space-y-3 max-h-80 overflow-y-auto pr-1">
-              {data.materialSuggestions.slice(0, 6).map((sug) => (
-                <div
-                  key={sug.id}
-                  className="rounded-2xl border border-ink/10 bg-surface/30 p-3 flex items-center justify-between gap-3 hover:bg-surface transition-colors"
-                >
-                  <div>
-                    <div className="font-bold text-xs text-ink">
-                      {sug.tag || sug.material_name || "Matériel"}
-                    </div>
-                    <div className="text-[10px] text-ink/50 font-medium">
-                      Domaine : {sug.domain || "Général"} • Demandé {sug.seen_count} fois
-                    </div>
-                  </div>
-
-                  <Link
-                    to="/admin/products"
-                    className="rounded-xl bg-purple-600 px-3 py-1 text-[11px] font-bold text-white shadow-sm hover:bg-purple-700 transition-all cursor-pointer whitespace-nowrap"
-                  >
-                    Ajouter au catalogue
-                  </Link>
-                </div>
-              ))}
-            </div>
-          )}
+          </div>
+          <button
+            type="button"
+            onClick={onOpenProductsTab}
+            className="inline-flex items-center gap-2 rounded-2xl bg-indigo-600 px-4 py-2.5 text-xs font-extrabold text-white shadow-sm hover:bg-indigo-700 transition-all cursor-pointer self-start md:self-auto"
+          >
+            <Package className="size-4" />
+            Gérer dans Produits & Stock
+            <ExternalLink className="size-3" />
+          </button>
         </div>
       </div>
     </div>

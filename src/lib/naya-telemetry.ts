@@ -1,21 +1,48 @@
-// Tarifs indicatifs (2026-07-22) — à vérifier contre la page de tarification
-// officielle DeepSeek au moment de la lecture (leurs prix changent régulièrement) ;
-// Sonnet reste au tarif Anthropic publié. Ce module reste un ESTIMATEUR de coût
-// (formules ci-dessous), jamais une facturation réelle mesurée sur des logs d'appels.
+// Tarifs indicatifs (vérifiés 2026-08-15 sur api-docs.deepseek.com) — les modèles
+// actuels DeepSeek sont deepseek-v4-flash et deepseek-v4-pro (les alias
+// deepseek-chat/deepseek-reasoner sont dépréciés depuis le 2026-07-24). Sonnet
+// reste au tarif Anthropic publié. Ce module reste un ESTIMATEUR de coût (formules
+// ci-dessous), jamais une facturation réelle mesurée sur des logs d'appels.
 //
-// Depuis la dépréciation des alias deepseek-chat/deepseek-reasoner (2026-07-24) et
-// la décision produit du 2026-07-22 (cf. callDeepSeekText dans
-// challenges.functions.ts) : DeepSeek Chat (défis, interactions utilisateur) reste
-// sur deepseek-v4-flash (rapide/économique) ; DeepSeek Reasoner (raisonnement
-// bayésien NAYA, volume faible) monte en gamme sur deepseek-v4-pro, le modèle le
-// plus avancé — d'où des tarifs distincts, plus élevés pour ce second poste. Tarif
-// "cache miss" (plein tarif) retenu par prudence, cet estimateur ne modélise pas
-// le cache de contexte.
+// Décision produit du 2026-07-22 (cf. callDeepSeekText dans
+// challenges.functions.ts) : deepseek-v4-flash (rapide/économique) porte les défis
+// et interactions utilisateur ; deepseek-v4-pro, le modèle le plus avancé de
+// DeepSeek, porte le raisonnement bayésien NAYA (volume faible, rôle premium) —
+// d'où des tarifs distincts, plus élevés pour ce second poste.
+//
+// Mode réflexion (thinking) : activé par défaut chez DeepSeek v4, réglable via
+// `{"thinking": {"type": "enabled/disabled"}}` + reasoning_effort (low/high/max).
+// NAYA le désactive sur v4-flash et l'active en effort élevé sur v4-pro. Le mode
+// réflexion n'a PAS de tarif séparé (mêmes taux ; ses tokens de raisonnement sont
+// facturés comme tokens de sortie) — non modélisés ici.
+//
+// ── Barème creux/plein (2026-08-16 16:00 UTC) ───────────────────────────────
+// Les taux promotionnels actuels (flash 0.14/0.28, pro 0.435/0.87, tarif "cache
+// miss") sont remplacés par un barème creux/plein nettement plus élevé :
+//   • pointe : flash 0.44/1.32, pro 1.32/3.96 (cache miss)
+//   • creux : flash 0.22/0.66, pro 0.66/1.98 (cache miss, = moitié de la pointe)
+//   • heures de pointe (UTC) : 01:00-04:00 et 06:00-10:00 — tout le reste est creux.
+// L'estimateur utilise les TAUX PONDÉRÉS 70 % creux / 30 % pointe (part creuse =
+// 17 h/24 h, usage famille concentré hors de cette fenêtre nocturne/matinale).
+// L'admin affiche aussi le coût plafond (100 % en pointe) et, à l'inverse, les
+// taux cache hit restent non modélisés (cache miss conservateur).
 export const NAYA_PRICING = {
-  DEEPSEEK_CHAT_INPUT_PER_M: 0.14,
-  DEEPSEEK_CHAT_OUTPUT_PER_M: 0.28,
-  DEEPSEEK_REASONER_INPUT_PER_M: 0.435,
-  DEEPSEEK_REASONER_OUTPUT_PER_M: 0.87,
+  DEEPSEEK_PEAK: {
+    FLASH_INPUT_PER_M: 0.44,
+    FLASH_OUTPUT_PER_M: 1.32,
+    PRO_INPUT_PER_M: 1.32,
+    PRO_OUTPUT_PER_M: 3.96,
+  },
+  DEEPSEEK_OFF_PEAK: {
+    FLASH_INPUT_PER_M: 0.22,
+    FLASH_OUTPUT_PER_M: 0.66,
+    PRO_INPUT_PER_M: 0.66,
+    PRO_OUTPUT_PER_M: 1.98,
+  },
+  // Taux pondérés 70 % creux / 30 % pointe — utilisés par défaut par l'estimateur.
+  // flash : 0.7×0.22 + 0.3×0.44 = 0.286 / 0.7×0.66 + 0.3×1.32 = 0.858
+  // pro   : 0.7×0.66 + 0.3×1.32 = 0.858 / 0.7×1.98 + 0.3×3.96 = 2.574
+  DEFAULT_OFF_PEAK_SHARE: 0.7,
   SONNET_INPUT_PER_M: 3.00,
   SONNET_OUTPUT_PER_M: 15.00,
   USD_TO_XOF_RATE: 600,
@@ -52,15 +79,19 @@ export interface NayaCostResult {
 
 export interface FeatureBreakdown {
   feature: "Défis" | "Hypothèses" | "Recommandations";
+  /** Noms d'affichage alignés sur les modèles API réels (alias dépréciés depuis le 2026-07-24). */
+  modelUsed:
+    | "DeepSeek V4 Flash"
+    | "DeepSeek V4 Flash + Sonnet (vision)"
+    | "DeepSeek V4 Pro";
   callsCount: number;
-  modelUsed: "DeepSeek Chat" | "DeepSeek Chat + Sonnet (vision)" | "DeepSeek Reasoner";
   estimatedTokens: number;
   costUsd: number;
   costXof: number;
 }
 
 export interface ModelUsageBreakdown {
-  model: "DeepSeek Chat" | "DeepSeek Reasoner" | "Claude Sonnet 5 (Vision)";
+  model: "DeepSeek V4 Flash" | "DeepSeek V4 Pro" | "Claude Sonnet 5 (Vision)";
   inputTokens: number;
   outputTokens: number;
   totalTokens: number;
@@ -88,6 +119,10 @@ export interface NayaTelemetryResponse {
   tokenUsage: NayaTokenUsage;
   totalCostUsd: number;
   totalCostXof: number;
+  /** Coût total si 100 % des appels tombaient en heures de pointe — plafond du
+   *  barème creux/plein DeepSeek (visible dans l'admin pour cadrer l'estimation). */
+  peakCeilingCostUsd: number;
+  peakCeilingCostXof: number;
   conversionRatePct: number;
   featureBreakdown: FeatureBreakdown[];
   modelBreakdown: ModelUsageBreakdown[];
@@ -208,23 +243,59 @@ function toSafeTokenCount(val: any): number {
   return val;
 }
 
-/** Coût DeepSeek Chat (défis + recommandations) pour une paire input/output de tokens. */
-export function calculateDeepSeekChatCost(inputTokens: number, outputTokens: number): NayaCostResult {
+function clampShare(share: number): number {
+  if (typeof share !== "number" || Number.isNaN(share)) return NAYA_PRICING.DEFAULT_OFF_PEAK_SHARE;
+  return Math.max(0, Math.min(1, share));
+}
+
+/**
+ * Heure de pointe DeepSeek (barème creux/plein, effectif 2026-08-16 16:00 UTC) :
+ * 01:00-04:00 et 06:00-10:00 UTC — tout le reste est en heure creuse (−50 %).
+ */
+export function isDeepSeekPeakHour(now: Date): boolean {
+  const h = now.getUTCHours();
+  return (h >= 1 && h < 4) || (h >= 6 && h < 10);
+}
+
+/**
+ * Coût deepseek-v4-flash (défis + recommandations) pour une paire input/output de
+ * tokens. `offPeakSharePct` (défaut 70 %) pondère les taux creux/plein : 1 = tout
+ * en creux, 0 = tout en pointe (plafond).
+ */
+export function calculateDeepSeekChatCost(
+  inputTokens: number,
+  outputTokens: number,
+  offPeakSharePct: number = NAYA_PRICING.DEFAULT_OFF_PEAK_SHARE
+): NayaCostResult {
   const input = toSafeTokenCount(inputTokens);
   const output = toSafeTokenCount(outputTokens);
-  const usd =
-    (input / 1_000_000) * NAYA_PRICING.DEEPSEEK_CHAT_INPUT_PER_M +
-    (output / 1_000_000) * NAYA_PRICING.DEEPSEEK_CHAT_OUTPUT_PER_M;
+  const share = clampShare(offPeakSharePct);
+  const inputRate =
+    share * NAYA_PRICING.DEEPSEEK_OFF_PEAK.FLASH_INPUT_PER_M +
+    (1 - share) * NAYA_PRICING.DEEPSEEK_PEAK.FLASH_INPUT_PER_M;
+  const outputRate =
+    share * NAYA_PRICING.DEEPSEEK_OFF_PEAK.FLASH_OUTPUT_PER_M +
+    (1 - share) * NAYA_PRICING.DEEPSEEK_PEAK.FLASH_OUTPUT_PER_M;
+  const usd = (input / 1_000_000) * inputRate + (output / 1_000_000) * outputRate;
   return { costUsd: round4(usd), costXof: Math.round(usd * NAYA_PRICING.USD_TO_XOF_RATE) };
 }
 
-/** Coût DeepSeek Reasoner (hypothèses) pour une paire input/output de tokens. */
-export function calculateDeepSeekReasonerCost(inputTokens: number, outputTokens: number): NayaCostResult {
+/** Coût deepseek-v4-pro (hypothèses) pour une paire input/output de tokens (même pondération). */
+export function calculateDeepSeekReasonerCost(
+  inputTokens: number,
+  outputTokens: number,
+  offPeakSharePct: number = NAYA_PRICING.DEFAULT_OFF_PEAK_SHARE
+): NayaCostResult {
   const input = toSafeTokenCount(inputTokens);
   const output = toSafeTokenCount(outputTokens);
-  const usd =
-    (input / 1_000_000) * NAYA_PRICING.DEEPSEEK_REASONER_INPUT_PER_M +
-    (output / 1_000_000) * NAYA_PRICING.DEEPSEEK_REASONER_OUTPUT_PER_M;
+  const share = clampShare(offPeakSharePct);
+  const inputRate =
+    share * NAYA_PRICING.DEEPSEEK_OFF_PEAK.PRO_INPUT_PER_M +
+    (1 - share) * NAYA_PRICING.DEEPSEEK_PEAK.PRO_INPUT_PER_M;
+  const outputRate =
+    share * NAYA_PRICING.DEEPSEEK_OFF_PEAK.PRO_OUTPUT_PER_M +
+    (1 - share) * NAYA_PRICING.DEEPSEEK_PEAK.PRO_OUTPUT_PER_M;
+  const usd = (input / 1_000_000) * inputRate + (output / 1_000_000) * outputRate;
   return { costUsd: round4(usd), costXof: Math.round(usd * NAYA_PRICING.USD_TO_XOF_RATE) };
 }
 
@@ -262,7 +333,7 @@ export function calculateNayaConversionRate(generatedCount: number, completedCou
 /**
  * Aggregates raw system counts into full Naya AI telemetry metrics:
  * - Feature breakdown (Défis, Hypothèses, Recommandations)
- * - Model breakdown (DeepSeek Chat / DeepSeek Reasoner / Claude Sonnet 5 Vision)
+ * - Model breakdown (DeepSeek V4 Flash / DeepSeek V4 Pro / Claude Sonnet 5 Vision)
  * - Conversion funnel
  * - Monthly projections
  */
@@ -283,7 +354,7 @@ export function calculateNayaTelemetry(raw: {
 
   // Token multipliers per API call (mêmes ordres de grandeur qu'avant le
   // passage à DeepSeek — seul le fournisseur/tarif change, pas le volume estimé)
-  // Défis text generation (DeepSeek Chat): 1,200 input, 800 output per challenge generated
+  // Défis text generation (deepseek-v4-flash): 1,200 input, 800 output per challenge generated
   const defisChatInput = genCount * 1200;
   const defisChatOutput = genCount * 800;
 
@@ -291,11 +362,11 @@ export function calculateNayaTelemetry(raw: {
   const defisVisionInput = photoProofCount * 1500;
   const defisVisionOutput = photoProofCount * 300;
 
-  // Hypotheses cycles (DeepSeek Reasoner) : 2,500 input, 600 output per cycle
+  // Hypotheses cycles (deepseek-v4-pro) : 2,500 input, 600 output per cycle
   const hypReasonerInput = hypCount * 2500;
   const hypReasonerOutput = hypCount * 600;
 
-  // Recommandations syntheses (DeepSeek Chat) : 1,000 input, 500 output per synthesis
+  // Recommandations syntheses (deepseek-v4-flash) : 1,000 input, 500 output per synthesis
   const recChatInput = recCount * 1000;
   const recChatOutput = recCount * 500;
 
@@ -320,6 +391,13 @@ export function calculateNayaTelemetry(raw: {
   const totalCostUsd = round4(chatCosts.costUsd + reasonerCosts.costUsd + visionCosts.costUsd);
   const totalCostXof = chatCosts.costXof + reasonerCosts.costXof + visionCosts.costXof;
 
+  // Plafond du barème creux/plein : tous les appels DeepSeek facturés en pointe
+  // (offPeakSharePct = 0). La vision Sonnet est inchangée (pas de creux/plein).
+  const peakChatCosts = calculateDeepSeekChatCost(tokenUsage.deepseekChatInputTokens, tokenUsage.deepseekChatOutputTokens, 0);
+  const peakReasonerCosts = calculateDeepSeekReasonerCost(tokenUsage.deepseekReasonerInputTokens, tokenUsage.deepseekReasonerOutputTokens, 0);
+  const peakCeilingCostUsd = round4(peakChatCosts.costUsd + peakReasonerCosts.costUsd + visionCosts.costUsd);
+  const peakCeilingCostXof = peakChatCosts.costXof + peakReasonerCosts.costXof + visionCosts.costXof;
+
   const defisChatCosts = calculateDeepSeekChatCost(defisChatInput, defisChatOutput);
   const defisVisionCosts = calculateVisionSonnetCost(defisVisionInput, defisVisionOutput);
   const defisCostUsd = round4(defisChatCosts.costUsd + defisVisionCosts.costUsd);
@@ -335,7 +413,7 @@ export function calculateNayaTelemetry(raw: {
     {
       feature: "Défis",
       callsCount: genCount + photoProofCount,
-      modelUsed: photoProofCount > 0 ? "DeepSeek Chat + Sonnet (vision)" : "DeepSeek Chat",
+      modelUsed: photoProofCount > 0 ? "DeepSeek V4 Flash + Sonnet (vision)" : "DeepSeek V4 Flash",
       estimatedTokens: defisChatInput + defisChatOutput + defisVisionInput + defisVisionOutput,
       costUsd: defisCostUsd,
       costXof: defisCostXof,
@@ -343,7 +421,7 @@ export function calculateNayaTelemetry(raw: {
     {
       feature: "Hypothèses",
       callsCount: hypCount,
-      modelUsed: "DeepSeek Reasoner",
+      modelUsed: "DeepSeek V4 Pro",
       estimatedTokens: hypReasonerInput + hypReasonerOutput,
       costUsd: hypCosts.costUsd,
       costXof: hypCosts.costXof,
@@ -351,7 +429,7 @@ export function calculateNayaTelemetry(raw: {
     {
       feature: "Recommandations",
       callsCount: recCount,
-      modelUsed: "DeepSeek Chat",
+      modelUsed: "DeepSeek V4 Flash",
       estimatedTokens: recChatInput + recChatOutput,
       costUsd: recCosts.costUsd,
       costXof: recCosts.costXof,
@@ -360,7 +438,7 @@ export function calculateNayaTelemetry(raw: {
 
   const modelBreakdown: ModelUsageBreakdown[] = [
     {
-      model: "DeepSeek Chat",
+      model: "DeepSeek V4 Flash",
       inputTokens: tokenUsage.deepseekChatInputTokens,
       outputTokens: tokenUsage.deepseekChatOutputTokens,
       totalTokens: totalChatTokens,
@@ -369,7 +447,7 @@ export function calculateNayaTelemetry(raw: {
       sharePercentage: totalTokens > 0 ? Math.round((totalChatTokens / totalTokens) * 100) : 0,
     },
     {
-      model: "DeepSeek Reasoner",
+      model: "DeepSeek V4 Pro",
       inputTokens: tokenUsage.deepseekReasonerInputTokens,
       outputTokens: tokenUsage.deepseekReasonerOutputTokens,
       totalTokens: totalReasonerTokens,
@@ -406,6 +484,8 @@ export function calculateNayaTelemetry(raw: {
     tokenUsage,
     totalCostUsd,
     totalCostXof,
+    peakCeilingCostUsd,
+    peakCeilingCostXof,
     conversionRatePct,
     featureBreakdown,
     modelBreakdown,

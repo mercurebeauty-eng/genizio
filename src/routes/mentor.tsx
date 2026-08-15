@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { useSession } from "@/hooks/use-session";
 import { AppHeader } from "@/components/AppHeader";
-import { getMentorDashboard, declareSessionMentor } from "@/lib/mentors.functions";
+import { getMentorDashboard, declareSessionMentor, checkIsActiveMentor } from "@/lib/mentors.functions";
 import { listMyNotifications, markNotificationsRead } from "@/lib/notifications.functions";
 import {
   mentorUpdateChallenge,
@@ -43,11 +43,13 @@ import {
   Sparkles,
   Bell,
   Activity,
+  ShieldAlert,
 } from "lucide-react";
 import { NayaAvatar } from "@/components/NayaAvatar";
 import { MarkdownContent } from "@/components/ui/markdown-content";
 import { GenizioLoader } from "@/components/GenizioLoader";
 import { formatPedagogicalIntention } from "@/lib/pedagogical-intention";
+import { ProofImage } from "@/lib/proof-image";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/mentor")({
@@ -185,6 +187,19 @@ function MentorDashboardPage() {
   useEffect(() => {
     if (!loading && !session) navigate({ to: "/auth", replace: true });
   }, [session, loading, navigate]);
+
+  // Garde de route (Vague 5, spec §8) : l'espace /mentor n'est visible que pour les
+  // mentors ACTIFS (assignation non retirée, statut non banni) — miroir d'admin.tsx.
+  // Les données restent protégées côté serveur (assertMentorOperator) ; cette garde
+  // évite d'offrir l'interface à un compte qui n'a rien à y faire.
+  const checkMentorFn = useServerFn(checkIsActiveMentor);
+  const [isMentor, setIsMentor] = useState<boolean | null>(null);
+  useEffect(() => {
+    if (loading || !session) return;
+    checkMentorFn({ headers: { Authorization: `Bearer ${session.access_token}` } })
+      .then((res) => setIsMentor(res.isMentor))
+      .catch(() => setIsMentor(false));
+  }, [session, loading, checkMentorFn]);
 
   const loadDashboard = async () => {
     setFetching(true);
@@ -459,10 +474,33 @@ function MentorDashboardPage() {
 
   const selected = children.find((c) => c.id === selectedId) ?? null;
 
-  if (loading || !session) {
+  if (loading || !session || isMentor === null) {
     return (
       <div className="grid min-h-dvh place-items-center bg-surface">
         <GenizioLoader label="Chargement…" />
+      </div>
+    );
+  }
+
+  if (!isMentor) {
+    return (
+      <div className="grid min-h-dvh place-items-center bg-surface p-6 text-center">
+        <div>
+          <ShieldAlert className="size-16 text-amber-500 mx-auto mb-4" />
+          <h1 className="font-display text-balance text-2xl font-black text-ink mb-2">
+            Espace Mentor réservé
+          </h1>
+          <p className="text-sm text-ink/60 max-w-sm mx-auto mb-6 leading-relaxed">
+            Cet espace est réservé aux mentors actifs : un compte assigné par
+            l'administration, ou un mode Mentor activé par code dans les paramètres.
+          </p>
+          <button
+            onClick={() => navigate({ to: "/profiles" })}
+            className="rounded-2xl border border-ink/10 bg-white px-6 py-3 font-bold cursor-pointer hover:bg-surface transition-colors"
+          >
+            Retour à l'accueil
+          </button>
+        </div>
       </div>
     );
   }
@@ -483,6 +521,9 @@ function MentorDashboardPage() {
               thoughts={["Bonjour Mentor ! Voici vos enfants à accompagner."]}
             />
             <p className="text-sm text-ink/60 mb-0.5">Espace Mentor</p>
+            <span className="inline-flex items-center gap-1.5 rounded-full bg-brand/10 px-3 py-1 text-[10px] font-black uppercase tracking-widest text-brand">
+              <Eye className="size-3" /> Mode Mentor
+            </span>
           </div>
           <div className="flex flex-wrap items-end justify-between gap-4">
             <h1 className="font-display text-balance text-3xl font-extrabold">
@@ -1223,8 +1264,8 @@ function MentorDashboardPage() {
                         Preuve de réalisation
                       </p>
                       <div className="rounded-2xl overflow-hidden border border-ink/10 bg-surface max-w-md">
-                        <img
-                          src={selectedChallenge.proof_image_url}
+                        <ProofImage
+                          stored={selectedChallenge.proof_image_url}
                           alt="Preuve"
                           className="w-full max-h-64 object-contain"
                         />

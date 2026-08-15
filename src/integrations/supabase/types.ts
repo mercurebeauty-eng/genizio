@@ -166,6 +166,75 @@ export type Database = {
         }
         Relationships: []
       }
+      parent_testimonials: {
+        Row: {
+          author_city: string
+          author_name: string
+          challenges_completed: number
+          child_id: string
+          children_count: number
+          consent_publish: boolean
+          created_at: string
+          headline: string
+          id: string
+          published: boolean
+          rating: number
+          review_body: string
+          sender_type: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          author_city?: string
+          author_name: string
+          challenges_completed?: number
+          child_id: string
+          children_count?: number
+          consent_publish?: boolean
+          created_at?: string
+          headline: string
+          id?: string
+          published?: boolean
+          rating: number
+          review_body: string
+          sender_type?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          author_city?: string
+          author_name?: string
+          challenges_completed?: number
+          child_id?: string
+          children_count?: number
+          consent_publish?: boolean
+          created_at?: string
+          headline?: string
+          id?: string
+          published?: boolean
+          rating?: number
+          review_body?: string
+          sender_type?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "parent_testimonials_child_id_fkey"
+            columns: ["child_id"]
+            isOneToOne: false
+            referencedRelation: "child_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "parent_testimonials_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
       challenge_outcomes: {
         Row: {
           challenge_id: string
@@ -1349,68 +1418,6 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
-      }
-      parent_testimonials: {
-        Row: {
-          author_city: string
-          author_name: string
-          challenges_completed: number
-          child_id: string
-          children_count: number
-          consent_publish: boolean
-          created_at: string
-          headline: string
-          id: string
-          published: boolean
-          rating: number
-          review_body: string
-          sender_type: string
-          updated_at: string
-          user_id: string
-        }
-        Insert: {
-          author_city?: string
-          author_name: string
-          challenges_completed?: number
-          child_id: string
-          children_count?: number
-          consent_publish?: boolean
-          created_at?: string
-          headline: string
-          id?: string
-          published?: boolean
-          rating: number
-          review_body: string
-          sender_type?: string
-          updated_at?: string
-          user_id: string
-        }
-        Update: {
-          author_city?: string
-          author_name?: string
-          challenges_completed?: number
-          child_id?: string
-          children_count?: number
-          consent_publish?: boolean
-          created_at?: string
-          headline?: string
-          id?: string
-          published?: boolean
-          rating?: number
-          review_body?: string
-          sender_type?: string
-          updated_at?: string
-          user_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "parent_testimonials_child_id_fkey"
-            columns: ["child_id"]
-            isOneToOne: false
-            referencedRelation: "child_profiles"
-            referencedColumns: ["id"]
-          },
-        ]
       }
       payments: {
         Row: {

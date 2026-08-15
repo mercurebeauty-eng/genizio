@@ -1438,6 +1438,12 @@ export async function generateChallengesCore(params: {
     { data: staleChallenges },
     { data: domainCounts },
     progressionTargets,
+    // Question formulée par l'enfant lui-même (chantier « Deuxième colonne
+    // vertébrale », 2026-08-15) : le dernier défi portant une child_question non
+    // nulle fournit le fil conducteur de la prochaine génération — l'enfant
+    // devient l'auteur de la question, pas le spectateur. `db` étant `any`, le
+    // retour du maybeSingle est casté comme le reste.
+    latestChildQuestion,
     // `db` est `any` (client parent OU service role) → Promise.all ne peut pas inférer
     // un tuple typé à partir d'éléments `any` mélangés à Promise<ProgressionTarget[]> ;
     // le cast est explicite (l'original typé via le client supabase inférait tout seul).
@@ -1473,8 +1479,17 @@ export async function generateChallengesCore(params: {
     // sous-estimée pour les enfants avec beaucoup d'historique.
     db.from("challenges").select("domain").eq("child_id", childId).eq("status", "completed"),
     computeProgressionTargets(db, childId),
+    db
+      .from("challenges")
+      .select("child_question")
+      .eq("child_id", childId)
+      .not("child_question", "is", null)
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle(),
   ])) as any;
   const existingTitles = ((existing ?? []) as any[]).map((c) => c.title);
+  const childQuestionNote = ((latestChildQuestion as any)?.child_question ?? "").trim();
   const completedSummary = ((completedChallenges ?? []) as any[])
     .map((c) => `- Défi "${c.title}" (${c.domain}) : "${c.ai_observations ?? ""}"`)
     .join("\n");
@@ -1525,6 +1540,7 @@ export async function generateChallengesCore(params: {
       child.time_pressure as TimePressure | null | undefined,
     ),
     profileContextNote: formatChildProfileContext(child as any),
+    childQuestionNote,
   });
 
   // Up to 6 full défis in one response, each now carrying the academic
@@ -1626,6 +1642,10 @@ export const UpdateInput = z.object({
   status: z.enum(["todo", "in_progress", "completed"]).optional(),
   progress: z.number().int().min(0).max(100).optional(),
   notes: z.string().max(2000).nullable().optional(),
+  // Question formulée par l'enfant lui-même (chantier « Deuxième colonne
+  // vertébrale », 2026-08-15) : sauvegardée depuis le mode quête, réinjectée
+  // dans les prompts de génération suivants.
+  child_question: z.string().max(500).nullable().optional(),
 });
 
 export const updateChallenge = createServerFn({ method: "POST" })
@@ -1638,6 +1658,7 @@ export const updateChallenge = createServerFn({ method: "POST" })
       notes?: string | null;
       completed_at?: string | null;
       time_limit_minutes?: number | null;
+      child_question?: string | null;
     } = {};
     if (data.status === "completed") {
       throw new Error(
@@ -1662,6 +1683,7 @@ export const updateChallenge = createServerFn({ method: "POST" })
       }
     }
     if (data.notes !== undefined) patch.notes = data.notes;
+    if (data.child_question !== undefined) patch.child_question = data.child_question;
 
     // Verrouillage (2026-07-30) : cette mutation touche directement `challenges`, pas
     // `child_profiles` — donc pas de colonne access_locked_at à filtrer dans l'update lui-même,
@@ -1942,10 +1964,29 @@ Réponds STRICTEMENT en JSON valide avec ce format :
 }`;
 
   let aiContent = "";
-  let imageAnalyzed = !!params.proofImageBase64;
-  const imageData = params.proofImageBase64
+  // D-07 : filet serveur — le client convertit déjà HEIC→JPEG (heic2any, image-proof.ts),
+  // mais une preuve HEIC peut arriver ici (client ancien, WASM indisponible, type non
+  // reconnu). Import dynamique : le module de conversion (~1,7 Mo de WASM embarqué) ne
+  // doit jamais entrer dans le bundle client des server functions. Échec de conversion
+  // → analyse texte seul (imageAnalyzed=false), même repli que l'ancien fallback vision
+  // mais sans l'appel Claude gaspillé sur des octets HEIC relabelés JPEG.
+  let imageData = params.proofImageBase64
     ? { base64: params.proofImageBase64, mediaType: params.proofImageMediaType ?? "image/jpeg" }
     : undefined;
+  if (imageData && !ALLOWED_IMAGE_MEDIA_TYPES.includes(imageData.mediaType)) {
+    const { convertHeicProofBase64ToJpeg, isHeifProof } = await import("@/lib/server-heic");
+    if (isHeifProof(imageData.base64, imageData.mediaType)) {
+      const converted = await convertHeicProofBase64ToJpeg(imageData.base64);
+      if (converted) {
+        imageData = { base64: converted, mediaType: "image/jpeg" };
+      } else {
+        console.warn("Preuve HEIC non convertible côté serveur — analyse texte seul.");
+        imageData = undefined;
+      }
+    }
+  }
+  // let : le fallback vision ci-dessous (échec de l'appel Claude) le passe à false.
+  let imageAnalyzed = !!imageData;
   // A short observation + a small talents_awarded object — nowhere near
   // the 4000-token default sized for a batch of full défis. Reserving
   // that much per call was the main way this endpoint could exhaust the
@@ -2077,20 +2118,23 @@ Réponds STRICTEMENT en JSON valide avec ce format :
   let badgeUnlocked: Awaited<ReturnType<typeof checkAndAwardBadge>> = null;
   if (relevant) {
     let proofImageUrl: string | null = null;
-    if (params.proofImageBase64) {
-      const mediaType = params.proofImageMediaType ?? "image/jpeg";
+    // D-07 : on stocke la version normalisée (JPEG converti le cas échéant) — un HEIC
+    // brut ne serait de toute façon pas affichable par les navigateurs du flux.
+    if (imageData) {
+      const mediaType = imageData.mediaType;
       const ext = mediaType.split("/")[1] ?? "jpg";
       const fileName = `${challenge.child_id}/${challenge.id}-${Math.random()}.${ext}`;
       const { error: uploadError } = await db.storage
         .from("proofs")
-        .upload(fileName, Buffer.from(params.proofImageBase64, "base64"), {
+        .upload(fileName, Buffer.from(imageData.base64, "base64"), {
           contentType: mediaType,
         });
       if (uploadError) {
         console.error("Erreur d'upload de la preuve (non bloquant):", uploadError);
       } else {
-        const { data: publicUrlData } = db.storage.from("proofs").getPublicUrl(fileName);
-        proofImageUrl = publicUrlData.publicUrl;
+        // Chantier preuves privées : on stocke le PATH (`proofs/{childId}/{file}`),
+        // plus d'URL publique — l'affichage passe par une URL signée (proof-image.ts).
+        proofImageUrl = `proofs/${fileName}`;
       }
     }
 
@@ -2992,7 +3036,7 @@ export const generateSingleChallenge = createServerFn({ method: "POST" })
     // path never checked recent titles at all — a parent clicking "Composer un défi
     // ciblé" repeatedly could get literal duplicates. Fetching both in parallel
     // matches generateChallenges' existing pattern instead of inventing a new one.
-    const [{ data: completedChallenges }, { data: existing }, progressionTargets] =
+    const [{ data: completedChallenges }, { data: existing }, progressionTargets, { data: latestChildQuestion }] =
       await Promise.all([
         supabase
           .from("challenges")
@@ -3008,12 +3052,23 @@ export const generateSingleChallenge = createServerFn({ method: "POST" })
           .order("created_at", { ascending: false })
           .limit(30),
         computeProgressionTargets(supabase, data.childId),
+        // Question formulée par l'enfant lui-même (chantier « Deuxième colonne
+        // vertébrale », 2026-08-15) — fil conducteur de la génération ciblée.
+        supabase
+          .from("challenges")
+          .select("child_question")
+          .eq("child_id", data.childId)
+          .not("child_question", "is", null)
+          .order("created_at", { ascending: false })
+          .limit(1)
+          .maybeSingle(),
       ]);
 
     const completedSummary = (completedChallenges ?? [])
       .map((c) => `- Défi "${c.title}" (${c.domain}) : "${c.ai_observations ?? ""}"`)
       .join("\n");
     const existingTitles = (existing ?? []).map((c) => c.title);
+    const childQuestionNote = (latestChildQuestion?.child_question ?? "").trim();
 
     const timeAvailable = data.timeAvailable || "30 min";
     const location = data.location || "Maison (Intérieur)";
@@ -3055,6 +3110,7 @@ export const generateSingleChallenge = createServerFn({ method: "POST" })
         child.time_pressure as TimePressure | null | undefined,
       ),
       profileContextNote: formatChildProfileContext(child as any),
+      childQuestionNote,
     });
 
     // A single défi, not a batch — the 4000 default (sized for up to 6 défis

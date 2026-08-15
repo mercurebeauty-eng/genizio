@@ -4,7 +4,7 @@ description: Décisions d'architecture et produit — quoi, pourquoi, alternativ
 metadata:
   type: project
   status: living-document
-  last_updated: 2026-08-10
+  last_updated: 2026-08-15
 ---
 
 ## Décision #1 : Nom du projet — Geniusio
@@ -1899,7 +1899,35 @@ fichier ne porte plus que les constantes partagées.
 
 **Migration** : `20260815120000_supervisor_to_mentor_rename.sql` — **appliquée en prod** (aucune perte : `mentors` = 3 lignes conservées, `child_mentors` = 0 ligne), types régénérés (`supabase gen types typescript --linked`). **Vérifié** : 675 tests verts (55 fichiers), `tsc --noEmit` propre, build OK.
 
-## Décision #77 : Confiance Mentor — validation parent, points, statut automatique, palier 75/25, push & email (2026-08-15)
+## Décision #77 : Photos iOS (Live Photos HEIC) — conversion client + filet serveur WASM (2026-08-15)
+
+**✅ IMPLÉMENTÉ (2026-08-15)** — constat utilisateur : une photo « live » (Live Photo iPhone) échoue à l'envoi pour valider un défi — il fallait passer par une capture d'écran (PNG). Cause racine : iOS livre les Live Photos en **HEIC**, que le pipeline navigateur (`<img>`/canvas) ne décode pas → `fileToCompressedProof` échouait avec « Image illisible. » **avant** tout envoi (le serveur ne voyait rien). Deuxième constat (doute utilisateur sur la compression, justifié) : Safari n'encode **pas** le WebP via `canvas.toBlob` et retombe **silencieusement** sur un PNG (spec HTMLCanvasElement) — le repli `!blob` ne se déclenchait jamais, la « compression » produisait un PNG de plusieurs Mo sur iOS.
+
+**Livré** :
+- **Client** (`src/lib/image-proof.ts`, partagé /quest + OutcomeChat + mentor) : détection HEIC/HEIF (type MIME normalisé + extension en repli pour le quirk iOS « type vide ») → conversion **heic2any** (libheif WASM, ~1,3 Mo, import dynamique — jamais dans le bundle initial) → pipeline existant. Échec de conversion → envoi **brut** HEIC (le serveur convertit). Encodage durci : après `toBlob`, vérification du `blob.type` réel — une demande WebP qui rend un PNG (Safari) est ré-encodée en **JPEG explicite**.
+- **Serveur** (`src/lib/server-heic.ts` + `validateChallengeProofCore`) : filet — une preuve HEIC qui arrive quand même (client ancien, WASM indisponible, type non reconnu) est détectée (type MIME **et** magie `ftyp` heif/heic) puis convertie en JPEG avant l'appel vision. Échec → analyse **texte seul** (même repli que l'ancien fallback vision, mais sans l'appel Claude gaspillé sur des octets HEIC relabelés JPEG). Le stockage `proofs` enregistre la version normalisée (JPEG).
+- **Pourquoi WASM et pas sharp** : le runtime de production est **Cloudflare Workers** (`src/server.ts`, `.output/server/wrangler.json`, `nodejs_compat`) — sharp embarque des binaires natifs libvips et n'y tourne pas ; il reste cantonné aux scripts d'assets build-time (`scripts/convert-images.js`). Le filet utilise donc `libheif-js` (décodeur HEIC, WASM **embarqué** en base64, aucun fetch/fs) + `@jsquash/jpeg` (mozjpeg, wasm embarqué via `scripts/embed-mozjpeg-wasm.mjs`). Imports dynamiques : le module (~1,7 Mo) ne peut pas entrer dans le bundle client des server functions.
+
+**Vérifié** : 682 tests verts (55 fichiers, dont nouveaux tests de détection HEIC), `tsc --noEmit` propre (hors erreur pré-existante `admin.index.tsx` d'une autre branche), build Nitro/Workers OK (chunks WASM embarqués dans `.output/server/_libs`, **zéro référence `fs`**), conversion testée en réel sur un HEIC de référence (1280×854 → JPEG 474 Ko qualité 92, contenu vérifié au re-décodage).
+
+**Alternatives rejetées** : *sharp côté serveur* (impossible sur Workers) ; *`@jsquash/heic`* (retiré du registry npm — 404) ; *dépendre du CDN pour le WASM* (hors-ligne/CI fragile — on embarque les octets) ; *relabeler HEIC en JPEG et laisser Claude échouer* (appel gaspillé + erreur trompeuse — remplacé par détection + conversion propre).
+
+## Décision #78 : Admin OS — appellations modèles DeepSeek réelles + barème creux/plein + dé-doublonnage Commerce (2026-08-15)
+
+**Contexte (constats utilisateur)** : (1) l'onglet « IA Naya » affichait des appellations dépréciées (« DeepSeek Chat » / « DeepSeek Reasoner », alias supprimés par DeepSeek le 2026-07-24) et des coûts « loin de la réalité » ; (2) « Produits & Stock » et « Commerce » se chevauchaient sur les Suggestions Matériel Naya IA, avec des boutons d'ajout rapide inopérants, et un produit ajouté au catalogue ne pouvait pas être modifié.
+
+**Livré (non commité à la clôture — vérifier `git status`)** :
+
+1. **Appellations alignées sur les modèles API réels.** `deepseek-v4-flash` (texte courant, réflexion désactivée) et `deepseek-v4-pro` (raisonnement NAYA, réflexion activée — effort élevé) partout dans `naya-telemetry.ts` et l'onglet IA Naya. Le mode réflexion est documenté et affiché ; le fait qu'il n'ait pas de tarif séparé (tokens de raisonnement facturés comme sortie) est explicité.
+2. **Barème creux/plein DeepSeek intégré (effectif 2026-08-16 16:00 UTC).** Les taux promotionnels actuels (flash 0,14/0,28, pro 0,435/0,87 $/M) sont remplacés par un barème nettement plus élevé : pointe flash 0,44/1,32 et pro 1,32/3,96 $/M (cache miss), creux = moitié (flash 0,22/0,66, pro 0,66/1,98) ; heures de pointe 01:00-04:00 et 06:00-10:00 UTC. L'estimateur utilise des **taux pondérés 70 % creux / 30 % pointe** (part creuse = 17 h/24 h, usage famille hors fenêtre nocturne/matineale) via `calculateDeepSeekChatCost/ReasonerCost(input, output, offPeakSharePct)`. La réponse expose un **plafond** `peakCeilingCostUsd/Xof` (100 % en pointe), affiché sur la carte « Coût Estimé » avec l'heure actuelle pointe/creuse (`isDeepSeekPeakHour`).
+3. **Dé-doublonnage Commerce → Produits & Stock.** Les panneaux dupliqués « Catalogue Produits Boutique » et « Suggestions Matériel Naya IA » sont **supprimés** de l'onglet Commerce (décision : la gestion a une seule source de vérité, Produits & Stock). À la place, une carte CTA compacte affiche les compteurs (produits + suggestions Naya en attente) et bascule sur l'onglet Produits (`onOpenProductsTab`). Le mécanisme de pré-remplissage trans-onglet (`prefillSuggestion`/`onPrefillConsumed`) livré en cours de session a été retiré comme code mort.
+4. **Édition des produits du catalogue.** L'onglet Produits expose enfin « Modifier » (nom, description, prix, stock, tags) : le formulaire unique sert à créer ET à modifier (`editingId`), avec bouton « Annuler la modification ». Le backend `updateProduct` (édition partielle) existait déjà — seul l'UI manquait.
+
+**Alternatives rejetées** : *garder les panneaux dupliqués avec un bouton d'ajout rapide trans-onglet* (deux surfaces pour la même donnée = incohérence garantie ; la page Produits a déjà son panneau « Matériaux détectés sans produit » avec pré-remplissage — c'est la bonne surface d'action) ; *garder les taux promotionnels en attendant* (le changement DeepSeek est effectif le lendemain — l'estimateur devait refléter le nouveau barème, avec plafond conservateur) ; *modéliser le tarif creux par tranche horaire* (l'estimateur travaille sur des comptages, pas des horodatages d'appels — une part pondérée documentée est plus honnête qu'une fausse précision).
+
+**Vérifié** : `tsc --noEmit` propre, suite complète verte (682 tests + mises à jour des assertions de tarifs), lint sans nouvel apport (bruit CRLF préexistant au repo). Sources tarifaires : api-docs.deepseek.com (pricing + guides/thinking_mode), recoupées avec la presse (augmentation annoncée ~×3 à ×4,5).
+
+## Décision #79 : Confiance Mentor — validation parent, points, statut automatique, palier 75/25, push & email (2026-08-15)
 
 **✅ IMPLÉMENTÉE (2026-08-15, branche `feat/confiance-mentor`)** — le système de récompense/punition des mentors existait (statut, score, payout) mais était **informatif et manuel** : le score n'avait aucune conséquence, la sanction dépendait de l'admin, et la déclaration de séance du mentor suffisait pour le payout. Décision du porteur : tout automatiser et faire entrer le parent dans la boucle. Quatre volets, cadrés par 4 réponses du porteur :
 
@@ -1911,6 +1939,6 @@ fichier ne porte plus que les constantes partagées.
 
 **Seuils décidés** : confiance ≥ 75 ; warning < 40 ; suspended < 25 ; points : +5 % à 30, +10 % à 60. Tous paramétrables en constantes (mentor-score.ts).
 
-**Migration** : `20260815130000_mentor_trust_system.sql` (statut `confirmed` + `confirmed_by/confirmed_at`, `mentor_points`, `push_subscriptions` ; RLS sans policy, service-role) — types patchés à la main dans `src/integrations/supabase/types.ts` (CLI supabase indisponible). **Vérifié** : 697 tests verts (55 fichiers, +22 nouveaux : seuils, palier, payout tier/bonus, paliers points), `tsc --noEmit` propre, build OK (`sw.js` injectManifest généré, handlers push/notificationclick présents).
+**Migration** : `20260815130000_mentor_trust_system.sql` (statut `confirmed` + `confirmed_by/confirmed_at`, `mentor_points`, `push_subscriptions` ; RLS sans policy, service-role) — **appliquée en prod + types régénérés depuis la base** (2026-08-15, jeton Supabase réparé). **Vérifié** : suite complète verte (+22 nouveaux : seuils, palier, payout tier/bonus, paliers points), `tsc --noEmit` propre, build OK (`sw.js` injectManifest généré, handlers push/notificationclick présents).
 
 **Différé au backlog** : « contester une séance » (rejet parent explicite), « cadeau boutique » au palier 60 pts (la boutique/orders existe, l'intégration produit est un chantier à part), notification admin sur bascule de statut via la page admin elle-même (les admins reçoivent push+email, le panneau in-app admin n'existe pas).
