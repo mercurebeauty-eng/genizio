@@ -222,10 +222,11 @@ describe("refundSessionDebit", () => {
 });
 
 // ── Garde « travail validé » (anti-faille parent) ─────────────────────────────
-// Si un défi a été complété et validé (preuve IA ou défi déclaratif) sur la
-// période de la séance, le travail a eu lieu : la séance ne peut pas être
-// contestée. La session d'exemple a lieu le 2026-08-15 ; la fenêtre ±7 jours
-// couvre le 2026-08-08 → 2026-08-22.
+// Si un défi a été complété et validé (preuve IA ou défi déclaratif) le JOUR de la
+// séance ou dans les 7 jours SUIVANTS, le travail a eu lieu : la séance ne peut
+// pas être contestée. Fenêtre à SENS UNIQUE — un défi validé AVANT la date de la
+// séance n'atteste pas celle-ci. La session d'exemple a lieu le 2026-08-15 ; la
+// fenêtre couvre donc du 2026-08-15 (00:00) au 2026-08-22 (23:59).
 
 const completedChallenge = (over: Partial<any> = {}) => ({
   child_id: "c1",
@@ -262,9 +263,45 @@ describe("hasValidatedChildWorkNearSession", () => {
     ).resolves.toBe(false);
   });
 
-  it("défi complété hors fenêtre (±7 jours) → faux", async () => {
+  it("défi complété hors fenêtre (avant la séance) → faux", async () => {
     const { db } = makeFakeDb({
       challenges: [completedChallenge({ completed_at: "2026-07-01T12:00:00.000Z" })],
+    });
+    await expect(
+      hasValidatedChildWorkNearSession(db, "c1", "2026-08-15T10:00:00.000Z"),
+    ).resolves.toBe(false);
+  });
+
+  it("défi validé AVANT la date de la séance (autre séance ou travail du parent) → faux — la fenêtre est à sens unique", async () => {
+    const { db } = makeFakeDb({
+      challenges: [completedChallenge({ completed_at: "2026-08-10T12:00:00.000Z" })],
+    });
+    await expect(
+      hasValidatedChildWorkNearSession(db, "c1", "2026-08-15T10:00:00.000Z"),
+    ).resolves.toBe(false);
+  });
+
+  it("défi validé APRÈS la séance (soumission en retard du mentor) → vrai", async () => {
+    const { db } = makeFakeDb({
+      challenges: [completedChallenge({ completed_at: "2026-08-20T12:00:00.000Z" })],
+    });
+    await expect(
+      hasValidatedChildWorkNearSession(db, "c1", "2026-08-15T10:00:00.000Z"),
+    ).resolves.toBe(true);
+  });
+
+  it("défi validé au 7e jour après la séance (borne incluse) → vrai", async () => {
+    const { db } = makeFakeDb({
+      challenges: [completedChallenge({ completed_at: "2026-08-22T23:00:00.000Z" })],
+    });
+    await expect(
+      hasValidatedChildWorkNearSession(db, "c1", "2026-08-15T10:00:00.000Z"),
+    ).resolves.toBe(true);
+  });
+
+  it("défi validé au-delà de 7 jours après la séance → faux", async () => {
+    const { db } = makeFakeDb({
+      challenges: [completedChallenge({ completed_at: "2026-08-23T12:00:00.000Z" })],
     });
     await expect(
       hasValidatedChildWorkNearSession(db, "c1", "2026-08-15T10:00:00.000Z"),

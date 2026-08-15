@@ -36,8 +36,14 @@ export type ContestedSession = {
 // bénéfice du travail. Le parent ne peut donc PAS la contester — sinon un parent
 // malveillant laisserait le mentor travailler (défi validé, points à l'enfant)
 // puis contesterait la séance pour ne pas la payer.
+//
+// Fenêtre à SENS UNIQUE : du JOUR de la séance (inclus) jusqu'à 7 jours APRÈS.
+// La preuve est prise pendant la séance et validée le jour même ou dans les jours
+// qui suivent (soumission en retard du mentor) — elle ne peut pas précéder la
+// séance. Un défi validé AVANT la date de la séance n'atteste pas celle-ci (autre
+// séance, travail du parent) et ne bloque donc pas la contestation.
 
-/** Fenêtre autour de la date de la séance où un défi validé atteste le travail. */
+/** Nombre de jours APRÈS la séance où un défi validé atteste encore le travail. */
 export const CONTEST_VALIDATED_WORK_WINDOW_DAYS = 7;
 
 export const CONTEST_BLOCKED_VALIDATED_WORK_MESSAGE =
@@ -48,8 +54,8 @@ export const CONTEST_BLOCKED_VALIDATED_WORK_MESSAGE =
 /**
  * Vrai si l'enfant a un défi COMPLÉTÉ et validé (preuve photo analysée par l'IA —
  * ai_observations non nul — ou défi déclaratif complété) dont la complétion tombe
- * dans ±windowDays autour de la date de la séance. C'est la preuve que le travail
- * a eu lieu : la séance est attestée, elle ne peut pas être contestée.
+ * le JOUR de la séance ou dans les `windowDays` jours suivants. C'est la preuve
+ * que le travail a eu lieu : la séance est attestée, elle ne peut pas être contestée.
  */
 export async function hasValidatedChildWorkNearSession(
   db: { from: (table: string) => any },
@@ -57,16 +63,21 @@ export async function hasValidatedChildWorkNearSession(
   occurredAt: string,
   windowDays = CONTEST_VALIDATED_WORK_WINDOW_DAYS,
 ): Promise<boolean> {
-  const t = new Date(occurredAt).getTime();
-  const start = new Date(t - windowDays * 86_400_000).toISOString();
-  const end = new Date(t + windowDays * 86_400_000).toISOString();
+  // Début = jour de la séance à 00:00 (UTC) — une preuve validée le jour même
+  // compte, même avant l'heure exacte de début déclarée.
+  const start = new Date(occurredAt);
+  start.setUTCHours(0, 0, 0, 0);
+  // Fin = 7 jours après la séance, fin de journée (inclus).
+  const end = new Date(start);
+  end.setUTCDate(start.getUTCDate() + windowDays);
+  end.setUTCHours(23, 59, 59, 999);
   const { data, error } = await db
     .from("challenges")
     .select("ai_observations, proof_mode")
     .eq("child_id", childId)
     .eq("status", "completed")
-    .gte("completed_at", start)
-    .lte("completed_at", end)
+    .gte("completed_at", start.toISOString())
+    .lte("completed_at", end.toISOString())
     .limit(20);
   if (error) {
     // Garde fermée : si on ne peut pas vérifier le travail validé, on refuse la
