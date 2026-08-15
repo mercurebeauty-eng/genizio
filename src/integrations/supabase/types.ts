@@ -166,75 +166,6 @@ export type Database = {
         }
         Relationships: []
       }
-      parent_testimonials: {
-        Row: {
-          author_city: string
-          author_name: string
-          challenges_completed: number
-          child_id: string
-          children_count: number
-          consent_publish: boolean
-          created_at: string
-          headline: string
-          id: string
-          published: boolean
-          rating: number
-          review_body: string
-          sender_type: string
-          updated_at: string
-          user_id: string
-        }
-        Insert: {
-          author_city?: string
-          author_name: string
-          challenges_completed?: number
-          child_id: string
-          children_count?: number
-          consent_publish?: boolean
-          created_at?: string
-          headline: string
-          id?: string
-          published?: boolean
-          rating: number
-          review_body: string
-          sender_type?: string
-          updated_at?: string
-          user_id: string
-        }
-        Update: {
-          author_city?: string
-          author_name?: string
-          challenges_completed?: number
-          child_id?: string
-          children_count?: number
-          consent_publish?: boolean
-          created_at?: string
-          headline?: string
-          id?: string
-          published?: boolean
-          rating?: number
-          review_body?: string
-          sender_type?: string
-          updated_at?: string
-          user_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "parent_testimonials_child_id_fkey"
-            columns: ["child_id"]
-            isOneToOne: false
-            referencedRelation: "child_profiles"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "parent_testimonials_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "users"
-            referencedColumns: ["id"]
-          }
-        ]
-      }
       challenge_outcomes: {
         Row: {
           challenge_id: string
@@ -1186,19 +1117,68 @@ export type Database = {
           },
         ]
       }
+      mentor_session_slots: {
+        Row: {
+          cancelled_at: string | null
+          cancelled_by: string | null
+          child_profile_id: string
+          created_at: string
+          id: string
+          mentor_user_id: string
+          notes: string | null
+          planned_at: string
+          status: string
+        }
+        Insert: {
+          cancelled_at?: string | null
+          cancelled_by?: string | null
+          child_profile_id: string
+          created_at?: string
+          id?: string
+          mentor_user_id: string
+          notes?: string | null
+          planned_at: string
+          status?: string
+        }
+        Update: {
+          cancelled_at?: string | null
+          cancelled_by?: string | null
+          child_profile_id?: string
+          created_at?: string
+          id?: string
+          mentor_user_id?: string
+          notes?: string | null
+          planned_at?: string
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "mentor_session_slots_child_profile_id_fkey"
+            columns: ["child_profile_id"]
+            isOneToOne: false
+            referencedRelation: "child_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       mentor_sessions: {
         Row: {
           campaign_id: string | null
           child_profile_id: string
           confirmed_at: string | null
           confirmed_by: string | null
+          contest_reason: string | null
+          contested_at: string | null
+          contested_by: string | null
           created_at: string
           funding: string
           id: string
+          mentor_session_slot_id: string | null
           mentor_user_id: string
           notes: string | null
           occurred_at: string
           payout_xof: number | null
+          scheduled_at: string | null
           status: string
         }
         Insert: {
@@ -1206,13 +1186,18 @@ export type Database = {
           child_profile_id: string
           confirmed_at?: string | null
           confirmed_by?: string | null
+          contest_reason?: string | null
+          contested_at?: string | null
+          contested_by?: string | null
           created_at?: string
           funding?: string
           id?: string
+          mentor_session_slot_id?: string | null
           mentor_user_id: string
           notes?: string | null
           occurred_at?: string
           payout_xof?: number | null
+          scheduled_at?: string | null
           status?: string
         }
         Update: {
@@ -1220,13 +1205,18 @@ export type Database = {
           child_profile_id?: string
           confirmed_at?: string | null
           confirmed_by?: string | null
+          contest_reason?: string | null
+          contested_at?: string | null
+          contested_by?: string | null
           created_at?: string
           funding?: string
           id?: string
+          mentor_session_slot_id?: string | null
           mentor_user_id?: string
           notes?: string | null
           occurred_at?: string
           payout_xof?: number | null
+          scheduled_at?: string | null
           status?: string
         }
         Relationships: [
@@ -1242,6 +1232,13 @@ export type Database = {
             columns: ["child_profile_id"]
             isOneToOne: false
             referencedRelation: "child_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "mentor_sessions_mentor_session_slot_id_fkey"
+            columns: ["mentor_session_slot_id"]
+            isOneToOne: false
+            referencedRelation: "mentor_session_slots"
             referencedColumns: ["id"]
           },
         ]
@@ -1418,6 +1415,68 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      parent_testimonials: {
+        Row: {
+          author_city: string
+          author_name: string
+          challenges_completed: number
+          child_id: string
+          children_count: number
+          consent_publish: boolean
+          created_at: string
+          headline: string
+          id: string
+          published: boolean
+          rating: number
+          review_body: string
+          sender_type: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          author_city?: string
+          author_name: string
+          challenges_completed?: number
+          child_id: string
+          children_count?: number
+          consent_publish?: boolean
+          created_at?: string
+          headline: string
+          id?: string
+          published?: boolean
+          rating: number
+          review_body: string
+          sender_type?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          author_city?: string
+          author_name?: string
+          challenges_completed?: number
+          child_id?: string
+          children_count?: number
+          consent_publish?: boolean
+          created_at?: string
+          headline?: string
+          id?: string
+          published?: boolean
+          rating?: number
+          review_body?: string
+          sender_type?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "parent_testimonials_child_id_fkey"
+            columns: ["child_id"]
+            isOneToOne: false
+            referencedRelation: "child_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       payments: {
         Row: {
