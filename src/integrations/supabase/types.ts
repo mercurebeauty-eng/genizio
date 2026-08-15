@@ -1223,6 +1223,30 @@ export type Database = {
           },
         ]
       }
+      parent_profiles: {
+        Row: {
+          display_name: string | null
+          email: string
+          phone: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          display_name?: string | null
+          email: string
+          phone?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          display_name?: string | null
+          email?: string
+          phone?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       payments: {
         Row: {
           amount_xof: number
