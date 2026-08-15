@@ -8,17 +8,18 @@
 -- ═══════════════════════════════════════════════════════════════════════════
 
 -- ── 1. pg_stat_statements : les 10 requêtes les plus lentes ──────────────
--- [hypothèse] pg_stat_statements est actif par défaut sur Supabase — à confirmer
--- ici : si la vue est absente (erreur « relation does not exist »), l'activer dans
--- Database Settings (exige un redémarrage du compute).
-SELECT calls, mean_exec_ms, max_exec_ms, total_exec_ms,
+-- ⚠️ Noms de colonnes PostgreSQL 14+ (Supabase est en 15+) : mean_exec_TIME,
+-- max_exec_TIME, total_exec_TIME (avant PG 13, c'était *_exec_ms).
+-- Vérifié en prod le 2026-08-15 : la vue EXISTE (l'erreur précédente de colonne
+-- prouve que pg_stat_statements est actif — pas de « relation does not exist »).
+SELECT calls, mean_exec_time, max_exec_time, total_exec_time,
        substring(query, 1, 120) AS query
 FROM pg_stat_statements
-ORDER BY mean_exec_ms DESC
+ORDER BY mean_exec_time DESC
 LIMIT 10;
 
 -- ── 2. Requêtes les plus FRÉQUENTES (N+1 à traquer) ───────────────────────
-SELECT calls, mean_exec_ms,
+SELECT calls, mean_exec_time,
        substring(query, 1, 120) AS query
 FROM pg_stat_statements
 ORDER BY calls DESC
