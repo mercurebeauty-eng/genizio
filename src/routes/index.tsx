@@ -1634,6 +1634,17 @@ function TestimonialsSection() {
                     <p className="text-xs font-extrabold text-ink">{t.author}</p>
                     <p className="text-[11px] font-semibold text-ink/70">{t.authorLocation}</p>
                   </div>
+                  {/* La nature de l'émetteur : un avis de parent n'a pas la même
+                      valeur qu'un avis de mentor — on la rend visible. */}
+                  <span
+                    className={`inline-flex items-center rounded-full border px-2.5 py-0.5 text-[10px] font-black uppercase tracking-wider ${
+                      t.senderType === "mentor"
+                        ? "border-sky/30 bg-sky-50 text-sky-dark"
+                        : "border-brand/25 bg-brand/10 text-brand"
+                    }`}
+                  >
+                    {t.senderType === "mentor" ? "Avis de mentor" : "Avis de parent"}
+                  </span>
                   {/* Les petits détails factuels qui donnent de la valeur à l'avis :
                       le témoignage vient d'un parent réel, avec un vrai usage. */}
                   <span className="ml-auto flex flex-wrap items-center justify-end gap-1.5">

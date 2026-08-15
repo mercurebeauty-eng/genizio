@@ -180,6 +180,7 @@ export type Database = {
           published: boolean
           rating: number
           review_body: string
+          sender_type: string
           updated_at: string
           user_id: string
         }
@@ -196,6 +197,7 @@ export type Database = {
           published?: boolean
           rating: number
           review_body: string
+          sender_type?: string
           updated_at?: string
           user_id: string
         }
@@ -212,6 +214,7 @@ export type Database = {
           published?: boolean
           rating?: number
           review_body?: string
+          sender_type?: string
           updated_at?: string
           user_id?: string
         }

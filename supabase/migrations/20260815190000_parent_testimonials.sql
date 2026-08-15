@@ -31,6 +31,12 @@ CREATE TABLE IF NOT EXISTS public.parent_testimonials (
   rating smallint NOT NULL CHECK (rating BETWEEN 1 AND 5),
   consent_publish boolean NOT NULL DEFAULT false,
   published boolean NOT NULL DEFAULT false,
+  -- Nature de l'émetteur au moment de l'écriture : 'parent' (propriétaire du
+  -- profil enfant) ou 'mentor' (assigné à l'enfant via mentors). La landing peut
+  -- ainsi afficher « Avis de parent » ou « Avis de mentor » — un témoignage de
+  -- mentor n'a pas la même valeur qu'un témoignage de parent.
+  sender_type text NOT NULL DEFAULT 'parent'
+    CHECK (sender_type IN ('parent', 'mentor')),
   children_count smallint NOT NULL DEFAULT 0,
   challenges_completed smallint NOT NULL DEFAULT 0,
   created_at timestamptz NOT NULL DEFAULT now(),
