@@ -1438,6 +1438,12 @@ export async function generateChallengesCore(params: {
     { data: staleChallenges },
     { data: domainCounts },
     progressionTargets,
+    // Question formulée par l'enfant lui-même (chantier « Deuxième colonne
+    // vertébrale », 2026-08-15) : le dernier défi portant une child_question non
+    // nulle fournit le fil conducteur de la prochaine génération — l'enfant
+    // devient l'auteur de la question, pas le spectateur. `db` étant `any`, le
+    // retour du maybeSingle est casté comme le reste.
+    latestChildQuestion,
     // `db` est `any` (client parent OU service role) → Promise.all ne peut pas inférer
     // un tuple typé à partir d'éléments `any` mélangés à Promise<ProgressionTarget[]> ;
     // le cast est explicite (l'original typé via le client supabase inférait tout seul).
@@ -1473,8 +1479,17 @@ export async function generateChallengesCore(params: {
     // sous-estimée pour les enfants avec beaucoup d'historique.
     db.from("challenges").select("domain").eq("child_id", childId).eq("status", "completed"),
     computeProgressionTargets(db, childId),
+    db
+      .from("challenges")
+      .select("child_question")
+      .eq("child_id", childId)
+      .not("child_question", "is", null)
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle(),
   ])) as any;
   const existingTitles = ((existing ?? []) as any[]).map((c) => c.title);
+  const childQuestionNote = ((latestChildQuestion as any)?.child_question ?? "").trim();
   const completedSummary = ((completedChallenges ?? []) as any[])
     .map((c) => `- Défi "${c.title}" (${c.domain}) : "${c.ai_observations ?? ""}"`)
     .join("\n");
@@ -1525,6 +1540,7 @@ export async function generateChallengesCore(params: {
       child.time_pressure as TimePressure | null | undefined,
     ),
     profileContextNote: formatChildProfileContext(child as any),
+    childQuestionNote,
   });
 
   // Up to 6 full défis in one response, each now carrying the academic
@@ -1626,6 +1642,10 @@ export const UpdateInput = z.object({
   status: z.enum(["todo", "in_progress", "completed"]).optional(),
   progress: z.number().int().min(0).max(100).optional(),
   notes: z.string().max(2000).nullable().optional(),
+  // Question formulée par l'enfant lui-même (chantier « Deuxième colonne
+  // vertébrale », 2026-08-15) : sauvegardée depuis le mode quête, réinjectée
+  // dans les prompts de génération suivants.
+  child_question: z.string().max(500).nullable().optional(),
 });
 
 export const updateChallenge = createServerFn({ method: "POST" })
@@ -1638,6 +1658,7 @@ export const updateChallenge = createServerFn({ method: "POST" })
       notes?: string | null;
       completed_at?: string | null;
       time_limit_minutes?: number | null;
+      child_question?: string | null;
     } = {};
     if (data.status === "completed") {
       throw new Error(
@@ -1662,6 +1683,7 @@ export const updateChallenge = createServerFn({ method: "POST" })
       }
     }
     if (data.notes !== undefined) patch.notes = data.notes;
+    if (data.child_question !== undefined) patch.child_question = data.child_question;
 
     // Verrouillage (2026-07-30) : cette mutation touche directement `challenges`, pas
     // `child_profiles` — donc pas de colonne access_locked_at à filtrer dans l'update lui-même,
@@ -2992,7 +3014,7 @@ export const generateSingleChallenge = createServerFn({ method: "POST" })
     // path never checked recent titles at all — a parent clicking "Composer un défi
     // ciblé" repeatedly could get literal duplicates. Fetching both in parallel
     // matches generateChallenges' existing pattern instead of inventing a new one.
-    const [{ data: completedChallenges }, { data: existing }, progressionTargets] =
+    const [{ data: completedChallenges }, { data: existing }, progressionTargets, { data: latestChildQuestion }] =
       await Promise.all([
         supabase
           .from("challenges")
@@ -3008,12 +3030,23 @@ export const generateSingleChallenge = createServerFn({ method: "POST" })
           .order("created_at", { ascending: false })
           .limit(30),
         computeProgressionTargets(supabase, data.childId),
+        // Question formulée par l'enfant lui-même (chantier « Deuxième colonne
+        // vertébrale », 2026-08-15) — fil conducteur de la génération ciblée.
+        supabase
+          .from("challenges")
+          .select("child_question")
+          .eq("child_id", data.childId)
+          .not("child_question", "is", null)
+          .order("created_at", { ascending: false })
+          .limit(1)
+          .maybeSingle(),
       ]);
 
     const completedSummary = (completedChallenges ?? [])
       .map((c) => `- Défi "${c.title}" (${c.domain}) : "${c.ai_observations ?? ""}"`)
       .join("\n");
     const existingTitles = (existing ?? []).map((c) => c.title);
+    const childQuestionNote = (latestChildQuestion?.child_question ?? "").trim();
 
     const timeAvailable = data.timeAvailable || "30 min";
     const location = data.location || "Maison (Intérieur)";
@@ -3055,6 +3088,7 @@ export const generateSingleChallenge = createServerFn({ method: "POST" })
         child.time_pressure as TimePressure | null | undefined,
       ),
       profileContextNote: formatChildProfileContext(child as any),
+      childQuestionNote,
     });
 
     // A single défi, not a batch — the 4000 default (sized for up to 6 défis

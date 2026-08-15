@@ -4,6 +4,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { supabase } from "@/integrations/supabase/client";
 import { useSession } from "@/hooks/use-session";
 import { updateChallenge, validateChallengeProof } from "@/lib/challenges.functions";
+import { generateJustInTimeHint } from "@/lib/naya-hint.functions";
 import { getActiveChallenge, ChallengeLike } from "@/lib/active-challenge";
 import {
   ArrowLeft,
@@ -17,6 +18,8 @@ import {
   MessageCircle,
   Loader2,
   Upload,
+  Lightbulb,
+  Send,
 } from "lucide-react";
 import { toast } from "sonner";
 import { NayaAvatar } from "@/components/NayaAvatar";
@@ -53,6 +56,8 @@ type Challenge = ChallengeLike & {
   duration: string;
   difficulty?: string | null;
   kind?: string | null;
+  child_question?: string | null;
+  naya_hint?: string | null;
 };
 
 const DOMAIN_COLORS: Record<string, string> = {
@@ -81,6 +86,54 @@ function QuestPage() {
   const [stepChecked, setStepChecked] = useState<boolean[]>([]);
   const [childFeedback, setChildFeedback] = useState("");
   const [completing, setCompleting] = useState(false);
+
+  // Indice juste-à-temps (chantier « Deuxième colonne vertébrale », 2026-08-15) :
+  // bouton « Naya, je suis bloqué·e » → Naya livre le concept minimal qui débloque
+  // l'étape, jamais la solution. L'indice persiste sur le défi (naya_hint) pour être
+  // relisible après rechargement.
+  const [hintLoading, setHintLoading] = useState(false);
+  const [hintText, setHintText] = useState<string | null>(null);
+  const [hintError, setHintError] = useState(false);
+  const hintFn = useServerFn(generateJustInTimeHint);
+
+  // Question formulée par l'enfant lui-même — sauvegardée sur le défi, réinjectée
+  // comme fil conducteur des prochains défis générés.
+  const [childQuestion, setChildQuestion] = useState("");
+  const [questionSaving, setQuestionSaving] = useState(false);
+  const [questionSaved, setQuestionSaved] = useState(false);
+
+  const handleAskHint = async () => {
+    if (!activeChallenge || hintLoading) return;
+    setHintLoading(true);
+    setHintError(false);
+    try {
+      const res = await hintFn({ data: { challengeId: activeChallenge.id } });
+      setHintText(res.hint);
+    } catch (err) {
+      console.error("handleAskHint:", err);
+      setHintError(true);
+      setHintText(null);
+    } finally {
+      setHintLoading(false);
+    }
+  };
+
+  const handleSaveChildQuestion = async () => {
+    if (!activeChallenge || questionSaving) return;
+    const q = childQuestion.trim();
+    if (!q) return;
+    setQuestionSaving(true);
+    try {
+      await updateChallengeFn({ data: { id: activeChallenge.id, child_question: q } });
+      setQuestionSaved(true);
+      toast.success("Question envoyée à Naya ! 💬");
+    } catch (err) {
+      console.error("handleSaveChildQuestion:", err);
+      toast.error("Impossible d'enregistrer ta question pour le moment.");
+    } finally {
+      setQuestionSaving(false);
+    }
+  };
 
   // Celebration screen state
   const [isCelebrated, setIsCelebrated] = useState(false);
@@ -554,6 +607,99 @@ function QuestPage() {
                     </button>
                   </div>
 
+                  {/* Indice juste-à-temps — « Naya, je suis bloqué·e » */}
+                  {!stepChecked[currentStepIndex] && (
+                    <div className="mt-4">
+                      {hintText ? (
+                        <div className="rounded-2xl border border-brand/25 bg-brand/5 p-4 text-left">
+                          <div className="flex items-start gap-3">
+                            <span className="grid size-9 shrink-0 place-items-center rounded-full bg-brand/15 text-brand">
+                              <Lightbulb className="size-4" />
+                            </span>
+                            <div>
+                              <p className="text-[10px] font-black uppercase tracking-widest text-brand mb-1">
+                                Naya t'aide
+                              </p>
+                              <p className="text-xs font-bold leading-relaxed text-ink/80">
+                                {hintText}
+                              </p>
+                              <button
+                                type="button"
+                                onClick={handleAskHint}
+                                disabled={hintLoading}
+                                className="mt-3 text-[11px] font-black text-brand underline-offset-2 hover:underline cursor-pointer disabled:opacity-50"
+                              >
+                                {hintLoading ? "Naya réfléchit…" : "Un autre indice ?"}
+                              </button>
+                            </div>
+                          </div>
+                        </div>
+                      ) : (
+                        <button
+                          type="button"
+                          onClick={handleAskHint}
+                          disabled={hintLoading}
+                          className="w-full inline-flex items-center justify-center gap-2 rounded-2xl border border-dashed border-ink/25 bg-white/70 px-5 py-3 text-xs font-black text-ink/70 hover:border-brand/50 hover:text-brand transition-all cursor-pointer disabled:opacity-50"
+                        >
+                          {hintLoading ? (
+                            <>
+                              <Loader2 className="size-4 animate-spin" />
+                              <span>Naya réfléchit…</span>
+                            </>
+                          ) : (
+                            <>
+                              <Lightbulb className="size-4" />
+                              <span>Je suis bloqué·e, Naya m'aide !</span>
+                            </>
+                          )}
+                        </button>
+                      )}
+                      {hintError && (
+                        <p className="mt-2 text-[11px] font-bold text-rose-500">
+                          Naya n'a pas trouvé d'indice pour le moment. Réessaie dans quelques
+                          secondes !
+                        </p>
+                      )}
+                    </div>
+                  )}
+
+                  {/* Question de l'enfant — fil conducteur des prochains défis */}
+                  <div className="mt-4 rounded-2xl border border-ink/10 bg-surface/60 p-4 text-left">
+                    <p className="text-[10px] font-black uppercase tracking-widest text-ink/60 mb-2">
+                      💬 Une question pour Naya ?
+                    </p>
+                    <div className="flex gap-2">
+                      <input
+                        value={childQuestion}
+                        onChange={(e) => {
+                          setChildQuestion(e.target.value.slice(0, 500));
+                          setQuestionSaved(false);
+                        }}
+                        placeholder="Ex : pourquoi l'eau monte dans la bouteille ?"
+                        disabled={questionSaving}
+                        className="flex-1 rounded-xl border border-ink/10 bg-white px-3 py-2.5 text-xs font-bold outline-none focus:ring-2 focus:ring-brand/40 text-ink placeholder:text-ink/35 disabled:opacity-50"
+                      />
+                      <button
+                        type="button"
+                        onClick={handleSaveChildQuestion}
+                        disabled={questionSaving || !childQuestion.trim()}
+                        className="shrink-0 inline-flex items-center gap-1.5 rounded-xl bg-brand px-4 py-2.5 text-xs font-black text-white shadow-sm hover:-translate-y-0.5 active:translate-y-0 transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        {questionSaving ? (
+                          <Loader2 className="size-4 animate-spin" />
+                        ) : (
+                          <Send className="size-4" />
+                        )}
+                        <span>{questionSaved ? "Envoyée !" : "Envoyer"}</span>
+                      </button>
+                    </div>
+                    <p className="mt-2 text-[11px] font-semibold text-ink/50">
+                      {questionSaved
+                        ? "Naya garde ta question en mémoire pour tes prochaines missions. ✨"
+                        : "Naya gardera ta question en mémoire pour tes prochaines missions."}
+                    </p>
+                  </div>
+
                   {/* Next Step / Footer Navigation */}
                   <div className="mt-8 flex justify-end">
                     <button
@@ -763,7 +909,15 @@ function QuestPage() {
             )}
 
             <button
-              onClick={() => setIsQuestActive(true)}
+              onClick={() => {
+                // On restaure l'indice et la question persistés sur le défi (le cas
+                // échéant) avant de lancer le wizard — l'enfant retrouve ses repères.
+                setHintText(activeChallenge.naya_hint || null);
+                setHintError(false);
+                setChildQuestion(activeChallenge.child_question || "");
+                setQuestionSaved(false);
+                setIsQuestActive(true);
+              }}
               className="inline-flex w-full items-center justify-center gap-2 rounded-2xl border border-ink/10 bg-brand px-8 py-4 text-base font-black text-white shadow-xl hover:-translate-y-0.5 active:translate-y-0 transition-all cursor-pointer"
             >
               <Play className="size-5 fill-current" />

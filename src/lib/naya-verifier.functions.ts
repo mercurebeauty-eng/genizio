@@ -46,7 +46,8 @@ export type GenerationKind =
   | "synthesis"
   | "letter"
   | "narrative"
-  | "proof_tampon";
+  | "proof_tampon"
+  | "just_in_time_hint";
 
 export type ViolationSeverity = "mineur" | "majeur";
 
@@ -81,6 +82,8 @@ export interface VerifyContext {
   /** Reformulation (chantier 3, modalités) : titre du défi original à reformuler —
    * le Loup vérifie que l'objectif pédagogique reste identique. */
   originalTitle?: string;
+  /** Indice juste-à-temps (chantier 2026-08-15) : titre du défi en cours. */
+  challengeTitle?: string;
 }
 
 // ── Constantes de référence (copies locales, verrouillées par test) ─────────
@@ -477,6 +480,9 @@ export function verifyGeneration(kind: GenerationKind, output: unknown, context:
       case "proof_tampon":
         if (isRecord(output)) violations.push(...validateProseText(str(output.tampon ?? output.text), kind, context));
         break;
+      case "just_in_time_hint":
+        violations.push(...validateProseText(typeof output === "string" ? output : str(isRecord(output) ? output.hint : output), kind, context));
+        break;
     }
   } catch (err) {
     // Le Loup ne doit jamais casser la génération : toute anomalie de forme est
@@ -578,6 +584,10 @@ export function semanticRubricFor(kind: GenerationKind): string {
       return `1. coherence-cause : la cause classée doit correspondre au texte de l'explication du parent.`;
     case "proof_tampon":
       return `1. chaleur-concision : une phrase courte et chaleureuse mentionnant l'intelligence utilisée, sans invention.`;
+    case "just_in_time_hint":
+      return `1. hint-pas-la-solution : l'indice ne doit JAMAIS donner la réponse complète ni la démarche aboutie — uniquement le concept minimal qui débloque l'étape.
+2. hint-ancre : l'indice doit s'ancrer dans le geste ou le matériel du défi en cours, pas dans une théorie générique.
+3. hint-taille : 2 à 3 phrases maximum, en langage d'enfant, sans chiffres ni jargon scolaire.`;
   }
 }
 

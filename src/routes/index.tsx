@@ -117,53 +117,20 @@ const LANDING_FAQ: {
 // Avis de parents affichés sur la landing (data-driven, éditorialisés).
 //
 // ⚠️ IMPORTANT — La base de production ne contient pas encore de témoignages
-// collectés : les entrées ci-dessous sont des modèles réalistes à REMPLACER par
-// de vrais retours clients avant toute mise en ligne. La codebase refuse la
-// preuve sociale inventée (un faux avis est un risque de crédibilité réel face
-// à un partenaire ou un moteur qui vérifie). Pour activer la section, remplacez
-// chaque entrée par une citation authentique (prénom + ville suffisent, jamais
-// de nom complet). Tant que le tableau est vide, la section ne s'affiche pas.
-const LANDING_TESTIMONIALS: ParentReview[] = [
-  {
-    author: "Aïcha K.",
-    authorLocation: "Abidjan, Côte d'Ivoire",
-    rating: 5,
-    headline: "Un vrai changement pour mon fils",
-    reviewBody:
-      "Mon fils de 8 ans ne tenait jamais en place. Depuis qu'il fait les défis Génizio, je vois enfin ce qui l'absorbe vraiment : il construit, il bricole, et il en est fier. La carte des talents m'a ouvert les yeux.",
-  },
-  {
-    author: "Moussa D.",
-    authorLocation: "Dakar, Sénégal",
-    rating: 5,
-    headline: "Enfin un outil qui regarde ailleurs que les notes",
-    reviewBody:
-      "Ma fille est moyenne à l'école mais déborde d'idées. Génizio a mis en valeur son sens pratique et sa créativité que personne ne voyait. Le portfolio de réalisations est bluffant.",
-  },
-  {
-    author: "Fanta T.",
-    authorLocation: "Paris, France",
-    rating: 4,
-    headline: "Le lien avec le pays, concrètement",
-    reviewBody:
-      "Nous vivons à Paris et mon neveu à Abidjan. Le parrainage nous permet de suivre ses défis à distance et de partager un vrai sujet de conversation. Les défis sont bien ancrés dans le contexte africain.",
-  },
-  {
-    author: "Jean-Marc N.",
-    authorLocation: "Douala, Cameroun",
-    rating: 5,
-    headline: "Des défis simples, des résultats réels",
-    reviewBody:
-      "Pas besoin de matériel coûteux ni de connexion parfaite. Les défis utilisent ce qu'on a sous la main et le suivi IA donne des retours utiles, pas des jugements.",
-  },
-];
+// collectés : le tableau est volontairement VIDE pour ne jamais afficher de
+// preuve sociale inventée (un faux avis est un risque de crédibilité réel face à
+// un partenaire ou un moteur qui vérifie, et Google déclasse les signaux de
+// confiance fabriqués). Dès qu'un premier retour authentique arrive (prénom +
+// ville suffisent, jamais de nom complet), ajoutez-le ici : la section se
+// réaffiche automatiquement.
+const LANDING_TESTIMONIALS: ParentReview[] = [];
 
 export const Route = createFileRoute("/")({
   head: () => {
     const meta = pageMeta({
-      title: "Génizio — Révéler les talents de votre enfant",
+      title: "Génizio — Les talents que le bulletin ne montre pas",
       description:
-        "Des défis concrets à faire à la maison pour révéler les talents de votre enfant de 5 à 16 ans, fondés sur les 9 intelligences de Howard Gardner.",
+        "Des défis concrets à faire à la maison pour révéler les talents de votre enfant de 5 à 16 ans — et les transformer en compétences, confiance et projets. Fondé sur les 9 intelligences de Howard Gardner.",
       path: "/",
     });
     return {
@@ -494,7 +461,7 @@ function NayaLanding() {
 const NAV_LINKS = [
   { href: "#domaines", label: "Les 9 Talents" },
   { href: "#portfolio", label: "Portfolio de vie" },
-  { href: "#demo", label: "Simulateur" },
+  { href: "#demo", label: "Exemple" },
   { href: "#communaute", label: "Communauté" },
   { href: "#faq", label: "FAQ" },
 ];
@@ -642,19 +609,18 @@ function Hero() {
       <div className="relative mx-auto grid max-w-6xl items-center gap-16 px-6 pt-36 pb-28 lg:grid-cols-[1.05fr_0.95fr] lg:gap-16 lg:pt-44 lg:pb-32">
         <div>
           <span className="mb-5 inline-block rounded-full border border-brand-glow/30 bg-brand/20 px-4 py-1.5 text-xs font-bold uppercase tracking-wider text-brand-glow">
-            Le laboratoire de potentiel par projet
+            Au-delà du bulletin
           </span>
           <h1 className="mb-6 font-display text-balance text-4xl font-extrabold leading-[1.04] md:text-6xl">
-            Révélez les{" "}
+            Votre enfant a des talents que{" "}
             <span className="bg-gradient-to-r from-brand-glow to-amber-300 bg-clip-text text-transparent">
-              intelligences
-            </span>{" "}
-            naturelles de votre enfant.
+              l'école ne voit pas.
+            </span>
           </h1>
           <p className="mb-9 max-w-xl text-base font-medium leading-relaxed text-white/85">
-            Bien plus qu'un soutien scolaire. Génizio propose à votre enfant d'expérimenter le monde
-            réel grâce à des défis d'apprentissage sur-mesure validés par l'IA et accompagnés par
-            des mentors.
+            Génizio les révèle par des défis concrets à la maison — et les transforme en
+            compétences, en confiance et en chemin pour l'avenir. Pas de notes, pas de verdict :
+            des réalisations, observées par l'IA Naya et validées par vous.
           </p>
           <div className="mb-9 flex items-center gap-3.5 rounded-2xl border border-white/15 bg-white/10 p-4 shadow-lg backdrop-blur-md w-fit">
             <NayaAvatar size="sm" thoughts={["Bonjour ! Prêt pour un nouveau défi ?"]} />
@@ -668,18 +634,18 @@ function Hero() {
             </div>
           </div>
           <div className="flex flex-col gap-4 sm:flex-row">
-            <a
-              href="#demo"
-              className="press-brand rounded-2xl bg-brand px-8 py-4 text-center text-base font-bold text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-glow focus-visible:ring-offset-2 focus-visible:ring-offset-ink cursor-pointer"
-            >
-              Tester le Simulateur
-            </a>
             <Link
               to="/auth"
+              className="press-brand rounded-2xl bg-brand px-8 py-4 text-center text-base font-bold text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-glow focus-visible:ring-offset-2 focus-visible:ring-offset-ink cursor-pointer"
+            >
+              Créer mon compte gratuit
+            </Link>
+            <a
+              href="#demo"
               className="press-white rounded-2xl bg-white px-8 py-4 text-center text-base font-bold text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-glow focus-visible:ring-offset-2 focus-visible:ring-offset-ink cursor-pointer"
             >
-              Créer un compte
-            </Link>
+              Voir un exemple de défi
+            </a>
           </div>
           {/* Les anciennes pastilles d'avatars et la mention « familles à Dakar, Abidjan et
             Yaoundé » ont été retirées : la base de production ne contient d'utilisateurs qu'à
@@ -1034,7 +1000,9 @@ function MethodSection() {
           </h2>
           <p className="mt-5 text-sm font-semibold leading-relaxed text-white/85">
             La richesse d'un enfant ne se lit pas dans un formulaire. Elle se lit dans ce qu'il
-            fabrique, ce qu'il organise, ce qu'il raconte.
+            fabrique, ce qu'il organise, ce qu'il raconte. Et chaque défi révèle aussi{" "}
+            <span className="text-brand-glow">pourquoi la connaissance sert</span> — pas seulement
+            ce qu'il faut retenir.
           </p>
         </Reveal>
 
@@ -1764,7 +1732,7 @@ function VisionSection() {
             Chez Génizio, nous croyons qu'un enfant n'est pas réductible à des notes d'examen. À
             chaque défi complété, le parent photographie la réalisation, et notre IA déduit
             l'émergence des talents associés. C'est ainsi que se dresse, au fil des mois, une
-            cartographie scientifique et vivante de son génie naturel.
+            cartographie vivante de ce qu'il sait vraiment faire.
           </p>
           <ul className="mt-8 space-y-3.5 text-xs font-bold text-white/80">
             <li className="flex items-center gap-3">
@@ -1877,7 +1845,7 @@ function PositioningSection() {
           <blockquote className="rounded-3xl border border-brand/20 bg-brand/10 p-6 md:p-8 shadow-xl">
             <p className="font-display text-balance text-xl font-extrabold leading-snug text-brand md:text-2xl">
               « Le but n'est pas de faire de tous les enfants des ingénieurs ou des artistes, mais
-              de s'assurer qu'aucun ne passe à côté de son génie naturel. »
+              de s'assurer qu'aucun ne passe à côté de ce qu'il est vraiment capable de devenir. »
             </p>
           </blockquote>
         </div>
@@ -2170,7 +2138,7 @@ function CTASection() {
               Inscription libre
             </span>
             <h2 className="mb-4 font-display text-balance text-3xl font-extrabold leading-tight md:text-4xl">
-              Révélez le potentiel de vos enfants dès aujourd'hui.
+              Découvrez les talents que le bulletin ne montre pas.
             </h2>
             <p className="mx-auto mb-10 max-w-md text-sm font-semibold leading-relaxed text-white/85">
               Créez le profil de votre enfant en deux minutes et recevez son premier défi sur
