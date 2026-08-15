@@ -7,18 +7,47 @@ import {
   calculateNayaTelemetry,
   calculateNayaWolfTelemetry,
   NAYA_PRICING,
+  isDeepSeekPeakHour,
 } from "./naya-telemetry";
 
 describe("Naya Telemetry & Pricing Functions", () => {
-  describe("NAYA_PRICING constants", () => {
-    it("has the exact required pricing rates and USD-to-XOF conversion factor", () => {
-      expect(NAYA_PRICING.DEEPSEEK_CHAT_INPUT_PER_M).toBe(0.14);
-      expect(NAYA_PRICING.DEEPSEEK_CHAT_OUTPUT_PER_M).toBe(0.28);
-      expect(NAYA_PRICING.DEEPSEEK_REASONER_INPUT_PER_M).toBe(0.435);
-      expect(NAYA_PRICING.DEEPSEEK_REASONER_OUTPUT_PER_M).toBe(0.87);
+  describe("NAYA_PRICING constants (barème creux/plein 2026-08-16)", () => {
+    it("exposes the peak/off-peak rate card with exact values", () => {
+      expect(NAYA_PRICING.DEEPSEEK_PEAK.FLASH_INPUT_PER_M).toBe(0.44);
+      expect(NAYA_PRICING.DEEPSEEK_PEAK.FLASH_OUTPUT_PER_M).toBe(1.32);
+      expect(NAYA_PRICING.DEEPSEEK_PEAK.PRO_INPUT_PER_M).toBe(1.32);
+      expect(NAYA_PRICING.DEEPSEEK_PEAK.PRO_OUTPUT_PER_M).toBe(3.96);
+      expect(NAYA_PRICING.DEEPSEEK_OFF_PEAK.FLASH_INPUT_PER_M).toBe(0.22);
+      expect(NAYA_PRICING.DEEPSEEK_OFF_PEAK.FLASH_OUTPUT_PER_M).toBe(0.66);
+      expect(NAYA_PRICING.DEEPSEEK_OFF_PEAK.PRO_INPUT_PER_M).toBe(0.66);
+      expect(NAYA_PRICING.DEEPSEEK_OFF_PEAK.PRO_OUTPUT_PER_M).toBe(1.98);
       expect(NAYA_PRICING.SONNET_INPUT_PER_M).toBe(3.0);
       expect(NAYA_PRICING.SONNET_OUTPUT_PER_M).toBe(15.0);
       expect(NAYA_PRICING.USD_TO_XOF_RATE).toBe(600);
+    });
+
+    it("defaults to a 70% off-peak blended share (fenêtre creuse 17h/24h)", () => {
+      expect(NAYA_PRICING.DEFAULT_OFF_PEAK_SHARE).toBe(0.7);
+    });
+  });
+
+  describe("isDeepSeekPeakHour", () => {
+    const at = (utcHour: number): Date => new Date(Date.UTC(2026, 7, 16, utcHour, 0, 0));
+
+    it("marks 01:00-04:00 and 06:00-10:00 UTC as peak hours", () => {
+      expect(isDeepSeekPeakHour(at(1))).toBe(true);
+      expect(isDeepSeekPeakHour(at(3))).toBe(true);
+      expect(isDeepSeekPeakHour(at(6))).toBe(true);
+      expect(isDeepSeekPeakHour(at(9))).toBe(true);
+    });
+
+    it("marks boundary hours as off-peak (04:00, 10:00, and the rest of the day)", () => {
+      expect(isDeepSeekPeakHour(at(0))).toBe(false);
+      expect(isDeepSeekPeakHour(at(4))).toBe(false);
+      expect(isDeepSeekPeakHour(at(5))).toBe(false);
+      expect(isDeepSeekPeakHour(at(10))).toBe(false);
+      expect(isDeepSeekPeakHour(at(18))).toBe(false);
+      expect(isDeepSeekPeakHour(at(23))).toBe(false);
     });
   });
 
@@ -27,11 +56,18 @@ describe("Naya Telemetry & Pricing Functions", () => {
       expect(calculateDeepSeekChatCost(0, 0)).toEqual({ costUsd: 0, costXof: 0 });
     });
 
-    it("accurately calculates costs for DeepSeek Chat token usage", () => {
-      // 1M input ($0.14) + 1M output ($0.28) = $0.42 -> 252 FCFA
+    it("accurately calculates costs for DeepSeek V4 Flash token usage (blended 70/30)", () => {
+      // blended input = 0.7×0.22 + 0.3×0.44 = $0.286/M ; output = 0.7×0.66 + 0.3×1.32 = $0.858/M
+      // 1M input + 1M output = 0.286 + 0.858 = $1.144 -> 686 FCFA
       const result = calculateDeepSeekChatCost(1_000_000, 1_000_000);
-      expect(result.costUsd).toBe(0.42);
-      expect(result.costXof).toBe(252);
+      expect(result.costUsd).toBeCloseTo(1.144, 6);
+      expect(result.costXof).toBe(686);
+    });
+
+    it("computes the peak ceiling (share=0) and off-peak floor (share=1)", () => {
+      // 100% pointe : 0.44 + 1.32 = $1.76 ; 100% creux : 0.22 + 0.66 = $0.88
+      expect(calculateDeepSeekChatCost(1_000_000, 1_000_000, 0).costUsd).toBeCloseTo(1.76, 6);
+      expect(calculateDeepSeekChatCost(1_000_000, 1_000_000, 1).costUsd).toBeCloseTo(0.88, 6);
     });
 
     it("clamps negative or NaN token values to 0", () => {
@@ -40,12 +76,13 @@ describe("Naya Telemetry & Pricing Functions", () => {
   });
 
   describe("calculateDeepSeekReasonerCost", () => {
-    it("accurately calculates costs for DeepSeek Reasoner token usage", () => {
-      // Depuis la décision du 2026-07-22, ce poste tourne sur deepseek-v4-pro —
-      // 1M input ($0.435) + 1M output ($0.87) = $1.305 -> 783 FCFA
+    it("accurately calculates costs for DeepSeek V4 Pro token usage (blended 70/30)", () => {
+      // Ce poste tourne sur deepseek-v4-pro (mode réflexion activé, effort élevé) —
+      // blended input = 0.7×0.66 + 0.3×1.32 = $0.858/M ; output = 0.7×1.98 + 0.3×3.96 = $2.574/M
+      // 1M + 1M = 0.858 + 2.574 = $3.432 -> 2059 FCFA
       const result = calculateDeepSeekReasonerCost(1_000_000, 1_000_000);
-      expect(result.costUsd).toBe(1.305);
-      expect(result.costXof).toBe(783);
+      expect(result.costUsd).toBeCloseTo(3.432, 6);
+      expect(result.costXof).toBe(2059);
     });
   });
 
@@ -129,17 +166,17 @@ describe("Naya Telemetry & Pricing Functions", () => {
       const defisFeature = telemetry.featureBreakdown.find((f) => f.feature === "Défis");
       expect(defisFeature).toBeDefined();
       expect(defisFeature?.callsCount).toBe(120);
-      expect(defisFeature?.modelUsed).toBe("DeepSeek Chat + Sonnet (vision)");
+      expect(defisFeature?.modelUsed).toBe("DeepSeek V4 Flash + Sonnet (vision)");
 
       const hypFeature = telemetry.featureBreakdown.find((f) => f.feature === "Hypothèses");
-      expect(hypFeature?.modelUsed).toBe("DeepSeek Reasoner");
+      expect(hypFeature?.modelUsed).toBe("DeepSeek V4 Pro");
 
       const recFeature = telemetry.featureBreakdown.find((f) => f.feature === "Recommandations");
-      expect(recFeature?.modelUsed).toBe("DeepSeek Chat");
+      expect(recFeature?.modelUsed).toBe("DeepSeek V4 Flash");
 
       // Model breakdown check
-      const chatModel = telemetry.modelBreakdown.find((m) => m.model === "DeepSeek Chat");
-      const reasonerModel = telemetry.modelBreakdown.find((m) => m.model === "DeepSeek Reasoner");
+      const chatModel = telemetry.modelBreakdown.find((m) => m.model === "DeepSeek V4 Flash");
+      const reasonerModel = telemetry.modelBreakdown.find((m) => m.model === "DeepSeek V4 Pro");
       const visionModel = telemetry.modelBreakdown.find((m) => m.model === "Claude Sonnet 5 (Vision)");
 
       expect(chatModel).toBeDefined();

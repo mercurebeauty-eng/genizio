@@ -23,6 +23,7 @@ import {
   X,
 } from "lucide-react";
 import type { NayaTelemetryResponse } from "@/lib/naya-telemetry";
+import { isDeepSeekPeakHour } from "@/lib/naya-telemetry";
 import type { AiProviderStatus, ProgressionHealthResponse } from "@/lib/admin-os.functions";
 import {
   LOUP_DECISION_LABELS,
@@ -52,17 +53,18 @@ interface AdminNayaTabProps {
   ) => Promise<void>;
 }
 
-// Couleur par modèle — 3 fournisseurs depuis le passage à DeepSeek (2026-07-21) :
-// sky = DeepSeek Chat (texte courant), amber = DeepSeek Reasoner (raisonnement
-// NAYA), purple = Claude Sonnet 5 (vision uniquement, seul cas encore Anthropic).
+// Couleur par modèle — 3 postes depuis le passage à DeepSeek (2026-07-21) :
+// sky = deepseek-v4-flash (texte courant), amber = deepseek-v4-pro (raisonnement
+// NAYA, mode réflexion activé), purple = Claude Sonnet 5 (vision uniquement, seul
+// cas encore Anthropic). Les appellations affichent les noms de modèles API réels.
 function modelDotClass(modelLabel: string): string {
   if (modelLabel.includes("Sonnet")) return "bg-purple-600";
-  if (modelLabel.includes("Reasoner")) return "bg-amber-500";
+  if (modelLabel.includes("V4 Pro")) return "bg-amber-500";
   return "bg-sky-500";
 }
 function modelBadgeClass(modelLabel: string): string {
   if (modelLabel.includes("Sonnet")) return "bg-purple-100 text-purple-700";
-  if (modelLabel.includes("Reasoner")) return "bg-amber-100 text-amber-700";
+  if (modelLabel.includes("V4 Pro")) return "bg-amber-100 text-amber-700";
   return "bg-sky-100 text-sky-700";
 }
 
@@ -82,12 +84,16 @@ export function AdminNayaTab({
     tokenUsage,
     totalCostUsd,
     totalCostXof,
+    peakCeilingCostUsd,
+    peakCeilingCostXof,
     conversionRatePct,
     featureBreakdown,
     modelBreakdown,
     funnel,
     projection,
   } = telemetry;
+
+  const peakHourNow = isDeepSeekPeakHour(new Date());
 
   return (
     <div className="space-y-10">
@@ -159,8 +165,11 @@ export function AdminNayaTab({
                 Texte général
               </span>
             </div>
-            <p className="text-sm font-black text-ink">DeepSeek Chat</p>
+            <p className="text-sm font-black text-ink">DeepSeek V4 Flash</p>
             <p className="text-[11px] text-ink/60 mt-0.5">Défis, synthèses, recommandations</p>
+            <p className="text-[10px] font-bold text-sky-600 mt-1">
+              deepseek-v4-flash · réflexion désactivée
+            </p>
           </div>
           <div className="rounded-2xl border border-amber-500/20 bg-amber-500/5 p-4">
             <div className="flex items-center gap-2 mb-1.5">
@@ -169,8 +178,11 @@ export function AdminNayaTab({
                 Raisonnement
               </span>
             </div>
-            <p className="text-sm font-black text-ink">DeepSeek Reasoner</p>
+            <p className="text-sm font-black text-ink">DeepSeek V4 Pro</p>
             <p className="text-[11px] text-ink/60 mt-0.5">Diagnostic bayésien NAYA (hypothèses)</p>
+            <p className="text-[10px] font-bold text-amber-600 mt-1">
+              deepseek-v4-pro · réflexion activée (effort élevé)
+            </p>
           </div>
           <div className="rounded-2xl border border-purple-500/20 bg-purple-500/5 p-4">
             <div className="flex items-center gap-2 mb-1.5">
@@ -340,6 +352,28 @@ export function AdminNayaTab({
           <p className="text-xs text-ink/60 mt-2 font-medium">
             Taux de conversion : <strong className="text-ink">1 USD ≈ 600 XOF</strong>
           </p>
+          <div className="mt-2 space-y-1 text-[10px] font-semibold text-ink/55">
+            <p className="flex items-center gap-1.5">
+              <span
+                className={`size-2 rounded-full ${peakHourNow ? "bg-red-500" : "bg-emerald-500"}`}
+              />
+              Heure actuelle (UTC) :{" "}
+              <strong className={peakHourNow ? "text-red-600" : "text-emerald-700"}>
+                {peakHourNow ? "pointe" : "creuse"} (−50 %)
+              </strong>
+            </p>
+            <p className="flex items-center gap-1.5">
+              <span className="size-2 rounded-full bg-sky-500" />
+              Plafond (100 % en pointe) :{" "}
+              <strong className="text-ink">
+                ${peakCeilingCostUsd.toFixed(4)}
+                <span className="font-semibold text-ink/50">
+                  {" "}
+                  ({peakCeilingCostXof.toLocaleString("fr-FR")} FCFA)
+                </span>
+              </strong>
+            </p>
+          </div>
         </div>
 
         {/* Card 4: Challenge Conversion Rate % */}
@@ -657,7 +691,7 @@ export function AdminNayaTab({
           </div>
         </div>
 
-        {/* Model Breakdown Panel (DeepSeek Chat / Reasoner vs Sonnet vision) */}
+        {/* Model Breakdown Panel (DeepSeek V4 Flash / V4 Pro vs Sonnet vision) */}
         <div className="rounded-3xl border border-ink/10 bg-white p-6 shadow-xl space-y-5">
           <div className="flex items-center gap-3">
             <div className="p-2.5 rounded-2xl bg-purple-500/10 text-purple-600">
@@ -821,8 +855,11 @@ export function AdminNayaTab({
           </div>
 
           <div className="text-[11px] text-ink/50 italic text-center">
-            * Basé sur les tarifs indicatifs DeepSeek Chat/Reasoner + Claude Sonnet 5 (vision), 1
-            USD = 600 XOF — à ajuster si les tarifs DeepSeek changent.
+            * Barème DeepSeek creux/plein effectif le 2026-08-16 16:00 UTC (pointe 01:00-04:00 et
+            06:00-10:00 UTC). Estimation sur taux pondérés 70 % creux / 30 % pointe + Claude Sonnet
+            5 (vision), 1 USD = 600 XOF. Le mode réflexion (activé sur v4-pro) génère des tokens de
+            raisonnement non modélisés ici — le coût réel peut donc dépasser l'estimation (le plafond
+            100 % pointe est affiché sur la carte « Coût Estimé »).
           </div>
         </div>
       </div>
