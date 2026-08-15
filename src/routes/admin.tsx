@@ -26,7 +26,7 @@ function AdminLayout() {
     }
 
     // Server-side allowlist is the only source of truth for admin status.
-    checkAdmin()
+    checkAdmin({ headers: { Authorization: `Bearer ${session.access_token}` } })
       .then(({ isAdmin: isUserAdmin }) => setIsAdmin(isUserAdmin))
       .catch((err) => {
         console.error("Error checking admin status:", err);
