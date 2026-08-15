@@ -159,7 +159,7 @@ function RemboursementsPage() {
             href="https://wa.me/33606433148?text=Bonjour%2C%20j%27ai%20une%20question%20sur%20un%20remboursement%20G%C3%A9nizio."
             target="_blank"
             rel="noopener noreferrer"
-            className="press-ink inline-flex items-center justify-center gap-2 rounded-xl bg-ink px-5 py-3 text-xs font-bold text-white"
+            className="press-brand inline-flex items-center justify-center gap-2 rounded-xl bg-[#25D366] px-5 py-3 text-xs font-bold text-white"
           >
             <MessageCircle className="size-4" aria-hidden />
             Contacter sur WhatsApp
