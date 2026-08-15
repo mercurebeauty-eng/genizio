@@ -1565,6 +1565,87 @@ const ActivateMentorCodeInput = z.object({
   code: z.string().trim().min(1, "Saisissez votre code d'activation.").max(40),
 });
 
+// ── Mode Parent/Mentor (décision #79) ────────────────────────────────────────
+// Le mode vit dans auth.users.user_metadata.mode : pur commutateur de contexte,
+// il ne touche jamais au statut du compte (mentor_profiles). « Certifié » = ligne
+// mentor_profiles (activation par code, RPC activate_mentor_code) OU assignations
+// actives — un mentor activé par code sans enfant encore assigné reste un mentor
+// (l'espace /mentor est accessible, la liste d'enfants est vide).
+
+export const getMentorActivationStatus = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const userId = (context as any).claims?.sub;
+
+    const { data: profile } = await (supabaseAdmin as any)
+      .from("mentor_profiles")
+      .select("status")
+      .eq("mentor_user_id", userId)
+      .maybeSingle();
+
+    const { count } = await supabaseAdmin
+      .from("mentors")
+      .select("id", { count: "exact", head: true })
+      .eq("mentor_user_id", userId)
+      .is("removed_at", null);
+    const hasAssignments = (count ?? 0) > 0;
+
+    const { data: user } = await supabaseAdmin.auth.admin
+      .getUserById(userId)
+      .catch(() => ({ data: null }));
+    const mode = (user?.user?.user_metadata as any)?.mode === "mentor" ? "mentor" : "parent";
+
+    return {
+      certified: !!profile || hasAssignments,
+      status: (profile?.status as string | undefined) ?? "active",
+      mode,
+      hasAssignments,
+    };
+  });
+
+const SetModeInput = z.object({ mode: z.enum(["parent", "mentor"]) });
+
+export const setMentorMode = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .validator((input: unknown) => SetModeInput.parse(input))
+  .handler(async ({ data, context }) => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const userId = (context as any).claims?.sub;
+
+    if (data.mode === "mentor") {
+      const { data: profile } = await (supabaseAdmin as any)
+        .from("mentor_profiles")
+        .select("status")
+        .eq("mentor_user_id", userId)
+        .maybeSingle();
+      const { count } = await supabaseAdmin
+        .from("mentors")
+        .select("id", { count: "exact", head: true })
+        .eq("mentor_user_id", userId)
+        .is("removed_at", null);
+      const status = (profile?.status as string | undefined) ?? "active";
+      if (!profile && (count ?? 0) === 0) {
+        throw new Error("Votre compte n'est pas certifié comme mentor.");
+      }
+      if (status === "banned" || status === "suspended") {
+        throw new Error(
+          status === "banned"
+            ? "Votre compte mentor est banni — contactez l'équipe Génizio."
+            : "Votre compte mentor est suspendu — contactez l'équipe Génizio.",
+        );
+      }
+    }
+
+    const { data: user } = await supabaseAdmin.auth.admin.getUserById(userId);
+    const meta = { ...(user?.user?.user_metadata ?? {}), mode: data.mode };
+    const { error } = await supabaseAdmin.auth.admin.updateUserById(userId, {
+      user_metadata: meta,
+    });
+    if (error) throw new Error(error.message);
+    return { success: true, mode: data.mode };
+  });
+
 // L'utilisateur active le mode Mentor avec son code — la RPC défenseur vérifie
 // auth.uid() (l'appel passe par le client authentifié, jamais le service role).
 export const activateMentorCode = createServerFn({ method: "POST" })

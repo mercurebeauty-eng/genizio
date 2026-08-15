@@ -1927,6 +1927,19 @@ fichier ne porte plus que les constantes partagées.
 
 **Vérifié** : `tsc --noEmit` propre, suite complète verte (682 tests + mises à jour des assertions de tarifs), lint sans nouvel apport (bruit CRLF préexistant au repo). Sources tarifaires : api-docs.deepseek.com (pricing + guides/thinking_mode), recoupées avec la presse (augmentation annoncée ~×3 à ×4,5).
 
+## Décision #80 : Mode Parent/Mentor — bascule (toggle) + navigation adaptative (2026-08-15)
+
+**✅ IMPLÉMENTÉ (2026-08-15, branche `feat/mentor-activation-codes`)** — la Vague 5 multicouche (spec §7) a livré l'activation du mode Mentor par code (table `mentor_activation_codes` + RPC `activate_mentor_code`, génération admin, carte de saisie dans Réglages). Restaient deux comportements demandés par le porteur, livrés ici :
+
+1. **Le toggle ne sert qu'à switcher.** `setMentorMode` (server fn) bascule `auth.users.user_metadata.mode` entre `parent` et `mentor` — pur commutateur de contexte, il ne suspend ni ne modifie jamais le statut du compte (`mentor_profiles`). Un compte banni/suspendu se voit refuser la bascule vers mentor. Après bascule, `refreshSession()` (nouveau token) propage le mode au store → la barre d'onglets réagit immédiatement.
+2. **En mode Mentor, l'onglet « Mentor » de la barre basse disparaît** (« on ne se suit pas soi-même ») : `AppTabBar` filtre l'onglet hub de l'enfant (`/profiles/$profileId/mentors`) quand `mode === "mentor"`. En mode Parent, le côté mentor réapparaît (onglet + espaces d'accompagnement dans les réglages).
+3. **Trou comblé : mentor activé par code sans enfant assigné.** `checkIsActiveMentor` (V1) ne détectait que les ASSIGNATIONS (`mentors` actives) — un mentor certifié par code (ligne `mentor_profiles` créée par la RPC) avec zéro enfant assigné ne voyait ni l'espace `/mentor` ni son statut après rechargement (la carte de saisie réapparaissait). `getMentorActivationStatus` définit « certifié » = profil `mentor_profiles` OU assignations actives ; la carte Réglages → Mode Mentor affiche le toggle pour tout mentor certifié, et le bloc « Accompagnant & Pro » montre le lien `/mentor` (profil OU assignations).
+4. **UI Réglages → « Mode Mentor »** : non certifié → saisie du code (carte Vague 5 conservée à l'identique) ; certifié → badge de statut (warning/suspended/banned) + toggle Parent/Mentor + texte expliquant le comportement de l'onglet selon le mode.
+
+**Contexte de livraison (réconciliation)** : le cœur de l'activation (base + RPC + génération admin + carte de saisie) a été livré en parallèle par la Vague 5 multicouche (déjà mergée, migration `20260815180000_multicouche_v5_mentor_activation.sql` appliquée en base). Cette décision n'apporte QUE le delta : la bascule de mode et la navigation adaptative. Les parties initialement construites en double par cette session (migration `mentor_activation_codes` alternative avec horodatage en collision, helpers de codes `mentor-codes.ts`, panneau admin `AdminMentorCodesPanel`) ont été abandonnées au profit de l'existant. Aucune migration nouvelle : la table + la RPC existent déjà en base.
+
+**Vérifié** : `tsc --noEmit` propre, suite de tests verte (base `main` @ merges multicouche + admin-os + confiance mentor).
+
 ## Décision #79 : Confiance Mentor — validation parent, points, statut automatique, palier 75/25, push & email (2026-08-15)
 
 **✅ IMPLÉMENTÉE (2026-08-15, branche `feat/confiance-mentor`)** — le système de récompense/punition des mentors existait (statut, score, payout) mais était **informatif et manuel** : le score n'avait aucune conséquence, la sanction dépendait de l'admin, et la déclaration de séance du mentor suffisait pour le payout. Décision du porteur : tout automatiser et faire entrer le parent dans la boucle. Quatre volets, cadrés par 4 réponses du porteur :

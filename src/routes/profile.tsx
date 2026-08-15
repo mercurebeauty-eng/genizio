@@ -30,7 +30,12 @@ import { RELATIONSHIP_TYPES } from "@/lib/relationship-types";
 import { GenizioLoader } from "@/components/GenizioLoader";
 import { checkAdminStatus } from "@/lib/admin.functions";
 import { checkIsCampaignManager } from "@/lib/campaigns.functions";
-import { checkIsActiveMentor, activateMentorCode } from "@/lib/mentors.functions";
+import {
+  checkIsActiveMentor,
+  activateMentorCode,
+  getMentorActivationStatus,
+  setMentorMode,
+} from "@/lib/mentors.functions";
 
 export const Route = createFileRoute("/profile")({
   component: ProfilePage,
@@ -68,6 +73,17 @@ function ProfilePage() {
     text: string;
   } | null>(null);
 
+  // Mode Parent/Mentor (décision #79) : état d'activation (certifié ? statut,
+  // mode courant) + bascule — pur commutateur stocké dans user_metadata.mode.
+  const getMentorStatus = useServerFn(getMentorActivationStatus);
+  const switchModeFn = useServerFn(setMentorMode);
+  const [mentorStatus, setMentorStatus] = useState<{
+    certified: boolean;
+    status: string;
+    mode: "parent" | "mentor";
+  } | null>(null);
+  const [switchingMode, setSwitchingMode] = useState(false);
+
   const handleActivateCode = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!activationCode.trim()) return;
@@ -82,6 +98,7 @@ function ProfilePage() {
         });
         setActivationCode("");
         setIsMentor(true);
+        void refreshMentorStatus();
       } else {
         const msg =
           {
@@ -164,6 +181,42 @@ function ProfilePage() {
         }
       });
   }, [userId, relationshipMeta, savedPhone, checkAdmin, checkManager]);
+
+  // Statut d'activation mentor — lecture légère, keyée sur userId comme les 8
+  // requêtes ci-dessus (ne rejoue pas pour un simple refresh de token).
+  useEffect(() => {
+    if (!userId) return;
+    getMentorStatus()
+      .then((res) => setMentorStatus(res as any))
+      .catch((err) => console.error("Erreur statut mentor:", err));
+  }, [userId, getMentorStatus]);
+
+  const refreshMentorStatus = async () => {
+    try {
+      const res = await getMentorStatus();
+      setMentorStatus(res as any);
+    } catch (err) {
+      console.error("Erreur statut mentor:", err);
+    }
+  };
+
+  const handleSwitchMode = async (mode: "parent" | "mentor") => {
+    if (!mentorStatus || mentorStatus.mode === mode || switchingMode) return;
+    setSwitchingMode(true);
+    try {
+      await switchModeFn({ data: { mode } });
+      // Le mode vit dans user_metadata : refreshSession tourne le token →
+      // nouvelle identité → le store émet → l'AppTabBar (onglet « Mentor »)
+      // réagit immédiatement.
+      await supabase.auth.refreshSession();
+      await refreshMentorStatus();
+      toast.success(mode === "mentor" ? "Mode Mentor activé." : "Mode Parent activé.");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Erreur lors du changement de mode.");
+    } finally {
+      setSwitchingMode(false);
+    }
+  };
 
   const handleSignOut = async () => {
     await supabase.auth.signOut();
@@ -277,57 +330,127 @@ function ProfilePage() {
             </div>
           </div>
 
-          {!isMentor && (
-            <div className="rounded-3xl border border-ink/10 bg-white p-6 shadow-xl">
-              <h3 className="font-display text-balance text-base font-bold flex items-center gap-2 mb-1">
-                <Eye className="size-4 text-brand" /> Mentor
-              </h3>
-              <p className="text-xs text-ink/60 mb-4 leading-relaxed">
-                Le mode Mentor permet d'accompagner les enfants qui vous sont assignés.
-                Activez-le avec le code fourni par votre administration (spec §7).
-              </p>
-              <form onSubmit={handleActivateCode} className="flex gap-2">
-                <input
-                  value={activationCode}
-                  onChange={(e) => setActivationCode(e.target.value)}
-                  placeholder="MNT-XXXXXXXX"
-                  disabled={activating}
-                  className="flex-1 bg-surface border border-ink/10 rounded-2xl p-3 text-sm font-bold text-ink focus:outline-none focus:ring-2 focus:ring-brand/30"
-                />
-                <button
-                  type="submit"
-                  disabled={activating || !activationCode.trim()}
-                  className="rounded-2xl bg-brand hover:bg-brand/90 text-white px-5 py-3 text-sm font-bold flex items-center gap-2 transition-all cursor-pointer disabled:opacity-50"
-                >
-                  {activating ? (
-                    <Loader2 className="size-4 animate-spin" />
-                  ) : (
-                    <Eye className="size-4" />
-                  )}
-                  Activer
-                </button>
-              </form>
-              {activationStatus && (
-                <p
-                  className={
-                    "mt-3 text-xs font-bold " +
-                    (activationStatus.ok ? "text-emerald-700" : "text-red-600")
-                  }
-                >
-                  {activationStatus.text}
-                </p>
-              )}
-            </div>
-          )}
+          {/* Mode Mentor (Vague 5 spec §7 + décision #79) : activation par code,
+              puis bascule Parent/Mentor — pur commutateur de contexte. En mode
+              mentor, l'onglet « Mentor » de la barre basse disparaît (on ne se
+              suit pas soi-même) ; en mode parent, le côté mentor réapparaît. */}
+          <div className="rounded-3xl border border-ink/10 bg-white p-6 shadow-xl">
+            <h3 className="font-display text-balance text-base font-bold flex items-center gap-2 mb-1">
+              <Eye className="size-4 text-brand" /> Mode Mentor
+            </h3>
 
-          {(isMentor || isAdmin || isManager) && (
+            {!mentorStatus ? (
+              <div className="flex items-center gap-2 text-sm text-ink/50 py-3">
+                <Loader2 className="size-4 animate-spin" /> Vérification de votre statut…
+              </div>
+            ) : !mentorStatus.certified ? (
+              <>
+                <p className="text-xs text-ink/60 mb-4 leading-relaxed">
+                  Le mode Mentor permet d'accompagner les enfants qui vous sont assignés.
+                  Activez-le avec le code fourni par votre administration (spec §7).
+                </p>
+                <form onSubmit={handleActivateCode} className="flex gap-2">
+                  <input
+                    value={activationCode}
+                    onChange={(e) => setActivationCode(e.target.value)}
+                    placeholder="MNT-XXXXXXXX"
+                    disabled={activating}
+                    className="flex-1 bg-surface border border-ink/10 rounded-2xl p-3 text-sm font-bold text-ink focus:outline-none focus:ring-2 focus:ring-brand/30"
+                  />
+                  <button
+                    type="submit"
+                    disabled={activating || !activationCode.trim()}
+                    className="rounded-2xl bg-brand hover:bg-brand/90 text-white px-5 py-3 text-sm font-bold flex items-center gap-2 transition-all cursor-pointer disabled:opacity-50"
+                  >
+                    {activating ? (
+                      <Loader2 className="size-4 animate-spin" />
+                    ) : (
+                      <Eye className="size-4" />
+                    )}
+                    Activer
+                  </button>
+                </form>
+                {activationStatus && (
+                  <p
+                    className={
+                      "mt-3 text-xs font-bold " +
+                      (activationStatus.ok ? "text-emerald-700" : "text-red-600")
+                    }
+                  >
+                    {activationStatus.text}
+                  </p>
+                )}
+              </>
+            ) : (
+              <div className="space-y-4">
+                <div className="flex items-center justify-between gap-3">
+                  <p className="text-sm font-bold text-ink flex items-center gap-2">
+                    <Check className="size-4 text-emerald-600" />
+                    Compte mentor certifié
+                  </p>
+                  {mentorStatus.status !== "active" && (
+                    <span
+                      className={`rounded-full px-2.5 py-1 text-[10px] font-black uppercase tracking-wider ${
+                        mentorStatus.status === "banned"
+                          ? "bg-red-50 text-red-700"
+                          : mentorStatus.status === "suspended"
+                            ? "bg-orange-50 text-orange-700"
+                            : "bg-amber-50 text-amber-700"
+                      }`}
+                    >
+                      {mentorStatus.status}
+                    </span>
+                  )}
+                </div>
+
+                {/* Bascule de mode : pur commutateur — rien d'autre ne change. */}
+                <div>
+                  <p className="text-[10px] font-extrabold uppercase tracking-widest text-ink/60 mb-2">
+                    Mode actif
+                  </p>
+                  <div className="flex rounded-xl bg-surface p-1 border border-ink/5">
+                    {(["parent", "mentor"] as const).map((m) => (
+                      <button
+                        key={m}
+                        type="button"
+                        onClick={() => handleSwitchMode(m)}
+                        disabled={switchingMode || mentorStatus.mode === m}
+                        className={`flex-1 rounded-lg px-4 py-2.5 text-sm font-bold transition-all cursor-pointer ${
+                          mentorStatus.mode === m
+                            ? m === "mentor"
+                              ? "bg-brand text-white shadow-sm"
+                              : "bg-ink text-white shadow-sm"
+                            : "text-ink/50 hover:text-ink/80"
+                        }`}
+                      >
+                        {switchingMode ? (
+                          <Loader2 className="size-4 animate-spin mx-auto" />
+                        ) : m === "parent" ? (
+                          "Mode Parent"
+                        ) : (
+                          "Mode Mentor"
+                        )}
+                      </button>
+                    ))}
+                  </div>
+                  <p className="text-[11px] font-medium text-ink/50 leading-relaxed mt-2">
+                    {mentorStatus.mode === "mentor"
+                      ? "En mode Mentor, l'onglet « Mentor » de la barre de navigation est masqué : vous ne vous suivez pas vous-même. Repassez en mode Parent pour retrouver le côté mentor (votre enfant, ses accompagnements…)."
+                      : "En mode Parent, vous voyez le côté mentor : l'onglet « Mentor » de la barre de navigation et vos espaces d'accompagnement dans les réglages."}
+                  </p>
+                </div>
+              </div>
+            )}
+          </div>
+
+          {(isMentor || mentorStatus?.certified || isAdmin || isManager) && (
             <div className="rounded-3xl border border-ink/10 bg-white p-6 shadow-xl">
               <h3 className="font-display text-balance text-base font-bold flex items-center gap-2 mb-3">
                 <Eye className="size-4 text-brand" />
                 Accompagnant & Pro
               </h3>
               <div className="space-y-1">
-                {isMentor && (
+                {(isMentor || mentorStatus?.certified) && (
                   <Link
                     to="/mentor"
                     className="flex items-center gap-2.5 rounded-xl px-3 py-2.5 text-sm font-bold text-brand hover:bg-brand/5"
