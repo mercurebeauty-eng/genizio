@@ -20,6 +20,7 @@ import { z } from "zod";
 import { assertMentorOperator } from "@/lib/mentor-operator";
 import { logMentorAction } from "@/lib/mentor-actions";
 import { notifyUser } from "@/lib/app-notifications";
+import { creditMentorPoints } from "@/lib/mentor-trust";
 import { resolveTimeLimitMinutes } from "@/lib/time-limit";
 import {
   validateChallengeProofCore,
@@ -303,6 +304,16 @@ export const mentorSubmitProof = createServerFn({ method: "POST" })
         childId: challenge.child_id,
         payload: { challenge_id: challenge.id, title: challenge.title },
       });
+      // Confiance Mentor (V3) : un défi complété par le mentor crédite +2 points
+      // (idempotent — l'index unique (challenge_id, kind) empêche le double crédit).
+      void creditMentorPoints(supabaseAdmin as any, {
+        mentorUserId: userId,
+        childId: challenge.child_id,
+        challengeId: challenge.id,
+        kind: "challenge_completed",
+        points: 2,
+        reason: "Défi complété par le mentor",
+      });
     }
 
     return result;
@@ -352,6 +363,15 @@ export const mentorSubmitDeclarativeProof = createServerFn({ method: "POST" })
         type: "mentor_challenge_completed",
         childId: challenge.child_id,
         payload: { challenge_id: challenge.id, title: challenge.title },
+      });
+      // Confiance Mentor (V3) : +2 points pour un défi complété (idempotent en base).
+      void creditMentorPoints(supabaseAdmin as any, {
+        mentorUserId: userId,
+        childId: challenge.child_id,
+        challengeId: challenge.id,
+        kind: "challenge_completed",
+        points: 2,
+        reason: "Défi complété par le mentor (déclaratif)",
       });
     }
 

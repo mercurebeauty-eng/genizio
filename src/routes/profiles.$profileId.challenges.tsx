@@ -1056,13 +1056,17 @@ function ChallengesPage() {
                               ? `🎉 ${n.payload?.title ?? "Un défi"} complété par le mentor`
                               : n.type === "mentor_abandon"
                                 ? `❌ ${n.payload?.title ?? "Un défi"} marqué non réussi par le mentor`
-                                : n.type === "mentor_bilan_submitted"
-                                  ? `📄 Bilan soumis par le mentor`
-                                  : n.type === "mentor_bilan_validated"
-                                    ? `✅ Bilan validé par le parent`
-                                    : n.type === "mentor_bilan_rejected"
-                                      ? `↩️ Bilan renvoyé au mentor`
-                                      : `🔔 ${n.type}`}
+                                : n.type === "mentor_session_to_validate"
+                                  ? `📋 Séance à valider — ${n.payload?.occurred_at ? new Date(n.payload.occurred_at).toLocaleDateString("fr-FR") : ""}`
+                                  : n.type === "mentor_session_confirmed"
+                                    ? `✅ Séance confirmée par le parent`
+                                    : n.type === "mentor_bilan_submitted"
+                                      ? `📄 Bilan soumis par le mentor`
+                                      : n.type === "mentor_bilan_validated"
+                                        ? `✅ Bilan validé par le parent`
+                                        : n.type === "mentor_bilan_rejected"
+                                          ? `↩️ Bilan renvoyé au mentor`
+                                          : `🔔 ${n.type}`}
                             <span className="block text-[10px] font-bold text-ink/40 mt-0.5">
                               {new Date(n.created_at).toLocaleString("fr-FR")}
                             </span>
