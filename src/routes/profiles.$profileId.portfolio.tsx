@@ -5,6 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useSession } from "@/hooks/use-session";
 import { toast } from "sonner";
 import { TALENT_SUBFORM_LABELS } from "@/lib/challenges.functions";
+import { ProofImage } from "@/lib/proof-image";
 import { ensureHypothesesForChild } from "@/lib/hypotheses.functions";
 import { getChildGuild, getTalentAffinities } from "@/lib/guilds";
 import { getChildEnrolledSeason, getActiveSeason, type Season } from "@/lib/seasons.functions";
@@ -1616,8 +1617,8 @@ function PortfolioPage() {
                     key={c.id}
                     className="aspect-square overflow-hidden rounded-2xl border border-ink/10 bg-surface"
                   >
-                    <img
-                      src={c.proof_image_url!}
+                    <ProofImage
+                      stored={c.proof_image_url}
                       alt={c.title}
                       className="h-full w-full object-cover"
                     />

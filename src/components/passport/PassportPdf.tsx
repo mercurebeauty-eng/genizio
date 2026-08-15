@@ -590,7 +590,13 @@ export function PassportPdf({ data }: { data: PassportPdfData }) {
             </View>
 
             {chunk.map((c) => {
-              const imgSrc = data.proofImages[c.id] ?? c.proof_image_url ?? null;
+              // Preuves privées : les data-URL pré-résolues font foi ; le fallback ne
+              // vaut que pour les anciennes URLs publiques (un path stocké n'est pas
+              // fetchable par le moteur PDF).
+              const imgSrc =
+                data.proofImages[c.id] ??
+                (c.proof_image_url?.startsWith("http") ? c.proof_image_url : null) ??
+                null;
               return (
                 <View key={c.id} style={{ ...cardBase, marginBottom: 10, backgroundColor: PDF_COLORS.white }}>
                   <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "flex-start" }}>

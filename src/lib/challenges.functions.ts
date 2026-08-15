@@ -2111,8 +2111,9 @@ Réponds STRICTEMENT en JSON valide avec ce format :
       if (uploadError) {
         console.error("Erreur d'upload de la preuve (non bloquant):", uploadError);
       } else {
-        const { data: publicUrlData } = db.storage.from("proofs").getPublicUrl(fileName);
-        proofImageUrl = publicUrlData.publicUrl;
+        // Chantier preuves privées : on stocke le PATH (`proofs/{childId}/{file}`),
+        // plus d'URL publique — l'affichage passe par une URL signée (proof-image.ts).
+        proofImageUrl = `proofs/${fileName}`;
       }
     }
 

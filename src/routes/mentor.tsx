@@ -46,6 +46,7 @@ import { NayaAvatar } from "@/components/NayaAvatar";
 import { MarkdownContent } from "@/components/ui/markdown-content";
 import { GenizioLoader } from "@/components/GenizioLoader";
 import { formatPedagogicalIntention } from "@/lib/pedagogical-intention";
+import { ProofImage } from "@/lib/proof-image";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/mentor")({
@@ -1123,8 +1124,8 @@ function MentorDashboardPage() {
                         Preuve de réalisation
                       </p>
                       <div className="rounded-2xl overflow-hidden border border-ink/10 bg-surface max-w-md">
-                        <img
-                          src={selectedChallenge.proof_image_url}
+                        <ProofImage
+                          stored={selectedChallenge.proof_image_url}
                           alt="Preuve"
                           className="w-full max-h-64 object-contain"
                         />
