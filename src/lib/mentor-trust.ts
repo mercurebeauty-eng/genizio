@@ -266,18 +266,18 @@ export async function syncMentorTrustStatus(
     if (current === "banned") return { changed: false, score };
 
     // Cold-start (2026-08-16) : pas de dégradation automatique tant qu'il n'y a
-    // aucune trace mesurable (ni séance confirmée, ni contestation, ni feedback,
-    // ni défi complété) et que la période de grâce (une fenêtre de confiance
-    // pleine) n'est pas écoulée. Rétro-compat : un compte que l'ancienne logique
-    // avait suspendu/averti sans donnée est restauré à « active » — le ban,
-    // décision humaine, n'est jamais touché (géré plus haut).
+    // aucune donnée de SÉANCE (ni séance confirmée, ni contestation, ni feedback —
+    // l'activité défis ne compte pas : elle ne prouve rien sur la tenue des
+    // séances) et que la période de grâce (une fenêtre de confiance pleine) n'est
+    // pas écoulée. Rétro-compat : un compte que l'ancienne logique avait
+    // suspendu/averti sans donnée est restauré à « active » — le ban, décision
+    // humaine, n'est jamais touché (géré plus haut).
     if (
       isMentorColdStart({
         accountAgeDays: counters.accountAgeDays,
         confirmedSessions: counters.confirmedSessions,
         contestedSessions: counters.contestedSessions,
         feedbackCount: counters.feedbackCount,
-        completedChallenges: counters.completedChallenges,
       })
     ) {
       const restore = coldStartRestoreTarget(current);
