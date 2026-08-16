@@ -8,11 +8,22 @@
 //      mois passé retomberait à ~0 début de mois suivant et serait sanctionné à
 //      tort. `syncMentorTrustStatus` compare le statut cible au statut actuel et
 //      ne bascule que si nécessaire (jamais sur « banned », décision humaine).
+//      Deux garde-fous (2026-08-16) : la fenêtre est PRORATISÉE sur l'âge du
+//      compte (premier mois partiel réellement appliqué au score glissant) et un
+//      compte jeune sans AUCUNE trace mesurable n'est jamais dégradé (cold-start)
+//      — le score 0 d'un mentor tout neuf vient de l'absence de données, pas
+//      d'une mauvaise conduite.
 //
 // Même convention que mentor-score.ts : helpers purs pour les calculs, ici les
 // lectures/écritures via le db passé (toujours supabaseAdmin — tables service-role).
 
-import { computeExpectedSessions, computeMentorScore, computeMentorStatusFromScore } from "./mentor-score";
+import {
+  computeExpectedSessions,
+  computeMentorAccountAgeDays,
+  computeMentorScore,
+  computeMentorStatusFromScore,
+  isMentorColdStart,
+} from "./mentor-score";
 import { notifyUser } from "./app-notifications";
 import { punctualityFromSessions } from "./mentor-scheduling";
 
@@ -81,25 +92,54 @@ export async function creditMentorPoints(
 // ── Statut automatique (fenêtre glissante 30 j) ──────────────────────────────
 
 /**
- * Score de confiance sur les 30 derniers jours pour un mentor : séances CONFIRMÉES
- * (la déclaration seule ne suffit plus) ÷ attendues (12/mois/enfant), progression
- * des défis (cumul), feedback famille sur les séances de la fenêtre, ponctualité
- * (séances liées à un créneau planifié réalisées à l'heure) et contestations
- * (compteur négatif).
+ * Compteurs du score de confiance sur la fenêtre glissante (30 j) d'un mentor :
+ * séances CONFIRMÉES (la déclaration seule ne suffit plus) ÷ attendues
+ * (12/mois/enfant, PRORATISÉES sur l'âge du compte — un mentor d'une semaine n'a
+ * pas 12 séances/enfant d'attendu), progression des défis (cumul), feedback
+ * famille, ponctualité et contestations (compteur négatif). Expose aussi l'âge du
+ * compte (borne la plus ancienne : activation du profil / première assignation)
+ * pour la proratisation ET la garde cold-start — pas de dégradation automatique
+ * tant qu'il n'y a aucune trace mesurable.
  */
-export async function computeRollingScore(
+export interface RollingScoreCounters {
+  childrenCount: number;
+  /** Âge du compte mentor en jours (0 = tout neuf, aucune borne). */
+  accountAgeDays: number;
+  /** Séances confirmées par le parent dans la fenêtre. */
+  confirmedSessions: number;
+  /** Séances contestées dans la fenêtre (compteur négatif). */
+  contestedSessions: number;
+  /** Notes famille posées dans la fenêtre. */
+  feedbackCount: number;
+  avgFeedback: number;
+  completedChallenges: number;
+  totalChallenges: number;
+  /** Score de ponctualité /100, null si aucune séance planifiée (composante absente). */
+  punctualityScore: number | null;
+}
+
+export async function loadRollingCounters(
   db: { from: (table: string) => any },
   mentorUserId: string,
-): Promise<number> {
+): Promise<RollingScoreCounters> {
   const { data: assignments } = await db
     .from("mentors")
-    .select("child_profile_id")
+    .select("child_profile_id, created_at")
     .eq("mentor_user_id", mentorUserId)
     .is("removed_at", null);
   const childrenCount = assignments?.length ?? 0;
-  if (childrenCount === 0) return 0;
-
   const childIds = (assignments ?? []).map((a: any) => a.child_profile_id as string);
+
+  const { data: profile } = await db
+    .from("mentor_profiles")
+    .select("created_at")
+    .eq("mentor_user_id", mentorUserId)
+    .maybeSingle();
+  const accountAgeDays = computeMentorAccountAgeDays([
+    profile?.created_at as string | undefined,
+    ...(assignments ?? []).map((a: any) => a.created_at as string | undefined),
+  ]);
+
   const windowStart = new Date(Date.now() - TRUST_WINDOW_DAYS * 24 * 60 * 60 * 1000).toISOString();
 
   const { data: sessions } = await db
@@ -119,39 +159,73 @@ export async function computeRollingScore(
     .gte("contested_at", windowStart);
 
   let avgFeedback = 0;
+  let feedbackCount = 0;
   if (sessionIds.length > 0) {
     const { data: feedback } = await db
       .from("mentor_feedback")
       .select("rating")
       .in("mentor_session_id", sessionIds);
     const ratings = (feedback ?? []).map((f: any) => Number(f.rating));
+    feedbackCount = ratings.length;
     if (ratings.length > 0) {
       avgFeedback = ratings.reduce((a: number, b: number) => a + b, 0) / ratings.length;
     }
   }
 
-  const { data: challenges } = await db
-    .from("challenges")
-    .select("child_id, status")
-    .in("child_id", childIds)
-    .is("deleted_at", null);
-  const childSet = new Set(childIds);
   let completed = 0;
   let total = 0;
-  for (const c of challenges ?? []) {
-    if (!childSet.has(c.child_id)) continue;
-    total += 1;
-    if (c.status === "completed") completed += 1;
+  if (childIds.length > 0) {
+    const childSet = new Set(childIds);
+    const { data: challenges } = await db
+      .from("challenges")
+      .select("child_id, status")
+      .in("child_id", childIds)
+      .is("deleted_at", null);
+    for (const c of challenges ?? []) {
+      if (!childSet.has(c.child_id)) continue;
+      total += 1;
+      if (c.status === "completed") completed += 1;
+    }
   }
 
-  return computeMentorScore({
-    expectedSessions: computeExpectedSessions(childrenCount, TRUST_WINDOW_DAYS, TRUST_WINDOW_DAYS),
-    declaredSessions: sessionIds.length,
+  return {
+    childrenCount,
+    accountAgeDays,
+    confirmedSessions: sessionIds.length,
     contestedSessions: (contested ?? []).length,
+    feedbackCount,
+    avgFeedback,
     completedChallenges: completed,
     totalChallenges: total,
-    avgFeedback,
     punctualityScore: punctualityFromSessions(sessions ?? []),
+  };
+}
+
+/** Séances attendues proratisées sur l'âge du compte (plancher 1 jour, cap fenêtre). */
+function expectedRollingSessions(c: { childrenCount: number; accountAgeDays: number }): number {
+  const elapsedDays = Math.min(TRUST_WINDOW_DAYS, Math.max(1, c.accountAgeDays));
+  return computeExpectedSessions(c.childrenCount, TRUST_WINDOW_DAYS, elapsedDays);
+}
+
+/**
+ * Score de confiance sur les 30 derniers jours pour un mentor (2026-08-16 : la
+ * fenêtre est PRORATISÉE sur l'âge du compte — « le premier mois partiel ne
+ * pénalise pas d'office » est maintenant réellement appliqué au score glissant,
+ * pas seulement à la vue mensuelle du dashboard).
+ */
+export async function computeRollingScore(
+  db: { from: (table: string) => any },
+  mentorUserId: string,
+): Promise<number> {
+  const counters = await loadRollingCounters(db, mentorUserId);
+  return computeMentorScore({
+    expectedSessions: expectedRollingSessions(counters),
+    declaredSessions: counters.confirmedSessions,
+    contestedSessions: counters.contestedSessions,
+    completedChallenges: counters.completedChallenges,
+    totalChallenges: counters.totalChallenges,
+    avgFeedback: counters.avgFeedback,
+    punctualityScore: counters.punctualityScore,
   });
 }
 
@@ -160,13 +234,25 @@ export async function computeRollingScore(
  * Jamais sur « banned ». À chaque bascule : notification in-app mentor + admins
  * (type `mentor_status_changed`). Non-fatal — une erreur ici ne doit jamais faire
  * échouer l'action qui l'a déclenchée (même pattern que logMentorAction).
+ * Garde cold-start : tant que le compte n'a aucune trace mesurable et que la
+ * période de grâce n'est pas écoulée, le statut n'est JAMAIS dégradé — un mentor
+ * tout neuf (score 0 par absence de données) reste « active ».
  */
 export async function syncMentorTrustStatus(
   db: { from: (table: string) => any },
   mentorUserId: string,
-): Promise<{ changed: boolean; from?: string; to?: string; score?: number }> {
+): Promise<{ changed: boolean; from?: string; to?: string; score?: number; coldStart?: boolean }> {
   try {
-    const score = await computeRollingScore(db, mentorUserId);
+    const counters = await loadRollingCounters(db, mentorUserId);
+    const score = computeMentorScore({
+      expectedSessions: expectedRollingSessions(counters),
+      declaredSessions: counters.confirmedSessions,
+      contestedSessions: counters.contestedSessions,
+      completedChallenges: counters.completedChallenges,
+      totalChallenges: counters.totalChallenges,
+      avgFeedback: counters.avgFeedback,
+      punctualityScore: counters.punctualityScore,
+    });
     const target = computeMentorStatusFromScore(score);
 
     const { data: profile } = await db
@@ -175,7 +261,23 @@ export async function syncMentorTrustStatus(
       .eq("mentor_user_id", mentorUserId)
       .maybeSingle();
     const current = (profile?.status as string | undefined) ?? "active";
-    if (current === "banned" || current === target) return { changed: false };
+    if (current === "banned" || current === target) return { changed: false, score };
+
+    // Cold-start (2026-08-16) : pas de dégradation automatique tant qu'il n'y a
+    // aucune trace mesurable (ni séance confirmée, ni contestation, ni feedback,
+    // ni défi complété) et que la période de grâce (une fenêtre de confiance
+    // pleine) n'est pas écoulée.
+    if (
+      isMentorColdStart({
+        accountAgeDays: counters.accountAgeDays,
+        confirmedSessions: counters.confirmedSessions,
+        contestedSessions: counters.contestedSessions,
+        feedbackCount: counters.feedbackCount,
+        completedChallenges: counters.completedChallenges,
+      })
+    ) {
+      return { changed: false, coldStart: true, score };
+    }
 
     if (profile) {
       await db
@@ -208,9 +310,7 @@ export async function syncMentorTrustStatus(
 }
 
 /** Ids des comptes admin (ADMIN_EMAILS, même source de vérité que requireAdmin). */
-export async function listAdminUserIds(
-  db: { from: (table: string) => any },
-): Promise<string[]> {
+export async function listAdminUserIds(db: { from: (table: string) => any }): Promise<string[]> {
   const emails = (process.env.ADMIN_EMAILS ?? "")
     .split(",")
     .map((e) => e.trim().toLowerCase())
@@ -221,9 +321,7 @@ export async function listAdminUserIds(
     // listAllUsers attend le client complet (auth.admin.listUsers) ; les appelants
     // passent toujours supabaseAdmin — le cast est documenté par le paramètre.
     const users = await listAllUsers(db as any);
-    return users
-      .filter((u) => u.email && emails.includes(u.email.toLowerCase()))
-      .map((u) => u.id);
+    return users.filter((u) => u.email && emails.includes(u.email.toLowerCase())).map((u) => u.id);
   } catch (err) {
     console.error("listAdminUserIds failed (non-fatal):", err);
     return [];

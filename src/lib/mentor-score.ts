@@ -34,14 +34,9 @@ export function computeMentorScore(params: {
 }): number {
   // Tenue des séances — « compteur négatif » : chaque contestation retire 1 séance
   // confirmée du numérateur, plancher 0 (jamais négatif).
-  const netSessions = Math.max(
-    0,
-    params.declaredSessions - (params.contestedSessions ?? 0),
-  );
+  const netSessions = Math.max(0, params.declaredSessions - (params.contestedSessions ?? 0));
   const sessionsScore =
-    params.expectedSessions > 0
-      ? Math.min(100, (netSessions / params.expectedSessions) * 100)
-      : 0;
+    params.expectedSessions > 0 ? Math.min(100, (netSessions / params.expectedSessions) * 100) : 0;
   const progressScore =
     params.totalChallenges > 0
       ? Math.min(100, (params.completedChallenges / params.totalChallenges) * 100)
@@ -49,14 +44,11 @@ export function computeMentorScore(params: {
   const hasFeedback = (params.avgFeedback ?? 0) > 0;
   const feedbackScore = hasFeedback ? Math.min(100, ((params.avgFeedback ?? 0) / 5) * 100) : 0;
   const hasPunctuality = params.punctualityScore != null;
-  const punctualityScore = hasPunctuality
-    ? Math.min(100, params.punctualityScore as number)
-    : 0;
+  const punctualityScore = hasPunctuality ? Math.min(100, params.punctualityScore as number) : 0;
 
   // Grille 40/15/15/30, renormalisée sur les composantes réellement mesurées
   // (0.70 sans ponctualité ni feedback, 1.00 avec les deux).
-  const weightSum =
-    0.4 + (hasPunctuality ? 0.15 : 0) + (hasFeedback ? 0.15 : 0) + 0.3;
+  const weightSum = 0.4 + (hasPunctuality ? 0.15 : 0) + (hasFeedback ? 0.15 : 0) + 0.3;
   const weighted =
     0.4 * sessionsScore +
     (hasPunctuality ? 0.15 * punctualityScore : 0) +
@@ -86,6 +78,10 @@ export function computeExpectedSessions(
 //    mentor passe au partage 75/25 (75 % de la séance, soit 3 750 F au lieu de 3 500 F).
 //  • Statut automatique : score < 40 → warning ; score < 25 → suspended ; au-dessus
 //    des seuils → active. Le ban reste une décision humaine (jamais automatique).
+//  • Cold-start (2026-08-16) : pas de dégradation automatique tant que le compte
+//    est jeune (moins d'une fenêtre de confiance) ET sans aucune trace mesurable
+//    (séance confirmée, contestation, feedback, défi complété) — un mentor tout
+//    neuf a un score de 0 par absence de données, pas par mauvaise conduite.
 //  • Payout : snapshot immuable posé À LA DÉCLARATION (palier + bonus points du
 //    moment) — invariant conservé : le montant ne change jamais après coup.
 //  • Points (mentor_points) : séance confirmée +1, défi complété +2, note 5/5 +1 —
@@ -105,6 +101,56 @@ export const MENTOR_TRUSTED_SHARE = 0.75;
 export const MENTOR_WARNING_SCORE_THRESHOLD = 40;
 /** Sous ce score, le statut passe automatiquement à suspended. */
 export const MENTOR_SUSPENDED_SCORE_THRESHOLD = 25;
+
+/**
+ * Période de grâce cold-start : pendant la durée d'une fenêtre de confiance pleine
+ * (30 j), un compte mentor SANS trace mesurable n'est jamais dégradé automatiquement
+ * (le score 0 d'un compte tout neuf vient de l'absence de données, pas d'une
+ * mauvaise conduite). Passé ce délai, un mentor qui n'a rien produit est jugé
+ * normalement (score 0 → suspended).
+ */
+export const MENTOR_COLD_START_GRACE_DAYS = 30;
+
+/**
+ * Âge en jours d'un compte mentor : la PLUS ANCIENNE des bornes fournies
+ * (activation du profil, première assignation active…). 0 si aucune borne —
+ * compte tout neuf, toujours en cold-start. Les dates invalides sont ignorées.
+ */
+export function computeMentorAccountAgeDays(anchors: Array<string | null | undefined>): number {
+  const times = anchors
+    .filter((d): d is string => Boolean(d))
+    .map((d) => new Date(d).getTime())
+    .filter((t) => !Number.isNaN(t));
+  if (times.length === 0) return 0;
+  return Math.max(0, Math.floor((Date.now() - Math.min(...times)) / 86_400_000));
+}
+
+/**
+ * Garde anti-démarrage à froid : un compte jeune sans aucune trace mesurable n'a
+ * pas encore de données pour être évalué — le statut automatique ne doit pas le
+ * dégrader. La garde expire dès qu'une trace existe (même négative, comme une
+ * contestation) ou dès que la période de grâce est écoulée.
+ */
+export function isMentorColdStart(params: {
+  /** Âge du compte mentor en jours (activation ou première assignation). */
+  accountAgeDays: number;
+  /** Séances confirmées par le parent dans la fenêtre glissante. */
+  confirmedSessions: number;
+  /** Séances contestées par le parent — une trace négative reste mesurable. */
+  contestedSessions?: number;
+  /** Notes famille posées dans la fenêtre. */
+  feedbackCount?: number;
+  /** Défis complétés (progression). */
+  completedChallenges: number;
+}): boolean {
+  if (params.accountAgeDays >= MENTOR_COLD_START_GRACE_DAYS) return false;
+  const hasTrace =
+    params.confirmedSessions > 0 ||
+    (params.contestedSessions ?? 0) > 0 ||
+    (params.feedbackCount ?? 0) > 0 ||
+    params.completedChallenges > 0;
+  return !hasTrace;
+}
 
 export function computeTrustTier(score: number): MentorTrustTier {
   return score >= MENTOR_TRUSTED_SCORE_THRESHOLD ? "trusted" : "standard";
@@ -127,9 +173,7 @@ export function computeMentorPayoutXof(params: {
   tier: MentorTrustTier;
   pointsBonusPct?: number;
 }): number {
-  const shareRatio = params.tier === "trusted"
-    ? MENTOR_TRUSTED_SHARE / MENTOR_STANDARD_SHARE
-    : 1;
+  const shareRatio = params.tier === "trusted" ? MENTOR_TRUSTED_SHARE / MENTOR_STANDARD_SHARE : 1;
   const withTier = Math.round(params.basePayoutXof * shareRatio);
   const bonus = params.pointsBonusPct ?? 0;
   return Math.round(withTier * (1 + bonus / 100));
@@ -148,7 +192,11 @@ export const MENTOR_POINTS_GOLD_AT = 60;
 
 export function computeMentorPointsRewards(points: number): MentorPointsRewards {
   const badge =
-    points >= MENTOR_POINTS_GOLD_AT ? "gold" : points >= MENTOR_POINTS_BRONZE_AT ? "bronze" : "none";
+    points >= MENTOR_POINTS_GOLD_AT
+      ? "gold"
+      : points >= MENTOR_POINTS_BRONZE_AT
+        ? "bronze"
+        : "none";
   const payoutBonusPct =
     points >= MENTOR_POINTS_GOLD_AT ? 10 : points >= MENTOR_POINTS_PAYOUT_BONUS_AT ? 5 : 0;
   const nextPayoutBonusAt =
