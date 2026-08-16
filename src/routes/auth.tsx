@@ -65,9 +65,10 @@ function AuthPage() {
           GÉNIZIO
         </Link>
         <div className="rounded-3xl border border-ink/10 bg-white p-8 shadow-xl">
-          <h1 className="font-display text-balance text-3xl font-extrabold">Content de vous revoir</h1>
+          <h1 className="font-display text-balance text-3xl font-extrabold">Bienvenue dans l'Espace Parent</h1>
           <p className="mt-2 text-sm text-ink/60">
-            Sauvegardez les profils de vos enfants et retrouvez leurs défis à tout moment.
+            Le premier profil enfant est gratuit pour toujours. Créez votre accès et recevez le
+            premier défi sur mesure de votre enfant.
           </p>
 
           <button
@@ -84,6 +85,10 @@ function AuthPage() {
             </svg>
             {busy ? "…" : "Continuer avec Google"}
           </button>
+
+          <p className="mt-3 text-center text-xs font-semibold text-ink/50">
+            Gratuit pour commencer · Sans carte bancaire · Annulable à tout moment
+          </p>
 
           <p className="mt-4 text-center text-xs text-ink/60">
             En continuant, vous acceptez nos{" "}

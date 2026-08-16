@@ -96,13 +96,15 @@ export function GuideLayout({
 
         <aside className="mt-16 rounded-3xl border border-brand/20 bg-gradient-to-br from-brand/5 via-white to-sky/5 p-8 shadow-md">
           <div className="inline-flex items-center gap-2 rounded-full bg-brand/10 px-3.5 py-1 text-xs font-black uppercase tracking-wider text-brand">
-            ✨ Jumeau Pédagogique & Défis Maison
+            ✨ Co-pilote Pédagogique & Défis Maison
           </div>
           <h2 className="mt-4 font-display text-2xl font-black text-ink">
             Passez de la théorie à l'action avec Génizio
           </h2>
           <p className="mt-2 text-sm font-medium leading-relaxed text-ink/70">
-            Ne laissez pas les talents de votre enfant dans l'ombre. Génizio accompagne chaque enfant de 5 à 16 ans avec des défis concrets à faire à la maison, guidés par son jumeau pédagogique Naya.
+            Chaque enfant a des capacités qui ne demandent qu'à se développer. Génizio accompagne
+            les enfants de 5 à 16 ans avec des défis concrets à faire à la maison, guidés par son
+            co-pilote pédagogique Naya.
           </p>
 
           <div className="mt-6 grid gap-4 sm:grid-cols-3 border-y border-ink/10 py-5">
@@ -115,7 +117,7 @@ export function GuideLayout({
               <span className="text-xs text-ink/70">Défis 10 min personnalisés selon ses passions.</span>
             </div>
             <div className="flex flex-col gap-1">
-              <span className="text-sm font-extrabold text-brand">📜 Passeport Talents</span>
+              <span className="text-sm font-extrabold text-brand">📜 Passeport d'Excellence</span>
               <span className="text-xs text-ink/70">Un portfolio valorisant pour renforcer sa confiance.</span>
             </div>
           </div>

@@ -23,19 +23,17 @@ export const SITE_URL =
   "https://www.genizio.com";
 
 export const SITE_NAME = "Génizio";
-export const SITE_NAME_LONG = "Génizio — Révélez le potentiel unique de votre enfant";
+export const SITE_NAME_LONG =
+  "Génizio — Découvrez qui est votre enfant, développez ce qu'il peut devenir";
 export const SITE_DESCRIPTION =
-  "Génizio révèle les talents naturels de votre enfant à travers des défis concrets à réaliser à la maison, fondés sur les 9 intelligences de Howard Gardner. Conçu pour les familles d'Afrique francophone.";
+  "Développez les capacités de votre enfant avec des défis concrets à la maison, fondés sur les 9 intelligences de Howard Gardner : compétences, expériences et réalisations documentées. Pensé pour les familles d'Afrique francophone.";
 
 // Image affichée quand un lien Génizio est partagé (WhatsApp, Facebook, LinkedIn, X).
-// Auto-hébergée : l'ancienne pointait vers un espace de stockage tiers hérité de
-// l'échafaudage du projet.
-//
-// Limite connue : c'est la photo carrée du site (1200×1200), que les réseaux recadrent au
-// centre en 1200×630. Le rendu est correct mais pas optimal — une vraie carte de partage
-// dessinée au format 1200×630, avec le logotype et une accroche, convertirait mieux. À
-// remplacer ici même dès qu'elle existe, sans autre changement de code.
-export const OG_IMAGE_PATH = "/og-image.jpg";
+// Auto-hébergée au format 1200×630 — le format que les plateformes recadrent au centre
+// sans le déformer. Générée par scripts/og-card.mjs (logotype + promesse produit) ; le
+// nom de fichier change quand la carte évolue pour forcer les caches (WhatsApp
+// notamment) à re-télécharger l'aperçu.
+export const OG_IMAGE_PATH = "/og-card.jpg";
 
 export const FOUNDER_NAME = "Cheick Mohamed TRAORE";
 
@@ -58,7 +56,10 @@ export function pageMeta(opts: {
   type?: "website" | "article";
 }) {
   const url = absoluteUrl(opts.path);
-  const image = absoluteUrl(opts.image ?? OG_IMAGE_PATH);
+  // `?v=` : WhatsApp, Facebook et X cachent l'aperçu par URL. Les cartes des
+  // guides gardent leur nom de fichier (référencé par 17 routes) : on force
+  // le re-téléchargement en changeant la version ici quand une carte évolue.
+  const image = `${absoluteUrl(opts.image ?? OG_IMAGE_PATH)}?v=20260816`;
   return {
     meta: [
       { title: opts.title },
@@ -69,6 +70,13 @@ export function pageMeta(opts: {
       { property: "og:url", content: url },
       { property: "og:type", content: opts.type ?? "website" },
       { property: "og:image", content: image },
+      // Toutes les cartes de partage du site (défaut + guides) sont au format
+      // 1200×630 : sans width/height/type, certaines plateformes téléchargent
+      // l'image pour la dimensionner et l'aperçu varie d'un réseau à l'autre.
+      { property: "og:image:width", content: "1200" },
+      { property: "og:image:height", content: "630" },
+      { property: "og:image:type", content: "image/jpeg" },
+      { property: "og:image:alt", content: opts.title },
       { name: "twitter:title", content: opts.title },
       { name: "twitter:description", content: opts.description },
       { name: "twitter:image", content: image },
@@ -115,7 +123,7 @@ export const ORGANIZATION_JSONLD = {
     "Développement de l'enfant",
     "Apprentissage par projet",
     "Activités éducatives pour enfants",
-    "Détection des talents chez l'enfant",
+    "Développement des compétences de l'enfant",
   ],
 };
 
