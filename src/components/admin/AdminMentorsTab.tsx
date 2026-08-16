@@ -113,14 +113,10 @@ export function AdminMentorsTab() {
     setGeneratingCodes(true);
     try {
       const res = await generateCodesFn({ data: { count }, ...opts });
-      toast.success(
-        `${res.codes.length} code(s) généré(s) — transmettez-les aux futurs mentors.`,
-      );
+      toast.success(`${res.codes.length} code(s) généré(s) — transmettez-les aux futurs mentors.`);
       await loadCodes();
     } catch (err) {
-      toast.error(
-        err instanceof Error ? err.message : "Erreur lors de la génération des codes.",
-      );
+      toast.error(err instanceof Error ? err.message : "Erreur lors de la génération des codes.");
     } finally {
       setGeneratingCodes(false);
     }
@@ -255,9 +251,7 @@ export function AdminMentorsTab() {
       : {};
     try {
       await updateStatusFn({ data: { mentorUserId, status }, ...opts });
-      toast.success(
-        `Mentor ${isRestore ? "restauré" : label.toLowerCase()} — statut mis à jour.`,
-      );
+      toast.success(`Mentor ${isRestore ? "restauré" : label.toLowerCase()} — statut mis à jour.`);
       void refetch();
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Erreur lors de la mise à jour du statut.");
@@ -359,10 +353,10 @@ export function AdminMentorsTab() {
           <div className="text-xs sm:text-sm text-sky-900 leading-relaxed space-y-1">
             <p className="font-black text-sky-800">Comment ça marche</p>
             <p>
-              Un compte devient mentor quand on lui <strong>assigne des enfants</strong> — par
-              un admin (assignation enfant par enfant) ou par un gestionnaire de campagne
-              (assignation de toute la cohorte, ici aussi possible via « Assigner à une campagne »).
-              Le mentor voit alors ces enfants dans son tableau de bord{" "}
+              Un compte devient mentor quand on lui <strong>assigne des enfants</strong> — par un
+              admin (assignation enfant par enfant) ou par un gestionnaire de campagne (assignation
+              de toute la cohorte, ici aussi possible via « Assigner à une campagne »). Le mentor
+              voit alors ces enfants dans son tableau de bord{" "}
               <code className="font-mono">/mentor</code>.
             </p>
             <p>
@@ -537,9 +531,12 @@ export function AdminMentorsTab() {
                     </div>
                   </div>
 
-                  {/* Actions de statut (V1) : suspendre/bannir/restaurer le compte mentor. */}
+                  {/* Actions de statut (V1) : suspendre/bannir/restaurer le compte mentor.
+                      Restaurer (→ active) est disponible pour les comptes bannis ET suspendus
+                      (2026-08-16) : une suspension antérieure à la garde cold-start pouvait être
+                      automatique et injuste — l'admin doit pouvoir la lever. */}
                   <div className="flex flex-wrap items-center gap-2 mb-4">
-                    {g.status === "banned" ? (
+                    {g.status === "banned" || g.status === "suspended" ? (
                       <button
                         onClick={() => void handleUpdateStatus(g.mentor_user_id, "active")}
                         disabled={updatingStatusId === g.mentor_user_id}
@@ -553,23 +550,23 @@ export function AdminMentorsTab() {
                         Restaurer
                       </button>
                     ) : (
-                      <>
-                        <button
-                          onClick={() => void handleUpdateStatus(g.mentor_user_id, "suspended")}
-                          disabled={updatingStatusId === g.mentor_user_id}
-                          className="inline-flex items-center gap-1.5 rounded-xl border border-amber-200 bg-amber-50 px-3 py-1.5 text-xs font-bold text-amber-700 hover:bg-amber-100 transition-all cursor-pointer disabled:opacity-50"
-                        >
-                          Suspendre
-                        </button>
-                        <button
-                          onClick={() => void handleUpdateStatus(g.mentor_user_id, "banned")}
-                          disabled={updatingStatusId === g.mentor_user_id}
-                          className="inline-flex items-center gap-1.5 rounded-xl border border-rose-200 bg-rose-50 px-3 py-1.5 text-xs font-bold text-rose-600 hover:bg-rose-100 transition-all cursor-pointer disabled:opacity-50"
-                        >
-                          <Ban className="size-3.5" />
-                          Bannir
-                        </button>
-                      </>
+                      <button
+                        onClick={() => void handleUpdateStatus(g.mentor_user_id, "suspended")}
+                        disabled={updatingStatusId === g.mentor_user_id}
+                        className="inline-flex items-center gap-1.5 rounded-xl border border-amber-200 bg-amber-50 px-3 py-1.5 text-xs font-bold text-amber-700 hover:bg-amber-100 transition-all cursor-pointer disabled:opacity-50"
+                      >
+                        Suspendre
+                      </button>
+                    )}
+                    {g.status !== "banned" && (
+                      <button
+                        onClick={() => void handleUpdateStatus(g.mentor_user_id, "banned")}
+                        disabled={updatingStatusId === g.mentor_user_id}
+                        className="inline-flex items-center gap-1.5 rounded-xl border border-rose-200 bg-rose-50 px-3 py-1.5 text-xs font-bold text-rose-600 hover:bg-rose-100 transition-all cursor-pointer disabled:opacity-50"
+                      >
+                        <Ban className="size-3.5" />
+                        Bannir
+                      </button>
                     )}
                   </div>
 
@@ -673,9 +670,9 @@ export function AdminMentorsTab() {
               <KeyRound className="size-5 text-brand" /> Codes d'activation Mentor
             </h3>
             <p className="text-xs text-ink/60 mt-0.5 leading-relaxed">
-              Codes à usage unique : un parent/mentor les saisit dans Paramètres → Mentor
-              pour activer le mode Mentor lui-même (spec §7). Sans code, un mentor n'existe
-              que par assignation admin.
+              Codes à usage unique : un parent/mentor les saisit dans Paramètres → Mentor pour
+              activer le mode Mentor lui-même (spec §7). Sans code, un mentor n'existe que par
+              assignation admin.
             </p>
           </div>
           <button
@@ -710,8 +707,7 @@ export function AdminMentorsTab() {
                 </thead>
                 <tbody className="divide-y divide-ink/5">
                   {codes.map((c) => {
-                    const expired =
-                      c.valid_until && new Date(c.valid_until).getTime() < Date.now();
+                    const expired = c.valid_until && new Date(c.valid_until).getTime() < Date.now();
                     return (
                       <tr key={c.id}>
                         <td className="px-4 py-2.5 font-mono text-xs font-bold text-ink">
@@ -776,10 +772,9 @@ export function AdminMentorsTab() {
                   Séances & Payout
                 </h3>
                 <p className="text-sm text-ink/60 mt-0.5">
-                  Approuvez les séances <strong>confirmées par le parent</strong> — elles
-                  entrent dans le payout dû (70 % × séance = 3 500 F, 75 % pour un mentor
-                  « confiance »). Une séance déclarée mais non confirmée par la famille
-                  ne peut pas être approuvée.
+                  Approuvez les séances <strong>confirmées par le parent</strong> — elles entrent
+                  dans le payout dû (70 % × séance = 3 500 F, 75 % pour un mentor « confiance »).
+                  Une séance déclarée mais non confirmée par la famille ne peut pas être approuvée.
                 </p>
               </div>
               <button
@@ -1063,9 +1058,9 @@ function AssignMentorModal({
         {mode === "campaign" ? (
           <form onSubmit={handleCampaignSubmit} className="space-y-4">
             <p className="text-xs sm:text-sm font-medium text-ink/70 leading-relaxed">
-              L'application confie automatiquement des enfants de la cohorte qui n'ont encore
-              aucun mentor — jusqu'au nombre demandé, dans la limite du quota du mentor
-              (5 enfants max, « 5 par 5 »).
+              L'application confie automatiquement des enfants de la cohorte qui n'ont encore aucun
+              mentor — jusqu'au nombre demandé, dans la limite du quota du mentor (5 enfants max, «
+              5 par 5 »).
             </p>
             <div>
               <label className="block text-xs font-extrabold uppercase tracking-widest text-ink/50 mb-1.5">
@@ -1108,9 +1103,7 @@ function AssignMentorModal({
                 min={1}
                 max={5}
                 value={count}
-                onChange={(e) =>
-                  setCount(Math.max(1, Math.min(5, parseInt(e.target.value) || 1)))
-                }
+                onChange={(e) => setCount(Math.max(1, Math.min(5, parseInt(e.target.value) || 1)))}
                 className="w-full bg-surface border border-ink/10 rounded-2xl p-3.5 text-sm font-bold text-ink focus:outline-none focus:ring-2 focus:ring-brand/30"
               />
             </div>

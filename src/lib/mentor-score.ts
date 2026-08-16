@@ -152,6 +152,19 @@ export function isMentorColdStart(params: {
   return !hasTrace;
 }
 
+/**
+ * Rétro-compat cold-start : un compte en période de grâce sans trace mesurable
+ * doit être « active ». S'il a été dégradé par une logique antérieure
+ * (warning/suspended — suspensions automatiques d'avant la garde), la
+ * restauration cible « active ». Le ban (décision humaine) et l'actif ne sont
+ * jamais touchés — null = rien à faire.
+ */
+export function coldStartRestoreTarget(current: string | null | undefined): "active" | null {
+  const cur = current ?? "active";
+  if (cur === "banned" || cur === "active") return null;
+  return "active";
+}
+
 export function computeTrustTier(score: number): MentorTrustTier {
   return score >= MENTOR_TRUSTED_SCORE_THRESHOLD ? "trusted" : "standard";
 }

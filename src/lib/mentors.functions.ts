@@ -4,6 +4,7 @@ import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { z } from "zod";
 import { computeMentorQuota } from "./mentor-quota";
 import {
+  coldStartRestoreTarget,
   computeExpectedSessions,
   computeMentorAccountAgeDays,
   computeMentorPayoutXof,
@@ -500,7 +501,9 @@ export const listMentorsAdmin = createServerFn({ method: "GET" })
     // bascule — jamais sur « banned » (décision humaine). L'admin voit le nouveau
     // statut immédiatement, sans attendre le prochain calcul. Garde cold-start :
     // un compte jeune sans aucune trace mesurable n'est jamais dégradé (son score
-    // 0 vient de l'absence de données, pas d'une mauvaise conduite).
+    // 0 vient de l'absence de données, pas d'une mauvaise conduite) — et un compte
+    // que l'ancienne logique avait déjà dégradé est restauré à « active »
+    // (rétro-compat, le ban reste humain).
     for (const g of list) {
       if (g.status === "banned") continue;
       const rollingScore = rollingScoreByMentor.get(g.mentor_user_id) ?? 0;
@@ -513,6 +516,20 @@ export const listMentorsAdmin = createServerFn({ method: "GET" })
           completedChallenges: completedByMentor.get(g.mentor_user_id) ?? 0,
         })
       ) {
+        const restore = coldStartRestoreTarget(g.status);
+        if (restore && restore !== g.status) {
+          await (supabaseAdmin as any)
+            .from("mentor_profiles")
+            .update({ status: restore })
+            .eq("mentor_user_id", g.mentor_user_id);
+          void notifyUser({
+            userId: g.mentor_user_id,
+            type: "mentor_status_changed",
+            payload: { from: g.status, to: restore, score: rollingScore },
+            channels: { push: true, email: true },
+          });
+          g.status = restore;
+        }
         continue;
       }
       const target = computeMentorStatusFromScore(rollingScore);
