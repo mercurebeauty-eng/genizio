@@ -6,13 +6,13 @@ import { computeMentorQuota } from "./mentor-quota";
 import {
   coldStartRestoreTarget,
   computeExpectedSessions,
-  computeMentorAccountAgeDays,
+  computeMentorOperationalAgeDays,
   computeMentorPayoutXof,
   computeMentorPointsRewards,
   computeMentorScore,
   computeMentorStatusFromScore,
   computeTrustTier,
-  isMentorColdStart,
+  hasSufficientMentorSessionData,
 } from "./mentor-score";
 import {
   CONFIRMED_SESSION_STATUSES,
@@ -254,8 +254,8 @@ export const listMentorsAdmin = createServerFn({ method: "GET" })
     const statusMap = new Map<string, string>(
       (profiles ?? []).map((p: any) => [p.mentor_user_id as string, p.status as string]),
     );
-    // Cold-start (2026-08-16) : date d'activation du profil — borne d'âge du compte
-    // avec la première assignation (voir computeMentorAccountAgeDays).
+    // Date d'activation du profil — borne d'âge opérationnel avec la première
+    // assignation (voir computeMentorOperationalAgeDays).
     const profileCreatedAtMap = new Map<string, string>(
       (profiles ?? []).map((p: any) => [p.mentor_user_id as string, p.created_at as string]),
     );
@@ -428,7 +428,7 @@ export const listMentorsAdmin = createServerFn({ method: "GET" })
     const elapsedDays = Math.max(1, now.getDate());
 
     const rollingScoreByMentor = new Map<string, number>();
-    const accountAgeDaysByMentor = new Map<string, number>();
+    const operationalAgeDaysByMentor = new Map<string, number>();
 
     const list = [...groups.values()].map((g) => {
       const email = emailMap.get(g.mentor_user_id)?.email ?? "Inconnu";
@@ -467,17 +467,23 @@ export const listMentorsAdmin = createServerFn({ method: "GET" })
       g.pointsBonusPct = rewards.payoutBonusPct;
       g.badge = rewards.badge;
       const rfb = rollingRatingsByMentor.get(g.mentor_user_id);
-      // Cold-start (2026-08-16) : âge du compte = borne la plus ancienne entre
-      // l'activation du profil et la première assignation active. La fenêtre
-      // glissante est PRORATISÉE sur cette durée (un mentor d'une semaine n'a pas
-      // 12 séances/enfant d'attendu) et la garde isMentorColdStart évite toute
-      // dégradation automatique avant la première trace mesurable.
-      const accountAgeDays = computeMentorAccountAgeDays([
+      // Âge OPÉRATIONNEL (2026-08-16) : borne la plus récente entre l'activation
+      // du profil et la première assignation active — le moment où le mentor a PU
+      // commencer à opérer. La fenêtre glissante est PRORATISÉE sur cette durée
+      // (un mentor d'une semaine n'a pas 12 séances/enfant d'attendu) et la garde
+      // hasSufficientMentorSessionData évite toute dégradation automatique tant
+      // qu'il n'y a pas assez de données de séance pour juger.
+      const childCreatedAts = g.children
+        .map((c) => new Date(c.created_at).getTime())
+        .filter((t) => !Number.isNaN(t));
+      const firstAssignmentAt =
+        childCreatedAts.length > 0 ? new Date(Math.min(...childCreatedAts)).toISOString() : null;
+      const operationalAgeDays = computeMentorOperationalAgeDays(
         profileCreatedAtMap.get(g.mentor_user_id),
-        ...g.children.map((c) => c.created_at),
-      ]);
-      accountAgeDaysByMentor.set(g.mentor_user_id, accountAgeDays);
-      const rollingElapsedDays = Math.min(30, Math.max(1, accountAgeDays));
+        firstAssignmentAt,
+      );
+      operationalAgeDaysByMentor.set(g.mentor_user_id, operationalAgeDays);
+      const rollingElapsedDays = Math.min(30, Math.max(1, operationalAgeDays));
       const rollingScore = computeMentorScore({
         expectedSessions: computeExpectedSessions(g.totalChildren, 30, rollingElapsedDays),
         declaredSessions: rollingCountByMentor.get(g.mentor_user_id) ?? 0,
@@ -499,20 +505,19 @@ export const listMentorsAdmin = createServerFn({ method: "GET" })
 
     // Statut automatique (2 sens) : si le score de confiance a franchi un seuil, on
     // bascule — jamais sur « banned » (décision humaine). L'admin voit le nouveau
-    // statut immédiatement, sans attendre le prochain calcul. Garde cold-start :
-    // un compte jeune sans aucune trace mesurable n'est jamais dégradé (son score
-    // 0 vient de l'absence de données, pas d'une mauvaise conduite) — et un compte
-    // que l'ancienne logique avait déjà dégradé est restauré à « active »
-    // (rétro-compat, le ban reste humain).
+    // statut immédiatement, sans attendre le prochain calcul. Garde
+    // anti-suspension data-driven : un mentor qui a moins de
+    // MENTOR_MIN_SESSION_DATA séances (confirmées + contestées) n'est jamais
+    // dégradé (son score ≈ 0 vient de l'absence de données, pas d'une mauvaise
+    // conduite) — et un compte que l'ancienne logique avait déjà dégradé est
+    // restauré à « active » (rétro-compat, le ban reste humain).
     for (const g of list) {
       if (g.status === "banned") continue;
       const rollingScore = rollingScoreByMentor.get(g.mentor_user_id) ?? 0;
       if (
-        isMentorColdStart({
-          accountAgeDays: accountAgeDaysByMentor.get(g.mentor_user_id) ?? 0,
+        !hasSufficientMentorSessionData({
           confirmedSessions: rollingCountByMentor.get(g.mentor_user_id) ?? 0,
           contestedSessions: rollingContestedByMentor.get(g.mentor_user_id) ?? 0,
-          feedbackCount: rollingRatingsByMentor.get(g.mentor_user_id)?.count ?? 0,
         })
       ) {
         const restore = coldStartRestoreTarget(g.status);

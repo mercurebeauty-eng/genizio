@@ -533,8 +533,10 @@ export function AdminMentorsTab() {
 
                   {/* Actions de statut (V1) : suspendre/bannir/restaurer le compte mentor.
                       Restaurer (→ active) est disponible pour les comptes bannis ET suspendus
-                      (2026-08-16) : une suspension antérieure à la garde cold-start pouvait être
-                      automatique et injuste — l'admin doit pouvoir la lever. */}
+                      (2026-08-16) : une suspension automatique antérieure à la garde
+                      anti-suspension (données de séance insuffisantes) pouvait être injuste —
+                      l'admin doit pouvoir la lever. NB : pour une sanction qui doit tenir
+                      malgré la garde, utiliser « Bannir » (jamais touché par l'automatique). */}
                   <div className="flex flex-wrap items-center gap-2 mb-4">
                     {g.status === "banned" || g.status === "suspended" ? (
                       <button
