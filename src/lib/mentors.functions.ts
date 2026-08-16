@@ -5,11 +5,13 @@ import { z } from "zod";
 import { computeMentorQuota } from "./mentor-quota";
 import {
   computeExpectedSessions,
+  computeMentorAccountAgeDays,
   computeMentorPayoutXof,
   computeMentorPointsRewards,
   computeMentorScore,
   computeMentorStatusFromScore,
   computeTrustTier,
+  isMentorColdStart,
 } from "./mentor-score";
 import {
   CONFIRMED_SESSION_STATUSES,
@@ -131,9 +133,7 @@ export const listMentorsAdmin = createServerFn({ method: "GET" })
         .select("mentor_user_id")
         .eq("campaign_id", data.campaignId)
         .is("removed_at", null);
-      const campaignSet = new Set(
-        (campaignRows ?? []).map((r: any) => r.mentor_user_id as string),
-      );
+      const campaignSet = new Set((campaignRows ?? []).map((r: any) => r.mentor_user_id as string));
       baseMentorIds = allMentorIds.filter((id) => campaignSet.has(id));
     }
 
@@ -248,10 +248,15 @@ export const listMentorsAdmin = createServerFn({ method: "GET" })
     // seules les séances confirmées par le parent alimentent le score.
     const { data: profiles } = await (supabaseAdmin as any)
       .from("mentor_profiles")
-      .select("mentor_user_id, status")
+      .select("mentor_user_id, status, created_at")
       .in("mentor_user_id", mentorIds);
     const statusMap = new Map<string, string>(
       (profiles ?? []).map((p: any) => [p.mentor_user_id as string, p.status as string]),
+    );
+    // Cold-start (2026-08-16) : date d'activation du profil — borne d'âge du compte
+    // avec la première assignation (voir computeMentorAccountAgeDays).
+    const profileCreatedAtMap = new Map<string, string>(
+      (profiles ?? []).map((p: any) => [p.mentor_user_id as string, p.created_at as string]),
     );
 
     const now = new Date();
@@ -269,10 +274,7 @@ export const listMentorsAdmin = createServerFn({ method: "GET" })
     // Lignes complètes par mentor pour la ponctualité (scheduled_at vs occurred_at).
     const monthSessionsByMentor = new Map<string, any[]>();
     for (const s of sessions ?? []) {
-      sessionsByMentor.set(
-        s.mentor_user_id,
-        (sessionsByMentor.get(s.mentor_user_id) ?? 0) + 1,
-      );
+      sessionsByMentor.set(s.mentor_user_id, (sessionsByMentor.get(s.mentor_user_id) ?? 0) + 1);
       sessionMentor.set(s.id as string, s.mentor_user_id as string);
       const arr = monthSessionsByMentor.get(s.mentor_user_id) ?? [];
       arr.push(s);
@@ -289,10 +291,7 @@ export const listMentorsAdmin = createServerFn({ method: "GET" })
       .lt("contested_at", monthEnd);
     const contestedByMentor = new Map<string, number>();
     for (const c of contestedMonth ?? []) {
-      contestedByMentor.set(
-        c.mentor_user_id,
-        (contestedByMentor.get(c.mentor_user_id) ?? 0) + 1,
-      );
+      contestedByMentor.set(c.mentor_user_id, (contestedByMentor.get(c.mentor_user_id) ?? 0) + 1);
     }
 
     // Feedback famille (Vague C, V2) : moyenne des notes posées sur les séances DU MOIS des
@@ -408,10 +407,7 @@ export const listMentorsAdmin = createServerFn({ method: "GET" })
       .is("deleted_at", null);
     const childByMentor = new Map<string, Set<string>>();
     for (const g of groups.values()) {
-      childByMentor.set(
-        g.mentor_user_id,
-        new Set(g.children.map((c) => c.child_profile_id)),
-      );
+      childByMentor.set(g.mentor_user_id, new Set(g.children.map((c) => c.child_profile_id)));
     }
     const completedByMentor = new Map<string, number>();
     const totalByMentor = new Map<string, number>();
@@ -431,6 +427,7 @@ export const listMentorsAdmin = createServerFn({ method: "GET" })
     const elapsedDays = Math.max(1, now.getDate());
 
     const rollingScoreByMentor = new Map<string, number>();
+    const accountAgeDaysByMentor = new Map<string, number>();
 
     const list = [...groups.values()].map((g) => {
       const email = emailMap.get(g.mentor_user_id)?.email ?? "Inconnu";
@@ -445,10 +442,7 @@ export const listMentorsAdmin = createServerFn({ method: "GET" })
         const ctx = child.campaign_id ? campaignRefs.get(child.campaign_id) : undefined;
         const ref = ctx ? ctx.createdAt : createdAt;
         const extra = ctx?.extraQuota ?? 0;
-        quota = Math.max(
-          quota,
-          computeMentorQuota({ referenceCreatedAt: ref, extraQuota: extra }),
-        );
+        quota = Math.max(quota, computeMentorQuota({ referenceCreatedAt: ref, extraQuota: extra }));
       }
       g.quota = quota;
       g.status = statusMap.get(g.mentor_user_id) ?? "active";
@@ -472,8 +466,19 @@ export const listMentorsAdmin = createServerFn({ method: "GET" })
       g.pointsBonusPct = rewards.payoutBonusPct;
       g.badge = rewards.badge;
       const rfb = rollingRatingsByMentor.get(g.mentor_user_id);
+      // Cold-start (2026-08-16) : âge du compte = borne la plus ancienne entre
+      // l'activation du profil et la première assignation active. La fenêtre
+      // glissante est PRORATISÉE sur cette durée (un mentor d'une semaine n'a pas
+      // 12 séances/enfant d'attendu) et la garde isMentorColdStart évite toute
+      // dégradation automatique avant la première trace mesurable.
+      const accountAgeDays = computeMentorAccountAgeDays([
+        profileCreatedAtMap.get(g.mentor_user_id),
+        ...g.children.map((c) => c.created_at),
+      ]);
+      accountAgeDaysByMentor.set(g.mentor_user_id, accountAgeDays);
+      const rollingElapsedDays = Math.min(30, Math.max(1, accountAgeDays));
       const rollingScore = computeMentorScore({
-        expectedSessions: computeExpectedSessions(g.totalChildren, 30, 30),
+        expectedSessions: computeExpectedSessions(g.totalChildren, 30, rollingElapsedDays),
         declaredSessions: rollingCountByMentor.get(g.mentor_user_id) ?? 0,
         contestedSessions: rollingContestedByMentor.get(g.mentor_user_id) ?? 0,
         completedChallenges: completedByMentor.get(g.mentor_user_id) ?? 0,
@@ -493,10 +498,24 @@ export const listMentorsAdmin = createServerFn({ method: "GET" })
 
     // Statut automatique (2 sens) : si le score de confiance a franchi un seuil, on
     // bascule — jamais sur « banned » (décision humaine). L'admin voit le nouveau
-    // statut immédiatement, sans attendre le prochain calcul.
+    // statut immédiatement, sans attendre le prochain calcul. Garde cold-start :
+    // un compte jeune sans aucune trace mesurable n'est jamais dégradé (son score
+    // 0 vient de l'absence de données, pas d'une mauvaise conduite).
     for (const g of list) {
       if (g.status === "banned") continue;
-      const target = computeMentorStatusFromScore(rollingScoreByMentor.get(g.mentor_user_id) ?? 0);
+      const rollingScore = rollingScoreByMentor.get(g.mentor_user_id) ?? 0;
+      if (
+        isMentorColdStart({
+          accountAgeDays: accountAgeDaysByMentor.get(g.mentor_user_id) ?? 0,
+          confirmedSessions: rollingCountByMentor.get(g.mentor_user_id) ?? 0,
+          contestedSessions: rollingContestedByMentor.get(g.mentor_user_id) ?? 0,
+          feedbackCount: rollingRatingsByMentor.get(g.mentor_user_id)?.count ?? 0,
+          completedChallenges: completedByMentor.get(g.mentor_user_id) ?? 0,
+        })
+      ) {
+        continue;
+      }
+      const target = computeMentorStatusFromScore(rollingScore);
       if (target === g.status) continue;
       await (supabaseAdmin as any)
         .from("mentor_profiles")
@@ -631,7 +650,10 @@ export const searchParentsAdmin = createServerFn({ method: "GET" })
       const { data: children } = await supabaseAdmin
         .from("child_profiles")
         .select("user_id")
-        .in("user_id", parents.map((p) => p.user_id));
+        .in(
+          "user_id",
+          parents.map((p) => p.user_id),
+        );
       for (const c of children ?? []) {
         childCountByParent.set(c.user_id, (childCountByParent.get(c.user_id) ?? 0) + 1);
       }
@@ -747,10 +769,7 @@ export const searchMentorsAdmin = createServerFn({ method: "GET" })
         .in("mentor_user_id", userIds)
         .is("removed_at", null);
       for (const a of assignments ?? []) {
-        activeCountByUser.set(
-          a.mentor_user_id,
-          (activeCountByUser.get(a.mentor_user_id) ?? 0) + 1,
-        );
+        activeCountByUser.set(a.mentor_user_id, (activeCountByUser.get(a.mentor_user_id) ?? 0) + 1);
       }
     }
 
@@ -1139,9 +1158,7 @@ export const confirmMentorSession = createServerFn({ method: "POST" })
     // Ownership parent : seule la famille de l'enfant de la séance peut confirmer.
     const { data: session } = await (supabaseAdmin as any)
       .from("mentor_sessions")
-      .select(
-        "id, child_profile_id, mentor_user_id, status, occurred_at, child_profiles(user_id)",
-      )
+      .select("id, child_profile_id, mentor_user_id, status, occurred_at, child_profiles(user_id)")
       .eq("id", data.sessionId)
       .maybeSingle();
     if (!session) throw new Error("Séance introuvable.");
@@ -1575,11 +1592,12 @@ export const getMentorDashboard = createServerFn({ method: "GET" })
     // server functions (source unique). Borné par le quota (≤ 5 enfants) ; Vague 4 :
     // résolutions PARALLÈLES (Promise.all) au lieu de la boucle séquentielle.
     const accompanimentResults = await Promise.all(
-      (assignments ?? []).map(async (a) =>
-        [
-          a.child_profile_id,
-          await resolveChildAccompaniment(supabaseAdmin as any, a.child_profile_id),
-        ] as const,
+      (assignments ?? []).map(
+        async (a) =>
+          [
+            a.child_profile_id,
+            await resolveChildAccompaniment(supabaseAdmin as any, a.child_profile_id),
+          ] as const,
       ),
     );
     const accompanimentByChild = new Map(accompanimentResults);
@@ -1650,11 +1668,7 @@ export const getMentorChildView = createServerFn({ method: "GET" })
     await assertChildActor(supabaseAdmin as any, userId, data.childId);
 
     const [childRes, challengesRes, cycleRes] = await Promise.all([
-      supabaseAdmin
-        .from("child_profiles")
-        .select("*")
-        .eq("id", data.childId)
-        .maybeSingle(),
+      supabaseAdmin.from("child_profiles").select("*").eq("id", data.childId).maybeSingle(),
       (supabaseAdmin as any)
         .from("challenges")
         .select("*")
@@ -1779,9 +1793,7 @@ export const listMentorActivationCodesAdmin = createServerFn({ method: "GET" })
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
     const [{ count }, { data: rows, error }] = await Promise.all([
-      supabaseAdmin
-        .from("mentor_activation_codes")
-        .select("id", { count: "exact", head: true }),
+      supabaseAdmin.from("mentor_activation_codes").select("id", { count: "exact", head: true }),
       (supabaseAdmin as any)
         .from("mentor_activation_codes")
         .select("id, code, valid_until, used_by, used_at, created_at")
@@ -2025,7 +2037,8 @@ export const approveMentorSessionAdmin = createServerFn({ method: "POST" })
       .eq("status", "confirmed")
       .select("id")
       .maybeSingle();
-    if (!claimed) throw new Error("Séance introuvable, non confirmée par le parent ou déjà approuvée.");
+    if (!claimed)
+      throw new Error("Séance introuvable, non confirmée par le parent ou déjà approuvée.");
 
     return { success: true };
   });
