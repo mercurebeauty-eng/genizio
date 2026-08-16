@@ -5,9 +5,9 @@ import { pageMeta, jsonLdScript, breadcrumbJsonLd } from "@/lib/seo";
 export const Route = createFileRoute("/a-propos")({
   head: () => {
     const meta = pageMeta({
-      title: "À propos de Génizio — révéler les talents de votre enfant",
+      title: "À propos de Génizio — comprendre et développer votre enfant",
       description:
-        "Génizio est un projet fondé par Cheick Mohamed TRAORE pour aider chaque enfant à révéler et développer les talents que l'école ne mesure pas, du Sénégal à la Côte d'Ivoire.",
+        "Génizio aide chaque enfant à construire son propre chemin de développement, du Sénégal à la Côte d'Ivoire : défis concrets à la maison, 9 intelligences de Howard Gardner, compétences et réalisations documentées.",
       path: "/a-propos",
     });
     return {
@@ -66,18 +66,24 @@ function AProposPage() {
         <div className="prose-genizio mt-8">
           <h2>Notre mission</h2>
           <p>
-            Génizio aide chaque enfant à révéler les talents que l'école ne mesure pas — à travers
+            Génizio aide chaque enfant à construire son propre chemin de développement — à travers
             des défis concrets à réaliser à la maison, fondés sur les 9 intelligences de Howard
-            Gardner — puis à les transformer en compétences, en confiance et en projets. L'idée de
-            départ : le programme scolaire ne mesure qu'une petite partie de ce dont un enfant est
-            capable. Génizio cherche le reste, et lui donne un chemin.
+            Gardner — et donne aux parents les moyens de transformer les capacités de leur enfant
+            en compétences, en confiance et en réalisations. L'idée de départ : le programme
+            scolaire ne mesure qu'une petite partie de ce dont un enfant est capable. Génizio
+            cherche le reste, et lui donne un chemin.
           </p>
           <p>
             Beaucoup d'enfants — surtout en Afrique francophone et dans la diaspora — grandissent
-            avec des talents réels que personne ne regarde : l'habileté manuelle, le sens de la
+            avec des capacités réelles que personne ne regarde : l'habileté manuelle, le sens de la
             négociation, l'esprit d'entreprise, la capacité à fédérer un groupe. L'école valorise
             presque exclusivement le langage et la logique. Génizio donne aux autres formes
-            d'intelligence un cadre pour se révéler — et aux parents, un moyen de les voir.
+            d'intelligence un cadre pour se développer — et aux parents, un moyen de les voir et
+            de les accompagner.
+          </p>
+          <p>
+            En une phrase : à l'école, votre enfant apprend ce que le système lui enseigne. Avec
+            Génizio, vous découvrez ce dont il a besoin pour devenir lui-même.
           </p>
 
           <h2>Notre méthode : observer ce que l'enfant fait, pas ce qu'il déclare</h2>
@@ -89,7 +95,7 @@ function AProposPage() {
             d'un questionnaire rempli par un adulte.
           </p>
           <p>
-            C'est une approche du potentiel par la preuve plutôt que par l'intuition : ce que
+            C'est une approche du développement par la preuve plutôt que par l'intuition : ce que
             l'enfant choisit, ce qu'il persévère à terminer, ce vers quoi il revient spontanément en
             dit plus long que n'importe quel test.
           </p>

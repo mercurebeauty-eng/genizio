@@ -67,9 +67,9 @@ const LANDING_FAQ: {
   link?: { to: "/tarifs"; label: string };
 }[] = [
   {
-    question: "Comment révéler les talents cachés de son enfant ?",
+    question: "Comment découvrir et développer les capacités de mon enfant ?",
     answer:
-      "Les talents d'un enfant se révèlent dans l'action, pas dans un test. En lui proposant régulièrement des activités concrètes et variées — construire, cuisiner, négocier, raconter, observer — puis en notant ce qui l'absorbe vraiment, on voit apparaître des constantes. Génizio structure cette observation : l'application propose des défis adaptés à l'âge et aux centres d'intérêt de l'enfant, le parent photographie la réalisation, et une cartographie des 9 intelligences de Howard Gardner se construit au fil des semaines à partir de ce que l'enfant a réellement fait.",
+      "Les capacités d'un enfant se découvrent et se développent dans l'action, pas dans un test. En lui proposant régulièrement des activités concrètes et variées — construire, cuisiner, négocier, raconter, observer — puis en notant ce qui l'absorbe vraiment, on voit apparaître des constantes : ce qu'il aime réellement, ce dans quoi il est naturellement fort, ce qui lui demande un effort. Génizio structure cette observation et ce développement : l'application propose des défis adaptés à l'âge et aux centres d'intérêt de l'enfant, le parent photographie la réalisation, et la carte des 9 intelligences de Howard Gardner se construit au fil des semaines à partir de ce que l'enfant a réellement fait. Chaque défi le fait progresser sur une compétence précise — et vous savez toujours où il en est.",
   },
   {
     question: "Que faire quand un enfant ne tient pas en place et ne se concentre pas ?",
@@ -89,7 +89,7 @@ const LANDING_FAQ: {
   {
     question: "Génizio remplace-t-il le soutien scolaire ?",
     answer:
-      "Non. Le soutien scolaire vise à faire progresser sur le programme et les notes ; Génizio vise à révéler ce que l'enfant sait faire en dehors de ce que l'école mesure. Les deux sont complémentaires. Génizio propose des défis pratiques à réaliser à la maison ou dans le quartier, avec du matériel simple, et construit un portfolio des réalisations de l'enfant plutôt qu'un bulletin de notes.",
+      "Non. Le soutien scolaire vise à faire progresser l'enfant sur le programme et les notes ; Génizio vise à développer ce qu'il sait faire en dehors de ce que l'école mesure — sa créativité, son sens pratique, sa confiance, son autonomie. Les deux sont complémentaires. Génizio propose des défis pratiques à réaliser à la maison ou dans le quartier, avec du matériel simple, et construit un portfolio des réalisations de l'enfant plutôt qu'un bulletin de notes.",
   },
   {
     question: "À partir de quel âge un enfant peut-il utiliser Génizio ?",
@@ -125,9 +125,9 @@ const LANDING_FAQ: {
 export const Route = createFileRoute("/")({
   head: () => {
     const meta = pageMeta({
-      title: "Génizio — Les talents que le bulletin ne montre pas",
+      title: "Génizio — Découvrez qui est votre enfant, développez ce qu'il peut devenir",
       description:
-        "Des défis concrets à faire à la maison pour révéler les talents de votre enfant de 5 à 16 ans — et les transformer en compétences, confiance et projets. Fondé sur les 9 intelligences de Howard Gardner.",
+        "Des défis concrets à faire à la maison pour développer les capacités de votre enfant de 5 à 16 ans — et les transformer en compétences, en réalisations et en confiance. Fondé sur les 9 intelligences de Howard Gardner.",
       path: "/",
     });
     return {
@@ -145,7 +145,7 @@ export const Route = createFileRoute("/")({
         // les étapes affichées.
         jsonLdScript(
           howToJsonLd({
-            name: "Comment révéler les talents de votre enfant avec Génizio",
+            name: "Comment développer les capacités de votre enfant avec Génizio",
             description:
               "La méthode Génizio en trois actes : l'enfant réalise un défi concret, le parent photographie la réalisation, et l'IA Naya met à jour la carte des 9 intelligences.",
             steps: METHOD_STEPS.map(({ title, desc }) => ({ name: title, text: desc })),
@@ -460,7 +460,7 @@ function NayaLanding() {
 }
 
 const NAV_LINKS = [
-  { href: "#domaines", label: "Les 9 Talents" },
+  { href: "#domaines", label: "9 intelligences" },
   { href: "#portfolio", label: "Portfolio de vie" },
   { href: "#demo", label: "Exemple" },
   { href: "#communaute", label: "Communauté" },
@@ -613,15 +613,15 @@ function Hero() {
             Au-delà du bulletin
           </span>
           <h1 className="mb-6 font-display text-balance text-4xl font-extrabold leading-[1.04] md:text-6xl">
-            Votre enfant a des talents que{" "}
+            Découvrez qui est votre enfant.{" "}
             <span className="bg-gradient-to-r from-brand-glow to-amber-300 bg-clip-text text-transparent">
-              l'école ne voit pas.
+              Développez ce qu'il peut devenir.
             </span>
           </h1>
           <p className="mb-9 max-w-xl text-base font-medium leading-relaxed text-white/85">
-            Génizio les révèle par des défis concrets à la maison — et les transforme en
-            compétences, en confiance et en chemin pour l'avenir. Pas de notes, pas de verdict :
-            des réalisations, observées par l'IA Naya et validées par vous.
+            Génizio transforme ses capacités en compétences, en expériences et en réalisations —
+            par des défis concrets à la maison, observés par l'IA Naya et validés par vous. Pas de
+            notes, pas de verdict : un chemin de développement qui se construit, jour après jour.
           </p>
           <div className="mb-9 flex items-center gap-3.5 rounded-2xl border border-white/15 bg-white/10 p-4 shadow-lg backdrop-blur-md w-fit">
             <NayaAvatar size="sm" thoughts={["Bonjour ! Prêt pour un nouveau défi ?"]} />
@@ -630,7 +630,7 @@ function Hero() {
                 Co-pilote Pédagogique
               </p>
               <p className="text-xs font-bold text-white/80">
-                Guidé par Naya, notre IA mentore bienveillante.
+                Guidé par Naya, notre IA bienveillante.
               </p>
             </div>
           </div>
@@ -733,7 +733,7 @@ function Hero() {
             <span className="grid size-9 shrink-0 place-items-center rounded-full bg-brand-glow text-ink">
               <Radar className="size-4" aria-hidden />
             </span>
-            <p className="text-xs font-bold text-white">Naya a détecté un signal fort</p>
+            <p className="text-xs font-bold text-white">Naya a repéré un progrès marquant</p>
           </div>
 
           <div className="absolute -bottom-6 -left-3 hidden items-center gap-2 rounded-2xl border border-white/15 bg-ink/90 px-4 py-2.5 shadow-xl backdrop-blur-md md:flex">
@@ -780,18 +780,18 @@ function MarqueeSection() {
 const PAINS: { Icon: LucideIcon; title: string; desc: string }[] = [
   {
     Icon: BookOpen,
-    title: "L'école note, elle ne révèle pas",
-    desc: "Bulletins, examens, classements. Rien n'y capte la créativité, le leadership ou le sens pratique d'un enfant.",
+    title: "L'école note, elle ne développe pas",
+    desc: "Bulletins, examens, classements. Rien n'y développe ni ne valorise la créativité, le leadership ou le sens pratique d'un enfant.",
   },
   {
     Icon: HelpCircle,
-    title: "Les parents manquent d'outils",
-    desc: "Comment identifier un talent naturel sans méthode d'observation structurée ? Par où commencer ?",
+    title: "Les parents manquent d'outils pour accompagner",
+    desc: "Comment savoir ce que son enfant aime réellement, comment il réfléchit, dans quoi il est naturellement fort — et par où commencer ?",
   },
   {
     Icon: Globe,
-    title: "Une jeunesse immense, zéro détection",
-    desc: "L'Afrique regorge de talents. Sans accompagnement individuel pour les repérer, des millions d'enfants passent à côté des leurs.",
+    title: "Une jeunesse immense, sans chemin individuel",
+    desc: "L'Afrique compte des millions d'enfants aux capacités réelles. Sans accompagnement individuel pour les développer, beaucoup ne deviennent jamais ce qu'ils pourraient être.",
   },
 ];
 
@@ -807,7 +807,7 @@ const STORY_STEPS: { n: string; title: string; desc: string }[] = [
   {
     n: "02",
     title: "Deux profils, un même risque",
-    desc: "Ceux qui réussiraient à l'école, et ceux dont les talents sont ailleurs — artistiques, entrepreneuriaux, créatifs, techniques. Les opposer n'a aucun sens : tous deux ont besoin d'être reconnus.",
+    desc: "Ceux qui réussiraient à l'école, et ceux dont les capacités sont ailleurs — artistiques, entrepreneuriales, créatives, techniques. Les opposer n'a aucun sens : tous deux ont besoin d'être vus, compris et développés.",
   },
   {
     n: "03",
@@ -836,9 +836,9 @@ function StorySection() {
             Avant les notes, il y a la confiance.
           </h2>
           <p className="mt-5 text-sm font-semibold leading-relaxed text-ink/70">
-            Des milliers d'enfants ne se révèlent jamais — non pas faute de potentiel, mais parce
-            que leur environnement n'a pas su le voir. Derrière chaque décrochage, il y a d'abord
-            une confiance qui n'a pas survécu.
+            Des milliers d'enfants ne se construisent jamais — non pas faute de capacités, mais
+            parce que personne n'a su les voir ni les développer. Derrière chaque décrochage, il
+            y a d'abord une confiance qui n'a pas survécu.
           </p>
         </Reveal>
 
@@ -917,7 +917,9 @@ function ConstatSection() {
           <p className="mt-5 text-sm font-semibold leading-relaxed text-ink/70">
             Le système scolaire mesure les performances académiques. Mais un enfant qui peine en
             maths est peut-être un leader né, un bâtisseur, un artiste — et sans les bons outils,
-            ces talents restent invisibles pendant toute la scolarité.
+            ses forces restent invisibles pendant toute la scolarité. À l'école, votre enfant
+            apprend ce que le système lui enseigne. Avec Génizio, vous découvrez ce dont il a
+            besoin pour devenir lui-même.
           </p>
         </Reveal>
 
@@ -936,6 +938,15 @@ function ConstatSection() {
             </Reveal>
           ))}
         </div>
+
+        <Reveal delay={140} className="mx-auto mt-12 max-w-2xl text-center">
+          <p className="text-sm font-semibold leading-relaxed text-ink/70">
+            Qu'est-ce que mon enfant aime réellement ? Comment réfléchit-il ? Dans quoi est-il
+            naturellement fort ? Dans quoi doit-il progresser ? La plupart des parents se posent
+            ces questions sans pouvoir y répondre. Génizio y répond par l'observation de ses
+            réalisations — pas par un test.
+          </p>
+        </Reveal>
 
         <Reveal delay={160} className="mx-auto mt-12 max-w-2xl text-center">
           <blockquote className="font-display text-balance text-xl font-semibold leading-snug text-ink/80 md:text-2xl">
@@ -966,8 +977,8 @@ const METHOD_STEPS: { Icon: LucideIcon; n: string; title: string; desc: string }
   {
     Icon: Map,
     n: "03",
-    title: "Naya cartographie le talent",
-    desc: "L'IA analyse la réalisation et met à jour la carte des 9 intelligences. Le profil se précise défi après défi.",
+    title: "Naya affine le profil",
+    desc: "L'IA analyse la réalisation, met à jour la carte des 9 intelligences et cale le défi suivant sur le profil qui se précise.",
   },
 ];
 
@@ -1001,7 +1012,7 @@ function MethodSection() {
           </h2>
           <p className="mt-5 text-sm font-semibold leading-relaxed text-white/85">
             La richesse d'un enfant ne se lit pas dans un formulaire. Elle se lit dans ce qu'il
-            fabrique, ce qu'il organise, ce qu'il raconte. Et chaque défi révèle aussi{" "}
+            fabrique, ce qu'il organise, ce qu'il raconte. Et chaque défi éclaire aussi{" "}
             <span className="text-brand-glow">pourquoi la connaissance sert</span> — pas seulement
             ce qu'il faut retenir.
           </p>
@@ -1029,7 +1040,7 @@ function MethodSection() {
         <Reveal delay={120} className="relative mt-16">
           <img
             src={constatImage}
-            alt="Un enfant en activité pratique Génizio — le talent se révèle dans l'action, pas dans un test"
+            alt="Un enfant en activité pratique Génizio — les capacités se révèlent dans l'action, pas dans un test"
             className="aspect-video w-full rounded-3xl border border-white/10 object-cover shadow-2xl"
           />
           <div
@@ -1038,7 +1049,7 @@ function MethodSection() {
           />
           <figcaption className="absolute bottom-5 left-5 max-w-md rounded-2xl border border-white/15 bg-ink/80 px-5 py-4 backdrop-blur-md">
             <p className="text-[10px] font-black uppercase tracking-widest text-brand-glow">
-              Le talent se révèle dans l'action
+              Les capacités se révèlent dans l'action
             </p>
             <p className="mt-1 text-sm font-bold leading-snug text-white">
               Jamais dans un questionnaire. Génizio structure l'observation des réalisations
@@ -1059,7 +1070,7 @@ function DomainsSection() {
       <div className="mx-auto max-w-6xl px-6">
         <Reveal className="mb-14 max-w-2xl">
           <span className="mb-3 inline-block text-xs font-bold uppercase tracking-widest text-brand">
-            03 · Les 9 talents
+            03 · Les 9 intelligences
           </span>
           <h2 className="font-display text-balance text-3xl font-extrabold text-ink md:text-4xl">
             Neuf formes d'intelligence, aucune supérieure aux autres.
@@ -1169,7 +1180,7 @@ function DemoSection() {
             </h2>
             <p className="mt-3 text-sm text-white/85 leading-relaxed font-semibold">
               Sélectionnez ci-dessous les comportements et activités de votre enfant pour voir son
-              potentiel se cartographier en temps réel et générer des défis adaptés.
+              profil se construire en temps réel — et générer des défis adaptés à ses forces.
             </p>
           </div>
           <div className="rounded-xl border-2 border-brand-glow bg-brand/20 px-5 py-2 text-xs font-bold text-brand-glow h-fit shrink-0">
@@ -1504,13 +1515,13 @@ function CommunitySection() {
               Réseau social positif
             </span>
             <h2 className="font-display text-balance text-3xl font-extrabold leading-tight text-ink md:text-4xl">
-              On ne révèle pas seulement les talents.{" "}
-              <span className="text-sky-dark">On les connecte.</span>
+              On ne se contente pas d'observer.{" "}
+              <span className="text-sky-dark">On accompagne, on développe.</span>
             </h2>
             <p className="mt-5 text-sm font-semibold leading-relaxed text-ink/70">
               Un enfant passionné d'astronomie à Abidjan peut rencontrer d'autres passionnés de
               sciences. Plusieurs jeunes amoureux de l'environnement peuvent monter un vrai projet
-              ensemble — encadrés, et toujours sous le regard des parents.
+              ensemble — encadrés par des mentors, et toujours sous le regard des parents.
             </p>
           </Reveal>
 
@@ -1588,7 +1599,7 @@ function TestimonialsSection() {
           </h2>
           <p className="mt-5 text-sm font-semibold leading-relaxed text-ink/70">
             Des retours donnés par les familles directement dans l'application — après avoir vu
-            leur enfant se révéler autrement qu'à travers les notes.
+            leur enfant se développer autrement qu'à travers les notes.
           </p>
           <div className="mt-4 inline-flex items-center gap-2 rounded-full border border-ink/10 bg-white px-4 py-1.5 text-xs font-bold text-ink/70 shadow-sm">
             <span className="flex items-center gap-0.5 text-amber-500" aria-hidden>
@@ -1781,9 +1792,10 @@ function VisionSection() {
           </h2>
           <p className="mt-6 text-sm font-semibold leading-relaxed text-white/85">
             Chez Génizio, nous croyons qu'un enfant n'est pas réductible à des notes d'examen. À
-            chaque défi complété, le parent photographie la réalisation, et notre IA déduit
-            l'émergence des talents associés. C'est ainsi que se dresse, au fil des mois, une
-            cartographie vivante de ce qu'il sait vraiment faire.
+            chaque défi complété, le parent photographie la réalisation, et notre IA suit
+            l'émergence des compétences associées. C'est ainsi que se dresse, au fil des mois, une
+            cartographie vivante de ce qu'il sait vraiment faire — et de ce qu'il peut apprendre
+            ensuite.
           </p>
           <ul className="mt-8 space-y-3.5 text-xs font-bold text-white/80">
             <li className="flex items-center gap-3">
@@ -1877,13 +1889,14 @@ function PositioningSection() {
             Notre Philosophie
           </span>
           <h2 className="font-display text-balance text-3xl font-extrabold leading-tight md:text-4xl">
-            Au-delà des devoirs et de la théorie scolaire.
+            L'école prépare aux programmes. Génizio prépare à la vie.
           </h2>
           <p className="mt-6 text-sm font-semibold leading-relaxed text-ink/70">
             Les plateformes de soutien scolaire traditionnel reproduisent le modèle de la
             mémorisation et de la notation. Génizio fait l'inverse : nous stimulons la curiosité
             active et le sens pratique à travers des projets réels. Votre enfant n'apprend pas
-            passivement, il crée.
+            passivement, il crée. Il apprend à se connaître, à se concentrer, à persévérer — et à
+            transformer ce qu'il sait en actions.
           </p>
         </div>
         <div className="md:col-span-3 grid gap-4">
@@ -1949,7 +1962,7 @@ const MODEL_LEVELS = [
   {
     n: "05",
     title: "Écoles Expérimentales",
-    tagline: "Le rêve d'un campus construit autour du potentiel — pas du programme.",
+    tagline: "Le rêve d'un campus construit autour du développement de chaque enfant — pas du programme.",
     points: [
       "Apprentissage par projets réels",
       "Intervenants professionnels",
@@ -2150,8 +2163,8 @@ function FAQSection() {
             <ArrowRight className="size-4" aria-hidden />
           </Link>
           <p className="mt-3 text-xs font-semibold text-ink/70">
-            Potentiel, intelligences multiples, activités à la maison : des articles pour les
-            parents.
+            Confiance en soi, réussite scolaire, intelligences multiples, activités à la maison :
+            des articles écrits pour les parents.
           </p>
         </div>
       </div>
@@ -2189,7 +2202,7 @@ function CTASection() {
               Inscription libre
             </span>
             <h2 className="mb-4 font-display text-balance text-3xl font-extrabold leading-tight md:text-4xl">
-              Découvrez les talents que le bulletin ne montre pas.
+              Comprendre votre enfant. Développer ses capacités. Construire son avenir.
             </h2>
             <p className="mx-auto mb-10 max-w-md text-sm font-semibold leading-relaxed text-white/85">
               Créez le profil de votre enfant en deux minutes et recevez son premier défi sur
