@@ -7,8 +7,8 @@ import {
   computeMentorPayoutXof,
   computeMentorPointsRewards,
   computeTrustTier,
-  computeMentorAccountAgeDays,
-  isMentorColdStart,
+  computeMentorOperationalAgeDays,
+  hasSufficientMentorSessionData,
 } from "./mentor-score";
 
 // Score de fiabilité mentor (V3, 2026-08-15) — grille 40/15/15/30 décidée avec le
@@ -353,82 +353,89 @@ describe("computeMentorPointsRewards", () => {
   });
 });
 
-// Âge du compte mentor (2026-08-16) — borne la plus ancienne entre activation du
-// profil et première assignation ; 0 si aucune borne (compte tout neuf).
-describe("computeMentorAccountAgeDays", () => {
-  it("aucune borne : 0 (compte tout neuf)", () => {
-    expect(computeMentorAccountAgeDays([])).toBe(0);
-    expect(computeMentorAccountAgeDays([null, undefined])).toBe(0);
+// Âge opérationnel (2026-08-16) — le moment où le mentor a PU commencer à opérer :
+// la borne la plus RÉCENTE entre l'activation du profil et la première assignation
+// (avant d'être activé OU d'avoir un enfant, il ne pouvait rien produire). 0 si
+// aucune borne.
+describe("computeMentorOperationalAgeDays", () => {
+  it("aucune borne : 0", () => {
+    expect(computeMentorOperationalAgeDays(null, null)).toBe(0);
+    expect(computeMentorOperationalAgeDays(undefined, undefined)).toBe(0);
   });
 
-  it("prend la borne la plus ancienne", () => {
+  it("profil créé avant la première assignation : part de l'assignation (la plus récente)", () => {
     const now = Date.now();
-    const old = new Date(now - 10 * 86_400_000).toISOString();
-    const recent = new Date(now - 2 * 86_400_000).toISOString();
-    expect(computeMentorAccountAgeDays([recent, old])).toBe(10);
+    const profile = new Date(now - 20 * 86_400_000).toISOString();
+    const firstAssignment = new Date(now - 2 * 86_400_000).toISOString();
+    expect(computeMentorOperationalAgeDays(profile, firstAssignment)).toBe(2);
+  });
+
+  it("assignation avant l'activation du profil : part du profil (la plus récente)", () => {
+    const now = Date.now();
+    const profile = new Date(now - 3 * 86_400_000).toISOString();
+    const firstAssignment = new Date(now - 10 * 86_400_000).toISOString();
+    expect(computeMentorOperationalAgeDays(profile, firstAssignment)).toBe(3);
+  });
+
+  it("une seule borne connue : part de cette borne", () => {
+    expect(
+      computeMentorOperationalAgeDays(null, new Date(Date.now() - 4 * 86_400_000).toISOString()),
+    ).toBe(4);
   });
 
   it("ignore les dates invalides", () => {
     expect(
-      computeMentorAccountAgeDays([
+      computeMentorOperationalAgeDays(
         "pas-une-date",
         new Date(Date.now() - 3 * 86_400_000).toISOString(),
-      ]),
+      ),
     ).toBe(3);
   });
 });
 
-// Garde cold-start (2026-08-16) — pas de dégradation automatique du statut tant
-// que le compte est jeune (moins d'une fenêtre de confiance pleine) ET sans
-// donnée de SÉANCE (confirmée, contestée, feedback) : le score 0 d'un mentor
-// tout neuf vient de l'absence de données, pas d'une mauvaise conduite.
-// L'activité défis ne compte pas — elle ne prouve rien sur la tenue des séances
-// (le cycle de confirmation est récent) et ne retire pas la protection.
-describe("isMentorColdStart", () => {
-  it("compte jeune sans aucune donnée : true", () => {
-    expect(isMentorColdStart({ accountAgeDays: 2, confirmedSessions: 0 })).toBe(true);
+// Garde anti-suspension DATA-DRIVEN (2026-08-16) — le statut automatique ne
+// dégrade JAMAIS un mentor qui a moins de MENTOR_MIN_SESSION_DATA séances
+// (confirmées + contestées) : son score ≈ 0 vient de l'absence de données, pas
+// d'une mauvaise conduite. Les défis complétés et les séances « declared » non
+// confirmées ne comptent pas (le mentor peut être actif sans qu'aucune
+// confirmation n'existe encore) — pas de grâce temporelle.
+describe("hasSufficientMentorSessionData", () => {
+  it("0 confirmée + 0 contestée : false (protégé)", () => {
+    expect(hasSufficientMentorSessionData({ confirmedSessions: 0 })).toBe(false);
   });
 
-  it("compte jeune avec une séance confirmée : false", () => {
-    expect(isMentorColdStart({ accountAgeDays: 2, confirmedSessions: 1 })).toBe(false);
+  it("1 confirmée : false (pas encore assez pour juger)", () => {
+    expect(hasSufficientMentorSessionData({ confirmedSessions: 1 })).toBe(false);
   });
 
-  it("compte jeune avec une contestation : false (une trace négative reste mesurable)", () => {
-    expect(
-      isMentorColdStart({
-        accountAgeDays: 2,
-        confirmedSessions: 0,
-        contestedSessions: 1,
-      }),
-    ).toBe(false);
+  it("2 confirmées : false (sous le seuil)", () => {
+    expect(hasSufficientMentorSessionData({ confirmedSessions: 2 })).toBe(false);
   });
 
-  it("compte jeune avec un feedback famille : false", () => {
-    expect(
-      isMentorColdStart({
-        accountAgeDays: 2,
-        confirmedSessions: 0,
-        feedbackCount: 2,
-      }),
-    ).toBe(false);
+  it("3 confirmées : true (jugé normalement)", () => {
+    expect(hasSufficientMentorSessionData({ confirmedSessions: 3 })).toBe(true);
   });
 
-  it("compte jeune avec des défis complétés mais aucune séance : true (cas réel : la suspension ne doit pas tenir)", () => {
-    expect(isMentorColdStart({ accountAgeDays: 2, confirmedSessions: 0 })).toBe(true);
+  it("1 confirmée + 2 contestées : true (le volume fait foi, les contestations comptent)", () => {
+    expect(hasSufficientMentorSessionData({ confirmedSessions: 1, contestedSessions: 2 })).toBe(
+      true,
+    );
   });
 
-  it("fenêtre de grâce écoulée (30 j) : false, même sans donnée", () => {
-    expect(isMentorColdStart({ accountAgeDays: 30, confirmedSessions: 0 })).toBe(false);
+  it("3 contestées seules : true (signal négatif mesurable)", () => {
+    expect(hasSufficientMentorSessionData({ confirmedSessions: 0, contestedSessions: 3 })).toBe(
+      true,
+    );
   });
 
-  it("avant la fin de la grâce (29 j) : true sans donnée", () => {
-    expect(isMentorColdStart({ accountAgeDays: 29, confirmedSessions: 0 })).toBe(true);
+  it("10 confirmées : true", () => {
+    expect(hasSufficientMentorSessionData({ confirmedSessions: 10 })).toBe(true);
   });
 });
 
-// Rétro-compat cold-start (2026-08-16) — un compte jeune sans trace mesurable est
-// restauré à « active » s'il a été dégradé par une logique antérieure ; le ban
-// (décision humaine) et l'actif ne sont jamais touchés.
+// Rétro-compat (2026-08-16) — un mentor protégé (données de séance insuffisantes)
+// dégradé par une logique antérieure est restauré à « active » ; le ban (décision
+// humaine) et l'actif ne sont jamais touchés.
 describe("coldStartRestoreTarget", () => {
   it("actif : rien à faire", () => {
     expect(coldStartRestoreTarget("active")).toBeNull();

@@ -78,10 +78,15 @@ export function computeExpectedSessions(
 //    mentor passe au partage 75/25 (75 % de la séance, soit 3 750 F au lieu de 3 500 F).
 //  • Statut automatique : score < 40 → warning ; score < 25 → suspended ; au-dessus
 //    des seuils → active. Le ban reste une décision humaine (jamais automatique).
-//  • Cold-start (2026-08-16) : pas de dégradation automatique tant que le compte
-//    est jeune (moins d'une fenêtre de confiance) ET sans aucune trace mesurable
-//    (séance confirmée, contestation, feedback, défi complété) — un mentor tout
-//    neuf a un score de 0 par absence de données, pas par mauvaise conduite.
+//  • Garde anti-suspension (2026-08-16) : DATA-DRIVEN, pas de grâce temporelle —
+//    le statut automatique ne dégrade JAMAIS un mentor qui a moins de
+//    MENTOR_MIN_SESSION_DATA données de séance (confirmées + contestées). Les
+//    défis complétés ne comptent pas (activité de l'enfant), ni les séances
+//    « declared » non confirmées (le mentor peut être actif sans qu'aucune
+//    confirmation n'existe encore). L'attendu de séances est PRORATISÉ sur l'âge
+//    opérationnel (borne la plus récente : activation du profil / première
+//    assignation). Un mentor protégé dégradé par une logique antérieure est
+//    restauré « active » (jamais le ban).
 //  • Payout : snapshot immuable posé À LA DÉCLARATION (palier + bonus points du
 //    moment) — invariant conservé : le montant ne change jamais après coup.
 //  • Points (mentor_points) : séance confirmée +1, défi complété +2, note 5/5 +1 —
@@ -103,62 +108,55 @@ export const MENTOR_WARNING_SCORE_THRESHOLD = 40;
 export const MENTOR_SUSPENDED_SCORE_THRESHOLD = 25;
 
 /**
- * Période de grâce cold-start : pendant la durée d'une fenêtre de confiance pleine
- * (30 j), un compte mentor SANS trace mesurable n'est jamais dégradé automatiquement
- * (le score 0 d'un compte tout neuf vient de l'absence de données, pas d'une
- * mauvaise conduite). Passé ce délai, un mentor qui n'a rien produit est jugé
- * normalement (score 0 → suspended).
+ * Volume minimal de données de séance (confirmées + contestées) à partir duquel
+ * le statut automatique peut dégrader un mentor. En-deçà, il n'y a pas de quoi
+ * juger : le score (≈ 0) vient de l'absence de données, pas d'une mauvaise
+ * conduite — sanctionner reviendrait à suspendre un mentor dès sa première
+ * séance (attendu proratisé + progression qui démarre lentement). À partir de
+ * 3 séances (confirmées ou contestées), le mentor est jugé normalement. Les
+ * défis ne comptent pas (activité de l'enfant, pas donnée de séance) — ni les
+ * séances « declared » non confirmées (le mentor peut être actif sans qu'aucune
+ * confirmation parent n'existe encore).
  */
-export const MENTOR_COLD_START_GRACE_DAYS = 30;
+export const MENTOR_MIN_SESSION_DATA = 3;
+
+/** Y a-t-il assez de données de séance pour que le statut automatique puisse
+ * dégrader ? Une contestation pèse comme une donnée (signal négatif mesurable). */
+export function hasSufficientMentorSessionData(params: {
+  confirmedSessions: number;
+  contestedSessions?: number;
+}): boolean {
+  return params.confirmedSessions + (params.contestedSessions ?? 0) >= MENTOR_MIN_SESSION_DATA;
+}
 
 /**
- * Âge en jours d'un compte mentor : la PLUS ANCIENNE des bornes fournies
- * (activation du profil, première assignation active…). 0 si aucune borne —
- * compte tout neuf, toujours en cold-start. Les dates invalides sont ignorées.
+ * Âge opérationnel en jours : le moment où le mentor a PU commencer à opérer —
+ * la borne la plus RÉCENTE entre l'activation du profil et sa première
+ * assignation active (avant d'être activé OU avant d'avoir un enfant, il ne
+ * pouvait rien produire). Sert à PRORATISER l'attendu de séances de la fenêtre
+ * glissante : un mentor dont le compte date de 40 j mais dont le premier enfant
+ * est arrivé hier n'a pas 12 séances/mois d'attendu. 0 si aucune borne.
  */
-export function computeMentorAccountAgeDays(anchors: Array<string | null | undefined>): number {
-  const times = anchors
+export function computeMentorOperationalAgeDays(
+  profileCreatedAt: string | null | undefined,
+  firstAssignmentAt: string | null | undefined,
+): number {
+  const times = [profileCreatedAt, firstAssignmentAt]
     .filter((d): d is string => Boolean(d))
     .map((d) => new Date(d).getTime())
     .filter((t) => !Number.isNaN(t));
   if (times.length === 0) return 0;
-  return Math.max(0, Math.floor((Date.now() - Math.min(...times)) / 86_400_000));
+  return Math.max(0, Math.floor((Date.now() - Math.max(...times)) / 86_400_000));
 }
 
 /**
- * Garde anti-démarrage à froid : un compte jeune sans AUCUNE donnée de séance
- * (confirmée, contestée, feedback) n'a pas encore de quoi être évalué — le
- * statut automatique ne doit pas le dégrader. Seules les traces liées aux
- * SÉANCES comptent : l'activité défis ne prouve rien sur la tenue des séances
- * (le cycle de confirmation des séances est récent, un mentor peut compléter
- * des défis sans qu'aucune séance confirmée n'existe encore) — elle ne retire
- * pas la protection. La garde expire dès qu'une donnée de séance existe (même
- * négative, comme une contestation) ou dès que la période de grâce est écoulée.
- */
-export function isMentorColdStart(params: {
-  /** Âge du compte mentor en jours (activation ou première assignation). */
-  accountAgeDays: number;
-  /** Séances confirmées par le parent dans la fenêtre glissante. */
-  confirmedSessions: number;
-  /** Séances contestées par le parent — une trace négative reste mesurable. */
-  contestedSessions?: number;
-  /** Notes famille posées dans la fenêtre. */
-  feedbackCount?: number;
-}): boolean {
-  if (params.accountAgeDays >= MENTOR_COLD_START_GRACE_DAYS) return false;
-  const hasSessionTrace =
-    params.confirmedSessions > 0 ||
-    (params.contestedSessions ?? 0) > 0 ||
-    (params.feedbackCount ?? 0) > 0;
-  return !hasSessionTrace;
-}
-
-/**
- * Rétro-compat cold-start : un compte en période de grâce sans trace mesurable
- * doit être « active ». S'il a été dégradé par une logique antérieure
- * (warning/suspended — suspensions automatiques d'avant la garde), la
- * restauration cible « active ». Le ban (décision humaine) et l'actif ne sont
- * jamais touchés — null = rien à faire.
+ * Rétro-compat : un mentor protégé (pas assez de données pour juger) doit être
+ * « active ». S'il a été dégradé par une logique antérieure (warning/suspended —
+ * suspensions automatiques d'avant la garde), la restauration cible « active ».
+ * Le ban (décision humaine) et l'actif ne sont jamais touchés — null = rien à
+ * faire. NB : le statut auto est géré par le système — une suspension MANUELLE
+ * d'un mentor protégé sera re-basculée « active » au prochain sync ; pour une
+ * sanction qui doit tenir, l'admin utilise « bannir » (jamais touché).
  */
 export function coldStartRestoreTarget(current: string | null | undefined): "active" | null {
   const cur = current ?? "active";

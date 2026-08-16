@@ -8,11 +8,12 @@
 //      mois passé retomberait à ~0 début de mois suivant et serait sanctionné à
 //      tort. `syncMentorTrustStatus` compare le statut cible au statut actuel et
 //      ne bascule que si nécessaire (jamais sur « banned », décision humaine).
-//      Deux garde-fous (2026-08-16) : la fenêtre est PRORATISÉE sur l'âge du
-//      compte (premier mois partiel réellement appliqué au score glissant) et un
-//      compte jeune sans AUCUNE trace mesurable n'est jamais dégradé (cold-start)
-//      — le score 0 d'un mentor tout neuf vient de l'absence de données, pas
-//      d'une mauvaise conduite.
+//      Garde anti-suspension (2026-08-16, V2 data-driven) : l'attendu de séances
+//      est PRORATISÉ sur l'âge OPÉRATIONNEL du compte (borne la plus récente entre
+//      l'activation du profil et la première assignation) et le statut automatique
+//      ne dégrade JAMAIS un mentor qui a moins de MENTOR_MIN_SESSION_DATA séances
+//      (confirmées + contestées) — un compte protégé dégradé par une logique
+//      antérieure est restauré « active ».
 //
 // Même convention que mentor-score.ts : helpers purs pour les calculs, ici les
 // lectures/écritures via le db passé (toujours supabaseAdmin — tables service-role).
@@ -20,10 +21,10 @@
 import {
   coldStartRestoreTarget,
   computeExpectedSessions,
-  computeMentorAccountAgeDays,
+  computeMentorOperationalAgeDays,
   computeMentorScore,
   computeMentorStatusFromScore,
-  isMentorColdStart,
+  hasSufficientMentorSessionData,
 } from "./mentor-score";
 import { notifyUser } from "./app-notifications";
 import { punctualityFromSessions } from "./mentor-scheduling";
@@ -95,17 +96,17 @@ export async function creditMentorPoints(
 /**
  * Compteurs du score de confiance sur la fenêtre glissante (30 j) d'un mentor :
  * séances CONFIRMÉES (la déclaration seule ne suffit plus) ÷ attendues
- * (12/mois/enfant, PRORATISÉES sur l'âge du compte — un mentor d'une semaine n'a
- * pas 12 séances/enfant d'attendu), progression des défis (cumul), feedback
- * famille, ponctualité et contestations (compteur négatif). Expose aussi l'âge du
- * compte (borne la plus ancienne : activation du profil / première assignation)
- * pour la proratisation ET la garde cold-start — pas de dégradation automatique
- * tant qu'il n'y a aucune trace mesurable.
+ * (12/mois/enfant, PRORATISÉES sur l'âge OPÉRATIONNEL — la borne la plus récente
+ * entre l'activation du profil et la première assignation : un mentor d'une
+ * semaine n'a pas 12 séances/enfant d'attendu), progression des défis (cumul),
+ * feedback famille, ponctualité et contestations (compteur négatif). Les
+ * séances confirmées + contestées alimentent aussi la garde anti-suspension
+ * (MENTOR_MIN_SESSION_DATA) : en-deçà, le statut automatique ne juge pas.
  */
 export interface RollingScoreCounters {
   childrenCount: number;
-  /** Âge du compte mentor en jours (0 = tout neuf, aucune borne). */
-  accountAgeDays: number;
+  /** Âge opérationnel en jours (0 = aucune borne connue, tout neuf). */
+  operationalAgeDays: number;
   /** Séances confirmées par le parent dans la fenêtre. */
   confirmedSessions: number;
   /** Séances contestées dans la fenêtre (compteur négatif). */
@@ -131,15 +132,24 @@ export async function loadRollingCounters(
   const childrenCount = assignments?.length ?? 0;
   const childIds = (assignments ?? []).map((a: any) => a.child_profile_id as string);
 
+  // Première assignation ACTIVE (la plus ancienne) : avec la date d'activation du
+  // profil, elle borne l'âge opérationnel (le mentor ne pouvait rien produire
+  // avant d'être activé ET d'avoir au moins un enfant).
+  const assignmentTimes = (assignments ?? [])
+    .map((a: any) => (a.created_at ? new Date(a.created_at as string).getTime() : NaN))
+    .filter((t: number) => !Number.isNaN(t));
+  const firstAssignmentAt =
+    assignmentTimes.length > 0 ? new Date(Math.min(...assignmentTimes)).toISOString() : null;
+
   const { data: profile } = await db
     .from("mentor_profiles")
     .select("created_at")
     .eq("mentor_user_id", mentorUserId)
     .maybeSingle();
-  const accountAgeDays = computeMentorAccountAgeDays([
+  const operationalAgeDays = computeMentorOperationalAgeDays(
     profile?.created_at as string | undefined,
-    ...(assignments ?? []).map((a: any) => a.created_at as string | undefined),
-  ]);
+    firstAssignmentAt,
+  );
 
   const windowStart = new Date(Date.now() - TRUST_WINDOW_DAYS * 24 * 60 * 60 * 1000).toISOString();
 
@@ -191,7 +201,7 @@ export async function loadRollingCounters(
 
   return {
     childrenCount,
-    accountAgeDays,
+    operationalAgeDays,
     confirmedSessions: sessionIds.length,
     contestedSessions: (contested ?? []).length,
     feedbackCount,
@@ -202,15 +212,15 @@ export async function loadRollingCounters(
   };
 }
 
-/** Séances attendues proratisées sur l'âge du compte (plancher 1 jour, cap fenêtre). */
-function expectedRollingSessions(c: { childrenCount: number; accountAgeDays: number }): number {
-  const elapsedDays = Math.min(TRUST_WINDOW_DAYS, Math.max(1, c.accountAgeDays));
+/** Séances attendues proratisées sur l'âge opérationnel (plancher 1 jour, cap fenêtre). */
+function expectedRollingSessions(c: { childrenCount: number; operationalAgeDays: number }): number {
+  const elapsedDays = Math.min(TRUST_WINDOW_DAYS, Math.max(1, c.operationalAgeDays));
   return computeExpectedSessions(c.childrenCount, TRUST_WINDOW_DAYS, elapsedDays);
 }
 
 /**
  * Score de confiance sur les 30 derniers jours pour un mentor (2026-08-16 : la
- * fenêtre est PRORATISÉE sur l'âge du compte — « le premier mois partiel ne
+ * fenêtre est PRORATISÉE sur l'âge OPÉRATIONNEL — « le premier mois partiel ne
  * pénalise pas d'office » est maintenant réellement appliqué au score glissant,
  * pas seulement à la vue mensuelle du dashboard).
  */
@@ -235,16 +245,16 @@ export async function computeRollingScore(
  * Jamais sur « banned ». À chaque bascule : notification in-app mentor + admins
  * (type `mentor_status_changed`). Non-fatal — une erreur ici ne doit jamais faire
  * échouer l'action qui l'a déclenchée (même pattern que logMentorAction).
- * Garde cold-start : tant que le compte n'a aucune trace mesurable et que la
- * période de grâce n'est pas écoulée, le statut n'est JAMAIS dégradé — un mentor
- * tout neuf (score 0 par absence de données) reste « active ». Rétro-compat : un
- * compte déjà dégradé par une logique antérieure (warning/suspended) est alors
- * restauré à « active ».
+ * Garde anti-suspension data-driven : tant que le mentor a moins de
+ * MENTOR_MIN_SESSION_DATA séances (confirmées + contestées), le statut n'est
+ * JAMAIS dégradé — son score ≈ 0 vient de l'absence de données, pas d'une
+ * mauvaise conduite. Rétro-compat : un compte déjà dégradé par une logique
+ * antérieure (warning/suspended) est alors restauré à « active ».
  */
 export async function syncMentorTrustStatus(
   db: { from: (table: string) => any },
   mentorUserId: string,
-): Promise<{ changed: boolean; from?: string; to?: string; score?: number; coldStart?: boolean }> {
+): Promise<{ changed: boolean; from?: string; to?: string; score?: number; protected?: boolean }> {
   try {
     const counters = await loadRollingCounters(db, mentorUserId);
     const score = computeMentorScore({
@@ -265,29 +275,29 @@ export async function syncMentorTrustStatus(
     const current = (profile?.status as string | undefined) ?? "active";
     if (current === "banned") return { changed: false, score };
 
-    // Cold-start (2026-08-16) : pas de dégradation automatique tant qu'il n'y a
-    // aucune donnée de SÉANCE (ni séance confirmée, ni contestation, ni feedback —
-    // l'activité défis ne compte pas : elle ne prouve rien sur la tenue des
-    // séances) et que la période de grâce (une fenêtre de confiance pleine) n'est
-    // pas écoulée. Rétro-compat : un compte que l'ancienne logique avait
-    // suspendu/averti sans donnée est restauré à « active » — le ban, décision
-    // humaine, n'est jamais touché (géré plus haut).
+    // Garde anti-suspension DATA-DRIVEN (2026-08-16) : pas de dégradation
+    // automatique tant qu'il n'y a pas assez de données de séance pour juger
+    // (moins de MENTOR_MIN_SESSION_DATA séances confirmées + contestées). Les
+    // défis complétés et les séances « declared » non confirmées ne comptent
+    // pas : le mentor peut être actif sans qu'aucune confirmation parent
+    // n'existe encore — son score ≈ 0 vient de l'absence de données, pas d'une
+    // mauvaise conduite. Rétro-compat : un compte dégradé par une logique
+    // antérieure est restauré à « active » — le ban, décision humaine, n'est
+    // jamais touché (géré plus haut).
     if (
-      isMentorColdStart({
-        accountAgeDays: counters.accountAgeDays,
+      !hasSufficientMentorSessionData({
         confirmedSessions: counters.confirmedSessions,
         contestedSessions: counters.contestedSessions,
-        feedbackCount: counters.feedbackCount,
       })
     ) {
       const restore = coldStartRestoreTarget(current);
-      if (!restore) return { changed: false, coldStart: true, score };
+      if (!restore) return { changed: false, protected: true, score };
       await db
         .from("mentor_profiles")
         .update({ status: restore })
         .eq("mentor_user_id", mentorUserId);
       await notifyMentorStatusChange(db, mentorUserId, current, restore, score);
-      return { changed: true, from: current, to: restore, score, coldStart: true };
+      return { changed: true, from: current, to: restore, score, protected: true };
     }
 
     const target = computeMentorStatusFromScore(score);
