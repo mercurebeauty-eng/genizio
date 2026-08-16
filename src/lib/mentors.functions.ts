@@ -513,7 +513,6 @@ export const listMentorsAdmin = createServerFn({ method: "GET" })
           confirmedSessions: rollingCountByMentor.get(g.mentor_user_id) ?? 0,
           contestedSessions: rollingContestedByMentor.get(g.mentor_user_id) ?? 0,
           feedbackCount: rollingRatingsByMentor.get(g.mentor_user_id)?.count ?? 0,
-          completedChallenges: completedByMentor.get(g.mentor_user_id) ?? 0,
         })
       ) {
         const restore = coldStartRestoreTarget(g.status);

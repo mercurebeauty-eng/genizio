@@ -126,10 +126,14 @@ export function computeMentorAccountAgeDays(anchors: Array<string | null | undef
 }
 
 /**
- * Garde anti-démarrage à froid : un compte jeune sans aucune trace mesurable n'a
- * pas encore de données pour être évalué — le statut automatique ne doit pas le
- * dégrader. La garde expire dès qu'une trace existe (même négative, comme une
- * contestation) ou dès que la période de grâce est écoulée.
+ * Garde anti-démarrage à froid : un compte jeune sans AUCUNE donnée de séance
+ * (confirmée, contestée, feedback) n'a pas encore de quoi être évalué — le
+ * statut automatique ne doit pas le dégrader. Seules les traces liées aux
+ * SÉANCES comptent : l'activité défis ne prouve rien sur la tenue des séances
+ * (le cycle de confirmation des séances est récent, un mentor peut compléter
+ * des défis sans qu'aucune séance confirmée n'existe encore) — elle ne retire
+ * pas la protection. La garde expire dès qu'une donnée de séance existe (même
+ * négative, comme une contestation) ou dès que la période de grâce est écoulée.
  */
 export function isMentorColdStart(params: {
   /** Âge du compte mentor en jours (activation ou première assignation). */
@@ -140,16 +144,13 @@ export function isMentorColdStart(params: {
   contestedSessions?: number;
   /** Notes famille posées dans la fenêtre. */
   feedbackCount?: number;
-  /** Défis complétés (progression). */
-  completedChallenges: number;
 }): boolean {
   if (params.accountAgeDays >= MENTOR_COLD_START_GRACE_DAYS) return false;
-  const hasTrace =
+  const hasSessionTrace =
     params.confirmedSessions > 0 ||
     (params.contestedSessions ?? 0) > 0 ||
-    (params.feedbackCount ?? 0) > 0 ||
-    params.completedChallenges > 0;
-  return !hasTrace;
+    (params.feedbackCount ?? 0) > 0;
+  return !hasSessionTrace;
 }
 
 /**

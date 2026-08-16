@@ -380,19 +380,17 @@ describe("computeMentorAccountAgeDays", () => {
 
 // Garde cold-start (2026-08-16) — pas de dégradation automatique du statut tant
 // que le compte est jeune (moins d'une fenêtre de confiance pleine) ET sans
-// aucune trace mesurable : le score 0 d'un mentor tout neuf vient de l'absence de
-// données, pas d'une mauvaise conduite.
+// donnée de SÉANCE (confirmée, contestée, feedback) : le score 0 d'un mentor
+// tout neuf vient de l'absence de données, pas d'une mauvaise conduite.
+// L'activité défis ne compte pas — elle ne prouve rien sur la tenue des séances
+// (le cycle de confirmation est récent) et ne retire pas la protection.
 describe("isMentorColdStart", () => {
-  it("compte jeune sans aucune trace : true", () => {
-    expect(
-      isMentorColdStart({ accountAgeDays: 2, confirmedSessions: 0, completedChallenges: 0 }),
-    ).toBe(true);
+  it("compte jeune sans aucune donnée : true", () => {
+    expect(isMentorColdStart({ accountAgeDays: 2, confirmedSessions: 0 })).toBe(true);
   });
 
   it("compte jeune avec une séance confirmée : false", () => {
-    expect(
-      isMentorColdStart({ accountAgeDays: 2, confirmedSessions: 1, completedChallenges: 0 }),
-    ).toBe(false);
+    expect(isMentorColdStart({ accountAgeDays: 2, confirmedSessions: 1 })).toBe(false);
   });
 
   it("compte jeune avec une contestation : false (une trace négative reste mesurable)", () => {
@@ -401,7 +399,6 @@ describe("isMentorColdStart", () => {
         accountAgeDays: 2,
         confirmedSessions: 0,
         contestedSessions: 1,
-        completedChallenges: 0,
       }),
     ).toBe(false);
   });
@@ -412,27 +409,20 @@ describe("isMentorColdStart", () => {
         accountAgeDays: 2,
         confirmedSessions: 0,
         feedbackCount: 2,
-        completedChallenges: 0,
       }),
     ).toBe(false);
   });
 
-  it("compte jeune avec un défi complété : false", () => {
-    expect(
-      isMentorColdStart({ accountAgeDays: 2, confirmedSessions: 0, completedChallenges: 1 }),
-    ).toBe(false);
+  it("compte jeune avec des défis complétés mais aucune séance : true (cas réel : la suspension ne doit pas tenir)", () => {
+    expect(isMentorColdStart({ accountAgeDays: 2, confirmedSessions: 0 })).toBe(true);
   });
 
-  it("fenêtre de grâce écoulée (30 j) : false, même sans trace", () => {
-    expect(
-      isMentorColdStart({ accountAgeDays: 30, confirmedSessions: 0, completedChallenges: 0 }),
-    ).toBe(false);
+  it("fenêtre de grâce écoulée (30 j) : false, même sans donnée", () => {
+    expect(isMentorColdStart({ accountAgeDays: 30, confirmedSessions: 0 })).toBe(false);
   });
 
-  it("avant la fin de la grâce (29 j) : true sans trace", () => {
-    expect(
-      isMentorColdStart({ accountAgeDays: 29, confirmedSessions: 0, completedChallenges: 0 }),
-    ).toBe(true);
+  it("avant la fin de la grâce (29 j) : true sans donnée", () => {
+    expect(isMentorColdStart({ accountAgeDays: 29, confirmedSessions: 0 })).toBe(true);
   });
 });
 
