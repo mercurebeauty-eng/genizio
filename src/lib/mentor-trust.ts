@@ -18,6 +18,7 @@
 // lectures/écritures via le db passé (toujours supabaseAdmin — tables service-role).
 
 import {
+  coldStartRestoreTarget,
   computeExpectedSessions,
   computeMentorAccountAgeDays,
   computeMentorScore,
@@ -236,7 +237,9 @@ export async function computeRollingScore(
  * échouer l'action qui l'a déclenchée (même pattern que logMentorAction).
  * Garde cold-start : tant que le compte n'a aucune trace mesurable et que la
  * période de grâce n'est pas écoulée, le statut n'est JAMAIS dégradé — un mentor
- * tout neuf (score 0 par absence de données) reste « active ».
+ * tout neuf (score 0 par absence de données) reste « active ». Rétro-compat : un
+ * compte déjà dégradé par une logique antérieure (warning/suspended) est alors
+ * restauré à « active ».
  */
 export async function syncMentorTrustStatus(
   db: { from: (table: string) => any },
@@ -253,7 +256,6 @@ export async function syncMentorTrustStatus(
       avgFeedback: counters.avgFeedback,
       punctualityScore: counters.punctualityScore,
     });
-    const target = computeMentorStatusFromScore(score);
 
     const { data: profile } = await db
       .from("mentor_profiles")
@@ -261,12 +263,14 @@ export async function syncMentorTrustStatus(
       .eq("mentor_user_id", mentorUserId)
       .maybeSingle();
     const current = (profile?.status as string | undefined) ?? "active";
-    if (current === "banned" || current === target) return { changed: false, score };
+    if (current === "banned") return { changed: false, score };
 
     // Cold-start (2026-08-16) : pas de dégradation automatique tant qu'il n'y a
     // aucune trace mesurable (ni séance confirmée, ni contestation, ni feedback,
     // ni défi complété) et que la période de grâce (une fenêtre de confiance
-    // pleine) n'est pas écoulée.
+    // pleine) n'est pas écoulée. Rétro-compat : un compte que l'ancienne logique
+    // avait suspendu/averti sans donnée est restauré à « active » — le ban,
+    // décision humaine, n'est jamais touché (géré plus haut).
     if (
       isMentorColdStart({
         accountAgeDays: counters.accountAgeDays,
@@ -276,8 +280,18 @@ export async function syncMentorTrustStatus(
         completedChallenges: counters.completedChallenges,
       })
     ) {
-      return { changed: false, coldStart: true, score };
+      const restore = coldStartRestoreTarget(current);
+      if (!restore) return { changed: false, coldStart: true, score };
+      await db
+        .from("mentor_profiles")
+        .update({ status: restore })
+        .eq("mentor_user_id", mentorUserId);
+      await notifyMentorStatusChange(db, mentorUserId, current, restore, score);
+      return { changed: true, from: current, to: restore, score, coldStart: true };
     }
+
+    const target = computeMentorStatusFromScore(score);
+    if (current === target) return { changed: false, score };
 
     if (profile) {
       await db
@@ -288,24 +302,35 @@ export async function syncMentorTrustStatus(
       await db.from("mentor_profiles").insert({ mentor_user_id: mentorUserId, status: target });
     }
 
-    void notifyUser({
-      userId: mentorUserId,
-      type: "mentor_status_changed",
-      payload: { from: current, to: target, score },
-      channels: { push: true, email: true },
-    });
-    for (const adminId of await listAdminUserIds(db)) {
-      void notifyUser({
-        userId: adminId,
-        type: "mentor_status_changed",
-        payload: { mentor_user_id: mentorUserId, from: current, to: target, score },
-        channels: { push: true, email: true },
-      });
-    }
+    await notifyMentorStatusChange(db, mentorUserId, current, target, score);
     return { changed: true, from: current, to: target, score };
   } catch (err) {
     console.error("syncMentorTrustStatus failed (non-fatal):", err);
     return { changed: false };
+  }
+}
+
+/** Notification in-app mentor + admins d'une bascule de statut (auto ou rétro-restauration). */
+async function notifyMentorStatusChange(
+  db: { from: (table: string) => any },
+  mentorUserId: string,
+  from: string,
+  to: string,
+  score?: number,
+): Promise<void> {
+  void notifyUser({
+    userId: mentorUserId,
+    type: "mentor_status_changed",
+    payload: { from, to, score },
+    channels: { push: true, email: true },
+  });
+  for (const adminId of await listAdminUserIds(db)) {
+    void notifyUser({
+      userId: adminId,
+      type: "mentor_status_changed",
+      payload: { mentor_user_id: mentorUserId, from, to, score },
+      channels: { push: true, email: true },
+    });
   }
 }
 

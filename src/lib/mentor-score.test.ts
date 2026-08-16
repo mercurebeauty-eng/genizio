@@ -1,5 +1,6 @@
 import { describe, it, expect } from "vitest";
 import {
+  coldStartRestoreTarget,
   computeMentorScore,
   computeExpectedSessions,
   computeMentorStatusFromScore,
@@ -432,5 +433,31 @@ describe("isMentorColdStart", () => {
     expect(
       isMentorColdStart({ accountAgeDays: 29, confirmedSessions: 0, completedChallenges: 0 }),
     ).toBe(true);
+  });
+});
+
+// Rétro-compat cold-start (2026-08-16) — un compte jeune sans trace mesurable est
+// restauré à « active » s'il a été dégradé par une logique antérieure ; le ban
+// (décision humaine) et l'actif ne sont jamais touchés.
+describe("coldStartRestoreTarget", () => {
+  it("actif : rien à faire", () => {
+    expect(coldStartRestoreTarget("active")).toBeNull();
+  });
+
+  it("pas de profil (implicitement actif) : rien à faire", () => {
+    expect(coldStartRestoreTarget(null)).toBeNull();
+    expect(coldStartRestoreTarget(undefined)).toBeNull();
+  });
+
+  it("suspendu : restaure à active", () => {
+    expect(coldStartRestoreTarget("suspended")).toBe("active");
+  });
+
+  it("averti : restaure à active", () => {
+    expect(coldStartRestoreTarget("warning")).toBe("active");
+  });
+
+  it("banni : jamais touché (décision humaine)", () => {
+    expect(coldStartRestoreTarget("banned")).toBeNull();
   });
 });
