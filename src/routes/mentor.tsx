@@ -661,8 +661,8 @@ function MentorDashboardPage() {
                 tout seul (séances tenues + progression des enfants). Depuis la V3, seules
                 les séances CONFIRMÉES par le parent comptent. */}
             {score !== null && (
-              <div className="flex items-center gap-3 rounded-2xl border border-ink/10 bg-white px-4 py-2.5 shadow-sm">
-                <div className="text-right">
+              <div className="flex max-w-full flex-wrap items-center gap-3 rounded-2xl border border-ink/10 bg-white px-4 py-2.5 shadow-sm sm:flex-nowrap">
+                <div className="min-w-0 text-right">
                   <p className="text-[10px] font-black uppercase tracking-widest text-ink/50">
                     Score de fiabilité
                   </p>
@@ -855,7 +855,7 @@ function MentorDashboardPage() {
         ) : (
           <div className="grid gap-6">
             {/* Child Selector — Horizontal scroll bar on Mobile, grid on Desktop */}
-            <div className="space-y-3">
+            <div className="min-w-0 space-y-3">
               <div className="flex items-center justify-between">
                 <h2 className="text-xs font-black uppercase tracking-widest text-ink/60">
                   Enfants assignés ({children.length})
@@ -931,7 +931,7 @@ function MentorDashboardPage() {
                 const todo = selected.challenges.filter((c) => c.status === "todo");
 
                 return (
-                  <div className="md:col-span-2 space-y-6">
+                  <div className="min-w-0 md:col-span-2 space-y-6">
                     {/* Guild Banner */}
                     <div
                       className={`rounded-3xl border border-ink/10 p-5 shadow-xl flex items-center gap-4 ${guild.bgColor}`}
