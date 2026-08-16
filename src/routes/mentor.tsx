@@ -4,6 +4,22 @@ import { useServerFn } from "@tanstack/react-start";
 import { useSession } from "@/hooks/use-session";
 import { AppHeader } from "@/components/AppHeader";
 import { getMentorDashboard, declareSessionMentor, checkIsActiveMentor, CONTEST_REASONS } from "@/lib/mentors.functions";
+import {
+  getMentorActivityOverview,
+  type MentorActivityOverview,
+} from "@/lib/mentor-activity.functions";
+import { computeMentorPayoutXof } from "@/lib/mentor-score";
+import { MENTOR_SESSION_PAYOUT_XOF, formatXofAmount } from "@/lib/pricing";
+import {
+  Bar,
+  CartesianGrid,
+  ComposedChart,
+  Line,
+  ResponsiveContainer,
+  Tooltip,
+  XAxis,
+  YAxis,
+} from "recharts";
 import { listMyNotifications, markNotificationsRead } from "@/lib/notifications.functions";
 import {
   planMentorSessionSlot,
@@ -49,6 +65,13 @@ import {
   Bell,
   Activity,
   ShieldAlert,
+  Wallet,
+  CircleDollarSign,
+  Hourglass,
+  TrendingUp,
+  Star,
+  CalendarDays,
+  type LucideIcon,
 } from "lucide-react";
 import { NayaAvatar } from "@/components/NayaAvatar";
 import { MarkdownContent } from "@/components/ui/markdown-content";
@@ -131,6 +154,11 @@ function MentorDashboardPage() {
   const [points, setPoints] = useState(0);
   const [badge, setBadge] = useState<"none" | "bronze" | "gold">("none");
   const [pointsBonusPct, setPointsBonusPct] = useState(0);
+  // Vue globale d'activité (décision #83) — données BI du mentor + bascule de vue.
+  const [overview, setOverview] = useState<MentorActivityOverview | null>(null);
+  const [activityLoading, setActivityLoading] = useState(true);
+  const [activityError, setActivityError] = useState(false);
+  const [view, setView] = useState<"overview" | "children">("overview");
   // Notifications in-app (canal pull — bilan validé/refusé, séance confirmée, statut).
   const [notifications, setNotifications] = useState<any[]>([]);
   const [notifOpen, setNotifOpen] = useState(false);
@@ -160,6 +188,7 @@ function MentorDashboardPage() {
   const [declaredSlotId, setDeclaredSlotId] = useState<string>("");
 
   const getDashboardFn = useServerFn(getMentorDashboard);
+  const activityFn = useServerFn(getMentorActivityOverview);
   const declareFn = useServerFn(declareSessionMentor);
   const planSlotFn = useServerFn(planMentorSessionSlot);
   const cancelSlotFn = useServerFn(cancelMentorSessionSlot);
@@ -252,6 +281,19 @@ function MentorDashboardPage() {
     }
   };
 
+  const loadActivity = async () => {
+    setActivityLoading(true);
+    setActivityError(false);
+    try {
+      const res = await activityFn();
+      setOverview(res as MentorActivityOverview);
+    } catch {
+      setActivityError(true);
+    } finally {
+      setActivityLoading(false);
+    }
+  };
+
   const refreshNotifications = async () => {
     try {
       const res = await notificationsFn();
@@ -273,6 +315,7 @@ function MentorDashboardPage() {
   useEffect(() => {
     if (!session) return;
     void loadDashboard();
+    void loadActivity();
     void refreshNotifications();
     void refreshPlannedSlots();
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -752,7 +795,41 @@ function MentorDashboardPage() {
           </div>
         </div>
 
-        {fetching ? (
+        {/* Bascule Vue d'ensemble / Mes enfants (décision #83) — le mentor consulte
+            sa vue globale d'activité ou revient au travail quotidien sur les enfants. */}
+        <div className="mb-6 flex w-fit items-center gap-1 rounded-2xl border border-ink/10 bg-white p-1 shadow-sm">
+          {(["overview", "children"] as const).map((v) => (
+            <button
+              key={v}
+              type="button"
+              onClick={() => setView(v)}
+              aria-pressed={view === v}
+              className={`rounded-xl px-4 py-2 text-[11px] font-black uppercase tracking-widest transition-all cursor-pointer ${
+                view === v ? "bg-brand text-white shadow-sm" : "text-ink/60 hover:text-ink"
+              }`}
+            >
+              {v === "overview" ? "Vue d'ensemble" : "Mes enfants"}
+            </button>
+          ))}
+        </div>
+
+        {view === "overview" ? (
+          <MentorOverview
+            overview={overview}
+            loading={activityLoading}
+            error={activityError}
+            score={score}
+            expectedSessions={expectedSessions}
+            tier={tier}
+            pointsBonusPct={pointsBonusPct}
+            points={points}
+            badge={badge}
+            mentorStatus={mentorStatus}
+            childrenCount={children.length}
+          />
+        ) : (
+          <>
+            {fetching ? (
           <div className="flex justify-center py-20">
             <Loader2 className="size-6 animate-spin text-brand" />
           </div>
@@ -1272,6 +1349,8 @@ function MentorDashboardPage() {
                 );
               })()}
           </div>
+        )}
+          </>
         )}
       </main>
       {/* Challenge Detail Modal */}
@@ -2055,6 +2134,492 @@ function MentorDashboardPage() {
             </div>
           );
         })()}
+    </div>
+  );
+}
+
+// ── Vue globale d'activité (décision #83, 2026-08-16) ─────────────────────────
+// Répond au constat « le mentor n'a aucune vue sur son activité » : ce qu'il gagne,
+// ce qu'il reçoit, ce qui est payé ou en attente, son taux par séance, ses séances
+// effectuées et l'évolution des enfants suivis. Les agrégats viennent de
+// getMentorActivityOverview (mentor-activity.functions.ts) ; le taux actuel est
+// recalculé comme à la déclaration (computeMentorPayoutXof) à partir du palier et
+// du bonus points déjà chargés par le dashboard.
+
+type MentorOverviewProps = {
+  overview: MentorActivityOverview | null;
+  loading: boolean;
+  error: boolean;
+  score: number | null;
+  expectedSessions: number;
+  tier: "standard" | "trusted";
+  pointsBonusPct: number;
+  points: number;
+  badge: "none" | "bronze" | "gold";
+  mentorStatus: string;
+  childrenCount: number;
+};
+
+function MentorOverview({
+  overview,
+  loading,
+  error,
+  score,
+  expectedSessions,
+  tier,
+  pointsBonusPct,
+  points,
+  badge,
+  mentorStatus,
+  childrenCount,
+}: MentorOverviewProps) {
+  const currentRate = computeMentorPayoutXof({
+    basePayoutXof: MENTOR_SESSION_PAYOUT_XOF,
+    tier,
+    pointsBonusPct,
+  });
+
+  if (loading) {
+    return (
+      <div className="flex justify-center py-20">
+        <Loader2 className="size-6 animate-spin text-brand" />
+      </div>
+    );
+  }
+
+  if (error || !overview) {
+    return (
+      <div className="rounded-3xl border border-dashed border-red-400 bg-red-50 p-16 text-center shadow-sm">
+        <AlertTriangle className="size-16 text-red-400 mx-auto mb-4" />
+        <p className="font-display text-balance text-xl font-bold mb-2 text-red-700">
+          Impossible de charger votre vue d'ensemble
+        </p>
+        <p className="text-sm text-ink/60">
+          Une erreur est survenue. Rechargez la page pour réessayer.
+        </p>
+      </div>
+    );
+  }
+
+  const e = overview.earnings;
+  const me = overview.monthEarnings;
+  const confirmedTotal = e.counts.confirmed + e.counts.approved + e.counts.paid;
+  const confirmedMonth = me.counts.confirmed + me.counts.approved + me.counts.paid;
+  const pendingXof = e.approvedPending + e.confirmedPending;
+
+  return (
+    <div className="space-y-6">
+      {childrenCount === 0 && (
+        <div className="rounded-3xl border border-dashed border-ink/20 bg-white/40 p-8 text-center shadow-sm">
+          <Users className="size-12 text-ink/30 mx-auto mb-3" />
+          <p className="font-display text-balance text-lg font-bold mb-1">
+            Aucun enfant assigné pour l'instant
+          </p>
+          <p className="text-sm text-ink/60">
+            Vos revenus, séances et évolutions apparaîtront ici dès qu'un administrateur
+            vous assigne des profils d'enfants.
+          </p>
+        </div>
+      )}
+
+      {/* Cartes KPI — ce que le mentor gagne, reçoit, attend, facture. */}
+      <div className="grid grid-cols-2 gap-3 md:grid-cols-3">
+        <KpiCard
+          icon={Wallet}
+          iconClass="text-emerald-600"
+          label="Total gagné"
+          value={`${formatXofAmount(e.earned)} F`}
+          sub={`${confirmedTotal} séance${confirmedTotal > 1 ? "s" : ""} confirmée${confirmedTotal > 1 ? "s" : ""}`}
+        />
+        <KpiCard
+          icon={CircleDollarSign}
+          iconClass="text-sky-600"
+          label="Reçu"
+          value={`${formatXofAmount(e.received)} F`}
+          sub={`${e.counts.paid} séance${e.counts.paid > 1 ? "s" : ""} payée${e.counts.paid > 1 ? "s" : ""}`}
+        />
+        <KpiCard
+          icon={Hourglass}
+          iconClass="text-amber-600"
+          label="En attente"
+          value={`${formatXofAmount(pendingXof)} F`}
+          sub={`${e.counts.approved} à payer · ${e.counts.confirmed} à approuver`}
+        />
+        <KpiCard
+          icon={Clock}
+          iconClass="text-indigo-600"
+          label="Taux par séance"
+          value={`${formatXofAmount(currentRate)} F`}
+          sub={
+            tier === "trusted"
+              ? `palier confiance (75 %)${pointsBonusPct > 0 ? ` · +${pointsBonusPct} %` : ""}`
+              : `part 70 % de la séance${pointsBonusPct > 0 ? ` · +${pointsBonusPct} %` : ""}`
+          }
+        />
+        <KpiCard
+          icon={TrendingUp}
+          iconClass="text-brand"
+          label="Séances ce mois"
+          value={String(confirmedMonth)}
+          sub={expectedSessions > 0 ? `sur ${expectedSessions} attendues` : "aucune attendue"}
+        />
+        <KpiCard
+          icon={Users}
+          iconClass="text-rose-500"
+          label="Enfants suivis"
+          value={String(overview.children.length)}
+          sub={childrenCount > 0 ? "assignés actifs" : "aucun"}
+        />
+      </div>
+
+      {/* Paiements — ventilation payé / en attente (toutes périodes + ce mois). */}
+      <section className="rounded-3xl border border-ink/10 bg-white p-5 shadow-sm">
+        <h3 className="flex items-center gap-1.5 font-display text-base font-black">
+          <CircleDollarSign className="size-4 text-ink/40" /> Paiements
+        </h3>
+        <p className="text-[11px] text-ink/50 mb-3">
+          Ce qui vous est dû — la confirmation du parent fait foi, l'admin valide puis paie.
+        </p>
+        <div>
+          <PaymentRow
+            label="Payé"
+            dotClass="bg-emerald-500"
+            totalXof={e.received}
+            monthXof={me.received}
+            count={e.counts.paid}
+          />
+          <PaymentRow
+            label="Approuvé, à payer"
+            dotClass="bg-amber-500"
+            totalXof={e.approvedPending}
+            monthXof={me.approvedPending}
+            count={e.counts.approved}
+          />
+          <PaymentRow
+            label="Confirmé, à approuver"
+            dotClass="bg-sky-500"
+            totalXof={e.confirmedPending}
+            monthXof={me.confirmedPending}
+            count={e.counts.confirmed}
+          />
+          <PaymentRow
+            label="Déclaré, en attente du parent"
+            dotClass="bg-stone-400"
+            totalXof={e.declaredPending}
+            monthXof={me.declaredPending}
+            count={e.counts.declared}
+          />
+          <PaymentRow
+            label="Contesté (exclu des gains)"
+            dotClass="bg-rose-500"
+            totalXof={e.contested}
+            monthXof={me.contested}
+            count={e.counts.contested}
+          />
+        </div>
+      </section>
+
+      {/* Évolution mensuelle — séances confirmées (barres) et gains acquis (ligne). */}
+      <section className="rounded-3xl border border-ink/10 bg-white p-5 shadow-sm">
+        <h3 className="flex items-center gap-1.5 font-display text-base font-black">
+          <TrendingUp className="size-4 text-ink/40" /> Évolution mensuelle
+        </h3>
+        <p className="text-[11px] text-ink/50 mb-3">
+          Séances confirmées par les parents et gains acquis — 6 derniers mois.
+        </p>
+        <ResponsiveContainer width="100%" height={200}>
+          <ComposedChart
+            data={overview.monthlySeries}
+            margin={{ top: 8, right: 0, bottom: 0, left: -18 }}
+          >
+            <CartesianGrid strokeDasharray="3 3" stroke="#e7e5e4" vertical={false} />
+            <XAxis
+              dataKey="label"
+              tick={{ fontSize: 10, fill: "#78716c" }}
+              tickLine={false}
+              axisLine={false}
+            />
+            <YAxis
+              yAxisId="sessions"
+              allowDecimals={false}
+              tick={{ fontSize: 10, fill: "#78716c" }}
+              tickLine={false}
+              axisLine={false}
+            />
+            <YAxis
+              yAxisId="xof"
+              orientation="right"
+              tickFormatter={(v: number) => `${Math.round(Number(v) / 1000)}k`}
+              tick={{ fontSize: 10, fill: "#78716c" }}
+              tickLine={false}
+              axisLine={false}
+            />
+            <Tooltip
+              formatter={(value: any, name: any) =>
+                name === "Gains (F)"
+                  ? [`${formatXofAmount(Number(value))} F`, name]
+                  : [value, name]
+              }
+              contentStyle={{
+                borderRadius: 12,
+                border: "1px solid #e7e5e4",
+                fontSize: 12,
+              }}
+            />
+            <Bar
+              yAxisId="sessions"
+              dataKey="confirmed"
+              name="Séances confirmées"
+              fill="#6366f1"
+              radius={[6, 6, 0, 0]}
+              maxBarSize={28}
+            />
+            <Line
+              yAxisId="xof"
+              dataKey="earnedXof"
+              name="Gains (F)"
+              stroke="#10b981"
+              strokeWidth={2}
+              dot={{ r: 3, fill: "#10b981" }}
+            />
+          </ComposedChart>
+        </ResponsiveContainer>
+      </section>
+
+      {/* Évolution des jeunes suivis — une carte par enfant. */}
+      <section>
+        <h3 className="mb-3 flex items-center gap-1.5 font-display text-base font-black">
+          <Star className="size-4 text-ink/40" /> Évolution des jeunes suivis
+        </h3>
+        {overview.children.length === 0 ? (
+          <div className="rounded-3xl border border-dashed border-ink/20 bg-white/40 p-8 text-center shadow-sm">
+            <p className="text-sm text-ink/60 italic">Aucun enfant assigné pour l'instant.</p>
+          </div>
+        ) : (
+          <div className="grid gap-3 md:grid-cols-2">
+            {overview.children.map((child) => {
+              const guild = getChildGuild(child.talents);
+              const pct =
+                child.challengesTotal > 0
+                  ? Math.round((child.challengesCompleted / child.challengesTotal) * 100)
+                  : 0;
+              const reportChip =
+                child.reportStatus === "validated"
+                  ? { label: "Bilan validé", cls: "bg-emerald-100 text-emerald-700" }
+                  : child.reportStatus === "submitted"
+                    ? { label: "Bilan en attente", cls: "bg-amber-100 text-amber-700" }
+                    : child.reportStatus === "rejected"
+                      ? { label: "Bilan à corriger", cls: "bg-rose-100 text-rose-700" }
+                      : child.reportStatus === "draft"
+                        ? { label: "Bilan brouillon", cls: "bg-stone-100 text-stone-600" }
+                        : null;
+              return (
+                <div
+                  key={child.child_id}
+                  className="rounded-2xl border border-ink/10 bg-white p-4 shadow-sm"
+                >
+                  <div className="flex items-center gap-2">
+                    <span className="text-xl">{guild.emoji}</span>
+                    <div className="min-w-0 flex-1">
+                      <p className="font-display font-black text-sm truncate">{child.name}</p>
+                      <p className="text-[10px] text-ink/50">
+                        <CalendarDays className="-mt-0.5 mr-0.5 inline size-3" />
+                        Suivi depuis{" "}
+                        {new Date(child.assigned_at).toLocaleDateString("fr-FR", {
+                          month: "short",
+                          year: "numeric",
+                        })}
+                      </p>
+                    </div>
+                    {reportChip && (
+                      <span
+                        className={`shrink-0 rounded-full px-2 py-0.5 text-[9px] font-black uppercase tracking-wider ${reportChip.cls}`}
+                      >
+                        {reportChip.label}
+                      </span>
+                    )}
+                  </div>
+
+                  <div className="mt-3 grid grid-cols-3 gap-2 text-center">
+                    <div>
+                      <p className="text-base font-black">{child.confirmedSessions}</p>
+                      <p className="text-[9px] font-black uppercase tracking-widest text-ink/40">
+                        séances
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-base font-black">
+                        {child.challengesCompleted}
+                        <span className="text-ink/30">/{child.challengesTotal}</span>
+                      </p>
+                      <p className="text-[9px] font-black uppercase tracking-widest text-ink/40">
+                        défis
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-base font-black">
+                        {child.avgFeedback != null ? `${child.avgFeedback.toFixed(1)}/5` : "—"}
+                      </p>
+                      <p className="text-[9px] font-black uppercase tracking-widest text-ink/40">
+                        note fam.
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="mt-3">
+                    <div className="h-1.5 rounded-full bg-ink/10">
+                      <div
+                        className="h-full rounded-full bg-brand"
+                        style={{ width: `${pct}%` }}
+                      />
+                    </div>
+                    <p className="mt-1 text-[10px] font-semibold text-ink/50">
+                      {child.feedbackCount > 0
+                        ? `${child.feedbackCount} note${child.feedbackCount > 1 ? "s" : ""} famille · `
+                        : ""}
+                      {child.confirmedThisMonth > 0
+                        ? `${child.confirmedThisMonth} séance${child.confirmedThisMonth > 1 ? "s" : ""} ce mois`
+                        : "aucune séance ce mois"}
+                    </p>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </section>
+
+      {/* Confiance & qualité — les indicateurs qui décident du statut et du taux. */}
+      <section className="rounded-3xl border border-ink/10 bg-white p-5 shadow-sm">
+        <h3 className="flex items-center gap-1.5 font-display text-base font-black">
+          <ShieldAlert className="size-4 text-ink/40" /> Confiance & qualité
+        </h3>
+        <div className="mt-3 flex flex-wrap gap-2">
+          <span className="rounded-full border border-ink/10 bg-surface px-3 py-1.5 text-[10px] font-black uppercase tracking-wider text-ink/70">
+            Score {score ?? "—"}/100
+          </span>
+          <span className="rounded-full border border-ink/10 bg-surface px-3 py-1.5 text-[10px] font-black uppercase tracking-wider text-ink/70">
+            Ponctualité{" "}
+            {overview.quality.punctuality != null
+              ? `${overview.quality.punctuality} %`
+              : "non mesurée"}
+          </span>
+          <span className="rounded-full border border-ink/10 bg-surface px-3 py-1.5 text-[10px] font-black uppercase tracking-wider text-ink/70">
+            Note famille{" "}
+            {overview.quality.avgFeedback != null
+              ? `${overview.quality.avgFeedback.toFixed(1)}/5`
+              : "—"}
+          </span>
+          {overview.quality.contestedTotal > 0 && (
+            <span className="rounded-full border border-rose-200 bg-rose-50 px-3 py-1.5 text-[10px] font-black uppercase tracking-wider text-rose-700">
+              {overview.quality.contestedTotal} contestation
+              {overview.quality.contestedTotal > 1 ? "s" : ""}
+            </span>
+          )}
+          {overview.quality.reportsSubmitted + overview.quality.reportsDraft +
+            overview.quality.reportsRejected >
+            0 && (
+            <span className="rounded-full border border-amber-200 bg-amber-50 px-3 py-1.5 text-[10px] font-black uppercase tracking-wider text-amber-700">
+              {overview.quality.reportsSubmitted} bilan
+              {overview.quality.reportsSubmitted > 1 ? "s" : ""} en attente
+            </span>
+          )}
+          {overview.quality.reportsValidated > 0 && (
+            <span className="rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1.5 text-[10px] font-black uppercase tracking-wider text-emerald-700">
+              {overview.quality.reportsValidated} bilan
+              {overview.quality.reportsValidated > 1 ? "s" : ""} validé
+              {overview.quality.reportsValidated > 1 ? "s" : ""}
+            </span>
+          )}
+          {tier === "trusted" && (
+            <span className="rounded-full border border-indigo-200 bg-indigo-50 px-3 py-1.5 text-[10px] font-black uppercase tracking-wider text-indigo-700">
+              ⭐ Mentor de confiance
+            </span>
+          )}
+          {points > 0 && (
+            <span className="rounded-full border border-ink/10 bg-surface px-3 py-1.5 text-[10px] font-black uppercase tracking-wider text-ink/70">
+              🏅 {badge === "gold" ? "Or" : badge === "bronze" ? "Bronze" : ""} {points} pts
+              {pointsBonusPct > 0 ? ` · +${pointsBonusPct} % payout` : ""}
+            </span>
+          )}
+          {mentorStatus !== "active" && (
+            <span
+              className={`rounded-full px-3 py-1.5 text-[10px] font-black uppercase tracking-wider ${
+                mentorStatus === "suspended"
+                  ? "bg-rose-600 text-white"
+                  : "bg-amber-100 text-amber-700"
+              }`}
+            >
+              {mentorStatus === "suspended"
+                ? "Suspendu"
+                : mentorStatus === "banned"
+                  ? "Banni"
+                  : "Averti"}
+            </span>
+          )}
+        </div>
+      </section>
+    </div>
+  );
+}
+
+function KpiCard({
+  icon: Icon,
+  iconClass,
+  label,
+  value,
+  sub,
+}: {
+  icon: LucideIcon;
+  iconClass: string;
+  label: string;
+  value: string;
+  sub?: string;
+}) {
+  return (
+    <div className="rounded-2xl border border-ink/10 bg-white p-4 shadow-sm">
+      <div className="flex items-center gap-1.5 text-[10px] font-black uppercase tracking-widest text-ink/50">
+        <Icon className={`size-3.5 ${iconClass}`} />
+        {label}
+      </div>
+      <p className="mt-1.5 font-display text-xl font-black text-ink leading-tight">{value}</p>
+      {sub && <p className="mt-1 text-[10px] font-semibold text-ink/50">{sub}</p>}
+    </div>
+  );
+}
+
+function PaymentRow({
+  label,
+  dotClass,
+  totalXof,
+  monthXof,
+  count,
+}: {
+  label: string;
+  dotClass: string;
+  totalXof: number;
+  monthXof: number;
+  count: number;
+}) {
+  return (
+    <div className="flex items-center justify-between gap-3 border-b border-ink/5 py-2.5 last:border-0">
+      <div className="flex min-w-0 items-center gap-2">
+        <span className={`size-2 shrink-0 rounded-full ${dotClass}`} />
+        <div className="min-w-0">
+          <p className="truncate text-xs font-bold text-ink">{label}</p>
+          <p className="text-[10px] font-semibold text-ink/50">
+            {count} séance{count > 1 ? "s" : ""}
+          </p>
+        </div>
+      </div>
+      <div className="shrink-0 text-right">
+        <p className="text-sm font-black text-ink leading-tight">
+          {formatXofAmount(totalXof)} F
+        </p>
+        <p className="text-[10px] font-semibold text-ink/50">
+          ce mois : {formatXofAmount(monthXof)} F
+        </p>
+      </div>
     </div>
   );
 }
