@@ -938,11 +938,11 @@ function ChallengesPage() {
               reste une action de l'enfant. */}
           {!mentorMode && (
             <div className="mb-6 flex justify-center">
-              <div className="inline-flex rounded-2xl bg-stone-100 p-1.5 border border-ink/10 shadow-inner">
+              <div className="flex flex-wrap justify-center gap-1.5 rounded-2xl bg-stone-100 p-1.5 border border-ink/10 shadow-inner">
                 <button
                   type="button"
                   onClick={() => setMode("parent")}
-                  className={`px-5 py-2.5 rounded-xl text-sm font-extrabold transition-all cursor-pointer flex items-center gap-2 ${
+                  className={`px-4 sm:px-5 py-2.5 rounded-xl text-sm font-extrabold transition-all cursor-pointer flex items-center gap-2 whitespace-nowrap ${
                     viewMode === "parent"
                       ? "bg-white text-ink shadow-md border border-ink/10"
                       : "text-ink/60 hover:text-ink"
@@ -953,7 +953,7 @@ function ChallengesPage() {
                 <button
                   type="button"
                   onClick={() => setMode("child")}
-                  className={`px-5 py-2.5 rounded-xl text-sm font-extrabold transition-all cursor-pointer flex items-center gap-2 ${
+                  className={`px-4 sm:px-5 py-2.5 rounded-xl text-sm font-extrabold transition-all cursor-pointer flex items-center gap-2 whitespace-nowrap ${
                     viewMode === "child"
                       ? "bg-brand text-white shadow-md"
                       : "text-ink/60 hover:text-ink"
@@ -1183,7 +1183,7 @@ function ChallengesPage() {
               </div>
 
               {/* Dashboard Grid Layout */}
-              <div className="grid grid-cols-1 gap-8 ">
+              <div className="grid grid-cols-1 gap-8 lg:grid-cols-3">
                 {/* LEFT COLUMN: Radar chart & AI Synthesis */}
                 <div className="lg:col-span-1 space-y-6">
                   {/* Radar Chart Card */}
@@ -2258,7 +2258,7 @@ function ChallengeCard({
                   <span
                     className={`w-[8px] h-[8px] rounded-full ${["bg-brand", "bg-leaf", "bg-sky-dark", "bg-pink-500"][i % 4]}`}
                   ></span>
-                  <span className="truncate">{m}</span>
+                  <span className="min-w-0">{m}</span>
                 </div>
               ))}
             </div>

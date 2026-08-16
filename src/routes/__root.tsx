@@ -95,7 +95,10 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
   head: () => ({
     meta: [
       { charSet: "utf-8" },
-      { name: "viewport", content: "width=device-width, initial-scale=1" },
+      // viewport-fit=cover est requis pour que env(safe-area-inset-*) soit non nul
+      // sur iOS (Safari et PWA standalone) : sans lui, la tab bar et les bannières
+      // fixes passent sous l'encoche / le home indicator.
+      { name: "viewport", content: "width=device-width, initial-scale=1, viewport-fit=cover" },
       { title: SITE_NAME_LONG },
       { name: "description", content: SITE_DESCRIPTION },
       { name: "author", content: "Génizio" },
@@ -172,44 +175,13 @@ function RootShell({ children }: { children: ReactNode }) {
   );
 }
 
-// Routes rendues pleine largeur, hors du cadre-téléphone de 414px.
+// Toutes les routes sont rendues pleine largeur. Le « cadre-téléphone » de 414px
+// qui enveloppait l'app parent a été supprimé (2026-08-16) : il n'apportait rien
+// sur mobile (le cadre était déjà pleine largeur) et, sur desktop, il réduisait
+// l'app à une maquette de téléphone — le même constat qui avait déjà conduit à
+// sortir les pages vitrine du cadre. Les pages parent sont désormais pleine
+// largeur et se placent elles-mêmes (conteneurs max-w-*, grilles md/lg).
 //
-// Deux familles distinctes, même besoin :
-//  1. Outils internes (Admin OS, mentor, espace organisation) — mises en
-//     page multi-colonnes conçues pour un écran d'ordinateur.
-//  2. Pages publiques (accueil, mentions légales, parrainage, contenus, page
-//     d'inscription à une campagne) — ce sont des pages vitrine. Les afficher
-//     dans une maquette de téléphone sur un écran d'ordinateur donnait
-//     l'impression d'une démo/prototype plutôt que d'un produit réel, et
-//     écrasait des mises en page pourtant écrites pour du plein écran
-//     (conteneurs max-w-6xl inutilisables dans une colonne de 414px).
-//
-// Le cadre-téléphone reste pour l'application parent elle-même, où il sert
-// vraiment : /profiles, /profile, /boutique, /laboratory, /auth.
-const FULL_BLEED_PREFIXES = [
-  "/admin",
-  "/mentor",
-  "/organisation",
-  "/rejoindre",
-  "/guides",
-];
-
-const FULL_BLEED_EXACT = new Set([
-  "/",
-  "/parrainage",
-  "/terms",
-  "/privacy",
-  "/mentions-legales",
-  "/tarifs",
-  "/remboursements",
-  "/a-propos",
-]);
-
-function isFullBleedRoute(pathname: string): boolean {
-  if (FULL_BLEED_EXACT.has(pathname)) return true;
-  return FULL_BLEED_PREFIXES.some((p) => pathname === p || pathname.startsWith(`${p}/`));
-}
-
 // Outils internes : pas de bouton WhatsApp flottant (le support public n'a rien
 // à faire sur un tableau de bord admin), contrairement aux pages vitrine où il
 // reste le canal de contact principal.
@@ -222,7 +194,7 @@ function isInternalTool(pathname: string): boolean {
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
-  const fullBleed = isFullBleedRoute(pathname);
+  const internal = isInternalTool(pathname);
 
   // Univers Mentor (décision #81) : data-mode sur <html> → le bloc
   // :root[data-mode="mentor"] de styles.css rethème toute l'app (palette
@@ -233,40 +205,13 @@ function RootComponent() {
     document.documentElement.dataset.mode = mentorMode ? "mentor" : "parent";
   }, [mentorMode]);
 
-  if (fullBleed) {
-    const internal = isInternalTool(pathname);
-    return (
-      <QueryClientProvider client={queryClient}>
-        <div className="min-h-dvh bg-[var(--page-bg)] font-body">
-          <Outlet />
-        </div>
-        <Toaster />
-        {!internal && <WhatsAppFAB />}
-        <ConfirmDialogHost />
-        <Analytics />
-        <SpeedInsights />
-      </QueryClientProvider>
-    );
-  }
-
   return (
     <QueryClientProvider client={queryClient}>
-      <div className="min-h-dvh bg-[var(--page-bg)] flex justify-center items-center py-0 md:py-8 px-0 md:px-4 relative overflow-x-hidden font-body">
-        {/* Ambient background glowing blur circles */}
-        <div className="hidden md:block absolute -top-24 -left-20 size-[520px] bg-brand-glow/20 blur-3xl pointer-events-none rounded-full" />
-        <div className="hidden md:block absolute -bottom-32 -right-24 size-[560px] bg-sky/20 blur-3xl pointer-events-none rounded-full" />
-        <div className="hidden md:block absolute bottom-10 -left-20 size-[360px] bg-leaf/20 blur-3xl pointer-events-none rounded-full" />
-
-        {/* Device Shell Frame */}
-        <div className="w-full max-w-[414px] min-h-dvh md:min-h-[868px] md:h-[868px] bg-surface md:bg-[#15130f] md:rounded-[56px] md:p-2.5 md:shadow-2xl md:ring-1 md:ring-black/20 relative flex flex-col overflow-hidden">
-          {/* Inner Mobile Screen Content */}
-          <div className="w-full h-full bg-surface md:rounded-[44px] overflow-y-auto flex flex-col relative scrollbar-none">
-            <Outlet />
-          </div>
-        </div>
+      <div className="min-h-dvh bg-[var(--page-bg)] font-body">
+        <Outlet />
       </div>
       <Toaster />
-      <WhatsAppFAB />
+      {!internal && <WhatsAppFAB />}
       <ConfirmDialogHost />
       <PwaInstallPrompt />
       <PwaUpdateBanner />

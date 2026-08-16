@@ -110,7 +110,7 @@ function ManageProfilesPage() {
           <ArrowLeft className="size-4" /> Retour aux réglages
         </Link>
 
-        <div className="mb-10 flex flex-col justify-between gap-4  md:items-end">
+        <div className="mb-10 flex flex-col justify-between gap-4 md:flex-row md:items-end">
           <div>
             <h1 className="font-display text-balance text-4xl font-extrabold md:text-5xl">
               Mes profils enfants
@@ -144,7 +144,7 @@ function ManageProfilesPage() {
             <p className="text-ink/60">Aucun profil pour l'instant. Créez le premier.</p>
           </div>
         ) : (
-          <div className="grid gap-6  ">
+          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
             {profiles.map((p) => (
               <ProfileCard
                 key={p.id}

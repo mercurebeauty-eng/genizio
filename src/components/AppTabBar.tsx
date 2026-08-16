@@ -45,7 +45,7 @@ export function AppTabBar({ profileId }: AppTabBarProps) {
 
   return (
     <nav
-      className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[414px] z-40 bg-white/95 backdrop-blur-md border-t border-ink/5 pt-2.5 pb-2.5 px-2 flex flex-col justify-between shadow-xl rounded-t-[28px] transition-all"
+      className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[414px] z-40 bg-white/95 backdrop-blur-md border-t border-ink/5 pt-2.5 pb-[calc(0.625rem+env(safe-area-inset-bottom))] px-2 flex flex-col justify-between shadow-xl rounded-t-[28px] transition-all"
       aria-label="Navigation principale"
     >
       <div className="flex items-center justify-around w-full">

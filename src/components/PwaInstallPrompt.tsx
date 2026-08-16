@@ -68,7 +68,7 @@ export function PwaInstallPrompt() {
   if (!showPrompt) return null;
 
   return (
-    <div className="fixed bottom-6 left-6 right-6 z-50 mx-auto max-w-md rounded-3xl border border-ink/10 bg-white p-5 shadow-xl animate-in slide-in-from-bottom-10 duration-300">
+    <div className="fixed bottom-[calc(5.5rem+env(safe-area-inset-bottom))] left-6 right-6 z-50 mx-auto max-w-md rounded-3xl border border-ink/10 bg-white p-5 shadow-xl animate-in slide-in-from-bottom-10 duration-300">
       <button
         onClick={handleDismiss}
         className="absolute top-3 right-3 rounded-xl border-2 border-ink p-1 hover:bg-surface transition-all cursor-pointer"

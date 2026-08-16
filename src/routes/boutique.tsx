@@ -338,7 +338,7 @@ function BoutiquePage() {
               </button>
             </div>
           ) : (
-            <div className="flex flex-col gap-6">
+            <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
               {filteredProducts.map((p) => {
                 const count = getChallengeCount(p.material_tags);
                 const outOfStock = p.stock_quantity !== null && p.stock_quantity <= 0;
