@@ -283,7 +283,7 @@ function ProfilePage() {
 
       <div className="mx-auto max-w-6xl grid gap-8 px-6 pt-6 lg:grid-cols-3">
         {/* Left Column: Summary Card */}
-        <div className="lg:col-span-1 space-y-6">
+        <div className="min-w-0 lg:col-span-1 space-y-6">
           <div className="rounded-3xl border border-ink/10 bg-white p-6 shadow-xl text-center">
             <div className="mx-auto grid size-16 place-items-center rounded-2xl border-2 border-ink bg-brand/10 text-brand text-2xl font-bold">
               <User className="size-8" />
@@ -506,7 +506,7 @@ function ProfilePage() {
         </div>
 
         {/* Right Column: Settings Sections */}
-        <div className="lg:col-span-2 space-y-6">
+        <div className="min-w-0 lg:col-span-2 space-y-6">
           {/* Family subscription (self-service) */}
           <SubscriptionCard />
 

@@ -498,3 +498,31 @@
     -webkit-print-color-adjust: exact;
   }
 }
+
+/* ── Garde anti-débordement horizontal (2026-08-16) ────────────────────────────
+   Aucune page ne doit scroller horizontalement sur mobile/PWA : les conteneurs
+   internes (overflow-x-auto, sélecteur d'enfants, tableaux admin) gardent leur
+   propre scroll, mais la page reste verrouillée. `clip` plutôt que `hidden` :
+   clip n'en fait pas un conteneur de scroll, donc `position: sticky` (en-têtes)
+   continue de fonctionner ; `hidden` reste le fallback des navigateurs plus
+   anciens qui ne connaissent pas `clip`. */
+html,
+body {
+  overflow-x: hidden;
+}
+@supports (overflow: clip) {
+  html,
+  body {
+    overflow-x: clip;
+  }
+}
+
+/* Masque la barre de défilement d'un conteneur scrollable (sélecteur d'enfants
+   du mentor, onglets admin) — le scroll reste tactile / à la molette. */
+.no-scrollbar {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
