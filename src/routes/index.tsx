@@ -706,7 +706,7 @@ function Hero() {
                 <div className="font-display text-balance text-2xl font-extrabold text-brand-glow">
                   27
                 </div>
-                <div className="text-[10px] font-bold uppercase tracking-widest text-white/60">
+                <div className="text-[10px] font-bold uppercase tracking-widest text-white/60 text-balance">
                   Défis validés
                 </div>
               </div>
@@ -714,7 +714,7 @@ function Hero() {
                 <div className="font-display text-balance text-2xl font-extrabold text-leaf-50">
                   9
                 </div>
-                <div className="text-[10px] font-bold uppercase tracking-widest text-white/60">
+                <div className="text-[10px] font-bold uppercase tracking-widest text-white/60 text-balance">
                   Talents cartographiés
                 </div>
               </div>
@@ -1842,13 +1842,13 @@ function VisionSection() {
                 <div className="font-display text-balance text-2xl font-extrabold text-brand">
                   27
                 </div>
-                <div className="text-[10px] font-bold uppercase tracking-widest text-ink/70">
+                <div className="text-[10px] font-bold uppercase tracking-widest text-ink/70 text-balance">
                   Défis complétés
                 </div>
               </div>
               <div className="text-center">
                 <div className="font-display text-balance text-2xl font-extrabold text-leaf">9</div>
-                <div className="text-[10px] font-bold uppercase tracking-widest text-ink/70">
+                <div className="text-[10px] font-bold uppercase tracking-widest text-ink/70 text-balance">
                   Talents cartographiés
                 </div>
               </div>
@@ -1856,7 +1856,7 @@ function VisionSection() {
                 <div className="font-display text-balance text-2xl font-extrabold text-sky-dark">
                   3
                 </div>
-                <div className="text-[10px] font-bold uppercase tracking-widest text-ink/70">
+                <div className="text-[10px] font-bold uppercase tracking-widest text-ink/70 text-balance">
                   Mentors actifs
                 </div>
               </div>
@@ -2170,7 +2170,7 @@ function CTASection() {
   return (
     <section id="inscription" className="px-6 py-16 lg:py-20">
       <div className="mx-auto max-w-4xl rounded-[2.6rem] bg-gradient-to-r from-brand via-orange-500 to-brand p-[3px] shadow-2xl shadow-brand/30">
-        <div className="relative overflow-hidden rounded-[2.45rem] bg-ink p-10 text-center text-white md:p-14">
+        <div className="relative overflow-hidden rounded-[2.45rem] bg-ink p-8 text-center text-white sm:p-10 md:p-14">
           <div
             aria-hidden
             className="pointer-events-none absolute -top-24 left-1/2 h-72 w-72 -translate-x-1/2 rounded-full bg-brand/30 blur-3xl"

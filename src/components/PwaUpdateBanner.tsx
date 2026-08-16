@@ -40,7 +40,7 @@ export function PwaUpdateBanner() {
   if (!needRefresh) return null;
 
   return (
-    <div className="fixed top-0 left-1/2 z-[70] w-full max-w-[414px] -translate-x-1/2 px-3 pt-3 animate-in slide-in-from-top-6 duration-300">
+    <div className="fixed top-0 left-1/2 z-[70] w-full max-w-[414px] -translate-x-1/2 px-3 pt-[calc(0.75rem+env(safe-area-inset-top))] animate-in slide-in-from-top-6 duration-300">
       <div
         className="flex items-center gap-3 rounded-2xl border border-white/20 px-4 py-3 shadow-xl"
         style={{ background: "linear-gradient(120deg, var(--brand), var(--brand-glow))" }}

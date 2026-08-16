@@ -1659,7 +1659,7 @@ function PortfolioPage() {
             {artifacts.length === 0 ? (
               <p className="text-sm text-ink/60">Aucune photo pour l'instant.</p>
             ) : (
-              <div className="grid grid-cols-2 gap-3  ">
+              <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
                 {artifacts.map((c) => (
                   <div
                     key={c.id}

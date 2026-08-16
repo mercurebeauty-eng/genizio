@@ -461,7 +461,7 @@ function DashboardPage() {
                       `Bonjour, je voudrais devenir mentor de ${selected.name} suite à la fin de mon rôle d'éducateur.`,
                     );
                     return (
-                      <div className="animate-in fade-in slide-in-from-bottom-4 duration-300 ease-out md:mx-auto max-w-[414px] w-full">
+                      <div className="animate-in fade-in slide-in-from-bottom-4 duration-300 ease-out md:mx-auto max-w-md w-full">
                         <div className="rounded-3xl border border-ink/10 bg-white p-8 text-center shadow-md">
                           <div className="mx-auto mb-4 flex size-14 items-center justify-center rounded-2xl bg-ink/5 text-ink/60">
                             <Lock className="size-6" />
@@ -488,7 +488,7 @@ function DashboardPage() {
                   }
 
                   return (
-                    <div className="animate-in fade-in slide-in-from-bottom-4 duration-300 ease-out md:mx-auto max-w-[414px] w-full">
+                    <div className="animate-in fade-in slide-in-from-bottom-4 duration-300 ease-out md:mx-auto max-w-2xl w-full">
                       {/* Top Header Prototype */}
                       <div className="flex items-center justify-between mb-5">
                         <div className="flex items-center gap-3">

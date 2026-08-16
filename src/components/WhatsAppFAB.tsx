@@ -110,7 +110,7 @@ export function WhatsAppFAB({ phoneNumber }: WhatsAppFABProps) {
       target="_blank"
       rel="noopener noreferrer"
       aria-label="Besoin d'aide ? Discuter sur WhatsApp"
-      className={`fixed bottom-24 right-5 z-50 flex items-center gap-2 rounded-full border border-ink/10 bg-[#0B7A5A] px-4 py-3 text-sm font-bold text-white shadow-lg transition-all hover:-translate-y-1 hover:shadow-xl active:translate-y-0 md:bottom-8 ${
+      className={`fixed bottom-[calc(6rem+env(safe-area-inset-bottom))] right-5 z-50 flex items-center gap-2 rounded-full border border-ink/10 bg-[#0B7A5A] px-4 py-3 text-sm font-bold text-white shadow-lg transition-all hover:-translate-y-1 hover:shadow-xl active:translate-y-0 md:bottom-8 ${
         visible ? "opacity-100 scale-100" : "opacity-0 scale-90 pointer-events-none"
       }`}
     >
