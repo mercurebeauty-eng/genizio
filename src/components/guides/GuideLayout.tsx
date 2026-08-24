@@ -25,6 +25,7 @@ export function GuideLayout({
   children,
   related,
   path,
+  faq,
 }: {
   eyebrow: string;
   title: string;
@@ -34,6 +35,7 @@ export function GuideLayout({
   children: ReactNode;
   related?: { label: string; to: string }[];
   path?: string;
+  faq?: FaqItem[];
 }) {
   return (
     <div className="min-h-dvh bg-surface text-ink antialiased">
