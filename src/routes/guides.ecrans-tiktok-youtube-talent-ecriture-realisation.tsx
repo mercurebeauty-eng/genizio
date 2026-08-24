@@ -34,9 +34,9 @@ const FAQ = [
 export const Route = createFileRoute("/guides/ecrans-tiktok-youtube-talent-ecriture-realisation")({
   head: () => {
     const meta = pageMeta({
-      title: "Enfant accro à TikTok ou YouTube ? Le transformer en créateur et scénariste",
+      title: "Écrans & Enfants : Devenir créateur plutôt que spectateur",
       description:
-        "Votre enfant passe des heures sur les vidéos ou veut devenir youtubeur ? Découvrez comment transformer son temps d'écran en compétences d'écriture et de réalisation.",
+        "Votre enfant passe des heures sur TikTok ? Découvrez comment transformer cette consommation passive en un véritable apprentissage de la réalisation vidéo.",
       path: PATH,
       image: "/guides/og-tiktok-realisation.jpg",
       type: "article",
@@ -49,14 +49,14 @@ export const Route = createFileRoute("/guides/ecrans-tiktok-youtube-talent-ecrit
           breadcrumbJsonLd([
             { name: "Accueil", path: "/" },
             { name: "Guides", path: "/guides" },
-            { name: "Écrans, TikTok & Réalisation", path: PATH },
+            { name: "Écrans & Création numérique", path: PATH },
           ]),
         ),
         jsonLdScript(
           articleJsonLd({
             headline: "Votre enfant passe des heures sur TikTok ou YouTube ? Transformez son écran en talent d'écriture et de réalisation",
             description:
-              "Méthode concrète pour canaliser la passion des écrans chez les enfants et adolescents vers l'écriture de scénarios, le storyboard et la réalisation vidéo familiale.",
+              "Comment passer d'une consommation passive des écrans à une démarche active en apprenant à son enfant les bases du montage, du script et de la réalisation.",
             path: PATH,
             image: "/guides/og-tiktok-realisation.jpg",
             datePublished: "2026-08-24",
@@ -72,12 +72,13 @@ export const Route = createFileRoute("/guides/ecrans-tiktok-youtube-talent-ecrit
 function Guide() {
   return (
     <GuideLayout
-      eyebrow="Écrans & Créativité"
+      eyebrow="Écrans & Numérique"
       title="Votre enfant passe des heures sur TikTok ou YouTube ? Transformez son écran en talent d'écriture et de réalisation"
-      intro="Voir son enfant ou son adolescent scroller passivement pendant des heures sur des vidéos courtes est l'une des plus grandes angoisses parentales d'aujourd'hui. Les disputes éclatent, les téléphones sont confisqués, mais la dynamique de fond ne change pas. Pourtant, l'attrait pour la vidéo cache une passion pour la narration et l'image. Voici comment faire basculer votre enfant du rôle de consommateur passif à celui de créateur exigeant."
+      intro="La bataille des écrans est le premier sujet de conflit dans les familles modernes. Couper le Wi-Fi, confisquer le téléphone, limiter à une heure par jour... Ces méthodes d'urgence s'essoufflent souvent face à l'attrait puissant des algorithmes. Et si, plutôt que d'interdire l'écran, vous changiez le statut de votre enfant : de consommateur passif, comment en faire un créateur exigeant ?"
       updated="24 août 2026"
-      readingTime="8 min"
+      readingTime="6 min"
       path={PATH}
+      faq={FAQ}
       related={[
         {
           label: "Mon enfant est accro aux écrans : sevrage en douceur",

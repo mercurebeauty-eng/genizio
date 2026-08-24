@@ -34,9 +34,9 @@ const FAQ = [
 export const Route = createFileRoute("/guides/jouets-educatifs-kits-scientifiques-placards-maison")({
   head: () => {
     const meta = pageMeta({
-      title: "Jeux éducatifs et kits scientifiques : pourquoi vos placards font 10 fois mieux",
+      title: "Kits scientifiques vs Maison : Éveiller l'enfant au réel",
       description:
-        "Avant d'acheter un kit scientifique ou un jouet éducatif coûteux, découvrez comment les matériaux de la maison développent une vraie ingéniosité.",
+        "Découvrez pourquoi les objets de votre cuisine développent mieux l'ingéniosité scientifique de votre enfant que les kits éducatifs coûteux.",
       path: PATH,
       image: "/guides/og-jouets-placards.jpg",
       type: "article",
@@ -49,14 +49,14 @@ export const Route = createFileRoute("/guides/jouets-educatifs-kits-scientifique
           breadcrumbJsonLd([
             { name: "Accueil", path: "/" },
             { name: "Guides", path: "/guides" },
-            { name: "Jeux éducatifs & Sciences maison", path: PATH },
+            { name: "Apprentissage & Matériel", path: PATH },
           ]),
         ),
         jsonLdScript(
           articleJsonLd({
             headline: "Jouets éducatifs et kits scientifiques : pourquoi ce que vous avez dans vos placards développe mieux l'ingéniosité",
             description:
-              "Pourquoi les jouets éducatifs rigides brident l'imagination et comment 4 expériences scientifiques maison gratuites développent le vrai esprit d'inventeur.",
+              "Comment les objets du quotidien, sans notice ni plastique, surpassent les jouets dits 'éducatifs' pour développer la résolution de problèmes chez l'enfant.",
             path: PATH,
             image: "/guides/og-jouets-placards.jpg",
             datePublished: "2026-08-24",
@@ -78,6 +78,7 @@ function Guide() {
       updated="24 août 2026"
       readingTime="7 min"
       path={PATH}
+      faq={FAQ}
       related={[
         {
           label: "Activités manuelles pour enfants (15 idées)",

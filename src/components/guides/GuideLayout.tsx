@@ -4,6 +4,7 @@ import { ArrowLeft, ArrowRight } from "lucide-react";
 
 import { SocialShareBar } from "./SocialShareBar";
 import { AuthorBio } from "./AuthorBio";
+import { FaqSection, type FaqItem } from "./FaqSection";
 
 /**
  * Coquille éditoriale partagée par les pages de guide.
@@ -161,6 +162,8 @@ export function GuideLayout({
             </Link>
           </div>
         </aside>
+
+        {faq && faq.length > 0 && <FaqSection items={faq} />}
 
         {related && related.length > 0 && (
           <nav className="mt-12" aria-label="Guides liés">
