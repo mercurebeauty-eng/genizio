@@ -472,7 +472,7 @@ function NayaLanding() {
 }
 
 const NAV_LINKS = [
-  { href: "#domaines", label: "Les 9 Talents" },
+  { href: "#domaines", label: "9 intelligences" },
   { href: "#portfolio", label: "Portfolio de vie" },
   { href: "#demo", label: "Exemple" },
   { href: "#communaute", label: "Communauté" },
@@ -748,7 +748,7 @@ function Hero() {
             <span className="grid size-9 shrink-0 place-items-center rounded-full bg-brand-glow text-ink">
               <Radar className="size-4" aria-hidden />
             </span>
-            <p className="text-xs font-bold text-white">Naya a détecté un signal fort</p>
+            <p className="text-xs font-bold text-white">Naya a repéré un progrès marquant</p>
           </div>
 
           <div className="absolute -bottom-6 -left-3 hidden items-center gap-2 rounded-2xl border border-white/15 bg-ink/90 px-4 py-2.5 shadow-xl backdrop-blur-md md:flex">
@@ -945,6 +945,15 @@ function ConstatSection() {
             </Reveal>
           ))}
         </div>
+
+        <Reveal delay={140} className="mx-auto mt-12 max-w-2xl text-center">
+          <p className="text-sm font-semibold leading-relaxed text-ink/70">
+            Qu'est-ce que mon enfant aime réellement ? Comment réfléchit-il ? Dans quoi est-il
+            naturellement fort ? Dans quoi doit-il progresser ? La plupart des parents se posent
+            ces questions sans pouvoir y répondre. Génizio y répond par l'observation de ses
+            réalisations — pas par un test.
+          </p>
+        </Reveal>
 
         <Reveal delay={160} className="mx-auto mt-12 max-w-2xl text-center">
           <blockquote className="font-display text-balance text-xl font-semibold leading-snug text-ink/80 md:text-2xl">
@@ -1185,7 +1194,7 @@ function DemoSection() {
             </h2>
             <p className="mt-3 text-sm text-white/85 leading-relaxed font-semibold">
               Sélectionnez ci-dessous les comportements et activités de votre enfant pour voir son
-              potentiel se cartographier en temps réel et générer des défis adaptés.
+              profil se construire en temps réel — et générer des défis adaptés à ses forces.
             </p>
           </div>
           <div className="rounded-xl border-2 border-brand-glow bg-brand/20 px-5 py-2 text-xs font-bold text-brand-glow h-fit shrink-0">
@@ -1520,13 +1529,13 @@ function CommunitySection() {
               Réseau social positif
             </span>
             <h2 className="font-display text-balance text-3xl font-extrabold leading-tight text-ink md:text-4xl">
-              On ne révèle pas seulement les talents.{" "}
-              <span className="text-sky-dark">On les connecte.</span>
+              On ne se contente pas d'observer.{" "}
+              <span className="text-sky-dark">On accompagne, on développe.</span>
             </h2>
             <p className="mt-5 text-sm font-semibold leading-relaxed text-ink/70">
               Un enfant passionné d'astronomie à Abidjan peut rencontrer d'autres passionnés de
               sciences. Plusieurs jeunes amoureux de l'environnement peuvent monter un vrai projet
-              ensemble — encadrés, et toujours sous le regard des parents.
+              ensemble — encadrés par des mentors, et toujours sous le regard des parents.
             </p>
           </Reveal>
 
@@ -1968,7 +1977,7 @@ const MODEL_LEVELS = [
   {
     n: "05",
     title: "Écoles Expérimentales",
-    tagline: "Le rêve d'un campus construit autour du potentiel — pas du programme.",
+    tagline: "Le rêve d'un campus construit autour du développement de chaque enfant — pas du programme.",
     points: [
       "Apprentissage par projets réels",
       "Intervenants professionnels",
@@ -2169,8 +2178,8 @@ function FAQSection() {
             <ArrowRight className="size-4" aria-hidden />
           </Link>
           <p className="mt-3 text-xs font-semibold text-ink/70">
-            Potentiel, intelligences multiples, activités à la maison : des articles pour les
-            parents.
+            Confiance en soi, réussite scolaire, intelligences multiples, activités à la maison :
+            des articles écrits pour les parents.
           </p>
         </div>
       </div>

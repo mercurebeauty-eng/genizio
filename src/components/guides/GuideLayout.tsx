@@ -107,7 +107,7 @@ export function GuideLayout({
 
         <aside className="mt-16 rounded-3xl border border-brand/20 bg-gradient-to-br from-brand/5 via-white to-sky/5 p-8 shadow-md">
           <div className="inline-flex items-center gap-2 rounded-full bg-brand/10 px-3.5 py-1 text-xs font-black uppercase tracking-wider text-brand">
-            ✨ Jumeau Pédagogique & Défis Maison
+            ✨ Co-pilote Pédagogique & Défis Maison
           </div>
           <h2 className="mt-4 font-display text-2xl font-black text-ink">
             Passez de la théorie à l'action avec Génizio
