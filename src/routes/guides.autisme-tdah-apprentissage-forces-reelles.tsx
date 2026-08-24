@@ -34,7 +34,7 @@ const FAQ = [
 export const Route = createFileRoute("/guides/autisme-tdah-apprentissage-forces-reelles")({
   head: () => {
     const meta = pageMeta({
-      title: "Autisme, TDAH et pensée visuelle : pourquoi apprendre par le réel est une force",
+      title: "Autisme & TDAH : Leurs atouts uniques d'apprentissage",
       description:
         "Profils atypiques, autisme et TDAH : découvrez comment leur façon d'apprendre par le réel, l'image et l'action concrète surpasse les limites de l'école classique.",
       path: PATH,
@@ -78,6 +78,7 @@ function Guide() {
       updated="24 août 2026"
       readingTime="9 min"
       path={PATH}
+      faq={FAQ}
       related={[
         {
           label: "Enfant agité ou hyperactif : l'aider à se concentrer",

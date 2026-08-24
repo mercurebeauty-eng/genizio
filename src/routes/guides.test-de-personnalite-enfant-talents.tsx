@@ -34,7 +34,7 @@ const FAQ = [
 export const Route = createFileRoute("/guides/test-de-personnalite-enfant-talents")({
   head: () => {
     const meta = pageMeta({
-      title: "Test de personnalité enfant : pourquoi 20 questions ne remplaceront jamais l'action",
+      title: "Test de personnalité pour enfant : Les 4 limites à connaître",
       description:
         "Vous cherchez un test de personnalité ou un quiz pour votre enfant ? Découvrez pourquoi les QCM sur écran sont trompeurs et comment révéler ses vrais talents par l'action réelle.",
       path: PATH,
@@ -78,6 +78,7 @@ function Guide() {
       updated="24 août 2026"
       readingTime="8 min"
       path={PATH}
+      faq={FAQ}
       related={[
         {
           label: "Les 9 formes d'intelligence de Gardner",

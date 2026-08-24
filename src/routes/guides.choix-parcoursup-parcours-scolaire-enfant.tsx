@@ -34,7 +34,7 @@ const FAQ = [
 export const Route = createFileRoute("/guides/choix-parcoursup-parcours-scolaire-enfant")({
   head: () => {
     const meta = pageMeta({
-      title: "Choix des vœux et parcours scolaire : pourquoi le vrai profil dépasse les notes",
+      title: "Vœux Parcoursup : Valoriser le vrai profil de votre enfant",
       description:
         "Angoisse de l'orientation, choix des filières et vœux d'avenir : découvrez comment dédramatiser le parcours scolaire de votre enfant et valoriser ses vraies forces.",
       path: PATH,
@@ -78,6 +78,7 @@ function Guide() {
       updated="24 août 2026"
       readingTime="8 min"
       path={PATH}
+      faq={FAQ}
       related={[
         {
           label: "Test d'orientation et métiers d'avenir",

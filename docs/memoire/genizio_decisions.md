@@ -4,7 +4,7 @@ description: Décisions d'architecture et produit — quoi, pourquoi, alternativ
 metadata:
   type: project
   status: living-document
-  last_updated: 2026-08-15
+  last_updated: 2026-08-24
 ---
 
 ## Décision #1 : Nom du projet — Geniusio
@@ -2015,3 +2015,35 @@ fichier ne porte plus que les constantes partagées.
 **Alternatives rejetées** : *vue globale comme section toujours visible au-dessus des enfants* (page trop longue — le toggle garde le flux quotidien à 1 clic) ; *taux horaire stocké en base* (dérivé à la demande — une valeur stockée serait déjà obsolète à la prochaine bascule de palier, et l'invariant snapshot est respecté).
 
 **Vérifié** : `tsc --noEmit` propre, 778 tests verts (60 fichiers, dont `mentor-activity.test.ts` ×8 nouveaux), aucune migration nouvelle.
+
+## Décision #84 : Rhétorique produit & promesse de développement sur les pages publiques (2026-08-20, PR #113)
+
+**✅ IMPLÉMENTÉE (PR #113, commit `5462ce9`)** — recentrage du message de positionnement sur l'ensemble des pages publiques (Accueil, Guides, Auth, Landing).
+1. **Passage de « détection/observation passive » à « accompagnement & développement actif »** : abandon des formulations passives (« cartographier », « observer ») au profit d'une promesse forte (« Comprendre votre enfant. Développer ses capacités. Construire son avenir. »). L'accent est mis sur la transformation du savoir en action et l'éveil du sens pratique.
+2. **Harmonisation des cartes de partage social (OpenGraph 1200×630)** : standardisation des balises et images de prévisualisation pour Twitter/LinkedIn/WhatsApp.
+
+## Décision #85 : Audit de responsivité globale (Modales, Popovers, Tableaux) (2026-08-22, commit `ed9fd87`)
+
+**✅ IMPLÉMENTÉE (commit `ed9fd87`)** — audit transversal UX/UI sur toutes les résolutions mobiles et desktop.
+1. **Résolution des débordements (Overflow)** : ajustement des conteneurs, modales, dialogs et popovers sur petits écrans (iPhone SE, Android 360px).
+2. **Tableaux de bord et listes** : défilement horizontal fluide et pagination responsive sur les tableaux admin, les listes de profils et l'annuaire mentor.
+3. **Typographie fluide et padding** : calibrage des marges de sécurité et des cibles tactiles (44px minimum) selon les critères ergonomiques.
+
+## Décision #86 : Stratégie de contenu SEO/GEO/AEO — Guides Siphonneurs & Citabilité IA (2026-08-24, commits `8604c96`, `9c7d9f4`, `e7608ac`)
+
+**✅ IMPLÉMENTÉE (2026-08-24, branche `feat/ui-responsiveness-audit`)** — création de 8 guides siphonneurs ciblés sur les requêtes à fort volume de recherche parentale, conformes à l'intégrité pédagogique de Génizio, avec architecture AEO / GEO optimisée.
+1. **8 Guides Siphonneurs (requêtes volumiques & intention de recherche)** :
+   - `/guides/test-de-personnalite-enfant-talents` (test de personnalité, quiz psychologie, MBTI junior)
+   - `/guides/test-orientation-metier-enfant-futur` (test orientation, métier d'avenir, IA au collège)
+   - `/guides/choix-parcoursup-parcours-scolaire-enfant` (Parcoursup, choix de filière, voeux)
+   - `/guides/sac-a-dos-marques-challenge-creativite-enfant` (pression des marques, autonomie, créativité manuelle)
+   - `/guides/quelle-librairie-choisir-lieux-creativite-enfant` (librairies, éveil culturel, curiosité)
+   - `/guides/autisme-tdah-apprentissage-forces-reelles` (neurodiversité, TDAH, TSA, forces cognitives)
+   - `/guides/ecrans-tiktok-youtube-talent-ecriture-realisation` (TikTok/YouTube, passage de spectateur à créateur)
+   - `/guides/jouets-educatifs-kits-scientifiques-placards-maison` (kits Montessori/STEM vs réemploi domestique)
+2. **Règle d'or de l'intégrité pédagogique respectée** : chaque guide capte la requête populaire pour immédiatement recadrer vers l'action concrète, la grille des 9 intelligences d'Howard Gardner et le Passeport de réalisations de Génizio (zéro QCM réducteur, zéro diagnostic médical sauvage).
+3. **Intégration technique & AEO / GEO** :
+   - Schémas JSON-LD `Article`, `BreadcrumbList` et `FAQPage` automatiques (`lib/seo.ts`).
+   - Rendu DOM visible obligatoire : création du composant `@/components/guides/FaqSection.tsx` (accordéon UI) et intégration dans `GuideLayout.tsx` pour éliminer le risque de pénalité Google sur les données structurées invisibles.
+   - Balises `<title>` SEO calibrées sous 60 caractères (évitant la troncature SERP) tout en conservant le grand `<h1>` narratif.
+   - Référencement complet dans `public/llms.txt` et permissions `robots.txt` ouvertes aux crawlers IA (GPTBot, ClaudeBot, Perplexity).

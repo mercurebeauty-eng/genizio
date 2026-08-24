@@ -4,12 +4,22 @@ description: État actuel de l'implémentation — snapshot vérifié contre le 
 metadata:
   type: reference
   status: living-document
-  last_updated: 2026-08-15
+  last_updated: 2026-08-24
 ---
 
 # État du Code
 
-> Vérifié le 2026-08-15 — chantier Admin OS « réalité des coûts IA + dé-doublonnage Commerce » (décision #78). Statut complet dans le Status Overview de [[MEMORY]].
+> Vérifié le 2026-08-24 — chantier Guides Siphonneurs & Optimisations SEO / GEO / AEO (décision #86). Statut complet dans le Status Overview de [[MEMORY]].
+
+## Snapshot du 2026-08-24 — Guides Siphonneurs & Optimisation SEO / GEO / AEO (décision #86)
+
+**Branche** : `feat/ui-responsiveness-audit` — **COMMITÉ & PUSHÉ** (commits `8604c96`, `9c7d9f4`, `e7608ac`).
+
+**Contenu** (détail dans [[genizio-decisions]] #86) :
+- **8 Nouvelles Routes de Guides Siphonneurs** (`src/routes/guides.*.tsx`) : ciblées sur des requêtes de forte volumétrie parentale (personnalité, orientation, Parcoursup, marques, neurodiversité, écrans, Montessori, librairies).
+- **Composant FAQ Visuelle** : `src/components/guides/FaqSection.tsx` (accordéon Radix / shadcn-ui) injecté dans `src/components/guides/GuideLayout.tsx` pour éliminer le risque de pénalités Google relatives aux données structurées invisibles (`FAQPage`).
+- **Méta-titres SEO** : balises `<title>` courtes (< 60 car.) pour le SERP et maintien de H1 éditoriaux riches.
+- **LLM & Crawlers** : mise à jour de `public/llms.txt` et `public/robots.txt`.
 
 ## Snapshot du 2026-08-15 — Admin OS : tarifs IA réels (barème creux/plein DeepSeek), appellations v4, édition produits (décision #78)
 
