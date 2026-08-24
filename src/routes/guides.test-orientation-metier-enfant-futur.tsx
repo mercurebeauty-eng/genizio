@@ -34,7 +34,7 @@ const FAQ = [
 export const Route = createFileRoute("/guides/test-orientation-metier-enfant-futur")({
   head: () => {
     const meta = pageMeta({
-      title: "Test d'orientation et de métier : comment savoir ce qui anime vraiment votre enfant",
+      title: "Test d'orientation collégien : Choisir un métier à l'ère de l'IA",
       description:
         "Avant de faire passer un test d'orientation à votre enfant, découvrez pourquoi les métiers de demain exigent des compétences réelles plutôt qu'une case figée.",
       path: PATH,
@@ -78,6 +78,7 @@ function Guide() {
       updated="24 août 2026"
       readingTime="8 min"
       path={PATH}
+      faq={FAQ}
       related={[
         {
           label: "Test de personnalité pour enfant",

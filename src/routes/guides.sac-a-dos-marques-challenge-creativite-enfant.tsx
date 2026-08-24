@@ -34,7 +34,7 @@ const FAQ = [
 export const Route = createFileRoute("/guides/sac-a-dos-marques-challenge-creativite-enfant")({
   head: () => {
     const meta = pageMeta({
-      title: "Votre enfant réclame un sac de marque ? Le défi créatif et responsabilisant",
+      title: "Enfant et marques de luxe : Comment éveiller sa créativité",
       description:
         "Sac North Face, sacoche Nike ou housse tendance : comment réagir face à la pression des marques scolaires et transformer l'envie en projet d'autonomie génial.",
       path: PATH,
@@ -78,6 +78,7 @@ function Guide() {
       updated="24 août 2026"
       readingTime="7 min"
       path={PATH}
+      faq={FAQ}
       related={[
         {
           label: "Activités manuelles : 15 idées concrètes (4-12 ans)",

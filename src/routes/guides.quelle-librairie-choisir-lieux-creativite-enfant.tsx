@@ -34,7 +34,7 @@ const FAQ = [
 export const Route = createFileRoute("/guides/quelle-librairie-choisir-lieux-creativite-enfant")({
   head: () => {
     const meta = pageMeta({
-      title: "Quelle librairie choisir pour son enfant ? Les vrais lieux d'éveil de la créativité",
+      title: "Éveiller la créativité de l'enfant : l'impact du marché",
       description:
         "Vous cherchez la meilleure librairie jeunesse ou des livres éducatifs ? Découvrez pourquoi le marché, le garage et la cuisine éveillent 10 fois plus son génie.",
       path: PATH,
@@ -78,6 +78,7 @@ function Guide() {
       updated="24 août 2026"
       readingTime="7 min"
       path={PATH}
+      faq={FAQ}
       related={[
         {
           label: "Développer les talents de son enfant en Afrique",
