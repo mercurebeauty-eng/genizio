@@ -67,13 +67,17 @@ export function CampaignLinkCard({
             <img
               src={qrDataUrl}
               alt={`QR code d'inscription pour ${campaignName}`}
+              width="144"
+              height="144"
+              loading="lazy"
+              decoding="async"
               className="size-32 sm:size-36"
             />
           </div>
         )}
         <div className="flex-1 w-full min-w-0">
           <div className="flex items-center gap-2 rounded-2xl border border-ink/10 bg-surface px-4 py-3 mb-3">
-            <code className="text-xs font-mono text-ink/70 truncate flex-1">{url}</code>
+            <code className="text-xs font-mono text-ink/70 truncate flex-1 min-w-0">{url}</code>
           </div>
           <div className="flex gap-2">
             <button

@@ -3,7 +3,12 @@ import { useEffect, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { useSession } from "@/hooks/use-session";
 import { AppHeader } from "@/components/AppHeader";
-import { getMentorDashboard, declareSessionMentor, checkIsActiveMentor, CONTEST_REASONS } from "@/lib/mentors.functions";
+import {
+  getMentorDashboard,
+  declareSessionMentor,
+  checkIsActiveMentor,
+  CONTEST_REASONS,
+} from "@/lib/mentors.functions";
 import {
   getMentorActivityOverview,
   type MentorActivityOverview,
@@ -75,6 +80,7 @@ import {
 } from "lucide-react";
 import { NayaAvatar } from "@/components/NayaAvatar";
 import { MarkdownContent } from "@/components/ui/markdown-content";
+import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover";
 import { GenizioLoader } from "@/components/GenizioLoader";
 import { formatPedagogicalIntention } from "@/lib/pedagogical-intention";
 import { ProofImage } from "@/lib/proof-image";
@@ -619,8 +625,8 @@ function MentorDashboardPage() {
             Espace Mentor réservé
           </h1>
           <p className="text-sm text-ink/60 max-w-sm mx-auto mb-6 leading-relaxed">
-            Cet espace est réservé aux mentors actifs : un compte assigné par
-            l'administration, ou un mode Mentor activé par code dans les paramètres.
+            Cet espace est réservé aux mentors actifs : un compte assigné par l'administration, ou
+            un mode Mentor activé par code dans les paramètres.
           </p>
           <button
             onClick={() => navigate({ to: "/profiles" })}
@@ -723,23 +729,32 @@ function MentorDashboardPage() {
                 </div>
                 {/* Cloche de notifications (V3) — bilan validé/refusé, séance confirmée… */}
                 <div className="relative">
-                  <button
-                    onClick={() => {
-                      setNotifOpen((o) => !o);
-                      void refreshNotifications();
+                  <Popover
+                    open={notifOpen}
+                    onOpenChange={(open) => {
+                      setNotifOpen(open);
+                      if (open) {
+                        void refreshNotifications();
+                      }
                     }}
-                    aria-label="Notifications"
-                    className="relative grid size-10 place-items-center rounded-xl border border-ink/10 bg-surface text-ink/70 hover:bg-stone-100 transition-all cursor-pointer"
                   >
-                    <Bell className="size-4" />
-                    {notifications.filter((n) => !n.read).length > 0 && (
-                      <span className="absolute -right-1 -top-1 grid size-4 place-items-center rounded-full bg-rose-500 text-[9px] font-black text-white">
-                        {notifications.filter((n) => !n.read).length}
-                      </span>
-                    )}
-                  </button>
-                  {notifOpen && (
-                    <div className="absolute right-0 top-12 z-50 w-80 max-w-[85vw] rounded-2xl border border-ink/10 bg-white p-3 shadow-xl animate-in fade-in zoom-in-95 duration-150">
+                    <PopoverTrigger asChild>
+                      <button
+                        aria-label="Notifications"
+                        className="relative grid size-10 place-items-center rounded-xl border border-ink/10 bg-surface text-ink/70 hover:bg-stone-100 transition-all cursor-pointer"
+                      >
+                        <Bell className="size-4" />
+                        {notifications.filter((n) => !n.read).length > 0 && (
+                          <span className="absolute -right-1 -top-1 grid size-4 place-items-center rounded-full bg-rose-500 text-[9px] font-black text-white">
+                            {notifications.filter((n) => !n.read).length}
+                          </span>
+                        )}
+                      </button>
+                    </PopoverTrigger>
+                    <PopoverContent
+                      align="end"
+                      className="z-50 w-80 max-w-[calc(100vw-2rem)] rounded-2xl border border-ink/10 bg-white p-3 shadow-xl"
+                    >
                       <div className="flex items-center justify-between gap-2 mb-2">
                         <p className="flex items-center gap-1.5 text-[10px] font-black uppercase tracking-widest text-ink/60">
                           <Activity className="size-3.5 text-brand" />
@@ -776,7 +791,7 @@ function MentorDashboardPage() {
                                   : n.type === "mentor_session_confirmed"
                                     ? "✅ Séance confirmée par le parent"
                                     : n.type === "mentor_session_contested"
-                                      ? `⚠️ Séance contestée — ${n.payload?.reason ? CONTEST_REASONS[n.payload.reason as keyof typeof CONTEST_REASONS] ?? n.payload.reason : "motif à préciser"}`
+                                      ? `⚠️ Séance contestée — ${n.payload?.reason ? (CONTEST_REASONS[n.payload.reason as keyof typeof CONTEST_REASONS] ?? n.payload.reason) : "motif à préciser"}`
                                       : n.type === "mentor_status_changed"
                                         ? `🏷️ Statut passé à ${n.payload?.to === "suspended" ? "« suspendu »" : n.payload?.to === "warning" ? "« averti »" : "« actif »"}`
                                         : `🔔 ${n.type}`}
@@ -787,8 +802,8 @@ function MentorDashboardPage() {
                           ))}
                         </ul>
                       )}
-                    </div>
-                  )}
+                    </PopoverContent>
+                  </Popover>
                 </div>
               </div>
             )}
@@ -797,7 +812,7 @@ function MentorDashboardPage() {
 
         {/* Bascule Vue d'ensemble / Mes enfants (décision #83) — le mentor consulte
             sa vue globale d'activité ou revient au travail quotidien sur les enfants. */}
-        <div className="mb-6 flex w-fit items-center gap-1 rounded-2xl border border-ink/10 bg-white p-1 shadow-sm">
+        <div className="mb-6 flex w-fit max-w-full items-center gap-1 rounded-2xl border border-ink/10 bg-white p-1 shadow-sm overflow-x-auto no-scrollbar">
           {(["overview", "children"] as const).map((v) => (
             <button
               key={v}
@@ -830,533 +845,549 @@ function MentorDashboardPage() {
         ) : (
           <>
             {fetching ? (
-          <div className="flex justify-center py-20">
-            <Loader2 className="size-6 animate-spin text-brand" />
-          </div>
-        ) : loadError ? (
-          <div className="rounded-3xl border border-dashed border-red-400 bg-red-50 p-16 text-center shadow-sm">
-            <AlertTriangle className="size-16 text-red-400 mx-auto mb-4" />
-            <p className="font-display text-balance text-xl font-bold mb-2 text-red-700">
-              Impossible de charger votre tableau de bord
-            </p>
-            <p className="text-sm text-ink/60">
-              Une erreur est survenue. Vérifiez votre connexion et réessayez, ou rechargez la page.
-            </p>
-          </div>
-        ) : children.length === 0 ? (
-          <div className="rounded-3xl border border-dashed border-ink/20 bg-white/40 p-16 text-center shadow-sm">
-            <Users className="size-16 text-ink/30 mx-auto mb-4" />
-            <p className="font-display text-balance text-xl font-bold mb-2">Aucun enfant assigné</p>
-            <p className="text-sm text-ink/60">
-              Un administrateur Génizio doit vous assigner des profils d'enfants pour que vous
-              puissiez les accompagner.
-            </p>
-          </div>
-        ) : (
-          <div className="grid gap-6">
-            {/* Child Selector — Horizontal scroll bar on Mobile, grid on Desktop */}
-            <div className="min-w-0 space-y-3">
-              <div className="flex items-center justify-between">
-                <h2 className="text-xs font-black uppercase tracking-widest text-ink/60">
-                  Enfants assignés ({children.length})
-                </h2>
-                <span className="text-[10px] font-bold text-ink/40 sm:hidden">
-                  Glissez pour voir tous
-                </span>
+              <div className="flex justify-center py-20">
+                <Loader2 className="size-6 animate-spin text-brand" />
               </div>
-              <div className="flex overflow-x-auto sm:grid sm:grid-cols-2 md:grid-cols-3 gap-3 pb-2 no-scrollbar scroll-smooth">
-                {children.map((child) => {
-                  const guild = getChildGuild(child.talents);
-                  const completed = child.challenges.filter((c) => c.status === "completed").length;
-                  const isActive = child.id === selectedId;
-                  // Seul signal de "nouveau" disponible : pas de notification à l'assignation
-                  // (aucune infra email/SMS dans ce projet) — l'accueil.assignedAt sert de proxy.
-                  const daysSinceAssigned =
-                    (Date.now() - new Date(child.assignedAt).getTime()) / 86400000;
-                  const isNew = daysSinceAssigned <= 7;
-                  return (
-                    <button
-                      key={child.id}
-                      onClick={() => setSelectedId(child.id)}
-                      className={`relative min-w-[200px] sm:min-w-0 text-left rounded-2xl border border-ink/10 p-3.5 shadow-2xs transition-all cursor-pointer ${
-                        isActive
-                          ? "bg-brand text-white border-brand scale-[1.01]"
-                          : "bg-white text-ink hover:bg-surface hover:border-ink/20"
-                      }`}
-                    >
-                      {isNew && (
-                        <span
-                          className={`absolute -top-2 -right-2 rounded-full px-2 py-0.5 text-[9px] font-black uppercase tracking-wider shadow-sm ${
-                            isActive ? "bg-white text-brand" : "bg-brand text-white"
-                          }`}
-                        >
-                          Nouveau
-                        </span>
-                      )}
-                      <div className="flex items-center gap-2 mb-1">
-                        <span className="text-lg">{guild.emoji}</span>
-                        <div className="font-display font-black text-sm truncate">{child.name}</div>
-                      </div>
-                      <div
-                        className={`text-[11px] font-bold ${isActive ? "text-white/80" : "text-ink/60"}`}
-                      >
-                        {child.age} ans · {guild.name}
-                      </div>
-                      <div
-                        className={`text-[11px] mt-1 font-semibold flex items-center justify-between ${isActive ? "text-white/90" : "text-brand"}`}
-                      >
-                        <span>
-                          {completed} / {child.challenges.length} défis
-                        </span>
-                        {completed > 0 && (
-                          <span
-                            className={`text-[9px] px-1.5 py-0.5 rounded-full font-black ${isActive ? "bg-white/20 text-white" : "bg-brand/10 text-brand"}`}
-                          >
-                            Active
-                          </span>
-                        )}
-                      </div>
-                    </button>
-                  );
-                })}
+            ) : loadError ? (
+              <div className="rounded-3xl border border-dashed border-red-400 bg-red-50 p-16 text-center shadow-sm">
+                <AlertTriangle className="size-16 text-red-400 mx-auto mb-4" />
+                <p className="font-display text-balance text-xl font-bold mb-2 text-red-700">
+                  Impossible de charger votre tableau de bord
+                </p>
+                <p className="text-sm text-ink/60">
+                  Une erreur est survenue. Vérifiez votre connexion et réessayez, ou rechargez la
+                  page.
+                </p>
               </div>
-            </div>
-
-            {/* Main — profil de l'enfant sélectionné */}
-            {selected &&
-              (() => {
-                const guild = getChildGuild(selected.talents);
-                const completed = selected.challenges.filter((c) => c.status === "completed");
-                const inProgress = selected.challenges.filter((c) => c.status === "in_progress");
-                const todo = selected.challenges.filter((c) => c.status === "todo");
-
-                return (
-                  <div className="min-w-0 md:col-span-2 space-y-6">
-                    {/* Guild Banner */}
-                    <div
-                      className={`rounded-3xl border border-ink/10 p-5 shadow-xl flex items-center gap-4 ${guild.bgColor}`}
-                    >
-                      <div className="text-5xl">{guild.emoji}</div>
-                      <div>
-                        <p
-                          className={`text-[11px] font-extrabold uppercase tracking-widest mb-0.5 ${guild.color} opacity-70`}
-                        >
-                          Guilde
-                        </p>
-                        <h2
-                          className={`font-display text-balance text-2xl font-black ${guild.color}`}
-                        >
-                          {selected.name} — {guild.name}
-                        </h2>
-                        <p className={`text-sm font-medium italic mt-1 ${guild.color} opacity-80`}>
-                          « {guild.tagline} »
-                        </p>
-                      </div>
-                    </div>
-
-                    {/* Contact parent */}
-                    <div className="rounded-2xl border border-ink/10 bg-white p-4 shadow-sm flex items-center gap-3">
-                      <div className="grid size-9 shrink-0 place-items-center rounded-full bg-brand/10 text-brand">
-                        <Phone className="size-4" />
-                      </div>
-                      <div className="min-w-0">
-                        <p className="text-[10px] font-extrabold uppercase tracking-widest text-ink/40">
-                          Contacter le parent
-                        </p>
-                        {selected.parentPhone ? (
-                          <a
-                            href={`tel:${selected.parentPhone}`}
-                            className="text-sm font-bold text-ink hover:text-brand"
-                          >
-                            {selected.parentPhone}
-                          </a>
-                        ) : (
-                          <p className="text-sm font-semibold text-ink/50 italic">Non renseigné</p>
-                        )}
-                      </div>
-                    </div>
-
-                    {/* Séances (2026-08-15) : déclarer une séance réalisée + planifier un
-                        créneau à venir (le créneau lié alimente la ponctualité du score). */}
-                    <div className="grid grid-cols-2 gap-3">
-                      <button
-                        onClick={() => {
-                          setDeclaringFor(selected.id);
-                          setSessionDate(new Date().toISOString().slice(0, 10));
-                          setSessionTime("");
-                          setSessionNotes("");
-                          setDeclaredSlotId("");
-                        }}
-                        className="flex items-center justify-center gap-2 rounded-2xl bg-ink py-3 text-xs font-bold text-white hover:bg-ink/90 transition-colors cursor-pointer"
-                      >
-                        <CalendarCheck className="size-4" />
-                        Déclarer une séance
-                      </button>
-                      <button
-                        onClick={() => {
-                          setPlanningFor(selected.id);
-                          setPlanDate(new Date().toISOString().slice(0, 10));
-                          setPlanTime("10:00");
-                          setPlanNotes("");
-                        }}
-                        className="flex items-center justify-center gap-2 rounded-2xl border-2 border-ink/15 bg-white py-3 text-xs font-bold text-ink hover:border-brand/40 hover:text-brand transition-colors cursor-pointer"
-                      >
-                        <Clock className="size-4" />
-                        Planifier une séance
-                      </button>
-                    </div>
-
-                    {/* Créneaux planifiés à venir de cet enfant (avec annulation) */}
-                    {(() => {
-                      const childSlots = plannedSlots
-                        .filter((s) => s.child_profile_id === selected.id)
-                        .sort(
-                          (a, b) =>
-                            new Date(a.planned_at).getTime() - new Date(b.planned_at).getTime(),
-                        )
-                        .slice(0, 5);
-                      if (childSlots.length === 0) return null;
+            ) : children.length === 0 ? (
+              <div className="rounded-3xl border border-dashed border-ink/20 bg-white/40 p-16 text-center shadow-sm">
+                <Users className="size-16 text-ink/30 mx-auto mb-4" />
+                <p className="font-display text-balance text-xl font-bold mb-2">
+                  Aucun enfant assigné
+                </p>
+                <p className="text-sm text-ink/60">
+                  Un administrateur Génizio doit vous assigner des profils d'enfants pour que vous
+                  puissiez les accompagner.
+                </p>
+              </div>
+            ) : (
+              <div className="grid gap-6">
+                {/* Child Selector — Horizontal scroll bar on Mobile, grid on Desktop */}
+                <div className="min-w-0 space-y-3">
+                  <div className="flex items-center justify-between">
+                    <h2 className="text-xs font-black uppercase tracking-widest text-ink/60">
+                      Enfants assignés ({children.length})
+                    </h2>
+                    <span className="text-[10px] font-bold text-ink/40 sm:hidden">
+                      Glissez pour voir tous
+                    </span>
+                  </div>
+                  <div className="flex overflow-x-auto sm:grid sm:grid-cols-2 md:grid-cols-3 gap-3 pb-2 no-scrollbar scroll-smooth">
+                    {children.map((child) => {
+                      const guild = getChildGuild(child.talents);
+                      const completed = child.challenges.filter(
+                        (c) => c.status === "completed",
+                      ).length;
+                      const isActive = child.id === selectedId;
+                      // Seul signal de "nouveau" disponible : pas de notification à l'assignation
+                      // (aucune infra email/SMS dans ce projet) — l'accueil.assignedAt sert de proxy.
+                      const daysSinceAssigned =
+                        (Date.now() - new Date(child.assignedAt).getTime()) / 86400000;
+                      const isNew = daysSinceAssigned <= 7;
                       return (
-                        <div className="rounded-2xl border border-ink/10 bg-surface/60 p-4 space-y-2">
-                          <p className="flex items-center gap-1.5 text-[10px] font-black uppercase tracking-widest text-ink/50">
-                            <Clock className="size-3.5 text-brand" />
-                            Créneaux planifiés
-                          </p>
-                          <ul className="space-y-1.5">
-                            {childSlots.map((slot) => (
-                              <li
-                                key={slot.id}
-                                className="flex items-center justify-between gap-2 rounded-xl border border-ink/10 bg-white px-3 py-2"
-                              >
-                                <div className="min-w-0">
-                                  <p className="text-xs font-bold text-ink">
-                                    {new Date(slot.planned_at).toLocaleDateString("fr-FR", {
-                                      weekday: "short",
-                                      day: "numeric",
-                                      month: "long",
-                                    })}{" "}
-                                    ·{" "}
-                                    {new Date(slot.planned_at).toLocaleTimeString("fr-FR", {
-                                      hour: "2-digit",
-                                      minute: "2-digit",
-                                    })}
-                                  </p>
-                                  {slot.notes && (
-                                    <p className="text-[11px] text-ink/50 truncate">
-                                      {slot.notes}
-                                    </p>
-                                  )}
-                                </div>
-                                <button
-                                  onClick={() => void handleCancelSlot(slot.id)}
-                                  title="Annuler ce créneau"
-                                  className="shrink-0 rounded-lg border border-ink/10 px-2 py-1 text-[10px] font-bold text-ink/50 hover:bg-rose-50 hover:text-rose-600 transition-all cursor-pointer"
-                                >
-                                  Annuler
-                                </button>
-                              </li>
-                            ))}
-                          </ul>
-                        </div>
-                      );
-                    })()}
-
-                    {/* Mentor Copilote (décision #74) : onglet Défis (opérateur) | Bilan */}
-                    <div className="flex rounded-2xl border border-ink/10 bg-white p-1 shadow-sm">
-                      {(["defis", "bilan"] as const).map((tab) => (
                         <button
-                          key={tab}
-                          onClick={() => setPanelTab(tab)}
-                          className={`flex-1 rounded-xl px-4 py-2 text-xs font-black uppercase tracking-widest transition-all cursor-pointer ${
-                            panelTab === tab
-                              ? "bg-ink text-white shadow-sm"
-                              : "text-ink/50 hover:text-ink"
+                          key={child.id}
+                          onClick={() => setSelectedId(child.id)}
+                          className={`relative min-w-[200px] sm:min-w-0 text-left rounded-2xl border border-ink/10 p-3.5 shadow-2xs transition-all cursor-pointer ${
+                            isActive
+                              ? "bg-brand text-white border-brand scale-[1.01]"
+                              : "bg-white text-ink hover:bg-surface hover:border-ink/20"
                           }`}
                         >
-                          {tab === "defis" ? "⚙️ Défis" : "📄 Bilan de fin"}
-                        </button>
-                      ))}
-                    </div>
-
-                    {panelTab === "defis" && (
-                      <>
-                        {/* Stats rapides */}
-                        <div className="grid grid-cols-3 gap-4">
-                          {[
-                            {
-                              label: "À faire",
-                              count: todo.length,
-                              icon: ClipboardList,
-                              color: "bg-surface",
-                              iconColor: "text-ink/60",
-                            },
-                            {
-                              label: "En cours",
-                              count: inProgress.length,
-                              icon: Zap,
-                              color: "bg-brand/10",
-                              iconColor: "text-brand",
-                            },
-                            {
-                              label: "Complétés",
-                              count: completed.length,
-                              icon: CheckCircle2,
-                              color: "bg-emerald-50",
-                              iconColor: "text-emerald-600",
-                            },
-                          ].map((stat) => {
-                            const Icon = stat.icon;
-                            return (
-                              <div
-                                key={stat.label}
-                                className={`rounded-2xl border border-ink/10 p-4 text-center shadow-sm ${stat.color} flex flex-col items-center justify-center`}
-                              >
-                                <Icon className={`size-6 mb-1.5 ${stat.iconColor}`} />
-                                <div className="font-display text-balance text-2xl font-black">
-                                  {stat.count}
-                                </div>
-                                <p className="text-[10px] font-bold uppercase tracking-widest text-ink/60 mt-1">
-                                  {stat.label}
-                                </p>
-                              </div>
-                            );
-                          })}
-                        </div>
-
-                        {/* Timeline des défis */}
-                        <div className="rounded-3xl border border-ink/10 bg-white p-6 shadow-xl">
-                          <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
-                            <h3 className="font-display text-balance text-lg font-black flex items-center gap-2">
-                              <Trophy className="size-5 text-brand" />
-                              Défis de {selected.name}
-                            </h3>
-                            {/* Opérateur (enfant accompagné) : le mentor génère les défis
-                            comme le parent — user_id reste le parent, attribution tracée. */}
-                            {selected.accompaniment !== "none" && (
-                              <button
-                                onClick={handleGenerate}
-                                disabled={generatingFor}
-                                className="inline-flex items-center gap-2 rounded-xl bg-brand px-3.5 py-2 text-xs font-black text-white shadow-sm hover:-translate-y-0.5 transition-all disabled:opacity-50 cursor-pointer"
-                              >
-                                {generatingFor ? (
-                                  <Loader2 className="size-4 animate-spin" />
-                                ) : (
-                                  <Sparkles className="size-4" />
-                                )}
-                                Générer 4 défis
-                              </button>
-                            )}
-                          </div>
-                          {selected.challenges.length === 0 ? (
-                            <p className="text-sm text-ink/60 italic">
-                              Aucun défi assigné pour le moment.
-                            </p>
-                          ) : (
-                            <ul className="space-y-3">
-                              {selected.challenges.map((c) => (
-                                <li key={c.id}>
-                                  <button
-                                    onClick={() => {
-                                      setSelectedChallenge(c);
-                                      setNoteDraft("");
-                                    }}
-                                    className="w-full flex items-center justify-between rounded-2xl border border-ink/10 bg-surface px-4 py-3 hover:bg-stone-50 transition-all text-left cursor-pointer"
-                                  >
-                                    <div>
-                                      <p className="text-sm font-bold text-ink hover:text-brand transition-colors">
-                                        {c.title}
-                                      </p>
-                                      <p className="text-xs text-ink/60">{c.domain}</p>
-                                    </div>
-                                    <span
-                                      className={`rounded-full px-2.5 py-1 text-[10px] font-black uppercase tracking-widest border border-ink/10 ${
-                                        c.status === "completed"
-                                          ? "bg-emerald-100 text-emerald-800"
-                                          : c.status === "in_progress"
-                                            ? "bg-brand/10 text-brand"
-                                            : c.status === "not_completed"
-                                              ? "bg-rose-100 text-rose-800"
-                                              : "bg-surface text-ink/60"
-                                      }`}
-                                    >
-                                      {c.status === "completed"
-                                        ? "✅ Complété"
-                                        : c.status === "in_progress"
-                                          ? "⚡ En cours"
-                                          : c.status === "not_completed"
-                                            ? "❌ Non réussi"
-                                            : "📋 À faire"}
-                                    </span>
-                                  </button>
-                                </li>
-                              ))}
-                            </ul>
-                          )}
-                        </div>
-                      </>
-                    )}
-
-                    {/* ── Bilan de fin (décision #74) — le « bilan inclus » du pack ── */}
-                    {panelTab === "bilan" && (
-                      <div className="rounded-3xl border border-ink/10 bg-white p-6 shadow-xl space-y-5">
-                        <div className="flex items-center justify-between gap-3 border-b-2 border-ink pb-4">
-                          <div>
-                            <h3 className="font-display text-balance text-lg font-black flex items-center gap-2">
-                              <FileText className="size-5 text-brand" />
-                              Bilan de fin — {selected.name}
-                            </h3>
-                            <p className="text-xs text-ink/60 mt-0.5">
-                              Le « bilan inclus » du pack : le parent le valide, il devient le
-                              livrable officiel de la période.
-                            </p>
-                          </div>
-                          {reportDraft && (
+                          {isNew && (
                             <span
-                              className={`shrink-0 rounded-full px-2.5 py-1 text-[10px] font-black uppercase tracking-widest border border-ink/10 ${
-                                reportDraft.status === "validated"
-                                  ? "bg-emerald-100 text-emerald-800"
-                                  : reportDraft.status === "submitted"
-                                    ? "bg-amber-100 text-amber-800"
-                                    : reportDraft.status === "rejected"
-                                      ? "bg-rose-100 text-rose-800"
-                                      : "bg-surface text-ink/60"
+                              className={`absolute -top-2 -right-2 rounded-full px-2 py-0.5 text-[9px] font-black uppercase tracking-wider shadow-sm ${
+                                isActive ? "bg-white text-brand" : "bg-brand text-white"
                               }`}
                             >
-                              {reportDraft.status === "validated"
-                                ? "✅ Validé par le parent"
-                                : reportDraft.status === "submitted"
-                                  ? "⏳ En attente du parent"
-                                  : reportDraft.status === "rejected"
-                                    ? "❌ Modifications demandées"
-                                    : "📝 Brouillon"}
+                              Nouveau
                             </span>
                           )}
+                          <div className="flex items-center gap-2 mb-1 min-w-0">
+                            <span className="text-lg shrink-0">{guild.emoji}</span>
+                            <div className="font-display font-black text-sm truncate min-w-0">
+                              {child.name}
+                            </div>
+                          </div>
+                          <div
+                            className={`text-[11px] font-bold ${isActive ? "text-white/80" : "text-ink/60"}`}
+                          >
+                            {child.age} ans · {guild.name}
+                          </div>
+                          <div
+                            className={`text-[11px] mt-1 font-semibold flex items-center justify-between ${isActive ? "text-white/90" : "text-brand"}`}
+                          >
+                            <span>
+                              {completed} / {child.challenges.length} défis
+                            </span>
+                            {completed > 0 && (
+                              <span
+                                className={`text-[9px] px-1.5 py-0.5 rounded-full font-black ${isActive ? "bg-white/20 text-white" : "bg-brand/10 text-brand"}`}
+                              >
+                                Active
+                              </span>
+                            )}
+                          </div>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {/* Main — profil de l'enfant sélectionné */}
+                {selected &&
+                  (() => {
+                    const guild = getChildGuild(selected.talents);
+                    const completed = selected.challenges.filter((c) => c.status === "completed");
+                    const inProgress = selected.challenges.filter(
+                      (c) => c.status === "in_progress",
+                    );
+                    const todo = selected.challenges.filter((c) => c.status === "todo");
+
+                    return (
+                      <div className="min-w-0 md:col-span-2 space-y-6">
+                        {/* Guild Banner */}
+                        <div
+                          className={`rounded-3xl border border-ink/10 p-5 shadow-xl flex items-center gap-4 ${guild.bgColor}`}
+                        >
+                          <div className="text-5xl shrink-0">{guild.emoji}</div>
+                          <div className="min-w-0">
+                            <p
+                              className={`text-[11px] font-extrabold uppercase tracking-widest mb-0.5 ${guild.color} opacity-70`}
+                            >
+                              Guilde
+                            </p>
+                            <h2
+                              className={`font-display text-balance text-2xl font-black ${guild.color}`}
+                            >
+                              {selected.name} — {guild.name}
+                            </h2>
+                            <p
+                              className={`text-sm font-medium italic mt-1 ${guild.color} opacity-80`}
+                            >
+                              « {guild.tagline} »
+                            </p>
+                          </div>
                         </div>
 
-                        {reportDraft?.status === "rejected" && reportDraft.parent_feedback && (
-                          <div className="rounded-2xl border border-rose-200 bg-rose-50 p-4 text-sm text-rose-900">
-                            <p className="text-xs font-black uppercase tracking-wider mb-1 text-rose-800">
-                              Message du parent
-                            </p>
-                            {reportDraft.parent_feedback}
+                        {/* Contact parent */}
+                        <div className="rounded-2xl border border-ink/10 bg-white p-4 shadow-sm flex items-center gap-3">
+                          <div className="grid size-9 shrink-0 place-items-center rounded-full bg-brand/10 text-brand">
+                            <Phone className="size-4" />
                           </div>
-                        )}
+                          <div className="min-w-0">
+                            <p className="text-[10px] font-extrabold uppercase tracking-widest text-ink/40">
+                              Contacter le parent
+                            </p>
+                            {selected.parentPhone ? (
+                              <a
+                                href={`tel:${selected.parentPhone}`}
+                                className="text-sm font-bold text-ink hover:text-brand"
+                              >
+                                {selected.parentPhone}
+                              </a>
+                            ) : (
+                              <p className="text-sm font-semibold text-ink/50 italic">
+                                Non renseigné
+                              </p>
+                            )}
+                          </div>
+                        </div>
 
-                        {reportDraft?.status === "submitted" ? (
-                          <div className="rounded-2xl border border-ink/10 bg-amber-50 p-5 text-center">
-                            <p className="font-display text-base font-black text-amber-900">
-                              Bilan envoyé au parent
-                            </p>
-                            <p className="text-sm text-amber-800/80 mt-1">
-                              En attente de validation. Le parent peut demander des modifications —
-                              vous serez notifié.
-                            </p>
-                          </div>
-                        ) : (
+                        {/* Séances (2026-08-15) : déclarer une séance réalisée + planifier un
+                        créneau à venir (le créneau lié alimente la ponctualité du score). */}
+                        <div className="grid grid-cols-2 gap-3">
+                          <button
+                            onClick={() => {
+                              setDeclaringFor(selected.id);
+                              setSessionDate(new Date().toISOString().slice(0, 10));
+                              setSessionTime("");
+                              setSessionNotes("");
+                              setDeclaredSlotId("");
+                            }}
+                            className="flex items-center justify-center gap-2 rounded-2xl bg-ink py-3 text-xs font-bold text-white hover:bg-ink/90 transition-colors cursor-pointer"
+                          >
+                            <CalendarCheck className="size-4" />
+                            Déclarer une séance
+                          </button>
+                          <button
+                            onClick={() => {
+                              setPlanningFor(selected.id);
+                              setPlanDate(new Date().toISOString().slice(0, 10));
+                              setPlanTime("10:00");
+                              setPlanNotes("");
+                            }}
+                            className="flex items-center justify-center gap-2 rounded-2xl border-2 border-ink/15 bg-white py-3 text-xs font-bold text-ink hover:border-brand/40 hover:text-brand transition-colors cursor-pointer"
+                          >
+                            <Clock className="size-4" />
+                            Planifier une séance
+                          </button>
+                        </div>
+
+                        {/* Créneaux planifiés à venir de cet enfant (avec annulation) */}
+                        {(() => {
+                          const childSlots = plannedSlots
+                            .filter((s) => s.child_profile_id === selected.id)
+                            .sort(
+                              (a, b) =>
+                                new Date(a.planned_at).getTime() - new Date(b.planned_at).getTime(),
+                            )
+                            .slice(0, 5);
+                          if (childSlots.length === 0) return null;
+                          return (
+                            <div className="rounded-2xl border border-ink/10 bg-surface/60 p-4 space-y-2">
+                              <p className="flex items-center gap-1.5 text-[10px] font-black uppercase tracking-widest text-ink/50">
+                                <Clock className="size-3.5 text-brand" />
+                                Créneaux planifiés
+                              </p>
+                              <ul className="space-y-1.5">
+                                {childSlots.map((slot) => (
+                                  <li
+                                    key={slot.id}
+                                    className="flex items-center justify-between gap-2 rounded-xl border border-ink/10 bg-white px-3 py-2"
+                                  >
+                                    <div className="min-w-0">
+                                      <p className="text-xs font-bold text-ink">
+                                        {new Date(slot.planned_at).toLocaleDateString("fr-FR", {
+                                          weekday: "short",
+                                          day: "numeric",
+                                          month: "long",
+                                        })}{" "}
+                                        ·{" "}
+                                        {new Date(slot.planned_at).toLocaleTimeString("fr-FR", {
+                                          hour: "2-digit",
+                                          minute: "2-digit",
+                                        })}
+                                      </p>
+                                      {slot.notes && (
+                                        <p className="text-[11px] text-ink/50 truncate">
+                                          {slot.notes}
+                                        </p>
+                                      )}
+                                    </div>
+                                    <button
+                                      onClick={() => void handleCancelSlot(slot.id)}
+                                      title="Annuler ce créneau"
+                                      className="shrink-0 rounded-lg border border-ink/10 px-2 py-1 text-[10px] font-bold text-ink/50 hover:bg-rose-50 hover:text-rose-600 transition-all cursor-pointer"
+                                    >
+                                      Annuler
+                                    </button>
+                                  </li>
+                                ))}
+                              </ul>
+                            </div>
+                          );
+                        })()}
+
+                        {/* Mentor Copilote (décision #74) : onglet Défis (opérateur) | Bilan */}
+                        <div className="flex rounded-2xl border border-ink/10 bg-white p-1 shadow-sm">
+                          {(["defis", "bilan"] as const).map((tab) => (
+                            <button
+                              key={tab}
+                              onClick={() => setPanelTab(tab)}
+                              className={`flex-1 rounded-xl px-4 py-2 text-xs font-black uppercase tracking-widest transition-all cursor-pointer ${
+                                panelTab === tab
+                                  ? "bg-ink text-white shadow-sm"
+                                  : "text-ink/50 hover:text-ink"
+                              }`}
+                            >
+                              {tab === "defis" ? "⚙️ Défis" : "📄 Bilan de fin"}
+                            </button>
+                          ))}
+                        </div>
+
+                        {panelTab === "defis" && (
                           <>
-                            <div className="grid grid-cols-2 gap-4">
-                              <div>
-                                <label className="text-xs font-black uppercase tracking-widest text-ink/60 mb-2 block">
-                                  Période — début
-                                </label>
-                                <input
-                                  type="date"
-                                  value={reportForm.periodStart}
-                                  onChange={(e) =>
-                                    setReportForm((f) => ({ ...f, periodStart: e.target.value }))
-                                  }
-                                  className="w-full rounded-xl border border-ink/10 bg-surface px-4 py-2.5 text-sm font-bold text-ink outline-none focus:ring-2 focus:ring-brand"
-                                />
-                              </div>
-                              <div>
-                                <label className="text-xs font-black uppercase tracking-widest text-ink/60 mb-2 block">
-                                  Période — fin
-                                </label>
-                                <input
-                                  type="date"
-                                  value={reportForm.periodEnd}
-                                  onChange={(e) =>
-                                    setReportForm((f) => ({ ...f, periodEnd: e.target.value }))
-                                  }
-                                  className="w-full rounded-xl border border-ink/10 bg-surface px-4 py-2.5 text-sm font-bold text-ink outline-none focus:ring-2 focus:ring-brand"
-                                />
-                              </div>
+                            {/* Stats rapides */}
+                            <div className="grid grid-cols-3 gap-4">
+                              {[
+                                {
+                                  label: "À faire",
+                                  count: todo.length,
+                                  icon: ClipboardList,
+                                  color: "bg-surface",
+                                  iconColor: "text-ink/60",
+                                },
+                                {
+                                  label: "En cours",
+                                  count: inProgress.length,
+                                  icon: Zap,
+                                  color: "bg-brand/10",
+                                  iconColor: "text-brand",
+                                },
+                                {
+                                  label: "Complétés",
+                                  count: completed.length,
+                                  icon: CheckCircle2,
+                                  color: "bg-emerald-50",
+                                  iconColor: "text-emerald-600",
+                                },
+                              ].map((stat) => {
+                                const Icon = stat.icon;
+                                return (
+                                  <div
+                                    key={stat.label}
+                                    className={`rounded-2xl border border-ink/10 p-4 text-center shadow-sm ${stat.color} flex flex-col items-center justify-center`}
+                                  >
+                                    <Icon className={`size-6 mb-1.5 ${stat.iconColor}`} />
+                                    <div className="font-display text-balance text-2xl font-black">
+                                      {stat.count}
+                                    </div>
+                                    <p className="text-[10px] font-bold uppercase tracking-widest text-ink/60 mt-1">
+                                      {stat.label}
+                                    </p>
+                                  </div>
+                                );
+                              })}
                             </div>
 
-                            {(
-                              [
-                                [
-                                  "realisations",
-                                  "Réalisations de la période",
-                                  "Les défis complétés, les projets menés, ce que l'enfant a accompli…",
-                                ],
-                                [
-                                  "competencesObservees",
-                                  "Compétences observées",
-                                  "Ce que vous avez vu se développer chez l'enfant (persévérance, curiosité, méthode…)",
-                                ],
-                                [
-                                  "recommandations",
-                                  "Recommandations",
-                                  "Les pistes pour la suite — domaines à explorer, rythme, points d'attention…",
-                                ],
-                              ] as const
-                            ).map(([key, label, placeholder]) => (
-                              <div key={key}>
-                                <label className="text-xs font-black uppercase tracking-widest text-ink/60 mb-2 block">
-                                  {label}
-                                </label>
-                                <textarea
-                                  value={reportForm[key]}
-                                  onChange={(e) =>
-                                    setReportForm((f) => ({ ...f, [key]: e.target.value }))
-                                  }
-                                  rows={4}
-                                  maxLength={5000}
-                                  placeholder={placeholder}
-                                  className="w-full rounded-xl border border-ink/10 bg-surface px-4 py-3 text-sm font-medium text-ink outline-none focus:ring-2 focus:ring-brand"
-                                />
-                              </div>
-                            ))}
-
-                            <div className="border-t-2 border-ink pt-4 flex flex-wrap justify-end gap-2">
-                              <button
-                                onClick={handleSaveReport}
-                                disabled={savingReport}
-                                className="inline-flex items-center gap-2 rounded-2xl border border-ink/10 px-5 py-2.5 text-xs font-bold text-ink hover:bg-stone-100 transition-all disabled:opacity-50 cursor-pointer"
-                              >
-                                {savingReport && <Loader2 className="size-4 animate-spin" />}
-                                Enregistrer le brouillon
-                              </button>
-                              <button
-                                onClick={handleSubmitReport}
-                                disabled={savingReport || submittingReport}
-                                className="inline-flex items-center gap-2 rounded-2xl bg-ink px-5 py-2.5 text-xs font-bold text-white shadow-sm hover:-translate-y-0.5 transition-all disabled:opacity-50 cursor-pointer"
-                              >
-                                {submittingReport ? (
-                                  <Loader2 className="size-4 animate-spin" />
-                                ) : (
-                                  <Send className="size-4" />
+                            {/* Timeline des défis */}
+                            <div className="rounded-3xl border border-ink/10 bg-white p-6 shadow-xl">
+                              <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
+                                <h3 className="font-display text-balance text-lg font-black flex items-center gap-2">
+                                  <Trophy className="size-5 text-brand" />
+                                  Défis de {selected.name}
+                                </h3>
+                                {/* Opérateur (enfant accompagné) : le mentor génère les défis
+                            comme le parent — user_id reste le parent, attribution tracée. */}
+                                {selected.accompaniment !== "none" && (
+                                  <button
+                                    onClick={handleGenerate}
+                                    disabled={generatingFor}
+                                    className="inline-flex items-center gap-2 rounded-xl bg-brand px-3.5 py-2 text-xs font-black text-white shadow-sm hover:-translate-y-0.5 transition-all disabled:opacity-50 cursor-pointer"
+                                  >
+                                    {generatingFor ? (
+                                      <Loader2 className="size-4 animate-spin" />
+                                    ) : (
+                                      <Sparkles className="size-4" />
+                                    )}
+                                    Générer 4 défis
+                                  </button>
                                 )}
-                                Soumettre au parent
-                              </button>
+                              </div>
+                              {selected.challenges.length === 0 ? (
+                                <p className="text-sm text-ink/60 italic">
+                                  Aucun défi assigné pour le moment.
+                                </p>
+                              ) : (
+                                <ul className="space-y-3">
+                                  {selected.challenges.map((c) => (
+                                    <li key={c.id}>
+                                      <button
+                                        onClick={() => {
+                                          setSelectedChallenge(c);
+                                          setNoteDraft("");
+                                        }}
+                                        className="w-full flex items-center justify-between rounded-2xl border border-ink/10 bg-surface px-4 py-3 hover:bg-stone-50 transition-all text-left cursor-pointer"
+                                      >
+                                        <div>
+                                          <p className="text-sm font-bold text-ink hover:text-brand transition-colors">
+                                            {c.title}
+                                          </p>
+                                          <p className="text-xs text-ink/60">{c.domain}</p>
+                                        </div>
+                                        <span
+                                          className={`rounded-full px-2.5 py-1 text-[10px] font-black uppercase tracking-widest border border-ink/10 ${
+                                            c.status === "completed"
+                                              ? "bg-emerald-100 text-emerald-800"
+                                              : c.status === "in_progress"
+                                                ? "bg-brand/10 text-brand"
+                                                : c.status === "not_completed"
+                                                  ? "bg-rose-100 text-rose-800"
+                                                  : "bg-surface text-ink/60"
+                                          }`}
+                                        >
+                                          {c.status === "completed"
+                                            ? "✅ Complété"
+                                            : c.status === "in_progress"
+                                              ? "⚡ En cours"
+                                              : c.status === "not_completed"
+                                                ? "❌ Non réussi"
+                                                : "📋 À faire"}
+                                        </span>
+                                      </button>
+                                    </li>
+                                  ))}
+                                </ul>
+                              )}
                             </div>
                           </>
                         )}
+
+                        {/* ── Bilan de fin (décision #74) — le « bilan inclus » du pack ── */}
+                        {panelTab === "bilan" && (
+                          <div className="rounded-3xl border border-ink/10 bg-white p-6 shadow-xl space-y-5">
+                            <div className="flex items-center justify-between gap-3 border-b-2 border-ink pb-4">
+                              <div>
+                                <h3 className="font-display text-balance text-lg font-black flex items-center gap-2">
+                                  <FileText className="size-5 text-brand" />
+                                  Bilan de fin — {selected.name}
+                                </h3>
+                                <p className="text-xs text-ink/60 mt-0.5">
+                                  Le « bilan inclus » du pack : le parent le valide, il devient le
+                                  livrable officiel de la période.
+                                </p>
+                              </div>
+                              {reportDraft && (
+                                <span
+                                  className={`shrink-0 rounded-full px-2.5 py-1 text-[10px] font-black uppercase tracking-widest border border-ink/10 ${
+                                    reportDraft.status === "validated"
+                                      ? "bg-emerald-100 text-emerald-800"
+                                      : reportDraft.status === "submitted"
+                                        ? "bg-amber-100 text-amber-800"
+                                        : reportDraft.status === "rejected"
+                                          ? "bg-rose-100 text-rose-800"
+                                          : "bg-surface text-ink/60"
+                                  }`}
+                                >
+                                  {reportDraft.status === "validated"
+                                    ? "✅ Validé par le parent"
+                                    : reportDraft.status === "submitted"
+                                      ? "⏳ En attente du parent"
+                                      : reportDraft.status === "rejected"
+                                        ? "❌ Modifications demandées"
+                                        : "📝 Brouillon"}
+                                </span>
+                              )}
+                            </div>
+
+                            {reportDraft?.status === "rejected" && reportDraft.parent_feedback && (
+                              <div className="rounded-2xl border border-rose-200 bg-rose-50 p-4 text-sm text-rose-900">
+                                <p className="text-xs font-black uppercase tracking-wider mb-1 text-rose-800">
+                                  Message du parent
+                                </p>
+                                {reportDraft.parent_feedback}
+                              </div>
+                            )}
+
+                            {reportDraft?.status === "submitted" ? (
+                              <div className="rounded-2xl border border-ink/10 bg-amber-50 p-5 text-center">
+                                <p className="font-display text-base font-black text-amber-900">
+                                  Bilan envoyé au parent
+                                </p>
+                                <p className="text-sm text-amber-800/80 mt-1">
+                                  En attente de validation. Le parent peut demander des
+                                  modifications — vous serez notifié.
+                                </p>
+                              </div>
+                            ) : (
+                              <>
+                                <div className="grid grid-cols-2 gap-4">
+                                  <div>
+                                    <label className="text-xs font-black uppercase tracking-widest text-ink/60 mb-2 block">
+                                      Période — début
+                                    </label>
+                                    <input
+                                      type="date"
+                                      value={reportForm.periodStart}
+                                      onChange={(e) =>
+                                        setReportForm((f) => ({
+                                          ...f,
+                                          periodStart: e.target.value,
+                                        }))
+                                      }
+                                      className="w-full rounded-xl border border-ink/10 bg-surface px-4 py-2.5 text-sm font-bold text-ink outline-none focus:ring-2 focus:ring-brand"
+                                    />
+                                  </div>
+                                  <div>
+                                    <label className="text-xs font-black uppercase tracking-widest text-ink/60 mb-2 block">
+                                      Période — fin
+                                    </label>
+                                    <input
+                                      type="date"
+                                      value={reportForm.periodEnd}
+                                      onChange={(e) =>
+                                        setReportForm((f) => ({ ...f, periodEnd: e.target.value }))
+                                      }
+                                      className="w-full rounded-xl border border-ink/10 bg-surface px-4 py-2.5 text-sm font-bold text-ink outline-none focus:ring-2 focus:ring-brand"
+                                    />
+                                  </div>
+                                </div>
+
+                                {(
+                                  [
+                                    [
+                                      "realisations",
+                                      "Réalisations de la période",
+                                      "Les défis complétés, les projets menés, ce que l'enfant a accompli…",
+                                    ],
+                                    [
+                                      "competencesObservees",
+                                      "Compétences observées",
+                                      "Ce que vous avez vu se développer chez l'enfant (persévérance, curiosité, méthode…)",
+                                    ],
+                                    [
+                                      "recommandations",
+                                      "Recommandations",
+                                      "Les pistes pour la suite — domaines à explorer, rythme, points d'attention…",
+                                    ],
+                                  ] as const
+                                ).map(([key, label, placeholder]) => (
+                                  <div key={key}>
+                                    <label className="text-xs font-black uppercase tracking-widest text-ink/60 mb-2 block">
+                                      {label}
+                                    </label>
+                                    <textarea
+                                      value={reportForm[key]}
+                                      onChange={(e) =>
+                                        setReportForm((f) => ({ ...f, [key]: e.target.value }))
+                                      }
+                                      rows={4}
+                                      maxLength={5000}
+                                      placeholder={placeholder}
+                                      className="w-full rounded-xl border border-ink/10 bg-surface px-4 py-3 text-sm font-medium text-ink outline-none focus:ring-2 focus:ring-brand"
+                                    />
+                                  </div>
+                                ))}
+
+                                <div className="border-t-2 border-ink pt-4 flex flex-wrap justify-end gap-2">
+                                  <button
+                                    onClick={handleSaveReport}
+                                    disabled={savingReport}
+                                    className="inline-flex items-center gap-2 rounded-2xl border border-ink/10 px-5 py-2.5 text-xs font-bold text-ink hover:bg-stone-100 transition-all disabled:opacity-50 cursor-pointer"
+                                  >
+                                    {savingReport && <Loader2 className="size-4 animate-spin" />}
+                                    Enregistrer le brouillon
+                                  </button>
+                                  <button
+                                    onClick={handleSubmitReport}
+                                    disabled={savingReport || submittingReport}
+                                    className="inline-flex items-center gap-2 rounded-2xl bg-ink px-5 py-2.5 text-xs font-bold text-white shadow-sm hover:-translate-y-0.5 transition-all disabled:opacity-50 cursor-pointer"
+                                  >
+                                    {submittingReport ? (
+                                      <Loader2 className="size-4 animate-spin" />
+                                    ) : (
+                                      <Send className="size-4" />
+                                    )}
+                                    Soumettre au parent
+                                  </button>
+                                </div>
+                              </>
+                            )}
+                          </div>
+                        )}
                       </div>
-                    )}
-                  </div>
-                );
-              })()}
-          </div>
-        )}
+                    );
+                  })()}
+              </div>
+            )}
           </>
         )}
       </main>
       {/* Challenge Detail Modal */}
       {selectedChallenge && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-ink/40 p-4 backdrop-blur-sm">
-          <div className="w-full max-w-2xl max-h-[85vh] overflow-y-auto bg-white rounded-3xl border border-ink/10 p-6 md:p-8 shadow-xl animate-in zoom-in-95 duration-200">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-ink/40 p-4 backdrop-blur-sm overflow-y-auto">
+          <div className="w-full max-w-2xl my-auto max-h-[85vh] overflow-y-auto bg-white rounded-3xl border border-ink/10 p-6 md:p-8 shadow-xl animate-in zoom-in-95 duration-200">
             {/* Modal Header */}
             <div className="flex items-start justify-between gap-4 border-b-2 border-ink pb-4 mb-6">
               <div>
@@ -1695,8 +1726,8 @@ function MentorDashboardPage() {
         (() => {
           const child = children.find((c) => c.id === planningFor);
           return (
-            <div className="fixed inset-0 z-50 flex items-center justify-center bg-ink/40 p-4 backdrop-blur-sm">
-              <div className="w-full max-w-md max-h-[85vh] overflow-y-auto bg-white rounded-3xl border border-ink/10 p-6 md:p-8 shadow-xl animate-in zoom-in-95 duration-200">
+            <div className="fixed inset-0 z-50 flex items-center justify-center bg-ink/40 p-4 backdrop-blur-sm overflow-y-auto">
+              <div className="w-full max-w-md my-auto max-h-[85vh] overflow-y-auto bg-white rounded-3xl border border-ink/10 p-6 md:p-8 shadow-xl animate-in zoom-in-95 duration-200">
                 <div className="flex items-start justify-between gap-4 border-b-2 border-ink pb-4 mb-6">
                   <div>
                     <h3 className="font-display text-balance text-xl font-black text-ink">
@@ -1789,8 +1820,8 @@ function MentorDashboardPage() {
         (() => {
           const child = children.find((c) => c.id === declaringFor);
           return (
-            <div className="fixed inset-0 z-50 flex items-center justify-center bg-ink/40 p-4 backdrop-blur-sm">
-              <div className="w-full max-w-md max-h-[85vh] overflow-y-auto bg-white rounded-3xl border border-ink/10 p-6 md:p-8 shadow-xl animate-in zoom-in-95 duration-200">
+            <div className="fixed inset-0 z-50 flex items-center justify-center bg-ink/40 p-4 backdrop-blur-sm overflow-y-auto">
+              <div className="w-full max-w-md my-auto max-h-[85vh] overflow-y-auto bg-white rounded-3xl border border-ink/10 p-6 md:p-8 shadow-xl animate-in zoom-in-95 duration-200">
                 <div className="flex items-start justify-between gap-4 border-b-2 border-ink pb-4 mb-6">
                   <div>
                     <h3 className="font-display text-balance text-xl font-black text-ink">
@@ -1837,8 +1868,8 @@ function MentorDashboardPage() {
                     </div>
                   </div>
                   <p className="-mt-3 text-[11px] text-ink/50">
-                    L'heure réelle de début est comparée à l'heure planifiée du créneau (±30
-                    min) pour votre ponctualité — c'est elle qui alimente votre score.
+                    L'heure réelle de début est comparée à l'heure planifiée du créneau (±30 min)
+                    pour votre ponctualité — c'est elle qui alimente votre score.
                   </p>
 
                   {(() => {
@@ -1891,8 +1922,8 @@ function MentorDashboardPage() {
                           ))}
                         </select>
                         <p className="mt-1.5 text-[11px] text-ink/50">
-                          Liez la séance à son créneau planifié : la date et l'heure réelles
-                          sont pré-remplies — ajustez l'heure si vous avez commencé plus tard.
+                          Liez la séance à son créneau planifié : la date et l'heure réelles sont
+                          pré-remplies — ajustez l'heure si vous avez commencé plus tard.
                         </p>
                       </div>
                     );
@@ -1944,8 +1975,8 @@ function MentorDashboardPage() {
       {notCompletedFor &&
         (() => {
           return (
-            <div className="fixed inset-0 z-50 flex items-center justify-center bg-ink/40 p-4 backdrop-blur-sm">
-              <div className="w-full max-w-md max-h-[85vh] overflow-y-auto bg-white rounded-3xl border border-ink/10 p-6 md:p-8 shadow-xl animate-in zoom-in-95 duration-200">
+            <div className="fixed inset-0 z-50 flex items-center justify-center bg-ink/40 p-4 backdrop-blur-sm overflow-y-auto">
+              <div className="w-full max-w-md my-auto max-h-[85vh] overflow-y-auto bg-white rounded-3xl border border-ink/10 p-6 md:p-8 shadow-xl animate-in zoom-in-95 duration-200">
                 <div className="flex items-start justify-between gap-4 border-b-2 border-ink pb-4 mb-6">
                   <div>
                     <h3 className="font-display text-balance text-xl font-black text-ink">
@@ -2035,8 +2066,8 @@ function MentorDashboardPage() {
           const isDeclarative = proofFor.proof_mode === "declarative";
           const target = proofFor.proof_target as { metric?: string; value?: number } | null;
           return (
-            <div className="fixed inset-0 z-50 flex items-center justify-center bg-ink/40 p-4 backdrop-blur-sm">
-              <div className="w-full max-w-md max-h-[85vh] overflow-y-auto bg-white rounded-3xl border border-ink/10 p-6 md:p-8 shadow-xl animate-in zoom-in-95 duration-200">
+            <div className="fixed inset-0 z-50 flex items-center justify-center bg-ink/40 p-4 backdrop-blur-sm overflow-y-auto">
+              <div className="w-full max-w-md my-auto max-h-[85vh] overflow-y-auto bg-white rounded-3xl border border-ink/10 p-6 md:p-8 shadow-xl animate-in zoom-in-95 duration-200">
                 <div className="flex items-start justify-between gap-4 border-b-2 border-ink pb-4 mb-6">
                   <div>
                     <h3 className="font-display text-balance text-xl font-black text-ink">
@@ -2216,8 +2247,8 @@ function MentorOverview({
             Aucun enfant assigné pour l'instant
           </p>
           <p className="text-sm text-ink/60">
-            Vos revenus, séances et évolutions apparaîtront ici dès qu'un administrateur
-            vous assigne des profils d'enfants.
+            Vos revenus, séances et évolutions apparaîtront ici dès qu'un administrateur vous
+            assigne des profils d'enfants.
           </p>
         </div>
       )}
@@ -2356,9 +2387,7 @@ function MentorOverview({
             />
             <Tooltip
               formatter={(value: any, name: any) =>
-                name === "Gains (F)"
-                  ? [`${formatXofAmount(Number(value))} F`, name]
-                  : [value, name]
+                name === "Gains (F)" ? [`${formatXofAmount(Number(value))} F`, name] : [value, name]
               }
               contentStyle={{
                 borderRadius: 12,
@@ -2468,10 +2497,7 @@ function MentorOverview({
 
                   <div className="mt-3">
                     <div className="h-1.5 rounded-full bg-ink/10">
-                      <div
-                        className="h-full rounded-full bg-brand"
-                        style={{ width: `${pct}%` }}
-                      />
+                      <div className="h-full rounded-full bg-brand" style={{ width: `${pct}%` }} />
                     </div>
                     <p className="mt-1 text-[10px] font-semibold text-ink/50">
                       {child.feedbackCount > 0
@@ -2516,7 +2542,8 @@ function MentorOverview({
               {overview.quality.contestedTotal > 1 ? "s" : ""}
             </span>
           )}
-          {overview.quality.reportsSubmitted + overview.quality.reportsDraft +
+          {overview.quality.reportsSubmitted +
+            overview.quality.reportsDraft +
             overview.quality.reportsRejected >
             0 && (
             <span className="rounded-full border border-amber-200 bg-amber-50 px-3 py-1.5 text-[10px] font-black uppercase tracking-wider text-amber-700">
@@ -2613,9 +2640,7 @@ function PaymentRow({
         </div>
       </div>
       <div className="shrink-0 text-right">
-        <p className="text-sm font-black text-ink leading-tight">
-          {formatXofAmount(totalXof)} F
-        </p>
+        <p className="text-sm font-black text-ink leading-tight">{formatXofAmount(totalXof)} F</p>
         <p className="text-[10px] font-semibold text-ink/50">
           ce mois : {formatXofAmount(monthXof)} F
         </p>

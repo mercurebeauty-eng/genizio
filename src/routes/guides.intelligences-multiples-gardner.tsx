@@ -1,6 +1,13 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { GuideLayout, MedicalDisclaimer } from "@/components/guides/GuideLayout";
-import { pageMeta, jsonLdScript, faqPageJsonLd, breadcrumbJsonLd, absoluteUrl, SITE_URL } from "@/lib/seo";
+import {
+  pageMeta,
+  jsonLdScript,
+  faqPageJsonLd,
+  breadcrumbJsonLd,
+  absoluteUrl,
+  SITE_URL,
+} from "@/lib/seo";
 
 const PATH = "/guides/intelligences-multiples-gardner";
 
@@ -38,15 +45,60 @@ const FAQ = [
 ];
 
 const INTELLIGENCES = [
-  { name: "Linguistique", what: "Manier les mots, à l'oral comme à l'écrit.", signs: "Raconte des histoires spontanément, retient facilement ce qu'il entend, aime argumenter et jouer avec les mots." },
-  { name: "Logico-mathématique", what: "Raisonner, calculer, repérer des régularités.", signs: "Pose des questions sur le pourquoi des choses, aime les énigmes et les stratégies, remarque les incohérences." },
-  { name: "Spatiale", what: "Se représenter les volumes et l'espace.", signs: "Dessine avec justesse, s'oriente facilement, construit sans plan, visualise un objet avant de le faire." },
-  { name: "Corporelle-kinesthésique", what: "Penser avec le corps et les mains.", signs: "Apprend en manipulant, coordination remarquable, imite un geste vu une seule fois, a du mal à rester assis." },
-  { name: "Musicale & créative", what: "Percevoir rythmes, sons et formes.", signs: "Retient les mélodies, marque le rythme sans y penser, invente des variations, sensible aux ambiances." },
-  { name: "Interpersonnelle (sociale)", what: "Comprendre les autres et agir avec eux.", signs: "Repère l'humeur d'autrui, joue le médiateur, organise naturellement le groupe, négocie." },
-  { name: "Intrapersonnelle (émotionnelle)", what: "Se connaître et se réguler.", signs: "Sait nommer ce qu'il ressent, connaît ses limites, préfère parfois travailler seul, se fixe ses propres objectifs." },
-  { name: "Naturaliste", what: "Observer et classer le vivant.", signs: "Distingue les espèces, remarque les changements de la nature, collectionne et trie, s'occupe des animaux ou des plantes." },
-  { name: "Entrepreneuriale (adaptation pratique)", what: "Voir la valeur et passer à l'acte.", signs: "Propose d'échanger ou de vendre, évalue ce que vaut une chose, saisit une occasion, organise pour obtenir un résultat." },
+  {
+    name: "Linguistique",
+    what: "Manier les mots, à l'oral comme à l'écrit.",
+    signs:
+      "Raconte des histoires spontanément, retient facilement ce qu'il entend, aime argumenter et jouer avec les mots.",
+  },
+  {
+    name: "Logico-mathématique",
+    what: "Raisonner, calculer, repérer des régularités.",
+    signs:
+      "Pose des questions sur le pourquoi des choses, aime les énigmes et les stratégies, remarque les incohérences.",
+  },
+  {
+    name: "Spatiale",
+    what: "Se représenter les volumes et l'espace.",
+    signs:
+      "Dessine avec justesse, s'oriente facilement, construit sans plan, visualise un objet avant de le faire.",
+  },
+  {
+    name: "Corporelle-kinesthésique",
+    what: "Penser avec le corps et les mains.",
+    signs:
+      "Apprend en manipulant, coordination remarquable, imite un geste vu une seule fois, a du mal à rester assis.",
+  },
+  {
+    name: "Musicale & créative",
+    what: "Percevoir rythmes, sons et formes.",
+    signs:
+      "Retient les mélodies, marque le rythme sans y penser, invente des variations, sensible aux ambiances.",
+  },
+  {
+    name: "Interpersonnelle (sociale)",
+    what: "Comprendre les autres et agir avec eux.",
+    signs:
+      "Repère l'humeur d'autrui, joue le médiateur, organise naturellement le groupe, négocie.",
+  },
+  {
+    name: "Intrapersonnelle (émotionnelle)",
+    what: "Se connaître et se réguler.",
+    signs:
+      "Sait nommer ce qu'il ressent, connaît ses limites, préfère parfois travailler seul, se fixe ses propres objectifs.",
+  },
+  {
+    name: "Naturaliste",
+    what: "Observer et classer le vivant.",
+    signs:
+      "Distingue les espèces, remarque les changements de la nature, collectionne et trie, s'occupe des animaux ou des plantes.",
+  },
+  {
+    name: "Entrepreneuriale (adaptation pratique)",
+    what: "Voir la valeur et passer à l'acte.",
+    signs:
+      "Propose d'échanger ou de vendre, évalue ce que vaut une chose, saisit une occasion, organise pour obtenir un résultat.",
+  },
 ];
 
 export const Route = createFileRoute("/guides/intelligences-multiples-gardner")({
@@ -68,7 +120,7 @@ export const Route = createFileRoute("/guides/intelligences-multiples-gardner")(
             { name: "Accueil", path: "/" },
             { name: "Guides", path: "/guides" },
             { name: "Intelligences multiples", path: PATH },
-          ])
+          ]),
         ),
         jsonLdScript({
           "@context": "https://schema.org",
@@ -101,8 +153,12 @@ function Guide() {
       intro="Votre enfant ne réussit pas en classe, mais il répare, négocie, chante ou organise ? Ce n'est pas une contradiction : c'est la théorie des intelligences multiples de Howard Gardner — il n'existe pas une seule intelligence mesurée par les notes, mais plusieurs, qui se repèrent à la maison. Voici comment les observer sans étiqueter votre enfant."
       updated="14 août 2026"
       readingTime="8 min"
+      path={PATH}
       related={[
-        { label: "Haut potentiel : les vrais signes", to: "/guides/potentiel-haut-potentiel-enfant" },
+        {
+          label: "Haut potentiel : les vrais signes",
+          to: "/guides/potentiel-haut-potentiel-enfant",
+        },
         { label: "24 activités éducatives (6-12 ans)", to: "/guides/activites-educatives-enfant" },
         { label: "Mon enfant ne tient pas en place", to: "/guides/enfant-agite-concentration" },
       ]}
@@ -110,6 +166,10 @@ function Guide() {
       <img
         src="/guides/og-gardner.jpg"
         alt="Enfants africains explorant différentes formes de créativité et d'intelligences multiples"
+        width="1200"
+        height="630"
+        loading="lazy"
+        decoding="async"
         className="my-6 aspect-video w-full rounded-3xl border border-ink/10 object-cover shadow-lg"
       />
       <h2>D'où vient la théorie</h2>
@@ -132,8 +192,8 @@ function Guide() {
         La liste ci-dessous est l'adaptation pratique utilisée par Génizio : les huit intelligences
         de Gardner, plus une dimension entrepreneuriale, particulièrement présente dans les
         contextes où les enfants côtoient très tôt le commerce et l'artisanat. Pour chaque forme,
-        voici ce qu'elle recouvre et les signes concrets à observer à la maison — sans questionnaire,
-        sans test : juste ce que votre enfant fait spontanément.
+        voici ce qu'elle recouvre et les signes concrets à observer à la maison — sans
+        questionnaire, sans test : juste ce que votre enfant fait spontanément.
       </p>
 
       {INTELLIGENCES.map((i) => (
@@ -150,10 +210,11 @@ function Guide() {
       <h2>Mon enfant est-il surdoué, HPI ou précoce ?</h2>
       <p>
         La question revient souvent quand on découvre que son enfant a des forces peu visibles à
-        l'école. Réponse courte : <strong>les intelligences multiples ne sont pas un test de haut
-        potentiel</strong>. Un enfant surdoué, HPI ou précoce se repère à d'autres signes — avance
-        dans les apprentissages, questionnement intense, sensibilité particulière, ennui en classe —
-        et se confirme par un bilan avec un professionnel. Si vous vous posez cette question, notre{" "}
+        l'école. Réponse courte :{" "}
+        <strong>les intelligences multiples ne sont pas un test de haut potentiel</strong>. Un
+        enfant surdoué, HPI ou précoce se repère à d'autres signes — avance dans les apprentissages,
+        questionnement intense, sensibilité particulière, ennui en classe — et se confirme par un
+        bilan avec un professionnel. Si vous vous posez cette question, notre{" "}
         <a href="/guides/potentiel-haut-potentiel-enfant">guide sur les signes du haut potentiel</a>{" "}
         vous donne les repères d'observation ; mais dans les deux cas, l'observation quotidienne des
         forces de l'enfant reste le meilleur point de départ.
@@ -183,17 +244,23 @@ function Guide() {
       </p>
 
       <div className="my-8 rounded-2xl bg-brand-50 p-6 border border-brand/20">
-        <h3 className="font-bold text-brand text-base mb-2">💡 Le Défi d'Observation Parentale sur 3 Jours</h3>
+        <h3 className="font-bold text-brand text-base mb-2">
+          💡 Le Défi d'Observation Parentale sur 3 Jours
+        </h3>
         <p className="text-sm text-ink/80 leading-relaxed mb-3">
-          Ne faites passer aucun QCM théorique à votre enfant. Pendant 3 jours, observez simplement ce qu'il fait <strong>quand personne ne lui donne de consignes</strong> :
+          Ne faites passer aucun QCM théorique à votre enfant. Pendant 3 jours, observez simplement
+          ce qu'il fait <strong>quand personne ne lui donne de consignes</strong> :
         </p>
         <ul className="text-sm text-ink/80 leading-relaxed space-y-1">
           <li>• Se met-il à fredonner ou taper un rythme ? (Intelligence Musicale)</li>
           <li>• Dessine-t-il les plans de son jeu ? (Intelligence Spatiale)</li>
-          <li>• Organise-t-il les règles pour les autres enfants ? (Intelligence Interpersonnelle)</li>
+          <li>
+            • Organise-t-il les règles pour les autres enfants ? (Intelligence Interpersonnelle)
+          </li>
         </ul>
         <p className="text-sm text-ink/80 leading-relaxed mt-3">
-          Notez ces 3 faits réels. Ce sont vos meilleurs repères pour lui proposer des défis adaptés sur Génizio.
+          Notez ces 3 faits réels. Ce sont vos meilleurs repères pour lui proposer des défis adaptés
+          sur Génizio.
         </p>
       </div>
 
@@ -205,8 +272,8 @@ function Guide() {
           formulaire.
         </li>
         <li>
-          <strong>Chercher les angles morts.</strong> La question la plus productive n'est pas
-          « dans quoi est-il fort ? » mais « à quoi n'a-t-il jamais été exposé ? ». Un talent non
+          <strong>Chercher les angles morts.</strong> La question la plus productive n'est pas «
+          dans quoi est-il fort ? » mais « à quoi n'a-t-il jamais été exposé ? ». Un talent non
           sollicité reste invisible.
         </li>
         <li>
@@ -225,8 +292,8 @@ function Guide() {
       <p>
         Le mécanisme est délibérément orienté vers l'exploration : le moteur repère les
         intelligences les moins travaillées et propose des défis qui utilisent une force existante
-        comme point d'entrée vers ces domaines. Aucun profil n'est figé, aucun verdict n'est
-        affiché à l'enfant.
+        comme point d'entrée vers ces domaines. Aucun profil n'est figé, aucun verdict n'est affiché
+        à l'enfant.
       </p>
 
       <h2>Questions fréquentes</h2>

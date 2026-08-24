@@ -129,7 +129,9 @@ describe("resolveChildAccompaniment", () => {
   it("campagne hors fenêtre (end_date passée) → none", async () => {
     const { db } = makeFakeDb({
       family_coverages: [],
-      season_enrollments: [enrollmentRow({ campaigns: { ...enrollmentRow({}).campaigns, end_date: past } })],
+      season_enrollments: [
+        enrollmentRow({ campaigns: { ...enrollmentRow({}).campaigns, end_date: past } }),
+      ],
     });
     const acc = await resolveChildAccompaniment(db, "c1", now);
     expect(acc.funding).toBe("none");

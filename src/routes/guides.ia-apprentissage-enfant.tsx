@@ -1,6 +1,13 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { GuideLayout } from "@/components/guides/GuideLayout";
-import { pageMeta, jsonLdScript, faqPageJsonLd, breadcrumbJsonLd, absoluteUrl, SITE_URL } from "@/lib/seo";
+import {
+  pageMeta,
+  jsonLdScript,
+  faqPageJsonLd,
+  breadcrumbJsonLd,
+  absoluteUrl,
+  SITE_URL,
+} from "@/lib/seo";
 
 const PATH = "/guides/ia-apprentissage-enfant";
 
@@ -56,7 +63,7 @@ export const Route = createFileRoute("/guides/ia-apprentissage-enfant")({
             { name: "Accueil", path: "/" },
             { name: "Guides", path: "/guides" },
             { name: "IA & apprentissage", path: PATH },
-          ])
+          ]),
         ),
         jsonLdScript({
           "@context": "https://schema.org",
@@ -89,15 +96,26 @@ function Guide() {
       intro="Votre enfant a des devoirs, des leçons à comprendre, des exercices à refaire — et vous n'avez pas toujours le temps ni la méthode. ChatGPT peut devenir un allié précieux pour le soir des devoirs, à condition de savoir l'utiliser : c'est un outil pour l'adulte, pas une nounou pour l'enfant. Voici comment, avec des exemples de demandes concrets."
       updated="14 août 2026"
       readingTime="8 min"
+      path={PATH}
       related={[
-        { label: "Haut potentiel : les vrais signes", to: "/guides/potentiel-haut-potentiel-enfant" },
-        { label: "Les intelligences multiples de Gardner", to: "/guides/intelligences-multiples-gardner" },
+        {
+          label: "Haut potentiel : les vrais signes",
+          to: "/guides/potentiel-haut-potentiel-enfant",
+        },
+        {
+          label: "Les intelligences multiples de Gardner",
+          to: "/guides/intelligences-multiples-gardner",
+        },
         { label: "24 activités éducatives (6-12 ans)", to: "/guides/activites-educatives-enfant" },
       ]}
     >
       <img
         src="/guides/og-ia.jpg"
         alt="Père guidant avec bienveillance sa fille découvrant une application d'apprentissage interactif par IA"
+        width="1200"
+        height="630"
+        loading="lazy"
+        decoding="async"
         className="my-6 aspect-video w-full rounded-3xl border border-ink/10 object-cover shadow-lg"
       />
       <h2>Ce que l'IA fait réellement mieux qu'un parent seul</h2>
@@ -109,11 +127,12 @@ function Guide() {
         seul.
       </p>
       <p>
-        Pour les devoirs, cela se traduit en trois usages concrets : <strong>reformuler une leçon</strong>{" "}
-        que l'enfant n'a pas comprise en classe, <strong>générer des exercices supplémentaires</strong>{" "}
-        du même type que ceux de l'école, et <strong>trouver des exemples de la vie réelle</strong>{" "}
-        qui rendent une notion abstraite concrète. C'est un atout réel — à condition de ne pas
-        confondre « générer l'exercice » et « faire le devoir à la place de l'enfant ».
+        Pour les devoirs, cela se traduit en trois usages concrets :{" "}
+        <strong>reformuler une leçon</strong> que l'enfant n'a pas comprise en classe,{" "}
+        <strong>générer des exercices supplémentaires</strong> du même type que ceux de l'école, et{" "}
+        <strong>trouver des exemples de la vie réelle</strong> qui rendent une notion abstraite
+        concrète. C'est un atout réel — à condition de ne pas confondre « générer l'exercice » et «
+        faire le devoir à la place de l'enfant ».
       </p>
 
       <h2>5 demandes à copier telles quelles pour le soir des devoirs</h2>
@@ -122,33 +141,63 @@ function Guide() {
         fonctionnent, à adapter avec le sujet de votre enfant :
       </p>
       <div className="my-6 rounded-2xl bg-amber-50 p-5 border border-amber-200">
-        <h3 className="font-bold text-amber-950 text-base mb-2">1. Refaire le même type d'exercice</h3>
+        <h3 className="font-bold text-amber-950 text-base mb-2">
+          1. Refaire le même type d'exercice
+        </h3>
         <p className="text-sm text-amber-900 leading-relaxed">
-          <em>« Donne-moi 5 exercices de division comme celui-ci, avec des mangues à partager, pour un enfant de 9 ans. Donne les réponses à la fin. »</em> L'enfant refait le geste en classe, avec un exemple de son quotidien.
+          <em>
+            « Donne-moi 5 exercices de division comme celui-ci, avec des mangues à partager, pour un
+            enfant de 9 ans. Donne les réponses à la fin. »
+          </em>{" "}
+          L'enfant refait le geste en classe, avec un exemple de son quotidien.
         </p>
       </div>
       <div className="my-6 rounded-2xl bg-sky-50 p-5 border border-sky-200">
         <h3 className="font-bold text-sky-950 text-base mb-2">2. Expliquer comme une maman</h3>
         <p className="text-sm text-sky-900 leading-relaxed">
-          <em>« Explique la différence entre un nom et un adjectif à un enfant de 8 ans, comme si tu étais sa maman, avec des exemples qu'on trouve dans une cour de maison. »</em> Le registre change : simple, concret, patient.
+          <em>
+            « Explique la différence entre un nom et un adjectif à un enfant de 8 ans, comme si tu
+            étais sa maman, avec des exemples qu'on trouve dans une cour de maison. »
+          </em>{" "}
+          Le registre change : simple, concret, patient.
         </p>
       </div>
       <div className="my-6 rounded-2xl bg-emerald-50 p-5 border border-emerald-200">
-        <h3 className="font-bold text-emerald-950 text-base mb-2">3. Vérifier sans donner la réponse</h3>
+        <h3 className="font-bold text-emerald-950 text-base mb-2">
+          3. Vérifier sans donner la réponse
+        </h3>
         <p className="text-sm text-emerald-900 leading-relaxed">
-          <em>« Mon fils a répondu que 7 x 8 = 54. Sans lui donner la bonne réponse, propose une question qui l'aide à trouver son erreur tout seul. »</em> L'IA devient un répétiteur qui fait réfléchir, pas une calculatrice qui répond.
+          <em>
+            « Mon fils a répondu que 7 x 8 = 54. Sans lui donner la bonne réponse, propose une
+            question qui l'aide à trouver son erreur tout seul. »
+          </em>{" "}
+          L'IA devient un répétiteur qui fait réfléchir, pas une calculatrice qui répond.
         </p>
       </div>
       <div className="my-6 rounded-2xl bg-purple-50 p-5 border border-purple-200">
-        <h3 className="font-bold text-purple-950 text-base mb-2">4. Un exemple du quartier pour une leçon abstraite</h3>
+        <h3 className="font-bold text-purple-950 text-base mb-2">
+          4. Un exemple du quartier pour une leçon abstraite
+        </h3>
         <p className="text-sm text-purple-900 leading-relaxed">
-          <em>« Trouve 3 exemples de fractions dans un marché en Afrique de l'Ouest (demi, quart, tiers). »</em> L'illustration de la vie réelle ancre la leçon : c'est ce que l'école n'a pas le temps de faire.
+          <em>
+            « Trouve 3 exemples de fractions dans un marché en Afrique de l'Ouest (demi, quart,
+            tiers). »
+          </em>{" "}
+          L'illustration de la vie réelle ancre la leçon : c'est ce que l'école n'a pas le temps de
+          faire.
         </p>
       </div>
       <div className="my-6 rounded-2xl bg-rose-50 p-5 border border-rose-200">
-        <h3 className="font-bold text-rose-950 text-base mb-2">5. Préparer une récitation ou un exposé</h3>
+        <h3 className="font-bold text-rose-950 text-base mb-2">
+          5. Préparer une récitation ou un exposé
+        </h3>
         <p className="text-sm text-rose-900 leading-relaxed">
-          <em>« Aide-moi à préparer un exposé de 3 minutes sur le climat avec un enfant de 10 ans : 3 idées principales, une phrase d'introduction qui accroche, et une question pour la classe. »</em> L'enfant récite et explique avec ses mots — pas ceux de la machine.
+          <em>
+            « Aide-moi à préparer un exposé de 3 minutes sur le climat avec un enfant de 10 ans : 3
+            idées principales, une phrase d'introduction qui accroche, et une question pour la
+            classe. »
+          </em>{" "}
+          L'enfant récite et explique avec ses mots — pas ceux de la machine.
         </p>
       </div>
 
@@ -160,14 +209,14 @@ function Guide() {
       <ul>
         <li>
           <strong>Une confiance mal placée.</strong> Ces outils formulent une réponse fausse avec la
-          même assurance qu'une réponse juste. Un enfant qui n'a pas encore les outils critiques pour
-          repérer la différence peut apprendre une erreur avec autant de conviction qu'un fait
+          même assurance qu'une réponse juste. Un enfant qui n'a pas encore les outils critiques
+          pour repérer la différence peut apprendre une erreur avec autant de conviction qu'un fait
           vérifié.
         </li>
         <li>
           <strong>La tricherie facile.</strong> Demander à l'IA de rédiger une rédaction ou de
-          résoudre un problème ne demande aucun effort — et n'apprend rien. L'enfant qui recopie sans
-          comprendre se retrouve doublement perdant : il n'a pas appris, et il croit savoir.
+          résoudre un problème ne demande aucun effort — et n'apprend rien. L'enfant qui recopie
+          sans comprendre se retrouve doublement perdant : il n'a pas appris, et il croit savoir.
         </li>
         <li>
           <strong>Une conversation sans garde-fou adapté.</strong> Un assistant généraliste ne sait
@@ -175,9 +224,9 @@ function Guide() {
           ses limites en conséquence.
         </li>
         <li>
-          <strong>Le passage au virtuel plutôt qu'au concret.</strong> Une conversation qui reste une
-          conversation n'entraîne aucune compétence transférable dans le monde réel — construire,
-          présenter, manipuler restent des apprentissages d'un autre ordre.
+          <strong>Le passage au virtuel plutôt qu'au concret.</strong> Une conversation qui reste
+          une conversation n'entraîne aucune compétence transférable dans le monde réel —
+          construire, présenter, manipuler restent des apprentissages d'un autre ordre.
         </li>
         <li>
           <strong>Les données de l'enfant.</strong> Un outil qui collecte des informations sur un
@@ -189,19 +238,19 @@ function Guide() {
       <h2>Les règles d'or pour les devoirs avec ChatGPT</h2>
       <ol>
         <li>
-          <strong>L'adulte dialogue, jamais l'enfant seul.</strong> Pour un enfant de moins de 12 ans,
-          c'est vous qui posez les questions et qui adaptez les réponses. L'IA ne remplace pas votre
-          présence : elle la complète.
+          <strong>L'adulte dialogue, jamais l'enfant seul.</strong> Pour un enfant de moins de 12
+          ans, c'est vous qui posez les questions et qui adaptez les réponses. L'IA ne remplace pas
+          votre présence : elle la complète.
         </li>
         <li>
           <strong>L'enfant essaie avant, l'IA après.</strong> On demande à l'IA d'expliquer ou de
-          vérifier après un premier essai de l'enfant. Jamais avant : un enfant qui reçoit la réponse
-          sans chercher n'apprend pas.
+          vérifier après un premier essai de l'enfant. Jamais avant : un enfant qui reçoit la
+          réponse sans chercher n'apprend pas.
         </li>
         <li>
           <strong>Jamais de recopiage.</strong> Ce que l'IA produit doit être reformulé par l'enfant
-          avec ses propres mots — à l'oral ou à l'écrit. S'il ne peut pas l'expliquer, c'est qu'il n'a
-          pas compris, et on recommence autrement.
+          avec ses propres mots — à l'oral ou à l'écrit. S'il ne peut pas l'expliquer, c'est qu'il
+          n'a pas compris, et on recommence autrement.
         </li>
         <li>
           <strong>Vérifier les réponses.</strong> L'IA se trompe parfois avec assurance. Pour les

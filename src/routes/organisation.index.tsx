@@ -394,7 +394,7 @@ function OrganisationDashboard() {
                   « {n.observation} »
                 </blockquote>
                 <figcaption className="mt-3 pt-3 border-t border-ink/5 flex items-center justify-between gap-2">
-                  <span className="text-xs font-black text-brand truncate">{n.title}</span>
+                  <span className="text-xs font-black text-brand truncate min-w-0 flex-1">{n.title}</span>
                   <span className="rounded-full bg-surface px-2 py-0.5 text-[10px] font-black uppercase tracking-wider text-ink/50 shrink-0">
                     {n.domain}
                   </span>
@@ -454,15 +454,15 @@ function OrganisationDashboard() {
             {mentors.length === 0 && (
               <div className="p-6 text-center rounded-2xl border border-dashed border-ink/10 bg-white/40">
                 <p className="text-xs font-bold text-ink/50">
-                  Aucun mentor assigné — cliquez sur « Assigner un mentor » pour confier
-                  des enfants de la cohorte.
+                  Aucun mentor assigné — cliquez sur « Assigner un mentor » pour confier des enfants
+                  de la cohorte.
                 </p>
               </div>
             )}
           </div>
 
           <div className="hidden sm:block overflow-x-auto">
-            <table className="w-full text-left">
+            <table className="w-full min-w-[480px] text-left">
               <thead className="bg-surface/50 border-b border-ink/5">
                 <tr>
                   <th className="p-4 px-6 text-xs font-extrabold uppercase tracking-widest text-ink/50">
@@ -477,11 +477,11 @@ function OrganisationDashboard() {
                 {mentors.map((s) => (
                   <tr key={s.email} className="hover:bg-surface/30 transition-colors">
                     <td className="p-4 px-6">
-                      <div className="flex items-center gap-3">
+                      <div className="flex items-center gap-3 min-w-0">
                         <div className="grid size-9 place-items-center rounded-full bg-gradient-to-br from-brand to-indigo-600 text-white font-black text-sm shrink-0">
                           {(s.email.charAt(0) || "?").toUpperCase()}
                         </div>
-                        <span className="font-bold text-sm text-ink">{s.email}</span>
+                        <span className="font-bold text-sm text-ink truncate min-w-0">{s.email}</span>
                       </div>
                     </td>
                     <td className="p-4 px-6 text-right">
@@ -492,8 +492,7 @@ function OrganisationDashboard() {
                             style={{
                               width: `${Math.min(
                                 100,
-                                (s.assignedCount / Math.max(1, stats?.totalMentorQuota ?? 1)) *
-                                  100,
+                                (s.assignedCount / Math.max(1, stats?.totalMentorQuota ?? 1)) * 100,
                               )}%`,
                             }}
                           />
@@ -624,8 +623,8 @@ function ManagerCodesModal({ campaign, onClose }: { campaign: Campaign; onClose:
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-ink/40 backdrop-blur-sm">
-      <div className="bg-white rounded-[2rem] w-full max-w-3xl max-h-[85vh] flex flex-col p-6 shadow-2xl animate-in fade-in zoom-in-95 duration-200">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-ink/40 backdrop-blur-sm overflow-y-auto">
+      <div className="bg-white my-auto rounded-[2rem] w-full max-w-3xl max-h-[85vh] flex flex-col p-6 shadow-2xl animate-in fade-in zoom-in-95 duration-200">
         <div className="flex items-center justify-between pb-4 border-b border-ink/10">
           <div>
             <h3 className="font-display font-black text-xl text-ink flex items-center gap-2">
@@ -758,8 +757,8 @@ function AssignMentorModal({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-ink/40 backdrop-blur-sm animate-in fade-in duration-200">
-      <div className="bg-white rounded-[2.5rem] w-full max-w-md p-6 sm:p-8 shadow-2xl relative flex flex-col max-h-[90vh] overflow-y-auto">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-ink/40 backdrop-blur-sm overflow-y-auto animate-in fade-in duration-200">
+      <div className="bg-white my-auto rounded-[2.5rem] w-full max-w-md p-6 sm:p-8 shadow-2xl relative flex flex-col max-h-[90vh] overflow-y-auto">
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-3">
             <div className="size-10 rounded-2xl bg-brand/10 text-brand flex items-center justify-center">
@@ -949,7 +948,7 @@ function EducatorsSection({
             </div>
 
             <div className="hidden sm:block overflow-x-auto">
-              <table className="w-full text-left">
+              <table className="w-full min-w-[480px] text-left">
                 <thead className="bg-surface/50 border-b border-ink/5">
                   <tr>
                     <th className="p-4 px-6 text-xs font-extrabold uppercase tracking-widest text-ink/50">
@@ -966,7 +965,7 @@ function EducatorsSection({
                 <tbody className="divide-y divide-ink/5">
                   {educators.map((e) => (
                     <tr key={e.id} className="hover:bg-surface/30 transition-colors">
-                      <td className="p-4 px-6 font-bold text-sm text-ink">{e.email}</td>
+                      <td className="p-4 px-6 font-bold text-sm text-ink truncate min-w-0">{e.email}</td>
                       <td className="p-4 px-6 text-sm text-ink/60">
                         {new Date(e.added_at).toLocaleDateString("fr-FR")}
                       </td>
@@ -1040,7 +1039,7 @@ function AddEducatorModal({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-ink/40 backdrop-blur-sm animate-in fade-in duration-200">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-ink/40 backdrop-blur-sm overflow-y-auto animate-in fade-in duration-200">
       <div className="bg-white rounded-[2.5rem] w-full max-w-md p-6 sm:p-8 shadow-2xl relative flex flex-col max-h-[90vh] overflow-y-auto">
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-3">
@@ -1137,21 +1136,22 @@ function ImpactReportModal({
   });
 
   return (
-    <div className="fixed inset-0 z-50 flex items-start sm:items-center justify-center p-0 sm:p-4 bg-ink/40 backdrop-blur-sm print:bg-white print:p-0">
-      <div className="bg-white w-full sm:max-w-2xl sm:rounded-[2rem] max-h-[100vh] sm:max-h-[90vh] flex flex-col shadow-2xl print:shadow-none print:max-h-none">
+    <div className="fixed inset-0 z-50 flex items-start sm:items-center justify-center p-0 sm:p-4 bg-ink/40 backdrop-blur-sm overflow-y-auto print:bg-white print:p-0">
+      <div className="bg-white my-auto w-full sm:max-w-2xl sm:rounded-[2rem] max-h-[100vh] sm:max-h-[90vh] flex flex-col shadow-2xl print:shadow-none print:max-h-none">
         {/* Barre d'action — jamais imprimée */}
-        <div className="print:hidden flex items-center justify-between p-4 sm:p-6 border-b border-ink/10 shrink-0">
+        <div className="print:hidden flex flex-wrap items-center justify-between gap-2 p-4 sm:p-6 border-b border-ink/10 shrink-0">
           <h3 className="font-display font-black text-lg text-ink">Aperçu du rapport</h3>
           <div className="flex items-center gap-2">
             <button
               onClick={() => window.print()}
-              className="inline-flex items-center gap-2 px-4 py-2.5 rounded-2xl font-black text-xs uppercase tracking-wider bg-brand text-white hover:bg-brand/90 transition-colors cursor-pointer"
+              className="inline-flex items-center gap-2 px-4 py-2.5 rounded-2xl font-black text-xs uppercase tracking-wider bg-brand text-white hover:bg-brand/90 transition-colors cursor-pointer shrink-0"
             >
-              <Printer className="size-4" /> Imprimer / Exporter en PDF
+              <Printer className="size-4 shrink-0" />
+              <span>Imprimer / PDF</span>
             </button>
             <button
               onClick={onClose}
-              className="p-2 bg-surface rounded-full text-ink/60 hover:text-ink transition-colors cursor-pointer"
+              className="p-2 bg-surface rounded-full text-ink/60 hover:text-ink transition-colors cursor-pointer shrink-0"
             >
               <X className="size-5" />
             </button>
@@ -1214,7 +1214,7 @@ function ImpactReportModal({
             <div className="space-y-2.5 mb-8">
               {talentEntries.map(([key, value]) => (
                 <div key={key} className="flex items-center gap-3">
-                  <span className="w-40 shrink-0 text-xs font-black text-ink">
+                  <span className="w-28 sm:w-40 shrink-0 text-xs font-black text-ink truncate">
                     {TALENT_KEY_LABELS[key] || key}
                   </span>
                   <div className="flex-1 h-3 rounded-full bg-surface overflow-hidden border border-ink/5">

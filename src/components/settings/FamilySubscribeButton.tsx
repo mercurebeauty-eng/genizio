@@ -31,11 +31,7 @@ export function FamilySubscribeButton() {
       disabled={subscribing}
       className="press-brand flex w-full items-center justify-center gap-2 rounded-full bg-brand py-3.5 font-bold text-sm text-white shadow-md hover:shadow-lg hover:-translate-y-0.5 active:translate-y-0 active:shadow-sm transition-all disabled:opacity-60 disabled:cursor-not-allowed"
     >
-      {subscribing ? (
-        <Loader2 className="size-4 animate-spin" />
-      ) : (
-        <Sparkles className="size-4" />
-      )}
+      {subscribing ? <Loader2 className="size-4 animate-spin" /> : <Sparkles className="size-4" />}
       S'abonner pour la famille
     </button>
   );

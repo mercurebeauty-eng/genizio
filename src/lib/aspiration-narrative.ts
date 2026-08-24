@@ -25,7 +25,8 @@ export function formatAspirationChildLine(h: AspirationHypothesis): string {
 
 /** Ligne pour le PARENT (Portfolio) — jamais alarmiste, jamais un verdict. */
 export function formatAspirationParentLine(h: AspirationHypothesis, childName: string): string {
-  const sourceNote = h.source === "enfant" ? "déclarée par l'enfant lui-même" : "déclarée par le parent";
+  const sourceNote =
+    h.source === "enfant" ? "déclarée par l'enfant lui-même" : "déclarée par le parent";
   switch (h.status) {
     case "untested":
       return `« ${h.label} » (${sourceNote}) — Naya explore cet univers avec ${childName} ; rien n'est conclu, l'expérience décidera.`;

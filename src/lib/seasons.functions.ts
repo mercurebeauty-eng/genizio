@@ -44,7 +44,8 @@ export const DEFAULT_FALLBACK_SEASON: Season = {
   title: "Saison 1 : Les Penseurs & Inventeurs",
   subtitle: "Trimestre d'Éléments (3 Mois)",
   theme: "Exploration des 9 Intelligences Multiples & Physique du Quotidien",
-  description: "Un parcours immersif de 3 mois pour explorer l'ensemble des intelligences de Gardner, construire son portfolio d'artefacts et débloquer son passeport d'excellence.",
+  description:
+    "Un parcours immersif de 3 mois pour explorer l'ensemble des intelligences de Gardner, construire son portfolio d'artefacts et débloquer son passeport d'excellence.",
   duration_months: 3,
   start_date: new Date().toISOString(),
   end_date: new Date(Date.now() + 90 * 24 * 60 * 60 * 1000).toISOString(),
@@ -115,7 +116,7 @@ async function fetchActiveSeasonFromDb(supabaseAdmin: any): Promise<Season> {
 }
 
 export const getActiveSeason = createServerFn({ method: "GET" }).handler(async () => {
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
   return fetchActiveSeasonFromDb(supabaseAdmin);
 });
 
@@ -127,7 +128,7 @@ export const getActiveSeason = createServerFn({ method: "GET" }).handler(async (
 export function resolveEnrollmentWindow(
   enrolledAt: string,
   seasonDurationMonths: number,
-  campaign: { start_date: string; end_date: string } | null | undefined
+  campaign: { start_date: string; end_date: string } | null | undefined,
 ): { start: Date; end: Date } {
   if (campaign) {
     return { start: new Date(campaign.start_date), end: new Date(campaign.end_date) };
@@ -180,7 +181,7 @@ export const getChildEnrolledSeason = createServerFn({ method: "GET" })
       const { start, end } = resolveEnrollmentWindow(
         enrollment.enrolled_at,
         season.duration_months,
-        enrollment.campaign_id ? enrollment.campaigns : null
+        enrollment.campaign_id ? enrollment.campaigns : null,
       );
 
       if (new Date() > end) return null; // fenêtre expirée
@@ -265,7 +266,7 @@ export const createSponsorshipToken = createServerFn({ method: "POST" })
         months: z.number().int().min(1).max(12).default(3),
         currency: z.enum(["EUR", "XOF"]).default("XOF"),
       })
-      .parse(input)
+      .parse(input),
   )
   .handler(async ({ data }: { data: any }) => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
@@ -298,7 +299,7 @@ export const redeemSponsorshipToken = createServerFn({ method: "POST" })
         code: z.string().min(4),
         childId: z.string().uuid(),
       })
-      .parse(input)
+      .parse(input),
   )
   .handler(async ({ data, context }: { data: any; context: any }) => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
@@ -324,7 +325,9 @@ export const redeemSponsorshipToken = createServerFn({ method: "POST" })
     // confirmer manuellement le paiement (WhatsApp/Mobile Money) via confirmSponsorshipPaymentAdmin
     // avant que ce code ne devienne utilisable, même pattern que les commandes boutique.
     if (!token.payment_confirmed) {
-      throw new Error("Ce parrainage est en attente de confirmation de paiement par l'équipe Génizio. Vous recevrez une notification dès son activation.");
+      throw new Error(
+        "Ce parrainage est en attente de confirmation de paiement par l'équipe Génizio. Vous recevrez une notification dès son activation.",
+      );
     }
 
     // Décision utilisateur (2026-08-05) : on ne peut rédimer un code que sur un enfant de SON
@@ -445,7 +448,9 @@ export const redeemSponsorshipToken = createServerFn({ method: "POST" })
           .eq("id", token.id)
           .eq("is_redeemed", true);
         console.error("Error creating sponsorship credit on redeem:", credErr);
-        throw new Error("Erreur lors de l'activation du code. Le code n'a pas été consommé, réessayez.");
+        throw new Error(
+          "Erreur lors de l'activation du code. Le code n'a pas été consommé, réessayez.",
+        );
       }
 
       // V4 (Vague A) : la couverture family_coverages suit la même fenêtre (upsert idempotent).
@@ -519,7 +524,9 @@ export const listSponsorshipsAdmin = createServerFn({ method: "GET" })
         // recherche.
         const safe = term.replace(/[,()]/g, "");
         const like = `%${safe}%`;
-        q = q.or(`sponsor_name.ilike.${like},sponsor_email.ilike.${like},code.ilike.${like},target_child_name.ilike.${like}`);
+        q = q.or(
+          `sponsor_name.ilike.${like},sponsor_email.ilike.${like},code.ilike.${like},target_child_name.ilike.${like}`,
+        );
       }
       if (data.paymentFilter === "confirmed") q = q.eq("payment_confirmed", true);
       if (data.paymentFilter === "unconfirmed") q = q.eq("payment_confirmed", false);
@@ -529,7 +536,10 @@ export const listSponsorshipsAdmin = createServerFn({ method: "GET" })
     };
 
     const { count, error: countError } = await applyFilters(
-      (supabaseAdmin as any).from("sponsorship_tokens").select("id", { count: "exact", head: true }).is("campaign_id", null)
+      (supabaseAdmin as any)
+        .from("sponsorship_tokens")
+        .select("id", { count: "exact", head: true })
+        .is("campaign_id", null),
     );
     if (countError) throw new Error(countError.message);
 
@@ -538,7 +548,13 @@ export const listSponsorshipsAdmin = createServerFn({ method: "GET" })
     const page = Math.min(data.page, totalPages);
 
     if (total === 0) {
-      return { data: [], total: 0, page: 1, pageSize: data.pageSize, totalPages: 1 } as PaginatedResult<SponsorshipToken>;
+      return {
+        data: [],
+        total: 0,
+        page: 1,
+        pageSize: data.pageSize,
+        totalPages: 1,
+      } as PaginatedResult<SponsorshipToken>;
     }
 
     const from = (page - 1) * data.pageSize;
@@ -550,7 +566,7 @@ export const listSponsorshipsAdmin = createServerFn({ method: "GET" })
     // l'autre et 29 jamais affichées. Un tri total (clé primaire en départage) rend la pagination
     // déterministe.
     const { data: tokens, error } = await applyFilters(
-      (supabaseAdmin as any).from("sponsorship_tokens").select("*").is("campaign_id", null)
+      (supabaseAdmin as any).from("sponsorship_tokens").select("*").is("campaign_id", null),
     )
       .order("created_at", { ascending: false })
       .order("id", { ascending: false })
@@ -595,7 +611,7 @@ export const enrollChildAdmin = createServerFn({ method: "POST" })
         seasonId: z.string().uuid(),
         campaignId: z.string().uuid().optional(),
       })
-      .parse(input)
+      .parse(input),
   )
   .handler(async ({ data }) => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
@@ -660,7 +676,7 @@ export const unenrollCampaignAdmin = createServerFn({ method: "POST" })
       .object({
         childId: z.string().uuid(),
       })
-      .parse(input)
+      .parse(input),
   )
   .handler(async ({ data }) => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
@@ -712,7 +728,9 @@ export const getUpcomingExpirationsAdmin = createServerFn({ method: "GET" })
     // relance WhatsApp reste générique.
     const { data: enrollments, error: enrollErr } = await (supabaseAdmin as any)
       .from("season_enrollments")
-      .select("child_id, enrolled_at, campaign_id, child_profiles(name, user_id), seasons(duration_months), campaigns(name, start_date, end_date)")
+      .select(
+        "child_id, enrolled_at, campaign_id, child_profiles(name, user_id), seasons(duration_months), campaigns(name, start_date, end_date)",
+      )
       .order("enrolled_at", { ascending: false });
 
     if (enrollErr) throw new Error(enrollErr.message);
@@ -730,7 +748,7 @@ export const getUpcomingExpirationsAdmin = createServerFn({ method: "GET" })
       const { end } = resolveEnrollmentWindow(
         e.enrolled_at,
         e.seasons.duration_months,
-        e.campaign_id ? e.campaigns : null
+        e.campaign_id ? e.campaigns : null,
       );
       const daysLeft = Math.ceil((end.getTime() - now.getTime()) / (24 * 60 * 60 * 1000));
       if (daysLeft >= 0 && daysLeft <= EXPIRATION_REMINDER_WINDOW_DAYS) {
@@ -793,7 +811,10 @@ export const getUpcomingExpirationsAdmin = createServerFn({ method: "GET" })
     for (const s of subs ?? []) {
       if (s.status === "initiated") continue;
       const end = s.current_period_end ? new Date(s.current_period_end) : null;
-      if (s.status === "active" && (!end || end.getTime() > windowEnd.getTime() || end.getTime() < now.getTime())) {
+      if (
+        s.status === "active" &&
+        (!end || end.getTime() > windowEnd.getTime() || end.getTime() < now.getTime())
+      ) {
         continue; // actif avec période hors fenêtre des 14 jours (ou déjà dépassée : anomalie) — pas un rappel à venir
       }
       const daysLeft = Math.max(

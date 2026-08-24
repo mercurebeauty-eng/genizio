@@ -247,9 +247,7 @@ export function AdminCommerceTab({
             // Comptages globaux (toute l'historique) fournis par le serveur — les
             // badges restent justes même quand la page n'affiche qu'une tranche.
             const count =
-              f.id === "Tous"
-                ? data.summary?.totalOrders ?? 0
-                : data.statusCounts?.[f.id] ?? 0;
+              f.id === "Tous" ? (data.summary?.totalOrders ?? 0) : (data.statusCounts?.[f.id] ?? 0);
             const isActive = activeFilter === f.id;
 
             return (
@@ -292,125 +290,127 @@ export function AdminCommerceTab({
         ) : (
           <>
             <div className="overflow-x-auto">
-              <table className="w-full text-left border-collapse text-sm">
-              <thead>
-                <tr className="border-b-[3px] border-ink text-[11px] font-extrabold uppercase tracking-wider text-ink/60">
-                  <th className="pb-3 pr-4">Date & Réf</th>
-                  <th className="pb-3 pr-4">Bénéficiaire</th>
-                  <th className="pb-3 pr-4">Détails du Kit</th>
-                  <th className="pb-3 pr-4">Montant XOF</th>
-                  <th className="pb-3 pr-4">Statut Actuel</th>
-                  <th className="pb-3 text-center">Action</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y-2 divide-ink/5">
-                {filteredOrders.map((order) => {
-                  return (
-                    <tr key={order.id} className="hover:bg-surface/40 transition-colors">
-                      {/* Date & Ref */}
-                      <td className="py-4 pr-4 whitespace-nowrap">
-                        <div className="font-mono text-xs font-bold text-ink">
-                          #{order.id.slice(0, 8)}
-                        </div>
-                        <div className="text-[11px] font-medium text-ink/50">
-                          {new Date(order.created_at).toLocaleDateString("fr-FR", {
-                            day: "numeric",
-                            month: "short",
-                            year: "numeric",
-                          })}
-                        </div>
-                        {order.payment_reference && (
-                          <div className="mt-1.5 inline-flex items-center gap-1 rounded-full bg-emerald-100 border border-emerald-300 px-2 py-0.5 text-[10px] font-extrabold text-emerald-800">
-                            <BadgeCheck className="size-3" />
-                            Payé · {order.payment_reference.slice(0, 12)}
+              <table className="w-full min-w-[640px] text-left border-collapse text-sm">
+                <thead>
+                  <tr className="border-b-[3px] border-ink text-[11px] font-extrabold uppercase tracking-wider text-ink/60">
+                    <th className="pb-3 pr-4">Date & Réf</th>
+                    <th className="pb-3 pr-4">Bénéficiaire</th>
+                    <th className="pb-3 pr-4">Détails du Kit</th>
+                    <th className="pb-3 pr-4">Montant XOF</th>
+                    <th className="pb-3 pr-4">Statut Actuel</th>
+                    <th className="pb-3 text-center">Action</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y-2 divide-ink/5">
+                  {filteredOrders.map((order) => {
+                    return (
+                      <tr key={order.id} className="hover:bg-surface/40 transition-colors">
+                        {/* Date & Ref */}
+                        <td className="py-4 pr-4 whitespace-nowrap">
+                          <div className="font-mono text-xs font-bold text-ink">
+                            #{order.id.slice(0, 8)}
                           </div>
-                        )}
-                      </td>
-
-                      {/* Beneficiary */}
-                      <td className="py-4 pr-4">
-                        <div className="font-extrabold text-xs text-ink">
-                          {order.child_profiles?.name || "Enfant inconnu"}
-                        </div>
-                        {order.challenges?.title && (
-                          <div className="text-[11px] text-purple-600 font-bold line-clamp-1">
-                            Défi: {order.challenges.title}
+                          <div className="text-[11px] font-medium text-ink/50">
+                            {new Date(order.created_at).toLocaleDateString("fr-FR", {
+                              day: "numeric",
+                              month: "short",
+                              year: "numeric",
+                            })}
                           </div>
-                        )}
-                      </td>
-
-                      {/* Kit Items */}
-                      <td className="py-4 pr-4 max-w-xs">
-                        {order.items && order.items.length > 0 ? (
-                          <div className="flex flex-col gap-1">
-                            {order.items.map((item, idx) => (
-                              <div
-                                key={idx}
-                                className="text-xs font-medium text-ink flex items-center justify-between gap-2"
-                              >
-                                <span className="line-clamp-1">{item.name}</span>
-                                <span className="font-bold text-ink/60 text-[11px] whitespace-nowrap">
-                                  {formatXOF(item.price_xof)}
-                                </span>
-                              </div>
-                            ))}
-                          </div>
-                        ) : (
-                          <span className="text-xs text-ink/40 italic">Articles non spécifiés</span>
-                        )}
-                        {order.delivery_notes && (
-                          <div className="mt-1 rounded-lg bg-amber-50 p-1.5 border border-amber-200 text-[10px] text-amber-800 font-medium italic">
-                            Note: {order.delivery_notes}
-                          </div>
-                        )}
-                      </td>
-
-                      {/* Total Price */}
-                      <td className="py-4 pr-4 whitespace-nowrap">
-                        <span className="font-display font-black text-sm text-purple-700">
-                          {formatXOF(order.total_price_xof)}
-                        </span>
-                      </td>
-
-                      {/* Status Badge */}
-                      <td className="py-4 pr-4 whitespace-nowrap">
-                        {getStatusBadge(order.status)}
-                      </td>
-
-                      {/* Status 1-Click Update Control */}
-                      <td className="py-4 text-center whitespace-nowrap">
-                        <div className="inline-flex items-center gap-1.5">
-                          {updatingOrderId === order.id && (
-                            <Loader2 className="size-3.5 animate-spin text-purple-600 shrink-0" />
+                          {order.payment_reference && (
+                            <div className="mt-1.5 inline-flex items-center gap-1 rounded-full bg-emerald-100 border border-emerald-300 px-2 py-0.5 text-[10px] font-extrabold text-emerald-800">
+                              <BadgeCheck className="size-3" />
+                              Payé · {order.payment_reference.slice(0, 12)}
+                            </div>
                           )}
-                          <select
-                            value={order.status}
-                            disabled={updatingOrderId === order.id}
-                            onChange={(e) => handleStatusChange(order.id, e.target.value)}
-                            className="rounded-xl border-2 border-ink/20 bg-white px-3 py-1.5 text-xs font-bold text-ink cursor-pointer focus:border-purple-600 focus:outline-none transition-all disabled:opacity-50"
-                          >
-                            {ORDER_STATUS_OPTIONS.map((opt) => (
-                              <option key={opt.value} value={opt.value}>
-                                {opt.label}
-                              </option>
-                            ))}
-                          </select>
-                        </div>
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
-          <AdminPagination
-            page={page}
-            totalPages={totalPages}
-            total={total}
-            pageSize={50}
-            onPageChange={onPageChange}
-            label="commande"
-          />
+                        </td>
+
+                        {/* Beneficiary */}
+                        <td className="py-4 pr-4">
+                          <div className="font-extrabold text-xs text-ink">
+                            {order.child_profiles?.name || "Enfant inconnu"}
+                          </div>
+                          {order.challenges?.title && (
+                            <div className="text-[11px] text-purple-600 font-bold line-clamp-1">
+                              Défi: {order.challenges.title}
+                            </div>
+                          )}
+                        </td>
+
+                        {/* Kit Items */}
+                        <td className="py-4 pr-4 max-w-xs">
+                          {order.items && order.items.length > 0 ? (
+                            <div className="flex flex-col gap-1">
+                              {order.items.map((item, idx) => (
+                                <div
+                                  key={idx}
+                                  className="text-xs font-medium text-ink flex items-center justify-between gap-2"
+                                >
+                                  <span className="line-clamp-1">{item.name}</span>
+                                  <span className="font-bold text-ink/60 text-[11px] whitespace-nowrap">
+                                    {formatXOF(item.price_xof)}
+                                  </span>
+                                </div>
+                              ))}
+                            </div>
+                          ) : (
+                            <span className="text-xs text-ink/40 italic">
+                              Articles non spécifiés
+                            </span>
+                          )}
+                          {order.delivery_notes && (
+                            <div className="mt-1 rounded-lg bg-amber-50 p-1.5 border border-amber-200 text-[10px] text-amber-800 font-medium italic">
+                              Note: {order.delivery_notes}
+                            </div>
+                          )}
+                        </td>
+
+                        {/* Total Price */}
+                        <td className="py-4 pr-4 whitespace-nowrap">
+                          <span className="font-display font-black text-sm text-purple-700">
+                            {formatXOF(order.total_price_xof)}
+                          </span>
+                        </td>
+
+                        {/* Status Badge */}
+                        <td className="py-4 pr-4 whitespace-nowrap">
+                          {getStatusBadge(order.status)}
+                        </td>
+
+                        {/* Status 1-Click Update Control */}
+                        <td className="py-4 text-center whitespace-nowrap">
+                          <div className="inline-flex items-center gap-1.5">
+                            {updatingOrderId === order.id && (
+                              <Loader2 className="size-3.5 animate-spin text-purple-600 shrink-0" />
+                            )}
+                            <select
+                              value={order.status}
+                              disabled={updatingOrderId === order.id}
+                              onChange={(e) => handleStatusChange(order.id, e.target.value)}
+                              className="rounded-xl border-2 border-ink/20 bg-white px-3 py-1.5 text-xs font-bold text-ink cursor-pointer focus:border-purple-600 focus:outline-none transition-all disabled:opacity-50"
+                            >
+                              {ORDER_STATUS_OPTIONS.map((opt) => (
+                                <option key={opt.value} value={opt.value}>
+                                  {opt.label}
+                                </option>
+                              ))}
+                            </select>
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+            <AdminPagination
+              page={page}
+              totalPages={totalPages}
+              total={total}
+              pageSize={50}
+              onPageChange={onPageChange}
+              label="commande"
+            />
           </>
         )}
       </div>
@@ -461,7 +461,7 @@ export function AdminCommerceTab({
           </div>
         ) : (
           <div className="overflow-x-auto">
-            <table className="w-full text-left border-collapse text-sm">
+            <table className="w-full min-w-[640px] text-left border-collapse text-sm">
               <thead>
                 <tr className="border-b-[3px] border-ink text-[11px] font-extrabold uppercase tracking-wider text-ink/60">
                   <th className="pb-3 pr-4">Adolescent</th>

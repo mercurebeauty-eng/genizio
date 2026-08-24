@@ -5,7 +5,7 @@
 //     React/TanStack dedupe, error logger plugins, and sandbox detection (port/host/strictPort).
 // You can pass additional config via defineConfig({ vite: { ... }, etc... }) if needed.
 import { defineConfig } from "@lovable.dev/vite-tanstack-config";
-import { VitePWA } from 'vite-plugin-pwa';
+import { VitePWA } from "vite-plugin-pwa";
 
 export default defineConfig({
   tanstackStart: {
@@ -23,48 +23,48 @@ export default defineConfig({
         // bundle until the next full navigation/reload, which is the "changes don't show up
         // instantly" symptom reported. 'prompt' installs the new SW and waits for an explicit
         // updateServiceWorker() call, which the banner triggers.
-        registerType: 'prompt',
+        registerType: "prompt",
         injectRegister: false,
         // injectManifest (Confiance Mentor, 2026-08-15) : le SW généré par generateSW ne
         // pouvait pas porter les notifications push — on fournit notre propre SW
         // (src/sw.ts : pre-cache workbox + handlers push/notificationclick).
-        strategies: 'injectManifest',
-        srcDir: 'src',
-        filename: 'sw.ts',
-        outDir: '.output/public',
-        includeAssets: ['favicon.ico', 'apple-touch-icon.png', 'mask-icon.svg'],
+        strategies: "injectManifest",
+        srcDir: "src",
+        filename: "sw.ts",
+        outDir: ".output/public",
+        includeAssets: ["favicon.ico", "apple-touch-icon.png", "mask-icon.svg"],
         // Cette app est rendue par le serveur pour chaque route (TanStack Start/Nitro) —
         // pas de shell index.html statique : notre SW ne gère QUE le pre-cache des assets
         // et les notifications push, jamais les navigations (voir src/sw.ts).
         manifest: {
-          name: 'Génizio',
-          short_name: 'Génizio',
-          description: 'Révélez le potentiel de vos enfants',
-          start_url: '/profiles',
-          scope: '/',
-          theme_color: '#ffffff',
-          background_color: '#ffffff',
-          display: 'standalone',
+          name: "Génizio",
+          short_name: "Génizio",
+          description: "Révélez le potentiel de vos enfants",
+          start_url: "/profiles",
+          scope: "/",
+          theme_color: "#ffffff",
+          background_color: "#ffffff",
+          display: "standalone",
           icons: [
             {
-              src: 'pwa-192x192.png',
-              sizes: '192x192',
-              type: 'image/png'
+              src: "pwa-192x192.png",
+              sizes: "192x192",
+              type: "image/png",
             },
             {
-              src: 'pwa-512x512.png',
-              sizes: '512x512',
-              type: 'image/png'
+              src: "pwa-512x512.png",
+              sizes: "512x512",
+              type: "image/png",
             },
             {
-              src: 'pwa-512x512.png',
-              sizes: '512x512',
-              type: 'image/png',
-              purpose: 'any maskable'
-            }
-          ]
-        }
-      })
-    ]
-  }
+              src: "pwa-512x512.png",
+              sizes: "512x512",
+              type: "image/png",
+              purpose: "any maskable",
+            },
+          ],
+        },
+      }),
+    ],
+  },
 });

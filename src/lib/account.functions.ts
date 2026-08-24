@@ -53,7 +53,10 @@ export const deleteAccountAndData = createServerFn({ method: "POST" })
     // no owner DELETE policy on orders, so this has to go through the service role
     // client rather than the RLS-scoped one above.
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const { error: ordersError } = await supabaseAdmin.from("orders").delete().eq("user_id", userId);
+    const { error: ordersError } = await supabaseAdmin
+      .from("orders")
+      .delete()
+      .eq("user_id", userId);
     if (ordersError) {
       console.error("Erreur lors de la suppression des commandes :", ordersError);
       throw new Error("Impossible de supprimer le compte utilisateur.");

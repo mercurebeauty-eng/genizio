@@ -7,11 +7,21 @@ import { formatChildProfileContext, SCHOOL_LEVELS } from "@/lib/profile-context"
 describe("formatChildProfileContext", () => {
   it("profil vide → chaîne vide (aucun bruit dans les prompts)", () => {
     expect(formatChildProfileContext({})).toBe("");
-    expect(formatChildProfileContext({ school_level: null, languages: [], ability_profile: {}, aspirations: [] })).toBe("");
+    expect(
+      formatChildProfileContext({
+        school_level: null,
+        languages: [],
+        ability_profile: {},
+        aspirations: [],
+      }),
+    ).toBe("");
   });
 
   it("niveau scolaire et langues", () => {
-    const out = formatChildProfileContext({ school_level: "cm2", languages: ["français", "wolof"] });
+    const out = formatChildProfileContext({
+      school_level: "cm2",
+      languages: ["français", "wolof"],
+    });
     expect(out).toContain("CM2");
     expect(out).toContain("français, wolof");
   });
@@ -32,7 +42,9 @@ describe("formatChildProfileContext", () => {
   });
 
   it("l'aspiration déclarée est présentée comme une hypothèse à explorer, pas un verdict", () => {
-    const out = formatChildProfileContext({ aspirations: [{ label: "Menuiserie", type: "metier" }] });
+    const out = formatChildProfileContext({
+      aspirations: [{ label: "Menuiserie", type: "metier" }],
+    });
     expect(out).toContain("Menuiserie");
     expect(out).toContain("HYPOTHÈSE À EXPLORER");
   });

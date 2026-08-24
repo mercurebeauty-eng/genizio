@@ -87,7 +87,8 @@ const SAMPLE_DATA = {
       domain: "Entrepreneuriat",
       completed_at: "2026-07-18T10:00:00.000Z",
       proof_image_url: null,
-      description: "Calcule le coût d'un verre de bissap et simule la vente pour dégager un bénéfice.",
+      description:
+        "Calcule le coût d'un verre de bissap et simule la vente pour dégager un bénéfice.",
       ai_observations: "Négociation naturelle remarquée face au client simulé.",
       notes: null,
     },

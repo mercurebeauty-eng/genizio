@@ -698,7 +698,7 @@ export function AdminMentorsTab() {
         ) : (
           <>
             <div className="overflow-x-auto rounded-2xl border border-ink/10">
-              <table className="w-full text-left text-sm">
+              <table className="w-full min-w-[480px] text-left text-sm">
                 <thead className="border-b border-ink/10 bg-surface/60 text-[11px] font-black uppercase tracking-wider text-ink/60">
                   <tr>
                     <th className="px-4 py-2.5">Code</th>
@@ -753,21 +753,10 @@ export function AdminMentorsTab() {
         )}
       </div>
 
-      {isAssignModalOpen && (
-        <AssignMentorModal
-          campaigns={campaigns}
-          onClose={() => setIsAssignModalOpen(false)}
-          onSuccess={() => {
-            setIsAssignModalOpen(false);
-            void refetch();
-          }}
-        />
-      )}
-
       {/* Modal ledger payout (Vague C) : les séances du mentor + approbation. */}
       {payoutModalFor && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-ink/40 p-4 backdrop-blur-sm">
-          <div className="w-full max-w-lg max-h-[85vh] overflow-y-auto bg-white rounded-3xl border border-ink/10 p-6 shadow-xl animate-in zoom-in-95 duration-200">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-ink/40 p-4 backdrop-blur-sm overflow-y-auto">
+          <div className="w-full max-w-lg my-auto max-h-[85vh] overflow-y-auto bg-white rounded-3xl border border-ink/10 p-6 shadow-xl animate-in zoom-in-95 duration-200">
             <div className="flex items-start justify-between gap-4 border-b-2 border-ink pb-4 mb-4">
               <div>
                 <h3 className="font-display text-balance text-xl font-black text-ink">
@@ -1018,8 +1007,8 @@ function AssignMentorModal({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-ink/40 backdrop-blur-sm">
-      <div className="bg-white rounded-[2rem] w-full max-w-lg p-6 shadow-2xl animate-in fade-in zoom-in-95 duration-200 relative flex flex-col max-h-[90vh] overflow-y-auto">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-ink/40 backdrop-blur-sm overflow-y-auto">
+      <div className="bg-white my-auto rounded-[2rem] w-full max-w-lg p-6 shadow-2xl animate-in fade-in zoom-in-95 duration-200 relative flex flex-col max-h-[90vh] overflow-y-auto">
         <div className="flex items-center justify-between mb-5">
           <h3 className="font-display font-black text-xl text-ink flex items-center gap-2">
             <UserPlus className="size-6 text-brand" />
@@ -1147,7 +1136,7 @@ function AssignMentorModal({
                     value={parentQuery}
                     onChange={(e) => setParentQuery(e.target.value)}
                     placeholder="Email, téléphone ou nom du parent…"
-                    className="flex-1 bg-surface border border-ink/10 rounded-2xl p-3.5 text-sm font-bold text-ink focus:outline-none focus:ring-2 focus:ring-brand/30"
+                    className="flex-1 min-w-0 bg-surface border border-ink/10 rounded-2xl p-3.5 text-sm font-bold text-ink focus:outline-none focus:ring-2 focus:ring-brand/30"
                   />
                   <button
                     type="submit"
@@ -1212,7 +1201,7 @@ function AssignMentorModal({
                   >
                     ← Changer de parent
                   </button>
-                  <p className="text-xs font-bold text-ink/70 truncate">
+                  <p className="text-xs font-bold text-ink/70 truncate min-w-0">
                     {selectedParent?.email} · {childrenOfParent.length} enfant
                     {childrenOfParent.length > 1 ? "s" : ""}
                   </p>
@@ -1288,7 +1277,7 @@ function AssignMentorModal({
                   >
                     ← Changer d'enfant
                   </button>
-                  <p className="text-xs font-bold text-ink/70 truncate">
+                  <p className="text-xs font-bold text-ink/70 truncate min-w-0">
                     Enfant : {selectedChild?.name}
                   </p>
                 </div>
@@ -1299,7 +1288,7 @@ function AssignMentorModal({
                     value={mentorQuery}
                     onChange={(e) => setMentorQuery(e.target.value)}
                     placeholder="Email, téléphone ou nom du mentor…"
-                    className="flex-1 bg-surface border border-ink/10 rounded-2xl p-3.5 text-sm font-bold text-ink focus:outline-none focus:ring-2 focus:ring-brand/30"
+                    className="flex-1 min-w-0 bg-surface border border-ink/10 rounded-2xl p-3.5 text-sm font-bold text-ink focus:outline-none focus:ring-2 focus:ring-brand/30"
                   />
                   <button
                     type="submit"
@@ -1368,20 +1357,20 @@ function AssignMentorModal({
                 <div className="rounded-2xl border border-ink/10 bg-surface p-4 space-y-2.5">
                   <div className="flex items-center gap-2 text-sm">
                     <span className="font-black text-ink w-20 shrink-0">Parent</span>
-                    <span className="font-semibold text-ink/70 truncate">
+                    <span className="font-semibold text-ink/70 truncate min-w-0 flex-1">
                       {selectedParent?.email}
                     </span>
                   </div>
                   <div className="flex items-center gap-2 text-sm">
                     <span className="font-black text-ink w-20 shrink-0">Enfant</span>
-                    <span className="font-semibold text-ink/70 truncate">
+                    <span className="font-semibold text-ink/70 truncate min-w-0 flex-1">
                       {selectedChild?.name}
                       {selectedChild?.age != null ? ` (${selectedChild.age} ans)` : ""}
                     </span>
                   </div>
                   <div className="flex items-center gap-2 text-sm">
                     <span className="font-black text-ink w-20 shrink-0">Mentor</span>
-                    <span className="font-semibold text-ink/70 truncate">
+                    <span className="font-semibold text-ink/70 truncate min-w-0 flex-1">
                       {selectedMentor?.email}
                     </span>
                   </div>

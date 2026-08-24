@@ -7,14 +7,25 @@ type LevelUpCelebrationProps = {
   onContinue: () => void;
 };
 
-const CONFETTI_COLORS = ["var(--brand)", "var(--leaf)", "var(--sky-dark)", "var(--brand-glow)", "#fff"];
+const CONFETTI_COLORS = [
+  "var(--brand)",
+  "var(--leaf)",
+  "var(--sky-dark)",
+  "var(--brand-glow)",
+  "#fff",
+];
 
 // Écran plein écran déclenché quand awardCompletionXP (challenges.functions.ts)
 // détecte un passage de niveau — cf. écran 6 du prototype (Génizio Learning
 // Experience Design). Le nombre de badges du prototype est volontairement
 // omis : le système de badges n'existe pas encore (item séparé), pas question
 // d'afficher un chiffre inventé.
-export function LevelUpCelebration({ newLevel, xpGained, newStreak, onContinue }: LevelUpCelebrationProps) {
+export function LevelUpCelebration({
+  newLevel,
+  xpGained,
+  newStreak,
+  onContinue,
+}: LevelUpCelebrationProps) {
   const confettiPieces = useMemo(
     () =>
       Array.from({ length: 28 }, (_, i) => ({
@@ -24,12 +35,12 @@ export function LevelUpCelebration({ newLevel, xpGained, newStreak, onContinue }
         color: CONFETTI_COLORS[i % CONFETTI_COLORS.length],
         size: 6 + Math.random() * 6,
       })),
-    []
+    [],
   );
 
   return (
     <div
-      className="fixed inset-0 z-100 flex flex-col items-center justify-center overflow-hidden px-6 py-10 text-center animate-in fade-in duration-300"
+      className="fixed inset-0 z-100 flex flex-col items-center justify-center overflow-y-auto px-6 py-10 text-center animate-in fade-in duration-300"
       style={{ background: "linear-gradient(175deg, var(--brand), var(--brand-glow))" }}
     >
       <div className="pointer-events-none absolute inset-0 overflow-hidden">
@@ -48,17 +59,23 @@ export function LevelUpCelebration({ newLevel, xpGained, newStreak, onContinue }
         ))}
       </div>
 
-      <div className="relative z-10 flex flex-col items-center">
-        <p className="text-xs font-black uppercase tracking-[0.14em] text-white/80">Niveau supérieur</p>
+      <div className="relative z-10 flex flex-col items-center my-auto">
+        <p className="text-xs font-black uppercase tracking-[0.14em] text-white/80">
+          Niveau supérieur
+        </p>
 
         <div className="animate-gz-bounce-in relative my-6 flex size-[150px] items-center justify-center rounded-full bg-white/15">
           <div className="flex size-[118px] flex-col items-center justify-center rounded-full bg-white shadow-lg">
             <span className="text-xs font-bold text-brand">Niveau</span>
-            <span className="font-display text-5xl font-bold leading-none text-brand">{newLevel}</span>
+            <span className="font-display text-5xl font-bold leading-none text-brand">
+              {newLevel}
+            </span>
           </div>
         </div>
 
-        <p className="max-w-[260px] text-sm text-white/90">Continue comme ça — chaque défi compte !</p>
+        <p className="max-w-[260px] text-sm text-white/90">
+          Continue comme ça — chaque défi compte !
+        </p>
 
         <div className="my-6 flex gap-3">
           <div className="rounded-2xl bg-white/15 px-5 py-3">
@@ -67,7 +84,9 @@ export function LevelUpCelebration({ newLevel, xpGained, newStreak, onContinue }
           </div>
           <div className="rounded-2xl bg-white/15 px-5 py-3">
             <div className="font-display text-2xl font-bold text-white">{newStreak}</div>
-            <div className="text-[11px] font-semibold text-white/80">{newStreak > 1 ? "semaines de suite" : "semaine de suite"}</div>
+            <div className="text-[11px] font-semibold text-white/80">
+              {newStreak > 1 ? "semaines de suite" : "semaine de suite"}
+            </div>
           </div>
         </div>
 

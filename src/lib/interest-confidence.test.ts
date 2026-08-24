@@ -193,7 +193,9 @@ describe("resolveInterestHypotheses", () => {
 });
 
 describe("getInterestHypothesesSnapshot", () => {
-  const mkDb = (overrides: { child?: any; twin?: any; abandoned?: any[]; fail?: boolean } = {}) => ({
+  const mkDb = (
+    overrides: { child?: any; twin?: any; abandoned?: any[]; fail?: boolean } = {},
+  ) => ({
     from: (table: string) => {
       if (overrides.fail) throw new Error("table indisponible");
       if (table === "child_profiles") {
@@ -231,7 +233,10 @@ describe("getInterestHypothesesSnapshot", () => {
   it("agrège les 3 sources : complétions du jumeau + abandons par groupe Gardner", async () => {
     const db = mkDb({
       twin: { competencies: { logico_mathematique: { n: 8 } } },
-      abandoned: [{ target_intelligences: ["linguistique"] }, { target_intelligences: ["linguistique"] }],
+      abandoned: [
+        { target_intelligences: ["linguistique"] },
+        { target_intelligences: ["linguistique"] },
+      ],
     });
 
     const result = await getInterestHypothesesSnapshot(db, "c1");
@@ -283,14 +288,12 @@ describe("getInterestHypothesesSnapshot", () => {
 
 describe("formatChildInterestsPayload (v2 pondérée)", () => {
   it("sans snapshot → comportement historique inchangé", () => {
-    expect(formatChildInterestsPayload([TAG_LOGICO])).toBe(
-      `- [🧠 Logique] "${TAG_LOGICO}"`
-    );
+    expect(formatChildInterestsPayload([TAG_LOGICO])).toBe(`- [🧠 Logique] "${TAG_LOGICO}"`);
     expect(formatChildInterestsPayload(["Rêve de devenir astronaute"])).toBe(
-      `- [Levier d'action] "Rêve de devenir astronaute"`
+      `- [Levier d'action] "Rêve de devenir astronaute"`,
     );
     expect(formatChildInterestsPayload(undefined)).toBe(
-      "Aucun levier spécifique renseigné — explorer et expérimenter avec différentes postures d'apprentissage."
+      "Aucun levier spécifique renseigné — explorer et expérimenter avec différentes postures d'apprentissage.",
     );
   });
 
@@ -302,7 +305,7 @@ describe("formatChildInterestsPayload (v2 pondérée)", () => {
 
     expect(formatChildInterestsPayload([TAG_LOGICO], hypotheses)).toBe(
       `Déclaration du parent, hypothèse de travail — l'expérience réelle prime (influence parentale actuelle : 60 %).\n` +
-        `- [🧠 Logique] "${TAG_LOGICO}" — confirmé par l'expérience`
+        `- [🧠 Logique] "${TAG_LOGICO}" — confirmé par l'expérience`,
     );
   });
 
@@ -311,7 +314,7 @@ describe("formatChildInterestsPayload (v2 pondérée)", () => {
 
     expect(formatChildInterestsPayload([TAG_CORPORELLE], hypotheses)).toBe(
       `Déclaration du parent, hypothèse de travail — l'expérience réelle prime (influence parentale actuelle : 100 %).\n` +
-        `- [🏃 Corporelle] "${TAG_CORPORELLE}" — hypothèse du parent à confirmer (à tester en priorité)`
+        `- [🏃 Corporelle] "${TAG_CORPORELLE}" — hypothèse du parent à confirmer (à tester en priorité)`,
     );
   });
 
@@ -326,9 +329,11 @@ describe("formatChildInterestsPayload (v2 pondérée)", () => {
 
     expect(output).not.toContain(`- [🧠 Logique] "${TAG_LOGICO}"`); // retiré de la liste active
     expect(output).toContain(
-      `Intérêt déclaré non confirmé : "${TAG_LOGICO}" — ne pas l'utiliser comme moteur d'engagement, explorer d'autres pistes.`
+      `Intérêt déclaré non confirmé : "${TAG_LOGICO}" — ne pas l'utiliser comme moteur d'engagement, explorer d'autres pistes.`,
     );
-    expect(output).toContain(`"${TAG_LINGUISTIQUE}" — hypothèse du parent à confirmer (à tester en priorité)`);
+    expect(output).toContain(
+      `"${TAG_LINGUISTIQUE}" — hypothèse du parent à confirmer (à tester en priorité)`,
+    );
   });
 
   it("tous les leviers écartés → note 'tous les leviers déclarés ont été écartés'", () => {
@@ -348,7 +353,7 @@ describe("formatChildInterestsPayload (v2 pondérée)", () => {
     const hypotheses = resolveInterestHypotheses({ declared: [TAG_LOGICO] });
 
     expect(formatChildInterestsPayload(undefined, hypotheses)).toBe(
-      "Aucun levier spécifique renseigné — explorer et expérimenter avec différentes postures d'apprentissage."
+      "Aucun levier spécifique renseigné — explorer et expérimenter avec différentes postures d'apprentissage.",
     );
   });
 });

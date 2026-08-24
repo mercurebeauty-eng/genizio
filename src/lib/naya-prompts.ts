@@ -561,7 +561,11 @@ export function buildHomeworkPrompt(input: BuildHomeworkPromptInput): string {
 
   // Mapping du sujet technique vers les clés du JSON (identique au template d'origine).
   const domainJson =
-    subject === "maths" ? "Sciences" : subject === "francais" || subject === "anglais" ? "Langues" : "Sciences";
+    subject === "maths"
+      ? "Sciences"
+      : subject === "francais" || subject === "anglais"
+        ? "Langues"
+        : "Sciences";
   const intelligenceJson =
     subject === "maths"
       ? "logico_mathematique"
@@ -569,7 +573,11 @@ export function buildHomeworkPrompt(input: BuildHomeworkPromptInput): string {
         ? "linguistique"
         : "creative";
   const academicDomainJson =
-    subject === "maths" ? "mathematiques" : subject === "francais" || subject === "anglais" ? "langage" : "sciences";
+    subject === "maths"
+      ? "mathematiques"
+      : subject === "francais" || subject === "anglais"
+        ? "langage"
+        : "sciences";
 
   return `Tu es Naya, un mentor pédagogique d'élite spécialisé dans l'apprentissage ludique et l'ancrage concret des devoirs scolaires en Afrique francophone.
 Ta mission est de transformer une CONSEIGNE DE DEVOIR SCOLAIRE sous forme d'un DÉFI PHYSIQUE, CAPTIVANT ET CONCRET.
@@ -823,7 +831,11 @@ export interface BuildHypothesisPromptInput {
 // runHypothesisEngine. L'ordre des clés JSON du snapshot est stable (JSON.stringify d'un
 // objet littéral) — les tests s'appuient dessus pour vérifier la présence des trois blocs.
 export function buildHypothesisPrompt(input: BuildHypothesisPromptInput): string {
-  const snapshot = { enfant: input.enfant, ecart_referentiel: input.ecartReferentiel, jumeau_pedagogique: input.jumeauPedagogique };
+  const snapshot = {
+    enfant: input.enfant,
+    ecart_referentiel: input.ecartReferentiel,
+    jumeau_pedagogique: input.jumeauPedagogique,
+  };
   return `${NAYA_DIAGNOSIS_SYSTEM_REMINDERS}\n\nVoici le cas à diagnostiquer :\n${JSON.stringify(snapshot, null, 2)}`;
 }
 
@@ -853,7 +865,10 @@ export function buildJustInTimeHintPrompt(input: BuildJustInTimeHintPromptInput)
     ? `Modes d'engagement et leviers comportementaux observés par le parent (à utiliser dans les exemples) :
 ${input.interestsPayload.trim()}`
     : "";
-  const stepsList = steps.length > 0 ? `Toutes les étapes du défi (contexte) :\n${steps.map((s, i) => `${i + 1}. ${s}`).join("\n")}` : "";
+  const stepsList =
+    steps.length > 0
+      ? `Toutes les étapes du défi (contexte) :\n${steps.map((s, i) => `${i + 1}. ${s}`).join("\n")}`
+      : "";
 
   return `Tu es Naya, la mentore IA bienveillante de Génizio. ${childName}, ${childAge} ans, est en train de réaliser le défi « ${challengeTitle} » et vient de se bloquer sur une étape.
 
@@ -1035,11 +1050,14 @@ export const MODALITY_SEMANTICS: Record<string, string> = {
   image: "l'enfant découvre par des images, des schémas, des dessins à observer ou à compléter.",
   demonstration: "quelqu'un montre d'abord le geste ou le procédé, puis l'enfant le reproduit.",
   manipulation: "l'enfant fait avec ses mains : découper, plier, assembler, mesurer, construire.",
-  histoire: "le savoir est porté par un récit (personnages, marché, atelier) — l'enfant vit l'histoire.",
-  analogie: "le savoir est comparé à quelque chose que l'enfant connaît déjà très bien (un jeu, un objet du quotidien).",
+  histoire:
+    "le savoir est porté par un récit (personnages, marché, atelier) — l'enfant vit l'histoire.",
+  analogie:
+    "le savoir est comparé à quelque chose que l'enfant connaît déjà très bien (un jeu, un objet du quotidien).",
   conversation: "l'enfant découvre en parlant : questions, échanges, expliquer à quelqu'un.",
   projet: "l'enfant construit ou conçoit quelque chose de concret qui a une utilité pour lui.",
-  situation_concrete: "le savoir est mis en scène dans une situation réelle du quotidien (marché, cuisine, quartier, atelier).",
+  situation_concrete:
+    "le savoir est mis en scène dans une situation réelle du quotidien (marché, cuisine, quartier, atelier).",
 };
 
 export interface ReformulationPromptInput {
@@ -1057,7 +1075,8 @@ export interface ReformulationPromptInput {
 }
 
 export function buildReformulationPrompt(input: ReformulationPromptInput): string {
-  const semantics = MODALITY_SEMANTICS[input.presentationMode] ?? "une autre manière de présenter le savoir.";
+  const semantics =
+    MODALITY_SEMANTICS[input.presentationMode] ?? "une autre manière de présenter le savoir.";
   return `Tu es Naya, la mentore IA. Le défi « ${input.originalTitle} » (${input.originalDomain}) n'a pas été terminé par ${input.childName}, ${input.childAge} ans.
 N'ABANDONNE PAS ce que cet enfant doit apprendre : reformule le MÊME objectif pédagogique avec une AUTRE manière de le lui montrer.
 

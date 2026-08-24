@@ -184,10 +184,7 @@ describe("Milestone 2 Stress Tests - Empirical Edge Case Verification", () => {
     });
 
     it("correctly handles decimal/fractional talent scores", () => {
-      const children = [
-        { talents: { spatial: 75.5 } },
-        { talents: { spatial: 80.2 } },
-      ];
+      const children = [{ talents: { spatial: 75.5 } }, { talents: { spatial: 80.2 } }];
       const totals = calculateGardnerTotals(children);
       const spatial = totals.find((t) => t.key === "spatial");
       expect(spatial?.totalScore).toBe(155.7);
@@ -201,11 +198,7 @@ describe("Milestone 2 Stress Tests - Empirical Edge Case Verification", () => {
   // ─────────────────────────────────────────────────────────────
   describe("calculateGuildDistribution Edge Cases", () => {
     it("assigns profiles with empty {} or missing talents to 'Guilde à découvrir' (key: 'aucune')", () => {
-      const children = [
-        { talents: {} },
-        { talents: null },
-        { talents: undefined },
-      ];
+      const children = [{ talents: {} }, { talents: null }, { talents: undefined }];
 
       const distribution = calculateGuildDistribution(children);
       const noGuild = distribution.find((g) => g.key === "aucune");
@@ -229,7 +222,11 @@ describe("Milestone 2 Stress Tests - Empirical Edge Case Verification", () => {
       expect(distribution).toHaveLength(7);
 
       for (const guild of distribution) {
-        if (["batisseurs", "inventeurs", "explorateurs", "createurs", "strateges", "aucune"].includes(guild.key)) {
+        if (
+          ["batisseurs", "inventeurs", "explorateurs", "createurs", "strateges", "aucune"].includes(
+            guild.key,
+          )
+        ) {
           expect(guild.count).toBe(1);
           expect(guild.percentage).toBe(17); // Math.round(1/6 * 100) = 17
         } else {
@@ -357,7 +354,13 @@ describe("Milestone 2 Stress Tests - Empirical Edge Case Verification", () => {
       const children = [
         { id: "c1", name: "Yao", age: 8, city: null, talents: { spatial: 75 } },
         { id: "c2", name: "Bamba", age: 9, city: "   ", talents: { creative: 85 } },
-        { id: "c3", name: "Nia", age: 10, city: "San-Pédro 🌊", talents: { logico_mathematique: 95 } },
+        {
+          id: "c3",
+          name: "Nia",
+          age: 10,
+          city: "San-Pédro 🌊",
+          talents: { logico_mathematique: 95 },
+        },
       ];
 
       const alerts = detectHighPotentialProfiles(children);

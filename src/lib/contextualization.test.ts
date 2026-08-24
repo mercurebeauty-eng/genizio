@@ -4,7 +4,11 @@ import {
   localMaterialsForCountry,
   buildContextualizationInstruction,
 } from "@/lib/contextualization";
-import { buildChallengePrompt, buildSingleChallengePrompt, INTELLIGENCES_FIELD_INSTRUCTION } from "@/lib/naya-prompts";
+import {
+  buildChallengePrompt,
+  buildSingleChallengePrompt,
+  INTELLIGENCES_FIELD_INSTRUCTION,
+} from "@/lib/naya-prompts";
 
 // Chantier 6 — double contextualisation local → global (analyse §30-31) + interdisciplinarité
 // assumée (§32) : le défi part des matériaux et réalités locaux du pays, puis escalier vers
@@ -32,17 +36,34 @@ describe("localMaterialsForCountry — mapping pays → matériaux locaux (0 IA)
     const materials = localMaterialsForCountry("Côte d'Ivoire");
     expect(materials).toContain("bois local (iroko, sipo)");
     expect(materials).toContain("coques de cacao");
-    expect(materials).not.toEqual(["bambou", "bois local", "carton", "textile", "argile", "matériaux recyclés"]);
+    expect(materials).not.toEqual([
+      "bambou",
+      "bois local",
+      "carton",
+      "textile",
+      "argile",
+      "matériaux recyclés",
+    ]);
   });
 
   it("Sénégal avec accent, Congo qualifié, pays inconnu et absence", () => {
     expect(localMaterialsForCountry("Sénégal")).toContain("coquillages");
     expect(localMaterialsForCountry("République démocratique du Congo")).toContain("raphia");
     expect(localMaterialsForCountry("Mauritanie")).toEqual([
-      "bambou", "bois local", "carton", "textile", "argile", "matériaux recyclés",
+      "bambou",
+      "bois local",
+      "carton",
+      "textile",
+      "argile",
+      "matériaux recyclés",
     ]);
     expect(localMaterialsForCountry(null)).toEqual([
-      "bambou", "bois local", "carton", "textile", "argile", "matériaux recyclés",
+      "bambou",
+      "bois local",
+      "carton",
+      "textile",
+      "argile",
+      "matériaux recyclés",
     ]);
   });
 });
@@ -114,6 +135,6 @@ describe("injection dans les prompts — les défis générés portent la double
   it("l'interdisciplinarité projet est explicitement demandée (§32)", () => {
     expect(INTELLIGENCES_FIELD_INSTRUCTION).toContain("2 clés COMPLÉMENTAIRES");
     expect(INTELLIGENCES_FIELD_INSTRUCTION).toContain("l'interdisciplinarité est assumée");
-    expect(INTELLIGENCES_FIELD_INSTRUCTION).toContain("kind \"projet\"");
+    expect(INTELLIGENCES_FIELD_INSTRUCTION).toContain('kind "projet"');
   });
 });

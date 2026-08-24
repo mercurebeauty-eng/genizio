@@ -1,6 +1,13 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { GuideLayout, MedicalDisclaimer } from "@/components/guides/GuideLayout";
-import { pageMeta, jsonLdScript, faqPageJsonLd, breadcrumbJsonLd, absoluteUrl, SITE_URL } from "@/lib/seo";
+import {
+  pageMeta,
+  jsonLdScript,
+  faqPageJsonLd,
+  breadcrumbJsonLd,
+  absoluteUrl,
+  SITE_URL,
+} from "@/lib/seo";
 
 const PATH = "/guides/gestion-colere-emotions-enfant";
 
@@ -61,7 +68,7 @@ export const Route = createFileRoute("/guides/gestion-colere-emotions-enfant")({
             { name: "Accueil", path: "/" },
             { name: "Guides", path: "/guides" },
             { name: "Gestion des émotions", path: PATH },
-          ])
+          ]),
         ),
         jsonLdScript({
           "@context": "https://schema.org",
@@ -94,21 +101,32 @@ function Guide() {
       intro="Une crise de colère à 18 h dans la cuisine, et c'est toute la maison qui tangue. Avant de chercher à « faire taire » cette colère, il faut comprendre ce qu'elle est : une émotion réelle, pas une attaque contre vous. Voici comment la traverser sans céder, sans crier, et en apprenant quelque chose à l'enfant."
       updated="14 août 2026"
       readingTime="7 min"
+      path={PATH}
       related={[
         { label: "Mon enfant ne tient pas en place", to: "/guides/enfant-agite-concentration" },
-        { label: "Se faire obéir sans crier ni frapper", to: "/guides/discipline-positive-sans-punition" },
-        { label: "Enfant qui perd confiance : l'aider", to: "/guides/decrochage-scolaire-confiance-enfant" },
+        {
+          label: "Se faire obéir sans crier ni frapper",
+          to: "/guides/discipline-positive-sans-punition",
+        },
+        {
+          label: "Enfant qui perd confiance : l'aider",
+          to: "/guides/decrochage-scolaire-confiance-enfant",
+        },
       ]}
     >
       <img
         src="/guides/og-colere.jpg"
         alt="Parent accompagnant calmement un enfant en colère à la maison"
+        width="1200"
+        height="630"
+        loading="lazy"
+        decoding="async"
         className="my-6 aspect-video w-full rounded-3xl border border-ink/10 object-cover shadow-lg"
       />
       <MedicalDisclaimer>
-        Ce guide est un contenu éducatif destiné aux parents. Il ne constitue pas un avis médical
-        et ne permet pas d'évaluer un trouble du comportement. Si les colères de votre enfant sont
-        très fréquentes, très intenses, durent longtemps ou s'accompagnent de signes de souffrance,
+        Ce guide est un contenu éducatif destiné aux parents. Il ne constitue pas un avis médical et
+        ne permet pas d'évaluer un trouble du comportement. Si les colères de votre enfant sont très
+        fréquentes, très intenses, durent longtemps ou s'accompagnent de signes de souffrance,
         parlez-en à un pédiatre, un psychologue ou un pédopsychiatre.
       </MedicalDisclaimer>
 
@@ -121,8 +139,8 @@ function Guide() {
       </p>
       <p>
         Ajoutez la fatigue, la faim, un changement de rythme ou le besoin d'attention, et la colère
-        devient une soupape de sécurité. La comprendre ainsi change la question : ce n'est plus
-        « comment la faire taire ? » mais « de quoi cette colère est-elle le signal ? ». Chez les
+        devient une soupape de sécurité. La comprendre ainsi change la question : ce n'est plus «
+        comment la faire taire ? » mais « de quoi cette colère est-elle le signal ? ». Chez les
         enfants hypersensibles — qui ressentent tout plus fort — la colère est souvent la pointe
         émergée d'une sensibilité débordante : il faut alors moins la réprimer que lui apprendre à
         la reconnaître avant qu'elle ne déborde.
@@ -158,8 +176,8 @@ function Guide() {
         </li>
         <li>
           <strong>Offrir un exutoire physique.</strong> Courir, taper dans un coussin, déchirer un
-          papier, presser une balle : le corps décharge avant que les mots reviennent. Demander à
-          un enfant en crise de « se calmer » sans exutoire est rarement efficace.
+          papier, presser une balle : le corps décharge avant que les mots reviennent. Demander à un
+          enfant en crise de « se calmer » sans exutoire est rarement efficace.
         </li>
         <li>
           <strong>Installer un rituel de retour au calme.</strong> Un endroit choisi (pas un coin
@@ -168,9 +186,8 @@ function Guide() {
         </li>
         <li>
           <strong>Revenir sur la crise après coup.</strong> Une fois l'apaisement trouvé, cinq
-          minutes suffisent : « Qu'est-ce qui s'est passé ? Qu'est-ce qui aurait pu te
-          aider ? » Le lien parent-enfant sort renforcé, et l'enfant apprend à anticiper sa propre
-          colère.
+          minutes suffisent : « Qu'est-ce qui s'est passé ? Qu'est-ce qui aurait pu te aider ? » Le
+          lien parent-enfant sort renforcé, et l'enfant apprend à anticiper sa propre colère.
         </li>
       </ol>
 
@@ -179,8 +196,8 @@ function Guide() {
         Les mots comptent moins que le calme avec lequel on les dit — mais certains aident, d'autres
         enflamment.
       </p>
-      <div className="my-6 overflow-hidden rounded-2xl border border-ink/10">
-        <table className="w-full text-sm">
+      <div className="my-6 overflow-x-auto rounded-2xl border border-ink/10">
+        <table className="w-full min-w-[500px] text-sm print:min-w-0">
           <thead>
             <tr className="bg-brand/8 text-left text-xs font-black uppercase tracking-widest text-brand">
               <th className="px-4 py-3">À dire, à voix basse</th>

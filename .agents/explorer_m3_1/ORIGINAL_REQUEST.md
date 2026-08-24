@@ -1,4 +1,5 @@
 ## 2026-07-21T21:15:57Z
+
 You are Explorer 3 for Milestone 1 of the Génizio End-to-End Functional Audit & Systemic Reliability Fix project.
 
 Your Working Directory: C:\Users\USER\Documents\GENIZIO\.agents\explorer_m3_1
@@ -9,6 +10,7 @@ OBJECTIVE:
 Conduct a code-wide audit for Silent Errors, Edge Cases, and run Automated Diagnostics Baseline (`npx vitest run` & `npx tsc --noEmit`).
 
 INSTRUCTIONS:
+
 1. Search across all files in `src/` for silent error patterns:
    - Empty catches (`catch {}`, `catch (e) {}`).
    - Unhandled promises or `.catch(() => null)` / `.catch(() => {})` without logging or UI toast.

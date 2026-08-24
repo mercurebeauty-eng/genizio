@@ -17,7 +17,7 @@ describe("suggestTimePressureChange — seuil, fenêtre et modes", () => {
   it("propose quand un domaine atteint le seuil de 3 dépassements", () => {
     const res = suggestTimePressureChange(
       [event("Mathématiques", 1), event("Mathématiques", 2), event("Mathématiques", 3)],
-      "standard"
+      "standard",
     );
     expect(res.suggested).toBe(true);
     expect(res.domains).toEqual(["Mathématiques"]);
@@ -26,7 +26,7 @@ describe("suggestTimePressureChange — seuil, fenêtre et modes", () => {
   it("ne propose pas sous le seuil (2 dépassements)", () => {
     const res = suggestTimePressureChange(
       [event("Mathématiques", 1), event("Mathématiques", 2)],
-      "standard"
+      "standard",
     );
     expect(res.suggested).toBe(false);
     expect(res.domains).toEqual([]);
@@ -39,13 +39,17 @@ describe("suggestTimePressureChange — seuil, fenêtre et modes", () => {
         event("Mathématiques", 2),
         event("Mathématiques", 31), // hors fenêtre
       ],
-      "standard"
+      "standard",
     );
     expect(res.suggested).toBe(false);
   });
 
   it("ne propose jamais en mode gentle ou none (déjà adapté, pas de bruit)", () => {
-    const events = [event("Mathématiques", 1), event("Mathématiques", 2), event("Mathématiques", 3)];
+    const events = [
+      event("Mathématiques", 1),
+      event("Mathématiques", 2),
+      event("Mathématiques", 3),
+    ];
     expect(suggestTimePressureChange(events, "gentle").suggested).toBe(false);
     expect(suggestTimePressureChange(events, "none").suggested).toBe(false);
   });
@@ -53,7 +57,7 @@ describe("suggestTimePressureChange — seuil, fenêtre et modes", () => {
   it("compte séparément par domaine (3 domaines différents ne suffisent pas)", () => {
     const res = suggestTimePressureChange(
       [event("Sciences", 1), event("Sciences", 2), event("Arts", 1), event("Arts", 2)],
-      "standard"
+      "standard",
     );
     expect(res.suggested).toBe(false);
   });

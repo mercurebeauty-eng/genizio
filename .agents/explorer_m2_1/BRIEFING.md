@@ -1,9 +1,11 @@
 # BRIEFING — 2026-07-21T21:17:45Z
 
 ## Mission
+
 Conduct a detailed functional audit of User Flows 4-6 (Parcours & Portfolio, PDF Passport Generation & Print, Génizio Admin OS).
 
 ## 🔒 My Identity
+
 - Archetype: Teamwork Explorer
 - Roles: Explorer 2 (Milestone 1)
 - Working directory: C:\Users\USER\Documents\GENIZIO\.agents\explorer_m2_1
@@ -11,14 +13,17 @@ Conduct a detailed functional audit of User Flows 4-6 (Parcours & Portfolio, PDF
 - Milestone: Milestone 1 - User Flows 4-6 Audit
 
 ## 🔒 Key Constraints
+
 - Read-only investigation — do NOT modify source code (only write inside C:\Users\USER\Documents\GENIZIO\.agents\explorer_m2_1)
 - Code-only mode (no internet/external web searches)
 
 ## Current Parent
+
 - Conversation ID: 7b0a2ada-3821-40a8-94b2-dae2799a6ec0
 - Updated: 2026-07-21T21:17:45Z
 
 ## Investigation State
+
 - **Explored paths**:
   - `src/routes/profiles.$profileId.parcours.tsx`
   - `src/routes/profiles.$profileId.portfolio.tsx`
@@ -34,10 +39,12 @@ Conduct a detailed functional audit of User Flows 4-6 (Parcours & Portfolio, PDF
 - **Unexplored areas**: None (Flows 4–6 audit fully complete).
 
 ## Key Decisions Made
+
 - Completed full investigation of User Flows 4–6.
 - Synthesized findings into `analysis.md` and `handoff.md`.
 
 ## Artifact Index
+
 - ORIGINAL_REQUEST.md — Original user request record
 - BRIEFING.md — Persistent context index
 - progress.md — Audit execution progress log

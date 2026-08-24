@@ -367,8 +367,8 @@ function ProfilePage() {
             ) : !mentorStatus.certified ? (
               <>
                 <p className="text-xs text-ink/60 mb-4 leading-relaxed">
-                  Le mode Mentor permet d'accompagner les enfants qui vous sont assignés.
-                  Activez-le avec le code fourni par votre administration (spec §7).
+                  Le mode Mentor permet d'accompagner les enfants qui vous sont assignés. Activez-le
+                  avec le code fourni par votre administration (spec §7).
                 </p>
                 <form onSubmit={handleActivateCode} className="flex gap-2">
                   <input

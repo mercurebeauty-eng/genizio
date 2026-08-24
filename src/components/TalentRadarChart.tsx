@@ -12,9 +12,19 @@ type TalentRadarChartProps = {
   dark?: boolean;
 };
 
-export function TalentRadarChart({ talents, name, className = "h-48 w-full", age, dark = false }: TalentRadarChartProps) {
+export function TalentRadarChart({
+  talents,
+  name,
+  className = "h-48 w-full",
+  age,
+  dark = false,
+}: TalentRadarChartProps) {
   const raw = talents ?? {};
-  const data = TALENT_KEYS.map(({ key, subject }) => ({ subject, A: raw[key] || 0, fullMark: 100 }));
+  const data = TALENT_KEYS.map(({ key, subject }) => ({
+    subject,
+    A: raw[key] || 0,
+    fullMark: 100,
+  }));
 
   // Color mapping based on child age typology
   let chartColor = "#6366f1"; // default Indigo
@@ -29,9 +39,9 @@ export function TalentRadarChart({ talents, name, className = "h-48 w-full", age
   }
 
   // Palette depends on background
-  const labelColor  = dark ? "#FFFFFF" : "#1A1A1A";
-  const gridColor   = dark ? "#FFFFFF" : "#1A1A1A";
-  const gridOpacity = dark ? 0.20     : 0.15;
+  const labelColor = dark ? "#FFFFFF" : "#1A1A1A";
+  const gridColor = dark ? "#FFFFFF" : "#1A1A1A";
+  const gridOpacity = dark ? 0.2 : 0.15;
 
   return (
     <div className={className}>
@@ -52,7 +62,7 @@ export function TalentRadarChart({ talents, name, className = "h-48 w-full", age
             dataKey="A"
             stroke={chartColor}
             fill={chartColor}
-            fillOpacity={0.40}
+            fillOpacity={0.4}
             strokeWidth={3}
           />
         </RadarChart>

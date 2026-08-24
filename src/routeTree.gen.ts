@@ -36,20 +36,29 @@ import { Route as AdminIndexRouteImport } from './routes/admin.index'
 import { Route as RejoindreCampaignIdRouteImport } from './routes/rejoindre.$campaignId'
 import { Route as ProfilesManageRouteImport } from './routes/profiles.manage'
 import { Route as GuidesTimiditeConfiancePriseDeParoleRouteImport } from './routes/guides.timidite-confiance-prise-de-parole'
+import { Route as GuidesTestOrientationMetierEnfantFuturRouteImport } from './routes/guides.test-orientation-metier-enfant-futur'
+import { Route as GuidesTestDePersonnaliteEnfantTalentsRouteImport } from './routes/guides.test-de-personnalite-enfant-talents'
+import { Route as GuidesSacADosMarquesChallengeCreativiteEnfantRouteImport } from './routes/guides.sac-a-dos-marques-challenge-creativite-enfant'
 import { Route as GuidesReussiteScolaireAiderEnfantRouteImport } from './routes/guides.reussite-scolaire-aider-enfant'
+import { Route as GuidesQuelleLibrairieChoisirLieuxCreativiteEnfantRouteImport } from './routes/guides.quelle-librairie-choisir-lieux-creativite-enfant'
+import { Route as GuidesPratiqueAvantTheorieApprentissageIaRouteImport } from './routes/guides.pratique-avant-theorie-apprentissage-ia'
 import { Route as GuidesPotentielHautPotentielEnfantRouteImport } from './routes/guides.potentiel-haut-potentiel-enfant'
 import { Route as GuidesOrientationScolaireMetiersAvenirRouteImport } from './routes/guides.orientation-scolaire-metiers-avenir'
+import { Route as GuidesJouetsEducatifsKitsScientifiquesPlacardsMaisonRouteImport } from './routes/guides.jouets-educatifs-kits-scientifiques-placards-maison'
 import { Route as GuidesIntelligencesMultiplesGardnerRouteImport } from './routes/guides.intelligences-multiples-gardner'
 import { Route as GuidesIaApprentissageEnfantRouteImport } from './routes/guides.ia-apprentissage-enfant'
 import { Route as GuidesGestionColereEmotionsEnfantRouteImport } from './routes/guides.gestion-colere-emotions-enfant'
 import { Route as GuidesFratrieRivaliteCooperationRouteImport } from './routes/guides.fratrie-rivalite-cooperation'
 import { Route as GuidesEnfantAgiteConcentrationRouteImport } from './routes/guides.enfant-agite-concentration'
 import { Route as GuidesEducationEnfantsAfriqueFrancophoneRouteImport } from './routes/guides.education-enfants-afrique-francophone'
+import { Route as GuidesEcransTiktokYoutubeTalentEcritureRealisationRouteImport } from './routes/guides.ecrans-tiktok-youtube-talent-ecriture-realisation'
 import { Route as GuidesEcransAddictionAlternativesEnfantRouteImport } from './routes/guides.ecrans-addiction-alternatives-enfant'
 import { Route as GuidesDisciplinePositiveSansPunitionRouteImport } from './routes/guides.discipline-positive-sans-punition'
 import { Route as GuidesDefisPourAdolescentsRouteImport } from './routes/guides.defis-pour-adolescents'
 import { Route as GuidesDecrochageScolaireConfianceEnfantRouteImport } from './routes/guides.decrochage-scolaire-confiance-enfant'
+import { Route as GuidesChoixParcoursupParcoursScolaireEnfantRouteImport } from './routes/guides.choix-parcoursup-parcours-scolaire-enfant'
 import { Route as GuidesAutonomieResponsabiliteMaisonRouteImport } from './routes/guides.autonomie-responsabilite-maison'
+import { Route as GuidesAutismeTdahApprentissageForcesReellesRouteImport } from './routes/guides.autisme-tdah-apprentissage-forces-reelles'
 import { Route as GuidesActivitesManuellesEnfantRouteImport } from './routes/guides.activites-manuelles-enfant'
 import { Route as GuidesActivitesEducativesEnfantRouteImport } from './routes/guides.activites-educatives-enfant'
 import { Route as AdminProductsRouteImport } from './routes/admin.products'
@@ -199,10 +208,40 @@ const GuidesTimiditeConfiancePriseDeParoleRoute =
     path: '/timidite-confiance-prise-de-parole',
     getParentRoute: () => GuidesRoute,
   } as any)
+const GuidesTestOrientationMetierEnfantFuturRoute =
+  GuidesTestOrientationMetierEnfantFuturRouteImport.update({
+    id: '/test-orientation-metier-enfant-futur',
+    path: '/test-orientation-metier-enfant-futur',
+    getParentRoute: () => GuidesRoute,
+  } as any)
+const GuidesTestDePersonnaliteEnfantTalentsRoute =
+  GuidesTestDePersonnaliteEnfantTalentsRouteImport.update({
+    id: '/test-de-personnalite-enfant-talents',
+    path: '/test-de-personnalite-enfant-talents',
+    getParentRoute: () => GuidesRoute,
+  } as any)
+const GuidesSacADosMarquesChallengeCreativiteEnfantRoute =
+  GuidesSacADosMarquesChallengeCreativiteEnfantRouteImport.update({
+    id: '/sac-a-dos-marques-challenge-creativite-enfant',
+    path: '/sac-a-dos-marques-challenge-creativite-enfant',
+    getParentRoute: () => GuidesRoute,
+  } as any)
 const GuidesReussiteScolaireAiderEnfantRoute =
   GuidesReussiteScolaireAiderEnfantRouteImport.update({
     id: '/reussite-scolaire-aider-enfant',
     path: '/reussite-scolaire-aider-enfant',
+    getParentRoute: () => GuidesRoute,
+  } as any)
+const GuidesQuelleLibrairieChoisirLieuxCreativiteEnfantRoute =
+  GuidesQuelleLibrairieChoisirLieuxCreativiteEnfantRouteImport.update({
+    id: '/quelle-librairie-choisir-lieux-creativite-enfant',
+    path: '/quelle-librairie-choisir-lieux-creativite-enfant',
+    getParentRoute: () => GuidesRoute,
+  } as any)
+const GuidesPratiqueAvantTheorieApprentissageIaRoute =
+  GuidesPratiqueAvantTheorieApprentissageIaRouteImport.update({
+    id: '/pratique-avant-theorie-apprentissage-ia',
+    path: '/pratique-avant-theorie-apprentissage-ia',
     getParentRoute: () => GuidesRoute,
   } as any)
 const GuidesPotentielHautPotentielEnfantRoute =
@@ -215,6 +254,12 @@ const GuidesOrientationScolaireMetiersAvenirRoute =
   GuidesOrientationScolaireMetiersAvenirRouteImport.update({
     id: '/orientation-scolaire-metiers-avenir',
     path: '/orientation-scolaire-metiers-avenir',
+    getParentRoute: () => GuidesRoute,
+  } as any)
+const GuidesJouetsEducatifsKitsScientifiquesPlacardsMaisonRoute =
+  GuidesJouetsEducatifsKitsScientifiquesPlacardsMaisonRouteImport.update({
+    id: '/jouets-educatifs-kits-scientifiques-placards-maison',
+    path: '/jouets-educatifs-kits-scientifiques-placards-maison',
     getParentRoute: () => GuidesRoute,
   } as any)
 const GuidesIntelligencesMultiplesGardnerRoute =
@@ -253,6 +298,12 @@ const GuidesEducationEnfantsAfriqueFrancophoneRoute =
     path: '/education-enfants-afrique-francophone',
     getParentRoute: () => GuidesRoute,
   } as any)
+const GuidesEcransTiktokYoutubeTalentEcritureRealisationRoute =
+  GuidesEcransTiktokYoutubeTalentEcritureRealisationRouteImport.update({
+    id: '/ecrans-tiktok-youtube-talent-ecriture-realisation',
+    path: '/ecrans-tiktok-youtube-talent-ecriture-realisation',
+    getParentRoute: () => GuidesRoute,
+  } as any)
 const GuidesEcransAddictionAlternativesEnfantRoute =
   GuidesEcransAddictionAlternativesEnfantRouteImport.update({
     id: '/ecrans-addiction-alternatives-enfant',
@@ -277,10 +328,22 @@ const GuidesDecrochageScolaireConfianceEnfantRoute =
     path: '/decrochage-scolaire-confiance-enfant',
     getParentRoute: () => GuidesRoute,
   } as any)
+const GuidesChoixParcoursupParcoursScolaireEnfantRoute =
+  GuidesChoixParcoursupParcoursScolaireEnfantRouteImport.update({
+    id: '/choix-parcoursup-parcours-scolaire-enfant',
+    path: '/choix-parcoursup-parcours-scolaire-enfant',
+    getParentRoute: () => GuidesRoute,
+  } as any)
 const GuidesAutonomieResponsabiliteMaisonRoute =
   GuidesAutonomieResponsabiliteMaisonRouteImport.update({
     id: '/autonomie-responsabilite-maison',
     path: '/autonomie-responsabilite-maison',
+    getParentRoute: () => GuidesRoute,
+  } as any)
+const GuidesAutismeTdahApprentissageForcesReellesRoute =
+  GuidesAutismeTdahApprentissageForcesReellesRouteImport.update({
+    id: '/autisme-tdah-apprentissage-forces-reelles',
+    path: '/autisme-tdah-apprentissage-forces-reelles',
     getParentRoute: () => GuidesRoute,
   } as any)
 const GuidesActivitesManuellesEnfantRoute =
@@ -376,20 +439,29 @@ export interface FileRoutesByFullPath {
   '/admin/products': typeof AdminProductsRoute
   '/guides/activites-educatives-enfant': typeof GuidesActivitesEducativesEnfantRoute
   '/guides/activites-manuelles-enfant': typeof GuidesActivitesManuellesEnfantRoute
+  '/guides/autisme-tdah-apprentissage-forces-reelles': typeof GuidesAutismeTdahApprentissageForcesReellesRoute
   '/guides/autonomie-responsabilite-maison': typeof GuidesAutonomieResponsabiliteMaisonRoute
+  '/guides/choix-parcoursup-parcours-scolaire-enfant': typeof GuidesChoixParcoursupParcoursScolaireEnfantRoute
   '/guides/decrochage-scolaire-confiance-enfant': typeof GuidesDecrochageScolaireConfianceEnfantRoute
   '/guides/defis-pour-adolescents': typeof GuidesDefisPourAdolescentsRoute
   '/guides/discipline-positive-sans-punition': typeof GuidesDisciplinePositiveSansPunitionRoute
   '/guides/ecrans-addiction-alternatives-enfant': typeof GuidesEcransAddictionAlternativesEnfantRoute
+  '/guides/ecrans-tiktok-youtube-talent-ecriture-realisation': typeof GuidesEcransTiktokYoutubeTalentEcritureRealisationRoute
   '/guides/education-enfants-afrique-francophone': typeof GuidesEducationEnfantsAfriqueFrancophoneRoute
   '/guides/enfant-agite-concentration': typeof GuidesEnfantAgiteConcentrationRoute
   '/guides/fratrie-rivalite-cooperation': typeof GuidesFratrieRivaliteCooperationRoute
   '/guides/gestion-colere-emotions-enfant': typeof GuidesGestionColereEmotionsEnfantRoute
   '/guides/ia-apprentissage-enfant': typeof GuidesIaApprentissageEnfantRoute
   '/guides/intelligences-multiples-gardner': typeof GuidesIntelligencesMultiplesGardnerRoute
+  '/guides/jouets-educatifs-kits-scientifiques-placards-maison': typeof GuidesJouetsEducatifsKitsScientifiquesPlacardsMaisonRoute
   '/guides/orientation-scolaire-metiers-avenir': typeof GuidesOrientationScolaireMetiersAvenirRoute
   '/guides/potentiel-haut-potentiel-enfant': typeof GuidesPotentielHautPotentielEnfantRoute
+  '/guides/pratique-avant-theorie-apprentissage-ia': typeof GuidesPratiqueAvantTheorieApprentissageIaRoute
+  '/guides/quelle-librairie-choisir-lieux-creativite-enfant': typeof GuidesQuelleLibrairieChoisirLieuxCreativiteEnfantRoute
   '/guides/reussite-scolaire-aider-enfant': typeof GuidesReussiteScolaireAiderEnfantRoute
+  '/guides/sac-a-dos-marques-challenge-creativite-enfant': typeof GuidesSacADosMarquesChallengeCreativiteEnfantRoute
+  '/guides/test-de-personnalite-enfant-talents': typeof GuidesTestDePersonnaliteEnfantTalentsRoute
+  '/guides/test-orientation-metier-enfant-futur': typeof GuidesTestOrientationMetierEnfantFuturRoute
   '/guides/timidite-confiance-prise-de-parole': typeof GuidesTimiditeConfiancePriseDeParoleRoute
   '/profiles/manage': typeof ProfilesManageRoute
   '/rejoindre/$campaignId': typeof RejoindreCampaignIdRoute
@@ -427,20 +499,29 @@ export interface FileRoutesByTo {
   '/admin/products': typeof AdminProductsRoute
   '/guides/activites-educatives-enfant': typeof GuidesActivitesEducativesEnfantRoute
   '/guides/activites-manuelles-enfant': typeof GuidesActivitesManuellesEnfantRoute
+  '/guides/autisme-tdah-apprentissage-forces-reelles': typeof GuidesAutismeTdahApprentissageForcesReellesRoute
   '/guides/autonomie-responsabilite-maison': typeof GuidesAutonomieResponsabiliteMaisonRoute
+  '/guides/choix-parcoursup-parcours-scolaire-enfant': typeof GuidesChoixParcoursupParcoursScolaireEnfantRoute
   '/guides/decrochage-scolaire-confiance-enfant': typeof GuidesDecrochageScolaireConfianceEnfantRoute
   '/guides/defis-pour-adolescents': typeof GuidesDefisPourAdolescentsRoute
   '/guides/discipline-positive-sans-punition': typeof GuidesDisciplinePositiveSansPunitionRoute
   '/guides/ecrans-addiction-alternatives-enfant': typeof GuidesEcransAddictionAlternativesEnfantRoute
+  '/guides/ecrans-tiktok-youtube-talent-ecriture-realisation': typeof GuidesEcransTiktokYoutubeTalentEcritureRealisationRoute
   '/guides/education-enfants-afrique-francophone': typeof GuidesEducationEnfantsAfriqueFrancophoneRoute
   '/guides/enfant-agite-concentration': typeof GuidesEnfantAgiteConcentrationRoute
   '/guides/fratrie-rivalite-cooperation': typeof GuidesFratrieRivaliteCooperationRoute
   '/guides/gestion-colere-emotions-enfant': typeof GuidesGestionColereEmotionsEnfantRoute
   '/guides/ia-apprentissage-enfant': typeof GuidesIaApprentissageEnfantRoute
   '/guides/intelligences-multiples-gardner': typeof GuidesIntelligencesMultiplesGardnerRoute
+  '/guides/jouets-educatifs-kits-scientifiques-placards-maison': typeof GuidesJouetsEducatifsKitsScientifiquesPlacardsMaisonRoute
   '/guides/orientation-scolaire-metiers-avenir': typeof GuidesOrientationScolaireMetiersAvenirRoute
   '/guides/potentiel-haut-potentiel-enfant': typeof GuidesPotentielHautPotentielEnfantRoute
+  '/guides/pratique-avant-theorie-apprentissage-ia': typeof GuidesPratiqueAvantTheorieApprentissageIaRoute
+  '/guides/quelle-librairie-choisir-lieux-creativite-enfant': typeof GuidesQuelleLibrairieChoisirLieuxCreativiteEnfantRoute
   '/guides/reussite-scolaire-aider-enfant': typeof GuidesReussiteScolaireAiderEnfantRoute
+  '/guides/sac-a-dos-marques-challenge-creativite-enfant': typeof GuidesSacADosMarquesChallengeCreativiteEnfantRoute
+  '/guides/test-de-personnalite-enfant-talents': typeof GuidesTestDePersonnaliteEnfantTalentsRoute
+  '/guides/test-orientation-metier-enfant-futur': typeof GuidesTestOrientationMetierEnfantFuturRoute
   '/guides/timidite-confiance-prise-de-parole': typeof GuidesTimiditeConfiancePriseDeParoleRoute
   '/profiles/manage': typeof ProfilesManageRoute
   '/rejoindre/$campaignId': typeof RejoindreCampaignIdRoute
@@ -483,20 +564,29 @@ export interface FileRoutesById {
   '/admin/products': typeof AdminProductsRoute
   '/guides/activites-educatives-enfant': typeof GuidesActivitesEducativesEnfantRoute
   '/guides/activites-manuelles-enfant': typeof GuidesActivitesManuellesEnfantRoute
+  '/guides/autisme-tdah-apprentissage-forces-reelles': typeof GuidesAutismeTdahApprentissageForcesReellesRoute
   '/guides/autonomie-responsabilite-maison': typeof GuidesAutonomieResponsabiliteMaisonRoute
+  '/guides/choix-parcoursup-parcours-scolaire-enfant': typeof GuidesChoixParcoursupParcoursScolaireEnfantRoute
   '/guides/decrochage-scolaire-confiance-enfant': typeof GuidesDecrochageScolaireConfianceEnfantRoute
   '/guides/defis-pour-adolescents': typeof GuidesDefisPourAdolescentsRoute
   '/guides/discipline-positive-sans-punition': typeof GuidesDisciplinePositiveSansPunitionRoute
   '/guides/ecrans-addiction-alternatives-enfant': typeof GuidesEcransAddictionAlternativesEnfantRoute
+  '/guides/ecrans-tiktok-youtube-talent-ecriture-realisation': typeof GuidesEcransTiktokYoutubeTalentEcritureRealisationRoute
   '/guides/education-enfants-afrique-francophone': typeof GuidesEducationEnfantsAfriqueFrancophoneRoute
   '/guides/enfant-agite-concentration': typeof GuidesEnfantAgiteConcentrationRoute
   '/guides/fratrie-rivalite-cooperation': typeof GuidesFratrieRivaliteCooperationRoute
   '/guides/gestion-colere-emotions-enfant': typeof GuidesGestionColereEmotionsEnfantRoute
   '/guides/ia-apprentissage-enfant': typeof GuidesIaApprentissageEnfantRoute
   '/guides/intelligences-multiples-gardner': typeof GuidesIntelligencesMultiplesGardnerRoute
+  '/guides/jouets-educatifs-kits-scientifiques-placards-maison': typeof GuidesJouetsEducatifsKitsScientifiquesPlacardsMaisonRoute
   '/guides/orientation-scolaire-metiers-avenir': typeof GuidesOrientationScolaireMetiersAvenirRoute
   '/guides/potentiel-haut-potentiel-enfant': typeof GuidesPotentielHautPotentielEnfantRoute
+  '/guides/pratique-avant-theorie-apprentissage-ia': typeof GuidesPratiqueAvantTheorieApprentissageIaRoute
+  '/guides/quelle-librairie-choisir-lieux-creativite-enfant': typeof GuidesQuelleLibrairieChoisirLieuxCreativiteEnfantRoute
   '/guides/reussite-scolaire-aider-enfant': typeof GuidesReussiteScolaireAiderEnfantRoute
+  '/guides/sac-a-dos-marques-challenge-creativite-enfant': typeof GuidesSacADosMarquesChallengeCreativiteEnfantRoute
+  '/guides/test-de-personnalite-enfant-talents': typeof GuidesTestDePersonnaliteEnfantTalentsRoute
+  '/guides/test-orientation-metier-enfant-futur': typeof GuidesTestOrientationMetierEnfantFuturRoute
   '/guides/timidite-confiance-prise-de-parole': typeof GuidesTimiditeConfiancePriseDeParoleRoute
   '/profiles/manage': typeof ProfilesManageRoute
   '/rejoindre/$campaignId': typeof RejoindreCampaignIdRoute
@@ -540,20 +630,29 @@ export interface FileRouteTypes {
     | '/admin/products'
     | '/guides/activites-educatives-enfant'
     | '/guides/activites-manuelles-enfant'
+    | '/guides/autisme-tdah-apprentissage-forces-reelles'
     | '/guides/autonomie-responsabilite-maison'
+    | '/guides/choix-parcoursup-parcours-scolaire-enfant'
     | '/guides/decrochage-scolaire-confiance-enfant'
     | '/guides/defis-pour-adolescents'
     | '/guides/discipline-positive-sans-punition'
     | '/guides/ecrans-addiction-alternatives-enfant'
+    | '/guides/ecrans-tiktok-youtube-talent-ecriture-realisation'
     | '/guides/education-enfants-afrique-francophone'
     | '/guides/enfant-agite-concentration'
     | '/guides/fratrie-rivalite-cooperation'
     | '/guides/gestion-colere-emotions-enfant'
     | '/guides/ia-apprentissage-enfant'
     | '/guides/intelligences-multiples-gardner'
+    | '/guides/jouets-educatifs-kits-scientifiques-placards-maison'
     | '/guides/orientation-scolaire-metiers-avenir'
     | '/guides/potentiel-haut-potentiel-enfant'
+    | '/guides/pratique-avant-theorie-apprentissage-ia'
+    | '/guides/quelle-librairie-choisir-lieux-creativite-enfant'
     | '/guides/reussite-scolaire-aider-enfant'
+    | '/guides/sac-a-dos-marques-challenge-creativite-enfant'
+    | '/guides/test-de-personnalite-enfant-talents'
+    | '/guides/test-orientation-metier-enfant-futur'
     | '/guides/timidite-confiance-prise-de-parole'
     | '/profiles/manage'
     | '/rejoindre/$campaignId'
@@ -591,20 +690,29 @@ export interface FileRouteTypes {
     | '/admin/products'
     | '/guides/activites-educatives-enfant'
     | '/guides/activites-manuelles-enfant'
+    | '/guides/autisme-tdah-apprentissage-forces-reelles'
     | '/guides/autonomie-responsabilite-maison'
+    | '/guides/choix-parcoursup-parcours-scolaire-enfant'
     | '/guides/decrochage-scolaire-confiance-enfant'
     | '/guides/defis-pour-adolescents'
     | '/guides/discipline-positive-sans-punition'
     | '/guides/ecrans-addiction-alternatives-enfant'
+    | '/guides/ecrans-tiktok-youtube-talent-ecriture-realisation'
     | '/guides/education-enfants-afrique-francophone'
     | '/guides/enfant-agite-concentration'
     | '/guides/fratrie-rivalite-cooperation'
     | '/guides/gestion-colere-emotions-enfant'
     | '/guides/ia-apprentissage-enfant'
     | '/guides/intelligences-multiples-gardner'
+    | '/guides/jouets-educatifs-kits-scientifiques-placards-maison'
     | '/guides/orientation-scolaire-metiers-avenir'
     | '/guides/potentiel-haut-potentiel-enfant'
+    | '/guides/pratique-avant-theorie-apprentissage-ia'
+    | '/guides/quelle-librairie-choisir-lieux-creativite-enfant'
     | '/guides/reussite-scolaire-aider-enfant'
+    | '/guides/sac-a-dos-marques-challenge-creativite-enfant'
+    | '/guides/test-de-personnalite-enfant-talents'
+    | '/guides/test-orientation-metier-enfant-futur'
     | '/guides/timidite-confiance-prise-de-parole'
     | '/profiles/manage'
     | '/rejoindre/$campaignId'
@@ -646,20 +754,29 @@ export interface FileRouteTypes {
     | '/admin/products'
     | '/guides/activites-educatives-enfant'
     | '/guides/activites-manuelles-enfant'
+    | '/guides/autisme-tdah-apprentissage-forces-reelles'
     | '/guides/autonomie-responsabilite-maison'
+    | '/guides/choix-parcoursup-parcours-scolaire-enfant'
     | '/guides/decrochage-scolaire-confiance-enfant'
     | '/guides/defis-pour-adolescents'
     | '/guides/discipline-positive-sans-punition'
     | '/guides/ecrans-addiction-alternatives-enfant'
+    | '/guides/ecrans-tiktok-youtube-talent-ecriture-realisation'
     | '/guides/education-enfants-afrique-francophone'
     | '/guides/enfant-agite-concentration'
     | '/guides/fratrie-rivalite-cooperation'
     | '/guides/gestion-colere-emotions-enfant'
     | '/guides/ia-apprentissage-enfant'
     | '/guides/intelligences-multiples-gardner'
+    | '/guides/jouets-educatifs-kits-scientifiques-placards-maison'
     | '/guides/orientation-scolaire-metiers-avenir'
     | '/guides/potentiel-haut-potentiel-enfant'
+    | '/guides/pratique-avant-theorie-apprentissage-ia'
+    | '/guides/quelle-librairie-choisir-lieux-creativite-enfant'
     | '/guides/reussite-scolaire-aider-enfant'
+    | '/guides/sac-a-dos-marques-challenge-creativite-enfant'
+    | '/guides/test-de-personnalite-enfant-talents'
+    | '/guides/test-orientation-metier-enfant-futur'
     | '/guides/timidite-confiance-prise-de-parole'
     | '/profiles/manage'
     | '/rejoindre/$campaignId'
@@ -893,11 +1010,46 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof GuidesTimiditeConfiancePriseDeParoleRouteImport
       parentRoute: typeof GuidesRoute
     }
+    '/guides/test-orientation-metier-enfant-futur': {
+      id: '/guides/test-orientation-metier-enfant-futur'
+      path: '/test-orientation-metier-enfant-futur'
+      fullPath: '/guides/test-orientation-metier-enfant-futur'
+      preLoaderRoute: typeof GuidesTestOrientationMetierEnfantFuturRouteImport
+      parentRoute: typeof GuidesRoute
+    }
+    '/guides/test-de-personnalite-enfant-talents': {
+      id: '/guides/test-de-personnalite-enfant-talents'
+      path: '/test-de-personnalite-enfant-talents'
+      fullPath: '/guides/test-de-personnalite-enfant-talents'
+      preLoaderRoute: typeof GuidesTestDePersonnaliteEnfantTalentsRouteImport
+      parentRoute: typeof GuidesRoute
+    }
+    '/guides/sac-a-dos-marques-challenge-creativite-enfant': {
+      id: '/guides/sac-a-dos-marques-challenge-creativite-enfant'
+      path: '/sac-a-dos-marques-challenge-creativite-enfant'
+      fullPath: '/guides/sac-a-dos-marques-challenge-creativite-enfant'
+      preLoaderRoute: typeof GuidesSacADosMarquesChallengeCreativiteEnfantRouteImport
+      parentRoute: typeof GuidesRoute
+    }
     '/guides/reussite-scolaire-aider-enfant': {
       id: '/guides/reussite-scolaire-aider-enfant'
       path: '/reussite-scolaire-aider-enfant'
       fullPath: '/guides/reussite-scolaire-aider-enfant'
       preLoaderRoute: typeof GuidesReussiteScolaireAiderEnfantRouteImport
+      parentRoute: typeof GuidesRoute
+    }
+    '/guides/quelle-librairie-choisir-lieux-creativite-enfant': {
+      id: '/guides/quelle-librairie-choisir-lieux-creativite-enfant'
+      path: '/quelle-librairie-choisir-lieux-creativite-enfant'
+      fullPath: '/guides/quelle-librairie-choisir-lieux-creativite-enfant'
+      preLoaderRoute: typeof GuidesQuelleLibrairieChoisirLieuxCreativiteEnfantRouteImport
+      parentRoute: typeof GuidesRoute
+    }
+    '/guides/pratique-avant-theorie-apprentissage-ia': {
+      id: '/guides/pratique-avant-theorie-apprentissage-ia'
+      path: '/pratique-avant-theorie-apprentissage-ia'
+      fullPath: '/guides/pratique-avant-theorie-apprentissage-ia'
+      preLoaderRoute: typeof GuidesPratiqueAvantTheorieApprentissageIaRouteImport
       parentRoute: typeof GuidesRoute
     }
     '/guides/potentiel-haut-potentiel-enfant': {
@@ -912,6 +1064,13 @@ declare module '@tanstack/react-router' {
       path: '/orientation-scolaire-metiers-avenir'
       fullPath: '/guides/orientation-scolaire-metiers-avenir'
       preLoaderRoute: typeof GuidesOrientationScolaireMetiersAvenirRouteImport
+      parentRoute: typeof GuidesRoute
+    }
+    '/guides/jouets-educatifs-kits-scientifiques-placards-maison': {
+      id: '/guides/jouets-educatifs-kits-scientifiques-placards-maison'
+      path: '/jouets-educatifs-kits-scientifiques-placards-maison'
+      fullPath: '/guides/jouets-educatifs-kits-scientifiques-placards-maison'
+      preLoaderRoute: typeof GuidesJouetsEducatifsKitsScientifiquesPlacardsMaisonRouteImport
       parentRoute: typeof GuidesRoute
     }
     '/guides/intelligences-multiples-gardner': {
@@ -956,6 +1115,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof GuidesEducationEnfantsAfriqueFrancophoneRouteImport
       parentRoute: typeof GuidesRoute
     }
+    '/guides/ecrans-tiktok-youtube-talent-ecriture-realisation': {
+      id: '/guides/ecrans-tiktok-youtube-talent-ecriture-realisation'
+      path: '/ecrans-tiktok-youtube-talent-ecriture-realisation'
+      fullPath: '/guides/ecrans-tiktok-youtube-talent-ecriture-realisation'
+      preLoaderRoute: typeof GuidesEcransTiktokYoutubeTalentEcritureRealisationRouteImport
+      parentRoute: typeof GuidesRoute
+    }
     '/guides/ecrans-addiction-alternatives-enfant': {
       id: '/guides/ecrans-addiction-alternatives-enfant'
       path: '/ecrans-addiction-alternatives-enfant'
@@ -984,11 +1150,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof GuidesDecrochageScolaireConfianceEnfantRouteImport
       parentRoute: typeof GuidesRoute
     }
+    '/guides/choix-parcoursup-parcours-scolaire-enfant': {
+      id: '/guides/choix-parcoursup-parcours-scolaire-enfant'
+      path: '/choix-parcoursup-parcours-scolaire-enfant'
+      fullPath: '/guides/choix-parcoursup-parcours-scolaire-enfant'
+      preLoaderRoute: typeof GuidesChoixParcoursupParcoursScolaireEnfantRouteImport
+      parentRoute: typeof GuidesRoute
+    }
     '/guides/autonomie-responsabilite-maison': {
       id: '/guides/autonomie-responsabilite-maison'
       path: '/autonomie-responsabilite-maison'
       fullPath: '/guides/autonomie-responsabilite-maison'
       preLoaderRoute: typeof GuidesAutonomieResponsabiliteMaisonRouteImport
+      parentRoute: typeof GuidesRoute
+    }
+    '/guides/autisme-tdah-apprentissage-forces-reelles': {
+      id: '/guides/autisme-tdah-apprentissage-forces-reelles'
+      path: '/autisme-tdah-apprentissage-forces-reelles'
+      fullPath: '/guides/autisme-tdah-apprentissage-forces-reelles'
+      preLoaderRoute: typeof GuidesAutismeTdahApprentissageForcesReellesRouteImport
       parentRoute: typeof GuidesRoute
     }
     '/guides/activites-manuelles-enfant': {
@@ -1095,20 +1275,29 @@ const AdminRouteWithChildren = AdminRoute._addFileChildren(AdminRouteChildren)
 interface GuidesRouteChildren {
   GuidesActivitesEducativesEnfantRoute: typeof GuidesActivitesEducativesEnfantRoute
   GuidesActivitesManuellesEnfantRoute: typeof GuidesActivitesManuellesEnfantRoute
+  GuidesAutismeTdahApprentissageForcesReellesRoute: typeof GuidesAutismeTdahApprentissageForcesReellesRoute
   GuidesAutonomieResponsabiliteMaisonRoute: typeof GuidesAutonomieResponsabiliteMaisonRoute
+  GuidesChoixParcoursupParcoursScolaireEnfantRoute: typeof GuidesChoixParcoursupParcoursScolaireEnfantRoute
   GuidesDecrochageScolaireConfianceEnfantRoute: typeof GuidesDecrochageScolaireConfianceEnfantRoute
   GuidesDefisPourAdolescentsRoute: typeof GuidesDefisPourAdolescentsRoute
   GuidesDisciplinePositiveSansPunitionRoute: typeof GuidesDisciplinePositiveSansPunitionRoute
   GuidesEcransAddictionAlternativesEnfantRoute: typeof GuidesEcransAddictionAlternativesEnfantRoute
+  GuidesEcransTiktokYoutubeTalentEcritureRealisationRoute: typeof GuidesEcransTiktokYoutubeTalentEcritureRealisationRoute
   GuidesEducationEnfantsAfriqueFrancophoneRoute: typeof GuidesEducationEnfantsAfriqueFrancophoneRoute
   GuidesEnfantAgiteConcentrationRoute: typeof GuidesEnfantAgiteConcentrationRoute
   GuidesFratrieRivaliteCooperationRoute: typeof GuidesFratrieRivaliteCooperationRoute
   GuidesGestionColereEmotionsEnfantRoute: typeof GuidesGestionColereEmotionsEnfantRoute
   GuidesIaApprentissageEnfantRoute: typeof GuidesIaApprentissageEnfantRoute
   GuidesIntelligencesMultiplesGardnerRoute: typeof GuidesIntelligencesMultiplesGardnerRoute
+  GuidesJouetsEducatifsKitsScientifiquesPlacardsMaisonRoute: typeof GuidesJouetsEducatifsKitsScientifiquesPlacardsMaisonRoute
   GuidesOrientationScolaireMetiersAvenirRoute: typeof GuidesOrientationScolaireMetiersAvenirRoute
   GuidesPotentielHautPotentielEnfantRoute: typeof GuidesPotentielHautPotentielEnfantRoute
+  GuidesPratiqueAvantTheorieApprentissageIaRoute: typeof GuidesPratiqueAvantTheorieApprentissageIaRoute
+  GuidesQuelleLibrairieChoisirLieuxCreativiteEnfantRoute: typeof GuidesQuelleLibrairieChoisirLieuxCreativiteEnfantRoute
   GuidesReussiteScolaireAiderEnfantRoute: typeof GuidesReussiteScolaireAiderEnfantRoute
+  GuidesSacADosMarquesChallengeCreativiteEnfantRoute: typeof GuidesSacADosMarquesChallengeCreativiteEnfantRoute
+  GuidesTestDePersonnaliteEnfantTalentsRoute: typeof GuidesTestDePersonnaliteEnfantTalentsRoute
+  GuidesTestOrientationMetierEnfantFuturRoute: typeof GuidesTestOrientationMetierEnfantFuturRoute
   GuidesTimiditeConfiancePriseDeParoleRoute: typeof GuidesTimiditeConfiancePriseDeParoleRoute
   GuidesIndexRoute: typeof GuidesIndexRoute
 }
@@ -1116,8 +1305,12 @@ interface GuidesRouteChildren {
 const GuidesRouteChildren: GuidesRouteChildren = {
   GuidesActivitesEducativesEnfantRoute: GuidesActivitesEducativesEnfantRoute,
   GuidesActivitesManuellesEnfantRoute: GuidesActivitesManuellesEnfantRoute,
+  GuidesAutismeTdahApprentissageForcesReellesRoute:
+    GuidesAutismeTdahApprentissageForcesReellesRoute,
   GuidesAutonomieResponsabiliteMaisonRoute:
     GuidesAutonomieResponsabiliteMaisonRoute,
+  GuidesChoixParcoursupParcoursScolaireEnfantRoute:
+    GuidesChoixParcoursupParcoursScolaireEnfantRoute,
   GuidesDecrochageScolaireConfianceEnfantRoute:
     GuidesDecrochageScolaireConfianceEnfantRoute,
   GuidesDefisPourAdolescentsRoute: GuidesDefisPourAdolescentsRoute,
@@ -1125,6 +1318,8 @@ const GuidesRouteChildren: GuidesRouteChildren = {
     GuidesDisciplinePositiveSansPunitionRoute,
   GuidesEcransAddictionAlternativesEnfantRoute:
     GuidesEcransAddictionAlternativesEnfantRoute,
+  GuidesEcransTiktokYoutubeTalentEcritureRealisationRoute:
+    GuidesEcransTiktokYoutubeTalentEcritureRealisationRoute,
   GuidesEducationEnfantsAfriqueFrancophoneRoute:
     GuidesEducationEnfantsAfriqueFrancophoneRoute,
   GuidesEnfantAgiteConcentrationRoute: GuidesEnfantAgiteConcentrationRoute,
@@ -1134,12 +1329,24 @@ const GuidesRouteChildren: GuidesRouteChildren = {
   GuidesIaApprentissageEnfantRoute: GuidesIaApprentissageEnfantRoute,
   GuidesIntelligencesMultiplesGardnerRoute:
     GuidesIntelligencesMultiplesGardnerRoute,
+  GuidesJouetsEducatifsKitsScientifiquesPlacardsMaisonRoute:
+    GuidesJouetsEducatifsKitsScientifiquesPlacardsMaisonRoute,
   GuidesOrientationScolaireMetiersAvenirRoute:
     GuidesOrientationScolaireMetiersAvenirRoute,
   GuidesPotentielHautPotentielEnfantRoute:
     GuidesPotentielHautPotentielEnfantRoute,
+  GuidesPratiqueAvantTheorieApprentissageIaRoute:
+    GuidesPratiqueAvantTheorieApprentissageIaRoute,
+  GuidesQuelleLibrairieChoisirLieuxCreativiteEnfantRoute:
+    GuidesQuelleLibrairieChoisirLieuxCreativiteEnfantRoute,
   GuidesReussiteScolaireAiderEnfantRoute:
     GuidesReussiteScolaireAiderEnfantRoute,
+  GuidesSacADosMarquesChallengeCreativiteEnfantRoute:
+    GuidesSacADosMarquesChallengeCreativiteEnfantRoute,
+  GuidesTestDePersonnaliteEnfantTalentsRoute:
+    GuidesTestDePersonnaliteEnfantTalentsRoute,
+  GuidesTestOrientationMetierEnfantFuturRoute:
+    GuidesTestOrientationMetierEnfantFuturRoute,
   GuidesTimiditeConfiancePriseDeParoleRoute:
     GuidesTimiditeConfiancePriseDeParoleRoute,
   GuidesIndexRoute: GuidesIndexRoute,

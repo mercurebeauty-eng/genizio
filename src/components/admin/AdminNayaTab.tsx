@@ -49,7 +49,7 @@ interface AdminNayaTabProps {
   decidingRuleKeys?: string[];
   onDecideSuggestion?: (
     ruleKey: string,
-    decision: "valide" | "a_revoir" | "rejete"
+    decision: "valide" | "a_revoir" | "rejete",
   ) => Promise<void>;
 }
 
@@ -244,7 +244,7 @@ export function AdminNayaTab({
           </div>
 
           <div className="overflow-x-auto">
-            <table className="w-full text-left border-collapse text-xs">
+            <table className="w-full min-w-[480px] text-left border-collapse text-xs">
               <thead>
                 <tr className="border-b-2 border-ink/10 font-extrabold uppercase tracking-wider text-ink/60 pb-2">
                   <th className="py-2.5 pr-3">Domaine</th>
@@ -403,9 +403,12 @@ export function AdminNayaTab({
             <AlertTriangle className="size-5" />
           </div>
           <div>
-            <h3 className="font-display text-lg font-extrabold text-ink">Le Loup de Naya — Vérification sémantique</h3>
+            <h3 className="font-display text-lg font-extrabold text-ink">
+              Le Loup de Naya — Vérification sémantique
+            </h3>
             <p className="text-xs text-ink/60 font-medium">
-              Conformité des générations IA (audits <code className="bg-surface px-1 rounded">generation_audits</code>), recadrage en mode
+              Conformité des générations IA (audits{" "}
+              <code className="bg-surface px-1 rounded">generation_audits</code>), recadrage en mode
               enforce, top violations récurrentes.
             </p>
           </div>
@@ -413,26 +416,44 @@ export function AdminNayaTab({
 
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           <div className="rounded-2xl border border-leaf/20 bg-leaf/5 p-4">
-            <div className="text-[10px] font-extrabold uppercase tracking-wider text-leaf">Conformes</div>
+            <div className="text-[10px] font-extrabold uppercase tracking-wider text-leaf">
+              Conformes
+            </div>
             <div className="font-display text-2xl font-black text-leaf mt-1">
               {telemetry.wolf.conformityRatePct}%
             </div>
-            <div className="text-[11px] text-ink/60 font-medium">des {telemetry.wolf.totalAudits} audits</div>
+            <div className="text-[11px] text-ink/60 font-medium">
+              des {telemetry.wolf.totalAudits} audits
+            </div>
           </div>
           <div className="rounded-2xl border border-amber-500/20 bg-amber-500/5 p-4">
-            <div className="text-[10px] font-extrabold uppercase tracking-wider text-amber-600">Mineures</div>
-            <div className="font-display text-2xl font-black text-amber-600 mt-1">{telemetry.wolf.minorRatePct}%</div>
+            <div className="text-[10px] font-extrabold uppercase tracking-wider text-amber-600">
+              Mineures
+            </div>
+            <div className="font-display text-2xl font-black text-amber-600 mt-1">
+              {telemetry.wolf.minorRatePct}%
+            </div>
             <div className="text-[11px] text-ink/60 font-medium">écarts mineurs détectés</div>
           </div>
           <div className="rounded-2xl border border-red-500/20 bg-red-500/5 p-4">
-            <div className="text-[10px] font-extrabold uppercase tracking-wider text-red-600">Majeures</div>
-            <div className="font-display text-2xl font-black text-red-600 mt-1">{telemetry.wolf.majorRatePct}%</div>
+            <div className="text-[10px] font-extrabold uppercase tracking-wider text-red-600">
+              Majeures
+            </div>
+            <div className="font-display text-2xl font-black text-red-600 mt-1">
+              {telemetry.wolf.majorRatePct}%
+            </div>
             <div className="text-[11px] text-ink/60 font-medium">manquements majeurs</div>
           </div>
           <div className="rounded-2xl border border-sky/20 bg-sky/5 p-4">
-            <div className="text-[10px] font-extrabold uppercase tracking-wider text-sky-600">Coût du Loup</div>
-            <div className="font-display text-2xl font-black text-sky-600 mt-1">${telemetry.wolf.loupCostUsd.toFixed(4)}</div>
-            <div className="text-[11px] text-ink/60 font-medium">{telemetry.wolf.loupCostXof.toLocaleString("fr-FR")} FCFA (sémantique)</div>
+            <div className="text-[10px] font-extrabold uppercase tracking-wider text-sky-600">
+              Coût du Loup
+            </div>
+            <div className="font-display text-2xl font-black text-sky-600 mt-1">
+              ${telemetry.wolf.loupCostUsd.toFixed(4)}
+            </div>
+            <div className="text-[11px] text-ink/60 font-medium">
+              {telemetry.wolf.loupCostXof.toLocaleString("fr-FR")} FCFA (sémantique)
+            </div>
           </div>
         </div>
 
@@ -445,18 +466,30 @@ export function AdminNayaTab({
               <div className="bg-white p-3 rounded-xl border border-ink/5">
                 <div className="text-[10px] text-ink/50 font-bold uppercase">Vérif. sémantique</div>
                 <div className="font-extrabold text-ink">
-                  {telemetry.wolf.semanticChecked} <span className="font-medium text-ink/50">({telemetry.wolf.semanticCheckedRatePct}%)</span>
+                  {telemetry.wolf.semanticChecked}{" "}
+                  <span className="font-medium text-ink/50">
+                    ({telemetry.wolf.semanticCheckedRatePct}%)
+                  </span>
                 </div>
               </div>
               <div className="bg-white p-3 rounded-xl border border-ink/5">
-                <div className="text-[10px] text-ink/50 font-bold uppercase">Recadrages (enforce)</div>
+                <div className="text-[10px] text-ink/50 font-bold uppercase">
+                  Recadrages (enforce)
+                </div>
                 <div className="font-extrabold text-ink">
-                  {telemetry.wolf.regenerated} <span className="font-medium text-ink/50">({telemetry.wolf.recadrageRatePct}%)</span>
+                  {telemetry.wolf.regenerated}{" "}
+                  <span className="font-medium text-ink/50">
+                    ({telemetry.wolf.recadrageRatePct}%)
+                  </span>
                 </div>
               </div>
               <div className="bg-white p-3 rounded-xl border border-ink/5">
-                <div className="text-[10px] text-ink/50 font-bold uppercase">Violations / audit</div>
-                <div className="font-extrabold text-ink">{telemetry.wolf.avgViolationsPerAudit}</div>
+                <div className="text-[10px] text-ink/50 font-bold uppercase">
+                  Violations / audit
+                </div>
+                <div className="font-extrabold text-ink">
+                  {telemetry.wolf.avgViolationsPerAudit}
+                </div>
               </div>
             </div>
           </div>
@@ -466,16 +499,18 @@ export function AdminNayaTab({
               Top violations récurrentes (apprentissage, chantier 3)
             </div>
             {telemetry.wolf.topViolations.length === 0 ? (
-              <p className="text-xs text-ink/50 italic">Aucune violation enregistrée pour l'instant.</p>
+              <p className="text-xs text-ink/50 italic">
+                Aucune violation enregistrée pour l'instant.
+              </p>
             ) : (
               <ul className="space-y-1.5">
                 {telemetry.wolf.topViolations.slice(0, 5).map((v) => (
                   <li key={v.rule} className="flex items-center justify-between text-xs gap-3">
-                    <code className="bg-white px-1.5 py-0.5 rounded border border-ink/5 text-ink font-mono truncate">
-                      {v.rule}
-                    </code>
-                    <span className="font-black text-ink whitespace-nowrap">×{v.count}</span>
-                  </li>
+                  <code className="bg-white px-1.5 py-0.5 rounded border border-ink/5 text-ink font-mono truncate min-w-0 flex-1">
+                    {v.rule}
+                  </code>
+                  <span className="font-bold text-ink shrink-0">{v.count}</span>
+                </li>
                 ))}
               </ul>
             )}
@@ -498,8 +533,10 @@ export function AdminNayaTab({
                 Le Loup qui apprend — Validation des règles apprises
               </h3>
               <p className="text-xs text-ink/60 font-medium">
-                Règles récurrentes (audits <code className="bg-surface px-1 rounded">generation_audits</code>) auto-acquittées par
-                seuil, puis décisions humaines — la promotion dans la constitution reste volontaire.
+                Règles récurrentes (audits{" "}
+                <code className="bg-surface px-1 rounded">generation_audits</code>) auto-acquittées
+                par seuil, puis décisions humaines — la promotion dans la constitution reste
+                volontaire.
               </p>
             </div>
           </div>
@@ -507,12 +544,13 @@ export function AdminNayaTab({
             <button
               type="button"
               onClick={() => {
-                navigator.clipboard
-                  .writeText(constitution.learnedRulesBlock)
-                  .then(
-                    () => toast.success("Bloc LEARNED_RULES copié — à coller dans la constitution (promotion finale volontaire)."),
-                    () => toast.error("Impossible de copier le bloc LEARNED_RULES.")
-                  );
+                navigator.clipboard.writeText(constitution.learnedRulesBlock).then(
+                  () =>
+                    toast.success(
+                      "Bloc LEARNED_RULES copié — à coller dans la constitution (promotion finale volontaire).",
+                    ),
+                  () => toast.error("Impossible de copier le bloc LEARNED_RULES."),
+                );
               }}
               className="press-sky rounded-2xl border border-ink/10 bg-sky/10 px-4 py-2 text-xs font-extrabold text-ink flex items-center gap-2"
             >
@@ -527,30 +565,42 @@ export function AdminNayaTab({
           <div className="grid grid-cols-2 md:grid-cols-5 gap-2 text-center text-xs">
             <div className="bg-surface/30 p-3 rounded-xl border border-ink/5">
               <div className="text-[10px] text-ink/50 font-bold uppercase">Mode</div>
-              <div className={`font-extrabold ${constitution.wolfState.enforce ? "text-red-600" : "text-sky-600"}`}>
+              <div
+                className={`font-extrabold ${constitution.wolfState.enforce ? "text-red-600" : "text-sky-600"}`}
+              >
                 {constitution.wolfState.enforce ? "ENFORCE (recadre)" : "OBSERVATION (shadow)"}
               </div>
             </div>
             <div className="bg-surface/30 p-3 rounded-xl border border-ink/5">
-              <div className="text-[10px] text-ink/50 font-bold uppercase">Échantillonnage sémantique</div>
-              <div className="font-extrabold text-ink">{constitution.wolfState.semanticRatePct}%</div>
+              <div className="text-[10px] text-ink/50 font-bold uppercase">
+                Échantillonnage sémantique
+              </div>
+              <div className="font-extrabold text-ink">
+                {constitution.wolfState.semanticRatePct}%
+              </div>
             </div>
             <div className="bg-surface/30 p-3 rounded-xl border border-ink/5">
               <div className="text-[10px] text-ink/50 font-bold uppercase">Vérif. activée</div>
-              <div className={`font-extrabold ${constitution.wolfState.enabled ? "text-leaf" : "text-red-600"}`}>
+              <div
+                className={`font-extrabold ${constitution.wolfState.enabled ? "text-leaf" : "text-red-600"}`}
+              >
                 {constitution.wolfState.enabled ? "Oui" : "NON (kill-switch)"}
               </div>
             </div>
             <div className="bg-surface/30 p-3 rounded-xl border border-ink/5">
               <div className="text-[10px] text-ink/50 font-bold uppercase">Seuils suggestions</div>
               <div className="font-extrabold text-ink">
-                ≥{constitution.wolfState.suggestThresholds.minCount} occ. · ≥{constitution.wolfState.suggestThresholds.minChildren} enf.
+                ≥{constitution.wolfState.suggestThresholds.minCount} occ. · ≥
+                {constitution.wolfState.suggestThresholds.minChildren} enf.
               </div>
             </div>
             <div className="bg-surface/30 p-3 rounded-xl border border-ink/5">
-              <div className="text-[10px] text-ink/50 font-bold uppercase">Seuils auto-acquittement</div>
+              <div className="text-[10px] text-ink/50 font-bold uppercase">
+                Seuils auto-acquittement
+              </div>
               <div className="font-extrabold text-ink">
-                ≥{constitution.wolfState.autoAckThresholds.minCount} occ. · ≥{constitution.wolfState.autoAckThresholds.minChildren} enf.
+                ≥{constitution.wolfState.autoAckThresholds.minCount} occ. · ≥
+                {constitution.wolfState.autoAckThresholds.minChildren} enf.
               </div>
             </div>
           </div>
@@ -559,7 +609,8 @@ export function AdminNayaTab({
         {/* Suggestions en attente */}
         <div className="rounded-2xl border border-ink/10 bg-surface/30 p-4 space-y-3">
           <div className="text-[11px] font-extrabold uppercase tracking-wider text-ink/60">
-            En attente — {constitution ? `${constitution.suggestions.length} règle(s) proposée(s)` : "…"}
+            En attente —{" "}
+            {constitution ? `${constitution.suggestions.length} règle(s) proposée(s)` : "…"}
           </div>
           {!constitution ? (
             <p className="text-xs text-ink/50 italic">Chargement des suggestions…</p>
@@ -584,7 +635,8 @@ export function AdminNayaTab({
         {/* Journal des décisions (auto + humaines) */}
         <div className="rounded-2xl border border-ink/10 bg-surface/30 p-4 space-y-3">
           <div className="text-[11px] font-extrabold uppercase tracking-wider text-ink/60">
-            Journal des décisions — {constitution ? `${constitution.journal.length} règle(s) décidée(s)` : "…"}
+            Journal des décisions —{" "}
+            {constitution ? `${constitution.journal.length} règle(s) décidée(s)` : "…"}
           </div>
           {!constitution ? (
             <p className="text-xs text-ink/50 italic">Chargement du journal…</p>
@@ -606,7 +658,8 @@ export function AdminNayaTab({
             par conception : il informe Naya sans jamais condamner un domaine. */}
         <div className="rounded-2xl border border-ink/10 bg-surface/30 p-4 space-y-3">
           <div className="text-[11px] font-extrabold uppercase tracking-wider text-ink/60">
-            Signaux d'abandon — {constitution ? `${constitution.outcomeSignals.length} signal(aux)` : "…"}
+            Signaux d'abandon —{" "}
+            {constitution ? `${constitution.outcomeSignals.length} signal(aux)` : "…"}
           </div>
           {!constitution ? (
             <p className="text-xs text-ink/50 italic">Chargement des signaux…</p>
@@ -648,7 +701,7 @@ export function AdminNayaTab({
           </div>
 
           <div className="overflow-x-auto">
-            <table className="w-full text-left border-collapse text-xs">
+            <table className="w-full min-w-[560px] text-left border-collapse text-xs">
               <thead>
                 <tr className="border-b-2 border-ink/10 font-extrabold uppercase tracking-wider text-ink/60 pb-2">
                   <th className="py-2.5 pr-3">Fonctionnalité</th>
@@ -858,8 +911,8 @@ export function AdminNayaTab({
             * Barème DeepSeek creux/plein effectif le 2026-08-16 16:00 UTC (pointe 01:00-04:00 et
             06:00-10:00 UTC). Estimation sur taux pondérés 70 % creux / 30 % pointe + Claude Sonnet
             5 (vision), 1 USD = 600 XOF. Le mode réflexion (activé sur v4-pro) génère des tokens de
-            raisonnement non modélisés ici — le coût réel peut donc dépasser l'estimation (le plafond
-            100 % pointe est affiché sur la carte « Coût Estimé »).
+            raisonnement non modélisés ici — le coût réel peut donc dépasser l'estimation (le
+            plafond 100 % pointe est affiché sur la carte « Coût Estimé »).
           </div>
         </div>
       </div>
@@ -914,8 +967,8 @@ function SuggestionRow({
           </code>
           <div className="text-[10px] text-ink/50 font-semibold mt-1">
             {suggestion.kind}
-            {suggestion.domain !== "general" ? ` · ${suggestion.domain}` : ""} — ×{suggestion.count} occ. ·{" "}
-            {suggestion.childCount} enfant(s)
+            {suggestion.domain !== "general" ? ` · ${suggestion.domain}` : ""} — ×{suggestion.count}{" "}
+            occ. · {suggestion.childCount} enfant(s)
           </div>
         </div>
         {suggestion.severity === "majeur" ? (
@@ -925,12 +978,19 @@ function SuggestionRow({
         ) : null}
       </div>
       {constat ? <p className="text-[11px] text-ink/70 font-medium">Constat : {constat}</p> : null}
-      {correctif ? <p className="text-[11px] text-ink/60">Correctif proposé : {correctif}</p> : null}
+      {correctif ? (
+        <p className="text-[11px] text-ink/60">Correctif proposé : {correctif}</p>
+      ) : null}
       <div className="flex items-center gap-2 pt-1">
         <button
           type="button"
           disabled={busy}
-          onClick={() => void onDecide?.(ruleKeyOf(suggestion.kind, suggestion.domain, suggestion.rule), "valide")}
+          onClick={() =>
+            void onDecide?.(
+              ruleKeyOf(suggestion.kind, suggestion.domain, suggestion.rule),
+              "valide",
+            )
+          }
           className="press-leaf rounded-lg bg-leaf px-3 py-1.5 text-[11px] font-extrabold text-white flex items-center gap-1.5 disabled:opacity-50"
         >
           {busy ? <Loader2 className="size-3 animate-spin" /> : <CheckCircle2 className="size-3" />}
@@ -939,16 +999,25 @@ function SuggestionRow({
         <button
           type="button"
           disabled={busy}
-          onClick={() => void onDecide?.(ruleKeyOf(suggestion.kind, suggestion.domain, suggestion.rule), "a_revoir")}
+          onClick={() =>
+            void onDecide?.(
+              ruleKeyOf(suggestion.kind, suggestion.domain, suggestion.rule),
+              "a_revoir",
+            )
+          }
           className="press-white rounded-lg border border-amber-500/30 bg-amber-500/5 px-3 py-1.5 text-[11px] font-extrabold text-amber-600 flex items-center gap-1.5 disabled:opacity-50"
         >
-          {busy ? <Loader2 className="size-3 animate-spin" /> : <Eye className="size-3" />}
-          À revoir
+          {busy ? <Loader2 className="size-3 animate-spin" /> : <Eye className="size-3" />}À revoir
         </button>
         <button
           type="button"
           disabled={busy}
-          onClick={() => void onDecide?.(ruleKeyOf(suggestion.kind, suggestion.domain, suggestion.rule), "rejete")}
+          onClick={() =>
+            void onDecide?.(
+              ruleKeyOf(suggestion.kind, suggestion.domain, suggestion.rule),
+              "rejete",
+            )
+          }
           className="press-white rounded-lg border border-red-500/30 bg-red-500/5 px-3 py-1.5 text-[11px] font-extrabold text-red-600 flex items-center gap-1.5 disabled:opacity-50"
         >
           {busy ? <Loader2 className="size-3 animate-spin" /> : <X className="size-3" />}
@@ -964,15 +1033,17 @@ function JournalRow({ decision }: { decision: RuleDecision }) {
   return (
     <li className="flex items-center justify-between gap-3 bg-white rounded-lg border border-ink/5 px-3 py-2">
       <div className="min-w-0 flex items-center gap-2">
-        <span className={`shrink-0 text-[10px] font-extrabold uppercase px-2 py-0.5 rounded-full ${decisionBadgeClass(decision.decision)}`}>
+        <span
+          className={`shrink-0 text-[10px] font-extrabold uppercase px-2 py-0.5 rounded-full ${decisionBadgeClass(decision.decision)}`}
+        >
           {LOUP_DECISION_LABELS[decision.decision]}
         </span>
         <div className="min-w-0">
           <code className="text-ink font-mono text-[11px] block truncate">{decision.rule}</code>
           <div className="text-[10px] text-ink/50 font-medium">
             {decision.kind}
-            {decision.domain !== "general" ? ` · ${decision.domain}` : ""} — ×{decision.count} occ. ·{" "}
-            {decision.childCount} enfant(s)
+            {decision.domain !== "general" ? ` · ${decision.domain}` : ""} — ×{decision.count} occ.
+            · {decision.childCount} enfant(s)
             {decision.note ? ` — « ${decision.note} »` : ""}
           </div>
         </div>
@@ -988,13 +1059,13 @@ function JournalRow({ decision }: { decision: RuleDecision }) {
 /** Un signal d'abandon agrégé (Décision #58) : raison, type, domaine, comptes. */
 function OutcomeSignalRow({ signal }: { signal: OutcomeSignal }) {
   const kindClass =
-    signal.kind === "deleted_completed"
-      ? "bg-leaf/10 text-leaf"
-      : "bg-amber-500/10 text-amber-600";
+    signal.kind === "deleted_completed" ? "bg-leaf/10 text-leaf" : "bg-amber-500/10 text-amber-600";
   return (
     <li className="flex items-center justify-between gap-3 bg-white rounded-lg border border-ink/5 px-3 py-2">
       <div className="min-w-0 flex items-center gap-2">
-        <span className={`shrink-0 text-[10px] font-extrabold uppercase px-2 py-0.5 rounded-full ${kindClass}`}>
+        <span
+          className={`shrink-0 text-[10px] font-extrabold uppercase px-2 py-0.5 rounded-full ${kindClass}`}
+        >
           {OUTCOME_KIND_LABELS[signal.kind]}
         </span>
         <div className="min-w-0">
@@ -1003,7 +1074,8 @@ function OutcomeSignalRow({ signal }: { signal: OutcomeSignal }) {
             {signal.domain !== "general" ? ` · ${signal.domain}` : ""}
           </div>
           <div className="text-[10px] text-ink/50 font-medium">
-            ×{signal.count} suppr. · {signal.childCount} enfant(s) · Ø {signal.avgPendingDays} j d'attente
+            ×{signal.count} suppr. · {signal.childCount} enfant(s) · Ø {signal.avgPendingDays} j
+            d'attente
           </div>
         </div>
       </div>

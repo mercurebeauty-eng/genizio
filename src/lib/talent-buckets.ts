@@ -1,4 +1,8 @@
-export type TalentBucket = "confirme" | "en_developpement" | "signal_precoce" | "pas_encore_explore";
+export type TalentBucket =
+  | "confirme"
+  | "en_developpement"
+  | "signal_precoce"
+  | "pas_encore_explore";
 
 export const TALENT_BUCKET_LABEL: Record<TalentBucket, string> = {
   confirme: "profondément exploré",

@@ -45,7 +45,9 @@ export interface SequenceAttempt {
  *    conclusion — « personne n'est nul », on n'a pas encore cherché assez loin).
  * Renvoie null tant qu'il n'y a rien de concluant à montrer au parent.
  */
-export function evaluateFailureSequence(attempts: SequenceAttempt[]): FailureSequenceVerdict | null {
+export function evaluateFailureSequence(
+  attempts: SequenceAttempt[],
+): FailureSequenceVerdict | null {
   const succeeded = attempts.find((a) => a.status === "completed" && a.presentationMode);
   if (succeeded?.presentationMode) {
     return { status: "MODALITY_FOUND", modality: succeeded.presentationMode };
@@ -127,7 +129,7 @@ export const getLatestFailureSequence = createServerFn({ method: "GET" })
     const siblings = chain.filter(
       (c) =>
         parseReformulationContext(c.pedagogical_context)?.originalChallengeId ===
-        latestCtx.originalChallengeId
+        latestCtx.originalChallengeId,
     );
 
     const attempts: SequenceAttempt[] = siblings.map((s) => ({

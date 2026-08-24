@@ -30,39 +30,77 @@ import type { TimePressure } from "@/lib/time-limit";
 export const INTERESTS_BY_TALENT: Record<string, { label: string; tags: readonly string[] }> = {
   spatial: {
     label: TALENT_KEY_LABELS.spatial,
-    tags: ["Démonte pour comprendre", "Remarque les petits détails visuels", "Aime assembler et construire", "S'oriente facilement dans l'espace"],
+    tags: [
+      "Démonte pour comprendre",
+      "Remarque les petits détails visuels",
+      "Aime assembler et construire",
+      "S'oriente facilement dans l'espace",
+    ],
   },
   corporelle: {
     label: TALENT_KEY_LABELS.corporelle,
-    tags: ["A besoin de bouger pour réfléchir", "Touche tout ce qu'il voit", "Apprend en imitant les gestes"],
+    tags: [
+      "A besoin de bouger pour réfléchir",
+      "Touche tout ce qu'il voit",
+      "Apprend en imitant les gestes",
+    ],
   },
   sociale: {
     label: TALENT_KEY_LABELS.sociale,
-    tags: ["Joue souvent le médiateur", "Comprend vite les règles du groupe", "Aime organiser les autres"],
+    tags: [
+      "Joue souvent le médiateur",
+      "Comprend vite les règles du groupe",
+      "Aime organiser les autres",
+    ],
   },
   entrepreneuriale: {
     label: TALENT_KEY_LABELS.entrepreneuriale,
-    tags: ["Invente ses propres règles de jeu", "Négocie toujours (même le coucher)", "Cherche à optimiser ou marchander"],
+    tags: [
+      "Invente ses propres règles de jeu",
+      "Négocie toujours (même le coucher)",
+      "Cherche à optimiser ou marchander",
+    ],
   },
   creative: {
     label: TALENT_KEY_LABELS.creative,
-    tags: ["Détourne les objets de leur usage", "A un imaginaire débordant", "Préfère inventer que suivre la notice"],
+    tags: [
+      "Détourne les objets de leur usage",
+      "A un imaginaire débordant",
+      "Préfère inventer que suivre la notice",
+    ],
   },
   artisanale: {
     label: TALENT_KEY_LABELS.artisanale,
-    tags: ["Préfère faire de ses propres mains", "Aime les résultats concrets et finis", "S'applique sur les tâches minutieuses"],
+    tags: [
+      "Préfère faire de ses propres mains",
+      "Aime les résultats concrets et finis",
+      "S'applique sur les tâches minutieuses",
+    ],
   },
   emotionnelle: {
     label: TALENT_KEY_LABELS.emotionnelle,
-    tags: ["Ressent intensément l'humeur ambiante", "A besoin de solitude pour se recharger", "Très sensible à l'injustice"],
+    tags: [
+      "Ressent intensément l'humeur ambiante",
+      "A besoin de solitude pour se recharger",
+      "Très sensible à l'injustice",
+    ],
   },
   logico_mathematique: {
     label: TALENT_KEY_LABELS.logico_mathematique,
-    tags: ["Pose sans arrêt la question 'Pourquoi ?'", "Aime classer, trier et mesurer", "Cherche la logique cachée des choses", "Fasciné par le lien cause/effet"],
+    tags: [
+      "Pose sans arrêt la question 'Pourquoi ?'",
+      "Aime classer, trier et mesurer",
+      "Cherche la logique cachée des choses",
+      "Fasciné par le lien cause/effet",
+    ],
   },
   linguistique: {
     label: TALENT_KEY_LABELS.linguistique,
-    tags: ["Retient très facilement les histoires", "Joue avec les mots et les sons", "Argumente pour défendre ses idées"],
+    tags: [
+      "Retient très facilement les histoires",
+      "Joue avec les mots et les sons",
+      "Argumente pour défendre ses idées",
+    ],
   },
 };
 
@@ -105,7 +143,13 @@ export type ChildProfile = {
 
 export type ProfileDraft = Omit<
   ChildProfile,
-  "id" | "user_id" | "favorite_challenges" | "completed_challenges" | "talents" | "pdf_unlocked" | "access_locked_at"
+  | "id"
+  | "user_id"
+  | "favorite_challenges"
+  | "completed_challenges"
+  | "talents"
+  | "pdf_unlocked"
+  | "access_locked_at"
 >;
 
 export const emptyProfileDraft = (): ProfileDraft => ({

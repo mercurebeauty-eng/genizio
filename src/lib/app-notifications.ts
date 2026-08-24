@@ -31,9 +31,8 @@ export async function notifyUser(params: {
       void sendPushToUser(supabaseAdmin as any, params.userId, buildPushPayload(params));
     }
     if (channels.email) {
-      const { sendNotificationEmail, emailForEvent } = await import(
-        "./notification-email.functions"
-      );
+      const { sendNotificationEmail, emailForEvent } =
+        await import("./notification-email.functions");
       void sendEmailForEvent(supabaseAdmin as any, params);
     }
   } catch (err) {
@@ -125,9 +124,7 @@ async function sendEmailForEvent(
   },
 ): Promise<void> {
   try {
-    const { sendNotificationEmail, emailForEvent } = await import(
-      "./notification-email.functions"
-    );
+    const { sendNotificationEmail, emailForEvent } = await import("./notification-email.functions");
     const childId = params.childId;
     let childName: string | null = null;
     if (childId) {

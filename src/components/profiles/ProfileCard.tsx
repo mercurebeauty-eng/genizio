@@ -17,13 +17,15 @@ export function ProfileCard({
 
   return (
     <div className="rounded-3xl border border-ink/10 bg-white p-6 shadow-md">
-      <div className="mb-4 flex items-center gap-4">
-        <div className={`grid size-14 place-items-center rounded-full font-display text-balance text-xl font-bold text-white ${color}`}>
+      <div className="mb-4 flex items-center gap-4 min-w-0">
+        <div
+          className={`grid size-14 shrink-0 place-items-center rounded-full font-display text-balance text-xl font-bold text-white ${color}`}
+        >
           {profile.name.charAt(0).toUpperCase()}
         </div>
-        <div>
-          <h3 className="font-display text-balance text-xl font-bold">{profile.name}</h3>
-          <p className="text-xs text-ink/60">
+        <div className="min-w-0">
+          <h3 className="font-display text-balance text-xl font-bold truncate">{profile.name}</h3>
+          <p className="text-xs text-ink/60 truncate">
             {profile.age} ans
             {profile.city ? ` · ${profile.city}` : ""}
             {profile.country ? `, ${profile.country}` : ""}
@@ -32,7 +34,10 @@ export function ProfileCard({
       </div>
       <div className="mb-4 flex flex-wrap gap-1.5">
         {profile.interests.slice(0, 6).map((i) => (
-          <span key={i} className="rounded-full bg-brand/10 px-2.5 py-0.5 text-[11px] font-medium text-brand">
+          <span
+            key={i}
+            className="rounded-full bg-brand/10 px-2.5 py-0.5 text-[11px] font-medium text-brand"
+          >
             {i}
           </span>
         ))}
@@ -58,7 +63,13 @@ export function ProfileCard({
         {showPortfolio ? "Masquer le Portfolio" : "📊 Voir le Portfolio (Carte des Talents)"}
       </button>
 
-      {showPortfolio && <TalentRadarChart talents={profile.talents} name={profile.name} className="mb-4 h-48 w-full" />}
+      {showPortfolio && (
+        <TalentRadarChart
+          talents={profile.talents}
+          name={profile.name}
+          className="mb-4 h-48 w-full"
+        />
+      )}
 
       <div className="flex gap-2">
         <button

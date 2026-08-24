@@ -84,7 +84,10 @@ export function paginateChallenges<T extends { proof_image_url: string | null }>
   const pages: T[][] = [];
   let current: T[] = [];
   for (const c of challenges) {
-    if (current.length >= 2 || (current.length === 1 && (current[0].proof_image_url || c.proof_image_url))) {
+    if (
+      current.length >= 2 ||
+      (current.length === 1 && (current[0].proof_image_url || c.proof_image_url))
+    ) {
       pages.push(current);
       current = [];
     }

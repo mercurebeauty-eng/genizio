@@ -32,55 +32,193 @@ export const TALENT_SUBFORM_OPPORTUNITIES: Record<string, string[]> = {
   // corporelle
   endurance: ["Athlétisme (fond/demi-fond)", "Football", "Natation", "Cyclisme"],
   explosivite: ["Basketball", "Athlétisme (sprint/saut)", "Volleyball", "Sports de combat"],
-  coordination_fine: ["Tennis de table", "Escrime", "Arts martiaux techniques", "Métiers manuels de précision"],
+  coordination_fine: [
+    "Tennis de table",
+    "Escrime",
+    "Arts martiaux techniques",
+    "Métiers manuels de précision",
+  ],
   coordination_collective: ["Handball", "Football", "Basketball", "Rugby"],
   precision: ["Tir à l'arc", "Golf", "Pétanque", "Gymnastique"],
 
   // spatial
-  orientation: ["Navigation/cartographie", "Architecture", "Guide d'exploration", "Pilotage (aviation, marine)"],
+  orientation: [
+    "Navigation/cartographie",
+    "Architecture",
+    "Guide d'exploration",
+    "Pilotage (aviation, marine)",
+  ],
   visualisation_3d: ["Architecture", "Design produit", "Chirurgie", "Design de jeux vidéo (3D)"],
-  representation_graphique: ["Design graphique", "Illustration", "Cartographie", "Dessin technique (ingénierie)"],
-  organisation_espace: ["Architecture d'intérieur", "Logistique/entreposage", "Urbanisme", "Scénographie/muséographie"],
+  representation_graphique: [
+    "Design graphique",
+    "Illustration",
+    "Cartographie",
+    "Dessin technique (ingénierie)",
+  ],
+  organisation_espace: [
+    "Architecture d'intérieur",
+    "Logistique/entreposage",
+    "Urbanisme",
+    "Scénographie/muséographie",
+  ],
 
   // sociale
-  leadership: ["Management d'équipe", "Vie associative/politique", "Coaching sportif", "Entrepreneuriat collectif"],
+  leadership: [
+    "Management d'équipe",
+    "Vie associative/politique",
+    "Coaching sportif",
+    "Entrepreneuriat collectif",
+  ],
   mediation: ["Médiation/résolution de conflits", "Droit", "Ressources humaines", "Diplomatie"],
-  collaboration: ["Travail en mode projet", "Sport collectif", "Organisation d'événements", "Coopératives"],
-  ecoute_empathique: ["Psychologie/accompagnement", "Enseignement", "Travail social", "Soins infirmiers"],
+  collaboration: [
+    "Travail en mode projet",
+    "Sport collectif",
+    "Organisation d'événements",
+    "Coopératives",
+  ],
+  ecoute_empathique: [
+    "Psychologie/accompagnement",
+    "Enseignement",
+    "Travail social",
+    "Soins infirmiers",
+  ],
 
   // entrepreneuriale
-  negociation: ["Commerce/vente", "Achats & négociation fournisseurs", "Droit des affaires", "Diplomatie"],
-  prise_de_risque: ["Création d'entreprise", "Investissement", "Recherche & innovation", "Sports à risque encadrés"],
+  negociation: [
+    "Commerce/vente",
+    "Achats & négociation fournisseurs",
+    "Droit des affaires",
+    "Diplomatie",
+  ],
+  prise_de_risque: [
+    "Création d'entreprise",
+    "Investissement",
+    "Recherche & innovation",
+    "Sports à risque encadrés",
+  ],
   sens_du_client: ["Marketing", "Vente/commerce", "Design de service", "Hôtellerie-restauration"],
-  gestion_ressources: ["Gestion de projet", "Bureautique avancée (tableurs, outils numériques)", "Finance/comptabilité", "Logistique", "Gestion d'exploitation agricole"],
+  gestion_ressources: [
+    "Gestion de projet",
+    "Bureautique avancée (tableurs, outils numériques)",
+    "Finance/comptabilité",
+    "Logistique",
+    "Gestion d'exploitation agricole",
+  ],
 
   // creative
-  invention_visuelle: ["Arts plastiques", "Design graphique/mode", "Architecture", "Illustration/animation"],
-  narration: ["Écriture/scénario", "Cinéma/audiovisuel", "Narrative design (jeux vidéo)", "Édition jeunesse"],
-  improvisation: ["Théâtre/comédie", "Musique (jazz, composition live)", "Publicité créative", "Stand-up"],
-  detournement: ["Design industriel", "Artisanat durable (upcycling)", "Publicité créative", "Arts visuels contemporains"],
+  invention_visuelle: [
+    "Arts plastiques",
+    "Design graphique/mode",
+    "Architecture",
+    "Illustration/animation",
+  ],
+  narration: [
+    "Écriture/scénario",
+    "Cinéma/audiovisuel",
+    "Narrative design (jeux vidéo)",
+    "Édition jeunesse",
+  ],
+  improvisation: [
+    "Théâtre/comédie",
+    "Musique (jazz, composition live)",
+    "Publicité créative",
+    "Stand-up",
+  ],
+  detournement: [
+    "Design industriel",
+    "Artisanat durable (upcycling)",
+    "Publicité créative",
+    "Arts visuels contemporains",
+  ],
 
   // artisanale
   dexterite_fine: ["Bijouterie/horlogerie", "Couture/broderie", "Chirurgie", "Ébénisterie fine"],
   assemblage: ["Menuiserie/charpente", "Mécanique", "Construction/BTP", "Électronique"],
-  reparation: ["Mécanique auto/moto", "Électroménager", "Dépannage informatique", "Restauration de mobilier"],
-  finition_esthetique: ["Ébénisterie", "Décoration d'intérieur", "Pâtisserie/art culinaire", "Carrosserie"],
+  reparation: [
+    "Mécanique auto/moto",
+    "Électroménager",
+    "Dépannage informatique",
+    "Restauration de mobilier",
+  ],
+  finition_esthetique: [
+    "Ébénisterie",
+    "Décoration d'intérieur",
+    "Pâtisserie/art culinaire",
+    "Carrosserie",
+  ],
 
   // emotionnelle
-  autoregulation: ["Sport individuel de haut niveau", "Métiers à forte pression (secours, pilotage)", "Arbitrage sportif", "Encadrement bien-être"],
-  expression: ["Écriture personnelle", "Théâtre", "Chant/musique expressive", "Accompagnement psychologique"],
+  autoregulation: [
+    "Sport individuel de haut niveau",
+    "Métiers à forte pression (secours, pilotage)",
+    "Arbitrage sportif",
+    "Encadrement bien-être",
+  ],
+  expression: [
+    "Écriture personnelle",
+    "Théâtre",
+    "Chant/musique expressive",
+    "Accompagnement psychologique",
+  ],
   empathie: ["Psychologie/thérapie", "Médecine/soins infirmiers", "Travail social", "Enseignement"],
-  resilience: ["Sport de haut niveau", "Entrepreneuriat", "Recherche scientifique", "Métiers d'urgence"],
+  resilience: [
+    "Sport de haut niveau",
+    "Entrepreneuriat",
+    "Recherche scientifique",
+    "Métiers d'urgence",
+  ],
 
   // logico_mathematique
-  raisonnement_abstrait: ["Mathématiques/recherche", "Philosophie", "Informatique théorique", "Droit (raisonnement juridique)"],
-  calcul: ["Comptabilité/finance", "Ingénierie", "Statistiques/data science", "Sciences de laboratoire"],
-  resolution_problemes: ["Programmation informatique", "Développement web/mobile", "Automatisation & outils d'IA", "Ingénierie", "Médecine (diagnostic)", "Jeux stratégiques (échecs)"],
-  reconnaissance_motifs: ["Data science/IA", "Composition musicale", "Cryptographie/sécurité informatique", "Sciences (biologie, astronomie)"],
+  raisonnement_abstrait: [
+    "Mathématiques/recherche",
+    "Philosophie",
+    "Informatique théorique",
+    "Droit (raisonnement juridique)",
+  ],
+  calcul: [
+    "Comptabilité/finance",
+    "Ingénierie",
+    "Statistiques/data science",
+    "Sciences de laboratoire",
+  ],
+  resolution_problemes: [
+    "Programmation informatique",
+    "Développement web/mobile",
+    "Automatisation & outils d'IA",
+    "Ingénierie",
+    "Médecine (diagnostic)",
+    "Jeux stratégiques (échecs)",
+  ],
+  reconnaissance_motifs: [
+    "Data science/IA",
+    "Composition musicale",
+    "Cryptographie/sécurité informatique",
+    "Sciences (biologie, astronomie)",
+  ],
 
   // linguistique
-  expression_ecrite: ["Journalisme/écriture", "Édition", "Rédaction juridique", "Communication/marketing"],
-  expression_orale: ["Enseignement", "Théâtre/audiovisuel", "Prise de parole publique", "Guide/animation"],
-  argumentation: ["Droit (avocat)", "Débat/diplomatie", "Vente/négociation", "Journalisme d'opinion"],
-  memorisation_lexicale: ["Traduction/interprétariat", "Enseignement des langues", "Droit", "Littérature/poésie"],
+  expression_ecrite: [
+    "Journalisme/écriture",
+    "Édition",
+    "Rédaction juridique",
+    "Communication/marketing",
+  ],
+  expression_orale: [
+    "Enseignement",
+    "Théâtre/audiovisuel",
+    "Prise de parole publique",
+    "Guide/animation",
+  ],
+  argumentation: [
+    "Droit (avocat)",
+    "Débat/diplomatie",
+    "Vente/négociation",
+    "Journalisme d'opinion",
+  ],
+  memorisation_lexicale: [
+    "Traduction/interprétariat",
+    "Enseignement des langues",
+    "Droit",
+    "Littérature/poésie",
+  ],
 };

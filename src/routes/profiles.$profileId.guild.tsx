@@ -159,8 +159,8 @@ function GuildPage() {
                 présentée comme un verdict — elle s'affine avec les validations réelles. */}
             {completedCount === 0 && guild.key !== "aucune" && (
               <p className={`mt-2 text-xs italic opacity-80 ${guild.color}`}>
-                Cette guilde est basée sur les intérêts déclarés — elle s'affinera au fil des
-                défis réalisés.
+                Cette guilde est basée sur les intérêts déclarés — elle s'affinera au fil des défis
+                réalisés.
               </p>
             )}
             {guild.talentKeys.length > 0 && (

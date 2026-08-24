@@ -104,14 +104,25 @@ const VALID_TALENT_KEYS = [
 // vérifie l'égalité stricte avec la source, pour que ce module n'importe pas le
 // serveur au chargement et reste pur/testable en isolation.
 const VALID_SUBFORMS: Record<string, readonly string[]> = {
-  corporelle: ["endurance", "explosivite", "coordination_fine", "coordination_collective", "precision"],
+  corporelle: [
+    "endurance",
+    "explosivite",
+    "coordination_fine",
+    "coordination_collective",
+    "precision",
+  ],
   spatial: ["orientation", "visualisation_3d", "representation_graphique", "organisation_espace"],
   sociale: ["leadership", "mediation", "collaboration", "ecoute_empathique"],
   entrepreneuriale: ["negociation", "prise_de_risque", "sens_du_client", "gestion_ressources"],
   creative: ["invention_visuelle", "narration", "improvisation", "detournement"],
   artisanale: ["dexterite_fine", "assemblage", "reparation", "finition_esthetique"],
   emotionnelle: ["autoregulation", "expression", "empathie", "resilience"],
-  logico_mathematique: ["raisonnement_abstrait", "calcul", "resolution_problemes", "reconnaissance_motifs"],
+  logico_mathematique: [
+    "raisonnement_abstrait",
+    "calcul",
+    "resolution_problemes",
+    "reconnaissance_motifs",
+  ],
   linguistique: ["expression_ecrite", "expression_orale", "argumentation", "memorisation_lexicale"],
 };
 
@@ -216,73 +227,162 @@ function extractChallengeObjects(kind: GenerationKind, output: unknown): Record<
 
 // ── Validateurs déterministes (couche 1 — toujours active) ──────────────────
 
-function validateChallengeRecord(c: Record<string, unknown>, ctx: VerifyContext, kind: GenerationKind): Violation[] {
+function validateChallengeRecord(
+  c: Record<string, unknown>,
+  ctx: VerifyContext,
+  kind: GenerationKind,
+): Violation[] {
   const v: Violation[] = [];
   const title = str(c.title);
   const description = str(c.description);
 
   if (!title.trim()) {
-    v.push({ rule: "challenge.title_present", severity: "majeur", detail: "Titre manquant ou vide.", suggestion: "Fournis un titre accrocheur, compréhensible par l'enfant." });
+    v.push({
+      rule: "challenge.title_present",
+      severity: "majeur",
+      detail: "Titre manquant ou vide.",
+      suggestion: "Fournis un titre accrocheur, compréhensible par l'enfant.",
+    });
   }
   if (!description.trim()) {
-    v.push({ rule: "challenge.description_present", severity: "majeur", detail: "Description manquante ou vide.", suggestion: "Rédige un pitch pour l'enfant, compréhensible sans adulte." });
+    v.push({
+      rule: "challenge.description_present",
+      severity: "majeur",
+      detail: "Description manquante ou vide.",
+      suggestion: "Rédige un pitch pour l'enfant, compréhensible sans adulte.",
+    });
   }
 
   const intelligences = c.intelligences;
   if (Array.isArray(intelligences)) {
     if (intelligences.length < 1 || intelligences.length > 2) {
-      v.push({ rule: "challenge.intelligences_count", severity: "mineur", detail: `${intelligences.length} intelligence(s) ciblée(s) (1 à 2 attendues).`, suggestion: "Cible 1 à 2 intelligences réellement sollicitées." });
+      v.push({
+        rule: "challenge.intelligences_count",
+        severity: "mineur",
+        detail: `${intelligences.length} intelligence(s) ciblée(s) (1 à 2 attendues).`,
+        suggestion: "Cible 1 à 2 intelligences réellement sollicitées.",
+      });
     }
-    const bad = intelligences.filter((k) => typeof k !== "string" || !(VALID_TALENT_KEYS as readonly string[]).includes(k));
+    const bad = intelligences.filter(
+      (k) => typeof k !== "string" || !(VALID_TALENT_KEYS as readonly string[]).includes(k),
+    );
     if (bad.length) {
-      v.push({ rule: "challenge.intelligences_valid", severity: "majeur", detail: `Clés d'intelligence invalides : ${bad.join(", ")}.`, suggestion: "Utilise uniquement les clés techniques exactes des 9 intelligences." });
+      v.push({
+        rule: "challenge.intelligences_valid",
+        severity: "majeur",
+        detail: `Clés d'intelligence invalides : ${bad.join(", ")}.`,
+        suggestion: "Utilise uniquement les clés techniques exactes des 9 intelligences.",
+      });
     }
   } else if (intelligences !== undefined && intelligences !== null) {
-    v.push({ rule: "challenge.intelligences_valid", severity: "majeur", detail: "intelligences n'est pas un tableau.", suggestion: "intelligences doit être un tableau de 1 à 2 clés." });
+    v.push({
+      rule: "challenge.intelligences_valid",
+      severity: "majeur",
+      detail: "intelligences n'est pas un tableau.",
+      suggestion: "intelligences doit être un tableau de 1 à 2 clés.",
+    });
   }
 
   const difficulty = str(c.difficulty);
   if (difficulty && !(VALID_DIFFICULTIES as readonly string[]).includes(difficulty)) {
-    v.push({ rule: "challenge.difficulty_valid", severity: "majeur", detail: `difficulty invalide : ${difficulty}.`, suggestion: "facile | moyen | difficile." });
+    v.push({
+      rule: "challenge.difficulty_valid",
+      severity: "majeur",
+      detail: `difficulty invalide : ${difficulty}.`,
+      suggestion: "facile | moyen | difficile.",
+    });
   }
 
   const proofMode = str(c.proof_mode);
   if (proofMode && !(VALID_PROOF_MODES as readonly string[]).includes(proofMode)) {
-    v.push({ rule: "challenge.proof_mode_valid", severity: "majeur", detail: `proof_mode invalide : ${proofMode}.`, suggestion: "photo | declarative." });
+    v.push({
+      rule: "challenge.proof_mode_valid",
+      severity: "majeur",
+      detail: `proof_mode invalide : ${proofMode}.`,
+      suggestion: "photo | declarative.",
+    });
   }
   if (proofMode === "declarative") {
     const pt = isRecord(c.proof_target) ? c.proof_target : undefined;
     const award = isRecord(c.declarative_award) ? c.declarative_award : undefined;
-    if (!pt || typeof pt.metric !== "string" || !pt.metric.trim() || pt.value === undefined || pt.value === null) {
-      v.push({ rule: "challenge.proof_declarative_complete", severity: "mineur", detail: "proof_mode=declarative sans proof_target complet.", suggestion: "Ajoute proof_target {metric, value} pour toute cible déclarative." });
+    if (
+      !pt ||
+      typeof pt.metric !== "string" ||
+      !pt.metric.trim() ||
+      pt.value === undefined ||
+      pt.value === null
+    ) {
+      v.push({
+        rule: "challenge.proof_declarative_complete",
+        severity: "mineur",
+        detail: "proof_mode=declarative sans proof_target complet.",
+        suggestion: "Ajoute proof_target {metric, value} pour toute cible déclarative.",
+      });
     }
     if (!award || Object.keys(award).length === 0) {
-      v.push({ rule: "challenge.proof_declarative_complete", severity: "mineur", detail: "proof_mode=declarative sans declarative_award.", suggestion: "Ajoute declarative_award {clé:points}, clés parmi les 9 intelligences." });
+      v.push({
+        rule: "challenge.proof_declarative_complete",
+        severity: "mineur",
+        detail: "proof_mode=declarative sans declarative_award.",
+        suggestion: "Ajoute declarative_award {clé:points}, clés parmi les 9 intelligences.",
+      });
     } else {
-      const badAward = Object.keys(award).filter((k) => !(VALID_TALENT_KEYS as readonly string[]).includes(k));
+      const badAward = Object.keys(award).filter(
+        (k) => !(VALID_TALENT_KEYS as readonly string[]).includes(k),
+      );
       if (badAward.length) {
-        v.push({ rule: "challenge.declarative_award_valid", severity: "mineur", detail: `Clés declarative_award invalides : ${badAward.join(", ")}.`, suggestion: "Clés exclusivement parmi les 9 intelligences." });
+        v.push({
+          rule: "challenge.declarative_award_valid",
+          severity: "mineur",
+          detail: `Clés declarative_award invalides : ${badAward.join(", ")}.`,
+          suggestion: "Clés exclusivement parmi les 9 intelligences.",
+        });
       }
     }
-  } else if (proofMode === "photo" && (c.proof_target !== undefined || c.declarative_award !== undefined)) {
-    v.push({ rule: "challenge.proof_declarative_complete", severity: "mineur", detail: "proof_mode=photo avec des champs déclaratifs résiduels.", suggestion: "N'inclus ni proof_target ni declarative_award en mode photo." });
+  } else if (
+    proofMode === "photo" &&
+    (c.proof_target !== undefined || c.declarative_award !== undefined)
+  ) {
+    v.push({
+      rule: "challenge.proof_declarative_complete",
+      severity: "mineur",
+      detail: "proof_mode=photo avec des champs déclaratifs résiduels.",
+      suggestion: "N'inclus ni proof_target ni declarative_award en mode photo.",
+    });
   }
 
   const trait = str(c.trait_subform);
   if (trait) {
-    const chosen = Array.isArray(intelligences) ? intelligences.filter((k): k is string => typeof k === "string") : [];
+    const chosen = Array.isArray(intelligences)
+      ? intelligences.filter((k): k is string => typeof k === "string")
+      : [];
     const allowed = chosen.flatMap((k) => VALID_SUBFORMS[k] ?? []);
     if (allowed.length > 0 && !allowed.includes(trait)) {
-      v.push({ rule: "challenge.trait_subform_valid", severity: "mineur", detail: `trait_subform "${trait}" hors des sous-formes de l'intelligence choisie (${chosen.join(", ") || "aucune"}).`, suggestion: "Choisis une sous-forme listée pour l'intelligence choisie, ou omets le champ." });
+      v.push({
+        rule: "challenge.trait_subform_valid",
+        severity: "mineur",
+        detail: `trait_subform "${trait}" hors des sous-formes de l'intelligence choisie (${chosen.join(", ") || "aucune"}).`,
+        suggestion: "Choisis une sous-forme listée pour l'intelligence choisie, ou omets le champ.",
+      });
     } else if (allowed.length === 0) {
-      v.push({ rule: "challenge.trait_subform_valid", severity: "mineur", detail: `trait_subform "${trait}" fourni sans intelligence parente choisie.`, suggestion: "Ajoute l'intelligence parente dans intelligences, ou omets trait_subform." });
+      v.push({
+        rule: "challenge.trait_subform_valid",
+        severity: "mineur",
+        detail: `trait_subform "${trait}" fourni sans intelligence parente choisie.`,
+        suggestion: "Ajoute l'intelligence parente dans intelligences, ou omets trait_subform.",
+      });
     }
   }
 
   const steps = c.steps;
   if (Array.isArray(steps)) {
     if (steps.length < 3 || steps.length > 6) {
-      v.push({ rule: "challenge.steps_count", severity: "mineur", detail: `${steps.length} étapes (3 à 6 attendues).`, suggestion: "Décompose en 3 à 6 gestes concrets et complets." });
+      v.push({
+        rule: "challenge.steps_count",
+        severity: "mineur",
+        detail: `${steps.length} étapes (3 à 6 attendues).`,
+        suggestion: "Décompose en 3 à 6 gestes concrets et complets.",
+      });
     }
   }
 
@@ -290,25 +390,51 @@ function validateChallengeRecord(c: Record<string, unknown>, ctx: VerifyContext,
   if (Array.isArray(tags)) {
     const upper = tags.filter((t) => typeof t === "string" && /[A-ZÀ-Ü]/.test(t));
     if (upper.length) {
-      v.push({ rule: "challenge.material_tags_format", severity: "mineur", detail: `tags avec majuscules : ${upper.join(", ")}.`, suggestion: "Tags courts, minuscules, sans accent, par matériau achetable." });
+      v.push({
+        rule: "challenge.material_tags_format",
+        severity: "mineur",
+        detail: `tags avec majuscules : ${upper.join(", ")}.`,
+        suggestion: "Tags courts, minuscules, sans accent, par matériau achetable.",
+      });
     }
   }
 
   const acadDomain = str(c.academic_domain);
   if (acadDomain === "creative") {
-    v.push({ rule: "challenge.academic_domain_creative_forbidden", severity: "mineur", detail: "academic_domain=creative est interdit (développement non linéaire par âge).", suggestion: "Omet les champs académiques pour la créativité pure." });
+    v.push({
+      rule: "challenge.academic_domain_creative_forbidden",
+      severity: "mineur",
+      detail: "academic_domain=creative est interdit (développement non linéaire par âge).",
+      suggestion: "Omet les champs académiques pour la créativité pure.",
+    });
   } else if (acadDomain) {
     const lvl = c.academic_level_age;
     if (typeof lvl !== "number" || !Number.isInteger(lvl) || lvl < 3 || lvl > 18) {
-      v.push({ rule: "challenge.academic_level_coherent", severity: "mineur", detail: `academic_level_age invalide : ${String(lvl)}.`, suggestion: "academic_level_age doit être un entier 3-18." });
+      v.push({
+        rule: "challenge.academic_level_coherent",
+        severity: "mineur",
+        detail: `academic_level_age invalide : ${String(lvl)}.`,
+        suggestion: "academic_level_age doit être un entier 3-18.",
+      });
     }
     if (!str(c.academic_reference_note).trim()) {
-      v.push({ rule: "challenge.academic_level_coherent", severity: "mineur", detail: "academic_reference_note manquante.", suggestion: "Cite la ligne du référentiel utilisée." });
+      v.push({
+        rule: "challenge.academic_level_coherent",
+        severity: "mineur",
+        detail: "academic_reference_note manquante.",
+        suggestion: "Cite la ligne du référentiel utilisée.",
+      });
     }
     if (typeof lvl === "number" && ctx.childAge !== undefined) {
       const gap = Math.abs(lvl - ctx.childAge);
       if (gap > 5) {
-        v.push({ rule: "challenge.academic_level_vs_age", severity: "mineur", detail: `academic_level_age ${lvl} ans pour un enfant de ${ctx.childAge} ans (écart ${gap} ans).`, suggestion: "Vérifie que le contenu correspond vraiment au niveau étiqueté, ou ajuste academic_level_age." });
+        v.push({
+          rule: "challenge.academic_level_vs_age",
+          severity: "mineur",
+          detail: `academic_level_age ${lvl} ans pour un enfant de ${ctx.childAge} ans (écart ${gap} ans).`,
+          suggestion:
+            "Vérifie que le contenu correspond vraiment au niveau étiqueté, ou ajuste academic_level_age.",
+        });
       }
     }
   }
@@ -316,19 +442,39 @@ function validateChallengeRecord(c: Record<string, unknown>, ctx: VerifyContext,
   const reqSup = c.requires_supervision;
   const warn = str(c.supervision_warning);
   if (reqSup === true && !warn.trim()) {
-    v.push({ rule: "challenge.supervision_coherent", severity: "mineur", detail: "requires_supervision=true sans supervision_warning.", suggestion: "Ajoute une mise en garde concrète adaptée à l'âge." });
+    v.push({
+      rule: "challenge.supervision_coherent",
+      severity: "mineur",
+      detail: "requires_supervision=true sans supervision_warning.",
+      suggestion: "Ajoute une mise en garde concrète adaptée à l'âge.",
+    });
   }
   if (reqSup === false && warn.trim()) {
-    v.push({ rule: "challenge.supervision_coherent", severity: "mineur", detail: "requires_supervision=false avec une supervision_warning renseignée.", suggestion: "Nullifie supervision_warning si aucun risque réel." });
+    v.push({
+      rule: "challenge.supervision_coherent",
+      severity: "mineur",
+      detail: "requires_supervision=false avec une supervision_warning renseignée.",
+      suggestion: "Nullifie supervision_warning si aucun risque réel.",
+    });
   }
 
   if (title.trim() && ctx.existingTitles?.includes(title)) {
-    v.push({ rule: "challenge.title_unique", severity: "mineur", detail: `Titre déjà proposé : "${title}".`, suggestion: "Propose un titre inédit." });
+    v.push({
+      rule: "challenge.title_unique",
+      severity: "mineur",
+      detail: `Titre déjà proposé : "${title}".`,
+      suggestion: "Propose un titre inédit.",
+    });
   }
 
   const textFields = [title, description, ...(Array.isArray(steps) ? steps.map(str) : [])];
   if (textFields.some((t) => t.includes("**") || /(^|\n)#/.test(t))) {
-    v.push({ rule: "challenge.no_markdown", severity: "mineur", detail: "Syntaxe Markdown détectée dans un champ texte.", suggestion: "Phrases en texte brut uniquement." });
+    v.push({
+      rule: "challenge.no_markdown",
+      severity: "mineur",
+      detail: "Syntaxe Markdown détectée dans un champ texte.",
+      suggestion: "Phrases en texte brut uniquement.",
+    });
   }
 
   return v;
@@ -337,14 +483,29 @@ function validateChallengeRecord(c: Record<string, unknown>, ctx: VerifyContext,
 function validateHomeworkRecord(c: Record<string, unknown>, ctx: VerifyContext): Violation[] {
   const v = validateChallengeRecord(c, ctx, "homework");
   if (!str(c.behavioral_driver).trim()) {
-    v.push({ rule: "homework.behavioral_driver_present", severity: "mineur", detail: "behavioral_driver manquant.", suggestion: "Indique le levier comportemental utilisé pour ce devoir fusionné." });
+    v.push({
+      rule: "homework.behavioral_driver_present",
+      severity: "mineur",
+      detail: "behavioral_driver manquant.",
+      suggestion: "Indique le levier comportemental utilisé pour ce devoir fusionné.",
+    });
   }
   const zpa = c.zpa_level;
   if (typeof zpa === "number" && (zpa < 1 || zpa > 5)) {
-    v.push({ rule: "homework.zpa_level_valid", severity: "mineur", detail: `zpa_level ${zpa} hors de 1-5.`, suggestion: "Niveau ZPA entre 1 (très guidé) et 5 (autonome)." });
+    v.push({
+      rule: "homework.zpa_level_valid",
+      severity: "mineur",
+      detail: `zpa_level ${zpa} hors de 1-5.`,
+      suggestion: "Niveau ZPA entre 1 (très guidé) et 5 (autonome).",
+    });
   }
   if (ctx.anxietyDamped && str(c.difficulty) === "difficile") {
-    v.push({ rule: "homework.anti_anxiety", severity: "majeur", detail: "Contexte d'anxiété détecté mais difficulty=difficile.", suggestion: "Mode très guidé et rassurant : baisse la difficulté et la pression." });
+    v.push({
+      rule: "homework.anti_anxiety",
+      severity: "majeur",
+      detail: "Contexte d'anxiété détecté mais difficulty=difficile.",
+      suggestion: "Mode très guidé et rassurant : baisse la difficulté et la pression.",
+    });
   }
   return v;
 }
@@ -353,10 +514,20 @@ function validateRecommendationRecord(c: Record<string, unknown>, ctx: VerifyCon
   const v = validateChallengeRecord(c, ctx, "recommendation");
   if (ctx.requiresStabilisation) {
     if (str(c.difficulty) === "difficile") {
-      v.push({ rule: "recommendation.difficulte_douce", severity: "majeur", detail: "Défi de stabilisation en difficulty=difficile (doit rassurer, pas challenger).", suggestion: "difficulty=facile, étapes ultra-simples, réussite quasi certaine." });
+      v.push({
+        rule: "recommendation.difficulte_douce",
+        severity: "majeur",
+        detail: "Défi de stabilisation en difficulty=difficile (doit rassurer, pas challenger).",
+        suggestion: "difficulty=facile, étapes ultra-simples, réussite quasi certaine.",
+      });
     }
     if (Array.isArray(c.steps) && c.steps.length > 4) {
-      v.push({ rule: "recommendation.difficulte_douce", severity: "mineur", detail: "Défi de stabilisation avec trop d'étapes.", suggestion: "Peu d'étapes, très simples, sans surprise." });
+      v.push({
+        rule: "recommendation.difficulte_douce",
+        severity: "mineur",
+        detail: "Défi de stabilisation avec trop d'étapes.",
+        suggestion: "Peu d'étapes, très simples, sans surprise.",
+      });
     }
   }
   return v;
@@ -366,30 +537,65 @@ function validateHypothesis(output: Record<string, unknown>, ctx: VerifyContext)
   const v: Violation[] = [];
   const hypotheses = Array.isArray(output.hypotheses) ? output.hypotheses.filter(isRecord) : [];
   if (hypotheses.length < 1 || hypotheses.length > 3) {
-    v.push({ rule: "hypothesis.count", severity: "mineur", detail: `${hypotheses.length} hypothèse(s) (1 à 3 attendues).`, suggestion: "1 à 3 hypothèses classées de la plus à la moins probable." });
+    v.push({
+      rule: "hypothesis.count",
+      severity: "mineur",
+      detail: `${hypotheses.length} hypothèse(s) (1 à 3 attendues).`,
+      suggestion: "1 à 3 hypothèses classées de la plus à la moins probable.",
+    });
   }
-  const sum = hypotheses.reduce((acc, h) => acc + (typeof h.prior_probability === "number" ? h.prior_probability : 0), 0);
+  const sum = hypotheses.reduce(
+    (acc, h) => acc + (typeof h.prior_probability === "number" ? h.prior_probability : 0),
+    0,
+  );
   if (Math.abs(sum - 1) > 0.001) {
-    v.push({ rule: "hypothesis.probabilities_sum", severity: "majeur", detail: `Somme des prior_probability = ${sum.toFixed(3)} (attendue 1.0).`, suggestion: "La somme des probabilités doit valoir exactement 1.0." });
+    v.push({
+      rule: "hypothesis.probabilities_sum",
+      severity: "majeur",
+      detail: `Somme des prior_probability = ${sum.toFixed(3)} (attendue 1.0).`,
+      suggestion: "La somme des probabilités doit valoir exactement 1.0.",
+    });
   }
   for (const h of hypotheses) {
     if (!(VALID_CAUSES as readonly string[]).includes(str(h.cause))) {
-      v.push({ rule: "hypothesis.cause_valid", severity: "majeur", detail: `Cause invalide : ${String(h.cause)}.`, suggestion: `Une des causes exactes : ${VALID_CAUSES.join(", ")}.` });
+      v.push({
+        rule: "hypothesis.cause_valid",
+        severity: "majeur",
+        detail: `Cause invalide : ${String(h.cause)}.`,
+        suggestion: `Une des causes exactes : ${VALID_CAUSES.join(", ")}.`,
+      });
     }
     if (!Array.isArray(h.evidence_log) || h.evidence_log.length === 0) {
-      v.push({ rule: "hypothesis.evidence_snapshot", severity: "mineur", detail: "Hypothèse sans evidence_log.", suggestion: "Cite les nœuds réels du snapshot qui justifient l'hypothèse." });
+      v.push({
+        rule: "hypothesis.evidence_snapshot",
+        severity: "mineur",
+        detail: "Hypothèse sans evidence_log.",
+        suggestion: "Cite les nœuds réels du snapshot qui justifient l'hypothèse.",
+      });
     }
   }
   if (ctx.direction === "BEHIND") {
     const bad = hypotheses.filter((h) => h.cause === "READY_FOR_MORE");
     if (bad.length) {
-      v.push({ rule: "hypothesis.direction_coherent", severity: "mineur", detail: "READY_FOR_MORE proposée pour un écart « en retard ».", suggestion: "READY_FOR_MORE ne s'applique qu'à un écart « en avance »." });
+      v.push({
+        rule: "hypothesis.direction_coherent",
+        severity: "mineur",
+        detail: "READY_FOR_MORE proposée pour un écart « en retard ».",
+        suggestion: "READY_FOR_MORE ne s'applique qu'à un écart « en avance ».",
+      });
     }
   }
   if (ctx.direction === "AHEAD") {
-    const bad = hypotheses.filter((h) => h.cause === "METHOD_MISMATCH" || h.cause === "CONCEPTUAL_GAP");
+    const bad = hypotheses.filter(
+      (h) => h.cause === "METHOD_MISMATCH" || h.cause === "CONCEPTUAL_GAP",
+    );
     if (bad.length) {
-      v.push({ rule: "hypothesis.direction_coherent", severity: "mineur", detail: "Cause « en retard » proposée pour un écart « en avance ».", suggestion: "READY_FOR_MORE est presque toujours l'hypothèse dominante « en avance »." });
+      v.push({
+        rule: "hypothesis.direction_coherent",
+        severity: "mineur",
+        detail: "Cause « en retard » proposée pour un écart « en avance ».",
+        suggestion: "READY_FOR_MORE est presque toujours l'hypothèse dominante « en avance ».",
+      });
     }
   }
   return v;
@@ -398,36 +604,75 @@ function validateHypothesis(output: Record<string, unknown>, ctx: VerifyContext)
 function validateProseText(text: string, kind: GenerationKind, _ctx: VerifyContext): Violation[] {
   const v: Violation[] = [];
   if (!text.trim()) {
-    v.push({ rule: `${kind}.text_present`, severity: "majeur", detail: "Texte vide.", suggestion: "Produis un texte non vide." });
+    v.push({
+      rule: `${kind}.text_present`,
+      severity: "majeur",
+      detail: "Texte vide.",
+      suggestion: "Produis un texte non vide.",
+    });
     return v;
   }
   if (/\d/.test(text)) {
-    v.push({ rule: "prose.zero_chiffre", severity: "mineur", detail: "Chiffre(s) détecté(s) dans un texte destiné au parent.", suggestion: "Traduis toute donnée chiffrée en tendance qualitative." });
+    v.push({
+      rule: "prose.zero_chiffre",
+      severity: "mineur",
+      detail: "Chiffre(s) détecté(s) dans un texte destiné au parent.",
+      suggestion: "Traduis toute donnée chiffrée en tendance qualitative.",
+    });
   }
   const lowered = text.toLowerCase();
   const clinical = CLINICAL_WORDS.filter((w) => lowered.includes(w));
   if (clinical.length) {
-    v.push({ rule: "prose.ton_non_pathologisant", severity: "majeur", detail: `Vocabulaire clinique détecté : ${clinical.join(", ")}.`, suggestion: "Description comportementale factuelle, observation provisoire, jamais de diagnostic." });
+    v.push({
+      rule: "prose.ton_non_pathologisant",
+      severity: "majeur",
+      detail: `Vocabulaire clinique détecté : ${clinical.join(", ")}.`,
+      suggestion:
+        "Description comportementale factuelle, observation provisoire, jamais de diagnostic.",
+    });
   }
   if (text.includes("**") || /(^|\n)#/.test(text)) {
-    v.push({ rule: "prose.no_markdown", severity: "mineur", detail: "Syntaxe Markdown détectée.", suggestion: "Texte brut sans Markdown." });
+    v.push({
+      rule: "prose.no_markdown",
+      severity: "mineur",
+      detail: "Syntaxe Markdown détectée.",
+      suggestion: "Texte brut sans Markdown.",
+    });
   }
   return v;
 }
 
-function validateProofValidation(output: Record<string, unknown>, _ctx: VerifyContext): Violation[] {
+function validateProofValidation(
+  output: Record<string, unknown>,
+  _ctx: VerifyContext,
+): Violation[] {
   const v: Violation[] = [];
   if (!str(output.observations).trim()) {
-    v.push({ rule: "proof_validation.observations_present", severity: "majeur", detail: "observations manquantes.", suggestion: "Rédige une courte observation (ou un refus poli si la preuve est hors-sujet)." });
+    v.push({
+      rule: "proof_validation.observations_present",
+      severity: "majeur",
+      detail: "observations manquantes.",
+      suggestion: "Rédige une courte observation (ou un refus poli si la preuve est hors-sujet).",
+    });
   }
   const award = isRecord(output.talents_awarded) ? output.talents_awarded : undefined;
   if (award) {
     for (const [k, val] of Object.entries(award)) {
       if (!(VALID_TALENT_KEYS as readonly string[]).includes(k)) {
-        v.push({ rule: "proof_validation.talents_valid", severity: "majeur", detail: `Clé d'intelligence invalide : ${k}.`, suggestion: "Clés parmi les 9 intelligences." });
+        v.push({
+          rule: "proof_validation.talents_valid",
+          severity: "majeur",
+          detail: `Clé d'intelligence invalide : ${k}.`,
+          suggestion: "Clés parmi les 9 intelligences.",
+        });
       }
       if (typeof val === "number" && (val < 0 || val > 3)) {
-        v.push({ rule: "proof_validation.talents_valid", severity: "mineur", detail: `Points hors 0-3 : ${k}=${val}.`, suggestion: "Points de 1 à 3 (0 autorisé pour hors-sujet)." });
+        v.push({
+          rule: "proof_validation.talents_valid",
+          severity: "mineur",
+          detail: `Points hors 0-3 : ${k}=${val}.`,
+          suggestion: "Points de 1 à 3 (0 autorisé pour hors-sujet).",
+        });
       }
     }
   }
@@ -438,30 +683,43 @@ function validateClassification(output: Record<string, unknown>, _ctx: VerifyCon
   const v: Violation[] = [];
   const cat = str(output.cause ?? output.category);
   if (cat && !(VALID_NOT_COMPLETED_CAUSES as readonly string[]).includes(cat)) {
-    v.push({ rule: "classification.cause_valid", severity: "majeur", detail: `Cause invalide : ${cat}.`, suggestion: `Une des causes exactes : ${VALID_NOT_COMPLETED_CAUSES.join(", ")}.` });
+    v.push({
+      rule: "classification.cause_valid",
+      severity: "majeur",
+      detail: `Cause invalide : ${cat}.`,
+      suggestion: `Une des causes exactes : ${VALID_NOT_COMPLETED_CAUSES.join(", ")}.`,
+    });
   }
   return v;
 }
 
 // ── verifyGeneration (couche 1 — pur, synchrone) ─────────────────────────────
 
-export function verifyGeneration(kind: GenerationKind, output: unknown, context: VerifyContext = {}): VerifyVerdict {
+export function verifyGeneration(
+  kind: GenerationKind,
+  output: unknown,
+  context: VerifyContext = {},
+): VerifyVerdict {
   const violations: Violation[] = [];
   try {
     switch (kind) {
       case "challenge_bulk":
-        for (const c of extractChallengeObjects(kind, output)) violations.push(...validateChallengeRecord(c, context, kind));
+        for (const c of extractChallengeObjects(kind, output))
+          violations.push(...validateChallengeRecord(c, context, kind));
         break;
       case "homework":
-        for (const c of extractChallengeObjects(kind, output)) violations.push(...validateHomeworkRecord(c, context));
+        for (const c of extractChallengeObjects(kind, output))
+          violations.push(...validateHomeworkRecord(c, context));
         break;
       case "recommendation":
-        for (const c of extractChallengeObjects(kind, output)) violations.push(...validateRecommendationRecord(c, context));
+        for (const c of extractChallengeObjects(kind, output))
+          violations.push(...validateRecommendationRecord(c, context));
         break;
       case "challenge_single":
       case "discriminant":
       case "support_retest":
-        for (const c of extractChallengeObjects(kind, output)) violations.push(...validateChallengeRecord(c, context, kind));
+        for (const c of extractChallengeObjects(kind, output))
+          violations.push(...validateChallengeRecord(c, context, kind));
         break;
       case "hypothesis":
         if (isRecord(output)) violations.push(...validateHypothesis(output, context));
@@ -469,7 +727,13 @@ export function verifyGeneration(kind: GenerationKind, output: unknown, context:
       case "synthesis":
       case "letter":
       case "narrative":
-        violations.push(...validateProseText(typeof output === "string" ? output : str(isRecord(output) ? output.text : output), kind, context));
+        violations.push(
+          ...validateProseText(
+            typeof output === "string" ? output : str(isRecord(output) ? output.text : output),
+            kind,
+            context,
+          ),
+        );
         break;
       case "proof_validation":
         if (isRecord(output)) violations.push(...validateProofValidation(output, context));
@@ -478,10 +742,17 @@ export function verifyGeneration(kind: GenerationKind, output: unknown, context:
         if (isRecord(output)) violations.push(...validateClassification(output, context));
         break;
       case "proof_tampon":
-        if (isRecord(output)) violations.push(...validateProseText(str(output.tampon ?? output.text), kind, context));
+        if (isRecord(output))
+          violations.push(...validateProseText(str(output.tampon ?? output.text), kind, context));
         break;
       case "just_in_time_hint":
-        violations.push(...validateProseText(typeof output === "string" ? output : str(isRecord(output) ? output.hint : output), kind, context));
+        violations.push(
+          ...validateProseText(
+            typeof output === "string" ? output : str(isRecord(output) ? output.hint : output),
+            kind,
+            context,
+          ),
+        );
         break;
     }
   } catch (err) {
@@ -606,7 +877,7 @@ const SEMANTIC_SCHEMA = z.object({
         severity: z.enum(["mineur", "majeur"]),
         detail: z.string(),
         suggestion: z.string().optional(),
-      })
+      }),
     )
     .default([]),
 });
@@ -616,7 +887,11 @@ const SEMANTIC_SCHEMA = z.object({
  * Ne lance JAMAIS d'erreur — en cas de panne IA il retourne [] (défaut : pas
  * de signal supplémentaire, la couche 1 déterministe reste la source de vérité).
  */
-export async function verifyGenerationSemantic(kind: GenerationKind, output: unknown, context: VerifyContext = {}): Promise<Violation[]> {
+export async function verifyGenerationSemantic(
+  kind: GenerationKind,
+  output: unknown,
+  context: VerifyContext = {},
+): Promise<Violation[]> {
   try {
     const { callClaude, extractJsonFromLLMResponse } = await import("@/lib/challenges.functions");
     const rubric = semanticRubricFor(kind);
@@ -626,7 +901,9 @@ export async function verifyGenerationSemantic(kind: GenerationKind, output: unk
         : "" +
           (context.direction ? `Direction de l'écart : ${context.direction}.\n` : "") +
           (context.subject ? `Matière : ${context.subject}.\n` : "") +
-          (context.requiresStabilisation ? "Type de recommandation : STABILISATION (doit rassurer, réussite quasi garantie).\n" : "");
+          (context.requiresStabilisation
+            ? "Type de recommandation : STABILISATION (doit rassurer, réussite quasi garantie).\n"
+            : "");
     const prompt = `Tu es « Le Loup de Naya », le vérificateur sémantique de Génizio. Tu contrôles si une génération IA respecte des règles pédagogiques, pour lutter contre les hallucinations et les sorties génériques. Ne sois pas tatillon : ne signale que ce qui est réellement problématique.
 
 GÉNÉRATION À VÉRIFIER (type ${kind}) :
@@ -681,7 +958,11 @@ export async function verifyAndLog(options: VerifyAndLogOptions): Promise<Verify
     let violations = deterministic.violations;
     let semanticChecked = false;
     if (options.forceSemantic || semanticSampleEnabled()) {
-      const semantic = await verifyGenerationSemantic(options.kind, options.output, options.context ?? {});
+      const semantic = await verifyGenerationSemantic(
+        options.kind,
+        options.output,
+        options.context ?? {},
+      );
       violations = mergeViolations(violations, semantic);
       semanticChecked = true;
     }
@@ -779,7 +1060,9 @@ export const getGenerationAuditsAdmin = createServerFn({ method: "GET" })
     const [rowsRes, recentRes] = await Promise.all([
       supabaseAdmin
         .from("generation_audits")
-        .select("kind, verdict, violations, semantic_checked, regenerated, estimated_cost, created_at"),
+        .select(
+          "kind, verdict, violations, semantic_checked, regenerated, estimated_cost, created_at",
+        ),
       supabaseAdmin
         .from("generation_audits")
         .select("id, kind, source_function, verdict, created_at")
@@ -813,7 +1096,9 @@ export const getGenerationAuditsAdmin = createServerFn({ method: "GET" })
       }
     }
 
-    const topViolations = [...violationCounts.values()].sort((a, b) => b.count - a.count).slice(0, 20);
+    const topViolations = [...violationCounts.values()]
+      .sort((a, b) => b.count - a.count)
+      .slice(0, 20);
 
     return {
       total: rows.length,

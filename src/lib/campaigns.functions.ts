@@ -55,7 +55,7 @@ export const createCampaignAdmin = createServerFn({ method: "POST" })
         startDate: z.string(),
         endDate: z.string(),
       })
-      .parse(input)
+      .parse(input),
   )
   .handler(async ({ data }) => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
@@ -140,7 +140,7 @@ export const updateCampaignExtraQuotaAdmin = createServerFn({ method: "POST" })
         // même levier "réglé par l'admin après paiement hors-app" (cf. check_campaign_educator_capacity).
         maxEducators: z.number().int().min(0).max(50).default(0),
       })
-      .parse(input)
+      .parse(input),
   )
   .handler(async ({ data }) => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
@@ -191,7 +191,13 @@ export const listCampaignsAdmin = createServerFn({ method: "GET" })
   .validator((input: unknown) => ListCampaignsInput.parse(input ?? {}))
   .handler(async ({ data }) => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const empty: PaginatedCampaigns = { data: [], total: 0, page: data.page, pageSize: data.pageSize, totalPages: 1 };
+    const empty: PaginatedCampaigns = {
+      data: [],
+      total: 0,
+      page: data.page,
+      pageSize: data.pageSize,
+      totalPages: 1,
+    };
     try {
       // `id` en départage : la pagination ci-dessous découpe ce tableau à chaque requête, donc un
       // ordre non déterministe (created_at n'est pas unique) ferait apparaître/disparaître des
@@ -209,19 +215,20 @@ export const listCampaignsAdmin = createServerFn({ method: "GET" })
 
       // Attach emails safely
       const users = await listAllUsers(supabaseAdmin).catch(() => []);
-      const emailMap = new Map(users.map(u => [u.id, u.email]));
+      const emailMap = new Map(users.map((u) => [u.id, u.email]));
 
-      let enriched = (campaigns as Campaign[]).map(c => ({
-          ...c,
-          manager_email: c.manager_user_id ? emailMap.get(c.manager_user_id) : null
+      let enriched = (campaigns as Campaign[]).map((c) => ({
+        ...c,
+        manager_email: c.manager_user_id ? emailMap.get(c.manager_user_id) : null,
       }));
 
       const term = data.search?.trim().toLowerCase();
       if (term) {
-        enriched = enriched.filter((c) =>
-          c.name?.toLowerCase().includes(term) ||
-          c.description?.toLowerCase().includes(term) ||
-          c.manager_email?.toLowerCase().includes(term)
+        enriched = enriched.filter(
+          (c) =>
+            c.name?.toLowerCase().includes(term) ||
+            c.description?.toLowerCase().includes(term) ||
+            c.manager_email?.toLowerCase().includes(term),
         );
       }
 
@@ -265,7 +272,7 @@ export const generateCampaignTokensAdmin = createServerFn({ method: "POST" })
         campaignId: z.string().uuid(),
         count: z.number().int().positive().max(500),
       })
-      .parse(input)
+      .parse(input),
   )
   .handler(async ({ data }) => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
@@ -296,7 +303,7 @@ export const generateCampaignTokensAdmin = createServerFn({ method: "POST" })
     if ((existingCount ?? 0) + data.count > campaign.target_count) {
       throw new Error(
         `Cette campagne a déjà ${existingCount ?? 0} code(s) pour un objectif de ${campaign.target_count}. ` +
-        `Générer ${data.count} de plus dépasserait l'objectif — ajustez le nombre demandé, ou augmentez l'objectif de la campagne si c'est voulu.`
+          `Générer ${data.count} de plus dépasserait l'objectif — ajustez le nombre demandé, ou augmentez l'objectif de la campagne si c'est voulu.`,
       );
     }
 
@@ -328,9 +335,7 @@ export const generateCampaignTokensAdmin = createServerFn({ method: "POST" })
       payment_confirmed: true, // Pré-payé par contrat/facture ONG — confirmé par l'admin qui génère le lot après réception du paiement, même logique que le reste de l'app (WhatsApp/Mobile Money manuel).
     }));
 
-    const { error } = await (supabaseAdmin as any)
-      .from("sponsorship_tokens")
-      .insert(tokens);
+    const { error } = await (supabaseAdmin as any).from("sponsorship_tokens").insert(tokens);
 
     if (error) throw new Error(error.message);
 
@@ -380,7 +385,7 @@ export const generateCampaignPaymentLinkAdmin = createServerFn({ method: "POST" 
     if ((existingCount ?? 0) + data.tokenCount > campaign.target_count) {
       throw new Error(
         `Cette campagne a déjà ${existingCount ?? 0} code(s) pour un objectif de ${campaign.target_count} — ` +
-          `un paiement de ${data.tokenCount} code(s) dépasserait l'objectif.`
+          `un paiement de ${data.tokenCount} code(s) dépasserait l'objectif.`,
       );
     }
 
@@ -477,7 +482,9 @@ export const deleteCampaignAdmin = createServerFn({ method: "POST" })
     if (error) throw new Error(error.message);
     if (!campaign) throw new Error("Campagne introuvable.");
     if (campaign.status !== "archived") {
-      throw new Error("Archivez d'abord la campagne (fermeture douce) avant de la supprimer définitivement.");
+      throw new Error(
+        "Archivez d'abord la campagne (fermeture douce) avant de la supprimer définitivement.",
+      );
     }
 
     const [tokensRes, enrollmentsRes] = await Promise.all([
@@ -495,7 +502,7 @@ export const deleteCampaignAdmin = createServerFn({ method: "POST" })
     if (tokens > 0 || enrollments > 0) {
       throw new Error(
         `Suppression impossible : la campagne a ${tokens} code(s) généré(s) et ` +
-          `${enrollments} enfant(s) inscrit(s). Conservez-la archivée — l'historique ne se supprime pas.`
+          `${enrollments} enfant(s) inscrit(s). Conservez-la archivée — l'historique ne se supprime pas.`,
       );
     }
 
@@ -637,7 +644,8 @@ export const enrollChildViaCampaignLink = createServerFn({ method: "POST" })
     });
 
     if (error) {
-      if (error.code === "P0001") throw new Error("Ce programme a atteint sa capacité maximale de places.");
+      if (error.code === "P0001")
+        throw new Error("Ce programme a atteint sa capacité maximale de places.");
       throw new Error(error.message);
     }
 
@@ -681,7 +689,7 @@ export const listCampaignTokensAdmin = createServerFn({ method: "POST" })
       .object({
         campaignId: z.string().uuid(),
       })
-      .parse(input)
+      .parse(input),
   )
   .handler(async ({ data }) => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
@@ -801,7 +809,9 @@ export const listCampaignTokensForManager = createServerFn({ method: "POST" })
 // gestionnaire n'a qu'une seule campagne (le cas aujourd'hui), mais faux dès le 2e contrat.
 export const getNgoDashboardData = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
-  .validator((input: unknown) => z.object({ campaignId: z.string().uuid().optional() }).parse(input ?? {}))
+  .validator((input: unknown) =>
+    z.object({ campaignId: z.string().uuid().optional() }).parse(input ?? {}),
+  )
   .handler(async ({ data, context }) => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const userId = (context as any).claims?.sub;
@@ -862,7 +872,11 @@ export const getNgoDashboardData = createServerFn({ method: "GET" })
       }
       for (const c of challenges) {
         if (narratives.length >= 3) break;
-        if (c.status === "completed" && c.ai_observations && String(c.ai_observations).trim().length > 0) {
+        if (
+          c.status === "completed" &&
+          c.ai_observations &&
+          String(c.ai_observations).trim().length > 0
+        ) {
           narratives.push({ domain: c.domain, title: c.title, observation: c.ai_observations });
         }
       }
@@ -891,7 +905,7 @@ export const getNgoDashboardData = createServerFn({ method: "GET" })
             .getUserById(id)
             .catch(() => ({ data: null }));
           return [id, (data?.user?.email as string) ?? "Inconnu"] as const;
-        })
+        }),
       );
       for (const [id, email] of resolved) usersMap.set(id, email);
     }
@@ -937,7 +951,7 @@ export const assignCampaignMentor = createServerFn({ method: "POST" })
         mentorEmail: z.string().email(),
         count: z.number().int().min(1).max(5).default(5),
       })
-      .parse(input)
+      .parse(input),
   )
   .handler(async ({ data, context }) => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
@@ -964,7 +978,9 @@ export const assignCampaignMentor = createServerFn({ method: "POST" })
       .from("season_enrollments")
       .select("child_id")
       .eq("campaign_id", data.campaignId);
-    const cohortChildIds: string[] = [...new Set<string>((enrollments ?? []).map((e: any) => e.child_id as string))];
+    const cohortChildIds: string[] = [
+      ...new Set<string>((enrollments ?? []).map((e: any) => e.child_id as string)),
+    ];
     if (cohortChildIds.length === 0) {
       throw new Error("Aucun enfant inscrit dans cette campagne pour l'instant.");
     }
@@ -973,7 +989,9 @@ export const assignCampaignMentor = createServerFn({ method: "POST" })
       .from("mentors")
       .select("child_profile_id")
       .in("child_profile_id", cohortChildIds);
-    const alreadyMentored = new Set((existingSup ?? []).map((s: any) => s.child_profile_id as string));
+    const alreadyMentored = new Set(
+      (existingSup ?? []).map((s: any) => s.child_profile_id as string),
+    );
     const unmentoredChildIds = cohortChildIds.filter((id) => !alreadyMentored.has(id));
 
     if (unmentoredChildIds.length === 0) {
@@ -996,7 +1014,9 @@ export const assignCampaignMentor = createServerFn({ method: "POST" })
     const toAssign = Math.min(data.count, slotsLeft, unmentoredChildIds.length);
 
     if (toAssign === 0) {
-      throw new Error(`Le mentor ${data.mentorEmail} a atteint sa limite de ${quota} enfants. Contactez le support pour augmenter son quota.`);
+      throw new Error(
+        `Le mentor ${data.mentorEmail} a atteint sa limite de ${quota} enfants. Contactez le support pour augmenter son quota.`,
+      );
     }
 
     // Insertion centralisée (mentors.functions.ts) — même point de passage que le chemin
@@ -1026,7 +1046,7 @@ export const addCampaignEducator = createServerFn({ method: "POST" })
         campaignId: z.string().uuid(),
         educatorEmail: z.string().email(),
       })
-      .parse(input)
+      .parse(input),
   )
   .handler(async ({ data, context }) => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
@@ -1049,7 +1069,7 @@ export const addCampaignEducator = createServerFn({ method: "POST" })
     }
     if ((educator as any).user_metadata?.relationship_type !== "educateur") {
       throw new Error(
-        `${data.educatorEmail} doit d'abord choisir "Éducateur" comme lien avec l'enfant dans son compte (Réglages) avant de pouvoir être ajouté ici.`
+        `${data.educatorEmail} doit d'abord choisir "Éducateur" comme lien avec l'enfant dans son compte (Réglages) avant de pouvoir être ajouté ici.`,
       );
     }
 
@@ -1060,7 +1080,7 @@ export const addCampaignEducator = createServerFn({ method: "POST" })
       .is("removed_at", null);
     if ((currentCount ?? 0) >= (campaign.max_educators ?? 0)) {
       throw new Error(
-        `Capacité éducateurs atteinte (${currentCount} / ${campaign.max_educators}). Contactez le support pour l'augmenter.`
+        `Capacité éducateurs atteinte (${currentCount} / ${campaign.max_educators}). Contactez le support pour l'augmenter.`,
       );
     }
 
@@ -1070,7 +1090,8 @@ export const addCampaignEducator = createServerFn({ method: "POST" })
       .select()
       .single();
     if (error) {
-      if (error.code === "23505") throw new Error(`${data.educatorEmail} est déjà éducateur sur cette campagne.`);
+      if (error.code === "23505")
+        throw new Error(`${data.educatorEmail} est déjà éducateur sur cette campagne.`);
       throw new Error(error.message);
     }
 
@@ -1123,7 +1144,7 @@ export const listCampaignEducators = createServerFn({ method: "GET" })
 export const removeCampaignEducator = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .validator((input: any) =>
-    z.object({ campaignId: z.string().uuid(), educatorUserId: z.string().uuid() }).parse(input)
+    z.object({ campaignId: z.string().uuid(), educatorUserId: z.string().uuid() }).parse(input),
   )
   .handler(async ({ data, context }) => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
@@ -1148,7 +1169,9 @@ export const removeCampaignEducator = createServerFn({ method: "POST" })
       .from("season_enrollments")
       .select("child_id")
       .eq("campaign_id", data.campaignId);
-    const childIds: string[] = [...new Set<string>((enrollments ?? []).map((e: any) => e.child_id as string))];
+    const childIds: string[] = [
+      ...new Set<string>((enrollments ?? []).map((e: any) => e.child_id as string)),
+    ];
 
     let lockedCount = 0;
     if (childIds.length > 0) {

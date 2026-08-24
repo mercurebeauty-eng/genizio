@@ -47,7 +47,10 @@ export async function sendPushToUser(
           JSON.stringify(payload),
         );
         sent += 1;
-        await db.from("push_subscriptions").update({ last_seen_at: new Date().toISOString() }).eq("id", sub.id);
+        await db
+          .from("push_subscriptions")
+          .update({ last_seen_at: new Date().toISOString() })
+          .eq("id", sub.id);
       } catch (err: any) {
         // 404/410 = endpoint expiré/révoqué — on le nettoie, on n'essaye plus dessus.
         if (err?.statusCode === 404 || err?.statusCode === 410) {

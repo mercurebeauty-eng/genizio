@@ -59,7 +59,7 @@ export function AppTabBar({ profileId }: AppTabBarProps) {
               to={targetTo as any}
               params={params}
               activeOptions={{ exact: label === "Accueil" }}
-              className="flex flex-col items-center gap-1 px-3 py-1 cursor-pointer transition-all duration-150 text-ink/40 hover:text-ink/70"
+              className="flex flex-col items-center gap-1 px-1.5 sm:px-3 py-1 cursor-pointer transition-all duration-150 text-ink/40 hover:text-ink/70"
               activeProps={{
                 className: "!text-brand font-bold",
               }}

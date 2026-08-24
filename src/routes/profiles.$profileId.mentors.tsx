@@ -311,9 +311,7 @@ function MentorHubPage() {
               <Users className="size-6" />
             </div>
             <div>
-              <h1 className="font-display text-balance text-3xl font-extrabold text-ink">
-                Mentor
-              </h1>
+              <h1 className="font-display text-balance text-3xl font-extrabold text-ink">Mentor</h1>
               <p className="mt-1 text-sm font-medium text-ink/60">
                 {mentorInfo
                   ? `L'accompagnement de ${childName} — suivi, bilan et activités.`
@@ -328,8 +326,8 @@ function MentorHubPage() {
                 Aucun mentor assigné pour l'instant
               </p>
               <p className="text-sm text-ink/60 max-w-md mx-auto leading-relaxed">
-                Quand un mentor sera assigné pour accompagner {childName}, vous le verrez
-                apparaître ici avec son bilan de fin de période et son activité.
+                Quand un mentor sera assigné pour accompagner {childName}, vous le verrez apparaître
+                ici avec son bilan de fin de période et son activité.
               </p>
               <Link
                 to="/profiles/$profileId/portfolio"
@@ -353,8 +351,7 @@ function MentorHubPage() {
                     </p>
                     <p className="text-sm font-bold text-ink mt-0.5">{mentorInfo.email}</p>
                     <p className="text-xs text-ink/50 mt-0.5">
-                      Depuis le{" "}
-                      {new Date(mentorInfo.assignedAt).toLocaleDateString("fr-FR")}
+                      Depuis le {new Date(mentorInfo.assignedAt).toLocaleDateString("fr-FR")}
                     </p>
                   </div>
                 </div>
@@ -382,8 +379,8 @@ function MentorHubPage() {
                           Bilan du mentor
                         </p>
                         <p className="text-xs text-ink/50 mt-0.5">
-                          Période du {new Date(bilan.period_start).toLocaleDateString("fr-FR")}{" "}
-                          au {new Date(bilan.period_end).toLocaleDateString("fr-FR")}
+                          Période du {new Date(bilan.period_start).toLocaleDateString("fr-FR")} au{" "}
+                          {new Date(bilan.period_end).toLocaleDateString("fr-FR")}
                         </p>
                       </div>
                     </div>
@@ -420,8 +417,8 @@ function MentorHubPage() {
                   {bilan.status === "submitted" ? (
                     <div className="space-y-3">
                       <p className="text-sm text-ink/70">
-                        Le mentor a soumis le bilan de fin de période. Validez-le pour en faire
-                        le livrable officiel (il débloque aussi la dernière séance du mois).
+                        Le mentor a soumis le bilan de fin de période. Validez-le pour en faire le
+                        livrable officiel (il débloque aussi la dernière séance du mois).
                       </p>
                       {rejectingBilan ? (
                         <div className="rounded-2xl border border-ink/10 bg-white p-4 space-y-3">
@@ -536,8 +533,8 @@ function MentorHubPage() {
                         Séances planifiées
                       </p>
                       <p className="text-xs text-ink/50 mt-0.5">
-                        {plannedSlots.length} créneau{plannedSlots.length > 1 ? "x" : ""} à
-                        venir — le mentor est attendu à l'heure prévue.
+                        {plannedSlots.length} créneau{plannedSlots.length > 1 ? "x" : ""} à venir —
+                        le mentor est attendu à l'heure prévue.
                       </p>
                     </div>
                   </div>
@@ -560,9 +557,7 @@ function MentorHubPage() {
                             minute: "2-digit",
                           })}
                         </p>
-                        {slot.notes && (
-                          <p className="text-xs text-ink/60 mt-0.5">{slot.notes}</p>
-                        )}
+                        {slot.notes && <p className="text-xs text-ink/60 mt-0.5">{slot.notes}</p>}
                       </li>
                     ))}
                   </ul>
@@ -584,8 +579,8 @@ function MentorHubPage() {
                       </p>
                       <p className="text-xs text-ink/50 mt-0.5">
                         Le mentor a déclaré {sessionsToValidate.length} séance
-                        {sessionsToValidate.length > 1 ? "s" : ""} — confirmez qu'elles ont
-                        bien eu lieu.
+                        {sessionsToValidate.length > 1 ? "s" : ""} — confirmez qu'elles ont bien eu
+                        lieu.
                       </p>
                     </div>
                   </div>
@@ -604,9 +599,7 @@ function MentorHubPage() {
                             })}
                           </p>
                           {s.notes ? (
-                            <p className="text-xs text-ink/60 mt-0.5 line-clamp-2">
-                              {s.notes}
-                            </p>
+                            <p className="text-xs text-ink/60 mt-0.5 line-clamp-2">{s.notes}</p>
                           ) : (
                             <p className="text-[11px] text-ink/40 italic mt-0.5">
                               Compte-rendu non renseigné.
@@ -659,8 +652,8 @@ function MentorHubPage() {
                     ?
                   </p>
                   <p className="mt-1 text-xs text-ink/60">
-                    Votre note aide à valoriser les bons mentors et à repérer ceux qui manquent
-                    de sérieux.
+                    Votre note aide à valoriser les bons mentors et à repérer ceux qui manquent de
+                    sérieux.
                   </p>
                   <div className="mt-3 flex items-center gap-1">
                     {[1, 2, 3, 4, 5].map((n) => (
@@ -780,8 +773,8 @@ function MentorHubPage() {
           <div className="flex items-center gap-2 text-xs text-ink/50">
             <Clock className="size-4" />
             <span>
-              Ce hub centralise le suivi de l'accompagnement : mentor, bilan de fin de période
-              et activité.
+              Ce hub centralise le suivi de l'accompagnement : mentor, bilan de fin de période et
+              activité.
             </span>
           </div>
         </div>
@@ -790,16 +783,16 @@ function MentorHubPage() {
       {/* Modal — Contester une séance (2026-08-15) : la séance déclarée est annulée,
           la séance de pack/campagne remboursée, le mentor notifié. */}
       {contestingFor && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-ink/40 p-4 backdrop-blur-sm">
-          <div className="w-full max-w-md max-h-[85vh] overflow-y-auto bg-white rounded-3xl border border-ink/10 p-6 md:p-8 shadow-xl animate-in zoom-in-95 duration-200">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-ink/40 p-4 backdrop-blur-sm overflow-y-auto">
+          <div className="w-full max-w-md my-auto max-h-[85vh] overflow-y-auto bg-white rounded-3xl border border-ink/10 p-6 md:p-8 shadow-xl animate-in zoom-in-95 duration-200">
             <div className="flex items-start justify-between gap-4 border-b-2 border-ink pb-4 mb-6">
               <div>
                 <h3 className="font-display text-balance text-xl font-black text-ink">
                   Contester cette séance ?
                 </h3>
                 <p className="text-sm text-ink/60 mt-0.5">
-                  Séance du {contestingFor.date} — elle sera annulée, la séance de
-                  pack/campagne remboursée, et le score du mentor pénalisé.
+                  Séance du {contestingFor.date} — elle sera annulée, la séance de pack/campagne
+                  remboursée, et le score du mentor pénalisé.
                 </p>
               </div>
               <button
@@ -835,8 +828,7 @@ function MentorHubPage() {
 
               <div>
                 <label className="text-xs font-black uppercase tracking-widest text-ink/60 mb-2 block">
-                  Précision{" "}
-                  <span className="normal-case font-bold text-ink/40">(optionnelle)</span>
+                  Précision <span className="normal-case font-bold text-ink/40">(optionnelle)</span>
                 </label>
                 <textarea
                   value={contestNote}
@@ -849,9 +841,9 @@ function MentorHubPage() {
               </div>
 
               <p className="text-[11px] leading-relaxed text-ink/50">
-                La contestation est <strong>refusée</strong> si un défi a été complété et
-                validé avec l'enfant sur la période de la séance (travail attesté par une
-                preuve) — dans ce cas, contactez l'équipe Génizio en cas de désaccord.
+                La contestation est <strong>refusée</strong> si un défi a été complété et validé
+                avec l'enfant sur la période de la séance (travail attesté par une preuve) — dans ce
+                cas, contactez l'équipe Génizio en cas de désaccord.
               </p>
 
               <div className="border-t-2 border-ink pt-4 flex justify-end gap-2">
@@ -866,7 +858,11 @@ function MentorHubPage() {
                   disabled={contesting}
                   className="inline-flex items-center gap-2 rounded-2xl bg-rose-600 px-6 py-2.5 text-xs font-bold text-white shadow-sm hover:-translate-y-0.5 transition-all disabled:opacity-50 cursor-pointer"
                 >
-                  {contesting ? <Loader2 className="size-4 animate-spin" /> : <X className="size-4" />}
+                  {contesting ? (
+                    <Loader2 className="size-4 animate-spin" />
+                  ) : (
+                    <X className="size-4" />
+                  )}
                   {contesting ? "Contestation…" : "Contester la séance"}
                 </button>
               </div>

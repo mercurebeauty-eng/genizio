@@ -30,6 +30,7 @@
      - Status: Exit code 0. Zero TypeScript type errors across the entire project.
   2. `npm run test` (`vitest run`)
      - Output:
+
        ```
        ✓ src/lib/talent-buckets.test.ts (16 tests) 39ms
        ✓ src/lib/guilds.test.ts (8 tests) 22ms
@@ -91,16 +92,20 @@
 To independently verify these results:
 
 1. **Type Checking**:
+
    ```bash
    npx tsc --noEmit
    ```
-   *Expected result*: Exit status 0, zero output/errors.
+
+   _Expected result_: Exit status 0, zero output/errors.
 
 2. **Unit & Schema Test Execution**:
+
    ```bash
    npm run test
    ```
-   *Expected result*: 5 passed test files (`ProfileDialog.schema.test.ts`, `ProfileDialog.test.ts`, `active-challenge.test.ts`, `guilds.test.ts`, `talent-buckets.test.ts`), 55 passed tests.
+
+   _Expected result_: 5 passed test files (`ProfileDialog.schema.test.ts`, `ProfileDialog.test.ts`, `active-challenge.test.ts`, `guilds.test.ts`, `talent-buckets.test.ts`), 55 passed tests.
 
 3. **Inspect Files**:
    - `src/components/profiles/ProfileDialog.tsx` (lines 80-88)

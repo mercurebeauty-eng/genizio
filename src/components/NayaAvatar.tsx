@@ -147,6 +147,9 @@ export function NayaAvatar({ size = "md", thoughts, className = "" }: NayaAvatar
         <img
           src={nayaAvatar}
           alt="Naya, le mentor IA de Génizio"
+          width="128"
+          height="128"
+          decoding="async"
           className="relative h-full w-full object-contain drop-shadow-lg"
           draggable={false}
         />

@@ -1,6 +1,13 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { GuideLayout, MedicalDisclaimer } from "@/components/guides/GuideLayout";
-import { pageMeta, jsonLdScript, faqPageJsonLd, breadcrumbJsonLd, absoluteUrl, SITE_URL } from "@/lib/seo";
+import {
+  pageMeta,
+  jsonLdScript,
+  faqPageJsonLd,
+  breadcrumbJsonLd,
+  absoluteUrl,
+  SITE_URL,
+} from "@/lib/seo";
 
 const PATH = "/guides/potentiel-haut-potentiel-enfant";
 
@@ -61,7 +68,7 @@ export const Route = createFileRoute("/guides/potentiel-haut-potentiel-enfant")(
             { name: "Accueil", path: "/" },
             { name: "Guides", path: "/guides" },
             { name: "Haut potentiel", path: PATH },
-          ])
+          ]),
         ),
         jsonLdScript({
           "@context": "https://schema.org",
@@ -93,32 +100,43 @@ function Guide() {
       intro="« Mon enfant est-il surdoué ? » La question revient chez presque tous les parents à un moment ou un autre — surtout quand l'enfant s'ennuie à l'école ou montre des capacités étonnantes à la maison. Voici ce qui relève de l'observation à la maison, ce qui relève d'un diagnostic professionnel, et pourquoi le potentiel réel d'un enfant dépasse largement ce que l'école mesure."
       updated="14 août 2026"
       readingTime="10 min"
+      path={PATH}
       related={[
-        { label: "Les intelligences multiples de Gardner", to: "/guides/intelligences-multiples-gardner" },
+        {
+          label: "Les intelligences multiples de Gardner",
+          to: "/guides/intelligences-multiples-gardner",
+        },
         { label: "Mon enfant ne tient pas en place", to: "/guides/enfant-agite-concentration" },
         { label: "24 activités éducatives (6-12 ans)", to: "/guides/activites-educatives-enfant" },
         { label: "Motiver un adolescent (12-16 ans)", to: "/guides/defis-pour-adolescents" },
-        { label: "Développer les talents en Afrique", to: "/guides/education-enfants-afrique-francophone" },
+        {
+          label: "Développer les talents en Afrique",
+          to: "/guides/education-enfants-afrique-francophone",
+        },
       ]}
     >
       <img
         src="/guides/og-haut-potentiel.jpg"
         alt="Jeune élève africain plongé dans la réflexion d'un casse-tête stimulant"
+        width="1200"
+        height="630"
+        loading="lazy"
+        decoding="async"
         className="my-6 aspect-video w-full rounded-3xl border border-ink/10 object-cover shadow-lg"
       />
       <h2>Deux questions qu'on confond souvent</h2>
       <p>
         « Mon enfant a-t-il un don ? » recouvre en réalité deux questions très différentes. La
-        première est clinique : correspond-il aux critères diagnostiques du <strong>haut potentiel
-        intellectuel</strong> (HPI), une catégorie psychologique précise, établie par un
-        professionnel à l'aide de tests standardisés. La seconde est bien plus large : dans quels
-        domaines cet enfant particulier est-il déjà compétent, ou le deviendrait rapidement s'il en
-        avait l'occasion — que ce soit reconnu par un diagnostic ou non.
+        première est clinique : correspond-il aux critères diagnostiques du{" "}
+        <strong>haut potentiel intellectuel</strong> (HPI), une catégorie psychologique précise,
+        établie par un professionnel à l'aide de tests standardisés. La seconde est bien plus large
+        : dans quels domaines cet enfant particulier est-il déjà compétent, ou le deviendrait
+        rapidement s'il en avait l'occasion — que ce soit reconnu par un diagnostic ou non.
       </p>
       <p>
         La confusion entre les deux mène à deux impasses opposées : soit on attend un diagnostic
-        formel avant de prendre au sérieux ce qu'un enfant montre déjà, soit on colle l'étiquette
-        « surdoué » sur la base d'impressions, ce qui n'aide ni l'enfant ni personne. Ce guide traite
+        formel avant de prendre au sérieux ce qu'un enfant montre déjà, soit on colle l'étiquette «
+        surdoué » sur la base d'impressions, ce qui n'aide ni l'enfant ni personne. Ce guide traite
         des deux, séparément.
       </p>
 
@@ -151,7 +169,8 @@ function Guide() {
         </li>
         <li>
           <strong>Un perfectionnisme paralysant.</strong> Une exigence envers soi-même si élevée
-          qu'elle empêche parfois de commencer une tâche, par peur de ne pas la réussir parfaitement.
+          qu'elle empêche parfois de commencer une tâche, par peur de ne pas la réussir
+          parfaitement.
         </li>
       </ul>
       <p>
@@ -167,8 +186,8 @@ function Guide() {
         surdoué ? » mais « dans quoi est-il déjà compétent, et dans quoi ne l'a-t-on jamais laissé
         essayer ? ». La théorie des intelligences multiples de Howard Gardner (détaillée dans{" "}
         <a href="/guides/intelligences-multiples-gardner">notre guide dédié</a>) est utile ici
-        précisément parce qu'elle élargit le regard au-delà du linguistique et du logico-mathématique
-        — les deux seules formes que l'école évalue vraiment.
+        précisément parce qu'elle élargit le regard au-delà du linguistique et du
+        logico-mathématique — les deux seules formes que l'école évalue vraiment.
       </p>
       <p>
         Un enfant qui négocie habilement entre camarades, qui repère instinctivement la valeur d'un
@@ -201,9 +220,9 @@ function Guide() {
 
       <h2>Ce que Génizio observe, concrètement</h2>
       <p>
-        Génizio ne cherche pas à établir un diagnostic ni à confirmer un haut potentiel — ce n'est ni
-        son rôle ni sa compétence. L'application propose à l'enfant des défis concrets à réaliser à
-        la maison, répartis sur 9 formes de talent, et met à jour sa carte de talents à partir des
+        Génizio ne cherche pas à établir un diagnostic ni à confirmer un haut potentiel — ce n'est
+        ni son rôle ni sa compétence. L'application propose à l'enfant des défis concrets à réaliser
+        à la maison, répartis sur 9 formes de talent, et met à jour sa carte de talents à partir des
         défis effectivement menés à bien, preuve à l'appui. L'intérêt de cette approche est
         d'observer sur la durée plutôt que sur un instantané, et de couvrir des domaines — sociaux,
         entrepreneuriaux, corporels — qu'aucun bulletin scolaire ne regarde.

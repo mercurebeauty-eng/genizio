@@ -68,7 +68,7 @@ export function PwaInstallPrompt() {
   if (!showPrompt) return null;
 
   return (
-    <div className="fixed bottom-[calc(5.5rem+env(safe-area-inset-bottom))] left-6 right-6 z-50 mx-auto max-w-md rounded-3xl border border-ink/10 bg-white p-5 shadow-xl animate-in slide-in-from-bottom-10 duration-300">
+    <div className="fixed bottom-[calc(5.5rem+env(safe-area-inset-bottom))] left-3 right-3 sm:left-6 sm:right-6 z-50 mx-auto max-w-md rounded-3xl border border-ink/10 bg-white p-4 sm:p-5 shadow-xl animate-in slide-in-from-bottom-10 duration-300">
       <button
         onClick={handleDismiss}
         className="absolute top-3 right-3 rounded-xl border-2 border-ink p-1 hover:bg-surface transition-all cursor-pointer"
@@ -77,11 +77,11 @@ export function PwaInstallPrompt() {
         <X className="size-4" />
       </button>
 
-      <div className="flex gap-4 items-start pr-8">
+      <div className="flex gap-3 sm:gap-4 items-start pr-8">
         <div className="grid size-12 place-items-center rounded-2xl bg-brand border border-white/20 text-white shadow-md shrink-0">
           <Smartphone className="size-6" />
         </div>
-        <div>
+        <div className="min-w-0 flex-1">
           <h4 className="font-display text-balance text-base font-black text-ink">
             Installer Génizio
           </h4>

@@ -42,7 +42,7 @@ export const getGeoHint = createServerFn({ method: "GET" }).handler(async () => 
   const cityRaw = request?.headers.get("x-vercel-ip-city") ?? null;
 
   return {
-    country: countryCode ? COUNTRY_LABELS_FR[countryCode] ?? null : null,
+    country: countryCode ? (COUNTRY_LABELS_FR[countryCode] ?? null) : null,
     city: cityRaw ? decodeURIComponent(cityRaw) : null,
   };
 });

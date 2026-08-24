@@ -83,7 +83,9 @@ describe("lastAcademicLevelByDomain — dernier niveau atteint par domaine", () 
   });
 
   it("fallback « N ans » si le niveau sort des bornes du référentiel", () => {
-    const challenges = [c({ academic_domain: "mathematiques", academic_level_age: 19, completed_at: "2026-01-01" })];
+    const challenges = [
+      c({ academic_domain: "mathematiques", academic_level_age: 19, completed_at: "2026-01-01" }),
+    ];
     expect(lastAcademicLevelByDomain(challenges)).toEqual([
       { domain: "mathematiques", levelAge: 19, grade: "19 ans" },
     ]);

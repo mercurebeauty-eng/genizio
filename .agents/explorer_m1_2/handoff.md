@@ -11,6 +11,7 @@
 ## 1. Observation
 
 ### 1.1 Existing Data Models & Schemas
+
 - **Child Profile Interface**: In `src/components/profiles/shared.ts`, lines 74–90:
   ```typescript
   export type ChildProfile = {
@@ -39,6 +40,7 @@
     - `academic_reference_note`: `text` (citation string from referential).
 
 ### 1.2 Telemetry & Hypothesis Progression Tracking
+
 - **Telemetry Module**: In `src/lib/naya-telemetry.ts`:
   - `NAYA_PRICING`: DeepSeek Chat ($0.14 input / $0.28 output per M), DeepSeek Reasoner ($0.435 input / $0.87 output per M), Sonnet Vision ($3.00 input / $15.00 output per M).
   - `calculateNayaTelemetry(raw)`: Computes token usage, total costs in USD/XOF, conversion funnel, feature breakdown, model breakdown, and monthly projections.
@@ -57,7 +59,7 @@
 3. **Premise 3**: Telemetry (`naya-telemetry.ts`) and Bayesian hypothesis cycles (`hypotheses.functions.ts`) provide the foundation for tracking child progress and detecting learning anomalies, but lack a fine-grained **Levels 1 to 5 difficulty adjustment algorithm** with explicit performance anxiety damping.
 4. **Deduction**:
    - Creating a structured **Curriculum Registry Data Model (`CurriculumNode`)** for grades CP to 3ème bridging subjects, core competencies, gamified hooks, and gap triggers provides the necessary academic grounding.
-   - Designing a **Bayesian ZPA Telemetry Adjustment Algorithm** modulating challenge difficulty from Level 1 (*Ancrage & Reconditionnement*) to Level 5 (*Maîtrise & Dépassement*) with an explicit anxiety damping rule ($P(\text{Anxiety}) > 0.40 \implies \text{Level } 1-2$ with `HIGH_SUPPORT`) solves the challenge calibration problem without inducing stress.
+   - Designing a **Bayesian ZPA Telemetry Adjustment Algorithm** modulating challenge difficulty from Level 1 (_Ancrage & Reconditionnement_) to Level 5 (_Maîtrise & Dépassement_) with an explicit anxiety damping rule ($P(\text{Anxiety}) > 0.40 \implies \text{Level } 1-2$ with `HIGH_SUPPORT`) solves the challenge calibration problem without inducing stress.
 
 ---
 
@@ -94,4 +96,5 @@ To independently verify the exploration findings and designs:
    - If `ACADEMIC_DOMAINS` or `academic_level_age` in `challenges.functions.ts` is changed or removed, the curriculum registry mapping would need to be updated accordingly.
 
 ---
-*End of Handoff Report.*
+
+_End of Handoff Report._

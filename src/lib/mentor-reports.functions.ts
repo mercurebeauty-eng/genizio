@@ -258,8 +258,7 @@ export const validateMentorReport = createServerFn({ method: "POST" })
 
     void notifyUser({
       userId: report.mentor_user_id,
-      type:
-        data.decision === "validate" ? "mentor_bilan_validated" : "mentor_bilan_rejected",
+      type: data.decision === "validate" ? "mentor_bilan_validated" : "mentor_bilan_rejected",
       childId: report.child_profile_id,
       payload: { report_id: report.id, feedback: data.feedback ?? null },
       channels: { push: true, email: true },

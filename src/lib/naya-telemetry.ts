@@ -43,8 +43,8 @@ export const NAYA_PRICING = {
   // flash : 0.7×0.22 + 0.3×0.44 = 0.286 / 0.7×0.66 + 0.3×1.32 = 0.858
   // pro   : 0.7×0.66 + 0.3×1.32 = 0.858 / 0.7×1.98 + 0.3×3.96 = 2.574
   DEFAULT_OFF_PEAK_SHARE: 0.7,
-  SONNET_INPUT_PER_M: 3.00,
-  SONNET_OUTPUT_PER_M: 15.00,
+  SONNET_INPUT_PER_M: 3.0,
+  SONNET_OUTPUT_PER_M: 15.0,
   USD_TO_XOF_RATE: 600,
   // « Le Loup » (chantiers 2-4, Naya 3.0) : la vérification sémantique tourne sur
   // le modèle économique par défaut (deepseek-v4-flash, via callClaude) et son
@@ -80,10 +80,7 @@ export interface NayaCostResult {
 export interface FeatureBreakdown {
   feature: "Défis" | "Hypothèses" | "Recommandations";
   /** Noms d'affichage alignés sur les modèles API réels (alias dépréciés depuis le 2026-07-24). */
-  modelUsed:
-    | "DeepSeek V4 Flash"
-    | "DeepSeek V4 Flash + Sonnet (vision)"
-    | "DeepSeek V4 Pro";
+  modelUsed: "DeepSeek V4 Flash" | "DeepSeek V4 Flash + Sonnet (vision)" | "DeepSeek V4 Pro";
   callsCount: number;
   estimatedTokens: number;
   costUsd: number;
@@ -165,7 +162,7 @@ export interface WolfTelemetry {
 
 const LOUP_SEMANTIC_COST_PER_CALL = calculateDeepSeekChatCost(
   NAYA_PRICING.LOUP_SEMANTIC_INPUT_PER_CALL,
-  NAYA_PRICING.LOUP_SEMANTIC_OUTPUT_PER_CALL
+  NAYA_PRICING.LOUP_SEMANTIC_OUTPUT_PER_CALL,
 );
 
 /**
@@ -204,7 +201,8 @@ export function calculateNayaWolfTelemetry(audits: WolfAuditSample[]): WolfTelem
     }
   }
 
-  const pct = (n: number): number => (totalAudits > 0 ? Math.round((n / totalAudits) * 1000) / 10 : 0);
+  const pct = (n: number): number =>
+    totalAudits > 0 ? Math.round((n / totalAudits) * 1000) / 10 : 0;
 
   const topViolations = [...violationCounts.entries()]
     .map(([rule, count]) => ({ rule, count }))
@@ -225,7 +223,8 @@ export function calculateNayaWolfTelemetry(audits: WolfAuditSample[]): WolfTelem
     regenerated,
     recadrageRatePct: pct(regenerated),
     totalViolations,
-    avgViolationsPerAudit: totalAudits > 0 ? Math.round((totalViolations / totalAudits) * 100) / 100 : 0,
+    avgViolationsPerAudit:
+      totalAudits > 0 ? Math.round((totalViolations / totalAudits) * 100) / 100 : 0,
     topViolations,
     byKind,
     loupCostUsd,
@@ -265,7 +264,7 @@ export function isDeepSeekPeakHour(now: Date): boolean {
 export function calculateDeepSeekChatCost(
   inputTokens: number,
   outputTokens: number,
-  offPeakSharePct: number = NAYA_PRICING.DEFAULT_OFF_PEAK_SHARE
+  offPeakSharePct: number = NAYA_PRICING.DEFAULT_OFF_PEAK_SHARE,
 ): NayaCostResult {
   const input = toSafeTokenCount(inputTokens);
   const output = toSafeTokenCount(outputTokens);
@@ -284,7 +283,7 @@ export function calculateDeepSeekChatCost(
 export function calculateDeepSeekReasonerCost(
   inputTokens: number,
   outputTokens: number,
-  offPeakSharePct: number = NAYA_PRICING.DEFAULT_OFF_PEAK_SHARE
+  offPeakSharePct: number = NAYA_PRICING.DEFAULT_OFF_PEAK_SHARE,
 ): NayaCostResult {
   const input = toSafeTokenCount(inputTokens);
   const output = toSafeTokenCount(outputTokens);
@@ -300,7 +299,10 @@ export function calculateDeepSeekReasonerCost(
 }
 
 /** Coût Claude Sonnet 5 (vision — preuve photo) pour une paire input/output de tokens. */
-export function calculateVisionSonnetCost(inputTokens: number, outputTokens: number): NayaCostResult {
+export function calculateVisionSonnetCost(
+  inputTokens: number,
+  outputTokens: number,
+): NayaCostResult {
   const input = toSafeTokenCount(inputTokens);
   const output = toSafeTokenCount(outputTokens);
   const usd =
@@ -313,7 +315,10 @@ export function calculateVisionSonnetCost(inputTokens: number, outputTokens: num
  * Calculates challenge conversion rate percentage: (completed / generated) * 100.
  * Clamped strictly to 0% – 100%.
  */
-export function calculateNayaConversionRate(generatedCount: number, completedCount: number): number {
+export function calculateNayaConversionRate(
+  generatedCount: number,
+  completedCount: number,
+): number {
   if (
     typeof generatedCount !== "number" ||
     typeof completedCount !== "number" ||
@@ -380,23 +385,45 @@ export function calculateNayaTelemetry(raw: {
   };
 
   const totalChatTokens = tokenUsage.deepseekChatInputTokens + tokenUsage.deepseekChatOutputTokens;
-  const totalReasonerTokens = tokenUsage.deepseekReasonerInputTokens + tokenUsage.deepseekReasonerOutputTokens;
-  const totalVisionTokens = tokenUsage.visionSonnetInputTokens + tokenUsage.visionSonnetOutputTokens;
+  const totalReasonerTokens =
+    tokenUsage.deepseekReasonerInputTokens + tokenUsage.deepseekReasonerOutputTokens;
+  const totalVisionTokens =
+    tokenUsage.visionSonnetInputTokens + tokenUsage.visionSonnetOutputTokens;
   const totalTokens = totalChatTokens + totalReasonerTokens + totalVisionTokens;
 
-  const chatCosts = calculateDeepSeekChatCost(tokenUsage.deepseekChatInputTokens, tokenUsage.deepseekChatOutputTokens);
-  const reasonerCosts = calculateDeepSeekReasonerCost(tokenUsage.deepseekReasonerInputTokens, tokenUsage.deepseekReasonerOutputTokens);
-  const visionCosts = calculateVisionSonnetCost(tokenUsage.visionSonnetInputTokens, tokenUsage.visionSonnetOutputTokens);
+  const chatCosts = calculateDeepSeekChatCost(
+    tokenUsage.deepseekChatInputTokens,
+    tokenUsage.deepseekChatOutputTokens,
+  );
+  const reasonerCosts = calculateDeepSeekReasonerCost(
+    tokenUsage.deepseekReasonerInputTokens,
+    tokenUsage.deepseekReasonerOutputTokens,
+  );
+  const visionCosts = calculateVisionSonnetCost(
+    tokenUsage.visionSonnetInputTokens,
+    tokenUsage.visionSonnetOutputTokens,
+  );
 
   const totalCostUsd = round4(chatCosts.costUsd + reasonerCosts.costUsd + visionCosts.costUsd);
   const totalCostXof = chatCosts.costXof + reasonerCosts.costXof + visionCosts.costXof;
 
   // Plafond du barème creux/plein : tous les appels DeepSeek facturés en pointe
   // (offPeakSharePct = 0). La vision Sonnet est inchangée (pas de creux/plein).
-  const peakChatCosts = calculateDeepSeekChatCost(tokenUsage.deepseekChatInputTokens, tokenUsage.deepseekChatOutputTokens, 0);
-  const peakReasonerCosts = calculateDeepSeekReasonerCost(tokenUsage.deepseekReasonerInputTokens, tokenUsage.deepseekReasonerOutputTokens, 0);
-  const peakCeilingCostUsd = round4(peakChatCosts.costUsd + peakReasonerCosts.costUsd + visionCosts.costUsd);
-  const peakCeilingCostXof = peakChatCosts.costXof + peakReasonerCosts.costXof + visionCosts.costXof;
+  const peakChatCosts = calculateDeepSeekChatCost(
+    tokenUsage.deepseekChatInputTokens,
+    tokenUsage.deepseekChatOutputTokens,
+    0,
+  );
+  const peakReasonerCosts = calculateDeepSeekReasonerCost(
+    tokenUsage.deepseekReasonerInputTokens,
+    tokenUsage.deepseekReasonerOutputTokens,
+    0,
+  );
+  const peakCeilingCostUsd = round4(
+    peakChatCosts.costUsd + peakReasonerCosts.costUsd + visionCosts.costUsd,
+  );
+  const peakCeilingCostXof =
+    peakChatCosts.costXof + peakReasonerCosts.costXof + visionCosts.costXof;
 
   const defisChatCosts = calculateDeepSeekChatCost(defisChatInput, defisChatOutput);
   const defisVisionCosts = calculateVisionSonnetCost(defisVisionInput, defisVisionOutput);

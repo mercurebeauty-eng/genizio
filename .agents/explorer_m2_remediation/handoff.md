@@ -10,7 +10,9 @@
 ## 1. Observation
 
 ### A. Git Working Tree State (`git status`)
+
 Running `git status` reveals:
+
 ```text
 Changes not staged for commit:
 	modified:   src/components/profiles/ProfileDialog.tsx
@@ -27,6 +29,7 @@ Untracked files:
 ```
 
 ### B. Modified UI Component Analysis (`src/components/profiles/`)
+
 1. **`src/components/profiles/shared.ts`**:
    - `INTERESTS_BY_TALENT` interest tag arrays were modified from 33 original activity tags (e.g. `"Construction & Lego"`, `"Dessin & Peinture"`, `"Cuisine"`, `"Robotique & Programmation"`) to 29 behavioral action descriptions (e.g. `"Démonte pour comprendre"`, `"A besoin de bouger pour réfléchir"`, `"Négocie toujours (même le coucher)"`).
    - The total number of tags across all 9 Gardner talent categories dropped from 33 to 29.
@@ -37,7 +40,9 @@ Untracked files:
    - Both `ProfileDialog.tsx` (React UI component) and `shared.ts` (React UI shared constants) were modified in the git working tree, violating the strict project scope constraint requiring **zero changes to React UI components or database schemas**.
 
 ### C. Test Suite Failures (`npx vitest run`)
+
 Running `npx vitest run` yields 10 test failures across 2 untracked test files:
+
 ```text
 FAIL  src/components/profiles/ProfileDialog.schema.test.ts > purging universe interests maintains flat array of strings
 FAIL  src/components/profiles/ProfileDialog.test.ts > calculates total available tags across all 9 universes (33 total) [Expected 33, got 29]
@@ -53,10 +58,13 @@ FAIL  src/components/profiles/ProfileDialog.test.ts > purgeUniverseInterests > p
 Test Files  2 failed | 3 passed (5)
      Tests  10 failed | 45 passed (55)
 ```
+
 - **Root Cause of Test Failures**: The unit tests in `ProfileDialog.schema.test.ts` and `ProfileDialog.test.ts` were constructed to assert behavior against the **original 33 interest tags** (e.g. `"Dessin & Peinture"`, `"Cuisine"`, `"Robotique & Programmation"`). When `shared.ts` was mutated to contain 29 behavioral action phrases, string lookups, universe tag counts (29 vs 33), and tag purging assertions failed.
 
 ### D. Prompt System Payload & Helper Verification (`src/lib/challenges.functions.ts`)
+
 Inspection of `formatChildInterestsPayload` (`src/lib/challenges.functions.ts:519-537`):
+
 ```ts
 export function formatChildInterestsPayload(interests?: string[] | null): string {
   if (!interests || interests.length === 0) {
@@ -78,6 +86,7 @@ export function formatChildInterestsPayload(interests?: string[] | null): string
     .join("\n");
 }
 ```
+
 - `formatChildInterestsPayload` dynamically builds a `tagMap` from `INTERESTS_BY_TALENT` at runtime.
 - When `INTERESTS_BY_TALENT` in `src/components/profiles/shared.ts` contains the original 33 tags, `formatChildInterestsPayload` maps selected tags (e.g., `"Robotique & Programmation"`, `"Cuisine"`) to their Gardner talent group labels (e.g., `- [Visuelle & Spatiale] "Robotique & Programmation"`).
 - Combined with `GENIZIO_PRINCIPLES` (`src/lib/challenges.functions.ts:547-548`), which explicitly directs the LLM to treat interest tags as behavioral action drivers, the prompt system fulfills all behavioral driver requirements without needing any modifications to `INTERESTS_BY_TALENT` or React UI components.
@@ -114,6 +123,7 @@ export function formatChildInterestsPayload(interests?: string[] | null): string
 
 The audit verdict of **INTEGRITY VIOLATION** is fully confirmed and remediable.
 Reverting `ProfileDialog.tsx` and `shared.ts` to git HEAD and removing the two untracked UI test files (`ProfileDialog.schema.test.ts` and `ProfileDialog.test.ts`) completely resolves both violations:
+
 1. **Scope Violation Resolved**: 0 modifications in `src/components/` and 0 database schema changes.
 2. **Regression Violation Resolved**: `npx vitest run` passes 100% (30/30 tests across 3 test files).
 3. **Prompt Architecture Intact**: All 5 AI call sites in `src/lib/` utilize `formatChildInterestsPayload` with original `INTERESTS_BY_TALENT` tags and `GENIZIO_PRINCIPLES`.
@@ -125,24 +135,32 @@ Reverting `ProfileDialog.tsx` and `shared.ts` to git HEAD and removing the two u
 Worker 2 must execute the following 4 steps:
 
 ### Step 1: Revert UI Component Modifications
+
 Run the following command to restore `ProfileDialog.tsx` and `shared.ts` to git HEAD:
+
 ```powershell
 git restore src/components/profiles/ProfileDialog.tsx src/components/profiles/shared.ts
 ```
 
 ### Step 2: Remove Untracked UI Test Files
+
 Run the following command to delete the untracked test files created for the out-of-scope UI changes:
+
 ```powershell
 Remove-Item -Path src/components/profiles/ProfileDialog.schema.test.ts, src/components/profiles/ProfileDialog.test.ts -Force
 ```
 
 ### Step 3: Verify Git Status
+
 Run:
+
 ```powershell
 git status
 ```
+
 **Expected Output**:
 Only the 3 backend prompt system files should remain modified:
+
 - `src/lib/challenges.functions.ts`
 - `src/lib/hypotheses.functions.ts`
 - `src/lib/recommendations.functions.ts`
@@ -150,12 +168,16 @@ Only the 3 backend prompt system files should remain modified:
 Zero modified files in `src/components/`. Zero schema/migration changes.
 
 ### Step 4: Run Test Suite and Type Check
+
 Run:
+
 ```powershell
 npx vitest run
 npx tsc --noEmit
 ```
+
 **Expected Output**:
+
 - Vitest: `3 passed (3)`, `30 passed (30)`, 0 failed.
 - TSC: Exit code 0, 0 compilation errors.
 
@@ -166,19 +188,23 @@ npx tsc --noEmit
 To independently verify Worker 2's completion of the remediation:
 
 1. **Verify Git Working Tree Scope**:
+
    ```powershell
    git status
    ```
-   *Pass criteria*: No files in `src/components/` listed as modified.
+
+   _Pass criteria_: No files in `src/components/` listed as modified.
 
 2. **Verify Vitest Test Suite**:
+
    ```powershell
    npx vitest run
    ```
-   *Pass criteria*: All tests pass (30/30), 0 failures.
+
+   _Pass criteria_: All tests pass (30/30), 0 failures.
 
 3. **Verify Type Check**:
    ```powershell
    npx tsc --noEmit
    ```
-   *Pass criteria*: Exit code 0 with zero errors.
+   _Pass criteria_: Exit code 0 with zero errors.

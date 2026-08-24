@@ -3,6 +3,7 @@ import type { ReactNode } from "react";
 import { ArrowLeft, ArrowRight } from "lucide-react";
 
 import { SocialShareBar } from "./SocialShareBar";
+import { AuthorBio } from "./AuthorBio";
 
 /**
  * Coquille éditoriale partagée par les pages de guide.
@@ -22,6 +23,7 @@ export function GuideLayout({
   readingTime,
   children,
   related,
+  path,
 }: {
   eyebrow: string;
   title: string;
@@ -30,6 +32,7 @@ export function GuideLayout({
   readingTime: string;
   children: ReactNode;
   related?: { label: string; to: string }[];
+  path?: string;
 }) {
   return (
     <div className="min-h-dvh bg-surface text-ink antialiased">
@@ -39,7 +42,13 @@ export function GuideLayout({
             to="/"
             className="flex items-center gap-2 font-display text-xl font-extrabold tracking-tight text-brand"
           >
-            <img src="/favicon-96x96.png" alt="Logo Génizio" className="h-7 w-7" />
+            <img
+              src="/favicon-96x96.png"
+              alt="Logo Génizio"
+              width="28"
+              height="28"
+              className="h-7 w-7"
+            />
             GÉNIZIO
           </Link>
           <Link
@@ -79,20 +88,22 @@ export function GuideLayout({
             <span aria-hidden>·</span>
             <span>{readingTime} de lecture</span>
             <span aria-hidden>·</span>
-            <span>Par l'équipe Génizio</span>
+            <span>Par Cheick Mohamed TRAORE</span>
           </div>
-          <SocialShareBar title={title} />
+          <SocialShareBar title={title} path={path} />
         </div>
 
         {/* `prose-genizio` est défini dans styles.css — la mise en forme du corps de texte
             vit là plutôt qu'en classes utilitaires répétées sur chaque paragraphe. */}
         <div className="prose-genizio mt-10">{children}</div>
 
-        <div className="mt-8 flex items-center justify-between border-t border-ink/10 pt-4">
+        <div className="mt-8 flex flex-wrap items-center justify-between gap-3 border-t border-ink/10 pt-4">
           <span className="text-xs font-bold text-ink/60">Vous avez aimé ce guide ?</span>
-          <SocialShareBar title={title} />
+          <SocialShareBar title={title} path={path} />
         </div>
 
+        {/* Bloc E-E-A-T Auteur */}
+        <AuthorBio />
 
         <aside className="mt-16 rounded-3xl border border-brand/20 bg-gradient-to-br from-brand/5 via-white to-sky/5 p-8 shadow-md">
           <div className="inline-flex items-center gap-2 rounded-full bg-brand/10 px-3.5 py-1 text-xs font-black uppercase tracking-wider text-brand">
@@ -102,31 +113,44 @@ export function GuideLayout({
             Passez de la théorie à l'action avec Génizio
           </h2>
           <p className="mt-2 text-sm font-medium leading-relaxed text-ink/70">
-            Chaque enfant a des capacités qui ne demandent qu'à se développer. Génizio accompagne
-            les enfants de 5 à 16 ans avec des défis concrets à faire à la maison, guidés par son
-            co-pilote pédagogique Naya.
+            Ne laissez pas les talents de votre enfant dans l'ombre. Génizio accompagne chaque
+            enfant de 5 à 16 ans avec des défis concrets à faire à la maison, guidés par son jumeau
+            pédagogique Naya.
           </p>
 
           <div className="mt-6 grid gap-4 sm:grid-cols-3 border-y border-ink/10 py-5">
             <div className="flex flex-col gap-1">
               <span className="text-sm font-extrabold text-brand">🧠 9 Intelligences</span>
-              <span className="text-xs text-ink/70">Cartographie précise basée sur ses réalisations concrètes.</span>
+              <span className="text-xs text-ink/70">
+                Cartographie précise basée sur ses réalisations concrètes.
+              </span>
             </div>
             <div className="flex flex-col gap-1">
               <span className="text-sm font-extrabold text-brand">🤖 Naya (IA Mentor)</span>
-              <span className="text-xs text-ink/70">Défis 10 min personnalisés selon ses passions.</span>
+              <span className="text-xs text-ink/70">
+                Défis 10 min personnalisés selon ses passions.
+              </span>
             </div>
             <div className="flex flex-col gap-1">
-              <span className="text-sm font-extrabold text-brand">📜 Passeport d'Excellence</span>
-              <span className="text-xs text-ink/70">Un portfolio valorisant pour renforcer sa confiance.</span>
+              <span className="text-sm font-extrabold text-brand">📜 Passeport Talents</span>
+              <span className="text-xs text-ink/70">
+                Un portfolio valorisant pour renforcer sa confiance.
+              </span>
             </div>
           </div>
 
           <div className="mt-6 flex flex-wrap items-center justify-between gap-4">
             <div>
-              <span className="block text-xs font-bold text-ink/50">1er profil enfant 100 % gratuit</span>
-              <span className="text-xs font-medium text-ink/70">Puis 5 000 FCFA / mois* par profil supplémentaire.</span>
-              <span className="block text-[10px] text-ink/50 mt-0.5 leading-tight">* Tarif de 5 000 FCFA/mois valable pendant les 3 premiers mois (puis 15 000 FCFA/mois par profil).</span>
+              <span className="block text-xs font-bold text-ink/50">
+                1er profil enfant 100 % gratuit
+              </span>
+              <span className="text-xs font-medium text-ink/70">
+                Puis 5 000 FCFA / mois* par profil supplémentaire.
+              </span>
+              <span className="block text-[10px] text-ink/50 mt-0.5 leading-tight">
+                * Tarif de 5 000 FCFA/mois valable pendant les 3 premiers mois (puis 15 000
+                FCFA/mois par profil).
+              </span>
             </div>
             <Link
               to="/auth"

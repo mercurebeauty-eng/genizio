@@ -33,7 +33,13 @@ function MentionsLegalesPage() {
             to="/"
             className="flex items-center gap-2 font-display text-xl font-extrabold tracking-tight text-brand"
           >
-            <img src="/favicon-96x96.png" alt="Logo Génizio" className="h-7 w-7" />
+            <img
+              src="/favicon-96x96.png"
+              alt="Logo Génizio"
+              width="28"
+              height="28"
+              className="h-7 w-7"
+            />
             GÉNIZIO
           </Link>
           <Link
@@ -91,8 +97,8 @@ function MentionsLegalesPage() {
             </a>
           </p>
           <p>
-            Adresse : <strong>ABOBO 29 Q, rue Ousso N'Guéssan, Abidjan, Lacs Region, Côte
-            d'Ivoire</strong>
+            Adresse :{" "}
+            <strong>ABOBO 29 Q, rue Ousso N'Guéssan, Abidjan, Lacs Region, Côte d'Ivoire</strong>
           </p>
           <p>
             Génizio opère à destination de familles situées principalement au Sénégal, en Côte

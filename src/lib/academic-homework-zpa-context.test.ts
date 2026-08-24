@@ -58,7 +58,10 @@ describe("computeHomeworkZPAContext", () => {
   it("remonte les vraies causes diagnostiquées quand le cycle ouvert cible le même domaine", async () => {
     const supabase = makeFakeSupabase([
       null,
-      { trigger_domain: "mathematiques", hypotheses: [{ cause: "PERFORMANCE_ANXIETY", current_probability: 0.72 }] },
+      {
+        trigger_domain: "mathematiques",
+        hypotheses: [{ cause: "PERFORMANCE_ANXIETY", current_probability: 0.72 }],
+      },
       null,
     ]);
     const ctx = await computeHomeworkZPAContext(supabase, "child-1", "maths", 8);
@@ -69,7 +72,10 @@ describe("computeHomeworkZPAContext", () => {
   it("ignore le cycle ouvert s'il cible un autre domaine que la matière du devoir", async () => {
     const supabase = makeFakeSupabase([
       null,
-      { trigger_domain: "sociale", hypotheses: [{ cause: "PERFORMANCE_ANXIETY", current_probability: 0.9 }] },
+      {
+        trigger_domain: "sociale",
+        hypotheses: [{ cause: "PERFORMANCE_ANXIETY", current_probability: 0.9 }],
+      },
       null,
     ]);
     const ctx = await computeHomeworkZPAContext(supabase, "child-1", "maths", 8);
@@ -86,7 +92,10 @@ describe("computeHomeworkZPAContext", () => {
   it("reste au repli neutre pour histoire_geo (aucun domaine académique équivalent, 1 seul appel .from() court-circuité)", async () => {
     // Séquence réelle pour un domaine non mappé : seulement [openCycle, lastHomework].
     const supabase = makeFakeSupabase([
-      { trigger_domain: "mathematiques", hypotheses: [{ cause: "READY_FOR_MORE", current_probability: 0.8 }] },
+      {
+        trigger_domain: "mathematiques",
+        hypotheses: [{ cause: "READY_FOR_MORE", current_probability: 0.8 }],
+      },
       null,
     ]);
     const ctx = await computeHomeworkZPAContext(supabase, "child-1", "histoire_geo", 8);

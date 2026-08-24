@@ -1,5 +1,9 @@
 import { describe, it, expect } from "vitest";
-import { resolveProofEncodePlan, isHeicProofFile, normalizeProofMediaType } from "@/lib/image-proof";
+import {
+  resolveProofEncodePlan,
+  isHeicProofFile,
+  normalizeProofMediaType,
+} from "@/lib/image-proof";
 
 // D-04 (review 2026-08-13) : compression sans perte de qualité visible — la DÉCISION
 // est pure et testée ; l'exécution (canvas) relève du navigateur.

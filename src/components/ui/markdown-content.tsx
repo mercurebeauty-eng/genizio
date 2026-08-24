@@ -4,6 +4,7 @@
 // renders correctly instead of showing up as literal characters.
 import ReactMarkdown from "react-markdown";
 import type { Components } from "react-markdown";
+import { cn } from "@/lib/utils";
 
 const blockComponents: Components = {
   p: ({ children }) => <p className="mb-2 last:mb-0">{children}</p>,
@@ -24,9 +25,21 @@ const blockComponents: Components = {
     </a>
   ),
   blockquote: ({ children }) => (
-    <blockquote className="border-l-4 border-brand/40 pl-3 italic text-ink/70">{children}</blockquote>
+    <blockquote className="border-l-4 border-brand/40 pl-3 italic text-ink/70">
+      {children}
+    </blockquote>
   ),
-  code: ({ children }) => <code className="rounded bg-ink/5 px-1 py-0.5 text-[0.9em]">{children}</code>,
+  pre: ({ children }) => (
+    <pre className="overflow-x-auto rounded bg-ink/5 p-2 text-xs font-mono">{children}</pre>
+  ),
+  table: ({ children }) => (
+    <div className="my-2 overflow-x-auto rounded-xl border border-ink/10">
+      <table className="w-full text-xs">{children}</table>
+    </div>
+  ),
+  code: ({ children }) => (
+    <code className="rounded bg-ink/5 px-1 py-0.5 text-[0.9em] break-all">{children}</code>
+  ),
 };
 
 const inlineComponents: Components = {
@@ -53,8 +66,10 @@ export function MarkdownContent({
   // cosmetic, it's what makes `inline` actually valid to nest.
   const Wrapper = inline ? "span" : "div";
   return (
-    <Wrapper className={className}>
-      <ReactMarkdown components={inline ? inlineComponents : blockComponents}>{content}</ReactMarkdown>
+    <Wrapper className={cn("break-words", className)}>
+      <ReactMarkdown components={inline ? inlineComponents : blockComponents}>
+        {content}
+      </ReactMarkdown>
     </Wrapper>
   );
 }

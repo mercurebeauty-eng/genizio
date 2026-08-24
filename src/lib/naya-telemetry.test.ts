@@ -177,14 +177,16 @@ describe("Naya Telemetry & Pricing Functions", () => {
       // Model breakdown check
       const chatModel = telemetry.modelBreakdown.find((m) => m.model === "DeepSeek V4 Flash");
       const reasonerModel = telemetry.modelBreakdown.find((m) => m.model === "DeepSeek V4 Pro");
-      const visionModel = telemetry.modelBreakdown.find((m) => m.model === "Claude Sonnet 5 (Vision)");
+      const visionModel = telemetry.modelBreakdown.find(
+        (m) => m.model === "Claude Sonnet 5 (Vision)",
+      );
 
       expect(chatModel).toBeDefined();
       expect(reasonerModel).toBeDefined();
       expect(visionModel).toBeDefined();
 
       expect(telemetry.totalTokens).toBe(
-        chatModel!.totalTokens + reasonerModel!.totalTokens + visionModel!.totalTokens
+        chatModel!.totalTokens + reasonerModel!.totalTokens + visionModel!.totalTokens,
       );
       expect(telemetry.projection.projectedCallsMonthly).toBe(telemetry.totalApiCalls * 4);
     });
@@ -199,10 +201,34 @@ describe("Naya Telemetry & Pricing Functions", () => {
 describe("calculateNayaWolfTelemetry", () => {
   it("calcule les taux de conformité et le recadrage sur un échantillon d'audits", () => {
     const audits = [
-      { kind: "challenge_single", verdict: "conforme", violations: null, semantic_checked: false, regenerated: false },
-      { kind: "challenge_single", verdict: "mineur", violations: [{ rule: "challenge.no_markdown", severity: "mineur" }], semantic_checked: true, regenerated: false },
-      { kind: "challenge_bulk", verdict: "majeur", violations: [{ rule: "challenge.intelligences_valid", severity: "majeur" }], semantic_checked: true, regenerated: true },
-      { kind: "challenge_bulk", verdict: "majeur", violations: [{ rule: "challenge.intelligences_valid", severity: "majeur" }], semantic_checked: true, regenerated: false },
+      {
+        kind: "challenge_single",
+        verdict: "conforme",
+        violations: null,
+        semantic_checked: false,
+        regenerated: false,
+      },
+      {
+        kind: "challenge_single",
+        verdict: "mineur",
+        violations: [{ rule: "challenge.no_markdown", severity: "mineur" }],
+        semantic_checked: true,
+        regenerated: false,
+      },
+      {
+        kind: "challenge_bulk",
+        verdict: "majeur",
+        violations: [{ rule: "challenge.intelligences_valid", severity: "majeur" }],
+        semantic_checked: true,
+        regenerated: true,
+      },
+      {
+        kind: "challenge_bulk",
+        verdict: "majeur",
+        violations: [{ rule: "challenge.intelligences_valid", severity: "majeur" }],
+        semantic_checked: true,
+        regenerated: false,
+      },
     ];
     const wolf = calculateNayaWolfTelemetry(audits as any);
     expect(wolf.totalAudits).toBe(4);
@@ -218,8 +244,20 @@ describe("calculateNayaWolfTelemetry", () => {
 
   it("classe les top violations par fréquence décroissante", () => {
     const audits = [
-      { kind: "k", verdict: "majeur", violations: [{ rule: "a" }, { rule: "b" }, { rule: "b" }, { rule: "b" }], semantic_checked: null, regenerated: null },
-      { kind: "k", verdict: "mineur", violations: [{ rule: "a" }], semantic_checked: null, regenerated: null },
+      {
+        kind: "k",
+        verdict: "majeur",
+        violations: [{ rule: "a" }, { rule: "b" }, { rule: "b" }, { rule: "b" }],
+        semantic_checked: null,
+        regenerated: null,
+      },
+      {
+        kind: "k",
+        verdict: "mineur",
+        violations: [{ rule: "a" }],
+        semantic_checked: null,
+        regenerated: null,
+      },
     ];
     const wolf = calculateNayaWolfTelemetry(audits as any);
     expect(wolf.topViolations[0]).toEqual({ rule: "b", count: 3 });
@@ -228,9 +266,27 @@ describe("calculateNayaWolfTelemetry", () => {
 
   it("ventile par type de génération avec les compteurs majeurs", () => {
     const audits = [
-      { kind: "homework", verdict: "majeur", violations: [{ rule: "r" }], semantic_checked: null, regenerated: null },
-      { kind: "homework", verdict: "conforme", violations: null, semantic_checked: null, regenerated: null },
-      { kind: "narrative", verdict: "majeur", violations: [{ rule: "r" }], semantic_checked: null, regenerated: null },
+      {
+        kind: "homework",
+        verdict: "majeur",
+        violations: [{ rule: "r" }],
+        semantic_checked: null,
+        regenerated: null,
+      },
+      {
+        kind: "homework",
+        verdict: "conforme",
+        violations: null,
+        semantic_checked: null,
+        regenerated: null,
+      },
+      {
+        kind: "narrative",
+        verdict: "majeur",
+        violations: [{ rule: "r" }],
+        semantic_checked: null,
+        regenerated: null,
+      },
     ];
     const wolf = calculateNayaWolfTelemetry(audits as any);
     expect(wolf.byKind["homework"]).toEqual({ total: 2, majeur: 1 });
@@ -239,9 +295,27 @@ describe("calculateNayaWolfTelemetry", () => {
 
   it("estime le coût propre du Loup à partir des seules vérifications sémantiques", () => {
     const audits = [
-      { kind: "k", verdict: "conforme", violations: null, semantic_checked: true, regenerated: false },
-      { kind: "k", verdict: "conforme", violations: null, semantic_checked: true, regenerated: false },
-      { kind: "k", verdict: "conforme", violations: null, semantic_checked: false, regenerated: false },
+      {
+        kind: "k",
+        verdict: "conforme",
+        violations: null,
+        semantic_checked: true,
+        regenerated: false,
+      },
+      {
+        kind: "k",
+        verdict: "conforme",
+        violations: null,
+        semantic_checked: true,
+        regenerated: false,
+      },
+      {
+        kind: "k",
+        verdict: "conforme",
+        violations: null,
+        semantic_checked: false,
+        regenerated: false,
+      },
     ];
     const wolf = calculateNayaWolfTelemetry(audits as any);
     // 2 vérifications sémantiques × (2500 tokens entrée @0.14/M + 800 sortie @0.28/M)

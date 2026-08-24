@@ -53,26 +53,22 @@ describe("getPortfolioPulse", () => {
   });
 
   it("ranks the highest scores first", () => {
-    const pulse = getPortfolioPulse(
-      { spatial: 90, corporelle: 10, sociale: 50 },
-      3,
-    );
+    const pulse = getPortfolioPulse({ spatial: 90, corporelle: 10, sociale: 50 }, 3);
     expect(pulse[0].key).toBe("spatial");
   });
 
   it("keeps at least one pas_encore_explore entry in the slice when one exists", () => {
     // 9 talents, only 3 requested: without the "keep one unexplored" rule this
     // would be the top 3 scores only, all non-zero.
-    const pulse = getPortfolioPulse(
-      { spatial: 90, corporelle: 80, sociale: 70, creative: 60 },
-      3,
-    );
+    const pulse = getPortfolioPulse({ spatial: 90, corporelle: 80, sociale: 70, creative: 60 }, 3);
     expect(pulse.some((e) => e.bucket === "pas_encore_explore")).toBe(true);
   });
 
   it("falls back to '{label} — {bucket label}' for a (domain, bucket) pair with no custom phrase", () => {
     const pulse = getPortfolioPulse({ linguistique: 50 }, 9);
     const entry = pulse.find((e) => e.key === "linguistique")!;
-    expect(entry.phrase).toBe(`${TALENT_KEY_LABELS.linguistique} — ${TALENT_BUCKET_LABEL.en_developpement}`);
+    expect(entry.phrase).toBe(
+      `${TALENT_KEY_LABELS.linguistique} — ${TALENT_BUCKET_LABEL.en_developpement}`,
+    );
   });
 });

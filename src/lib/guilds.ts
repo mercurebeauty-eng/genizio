@@ -34,7 +34,8 @@ export const GUILDS: Record<GuildKey, GuildInfo> = {
     name: "Les Bâtisseurs",
     emoji: "🏗️",
     tagline: "Construire le monde de demain",
-    description: "Architecture, construction, ingénierie. Tu conçois, tu assembles, tu élèves (📐 Spatiale & 🪵 Artisanale).",
+    description:
+      "Architecture, construction, ingénierie. Tu conçois, tu assembles, tu élèves (📐 Spatiale & 🪵 Artisanale).",
     color: "text-amber-800",
     bgColor: "bg-amber-100 border-amber-400",
     talentKeys: ["spatial", "artisanale"],
@@ -44,7 +45,8 @@ export const GUILDS: Record<GuildKey, GuildInfo> = {
     name: "Les Inventeurs",
     emoji: "⚙️",
     tagline: "Résoudre ce que personne n'a encore résolu",
-    description: "Technologie, robotique, IA, innovation. Tu imagines, tu prototypes, tu innoves (🧠 Logique).",
+    description:
+      "Technologie, robotique, IA, innovation. Tu imagines, tu prototypes, tu innoves (🧠 Logique).",
     color: "text-violet-800",
     bgColor: "bg-violet-100 border-violet-400",
     talentKeys: ["logico_mathematique"],
@@ -54,7 +56,8 @@ export const GUILDS: Record<GuildKey, GuildInfo> = {
     name: "Les Explorateurs",
     emoji: "🔭",
     tagline: "Découvrir ce que le monde cache encore",
-    description: "Sciences, nature, biologie, géographie. Tu observes, tu questionnes, tu découvres (🏃 Corporelle).",
+    description:
+      "Sciences, nature, biologie, géographie. Tu observes, tu questionnes, tu découvres (🏃 Corporelle).",
     color: "text-sky-800",
     bgColor: "bg-sky-100 border-sky-400",
     talentKeys: ["corporelle"],
@@ -64,7 +67,8 @@ export const GUILDS: Record<GuildKey, GuildInfo> = {
     name: "Les Créateurs",
     emoji: "🎨",
     tagline: "Donner vie à ce qui n'existait pas",
-    description: "Arts, musique, expression, design. Tu ressens, tu crées, tu touches les cœurs (🎨 Créative & 🗣️ Linguistique).",
+    description:
+      "Arts, musique, expression, design. Tu ressens, tu crées, tu touches les cœurs (🎨 Créative & 🗣️ Linguistique).",
     color: "text-pink-800",
     bgColor: "bg-pink-100 border-pink-400",
     talentKeys: ["creative", "linguistique"],
@@ -74,7 +78,8 @@ export const GUILDS: Record<GuildKey, GuildInfo> = {
     name: "Les Stratèges",
     emoji: "🏆",
     tagline: "Transformer une idée en impact réel",
-    description: "Entrepreneuriat, leadership, négociation. Tu planifies, tu décides, tu inspires (💡 Entreprendre, 🤝 Sociale & 🪞 Émotionnelle).",
+    description:
+      "Entrepreneuriat, leadership, négociation. Tu planifies, tu décides, tu inspires (💡 Entreprendre, 🤝 Sociale & 🪞 Émotionnelle).",
     color: "text-emerald-800",
     bgColor: "bg-emerald-100 border-emerald-400",
     talentKeys: ["entrepreneuriale", "sociale", "emotionnelle"],
@@ -158,9 +163,7 @@ export function getTalentAffinities(
  *  Protecteurs (talentKeys: []) reste hors course par design — aucune voie
  *  d'atteinte par les 9 talents actuels (chantier séparé).
  */
-export function getChildGuild(
-  talents: Record<string, number> | null | undefined
-): GuildInfo {
+export function getChildGuild(talents: Record<string, number> | null | undefined): GuildInfo {
   const raw = talents ?? {};
 
   let bestGuildKey: GuildKey | null = null;

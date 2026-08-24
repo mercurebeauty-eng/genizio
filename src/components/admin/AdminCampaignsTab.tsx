@@ -568,8 +568,8 @@ export function AdminCampaignsTab() {
       )}
 
       {isLinkModalOpen && selectedCampaign && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-ink/40 backdrop-blur-sm">
-          <div className="w-full max-w-lg relative animate-in fade-in zoom-in-95 duration-200">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-ink/40 backdrop-blur-sm overflow-y-auto">
+          <div className="w-full max-w-lg my-auto relative animate-in fade-in zoom-in-95 duration-200 max-h-[90vh] overflow-y-auto">
             <button
               onClick={() => setIsLinkModalOpen(false)}
               className="absolute -top-3 -right-3 p-2 bg-white rounded-full text-ink/60 hover:text-ink transition-colors shadow-md cursor-pointer z-10"
@@ -587,11 +587,11 @@ export function AdminCampaignsTab() {
       {/* ── Modale : lien de paiement partageable (mode payé, décision #72) ── */}
       {linkCampaign && (
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-ink/40 p-4"
+          className="fixed inset-0 z-50 flex items-center justify-center bg-ink/40 p-4 overflow-y-auto"
           onClick={() => !generatingLink && setLinkCampaign(null)}
         >
           <div
-            className="w-full max-w-md rounded-3xl border border-ink/10 bg-white p-6 shadow-2xl"
+            className="w-full max-w-md my-auto rounded-3xl border border-ink/10 bg-white p-6 shadow-2xl max-h-[90vh] overflow-y-auto"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="mb-4">
@@ -742,9 +742,7 @@ function CampaignQuotaEditor({
           Quota mentors
         </div>
         <div className="flex items-center gap-2 flex-wrap">
-          <span className="text-sm font-medium text-ink/60 shrink-0">
-            {mentorFloor} de base +
-          </span>
+          <span className="text-sm font-medium text-ink/60 shrink-0">{mentorFloor} de base +</span>
           <input
             type="number"
             min={0}
@@ -852,8 +850,8 @@ function CreateCampaignModal({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-ink/40 backdrop-blur-sm">
-      <div className="bg-white rounded-[2rem] w-full max-w-md shadow-2xl animate-in fade-in zoom-in-95 duration-200 flex flex-col max-h-[90vh]">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-ink/40 backdrop-blur-sm overflow-y-auto">
+      <div className="bg-white my-auto rounded-[2rem] w-full max-w-md shadow-2xl animate-in fade-in zoom-in-95 duration-200 flex flex-col max-h-[90vh]">
         <div className="flex items-center justify-between p-6 pb-4 shrink-0">
           <h3 className="font-display font-black text-xl text-ink flex items-center gap-2">
             <Building2 className="size-6 text-brand" />
@@ -869,118 +867,120 @@ function CreateCampaignModal({
         <div className="p-6 pt-2 overflow-y-auto">
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-            <label className="block text-sm font-bold text-ink mb-1">Nom de la campagne</label>
-            <input
-              required
-              type="text"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              className="w-full bg-surface border-none rounded-2xl p-4 font-medium"
-              placeholder="Ex: Cohorte UNICEF 2026"
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-bold text-ink mb-1">
-              Email du chargé de projet (Client)
-            </label>
-            <input
-              required
-              type="email"
-              value={managerEmail}
-              onChange={(e) => setManagerEmail(e.target.value)}
-              className="w-full bg-surface border-none rounded-2xl p-4 font-medium"
-              placeholder="responsable@ong.org"
-            />
-            <p className="text-xs text-ink/50 mt-1 font-medium">
-              L'utilisateur doit déjà avoir un compte sur Génizio.
-            </p>
-          </div>
-          <div>
-            <label className="block text-sm font-bold text-ink mb-1">Nombre d'enfants ciblés</label>
-            <input
-              required
-              type="number"
-              min={1}
-              value={targetCount}
-              onChange={(e) => setTargetCount(parseInt(e.target.value))}
-              className="w-full bg-surface border-none rounded-2xl p-4 font-medium"
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-bold text-ink mb-1">
-              Séances d'accompagnement financées (optionnel)
-            </label>
-            <input
-              type="number"
-              min={0}
-              value={sessionsTarget}
-              onChange={(e) => setSessionsTarget(parseInt(e.target.value) || 0)}
-              className="w-full bg-surface border-none rounded-2xl p-4 font-medium"
-            />
-            <p className="text-xs text-ink/50 mt-1 font-medium">
-              V4 — 2 compteurs distincts : en plus des enfants (app), l'ONG peut financer un budget
-              de séances d'accompagnement (12 séances/enfant/mois). Le rapport d'impact affichera «
-              N enfants + M séances financés ».
-            </p>
-          </div>
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <label className="block text-sm font-bold text-ink mb-1">Début du programme</label>
+              <label className="block text-sm font-bold text-ink mb-1">Nom de la campagne</label>
               <input
                 required
-                type="date"
-                value={startDate}
-                onChange={(e) => setStartDate(e.target.value)}
+                type="text"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                className="w-full bg-surface border-none rounded-2xl p-4 font-medium"
+                placeholder="Ex: Cohorte UNICEF 2026"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-bold text-ink mb-1">
+                Email du chargé de projet (Client)
+              </label>
+              <input
+                required
+                type="email"
+                value={managerEmail}
+                onChange={(e) => setManagerEmail(e.target.value)}
+                className="w-full bg-surface border-none rounded-2xl p-4 font-medium"
+                placeholder="responsable@ong.org"
+              />
+              <p className="text-xs text-ink/50 mt-1 font-medium">
+                L'utilisateur doit déjà avoir un compte sur Génizio.
+              </p>
+            </div>
+            <div>
+              <label className="block text-sm font-bold text-ink mb-1">
+                Nombre d'enfants ciblés
+              </label>
+              <input
+                required
+                type="number"
+                min={1}
+                value={targetCount}
+                onChange={(e) => setTargetCount(parseInt(e.target.value))}
                 className="w-full bg-surface border-none rounded-2xl p-4 font-medium"
               />
             </div>
             <div>
-              <label className="block text-sm font-bold text-ink mb-1">Fin du programme</label>
+              <label className="block text-sm font-bold text-ink mb-1">
+                Séances d'accompagnement financées (optionnel)
+              </label>
               <input
-                required
-                type="date"
-                value={endDate}
-                onChange={(e) => setEndDate(e.target.value)}
+                type="number"
+                min={0}
+                value={sessionsTarget}
+                onChange={(e) => setSessionsTarget(parseInt(e.target.value) || 0)}
                 className="w-full bg-surface border-none rounded-2xl p-4 font-medium"
               />
+              <p className="text-xs text-ink/50 mt-1 font-medium">
+                V4 — 2 compteurs distincts : en plus des enfants (app), l'ONG peut financer un
+                budget de séances d'accompagnement (12 séances/enfant/mois). Le rapport d'impact
+                affichera « N enfants + M séances financés ».
+              </p>
             </div>
-          </div>
-          <p className="text-xs text-ink/50 -mt-2 font-medium">
-            Fenêtre fixe et partagée par toute la cohorte — contrairement à un enfant isolé, ses
-            enfants ne démarrent pas chacun leur propre chrono individuel.
-          </p>
-          <div>
-            <label className="block text-sm font-bold text-ink mb-1">
-              Description (Optionnelle)
-            </label>
-            <textarea
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              className="w-full bg-surface border-none rounded-2xl p-4 font-medium min-h-[100px]"
-              placeholder="Détails du programme..."
-            />
-          </div>
-          <div className="flex gap-3 pt-4">
-            <button
-              type="button"
-              onClick={onClose}
-              className="flex-1 px-4 py-3 bg-surface hover:bg-ink/5 text-ink rounded-2xl font-bold transition-colors"
-            >
-              Annuler
-            </button>
-            <button
-              type="submit"
-              disabled={isSubmitting}
-              className="flex-1 px-4 py-3 bg-brand hover:bg-brand/90 text-white rounded-2xl font-bold transition-colors flex items-center justify-center gap-2"
-            >
-              {isSubmitting ? (
-                <Loader2 className="size-5 animate-spin" />
-              ) : (
-                <span>Créer la campagne</span>
-              )}
-            </button>
-          </div>
-        </form>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="block text-sm font-bold text-ink mb-1">Début du programme</label>
+                <input
+                  required
+                  type="date"
+                  value={startDate}
+                  onChange={(e) => setStartDate(e.target.value)}
+                  className="w-full bg-surface border-none rounded-2xl p-4 font-medium"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-bold text-ink mb-1">Fin du programme</label>
+                <input
+                  required
+                  type="date"
+                  value={endDate}
+                  onChange={(e) => setEndDate(e.target.value)}
+                  className="w-full bg-surface border-none rounded-2xl p-4 font-medium"
+                />
+              </div>
+            </div>
+            <p className="text-xs text-ink/50 -mt-2 font-medium">
+              Fenêtre fixe et partagée par toute la cohorte — contrairement à un enfant isolé, ses
+              enfants ne démarrent pas chacun leur propre chrono individuel.
+            </p>
+            <div>
+              <label className="block text-sm font-bold text-ink mb-1">
+                Description (Optionnelle)
+              </label>
+              <textarea
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
+                className="w-full bg-surface border-none rounded-2xl p-4 font-medium min-h-[100px]"
+                placeholder="Détails du programme..."
+              />
+            </div>
+            <div className="flex gap-3 pt-4">
+              <button
+                type="button"
+                onClick={onClose}
+                className="flex-1 px-4 py-3 bg-surface hover:bg-ink/5 text-ink rounded-2xl font-bold transition-colors"
+              >
+                Annuler
+              </button>
+              <button
+                type="submit"
+                disabled={isSubmitting}
+                className="flex-1 px-4 py-3 bg-brand hover:bg-brand/90 text-white rounded-2xl font-bold transition-colors flex items-center justify-center gap-2"
+              >
+                {isSubmitting ? (
+                  <Loader2 className="size-5 animate-spin" />
+                ) : (
+                  <span>Créer la campagne</span>
+                )}
+              </button>
+            </div>
+          </form>
         </div>
       </div>
     </div>
@@ -1034,8 +1034,8 @@ function GenerateTokensModal({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-ink/40 backdrop-blur-sm">
-      <div className="bg-white rounded-[2rem] w-full max-w-md p-6 shadow-2xl animate-in fade-in zoom-in-95 duration-200">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-ink/40 backdrop-blur-sm overflow-y-auto">
+      <div className="bg-white my-auto rounded-[2rem] w-full max-w-md p-6 shadow-2xl animate-in fade-in zoom-in-95 duration-200 max-h-[90vh] overflow-y-auto">
         <div className="flex items-center justify-between mb-6">
           <h3 className="font-display font-black text-xl text-ink flex items-center gap-2">
             <Key className="size-6 text-brand" />
@@ -1197,8 +1197,8 @@ function ViewCampaignTokensModal({
   const unredeemedCount = tokens.length - redeemedCount;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-ink/40 backdrop-blur-sm">
-      <div className="bg-white rounded-[2rem] w-full max-w-3xl max-h-[85vh] flex flex-col p-6 shadow-2xl animate-in fade-in zoom-in-95 duration-200">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-ink/40 backdrop-blur-sm overflow-y-auto">
+      <div className="bg-white my-auto rounded-[2rem] w-full max-w-3xl max-h-[85vh] flex flex-col p-6 shadow-2xl animate-in fade-in zoom-in-95 duration-200">
         {/* Header */}
         <div className="flex items-center justify-between pb-4 border-b border-ink/10">
           <div>
@@ -1305,10 +1305,10 @@ function ViewCampaignTokensModal({
                     )}
                   </div>
 
-                  <div className="text-xs text-ink/70 flex flex-col sm:items-end gap-0.5">
+                  <div className="text-xs text-ink/70 flex flex-col sm:items-end gap-0.5 min-w-0">
                     {t.is_redeemed ? (
                       <>
-                        <span className="font-bold text-ink">
+                        <span className="font-bold text-ink break-words">
                           Enfant: {t.child_name || "Anonyme"}{" "}
                           {t.parent_email ? `(${t.parent_email})` : ""}
                         </span>

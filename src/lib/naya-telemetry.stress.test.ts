@@ -112,7 +112,7 @@ describe("Naya Telemetry Stress & Edge Case Suite", () => {
       // Verify projected monthly totals (4x multiplier)
       expect(telemetry.projection.projectedCallsMonthly).toBe(4_000_000);
       expect(telemetry.projection.projectedCostUsdMonthly).toBe(
-        Math.round(telemetry.totalCostUsd * 4 * 10000) / 10000
+        Math.round(telemetry.totalCostUsd * 4 * 10000) / 10000,
       );
       expect(telemetry.projection.projectedCostXofMonthly).toBe(telemetry.totalCostXof * 4);
     });

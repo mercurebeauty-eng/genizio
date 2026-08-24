@@ -19,10 +19,7 @@ type AdminTestimonialsTabProps = {
   onRefresh?: () => void;
 };
 
-export function AdminTestimonialsTab({
-  isRefreshing,
-  onRefresh,
-}: AdminTestimonialsTabProps) {
+export function AdminTestimonialsTab({ isRefreshing, onRefresh }: AdminTestimonialsTabProps) {
   const listFn = useServerFn(listTestimonialsAdmin);
   const setPublishFn = useServerFn(setTestimonialPublishAdmin);
   const [rows, setRows] = useState<AdminTestimonialRow[]>([]);

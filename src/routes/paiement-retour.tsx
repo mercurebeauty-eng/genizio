@@ -183,7 +183,7 @@ function PaymentReturnPage() {
                   </button>
                 </div>
                 <p className="mt-4 text-xs text-ink/50">
-                  Référence : <span className="font-bold text-ink">{reference}</span>
+                  Référence : <span className="font-bold text-ink break-all">{reference}</span>
                 </p>
                 <Link
                   to="/parrainage"
@@ -199,7 +199,7 @@ function PaymentReturnPage() {
                   {ENTITLEMENT_COPY[state.entitlement ?? ""]?.title ??
                     "Votre paiement a bien été reçu."}
                   <br />
-                  Référence : <span className="font-bold text-ink">{reference}</span>
+                  Référence : <span className="font-bold text-ink break-all">{reference}</span>
                 </p>
                 <Link
                   to={ENTITLEMENT_COPY[state.entitlement ?? ""]?.href ?? "/profiles"}

@@ -1,6 +1,13 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { GuideLayout } from "@/components/guides/GuideLayout";
-import { pageMeta, jsonLdScript, faqPageJsonLd, breadcrumbJsonLd, absoluteUrl, SITE_URL } from "@/lib/seo";
+import {
+  pageMeta,
+  jsonLdScript,
+  faqPageJsonLd,
+  breadcrumbJsonLd,
+  absoluteUrl,
+  SITE_URL,
+} from "@/lib/seo";
 
 const PATH = "/guides/defis-pour-adolescents";
 
@@ -16,7 +23,8 @@ const FAQ = [
       "« Ne s'intéresse à rien » signifie presque toujours « ne s'intéresse à rien de ce que je lui propose ». Le levier le plus efficace n'est pas de trouver l'activité parfaite mais de transférer le pouvoir de décision : laisser choisir le sujet, la méthode et le rendu, et ne garder que la contrainte de terminer. Un adolescent qui exécute une consigne d'adulte fournit le minimum ; le même, responsable d'un projet qu'il a choisi, y passe ses soirées. Commencer petit — un défi d'une heure qu'il choisit — rétablit plus sûrement l'engagement qu'un grand projet imposé.",
   },
   {
-    question: "Mon fils ne fait que jouer aux jeux vidéo ou scroller les réseaux sociaux, que faire ?",
+    question:
+      "Mon fils ne fait que jouer aux jeux vidéo ou scroller les réseaux sociaux, que faire ?",
     answer:
       "D'abord, ne diabolisez pas l'écran : le jeu vidéo et les réseaux sociaux sont son espace social, celui où il retrouve ses amis — c'est pour cela qu'ils sont si difficiles à remplacer. Ensuite, négociez un contrat clair plutôt qu'une interdiction : un temps d'écran défini (par exemple après les devoirs, une durée fixe), et des moments sans téléphone non négociables (repas, nuit). Enfin, proposez des projets qui concurrencent l'écran sur son propre terrain : un défi qui se montre en ligne (une vidéo, une création à poster) a beaucoup plus de chances de l'accrocher qu'une activité « pour enfants ». Le jeu vidéo n'est pas l'ennemi : c'est un rival que l'on ne bat qu'avec des projets aussi engageants que lui.",
   },
@@ -56,7 +64,7 @@ export const Route = createFileRoute("/guides/defis-pour-adolescents")({
             { name: "Accueil", path: "/" },
             { name: "Guides", path: "/guides" },
             { name: "Défis pour adolescents", path: PATH },
-          ])
+          ]),
         ),
         jsonLdScript({
           "@context": "https://schema.org",
@@ -89,15 +97,26 @@ function Guide() {
       intro="À partir de 12 ans, la plupart des activités « éducatives » cessent de fonctionner — non parce que l'adolescent est démotivé, mais parce qu'il repère l'intention pédagogique et n'y croit plus. Voici ce qui prend le relais, et surtout comment le lui proposer sans déclencher un conflit."
       updated="14 août 2026"
       readingTime="8 min"
+      path={PATH}
       related={[
-        { label: "Haut potentiel : les vrais signes", to: "/guides/potentiel-haut-potentiel-enfant" },
+        {
+          label: "Haut potentiel : les vrais signes",
+          to: "/guides/potentiel-haut-potentiel-enfant",
+        },
         { label: "24 activités éducatives (6-12 ans)", to: "/guides/activites-educatives-enfant" },
-        { label: "Les intelligences multiples expliquées simplement", to: "/guides/intelligences-multiples-gardner" },
+        {
+          label: "Les intelligences multiples expliquées simplement",
+          to: "/guides/intelligences-multiples-gardner",
+        },
       ]}
     >
       <img
         src="/guides/og-ados.jpg"
         alt="Adolescent africain concentré sur son ordinateur travaillant sur un projet ambitieux"
+        width="1200"
+        height="630"
+        loading="lazy"
+        decoding="async"
         className="my-6 aspect-video w-full rounded-3xl border border-ink/10 object-cover shadow-lg"
       />
       <h2>Ce qui change vers 12 ans</h2>
@@ -118,9 +137,8 @@ function Guide() {
       <h3>Les trois conditions d'un défi crédible</h3>
       <ul>
         <li>
-          <strong>Un rendu montrable.</strong> Quelque chose qui existe en dehors du cercle
-          familial : une vidéo, un objet vendu, un événement qui a eu lieu, un outil que d'autres
-          utilisent.
+          <strong>Un rendu montrable.</strong> Quelque chose qui existe en dehors du cercle familial
+          : une vidéo, un objet vendu, un événement qui a eu lieu, un outil que d'autres utilisent.
         </li>
         <li>
           <strong>Une difficulté réelle.</strong> Un adolescent détecte une tâche calibrée pour
@@ -156,8 +174,8 @@ function Guide() {
         </li>
         <li>
           <strong>Ne dites jamais « c'est éducatif ».</strong> Le mot est rédhibitoire à cet âge.
-          Parlez du résultat : « ce sera à montrer à papa le week-end », « tu pourras le vendre »,
-          « tu seras le seul de ta classe à savoir faire ça ».
+          Parlez du résultat : « ce sera à montrer à papa le week-end », « tu pourras le vendre », «
+          tu seras le seul de ta classe à savoir faire ça ».
         </li>
       </ol>
 
@@ -165,14 +183,24 @@ function Guide() {
 
       <h3>Entreprendre</h3>
       <ul>
-        <li>Monter une micro-activité sur un week-end (lavage de motos, jus, pâtisseries) et calculer la marge réelle, charges comprises</li>
-        <li>Revendre trois objets inutilisés au meilleur prix, en rédigeant lui-même les annonces</li>
-        <li>Chiffrer un projet qu'il veut vraiment (un téléphone, un voyage) et construire le plan pour y arriver</li>
+        <li>
+          Monter une micro-activité sur un week-end (lavage de motos, jus, pâtisseries) et calculer
+          la marge réelle, charges comprises
+        </li>
+        <li>
+          Revendre trois objets inutilisés au meilleur prix, en rédigeant lui-même les annonces
+        </li>
+        <li>
+          Chiffrer un projet qu'il veut vraiment (un téléphone, un voyage) et construire le plan
+          pour y arriver
+        </li>
       </ul>
 
       <h3>Produire et documenter</h3>
       <ul>
-        <li>Réaliser un mini-documentaire de 3 minutes sur un métier du quartier, montage compris</li>
+        <li>
+          Réaliser un mini-documentaire de 3 minutes sur un métier du quartier, montage compris
+        </li>
         <li>Photographier une série de 10 images sur un thème unique et en défendre le choix</li>
         <li>Tenir un carnet de projet pendant 30 jours et en tirer un bilan écrit</li>
       </ul>
@@ -181,14 +209,23 @@ function Guide() {
       <ul>
         <li>Diagnostiquer et réparer un appareil en panne, en documentant chaque étape</li>
         <li>Construire un meuble simple utile à la maison, à partir de mesures qu'il a prises</li>
-        <li>Installer et configurer quelque chose de réel : un réseau, un éclairage, un système d'arrosage</li>
+        <li>
+          Installer et configurer quelque chose de réel : un réseau, un éclairage, un système
+          d'arrosage
+        </li>
       </ul>
 
       <h3>Organiser et transmettre</h3>
       <ul>
-        <li>Organiser un tournoi ou un atelier pour des plus jeunes, de l'inscription au déroulé</li>
-        <li>Enseigner une compétence qu'il maîtrise à un adulte, et l'évaluer honnêtement à la fin</li>
-        <li>Préparer et défendre un argumentaire sur un sujet qui le concerne, face à contradiction</li>
+        <li>
+          Organiser un tournoi ou un atelier pour des plus jeunes, de l'inscription au déroulé
+        </li>
+        <li>
+          Enseigner une compétence qu'il maîtrise à un adulte, et l'évaluer honnêtement à la fin
+        </li>
+        <li>
+          Préparer et défendre un argumentaire sur un sujet qui le concerne, face à contradiction
+        </li>
       </ul>
 
       <h2>L'erreur la plus fréquente : trop cadrer</h2>

@@ -69,7 +69,7 @@ function init() {
   initialized = true;
 
   supabase.auth.onAuthStateChange((event, s) => {
-    setSession(s, event === "SIGNED_IN" ? s?.user?.id ?? null : undefined);
+    setSession(s, event === "SIGNED_IN" ? (s?.user?.id ?? null) : undefined);
   });
 
   supabase.auth

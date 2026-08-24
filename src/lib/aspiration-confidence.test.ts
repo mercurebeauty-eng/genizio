@@ -24,26 +24,40 @@ describe("resolveAspirationHypotheses", () => {
   });
 
   it("moins de 8 essais → untested malgré un bon engagement", () => {
-    const res = resolveAspirationHypotheses({ aspirations: DECLARED, completed: completedInArtisanat(5) });
+    const res = resolveAspirationHypotheses({
+      aspirations: DECLARED,
+      completed: completedInArtisanat(5),
+    });
     expect(res.byLabel["Menuiserie"].status).toBe("untested");
   });
 
   it("8 complétions sur 8 → confirmed (engagement 1.0)", () => {
-    const res = resolveAspirationHypotheses({ aspirations: DECLARED, completed: completedInArtisanat(8) });
+    const res = resolveAspirationHypotheses({
+      aspirations: DECLARED,
+      completed: completedInArtisanat(8),
+    });
     expect(res.byLabel["Menuiserie"].status).toBe("confirmed");
     expect(res.confirmedLabels).toContain("Menuiserie");
   });
 
   it("6 abandons sur 8 → refuted (engagement net 0)", () => {
     const abandoned = Array.from({ length: 6 }, () => ({ domain: "Artisanat" }));
-    const res = resolveAspirationHypotheses({ aspirations: DECLARED, completed: completedInArtisanat(2), abandoned });
+    const res = resolveAspirationHypotheses({
+      aspirations: DECLARED,
+      completed: completedInArtisanat(2),
+      abandoned,
+    });
     const h = res.byLabel["Menuiserie"];
     expect(h.status).toBe("refuted");
     expect(h.engagement).toBe(0);
   });
 
   it("engagement intermédiaire (6 complétions / 2 abandons = 0.5) → exploring", () => {
-    const res = resolveAspirationHypotheses({ aspirations: DECLARED, completed: completedInArtisanat(6), abandoned: completedInArtisanat(2) });
+    const res = resolveAspirationHypotheses({
+      aspirations: DECLARED,
+      completed: completedInArtisanat(6),
+      abandoned: completedInArtisanat(2),
+    });
     const h = res.byLabel["Menuiserie"];
     expect(h.status).toBe("exploring");
     expect(h.engagement).toBeCloseTo(0.5);
@@ -93,10 +107,12 @@ describe("resolveAspirationHypotheses", () => {
 });
 
 describe("avis GPT Codex — P2 clé Gardner canonique (spatial)", () => {
-  it("le pont Menuiserie compte un défi validé avec target_intelligences [\"spatial\"]", () => {
+  it('le pont Menuiserie compte un défi validé avec target_intelligences ["spatial"]', () => {
     const res = resolveAspirationHypotheses({
       aspirations: [{ label: "Menuiserie", type: "metier" }],
-      completed: [{ domain: "Artisanat", target_intelligences: ["spatial"], aspiration_label: null }],
+      completed: [
+        { domain: "Artisanat", target_intelligences: ["spatial"], aspiration_label: null },
+      ],
       abandoned: [],
     });
     expect(res.byLabel["Menuiserie"].completions).toBe(1);

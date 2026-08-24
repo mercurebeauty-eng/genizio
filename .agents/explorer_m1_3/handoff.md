@@ -11,6 +11,7 @@
 ## 1. Observation
 
 ### 1.1 Existing UI Route & Component Structure
+
 - **Parent Challenge Route (`src/routes/profiles.$profileId.challenges.tsx`)**:
   - Lines 473–526: Header with profile avatar, metadata, and CTA buttons (`Suggérer 4 défis (IA)`, `Au tour de {child.name} →`).
   - Lines 535–650: Left column containing `TalentRadarChart`, subform counts, `getChildAISynthesis` report card, and micro stats.
@@ -21,7 +22,7 @@
 - **Child Quest Mode Route (`src/routes/profiles.$profileId.quest.tsx`)**:
   - Lines 433–478: Map Node Tree showing completed, active (pulsing star), and upcoming nodes.
   - Lines 234–408: Gamified step-by-step game wizard with dynamic Naya mascot speech bubble, interactive checkboxes, step navigation, and completion screen.
-  - Lines 174–188: Toast action *"Ajouter une preuve"* setting `sessionStorage.setItem("genizio:highlightChallenge", activeChallenge.id)` to deep-link and auto-expand card on challenges page reload.
+  - Lines 174–188: Toast action _"Ajouter une preuve"_ setting `sessionStorage.setItem("genizio:highlightChallenge", activeChallenge.id)` to deep-link and auto-expand card on challenges page reload.
 - **Proof Submission Component (`src/components/challenges/OutcomeChat.tsx`)**:
   - Lines 97–105: Dual proof mode support (`proof_mode === "declarative"` vs `proof_mode === "photo"`).
   - Lines 117–145: Image base64 conversion and submission to `validateChallengeProof`.
@@ -34,8 +35,9 @@
   - Ambient shadows: `--shadow-sm`, `--shadow-md`, `--shadow-xl`, `--shadow-glow-brand`.
 
 ### 1.2 Identified UI/UX Gaps
+
 - Currently, `#genizio-lab` only allows selecting Gardner domains (e.g. "Mathématiques", "Sciences").
-- Parents cannot input specific school homework (e.g. *"Tables de 7"*, *"Le cycle de l'eau"*) or select a target grade level (CP to 3ème).
+- Parents cannot input specific school homework (e.g. _"Tables de 7"_, _"Le cycle de l'eau"_) or select a target grade level (CP to 3ème).
 - There is no visual badge or tab distinguishing "Devoir Scolaire (CM1)" from generic "Défi Libre".
 
 ---
@@ -87,4 +89,5 @@ To independently verify the exploration findings and UI designs:
    - If `#genizio-lab` is removed from `profiles.$profileId.challenges.tsx`, the placement of `AcademicHomeworkInput` would need to be re-anchored.
 
 ---
-*End of Handoff Report.*
+
+_End of Handoff Report._

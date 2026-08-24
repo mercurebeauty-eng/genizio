@@ -22,6 +22,9 @@ export function GenizioLoader({ size = "md", label, className = "" }: GenizioLoa
         <img
           src="/favicon-96x96.png"
           alt="Logo Génizio"
+          width={px}
+          height={px}
+          decoding="async"
           className="absolute inset-0 z-10 h-full w-full object-contain p-2 drop-shadow-sm"
           draggable={false}
         />
