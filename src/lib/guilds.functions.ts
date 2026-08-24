@@ -38,7 +38,8 @@ export const getGuildCommunity = createServerFn({ method: "POST" })
     if (othersErr) throw new Error(othersErr.message);
 
     const sameGuildOthers = (others ?? []).filter(
-      (o: { talents: unknown }) => getChildGuild(o.talents as Record<string, number> | null).key === ownGuild.key
+      (o: { talents: unknown }) =>
+        getChildGuild(o.talents as Record<string, number> | null).key === ownGuild.key,
     ) as { id: string; name: string; age: number }[];
 
     const memberIds = [
@@ -51,7 +52,13 @@ export const getGuildCommunity = createServerFn({ method: "POST" })
     startOfMonth.setHours(0, 0, 0, 0);
 
     let completedThisMonth = 0;
-    const recentActivity: { childName: string; childAge: number; title: string; domain: string; completedAt: string }[] = [];
+    const recentActivity: {
+      childName: string;
+      childAge: number;
+      title: string;
+      domain: string;
+      completedAt: string;
+    }[] = [];
 
     if (memberIds.length > 0) {
       const { count } = await supabase

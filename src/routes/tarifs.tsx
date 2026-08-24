@@ -130,7 +130,13 @@ function TarifsPage() {
             to="/"
             className="flex items-center gap-2 font-display text-xl font-extrabold tracking-tight text-brand"
           >
-            <img src="/favicon-96x96.png" alt="Logo Génizio" className="h-7 w-7" />
+            <img
+              src="/favicon-96x96.png"
+              alt="Logo Génizio"
+              width="28"
+              height="28"
+              className="h-7 w-7"
+            />
             GÉNIZIO
           </Link>
           <Link

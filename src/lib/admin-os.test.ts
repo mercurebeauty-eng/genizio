@@ -330,7 +330,9 @@ describe("Admin OS Helper Functions", () => {
       // Total USD = 1.43 + 4.50 = $5.93
       const totalUsd = Math.round((chatCosts.costUsd + visionCosts.costUsd) * 10000) / 10000;
       expect(totalUsd).toBe(5.93);
-      expect(chatCosts.costXof + visionCosts.costXof).toBe(Math.round(totalUsd * NAYA_PRICING.USD_TO_XOF_RATE));
+      expect(chatCosts.costXof + visionCosts.costXof).toBe(
+        Math.round(totalUsd * NAYA_PRICING.USD_TO_XOF_RATE),
+      );
     });
 
     it("calculates clamped conversion rate percentage", () => {
@@ -367,7 +369,9 @@ describe("Admin OS Helper Functions", () => {
 
       expect(filterOrdersByStatus(orders, "Tous")).toHaveLength(3);
       expect(filterOrdersByStatus(orders, "En attente")).toEqual([{ id: "o1", status: "pending" }]);
-      expect(filterOrdersByStatus(orders, "delivered")).toEqual([{ id: "o2", status: "delivered" }]);
+      expect(filterOrdersByStatus(orders, "delivered")).toEqual([
+        { id: "o2", status: "delivered" },
+      ]);
     });
 
     it("filters teen passport profiles (age >= 14)", () => {
@@ -396,4 +400,3 @@ describe("Admin OS Helper Functions", () => {
     });
   });
 });
-

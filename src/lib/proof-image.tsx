@@ -55,5 +55,5 @@ export function ProofImage({
 }) {
   const src = useProofImageUrl(stored);
   if (!src) return null;
-  return <img src={src} alt={alt} className={className} />;
+  return <img src={src} alt={alt} loading="lazy" decoding="async" className={className} />;
 }

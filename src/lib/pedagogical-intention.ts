@@ -19,8 +19,7 @@ const DISCRIMINANT_CAUSE_LABELS: Record<string, string> = {
     "Naya vérifie si la pression de l'évaluation freine l'enfant — ce défi est pensé sans chrono ni jugement, juste pour le plaisir d'essayer.",
   LACK_OF_ENGAGEMENT:
     "Naya s'appuie sur les centres d'intérêt de l'enfant pour raviver sa curiosité sur ce sujet précis.",
-  CONCEPTUAL_GAP:
-    "Naya vérifie les bases de manière simple et amusante avant d'aller plus loin.",
+  CONCEPTUAL_GAP: "Naya vérifie les bases de manière simple et amusante avant d'aller plus loin.",
   READY_FOR_MORE:
     "Naya teste si l'enfant est prêt·e pour un niveau au-dessus — une mission bonus, pas un piège.",
 };
@@ -29,7 +28,7 @@ const RECOMMENDATION_TYPE_LABELS: Record<string, string> = {
   ESSAIMAGE:
     "Naya s'appuie sur une force de l'enfant pour l'aider en douceur sur une compétence en progression.",
   STABILISATION:
-    "Défi \"doudou\" pensé par Naya pour un succès quasi garanti — renforcer la confiance avant d'aller plus loin.",
+    'Défi "doudou" pensé par Naya pour un succès quasi garanti — renforcer la confiance avant d\'aller plus loin.',
 };
 
 /**

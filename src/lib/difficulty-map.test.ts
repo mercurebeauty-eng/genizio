@@ -67,8 +67,15 @@ describe("shouldAskAspirations", () => {
   });
 
   it("des aspirations existent déjà → visible quoi qu'il arrive (on ne cache jamais des données)", () => {
-    expect(shouldAskAspirations({ existingAspirations: [{ label: "Menuiserie", type: "metier" }] })).toBe(true);
-    expect(shouldAskAspirations({ life_context: [], existingAspirations: [{ label: "Danse", type: "exploration" }] })).toBe(true);
+    expect(
+      shouldAskAspirations({ existingAspirations: [{ label: "Menuiserie", type: "metier" }] }),
+    ).toBe(true);
+    expect(
+      shouldAskAspirations({
+        life_context: [],
+        existingAspirations: [{ label: "Danse", type: "exploration" }],
+      }),
+    ).toBe(true);
   });
 
   it("besoins spécifiques seuls → non (pas dans la liste vulnérable du choix d'aspiration)", () => {

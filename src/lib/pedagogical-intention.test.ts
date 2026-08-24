@@ -32,17 +32,29 @@ describe("formatPedagogicalIntention", () => {
   });
 
   it("traduit chaque cause discriminante connue en texte distinct", () => {
-    const causes = ["METHOD_MISMATCH", "PERFORMANCE_ANXIETY", "LACK_OF_ENGAGEMENT", "CONCEPTUAL_GAP", "READY_FOR_MORE"];
+    const causes = [
+      "METHOD_MISMATCH",
+      "PERFORMANCE_ANXIETY",
+      "LACK_OF_ENGAGEMENT",
+      "CONCEPTUAL_GAP",
+      "READY_FOR_MORE",
+    ];
     const results = causes.map((cause) =>
-      formatPedagogicalIntention(JSON.stringify({ is_discriminant: true, target_cause: cause, cycle_id: "x" }))
+      formatPedagogicalIntention(
+        JSON.stringify({ is_discriminant: true, target_cause: cause, cycle_id: "x" }),
+      ),
     );
     expect(new Set(results).size).toBe(causes.length);
     results.forEach((r) => expect(r).not.toBeNull());
   });
 
   it("traduit le JSON d'une recommandation ESSAIMAGE/STABILISATION en phrase lisible", () => {
-    const essaimage = formatPedagogicalIntention(JSON.stringify({ is_recommendation: true, type: "ESSAIMAGE" }));
-    const stabilisation = formatPedagogicalIntention(JSON.stringify({ is_recommendation: true, type: "STABILISATION" }));
+    const essaimage = formatPedagogicalIntention(
+      JSON.stringify({ is_recommendation: true, type: "ESSAIMAGE" }),
+    );
+    const stabilisation = formatPedagogicalIntention(
+      JSON.stringify({ is_recommendation: true, type: "STABILISATION" }),
+    );
     expect(essaimage).not.toContain("{");
     expect(stabilisation).not.toContain("{");
     expect(essaimage).not.toBe(stabilisation);

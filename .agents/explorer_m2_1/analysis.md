@@ -1,4 +1,5 @@
 # Detailed Functional Audit Report — User Flows 4–6
+
 **Project**: Génizio End-to-End Functional Audit & Systemic Reliability Fix  
 **Auditor**: Explorer 2 (Milestone 1)  
 **Date**: 2026-07-21  
@@ -11,6 +12,7 @@
 This report presents a thorough functional, UX, data-flow, and resilience audit of **User Flows 4, 5, and 6** in the Génizio web application codebase.
 
 ### Scope Covered:
+
 1. **User Flow 4 ("Ton Parcours" & Portfolio)**:
    - Routes: `/profiles/$profileId/parcours` (`src/routes/profiles.$profileId.parcours.tsx`), `/profiles/$profileId/portfolio` (`src/routes/profiles.$profileId.portfolio.tsx`)
    - Components: `TalentRadarChart.tsx`, `AppTabBar.tsx`, `AppHeader.tsx`, timeline components.
@@ -37,6 +39,7 @@ This report presents a thorough functional, UX, data-flow, and resilience audit 
 ### 3.1 User Flow 4: "Ton Parcours" & Portfolio
 
 #### Execution Chain Analysis:
+
 - **Trigger**: User navigates to `/profiles/$profileId/parcours` or `/profiles/$profileId/portfolio`.
 - **Data Fetching**: `useEffect` fires `Promise.all` querying Supabase tables `child_profiles`, `challenges`, `child_mentors`, and `hypothesis_cycles`.
 - **Logic & State**: Computes XP level (`getLevelInfo` / `Math.floor(xp / 500) + 1`), groups completed challenges by month or domain, calculates top domains, renders Gardner 9 intelligences radar chart (`TalentRadarChart`).
@@ -51,6 +54,7 @@ This report presents a thorough functional, UX, data-flow, and resilience audit 
 ### 3.2 User Flow 5: PDF Passport Generation & Print
 
 #### Execution Chain Analysis:
+
 - **Trigger**: User opens `/profiles/$profileId/passport-print`.
 - **Data Fetching**: `useEffect` loads child profile, completed challenges, earned badges, AI synthesis, and passport orientation letter (`getPassportLetter`).
 - **Print Trigger**: An `useEffect` timer schedules `window.print()` after 1.5s delay when data is loaded.
@@ -69,6 +73,7 @@ This report presents a thorough functional, UX, data-flow, and resilience audit 
 ### 3.3 User Flow 6: Génizio Admin OS
 
 #### Execution Chain Analysis:
+
 - **Trigger**: Admin user enters `/admin`.
 - **Guard Check**: `AdminLayout` calls `checkAdminStatus` server function.
 - **Tab Navigation**: `AdminIndexPage` renders `AdminNavTabBar` managing 4 tabs: Executive (`AdminExecutiveTab`), Talents & Cities (`AdminTalentsCitiesTab`), Naya Telemetry (`AdminNayaTab`), Commerce (`AdminCommerceTab`).
@@ -82,26 +87,27 @@ This report presents a thorough functional, UX, data-flow, and resilience audit 
 
 ## 4. Complete Defect Inventory (Flows 4–6)
 
-| Defect ID | User Flow | File Path | Line Numbers | Description | Impact | Proposed Fix |
-|-----------|-----------|-----------|--------------|-------------|--------|--------------|
-| **D-F4-01** | Flow 4 | `src/routes/profiles.$profileId.parcours.tsx`<br>`src/routes/profiles.$profileId.portfolio.tsx` | parcours: 122–138<br>portfolio: 183–210 | `Promise.all` data fetch lacks `.catch()` error block | Infinite loading UI lock on network/RLS errors | Add `.catch()` block, log error, set `fetching = false`, and display toast/error state |
-| **D-F4-02** | Flow 4 | `src/routes/profiles.$profileId.parcours.tsx` | 275–282 | No empty state when `child.talents` is null or empty | "Carte des talents" vanishes silently for new profiles | Add an explicit placeholder card encouraging completion of the first challenge |
-| **D-F4-03** | Flow 4 | `src/routes/profiles.$profileId.portfolio.tsx` | 237–243 | `acceptDiscovery` performs optimistic state update without DB error handling | DB write failure leaves UI out of sync with backend | Wrap DB update in `try/catch`, revert state and show toast error on failure |
-| **D-F4-04** | Flow 4 | `src/routes/profiles.$profileId.portfolio.tsx` | 260–264, 276–278 | `fetchSynthesis` and `ensureHypotheses` swallow errors silently | Violates zero error swallowing contract | Log errors and display Sonner toast or UI alert |
-| **D-F5-01** | Flow 5 | `src/routes/profiles.$profileId.passport-print.tsx` | 161–168, 193–213 | Auto-print `useEffect` triggers `window.print()` on Locked Access screen and fails on 0 challenges | Severe UX bug: prints locked screen; fails to print unlocked profiles with 0 challenges | Check `child.pdf_unlocked === true` inside hook; fix auto-print conditions |
-| **D-F5-02** | Flow 5 | `package.json`<br>`src/routes/profiles.$profileId.passport-print.tsx` | package.json<br>passport-print: 260+ | Missing `@react-pdf/renderer` dependency; uses browser CSS print instead | Architecture discrepancy with project scope requirement | Document divergence or integrate `@react-pdf/renderer` for pure PDF export |
-| **D-F5-03** | Flow 5 | `src/routes/profiles.$profileId.passport-print.tsx` | 515, 556, 646–649 | Hardcoded page numbering formula `Math.min(6, 3 + ...)` miscalculates total pages | Incorrect page numbers in print footers | Compute `totalPages` dynamically in a single helper variable |
-| **D-F5-04** | Flow 5 | `src/routes/profiles.$profileId.passport-print.tsx` | 112–136, 138–158 | Unhandled `Promise.all` rejection and swallowed synthesis errors | Loading lock on failure; silent error swallowing | Add `.catch()` to initial fetch and display error fallback |
-| **D-F6-01** | Flow 6 | `src/routes/admin.tsx` | 28–30 | `checkAdmin()` server call lacks `.catch()` block | Misleads user to "Accès Interdit" on network/server error | Add `.catch()` with error toast and fallback error screen |
-| **D-F6-02** | Flow 6 | `src/components/admin/AdminExecutiveTab.tsx`<br>`src/components/admin/AdminCommerceTab.tsx` | ExecutiveTab: 239–258<br>CommerceTab: 318–329, 441–460 | Action buttons and status selects lack row-level pending state | Risk of double clicks and race conditions | Add row-specific pending tracking and disable controls during async operations |
-| **D-F6-03** | Flow 6 | `src/lib/admin-os.functions.ts`<br>`src/components/admin/AdminTalentsCitiesTab.tsx` | admin-os: 417–421, 712–714<br>TalentsTab: 203 | Unhandled location data discrepancy when "Ville non renseignée" dominates | Confusing KPI vs table stats in Admin OS | Add callout banner for unassigned cities and improve data completeness |
-| **D-F6-04** | Flow 6 | `src/routes/admin.index.tsx` | 101–107 | `handleUpdateOrderStatus` lacks `try/catch` block for server errors | Unhandled promise rejection on server error during status update | Wrap call in `try/catch` and display `toast.error(...)` |
+| Defect ID   | User Flow | File Path                                                                                       | Line Numbers                                           | Description                                                                                        | Impact                                                                                  | Proposed Fix                                                                           |
+| ----------- | --------- | ----------------------------------------------------------------------------------------------- | ------------------------------------------------------ | -------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------- |
+| **D-F4-01** | Flow 4    | `src/routes/profiles.$profileId.parcours.tsx`<br>`src/routes/profiles.$profileId.portfolio.tsx` | parcours: 122–138<br>portfolio: 183–210                | `Promise.all` data fetch lacks `.catch()` error block                                              | Infinite loading UI lock on network/RLS errors                                          | Add `.catch()` block, log error, set `fetching = false`, and display toast/error state |
+| **D-F4-02** | Flow 4    | `src/routes/profiles.$profileId.parcours.tsx`                                                   | 275–282                                                | No empty state when `child.talents` is null or empty                                               | "Carte des talents" vanishes silently for new profiles                                  | Add an explicit placeholder card encouraging completion of the first challenge         |
+| **D-F4-03** | Flow 4    | `src/routes/profiles.$profileId.portfolio.tsx`                                                  | 237–243                                                | `acceptDiscovery` performs optimistic state update without DB error handling                       | DB write failure leaves UI out of sync with backend                                     | Wrap DB update in `try/catch`, revert state and show toast error on failure            |
+| **D-F4-04** | Flow 4    | `src/routes/profiles.$profileId.portfolio.tsx`                                                  | 260–264, 276–278                                       | `fetchSynthesis` and `ensureHypotheses` swallow errors silently                                    | Violates zero error swallowing contract                                                 | Log errors and display Sonner toast or UI alert                                        |
+| **D-F5-01** | Flow 5    | `src/routes/profiles.$profileId.passport-print.tsx`                                             | 161–168, 193–213                                       | Auto-print `useEffect` triggers `window.print()` on Locked Access screen and fails on 0 challenges | Severe UX bug: prints locked screen; fails to print unlocked profiles with 0 challenges | Check `child.pdf_unlocked === true` inside hook; fix auto-print conditions             |
+| **D-F5-02** | Flow 5    | `package.json`<br>`src/routes/profiles.$profileId.passport-print.tsx`                           | package.json<br>passport-print: 260+                   | Missing `@react-pdf/renderer` dependency; uses browser CSS print instead                           | Architecture discrepancy with project scope requirement                                 | Document divergence or integrate `@react-pdf/renderer` for pure PDF export             |
+| **D-F5-03** | Flow 5    | `src/routes/profiles.$profileId.passport-print.tsx`                                             | 515, 556, 646–649                                      | Hardcoded page numbering formula `Math.min(6, 3 + ...)` miscalculates total pages                  | Incorrect page numbers in print footers                                                 | Compute `totalPages` dynamically in a single helper variable                           |
+| **D-F5-04** | Flow 5    | `src/routes/profiles.$profileId.passport-print.tsx`                                             | 112–136, 138–158                                       | Unhandled `Promise.all` rejection and swallowed synthesis errors                                   | Loading lock on failure; silent error swallowing                                        | Add `.catch()` to initial fetch and display error fallback                             |
+| **D-F6-01** | Flow 6    | `src/routes/admin.tsx`                                                                          | 28–30                                                  | `checkAdmin()` server call lacks `.catch()` block                                                  | Misleads user to "Accès Interdit" on network/server error                               | Add `.catch()` with error toast and fallback error screen                              |
+| **D-F6-02** | Flow 6    | `src/components/admin/AdminExecutiveTab.tsx`<br>`src/components/admin/AdminCommerceTab.tsx`     | ExecutiveTab: 239–258<br>CommerceTab: 318–329, 441–460 | Action buttons and status selects lack row-level pending state                                     | Risk of double clicks and race conditions                                               | Add row-specific pending tracking and disable controls during async operations         |
+| **D-F6-03** | Flow 6    | `src/lib/admin-os.functions.ts`<br>`src/components/admin/AdminTalentsCitiesTab.tsx`             | admin-os: 417–421, 712–714<br>TalentsTab: 203          | Unhandled location data discrepancy when "Ville non renseignée" dominates                          | Confusing KPI vs table stats in Admin OS                                                | Add callout banner for unassigned cities and improve data completeness                 |
+| **D-F6-04** | Flow 6    | `src/routes/admin.index.tsx`                                                                    | 101–107                                                | `handleUpdateOrderStatus` lacks `try/catch` block for server errors                                | Unhandled promise rejection on server error during status update                        | Wrap call in `try/catch` and display `toast.error(...)`                                |
 
 ---
 
 ## 5. Verification Method
 
 To verify these observations independently:
+
 1. **TypeScript Verification**: Run `npx tsc --noEmit` in project root (`C:\Users\USER\Documents\GENIZIO`). Confirm 0 errors.
 2. **Vitest Verification**: Run `npx vitest run`. Confirm all 149 tests pass.
 3. **Manual Code Inspection**:

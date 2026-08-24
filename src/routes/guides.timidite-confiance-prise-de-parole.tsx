@@ -51,7 +51,7 @@ export const Route = createFileRoute("/guides/timidite-confiance-prise-de-parole
             { name: "Accueil", path: "/" },
             { name: "Guides", path: "/guides" },
             { name: "Timidité & Confiance", path: PATH },
-          ])
+          ]),
         ),
         jsonLdScript(
           articleJsonLd({
@@ -62,7 +62,7 @@ export const Route = createFileRoute("/guides/timidite-confiance-prise-de-parole
             image: "/guides/og-timidite.jpg",
             datePublished: "2026-08-08",
             dateModified: "2026-08-14",
-          })
+          }),
         ),
       ],
     };
@@ -78,8 +78,12 @@ function Guide() {
       intro="Un enfant réservé est souvent un grand observateur : il regarde, analyse, réfléchit avant de parler. L'objectif n'est pas de le transformer en bavard, mais de lui donner les clés pour porter sa voix quand il le faut — en classe, devant un exposé, avec les autres. Voici comment faire, en douceur, à la maison."
       updated="14 août 2026"
       readingTime="7 min"
+      path={PATH}
       related={[
-        { label: "Décrochage scolaire : la confiance avant l'école", to: "/guides/decrochage-scolaire-confiance-enfant" },
+        {
+          label: "Décrochage scolaire : la confiance avant l'école",
+          to: "/guides/decrochage-scolaire-confiance-enfant",
+        },
         { label: "Mon enfant ne tient pas en place", to: "/guides/enfant-agite-concentration" },
         { label: "24 activités éducatives (6-12 ans)", to: "/guides/activites-educatives-enfant" },
       ]}
@@ -87,6 +91,10 @@ function Guide() {
       <img
         src="/guides/og-timidite.jpg"
         alt="Jeune fille s'exprimant joyeusement avec assurance devant sa famille"
+        width="1200"
+        height="630"
+        loading="lazy"
+        decoding="async"
         className="my-6 aspect-video w-full rounded-3xl border border-ink/10 object-cover shadow-lg"
       />
 
@@ -110,28 +118,43 @@ function Guide() {
       <div className="my-6 rounded-2xl bg-brand-50 p-5 border border-brand/20">
         <h3 className="font-bold text-brand text-base mb-2">1. Le Journaliste de la Maison</h3>
         <p className="text-sm text-ink/80 leading-relaxed">
-          Armé d'un faux micro (un stylo ou une cuillère en bois), l'enfant a pour mission d'interviewer un membre de la famille sur son souvenir d'enfance le plus drôle. Le rôle de journaliste lui donne une fonction protectrice : ce n'est pas lui qui s'expose, c'est lui qui pose les questions.
+          Armé d'un faux micro (un stylo ou une cuillère en bois), l'enfant a pour mission
+          d'interviewer un membre de la famille sur son souvenir d'enfance le plus drôle. Le rôle de
+          journaliste lui donne une fonction protectrice : ce n'est pas lui qui s'expose, c'est lui
+          qui pose les questions.
         </p>
       </div>
 
       <div className="my-6 rounded-2xl bg-amber-50 p-5 border border-amber-200">
-        <h3 className="font-bold text-amber-950 text-base mb-2">2. Le Discours de 1 Minute (La Boîte à Sujets)</h3>
+        <h3 className="font-bold text-amber-950 text-base mb-2">
+          2. Le Discours de 1 Minute (La Boîte à Sujets)
+        </h3>
         <p className="text-sm text-amber-900 leading-relaxed">
-          Tirez au sort un objet du quotidien (une chaussure, une banane, un cahier). L'enfant a 1 minute pour convaincre la famille que cet objet est magique. Le côté absurde du sujet désamorce la peur d'être jugé.
+          Tirez au sort un objet du quotidien (une chaussure, une banane, un cahier). L'enfant a 1
+          minute pour convaincre la famille que cet objet est magique. Le côté absurde du sujet
+          désamorce la peur d'être jugé.
         </p>
       </div>
 
       <div className="my-6 rounded-2xl bg-sky-50 p-5 border border-sky-200">
-        <h3 className="font-bold text-sky-950 text-base mb-2">3. Le Théâtre d'Ombres ou de Marionnettes</h3>
+        <h3 className="font-bold text-sky-950 text-base mb-2">
+          3. Le Théâtre d'Ombres ou de Marionnettes
+        </h3>
         <p className="text-sm text-sky-900 leading-relaxed">
-          Derrière un drap ou une boîte en carton découpée, l'enfant raconte une histoire courte. La marionnette sert d'écran protecteur : l'enfant s'exprime avec puissance sans subir le regard direct des auditeurs.
+          Derrière un drap ou une boîte en carton découpée, l'enfant raconte une histoire courte. La
+          marionnette sert d'écran protecteur : l'enfant s'exprime avec puissance sans subir le
+          regard direct des auditeurs.
         </p>
       </div>
 
       <div className="my-6 rounded-2xl bg-emerald-50 p-5 border border-emerald-200">
-        <h3 className="font-bold text-emerald-950 text-base mb-2">4. L'Hôte d'Accueil de la Famille</h3>
+        <h3 className="font-bold text-emerald-950 text-base mb-2">
+          4. L'Hôte d'Accueil de la Famille
+        </h3>
         <p className="text-sm text-emerald-900 leading-relaxed">
-          Lorsqu'un invité ou un proche arrive à la maison, confiez à votre enfant une responsabilité bien définie : proposer un verre d'eau ou installer le visiteur. Une tâche concrète réduit la gêne des premiers instants.
+          Lorsqu'un invité ou un proche arrive à la maison, confiez à votre enfant une
+          responsabilité bien définie : proposer un verre d'eau ou installer le visiteur. Une tâche
+          concrète réduit la gêne des premiers instants.
         </p>
       </div>
 
@@ -141,8 +164,8 @@ function Guide() {
         et c'est aussi le meilleur endroit pour construire sa confiance, à condition de s'y préparer
         à la maison. Voici un plan simple sur trois jours :
       </p>
-      <div className="my-6 overflow-hidden rounded-2xl border border-ink/10">
-        <table className="w-full text-sm">
+      <div className="my-6 overflow-x-auto rounded-2xl border border-ink/10">
+        <table className="w-full min-w-[500px] text-sm print:min-w-0">
           <thead>
             <tr className="bg-brand/8 text-left text-xs font-black uppercase tracking-widest text-brand">
               <th className="px-4 py-3">Quand</th>
@@ -152,15 +175,24 @@ function Guide() {
           <tbody className="divide-y divide-ink/10">
             <tr>
               <td className="px-4 py-3 font-bold">3 jours avant</td>
-              <td className="px-4 py-3">Il raconte son exposé à voix haute, sans papier, devant vous. On note ce qu'il sait déjà — souvent plus qu'il ne le croit.</td>
+              <td className="px-4 py-3">
+                Il raconte son exposé à voix haute, sans papier, devant vous. On note ce qu'il sait
+                déjà — souvent plus qu'il ne le croit.
+              </td>
             </tr>
             <tr>
               <td className="px-4 py-3 font-bold">2 jours avant</td>
-              <td className="px-4 py-3">Il répète devant deux personnes de confiance (un grand-parent, un frère), avec une feuille de 3 mots-clés seulement.</td>
+              <td className="px-4 py-3">
+                Il répète devant deux personnes de confiance (un grand-parent, un frère), avec une
+                feuille de 3 mots-clés seulement.
+              </td>
             </tr>
             <tr>
               <td className="px-4 py-3 font-bold">La veille et le jour J</td>
-              <td className="px-4 py-3">On relit ensemble, on respire, on rappelle que la maîtresse n'attend pas un discours parfait. Le matin : « tu as préparé, tu connais, tu peux y arriver ».</td>
+              <td className="px-4 py-3">
+                On relit ensemble, on respire, on rappelle que la maîtresse n'attend pas un discours
+                parfait. Le matin : « tu as préparé, tu connais, tu peux y arriver ».
+              </td>
             </tr>
           </tbody>
         </table>
@@ -168,10 +200,25 @@ function Guide() {
 
       <h2>Comment encourager les progrès sans sur-réagir</h2>
       <ul>
-        <li><strong>Féliciter la tentative, pas le résultat :</strong> <em>"J'ai aimé la clarté de ton explication"</em> plutôt que <em>"Tu vois, ce n'était pas dur !"</em></li>
-        <li><strong>Ne jamais parler à sa place :</strong> Laissez-lui quelques secondes de silence pour rassembler ses idées avant de répondre pour lui.</li>
-        <li><strong>Prévenir, jamais surprendre :</strong> Annoncez les situations de prise de parole à l'avance (« dimanche, tu raconteras ta semaine à tonton ») — la surprise est l'ennemie des enfants réservés.</li>
-        <li><strong>Valoriser ses réalisations tangibles :</strong> Son cahier des réussites (photos de ses exposés, dessins) est la meilleure preuve de son talent — montrez-le-lui avant chaque nouveau défi.</li>
+        <li>
+          <strong>Féliciter la tentative, pas le résultat :</strong>{" "}
+          <em>"J'ai aimé la clarté de ton explication"</em> plutôt que{" "}
+          <em>"Tu vois, ce n'était pas dur !"</em>
+        </li>
+        <li>
+          <strong>Ne jamais parler à sa place :</strong> Laissez-lui quelques secondes de silence
+          pour rassembler ses idées avant de répondre pour lui.
+        </li>
+        <li>
+          <strong>Prévenir, jamais surprendre :</strong> Annoncez les situations de prise de parole
+          à l'avance (« dimanche, tu raconteras ta semaine à tonton ») — la surprise est l'ennemie
+          des enfants réservés.
+        </li>
+        <li>
+          <strong>Valoriser ses réalisations tangibles :</strong> Son cahier des réussites (photos
+          de ses exposés, dessins) est la meilleure preuve de son talent — montrez-le-lui avant
+          chaque nouveau défi.
+        </li>
       </ul>
 
       <h2>Foire aux questions sur la timidité chez l'enfant</h2>

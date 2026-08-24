@@ -209,7 +209,7 @@ export function AdminExecutiveTab({
         </div>
 
         <div className="overflow-x-auto">
-          <table className="w-full text-left border-collapse text-sm">
+          <table className="w-full min-w-[800px] text-left border-collapse text-sm">
             <thead>
               <tr className="border-b-[3px] border-ink text-[11px] font-extrabold uppercase tracking-wider text-ink/60">
                 <th className="pb-3 pr-4">Inscription</th>

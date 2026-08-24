@@ -21,4 +21,6 @@ export const MOZJPEG_ENC_WASM_BASE64 =
 `;
 
 writeFileSync(root + "src/lib/mozjpeg-enc.wasm.base64.ts", out);
-console.log(`Écrit ${root}src/lib/mozjpeg-enc.wasm.base64.ts (${(base64.length / 1024).toFixed(0)} Ko base64)`);
+console.log(
+  `Écrit ${root}src/lib/mozjpeg-enc.wasm.base64.ts (${(base64.length / 1024).toFixed(0)} Ko base64)`,
+);

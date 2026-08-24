@@ -27,7 +27,7 @@ describe("HomeworkModeToggle Component", () => {
     };
 
     const html = renderToString(
-      <HomeworkModeToggle mode={activeMode} onModeChange={handleModeChange} />
+      <HomeworkModeToggle mode={activeMode} onModeChange={handleModeChange} />,
     );
 
     expect(html).toContain("Défis Libres (Éveil)");
@@ -37,9 +37,7 @@ describe("HomeworkModeToggle Component", () => {
   });
 
   it("renders with correct active state for 'homework' mode", () => {
-    const html = renderToString(
-      <HomeworkModeToggle mode="homework" onModeChange={() => {}} />
-    );
+    const html = renderToString(<HomeworkModeToggle mode="homework" onModeChange={() => {}} />);
 
     expect(html).toContain("Devoirs Scolaires (Fusion)");
     expect(html).toContain('data-active="true"');
@@ -70,7 +68,7 @@ describe("AcademicHomeworkInput Component Render & Mechanics", () => {
         childName="Awa"
         onGenerate={() => {}}
         isGenerating={false}
-      />
+      />,
     );
 
     const cleanHtml = html.replace(/<!-- -->/g, "");
@@ -91,7 +89,7 @@ describe("AcademicHomeworkInput Component Render & Mechanics", () => {
         childName="Awa"
         onGenerate={() => {}}
         isGenerating={false}
-      />
+      />,
     );
 
     expect(html).toContain("2. Matière du Devoir");
@@ -109,7 +107,7 @@ describe("AcademicHomeworkInput Component Render & Mechanics", () => {
         childName="Awa"
         onGenerate={() => {}}
         isGenerating={false}
-      />
+      />,
     );
 
     expect(html).toContain("Sujets du programme au CM1");
@@ -126,7 +124,7 @@ describe("AcademicHomeworkInput Component Render & Mechanics", () => {
         detectedGaps={{ maths: 7, francais: 8 }}
         onGenerate={() => {}}
         isGenerating={false}
-      />
+      />,
     );
 
     expect(html).toContain('data-testid="gap-badge-maths"');
@@ -141,7 +139,7 @@ describe("AcademicHomeworkInput Component Render & Mechanics", () => {
         childName="Awa"
         onGenerate={() => {}}
         isGenerating={false}
-      />
+      />,
     );
 
     expect(html).toContain("3. Consigne précise du devoir");
@@ -157,7 +155,7 @@ describe("AcademicHomeworkInput Component Render & Mechanics", () => {
         childName="Awa"
         onGenerate={() => {}}
         isGenerating={true}
-      />
+      />,
     );
 
     expect(html).toContain("Fusion du devoir en quête...");

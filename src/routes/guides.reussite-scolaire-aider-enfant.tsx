@@ -1,6 +1,14 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { GuideLayout } from "@/components/guides/GuideLayout";
-import { pageMeta, jsonLdScript, faqPageJsonLd, breadcrumbJsonLd, absoluteUrl, SITE_URL } from "@/lib/seo";
+import {
+  pageMeta,
+  jsonLdScript,
+  faqPageJsonLd,
+  breadcrumbJsonLd,
+  articleJsonLd,
+  absoluteUrl,
+  SITE_URL,
+} from "@/lib/seo";
 
 const PATH = "/guides/reussite-scolaire-aider-enfant";
 
@@ -45,9 +53,9 @@ const FAQ = [
 export const Route = createFileRoute("/guides/reussite-scolaire-aider-enfant")({
   head: () => {
     const meta = pageMeta({
-      title: "Aider son enfant à réussir à l'école sans pression",
+      title: "Comment aider son enfant à réussir à l'école sans crier ni stresser",
       description:
-        "Ce qui prédit vraiment la réussite scolaire, comment réagir aux mauvaises notes, faire les devoirs dans une classe surchargée, et ce qu'on peut faire à la maison.",
+        "Découvrez les 6 habitudes indispensables à la maison pour aider votre enfant à faire ses devoirs, surmonter les mauvaises notes et reprendre confiance sans dispute.",
       path: PATH,
       image: "/guides/og-reussite.jpg",
       type: "article",
@@ -61,25 +69,19 @@ export const Route = createFileRoute("/guides/reussite-scolaire-aider-enfant")({
             { name: "Accueil", path: "/" },
             { name: "Guides", path: "/guides" },
             { name: "Réussite scolaire", path: PATH },
-          ])
+          ]),
         ),
-        jsonLdScript({
-          "@context": "https://schema.org",
-          "@type": "Article",
-          headline: "Aider son enfant à réussir à l'école sans pression",
-          inLanguage: "fr-FR",
-          mainEntityOfPage: absoluteUrl(PATH),
-          image: absoluteUrl("/guides/og-reussite.jpg"),
-          publisher: { "@id": `${SITE_URL}/#organization` },
-          author: { "@type": "Organization", name: "Génizio" },
-          datePublished: "2026-08-10",
-          dateModified: "2026-08-14",
-          about: [
-            { "@type": "Thing", name: "Réussite scolaire" },
-            { "@type": "Thing", name: "Motivation de l'enfant" },
-            { "@type": "Thing", name: "Confiance en soi de l'enfant" },
-          ],
-        }),
+        jsonLdScript(
+          articleJsonLd({
+            headline: "Comment aider son enfant à réussir à l'école sans crier ni stresser",
+            description:
+              "Ce qui prédit vraiment la réussite scolaire, comment réagir aux mauvaises notes, faire les devoirs sereinement et construire la confiance à la maison.",
+            path: PATH,
+            image: "/guides/og-reussite.jpg",
+            datePublished: "2026-08-10",
+            dateModified: "2026-08-24",
+          }),
+        ),
       ],
     };
   },
@@ -89,20 +91,31 @@ export const Route = createFileRoute("/guides/reussite-scolaire-aider-enfant")({
 function Guide() {
   return (
     <GuideLayout
-      eyebrow="Réussite & motivation"
-      title="Aider son enfant à réussir à l'école sans pression"
+      eyebrow="Réussite scolaire & Devoirs"
+      title="Comment aider son enfant à réussir à l'école sans crier ni stresser"
       intro="« Il est intelligent mais il ne travaille pas assez. » Cette phrase cache presque toujours une autre réalité : ce qui manque à l'enfant n'est ni l'intelligence ni la paresse, mais un ensemble de conditions — confiance, routines, motivation — que les parents peuvent installer à la maison. Voici lesquelles, et dans quel ordre."
-      updated="10 août 2026"
+      updated="24 août 2026"
       readingTime="8 min"
+      path={PATH}
       related={[
-        { label: "Enfant qui perd confiance : l'aider", to: "/guides/decrochage-scolaire-confiance-enfant" },
-        { label: "Motiver un adolescent : 12 défis qui marchent", to: "/guides/defis-pour-adolescents" },
+        {
+          label: "Enfant qui perd confiance : l'aider",
+          to: "/guides/decrochage-scolaire-confiance-enfant",
+        },
+        {
+          label: "Motiver un adolescent : 12 défis qui marchent",
+          to: "/guides/defis-pour-adolescents",
+        },
         { label: "24 activités éducatives (6-12 ans)", to: "/guides/activites-educatives-enfant" },
       ]}
     >
       <img
         src="/guides/og-reussite.jpg"
         alt="Enfant concentré sur son cahier accompagné de ses parents à la maison"
+        width="1200"
+        height="630"
+        loading="lazy"
+        decoding="async"
         className="my-6 aspect-video w-full rounded-3xl border border-ink/10 object-cover shadow-lg"
       />
       <h2>Ce qui prédit vraiment la réussite scolaire</h2>
@@ -124,8 +137,8 @@ function Guide() {
       <ol>
         <li>
           <strong>Des routines stables.</strong> Heures de sommeil et de repas régulières, et un
-          créneau de devoirs fixe. La régularité sécurise ; le cerveau de l'enfant apprend mieux dans
-          un environnement prévisible.
+          créneau de devoirs fixe. La régularité sécurise ; le cerveau de l'enfant apprend mieux
+          dans un environnement prévisible.
         </li>
         <li>
           <strong>Un espace de travail prêt.</strong> Pas besoin d'une pièce dédiée : une table
@@ -178,8 +191,8 @@ function Guide() {
         </li>
         <li>
           <strong>En cas de redoublement annoncé,</strong> changez de discours : c'est une deuxième
-          chance, pas une punition. Un enfant qui refait une année avec un vrai rituel de travail à la
-          maison réussit souvent mieux la seconde fois.
+          chance, pas une punition. Un enfant qui refait une année avec un vrai rituel de travail à
+          la maison réussit souvent mieux la seconde fois.
         </li>
       </ul>
       <p>
@@ -194,13 +207,13 @@ function Guide() {
       </p>
       <ul>
         <li>
-          <strong>Ne pas dramatiser.</strong> « Ce contrôle ne reflète pas ce que tu sais faire » est
-          une phrase qui débloque ; « tu ne travailles jamais » verrouille.
+          <strong>Ne pas dramatiser.</strong> « Ce contrôle ne reflète pas ce que tu sais faire »
+          est une phrase qui débloque ; « tu ne travailles jamais » verrouille.
         </li>
         <li>
           <strong>Chercher la cause, pas le coupable.</strong> Fatigue passagère ? Consigne non
-          comprise ? Difficulté durable ? Conflit avec un camarade ou un enseignant ? La note est une
-          information à interpréter, pas à juger.
+          comprise ? Difficulté durable ? Conflit avec un camarade ou un enseignant ? La note est
+          une information à interpréter, pas à juger.
         </li>
         <li>
           <strong>Parler avec l'enseignant.</strong> L'école voit l'enfant dans un autre contexte.
@@ -215,11 +228,10 @@ function Guide() {
       <h2>Le piège de la récompense</h2>
       <p>
         « Si tu as une bonne note, je t'achète... » fonctionne à court terme et casse à long terme :
-        l'enfant apprend à travailler pour la récompense, et quand la récompense s'arrête,
-        l'effort s'arrête aussi. À la place, on valorise le <strong>processus</strong> : avoir
-        révisé trois soirs de suite, avoir demandé de l'aide, avoir progressé entre deux contrôles.
-        La fierté reconnue d'un progrès réel est la récompense la plus durable — et elle est
-        gratuite.
+        l'enfant apprend à travailler pour la récompense, et quand la récompense s'arrête, l'effort
+        s'arrête aussi. À la place, on valorise le <strong>processus</strong> : avoir révisé trois
+        soirs de suite, avoir demandé de l'aide, avoir progressé entre deux contrôles. La fierté
+        reconnue d'un progrès réel est la récompense la plus durable — et elle est gratuite.
       </p>
 
       <h2>Ce que Génizio apporte à la réussite scolaire</h2>

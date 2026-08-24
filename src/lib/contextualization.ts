@@ -12,7 +12,14 @@
  *  Choix éditorial : des matériaux réellement accessibles (marché, quartier, maison)
  *  dans chaque pays — jamais d'équipement coûteux ou introuvable. */
 const LOCAL_MATERIALS_BY_COUNTRY: Record<string, string[]> = {
-  "cote ivoire": ["bois local (iroko, sipo)", "bambou", "argile", "raffia", "coques de cacao", "matériaux recyclés"],
+  "cote ivoire": [
+    "bois local (iroko, sipo)",
+    "bambou",
+    "argile",
+    "raffia",
+    "coques de cacao",
+    "matériaux recyclés",
+  ],
   senegal: ["bois local", "argile", "coquillages", "textile (pagne)", "matériaux recyclés"],
   cameroun: ["bambou", "bois (ayous, ébène)", "raphia", "argile", "matériaux recyclés"],
   mali: ["argile (banco)", "bois", "coton", "cuir", "matériaux recyclés"],
@@ -25,18 +32,43 @@ const LOCAL_MATERIALS_BY_COUNTRY: Record<string, string[]> = {
   congo: ["bois", "bambou", "argile", "raphia", "matériaux recyclés"],
   tchad: ["argile", "bois", "cuir", "matériaux recyclés"],
   madagascar: ["bois", "bambou", "raphia", "matériaux recyclés"],
-  france: ["carton", "bois", "bouteilles plastique", "textile recyclé", "matériaux de récupération"],
+  france: [
+    "carton",
+    "bois",
+    "bouteilles plastique",
+    "textile recyclé",
+    "matériaux de récupération",
+  ],
 };
 
 /** Repli pour tout pays non listé : matériaux accessibles dans toute l'Afrique
  *  francophone — jamais un vide (le prompt ne doit jamais casser). */
-const GENERIC_LOCAL_MATERIALS = ["bambou", "bois local", "carton", "textile", "argile", "matériaux recyclés"];
+const GENERIC_LOCAL_MATERIALS = [
+  "bambou",
+  "bois local",
+  "carton",
+  "textile",
+  "argile",
+  "matériaux recyclés",
+];
 
 /** Normalise un nom de pays : minuscules, sans accents, sans articles/qualificatifs. */
 export function normalizeCountryKey(country: string): string {
   const accents: Record<string, string> = {
-    à: "a", â: "a", é: "e", è: "e", ê: "e", ë: "e", î: "i", ï: "i", ô: "o",
-    ù: "u", û: "u", ü: "u", ç: "c", ñ: "n",
+    à: "a",
+    â: "a",
+    é: "e",
+    è: "e",
+    ê: "e",
+    ë: "e",
+    î: "i",
+    ï: "i",
+    ô: "o",
+    ù: "u",
+    û: "u",
+    ü: "u",
+    ç: "c",
+    ñ: "n",
   };
   return country
     .toLowerCase()
@@ -46,7 +78,25 @@ export function normalizeCountryKey(country: string): string {
     .replace(/['`]/g, " ")
     .replace(/[^a-z0-9 ]/g, " ")
     .split(/\s+/)
-    .filter((w) => w && !["le", "la", "les", "du", "de", "des", "d", "l", "et", "republique", "democratique", "rd", "rca"].includes(w))
+    .filter(
+      (w) =>
+        w &&
+        ![
+          "le",
+          "la",
+          "les",
+          "du",
+          "de",
+          "des",
+          "d",
+          "l",
+          "et",
+          "republique",
+          "democratique",
+          "rd",
+          "rca",
+        ].includes(w),
+    )
     .join(" ");
 }
 

@@ -52,15 +52,13 @@ export async function resolveChildAccompaniment(
     .order("enrolled_at", { ascending: false })
     .limit(1)
     .maybeSingle();
-  const c = enrollment?.campaigns as
-    | {
-        id: string;
-        sessions_target: number;
-        sessions_used: number;
-        start_date: string | null;
-        end_date: string | null;
-      }
-    | null;
+  const c = enrollment?.campaigns as {
+    id: string;
+    sessions_target: number;
+    sessions_used: number;
+    start_date: string | null;
+    end_date: string | null;
+  } | null;
   const inWindow =
     !!c?.start_date &&
     !!c.end_date &&

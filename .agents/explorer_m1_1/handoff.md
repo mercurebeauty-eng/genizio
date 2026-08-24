@@ -3,7 +3,7 @@
 **Working Directory**: `C:\Users\USER\Documents\GENIZIO\.agents\explorer_m1_1`  
 **Target Feature**: `feat/naya-academic-homework-fusion`  
 **Handoff Type**: Hard Handoff (Task Completed)  
-**Date**: 2026-07-23  
+**Date**: 2026-07-23
 
 ---
 
@@ -25,7 +25,7 @@ Direct observations made during the read-only investigation of `src/lib/challeng
 
 3. **Current Child Interest & Behavioral Injection**:
    - `formatChildInterestsPayload` (lines 567–586): Converts raw `child.interests` tags into strings labeled by talent area from `INTERESTS_BY_TALENT`.
-   - `GENIZIO_PRINCIPLES` (lines 676–688): Instructs the LLM to treat interests as cognitive postures and action mechanics (*démonter*, *schématiser*, *simuler*, *optimiser*, *enquêter*).
+   - `GENIZIO_PRINCIPLES` (lines 676–688): Instructs the LLM to treat interests as cognitive postures and action mechanics (_démonter_, _schématiser_, _simuler_, _optimiser_, _enquêter_).
    - Limitation: Currently, there are no fields or helper modules to handle explicit school homework inputs (e.g. "Tables de 7"), school grade levels (CP to 3ème), curriculum topics, or explicit behavioral driver selections.
 
 4. **Existing Code Base Stability**:
@@ -37,7 +37,7 @@ Direct observations made during the read-only investigation of `src/lib/challeng
 ## 2. Logic Chain
 
 1. **Observation**: The current Naya engine in `src/lib/challenges.functions.ts` builds prompts using child age, Gardner talents, and raw `interests` tags.
-2. **Deduction**: While `GENIZIO_PRINCIPLES` mentions behavioral postures (*démonter*, *schématiser*, *simuler*, *enquêter*, *optimiser*), the engine lacks structured inputs for parent-specified school homework ("consignes de devoirs") and formal school grade levels (CP to 3ème).
+2. **Deduction**: While `GENIZIO_PRINCIPLES` mentions behavioral postures (_démonter_, _schématiser_, _simuler_, _enquêter_, _optimiser_), the engine lacks structured inputs for parent-specified school homework ("consignes de devoirs") and formal school grade levels (CP to 3ème).
 3. **Observation**: `finalizeChallenge` acts as a mandatory choke point for all inserted challenges, ensuring title truncation, safety warnings, talent key sanitization, and academic level validation.
 4. **Deduction**: We can extend the existing engine without breaking any current features by:
    - Creating a dedicated helper module `src/lib/academic-homework.functions.ts` containing grade level mappings (CP -> 3ème), subject constants, official curriculum topics (`CURRICULUM_TOPICS`), and behavioral driver guidance (`DRIVER_FUSION_GUIDANCE`).
@@ -56,13 +56,14 @@ Direct observations made during the read-only investigation of `src/lib/challeng
 
 ## 4. Conclusion
 
-The analysis of `src/lib/challenges.functions.ts` and associated AI modules is complete. The exact technical specifications, interface definitions, curriculum topic catalog, prompt structures, and LLM guardrails have been documented in `analysis.md`. 
+The analysis of `src/lib/challenges.functions.ts` and associated AI modules is complete. The exact technical specifications, interface definitions, curriculum topic catalog, prompt structures, and LLM guardrails have been documented in `analysis.md`.
 
 Key components specified:
+
 - New helper module: `src/lib/academic-homework.functions.ts`
 - New server function: `generateAcademicHomeworkChallenge` in `src/lib/challenges.functions.ts`
 - Updated Zod validation schema: `ChallengeSchema`
-- 5 core behavioral drivers (*déconstruire*, *schématiser*, *simuler*, *enquêter*, *optimiser*) explicitly integrated into academic prompt synthesis.
+- 5 core behavioral drivers (_déconstruire_, _schématiser_, _simuler_, _enquêter_, _optimiser_) explicitly integrated into academic prompt synthesis.
 
 ---
 

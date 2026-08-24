@@ -10,7 +10,10 @@
 import { z } from "zod";
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
-import { getAspirationHypothesesSnapshot, type AspirationStatus } from "@/lib/aspiration-confidence";
+import {
+  getAspirationHypothesesSnapshot,
+  type AspirationStatus,
+} from "@/lib/aspiration-confidence";
 import { formatAspirationChildLine, formatAspirationParentLine } from "@/lib/aspiration-narrative";
 
 const AspirationCompassInput = z.object({ childId: z.string().uuid() });

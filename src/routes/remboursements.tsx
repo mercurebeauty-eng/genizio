@@ -34,7 +34,13 @@ function RemboursementsPage() {
             to="/"
             className="flex items-center gap-2 font-display text-xl font-extrabold tracking-tight text-brand"
           >
-            <img src="/favicon-96x96.png" alt="Logo Génizio" className="h-7 w-7" />
+            <img
+              src="/favicon-96x96.png"
+              alt="Logo Génizio"
+              width="28"
+              height="28"
+              className="h-7 w-7"
+            />
             GÉNIZIO
           </Link>
           <Link
@@ -140,7 +146,6 @@ function RemboursementsPage() {
             sur le reçu Paystack) et la date de la transaction. Nous accusons réception de chaque
             demande sous 48 h ouvrées.
           </p>
-
         </div>
 
         {/* Boutons de contact placés HORS de .prose-genizio : la règle maison

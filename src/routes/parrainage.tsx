@@ -107,7 +107,13 @@ function ParrainagePage() {
             to="/"
             className="flex items-center gap-2 font-display text-2xl font-extrabold text-brand"
           >
-            <img src="/favicon-96x96.png" alt="Logo Génizio" className="h-8 w-8" />
+            <img
+              src="/favicon-96x96.png"
+              alt="Logo Génizio"
+              width="32"
+              height="32"
+              className="h-8 w-8"
+            />
             GÉNIZIO
           </Link>
           <Link
@@ -191,7 +197,7 @@ function ParrainagePage() {
               <span className="text-xs font-bold uppercase tracking-wider text-ink/60 block mb-2">
                 Code de Parrainage Unique <span className="text-emerald-600">(actif)</span>
               </span>
-              <div className="font-mono text-2xl font-black text-brand tracking-widest selection:bg-brand selection:text-white mb-4">
+              <div className="font-mono text-2xl font-black text-brand tracking-widest selection:bg-brand selection:text-white mb-4 break-all">
                 {createdToken.code}
               </div>
               <button
@@ -285,13 +291,13 @@ function ParrainagePage() {
                   <label className="block text-xs font-bold uppercase tracking-wider text-ink mb-2">
                     Durée du parrainage (1 à 12 mois)
                   </label>
-                  <div className="grid grid-cols-6 gap-2">
+                  <div className="grid grid-cols-4 sm:grid-cols-6 gap-1.5 sm:gap-2">
                     {Array.from({ length: 12 }, (_, i) => i + 1).map((m) => (
                       <button
                         key={m}
                         type="button"
                         onClick={() => setMonths(m)}
-                        className={`rounded-2xl border px-2 py-3 text-sm font-black transition-all cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-glow focus-visible:ring-offset-2 ${
+                        className={`rounded-2xl border px-1.5 sm:px-2 py-2.5 sm:py-3 text-sm font-black transition-all cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-glow focus-visible:ring-offset-2 ${
                           months === m
                             ? "press-brand border-brand bg-brand text-white"
                             : "press-white border-ink/10 bg-white text-ink/70"

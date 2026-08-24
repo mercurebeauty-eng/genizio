@@ -35,11 +35,7 @@ describe("Admin OS Helper Functions - Boundary & Stress Harness", () => {
     });
 
     it("safely ignores null, undefined, and NaN age properties", () => {
-      const children = [
-        { age: null as any },
-        { age: undefined as any },
-        { age: NaN as any },
-      ];
+      const children = [{ age: null as any }, { age: undefined as any }, { age: NaN as any }];
       const res = calculateAgeDistribution(children);
       const bracket3to6 = res.find((b) => b.bracket === "3-6 ans");
       const bracket14Plus = res.find((b) => b.bracket === "14+ ans");
@@ -84,9 +80,7 @@ describe("Admin OS Helper Functions - Boundary & Stress Harness", () => {
 
     it("handles invalid date strings in challenges without throwing", () => {
       const children = [{ id: "c1", last_activity_date: null }];
-      const challenges = [
-        { child_id: "c1", completed_at: "corrupted-timestamp" },
-      ];
+      const challenges = [{ child_id: "c1", completed_at: "corrupted-timestamp" }];
       const active7d = calculateActiveChildren(children, 7, refDate, challenges);
       expect(active7d).toBe(0);
     });
@@ -106,9 +100,7 @@ describe("Admin OS Helper Functions - Boundary & Stress Harness", () => {
 
     it("handles challenges belonging to non-existent children", () => {
       const children = [{ id: "c1", last_activity_date: "2026-01-01T00:00:00Z" }];
-      const challenges = [
-        { child_id: "ghost-child", completed_at: "2026-07-20T10:00:00Z" },
-      ];
+      const challenges = [{ child_id: "ghost-child", completed_at: "2026-07-20T10:00:00Z" }];
       const active7d = calculateActiveChildren(children, 7, refDate, challenges);
       expect(active7d).toBe(0);
     });

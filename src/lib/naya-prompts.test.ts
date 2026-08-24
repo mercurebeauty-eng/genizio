@@ -59,10 +59,7 @@ describe("NAYA_SYSTEM_PROMPT — identité experte (C1.2)", () => {
   });
 
   it("l'ancien placeholder ne subsiste plus comme littéral system dans challenges.functions.ts", () => {
-    const source = readFileSync(
-      resolve(__dirname, "../lib/challenges.functions.ts"),
-      "utf-8"
-    );
+    const source = readFileSync(resolve(__dirname, "../lib/challenges.functions.ts"), "utf-8");
     // Le littéral d'origine était une chaîne entre guillemets droits ; les mentions
     // « … » en commentaires documentent le remplacement et sont légitimes.
     expect(source).not.toContain('"Tu es un assistant IA précis');
@@ -84,7 +81,8 @@ describe("buildChallengePrompt — contrat (C1.3)", () => {
     domainsText: "sciences, mathematiques",
     ignoredDomains: ["langage"],
     existingTitles: ["Défi déjà vu"],
-    timePressureNote: "- Durée : donne une durée estimée honnête (le chrono du défi se base dessus).",
+    timePressureNote:
+      "- Durée : donne une durée estimée honnête (le chrono du défi se base dessus).",
     profileContextNote: "- Niveau scolaire déclaré : CM2.",
   };
 
@@ -206,7 +204,8 @@ describe("buildSingleChallengePrompt — contrat (C1.3)", () => {
     domainInstruction: '3. Tu DOIS générer un défi spécifiquement dans le domaine : "corporelle".',
     materialScopeInstruction: "5. MATÉRIEL (MIXTE) : Libre à toi !",
     homeMaterialsUseLine: "6. UTILISATION DES MATÉRIAUX MENTIONNÉS : Tu DOIS concevoir un défi...",
-    timePressureNote: "- Durée : donne une durée estimée honnête (le chrono du défi se base dessus).",
+    timePressureNote:
+      "- Durée : donne une durée estimée honnête (le chrono du défi se base dessus).",
     profileContextNote: "- Aspiration(s) déclarée(s) : Menuiserie — HYPOTHÈSE À EXPLORER.",
   };
 
@@ -281,7 +280,10 @@ describe("buildHomeworkPrompt — contrat (C1.3)", () => {
   });
 
   it("ajoute la ligne d'anxiété quand ZPA la détecte", () => {
-    const p = buildHomeworkPrompt({ ...base, anxietyLine: "- CONTEXTE D'ANXIÉTÉ DÉTECTÉ : Propose un soutien renforcé." });
+    const p = buildHomeworkPrompt({
+      ...base,
+      anxietyLine: "- CONTEXTE D'ANXIÉTÉ DÉTECTÉ : Propose un soutien renforcé.",
+    });
     expect(p).toContain("CONTEXTE D'ANXIÉTÉ DÉTECTÉ");
     expect(buildHomeworkPrompt(base)).not.toContain("CONTEXTE D'ANXIÉTÉ DÉTECTÉ");
   });
@@ -304,17 +306,26 @@ describe("buildRecommendationPrompt — contrat des 4 modes (C1.3)", () => {
   };
 
   it("stabilisation_cycle : rassure, domaine ciblé, cible declarative triviale", () => {
-    const p = buildRecommendationPrompt({ ...commun, mode: "stabilisation_cycle", subject: "mathématiques" });
+    const p = buildRecommendationPrompt({
+      ...commun,
+      mode: "stabilisation_cycle",
+      subject: "mathématiques",
+    });
     expect(p).toContain("micro-défi de STABILISATION");
     expect(p).toContain("spécifiquement en mathématiques");
     expect(p).toContain('"domain": "mathématiques"');
-    expect(p).toContain("une cible \"declarative\" doit rester trivialement atteignable");
+    expect(p).toContain('une cible "declarative" doit rester trivialement atteignable');
     expect(p).toContain(STEPS_INSTRUCTION.slice(0, 20));
     expect(p).toContain(ACADEMIC_REFERENTIAL_INSTRUCTION.slice(0, 25));
   });
 
   it("essaimage : force → faiblesse", () => {
-    const p = buildRecommendationPrompt({ ...commun, mode: "essaimage", strengthLabel: "corporelle", weaknessLabel: "langage" });
+    const p = buildRecommendationPrompt({
+      ...commun,
+      mode: "essaimage",
+      strengthLabel: "corporelle",
+      weaknessLabel: "langage",
+    });
     expect(p).toContain("micro-défi d'ESSAIMAGE");
     expect(p).toContain("Utiliser sa FORCE (corporelle)");
     expect(p).toContain("compétence en progression (langage)");
@@ -322,7 +333,11 @@ describe("buildRecommendationPrompt — contrat des 4 modes (C1.3)", () => {
   });
 
   it("stabilisation_fragilite : compétence en dents de scie + levier confort", () => {
-    const p = buildRecommendationPrompt({ ...commun, mode: "stabilisation_fragilite", comfortSkillText: "sa force reconnue (spatiale)" });
+    const p = buildRecommendationPrompt({
+      ...commun,
+      mode: "stabilisation_fragilite",
+      comfortSkillText: "sa force reconnue (spatiale)",
+    });
     expect(p).toContain("phase instable sur une compétence");
     expect(p).toContain("appuyé sur sa force reconnue (spatiale)");
     expect(p).toContain("trivialement atteignable");
@@ -332,7 +347,11 @@ describe("buildRecommendationPrompt — contrat des 4 modes (C1.3)", () => {
   });
 
   it("exploration : cible l'intelligence la moins explorée", () => {
-    const p = buildRecommendationPrompt({ ...commun, mode: "exploration", targetLabel: "artisanale" });
+    const p = buildRecommendationPrompt({
+      ...commun,
+      mode: "exploration",
+      targetLabel: "artisanale",
+    });
     expect(p).toContain("Conçois LE prochain défi d'EXPLORATION");
     expect(p).toContain('Cible en priorité l\'intelligence "artisanale"');
     expect(p).toContain('"difficulty": "moyen"');
@@ -343,7 +362,12 @@ describe("buildRecommendationPrompt — contrat des 4 modes (C1.3)", () => {
   });
 
   it("tous les modes couvrent le pied de constitution", () => {
-    for (const mode of ["stabilisation_cycle", "essaimage", "stabilisation_fragilite", "exploration"] as const) {
+    for (const mode of [
+      "stabilisation_cycle",
+      "essaimage",
+      "stabilisation_fragilite",
+      "exploration",
+    ] as const) {
       const p = buildRecommendationPrompt({ ...commun, mode, subject: "sciences" });
       expect(p).toContain(PROOF_MODE_INSTRUCTION.slice(0, 20));
       expect(p).toContain(ACADEMIC_SECRET_INSTRUCTION.slice(0, 25));
@@ -356,7 +380,11 @@ describe("buildHypothesisPrompt — contrat (C1.3)", () => {
   it("concatène rappels system + snapshot d'investigation structuré", () => {
     const p = buildHypothesisPrompt({
       enfant: { prenom: "Awa", age: 9 },
-      ecartReferentiel: { domaine: "sciences", direction: "en retard sur le référentiel", niveaux_recents_observes: [1, 2] },
+      ecartReferentiel: {
+        domaine: "sciences",
+        direction: "en retard sur le référentiel",
+        niveaux_recents_observes: [1, 2],
+      },
       jumeauPedagogique: { moteurs: { curiosite: 0.8 }, competences_gardner: {}, interets: {} },
     });
     expect(p).toContain(NAYA_DIAGNOSIS_SYSTEM_REMINDERS);
@@ -501,7 +529,9 @@ describe("Décision #59 — chiffres/mesures réels et benchmark international (
   });
 
   it("le benchmark international est une règle exécutée, pas une note en commentaire", () => {
-    expect(ACADEMIC_REFERENTIAL_INSTRUCTION).toContain("calibrage international, pas une échelle maison");
+    expect(ACADEMIC_REFERENTIAL_INSTRUCTION).toContain(
+      "calibrage international, pas une échelle maison",
+    );
     expect(ACADEMIC_REFERENTIAL_INSTRUCTION).toContain("Common Core US");
     expect(ACADEMIC_REFERENTIAL_INSTRUCTION).toContain("Singapore Math");
     expect(ACADEMIC_REFERENTIAL_INSTRUCTION).toContain("Chine");
@@ -510,15 +540,21 @@ describe("Décision #59 — chiffres/mesures réels et benchmark international (
 
   it("le secret académique est ancré sur la mesure réelle et invite à la recherche personnelle", () => {
     expect(ACADEMIC_SECRET_INSTRUCTION).toContain("quatre temps");
-    expect(ACADEMIC_SECRET_INSTRUCTION).toContain("Ancre le concept sur le geste et le chiffre réels");
+    expect(ACADEMIC_SECRET_INSTRUCTION).toContain(
+      "Ancre le concept sur le geste et le chiffre réels",
+    );
     expect(ACADEMIC_SECRET_INSTRUCTION).toContain("périmètre");
-    expect(ACADEMIC_SECRET_INSTRUCTION).toContain("invitation à la recherche personnelle adaptée à son âge");
+    expect(ACADEMIC_SECRET_INSTRUCTION).toContain(
+      "invitation à la recherche personnelle adaptée à son âge",
+    );
     expect(ACADEMIC_SECRET_INSTRUCTION).toContain("8 à 11 ans");
     expect(ACADEMIC_SECRET_INSTRUCTION).toContain("mini-recherche autonome");
   });
 
   it("la règle de mesures réelles est injectée dans le prompt bulk", () => {
     expect(buildChallengePrompt(input)).toContain("CHIFFRES ET MESURES RÉELS OBLIGATOIRES");
-    expect(buildChallengePrompt(input)).toContain("calibrage international, pas une échelle maison");
+    expect(buildChallengePrompt(input)).toContain(
+      "calibrage international, pas une échelle maison",
+    );
   });
 });

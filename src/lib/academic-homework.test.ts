@@ -10,7 +10,10 @@ import {
   AcademicSubject,
   BehavioralDriver,
 } from "@/lib/academic-homework.functions";
-import { generateAcademicHomeworkChallenge, assignTemplateChallenge } from "@/lib/challenges.functions";
+import {
+  generateAcademicHomeworkChallenge,
+  assignTemplateChallenge,
+} from "@/lib/challenges.functions";
 
 describe("Academic Homework Generation Engine — Grade & Topic Mapping", () => {
   it("maps grade levels to correct nominal age and cycle metadata", () => {
@@ -35,7 +38,13 @@ describe("Academic Homework Generation Engine — Grade & Topic Mapping", () => 
 
   it("resolves curriculum topics across all grades and subjects", () => {
     const grades: GradeLevel[] = ["CP", "CE1", "CE2", "CM1", "CM2", "6eme", "5eme", "4eme", "3eme"];
-    const subjects: AcademicSubject[] = ["maths", "francais", "sciences", "histoire_geo", "anglais"];
+    const subjects: AcademicSubject[] = [
+      "maths",
+      "francais",
+      "sciences",
+      "histoire_geo",
+      "anglais",
+    ];
 
     for (const grade of grades) {
       for (const subject of subjects) {
@@ -93,13 +102,13 @@ describe("ZPA Bayesian Telemetry Difficulty Algorithm", () => {
 
   it("applies anxiety safety damping when P(Anxiety) > 0.40 or PERFORMANCE_ANXIETY cause", () => {
     // High anxiety probability -> cap at level 1 or 2 with HIGH_SUPPORT
-    const highAnxiety = calculateZPADifficulty(5, [], 0.50);
+    const highAnxiety = calculateZPADifficulty(5, [], 0.5);
     expect(highAnxiety.isAnxietyDamped).toBe(true);
     expect(highAnxiety.level).toBeLessThanOrEqual(2);
     expect(highAnxiety.supportMode).toBe("HIGH_SUPPORT");
 
     // PERFORMANCE_ANXIETY hypothesis cause -> cap at level 1 or 2 with HIGH_SUPPORT
-    const anxietyCause = calculateZPADifficulty(4, ["PERFORMANCE_ANXIETY"], 0.10);
+    const anxietyCause = calculateZPADifficulty(4, ["PERFORMANCE_ANXIETY"], 0.1);
     expect(anxietyCause.isAnxietyDamped).toBe(true);
     expect(anxietyCause.level).toBeLessThanOrEqual(2);
     expect(anxietyCause.supportMode).toBe("HIGH_SUPPORT");

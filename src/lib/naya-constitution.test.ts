@@ -69,12 +69,16 @@ describe("aggregateAuditViolations", () => {
       auditRow({
         kind: "challenge_single",
         context: { domain: "spatial" },
-        violations: [{ rule: "challenge.no_markdown", severity: "mineur", detail: "Markdown détecté." }],
+        violations: [
+          { rule: "challenge.no_markdown", severity: "mineur", detail: "Markdown détecté." },
+        ],
       }),
       auditRow({
         kind: "challenge_bulk",
         context: { domain: "spatial" },
-        violations: [{ rule: "challenge.no_markdown", severity: "mineur", detail: "Markdown détecté." }],
+        violations: [
+          { rule: "challenge.no_markdown", severity: "mineur", detail: "Markdown détecté." },
+        ],
       }),
     ];
     const agg = aggregateAuditViolations(rows);
@@ -106,7 +110,11 @@ describe("aggregateAuditViolations", () => {
 
   it("extrait le domaine du contexte (subject pour les devoirs)", () => {
     const rows: AuditRow[] = [
-      auditRow({ kind: "homework", context: { subject: "mathematiques" }, violations: [{ rule: "r1", severity: "mineur", detail: "d" }] }),
+      auditRow({
+        kind: "homework",
+        context: { subject: "mathematiques" },
+        violations: [{ rule: "r1", severity: "mineur", detail: "d" }],
+      }),
     ];
     const agg = aggregateAuditViolations(rows);
     expect(agg[0].domain).toBe("mathematiques");
@@ -129,9 +137,36 @@ describe("aggregateAuditViolations", () => {
 
 describe("computeRecurringRules (seuils de récurrence)", () => {
   const aggregates = [
-    { rule: "a", kind: "challenge_single", domain: "general", severity: "mineur" as const, count: 5, childCount: 3, sampleDetails: [], sampleSuggestions: [] },
-    { rule: "b", kind: "challenge_single", domain: "general", severity: "majeur" as const, count: 3, childCount: 1, sampleDetails: [], sampleSuggestions: [] },
-    { rule: "c", kind: "homework", domain: "general", severity: "mineur" as const, count: 2, childCount: 2, sampleDetails: [], sampleSuggestions: [] },
+    {
+      rule: "a",
+      kind: "challenge_single",
+      domain: "general",
+      severity: "mineur" as const,
+      count: 5,
+      childCount: 3,
+      sampleDetails: [],
+      sampleSuggestions: [],
+    },
+    {
+      rule: "b",
+      kind: "challenge_single",
+      domain: "general",
+      severity: "majeur" as const,
+      count: 3,
+      childCount: 1,
+      sampleDetails: [],
+      sampleSuggestions: [],
+    },
+    {
+      rule: "c",
+      kind: "homework",
+      domain: "general",
+      severity: "mineur" as const,
+      count: 2,
+      childCount: 2,
+      sampleDetails: [],
+      sampleSuggestions: [],
+    },
   ];
 
   it("ne retient que les règles ≥ N occurrences ET ≥ M enfants distincts", () => {
@@ -181,10 +216,13 @@ describe("rédaction LEARNED_RULES (C3.2)", () => {
   });
 
   it("buildLearnings assemble un bloc numéroté en continu", () => {
-    const { recurringRules, learnedRulesBlock, decisionDrafts } = buildLearnings([aggregate, { ...aggregate, rule: "x", count: 3, childCount: 2 }], {
-      minCount: 3,
-      minChildren: 2,
-    });
+    const { recurringRules, learnedRulesBlock, decisionDrafts } = buildLearnings(
+      [aggregate, { ...aggregate, rule: "x", count: 3, childCount: 2 }],
+      {
+        minCount: 3,
+        minChildren: 2,
+      },
+    );
     expect(recurringRules).toHaveLength(2);
     expect(recurringRules[0].learnedRuleText).toContain("LEARNED_RULE 1.");
     expect(recurringRules[1].learnedRuleText).toContain("LEARNED_RULE 2.");
@@ -196,9 +234,36 @@ describe("rédaction LEARNED_RULES (C3.2)", () => {
 
 describe("auto-acquittement par seuil (Décision #56)", () => {
   const aggregates = [
-    { rule: "a", kind: "challenge_single", domain: "general", severity: "mineur" as const, count: 6, childCount: 4, sampleDetails: [], sampleSuggestions: [] },
-    { rule: "b", kind: "challenge_single", domain: "general", severity: "majeur" as const, count: 5, childCount: 3, sampleDetails: [], sampleSuggestions: [] },
-    { rule: "c", kind: "challenge_single", domain: "general", severity: "majeur" as const, count: 5, childCount: 2, sampleDetails: [], sampleSuggestions: [] },
+    {
+      rule: "a",
+      kind: "challenge_single",
+      domain: "general",
+      severity: "mineur" as const,
+      count: 6,
+      childCount: 4,
+      sampleDetails: [],
+      sampleSuggestions: [],
+    },
+    {
+      rule: "b",
+      kind: "challenge_single",
+      domain: "general",
+      severity: "majeur" as const,
+      count: 5,
+      childCount: 3,
+      sampleDetails: [],
+      sampleSuggestions: [],
+    },
+    {
+      rule: "c",
+      kind: "challenge_single",
+      domain: "general",
+      severity: "majeur" as const,
+      count: 5,
+      childCount: 2,
+      sampleDetails: [],
+      sampleSuggestions: [],
+    },
   ];
 
   it("ne franchit le seuil auto que sur occurrences ET enfants distincts élevés (5/3)", () => {
@@ -212,25 +277,50 @@ describe("auto-acquittement par seuil (Décision #56)", () => {
   });
 
   it("clampAutoAckThresholds borne les seuils auto au-dessus des seuils de suggestion", () => {
-    const clamped = clampAutoAckThresholds({ minCount: 5, minChildren: 3 }, { minCount: 3, minChildren: 2 });
+    const clamped = clampAutoAckThresholds(
+      { minCount: 5, minChildren: 3 },
+      { minCount: 3, minChildren: 2 },
+    );
     expect(clamped).toEqual({ minCount: 5, minChildren: 3 });
   });
 
   it("ruleKeyOf produit la clé canonique kind|domaine|règle", () => {
     expect(ruleKeyOf("challenge_single", "spatial", "challenge.no_markdown")).toBe(
-      "challenge_single|spatial|challenge.no_markdown"
+      "challenge_single|spatial|challenge.no_markdown",
     );
   });
 });
 
 describe("buildRuleJournal (journal des décisions, Décision #56)", () => {
-  const violation = { rule: "challenge.no_markdown", severity: "majeur" as const, detail: "Markdown détecté." };
+  const violation = {
+    rule: "challenge.no_markdown",
+    severity: "majeur" as const,
+    detail: "Markdown détecté.",
+  };
 
   it("agrège les décisions par règle avec enfants distincts", () => {
     const rows: DecidedAuditRow[] = [
-      decidedRow({ id: "a1", child_id: "c1", decision: "auto", decision_by: "système", violations: [violation] }),
-      decidedRow({ id: "a2", child_id: "c1", decision: "auto", decision_by: "système", violations: [violation] }),
-      decidedRow({ id: "a3", child_id: "c2", decision: "auto", decision_by: "système", violations: [violation] }),
+      decidedRow({
+        id: "a1",
+        child_id: "c1",
+        decision: "auto",
+        decision_by: "système",
+        violations: [violation],
+      }),
+      decidedRow({
+        id: "a2",
+        child_id: "c1",
+        decision: "auto",
+        decision_by: "système",
+        violations: [violation],
+      }),
+      decidedRow({
+        id: "a3",
+        child_id: "c2",
+        decision: "auto",
+        decision_by: "système",
+        violations: [violation],
+      }),
     ];
     const journal = buildRuleJournal(rows);
     expect(journal).toHaveLength(1);
@@ -242,8 +332,20 @@ describe("buildRuleJournal (journal des décisions, Décision #56)", () => {
 
   it("la décision la plus récente prime et son auteur est conservé", () => {
     const rows: DecidedAuditRow[] = [
-      decidedRow({ id: "a1", decision: "auto", decision_at: "2026-08-06T10:00:00Z", decision_by: "système", violations: [violation] }),
-      decidedRow({ id: "a2", decision: "valide", decision_at: "2026-08-06T14:00:00Z", decision_by: "admin@genizio.com", violations: [violation] }),
+      decidedRow({
+        id: "a1",
+        decision: "auto",
+        decision_at: "2026-08-06T10:00:00Z",
+        decision_by: "système",
+        violations: [violation],
+      }),
+      decidedRow({
+        id: "a2",
+        decision: "valide",
+        decision_at: "2026-08-06T14:00:00Z",
+        decision_by: "admin@genizio.com",
+        violations: [violation],
+      }),
     ];
     const journal = buildRuleJournal(rows);
     expect(journal[0].decision).toBe("valide");
@@ -254,7 +356,12 @@ describe("buildRuleJournal (journal des décisions, Décision #56)", () => {
   it("ignore les audits encore en attente et porte le commentaire", () => {
     const rows: DecidedAuditRow[] = [
       decidedRow({ id: "a1", decision: "en_attente", violations: [violation] }),
-      decidedRow({ id: "a2", decision: "rejete", decision_note: "Faux positif : matériau local réel.", violations: [violation] }),
+      decidedRow({
+        id: "a2",
+        decision: "rejete",
+        decision_note: "Faux positif : matériau local réel.",
+        violations: [violation],
+      }),
     ];
     const journal = buildRuleJournal(rows);
     expect(journal).toHaveLength(1);
@@ -266,10 +373,30 @@ describe("buildRuleJournal (journal des décisions, Décision #56)", () => {
 describe("aggregateOutcomeSignals (signaux d'abandon, Décision #58)", () => {
   it("groupe par (raison, type, domaine) et compte les enfants distincts", () => {
     const rows: ChallengeOutcomeRow[] = [
-      outcomeRow({ child_id: "c1", reason_chip: "pas_le_bon_moment", kind: "deleted_uncompleted", domain: "spatial" }),
-      outcomeRow({ child_id: "c1", reason_chip: "pas_le_bon_moment", kind: "deleted_uncompleted", domain: "spatial" }),
-      outcomeRow({ child_id: "c2", reason_chip: "pas_le_bon_moment", kind: "deleted_uncompleted", domain: "spatial" }),
-      outcomeRow({ child_id: "c3", reason_chip: "pas_interesse", kind: "deleted_uncompleted", domain: "spatial" }),
+      outcomeRow({
+        child_id: "c1",
+        reason_chip: "pas_le_bon_moment",
+        kind: "deleted_uncompleted",
+        domain: "spatial",
+      }),
+      outcomeRow({
+        child_id: "c1",
+        reason_chip: "pas_le_bon_moment",
+        kind: "deleted_uncompleted",
+        domain: "spatial",
+      }),
+      outcomeRow({
+        child_id: "c2",
+        reason_chip: "pas_le_bon_moment",
+        kind: "deleted_uncompleted",
+        domain: "spatial",
+      }),
+      outcomeRow({
+        child_id: "c3",
+        reason_chip: "pas_interesse",
+        kind: "deleted_uncompleted",
+        domain: "spatial",
+      }),
     ];
     const signals = aggregateOutcomeSignals(rows);
     expect(signals).toHaveLength(2);
@@ -288,7 +415,10 @@ describe("aggregateOutcomeSignals (signaux d'abandon, Décision #58)", () => {
   });
 
   it("bascule une raison NULL en 'sans_raison'", () => {
-    const rows: ChallengeOutcomeRow[] = [outcomeRow({ reason_chip: null }), outcomeRow({ reason_chip: null })];
+    const rows: ChallengeOutcomeRow[] = [
+      outcomeRow({ reason_chip: null }),
+      outcomeRow({ reason_chip: null }),
+    ];
     const signals = aggregateOutcomeSignals(rows);
     expect(signals).toHaveLength(1);
     expect(signals[0].reasonKey).toBe("sans_raison");

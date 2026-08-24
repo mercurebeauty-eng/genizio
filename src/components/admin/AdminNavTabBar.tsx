@@ -232,13 +232,13 @@ export function AdminNavTabBar({ activeTab, onTabChange, onGoHome }: AdminNavTab
               type="button"
               onClick={() => onTabChange(tab.id)}
               aria-current={isActive ? "page" : undefined}
-              className={`inline-flex items-center gap-1.5 rounded-xl px-3 py-2 text-xs font-bold transition-all cursor-pointer border ${
+              className={`inline-flex items-center gap-1.5 shrink-0 rounded-xl px-3 py-2 text-xs font-bold transition-all cursor-pointer border ${
                 isActive
                   ? "border-ink bg-ink text-white shadow-sm"
                   : "border-transparent bg-white/60 text-ink/60 hover:bg-white hover:text-ink"
               }`}
             >
-              <Icon className={`size-3.5 ${isActive ? "" : "opacity-70"}`} />
+              <Icon className={`size-3.5 shrink-0 ${isActive ? "" : "opacity-70"}`} />
               <span className="truncate">{tab.label}</span>
             </button>
           );

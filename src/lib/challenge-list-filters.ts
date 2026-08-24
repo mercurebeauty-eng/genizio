@@ -1,12 +1,7 @@
 // Logique de filtres de la liste de défis (page challenges) — extraite du composant
 // pour être testée sans navigateur (clôture décision #51, 2026-08-13).
 
-export type ChallengeStatusFilter =
-  | "all"
-  | "todo"
-  | "in_progress"
-  | "completed"
-  | "not_completed";
+export type ChallengeStatusFilter = "all" | "todo" | "in_progress" | "completed" | "not_completed";
 
 /**
  * Correctif du 2026-08-05 (clôture décision #51) : au démarrage d'un défi depuis le
@@ -19,7 +14,7 @@ export type ChallengeStatusFilter =
 export function followFilterAfterStart(
   currentFilter: ChallengeStatusFilter,
   fromStatus: ChallengeStatusFilter,
-  toStatus: ChallengeStatusFilter
+  toStatus: ChallengeStatusFilter,
 ): ChallengeStatusFilter {
   return currentFilter === "todo" && fromStatus === "todo" && toStatus === "in_progress"
     ? "in_progress"

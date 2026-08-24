@@ -3,6 +3,7 @@
 ## 1. Observation
 
 ### Implementation & Source File Audit
+
 - **Files inspected**:
   - `src/components/profiles/ProfileDialog.tsx` (lines 1–311)
   - `src/components/profiles/shared.ts` (lines 1–108)
@@ -36,6 +37,7 @@
 
 - **Verification Command Execution**:
   - `npm run test`:
+
     ```
     ✓ src/lib/guilds.test.ts (8 tests)
     ✓ src/lib/active-challenge.test.ts (6 tests)
@@ -45,6 +47,7 @@
     Test Files  4 passed (4)
          Tests  46 passed (46)
     ```
+
   - `npx tsc --noEmit`: Completed with 0 type errors.
 
 ---
@@ -102,16 +105,20 @@
 To independently verify these findings:
 
 1. **Run Unit & Boundary Tests**:
+
    ```bash
    npm run test
    ```
-   *Expected result*: All 46 tests across 4 test files pass, including 16 tests in `ProfileDialog.test.ts`.
+
+   _Expected result_: All 46 tests across 4 test files pass, including 16 tests in `ProfileDialog.test.ts`.
 
 2. **Run Type Checks**:
+
    ```bash
    npx tsc --noEmit
    ```
-   *Expected result*: Process completes with 0 errors.
+
+   _Expected result_: Process completes with 0 errors.
 
 3. **Inspect Test Code**:
    View `src/components/profiles/ProfileDialog.test.ts` to inspect the combinatorial max tag count check, selection boundary simulator, and edge case assertions.

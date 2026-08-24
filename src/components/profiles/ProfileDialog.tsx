@@ -307,22 +307,22 @@ export function ProfileDialog({
     >
       <div
         onClick={(e) => e.stopPropagation()}
-        className="max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-3xl border border-ink/10 bg-white p-8 shadow-xl"
+        className="max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-3xl border border-ink/10 bg-white p-5 sm:p-8 shadow-xl"
       >
-        <div className="mb-6 flex items-center gap-4">
+        <div className="mb-6 flex items-center gap-4 min-w-0">
           <div
-            className={`grid size-14 place-items-center rounded-full font-display text-balance text-xl font-bold text-white ${selectedColor}`}
+            className={`grid size-14 shrink-0 place-items-center rounded-full font-display text-balance text-xl font-bold text-white ${selectedColor}`}
           >
             {draft.name.charAt(0).toUpperCase() || "?"}
           </div>
-          <h2 className="font-display text-balance text-2xl font-extrabold">
+          <h2 className="font-display text-balance text-2xl font-extrabold truncate min-w-0">
             {initial ? "Modifier le profil" : "Nouveau profil"}
           </h2>
         </div>
 
         <div className="space-y-5">
           {/* Parcours d'onboarding en étapes (2026-08-12, analyse §6-7, §10) */}
-          <div className="flex items-center justify-between gap-1 rounded-xl bg-ink/5 p-1 text-xs font-bold">
+          <div className="flex items-center justify-between gap-1 rounded-xl bg-ink/5 p-1 text-xs font-bold overflow-x-auto no-scrollbar">
             {["Qui", "Comment il est", "À quel enfant ?", "Ce qu'il veut devenir"]
               .slice(0, wizardSteps)
               .map((label, i) => (
@@ -330,11 +330,11 @@ export function ProfileDialog({
                   key={label}
                   type="button"
                   onClick={() => setWizardStep(i)}
-                  className={`flex-1 rounded-lg py-1.5 transition-all ${
-                    wizardStep === i ? "bg-white text-ink shadow-sm" : "text-ink/60 hover:text-ink"
+                  className={`flex-1 min-w-0 truncate rounded-lg py-1.5 px-1 sm:px-2 transition-all text-center ${
+                    wizardStep === i ? "bg-white text-ink shadow-sm font-black" : "text-ink/60 hover:text-ink"
                   }`}
                 >
-                  {i + 1}. {label}
+                  <span className="truncate block">{i + 1}. {label}</span>
                 </button>
               ))}
           </div>
@@ -824,9 +824,9 @@ export function ProfileDialog({
                     {draft.aspirations.map((a) => (
                       <span
                         key={a.label}
-                        className="inline-flex items-center gap-1 rounded-full bg-sky-50 border border-sky-200 px-2.5 py-1 text-[11px] font-bold text-sky-800"
+                        className="inline-flex max-w-full items-center gap-1 rounded-full bg-sky-50 border border-sky-200 px-2.5 py-1 text-[11px] font-bold text-sky-800"
                       >
-                        {a.label}
+                        <span className="truncate min-w-0">{a.label}</span>
                         <button
                           type="button"
                           onClick={() =>
@@ -835,7 +835,7 @@ export function ProfileDialog({
                               aspirations: d.aspirations.filter((x) => x.label !== a.label),
                             }))
                           }
-                          className="text-sky-600 hover:text-sky-900"
+                          className="shrink-0 text-sky-600 hover:text-sky-900"
                           aria-label={`Retirer ${a.label}`}
                         >
                           ✕
@@ -851,19 +851,19 @@ export function ProfileDialog({
           {error && <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">{error}</p>}
         </div>
 
-        <div className="mt-8 flex items-center justify-between gap-3">
+        <div className="mt-8 flex flex-wrap items-center justify-between gap-3">
           <button
             onClick={onClose}
-            className="press-white rounded-2xl border border-ink/10 bg-white px-5 py-2.5 text-sm font-bold"
+            className="press-white rounded-2xl border border-ink/10 bg-white px-4 sm:px-5 py-2.5 text-sm font-bold cursor-pointer"
           >
             Annuler
           </button>
-          <div className="flex gap-3">
+          <div className="flex flex-wrap gap-2 sm:gap-3">
             {wizardStep > 0 && (
               <button
                 type="button"
                 onClick={() => setWizardStep((s) => s - 1)}
-                className="press-white rounded-2xl border border-ink/10 bg-white px-5 py-2.5 text-sm font-bold"
+                className="press-white rounded-2xl border border-ink/10 bg-white px-4 sm:px-5 py-2.5 text-sm font-bold cursor-pointer"
               >
                 ← Précédent
               </button>
@@ -872,7 +872,7 @@ export function ProfileDialog({
               <button
                 type="button"
                 onClick={() => setWizardStep((s) => s + 1)}
-                className="press-brand rounded-2xl bg-brand px-6 py-2.5 text-sm font-bold text-white"
+                className="press-brand rounded-2xl bg-brand px-5 sm:px-6 py-2.5 text-sm font-bold text-white cursor-pointer"
               >
                 Suivant →
               </button>
@@ -880,7 +880,7 @@ export function ProfileDialog({
               <button
                 onClick={save}
                 disabled={busy}
-                className="press-brand rounded-2xl bg-brand px-6 py-2.5 text-sm font-bold text-white disabled:opacity-60"
+                className="press-brand rounded-2xl bg-brand px-5 sm:px-6 py-2.5 text-sm font-bold text-white disabled:opacity-60 cursor-pointer"
               >
                 {busy ? "…" : "Enregistrer"}
               </button>

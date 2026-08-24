@@ -61,7 +61,7 @@ export const LEGACY_TO_BEHAVIORAL_INTEREST_MAP: Record<string, string> = {
  * All valid current behavioral driver tags across all talent categories.
  */
 export const ALL_BEHAVIORAL_DRIVERS: string[] = Object.values(INTERESTS_BY_TALENT).flatMap(
-  (group) => group.tags as readonly string[]
+  (group) => group.tags as readonly string[],
 );
 
 /**

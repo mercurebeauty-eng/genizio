@@ -55,9 +55,7 @@ function makeFakeDb(initial: Record<string, any[]> = {}) {
       // Applique le patch aux lignes matchées (sémantique PostgREST : UPDATE …
       // WHERE …) et retourne la première, ou null si aucune ligne ne matche.
       const apply = () => {
-        const matched = (tables[table] ?? []).filter((r) =>
-          updateFilters.every((f) => f(r)),
-        );
+        const matched = (tables[table] ?? []).filter((r) => updateFilters.every((f) => f(r)));
         if (matched.length === 0) return null;
         Object.assign(matched[0], patch);
         return matched[0];
@@ -130,9 +128,7 @@ describe("processSessionContest", () => {
 
   it("séance déclarée financée par campagne : compteur campagne remboursé (5 → 4)", async () => {
     const { db, tables } = makeFakeDb({
-      mentor_sessions: [
-        session({ funding: "campaign", campaign_id: "camp-1" }),
-      ],
+      mentor_sessions: [session({ funding: "campaign", campaign_id: "camp-1" })],
       campaigns: [{ id: "camp-1", sessions_used: 5, sessions_target: 10 }],
     });
     const claimed = await processSessionContest(db, "s1", "parent-1", "not_on_time");
@@ -327,9 +323,9 @@ describe("processSessionContest — garde travail validé", () => {
       family_coverages: [pack()],
       challenges: [completedChallenge()],
     });
-    await expect(
-      processSessionContest(db, "s1", "parent-1", "not_done"),
-    ).rejects.toThrow(CONTEST_BLOCKED_VALIDATED_WORK_MESSAGE);
+    await expect(processSessionContest(db, "s1", "parent-1", "not_done")).rejects.toThrow(
+      CONTEST_BLOCKED_VALIDATED_WORK_MESSAGE,
+    );
     expect(tables.mentor_sessions[0].status).toBe("declared");
     expect(tables.family_coverages[0].sessions_used).toBe(3);
   });

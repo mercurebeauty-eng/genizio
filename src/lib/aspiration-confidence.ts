@@ -59,17 +59,27 @@ export interface AspirationHypothesisInput {
 }
 
 /** Un défi compte comme essai d'une aspiration s'il est marqué par elle OU chevauche son pont. */
-function countsAsTrial(signal: AspirationChallengeSignal, aspiration: { label: string; bridge: AspirationBridge }): boolean {
+function countsAsTrial(
+  signal: AspirationChallengeSignal,
+  aspiration: { label: string; bridge: AspirationBridge },
+): boolean {
   if (signal.aspiration_label) {
     return signal.aspiration_label.toLowerCase() === aspiration.label.toLowerCase();
   }
   const bridge = aspiration.bridge;
-  if (bridge.domains.length > 0 && signal.domain && bridge.domains.includes(signal.domain)) return true;
-  if (bridge.talentKeys.length > 0 && (signal.target_intelligences ?? []).some((k) => bridge.talentKeys.includes(k))) return true;
+  if (bridge.domains.length > 0 && signal.domain && bridge.domains.includes(signal.domain))
+    return true;
+  if (
+    bridge.talentKeys.length > 0 &&
+    (signal.target_intelligences ?? []).some((k) => bridge.talentKeys.includes(k))
+  )
+    return true;
   return false;
 }
 
-export function resolveAspirationHypotheses(input: AspirationHypothesisInput): AspirationHypotheses {
+export function resolveAspirationHypotheses(
+  input: AspirationHypothesisInput,
+): AspirationHypotheses {
   const declared = input.aspirations ?? [];
   const completed = input.completed ?? [];
   const abandoned = input.abandoned ?? [];
@@ -123,7 +133,7 @@ export function resolveAspirationHypotheses(input: AspirationHypothesisInput): A
  */
 export async function getAspirationHypothesesSnapshot(
   db: { from: (table: string) => any },
-  childId: string
+  childId: string,
 ): Promise<AspirationHypotheses | null> {
   try {
     const [{ data: child }, { data: completed }, { data: abandoned }] = await Promise.all([
@@ -146,7 +156,10 @@ export async function getAspirationHypothesesSnapshot(
       abandoned: (abandoned ?? []) as AspirationChallengeSignal[],
     });
   } catch (err) {
-    console.error("getAspirationHypothesesSnapshot: échec non bloquant (fallback sans aspiration):", err);
+    console.error(
+      "getAspirationHypothesesSnapshot: échec non bloquant (fallback sans aspiration):",
+      err,
+    );
     return null;
   }
 }

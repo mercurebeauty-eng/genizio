@@ -1,8 +1,98 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { ArrowRight, Compass, Puzzle, Rocket, Brain, Gem, Globe2, Bot, HeartPulse, Tv, Mic, CheckSquare, Briefcase, Users, Palette, ShieldCheck, HeartHandshake, GraduationCap } from "lucide-react";
+import {
+  ArrowRight,
+  Compass,
+  Puzzle,
+  Rocket,
+  Brain,
+  Gem,
+  Globe2,
+  Bot,
+  HeartPulse,
+  Tv,
+  Mic,
+  CheckSquare,
+  Briefcase,
+  Users,
+  Palette,
+  ShieldCheck,
+  HeartHandshake,
+  GraduationCap,
+  Sparkles,
+  Target,
+  Award,
+  Scissors,
+  Store,
+  Cpu,
+  FlaskConical,
+  Clapperboard,
+} from "lucide-react";
 import { pageMeta, jsonLdScript, breadcrumbJsonLd, absoluteUrl } from "@/lib/seo";
 
 const GUIDES = [
+  {
+    to: "/guides/test-de-personnalite-enfant-talents",
+    Icon: Sparkles,
+    eyebrow: "Orientation & Talents",
+    title: "Test de personnalité pour enfant : pourquoi l'action dépasse le QCM",
+    desc: "Pourquoi 20 questions sur écran ne révèlent pas la personnalité de votre enfant, et comment cartographier ses vraies forces par 3 défis réels.",
+  },
+  {
+    to: "/guides/test-orientation-metier-enfant-futur",
+    Icon: Target,
+    eyebrow: "Orientation & Avenir",
+    title: "Test d'orientation et métiers d'avenir : ce qui l'anime vraiment",
+    desc: "Pourquoi 85% des métiers de demain seront transformés par l'IA et comment développer les méta-compétences transversales dès le collège.",
+  },
+  {
+    to: "/guides/choix-parcoursup-parcours-scolaire-enfant",
+    Icon: Award,
+    eyebrow: "Orientation & Parcours",
+    title: "Choix des vœux et parcours scolaire : valoriser ses vraies forces",
+    desc: "Dédramatiser la course aux notes et construire un Passeport de Réalisations Concrètes valorisable dans n'importe quelle filière.",
+  },
+  {
+    to: "/guides/sac-a-dos-marques-challenge-creativite-enfant",
+    Icon: Scissors,
+    eyebrow: "Créativité & Autonomie",
+    title: "Votre enfant réclame un sac de marque ? Le défi créatif et responsabilisant",
+    desc: "Sac North Face ou Nike : comment canaliser la pression sociale des marques pour développer l'ingéniosité manuelle et la valeur de l'effort.",
+  },
+  {
+    to: "/guides/quelle-librairie-choisir-lieux-creativite-enfant",
+    Icon: Store,
+    eyebrow: "Éveil & Créativité",
+    title: "Quelle librairie choisir ? Les vrais lieux d'éveil de la créativité",
+    desc: "Pourquoi le marché, le garage et la cuisine éveillent 10 fois plus son esprit d'analyse et son intelligence pratique que les manuels théoriques.",
+  },
+  {
+    to: "/guides/autisme-tdah-apprentissage-forces-reelles",
+    Icon: Cpu,
+    eyebrow: "Neurodiversité & Apprentissage",
+    title: "Autisme, TDAH et pensée visuelle : la force de l'apprentissage par le réel",
+    desc: "Pourquoi les profils atypiques apprennent mieux par la matière et le projet concret, et comment transformer leur singularité en génie créatif.",
+  },
+  {
+    to: "/guides/jouets-educatifs-kits-scientifiques-placards-maison",
+    Icon: FlaskConical,
+    eyebrow: "Sciences & Bricolage",
+    title: "Jeux éducatifs et kits scientifiques : vos placards font 10 fois mieux",
+    desc: "Pourquoi les kits rigides brident l'imagination et comment 4 défis avec carton et bouteilles développent le vrai esprit d'inventeur.",
+  },
+  {
+    to: "/guides/ecrans-tiktok-youtube-talent-ecriture-realisation",
+    Icon: Clapperboard,
+    eyebrow: "Écrans & Réalisation",
+    title: "Enfant accro à TikTok ou YouTube ? Le transformer en créateur et scénariste",
+    desc: "Méthode concrète pour passer de consommateur passif à réalisateur exigeant : storyboard papier, cadrage et documentaire familial.",
+  },
+  {
+    to: "/guides/pratique-avant-theorie-apprentissage-ia",
+    Icon: Rocket,
+    eyebrow: "Pédagogie & Ère IA",
+    title: "Pratique avant théorie : éduquer son enfant à l'ère de l'IA",
+    desc: "Pourquoi l'ancien modèle théorique décourage les enfants et comment la confrontation au réel développe les compétences que l'IA ne remplacera pas.",
+  },
   {
     to: "/guides/potentiel-haut-potentiel-enfant",
     Icon: Gem,
@@ -118,9 +208,9 @@ const GUIDES = [
   {
     to: "/guides/reussite-scolaire-aider-enfant",
     Icon: GraduationCap,
-    eyebrow: "Réussite & motivation",
-    title: "Aider son enfant à réussir à l'école sans pression",
-    desc: "Ce qui prédit vraiment la réussite scolaire, comment réagir aux mauvaises notes et les leviers à installer à la maison.",
+    eyebrow: "Réussite & Devoirs",
+    title: "Comment aider son enfant à réussir à l'école sans crier ni stresser",
+    desc: "Ce qui prédit vraiment la réussite scolaire, comment réagir aux mauvaises notes et les 6 habitudes indispensables à installer à la maison.",
   },
 ];
 
@@ -172,7 +262,13 @@ function GuidesIndex() {
             to="/"
             className="flex items-center gap-2 font-display text-xl font-extrabold tracking-tight text-brand"
           >
-            <img src="/favicon-96x96.png" alt="Logo Génizio" className="h-7 w-7" />
+            <img
+              src="/favicon-96x96.png"
+              alt="Logo Génizio"
+              width="28"
+              height="28"
+              className="h-7 w-7"
+            />
             GÉNIZIO
           </Link>
           <Link

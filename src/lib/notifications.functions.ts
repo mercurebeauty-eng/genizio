@@ -120,9 +120,7 @@ export const savePushSubscription = createServerFn({ method: "POST" })
 
 export const removePushSubscription = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .validator((input: unknown) =>
-    z.object({ endpoint: z.string().url() }).parse(input),
-  )
+  .validator((input: unknown) => z.object({ endpoint: z.string().url() }).parse(input))
   .handler(async ({ data, context }) => {
     const userId = (context as any).claims?.sub;
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");

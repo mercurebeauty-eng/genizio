@@ -10,7 +10,10 @@ describe("TALENT_SUBFORM_OPPORTUNITIES", () => {
   it("couvre toutes les sous-formes des 9 domaines avec au moins 2 pistes chacune", () => {
     const allSubforms = Object.values(TALENT_SUBFORMS).flat();
     for (const subform of allSubforms) {
-      expect(TALENT_SUBFORM_OPPORTUNITIES[subform], `pistes manquantes pour "${subform}"`).toBeDefined();
+      expect(
+        TALENT_SUBFORM_OPPORTUNITIES[subform],
+        `pistes manquantes pour "${subform}"`,
+      ).toBeDefined();
       expect(TALENT_SUBFORM_OPPORTUNITIES[subform].length).toBeGreaterThanOrEqual(2);
     }
   });
@@ -18,7 +21,9 @@ describe("TALENT_SUBFORM_OPPORTUNITIES", () => {
   it("ne contient aucune clé orpheline (sans domaine parent dans TALENT_SUBFORMS)", () => {
     const allSubforms = new Set(Object.values(TALENT_SUBFORMS).flat());
     for (const key of Object.keys(TALENT_SUBFORM_OPPORTUNITIES)) {
-      expect(allSubforms.has(key), `"${key}" n'appartient à aucun domaine de TALENT_SUBFORMS`).toBe(true);
+      expect(allSubforms.has(key), `"${key}" n'appartient à aucun domaine de TALENT_SUBFORMS`).toBe(
+        true,
+      );
     }
   });
 });

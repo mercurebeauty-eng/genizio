@@ -58,7 +58,11 @@ export const listPaymentsAdmin = createServerFn({ method: "GET" })
 
     let query = supabaseAdmin.from("payments").select("*", { count: "exact" });
     if (data.status === "initiated") query = query.eq("status", "initiated");
-    const { data: payments, error, count } = await query
+    const {
+      data: payments,
+      error,
+      count,
+    } = await query
       .order("created_at", { ascending: false })
       .range((data.page - 1) * data.pageSize, data.page * data.pageSize - 1);
     if (error) throw new Error(error.message);
@@ -143,13 +147,21 @@ export const retryPaymentFulfillmentAdmin = createServerFn({ method: "POST" })
       try {
         verified = await verifyPaystackTransaction(payment.reference);
       } catch {
-        return { ok: false, reason: "VERIFY_FAILED", detail: "Transaction introuvable chez Paystack." };
+        return {
+          ok: false,
+          reason: "VERIFY_FAILED",
+          detail: "Transaction introuvable chez Paystack.",
+        };
       }
       if (verified.status !== "success") {
         return { ok: false, reason: `TX_${verified.status.toUpperCase()}` };
       }
       if (verified.amountXof !== payment.amount_xof) {
-        return { ok: false, reason: "AMOUNT_MISMATCH", detail: "Montant Paystack différent de la payment." };
+        return {
+          ok: false,
+          reason: "AMOUNT_MISMATCH",
+          detail: "Montant Paystack différent de la payment.",
+        };
       }
     }
 
@@ -157,7 +169,7 @@ export const retryPaymentFulfillmentAdmin = createServerFn({ method: "POST" })
     try {
       const result = await markPaymentSuccessAndFulfill(
         supabaseAdmin,
-        payment as unknown as PaymentRow
+        payment as unknown as PaymentRow,
       );
       return { ok: true, entitlement: result.entitlement, detail: result.detail };
     } catch (err: any) {
@@ -225,7 +237,7 @@ const ExtendSubscriptionInput = z.object({
  *  jamais de débordement JS sur le mois suivant (3 mars). */
 export function computeSubscriptionExtensionWindow(
   currentEnd: string | null,
-  months: number
+  months: number,
 ): { start: string; end: string } {
   const now = new Date();
   const base =
@@ -250,7 +262,7 @@ export function resolveCampaignTokenLot(
   amountXof: number,
   pricePerTokenXof: number | null | undefined,
   existingCount: number,
-  targetCount: number
+  targetCount: number,
 ): number {
   if (!pricePerTokenXof || pricePerTokenXof <= 0) {
     throw new Error("Campagne sans prix unitaire (price_per_token_xof).");
@@ -268,7 +280,7 @@ export function resolveCampaignTokenLot(
  *  token_count enregistré ne permet aucune inférence → 0. */
 export function campaignLotDiscrepancy(
   requestedCount: number | null | undefined,
-  deliverableCount: number
+  deliverableCount: number,
 ): number {
   if (requestedCount == null) return 0;
   return deliverableCount - requestedCount;

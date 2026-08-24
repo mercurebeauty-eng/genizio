@@ -30,7 +30,6 @@ import { PushNotificationsSetup } from "../hooks/use-push-notifications";
 import { Analytics } from "@vercel/analytics/react";
 import { SpeedInsights } from "@vercel/speed-insights/react";
 
-
 function NotFoundComponent() {
   return (
     <div className="flex min-h-dvh items-center justify-center bg-background px-4">

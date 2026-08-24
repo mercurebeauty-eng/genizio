@@ -440,7 +440,13 @@ function PassportPrintPage() {
           {/* Header Cover */}
           <div className="flex justify-between items-center border-b-[3px] border-ink pb-6">
             <div className="flex items-center gap-2 font-display text-balance text-xl font-black text-brand">
-              <img src="/favicon-96x96.png" alt="" className="size-8" />
+              <img
+                src="/favicon-96x96.png"
+                alt="Logo Génizio"
+                width="32"
+                height="32"
+                className="size-8"
+              />
               <span>GÉNIZIO</span>
             </div>
             <span className="rounded-full border-2 border-ink bg-stone-50 px-3 py-1 text-[10px] font-black uppercase tracking-wider">

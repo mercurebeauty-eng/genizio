@@ -27,7 +27,10 @@ import {
   createSponsorshipTokenAdmin,
   type AdminPaymentRow,
 } from "@/lib/payments-admin.functions";
-import { getSubscriptionsDataAdmin, type AdminSubscriptionRow } from "@/lib/subscriptions.functions";
+import {
+  getSubscriptionsDataAdmin,
+  type AdminSubscriptionRow,
+} from "@/lib/subscriptions.functions";
 import {
   listSponsorshipsAdmin,
   confirmSponsorshipPaymentAdmin,
@@ -65,18 +68,28 @@ const SUB_STATUS_LABELS: Record<string, { label: string; className: string }> = 
 };
 
 function StatusBadge({ status }: { status: string }) {
-  const cfg = PAYMENT_STATUS_LABELS[status] ?? { label: status, className: "bg-ink/10 text-ink/60 border-ink/10" };
+  const cfg = PAYMENT_STATUS_LABELS[status] ?? {
+    label: status,
+    className: "bg-ink/10 text-ink/60 border-ink/10",
+  };
   return (
-    <span className={`inline-flex items-center rounded-full border px-2.5 py-0.5 text-[10px] font-black uppercase tracking-wider ${cfg.className}`}>
+    <span
+      className={`inline-flex items-center rounded-full border px-2.5 py-0.5 text-[10px] font-black uppercase tracking-wider ${cfg.className}`}
+    >
       {cfg.label}
     </span>
   );
 }
 
 function SubStatusBadge({ status }: { status: string }) {
-  const cfg = SUB_STATUS_LABELS[status] ?? { label: status, className: "bg-ink/10 text-ink/60 border-ink/10" };
+  const cfg = SUB_STATUS_LABELS[status] ?? {
+    label: status,
+    className: "bg-ink/10 text-ink/60 border-ink/10",
+  };
   return (
-    <span className={`inline-flex items-center rounded-full border px-2.5 py-0.5 text-[10px] font-black uppercase tracking-wider ${cfg.className}`}>
+    <span
+      className={`inline-flex items-center rounded-full border px-2.5 py-0.5 text-[10px] font-black uppercase tracking-wider ${cfg.className}`}
+    >
       {cfg.label}
     </span>
   );
@@ -86,7 +99,9 @@ type PaymentsSection = "payments" | "subscriptions" | "sponsorships" | "expirati
 
 export function AdminPaymentsTab() {
   const { session } = useSession();
-  const opts = session?.access_token ? { headers: { Authorization: `Bearer ${session.access_token}` } } : {};
+  const opts = session?.access_token
+    ? { headers: { Authorization: `Bearer ${session.access_token}` } }
+    : {};
 
   const listPaymentsFn = useServerFn(listPaymentsAdmin);
   const retryFn = useServerFn(retryPaymentFulfillmentAdmin);
@@ -141,7 +156,9 @@ export function AdminPaymentsTab() {
           ...opts,
         }).catch(() => null),
         getSubsFn({ data: undefined, ...opts }).catch(() => ({ subscriptions: [] })),
-        listSponsorshipsFn({ data: { page: 1, pageSize: 50 }, ...opts }).catch(() => ({ data: [] })),
+        listSponsorshipsFn({ data: { page: 1, pageSize: 50 }, ...opts }).catch(() => ({
+          data: [],
+        })),
         getExpirationsFn({ data: undefined, ...opts }).catch(() => []),
         getPendingPaymentsFn({ data: undefined, ...opts }).catch(() => null),
       ]);
@@ -210,7 +227,9 @@ export function AdminPaymentsTab() {
     try {
       const res = await extendSubFn({ data: { subscriptionId, months }, ...opts });
       if (res.ok) {
-        toast.success(`Période prolongée de ${months} mois — échéance : ${new Date(res.endsAt).toLocaleDateString("fr-FR")}.`);
+        toast.success(
+          `Période prolongée de ${months} mois — échéance : ${new Date(res.endsAt).toLocaleDateString("fr-FR")}.`,
+        );
       } else {
         toast.error("Prolongation impossible", { description: res.reason });
       }
@@ -225,7 +244,8 @@ export function AdminPaymentsTab() {
   const handleCancelSubscription = async (subscriptionId: string) => {
     const ok = await confirmDialog({
       title: "Résilier cet abonnement ?",
-      description: "L'abonnement Paystack sera désactivé et la couverture famille s'arrêtera à la fin de la période.",
+      description:
+        "L'abonnement Paystack sera désactivé et la couverture famille s'arrêtera à la fin de la période.",
       confirmLabel: "Résilier",
       variant: "danger",
     });
@@ -260,7 +280,9 @@ export function AdminPaymentsTab() {
     setExtendingId(childId);
     try {
       const res = await extendAccessFn({ data: { childId, months }, ...opts });
-      toast.success(`Accès prolongé de ${months} mois — échéance : ${new Date(res.endsAt).toLocaleDateString("fr-FR")}.`);
+      toast.success(
+        `Accès prolongé de ${months} mois — échéance : ${new Date(res.endsAt).toLocaleDateString("fr-FR")}.`,
+      );
       await loadAll();
     } catch (err: any) {
       toast.error(err?.message || "Erreur lors de la prolongation.");
@@ -287,7 +309,10 @@ export function AdminPaymentsTab() {
   const filteredPayments = payments ?? [];
 
   const SECTIONS: { id: PaymentsSection; label: string }[] = [
-    { id: "payments", label: `Paiements ${pendingCount > 0 ? `· ${pendingCount} en attente` : ""}` },
+    {
+      id: "payments",
+      label: `Paiements ${pendingCount > 0 ? `· ${pendingCount} en attente` : ""}`,
+    },
     { id: "subscriptions", label: "Abonnements" },
     { id: "sponsorships", label: "Parrainages" },
     { id: "expirations", label: "Renouvellements" },
@@ -329,13 +354,16 @@ export function AdminPaymentsTab() {
                 <AlertTriangle className="size-5" />
               </div>
               <div>
-                <h3 className="font-display text-base font-black text-ink">Secours webhook de paiement</h3>
+                <h3 className="font-display text-base font-black text-ink">
+                  Secours webhook de paiement
+                </h3>
                 <p className="mt-1 text-sm font-medium leading-relaxed text-ink/70">
-                  Un paiement resté « en attente » n'a pas été exécuté (webhook manqué, page de retour
-                  perdue, divergence de montant). <strong>Vérifier & exécuter</strong> interroge Paystack
-                  (statut + montant) puis applique le bénéfice ; <strong>Marquer reçu</strong> exécute sans
-                  Paystack (paiement WhatsApp / Mobile Money — décision administrative). L'opération est
-                  idempotente : un paiement déjà exécuté n'est jamais rejoué.
+                  Un paiement resté « en attente » n'a pas été exécuté (webhook manqué, page de
+                  retour perdue, divergence de montant). <strong>Vérifier & exécuter</strong>{" "}
+                  interroge Paystack (statut + montant) puis applique le bénéfice ;{" "}
+                  <strong>Marquer reçu</strong> exécute sans Paystack (paiement WhatsApp / Mobile
+                  Money — décision administrative). L'opération est idempotente : un paiement déjà
+                  exécuté n'est jamais rejoué.
                 </p>
               </div>
             </div>
@@ -379,7 +407,8 @@ export function AdminPaymentsTab() {
                 {filteredPayments.length === 0 && (
                   <tr>
                     <td colSpan={7} className="px-4 py-10 text-center text-sm text-ink/40">
-                      Aucun paiement {paymentFilter === "initiated" ? "en attente" : ""} — tout est fluide.
+                      Aucun paiement {paymentFilter === "initiated" ? "en attente" : ""} — tout est
+                      fluide.
                     </td>
                   </tr>
                 )}
@@ -409,7 +438,11 @@ export function AdminPaymentsTab() {
                             onClick={() => void handleRetry(p.id, "verify")}
                             className="inline-flex items-center gap-1 rounded-xl bg-ink px-2.5 py-1.5 text-[10px] font-bold text-white hover:bg-ink/90 disabled:opacity-50 cursor-pointer"
                           >
-                            {busyId === p.id ? <Loader2 className="size-3 animate-spin" /> : <ShieldCheck className="size-3" />}
+                            {busyId === p.id ? (
+                              <Loader2 className="size-3 animate-spin" />
+                            ) : (
+                              <ShieldCheck className="size-3" />
+                            )}
                             Vérifier & exécuter
                           </button>
                           <button
@@ -468,7 +501,9 @@ export function AdminPaymentsTab() {
               )}
               {(subscriptions ?? []).map((s: AdminSubscriptionRow) => {
                 const periodEnded =
-                  s.status === "active" && s.currentPeriodEnd && new Date(s.currentPeriodEnd).getTime() < Date.now();
+                  s.status === "active" &&
+                  s.currentPeriodEnd &&
+                  new Date(s.currentPeriodEnd).getTime() < Date.now();
                 return (
                   <tr key={s.id} className={periodEnded ? "bg-rose-50/50" : ""}>
                     <td className="px-4 py-3">
@@ -496,7 +531,13 @@ export function AdminPaymentsTab() {
                             {new Date(s.currentPeriodEnd).toLocaleDateString("fr-FR")}
                           </p>
                           <p className="text-[10px] font-medium text-ink/40">
-                            {Math.max(0, Math.ceil((new Date(s.currentPeriodEnd).getTime() - Date.now()) / 86_400_000))} j restant
+                            {Math.max(
+                              0,
+                              Math.ceil(
+                                (new Date(s.currentPeriodEnd).getTime() - Date.now()) / 86_400_000,
+                              ),
+                            )}{" "}
+                            j restant
                           </p>
                         </>
                       ) : (
@@ -512,7 +553,11 @@ export function AdminPaymentsTab() {
                             className="inline-flex items-center gap-1 rounded-xl bg-ink px-2.5 py-1.5 text-[10px] font-bold text-white hover:bg-ink/90 disabled:opacity-50 cursor-pointer"
                             title="Vérifie la référence Paystack puis active l'abonnement (secours du 1er paiement)"
                           >
-                            {busyId === s.id ? <Loader2 className="size-3 animate-spin" /> : <ShieldCheck className="size-3" />}
+                            {busyId === s.id ? (
+                              <Loader2 className="size-3 animate-spin" />
+                            ) : (
+                              <ShieldCheck className="size-3" />
+                            )}
                             Activer (vérifier ref)
                           </button>
                         )}
@@ -627,7 +672,11 @@ export function AdminPaymentsTab() {
                             onClick={() => void handleConfirmSponsorship(t.id)}
                             className="inline-flex items-center gap-1 rounded-xl bg-ink px-2.5 py-1.5 text-[10px] font-bold text-white hover:bg-ink/90 disabled:opacity-50 cursor-pointer"
                           >
-                            {confirmingId === t.id ? <Loader2 className="size-3 animate-spin" /> : <HandCoins className="size-3" />}
+                            {confirmingId === t.id ? (
+                              <Loader2 className="size-3 animate-spin" />
+                            ) : (
+                              <HandCoins className="size-3" />
+                            )}
                             Confirmer paiement
                           </button>
                         )}
@@ -676,7 +725,11 @@ export function AdminPaymentsTab() {
                   </td>
                   <td className="px-4 py-3">
                     <span className="rounded-full border border-ink/10 bg-surface px-2.5 py-0.5 text-[10px] font-black uppercase tracking-wider text-ink/60">
-                      {e.source === "season" ? "Saison" : e.source === "access" ? "Accès" : "Famille"}
+                      {e.source === "season"
+                        ? "Saison"
+                        : e.source === "access"
+                          ? "Accès"
+                          : "Famille"}
                     </span>
                   </td>
                   <td className="px-4 py-3">
@@ -715,15 +768,31 @@ export function AdminPaymentsTab() {
       )}
 
       {/* ── Modale : créer un code de parrainage ── */}
-      {showCreateSponsorship && <CreateSponsorshipModal onClose={() => setShowCreateSponsorship(false)} onCreated={() => { setShowCreateSponsorship(false); void loadAll(); }} />}
+      {showCreateSponsorship && (
+        <CreateSponsorshipModal
+          onClose={() => setShowCreateSponsorship(false)}
+          onCreated={() => {
+            setShowCreateSponsorship(false);
+            void loadAll();
+          }}
+        />
+      )}
     </div>
   );
 }
 
-function CreateSponsorshipModal({ onClose, onCreated }: { onClose: () => void; onCreated: () => void }) {
+function CreateSponsorshipModal({
+  onClose,
+  onCreated,
+}: {
+  onClose: () => void;
+  onCreated: () => void;
+}) {
   const { session } = useSession();
   const createFn = useServerFn(createSponsorshipTokenAdmin);
-  const opts = session?.access_token ? { headers: { Authorization: `Bearer ${session.access_token}` } } : {};
+  const opts = session?.access_token
+    ? { headers: { Authorization: `Bearer ${session.access_token}` } }
+    : {};
   const [sponsorName, setSponsorName] = useState("");
   const [sponsorEmail, setSponsorEmail] = useState("");
   const [months, setMonths] = useState(3);
@@ -737,7 +806,15 @@ function CreateSponsorshipModal({ onClose, onCreated }: { onClose: () => void; o
     }
     setSubmitting(true);
     try {
-      const res = await createFn({ data: { sponsorName: sponsorName.trim(), sponsorEmail: sponsorEmail.trim(), months, amountXof }, ...opts });
+      const res = await createFn({
+        data: {
+          sponsorName: sponsorName.trim(),
+          sponsorEmail: sponsorEmail.trim(),
+          months,
+          amountXof,
+        },
+        ...opts,
+      });
       toast.success(`Code de parrainage créé : ${res.code}`);
       onCreated();
     } catch (err: any) {
@@ -748,11 +825,21 @@ function CreateSponsorshipModal({ onClose, onCreated }: { onClose: () => void; o
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-ink/40 p-4" onClick={() => !submitting && onClose()}>
-      <div className="w-full max-w-md rounded-3xl border border-ink/10 bg-white p-6 shadow-2xl" onClick={(e) => e.stopPropagation()}>
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-ink/40 p-4 overflow-y-auto"
+      onClick={() => !submitting && onClose()}
+    >
+      <div
+        className="w-full max-w-md my-auto rounded-3xl border border-ink/10 bg-white p-6 shadow-2xl max-h-[90vh] overflow-y-auto"
+        onClick={(e) => e.stopPropagation()}
+      >
         <div className="mb-4">
-          <p className="text-[10px] font-black uppercase tracking-widest text-brand">Secours parrainage</p>
-          <h3 className="mt-1 font-display text-lg font-black text-ink">Créer un code de parrainage</h3>
+          <p className="text-[10px] font-black uppercase tracking-widest text-brand">
+            Secours parrainage
+          </p>
+          <h3 className="mt-1 font-display text-lg font-black text-ink">
+            Créer un code de parrainage
+          </h3>
           <p className="mt-1 text-xs text-ink/60">
             Crée un code CONFIRMÉ (prêt à être rédimé) — secours d'un parrainage en ligne dont le
             paiement est confirmé mais dont le code n'a jamais été généré.
@@ -787,7 +874,9 @@ function CreateSponsorshipModal({ onClose, onCreated }: { onClose: () => void; o
                 className="w-full rounded-xl border border-ink/10 bg-surface px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-brand"
               >
                 {[1, 3, 6, 12].map((m) => (
-                  <option key={m} value={m}>{m} mois</option>
+                  <option key={m} value={m}>
+                    {m} mois
+                  </option>
                 ))}
               </select>
             </div>
@@ -817,7 +906,11 @@ function CreateSponsorshipModal({ onClose, onCreated }: { onClose: () => void; o
             onClick={() => void handleCreate()}
             className="inline-flex items-center gap-2 rounded-xl bg-brand px-4 py-2 text-xs font-bold text-white hover:bg-brand/90 disabled:opacity-50 cursor-pointer"
           >
-            {submitting ? <Loader2 className="size-3.5 animate-spin" /> : <HeartHandshake className="size-3.5" />}
+            {submitting ? (
+              <Loader2 className="size-3.5 animate-spin" />
+            ) : (
+              <HeartHandshake className="size-3.5" />
+            )}
             Créer le code
           </button>
         </div>

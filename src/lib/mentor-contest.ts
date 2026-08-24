@@ -84,9 +84,7 @@ export async function hasValidatedChildWorkNearSession(
     // contestation plutôt que d'ouvrir la faille (l'admin reste joignable).
     throw new Error(`Impossible de vérifier le travail validé: ${error.message}`);
   }
-  return (data ?? []).some(
-    (c: any) => c.ai_observations != null || c.proof_mode === "declarative",
-  );
+  return (data ?? []).some((c: any) => c.ai_observations != null || c.proof_mode === "declarative");
 }
 
 /**

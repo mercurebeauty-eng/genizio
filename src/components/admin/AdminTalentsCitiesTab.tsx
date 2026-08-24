@@ -186,7 +186,7 @@ export function AdminTalentsCitiesTab({
 
         {/* Full City Distribution Table */}
         <div className="overflow-x-auto rounded-2xl border border-ink/10">
-          <table className="w-full text-left text-sm">
+          <table className="w-full min-w-[500px] text-left text-sm">
             <thead className="bg-surface text-ink/70 font-extrabold text-xs uppercase tracking-wider border-b border-ink/10">
               <tr>
                 <th className="px-5 py-3.5">Ville</th>
@@ -276,8 +276,8 @@ export function AdminTalentsCitiesTab({
 
           <div className="rounded-2xl bg-leaf/5 border border-leaf/20 p-3.5 text-xs text-leaf/90 font-medium">
             💡 <strong>Règle des Guildes :</strong> L'algorithme attribue la guilde à partir du
-            score moyen des talents de chaque guilde (ex. Bâtisseurs = moyenne Spatiale + Artisanale),
-            égalités départagées par le talent le plus fort.
+            score moyen des talents de chaque guilde (ex. Bâtisseurs = moyenne Spatiale +
+            Artisanale), égalités départagées par le talent le plus fort.
           </div>
         </div>
 

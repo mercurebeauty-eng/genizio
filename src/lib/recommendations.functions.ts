@@ -1,10 +1,28 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
-import { generateDiscriminantChallenge, generateSupportRetestChallenge } from "@/lib/hypotheses.functions";
+import {
+  generateDiscriminantChallenge,
+  generateSupportRetestChallenge,
+} from "@/lib/hypotheses.functions";
 import { getChildAccessStatus } from "@/lib/child-access";
 import { assertChildActor } from "@/lib/child-actor";
 import { getInterestHypothesesSnapshot } from "@/lib/interest-confidence";
-import { callClaude, finalizeChallenge, PROOF_MODE_INSTRUCTION, ACADEMIC_REFERENTIAL_INSTRUCTION, ACADEMIC_SECRET_INSTRUCTION, ACADEMIC_DOMAIN_LABELS, STEPS_INSTRUCTION, INTELLIGENCES_FIELD_INSTRUCTION, TRAIT_SUBFORM_INSTRUCTION, formatChildInterestsPayload, extractJsonFromLLMResponse, getLeastExploredTalentLabels, computeProgressionTargets, formatProgressionInstruction } from "@/lib/challenges.functions";
+import {
+  callClaude,
+  finalizeChallenge,
+  PROOF_MODE_INSTRUCTION,
+  ACADEMIC_REFERENTIAL_INSTRUCTION,
+  ACADEMIC_SECRET_INSTRUCTION,
+  ACADEMIC_DOMAIN_LABELS,
+  STEPS_INSTRUCTION,
+  INTELLIGENCES_FIELD_INSTRUCTION,
+  TRAIT_SUBFORM_INSTRUCTION,
+  formatChildInterestsPayload,
+  extractJsonFromLLMResponse,
+  getLeastExploredTalentLabels,
+  computeProgressionTargets,
+  formatProgressionInstruction,
+} from "@/lib/challenges.functions";
 import { buildRecommendationPrompt, buildAspirationBridgePrompt } from "@/lib/naya-prompts";
 import { getAspirationHypothesesSnapshot } from "@/lib/aspiration-confidence";
 import { formatChildProfileContext, VULNERABLE_LIFE_CONTEXTS } from "@/lib/profile-context";
@@ -19,7 +37,12 @@ const RecommendInput = z.object({
   childId: z.string().uuid(),
 });
 
-export type RecommendationType = "INVESTIGATION" | "ASPIRATION" | "ESSAIMAGE" | "STABILISATION" | "EXPLORATION";
+export type RecommendationType =
+  | "INVESTIGATION"
+  | "ASPIRATION"
+  | "ESSAIMAGE"
+  | "STABILISATION"
+  | "EXPLORATION";
 
 export type RecommendedChallengeResult = {
   recommendationType: RecommendationType;
@@ -38,15 +61,16 @@ export const recommendChallengesForChild = createServerFn({ method: "POST" })
     // Naya de ses enfants assignés. La RLS ne rend pas les défis non-complétés ni
     // les cycles d'hypothèses aux mentors — une fois l'assignation prouvée
     // (assertChildActor), toutes les lectures rebasculent sur le service role.
-    const supAdmin = (await import("@/integrations/supabase/client.server"))
-      .supabaseAdmin as any;
+    const supAdmin = (await import("@/integrations/supabase/client.server")).supabaseAdmin as any;
     const actor = await assertChildActor(supAdmin, userId, data.childId);
     const supabase = actor === "mentor" ? supAdmin : supabaseUser;
 
     // 1. Profil Enfant
     const query = supabase
       .from("child_profiles")
-      .select("id, name, age, interests, talents, life_context, school_relation, ability_profile, aspirations, city, country, time_pressure, school_level, languages")
+      .select(
+        "id, name, age, interests, talents, life_context, school_relation, ability_profile, aspirations, city, country, time_pressure, school_level, languages",
+      )
       .eq("id", data.childId)
       .is("access_locked_at", null)
       .eq("is_active", true);
@@ -67,7 +91,10 @@ export const recommendChallengesForChild = createServerFn({ method: "POST" })
     // Décision 2026-08-05 : les intérêts déclarés sont des HYPOTHÈSES de travail — leur
     // confiance est dérivée à la lecture (complétions vs abandons, par groupe de talents).
     // Un seul snapshot pour les 4 branches de recommandation ci-dessous.
-    const interestHypotheses = await getInterestHypothesesSnapshot(supabase as any, data.childId).catch(() => null);
+    const interestHypotheses = await getInterestHypothesesSnapshot(
+      supabase as any,
+      data.childId,
+    ).catch(() => null);
 
     // 2. NAYA 2.0 Phase 3b : Récupération d'un cycle d'hypothèses ouvert (Priorité 1 — Investigation)
     const { data: openCycle } = await supabase
@@ -93,7 +120,8 @@ export const recommendChallengesForChild = createServerFn({ method: "POST" })
         return {
           recommendationType: "INVESTIGATION",
           badgeLabel: "🔎 Mission d'investigation Naya",
-          pedagogicalReason: "Ce défi a été conçu par Naya pour comprendre précisément la façon dont l'enfant appréhende cet apprentissage.",
+          pedagogicalReason:
+            "Ce défi a été conçu par Naya pour comprendre précisément la façon dont l'enfant appréhende cet apprentissage.",
           challenge: existingDiscriminant,
         };
       }
@@ -104,7 +132,8 @@ export const recommendChallengesForChild = createServerFn({ method: "POST" })
         return {
           recommendationType: "INVESTIGATION",
           badgeLabel: "🔎 Mission d'investigation Naya",
-          pedagogicalReason: "Naya a conçu ce défi spécialement pour tester une hypothèse d'apprentissage adaptée à l'enfant.",
+          pedagogicalReason:
+            "Naya a conçu ce défi spécialement pour tester une hypothèse d'apprentissage adaptée à l'enfant.",
           challenge: discResult.challenge,
         };
       }
@@ -117,14 +146,27 @@ export const recommendChallengesForChild = createServerFn({ method: "POST" })
     // HYPOTHÈSE à explorer, jamais un verdict (§10, §16). Idempotent : un seul
     // défi-pont en attente par aspiration, et pas de nouveau pont si un défi récent
     // (< 14 j) touche déjà ses domaines mappés.
-    const aspirationSnapshot = await getAspirationHypothesesSnapshot(supabase as any, data.childId).catch(() => null);
+    const aspirationSnapshot = await getAspirationHypothesesSnapshot(
+      supabase as any,
+      data.childId,
+    ).catch(() => null);
     if (aspirationSnapshot) {
-      const candidateLabel = [...aspirationSnapshot.untestedLabels, ...aspirationSnapshot.exploringLabels][0];
+      const candidateLabel = [
+        ...aspirationSnapshot.untestedLabels,
+        ...aspirationSnapshot.exploringLabels,
+      ][0];
       if (candidateLabel) {
         const hypothesis = aspirationSnapshot.byLabel[candidateLabel];
         const STALE_CUTOFF = new Date(Date.now() - 14 * 86_400_000).toISOString();
 
-        const [{ data: pendingBridge }, recentInDomains, completedRes, completedInDomainsCount, titlesRes, progressionTargets] = await Promise.all([
+        const [
+          { data: pendingBridge },
+          recentInDomains,
+          completedRes,
+          completedInDomainsCount,
+          titlesRes,
+          progressionTargets,
+        ] = await Promise.all([
           supabase
             .from("challenges")
             .select("id")
@@ -173,19 +215,22 @@ export const recommendChallengesForChild = createServerFn({ method: "POST" })
 
         if (!pendingBridge && !recentInDomains?.data) {
           const vulnerable =
-            ((child as any).life_context ?? []).some((c: string) => VULNERABLE_LIFE_CONTEXTS.includes(c)) ||
+            ((child as any).life_context ?? []).some((c: string) =>
+              VULNERABLE_LIFE_CONTEXTS.includes(c),
+            ) ||
             (child as any).school_relation === "conflit" ||
             (child as any).school_relation === "non_scolarise";
 
           const completedSummary = (completedRes.data ?? [])
-            .map((c: any) => `- Défi "${c.title}" (${c.domain}) : "${c.ai_observations ?? ''}"`)
+            .map((c: any) => `- Défi "${c.title}" (${c.domain}) : "${c.ai_observations ?? ""}"`)
             .join("\n");
           const completedInAspirationDomains = completedInDomainsCount.count ?? 0;
 
           const prompt = buildAspirationBridgePrompt({
             childName: child.name,
             childAge: child.age,
-            profileLocation: [child.city, child.country].filter(Boolean).join(", ") || "non précisé",
+            profileLocation:
+              [child.city, child.country].filter(Boolean).join(", ") || "non précisé",
             interestsPayload: formatChildInterestsPayload(child.interests, interestHypotheses),
             talentsJson: JSON.stringify(child.talents || {}),
             completedSummary,
@@ -207,7 +252,11 @@ export const recommendChallengesForChild = createServerFn({ method: "POST" })
             void verifyAndLog({
               kind: "recommendation",
               output: parsed,
-              context: { childAge: child.age, childName: child.name, aspirationLabel: hypothesis.label },
+              context: {
+                childAge: child.age,
+                childName: child.name,
+                aspirationLabel: hypothesis.label,
+              },
               sourceFunction: "recommendChallengesForChild/aspiration",
               childId: data.childId,
               model: "deepseek-v4-flash",
@@ -231,7 +280,10 @@ export const recommendChallengesForChild = createServerFn({ method: "POST" })
                 materials: safeMaterials,
                 status: "todo",
                 progress: 0,
-                pedagogical_context: JSON.stringify({ is_recommendation: true, type: "ASPIRATION" }),
+                pedagogical_context: JSON.stringify({
+                  is_recommendation: true,
+                  type: "ASPIRATION",
+                }),
                 academic_secret: parsed.academic_secret ?? null,
                 aspiration_label: hypothesis.label,
                 ...finalizeChallenge(
@@ -254,7 +306,7 @@ export const recommendChallengesForChild = createServerFn({ method: "POST" })
                     guidance_level: parsed.guidance_level,
                   },
                   child.age,
-                  { completedInDomain: completedInAspirationDomains }
+                  { completedInDomain: completedInAspirationDomains },
                 ),
               })
               .select("*")
@@ -301,7 +353,9 @@ export const recommendChallengesForChild = createServerFn({ method: "POST" })
         // Valeurs entre guillemets (review 2026-08-12, P2) : trigger_domain est un
         // libellé libre (ex. « Tech & IA ») — sans quoting, le filtre PostgREST .or()
         // cassait en 400 sur les &/espaces.
-        .or(`domain.eq."${supportCycle.trigger_domain}",academic_domain.eq."${supportCycle.trigger_domain}"`)
+        .or(
+          `domain.eq."${supportCycle.trigger_domain}",academic_domain.eq."${supportCycle.trigger_domain}"`,
+        )
         .gt("completed_at", since);
 
       // 5 défis réussis en mode soutenu avant de retester (décision utilisateur explicite,
@@ -317,34 +371,36 @@ export const recommendChallengesForChild = createServerFn({ method: "POST" })
           return {
             recommendationType: "INVESTIGATION",
             badgeLabel: "🔎 Mission d'investigation Naya",
-            pedagogicalReason: "Naya vérifie discrètement si l'accompagnement renforcé récent est encore nécessaire.",
+            pedagogicalReason:
+              "Naya vérifie discrètement si l'accompagnement renforcé récent est encore nécessaire.",
             challenge: retestResult.challenge,
           };
         }
       } else {
-        const subject = ACADEMIC_DOMAIN_LABELS[supportCycle.trigger_domain] ?? supportCycle.trigger_domain;
+        const subject =
+          ACADEMIC_DOMAIN_LABELS[supportCycle.trigger_domain] ?? supportCycle.trigger_domain;
         const formattedInterests = formatChildInterestsPayload(child.interests, interestHypotheses);
         const prompt = buildRecommendationPrompt({
-        mode: "stabilisation_cycle",
-        childName: child.name,
-        childAge: child.age,
-        interestsPayload: formattedInterests,
-        subject,
-      });
-
-      try {
-        const rawJson = await callClaude(prompt, true, undefined, 1000, 2);
-        const parsed = JSON.parse(extractJsonFromLLMResponse(rawJson));
-
-        // Le Loup (chantier 2, Naya 3.0) : audit shadow non-bloquant de la sortie brute.
-        void verifyAndLog({
-          kind: "recommendation",
-          output: parsed,
-          context: { childAge: child.age, childName: child.name, requiresStabilisation: true },
-          sourceFunction: "recommendChallengesForChild/stabilisation_cycle",
-          childId: data.childId,
-          model: "deepseek-v4-flash",
+          mode: "stabilisation_cycle",
+          childName: child.name,
+          childAge: child.age,
+          interestsPayload: formattedInterests,
+          subject,
         });
+
+        try {
+          const rawJson = await callClaude(prompt, true, undefined, 1000, 2);
+          const parsed = JSON.parse(extractJsonFromLLMResponse(rawJson));
+
+          // Le Loup (chantier 2, Naya 3.0) : audit shadow non-bloquant de la sortie brute.
+          void verifyAndLog({
+            kind: "recommendation",
+            output: parsed,
+            context: { childAge: child.age, childName: child.name, requiresStabilisation: true },
+            sourceFunction: "recommendChallengesForChild/stabilisation_cycle",
+            childId: data.childId,
+            model: "deepseek-v4-flash",
+          });
 
           const safeTitle = (parsed.title || "Petit défi tranquille avec Naya") as string;
           const safeDescription = (parsed.description || "") as string;
@@ -364,7 +420,10 @@ export const recommendChallengesForChild = createServerFn({ method: "POST" })
               materials: safeMaterials,
               status: "todo",
               progress: 0,
-              pedagogical_context: JSON.stringify({ is_recommendation: true, type: "STABILISATION" }),
+              pedagogical_context: JSON.stringify({
+                is_recommendation: true,
+                type: "STABILISATION",
+              }),
               // Même trou que les autres générateurs de recommandation (Essaimage/Stabilisation/
               // Exploration) : demandé au prompt mais jamais recopié dans l'insertion directe.
               academic_secret: parsed.academic_secret ?? null,
@@ -391,7 +450,7 @@ export const recommendChallengesForChild = createServerFn({ method: "POST" })
                   kind: parsed.kind,
                   guidance_level: parsed.guidance_level,
                 },
-                child.age
+                child.age,
               ),
             })
             .select("*")
@@ -421,7 +480,8 @@ export const recommendChallengesForChild = createServerFn({ method: "POST" })
     // "level" corrigé en "value" (2026-07-20, décision #34) : le champ réel écrit par
     // Phase 1 (record_trait_point, migration 20260720110000) est "value", pas "level"
     // — n'était encore lu nulle part donc sans conséquence runtime, mais trompeur.
-    const competencies = (twin?.competencies as Record<string, { value: number; category: string }>) || {};
+    const competencies =
+      (twin?.competencies as Record<string, { value: number; category: string }>) || {};
     const entries = Object.entries(competencies);
 
     // §8 (2026-08-12) : les difficultés DÉCLARÉES par le parent (ability_profile)
@@ -430,7 +490,10 @@ export const recommendChallengesForChild = createServerFn({ method: "POST" })
     const weaknessCandidates = entries
       .filter(([, v]) => v.category === "RISQUE" || v.category === "FAIBLESSE")
       .map(([key, v]) => ({ key, v }));
-    const weaknessEntry = rankByDeclaredDifficulties(weaknessCandidates, (child as any).ability_profile)[0];
+    const weaknessEntry = rankByDeclaredDifficulties(
+      weaknessCandidates,
+      (child as any).ability_profile,
+    )[0];
     const strengthEntry = entries.find(([, v]) => v.category === "FORCE");
     const fragilityEntry = entries.find(([, v]) => v.category === "FRAGILITE");
 
@@ -505,7 +568,7 @@ export const recommendChallengesForChild = createServerFn({ method: "POST" })
                 kind: parsed.kind,
                 guidance_level: parsed.guidance_level,
               },
-              child.age
+              child.age,
             ),
           })
           .select("*")
@@ -597,7 +660,7 @@ export const recommendChallengesForChild = createServerFn({ method: "POST" })
                 kind: parsed.kind,
                 guidance_level: parsed.guidance_level,
               },
-              child.age
+              child.age,
             ),
           })
           .select("*")
@@ -607,7 +670,8 @@ export const recommendChallengesForChild = createServerFn({ method: "POST" })
           return {
             recommendationType: "STABILISATION",
             badgeLabel: "🛡️ Défi d'ancrage Naya",
-            pedagogicalReason: "Un défi rassurant et structuré pour ancrer la confiance avant de reprendre l'exploration.",
+            pedagogicalReason:
+              "Un défi rassurant et structuré pour ancrer la confiance avant de reprendre l'exploration.",
             challenge,
           };
         }
@@ -642,7 +706,7 @@ export const recommendChallengesForChild = createServerFn({ method: "POST" })
       // (review 2026-08-12, P1). La difficulté ciblée n'était jamais choisie.
       const targetLabels = biasLabelsByDeclaredDifficulties(
         getLeastExploredTalentLabels(child.talents as Record<string, number> | null, 3),
-        (child as any).ability_profile
+        (child as any).ability_profile,
       );
       const formattedInterests = formatChildInterestsPayload(child.interests, interestHypotheses);
       const prompt = buildRecommendationPrompt({
@@ -710,7 +774,7 @@ export const recommendChallengesForChild = createServerFn({ method: "POST" })
                 kind: parsed.kind,
                 guidance_level: parsed.guidance_level,
               },
-              child.age
+              child.age,
             ),
           })
           .select("*")

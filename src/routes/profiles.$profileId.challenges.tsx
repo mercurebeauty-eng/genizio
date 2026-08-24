@@ -81,11 +81,13 @@ import { DifficultyBadge } from "@/components/challenges/DifficultyBadge";
 import { ChallengeCountdown } from "@/components/challenges/ChallengeCountdown";
 import { ChallengeKindBadge } from "@/components/challenges/ChallengeKindBadge";
 import { MarkdownContent } from "@/components/ui/markdown-content";
+import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover";
 import {
   ChallengeDeleteDialog,
   type ChallengeDeletePayload,
 } from "@/components/challenges/ChallengeDeleteDialog";
-import { ChallengeNotCompletedDialog,
+import {
+  ChallengeNotCompletedDialog,
   NOT_COMPLETED_CHIP_LABELS,
   type NotCompletedPayload,
 } from "@/components/challenges/ChallengeNotCompletedDialog";
@@ -1026,82 +1028,86 @@ function ChallengesPage() {
                   Mode accompagnement — {child?.name ?? "cet enfant"} est suivi par un mentor
                 </p>
                 <p className="text-xs text-ink/60 mt-0.5">
-                  Le mentor opère les défis en séance ({mentorInfo.email}). Vous gardez le
-                  dernier mot : réouvrez un défi, validez le bilan, gérez la publication.
+                  Le mentor opère les défis en séance ({mentorInfo.email}). Vous gardez le dernier
+                  mot : réouvrez un défi, validez le bilan, gérez la publication.
                 </p>
               </div>
-              <div className="relative">
-                <button
-                  onClick={() => {
-                    setShowActivity((s) => !s);
-                    if (!showActivity)
-                      void notificationsFn().then((res) =>
-                        setNotifications((res as any).notifications ?? []),
-                      );
-                  }}
-                  className="inline-flex items-center gap-2 rounded-2xl border border-sky-300 bg-white px-4 py-2.5 text-xs font-black text-sky-800 shadow-sm hover:bg-sky-50 transition-all cursor-pointer"
-                >
-                  <Bell className="size-4" />
-                  Activité
-                  {notifications.filter((n) => !n.read).length > 0 && (
-                    <span className="grid size-5 place-items-center rounded-full bg-rose-500 text-[10px] font-black text-white">
-                      {notifications.filter((n) => !n.read).length}
-                    </span>
-                  )}
-                </button>
-                {showActivity && (
-                  <div className="absolute right-0 top-full z-40 mt-2 w-80 rounded-2xl border border-ink/10 bg-white p-3 shadow-2xl">
-                    <div className="flex items-center justify-between mb-2">
-                      <p className="text-xs font-black uppercase tracking-widest text-ink/60">
-                        Activité du mentor
-                      </p>
-                      <button
-                        onClick={handleMarkAllRead}
-                        className="text-[10px] font-black text-brand hover:underline cursor-pointer"
-                      >
-                        Tout marquer lu
-                      </button>
-                    </div>
-                    {notifications.length === 0 ? (
-                      <p className="text-sm text-ink/50 italic py-4 text-center">
-                        Aucune activité récente.
-                      </p>
-                    ) : (
-                      <ul className="space-y-2 max-h-72 overflow-y-auto">
-                        {notifications.map((n) => (
-                          <li
-                            key={n.id}
-                            className={`rounded-xl border px-3 py-2 text-xs ${
-                              n.read
-                                ? "border-ink/10 bg-surface text-ink/60"
-                                : "border-sky-200 bg-sky-50 text-ink"
-                            }`}
-                          >
-                            {n.type === "mentor_challenge_completed"
-                              ? `🎉 ${n.payload?.title ?? "Un défi"} complété par le mentor`
-                              : n.type === "mentor_abandon"
-                                ? `❌ ${n.payload?.title ?? "Un défi"} marqué non réussi par le mentor`
-                                : n.type === "mentor_session_to_validate"
-                                  ? `📋 Séance à valider — ${n.payload?.occurred_at ? new Date(n.payload.occurred_at).toLocaleDateString("fr-FR") : ""}`
-                                  : n.type === "mentor_session_confirmed"
-                                    ? `✅ Séance confirmée par le parent`
-                                    : n.type === "mentor_bilan_submitted"
-                                      ? `📄 Bilan soumis par le mentor`
-                                      : n.type === "mentor_bilan_validated"
-                                        ? `✅ Bilan validé par le parent`
-                                        : n.type === "mentor_bilan_rejected"
-                                          ? `↩️ Bilan renvoyé au mentor`
-                                          : `🔔 ${n.type}`}
-                            <span className="block text-[10px] font-bold text-ink/40 mt-0.5">
-                              {new Date(n.created_at).toLocaleString("fr-FR")}
-                            </span>
-                          </li>
-                        ))}
-                      </ul>
+              <Popover
+                open={showActivity}
+                onOpenChange={(open) => {
+                  setShowActivity(open);
+                  if (open) {
+                    void notificationsFn().then((res) =>
+                      setNotifications((res as any).notifications ?? []),
+                    );
+                  }
+                }}
+              >
+                <PopoverTrigger asChild>
+                  <button className="inline-flex items-center gap-2 rounded-2xl border border-sky-300 bg-white px-4 py-2.5 text-xs font-black text-sky-800 shadow-sm hover:bg-sky-50 transition-all cursor-pointer">
+                    <Bell className="size-4" />
+                    Activité
+                    {notifications.filter((n) => !n.read).length > 0 && (
+                      <span className="grid size-5 place-items-center rounded-full bg-rose-500 text-[10px] font-black text-white">
+                        {notifications.filter((n) => !n.read).length}
+                      </span>
                     )}
+                  </button>
+                </PopoverTrigger>
+                <PopoverContent
+                  align="end"
+                  className="z-40 w-80 max-w-[calc(100vw-2rem)] rounded-2xl border border-ink/10 bg-white p-3 shadow-2xl"
+                >
+                  <div className="flex items-center justify-between mb-2">
+                    <p className="text-xs font-black uppercase tracking-widest text-ink/60">
+                      Activité du mentor
+                    </p>
+                    <button
+                      onClick={handleMarkAllRead}
+                      className="text-[10px] font-black text-brand hover:underline cursor-pointer"
+                    >
+                      Tout marquer lu
+                    </button>
                   </div>
-                )}
-              </div>
+                  {notifications.length === 0 ? (
+                    <p className="text-sm text-ink/50 italic py-4 text-center">
+                      Aucune activité récente.
+                    </p>
+                  ) : (
+                    <ul className="space-y-2 max-h-72 overflow-y-auto">
+                      {notifications.map((n) => (
+                        <li
+                          key={n.id}
+                          className={`rounded-xl border px-3 py-2 text-xs ${
+                            n.read
+                              ? "border-ink/10 bg-surface text-ink/60"
+                              : "border-sky-200 bg-sky-50 text-ink"
+                          }`}
+                        >
+                          {n.type === "mentor_challenge_completed"
+                            ? `🎉 ${n.payload?.title ?? "Un défi"} complété par le mentor`
+                            : n.type === "mentor_abandon"
+                              ? `❌ ${n.payload?.title ?? "Un défi"} marqué non réussi par le mentor`
+                              : n.type === "mentor_session_to_validate"
+                                ? `📋 Séance à valider — ${n.payload?.occurred_at ? new Date(n.payload.occurred_at).toLocaleDateString("fr-FR") : ""}`
+                                : n.type === "mentor_session_confirmed"
+                                  ? `✅ Séance confirmée par le parent`
+                                  : n.type === "mentor_bilan_submitted"
+                                    ? `📄 Bilan soumis par le mentor`
+                                    : n.type === "mentor_bilan_validated"
+                                      ? `✅ Bilan validé par le parent`
+                                      : n.type === "mentor_bilan_rejected"
+                                        ? `↩️ Bilan renvoyé au mentor`
+                                        : `🔔 ${n.type}`}
+                          <span className="block text-[10px] font-bold text-ink/40 mt-0.5">
+                            {new Date(n.created_at).toLocaleString("fr-FR")}
+                          </span>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </PopoverContent>
+              </Popover>
             </div>
           )}
 
@@ -1224,7 +1230,7 @@ function ChallengesPage() {
                               key={d.domain}
                               className="flex items-center justify-between gap-2 rounded-2xl bg-surface border border-border px-4 py-3"
                             >
-                              <span className="text-[13px] font-bold text-ink">
+                              <span className="text-[13px] font-bold text-ink truncate min-w-0">
                                 {ACADEMIC_DOMAIN_LABELS[d.domain] ?? d.domain}
                               </span>
                               <span className="text-[13px] font-extrabold text-cyan-900 bg-cyan-100 rounded-full px-3 py-1 shrink-0">
@@ -1270,12 +1276,12 @@ function ChallengesPage() {
                                 {entries.map(([key, count]) => (
                                   <div
                                     key={key}
-                                    className="flex items-center justify-between text-sm"
+                                    className="flex items-center justify-between gap-2 text-sm"
                                   >
-                                    <span className="font-bold text-ink">
+                                    <span className="font-bold text-ink truncate min-w-0">
                                       {TALENT_SUBFORM_LABELS[key] ?? key}
                                     </span>
-                                    <span className="text-ink/60 font-medium">
+                                    <span className="text-ink/60 font-medium shrink-0">
                                       {count} défi{count > 1 ? "s" : ""}
                                     </span>
                                   </div>
@@ -1566,9 +1572,11 @@ function ChallengesPage() {
                               💡 Analyse stratégique (Naya)
                             </h5>
                             <MarkdownContent
-                              content={formatPedagogicalIntention(
-                                currentGeneratedChallenge.pedagogical_context,
-                              )!}
+                              content={
+                                formatPedagogicalIntention(
+                                  currentGeneratedChallenge.pedagogical_context,
+                                )!
+                              }
                               inline
                             />
                           </div>
@@ -1868,7 +1876,7 @@ function ChallengesPage() {
       {/* Modal Recommandation de Kit Post-Assignation */}
       {assignedChallengeForKit && (
         <div className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-ink/55 backdrop-blur-sm p-4 animate-in fade-in duration-200">
-          <div className="relative w-full max-w-md rounded-3xl border border-ink/10 bg-white p-6 shadow-xl md:p-8">
+          <div className="relative my-auto w-full max-w-md max-h-[90vh] overflow-y-auto rounded-3xl border border-ink/10 bg-white p-6 shadow-xl md:p-8">
             <button
               onClick={() => setAssignedChallengeForKit(null)}
               className="absolute right-4 top-4 rounded-xl border border-ink/10 bg-stone-100 p-1.5 hover:bg-stone-200 transition-colors"
@@ -1892,9 +1900,9 @@ function ChallengesPage() {
             <div className="rounded-2xl border border-ink/10 bg-sky/15 p-4 mb-6">
               <ul className="space-y-1.5 mb-3">
                 {assignedChallengeForKit.products.map((p) => (
-                  <li key={p.id} className="flex justify-between text-sm font-bold text-ink">
-                    <span>{p.name}</span>
-                    <span>{p.price_xof.toLocaleString("fr-FR")} FCFA</span>
+                  <li key={p.id} className="flex justify-between items-center text-sm font-bold text-ink gap-2 min-w-0">
+                    <span className="truncate min-w-0">{p.name}</span>
+                    <span className="shrink-0">{p.price_xof.toLocaleString("fr-FR")} FCFA</span>
                   </li>
                 ))}
               </ul>
@@ -2483,11 +2491,7 @@ function ChallengeCard({
         {/* Preuve sociale réelle : collecte du témoignage parent après un défi validé.
             Seulement sur un défi complété — c'est là qu'un vrai vécu existe. */}
         {c.status === "completed" && (
-          <TestimonialPrompt
-            childId={childId}
-            childName={childName}
-            challengeTitle={c.title}
-          />
+          <TestimonialPrompt childId={childId} childName={childName} challengeTitle={c.title} />
         )}
 
         <div className="flex justify-end pt-5 border-t border-border mt-6">

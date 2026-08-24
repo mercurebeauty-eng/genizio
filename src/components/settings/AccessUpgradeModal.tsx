@@ -121,7 +121,7 @@ export function AccessUpgradeModal({
     >
       <div
         onClick={(e) => e.stopPropagation()}
-        className="w-full max-w-md rounded-[2rem] border border-ink/10 bg-white/95 backdrop-blur-md p-8 shadow-xl"
+        className="w-full max-w-md rounded-[2rem] border border-ink/10 bg-white/95 backdrop-blur-md p-6 sm:p-8 shadow-xl max-h-[90vh] overflow-y-auto"
       >
         {/* Header — jauge de couverture */}
         <div className="mb-6 flex items-start gap-4">
@@ -220,9 +220,9 @@ export function AccessUpgradeModal({
           <p className="mt-1 text-[11px] font-semibold text-ink/60">
             {PACK_SESSIONS} séances × {formatXof(SESSION_PRICE_XOF)} = {formatXof(PACK_PRICE_XOF)}
             /mois — <strong>pour un seul enfant</strong> (3 séances/ semaine × 4 semaines). Un
-            mentor formé rencontre votre enfant, suit sa progression et fait le lien avec les
-            défis Naya. Le bilan initial ({formatXof(BILAN_PRICE_XOF)}, une séance) est inclus dans
-            le premier mois.
+            mentor formé rencontre votre enfant, suit sa progression et fait le lien avec les défis
+            Naya. Le bilan initial ({formatXof(BILAN_PRICE_XOF)}, une séance) est inclus dans le
+            premier mois.
           </p>
 
           {/* Sélecteur d'enfant — le pack est PAR ENFANT. */}

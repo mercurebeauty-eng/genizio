@@ -1,8 +1,13 @@
-import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
 import { cn } from "@/lib/utils";
 import { MarkdownContent } from "@/components/ui/markdown-content";
 
-export function StepAccordion({ steps, className }: { steps: string[], className?: string }) {
+export function StepAccordion({ steps, className }: { steps: string[]; className?: string }) {
   if (!steps || steps.length === 0) return null;
 
   return (
@@ -15,12 +20,13 @@ export function StepAccordion({ steps, className }: { steps: string[], className
           // Si l'étape est longue, on essaie d'extraire une phrase courte pour le titre,
           // sinon on affiche "Étape X".
           const firstDot = step.indexOf(".");
-          const shortTitle = firstDot > 10 && firstDot < 60 ? step.substring(0, firstDot) : `Étape ${index + 1}`;
-          
+          const shortTitle =
+            firstDot > 10 && firstDot < 60 ? step.substring(0, firstDot) : `Étape ${index + 1}`;
+
           return (
-            <AccordionItem 
-              key={index} 
-              value={`step-${index}`} 
+            <AccordionItem
+              key={index}
+              value={`step-${index}`}
               className="border border-ink/10 bg-white rounded-xl px-4 overflow-hidden data-[state=open]:bg-white data-[state=open]:shadow-md transition-all"
             >
               <AccordionTrigger className="py-3 hover:no-underline text-ink/80 hover:text-ink text-sm data-[state=open]:text-brand group">

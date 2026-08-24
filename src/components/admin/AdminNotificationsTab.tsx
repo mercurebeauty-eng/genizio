@@ -191,8 +191,8 @@ export function AdminNotificationsTab() {
         </div>
       ) : rows.length === 0 ? (
         <div className="rounded-2xl border border-ink/10 bg-white p-10 text-center text-sm font-semibold text-ink/60">
-          Aucune notification{typeFilter ? " de ce type" : ""} pour le moment. Elles
-          apparaîtront ici dès qu'un événement sera émis.
+          Aucune notification{typeFilter ? " de ce type" : ""} pour le moment. Elles apparaîtront
+          ici dès qu'un événement sera émis.
         </div>
       ) : (
         <>

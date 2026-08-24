@@ -1,13 +1,13 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { ArrowRight, MessageCircle } from "lucide-react";
+import { ArrowRight, MessageCircle, Sparkles, Brain, Compass, Target } from "lucide-react";
 import { pageMeta, jsonLdScript, breadcrumbJsonLd } from "@/lib/seo";
 
 export const Route = createFileRoute("/a-propos")({
   head: () => {
     const meta = pageMeta({
-      title: "À propos de Génizio — révéler les talents de votre enfant",
+      title: "À propos de Génizio — Le manifeste pour l'éducation à l'ère de l'IA",
       description:
-        "Génizio est un projet fondé par Cheick Mohamed TRAORE pour aider chaque enfant à révéler et développer les talents que l'école ne mesure pas, du Sénégal à la Côte d'Ivoire.",
+        "Découvrez la vision de Génizio : renverser le paradigme pédagogique, préparer les enfants aux mutations de l'IA par l'action réelle et révéler le potentiel de la jeunesse africaine.",
       path: "/a-propos",
     });
     return {
@@ -34,7 +34,13 @@ function AProposPage() {
             to="/"
             className="flex items-center gap-2 font-display text-xl font-extrabold tracking-tight text-brand"
           >
-            <img src="/favicon-96x96.png" alt="Logo Génizio" className="h-7 w-7" />
+            <img
+              src="/favicon-96x96.png"
+              alt="Logo Génizio"
+              width="28"
+              height="28"
+              className="h-7 w-7"
+            />
             GÉNIZIO
           </Link>
           <Link
@@ -58,107 +64,164 @@ function AProposPage() {
           <span className="text-ink/70">À propos</span>
         </nav>
 
-        <p className="mb-3 text-xs font-black uppercase tracking-widest text-brand">À propos</p>
+        <p className="mb-3 text-xs font-black uppercase tracking-widest text-brand">
+          Manifeste Pédagogique
+        </p>
         <h1 className="font-display text-balance text-3xl font-extrabold leading-[1.1] md:text-5xl">
-          Pourquoi Génizio existe
+          Préparer les enfants à un monde que nous ne connaissons pas encore.
         </h1>
 
-        <div className="prose-genizio mt-8">
-          <h2>Notre mission</h2>
+        <div className="prose-genizio mt-10 space-y-8">
+          <div className="rounded-3xl border border-brand/20 bg-brand/5 p-6 md:p-8">
+            <p className="text-base font-semibold leading-relaxed text-ink/90 italic">
+              « Pendant des siècles, nous avons surtout cherché à savoir ce qu'un enfant avait
+              retenu. Le défi éducatif de l'ère de l'intelligence artificielle est de comprendre ce
+              qu'il est capable de faire lorsque personne ne lui donne la réponse. »
+            </p>
+          </div>
+
+          <h2>1. Le constat : L'urgence d'une nouvelle éducation face à l'IA</h2>
           <p>
-            Génizio aide chaque enfant à révéler les talents que l'école ne mesure pas — à travers
-            des défis concrets à réaliser à la maison, fondés sur les 9 intelligences de Howard
-            Gardner — puis à les transformer en compétences, en confiance et en projets. L'idée de
-            départ : le programme scolaire ne mesure qu'une petite partie de ce dont un enfant est
-            capable. Génizio cherche le reste, et lui donne un chemin.
+            Le monde professionnel connaît la mutation la plus rapide de son histoire. Chaque
+            semaine, de nouveaux modèles d'intelligence artificielle automatisent des tâches qui
+            exigeaient hier des années d'études : rédiger, synthétiser, traduire, coder une
+            application, analyser des masses de données ou générer des visuels.
           </p>
           <p>
-            Beaucoup d'enfants — surtout en Afrique francophone et dans la diaspora — grandissent
-            avec des talents réels que personne ne regarde : l'habileté manuelle, le sens de la
-            négociation, l'esprit d'entreprise, la capacité à fédérer un groupe. L'école valorise
-            presque exclusivement le langage et la logique. Génizio donne aux autres formes
-            d'intelligence un cadre pour se révéler — et aux parents, un moyen de les voir.
+            Pourtant, le système éducatif traditionnel continue de former les enfants selon les
+            règles du siècle passé : mémoriser une leçon, appliquer une procédure standardisée et
+            restituer des réponses connues lors d'un examen théorique. Des milliers d'élèves sortent
+            avec des diplômes identiques pour des métiers en cours de disparition, risquant de se
+            retrouver sans repères sur le marché mondial.
+          </p>
+          <p>
+            <strong>La valeur humaine s'est déplacée.</strong> Ce qui devient rare et décisif, ce
+            n'est plus d'être une banque de données vivante : c'est de savoir observer le monde
+            réel, identifier les vrais problèmes, prendre des initiatives, faire preuve d'esprit
+            critique, collaborer et savoir concevoir des solutions avec l'IA.
           </p>
 
-          <h2>Notre méthode : observer ce que l'enfant fait, pas ce qu'il déclare</h2>
+          <h2>2. Notre rupture : Partir de la pratique pour donner soif de théorie</h2>
           <p>
-            La méthode tient en trois gestes simples. L'application propose à l'enfant un défi
-            concret adapté à son âge et à ses centres d'intérêt : fabriquer, mesurer, cuisiner,
-            vendre, organiser, réparer. Le parent photographie le résultat, preuve à l'appui. Et la
-            carte des talents de l'enfant se construit à partir de ces réalisations réelles, jamais
-            d'un questionnaire rempli par un adulte.
+            L'ancien paradigme consiste à assommer l'élève de théories abstraites en espérant qu'il
+            trouve un jour l'occasion de les appliquer. Génizio inverse totalement la logique :
+          </p>
+          <ul className="space-y-2 list-disc pl-5 font-medium text-ink/80">
+            <li>
+              <strong>L'action d'abord :</strong> L'enfant commence par affronter un défi concret
+              ancré dans le réel (concevoir un système d'irrigation avec des bouteilles recyclées,
+              calculer le prix de revient d'une boisson et la vendre, fabriquer un pont miniature
+              sans colle).
+            </li>
+            <li>
+              <strong>La friction du réel :</strong> En manipulant et en se heurtant aux contraintes
+              physiques, matérielles ou économiques, l'enfant commet des erreurs, teste des
+              hypothèses et affine sa réflexion.
+            </li>
+            <li>
+              <strong>La théorie utile :</strong> C'est parce qu'il veut faire fonctionner son
+              projet qu'il ressent le besoin naturel et viscéral d'aller chercher la formule
+              mathématique, le principe physique ou la structure linguistique. La théorie cesse
+              d'être une corvée imposée : elle devient son outil de puissance.
+            </li>
+          </ul>
+
+          <h2>3. La revanche des intelligences non conventionnelles</h2>
+          <p>
+            Le système scolaire classique a historiquement récompensé une frange étroite des profils
+            : ceux dotés d'une forte mémoire académique et d'une aisance logico-linguistique
+            formelle. Tous les autres — les profils manuels, spatiaux, commerciaux, relationnels ou
+            créatifs — ont souvent été marginalisés ou qualifiés de « moyens ».
           </p>
           <p>
-            C'est une approche du potentiel par la preuve plutôt que par l'intuition : ce que
-            l'enfant choisit, ce qu'il persévère à terminer, ce vers quoi il revient spontanément en
-            dit plus long que n'importe quel test.
+            Aujourd'hui, l'IA exécute la théorie formelle à coût nul. Par un renversement
+            historique, ce sont précisément les qualités autrefois délaissées qui deviennent les
+            atouts maîtres : l'ingéniosité pratique, le sens de la négociation, l'intelligence
+            spatiale, l'artisanat et l'audace entrepreneuriale.
+          </p>
+          <p>
+            En nous fondant sur les <strong>9 intelligences de Howard Gardner</strong>, nous
+            refusons de réduire un enfant à son rang dans une classe. Nous cartographions son
+            potentiel complet pour que chaque profil trouve sa voie d'excellence.
           </p>
 
-          <h2>Ce que Génizio n'est pas</h2>
+          <h2>4. Complémentarité avec l'école & Hybridation avec l'IA (Naya)</h2>
           <p>
-            Génizio ne pose aucun diagnostic, ne mesure aucun QI et ne remplace ni un psychologue,
-            ni un enseignant, ni un médecin. Il n'est pas non plus un cours particulier déguisé ni
-            un outil de classement des enfants entre eux. C'est un outil d'observation et de mise en
-            confiance : il crée des occasions de réussir et documente ce qui est réussi.
+            Génizio ne s'oppose pas à l'école. L'école transmet le socle fondamental des
+            connaissances. Génizio explore ce que l'enfant peut en faire.
+          </p>
+          <p>
+            Dans cet environnement, <strong>Naya</strong>, notre IA pédagogique bienveillante, ne
+            donne jamais de réponses toutes faites. Elle agit comme un entraîneur intellectuel :
+            elle pose des questions socratiques, invite à trouver les failles d'un raisonnement,
+            encourage après un échec et guide l'enfant pour qu'il devienne un <em>architecte</em>{" "}
+            qui pilote la machine, et non un exécutant passif.
           </p>
 
-          <h2>Le fondateur</h2>
+          <h2>5. La méthode de la preuve par l'action</h2>
           <p>
-            Génizio est fondé par <strong>Cheick Mohamed TRAORE</strong>. Les détails juridiques de
-            la structure porteuse sont précisés dans les{" "}
-            <Link to="/mentions-legales" className="text-brand underline">
-              mentions légales
-            </Link>
-            .
+            Génizio bannit les questionnaires d'évaluation remplis par des tiers. La méthode repose
+            sur la preuve tangible :
+          </p>
+          <ol className="space-y-2 list-decimal pl-5 font-medium text-ink/80">
+            <li>L'enfant réalise son défi dans son environnement familial ou son quartier.</li>
+            <li>Le parent valide et photographie la réalisation concrète.</li>
+            <li>
+              L'IA et nos outils pédagogiques analysent la démarche et mettent à jour la
+              cartographie dynamique des compétences au fil des semaines.
+            </li>
+          </ol>
+
+          <h2>6. Le Fondateur & l'Ambition Panafricaine</h2>
+          <p>
+            Génizio a été pensé et fondé par <strong>Cheick Mohamed TRAORE</strong> à Abidjan, en
+            Côte d'Ivoire, avec une conviction chevillée au corps : l'Afrique détient la jeunesse la
+            plus dynamique au monde, mais son capital humain est encore bridé par des formats
+            d'orientation dépassés.
+          </p>
+          <p>
+            Notre mission est d'équiper les familles africaines et de la diaspora des instruments
+            les plus exigeants et les plus innovants pour que leurs enfants ne soient pas seulement
+            consommateurs des technologies de demain, mais les bâtisseurs, inventeurs et leaders de
+            leur époque.
           </p>
 
-          <h2>Où nous intervenons</h2>
+          <h2>7. Ce que Génizio n'est pas</h2>
           <p>
-            Génizio s'adresse aux familles d'Afrique francophone et de la diaspora, principalement
-            en Côte d'Ivoire, au Sénégal et en France. Chaque défi est conçu pour se réaliser avec
-            du matériel déjà présent à la maison — jamais avec un achat obligatoire — et
-            l'accompagnement passe par WhatsApp, l'outil que les familles de la zone utilisent déjà
-            au quotidien.
-          </p>
-
-          <h2>Nous contacter</h2>
-          <p>
-            La voie la plus rapide est WhatsApp. L'adresse email de l'éditeur est aussi disponible
-            sur la page{" "}
-            <Link to="/mentions-legales" className="text-brand underline">
-              mentions légales
-            </Link>
-            .
+            Génizio ne pose aucun diagnostic médical ou neuropsychologique, ne calcule pas de
+            quotient intellectuel et ne remplace ni les enseignants, ni les médecins, ni les
+            psychologues. Il ne classe pas les enfants les uns contre les autres. C'est une
+            infrastructure d'observation formative, d'entraînement pratique et de renforcement de
+            l'estime de soi.
           </p>
         </div>
 
-        <a
-          href="https://wa.me/33606433148?text=Bonjour%2C%20j%27ai%20une%20question%20sur%20G%C3%A9nizio."
-          target="_blank"
-          rel="noopener noreferrer"
-          className="press-brand mt-2 inline-flex items-center gap-2 rounded-2xl bg-[#25D366] px-6 py-3 text-sm font-bold text-white"
-        >
-          <MessageCircle className="size-4" aria-hidden />
-          Écrire sur WhatsApp
-        </a>
+        <div className="mt-12 flex flex-col gap-4 sm:flex-row sm:items-center">
+          <a
+            href="https://wa.me/33606433148?text=Bonjour%2C%20j%27ai%20une%20question%20sur%20G%C3%A9nizio."
+            target="_blank"
+            rel="noopener noreferrer"
+            className="press-brand inline-flex items-center justify-center gap-2 rounded-2xl bg-[#25D366] px-6 py-3.5 text-sm font-bold text-white shadow-md"
+          >
+            <MessageCircle className="size-4" aria-hidden />
+            Échanger sur WhatsApp avec l'équipe
+          </a>
+        </div>
 
         <aside className="mt-16 rounded-3xl border border-ink/10 bg-white p-8 shadow-sm">
-          <h2 className="font-display text-xl font-extrabold">
-            Passer de la lecture à la pratique
+          <h2 className="font-display text-xl font-extrabold text-ink">
+            Passez de la réflexion à l'action
           </h2>
           <p className="mt-2 text-sm font-medium leading-relaxed text-ink/70">
-            Génizio propose à votre enfant des défis concrets adaptés à son âge et à ses centres
-            d'intérêt, et construit la carte de ses talents à partir de ce qu'il réalise vraiment —
-            un premier défi sur mesure arrive dès la création du profil. Le premier profil enfant
-            est offert pour toujours ; l'abonnement famille démarre à 5 000 F/mois (puis 15 000 F).
-            Pour un accompagnement plus poussé, un mentor formé suit votre enfant en séances
-            hebdomadaires (12 séances × 5 000 F/mois/enfant).
+            Offrez à votre enfant un premier défi adapté à ses forces naturelles et observez sa
+            manière de résoudre des situations réelles. Le premier profil enfant est gratuit pour
+            toujours.
           </p>
           <Link
             to="/auth"
             className="press-brand mt-5 inline-flex items-center gap-2 rounded-2xl bg-brand px-6 py-3 text-sm font-bold text-white"
           >
-            Créer le profil de mon enfant
+            Créer le profil gratuit de mon enfant
             <ArrowRight className="size-4" aria-hidden />
           </Link>
         </aside>

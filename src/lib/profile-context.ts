@@ -70,14 +70,22 @@ export const ASPIRATION_SUGGESTIONS = [
 
 export type AbilityValue = "facile" | "neutre" | "difficulte";
 
-export type Aspiration = { label: string; type: "metier" | "exploration"; source?: "parent" | "enfant" };
+export type Aspiration = {
+  label: string;
+  type: "metier" | "exploration";
+  source?: "parent" | "enfant";
+};
 
 // Contextes de parcours qui signalent un profil vulnérable — pour ces enfants, la
 // déclaration d'aspiration est une boussole (analyse §10, §14 : rapport à l'argent,
 // méfiance des adultes → la déclaration est une HYPOTHÈSE que Naya explore par
 // l'expérience). Pour les autres, pas besoin de choix d'aspiration (décision
 // utilisateur 2026-08-12).
-export const VULNERABLE_LIFE_CONTEXTS = ["parcours_rue", "environnement_precaire", "famille_eloignee"];
+export const VULNERABLE_LIFE_CONTEXTS = [
+  "parcours_rue",
+  "environnement_precaire",
+  "famille_eloignee",
+];
 
 /**
  * Faut-il demander les aspirations à l'onboarding ?
@@ -94,7 +102,8 @@ export function shouldAskAspirations(context: {
 }): boolean {
   const lifeContext = context.life_context ?? [];
   if (lifeContext.some((c) => VULNERABLE_LIFE_CONTEXTS.includes(c))) return true;
-  if (context.school_relation === "conflit" || context.school_relation === "non_scolarise") return true;
+  if (context.school_relation === "conflit" || context.school_relation === "non_scolarise")
+    return true;
   if (context.existingAspirations && context.existingAspirations.length > 0) return true;
   return false;
 }
@@ -133,7 +142,7 @@ export function formatChildProfileContext(profile: {
   }
   if (difficultes.length > 0) {
     lines.push(
-      `- Difficultés déclarées par le parent : ${difficultes.join(", ")} — ce sont des axes d'entraînement à stimuler progressivement, JAMAIS des étiquettes ni des échecs forcés : choisis des expériences qui les sollicitent doucement.`
+      `- Difficultés déclarées par le parent : ${difficultes.join(", ")} — ce sont des axes d'entraînement à stimuler progressivement, JAMAIS des étiquettes ni des échecs forcés : choisis des expériences qui les sollicitent doucement.`,
     );
   }
 
@@ -144,7 +153,7 @@ export function formatChildProfileContext(profile: {
   if (profile.life_context && profile.life_context.length > 0) {
     const labels = profile.life_context.map((c) => LIFE_CONTEXT_OPTIONS[c] ?? c).join(", ");
     lines.push(
-      `- Contexte de parcours (déclaré par le parent) : ${labels} — entre dans son monde avant de lui demander d'entrer dans le nôtre : des expériences concrètes, utiles, respectueuses de sa réalité. Objectif de fond (décision utilisateur) : qu'il apprenne progressivement à faire confiance à un adulte — propose des interactions PRÉVISIBLES et GÉNÉREUSES (l'adulte donne d'abord : temps, matériel, attention), sans jamais forcer la proximité.`
+      `- Contexte de parcours (déclaré par le parent) : ${labels} — entre dans son monde avant de lui demander d'entrer dans le nôtre : des expériences concrètes, utiles, respectueuses de sa réalité. Objectif de fond (décision utilisateur) : qu'il apprenne progressivement à faire confiance à un adulte — propose des interactions PRÉVISIBLES et GÉNÉREUSES (l'adulte donne d'abord : temps, matériel, attention), sans jamais forcer la proximité.`,
     );
   }
 
@@ -154,7 +163,7 @@ export function formatChildProfileContext(profile: {
       ? " (déclarée(s) par l'enfant lui-même, rapportées par le parent)"
       : "";
     lines.push(
-      `- Aspiration(s) déclarée(s)${sourceNote} : ${list} — HYPOTHÈSE À EXPLORER, jamais un verdict : propose des expériences liées à cet univers, observe les aptitudes réelles, et si une divergence apparaît, cherche « qu'est-ce que cet enfant sait réellement bien faire » pour orienter (analyse §10-16).`
+      `- Aspiration(s) déclarée(s)${sourceNote} : ${list} — HYPOTHÈSE À EXPLORER, jamais un verdict : propose des expériences liées à cet univers, observe les aptitudes réelles, et si une divergence apparaît, cherche « qu'est-ce que cet enfant sait réellement bien faire » pour orienter (analyse §10-16).`,
     );
   }
 

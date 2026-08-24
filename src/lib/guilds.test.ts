@@ -16,8 +16,17 @@ describe("getChildGuild", () => {
 
   it("returns NO_GUILD_YET when every talent score is explicitly 0", () => {
     const allZero = Object.fromEntries(
-      ["spatial", "corporelle", "sociale", "entrepreneuriale", "creative", "artisanale", "emotionnelle", "logico_mathematique", "linguistique"]
-        .map((k) => [k, 0]),
+      [
+        "spatial",
+        "corporelle",
+        "sociale",
+        "entrepreneuriale",
+        "creative",
+        "artisanale",
+        "emotionnelle",
+        "logico_mathematique",
+        "linguistique",
+      ].map((k) => [k, 0]),
     );
     expect(getChildGuild(allZero)).toEqual(NO_GUILD_YET);
   });
@@ -33,7 +42,9 @@ describe("getChildGuild", () => {
 
   it("averages multiple talent keys of the same guild", () => {
     // strateges = entrepreneuriale + sociale + emotionnelle, mean 5.
-    expect(getChildGuild({ entrepreneuriale: 5, sociale: 5, emotionnelle: 5 }).key).toBe("strateges");
+    expect(getChildGuild({ entrepreneuriale: 5, sociale: 5, emotionnelle: 5 }).key).toBe(
+      "strateges",
+    );
   });
 
   // Refonte 2026-08-09 : comportement VOLONTAIREMENT changé par rapport à l'ancienne
@@ -68,9 +79,9 @@ describe("getChildGuild", () => {
     // spatial+artisanale (batisseurs) et logico_mathematique (inventeurs) : moyenne 10
     // ET pic 10 partout — dernier recours déterministe = ordre de déclaration
     // (batisseurs déclarée en premier).
-    expect(
-      getChildGuild({ spatial: 10, artisanale: 10, logico_mathematique: 10 }).key,
-    ).toBe("batisseurs");
+    expect(getChildGuild({ spatial: 10, artisanale: 10, logico_mathematique: 10 }).key).toBe(
+      "batisseurs",
+    );
   });
 
   it("every GuildInfo.talentKeys entry is a real talent key covered exactly once", () => {

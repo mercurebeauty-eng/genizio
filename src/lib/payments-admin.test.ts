@@ -15,7 +15,8 @@ describe("computeSubscriptionExtensionWindow — prolongation d'abonnement", () 
     const futureEnd = new Date(Date.now() + 20 * 86_400_000).toISOString();
     const { start, end } = computeSubscriptionExtensionWindow(futureEnd, 3);
     expect(new Date(start).getTime()).toBe(new Date(futureEnd).getTime());
-    const months = (new Date(end).getFullYear() - new Date(futureEnd).getFullYear()) * 12 +
+    const months =
+      (new Date(end).getFullYear() - new Date(futureEnd).getFullYear()) * 12 +
       (new Date(end).getMonth() - new Date(futureEnd).getMonth());
     expect(months).toBe(3);
   });

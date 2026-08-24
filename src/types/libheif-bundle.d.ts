@@ -10,10 +10,7 @@ declare module "libheif-js/libheif-wasm/libheif-bundle.mjs" {
   interface HeifImage {
     get_width(): number;
     get_height(): number;
-    display(
-      data: HeifDisplayData,
-      callback: (data: HeifDisplayData | null) => void,
-    ): void;
+    display(data: HeifDisplayData, callback: (data: HeifDisplayData | null) => void): void;
   }
   interface HeifDecoder {
     /** Décode toutes les images du conteneur HEIC/HEIF (RGBA accessible via display). */

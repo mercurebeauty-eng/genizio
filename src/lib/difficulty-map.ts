@@ -44,7 +44,7 @@ export function difficultyTalentTargets(abilityProfile?: Record<string, string> 
  */
 export function rankByDeclaredDifficulties<T extends { key: string }>(
   candidates: T[],
-  abilityProfile?: Record<string, string> | null
+  abilityProfile?: Record<string, string> | null,
 ): T[] {
   const targets = difficultyTalentTargets(abilityProfile);
   if (targets.length === 0 || candidates.length === 0) return candidates;
@@ -54,13 +54,13 @@ export function rankByDeclaredDifficulties<T extends { key: string }>(
 }
 
 const LABEL_TO_KEY: Record<string, string> = Object.fromEntries(
-  Object.entries(TALENT_KEY_LABELS).map(([key, label]) => [label, key])
+  Object.entries(TALENT_KEY_LABELS).map(([key, label]) => [label, key]),
 );
 
 /** Variante pour les libellés (sortie de getLeastExploredTalentLabels). */
 export function biasLabelsByDeclaredDifficulties(
   labels: string[],
-  abilityProfile?: Record<string, string> | null
+  abilityProfile?: Record<string, string> | null,
 ): string[] {
   const targets = difficultyTalentTargets(abilityProfile);
   if (targets.length === 0 || labels.length === 0) return labels;

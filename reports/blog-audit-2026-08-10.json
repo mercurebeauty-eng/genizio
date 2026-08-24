@@ -69,10 +69,30 @@
     }
   },
   "new_posts": [
-    {"file": "guides.activites-manuelles-enfant.tsx", "path": "/guides/activites-manuelles-enfant", "score": 89, "keyword": "activités manuelles enfants"},
-    {"file": "guides.discipline-positive-sans-punition.tsx", "path": "/guides/discipline-positive-sans-punition", "score": 89, "keyword": "discipline positive"},
-    {"file": "guides.gestion-colere-emotions-enfant.tsx", "path": "/guides/gestion-colere-emotions-enfant", "score": 89, "keyword": "colère enfant / émotions"},
-    {"file": "guides.reussite-scolaire-aider-enfant.tsx", "path": "/guides/reussite-scolaire-aider-enfant", "score": 90, "keyword": "réussite scolaire enfant"}
+    {
+      "file": "guides.activites-manuelles-enfant.tsx",
+      "path": "/guides/activites-manuelles-enfant",
+      "score": 89,
+      "keyword": "activités manuelles enfants"
+    },
+    {
+      "file": "guides.discipline-positive-sans-punition.tsx",
+      "path": "/guides/discipline-positive-sans-punition",
+      "score": 89,
+      "keyword": "discipline positive"
+    },
+    {
+      "file": "guides.gestion-colere-emotions-enfant.tsx",
+      "path": "/guides/gestion-colere-emotions-enfant",
+      "score": 89,
+      "keyword": "colère enfant / émotions"
+    },
+    {
+      "file": "guides.reussite-scolaire-aider-enfant.tsx",
+      "path": "/guides/reussite-scolaire-aider-enfant",
+      "score": 90,
+      "keyword": "réussite scolaire enfant"
+    }
   ],
   "technical": {
     "sitemap": "ok_24_urls_17_guides_valid_xml",

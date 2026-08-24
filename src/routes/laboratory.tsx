@@ -4,10 +4,7 @@ import { GenizioLoader } from "@/components/GenizioLoader";
 
 export const Route = createFileRoute("/laboratory")({
   head: () => ({
-    meta: [
-      { title: "Redirection — Génizio" },
-      { name: "robots", content: "noindex, follow" },
-    ],
+    meta: [{ title: "Redirection — Génizio" }, { name: "robots", content: "noindex, follow" }],
   }),
   component: LaboratoryRedirectPage,
 });

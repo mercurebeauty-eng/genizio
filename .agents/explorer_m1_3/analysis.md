@@ -5,7 +5,7 @@
 **Role**: Explorer 3 (UI Routes & Component Architecture Explorer)  
 **Target Route**: `src/routes/profiles.$profileId.challenges.tsx`  
 **Related Routes & Components**: `src/routes/profiles.$profileId.quest.tsx`, `src/components/challenges/OutcomeChat.tsx`, `StepAccordion.tsx`, `KitSuggestion.tsx`, `DifficultyBadge.tsx`, `styles.css`  
-**Date**: July 23, 2026  
+**Date**: July 23, 2026
 
 ---
 
@@ -13,9 +13,10 @@
 
 The objective of Explorer 3 for Milestone 1 is to perform a read-only investigation and design the complete front-end UI/UX architecture for integrating **Academic Homework Fusion** ("Devoirs Scolaires") into Génizio's challenge ecosystem.
 
-Currently, Génizio allows parents to initiate challenges via bulk AI generation (4 general challenges) or targeted single-challenge generation by Gardner intelligence domain ("Composer un défi ciblé" in the Unified Lab Panel). While this approach succeeds in fostering child curiosity, it lacks an explicit, frictionless interface for parents to input concrete school homework (e.g. *"Tables de 7"*, *"Accord du participe passé"*, *"Le cycle de l'eau"*) tied to official school grade levels (**CP to 3ème**).
+Currently, Génizio allows parents to initiate challenges via bulk AI generation (4 general challenges) or targeted single-challenge generation by Gardner intelligence domain ("Composer un défi ciblé" in the Unified Lab Panel). While this approach succeeds in fostering child curiosity, it lacks an explicit, frictionless interface for parents to input concrete school homework (e.g. _"Tables de 7"_, _"Accord du participe passé"_, _"Le cycle de l'eau"_) tied to official school grade levels (**CP to 3ème**).
 
 This report presents:
+
 1. A comprehensive audit of the existing challenge route (`profiles.$profileId.challenges.tsx`), child quest mode (`profiles.$profileId.quest.tsx`), and proof validation components (`OutcomeChat.tsx`).
 2. A complete analysis of the current end-to-end user experience for challenge initiation, execution, proof submission, and Naya AI feedback.
 3. The full UI architecture design for the **Homework Mode Toggle** ("Défis Libres" vs. "Devoirs Scolaires") and the **Hybrid Homework Input Component** (`AcademicHomeworkInput.tsx`), combining grade-adapted CP-3ème topic chips with explicit text input and behavioral driver selection.
@@ -64,6 +65,7 @@ ProfilesChallengesPage (profiles.$profileId.challenges.tsx)
 ```
 
 #### Core Local States in `ProfilesChallengesPage`:
+
 - `child`: `Child | null` (Loaded from `child_profiles` table).
 - `challenges`: `Challenge[]` (List of active/completed challenges for the profile).
 - `fetching` & `initialLoad`: `boolean` (Loading spinners during initial mount).
@@ -82,6 +84,7 @@ ProfilesChallengesPage (profiles.$profileId.challenges.tsx)
 The Quest page provides a child-centric, gamified interface designed specifically for tablet/mobile interaction.
 
 #### Page Layout & Sub-States:
+
 1. **Quest Map Node Tree (Screen 1j, Lines 433–478)**:
    - Horizontal path displaying recent completed nodes (emerald checkmark), active node (pulsing star badge), and upcoming node.
    - Dynamic domain colors mapped from `DOMAIN_COLORS` (Sciences = amber, Arts = purple, Sport = emerald, etc.).
@@ -92,7 +95,7 @@ The Quest page provides a child-centric, gamified interface designed specificall
    - Step card displaying current step text (`steps[currentStepIndex]`), interactive tactile checkbox ("✓ C'est fait !"), and "Suivant →" navigation button.
    - Final completion screen: Textarea for child feedback (`childFeedback`), finish button triggering `handleFinishQuest`.
 3. **Deep-Link Toast & Persistence (Lines 174–188)**:
-   - Upon completing a quest, `toast.success` displays with an action button: *"Ajouter une preuve"*.
+   - Upon completing a quest, `toast.success` displays with an action button: _"Ajouter une preuve"_.
    - Clicking this action sets `sessionStorage.setItem("genizio:highlightChallenge", activeChallenge.id)` and navigates to `/profiles/$profileId/challenges`.
    - On landing, `refetch()` reads `genizio:highlightChallenge`, clears the key, auto-expands the corresponding card (`setOpenId(highlightId)`), and smoothly scrolls the element into view.
 
@@ -103,6 +106,7 @@ The Quest page provides a child-centric, gamified interface designed specificall
 `OutcomeChat` handles the critical bridge between physical challenge execution and AI analysis.
 
 #### Dual Proof Mode Handling:
+
 1. **Photo Proof Mode (`proof_mode === "photo"`)**:
    - File selector input with base64 conversion (`fileToBase64`), enforcing 5 MB maximum size.
    - Parent's learning notes (`notes`) are passed from the parent textarea and saved alongside validation (`onSaveNotes`).
@@ -113,6 +117,7 @@ The Quest page provides a child-centric, gamified interface designed specificall
    - Submits to `submitDeclarativeProof` server function (zero AI image analysis cost).
 
 #### Post-Validation & Celebration Flow:
+
 - **Rejection Notice (`rejectionNotice`)**: If AI judges the proof irrelevant, displays a gentle feedback box without modifying DB state, keeping the form open for immediate retry.
 - **Success Flow**:
   - Sets `report` data.
@@ -140,7 +145,7 @@ défis or 1 draft preview          Quest finishes → Toast link      Submits to
 
 1. **Missing Homework Entry Point**:
    - The current Lab panel only allows filtering by Gardner intelligence domains (e.g., "Mathématiques & Logique", "Sciences & Ingénierie").
-   - A parent whose child comes home with a specific homework assignment (*"Apprendre les tables de 7"* or *"Réviser la leçon de géographie sur le relief"*) has no way to input this text or select their child's grade level.
+   - A parent whose child comes home with a specific homework assignment (_"Apprendre les tables de 7"_ or _"Réviser la leçon de géographie sur le relief"_) has no way to input this text or select their child's grade level.
 
 2. **Lack of Grade Calibration in UI**:
    - Parents cannot select whether a challenge should be targeted for CP, CE1, CM2, or 3ème. The generator estimates age from `child.age`, which does not reflect specific school curriculum expectations or grade-level gaps.
@@ -189,7 +194,9 @@ The Unified Lab Panel (`#genizio-lab`) in `profiles.$profileId.challenges.tsx` w
 The toggle utilizes Génizio's tactile keycap design system with immediate visual feedback:
 
 ```tsx
-{/* Tactile Segmented Toggle */}
+{
+  /* Tactile Segmented Toggle */
+}
 <div className="mb-6 flex rounded-2xl bg-white p-1.5 border border-ink/10 shadow-inner">
   <button
     type="button"
@@ -215,7 +222,7 @@ The toggle utilizes Génizio's tactile keycap design system with immediate visua
     <BookOpen className="size-4" />
     <span>Devoirs Scolaires (Fusion)</span>
   </button>
-</div>
+</div>;
 ```
 
 ---
@@ -223,6 +230,7 @@ The toggle utilizes Génizio's tactile keycap design system with immediate visua
 ### 3.3 Hybrid Homework Input Component (`AcademicHomeworkInput.tsx`)
 
 #### Key Requirements & Features:
+
 1. **Grade Selector**: Horizontal scrolling or wrapped pills for CP, CE1, CE2, CM1, CM2, 6ème, 5ème, 4ème, 3ème. Auto-selects the grade corresponding to `child.age` by default (e.g. 7 years old $\to$ CE1).
 2. **Subject Selector**: Grid of subjects with custom HSL/OKLCH color themes and icons:
    - Mathématiques & Logique ($\text{Blue/Brand}$)
@@ -233,14 +241,14 @@ The toggle utilizes Génizio's tactile keycap design system with immediate visua
    - Anglais & LV ($\text{Rose}$)
 3. **Curriculum Suggestions & Gap Chips**:
    - Reads `CURRICULUM_TOPICS[gradeLevel][subject]`.
-   - If a Bayesian gap is detected for this subject (via `progressionTargets`), displays a special highlighted badge: *"🎯 Lacune détectée par Naya dans cette matière"*.
+   - If a Bayesian gap is detected for this subject (via `progressionTargets`), displays a special highlighted badge: _"🎯 Lacune détectée par Naya dans cette matière"_.
    - Clicking any chip populates or appends to the text area.
 4. **Explicit Homework Textarea**:
    - Character counter (2–500 chars).
    - Placeholder tailored to subject/grade.
    - Clear button to reset prompt.
 5. **Behavioral Driver Accordion / Selector (Optional/Advanced)**:
-   - 5 mechanics: *"Déconstruire"*, *"Schématiser"*, *"Simuler"*, *"Enquêter"*, *"Optimiser"*.
+   - 5 mechanics: _"Déconstruire"_, _"Schématiser"_, _"Simuler"_, _"Enquêter"_, _"Optimiser"_.
    - Gives parents direct control over how Naya transforms the exercise.
 
 #### Complete Proposed Component Specification:
@@ -317,7 +325,6 @@ export function AcademicHomeworkInput({
 
   return (
     <form onSubmit={handleSubmit} className="space-y-5 animate-in fade-in duration-300">
-      
       {/* 1. Grade Level Selector */}
       <div>
         <label className="block text-xs font-black uppercase tracking-wider text-ink mb-2">
@@ -428,7 +435,11 @@ export function AcademicHomeworkInput({
           className="text-xs font-bold text-brand hover:underline inline-flex items-center gap-1 cursor-pointer"
         >
           <Layers className="size-3.5" />
-          <span>{showDriverHelp ? "Masquer la mécanique de fusion" : "Personnaliser la mécanique de fusion (optionnel)"}</span>
+          <span>
+            {showDriverHelp
+              ? "Masquer la mécanique de fusion"
+              : "Personnaliser la mécanique de fusion (optionnel)"}
+          </span>
         </button>
 
         {showDriverHelp && (
@@ -441,7 +452,9 @@ export function AcademicHomeworkInput({
                 type="button"
                 onClick={() => setDriver("auto")}
                 className={`p-2.5 rounded-xl border text-left text-xs font-bold transition-all ${
-                  driver === "auto" ? "bg-brand text-white border-brand" : "bg-surface text-ink border-ink/10"
+                  driver === "auto"
+                    ? "bg-brand text-white border-brand"
+                    : "bg-surface text-ink border-ink/10"
                 }`}
               >
                 🪄 Mode Automatique (Naya choisit le meilleur levier)
@@ -452,11 +465,15 @@ export function AcademicHomeworkInput({
                   type="button"
                   onClick={() => setDriver(d)}
                   className={`p-2.5 rounded-xl border text-left text-xs transition-all ${
-                    driver === d ? "bg-brand text-white border-brand font-black" : "bg-surface text-ink border-ink/10 font-semibold"
+                    driver === d
+                      ? "bg-brand text-white border-brand font-black"
+                      : "bg-surface text-ink border-ink/10 font-semibold"
                   }`}
                 >
                   <span className="block font-bold">{BEHAVIORAL_DRIVER_LABELS[d].title}</span>
-                  <span className="text-[10px] opacity-80 line-clamp-1">{BEHAVIORAL_DRIVER_LABELS[d].description}</span>
+                  <span className="text-[10px] opacity-80 line-clamp-1">
+                    {BEHAVIORAL_DRIVER_LABELS[d].description}
+                  </span>
                 </button>
               ))}
             </div>
@@ -492,12 +509,15 @@ export function AcademicHomeworkInput({
 ## 4. Async Loading States, Error Handling & Double-Click Prevention
 
 ### 4.1 Double-Click Prevention & Optimistic Locking
+
 To prevent duplicate requests when generating or assigning challenges:
+
 1. **Single-Flight Guard**: State flags (`isGeneratingAcademic`, `isAssigningSingle`, `generating`) lock immediately upon handler invocation.
 2. **Disabled UI States**: All submit buttons apply `disabled={isGenerating}` and `pointer-events-none` during inflight server calls.
 3. **Form Reset on Success**: Draft state is cleared only after server confirms success (`setCurrentGeneratedChallenge(resp)`).
 
 ### 4.2 Animated Loading States with Cycling Thoughts
+
 During challenge generation (which takes 3–6 seconds via DeepSeek/Claude), Naya's mascot avatar displays cycling pedagogical thoughts to reassure the parent:
 
 ```tsx
@@ -509,17 +529,20 @@ const ACADEMIC_LOADING_STEPS = [
   "Finalisation de la quête académique...",
 ];
 
-{isGeneratingAcademic && (
-  <div className="mt-6 flex flex-col items-center justify-center py-6 text-center border-t-2 border-dashed border-ink/20">
-    <NayaAvatar size="md" thoughts={ACADEMIC_LOADING_STEPS} className="mb-4" />
-    <p className="text-sm font-bold text-brand animate-pulse">
-      {ACADEMIC_LOADING_STEPS[loadingTextIndex]}
-    </p>
-  </div>
-)}
+{
+  isGeneratingAcademic && (
+    <div className="mt-6 flex flex-col items-center justify-center py-6 text-center border-t-2 border-dashed border-ink/20">
+      <NayaAvatar size="md" thoughts={ACADEMIC_LOADING_STEPS} className="mb-4" />
+      <p className="text-sm font-bold text-brand animate-pulse">
+        {ACADEMIC_LOADING_STEPS[loadingTextIndex]}
+      </p>
+    </div>
+  );
+}
 ```
 
 ### 4.3 Toast Notification Strategy (`sonner`)
+
 - **Success Toast**: `toast.success("Devoir transformé avec succès en défi ludique !")`
 - **Error Toast**: `toast.error("Erreur lors de la fusion du devoir. Réessayez dans un instant.")`
 - **Rate Limit / Quota Error**: Explicit handling for status `429` with retry suggestions.
@@ -530,18 +553,18 @@ const ACADEMIC_LOADING_STEPS = [
 
 Every new UI element strictly adheres to the visual guidelines defined in `src/styles.css`:
 
-| Design Element | Token / Utility Class | Usage Specification |
-|---|---|---|
-| **Background Color** | `bg-surface` (`oklch(0.98 0.01 80)`) | Page container background, off-white card fills |
-| **Primary Text Color** | `text-ink` (`oklch(0.18 0.03 250)`) | Deep slate typography for titles, labels, and text |
-| **Brand Color** | `bg-brand` (`oklch(0.55 0.16 40)`) | Primary buttons, active tabs, highlight borders |
-| **Accent Colors** | `bg-leaf` (`oklch(0.54 0.14 150)`), `bg-sky` | Success states, secondary badges, callout cards |
-| **Heading Typography** | `font-display` (`Fredoka`) | All section titles, modal headers, grade pill labels |
-| **Body Typography** | `font-body` (`Inter`) | Form inputs, instruction copy, descriptions |
-| **Tactile Keycaps** | `.press-brand`, `.press-leaf`, `.press-white` | 3D pressable depth effect on active buttons |
-| **Ambient Elevation** | `shadow-sm`, `shadow-md`, `shadow-xl` | Soft OKLCH ambient shadows for layered cards |
-| **Border Radius** | `rounded-3xl` (24px), `rounded-2xl` (16px), `rounded-full` | Friendly rounded corners across all components |
-| **Touch Targets** | Min height `44px` (`py-3`, `px-4`) | Mobile-first ergonomics for parent & child touch |
+| Design Element         | Token / Utility Class                                      | Usage Specification                                  |
+| ---------------------- | ---------------------------------------------------------- | ---------------------------------------------------- |
+| **Background Color**   | `bg-surface` (`oklch(0.98 0.01 80)`)                       | Page container background, off-white card fills      |
+| **Primary Text Color** | `text-ink` (`oklch(0.18 0.03 250)`)                        | Deep slate typography for titles, labels, and text   |
+| **Brand Color**        | `bg-brand` (`oklch(0.55 0.16 40)`)                         | Primary buttons, active tabs, highlight borders      |
+| **Accent Colors**      | `bg-leaf` (`oklch(0.54 0.14 150)`), `bg-sky`               | Success states, secondary badges, callout cards      |
+| **Heading Typography** | `font-display` (`Fredoka`)                                 | All section titles, modal headers, grade pill labels |
+| **Body Typography**    | `font-body` (`Inter`)                                      | Form inputs, instruction copy, descriptions          |
+| **Tactile Keycaps**    | `.press-brand`, `.press-leaf`, `.press-white`              | 3D pressable depth effect on active buttons          |
+| **Ambient Elevation**  | `shadow-sm`, `shadow-md`, `shadow-xl`                      | Soft OKLCH ambient shadows for layered cards         |
+| **Border Radius**      | `rounded-3xl` (24px), `rounded-2xl` (16px), `rounded-full` | Friendly rounded corners across all components       |
+| **Touch Targets**      | Min height `44px` (`py-3`, `px-4`)                         | Mobile-first ergonomics for parent & child touch     |
 
 ---
 
@@ -562,4 +585,5 @@ To execute this architecture cleanly, implementers should follow these exact ste
    - Execute `npx tsc --noEmit` and Vite build tests to ensure 100% type safety and design consistency.
 
 ---
-*End of Analysis Report.*
+
+_End of Analysis Report._

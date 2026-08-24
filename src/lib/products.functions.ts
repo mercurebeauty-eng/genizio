@@ -50,7 +50,9 @@ export const createProduct = createServerFn({ method: "POST" })
     return row;
   });
 
-const UpdateProductInput = ProductInput.omit({ fromSuggestionId: true }).partial().extend({ id: z.string().uuid() });
+const UpdateProductInput = ProductInput.omit({ fromSuggestionId: true })
+  .partial()
+  .extend({ id: z.string().uuid() });
 
 export const updateProduct = createServerFn({ method: "POST" })
   .middleware([requireAdmin])
@@ -113,7 +115,7 @@ const OrderInput = z.object({
       id: z.string().uuid().optional(),
       name: z.string(),
       price_xof: z.number().int().min(0),
-    })
+    }),
   ),
   delivery_notes: z.string().optional().nullable(),
 });
@@ -157,8 +159,15 @@ export const getEcosystemStats = createServerFn({ method: "GET" })
     ] = await Promise.all([
       supabaseAdmin.from("child_profiles").select("*", { count: "exact", head: true }),
       listAllUsers(supabaseAdmin),
-      supabaseAdmin.from("challenges").select("*", { count: "exact", head: true }).is("deleted_at", null),
-      supabaseAdmin.from("challenges").select("*", { count: "exact", head: true }).eq("status", "completed").is("deleted_at", null),
+      supabaseAdmin
+        .from("challenges")
+        .select("*", { count: "exact", head: true })
+        .is("deleted_at", null),
+      supabaseAdmin
+        .from("challenges")
+        .select("*", { count: "exact", head: true })
+        .eq("status", "completed")
+        .is("deleted_at", null),
       supabaseAdmin.from("orders").select("*", { count: "exact", head: true }),
       supabaseAdmin.from("child_profiles").select("talents"),
       supabaseAdmin
@@ -204,10 +213,14 @@ export const getEcosystemStats = createServerFn({ method: "GET" })
 
 export const togglePassportUnlock = createServerFn({ method: "POST" })
   .middleware([requireAdmin])
-  .validator((input: unknown) => z.object({
-    childId: z.string().uuid(),
-    unlock: z.boolean(),
-  }).parse(input))
+  .validator((input: unknown) =>
+    z
+      .object({
+        childId: z.string().uuid(),
+        unlock: z.boolean(),
+      })
+      .parse(input),
+  )
   .handler(async ({ data }) => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
@@ -236,14 +249,16 @@ export const updateProfileQuotaAdmin = createServerFn({ method: "POST" })
         // 0 = règle standard automatique (la clé est retirée) ; > 0 = quota TOTAL accordé.
         quota: z.number().int().min(0).max(50),
       })
-      .parse(input)
+      .parse(input),
   )
   .handler(async ({ data }) => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
     // Lecture avant écriture plutôt qu'un objet partiel : app_metadata peut contenir d'autres
     // clés posées par GoTrue (provider/providers d'un compte Google) qu'il ne faut pas écraser.
-    const { data: userRes, error: getErr } = await supabaseAdmin.auth.admin.getUserById(data.userId);
+    const { data: userRes, error: getErr } = await supabaseAdmin.auth.admin.getUserById(
+      data.userId,
+    );
     if (getErr || !userRes?.user) {
       throw new Error(`Utilisateur introuvable: ${getErr?.message ?? data.userId}`);
     }
@@ -262,4 +277,3 @@ export const updateProfileQuotaAdmin = createServerFn({ method: "POST" })
 
     return { success: true, userId: data.userId, quota: data.quota };
   });
-

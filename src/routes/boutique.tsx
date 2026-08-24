@@ -30,10 +30,7 @@ import { formatPedagogicalIntention } from "@/lib/pedagogical-intention";
 
 export const Route = createFileRoute("/boutique")({
   head: () => ({
-    meta: [
-      { title: "Boutique Génizio" },
-      { name: "robots", content: "noindex, follow" },
-    ],
+    meta: [{ title: "Boutique Génizio" }, { name: "robots", content: "noindex, follow" }],
   }),
   component: BoutiquePage,
 });
@@ -433,7 +430,7 @@ function BoutiquePage() {
       {/* Modal - Configuration de la génération */}
       {selectedProduct && !generatedChallenge && !isGenerating && (
         <div className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-ink/55 backdrop-blur-sm p-4 animate-in fade-in duration-200">
-          <div className="relative w-full max-w-lg rounded-3xl border border-ink/10 bg-white p-6 shadow-xl md:p-8">
+          <div className="relative my-auto w-full max-w-lg max-h-[90vh] overflow-y-auto rounded-3xl border border-ink/10 bg-white p-5 sm:p-8 shadow-xl">
             <button
               onClick={() => setSelectedProduct(null)}
               className="absolute right-4 top-4 rounded-xl border border-ink/10 bg-stone-100 p-1.5 hover:bg-stone-200 transition-colors"
@@ -459,12 +456,12 @@ function BoutiquePage() {
                   <label className="block text-xs font-black uppercase tracking-widest text-ink/60 mb-2">
                     Pour quel enfant ?
                   </label>
-                  <div className="grid grid-cols-2 gap-3">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-3">
                     {children.map((c) => (
                       <button
                         key={c.id}
                         onClick={() => setSelectedChild(c.id)}
-                        className={`flex items-center gap-2.5 rounded-2xl border border-ink/10 px-4 py-3 text-sm font-bold shadow-sm transition-all ${
+                        className={`flex items-center gap-2.5 rounded-2xl border border-ink/10 px-4 py-3 text-sm font-bold shadow-sm transition-all text-left ${
                           selectedChild === c.id
                             ? "border-ink bg-[#FFF4E5] -translate-y-0.5"
                             : "border-stone-200 hover:border-ink"
@@ -474,7 +471,9 @@ function BoutiquePage() {
                           className="size-3.5 shrink-0 rounded-full border border-ink/10"
                           style={{ backgroundColor: c.avatar_color }}
                         />
-                        {c.name} ({c.age} ans)
+                        <span className="truncate min-w-0">
+                          {c.name} ({c.age} ans)
+                        </span>
                       </button>
                     ))}
                   </div>
@@ -545,7 +544,7 @@ function BoutiquePage() {
       {/* Modal - Génération en cours */}
       {isGenerating && (
         <div className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-ink/55 backdrop-blur-sm p-4 animate-in fade-in duration-200">
-          <div className="w-full max-w-md rounded-3xl border border-ink/10 bg-white p-8 text-center shadow-xl">
+          <div className="w-full max-w-md my-auto rounded-3xl border border-ink/10 bg-white p-8 text-center shadow-xl">
             <NayaAvatar size="lg" thoughts={LOADING_STEPS} className="mx-auto mb-6" />
             <p className="text-lg font-black text-brand animate-pulse">
               {LOADING_STEPS[loadingTextIndex]}
@@ -557,7 +556,7 @@ function BoutiquePage() {
       {/* Modal - Preview du défi généré */}
       {generatedChallenge && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-ink/55 backdrop-blur-sm p-4 overflow-y-auto animate-in fade-in duration-200">
-          <div className="my-8 w-full max-w-2xl rounded-3xl border border-ink/10 bg-white p-6 shadow-xl md:p-8 relative">
+          <div className="my-auto w-full max-w-2xl max-h-[90vh] overflow-y-auto rounded-3xl border border-ink/10 bg-white p-5 sm:p-8 shadow-xl relative">
             <button
               onClick={() => setGeneratedChallenge(null)}
               className="absolute right-4 top-4 rounded-xl border border-ink/10 bg-stone-100 p-1.5 hover:bg-stone-200 transition-colors"
@@ -642,9 +641,9 @@ function BoutiquePage() {
                     <p className="text-xs font-bold text-brand leading-relaxed">
                       "
                       <MarkdownContent
-                        content={formatPedagogicalIntention(
-                          generatedChallenge.pedagogical_context,
-                        )!}
+                        content={
+                          formatPedagogicalIntention(generatedChallenge.pedagogical_context)!
+                        }
                         inline
                       />
                       "
@@ -688,7 +687,7 @@ function BoutiquePage() {
         >
           <div
             onClick={(e) => e.stopPropagation()}
-            className="relative w-full max-w-sm rounded-3xl border border-ink/10 bg-white p-6 shadow-xl"
+            className="relative my-auto w-full max-w-sm max-h-[90vh] overflow-y-auto rounded-3xl border border-ink/10 bg-white p-6 shadow-xl"
           >
             <button
               onClick={() => setTagsModalProduct(null)}

@@ -5,7 +5,7 @@
 **Auteur** : Explorer 1 (Read-Only Investigation & AI Prompt Architecture)  
 **Fichier Cible Principal** : `src/lib/challenges.functions.ts`  
 **Nouveau Fichier Proposé** : `src/lib/academic-homework.functions.ts`  
-**Date** : 23 Juillet 2026  
+**Date** : 23 Juillet 2026
 
 ---
 
@@ -13,9 +13,10 @@
 
 Le projet Génizio fait évoluer son moteur de génération de défis Naya (`src/lib/challenges.functions.ts`) d'un système de défis d'éveil et de découverte générale vers une **moteur hybride académique-ludique**.
 
-L'objectif principal de cette fonctionnalité (**Fusion Académique-Ludique**) est de permettre aux parents d'injecter une consigne de devoir scolaire concrète (ex: *"Tables de 7"*, *"Accord du participe passé"*, *"Le cycle de l'eau"*, *"La Révolution Française"*), associée à un niveau scolaire (du **CP à la 3ème**), et de la transformer instantanément en un défi physique, concret et captivant. 
+L'objectif principal de cette fonctionnalité (**Fusion Académique-Ludique**) est de permettre aux parents d'injecter une consigne de devoir scolaire concrète (ex: _"Tables de 7"_, _"Accord du participe passé"_, _"Le cycle de l'eau"_, _"La Révolution Française"_), associée à un niveau scolaire (du **CP à la 3ème**), et de la transformer instantanément en un défi physique, concret et captivant.
 
 Pour maintenir l'ADN de Génizio, cette transformation académique ne doit pas être un banal questionnaire ou un exercice sur fiche papier, mais une **fusion comportementale** utilisant l'un des 5 leviers d'action préférentiels de l'enfant :
+
 1. **Déconstruire / Démonter** (Analyse inverse, démontage de règles/structures).
 2. **Schématiser / Cartographier** (Représentation visuelle, modèles, schémas physiques).
 3. **Simuler / Modéliser** (Jeux de rôle, modélisation de systèmes, scénarios "et si").
@@ -42,7 +43,7 @@ Le moteur `src/lib/challenges.functions.ts` contient actuellement 4 points d'ent
 Chaque appel de génération de défis suit une séquence de construction de prompt rigoureusement structurée :
 
 ```
-[Profil Enfant & Ville/Pays] 
+[Profil Enfant & Ville/Pays]
        ↓
 [Formatage des Intérêts/Leviers (formatChildInterestsPayload)]
        ↓
@@ -66,12 +67,13 @@ Chaque appel de génération de défis suit une séquence de construction de pro
 ### 1.3 Routage et Execution LLM
 
 Le moteur de requêtage LLM est centralisé dans la fonction `callClaude` (qui sert de façade unifiée) :
+
 - **Requêtes d'analyse d'image (Vision)** : Routées vers `callAnthropicVision` utilisant `claude-sonnet-5` via l'API Anthropic (`https://api.anthropic.com/v1/messages`).
 - **Requêtes de texte brut et génération de JSON** : Routées vers `callDeepSeekText` via l'API OpenAI-compatible de DeepSeek (`https://api.deepseek.com/chat/completions`).
   - **Modèle standard (Volume élevé)** : `deepseek-v4-flash` (rapide et économique).
   - **Modèle de raisonnement / diagnostic bayésien** : `deepseek-v4-pro` avec option `{ type: "enabled", reasoning_effort: "high" }`.
 
-L'extraction du JSON produit par les LLM s'appuie sur `extractJsonFromLLMResponse(raw)`, une fonction d'extraction robuste capable de nettoyer les blocs de code Markdown (```json ... ```), d'isoler les objets JSON tronqués ou entourés de texte conversationnel.
+L'extraction du JSON produit par les LLM s'appuie sur `extractJsonFromLLMResponse(raw)`, une fonction d'extraction robuste capable de nettoyer les blocs de code Markdown (`json ... `), d'isoler les objets JSON tronqués ou entourés de texte conversationnel.
 
 ### 1.4 Choke Point de Validation et Sécurité (`finalizeChallenge`)
 
@@ -81,7 +83,12 @@ Tous les défis générés ou assignés (qu'ils proviennent d'une génération e
 export function finalizeChallenge<T>(c: T, age: number) {
   const safety = applySafetyNet(c, age);
   const proof = resolveProofMode(c.proof_mode, c.proof_target, c.declarative_award, c.title);
-  const academic = resolveAcademicLevel(c.academic_domain, c.academic_level_age, c.academic_reference_note, c.title);
+  const academic = resolveAcademicLevel(
+    c.academic_domain,
+    c.academic_level_age,
+    c.academic_reference_note,
+    c.title,
+  );
   const resolvedIntelligences = resolveTargetIntelligences(c.intelligences);
   return {
     title: c.title.slice(0, 120),
@@ -102,6 +109,7 @@ export function finalizeChallenge<T>(c: T, age: number) {
 ```
 
 Ce goulot d'étranglement garantit :
+
 1. **Sécurité active (`applySafetyNet`)** : Analyse par expressions régulières (Unicode lookarounds) pour détecter la présence de mots-clés à risque (feu, lame, produits chimiques, électricité, cuisson/chaleur, hauteur/eau) et forcer la supervision d'un adulte adaptée à l'âge (<12 ans ou >=12 ans).
 2. **Normalisation du mode de preuve (`resolveProofMode`)** : Vérifie la validité des métriques déclaratives et replie sur le mode `photo` en cas d'incohérence.
 3. **Validation du Référentiel Académique Interne (`resolveAcademicLevel`)** : Contrôle la présence des 9 domaines académiques internes (`mathematiques`, `langage`, `sciences`, `corporelle`, `sociale`, `emotionnelle`, `entrepreneuriale`, `artisanale`, `spatiale`) et le niveau d'âge (3 à 18 ans).
@@ -143,13 +151,16 @@ export function formatChildInterestsPayload(interests?: string[] | null): string
 ### 2.2 Re-Cadrage dans `GENIZIO_PRINCIPLES`
 
 Dans le prompt système `GENIZIO_PRINCIPLES`, la directive suivante est appliquée au LLM :
-> *"CENTRES D'INTÉRÊT = LEVIERS COMPORTEMENTAUX ET MODES COGNITIFS PROFONDS : Ne traite jamais un centre d'intérêt comme un simple thème, un sujet de surface ou un hobby décoratif (ex: 'football', 'dinosaures'). Décode et exploite le LEVIER COMPORTEMENTAL ET LE MODE OPÉRATOIRE MENTAL sous-jacent de l'enfant (ex: 'Démonte pour comprendre', 'Négocie toujours', 'A besoin de bouger pour réfléchir'). Utilise ces traits comme MÉCANIQUE ET POSTURE D'APPRENTISSAGE pour introduire n'importe quel domaine."*
+
+> _"CENTRES D'INTÉRÊT = LEVIERS COMPORTEMENTAUX ET MODES COGNITIFS PROFONDS : Ne traite jamais un centre d'intérêt comme un simple thème, un sujet de surface ou un hobby décoratif (ex: 'football', 'dinosaures'). Décode et exploite le LEVIER COMPORTEMENTAL ET LE MODE OPÉRATOIRE MENTAL sous-jacent de l'enfant (ex: 'Démonte pour comprendre', 'Négocie toujours', 'A besoin de bouger pour réfléchir'). Utilise ces traits comme MÉCANIQUE ET POSTURE D'APPRENTISSAGE pour introduire n'importe quel domaine."_
 
 ### 2.3 Constat et Limite de l'Approche Actuelle
+
 Bien que `GENIZIO_PRINCIPLES` pose la bonne philosophie, le moteur actuel comporte des limites pour la fusion académique :
-1. **Absence d'entrée explicite pour les devoirs scolaires** : Le parent ne peut pas saisir une consigne spécifique reçue de l'école (ex: *"Réviser la règle des participes passés avec l'auxiliaire avoir"*).
+
+1. **Absence d'entrée explicite pour les devoirs scolaires** : Le parent ne peut pas saisir une consigne spécifique reçue de l'école (ex: _"Réviser la règle des participes passés avec l'auxiliaire avoir"_).
 2. **Absence de niveau scolaire officiel (CP à 3ème)** : Le système ne manipule que `child.age` (un entier chronologique) et `academic_level_age`, mais pas les notions de cycles scolaires français/francophones (Cycle 2 : CP, CE1, CE2 ; Cycle 3 : CM1, CM2, 6ème ; Cycle 4 : 5ème, 4ème, 3ème).
-3. **Absence de sélection explicite du driver comportemental** : Le driver est actuellement déduit de manière floue par le LLM à partir du tableau des intérêts globaux de l'enfant, sans garantie qu'un défi de révision précis utilisera explicitement la mécanique *"Déconstruire"*, *"Schématiser"*, *"Simuler"*, *"Enquêter"* ou *"Optimiser"*.
+3. **Absence de sélection explicite du driver comportemental** : Le driver est actuellement déduit de manière floue par le LLM à partir du tableau des intérêts globaux de l'enfant, sans garantie qu'un défi de révision précis utilisera explicitement la mécanique _"Déconstruire"_, _"Schématiser"_, _"Simuler"_, _"Enquêter"_ ou _"Optimiser"_.
 
 ---
 
@@ -198,7 +209,10 @@ export const GRADE_LEVELS = [
 
 export type GradeLevel = (typeof GRADE_LEVELS)[number];
 
-export const GRADE_LEVEL_LABELS: Record<GradeLevel, { label: string; cycle: string; nominalAge: number }> = {
+export const GRADE_LEVEL_LABELS: Record<
+  GradeLevel,
+  { label: string; cycle: string; nominalAge: number }
+> = {
   CP: { label: "CP", cycle: "Cycle 2 (Apprentissages fondamentaux)", nominalAge: 6 },
   CE1: { label: "CE1", cycle: "Cycle 2 (Apprentissages fondamentaux)", nominalAge: 7 },
   CE2: { label: "CE2", cycle: "Cycle 2 (Apprentissages fondamentaux)", nominalAge: 8 },
@@ -220,14 +234,19 @@ export const BEHAVIORAL_DRIVERS = [
 
 export type BehavioralDriver = (typeof BEHAVIORAL_DRIVERS)[number];
 
-export const BEHAVIORAL_DRIVER_LABELS: Record<BehavioralDriver, { title: string; description: string }> = {
+export const BEHAVIORAL_DRIVER_LABELS: Record<
+  BehavioralDriver,
+  { title: string; description: string }
+> = {
   deconstruire: {
     title: "Déconstruire / Démonter",
-    description: "Analyse inverse, démontage de règles, recherche d'erreurs cachées ou décorticage d'un mécanisme.",
+    description:
+      "Analyse inverse, démontage de règles, recherche d'erreurs cachées ou décorticage d'un mécanisme.",
   },
   schematiser: {
     title: "Schématiser / Cartographier",
-    description: "Représentation visuelle, dessin technique, cartes mentales ou schémas physiques concrets.",
+    description:
+      "Représentation visuelle, dessin technique, cartes mentales ou schémas physiques concrets.",
   },
   simuler: {
     title: "Simuler / Modéliser",
@@ -235,7 +254,8 @@ export const BEHAVIORAL_DRIVER_LABELS: Record<BehavioralDriver, { title: string;
   },
   enqueter: {
     title: "Enquêter / Investiguer",
-    description: "Chasse aux indices, résolution de mystères, déduction logique et rôle de détective.",
+    description:
+      "Chasse aux indices, résolution de mystères, déduction logique et rôle de détective.",
   },
   optimiser: {
     title: "Optimiser / Améliorer",
@@ -251,76 +271,286 @@ Pour accompagner le parent qui n'a pas la consigne exacte sous les yeux, le modu
 ```typescript
 export const CURRICULUM_TOPICS: Record<GradeLevel, Record<AcademicSubject, string[]>> = {
   CP: {
-    mathematiques: ["Dénombrement jusqu'à 100", "Addition simple (< 20)", "Formes géométriques de base", "Comparaison de grandeurs"],
-    francais: ["Sons et lettres (Phonologie)", "Écriture des lettres cursives", "Lecture de mots simples", "Vocabulaire de la maison"],
-    sciences: ["Les 5 sens", "Le corps humain de base", "Les animaux et leur milieu", "Objets vivants vs non-vivants"],
-    histoire: ["Se repérer dans la journée", "Les jours de la semaine", "Les saisons", "Arbre généalogique simple"],
-    geographie: ["Se repérer dans la classe", "Ma maison et mon école", "Plan simple de la chambre"],
-    anglais: ["Salutations et prénom", "Les nombres de 1 à 10", "Les couleurs de base", "Les animaux de compagnie"],
+    mathematiques: [
+      "Dénombrement jusqu'à 100",
+      "Addition simple (< 20)",
+      "Formes géométriques de base",
+      "Comparaison de grandeurs",
+    ],
+    francais: [
+      "Sons et lettres (Phonologie)",
+      "Écriture des lettres cursives",
+      "Lecture de mots simples",
+      "Vocabulaire de la maison",
+    ],
+    sciences: [
+      "Les 5 sens",
+      "Le corps humain de base",
+      "Les animaux et leur milieu",
+      "Objets vivants vs non-vivants",
+    ],
+    histoire: [
+      "Se repérer dans la journée",
+      "Les jours de la semaine",
+      "Les saisons",
+      "Arbre généalogique simple",
+    ],
+    geographie: [
+      "Se repérer dans la classe",
+      "Ma maison et mon école",
+      "Plan simple de la chambre",
+    ],
+    anglais: [
+      "Salutations et prénom",
+      "Les nombres de 1 à 10",
+      "Les couleurs de base",
+      "Les animaux de compagnie",
+    ],
   },
   CE1: {
-    mathematiques: ["Tables de multiplication de 2 et 5", "Addition posée avec retenue", "Mesure de longueurs (cm, m)", "Soustraction simple"],
-    francais: ["Reconnaître le verbe et le sujet", "Nom propre vs nom commun", "L'accord dans le groupe nominal", "Lecture fluide de courts textes"],
-    sciences: ["Les états de l'eau (solide, liquide)", "Alimentation et santé", "Les plantes et leur croissance", "Electricité simple (pile et ampoule)"],
-    histoire: ["La frise chronologique de la journée à l'année", "Les objets d'autrefois vs aujourd'hui"],
-    geographie: ["Le quartier et la ville", "Lire un plan de quartier", "Les paysages urbains et ruraux"],
+    mathematiques: [
+      "Tables de multiplication de 2 et 5",
+      "Addition posée avec retenue",
+      "Mesure de longueurs (cm, m)",
+      "Soustraction simple",
+    ],
+    francais: [
+      "Reconnaître le verbe et le sujet",
+      "Nom propre vs nom commun",
+      "L'accord dans le groupe nominal",
+      "Lecture fluide de courts textes",
+    ],
+    sciences: [
+      "Les états de l'eau (solide, liquide)",
+      "Alimentation et santé",
+      "Les plantes et leur croissance",
+      "Electricité simple (pile et ampoule)",
+    ],
+    histoire: [
+      "La frise chronologique de la journée à l'année",
+      "Les objets d'autrefois vs aujourd'hui",
+    ],
+    geographie: [
+      "Le quartier et la ville",
+      "Lire un plan de quartier",
+      "Les paysages urbains et ruraux",
+    ],
     anglais: ["Exprimer ses goûts (I like...)", "Les parties du corps", "Les consignes de classe"],
   },
   CE2: {
-    mathematiques: ["Tables de multiplication de 3, 4, 10", "Soustraction posée avec retenue", "Notion de périmètre", "Lire l'heure"],
-    francais: ["Le présent de l'indicatif (1er et 2ème groupe)", "Les types de phrases", "Orthographe grammaticale (a/à, et/est)", "Synonymes et antonymes"],
-    sciences: ["Le cycle de vie des animaux", "Les engrenages et mouvements", "Les déchet et le recyclage"],
-    histoire: ["Les grandes périodes de l'Histoire", "La Préhistoire et l'art rupestre", "L'Antiquité"],
+    mathematiques: [
+      "Tables de multiplication de 3, 4, 10",
+      "Soustraction posée avec retenue",
+      "Notion de périmètre",
+      "Lire l'heure",
+    ],
+    francais: [
+      "Le présent de l'indicatif (1er et 2ème groupe)",
+      "Les types de phrases",
+      "Orthographe grammaticale (a/à, et/est)",
+      "Synonymes et antonymes",
+    ],
+    sciences: [
+      "Le cycle de vie des animaux",
+      "Les engrenages et mouvements",
+      "Les déchet et le recyclage",
+    ],
+    histoire: [
+      "Les grandes périodes de l'Histoire",
+      "La Préhistoire et l'art rupestre",
+      "L'Antiquité",
+    ],
     geographie: ["La carte du pays (villes, fleuves)", "Les grands types de paysages"],
     anglais: ["Les jours et la météo", "Les consignes et questions simples", "La famille"],
   },
   CM1: {
-    mathematiques: ["Toutes les tables de multiplication (1 à 10)", "Division à 1 chiffre", "Fractions simples (1/2, 1/4, 1/3)", "Aires et périmètres"],
-    francais: ["Accord du participe passé avec être/avoir", "Imparfait et futur de l'indicatif", "Complément d'objet (COD/COI)", "Champ lexical"],
-    sciences: ["Le cycle de l'eau complet", "Le système solaire et les planètes", "La digestion et la circulation sanguine"],
-    histoire: ["Moyen Âge (châteaux, chevaliers)", "Les Grandes Découvertes", "La monarchie en France et Afrique"],
+    mathematiques: [
+      "Toutes les tables de multiplication (1 à 10)",
+      "Division à 1 chiffre",
+      "Fractions simples (1/2, 1/4, 1/3)",
+      "Aires et périmètres",
+    ],
+    francais: [
+      "Accord du participe passé avec être/avoir",
+      "Imparfait et futur de l'indicatif",
+      "Complément d'objet (COD/COI)",
+      "Champ lexical",
+    ],
+    sciences: [
+      "Le cycle de l'eau complet",
+      "Le système solaire et les planètes",
+      "La digestion et la circulation sanguine",
+    ],
+    histoire: [
+      "Moyen Âge (châteaux, chevaliers)",
+      "Les Grandes Découvertes",
+      "La monarchie en France et Afrique",
+    ],
     geographie: ["Consommer en France/Afrique (eau, énergie)", "Reliefs et climats"],
-    anglais: ["Présentation personnelle complète", "La routine quotidienne", "La nourriture et les repas"],
+    anglais: [
+      "Présentation personnelle complète",
+      "La routine quotidienne",
+      "La nourriture et les repas",
+    ],
   },
   CM2: {
-    mathematiques: ["Nombres décimaux et opérations", "Division à 2 chiffres", "Proportionnalité et pourcentages", "Les angles"],
-    francais: ["Passé simple de l'indicatif", "Propositions indépendantes et coordonnées", "Attribut du sujet", "Vocabulaire abstrait"],
-    sciences: ["Énergie et ses transformations", "Écosystèmes et biodiversité", "Les volcans et séismes"],
-    histoire: ["La Révolution Française", "Le XIXe siècle et l'industrie", "Les deux Guerres Mondiales"],
-    geographie: ["Se déplacer dans le monde", "Internet et le réseau mondial", "La diversité des paysages mondiaux"],
-    anglais: ["Raconter un événement passé simple", "Les pays anglophones", "Les heures et horaires"],
+    mathematiques: [
+      "Nombres décimaux et opérations",
+      "Division à 2 chiffres",
+      "Proportionnalité et pourcentages",
+      "Les angles",
+    ],
+    francais: [
+      "Passé simple de l'indicatif",
+      "Propositions indépendantes et coordonnées",
+      "Attribut du sujet",
+      "Vocabulaire abstrait",
+    ],
+    sciences: [
+      "Énergie et ses transformations",
+      "Écosystèmes et biodiversité",
+      "Les volcans et séismes",
+    ],
+    histoire: [
+      "La Révolution Française",
+      "Le XIXe siècle et l'industrie",
+      "Les deux Guerres Mondiales",
+    ],
+    geographie: [
+      "Se déplacer dans le monde",
+      "Internet et le réseau mondial",
+      "La diversité des paysages mondiaux",
+    ],
+    anglais: [
+      "Raconter un événement passé simple",
+      "Les pays anglophones",
+      "Les heures et horaires",
+    ],
   },
   "6EME": {
-    mathematiques: ["Fractions et quotients", "Écritures décimales et fractions", "Symétrie axiale", "Volumes et contenances"],
-    francais: ["Récits de création et création du monde", "Le monstre et la métamorphose", "Récits d'aventures", "Grammaire de la phrase complexe"],
-    sciences: ["Matière, mouvement, énergie et information", "Le vivant et sa diversité", "La Terre dans le système solaire"],
-    histoire: ["La longue histoire de l'humanité et les premières écritures", "Premiers états, premières écritures", "Le monde des cités grecques", "Rome et l'Empire"],
-    geographie: ["Habiter une métropole", "Habiter un espace à fortes contraintes", "Habiter les littoraux"],
+    mathematiques: [
+      "Fractions et quotients",
+      "Écritures décimales et fractions",
+      "Symétrie axiale",
+      "Volumes et contenances",
+    ],
+    francais: [
+      "Récits de création et création du monde",
+      "Le monstre et la métamorphose",
+      "Récits d'aventures",
+      "Grammaire de la phrase complexe",
+    ],
+    sciences: [
+      "Matière, mouvement, énergie et information",
+      "Le vivant et sa diversité",
+      "La Terre dans le système solaire",
+    ],
+    histoire: [
+      "La longue histoire de l'humanité et les premières écritures",
+      "Premiers états, premières écritures",
+      "Le monde des cités grecques",
+      "Rome et l'Empire",
+    ],
+    geographie: [
+      "Habiter une métropole",
+      "Habiter un espace à fortes contraintes",
+      "Habiter les littoraux",
+    ],
     anglais: ["Niveau A1 : Description de lieux, personnes, routines, projets simples"],
   },
   "5EME": {
-    mathematiques: ["Priorités opératoires", "Nombres relatifs (introduction)", "Proportionnalité et échelles", "Triangles et angles"],
-    francais: ["Le voyage et l'aventure", "Avec autrui : familles, amis, réseaux", "Héros/Héroïnes et personnages", "L'imaginaire et la poésie"],
-    sciences: ["Organismes et santé", "Organisation et transformations de la matière", "Mouvement et interactions"],
-    histoire: ["Chrétientés et Islam au Moyen Âge", "Société, Église et pouvoir politique dans le féodalisme", "La Renaissance et les réformes"],
-    geographie: ["Démographie et développement durable", "Gestion des ressources (eau, énergie)", "Prévenir les risques"],
+    mathematiques: [
+      "Priorités opératoires",
+      "Nombres relatifs (introduction)",
+      "Proportionnalité et échelles",
+      "Triangles et angles",
+    ],
+    francais: [
+      "Le voyage et l'aventure",
+      "Avec autrui : familles, amis, réseaux",
+      "Héros/Héroïnes et personnages",
+      "L'imaginaire et la poésie",
+    ],
+    sciences: [
+      "Organismes et santé",
+      "Organisation et transformations de la matière",
+      "Mouvement et interactions",
+    ],
+    histoire: [
+      "Chrétientés et Islam au Moyen Âge",
+      "Société, Église et pouvoir politique dans le féodalisme",
+      "La Renaissance et les réformes",
+    ],
+    geographie: [
+      "Démographie et développement durable",
+      "Gestion des ressources (eau, énergie)",
+      "Prévenir les risques",
+    ],
     anglais: ["Niveau A1+ : Raconter une histoire, exprimer des choix, comparer des éléments"],
   },
   "4EME": {
-    mathematiques: ["Nombres relatifs et opérations", "Théorème de Pythagore", "Équations du premier degré", "Théorème de Thalès (intro)"],
-    francais: ["Dire l'amour", "Individu et société : confrontations", "La fiction pour interroger le réel", "Informer, s'informer, déformer"],
-    sciences: ["Reproduction et génétique de base", "Chimie : atomes et molécules", "Vitesse et forces"],
-    histoire: ["Bourgeoisies mercantiles et traite négrière", "L'Europe des Lumières", "La Révolution et l'Empire", "L'Europe et le monde au XIXe siècle"],
-    geographie: ["L'urbanisation du monde", "Les espaces de la mondialisation", "Mobilités humaines internationales"],
+    mathematiques: [
+      "Nombres relatifs et opérations",
+      "Théorème de Pythagore",
+      "Équations du premier degré",
+      "Théorème de Thalès (intro)",
+    ],
+    francais: [
+      "Dire l'amour",
+      "Individu et société : confrontations",
+      "La fiction pour interroger le réel",
+      "Informer, s'informer, déformer",
+    ],
+    sciences: [
+      "Reproduction et génétique de base",
+      "Chimie : atomes et molécules",
+      "Vitesse et forces",
+    ],
+    histoire: [
+      "Bourgeoisies mercantiles et traite négrière",
+      "L'Europe des Lumières",
+      "La Révolution et l'Empire",
+      "L'Europe et le monde au XIXe siècle",
+    ],
+    geographie: [
+      "L'urbanisation du monde",
+      "Les espaces de la mondialisation",
+      "Mobilités humaines internationales",
+    ],
     anglais: ["Niveau A2 : Argumenter simplement, exprimer une opinion, récits au passé"],
   },
   "3EME": {
-    mathematiques: ["Théorème de Thalès et réciproque", "Fonctions affines et linéaires", "Statistiques et probabilités", "Calcul littéral et factorisation"],
-    francais: ["Se raconter, se représenter", "Dénoncer les travers de la société", "Agir dans la cité : individu et pouvoir", "Progrès et rêves scientifiques"],
-    sciences: ["Génétique, ADN et hérédité", "Reactions chimiques acides-bases", "Énergie mécanique, cinétique, potentielle"],
-    histoire: ["L'Europe, théâtre majeur des deux guerres mondiales", "Démocraties et régimes totalitaires", "La Seconde Guerre Mondiale", "La Guerre Froide"],
-    geographie: ["Aire urbaine et dynamiques territoriales", "Les espaces productifs", "La France et l'UE dans le monde"],
-    anglais: ["Niveau A2/B1 : Débats, synthèses de documents, expression écrite et orale structurée"],
+    mathematiques: [
+      "Théorème de Thalès et réciproque",
+      "Fonctions affines et linéaires",
+      "Statistiques et probabilités",
+      "Calcul littéral et factorisation",
+    ],
+    francais: [
+      "Se raconter, se représenter",
+      "Dénoncer les travers de la société",
+      "Agir dans la cité : individu et pouvoir",
+      "Progrès et rêves scientifiques",
+    ],
+    sciences: [
+      "Génétique, ADN et hérédité",
+      "Reactions chimiques acides-bases",
+      "Énergie mécanique, cinétique, potentielle",
+    ],
+    histoire: [
+      "L'Europe, théâtre majeur des deux guerres mondiales",
+      "Démocraties et régimes totalitaires",
+      "La Seconde Guerre Mondiale",
+      "La Guerre Froide",
+    ],
+    geographie: [
+      "Aire urbaine et dynamiques territoriales",
+      "Les espaces productifs",
+      "La France et l'UE dans le monde",
+    ],
+    anglais: [
+      "Niveau A2/B1 : Débats, synthèses de documents, expression écrite et orale structurée",
+    ],
   },
 };
 ```
@@ -381,10 +611,19 @@ const ChallengeSchema = z.object({
   academic_level_age: z.number().nullable().optional(),
   academic_reference_note: z.string().nullable().optional(),
   // NOUVEAUX CHAMPS DE FUSION ACADÉMIQUE
-  academic_subject: z.enum(["mathematiques", "francais", "sciences", "histoire", "geographie", "anglais"]).nullable().optional(),
-  academic_grade_level: z.enum(["CP", "CE1", "CE2", "CM1", "CM2", "6EME", "5EME", "4EME", "3EME"]).nullable().optional(),
+  academic_subject: z
+    .enum(["mathematiques", "francais", "sciences", "histoire", "geographie", "anglais"])
+    .nullable()
+    .optional(),
+  academic_grade_level: z
+    .enum(["CP", "CE1", "CE2", "CM1", "CM2", "6EME", "5EME", "4EME", "3EME"])
+    .nullable()
+    .optional(),
   homework_instruction: z.string().nullable().optional(),
-  behavioral_driver: z.enum(["deconstruire", "schematiser", "simuler", "enqueter", "optimiser"]).nullable().optional(),
+  behavioral_driver: z
+    .enum(["deconstruire", "schematiser", "simuler", "enqueter", "optimiser"])
+    .nullable()
+    .optional(),
 });
 ```
 
@@ -396,7 +635,9 @@ const GenerateAcademicHomeworkInput = z.object({
   subject: z.enum(["mathematiques", "francais", "sciences", "histoire", "geographie", "anglais"]),
   gradeLevel: z.enum(["CP", "CE1", "CE2", "CM1", "CM2", "6EME", "5EME", "4EME", "3EME"]),
   homeworkInstruction: z.string().min(2).max(500),
-  behavioralDriver: z.enum(["deconstruire", "schematiser", "simuler", "enqueter", "optimiser"]).optional(),
+  behavioralDriver: z
+    .enum(["deconstruire", "schematiser", "simuler", "enqueter", "optimiser"])
+    .optional(),
   timeAvailable: z.string().optional(),
   homeMaterials: z.string().optional().nullable(),
 });
@@ -431,7 +672,7 @@ export const generateAcademicHomeworkChallenge = createServerFn({ method: "POST"
     const gradeInfo = GRADE_LEVEL_LABELS[data.gradeLevel];
     const targetAge = gradeInfo.nominalAge;
     const timeAvailable = data.timeAvailable || "30 min";
-    
+
     // Détermination du driver comportemental (sélectionné par le parent ou déduit des intérêts de l'enfant)
     const selectedDriver: BehavioralDriver = data.behavioralDriver || "deconstruire";
     const driverGuidance = DRIVER_FUSION_GUIDANCE[selectedDriver];
@@ -473,7 +714,7 @@ RÈGLES DE FUSION ACADÉMIQUE-LUDIQUE STRICTES :
 
 Réponds STRICTEMENT en JSON valide avec ce format exact :
 {
-  "domain": "${data.subject === 'mathematiques' ? 'Sciences' : data.subject === 'francais' || data.subject === 'anglais' ? 'Langues' : 'Sciences'}",
+  "domain": "${data.subject === "mathematiques" ? "Sciences" : data.subject === "francais" || data.subject === "anglais" ? "Langues" : "Sciences"}",
   "title": "Titre accrocheur du défi ludique",
   "description": "Pitch du défi pour l'enfant intégrant la révision de ${data.homeworkInstruction}",
   "duration": "${timeAvailable}",
@@ -481,7 +722,7 @@ Réponds STRICTEMENT en JSON valide avec ce format exact :
   "materials": ["Matériau 1", "Matériau 2..."],
   "material_tags": ["materiau-1"],
   "pedagogical_context": "Ce que Naya observe via cette activité de révision ludique",
-  "intelligences": ["${data.subject === 'mathematiques' ? 'logico_mathematique' : data.subject === 'francais' || data.subject === 'anglais' ? 'linguistique' : 'creative'}"],
+  "intelligences": ["${data.subject === "mathematiques" ? "logico_mathematique" : data.subject === "francais" || data.subject === "anglais" ? "linguistique" : "creative"}"],
   "trait_subform": "...",
   "requires_supervision": false,
   "supervision_warning": null,
@@ -489,7 +730,7 @@ Réponds STRICTEMENT en JSON valide avec ce format exact :
   "proof_mode": "photo",
   "proof_target": null,
   "declarative_award": null,
-  "academic_domain": "${data.subject === 'mathematiques' ? 'mathematiques' : data.subject === 'francais' || data.subject === 'anglais' ? 'langage' : 'sciences'}",
+  "academic_domain": "${data.subject === "mathematiques" ? "mathematiques" : data.subject === "francais" || data.subject === "anglais" ? "langage" : "sciences"}",
   "academic_level_age": ${targetAge},
   "academic_reference_note": "Consigne scolaire ${gradeInfo.label} : ${data.homeworkInstruction.slice(0, 100)}",
   "academic_subject": "${data.subject}",
@@ -503,7 +744,12 @@ Réponds STRICTEMENT en JSON valide avec ce format exact :
     try {
       parsed = JSON.parse(extractJsonFromLLMResponse(content));
     } catch (err) {
-      console.error("Error parsing generateAcademicHomeworkChallenge LLM response:", err, "Raw:", content);
+      console.error(
+        "Error parsing generateAcademicHomeworkChallenge LLM response:",
+        err,
+        "Raw:",
+        content,
+      );
       throw new Error("Réponse IA invalide");
     }
 

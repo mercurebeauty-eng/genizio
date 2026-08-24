@@ -395,8 +395,8 @@ function DashboardPage() {
               {mentorMode ? (
                 <>
                   <p className="mb-4 text-ink/60">
-                    Aucun enfant ne vous est assigné pour le moment. Un administrateur Génizio
-                    doit vous assigner des profils pour que vous puissiez les accompagner.
+                    Aucun enfant ne vous est assigné pour le moment. Un administrateur Génizio doit
+                    vous assigner des profils pour que vous puissiez les accompagner.
                   </p>
                   <Link
                     to="/mentor"
@@ -407,9 +407,7 @@ function DashboardPage() {
                 </>
               ) : (
                 <>
-                  <p className="mb-4 text-ink/60">
-                    Aucun profil pour l'instant. Créez le premier.
-                  </p>
+                  <p className="mb-4 text-ink/60">Aucun profil pour l'instant. Créez le premier.</p>
                   <button
                     onClick={() => setCreating(true)}
                     className="press-brand rounded-2xl bg-brand px-6 py-3 text-sm font-bold text-white cursor-pointer"
@@ -831,7 +829,7 @@ function DashboardPage() {
 
       {showRelationshipModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-black/60 p-4 backdrop-blur-sm animate-in fade-in duration-200">
-          <div className="w-full max-w-md rounded-[2rem] border border-ink/10 bg-white/95 backdrop-blur-md p-6 shadow-xl animate-in zoom-in-95 duration-200 md:p-8">
+          <div className="my-auto w-full max-w-md max-h-[90vh] overflow-y-auto rounded-[2rem] border border-ink/10 bg-white/95 backdrop-blur-md p-6 shadow-xl animate-in zoom-in-95 duration-200 md:p-8">
             <div className="text-center">
               <div className="mx-auto flex size-14 items-center justify-center rounded-[1.2rem] bg-brand/10 text-brand">
                 <Check className="size-6" />
@@ -875,7 +873,7 @@ function DashboardPage() {
 
       {showPhoneModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-black/60 p-4 backdrop-blur-sm animate-in fade-in duration-200">
-          <div className="w-full max-w-md rounded-[2rem] border border-ink/10 bg-white/95 backdrop-blur-md p-6 shadow-xl animate-in zoom-in-95 duration-200 md:p-8">
+          <div className="my-auto w-full max-w-md max-h-[90vh] overflow-y-auto rounded-[2rem] border border-ink/10 bg-white/95 backdrop-blur-md p-6 shadow-xl animate-in zoom-in-95 duration-200 md:p-8">
             <div className="text-center">
               <div className="mx-auto flex size-14 items-center justify-center rounded-[1.2rem] bg-brand/10 text-brand">
                 <Phone className="size-6" />
@@ -914,7 +912,7 @@ function DashboardPage() {
                     ))}
                   </select>
 
-                  <div className="relative flex-1">
+                  <div className="relative flex-1 min-w-0">
                     <input
                       type="tel"
                       inputMode="numeric"

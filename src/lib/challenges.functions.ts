@@ -2931,10 +2931,9 @@ export const generateAcademicHomeworkChallenge = createServerFn({ method: "POST"
 
     // Décision 2026-08-05 : les intérêts déclarés sont des HYPOTHÈSES de travail — leur
     // confiance est dérivée à la lecture (complétions vs abandons, par groupe de talents).
-    const interestHypotheses = await getInterestHypothesesSnapshot(
-      db as any,
-      data.childId,
-    ).catch(() => null);
+    const interestHypotheses = await getInterestHypothesesSnapshot(db as any, data.childId).catch(
+      () => null,
+    );
 
     const { data: existing } = await db
       .from("challenges")
@@ -2949,12 +2948,7 @@ export const generateAcademicHomeworkChallenge = createServerFn({ method: "POST"
     const targetAge = gradeInfo.nominalAge;
     const timeAvailable = data.timeAvailable || "30 min";
 
-    const zpaContext = await computeHomeworkZPAContext(
-      db,
-      data.childId,
-      data.subject,
-      targetAge,
-    );
+    const zpaContext = await computeHomeworkZPAContext(db, data.childId, data.subject, targetAge);
     const zpaResult = calculateZPADifficulty(
       zpaContext.masteryScore,
       zpaContext.hypothesisCauses,
@@ -3103,42 +3097,45 @@ export const generateSingleChallenge = createServerFn({ method: "POST" })
 
     // Décision 2026-08-05 : les intérêts déclarés sont des HYPOTHÈSES de travail — leur
     // confiance est dérivée à la lecture (complétions vs abandons, par groupe de talents).
-    const interestHypotheses = await getInterestHypothesesSnapshot(
-      db as any,
-      data.childId,
-    ).catch(() => null);
+    const interestHypotheses = await getInterestHypothesesSnapshot(db as any, data.childId).catch(
+      () => null,
+    );
 
     // Unlike generateChallenges (the batch generator), this on-demand single-défi
     // path never checked recent titles at all — a parent clicking "Composer un défi
     // ciblé" repeatedly could get literal duplicates. Fetching both in parallel
     // matches generateChallenges' existing pattern instead of inventing a new one.
-    const [{ data: completedChallenges }, { data: existing }, progressionTargets, { data: latestChildQuestion }] =
-      await Promise.all([
-        db
-          .from("challenges")
-          .select("title, domain, ai_observations")
-          .eq("child_id", data.childId)
-          .eq("status", "completed")
-          .order("completed_at", { ascending: false })
-          .limit(6),
-        db
-          .from("challenges")
-          .select("title")
-          .eq("child_id", data.childId)
-          .order("created_at", { ascending: false })
-          .limit(30),
-        computeProgressionTargets(db, data.childId),
-        // Question formulée par l'enfant lui-même (chantier « Deuxième colonne
-        // vertébrale », 2026-08-15) — fil conducteur de la génération ciblée.
-        db
-          .from("challenges")
-          .select("child_question")
-          .eq("child_id", data.childId)
-          .not("child_question", "is", null)
-          .order("created_at", { ascending: false })
-          .limit(1)
-          .maybeSingle(),
-      ]);
+    const [
+      { data: completedChallenges },
+      { data: existing },
+      progressionTargets,
+      { data: latestChildQuestion },
+    ] = await Promise.all([
+      db
+        .from("challenges")
+        .select("title, domain, ai_observations")
+        .eq("child_id", data.childId)
+        .eq("status", "completed")
+        .order("completed_at", { ascending: false })
+        .limit(6),
+      db
+        .from("challenges")
+        .select("title")
+        .eq("child_id", data.childId)
+        .order("created_at", { ascending: false })
+        .limit(30),
+      computeProgressionTargets(db, data.childId),
+      // Question formulée par l'enfant lui-même (chantier « Deuxième colonne
+      // vertébrale », 2026-08-15) — fil conducteur de la génération ciblée.
+      db
+        .from("challenges")
+        .select("child_question")
+        .eq("child_id", data.childId)
+        .not("child_question", "is", null)
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .maybeSingle(),
+    ]);
 
     const completedSummary = ((completedChallenges ?? []) as any[])
       .map((c) => `- Défi "${c.title}" (${c.domain}) : "${c.ai_observations ?? ""}"`)
@@ -3285,10 +3282,9 @@ export const getChildAISynthesis = createServerFn({ method: "POST" })
 
     // Décision 2026-08-05 : les intérêts déclarés sont des HYPOTHÈSES de travail — leur
     // confiance est dérivée à la lecture (complétions vs abandons, par groupe de talents).
-    const interestHypotheses = await getInterestHypothesesSnapshot(
-      db as any,
-      data.childId,
-    ).catch(() => null);
+    const interestHypotheses = await getInterestHypothesesSnapshot(db as any, data.childId).catch(
+      () => null,
+    );
     const formattedInterests = formatChildInterestsPayload(child.interests, interestHypotheses);
 
     const prompt = `Tu es Naya, une IA mentore pédagogique.

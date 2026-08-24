@@ -1,6 +1,13 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { GuideLayout } from "@/components/guides/GuideLayout";
-import { pageMeta, jsonLdScript, faqPageJsonLd, breadcrumbJsonLd, absoluteUrl, SITE_URL } from "@/lib/seo";
+import {
+  pageMeta,
+  jsonLdScript,
+  faqPageJsonLd,
+  breadcrumbJsonLd,
+  absoluteUrl,
+  SITE_URL,
+} from "@/lib/seo";
 
 const PATH = "/guides/discipline-positive-sans-punition";
 
@@ -56,7 +63,7 @@ export const Route = createFileRoute("/guides/discipline-positive-sans-punition"
             { name: "Accueil", path: "/" },
             { name: "Guides", path: "/guides" },
             { name: "Discipline positive", path: PATH },
-          ])
+          ]),
         ),
         jsonLdScript({
           "@context": "https://schema.org",
@@ -90,15 +97,26 @@ function Guide() {
       intro="Crier fonctionne quelques minutes, puis il faut crier plus fort. La fessée fait obéir sur le moment, puis il faut frapper plus fort. Il existe une autre voie, que nos familles connaissent déjà en partie : l'autorité ferme posée sans humiliation, celle qui s'appuie sur la communauté plutôt que sur la peur. Voici comment la mettre en pratique, au quotidien."
       updated="14 août 2026"
       readingTime="8 min"
+      path={PATH}
       related={[
-        { label: "Rendre son enfant autonome sans crier", to: "/guides/autonomie-responsabilite-maison" },
+        {
+          label: "Rendre son enfant autonome sans crier",
+          to: "/guides/autonomie-responsabilite-maison",
+        },
         { label: "Gérer la colère de son enfant", to: "/guides/gestion-colere-emotions-enfant" },
-        { label: "Rivalité frères et sœurs : coopérer", to: "/guides/fratrie-rivalite-cooperation" },
+        {
+          label: "Rivalité frères et sœurs : coopérer",
+          to: "/guides/fratrie-rivalite-cooperation",
+        },
       ]}
     >
       <img
         src="/guides/og-discipline.jpg"
         alt="Parent posant une limite avec bienveillance et fermeté à son enfant à la maison"
+        width="1200"
+        height="630"
+        loading="lazy"
+        decoding="async"
         className="my-6 aspect-video w-full rounded-3xl border border-ink/10 object-cover shadow-lg"
       />
       <h2>Ce que « poser des limites » veut dire, ici</h2>
@@ -106,16 +124,16 @@ function Guide() {
         Dans beaucoup de familles d'Afrique francophone, l'autorité n'a jamais été une affaire
         privée entre un parent et un enfant : le tonton, la tata, la grand-mère, le maître d'école
         participent tous à l'éducation. Un enfant sait que ses actes se savent, que sa conduite
-        rejaillit sur la famille. C'est une <strong>force immense</strong>, que la discipline moderne
-        redécouvre sous le nom de « village qui éduque » — et vous l'avez déjà.
+        rejaillit sur la famille. C'est une <strong>force immense</strong>, que la discipline
+        moderne redécouvre sous le nom de « village qui éduque » — et vous l'avez déjà.
       </p>
       <p>
         Le problème n'est donc pas l'autorité : c'est sa forme. Quand l'autorité passe par la
         violence ou l'humiliation (fessée, coups de ceinture, injures, moquerie devant les autres),
         l'enfant obéit par peur — et la peur n'apprend rien. Elle apprend seulement à éviter d'être
-        pris. Les limites doivent être <strong>fermes dans le fond et respectueuses dans la
-        forme</strong> : c'est exactement ce que nos grands-mères savaient faire quand elles
-        corrigeaient sans écraser.
+        pris. Les limites doivent être{" "}
+        <strong>fermes dans le fond et respectueuses dans la forme</strong> : c'est exactement ce
+        que nos grands-mères savaient faire quand elles corrigeaient sans écraser.
       </p>
 
       <h2>Comprendre avant de corriger : la question qui change tout</h2>
@@ -130,22 +148,23 @@ function Guide() {
       <p>
         Comprendre ne signifie pas excuser : cela signifie corriger au bon niveau — le besoin
         d'abord, le comportement ensuite. Et cela change aussi votre ton : on ne corrige pas de la
-        même façon un enfant fatigué, un enfant vexé et un enfant qui provoque. C'est ce discernement
-        qui fait la différence entre une correction qui apprend et une correction qui blesse.
+        même façon un enfant fatigué, un enfant vexé et un enfant qui provoque. C'est ce
+        discernement qui fait la différence entre une correction qui apprend et une correction qui
+        blesse.
       </p>
 
       <h2>Quatre techniques concrètes qui remplacent la fessée et les cris</h2>
       <ol>
         <li>
-          <strong>Les choix limités.</strong> Offrir deux options que l'adulte accepte vraiment :
-          « tu prépares ton sac maintenant ou dans cinq minutes ? » L'enfant exerce son autonomie
-          dans un cadre que vous décidez. Plus de choix qu'il n'en peut gérer l'angoisse.
+          <strong>Les choix limités.</strong> Offrir deux options que l'adulte accepte vraiment : «
+          tu prépares ton sac maintenant ou dans cinq minutes ? » L'enfant exerce son autonomie dans
+          un cadre que vous décidez. Plus de choix qu'il n'en peut gérer l'angoisse.
         </li>
         <li>
           <strong>Les conséquences logiques.</strong> Une conséquence liée à l'acte, annoncée à
-          l'avance, appliquée sans colère : « si tu jettes le livre, tu le ranges et tu le
-          répareras ». On distingue la conséquence logique de la punition arbitraire (« pas de
-          dessert ») qui n'apprend rien.
+          l'avance, appliquée sans colère : « si tu jettes le livre, tu le ranges et tu le répareras
+          ». On distingue la conséquence logique de la punition arbitraire (« pas de dessert ») qui
+          n'apprend rien.
         </li>
         <li>
           <strong>La réparation.</strong> Plutôt que de punir, demander à l'enfant de réparer ce
@@ -163,21 +182,48 @@ function Guide() {
 
       <h2>Des situations réelles, des paroles exactes</h2>
       <div className="my-6 rounded-2xl bg-amber-50 p-5 border border-amber-200">
-        <h3 className="font-bold text-amber-950 text-base mb-2">Au marché : l'enfant crie pour avoir un jouet</h3>
+        <h3 className="font-bold text-amber-950 text-base mb-2">
+          Au marché : l'enfant crie pour avoir un jouet
+        </h3>
         <p className="text-sm text-amber-900 leading-relaxed">
-          <em>« Tu es déçu, je comprends. Le jouet ne fait pas partie du marché aujourd'hui. Tu peux le mettre sur ta liste de souhaits, et on en reparle à la maison. »</em> Puis on s'accroupit à sa hauteur, on ne cède pas, et on change d'activité (l'aider à choisir les tomates). La crise s'éteint en quelques minutes si elle ne trouve pas de public.
+          <em>
+            « Tu es déçu, je comprends. Le jouet ne fait pas partie du marché aujourd'hui. Tu peux
+            le mettre sur ta liste de souhaits, et on en reparle à la maison. »
+          </em>{" "}
+          Puis on s'accroupit à sa hauteur, on ne cède pas, et on change d'activité (l'aider à
+          choisir les tomates). La crise s'éteint en quelques minutes si elle ne trouve pas de
+          public.
         </p>
       </div>
       <div className="my-6 rounded-2xl bg-sky-50 p-5 border border-sky-200">
-        <h3 className="font-bold text-sky-950 text-base mb-2">À la maison : il refuse de ranger ses affaires</h3>
+        <h3 className="font-bold text-sky-950 text-base mb-2">
+          À la maison : il refuse de ranger ses affaires
+        </h3>
         <p className="text-sm text-sky-900 leading-relaxed">
-          <em>« Tu préfères ranger tes jouets maintenant, ou dans cinq minutes avec le minuteur ? »</em> S'il refuse les deux : <em>« D'accord, je range les jouets dans le panier des objets à retrouver, et tu les retrouveras demain. »</em> Le jouet confisqué devient une conséquence qu'il peut comprendre — pas un vol punitif, un rangement logique.
+          <em>
+            « Tu préfères ranger tes jouets maintenant, ou dans cinq minutes avec le minuteur ? »
+          </em>{" "}
+          S'il refuse les deux :{" "}
+          <em>
+            « D'accord, je range les jouets dans le panier des objets à retrouver, et tu les
+            retrouveras demain. »
+          </em>{" "}
+          Le jouet confisqué devient une conséquence qu'il peut comprendre — pas un vol punitif, un
+          rangement logique.
         </p>
       </div>
       <div className="my-6 rounded-2xl bg-emerald-50 p-5 border border-emerald-200">
-        <h3 className="font-bold text-emerald-950 text-base mb-2">À l'école : la maîtresse se plaint de son comportement</h3>
+        <h3 className="font-bold text-emerald-950 text-base mb-2">
+          À l'école : la maîtresse se plaint de son comportement
+        </h3>
         <p className="text-sm text-emerald-900 leading-relaxed">
-          On ne punit pas deux fois. À la maison, on écoute la version de l'enfant, on reconnaît son émotion, puis on définit ensemble une réparation : <em>« Tu présenteras des excuses à ta maîtresse, et tu aideras un camarade cette semaine. »</em> Et surtout, on garde l'école comme alliée, pas comme menace (« tu vas voir, je vais le dire à ton père » ne crée que de la peur).
+          On ne punit pas deux fois. À la maison, on écoute la version de l'enfant, on reconnaît son
+          émotion, puis on définit ensemble une réparation :{" "}
+          <em>
+            « Tu présenteras des excuses à ta maîtresse, et tu aideras un camarade cette semaine. »
+          </em>{" "}
+          Et surtout, on garde l'école comme alliée, pas comme menace (« tu vas voir, je vais le
+          dire à ton père » ne crée que de la peur).
         </p>
       </div>
 
@@ -208,13 +254,13 @@ function Guide() {
 
       <h2>Pourquoi ça demande de la régularité</h2>
       <p>
-        Aucune technique ne change un comportement en une fois. Un enfant teste une limite
-        plusieurs dizaines de fois avant de l'intégrer — c'est son travail. Le vôtre est de tenir la
-        même limite, avec le même calme, assez longtemps pour qu'elle devienne prévisible. La
-        répétition sereine fait la différence entre une règle comprise et une règle subie. Et si
-        vous criez ou frappez un jour de fatigue, ne vous flagellez pas : reprenez la règle le
-        lendemain, présentez des excuses si besoin, et recommencez. C'est la constance dans le temps
-        qui éduque, pas la perfection d'une journée.
+        Aucune technique ne change un comportement en une fois. Un enfant teste une limite plusieurs
+        dizaines de fois avant de l'intégrer — c'est son travail. Le vôtre est de tenir la même
+        limite, avec le même calme, assez longtemps pour qu'elle devienne prévisible. La répétition
+        sereine fait la différence entre une règle comprise et une règle subie. Et si vous criez ou
+        frappez un jour de fatigue, ne vous flagellez pas : reprenez la règle le lendemain,
+        présentez des excuses si besoin, et recommencez. C'est la constance dans le temps qui
+        éduque, pas la perfection d'une journée.
       </p>
       <p>
         Génizio applique le même principe à sa manière : chaque défi proposé à l'enfant lui donne un

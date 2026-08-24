@@ -146,7 +146,13 @@ function JoinCampaignPage() {
           to="/"
           className="mb-8 flex items-center gap-2 font-display text-2xl font-extrabold text-brand"
         >
-          <img src="/favicon-96x96.png" alt="Logo Génizio" className="h-8 w-8" />
+          <img
+            src="/favicon-96x96.png"
+            alt="Logo Génizio"
+            width="32"
+            height="32"
+            className="h-8 w-8"
+          />
           GÉNIZIO
         </Link>
 
@@ -300,9 +306,9 @@ function JoinCampaignPage() {
                         name="child"
                         checked={selectedChildId === c.id}
                         onChange={() => setSelectedChildId(c.id)}
-                        className="accent-brand"
+                        className="accent-brand shrink-0"
                       />
-                      <span className="text-sm font-bold text-ink">
+                      <span className="text-sm font-bold text-ink truncate min-w-0">
                         {c.name} <span className="text-ink/40 font-medium">({c.age} ans)</span>
                       </span>
                     </label>

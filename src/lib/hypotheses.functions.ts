@@ -1,6 +1,18 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
-import { callClaude, finalizeChallenge, PROOF_MODE_INSTRUCTION, ACADEMIC_REFERENTIAL_INSTRUCTION, ACADEMIC_SECRET_INSTRUCTION, ACADEMIC_DOMAIN_LABELS, STEPS_INSTRUCTION, INTELLIGENCES_FIELD_INSTRUCTION, TRAIT_SUBFORM_INSTRUCTION, formatChildInterestsPayload, extractJsonFromLLMResponse } from "@/lib/challenges.functions";
+import {
+  callClaude,
+  finalizeChallenge,
+  PROOF_MODE_INSTRUCTION,
+  ACADEMIC_REFERENTIAL_INSTRUCTION,
+  ACADEMIC_SECRET_INSTRUCTION,
+  ACADEMIC_DOMAIN_LABELS,
+  STEPS_INSTRUCTION,
+  INTELLIGENCES_FIELD_INSTRUCTION,
+  TRAIT_SUBFORM_INSTRUCTION,
+  formatChildInterestsPayload,
+  extractJsonFromLLMResponse,
+} from "@/lib/challenges.functions";
 import { buildHypothesisPrompt } from "@/lib/naya-prompts";
 import { TALENT_KEY_LABELS } from "@/lib/talent-buckets";
 import { getInterestHypothesesSnapshot } from "@/lib/interest-confidence";
@@ -34,7 +46,12 @@ const ALLOWED_CAUSES = [
 // 2026-08-02). Causes pour lesquelles un accompagnement renforcé (défis "Stabilisation")
 // a du sens une fois confirmées — READY_FOR_MORE va dans l'autre sens (plus de défi, pas
 // plus de soutien) et OTHER est trop vague pour justifier une accommodation ciblée.
-const ACCOMMODATION_CAUSES = ["METHOD_MISMATCH", "PERFORMANCE_ANXIETY", "LACK_OF_ENGAGEMENT", "CONCEPTUAL_GAP"] as const;
+const ACCOMMODATION_CAUSES = [
+  "METHOD_MISMATCH",
+  "PERFORMANCE_ANXIETY",
+  "LACK_OF_ENGAGEMENT",
+  "CONCEPTUAL_GAP",
+] as const;
 
 // NAYA 2.0 Phase 3a, reconstruit (cf. genizio-decisions #38) : le déclencheur d'origine
 // (note scolaire anormale) a été retiré en décision #37 — remplacé par un écart RÉPÉTÉ entre
@@ -53,7 +70,7 @@ const GAP_THRESHOLD_YEARS = 1; // écart minimal (en années) pour compter comme
 // DB et de l'appel IA qui l'entourent dans ensureHypothesesForChild.
 export function findRepeatedNotCompletedCause(
   recentNotCompleted: { domain: string | null; cause: string | null; title: string | null }[],
-  openDomains: Set<string>
+  openDomains: Set<string>,
 ): { domain: string; cause: string; evidence: { cause: string; title: string }[] } | null {
   const byDomainCause = new Map<string, { cause: string; title: string }[]>();
   for (const c of recentNotCompleted) {
@@ -79,7 +96,7 @@ async function narrateForParent(
   childAge: number,
   domainLabel: string,
   direction: "BEHIND" | "AHEAD",
-  hypotheses: { cause: string; evidence_log: { fact: string }[] }[]
+  hypotheses: { cause: string; evidence_log: { fact: string }[] }[],
 ): Promise<string | null> {
   const sanitizeFact = (fact: string) => {
     return fact
@@ -95,9 +112,10 @@ async function narrateForParent(
     elements_observes: h.evidence_log.map((e) => sanitizeFact(e.fact)),
   }));
 
-  const toneInstruction = direction === "AHEAD"
-    ? `Le ton doit être ENTHOUSIASTE et valorisant — ${childName} semble prêt·e pour des défis plus stimulants en ${domainLabel}, ce n'est jamais un problème, c'est une bonne nouvelle à explorer.`
-    : `Le ton doit être chaleureux et jamais alarmiste — c'est une observation provisoire que Naya continue d'explorer, pas un jugement sur ${childName} ni sur le parent.`;
+  const toneInstruction =
+    direction === "AHEAD"
+      ? `Le ton doit être ENTHOUSIASTE et valorisant — ${childName} semble prêt·e pour des défis plus stimulants en ${domainLabel}, ce n'est jamais un problème, c'est une bonne nouvelle à explorer.`
+      : `Le ton doit être chaleureux et jamais alarmiste — c'est une observation provisoire que Naya continue d'explorer, pas un jugement sur ${childName} ni sur le parent.`;
 
   const prompt = `Tu es Naya, la mentore IA bienveillante de Génizio. Tu écris directement pour le PARENT de ${childName}, ${childAge} ans, à propos d'une observation récente en ${domainLabel}.
 
@@ -119,13 +137,24 @@ Réponds uniquement avec le texte final, sans guillemets, sans préambule, sans 
 
     let cleaned = text.replace(/^[\d\s.#-]+/gm, "").trim();
     const digitWords: Record<string, string> = {
-      "0": "zéro", "1": "un", "2": "deux", "3": "trois", "4": "quatre",
-      "5": "cinq", "6": "six", "7": "sept", "8": "huit", "9": "neuf"
+      "0": "zéro",
+      "1": "un",
+      "2": "deux",
+      "3": "trois",
+      "4": "quatre",
+      "5": "cinq",
+      "6": "six",
+      "7": "sept",
+      "8": "huit",
+      "9": "neuf",
     };
     cleaned = cleaned.replace(/\b([0-9])\b/g, (m) => digitWords[m] || m);
 
     if (/\d/.test(cleaned)) {
-      console.warn("narrateForParent: chiffre détecté malgré la consigne, narration rejetée:", cleaned);
+      console.warn(
+        "narrateForParent: chiffre détecté malgré la consigne, narration rejetée:",
+        cleaned,
+      );
       return null;
     }
     // Le Loup (chantier 2, Naya 3.0) : audit shadow non-bloquant du texte final livré.
@@ -154,7 +183,10 @@ const EnsureInput = z.object({ childId: z.string().uuid() });
 // STALE_DOMAIN_CUTOFF (14 jours, cf. generateChallenges), traite chacun une seule
 // fois — flag "abandoned_processed" dans pedagogical_context, pour ne pas
 // réappliquer le multiplicateur bayésien à chaque visite du Portfolio.
-async function processAbandonedDiscriminantChallenges(supabase: any, childId: string): Promise<void> {
+async function processAbandonedDiscriminantChallenges(
+  supabase: any,
+  childId: string,
+): Promise<void> {
   const cutoff = new Date(Date.now() - 14 * 24 * 60 * 60 * 1000).toISOString();
   const { data: staleCandidates } = await supabase
     .from("challenges")
@@ -218,9 +250,12 @@ export const ensureHypothesesForChild = createServerFn({ method: "POST" })
     // moins coûteuse, est retentée.
     const unnarrated = (existingCycles ?? []).find((c) => !c.parent_narrative);
     if (unnarrated) {
-      const hyps = (unnarrated.hypotheses as { cause: string; evidence_log: { fact: string }[] }[]) || [];
-      const domainLabel = ACADEMIC_DOMAIN_LABELS[unnarrated.trigger_domain ?? ""] ?? "apprentissage";
-      const direction = hyps[0]?.cause === "READY_FOR_MORE" ? "AHEAD" as const : "BEHIND" as const;
+      const hyps =
+        (unnarrated.hypotheses as { cause: string; evidence_log: { fact: string }[] }[]) || [];
+      const domainLabel =
+        ACADEMIC_DOMAIN_LABELS[unnarrated.trigger_domain ?? ""] ?? "apprentissage";
+      const direction =
+        hyps[0]?.cause === "READY_FOR_MORE" ? ("AHEAD" as const) : ("BEHIND" as const);
       const narrative = await narrateForParent(child.name, child.age, domainLabel, direction, hyps);
       if (narrative) {
         const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
@@ -254,7 +289,9 @@ export const ensureHypothesesForChild = createServerFn({ method: "POST" })
     }
 
     const openDomains = new Set(
-      (existingCycles ?? []).filter((c) => c.status === "open" && c.trigger_domain).map((c) => c.trigger_domain as string)
+      (existingCycles ?? [])
+        .filter((c) => c.status === "open" && c.trigger_domain)
+        .map((c) => c.trigger_domain as string),
     );
 
     let triggerDomain: string | null = null;
@@ -294,7 +331,7 @@ export const ensureHypothesesForChild = createServerFn({ method: "POST" })
           cause: c.not_completed_cause,
           title: c.title,
         })),
-        openDomains
+        openDomains,
       );
 
       if (!pattern) return { generated: false as const };
@@ -325,7 +362,13 @@ export const ensureHypothesesForChild = createServerFn({ method: "POST" })
         },
       ];
 
-      const ncNarrative = await narrateForParent(child.name, child.age, ncDomain, "BEHIND", ncHypotheses);
+      const ncNarrative = await narrateForParent(
+        child.name,
+        child.age,
+        ncDomain,
+        "BEHIND",
+        ncHypotheses,
+      );
 
       const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
       const { data: ncCycleRow, error: ncInsertErr } = await supabaseAdmin
@@ -370,7 +413,10 @@ export const ensureHypothesesForChild = createServerFn({ method: "POST" })
         enfant: { prenom: child.name, age: child.age },
         ecartReferentiel: {
           domaine: domainLabel,
-          direction: direction === "BEHIND" ? "en retard sur le référentiel" : "en avance sur le référentiel",
+          direction:
+            direction === "BEHIND"
+              ? "en retard sur le référentiel"
+              : "en avance sur le référentiel",
           niveaux_recents_observes: byDomain.get(triggerDomain),
         },
         jumeauPedagogique: {
@@ -384,14 +430,19 @@ export const ensureHypothesesForChild = createServerFn({ method: "POST" })
       4000,
       3,
       undefined,
-      NAYA_REASONING_MODEL
+      NAYA_REASONING_MODEL,
     );
 
     let parsed: { hypotheses?: unknown };
     try {
       parsed = JSON.parse(extractJsonFromLLMResponse(raw));
     } catch (err) {
-      console.error("Error parsing LLM response in runHypothesisEngine:", err, "Raw response:", raw);
+      console.error(
+        "Error parsing LLM response in runHypothesisEngine:",
+        err,
+        "Raw response:",
+        raw,
+      );
       throw new Error("Réponse IA invalide (JSON non parsable).");
     }
 
@@ -416,7 +467,7 @@ export const ensureHypothesesForChild = createServerFn({ method: "POST" })
             source_node: z.string().default(""),
             fact: z.string().default(""),
             weight_impact: z.string().default("POSITIVE_LOW"),
-          })
+          }),
         )
         .default([]),
     });
@@ -428,7 +479,9 @@ export const ensureHypothesesForChild = createServerFn({ method: "POST" })
       throw new Error("Réponse IA invalide (schéma d'hypothèses).");
     }
 
-    list = list.filter((h) => (ALLOWED_CAUSES as readonly string[]).includes(h.cause) && h.prior_probability > 0);
+    list = list.filter(
+      (h) => (ALLOWED_CAUSES as readonly string[]).includes(h.cause) && h.prior_probability > 0,
+    );
     if (list.length === 0) throw new Error("Aucune hypothèse valide générée.");
 
     const total = list.reduce((s, h) => s + h.prior_probability, 0);
@@ -445,7 +498,13 @@ export const ensureHypothesesForChild = createServerFn({ method: "POST" })
       })
       .sort((a, b) => b.prior_probability - a.prior_probability);
 
-    const parentNarrative = await narrateForParent(child.name, child.age, domainLabel, direction, hypotheses);
+    const parentNarrative = await narrateForParent(
+      child.name,
+      child.age,
+      domainLabel,
+      direction,
+      hypotheses,
+    );
 
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { data: cycle, error: insertErr } = await supabaseAdmin
@@ -492,7 +551,10 @@ export const generateDiscriminantChallenge = createServerFn({ method: "POST" })
 
     // Décision 2026-08-05 : les intérêts déclarés sont des HYPOTHÈSES de travail — leur
     // confiance est dérivée à la lecture (complétions vs abandons, par groupe de talents).
-    const interestHypotheses = await getInterestHypothesesSnapshot(supabase as any, data.childId).catch(() => null);
+    const interestHypotheses = await getInterestHypothesesSnapshot(
+      supabase as any,
+      data.childId,
+    ).catch(() => null);
 
     // 2. Récupère le cycle ouvert le plus récent
     const { data: cycle, error: cycleErr } = await supabase
@@ -642,7 +704,7 @@ Réponds EXCLUSIVEMENT avec un objet JSON strict au format suivant :
             academic_level_age: parsed.academic_level_age,
             academic_reference_note: parsed.academic_reference_note,
           },
-          child.age
+          child.age,
         ),
       })
       .select("*")
@@ -658,7 +720,7 @@ Réponds EXCLUSIVEMENT avec un objet JSON strict au format suivant :
 export async function processDiscriminantResult(
   challengeId: string,
   action: "COMPLETED" | "ABANDONED",
-  aiValidated: boolean = true
+  aiValidated: boolean = true,
 ): Promise<{ processed: boolean; resolved?: boolean; finalDiagnosis?: string }> {
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
@@ -692,7 +754,12 @@ export async function processDiscriminantResult(
 
   if (!cycle || cycle.status !== "open") return { processed: false };
 
-  const hypotheses = (cycle.hypotheses as { cause: string; current_probability: number; prior_probability: number }[]) || [];
+  const hypotheses =
+    (cycle.hypotheses as {
+      cause: string;
+      current_probability: number;
+      prior_probability: number;
+    }[]) || [];
   if (hypotheses.length === 0) return { processed: false };
 
   const targetCause = context.target_cause;
@@ -704,9 +771,13 @@ export async function processDiscriminantResult(
       if (action === "COMPLETED" && aiValidated) {
         mult = 1.8; // Succès au défi discriminant -> fort renforcement de la piste
       } else if (action === "ABANDONED") {
-        mult = (h.cause === "PERFORMANCE_ANXIETY" || h.cause === "LACK_OF_ENGAGEMENT") ? 1.5 : 0.6;
+        mult = h.cause === "PERFORMANCE_ANXIETY" || h.cause === "LACK_OF_ENGAGEMENT" ? 1.5 : 0.6;
       }
-    } else if (targetCause === "METHOD_MISMATCH" && h.cause === "CONCEPTUAL_GAP" && action === "COMPLETED") {
+    } else if (
+      targetCause === "METHOD_MISMATCH" &&
+      h.cause === "CONCEPTUAL_GAP" &&
+      action === "COMPLETED"
+    ) {
       mult = 0.4; // Réussite sur méthode alternative dément un manque de capacités réelles
     }
     return { ...h, current_probability: h.current_probability * mult };
@@ -796,7 +867,10 @@ export const generateSupportRetestChallenge = createServerFn({ method: "POST" })
 
     // Décision 2026-08-05 : les intérêts déclarés sont des HYPOTHÈSES de travail — leur
     // confiance est dérivée à la lecture (complétions vs abandons, par groupe de talents).
-    const interestHypotheses = await getInterestHypothesesSnapshot(supabase as any, data.childId).catch(() => null);
+    const interestHypotheses = await getInterestHypothesesSnapshot(
+      supabase as any,
+      data.childId,
+    ).catch(() => null);
 
     const { data: cycle, error: cycleErr } = await supabase
       .from("hypothesis_cycles")
@@ -916,7 +990,7 @@ Réponds EXCLUSIVEMENT avec un objet JSON strict au format suivant :
             academic_level_age: parsed.academic_level_age,
             academic_reference_note: parsed.academic_reference_note,
           },
-          child.age
+          child.age,
         ),
       })
       .select("*")
@@ -931,7 +1005,7 @@ Réponds EXCLUSIVEMENT avec un objet JSON strict au format suivant :
 // est un signal CONTRE le maintien du soutien renforcé (pas une confirmation de la cause).
 export async function processSupportRetestResult(
   challengeId: string,
-  action: "COMPLETED" | "ABANDONED"
+  action: "COMPLETED" | "ABANDONED",
 ): Promise<{ processed: boolean }> {
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
@@ -955,9 +1029,9 @@ export async function processSupportRetestResult(
   const updatePayload =
     action === "COMPLETED"
       ? { support_active: false }
-      // Encore besoin de soutien : on redémarre le compteur de 5 défis depuis maintenant,
-      // plutôt que de retenter un retest à chaque prochaine génération.
-      : { support_checkpoint_at: new Date().toISOString() };
+      : // Encore besoin de soutien : on redémarre le compteur de 5 défis depuis maintenant,
+        // plutôt que de retenter un retest à chaque prochaine génération.
+        { support_checkpoint_at: new Date().toISOString() };
 
   const { error } = await supabaseAdmin
     .from("hypothesis_cycles")
@@ -971,4 +1045,3 @@ export async function processSupportRetestResult(
 
   return { processed: true };
 }
-

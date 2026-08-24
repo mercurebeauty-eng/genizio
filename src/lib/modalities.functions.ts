@@ -93,7 +93,7 @@ const DEFAULT_MODALITY_PRIORITY: PresentationMode[] = ["image", "histoire", "man
  */
 export function resolveNextModality(
   cause: string | null | undefined,
-  tried: PresentationMode[]
+  tried: PresentationMode[],
 ): PresentationMode | null {
   const priority =
     cause && MODALITY_PRIORITIES[cause] ? MODALITY_PRIORITIES[cause] : DEFAULT_MODALITY_PRIORITY;
@@ -113,7 +113,7 @@ export interface ReformulationContext {
 
 /** Lit la filiation depuis `pedagogical_context` (colonne TEXT contenant du JSON). */
 export function parseReformulationContext(
-  raw: string | null | undefined
+  raw: string | null | undefined,
 ): ReformulationContext | null {
   if (!raw) return null;
   try {
@@ -140,7 +140,7 @@ export function parseReformulationContext(
  *  même modalité re-choisie — review 2026-08-12, P0). */
 export function resolveReformulationRoot(
   failedChallengeContext: string | null | undefined,
-  challengeId: string
+  challengeId: string,
 ): string {
   return parseReformulationContext(failedChallengeContext)?.originalChallengeId ?? challengeId;
 }
@@ -156,7 +156,7 @@ export interface ModalityAttemptSummary {
 
 /** Résumé déterministe des tentatives d'une chaîne de reformulation (0 IA). */
 export function summarizeModalityAttempts(
-  attempts: { presentationMode: PresentationMode | null; status: string }[]
+  attempts: { presentationMode: PresentationMode | null; status: string }[],
 ): ModalityAttemptSummary {
   const summary: ModalityAttemptSummary = {
     total: attempts.length,
@@ -180,9 +180,7 @@ const ReformulateInput = z.object({
   challengeId: z.string().uuid(),
 });
 
-export type ReformulationOutcome =
-  | { ok: true; challenge: any }
-  | { ok: false; reason: string };
+export type ReformulationOutcome = { ok: true; challenge: any } | { ok: false; reason: string };
 
 /**
  * Fonction interne (réutilisable par submitChallengeNotCompleted sans passer par le
@@ -192,7 +190,7 @@ export type ReformulationOutcome =
 export async function processModalityReformulation(
   supabase: SupabaseClient<Database>,
   userId: string,
-  challengeId: string
+  challengeId: string,
 ): Promise<ReformulationOutcome> {
   // 1. Défi original + enfant (ownership explicite, gating identique aux autres
   //    mutations de challenges — on ne se fie jamais qu'à la RLS).
@@ -242,9 +240,7 @@ export async function processModalityReformulation(
 
   // 3. Génération IA — même compétence cible, modalité imposée.
   const location = [child.city, child.country].filter(Boolean).join(", ") || "non précisé";
-  const reformulationTitles = attempts
-    .map((a) => a.title)
-    .filter((t): t is string => !!t);
+  const reformulationTitles = attempts.map((a) => a.title).filter((t): t is string => !!t);
   const prompt = buildReformulationPrompt({
     childName: child.name,
     childAge: child.age,
@@ -316,7 +312,7 @@ export async function processModalityReformulation(
       kind: parsed.kind,
       guidance_level: parsed.guidance_level,
     },
-    child.age
+    child.age,
   );
 
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");

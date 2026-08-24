@@ -48,7 +48,7 @@ describe("Milestone 3 UI & Function Edge Cases", () => {
             childName="TestChild"
             onGenerate={() => {}}
             isGenerating={false}
-          />
+          />,
         );
 
         // Verify grade level pill rendering
@@ -59,18 +59,14 @@ describe("Milestone 3 UI & Function Edge Cases", () => {
 
   describe("Edge Case 2: Mode toggling between free and homework", () => {
     it("correctly renders free mode with active state and aria attributes", () => {
-      const html = renderToString(
-        <HomeworkModeToggle mode="free" onModeChange={() => {}} />
-      );
+      const html = renderToString(<HomeworkModeToggle mode="free" onModeChange={() => {}} />);
       expect(html).toContain('data-active="true"');
       expect(html).toContain('aria-pressed="true"');
       expect(html).toContain("Défis Libres (Éveil)");
     });
 
     it("correctly renders homework mode with active state and aria attributes", () => {
-      const html = renderToString(
-        <HomeworkModeToggle mode="homework" onModeChange={() => {}} />
-      );
+      const html = renderToString(<HomeworkModeToggle mode="homework" onModeChange={() => {}} />);
       expect(html).toContain('data-active="true"');
       expect(html).toContain('aria-pressed="true"');
       expect(html).toContain("Devoirs Scolaires (Fusion)");
@@ -91,7 +87,7 @@ describe("Milestone 3 UI & Function Edge Cases", () => {
           childName="Awa"
           onGenerate={() => {}}
           isGenerating={false}
-        />
+        />,
       );
       expect(htmlEmpty).toContain("disabled");
       expect(htmlEmpty).toContain('data-testid="submit-homework-button"');
@@ -106,7 +102,7 @@ describe("Milestone 3 UI & Function Edge Cases", () => {
           childName="Awa"
           onGenerate={() => {}}
           isGenerating={true}
-        />
+        />,
       );
       expect(htmlGenerating).toContain("disabled");
       expect(htmlGenerating).toContain("Fusion du devoir en quête...");
@@ -115,7 +111,7 @@ describe("Milestone 3 UI & Function Edge Cases", () => {
 
     it("guards against submission while generation is active", async () => {
       const mockOnGenerate = vi.fn();
-      
+
       // Simulate handleSubmit double-submit protection logic
       const isGenerating = true;
       const handleSubmitGuard = async (instruction: string) => {

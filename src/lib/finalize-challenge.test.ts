@@ -16,7 +16,7 @@ describe("finalizeChallenge — trait_subform", () => {
   it("garde une sous-forme valide quand corporelle fait partie des intelligences", () => {
     const result = finalizeChallenge(
       { ...base, intelligences: ["corporelle"], trait_subform: "explosivite" },
-      10
+      10,
     );
     expect(result.trait_subform).toBe("explosivite");
     expect(result.target_intelligences).toEqual(["corporelle"]);
@@ -25,7 +25,7 @@ describe("finalizeChallenge — trait_subform", () => {
   it("rejette une sous-forme si corporelle n'est pas dans les intelligences résolues", () => {
     const result = finalizeChallenge(
       { ...base, intelligences: ["creative"], trait_subform: "explosivite" },
-      10
+      10,
     );
     expect(result.trait_subform).toBeNull();
   });
@@ -33,7 +33,7 @@ describe("finalizeChallenge — trait_subform", () => {
   it("rejette une valeur de sous-forme inconnue même avec corporelle présent", () => {
     const result = finalizeChallenge(
       { ...base, intelligences: ["corporelle"], trait_subform: "vitesse-de-la-lumiere" },
-      10
+      10,
     );
     expect(result.trait_subform).toBeNull();
   });
@@ -56,7 +56,7 @@ describe("finalizeChallenge — trait_subform", () => {
   it("garde une sous-forme valide pour un domaine non-corporelle (spatial)", () => {
     const result = finalizeChallenge(
       { ...base, intelligences: ["spatial"], trait_subform: "orientation" },
-      10
+      10,
     );
     expect(result.trait_subform).toBe("orientation");
   });
@@ -66,7 +66,7 @@ describe("finalizeChallenge — trait_subform", () => {
     // une intelligence valide et présente, cette sous-forme ne lui appartient pas.
     const result = finalizeChallenge(
       { ...base, intelligences: ["sociale"], trait_subform: "orientation" },
-      10
+      10,
     );
     expect(result.trait_subform).toBeNull();
   });
@@ -93,7 +93,10 @@ describe("resolveKind / resolveGuidanceLevel — filets déterministes", () => {
   });
 
   it("projet accepté si l'IA le demande ET ≥ 3 étapes", () => {
-    const result = finalizeChallenge({ ...base, steps: ["Étape 1", "Étape 2", "Étape 3"], kind: "projet" }, 10);
+    const result = finalizeChallenge(
+      { ...base, steps: ["Étape 1", "Étape 2", "Étape 3"], kind: "projet" },
+      10,
+    );
     expect(result.kind).toBe("projet");
   });
 
@@ -105,9 +108,18 @@ describe("resolveKind / resolveGuidanceLevel — filets déterministes", () => {
   });
 
   it("retrait progressif : 1 cran de moins tous les 4 défis complétés dans le domaine (§28)", () => {
-    expect(finalizeChallenge({ ...base, guidance_level: 4 }, 10, { completedInDomain: 4 }).guidance_level).toBe(3);
-    expect(finalizeChallenge({ ...base, guidance_level: 4 }, 10, { completedInDomain: 8 }).guidance_level).toBe(2);
-    expect(finalizeChallenge({ ...base, guidance_level: 1 }, 10, { completedInDomain: 12 }).guidance_level).toBe(1);
+    expect(
+      finalizeChallenge({ ...base, guidance_level: 4 }, 10, { completedInDomain: 4 })
+        .guidance_level,
+    ).toBe(3);
+    expect(
+      finalizeChallenge({ ...base, guidance_level: 4 }, 10, { completedInDomain: 8 })
+        .guidance_level,
+    ).toBe(2);
+    expect(
+      finalizeChallenge({ ...base, guidance_level: 1 }, 10, { completedInDomain: 12 })
+        .guidance_level,
+    ).toBe(1);
     expect(finalizeChallenge({ ...base, guidance_level: 3 }, 10).guidance_level).toBe(3);
   });
 });

@@ -25,13 +25,17 @@ describe("resolveNextModality — priorité par cause, borne et non-répétition
   it("ne répète jamais une modalité déjà essayée", () => {
     expect(resolveNextModality("METHOD_MISMATCH", ["manipulation"])).toBe("demonstration");
     expect(resolveNextModality("METHOD_MISMATCH", ["manipulation", "demonstration"])).toBe(
-      "situation_concrete"
+      "situation_concrete",
     );
   });
 
   it("retourne null quand tout le socle de la cause a été essayé (fin de boucle)", () => {
     expect(
-      resolveNextModality("METHOD_MISMATCH", ["manipulation", "demonstration", "situation_concrete"])
+      resolveNextModality("METHOD_MISMATCH", [
+        "manipulation",
+        "demonstration",
+        "situation_concrete",
+      ]),
     ).toBeNull();
   });
 
@@ -58,7 +62,12 @@ describe("resolveNextModality — priorité par cause, borne et non-répétition
 
 describe("canReformulate — quelles causes ouvrent la boucle", () => {
   it("accepte les causes accommodables (la présentation peut être en cause)", () => {
-    for (const cause of ["METHOD_MISMATCH", "PERFORMANCE_ANXIETY", "LACK_OF_ENGAGEMENT", "CONCEPTUAL_GAP"]) {
+    for (const cause of [
+      "METHOD_MISMATCH",
+      "PERFORMANCE_ANXIETY",
+      "LACK_OF_ENGAGEMENT",
+      "CONCEPTUAL_GAP",
+    ]) {
       expect(canReformulate(cause)).toBe(true);
     }
   });
@@ -79,7 +88,7 @@ describe("parseReformulationContext — filiation lisible depuis pedagogical_con
         original_challenge_id: "abc-123",
         modality_attempt: 2,
         presentation_mode: "histoire",
-      })
+      }),
     );
     expect(ctx).toEqual({
       originalChallengeId: "abc-123",
@@ -92,8 +101,13 @@ describe("parseReformulationContext — filiation lisible depuis pedagogical_con
     expect(parseReformulationContext(JSON.stringify({ is_discriminant: true }))).toBeNull();
     expect(
       parseReformulationContext(
-        JSON.stringify({ is_reformulation: true, original_challenge_id: "a", modality_attempt: 1, presentation_mode: "magie" })
-      )
+        JSON.stringify({
+          is_reformulation: true,
+          original_challenge_id: "a",
+          modality_attempt: 1,
+          presentation_mode: "magie",
+        }),
+      ),
     ).toBeNull();
     expect(parseReformulationContext("pas du json")).toBeNull();
     expect(parseReformulationContext(null)).toBeNull();
@@ -178,7 +192,7 @@ describe("formatPedagogicalIntention — traduction parent de la reformulation",
         original_challenge_id: "abc",
         modality_attempt: 1,
         presentation_mode: "histoire",
-      })
+      }),
     );
     expect(text).toContain("par une histoire cette fois");
     expect(text).not.toContain("échec");
@@ -186,7 +200,11 @@ describe("formatPedagogicalIntention — traduction parent de la reformulation",
   });
 
   it("ne traduit pas un contexte non reformulation", () => {
-    expect(formatPedagogicalIntention(JSON.stringify({ is_discriminant: true, target_cause: "METHOD_MISMATCH" }))).toBeTruthy();
+    expect(
+      formatPedagogicalIntention(
+        JSON.stringify({ is_discriminant: true, target_cause: "METHOD_MISMATCH" }),
+      ),
+    ).toBeTruthy();
     expect(formatPedagogicalIntention(JSON.stringify({ quelque_chose: 1 }))).toBeNull();
   });
 });

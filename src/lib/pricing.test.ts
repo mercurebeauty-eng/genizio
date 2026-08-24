@@ -1,5 +1,11 @@
 import { describe, it, expect } from "vitest";
-import { resolveExtraSlotPrice, formatXof, formatXofAmount, PROMO_PRICE_XOF, STANDARD_PRICE_XOF } from "@/lib/pricing";
+import {
+  resolveExtraSlotPrice,
+  formatXof,
+  formatXofAmount,
+  PROMO_PRICE_XOF,
+  STANDARD_PRICE_XOF,
+} from "@/lib/pricing";
 
 // Prix de bienvenue (2026-08-03) : 5 000 FCFA pendant les 3 premiers mois du COMPTE (pas une
 // fenêtre de lancement globale), puis 15 000 FCFA. Même barème utilisé côté organisations avec

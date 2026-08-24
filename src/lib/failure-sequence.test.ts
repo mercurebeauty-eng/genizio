@@ -30,7 +30,7 @@ describe("evaluateFailureSequence — comparaison des tentatives (§36)", () => 
 
   it("garde-fou §35 : pas de conclusion avec une seule modalité testée", () => {
     expect(
-      evaluateFailureSequence([{ presentationMode: "manipulation", status: "not_completed" }])
+      evaluateFailureSequence([{ presentationMode: "manipulation", status: "not_completed" }]),
     ).toBeNull();
   });
 
@@ -39,7 +39,7 @@ describe("evaluateFailureSequence — comparaison des tentatives (§36)", () => 
       evaluateFailureSequence([
         { presentationMode: null, status: "not_completed" },
         { presentationMode: null, status: "not_completed" },
-      ])
+      ]),
     ).toBeNull();
   });
 
@@ -51,12 +51,14 @@ describe("evaluateFailureSequence — comparaison des tentatives (§36)", () => 
   });
 
   it("isSequenceConcludable reflète le garde-fou", () => {
-    expect(isSequenceConcludable([{ presentationMode: "manipulation", status: "not_completed" }])).toBe(false);
+    expect(
+      isSequenceConcludable([{ presentationMode: "manipulation", status: "not_completed" }]),
+    ).toBe(false);
     expect(
       isSequenceConcludable([
         { presentationMode: "manipulation", status: "not_completed" },
         { presentationMode: "histoire", status: "not_completed" },
-      ])
+      ]),
     ).toBe(true);
   });
 });

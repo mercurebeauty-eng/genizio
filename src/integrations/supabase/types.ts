@@ -1,2259 +1,2251 @@
-export type Json =
-  | string
-  | number
-  | boolean
-  | null
-  | { [key: string]: Json | undefined }
-  | Json[]
+export type Json = string | number | boolean | null | { [key: string]: Json | undefined } | Json[];
 
 export type Database = {
   // Allows to automatically instantiate createClient with right options
   // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
-    PostgrestVersion: "14.5"
-  }
+    PostgrestVersion: "14.5";
+  };
   graphql_public: {
     Tables: {
-      [_ in never]: never
-    }
+      [_ in never]: never;
+    };
     Views: {
-      [_ in never]: never
-    }
+      [_ in never]: never;
+    };
     Functions: {
       graphql: {
         Args: {
-          extensions?: Json
-          operationName?: string
-          query?: string
-          variables?: Json
-        }
-        Returns: Json
-      }
-    }
+          extensions?: Json;
+          operationName?: string;
+          query?: string;
+          variables?: Json;
+        };
+        Returns: Json;
+      };
+    };
     Enums: {
-      [_ in never]: never
-    }
+      [_ in never]: never;
+    };
     CompositeTypes: {
-      [_ in never]: never
-    }
-  }
+      [_ in never]: never;
+    };
+  };
   public: {
     Tables: {
       app_notifications: {
         Row: {
-          child_profile_id: string | null
-          created_at: string
-          id: string
-          payload: Json
-          read_at: string | null
-          type: string
-          user_id: string
-        }
+          child_profile_id: string | null;
+          created_at: string;
+          id: string;
+          payload: Json;
+          read_at: string | null;
+          type: string;
+          user_id: string;
+        };
         Insert: {
-          child_profile_id?: string | null
-          created_at?: string
-          id?: string
-          payload?: Json
-          read_at?: string | null
-          type: string
-          user_id: string
-        }
+          child_profile_id?: string | null;
+          created_at?: string;
+          id?: string;
+          payload?: Json;
+          read_at?: string | null;
+          type: string;
+          user_id: string;
+        };
         Update: {
-          child_profile_id?: string | null
-          created_at?: string
-          id?: string
-          payload?: Json
-          read_at?: string | null
-          type?: string
-          user_id?: string
-        }
+          child_profile_id?: string | null;
+          created_at?: string;
+          id?: string;
+          payload?: Json;
+          read_at?: string | null;
+          type?: string;
+          user_id?: string;
+        };
         Relationships: [
           {
-            foreignKeyName: "app_notifications_child_profile_id_fkey"
-            columns: ["child_profile_id"]
-            isOneToOne: false
-            referencedRelation: "child_profiles"
-            referencedColumns: ["id"]
+            foreignKeyName: "app_notifications_child_profile_id_fkey";
+            columns: ["child_profile_id"];
+            isOneToOne: false;
+            referencedRelation: "child_profiles";
+            referencedColumns: ["id"];
           },
-        ]
-      }
+        ];
+      };
       campaign_educators: {
         Row: {
-          added_at: string
-          added_by: string | null
-          campaign_id: string
-          educator_user_id: string
-          id: string
-          removed_at: string | null
-        }
+          added_at: string;
+          added_by: string | null;
+          campaign_id: string;
+          educator_user_id: string;
+          id: string;
+          removed_at: string | null;
+        };
         Insert: {
-          added_at?: string
-          added_by?: string | null
-          campaign_id: string
-          educator_user_id: string
-          id?: string
-          removed_at?: string | null
-        }
+          added_at?: string;
+          added_by?: string | null;
+          campaign_id: string;
+          educator_user_id: string;
+          id?: string;
+          removed_at?: string | null;
+        };
         Update: {
-          added_at?: string
-          added_by?: string | null
-          campaign_id?: string
-          educator_user_id?: string
-          id?: string
-          removed_at?: string | null
-        }
+          added_at?: string;
+          added_by?: string | null;
+          campaign_id?: string;
+          educator_user_id?: string;
+          id?: string;
+          removed_at?: string | null;
+        };
         Relationships: [
           {
-            foreignKeyName: "campaign_educators_campaign_id_fkey"
-            columns: ["campaign_id"]
-            isOneToOne: false
-            referencedRelation: "campaigns"
-            referencedColumns: ["id"]
+            foreignKeyName: "campaign_educators_campaign_id_fkey";
+            columns: ["campaign_id"];
+            isOneToOne: false;
+            referencedRelation: "campaigns";
+            referencedColumns: ["id"];
           },
-        ]
-      }
+        ];
+      };
       campaigns: {
         Row: {
-          created_at: string | null
-          description: string | null
-          end_date: string
-          extra_mentors_quota: number
-          id: string
-          manager_user_id: string | null
-          max_educators: number
-          mode: string
-          name: string
-          price_per_token_xof: number | null
-          sessions_target: number
-          sessions_used: number
-          start_date: string
-          status: string
-          target_count: number
-        }
+          created_at: string | null;
+          description: string | null;
+          end_date: string;
+          extra_mentors_quota: number;
+          id: string;
+          manager_user_id: string | null;
+          max_educators: number;
+          mode: string;
+          name: string;
+          price_per_token_xof: number | null;
+          sessions_target: number;
+          sessions_used: number;
+          start_date: string;
+          status: string;
+          target_count: number;
+        };
         Insert: {
-          created_at?: string | null
-          description?: string | null
-          end_date?: string
-          extra_mentors_quota?: number
-          id?: string
-          manager_user_id?: string | null
-          max_educators?: number
-          mode?: string
-          name: string
-          price_per_token_xof?: number | null
-          sessions_target?: number
-          sessions_used?: number
-          start_date?: string
-          status?: string
-          target_count?: number
-        }
+          created_at?: string | null;
+          description?: string | null;
+          end_date?: string;
+          extra_mentors_quota?: number;
+          id?: string;
+          manager_user_id?: string | null;
+          max_educators?: number;
+          mode?: string;
+          name: string;
+          price_per_token_xof?: number | null;
+          sessions_target?: number;
+          sessions_used?: number;
+          start_date?: string;
+          status?: string;
+          target_count?: number;
+        };
         Update: {
-          created_at?: string | null
-          description?: string | null
-          end_date?: string
-          extra_mentors_quota?: number
-          id?: string
-          manager_user_id?: string | null
-          max_educators?: number
-          mode?: string
-          name?: string
-          price_per_token_xof?: number | null
-          sessions_target?: number
-          sessions_used?: number
-          start_date?: string
-          status?: string
-          target_count?: number
-        }
-        Relationships: []
-      }
+          created_at?: string | null;
+          description?: string | null;
+          end_date?: string;
+          extra_mentors_quota?: number;
+          id?: string;
+          manager_user_id?: string | null;
+          max_educators?: number;
+          mode?: string;
+          name?: string;
+          price_per_token_xof?: number | null;
+          sessions_target?: number;
+          sessions_used?: number;
+          start_date?: string;
+          status?: string;
+          target_count?: number;
+        };
+        Relationships: [];
+      };
       challenge_outcomes: {
         Row: {
-          challenge_id: string
-          child_id: string
-          created_at: string
-          domain: string
-          id: string
-          kind: string
-          pending_duration_days: number
-          reason_chip: string | null
-          reason_note: string | null
-          status_when_deleted: string
-        }
+          challenge_id: string;
+          child_id: string;
+          created_at: string;
+          domain: string;
+          id: string;
+          kind: string;
+          pending_duration_days: number;
+          reason_chip: string | null;
+          reason_note: string | null;
+          status_when_deleted: string;
+        };
         Insert: {
-          challenge_id: string
-          child_id: string
-          created_at?: string
-          domain: string
-          id?: string
-          kind: string
-          pending_duration_days?: number
-          reason_chip?: string | null
-          reason_note?: string | null
-          status_when_deleted: string
-        }
+          challenge_id: string;
+          child_id: string;
+          created_at?: string;
+          domain: string;
+          id?: string;
+          kind: string;
+          pending_duration_days?: number;
+          reason_chip?: string | null;
+          reason_note?: string | null;
+          status_when_deleted: string;
+        };
         Update: {
-          challenge_id?: string
-          child_id?: string
-          created_at?: string
-          domain?: string
-          id?: string
-          kind?: string
-          pending_duration_days?: number
-          reason_chip?: string | null
-          reason_note?: string | null
-          status_when_deleted?: string
-        }
+          challenge_id?: string;
+          child_id?: string;
+          created_at?: string;
+          domain?: string;
+          id?: string;
+          kind?: string;
+          pending_duration_days?: number;
+          reason_chip?: string | null;
+          reason_note?: string | null;
+          status_when_deleted?: string;
+        };
         Relationships: [
           {
-            foreignKeyName: "challenge_outcomes_challenge_id_fkey"
-            columns: ["challenge_id"]
-            isOneToOne: false
-            referencedRelation: "challenges"
-            referencedColumns: ["id"]
+            foreignKeyName: "challenge_outcomes_challenge_id_fkey";
+            columns: ["challenge_id"];
+            isOneToOne: false;
+            referencedRelation: "challenges";
+            referencedColumns: ["id"];
           },
           {
-            foreignKeyName: "challenge_outcomes_child_id_fkey"
-            columns: ["child_id"]
-            isOneToOne: false
-            referencedRelation: "child_profiles"
-            referencedColumns: ["id"]
+            foreignKeyName: "challenge_outcomes_child_id_fkey";
+            columns: ["child_id"];
+            isOneToOne: false;
+            referencedRelation: "child_profiles";
+            referencedColumns: ["id"];
           },
-        ]
-      }
+        ];
+      };
       challenges: {
         Row: {
-          academic_domain: string | null
-          academic_grade_level: string | null
-          academic_level_age: number | null
-          academic_reference_note: string | null
-          academic_secret: string | null
-          academic_subject: string | null
-          ai_observations: string | null
-          aspiration_label: string | null
-          behavioral_driver: string | null
-          child_id: string
-          child_question: string | null
-          completed_at: string | null
-          created_at: string
-          created_by_user_id: string | null
-          declarative_award: Json | null
-          deleted_at: string | null
-          description: string
-          difficulty: string | null
-          domain: string
-          duration: string
-          estimated_duration_minutes: number | null
-          guidance_level: number
-          homework_instruction: string | null
-          id: string
-          kind: string
-          material_tags: string[]
-          materials: Json
-          naya_hint: string | null
-          not_completed_at: string | null
-          not_completed_cause: string | null
-          not_completed_reason: string | null
-          not_completed_reason_chip: string | null
-          notes: string | null
-          pedagogical_context: string | null
-          presentation_mode: string | null
-          progress: number
-          proof_image_url: string | null
-          proof_mode: string
-          proof_target: Json | null
-          requires_supervision: boolean | null
-          started_at: string | null
-          status: Database["public"]["Enums"]["challenge_status"]
-          steps: Json
-          supervision_warning: string | null
-          target_intelligences: Json
-          time_limit_minutes: number | null
-          title: string
-          trait_subform: string | null
-          updated_at: string
-          user_id: string
-          zpa_level: number | null
-        }
+          academic_domain: string | null;
+          academic_grade_level: string | null;
+          academic_level_age: number | null;
+          academic_reference_note: string | null;
+          academic_secret: string | null;
+          academic_subject: string | null;
+          ai_observations: string | null;
+          aspiration_label: string | null;
+          behavioral_driver: string | null;
+          child_id: string;
+          child_question: string | null;
+          completed_at: string | null;
+          created_at: string;
+          created_by_user_id: string | null;
+          declarative_award: Json | null;
+          deleted_at: string | null;
+          description: string;
+          difficulty: string | null;
+          domain: string;
+          duration: string;
+          estimated_duration_minutes: number | null;
+          guidance_level: number;
+          homework_instruction: string | null;
+          id: string;
+          kind: string;
+          material_tags: string[];
+          materials: Json;
+          naya_hint: string | null;
+          not_completed_at: string | null;
+          not_completed_cause: string | null;
+          not_completed_reason: string | null;
+          not_completed_reason_chip: string | null;
+          notes: string | null;
+          pedagogical_context: string | null;
+          presentation_mode: string | null;
+          progress: number;
+          proof_image_url: string | null;
+          proof_mode: string;
+          proof_target: Json | null;
+          requires_supervision: boolean | null;
+          started_at: string | null;
+          status: Database["public"]["Enums"]["challenge_status"];
+          steps: Json;
+          supervision_warning: string | null;
+          target_intelligences: Json;
+          time_limit_minutes: number | null;
+          title: string;
+          trait_subform: string | null;
+          updated_at: string;
+          user_id: string;
+          zpa_level: number | null;
+        };
         Insert: {
-          academic_domain?: string | null
-          academic_grade_level?: string | null
-          academic_level_age?: number | null
-          academic_reference_note?: string | null
-          academic_secret?: string | null
-          academic_subject?: string | null
-          ai_observations?: string | null
-          aspiration_label?: string | null
-          behavioral_driver?: string | null
-          child_id: string
-          child_question?: string | null
-          completed_at?: string | null
-          created_at?: string
-          created_by_user_id?: string | null
-          declarative_award?: Json | null
-          deleted_at?: string | null
-          description: string
-          difficulty?: string | null
-          domain: string
-          duration: string
-          estimated_duration_minutes?: number | null
-          guidance_level?: number
-          homework_instruction?: string | null
-          id?: string
-          kind?: string
-          material_tags?: string[]
-          materials?: Json
-          naya_hint?: string | null
-          not_completed_at?: string | null
-          not_completed_cause?: string | null
-          not_completed_reason?: string | null
-          not_completed_reason_chip?: string | null
-          notes?: string | null
-          pedagogical_context?: string | null
-          presentation_mode?: string | null
-          progress?: number
-          proof_image_url?: string | null
-          proof_mode?: string
-          proof_target?: Json | null
-          requires_supervision?: boolean | null
-          started_at?: string | null
-          status?: Database["public"]["Enums"]["challenge_status"]
-          steps?: Json
-          supervision_warning?: string | null
-          target_intelligences?: Json
-          time_limit_minutes?: number | null
-          title: string
-          trait_subform?: string | null
-          updated_at?: string
-          user_id: string
-          zpa_level?: number | null
-        }
+          academic_domain?: string | null;
+          academic_grade_level?: string | null;
+          academic_level_age?: number | null;
+          academic_reference_note?: string | null;
+          academic_secret?: string | null;
+          academic_subject?: string | null;
+          ai_observations?: string | null;
+          aspiration_label?: string | null;
+          behavioral_driver?: string | null;
+          child_id: string;
+          child_question?: string | null;
+          completed_at?: string | null;
+          created_at?: string;
+          created_by_user_id?: string | null;
+          declarative_award?: Json | null;
+          deleted_at?: string | null;
+          description: string;
+          difficulty?: string | null;
+          domain: string;
+          duration: string;
+          estimated_duration_minutes?: number | null;
+          guidance_level?: number;
+          homework_instruction?: string | null;
+          id?: string;
+          kind?: string;
+          material_tags?: string[];
+          materials?: Json;
+          naya_hint?: string | null;
+          not_completed_at?: string | null;
+          not_completed_cause?: string | null;
+          not_completed_reason?: string | null;
+          not_completed_reason_chip?: string | null;
+          notes?: string | null;
+          pedagogical_context?: string | null;
+          presentation_mode?: string | null;
+          progress?: number;
+          proof_image_url?: string | null;
+          proof_mode?: string;
+          proof_target?: Json | null;
+          requires_supervision?: boolean | null;
+          started_at?: string | null;
+          status?: Database["public"]["Enums"]["challenge_status"];
+          steps?: Json;
+          supervision_warning?: string | null;
+          target_intelligences?: Json;
+          time_limit_minutes?: number | null;
+          title: string;
+          trait_subform?: string | null;
+          updated_at?: string;
+          user_id: string;
+          zpa_level?: number | null;
+        };
         Update: {
-          academic_domain?: string | null
-          academic_grade_level?: string | null
-          academic_level_age?: number | null
-          academic_reference_note?: string | null
-          academic_secret?: string | null
-          academic_subject?: string | null
-          ai_observations?: string | null
-          aspiration_label?: string | null
-          behavioral_driver?: string | null
-          child_id?: string
-          child_question?: string | null
-          completed_at?: string | null
-          created_at?: string
-          created_by_user_id?: string | null
-          declarative_award?: Json | null
-          deleted_at?: string | null
-          description?: string
-          difficulty?: string | null
-          domain?: string
-          duration?: string
-          estimated_duration_minutes?: number | null
-          guidance_level?: number
-          homework_instruction?: string | null
-          id?: string
-          kind?: string
-          material_tags?: string[]
-          materials?: Json
-          naya_hint?: string | null
-          not_completed_at?: string | null
-          not_completed_cause?: string | null
-          not_completed_reason?: string | null
-          not_completed_reason_chip?: string | null
-          notes?: string | null
-          pedagogical_context?: string | null
-          presentation_mode?: string | null
-          progress?: number
-          proof_image_url?: string | null
-          proof_mode?: string
-          proof_target?: Json | null
-          requires_supervision?: boolean | null
-          started_at?: string | null
-          status?: Database["public"]["Enums"]["challenge_status"]
-          steps?: Json
-          supervision_warning?: string | null
-          target_intelligences?: Json
-          time_limit_minutes?: number | null
-          title?: string
-          trait_subform?: string | null
-          updated_at?: string
-          user_id?: string
-          zpa_level?: number | null
-        }
+          academic_domain?: string | null;
+          academic_grade_level?: string | null;
+          academic_level_age?: number | null;
+          academic_reference_note?: string | null;
+          academic_secret?: string | null;
+          academic_subject?: string | null;
+          ai_observations?: string | null;
+          aspiration_label?: string | null;
+          behavioral_driver?: string | null;
+          child_id?: string;
+          child_question?: string | null;
+          completed_at?: string | null;
+          created_at?: string;
+          created_by_user_id?: string | null;
+          declarative_award?: Json | null;
+          deleted_at?: string | null;
+          description?: string;
+          difficulty?: string | null;
+          domain?: string;
+          duration?: string;
+          estimated_duration_minutes?: number | null;
+          guidance_level?: number;
+          homework_instruction?: string | null;
+          id?: string;
+          kind?: string;
+          material_tags?: string[];
+          materials?: Json;
+          naya_hint?: string | null;
+          not_completed_at?: string | null;
+          not_completed_cause?: string | null;
+          not_completed_reason?: string | null;
+          not_completed_reason_chip?: string | null;
+          notes?: string | null;
+          pedagogical_context?: string | null;
+          presentation_mode?: string | null;
+          progress?: number;
+          proof_image_url?: string | null;
+          proof_mode?: string;
+          proof_target?: Json | null;
+          requires_supervision?: boolean | null;
+          started_at?: string | null;
+          status?: Database["public"]["Enums"]["challenge_status"];
+          steps?: Json;
+          supervision_warning?: string | null;
+          target_intelligences?: Json;
+          time_limit_minutes?: number | null;
+          title?: string;
+          trait_subform?: string | null;
+          updated_at?: string;
+          user_id?: string;
+          zpa_level?: number | null;
+        };
         Relationships: [
           {
-            foreignKeyName: "challenges_child_id_fkey"
-            columns: ["child_id"]
-            isOneToOne: false
-            referencedRelation: "child_profiles"
-            referencedColumns: ["id"]
+            foreignKeyName: "challenges_child_id_fkey";
+            columns: ["child_id"];
+            isOneToOne: false;
+            referencedRelation: "child_profiles";
+            referencedColumns: ["id"];
           },
-        ]
-      }
+        ];
+      };
       child_access_periods: {
         Row: {
-          amount_xof: number
-          child_id: string
-          created_at: string
-          currency: string
-          ends_at: string
-          id: string
-          note: string | null
-          source: string
-          starts_at: string
-          token_id: string | null
-        }
+          amount_xof: number;
+          child_id: string;
+          created_at: string;
+          currency: string;
+          ends_at: string;
+          id: string;
+          note: string | null;
+          source: string;
+          starts_at: string;
+          token_id: string | null;
+        };
         Insert: {
-          amount_xof?: number
-          child_id: string
-          created_at?: string
-          currency?: string
-          ends_at: string
-          id?: string
-          note?: string | null
-          source?: string
-          starts_at: string
-          token_id?: string | null
-        }
+          amount_xof?: number;
+          child_id: string;
+          created_at?: string;
+          currency?: string;
+          ends_at: string;
+          id?: string;
+          note?: string | null;
+          source?: string;
+          starts_at: string;
+          token_id?: string | null;
+        };
         Update: {
-          amount_xof?: number
-          child_id?: string
-          created_at?: string
-          currency?: string
-          ends_at?: string
-          id?: string
-          note?: string | null
-          source?: string
-          starts_at?: string
-          token_id?: string | null
-        }
+          amount_xof?: number;
+          child_id?: string;
+          created_at?: string;
+          currency?: string;
+          ends_at?: string;
+          id?: string;
+          note?: string | null;
+          source?: string;
+          starts_at?: string;
+          token_id?: string | null;
+        };
         Relationships: [
           {
-            foreignKeyName: "child_access_periods_child_id_fkey"
-            columns: ["child_id"]
-            isOneToOne: false
-            referencedRelation: "child_profiles"
-            referencedColumns: ["id"]
+            foreignKeyName: "child_access_periods_child_id_fkey";
+            columns: ["child_id"];
+            isOneToOne: false;
+            referencedRelation: "child_profiles";
+            referencedColumns: ["id"];
           },
           {
-            foreignKeyName: "child_access_periods_token_id_fkey"
-            columns: ["token_id"]
-            isOneToOne: false
-            referencedRelation: "sponsorship_tokens"
-            referencedColumns: ["id"]
+            foreignKeyName: "child_access_periods_token_id_fkey";
+            columns: ["token_id"];
+            isOneToOne: false;
+            referencedRelation: "sponsorship_tokens";
+            referencedColumns: ["id"];
           },
-        ]
-      }
+        ];
+      };
       child_badges: {
         Row: {
-          badge_slug: string
-          child_id: string
-          earned_at: string
-          id: string
-        }
+          badge_slug: string;
+          child_id: string;
+          earned_at: string;
+          id: string;
+        };
         Insert: {
-          badge_slug: string
-          child_id: string
-          earned_at?: string
-          id?: string
-        }
+          badge_slug: string;
+          child_id: string;
+          earned_at?: string;
+          id?: string;
+        };
         Update: {
-          badge_slug?: string
-          child_id?: string
-          earned_at?: string
-          id?: string
-        }
+          badge_slug?: string;
+          child_id?: string;
+          earned_at?: string;
+          id?: string;
+        };
         Relationships: [
           {
-            foreignKeyName: "child_badges_child_id_fkey"
-            columns: ["child_id"]
-            isOneToOne: false
-            referencedRelation: "child_profiles"
-            referencedColumns: ["id"]
+            foreignKeyName: "child_badges_child_id_fkey";
+            columns: ["child_id"];
+            isOneToOne: false;
+            referencedRelation: "child_profiles";
+            referencedColumns: ["id"];
           },
-        ]
-      }
+        ];
+      };
       child_profiles: {
         Row: {
-          ability_profile: Json
-          access_locked_at: string | null
-          age: number
-          ai_synthesis: string | null
-          ai_synthesis_generated_at: string | null
-          aspirations: Json
-          avatar_color: string
-          birthdate: string | null
-          city: string | null
-          completed_challenges: string[]
-          country: string | null
-          created_at: string
-          favorite_challenges: string[]
-          guild_participation_opt_in: boolean
-          id: string
-          interests: string[]
-          is_active: boolean
-          languages: string[]
-          last_activity_date: string | null
-          life_context: string[]
-          name: string
-          passport_letter: string | null
-          passport_letter_generated_at: string | null
-          pdf_unlocked: boolean
-          school_level: string | null
-          school_relation: string | null
-          streak: number
-          talents: Json
-          time_pressure: string
-          updated_at: string
-          user_id: string
-          xp: number
-        }
+          ability_profile: Json;
+          access_locked_at: string | null;
+          age: number;
+          ai_synthesis: string | null;
+          ai_synthesis_generated_at: string | null;
+          aspirations: Json;
+          avatar_color: string;
+          birthdate: string | null;
+          city: string | null;
+          completed_challenges: string[];
+          country: string | null;
+          created_at: string;
+          favorite_challenges: string[];
+          guild_participation_opt_in: boolean;
+          id: string;
+          interests: string[];
+          is_active: boolean;
+          languages: string[];
+          last_activity_date: string | null;
+          life_context: string[];
+          name: string;
+          passport_letter: string | null;
+          passport_letter_generated_at: string | null;
+          pdf_unlocked: boolean;
+          school_level: string | null;
+          school_relation: string | null;
+          streak: number;
+          talents: Json;
+          time_pressure: string;
+          updated_at: string;
+          user_id: string;
+          xp: number;
+        };
         Insert: {
-          ability_profile?: Json
-          access_locked_at?: string | null
-          age: number
-          ai_synthesis?: string | null
-          ai_synthesis_generated_at?: string | null
-          aspirations?: Json
-          avatar_color?: string
-          birthdate?: string | null
-          city?: string | null
-          completed_challenges?: string[]
-          country?: string | null
-          created_at?: string
-          favorite_challenges?: string[]
-          guild_participation_opt_in?: boolean
-          id?: string
-          interests?: string[]
-          is_active?: boolean
-          languages?: string[]
-          last_activity_date?: string | null
-          life_context?: string[]
-          name: string
-          passport_letter?: string | null
-          passport_letter_generated_at?: string | null
-          pdf_unlocked?: boolean
-          school_level?: string | null
-          school_relation?: string | null
-          streak?: number
-          talents?: Json
-          time_pressure?: string
-          updated_at?: string
-          user_id: string
-          xp?: number
-        }
+          ability_profile?: Json;
+          access_locked_at?: string | null;
+          age: number;
+          ai_synthesis?: string | null;
+          ai_synthesis_generated_at?: string | null;
+          aspirations?: Json;
+          avatar_color?: string;
+          birthdate?: string | null;
+          city?: string | null;
+          completed_challenges?: string[];
+          country?: string | null;
+          created_at?: string;
+          favorite_challenges?: string[];
+          guild_participation_opt_in?: boolean;
+          id?: string;
+          interests?: string[];
+          is_active?: boolean;
+          languages?: string[];
+          last_activity_date?: string | null;
+          life_context?: string[];
+          name: string;
+          passport_letter?: string | null;
+          passport_letter_generated_at?: string | null;
+          pdf_unlocked?: boolean;
+          school_level?: string | null;
+          school_relation?: string | null;
+          streak?: number;
+          talents?: Json;
+          time_pressure?: string;
+          updated_at?: string;
+          user_id: string;
+          xp?: number;
+        };
         Update: {
-          ability_profile?: Json
-          access_locked_at?: string | null
-          age?: number
-          ai_synthesis?: string | null
-          ai_synthesis_generated_at?: string | null
-          aspirations?: Json
-          avatar_color?: string
-          birthdate?: string | null
-          city?: string | null
-          completed_challenges?: string[]
-          country?: string | null
-          created_at?: string
-          favorite_challenges?: string[]
-          guild_participation_opt_in?: boolean
-          id?: string
-          interests?: string[]
-          is_active?: boolean
-          languages?: string[]
-          last_activity_date?: string | null
-          life_context?: string[]
-          name?: string
-          passport_letter?: string | null
-          passport_letter_generated_at?: string | null
-          pdf_unlocked?: boolean
-          school_level?: string | null
-          school_relation?: string | null
-          streak?: number
-          talents?: Json
-          time_pressure?: string
-          updated_at?: string
-          user_id?: string
-          xp?: number
-        }
-        Relationships: []
-      }
+          ability_profile?: Json;
+          access_locked_at?: string | null;
+          age?: number;
+          ai_synthesis?: string | null;
+          ai_synthesis_generated_at?: string | null;
+          aspirations?: Json;
+          avatar_color?: string;
+          birthdate?: string | null;
+          city?: string | null;
+          completed_challenges?: string[];
+          country?: string | null;
+          created_at?: string;
+          favorite_challenges?: string[];
+          guild_participation_opt_in?: boolean;
+          id?: string;
+          interests?: string[];
+          is_active?: boolean;
+          languages?: string[];
+          last_activity_date?: string | null;
+          life_context?: string[];
+          name?: string;
+          passport_letter?: string | null;
+          passport_letter_generated_at?: string | null;
+          pdf_unlocked?: boolean;
+          school_level?: string | null;
+          school_relation?: string | null;
+          streak?: number;
+          talents?: Json;
+          time_pressure?: string;
+          updated_at?: string;
+          user_id?: string;
+          xp?: number;
+        };
+        Relationships: [];
+      };
       comments: {
         Row: {
-          body: string
-          created_at: string
-          id: string
-          post_id: string
-          user_id: string
-        }
+          body: string;
+          created_at: string;
+          id: string;
+          post_id: string;
+          user_id: string;
+        };
         Insert: {
-          body: string
-          created_at?: string
-          id?: string
-          post_id: string
-          user_id: string
-        }
+          body: string;
+          created_at?: string;
+          id?: string;
+          post_id: string;
+          user_id: string;
+        };
         Update: {
-          body?: string
-          created_at?: string
-          id?: string
-          post_id?: string
-          user_id?: string
-        }
+          body?: string;
+          created_at?: string;
+          id?: string;
+          post_id?: string;
+          user_id?: string;
+        };
         Relationships: [
           {
-            foreignKeyName: "comments_post_id_fkey"
-            columns: ["post_id"]
-            isOneToOne: false
-            referencedRelation: "posts"
-            referencedColumns: ["id"]
+            foreignKeyName: "comments_post_id_fkey";
+            columns: ["post_id"];
+            isOneToOne: false;
+            referencedRelation: "posts";
+            referencedColumns: ["id"];
           },
-        ]
-      }
+        ];
+      };
       consent_events: {
         Row: {
-          child_id: string | null
-          created_at: string
-          description: string
-          event_type: string
-          id: string
-          metadata: Json
-          user_id: string
-        }
+          child_id: string | null;
+          created_at: string;
+          description: string;
+          event_type: string;
+          id: string;
+          metadata: Json;
+          user_id: string;
+        };
         Insert: {
-          child_id?: string | null
-          created_at?: string
-          description: string
-          event_type: string
-          id?: string
-          metadata?: Json
-          user_id: string
-        }
+          child_id?: string | null;
+          created_at?: string;
+          description: string;
+          event_type: string;
+          id?: string;
+          metadata?: Json;
+          user_id: string;
+        };
         Update: {
-          child_id?: string | null
-          created_at?: string
-          description?: string
-          event_type?: string
-          id?: string
-          metadata?: Json
-          user_id?: string
-        }
+          child_id?: string | null;
+          created_at?: string;
+          description?: string;
+          event_type?: string;
+          id?: string;
+          metadata?: Json;
+          user_id?: string;
+        };
         Relationships: [
           {
-            foreignKeyName: "consent_events_child_id_fkey"
-            columns: ["child_id"]
-            isOneToOne: false
-            referencedRelation: "child_profiles"
-            referencedColumns: ["id"]
+            foreignKeyName: "consent_events_child_id_fkey";
+            columns: ["child_id"];
+            isOneToOne: false;
+            referencedRelation: "child_profiles";
+            referencedColumns: ["id"];
           },
-        ]
-      }
+        ];
+      };
       family_coverages: {
         Row: {
-          child_id: string | null
-          created_at: string
-          ends_at: string | null
-          id: string
-          max_children: number
-          price_xof: number | null
-          sessions: number
-          sessions_used: number
-          source: string
-          source_ref: string | null
-          starts_at: string
-          status: string
-          user_id: string
-        }
+          child_id: string | null;
+          created_at: string;
+          ends_at: string | null;
+          id: string;
+          max_children: number;
+          price_xof: number | null;
+          sessions: number;
+          sessions_used: number;
+          source: string;
+          source_ref: string | null;
+          starts_at: string;
+          status: string;
+          user_id: string;
+        };
         Insert: {
-          child_id?: string | null
-          created_at?: string
-          ends_at?: string | null
-          id?: string
-          max_children?: number
-          price_xof?: number | null
-          sessions?: number
-          sessions_used?: number
-          source: string
-          source_ref?: string | null
-          starts_at?: string
-          status?: string
-          user_id: string
-        }
+          child_id?: string | null;
+          created_at?: string;
+          ends_at?: string | null;
+          id?: string;
+          max_children?: number;
+          price_xof?: number | null;
+          sessions?: number;
+          sessions_used?: number;
+          source: string;
+          source_ref?: string | null;
+          starts_at?: string;
+          status?: string;
+          user_id: string;
+        };
         Update: {
-          child_id?: string | null
-          created_at?: string
-          ends_at?: string | null
-          id?: string
-          max_children?: number
-          price_xof?: number | null
-          sessions?: number
-          sessions_used?: number
-          source?: string
-          source_ref?: string | null
-          starts_at?: string
-          status?: string
-          user_id?: string
-        }
+          child_id?: string | null;
+          created_at?: string;
+          ends_at?: string | null;
+          id?: string;
+          max_children?: number;
+          price_xof?: number | null;
+          sessions?: number;
+          sessions_used?: number;
+          source?: string;
+          source_ref?: string | null;
+          starts_at?: string;
+          status?: string;
+          user_id?: string;
+        };
         Relationships: [
           {
-            foreignKeyName: "family_coverages_child_id_fkey"
-            columns: ["child_id"]
-            isOneToOne: false
-            referencedRelation: "child_profiles"
-            referencedColumns: ["id"]
+            foreignKeyName: "family_coverages_child_id_fkey";
+            columns: ["child_id"];
+            isOneToOne: false;
+            referencedRelation: "child_profiles";
+            referencedColumns: ["id"];
           },
-        ]
-      }
+        ];
+      };
       generation_audits: {
         Row: {
-          child_id: string | null
-          context: Json
-          created_at: string
-          decision: string
-          decision_at: string | null
-          decision_by: string | null
-          decision_note: string | null
-          estimated_cost: number | null
-          id: string
-          kind: string
-          model: string | null
-          processed: boolean
-          regenerated: boolean
-          semantic_checked: boolean
-          source_function: string
-          verdict: string
-          violations: Json
-        }
+          child_id: string | null;
+          context: Json;
+          created_at: string;
+          decision: string;
+          decision_at: string | null;
+          decision_by: string | null;
+          decision_note: string | null;
+          estimated_cost: number | null;
+          id: string;
+          kind: string;
+          model: string | null;
+          processed: boolean;
+          regenerated: boolean;
+          semantic_checked: boolean;
+          source_function: string;
+          verdict: string;
+          violations: Json;
+        };
         Insert: {
-          child_id?: string | null
-          context?: Json
-          created_at?: string
-          decision?: string
-          decision_at?: string | null
-          decision_by?: string | null
-          decision_note?: string | null
-          estimated_cost?: number | null
-          id?: string
-          kind: string
-          model?: string | null
-          processed?: boolean
-          regenerated?: boolean
-          semantic_checked?: boolean
-          source_function: string
-          verdict: string
-          violations?: Json
-        }
+          child_id?: string | null;
+          context?: Json;
+          created_at?: string;
+          decision?: string;
+          decision_at?: string | null;
+          decision_by?: string | null;
+          decision_note?: string | null;
+          estimated_cost?: number | null;
+          id?: string;
+          kind: string;
+          model?: string | null;
+          processed?: boolean;
+          regenerated?: boolean;
+          semantic_checked?: boolean;
+          source_function: string;
+          verdict: string;
+          violations?: Json;
+        };
         Update: {
-          child_id?: string | null
-          context?: Json
-          created_at?: string
-          decision?: string
-          decision_at?: string | null
-          decision_by?: string | null
-          decision_note?: string | null
-          estimated_cost?: number | null
-          id?: string
-          kind?: string
-          model?: string | null
-          processed?: boolean
-          regenerated?: boolean
-          semantic_checked?: boolean
-          source_function?: string
-          verdict?: string
-          violations?: Json
-        }
+          child_id?: string | null;
+          context?: Json;
+          created_at?: string;
+          decision?: string;
+          decision_at?: string | null;
+          decision_by?: string | null;
+          decision_note?: string | null;
+          estimated_cost?: number | null;
+          id?: string;
+          kind?: string;
+          model?: string | null;
+          processed?: boolean;
+          regenerated?: boolean;
+          semantic_checked?: boolean;
+          source_function?: string;
+          verdict?: string;
+          violations?: Json;
+        };
         Relationships: [
           {
-            foreignKeyName: "generation_audits_child_id_fkey"
-            columns: ["child_id"]
-            isOneToOne: false
-            referencedRelation: "child_profiles"
-            referencedColumns: ["id"]
+            foreignKeyName: "generation_audits_child_id_fkey";
+            columns: ["child_id"];
+            isOneToOne: false;
+            referencedRelation: "child_profiles";
+            referencedColumns: ["id"];
           },
-        ]
-      }
+        ];
+      };
       hypothesis_cycles: {
         Row: {
-          child_id: string
-          created_at: string
-          final_diagnosis: string | null
-          hypotheses: Json
-          id: string
-          model: string | null
-          parent_narrative: string | null
-          resolved_at: string | null
-          status: string
-          support_active: boolean | null
-          support_checkpoint_at: string | null
-          trigger_domain: string | null
-          updated_at: string
-          user_id: string
-        }
+          child_id: string;
+          created_at: string;
+          final_diagnosis: string | null;
+          hypotheses: Json;
+          id: string;
+          model: string | null;
+          parent_narrative: string | null;
+          resolved_at: string | null;
+          status: string;
+          support_active: boolean | null;
+          support_checkpoint_at: string | null;
+          trigger_domain: string | null;
+          updated_at: string;
+          user_id: string;
+        };
         Insert: {
-          child_id: string
-          created_at?: string
-          final_diagnosis?: string | null
-          hypotheses: Json
-          id?: string
-          model?: string | null
-          parent_narrative?: string | null
-          resolved_at?: string | null
-          status?: string
-          support_active?: boolean | null
-          support_checkpoint_at?: string | null
-          trigger_domain?: string | null
-          updated_at?: string
-          user_id: string
-        }
+          child_id: string;
+          created_at?: string;
+          final_diagnosis?: string | null;
+          hypotheses: Json;
+          id?: string;
+          model?: string | null;
+          parent_narrative?: string | null;
+          resolved_at?: string | null;
+          status?: string;
+          support_active?: boolean | null;
+          support_checkpoint_at?: string | null;
+          trigger_domain?: string | null;
+          updated_at?: string;
+          user_id: string;
+        };
         Update: {
-          child_id?: string
-          created_at?: string
-          final_diagnosis?: string | null
-          hypotheses?: Json
-          id?: string
-          model?: string | null
-          parent_narrative?: string | null
-          resolved_at?: string | null
-          status?: string
-          support_active?: boolean | null
-          support_checkpoint_at?: string | null
-          trigger_domain?: string | null
-          updated_at?: string
-          user_id?: string
-        }
+          child_id?: string;
+          created_at?: string;
+          final_diagnosis?: string | null;
+          hypotheses?: Json;
+          id?: string;
+          model?: string | null;
+          parent_narrative?: string | null;
+          resolved_at?: string | null;
+          status?: string;
+          support_active?: boolean | null;
+          support_checkpoint_at?: string | null;
+          trigger_domain?: string | null;
+          updated_at?: string;
+          user_id?: string;
+        };
         Relationships: [
           {
-            foreignKeyName: "hypothesis_cycles_child_id_fkey"
-            columns: ["child_id"]
-            isOneToOne: false
-            referencedRelation: "child_profiles"
-            referencedColumns: ["id"]
+            foreignKeyName: "hypothesis_cycles_child_id_fkey";
+            columns: ["child_id"];
+            isOneToOne: false;
+            referencedRelation: "child_profiles";
+            referencedColumns: ["id"];
           },
-        ]
-      }
+        ];
+      };
       material_suggestions: {
         Row: {
-          first_seen_at: string
-          id: string
-          last_seen_at: string
-          product_id: string | null
-          sample_challenge_title: string | null
-          seen_count: number
-          status: string
-          tag: string
-        }
+          first_seen_at: string;
+          id: string;
+          last_seen_at: string;
+          product_id: string | null;
+          sample_challenge_title: string | null;
+          seen_count: number;
+          status: string;
+          tag: string;
+        };
         Insert: {
-          first_seen_at?: string
-          id?: string
-          last_seen_at?: string
-          product_id?: string | null
-          sample_challenge_title?: string | null
-          seen_count?: number
-          status?: string
-          tag: string
-        }
+          first_seen_at?: string;
+          id?: string;
+          last_seen_at?: string;
+          product_id?: string | null;
+          sample_challenge_title?: string | null;
+          seen_count?: number;
+          status?: string;
+          tag: string;
+        };
         Update: {
-          first_seen_at?: string
-          id?: string
-          last_seen_at?: string
-          product_id?: string | null
-          sample_challenge_title?: string | null
-          seen_count?: number
-          status?: string
-          tag?: string
-        }
+          first_seen_at?: string;
+          id?: string;
+          last_seen_at?: string;
+          product_id?: string | null;
+          sample_challenge_title?: string | null;
+          seen_count?: number;
+          status?: string;
+          tag?: string;
+        };
         Relationships: [
           {
-            foreignKeyName: "material_suggestions_product_id_fkey"
-            columns: ["product_id"]
-            isOneToOne: false
-            referencedRelation: "products"
-            referencedColumns: ["id"]
+            foreignKeyName: "material_suggestions_product_id_fkey";
+            columns: ["product_id"];
+            isOneToOne: false;
+            referencedRelation: "products";
+            referencedColumns: ["id"];
           },
-        ]
-      }
+        ];
+      };
       mentor_actions: {
         Row: {
-          action: string
-          challenge_id: string | null
-          child_profile_id: string
-          created_at: string
-          id: string
-          mentor_user_id: string
-          payload: Json
-        }
+          action: string;
+          challenge_id: string | null;
+          child_profile_id: string;
+          created_at: string;
+          id: string;
+          mentor_user_id: string;
+          payload: Json;
+        };
         Insert: {
-          action: string
-          challenge_id?: string | null
-          child_profile_id: string
-          created_at?: string
-          id?: string
-          mentor_user_id: string
-          payload?: Json
-        }
+          action: string;
+          challenge_id?: string | null;
+          child_profile_id: string;
+          created_at?: string;
+          id?: string;
+          mentor_user_id: string;
+          payload?: Json;
+        };
         Update: {
-          action?: string
-          challenge_id?: string | null
-          child_profile_id?: string
-          created_at?: string
-          id?: string
-          mentor_user_id?: string
-          payload?: Json
-        }
+          action?: string;
+          challenge_id?: string | null;
+          child_profile_id?: string;
+          created_at?: string;
+          id?: string;
+          mentor_user_id?: string;
+          payload?: Json;
+        };
         Relationships: [
           {
-            foreignKeyName: "mentor_actions_challenge_id_fkey"
-            columns: ["challenge_id"]
-            isOneToOne: false
-            referencedRelation: "challenges"
-            referencedColumns: ["id"]
+            foreignKeyName: "mentor_actions_challenge_id_fkey";
+            columns: ["challenge_id"];
+            isOneToOne: false;
+            referencedRelation: "challenges";
+            referencedColumns: ["id"];
           },
           {
-            foreignKeyName: "mentor_actions_child_profile_id_fkey"
-            columns: ["child_profile_id"]
-            isOneToOne: false
-            referencedRelation: "child_profiles"
-            referencedColumns: ["id"]
+            foreignKeyName: "mentor_actions_child_profile_id_fkey";
+            columns: ["child_profile_id"];
+            isOneToOne: false;
+            referencedRelation: "child_profiles";
+            referencedColumns: ["id"];
           },
-        ]
-      }
+        ];
+      };
       mentor_activation_codes: {
         Row: {
-          code: string
-          created_at: string
-          created_by: string | null
-          id: string
-          used_at: string | null
-          used_by: string | null
-          valid_until: string | null
-        }
+          code: string;
+          created_at: string;
+          created_by: string | null;
+          id: string;
+          used_at: string | null;
+          used_by: string | null;
+          valid_until: string | null;
+        };
         Insert: {
-          code: string
-          created_at?: string
-          created_by?: string | null
-          id?: string
-          used_at?: string | null
-          used_by?: string | null
-          valid_until?: string | null
-        }
+          code: string;
+          created_at?: string;
+          created_by?: string | null;
+          id?: string;
+          used_at?: string | null;
+          used_by?: string | null;
+          valid_until?: string | null;
+        };
         Update: {
-          code?: string
-          created_at?: string
-          created_by?: string | null
-          id?: string
-          used_at?: string | null
-          used_by?: string | null
-          valid_until?: string | null
-        }
-        Relationships: []
-      }
+          code?: string;
+          created_at?: string;
+          created_by?: string | null;
+          id?: string;
+          used_at?: string | null;
+          used_by?: string | null;
+          valid_until?: string | null;
+        };
+        Relationships: [];
+      };
       mentor_feedback: {
         Row: {
-          comment: string | null
-          created_at: string
-          id: string
-          mentor_session_id: string
-          rating: number
-          user_id: string
-        }
+          comment: string | null;
+          created_at: string;
+          id: string;
+          mentor_session_id: string;
+          rating: number;
+          user_id: string;
+        };
         Insert: {
-          comment?: string | null
-          created_at?: string
-          id?: string
-          mentor_session_id: string
-          rating: number
-          user_id: string
-        }
+          comment?: string | null;
+          created_at?: string;
+          id?: string;
+          mentor_session_id: string;
+          rating: number;
+          user_id: string;
+        };
         Update: {
-          comment?: string | null
-          created_at?: string
-          id?: string
-          mentor_session_id?: string
-          rating?: number
-          user_id?: string
-        }
+          comment?: string | null;
+          created_at?: string;
+          id?: string;
+          mentor_session_id?: string;
+          rating?: number;
+          user_id?: string;
+        };
         Relationships: [
           {
-            foreignKeyName: "mentor_feedback_mentor_session_id_fkey"
-            columns: ["mentor_session_id"]
-            isOneToOne: false
-            referencedRelation: "mentor_sessions"
-            referencedColumns: ["id"]
+            foreignKeyName: "mentor_feedback_mentor_session_id_fkey";
+            columns: ["mentor_session_id"];
+            isOneToOne: false;
+            referencedRelation: "mentor_sessions";
+            referencedColumns: ["id"];
           },
-        ]
-      }
+        ];
+      };
       mentor_points: {
         Row: {
-          challenge_id: string | null
-          child_profile_id: string | null
-          created_at: string
-          id: string
-          kind: string
-          mentor_user_id: string
-          points: number
-          reason: string | null
-          session_id: string | null
-        }
+          challenge_id: string | null;
+          child_profile_id: string | null;
+          created_at: string;
+          id: string;
+          kind: string;
+          mentor_user_id: string;
+          points: number;
+          reason: string | null;
+          session_id: string | null;
+        };
         Insert: {
-          challenge_id?: string | null
-          child_profile_id?: string | null
-          created_at?: string
-          id?: string
-          kind: string
-          mentor_user_id: string
-          points: number
-          reason?: string | null
-          session_id?: string | null
-        }
+          challenge_id?: string | null;
+          child_profile_id?: string | null;
+          created_at?: string;
+          id?: string;
+          kind: string;
+          mentor_user_id: string;
+          points: number;
+          reason?: string | null;
+          session_id?: string | null;
+        };
         Update: {
-          challenge_id?: string | null
-          child_profile_id?: string | null
-          created_at?: string
-          id?: string
-          kind?: string
-          mentor_user_id?: string
-          points?: number
-          reason?: string | null
-          session_id?: string | null
-        }
+          challenge_id?: string | null;
+          child_profile_id?: string | null;
+          created_at?: string;
+          id?: string;
+          kind?: string;
+          mentor_user_id?: string;
+          points?: number;
+          reason?: string | null;
+          session_id?: string | null;
+        };
         Relationships: [
           {
-            foreignKeyName: "mentor_points_challenge_id_fkey"
-            columns: ["challenge_id"]
-            isOneToOne: false
-            referencedRelation: "challenges"
-            referencedColumns: ["id"]
+            foreignKeyName: "mentor_points_challenge_id_fkey";
+            columns: ["challenge_id"];
+            isOneToOne: false;
+            referencedRelation: "challenges";
+            referencedColumns: ["id"];
           },
           {
-            foreignKeyName: "mentor_points_child_profile_id_fkey"
-            columns: ["child_profile_id"]
-            isOneToOne: false
-            referencedRelation: "child_profiles"
-            referencedColumns: ["id"]
+            foreignKeyName: "mentor_points_child_profile_id_fkey";
+            columns: ["child_profile_id"];
+            isOneToOne: false;
+            referencedRelation: "child_profiles";
+            referencedColumns: ["id"];
           },
           {
-            foreignKeyName: "mentor_points_session_id_fkey"
-            columns: ["session_id"]
-            isOneToOne: false
-            referencedRelation: "mentor_sessions"
-            referencedColumns: ["id"]
+            foreignKeyName: "mentor_points_session_id_fkey";
+            columns: ["session_id"];
+            isOneToOne: false;
+            referencedRelation: "mentor_sessions";
+            referencedColumns: ["id"];
           },
-        ]
-      }
+        ];
+      };
       mentor_profiles: {
         Row: {
-          created_at: string
-          mentor_user_id: string
-          status: string
-        }
+          created_at: string;
+          mentor_user_id: string;
+          status: string;
+        };
         Insert: {
-          created_at?: string
-          mentor_user_id: string
-          status?: string
-        }
+          created_at?: string;
+          mentor_user_id: string;
+          status?: string;
+        };
         Update: {
-          created_at?: string
-          mentor_user_id?: string
-          status?: string
-        }
-        Relationships: []
-      }
+          created_at?: string;
+          mentor_user_id?: string;
+          status?: string;
+        };
+        Relationships: [];
+      };
       mentor_reports: {
         Row: {
-          child_profile_id: string
-          competences_observees: string
-          created_at: string
-          id: string
-          mentor_user_id: string
-          parent_feedback: string | null
-          period_end: string
-          period_start: string
-          realisations: string
-          recommandations: string
-          status: string
-          updated_at: string
-          validated_at: string | null
-          validated_by: string | null
-        }
+          child_profile_id: string;
+          competences_observees: string;
+          created_at: string;
+          id: string;
+          mentor_user_id: string;
+          parent_feedback: string | null;
+          period_end: string;
+          period_start: string;
+          realisations: string;
+          recommandations: string;
+          status: string;
+          updated_at: string;
+          validated_at: string | null;
+          validated_by: string | null;
+        };
         Insert: {
-          child_profile_id: string
-          competences_observees?: string
-          created_at?: string
-          id?: string
-          mentor_user_id: string
-          parent_feedback?: string | null
-          period_end: string
-          period_start: string
-          realisations?: string
-          recommandations?: string
-          status?: string
-          updated_at?: string
-          validated_at?: string | null
-          validated_by?: string | null
-        }
+          child_profile_id: string;
+          competences_observees?: string;
+          created_at?: string;
+          id?: string;
+          mentor_user_id: string;
+          parent_feedback?: string | null;
+          period_end: string;
+          period_start: string;
+          realisations?: string;
+          recommandations?: string;
+          status?: string;
+          updated_at?: string;
+          validated_at?: string | null;
+          validated_by?: string | null;
+        };
         Update: {
-          child_profile_id?: string
-          competences_observees?: string
-          created_at?: string
-          id?: string
-          mentor_user_id?: string
-          parent_feedback?: string | null
-          period_end?: string
-          period_start?: string
-          realisations?: string
-          recommandations?: string
-          status?: string
-          updated_at?: string
-          validated_at?: string | null
-          validated_by?: string | null
-        }
+          child_profile_id?: string;
+          competences_observees?: string;
+          created_at?: string;
+          id?: string;
+          mentor_user_id?: string;
+          parent_feedback?: string | null;
+          period_end?: string;
+          period_start?: string;
+          realisations?: string;
+          recommandations?: string;
+          status?: string;
+          updated_at?: string;
+          validated_at?: string | null;
+          validated_by?: string | null;
+        };
         Relationships: [
           {
-            foreignKeyName: "mentor_reports_child_profile_id_fkey"
-            columns: ["child_profile_id"]
-            isOneToOne: false
-            referencedRelation: "child_profiles"
-            referencedColumns: ["id"]
+            foreignKeyName: "mentor_reports_child_profile_id_fkey";
+            columns: ["child_profile_id"];
+            isOneToOne: false;
+            referencedRelation: "child_profiles";
+            referencedColumns: ["id"];
           },
-        ]
-      }
+        ];
+      };
       mentor_session_slots: {
         Row: {
-          cancelled_at: string | null
-          cancelled_by: string | null
-          child_profile_id: string
-          created_at: string
-          id: string
-          mentor_user_id: string
-          notes: string | null
-          planned_at: string
-          status: string
-        }
+          cancelled_at: string | null;
+          cancelled_by: string | null;
+          child_profile_id: string;
+          created_at: string;
+          id: string;
+          mentor_user_id: string;
+          notes: string | null;
+          planned_at: string;
+          status: string;
+        };
         Insert: {
-          cancelled_at?: string | null
-          cancelled_by?: string | null
-          child_profile_id: string
-          created_at?: string
-          id?: string
-          mentor_user_id: string
-          notes?: string | null
-          planned_at: string
-          status?: string
-        }
+          cancelled_at?: string | null;
+          cancelled_by?: string | null;
+          child_profile_id: string;
+          created_at?: string;
+          id?: string;
+          mentor_user_id: string;
+          notes?: string | null;
+          planned_at: string;
+          status?: string;
+        };
         Update: {
-          cancelled_at?: string | null
-          cancelled_by?: string | null
-          child_profile_id?: string
-          created_at?: string
-          id?: string
-          mentor_user_id?: string
-          notes?: string | null
-          planned_at?: string
-          status?: string
-        }
+          cancelled_at?: string | null;
+          cancelled_by?: string | null;
+          child_profile_id?: string;
+          created_at?: string;
+          id?: string;
+          mentor_user_id?: string;
+          notes?: string | null;
+          planned_at?: string;
+          status?: string;
+        };
         Relationships: [
           {
-            foreignKeyName: "mentor_session_slots_child_profile_id_fkey"
-            columns: ["child_profile_id"]
-            isOneToOne: false
-            referencedRelation: "child_profiles"
-            referencedColumns: ["id"]
+            foreignKeyName: "mentor_session_slots_child_profile_id_fkey";
+            columns: ["child_profile_id"];
+            isOneToOne: false;
+            referencedRelation: "child_profiles";
+            referencedColumns: ["id"];
           },
-        ]
-      }
+        ];
+      };
       mentor_sessions: {
         Row: {
-          campaign_id: string | null
-          child_profile_id: string
-          confirmed_at: string | null
-          confirmed_by: string | null
-          contest_reason: string | null
-          contested_at: string | null
-          contested_by: string | null
-          created_at: string
-          funding: string
-          id: string
-          mentor_session_slot_id: string | null
-          mentor_user_id: string
-          notes: string | null
-          occurred_at: string
-          payout_xof: number | null
-          scheduled_at: string | null
-          status: string
-        }
+          campaign_id: string | null;
+          child_profile_id: string;
+          confirmed_at: string | null;
+          confirmed_by: string | null;
+          contest_reason: string | null;
+          contested_at: string | null;
+          contested_by: string | null;
+          created_at: string;
+          funding: string;
+          id: string;
+          mentor_session_slot_id: string | null;
+          mentor_user_id: string;
+          notes: string | null;
+          occurred_at: string;
+          payout_xof: number | null;
+          scheduled_at: string | null;
+          status: string;
+        };
         Insert: {
-          campaign_id?: string | null
-          child_profile_id: string
-          confirmed_at?: string | null
-          confirmed_by?: string | null
-          contest_reason?: string | null
-          contested_at?: string | null
-          contested_by?: string | null
-          created_at?: string
-          funding?: string
-          id?: string
-          mentor_session_slot_id?: string | null
-          mentor_user_id: string
-          notes?: string | null
-          occurred_at?: string
-          payout_xof?: number | null
-          scheduled_at?: string | null
-          status?: string
-        }
+          campaign_id?: string | null;
+          child_profile_id: string;
+          confirmed_at?: string | null;
+          confirmed_by?: string | null;
+          contest_reason?: string | null;
+          contested_at?: string | null;
+          contested_by?: string | null;
+          created_at?: string;
+          funding?: string;
+          id?: string;
+          mentor_session_slot_id?: string | null;
+          mentor_user_id: string;
+          notes?: string | null;
+          occurred_at?: string;
+          payout_xof?: number | null;
+          scheduled_at?: string | null;
+          status?: string;
+        };
         Update: {
-          campaign_id?: string | null
-          child_profile_id?: string
-          confirmed_at?: string | null
-          confirmed_by?: string | null
-          contest_reason?: string | null
-          contested_at?: string | null
-          contested_by?: string | null
-          created_at?: string
-          funding?: string
-          id?: string
-          mentor_session_slot_id?: string | null
-          mentor_user_id?: string
-          notes?: string | null
-          occurred_at?: string
-          payout_xof?: number | null
-          scheduled_at?: string | null
-          status?: string
-        }
+          campaign_id?: string | null;
+          child_profile_id?: string;
+          confirmed_at?: string | null;
+          confirmed_by?: string | null;
+          contest_reason?: string | null;
+          contested_at?: string | null;
+          contested_by?: string | null;
+          created_at?: string;
+          funding?: string;
+          id?: string;
+          mentor_session_slot_id?: string | null;
+          mentor_user_id?: string;
+          notes?: string | null;
+          occurred_at?: string;
+          payout_xof?: number | null;
+          scheduled_at?: string | null;
+          status?: string;
+        };
         Relationships: [
           {
-            foreignKeyName: "mentor_sessions_campaign_id_fkey"
-            columns: ["campaign_id"]
-            isOneToOne: false
-            referencedRelation: "campaigns"
-            referencedColumns: ["id"]
+            foreignKeyName: "mentor_sessions_campaign_id_fkey";
+            columns: ["campaign_id"];
+            isOneToOne: false;
+            referencedRelation: "campaigns";
+            referencedColumns: ["id"];
           },
           {
-            foreignKeyName: "mentor_sessions_child_profile_id_fkey"
-            columns: ["child_profile_id"]
-            isOneToOne: false
-            referencedRelation: "child_profiles"
-            referencedColumns: ["id"]
+            foreignKeyName: "mentor_sessions_child_profile_id_fkey";
+            columns: ["child_profile_id"];
+            isOneToOne: false;
+            referencedRelation: "child_profiles";
+            referencedColumns: ["id"];
           },
           {
-            foreignKeyName: "mentor_sessions_mentor_session_slot_id_fkey"
-            columns: ["mentor_session_slot_id"]
-            isOneToOne: false
-            referencedRelation: "mentor_session_slots"
-            referencedColumns: ["id"]
+            foreignKeyName: "mentor_sessions_mentor_session_slot_id_fkey";
+            columns: ["mentor_session_slot_id"];
+            isOneToOne: false;
+            referencedRelation: "mentor_session_slots";
+            referencedColumns: ["id"];
           },
-        ]
-      }
+        ];
+      };
       mentors: {
         Row: {
-          assigned_by: string | null
-          campaign_id: string | null
-          child_profile_id: string
-          created_at: string
-          id: string
-          mentor_user_id: string
-          removed_at: string | null
-        }
+          assigned_by: string | null;
+          campaign_id: string | null;
+          child_profile_id: string;
+          created_at: string;
+          id: string;
+          mentor_user_id: string;
+          removed_at: string | null;
+        };
         Insert: {
-          assigned_by?: string | null
-          campaign_id?: string | null
-          child_profile_id: string
-          created_at?: string
-          id?: string
-          mentor_user_id: string
-          removed_at?: string | null
-        }
+          assigned_by?: string | null;
+          campaign_id?: string | null;
+          child_profile_id: string;
+          created_at?: string;
+          id?: string;
+          mentor_user_id: string;
+          removed_at?: string | null;
+        };
         Update: {
-          assigned_by?: string | null
-          campaign_id?: string | null
-          child_profile_id?: string
-          created_at?: string
-          id?: string
-          mentor_user_id?: string
-          removed_at?: string | null
-        }
+          assigned_by?: string | null;
+          campaign_id?: string | null;
+          child_profile_id?: string;
+          created_at?: string;
+          id?: string;
+          mentor_user_id?: string;
+          removed_at?: string | null;
+        };
         Relationships: [
           {
-            foreignKeyName: "mentors_campaign_id_fkey"
-            columns: ["campaign_id"]
-            isOneToOne: false
-            referencedRelation: "campaigns"
-            referencedColumns: ["id"]
+            foreignKeyName: "mentors_campaign_id_fkey";
+            columns: ["campaign_id"];
+            isOneToOne: false;
+            referencedRelation: "campaigns";
+            referencedColumns: ["id"];
           },
           {
-            foreignKeyName: "mentors_child_profile_id_fkey"
-            columns: ["child_profile_id"]
-            isOneToOne: false
-            referencedRelation: "child_profiles"
-            referencedColumns: ["id"]
+            foreignKeyName: "mentors_child_profile_id_fkey";
+            columns: ["child_profile_id"];
+            isOneToOne: false;
+            referencedRelation: "child_profiles";
+            referencedColumns: ["id"];
           },
-        ]
-      }
+        ];
+      };
       observation_events: {
         Row: {
-          child_id: string
-          id: string
-          occurred_at: string
-          payload: Json
-          processed: boolean
-          recorded_at: string
-          source: string
-          type: string
-          user_id: string
-        }
+          child_id: string;
+          id: string;
+          occurred_at: string;
+          payload: Json;
+          processed: boolean;
+          recorded_at: string;
+          source: string;
+          type: string;
+          user_id: string;
+        };
         Insert: {
-          child_id: string
-          id?: string
-          occurred_at?: string
-          payload?: Json
-          processed?: boolean
-          recorded_at?: string
-          source?: string
-          type: string
-          user_id: string
-        }
+          child_id: string;
+          id?: string;
+          occurred_at?: string;
+          payload?: Json;
+          processed?: boolean;
+          recorded_at?: string;
+          source?: string;
+          type: string;
+          user_id: string;
+        };
         Update: {
-          child_id?: string
-          id?: string
-          occurred_at?: string
-          payload?: Json
-          processed?: boolean
-          recorded_at?: string
-          source?: string
-          type?: string
-          user_id?: string
-        }
+          child_id?: string;
+          id?: string;
+          occurred_at?: string;
+          payload?: Json;
+          processed?: boolean;
+          recorded_at?: string;
+          source?: string;
+          type?: string;
+          user_id?: string;
+        };
         Relationships: [
           {
-            foreignKeyName: "observation_events_child_id_fkey"
-            columns: ["child_id"]
-            isOneToOne: false
-            referencedRelation: "child_profiles"
-            referencedColumns: ["id"]
+            foreignKeyName: "observation_events_child_id_fkey";
+            columns: ["child_id"];
+            isOneToOne: false;
+            referencedRelation: "child_profiles";
+            referencedColumns: ["id"];
           },
-        ]
-      }
+        ];
+      };
       orders: {
         Row: {
-          challenge_id: string | null
-          child_id: string | null
-          created_at: string
-          delivery_notes: string | null
-          id: string
-          items: Json
-          payment_reference: string | null
-          status: string
-          total_price_xof: number
-          updated_at: string
-          user_id: string | null
-        }
+          challenge_id: string | null;
+          child_id: string | null;
+          created_at: string;
+          delivery_notes: string | null;
+          id: string;
+          items: Json;
+          payment_reference: string | null;
+          status: string;
+          total_price_xof: number;
+          updated_at: string;
+          user_id: string | null;
+        };
         Insert: {
-          challenge_id?: string | null
-          child_id?: string | null
-          created_at?: string
-          delivery_notes?: string | null
-          id?: string
-          items?: Json
-          payment_reference?: string | null
-          status?: string
-          total_price_xof: number
-          updated_at?: string
-          user_id?: string | null
-        }
+          challenge_id?: string | null;
+          child_id?: string | null;
+          created_at?: string;
+          delivery_notes?: string | null;
+          id?: string;
+          items?: Json;
+          payment_reference?: string | null;
+          status?: string;
+          total_price_xof: number;
+          updated_at?: string;
+          user_id?: string | null;
+        };
         Update: {
-          challenge_id?: string | null
-          child_id?: string | null
-          created_at?: string
-          delivery_notes?: string | null
-          id?: string
-          items?: Json
-          payment_reference?: string | null
-          status?: string
-          total_price_xof?: number
-          updated_at?: string
-          user_id?: string | null
-        }
+          challenge_id?: string | null;
+          child_id?: string | null;
+          created_at?: string;
+          delivery_notes?: string | null;
+          id?: string;
+          items?: Json;
+          payment_reference?: string | null;
+          status?: string;
+          total_price_xof?: number;
+          updated_at?: string;
+          user_id?: string | null;
+        };
         Relationships: [
           {
-            foreignKeyName: "orders_challenge_id_fkey"
-            columns: ["challenge_id"]
-            isOneToOne: false
-            referencedRelation: "challenges"
-            referencedColumns: ["id"]
+            foreignKeyName: "orders_challenge_id_fkey";
+            columns: ["challenge_id"];
+            isOneToOne: false;
+            referencedRelation: "challenges";
+            referencedColumns: ["id"];
           },
           {
-            foreignKeyName: "orders_child_id_fkey"
-            columns: ["child_id"]
-            isOneToOne: false
-            referencedRelation: "child_profiles"
-            referencedColumns: ["id"]
+            foreignKeyName: "orders_child_id_fkey";
+            columns: ["child_id"];
+            isOneToOne: false;
+            referencedRelation: "child_profiles";
+            referencedColumns: ["id"];
           },
-        ]
-      }
+        ];
+      };
       parent_profiles: {
         Row: {
-          created_at: string | null
-          display_name: string | null
-          email: string
-          phone: string | null
-          updated_at: string
-          user_id: string
-        }
+          created_at: string | null;
+          display_name: string | null;
+          email: string;
+          phone: string | null;
+          updated_at: string;
+          user_id: string;
+        };
         Insert: {
-          created_at?: string | null
-          display_name?: string | null
-          email: string
-          phone?: string | null
-          updated_at?: string
-          user_id: string
-        }
+          created_at?: string | null;
+          display_name?: string | null;
+          email: string;
+          phone?: string | null;
+          updated_at?: string;
+          user_id: string;
+        };
         Update: {
-          created_at?: string | null
-          display_name?: string | null
-          email?: string
-          phone?: string | null
-          updated_at?: string
-          user_id?: string
-        }
-        Relationships: []
-      }
+          created_at?: string | null;
+          display_name?: string | null;
+          email?: string;
+          phone?: string | null;
+          updated_at?: string;
+          user_id?: string;
+        };
+        Relationships: [];
+      };
       parent_testimonials: {
         Row: {
-          author_city: string
-          author_name: string
-          challenges_completed: number
-          child_id: string
-          children_count: number
-          consent_publish: boolean
-          created_at: string
-          headline: string
-          id: string
-          published: boolean
-          rating: number
-          review_body: string
-          sender_type: string
-          updated_at: string
-          user_id: string
-        }
+          author_city: string;
+          author_name: string;
+          challenges_completed: number;
+          child_id: string;
+          children_count: number;
+          consent_publish: boolean;
+          created_at: string;
+          headline: string;
+          id: string;
+          published: boolean;
+          rating: number;
+          review_body: string;
+          sender_type: string;
+          updated_at: string;
+          user_id: string;
+        };
         Insert: {
-          author_city?: string
-          author_name: string
-          challenges_completed?: number
-          child_id: string
-          children_count?: number
-          consent_publish?: boolean
-          created_at?: string
-          headline: string
-          id?: string
-          published?: boolean
-          rating: number
-          review_body: string
-          sender_type?: string
-          updated_at?: string
-          user_id: string
-        }
+          author_city?: string;
+          author_name: string;
+          challenges_completed?: number;
+          child_id: string;
+          children_count?: number;
+          consent_publish?: boolean;
+          created_at?: string;
+          headline: string;
+          id?: string;
+          published?: boolean;
+          rating: number;
+          review_body: string;
+          sender_type?: string;
+          updated_at?: string;
+          user_id: string;
+        };
         Update: {
-          author_city?: string
-          author_name?: string
-          challenges_completed?: number
-          child_id?: string
-          children_count?: number
-          consent_publish?: boolean
-          created_at?: string
-          headline?: string
-          id?: string
-          published?: boolean
-          rating?: number
-          review_body?: string
-          sender_type?: string
-          updated_at?: string
-          user_id?: string
-        }
+          author_city?: string;
+          author_name?: string;
+          challenges_completed?: number;
+          child_id?: string;
+          children_count?: number;
+          consent_publish?: boolean;
+          created_at?: string;
+          headline?: string;
+          id?: string;
+          published?: boolean;
+          rating?: number;
+          review_body?: string;
+          sender_type?: string;
+          updated_at?: string;
+          user_id?: string;
+        };
         Relationships: [
           {
-            foreignKeyName: "parent_testimonials_child_id_fkey"
-            columns: ["child_id"]
-            isOneToOne: false
-            referencedRelation: "child_profiles"
-            referencedColumns: ["id"]
+            foreignKeyName: "parent_testimonials_child_id_fkey";
+            columns: ["child_id"];
+            isOneToOne: false;
+            referencedRelation: "child_profiles";
+            referencedColumns: ["id"];
           },
-        ]
-      }
+        ];
+      };
       payments: {
         Row: {
-          amount_xof: number
-          created_at: string
-          currency: string
-          id: string
-          metadata: Json
-          paid_at: string | null
-          provider: string
-          reference: string
-          status: string
-          updated_at: string
-          user_id: string | null
-        }
+          amount_xof: number;
+          created_at: string;
+          currency: string;
+          id: string;
+          metadata: Json;
+          paid_at: string | null;
+          provider: string;
+          reference: string;
+          status: string;
+          updated_at: string;
+          user_id: string | null;
+        };
         Insert: {
-          amount_xof: number
-          created_at?: string
-          currency?: string
-          id?: string
-          metadata?: Json
-          paid_at?: string | null
-          provider?: string
-          reference: string
-          status?: string
-          updated_at?: string
-          user_id?: string | null
-        }
+          amount_xof: number;
+          created_at?: string;
+          currency?: string;
+          id?: string;
+          metadata?: Json;
+          paid_at?: string | null;
+          provider?: string;
+          reference: string;
+          status?: string;
+          updated_at?: string;
+          user_id?: string | null;
+        };
         Update: {
-          amount_xof?: number
-          created_at?: string
-          currency?: string
-          id?: string
-          metadata?: Json
-          paid_at?: string | null
-          provider?: string
-          reference?: string
-          status?: string
-          updated_at?: string
-          user_id?: string | null
-        }
-        Relationships: []
-      }
+          amount_xof?: number;
+          created_at?: string;
+          currency?: string;
+          id?: string;
+          metadata?: Json;
+          paid_at?: string | null;
+          provider?: string;
+          reference?: string;
+          status?: string;
+          updated_at?: string;
+          user_id?: string | null;
+        };
+        Relationships: [];
+      };
       paystack_plans: {
         Row: {
-          amount_xof: number
-          created_at: string
-          currency: string
-          id: string
-          interval: string
-          name: string
-          plan_code: string
-          plan_key: string
-        }
+          amount_xof: number;
+          created_at: string;
+          currency: string;
+          id: string;
+          interval: string;
+          name: string;
+          plan_code: string;
+          plan_key: string;
+        };
         Insert: {
-          amount_xof: number
-          created_at?: string
-          currency?: string
-          id?: string
-          interval?: string
-          name: string
-          plan_code: string
-          plan_key: string
-        }
+          amount_xof: number;
+          created_at?: string;
+          currency?: string;
+          id?: string;
+          interval?: string;
+          name: string;
+          plan_code: string;
+          plan_key: string;
+        };
         Update: {
-          amount_xof?: number
-          created_at?: string
-          currency?: string
-          id?: string
-          interval?: string
-          name?: string
-          plan_code?: string
-          plan_key?: string
-        }
-        Relationships: []
-      }
+          amount_xof?: number;
+          created_at?: string;
+          currency?: string;
+          id?: string;
+          interval?: string;
+          name?: string;
+          plan_code?: string;
+          plan_key?: string;
+        };
+        Relationships: [];
+      };
       pedagogical_twins: {
         Row: {
-          child_id: string
-          competencies: Json
-          created_at: string
-          drivers: Json
-          id: string
-          interests: Json
-          last_computed_at: string
-          presentation_signals: Json
-          updated_at: string
-          user_id: string
-        }
+          child_id: string;
+          competencies: Json;
+          created_at: string;
+          drivers: Json;
+          id: string;
+          interests: Json;
+          last_computed_at: string;
+          presentation_signals: Json;
+          updated_at: string;
+          user_id: string;
+        };
         Insert: {
-          child_id: string
-          competencies?: Json
-          created_at?: string
-          drivers?: Json
-          id?: string
-          interests?: Json
-          last_computed_at?: string
-          presentation_signals?: Json
-          updated_at?: string
-          user_id: string
-        }
+          child_id: string;
+          competencies?: Json;
+          created_at?: string;
+          drivers?: Json;
+          id?: string;
+          interests?: Json;
+          last_computed_at?: string;
+          presentation_signals?: Json;
+          updated_at?: string;
+          user_id: string;
+        };
         Update: {
-          child_id?: string
-          competencies?: Json
-          created_at?: string
-          drivers?: Json
-          id?: string
-          interests?: Json
-          last_computed_at?: string
-          presentation_signals?: Json
-          updated_at?: string
-          user_id?: string
-        }
+          child_id?: string;
+          competencies?: Json;
+          created_at?: string;
+          drivers?: Json;
+          id?: string;
+          interests?: Json;
+          last_computed_at?: string;
+          presentation_signals?: Json;
+          updated_at?: string;
+          user_id?: string;
+        };
         Relationships: [
           {
-            foreignKeyName: "pedagogical_twins_child_id_fkey"
-            columns: ["child_id"]
-            isOneToOne: true
-            referencedRelation: "child_profiles"
-            referencedColumns: ["id"]
+            foreignKeyName: "pedagogical_twins_child_id_fkey";
+            columns: ["child_id"];
+            isOneToOne: true;
+            referencedRelation: "child_profiles";
+            referencedColumns: ["id"];
           },
-        ]
-      }
+        ];
+      };
       post_likes: {
         Row: {
-          created_at: string
-          id: string
-          post_id: string
-          user_id: string
-        }
+          created_at: string;
+          id: string;
+          post_id: string;
+          user_id: string;
+        };
         Insert: {
-          created_at?: string
-          id?: string
-          post_id: string
-          user_id: string
-        }
+          created_at?: string;
+          id?: string;
+          post_id: string;
+          user_id: string;
+        };
         Update: {
-          created_at?: string
-          id?: string
-          post_id?: string
-          user_id?: string
-        }
+          created_at?: string;
+          id?: string;
+          post_id?: string;
+          user_id?: string;
+        };
         Relationships: [
           {
-            foreignKeyName: "post_likes_post_id_fkey"
-            columns: ["post_id"]
-            isOneToOne: false
-            referencedRelation: "posts"
-            referencedColumns: ["id"]
+            foreignKeyName: "post_likes_post_id_fkey";
+            columns: ["post_id"];
+            isOneToOne: false;
+            referencedRelation: "posts";
+            referencedColumns: ["id"];
           },
-        ]
-      }
+        ];
+      };
       posts: {
         Row: {
-          ai_talent_tag: string | null
-          caption: string | null
-          child_profile_id: string | null
-          created_at: string
-          id: string
-          image_url: string
-          likes_count: number | null
-          parent_id: string
-        }
+          ai_talent_tag: string | null;
+          caption: string | null;
+          child_profile_id: string | null;
+          created_at: string;
+          id: string;
+          image_url: string;
+          likes_count: number | null;
+          parent_id: string;
+        };
         Insert: {
-          ai_talent_tag?: string | null
-          caption?: string | null
-          child_profile_id?: string | null
-          created_at?: string
-          id?: string
-          image_url: string
-          likes_count?: number | null
-          parent_id: string
-        }
+          ai_talent_tag?: string | null;
+          caption?: string | null;
+          child_profile_id?: string | null;
+          created_at?: string;
+          id?: string;
+          image_url: string;
+          likes_count?: number | null;
+          parent_id: string;
+        };
         Update: {
-          ai_talent_tag?: string | null
-          caption?: string | null
-          child_profile_id?: string | null
-          created_at?: string
-          id?: string
-          image_url?: string
-          likes_count?: number | null
-          parent_id?: string
-        }
+          ai_talent_tag?: string | null;
+          caption?: string | null;
+          child_profile_id?: string | null;
+          created_at?: string;
+          id?: string;
+          image_url?: string;
+          likes_count?: number | null;
+          parent_id?: string;
+        };
         Relationships: [
           {
-            foreignKeyName: "posts_child_profile_id_fkey"
-            columns: ["child_profile_id"]
-            isOneToOne: false
-            referencedRelation: "child_profiles"
-            referencedColumns: ["id"]
+            foreignKeyName: "posts_child_profile_id_fkey";
+            columns: ["child_profile_id"];
+            isOneToOne: false;
+            referencedRelation: "child_profiles";
+            referencedColumns: ["id"];
           },
-        ]
-      }
+        ];
+      };
       products: {
         Row: {
-          created_at: string
-          description: string | null
-          id: string
-          image_url: string | null
-          is_active: boolean
-          material_tags: string[]
-          name: string
-          price_xof: number
-          stock_quantity: number | null
-          updated_at: string
-        }
+          created_at: string;
+          description: string | null;
+          id: string;
+          image_url: string | null;
+          is_active: boolean;
+          material_tags: string[];
+          name: string;
+          price_xof: number;
+          stock_quantity: number | null;
+          updated_at: string;
+        };
         Insert: {
-          created_at?: string
-          description?: string | null
-          id?: string
-          image_url?: string | null
-          is_active?: boolean
-          material_tags?: string[]
-          name: string
-          price_xof: number
-          stock_quantity?: number | null
-          updated_at?: string
-        }
+          created_at?: string;
+          description?: string | null;
+          id?: string;
+          image_url?: string | null;
+          is_active?: boolean;
+          material_tags?: string[];
+          name: string;
+          price_xof: number;
+          stock_quantity?: number | null;
+          updated_at?: string;
+        };
         Update: {
-          created_at?: string
-          description?: string | null
-          id?: string
-          image_url?: string | null
-          is_active?: boolean
-          material_tags?: string[]
-          name?: string
-          price_xof?: number
-          stock_quantity?: number | null
-          updated_at?: string
-        }
-        Relationships: []
-      }
+          created_at?: string;
+          description?: string | null;
+          id?: string;
+          image_url?: string | null;
+          is_active?: boolean;
+          material_tags?: string[];
+          name?: string;
+          price_xof?: number;
+          stock_quantity?: number | null;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
       push_subscriptions: {
         Row: {
-          auth: string
-          created_at: string
-          endpoint: string
-          id: string
-          last_seen_at: string
-          p256dh: string
-          user_agent: string | null
-          user_id: string
-        }
+          auth: string;
+          created_at: string;
+          endpoint: string;
+          id: string;
+          last_seen_at: string;
+          p256dh: string;
+          user_agent: string | null;
+          user_id: string;
+        };
         Insert: {
-          auth: string
-          created_at?: string
-          endpoint: string
-          id?: string
-          last_seen_at?: string
-          p256dh: string
-          user_agent?: string | null
-          user_id: string
-        }
+          auth: string;
+          created_at?: string;
+          endpoint: string;
+          id?: string;
+          last_seen_at?: string;
+          p256dh: string;
+          user_agent?: string | null;
+          user_id: string;
+        };
         Update: {
-          auth?: string
-          created_at?: string
-          endpoint?: string
-          id?: string
-          last_seen_at?: string
-          p256dh?: string
-          user_agent?: string | null
-          user_id?: string
-        }
-        Relationships: []
-      }
+          auth?: string;
+          created_at?: string;
+          endpoint?: string;
+          id?: string;
+          last_seen_at?: string;
+          p256dh?: string;
+          user_agent?: string | null;
+          user_id?: string;
+        };
+        Relationships: [];
+      };
       season_enrollments: {
         Row: {
-          artifact_url: string | null
-          campaign_id: string | null
-          child_id: string
-          enrolled_at: string
-          id: string
-          payment_status: string
-          season_id: string | null
-          sponsor_email: string | null
-          sponsor_message: string | null
-          sponsor_name: string | null
-          user_id: string
-        }
+          artifact_url: string | null;
+          campaign_id: string | null;
+          child_id: string;
+          enrolled_at: string;
+          id: string;
+          payment_status: string;
+          season_id: string | null;
+          sponsor_email: string | null;
+          sponsor_message: string | null;
+          sponsor_name: string | null;
+          user_id: string;
+        };
         Insert: {
-          artifact_url?: string | null
-          campaign_id?: string | null
-          child_id: string
-          enrolled_at?: string
-          id?: string
-          payment_status?: string
-          season_id?: string | null
-          sponsor_email?: string | null
-          sponsor_message?: string | null
-          sponsor_name?: string | null
-          user_id: string
-        }
+          artifact_url?: string | null;
+          campaign_id?: string | null;
+          child_id: string;
+          enrolled_at?: string;
+          id?: string;
+          payment_status?: string;
+          season_id?: string | null;
+          sponsor_email?: string | null;
+          sponsor_message?: string | null;
+          sponsor_name?: string | null;
+          user_id: string;
+        };
         Update: {
-          artifact_url?: string | null
-          campaign_id?: string | null
-          child_id?: string
-          enrolled_at?: string
-          id?: string
-          payment_status?: string
-          season_id?: string | null
-          sponsor_email?: string | null
-          sponsor_message?: string | null
-          sponsor_name?: string | null
-          user_id?: string
-        }
+          artifact_url?: string | null;
+          campaign_id?: string | null;
+          child_id?: string;
+          enrolled_at?: string;
+          id?: string;
+          payment_status?: string;
+          season_id?: string | null;
+          sponsor_email?: string | null;
+          sponsor_message?: string | null;
+          sponsor_name?: string | null;
+          user_id?: string;
+        };
         Relationships: [
           {
-            foreignKeyName: "season_enrollments_campaign_id_fkey"
-            columns: ["campaign_id"]
-            isOneToOne: false
-            referencedRelation: "campaigns"
-            referencedColumns: ["id"]
+            foreignKeyName: "season_enrollments_campaign_id_fkey";
+            columns: ["campaign_id"];
+            isOneToOne: false;
+            referencedRelation: "campaigns";
+            referencedColumns: ["id"];
           },
           {
-            foreignKeyName: "season_enrollments_child_id_fkey"
-            columns: ["child_id"]
-            isOneToOne: false
-            referencedRelation: "child_profiles"
-            referencedColumns: ["id"]
+            foreignKeyName: "season_enrollments_child_id_fkey";
+            columns: ["child_id"];
+            isOneToOne: false;
+            referencedRelation: "child_profiles";
+            referencedColumns: ["id"];
           },
           {
-            foreignKeyName: "season_enrollments_season_id_fkey"
-            columns: ["season_id"]
-            isOneToOne: false
-            referencedRelation: "seasons"
-            referencedColumns: ["id"]
+            foreignKeyName: "season_enrollments_season_id_fkey";
+            columns: ["season_id"];
+            isOneToOne: false;
+            referencedRelation: "seasons";
+            referencedColumns: ["id"];
           },
-        ]
-      }
+        ];
+      };
       seasons: {
         Row: {
-          created_at: string
-          description: string | null
-          duration_months: number
-          end_date: string
-          id: string
-          price_eur: number
-          price_xof: number
-          start_date: string
-          status: string
-          subtitle: string | null
-          theme: string
-          title: string
-        }
+          created_at: string;
+          description: string | null;
+          duration_months: number;
+          end_date: string;
+          id: string;
+          price_eur: number;
+          price_xof: number;
+          start_date: string;
+          status: string;
+          subtitle: string | null;
+          theme: string;
+          title: string;
+        };
         Insert: {
-          created_at?: string
-          description?: string | null
-          duration_months?: number
-          end_date: string
-          id?: string
-          price_eur?: number
-          price_xof?: number
-          start_date: string
-          status?: string
-          subtitle?: string | null
-          theme: string
-          title: string
-        }
+          created_at?: string;
+          description?: string | null;
+          duration_months?: number;
+          end_date: string;
+          id?: string;
+          price_eur?: number;
+          price_xof?: number;
+          start_date: string;
+          status?: string;
+          subtitle?: string | null;
+          theme: string;
+          title: string;
+        };
         Update: {
-          created_at?: string
-          description?: string | null
-          duration_months?: number
-          end_date?: string
-          id?: string
-          price_eur?: number
-          price_xof?: number
-          start_date?: string
-          status?: string
-          subtitle?: string | null
-          theme?: string
-          title?: string
-        }
-        Relationships: []
-      }
+          created_at?: string;
+          description?: string | null;
+          duration_months?: number;
+          end_date?: string;
+          id?: string;
+          price_eur?: number;
+          price_xof?: number;
+          start_date?: string;
+          status?: string;
+          subtitle?: string | null;
+          theme?: string;
+          title?: string;
+        };
+        Relationships: [];
+      };
       sponsorship_credits: {
         Row: {
-          created_at: string
-          ends_at: string
-          id: string
-          months_count: number
-          token_id: string | null
-          user_id: string
-        }
+          created_at: string;
+          ends_at: string;
+          id: string;
+          months_count: number;
+          token_id: string | null;
+          user_id: string;
+        };
         Insert: {
-          created_at?: string
-          ends_at: string
-          id?: string
-          months_count?: number
-          token_id?: string | null
-          user_id: string
-        }
+          created_at?: string;
+          ends_at: string;
+          id?: string;
+          months_count?: number;
+          token_id?: string | null;
+          user_id: string;
+        };
         Update: {
-          created_at?: string
-          ends_at?: string
-          id?: string
-          months_count?: number
-          token_id?: string | null
-          user_id?: string
-        }
+          created_at?: string;
+          ends_at?: string;
+          id?: string;
+          months_count?: number;
+          token_id?: string | null;
+          user_id?: string;
+        };
         Relationships: [
           {
-            foreignKeyName: "sponsorship_credits_token_id_fkey"
-            columns: ["token_id"]
-            isOneToOne: false
-            referencedRelation: "sponsorship_tokens"
-            referencedColumns: ["id"]
+            foreignKeyName: "sponsorship_credits_token_id_fkey";
+            columns: ["token_id"];
+            isOneToOne: false;
+            referencedRelation: "sponsorship_tokens";
+            referencedColumns: ["id"];
           },
-        ]
-      }
+        ];
+      };
       sponsorship_tokens: {
         Row: {
-          amount_paid: number
-          campaign_id: string | null
-          code: string
-          created_at: string
-          currency: string
-          id: string
-          is_redeemed: boolean
-          months_count: number
-          payment_confirmed: boolean
-          paystack_reference: string | null
-          redeemed_at: string | null
-          redeemed_by_child_id: string | null
-          season_id: string | null
-          sponsor_email: string
-          sponsor_message: string | null
-          sponsor_name: string
-          target_child_name: string | null
-        }
+          amount_paid: number;
+          campaign_id: string | null;
+          code: string;
+          created_at: string;
+          currency: string;
+          id: string;
+          is_redeemed: boolean;
+          months_count: number;
+          payment_confirmed: boolean;
+          paystack_reference: string | null;
+          redeemed_at: string | null;
+          redeemed_by_child_id: string | null;
+          season_id: string | null;
+          sponsor_email: string;
+          sponsor_message: string | null;
+          sponsor_name: string;
+          target_child_name: string | null;
+        };
         Insert: {
-          amount_paid?: number
-          campaign_id?: string | null
-          code: string
-          created_at?: string
-          currency?: string
-          id?: string
-          is_redeemed?: boolean
-          months_count?: number
-          payment_confirmed?: boolean
-          paystack_reference?: string | null
-          redeemed_at?: string | null
-          redeemed_by_child_id?: string | null
-          season_id?: string | null
-          sponsor_email: string
-          sponsor_message?: string | null
-          sponsor_name: string
-          target_child_name?: string | null
-        }
+          amount_paid?: number;
+          campaign_id?: string | null;
+          code: string;
+          created_at?: string;
+          currency?: string;
+          id?: string;
+          is_redeemed?: boolean;
+          months_count?: number;
+          payment_confirmed?: boolean;
+          paystack_reference?: string | null;
+          redeemed_at?: string | null;
+          redeemed_by_child_id?: string | null;
+          season_id?: string | null;
+          sponsor_email: string;
+          sponsor_message?: string | null;
+          sponsor_name: string;
+          target_child_name?: string | null;
+        };
         Update: {
-          amount_paid?: number
-          campaign_id?: string | null
-          code?: string
-          created_at?: string
-          currency?: string
-          id?: string
-          is_redeemed?: boolean
-          months_count?: number
-          payment_confirmed?: boolean
-          paystack_reference?: string | null
-          redeemed_at?: string | null
-          redeemed_by_child_id?: string | null
-          season_id?: string | null
-          sponsor_email?: string
-          sponsor_message?: string | null
-          sponsor_name?: string
-          target_child_name?: string | null
-        }
+          amount_paid?: number;
+          campaign_id?: string | null;
+          code?: string;
+          created_at?: string;
+          currency?: string;
+          id?: string;
+          is_redeemed?: boolean;
+          months_count?: number;
+          payment_confirmed?: boolean;
+          paystack_reference?: string | null;
+          redeemed_at?: string | null;
+          redeemed_by_child_id?: string | null;
+          season_id?: string | null;
+          sponsor_email?: string;
+          sponsor_message?: string | null;
+          sponsor_name?: string;
+          target_child_name?: string | null;
+        };
         Relationships: [
           {
-            foreignKeyName: "sponsorship_tokens_campaign_id_fkey"
-            columns: ["campaign_id"]
-            isOneToOne: false
-            referencedRelation: "campaigns"
-            referencedColumns: ["id"]
+            foreignKeyName: "sponsorship_tokens_campaign_id_fkey";
+            columns: ["campaign_id"];
+            isOneToOne: false;
+            referencedRelation: "campaigns";
+            referencedColumns: ["id"];
           },
           {
-            foreignKeyName: "sponsorship_tokens_redeemed_by_child_id_fkey"
-            columns: ["redeemed_by_child_id"]
-            isOneToOne: false
-            referencedRelation: "child_profiles"
-            referencedColumns: ["id"]
+            foreignKeyName: "sponsorship_tokens_redeemed_by_child_id_fkey";
+            columns: ["redeemed_by_child_id"];
+            isOneToOne: false;
+            referencedRelation: "child_profiles";
+            referencedColumns: ["id"];
           },
           {
-            foreignKeyName: "sponsorship_tokens_season_id_fkey"
-            columns: ["season_id"]
-            isOneToOne: false
-            referencedRelation: "seasons"
-            referencedColumns: ["id"]
+            foreignKeyName: "sponsorship_tokens_season_id_fkey";
+            columns: ["season_id"];
+            isOneToOne: false;
+            referencedRelation: "seasons";
+            referencedColumns: ["id"];
           },
-        ]
-      }
+        ];
+      };
       subscriptions: {
         Row: {
-          cancelled_at: string | null
-          created_at: string
-          currency: string
-          current_period_end: string | null
-          current_period_start: string | null
-          id: string
-          paystack_customer_code: string | null
-          paystack_reference: string | null
-          paystack_subscription_code: string | null
-          plan_code: string | null
-          price_xof: number | null
-          started_at: string | null
-          status: string
-          updated_at: string
-          user_id: string
-        }
+          cancelled_at: string | null;
+          created_at: string;
+          currency: string;
+          current_period_end: string | null;
+          current_period_start: string | null;
+          id: string;
+          paystack_customer_code: string | null;
+          paystack_reference: string | null;
+          paystack_subscription_code: string | null;
+          plan_code: string | null;
+          price_xof: number | null;
+          started_at: string | null;
+          status: string;
+          updated_at: string;
+          user_id: string;
+        };
         Insert: {
-          cancelled_at?: string | null
-          created_at?: string
-          currency?: string
-          current_period_end?: string | null
-          current_period_start?: string | null
-          id?: string
-          paystack_customer_code?: string | null
-          paystack_reference?: string | null
-          paystack_subscription_code?: string | null
-          plan_code?: string | null
-          price_xof?: number | null
-          started_at?: string | null
-          status?: string
-          updated_at?: string
-          user_id: string
-        }
+          cancelled_at?: string | null;
+          created_at?: string;
+          currency?: string;
+          current_period_end?: string | null;
+          current_period_start?: string | null;
+          id?: string;
+          paystack_customer_code?: string | null;
+          paystack_reference?: string | null;
+          paystack_subscription_code?: string | null;
+          plan_code?: string | null;
+          price_xof?: number | null;
+          started_at?: string | null;
+          status?: string;
+          updated_at?: string;
+          user_id: string;
+        };
         Update: {
-          cancelled_at?: string | null
-          created_at?: string
-          currency?: string
-          current_period_end?: string | null
-          current_period_start?: string | null
-          id?: string
-          paystack_customer_code?: string | null
-          paystack_reference?: string | null
-          paystack_subscription_code?: string | null
-          plan_code?: string | null
-          price_xof?: number | null
-          started_at?: string | null
-          status?: string
-          updated_at?: string
-          user_id?: string
-        }
-        Relationships: []
-      }
+          cancelled_at?: string | null;
+          created_at?: string;
+          currency?: string;
+          current_period_end?: string | null;
+          current_period_start?: string | null;
+          id?: string;
+          paystack_customer_code?: string | null;
+          paystack_reference?: string | null;
+          paystack_subscription_code?: string | null;
+          plan_code?: string | null;
+          price_xof?: number | null;
+          started_at?: string | null;
+          status?: string;
+          updated_at?: string;
+          user_id?: string;
+        };
+        Relationships: [];
+      };
       trait_series: {
         Row: {
-          child_id: string
-          id: string
-          level: number
-          recorded_at: string
-          source_event_id: string | null
-          trait_key: string
-          user_id: string
-          value: number
-        }
+          child_id: string;
+          id: string;
+          level: number;
+          recorded_at: string;
+          source_event_id: string | null;
+          trait_key: string;
+          user_id: string;
+          value: number;
+        };
         Insert: {
-          child_id: string
-          id?: string
-          level: number
-          recorded_at?: string
-          source_event_id?: string | null
-          trait_key: string
-          user_id: string
-          value: number
-        }
+          child_id: string;
+          id?: string;
+          level: number;
+          recorded_at?: string;
+          source_event_id?: string | null;
+          trait_key: string;
+          user_id: string;
+          value: number;
+        };
         Update: {
-          child_id?: string
-          id?: string
-          level?: number
-          recorded_at?: string
-          source_event_id?: string | null
-          trait_key?: string
-          user_id?: string
-          value?: number
-        }
+          child_id?: string;
+          id?: string;
+          level?: number;
+          recorded_at?: string;
+          source_event_id?: string | null;
+          trait_key?: string;
+          user_id?: string;
+          value?: number;
+        };
         Relationships: [
           {
-            foreignKeyName: "trait_series_child_id_fkey"
-            columns: ["child_id"]
-            isOneToOne: false
-            referencedRelation: "child_profiles"
-            referencedColumns: ["id"]
+            foreignKeyName: "trait_series_child_id_fkey";
+            columns: ["child_id"];
+            isOneToOne: false;
+            referencedRelation: "child_profiles";
+            referencedColumns: ["id"];
           },
           {
-            foreignKeyName: "trait_series_source_event_id_fkey"
-            columns: ["source_event_id"]
-            isOneToOne: false
-            referencedRelation: "observation_events"
-            referencedColumns: ["id"]
+            foreignKeyName: "trait_series_source_event_id_fkey";
+            columns: ["source_event_id"];
+            isOneToOne: false;
+            referencedRelation: "observation_events";
+            referencedColumns: ["id"];
           },
-        ]
-      }
-    }
+        ];
+      };
+    };
     Views: {
       talent_environment_signals: {
         Row: {
-          city: string | null
-          country: string | null
-          domain: string | null
-          talent_key: string | null
-          validated_completions: number | null
-        }
-        Relationships: []
-      }
-    }
+          city: string | null;
+          country: string | null;
+          domain: string | null;
+          talent_key: string | null;
+          validated_completions: number | null;
+        };
+        Relationships: [];
+      };
+    };
     Functions: {
       activate_mentor_code: {
-        Args: { p_code: string; p_user_id: string }
-        Returns: string
-      }
-      activate_season: { Args: { target_id: string }; Returns: undefined }
+        Args: { p_code: string; p_user_id: string };
+        Returns: string;
+      };
+      activate_season: { Args: { target_id: string }; Returns: undefined };
       apply_observation_to_twin: {
         Args: {
-          p_event: Database["public"]["Tables"]["observation_events"]["Row"]
-        }
-        Returns: undefined
-      }
+          p_event: Database["public"]["Tables"]["observation_events"]["Row"];
+        };
+        Returns: undefined;
+      };
       classify_trait: {
-        Args: { p_trend: number; p_value: number; p_variance: number }
-        Returns: string
-      }
-      compute_executive_kpis: { Args: never; Returns: Json }
-      compute_progression_health: { Args: never; Returns: Json }
+        Args: { p_trend: number; p_value: number; p_variance: number };
+        Returns: string;
+      };
+      compute_executive_kpis: { Args: never; Returns: Json };
+      compute_progression_health: { Args: never; Returns: Json };
       increment_child_talents: {
-        Args: { p_child_id: string; p_deltas: Json }
-        Returns: Json
-      }
+        Args: { p_child_id: string; p_deltas: Json };
+        Returns: Json;
+      };
       list_opted_in_guild_members: {
-        Args: { p_requesting_child_id: string }
+        Args: { p_requesting_child_id: string };
         Returns: {
-          age: number
-          id: string
-          name: string
-          talents: Json
-        }[]
-      }
+          age: number;
+          id: string;
+          name: string;
+          talents: Json;
+        }[];
+      };
       record_trait_point: {
         Args: {
-          p_alpha: number
-          p_child_id: string
-          p_field: string
-          p_level: number
-          p_occurred_at: string
-          p_signal: number
-          p_source_event_id: string
-          p_trait_key: string
-          p_user_id: string
-        }
-        Returns: undefined
-      }
-    }
+          p_alpha: number;
+          p_child_id: string;
+          p_field: string;
+          p_level: number;
+          p_occurred_at: string;
+          p_signal: number;
+          p_source_event_id: string;
+          p_trait_key: string;
+          p_user_id: string;
+        };
+        Returns: undefined;
+      };
+    };
     Enums: {
-      challenge_status: "todo" | "in_progress" | "completed" | "not_completed"
-    }
+      challenge_status: "todo" | "in_progress" | "completed" | "not_completed";
+    };
     CompositeTypes: {
-      [_ in never]: never
-    }
-  }
-}
+      [_ in never]: never;
+    };
+  };
+};
 
-type DatabaseWithoutInternals = Omit<Database, "__InternalSupabase">
+type DatabaseWithoutInternals = Omit<Database, "__InternalSupabase">;
 
-type DefaultSchema = DatabaseWithoutInternals[Extract<keyof Database, "public">]
+type DefaultSchema = DatabaseWithoutInternals[Extract<keyof Database, "public">];
 
 export type Tables<
   DefaultSchemaTableNameOrOptions extends
     | keyof (DefaultSchema["Tables"] & DefaultSchema["Views"])
     | { schema: keyof DatabaseWithoutInternals },
   TableName extends DefaultSchemaTableNameOrOptions extends {
-    schema: keyof DatabaseWithoutInternals
+    schema: keyof DatabaseWithoutInternals;
   }
     ? keyof (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
         DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])
     : never = never,
 > = DefaultSchemaTableNameOrOptions extends {
-  schema: keyof DatabaseWithoutInternals
+  schema: keyof DatabaseWithoutInternals;
 }
   ? (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
       DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])[TableName] extends {
-      Row: infer R
+      Row: infer R;
     }
     ? R
     : never
-  : DefaultSchemaTableNameOrOptions extends keyof (DefaultSchema["Tables"] &
-        DefaultSchema["Views"])
-    ? (DefaultSchema["Tables"] &
-        DefaultSchema["Views"])[DefaultSchemaTableNameOrOptions] extends {
-        Row: infer R
+  : DefaultSchemaTableNameOrOptions extends keyof (DefaultSchema["Tables"] & DefaultSchema["Views"])
+    ? (DefaultSchema["Tables"] & DefaultSchema["Views"])[DefaultSchemaTableNameOrOptions] extends {
+        Row: infer R;
       }
       ? R
       : never
-    : never
+    : never;
 
 export type TablesInsert<
   DefaultSchemaTableNameOrOptions extends
     | keyof DefaultSchema["Tables"]
     | { schema: keyof DatabaseWithoutInternals },
   TableName extends DefaultSchemaTableNameOrOptions extends {
-    schema: keyof DatabaseWithoutInternals
+    schema: keyof DatabaseWithoutInternals;
   }
     ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
     : never = never,
 > = DefaultSchemaTableNameOrOptions extends {
-  schema: keyof DatabaseWithoutInternals
+  schema: keyof DatabaseWithoutInternals;
 }
   ? DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"][TableName] extends {
-      Insert: infer I
+      Insert: infer I;
     }
     ? I
     : never
   : DefaultSchemaTableNameOrOptions extends keyof DefaultSchema["Tables"]
     ? DefaultSchema["Tables"][DefaultSchemaTableNameOrOptions] extends {
-        Insert: infer I
+        Insert: infer I;
       }
       ? I
       : never
-    : never
+    : never;
 
 export type TablesUpdate<
   DefaultSchemaTableNameOrOptions extends
     | keyof DefaultSchema["Tables"]
     | { schema: keyof DatabaseWithoutInternals },
   TableName extends DefaultSchemaTableNameOrOptions extends {
-    schema: keyof DatabaseWithoutInternals
+    schema: keyof DatabaseWithoutInternals;
   }
     ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
     : never = never,
 > = DefaultSchemaTableNameOrOptions extends {
-  schema: keyof DatabaseWithoutInternals
+  schema: keyof DatabaseWithoutInternals;
 }
   ? DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"][TableName] extends {
-      Update: infer U
+      Update: infer U;
     }
     ? U
     : never
   : DefaultSchemaTableNameOrOptions extends keyof DefaultSchema["Tables"]
     ? DefaultSchema["Tables"][DefaultSchemaTableNameOrOptions] extends {
-        Update: infer U
+        Update: infer U;
       }
       ? U
       : never
-    : never
+    : never;
 
 export type Enums<
   DefaultSchemaEnumNameOrOptions extends
     | keyof DefaultSchema["Enums"]
     | { schema: keyof DatabaseWithoutInternals },
   EnumName extends DefaultSchemaEnumNameOrOptions extends {
-    schema: keyof DatabaseWithoutInternals
+    schema: keyof DatabaseWithoutInternals;
   }
     ? keyof DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"]
     : never = never,
 > = DefaultSchemaEnumNameOrOptions extends {
-  schema: keyof DatabaseWithoutInternals
+  schema: keyof DatabaseWithoutInternals;
 }
   ? DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"][EnumName]
   : DefaultSchemaEnumNameOrOptions extends keyof DefaultSchema["Enums"]
     ? DefaultSchema["Enums"][DefaultSchemaEnumNameOrOptions]
-    : never
+    : never;
 
 export type CompositeTypes<
   PublicCompositeTypeNameOrOptions extends
     | keyof DefaultSchema["CompositeTypes"]
     | { schema: keyof DatabaseWithoutInternals },
   CompositeTypeName extends PublicCompositeTypeNameOrOptions extends {
-    schema: keyof DatabaseWithoutInternals
+    schema: keyof DatabaseWithoutInternals;
   }
     ? keyof DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"]
     : never = never,
 > = PublicCompositeTypeNameOrOptions extends {
-  schema: keyof DatabaseWithoutInternals
+  schema: keyof DatabaseWithoutInternals;
 }
   ? DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"][CompositeTypeName]
   : PublicCompositeTypeNameOrOptions extends keyof DefaultSchema["CompositeTypes"]
     ? DefaultSchema["CompositeTypes"][PublicCompositeTypeNameOrOptions]
-    : never
+    : never;
 
 export const Constants = {
   graphql_public: {
@@ -2264,4 +2256,4 @@ export const Constants = {
       challenge_status: ["todo", "in_progress", "completed", "not_completed"],
     },
   },
-} as const
+} as const;

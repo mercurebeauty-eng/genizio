@@ -21,9 +21,7 @@ export type NotificationEmailParams = {
   html: string;
 };
 
-export async function sendNotificationEmail(
-  params: NotificationEmailParams,
-): Promise<boolean> {
+export async function sendNotificationEmail(params: NotificationEmailParams): Promise<boolean> {
   const { supabaseAdmin, userId, eventKey, subject, html } = params;
   try {
     const eventType = `notification_email_sent:${eventKey}`;
@@ -90,7 +88,9 @@ export function sessionToValidateEmailHtml(childName: string | null, date: strin
   return shell(
     "Une séance attend votre confirmation",
     [
-      childName ? `Le mentor de ${childName} a déclaré une séance le ${date}.` : `Votre mentor a déclaré une séance le ${date}.`,
+      childName
+        ? `Le mentor de ${childName} a déclaré une séance le ${date}.`
+        : `Votre mentor a déclaré une séance le ${date}.`,
       "Confirmez-la pour qu'elle compte dans le suivi : c'est votre validation qui rend la séance officielle (score, points et paiement du mentor).",
     ],
     { label: "Confirmer la séance", url: "/profiles" },
@@ -101,7 +101,9 @@ export function bilanSubmittedEmailHtml(childName: string | null): string {
   return shell(
     "Le bilan de fin est prêt à valider",
     [
-      childName ? `Le mentor de ${childName} a soumis le bilan de fin de période.` : "Votre mentor a soumis le bilan de fin de période.",
+      childName
+        ? `Le mentor de ${childName} a soumis le bilan de fin de période.`
+        : "Votre mentor a soumis le bilan de fin de période.",
       "Validez-le pour en faire le livrable officiel de la période.",
     ],
     { label: "Voir le bilan", url: "/profiles" },
@@ -117,30 +119,35 @@ export function bilanDecidedEmailHtml(
     validated ? "Votre bilan a été validé" : "Des modifications sont demandées sur votre bilan",
     validated
       ? [
-          childName ? `Le parent de ${childName} a validé votre bilan de fin de période. Merci !` : "Le parent a validé votre bilan de fin de période. Merci !",
+          childName
+            ? `Le parent de ${childName} a validé votre bilan de fin de période. Merci !`
+            : "Le parent a validé votre bilan de fin de période. Merci !",
         ]
       : [
-          childName ? `Le parent de ${childName} demande des modifications sur votre bilan.` : "Le parent demande des modifications sur votre bilan.",
+          childName
+            ? `Le parent de ${childName} demande des modifications sur votre bilan.`
+            : "Le parent demande des modifications sur votre bilan.",
           feedback ? `Motif : ${feedback}` : "Ouvrez l'application pour voir le détail.",
         ],
   );
 }
 
-export function statusChangedEmailHtml(mentorEmail: string | null, from: string, to: string, score: number): string {
-  const label =
-    to === "suspended" ? "suspendu" : to === "warning" ? "averti" : "de nouveau actif";
-  return shell(
-    `Votre statut mentor est passé à « ${label} »`,
-    [
-      `Votre score de fiabilité (${score}/100 sur les 30 derniers jours) a franchi un seuil : votre compte est maintenant ${label}.`,
-      to === "suspended"
-        ? "Vous ne pouvez plus déclarer de séances ni opérer les défis tant que le score ne remonte pas."
-        : to === "warning"
-          ? "Votre accès est conservé, mais retrouvez le niveau pour éviter la suspension."
-          : "Vous retrouvez l'accès complet.",
-      "Contactez l'équipe Génizio pour toute question.",
-    ],
-  );
+export function statusChangedEmailHtml(
+  mentorEmail: string | null,
+  from: string,
+  to: string,
+  score: number,
+): string {
+  const label = to === "suspended" ? "suspendu" : to === "warning" ? "averti" : "de nouveau actif";
+  return shell(`Votre statut mentor est passé à « ${label} »`, [
+    `Votre score de fiabilité (${score}/100 sur les 30 derniers jours) a franchi un seuil : votre compte est maintenant ${label}.`,
+    to === "suspended"
+      ? "Vous ne pouvez plus déclarer de séances ni opérer les défis tant que le score ne remonte pas."
+      : to === "warning"
+        ? "Votre accès est conservé, mais retrouvez le niveau pour éviter la suspension."
+        : "Vous retrouvez l'accès complet.",
+    "Contactez l'équipe Génizio pour toute question.",
+  ]);
 }
 
 // ── Mappeur événement → email (appelé par notifyUser, app-notifications.ts) ────
@@ -220,7 +227,12 @@ export function emailForEvent(params: {
       if (typeof params.score !== "number") return null;
       return {
         subject: `Votre statut mentor est passé à « ${params.to === "suspended" ? "suspendu" : params.to === "warning" ? "averti" : "actif"} »`,
-        html: statusChangedEmailHtml(null, params.from ?? "active", params.to ?? "active", params.score),
+        html: statusChangedEmailHtml(
+          null,
+          params.from ?? "active",
+          params.to ?? "active",
+          params.score,
+        ),
       };
     }
     default:

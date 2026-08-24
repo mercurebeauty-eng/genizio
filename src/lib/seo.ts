@@ -220,7 +220,6 @@ export function articleJsonLd(opts: {
   };
 }
 
-
 /**
  * Un avis de parent publié sur la landing. `reviewBody` doit être un vrai
  * retour client (jamais inventé) : c'est le format que Google et les LLM

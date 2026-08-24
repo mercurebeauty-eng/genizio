@@ -4,7 +4,12 @@ import { requireAdmin } from "@/integrations/supabase/admin-middleware";
 import { listAllUsers } from "@/integrations/supabase/admin-users";
 import { getChildGuild, GUILDS, NO_GUILD_YET, GuildInfo } from "@/lib/guilds";
 import { TALENT_KEY_LABELS } from "@/lib/talent-buckets";
-import { calculateNayaTelemetry, calculateNayaWolfTelemetry, NayaTelemetryResponse, WolfAuditSample } from "@/lib/naya-telemetry";
+import {
+  calculateNayaTelemetry,
+  calculateNayaWolfTelemetry,
+  NayaTelemetryResponse,
+  WolfAuditSample,
+} from "@/lib/naya-telemetry";
 import { ACADEMIC_DOMAINS, ACADEMIC_DOMAIN_LABELS } from "@/lib/challenges.functions";
 
 export type AgeBracketKey = "3-6 ans" | "7-10 ans" | "11-13 ans" | "14+ ans";
@@ -143,7 +148,7 @@ export interface CommercePassportsDataResponse {
  */
 export function filterOrdersByStatus<T extends { status?: string | null }>(
   orders: T[] | null | undefined,
-  status: string
+  status: string,
 ): T[] {
   if (!Array.isArray(orders)) return [];
   if (!status || status === "all" || status === "Tous" || status.toLowerCase() === "tous") {
@@ -152,14 +157,14 @@ export function filterOrdersByStatus<T extends { status?: string | null }>(
 
   const statusMap: Record<string, string> = {
     "en attente": "pending",
-    "confirmé": "confirmed",
-    "confirme": "confirmed",
-    "expédié": "shipped",
-    "expedie": "shipped",
-    "livré": "delivered",
-    "livre": "delivered",
-    "annulé": "cancelled",
-    "annule": "cancelled",
+    confirmé: "confirmed",
+    confirme: "confirmed",
+    expédié: "shipped",
+    expedie: "shipped",
+    livré: "delivered",
+    livre: "delivered",
+    annulé: "cancelled",
+    annule: "cancelled",
   };
 
   const normalizedInput = status.trim().toLowerCase();
@@ -175,11 +180,17 @@ export function filterOrdersByStatus<T extends { status?: string | null }>(
  * Filters child profiles to return only teen profiles (age >= 14).
  */
 export function filterTeenPassportProfiles<T extends { age?: number | null }>(
-  children: T[] | null | undefined
+  children: T[] | null | undefined,
 ): T[] {
   if (!Array.isArray(children)) return [];
   return children.filter((child) => {
-    if (!child || child.age === null || child.age === undefined || typeof child.age !== "number" || Number.isNaN(child.age)) {
+    if (
+      !child ||
+      child.age === null ||
+      child.age === undefined ||
+      typeof child.age !== "number" ||
+      Number.isNaN(child.age)
+    ) {
       return false;
     }
     return child.age >= 14;
@@ -190,7 +201,12 @@ export function filterTeenPassportProfiles<T extends { age?: number | null }>(
  * Formats a raw number amount into West African CFA Franc string format (e.g. 50 000 FCFA).
  */
 export function formatXOF(amount: number | null | undefined): string {
-  if (amount === null || amount === undefined || typeof amount !== "number" || Number.isNaN(amount)) {
+  if (
+    amount === null ||
+    amount === undefined ||
+    typeof amount !== "number" ||
+    Number.isNaN(amount)
+  ) {
     return "0 FCFA";
   }
   const formatted = new Intl.NumberFormat("fr-FR").format(amount);
@@ -329,7 +345,7 @@ export function calculateActiveChildren(
     created_at?: string | null;
     updated_at?: string | null;
     completed_at?: string | null;
-  }> = []
+  }> = [],
 ): number {
   const safeChildren = Array.isArray(children) ? children : [];
   const safeChallenges = Array.isArray(challenges) ? challenges : [];
@@ -342,11 +358,7 @@ export function calculateActiveChildren(
   const maxChallengeTimeByChild = new Map<string, number>();
   for (const c of safeChallenges) {
     if (!c || !c.child_id) continue;
-    const times = [
-      toMs(c.completed_at),
-      toMs(c.updated_at),
-      toMs(c.created_at),
-    ];
+    const times = [toMs(c.completed_at), toMs(c.updated_at), toMs(c.created_at)];
     const maxTime = Math.max(...times, 0);
     if (maxTime > 0) {
       const existing = maxChallengeTimeByChild.get(c.child_id) ?? 0;
@@ -406,7 +418,7 @@ export function formatWhatsAppUrl(phone: string | null | undefined): string | nu
  */
 export function calculateCityStats(
   children: Array<{ id?: string; city?: string | null }>,
-  orders: Array<{ child_id?: string | null }> = []
+  orders: Array<{ child_id?: string | null }> = [],
 ): CityStatItem[] {
   const safeChildren = Array.isArray(children) ? children : [];
   const safeOrders = Array.isArray(orders) ? orders : [];
@@ -471,7 +483,7 @@ export function calculateCityStats(
  * Aggregates scores across the 9 Howard Gardner intelligences.
  */
 export function calculateGardnerTotals(
-  children: Array<{ talents?: Record<string, any> | null }>
+  children: Array<{ talents?: Record<string, any> | null }>,
 ): GardnerTotalItem[] {
   const safeChildren = Array.isArray(children) ? children : [];
   const totalChildren = safeChildren.length;
@@ -499,7 +511,8 @@ export function calculateGardnerTotals(
   const result: GardnerTotalItem[] = Object.keys(TALENT_KEY_LABELS).map((key) => {
     const label = TALENT_KEY_LABELS[key] || key;
     const entry = totalsByKey[key] || { totalScore: 0, count: 0 };
-    const avgScore = totalChildren > 0 ? Math.round((entry.totalScore / totalChildren) * 10) / 10 : 0;
+    const avgScore =
+      totalChildren > 0 ? Math.round((entry.totalScore / totalChildren) * 10) / 10 : 0;
     return {
       key,
       label,
@@ -518,7 +531,7 @@ export function calculateGardnerTotals(
  * ("Les Bâtisseurs", "Les Inventeurs", "Les Explorateurs", "Les Créateurs", "Les Stratèges", "Les Protecteurs du Vivant", "Guilde à découvrir").
  */
 export function calculateGuildDistribution(
-  children: Array<{ talents?: Record<string, any> | null }>
+  children: Array<{ talents?: Record<string, any> | null }>,
 ): GuildDistributionItem[] {
   const safeChildren = Array.isArray(children) ? children : [];
   const totalChildren = safeChildren.length;
@@ -570,7 +583,7 @@ export function detectHighPotentialProfiles(
     age: number;
     city?: string | null;
     talents?: Record<string, any> | null;
-  }>
+  }>,
 ): HighPotentialAlert[] {
   const safeChildren = Array.isArray(children) ? children : [];
   const alerts: HighPotentialAlert[] = [];
@@ -745,9 +758,8 @@ export const getExecutiveKPIsAdmin = createServerFn({ method: "GET" })
       return {
         bracket,
         count,
-        percentage: (k.totalChildren ?? 0) > 0
-          ? Math.round((count / (k.totalChildren ?? 0)) * 100)
-          : 0,
+        percentage:
+          (k.totalChildren ?? 0) > 0 ? Math.round((count / (k.totalChildren ?? 0)) * 100) : 0,
       };
     });
 
@@ -866,13 +878,15 @@ export const getProgressionHealthAdmin = createServerFn({ method: "GET" })
     const { data: raw, error } = await (supabaseAdmin as any).rpc("compute_progression_health");
     if (error) throw new Error(error.message);
     const r = (raw ?? {}) as {
-      completed: Array<{ domain: string; completedCount: number; avgDaysToCompletion: number | null }>;
+      completed: Array<{
+        domain: string;
+        completedCount: number;
+        avgDaysToCompletion: number | null;
+      }>;
       stale: Array<{ domain: string; staleCount: number }>;
     };
 
-    const completedByDomain = new Map(
-      (r.completed ?? []).map((d) => [d.domain, d] as const),
-    );
+    const completedByDomain = new Map((r.completed ?? []).map((d) => [d.domain, d] as const));
     const staleByDomain = new Map((r.stale ?? []).map((d) => [d.domain, d.staleCount] as const));
 
     const domains: ProgressionDomainHealth[] = ACADEMIC_DOMAINS.map((domain) => {
@@ -962,10 +976,12 @@ export const getNayaTelemetryAdmin = createServerFn({ method: "GET" })
       (auditsRes.data ?? []).map((a) => ({
         kind: a.kind,
         verdict: a.verdict,
-        violations: (Array.isArray(a.violations) ? a.violations : []) as WolfAuditSample["violations"],
+        violations: (Array.isArray(a.violations)
+          ? a.violations
+          : []) as WolfAuditSample["violations"],
         semantic_checked: a.semantic_checked,
         regenerated: a.regenerated,
-      }))
+      })),
     );
 
     return telemetry;
@@ -978,8 +994,7 @@ const CommercePageInput = z.object({
   status: z.string().max(20).default("Tous"),
 });
 
-export interface PaginatedCommerceResponse
-  extends Omit<CommercePassportsDataResponse, "orders"> {
+export interface PaginatedCommerceResponse extends Omit<CommercePassportsDataResponse, "orders"> {
   orders: KitOrder[];
   /** Comptage par statut sur TOUTE l'historique (pas seulement la page) — badges des onglets. */
   statusCounts: Record<string, number>;
@@ -1114,8 +1129,6 @@ export const getCommercePassportsDataAdmin = createServerFn({ method: "GET" })
     };
   });
 
-
-
 // ── Pouvoir administratif exceptionnel sur les profils (2026-08-12, analyse
 // « Évolution de Génizio » §4) ──────────────────────────────────────────────────
 // La règle commerciale (quotas, accès) ne prime jamais sur le pouvoir admin : un
@@ -1152,12 +1165,18 @@ export const searchChildProfilesAdmin = createServerFn({ method: "GET" })
     const SELECT =
       "id, user_id, name, age, city, country, is_active, access_locked_at, time_pressure, pdf_unlocked, created_at";
     const base = () =>
-      supabaseAdmin.from("child_profiles").select(SELECT).order("created_at", { ascending: false }).limit(200);
+      supabaseAdmin
+        .from("child_profiles")
+        .select(SELECT)
+        .order("created_at", { ascending: false })
+        .limit(200);
     let children: any[] = [];
     if (clean) {
       const [byName, byEmail] = await Promise.all([
         base().ilike("name", `%${clean}%`),
-        emailMatchIds.size > 0 ? base().in("user_id", [...emailMatchIds]) : Promise.resolve({ data: null }),
+        emailMatchIds.size > 0
+          ? base().in("user_id", [...emailMatchIds])
+          : Promise.resolve({ data: null }),
       ]);
       children = [...(byName.data ?? []), ...(byEmail?.data ?? [])];
     } else {

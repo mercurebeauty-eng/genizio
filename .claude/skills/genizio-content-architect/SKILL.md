@@ -11,6 +11,7 @@ Ce skill définit la méthode officielle pour rédiger, structurer et générer 
 ## 1. Protocole Anti-Doublons (Audit Préalable Obligatoire)
 
 Avant TOUTE génération de nouveau contenu :
+
 1. **Inspection des routes existantes** : Scanner la liste des fichiers dans `src/routes/guides.*.tsx` et `public/sitemap.xml`.
 2. **Vérification du sujet** : S'assurer que le sujet proposé ne traite pas d'un angle déjà couvert à plus de 40 %.
 3. **Différenciation de l'angle** : Si le sujet s'approche d'un article existant, trouver une inclinaison spécifique (ex. par tranche d'âge, par forme d'intelligence ou par situation de crise quotidienne).
@@ -23,7 +24,7 @@ Le public cible est composé de parents en **Afrique francophone** et dans la **
 
 - **Règle n°1 : Le Re-framing (Culpabilité → Fierté)**  
   Un comportement dit "problématique" chez l'enfant (ex: agitation, contestation, timidité, obsession par les jeux) doit TOUJOURS être ré-interprété à la lumière des 9 intelligences de Howard Gardner.
-  - *Exemple :* L'agitation devient de l'intelligence kinezthésique ; la contestation devient de l'intelligence verbale-logique.
+  - _Exemple :_ L'agitation devient de l'intelligence kinezthésique ; la contestation devient de l'intelligence verbale-logique.
 - **Règle n°2 : L'Identité Parentale Inspirante**  
   Le parent lit pour se rassurer et renforcer son sentiment de compétence. Le ton est chaleureux, bienveillant, d'égal à égal, sans jargon pédant ni leçons de morale.
 - **Règle n°3 : L'Actionnabilité Immédiate (10 minutes)**  
@@ -52,6 +53,7 @@ Le public cible est composé de parents en **Afrique francophone** et dans la **
 ## 4. Boutons de Partage Social & Virabilité WhatsApp
 
 Chaque article utilise la coquille `GuideLayout` qui intègre `SocialShareBar` :
+
 - **WhatsApp** est l'axe prioritaire de partage pour la transmission dans les groupes de parents et de familles.
 - Titre optimisé pour le partage : dynamique, intriguant et positif.
 

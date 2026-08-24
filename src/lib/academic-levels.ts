@@ -57,7 +57,9 @@ export function internationalLevelLabel(age: number): string | null {
 // Dernier academic_level_age atteint par domaine sur les défis COMPLÉTÉS
 // uniquement (le plus récent par completed_at desc) — même agrégation que
 // computeProgressionTargets, ici pure et prête pour l'affichage.
-export function lastAcademicLevelByDomain(challenges: AcademicLevelSource[]): DomainAcademicLevel[] {
+export function lastAcademicLevelByDomain(
+  challenges: AcademicLevelSource[],
+): DomainAcademicLevel[] {
   const latest = new Map<string, number>();
   [...challenges]
     .filter(

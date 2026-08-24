@@ -37,7 +37,12 @@ import type { ViolationSeverity } from "@/lib/naya-verifier.functions";
 export interface AuditRow {
   kind: string;
   child_id: string | null;
-  violations: Array<{ rule: string; severity: ViolationSeverity; detail: string; suggestion?: string }> | null;
+  violations: Array<{
+    rule: string;
+    severity: ViolationSeverity;
+    detail: string;
+    suggestion?: string;
+  }> | null;
   created_at: string;
   source_function?: string;
   context?: Record<string, unknown> | null;
@@ -236,7 +241,10 @@ export function aggregateAuditViolations(rows: AuditRow[]): ViolationAggregate[]
 
   return [...map.values()]
     .map((acc) => ({ ...acc, childCount: acc.childIds.size }))
-    .sort((a, b) => b.count - a.count || (b.severity === "majeur" ? 1 : 0) - (a.severity === "majeur" ? 1 : 0));
+    .sort(
+      (a, b) =>
+        b.count - a.count || (b.severity === "majeur" ? 1 : 0) - (a.severity === "majeur" ? 1 : 0),
+    );
 }
 
 /**
@@ -254,9 +262,11 @@ export function ruleKeyOf(kind: string, domain: string, rule: string): string {
  */
 export function computeRecurringRules(
   aggregates: ViolationAggregate[],
-  thresholds: RecurrenceThresholds = { minCount: 3, minChildren: 2 }
+  thresholds: RecurrenceThresholds = { minCount: 3, minChildren: 2 },
 ): ViolationAggregate[] {
-  return aggregates.filter((a) => a.count >= thresholds.minCount && a.childCount >= thresholds.minChildren);
+  return aggregates.filter(
+    (a) => a.count >= thresholds.minCount && a.childCount >= thresholds.minChildren,
+  );
 }
 
 /**
@@ -265,7 +275,7 @@ export function computeRecurringRules(
  */
 export function clampAutoAckThresholds(
   suggest: RecurrenceThresholds,
-  autoAck: RecurrenceThresholds
+  autoAck: RecurrenceThresholds,
 ): RecurrenceThresholds {
   return {
     minCount: Math.max(suggest.minCount, autoAck.minCount),
@@ -280,7 +290,7 @@ export function clampAutoAckThresholds(
  */
 export function computeAutoAckRules(
   aggregates: ViolationAggregate[],
-  thresholds: RecurrenceThresholds
+  thresholds: RecurrenceThresholds,
 ): ViolationAggregate[] {
   return computeRecurringRules(aggregates, thresholds);
 }
@@ -415,9 +425,10 @@ export function aggregateOutcomeSignals(rows: ChallengeOutcomeRow[]): OutcomeSig
  * constitution (bloc LEARNED_RULES) après validation humaine.
  */
 export function buildLearnedRuleText(index: number, aggregate: ViolationAggregate): string {
-  const evidence = aggregate.count === aggregate.childCount
-    ? `${aggregate.count} occurrence(s), chez ${aggregate.childCount} enfant(s) distinct(s)`
-    : `${aggregate.count} occurrence(s) chez ${aggregate.childCount} enfant(s) distinct(s)`;
+  const evidence =
+    aggregate.count === aggregate.childCount
+      ? `${aggregate.count} occurrence(s), chez ${aggregate.childCount} enfant(s) distinct(s)`
+      : `${aggregate.count} occurrence(s) chez ${aggregate.childCount} enfant(s) distinct(s)`;
   const suggestion = aggregate.sampleSuggestions[0] ?? "Reformuler pour éliminer cette violation.";
   const detail = aggregate.sampleDetails[0];
   return [
@@ -439,7 +450,9 @@ export function buildDecisionDraft(aggregate: ViolationAggregate): string {
     `### Règle apprise du Loup — « ${aggregate.rule} » (${aggregate.kind}${domainPart})`,
     `${aggregate.count} occurrence(s) chez ${aggregate.childCount} enfant(s) distinct(s).`,
     ...aggregate.sampleDetails.slice(0, 2).map((d) => `- Constat : ${d}`),
-    aggregate.sampleSuggestions[0] ? `- Correctif proposé : ${aggregate.sampleSuggestions[0]}` : null,
+    aggregate.sampleSuggestions[0]
+      ? `- Correctif proposé : ${aggregate.sampleSuggestions[0]}`
+      : null,
     "**Verdict** : validée / rejetée — (à trancher dans le panneau admin, Décision #56).",
   ]
     .filter((l): l is string => l !== null)
@@ -452,7 +465,7 @@ export function buildDecisionDraft(aggregate: ViolationAggregate): string {
  */
 export function buildLearnings(
   recurring: ViolationAggregate[],
-  thresholds: RecurrenceThresholds
+  thresholds: RecurrenceThresholds,
 ): { recurringRules: RecurringRule[]; learnedRulesBlock: string; decisionDrafts: string } {
   const recurringRules = recurring.map((aggregate, i) => ({
     ...aggregate,
@@ -520,7 +533,12 @@ function toAuditRow(r: {
   };
 }
 
-function violationsContain(violations: unknown, kind: string, context: unknown, key: string): boolean {
+function violationsContain(
+  violations: unknown,
+  kind: string,
+  context: unknown,
+  key: string,
+): boolean {
   const list = Array.isArray(violations) ? violations : [];
   const domain = extractDomain((context ?? null) as AuditRow["context"]);
   return list.some((v) => {
@@ -562,14 +580,18 @@ export const getConstitutionSuggestionsAdmin = createServerFn({ method: "GET" })
         .eq("processed", false),
       supabaseAdmin
         .from("generation_audits")
-        .select("id, kind, child_id, violations, context, created_at, decision, decision_at, decision_by, decision_note")
+        .select(
+          "id, kind, child_id, violations, context, created_at, decision, decision_at, decision_by, decision_note",
+        )
         .neq("decision", "en_attente")
         .order("decision_at", { ascending: false })
         .limit(2000),
       // Décision #58 : signaux d'issue des défis supprimés (challenge_outcomes).
       supabaseAdmin
         .from("challenge_outcomes")
-        .select("child_id, kind, reason_chip, domain, status_when_deleted, pending_duration_days, created_at")
+        .select(
+          "child_id, kind, reason_chip, domain, status_when_deleted, pending_duration_days, created_at",
+        )
         .order("created_at", { ascending: false })
         .limit(2000),
     ]);
@@ -581,7 +603,10 @@ export const getConstitutionSuggestionsAdmin = createServerFn({ method: "GET" })
     const rows = (pendingRes.data ?? []).map(toAuditRow);
     const aggregates = aggregateAuditViolations(rows);
     const recurring = computeRecurringRules(aggregates, suggest);
-    const { recurringRules, learnedRulesBlock, decisionDrafts } = buildLearnings(recurring, suggest);
+    const { recurringRules, learnedRulesBlock, decisionDrafts } = buildLearnings(
+      recurring,
+      suggest,
+    );
 
     const journal = buildRuleJournal(
       (decidedRes.data ?? []).map((r) => ({
@@ -595,7 +620,7 @@ export const getConstitutionSuggestionsAdmin = createServerFn({ method: "GET" })
         decision_at: r.decision_at,
         decision_by: r.decision_by,
         decision_note: r.decision_note,
-      }))
+      })),
     );
 
     const outcomeSignals = aggregateOutcomeSignals(
@@ -607,7 +632,7 @@ export const getConstitutionSuggestionsAdmin = createServerFn({ method: "GET" })
         status_when_deleted: r.status_when_deleted,
         pending_duration_days: r.pending_duration_days,
         created_at: r.created_at,
-      }))
+      })),
     );
 
     return {
@@ -678,7 +703,7 @@ const DecideInput = z.object({
         decision: z.enum(["valide", "a_revoir", "rejete"]),
         /** Commentaire optionnel (≤ 500 caractères). */
         note: z.string().max(500).optional(),
-      })
+      }),
     )
     .min(1)
     .max(50),
@@ -708,7 +733,10 @@ export const decideLoupSuggestionsAdmin = createServerFn({ method: "POST" })
 
     for (const d of data.decisions) {
       const idsFor = (audits ?? [])
-        .filter((r) => !decidedIds.has(r.id) && violationsContain(r.violations, r.kind, r.context, d.ruleKey))
+        .filter(
+          (r) =>
+            !decidedIds.has(r.id) && violationsContain(r.violations, r.kind, r.context, d.ruleKey),
+        )
         .map((r) => r.id);
       if (idsFor.length === 0) continue;
 

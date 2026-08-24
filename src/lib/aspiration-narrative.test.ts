@@ -42,14 +42,18 @@ describe("formatAspirationChildLine", () => {
   it("aucune ligne ne contient de chiffre ni d'étiquette technique", () => {
     for (const status of ["untested", "exploring", "confirmed", "refuted"] as const) {
       expect(formatAspirationChildLine(mkHypothesis(status))).not.toMatch(/\d/);
-      expect(formatAspirationChildLine(mkHypothesis(status))).not.toMatch(/METHOD_MISMATCH|refuted|confirmed/i);
+      expect(formatAspirationChildLine(mkHypothesis(status))).not.toMatch(
+        /METHOD_MISMATCH|refuted|confirmed/i,
+      );
     }
   });
 });
 
 describe("formatAspirationParentLine", () => {
   it("mentionne la source enfant quand la déclaration vient de l'enfant", () => {
-    expect(formatAspirationParentLine(mkHypothesis("untested"), "Awa")).toContain("déclarée par l'enfant");
+    expect(formatAspirationParentLine(mkHypothesis("untested"), "Awa")).toContain(
+      "déclarée par l'enfant",
+    );
     expect(formatAspirationParentLine(mkHypothesis("untested"), "Awa")).toContain("Awa");
   });
 

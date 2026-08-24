@@ -39,7 +39,7 @@ export interface GentleSuggestion {
  */
 export function suggestTimePressureChange(
   events: TimeOverSignal[],
-  current: "standard" | "gentle" | "none"
+  current: "standard" | "gentle" | "none",
 ): GentleSuggestion {
   if (current !== "standard") return { suggested: false, domains: [] };
 
@@ -71,10 +71,7 @@ export const getGentleTimeSuggestion = createServerFn({ method: "GET" })
     const actor = await assertChildActor(supabaseAdmin as any, userId, data.childId);
     const db: any = actor === "mentor" ? (supabaseAdmin as any) : supabase;
 
-    const query = db
-      .from("child_profiles")
-      .select("id, time_pressure")
-      .eq("id", data.childId);
+    const query = db.from("child_profiles").select("id, time_pressure").eq("id", data.childId);
     if (actor === "owner") query.eq("user_id", userId);
     const { data: child } = await query.maybeSingle();
     if (!child) return { suggested: false, domains: [] };
@@ -86,7 +83,7 @@ export const getGentleTimeSuggestion = createServerFn({ method: "GET" })
       .eq("type", "TIME_OVER")
       .gte(
         "occurred_at",
-        new Date(Date.now() - GENTLE_SUGGESTION_WINDOW_DAYS * 24 * 60 * 60 * 1000).toISOString()
+        new Date(Date.now() - GENTLE_SUGGESTION_WINDOW_DAYS * 24 * 60 * 60 * 1000).toISOString(),
       )
       .order("occurred_at", { ascending: false })
       .limit(200);
@@ -96,7 +93,7 @@ export const getGentleTimeSuggestion = createServerFn({ method: "GET" })
         domain: (e.payload as { domain?: string | null } | null)?.domain ?? null,
         occurredAt: e.occurred_at,
       })),
-      child.time_pressure as "standard" | "gentle" | "none"
+      child.time_pressure as "standard" | "gentle" | "none",
     );
   });
 
@@ -125,7 +122,9 @@ export const applyGentleTimeProposal = createServerFn({ method: "POST" })
     // ne doit pas pouvoir être basculé en mode doux par un simple appel POST — la
     // suggestion n'est proposée qu'en mode 'standard'.
     if (child.time_pressure === "none") {
-      throw new Error("Le chrono est désactivé pour ce profil — le mode doux n'est pas applicable.");
+      throw new Error(
+        "Le chrono est désactivé pour ce profil — le mode doux n'est pas applicable.",
+      );
     }
     if (child.time_pressure === "gentle") return { ok: true, timePressure: "gentle" as const };
 

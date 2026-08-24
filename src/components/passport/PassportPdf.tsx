@@ -8,7 +8,18 @@
 // accents français dont œ/Œ). Les images de preuve sont passées en data-URL
 // (pré-téléchargées par l'appelant) pour éviter tout problème CORS.
 // ────────────────────────────────────────────────────────────
-import { Document, Page, Text, View, Image, Svg, Polygon, Line, Circle, StyleSheet } from "@react-pdf/renderer";
+import {
+  Document,
+  Page,
+  Text,
+  View,
+  Image,
+  Svg,
+  Polygon,
+  Line,
+  Circle,
+  StyleSheet,
+} from "@react-pdf/renderer";
 import type { Style } from "@react-pdf/stylesheet";
 import type { ReactNode } from "react";
 import { getChildGuild, getTalentAffinities } from "@/lib/guilds";
@@ -180,7 +191,11 @@ function renderInline(text: string, baseStyle: Style): ReactNode[] {
       return (
         <Text
           key={i}
-          style={{ ...baseStyle, fontFamily: "Courier", fontSize: (baseStyle.fontSize as number | undefined) ?? 8 * 0.92 }}
+          style={{
+            ...baseStyle,
+            fontFamily: "Courier",
+            fontSize: (baseStyle.fontSize as number | undefined) ?? 8 * 0.92,
+          }}
         >
           {part.slice(1, -1)}
         </Text>
@@ -202,7 +217,17 @@ function MdContent({ md, baseStyle }: { md: string; baseStyle: Style }) {
         switch (block.type) {
           case "h":
             return (
-              <Text key={i} style={{ fontFamily: PASSPORT_FONT_DISPLAY, fontWeight: 700, fontSize: 10.5, marginBottom: 3, marginTop: 2, color: PDF_COLORS.ink }}>
+              <Text
+                key={i}
+                style={{
+                  fontFamily: PASSPORT_FONT_DISPLAY,
+                  fontWeight: 700,
+                  fontSize: 10.5,
+                  marginBottom: 3,
+                  marginTop: 2,
+                  color: PDF_COLORS.ink,
+                }}
+              >
                 {block.text}
               </Text>
             );
@@ -214,7 +239,15 @@ function MdContent({ md, baseStyle }: { md: string; baseStyle: Style }) {
             );
           case "quote":
             return (
-              <View key={i} style={{ borderLeftWidth: 2, borderLeftColor: PDF_COLORS.brand, paddingLeft: 8, marginBottom: 4 }}>
+              <View
+                key={i}
+                style={{
+                  borderLeftWidth: 2,
+                  borderLeftColor: PDF_COLORS.brand,
+                  paddingLeft: 8,
+                  marginBottom: 4,
+                }}
+              >
                 <Text style={{ ...baseStyle, color: PDF_COLORS.inkMuted }}>{block.text}</Text>
               </View>
             );
@@ -224,7 +257,9 @@ function MdContent({ md, baseStyle }: { md: string; baseStyle: Style }) {
               <View key={i} style={{ marginBottom: 4 }}>
                 {block.items.map((item, j) => (
                   <View key={j} style={{ flexDirection: "row", marginBottom: 1.5 }}>
-                    <Text style={{ ...baseStyle, width: 10, color: PDF_COLORS.brand, fontWeight: 600 }}>
+                    <Text
+                      style={{ ...baseStyle, width: 10, color: PDF_COLORS.brand, fontWeight: 600 }}
+                    >
                       {block.type === "ul" ? "•" : `${j + 1}.`}
                     </Text>
                     <Text style={{ ...baseStyle, flex: 1 }}>{renderInline(item, baseStyle)}</Text>
@@ -272,18 +307,52 @@ function TalentRadarSvg({ talents, color }: { talents: Record<string, number>; c
   return (
     <Svg viewBox={`0 0 ${RADAR.w} ${RADAR.h}`} style={{ width: 300, height: 218 }}>
       {[0.25, 0.5, 0.75, 1].map((f) => (
-        <Polygon key={f} points={ringPoints(f)} fill="none" stroke={PDF_COLORS.ink} strokeOpacity={0.14} strokeWidth={1} />
+        <Polygon
+          key={f}
+          points={ringPoints(f)}
+          fill="none"
+          stroke={PDF_COLORS.ink}
+          strokeOpacity={0.14}
+          strokeWidth={1}
+        />
       ))}
       {RADAR_KEYS.map((_, i) => {
         const p = radarPoint(i, RADAR.r);
-        return <Line key={i} x1={RADAR.cx} y1={RADAR.cy} x2={p.x} y2={p.y} stroke={PDF_COLORS.ink} strokeOpacity={0.12} strokeWidth={1} />;
+        return (
+          <Line
+            key={i}
+            x1={RADAR.cx}
+            y1={RADAR.cy}
+            x2={p.x}
+            y2={p.y}
+            stroke={PDF_COLORS.ink}
+            strokeOpacity={0.12}
+            strokeWidth={1}
+          />
+        );
       })}
-      <Polygon points={dataPoints.map((p) => `${p.x.toFixed(2)},${p.y.toFixed(2)}`).join(" ")} fill={color} fillOpacity={0.28} stroke={color} strokeWidth={2} />
+      <Polygon
+        points={dataPoints.map((p) => `${p.x.toFixed(2)},${p.y.toFixed(2)}`).join(" ")}
+        fill={color}
+        fillOpacity={0.28}
+        stroke={color}
+        strokeWidth={2}
+      />
       {RADAR_KEYS.map((key, i) => {
         const p = radarPoint(i, RADAR.r + 16);
         const value = talents[key] ?? 0;
         return (
-          <SvgText key={key} x={p.x} y={p.y} fontSize={7} fill={PDF_COLORS.ink} textAnchor="middle" dominantBaseline="middle" fontFamily={PASSPORT_FONT_BODY} fontWeight={600}>
+          <SvgText
+            key={key}
+            x={p.x}
+            y={p.y}
+            fontSize={7}
+            fill={PDF_COLORS.ink}
+            textAnchor="middle"
+            dominantBaseline="middle"
+            fontFamily={PASSPORT_FONT_BODY}
+            fontWeight={600}
+          >
             {GARDNER_TAXONOMY[key].name}
             {value > 0 ? ` (${value}%)` : ""}
           </SvgText>
@@ -297,7 +366,15 @@ function TalentRadarSvg({ talents, color }: { talents: Record<string, number>; c
 }
 
 // ── Pied de page avec numérotation ───────────────────────────
-function PageFooter({ childName, pageNumber, totalPages }: { childName: string; pageNumber: number; totalPages: number }) {
+function PageFooter({
+  childName,
+  pageNumber,
+  totalPages,
+}: {
+  childName: string;
+  pageNumber: number;
+  totalPages: number;
+}) {
   return (
     <View style={styles.footer} fixed>
       <Text style={styles.footerText}>Passeport d'Excellence • {childName}</Text>
@@ -350,7 +427,9 @@ export function PassportPdf({ data }: { data: PassportPdfData }) {
   // Terrains d'excellence = top 3 domaines des défis réussis.
   const domainCounts: Record<string, number> = {};
   for (const c of challenges) domainCounts[c.domain] = (domainCounts[c.domain] ?? 0) + 1;
-  const topDomains = Object.entries(domainCounts).sort((a, b) => b[1] - a[1]).slice(0, 3);
+  const topDomains = Object.entries(domainCounts)
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 3);
 
   const drivers = normalizeChildInterests(child.interests);
   const affinities = getTalentAffinities(child.talents).filter((a) => a.pct > 0);
@@ -364,7 +443,8 @@ export function PassportPdf({ data }: { data: PassportPdfData }) {
   const startPage = hasSynthesis ? 4 : 3;
   const totalPages = 2 + (hasSynthesis ? 1 : 0) + challengePages.length;
 
-  const radarColor = child.age >= 12 ? PDF_COLORS.amber : child.age >= 7 ? PDF_COLORS.skyDark : PDF_COLORS.leaf;
+  const radarColor =
+    child.age >= 12 ? PDF_COLORS.amber : child.age >= 7 ? PDF_COLORS.skyDark : PDF_COLORS.leaf;
 
   return (
     <Document
@@ -375,53 +455,236 @@ export function PassportPdf({ data }: { data: PassportPdfData }) {
     >
       {/* ══ PAGE 1 : COUVERTURE ══ */}
       <Page size="A4" style={styles.page}>
-        <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", borderBottomWidth: 2.5, borderBottomColor: PDF_COLORS.ink, paddingBottom: 14 }}>
-          <Text style={{ fontFamily: PASSPORT_FONT_DISPLAY, fontWeight: 700, fontSize: 17, color: PDF_COLORS.brand, letterSpacing: 0.5 }}>
+        <View
+          style={{
+            flexDirection: "row",
+            alignItems: "center",
+            justifyContent: "space-between",
+            borderBottomWidth: 2.5,
+            borderBottomColor: PDF_COLORS.ink,
+            paddingBottom: 14,
+          }}
+        >
+          <Text
+            style={{
+              fontFamily: PASSPORT_FONT_DISPLAY,
+              fontWeight: 700,
+              fontSize: 17,
+              color: PDF_COLORS.brand,
+              letterSpacing: 0.5,
+            }}
+          >
             GÉNIZIO
           </Text>
-          <Text style={{ fontFamily: PASSPORT_FONT_BODY, fontWeight: 700, fontSize: 6, letterSpacing: 1, textTransform: "uppercase", borderWidth: 1.2, borderColor: PDF_COLORS.ink, borderRadius: 999, paddingVertical: 3, paddingHorizontal: 8, color: PDF_COLORS.ink, backgroundColor: PDF_COLORS.surface }}>
+          <Text
+            style={{
+              fontFamily: PASSPORT_FONT_BODY,
+              fontWeight: 700,
+              fontSize: 6,
+              letterSpacing: 1,
+              textTransform: "uppercase",
+              borderWidth: 1.2,
+              borderColor: PDF_COLORS.ink,
+              borderRadius: 999,
+              paddingVertical: 3,
+              paddingHorizontal: 8,
+              color: PDF_COLORS.ink,
+              backgroundColor: PDF_COLORS.surface,
+            }}
+          >
             Dossier de Valorisation Génizio
           </Text>
         </View>
 
-        <View style={{ flex: 1, justifyContent: "center", alignItems: "center", paddingVertical: 40 }}>
-          <View style={{ width: 56, height: 56, borderRadius: 18, backgroundColor: "#f7ece3", borderWidth: 1, borderColor: PDF_COLORS.dividerSoft, alignItems: "center", justifyContent: "center", marginBottom: 16 }}>
-            <Text style={{ fontFamily: PASSPORT_FONT_BODY, fontSize: 24, color: PDF_COLORS.brand }}>★</Text>
+        <View
+          style={{ flex: 1, justifyContent: "center", alignItems: "center", paddingVertical: 40 }}
+        >
+          <View
+            style={{
+              width: 56,
+              height: 56,
+              borderRadius: 18,
+              backgroundColor: "#f7ece3",
+              borderWidth: 1,
+              borderColor: PDF_COLORS.dividerSoft,
+              alignItems: "center",
+              justifyContent: "center",
+              marginBottom: 16,
+            }}
+          >
+            <Text style={{ fontFamily: PASSPORT_FONT_BODY, fontSize: 24, color: PDF_COLORS.brand }}>
+              ★
+            </Text>
           </View>
-          <Text style={{ fontFamily: PASSPORT_FONT_DISPLAY, fontWeight: 700, fontSize: 30, textTransform: "uppercase", color: PDF_COLORS.ink, textAlign: "center", letterSpacing: 0.5 }}>
+          <Text
+            style={{
+              fontFamily: PASSPORT_FONT_DISPLAY,
+              fontWeight: 700,
+              fontSize: 30,
+              textTransform: "uppercase",
+              color: PDF_COLORS.ink,
+              textAlign: "center",
+              letterSpacing: 0.5,
+            }}
+          >
             Passeport d'Excellence
           </Text>
-          <Text style={{ fontFamily: PASSPORT_FONT_BODY, fontWeight: 500, fontSize: 6.5, letterSpacing: 1.6, textTransform: "uppercase", color: PDF_COLORS.ink, textAlign: "center", marginTop: 10, borderTopWidth: 1, borderBottomWidth: 1, borderColor: PDF_COLORS.ink, paddingVertical: 5, paddingHorizontal: 24, maxWidth: 340 }}>
+          <Text
+            style={{
+              fontFamily: PASSPORT_FONT_BODY,
+              fontWeight: 500,
+              fontSize: 6.5,
+              letterSpacing: 1.6,
+              textTransform: "uppercase",
+              color: PDF_COLORS.ink,
+              textAlign: "center",
+              marginTop: 10,
+              borderTopWidth: 1,
+              borderBottomWidth: 1,
+              borderColor: PDF_COLORS.ink,
+              paddingVertical: 5,
+              paddingHorizontal: 24,
+              maxWidth: 340,
+            }}
+          >
             Dossier de valorisation des talents, compétences et moteurs d'engagement
           </Text>
 
-          <Text style={{ fontFamily: PASSPORT_FONT_DISPLAY, fontWeight: 700, fontSize: 26, color: PDF_COLORS.brand, marginTop: 26, textAlign: "center" }}>
+          <Text
+            style={{
+              fontFamily: PASSPORT_FONT_DISPLAY,
+              fontWeight: 700,
+              fontSize: 26,
+              color: PDF_COLORS.brand,
+              marginTop: 26,
+              textAlign: "center",
+            }}
+          >
             {child.name}
           </Text>
-          <Text style={{ fontFamily: PASSPORT_FONT_BODY, fontWeight: 600, fontSize: 8.5, color: PDF_COLORS.inkMuted, marginTop: 6, textAlign: "center" }}>
+          <Text
+            style={{
+              fontFamily: PASSPORT_FONT_BODY,
+              fontWeight: 600,
+              fontSize: 8.5,
+              color: PDF_COLORS.inkMuted,
+              marginTop: 6,
+              textAlign: "center",
+            }}
+          >
             Âge : {child.age} ans{locationStr ? `  •  ${locationStr}` : ""}
           </Text>
 
-          <View style={{ flexDirection: "row", alignItems: "center", marginTop: 16, borderWidth: 1.2, borderColor: PDF_COLORS.dividerSoft, borderRadius: 12, backgroundColor: PDF_COLORS.surface, paddingVertical: 8, paddingHorizontal: 16 }}>
+          <View
+            style={{
+              flexDirection: "row",
+              alignItems: "center",
+              marginTop: 16,
+              borderWidth: 1.2,
+              borderColor: PDF_COLORS.dividerSoft,
+              borderRadius: 12,
+              backgroundColor: PDF_COLORS.surface,
+              paddingVertical: 8,
+              paddingHorizontal: 16,
+            }}
+          >
             <Text style={{ fontFamily: PASSPORT_FONT_BODY, fontSize: 14, marginRight: 8 }}>◉</Text>
             <View>
-              <Text style={{ fontFamily: PASSPORT_FONT_DISPLAY, fontWeight: 700, fontSize: 10, color: PDF_COLORS.ink }}>{guild.name}</Text>
-              <Text style={{ fontFamily: PASSPORT_FONT_BODY, fontWeight: 600, fontSize: 7, color: PDF_COLORS.brand, marginTop: 1 }}>
+              <Text
+                style={{
+                  fontFamily: PASSPORT_FONT_DISPLAY,
+                  fontWeight: 700,
+                  fontSize: 10,
+                  color: PDF_COLORS.ink,
+                }}
+              >
+                {guild.name}
+              </Text>
+              <Text
+                style={{
+                  fontFamily: PASSPORT_FONT_BODY,
+                  fontWeight: 600,
+                  fontSize: 7,
+                  color: PDF_COLORS.brand,
+                  marginTop: 1,
+                }}
+              >
                 Niveau {level} · {totalXP} XP cumulés
               </Text>
             </View>
           </View>
         </View>
 
-        <View style={{ flexDirection: "row", alignItems: "flex-end", justifyContent: "space-between", borderTopWidth: 2.5, borderTopColor: PDF_COLORS.ink, paddingTop: 14 }}>
+        <View
+          style={{
+            flexDirection: "row",
+            alignItems: "flex-end",
+            justifyContent: "space-between",
+            borderTopWidth: 2.5,
+            borderTopColor: PDF_COLORS.ink,
+            paddingTop: 14,
+          }}
+        >
           <View>
-            <Text style={{ fontFamily: PASSPORT_FONT_BODY, fontWeight: 700, fontSize: 6, letterSpacing: 1, textTransform: "uppercase", color: PDF_COLORS.inkMuted }}>Délivré par</Text>
-            <Text style={{ fontFamily: PASSPORT_FONT_BODY, fontWeight: 600, fontSize: 8, color: PDF_COLORS.ink, marginTop: 2 }}>Laboratoire d'Innovation Pédagogique Génizio</Text>
-            <Text style={{ fontFamily: PASSPORT_FONT_BODY, fontWeight: 500, fontSize: 6.5, color: PDF_COLORS.inkMuted, marginTop: 1 }}>Dakar · Abidjan · Yaoundé</Text>
+            <Text
+              style={{
+                fontFamily: PASSPORT_FONT_BODY,
+                fontWeight: 700,
+                fontSize: 6,
+                letterSpacing: 1,
+                textTransform: "uppercase",
+                color: PDF_COLORS.inkMuted,
+              }}
+            >
+              Délivré par
+            </Text>
+            <Text
+              style={{
+                fontFamily: PASSPORT_FONT_BODY,
+                fontWeight: 600,
+                fontSize: 8,
+                color: PDF_COLORS.ink,
+                marginTop: 2,
+              }}
+            >
+              Laboratoire d'Innovation Pédagogique Génizio
+            </Text>
+            <Text
+              style={{
+                fontFamily: PASSPORT_FONT_BODY,
+                fontWeight: 500,
+                fontSize: 6.5,
+                color: PDF_COLORS.inkMuted,
+                marginTop: 1,
+              }}
+            >
+              Dakar · Abidjan · Yaoundé
+            </Text>
           </View>
           <View style={{ alignItems: "flex-end" }}>
-            <Text style={{ fontFamily: PASSPORT_FONT_BODY, fontWeight: 700, fontSize: 5.5, letterSpacing: 0.8, textTransform: "uppercase", color: PDF_COLORS.inkMuted }}>Généré par l'IA Naya</Text>
-            <Text style={{ fontFamily: PASSPORT_FONT_BODY, fontWeight: 600, fontSize: 7, color: PDF_COLORS.emerald, marginTop: 2 }}>Référence : {child.id.slice(0, 8).toUpperCase()}</Text>
+            <Text
+              style={{
+                fontFamily: PASSPORT_FONT_BODY,
+                fontWeight: 700,
+                fontSize: 5.5,
+                letterSpacing: 0.8,
+                textTransform: "uppercase",
+                color: PDF_COLORS.inkMuted,
+              }}
+            >
+              Généré par l'IA Naya
+            </Text>
+            <Text
+              style={{
+                fontFamily: PASSPORT_FONT_BODY,
+                fontWeight: 600,
+                fontSize: 7,
+                color: PDF_COLORS.emerald,
+                marginTop: 2,
+              }}
+            >
+              Référence : {child.id.slice(0, 8).toUpperCase()}
+            </Text>
           </View>
         </View>
 
@@ -430,12 +693,41 @@ export function PassportPdf({ data }: { data: PassportPdfData }) {
 
       {/* ══ PAGE 2 : CARTE DES TALENTS ══ */}
       <Page size="A4" style={styles.page}>
-        <View style={{ borderBottomWidth: 2.5, borderBottomColor: PDF_COLORS.ink, paddingBottom: 8, marginBottom: 12 }}>
-          <Text style={sectionHeading}>I. Cartographie des intelligences &amp; leviers d'action</Text>
+        <View
+          style={{
+            borderBottomWidth: 2.5,
+            borderBottomColor: PDF_COLORS.ink,
+            paddingBottom: 8,
+            marginBottom: 12,
+          }}
+        >
+          <Text style={sectionHeading}>
+            I. Cartographie des intelligences &amp; leviers d'action
+          </Text>
         </View>
 
-        <View style={{ alignItems: "center", borderWidth: 1, borderColor: PDF_COLORS.dividerSoft, borderRadius: 10, paddingVertical: 6 }}>
-          <Text style={{ fontFamily: PASSPORT_FONT_BODY, fontWeight: 700, fontSize: 6.5, letterSpacing: 1, textTransform: "uppercase", color: PDF_COLORS.inkMuted, alignSelf: "flex-start", marginLeft: 12, marginBottom: 2 }}>
+        <View
+          style={{
+            alignItems: "center",
+            borderWidth: 1,
+            borderColor: PDF_COLORS.dividerSoft,
+            borderRadius: 10,
+            paddingVertical: 6,
+          }}
+        >
+          <Text
+            style={{
+              fontFamily: PASSPORT_FONT_BODY,
+              fontWeight: 700,
+              fontSize: 6.5,
+              letterSpacing: 1,
+              textTransform: "uppercase",
+              color: PDF_COLORS.inkMuted,
+              alignSelf: "flex-start",
+              marginLeft: 12,
+              marginBottom: 2,
+            }}
+          >
             Radar des 9 Intelligences (Howard Gardner)
           </Text>
           <TalentRadarSvg talents={child.talents} color={radarColor} />
@@ -444,7 +736,20 @@ export function PassportPdf({ data }: { data: PassportPdfData }) {
         {/* Forces dominantes */}
         {topTalents.length > 0 && (
           <View style={{ marginTop: 9 }}>
-            <Text style={{ fontFamily: PASSPORT_FONT_BODY, fontWeight: 700, fontSize: 6.5, letterSpacing: 1, textTransform: "uppercase", color: PDF_COLORS.inkMuted, borderBottomWidth: 1, borderBottomColor: PDF_COLORS.dividerSoft, paddingBottom: 3, marginBottom: 6 }}>
+            <Text
+              style={{
+                fontFamily: PASSPORT_FONT_BODY,
+                fontWeight: 700,
+                fontSize: 6.5,
+                letterSpacing: 1,
+                textTransform: "uppercase",
+                color: PDF_COLORS.inkMuted,
+                borderBottomWidth: 1,
+                borderBottomColor: PDF_COLORS.dividerSoft,
+                paddingBottom: 3,
+                marginBottom: 6,
+              }}
+            >
               Forces dominantes identifiées
             </Text>
             <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 6 }}>
@@ -452,13 +757,57 @@ export function PassportPdf({ data }: { data: PassportPdfData }) {
                 const label = GARDNER_TAXONOMY[key as GardnerKey]?.name ?? key;
                 const lvl = talentLevel(val);
                 return (
-                  <View key={key} style={{ flexGrow: 1, flexBasis: "23%", borderWidth: 1, borderColor: PDF_COLORS.dividerSoft, borderRadius: 8, backgroundColor: PDF_COLORS.surface, paddingVertical: 4.5, paddingHorizontal: 6 }}>
-                    <Text style={{ fontFamily: PASSPORT_FONT_DISPLAY, fontWeight: 600, fontSize: 7.6, color: PDF_COLORS.ink }}>{label}</Text>
-                    <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginTop: 2 }}>
-                      <Text style={{ fontFamily: PASSPORT_FONT_BODY, fontWeight: 700, fontSize: 5.2, letterSpacing: 0.4, textTransform: "uppercase", color: PDF_COLORS.brand }}>
+                  <View
+                    key={key}
+                    style={{
+                      flexGrow: 1,
+                      flexBasis: "23%",
+                      borderWidth: 1,
+                      borderColor: PDF_COLORS.dividerSoft,
+                      borderRadius: 8,
+                      backgroundColor: PDF_COLORS.surface,
+                      paddingVertical: 4.5,
+                      paddingHorizontal: 6,
+                    }}
+                  >
+                    <Text
+                      style={{
+                        fontFamily: PASSPORT_FONT_DISPLAY,
+                        fontWeight: 600,
+                        fontSize: 7.6,
+                        color: PDF_COLORS.ink,
+                      }}
+                    >
+                      {label}
+                    </Text>
+                    <View
+                      style={{
+                        flexDirection: "row",
+                        justifyContent: "space-between",
+                        alignItems: "center",
+                        marginTop: 2,
+                      }}
+                    >
+                      <Text
+                        style={{
+                          fontFamily: PASSPORT_FONT_BODY,
+                          fontWeight: 700,
+                          fontSize: 5.2,
+                          letterSpacing: 0.4,
+                          textTransform: "uppercase",
+                          color: PDF_COLORS.brand,
+                        }}
+                      >
                         {talentTypeLabel(child.age).replace("Carte ", "")}
                       </Text>
-                      <Text style={{ fontFamily: PASSPORT_FONT_BODY, fontWeight: 700, fontSize: 6.2, color: PDF_COLORS.inkMuted }}>
+                      <Text
+                        style={{
+                          fontFamily: PASSPORT_FONT_BODY,
+                          fontWeight: 700,
+                          fontSize: 6.2,
+                          color: PDF_COLORS.inkMuted,
+                        }}
+                      >
                         {lvl.label.replace("Niveau ", "N")} ({val}%)
                       </Text>
                     </View>
@@ -474,13 +823,39 @@ export function PassportPdf({ data }: { data: PassportPdfData }) {
         {(drivers.length > 0 || topDomains.length > 0) && (
           <View style={{ flexDirection: "row", gap: 7, marginTop: 7 }}>
             {drivers.length > 0 && (
-              <View style={{ ...cardBase, flex: 1, backgroundColor: "#fffbeb", borderColor: "#fde68a" }}>
-                <Text style={{ fontFamily: PASSPORT_FONT_BODY, fontWeight: 700, fontSize: 6.2, letterSpacing: 0.8, textTransform: "uppercase", color: PDF_COLORS.amber, marginBottom: 4 }}>
+              <View
+                style={{ ...cardBase, flex: 1, backgroundColor: "#fffbeb", borderColor: "#fde68a" }}
+              >
+                <Text
+                  style={{
+                    fontFamily: PASSPORT_FONT_BODY,
+                    fontWeight: 700,
+                    fontSize: 6.2,
+                    letterSpacing: 0.8,
+                    textTransform: "uppercase",
+                    color: PDF_COLORS.amber,
+                    marginBottom: 4,
+                  }}
+                >
                   Moteurs comportementaux &amp; leviers d'action (Observés)
                 </Text>
                 <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 4 }}>
                   {drivers.map((tag) => (
-                    <Text key={tag} style={{ fontFamily: PASSPORT_FONT_BODY, fontWeight: 600, fontSize: 6.3, color: PDF_COLORS.amber, borderWidth: 1, borderColor: "#fde68a", borderRadius: 999, paddingVertical: 2, paddingHorizontal: 6, backgroundColor: PDF_COLORS.white }}>
+                    <Text
+                      key={tag}
+                      style={{
+                        fontFamily: PASSPORT_FONT_BODY,
+                        fontWeight: 600,
+                        fontSize: 6.3,
+                        color: PDF_COLORS.amber,
+                        borderWidth: 1,
+                        borderColor: "#fde68a",
+                        borderRadius: 999,
+                        paddingVertical: 2,
+                        paddingHorizontal: 6,
+                        backgroundColor: PDF_COLORS.white,
+                      }}
+                    >
                       {tag}
                     </Text>
                   ))}
@@ -489,13 +864,44 @@ export function PassportPdf({ data }: { data: PassportPdfData }) {
             )}
 
             {topDomains.length > 0 && (
-              <View style={{ ...cardBase, flex: 1, backgroundColor: PDF_COLORS.purpleSoft, borderColor: "#ddd6fe" }}>
-                <Text style={{ fontFamily: PASSPORT_FONT_BODY, fontWeight: 700, fontSize: 6.2, letterSpacing: 0.8, textTransform: "uppercase", color: PDF_COLORS.purple, marginBottom: 4 }}>
+              <View
+                style={{
+                  ...cardBase,
+                  flex: 1,
+                  backgroundColor: PDF_COLORS.purpleSoft,
+                  borderColor: "#ddd6fe",
+                }}
+              >
+                <Text
+                  style={{
+                    fontFamily: PASSPORT_FONT_BODY,
+                    fontWeight: 700,
+                    fontSize: 6.2,
+                    letterSpacing: 0.8,
+                    textTransform: "uppercase",
+                    color: PDF_COLORS.purple,
+                    marginBottom: 4,
+                  }}
+                >
                   Terrains d'excellence privilégiés
                 </Text>
                 <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 4 }}>
                   {topDomains.map(([domain, count]) => (
-                    <Text key={domain} style={{ fontFamily: PASSPORT_FONT_BODY, fontWeight: 600, fontSize: 6.6, color: PDF_COLORS.ink, borderWidth: 1, borderColor: "#ddd6fe", borderRadius: 6, paddingVertical: 3, paddingHorizontal: 7, backgroundColor: PDF_COLORS.white }}>
+                    <Text
+                      key={domain}
+                      style={{
+                        fontFamily: PASSPORT_FONT_BODY,
+                        fontWeight: 600,
+                        fontSize: 6.6,
+                        color: PDF_COLORS.ink,
+                        borderWidth: 1,
+                        borderColor: "#ddd6fe",
+                        borderRadius: 6,
+                        paddingVertical: 3,
+                        paddingHorizontal: 7,
+                        backgroundColor: PDF_COLORS.white,
+                      }}
+                    >
                       {domain} ({count} défi{count > 1 ? "s" : ""})
                     </Text>
                   ))}
@@ -507,18 +913,82 @@ export function PassportPdf({ data }: { data: PassportPdfData }) {
 
         {/* Voies d'orientation */}
         {affinities.length > 0 && (
-          <View style={{ ...cardBase, marginTop: 7, backgroundColor: PDF_COLORS.skySoft, borderColor: "#bae6fd" }}>
-            <Text style={{ fontFamily: PASSPORT_FONT_BODY, fontWeight: 700, fontSize: 6.2, letterSpacing: 0.8, textTransform: "uppercase", color: PDF_COLORS.skyDark, marginBottom: 5 }}>
+          <View
+            style={{
+              ...cardBase,
+              marginTop: 7,
+              backgroundColor: PDF_COLORS.skySoft,
+              borderColor: "#bae6fd",
+            }}
+          >
+            <Text
+              style={{
+                fontFamily: PASSPORT_FONT_BODY,
+                fontWeight: 700,
+                fontSize: 6.2,
+                letterSpacing: 0.8,
+                textTransform: "uppercase",
+                color: PDF_COLORS.skyDark,
+                marginBottom: 5,
+              }}
+            >
               Voies d'orientation suggérées par ses talents
             </Text>
             <View style={{ flexDirection: "row", flexWrap: "wrap", rowGap: 3, columnGap: 10 }}>
               {affinities.slice(0, 5).map((a) => (
-                <View key={a.key} style={{ flexDirection: "row", alignItems: "center", flexBasis: "46%", flexGrow: 1 }}>
-                  <Text style={{ fontFamily: PASSPORT_FONT_BODY, fontWeight: 600, fontSize: 6.8, color: PDF_COLORS.inkSoft, width: 92 }}>{a.label}</Text>
-                  <View style={{ flex: 1, height: 5, borderRadius: 999, backgroundColor: PDF_COLORS.white, borderWidth: 1, borderColor: PDF_COLORS.dividerSoft, overflow: "hidden", marginHorizontal: 6 }}>
-                    <View style={{ width: `${a.pct}%`, height: "100%", borderRadius: 999, backgroundColor: GUILD_BAR_COLORS[a.key] ?? PDF_COLORS.brand }} />
+                <View
+                  key={a.key}
+                  style={{
+                    flexDirection: "row",
+                    alignItems: "center",
+                    flexBasis: "46%",
+                    flexGrow: 1,
+                  }}
+                >
+                  <Text
+                    style={{
+                      fontFamily: PASSPORT_FONT_BODY,
+                      fontWeight: 600,
+                      fontSize: 6.8,
+                      color: PDF_COLORS.inkSoft,
+                      width: 92,
+                    }}
+                  >
+                    {a.label}
+                  </Text>
+                  <View
+                    style={{
+                      flex: 1,
+                      height: 5,
+                      borderRadius: 999,
+                      backgroundColor: PDF_COLORS.white,
+                      borderWidth: 1,
+                      borderColor: PDF_COLORS.dividerSoft,
+                      overflow: "hidden",
+                      marginHorizontal: 6,
+                    }}
+                  >
+                    <View
+                      style={{
+                        width: `${a.pct}%`,
+                        height: "100%",
+                        borderRadius: 999,
+                        backgroundColor: GUILD_BAR_COLORS[a.key] ?? PDF_COLORS.brand,
+                      }}
+                    />
                   </View>
-                  <Text style={{ fontFamily: PASSPORT_FONT_BODY, fontWeight: 700, fontSize: 6.8, color: PDF_COLORS.skyDark, width: 22, textAlign: "right" }}>{a.pct}%</Text>
+                  <Text
+                    style={{
+                      fontFamily: PASSPORT_FONT_BODY,
+                      fontWeight: 700,
+                      fontSize: 6.8,
+                      color: PDF_COLORS.skyDark,
+                      width: 22,
+                      textAlign: "right",
+                    }}
+                  >
+                    {a.pct}%
+                  </Text>
                 </View>
               ))}
             </View>
@@ -527,8 +997,25 @@ export function PassportPdf({ data }: { data: PassportPdfData }) {
 
         {/* Distinctions */}
         {earnedBadges.length > 0 && (
-          <View style={{ ...cardBase, marginTop: 7, backgroundColor: "#fffbeb", borderColor: "#fde68a" }}>
-            <Text style={{ fontFamily: PASSPORT_FONT_BODY, fontWeight: 700, fontSize: 6.2, letterSpacing: 0.8, textTransform: "uppercase", color: PDF_COLORS.amber, marginBottom: 5 }}>
+          <View
+            style={{
+              ...cardBase,
+              marginTop: 7,
+              backgroundColor: "#fffbeb",
+              borderColor: "#fde68a",
+            }}
+          >
+            <Text
+              style={{
+                fontFamily: PASSPORT_FONT_BODY,
+                fontWeight: 700,
+                fontSize: 6.2,
+                letterSpacing: 0.8,
+                textTransform: "uppercase",
+                color: PDF_COLORS.amber,
+                marginBottom: 5,
+              }}
+            >
               Distinctions obtenues
             </Text>
             <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 5 }}>
@@ -536,9 +1023,40 @@ export function PassportPdf({ data }: { data: PassportPdfData }) {
                 const badge = BADGE_CATALOG[slug];
                 if (!badge) return null;
                 return (
-                  <View key={slug} style={{ flexBasis: "47%", flexGrow: 1, borderWidth: 1, borderColor: "#fde68a", borderRadius: 8, backgroundColor: PDF_COLORS.white, paddingVertical: 4, paddingHorizontal: 7 }}>
-                    <Text style={{ fontFamily: PASSPORT_FONT_DISPLAY, fontWeight: 700, fontSize: 7.2, color: "#92400e" }}>{badge.title}</Text>
-                    <Text style={{ fontFamily: PASSPORT_FONT_BODY, fontWeight: 500, fontSize: 5.6, color: PDF_COLORS.inkMuted, marginTop: 1 }}>{badge.description}</Text>
+                  <View
+                    key={slug}
+                    style={{
+                      flexBasis: "47%",
+                      flexGrow: 1,
+                      borderWidth: 1,
+                      borderColor: "#fde68a",
+                      borderRadius: 8,
+                      backgroundColor: PDF_COLORS.white,
+                      paddingVertical: 4,
+                      paddingHorizontal: 7,
+                    }}
+                  >
+                    <Text
+                      style={{
+                        fontFamily: PASSPORT_FONT_DISPLAY,
+                        fontWeight: 700,
+                        fontSize: 7.2,
+                        color: "#92400e",
+                      }}
+                    >
+                      {badge.title}
+                    </Text>
+                    <Text
+                      style={{
+                        fontFamily: PASSPORT_FONT_BODY,
+                        fontWeight: 500,
+                        fontSize: 5.6,
+                        color: PDF_COLORS.inkMuted,
+                        marginTop: 1,
+                      }}
+                    >
+                      {badge.description}
+                    </Text>
                   </View>
                 );
               })}
@@ -552,23 +1070,85 @@ export function PassportPdf({ data }: { data: PassportPdfData }) {
       {/* ══ PAGE 3 : SYNTHÈSE NAYA ══ */}
       {hasSynthesis && (
         <Page size="A4" style={styles.page}>
-          <View style={{ borderBottomWidth: 2.5, borderBottomColor: PDF_COLORS.ink, paddingBottom: 8, marginBottom: 12 }}>
+          <View
+            style={{
+              borderBottomWidth: 2.5,
+              borderBottomColor: PDF_COLORS.ink,
+              paddingBottom: 8,
+              marginBottom: 12,
+            }}
+          >
             <Text style={sectionHeading}>II. Synthèse pédagogique du Co-pilote Naya</Text>
           </View>
 
-          <View style={{ borderWidth: 1.5, borderColor: "#fbd7ae", borderRadius: 10, backgroundColor: "#fdf3ea", padding: 14 }}>
-            <Text style={{ fontFamily: PASSPORT_FONT_BODY, fontWeight: 700, fontSize: 6, letterSpacing: 1.4, textTransform: "uppercase", color: PDF_COLORS.brand, marginBottom: 8 }}>
+          <View
+            style={{
+              borderWidth: 1.5,
+              borderColor: "#fbd7ae",
+              borderRadius: 10,
+              backgroundColor: "#fdf3ea",
+              padding: 14,
+            }}
+          >
+            <Text
+              style={{
+                fontFamily: PASSPORT_FONT_BODY,
+                fontWeight: 700,
+                fontSize: 6,
+                letterSpacing: 1.4,
+                textTransform: "uppercase",
+                color: PDF_COLORS.brand,
+                marginBottom: 8,
+              }}
+            >
               Rapport de bilan personnalisé
             </Text>
-            <MdContent md={synthesis} baseStyle={{ fontFamily: PASSPORT_FONT_BODY, fontSize: 8, lineHeight: 1.55, color: PDF_COLORS.ink, fontWeight: 500 }} />
+            <MdContent
+              md={synthesis}
+              baseStyle={{
+                fontFamily: PASSPORT_FONT_BODY,
+                fontSize: 8,
+                lineHeight: 1.55,
+                color: PDF_COLORS.ink,
+                fontWeight: 500,
+              }}
+            />
           </View>
 
           {letter && (
-            <View style={{ borderWidth: 1.5, borderColor: "#a7f3d0", borderRadius: 10, backgroundColor: PDF_COLORS.emeraldSoft, padding: 14, marginTop: 12 }}>
-              <Text style={{ fontFamily: PASSPORT_FONT_BODY, fontWeight: 700, fontSize: 6, letterSpacing: 1.4, textTransform: "uppercase", color: PDF_COLORS.emerald, marginBottom: 8 }}>
+            <View
+              style={{
+                borderWidth: 1.5,
+                borderColor: "#a7f3d0",
+                borderRadius: 10,
+                backgroundColor: PDF_COLORS.emeraldSoft,
+                padding: 14,
+                marginTop: 12,
+              }}
+            >
+              <Text
+                style={{
+                  fontFamily: PASSPORT_FONT_BODY,
+                  fontWeight: 700,
+                  fontSize: 6,
+                  letterSpacing: 1.4,
+                  textTransform: "uppercase",
+                  color: PDF_COLORS.emerald,
+                  marginBottom: 8,
+                }}
+              >
                 Mot de Naya sur son avenir
               </Text>
-              <MdContent md={letter} baseStyle={{ fontFamily: PASSPORT_FONT_BODY, fontSize: 8, lineHeight: 1.55, color: PDF_COLORS.ink, fontWeight: 500 }} />
+              <MdContent
+                md={letter}
+                baseStyle={{
+                  fontFamily: PASSPORT_FONT_BODY,
+                  fontSize: 8,
+                  lineHeight: 1.55,
+                  color: PDF_COLORS.ink,
+                  fontWeight: 500,
+                }}
+              />
             </View>
           )}
 
@@ -583,7 +1163,14 @@ export function PassportPdf({ data }: { data: PassportPdfData }) {
         const to = Math.min(challenges.length, chunkIdx * 2 + 2);
         return (
           <Page key={chunkIdx} size="A4" style={styles.page}>
-            <View style={{ borderBottomWidth: 2.5, borderBottomColor: PDF_COLORS.ink, paddingBottom: 8, marginBottom: 12 }}>
+            <View
+              style={{
+                borderBottomWidth: 2.5,
+                borderBottomColor: PDF_COLORS.ink,
+                paddingBottom: 8,
+                marginBottom: 12,
+              }}
+            >
               <Text style={sectionHeading}>
                 {roman}. Réalisations Pratiques &amp; Épreuves ({from} - {to})
               </Text>
@@ -598,18 +1185,61 @@ export function PassportPdf({ data }: { data: PassportPdfData }) {
                 (c.proof_image_url?.startsWith("http") ? c.proof_image_url : null) ??
                 null;
               return (
-                <View key={c.id} style={{ ...cardBase, marginBottom: 10, backgroundColor: PDF_COLORS.white }}>
-                  <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "flex-start" }}>
+                <View
+                  key={c.id}
+                  style={{ ...cardBase, marginBottom: 10, backgroundColor: PDF_COLORS.white }}
+                >
+                  <View
+                    style={{
+                      flexDirection: "row",
+                      justifyContent: "space-between",
+                      alignItems: "flex-start",
+                    }}
+                  >
                     <View style={{ flex: 1 }}>
-                      <Text style={{ fontFamily: PASSPORT_FONT_BODY, fontWeight: 700, fontSize: 5.5, letterSpacing: 1, textTransform: "uppercase", color: PDF_COLORS.brand, borderWidth: 1, borderColor: "#fbd7ae", borderRadius: 999, paddingVertical: 2, paddingHorizontal: 7, alignSelf: "flex-start", backgroundColor: "#fdf3ea" }}>
+                      <Text
+                        style={{
+                          fontFamily: PASSPORT_FONT_BODY,
+                          fontWeight: 700,
+                          fontSize: 5.5,
+                          letterSpacing: 1,
+                          textTransform: "uppercase",
+                          color: PDF_COLORS.brand,
+                          borderWidth: 1,
+                          borderColor: "#fbd7ae",
+                          borderRadius: 999,
+                          paddingVertical: 2,
+                          paddingHorizontal: 7,
+                          alignSelf: "flex-start",
+                          backgroundColor: "#fdf3ea",
+                        }}
+                      >
                         {c.domain}
                       </Text>
-                      <Text style={{ fontFamily: PASSPORT_FONT_DISPLAY, fontWeight: 600, fontSize: 10.5, color: PDF_COLORS.ink, marginTop: 5 }}>
+                      <Text
+                        style={{
+                          fontFamily: PASSPORT_FONT_DISPLAY,
+                          fontWeight: 600,
+                          fontSize: 10.5,
+                          color: PDF_COLORS.ink,
+                          marginTop: 5,
+                        }}
+                      >
                         {c.title}
                       </Text>
                     </View>
                     {formatDate(c.completed_at) && (
-                      <Text style={{ fontFamily: PASSPORT_FONT_BODY, fontWeight: 600, fontSize: 6.2, letterSpacing: 0.4, textTransform: "uppercase", color: PDF_COLORS.inkMuted, marginLeft: 8 }}>
+                      <Text
+                        style={{
+                          fontFamily: PASSPORT_FONT_BODY,
+                          fontWeight: 600,
+                          fontSize: 6.2,
+                          letterSpacing: 0.4,
+                          textTransform: "uppercase",
+                          color: PDF_COLORS.inkMuted,
+                          marginLeft: 8,
+                        }}
+                      >
                         Validé le {formatDate(c.completed_at)}
                       </Text>
                     )}
@@ -617,34 +1247,124 @@ export function PassportPdf({ data }: { data: PassportPdfData }) {
 
                   {c.description && (
                     <View style={{ marginTop: 7 }}>
-                      <Text style={{ fontFamily: PASSPORT_FONT_BODY, fontWeight: 700, fontSize: 5.8, letterSpacing: 0.8, textTransform: "uppercase", color: PDF_COLORS.inkMuted, marginBottom: 2 }}>
+                      <Text
+                        style={{
+                          fontFamily: PASSPORT_FONT_BODY,
+                          fontWeight: 700,
+                          fontSize: 5.8,
+                          letterSpacing: 0.8,
+                          textTransform: "uppercase",
+                          color: PDF_COLORS.inkMuted,
+                          marginBottom: 2,
+                        }}
+                      >
                         Description de la mission
                       </Text>
-                      <MdContent md={c.description} baseStyle={{ fontFamily: PASSPORT_FONT_BODY, fontSize: 7.4, lineHeight: 1.5, color: PDF_COLORS.inkSoft, fontWeight: 500 }} />
+                      <MdContent
+                        md={c.description}
+                        baseStyle={{
+                          fontFamily: PASSPORT_FONT_BODY,
+                          fontSize: 7.4,
+                          lineHeight: 1.5,
+                          color: PDF_COLORS.inkSoft,
+                          fontWeight: 500,
+                        }}
+                      />
                     </View>
                   )}
 
                   {imgSrc && (
-                    <View style={{ borderWidth: 1, borderColor: PDF_COLORS.dividerSoft, borderRadius: 6, marginTop: 7, backgroundColor: PDF_COLORS.surface, padding: 4, alignItems: "center" }}>
-                      <Image src={imgSrc} style={{ maxWidth: "100%", maxHeight: 130, objectFit: "contain" }} />
+                    <View
+                      style={{
+                        borderWidth: 1,
+                        borderColor: PDF_COLORS.dividerSoft,
+                        borderRadius: 6,
+                        marginTop: 7,
+                        backgroundColor: PDF_COLORS.surface,
+                        padding: 4,
+                        alignItems: "center",
+                      }}
+                    >
+                      <Image
+                        src={imgSrc}
+                        style={{ maxWidth: "100%", maxHeight: 130, objectFit: "contain" }}
+                      />
                     </View>
                   )}
 
                   <View style={{ flexDirection: "row", gap: 8, marginTop: 7 }}>
                     {c.ai_observations && (
-                      <View style={{ flex: 1, borderWidth: 1, borderColor: "#a7f3d0", borderRadius: 8, backgroundColor: PDF_COLORS.emeraldSoft, paddingVertical: 6, paddingHorizontal: 8 }}>
-                        <Text style={{ fontFamily: PASSPORT_FONT_BODY, fontWeight: 700, fontSize: 5.6, letterSpacing: 0.6, textTransform: "uppercase", color: PDF_COLORS.emerald, marginBottom: 2 }}>
+                      <View
+                        style={{
+                          flex: 1,
+                          borderWidth: 1,
+                          borderColor: "#a7f3d0",
+                          borderRadius: 8,
+                          backgroundColor: PDF_COLORS.emeraldSoft,
+                          paddingVertical: 6,
+                          paddingHorizontal: 8,
+                        }}
+                      >
+                        <Text
+                          style={{
+                            fontFamily: PASSPORT_FONT_BODY,
+                            fontWeight: 700,
+                            fontSize: 5.6,
+                            letterSpacing: 0.6,
+                            textTransform: "uppercase",
+                            color: PDF_COLORS.emerald,
+                            marginBottom: 2,
+                          }}
+                        >
                           Observation pédagogique
                         </Text>
-                        <Text style={{ fontFamily: PASSPORT_FONT_BODY, fontStyle: "italic", fontSize: 7, color: PDF_COLORS.ink }}>{c.ai_observations}</Text>
+                        <Text
+                          style={{
+                            fontFamily: PASSPORT_FONT_BODY,
+                            fontStyle: "italic",
+                            fontSize: 7,
+                            color: PDF_COLORS.ink,
+                          }}
+                        >
+                          {c.ai_observations}
+                        </Text>
                       </View>
                     )}
                     {c.notes && (
-                      <View style={{ flex: 1, borderWidth: 1, borderColor: "#bae6fd", borderRadius: 8, backgroundColor: PDF_COLORS.skySoft, paddingVertical: 6, paddingHorizontal: 8 }}>
-                        <Text style={{ fontFamily: PASSPORT_FONT_BODY, fontWeight: 700, fontSize: 5.6, letterSpacing: 0.6, textTransform: "uppercase", color: PDF_COLORS.skyDark, marginBottom: 2 }}>
+                      <View
+                        style={{
+                          flex: 1,
+                          borderWidth: 1,
+                          borderColor: "#bae6fd",
+                          borderRadius: 8,
+                          backgroundColor: PDF_COLORS.skySoft,
+                          paddingVertical: 6,
+                          paddingHorizontal: 8,
+                        }}
+                      >
+                        <Text
+                          style={{
+                            fontFamily: PASSPORT_FONT_BODY,
+                            fontWeight: 700,
+                            fontSize: 5.6,
+                            letterSpacing: 0.6,
+                            textTransform: "uppercase",
+                            color: PDF_COLORS.skyDark,
+                            marginBottom: 2,
+                          }}
+                        >
                           Note de réalisation
                         </Text>
-                        <Text style={{ fontFamily: PASSPORT_FONT_BODY, fontWeight: 500, fontSize: 7, color: PDF_COLORS.ink }}>{c.notes}</Text>
+                        <Text
+                          style={{
+                            fontFamily: PASSPORT_FONT_BODY,
+                            fontWeight: 500,
+                            fontSize: 7,
+                            color: PDF_COLORS.ink,
+                          }}
+                        >
+                          {c.notes}
+                        </Text>
                       </View>
                     )}
                   </View>
@@ -652,7 +1372,11 @@ export function PassportPdf({ data }: { data: PassportPdfData }) {
               );
             })}
 
-            <PageFooter childName={child.name} pageNumber={startPage + chunkIdx} totalPages={totalPages} />
+            <PageFooter
+              childName={child.name}
+              pageNumber={startPage + chunkIdx}
+              totalPages={totalPages}
+            />
           </Page>
         );
       })}

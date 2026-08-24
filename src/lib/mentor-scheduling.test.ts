@@ -1,9 +1,5 @@
 import { describe, it, expect } from "vitest";
-import {
-  isOnTime,
-  computePunctualityScore,
-  punctualityFromSessions,
-} from "./mentor-scheduling";
+import { isOnTime, computePunctualityScore, punctualityFromSessions } from "./mentor-scheduling";
 
 // Planification des séances + ponctualité (2026-08-15) — helpers purs.
 // La ponctualité = écart entre l'heure planifiée (scheduled_at) et l'heure déclarée

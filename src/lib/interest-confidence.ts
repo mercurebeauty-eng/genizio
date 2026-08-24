@@ -148,7 +148,7 @@ export function resolveInterestHypotheses(input: InterestHypothesisInput): Inter
  */
 export async function getInterestHypothesesSnapshot(
   db: { from: (table: string) => any },
-  childId: string
+  childId: string,
 ): Promise<InterestHypotheses | null> {
   try {
     const [{ data: child }, { data: twin }, { data: abandoned }] = await Promise.all([
@@ -183,7 +183,7 @@ export async function getInterestHypothesesSnapshot(
   } catch (err) {
     console.error(
       "getInterestHypothesesSnapshot: échec non bloquant, fallback au formatage brut:",
-      err
+      err,
     );
     return null;
   }

@@ -11,8 +11,12 @@ describe("findRepeatedNotCompletedCause", () => {
 
   it("ne détecte rien avec seulement 3 occurrences de la même cause", () => {
     const result = findRepeatedNotCompletedCause(
-      [entry("Logique", "CONCEPTUAL_GAP"), entry("Logique", "CONCEPTUAL_GAP"), entry("Logique", "CONCEPTUAL_GAP")],
-      new Set()
+      [
+        entry("Logique", "CONCEPTUAL_GAP"),
+        entry("Logique", "CONCEPTUAL_GAP"),
+        entry("Logique", "CONCEPTUAL_GAP"),
+      ],
+      new Set(),
     );
     expect(result).toBeNull();
   });
@@ -25,7 +29,7 @@ describe("findRepeatedNotCompletedCause", () => {
         entry("Logique", "CONCEPTUAL_GAP"),
         entry("Logique", "CONCEPTUAL_GAP"),
       ],
-      new Set()
+      new Set(),
     );
     expect(result).toEqual({
       domain: "Logique",
@@ -47,7 +51,7 @@ describe("findRepeatedNotCompletedCause", () => {
         entry("Logique", "CONCEPTUAL_GAP"),
         entry("Logique", "CONCEPTUAL_GAP"),
       ],
-      new Set()
+      new Set(),
     );
     expect(result).toBeNull();
   });
@@ -60,7 +64,7 @@ describe("findRepeatedNotCompletedCause", () => {
         entry("Logique", "CONCEPTUAL_GAP"),
         entry("Logique", "CONCEPTUAL_GAP"),
       ],
-      new Set(["Logique"])
+      new Set(["Logique"]),
     );
     expect(result).toBeNull();
   });
@@ -73,7 +77,7 @@ describe("findRepeatedNotCompletedCause", () => {
         entry("Logique", "CONCEPTUAL_GAP"),
         entry("Logique", "CONCEPTUAL_GAP"),
       ],
-      new Set()
+      new Set(),
     );
     expect(result).toBeNull();
   });
@@ -86,7 +90,7 @@ describe("findRepeatedNotCompletedCause", () => {
         entry("Logique", "CONCEPTUAL_GAP"),
         entry("Sciences", "CONCEPTUAL_GAP"),
       ],
-      new Set()
+      new Set(),
     );
     expect(result).toBeNull();
   });

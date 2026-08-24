@@ -22,7 +22,10 @@ const GenerateAcademicHomeworkInputSchema = z.object({
   gradeLevel: z.enum(["CP", "CE1", "CE2", "CM1", "CM2", "6eme", "5eme", "4eme", "3eme"]),
   homeworkInstruction: z.string().min(2).max(500),
   suggestedTopicId: z.string().optional().nullable(),
-  behavioralDriver: z.enum(["deconstruire", "schematiser", "simuler", "enqueter", "optimiser"]).optional().nullable(),
+  behavioralDriver: z
+    .enum(["deconstruire", "schematiser", "simuler", "enqueter", "optimiser"])
+    .optional()
+    .nullable(),
   timeAvailable: z.string().optional(),
   homeMaterials: z.string().optional().nullable(),
   masteryScore: z.number().optional(),
@@ -51,7 +54,7 @@ describe("Challenger Stress Suite — Extreme Anxiety Probabilities P(A)", () =>
   });
 
   it("respects anxiety threshold boundary: 0.40 (not damped) vs 0.4001 (damped)", () => {
-    const atBoundary = calculateZPADifficulty(5, [], 0.40);
+    const atBoundary = calculateZPADifficulty(5, [], 0.4);
     expect(atBoundary.isAnxietyDamped).toBe(false);
     expect(atBoundary.level).toBe(5);
     expect(atBoundary.supportMode).toBe("CHALLENGE_PLUS");
@@ -194,7 +197,13 @@ describe("Challenger Stress Suite — All 5 Behavioral Drivers Coverage", () => 
       expect(guidance).toBeDefined();
       expect(guidance.length).toBeGreaterThan(100);
       expect(guidance).toContain("MÉCANIQUE DE FUSION");
-      expect(guidance.toUpperCase()).toContain(driver.toUpperCase().replace("DECONSTRUIRE", "DÉCONSTRUIRE").replace("SCHEMATISER", "SCHÉMATISER").replace("ENQUETER", "ENQUÊTER"));
+      expect(guidance.toUpperCase()).toContain(
+        driver
+          .toUpperCase()
+          .replace("DECONSTRUIRE", "DÉCONSTRUIRE")
+          .replace("SCHEMATISER", "SCHÉMATISER")
+          .replace("ENQUETER", "ENQUÊTER"),
+      );
       expect(guidance).toContain("Exemples :");
     }
   });

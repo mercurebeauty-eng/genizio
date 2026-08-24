@@ -6,10 +6,7 @@ export const Route = createFileRoute("/nouveautes")({
   // noindex plutôt que robots Disallow : les crawlers voient la directive et
   // cessent de signaler une « page bloquée ».
   head: () => ({
-    meta: [
-      { title: "Nouveautés — Génizio" },
-      { name: "robots", content: "noindex, follow" },
-    ],
+    meta: [{ title: "Nouveautés — Génizio" }, { name: "robots", content: "noindex, follow" }],
   }),
   component: NouveautesPage,
 });

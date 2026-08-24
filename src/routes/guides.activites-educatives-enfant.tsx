@@ -1,6 +1,13 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { GuideLayout } from "@/components/guides/GuideLayout";
-import { pageMeta, jsonLdScript, faqPageJsonLd, breadcrumbJsonLd, absoluteUrl, SITE_URL } from "@/lib/seo";
+import {
+  pageMeta,
+  jsonLdScript,
+  faqPageJsonLd,
+  breadcrumbJsonLd,
+  absoluteUrl,
+  SITE_URL,
+} from "@/lib/seo";
 
 const PATH = "/guides/activites-educatives-enfant";
 
@@ -108,12 +115,13 @@ export const Route = createFileRoute("/guides/activites-educatives-enfant")({
             { name: "Accueil", path: "/" },
             { name: "Guides", path: "/guides" },
             { name: "Activités éducatives", path: PATH },
-          ])
+          ]),
         ),
         jsonLdScript({
           "@context": "https://schema.org",
           "@type": "Article",
-          headline: "24 activités éducatives sans écran à faire à la maison avec un enfant de 6 à 12 ans",
+          headline:
+            "24 activités éducatives sans écran à faire à la maison avec un enfant de 6 à 12 ans",
           inLanguage: "fr-FR",
           mainEntityOfPage: absoluteUrl(PATH),
           image: absoluteUrl("/guides/og-activites.jpg"),
@@ -141,8 +149,12 @@ function Guide() {
       intro="Pas de matériel coûteux, pas d'écran, pas de fiche à imprimer. Des activités qui produisent un résultat visible — et qui, mises bout à bout, révèlent ce que votre enfant sait faire. Pour le soir des devoirs, le week-end ou les vacances."
       updated="14 août 2026"
       readingTime="8 min"
+      path={PATH}
       related={[
-        { label: "Haut potentiel : les vrais signes", to: "/guides/potentiel-haut-potentiel-enfant" },
+        {
+          label: "Haut potentiel : les vrais signes",
+          to: "/guides/potentiel-haut-potentiel-enfant",
+        },
         { label: "Mon enfant ne tient pas en place", to: "/guides/enfant-agite-concentration" },
         { label: "Motiver un adolescent (12-16 ans)", to: "/guides/defis-pour-adolescents" },
         { label: "Activités manuelles (4-12 ans)", to: "/guides/activites-manuelles-enfant" },
@@ -151,6 +163,10 @@ function Guide() {
       <img
         src="/guides/og-activites.jpg"
         alt="Famille africaine engagée dans des activités éducatives manuelles à la maison"
+        width="1200"
+        height="630"
+        loading="lazy"
+        decoding="async"
         className="my-6 aspect-video w-full rounded-3xl border border-ink/10 object-cover shadow-lg"
       />
       <h2>Pourquoi le résultat visible change tout</h2>
@@ -207,10 +223,22 @@ function Guide() {
 
       <h2>Ce qu'il ne faut pas faire</h2>
       <ul>
-        <li><strong>Corriger pendant.</strong> Laissez l'erreur se produire : c'est là que l'apprentissage a lieu.</li>
-        <li><strong>Finir à sa place.</strong> Un résultat imparfait mais fait par lui vaut mieux qu'un bel objet fait par vous.</li>
-        <li><strong>Enchaîner.</strong> Une activité par jour, terminée, vaut mieux que trois commencées.</li>
-        <li><strong>Transformer en évaluation.</strong> Dès qu'il y a une note, l'enfant optimise pour la note et arrête d'explorer.</li>
+        <li>
+          <strong>Corriger pendant.</strong> Laissez l'erreur se produire : c'est là que
+          l'apprentissage a lieu.
+        </li>
+        <li>
+          <strong>Finir à sa place.</strong> Un résultat imparfait mais fait par lui vaut mieux
+          qu'un bel objet fait par vous.
+        </li>
+        <li>
+          <strong>Enchaîner.</strong> Une activité par jour, terminée, vaut mieux que trois
+          commencées.
+        </li>
+        <li>
+          <strong>Transformer en évaluation.</strong> Dès qu'il y a une note, l'enfant optimise pour
+          la note et arrête d'explorer.
+        </li>
       </ul>
 
       <h2>10 minutes d'activité entre deux devoirs</h2>
@@ -220,14 +248,25 @@ function Guide() {
         corps en mouvement et relancent la concentration :
       </p>
       <ul>
-        <li><strong>Le chronomètre inversé :</strong> « Je te donne 10 minutes pour construire la tour la plus haute avec ce que tu trouves dans la cuisine. » On photographie le résultat, on range, on reprend les devoirs.</li>
-        <li><strong>La monnaie du jour :</strong> comptez la monnaie de la journée ensemble, à voix haute — 3 minutes de calcul réel valent une page d'exercices.</li>
-        <li><strong>Le tirage surprise :</strong> un bocal avec des défis courts écrits sur des papiers (« nomme 5 fruits qui poussent dans notre région », « raconte ta journée en 3 phrases »). L'enfant tire un papier, répond, et retourne travailler.</li>
+        <li>
+          <strong>Le chronomètre inversé :</strong> « Je te donne 10 minutes pour construire la tour
+          la plus haute avec ce que tu trouves dans la cuisine. » On photographie le résultat, on
+          range, on reprend les devoirs.
+        </li>
+        <li>
+          <strong>La monnaie du jour :</strong> comptez la monnaie de la journée ensemble, à voix
+          haute — 3 minutes de calcul réel valent une page d'exercices.
+        </li>
+        <li>
+          <strong>Le tirage surprise :</strong> un bocal avec des défis courts écrits sur des
+          papiers (« nomme 5 fruits qui poussent dans notre région », « raconte ta journée en 3
+          phrases »). L'enfant tire un papier, répond, et retourne travailler.
+        </li>
       </ul>
       <p>
-        La règle : <strong>court, terminé, rangé</strong>. Dix minutes qui finissent par une photo ou
-        une case cochée laissent l'enfant avec le sentiment d'avoir réussi — et les devoirs d'après
-        se font dans un meilleur état d'esprit.
+        La règle : <strong>court, terminé, rangé</strong>. Dix minutes qui finissent par une photo
+        ou une case cochée laissent l'enfant avec le sentiment d'avoir réussi — et les devoirs
+        d'après se font dans un meilleur état d'esprit.
       </p>
 
       <h2>Garder une trace</h2>

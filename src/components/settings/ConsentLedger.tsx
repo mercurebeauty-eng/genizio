@@ -79,7 +79,7 @@ export function ConsentLedger() {
             >
               {getEventIcon(ev.event_type)}
             </div>
-            <div className="flex-1 space-y-1">
+            <div className="flex-1 space-y-1 min-w-0">
               <p className="text-sm font-medium text-ink">{ev.description}</p>
               <div className="flex flex-wrap gap-x-3 text-[11px] text-ink/60">
                 <span>

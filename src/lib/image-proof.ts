@@ -73,7 +73,7 @@ export function resolveProofEncodePlan(
   fileSizeBytes: number,
   width: number,
   height: number,
-  mediaType: string
+  mediaType: string,
 ): ProofEncodePlan {
   const maxDim = Math.max(width, height);
   if (fileSizeBytes <= MAX_PASSTHROUGH_BYTES && maxDim <= MAX_DIMENSION) {
@@ -126,7 +126,7 @@ function fileToBase64(file: File): Promise<string> {
 function canvasToBlob(
   canvas: HTMLCanvasElement,
   mime: string,
-  quality?: number
+  quality?: number,
 ): Promise<Blob | null> {
   return new Promise((resolve) => canvas.toBlob(resolve, mime, quality));
 }
@@ -147,12 +147,7 @@ export async function fileToCompressedProof(file: File): Promise<CompressedProof
   }
 
   const dims = await loadImage(file);
-  const plan = resolveProofEncodePlan(
-    file.size,
-    dims.naturalWidth,
-    dims.naturalHeight,
-    file.type
-  );
+  const plan = resolveProofEncodePlan(file.size, dims.naturalWidth, dims.naturalHeight, file.type);
   if (plan.action === "passthrough") {
     return { base64: await fileToBase64(file), mediaType: plan.mediaType, compressed: false };
   }

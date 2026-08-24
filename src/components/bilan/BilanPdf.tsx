@@ -100,9 +100,7 @@ export function BilanPdf({
             {new Date(data.periodStart).toLocaleDateString("fr-FR")} au{" "}
             {new Date(data.periodEnd).toLocaleDateString("fr-FR")}
           </Text>
-          <Text style={styles.subtitle}>
-            Mentor : {data.mentorEmail} · Validé par le parent
-          </Text>
+          <Text style={styles.subtitle}>Mentor : {data.mentorEmail} · Validé par le parent</Text>
         </View>
 
         {sections.map(([label, content]) =>
@@ -115,8 +113,8 @@ export function BilanPdf({
         )}
 
         <Text style={styles.footer}>
-          Génizio — le laboratoire de découverte des talents · Révélé par le mentor, validé par
-          la famille.
+          Génizio — le laboratoire de découverte des talents · Révélé par le mentor, validé par la
+          famille.
         </Text>
       </Page>
     </Document>
