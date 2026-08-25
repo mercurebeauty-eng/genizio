@@ -53,12 +53,12 @@ class PreflightChecker:
 
     def check_title(self):
         """Vérifie la balise title (30 à 65 caractères, non générique)."""
-        match = re.search(r'title:\s*["\']([^"\']+)["\']', self.content)
+        match = re.search(r'title:\s*(?:"([^"]+)"|\'([^\']+)\')', self.content)
         if not match:
             self.errors.append("Balise 'title' manquante dans head() / pageMeta.")
             return
 
-        title = match.group(1).strip()
+        title = (match.group(1) or match.group(2)).strip()
         self.metadata["title"] = title
         length = len(title)
 
@@ -71,12 +71,14 @@ class PreflightChecker:
 
     def check_description(self):
         """Vérifie la meta description (110 à 165 caractères)."""
-        match = re.search(r'description:\s*["\']([^"\']+)["\']', self.content)
+        match = re.search(r'description:\s*(?:"([^"]+)"|\'([^\']+)\')', self.content, re.DOTALL)
         if not match:
             self.errors.append("Meta 'description' manquante dans head() / pageMeta.")
             return
 
-        desc = match.group(1).strip()
+        desc = (match.group(1) or match.group(2)).strip()
+        # Nettoyer les sauts de ligne internes éventuels
+        desc = re.sub(r'\s+', ' ', desc)
         self.metadata["description"] = desc
         length = len(desc)
 
