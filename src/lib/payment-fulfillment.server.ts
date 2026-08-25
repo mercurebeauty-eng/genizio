@@ -30,6 +30,7 @@ export type PaymentMetadata = {
     | "order"
     | "child_access"
     | "passport"
+    | "diagnostic"
     | "extra_slots"
     | "accompaniment_pack"
     | "sponsorship"
@@ -132,6 +133,14 @@ export async function applyPaystackEntitlement(
         .eq("id", metadata.child_id);
       if (error) throw new Error(`Erreur lors du déblocage du passeport: ${error.message}`);
       return { entitlement: "passport", detail: `Passeport débloqué (${metadata.child_id})` };
+    }
+
+    case "diagnostic": {
+      if (!metadata.child_id) throw new Error("Payment 'diagnostic' sans child_id.");
+      return {
+        entitlement: "diagnostic",
+        detail: `Diagnostic première rencontre confirmé pour l'enfant (${metadata.child_id})`,
+      };
     }
 
     // PALIER (V4, DÉCISION 5, 2026-08-14) : un paiement « palier » octroie +5 enfants au

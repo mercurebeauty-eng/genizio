@@ -111,7 +111,7 @@ const LANDING_FAQ: {
   {
     question: "Combien coûte Génizio ?",
     answer:
-      "Génizio démarre gratuitement : le premier profil enfant est offert, sans carte bancaire demandée, et le premier défi sur mesure arrive dès la création du profil. Les profils supplémentaires coûtent 5 000 FCFA pour les trois premiers mois du compte, puis 15 000 FCFA par mois. L'abonnement famille couvre jusqu'à 5 profils, le Passeport d'Excellence se paie en une fois et les kits pédagogiques sont vendus à l'unité. Tous les plans, produits et tarifs détaillés figurent sur la page Tarifs.",
+      "Génizio démarre gratuitement : le premier profil enfant est offert pour toujours, sans carte bancaire demandée. Les comptes supplémentaires sans suivi coûtent 35 000 FCFA par mois et par enfant supplémentaire. Le Diagnostic Première Rencontre pour établir le profil complet de l'enfant est à 50 000 FCFA, le Pack Accompagnement avec mentor dédié (12 séances/mois) à 180 000 FCFA/mois/enfant, le Passeport d'Excellence certifié à 75 000 FCFA et les kits pédagogiques sont disponibles à l'unité. Tous les détails figurent sur la page Tarifs.",
     link: { to: "/tarifs", label: "Voir tous les tarifs" },
   },
   {

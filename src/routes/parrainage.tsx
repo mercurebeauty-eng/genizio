@@ -326,9 +326,8 @@ function ParrainagePage() {
                     )}
                   </p>
                   <p className="mt-1 text-[11px] text-ink/45">
-                    Les 3 premiers mois sont offerts, puis {formatXofAmount(STANDARD_PRICE_XOF)}{" "}
-                    FCFA/mois (≈ 22,50 €/mois). Paiement sécurisé en ligne, le code est généré
-                    automatiquement.
+                    Tarif : {formatXofAmount(STANDARD_PRICE_XOF)} FCFA/mois. Paiement sécurisé en ligne
+                    via Paystack, le code de parrainage est généré immédiatement.
                   </p>
                 </div>
               </div>

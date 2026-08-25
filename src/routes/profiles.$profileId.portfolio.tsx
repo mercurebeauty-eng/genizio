@@ -10,7 +10,7 @@ import { ensureHypothesesForChild } from "@/lib/hypotheses.functions";
 import { getChildGuild, getTalentAffinities } from "@/lib/guilds";
 import { getChildEnrolledSeason, getActiveSeason, type Season } from "@/lib/seasons.functions";
 import { getChildAccessStatusFn, type ChildAccessStatus } from "@/lib/child-access";
-import { formatXof } from "@/lib/pricing";
+import { formatXof, PASSPORT_PRICE_XOF } from "@/lib/pricing";
 import { initializePassportPayment } from "@/lib/payments.functions";
 import { getMentorChildView } from "@/lib/mentors.functions";
 import { isMentorMode } from "@/lib/mentor-mode";
@@ -1200,7 +1200,7 @@ function PortfolioPage() {
                       // Acte d'achat réservé au parent (décision #81) — le mentor
                       // (remplaçant) voit le Passeport mais ne paie pas à sa place.
                       <p className="w-full md:w-auto text-center rounded-2xl border border-dashed border-ink/20 bg-white/60 px-5 py-3 text-xs font-bold text-ink/60">
-                        Le parent peut activer le Passeport (50 000 FCFA) pour le téléchargement.
+                        Le parent peut activer le Passeport ({formatXof(PASSPORT_PRICE_XOF)}) pour le téléchargement.
                       </p>
                     ) : (
                       <button
@@ -1213,7 +1213,7 @@ function PortfolioPage() {
                         ) : (
                           <CreditCard className="size-3.5" />
                         )}
-                        <span>Activer le Passeport (50 000 FCFA)</span>
+                        <span>Activer le Passeport ({formatXof(PASSPORT_PRICE_XOF)})</span>
                       </button>
                     )}
                     <p className="text-[9px] text-center text-ink/60 font-bold">
@@ -1223,6 +1223,33 @@ function PortfolioPage() {
                 </div>
               );
             })()}
+
+          {/* Bannière Accompagnement & Diagnostic */}
+          {!mentorMode && (
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 rounded-3xl border border-sky-200 bg-sky-50/70 p-5 shadow-sm">
+              <div className="flex items-center gap-3">
+                <div className="grid size-10 place-items-center rounded-2xl bg-sky-600 text-white shrink-0">
+                  <Users className="size-5" />
+                </div>
+                <div>
+                  <p className="text-xs font-black uppercase tracking-wider text-sky-800">
+                    Accompagnement & Diagnostic
+                  </p>
+                  <p className="text-xs text-ink/70 mt-0.5">
+                    Séance de diagnostic (50 000 F) ou mentor dédié 12 séances/mois (180 000 F).
+                  </p>
+                </div>
+              </div>
+              <Link
+                to="/profiles/$profileId/mentors"
+                params={{ profileId: child.id }}
+                className="shrink-0 inline-flex items-center justify-center gap-1.5 rounded-xl bg-sky-600 px-4 py-2.5 text-xs font-bold text-white shadow-sm hover:bg-sky-700 transition-all cursor-pointer text-center"
+              >
+                Découvrir & Réserver
+                <ChevronRight className="size-3.5" />
+              </Link>
+            </div>
+          )}
 
           <div className="grid grid-cols-1 gap-6 ">
             <div className="rounded-3xl border border-ink/10 bg-white p-6 shadow-xl">

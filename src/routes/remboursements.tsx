@@ -88,7 +88,7 @@ function RemboursementsPage() {
           <h2>1. Produits et services concernés</h2>
           <p>
             Cette politique couvre tous les achats réalisés sur Génizio via Paystack : abonnement
-            famille (« Génizio Bienvenue » puis « Génizio Standard »), accès enfant supplémentaire,
+            compte supplémentaire sans suivi, Diagnostic Première Rencontre, Certificats et
             Passeport d'Excellence, Pack Accompagnement, parrainage, et kits pédagogiques de la
             boutique.
           </p>

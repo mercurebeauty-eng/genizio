@@ -64,17 +64,56 @@ export type SubscriptionRow = {
 };
 
 /**
- * Retrouve le plan Paystack (idempotent à travers les déplois) : cache local paystack_plans
- * → recherche par nom chez Paystack → création si absent. L'admin n'a RIEN à créer dans le
- * dashboard. En cas de course (deux appels simultanés), l'échec d'insert du cache est
- * avalé et le cache est relu.
+ * Retrouve le plan Paystack (idempotent à travers les déploiements) :
+ * 1. Variables d'environnement (PAYSTACK_PLAN_FAMILY_STANDARD / PAYSTACK_PLAN_FAMILY_PROMO)
+ * 2. Cache local table paystack_plans
+ * 3. Recherche par nom chez Paystack via searchPaystackPlans
+ * 4. Création automatique chez Paystack si absent.
  */
 async function ensurePaystackPlan(
   supabaseAdmin: any,
   planKey: FamilyPlanKey,
 ): Promise<{ planCode: string; amountXof: number }> {
-  const { searchPaystackPlans, createPaystackPlan } = await import("@/lib/paystack.server");
+  const plan = FAMILY_PLANS[planKey] ?? FAMILY_PLANS.family_standard;
 
+  // 1. Priorité aux variables d'environnement Vercel / .env
+  const envPlanCode =
+    planKey === "family_promo"
+      ? process.env.PAYSTACK_PLAN_FAMILY_PROMO || process.env.PAYSTACK_PLAN_FAMILY_STANDARD
+      : process.env.PAYSTACK_PLAN_FAMILY_STANDARD || process.env.PAYSTACK_PLAN_FAMILY_PROMO;
+
+  const upsertCache = async (planCode: string) => {
+    const { error } = await supabaseAdmin.from("paystack_plans").upsert(
+      {
+        plan_key: planKey,
+        plan_code: planCode,
+        name: plan.name,
+        interval: "monthly",
+        amount_xof: plan.priceXof,
+        currency: "XOF",
+      },
+      { onConflict: "plan_key" },
+    );
+    if (error) {
+      // Course entre deux appels : relire le cache plutôt que d'échouer.
+      const { data: reread } = await supabaseAdmin
+        .from("paystack_plans")
+        .select("plan_code")
+        .eq("plan_key", planKey)
+        .maybeSingle();
+      if (!reread) console.warn(`Erreur lors du cache du plan: ${error.message}`);
+      return reread?.plan_code ?? planCode;
+    }
+    return planCode;
+  };
+
+  if (envPlanCode) {
+    // Si la variable d'env est fournie, on s'assure qu'elle est en cache et on la retourne directement
+    await upsertCache(envPlanCode).catch(() => {});
+    return { planCode: envPlanCode, amountXof: plan.priceXof };
+  }
+
+  // 2. Cache en base de données
   const { data: cached, error: cacheErr } = await supabaseAdmin
     .from("paystack_plans")
     .select("plan_code, amount_xof")
@@ -83,30 +122,9 @@ async function ensurePaystackPlan(
   if (cacheErr) throw new Error(cacheErr.message);
   if (cached) return { planCode: cached.plan_code, amountXof: cached.amount_xof };
 
-  const plan = FAMILY_PLANS[planKey];
-  const upsertCache = async (planCode: string) => {
-    const { error } = await supabaseAdmin.from("paystack_plans").insert({
-      plan_key: planKey,
-      plan_code: planCode,
-      name: plan.name,
-      interval: "monthly",
-      amount_xof: plan.priceXof,
-      currency: "XOF",
-    });
-    if (error) {
-      // Course entre deux appels : relire le cache plutôt que d'échouer.
-      const { data: reread } = await supabaseAdmin
-        .from("paystack_plans")
-        .select("plan_code")
-        .eq("plan_key", planKey)
-        .maybeSingle();
-      if (!reread) throw new Error(`Erreur lors du cache du plan: ${error.message}`);
-      return reread.plan_code;
-    }
-    return planCode;
-  };
+  // 3. Recherche chez Paystack ou création
+  const { searchPaystackPlans, createPaystackPlan } = await import("@/lib/paystack.server");
 
-  // Déploiements parallèles / cache vidé : le plan existe peut-être déjà chez Paystack.
   const found = await searchPaystackPlans(plan.name);
   const match = found.find((p) => p.name === plan.name && p.amountXof === plan.priceXof);
   if (match) return { planCode: await upsertCache(match.planCode), amountXof: plan.priceXof };

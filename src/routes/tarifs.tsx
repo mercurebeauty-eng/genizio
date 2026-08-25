@@ -1,16 +1,15 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { pageMeta, jsonLdScript, breadcrumbJsonLd } from "@/lib/seo";
 import {
-  PROMO_PRICE_XOF,
-  PROMO_PRICE_EUR,
   STANDARD_PRICE_XOF,
   STANDARD_PRICE_EUR,
   PASSPORT_PRICE_XOF,
   PASSPORT_PRICE_EUR,
+  DIAGNOSTIC_PRICE_XOF,
+  DIAGNOSTIC_PRICE_EUR,
   SESSION_PRICE_XOF,
   PACK_SESSIONS,
   PACK_PRICE_XOF,
-  SPONSORSHIP_FREE_MONTHS,
   formatXof,
 } from "@/lib/pricing";
 import { ArrowRight, BadgeCheck, CreditCard, HeartHandshake, Smartphone } from "lucide-react";
@@ -18,9 +17,9 @@ import { ArrowRight, BadgeCheck, CreditCard, HeartHandshake, Smartphone } from "
 export const Route = createFileRoute("/tarifs")({
   head: () => {
     const meta = pageMeta({
-      title: "Tarifs — Génizio",
+      title: "Tarifs & Services — Génizio",
       description:
-        "Les prix de Génizio en FCFA : 1 profil enfant gratuit pour toujours, abonnement famille dès 5 000 F/mois, Passeport d'Excellence et kits pédagogiques. Paiement sécurisé Paystack.",
+        "Les tarifs de Génizio en FCFA : 1 profil enfant gratuit pour toujours, diagnostic première rencontre à 50 000 F, accompagnement 12 séances × 15 000 F/mois, certificats d'excellence et kits pédagogiques.",
       path: "/tarifs",
     });
     return {
@@ -38,12 +37,11 @@ export const Route = createFileRoute("/tarifs")({
   component: TarifsPage,
 });
 
-// Équivalent EUR indicatif au format français (« ≈ 7,50 € »), à la parité de la saison
-// (10 000 F = 15 €) — les prix constants vivent dans src/lib/pricing.ts.
+// Équivalent EUR indicatif au format français (« ≈ 53,50 € »), à la parité de la saison
 const eurHint = (amount: number) =>
   `≈ ${amount.toLocaleString("fr-FR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} €`;
 
-// Les trois grandes offres en cartes : le gratuit, l'abonnement famille, le parrainage.
+// Les trois grandes offres en cartes : le gratuit, le compte supplémentaire autonome, l'accompagnement mentor.
 const PLANS: {
   name: string;
   badge: string;
@@ -59,7 +57,7 @@ const PLANS: {
     price: "0 F",
     priceSub: "pour toujours, pour le 1er profil",
     points: [
-      "1 profil enfant offert",
+      "1 profil enfant complet offert",
       "Premier défi sur mesure dès la création du profil",
       "Carte des 9 intelligences au fil des réalisations",
       "Validation parentale à chaque étape",
@@ -67,57 +65,68 @@ const PLANS: {
     cta: { to: "/auth", label: "Créer un compte gratuit" },
   },
   {
-    name: "Abonnement famille",
-    badge: "Recommandé",
-    price: `${formatXof(PROMO_PRICE_XOF)}/mois`,
-    priceSub: `les 3 premiers mois (${eurHint(PROMO_PRICE_EUR)}), puis ${formatXof(STANDARD_PRICE_XOF)}/mois (${eurHint(STANDARD_PRICE_EUR)})`,
+    name: "Compte sans suivi",
+    badge: "Parents Autonomes",
+    price: `${formatXof(STANDARD_PRICE_XOF)}/mois`,
+    priceSub: `par enfant supplémentaire (${eurHint(STANDARD_PRICE_EUR)})`,
     points: [
-      "Jusqu'à 5 profils enfants par compte",
-      "« Génizio Bienvenue » les 3 premiers mois, puis « Génizio Standard »",
-      "Défis, portfolio, Passeport d'Excellence et communauté inclus",
-      "Annulable à tout moment, sans frais",
+      "Pour les parents qui suivent eux-mêmes leur enfant",
+      "Accès complet aux défis Naya personnalisés",
+      "Portfolio de compétences et carte des talents",
+      "Sans engagement, annulable à tout moment",
     ],
-    cta: { to: "/auth", label: "Activer mon abonnement" },
+    cta: { to: "/auth", label: "Activer un compte" },
     highlight: true,
   },
   {
-    name: "Parrainage",
-    badge: "Diaspora & RSE",
-    price: `${SPONSORSHIP_FREE_MONTHS} premiers mois offerts`,
-    priceSub: `puis ${formatXof(STANDARD_PRICE_XOF)}/mois (${eurHint(STANDARD_PRICE_EUR)}), de 1 à 12 mois`,
+    name: "Accompagnement Dédié",
+    badge: "Service Premium",
+    price: `${formatXof(PACK_PRICE_XOF)}/mois`,
+    priceSub: `par enfant (${PACK_SESSIONS} séances × ${formatXof(SESSION_PRICE_XOF)})`,
     points: [
-      "Offrez une saison Génizio à un enfant resté au pays",
-      "Suivi de sa progression à distance",
-      "Code de parrainage à remettre à la famille",
-      "Portfolio d'impact à la fin du parrainage",
+      "12 séances par mois (3 séances / semaine)",
+      "Suivi personnalisé par un mentor formé",
+      "Diagnostic et bilan initial inclus",
+      "Comptes rendus réguliers pour les parents",
     ],
-    cta: { to: "/parrainage", label: "Parrainer un enfant" },
+    cta: { to: "/auth", label: "Rejoindre l'accompagnement" },
   },
 ];
 
 // Les produits et services payants, au-delà du profil gratuit — chaque prix est lu
 // directement depuis src/lib/pricing.ts (source unique de l'affichage).
-const PRODUCTS: { name: string; price: string; desc: string; href?: "/boutique" }[] = [
+const PRODUCTS: { name: string; price: string; desc: string; href?: "/boutique" | "/parrainage" }[] = [
   {
-    name: "Profil enfant supplémentaire",
-    price: `${formatXof(PROMO_PRICE_XOF)}/mois puis ${formatXof(STANDARD_PRICE_XOF)}/mois`,
-    desc: "Accès hors abonnement pour un 2e enfant (ou plus), par périodes de 1, 3 ou 6 mois. Prix de bienvenue les 3 premiers mois du compte.",
+    name: "Diagnostic première rencontre (Nouveau)",
+    price: `${formatXof(DIAGNOSTIC_PRICE_XOF)} (${eurHint(DIAGNOSTIC_PRICE_EUR)})`,
+    desc: "Séance initiale approfondie avec un expert pour établir le premier profil psychopédagogique de l'enfant, identifier ses intelligences dominantes et orienter son parcours.",
   },
   {
-    name: "Passeport d'Excellence",
+    name: "Comptes supplémentaires sans suivi",
+    price: `${formatXof(STANDARD_PRICE_XOF)}/mois/enfant (${eurHint(STANDARD_PRICE_EUR)})`,
+    desc: "Accès complet autonome pour chaque enfant supplémentaire (au-delà du 1er profil gratuit), pour les parents qui pilotent eux-mêmes les défis et le portfolio.",
+  },
+  {
+    name: "Certificats & Passeport d'Excellence",
     price: `${formatXof(PASSPORT_PRICE_XOF)} (${eurHint(PASSPORT_PRICE_EUR)})`,
-    desc: "Rapport de compétences imprimable, synthèse de la carte des talents et des réalisations de l'enfant. Paiement unique.",
+    desc: "Rapport officiel de compétences imprimable, synthèse certifiée de la carte des talents et de toutes les réalisations concrètes de l'enfant. Paiement unique.",
   },
   {
-    name: "Pack Accompagnement",
+    name: "Pack Accompagnement Mensuel",
     price: `${PACK_SESSIONS} séances × ${formatXof(SESSION_PRICE_XOF)} = ${formatXof(PACK_PRICE_XOF)}/mois/enfant`,
-    desc: "Suivi hebdomadaire par un mentor formé : bilan, séances et comptes rendus directement dans l'application.",
+    desc: "Suivi intensif hebdomadaire par un mentor dédié et formé : préparation, séances en direct, comptes rendus d'évolution et liaison continue avec l'IA Naya.",
   },
   {
-    name: "Kits pédagogiques",
+    name: "Kits pédagogiques physiques",
     price: "Prix par kit",
-    desc: "Kits matériels physiques pour réaliser de vrais projets : bricolage, expériences, cuisine, couture. Commandables dans la boutique.",
+    desc: "Kits matériels réels pour réaliser des projets concrets : bricolage, sciences, robotique, expériences et travaux manuels.",
     href: "/boutique",
+  },
+  {
+    name: "Parrainage",
+    price: `${formatXof(STANDARD_PRICE_XOF)}/mois (${eurHint(STANDARD_PRICE_EUR)})`,
+    desc: "Offrez un accès Génizio à un enfant de votre choix au pays, avec suivi de sa progression et portfolio d'impact à distance.",
+    href: "/parrainage",
   },
 ];
 
@@ -310,8 +319,8 @@ function TarifsPage() {
         {/* Note de bas de page */}
         <p className="mt-8 text-xs font-semibold leading-relaxed text-ink/50">
           Tous les prix sont en FCFA (XOF), TVA incluse le cas échéant. Équivalents en euros à la
-          parité de la saison (10 000 F = 15 €), à titre indicatif : 5 000 F ≈ 7,50 €, 15 000 F ≈
-          22,50 €, 50 000 F ≈ 75 €. Les frais éventuels de transfert Mobile Money restent à la
+          parité saison (10 000 F ≈ 15 €), à titre indicatif : 35 000 F ≈ 53,50 €, 50 000 F ≈ 75 €,
+          75 000 F ≈ 115 €, 180 000 F ≈ 270 €. Les frais éventuels de transfert Mobile Money restent à la
           charge de l'acheteur. Le premier profil enfant reste gratuit pour toujours, sans carte
           bancaire demandée.
         </p>
