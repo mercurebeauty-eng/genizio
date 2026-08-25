@@ -88,6 +88,7 @@ function MentorHubPage() {
   const { session, loading } = useSession();
   const navigate = useNavigate();
 
+
   const [childName, setChildName] = useState("");
   const [fetching, setFetching] = useState(true);
 
@@ -300,6 +301,9 @@ function MentorHubPage() {
   }, [session, loading, navigate]);
 
   const mentorMode = isMentorMode(session);
+  useEffect(() => {
+    if (mentorMode) navigate({ to: "/mentor", replace: true });
+  }, [mentorMode, navigate]);
 
   useEffect(() => {
     if (!userId) return;
