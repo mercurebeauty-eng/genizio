@@ -19,7 +19,7 @@ export const Route = createFileRoute("/tarifs")({
     const meta = pageMeta({
       title: "Tarifs & Services — Génizio",
       description:
-        "Les tarifs de Génizio en FCFA : 1 profil enfant gratuit pour toujours, diagnostic première rencontre à 50 000 F, accompagnement 12 séances × 15 000 F/mois, certificats d'excellence et kits pédagogiques.",
+        "Les tarifs de Génizio en FCFA : 1 profil enfant gratuit pour toujours, diagnostic première rencontre à 50 000 F, accompagnement 12 séances (15 000 F/séance), certificats d'excellence et kits pédagogiques.",
       path: "/tarifs",
     });
     return {
