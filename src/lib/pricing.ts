@@ -6,98 +6,71 @@
 // fichier est donc la source unique de l'affichage — sans lui, les deux copies de la modale de
 // mise à niveau (profiles.index.tsx et profiles.manage.tsx) finiraient par diverger.
 //
-// Décision utilisateur (2026-08-03) : prix de bienvenue à 5 000 FCFA valable les 3 PREMIERS
-// MOIS DU COMPTE (compte à rebours personnel, pas une fenêtre de lancement globale), puis
-// 15 000 FCFA. Même barème côté organisations, où la référence est la date de création de la
-// campagne plutôt que celle d'un compte.
-//
-// Décision utilisateur (2026-08-05) : ce barème mensuel devient LE modèle d'accès — chaque
-// enfant au-delà du 1er profil gratuit coûte 5 000 F/mois (3 premiers mois du compte) puis
-// 15 000 F/mois. Le parrainage suit le même barème. Équivalents EUR à la parité de la saison
-// (10 000 F = 15 €) : 5 000 F ≈ 7,50 €, 15 000 F ≈ 22,50 €.
-export const PROMO_PRICE_XOF = 5000;
-export const PROMO_PRICE_EUR = 7.5;
-export const STANDARD_PRICE_XOF = 15000;
-export const STANDARD_PRICE_EUR = 22.5;
-export const PROMO_DURATION_MONTHS = 3;
+// Décision utilisateur (2026-08-24) : Positionnement premium
+//   • 1er profil enfant : offert pour toujours (0 F)
+//   • Profils supplémentaires / comptes sans suivi : 35 000 FCFA/mois (direct, plus d'offre 5 000 F).
+//   • Diagnostic première rencontre : 50 000 FCFA (séance initiale pour établir le profil).
+//   • Certificats / Passeport d'Excellence : 75 000 FCFA.
+//   • Pack Accompagnement : 12 séances × 15 000 FCFA = 180 000 FCFA/mois.
+// Équivalents EUR indicatifs à la parité saison (10 000 F ≈ 15 €).
+export const PROMO_PRICE_XOF = 35000;
+export const PROMO_PRICE_EUR = 53.5;
+export const STANDARD_PRICE_XOF = 35000;
+export const STANDARD_PRICE_EUR = 53.5;
+export const PROMO_DURATION_MONTHS = 0;
 
-// Parrainage (décision utilisateur 2026-08-08) : les 3 PREMIERS MOIS sont OFFERTS pour
-// l'enfant parrainé, puis 15 000 F/mois au-delà — « 3 mois gratuit puis le passage à
-// 15 000 ». Les mois offerts sont un cadeau, découplés de la fenêtre de bienvenue du compte
-// (5 000 F) : le parrain paie max(0, months − 3) × tarif standard.
-export const SPONSORSHIP_FREE_MONTHS = 3;
+// Parrainage (décision utilisateur 2026-08-24) : 35 000 F/mois par enfant soutenu.
+export const SPONSORSHIP_FREE_MONTHS = 0;
 
 export function resolveSponsorshipPrice(
   months: number,
   currency: "EUR" | "XOF" = "XOF",
 ): { paidMonths: number; amountPaid: number; totalMonths: number } {
-  const paidMonths = Math.max(0, months - SPONSORSHIP_FREE_MONTHS);
+  const paidMonths = Math.max(0, months);
   const monthly = currency === "EUR" ? STANDARD_PRICE_EUR : STANDARD_PRICE_XOF;
   return { paidMonths, amountPaid: paidMonths * monthly, totalMonths: months };
 }
 
-// Passeport d'Excellence (déblocage pdf_unlocked) — prix unique affiché côté admin et
-// utilisé par le paiement en ligne Paystack (initializePassportPayment). 50 000 FCFA.
-export const PASSPORT_PRICE_XOF = 50000;
-export const PASSPORT_PRICE_EUR = 75;
+// Passeport d'Excellence & Certificats de compétences (déblocage pdf_unlocked)
+// Prix unique : 75 000 FCFA.
+export const PASSPORT_PRICE_XOF = 75000;
+export const PASSPORT_PRICE_EUR = 115;
 
-// ── Accompagnement (V1, décisions porteur 2026-08-14) ───────────────────────────
-// Le pack d'accompagnement est PAR ENFANT : 12 séances × 5 000 F = 60 000 F/mois/enfant.
-// Pendant le pilote le paiement est manuel (WhatsApp/Mobile Money) — le bouton de la
-// modale ouvre un lien WhatsApp pré-rempli, pas Paystack. Ces constantes sont la source
-// unique de l'affichage (modale parent, future facturation mentor_payout en V2).
-export const SESSION_PRICE_XOF = 5000;
-export const BILAN_PRICE_XOF = 25000;
+// Diagnostic première rencontre (Nouveau) — séance initiale approfondie pour établir le profil
+// Prix unique : 50 000 FCFA.
+export const DIAGNOSTIC_PRICE_XOF = 50000;
+export const DIAGNOSTIC_PRICE_EUR = 75;
+
+// ── Accompagnement (Positionnement Premium 2026-08-24) ───────────────────────────
+// Le pack d'accompagnement est PAR ENFANT : 12 séances × 15 000 F = 180 000 F/mois/enfant.
+export const SESSION_PRICE_XOF = 15000;
+export const BILAN_PRICE_XOF = 50000;
 export const PACK_SESSIONS = 12;
-export const PACK_PRICE_XOF = SESSION_PRICE_XOF * PACK_SESSIONS; // 60 000 F/mois/enfant
+export const PACK_PRICE_XOF = SESSION_PRICE_XOF * PACK_SESSIONS; // 180 000 F/mois/enfant
 
-// Payout mentor (Vague C, 2026-08-14) : 70% de la séance sur preuve (CR en app +
-// déclaration). La part est calculée au fil des séances approuvées par l'admin (ledger).
+// Payout mentor : 70% de la séance sur preuve (CR en app + déclaration).
 export const MENTOR_SHARE = 0.7;
-export const MENTOR_SESSION_PAYOUT_XOF = Math.round(SESSION_PRICE_XOF * MENTOR_SHARE); // 3 500 F/séance
+export const MENTOR_SESSION_PAYOUT_XOF = Math.round(SESSION_PRICE_XOF * MENTOR_SHARE); // 10 500 F/séance
 
 export interface ExtraSlotPrice {
   priceXof: number;
-  /** Équivalent EUR à la parité saison (10 000 F = 15 €). */
+  /** Équivalent EUR à la parité saison (10 000 F ≈ 15 €). */
   priceEur: number;
   isPromo: boolean;
   /** Fin du prix de bienvenue. `null` dès que la promo est passée ou la référence inconnue. */
   promoEndsAt: Date | null;
 }
 
-// referenceCreatedAt : auth.users.created_at côté famille, campaigns.created_at côté ONG.
-// Référence absente/illisible → tarif standard, jamais une promo offerte par erreur.
+// Résolution directe du tarif compte supplémentaire (35 000 FCFA/mois).
 export function resolveExtraSlotPrice(
-  referenceCreatedAt: string | null | undefined,
-  now: Date = new Date(),
+  _referenceCreatedAt?: string | null,
+  _now: Date = new Date(),
 ): ExtraSlotPrice {
-  if (!referenceCreatedAt) {
-    return {
-      priceXof: STANDARD_PRICE_XOF,
-      priceEur: STANDARD_PRICE_EUR,
-      isPromo: false,
-      promoEndsAt: null,
-    };
-  }
-  const created = new Date(referenceCreatedAt);
-  if (Number.isNaN(created.getTime())) {
-    return {
-      priceXof: STANDARD_PRICE_XOF,
-      priceEur: STANDARD_PRICE_EUR,
-      isPromo: false,
-      promoEndsAt: null,
-    };
-  }
-
-  const endsAt = new Date(created);
-  endsAt.setMonth(endsAt.getMonth() + PROMO_DURATION_MONTHS);
-
-  const isPromo = now.getTime() < endsAt.getTime();
   return {
-    priceXof: isPromo ? PROMO_PRICE_XOF : STANDARD_PRICE_XOF,
-    priceEur: isPromo ? PROMO_PRICE_EUR : STANDARD_PRICE_EUR,
-    isPromo,
-    promoEndsAt: isPromo ? endsAt : null,
+    priceXof: STANDARD_PRICE_XOF,
+    priceEur: STANDARD_PRICE_EUR,
+    isPromo: false,
+    promoEndsAt: null,
   };
 }
 

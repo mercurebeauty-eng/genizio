@@ -4,32 +4,30 @@ import { getFamilyCoverage } from "@/lib/child-access";
 import { resolveSponsorshipPrice } from "@/lib/pricing";
 import { applyPaystackEntitlement, type PaymentRow } from "@/lib/payment-fulfillment.server";
 
-// ── Prix du parrainage : 3 premiers mois OFFERTS puis 15 000 F/mois ────────────
-// Corrige le bug historique « le parrainage ne prend en charge que le 5 000 F » : le
-// montant suit désormais max(0, months − 3) × tarif standard (resolveSponsorshipPrice).
-describe("resolveSponsorshipPrice (3 mois offerts puis 15 000 F/mois)", () => {
-  it("1 à 3 mois → rien à payer (offert)", () => {
-    expect(resolveSponsorshipPrice(1, "XOF").amountPaid).toBe(0);
-    expect(resolveSponsorshipPrice(3, "XOF").amountPaid).toBe(0);
-    expect(resolveSponsorshipPrice(3, "XOF").paidMonths).toBe(0);
-    expect(resolveSponsorshipPrice(3, "XOF").totalMonths).toBe(3);
+// ── Prix du parrainage : 35 000 F/mois (positionnement direct sans promo) ───────
+describe("resolveSponsorshipPrice (35 000 F/mois)", () => {
+  it("1 mois → 1 mois payé × 35 000 F", () => {
+    const p = resolveSponsorshipPrice(1, "XOF");
+    expect(p.paidMonths).toBe(1);
+    expect(p.amountPaid).toBe(35000);
+    expect(p.totalMonths).toBe(1);
   });
 
-  it("4 mois → 1 mois payé × 15 000 F", () => {
+  it("4 mois → 4 mois payés × 35 000 F = 140 000 F", () => {
     const p = resolveSponsorshipPrice(4, "XOF");
-    expect(p.paidMonths).toBe(1);
-    expect(p.amountPaid).toBe(15000);
+    expect(p.paidMonths).toBe(4);
+    expect(p.amountPaid).toBe(140000);
     expect(p.totalMonths).toBe(4);
   });
 
-  it("12 mois → 9 mois payés × 15 000 F = 135 000 F", () => {
+  it("12 mois → 12 mois payés × 35 000 F = 420 000 F", () => {
     const p = resolveSponsorshipPrice(12, "XOF");
-    expect(p.paidMonths).toBe(9);
-    expect(p.amountPaid).toBe(135000);
+    expect(p.paidMonths).toBe(12);
+    expect(p.amountPaid).toBe(420000);
   });
 
-  it("EUR : équivalent repère au taux de la saison (15 000 F ≈ 22,50 €)", () => {
-    expect(resolveSponsorshipPrice(6, "EUR").amountPaid).toBe(3 * 22.5);
+  it("EUR : équivalent repère au taux de la saison (35 000 F ≈ 53,50 €)", () => {
+    expect(resolveSponsorshipPrice(6, "EUR").amountPaid).toBe(6 * 53.5);
   });
 });
 

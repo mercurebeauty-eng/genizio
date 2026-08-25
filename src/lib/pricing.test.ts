@@ -3,50 +3,53 @@ import {
   resolveExtraSlotPrice,
   formatXof,
   formatXofAmount,
-  PROMO_PRICE_XOF,
   STANDARD_PRICE_XOF,
+  PASSPORT_PRICE_XOF,
+  DIAGNOSTIC_PRICE_XOF,
+  PACK_PRICE_XOF,
+  SESSION_PRICE_XOF,
+  resolveSponsorshipPrice,
 } from "@/lib/pricing";
 
-// Prix de bienvenue (2026-08-03) : 5 000 FCFA pendant les 3 premiers mois du COMPTE (pas une
-// fenêtre de lancement globale), puis 15 000 FCFA. Même barème utilisé côté organisations avec
-// campaigns.created_at comme référence, d'où la signature générique "referenceCreatedAt".
 describe("resolveExtraSlotPrice", () => {
-  const now = new Date("2026-08-03T12:00:00.000Z");
+  const now = new Date("2026-08-24T12:00:00.000Z");
 
-  it("un compte de moins de 3 mois est en promo", () => {
+  it("retourne directement le tarif standard premium de 35 000 FCFA", () => {
     const result = resolveExtraSlotPrice("2026-07-01T00:00:00.000Z", now);
-    expect(result.priceXof).toBe(PROMO_PRICE_XOF);
-    expect(result.isPromo).toBe(true);
-    expect(result.promoEndsAt).not.toBeNull();
-  });
-
-  it("un compte de plus de 3 mois est au tarif standard", () => {
-    const result = resolveExtraSlotPrice("2026-01-01T00:00:00.000Z", now);
-    expect(result.priceXof).toBe(STANDARD_PRICE_XOF);
+    expect(result.priceXof).toBe(35000);
     expect(result.isPromo).toBe(false);
     expect(result.promoEndsAt).toBeNull();
   });
 
-  it("un compte créé exactement il y a 3 mois n'est plus en promo", () => {
-    const result = resolveExtraSlotPrice("2026-05-03T12:00:00.000Z", now);
-    expect(result.isPromo).toBe(false);
-    expect(result.priceXof).toBe(STANDARD_PRICE_XOF);
-  });
-
-  it("une référence manquante retombe sur le tarif standard, jamais une promo offerte par erreur", () => {
+  it("gère les références null, undefined ou invalides de manière robuste", () => {
     expect(resolveExtraSlotPrice(null, now).priceXof).toBe(STANDARD_PRICE_XOF);
     expect(resolveExtraSlotPrice(undefined, now).priceXof).toBe(STANDARD_PRICE_XOF);
     expect(resolveExtraSlotPrice("pas-une-date", now).priceXof).toBe(STANDARD_PRICE_XOF);
   });
 });
 
+describe("constantes tarifaires premium", () => {
+  it("valide les montants des produits et services", () => {
+    expect(STANDARD_PRICE_XOF).toBe(35000);
+    expect(PASSPORT_PRICE_XOF).toBe(75000);
+    expect(DIAGNOSTIC_PRICE_XOF).toBe(50000);
+    expect(SESSION_PRICE_XOF).toBe(15000);
+    expect(PACK_PRICE_XOF).toBe(180000);
+  });
+
+  it("calcule le parrainage au tarif standard par mois", () => {
+    const sp = resolveSponsorshipPrice(3, "XOF");
+    expect(sp.paidMonths).toBe(3);
+    expect(sp.amountPaid).toBe(3 * 35000);
+  });
+});
+
 describe("formatXof / formatXofAmount", () => {
-  // Intl.NumberFormat("fr-FR") insère une espace insécable étroite (U+202F) entre les
-  // milliers, pas une espace ASCII classique — comparaison par regex plutôt que par égalité
-  // stricte pour ne pas dépendre du caractère exact choisi par l'environnement Node/ICU.
   it("formate le montant en français avec le suffixe FCFA", () => {
-    expect(formatXofAmount(5000)).toMatch(/^5[\s ]000$/);
-    expect(formatXof(5000)).toMatch(/^5[\s ]000 FCFA$/);
-    expect(formatXof(15000)).toMatch(/^15[\s ]000 FCFA$/);
+    expect(formatXofAmount(35000)).toMatch(/^35[\s ]000$/);
+    expect(formatXof(35000)).toMatch(/^35[\s ]000 FCFA$/);
+    expect(formatXof(50000)).toMatch(/^50[\s ]000 FCFA$/);
+    expect(formatXof(75000)).toMatch(/^75[\s ]000 FCFA$/);
+    expect(formatXof(180000)).toMatch(/^180[\s ]000 FCFA$/);
   });
 });

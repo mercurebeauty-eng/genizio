@@ -33,7 +33,24 @@ import {
   Clock,
   Sparkles,
   Loader2,
+  CreditCard,
+  MessageCircle,
+  Calendar,
+  CheckCircle2,
+  ShieldCheck,
 } from "lucide-react";
+import {
+  initializeAccompanimentPackPayment,
+  initializeDiagnosticPayment,
+} from "@/lib/payments.functions";
+import {
+  PACK_PRICE_XOF,
+  PACK_SESSIONS,
+  SESSION_PRICE_XOF,
+  DIAGNOSTIC_PRICE_XOF,
+  formatXof,
+  formatXofAmount,
+} from "@/lib/pricing";
 
 export const Route = createFileRoute("/profiles/$profileId/mentors")({
   component: MentorHubPage,
@@ -125,6 +142,47 @@ function MentorHubPage() {
     Array<{ id: string; planned_at: string; notes: string | null }>
   >([]);
   const plannedSlotsFn = useServerFn(listChildPlannedSlots);
+
+  // Paiement du Pack Accompagnement et du Diagnostic
+  const [packMonths, setPackMonths] = useState(1);
+  const [payingPack, setPayingPack] = useState(false);
+  const [payingDiagnostic, setPayingDiagnostic] = useState(false);
+  const initializePackPaymentFn = useServerFn(initializeAccompanimentPackPayment);
+  const initializeDiagnosticPaymentFn = useServerFn(initializeDiagnosticPayment);
+
+  const handlePayPack = async () => {
+    if (!session) return;
+    setPayingPack(true);
+    try {
+      const callbackUrl = `${window.location.origin}/paiement-retour`;
+      const { authorizationUrl } = await initializePackPaymentFn({
+        data: { childId: profileId, months: packMonths, callbackUrl },
+      });
+      toast.success("Redirection vers le paiement sécurisé Paystack…");
+      window.location.href = authorizationUrl;
+    } catch (err: any) {
+      toast.error(err.message || "Erreur lors du paiement.");
+    } finally {
+      setPayingPack(false);
+    }
+  };
+
+  const handlePayDiagnostic = async () => {
+    if (!session) return;
+    setPayingDiagnostic(true);
+    try {
+      const callbackUrl = `${window.location.origin}/paiement-retour`;
+      const { authorizationUrl } = await initializeDiagnosticPaymentFn({
+        data: { childId: profileId, callbackUrl },
+      });
+      toast.success("Redirection vers le paiement sécurisé Paystack…");
+      window.location.href = authorizationUrl;
+    } catch (err: any) {
+      toast.error(err.message || "Erreur lors du paiement.");
+    } finally {
+      setPayingDiagnostic(false);
+    }
+  };
 
   // Activité récente (canal pull + badge, décision #74).
   const [notifications, setNotifications] = useState<any[]>([]);
@@ -241,13 +299,7 @@ function MentorHubPage() {
     if (!loading && !session) navigate({ to: "/auth", replace: true });
   }, [session, loading, navigate]);
 
-  // Univers Mentor (décision #81) : ce hub est l'espace du PARENT qui suit le
-  // mentor de son enfant (« on ne se suit pas soi-même », décision #80) — en
-  // mode mentor, l'onglet est déjà masqué ; un accès direct renvoie vers /mentor.
   const mentorMode = isMentorMode(session);
-  useEffect(() => {
-    if (mentorMode) navigate({ to: "/mentor", replace: true });
-  }, [mentorMode, navigate]);
 
   useEffect(() => {
     if (!userId) return;
@@ -321,21 +373,152 @@ function MentorHubPage() {
           </div>
 
           {!mentorInfo ? (
-            <div className="rounded-3xl border-2 border-dashed border-ink/10 bg-white p-8 text-center">
-              <p className="font-display text-lg font-bold text-ink mb-2">
-                Aucun mentor assigné pour l'instant
-              </p>
-              <p className="text-sm text-ink/60 max-w-md mx-auto leading-relaxed">
-                Quand un mentor sera assigné pour accompagner {childName}, vous le verrez apparaître
-                ici avec son bilan de fin de période et son activité.
-              </p>
-              <Link
-                to="/profiles/$profileId/portfolio"
-                params={{ profileId }}
-                className="mt-5 inline-block rounded-xl border border-ink/10 bg-surface px-5 py-2 text-xs font-bold text-ink/70 hover:text-ink cursor-pointer"
-              >
-                Retour au Portfolio
-              </Link>
+            <div className="space-y-6">
+              {/* Carte principale Pack Accompagnement */}
+              <div className="relative overflow-hidden rounded-3xl border-2 border-sky-300/80 bg-white p-6 sm:p-8 shadow-xl shadow-sky-500/5">
+                <div className="flex flex-wrap items-center justify-between gap-2 mb-4">
+                  <span className="inline-flex items-center gap-1.5 rounded-full bg-sky-100 px-3.5 py-1 text-xs font-black uppercase tracking-wider text-sky-800">
+                    <Sparkles className="size-3.5 text-sky-600" />
+                    Pack Accompagnement Dédié
+                  </span>
+                  <span className="rounded-full bg-sky-600 px-3 py-1 text-xs font-black text-white">
+                    12 séances / mois
+                  </span>
+                </div>
+
+                <h2 className="font-display text-2xl sm:text-3xl font-extrabold text-ink leading-tight">
+                  Accompagnez le potentiel de {childName} avec un mentor dédié
+                </h2>
+                <p className="mt-3 text-sm text-ink/70 max-w-2xl leading-relaxed">
+                  Un mentor formé rencontre {childName} chaque semaine (3 séances par semaine),
+                  établit son diagnostic pédagogique, suit ses défis Naya et vous remet un bilan de
+                  compétences détaillé.
+                </p>
+
+                {/* Détails du pack */}
+                <div className="mt-6 grid grid-cols-1 sm:grid-cols-3 gap-3">
+                  <div className="rounded-2xl border border-sky-100 bg-sky-50/50 p-4">
+                    <p className="text-xs font-black uppercase tracking-wider text-sky-800">
+                      Séances en direct
+                    </p>
+                    <p className="text-sm font-bold text-ink mt-1">3 séances / semaine</p>
+                    <p className="text-[11px] text-ink/50 mt-0.5">12 séances mensuelles</p>
+                  </div>
+                  <div className="rounded-2xl border border-sky-100 bg-sky-50/50 p-4">
+                    <p className="text-xs font-black uppercase tracking-wider text-sky-800">
+                      Bilan inclus
+                    </p>
+                    <p className="text-sm font-bold text-ink mt-1">Évaluation & Livrable</p>
+                    <p className="text-[11px] text-ink/50 mt-0.5">Rapport officiel parent</p>
+                  </div>
+                  <div className="rounded-2xl border border-sky-100 bg-sky-50/50 p-4">
+                    <p className="text-xs font-black uppercase tracking-wider text-sky-800">
+                      Tarif séance
+                    </p>
+                    <p className="text-sm font-bold text-ink mt-1">
+                      {formatXof(SESSION_PRICE_XOF)} / séance
+                    </p>
+                    <p className="text-[11px] text-ink/50 mt-0.5">Soit {formatXof(PACK_PRICE_XOF)}/mois</p>
+                  </div>
+                </div>
+
+                {/* Choix de la durée */}
+                <div className="mt-6">
+                  <p className="text-xs font-black uppercase tracking-widest text-ink/60 mb-2">
+                    Durée d'accompagnement souhaitée :
+                  </p>
+                  <div className="flex gap-2.5">
+                    {[1, 3, 6].map((m) => (
+                      <button
+                        key={m}
+                        type="button"
+                        onClick={() => setPackMonths(m)}
+                        className={`flex-1 rounded-2xl border py-3 px-4 text-center transition-all cursor-pointer ${
+                          packMonths === m
+                            ? "border-sky-600 bg-sky-600 text-white shadow-md"
+                            : "border-ink/10 bg-surface hover:bg-white text-ink font-semibold"
+                        }`}
+                      >
+                        <p className="text-sm font-extrabold">{m} mois</p>
+                        <p className="text-[11px] opacity-80 mt-0.5">
+                          {formatXofAmount(PACK_PRICE_XOF * m)} FCFA
+                        </p>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Bouton de paiement Paystack */}
+                <div className="mt-6 flex flex-col sm:flex-row gap-3">
+                  <button
+                    onClick={handlePayPack}
+                    disabled={payingPack}
+                    className="flex-1 inline-flex items-center justify-center gap-2.5 rounded-2xl bg-sky-600 px-6 py-4 text-sm font-extrabold text-white shadow-md hover:bg-sky-700 hover:shadow-lg transition-all cursor-pointer disabled:opacity-60"
+                  >
+                    {payingPack ? (
+                      <>
+                        <Loader2 className="size-4 animate-spin" />
+                        Initialisation du paiement…
+                      </>
+                    ) : (
+                      <>
+                        <CreditCard className="size-4" />
+                        Payer le Pack ({formatXof(PACK_PRICE_XOF * packMonths)}) par Paystack
+                      </>
+                    )}
+                  </button>
+                  <a
+                    href={`https://wa.me/33606433148?text=${encodeURIComponent(`Bonjour Génizio, je souhaite souscrire au Pack Accompagnement pour mon enfant ${childName} (${packMonths} mois à ${formatXof(PACK_PRICE_XOF * packMonths)}).`)}`}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="inline-flex items-center justify-center gap-2 rounded-2xl border border-emerald-600/30 bg-emerald-50 px-5 py-4 text-xs font-bold text-emerald-800 hover:bg-emerald-100 transition-all cursor-pointer"
+                  >
+                    <MessageCircle className="size-4 text-emerald-600" />
+                    Souscrire via WhatsApp
+                  </a>
+                </div>
+                <p className="mt-2.5 text-center text-[11px] text-ink/50 font-medium">
+                  Paiement sécurisé via Paystack : Mobile Money (Wave, Orange, MTN) ou Carte bancaire.
+                </p>
+              </div>
+
+              {/* Deuxième carte : Diagnostic Première Rencontre */}
+              <div className="rounded-3xl border border-ink/10 bg-white p-6 shadow-sm flex flex-col sm:flex-row sm:items-center sm:justify-between gap-6">
+                <div className="space-y-1 max-w-xl">
+                  <span className="inline-flex items-center gap-1 rounded-full bg-amber-100 px-3 py-0.5 text-[11px] font-black uppercase tracking-wider text-amber-900">
+                    Nouveau
+                  </span>
+                  <h3 className="font-display text-lg font-extrabold text-ink">
+                    Diagnostic Première Rencontre ({formatXof(DIAGNOSTIC_PRICE_XOF)})
+                  </h3>
+                  <p className="text-xs text-ink/70 leading-relaxed">
+                    Une première séance d'évaluation d'1h30 avec un expert psychopédagogique pour
+                    cartographier les intelligences de {childName} et établir son profil complet
+                    avant de démarrer un suivi.
+                  </p>
+                </div>
+                <div className="shrink-0 flex flex-col gap-2 sm:w-64">
+                  <button
+                    onClick={handlePayDiagnostic}
+                    disabled={payingDiagnostic}
+                    className="inline-flex items-center justify-center gap-2 rounded-xl bg-ink px-4 py-3 text-xs font-black text-white hover:bg-ink/90 transition-all cursor-pointer disabled:opacity-60 shadow-sm"
+                  >
+                    {payingDiagnostic ? (
+                      <Loader2 className="size-3.5 animate-spin" />
+                    ) : (
+                      <CreditCard className="size-3.5" />
+                    )}
+                    Réserver le Diagnostic
+                  </button>
+                  <Link
+                    to="/profiles/$profileId/portfolio"
+                    params={{ profileId }}
+                    className="text-center rounded-xl border border-ink/10 px-4 py-2 text-xs font-bold text-ink/60 hover:text-ink hover:bg-surface transition-all"
+                  >
+                    Retour au Portfolio
+                  </Link>
+                </div>
+              </div>
             </div>
           ) : (
             <>

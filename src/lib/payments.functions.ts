@@ -16,6 +16,7 @@ import {
   resolveExtraSlotPrice,
   resolveSponsorshipPrice,
   PASSPORT_PRICE_XOF,
+  DIAGNOSTIC_PRICE_XOF,
   PACK_PRICE_XOF,
 } from "@/lib/pricing";
 import type { PaymentMetadata, PaymentRow } from "@/lib/payment-fulfillment.server";
@@ -243,6 +244,49 @@ export const initializePassportPayment = createServerFn({ method: "POST" })
     });
 
     return { authorizationUrl, reference, amountXof: PASSPORT_PRICE_XOF };
+  });
+
+// ── Diagnostic Première Rencontre (50 000 FCFA) ──────────────────────────────
+const DiagnosticPaymentInput = z.object({
+  childId: z.string().uuid(),
+  callbackUrl: callbackUrlSchema,
+});
+
+export const initializeDiagnosticPayment = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .validator((input: unknown) => DiagnosticPaymentInput.parse(input))
+  .handler(async ({ data, context }) => {
+    const userId = context.userId;
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { initializePaystackTransaction, createPaystackReference } =
+      await import("@/lib/paystack.server");
+
+    const { data: child, error: childErr } = await supabaseAdmin
+      .from("child_profiles")
+      .select("id")
+      .eq("id", data.childId)
+      .eq("user_id", userId)
+      .maybeSingle();
+    if (childErr || !child) throw new Error("Profil enfant introuvable ou accès refusé.");
+
+    const reference = createPaystackReference("DIAG");
+    await createPaystackPayment({
+      supabaseAdmin,
+      userId,
+      reference,
+      amountXof: DIAGNOSTIC_PRICE_XOF,
+      metadata: { type: "diagnostic", child_id: data.childId },
+    });
+
+    const { authorizationUrl } = await initializePaystackTransaction({
+      email: await getPaystackUserEmail(supabaseAdmin, userId),
+      amountXof: DIAGNOSTIC_PRICE_XOF,
+      reference,
+      callbackUrl: data.callbackUrl,
+      metadata: { intent: "diagnostic", child_id: data.childId },
+    });
+
+    return { authorizationUrl, reference, amountXof: DIAGNOSTIC_PRICE_XOF };
   });
 
 // ── Modale d'upgrade (quota atteint) ─────────────────────────────────────────
