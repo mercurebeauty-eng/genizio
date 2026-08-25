@@ -46,6 +46,7 @@ import {
 import { NOT_COMPLETED_CHIPS } from "@/lib/challenges.functions";
 import { fileToCompressedProof } from "@/lib/image-proof";
 import { getChildGuild } from "@/lib/guilds";
+import { MentorDiscoveryFeed } from "@/components/mentor/MentorDiscoveryFeed";
 import {
   Loader2,
   Users,
@@ -208,8 +209,8 @@ function MentorDashboardPage() {
   const saveReportFn = useServerFn(saveMentorReportDraft);
   const submitReportFn = useServerFn(submitMentorReport);
 
-  // Mentor Copilote — onglet de l'enfant sélectionné (Défis | Bilan).
-  const [panelTab, setPanelTab] = useState<"defis" | "bilan">("defis");
+  // Mentor Copilote — onglet de l'enfant sélectionné (Défis | Découverte | Bilan).
+  const [panelTab, setPanelTab] = useState<"defis" | "decouverte" | "bilan">("defis");
   // Bilan de fin (décision #74) — le « bilan inclus » du pack, validé par le parent.
   const [reportDraft, setReportDraft] = useState<MentorReport | null>(null);
   const [reportForm, setReportForm] = useState({
@@ -1089,19 +1090,23 @@ function MentorDashboardPage() {
                           );
                         })()}
 
-                        {/* Mentor Copilote (décision #74) : onglet Défis (opérateur) | Bilan */}
+                        {/* Mentor Copilote (décision #74) : onglet Défis (opérateur) | Découverte | Bilan */}
                         <div className="flex rounded-2xl border border-ink/10 bg-white p-1 shadow-sm">
-                          {(["defis", "bilan"] as const).map((tab) => (
+                          {(["defis", "decouverte", "bilan"] as const).map((tab) => (
                             <button
                               key={tab}
                               onClick={() => setPanelTab(tab)}
-                              className={`flex-1 rounded-xl px-4 py-2 text-xs font-black uppercase tracking-widest transition-all cursor-pointer ${
+                              className={`flex-1 rounded-xl px-3 sm:px-4 py-2 text-xs font-black uppercase tracking-widest transition-all cursor-pointer ${
                                 panelTab === tab
                                   ? "bg-ink text-white shadow-sm"
                                   : "text-ink/50 hover:text-ink"
                               }`}
                             >
-                              {tab === "defis" ? "⚙️ Défis" : "📄 Bilan de fin"}
+                              {tab === "defis"
+                                ? "⚙️ Défis"
+                                : tab === "decouverte"
+                                ? "🧭 Découverte"
+                                : "📄 Bilan"}
                             </button>
                           ))}
                         </div>
@@ -1222,6 +1227,10 @@ function MentorDashboardPage() {
                               )}
                             </div>
                           </>
+                        )}
+
+                        {panelTab === "decouverte" && (
+                          <MentorDiscoveryFeed childId={selected.id} childName={selected.name} />
                         )}
 
                         {/* ── Bilan de fin (décision #74) — le « bilan inclus » du pack ── */}

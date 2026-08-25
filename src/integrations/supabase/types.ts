@@ -642,6 +642,99 @@ export type Database = {
           },
         ];
       };
+      discovery_traces: {
+        Row: {
+          ai_behavioral_analysis: Json | null;
+          attempts_count: number;
+          autonomy_level: string | null;
+          child_id: string;
+          created_at: string;
+          description: string;
+          domain: string;
+          duration_minutes: number | null;
+          help_context: string | null;
+          hypothesis_cycle_id: string | null;
+          id: string;
+          mentor_notes: string | null;
+          mentor_reviewed_at: string | null;
+          mentor_user_id: string | null;
+          naya_dialogue: Json;
+          outcome_status: string;
+          perceived_difficulty: string | null;
+          proof_image_url: string | null;
+          source_type: string;
+          strategy_used: string | null;
+          title: string;
+          updated_at: string;
+          user_id: string;
+        };
+        Insert: {
+          ai_behavioral_analysis?: Json | null;
+          attempts_count?: number;
+          autonomy_level?: string | null;
+          child_id: string;
+          created_at?: string;
+          description: string;
+          domain: string;
+          duration_minutes?: number | null;
+          help_context?: string | null;
+          hypothesis_cycle_id?: string | null;
+          id?: string;
+          mentor_notes?: string | null;
+          mentor_reviewed_at?: string | null;
+          mentor_user_id?: string | null;
+          naya_dialogue?: Json;
+          outcome_status: string;
+          perceived_difficulty?: string | null;
+          proof_image_url?: string | null;
+          source_type: string;
+          strategy_used?: string | null;
+          title: string;
+          updated_at?: string;
+          user_id: string;
+        };
+        Update: {
+          ai_behavioral_analysis?: Json | null;
+          attempts_count?: number;
+          autonomy_level?: string | null;
+          child_id?: string;
+          created_at?: string;
+          description?: string;
+          domain?: string;
+          duration_minutes?: number | null;
+          help_context?: string | null;
+          hypothesis_cycle_id?: string | null;
+          id?: string;
+          mentor_notes?: string | null;
+          mentor_reviewed_at?: string | null;
+          mentor_user_id?: string | null;
+          naya_dialogue?: Json;
+          outcome_status?: string;
+          perceived_difficulty?: string | null;
+          proof_image_url?: string | null;
+          source_type?: string;
+          strategy_used?: string | null;
+          title?: string;
+          updated_at?: string;
+          user_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "discovery_traces_child_id_fkey";
+            columns: ["child_id"];
+            isOneToOne: false;
+            referencedRelation: "child_profiles";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "discovery_traces_hypothesis_cycle_id_fkey";
+            columns: ["hypothesis_cycle_id"];
+            isOneToOne: false;
+            referencedRelation: "hypothesis_cycles";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       family_coverages: {
         Row: {
           child_id: string | null;

@@ -12,6 +12,7 @@ import {
   MessageSquareQuote,
   Bell,
   Home,
+  Compass,
 } from "lucide-react";
 
 // Refonte Admin OS (2026-08-13, décision #71) : onglets — « Seasons » supprimé
@@ -26,6 +27,7 @@ export type AdminTab =
   | "products"
   | "talents"
   | "naya"
+  | "discovery"
   | "payments"
   | "commerce"
   | "profiles"
@@ -130,6 +132,19 @@ export const ADMIN_TABS: AdminTabDef[] = [
       "bg-gradient-to-br from-sky-500/10 via-white to-white border-sky-500/20 hover:shadow-sky-500/25",
     iconClass: "from-sky-500 to-blue-600 shadow-sky-500/40",
     haloClass: "from-sky-400/50 to-blue-400/10",
+  },
+  {
+    id: "discovery",
+    label: "Découverte",
+    sublabel: "Initiatives & Sandbox",
+    icon: Compass,
+    badge: "Laboratoire",
+    badgeBgClass: "bg-amber-500/10",
+    badgeTextClass: "text-amber-600",
+    cardClass:
+      "bg-gradient-to-br from-amber-500/10 via-white to-white border-amber-500/20 hover:shadow-amber-500/25",
+    iconClass: "from-amber-500 to-orange-600 shadow-amber-500/40",
+    haloClass: "from-amber-400/50 to-orange-400/10",
   },
   {
     id: "payments",

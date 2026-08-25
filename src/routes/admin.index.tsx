@@ -41,6 +41,7 @@ import { AdminProductsTab } from "@/components/admin/AdminProductsTab";
 import { AdminProfilesTab } from "@/components/admin/AdminProfilesTab";
 import { AdminTestimonialsTab } from "@/components/admin/AdminTestimonialsTab";
 import { AdminNotificationsTab } from "@/components/admin/AdminNotificationsTab";
+import { AdminDiscoveryTab } from "@/components/admin/AdminDiscoveryTab";
 import { getPaymentsPendingCountAdmin } from "@/lib/payments-admin.functions";
 import { ChevronRight } from "lucide-react";
 import { toast } from "sonner";
@@ -447,6 +448,7 @@ function AdminIndexPage() {
               />
             )}
 
+            {activeTab === "discovery" && <AdminDiscoveryTab />}
             {activeTab === "payments" && <AdminPaymentsTab />}
             {activeTab === "b2b" && <AdminCampaignsTab />}
             {activeTab === "mentors" && <AdminMentorsTab />}

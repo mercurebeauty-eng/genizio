@@ -3,10 +3,10 @@ import { ADMIN_TABS, AdminTab } from "@/components/admin/AdminNavTabBar";
 import fs from "node:fs";
 import path from "node:path";
 
-describe("Refonte Admin OS — Navigation & grille d'accueil (11 onglets)", () => {
-  it("définit les 11 onglets de la refonte dans ADMIN_TABS avec leurs métadonnées", () => {
+describe("Refonte Admin OS — Navigation & grille d'accueil (12 onglets)", () => {
+  it("définit les 12 onglets de la refonte dans ADMIN_TABS avec leurs métadonnées", () => {
     const tabIds = ADMIN_TABS.map((t) => t.id);
-    expect(tabIds).toHaveLength(11);
+    expect(tabIds).toHaveLength(12);
     expect(tabIds).toEqual([
       "executive",
       "b2b",
@@ -14,6 +14,7 @@ describe("Refonte Admin OS — Navigation & grille d'accueil (11 onglets)", () =
       "products",
       "talents",
       "naya",
+      "discovery",
       "payments",
       "commerce",
       "profiles",

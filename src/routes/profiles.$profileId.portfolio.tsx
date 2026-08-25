@@ -253,6 +253,9 @@ function PortfolioPage() {
 
   const [child, setChild] = useState<Child | null>(null);
   const [challenges, setChallenges] = useState<Challenge[]>([]);
+  const [discoveryArtifacts, setDiscoveryArtifacts] = useState<
+    { id: string; title: string; domain: string; proof_image_url: string; created_at?: string }[]
+  >([]);
   const [openCycle, setOpenCycle] = useState<OpenHypothesisCycle | null>(null);
   const [fetching, setFetching] = useState(true);
   const [enrolledSeason, setEnrolledSeason] = useState<Season | null>(null);
@@ -317,17 +320,28 @@ function PortfolioPage() {
     // Univers Mentor : profil + défis + cycle ouvert via getMentorChildView
     // (service role — la RLS ne rend pas les défis non-complétés aux mentors).
     if (mentorMode) {
-      getMentorChildViewFn({ data: { childId: profileId } })
-        .then((view) => {
+      Promise.all([
+        getMentorChildViewFn({ data: { childId: profileId } }),
+        supabase
+          .from("discovery_traces")
+          .select("id, title, domain, proof_image_url, created_at")
+          .eq("child_id", profileId)
+          .not("proof_image_url", "is", null)
+          .order("created_at", { ascending: false })
+          .limit(50),
+      ])
+        .then(([view, dt]) => {
           setChild((view.child as Child) ?? null);
           setChallenges((view.challenges ?? []) as Challenge[]);
           setOpenCycle((view.openCycle as OpenHypothesisCycle) ?? null);
+          setDiscoveryArtifacts((dt.data ?? []) as any[]);
         })
         .catch((err) => {
           console.error("Erreur lors du chargement du portfolio (mode mentor):", err);
           setChild(null);
           setChallenges([]);
           setOpenCycle(null);
+          setDiscoveryArtifacts([]);
         })
         .finally(() => {
           setFetching(false);
@@ -360,17 +374,26 @@ function PortfolioPage() {
         .order("created_at", { ascending: false })
         .limit(1)
         .maybeSingle(),
+      supabase
+        .from("discovery_traces")
+        .select("id, title, domain, proof_image_url, created_at")
+        .eq("child_id", profileId)
+        .not("proof_image_url", "is", null)
+        .order("created_at", { ascending: false })
+        .limit(50),
     ])
-      .then(([c, ch, hc]) => {
+      .then(([c, ch, hc, dt]) => {
         setChild((c.data as Child) ?? null);
         setChallenges((ch.data ?? []) as Challenge[]);
         setOpenCycle((hc.data as OpenHypothesisCycle) ?? null);
+        setDiscoveryArtifacts((dt.data ?? []) as any[]);
       })
       .catch((err) => {
         console.error("Erreur lors du chargement du portfolio:", err);
         setChild(null);
         setChallenges([]);
         setOpenCycle(null);
+        setDiscoveryArtifacts([]);
       })
       .finally(() => {
         setFetching(false);
@@ -552,7 +575,23 @@ function PortfolioPage() {
   }
 
   const completed = challenges.filter((c) => c.status === "completed");
-  const artifacts = completed.filter((c) => c.proof_image_url);
+  const challengeArtifacts = completed
+    .filter((c) => c.proof_image_url)
+    .map((c) => ({
+      id: c.id,
+      title: c.title,
+      domain: c.domain,
+      proof_image_url: c.proof_image_url!,
+      source: "challenge" as const,
+    }));
+  const discArtifacts = discoveryArtifacts.map((d) => ({
+    id: d.id,
+    title: d.title,
+    domain: d.domain,
+    proof_image_url: d.proof_image_url,
+    source: "discovery" as const,
+  }));
+  const artifacts = [...challengeArtifacts, ...discArtifacts];
 
   // Portrait structuré (2026-08-09) : déterministe et instantané — plus le doublon
   // de la synthèse LLM "Rapport de Naya" (qui vit sur la page Défis). Construit à
@@ -1678,11 +1717,16 @@ function PortfolioPage() {
             )}
           </div>
 
-          <div className="rounded-3xl border border-ink/10 bg-white p-6 shadow-xl">
-            <h3 className="mb-4 flex items-center gap-2 font-display text-balance text-lg font-bold">
-              <ImageIcon className="size-5 text-brand" />
-              Galerie d'artefacts
-            </h3>
+          <div className="rounded-3xl border border-ink/10 bg-white p-6 shadow-xl space-y-4">
+            <div className="flex items-center justify-between">
+              <h3 className="flex items-center gap-2 font-display text-balance text-lg font-bold">
+                <ImageIcon className="size-5 text-brand" />
+                Galerie d'artefacts ({artifacts.length})
+              </h3>
+              <span className="text-[11px] font-bold text-ink/50">
+                Défis & Explorations libres
+              </span>
+            </div>
             {artifacts.length === 0 ? (
               <p className="text-sm text-ink/60">Aucune photo pour l'instant.</p>
             ) : (
@@ -1690,13 +1734,32 @@ function PortfolioPage() {
                 {artifacts.map((c) => (
                   <div
                     key={c.id}
-                    className="aspect-square overflow-hidden rounded-2xl border border-ink/10 bg-surface"
+                    className="group relative aspect-square overflow-hidden rounded-2xl border border-ink/10 bg-surface shadow-sm"
                   >
                     <ProofImage
                       stored={c.proof_image_url}
                       alt={c.title}
-                      className="h-full w-full object-cover"
+                      className="h-full w-full object-cover transition-transform group-hover:scale-105"
                     />
+                    <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent p-2 text-white">
+                      <p className="truncate text-xs font-bold">{c.title}</p>
+                      <div className="flex items-center gap-1.5 mt-0.5">
+                        <span
+                          className={`text-[9px] font-black uppercase tracking-wider px-1.5 py-0.2 rounded ${
+                            c.source === "discovery"
+                              ? "bg-amber-500 text-white"
+                              : "bg-white/20 text-white"
+                          }`}
+                        >
+                          {c.source === "discovery" ? "🧭 Découverte" : "⭐ Défi"}
+                        </span>
+                        {c.domain && (
+                          <span className="text-[9px] text-white/80 truncate">
+                            {c.domain}
+                          </span>
+                        )}
+                      </div>
+                    </div>
                   </div>
                 ))}
               </div>
