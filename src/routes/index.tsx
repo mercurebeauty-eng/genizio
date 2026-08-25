@@ -2232,9 +2232,7 @@ function CTASection() {
               </a>
             </div>
             <p className="mt-6 text-[11px] font-semibold text-white/50">
-              1 profil enfant gratuit · forfait famille 5 000 → 15 000 F/mois · paliers de +5
-              enfants au même tarif · Accompagnement humain par un mentor (12 séances × 5 000
-              F/mois/enfant) · Aucune carte bancaire demandée
+              1 profil enfant gratuit pour toujours · profils supplémentaires 35 000 F/mois · Accompagnement humain optionnel par un mentor (12 séances/mois)
             </p>
           </div>
         </div>

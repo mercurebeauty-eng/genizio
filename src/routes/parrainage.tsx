@@ -26,7 +26,7 @@ export const Route = createFileRoute("/parrainage")({
     pageMeta({
       title: "Parrainage Diaspora & RSE — Génizio",
       description:
-        "Offrez de 1 à 12 mois d'aventure Génizio à un enfant en Côte d'Ivoire, depuis la diaspora ou via le mécénat de votre entreprise (RSE). Les 3 premiers mois sont offerts.",
+        "Offrez de 1 à 12 mois d'aventure Génizio à un enfant en Côte d'Ivoire, depuis la diaspora ou via le mécénat de votre entreprise (RSE).",
       path: "/parrainage",
     }),
   component: ParrainagePage,
@@ -39,19 +39,19 @@ function ParrainagePage() {
   const [sponsorEmail, setSponsorEmail] = useState("");
   const [targetChildName, setTargetChildName] = useState("");
   const [sponsorMessage, setSponsorMessage] = useState("");
-  // Décision utilisateur (2026-08-08) : 1 à 12 mois ; les 3 premiers sont OFFERTS, au-delà
-  // 15 000 F/mois (resolveSponsorshipPrice). Paiement en ligne Paystack en FCFA (devise de
-  // charge du compte) — l'équivalent EUR n'est qu'un repère d'affichage pour la diaspora.
-  const [months, setMonths] = useState(3);
+  // Décision utilisateur (2026-08-24) : 1 à 12 mois, 35 000 F/mois (resolveSponsorshipPrice).
+  // Paiement en ligne Paystack en FCFA (devise de charge du compte) — l'équivalent EUR
+  // n'est qu'un repère d'affichage pour la diaspora.
+  const [months, setMonths] = useState(1);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [createdToken, setCreatedToken] = useState<SponsorshipToken | null>(null);
   const [copied, setCopied] = useState(false);
 
   const pricing = resolveSponsorshipPrice(months, "XOF");
   const isFree = pricing.amountPaid <= 0;
-  const eurHint = Math.round(pricing.paidMonths * 22.5); // équivalent EUR repère (15 000 F ≈ 22,50 €)
+  const eurHint = Math.round(pricing.paidMonths * 53.5); // équivalent EUR repère (35 000 F ≈ 53,50 €)
   const totalLabel = isFree
-    ? "Offert — 3 premiers mois"
+    ? "Offert"
     : `${formatXofAmount(pricing.amountPaid)} FCFA${eurHint > 0 ? ` (≈ ${eurHint} €)` : ""}`;
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -75,7 +75,8 @@ function ParrainagePage() {
       });
 
       if (res.token) {
-        // 3 premiers mois offerts : le code est actif d'office, aucun paiement.
+        // Si le parrainage est gratuit (ex: code promo ou solde 0), pas de redirection Paystack
+
         setCreatedToken(res.token as SponsorshipToken);
         toast.success("Code de parrainage généré ! Transmettez-le à la famille de l'enfant.");
       } else if (res.authorizationUrl) {
@@ -136,9 +137,7 @@ function ParrainagePage() {
             Offrez une <span className="text-brand">Saison d'Élite</span> à un enfant au pays
           </h1>
           <p className="text-lg text-ink/75 font-medium leading-relaxed max-w-2xl mx-auto mb-8">
-            Financez jusqu'à 12 mois d'apprentissage immersif pour un enfant nommé — les{" "}
-            <strong>3 premiers mois sont offerts</strong>. Recevez à la fin le Portfolio d'Impact
-            certifié de l'enfant.
+            Financez jusqu'à 12 mois d'apprentissage immersif pour un enfant nommé. Recevez à la fin le Portfolio d'Impact certifié de l'enfant.
           </p>
 
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-left max-w-2xl mx-auto mb-8">
@@ -147,8 +146,8 @@ function ParrainagePage() {
                 <Gift className="size-5" />
               </div>
               <div>
-                <h4 className="font-bold text-sm text-ink">3 Mois Offerts</h4>
-                <p className="text-xs text-ink/60">Puis 15 000 F/mois, 1 à 12 mois au choix</p>
+                <h4 className="font-bold text-sm text-ink">Flexible</h4>
+                <p className="text-xs text-ink/60">35 000 F/mois, 1 à 12 mois au choix</p>
               </div>
             </div>
 
@@ -188,7 +187,7 @@ function ParrainagePage() {
               Merci pour votre générosité, {createdToken.sponsor_name} ! 🎉
             </h2>
             <p className="text-ink/70 font-medium mb-6 max-w-md mx-auto">
-              Votre parrainage de <strong>{createdToken.months_count ?? 3} mois</strong> est actif.
+              Votre parrainage de <strong>{createdToken.months_count ?? 1} mois</strong> est actif.
               Transmettez ce code à la famille de l'enfant : elle l'activera dans Paramètres →
               Abonnement famille.
             </p>
@@ -308,22 +307,11 @@ function ParrainagePage() {
                     ))}
                   </div>
                   <p className="mt-2 text-xs text-ink/55">
-                    {isFree ? (
-                      <>
-                        <Gift className="size-3.5 inline-block text-emerald-600 -mt-0.5" />{" "}
-                        <strong className="text-emerald-600">3 premiers mois offerts</strong> —{" "}
-                        {months} mois, rien à payer
-                      </>
-                    ) : (
-                      <>
-                        {pricing.paidMonths} mois × {formatXofAmount(STANDARD_PRICE_XOF)} FCFA/mois
-                        ={" "}
-                        <strong className="text-brand">
-                          {formatXofAmount(pricing.amountPaid)} FCFA
-                        </strong>
-                        {eurHint > 0 && <> (≈ {eurHint} €)</>}
-                      </>
-                    )}
+                    {pricing.paidMonths} mois × {formatXofAmount(STANDARD_PRICE_XOF)} FCFA/mois ={" "}
+                    <strong className="text-brand">
+                      {formatXofAmount(pricing.amountPaid)} FCFA
+                    </strong>
+                    {eurHint > 0 && <> (≈ {eurHint} €)</>}
                   </p>
                   <p className="mt-1 text-[11px] text-ink/45">
                     Tarif : {formatXofAmount(STANDARD_PRICE_XOF)} FCFA/mois. Paiement sécurisé en ligne
