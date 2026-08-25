@@ -351,14 +351,36 @@ function ProfilePage() {
             </div>
           </div>
 
-          {/* Mode Mentor (Vague 5 spec §7 + décision #79) : activation par code,
-              puis bascule Parent/Mentor — pur commutateur de contexte. En mode
-              mentor, l'onglet « Mentor » de la barre basse disparaît (on ne se
-              suit pas soi-même) ; en mode parent, le côté mentor réapparaît. */}
+          {/* Mode Actif : bascule Parent/Mentor — commutateur clair avec retour visuel immédiat */}
           <div className="rounded-3xl border border-ink/10 bg-white p-6 shadow-xl">
-            <h3 className="font-display text-balance text-base font-bold flex items-center gap-2 mb-1">
-              <Eye className="size-4 text-brand" /> Mode Mentor
-            </h3>
+            <div className="flex items-center justify-between gap-3 mb-2">
+              <h3 className="font-display text-balance text-base font-bold flex items-center gap-2">
+                {!mentorStatus || !mentorStatus.certified ? (
+                  <>
+                    <Eye className="size-4 text-brand" /> Accès Mentor Professionnel
+                  </>
+                ) : mentorStatus.mode === "mentor" ? (
+                  <>
+                    <Eye className="size-4 text-brand" /> Espace Actif : Mode Mentor
+                  </>
+                ) : (
+                  <>
+                    <Users className="size-4 text-emerald-600" /> Espace Actif : Mode Parent
+                  </>
+                )}
+              </h3>
+              {mentorStatus?.certified && (
+                <span
+                  className={`rounded-full px-2.5 py-0.5 text-[10px] font-black uppercase tracking-wider ${
+                    mentorStatus.mode === "mentor"
+                      ? "bg-brand/10 text-brand border border-brand/20"
+                      : "bg-emerald-100 text-emerald-800 border border-emerald-200"
+                  }`}
+                >
+                  {mentorStatus.mode === "mentor" ? "Mentor Actif" : "Parent Actif"}
+                </span>
+              )}
+            </div>
 
             {!mentorStatus ? (
               <div className="flex items-center gap-2 text-sm text-ink/50 py-3">
@@ -403,15 +425,15 @@ function ProfilePage() {
                 )}
               </>
             ) : (
-              <div className="space-y-4">
+              <div className="space-y-4 mt-2">
                 <div className="flex items-center justify-between gap-3">
-                  <p className="text-sm font-bold text-ink flex items-center gap-2">
-                    <Check className="size-4 text-emerald-600" />
+                  <p className="text-xs font-bold text-ink/70 flex items-center gap-1.5">
+                    <Check className="size-3.5 text-emerald-600" />
                     Compte mentor certifié
                   </p>
                   {mentorStatus.status !== "active" && (
                     <span
-                      className={`rounded-full px-2.5 py-1 text-[10px] font-black uppercase tracking-wider ${
+                      className={`rounded-full px-2.5 py-0.5 text-[10px] font-black uppercase tracking-wider ${
                         mentorStatus.status === "banned"
                           ? "bg-red-50 text-red-700"
                           : mentorStatus.status === "suspended"
@@ -424,41 +446,72 @@ function ProfilePage() {
                   )}
                 </div>
 
-                {/* Bascule de mode : pur commutateur — rien d'autre ne change. */}
+                {/* Bascule de mode avec retour visuel immédiat */}
                 <div>
                   <p className="text-[10px] font-extrabold uppercase tracking-widest text-ink/60 mb-2">
-                    Mode actif
+                    Basculer d'espace
                   </p>
-                  <div className="flex rounded-xl bg-surface p-1 border border-ink/5">
-                    {(["parent", "mentor"] as const).map((m) => (
-                      <button
-                        key={m}
-                        type="button"
-                        onClick={() => handleSwitchMode(m)}
-                        disabled={switchingMode || mentorStatus.mode === m}
-                        className={`flex-1 rounded-lg px-4 py-2.5 text-sm font-bold transition-all cursor-pointer ${
-                          mentorStatus.mode === m
-                            ? m === "mentor"
-                              ? "bg-brand text-white shadow-sm"
-                              : "bg-ink text-white shadow-sm"
-                            : "text-ink/50 hover:text-ink/80"
-                        }`}
-                      >
-                        {switchingMode ? (
-                          <Loader2 className="size-4 animate-spin mx-auto" />
-                        ) : m === "parent" ? (
-                          "Mode Parent"
-                        ) : (
-                          "Mode Mentor"
-                        )}
-                      </button>
-                    ))}
+                  <div className="flex rounded-2xl bg-surface p-1 border border-ink/10 gap-1">
+                    {(["parent", "mentor"] as const).map((m) => {
+                      const isActive = mentorStatus.mode === m;
+                      return (
+                        <button
+                          key={m}
+                          type="button"
+                          onClick={() => handleSwitchMode(m)}
+                          disabled={switchingMode || isActive}
+                          className={`flex-1 rounded-xl px-4 py-2.5 text-xs font-extrabold transition-all cursor-pointer flex items-center justify-center gap-1.5 ${
+                            isActive
+                              ? m === "mentor"
+                                ? "bg-brand text-white shadow-sm"
+                                : "bg-emerald-600 text-white shadow-sm"
+                              : "text-ink/60 hover:text-ink hover:bg-white/70"
+                          }`}
+                        >
+                          {switchingMode ? (
+                            <Loader2 className="size-3.5 animate-spin" />
+                          ) : isActive ? (
+                            <Check className="size-3.5 stroke-[3]" />
+                          ) : null}
+                          <span>{m === "parent" ? "Mode Parent (Famille)" : "Mode Mentor (Pro)"}</span>
+                        </button>
+                      );
+                    })}
                   </div>
-                  <p className="text-[11px] font-medium text-ink/50 leading-relaxed mt-2">
-                    {mentorStatus.mode === "mentor"
-                      ? "En mode Mentor, l'onglet « Mentor » de la barre de navigation est masqué : vous ne vous suivez pas vous-même. Repassez en mode Parent pour retrouver le côté mentor (votre enfant, ses accompagnements…)."
-                      : "En mode Parent, vous voyez le côté mentor : l'onglet « Mentor » de la barre de navigation et vos espaces d'accompagnement dans les réglages."}
-                  </p>
+
+                  {/* Boîte explicative selon le mode sélectionné */}
+                  <div
+                    className={`mt-3 rounded-2xl p-3.5 text-xs leading-relaxed transition-all ${
+                      mentorStatus.mode === "mentor"
+                        ? "bg-brand/5 border border-brand/20 text-ink"
+                        : "bg-emerald-50/80 border border-emerald-200 text-emerald-950"
+                    }`}
+                  >
+                    <p className="font-semibold">
+                      {mentorStatus.mode === "mentor" ? (
+                        <>
+                          <strong className="text-brand font-black">Mode Mentor actif :</strong> Vous êtes
+                          dans votre espace professionnel pour encadrer les élèves qui vous sont
+                          confiés.
+                        </>
+                      ) : (
+                        <>
+                          <strong className="text-emerald-700 font-black">Mode Parent actif :</strong> Vous
+                          gérez vos propres enfants, leurs parcours et pouvez leur réserver un
+                          mentor ou diagnostic.
+                        </>
+                      )}
+                    </p>
+                    {mentorStatus.mode === "mentor" && (
+                      <Link
+                        to="/mentor"
+                        className="mt-2.5 inline-flex items-center gap-1.5 rounded-xl bg-brand text-white px-3.5 py-1.5 text-xs font-bold hover:bg-brand/90 transition-all shadow-sm"
+                      >
+                        <Eye className="size-3.5" />
+                        Accéder au tableau de bord Mentor
+                      </Link>
+                    )}
+                  </div>
                 </div>
               </div>
             )}
