@@ -15,83 +15,89 @@ const FAQ = [
   {
     question: "Quelles activités éducatives faire à la maison avec un enfant de 6 à 12 ans ?",
     answer:
-      "Les plus formatrices sont celles qui produisent un résultat visible avec du matériel du quotidien : fabriquer un arrosage automatique avec des bouteilles percées, construire un pont en bâtonnets qui tient sans colle, calculer le prix de revient d'un jus de bissap puis le vendre, teindre un tissu avec des pigments d'hibiscus, interviewer un artisan du quartier et en faire un reportage photo. Chacune mobilise plusieurs formes d'intelligence et laisse une trace concrète dont l'enfant est fier — c'est cette trace, plus que l'activité elle-même, qui construit la confiance.",
+      "Les plus formatrices produisent un résultat visible avec du matériel du quotidien : fabriquer un arrosage automatique avec des bouteilles percées, construire un pont en bâtonnets sans colle, calculer le prix de revient d'une boisson maison puis organiser une vente, ou interviewer un artisan du quartier. Chacune mobilise plusieurs intelligences (logique, manuelle, relationnelle) et laisse une trace concrète dont l'enfant est fier — c'est cette fierté qui ancre durablement l'apprentissage.",
   },
   {
-    question: "Quels jeux éducatifs sans écran proposer à un enfant ?",
+    question: "Quelle est la différence d'activités entre 6-8 ans et 9-12 ans ?",
     answer:
-      "Les jeux les plus riches sur le plan éducatif sont souvent ceux qui n'ont pas été conçus comme éducatifs : construction libre, cuisine avec pesée et conversion, jeux de stratégie à deux, parcours d'obstacles chronométrés, marchand avec de la vraie monnaie. Ils demandent peu de matériel et sollicitent à la fois la logique, la motricité, la négociation et la planification. L'important est que l'enfant décide de sa méthode plutôt que d'exécuter une procédure.",
+      "Entre 6 et 8 ans, privilégiez des défis courts (15-20 min) centrés sur la manipulation, la motricité fine et l'observation immédiate (germination, pesée, parcours chronométré). Entre 9 et 12 ans, l'enfant gagne en autonomie et s'épanouit dans des micro-projets de plusieurs jours : mini-entreprise familiale, journal illustré, programmation débranchée ou construction complexe.",
+  },
+  {
+    question: "Quels jeux éducatifs sans écran proposer à la maison ?",
+    answer:
+      "Les jeux les plus formateurs sont souvent du matériel détourné : construction libre en carton, cuisine avec pesée et conversion d'unités, jeux de société de stratégie, ou mini-marché avec de la vraie monnaie. Ils développent à la fois la planification, le calcul mental et la créativité sans aucune sur-stimulation numérique.",
   },
   {
     question: "Que faire pendant les vacances quand l'enfant s'ennuie et réclame les écrans ?",
     answer:
-      "Les vacances sont le moment idéal pour les activités sans écran, à condition de ne pas les présenter comme un « programme » : proposez un défi par jour, à heure fixe (le matin ou après la sieste), et laissez l'enfant choisir parmi deux ou trois options. Un grand projet de vacances — une maquette du quartier, un journal de vacances illustré, un stand de jus qui fonctionne toute la semaine — tient un enfant plusieurs jours. Et ne remplissez pas chaque minute : l'ennui fait partie du processus, c'est lui qui déclenche l'imagination. Prévoyez une activité courte toujours prête (bouteilles, cartons, monnaie) pour les moments creux.",
+      "Ne tentez pas de remplir chaque minute. Proposez un seul défi par jour à heure fixe et laissez l'enfant choisir entre deux options. Un grand fil rouge de vacances (une maquette du quartier, un herbier familial, un stand de limonade) structure ses journées tout en laissant l'ennui jouer son rôle déclencheur de créativité.",
   },
   {
-    question: "Combien de temps doit durer une activité éducative ?",
+    question: "Comment 10 minutes d'activité relancent-elles la concentration entre deux devoirs ?",
     answer:
-      "Cela dépend beaucoup plus de l'âge et du format que d'une règle générale. En pratique : 15 à 20 minutes suffisent pour un enfant de 5 à 7 ans, 30 à 45 minutes conviennent de 8 à 11 ans, et un projet peut s'étaler sur plusieurs jours à partir de 12 ans. Entre deux devoirs, 10 minutes d'activité manuelle suffisent pour couper l'ennui et relancer la concentration. Le meilleur indicateur reste l'enfant lui-même : une activité qu'il prolonge spontanément est bien calibrée ; une activité qu'il abandonne à mi-parcours est souvent trop longue, trop abstraite, ou trop dirigée.",
-  },
-  {
-    question: "Comment savoir si une activité a vraiment appris quelque chose à mon enfant ?",
-    answer:
-      "Trois signes fiables, tous observables sans test : il explique spontanément à quelqu'un d'autre ce qu'il a fait ; il réutilise la technique dans un autre contexte quelques jours plus tard ; il propose une variante ou une amélioration de lui-même. Ces trois comportements indiquent que la compétence a été intégrée, pas seulement exécutée. À l'inverse, un enfant qui a bien réalisé l'activité mais ne sait pas dire à quoi elle servait a surtout suivi des instructions.",
+      "Le cerveau d'un enfant de 6 à 12 ans sature après 30 à 45 minutes d'effort abstrait. Une pause de 10 minutes active et manuelle (bâtir une tour, ranger par catégorie, devinette physique) libère la dopamine sans générer l'addiction des écrans, permettant de reprendre les devoirs avec un esprit reposé.",
   },
 ];
 
 const ACTIVITIES = [
   {
     intelligence: "Logique & mathématiques",
+    age: "6-12 ans",
     items: [
-      "Calculer le prix de revient d'une recette, puis fixer un prix de vente et vérifier le bénéfice réel",
-      "Construire un pont en bâtonnets qui supporte un poids, sans colle ni clous",
-      "Mesurer l'ombre d'un bâton toutes les heures et en déduire la course du soleil",
-      "Créer un code secret à substitution et échanger des messages chiffrés",
+      "Calculer le prix de revient d'une recette familiale, fixer un prix de vente et calculer le bénéfice net",
+      "Construire un pont en bâtonnets de bois qui supporte 1 kg sans aucune colle",
+      "Mesurer l'ombre d'un bâton toutes les heures pour tracer la trajectoire solaire",
+      "Créer un alphabet chiffré à substitution et s'échanger des énigmes en famille",
     ],
   },
   {
     intelligence: "Sciences & observation",
+    age: "6-12 ans",
     items: [
-      "Fabriquer un arrosage goutte-à-goutte avec des bouteilles percées et régler le débit",
-      "Faire pousser la même graine dans quatre conditions différentes et comparer",
-      "Construire un baromètre avec une bouteille, de l'eau colorée et une paille",
-      "Extraire des pigments de fleurs d'hibiscus et teindre un tissu",
+      "Fabriquer un système d'arrosage goutte-à-goutte avec des bouteilles recyclées et étalonner le débit",
+      "Faire germer 4 graines identiques dans 4 substrats différents (coton, terre, sable, eau) et noter les écarts",
+      "Construire un baromètre maison avec un bocal, un ballon de baudruche et une paille",
+      "Extraire des pigments naturels de fleurs ou d'épices (curcuma, hibiscus) pour fabriquer de la peinture",
     ],
   },
   {
-    intelligence: "Langage & expression",
+    intelligence: "Langage & communication",
+    age: "6-12 ans",
     items: [
-      "Rédiger et prononcer un discours de 2 minutes pour convaincre la famille de trier les déchets",
-      "Interviewer un artisan du quartier et en faire un reportage photo légendé",
-      "Inventer la suite d'une histoire connue et la raconter à voix haute",
-      "Tenir un carnet de bord illustré d'un projet sur une semaine",
+      "Préparer et prononcer un discours de 2 minutes pour défendre une cause familiale ou écologique",
+      "Interviewer un aîné ou un commerçant du quartier et réaliser un mini-reportage photo",
+      "Inventer et enregistrer la suite d'un conte traditionnel sous forme de podcast audio",
+      "Rédiger le journal de bord illustré des aventures de la semaine",
     ],
   },
   {
-    intelligence: "Corps & espace",
+    intelligence: "Kinesthésique & espace",
+    age: "6-12 ans",
     items: [
-      "Concevoir un parcours d'obstacles, se chronométrer et optimiser son score",
-      "Dessiner le plan de sa maison à l'échelle, pièce par pièce",
-      "Reproduire une chorégraphie puis en inventer la suite",
-      "Construire une maquette de son quartier en matériaux de récupération",
+      "Concevoir un parcours d'agilité dans le salon avec des règles de pénalités et un chronomètre",
+      "Dessiner le plan à l'échelle de sa chambre avec un mètre ruban",
+      "Créer une chorégraphie ou un enchaînement d'équilibre et l'enseigner à ses parents",
+      "Bâtir une maquette de monument ou de son quartier en matériaux de récupération (cartons, bouchons)",
     ],
   },
   {
-    intelligence: "Social & entreprendre",
+    intelligence: "Social & entrepreneuriat",
+    age: "8-12 ans",
     items: [
-      "Organiser un petit marché avec de la vraie monnaie et rendre la monnaie juste",
-      "Monter un kiosque à jus, créer le logo et gérer les ventes d'un après-midi",
-      "Animer un jeu pour des enfants plus jeunes et adapter les règles à leur âge",
-      "Négocier et rédiger une charte des règles de la maison avec ses frères et sœurs",
+      "Tenir un stand de jus ou de gâteaux lors d'un après-midi en famille et gérer la caisse en monnaie réelle",
+      "Co-construire et signer la charte des règles de vie de la maison avec frères et sœurs",
+      "Organiser un tournoi de jeux de société pour les cousins ou voisins en expliquant les règles",
+      "Planifier le menu et la liste de courses de la famille pour 3 jours avec un budget limité",
     ],
   },
   {
-    intelligence: "Artisanat & création",
+    intelligence: "Artisanat & débrouillardise",
+    age: "6-12 ans",
     items: [
-      "Cuisiner une recette complète du début à la fin, achats compris",
-      "Réparer un objet cassé plutôt que le remplacer",
-      "Coudre ou assembler un masque, un costume, un accessoire",
-      "Fabriquer un instrument de musique et en tirer plusieurs notes distinctes",
+      "Préparer un plat traditionnel de A à Z sous la supervision bienveillante d'un adulte",
+      "Diagnostiquer et réparer un jouet ou un vêtement abîmé au lieu de le jeter",
+      "Tisser ou tresser un panier, un bracelet ou un sous-verre avec des fibres ou tissus recyclés",
+      "Fabriquer un instrument de percussion ou à cordes et jouer un rythme régulier",
     ],
   },
 ];
@@ -101,7 +107,7 @@ export const Route = createFileRoute("/guides/activites-educatives-enfant")({
     const meta = pageMeta({
       title: "24 activités éducatives sans écran à la maison (6-12 ans)",
       description:
-        "24 activités éducatives sans écran avec du matériel du quotidien, pour occuper l'enfant à la maison, entre deux devoirs ou pendant les vacances.",
+        "Découvrez 24 activités éducatives sans écran pour enfants de 6 à 12 ans à faire à la maison avec du matériel du quotidien. Jeux stimulants, sciences et créativité.",
       path: PATH,
       image: "/guides/og-activites.jpg",
       type: "article",
@@ -114,7 +120,7 @@ export const Route = createFileRoute("/guides/activites-educatives-enfant")({
           breadcrumbJsonLd([
             { name: "Accueil", path: "/" },
             { name: "Guides", path: "/guides" },
-            { name: "Activités éducatives", path: PATH },
+            { name: "Activités éducatives 6-12 ans", path: PATH },
           ]),
         ),
         jsonLdScript({
@@ -122,17 +128,20 @@ export const Route = createFileRoute("/guides/activites-educatives-enfant")({
           "@type": "Article",
           headline:
             "24 activités éducatives sans écran à faire à la maison avec un enfant de 6 à 12 ans",
+          description:
+            "Guide complet d'activités éducatives maison pour les 6 à 12 ans : expériences scientifiques simples, calcul réel, créativité manuelle et défis sans écran.",
           inLanguage: "fr-FR",
           mainEntityOfPage: absoluteUrl(PATH),
           image: absoluteUrl("/guides/og-activites.jpg"),
           publisher: { "@id": `${SITE_URL}/#organization` },
           author: { "@type": "Organization", name: "Génizio" },
           datePublished: "2026-07-27",
-          dateModified: "2026-08-14",
+          dateModified: "2026-08-25",
           about: [
             { "@type": "Thing", name: "Activités éducatives pour enfants" },
-            { "@type": "Thing", name: "Jeux éducatifs" },
-            { "@type": "Thing", name: "Apprentissage par projet" },
+            { "@type": "Thing", name: "Jeux éducatifs sans écran" },
+            { "@type": "Thing", name: "Intelligences multiples de Gardner" },
+            { "@type": "Thing", name: "Apprentissage par l'action" },
           ],
         }),
       ],
@@ -147,8 +156,8 @@ function Guide() {
       eyebrow="Activités & jeux"
       title="24 activités éducatives sans écran à faire à la maison avec un enfant de 6 à 12 ans"
       intro="Pas de matériel coûteux, pas d'écran, pas de fiche à imprimer. Des activités qui produisent un résultat visible — et qui, mises bout à bout, révèlent ce que votre enfant sait faire. Pour le soir des devoirs, le week-end ou les vacances."
-      updated="14 août 2026"
-      readingTime="8 min"
+      updated="25 août 2026"
+      readingTime="9 min"
       path={PATH}
       related={[
         {
@@ -156,8 +165,8 @@ function Guide() {
           to: "/guides/potentiel-haut-potentiel-enfant",
         },
         { label: "Mon enfant ne tient pas en place", to: "/guides/enfant-agite-concentration" },
-        { label: "Motiver un adolescent (12-16 ans)", to: "/guides/defis-pour-adolescents" },
         { label: "Activités manuelles (4-12 ans)", to: "/guides/activites-manuelles-enfant" },
+        { label: "Accro aux écrans ? Alternatives", to: "/guides/ecrans-addiction-alternatives-enfant" },
       ]}
     >
       <img
@@ -169,123 +178,115 @@ function Guide() {
         decoding="async"
         className="my-6 aspect-video w-full rounded-3xl border border-ink/10 object-cover shadow-lg"
       />
-      <h2>Pourquoi le résultat visible change tout</h2>
+
+      <h2>Pourquoi le résultat visible transforme l'apprentissage</h2>
       <p>
-        Une activité qui se termine par un objet, une photo, un plat ou un score tient un enfant
-        beaucoup plus longtemps qu'une consigne abstraite. Il ne s'agit pas de motivation par la
-        récompense : c'est que le résultat rend l'effort <strong>lisible</strong>. L'enfant voit ce
-        qu'il a produit, peut le montrer, peut l'améliorer.
+        Une activité qui se termine par un objet réel, une photo, un plat cuisiné ou un score tient un enfant
+        beaucoup plus longtemps qu'une consigne abstraite. Il ne s'agit pas de le motiver par une récompense artificielle :
+        le résultat rend l'effort <strong>lisible et tangible</strong>. L'enfant voit ce qu'il a produit de ses propres mains,
+        peut le montrer avec fierté et chercher à l'améliorer.
       </p>
       <p>
-        C'est aussi ce qui rend l'activité observable pour le parent. Une fiche d'exercices remplie
-        ne dit presque rien de l'enfant. Un pont en bâtonnets qui s'effondre trois fois avant de
-        tenir en dit beaucoup : sur sa persévérance, sa méthode, sa façon de réagir à l'échec.
+        C'est aussi ce qui rend l'activité profondément révélatrice pour les parents. Une fiche d'exercices scolaires
+        remplie sous la contrainte ne dit presque rien de la personnalité de l'enfant. Un pont en bâtonnets qui s'effondre trois fois avant de
+        tenir debout en dit infiniment plus : sur sa persévérance, son esprit méthodique et sa façon d'apprivoiser l'erreur.
+        Si votre enfant a du mal à se poser pour les devoirs, découvrez également nos conseils pour{" "}
+        <a href="/guides/enfant-agite-concentration">canaliser l'énergie d'un enfant agité par l'action</a>.
       </p>
 
-      <h2>Les activités, classées par forme d'intelligence</h2>
+      <h2>Adapter les activités selon l'âge : 6-8 ans vs 9-12 ans</h2>
       <p>
-        Le classement ci-dessous suit les{" "}
-        <a href="/guides/intelligences-multiples-gardner">9 intelligences de Howard Gardner</a>.
-        L'intérêt n'est pas de cantonner l'enfant à une catégorie, mais l'inverse : repérer celles
-        que vous ne lui proposez jamais, et y aller.
+        Pour qu'une activité éducative fonctionne à la maison, le niveau de défi doit correspondre précisément à la maturité de l'enfant :
+      </p>
+      <ul>
+        <li>
+          <strong>Pour les 6 à 8 ans (CP - CE2) :</strong> Privilégiez les micro-défis de 15 à 20 minutes basés sur la motricité fine, la manipulation directe et l'observation immédiate. À cet âge, l'enfant a besoin de voir la réaction physique rapide (germination, pesée, réaction colorée). N'hésitez pas à alterner avec des{" "}
+          <a href="/guides/activites-manuelles-enfant">ateliers manuels et de bricolage créatif</a>.
+        </li>
+        <li>
+          <strong>Pour les 9 à 12 ans (CM1 - 6e/5e) :</strong> L'enfant est capable de concevoir et de piloter de vrais micro-projets sur plusieurs jours (création d'un petit stand commercial, écriture d'une gazette de famille, énigmes mathématiques). Il cherche l'autonomie et aime être traité en partenaire de projet plutôt qu'en simple exécutant.
+        </li>
+      </ul>
+
+      <h2>Les 24 activités, classées par forme d'intelligence</h2>
+      <p>
+        Le classement ci-dessous s'appuie sur la théorie des{" "}
+        <a href="/guides/intelligences-multiples-gardner">9 intelligences d'Howard Gardner</a>.
+        L'intérêt n'est jamais d'enfermer l'enfant dans une case, mais au contraire de varier les plaisirs et d'explorer les formes d'intelligence moins sollicitées par le cadre scolaire classique.
       </p>
 
       {ACTIVITIES.map((group) => (
-        <div key={group.intelligence}>
-          <h3>{group.intelligence}</h3>
-          <ul>
+        <div key={group.intelligence} className="my-6 rounded-2xl border border-ink/10 bg-surface p-5">
+          <h3 className="text-xl font-bold text-ink">{group.intelligence} <span className="text-xs font-normal text-ink/60">({group.age})</span></h3>
+          <ul className="mt-3 space-y-2">
             {group.items.map((item) => (
-              <li key={item}>{item}</li>
+              <li key={item} className="text-ink/80">• {item}</li>
             ))}
           </ul>
         </div>
       ))}
 
-      <h2>Comment choisir la bonne activité pour votre enfant</h2>
-      <p>Trois critères suffisent, dans cet ordre :</p>
+      <h2>Comment choisir la bonne activité sans surcharger votre quotidien</h2>
+      <p>Trois critères simples suffisent pour ne pas transformer l'activité en corvée :</p>
       <ol>
         <li>
-          <strong>Le temps réellement disponible.</strong> Une activité de deux heures lancée à
-          18h30 un jeudi ne finira pas. Mieux vaut un mini-défi de 15 minutes terminé qu'un projet
-          ambitieux abandonné.
+          <strong>Le temps réellement disponible.</strong> Une activité de deux heures lancée un soir de semaine à 18h30 ne mènera qu'à de l'agacement. Mieux vaut un mini-défi de 15 minutes bouclé avec le sourire qu'un grand projet abandonné en larmes.
         </li>
         <li>
-          <strong>Ce qu'il y a à la maison.</strong> Une activité qui suppose un achat est une
-          activité qui n'aura pas lieu. Les meilleures utilisent des bouteilles, du carton, de la
-          farine, des bâtonnets.
+          <strong>Ce qu'il y a déjà dans vos placards.</strong> Une activité qui nécessite d'aller acheter du matériel spécifique est une activité qui n'aura jamais lieu. Les meilleures découvertes se font avec du carton, des bouteilles vides, des graines, de la farine ou de la ficelle.
         </li>
         <li>
-          <strong>La passerelle.</strong> Partez de ce qu'il aime déjà pour l'emmener ailleurs. Un
-          enfant passionné de foot peut mesurer des angles de tir : on entre par le sport, on sort
-          par la géométrie.
+          <strong>La passerelle d'intérêt.</strong> Partez toujours de ce que l'enfant adore déjà. Un enfant passionné de jeux vidéo peut concevoir les règles sur papier d'un jeu de plateau : vous partez de sa passion numérique pour l'amener vers une création concrète sans écran (voir aussi notre guide sur le{" "}
+          <a href="/guides/ecrans-addiction-alternatives-enfant">sevrage des écrans en douceur</a>).
         </li>
       </ol>
 
-      <h2>Ce qu'il ne faut pas faire</h2>
+      <h2>Les 4 pièges fréquents à éviter</h2>
       <ul>
         <li>
-          <strong>Corriger pendant.</strong> Laissez l'erreur se produire : c'est là que
-          l'apprentissage a lieu.
+          <strong>Corriger pendant l'effort.</strong> Laissez l'erreur se produire : c'est précisément dans le moment où la tour tombe que le cerveau cherche une solution.
         </li>
         <li>
-          <strong>Finir à sa place.</strong> Un résultat imparfait mais fait par lui vaut mieux
-          qu'un bel objet fait par vous.
+          <strong>Finir à sa place.</strong> Un bricolage imparfait mais réalisé à 100 % par l'enfant renforce son sentiment de compétence. Un bel objet fait par l'adulte ne lui apprend rien.
         </li>
         <li>
-          <strong>Enchaîner.</strong> Une activité par jour, terminée, vaut mieux que trois
-          commencées.
+          <strong>Enchaîner trop d'activités.</strong> Un seul défi mené à son terme par jour est amplement suffisant. Laissez du temps libre pour l'ennui constructif.
         </li>
         <li>
-          <strong>Transformer en évaluation.</strong> Dès qu'il y a une note, l'enfant optimise pour
-          la note et arrête d'explorer.
+          <strong>Transformer le jeu en évaluation scolaire.</strong> Dès qu'une note ou un jugement de valeur apparaît, l'enfant se met en retrait et bride sa créativité.
         </li>
       </ul>
 
-      <h2>10 minutes d'activité entre deux devoirs</h2>
+      <h2>Le rituel des « 10 minutes d'activité » entre deux devoirs</h2>
       <p>
-        Le moment le plus difficile pour un enfant, c'est la bascule entre l'école et les devoirs —
-        et entre deux exercices longs. Dix minutes d'activité manuelle coupent l'ennui, remettent le
-        corps en mouvement et relancent la concentration :
+        Le moment le plus difficile pour un enfant après une journée d'école, c'est la rupture d'attention entre deux exercices théoriques. Dix minutes d'activité manuelle suffisent pour oxygéner le cerveau, relâcher les tensions musculaires et relancer la concentration :
       </p>
       <ul>
         <li>
-          <strong>Le chronomètre inversé :</strong> « Je te donne 10 minutes pour construire la tour
-          la plus haute avec ce que tu trouves dans la cuisine. » On photographie le résultat, on
-          range, on reprend les devoirs.
+          <strong>Le défi chronométré inversé :</strong> « Tu as 10 minutes pour construire l'édifice le plus stable avec les ustensiles de cuisine. » On prend une photo souvenir, on range en 2 minutes, et l'on reprend les devoirs dans un état d'esprit détendu.
         </li>
         <li>
-          <strong>La monnaie du jour :</strong> comptez la monnaie de la journée ensemble, à voix
-          haute — 3 minutes de calcul réel valent une page d'exercices.
+          <strong>La caisse du jour :</strong> Compter ensemble la monnaie du marché ou vérifier une addition à voix haute — 3 minutes de calcul utile et réel valent une demi-heure de fiches abstraites.
         </li>
         <li>
-          <strong>Le tirage surprise :</strong> un bocal avec des défis courts écrits sur des
-          papiers (« nomme 5 fruits qui poussent dans notre région », « raconte ta journée en 3
-          phrases »). L'enfant tire un papier, répond, et retourne travailler.
+          <strong>Le bocal à défis surprises :</strong> Un bocal contenant des papiers pliés (« cite 5 objets d'une couleur précise », « récite une énigme »). L'enfant en tire un au sort pour marquer une pause stimulante.
         </li>
       </ul>
+
+      <h2>Garder une trace pour révéler les talents naturels de votre enfant</h2>
       <p>
-        La règle : <strong>court, terminé, rangé</strong>. Dix minutes qui finissent par une photo
-        ou une case cochée laissent l'enfant avec le sentiment d'avoir réussi — et les devoirs
-        d'après se font dans un meilleur état d'esprit.
+        Prises isolément, ces activités sont d'excellents moments de partage familial. Mais lorsqu'elles sont consignées et documentées dans le temps, elles constituent une véritable cartographie des forces de votre enfant : on observe vers quoi il se tourne spontanément, comment il résout les imprévus et ce qui le passionne profondément.
+      </p>
+      <p>
+        C'est toute la mission de Génizio : proposer des défis concrets du quotidien, photographier les réalisations réelles et construire le passeport d'intelligences de votre enfant sans test théorique réducteur. Vous pouvez également explorer notre analyse sur les{" "}
+        <a href="/guides/test-de-personnalite-enfant-talents">tests de personnalité pour enfants et la découverte des talents réels</a>.
       </p>
 
-      <h2>Garder une trace</h2>
-      <p>
-        Prises isolément, ces activités sont de bons moments. Mises bout à bout et documentées,
-        elles deviennent une cartographie : on voit apparaître ce vers quoi l'enfant revient
-        toujours, ce qu'il évite, ce qui a progressé en six mois.
-      </p>
-      <p>
-        C'est exactement ce que fait Génizio : l'application génère des défis de ce type adaptés à
-        l'âge, à la ville et aux centres d'intérêt de l'enfant, le parent photographie le résultat,
-        et la carte des talents se construit à partir des réalisations réelles.
-      </p>
-
-      <h2>Questions fréquentes</h2>
+      <h2>Questions fréquentes (FAQ)</h2>
       {FAQ.map((item) => (
-        <div key={item.question}>
-          <h3>{item.question}</h3>
-          <p>{item.answer}</p>
+        <div key={item.question} className="my-5 border-b border-ink/10 pb-4">
+          <h3 className="text-lg font-bold text-ink">{item.question}</h3>
+          <p className="mt-2 text-ink/80">{item.answer}</p>
         </div>
       ))}
     </GuideLayout>

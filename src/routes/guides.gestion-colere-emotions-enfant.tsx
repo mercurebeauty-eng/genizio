@@ -52,9 +52,9 @@ const FAQ = [
 export const Route = createFileRoute("/guides/gestion-colere-emotions-enfant")({
   head: () => {
     const meta = pageMeta({
-      title: "Crise de colère enfant : 5 outils pour l'apaiser",
+      title: "Gestion de la colère de l'enfant : 5 outils pour l'apaiser",
       description:
-        "Crise de colère, explosion, frustration : pourquoi l'enfant s'énerve, que dire pendant la crise, et 5 outils concrets pour l'apaiser sans céder ni crier.",
+        "Crise de colère, frustration et caprices : découvrez pourquoi l'enfant explose, les phrases qui apaisent et 5 outils concrets pour calmer la tempête sans crier.",
       path: PATH,
       image: "/guides/og-colere.jpg",
       type: "article",
@@ -67,24 +67,27 @@ export const Route = createFileRoute("/guides/gestion-colere-emotions-enfant")({
           breadcrumbJsonLd([
             { name: "Accueil", path: "/" },
             { name: "Guides", path: "/guides" },
-            { name: "Gestion des émotions", path: PATH },
+            { name: "Gestion de la colère enfant", path: PATH },
           ]),
         ),
         jsonLdScript({
           "@context": "https://schema.org",
           "@type": "Article",
-          headline: "Gérer la crise de colère de son enfant : 5 outils pour l'apaiser",
+          headline: "Gestion de la colère chez l'enfant : 5 outils concrets pour apaiser les crises",
+          description:
+            "Guide parental pour gérer la colère et les crises émotionnelles des enfants : neurosciences de la frustration, phrases clés et 5 outils pratiques d'apaisement.",
           inLanguage: "fr-FR",
           mainEntityOfPage: absoluteUrl(PATH),
           image: absoluteUrl("/guides/og-colere.jpg"),
           publisher: { "@id": `${SITE_URL}/#organization` },
           author: { "@type": "Organization", name: "Génizio" },
           datePublished: "2026-08-10",
-          dateModified: "2026-08-14",
+          dateModified: "2026-08-25",
           about: [
-            { "@type": "Thing", name: "Colère de l'enfant" },
-            { "@type": "Thing", name: "Gestion des émotions" },
-            { "@type": "Thing", name: "Crises de l'enfant" },
+            { "@type": "Thing", name: "Gestion de la colère de l'enfant" },
+            { "@type": "Thing", name: "Régulation des émotions" },
+            { "@type": "Thing", name: "Discipline positive" },
+            { "@type": "Thing", name: "Psychologie de l'enfant" },
           ],
         }),
       ],
@@ -97,10 +100,10 @@ function Guide() {
   return (
     <GuideLayout
       eyebrow="Émotions & bien-être"
-      title="Gérer la crise de colère de son enfant : 5 outils pour l'apaiser"
+      title="Gestion de la colère de l'enfant : 5 outils pour l'apaiser"
       intro="Une crise de colère à 18 h dans la cuisine, et c'est toute la maison qui tangue. Avant de chercher à « faire taire » cette colère, il faut comprendre ce qu'elle est : une émotion réelle, pas une attaque contre vous. Voici comment la traverser sans céder, sans crier, et en apprenant quelque chose à l'enfant."
-      updated="14 août 2026"
-      readingTime="7 min"
+      updated="25 août 2026"
+      readingTime="8 min"
       path={PATH}
       related={[
         { label: "Mon enfant ne tient pas en place", to: "/guides/enfant-agite-concentration" },
@@ -111,6 +114,10 @@ function Guide() {
         {
           label: "Enfant qui perd confiance : l'aider",
           to: "/guides/decrochage-scolaire-confiance-enfant",
+        },
+        {
+          label: "Activités éducatives (6-12 ans)",
+          to: "/guides/activites-educatives-enfant",
         },
       ]}
     >
@@ -130,134 +137,105 @@ function Guide() {
         parlez-en à un pédiatre, un psychologue ou un pédopsychiatre.
       </MedicalDisclaimer>
 
-      <h2>La colère n'est pas un caprice</h2>
+      <h2>La colère n'est pas un caprice : ce que disent les neurosciences</h2>
       <p>
-        Le cerveau qui permet de se calmer, de réfléchir avant d'agir et de tolérer la frustration
-        est le <strong>dernier à se développer</strong> chez l'être humain. Chez un enfant de 4 ans
-        comme chez un préadolescent, une frustration déclenche une réaction émotionnelle immédiate,
-        sans le filtre qu'un adulte a appris à poser.
+        Le cortex préfrontal — la zone du cerveau responsable de la régulation émotionnelle, du recul et de la tolérance à la frustration — est la <strong>dernière structure cérébrale à arriver à maturité</strong> (vers 20-25 ans). Chez un enfant de 4, 7 ou même 10 ans, une frustration déclenche une vague neurobiologique brute, sans le filtre qu'un adulte a mis des années à consolider.
       </p>
       <p>
-        Ajoutez la fatigue, la faim, un changement de rythme ou le besoin d'attention, et la colère
-        devient une soupape de sécurité. La comprendre ainsi change la question : ce n'est plus «
-        comment la faire taire ? » mais « de quoi cette colère est-elle le signal ? ». Chez les
-        enfants hypersensibles — qui ressentent tout plus fort — la colère est souvent la pointe
-        émergée d'une sensibilité débordante : il faut alors moins la réprimer que lui apprendre à
-        la reconnaître avant qu'elle ne déborde.
+        Ajoutez la fatigue de la journée d'école, la faim, un changement imprévu ou le besoin d'attention, et la colère devient une soupape de décompression. Changer de regard sur cette émotion transforme votre réaction : la question n'est plus « comment faire taire ce cri ? » mais « de quel besoin non satisfait cette colère est-elle le signal ? ». Chez les enfants très énergiques, la colère est souvent liée à un besoin de mouvement non comblé : découvrez comment{" "}
+        <a href="/guides/enfant-agite-concentration">canaliser l'agitation et l'énergie débordante de l'enfant</a>.
+      </p>
+      <p>
+        Chez les enfants hypersensibles — qui ressentent chaque stimulus décuplé — la crise est souvent la pointe émergée d'une surcharge sensorielle ou relationnelle : il faut alors moins la réprimer que lui apprendre à reconnaître les signaux avant-coureurs.
       </p>
 
       <h2>Les trois erreurs parentales les plus fréquentes</h2>
       <ul>
         <li>
-          <strong>La punir.</strong> Punir une émotion apprend à l'enfant à la cacher, pas à la
-          traverser. On punit les actes (frapper, casser), jamais le ressenti.
+          <strong>Punir l'émotion elle-même.</strong> Punir la colère apprend à l'enfant à la dissimuler par peur, pas à la réguler. On pose un cadre strict sur les actes (frapper, casser, insulter), mais on accueille toujours le ressenti. Pour aller plus loin, consultez notre méthode de{" "}
+          <a href="/guides/discipline-positive-sans-punition">discipline positive sans crier ni punir</a>.
         </li>
         <li>
-          <strong>Céder pour avoir la paix.</strong> Si la crise obtient ce qu'elle voulait, elle
-          devient une stratégie efficace — et elle reviendra, plus forte.
+          <strong>Céder pour acheter la paix.</strong> Si la tempête permet d'obtenir le paquet de gâteaux ou le temps d'écran refusé, le cerveau de l'enfant enregistre que la crise est une stratégie gagnante — et elle reviendra avec plus d'intensité.
         </li>
         <li>
-          <strong>Se mettre en colère en retour.</strong> Deux personnes en colère ne s'apaisent pas
-          mutuellement. Votre calme est l'outil le plus important de la pièce.
+          <strong>Entrer dans l'escalade et crier en retour.</strong> Deux systèmes nerveux en panique ne s'apaisent jamais mutuellement. Votre calme physique est le régulateur principal de la pièce.
         </li>
       </ul>
 
-      <h2>5 outils concrets pour apaiser une crise</h2>
+      <h2>5 outils concrets pour apaiser une crise à la maison</h2>
       <ol>
         <li>
-          <strong>Nommer l'émotion.</strong> « Tu es très en colère parce que je coupe la
-          télévision. » Nommer l'émotion l'aide à être traitée par le cerveau : c'est ce que font
-          les professionnels, et vous pouvez le faire à la maison.
+          <strong>Nommer l'émotion à voix basse.</strong> « Tu es très en colère parce que nous devons éteindre la console. » Le simple fait de poser des mots précis active l'hémisphère gauche et commence à court-circuiter l'amygdale cérébrale.
         </li>
         <li>
-          <strong>Accueillir sans céder.</strong> On valide le ressenti (« je comprends que ce soit
-          frustrant »), pas le comportement. La limite tient : « tu es en colère, et le cadre reste
-          le même. »
+          <strong>Accueillir sans céder sur le cadre.</strong> On valide pleinement ce que ressent l'enfant (« je comprends que tu sois déçu ») tout en maintenant la règle avec fermeté et douceur (« et le temps d'écran est terminé »). Voir nos solutions pour{" "}
+          <a href="/guides/ecrans-addiction-alternatives-enfant">désamorcer les crises liées aux écrans</a>.
         </li>
         <li>
-          <strong>Offrir un exutoire physique.</strong> Courir, taper dans un coussin, déchirer un
-          papier, presser une balle : le corps décharge avant que les mots reviennent. Demander à un
-          enfant en crise de « se calmer » sans exutoire est rarement efficace.
+          <strong>Offrir un exutoire physique immédiat.</strong> Courir sur place, taper dans un gros coussin, déchirer un papier journal ou pétrir de la pâte : le corps a besoin de décharger l'adrénaline avant que la parole rationnelle ne redevienne accessible.
         </li>
         <li>
-          <strong>Installer un rituel de retour au calme.</strong> Un endroit choisi (pas un coin
-          punitif), une boîte à objets apaisants, un dessin de la colère : l'enfant apprend qu'on
-          peut revenir à un état calme, par soi-même, sans que ce soit une punition.
+          <strong>Installer un coin de retour au calme (sans punition).</strong> Un espace douillet choisi ensemble (coussins, livres préférés, bocal sensoriel), où l'enfant peut aller s'apaiser à son rythme sans que ce soit vécu comme une mise à l'écart punitive.
         </li>
         <li>
-          <strong>Revenir sur la crise après coup.</strong> Une fois l'apaisement trouvé, cinq
-          minutes suffisent : « Qu'est-ce qui s'est passé ? Qu'est-ce qui aurait pu te aider ? » Le
-          lien parent-enfant sort renforcé, et l'enfant apprend à anticiper sa propre colère.
+          <strong>Le débriefing à froid (5 minutes).</strong> Une fois le calme revenu (1 à 2 heures plus tard), reparlez de l'événement sans reproche : « Qu'est-ce qui t'a mis en colère ? Qu'est-ce qu'on pourrait faire la prochaine fois pour que ça se passe mieux ? ».
         </li>
       </ol>
 
-      <h2>Que dire pendant la crise, et que ne jamais dire</h2>
+      <h2>Que dire pendant la crise : tableau des phrases clés</h2>
       <p>
-        Les mots comptent moins que le calme avec lequel on les dit — mais certains aident, d'autres
-        enflamment.
+        Pendant une tempête émotionnelle, les longs discours sont inaudibles. Privilégiez des phrases très courtes, dites d'une voix posée et basse :
       </p>
       <div className="my-6 overflow-x-auto rounded-2xl border border-ink/10">
         <table className="w-full min-w-[500px] text-sm print:min-w-0">
           <thead>
             <tr className="bg-brand/8 text-left text-xs font-black uppercase tracking-widest text-brand">
-              <th className="px-4 py-3">À dire, à voix basse</th>
-              <th className="px-4 py-3">À éviter absolument</th>
+              <th className="px-4 py-3">Phrases qui apaisent (à voix basse)</th>
+              <th className="px-4 py-3">Phrases qui enflamment (à éviter)</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-ink/10">
             <tr>
-              <td className="px-4 py-3">« Je suis là. »</td>
-              <td className="px-4 py-3">« Arrête de pleurer. »</td>
+              <td className="px-4 py-3">« Je suis là avec toi. »</td>
+              <td className="px-4 py-3">« Arrête ton cinéma immédiatement ! »</td>
             </tr>
             <tr>
-              <td className="px-4 py-3">« Tu es en colère, c'est normal. »</td>
-              <td className="px-4 py-3">« Tu es ridicule. »</td>
+              <td className="px-4 py-3">« Tu as le droit d'être en colère, c'est normal. »</td>
+              <td className="px-4 py-3">« Tu es ridicule de pleurer pour ça. »</td>
             </tr>
             <tr>
-              <td className="px-4 py-3">« Je ne te laisserai pas te faire mal. »</td>
-              <td className="px-4 py-3">« Tu fais exprès pour m'énerver. »</td>
+              <td className="px-4 py-3">« Je ne te laisserai pas taper ou te faire mal. »</td>
+              <td className="px-4 py-3">« Tu fais exprès de me pourrir la soirée. »</td>
             </tr>
             <tr>
-              <td className="px-4 py-3">« On va trouver une solution ensemble. »</td>
-              <td className="px-4 py-3">« Si tu continues, tu vas voir. »</td>
+              <td className="px-4 py-3">« On respire ensemble, on trouvera une solution. »</td>
+              <td className="px-4 py-3">« Si tu continues, tu vas être privé de tout ! »</td>
             </tr>
           </tbody>
         </table>
       </div>
+
+      <h2>Prévenir les colères grâce aux défis concrets et aux talents réels</h2>
       <p>
-        On accueille le ressenti, on tient la limite, et on garde un ton calme même si l'enfant
-        crie. La menace et la moquerie ne calment jamais une crise : elles l'allongent, et
-        apprennent à l'enfant que ses émotions font peur.
+        La majorité des crises de fin de journée s'évitent en amont par deux leviers : des transitions anticipées et un exutoire constructif à l'énergie de l'enfant. Un enfant qui a pu, au cours de son après-midi, bâtir, expérimenter, cuisiner ou relever des défis réels arrive le soir avec un réservoir de confiance plein et beaucoup moins de tension à évacuer.
+      </p>
+      <p>
+        C'est tout l'objet des défis proposés par Génizio : stimuler les{" "}
+        <a href="/guides/intelligences-multiples-gardner">intelligences multiples de l'enfant</a> (relationnelle, manuelle, logique) à travers des activités quotidiennes valorisantes, plutôt que de le laisser s'épuiser dans la passivité. Vous pouvez aussi réaliser notre{" "}
+        <a href="/guides/test-de-personnalite-enfant-talents">test de personnalité et de découverte des talents réels</a> pour mieux comprendre le tempérament de votre enfant.
       </p>
 
-      <h2>Prévenir vaut mieux que calmer</h2>
+      <h2>Quand la colère nécessite un accompagnement professionnel</h2>
       <p>
-        Une bonne partie des crises s'évitent en amont : des repères stables (repas, sommeil),
-        prévenir avant de changer d'activité, offrir des choix limités, et surtout des{" "}
-        <strong>occasions régulières de dépenser de l'énergie</strong> et de réussir quelque chose
-        de concret. Un enfant qui a eu, dans la journée, un moment où il a construit, mesuré,
-        cuisiné ou organisé quelque chose de réel a moins de pression à décharger à 18 h.
-      </p>
-      <p>
-        C'est exactement le rôle des défis de Génizio : des activités concrètes adaptées à l'âge et
-        aux centres d'intérêt de l'enfant, qui canalisent l'énergie vers la création et produisent
-        une réussite visible. Un enfant qui a fait quelque chose de ses mains n'a pas besoin de le
-        prouver en cassant quelque chose d'autre.
+        La colère fait partie intégrante du développement normal de l'enfant. Toutefois, une consultation auprès d'un pédiatre, d'un psychologue pour enfants ou d'un pédopsychiatre est recommandée si les crises durent régulièrement plus de 30 minutes, mettent en danger l'enfant ou son entourage, ou s'accompagnent d'un repli scolaire ou de troubles du sommeil importants.
       </p>
 
-      <h2>Quand la colère dépasse le cadre habituel</h2>
-      <p>
-        La colère est normale ; certaines intensités méritent un avis professionnel. Des crises
-        fréquentes, très longues, ou qui mettent l'enfant ou les autres en danger ; des signes de
-        repli, de tristesse durable ou de souffrance scolaire qui les accompagnent : dans ces cas,
-        un professionnel de santé est la bonne étape — pas une sanction, pas une attente passive.
-      </p>
-
-      <h2>Questions fréquentes</h2>
+      <h2>Questions fréquentes (FAQ)</h2>
       {FAQ.map((item) => (
-        <div key={item.question}>
-          <h3>{item.question}</h3>
-          <p>{item.answer}</p>
+        <div key={item.question} className="my-5 border-b border-ink/10 pb-4">
+          <h3 className="text-lg font-bold text-ink">{item.question}</h3>
+          <p className="mt-2 text-ink/80">{item.answer}</p>
         </div>
       ))}
     </GuideLayout>
