@@ -29,9 +29,9 @@ import {
   Globe,
   Clock,
   Timer,
-  RotateCcw,
   Bell,
   Users,
+  Compass,
 } from "lucide-react";
 import { getChildAccessStatusFn, type ChildAccessStatus } from "@/lib/child-access";
 import { followFilterAfterStart } from "@/lib/challenge-list-filters";
@@ -1149,6 +1149,14 @@ function ChallengesPage() {
                   </div>
                 </div>
                 <div className="flex flex-wrap gap-3">
+                  <Link
+                    to="/profiles/$profileId/decouverte"
+                    params={{ profileId }}
+                    className="rounded-2xl border border-amber-300/80 bg-amber-50 px-5 py-3 text-sm font-bold text-amber-900 shadow-sm hover:-translate-y-0.5 active:translate-y-0 transition-all flex items-center gap-2 cursor-pointer"
+                  >
+                    <Compass className="size-4 text-amber-700 stroke-[2.5]" />
+                    <span>Espace Découverte 🧭</span>
+                  </Link>
                   <button
                     onClick={() => {
                       document
@@ -1854,13 +1862,21 @@ function ChallengesPage() {
                           Demande à tes parents de t'en attribuer une nouvelle depuis l'Espace
                           Parent, ou accède à la Carte des Quêtes.
                         </p>
-                        <div className="pt-2">
+                        <div className="pt-2 flex flex-wrap items-center justify-center gap-3">
                           <Link
                             to="/profiles/$profileId/quest"
                             params={{ profileId }}
                             className="inline-flex items-center justify-center gap-2 rounded-2xl border border-ink/10 bg-sky px-6 py-3.5 text-sm font-black text-ink shadow-md hover:-translate-y-0.5 transition-all cursor-pointer"
                           >
                             <span>Voir la Carte des Quêtes 🗺️</span>
+                          </Link>
+                          <Link
+                            to="/profiles/$profileId/decouverte"
+                            params={{ profileId }}
+                            className="inline-flex items-center justify-center gap-2 rounded-2xl border border-amber-300/80 bg-amber-50 px-6 py-3.5 text-sm font-black text-amber-900 shadow-md hover:-translate-y-0.5 transition-all cursor-pointer"
+                          >
+                            <Compass className="size-4 text-amber-700 stroke-[2.5]" />
+                            <span>Espace Découverte 🧭</span>
                           </Link>
                         </div>
                       </div>

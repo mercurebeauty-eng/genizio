@@ -68,6 +68,7 @@ import { Route as ProfilesProfileIdPortfolioRouteImport } from './routes/profile
 import { Route as ProfilesProfileIdPassportPrintRouteImport } from './routes/profiles.$profileId.passport-print'
 import { Route as ProfilesProfileIdMentorsRouteImport } from './routes/profiles.$profileId.mentors'
 import { Route as ProfilesProfileIdGuildRouteImport } from './routes/profiles.$profileId.guild'
+import { Route as ProfilesProfileIdDecouverteRouteImport } from './routes/profiles.$profileId.decouverte'
 import { Route as ProfilesProfileIdChallengesRouteImport } from './routes/profiles.$profileId.challenges'
 import { Route as ProfilesProfileIdBilanPrintRouteImport } from './routes/profiles.$profileId.bilan-print'
 import { Route as ApiPaystackWebhookRouteImport } from './routes/api/paystack/webhook'
@@ -396,6 +397,12 @@ const ProfilesProfileIdGuildRoute = ProfilesProfileIdGuildRouteImport.update({
   path: '/$profileId/guild',
   getParentRoute: () => ProfilesRoute,
 } as any)
+const ProfilesProfileIdDecouverteRoute =
+  ProfilesProfileIdDecouverteRouteImport.update({
+    id: '/$profileId/decouverte',
+    path: '/$profileId/decouverte',
+    getParentRoute: () => ProfilesRoute,
+  } as any)
 const ProfilesProfileIdChallengesRoute =
   ProfilesProfileIdChallengesRouteImport.update({
     id: '/$profileId/challenges',
@@ -472,6 +479,7 @@ export interface FileRoutesByFullPath {
   '/api/paystack/webhook': typeof ApiPaystackWebhookRoute
   '/profiles/$profileId/bilan-print': typeof ProfilesProfileIdBilanPrintRoute
   '/profiles/$profileId/challenges': typeof ProfilesProfileIdChallengesRoute
+  '/profiles/$profileId/decouverte': typeof ProfilesProfileIdDecouverteRoute
   '/profiles/$profileId/guild': typeof ProfilesProfileIdGuildRoute
   '/profiles/$profileId/mentors': typeof ProfilesProfileIdMentorsRoute
   '/profiles/$profileId/passport-print': typeof ProfilesProfileIdPassportPrintRoute
@@ -532,6 +540,7 @@ export interface FileRoutesByTo {
   '/api/paystack/webhook': typeof ApiPaystackWebhookRoute
   '/profiles/$profileId/bilan-print': typeof ProfilesProfileIdBilanPrintRoute
   '/profiles/$profileId/challenges': typeof ProfilesProfileIdChallengesRoute
+  '/profiles/$profileId/decouverte': typeof ProfilesProfileIdDecouverteRoute
   '/profiles/$profileId/guild': typeof ProfilesProfileIdGuildRoute
   '/profiles/$profileId/mentors': typeof ProfilesProfileIdMentorsRoute
   '/profiles/$profileId/passport-print': typeof ProfilesProfileIdPassportPrintRoute
@@ -597,6 +606,7 @@ export interface FileRoutesById {
   '/api/paystack/webhook': typeof ApiPaystackWebhookRoute
   '/profiles/$profileId/bilan-print': typeof ProfilesProfileIdBilanPrintRoute
   '/profiles/$profileId/challenges': typeof ProfilesProfileIdChallengesRoute
+  '/profiles/$profileId/decouverte': typeof ProfilesProfileIdDecouverteRoute
   '/profiles/$profileId/guild': typeof ProfilesProfileIdGuildRoute
   '/profiles/$profileId/mentors': typeof ProfilesProfileIdMentorsRoute
   '/profiles/$profileId/passport-print': typeof ProfilesProfileIdPassportPrintRoute
@@ -663,6 +673,7 @@ export interface FileRouteTypes {
     | '/api/paystack/webhook'
     | '/profiles/$profileId/bilan-print'
     | '/profiles/$profileId/challenges'
+    | '/profiles/$profileId/decouverte'
     | '/profiles/$profileId/guild'
     | '/profiles/$profileId/mentors'
     | '/profiles/$profileId/passport-print'
@@ -723,6 +734,7 @@ export interface FileRouteTypes {
     | '/api/paystack/webhook'
     | '/profiles/$profileId/bilan-print'
     | '/profiles/$profileId/challenges'
+    | '/profiles/$profileId/decouverte'
     | '/profiles/$profileId/guild'
     | '/profiles/$profileId/mentors'
     | '/profiles/$profileId/passport-print'
@@ -787,6 +799,7 @@ export interface FileRouteTypes {
     | '/api/paystack/webhook'
     | '/profiles/$profileId/bilan-print'
     | '/profiles/$profileId/challenges'
+    | '/profiles/$profileId/decouverte'
     | '/profiles/$profileId/guild'
     | '/profiles/$profileId/mentors'
     | '/profiles/$profileId/passport-print'
@@ -1234,6 +1247,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ProfilesProfileIdGuildRouteImport
       parentRoute: typeof ProfilesRoute
     }
+    '/profiles/$profileId/decouverte': {
+      id: '/profiles/$profileId/decouverte'
+      path: '/$profileId/decouverte'
+      fullPath: '/profiles/$profileId/decouverte'
+      preLoaderRoute: typeof ProfilesProfileIdDecouverteRouteImport
+      parentRoute: typeof ProfilesRoute
+    }
     '/profiles/$profileId/challenges': {
       id: '/profiles/$profileId/challenges'
       path: '/$profileId/challenges'
@@ -1372,6 +1392,7 @@ interface ProfilesRouteChildren {
   ProfilesIndexRoute: typeof ProfilesIndexRoute
   ProfilesProfileIdBilanPrintRoute: typeof ProfilesProfileIdBilanPrintRoute
   ProfilesProfileIdChallengesRoute: typeof ProfilesProfileIdChallengesRoute
+  ProfilesProfileIdDecouverteRoute: typeof ProfilesProfileIdDecouverteRoute
   ProfilesProfileIdGuildRoute: typeof ProfilesProfileIdGuildRoute
   ProfilesProfileIdMentorsRoute: typeof ProfilesProfileIdMentorsRoute
   ProfilesProfileIdPassportPrintRoute: typeof ProfilesProfileIdPassportPrintRoute
@@ -1384,6 +1405,7 @@ const ProfilesRouteChildren: ProfilesRouteChildren = {
   ProfilesIndexRoute: ProfilesIndexRoute,
   ProfilesProfileIdBilanPrintRoute: ProfilesProfileIdBilanPrintRoute,
   ProfilesProfileIdChallengesRoute: ProfilesProfileIdChallengesRoute,
+  ProfilesProfileIdDecouverteRoute: ProfilesProfileIdDecouverteRoute,
   ProfilesProfileIdGuildRoute: ProfilesProfileIdGuildRoute,
   ProfilesProfileIdMentorsRoute: ProfilesProfileIdMentorsRoute,
   ProfilesProfileIdPassportPrintRoute: ProfilesProfileIdPassportPrintRoute,

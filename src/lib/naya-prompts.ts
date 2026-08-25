@@ -1134,3 +1134,86 @@ Réponds EXCLUSIVEMENT avec un objet JSON strict au format suivant :
   "presentation_mode": "${input.presentationMode}"
 }`;
 }
+
+// ---------------------------------------------------------------------------
+// ESPACE DÉCOUVERTE — Analyse cognitive et comportementale d'une exploration libre
+// ---------------------------------------------------------------------------
+export type DiscoveryAnalysisPromptInput = {
+  childName: string;
+  childAge: number;
+  talentsJson: string;
+  trace: {
+    sourceType: string;
+    title: string;
+    description: string;
+    domain: string;
+    perceivedDifficulty?: string | null;
+    attemptsCount: number;
+    durationMinutes?: number | null;
+    autonomyLevel?: string | null;
+    helpContext?: string | null;
+    strategyUsed?: string | null;
+    outcomeStatus: string;
+    proofImageUrl?: string | null;
+    dialogue?: { question: string; answer: string }[];
+  };
+};
+
+export function buildDiscoveryAnalysisPrompt(input: DiscoveryAnalysisPromptInput): string {
+  const dialogueText = input.trace.dialogue && input.trace.dialogue.length > 0
+    ? input.trace.dialogue.map((d) => `Q: ${d.question}\nR: ${d.answer}`).join("\n\n")
+    : "(Pas de dialogue interactif spécifique)";
+
+  const imageClause = input.trace.proofImageUrl
+    ? `- Preuve photo fournie : ${input.trace.proofImageUrl}\n- VALIDATION CONTEXTUELLE DE L'IMAGE : vérifie si l'image ou la réalisation semble cohérente avec ce qui est raconté (sans rigidité excessive). Règle "image_context_verified" à true si c'est plausible/pertinent.`
+    : `- Preuve photo : aucune image fournie. Règle "image_context_verified" à true par défaut.`;
+
+  return `Tu es Naya, l'IA observatrice pédagogique de Génizio. Tu observes une trace d'exploration libre enregistrée dans l'espace « Découverte » par ou pour ${input.childName} (${input.childAge} ans).
+
+RAPPEL FONDAMENTAL :
+- Dans le parcours normal, Genizio observe l'enfant face à une consigne.
+- Dans Découverte, tu observes ce que l'enfant CHOISIT de faire lorsqu'on lui donne la liberté d'explorer.
+- Ton rôle n'est PAS de noter ou de sanctionner, mais de comprendre son mode opératoire mental, son initiative et sa persévérance.
+- Si l'activité montre une capacité supérieure inattendue ou un grand intérêt spontané, formule une HYPOTHÈSE sans porter de verdict définitif.
+
+DONNÉES DE L'EXPLORATION :
+- Source de l'exploration : ${input.trace.sourceType} (ex: initiative personnelle, trouvé ailleurs, laboratoire libre)
+- Titre : ${input.trace.title}
+- Domaine exploré : ${input.trace.domain}
+- Description de ce qui a été fait : ${input.trace.description}
+- Difficulté perçue : ${input.trace.perceivedDifficulty || "non précisée"}
+- Nombre d'essais / tentatives : ${input.trace.attemptsCount}
+- Temps passé estimé : ${input.trace.durationMinutes ? input.trace.durationMinutes + " min" : "non précisé"}
+- Niveau d'autonomie : ${input.trace.autonomyLevel || "non précisé"}
+- Contexte d'aide (si demandé) : ${input.trace.helpContext || "aucune aide"}
+- Stratégie observée : ${input.trace.strategyUsed || "non précisée"}
+- Résultat final : ${input.trace.outcomeStatus}
+${imageClause}
+- Échanges / Verbatim de l'enfant :
+${dialogueText}
+
+PROFIL ACTUEL DE L'ENFANT :
+${input.talentsJson}
+
+RÈGLES D'ANALYSE :
+1. Évalue l'initiative, la persévérance, la curiosité et l'autonomie sur une échelle de 1 à 10.
+2. Identifie les mécanismes cognitifs sous-jacents (déduction, pensée spatiale, créativité divergente, méthode empirique...).
+3. Détecte si cette trace constitue une « anomalie positive » (indice d'une capacité potentiellement supérieure ou d'une aisance inattendue dans ce contexte libre).
+4. Si une image est fournie, évalue sa cohérence avec la description.
+5. Reste bienveillant, constructif et ancré dans les faits observables.
+
+Réponds EXCLUSIVEMENT avec un objet JSON strict au format suivant :
+{
+  "summary": "Synthèse bienveillante et valorisante de 2 à 3 phrases pour le parent ou le mentor.",
+  "initiative_score": 8,
+  "perseverance_score": 7,
+  "curiosity_score": 9,
+  "autonomy_score": 8,
+  "cognitive_insights": "Analyse qualitative du mode d'apprentissage spontané observé...",
+  "potential_anomaly": true,
+  "anomaly_hypothesis": "Hypothèse sur une capacité supérieure ou un levier particulier (ou null si exploration normale)",
+  "recommended_next_step": "Conseil d'observation pour le parent/mentor ou suggestion de calibration...",
+  "image_context_verified": true,
+  "image_feedback": "Observation sur la photo réalisée (ou null si pas d'image)"
+}`;
+}
