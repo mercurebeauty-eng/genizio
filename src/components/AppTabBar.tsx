@@ -41,7 +41,9 @@ export function AppTabBar({ profileId }: AppTabBarProps) {
     },
     { to: "/profile" as const, label: "Réglages", icon: Settings, needsProfileId: false },
   ];
-  const visibleItems = items;
+  const visibleItems = mentorMode
+    ? items.filter((item) => item.label !== "Mentor")
+    : items;
 
   return (
     <nav
