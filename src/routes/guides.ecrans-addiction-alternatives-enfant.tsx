@@ -40,9 +40,9 @@ const FAQ = [
 export const Route = createFileRoute("/guides/ecrans-addiction-alternatives-enfant")({
   head: () => {
     const meta = pageMeta({
-      title: "Accro aux écrans ? Activités sans écran + sevrage en douceur",
+      title: "Enfant accro aux écrans : 5 étapes pour décrocher sans crise",
       description:
-        "Votre enfant ne décroche pas de la tablette ? Parlez-en avec lui, puis réduisez le temps d'écran progressivement, sans crise ni conflit. Méthode et activités testées (6-12 ans).",
+        "Votre enfant passe trop de temps sur les écrans ? Découvrez une méthode de sevrage progressif sans conflit et 15 alternatives captivantes dans le monde réel.",
       path: PATH,
       image: "/guides/og-ecrans.jpg",
       type: "article",
@@ -63,11 +63,11 @@ export const Route = createFileRoute("/guides/ecrans-addiction-alternatives-enfa
             headline:
               "Mon enfant est accro aux écrans : comment réduire le temps d'écran en douceur, sans crise",
             description:
-              "Guide pratique pour les parents d'enfants de 6 à 12 ans : discuter avec son enfant, puis réduire les écrans par paliers progressifs, en remplaçant chaque palier par des activités concrètes qui captent vraiment leur attention.",
+              "Guide parental complet pour sevrer son enfant des écrans par paliers progressifs : négociation d'accord, rituels et activités stimulantes du monde réel.",
             path: PATH,
             image: "/guides/og-ecrans.jpg",
             datePublished: "2026-08-08",
-            dateModified: "2026-08-14",
+            dateModified: "2026-08-26",
           }),
         ),
       ],
@@ -82,14 +82,15 @@ function Guide() {
       eyebrow="Écrans & Créativité"
       title="Mon enfant est accro aux écrans : comment réduire le temps d'écran en douceur, sans crise"
       intro="Votre enfant réclame la tablette dès le réveil et la crise éclate chaque soir quand vous l'éteignez ? Ce n'est pas un caprice : son cerveau s'est habitué à une stimulation rapide et facile. La bonne nouvelle, c'est qu'on peut le sevrer — sans punition, sans conflit, et sans culpabilité. Deux étapes font toute la différence : d'abord lui en parler, ensuite changer progressivement, palier par palier, en lui proposant des activités qui captent la même énergie, mais dans le monde réel."
-      updated="14 août 2026"
-      readingTime="8 min"
+      updated="26 août 2026"
+      readingTime="9 min"
       path={PATH}
       related={[
-        { label: "24 activités éducatives (6-12 ans)", to: "/guides/activites-educatives-enfant" },
-        { label: "Mon enfant ne tient pas en place", to: "/guides/enfant-agite-concentration" },
-        { label: "L'IA pour aider son enfant à apprendre", to: "/guides/ia-apprentissage-enfant" },
-        { label: "Activités manuelles (4-12 ans)", to: "/guides/activites-manuelles-enfant" },
+        { label: "24 activités éducatives sans écran", to: "/guides/activites-educatives-enfant" },
+        { label: "18 activités manuelles (4-12 ans)", to: "/guides/activites-manuelles-enfant" },
+        { label: "Canaliser un enfant agité", to: "/guides/enfant-agite-concentration" },
+        { label: "Les 9 formes d'intelligence", to: "/guides/intelligences-multiples-gardner" },
+        { label: "Gestion de la colère et frustration", to: "/guides/gestion-colere-emotions-enfant" },
       ]}
     >
       <img
@@ -110,63 +111,44 @@ function Guide() {
 
       <h2>Pourquoi interdire les écrans d'un coup ne marche pas</h2>
       <p>
-        Les jeux vidéo, les vidéos YouTube et les applications sont conçus pour capter l'attention
-        le plus longtemps possible. Chaque niveau réussi, chaque vidéo suivante déclenche une petite
-        décharge de plaisir dans le cerveau. C'est le même mécanisme que celui d'une machine à sous
-        : imprévisible, rapide, addictif.
+        Les jeux vidéo, les vidéos YouTube et les réseaux sociaux sont conçus pour capter l'attention
+        le plus longtemps possible. Chaque notification ou vidéo suivante déclenche une micro-décharge de dopamine dans le cerveau. C'est le même mécanisme d'addiction comportementale qu'une machine à sous : imprévisible, rapide et hautement stimulant.
       </p>
       <p>
-        Quand vous éteignez brusquement la tablette, l'enfant passe d'un état de{" "}
-        <strong>sur-stimulation</strong> à un vide total. D'où la crise, les pleurs, la négociation
-        interminable. Ce n'est pas de la mauvaise volonté — c'est une réaction normale de son
-        système nerveux. Et ce qui est retiré d'un coup est souvent repris en cachette quelques
-        jours plus tard : c'est le <strong>phénomène du yoyo</strong>, qui épuise les parents et
-        fait perdre confiance à l'enfant.
+        Quand vous éteignez brusquement la tablette ou la télévision, l'enfant passe d'un état de <strong>sur-stimulation</strong> à un vide sensoriel total. D'où la tempête émotionnelle, les pleurs et la négociation agressive (découvrez notre guide sur la{" "}
+        <a href="/guides/gestion-colere-emotions-enfant">gestion de la colère et des crises chez l'enfant</a>). Ce n'est pas de la provocation délibérée, mais une réaction neurobiologique de manque.
       </p>
       <p>
-        La solution n'est ni d'interdire, ni de laisser faire, mais de{" "}
-        <strong>changer progressivement</strong>. C'est exactement le principe du sevrage en élevage
-        : on ne retire jamais le lait d'un coup à un jeune animal — on remplace petit à petit, 10 %
-        d'aliment dur et le reste de lait, puis un peu plus chaque semaine, jusqu'à l'équilibre. On
-        fait pareil avec les écrans, pour ne pas mettre l'organisme de l'enfant à rude épreuve.
+        La solution durable consiste à appliquer une méthode de <strong>sevrage progressif par le faire</strong> : on remplace petit à petit 10 % du temps d'écran par des activités du monde réel qui nourrissent ses{" "}
+        <a href="/guides/intelligences-multiples-gardner">9 formes d'intelligence naturelles</a>.
       </p>
 
-      <h2>Parler avec son enfant avant de toucher aux écrans</h2>
+      <h2>Parler avec son enfant avant d'imposer des règles</h2>
       <p>
-        Avant de changer quoi que ce soit, il faut <strong>discuter</strong>. Beaucoup de parents
-        annoncent une décision (« à partir de demain, une heure par jour ! ») et se heurtent à un
-        mur. L'enfant ne se braque pas parce qu'il est « accro » : il se braque parce qu'on touche à
-        quelque chose qu'il aime, sans lui demander son avis.
+        Avant d'instaurer des restrictions, asseyez-vous avec votre enfant. Imposer une règle unilatérale déclenche un réflexe de rébellion. En appliquant les principes de la{" "}
+        <a href="/guides/discipline-positive-sans-punition">discipline positive sans punition</a>, vous transformez l'interdiction en accord mutuel :
       </p>
-      <p>Posez-lui de vraies questions, sans jugement et sans sermon :</p>
       <ul>
         <li>
-          <strong>« Qu'est-ce que tu aimes le plus quand tu joues ? »</strong> — la réponse révèle
-          ce qu'il faut remplacer : le défi, la construction, l'histoire, l'action…
+          <strong>« Qu'est-ce qui te plaît le plus dans ce jeu ou cette vidéo ? »</strong> — Sa réponse révèle le besoin sous-jacent : construire, explorer, défier, rigoler avec des amis.
         </li>
         <li>
-          <strong>« Avec qui tu joues ? »</strong> — si l'écran remplace des copains, l'activité de
-          remplacement devra être sociale ; si c'est un refuge, elle devra être rassurante.
+          <strong>« Qu'est-ce que tu ressens dans ton corps quand on éteint ? »</strong> — L'aider à identifier son agitation motrice (retrouvez nos conseils pour un{" "}
+          <a href="/guides/enfant-agite-concentration">enfant qui a du mal à se concentrer</a>).
         </li>
         <li>
-          <strong>« Qu'est-ce que tu ressens quand on éteint ? »</strong> — l'enfant qui met des
-          mots sur sa frustration comprend mieux pourquoi vous voulez changer les choses.
+          <strong>« Comment pourrions-nous fabriquer ce projet en vrai ? »</strong> — L'inviter à devenir créateur plutôt que spectateur (lisez notre guide sur la{" "}
+          <a href="/guides/ecrans-tiktok-youtube-talent-ecriture-realisation">transformation des enfants de spectateurs à créateurs</a>).
         </li>
       </ul>
       <p>
-        Ensuite, <strong>négociez l'accord ensemble</strong>. Laissez l'enfant proposer d'abord :
-        quelle activité remplacerait tel jeu, à quel moment il éteint lui-même, quelle récompense de
-        confiance il gagne (choisir le repas du dimanche, une sortie…). Vous validez, vous écrivez
-        l'accord, vous l'affichez. Un enfant s'engage dix fois mieux dans une règle qu'il a
-        contribué à construire — et la discussion que vous ouvrez aujourd'hui est le socle de tous
-        les changements qui suivent.
+        Rédigez ensuite un contrat familial visible. Développez son sens de l'engagement grâce à nos rituels pour{" "}
+        <a href="/guides/autonomie-responsabilite-maison">rendre son enfant autonome et responsable à la maison</a>.
       </p>
 
       <h2>Le changement progressif : le sevrage en douceur, palier par palier</h2>
       <p>
-        Une fois l'accord trouvé, on ne réduit pas tout d'un coup : on descend{" "}
-        <strong>par paliers d'environ 10 % par semaine</strong>. Si votre enfant passe 2 heures par
-        jour sur les écrans, cela donne un sevrage en douceur sur 4 à 6 semaines :
+        Descendez par paliers d'environ 10 % de temps d'écran chaque semaine. Si votre enfant passe 2 heures par jour sur les écrans :
       </p>
       <div className="my-6 overflow-x-auto rounded-2xl border border-ink/10">
         <table className="w-full min-w-[520px] text-sm print:min-w-0">
@@ -179,141 +161,88 @@ function Guide() {
           </thead>
           <tbody className="divide-y divide-ink/10">
             <tr>
-              <td className="px-4 py-3 font-bold">1</td>
+              <td className="px-4 py-3 font-bold">Semaine 1</td>
               <td className="px-4 py-3">2 h → 1 h 50</td>
-              <td className="px-4 py-3">Le défi « Minecraft Réel » (cartons, construction)</td>
-            </tr>
-            <tr>
-              <td className="px-4 py-3 font-bold">2</td>
-              <td className="px-4 py-3">1 h 50 → 1 h 40</td>
-              <td className="px-4 py-3">Le reportage photo avec votre téléphone, 15 min</td>
-            </tr>
-            <tr>
-              <td className="px-4 py-3 font-bold">3</td>
-              <td className="px-4 py-3">1 h 40 → 1 h 30</td>
-              <td className="px-4 py-3">Le laboratoire secret de la cuisine</td>
-            </tr>
-            <tr>
-              <td className="px-4 py-3 font-bold">4</td>
-              <td className="px-4 py-3">1 h 30 → 1 h 15</td>
-              <td className="px-4 py-3">Une activité au choix de l'enfant (il décide seul)</td>
-            </tr>
-            <tr>
-              <td className="px-4 py-3 font-bold">5-6</td>
-              <td className="px-4 py-3">1 h 15 → 1 h maximum</td>
               <td className="px-4 py-3">
-                Consolidation : l'accord reste affiché, on fête la régularité
+                Le défi « Minecraft Réel » (bricolage issu de nos{" "}
+                <a href="/guides/activites-manuelles-enfant">activités manuelles récup</a>)
               </td>
+            </tr>
+            <tr>
+              <td className="px-4 py-3 font-bold">Semaine 2</td>
+              <td className="px-4 py-3">1 h 50 → 1 h 40</td>
+              <td className="px-4 py-3">Le reportage photo du quartier (15 min)</td>
+            </tr>
+            <tr>
+              <td className="px-4 py-3 font-bold">Semaine 3</td>
+              <td className="px-4 py-3">1 h 40 → 1 h 30</td>
+              <td className="px-4 py-3">
+                Expériences scientifiques de cuisine (issues de nos{" "}
+                <a href="/guides/activites-educatives-enfant">24 activités éducatives sans écran</a>)
+              </td>
+            </tr>
+            <tr>
+              <td className="px-4 py-3 font-bold">Semaine 4</td>
+              <td className="px-4 py-3">1 h 30 → 1 h 15</td>
+              <td className="px-4 py-3">Projet créatif libre en famille</td>
+            </tr>
+            <tr>
+              <td className="px-4 py-3 font-bold">Semaine 5+</td>
+              <td className="px-4 py-3">1 h maximum</td>
+              <td className="px-4 py-3">Consolidation : contrat respecté, célébration des victoires</td>
             </tr>
           </tbody>
         </table>
       </div>
-      <p>
-        Le rythme importe plus que la quantité : tant que l'enfant encaisse bien un palier (pas de
-        crise majeure, pas de repli), on descend au palier suivant. S'il régresse, on reste une
-        semaine de plus au même niveau. <strong>La régularité compte plus que la vitesse</strong> —
-        c'est elle qui transforme l'habitude, pas la fermeté d'un jour.
-      </p>
-      <p>
-        À chaque palier, le temps retiré est <strong>remplacé</strong>, jamais laissé vide. C'est ce
-        qu'on appelle le <strong>sevrage par le faire</strong> : on ne retire pas l'écran, on le
-        rend inutile. Voici trois activités de remplacement qui fonctionnent particulièrement bien
-        pour les 6-12 ans.
-      </p>
 
-      <h2>3 activités sans écran pour remplacer chaque palier</h2>
+      <h2>3 activités concrètes pour remplacer les écrans dès ce soir</h2>
 
       <div className="my-6 rounded-2xl bg-amber-50 p-5 border border-amber-200">
         <h3 className="font-bold text-amber-950 text-base mb-2">
-          1. Le défi « Minecraft Réel » — Construire avec ses mains
+          1. Le défi « Minecraft Réel » — Construire en 3D
         </h3>
         <p className="text-sm text-amber-900 leading-relaxed">
-          Donnez à votre enfant des cartons d'emballage, des ciseaux, du ruban adhésif et un défi
-          clair :{" "}
-          <em>
-            « Construis la maquette de ta chambre idéale avec 3 meubles qui tiennent debout. »
-          </em>{" "}
-          Le plaisir de la construction en 3D remplace directement les blocs virtuels de Minecraft
-          ou Roblox.
-        </p>
-        <p className="text-sm text-amber-900/80 leading-relaxed mt-2">
-          <strong>Pourquoi ça marche :</strong> L'enfant mobilise son intelligence spatiale et sa
-          motricité fine. Le résultat est tangible — il peut le montrer, le garder, le
-          perfectionner. C'est bien plus gratifiant qu'un score qui disparaît quand on ferme
-          l'application.
+          Donnez à votre enfant des cartons d'emballage, des ciseaux, du ruban adhésif et un défi clair : <em>« Construis la maquette de ta forteresse idéale avec un pont-levis qui fonctionne. »</em> Le plaisir physique de l'assemblage remplace directement les blocs virtuels.
         </p>
       </div>
 
       <div className="my-6 rounded-2xl bg-sky-50 p-5 border border-sky-200">
         <h3 className="font-bold text-sky-950 text-base mb-2">
-          2. Le reportage photo — Utiliser l'écran autrement
+          2. Le reportage photo et vidéo créatif
         </h3>
         <p className="text-sm text-sky-900 leading-relaxed">
-          Si votre enfant adore les vidéos YouTube, retournez la situation : confiez-lui le
-          téléphone <strong>uniquement en mode appareil photo</strong> pour une mission de 15
-          minutes. Réaliser un reportage photo légendé sur un métier du quartier, les plantes du
-          jardin ou la préparation du dîner.
-        </p>
-        <p className="text-sm text-sky-900/80 leading-relaxed mt-2">
-          <strong>Pourquoi ça marche :</strong> L'enfant passe de consommateur passif à créateur
-          actif. Il observe, cadre, rédige des légendes. Il développe son intelligence verbale et sa
-          curiosité sociale — tout en utilisant l'outil qu'il adore.
+          Confiez-lui un smartphone en mode caméra pour interviewer un grand-parent, photographier 5 insectes du jardin ou créer un mini-tutoriel de cuisine. L'enfant passe du statut de spectateur passif à celui de réalisateur actif.
         </p>
       </div>
 
       <div className="my-6 rounded-2xl bg-emerald-50 p-5 border border-emerald-200">
         <h3 className="font-bold text-emerald-950 text-base mb-2">
-          3. Le laboratoire secret de la cuisine — La science à portée de main
+          3. Le laboratoire secret de la maison
         </h3>
         <p className="text-sm text-emerald-900 leading-relaxed">
-          Proposez une expérience de chimie culinaire avec ce que vous avez dans le placard :
-          presser un citron, verser du bicarbonate de soude, observer la réaction effervescente,
-          mesurer les volumes et créer une limonade maison aromatisée. Ajoutez du curcuma pour voir
-          le changement de couleur.
-        </p>
-        <p className="text-sm text-emerald-900/80 leading-relaxed mt-2">
-          <strong>Pourquoi ça marche :</strong> L'enfant endosse le rôle de chercheur : il formule
-          une hypothèse, teste, observe un résultat visible immédiatement. C'est le même ressort que
-          le jeu vidéo — la récompense instantanée — mais dans le monde réel, avec un apprentissage
-          qui reste.
+          Bicarbonate, vinaigre, huile, épices : réalisez une réaction chimique effervescente ou une lampe à lave maison. L'effet « waouh » procure la même intensité émotionnelle qu'un jeu vidéo, avec la fierté d'avoir expérimenté soi-même.
         </p>
       </div>
 
-      <h2>Comment limiter le temps d'écran sans conflit au quotidien</h2>
+      <h2>Rituels pour maintenir l'équilibre au quotidien</h2>
       <ul>
         <li>
-          <strong>Le contrat visuel plutôt que la parole :</strong> Un sablier de 30 minutes ou une
-          alarme visuelle sur la tablette fonctionne mieux que dix rappels oraux. L'enfant voit le
-          temps défiler et se prépare mentalement à la transition.
+          <strong>Le sablier ou timer physique :</strong> Plus neutre que la voix du parent, il évite les querelles d'autorité.
         </li>
         <li>
-          <strong>Prévenir 5 minutes avant :</strong>{" "}
-          <em>
-            « Il te reste 5 minutes pour finir ton niveau, ensuite on passe au défi bricolage. »
-          </em>{" "}
-          Cette simple phrase réduit considérablement les crises parce que l'enfant ne subit plus la
-          coupure — il la voit venir.
+          <strong>La règle des 5 minutes d'avertissement :</strong> <em>« Dans 5 minutes, on sauvegarde et on éteint pour préparer le dîner ensemble. »</em>
         </li>
         <li>
-          <strong>Valoriser ce qui est fait sans écran :</strong> Exposez les créations de votre
-          enfant dans le salon, photographiez-les pour un « cahier de famille ». Quand l'effort réel
-          est reconnu publiquement, l'envie de créer l'emporte progressivement sur l'envie de
-          scroller.
-        </li>
-        <li>
-          <strong>Créer un rituel de transition :</strong> Associez systématiquement la fin de
-          l'écran à un moment agréable — goûter ensemble, histoire à voix haute, sortie au parc.
-          L'enfant n'associera plus « fin d'écran » à « punition », mais à « début de quelque chose
-          de bien ».
-        </li>
-        <li>
-          <strong>Fêter chaque palier :</strong> À la fin de chaque semaine de sevrage tenue,
-          marquez le coup avec l'enfant (sortie, plat qu'il choisit, visite). Le changement
-          progressif devient alors une aventure commune, pas une privation.
+          <strong>La boîte à écrans pendant les repas et la nuit :</strong> Les écrans restent hors des chambres pour préserver un sommeil réparateur.
         </li>
       </ul>
 
-      <h2>Foire aux questions — temps d'écran et sevrage progressif</h2>
+      <h2>Ce que fait Génizio au quotidien</h2>
+      <p>
+        Génizio transforme l'énergie numérique des enfants en réalisations réelles. L'application propose des défis du monde réel (bricolage, écriture, logique, cuisine, nature). En prenant en photo ses créations terminées, l'enfant accumule des badges d'accomplissement et remplit son Passeport de Talents.
+      </p>
+
+      <h2>Foire aux questions (FAQ)</h2>
       <div className="mt-8 space-y-6 border-t border-ink/10 pt-6">
         {FAQ.map((item, idx) => (
           <div key={idx} className="space-y-2">

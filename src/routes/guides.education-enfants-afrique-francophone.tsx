@@ -44,9 +44,9 @@ const FAQ = [
 export const Route = createFileRoute("/guides/education-enfants-afrique-francophone")({
   head: () => {
     const meta = pageMeta({
-      title: "Développer les talents de son enfant en Afrique (sans argent)",
+      title: "Développer les talents de son enfant en Afrique et Diaspora",
       description:
-        "3 méthodes gratuites pour révéler les talents de votre enfant avec les moyens du bord : carnet des réussites, enquête du quartier, heure du conte inversée. Côte d'Ivoire, Sénégal, diaspora.",
+        "3 méthodes gratuites pour révéler le potentiel et les talents de votre enfant en Afrique et dans la diaspora, avec les moyens du bord et sans budget.",
       path: PATH,
       image: "/guides/og-afrique.jpg",
       type: "article",
@@ -59,7 +59,7 @@ export const Route = createFileRoute("/guides/education-enfants-afrique-francoph
           breadcrumbJsonLd([
             { name: "Accueil", path: "/" },
             { name: "Guides", path: "/guides" },
-            { name: "Afrique francophone", path: PATH },
+            { name: "Éducation Afrique francophone & Diaspora", path: PATH },
           ]),
         ),
         jsonLdScript({
@@ -67,17 +67,20 @@ export const Route = createFileRoute("/guides/education-enfants-afrique-francoph
           "@type": "Article",
           headline:
             "Comment développer les talents de son enfant en Afrique avec les moyens du bord",
+          description:
+            "Méthodes concrètes et gratuites pour révéler les intelligences et les talents des enfants en Afrique francophone et dans la diaspora avec les ressources locales.",
           inLanguage: "fr-FR",
           mainEntityOfPage: absoluteUrl(PATH),
           image: absoluteUrl("/guides/og-afrique.jpg"),
           publisher: { "@id": `${SITE_URL}/#organization` },
           author: { "@type": "Organization", name: "Génizio" },
           datePublished: "2026-07-27",
-          dateModified: "2026-08-14",
+          dateModified: "2026-08-26",
           about: [
             { "@type": "Thing", name: "Éducation en Afrique francophone" },
             { "@type": "Thing", name: "Développement du potentiel de l'enfant" },
             { "@type": "Thing", name: "Activités sans argent" },
+            { "@type": "Thing", name: "Diaspora africaine" },
           ],
         }),
       ],
@@ -89,10 +92,10 @@ export const Route = createFileRoute("/guides/education-enfants-afrique-francoph
 function Guide() {
   return (
     <GuideLayout
-      eyebrow="Afrique & diaspora"
+      eyebrow="Afrique & Diaspora"
       title="Comment développer les talents de son enfant en Afrique avec les moyens du bord"
-      intro="Pas de club de robotique, pas d'atelier d'art le mercredi, des classes chargées et peu de suivi : pourtant, votre enfant développe des talents tous les jours — au marché, entre cousins, dans la cour, à l'école coranique. Voici 3 méthodes gratuites, avec ce que vous avez déjà à la maison, pour les faire apparaître et les faire grandir."
-      updated="14 août 2026"
+      intro="Pas besoin de clubs coûteux ni de matériel sophistiqué : votre enfant développe des compétences d'exception tous les jours — au marché, entre cousins, dans la cour et à l'école. Voici 3 méthodes gratuites et éprouvées, avec les moyens du bord, pour révéler ses talents uniques."
+      updated="26 août 2026"
       readingTime="8 min"
       path={PATH}
       related={[
@@ -101,10 +104,12 @@ function Guide() {
           to: "/guides/potentiel-haut-potentiel-enfant",
         },
         {
-          label: "Les intelligences multiples de Gardner",
+          label: "Les 9 formes d'intelligence",
           to: "/guides/intelligences-multiples-gardner",
         },
-        { label: "24 activités éducatives (6-12 ans)", to: "/guides/activites-educatives-enfant" },
+        { label: "18 activités manuelles récup", to: "/guides/activites-manuelles-enfant" },
+        { label: "24 activités éducatives sans écran", to: "/guides/activites-educatives-enfant" },
+        { label: "Réussite scolaire sans stress", to: "/guides/reussite-scolaire-aider-enfant" },
       ]}
     >
       <img
@@ -116,125 +121,66 @@ function Guide() {
         decoding="async"
         className="my-6 aspect-video w-full rounded-3xl border border-ink/10 object-cover shadow-lg"
       />
-      <h2>Un contexte différent, pas un contexte en manque</h2>
+
+      <h2>Un contexte riche de forces propres</h2>
       <p>
-        La plupart des guides sur le développement de l'enfant supposent un accès facile à des
-        activités extrascolaires organisées : cours de musique, club de robotique, atelier d'art le
-        mercredi après-midi. Ce n'est pas la réalité de la majorité des familles en Côte d'Ivoire,
-        au Sénégal, ou plus largement en Afrique francophone — et ce n'est pas non plus, en soi, un
-        problème à résoudre à tout prix. C'est un contexte différent, avec ses propres forces : la
-        famille élargie, le petit commerce, les responsabilités confiées tôt, le multilinguisme.
-        L'objectif n'est pas de copier un modèle occidental, mais de{" "}
-        <strong>faire apparaître ce qui se développe déjà sous vos yeux</strong>.
+        La plupart des guides éducatifs classiques supposent l'accès à des infrastructures onéreuses. La réalité en Côte d'Ivoire, au Sénégal, au Cameroun ou dans la diaspora possède ses propres richesses : la solidarité communautaire, le commerce de proximité, la débrouillardise pratique et le bilinguisme.
+      </p>
+      <p>
+        Ces expériences nourrissent directement les{" "}
+        <a href="/guides/intelligences-multiples-gardner">9 formes d'intelligence de l'enfant</a> (intelligence interpersonnelle, logico-mathématique et naturaliste).
       </p>
 
       <h2>Méthode 1 — Le carnet des petites réussites</h2>
       <p>
-        Prenez un cahier — même un vieux cahier de classe en reste — et notez, chaque semaine, une
-        réussite concrète de votre enfant. Pas une note : un fait.{" "}
-        <em>« Aujourd'hui, il a calculé la monnaie au marché sans se tromper »</em>,{" "}
-        <em>« elle a aidé sa petite sœur à s'habiller sans qu'on le lui demande »</em>,{" "}
-        <em>« il a récité sa sourate sans hésiter »</em>. Lisez le carnet ensemble un soir par
-        semaine.
+        Prenez un cahier et notez chaque semaine une prouesse concrète : <em>« A calculé la monnaie au marché »</em>, <em>« A réparé son jouet avec du fil »</em>, <em>« A raconté une histoire avec éloquence »</em>.
       </p>
       <p>
-        <strong>Pourquoi ça marche :</strong> dans des classes surchargées, un enfant n'entend
-        parler de lui qu'à travers les notes et les reproches. Le carnet lui montre qu'il progresse
-        ailleurs — et il crée le réflexe d'observation chez le parent : on finit par voir ce que
-        l'enfant fait bien, au lieu de ne voir que ce qu'il rate. C'est aussi la base d'une
-        conversation avec le maître ou la maîtresse : vous arrivez avec des faits, pas avec des
-        plaintes.
+        Ce carnet valorise l'effort et responsabilise l'enfant en appliquant les principes de la{" "}
+        <a href="/guides/discipline-positive-sans-punition">discipline positive sans punition</a>.
       </p>
 
-      <h2>Méthode 2 — L'enquête du quartier</h2>
+      <h2>Méthode 2 — L'enquête du quartier et les défis pratiques</h2>
       <p>
-        Chaque semaine, confiez à votre enfant une « mission d'enquête » sur le quartier, à préparer
-        puis à raconter : <em>« Demande au vendeur de fruits comment il choisit ses mangues »</em>,{" "}
-        <em>« Compte les métiers qu'on croise entre la maison et l'école »</em>,{" "}
-        <em>« Demande à tonton ce qu'il faisait comme travaux à ton âge »</em>. L'enfant doit
-        ensuite vous faire son rapport — à l'oral, ou dans son carnet.
+        Confiez-lui des missions d'observation dans son environnement : interviewer un artisan, classifier 5 types de plantes du quartier ou construire un objet à partir de notre sélection d'
+        <a href="/guides/activites-manuelles-enfant">activités manuelles et de bricolage récup</a>.
       </p>
       <p>
-        <strong>Pourquoi ça marche :</strong> l'enquête transforme le quartier en terrain
-        d'apprentissage. Elle développe la curiosité, l'observation, le vocabulaire et l'aisance à
-        parler avec des adultes — des compétences que l'école ne mesure pas, mais qui servent toute
-        la vie. Et elle valorise les savoirs locaux : l'enfant découvre que les métiers et les
-        savoir-faire autour de lui valent la peine d'être compris.
+        Cette démarche développe l'esprit d'initiative et l'
+        <a href="/guides/autonomie-responsabilite-maison">autonomie au quotidien</a>.
       </p>
 
       <h2>Méthode 3 — L'heure du conte inversée</h2>
       <p>
-        Dans nos cultures, l'adulte raconte et l'enfant écoute. Une fois par semaine, inversez les
-        rôles : c'est l'enfant qui raconte — une histoire qu'il a inventée, ce qu'il a appris en
-        classe, un événement de sa journée — et l'adulte écoute sans corriger, puis pose des
-        questions. Dix minutes suffisent, au moment du repas ou avant le coucher.
-      </p>
-      <p>
-        <strong>Pourquoi ça marche :</strong> raconter oblige l'enfant à organiser ses idées, à
-        choisir ses mots, à tenir l'attention d'un auditeur : c'est de la prise de parole en
-        conditions réelles. Les enfants qui racontent régulièrement à la maison arrivent plus à
-        l'aise devant un exposé ou une récitation. Et vous, parent, vous apprenez à écouter — ce qui
-        change la qualité de toute la relation.
+        Une fois par semaine, inversez la tradition : demandez à votre enfant de raconter son conte ou de vous expliquer ce qu'il a appris. Cet exercice d'éloquence développe sa confiance et stimule sa curiosité (explorez aussi nos{" "}
+        <a href="/guides/activites-educatives-enfant">24 activités éducatives sans écran</a>).
       </p>
 
-      <h2>Le multilinguisme : une force cognitive, pas un retard à combler</h2>
+      <h2>Réussir à l'école malgré les classes surchargées</h2>
       <p>
-        Beaucoup d'enfants de la région grandissent avec deux, parfois trois langues : une langue
-        locale à la maison, le français à l'école, parfois une troisième au contact d'autres
-        communautés. L'école a parfois tendance à traiter cela comme une source de confusion. La
-        recherche sur le bilinguisme précoce va plutôt dans le sens inverse : les enfants
-        multilingues développent tôt une flexibilité cognitive — la capacité à basculer rapidement
-        d'un système de règles à un autre — qui reste utile bien au-delà du langage. Ne freinez pas
-        la langue de la maison pour « aider » le français de l'école : les deux se renforcent.
+        Dans une classe nombreuse (60 à 100 élèves), le suivi personnalisé se fait à la maison par des rituels courts de 20 minutes et une écoute active. Consultez notre méthodologie complète pour{" "}
+        <a href="/guides/reussite-scolaire-aider-enfant">aider son enfant à réussir à l'école sans stress</a>.
       </p>
 
-      <h2>Réussir à l'école quand la classe est surchargée</h2>
+      <h2>La diaspora : accompagner et transmettre</h2>
       <p>
-        La réalité de beaucoup de classes en Afrique francophone : 60, 80, parfois 100 élèves pour
-        un enseignant. Dans ce contexte, l'enfant qui réussit n'est pas celui qui est le plus « doué
-        », c'est souvent celui qui a <strong>un rituel de travail à la maison</strong> : même heure,
-        même table, 20 à 30 minutes, chaque soir. Ajoutez la question rituelle — « qu'as-tu appris
-        aujourd'hui ? » — qui oblige l'enfant à reformuler sa leçon : reformuler, c'est comprendre.
+        Pour les familles de la diaspora, l'équilibre entre racines culturelles et exigence scolaire nécessite un regard bienveillant sur les forces réelles de l'enfant (lisez nos repères pour{" "}
+        <a href="/guides/potentiel-haut-potentiel-enfant">détecter le haut potentiel chez l'enfant</a>).
       </p>
       <p>
-        Et si l'enfant fréquente une école coranique ou religieuse en plus de l'école publique,
-        considérez cela comme un atout, pas une charge : la mémorisation, la discipline et le
-        respect des horaires qu'elle exerce se transfèrent aux devoirs. La pression scolaire existe
-        ; elle ne doit pas devenir de la pression familiale. Le carnet des réussites est là pour
-        rappeler à tous — et d'abord à l'enfant — qu'il vaut plus que ses notes.
+        Génizio permet également aux familles de la diaspora de parrainer à distance le parcours d'un enfant au pays via notre programme de parrainage solidaire.
       </p>
 
-      <h2>La diaspora : accompagner à distance sans comparer à distance</h2>
+      <h2>Ce que fait Génizio au quotidien</h2>
       <p>
-        Pour les familles de la diaspora, la question se double souvent d'une tension entre
-        transmission culturelle et intégration dans le pays d'accueil. Le principe reste le même que
-        partout ailleurs : observer ce que l'enfant fait réellement et bien, plutôt que de le
-        mesurer à l'aune d'un enfant resté au pays ou d'un enfant du pays d'accueil — les deux
-        comparaisons sont également trompeuses, parce qu'aucun des deux ne partage exactement son
-        contexte.
-      </p>
-      <p>
-        C'est aussi pour cette raison que Génizio propose un{" "}
-        <a href="/parrainage">parrainage à distance</a> : offrir une saison de défis à un enfant en
-        Côte d'Ivoire ou au Sénégal depuis l'étranger, pour rester engagé concrètement dans son
-        développement malgré la distance géographique.
+        Génizio a été pensé dès le départ pour fonctionner avec les réalités de terrain : des défis stimulants réalisables avec des matériaux du quotidien, sans obligation d'achat, et un suivi interactif via WhatsApp.
       </p>
 
-      <h2>Ce que Génizio a conçu pour ce contexte précis</h2>
-      <p>
-        Génizio n'a pas été pensé pour un contexte occidental puis adapté après coup. Chaque défi
-        est construit pour se réaliser avec du matériel déjà présent à la maison — jamais avec un
-        achat obligatoire — précisément parce que l'accès à du matériel spécialisé n'est pas
-        uniforme d'une famille à l'autre. Le contact humain passe par WhatsApp plutôt que par un
-        centre d'appel ou un chat intégré, parce que c'est déjà l'outil que les familles de la zone
-        utilisent au quotidien.
-      </p>
-
-      <h2>Questions fréquentes</h2>
+      <h2>Questions fréquentes (FAQ)</h2>
       {FAQ.map((item) => (
-        <div key={item.question}>
-          <h3>{item.question}</h3>
-          <p>{item.answer}</p>
+        <div key={item.question} className="my-5 border-b border-ink/10 pb-4">
+          <h3 className="text-lg font-bold text-ink">{item.question}</h3>
+          <p className="mt-2 text-ink/80">{item.answer}</p>
         </div>
       ))}
     </GuideLayout>

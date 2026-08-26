@@ -53,9 +53,9 @@ const FAQ = [
 export const Route = createFileRoute("/guides/reussite-scolaire-aider-enfant")({
   head: () => {
     const meta = pageMeta({
-      title: "Comment aider son enfant à réussir à l'école sans crier ni stresser",
+      title: "Réussite scolaire : aider son enfant sans stress ni cris",
       description:
-        "Découvrez les 6 habitudes indispensables à la maison pour aider votre enfant à faire ses devoirs, surmonter les mauvaises notes et reprendre confiance sans dispute.",
+        "Découvrez 6 habitudes indispensables à la maison pour aider votre enfant à faire ses devoirs, surmonter les mauvaises notes et reprendre confiance sans conflit.",
       path: PATH,
       image: "/guides/og-reussite.jpg",
       type: "article",
@@ -68,18 +68,18 @@ export const Route = createFileRoute("/guides/reussite-scolaire-aider-enfant")({
           breadcrumbJsonLd([
             { name: "Accueil", path: "/" },
             { name: "Guides", path: "/guides" },
-            { name: "Réussite scolaire", path: PATH },
+            { name: "Réussite scolaire et devoirs", path: PATH },
           ]),
         ),
         jsonLdScript(
           articleJsonLd({
-            headline: "Comment aider son enfant à réussir à l'école sans crier ni stresser",
+            headline: "Réussite scolaire : comment aider son enfant à l'école sans crier ni stresser",
             description:
-              "Ce qui prédit vraiment la réussite scolaire, comment réagir aux mauvaises notes, faire les devoirs sereinement et construire la confiance à la maison.",
+              "Guide pratique pour accompagner la scolarité de son enfant : devoirs sereins, gestion des mauvaises notes, autonomie et confiance en soi.",
             path: PATH,
             image: "/guides/og-reussite.jpg",
             datePublished: "2026-08-10",
-            dateModified: "2026-08-24",
+            dateModified: "2026-08-26",
           }),
         ),
       ],
@@ -92,21 +92,23 @@ function Guide() {
   return (
     <GuideLayout
       eyebrow="Réussite scolaire & Devoirs"
-      title="Comment aider son enfant à réussir à l'école sans crier ni stresser"
-      intro="« Il est intelligent mais il ne travaille pas assez. » Cette phrase cache presque toujours une autre réalité : ce qui manque à l'enfant n'est ni l'intelligence ni la paresse, mais un ensemble de conditions — confiance, routines, motivation — que les parents peuvent installer à la maison. Voici lesquelles, et dans quel ordre."
-      updated="24 août 2026"
+      title="Réussite scolaire : comment aider son enfant à l'école sans crier ni stresser"
+      intro="« Il est intelligent mais il ne travaille pas assez » : cette phrase cache presque toujours une autre réalité. Ce qui manque souvent à l'enfant n'est ni l'intelligence ni la volonté, mais des conditions propices à la maison — routines claires, méthode d'apprentissage adaptée et confiance en soi. Voici comment installer ces habitudes sans disputes quotidiennes."
+      updated="26 août 2026"
       readingTime="8 min"
       path={PATH}
       related={[
         {
-          label: "Enfant qui perd confiance : l'aider",
+          label: "Enfant qui décroche : l'aider",
           to: "/guides/decrochage-scolaire-confiance-enfant",
         },
         {
-          label: "Motiver un adolescent : 12 défis qui marchent",
-          to: "/guides/defis-pour-adolescents",
+          label: "Canaliser un enfant agité",
+          to: "/guides/enfant-agite-concentration",
         },
-        { label: "24 activités éducatives (6-12 ans)", to: "/guides/activites-educatives-enfant" },
+        { label: "24 activités éducatives sans écran", to: "/guides/activites-educatives-enfant" },
+        { label: "Les 9 formes d'intelligence", to: "/guides/intelligences-multiples-gardner" },
+        { label: "Discipline positive sans crier", to: "/guides/discipline-positive-sans-punition" },
       ]}
     >
       <img
@@ -118,141 +120,89 @@ function Guide() {
         decoding="async"
         className="my-6 aspect-video w-full rounded-3xl border border-ink/10 object-cover shadow-lg"
       />
-      <h2>Ce qui prédit vraiment la réussite scolaire</h2>
+
+      <h2>Ce qui prédit réellement la réussite scolaire</h2>
       <p>
-        On croit souvent que la réussite scolaire dépend de l'intelligence mesurée par les notes
-        elles-mêmes — une boucle qui ne dit rien de la cause. Les recherches sur l'apprentissage
-        dessinent un autre tableau : les facteurs qui distinguent les élèves qui progressent sont la{" "}
-        <strong>confiance en sa capacité d'apprendre</strong>, la <strong>régularité</strong> des
-        habitudes de travail, la capacité à <strong>tolérer l'erreur</strong> et à persévérer, et la{" "}
-        <strong>stabilité</strong> de l'environnement familial.
+        On croit souvent que la réussite scolaire dépend uniquement du QI ou de la facilité innée. Les recherches en psychologie cognitive démontrent le contraire : ce qui distingue les élèves qui réussissent durablement, c'est la <strong>confiance en leur capacité d'apprendre</strong>, la <strong>régularité</strong> des habitudes de travail, la capacité à <strong>tolérer l'erreur</strong> et la stabilité émotionnelle à la maison.
       </p>
       <p>
-        Un enfant qui croit que l'effort change les résultats — plutôt que « je suis comme ça » —
-        travaille davantage et progresse davantage. C'est une excellente nouvelle : ces facteurs ne
-        sont ni innés ni scolaires. Ils se cultivent à la maison.
+        Un enfant qui comprend que l'intelligence se développe avec l'entraînement persévère bien davantage qu'un enfant enfermé dans une étiquette (découvrez nos repères sur la{" "}
+        <a href="/guides/intelligences-multiples-gardner">théorie des 9 formes d'intelligence</a>).
       </p>
 
-      <h2>Ce qu'on peut faire à la maison (les six habitudes qui marchent)</h2>
-      <ol>
+      <h2>Les 6 habitudes indispensables à installer à la maison</h2>
+      <ol className="space-y-3 my-6">
         <li>
-          <strong>Des routines stables.</strong> Heures de sommeil et de repas régulières, et un
-          créneau de devoirs fixe. La régularité sécurise ; le cerveau de l'enfant apprend mieux
-          dans un environnement prévisible.
+          <strong>1. Des routines stables et un sommeil préservé :</strong> L'attention dépend d'un cerveau reposé. Éloignez les écrans le soir en appliquant nos conseils pour{" "}
+          <a href="/guides/ecrans-addiction-alternatives-enfant">réduire le temps d'écran sans crise</a>.
         </li>
         <li>
-          <strong>Un espace de travail prêt.</strong> Pas besoin d'une pièce dédiée : une table
-          débarrassée, la trousse prête, le téléphone éteint. L'effort doit aller à la tâche, pas à
-          l'installation.
+          <strong>2. Un espace de travail épuré :</strong> Une table débarrassée et sans distractions visuelles permet d'éviter l'éparpillement chez un{" "}
+          <a href="/guides/enfant-agite-concentration">enfant inattentif ou qui ne tient pas en place</a>.
         </li>
         <li>
-          <strong>Des devoirs en autonomie croissante.</strong> On aide à comprendre la consigne,
-          pas à faire à sa place. Un enfant qui corrige ses propres erreurs développe sa méthode ;
-          un enfant dont on corrige tout attend la correction.
+          <strong>3. L'autonomie plutôt que l'assistanat :</strong> Aidez-le à reformuler la consigne, mais ne faites jamais l'exercice à sa place. Apprenez-lui à devenir autonome grâce à nos rituels d'
+          <a href="/guides/autonomie-responsabilite-maison">autonomie et de responsabilité</a>.
         </li>
         <li>
-          <strong>Des félicitations sur l'effort, pas sur l'intelligence.</strong> « Tu as tenu bon
-          jusqu'au bout » construit plus que « tu es intelligent », qui enseigne à éviter les
-          difficultés pour ne pas décevoir.
+          <strong>4. Valoriser l'effort et la stratégie, pas le résultat brut :</strong> Félicitez sa persévérance (<em>« Tu as cherché 3 méthodes avant de trouver la solution, bravo ! »</em>) selon les principes de la{" "}
+          <a href="/guides/discipline-positive-sans-punition">discipline positive sans punition</a>.
         </li>
         <li>
-          <strong>Une relation à l'école qui reste positive.</strong> Ne pas parler de l'école comme
-          d'une menace (« tu verras quand tu seras au collège »), mais comme d'un lieu où l'on
-          apprend, y compris de ses erreurs.
+          <strong>5. Apaiser la frustration face aux erreurs :</strong> Une mauvaise note génère souvent de la colère ou du découragement. Appliquez nos{" "}
+          <a href="/guides/gestion-colere-emotions-enfant">5 outils pour réguler la frustration</a>.
         </li>
         <li>
-          <strong>Des réussites en dehors de l'école.</strong> Un enfant qui construit, cuisine,
-          organise ou vend quelque chose de concret accumule des preuves qu'il est capable. Ces
-          preuves nourrissent la confiance qui rend les devoirs possibles.
+          <strong>6. Des victoires dans d'autres domaines :</strong> Proposez-lui nos{" "}
+          <a href="/guides/activites-educatives-enfant">24 activités éducatives sans écran</a> ou des{" "}
+          <a href="/guides/activites-manuelles-enfant">ateliers manuels et de bricolage</a> pour nourrir son sentiment de compétence.
         </li>
       </ol>
 
-      <h2>Quand l'école ne peut pas suivre : les devoirs dans une classe surchargée</h2>
+      <h2>Quand l'école ne peut pas suivre : les devoirs dans une classe nombreuse</h2>
       <p>
-        Dans beaucoup d'écoles d'Afrique francophone, une classe compte 60, 80, parfois 100 élèves
-        pour un enseignant. Dans ces conditions, personne ne peut vérifier que chaque leçon est
-        comprise — et ce n'est pas la faute de l'enseignant, ni celle de l'enfant. C'est à la maison
-        que le suivi se joue, avec des moyens simples :
+        Dans de nombreuses écoles, les classes comptent 40, 60 voire 80 élèves. L'enseignant ne peut pas assurer un suivi individualisé quotidien. C'est à la maison que la consolidation se joue :
       </p>
       <ul>
         <li>
-          <strong>La question rituelle :</strong> chaque soir, « qu'as-tu appris aujourd'hui ? ».
-          L'enfant qui reformule sa leçon la comprend — et vous repérez immédiatement ce qui n'a pas
-          été compris.
+          <strong>La méthode de l'enfant-professeur :</strong> Demandez à votre enfant de vous expliquer sa leçon comme s'il était l'enseignant. Expliquer à voix haute est la méthode la plus puissante pour mémoriser.
         </li>
         <li>
-          <strong>L'enfant qui enseigne :</strong> si vous ne maîtrisez pas la matière, demandez-lui
-          de vous expliquer sa leçon. C'est lui qui apprend en vous enseignant — et vous, vous
-          montrez que l'école compte.
+          <strong>Le micro-créneau de 25 minutes :</strong> 25 minutes de concentration intense valent mieux que 2 heures de lutte passive.
         </li>
         <li>
-          <strong>Un créneau fixe de 20 à 30 minutes,</strong> une seule difficulté à la fois, et la
-          règle des « 3 essais avant de demander » qui apprend à chercher par soi-même.
-        </li>
-        <li>
-          <strong>En cas de redoublement annoncé,</strong> changez de discours : c'est une deuxième
-          chance, pas une punition. Un enfant qui refait une année avec un vrai rituel de travail à
-          la maison réussit souvent mieux la seconde fois.
+          <strong>S'aider des nouveaux outils numériques :</strong> Découvrez comment utiliser judicieusement l'IA et les tuteurs virtuels avec notre guide{" "}
+          <a href="/guides/ia-apprentissage-enfant">ChatGPT et l'IA pour les devoirs de mon enfant</a>.
         </li>
       </ul>
-      <p>
-        Ce que l'école ne peut pas donner, la maison peut le compenser autrement : la régularité, la
-        confiance et la preuve que l'effort paie.
-      </p>
 
-      <h2>Réagir aux mauvaises notes sans drame</h2>
+      <h2>Comment réagir aux mauvaises notes sans drame</h2>
       <p>
-        La première réaction compte plus que tout le reste. Une mauvaise note n'est ni un verdict
-        sur l'enfant ni une attaque contre vous. Voici une séquence qui marche :
+        Une mauvaise note est un signal d'ajustement, pas un verdict définitif. Voici comment transformer un échec en tremplin :
       </p>
       <ul>
         <li>
-          <strong>Ne pas dramatiser.</strong> « Ce contrôle ne reflète pas ce que tu sais faire »
-          est une phrase qui débloque ; « tu ne travailles jamais » verrouille.
+          <strong>Déculpabiliser :</strong> <em>« Cette note mesure ce que tu as compris ce jour-là, pas ta valeur ni ton intelligence. »</em>
         </li>
         <li>
-          <strong>Chercher la cause, pas le coupable.</strong> Fatigue passagère ? Consigne non
-          comprise ? Difficulté durable ? Conflit avec un camarade ou un enseignant ? La note est
-          une information à interpréter, pas à juger.
+          <strong>Analyser l'erreur avec méthode :</strong> Est-ce un manque de vocabulaire, une consigne lue trop vite ou un oubli de révision ?
         </li>
         <li>
-          <strong>Parler avec l'enseignant.</strong> L'école voit l'enfant dans un autre contexte.
-          Une conversation change souvent le diagnostic.
-        </li>
-        <li>
-          <strong>Reconstruire par petites victoires.</strong> Un objectif court et atteignable,
-          validé une fois, vaut mieux qu'un grand programme de rattrapage qui décourage.
+          <strong>Prévenir le décrochage :</strong> Si les difficultés s'installent, suivez notre guide pas à pas pour{" "}
+          <a href="/guides/decrochage-scolaire-confiance-enfant">redonner confiance à un enfant qui perd pied à l'école</a>.
         </li>
       </ul>
 
-      <h2>Le piège de la récompense</h2>
+      <h2>Ce que fait Génizio au quotidien</h2>
       <p>
-        « Si tu as une bonne note, je t'achète... » fonctionne à court terme et casse à long terme :
-        l'enfant apprend à travailler pour la récompense, et quand la récompense s'arrête, l'effort
-        s'arrête aussi. À la place, on valorise le <strong>processus</strong> : avoir révisé trois
-        soirs de suite, avoir demandé de l'aide, avoir progressé entre deux contrôles. La fierté
-        reconnue d'un progrès réel est la récompense la plus durable — et elle est gratuite.
+        Génizio renforce le moteur de la réussite scolaire : la confiance par l'action. En réalisant des défis concrets du quotidien (mesures, organisation, sciences maison, expression), votre enfant documente ses réussites réelles dans son Passeport de Talents, développant la curiosité et la persévérance nécessaires à l'école.
       </p>
 
-      <h2>Ce que Génizio apporte à la réussite scolaire</h2>
-      <p>
-        Génizio n'apprend pas les leçons à la place de l'école. Il construit ce qui rend l'école
-        possible : la confiance. Les défis concrets qu'il propose à l'enfant — construire, mesurer,
-        cuisiner, vendre, organiser — produisent des réussites visibles, photographiées et
-        documentées dans un cahier de réussites. L'enfant accumule des preuves de ce qu'il est
-        capable de mener à bien, ce qui transforme son rapport à l'effort en classe.
-      </p>
-      <p>
-        C'est aussi un outil d'observation pour le parent : ce que l'enfant choisit, termine et
-        persévère à faire en dit long sur ses forces réelles — bien au-delà de ce qu'un bulletin
-        scolaire mesure.
-      </p>
-
-      <h2>Questions fréquentes</h2>
+      <h2>Questions fréquentes (FAQ)</h2>
       {FAQ.map((item) => (
-        <div key={item.question}>
-          <h3>{item.question}</h3>
-          <p>{item.answer}</p>
+        <div key={item.question} className="my-5 border-b border-ink/10 pb-4">
+          <h3 className="text-lg font-bold text-ink">{item.question}</h3>
+          <p className="mt-2 text-ink/80">{item.answer}</p>
         </div>
       ))}
     </GuideLayout>

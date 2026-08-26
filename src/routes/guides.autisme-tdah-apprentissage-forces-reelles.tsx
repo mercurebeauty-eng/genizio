@@ -60,7 +60,7 @@ export const Route = createFileRoute("/guides/autisme-tdah-apprentissage-forces-
             path: PATH,
             image: "/guides/og-neurodiversite.jpg",
             datePublished: "2026-08-24",
-            dateModified: "2026-08-24",
+            dateModified: "2026-08-26",
           }),
         ),
       ],
@@ -74,26 +74,29 @@ function Guide() {
     <GuideLayout
       eyebrow="Neurodiversité & Apprentissage"
       title="Autisme, TDAH et pensée visuelle : pourquoi leur façon d'apprendre par le réel est une force majeure"
-      intro="Quand un enfant autiste ou atteint de TDAH peine à suivre une leçon magistrale en classe, on qualifie trop vite sa différence de 'handicap d'apprentissage'. Pourtant, l'histoire des plus grands innovateurs — de Temple Grandin aux pionniers de l'informatique — prouve que la pensée visuelle, le souci du détail et le besoin d'expérimentation concrète sont des moteurs de génie exceptionnels. Voici comment transformer ce fonctionnement singulier en une immense force."
-      updated="24 août 2026"
+      intro="Quand un enfant autiste ou avec un TDAH peine à suivre une leçon magistrale en classe, on qualifie trop vite sa différence de 'difficulté scolaire'. Pourtant, l'histoire des plus grands innovateurs — de Temple Grandin aux pionniers des sciences — prouve que la pensée visuelle, le souci du détail et le besoin d'expérimentation concrète sont des moteurs de génie exceptionnels. Voici comment valoriser ce fonctionnement singulier."
+      updated="26 août 2026"
       readingTime="9 min"
       path={PATH}
-      faq={FAQ}
       related={[
         {
-          label: "Enfant agité ou hyperactif : l'aider à se concentrer",
+          label: "Enfant agité ou inattentif : l'aider",
           to: "/guides/enfant-agite-concentration",
         },
         {
-          label: "Haut potentiel : les vrais signes à observer",
+          label: "Haut potentiel : les vrais signes",
           to: "/guides/potentiel-haut-potentiel-enfant",
         },
         {
-          label: "Gérer la colère et les émotions de son enfant",
+          label: "Les 9 formes d'intelligence",
+          to: "/guides/intelligences-multiples-gardner",
+        },
+        {
+          label: "Gérer la colère et émotions",
           to: "/guides/gestion-colere-emotions-enfant",
         },
         {
-          label: "Pratique avant théorie à l'ère de l'IA",
+          label: "Pratique avant théorie",
           to: "/guides/pratique-avant-theorie-apprentissage-ia",
         },
       ]}
@@ -120,12 +123,17 @@ function Guide() {
 
       <h2>1. La pensée en images et le besoin d'ancrage dans la matière</h2>
       <p>
-        Pour un enfant à profil neuroatypique, les mots abstraits flottant dans l'air pendant 45 minutes sont difficiles à fixer. Son cerveau fonctionne en <strong>pensée spatiale, visuelle ou systémique</strong> :
+        Pour un enfant à profil neuroatypique, les cours purement magistraux assis pendant 6 heures génèrent une surcharge cognitive et sensorielle rapide. Son cerveau s'épanouit dans la <strong>pensée spatiale, visuelle et kinesthésique</strong> (telle que décrite dans la{" "}
+        <a href="/guides/intelligences-multiples-gardner">théorie des 9 intelligences de Gardner</a>) :
       </p>
       <ul>
         <li>Il a besoin de voir la structure globale avant les détails.</li>
-        <li>Il comprend une règle de physique ou de grammaire instantanément lorsqu'il peut la manipuler (blocs de couleurs, cartes logiques, maquettes).</li>
-        <li>La confrontation directe avec des objets réels (engrenages, codes informatiques, instruments) dissipe l'anxiété et active une concentration absolue.</li>
+        <li>Il comprend une règle de physique ou de mathématiques instantanément lorsqu'il peut la manipuler via des{" "}
+          <a href="/guides/activites-manuelles-enfant">activités manuelles et d'ingénierie concrète</a>.
+        </li>
+        <li>La confrontation directe avec des objets réels (mécanique, programmation, puzzles 3D) dissipe l'anxiété et active une concentration absolue (découvrez nos méthodes pour un{" "}
+          <a href="/guides/enfant-agite-concentration">enfant inattentif ou hyperactif</a>).
+        </li>
       </ul>
 
       <h2>2. Les 3 super-pouvoirs des profils atypiques</h2>
@@ -137,7 +145,7 @@ function Guide() {
             1. L'Hyperfocalisation
           </div>
           <p className="text-sm text-ink/80 leading-relaxed">
-            Une capacité hors du commun à explorer un sujet jusqu'à son niveau d'expertise le plus pointu (la programmation, la botanique, la mécanique, l'astronomie).
+            Une capacité hors du commun à explorer un sujet jusqu'à un degré d'expertise remarquable (robotique, dessin technique, astronomie, botanique).
           </p>
         </div>
 
@@ -147,7 +155,7 @@ function Guide() {
             2. La Détection des Anomalies
           </div>
           <p className="text-sm text-ink/80 leading-relaxed">
-            Un œil ultra aiguisé pour repérer ce qui cloche dans un système, une incohérence logique ou une pièce mal emboîtée que les autres ne remarquent pas.
+            Un œil ultra aiguisé pour repérer les failles logiques, les détails invisibles pour les autres ou les pièces mal ajustées.
           </p>
         </div>
 
@@ -157,17 +165,28 @@ function Guide() {
             3. L'Authenticité Radicale
           </div>
           <p className="text-sm text-ink/80 leading-relaxed">
-            Une loyauté sincère aux faits et à la vérité, sans faux-semblants sociaux, précieuse dans la recherche scientifique et la création originale.
+            Une grande loyauté aux faits et à la logique pure, exempte de faux-semblants, qui forge de grands esprits scientifiques et créatifs.
           </p>
         </div>
       </div>
 
       <h2>3. 4 principes pour adapter les apprentissages à la maison</h2>
-      <ol>
-        <li><strong>Rendre chaque consigne visuelle</strong> : Remplacer les longs discours par un schéma, une liste à cocher ou des pictogrammes clairs.</li>
-        <li><strong>Utiliser ses centres d'intérêt spécifiques</strong> : Si votre enfant est passionné par les bus ou les dinosaures, créez des problèmes de mathématiques ou des textes de lecture autour de ces thèmes.</li>
-        <li><strong>Alterner effort et décharge motrice</strong> : Permettre à l'enfant de bouger, de manipuler une balle anti-stress ou de travailler debout s'il en ressent le besoin.</li>
-        <li><strong>Célébrer la finitude des tâches</strong> : Donner des objectifs avec un début et une fin très visibles (<em>« Dès que ces 5 pièces sont assemblées, c'est terminé »</em>).</li>
+      <ol className="space-y-3 my-6">
+        <li>
+          <strong>Rendre chaque consigne visuelle :</strong> Remplacer les longs discours par un schéma, une liste à cocher ou des pictogrammes clairs.
+        </li>
+        <li>
+          <strong>Utiliser ses centres d'intérêt spécifiques :</strong> S'il est passionné par les circuits électriques ou les animaux, faites-en la passerelle d'accès vers les maths et la lecture (consultez notre principe de{" "}
+          <a href="/guides/pratique-avant-theorie-apprentissage-ia">la pratique avant la théorie</a>).
+        </li>
+        <li>
+          <strong>Réguler les surcharges sensorielles :</strong> Les crises sont souvent causées par un trop-plein sensoriel ou une incompréhension : appliquez nos{" "}
+          <a href="/guides/gestion-colere-emotions-enfant">5 outils d'apaisement émotionnel</a>.
+        </li>
+        <li>
+          <strong>Identifier une éventuelle double exceptionnalité :</strong> De nombreux enfants TDAH ou autistes présentent aussi un haut potentiel intellectuel (consultez notre guide sur les{" "}
+          <a href="/guides/potentiel-haut-potentiel-enfant">signes du haut potentiel HPI</a>).
+        </li>
       </ol>
 
       <div className="my-8 rounded-3xl border border-brand/20 bg-brand/5 p-6 sm:p-8">
@@ -175,7 +194,7 @@ function Guide() {
           Génizio : un environnement pensé pour chaque profil d'intelligence
         </h3>
         <p className="mt-2 text-ink/80 leading-relaxed">
-          Génizio respecte le rythme et la modalité d'apprentissage unique de votre enfant. Grâce à <strong>Naya</strong>, les défis sont personnalisés selon ses centres d'intérêt réels et ses talents dominants.
+          Génizio respecte le rythme et la modalité d'apprentissage unique de votre enfant. Grâce à <strong>Naya</strong>, les défis sont personnalisés selon ses centres d'intérêt réels et ses talents dominants sans jamais l'enfermer dans un diagnostic réducteur.
         </p>
         <div className="mt-6 flex flex-wrap gap-4">
           <Button asChild size="lg" className="rounded-full">
@@ -191,6 +210,14 @@ function Guide() {
           </Button>
         </div>
       </div>
+
+      <h2>Questions fréquentes (FAQ)</h2>
+      {FAQ.map((item) => (
+        <div key={item.question} className="my-5 border-b border-ink/10 pb-4">
+          <h3 className="text-lg font-bold text-ink">{item.question}</h3>
+          <p className="mt-2 text-ink/80">{item.answer}</p>
+        </div>
+      ))}
     </GuideLayout>
   );
 }
