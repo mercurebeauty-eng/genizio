@@ -47,9 +47,9 @@ const FAQ = [
 export const Route = createFileRoute("/guides/enfant-agite-concentration")({
   head: () => {
     const meta = pageMeta({
-      title: "Enfant agité ou hyperactif : l'aider à se concentrer",
+      title: "Enfant agité ou inattentif : l'aider à se concentrer",
       description:
-        "Agitation, hyperactivité, concentration : comment observer votre enfant, l'aider à faire ses devoirs, et savoir quand consulter pour un TDAH.",
+        "Votre enfant ne tient pas en place ou peine à se concentrer ? Découvrez 5 méthodes concrètes pour adapter les devoirs et canaliser son énergie sans crier.",
       path: PATH,
       image: "/guides/og-agite.jpg",
       type: "article",
@@ -69,18 +69,21 @@ export const Route = createFileRoute("/guides/enfant-agite-concentration")({
           "@context": "https://schema.org",
           "@type": "Article",
           headline:
-            "Mon enfant est agité ou hyperactif : comment l'aider à se concentrer à la maison et à l'école",
+            "Mon enfant est agité ou inattentif : comment l'aider à se concentrer à la maison et à l'école",
+          description:
+            "Guide parental approfondi pour aider un enfant agité ou incapable de se concentrer : méthodes concrètes de devoirs, sommeil, mouvement et repérage TDAH.",
           inLanguage: "fr-FR",
           mainEntityOfPage: absoluteUrl(PATH),
           image: absoluteUrl("/guides/og-agite.jpg"),
           publisher: { "@id": `${SITE_URL}/#organization` },
           author: { "@type": "Organization", name: "Génizio" },
           datePublished: "2026-07-27",
-          dateModified: "2026-08-14",
+          dateModified: "2026-08-26",
           about: [
             { "@type": "Thing", name: "Attention de l'enfant" },
-            { "@type": "Thing", name: "Concentration" },
-            { "@type": "Thing", name: "Développement de l'enfant" },
+            { "@type": "Thing", name: "Concentration scolaire" },
+            { "@type": "Thing", name: "Enfant agité" },
+            { "@type": "Thing", name: "TDAH" },
           ],
         }),
       ],
@@ -93,10 +96,10 @@ function Guide() {
   return (
     <GuideLayout
       eyebrow="Attention & concentration"
-      title="Mon enfant est agité ou hyperactif : comment l'aider à se concentrer à la maison et à l'école"
-      intro="« Il ne se concentre sur rien. » C'est l'une des phrases que les parents nous disent le plus souvent. Dans une grande partie des cas, l'enfant se concentre très bien — mais pas sur ce qu'on lui demande, ni de la façon dont on l'attend. Voici comment faire la différence, et comment adapter les devoirs à un enfant qui bouge."
-      updated="14 août 2026"
-      readingTime="7 min"
+      title="Mon enfant est agité ou inattentif : comment l'aider à se concentrer à la maison et à l'école"
+      intro="« Il ne tient pas en place », « Il est incapable de se concentrer plus de 2 minutes » : ce constat est l'un des plus fréquents chez les parents. Dans la majorité des cas, l'enfant n'a pas un déficit d'attention, mais un besoin de mouvement pour réfléchir. Voici comment comprendre son fonctionnement, adapter les devoirs et restaurer le calme sans cris."
+      updated="26 août 2026"
+      readingTime="8 min"
       path={PATH}
       related={[
         {
@@ -104,14 +107,15 @@ function Guide() {
           to: "/guides/potentiel-haut-potentiel-enfant",
         },
         {
-          label: "24 activités éducatives sans écran (6-12 ans)",
+          label: "24 activités éducatives sans écran",
           to: "/guides/activites-educatives-enfant",
         },
         {
-          label: "Les 9 formes d'intelligence de l'enfant",
+          label: "Les 9 formes d'intelligence",
           to: "/guides/intelligences-multiples-gardner",
         },
-        { label: "Gérer la colère de son enfant", to: "/guides/gestion-colere-emotions-enfant" },
+        { label: "Gestion de la colère (5 outils)", to: "/guides/gestion-colere-emotions-enfant" },
+        { label: "Autisme & TDAH : forces réelles", to: "/guides/autisme-tdah-apprentissage-forces-reelles" },
       ]}
     >
       <img
@@ -141,109 +145,82 @@ function Guide() {
         Ce n'est pas de la mauvaise volonté, et ce n'est pas non plus nécessairement un trouble.
         L'attention se déclenche différemment selon <strong>le format de la tâche</strong> : ce
         qu'elle demande au corps, ce qu'elle produit de visible, et le degré de contrôle laissé à
-        l'enfant.
+        l'enfant. Selon les principes de la{" "}
+        <a href="/guides/intelligences-multiples-gardner">théorie des 9 formes d'intelligence</a>, beaucoup d'enfants apprennent avec leur corps (intelligence corporelle-kinesthésique).
       </p>
 
       <h3>Trois formats qui changent tout</h3>
       <ul>
         <li>
-          <strong>Le corps.</strong> Certains enfants ont besoin de manipuler pour penser. Leur
-          demander de rester immobile revient à leur retirer leur principal outil de réflexion.
+          <strong>Le corps et le mouvement :</strong> Certains enfants ont un besoin vital de manipuler pour fixer leur pensée. Leur imposer une immobilité totale coupe leurs circuits d'attention. Découvrez nos{" "}
+          <a href="/guides/activites-manuelles-enfant">18 activités manuelles faciles à la maison</a>.
         </li>
         <li>
-          <strong>Le résultat visible.</strong> Une consigne abstraite (« révise ta leçon ») ne
-          produit rien de tangible. Une activité qui aboutit à un objet, une photo, un score, donne
-          un but concret à l'effort.
+          <strong>Le résultat visible :</strong> Une consigne abstraite (« révise ta leçon ») ne produit rien de tangible. Proposez plutôt l'une de nos{" "}
+          <a href="/guides/activites-educatives-enfant">24 activités éducatives sans écran</a> pour donner un but immédiat à son énergie.
         </li>
         <li>
-          <strong>La marge de décision.</strong> Un enfant qui choisit sa méthode tient généralement
-          plus longtemps qu'un enfant qui exécute une procédure imposée.
+          <strong>La marge de décision :</strong> Un enfant qui choisit son ordre de travail tient deux fois plus longtemps qu'un enfant qui subit un protocole rigide.
         </li>
       </ul>
 
       <h2>La question utile : est-ce partout, ou seulement ici ?</h2>
       <p>
         C'est le point de bascule entre « mon enfant fonctionne autrement » et « mon enfant a
-        peut-être besoin d'un accompagnement ». Un professionnel de santé s'intéressera précisément
-        à cette question, et arriver avec des observations concrètes fait gagner un temps
-        considérable.
+        peut-être besoin d'un accompagnement spécialisé ». Un professionnel de santé s'intéressera précisément
+        à cette distinction :
       </p>
-      <p>Regardez, sur plusieurs semaines :</p>
       <ul>
         <li>
-          Les difficultés apparaissent-elles <strong>à la maison et à l'école et</strong> en
-          activité libre, ou seulement dans un cadre ?
+          Les difficultés apparaissent-elles <strong>à la maison ET à l'école ET</strong> en
+          activité libre, ou seulement dans un cadre scolaire précis ?
         </li>
         <li>
-          Durent-elles depuis plus de <strong>six mois</strong>, ou sont-elles apparues récemment
-          (déménagement, naissance, conflit, changement d'école) ?
+          Durent-elles depuis plus de <strong>six mois</strong>, ou sont-elles apparues après un événement précis (déménagement, surconsommation d'
+          <a href="/guides/ecrans-addiction-alternatives-enfant">écrans et réseaux sociaux</a>, conflit familial) ?
         </li>
         <li>
-          Y a-t-il un <strong>retentissement réel</strong> — l'enfant souffre, décroche, se met en
-          danger, perd ses amis — ou est-ce surtout inconfortable pour l'entourage ?
+          Y a-t-il un <strong>retentissement réel</strong> sur ses apprentissages (découvrez comment{" "}
+          <a href="/guides/decrochage-scolaire-confiance-enfant">redonner confiance à un enfant en difficulté scolaire</a>) ?
         </li>
         <li>
-          Existe-t-il au moins <strong>une activité</strong> sur laquelle il tient longtemps,
-          spontanément ?
+          Existe-t-il au moins <strong>une activité</strong> sur laquelle il reste absorbé spontanément ?
         </li>
       </ul>
       <p>
-        Une agitation présente partout, durable, avec un vrai retentissement et sans aucune plage
-        d'attention soutenue justifie un avis professionnel. À l'inverse, une agitation qui
-        s'effondre dès que l'enfant fait quelque chose qui l'intéresse est une information sur le
-        format des tâches, pas sur l'enfant.
+        Pour mieux comprendre les profils neuroatypiques, lisez notre dossier sur l'
+        <a href="/guides/autisme-tdah-apprentissage-forces-reelles">Autisme & TDAH : valoriser leurs forces d'apprentissage</a> ainsi que notre enquête sur les{" "}
+        <a href="/guides/potentiel-haut-potentiel-enfant">signes du haut potentiel intellectuel (HPI)</a>.
       </p>
 
       <h2>Observer sans étiqueter : une méthode simple</h2>
       <p>
-        La mémoire des parents est un mauvais instrument de mesure — elle retient les épisodes
-        marquants, pas la moyenne. Une trace écrite, même sommaire, change la conversation, avec
-        l'école comme avec un soignant.
+        La mémoire parentale retient souvent les moments de crise plutôt que la moyenne. Pour avoir une vision objective :
       </p>
       <ol>
         <li>
-          <strong>Notez la durée réelle.</strong> Pendant deux à trois semaines, notez pour chaque
-          activité combien de temps l'enfant est resté engagé. Trois lignes par jour suffisent.
+          <strong>Notez la durée réelle :</strong> Pendant deux semaines, notez combien de minutes l'enfant est resté engagé sur chaque type d'activité.
         </li>
         <li>
-          <strong>Notez le contexte.</strong> Seul ou accompagné ? Avant ou après l'école ? Avec ou
-          sans écran juste avant ? Ces variables ressortent vite.
+          <strong>Notez le contexte :</strong> Est-ce avant ou après les repas ? Après 1 heure passée devant un écran ?
         </li>
         <li>
-          <strong>Cherchez les exceptions.</strong> Les moments où il a tenu longtemps sont les plus
-          instructifs : qu'avaient-ils en commun ?
-        </li>
-        <li>
-          <strong>Ne concluez pas seul.</strong> Ces notes servent à décrire, pas à diagnostiquer.
-          Apportez-les à un professionnel si l'inquiétude persiste.
+          <strong>Cherchez les exceptions :</strong> Les moments où il a tenu longtemps révèlent ses véritables leviers d'attention.
         </li>
       </ol>
 
       <h2>Ce qui aide, indépendamment de tout diagnostic</h2>
-      <p>
-        Les habitudes ci-dessous améliorent l'engagement de la plupart des enfants, qu'un trouble
-        soit présent ou non. Elles ne remplacent pas une prise en charge quand elle est nécessaire.
-      </p>
       <ul>
         <li>
-          <strong>Découper.</strong> Une tâche de trente minutes devient trois tâches de dix, avec
-          un point d'arrivée visible à chaque fois.
+          <strong>Découper en blocs :</strong> Une tâche de 30 minutes devient 3 séquences de 10 minutes avec une respiration entre chaque.
         </li>
         <li>
-          <strong>Autoriser le mouvement.</strong> Debout, en marchant, en manipulant : le résultat
-          compte plus que la posture.
+          <strong>Réguler les émotions :</strong> L'agitation cache souvent une grande frustration inexprimée : appliquez nos{" "}
+          <a href="/guides/gestion-colere-emotions-enfant">5 outils pour apaiser la colère de l'enfant</a>.
         </li>
         <li>
-          <strong>Viser le concret.</strong> Une activité qui produit un objet ou une photo donne
-          une raison de finir.
-        </li>
-        <li>
-          <strong>Un objectif à la fois.</strong> Les listes découragent ; une seule mission tenue
-          jusqu'au bout construit la confiance.
-        </li>
-        <li>
-          <strong>Valoriser le fini, pas le parfait.</strong> Ce qui se consolide, c'est
-          l'expérience d'avoir terminé quelque chose.
+          <strong>Pratiquer la discipline positive :</strong> Remplacez les punitions stériles par des conséquences logiques en suivant notre guide sur la{" "}
+          <a href="/guides/discipline-positive-sans-punition">discipline positive sans crier</a>.
         </li>
       </ul>
 
@@ -252,76 +229,47 @@ function Guide() {
           ⚡ Le Défi 10 Min à tester ce soir : 'La Mission Chronomètre Inversé'
         </h3>
         <p className="text-sm text-amber-900 leading-relaxed mb-3">
-          Au lieu de demander à votre enfant de "se concentrer sagement", proposez-lui ce défi
-          kinesthésique :{" "}
-          <strong>
-            Construire la plus haute tour en livres et rouleaux de papier en exactement 7 minutes.
-          </strong>
+          Au lieu de lui ordonner de « rester sage », lancez-lui ce défi :{" "}
+          <strong>Construire la plus haute tour en livres et rouleaux de carton en exactement 7 minutes.</strong>
         </p>
         <p className="text-sm text-amber-900 leading-relaxed">
-          Il doit manipuler, ajuster l'équilibre et anticiper l'effondrement. À la fin des 7
-          minutes, prenez la photo de sa tour pour son cahier des réussites. Vous constaterez une
-          attention à 100 % parce que son corps et son cerveau étaient engagés ensemble.
+          Il doit manipuler, ajuster l'équilibre et anticiper la chute. À la fin, prenez la photo de sa tour pour son passeport de réussites. Vous observerez une concentration totale, car son corps et son esprit sont mobilisés ensemble.
         </p>
       </div>
 
-      <h2>Les devoirs avec un enfant qui bouge</h2>
+      <h2>Les devoirs avec un enfant qui bouge : 5 règles d'or</h2>
       <p>
-        Le moment des devoirs est le plus dur pour un enfant agité : on lui demande précisément ce
-        qu'il ne sait pas faire — rester assis et concentré longtemps. La solution n'est pas de
-        forcer la posture, mais d'adapter le format :
+        Le moment des devoirs cristallise les tensions. Voici comment transformer ce moment en réussite :
       </p>
       <ul>
         <li>
-          <strong>Le format chronomètre :</strong> 10 minutes de travail, 3 minutes de pause active
-          (sauter, marcher, s'étirer), puis 10 minutes. Trois blocs courts valent mieux qu'une heure
-          d'affilée — et l'enfant voit le temps passer, ce qui rend l'effort tenable.
+          <strong>1. La pause motrice préalable :</strong> 15 minutes de vélo, de course ou de danse avant d'ouvrir les cahiers pour décharger le trop-plein d'énergie.
         </li>
         <li>
-          <strong>La position debout autorisée :</strong> beaucoup d'enfants réfléchissent mieux
-          debout, en marchant ou en manipulant un objet. Laissez-le faire ses exercices en bougeant,
-          tant que le travail avance.
+          <strong>2. La position debout acceptée :</strong> Laissez votre enfant réciter sa leçon ou résoudre ses exercices debout, en marchant ou en manipulant une balle anti-stress.
         </li>
         <li>
-          <strong>Le devoir « à voix haute » :</strong> au lieu de lire et d'écrire en silence,
-          l'enfant explique à voix haute ce qu'il vient de lire. La parole engage le corps autrement
-          et aide la concentration.
+          <strong>3. Le devoir à voix haute :</strong> Transformer la lecture silencieuse en mini-exposé dynamique.
         </li>
         <li>
-          <strong>Dépenser avant de travailler :</strong> 15 minutes de jeu libre ou de sport avant
-          les devoirs vident l'excès d'énergie — un enfant qui a bougé se concentre mieux qu'un
-          enfant qu'on a forcé à rester immobile.
+          <strong>4. Une seule consigne à la fois :</strong> Évitez les listes à rallonge qui saturent sa mémoire de travail.
         </li>
         <li>
-          <strong>Une seule consigne à la fois :</strong> « sors ton cahier » puis « ouvre-le à la
-          page 12 » puis « lis l'exercice 1 » — plutôt qu'une liste de quatre tâches qui décourage
-          d'avance.
+          <strong>5. Les encouragements précis :</strong> Félicitez l'effort fourni et la stratégie utilisée (retrouvez nos conseils pour{" "}
+          <a href="/guides/reussite-scolaire-aider-enfant">aider son enfant à réussir à l'école</a>).
         </li>
       </ul>
+
+      <h2>Ce que fait Génizio au quotidien</h2>
       <p>
-        Ces adaptations aident tous les enfants, qu'il y ait un diagnostic ou non — et elles
-        transforment le moment des devoirs en expérience de réussite plutôt qu'en champ de bataille.
+        Génizio ne pose aucun diagnostic médical. L'application propose des défis d'action adaptés aux 9 formes d'intelligence : réparer, inventer, classer, observer. En photographiant ses réalisations, vous conservez la preuve vivante de ses capacités de persévérance et de créativité.
       </p>
 
-      <h2>Où Génizio intervient — et où il n'intervient pas</h2>
-      <p>
-        Génizio propose à votre enfant des défis concrets adaptés à son âge et à ses centres
-        d'intérêt : fabriquer, cuisiner, mesurer, raconter, vendre. Chaque défi terminé est
-        photographié par le parent, ce qui produit au fil des semaines une trace datée de ce que
-        l'enfant a réellement fait, et une carte de ses talents selon les 9 intelligences de Howard
-        Gardner.
-      </p>
-      <p>
-        Cette trace est utile pour repérer ses formats d'engagement — et elle peut se partager avec
-        un professionnel. Mais <strong>Génizio ne dépiste rien et ne diagnostique rien</strong>. Un
-        outil éducatif ne remplace ni un bilan, ni un soignant.
-      </p>
-
-      <h2>Questions fréquentes</h2>
+      <h2>Questions fréquentes (FAQ)</h2>
       {FAQ.map((item) => (
-        <div key={item.question}>
-          <h3>{item.question}</h3>
-          <p>{item.answer}</p>
+        <div key={item.question} className="my-5 border-b border-ink/10 pb-4">
+          <h3 className="text-lg font-bold text-ink">{item.question}</h3>
+          <p className="mt-2 text-ink/80">{item.answer}</p>
         </div>
       ))}
     </GuideLayout>

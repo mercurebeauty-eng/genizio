@@ -52,9 +52,9 @@ const FAQ = [
 export const Route = createFileRoute("/guides/potentiel-haut-potentiel-enfant")({
   head: () => {
     const meta = pageMeta({
-      title: "Enfant surdoué, HPI ou précoce : comment le reconnaître",
+      title: "Enfant HPI, surdoué ou précoce : comment le reconnaître",
       description:
-        "Surdoué, HPI, précoce ou zèbre : les vrais signes à observer, ce que seul un professionnel peut diagnostiquer, et comment accompagner un enfant qui s'ennuie à l'école.",
+        "Enfant surdoué, HPI, précoce ou zèbre : découvrez les signes révélateurs, les limites du test de QI et comment nourrir son potentiel sans le surmener.",
       path: PATH,
       image: "/guides/og-haut-potentiel.jpg",
       type: "article",
@@ -67,23 +67,27 @@ export const Route = createFileRoute("/guides/potentiel-haut-potentiel-enfant")(
           breadcrumbJsonLd([
             { name: "Accueil", path: "/" },
             { name: "Guides", path: "/guides" },
-            { name: "Haut potentiel", path: PATH },
+            { name: "Haut potentiel et enfant surdoué", path: PATH },
           ]),
         ),
         jsonLdScript({
           "@context": "https://schema.org",
           "@type": "Article",
-          headline: "Enfant surdoué, HPI ou précoce : comment le reconnaître et l'accompagner",
+          headline: "Enfant surdoué, HPI ou précoce : comment reconnaître et accompagner son haut potentiel",
+          description:
+            "Guide parental approfondi pour reconnaître un enfant à haut potentiel (HPI / zèbre), comprendre le test de QI et valoriser ses talents à la maison.",
           inLanguage: "fr-FR",
           mainEntityOfPage: absoluteUrl(PATH),
           image: absoluteUrl("/guides/og-haut-potentiel.jpg"),
           publisher: { "@id": `${SITE_URL}/#organization` },
           author: { "@type": "Organization", name: "Génizio" },
           datePublished: "2026-07-27",
-          dateModified: "2026-08-14",
+          dateModified: "2026-08-26",
           about: [
             { "@type": "Thing", name: "Haut potentiel intellectuel" },
-            { "@type": "Thing", name: "Développement du potentiel de l'enfant" },
+            { "@type": "Thing", name: "Enfant surdoué" },
+            { "@type": "Thing", name: "Test enfant précoce" },
+            { "@type": "Thing", name: "Enfant zèbre" },
           ],
         }),
       ],
@@ -96,23 +100,20 @@ function Guide() {
   return (
     <GuideLayout
       eyebrow="Potentiel & talents"
-      title="Enfant surdoué, HPI ou précoce : comment le reconnaître et l'accompagner"
-      intro="« Mon enfant est-il surdoué ? » La question revient chez presque tous les parents à un moment ou un autre — surtout quand l'enfant s'ennuie à l'école ou montre des capacités étonnantes à la maison. Voici ce qui relève de l'observation à la maison, ce qui relève d'un diagnostic professionnel, et pourquoi le potentiel réel d'un enfant dépasse largement ce que l'école mesure."
-      updated="14 août 2026"
-      readingTime="10 min"
+      title="Enfant surdoué, HPI ou précoce : comment reconnaître et accompagner son haut potentiel"
+      intro="« Mon enfant est-il surdoué ou précoce ? » Cette question taraude de nombreux parents lorsque leur enfant pose des questions vertigineuses, s'ennuie profondément à l'école ou fait preuve d'une hypersensibilité hors norme. Voici les vrais repères d'observation à la maison, les réalités du bilan psychologique et les clés pour valoriser son génie sans l'enfermer dans une case."
+      updated="26 août 2026"
+      readingTime="9 min"
       path={PATH}
       related={[
         {
-          label: "Les intelligences multiples de Gardner",
+          label: "Les 9 formes d'intelligence (Gardner)",
           to: "/guides/intelligences-multiples-gardner",
         },
-        { label: "Mon enfant ne tient pas en place", to: "/guides/enfant-agite-concentration" },
-        { label: "24 activités éducatives (6-12 ans)", to: "/guides/activites-educatives-enfant" },
-        { label: "Motiver un adolescent (12-16 ans)", to: "/guides/defis-pour-adolescents" },
-        {
-          label: "Développer les talents en Afrique",
-          to: "/guides/education-enfants-afrique-francophone",
-        },
+        { label: "Enfant inattentif ou agité", to: "/guides/enfant-agite-concentration" },
+        { label: "24 activités éducatives sans écran", to: "/guides/activites-educatives-enfant" },
+        { label: "Autisme & TDAH : forces réelles", to: "/guides/autisme-tdah-apprentissage-forces-reelles" },
+        { label: "Gestion de la colère et émotions", to: "/guides/gestion-colere-emotions-enfant" },
       ]}
     >
       <img
@@ -140,99 +141,77 @@ function Guide() {
         des deux, séparément.
       </p>
 
-      <h2>Le haut potentiel intellectuel : ce qu'un parent peut observer</h2>
+      <h2>Le haut potentiel intellectuel (HPI) : les signes observables à la maison</h2>
       <MedicalDisclaimer>
-        Le haut potentiel intellectuel (HPI) est un diagnostic psychologique. Ce guide décrit des
-        indices qui justifient de consulter, pas des critères suffisants pour conclure vous-même.
-        Seul un psychologue peut poser ce diagnostic, à l'aide de tests standardisés.
+        Le haut potentiel intellectuel (HPI) est un fonctionnement neurocognitif validé par un bilan psychométrique (test WISC-V par un psychologue ou neuropsychologue). Ce guide vous donne des repères d'observation bienveillants et ne remplace aucun avis médical.
       </MedicalDisclaimer>
       <p>
-        Les indices les plus souvent rapportés par les psychologues qui reçoivent des familles ne
-        sont pas « une bonne mémoire » ou « de l'avance scolaire » seules, mais plutôt une
-        combinaison de traits :
+        Les signes caractéristiques observés chez l'enfant précoce ou « zèbre » ne se résument pas à de bonnes notes scolaires. Ils combinent souvent :
       </p>
       <ul>
         <li>
-          <strong>Une pensée qui part dans tous les sens.</strong> L'enfant part d'une question et
-          enchaîne spontanément vers des domaines sans rapport apparent, avec une vitesse qui peut
-          désorganiser son propre discours.
+          <strong>Une pensée arborescente et fulgurante :</strong> L'enfant fait des liens instantanés entre des sujets sans rapport apparent, posant des questions existentielles précoces (découvrez notre éclairage sur l'
+          <a href="/guides/intelligences-multiples-gardner">intelligence existentielle et les 9 intelligences de Gardner</a>).
         </li>
         <li>
-          <strong>Un décalage entre intelligence et maturité émotionnelle.</strong> Un raisonnement
-          très abstrait pour son âge, combiné à une hypersensibilité ou des difficultés sociales
-          bien réelles.
+          <strong>Une hypersensibilité sensorielle et émotionnelle :</strong> Un sens aigu de la justice, des réactions intenses aux bruits ou aux textures, et parfois des tempêtes émotionnelles (consultez nos{" "}
+          <a href="/guides/gestion-colere-emotions-enfant">5 outils pour apaiser la frustration de l'enfant</a>).
         </li>
         <li>
-          <strong>Un ennui actif, pas passif.</strong> Non pas un enfant qui s'ennuie et se met en
-          retrait, mais un enfant qui perturbe la classe précisément parce que le rythme est trop
-          lent pour lui.
+          <strong>Un besoin irrépressible de comprendre le sens :</strong> Un rejet viscéral du « par cœur » et des consignes non justifiées, qui peut être confondu avec de l'opposition ou un{" "}
+          <a href="/guides/enfant-agite-concentration">manque d'attention et de concentration</a>.
         </li>
         <li>
-          <strong>Un perfectionnisme paralysant.</strong> Une exigence envers soi-même si élevée
-          qu'elle empêche parfois de commencer une tâche, par peur de ne pas la réussir
-          parfaitement.
+          <strong>Un perfectionnisme paralysant :</strong> La peur de l'échec ou d'un résultat imparfait qui l'amène parfois à refuser d'entamer une tâche.
         </li>
       </ul>
+
+      <h2>Les limites des tests de QI en ligne et des QCM</h2>
       <p>
-        Si plusieurs de ces traits sont présents et gênent réellement l'enfant au quotidien — à
-        l'école, dans ses relations, dans son rapport à lui-même — une consultation avec un
-        psychologue spécialisé dans le développement de l'enfant est la seule étape qui permette de
-        vraiment trancher.
+        De nombreux sites proposent des « tests de précocité » ou des quiz en quelques minutes. Attention : ces tests automatisés sont non seulement scientifiquement invalides, mais ils risquent d'enfermer votre enfant dans une fausse étiquette. Lisez notre enquête sur les{" "}
+        <a href="/guides/test-de-personnalite-enfant-talents">4 limites majeures des tests de personnalité pour enfants</a>.
       </p>
 
-      <h2>Le potentiel, au sens large : ce que l'école ne regarde pas</h2>
+      <h2>Pourquoi le désintérêt scolaire touche tant d'enfants HPI</h2>
       <p>
-        Qu'il y ait diagnostic ou non, la question la plus utile au quotidien n'est pas « est-il
-        surdoué ? » mais « dans quoi est-il déjà compétent, et dans quoi ne l'a-t-on jamais laissé
-        essayer ? ». La théorie des intelligences multiples de Howard Gardner (détaillée dans{" "}
-        <a href="/guides/intelligences-multiples-gardner">notre guide dédié</a>) est utile ici
-        précisément parce qu'elle élargit le regard au-delà du linguistique et du
-        logico-mathématique — les deux seules formes que l'école évalue vraiment.
+        « Mon enfant a d'immenses capacités mais ses notes chutent » : ce paradoxe est fréquent. L'enfant précoce souffre souvent d'un <strong>ennui actif</strong> : le rythme de répétition scolaire ne correspond pas à sa vitesse de traitement. Sans méthode de travail solide, il risque le désengagement. Découvrez nos clés pour{" "}
+        <a href="/guides/decrochage-scolaire-confiance-enfant">redonner confiance à un enfant qui décroche à l'école</a> et nos conseils pour{" "}
+        <a href="/guides/reussite-scolaire-aider-enfant">l'aider à réussir sans stresser</a>.
       </p>
       <p>
-        Un enfant qui négocie habilement entre camarades, qui repère instinctivement la valeur d'un
-        objet, qui construit sans plan avec une justesse d'ingénieur, ou qui apaise un groupe en
-        conflit sans qu'on le lui ait demandé, démontre un potentiel réel — simplement dans un
-        registre que le bulletin scolaire ne mesure jamais.
+        Il est également crucial de distinguer le HPI d'autres profils neuroatypiques, comme détaillé dans notre guide{" "}
+        <a href="/guides/autisme-tdah-apprentissage-forces-reelles">Autisme & TDAH : valoriser leurs forces d'apprentissage</a>.
       </p>
 
-      <h2>Pourquoi le désintérêt scolaire ne prouve rien à lui seul</h2>
+      <h2>Nourrir son potentiel par l'action concrète à la maison</h2>
       <p>
-        « Mon enfant est intelligent mais n'aime pas l'école » est l'une des phrases les plus
-        entendues par les psychologues scolaires, et elle peut avoir deux origines opposées — dans
-        les deux cas, l'ennui en classe peut mener à l'échec scolaire si rien n'est fait :
+        Au lieu de surcharger un enfant précoce d'exercices scolaires abstraits, proposez-lui des projets où son intelligence se confronte à la matière et au réel :
       </p>
-      <ol>
+      <ul>
         <li>
-          <strong>Un rythme trop lent</strong> pour un enfant qui a besoin d'aller plus vite ou plus
-          loin — fréquent chez les profils à haut potentiel.
+          Proposez des défis scientifiques et logiques issus de nos{" "}
+          <a href="/guides/activites-educatives-enfant">24 activités éducatives sans écran</a>.
         </li>
         <li>
-          <strong>Un format inadapté</strong> pour un enfant dont les forces réelles sont ailleurs —
-          fréquent chez tous les autres profils, sans lien avec un haut potentiel quelconque.
+          Canalisez son besoin d'expérimentation grâce à des{" "}
+          <a href="/guides/activites-manuelles-enfant">projets de bricolage et de fabrication manuelle</a>.
         </li>
-      </ol>
+        <li>
+          Développez son sens des responsabilités avec nos rituels pour{" "}
+          <a href="/guides/autonomie-responsabilite-maison">rendre son enfant autonome au quotidien</a>.
+        </li>
+      </ul>
+
+      <h2>Ce que fait Génizio au quotidien</h2>
       <p>
-        Distinguer les deux ne se fait pas en une conversation, mais en observant, sur plusieurs
-        semaines, ce que l'enfant fait quand la contrainte scolaire disparaît : vers quoi revient-il
-        spontanément, et dans quoi persévère-t-il malgré la difficulté ?
+        Génizio ne délivre pas d'étiquette de QI. L'application propose des défis concrets du monde réel adaptés aux 9 formes d'intelligence. En photographiant ses réussites concrètes, l'enfant construit son Passeport de Talents, révélant ses véritables forces sans pression ni comparaison.
       </p>
 
-      <h2>Ce que Génizio observe, concrètement</h2>
-      <p>
-        Génizio ne cherche pas à établir un diagnostic ni à confirmer un haut potentiel — ce n'est
-        ni son rôle ni sa compétence. L'application propose à l'enfant des défis concrets à réaliser
-        à la maison, répartis sur 9 formes de talent, et met à jour sa carte de talents à partir des
-        défis effectivement menés à bien, preuve à l'appui. L'intérêt de cette approche est
-        d'observer sur la durée plutôt que sur un instantané, et de couvrir des domaines — sociaux,
-        entrepreneuriaux, corporels — qu'aucun bulletin scolaire ne regarde.
-      </p>
-
-      <h2>Questions fréquentes</h2>
+      <h2>Questions fréquentes (FAQ)</h2>
       {FAQ.map((item) => (
-        <div key={item.question}>
-          <h3>{item.question}</h3>
-          <p>{item.answer}</p>
+        <div key={item.question} className="my-5 border-b border-ink/10 pb-4">
+          <h3 className="text-lg font-bold text-ink">{item.question}</h3>
+          <p className="mt-2 text-ink/80">{item.answer}</p>
         </div>
       ))}
     </GuideLayout>

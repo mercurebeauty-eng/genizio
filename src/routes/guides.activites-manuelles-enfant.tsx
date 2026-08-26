@@ -13,39 +13,74 @@ const PATH = "/guides/activites-manuelles-enfant";
 
 const FAQ = [
   {
-    question: "Quelles activités manuelles faire avec un enfant de 4 à 12 ans ?",
+    question: "Quelles sont les meilleures activités manuelles pour un enfant de 4 ans (maternelle) ?",
     answer:
-      "Les plus formatrices utilisent du matériel que vous avez déjà : déchirer, découper, coller, plier, nouer, modeler, coudre à la main, tresser, peindre avec des pigments naturels, assembler des objets de récupération. Ce qui compte n'est pas la complexité mais la régularité : un atelier de 20 à 30 minutes plusieurs fois par semaine développe la motricité fine, la concentration et le plaisir de finir ce qu'on a commencé.",
+      "À 4 ans, privilégiez les activités développant la motricité fine et l'autonomie sans danger : modelage en pâte à sel maison, déchirage et collage de papier de soie, enfilage de grosses perles ou macaronis, peinture aux doigts avec pigments naturels (curcuma, betterave) et fabrication d'animaux en rouleaux de carton. L'enfant doit pouvoir manipuler librement sans chercher la perfection.",
   },
   {
-    question:
-      "Les activités manuelles sont-elles vraiment utiles pour le développement de l'enfant ?",
+    question: "Quelles activités manuelles faciles faire avec un enfant de 6 à 12 ans ?",
     answer:
-      "Oui, sur plusieurs plans à la fois. La motricité fine (couper, nouer, enfiler) prépare directement l'écriture et la précision du geste. Une activité manuelle qui se termine par un objet apprend à l'enfant à se concentrer, à suivre des étapes et à finir ce qu'il commence — exactement ce qui fait réussir à l'école, mais entraîné ici sans note ni pression. Enfin, un résultat visible et manipulable construit la confiance en soi d'une façon qu'aucun exercice abstrait ne peut égaler.",
+      "Pour les 6-12 ans (primaire et collège), passez aux projets d'ingéniosité : fabrication d'une boîte à trésors compartimentée, couture d'un étui ou petit coussin, création d'instruments de musique en carton (balafon, guitare), fabrication de maquettes de ponts ou cabanes et teinture végétale de tissus. Ces projets renforcent la persévérance et la vision 3D.",
   },
   {
-    question: "Comment occuper un enfant avec des activités manuelles sans dépenser d'argent ?",
+    question: "Pourquoi le travail manuel est-il essentiel pour le cerveau de l'enfant ?",
     answer:
-      "Le matériel le plus riche est le plus courant : carton, bouteilles en plastique, bouchons, tissus usés, ficelle, farine et eau pour la pâte, feuilles et fleurs pour les pigments, papier journal. Dressez une boîte « trésor » où l'enfant range ce qu'il veut réutiliser, et laissez-le choisir son projet dedans. L'argent n'est pas un facteur : c'est l'autonomie de choix et la liberté d'expérimenter qui font la qualité de l'activité.",
+      "Le travail des mains active des zones neuronales majeures reliées à la motricité fine, la coordination œil-main et l'écriture. Selon la théorie des intelligences multiples, il stimule l'intelligence corporelle-kinesthésique et spatiale. De plus, transformer une matière brute en objet utile procure une fierté concrète qu'aucun écran ne peut offrir.",
   },
   {
-    question: "Comment installer un atelier à la maison en 10 minutes ?",
+    question: "Comment organiser un atelier bricolage à la maison sans rien dépenser ?",
     answer:
-      "Une boîte en carton suffit : dedans, une paire de ciseaux, un bâton de colle, du papier (vieux journaux, cahiers terminés), de la ficelle, des bouchons et des tissus usés. Posez la boîte sur un coin de table fixe — pas besoin de plus pour commencer. Ensuite, deux règles font toute la différence : un créneau régulier (par exemple le samedi matin ou après l'école, 20 à 30 minutes) et l'interdiction de finir à sa place : un résultat imparfait mais fait par l'enfant vaut toujours mieux qu'un bel objet fait par vous.",
+      "Créez une « Boîte Trésor » dans un carton où vous stockez vos emballages propres : bouchons, bouteilles, rouleaux, cartons d'œufs, bouts de ficelle et tissus usés. Installez un coin de table fixe avec une paire de ciseaux à bouts ronds et de la colle. L'enfant puise dans cette réserve en totale autonomie dès qu'une idée lui vient.",
   },
   {
-    question: "Comment Génizio utilise-t-il les activités manuelles ?",
+    question: "Comment valoriser les créations de son enfant avec Génizio ?",
     answer:
-      "Génizio génère des défis manuels adaptés à l'âge, aux centres d'intérêt et au matériel disponible à la maison de chaque enfant. Quand l'enfant termine un défi, le parent photographie le résultat, et la carte des talents de l'enfant se met à jour à partir de cette réalisation réelle — jamais d'un questionnaire. Les activités manuelles y occupent une place centrale parce qu'elles laissent une preuve visible de ce dont l'enfant est capable.",
+      "Génizio génère des défis manuels personnalisés selon l'âge et le matériel disponible à la maison. Lorsque votre enfant termine une construction ou un bricolage, photographiez sa réalisation dans l'application pour enrichir son Passeport de Talents et débloquer de nouveaux défis adaptés.",
+  },
+];
+
+const BY_AGE = [
+  {
+    age: "4 à 6 ans (Maternelle - Motricité fine & Découverte)",
+    items: [
+      "Collage texturé : déchirer et assembler des papiers colorés pour créer un paysage",
+      "Modelage en pâte à sel maison (farine, eau, sel) : empreintes de feuilles et figurines",
+      "Collier de perles géantes : enfiler des macaronis ou boutons sur une ficelle rigide",
+      "Peinture végétale aux doigts : tester des pigments naturels (betterave, café, curcuma)",
+      "Animaux en carton : transformer des rouleaux de papier en papillons, lions ou fusées",
+      "Bouteille sensorielle magique : eau, paillettes, riz et bouchons colorés",
+    ],
+  },
+  {
+    age: "7 à 9 ans (CP à CM1 - Précision & Logique d'assemblage)",
+    items: [
+      "Boîte à crayons compartimentée en carton rigide et papier kraft",
+      "Tressage et cordage : confectionner des bracelets d'amitié ou sous-verres en ficelle",
+      "Couture débutante : coudre une pochette en feutrine ou tissu recyclé avec une aiguille plastique",
+      "Masque en papier mâché (eau, colle de farine et bandes de journal)",
+      "Mobile d'équilibre aérien à partir de branches d'arbres et de formes géométriques",
+      "Tampons personnalisés gravés dans des bouchons en liège ou pommes de terre",
+    ],
+  },
+  {
+    age: "10 à 12 ans (CM2 et Collège - Ingénierie & Projets Utiles)",
+    items: [
+      "Maquette de pont en carton ou pont suspendu capable de supporter un poids réel",
+      "Fabrication d'un instrument de musique acoustique (balafon, tambour, guitare en boîte)",
+      "Teinture textile naturelle (technique du Tie and Dye avec pigments d'oignon ou avocat)",
+      "Réparation d'un objet du quotidien (recoller un jouet, recoudre un bouton, fabriquer une pièce de rechange)",
+      "Création d'un jeu de société complet (plateau en bois/carton, pions sculptés, livret de règles)",
+      "Mini-marché artisanal à la maison pour exposer et valoriser ses créations",
+    ],
   },
 ];
 
 export const Route = createFileRoute("/guides/activites-manuelles-enfant")({
   head: () => {
     const meta = pageMeta({
-      title: "Activités manuelles pour enfants : 15 idées (4-12 ans)",
+      title: "18 activités manuelles faciles à la maison (4-12 ans)",
       description:
-        "15 activités manuelles pour enfant à faire à la maison avec du matériel du quotidien : ce que chacune développe, et ce qu'elle révèle.",
+        "18 activités manuelles et bricolages faciles pour enfant de 4 à 12 ans avec du matériel recyclé : pâte à sel, collage, couture et constructions utiles.",
       path: PATH,
       image: "/guides/og-manuelles.jpg",
       type: "article",
@@ -58,25 +93,27 @@ export const Route = createFileRoute("/guides/activites-manuelles-enfant")({
           breadcrumbJsonLd([
             { name: "Accueil", path: "/" },
             { name: "Guides", path: "/guides" },
-            { name: "Activités manuelles", path: PATH },
+            { name: "Activités manuelles enfant", path: PATH },
           ]),
         ),
         jsonLdScript({
           "@context": "https://schema.org",
           "@type": "Article",
-          headline: "Activités manuelles pour enfants : 15 idées concrètes (4-12 ans)",
+          headline: "18 activités manuelles faciles à faire à la maison avec son enfant (4-12 ans)",
+          description:
+            "Guide complet des activités manuelles pour enfants de 4 à 12 ans : bricolage sans écran, motricité fine, matériel de récupération et valorisation des talents.",
           inLanguage: "fr-FR",
           mainEntityOfPage: absoluteUrl(PATH),
           image: absoluteUrl("/guides/og-manuelles.jpg"),
           publisher: { "@id": `${SITE_URL}/#organization` },
           author: { "@type": "Organization", name: "Génizio" },
           datePublished: "2026-08-10",
-          dateModified: "2026-08-10",
+          dateModified: "2026-08-26",
           about: [
             { "@type": "Thing", name: "Activités manuelles pour enfants" },
-            { "@type": "Thing", name: "Bricolage enfant" },
+            { "@type": "Thing", name: "Activités manuelles 4 ans" },
+            { "@type": "Thing", name: "Bricolage enfant recyclé" },
             { "@type": "Thing", name: "Motricité fine" },
-            { "@type": "Thing", name: "Activités sans écran" },
           ],
         }),
       ],
@@ -85,55 +122,20 @@ export const Route = createFileRoute("/guides/activites-manuelles-enfant")({
   component: Guide,
 });
 
-const BY_AGE = [
-  {
-    age: "4 à 6 ans",
-    items: [
-      "Déchirer et coller des papiers de couleurs pour composer une scène (collage)",
-      "Enfiler des grosses perles ou des pâtes sur un fil pour créer un collier",
-      "Modeler des formes avec de la pâte à sel (farine, eau, sel)",
-      "Peindre avec les doigts et des pigments naturels (hibiscus, curcuma, charbon)",
-      "Décorer une boîte à chaussures avec des bouchons, tissus et boutons",
-    ],
-  },
-  {
-    age: "7 à 9 ans",
-    items: [
-      "Construire un objet utile en carton : boîte à crayons, porte-revues, cadre photo",
-      "Coudre à la main un petit coussin ou un étui avec une aiguille en plastique",
-      "Tresser un bracelet ou un cordage avec de la ficelle et des perles",
-      "Faire du papier mâché pour créer un masque ou un bol",
-      "Monter un petit mobile à partir de branches et d'objets de récupération",
-    ],
-  },
-  {
-    age: "10 à 12 ans",
-    items: [
-      "Réparer un objet cassé (vêtement, jouet, petit appareil) au lieu de le jeter",
-      "Concevoir et fabriquer une maquette : pont, cabane miniature, quartier",
-      "Teindre un tissu avec des pigments naturels extraits soi-même",
-      "Construire un instrument de musique (balafon en bois, tambour, guitare en carton)",
-      "Organiser et vendre ses créations lors d'un petit marché familial",
-    ],
-  },
-];
-
 function Guide() {
   return (
     <GuideLayout
-      eyebrow="Activités & jeux"
-      title="Activités manuelles pour enfants : 15 idées concrètes (4-12 ans)"
-      intro="Couper, coller, nouer, modeler, réparer : les activités manuelles ne sont pas de simples occupations. Elles développent des compétences que l'école ne mesure pas — et elles laissent une trace visible de ce que l'enfant sait faire. Voici 15 idées à la portée de toutes les maisons."
-      updated="10 août 2026"
-      readingTime="7 min"
+      eyebrow="Activités & Bricolage"
+      title="18 activités manuelles faciles à faire à la maison avec son enfant (4-12 ans)"
+      intro="Couper, coller, assembler, modeler, réparer : le travail des mains n'est pas un simple passe-temps pour occuper un mercredi après-midi. C'est l'un des moteurs les plus puissants du développement cérébral et de l'autonomie de l'enfant. Découvrez 18 idées concrètes, adaptées par tranche d'âge de 4 à 12 ans, réalisables sans matériel coûteux."
+      updated="26 août 2026"
+      readingTime="8 min"
       path={PATH}
       related={[
-        { label: "24 activités éducatives (6-12 ans)", to: "/guides/activites-educatives-enfant" },
-        {
-          label: "Réduire les écrans sans crise",
-          to: "/guides/ecrans-addiction-alternatives-enfant",
-        },
-        { label: "Mon enfant ne tient pas en place", to: "/guides/enfant-agite-concentration" },
+        { label: "24 activités éducatives sans écran", to: "/guides/activites-educatives-enfant" },
+        { label: "Les 9 formes d'intelligence (Gardner)", to: "/guides/intelligences-multiples-gardner" },
+        { label: "Réduire les écrans sans crise", to: "/guides/ecrans-addiction-alternatives-enfant" },
+        { label: "Canaliser un enfant agité", to: "/guides/enfant-agite-concentration" },
       ]}
     >
       <img
@@ -145,134 +147,124 @@ function Guide() {
         decoding="async"
         className="my-6 aspect-video w-full rounded-3xl border border-ink/10 object-cover shadow-lg"
       />
-      <h2>Pourquoi les activités manuelles comptent vraiment</h2>
+
+      <h2>Pourquoi les activités manuelles sont indispensables au cerveau de l'enfant</h2>
       <p>
-        Une activité manuelle mobilise bien plus qu'une paire de mains. Découper en suivant un
-        tracé, enfiler des perles, nouer un fil : autant de gestes qui entraînent la{" "}
-        <strong>motricité fine</strong>, celle-là même qui prépare l'écriture. Mais le bénéfice va
-        plus loin.
+        À l'ère des écrans tactiles, où un simple glissement de doigt remplace l'effort physique, les neurosciences rappellent une vérité fondamentale : <strong>le cerveau humain apprend par la manipulation de la matière réelle</strong>.
       </p>
       <p>
-        Une activité qui se termine par un objet apprend à l'enfant à <strong>se concentrer</strong>{" "}
-        (par où commencer ?), à <strong>suivre des étapes</strong> et à{" "}
-        <strong>finir ce qu'il a commencé</strong>, même quand la pièce tombe ou que la colle ne
-        prend pas. Ce sont les mêmes habitudes qui font réussir à l'école — mais elles s'entraînent
-        ici sans note, sans pression, avec les mains.
+        En découpant du carton, en dosant la colle ou en enfilant une ficelle, l'enfant active une zone cérébrale majeure liée à la motricité fine, qui conditionne directement la tenue du stylo et la fluidité de l'écriture. Dans le cadre de la{" "}
+        <a href="/guides/intelligences-multiples-gardner">théorie des 9 formes d'intelligence</a>, le bricolage nourrit l'intelligence corporelle-kinesthésique et spatiale.
       </p>
       <p>
-        Enfin, il y a la confiance. Un exercice de cahier rempli disparaît. Une boîte décorée, un
-        collier ou une maquette restent : l'enfant peut la montrer, la donner, la garder. Cette
-        preuve visible de ce qu'il sait faire est l'un des moyens les plus directs de lui donner
-        confiance en lui.
+        De plus, créer un objet de ses mains est la meilleure alternative pour{" "}
+        <a href="/guides/ecrans-addiction-alternatives-enfant">sevrer un enfant des écrans sans crise</a> : face à un projet concret, son attention est naturellement captivée par le résultat tangible.
       </p>
 
-      <h2>15 activités classées par âge</h2>
+      <h2>18 activités manuelles classées par tranche d'âge</h2>
       <p>
-        Le classement par âge est indicatif : un enfant de 9 ans peut aimer une activité de la
-        tranche au-dessus si elle l'intéresse. L'important est que l'enfant choisisse et finisse.
+        Chaque tranche d'âge correspond à un stade d'autonomie motrice bien défini. Vous pouvez également combiner ces idées avec nos{" "}
+        <a href="/guides/activites-educatives-enfant">24 activités éducatives à la maison</a>.
       </p>
 
-      {BY_AGE.map((group) => (
-        <div key={group.age}>
-          <h3>{group.age}</h3>
-          <ul>
-            {group.items.map((item) => (
-              <li key={item}>{item}</li>
-            ))}
-          </ul>
-        </div>
-      ))}
-
-      <h2>3 activités phares, pas à pas</h2>
-      <p>
-        Pour bien démarrer, voici trois activités complètes, avec le déroulé précis — du matériel au
-        résultat fini.
-      </p>
-      <div className="my-6 rounded-2xl bg-amber-50 p-5 border border-amber-200">
-        <h3 className="font-bold text-amber-950 text-base mb-2">
-          1. La boîte à trésors décorée (4-7 ans, 20 min)
-        </h3>
-        <p className="text-sm text-amber-900 leading-relaxed">
-          <strong>Matériel :</strong> une boîte à chaussures, du papier découpé en petits morceaux
-          (vieux journaux, emballages), de la colle, des bouchons ou tissus.
-          <br />
-          <strong>Étapes :</strong> 1. L'enfant choisit ce qu'il colle (laissez-le décider seul). 2.
-          Il enduit la boîte de colle par petites zones et applique les morceaux — sans modèle
-          imposé. 3. Il ajoute les bouchons ou tissus où il veut. 4. On laisse sécher et on expose
-          la boîte dans le salon : « c'est la boîte où tu rangeras tes petites réussites ».
-        </p>
-      </div>
-      <div className="my-6 rounded-2xl bg-sky-50 p-5 border border-sky-200">
-        <h3 className="font-bold text-sky-950 text-base mb-2">
-          2. Le collier de perles en pâtes (4-8 ans, 15 min)
-        </h3>
-        <p className="text-sm text-sky-900 leading-relaxed">
-          <strong>Matériel :</strong> des pâtes (macaronis, penne), un fil solide ou une ficelle,
-          des ciseaux.
-          <br />
-          <strong>Étapes :</strong> 1. L'enfant crée son motif : il alterne les formes ou les
-          couleurs de pâtes sur le fil (c'est de la logique en action). 2. Il enfile jusqu'à la
-          longueur voulue. 3. On noue ensemble les deux bouts — c'est là que le parent aide si
-          besoin. 4. Le collier se porte ou se donne : la fierté du résultat est immédiate.
-        </p>
-      </div>
-      <div className="my-6 rounded-2xl bg-emerald-50 p-5 border border-emerald-200">
-        <h3 className="font-bold text-emerald-950 text-base mb-2">
-          3. Le cadre photo en carton (7-12 ans, 30 min)
-        </h3>
-        <p className="text-sm text-emerald-900 leading-relaxed">
-          <strong>Matériel :</strong> un carton rigide, des ciseaux, une photo, de la colle, des
-          décorations (bouchons, ficelle, pigments).
-          <br />
-          <strong>Étapes :</strong> 1. Découper un rectangle de carton plus grand que la photo, puis
-          une fenêtre au centre (l'enfant mesure et trace d'abord). 2. Coller la photo derrière la
-          fenêtre. 3. Décorer le pourtour avec le matériel choisi. 4. Fixer un support derrière (un
-          bout de carton plié) et offrir ou exposer le cadre — la photo peut être celle d'une
-          réussite de l'enfant.
-        </p>
+      <div className="my-8 space-y-6">
+        {BY_AGE.map((group) => (
+          <div key={group.age} className="rounded-2xl border border-ink/10 bg-surface p-6 shadow-xs">
+            <h3 className="text-xl font-bold text-ink">{group.age}</h3>
+            <ul className="mt-4 space-y-2 text-sm text-ink/85">
+              {group.items.map((item) => (
+                <li key={item} className="flex items-start gap-2">
+                  <span className="text-brand font-bold">✓</span>
+                  <span>{item}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        ))}
       </div>
 
-      <h2>Comment installer l'atelier sans se ruiner</h2>
+      <h2>Focus : Les activités manuelles pour un enfant de 4 ans (Maternelle)</h2>
+      <p>
+        À 4 ans, l'enfant perfectionne la coordination de ses deux mains. Le secret de la réussite réside dans la simplicité :
+      </p>
       <ul>
         <li>
-          <strong>La boîte « trésor ».</strong> Un carton où l'enfant range lui-même ce qu'il veut
-          réutiliser : bouchons, tissus, rouleaux, bouteilles, boutons. C'est son magasin, il
-          décide.
+          <strong>La pâte à sel magique :</strong> 2 verres de farine, 1 verre de sel fin, 1 verre d'eau tiède. Laissez l'enfant pétrir la pâte (un formidable exutoire pour{" "}
+          <a href="/guides/gestion-colere-emotions-enfant">apaiser les tensions et la frustration</a>), puis sculptez des formes avant cuisson douce.
         </li>
         <li>
-          <strong>Un coin fixe.</strong> Même une petite table avec une boîte de ciseaux, colle et
-          papier vaut mieux qu'un atelier complet sorti à chaque fois. L'enfant se met au travail
-          seul quand le matériel est accessible.
+          <strong>Le collage de papier de soie :</strong> Déchirer avec les doigts entraîne les muscles des pouces et index (la pince nécessaire pour écrire).
         </li>
         <li>
-          <strong>Un rituel régulier.</strong> Un créneau fixe (« samedi matin, atelier ») ancre
-          l'habitude mieux que des moments improvisés.
-        </li>
-        <li>
-          <strong>Résister à la tentation de finir à sa place.</strong> Un résultat imparfait mais
-          fait par lui construit plus qu'un bel objet fait par vous.
+          <strong>Le tri et enfilage de perles :</strong> Développe la concentration chez les tout-petits qui ont du mal à se poser (découvrez aussi nos conseils pour un{" "}
+          <a href="/guides/enfant-agite-concentration">enfant qui a du mal à se concentrer</a>).
         </li>
       </ul>
 
-      <h2>Ce qu'un enfant qui crée révèle de lui</h2>
+      <h2>3 ateliers pas à pas à faire avec du matériel de récupération</h2>
+
+      <div className="my-6 rounded-2xl bg-amber-50 p-5 border border-amber-200">
+        <h3 className="font-bold text-amber-950 text-base mb-2">
+          1. La boîte à secrets compartimentée (4-8 ans, 25 min)
+        </h3>
+        <p className="text-sm text-amber-900 leading-relaxed">
+          <strong>Matériel :</strong> Une boîte à chaussures, 3 rouleaux de carton coupés en deux, colle, magazines usés.
+          <br />
+          <strong>Étapes :</strong> 1. L'enfant colle les rouleaux à l'intérieur pour créer des compartiments secrets. 2. Il décore l'extérieur avec des collages de ses héros ou animaux préférés. 3. Cette boîte devient son espace d'
+          <a href="/guides/autonomie-responsabilite-maison" className="underline font-semibold">autonomie et de rangement</a> pour ses trésors.
+        </p>
+      </div>
+
+      <div className="my-6 rounded-2xl bg-sky-50 p-5 border border-sky-200">
+        <h3 className="font-bold text-sky-950 text-base mb-2">
+          2. Le balafon / xylophone en bois et carton (7-10 ans, 30 min)
+        </h3>
+        <p className="text-sm text-sky-900 leading-relaxed">
+          <strong>Matériel :</strong> Une boîte en carton allongée, 5 baguettes de bois (ou crayons) de longueurs différentes, élastiques.
+          <br />
+          <strong>Étapes :</strong> 1. Tendre les élastiques autour de la boîte. 2. Glisser les baguettes dessous en les espaçant du plus court au plus long. 3. L'enfant teste les sons émis en frappant avec un bâtonnet : c'est une initiation vivante à l'intelligence musicale et à la physique acoustique.
+        </p>
+      </div>
+
+      <div className="my-6 rounded-2xl bg-emerald-50 p-5 border border-emerald-200">
+        <h3 className="font-bold text-emerald-950 text-base mb-2">
+          3. La maquette de pont suspendu (9-12 ans, 45 min)
+        </h3>
+        <p className="text-sm text-emerald-950 text-base mb-2 font-bold">
+          <strong>Matériel :</strong> Carton fort, ficelle, colle forte ou pistolet basse température, ciseaux.
+          <br />
+          <strong>Étapes :</strong> 1. Tracer et découper deux piliers solides. 2. Relier les piliers avec un tablier de carton suspendu par des haubans en ficelle. 3. Tester la résistance du pont en y posant des petites voitures : l'enfant apprend par l'essai-erreur comme un véritable ingénieur.
+        </p>
+      </div>
+
+      <h2>Comment installer l'atelier à la maison sans désordre permanent</h2>
+      <ul>
+        <li>
+          <strong>La Boîte Trésor :</strong> Une grande boîte où vous jetez bouchons, emballages propres, ficelles et chutes de papier. L'enfant sait où piocher en totale indépendance.
+        </li>
+        <li>
+          <strong>La nappe de bricolage cirée :</strong> Une simple nappe plastique pliée que l'on déplie en 5 secondes sur la table de la cuisine pour protéger la surface.
+        </li>
+        <li>
+          <strong>La règle d'or du parent :</strong> Ne finissez jamais le travail à la place de l'enfant. Un résultat imparfait mais conçu à 100 % par lui génère infiniment plus d'estime de soi qu'un chef-d'œuvre terminé par un adulte.
+        </li>
+      </ul>
+
+      <h2>Ce que le bricolage révèle des talents cachés de votre enfant</h2>
       <p>
-        Les activités manuelles sont aussi une fenêtre d'observation. Face à un objet qui ne tient
-        pas : est-ce qu'il s'arrête, qu'il insiste, qu'il change de méthode ? Est-ce qu'il demande
-        de l'aide ou préfère chercher seul ? Ces informations, notées sur quelques semaines, en
-        disent plus sur son <strong>mode d'apprentissage</strong> que bien des questionnaires.
+        Quand un enfant construit, observez son comportement : est-il méthodique ou spontané ? Abandonne-t-il dès que la colle lâche ou cherche-t-il une autre solution ? Cette observation en dit beaucoup plus sur ses capacités que n'importe quel test théorique (consultez notre analyse sur les{" "}
+        <a href="/guides/test-de-personnalite-enfant-talents">tests de personnalité pour enfants</a> ou sur le{" "}
+        <a href="/guides/potentiel-haut-potentiel-enfant">repérage des enfants à haut potentiel</a>).
       </p>
       <p>
-        C'est précisément ce que Génizio observe : les défis manuels qu'il propose à chaque enfant
-        sont choisis selon son âge, ses centres d'intérêt et le matériel disponible à la maison, et
-        la carte de ses talents se construit à partir des réalisations photographiées — jamais d'un
-        questionnaire rempli par le parent.
+        Avec <strong>Génizio</strong>, chaque création manuelle devient une brique vivante de son passeport de compétences. Photographiez simplement sa réalisation : notre système identifie ses progrès et lui suggère le prochain défi stimulant.
       </p>
 
-      <h2>Questions fréquentes</h2>
+      <h2>Questions fréquentes (FAQ)</h2>
       {FAQ.map((item) => (
-        <div key={item.question}>
-          <h3>{item.question}</h3>
-          <p>{item.answer}</p>
+        <div key={item.question} className="my-5 border-b border-ink/10 pb-4">
+          <h3 className="text-lg font-bold text-ink">{item.question}</h3>
+          <p className="mt-2 text-ink/80">{item.answer}</p>
         </div>
       ))}
     </GuideLayout>
