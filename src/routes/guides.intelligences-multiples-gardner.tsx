@@ -145,6 +145,9 @@ export const Route = createFileRoute("/guides/intelligences-multiples-gardner")(
       ],
     };
   },
+  component: Guide,
+});
+
 function Guide() {
   return (
     <GuideLayout

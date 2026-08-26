@@ -56,7 +56,7 @@ const FAQ = [
 export const Route = createFileRoute("/guides/decrochage-scolaire-confiance-enfant")({
   head: () => {
     const meta = pageMeta({
-      title: "Enfant qui perd confiance ou décroche à l'école : comment l'aider",
+      title: "Décrochage scolaire : aider un enfant qui perd confiance",
       description:
         "Signaux d'alerte du décrochage scolaire, harcèlement, mauvaises notes, perte de confiance : ce que les parents peuvent faire à la maison, et quand consulter.",
       path: PATH,
@@ -78,13 +78,15 @@ export const Route = createFileRoute("/guides/decrochage-scolaire-confiance-enfa
           "@context": "https://schema.org",
           "@type": "Article",
           headline: "Comment aider un enfant qui perd confiance et se décourage à l'école",
+          description:
+            "Guide d'accompagnement parental : repérer les signes précoces de décrochage, réagir aux mauvaises notes sans drame et restaurer l'estime de soi.",
           inLanguage: "fr-FR",
           mainEntityOfPage: absoluteUrl(PATH),
           image: absoluteUrl("/guides/og-decrochage.jpg"),
           publisher: { "@id": `${SITE_URL}/#organization` },
           author: { "@type": "Organization", name: "Génizio" },
           datePublished: "2026-07-27",
-          dateModified: "2026-08-14",
+          dateModified: "2026-08-26",
           about: [
             { "@type": "Thing", name: "Décrochage scolaire" },
             { "@type": "Thing", name: "Confiance en soi de l'enfant" },
@@ -101,29 +103,32 @@ export const Route = createFileRoute("/guides/decrochage-scolaire-confiance-enfa
 function Guide() {
   return (
     <GuideLayout
-      eyebrow="Confiance & bien-être"
+      eyebrow="Confiance & Bien-être"
       title="Comment aider un enfant qui perd confiance et se décourage à l'école"
-      intro="« Il a tout pour réussir, mais il ne croit plus en lui. » Le décrochage n'est presque jamais un événement soudain : il commence des années plus tôt, en silence, par des signaux que l'on peut apprendre à repérer. Voici comment observer, agir à la maison, et savoir quand demander de l'aide."
-      updated="14 août 2026"
+      intro="« Il a tout pour réussir, mais il ne croit plus en lui. » Le décrochage n'est presque jamais un événement soudain : il s'installe progressivement à travers des signaux d'usure silencieux que l'on peut apprendre à repérer. Voici comment observer, agir à la maison et reconstruire l'estime de soi."
+      updated="26 août 2026"
       readingTime="9 min"
       path={PATH}
       related={[
         {
-          label: "Agitation et concentration : comprendre avant de s'inquiéter",
-          to: "/guides/enfant-agite-concentration",
+          label: "Réussite scolaire sans stress",
+          to: "/guides/reussite-scolaire-aider-enfant",
         },
         {
-          label: "Développer les talents de son enfant en Afrique",
-          to: "/guides/education-enfants-afrique-francophone",
+          label: "Les 9 formes d'intelligence",
+          to: "/guides/intelligences-multiples-gardner",
+        },
+        {
+          label: "Canaliser un enfant agité",
+          to: "/guides/enfant-agite-concentration",
         },
         {
           label: "Enfant timide : libérer la parole",
           to: "/guides/timidite-confiance-prise-de-parole",
         },
-        { label: "Motiver un adolescent (12-16 ans)", to: "/guides/defis-pour-adolescents" },
         {
-          label: "Aider son enfant à réussir à l'école",
-          to: "/guides/reussite-scolaire-aider-enfant",
+          label: "Discipline positive sans punition",
+          to: "/guides/discipline-positive-sans-punition",
         },
       ]}
     >
@@ -146,33 +151,16 @@ function Guide() {
 
       <h2>Le découragement se construit longtemps avant le décrochage</h2>
       <p>
-        Quand un jeune quitte l'école, on a l'impression d'un événement soudain. Dans la grande
-        majorité des cas, c'est l'étape visible d'un chemin commencé des années plus tôt — souvent
-        pendant l'enfance.
+        Quand un élève abandonne ses efforts, on a l'impression d'une rupture soudaine. Dans la grande majorité des cas, c'est l'aboutissement d'un long sentiment d'inadéquation scolaire.
       </p>
       <p>
-        À force de ne pas être compris, de ne pas se sentir à sa place, de ne recevoir aucun
-        soutien, des blessures invisibles s'installent progressivement. Elles n'apparaissent pas sur
-        un bulletin, mais elles agissent en profondeur : sur la <strong>confiance en soi</strong>,
-        la <strong>motivation</strong> et la capacité à <strong>se projeter dans l'avenir</strong>.
+        À force de notes décevantes et de comparaisons défavorables, des blessures d'estime s'installent. L'enfant finit par croire que son intelligence est insuffisante. Pourtant, selon la{" "}
+        <a href="/guides/intelligences-multiples-gardner">théorie des 9 intelligences de Howard Gardner</a>, l'école ne mesure qu'une fraction restreinte des capacités humaines (le logico-mathématique et le verbal-linguistique).
       </p>
-      <p>Ce que ces expériences répétées laissent chez un enfant :</p>
-      <ul>
-        <li>
-          la conviction de ne pas être à la hauteur, même quand les faits disent le contraire ;
-        </li>
-        <li>
-          le sentiment que ses efforts ne servent à rien, donc l'arrêt progressif des efforts ;
-        </li>
-        <li>l'impossibilité d'imaginer un avenir dans lequel il aurait sa place ;</li>
-        <li>l'habitude de se taire, pour ne pas risquer d'être jugé une fois de plus.</li>
-      </ul>
 
       <h2>Les signaux d'alerte à observer (tableau pratique)</h2>
       <p>
-        Ce qui suit n'est pas une grille de diagnostic, mais des repères d'observation. Ce qui
-        compte, ce n'est pas un signe isolé, c'est son <strong>évolution dans le temps</strong> et
-        son impact sur la vie quotidienne.
+        Ce qui suit n'est pas une grille de diagnostic médical, mais des repères d'observation parentale. Ce qui compte, c'est la persistance sur plusieurs semaines :
       </p>
       <div className="my-6 overflow-x-auto rounded-2xl border border-ink/10">
         <table className="w-full min-w-[520px] text-sm print:min-w-0">
@@ -184,140 +172,62 @@ function Guide() {
           </thead>
           <tbody className="divide-y divide-ink/10">
             <tr>
+              <td className="px-4 py-3 font-semibold">Repli sur soi et mutisme</td>
               <td className="px-4 py-3">
-                Un changement durable de comportement : un enfant ouvert qui devient renfermé, ou
-                l'inverse
-              </td>
-              <td className="px-4 py-3">
-                Un malaise qui s'installe, parfois un événement précis (une humiliation, un conflit)
+                Perte de confiance ou timidité anxieuse (découvrez nos conseils pour{" "}
+                <a href="/guides/timidite-confiance-prise-de-parole">aider un enfant timide à s'exprimer</a>)
               </td>
             </tr>
             <tr>
+              <td className="px-4 py-3 font-semibold">Agitation excessive et refus des devoirs</td>
               <td className="px-4 py-3">
-                La perte de plaisir dans des activités qu'il aimait auparavant
-              </td>
-              <td className="px-4 py-3">Un découragement qui dépasse la simple mauvaise passe</td>
-            </tr>
-            <tr>
-              <td className="px-4 py-3">Des troubles du sommeil ou de l'appétit qui persistent</td>
-              <td className="px-4 py-3">
-                Une anxiété qui se manifeste par le corps — à prendre au sérieux
+                Trop-plein d'énergie ou surcharge cognitive (consultez notre guide pour{" "}
+                <a href="/guides/enfant-agite-concentration">canaliser un enfant agité</a>)
               </td>
             </tr>
             <tr>
-              <td className="px-4 py-3">
-                Des paroles d'estime de soi en chute (« je suis nul », « ça ne sert à rien »)
-              </td>
-              <td className="px-4 py-3">
-                Une confiance érodée par des échecs répétés, des moqueries ou des comparaisons
-              </td>
+              <td className="px-4 py-3 font-semibold">Phrases d'auto-dévalorisation (« Je suis nul »)</td>
+              <td className="px-4 py-3">Érosion de l'estime de soi sous la pression des notes</td>
             </tr>
             <tr>
-              <td className="px-4 py-3">
-                Des signes de détresse à l'idée d'aller à l'école : maux de ventre, refus, angoisse
-                le dimanche soir
-              </td>
-              <td className="px-4 py-3">
-                Une peur liée à l'école : difficultés, pression, ou harcèlement scolaire
-              </td>
-            </tr>
-            <tr>
-              <td className="px-4 py-3">
-                Des affaires abîmées, des « pertes » répétées, des moqueries qu'il raconte à
-                contrecœur
-              </td>
-              <td className="px-4 py-3">
-                Un possible harcèlement scolaire — à traiter dès la première alerte
-              </td>
+              <td className="px-4 py-3 font-semibold">Maux de ventre récurrents le matin</td>
+              <td className="px-4 py-3">Angoisse scolaire ou harcèlement — à traiter sans attendre</td>
             </tr>
           </tbody>
         </table>
       </div>
-      <p>
-        Un seul signe, ponctuel, n'a rien d'alarmant : tous les enfants ont des mauvaises semaines.
-        Ce qui mérite l'attention, c'est la <strong>persistance sur plusieurs semaines</strong> et
-        l'effet réel sur le quotidien. Dans le doute, parlez-en à l'enfant, à l'école, puis à un
-        professionnel.
-      </p>
 
-      <h2>Mauvaises notes et redoublement : réagir sans casser la confiance</h2>
+      <h2>Mauvaises notes : réagir sans casser la confiance</h2>
       <p>
-        Les mauvaises notes sont souvent le premier signal visible — et le plus mal interprété. Une
-        note n'est pas un miroir de la valeur de l'enfant : c'est une information sur un
-        apprentissage précis, à un moment donné. Voici comment la traiter sans drame :
+        Une mauvaise note est une opportunité d'apprentissage, non un jugement d'identité. Appliquez notre protocole pour{" "}
+        <a href="/guides/reussite-scolaire-aider-enfant">accompagner les devoirs sans crier ni stresser</a> :
       </p>
       <ul>
         <li>
-          <strong>Demandez-lui d'abord son analyse :</strong> « Qu'est-ce qui t'a semblé difficile
-          dans ce contrôle ? » — l'enfant qui met des mots sur sa difficulté commence à la régler.
+          <strong>Demandez-lui son analyse :</strong> <em>« Qu'est-ce qui t'a semblé le plus confus dans cette consigne ? »</em>
         </li>
         <li>
-          <strong>Travaillez une seule difficulté à la fois :</strong> on ne corrige pas dix lacunes
-          en une semaine ; on en choisit une, on la travaille, on vérifie la progression.
+          <strong>Encouragez l'effort :</strong> Félicitez sa persévérance avec les principes de la{" "}
+          <a href="/guides/discipline-positive-sans-punition">discipline positive</a>.
         </li>
         <li>
-          <strong>Valorisez le progrès, pas le classement :</strong> « la semaine dernière tu avais
-          4 fautes, aujourd'hui 2 » — c'est cette comparaison à lui-même qui motive.
-        </li>
-        <li>
-          <strong>En cas de redoublement, changez de discours :</strong> c'est une deuxième chance,
-          pas une punition. Beaucoup d'enfants refont une année avec plus d'assurance.
-        </li>
-        <li>
-          <strong>Si les notes dégringolent brutalement</strong> chez un enfant qui travaillait
-          bien, demandez-vous ce qui a changé : une difficulté nouvelle, un conflit avec un camarade
-          ou un enseignant, un événement familial. La chute de notes est souvent un symptôme.
+          <strong>Si vous avez un adolescent démotivé :</strong> Proposez-lui des projets d'action autonomes parmi nos{" "}
+          <a href="/guides/defis-pour-adolescents">12 défis stimulants pour adolescents</a>.
         </li>
       </ul>
 
-      <h2>La santé mentale des enfants, un sujet encore tabou en Afrique</h2>
-      <p>
-        La dépression, l'anxiété, le mal-être ou la perte de sens existent chez les enfants et les
-        adolescents du continent, comme partout dans le monde. Ils prennent simplement des formes
-        que l'on ne reconnaît pas toujours : un enfant « turbulent » ou « rêveur » peut être un
-        enfant en souffrance.
-      </p>
-      <p>
-        Ces réalités sont souvent minimisées, voire ignorées. Pourtant, un jeune qui abandonne
-        l'école, qui devient agité, démotivé ou agressif n'est pas forcément « paresseux » ou «
-        indiscipliné » : ces comportements peuvent être les manifestations visibles d'une{" "}
-        <strong>souffrance beaucoup plus profonde</strong>. La crainte du jugement pousse encore
-        beaucoup de familles à taire ces difficultés. En parler ouvertement, sans honte, est la
-        première étape de la prise en charge.
-      </p>
-
       <h2>Ce que les parents peuvent faire au quotidien</h2>
-      <p>
-        La confiance ne se décrète pas, elle se construit — par de petites expériences répétées. Six
-        habitudes simples, applicables dès cette semaine :
-      </p>
-      <ol>
+      <ol className="space-y-3 my-6">
         <li>
-          <strong>Nommez des forces précises.</strong> « Tu as tenu bon jusqu'au bout » construit
-          plus qu'un « tu es intelligent » : l'enfant apprend ce qu'il a réellement fait, pas une
-          étiquette.
+          <strong>1. Créer des victoires hors de l'école :</strong> Bricoler, cuisiner, coder, dessiner via nos{" "}
+          <a href="/guides/activites-educatives-enfant">24 activités concrètes sans écran</a>.
         </li>
         <li>
-          <strong>Créez des réussites visibles.</strong> Une activité qui aboutit à un objet, un
-          plat, une photo ou une histoire finie donne une preuve concrète de ce dont l'enfant est
-          capable.
+          <strong>2. Nommer des forces précises :</strong> <em>« Tu es très attentif aux besoins des autres »</em> plutôt qu'un compliment vague.
         </li>
         <li>
-          <strong>Valorisez l'effort et le progrès</strong>, pas seulement les notes. Le parcours
-          compte autant que le résultat.
-        </li>
-        <li>
-          <strong>Gardez des repères stables.</strong> Repas, sommeil, rythmes réguliers : la
-          sécurité du cadre est le socle de la confiance.
-        </li>
-        <li>
-          <strong>Écoutez sans moraliser.</strong> Un enfant qui peut dire qu'il va mal, sans être
-          jugé ni sermonné, demandera de l'aide plus tôt.
-        </li>
-        <li>
-          <strong>Demandez de l'aide quand c'est nécessaire.</strong> Consulter un professionnel
-          n'est pas un échec parental — c'est une force. Plus tôt on agit, plus la confiance se
-          reconstruit vite.
+          <strong>3. Protéger son sommeil :</strong> Réduisez l'exposition nocturne aux écrans avec nos méthodes de{" "}
+          <a href="/guides/ecrans-addiction-alternatives-enfant">sevrage progressif des écrans</a>.
         </li>
       </ol>
 

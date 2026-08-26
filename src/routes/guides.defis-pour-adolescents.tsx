@@ -69,18 +69,21 @@ export const Route = createFileRoute("/guides/defis-pour-adolescents")({
         jsonLdScript({
           "@context": "https://schema.org",
           "@type": "Article",
-          headline: "Motiver un adolescent de 12 à 16 ans : les défis qui marchent",
+          headline: "Motiver un adolescent de 12 à 16 ans : 12 défis qui marchent",
+          description:
+            "Guide pratique pour motiver un ado sans conflit : concilier écrans, autonomie et 12 projets concrets d'action pour révéler ses talents.",
           inLanguage: "fr-FR",
           mainEntityOfPage: absoluteUrl(PATH),
           image: absoluteUrl("/guides/og-ados.jpg"),
           publisher: { "@id": `${SITE_URL}/#organization` },
           author: { "@type": "Organization", name: "Génizio" },
           datePublished: "2026-07-27",
-          dateModified: "2026-08-14",
+          dateModified: "2026-08-26",
           about: [
             { "@type": "Thing", name: "Motivation des adolescents" },
             { "@type": "Thing", name: "Défis pour jeunes" },
             { "@type": "Thing", name: "Orientation scolaire" },
+            { "@type": "Thing", name: "Autonomie" },
           ],
         }),
       ],
@@ -92,20 +95,31 @@ export const Route = createFileRoute("/guides/defis-pour-adolescents")({
 function Guide() {
   return (
     <GuideLayout
-      eyebrow="Adolescents"
+      eyebrow="Adolescents & Motivation"
       title="Motiver un adolescent de 12 à 16 ans : les défis qui marchent"
-      intro="À partir de 12 ans, la plupart des activités « éducatives » cessent de fonctionner — non parce que l'adolescent est démotivé, mais parce qu'il repère l'intention pédagogique et n'y croit plus. Voici ce qui prend le relais, et surtout comment le lui proposer sans déclencher un conflit."
-      updated="14 août 2026"
+      intro="À partir de 12 ans, la plupart des activités « éducatives » classiques cessent de fonctionner : l'adolescent repère l'intention pédagogique et décroche. Ce qui prend le relais, c'est l'utilité réelle, la responsabilité confiée et la reconnaissance de ses pairs. Voici comment le stimuler sans dispute."
+      updated="26 août 2026"
       readingTime="8 min"
       path={PATH}
       related={[
         {
-          label: "Haut potentiel : les vrais signes",
-          to: "/guides/potentiel-haut-potentiel-enfant",
+          label: "Test d'orientation collégien & IA",
+          to: "/guides/test-orientation-metier-enfant-futur",
         },
-        { label: "24 activités éducatives (6-12 ans)", to: "/guides/activites-educatives-enfant" },
         {
-          label: "Les intelligences multiples expliquées simplement",
+          label: "Orientation & Métiers dès 10 ans",
+          to: "/guides/orientation-scolaire-metiers-avenir",
+        },
+        {
+          label: "Décrochage et perte de confiance",
+          to: "/guides/decrochage-scolaire-confiance-enfant",
+        },
+        {
+          label: "De spectateur à créateur de contenus",
+          to: "/guides/ecrans-tiktok-youtube-talent-ecriture-realisation",
+        },
+        {
+          label: "Les 9 formes d'intelligence",
           to: "/guides/intelligences-multiples-gardner",
         },
       ]}
@@ -119,144 +133,89 @@ function Guide() {
         decoding="async"
         className="my-6 aspect-video w-full rounded-3xl border border-ink/10 object-cover shadow-lg"
       />
-      <h2>Ce qui change vers 12 ans</h2>
+      <h2>Ce qui change vers 12 ans : le besoin d'utilité réelle</h2>
       <p>
-        Un enfant de 8 ans accepte volontiers une activité parce qu'un adulte la propose. Un
-        adolescent de 14 ans évalue d'abord : à quoi ça sert, qui va le voir, est-ce que ça a l'air
-        sérieux. Une activité qui échoue à ces trois questions est abandonnée poliment — ou pas
-        poliment.
+        Un adolescent n'exécute plus une consigne simplement parce qu'un adulte la lui demande. Il évalue spontanément la pertinence de la tâche : à quoi ça sert, qui va le voir, est-ce un projet valorisant ?
       </p>
       <p>
-        Ce n'est pas de la démotivation. C'est un déplacement de ce qui donne de la valeur à une
-        tâche : du plaisir de faire vers <strong>la reconnaissance et l'utilité réelle</strong>.
-        C'est aussi l'âge où le téléphone, les jeux vidéo et les réseaux sociaux captent l'essentiel
-        de son attention — un concurrent redoutable, qu'on ne bat pas en l'interdisant, mais en
-        proposant des projets aussi engageants.
+        À cet âge, les écrans et réseaux sociaux captent une grande partie de son attention. Plutôt que d'entrer dans un bras de fer stérile (découvrez nos méthodes pour{" "}
+        <a href="/guides/ecrans-addiction-alternatives-enfant">réduire les écrans sans conflit</a>), proposez-lui de devenir créateur : transformer son intérêt pour les vidéos en écriture de scripts ou réalisation de montages (consultez notre guide{" "}
+        <a href="/guides/ecrans-tiktok-youtube-talent-ecriture-realisation">TikTok et YouTube : transformer le scroll en talent de réalisation</a>).
       </p>
 
-      <h3>Les trois conditions d'un défi crédible</h3>
+      <h3>Les trois conditions d'un défi motivant</h3>
       <ul>
         <li>
-          <strong>Un rendu montrable.</strong> Quelque chose qui existe en dehors du cercle familial
-          : une vidéo, un objet vendu, un événement qui a eu lieu, un outil que d'autres utilisent.
+          <strong>Un rendu montrable :</strong> Une vidéo terminée, un objet vendu, un événement organisé, un outil fonctionnel.
         </li>
         <li>
-          <strong>Une difficulté réelle.</strong> Un adolescent détecte une tâche calibrée pour
-          l'occuper. Le défi doit pouvoir échouer — sinon il ne vaut rien à ses yeux.
+          <strong>Une difficulté réelle :</strong> Le projet doit comporter un risque d'échec pour susciter un vrai sentiment d'accomplissement.
         </li>
         <li>
-          <strong>La méthode laissée ouverte.</strong> On fixe l'objectif et l'échéance, pas le
-          chemin. C'est la marge de décision qui fait la différence entre exécuter et s'engager.
+          <strong>La méthode laissée libre :</strong> Vous fixez l'objectif, l'adolescent choisit le chemin.
         </li>
       </ul>
 
       <h2>Comment introduire un défi sans conflit</h2>
-      <p>
-        Le meilleur défi du monde échoue si la proposition arrive mal. Voici les quatre règles qui
-        évitent la porte qui claque :
-      </p>
-      <ol>
+      <ol className="space-y-3 my-6">
         <li>
-          <strong>Ne proposez jamais pendant qu'il est sur son téléphone.</strong> L'écran capte
-          toute son attention ; toute proposition faite à ce moment est reçue comme une
-          interruption. Choisissez un moment neutre — un repas, un trajet, une corvée partagée.
+          <strong>Ne proposez jamais en plein jeu vidéo :</strong> Choisissez un moment neutre (en voiture, au dîner).
         </li>
         <li>
-          <strong>Proposez deux options, pas une mission.</strong> « J'ai deux idées de projets pour
-          toi, dis-moi laquelle t'attire : filmer un mini-documentaire sur le métier du quartier, ou
-          monter une petite vente de jus le week-end. » L'adolescent n'a plus à accepter une
-          consigne, il a à choisir — et choisir, c'est déjà s'engager.
+          <strong>Offrez deux options au choix :</strong> <em>« Tu préfères monter une micro-vente ce week-end ou réaliser un reportage vidéo sur le quartier ? »</em>
         </li>
         <li>
-          <strong>Laissez-le fixer la date de lancement.</strong> « Tu veux commencer samedi ou la
-          semaine prochaine ? » C'est lui qui décide du moment ; vous gardez la contrainte de la
-          date de fin. Une échéance qu'il a choisie est une échéance qu'il respecte.
-        </li>
-        <li>
-          <strong>Ne dites jamais « c'est éducatif ».</strong> Le mot est rédhibitoire à cet âge.
-          Parlez du résultat : « ce sera à montrer à papa le week-end », « tu pourras le vendre », «
-          tu seras le seul de ta classe à savoir faire ça ».
+          <strong>Laissez-le fixer sa date de rendu :</strong> Un engagement temporel choisi responsabilise le jeune.
         </li>
       </ol>
 
-      <h2>12 défis qui tiennent la route</h2>
+      <h2>12 défis stimulants pour adolescents (12-16 ans)</h2>
 
-      <h3>Entreprendre</h3>
+      <h3>1. Entreprendre & Gérer</h3>
       <ul>
-        <li>
-          Monter une micro-activité sur un week-end (lavage de motos, jus, pâtisseries) et calculer
-          la marge réelle, charges comprises
-        </li>
-        <li>
-          Revendre trois objets inutilisés au meilleur prix, en rédigeant lui-même les annonces
-        </li>
-        <li>
-          Chiffrer un projet qu'il veut vraiment (un téléphone, un voyage) et construire le plan
-          pour y arriver
-        </li>
+        <li>Monter une micro-activité le samedi (lavage auto, vente de pâtisseries) et calculer son bénéfice net.</li>
+        <li>Revendre 3 objets inutilisés en ligne en rédigeant des annonces vendeuses et honnêtes.</li>
+        <li>Chiffrer un projet personnel (achat d'un matériel, voyage) et établir un plan de financement.</li>
       </ul>
 
-      <h3>Produire et documenter</h3>
+      <h3>2. Créer & Documenter</h3>
       <ul>
-        <li>
-          Réaliser un mini-documentaire de 3 minutes sur un métier du quartier, montage compris
-        </li>
-        <li>Photographier une série de 10 images sur un thème unique et en défendre le choix</li>
-        <li>Tenir un carnet de projet pendant 30 jours et en tirer un bilan écrit</li>
+        <li>Réaliser un mini-documentaire de 3 minutes sur un artisan du quartier, montage et musique compris.</li>
+        <li>Créer une série photo thématique et rédiger un texte argumentatif pour chaque image.</li>
+        <li>Tenir un journal de bord de projet sur 30 jours.</li>
       </ul>
 
-      <h3>Réparer et construire</h3>
+      <h3>3. Réparer & Ingénierie</h3>
       <ul>
-        <li>Diagnostiquer et réparer un appareil en panne, en documentant chaque étape</li>
-        <li>Construire un meuble simple utile à la maison, à partir de mesures qu'il a prises</li>
-        <li>
-          Installer et configurer quelque chose de réel : un réseau, un éclairage, un système
-          d'arrosage
-        </li>
+        <li>Diagnostiquer et réparer un appareil domestique en panne en documentant chaque étape.</li>
+        <li>Fabriquer un meuble simple sur mesure à partir de plans côtés.</li>
+        <li>Installer un système domotique, solaire ou réseau à la maison.</li>
       </ul>
 
-      <h3>Organiser et transmettre</h3>
+      <h3>4. Transmettre & Convaincre</h3>
       <ul>
-        <li>
-          Organiser un tournoi ou un atelier pour des plus jeunes, de l'inscription au déroulé
-        </li>
-        <li>
-          Enseigner une compétence qu'il maîtrise à un adulte, et l'évaluer honnêtement à la fin
-        </li>
-        <li>
-          Préparer et défendre un argumentaire sur un sujet qui le concerne, face à contradiction
-        </li>
+        <li>Organiser un tournoi sportif ou un atelier créatif pour les plus jeunes du quartier.</li>
+        <li>Enseigner une compétence numérique ou linguistique à un adulte.</li>
+        <li>Passer notre <a href="/guides/test-orientation-metier-enfant-futur">test d'orientation collégien spécial IA</a> et explorer les métiers d'avenir avec notre guide <a href="/guides/orientation-scolaire-metiers-avenir">orientation dès 10 ans</a>.</li>
       </ul>
 
-      <h2>L'erreur la plus fréquente : trop cadrer</h2>
+      <h2>Le dossier de réalisations : préparer son orientation</h2>
       <p>
-        Le réflexe naturel, face à un adolescent qui traîne, est d'ajouter du cadre : plus de
-        consignes, plus de vérifications, plus d'étapes imposées. C'est généralement ce qui achève
-        l'engagement.
-      </p>
-      <p>
-        L'approche inverse fonctionne mieux : réduire à une seule contrainte non négociable —{" "}
-        <strong>terminer et montrer le résultat à une date fixée</strong> — et rendre tout le reste
-        négociable. Le sujet, la méthode, le format, le rythme.
+        Entre 12 et 16 ans, les choix de filières approchent. Si un adolescent traverse une période de démotivation scolaire (consultez notre guide sur le{" "}
+        <a href="/guides/decrochage-scolaire-confiance-enfant">décrochage scolaire et la perte de confiance</a>), ces réalisations concrètes lui prouvent ses compétences réelles et enrichissent son dossier pour les études futures selon ses{" "}
+        <a href="/guides/intelligences-multiples-gardner">talents dominants</a>.
       </p>
 
-      <h2>Le dossier de réalisations prend son vrai sens à cet âge</h2>
+      <h2>Ce que fait Génizio pour les adolescents</h2>
       <p>
-        Entre 12 et 16 ans arrivent les premières décisions d'orientation, et avec elles une
-        difficulté concrète : un adolescent n'a souvent rien d'autre à montrer que des notes. Une
-        trace datée de ce qu'il a réellement construit, vendu, organisé, réparé change la
-        conversation — avec un établissement, un employeur, ou simplement avec lui-même.
-      </p>
-      <p>
-        Génizio génère ce type de défis selon l'âge et les centres d'intérêt du jeune, et conserve
-        la preuve de chaque réalisation dans un dossier de réalisations qui lui appartient.
+        Génizio génère des défis ambitieux sur mesure, adaptés aux centres d'intérêt réels de chaque adolescent. En documentant ses projets dans son Passeport de Talents, le jeune bâtit une preuve concrète de ses compétences pratiques et créatives.
       </p>
 
-      <h2>Questions fréquentes</h2>
+      <h2>Questions fréquentes (FAQ)</h2>
       {FAQ.map((item) => (
-        <div key={item.question}>
-          <h3>{item.question}</h3>
-          <p>{item.answer}</p>
+        <div key={item.question} className="my-5 border-b border-ink/10 pb-4">
+          <h3 className="text-lg font-bold text-ink">{item.question}</h3>
+          <p className="mt-2 text-ink/80">{item.answer}</p>
         </div>
       ))}
     </GuideLayout>

@@ -64,7 +64,7 @@ export const Route = createFileRoute("/guides/pratique-avant-theorie-apprentissa
             path: PATH,
             image: "/guides/og-pratique-theorie.jpg",
             datePublished: "2026-08-24",
-            dateModified: "2026-08-24",
+            dateModified: "2026-08-26",
           }),
         ),
       ],
@@ -79,8 +79,8 @@ function GuidePratiqueAvantTheorie() {
       eyebrow="Pédagogie & Ère IA"
       title="Pourquoi la pratique doit précéder la théorie à l'ère de l'intelligence artificielle"
       intro="Pendant plus d'un siècle, l'école a fonctionné sur une promesse simple : mémorisez d'abord la théorie abstraite, et vous l'appliquerez peut-être un jour. Mais avec l'essor fulgurant de l'IA, ce modèle est devenu obsolète. Pour préparer un enfant à un monde incertain, il faut inverser l'équation : partir de la confrontation directe au réel pour susciter la soif naturelle de savoir."
-      updated="24 août 2026"
-      readingTime="6 min"
+      updated="26 août 2026"
+      readingTime="7 min"
       path={PATH}
       related={[
         {
@@ -88,12 +88,20 @@ function GuidePratiqueAvantTheorie() {
           to: "/guides/ia-apprentissage-enfant",
         },
         {
-          label: "Les 9 formes d'intelligence de Gardner",
+          label: "Les 9 formes d'intelligence",
           to: "/guides/intelligences-multiples-gardner",
         },
         {
-          label: "Aider son enfant à choisir son métier dès 10 ans",
+          label: "Orientation & Métiers dès 10 ans",
           to: "/guides/orientation-scolaire-metiers-avenir",
+        },
+        {
+          label: "Test d'orientation collégien & IA",
+          to: "/guides/test-orientation-metier-enfant-futur",
+        },
+        {
+          label: "12 défis pour adolescents",
+          to: "/guides/defis-pour-adolescents",
         },
       ]}
     >
@@ -116,13 +124,16 @@ function GuidePratiqueAvantTheorie() {
         <p>
           Aujourd'hui, n'importe quel modèle d'intelligence artificielle est capable de rédiger un
           essai, de résoudre une équation complexe, de générer du code informatique ou de traduire
-          dix langues en une fraction de seconde.{" "}
+          dix langues en une fraction de seconde (consultez notre analyse sur{" "}
+          <a href="/guides/ia-apprentissage-enfant">l'IA pour aider son enfant à apprendre sans tricher</a>).{" "}
           <strong>Le coût d'accès à la théorie s'est effondré.</strong>
         </p>
         <p>
           Dans ce nouveau contexte, continuer à évaluer nos enfants uniquement sur leur capacité à
           restituer des cours théoriques revient à les préparer à des métiers que les algorithmes
-          exécutent déjà mieux qu'eux.
+          exécutent déjà mieux qu'eux (découvrez nos repères pour{" "}
+          <a href="/guides/orientation-scolaire-metiers-avenir">aider son enfant à choisir son métier dès 10 ans</a> et notre{" "}
+          <a href="/guides/test-orientation-metier-enfant-futur">test d'orientation pour collégiens à l'ère de l'IA</a>).
         </p>
 
         <div className="rounded-3xl border border-brand/25 bg-brand/5 p-6 md:p-8">
@@ -140,7 +151,8 @@ function GuidePratiqueAvantTheorie() {
           Observez la manière dont les enfants réagissent face aux devoirs scolaires traditionnels :
           le découragement, l'ennui ou l'agitation ne sont pas des preuves de paresse. Ce sont les
           signaux d'un cerveau qui ne comprend pas <em>pourquoi</em> il doit emmagasiner une notion
-          déconnectée de sa réalité immédiate.
+          déconnectée de sa réalité immédiate (retrouvez nos méthodes pour{" "}
+          <a href="/guides/reussite-scolaire-aider-enfant">faciliter les devoirs à la maison</a>).
         </p>
         <p>
           Lorsqu'on enseigne les fractions, les pourcentages ou la géométrie sans que l'enfant n'ait
@@ -158,7 +170,8 @@ function GuidePratiqueAvantTheorie() {
           <li>
             <strong>Étape 1 : L'immersion dans le réel.</strong> L'enfant se voit confier une
             mission tangible adaptée à son âge (ex. fabriquer un mini-système d'irrigation
-            goutte-à-goutte avec des bouteilles recyclées, créer un logo et vendre des jus de
+            goutte-à-goutte avec des bouteilles recyclées via nos{" "}
+            <a href="/guides/activites-manuelles-enfant">activités manuelles faciles</a>, créer un logo et vendre des jus de
             bissap, concevoir un pont en bâtonnets qui supporte 1 kg).
           </li>
           <li>
@@ -184,7 +197,8 @@ function GuidePratiqueAvantTheorie() {
         </p>
         <p>
           Or, dans l'économie du XXIe siècle, ce sont précisément ces profils qui prennent leur
-          revanche :
+          revanche, comme l'explique la théorie des{" "}
+          <a href="/guides/intelligences-multiples-gardner">9 formes d'intelligence de Howard Gardner</a> :
         </p>
         <div className="grid gap-4 sm:grid-cols-2 mt-4">
           <div className="rounded-2xl border border-ink/10 bg-white p-5 shadow-sm">
@@ -220,7 +234,8 @@ function GuidePratiqueAvantTheorie() {
           <li>
             <strong>L'architecte éclairé :</strong> Il utilise l'IA comme un partenaire
             d'expérimentation. Il observe le réel, formule des hypothèses, demande à l'IA de
-            critiquer son projet, teste les solutions et garde le discernement final.
+            critiquer son projet, teste les solutions et garde le discernement final (voir nos{" "}
+            <a href="/guides/defis-pour-adolescents">12 défis pratiques pour adolescents</a>).
           </li>
         </ol>
         <p>
@@ -260,6 +275,16 @@ function GuidePratiqueAvantTheorie() {
               propres arguments avec la même vigueur. C'est l'exercice roi de l'esprit critique.
             </p>
           </div>
+        </div>
+
+        <h2>Foire aux questions (FAQ)</h2>
+        <div className="mt-8 space-y-6 border-t border-ink/10 pt-6">
+          {FAQ.map((item, idx) => (
+            <div key={idx} className="space-y-2">
+              <h3 className="text-base font-bold text-ink">{item.question}</h3>
+              <p className="text-sm leading-relaxed text-ink/75">{item.answer}</p>
+            </div>
+          ))}
         </div>
       </div>
     </GuideLayout>

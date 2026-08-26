@@ -33,7 +33,7 @@ export const Route = createFileRoute("/guides/autonomie-responsabilite-maison")(
     const meta = pageMeta({
       title: "Comment rendre son enfant autonome sans crier (6-12 ans)",
       description:
-        "Ranger sa chambre, préparer son sac, faire ses devoirs sans dispute : comment développer l'autonomie et la responsabilité de votre enfant, avec des tâches adaptées à son âge.",
+        "Comment rendre son enfant autonome sans crier ? Découvrez les tâches adaptées par âge (6-12 ans), la charte familiale et les tableaux de mission visuels.",
       path: PATH,
       image: "/guides/og-autonomie.jpg",
       type: "article",
@@ -46,18 +46,18 @@ export const Route = createFileRoute("/guides/autonomie-responsabilite-maison")(
           breadcrumbJsonLd([
             { name: "Accueil", path: "/" },
             { name: "Guides", path: "/guides" },
-            { name: "Autonomie & Responsabilité", path: PATH },
+            { name: "Autonomie et responsabilité enfant", path: PATH },
           ]),
         ),
         jsonLdScript(
           articleJsonLd({
             headline: "Comment rendre son enfant autonome et responsable à la maison sans crier",
             description:
-              "Méthode concrète pour que votre enfant range, prépare son sac et fasse ses devoirs sans qu'on crie : discussion, tâches adaptées à l'âge et tableau de missions visuel.",
+              "Méthode concrète pour développer l'autonomie et le sens des responsabilités chez l'enfant de 6 à 12 ans sans disputes quotidiennes.",
             path: PATH,
             image: "/guides/og-autonomie.jpg",
             datePublished: "2026-08-08",
-            dateModified: "2026-08-14",
+            dateModified: "2026-08-26",
           }),
         ),
       ],
@@ -69,19 +69,33 @@ export const Route = createFileRoute("/guides/autonomie-responsabilite-maison")(
 function Guide() {
   return (
     <GuideLayout
-      eyebrow="Autonomie & Projets"
+      eyebrow="Autonomie & Responsabilités"
       title="Comment rendre son enfant autonome et responsable à la maison sans crier"
-      intro="Répéter dix fois les mêmes consignes le soir est épuisant pour les parents et démotivant pour l'enfant. L'autonomie ne s'obtient pas par la contrainte répétée : elle s'installe en parlant avec l'enfant, en lui confiant de vraies responsabilités adaptées à son âge, et en lui montrant l'impact direct de ses décisions. Voici comment faire, étape par étape."
-      updated="14 août 2026"
-      readingTime="7 min"
+      intro="Répéter dix fois les mêmes consignes le soir épuise les parents et déresponsabilise l'enfant. L'autonomie ne s'obtient pas par la menace ou l'insistance sonore, mais par la co-construction de règles claires, la valorisation de tâches concrètes et la confiance accordée. Voici comment l'installer sereinement étape par étape."
+      updated="26 août 2026"
+      readingTime="8 min"
       path={PATH}
       related={[
-        { label: "24 activités éducatives (6-12 ans)", to: "/guides/activites-educatives-enfant" },
         {
-          label: "Rivalité frères et sœurs : coopérer",
+          label: "Discipline positive sans crier",
+          to: "/guides/discipline-positive-sans-punition",
+        },
+        {
+          label: "Réussite scolaire sans stress",
+          to: "/guides/reussite-scolaire-aider-enfant",
+        },
+        {
+          label: "Disputes frères et sœurs : coopérer",
           to: "/guides/fratrie-rivalite-cooperation",
         },
-        { label: "Motiver un adolescent (12-16 ans)", to: "/guides/defis-pour-adolescents" },
+        {
+          label: "Canaliser un enfant agité",
+          to: "/guides/enfant-agite-concentration",
+        },
+        {
+          label: "Réduire les écrans sans crise",
+          to: "/guides/ecrans-addiction-alternatives-enfant",
+        },
       ]}
     >
       <img
@@ -94,48 +108,22 @@ function Guide() {
         className="my-6 aspect-video w-full rounded-3xl border border-ink/10 object-cover shadow-lg"
       />
 
-      <h2>Pourquoi votre enfant attend que vous criez pour agir</h2>
+      <h2>Pourquoi votre enfant attend que vous criiez pour agir</h2>
       <p>
-        Observez ce qui se passe réellement : vous demandez calmement à votre enfant de ranger sa
-        chambre, rien ne se passe. Vous redemandez, toujours rien. Vous élevez la voix, il bouge
-        enfin. Ce n'est pas de la mauvaise volonté : l'enfant a simplement appris que les paroles
-        calmes ne comptent pas, et que <strong>seul le niveau de bruit fait foi</strong>. C'est le
-        cercle de l'escalade sonore : plus vous criez, plus il attend la prochaine montée de ton —
-        et vous vous épuisez dans un rôle de gendarme que vous n'avez pas choisi.
+        Répéter 5 fois calmement une demande sans réaction, puis élever la voix pour qu'il bouge enfin : ce cercle d'escalade sonore habitue l'enfant à ne réagir qu'au volume sonore.
       </p>
       <p>
-        La sortie de ce cercle ne passe pas par des ordres mieux formulés, mais par un changement de
-        système : des <strong>règles négociées avec lui</strong>, des{" "}
-        <strong>tâches adaptées à son âge</strong> et un <strong>tableau visible</strong> qu'il
-        coche lui-même. Quand l'enfant devient acteur de sa propre organisation, vous n'avez plus
-        besoin d'être le rappel à l'ordre permanent.
+        Pour briser cette boucle, appliquez les piliers de la{" "}
+        <a href="/guides/discipline-positive-sans-punition">discipline positive sans punition</a> : des règles négociées ensemble, des tâches valorisantes et un support visuel neutre.
       </p>
 
-      <h2>Parler avec son enfant avant de mettre en place les règles</h2>
+      <h2>Parler avec son enfant avant de poser les règles</h2>
       <p>
-        Avant d'installer un système, discutez-en avec lui. Asseyez-vous 15 minutes et posez de
-        vraies questions :{" "}
-        <em>« Qu'est-ce qui est le plus fatigant pour toi quand il faut ranger ? »</em>,{" "}
-        <em>« À quel moment de la journée tu te sens le plus capable de t'organiser ? »</em>. Vous
-        découvrirez souvent que le problème n'est pas la paresse : c'est un rangement trop vague («
-        range ta chambre » ne dit pas par où commencer), un moment mal choisi, ou une mission trop
-        grande pour ses capacités.
-      </p>
-      <p>
-        Ensuite, <strong>négociez la charte de la maison ensemble</strong>. L'enfant propose d'abord
-        ses idées de règles et de conséquences, vous validez, vous écrivez le résultat et vous
-        l'affichez. Un enfant s'engage dix fois mieux dans une règle qu'il a contribué à formuler —
-        et quand il la conteste, vous n'avez plus à défendre votre autorité : il suffit de montrer
-        la charte qu'il a signée avec vous.
+        Prenez 15 minutes pour échanger : <em>« À quel moment te sens-tu le plus en forme pour ranger ton espace ? »</em>. Pour un{" "}
+        <a href="/guides/enfant-agite-concentration">enfant agité ou inattentif</a>, décomposez les missions complexes en petites étapes de 5 minutes.
       </p>
 
       <h2>Les tâches par âge : ce qu'un enfant peut vraiment gérer</h2>
-      <p>
-        Le secret d'une autonomie qui tient dans la durée :{" "}
-        <strong>confier des tâches à sa mesure</strong>. Une mission trop difficile décourage, une
-        mission trop facile ennuie. Voici des repères concrets, adaptés aux familles qui n'ont pas
-        de matériel particulier :
-      </p>
       <div className="my-6 overflow-x-auto rounded-2xl border border-ink/10">
         <table className="w-full min-w-[520px] text-left text-sm print:min-w-0">
           <thead>
@@ -149,104 +137,76 @@ function Guide() {
             <tr>
               <td className="px-4 py-3 font-bold">6-7 ans</td>
               <td className="px-4 py-3">
-                Préparer son sac de classe (avec une liste), ranger ses jouets par catégorie, mettre
-                la table, se brosser les dents sans rappel
+                Préparer son cartable (avec liste imagée), ranger ses chaussures, mettre la table
               </td>
-              <td className="px-4 py-3">
-                Une seule mission par jour, toujours la même, avec une image ou un dessin pour s'y
-                retrouver
-              </td>
+              <td className="px-4 py-3">Une mission unique et constante chaque jour</td>
             </tr>
             <tr>
               <td className="px-4 py-3 font-bold">8-10 ans</td>
               <td className="px-4 py-3">
-                Ranger sa chambre de A à Z, préparer son cartable la veille, arroser les plantes,
-                aider à préparer un repas simple
+                Ranger sa chambre, préparer ses affaires la veille, faire ses devoirs en autonomie (voir nos conseils de{" "}
+                <a href="/guides/reussite-scolaire-aider-enfant">réussite scolaire</a>)
               </td>
-              <td className="px-4 py-3">
-                Le tableau des missions avec cases à cocher — il gère lui-même, vous vérifiez en fin
-                de journée
-              </td>
+              <td className="px-4 py-3">Tableau de bord à cocher en autonomie</td>
             </tr>
             <tr>
               <td className="px-4 py-3 font-bold">11-12 ans</td>
               <td className="px-4 py-3">
-                Planifier son temps de devoirs, suivre une recette seul, faire de petites courses au
-                quartier, gérer un petit budget
+                Gérer son emploi du temps, planifier ses révisions, réguler ses écrans (voir notre protocole{" "}
+                <a href="/guides/ecrans-addiction-alternatives-enfant">sevrage écrans</a>), faire des courses
               </td>
-              <td className="px-4 py-3">
-                Il fixe lui-même ses horaires dans un cadre validé — vous lâchez prise, il
-                s'organise
-              </td>
+              <td className="px-4 py-3">Liberté de timing dans un cadre validé</td>
             </tr>
           </tbody>
         </table>
       </div>
 
-      <h2>3 étapes pour installer l'autonomie sans crier</h2>
+      <h2>3 étapes pour installer l'autonomie sans conflit</h2>
 
       <div className="my-6 rounded-2xl bg-amber-50 p-5 border border-amber-200">
         <h3 className="font-bold text-amber-950 text-base mb-2">
           1. Rédiger la 'Charte de la Maison' en duo
         </h3>
         <p className="text-sm text-amber-900 leading-relaxed">
-          Ne plaquez pas un règlement intérieur unilatéral. Asseyez-vous 15 minutes avec votre
-          enfant et définissez ensemble 3 règles essentielles et les conséquences logiques. L'enfant
-          s'engage 10 fois mieux dans une règle qu'il a contribué à formuler.
+          Définissez ensemble 3 règles d'or et les conséquences logiques. L'enfant s'engage 10 fois mieux dans une règle qu'il a co-écrite. En cas de fratrie, organisez la répartition équitable pour éviter la rivalité (voir nos solutions pour{" "}
+          <a href="/guides/fratrie-rivalite-cooperation">apaiser les conflits frères et sœurs</a>).
         </p>
       </div>
 
       <div className="my-6 rounded-2xl bg-sky-50 p-5 border border-sky-200">
         <h3 className="font-bold text-sky-950 text-base mb-2">
-          2. Le tableau des missions visuelles (Pas de flou)
+          2. Le tableau des missions visuelles
         </h3>
         <p className="text-sm text-sky-900 leading-relaxed">
-          Transformez les tâches en étapes concrètes numérotées : 1. Sac de classe vérifié, 2. Tenue
-          du lendemain préparée, 3. Bureau libéré. L'enfant peut cocher lui-même ses réussites — le
-          tableau devient son chef, et vous n'êtes plus le rappel vivant.
+          Transformez les tâches en étapes numérotées concrètes : 1. Cartable prêt, 2. Tenue du lendemain sortie, 3. Bureau rangé. L'enfant coche lui-même : le support devient l'arbitre, vous n'êtes plus le gendarme.
         </p>
       </div>
 
       <div className="my-6 rounded-2xl bg-emerald-50 p-5 border border-emerald-200">
         <h3 className="font-bold text-emerald-950 text-base mb-2">
-          3. Accorder du pouvoir réel (Le budget goûter / recette)
+          3. Accorder une vraie responsabilité
         </h3>
         <p className="text-sm text-emerald-900 leading-relaxed">
-          Confiez-lui la responsabilité complète d'une tâche familiale : planifier les ingrédients
-          du repas du samedi, calculer les sommes nécessaires et vous accompagner au marché. Une
-          responsabilité confiée pour de vrai responsabilise — on se sent concerné quand on décide,
-          pas quand on exécute.
+          Confiez-lui la gestion d'un budget pour préparer un plat ou le choix de l'activité du dimanche. On grandit quand on nous confie du pouvoir réel.
         </p>
       </div>
 
-      <h2>Que faire en cas d'oubli ou de refus ?</h2>
+      <h2>Que faire en cas d'oubli ?</h2>
       <ul>
         <li>
-          <strong>Appliquer les conséquences naturelles :</strong> S'il oublie son cahier malgré son
-          tableau de mission, laissez l'école lui en faire le rappel plutôt que de dramatiser à la
-          maison. La conséquence naturelle enseigne mieux que n'importe quel sermon.
+          <strong>Laisser agir la conséquence naturelle :</strong> Un devoir oublié ou une tenue froissée responsabilise bien plus vite qu'un long sermon.
         </li>
         <li>
-          <strong>Remplacer le reproche par l'analyse :</strong>{" "}
-          <em>
-            "Qu'est-ce qui a manqué dans ton organisation hier pour que tu sois en retard ce matin
-            ?"
-          </em>{" "}
-          La question ouvre une solution ; l'accusation ferme la discussion.
-        </li>
-        <li>
-          <strong>Revenir à la charte, pas à la voix :</strong> Si l'enfant conteste une règle,
-          montrez l'accord affiché qu'il a contribué à écrire. Il ne se bat plus contre vous, mais
-          contre sa propre signature.
-        </li>
-        <li>
-          <strong>Célébrer la régularité :</strong> Validez ses réussites dans son cahier des
-          réussites (tableau, photos de ses rangements réussis). La fierté visible nourrit la
-          motivation bien mieux que les rappels.
+          <strong>Remplacer le reproche par la question :</strong> <em>« De quoi as-tu besoin pour ne pas oublier ton cahier demain matin ? »</em>
         </li>
       </ul>
 
-      <h2>Foire aux questions sur l'autonomie de l'enfant</h2>
+      <h2>Ce que fait Génizio au quotidien</h2>
+      <p>
+        Génizio transforme l'autonomie en jeu d'aventure. En relevant des défis concrets du monde réel, l'enfant prend des initiatives, documente ses réussites et remplit son Passeport de Talents avec fierté.
+      </p>
+
+      <h2>Foire aux questions (FAQ)</h2>
       <div className="mt-8 space-y-6 border-t border-ink/10 pt-6">
         {FAQ.map((item, idx) => (
           <div key={idx} className="space-y-2">

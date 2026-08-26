@@ -36,7 +36,7 @@ export const Route = createFileRoute("/guides/test-de-personnalite-enfant-talent
     const meta = pageMeta({
       title: "Test de personnalité pour enfant : Les 4 limites à connaître",
       description:
-        "Vous cherchez un test de personnalité ou un quiz pour votre enfant ? Découvrez pourquoi les QCM sur écran sont trompeurs et comment révéler ses vrais talents par l'action réelle.",
+        "Pourquoi les tests de personnalité en ligne pour enfants sont trompeurs ? Découvrez comment révéler ses vrais talents par l'action et 3 défis concrets.",
       path: PATH,
       image: "/guides/og-test-personnalite.jpg",
       type: "article",
@@ -60,7 +60,7 @@ export const Route = createFileRoute("/guides/test-de-personnalite-enfant-talent
             path: PATH,
             image: "/guides/og-test-personnalite.jpg",
             datePublished: "2026-08-24",
-            dateModified: "2026-08-24",
+            dateModified: "2026-08-26",
           }),
         ),
       ],
@@ -75,26 +75,29 @@ function Guide() {
       eyebrow="Orientation & Talents"
       title="Test de personnalité pour enfant : pourquoi 20 questions sur écran ne remplaceront jamais l'action réelle"
       intro="Quand un parent tape « test de personnalité enfant » ou « quiz psychologie pour mon fils », il cherche une réponse rassurante à une angoisse légitime : qui est vraiment mon enfant, et comment l'aider à s'épanouir ? Mais faire remplir un questionnaire à choix multiples à un enfant de 8 ou 12 ans repose sur un malentendu fondamental. Voici pourquoi les tests sur écran sont biaisés, et comment cartographier ses vraies forces à travers des situations de vie réelles."
-      updated="24 août 2026"
+      updated="26 août 2026"
       readingTime="8 min"
       path={PATH}
-      faq={FAQ}
       related={[
         {
-          label: "Les 9 formes d'intelligence de Gardner",
+          label: "Les 9 formes d'intelligence",
           to: "/guides/intelligences-multiples-gardner",
         },
         {
-          label: "Test d'orientation et métiers d'avenir",
+          label: "Test d'orientation collégien & IA",
           to: "/guides/test-orientation-metier-enfant-futur",
         },
         {
-          label: "Pratique avant théorie à l'ère de l'IA",
-          to: "/guides/pratique-avant-theorie-apprentissage-ia",
+          label: "Haut potentiel : les vrais signes",
+          to: "/guides/potentiel-haut-potentiel-enfant",
         },
         {
           label: "Découvrir les métiers dès 10 ans",
           to: "/guides/orientation-scolaire-metiers-avenir",
+        },
+        {
+          label: "Rendre son enfant autonome",
+          to: "/guides/autonomie-responsabilite-maison",
         },
       ]}
     >
@@ -114,19 +117,22 @@ function Guide() {
       </p>
       <ul>
         <li>
-          <strong>Le biais de désirabilité sociale</strong> : Un enfant ne répond pas à ce qu'il ressent intimement, mais à ce qu'il pense être la « bonne réponse » pour faire plaisir à ses parents ou ressembler au modèle scolaire.
+          <strong>Le biais de désirabilité sociale :</strong> Un enfant ne répond pas à ce qu'il ressent intimement, mais à ce qu'il pense être la « bonne réponse » pour faire plaisir à ses parents.
         </li>
         <li>
-          <strong>L'illusion de la case fermée</strong> : Étiqueter un enfant de 9 ans comme « non-manuel » ou « introverti » risque de créer une prophétie autoréalisatrice qui bride son exploration.
+          <strong>L'illusion de la case fermée :</strong> Étiqueter un enfant de 9 ans comme « non-manuel » ou « timide » risque de figer son identité (consultez nos conseils pour{" "}
+          <a href="/guides/timidite-confiance-prise-de-parole">aider un enfant réservé à libérer sa parole</a>).
         </li>
         <li>
-          <strong>La déconnexion du réel</strong> : Cocher une case « Aimes-tu aider les autres ? » ne dit rien de sa capacité à désamorcer une dispute entre camarades dans la cour de récréation.
+          <strong>La déconnexion du réel :</strong> Cocher une case ne dit rien de sa capacité à résoudre un problème concret dans la vraie vie ou à exprimer son profil naturel (découvrez comment{" "}
+          <a href="/guides/potentiel-haut-potentiel-enfant">repérer les signes d'un enfant précoce ou HPI</a>).
         </li>
       </ul>
 
       <h2>2. Observer la personnalité en action : les 4 situations révélatrices</h2>
       <p>
-        La psychologie développementale moderne démontre que la personnalité et les talents d'un jeune enfant se révèlent dans ses <em>comportements spontanés face à la matière et aux autres</em>, et non devant un écran. Voici 4 moments clés à observer :
+        La psychologie cognitive démontre que les talents d'un jeune enfant se révèlent dans ses comportements spontanés face à la matière et aux autres, selon la grille des{" "}
+        <a href="/guides/intelligences-multiples-gardner">9 formes d'intelligence de Howard Gardner</a>. Voici 4 moments clés à observer :
       </p>
 
       <div className="my-6 grid gap-4 sm:grid-cols-2">
@@ -136,7 +142,7 @@ function Guide() {
             Face à un problème imprévu
           </div>
           <p className="text-sm text-ink/80 leading-relaxed">
-            Un jouet se casse, une recette rate ou un plan tombe à l'eau : abandonne-t-il immédiatement, cherche-t-il un coupable, ou bricole-t-il immédiatement une solution alternative ?
+            Un jouet se casse, une recette rate : abandonne-t-il immédiatement ou bricole-t-il une solution alternative ?
           </p>
         </div>
 
@@ -146,7 +152,7 @@ function Guide() {
             Quand personne ne le regarde
           </div>
           <p className="text-sm text-ink/80 leading-relaxed">
-            Vers quoi se tourne son énergie lorsqu'il n'a ni écran ni consigne scolaire ? Démonter des objets, dessiner des plans, classer des collections ou imaginer des scénarios ?
+            Vers quoi se tourne son énergie lorsqu'il n'a ni écran ni consigne scolaire ? Démonter, dessiner, classer, inventer ?
           </p>
         </div>
 
@@ -156,39 +162,48 @@ function Guide() {
             Dans les interactions sociales
           </div>
           <p className="text-sm text-ink/80 leading-relaxed">
-            En groupe, prend-il spontanément le rôle du stratège, du médiateur qui apaise les tensions, du bâtisseur qui exécute ou de l'orateur qui galvanise les autres ?
+            En groupe, prend-il spontanément le rôle du stratège, du médiateur bienveillant, du bâtisseur ou de l'orateur ?
           </p>
         </div>
 
         <div className="rounded-2xl border border-ink/10 bg-surface/50 p-5 shadow-sm">
           <div className="mb-2 flex items-center gap-2 font-semibold text-ink">
             <CheckCircle2 className="h-5 w-5 text-brand" />
-            Son rapport à la contrainte matérielle
+            Son rapport à l'autonomie
           </div>
           <p className="text-sm text-ink/80 leading-relaxed">
-            Est-il à l'aise avec la manipulation d'outils, la gestion d'un budget au marché ou la mesure physique des espaces ?
+            Est-il capable de mener une mission au marché ou de gérer une responsabilité quotidienne (retrouvez nos repères d'
+            <a href="/guides/autonomie-responsabilite-maison">autonomie et de responsabilités à la maison</a>) ?
           </p>
         </div>
       </div>
 
       <h2>3. Le protocole des « 3 défis du week-end » (À faire à la maison)</h2>
       <p>
-        Au lieu d'un test abstrait, proposez à votre enfant ce protocole simple sur un samedi :
+        Au lieu d'un test abstrait sur écran, proposez à votre enfant ce protocole simple :
       </p>
-      <ol>
+      <ol className="space-y-4 my-6">
         <li>
           <strong>Défi 1 : La Mission du Marché (Intelligence Pratique & Interpersonnelle)</strong><br />
-          Donnez-lui une liste de 3 ingrédients et un budget précis. Laissez-le choisir les étals, vérifier les prix et calculer la monnaie rendue. Vous découvrirez son sens de la négociation et sa gestion du stress.
+          Donnez-lui une liste de 3 ingrédients et un budget précis. Laissez-le choisir les étals, négocier et calculer la monnaie rendue.
         </li>
         <li>
           <strong>Défi 2 : L'Invention en Carton (Intelligence Spatiale & Kinesthésique)</strong><br />
-          Avec une boîte de récupération, du ruban adhésif et des ciseaux, demandez-lui de concevoir un objet utile (un support de livre, un pont pour billes, un rangement). Observez sa persévérance face aux échecs d'équilibre.
+          Avec une boîte de récupération et des ciseaux (inspiré de nos{" "}
+          <a href="/guides/activites-manuelles-enfant">activités manuelles et de bricolage</a>), demandez-lui de fabriquer un objet fonctionnel.
         </li>
         <li>
           <strong>Défi 3 : L'Histoire Inversée (Intelligence Linguistique & Narrative)</strong><br />
-          Demandez-lui de vous expliquer le fonctionnement d'un objet du quotidien comme s'il était un journaliste de télévision. Vous mesurerez sa clarté d'esprit et sa confiance orale.
+          Demandez-lui de vous expliquer le fonctionnement d'une machine comme s'il était présentateur télé.
         </li>
       </ol>
+
+      <h2>Pour aller plus loin vers l'orientation future</h2>
+      <p>
+        Pour accompagner un collégien ou adolescent dans la découverte de ses affinités avec les métiers de demain, explorez notre{" "}
+        <a href="/guides/test-orientation-metier-enfant-futur">test d'orientation collégien & métiers d'avenir</a> ainsi que notre guide pour{" "}
+        <a href="/guides/orientation-scolaire-metiers-avenir">aider son enfant à choisir son métier dès 10 ans</a>.
+      </p>
 
       <div className="my-8 rounded-3xl border border-brand/20 bg-brand/5 p-6 sm:p-8">
         <h3 className="text-xl font-bold text-ink">
@@ -211,6 +226,14 @@ function Guide() {
           </Button>
         </div>
       </div>
+
+      <h2>Questions fréquentes (FAQ)</h2>
+      {FAQ.map((item) => (
+        <div key={item.question} className="my-5 border-b border-ink/10 pb-4">
+          <h3 className="text-lg font-bold text-ink">{item.question}</h3>
+          <p className="mt-2 text-ink/80">{item.answer}</p>
+        </div>
+      ))}
     </GuideLayout>
   );
 }

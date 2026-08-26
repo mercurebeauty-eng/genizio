@@ -35,9 +35,9 @@ const FAQ = [
 export const Route = createFileRoute("/guides/fratrie-rivalite-cooperation")({
   head: () => {
     const meta = pageMeta({
-      title: "Disputes frères et sœurs : comment les transformer en coopération",
+      title: "Fratrie et disputes : comment développer la coopération",
       description:
-        "Disputes pour un jouet, jalousie, comparaisons : comment apaiser les tensions entre frères et sœurs et transformer les conflits en entraide, avec des exemples concrets.",
+        "Comment apaiser les disputes et la jalousie entre frères et sœurs ? Découvrez 3 règles d'arbitrage positives et 3 défis d'équipe pour coopérer.",
       path: PATH,
       image: "/guides/og-fratrie.jpg",
       type: "article",
@@ -50,18 +50,18 @@ export const Route = createFileRoute("/guides/fratrie-rivalite-cooperation")({
           breadcrumbJsonLd([
             { name: "Accueil", path: "/" },
             { name: "Guides", path: "/guides" },
-            { name: "Fratrie & Coopération", path: PATH },
+            { name: "Fratrie et coopération", path: PATH },
           ]),
         ),
         jsonLdScript(
           articleJsonLd({
-            headline: "Disputes frères et sœurs : les transformer en coopération",
+            headline: "Disputes frères et sœurs : comment les transformer en coopération",
             description:
-              "Méthode pour apaiser les disputes entre frères et sœurs et développer l'entraide grâce à des jeux et des missions à faire ensemble.",
+              "Méthode parentale pour désamorcer les disputes, éliminer les comparaisons toxiques et favoriser l'esprit d'équipe dans la fratrie.",
             path: PATH,
             image: "/guides/og-fratrie.jpg",
             datePublished: "2026-08-08",
-            dateModified: "2026-08-14",
+            dateModified: "2026-08-26",
           }),
         ),
       ],
@@ -75,20 +75,22 @@ function Guide() {
     <GuideLayout
       eyebrow="Fratrie & Coopération"
       title="Disputes frères et sœurs : les transformer en coopération"
-      intro="Les disputes entre frères et sœurs fatiguent énormément les parents — un jouet qui passe de main en main, deux enfants qui se disputent la télécommande, une jalousie qui explose au moment du repas. Pourtant, la fratrie est le tout premier laboratoire de négociation. En remplaçant la compétition par des jeux et des missions à faire ensemble, on transforme les conflits en esprit d'équipe."
-      updated="14 août 2026"
-      readingTime="7 min"
+      intro="Les disputes entre frères et sœurs fatiguent énormément les parents — un jouet disputé, une jalousie pour la télécommande ou une rivalité à table. Pourtant, la fratrie est le tout premier laboratoire d'apprentissage social. En remplaçant les comparaisons par des missions communes, on transforme les frictions en esprit d'équipe solide."
+      updated="26 août 2026"
+      readingTime="8 min"
       path={PATH}
       related={[
-        { label: "24 activités éducatives (6-12 ans)", to: "/guides/activites-educatives-enfant" },
         {
-          label: "Enfant timide : libérer la parole",
-          to: "/guides/timidite-confiance-prise-de-parole",
+          label: "Discipline positive sans crier",
+          to: "/guides/discipline-positive-sans-punition",
         },
+        { label: "Gérer la colère et frustration", to: "/guides/gestion-colere-emotions-enfant" },
         {
-          label: "Rendre son enfant autonome sans crier",
+          label: "Rendre son enfant autonome",
           to: "/guides/autonomie-responsabilite-maison",
         },
+        { label: "Les 9 formes d'intelligence", to: "/guides/intelligences-multiples-gardner" },
+        { label: "24 activités éducatives sans écran", to: "/guides/activites-educatives-enfant" },
       ]}
     >
       <img
@@ -101,131 +103,71 @@ function Guide() {
         className="my-6 aspect-video w-full rounded-3xl border border-ink/10 object-cover shadow-lg"
       />
 
-      <h2>Pourquoi la comparaison est le pire ennemi de la paix familiale</h2>
+      <h2>Pourquoi la comparaison est le pire poison de la paix familiale</h2>
       <p>
-        Dans beaucoup de familles, les enfants sont comparés sans qu'on s'en rende compte : l'un est
-        vu comme « l'intellectuel », l'autre comme « le créatif » ou « le turbulent ». Cette
-        étiquette pousse les enfants à s'affronter pour obtenir l'exclusivité de l'attention
-        parentale — et chaque dispute pour un jouet devient une dispute pour savoir qui compte le
-        plus.
+        Dans beaucoup de familles, les enfants sont comparés involontairement : <em>« Regarde ton grand frère, lui est sage »</em>. Cette étiquette pousse les enfants dans une rivalité territoriale pour capter le regard des parents.
       </p>
       <p>
-        Grâce aux 9 intelligences de Howard Gardner, on apprend à montrer à l'enfant que{" "}
-        <strong>chaque être humain possède une combinaison unique de forces</strong>. L'aîné a
-        peut-être une intelligence logique plus avancée, tandis que le cadet fait preuve d'une
-        intelligence <strong>kinesthésique</strong> ou sociale remarquable. Ils ne sont pas rivaux :
-        ils sont <strong>coéquipiers</strong> — et votre rôle est de le leur rappeler à chaque
-        occasion, en valorisant ce qui rend chacun unique au lieu de comparer.
+        Grâce aux{" "}
+        <a href="/guides/intelligences-multiples-gardner">9 formes d'intelligence de Howard Gardner</a>, montrez à chaque enfant que ses talents sont uniques : l'aîné excelle peut-être en logique et organisation, tandis que le cadet brille par son empathie ou son agilité manuelle. Ils ne sont pas rivaux, ils sont coéquipiers complémentaires.
       </p>
 
-      <h2>Arbitrer une dispute sans jouer le juge</h2>
+      <h2>Arbitrer une dispute sans jouer les policiers</h2>
       <p>
-        Le réflexe le plus fréquent — et le plus contre-productif — est de chercher le coupable : «
-        C'est qui qui a commencé ? » Cette question transforme chaque dispute en procès, et le «
-        coupable » désigné ressort humilié. Voici les trois réflexes qui fonctionnent :
+        Chercher le « coupable » (<em>« C'est qui qui a commencé ? »</em>) transforme chaque querelle en procès judiciaire où l'un ressort vainqueur et l'autre humilié. En appliquant la{" "}
+        <a href="/guides/discipline-positive-sans-punition">discipline positive sans punition</a>, privilégiez la responsabilisation :
       </p>
       <ul>
         <li>
-          <strong>Accueillir l'émotion avant la règle :</strong> « Je vois que vous êtes tous les
-          deux fâchés et que vous voulez le même jouet. » L'enfant qui se sent entendu baisse d'un
-          cran avant même la solution.
+          <strong>Accueillir la frustration :</strong> <em>« Je vois que vous êtes très en colère tous les deux »</em> (découvrez comment{" "}
+          <a href="/guides/gestion-colere-emotions-enfant">apaiser les tempêtes émotionnelles chez l'enfant</a>).
         </li>
         <li>
-          <strong>Donner une mission de négociation :</strong> « Trouvez ensemble une solution où
-          chacun gagne quelque chose, vous avez deux minutes. » La première fois, préparez-vous à
-          les aider ; la dixième, ils négocient seuls.
+          <strong>Le contrat de négociation :</strong> <em>« Vous avez 2 minutes pour trouver un accord où chacun gagne quelque chose, sinon le jouet reste sur l'étagère jusqu'à demain. »</em>
         </li>
         <li>
-          <strong>La règle de la rotation pour les objets partagés :</strong> télécommande, vélo,
-          tablette : « Aujourd'hui c'est toi, demain c'est toi. » Annoncée à l'avance, la règle
-          supprime l'arbitrage du dernier moment — et donc la moitié des disputes.
+          <strong>L'apprentissage de l'autonomie :</strong> Développez leur maturité grâce à nos rituels pour{" "}
+          <a href="/guides/autonomie-responsabilite-maison">rendre les enfants autonomes et responsables</a>.
         </li>
       </ul>
-      <p>Deux exemples quotidiens, avec les paroles exactes :</p>
-      <div className="my-6 rounded-2xl bg-amber-50 p-5 border border-amber-200">
-        <h3 className="font-bold text-amber-950 text-base mb-2">La dispute du jouet</h3>
-        <p className="text-sm text-amber-900 leading-relaxed">
-          <em>
-            « Je vois que vous voulez tous les deux le camion. Vous avez deux minutes pour trouver
-            une solution où chacun gagne quelque chose. »
-          </em>{" "}
-          Si ça bloque :{" "}
-          <em>
-            « Je le garde cinq minutes, vous me proposez votre accord, et je le rends à celui qui a
-            trouvé la solution. »
-          </em>{" "}
-          Ne dites jamais « donne-le à ton petit frère, il est plus petit » : c'est le meilleur
-          moyen de fabriquer un aîné rancunier.
-        </p>
-      </div>
-      <div className="my-6 rounded-2xl bg-sky-50 p-5 border border-sky-200">
-        <h3 className="font-bold text-sky-950 text-base mb-2">La dispute de la télécommande</h3>
-        <p className="text-sm text-sky-900 leading-relaxed">
-          <em>
-            « La règle de la maison : chacun choisit un programme à tour de rôle, et pendant le
-            programme de l'autre, on regarde sans commenter. Qui veut commencer ? »
-          </em>{" "}
-          La règle fixe remplace la négociation à chaud — et la télévision devient un terrain
-          d'entraînement à la patience, pas un champ de bataille.
-        </p>
-      </div>
 
-      <h2>3 défis d'équipe à réaliser à 2 ou plus</h2>
+      <h2>3 défis d'équipe à réaliser à deux pour souder la fratrie</h2>
 
       <div className="my-6 rounded-2xl bg-amber-50 p-5 border border-amber-200">
         <h3 className="font-bold text-amber-950 text-base mb-2">
-          1. La mission 'Escape Game de la Maison'
+          1. L'Escape Game de la Maison
         </h3>
         <p className="text-sm text-amber-900 leading-relaxed">
-          Donnez à la fratrie une mission commune : résoudre une énigme familiale en 20 minutes pour
-          débloquer le goûter. L'un doit calculer un code chiffré (logique), l'autre doit retrouver
-          un objet caché dans un parcours d'obstacles (spatial/corporel). Impossible à réussir seul
-          : la coopération devient la seule stratégie gagnante.
+          Donnez à la fratrie une mission commune : déchiffrer un mot de passe en 15 minutes pour débloquer le goûter. L'un calcule l'indice, l'autre retrouve la clé cachée. La coopération devient la seule stratégie gagnante.
         </p>
       </div>
 
       <div className="my-6 rounded-2xl bg-sky-50 p-5 border border-sky-200">
         <h3 className="font-bold text-sky-950 text-base mb-2">
-          2. La réalisation du Journal de Famille
+          2. La Fabrique d'Objets en Binôme
         </h3>
         <p className="text-sm text-sky-900 leading-relaxed">
-          Confiez à l'un le rôle d'illustrateur/photographe et à l'autre le rôle de rédacteur des
-          événements de la semaine. Chacun brille dans sa spécialité sans faire de l'ombre à son
-          frère ou sa sœur — et le journal terminé est signé des deux, exposé au salon.
+          Proposez-leur de concevoir ensemble une maquette en carton issue de nos{" "}
+          <a href="/guides/activites-manuelles-enfant">activités manuelles récup</a>. L'un découpe, l'autre assemble et peint.
         </p>
       </div>
 
       <div className="my-6 rounded-2xl bg-emerald-50 p-5 border border-emerald-200">
         <h3 className="font-bold text-emerald-950 text-base mb-2">
-          3. Le spectacle / stand de vente commun
+          3. Le Grand Journal de Famille
         </h3>
         <p className="text-sm text-emerald-900 leading-relaxed">
-          Invitez-les à organiser ensemble une petite présentation pour la famille ou une petite
-          vente au quartier (jus, pâtisseries). L'objectif commun les oblige à négocier les rôles et
-          à partager le succès final — on n'écrase pas son coéquipier quand le résultat est signé à
-          deux.
+          L'un est reporter et interviewe les parents, l'autre est photographe et met en page les nouvelles de la semaine (issues de nos{" "}
+          <a href="/guides/activites-educatives-enfant">24 activités éducatives sans écran</a>).
         </p>
       </div>
 
-      <h2>3 réflexes parentaux pour installer la paix durable</h2>
-      <ul>
-        <li>
-          <strong>Valoriser la coopération :</strong> Récompensez l'entraide spontanée plutôt que le
-          travail individuel isolé. « J'ai vu que tu as aidé ta sœur à ranger sans qu'on te le
-          demande — c'est exactement l'esprit d'équipe. »
-        </li>
-        <li>
-          <strong>Créer des moments individuels :</strong> Accordez 15 minutes d'attention exclusive
-          à chaque enfant de temps en temps. La jalousie naît du manque, pas de l'excès de présence.
-        </li>
-        <li>
-          <strong>Responsabiliser les aînés sans les écraser :</strong> Donner un rôle de mentor
-          bienveillant plutôt qu'un rôle d'autorité policière. Un aîné qui « surveille » son cadet
-          devient un tyran ; un aîné qui lui apprend un jeu devient un allié.
-        </li>
-      </ul>
+      <h2>Ce que fait Génizio au quotidien</h2>
+      <p>
+        Génizio valorise chaque enfant selon sa propre carte d'intelligences sans jamais instaurer de classement comparatif. Les défis d'équipe permettent aux frères et sœurs de combiner leurs talents respectifs pour débloquer des réussites familiales partagées.
+      </p>
 
-      <h2>Foire aux questions sur la gestion de la fratrie</h2>
+      <h2>Foire aux questions (FAQ)</h2>
       <div className="mt-8 space-y-6 border-t border-ink/10 pt-6">
         {FAQ.map((item, idx) => (
           <div key={idx} className="space-y-2">
