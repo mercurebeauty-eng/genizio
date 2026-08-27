@@ -19,16 +19,28 @@ import { initializeSponsorshipPayment } from "@/lib/payments.functions";
 import type { SponsorshipToken } from "@/lib/seasons.functions";
 import { resolveSponsorshipPrice, STANDARD_PRICE_XOF, formatXofAmount } from "@/lib/pricing";
 import { toast } from "sonner";
-import { pageMeta } from "@/lib/seo";
+import { pageMeta, jsonLdScript, breadcrumbJsonLd } from "@/lib/seo";
 
 export const Route = createFileRoute("/parrainage")({
-  head: () =>
-    pageMeta({
+  head: () => {
+    const meta = pageMeta({
       title: "Parrainage Diaspora & RSE — Génizio",
       description:
         "Offrez de 1 à 12 mois d'aventure Génizio à un enfant en Côte d'Ivoire, depuis la diaspora ou via le mécénat de votre entreprise (RSE).",
       path: "/parrainage",
-    }),
+    });
+    return {
+      ...meta,
+      scripts: [
+        jsonLdScript(
+          breadcrumbJsonLd([
+            { name: "Accueil", path: "/" },
+            { name: "Parrainage", path: "/parrainage" },
+          ]),
+        ),
+      ],
+    };
+  },
   component: ParrainagePage,
 });
 
@@ -127,8 +139,19 @@ function ParrainagePage() {
       </header>
 
       {/* Hero Header */}
-      <section className="relative overflow-hidden bg-gradient-to-b from-brand/10 via-surface to-surface py-16 px-6 text-center">
+      <section className="relative overflow-hidden bg-gradient-to-b from-brand/10 via-surface to-surface py-12 px-6 text-center">
         <div className="mx-auto max-w-3xl">
+          <nav
+            aria-label="Fil d'Ariane"
+            className="mb-6 flex items-center justify-center gap-1.5 text-xs font-bold text-ink/50"
+          >
+            <Link to="/" className="hover:text-brand">
+              Accueil
+            </Link>
+            <span aria-hidden>/</span>
+            <span className="text-ink/70">Parrainage</span>
+          </nav>
+
           <span className="inline-flex items-center gap-2 rounded-full bg-brand/15 px-4 py-1.5 text-xs font-black uppercase tracking-widest text-brand border border-brand/20 mb-6">
             <Heart className="size-4 fill-current" />
             Génizio Parrainage • Diaspora & RSE
