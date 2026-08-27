@@ -1251,6 +1251,34 @@ export function PassportPdf({ data }: { data: PassportPdfData }) {
             </View>
           </View>
 
+          {longitudinalGraph.triangulatedCompetencies && longitudinalGraph.triangulatedCompetencies.length > 0 && (
+            <View style={{ ...cardBase, backgroundColor: "#ecfdf5", marginBottom: 16, borderColor: PDF_COLORS.emerald, borderWidth: 1 }}>
+              <Text style={{ fontFamily: PASSPORT_FONT_DISPLAY, fontWeight: 700, fontSize: 10, color: PDF_COLORS.emerald, marginBottom: 4 }}>
+                Compétences Triangulées (Multi-Contextes)
+              </Text>
+              <Text style={{ fontFamily: PASSPORT_FONT_BODY, fontSize: 8.5, lineHeight: 1.5, color: PDF_COLORS.ink, marginBottom: 8 }}>
+                Capacités démontrées avec succès dans plusieurs contextes (individuel, équipe, tutorat, etc.)
+              </Text>
+              <View style={{ flexDirection: "column", gap: 6 }}>
+                {longitudinalGraph.triangulatedCompetencies.map((hyp: any) => {
+                  const uniqueContexts = Array.from(new Set(hyp.evidence.filter((e: any) => e.success).map((e: any) => e.context)));
+                  return (
+                    <View key={hyp.id} style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center", borderTopWidth: 1, borderTopColor: "#d1fae5", paddingTop: 4 }}>
+                      <View>
+                        <Text style={{ fontFamily: PASSPORT_FONT_BODY, fontWeight: 700, fontSize: 9, color: PDF_COLORS.ink, textTransform: "capitalize" }}>
+                          {hyp.competenceKey.replace(/_/g, " ")}
+                        </Text>
+                        <Text style={{ fontFamily: PASSPORT_FONT_BODY, fontSize: 8, color: PDF_COLORS.inkMuted }}>
+                          Solidité : {Math.round(hyp.confidence * 100)}% • Confirmée dans {uniqueContexts.length}/4 contextes
+                        </Text>
+                      </View>
+                    </View>
+                  );
+                })}
+              </View>
+            </View>
+          )}
+
           <Text style={{ ...sectionHeading, fontSize: 12, color: PDF_COLORS.ink, marginBottom: 8, marginTop: 4 }}>
             Registre des Expériences Vécues
           </Text>

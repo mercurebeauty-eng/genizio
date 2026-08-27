@@ -81,6 +81,46 @@ export function CollectiveExperiencesSection({ graph }: CollectiveExperiencesSec
         </Card>
       </div>
 
+      {graph.triangulatedCompetencies && graph.triangulatedCompetencies.length > 0 && (
+        <Card className="border-emerald-200 bg-emerald-50/40">
+          <CardHeader className="pb-3">
+            <CardTitle className="text-lg flex items-center gap-2">
+              <CheckCircle2 className="w-5 h-5 text-emerald-600" />
+              Compétences Triangulées (Multi-Contextes)
+            </CardTitle>
+            <CardDescription>
+              Capacités démontrées avec succès dans plusieurs contextes (individuel, équipe, tutorat, etc.)
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              {graph.triangulatedCompetencies.map(hyp => {
+                const uniqueContexts = Array.from(new Set(hyp.evidence.filter(e => e.success).map(e => e.context)));
+                
+                return (
+                  <div key={hyp.id} className="p-3 bg-white rounded-lg border border-emerald-100 flex flex-col md:flex-row md:items-center justify-between gap-4">
+                    <div>
+                      <h4 className="font-bold text-emerald-900 capitalize">{hyp.competenceKey.replace(/_/g, " ")}</h4>
+                      <p className="text-sm text-emerald-700/80 mt-1">
+                        Solidité : <strong className="text-emerald-800">{Math.round(hyp.confidence * 100)}%</strong> 
+                        {" "} • Confirmée dans {uniqueContexts.length}/4 contextes
+                      </p>
+                    </div>
+                    <div className="flex gap-2 shrink-0">
+                      {uniqueContexts.map(ctx => (
+                        <Badge key={ctx} variant="outline" className="bg-emerald-50 text-emerald-700 border-emerald-200">
+                          {ctx.split('_').pop()}
+                        </Badge>
+                      ))}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       {/* Chronique des Projets */}
       <div>
         <h3 className="text-lg font-bold text-ink mb-4 mt-8 flex items-center gap-2">

@@ -1,4 +1,5 @@
 import { TeamRole, ImplicationLevel, SupervisorObservableTag, computeRolePlasticity } from "./collective-capability";
+import { type DiagnosticHypothesis, getTriangulatedCompetencies } from "./diagnostic-hypotheses";
 
 export interface LongitudinalExperience {
   id: string;
@@ -28,6 +29,7 @@ export interface LongitudinalGraph {
   experiences: LongitudinalExperience[];
   behavioralSummary: BehavioralEvidenceSummary;
   roleSummary: RoleDistributionSummary;
+  triangulatedCompetencies: DiagnosticHypothesis[];
 }
 
 /**
@@ -36,7 +38,8 @@ export interface LongitudinalGraph {
  */
 export function extractLongitudinalExperiences(
   discoveryTraces: any[],
-  challenges: any[] = [] // Réservé pour de futurs défis explicitement taggés 'groupe'
+  challenges: any[] = [], // Réservé pour de futurs défis explicitement taggés 'groupe'
+  hypotheses: DiagnosticHypothesis[] = []
 ): LongitudinalGraph {
   const experiences: LongitudinalExperience[] = [];
 
@@ -112,5 +115,6 @@ export function extractLongitudinalExperiences(
     experiences,
     behavioralSummary,
     roleSummary,
+    triangulatedCompetencies: getTriangulatedCompetencies(hypotheses)
   };
 }
