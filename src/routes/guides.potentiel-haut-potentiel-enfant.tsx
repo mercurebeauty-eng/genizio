@@ -5,8 +5,8 @@ import {
   jsonLdScript,
   faqPageJsonLd,
   breadcrumbJsonLd,
-  absoluteUrl,
-  SITE_URL,
+  articleJsonLd,
+  howToJsonLd,
 } from "@/lib/seo";
 
 const PATH = "/guides/potentiel-haut-potentiel-enfant";
@@ -70,26 +70,39 @@ export const Route = createFileRoute("/guides/potentiel-haut-potentiel-enfant")(
             { name: "Haut potentiel et enfant surdoué", path: PATH },
           ]),
         ),
-        jsonLdScript({
-          "@context": "https://schema.org",
-          "@type": "Article",
-          headline: "Enfant surdoué, HPI ou précoce : comment reconnaître et accompagner son haut potentiel",
-          description:
-            "Guide parental approfondi pour reconnaître un enfant à haut potentiel (HPI / zèbre), comprendre le test de QI et valoriser ses talents à la maison.",
-          inLanguage: "fr-FR",
-          mainEntityOfPage: absoluteUrl(PATH),
-          image: absoluteUrl("/guides/og-haut-potentiel.jpg"),
-          publisher: { "@id": `${SITE_URL}/#organization` },
-          author: { "@type": "Organization", name: "Génizio" },
-          datePublished: "2026-07-27",
-          dateModified: "2026-08-26",
-          about: [
-            { "@type": "Thing", name: "Haut potentiel intellectuel" },
-            { "@type": "Thing", name: "Enfant surdoué" },
-            { "@type": "Thing", name: "Test enfant précoce" },
-            { "@type": "Thing", name: "Enfant zèbre" },
-          ],
-        }),
+        jsonLdScript(
+          howToJsonLd({
+            name: "Protocole 10 min : Grille d'observation des forces singulières à la maison",
+            description:
+              "Une méthode en 3 étapes pour observer les manifestations du haut potentiel sans l'enfermer dans une étiquette théorique.",
+            steps: [
+              {
+                name: "Observer la vitesse d'assimilation et la mémoire",
+                text: "Notez les sujets pour lesquels votre enfant comprend le principe dès la première explication et fait des liens spontanés avec d'autres domaines.",
+              },
+              {
+                name: "Évaluer la profondeur du questionnement",
+                text: "Relevez ses questions existentielles sur le sens, la justice ou le fonctionnement du monde pour identifier son besoin de complexité.",
+              },
+              {
+                name: "Proposer un défi à haute intensité intellectuelle",
+                text: "Offrez-lui un problème ouvert (énigme de logique ou projet de construction complexe) et observez son niveau d'engagement et de persévérance.",
+              },
+            ],
+          }),
+        ),
+        jsonLdScript(
+          articleJsonLd({
+            headline:
+              "Enfant surdoué, HPI ou précoce : comment reconnaître et accompagner son haut potentiel",
+            description:
+              "Guide parental approfondi pour reconnaître un enfant à haut potentiel (HPI / zèbre), comprendre le test de QI et valoriser ses talents à la maison.",
+            path: PATH,
+            image: "/guides/og-haut-potentiel.jpg",
+            datePublished: "2026-07-27",
+            dateModified: "2026-08-27",
+          }),
+        ),
       ],
     };
   },
@@ -102,7 +115,7 @@ function Guide() {
       eyebrow="Potentiel & talents"
       title="Enfant surdoué, HPI ou précoce : comment reconnaître et accompagner son haut potentiel"
       intro="« Mon enfant est-il surdoué ou précoce ? » Cette question taraude de nombreux parents lorsque leur enfant pose des questions vertigineuses, s'ennuie profondément à l'école ou fait preuve d'une hypersensibilité hors norme. Voici les vrais repères d'observation à la maison, les réalités du bilan psychologique et les clés pour valoriser son génie sans l'enfermer dans une case."
-      updated="26 août 2026"
+      updated="27 août 2026"
       readingTime="9 min"
       path={PATH}
       related={[
@@ -110,10 +123,9 @@ function Guide() {
           label: "Les 9 formes d'intelligence (Gardner)",
           to: "/guides/intelligences-multiples-gardner",
         },
+        { label: "Test de personnalité : 4 limites", to: "/guides/test-de-personnalite-enfant-talents" },
+        { label: "Autisme & TDAH : atouts uniques", to: "/guides/autisme-tdah-apprentissage-forces-reelles" },
         { label: "Enfant inattentif ou agité", to: "/guides/enfant-agite-concentration" },
-        { label: "24 activités éducatives sans écran", to: "/guides/activites-educatives-enfant" },
-        { label: "Autisme & TDAH : forces réelles", to: "/guides/autisme-tdah-apprentissage-forces-reelles" },
-        { label: "Gestion de la colère et émotions", to: "/guides/gestion-colere-emotions-enfant" },
       ]}
     >
       <img

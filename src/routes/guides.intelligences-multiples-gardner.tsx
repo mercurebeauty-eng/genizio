@@ -5,8 +5,8 @@ import {
   jsonLdScript,
   faqPageJsonLd,
   breadcrumbJsonLd,
-  absoluteUrl,
-  SITE_URL,
+  articleJsonLd,
+  howToJsonLd,
 } from "@/lib/seo";
 
 const PATH = "/guides/intelligences-multiples-gardner";
@@ -122,26 +122,39 @@ export const Route = createFileRoute("/guides/intelligences-multiples-gardner")(
             { name: "Intelligences multiples de Gardner", path: PATH },
           ]),
         ),
-        jsonLdScript({
-          "@context": "https://schema.org",
-          "@type": "Article",
-          headline: "Les 9 formes d'intelligence de Howard Gardner : guide complet pour révéler les talents de son enfant",
-          description:
-            "Guide parental approfondi sur les 9 formes d'intelligence (Gardner) : signes d'observation concrets, intelligence existentielle, activités maison et valorisation des talents.",
-          inLanguage: "fr-FR",
-          mainEntityOfPage: absoluteUrl(PATH),
-          image: absoluteUrl("/guides/og-gardner.jpg"),
-          publisher: { "@id": `${SITE_URL}/#organization` },
-          author: { "@type": "Organization", name: "Génizio" },
-          datePublished: "2026-07-27",
-          dateModified: "2026-08-26",
-          about: [
-            { "@type": "Thing", name: "Théorie des intelligences multiples" },
-            { "@type": "Person", name: "Howard Gardner" },
-            { "@type": "Thing", name: "Intelligence existentielle" },
-            { "@type": "Thing", name: "Talents de l'enfant" },
-          ],
-        }),
+        jsonLdScript(
+          howToJsonLd({
+            name: "Protocole en 3 étapes : Observer les 9 intelligences de son enfant à la maison",
+            description:
+              "Une méthode d'observation naturelle sans questionnaire sur écran pour cartographier les forces réelles de votre enfant en 14 jours.",
+            steps: [
+              {
+                name: "Observation des moments de jeu libre",
+                text: "Notez pendant 7 jours ce que votre enfant entreprend spontanément lorsqu'il n'a aucune consigne : construction, dessin, négociation, histoires ou démontage d'objets.",
+              },
+              {
+                name: "Test des défis croisés 10 minutes",
+                text: "Proposez 3 mini-défis variés (un calcul pratique, un parcours moteur, une énigme logique) et observez quelle activité déclenche l'état de concentration spontanée (flow).",
+              },
+              {
+                name: "Validation par la fierté de réalisation",
+                text: "Photographiez ses créations pour bâtir son portfolio et l'encourager dans ses formes d'intelligence dominantes.",
+              },
+            ],
+          }),
+        ),
+        jsonLdScript(
+          articleJsonLd({
+            headline:
+              "Les 9 formes d'intelligence de Howard Gardner : comment identifier les talents de son enfant",
+            description:
+              "Guide parental complet sur les 9 formes d'intelligence (Gardner) : signes d'observation concrets, intelligence existentielle, activités maison et valorisation des talents.",
+            path: PATH,
+            image: "/guides/og-gardner.jpg",
+            datePublished: "2026-07-27",
+            dateModified: "2026-08-27",
+          }),
+        ),
       ],
     };
   },
@@ -154,17 +167,14 @@ function Guide() {
       eyebrow="Talents de l'enfant"
       title="Les 9 formes d'intelligence : comment identifier les talents de votre enfant"
       intro="Votre enfant ne rentre pas dans le moule scolaire classique, mais il répare, négocie, dessine, compose ou organise ? Ce n'est pas un paradoxe : selon la théorie des intelligences multiples de Howard Gardner, l'intelligence ne se résume pas aux notes scolaires. Découvrez les 9 formes d'intelligence et apprenez à les observer au quotidien sans étiqueter votre enfant."
-      updated="26 août 2026"
+      updated="27 août 2026"
       readingTime="9 min"
       path={PATH}
       related={[
-        {
-          label: "Haut potentiel : les vrais signes",
-          to: "/guides/potentiel-haut-potentiel-enfant",
-        },
+        { label: "Enfant HPI : les vrais signes", to: "/guides/potentiel-haut-potentiel-enfant" },
+        { label: "Test de personnalité : 4 limites", to: "/guides/test-de-personnalite-enfant-talents" },
+        { label: "Autisme & TDAH : atouts uniques", to: "/guides/autisme-tdah-apprentissage-forces-reelles" },
         { label: "24 activités éducatives (6-12 ans)", to: "/guides/activites-educatives-enfant" },
-        { label: "Mon enfant ne tient pas en place", to: "/guides/enfant-agite-concentration" },
-        { label: "Gestion de la colère (5 outils)", to: "/guides/gestion-colere-emotions-enfant" },
       ]}
     >
       <img

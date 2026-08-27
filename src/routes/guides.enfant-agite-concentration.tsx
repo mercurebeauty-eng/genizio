@@ -5,8 +5,8 @@ import {
   jsonLdScript,
   faqPageJsonLd,
   breadcrumbJsonLd,
-  absoluteUrl,
-  SITE_URL,
+  articleJsonLd,
+  howToJsonLd,
 } from "@/lib/seo";
 
 const PATH = "/guides/enfant-agite-concentration";
@@ -65,27 +65,39 @@ export const Route = createFileRoute("/guides/enfant-agite-concentration")({
             { name: "Enfant agité et concentration", path: PATH },
           ]),
         ),
-        jsonLdScript({
-          "@context": "https://schema.org",
-          "@type": "Article",
-          headline:
-            "Mon enfant est agité ou inattentif : comment l'aider à se concentrer à la maison et à l'école",
-          description:
-            "Guide parental approfondi pour aider un enfant agité ou incapable de se concentrer : méthodes concrètes de devoirs, sommeil, mouvement et repérage TDAH.",
-          inLanguage: "fr-FR",
-          mainEntityOfPage: absoluteUrl(PATH),
-          image: absoluteUrl("/guides/og-agite.jpg"),
-          publisher: { "@id": `${SITE_URL}/#organization` },
-          author: { "@type": "Organization", name: "Génizio" },
-          datePublished: "2026-07-27",
-          dateModified: "2026-08-26",
-          about: [
-            { "@type": "Thing", name: "Attention de l'enfant" },
-            { "@type": "Thing", name: "Concentration scolaire" },
-            { "@type": "Thing", name: "Enfant agité" },
-            { "@type": "Thing", name: "TDAH" },
-          ],
-        }),
+        jsonLdScript(
+          howToJsonLd({
+            name: "Rituel 10 min : Le sas de décompression moteur avant les devoirs",
+            description:
+              "Une séquence en 3 temps pour décharger l'énergie physique et activer la concentration avant une tâche intellectuelle.",
+            steps: [
+              {
+                name: "Décharge proprioceptive (3 min)",
+                text: "Proposez à l'enfant de sauter à la corde, faire la brouette ou porter un objet lourd (livres) pour envoyer des signaux musculaires apaisants au cerveau.",
+              },
+              {
+                name: "Sas sensoriel au calme (2 min)",
+                text: "Asseyez-vous avec lui, buvez un verre d'eau fraîche et fermez les yeux pendant 1 minute pour écouter 3 bruits lointains.",
+              },
+              {
+                name: "Découpage en micro-objectifs (5 min)",
+                text: "Isolez une seule consigne d'exercice sur la table et lancez un chronomètre de 15 minutes sans interruption.",
+              },
+            ],
+          }),
+        ),
+        jsonLdScript(
+          articleJsonLd({
+            headline:
+              "Mon enfant est agité ou inattentif : comment l'aider à se concentrer à la maison et à l'école",
+            description:
+              "Guide parental approfondi pour aider un enfant agité ou incapable de se concentrer : méthodes concrètes de devoirs, mouvement et valorisation du potentiel.",
+            path: PATH,
+            image: "/guides/og-agite.jpg",
+            datePublished: "2026-07-27",
+            dateModified: "2026-08-27",
+          }),
+        ),
       ],
     };
   },
@@ -98,24 +110,14 @@ function Guide() {
       eyebrow="Attention & concentration"
       title="Mon enfant est agité ou inattentif : comment l'aider à se concentrer à la maison et à l'école"
       intro="« Il ne tient pas en place », « Il est incapable de se concentrer plus de 2 minutes » : ce constat est l'un des plus fréquents chez les parents. Dans la majorité des cas, l'enfant n'a pas un déficit d'attention, mais un besoin de mouvement pour réfléchir. Voici comment comprendre son fonctionnement, adapter les devoirs et restaurer le calme sans cris."
-      updated="26 août 2026"
+      updated="27 août 2026"
       readingTime="8 min"
       path={PATH}
       related={[
-        {
-          label: "Haut potentiel : les vrais signes",
-          to: "/guides/potentiel-haut-potentiel-enfant",
-        },
-        {
-          label: "24 activités éducatives sans écran",
-          to: "/guides/activites-educatives-enfant",
-        },
-        {
-          label: "Les 9 formes d'intelligence",
-          to: "/guides/intelligences-multiples-gardner",
-        },
         { label: "Gestion de la colère (5 outils)", to: "/guides/gestion-colere-emotions-enfant" },
-        { label: "Autisme & TDAH : forces réelles", to: "/guides/autisme-tdah-apprentissage-forces-reelles" },
+        { label: "Discipline positive sans crier", to: "/guides/discipline-positive-sans-punition" },
+        { label: "Autisme & TDAH : atouts uniques", to: "/guides/autisme-tdah-apprentissage-forces-reelles" },
+        { label: "Les 9 formes d'intelligence", to: "/guides/intelligences-multiples-gardner" },
       ]}
     >
       <img

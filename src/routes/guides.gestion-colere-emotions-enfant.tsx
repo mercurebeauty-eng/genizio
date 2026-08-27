@@ -5,8 +5,8 @@ import {
   jsonLdScript,
   faqPageJsonLd,
   breadcrumbJsonLd,
-  absoluteUrl,
-  SITE_URL,
+  articleJsonLd,
+  howToJsonLd,
 } from "@/lib/seo";
 
 const PATH = "/guides/gestion-colere-emotions-enfant";
@@ -54,7 +54,7 @@ export const Route = createFileRoute("/guides/gestion-colere-emotions-enfant")({
     const meta = pageMeta({
       title: "Gestion de la colère de l'enfant : 5 outils pour l'apaiser",
       description:
-        "Crise de colère, frustration et caprices : découvrez pourquoi l'enfant explose, les phrases qui apaisent et 5 outils concrets pour calmer la tempête sans crier.",
+        "Votre enfant fait des crises de colère ? Découvrez 5 outils pratiques et bienveillants pour désamorcer les tensions et l'aider à réguler ses émotions sans crier.",
       path: PATH,
       image: "/guides/og-colere.jpg",
       type: "article",
@@ -67,29 +67,42 @@ export const Route = createFileRoute("/guides/gestion-colere-emotions-enfant")({
           breadcrumbJsonLd([
             { name: "Accueil", path: "/" },
             { name: "Guides", path: "/guides" },
-            { name: "Gestion de la colère enfant", path: PATH },
+            { name: "Gestion de la colère de l'enfant", path: PATH },
           ]),
         ),
-        jsonLdScript({
-          "@context": "https://schema.org",
-          "@type": "Article",
-          headline: "Gestion de la colère chez l'enfant : 5 outils concrets pour apaiser les crises",
-          description:
-            "Guide parental pour gérer la colère et les crises émotionnelles des enfants : neurosciences de la frustration, phrases clés et 5 outils pratiques d'apaisement.",
-          inLanguage: "fr-FR",
-          mainEntityOfPage: absoluteUrl(PATH),
-          image: absoluteUrl("/guides/og-colere.jpg"),
-          publisher: { "@id": `${SITE_URL}/#organization` },
-          author: { "@type": "Organization", name: "Génizio" },
-          datePublished: "2026-08-10",
-          dateModified: "2026-08-25",
-          about: [
-            { "@type": "Thing", name: "Gestion de la colère de l'enfant" },
-            { "@type": "Thing", name: "Régulation des émotions" },
-            { "@type": "Thing", name: "Discipline positive" },
-            { "@type": "Thing", name: "Psychologie de l'enfant" },
-          ],
-        }),
+        jsonLdScript(
+          howToJsonLd({
+            name: "Protocole 10 min : La méthode du Thermomètre Émotionnel et Respiration Carrée",
+            description:
+              "Une méthode en 3 étapes pour aider l'enfant à nommer l'intensité de sa frustration et faire redescendre la tension physiologique.",
+            steps: [
+              {
+                name: "L'échelle du thermomètre (1 min)",
+                text: "Demandez à l'enfant d'évaluer sa colère sur une échelle visuelle de 1 (agacement) à 5 (explosion) sans porter de jugement.",
+              },
+              {
+                name: "La respiration carrée (3 min)",
+                text: "Guidez 4 cycles de respiration : inspirez 4 secondes, bloquez 4 secondes, expirez 4 secondes, bloquez 4 secondes pour apaiser l'amygdale cérébrale.",
+              },
+              {
+                name: "Le sas d'expression verbale (6 min)",
+                text: "Formulez le besoin réel sous-jacent : « Tu es en colère parce que tu voulais finir ton jeu. Que pouvons-nous faire ensemble maintenant ? »",
+              },
+            ],
+          }),
+        ),
+        jsonLdScript(
+          articleJsonLd({
+            headline:
+              "Gestion de la colère chez l'enfant : 5 outils concrets pour apaiser les crises",
+            description:
+              "Guide parental pour gérer la colère et les crises émotionnelles des enfants : neurosciences de la frustration, phrases clés et 5 outils pratiques d'apaisement.",
+            path: PATH,
+            image: "/guides/og-colere.jpg",
+            datePublished: "2026-08-10",
+            dateModified: "2026-08-27",
+          }),
+        ),
       ],
     };
   },
@@ -102,7 +115,7 @@ function Guide() {
       eyebrow="Émotions & bien-être"
       title="Gestion de la colère de l'enfant : 5 outils pour l'apaiser"
       intro="Une crise de colère à 18 h dans la cuisine, et c'est toute la maison qui tangue. Avant de chercher à « faire taire » cette colère, il faut comprendre ce qu'elle est : une émotion réelle, pas une attaque contre vous. Voici comment la traverser sans céder, sans crier, et en apprenant quelque chose à l'enfant."
-      updated="25 août 2026"
+      updated="27 août 2026"
       readingTime="8 min"
       path={PATH}
       related={[
@@ -111,13 +124,10 @@ function Guide() {
           label: "Se faire obéir sans crier ni frapper",
           to: "/guides/discipline-positive-sans-punition",
         },
+        { label: "Fratrie et disputes : coopérer", to: "/guides/fratrie-rivalite-cooperation" },
         {
           label: "Enfant qui perd confiance : l'aider",
           to: "/guides/decrochage-scolaire-confiance-enfant",
-        },
-        {
-          label: "Activités éducatives (6-12 ans)",
-          to: "/guides/activites-educatives-enfant",
         },
       ]}
     >

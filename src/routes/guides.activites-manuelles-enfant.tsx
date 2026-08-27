@@ -5,8 +5,8 @@ import {
   jsonLdScript,
   faqPageJsonLd,
   breadcrumbJsonLd,
-  absoluteUrl,
-  SITE_URL,
+  articleJsonLd,
+  howToJsonLd,
 } from "@/lib/seo";
 
 const PATH = "/guides/activites-manuelles-enfant";
@@ -80,7 +80,7 @@ export const Route = createFileRoute("/guides/activites-manuelles-enfant")({
     const meta = pageMeta({
       title: "18 activités manuelles faciles à la maison (4-12 ans)",
       description:
-        "18 activités manuelles et bricolages faciles pour enfant de 4 à 12 ans avec du matériel recyclé : pâte à sel, collage, couture et constructions utiles.",
+        "Découvrez 18 activités manuelles faciles et sans écran pour enfants de 4 à 12 ans : bricolage créatif, motricité fine et recyclage à faire à la maison.",
       path: PATH,
       image: "/guides/og-manuelles.jpg",
       type: "article",
@@ -96,26 +96,39 @@ export const Route = createFileRoute("/guides/activites-manuelles-enfant")({
             { name: "Activités manuelles enfant", path: PATH },
           ]),
         ),
-        jsonLdScript({
-          "@context": "https://schema.org",
-          "@type": "Article",
-          headline: "18 activités manuelles faciles à faire à la maison avec son enfant (4-12 ans)",
-          description:
-            "Guide complet des activités manuelles pour enfants de 4 à 12 ans : bricolage sans écran, motricité fine, matériel de récupération et valorisation des talents.",
-          inLanguage: "fr-FR",
-          mainEntityOfPage: absoluteUrl(PATH),
-          image: absoluteUrl("/guides/og-manuelles.jpg"),
-          publisher: { "@id": `${SITE_URL}/#organization` },
-          author: { "@type": "Organization", name: "Génizio" },
-          datePublished: "2026-08-10",
-          dateModified: "2026-08-26",
-          about: [
-            { "@type": "Thing", name: "Activités manuelles pour enfants" },
-            { "@type": "Thing", name: "Activités manuelles 4 ans" },
-            { "@type": "Thing", name: "Bricolage enfant recyclé" },
-            { "@type": "Thing", name: "Motricité fine" },
-          ],
-        }),
+        jsonLdScript(
+          howToJsonLd({
+            name: "Défi 10 min : Le Circuit à billes vertical en carton recyclé (4-12 ans)",
+            description:
+              "Un atelier de bricolage d'ingénierie simple utilisant des rouleaux de carton et du ruban adhésif sur une porte ou un mur.",
+            steps: [
+              {
+                name: "Découpe des goulottes",
+                text: "Fendez 3 rouleaux d'essuie-tout ou de papier toilette en deux dans le sens de la longueur pour former des gouttières.",
+              },
+              {
+                name: "Fixation en pente",
+                text: "Fixez les segments avec du scotch repositionnable sur une porte en créant une pente en zigzag.",
+              },
+              {
+                name: "Test de gravité",
+                text: "Lâchez une bille ou une petite balle au sommet et ajustez les angles de descente pour qu'elle atteigne la boîte d'arrivée sans tomber.",
+              },
+            ],
+          }),
+        ),
+        jsonLdScript(
+          articleJsonLd({
+            headline:
+              "18 activités manuelles faciles à faire à la maison avec son enfant (4-12 ans)",
+            description:
+              "Guide complet des activités manuelles pour enfants de 4 à 12 ans : bricolage sans écran, motricité fine, matériel de récupération et valorisation des talents.",
+            path: PATH,
+            image: "/guides/og-manuelles.jpg",
+            datePublished: "2026-08-10",
+            dateModified: "2026-08-27",
+          }),
+        ),
       ],
     };
   },
@@ -128,14 +141,20 @@ function Guide() {
       eyebrow="Activités & Bricolage"
       title="18 activités manuelles faciles à faire à la maison avec son enfant (4-12 ans)"
       intro="Couper, coller, assembler, modeler, réparer : le travail des mains n'est pas un simple passe-temps pour occuper un mercredi après-midi. C'est l'un des moteurs les plus puissants du développement cérébral et de l'autonomie de l'enfant. Découvrez 18 idées concrètes, adaptées par tranche d'âge de 4 à 12 ans, réalisables sans matériel coûteux."
-      updated="26 août 2026"
+      updated="27 août 2026"
       readingTime="8 min"
       path={PATH}
       related={[
         { label: "24 activités éducatives sans écran", to: "/guides/activites-educatives-enfant" },
+        {
+          label: "Kits scientifiques vs placards",
+          to: "/guides/jouets-educatifs-kits-scientifiques-placards-maison",
+        },
+        {
+          label: "Éveiller la créativité et le réel",
+          to: "/guides/quelle-librairie-choisir-lieux-creativite-enfant",
+        },
         { label: "Les 9 formes d'intelligence (Gardner)", to: "/guides/intelligences-multiples-gardner" },
-        { label: "Réduire les écrans sans crise", to: "/guides/ecrans-addiction-alternatives-enfant" },
-        { label: "Canaliser un enfant agité", to: "/guides/enfant-agite-concentration" },
       ]}
     >
       <img

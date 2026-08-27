@@ -5,8 +5,8 @@ import {
   jsonLdScript,
   faqPageJsonLd,
   breadcrumbJsonLd,
-  absoluteUrl,
-  SITE_URL,
+  articleJsonLd,
+  howToJsonLd,
 } from "@/lib/seo";
 
 const PATH = "/guides/activites-educatives-enfant";
@@ -61,42 +61,42 @@ const ACTIVITIES = [
     ],
   },
   {
-    intelligence: "Langage & communication",
+    intelligence: "Créativité & travail manuel",
     age: "6-12 ans",
     items: [
-      "Préparer et prononcer un discours de 2 minutes pour défendre une cause familiale ou écologique",
-      "Interviewer un aîné ou un commerçant du quartier et réaliser un mini-reportage photo",
-      "Inventer et enregistrer la suite d'un conte traditionnel sous forme de podcast audio",
-      "Rédiger le journal de bord illustré des aventures de la semaine",
+      "Fabriquer une balance à fléau avec un cintre, de la ficelle et deux gobelets pour comparer des masses",
+      "Dessiner le plan d'architecte à l'échelle de la chambre ou du salon avec une règle et un mètre",
+      "Concevoir un jeu de société complet (plateau, règles, pions, cartes) et y jouer en famille",
+      "Créer une animation en stop-motion (dessins successifs) d'un personnage en papier",
     ],
   },
   {
-    intelligence: "Kinesthésique & espace",
+    intelligence: "Expression & langue",
     age: "6-12 ans",
     items: [
-      "Concevoir un parcours d'agilité dans le salon avec des règles de pénalités et un chronomètre",
-      "Dessiner le plan à l'échelle de sa chambre avec un mètre ruban",
-      "Créer une chorégraphie ou un enchaînement d'équilibre et l'enseigner à ses parents",
-      "Bâtir une maquette de monument ou de son quartier en matériaux de récupération (cartons, bouchons)",
+      "Interviewer un parent ou grand-parent sur son enfance et rédiger son portrait en 1 page",
+      "Écrire la suite alternative d'un conte traditionnel et l'interpréter devant la famille",
+      "Créer le journal d'actualités de la maison avec 3 rubriques (météo, exploit de la semaine, interview)",
+      "Inventer 5 charades ou rébus logiques et les faire deviner au dîner",
     ],
   },
   {
-    intelligence: "Social & entrepreneuriat",
-    age: "8-12 ans",
+    intelligence: "Social & coopération",
+    age: "6-12 ans",
     items: [
-      "Tenir un stand de jus ou de gâteaux lors d'un après-midi en famille et gérer la caisse en monnaie réelle",
-      "Co-construire et signer la charte des règles de vie de la maison avec frères et sœurs",
-      "Organiser un tournoi de jeux de société pour les cousins ou voisins en expliquant les règles",
-      "Planifier le menu et la liste de courses de la famille pour 3 jours avec un budget limité",
+      "Organiser une mini-vente de limonade ou gâteaux pour financer un livre ou un projet familial",
+      "Établir avec la fratrie la charte des responsabilités de la chambre et l'afficher",
+      "Guider un parent les yeux bandés à travers un parcours d'obstacles uniquement à la voix",
+      "Créer un jeu de cartes des émotions et jouer à mimer chaque situation vécue dans la journée",
     ],
   },
   {
-    intelligence: "Artisanat & débrouillardise",
+    intelligence: "Musique & rythme",
     age: "6-12 ans",
     items: [
-      "Préparer un plat traditionnel de A à Z sous la supervision bienveillante d'un adulte",
-      "Diagnostiquer et réparer un jouet ou un vêtement abîmé au lieu de le jeter",
-      "Tisser ou tresser un panier, un bracelet ou un sous-verre avec des fibres ou tissus recyclés",
+      "Créer une gamme musicale avec 6 verres remplis de niveaux d'eau différents",
+      "Composer un hymne familial de 4 vers sur un rythme régulier frappé sur la table",
+      "Reconnaître à l'aveugle 8 bruits du quotidien enregistrés dans la maison",
       "Fabriquer un instrument de percussion ou à cordes et jouer un rythme régulier",
     ],
   },
@@ -105,9 +105,9 @@ const ACTIVITIES = [
 export const Route = createFileRoute("/guides/activites-educatives-enfant")({
   head: () => {
     const meta = pageMeta({
-      title: "24 activités éducatives sans écran à la maison (6-12 ans)",
+      title: "Activités éducatives pour les 6-12 ans à la maison",
       description:
-        "Découvrez 24 activités éducatives sans écran pour enfants de 6 à 12 ans à faire à la maison avec du matériel du quotidien. Jeux stimulants, sciences et créativité.",
+        "Découvrez 24 activités éducatives sans écran pour enfants de 6 à 12 ans : sciences du quotidien, calcul réel et défis créatifs faciles à la maison.",
       path: PATH,
       image: "/guides/og-activites.jpg",
       type: "article",
@@ -123,27 +123,38 @@ export const Route = createFileRoute("/guides/activites-educatives-enfant")({
             { name: "Activités éducatives 6-12 ans", path: PATH },
           ]),
         ),
-        jsonLdScript({
-          "@context": "https://schema.org",
-          "@type": "Article",
-          headline:
-            "24 activités éducatives sans écran à faire à la maison avec un enfant de 6 à 12 ans",
-          description:
-            "Guide complet d'activités éducatives maison pour les 6 à 12 ans : expériences scientifiques simples, calcul réel, créativité manuelle et défis sans écran.",
-          inLanguage: "fr-FR",
-          mainEntityOfPage: absoluteUrl(PATH),
-          image: absoluteUrl("/guides/og-activites.jpg"),
-          publisher: { "@id": `${SITE_URL}/#organization` },
-          author: { "@type": "Organization", name: "Génizio" },
-          datePublished: "2026-07-27",
-          dateModified: "2026-08-25",
-          about: [
-            { "@type": "Thing", name: "Activités éducatives pour enfants" },
-            { "@type": "Thing", name: "Jeux éducatifs sans écran" },
-            { "@type": "Thing", name: "Intelligences multiples de Gardner" },
-            { "@type": "Thing", name: "Apprentissage par l'action" },
-          ],
-        }),
+        jsonLdScript(
+          howToJsonLd({
+            name: "Défi 10 min : Le Système d'arrosage goutte-à-goutte maison (6-12 ans)",
+            description:
+              "Une expérience scientifique sans écran avec des bouteilles recyclées pour comprendre le débit et la pression à la maison.",
+            steps: [
+              {
+                name: "Perçage de précision",
+                text: "Percez 2 micro-trous au fond d'une bouteille plastique à l'aide d'une pointe ou d'une épingle chauffée sous supervision adulte.",
+              },
+              {
+                name: "Étalonnage du débit",
+                text: "Remplissez la bouteille d'eau, vissez le bouchon plus ou moins fort et comptez le nombre de gouttes par minute pour régler le débit.",
+              },
+              {
+                name: "Installation et observation",
+                text: "Plantez le goulot au pied d'une plante en pot et mesurez l'humidité du sol après 24 heures.",
+              },
+            ],
+          }),
+        ),
+        jsonLdScript(
+          articleJsonLd({
+            headline: "24 activités éducatives sans écran pour enfants de 6 à 12 ans à la maison",
+            description:
+              "Guide complet d'activités éducatives maison pour les 6 à 12 ans : expériences scientifiques simples, calcul réel, créativité manuelle et défis sans écran.",
+            path: PATH,
+            image: "/guides/og-activites.jpg",
+            datePublished: "2026-07-27",
+            dateModified: "2026-08-27",
+          }),
+        ),
       ],
     };
   },
@@ -156,17 +167,17 @@ function Guide() {
       eyebrow="Activités & jeux"
       title="24 activités éducatives sans écran à faire à la maison avec un enfant de 6 à 12 ans"
       intro="Pas de matériel coûteux, pas d'écran, pas de fiche à imprimer. Des activités qui produisent un résultat visible — et qui, mises bout à bout, révèlent ce que votre enfant sait faire. Pour le soir des devoirs, le week-end ou les vacances."
-      updated="25 août 2026"
+      updated="27 août 2026"
       readingTime="9 min"
       path={PATH}
       related={[
+        { label: "18 activités manuelles (4-12 ans)", to: "/guides/activites-manuelles-enfant" },
         {
-          label: "Haut potentiel : les vrais signes",
-          to: "/guides/potentiel-haut-potentiel-enfant",
+          label: "Kits scientifiques vs maison",
+          to: "/guides/jouets-educatifs-kits-scientifiques-placards-maison",
         },
         { label: "Mon enfant ne tient pas en place", to: "/guides/enfant-agite-concentration" },
-        { label: "Activités manuelles (4-12 ans)", to: "/guides/activites-manuelles-enfant" },
-        { label: "Accro aux écrans ? Alternatives", to: "/guides/ecrans-addiction-alternatives-enfant" },
+        { label: "Les 9 formes d'intelligence", to: "/guides/intelligences-multiples-gardner" },
       ]}
     >
       <img
