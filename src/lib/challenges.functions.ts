@@ -837,6 +837,7 @@ export type ProgressionTarget = {
   peakLevelAge: number;
   confidence: number;
   evidenceCount: number;
+  hasUnconsolidatedCollectivePeak?: boolean;
 };
 
 import { calibrateDomainCapability, formatDynamicCapabilityInstruction, mapDiscoveryDifficultyToLevelAge, type ObservationEvidence } from "./dynamic-capability";
@@ -875,7 +876,7 @@ export async function computeProgressionTargets(
       .limit(200),
     supabase
       .from("discovery_traces")
-      .select("domain, perceived_difficulty, autonomy_level, attempts_count, outcome_status, proof_image_url, naya_dialogue, created_at")
+      .select("domain, perceived_difficulty, autonomy_level, attempts_count, outcome_status, proof_image_url, naya_dialogue, created_at, source_type, ai_behavioral_analysis")
       .eq("child_id", childId)
       .order("created_at", { ascending: true })
       .limit(100),
@@ -945,17 +946,59 @@ export async function computeProgressionTargets(
     else if (d.outcome_status === "bloque") outcomeStatus = "blocked";
     else if (d.outcome_status === "abandonne") outcomeStatus = "failed";
 
-    const ev: ObservationEvidence = {
-      source: "discovery_trace",
-      domain: acaDomain,
-      demonstratedLevelAge: levelAge,
-      autonomyWeight: autonomyW,
-      perseveranceWeight: persW,
-      metacognitiveWeight: metaW,
-      proofWeight: proofW,
-      outcomeStatus,
-      occurredAt: d.created_at,
-    };
+    let ev: ObservationEvidence;
+    if (d.source_type === "fablab_marathon" || d.source_type === "projet_collectif") {
+      const collectivePayload = d.ai_behavioral_analysis as any;
+      let alpha = 0.6; 
+      if (collectivePayload?.implication === "pilier") alpha = 0.85;
+      else if (collectivePayload?.implication === "apprenti") alpha = 0.35;
+      else if (collectivePayload?.implication === "observateur") alpha = 0.15;
+
+      const baseLevelAge = mapDiscoveryDifficultyToLevelAge(d.perceived_difficulty, childAge);
+      let demonstratedLevelAge = childAge;
+      if (baseLevelAge > childAge) {
+        demonstratedLevelAge = childAge + alpha * (baseLevelAge - childAge);
+      } else {
+        demonstratedLevelAge = baseLevelAge;
+      }
+
+      let autoW = 0.5;
+      let persW2 = 0.5;
+      let metaW2 = 0.5;
+      if (collectivePayload?.supervisorTags) {
+         for (const t of collectivePayload.supervisorTags) {
+           const shift = t.impact === "positive" ? 0.2 : t.impact === "negative" ? -0.2 : 0;
+           if (t.dimension === "autonomie") autoW = Math.min(1.0, Math.max(0.0, autoW + shift));
+           if (t.dimension === "perseverance") persW2 = Math.min(1.0, Math.max(0.0, persW2 + shift));
+           if (t.dimension === "collaboration") metaW2 = Math.min(1.0, Math.max(0.0, metaW2 + shift));
+         }
+         if (collectivePayload.implication === "pilier" && autoW === 0.5) autoW = 0.8;
+      }
+
+      ev = {
+        source: "collective_project",
+        domain: acaDomain,
+        demonstratedLevelAge: Number(demonstratedLevelAge.toFixed(2)),
+        autonomyWeight: autoW,
+        perseveranceWeight: persW2,
+        metacognitiveWeight: metaW2,
+        proofWeight: proofW,
+        outcomeStatus,
+        occurredAt: d.created_at || new Date().toISOString(),
+      };
+    } else {
+      ev = {
+        source: "discovery_trace",
+        domain: acaDomain,
+        demonstratedLevelAge: levelAge,
+        autonomyWeight: autonomyW,
+        perseveranceWeight: persW,
+        metacognitiveWeight: metaW,
+        proofWeight: proofW,
+        outcomeStatus,
+        occurredAt: d.created_at || new Date().toISOString(),
+      };
+    }
 
     if (!evidencesByDomain.has(acaDomain)) evidencesByDomain.set(acaDomain, []);
     evidencesByDomain.get(acaDomain)!.push(ev);
@@ -984,6 +1027,7 @@ export async function computeProgressionTargets(
       peakLevelAge: cap.peakLevelAge,
       confidence: cap.confidence,
       evidenceCount: cap.evidenceCount,
+      hasUnconsolidatedCollectivePeak: cap.hasUnconsolidatedCollectivePeak,
     });
   }
 

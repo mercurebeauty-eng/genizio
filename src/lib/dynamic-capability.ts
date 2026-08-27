@@ -12,10 +12,11 @@ export interface DomainCapabilityState {
   peakLevelAge: number;        // N_peak : Plus haut niveau observé crédible
   confidence: number;          // Confiance de l'estimation [0..1]
   evidenceCount: number;       // Nombre total de preuves
+  hasUnconsolidatedCollectivePeak?: boolean; // Vrai si le pic d'exploration vient d'un projet de groupe non vérifié en solo
 }
 
 export interface ObservationEvidence {
-  source: "challenge" | "discovery_trace";
+  source: "challenge" | "discovery_trace" | "collective_project";
   domain: string;
   demonstratedLevelAge: number;
   autonomyWeight: number;      // 0..1 (ex: seul=1.0, guidé=0.4)
@@ -90,6 +91,7 @@ export function calibrateDomainCapability(
   let stableLevel = childAge;
   let exploreLevel = childAge;
   let peakLevel = childAge;
+  let hasUnconsolidatedCollectivePeak = false;
   
   // Fenêtre glissante pour évaluer la stabilisation
   let consecutiveExploreFailures = 0;
@@ -112,7 +114,15 @@ export function calibrateDomainCapability(
         const push = w * (ev.demonstratedLevelAge - stableLevel);
         const newExplore = Math.round(stableLevel + push);
         
-        exploreLevel = Math.max(exploreLevel, newExplore);
+        if (newExplore > exploreLevel) {
+          exploreLevel = newExplore;
+          // Si cette poussée vient d'un projet collectif, on marque l'alerte
+          if (ev.source === "collective_project") {
+            hasUnconsolidatedCollectivePeak = true;
+          } else {
+            hasUnconsolidatedCollectivePeak = false; // Confirmé/remplacé par un solo
+          }
+        }
         consecutiveExploreFailures = 0; // Réinitialiser le compteur d'échec sur la ZPD
       }
     }
@@ -122,10 +132,13 @@ export function calibrateDomainCapability(
       if (w >= 0.7) {
         // Succès fort et autonome
         consecutiveStableSuccesses++;
-        if (consecutiveStableSuccesses >= 2) {
+        if (consecutiveStableSuccesses >= 2 || ev.source === "challenge") {
           // On consolide le socle
           stableLevel = Math.max(stableLevel, ev.demonstratedLevelAge);
           consecutiveStableSuccesses = 0;
+          if (stableLevel >= exploreLevel) {
+             hasUnconsolidatedCollectivePeak = false; // Consolidé
+          }
         }
       }
     } else if (ev.outcomeStatus === "failed" || ev.outcomeStatus === "blocked") {
@@ -160,6 +173,7 @@ export function calibrateDomainCapability(
     peakLevelAge: peakLevel,
     confidence: Math.min(1.0, sorted.length / 5), // Arbitrary scaling for confidence based on evidence volume
     evidenceCount: sorted.length,
+    hasUnconsolidatedCollectivePeak,
   };
 }
 
@@ -230,6 +244,11 @@ export function formatDynamicCapabilityInstruction(capabilities: DomainCapabilit
     } else {
       line += ".";
     }
+
+    if (cap.hasUnconsolidatedCollectivePeak) {
+      line += `\n  ⚠️ L'enfant a démontré un potentiel en équipe sur ce domaine (niveau ${cap.exploratoryLevelAge}). Propose un défi solo accessible pour sonder et consolider son autonomie réelle.`;
+    }
+
     return line;
   });
 

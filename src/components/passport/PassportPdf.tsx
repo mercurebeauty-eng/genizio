@@ -414,10 +414,11 @@ export type PassportPdfData = {
   letter: string;
   /** data-URL des photos de preuve, indexées par id de défi. */
   proofImages: Record<string, string>;
+  longitudinalGraph?: any; // The full LongitudinalGraph calculated from discovery traces
 };
 
 export function PassportPdf({ data }: { data: PassportPdfData }) {
-  const { child, challenges, earnedBadges, synthesis, letter } = data;
+  const { child, challenges, earnedBadges, synthesis, letter, longitudinalGraph } = data;
   const guild = getChildGuild(child.talents);
   const totalXP = child.xp || 0;
   const level = Math.floor(totalXP / 500) + 1;
@@ -440,8 +441,10 @@ export function PassportPdf({ data }: { data: PassportPdfData }) {
     .slice(0, 4);
 
   const challengePages = paginateChallenges(challenges);
+  const hasLongitudinal = longitudinalGraph && longitudinalGraph.experiences.length > 0;
   const startPage = hasSynthesis ? 4 : 3;
-  const totalPages = 2 + (hasSynthesis ? 1 : 0) + challengePages.length;
+  const challengeStartPage = startPage + (hasLongitudinal ? 1 : 0);
+  const totalPages = 2 + (hasSynthesis ? 1 : 0) + (hasLongitudinal ? 1 : 0) + challengePages.length;
 
   const radarColor =
     child.age >= 12 ? PDF_COLORS.amber : child.age >= 7 ? PDF_COLORS.skyDark : PDF_COLORS.leaf;
@@ -1156,7 +1159,138 @@ export function PassportPdf({ data }: { data: PassportPdfData }) {
         </Page>
       )}
 
-      {/* ══ PAGES 4+ : RÉALISATIONS & ÉPREUVES ══ */}
+      {/* ══ PAGE OPTIONNELLE : COMPÉTENCES & PROJETS COLLECTIFS ══ */}
+      {hasLongitudinal && (
+        <Page size="A4" style={styles.page}>
+          <View
+            style={{
+              borderBottomWidth: 2.5,
+              borderBottomColor: PDF_COLORS.ink,
+              paddingBottom: 8,
+              marginBottom: 16,
+            }}
+          >
+            <Text
+              style={{
+                fontFamily: PASSPORT_FONT_DISPLAY,
+                fontSize: 10,
+                color: PDF_COLORS.inkMuted,
+                fontWeight: 600,
+                marginBottom: 3,
+                textTransform: "uppercase",
+                letterSpacing: 0.5,
+              }}
+            >
+              Chapitre Spécial
+            </Text>
+            <Text style={{ ...sectionHeading, fontSize: 18, color: PDF_COLORS.ink }}>
+              Projets Collectifs & Coopération
+            </Text>
+          </View>
+
+          <View style={{ marginBottom: 12 }}>
+            <Text style={{ fontFamily: PASSPORT_FONT_BODY, fontSize: 8.5, lineHeight: 1.5, color: PDF_COLORS.ink }}>
+              Génizio documente la trajectoire collaborative de l'enfant à travers des projets réels (Fab Labs, Marathons). 
+              Ce registre compile les rôles endossés et les constats factuels des superviseurs (micro-observables),
+              formant un dossier de preuves de la capacité d'action en groupe.
+            </Text>
+          </View>
+
+          <View style={{ flexDirection: "row", gap: 12, marginBottom: 16 }}>
+            <View style={{ ...cardBase, flex: 1, backgroundColor: "#fdf3ea" }}>
+              <Text style={{ fontFamily: PASSPORT_FONT_DISPLAY, fontWeight: 700, fontSize: 10, color: PDF_COLORS.ink, marginBottom: 4 }}>
+                Compétences Démontrées
+              </Text>
+              <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 4 }}>
+                {Object.entries(longitudinalGraph.behavioralSummary.tagsFrequency)
+                  .sort((a, b) => (b[1] as any).count - (a[1] as any).count)
+                  .map(([tag, data]) => (
+                    <Text key={tag} style={{
+                      fontFamily: PASSPORT_FONT_BODY,
+                      fontSize: 7.5,
+                      fontWeight: 600,
+                      backgroundColor: PDF_COLORS.white,
+                      borderWidth: 1,
+                      borderColor: (data as any).impact === "positive" ? PDF_COLORS.emerald : PDF_COLORS.dividerSoft,
+                      color: (data as any).impact === "positive" ? PDF_COLORS.emerald : PDF_COLORS.inkMuted,
+                      paddingHorizontal: 6,
+                      paddingVertical: 3,
+                      borderRadius: 12,
+                    }}>
+                      {tag} ({(data as any).count})
+                    </Text>
+                  ))}
+              </View>
+            </View>
+            <View style={{ ...cardBase, flex: 1, backgroundColor: "#f0f9ff" }}>
+              <Text style={{ fontFamily: PASSPORT_FONT_DISPLAY, fontWeight: 700, fontSize: 10, color: PDF_COLORS.ink, marginBottom: 4 }}>
+                Rôles & Plasticité
+              </Text>
+              <Text style={{ fontFamily: PASSPORT_FONT_BODY, fontSize: 7.5, color: PDF_COLORS.inkMuted, marginBottom: 6 }}>
+                Indice d'adaptabilité : {Math.round(longitudinalGraph.roleSummary.plasticityScore * 100)}%
+              </Text>
+              <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 4 }}>
+                {Object.entries(longitudinalGraph.roleSummary.rolesFrequency).map(([role, count]) => (
+                  <Text key={role} style={{
+                    fontFamily: PASSPORT_FONT_BODY,
+                    fontSize: 7.5,
+                    fontWeight: 600,
+                    backgroundColor: PDF_COLORS.white,
+                    borderWidth: 1,
+                    borderColor: PDF_COLORS.brand,
+                    color: PDF_COLORS.brand,
+                    paddingHorizontal: 6,
+                    paddingVertical: 3,
+                    borderRadius: 12,
+                    textTransform: "capitalize"
+                  }}>
+                    {role} ({count as number})
+                  </Text>
+                ))}
+              </View>
+            </View>
+          </View>
+
+          <Text style={{ ...sectionHeading, fontSize: 12, color: PDF_COLORS.ink, marginBottom: 8, marginTop: 4 }}>
+            Registre des Expériences Vécues
+          </Text>
+
+          {longitudinalGraph.experiences.slice(0, 4).map((exp: any) => (
+            <View key={exp.id} style={{ ...cardBase, marginBottom: 8, flexDirection: "row", gap: 10 }}>
+              <View style={{ flex: 1 }}>
+                <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 3 }}>
+                  <Text style={{ fontFamily: PASSPORT_FONT_DISPLAY, fontWeight: 700, fontSize: 9.5, color: PDF_COLORS.ink }}>
+                    {exp.title}
+                  </Text>
+                  <Text style={{ fontFamily: PASSPORT_FONT_BODY, fontSize: 7, color: PDF_COLORS.inkMuted }}>
+                    {new Date(exp.occurredAt).toLocaleDateString("fr-FR", { year: "numeric", month: "long" })}
+                  </Text>
+                </View>
+                <Text style={{ fontFamily: PASSPORT_FONT_BODY, fontSize: 7.5, color: PDF_COLORS.ink, marginBottom: 4 }}>
+                  <Text style={{ color: PDF_COLORS.inkMuted }}>Rôle assumé : </Text>
+                  <Text style={{ fontWeight: 700, textTransform: "capitalize" }}>{exp.role}</Text>
+                  {exp.implication !== "non_specifie" && (
+                    <Text style={{ color: PDF_COLORS.brand }}> ({exp.implication.replace("_", " ")})</Text>
+                  )}
+                </Text>
+                {exp.supervisorTags.length > 0 && (
+                  <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 4 }}>
+                    {exp.supervisorTags.map((t: any, i: number) => (
+                      <Text key={i} style={{ fontFamily: PASSPORT_FONT_BODY, fontSize: 6.5, fontWeight: 600, backgroundColor: "#f3f4f6", color: "#374151", paddingHorizontal: 4, paddingVertical: 2, borderRadius: 4 }}>
+                        {t.tag}
+                      </Text>
+                    ))}
+                  </View>
+                )}
+              </View>
+            </View>
+          ))}
+
+          <PageFooter childName={child.name} pageNumber={startPage} totalPages={totalPages} />
+        </Page>
+      )}
+
+      {/* ══ PAGES 4/5+ : RÉALISATIONS & ÉPREUVES ══ */}
       {challengePages.map((chunk, chunkIdx) => {
         const roman = hasSynthesis ? "III" : "II";
         const from = chunkIdx * 2 + 1;
@@ -1374,7 +1508,7 @@ export function PassportPdf({ data }: { data: PassportPdfData }) {
 
             <PageFooter
               childName={child.name}
-              pageNumber={startPage + chunkIdx}
+              pageNumber={challengeStartPage + chunkIdx}
               totalPages={totalPages}
             />
           </Page>

@@ -4,6 +4,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { supabase } from "@/integrations/supabase/client";
 import { useSession } from "@/hooks/use-session";
 import { getChildAISynthesis, getPassportLetter, BADGE_CATALOG } from "@/lib/challenges.functions";
+import { extractLongitudinalExperiences } from "@/lib/longitudinal-evidence";
 import { getProofImageSrc, ProofImage } from "@/lib/proof-image";
 import { initializePassportPayment } from "@/lib/payments.functions";
 import { getChildGuild, getTalentAffinities } from "@/lib/guilds";
@@ -102,6 +103,7 @@ function PassportPrintPage() {
 
   const [child, setChild] = useState<Child | null>(null);
   const [challenges, setChallenges] = useState<Challenge[]>([]);
+  const [discoveryTraces, setDiscoveryTraces] = useState<any[]>([]);
   const [earnedBadges, setEarnedBadges] = useState<string[]>([]);
   const [fetching, setFetching] = useState(true);
   const [synthesis, setSynthesis] = useState("");
@@ -167,11 +169,18 @@ function PassportPrintPage() {
         .select("badge_slug")
         .eq("child_id", profileId)
         .order("earned_at", { ascending: true }),
+      supabase
+        .from("discovery_traces")
+        .select("id, title, domain, proof_image_url, created_at, source_type, ai_behavioral_analysis")
+        .eq("child_id", profileId)
+        .order("created_at", { ascending: false })
+        .limit(50),
     ])
-      .then(([c, ch, b]) => {
+      .then(([c, ch, b, dt]) => {
         setChild((c.data as Child) ?? null);
         setChallenges((ch.data ?? []) as Challenge[]);
         setEarnedBadges((b.data ?? []).map((row) => row.badge_slug));
+        setDiscoveryTraces((dt.data ?? []) as any[]);
       })
       .catch((err) => console.error("Erreur de chargement du passeport:", err))
       .finally(() => setFetching(false));
@@ -246,6 +255,7 @@ function PassportPrintPage() {
             synthesis,
             letter,
             proofImages,
+            longitudinalGraph: extractLongitudinalExperiences(discoveryTraces, challenges),
           }}
         />,
       ).toBlob();
