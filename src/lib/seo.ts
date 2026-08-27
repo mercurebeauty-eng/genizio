@@ -194,7 +194,14 @@ export function breadcrumbJsonLd(items: { name: string; path: string }[]) {
   };
 }
 
-/** Schéma d'Article pour les guides et articles de blog (SEO/AEO). */
+/**
+ * Schéma d'Article pour les guides et articles de blog (SEO/AEO/GEO).
+ * Conforme aux exigences officielles Google Search Central :
+ * - Image haute résolution (au moins 1200px de large)
+ * - Auteur Person (E-E-A-T) avec URL biographie et fonction
+ * - Publisher Organization relié au graphe sémantique
+ * - Dates de publication et révision au format ISO 8601
+ */
 export function articleJsonLd(opts: {
   headline: string;
   description: string;
@@ -203,7 +210,24 @@ export function articleJsonLd(opts: {
   dateModified?: string;
   image?: string;
   authorName?: string;
+  authorType?: "Person" | "Organization";
+  authorUrl?: string;
 }) {
+  const authorType = opts.authorType ?? "Person";
+  const author =
+    authorType === "Person"
+      ? {
+          "@type": "Person" as const,
+          name: opts.authorName ?? FOUNDER_NAME,
+          jobTitle: "Directeur Pédagogique & Fondateur",
+          url: absoluteUrl(opts.authorUrl ?? "/a-propos"),
+        }
+      : {
+          "@type": "Organization" as const,
+          name: opts.authorName ?? SITE_NAME,
+          url: SITE_URL,
+        };
+
   return {
     "@context": "https://schema.org",
     "@type": "Article",
@@ -216,11 +240,7 @@ export function articleJsonLd(opts: {
     image: absoluteUrl(opts.image ?? OG_IMAGE_PATH),
     datePublished: opts.datePublished,
     dateModified: opts.dateModified ?? opts.datePublished,
-    author: {
-      "@type": "Organization",
-      name: opts.authorName ?? SITE_NAME,
-      url: SITE_URL,
-    },
+    author,
     publisher: {
       "@id": `${SITE_URL}/#organization`,
     },

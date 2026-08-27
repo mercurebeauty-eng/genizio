@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { reviewsJsonLd, type ParentReview } from "@/lib/seo";
+import { reviewsJsonLd, articleJsonLd, type ParentReview } from "@/lib/seo";
 
 const REVIEWS: ParentReview[] = [
   {
@@ -42,3 +42,38 @@ describe("reviewsJsonLd", () => {
     expect(ld.review).toEqual([]);
   });
 });
+
+describe("articleJsonLd", () => {
+  it("génère un schéma Article conforme Google avec auteur Person par défaut pour l'E-E-A-T", () => {
+    const ld = articleJsonLd({
+      headline: "Les 9 formes d'intelligence pour révéler ses talents",
+      description: "Guide complet sur Gardner...",
+      path: "/guides/intelligences-multiples-gardner",
+      datePublished: "2026-08-27",
+    });
+
+    expect(ld["@context"]).toBe("https://schema.org");
+    expect(ld["@type"]).toBe("Article");
+    expect(ld.headline).toBe("Les 9 formes d'intelligence pour révéler ses talents");
+    expect(ld.author["@type"]).toBe("Person");
+    expect(ld.author.name).toBe("Cheick Mohamed TRAORE");
+    expect(ld.author.url).toContain("/a-propos");
+    expect(ld.publisher["@id"]).toContain("/#organization");
+    expect(ld.mainEntityOfPage["@id"]).toContain("/guides/intelligences-multiples-gardner");
+  });
+
+  it("supporte un auteur Organization si explicitement demandé", () => {
+    const ld = articleJsonLd({
+      headline: "Titre test",
+      description: "Desc test",
+      path: "/guides/test",
+      datePublished: "2026-08-27",
+      authorType: "Organization",
+      authorName: "Génizio Éditions",
+    });
+
+    expect(ld.author["@type"]).toBe("Organization");
+    expect(ld.author.name).toBe("Génizio Éditions");
+  });
+});
+
