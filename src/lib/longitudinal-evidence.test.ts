@@ -71,6 +71,51 @@ describe("longitudinal-evidence", () => {
     expect(graph.roleSummary.plasticityScore).toBeGreaterThan(0);
   });
 
+  it("should infer mobilization insights from environmental conditions", () => {
+    const tracesWithConditions = [
+      {
+        id: "t1",
+        title: "Projet Duo",
+        domain: "robotique",
+        source_type: "projet_collectif",
+        created_at: "2026-08-20T10:00:00Z",
+        ai_behavioral_analysis: {
+          role: "programmation",
+          implication: "pilier",
+          participationStatus: "active_participant",
+          environmentalConditions: {
+            groupSize: 2,
+            roleClarity: "explicit_structured",
+            peerFamiliarity: "peers_familiar",
+            timePressure: "relaxed"
+          }
+        }
+      },
+      {
+        id: "t2",
+        title: "Grand Atelier",
+        domain: "robotique",
+        source_type: "projet_collectif",
+        created_at: "2026-08-25T10:00:00Z",
+        ai_behavioral_analysis: {
+          role: "observateur",
+          implication: "observateur",
+          participationStatus: "present_passive",
+          environmentalConditions: {
+            groupSize: 8,
+            roleClarity: "open_autonomous",
+            peerFamiliarity: "peers_new",
+            timePressure: "relaxed"
+          }
+        }
+      }
+    ];
+
+    const graph = extractLongitudinalExperiences(tracesWithConditions);
+    expect(graph.mobilizationInsights.length).toBeGreaterThan(0);
+    expect(graph.mobilizationInsights[0].factor).toBe("group_size");
+  });
+
   it("should handle empty traces", () => {
     const graph = extractLongitudinalExperiences([], []);
     expect(graph.experiences.length).toBe(0);

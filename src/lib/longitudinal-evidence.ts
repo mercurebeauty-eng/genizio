@@ -1,5 +1,13 @@
-import { TeamRole, ImplicationLevel, SupervisorObservableTag, computeRolePlasticity } from "./collective-capability";
+import { 
+  TeamRole, 
+  ImplicationLevel, 
+  ParticipationStatus,
+  EnvironmentalConditions,
+  SupervisorObservableTag, 
+  computeRolePlasticity 
+} from "./collective-capability";
 import { type DiagnosticHypothesis, getTriangulatedCompetencies } from "./diagnostic-hypotheses";
+import { analyzeMobilizationConditions, type MobilizationConditionHypothesis } from "./mobilization-conditions";
 
 export interface LongitudinalExperience {
   id: string;
@@ -8,6 +16,8 @@ export interface LongitudinalExperience {
   sourceType: string; // "fablab_marathon", "projet_collectif", etc.
   role: TeamRole | "non_specifie";
   implication: ImplicationLevel | "non_specifie";
+  participationStatus: ParticipationStatus;
+  environmentalConditions?: EnvironmentalConditions;
   supervisorTags: SupervisorObservableTag[];
   proofImageUrl?: string | null;
   occurredAt: string;
@@ -34,6 +44,7 @@ export interface LongitudinalGraph {
   behavioralSummary: BehavioralEvidenceSummary;
   roleSummary: RoleDistributionSummary;
   triangulatedCompetencies: DiagnosticHypothesis[];
+  mobilizationInsights: MobilizationConditionHypothesis[];
 }
 
 /**
@@ -59,6 +70,8 @@ export function extractLongitudinalExperiences(
         sourceType: trace.source_type,
         role: (collectivePayload.role as TeamRole) || "non_specifie",
         implication: (collectivePayload.implication as ImplicationLevel) || "non_specifie",
+        participationStatus: (collectivePayload.participationStatus as ParticipationStatus) || "active_participant",
+        environmentalConditions: collectivePayload.environmentalConditions || undefined,
         supervisorTags: Array.isArray(collectivePayload.supervisorTags) ? collectivePayload.supervisorTags : [],
         proofImageUrl: trace.proof_image_url || null,
         occurredAt: trace.created_at || new Date().toISOString(),
@@ -116,10 +129,14 @@ export function extractLongitudinalExperiences(
     plasticityScore,
   };
 
+  // 4. Inférence des conditions écologiques de mobilisation
+  const mobilizationInsights = analyzeMobilizationConditions(experiences);
+
   return {
     experiences,
     behavioralSummary,
     roleSummary,
-    triangulatedCompetencies: getTriangulatedCompetencies(hypotheses)
+    triangulatedCompetencies: getTriangulatedCompetencies(hypotheses),
+    mobilizationInsights
   };
 }

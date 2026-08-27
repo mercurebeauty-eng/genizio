@@ -11,6 +11,21 @@ export type TeamRole =
 
 export type ImplicationLevel = "pilier" | "contributeur_actif" | "apprenti" | "observateur";
 
+export type ParticipationStatus = 
+  | "invited"
+  | "registered"
+  | "present_passive"
+  | "active_participant"
+  | "absent"
+  | "declined";
+
+export interface EnvironmentalConditions {
+  groupSize: number;
+  roleClarity: "explicit_structured" | "open_autonomous";
+  peerFamiliarity: "peers_familiar" | "peers_mixed" | "peers_new";
+  timePressure: "relaxed" | "paced" | "hackathon_tight";
+}
+
 export interface SupervisorObservableTag {
   tag: string;
   impact: "positive" | "negative" | "neutral";
@@ -24,13 +39,16 @@ export interface CollectiveProjectTrace {
   outcomeStatus: "completed" | "partial" | "failed";
   occurredAt: string;
   hasProofImage: boolean;
+  environmentalConditions?: EnvironmentalConditions;
 }
 
 export interface CollectiveParticipantContribution {
   childId: string;
   role: TeamRole;
   implication: ImplicationLevel;
+  participationStatus?: ParticipationStatus; // default: "active_participant"
   supervisorTags: SupervisorObservableTag[];
+  environmentalConditions?: EnvironmentalConditions;
   supervisorProvenance?: {
     supervisorId: string;
     contextName: string;
@@ -52,21 +70,27 @@ export const IMPLICATION_COEFFICIENTS: Record<ImplicationLevel, number> = {
  * Calcule l'évidence d'observation INDIVIDUELLE générée par une participation à un projet COLLECTIF.
  * N_demontre = N_stable + alpha * (N_P - N_stable) [Si le projet est plus dur que le socle de l'enfant].
  * Si le projet est plus facile que le socle (N_P <= N_stable), l'enfant consolide simplement (N_demontre = N_P).
+ * NOTE : Si l'enfant n'est pas un participant actif (ex: absent, refus, ou passif complet), alpha = 0.
  */
 export function computeParticipantEvidence(
   project: CollectiveProjectTrace,
   contribution: CollectiveParticipantContribution,
   childStableLevelAge: number
 ): ObservationEvidence {
-  const alpha = IMPLICATION_COEFFICIENTS[contribution.implication];
+  const status = contribution.participationStatus || "active_participant";
+  const isActive = status === "active_participant";
+  
+  const alpha = isActive ? IMPLICATION_COEFFICIENTS[contribution.implication] : 0;
   
   // Calcul du niveau démontré
   let demonstratedLevelAge = childStableLevelAge;
-  if (project.targetLevelAge > childStableLevelAge) {
-    demonstratedLevelAge = childStableLevelAge + alpha * (project.targetLevelAge - childStableLevelAge);
-  } else {
-    // S'il participe à un projet inférieur ou égal à son niveau, il démontre au moins le niveau du projet.
-    demonstratedLevelAge = project.targetLevelAge;
+  if (isActive) {
+    if (project.targetLevelAge > childStableLevelAge) {
+      demonstratedLevelAge = childStableLevelAge + alpha * (project.targetLevelAge - childStableLevelAge);
+    } else {
+      // S'il participe activement à un projet inférieur ou égal à son niveau, il démontre au moins le niveau du projet.
+      demonstratedLevelAge = project.targetLevelAge;
+    }
   }
 
   // Évaluation des micro-observables du superviseur

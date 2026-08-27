@@ -1,7 +1,7 @@
 import React from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Users, Workflow, Star, CheckCircle2 } from "lucide-react";
+import { Users, Workflow, Star, CheckCircle2, Sparkles } from "lucide-react";
 import type { LongitudinalGraph } from "@/lib/longitudinal-evidence";
 
 interface CollectiveExperiencesSectionProps {
@@ -116,6 +116,43 @@ export function CollectiveExperiencesSection({ graph }: CollectiveExperiencesSec
                   </div>
                 );
               })}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {graph.mobilizationInsights && graph.mobilizationInsights.length > 0 && (
+        <Card className="border-indigo-200 bg-gradient-to-br from-indigo-50/50 via-purple-50/30 to-white">
+          <CardHeader className="pb-3">
+            <CardTitle className="text-lg flex items-center gap-2 text-indigo-950">
+              <Sparkles className="w-5 h-5 text-indigo-600" />
+              Écologie d'Apprentissage & Clés d'Épanouissement
+            </CardTitle>
+            <CardDescription>
+              Conditions environnementales et relationnelles dans lesquelles le potentiel de l'enfant se libère avec le plus de fluidité
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              {graph.mobilizationInsights.map((insight, idx) => (
+                <div key={idx} className="p-4 bg-white/80 backdrop-blur-sm rounded-xl border border-indigo-100 shadow-xs">
+                  <div className="flex items-center justify-between gap-2 mb-2">
+                    <Badge variant="outline" className="bg-indigo-50 text-indigo-800 border-indigo-200 font-medium">
+                      {insight.optimalContext}
+                    </Badge>
+                    <span className="text-xs text-indigo-500 font-medium">
+                      Basé sur {insight.supportingExperiencesCount} expériences
+                    </span>
+                  </div>
+                  <p className="text-sm text-ink font-medium mb-2 leading-relaxed">
+                    {insight.parentInsightText}
+                  </p>
+                  <div className="text-xs text-indigo-700 bg-indigo-50/60 p-2.5 rounded-lg border border-indigo-100/50 flex items-start gap-2">
+                    <span className="font-bold shrink-0">💡 Conseil Mentor :</span>
+                    <span>{insight.mentorActionableTip}</span>
+                  </div>
+                </div>
+              ))}
             </div>
           </CardContent>
         </Card>

@@ -52,6 +52,21 @@ describe("collective-capability engine", () => {
       expect(evidence.autonomyWeight).toBe(0.5); // Base
     });
 
+    it("should attribute alpha=0 demonstrated level if participation is 'present_passive' or 'absent'", () => {
+      const passiveContrib: CollectiveParticipantContribution = {
+        childId: "child-1",
+        role: "fabrication",
+        implication: "pilier", // Même s'il était listé comme pilier
+        participationStatus: "present_passive",
+        supervisorTags: []
+      };
+      
+      const evidence = computeParticipantEvidence(baseProject, passiveContrib, 6);
+      
+      // demonstratedLevelAge reste le niveau stable (6), aucune appropriation indue du projet (10)
+      expect(evidence.demonstratedLevelAge).toBe(6);
+    });
+
     it("should process supervisor positive/negative tags", () => {
       const contrib: CollectiveParticipantContribution = {
         childId: "child-1",
