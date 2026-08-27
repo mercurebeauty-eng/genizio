@@ -49,7 +49,7 @@ export const Route = createFileRoute("/guides/ia-apprentissage-enfant")({
     const meta = pageMeta({
       title: "ChatGPT et IA pour les devoirs de mon enfant : comment faire",
       description:
-        "Comment utiliser ChatGPT et l'IA pour aider son enfant à faire ses devoirs sans tricher : prompts concrets pour les parents, âge minimum, risques et bons réflexes.",
+        "Comment utiliser ChatGPT et l'IA pour aider son enfant sans tricher ? Découvrez 5 prompts pour parents, les règles d'or et les bonnes pratiques scolaires.",
       path: PATH,
       image: "/guides/og-ia.jpg",
       type: "article",
@@ -69,13 +69,15 @@ export const Route = createFileRoute("/guides/ia-apprentissage-enfant")({
           "@context": "https://schema.org",
           "@type": "Article",
           headline: "Comment utiliser ChatGPT et l'IA pour aider son enfant à faire ses devoirs",
+          description:
+            "Guide parental pour intégrer l'intelligence artificielle dans les devoirs à la maison de façon éthique, pédagogique et sans tricherie.",
           inLanguage: "fr-FR",
           mainEntityOfPage: absoluteUrl(PATH),
           image: absoluteUrl("/guides/og-ia.jpg"),
           publisher: { "@id": `${SITE_URL}/#organization` },
           author: { "@type": "Organization", name: "Génizio" },
           datePublished: "2026-07-27",
-          dateModified: "2026-08-14",
+          dateModified: "2026-08-27",
           about: [
             { "@type": "Thing", name: "ChatGPT et éducation" },
             { "@type": "Thing", name: "Devoirs scolaires et IA" },
@@ -91,22 +93,33 @@ export const Route = createFileRoute("/guides/ia-apprentissage-enfant")({
 function Guide() {
   return (
     <GuideLayout
-      eyebrow="IA & apprentissage"
+      eyebrow="IA & Éducation"
       title="Comment utiliser ChatGPT et l'IA pour aider son enfant à faire ses devoirs"
-      intro="Votre enfant a des devoirs, des leçons à comprendre, des exercices à refaire — et vous n'avez pas toujours le temps ni la méthode. ChatGPT peut devenir un allié précieux pour le soir des devoirs, à condition de savoir l'utiliser : c'est un outil pour l'adulte, pas une nounou pour l'enfant. Voici comment, avec des exemples de demandes concrets."
-      updated="14 août 2026"
+      intro="Votre enfant a des devoirs, des leçons à comprendre et des exercices à refaire. ChatGPT peut devenir un allié pédagogique précieux pour le soir des devoirs, à condition de savoir l'utiliser : c'est un outil de facilitation pour l'adulte, pas une calculatrice magique pour l'enfant. Voici comment l'utiliser efficacement avec 5 prompts prêts à l'emploi."
+      updated="27 août 2026"
       readingTime="8 min"
       path={PATH}
       related={[
         {
-          label: "Haut potentiel : les vrais signes",
-          to: "/guides/potentiel-haut-potentiel-enfant",
+          label: "Pratique avant théorie avec l'IA",
+          to: "/guides/pratique-avant-theorie-apprentissage-ia",
         },
         {
-          label: "Les intelligences multiples de Gardner",
+          label: "Réussite scolaire sans stress",
+          to: "/guides/reussite-scolaire-aider-enfant",
+        },
+        {
+          label: "Test d'orientation collégien & IA",
+          to: "/guides/test-orientation-metier-enfant-futur",
+        },
+        {
+          label: "Les 9 formes d'intelligence",
           to: "/guides/intelligences-multiples-gardner",
         },
-        { label: "24 activités éducatives (6-12 ans)", to: "/guides/activites-educatives-enfant" },
+        {
+          label: "Réduire les écrans sans conflit",
+          to: "/guides/ecrans-addiction-alternatives-enfant",
+        },
       ]}
     >
       <img
@@ -120,25 +133,20 @@ function Guide() {
       />
       <h2>Ce que l'IA fait réellement mieux qu'un parent seul</h2>
       <p>
-        Un parent, aussi investi soit-il, ne peut pas générer chaque semaine une activité inédite,
-        parfaitement calibrée au niveau exact de son enfant, dans un domaine qu'il n'a pas encore
-        exploré. L'IA excelle précisément sur cette tâche : produire de la variété, ajuster une
-        difficulté, croiser des domaines, à un coût et une vitesse qu'aucun parent ne peut égaler
-        seul.
+        Un parent, aussi investi soit-il, ne peut pas improviser chaque soir des analogies parfaites pour chaque notion d'école. L'IA excelle pour vulgariser, adapter un niveau de difficulté et contextualiser des concepts abstraits (découvrez pourquoi nous prônons{" "}
+        <a href="/guides/pratique-avant-theorie-apprentissage-ia">la pratique avant la théorie à l'ère de l'IA</a>).
       </p>
       <p>
         Pour les devoirs, cela se traduit en trois usages concrets :{" "}
-        <strong>reformuler une leçon</strong> que l'enfant n'a pas comprise en classe,{" "}
-        <strong>générer des exercices supplémentaires</strong> du même type que ceux de l'école, et{" "}
-        <strong>trouver des exemples de la vie réelle</strong> qui rendent une notion abstraite
-        concrète. C'est un atout réel — à condition de ne pas confondre « générer l'exercice » et «
-        faire le devoir à la place de l'enfant ».
+        <strong>reformuler une leçon</strong> complexe,{" "}
+        <strong>générer des exercices progressifs</strong> et{" "}
+        <strong>trouver des exemples du quotidien</strong> qui ancrent la mémoire (retrouvez nos 6 habitudes maison pour la{" "}
+        <a href="/guides/reussite-scolaire-aider-enfant">réussite scolaire de l'enfant</a>).
       </p>
 
       <h2>5 demandes à copier telles quelles pour le soir des devoirs</h2>
       <p>
-        La qualité de la réponse dépend de la qualité de la demande. Voici cinq formulations qui
-        fonctionnent, à adapter avec le sujet de votre enfant :
+        Voici cinq formulations de prompts très efficaces à utiliser pour accompagner votre enfant :
       </p>
       <div className="my-6 rounded-2xl bg-amber-50 p-5 border border-amber-200">
         <h3 className="font-bold text-amber-950 text-base mb-2">
@@ -148,132 +156,79 @@ function Guide() {
           <em>
             « Donne-moi 5 exercices de division comme celui-ci, avec des mangues à partager, pour un
             enfant de 9 ans. Donne les réponses à la fin. »
-          </em>{" "}
-          L'enfant refait le geste en classe, avec un exemple de son quotidien.
+          </em>
         </p>
       </div>
       <div className="my-6 rounded-2xl bg-sky-50 p-5 border border-sky-200">
-        <h3 className="font-bold text-sky-950 text-base mb-2">2. Expliquer comme une maman</h3>
+        <h3 className="font-bold text-sky-950 text-base mb-2">2. Expliquer avec une métaphore imagée</h3>
         <p className="text-sm text-sky-900 leading-relaxed">
           <em>
-            « Explique la différence entre un nom et un adjectif à un enfant de 8 ans, comme si tu
-            étais sa maman, avec des exemples qu'on trouve dans une cour de maison. »
-          </em>{" "}
-          Le registre change : simple, concret, patient.
+            « Explique la différence entre un nom et un adjectif à un enfant de 8 ans, avec des exemples qu'on trouve dans une cour de maison. »
+          </em>
         </p>
       </div>
       <div className="my-6 rounded-2xl bg-emerald-50 p-5 border border-emerald-200">
         <h3 className="font-bold text-emerald-950 text-base mb-2">
-          3. Vérifier sans donner la réponse
+          3. Guider sans donner la réponse brute
         </h3>
         <p className="text-sm text-emerald-900 leading-relaxed">
           <em>
             « Mon fils a répondu que 7 x 8 = 54. Sans lui donner la bonne réponse, propose une
             question qui l'aide à trouver son erreur tout seul. »
-          </em>{" "}
-          L'IA devient un répétiteur qui fait réfléchir, pas une calculatrice qui répond.
+          </em>
         </p>
       </div>
       <div className="my-6 rounded-2xl bg-purple-50 p-5 border border-purple-200">
         <h3 className="font-bold text-purple-950 text-base mb-2">
-          4. Un exemple du quartier pour une leçon abstraite
+          4. Contextualiser une notion abstraite
         </h3>
         <p className="text-sm text-purple-900 leading-relaxed">
           <em>
-            « Trouve 3 exemples de fractions dans un marché en Afrique de l'Ouest (demi, quart,
-            tiers). »
-          </em>{" "}
-          L'illustration de la vie réelle ancre la leçon : c'est ce que l'école n'a pas le temps de
-          faire.
+            « Trouve 3 exemples de fractions dans un marché en Afrique de l'Ouest (demi, quart, tiers). »
+          </em>
         </p>
       </div>
       <div className="my-6 rounded-2xl bg-rose-50 p-5 border border-rose-200">
         <h3 className="font-bold text-rose-950 text-base mb-2">
-          5. Préparer une récitation ou un exposé
+          5. Structurer un exposé oral
         </h3>
         <p className="text-sm text-rose-900 leading-relaxed">
           <em>
-            « Aide-moi à préparer un exposé de 3 minutes sur le climat avec un enfant de 10 ans : 3
-            idées principales, une phrase d'introduction qui accroche, et une question pour la
-            classe. »
-          </em>{" "}
-          L'enfant récite et explique avec ses mots — pas ceux de la machine.
+            « Aide-moi à préparer un exposé de 3 minutes sur le cycle de l'eau avec un enfant de 10 ans : 3 idées clés et une accroche dynamique. »
+          </em> (pour l'aider à s'exprimer devant la classe, découvrez nos astuces pour{" "}
+          <a href="/guides/timidite-confiance-prise-de-parole">libérer la prise de parole d'un enfant timide</a>).
         </p>
       </div>
 
-      <h2>Où l'usage non cadré pose de vrais problèmes</h2>
-      <p>
-        ChatGPT et les autres assistants conversationnels généralistes ne sont pas conçus pour des
-        enfants, et un usage libre, sans cadre, expose à plusieurs risques réels et documentés :
-      </p>
-      <ul>
+      <h2>Les 4 règles d'or pour des devoirs éthiques avec l'IA</h2>
+      <ol className="space-y-3 my-6">
         <li>
-          <strong>Une confiance mal placée.</strong> Ces outils formulent une réponse fausse avec la
-          même assurance qu'une réponse juste. Un enfant qui n'a pas encore les outils critiques
-          pour repérer la différence peut apprendre une erreur avec autant de conviction qu'un fait
-          vérifié.
+          <strong>Le parent pilote l'outil :</strong> C'est l'adulte qui filtre et adapte les réponses de l'IA pour préserver l'équilibre numérique (voir notre guide sur les{" "}
+          <a href="/guides/ecrans-addiction-alternatives-enfant">écrans et les alternatives sans addiction</a>).
         </li>
         <li>
-          <strong>La tricherie facile.</strong> Demander à l'IA de rédiger une rédaction ou de
-          résoudre un problème ne demande aucun effort — et n'apprend rien. L'enfant qui recopie
-          sans comprendre se retrouve doublement perdant : il n'a pas appris, et il croit savoir.
+          <strong>L'enfant réfléchit avant :</strong> L'IA intervient en validation ou en éclairage, jamais comme premier recours de facilité.
         </li>
         <li>
-          <strong>Une conversation sans garde-fou adapté.</strong> Un assistant généraliste ne sait
-          pas qu'il parle à un enfant de 8 ans plutôt qu'à un adulte, et n'ajuste ni son registre ni
-          ses limites en conséquence.
+          <strong>Zéro copier-coller :</strong> L'enfant doit toujours reformuler les notions avec ses propres mots pour ancrer les{" "}
+          <a href="/guides/intelligences-multiples-gardner">connexions cognitives</a>.
         </li>
         <li>
-          <strong>Le passage au virtuel plutôt qu'au concret.</strong> Une conversation qui reste
-          une conversation n'entraîne aucune compétence transférable dans le monde réel —
-          construire, présenter, manipuler restent des apprentissages d'un autre ordre.
-        </li>
-        <li>
-          <strong>Les données de l'enfant.</strong> Un outil qui collecte des informations sur un
-          mineur doit le faire avec un cadre de confidentialité strict, ce qui n'est pas garanti par
-          tous les usages détournés d'assistants généralistes.
-        </li>
-      </ul>
-
-      <h2>Les règles d'or pour les devoirs avec ChatGPT</h2>
-      <ol>
-        <li>
-          <strong>L'adulte dialogue, jamais l'enfant seul.</strong> Pour un enfant de moins de 12
-          ans, c'est vous qui posez les questions et qui adaptez les réponses. L'IA ne remplace pas
-          votre présence : elle la complète.
-        </li>
-        <li>
-          <strong>L'enfant essaie avant, l'IA après.</strong> On demande à l'IA d'expliquer ou de
-          vérifier après un premier essai de l'enfant. Jamais avant : un enfant qui reçoit la
-          réponse sans chercher n'apprend pas.
-        </li>
-        <li>
-          <strong>Jamais de recopiage.</strong> Ce que l'IA produit doit être reformulé par l'enfant
-          avec ses propres mots — à l'oral ou à l'écrit. S'il ne peut pas l'expliquer, c'est qu'il
-          n'a pas compris, et on recommence autrement.
-        </li>
-        <li>
-          <strong>Vérifier les réponses.</strong> L'IA se trompe parfois avec assurance. Pour les
-          matières où c'est possible (calcul, grammaire), faites-vous confirmer par une relecture ou
-          croisez avec le livre de classe.
+          <strong>Préparer l'avenir :</strong> Familiariser son enfant aux usages intelligents de l'IA est un tremplin pour son futur métier (découvrez notre{" "}
+          <a href="/guides/test-orientation-metier-enfant-futur">test d'orientation collégien spécial IA</a>).
         </li>
       </ol>
 
-      <h2>Comment Génizio applique ces principes</h2>
+      <h2>Ce que fait Génizio au quotidien</h2>
       <p>
-        L'IA de Génizio génère un défi personnalisé pour chaque enfant, à partir de son âge, de ses
-        centres d'intérêt et de ce qu'il a déjà accompli — mais le défi se termine toujours par une
-        action réelle, dans le monde réel, jamais par une simple conversation avec l'IA. La réussite
-        est validée par une preuve, le plus souvent une photo du résultat, elle-même vérifiée. Le
-        parent supervise l'ensemble du parcours et reste la seule autorité qui valide ce qui compte
-        pour son enfant.
+        Génizio transforme l'IA en un tuteur interactif et bienveillant (Naya). Plutôt que de donner des réponses prémâchées, Naya challenge l'enfant par des missions pratiques dans le monde réel et valide ses accomplissements avec le parent.
       </p>
 
-      <h2>Questions fréquentes</h2>
+      <h2>Questions fréquentes (FAQ)</h2>
       {FAQ.map((item) => (
-        <div key={item.question}>
-          <h3>{item.question}</h3>
-          <p>{item.answer}</p>
+        <div key={item.question} className="my-5 border-b border-ink/10 pb-4">
+          <h3 className="text-lg font-bold text-ink">{item.question}</h3>
+          <p className="mt-2 text-ink/80">{item.answer}</p>
         </div>
       ))}
     </GuideLayout>

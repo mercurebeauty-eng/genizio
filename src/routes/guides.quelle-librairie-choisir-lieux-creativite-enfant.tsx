@@ -60,7 +60,7 @@ export const Route = createFileRoute("/guides/quelle-librairie-choisir-lieux-cre
             path: PATH,
             image: "/guides/og-librairie-creativite.jpg",
             datePublished: "2026-08-24",
-            dateModified: "2026-08-24",
+            dateModified: "2026-08-27",
           }),
         ),
       ],
@@ -74,18 +74,17 @@ function Guide() {
     <GuideLayout
       eyebrow="Éveil & Créativité"
       title="Quelle librairie choisir pour son enfant ? Pourquoi le marché et le quartier éveillent 10 fois plus sa créativité"
-      intro="Quand on souhaite développer l'intelligence de son enfant, le premier réflexe est souvent de chercher « la meilleure librairie », d'acheter des encyclopédies illustrées ou des cahiers de soutien coûteux. La lecture est une merveilleuse clé d'ouverture. Pourtant, limiter l'éveil culturel et intellectuel aux seuls rayons des librairies feutrées est une erreur : le monde réel regorge d'écoles vivantes, accessibles et gratuites."
-      updated="24 août 2026"
+      intro="Quand on souhaite développer l'intelligence de son enfant, le premier réflexe est souvent de chercher « la meilleure librairie », d'acheter des encyclopédies illustrées ou des cahiers de soutien coûteux. La lecture est une merveilleuse clé d'ouverture. Pourtant, limiter l'éveil culturel et intellectuel aux seuls rayons des librairies est une erreur : le monde réel regorge d'écoles vivantes, accessibles et gratuites."
+      updated="27 août 2026"
       readingTime="7 min"
       path={PATH}
-      faq={FAQ}
       related={[
         {
-          label: "Développer les talents de son enfant en Afrique",
+          label: "Éduquer en Afrique : système D & diaspora",
           to: "/guides/education-enfants-afrique-francophone",
         },
         {
-          label: "24 activités éducatives sans écran à la maison",
+          label: "24 activités éducatives sans écran",
           to: "/guides/activites-educatives-enfant",
         },
         {
@@ -93,8 +92,12 @@ function Guide() {
           to: "/guides/pratique-avant-theorie-apprentissage-ia",
         },
         {
-          label: "Jouets éducatifs et placards de la maison",
+          label: "Sciences avec les placards de la maison",
           to: "/guides/jouets-educatifs-kits-scientifiques-placards-maison",
+        },
+        {
+          label: "Marques de luxe et créativité enfant",
+          to: "/guides/sac-a-dos-marques-challenge-creativite-enfant",
         },
       ]}
     >
@@ -110,59 +113,68 @@ function Guide() {
 
       <h2>1. Les limites de la culture purement livresque</h2>
       <p>
-        Un enfant qui lit beaucoup acquiert du vocabulaire, c'est indiscutable. Mais sans confrontation au réel, ce savoir reste abstrait :
+        Un enfant qui lit beaucoup acquiert du vocabulaire, c'est indiscutable. Mais sans confrontation au monde réel, ce savoir reste abstrait (comme nous l'expliquons dans notre guide sur{" "}
+        <a href="/guides/pratique-avant-theorie-apprentissage-ia">la pratique avant la théorie face à l'IA</a>) :
       </p>
       <ul>
-        <li>Il connaît la définition de la masse, mais ne sait pas estimer le poids d'un sac de riz à la main.</li>
-        <li>Il a lu des histoires de diplomatie, mais panique lorsqu'il doit poser une question à un artisan inconnu.</li>
-        <li>Il sait résoudre une équation sur une feuille, mais ne sait pas comment calculer le budget des courses familiales.</li>
+        <li>Il connaît la formule du calcul de surface, mais ne sait pas estimer la taille d'une pièce.</li>
+        <li>Il comprend les théories scientifiques dans les livres, mais tire un apprentissage décuplé en expérimentant avec les objets du placard (voir nos{" "}
+        <a href="/guides/jouets-educatifs-kits-scientifiques-placards-maison">expériences scientifiques maison</a>).</li>
+        <li>Il observe les marques et la consommation sans exercer son discernement critique (découvrez notre approche sur les{" "}
+        <a href="/guides/sac-a-dos-marques-challenge-creativite-enfant">marques et la créativité chez l'enfant</a>).</li>
       </ul>
 
       <h2>2. Les 3 grands laboratoires d'apprentissage du quotidien</h2>
       <p>
-        Voici trois espaces gratuits que vous fréquentez déjà et qui développent l'intelligence pratique de votre enfant :
+        Particulièrement en Afrique francophone et dans les contextes multiculturels (voir nos repères d'
+        <a href="/guides/education-enfants-afrique-francophone">éducation des enfants en Afrique francophone</a>), l'environnement quotidien offre des opportunités d'éveil exceptionnelles :
       </p>
 
       <div className="my-6 grid gap-4 sm:grid-cols-3">
         <div className="rounded-2xl border border-ink/10 bg-surface/50 p-5 shadow-sm">
           <div className="mb-2 flex items-center gap-2 font-semibold text-ink">
             <Store className="h-5 w-5 text-brand" />
-            1. Le Marché : l'école d'arithmétique vivante
+            1. Le Marché : arithmétique vivante
           </div>
           <p className="text-sm text-ink/80 leading-relaxed">
-            Comparer les prix au kilogramme, vérifier le rendu de monnaie de tête, négocier avec politesse et observer la provenance des produits locaux.
+            Comparer les prix au kilogramme, calculer la monnaie de tête et négocier avec politesse.
           </p>
         </div>
 
         <div className="rounded-2xl border border-ink/10 bg-surface/50 p-5 shadow-sm">
           <div className="mb-2 flex items-center gap-2 font-semibold text-ink">
             <Utensils className="h-5 w-5 text-brand" />
-            2. La Cuisine : le laboratoire de chimie
+            2. La Cuisine : laboratoire de chimie
           </div>
           <p className="text-sm text-ink/80 leading-relaxed">
-            Comprendre les fractions en coupant des légumes, observer les changements d'états (ébullition, émulsion, levée de pâte) et apprendre la précision des dosages.
+            Comprendre les fractions en coupant des fruits, observer les émulsions et doser les ingrédients.
           </p>
         </div>
 
         <div className="rounded-2xl border border-ink/10 bg-surface/50 p-5 shadow-sm">
           <div className="mb-2 flex items-center gap-2 font-semibold text-ink">
             <Wrench className="h-5 w-5 text-brand" />
-            3. L'Atelier : la physique appliquée
+            3. L'Atelier : physique appliquée
           </div>
           <p className="text-sm text-ink/80 leading-relaxed">
-            Observer un menuisier ou un mécanicien, comprendre l'effet de levier d'une pince, la transmission d'une chaîne de vélo ou la conductivité d'un câble électrique.
+            Comprendre l'effet de levier, la transmission d'une chaîne ou l'équilibre des structures.
           </p>
         </div>
       </div>
 
       <h2>3. Comment concilier livres et pratique concrète</h2>
       <p>
-        La meilleure formule consiste à créer un pont permanent entre ce que l'enfant lit et ce qu'il fabrique :
+        La formule gagnante crée un pont entre ce que l'enfant lit et ce qu'il fabrique avec ses mains (selon ses{" "}
+        <a href="/guides/intelligences-multiples-gardner">intelligences dominantes</a>) :
       </p>
-      <ol>
-        <li><strong>Après une histoire d'aventure</strong> : Demandez-lui de dessiner la carte du pays imaginaire à l'échelle de votre salon ou de votre cour.</li>
-        <li><strong>Après un livre sur la nature</strong> : Sortir observer les insectes du quartier, récolter des feuilles différentes et créer un herbier réel.</li>
-        <li><strong>Après la lecture d'un conte oral</strong> : Lui faire réécrire la fin de l'histoire et la jouer devant toute la famille.</li>
+      <ol className="space-y-3 my-6">
+        <li>
+          <strong>Après une histoire d'aventure :</strong> Dessiner une carte grandeur nature dans le salon.
+        </li>
+        <li>
+          <strong>Après un conte traditionnel :</strong> Le réécrire et le jouer en famille grâce à nos{" "}
+          <a href="/guides/activites-educatives-enfant">24 activités éducatives à la maison</a>.
+        </li>
       </ol>
 
       <div className="my-8 rounded-3xl border border-brand/20 bg-brand/5 p-6 sm:p-8">
@@ -186,6 +198,14 @@ function Guide() {
           </Button>
         </div>
       </div>
+
+      <h2>Questions fréquentes (FAQ)</h2>
+      {FAQ.map((item) => (
+        <div key={item.question} className="my-5 border-b border-ink/10 pb-4">
+          <h3 className="text-lg font-bold text-ink">{item.question}</h3>
+          <p className="mt-2 text-ink/80">{item.answer}</p>
+        </div>
+      ))}
     </GuideLayout>
   );
 }

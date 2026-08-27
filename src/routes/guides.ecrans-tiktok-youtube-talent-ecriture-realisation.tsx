@@ -49,7 +49,7 @@ export const Route = createFileRoute("/guides/ecrans-tiktok-youtube-talent-ecrit
           breadcrumbJsonLd([
             { name: "Accueil", path: "/" },
             { name: "Guides", path: "/guides" },
-            { name: "Écrans & Création numérique", path: PATH },
+            { name: "Écrans & Création vidéo", path: PATH },
           ]),
         ),
         jsonLdScript(
@@ -60,7 +60,7 @@ export const Route = createFileRoute("/guides/ecrans-tiktok-youtube-talent-ecrit
             path: PATH,
             image: "/guides/og-tiktok-realisation.jpg",
             datePublished: "2026-08-24",
-            dateModified: "2026-08-24",
+            dateModified: "2026-08-27",
           }),
         ),
       ],
@@ -74,27 +74,30 @@ function Guide() {
     <GuideLayout
       eyebrow="Écrans & Numérique"
       title="Votre enfant passe des heures sur TikTok ou YouTube ? Transformez son écran en talent d'écriture et de réalisation"
-      intro="La bataille des écrans est le premier sujet de conflit dans les familles modernes. Couper le Wi-Fi, confisquer le téléphone, limiter à une heure par jour... Ces méthodes d'urgence s'essoufflent souvent face à l'attrait puissant des algorithmes. Et si, plutôt que d'interdire l'écran, vous changiez le statut de votre enfant : de consommateur passif, comment en faire un créateur exigeant ?"
-      updated="24 août 2026"
-      readingTime="6 min"
+      intro="La bataille des écrans est le premier sujet de conflit dans les familles. Couper le Wi-Fi, confisquer le smartphone, limiter arbitrairement le temps... Ces réactions d'urgence s'essoufflent vite. Et si, plutôt que d'interdire, vous changiez la posture de votre enfant : passer de simple consommateur passif à créateur exigeant ?"
+      updated="27 août 2026"
+      readingTime="7 min"
       path={PATH}
-      faq={FAQ}
       related={[
         {
-          label: "Mon enfant est accro aux écrans : sevrage en douceur",
+          label: "Sevrage écrans sans crise",
           to: "/guides/ecrans-addiction-alternatives-enfant",
         },
         {
-          label: "Motiver un adolescent : 12 défis qui marchent",
+          label: "12 défis pour adolescents",
           to: "/guides/defis-pour-adolescents",
         },
         {
-          label: "Enfant timide : libérer l'assurance orale",
+          label: "Libérer l'aisance orale",
           to: "/guides/timidite-confiance-prise-de-parole",
         },
         {
-          label: "ChatGPT et l'IA pour les devoirs",
-          to: "/guides/ia-apprentissage-enfant",
+          label: "Les 9 formes d'intelligence",
+          to: "/guides/intelligences-multiples-gardner",
+        },
+        {
+          label: "24 activités sans écran",
+          to: "/guides/activites-educatives-enfant",
         },
       ]}
     >
@@ -110,10 +113,12 @@ function Guide() {
 
       <h2>1. Pourquoi l'interdiction frontale ne fonctionne plus</h2>
       <p>
-        Les algorithmes des plateformes vidéo sont conçus par des centaines d'ingénieurs pour capter la dopamine de notre cerveau. Blâmer un jeune de 13 ans parce qu'il a du mal à s'arrêter revient à lui demander de résister seul à une machine de captation sophistiquée.
+        Les algorithmes des plateformes vidéo captent puissamment l'attention des jeunes. Plutôt que de subir ce piège (découvrez notre méthode de{" "}
+        <a href="/guides/ecrans-addiction-alternatives-enfant">sevrage progressif des écrans chez l'enfant</a>), apprendre à déconstruire les mécanismes de la vidéo permet à l'adolescent de développer son esprit critique.
       </p>
       <p>
-        En revanche, lorsqu'on lui apprend <strong>comment ces vidéos sont fabriquées</strong>, le charme s'estompe : il commence à analyser les ficelles narratives, les coupes au montage et les accroches émotionnelles avec un œil critique.
+        La réalisation vidéo sollicite simultanément plusieurs{" "}
+        <a href="/guides/intelligences-multiples-gardner">formes d'intelligences de Gardner</a> : l'intelligence linguistique (écriture de script), spatiale (cadrage et lumière) et musicale (rythme et montage sonore).
       </p>
 
       <h2>2. Le protocole du « Studio Familial » : 3 étapes de création</h2>
@@ -122,39 +127,45 @@ function Guide() {
         <div className="rounded-2xl border border-ink/10 bg-surface/50 p-5 shadow-sm">
           <div className="mb-2 flex items-center gap-2 font-semibold text-ink">
             <PenTool className="h-5 w-5 text-brand" />
-            Étape 1 : Le Script sur Papier (Interdit d'allumer la caméra)
+            Étape 1 : Le Script écrit
           </div>
           <p className="text-sm text-ink/80 leading-relaxed">
-            Avant de toucher un smartphone, il doit rédiger un texte structuré de 150 mots avec une accroche (les 3 premières secondes), un développement clair et une chute percutante.
+            Avant d'allumer la caméra, l'enfant écrit un texte de 150 mots avec une accroche percutante et une conclusion claire.
           </p>
         </div>
 
         <div className="rounded-2xl border border-ink/10 bg-surface/50 p-5 shadow-sm">
           <div className="mb-2 flex items-center gap-2 font-semibold text-ink">
             <Clapperboard className="h-5 w-5 text-brand" />
-            Étape 2 : Le Storyboard Dessiné
+            Étape 2 : Le Storyboard
           </div>
           <p className="text-sm text-ink/80 leading-relaxed">
-            Dessiner 6 cases simples représentant les plans de caméra : plan large, gros plan sur un détail, contre-plongée. Cela muscle sa vision spatiale et son sens du cadrage.
+            Dessiner 6 cases pour définir les angles de vue et la mise en scène.
           </p>
         </div>
 
         <div className="rounded-2xl border border-ink/10 bg-surface/50 p-5 shadow-sm">
           <div className="mb-2 flex items-center gap-2 font-semibold text-ink">
             <Video className="h-5 w-5 text-brand" />
-            Étape 3 : Le Tournage & Montage (Projet Privé)
+            Étape 3 : Le Tournage & Montage
           </div>
           <p className="text-sm text-ink/80 leading-relaxed">
-            Filmer un documentaire familial (l'histoire des grands-parents, la préparation d'un plat traditionnel, la vie du chat) et monter les plans avec une musique libre de droits.
+            Filmer un documentaire familial et monter les séquences avec rigueur. Un travail de diction idéal pour{" "}
+            <a href="/guides/timidite-confiance-prise-de-parole">développer la confiance orale</a>.
           </p>
         </div>
       </div>
 
-      <h2>3. Les règles d'or de la protection et de la valorisation</h2>
+      <h2>3. Les règles d'or d'un projet créatif réussi</h2>
       <ul>
-        <li><strong>Règle du circuit fermé</strong> : Le film est destiné à être projeté dans le salon devant la famille réunie, pas diffusé publiquement sur les réseaux sociaux. Cela élimine la course toxique aux « likes ».</li>
-        <li><strong>Débriefing comme au cinéma</strong> : Après la projection, félicitez le travail d'écriture, le son et le rythme. Demandez-lui : <em>« Si tu devais refaire ce plan, comment améliorerais-tu la lumière ? »</em></li>
-        <li><strong>Le grand basculement</strong> : Dès qu'il a goûté à la complexité de fabriquer 1 minute de vidéo propre, il ne regarde plus jamais YouTube de la même manière passive.</li>
+        <li>
+          <strong>La projection en salon privé :</strong> Le projet est projeté devant la famille lors d'un goûter convivial (à combiner avec nos{" "}
+          <a href="/guides/activites-educatives-enfant">24 activités éducatives à la maison</a>), sans pression d'exposition sur les réseaux publics.
+        </li>
+        <li>
+          <strong>Relever de vrais challenges :</strong> Intégrez cette activité dans nos{" "}
+          <a href="/guides/defis-pour-adolescents">12 défis stimulants pour adolescents</a> (reportage de quartier, micro-interview).
+        </li>
       </ul>
 
       <div className="my-8 rounded-3xl border border-brand/20 bg-brand/5 p-6 sm:p-8">
@@ -178,6 +189,14 @@ function Guide() {
           </Button>
         </div>
       </div>
+
+      <h2>Questions fréquentes (FAQ)</h2>
+      {FAQ.map((item) => (
+        <div key={item.question} className="my-5 border-b border-ink/10 pb-4">
+          <h3 className="text-lg font-bold text-ink">{item.question}</h3>
+          <p className="mt-2 text-ink/80">{item.answer}</p>
+        </div>
+      ))}
     </GuideLayout>
   );
 }

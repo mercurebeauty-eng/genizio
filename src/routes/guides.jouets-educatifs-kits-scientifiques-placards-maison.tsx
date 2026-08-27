@@ -49,7 +49,7 @@ export const Route = createFileRoute("/guides/jouets-educatifs-kits-scientifique
           breadcrumbJsonLd([
             { name: "Accueil", path: "/" },
             { name: "Guides", path: "/guides" },
-            { name: "Apprentissage & Matériel", path: PATH },
+            { name: "Sciences & Expériences maison", path: PATH },
           ]),
         ),
         jsonLdScript(
@@ -60,7 +60,7 @@ export const Route = createFileRoute("/guides/jouets-educatifs-kits-scientifique
             path: PATH,
             image: "/guides/og-jouets-placards.jpg",
             datePublished: "2026-08-24",
-            dateModified: "2026-08-24",
+            dateModified: "2026-08-27",
           }),
         ),
       ],
@@ -74,26 +74,29 @@ function Guide() {
     <GuideLayout
       eyebrow="Sciences & Bricolage"
       title="Jouets éducatifs et kits scientifiques : pourquoi ce que vous avez dans vos placards développe mieux l'ingéniosité"
-      intro="Chaque anniversaire ou fête apporte la même tentation : acheter une grosse boîte de 'kit scientifique' ou un 'jouet éducatif intelligent' à 25 000 FCFA ou 40 €. Pourtant, la plupart de ces jeux finissent délaissés après 30 minutes d'utilisation. La raison est simple : ils demandent d'exécuter une notice pré-écrite au lieu d'inventer. Voici pourquoi les matériaux bruts de votre maison forgent les meilleurs esprits scientifiques."
-      updated="24 août 2026"
+      intro="Chaque anniversaire apporte la tentation d'acheter une grosse boîte de 'kit scientifique' ou un 'jouet éducatif' onéreux. Pourtant, ces jeux finissent souvent délaissés après 30 minutes : ils demandent d'exécuter une notice fermée au lieu d'inventer. Voici pourquoi les matériaux bruts de votre cuisine et de vos placards forgent de bien meilleurs esprits scientifiques."
+      updated="27 août 2026"
       readingTime="7 min"
       path={PATH}
-      faq={FAQ}
       related={[
         {
-          label: "Activités manuelles pour enfants (15 idées)",
+          label: "15 activités manuelles récup",
           to: "/guides/activites-manuelles-enfant",
         },
         {
-          label: "24 activités éducatives sans écran",
+          label: "24 activités sans écran",
           to: "/guides/activites-educatives-enfant",
         },
         {
-          label: "Pratique avant théorie à l'ère de l'IA",
+          label: "Pratique avant théorie avec l'IA",
           to: "/guides/pratique-avant-theorie-apprentissage-ia",
         },
         {
-          label: "Quelle librairie choisir pour son enfant",
+          label: "Les 9 formes d'intelligence",
+          to: "/guides/intelligences-multiples-gardner",
+        },
+        {
+          label: "Éveil culturel et créativité",
           to: "/guides/quelle-librairie-choisir-lieux-creativite-enfant",
         },
       ]}
@@ -110,15 +113,17 @@ function Guide() {
 
       <h2>1. Le piège des « kits fermés » versus le génie des « matériaux ouverts »</h2>
       <p>
-        Dans un kit commercial, tout est prédécoupé, calibré et standardisé. Si l'enfant essaie de modifier une étape, l'expérience ne fonctionne plus. Il apprend donc à obéir, pas à chercher.
+        Dans un kit commercial, tout est prédécoupé et standardisé. Si l'enfant modifie une étape, l'expérience échoue. Il apprend à exécuter, pas à chercher.
       </p>
       <p>
-        À l'inverse, face à une boîte en carton, une ficelle et une bouteille vide (ce que les pédagogues appellent des <em>loose parts</em> ou matériaux ouverts) :
+        À l'inverse, face à du carton, de la ficelle ou des bouteilles recyclées (comme dans nos{" "}
+        <a href="/guides/activites-manuelles-enfant">activités manuelles et bricolages maison</a>) :
       </p>
       <ul>
         <li>Il n'y a pas de mauvaise réponse prédéfinie.</li>
-        <li>L'enfant doit imaginer la forme, tester les frottements, adapter les découpes et résoudre les imprévus.</li>
-        <li>Chaque réussite procure une fierté 10 fois plus intense parce qu'elle provient de son propre raisonnement.</li>
+        <li>L'enfant teste les lois de la gravité, adapte les découpes et muscle ses{" "}
+        <a href="/guides/intelligences-multiples-gardner">intelligences spatiale et kinesthésique</a>.</li>
+        <li>Chaque réussite procure une fierté authentique issue de son propre raisonnement.</li>
       </ul>
 
       <h2>2. Les 4 grands défis scientifiques des placards</h2>
@@ -130,7 +135,7 @@ function Guide() {
             1. Le Défi de l'Ingénieur : Le Pont Poids-Lourd
           </div>
           <p className="text-sm text-ink/80 leading-relaxed">
-            Matériel : 2 feuilles de papier ou carton et du scotch. Mission : Construire un pont suspendu entre deux chaises capable de soutenir une bouteille d'eau pleine d'un litre.
+            Matériel : 2 feuilles de carton et du scotch. Mission : Construire un pont suspendu capable de soutenir une bouteille d'eau d'un litre.
           </p>
         </div>
 
@@ -140,7 +145,7 @@ function Guide() {
             2. Le Défi du Chimiste : La Lampe à Lave Maison
           </div>
           <p className="text-sm text-ink/80 leading-relaxed">
-            Matériel : Bouteille transparente, eau, huile de cuisine, colorant et un comprimé effervescent. Découverte de la densité des liquides et du dégagement gazeux.
+            Matériel : Bouteille, eau, huile et comprimé effervescent. Découverte de la densité des liquides et des réactions acido-basiques.
           </p>
         </div>
 
@@ -150,7 +155,7 @@ function Guide() {
             3. Le Défi du Physicien : Le Sauvetage de l'Œuf
           </div>
           <p className="text-sm text-ink/80 leading-relaxed">
-            Matériel : Un œuf cru, pailles, sacs plastiques, élastiques. Mission : Concevoir une capsule amortissante pour lâcher l'œuf depuis 2 mètres sans qu'il ne se casse.
+            Matériel : Un œuf cru, pailles, sacs plastiques. Mission : Concevoir un parachute amortisseur pour un lâcher de 2 mètres.
           </p>
         </div>
 
@@ -160,17 +165,20 @@ function Guide() {
             4. Le Défi Hydraulique : La Station de Filtration
           </div>
           <p className="text-sm text-ink/80 leading-relaxed">
-            Matériel : Bouteille coupée, coton, sable propre, petits graviers. Mission : Filtrer de l'eau boueuse pour observer la décantation et la porosité des couches.
+            Matériel : Bouteille coupée, coton, sable et graviers. Observation de la porosité et de la décantation physique.
           </p>
         </div>
       </div>
 
       <h2>3. Ce que cela change dans son rapport à l'école</h2>
       <p>
-        Un enfant qui a construit un pont en carton comprend la géométrie des triangles sans avoir besoin d'apprendre par cœur le théorème de Pythagore. Un enfant qui a fait une lampe à lave comprend la masse volumique sans paniquer devant une formule de physique.
+        Un enfant qui a construit un pont en carton comprend intuitivement les forces physiques et la géométrie des triangles (découvrez pourquoi{" "}
+        <a href="/guides/pratique-avant-theorie-apprentissage-ia">la pratique doit toujours précéder la théorie à l'ère de l'IA</a>).
       </p>
       <p>
-        La pratique ancre la compréhension avant la formule mathématique abstraite : c'est le cœur de la pédagogie Génizio.
+        Pour stimuler la curiosité de votre enfant au quotidien, explorez également nos{" "}
+        <a href="/guides/activites-educatives-enfant">24 activités éducatives à faire à la maison</a> ainsi que nos conseils d'
+        <a href="/guides/quelle-librairie-choisir-lieux-creativite-enfant">éveil culturel et choix de librairies</a>.
       </p>
 
       <div className="my-8 rounded-3xl border border-brand/20 bg-brand/5 p-6 sm:p-8">
@@ -194,6 +202,14 @@ function Guide() {
           </Button>
         </div>
       </div>
+
+      <h2>Questions fréquentes (FAQ)</h2>
+      {FAQ.map((item) => (
+        <div key={item.question} className="my-5 border-b border-ink/10 pb-4">
+          <h3 className="text-lg font-bold text-ink">{item.question}</h3>
+          <p className="mt-2 text-ink/80">{item.answer}</p>
+        </div>
+      ))}
     </GuideLayout>
   );
 }

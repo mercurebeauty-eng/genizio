@@ -60,7 +60,7 @@ export const Route = createFileRoute("/guides/test-orientation-metier-enfant-fut
             path: PATH,
             image: "/guides/og-test-orientation.jpg",
             datePublished: "2026-08-24",
-            dateModified: "2026-08-24",
+            dateModified: "2026-08-27",
           }),
         ),
       ],
@@ -75,10 +75,9 @@ function Guide() {
       eyebrow="Orientation & Avenir"
       title="Test d'orientation et de métier : comment savoir ce qui anime vraiment votre enfant"
       intro="« Que veux-tu faire quand tu seras grand ? » Cette question, posée dès le primaire, génère souvent plus d'anxiété que de clarté. Alors que 85 % des emplois de la prochaine décennie seront profondément transformés par l'intelligence artificielle, chercher à figer un intitulé de métier dans un test QCM n'a plus de sens. Voici comment aider votre enfant à découvrir ce qui l'anime réellement et à muscler les compétences que les machines ne remplaceront pas."
-      updated="24 août 2026"
+      updated="27 août 2026"
       readingTime="8 min"
       path={PATH}
-      faq={FAQ}
       related={[
         {
           label: "Test de personnalité pour enfant",
@@ -96,6 +95,10 @@ function Guide() {
           label: "Pratique avant théorie à l'ère de l'IA",
           to: "/guides/pratique-avant-theorie-apprentissage-ia",
         },
+        {
+          label: "12 défis pour adolescents",
+          to: "/guides/defis-pour-adolescents",
+        },
       ]}
     >
       <img
@@ -110,19 +113,13 @@ function Guide() {
 
       <h2>1. Pourquoi les questionnaires d'orientation classiques sont obsolètes</h2>
       <p>
-        Les tests d'orientation traditionnels reposent sur une logique héritée de l'ère industrielle : faire correspondre des goûts déclarés (<em>« Aimes-tu les animaux ? »</em> $\rightarrow$ Vétérinaire ; <em>« Aimes-tu les calculs ? »</em> $\rightarrow$ Comptable) avec une liste fermée de diplômes.
+        Les tests d'orientation traditionnels reposent sur une logique héritée du siècle dernier : faire correspondre des réponses déclaratives à des catégories figées (comme le montre notre analyse critique sur les{" "}
+        <a href="/guides/test-de-personnalite-enfant-talents">limites des tests de personnalité pour enfants</a>).
       </p>
       <p>
-        Dans le monde d'aujourd'hui, cette approche pose deux écueils majeurs :
+        À l'ère de l'intelligence artificielle, ce qui compte n'est pas le titre exact d'une profession, mais la capacité à résoudre des problèmes concrets et à valoriser ses{" "}
+        <a href="/guides/intelligences-multiples-gardner">formes d'intelligence dominantes</a>.
       </p>
-      <ul>
-        <li>
-          <strong>L'obsolescence rapide des tâches répétitives</strong> : Les tâches de calculs purs, de rédaction de base ou de diagnostic standardisé sont désormais assistées par l'IA.
-        </li>
-        <li>
-          <strong>La rigidité des filières</strong> : La valeur d'un futur professionnel ne résidera plus dans la restitution de connaissances mémorisées, mais dans sa capacité à s'adapter, à combiner des disciplines et à créer de la valeur concrète sur le terrain.
-        </li>
-      </ul>
 
       <h2>2. Les 4 méta-compétences qui feront la différence</h2>
       <p>
@@ -133,20 +130,21 @@ function Guide() {
         <div className="rounded-2xl border border-ink/10 bg-surface/50 p-5 shadow-sm">
           <div className="mb-2 flex items-center gap-2 font-semibold text-ink">
             <Target className="h-5 w-5 text-brand" />
-            1. La résolution de problèmes du monde réel
+            1. La résolution de problèmes réels
           </div>
           <p className="text-sm text-ink/80 leading-relaxed">
-            Être capable de prendre une situation floue (un appareil en panne, une organisation défaillante, un besoin client) et d'élaborer une solution tangible pas à pas.
+            Être capable de prendre une situation floue et d'élaborer une solution concrète (comme illustré dans notre guide{" "}
+            <a href="/guides/pratique-avant-theorie-apprentissage-ia">la pratique avant la théorie face à l'IA</a>).
           </p>
         </div>
 
         <div className="rounded-2xl border border-ink/10 bg-surface/50 p-5 shadow-sm">
           <div className="mb-2 flex items-center gap-2 font-semibold text-ink">
             <Compass className="h-5 w-5 text-brand" />
-            2. La communication et la force de conviction
+            2. La communication et force de conviction
           </div>
           <p className="text-sm text-ink/80 leading-relaxed">
-            Savoir expliquer une idée clairement, écouter les objections, négocier et donner envie à d'autres de collaborer sur un projet.
+            Savoir expliquer une idée clairement, négocier et fédérer autour d'un projet commun.
           </p>
         </div>
 
@@ -156,36 +154,45 @@ function Guide() {
             3. L'aisance avec l'intelligence artificielle
           </div>
           <p className="text-sm text-ink/80 leading-relaxed">
-            Utiliser l'IA non pas pour copier des devoirs, mais comme un copilote pour coder, prototyper, rechercher des données et multiplier par 10 sa productivité.
+            Utiliser l'IA comme un copilote pour prototyper et décupler sa créativité (voir notre dossier{" "}
+            <a href="/guides/ia-apprentissage-enfant">l'IA pour aider son enfant à apprendre</a>).
           </p>
         </div>
 
         <div className="rounded-2xl border border-ink/10 bg-surface/50 p-5 shadow-sm">
           <div className="mb-2 flex items-center gap-2 font-semibold text-ink">
             <Sparkles className="h-5 w-5 text-brand" />
-            4. L'ingéniosité matérielle et spatiale
+            4. L'ingéniosité matérielle et manuelle
           </div>
           <p className="text-sm text-ink/80 leading-relaxed">
-            Garder un ancrage dans le physique : fabriquer, réparer, mesurer, concevoir des espaces ou des circuits. Le virtuel a toujours besoin du réel.
+            Garder un ancrage dans le physique : fabriquer, réparer, concevoir des espaces.
           </p>
         </div>
       </div>
 
-      <h2>3. L'enquête d'immersion : 3 missions pratiques pour votre collégien</h2>
+      <h2>3. L'enquête d'immersion : 3 missions pratiques pour collégiens</h2>
       <p>
-        Pour l'aider à découvrir ce qui le passionne, donnez-lui des missions d'explorateur :
+        Pour l'aider à découvrir ce qui le passionne, donnez-lui des missions d'explorateur issues de nos enquêtes pour{" "}
+        <a href="/guides/orientation-scolaire-metiers-avenir">aider son enfant à choisir son métier dès 10 ans</a> :
       </p>
-      <ol>
+      <ol className="space-y-4 my-6">
         <li>
-          <strong>L'interview du professionnel de proximité</strong> : Votre enfant choisit un adulte de son entourage (un mécanicien, un pharmacien, une créatrice de mode, un informaticien) et lui pose 5 questions précises : <em>Quel est le moment le plus difficile de ta journée ? Quel problème aimes-tu le plus résoudre ? Que ferais-tu si tu devais recommencer ?</em>
+          <strong>L'interview d'un professionnel de proximité :</strong> Choisir un artisan, médecin ou ingénieur et lui poser 5 questions concrètes sur son quotidien et ses défis.
         </li>
         <li>
-          <strong>Le mini-stage d'observation de 2 heures</strong> : L'accompagner sur un lieu de travail pour observer sans juger comment les gens communiquent, organisent leur espace et gèrent les imprévus.
+          <strong>Le mini-stage d'observation de 2 heures :</strong> Observer la réalité d'un atelier, d'un commerce ou d'un laboratoire.
         </li>
         <li>
-          <strong>Le projet d'application directe</strong> : Identifier un petit problème à la maison ou dans le quartier et concevoir une solution complète (un système d'arrosage économe, un panneau indicateur, un planning partagé).
+          <strong>Le projet d'application directe :</strong> Réaliser l'un de nos{" "}
+          <a href="/guides/defis-pour-adolescents">12 défis pratiques pour adolescents</a> pour tester sa persévérance et sa créativité.
         </li>
       </ol>
+
+      <h2>Anticiper les filières sans angoisse</h2>
+      <p>
+        Que ce soit pour le choix de spécialités au lycée ou pour préparer sereinement l'après-bac, consultez également nos conseils pour{" "}
+        <a href="/guides/choix-parcoursup-parcours-scolaire-enfant">dédramatiser Parcoursup et le parcours scolaire</a>.
+      </p>
 
       <div className="my-8 rounded-3xl border border-brand/20 bg-brand/5 p-6 sm:p-8">
         <h3 className="text-xl font-bold text-ink">
@@ -208,6 +215,14 @@ function Guide() {
           </Button>
         </div>
       </div>
+
+      <h2>Questions fréquentes (FAQ)</h2>
+      {FAQ.map((item) => (
+        <div key={item.question} className="my-5 border-b border-ink/10 pb-4">
+          <h3 className="text-lg font-bold text-ink">{item.question}</h3>
+          <p className="mt-2 text-ink/80">{item.answer}</p>
+        </div>
+      ))}
     </GuideLayout>
   );
 }

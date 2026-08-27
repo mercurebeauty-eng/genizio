@@ -36,7 +36,7 @@ export const Route = createFileRoute("/guides/choix-parcoursup-parcours-scolaire
     const meta = pageMeta({
       title: "Vœux Parcoursup : Valoriser le vrai profil de votre enfant",
       description:
-        "Angoisse de l'orientation, choix des filières et vœux d'avenir : découvrez comment dédramatiser le parcours scolaire de votre enfant et valoriser ses vraies forces.",
+        "Orientation et vœux scolaires : comment dédramatiser Parcoursup, valoriser le profil réel de votre enfant et bâtir un passeport de réussites tangibles.",
       path: PATH,
       image: "/guides/og-parcoursup.jpg",
       type: "article",
@@ -60,7 +60,7 @@ export const Route = createFileRoute("/guides/choix-parcoursup-parcours-scolaire
             path: PATH,
             image: "/guides/og-parcoursup.jpg",
             datePublished: "2026-08-24",
-            dateModified: "2026-08-24",
+            dateModified: "2026-08-27",
           }),
         ),
       ],
@@ -74,26 +74,29 @@ function Guide() {
     <GuideLayout
       eyebrow="Orientation & Parcours"
       title="Choix des vœux et parcours scolaire : pourquoi le vrai profil de votre enfant dépasse ses bulletins"
-      intro="À l'approche des choix d'orientation, du brevet ou de la constitution des dossiers scolaires, une immense pression s'abat sur les familles : la peur du mauvais choix, l'angoisse des algorithmes de sélection et le sentiment que l'avenir se joue sur une poignée de moyennes trimestrielles. Pourtant, les meilleurs parcours ne sont jamais linéaires. Voici comment aborder cette étape avec sérénité et transformer ses talents réels en atouts décisifs."
-      updated="24 août 2026"
+      intro="À l'approche des choix d'orientation, du brevet ou de la constitution des dossiers scolaires, une immense pression s'abat sur les familles : peur du mauvais choix, angoisse des algorithmes et sentiment que l'avenir se joue sur une poignée de moyennes trimestrielles. Pourtant, les meilleurs parcours ne sont jamais linéaires. Voici comment aborder cette étape avec sérénité et transformer ses talents réels en atouts décisifs."
+      updated="27 août 2026"
       readingTime="8 min"
       path={PATH}
-      faq={FAQ}
       related={[
         {
-          label: "Test d'orientation et métiers d'avenir",
+          label: "Test d'orientation collégien & IA",
           to: "/guides/test-orientation-metier-enfant-futur",
         },
         {
-          label: "Décrochage scolaire et confiance en soi",
+          label: "Orientation dès 10 ans",
+          to: "/guides/orientation-scolaire-metiers-avenir",
+        },
+        {
+          label: "Décrochage et confiance en soi",
           to: "/guides/decrochage-scolaire-confiance-enfant",
         },
         {
-          label: "Aider son enfant à réussir à l'école sans stress",
+          label: "Réussite scolaire sans stress",
           to: "/guides/reussite-scolaire-aider-enfant",
         },
         {
-          label: "Motiver un adolescent : 12 défis concrets",
+          label: "12 défis pour adolescents",
           to: "/guides/defis-pour-adolescents",
         },
       ]}
@@ -110,20 +113,24 @@ function Guide() {
 
       <h2>1. Le mythe du « choix unique et définitif »</h2>
       <p>
-        L'un des plus grands générateurs d'anxiété chez les jeunes et leurs parents est l'idée reçue selon laquelle une décision prise à 15 ou 18 ans conditionnerait irrémédiablement les 40 prochaines années d'existence.
+        L'un des plus grands générateurs d'anxiété chez les jeunes et leurs parents est l'idée reçue selon laquelle une décision prise à 15 ou 18 ans conditionnerait irrémédiablement toute une vie.
       </p>
       <p>
         Dans la réalité économique actuelle :
       </p>
       <ul>
-        <li>Une personne active changera en moyenne de métier ou d'orientation majeure 4 à 6 fois au cours de sa vie professionnelle.</li>
-        <li>Les compétences les plus valorisées (rigueur d'exécution, adaptabilité, leadership, maîtrise des outils numériques) sont transversales et transférables d'un secteur à un autre.</li>
-        <li>Une filière initiale qui ne plaît pas n'est pas un échec, mais une étape d'apprentissage qui affine ce que l'enfant ne veut plus.</li>
+        <li>Une personne active change en moyenne de métier ou d'orientation majeure 4 à 6 fois au cours de sa vie.</li>
+        <li>Les compétences les plus valorisées (rigueur d'exécution, adaptabilité, communication) sont transversales et s'ancrent dans les{" "}
+        <a href="/guides/intelligences-multiples-gardner">9 formes d'intelligence dominantes</a>.</li>
+        <li>Pour aider votre enfant à mûrir ses réflexions dès le collège, découvrez notre{" "}
+        <a href="/guides/test-orientation-metier-enfant-futur">test d'orientation collégien spécial IA</a> et nos enquêtes pour{" "}
+        <a href="/guides/orientation-scolaire-metiers-avenir">choisir son métier dès 10 ans</a>.</li>
       </ul>
 
       <h2>2. Construire un « Passeport de Réalisations » dès le collège</h2>
       <p>
-        Comment faire sortir du lot le profil de votre enfant, au-delà de ses bulletins de notes ? En l'aidant à documenter ce qu'il accomplit concrètement :
+        Comment faire sortir du lot le profil de votre enfant, au-delà de ses bulletins de notes (voir nos clés de{" "}
+        <a href="/guides/reussite-scolaire-aider-enfant">réussite scolaire sereine</a>) ? En l'aidant à documenter ce qu'il accomplit concrètement :
       </p>
 
       <div className="my-6 grid gap-4 sm:grid-cols-3">
@@ -133,7 +140,8 @@ function Guide() {
             Les projets finis
           </div>
           <p className="text-sm text-ink/80 leading-relaxed">
-            Un site web créé, un meuble restauré, un potager aménagé, un roman court écrit ou un budget d'événement familial géré de A à Z.
+            Un site web créé, un meuble restauré, un projet d'écriture ou une micro-entreprise du week-end issue de nos{" "}
+            <a href="/guides/defis-pour-adolescents">12 défis stimulants pour adolescents</a>.
           </p>
         </div>
 
@@ -143,7 +151,7 @@ function Guide() {
             Les engagements réels
           </div>
           <p className="text-sm text-ink/80 leading-relaxed">
-            L'aide régulière apportée à des personnes âgées du quartier, l'animation d'une équipe sportive, le bénévolat ou la participation à un club d'échecs.
+            L'aide régulière au quartier, l'animation d'une équipe sportive ou le mentorat fraternel.
           </p>
         </div>
 
@@ -153,7 +161,8 @@ function Guide() {
             La persévérance prouvée
           </div>
           <p className="text-sm text-ink/80 leading-relaxed">
-            Avoir surmonté une difficulté (passer de 7 à 12 en physique, apprendre un instrument de musique, réparer un moteur).
+            Avoir surmonté une difficulté scolaire ou personnelle (consultez notre guide sur le{" "}
+            <a href="/guides/decrochage-scolaire-confiance-enfant">décrochage scolaire et la reconquête de la confiance</a>).
           </p>
         </div>
       </div>
@@ -162,15 +171,15 @@ function Guide() {
       <p>
         Au moment de hiérarchiser les choix scolaires, posez-vous avec votre enfant et classez ses souhaits en 3 cercles équilibrés :
       </p>
-      <ol>
+      <ol className="space-y-3 my-6">
         <li>
-          <strong>Le Cercle d'Ambition (2 à 3 vœux)</strong> : Les filières d'excellence ou passionnées qui le font rêver, même si le niveau d'admission est exigeant.
+          <strong>Le Cercle d'Ambition (2 à 3 vœux) :</strong> Les filières d'excellence ou passionnées qui le font rêver, même si le niveau d'admission est sélectif.
         </li>
         <li>
-          <strong>Le Cercle de Cohérence (4 à 5 vœux)</strong> : Des formations solides et reconnues, parfaitement alignées avec son niveau actuel et ses aptitudes dominantes.
+          <strong>Le Cercle de Cohérence (4 à 5 vœux) :</strong> Des formations solides et reconnues, parfaitement alignées avec son niveau actuel et ses aptitudes dominantes.
         </li>
         <li>
-          <strong>Le Cercle de Sécurité (2 à 3 vœux)</strong> : Des parcours accessibles avec une forte employabilité ou des passerelles multiples pour rebondir.
+          <strong>Le Cercle de Sécurité (2 à 3 vœux) :</strong> Des parcours accessibles avec une forte employabilité ou des passerelles multiples pour rebondir.
         </li>
       </ol>
 
@@ -195,6 +204,14 @@ function Guide() {
           </Button>
         </div>
       </div>
+
+      <h2>Questions fréquentes (FAQ)</h2>
+      {FAQ.map((item) => (
+        <div key={item.question} className="my-5 border-b border-ink/10 pb-4">
+          <h3 className="text-lg font-bold text-ink">{item.question}</h3>
+          <p className="mt-2 text-ink/80">{item.answer}</p>
+        </div>
+      ))}
     </GuideLayout>
   );
 }

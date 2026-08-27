@@ -60,7 +60,7 @@ export const Route = createFileRoute("/guides/sac-a-dos-marques-challenge-creati
             path: PATH,
             image: "/guides/og-sac-challenge.jpg",
             datePublished: "2026-08-24",
-            dateModified: "2026-08-24",
+            dateModified: "2026-08-27",
           }),
         ),
       ],
@@ -74,27 +74,30 @@ function Guide() {
     <GuideLayout
       eyebrow="Créativité & Autonomie"
       title="Votre enfant réclame le sac North Face ou Nike ? Challengez-le : et s'il créait son équipement ?"
-      intro="Chaque rentrée scolaire ou passage au collège amène son lot d'exigences : le sac à dos North Face dernier cri, la sacoche Nike incontournable, la housse d'ordinateur à la mode. Cette pression des marques pèse lourdement sur le budget familial et suscite des tensions. Mais plutôt que de subir ou de punir, pourquoi ne pas saisir cette opportunité pour faire vivre à votre enfant son tout premier défi de créateur et de gestionnaire ?"
-      updated="24 août 2026"
+      intro="Chaque rentrée scolaire ou passage au collège amène son lot d'exigences : le sac à dos North Face dernier cri, la sacoche Nike incontournable, la housse à la mode. Cette pression des marques pèse sur le budget familial et suscite des tensions. Mais plutôt que de sanctionner ou de céder passivement, pourquoi ne pas transformer cette envie en son tout premier défi de créateur et de gestionnaire ?"
+      updated="27 août 2026"
       readingTime="7 min"
       path={PATH}
-      faq={FAQ}
       related={[
         {
-          label: "Activités manuelles : 15 idées concrètes (4-12 ans)",
+          label: "15 activités manuelles récup",
           to: "/guides/activites-manuelles-enfant",
         },
         {
-          label: "Rendre son enfant autonome sans crier",
+          label: "Développer l'autonomie à la maison",
           to: "/guides/autonomie-responsabilite-maison",
         },
         {
-          label: "12 défis qui motivent les adolescents",
+          label: "12 défis stimulants pour ados",
           to: "/guides/defis-pour-adolescents",
         },
         {
-          label: "Discipline positive et respect sans humiliation",
+          label: "Discipline positive sans punition",
           to: "/guides/discipline-positive-sans-punition",
+        },
+        {
+          label: "Les 9 formes d'intelligence",
+          to: "/guides/intelligences-multiples-gardner",
         },
       ]}
     >
@@ -110,14 +113,12 @@ function Guide() {
 
       <h2>1. Comprendre le vrai besoin derrière la demande de marque</h2>
       <p>
-        Quand un enfant ou un adolescent insiste pour avoir une marque précise, ce n'est pas par méchanceté ou par caprice matérialiste pur. En psychologie de l'enfance, cet objet remplit deux fonctions émotionnelles :
+        Quand un jeune réclame une marque précise, ce n'est pas un simple caprice : l'objet remplit un rôle d'intégration sociale et d'affirmation de soi dans la cour d'école.
       </p>
-      <ul>
-        <li><strong>Le passeport d'appartenance</strong> : Ne pas se sentir jugé ou mis à l'écart par les camarades de classe.</li>
-        <li><strong>L'expression d'un statut</strong> : Avoir un objet visible qui lui donne de l'assurance dans la cour.</li>
-      </ul>
       <p>
-        Si vous refusez avec agacement (<em>« C'est hors de question, c'est du gaspillage ! »</em>), l'enfant entend : <em>« Mon besoin d'intégration n'a aucune importance »</em>. La clé est de reconnaître son envie, tout en lui transmettant les rênes de l'effort.
+        Plutôt que d'entrer dans un bras de fer (retrouvez nos repères de{" "}
+        <a href="/guides/discipline-positive-sans-punition">discipline positive sans punition ni humiliation</a>), reconnaissez son désir d'appartenance tout en stimulant son{" "}
+        <a href="/guides/autonomie-responsabilite-maison">autonomie et son sens des responsabilités à la maison</a>.
       </p>
 
       <h2>2. Les 3 défis pour transformer le consommateur en producteur</h2>
@@ -129,7 +130,8 @@ function Guide() {
             Défi 1 : La Customisation Unique
           </div>
           <p className="text-sm text-ink/80 leading-relaxed">
-            Acheter un sac neutre très solide (trois fois moins cher) et lui donner carte blanche pour le personnaliser : écussons en tissu wax, peinture acrylique textile, porte-clés fait main. Il aura une pièce unique au monde.
+            Acheter un sac neutre très solide et le personnaliser avec du wax, de la broderie ou de la peinture textile (piochez dans nos{" "}
+            <a href="/guides/activites-manuelles-enfant">15 activités manuelles créatives</a>).
           </p>
         </div>
 
@@ -139,29 +141,31 @@ function Guide() {
             Défi 2 : Le Projet Co-Financement (50/50)
           </div>
           <p className="text-sm text-ink/80 leading-relaxed">
-            Vous financez le montant équivalent à un sac standard (ex. 15 000 FCFA ou 25 €). S'il tient absolument au modèle à 45 000 FCFA, il doit concevoir un plan pour gagner et épargner les 30 000 FCFA restants par des services utiles.
+            Allouez le budget d'un sac standard. Pour le modèle haut de gamme, encouragez-le à mériter le supplément par des services utiles issus de nos{" "}
+            <a href="/guides/defis-pour-adolescents">12 défis stimulants pour adolescents</a>.
           </p>
         </div>
 
         <div className="rounded-2xl border border-ink/10 bg-surface/50 p-5 shadow-sm">
           <div className="mb-2 flex items-center gap-2 font-semibold text-ink">
             <Sparkles className="h-5 w-5 text-brand" />
-            Défi 3 : La Housse Zéro Déchet
+            Défi 3 : La Housse Upcycling Zéro Déchet
           </div>
           <p className="text-sm text-ink/80 leading-relaxed">
-            Pour une housse d'ordinateur ou une sacoche, lui proposer de patronner et coudre la doublure avec de vieux jeans usés et de la mousse de récupération. L'effet "upcycling" est ultra valorisant auprès des jeunes.
+            Concevoir et coudre une pochette de protection d'ordinateur en recyclant de vieux jeans. L'occasion idéale d'explorer ses{" "}
+            <a href="/guides/intelligences-multiples-gardner">intelligences kinesthésique et visuo-spatiale</a>.
           </p>
         </div>
       </div>
 
       <h2>3. Ce que cette expérience apprend pour la vie</h2>
       <p>
-        En relevant ce défi, votre enfant n'obtient pas seulement un objet pour aller à l'école. Il apprend trois leçons inestimables :
+        En relevant ce défi, votre enfant apprend trois leçons inestimables pour son avenir :
       </p>
-      <ol>
-        <li><strong>L'effort a une valeur mesurable</strong> : Il comprend concrètement le lien entre le travail, le temps passé et le prix des choses.</li>
-        <li><strong>La fierté du "Fait Maison"</strong> : Quand ses camarades lui demanderont <em>« Où as-tu eu ce sac ? »</em>, il pourra répondre avec fierté : <em>« C'est moi qui l'ai fait »</em>.</li>
-        <li><strong>L'esprit d'initiative</strong> : Il comprend qu'il a le pouvoir de transformer sa réalité plutôt que d'attendre passivement qu'on lui achète tout.</li>
+      <ol className="space-y-3 my-6">
+        <li><strong>L'effort a une valeur mesurable :</strong> Il comprend le lien direct entre travail, patience et argent.</li>
+        <li><strong>La fierté du « Fait Maison » :</strong> Il passe du statut de suiveur passif à celui de créateur original.</li>
+        <li><strong>L'esprit d'initiative :</strong> Il découvre qu'il a le pouvoir d'agir sur son environnement.</li>
       </ol>
 
       <div className="my-8 rounded-3xl border border-brand/20 bg-brand/5 p-6 sm:p-8">
@@ -185,6 +189,14 @@ function Guide() {
           </Button>
         </div>
       </div>
+
+      <h2>Questions fréquentes (FAQ)</h2>
+      {FAQ.map((item) => (
+        <div key={item.question} className="my-5 border-b border-ink/10 pb-4">
+          <h3 className="text-lg font-bold text-ink">{item.question}</h3>
+          <p className="mt-2 text-ink/80">{item.answer}</p>
+        </div>
+      ))}
     </GuideLayout>
   );
 }
