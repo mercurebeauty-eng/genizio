@@ -165,6 +165,13 @@ export function CollectiveExperiencesSection({ graph }: CollectiveExperiencesSec
                     ))}
                   </div>
                 )}
+                {exp.supervisorProvenance && (
+                  <div className="mt-2 text-xs text-indigo-600/80 bg-indigo-50/50 px-2 py-1 rounded inline-flex items-center gap-1 border border-indigo-100/50">
+                    <Workflow className="w-3 h-3" />
+                    Observé par <span className="font-semibold">{exp.supervisorProvenance.supervisorId}</span> 
+                    dans le cadre : <span className="italic">{exp.supervisorProvenance.contextName}</span>
+                  </div>
+                )}
               </div>
             </div>
           ))}

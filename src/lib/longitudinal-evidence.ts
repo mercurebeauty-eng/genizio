@@ -11,6 +11,10 @@ export interface LongitudinalExperience {
   supervisorTags: SupervisorObservableTag[];
   proofImageUrl?: string | null;
   occurredAt: string;
+  supervisorProvenance?: {
+    supervisorId: string;
+    contextName: string;
+  };
 }
 
 export interface BehavioralEvidenceSummary {
@@ -58,6 +62,7 @@ export function extractLongitudinalExperiences(
         supervisorTags: Array.isArray(collectivePayload.supervisorTags) ? collectivePayload.supervisorTags : [],
         proofImageUrl: trace.proof_image_url || null,
         occurredAt: trace.created_at || new Date().toISOString(),
+        supervisorProvenance: collectivePayload.supervisorProvenance || undefined
       });
     }
   }

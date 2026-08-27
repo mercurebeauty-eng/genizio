@@ -31,6 +31,10 @@ export interface CollectiveParticipantContribution {
   role: TeamRole;
   implication: ImplicationLevel;
   supervisorTags: SupervisorObservableTag[];
+  supervisorProvenance?: {
+    supervisorId: string;
+    contextName: string;
+  };
 }
 
 /**
