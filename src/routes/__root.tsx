@@ -150,6 +150,9 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       {
         rel: "stylesheet",
         href: "https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap",
+        media: "print",
+        // @ts-ignore
+        onLoad: "this.media='all'",
       },
       {
         rel: "stylesheet",
@@ -168,6 +171,12 @@ function RootShell({ children }: { children: ReactNode }) {
     <html lang="fr">
       <head>
         <HeadContent />
+        <noscript>
+          <link
+            rel="stylesheet"
+            href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap"
+          />
+        </noscript>
       </head>
       <body>
         {children}
