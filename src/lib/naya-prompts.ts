@@ -295,6 +295,8 @@ export interface BuildChallengePromptInput {
   profileContextNote: string;
   /** Question formulée par l'enfant lui-même ("L'enfant se demande : …") — "" si aucune */
   childQuestionNote?: string;
+  /** But diagnostique secret (ex: vérifier une hypothèse sur la capacité de transmission) */
+  diagnosticIntentNote?: string;
 }
 
 export function buildChallengePrompt(input: BuildChallengePromptInput): string {
@@ -322,6 +324,9 @@ export function buildChallengePrompt(input: BuildChallengePromptInput): string {
   const contextualizationInstruction = buildContextualizationInstruction(location);
   const childQuestionBlock = childQuestionNote.trim()
     ? `\n- LA QUESTION DE ${childName.toUpperCase()} : ${childQuestionNote.trim()} — ${childName} a posé cette question lui-même : c'est le fil conducteur prioritaire. Au moins un des défis doit répondre à cette question par l'action (l'enfant doit découvrir la réponse en expérimentant, jamais par une leçon frontale).`
+    : "";
+  const diagnosticBlock = input.diagnosticIntentNote?.trim()
+    ? `\n- BUT DIAGNOSTIQUE SECRET : ${input.diagnosticIntentNote.trim()} — Au moins l'un des défis DOIT placer l'enfant dans cette situation de façon naturelle (sans lui dire qu'il est testé).`
     : "";
 
   return `Tu es Naya, un mentor pédagogique pour enfants en Afrique francophone, sur la plateforme Génizio.
@@ -352,7 +357,7 @@ Contraintes :
 - Ancre les défis dans le contexte africain (matériaux locaux, réalités du quotidien, langues, marchés, agriculture, artisanat, culture).
 - ${contextualizationInstruction}
 - Choisis parmi ces domaines : ${domainsText}.${ignoredDomainsNote}
-${childQuestionBlock}
+${childQuestionBlock}${diagnosticBlock}
 - Chaque défi doit être concret, réalisable à la maison ou dans le quartier, adapté à l'âge, avec des matériaux simples et accessibles.
 - ${STEPS_INSTRUCTION}
 - ${buildAvoidRepeatsInstruction(existingTitles)}

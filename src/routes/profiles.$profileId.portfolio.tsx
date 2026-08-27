@@ -35,6 +35,8 @@ import { AppTabBar } from "@/components/AppTabBar";
 import { TalentRadarChart } from "@/components/TalentRadarChart";
 import { AspirationCompassCard } from "@/components/aspirations/AspirationCompassCard";
 import { NayaAvatar } from "@/components/NayaAvatar";
+import { CollectiveExperiencesSection } from "@/components/portfolio/CollectiveExperiencesSection";
+import { extractLongitudinalExperiences } from "@/lib/longitudinal-evidence";
 import { GenizioLoader } from "@/components/GenizioLoader";
 import {
   Award,
@@ -324,7 +326,7 @@ function PortfolioPage() {
         getMentorChildViewFn({ data: { childId: profileId } }),
         supabase
           .from("discovery_traces")
-          .select("id, title, domain, proof_image_url, created_at")
+          .select("id, title, domain, proof_image_url, created_at, source_type, ai_behavioral_analysis")
           .eq("child_id", profileId)
           .not("proof_image_url", "is", null)
           .order("created_at", { ascending: false })
@@ -376,7 +378,7 @@ function PortfolioPage() {
         .maybeSingle(),
       supabase
         .from("discovery_traces")
-        .select("id, title, domain, proof_image_url, created_at")
+        .select("id, title, domain, proof_image_url, created_at, source_type, ai_behavioral_analysis")
         .eq("child_id", profileId)
         .not("proof_image_url", "is", null)
         .order("created_at", { ascending: false })
@@ -598,6 +600,7 @@ function PortfolioPage() {
   // partir des talents + défis complétés, aucune donnée inventée, aucun appel IA.
   const inProgress = challenges.filter((c) => c.status === "in_progress");
   const hasPortraitSignal = completed.length > 0;
+  const longitudinalGraph = extractLongitudinalExperiences(discoveryArtifacts, completed);
   const portraitPulse = getPortfolioPulse(child.talents, 3).filter((p) => p.score > 0);
   const domainCounts = new Map<string, number>();
   for (const c of completed) {
@@ -1484,6 +1487,9 @@ function PortfolioPage() {
                 </div>
               );
             })()}
+
+          {/* Section Expériences Collectives & Compétences Démontrées */}
+          <CollectiveExperiencesSection graph={longitudinalGraph} />
 
           {/* 🃏 Collectible Talent Cards Grid */}
           <div className="rounded-3xl border border-ink/10 bg-white p-6 shadow-xl space-y-6">

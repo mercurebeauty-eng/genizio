@@ -2,6 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { z } from "zod";
 import { getChildGuild } from "@/lib/guilds";
+import { analyzeGuildComplementarity } from "@/lib/guild-team-generator";
 
 // Ma Guilde — vue communautaire (cf. écran 9 du prototype, genizio-decisions
 // du 2026-07-21). Contrairement au reste de l'app (strictement cloisonné par
@@ -40,12 +41,24 @@ export const getGuildCommunity = createServerFn({ method: "POST" })
     const sameGuildOthers = (others ?? []).filter(
       (o: { talents: unknown }) =>
         getChildGuild(o.talents as Record<string, number> | null).key === ownGuild.key,
-    ) as { id: string; name: string; age: number }[];
+    ) as { id: string; name: string; age: number; talents: Record<string, number> }[];
 
     const memberIds = [
       ...(child.guild_participation_opt_in ? [child.id] : []),
       ...sameGuildOthers.map((o) => o.id),
     ];
+
+    // Calcul de la synergie d'équipe pour une escouade (Max 4 membres dont l'enfant)
+    let synergyData = null;
+    if (child.guild_participation_opt_in) {
+      const squadMembers = [
+        { id: child.id, name: child.name, talents: (child.talents || {}) as Record<string, number> },
+        ...sameGuildOthers.slice(0, 3).map(o => ({
+          id: o.id, name: o.name, talents: (o.talents || {}) as Record<string, number>
+        }))
+      ];
+      synergyData = analyzeGuildComplementarity(ownGuild.key, squadMembers);
+    }
 
     const startOfMonth = new Date();
     startOfMonth.setDate(1);
@@ -85,6 +98,7 @@ export const getGuildCommunity = createServerFn({ method: "POST" })
       completedThisMonth,
       monthlyTarget,
       recentActivity,
+      synergyData,
     };
   });
 

@@ -223,6 +223,44 @@ function GuildPage() {
                   </p>
                 </div>
 
+                {community.synergyData && community.synergyData.members.length > 1 && (
+                  <div className="rounded-2xl border border-ink/10 bg-white p-5 shadow-sm">
+                    <div className="flex items-center justify-between mb-4">
+                      <p className="font-display text-lg font-black text-ink">
+                        Escouade & Synergie
+                      </p>
+                      <div className="rounded-full bg-brand/10 px-3 py-1 text-xs font-bold text-brand">
+                        Indice: {Math.round(community.synergyData.synergyScore * 100)}%
+                      </div>
+                    </div>
+                    
+                    <p className="mb-4 text-sm text-ink/70">
+                      Génizio a identifié une complémentarité optimale avec ces membres pour relever un défi où chaque talent est indispensable.
+                    </p>
+                    
+                    <div className="flex flex-wrap gap-2 mb-5">
+                      {community.synergyData.members.map((m: any, i: number) => (
+                        <div key={i} className="flex items-center gap-2 rounded-xl bg-surface px-3 py-2 border border-ink/5">
+                          <div className="grid size-6 place-items-center rounded-full bg-sky-100 text-xs font-bold text-sky-700">
+                            {m.name[0]}
+                          </div>
+                          <div className="flex flex-col">
+                            <span className="text-xs font-bold text-ink">{m.name}</span>
+                            <span className="text-[10px] text-ink/50 uppercase tracking-wider">{TALENT_KEY_LABELS[m.primaryTalentKey as keyof typeof TALENT_KEY_LABELS] || m.primaryTalentKey}</span>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+
+                    <button 
+                      onClick={() => alert("Génération du défi collectif via Naya... L'invitation a été envoyée à l'escouade ! (Simulation)")}
+                      className="w-full rounded-xl bg-brand py-3 text-sm font-bold text-white transition-transform active:scale-[0.98] hover:bg-brand-dark"
+                    >
+                      Générer un défi d'équipe
+                    </button>
+                  </div>
+                )}
+
                 <div>
                   <p className="mb-3 text-xs font-extrabold uppercase tracking-widest text-ink/40">
                     À célébrer

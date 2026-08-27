@@ -14,7 +14,7 @@ import { verifyAndLog } from "@/lib/naya-verifier.functions";
 
 // ── Vocabulaire & Constantes Découverte ────────────────────────────────────────
 
-export const DISCOVERY_SOURCES = ["self_chosen", "found_external", "open_sandbox"] as const;
+export const DISCOVERY_SOURCES = ["self_chosen", "found_external", "open_sandbox", "fablab_marathon", "projet_collectif"] as const;
 export type DiscoverySourceType = (typeof DISCOVERY_SOURCES)[number];
 
 export const DISCOVERY_SOURCE_LABELS: Record<DiscoverySourceType, { label: string; badge: string; description: string }> = {
@@ -32,6 +32,16 @@ export const DISCOVERY_SOURCE_LABELS: Record<DiscoverySourceType, { label: strin
     label: "Je tente",
     badge: "Laboratoire libre",
     description: "Exploration ouverte ou expérimentation spontanée sans cadre rigide.",
+  },
+  fablab_marathon: {
+    label: "Fab Lab",
+    badge: "Événement de groupe",
+    description: "Participation à un atelier, marathon ou camp de création collectif.",
+  },
+  projet_collectif: {
+    label: "Projet d'équipe",
+    badge: "Coopération",
+    description: "Projet mené à plusieurs, mettant en jeu des compétences interpersonnelles.",
   },
 };
 

@@ -46,6 +46,7 @@ import {
   HelpCircle,
   UploadCloud,
   X,
+  Users,
 } from "lucide-react";
 import { toast } from "sonner";
 import { fileToCompressedProof } from "@/lib/image-proof";
@@ -81,6 +82,7 @@ export function DiscoveryRecordDialog({
   const [outcomeStatus, setOutcomeStatus] = useState<DiscoveryOutcomeStatus>("fonctionnel");
   const [proofImageUrl, setProofImageUrl] = useState("");
   const [isCompressingImg, setIsCompressingImg] = useState(false);
+  const [teamHandles, setTeamHandles] = useState("");
 
   // Questions métacognitives Naya spécialisées par source
   const [q1, setQ1] = useState("");
@@ -428,6 +430,25 @@ export function DiscoveryRecordDialog({
                   </Select>
                 </div>
               </div>
+
+              {(sourceType === "projet_collectif" || sourceType === "fablab_marathon") && (
+                <div className="space-y-1 mt-4 p-4 bg-sky-50 rounded-2xl border border-sky-100">
+                  <label className="text-[11px] font-bold text-sky-800 flex items-center gap-1.5">
+                    <Users className="size-3.5" /> 
+                    Équipiers du projet (Identifiants @handle)
+                  </label>
+                  <p className="text-[10px] text-sky-700/80 mb-2 leading-tight">
+                    Séparez les handles par des virgules (ex: @sarah_9, @leo_42). 
+                    Une invitation sera envoyée et le projet sera partagé une fois validé.
+                  </p>
+                  <Input
+                    placeholder="@handle1, @handle2"
+                    value={teamHandles}
+                    onChange={(e) => setTeamHandles(e.target.value)}
+                    className="h-9 rounded-xl border-sky-200 bg-white text-xs placeholder:text-sky-300 focus-visible:ring-sky-200"
+                  />
+                </div>
+              )}
 
               {/* Résultat obtenu */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
