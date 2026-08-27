@@ -215,8 +215,6 @@ function RootComponent() {
       <PwaInstallPrompt />
       <PwaUpdateBanner />
       <PushNotificationsSetup />
-      <Analytics />
-      <SpeedInsights />
     </QueryClientProvider>
   );
 }
