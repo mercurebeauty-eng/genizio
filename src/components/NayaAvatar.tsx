@@ -1,5 +1,4 @@
-import { useEffect, useRef, useState } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { useEffect, useState } from "react";
 import { Sparkles, Star, Heart } from "lucide-react";
 import nayaAvatar from "@/assets/naya-avatar.webp";
 
@@ -25,7 +24,6 @@ const DEFAULT_THOUGHTS = [
 export function NayaAvatar({ size = "md", thoughts, className = "" }: NayaAvatarProps) {
   const [isHovered, setIsHovered] = useState(false);
   const [isClicked, setIsClicked] = useState(false);
-  const [isDragging, setIsDragging] = useState(false);
   const [thoughtIndex, setThoughtIndex] = useState(0);
   const [showThought, setShowThought] = useState(false);
   const [particles, setParticles] = useState<
@@ -33,7 +31,6 @@ export function NayaAvatar({ size = "md", thoughts, className = "" }: NayaAvatar
   >([]);
   const px = SIZES[size];
 
-  // Allow all avatars to have thoughts, but position them above the head to avoid colliding with text on the right
   const activeThoughts = thoughts !== undefined ? thoughts : DEFAULT_THOUGHTS;
 
   useEffect(() => {
@@ -54,8 +51,8 @@ export function NayaAvatar({ size = "md", thoughts, className = "" }: NayaAvatar
     setIsClicked(true);
     const burst = Array.from({ length: 8 }, (_, i) => ({
       id: Date.now() + i,
-      x: Math.random() * 140 - 70,
-      y: Math.random() * 140 - 70,
+      x: Math.random() * 120 - 60,
+      y: Math.random() * 120 - 60,
       kind: Math.floor(Math.random() * 3),
     }));
     setParticles(burst);
@@ -66,7 +63,7 @@ export function NayaAvatar({ size = "md", thoughts, className = "" }: NayaAvatar
     setTimeout(() => {
       setIsClicked(false);
       setParticles([]);
-    }, 1200);
+    }, 1000);
   };
 
   return (
@@ -74,75 +71,55 @@ export function NayaAvatar({ size = "md", thoughts, className = "" }: NayaAvatar
       className={`relative inline-flex items-center justify-center ${className}`}
       style={{ width: px, height: px }}
     >
-      <AnimatePresence>
-        {particles.map((p) => (
-          <motion.div
-            key={p.id}
-            className="pointer-events-none absolute left-1/2 top-1/2 z-20"
-            initial={{ opacity: 1, scale: 0, x: 0, y: 0 }}
-            animate={{ opacity: [1, 1, 0], scale: [0, 1.3, 0.6], x: p.x, y: p.y, rotate: [0, 360] }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 1.1, ease: "easeOut" }}
-          >
-            {p.kind === 0 ? (
-              <Star className="size-4 text-brand" fill="currentColor" />
-            ) : p.kind === 1 ? (
-              <Sparkles className="size-4 text-sky" />
-            ) : (
-              <Heart className="size-4 text-leaf" fill="currentColor" />
-            )}
-          </motion.div>
-        ))}
-      </AnimatePresence>
+      {/* Particules légères au clic */}
+      {particles.map((p) => (
+        <div
+          key={p.id}
+          className="pointer-events-none absolute left-1/2 top-1/2 z-20 transition-all duration-700 ease-out animate-in fade-in zoom-in"
+          style={{
+            transform: `translate(calc(-50% + ${p.x}px), calc(-50% + ${p.y}px)) scale(${isClicked ? 1.2 : 0})`,
+            opacity: isClicked ? 1 : 0,
+          }}
+        >
+          {p.kind === 0 ? (
+            <Star className="size-4 text-brand fill-current" />
+          ) : p.kind === 1 ? (
+            <Sparkles className="size-4 text-sky" />
+          ) : (
+            <Heart className="size-4 text-leaf fill-current" />
+          )}
+        </div>
+      ))}
 
-      <AnimatePresence>
-        {(showThought || isHovered) && activeThoughts.length > 0 && (
-          <motion.div
-            className="absolute -top-3.5 left-1/2 z-30 w-max max-w-[10rem] cursor-default rounded-2xl border border-ink/10 bg-white px-3 py-2 shadow-md text-center"
-            initial={{ opacity: 0, scale: 0.6, y: 15, x: "-50%" }}
-            animate={{ opacity: 1, scale: 1, y: 0, x: "-50%" }}
-            exit={{ opacity: 0, scale: 0.6, y: 15, x: "-50%" }}
-            transition={{ type: "spring", stiffness: 300, damping: 20 }}
-          >
-            <p className="text-xs font-semibold leading-snug text-ink">
-              {activeThoughts[thoughtIndex]}
-            </p>
-            <div className="absolute -bottom-[7px] left-1/2 -translate-x-1/2 size-3 rotate-45 border-r-[3px] border-b-[3px] border-ink bg-white" />
-          </motion.div>
-        )}
-      </AnimatePresence>
+      {/* Bulle de pensée de Naya */}
+      {(showThought || isHovered) && activeThoughts.length > 0 && (
+        <div className="absolute -top-4 left-1/2 -translate-x-1/2 z-30 w-max max-w-[10rem] cursor-default rounded-2xl border border-ink/10 bg-white px-3 py-2 shadow-md text-center animate-in fade-in zoom-in-90 duration-200">
+          <p className="text-xs font-semibold leading-snug text-ink">
+            {activeThoughts[thoughtIndex]}
+          </p>
+          <div className="absolute -bottom-[7px] left-1/2 -translate-x-1/2 size-3 rotate-45 border-r-[3px] border-b-[3px] border-ink bg-white" />
+        </div>
+      )}
 
-      <motion.div
-        drag
-        dragConstraints={{ left: -24, right: 24, top: -24, bottom: 24 }}
-        dragElastic={0.15}
-        onDragStart={() => setIsDragging(true)}
-        onDragEnd={() => setIsDragging(false)}
+      {/* Corps interactif de l'avatar avec flottement CSS pur */}
+      <div
         onMouseEnter={() => setIsHovered(true)}
         onMouseLeave={() => setIsHovered(false)}
         onClick={handleClick}
-        className="relative z-10 cursor-grab select-none active:cursor-grabbing"
-        style={{ width: px, height: px }}
-        animate={{
-          y: isDragging ? 0 : [0, -6, 0],
-          rotate: isDragging ? [-3, 3] : isHovered ? [-2, 2, -2] : 0,
-          scale: isClicked ? 1.12 : isHovered ? 1.05 : 1,
+        className={`relative z-10 cursor-pointer select-none transition-transform duration-300 ease-out active:scale-95 ${
+          isHovered ? "scale-105 rotate-1" : isClicked ? "scale-110" : "hover:scale-105"
+        }`}
+        style={{
+          width: px,
+          height: px,
+          animation: "nayaFloat 3s ease-in-out infinite",
         }}
-        transition={{
-          y: { duration: 2.6, repeat: isDragging ? 0 : Infinity, ease: "easeInOut" },
-          rotate: {
-            duration: 0.6,
-            repeat: isHovered && !isDragging ? Infinity : 0,
-            repeatType: "mirror",
-          },
-          scale: { duration: 0.25 },
-        }}
-        whileTap={{ scale: 0.95 }}
       >
-        <motion.div
-          className="absolute inset-0 rounded-full bg-gradient-to-br from-brand/30 via-leaf/20 to-sky/30 blur-lg"
-          animate={{ opacity: isHovered || isDragging ? 0.9 : 0.4, scale: isHovered ? 1.15 : 1 }}
-          transition={{ duration: 0.3 }}
+        {/* Halo de lueur */}
+        <div
+          className={`absolute inset-0 rounded-full bg-gradient-to-br from-brand/30 via-leaf/20 to-sky/30 blur-lg transition-opacity duration-300 ${
+            isHovered ? "opacity-90 scale-110" : "opacity-40"
+          }`}
         />
         <img
           src={nayaAvatar}
@@ -154,12 +131,12 @@ export function NayaAvatar({ size = "md", thoughts, className = "" }: NayaAvatar
           draggable={false}
         />
 
-        {/* Blink overlay: two eyelid pills, invisible until the periodic blink */}
+        {/* Clignement des yeux en CSS pur (sans JavaScript d'animation) */}
         {[
           { left: "38.2%", top: "56%" },
           { left: "48%", top: "56%" },
         ].map((eye, i) => (
-          <motion.div
+          <div
             key={i}
             className="pointer-events-none absolute rounded-full bg-[#8a4a30]"
             style={{
@@ -167,21 +144,24 @@ export function NayaAvatar({ size = "md", thoughts, className = "" }: NayaAvatar
               top: eye.top,
               width: "7.5%",
               height: "7.5%",
-              x: "-50%",
-              y: "-50%",
+              transform: "translate(-50%, -50%)",
               transformOrigin: "center",
-            }}
-            animate={{ scaleY: [0, 0, 1, 0, 0] }}
-            transition={{
-              duration: 4.6,
-              repeat: Infinity,
-              repeatDelay: 0,
-              ease: "easeInOut",
-              times: [0, 0.93, 0.965, 0.99, 1],
+              animation: "nayaBlink 4.5s ease-in-out infinite",
             }}
           />
         ))}
-      </motion.div>
+      </div>
+
+      <style>{`
+        @keyframes nayaFloat {
+          0%, 100% { transform: translateY(0px); }
+          50% { transform: translateY(-6px); }
+        }
+        @keyframes nayaBlink {
+          0%, 92%, 100% { transform: translate(-50%, -50%) scaleY(0); }
+          95%, 97% { transform: translate(-50%, -50%) scaleY(1); }
+        }
+      `}</style>
     </div>
   );
 }
