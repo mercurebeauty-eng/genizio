@@ -826,36 +826,59 @@ export function formatChildInterestsPayload(
     .join("\n");
 }
 
-// "Zone Proximale d'Apprentissage" (2026-07-22) : jusqu'ici, generateChallenges/
-// generateSingleChallenge mesuraient déjà academic_level_age par défi et
-// diagnostiquaient déjà une cause (READY_FOR_MORE, CONCEPTUAL_GAP...) via le moteur
-// bayésien, mais aucune des deux ne réinjectait cette mesure dans la génération
-// suivante — le "difficulty" du prochain défi restait une estimation qualitative de
-// l'IA, jamais calibrée sur le niveau RÉELLEMENT déjà démontré par cet enfant précis.
-// Ferme cette boucle : lit le dernier academic_level_age mesuré par domaine sur les
-// défis complétés, et calibre une cible numérique pour le prochain, ajustée par la
-// cause diagnostiquée si un cycle d'hypothèses est ouvert sur ce domaine.
-type ProgressionTarget = {
+export type ProgressionTarget = {
   domain: string;
-  lastLevelAge: number;
-  targetLevelAge: number;
+  lastLevelAge: number; // backward compatibility
+  targetLevelAge: number; // backward compatibility
   cause: string | null;
+  // New fields from DomainCapabilityState
+  stableLevelAge: number;
+  exploratoryLevelAge: number;
+  peakLevelAge: number;
+  confidence: number;
+  evidenceCount: number;
 };
+
+import { calibrateDomainCapability, formatDynamicCapabilityInstruction, mapDiscoveryDifficultyToLevelAge, type ObservationEvidence } from "./dynamic-capability";
+import { mapDiscoveryToAcademicDomain } from "./dynamic-capability";
 
 export async function computeProgressionTargets(
   supabase: any,
   childId: string,
 ): Promise<ProgressionTarget[]> {
-  const [{ data: pastChallenges }, { data: openCycle }] = await Promise.all([
+  // 1. On charge l'enfant pour avoir son âge chronologique
+  const { data: childProfile } = await supabase
+    .from("child_profiles")
+    .select("birth_date")
+    .eq("id", childId)
+    .single();
+
+  let childAge = 6; // par défaut
+  if (childProfile?.birth_date) {
+    const today = new Date();
+    const birthDate = new Date(childProfile.birth_date);
+    childAge = today.getFullYear() - birthDate.getFullYear();
+    const m = today.getMonth() - birthDate.getMonth();
+    if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) {
+      childAge--;
+    }
+  }
+
+  const [{ data: pastChallenges }, { data: discoveryTraces }, { data: openCycle }] = await Promise.all([
     supabase
       .from("challenges")
-      .select("academic_domain, academic_level_age, completed_at")
+      .select("academic_domain, academic_level_age, status, completed_at, presentation_mode")
       .eq("child_id", childId)
-      .eq("status", "completed")
       .not("academic_domain", "is", null)
       .not("academic_level_age", "is", null)
-      .order("completed_at", { ascending: false })
-      .limit(60),
+      .order("completed_at", { ascending: true }) // Tri croissant pour rejouer l'historique
+      .limit(200),
+    supabase
+      .from("discovery_traces")
+      .select("domain, perceived_difficulty, autonomy_level, attempts_count, outcome_status, proof_image_url, naya_dialogue, created_at")
+      .eq("child_id", childId)
+      .order("created_at", { ascending: true })
+      .limit(100),
     supabase
       .from("hypothesis_cycles")
       .select("hypotheses, trigger_domain")
@@ -866,55 +889,110 @@ export async function computeProgressionTargets(
       .maybeSingle(),
   ]);
 
-  // Le plus récent par domaine — la liste est déjà triée par completed_at
-  // décroissant, donc la première occurrence d'un domaine est la bonne.
-  const latestPerDomain = new Map<string, number>();
+  const evidencesByDomain = new Map<string, ObservationEvidence[]>();
+
+  // Injection des défis dans le moteur de capacité
   for (const c of pastChallenges ?? []) {
-    if (
-      c.academic_domain &&
-      typeof c.academic_level_age === "number" &&
-      !latestPerDomain.has(c.academic_domain)
-    ) {
-      latestPerDomain.set(c.academic_domain, c.academic_level_age);
-    }
+    if (!c.academic_domain || typeof c.academic_level_age !== "number") continue;
+    
+    // Convertir les statuts des défis en outcome_status pour le moteur ZPD
+    let outcomeStatus: ObservationEvidence["outcomeStatus"] = "failed"; // default
+    if (c.status === "completed") outcomeStatus = "completed";
+    else if (c.status === "abandoned" || c.status === "failed" || c.status === "not_completed") outcomeStatus = "failed";
+    else continue; // on ignore les todo/in_progress
+    
+    // Le poids du défi est très élevé car il a été validé (par le parent ou vérifié)
+    const ev: ObservationEvidence = {
+      source: "challenge",
+      domain: c.academic_domain,
+      demonstratedLevelAge: c.academic_level_age,
+      autonomyWeight: 1.0,      // Conserver une pondération neutre haute
+      perseveranceWeight: 1.0,
+      metacognitiveWeight: 1.0,
+      proofWeight: 1.0,
+      outcomeStatus,
+      occurredAt: c.completed_at || new Date().toISOString(),
+    };
+
+    if (!evidencesByDomain.has(c.academic_domain)) evidencesByDomain.set(c.academic_domain, []);
+    evidencesByDomain.get(c.academic_domain)!.push(ev);
   }
 
-  const hypotheses =
-    (openCycle?.hypotheses as { cause: string; current_probability: number }[] | null) || [];
+  // Injection des découvertes (capteur libre)
+  for (const d of discoveryTraces ?? []) {
+    const acaDomain = mapDiscoveryToAcademicDomain(d.domain);
+    const levelAge = mapDiscoveryDifficultyToLevelAge(d.perceived_difficulty, childAge);
+    
+    let autonomyW = 0.5;
+    if (d.autonomy_level === "totalement_seul") autonomyW = 1.0;
+    else if (d.autonomy_level === "aide_ponctuelle") autonomyW = 0.7;
+    else if (d.autonomy_level === "guide_pas_a_pas") autonomyW = 0.4;
+    
+    const persW = d.attempts_count >= 2 ? 1.0 : 0.7;
+    
+    // Évaluation métacognitive heuristique : si naya_dialogue a > 2 clés remplies, on considère 1.0, sinon 0.6
+    let metaW = 0.6;
+    if (d.naya_dialogue && typeof d.naya_dialogue === "object") {
+      const keysCount = Object.keys(d.naya_dialogue).length;
+      if (keysCount >= 2) metaW = 1.0;
+      else if (keysCount === 1) metaW = 0.8;
+    }
+    
+    const proofW = d.proof_image_url ? 1.0 : 0.7;
+
+    let outcomeStatus: ObservationEvidence["outcomeStatus"] = "functional";
+    if (d.outcome_status === "partiel") outcomeStatus = "partial";
+    else if (d.outcome_status === "bloque") outcomeStatus = "blocked";
+    else if (d.outcome_status === "abandonne") outcomeStatus = "failed";
+
+    const ev: ObservationEvidence = {
+      source: "discovery_trace",
+      domain: acaDomain,
+      demonstratedLevelAge: levelAge,
+      autonomyWeight: autonomyW,
+      perseveranceWeight: persW,
+      metacognitiveWeight: metaW,
+      proofWeight: proofW,
+      outcomeStatus,
+      occurredAt: d.created_at,
+    };
+
+    if (!evidencesByDomain.has(acaDomain)) evidencesByDomain.set(acaDomain, []);
+    evidencesByDomain.get(acaDomain)!.push(ev);
+  }
+
+  const hypotheses = (openCycle?.hypotheses as { cause: string; current_probability: number }[] | null) || [];
   const topCause = hypotheses[0]?.cause;
   const causeDomain = openCycle?.trigger_domain as string | undefined;
 
-  return Array.from(latestPerDomain.entries()).map(([domain, lastLevelAge]) => {
-    const causeApplies = Boolean(topCause) && causeDomain === domain;
-    // READY_FOR_MORE : pousse clairement plus haut. Toute autre cause diagnostiquée
-    // sur ce domaine (méthode inadaptée, anxiété, désengagement, lacune) : on
-    // consolide au même niveau plutôt que de complexifier davantage. Pas de cause
-    // applicable : progression par défaut d'un cran, le cas le plus courant.
-    const delta = causeApplies && topCause === "READY_FOR_MORE" ? 2 : causeApplies ? 0 : 1;
-    return {
+  // Calcul du Tri-Niveau (N_stable, N_explore, N_peak) pour tous les domaines avec de la data
+  const targets: ProgressionTarget[] = [];
+  for (const [domain, evidences] of evidencesByDomain.entries()) {
+    const isTrigger = causeDomain === domain;
+    const activeCause = isTrigger && topCause ? topCause : null;
+    
+    const cap = calibrateDomainCapability(childAge, domain, evidences, activeCause);
+    
+    // Remplissage rétrocompatible pour `ProgressionTarget`
+    targets.push({
       domain,
-      lastLevelAge,
-      targetLevelAge: lastLevelAge + delta,
-      cause: causeApplies ? topCause! : null,
-    };
-  });
+      lastLevelAge: cap.stableLevelAge,
+      targetLevelAge: cap.exploratoryLevelAge,
+      cause: activeCause,
+      stableLevelAge: cap.stableLevelAge,
+      exploratoryLevelAge: cap.exploratoryLevelAge,
+      peakLevelAge: cap.peakLevelAge,
+      confidence: cap.confidence,
+      evidenceCount: cap.evidenceCount,
+    });
+  }
+
+  return targets;
 }
 
 export function formatProgressionInstruction(targets: ProgressionTarget[]): string {
-  if (targets.length === 0) {
-    return "PROGRESSION MESURÉE : aucun niveau académique mesuré pour l'instant chez cet enfant — calibre uniquement sur son âge chronologique (cf. consignes de développement ci-dessus).";
-  }
-  const lines = targets.map((t) => {
-    const label = ACADEMIC_DOMAIN_LABELS[t.domain] ?? t.domain;
-    const note =
-      t.cause === "READY_FOR_MORE"
-        ? " — Naya a diagnostiqué que l'enfant est prêt pour plus difficile ici : vise clairement ce niveau, ne reste pas en dessous."
-        : t.cause
-          ? " — Naya a diagnostiqué une difficulté récente ici : reste à ce niveau, mais change d'approche plutôt que de complexifier."
-          : "";
-    return `- ${label} : dernier niveau académique atteint ${t.lastLevelAge} ans → si tu génères un défi dans ce domaine, vise "academic_level_age" ${t.targetLevelAge} ans.${note}`;
-  });
-  return `PROGRESSION MESURÉE (zone proximale d'apprentissage — reflète le niveau réel déjà démontré par cet enfant sur ses défis complétés, pas une estimation) :\n${lines.join("\n")}`;
+  // L'ancienne instruction +1 est remplacée par le formateur dynamique ZPD !
+  return formatDynamicCapabilityInstruction(targets);
 }
 
 // — GENIZIO_PRINCIPLES, SAFETY_INSTRUCTION, PROOF_MODE_INSTRUCTION,
