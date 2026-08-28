@@ -180,8 +180,7 @@ function GuildPage() {
             )}
           </div>
 
-          {!mentorMode ? (
-            community?.isOptedIn ? (
+          {community?.isOptedIn ? (
               <>
                 <div className="flex gap-3">
                   <div className="flex-1 rounded-2xl border border-ink/10 bg-white p-4 text-center shadow-sm">
@@ -352,7 +351,7 @@ function GuildPage() {
                 </div>
               </div>
             )
-          ) : null}
+          }
         </div>
       </main>
     </div>
