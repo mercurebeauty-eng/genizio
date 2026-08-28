@@ -177,7 +177,7 @@ function Guide() {
         </li>
       </ol>
 
-      <div className="my-8 rounded-3xl border border-brand/20 bg-brand/5 p-6 sm:p-8">
+      <div className="my-8 not-prose rounded-3xl border border-brand/20 bg-brand/5 p-6 sm:p-8">
         <h3 className="text-xl font-bold text-ink">
           L'apprentissage par l'action avec Génizio
         </h3>
@@ -185,13 +185,13 @@ function Guide() {
           Génizio transforme les moments ordinaires du quotidien en missions d'éveil passionnantes. Avec <strong>Naya</strong>, votre enfant apprend en faisant, à son rythme, partout où il se trouve.
         </p>
         <div className="mt-6 flex flex-wrap gap-4">
-          <Button asChild size="lg" className="rounded-full">
+          <Button asChild size="lg" className="rounded-full bg-brand text-white shadow-md hover:bg-brand-dark transition-all">
             <Link to="/auth">
               Découvrir les défis du quotidien
               <ArrowRight className="ml-2 h-4 w-4" />
             </Link>
           </Button>
-          <Button asChild variant="outline" size="lg" className="rounded-full">
+          <Button asChild variant="outline" size="lg" className="rounded-full border-ink/20 bg-white text-ink hover:bg-surface hover:text-brand transition-all">
             <Link to="/guides/activites-educatives-enfant">
               Explorer 24 activités maison
             </Link>

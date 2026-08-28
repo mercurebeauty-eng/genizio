@@ -168,7 +168,7 @@ function Guide() {
         </li>
       </ul>
 
-      <div className="my-8 rounded-3xl border border-brand/20 bg-brand/5 p-6 sm:p-8">
+      <div className="my-8 not-prose rounded-3xl border border-brand/20 bg-brand/5 p-6 sm:p-8">
         <h3 className="text-xl font-bold text-ink">
           Développer les compétences du futur avec Génizio
         </h3>
@@ -176,13 +176,13 @@ function Guide() {
           Génizio canalise l'énergie créative des jeunes à travers des missions captivantes d'écriture, de communication et de projets réels. <strong>Naya</strong> accompagne chaque étape pour transformer leur curiosité en talents solides.
         </p>
         <div className="mt-6 flex flex-wrap gap-4">
-          <Button asChild size="lg" className="rounded-full">
+          <Button asChild size="lg" className="rounded-full bg-brand text-white shadow-md hover:bg-brand-dark transition-all">
             <Link to="/auth">
               Lancer un défi de création
               <ArrowRight className="ml-2 h-4 w-4" />
             </Link>
           </Button>
-          <Button asChild variant="outline" size="lg" className="rounded-full">
+          <Button asChild variant="outline" size="lg" className="rounded-full border-ink/20 bg-white text-ink hover:bg-surface hover:text-brand transition-all">
             <Link to="/guides/ecrans-addiction-alternatives-enfant">
               Méthode sevrage écrans sans crise
             </Link>

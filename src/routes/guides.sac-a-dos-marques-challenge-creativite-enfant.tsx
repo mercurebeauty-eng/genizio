@@ -168,7 +168,7 @@ function Guide() {
         <li><strong>L'esprit d'initiative :</strong> Il découvre qu'il a le pouvoir d'agir sur son environnement.</li>
       </ol>
 
-      <div className="my-8 rounded-3xl border border-brand/20 bg-brand/5 p-6 sm:p-8">
+      <div className="my-8 not-prose rounded-3xl border border-brand/20 bg-brand/5 p-6 sm:p-8">
         <h3 className="text-xl font-bold text-ink">
           Développer l'ingéniosité pratique avec Génizio
         </h3>
@@ -176,13 +176,13 @@ function Guide() {
           Génizio encourage les enfants à fabriquer, construire, réparer et entreprendre à travers des missions amusantes guidées par <strong>Naya</strong>. Chaque création enrichit son passeport d'accomplissements.
         </p>
         <div className="mt-6 flex flex-wrap gap-4">
-          <Button asChild size="lg" className="rounded-full">
+          <Button asChild size="lg" className="rounded-full bg-brand text-white shadow-md hover:bg-brand-dark transition-all">
             <Link to="/auth">
               Lancer un défi à mon enfant
               <ArrowRight className="ml-2 h-4 w-4" />
             </Link>
           </Button>
-          <Button asChild variant="outline" size="lg" className="rounded-full">
+          <Button asChild variant="outline" size="lg" className="rounded-full border-ink/20 bg-white text-ink hover:bg-surface hover:text-brand transition-all">
             <Link to="/guides/activites-manuelles-enfant">
               Voir les idées d'activités manuelles
             </Link>

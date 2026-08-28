@@ -205,7 +205,7 @@ function Guide() {
         <a href="/guides/orientation-scolaire-metiers-avenir">aider son enfant à choisir son métier dès 10 ans</a>.
       </p>
 
-      <div className="my-8 rounded-3xl border border-brand/20 bg-brand/5 p-6 sm:p-8">
+      <div className="my-8 not-prose rounded-3xl border border-brand/20 bg-brand/5 p-6 sm:p-8">
         <h3 className="text-xl font-bold text-ink">
           Comment Génizio documente la personnalité par la preuve
         </h3>
@@ -213,13 +213,13 @@ function Guide() {
           Sur Génizio, l'IA compagne <strong>Naya</strong> n'enferme jamais un enfant dans un score statique. Elle lui propose des défis réels adaptés à son âge, enregistre ses réussites tangibles et génère un <em>Passeport de Talents</em> évolutif fondé sur ce qu'il a réellement accompli.
         </p>
         <div className="mt-6 flex flex-wrap gap-4">
-          <Button asChild size="lg" className="rounded-full">
+          <Button asChild size="lg" className="rounded-full bg-brand text-white shadow-md hover:bg-brand-dark transition-all">
             <Link to="/auth">
               Découvrir le Jumeau Pédagogique
               <ArrowRight className="ml-2 h-4 w-4" />
             </Link>
           </Button>
-          <Button asChild variant="outline" size="lg" className="rounded-full">
+          <Button asChild variant="outline" size="lg" className="rounded-full border-ink/20 bg-white text-ink hover:bg-surface hover:text-brand transition-all">
             <Link to="/guides/intelligences-multiples-gardner">
               Explorer les 9 intelligences
             </Link>
