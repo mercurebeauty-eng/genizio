@@ -2,8 +2,12 @@ import { describe, it, expect } from "vitest";
 import { 
   getPrimaryTalent, 
   analyzeGuildComplementarity, 
-  buildGuildCollectiveChallengePrompt 
+  buildGuildCollectiveChallengePrompt,
+  analyzeEscouadeCompatibility,
+  rankSquadCandidates,
+  type MobilizationAwareTeamMember
 } from "./guild-team-generator";
+import type { MobilizationConditionHypothesis } from "./mobilization-conditions";
 
 describe("guild-team-generator", () => {
   describe("getPrimaryTalent", () => {
@@ -61,5 +65,45 @@ describe("guild-team-generator", () => {
       expect(prompt).toContain("Mia (Atout principal : 🏃 Corporelle)");
       expect(prompt).toContain("Interdépendance Positive");
     });
+  });
+});
+
+describe("analyzeEscouadeCompatibility", () => {
+  it("retourne 1.0 s'il n'y a aucun conflit", () => {
+    const members: MobilizationAwareTeamMember[] = [
+      { id: "1", name: "A", talents: {}, primaryTalentKey: "logique", mobilizationInsights: [] }
+    ];
+    const report = analyzeEscouadeCompatibility(members, 3, "explicit_structured");
+    expect(report.compatibilityScore).toBe(1.0);
+    expect(report.warnings).toHaveLength(0);
+  });
+
+  it("détecte un conflit de taille de groupe", () => {
+    const members: MobilizationAwareTeamMember[] = [
+      { 
+        id: "1", name: "A", talents: {}, primaryTalentKey: "logique", 
+        mobilizationInsights: [{ factor: "group_size", optimalContext: "small_group", observedTendency: "", confidence: 1, parentInsightText: "", mentorActionableTip: "", supportingExperiencesCount: 2 }] 
+      }
+    ];
+    const report = analyzeEscouadeCompatibility(members, 5, "explicit_structured");
+    expect(report.compatibilityScore).toBe(0.0);
+    expect(report.warnings).toHaveLength(1);
+    expect(report.warnings[0].factor).toBe("group_size");
+  });
+});
+
+describe("rankSquadCandidates", () => {
+  it("priorise les relations connues si peer_familiarity l'exige", () => {
+    const candidates: MobilizationAwareTeamMember[] = [
+      { id: "c1", name: "Unknown", talents: {}, primaryTalentKey: "logique" },
+      { id: "c2", name: "Known", talents: {}, primaryTalentKey: "logique" }
+    ];
+    
+    const childMob: MobilizationConditionHypothesis[] = [
+      { factor: "peer_familiarity", optimalContext: "peers_familiar", observedTendency: "", confidence: 1, parentInsightText: "", mentorActionableTip: "", supportingExperiencesCount: 2 }
+    ];
+
+    const ranked = rankSquadCandidates(childMob, candidates, ["c2"], "synergique");
+    expect(ranked[0].id).toBe("c2");
   });
 });

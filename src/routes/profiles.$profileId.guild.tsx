@@ -180,8 +180,7 @@ function GuildPage() {
             )}
           </div>
 
-          {!mentorMode ? (
-            community?.isOptedIn ? (
+          {community?.isOptedIn ? (
               <>
                 <div className="flex gap-3">
                   <div className="flex-1 rounded-2xl border border-ink/10 bg-white p-4 text-center shadow-sm">
@@ -229,8 +228,15 @@ function GuildPage() {
                       <p className="font-display text-lg font-black text-ink">
                         Escouade & Synergie
                       </p>
-                      <div className="rounded-full bg-brand/10 px-3 py-1 text-xs font-bold text-brand">
-                        Indice: {Math.round(community.synergyData.synergyScore * 100)}%
+                      <div className="flex items-center gap-2">
+                        {community.compatibilityReport && community.compatibilityReport.compatibilityScore < 1.0 && (
+                          <div className="rounded-full bg-orange-100 px-3 py-1 text-xs font-bold text-orange-700">
+                            ⚠️ {(community.compatibilityReport.compatibilityScore * 100).toFixed(0)}% Engagés
+                          </div>
+                        )}
+                        <div className="rounded-full bg-brand/10 px-3 py-1 text-xs font-bold text-brand">
+                          Indice: {Math.round(community.synergyData.synergyScore * 100)}%
+                        </div>
                       </div>
                     </div>
                     
@@ -238,6 +244,20 @@ function GuildPage() {
                       Génizio a identifié une complémentarité optimale avec ces membres pour relever un défi où chaque talent est indispensable.
                     </p>
                     
+                    {community.compatibilityReport && community.compatibilityReport.warnings.length > 0 && (
+                      <div className="mb-5 rounded-xl border border-orange-200 bg-orange-50 p-3">
+                        <p className="mb-2 text-xs font-bold text-orange-800">Conseils de mobilisation :</p>
+                        <ul className="flex flex-col gap-1.5">
+                          {community.compatibilityReport.warnings.map((w: any, idx: number) => (
+                            <li key={idx} className="text-xs text-orange-700 flex items-start gap-1.5">
+                              <span className="mt-0.5">•</span>
+                              <span>{w.message}</span>
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+
                     <div className="flex flex-wrap gap-2 mb-5">
                       {community.synergyData.members.map((m: any, i: number) => (
                         <div key={i} className="flex items-center gap-2 rounded-xl bg-surface px-3 py-2 border border-ink/5">
@@ -331,7 +351,7 @@ function GuildPage() {
                 </div>
               </div>
             )
-          ) : null}
+          }
         </div>
       </main>
     </div>

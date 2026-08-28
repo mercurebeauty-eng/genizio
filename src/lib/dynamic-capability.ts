@@ -246,7 +246,7 @@ export function formatDynamicCapabilityInstruction(capabilities: DomainCapabilit
     }
 
     if (cap.hasUnconsolidatedCollectivePeak) {
-      line += `\n  ⚠️ L'enfant a démontré un potentiel en équipe sur ce domaine (niveau ${cap.exploratoryLevelAge}). Propose un défi solo accessible pour sonder et consolider son autonomie réelle.`;
+      line += `\n  ⚠️ [Pic collectif non consolidé] En ${label}, l'enfant a démontré un potentiel de niveau ${cap.exploratoryLevelAge} lors d'un projet en groupe. Propose un défi solo de niveau ${Math.max(cap.stableLevelAge, cap.exploratoryLevelAge - 1)} pour sonder son autonomie réelle, en utilisant sa mécanique d'action préférée comme levier d'entrée.`;
     }
 
     return line;
