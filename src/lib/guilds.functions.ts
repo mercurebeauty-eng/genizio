@@ -2,7 +2,8 @@ import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { z } from "zod";
 import { getChildGuild } from "@/lib/guilds";
-import { analyzeGuildComplementarity } from "@/lib/guild-team-generator";
+import { analyzeGuildComplementarity, getPrimaryTalent, analyzeEscouadeCompatibility, rankSquadCandidates } from "@/lib/guild-team-generator";
+import { analyzeMobilizationConditions } from "@/lib/mobilization-conditions";
 
 // Ma Guilde — vue communautaire (cf. écran 9 du prototype, genizio-decisions
 // du 2026-07-21). Contrairement au reste de l'app (strictement cloisonné par
@@ -50,14 +51,72 @@ export const getGuildCommunity = createServerFn({ method: "POST" })
 
     // Calcul de la synergie d'équipe pour une escouade (Max 4 membres dont l'enfant)
     let synergyData = null;
+    let compatibilityReport = null;
     if (child.guild_participation_opt_in) {
-      const squadMembers = [
-        { id: child.id, name: child.name, talents: (child.talents || {}) as Record<string, number> },
-        ...sameGuildOthers.slice(0, 3).map(o => ({
-          id: o.id, name: o.name, talents: (o.talents || {}) as Record<string, number>
-        }))
-      ];
+      const allCandidateIds = [child.id, ...sameGuildOthers.map((o) => o.id)];
+
+      // 1. Récupération des relations connues
+      let knownChildIds: string[] = [];
+      const { data: relations } = await supabase
+        .from("child_relations")
+        .select("requester_child_id, addressee_child_id")
+        .in("status", ["accepted", "mentor_verified"])
+        .or(`requester_child_id.eq.${child.id},addressee_child_id.eq.${child.id}`)
+        .catch(() => ({ data: [] })); // fallback
+        
+      if (relations) {
+        knownChildIds = relations.map((r: any) => r.requester_child_id === child.id ? r.addressee_child_id : r.requester_child_id);
+      }
+
+      // 2. Récupération des traces collectives
+      const { data: traces } = await supabase
+        .from("discovery_traces")
+        .select("child_id, ai_behavioral_analysis")
+        .in("source_type", ["fablab_marathon", "projet_collectif"])
+        .in("child_id", allCandidateIds)
+        .catch(() => ({ data: [] }));
+        
+      const mobilizationByChild = new Map<string, any[]>();
+      if (traces) {
+        const tracesByChild = new Map<string, any[]>();
+        for (const t of traces) {
+          if (!t.ai_behavioral_analysis) continue;
+          if (!tracesByChild.has(t.child_id)) tracesByChild.set(t.child_id, []);
+          tracesByChild.get(t.child_id)!.push({
+            participationStatus: t.ai_behavioral_analysis.participationStatus || "active_participant",
+            environmentalConditions: t.ai_behavioral_analysis.environmentalConditions
+          });
+        }
+        for (const [cid, childTraces] of tracesByChild.entries()) {
+          const insights = analyzeMobilizationConditions(childTraces);
+          mobilizationByChild.set(cid, insights);
+        }
+      }
+
+      const mainChildInsights = mobilizationByChild.get(child.id) || [];
+
+      // 3. Classement intelligent
+      const candidates = sameGuildOthers.map((o) => ({
+        id: o.id,
+        name: o.name,
+        talents: (o.talents || {}) as Record<string, number>,
+        primaryTalentKey: getPrimaryTalent((o.talents || {}) as Record<string, number>),
+        mobilizationInsights: mobilizationByChild.get(o.id) || []
+      }));
+
+      const topSquad = rankSquadCandidates(mainChildInsights, candidates, knownChildIds, "synergique");
+
+      const childProfileAsMember = {
+        id: child.id,
+        name: child.name,
+        talents: (child.talents || {}) as Record<string, number>,
+        primaryTalentKey: getPrimaryTalent((child.talents || {}) as Record<string, number>),
+        mobilizationInsights: mainChildInsights
+      };
+
+      const squadMembers = [childProfileAsMember, ...topSquad];
       synergyData = analyzeGuildComplementarity(ownGuild.key, squadMembers);
+      compatibilityReport = analyzeEscouadeCompatibility(squadMembers, squadMembers.length, "explicit_structured");
     }
 
     const startOfMonth = new Date();
@@ -99,6 +158,7 @@ export const getGuildCommunity = createServerFn({ method: "POST" })
       monthlyTarget,
       recentActivity,
       synergyData,
+      compatibilityReport,
     };
   });
 

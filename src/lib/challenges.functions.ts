@@ -1643,6 +1643,30 @@ export async function generateChallengesCore(params: {
     child.talents as Record<string, number> | null,
   );
 
+  // Progression and capabilities logic
+  let hasUnconsolidatedCollectivePeak = false;
+  let diagnosticDomain = "";
+  for (const t of progressionTargets) {
+    if (t.hasUnconsolidatedCollectivePeak) {
+      hasUnconsolidatedCollectivePeak = true;
+      diagnosticDomain = t.domain;
+      break;
+    }
+  }
+
+  let diagnosticIntentNote = "";
+  if (hasUnconsolidatedCollectivePeak) {
+    // Si un pic collectif non consolidé existe, on forge une intention diagnostique pour Naya
+    diagnosticIntentNote = `Vérifier son autonomie réelle en ${diagnosticDomain} suite à une performance de groupe.`;
+  } else if (openCycle?.hypotheses) {
+    // Fallback sur le cycle d'hypothèses existant
+    const hyps = openCycle.hypotheses as any[];
+    const activeHyp = hyps.find((h: any) => h.status === "formulated" || h.status === "testing" || h.cause);
+    if (activeHyp) {
+      diagnosticIntentNote = activeHyp.rationale || `Tester l'hypothèse : ${activeHyp.cause || activeHyp.competenceKey}`;
+    }
+  }
+
   // Assemblage délégué au builder pur buildChallengePrompt (chantier 1 « Naya 3.0 ») :
   // le template string vivait ici et pouvait dériver des rubriques partagées — la
   // couverture des rubriques est désormais testée unitairement dans naya-prompts.test.ts.
@@ -1664,6 +1688,7 @@ export async function generateChallengesCore(params: {
     ),
     profileContextNote: formatChildProfileContext(child as any),
     childQuestionNote,
+    diagnosticIntentNote,
   });
 
   // Up to 6 full défis in one response, each now carrying the academic
