@@ -247,7 +247,7 @@ function GuildPage() {
                     
                     {community.compatibilityReport && community.compatibilityReport.warnings.length > 0 && (
                       <div className="mb-5 rounded-xl border border-orange-200 bg-orange-50 p-3">
-                        <p className="mb-2 text-xs font-bold text-orange-800">Conseils de mobilisation (Superviseur) :</p>
+                        <p className="mb-2 text-xs font-bold text-orange-800">Conseils de mobilisation :</p>
                         <ul className="flex flex-col gap-1.5">
                           {community.compatibilityReport.warnings.map((w: any, idx: number) => (
                             <li key={idx} className="text-xs text-orange-700 flex items-start gap-1.5">
