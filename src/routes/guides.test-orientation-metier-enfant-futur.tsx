@@ -194,7 +194,7 @@ function Guide() {
         <a href="/guides/choix-parcoursup-parcours-scolaire-enfant">dédramatiser Parcoursup et le parcours scolaire</a>.
       </p>
 
-      <div className="my-8 rounded-3xl border border-brand/20 bg-brand/5 p-6 sm:p-8">
+      <div className="my-8 not-prose rounded-3xl border border-brand/20 bg-brand/5 p-6 sm:p-8">
         <h3 className="text-xl font-bold text-ink">
           Construire un portfolio de compétences avec Génizio
         </h3>
@@ -202,13 +202,13 @@ function Guide() {
           Génizio aide votre enfant à documenter chacun de ses projets pratiques sous forme de preuves tangibles. Plus tard, face à une filière sélective ou un recruteur, il n'arrivera pas seulement avec des notes, mais avec un vrai portfolio de réalisations.
         </p>
         <div className="mt-6 flex flex-wrap gap-4">
-          <Button asChild size="lg" className="rounded-full">
+          <Button asChild size="lg" className="rounded-full bg-brand text-white shadow-md hover:bg-brand-dark transition-all">
             <Link to="/auth">
               Créer le compte de mon enfant
               <ArrowRight className="ml-2 h-4 w-4" />
             </Link>
           </Button>
-          <Button asChild variant="outline" size="lg" className="rounded-full">
+          <Button asChild variant="outline" size="lg" className="rounded-full border-ink/20 bg-white text-ink hover:bg-surface hover:text-brand transition-all">
             <Link to="/guides/defis-pour-adolescents">
               Voir 12 défis pour adolescents
             </Link>

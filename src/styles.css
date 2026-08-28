@@ -437,39 +437,53 @@
   color: var(--ink);
   font-weight: 700;
 }
-.prose-genizio a {
+:where(.prose-genizio) a:not(.not-prose, .not-prose *, [class*="bg-"], [class*="btn"], [class*="press-"], button a, [role="button"]) {
   color: var(--brand);
   font-weight: 600;
   text-underline-offset: 0.15em;
 }
-.prose-genizio a:hover {
+:where(.prose-genizio) a:not(.not-prose, .not-prose *, [class*="bg-"], [class*="btn"], [class*="press-"], button a, [role="button"]):hover {
   text-decoration: underline;
 }
-.prose-genizio ul,
-.prose-genizio ol {
+:where(.prose-genizio) ul,
+:where(.prose-genizio) ol {
   padding-left: 1.4rem;
 }
-.prose-genizio ul {
+:where(.prose-genizio) ul {
   list-style: disc;
 }
-.prose-genizio ol {
+:where(.prose-genizio) ol {
   list-style: decimal;
 }
-.prose-genizio li + li {
+:where(.prose-genizio) li + li {
   margin-top: 0.5rem;
 }
-.prose-genizio li::marker {
+:where(.prose-genizio) li::marker {
   color: var(--brand);
 }
-.prose-genizio blockquote {
+:where(.prose-genizio) blockquote {
   border-left: 3px solid var(--brand);
   padding-left: 1.25rem;
   font-style: italic;
   color: oklch(0.18 0.03 250 / 0.7);
 }
-.prose-genizio .not-prose {
-  font-size: initial;
-  line-height: initial;
+
+/* Filet de sécurité pour les boutons et liens stylisés imbriqués dans .prose-genizio */
+.prose-genizio a.bg-primary,
+.prose-genizio a[class*="bg-primary"],
+.prose-genizio a[class*="bg-brand"],
+.prose-genizio a[class*="press-brand"],
+.prose-genizio a.text-white,
+.prose-genizio a[class*="text-white"],
+.prose-genizio a[class*="text-primary-foreground"] {
+  color: #ffffff !important;
+  text-decoration: none !important;
+}
+
+.prose-genizio .not-prose,
+.prose-genizio .not-prose * {
+  font-size: revert;
+  line-height: revert;
 }
 
 /* Isole un rapport imprimable (ex: Rapport d'Impact B2B) du reste de l'app au moment de
