@@ -32,6 +32,7 @@ import {
   Bell,
   Users,
   Compass,
+  RotateCcw,
 } from "lucide-react";
 import { getChildAccessStatusFn, type ChildAccessStatus } from "@/lib/child-access";
 import { followFilterAfterStart } from "@/lib/challenge-list-filters";

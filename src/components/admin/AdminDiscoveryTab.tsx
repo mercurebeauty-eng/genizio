@@ -133,7 +133,7 @@ export function AdminDiscoveryTab() {
         <Card className="rounded-3xl border-ink/10 shadow-sm bg-white p-6 space-y-4">
           <h3 className="text-base font-black text-ink flex items-center gap-2">
             <Sparkles className="size-4 text-amber-600" />
-            <span>Répartition des 3 Sources d'Exploration</span>
+            <span>Répartition des 5 Sources d'Exploration</span>
           </h3>
           <div className="space-y-3">
             {[
@@ -151,6 +151,16 @@ export function AdminDiscoveryTab() {
                 key: "open_sandbox" as DiscoverySourceType,
                 count: bySource.open_sandbox || 0,
                 color: "bg-emerald-500",
+              },
+              {
+                key: "fablab_marathon" as DiscoverySourceType,
+                count: bySource.fablab_marathon || 0,
+                color: "bg-indigo-500",
+              },
+              {
+                key: "projet_collectif" as DiscoverySourceType,
+                count: bySource.projet_collectif || 0,
+                color: "bg-rose-500",
               },
             ].map(({ key, count, color }) => {
               const meta = DISCOVERY_SOURCE_LABELS[key];

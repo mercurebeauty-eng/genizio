@@ -18,6 +18,8 @@ import {
   Compass,
   Lightbulb,
   Beaker,
+  Hammer,
+  Users,
   Clock,
   RotateCcw,
   ShieldCheck,
@@ -135,12 +137,18 @@ export function DiscoveryTraceCard({
                 ? "bg-amber-100 text-amber-800 border border-amber-200"
                 : trace.source_type === "found_external"
                 ? "bg-sky-100 text-sky-800 border border-sky-200"
-                : "bg-emerald-100 text-emerald-800 border border-emerald-200"
+                : trace.source_type === "open_sandbox"
+                ? "bg-emerald-100 text-emerald-800 border border-emerald-200"
+                : trace.source_type === "fablab_marathon"
+                ? "bg-indigo-100 text-indigo-800 border border-indigo-200"
+                : "bg-rose-100 text-rose-800 border border-rose-200"
             }`}
           >
             {trace.source_type === "self_chosen" && <Sparkles className="size-3.5" />}
             {trace.source_type === "found_external" && <Lightbulb className="size-3.5" />}
             {trace.source_type === "open_sandbox" && <Beaker className="size-3.5" />}
+            {trace.source_type === "fablab_marathon" && <Hammer className="size-3.5" />}
+            {trace.source_type === "projet_collectif" && <Users className="size-3.5" />}
             <span>{sourceMeta.label}</span>
           </span>
 
@@ -148,6 +156,13 @@ export function DiscoveryTraceCard({
           <span className="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-stone-100 text-ink/70 border border-ink/5">
             {domainLabel}
           </span>
+
+          {/* Badge Contexte / Stratégie */}
+          {trace.strategy_used && (
+            <span className="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-amber-50 text-amber-900 border border-amber-200/60 max-w-xs truncate">
+              {trace.strategy_used}
+            </span>
+          )}
         </div>
 
         <div className="flex items-center gap-2 text-xs text-ink/50 font-medium">
@@ -160,6 +175,11 @@ export function DiscoveryTraceCard({
       <div className="space-y-1.5">
         <h3 className="text-lg font-black text-ink tracking-tight">{trace.title}</h3>
         <p className="text-xs sm:text-sm text-ink/75 leading-relaxed">{trace.description}</p>
+        {trace.help_context && (
+          <p className="text-[11px] text-ink/60 font-medium bg-stone-50 p-2 rounded-xl border border-ink/5">
+            <strong>Contexte :</strong> {trace.help_context}
+          </p>
+        )}
       </div>
 
       {/* Métriques d'exploration */}
