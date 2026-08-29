@@ -1140,8 +1140,13 @@ const ALLOWED_IMAGE_MEDIA_TYPES = ["image/jpeg", "image/png", "image/gif", "imag
 // response_format:json_object (cf. callDeepSeekText) et est donc le provider
 // le plus susceptible d'entourer son JSON de texte conversationnel.
 export function extractJsonFromLLMResponse(raw: string): string {
-  const trimmed = (raw ?? "").trim();
+  let trimmed = (raw ?? "").trim();
   if (!trimmed) return trimmed;
+
+  // 0. Si le modèle génère son raisonnement dans le texte brut (ex: DeepSeek ou un proxy),
+  // on retire tout le bloc <think>...</think> avant de chercher le JSON, car il
+  // peut contenir des accolades qui cassent le RegExp ci-dessous.
+  trimmed = trimmed.replace(/<think>[\s\S]*?<\/think>\s*/gi, "");
 
   // 1. Bloc explicitement tagué ```json ... ``` (prioritaire s'il y a plusieurs blocs)
   const tagged = trimmed.match(/```json\s*([\s\S]*?)```/i);

@@ -53,4 +53,15 @@ describe("extractJsonFromLLMResponse", () => {
   it("renvoie la chaîne vide telle quelle", () => {
     expect(extractJsonFromLLMResponse("")).toBe("");
   });
+
+  it("retire le bloc <think> avant extraction", () => {
+    const input = `<think>
+I need to output a JSON object. For example, { "foo": "bar" }.
+</think>
+{"hypotheses":[]}`;
+    const cleaned = extractJsonFromLLMResponse(input);
+    expect(cleaned).toBe('{"hypotheses":[]}');
+    expect(() => JSON.parse(cleaned)).not.toThrow();
+  });
 });
+
