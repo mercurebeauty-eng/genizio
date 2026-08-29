@@ -1705,7 +1705,8 @@ export async function generateChallengesCore(params: {
     parsed = JSON.parse(extractJsonFromLLMResponse(content));
   } catch (err) {
     console.error("Error parsing generateChallenges LLM response:", err, "Raw:", content);
-    throw new Error("Réponse IA invalide");
+    const snippet = content ? content.substring(0, 150).replace(/\n/g, " ") : "EMPTY_CONTENT";
+    throw new Error(`Réponse IA invalide (extrait: ${snippet}...)`);
   }
 
   // Le Loup (chantier 2, Naya 3.0) : audit shadow non-bloquant de la sortie brute
@@ -1722,8 +1723,9 @@ export async function generateChallengesCore(params: {
   let list: z.infer<typeof ChallengeSchema>[];
   try {
     list = z.array(ChallengeSchema).parse(parsed.challenges ?? []);
-  } catch {
-    throw new Error("Réponse IA invalide");
+  } catch (err: any) {
+    console.error("Zod validation failed for generateChallenges:", err);
+    throw new Error(`Réponse IA invalide (structure incorrecte: ${err.message?.substring(0, 100)})`);
   }
 
   const rows = list.map((c) => ({
