@@ -2077,3 +2077,28 @@ fichier ne porte plus que les constantes partagées.
    - **Cartes de Trace (`DiscoveryTraceCard.tsx`)** : badges dynamiques et affichage des métadonnées de contexte/stratégie.
 
 **Vérifié** : **875 tests verts (71 fichiers)**, `tsc --noEmit` propre sur tous les modules touchés, PR #123 créée.
+
+## Décision #88 : Optimisation Génération de Défis Naya — Thinking Mode « medium » (DeepSeek V4 Flash) & Calibrage Anti-Troncature des Tokens (2026-08-29, main)
+
+**✅ IMPLÉMENTÉE (2026-08-29, main)** — activation du mode de réflexion (Chain-of-Thought) pour Naya sur les flux de génération de défis et rehaussement des plafonds `maxOutputTokens` pour fiabiliser la clarté séquentielle des étapes sans troncature de réponse.
+
+1. **Activation du Thinking Mode `medium` sur DeepSeek V4 Flash (`src/lib/challenges.functions.ts`)** :
+   - `thinking: { type: "enabled", reasoning_effort: "medium" }` pour `deepseek-v4-flash` (génération de défis, devoirs scolaires, recommandations, reformulations, synthèses).
+   - **Pourquoi** : En mode autorégressif classique sans réflexion, le modèle omettait des sous-étapes implicites dans `steps` (action requise non détaillée pour un enfant/parent, manque de coordination matériel ↔ geste). Le mode de réflexion permet à l'IA de simuler mentalement le déroulé chronologique complet de l'activité avant d'émettre le JSON final.
+   - **Moteur diagnostique bayésien** : `deepseek-v4-pro` conserve son effort `high` (`reasoning_effort: "high"`) pour l'investigation causale lourde.
+
+2. **Rehaussement systématique des plafonds `maxOutputTokens` (Anti-Troncature)** :
+   - Sur l'API DeepSeek, les tokens de réflexion partagent le quota de sortie total de la requête. Pour éviter toute rupture de flux ou JSON incomplet :
+     - `generateSingleChallenge` : 1 200 → 3 000 tokens.
+     - `generateAcademicHomeworkChallenge` : 1 500 → 3 000 tokens.
+     - `recommendChallengesForChild` (5 branches) : 1 000/1 200 → 2 500 tokens.
+     - `generateDiscriminantChallenge` & `generateStabilisationChallenge` : 1 000 → 2 500 tokens.
+     - `reformulateChallenge` : 1 000 → 2 500 tokens.
+     - `generateTalentDiscoveries` : 1 000 → 2 500 tokens.
+     - `getChildAISynthesis` : 700 → 2 000 tokens.
+     - `getPassportLetter` : 400 → 1 500 tokens.
+     - `classifyNotCompletedReason` : 200 → 1 000 tokens.
+     - `generateNayaHint` : 250 → 1 000 tokens.
+     - `validateChallengeProof` (fallback texte) : 500 → 1 500 tokens.
+
+3. **Vérification** : 875/875 tests unitaires verts sur 71 fichiers.
