@@ -893,7 +893,7 @@ export async function verifyGenerationSemantic(
   context: VerifyContext = {},
 ): Promise<Violation[]> {
   try {
-    const { callClaude, extractJsonFromLLMResponse } = await import("@/lib/challenges.functions");
+    const { callClaude, safeJsonParse } = await import("@/lib/challenges.functions");
     const rubric = semanticRubricFor(kind);
     const extra =
       context.childAge !== undefined
@@ -914,7 +914,7 @@ ${rubric}
 
 ${extra}Réponds UNIQUEMENT en JSON brut, sans bloc Markdown ni préambule : {"violations":[{"rule":"nom_canonique_de_la_regle","severity":"mineur|majeur","detail":"contexte factuel précis","suggestion":"recadrage court"}]} — tableau vide si tout est conforme. Ne signale jamais une violation hors des règles listées.`;
     const raw = await callClaude(prompt, true, undefined, semanticMaxTokens(), 1);
-    const parsed = SEMANTIC_SCHEMA.parse(JSON.parse(extractJsonFromLLMResponse(raw)));
+    const parsed = SEMANTIC_SCHEMA.parse(safeJsonParse(raw));
     return parsed.violations;
   } catch (err) {
     console.error("Naya semantic verification failed (non-fatal):", err);

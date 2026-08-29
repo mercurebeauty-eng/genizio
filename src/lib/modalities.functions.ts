@@ -21,6 +21,7 @@ import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import {
   callClaude,
   extractJsonFromLLMResponse,
+  safeJsonParse,
   finalizeChallenge,
   formatChildInterestsPayload,
 } from "@/lib/challenges.functions";
@@ -260,7 +261,7 @@ export async function processModalityReformulation(
   let parsed: any;
   try {
     const rawJson = await callClaude(prompt, true, undefined, 2500, 2);
-    parsed = JSON.parse(extractJsonFromLLMResponse(rawJson));
+    parsed = safeJsonParse(rawJson);
   } catch {
     // Non fatal : l'échec de génération ne fait jamais échouer la soumission
     // d'origine (l'appelant retombe sur la recommandation classique).

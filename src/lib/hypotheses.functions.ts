@@ -12,6 +12,7 @@ import {
   TRAIT_SUBFORM_INSTRUCTION,
   formatChildInterestsPayload,
   extractJsonFromLLMResponse,
+  safeJsonParse,
 } from "@/lib/challenges.functions";
 import { buildHypothesisPrompt } from "@/lib/naya-prompts";
 import { TALENT_KEY_LABELS } from "@/lib/talent-buckets";
@@ -435,7 +436,7 @@ export const ensureHypothesesForChild = createServerFn({ method: "POST" })
 
     let parsed: { hypotheses?: unknown };
     try {
-      parsed = JSON.parse(extractJsonFromLLMResponse(raw));
+      parsed = safeJsonParse(raw);
     } catch (err) {
       console.error(
         "Error parsing LLM response in runHypothesisEngine:",
@@ -635,7 +636,7 @@ Réponds EXCLUSIVEMENT avec un objet JSON strict au format suivant :
     const rawJson = await callClaude(prompt, true, undefined, 2500, 2);
     let parsed: any;
     try {
-      parsed = JSON.parse(extractJsonFromLLMResponse(rawJson));
+      parsed = safeJsonParse(rawJson);
     } catch (err) {
       console.error("Error parsing discriminant challenge LLM response:", err, "Raw:", rawJson);
       throw new Error("Erreur de génération du défi discriminant.");
@@ -928,7 +929,7 @@ Réponds EXCLUSIVEMENT avec un objet JSON strict au format suivant :
     const rawJson = await callClaude(prompt, true, undefined, 2500, 2);
     let parsed: any;
     try {
-      parsed = JSON.parse(extractJsonFromLLMResponse(rawJson));
+      parsed = safeJsonParse(rawJson);
     } catch (err) {
       console.error("Error parsing support retest challenge LLM response:", err, "Raw:", rawJson);
       throw new Error("Erreur de génération du défi de retest.");

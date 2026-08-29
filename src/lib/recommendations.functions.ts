@@ -19,6 +19,7 @@ import {
   TRAIT_SUBFORM_INSTRUCTION,
   formatChildInterestsPayload,
   extractJsonFromLLMResponse,
+  safeJsonParse,
   getLeastExploredTalentLabels,
   computeProgressionTargets,
   formatProgressionInstruction,
@@ -246,7 +247,7 @@ export const recommendChallengesForChild = createServerFn({ method: "POST" })
 
           try {
             const rawJson = await callClaude(prompt, true, undefined, 2500, 2);
-            const parsed = JSON.parse(extractJsonFromLLMResponse(rawJson));
+            const parsed = safeJsonParse(rawJson);
 
             // Le Loup (chantier 2, Naya 3.0) : audit shadow non-bloquant de la sortie brute.
             void verifyAndLog({
@@ -390,7 +391,7 @@ export const recommendChallengesForChild = createServerFn({ method: "POST" })
 
         try {
           const rawJson = await callClaude(prompt, true, undefined, 2500, 2);
-          const parsed = JSON.parse(extractJsonFromLLMResponse(rawJson));
+          const parsed = safeJsonParse(rawJson);
 
           // Le Loup (chantier 2, Naya 3.0) : audit shadow non-bloquant de la sortie brute.
           void verifyAndLog({
@@ -511,7 +512,7 @@ export const recommendChallengesForChild = createServerFn({ method: "POST" })
 
       try {
         const rawJson = await callClaude(prompt, true, undefined, 2500, 2);
-        const parsed = JSON.parse(extractJsonFromLLMResponse(rawJson));
+        const parsed = safeJsonParse(rawJson);
 
         // Le Loup (chantier 2, Naya 3.0) : audit shadow non-bloquant de la sortie brute.
         void verifyAndLog({
@@ -605,7 +606,7 @@ export const recommendChallengesForChild = createServerFn({ method: "POST" })
 
       try {
         const rawJson = await callClaude(prompt, true, undefined, 2500, 2);
-        const parsed = JSON.parse(extractJsonFromLLMResponse(rawJson));
+        const parsed = safeJsonParse(rawJson);
 
         // Le Loup (chantier 2, Naya 3.0) : audit shadow non-bloquant de la sortie brute.
         void verifyAndLog({
@@ -719,7 +720,7 @@ export const recommendChallengesForChild = createServerFn({ method: "POST" })
 
       try {
         const rawJson = await callClaude(prompt, true, undefined, 2500, 2);
-        const parsed = JSON.parse(extractJsonFromLLMResponse(rawJson));
+        const parsed = safeJsonParse(rawJson);
 
         // Le Loup (chantier 2, Naya 3.0) : audit shadow non-bloquant de la sortie brute.
         void verifyAndLog({

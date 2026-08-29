@@ -103,51 +103,203 @@ export const ACADEMIC_DOMAIN_LABELS: Record<string, string> = {
   spatiale: "repérage dans l'espace",
 };
 
+const normalizeStringOrObjectArray = (val: unknown): string[] => {
+  if (!val) return [];
+  if (Array.isArray(val)) {
+    return val
+      .map((item) => {
+        if (typeof item === "string") return item.trim();
+        if (typeof item === "number") return String(item);
+        if (item && typeof item === "object") {
+          const obj = item as Record<string, unknown>;
+          return (
+            (typeof obj.text === "string" && obj.text) ||
+            (typeof obj.instruction === "string" && obj.instruction) ||
+            (typeof obj.description === "string" && obj.description) ||
+            (typeof obj.content === "string" && obj.content) ||
+            (typeof obj.etape === "string" && obj.etape) ||
+            (typeof obj.étape === "string" && obj.étape) ||
+            (typeof obj.consigne === "string" && obj.consigne) ||
+            (typeof obj.action === "string" && obj.action) ||
+            (typeof obj.titre === "string" && obj.titre) ||
+            (typeof obj.name === "string" && obj.name) ||
+            (typeof obj.nom === "string" && obj.nom) ||
+            (typeof obj.step === "string" && obj.step) ||
+            (typeof obj.item === "string" && obj.item) ||
+            (typeof obj.label === "string" && obj.label) ||
+            (typeof obj.materiel === "string" && obj.materiel) ||
+            (typeof obj.matériel === "string" && obj.matériel) ||
+            (typeof obj.outil === "string" && obj.outil) ||
+            (typeof obj.detail === "string" && obj.detail) ||
+            (typeof obj.value === "string" && obj.value) ||
+            Object.values(obj)
+              .filter((v) => typeof v === "string" || typeof v === "number")
+              .join(" - ") ||
+            ""
+          ).trim();
+        }
+        return "";
+      })
+      .filter(Boolean);
+  }
+  if (typeof val === "string") {
+    const trimmed = val.trim();
+    if (!trimmed) return [];
+    if (trimmed.includes("\n")) {
+      return trimmed
+        .split(/\r?\n/)
+        .map((s) => s.replace(/^[-*•\d.]+\s*/, "").trim())
+        .filter(Boolean);
+    }
+    return [trimmed];
+  }
+  return [];
+};
+
 export const ChallengeSchema = z.object({
-  domain: z.string(),
-  title: z.string(),
-  description: z.string(),
-  duration: z.string(),
-  steps: z.array(z.string()),
-  materials: z.array(z.string()),
-  material_tags: z.array(z.string()).optional(),
-  pedagogical_context: z.string().nullable().optional(),
-  intelligences: z.array(z.string()).optional(),
-  trait_subform: z.string().nullable().optional(),
-  requires_supervision: z.boolean().default(false),
-  supervision_warning: z.string().nullable().optional(),
-  difficulty: z.enum(["facile", "moyen", "difficile"]).optional(),
-  proof_mode: z.enum(["photo", "declarative"]).optional(),
-  proof_target: z.object({ metric: z.string(), value: z.number() }).nullable().optional(),
-  declarative_award: z.record(z.string(), z.number()).nullable().optional(),
-  academic_domain: z.enum(ACADEMIC_DOMAINS).nullable().optional(),
-  academic_level_age: z.number().nullable().optional(),
-  academic_reference_note: z.string().nullable().optional(),
+  domain: z
+    .unknown()
+    .nullish()
+    .transform((v) => (v != null ? String(v).trim() : "Sciences")),
+  title: z
+    .unknown()
+    .nullish()
+    .transform((v) => (v != null ? String(v).trim() : "Défi sans titre")),
+  description: z
+    .unknown()
+    .nullish()
+    .transform((v) => (v != null ? String(v).trim() : "")),
+  duration: z
+    .unknown()
+    .nullish()
+    .transform((v) => {
+      if (v == null) return "30 min";
+      if (typeof v === "number") return `${v} min`;
+      const s = String(v).trim();
+      return s || "30 min";
+    }),
+  steps: z.unknown().transform(normalizeStringOrObjectArray).default([]),
+  materials: z.unknown().transform(normalizeStringOrObjectArray).default([]),
+  material_tags: z.unknown().transform(normalizeStringOrObjectArray).default([]),
+  pedagogical_context: z
+    .unknown()
+    .nullish()
+    .transform((v) => (v != null ? String(v).trim() : null)),
+  intelligences: z
+    .unknown()
+    .nullish()
+    .transform((val) => {
+      if (!val) return [];
+      if (Array.isArray(val)) {
+        return val.map((v) => (typeof v === "string" ? v.trim() : String(v))).filter(Boolean);
+      }
+      if (typeof val === "string") {
+        return val
+          .split(/[,;\n]+/)
+          .map((s) => s.trim())
+          .filter(Boolean);
+      }
+      return [];
+    }),
+  trait_subform: z
+    .unknown()
+    .nullish()
+    .transform((v) => (v != null ? String(v).trim() : null)),
+  requires_supervision: z
+    .unknown()
+    .nullish()
+    .transform((v) => {
+      if (typeof v === "boolean") return v;
+      if (typeof v === "number") return v !== 0;
+      if (typeof v === "string") {
+        const s = v.trim().toLowerCase();
+        return s === "true" || s === "oui" || s === "1" || s === "yes";
+      }
+      return false;
+    }),
+  supervision_warning: z
+    .unknown()
+    .nullish()
+    .transform((v) => (v != null ? String(v).trim() : null)),
+  difficulty: z
+    .unknown()
+    .nullish()
+    .transform((v) => (v != null ? String(v).trim() : null)),
+  proof_mode: z
+    .unknown()
+    .nullish()
+    .transform((v) => (v != null ? String(v).trim() : null)),
+  proof_target: z
+    .object({ metric: z.unknown().optional(), value: z.unknown().optional() })
+    .nullish(),
+  declarative_award: z.record(z.string(), z.unknown()).nullish(),
+  academic_domain: z
+    .unknown()
+    .nullish()
+    .transform((v) => (v != null ? String(v).trim() : null)),
+  academic_level_age: z
+    .unknown()
+    .nullish()
+    .transform((v) => {
+      if (typeof v === "number") return Number.isFinite(v) ? v : null;
+      if (typeof v === "string") {
+        const n = parseInt(v.replace(/[^\d.-]/g, ""), 10);
+        return isNaN(n) ? null : n;
+      }
+      return null;
+    }),
+  academic_reference_note: z
+    .unknown()
+    .nullish()
+    .transform((v) => (v != null ? String(v).trim() : null)),
   academic_subject: z
-    .enum(["maths", "francais", "sciences", "histoire_geo", "anglais"])
-    .nullable()
-    .optional(),
+    .unknown()
+    .nullish()
+    .transform((v) => (v != null ? String(v).trim() : null)),
   academic_grade_level: z
-    .enum([
-      "CP", "CE1", "CE2", "CM1", "CM2", 
-      "6eme", "5eme", "4eme", "3eme",
-      "2nde", "1ere", "Terminale", 
-      "Superieur", "Bac+1", "Bac+2", "Bac+3", "Bac+4", "Bac+5",
-      "Cegep", "Universite"
-    ])
-    .nullable()
-    .optional(),
-  homework_instruction: z.string().nullable().optional(),
+    .unknown()
+    .nullish()
+    .transform((v) => (v != null ? String(v).trim() : null)),
+  homework_instruction: z
+    .unknown()
+    .nullish()
+    .transform((v) => (v != null ? String(v).trim() : null)),
   behavioral_driver: z
-    .enum(["deconstruire", "schematiser", "simuler", "enqueter", "optimiser"])
-    .nullable()
-    .optional(),
-  zpa_level: z.number().int().min(1).max(5).nullable().optional(),
-  academic_secret: z.string().nullable().optional(),
+    .unknown()
+    .nullish()
+    .transform((v) => (v != null ? String(v).trim() : null)),
+  zpa_level: z
+    .unknown()
+    .nullish()
+    .transform((v) => {
+      if (typeof v === "number") return Number.isFinite(v) ? v : null;
+      if (typeof v === "string") {
+        const n = parseInt(v.replace(/[^\d.-]/g, ""), 10);
+        return isNaN(n) ? null : n;
+      }
+      return null;
+    }),
+  academic_secret: z
+    .unknown()
+    .nullish()
+    .transform((v) => (v != null ? String(v).trim() : null)),
   // Défis-projets (2026-08-12, analyse §27-28) : kind (micro/projet) + niveau de
   // guidage 1-5 — le filet déterministe resolveKind/resolveGuidanceLevel borne tout.
-  kind: z.enum(["micro", "projet"]).optional(),
-  guidance_level: z.number().int().min(1).max(5).optional(),
+  kind: z
+    .unknown()
+    .nullish()
+    .transform((v) => (v != null ? String(v).trim() : null)),
+  guidance_level: z
+    .unknown()
+    .nullish()
+    .transform((v) => {
+      if (typeof v === "number") return Number.isFinite(v) ? v : null;
+      if (typeof v === "string") {
+        const n = parseInt(v.replace(/[^\d.-]/g, ""), 10);
+        return isNaN(n) ? null : n;
+      }
+      return null;
+    }),
 });
 
 // Shop Phase 1: log material tags that don't match any active product yet, so the
@@ -577,15 +729,27 @@ function resolveProofMode(
   // Cible bornée (review 2026-08-12, P2) : une valeur flottante ou hallucinée
   // (ex. 1e9) rendrait le défi déclaratif infranchissable — clamp [1, 1000]
   // unités (même esprit que declarative_award clampé [1,3]).
-  const value =
+  const rawValue =
     typeof proofTarget?.value === "number"
-      ? Math.min(1000, Math.max(1, Math.round(proofTarget.value)))
+      ? proofTarget.value
+      : typeof proofTarget?.value === "string"
+        ? parseFloat(proofTarget.value)
+        : NaN;
+  const value =
+    Number.isFinite(rawValue) && rawValue > 0
+      ? Math.min(1000, Math.max(1, Math.round(rawValue)))
       : NaN;
 
   const award: Record<string, number> = {};
   const validTalentKeys = new Set(VALID_TALENT_KEYS);
-  for (const [key, points] of Object.entries(declarativeAward ?? {})) {
-    if (typeof points === "number" && validTalentKeys.has(key)) {
+  for (const [key, rawPoints] of Object.entries(declarativeAward ?? {})) {
+    const points =
+      typeof rawPoints === "number"
+        ? rawPoints
+        : typeof rawPoints === "string"
+          ? parseFloat(rawPoints)
+          : NaN;
+    if (Number.isFinite(points) && points > 0 && validTalentKeys.has(key)) {
       award[key] = Math.max(1, Math.min(3, Math.round(points)));
     }
   }
@@ -676,6 +840,175 @@ function resolveAcademicLevel(
   };
 }
 
+export const VALID_ACADEMIC_SUBJECTS = [
+  "maths",
+  "francais",
+  "sciences",
+  "histoire_geo",
+  "anglais",
+] as const;
+
+export function resolveAcademicSubject(
+  subject: string | null | undefined,
+): (typeof VALID_ACADEMIC_SUBJECTS)[number] | null {
+  if (!subject) return null;
+  const s = subject
+    .trim()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .replace(/[\s-_]+/g, "_");
+  if ((VALID_ACADEMIC_SUBJECTS as readonly string[]).includes(s)) {
+    return s as (typeof VALID_ACADEMIC_SUBJECTS)[number];
+  }
+  if (s.includes("math")) return "maths";
+  if (s.includes("franc") || s.includes("litt") || s.includes("gramm") || s.includes("ortho"))
+    return "francais";
+  if (
+    s.includes("scien") ||
+    s.includes("phys") ||
+    s.includes("chim") ||
+    s.includes("svt") ||
+    s.includes("bio") ||
+    s.includes("tech")
+  )
+    return "sciences";
+  if (s.includes("hist") || s.includes("geo")) return "histoire_geo";
+  if (s.includes("angl") || s.includes("eng")) return "anglais";
+  return null;
+}
+
+export const VALID_ACADEMIC_GRADE_LEVELS = [
+  "CP",
+  "CE1",
+  "CE2",
+  "CM1",
+  "CM2",
+  "6eme",
+  "5eme",
+  "4eme",
+  "3eme",
+  "2nde",
+  "1ere",
+  "Terminale",
+  "Superieur",
+  "Bac+1",
+  "Bac+2",
+  "Bac+3",
+  "Bac+4",
+  "Bac+5",
+  "Cegep",
+  "Universite",
+] as const;
+
+export function resolveAcademicGradeLevel(
+  grade: string | null | undefined,
+): (typeof VALID_ACADEMIC_GRADE_LEVELS)[number] | null {
+  if (!grade) return null;
+  const raw = grade.trim();
+  if ((VALID_ACADEMIC_GRADE_LEVELS as readonly string[]).includes(raw)) {
+    return raw as (typeof VALID_ACADEMIC_GRADE_LEVELS)[number];
+  }
+  const clean = raw
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .replace(/[\s-_]+/g, "");
+
+  const directMap: Record<string, (typeof VALID_ACADEMIC_GRADE_LEVELS)[number]> = {
+    cp: "CP",
+    ce1: "CE1",
+    ce2: "CE2",
+    cm1: "CM1",
+    cm2: "CM2",
+    "6eme": "6eme",
+    "6e": "6eme",
+    "5eme": "5eme",
+    "5e": "5eme",
+    "4eme": "4eme",
+    "4e": "4eme",
+    "3eme": "3eme",
+    "3e": "3eme",
+    "2nde": "2nde",
+    "2nd": "2nde",
+    "2ndegenerale": "2nde",
+    seconde: "2nde",
+    "1ere": "1ere",
+    "1re": "1ere",
+    premiere: "1ere",
+    terminale: "Terminale",
+    tle: "Terminale",
+    superieur: "Superieur",
+    "bac+1": "Bac+1",
+    "bac1": "Bac+1",
+    "bac+2": "Bac+2",
+    "bac2": "Bac+2",
+    "bac+3": "Bac+3",
+    "bac3": "Bac+3",
+    "bac+4": "Bac+4",
+    "bac4": "Bac+4",
+    "bac+5": "Bac+5",
+    "bac5": "Bac+5",
+    cegep: "Cegep",
+    universite: "Universite",
+  };
+
+  if (directMap[clean]) return directMap[clean];
+
+  if (clean.includes("bac+1") || clean.includes("licence1") || clean.includes("l1")) return "Bac+1";
+  if (clean.includes("bac+2") || clean.includes("licence2") || clean.includes("l2") || clean.includes("deug"))
+    return "Bac+2";
+  if (clean.includes("bac+3") || clean.includes("licence3") || clean.includes("l3") || clean.includes("licence"))
+    return "Bac+3";
+  if (clean.includes("bac+4") || clean.includes("master1") || clean.includes("m1")) return "Bac+4";
+  if (clean.includes("bac+5") || clean.includes("master2") || clean.includes("m2") || clean.includes("master"))
+    return "Bac+5";
+  if (clean.includes("terminale") || clean.includes("tle")) return "Terminale";
+  if (clean.includes("1ere") || clean.includes("premiere")) return "1ere";
+  if (clean.includes("2nde") || clean.includes("seconde")) return "2nde";
+  if (clean.includes("cegep")) return "Cegep";
+  if (clean.includes("universit")) return "Universite";
+  if (clean.includes("superieur")) return "Superieur";
+
+  return null;
+}
+
+export const VALID_BEHAVIORAL_DRIVERS = [
+  "deconstruire",
+  "schematiser",
+  "simuler",
+  "enqueter",
+  "optimiser",
+] as const;
+
+export function resolveBehavioralDriver(
+  driver: string | null | undefined,
+): (typeof VALID_BEHAVIORAL_DRIVERS)[number] | null {
+  if (!driver) return null;
+  const s = driver
+    .trim()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .replace(/[\s-_]+/g, "");
+  if ((VALID_BEHAVIORAL_DRIVERS as readonly string[]).includes(s)) {
+    return s as (typeof VALID_BEHAVIORAL_DRIVERS)[number];
+  }
+  if (s.includes("deconstru") || s.includes("demonter")) return "deconstruire";
+  if (s.includes("schema") || s.includes("carte") || s.includes("cartograph")) return "schematiser";
+  if (s.includes("simul") || s.includes("modelis") || s.includes("role")) return "simuler";
+  if (s.includes("enquet") || s.includes("investig") || s.includes("detectiv")) return "enqueter";
+  if (s.includes("optim") || s.includes("amelior") || s.includes("perform")) return "optimiser";
+  return null;
+}
+
+export function resolveZpaLevel(level: number | string | null | undefined): number | null {
+  if (level == null) return null;
+  const n = typeof level === "number" ? level : parseInt(String(level).replace(/[^\d.-]/g, ""), 10);
+  if (!Number.isFinite(n) || isNaN(n)) return null;
+  return Math.max(1, Math.min(5, Math.round(n)));
+}
+
 // Single choke point for the checks every challenge must pass through before
 // it reaches a parent or the DB: the safety net, the difficulty fallback,
 // title truncation, material_tags normalization. Before this existed, the
@@ -732,6 +1065,10 @@ export function finalizeChallenge<
     academic_domain?: string | null;
     academic_level_age?: number | null;
     academic_reference_note?: string | null;
+    academic_subject?: string | null;
+    academic_grade_level?: string | null;
+    behavioral_driver?: string | null;
+    zpa_level?: number | null;
     kind?: string | null;
     guidance_level?: number | null;
   },
@@ -759,6 +1096,10 @@ export function finalizeChallenge<
     academic_domain: academic.academic_domain,
     academic_level_age: academic.academic_level_age,
     academic_reference_note: academic.academic_reference_note,
+    academic_subject: resolveAcademicSubject(c.academic_subject),
+    academic_grade_level: resolveAcademicGradeLevel(c.academic_grade_level),
+    behavioral_driver: resolveBehavioralDriver(c.behavioral_driver),
+    zpa_level: resolveZpaLevel(c.zpa_level),
     kind: resolveKind(c.kind, c.steps, c.title),
     guidance_level: resolveGuidanceLevel(c.guidance_level, context?.completedInDomain ?? 0),
   };
@@ -1152,7 +1493,7 @@ export function extractJsonFromLLMResponse(raw: string): string {
   // 0. Si le modèle génère son raisonnement dans le texte brut (ex: DeepSeek ou un proxy),
   // on retire tout le bloc <think>...</think> avant de chercher le JSON, car il
   // peut contenir des accolades qui cassent le RegExp ci-dessous.
-  trimmed = trimmed.replace(/<think>[\s\S]*?<\/think>\s*/gi, "");
+  trimmed = trimmed.replace(/<think>[\s\S]*?(?:<\/think>|$)\s*/gi, "");
 
   // 1. Bloc explicitement tagué ```json ... ``` (prioritaire s'il y a plusieurs blocs)
   const tagged = trimmed.match(/```json\s*([\s\S]*?)```/i);
@@ -1164,22 +1505,355 @@ export function extractJsonFromLLMResponse(raw: string): string {
     if (content.startsWith("{") || content.startsWith("[")) return content;
   }
 
-  // 3. Bloc balisé sans fermeture (réponse tronquée) — on retire juste le marqueur d'ouverture
-  const unclosed = trimmed.match(/^```(?:\w+)?\s*([\s\S]*)$/);
+  // 3. Bloc balisé sans fermeture (réponse tronquée) — on retire le marqueur et le texte introductif
+  const unclosed = trimmed.match(/```(?:\w+)?\s*([\s\S]*)$/);
   if (unclosed) {
     const content = unclosed[1].trim();
+    const brace = content.search(/[{[]/);
+    if (brace !== -1) return content.slice(brace);
     if (content.startsWith("{") || content.startsWith("[")) return content;
   }
 
   // 4. Pas de balise — extrait le plus grand span {...} ou [...], tolère du
-  //    texte conversationnel avant/après le JSON.
+  //    texte conversationnel avant/après le JSON ou réponse tronquée.
   const firstBrace = trimmed.search(/[{[]/);
   const lastBrace = Math.max(trimmed.lastIndexOf("}"), trimmed.lastIndexOf("]"));
-  if (firstBrace !== -1 && lastBrace > firstBrace) {
-    return trimmed.slice(firstBrace, lastBrace + 1);
+  if (firstBrace !== -1) {
+    if (lastBrace > firstBrace) {
+      return trimmed.slice(firstBrace, lastBrace + 1);
+    }
+    return trimmed.slice(firstBrace);
   }
 
   return trimmed;
+}
+
+export function sanitizeJsonString(raw: string): string {
+  let str = (raw ?? "").trim();
+  if (!str) return str;
+
+  // 1. Strip BOM and invisible zero-width chars
+  str = str.replace(/[\uFEFF\u200B-\u200D]/g, "");
+
+  // 2. Replace non-breaking spaces and unicode spaces with standard ASCII space
+  str = str.replace(/[\u00A0\u2000-\u200A\u202F\u205F\u3000]/g, " ");
+
+  // 3. Strip multi-line comments /* ... */
+  str = str.replace(/\/\*[\s\S]*?\*\//g, "");
+
+  // 4. Strip single-line comments // ... at start of line or preceded by whitespace
+  str = str.replace(/^\s*\/\/.*$/gm, "");
+
+  // 5. Remove trailing ellipsis (...) often left by truncated responses
+  str = str.replace(/,\s*\.{3,}/g, "");
+  str = str.replace(/\.{3,}\s*([}\]])/g, "$1");
+  str = str.replace(/\.{3,}\s*$/g, "");
+
+  // 6. Convert Python boolean/None literals when outside quotes
+  str = str.replace(/:\s*True\b/g, ": true");
+  str = str.replace(/:\s*False\b/g, ": false");
+  str = str.replace(/:\s*None\b/g, ": null");
+  str = str.replace(/\[\s*True\b/g, "[true");
+  str = str.replace(/\[\s*False\b/g, "[false");
+  str = str.replace(/\[\s*None\b/g, "[null");
+  str = str.replace(/,\s*True\b/g, ", true");
+  str = str.replace(/,\s*False\b/g, ", false");
+  str = str.replace(/,\s*None\b/g, ", null");
+
+  // 7. If entire JSON starts with single quote, convert single quotes to double quotes
+  if (/^\s*[{[]\s*'/.test(str)) {
+    str = convertSingleQuotesToDouble(str);
+  }
+
+  // 8. Remove trailing commas before } or ]
+  str = str.replace(/,\s*([}\]])/g, "$1");
+
+  return str;
+}
+
+function convertSingleQuotesToDouble(str: string): string {
+  let result = "";
+  let inDouble = false;
+  let inSingle = false;
+  let isEscaped = false;
+
+  for (let i = 0; i < str.length; i++) {
+    const char = str[i];
+    if (isEscaped) {
+      result += char;
+      isEscaped = false;
+      continue;
+    }
+    if (char === "\\") {
+      result += char;
+      isEscaped = true;
+      continue;
+    }
+    if (char === '"' && !inSingle) {
+      inDouble = !inDouble;
+      result += char;
+      continue;
+    }
+    if (char === "'" && !inDouble) {
+      if (!inSingle) {
+        inSingle = true;
+        result += '"';
+      } else {
+        // Check if closing quote or inner apostrophe in French (l'arbre, d'eau...)
+        const after = str.slice(i + 1).trimStart();
+        const nextChar = after[0];
+        const isClosing =
+          !nextChar || nextChar === ":" || nextChar === "," || nextChar === "}" || nextChar === "]";
+        if (isClosing) {
+          inSingle = false;
+          result += '"';
+        } else {
+          // Inner apostrophe
+          result += "'";
+        }
+      }
+      continue;
+    }
+    result += char;
+  }
+  if (inSingle) {
+    result += '"';
+  }
+  return result;
+}
+
+const LATEX_ESCAPABLE_WORDS = new Set([
+  // b
+  "bar", "begin", "beta", "bf", "big", "bigg", "bigl", "bigr", "Bigl", "Bigr",
+  "biggl", "biggr", "Biggl", "Biggr", "binom", "bm", "bmod", "bold", "boldsymbol",
+  "bot", "box", "brace", "brack", "breve", "bullet",
+  // f
+  "frac", "forall", "flat", "fbox", "footnotesize", "framebox",
+  // n
+  "nabla", "ne", "neq", "ni", "norm", "not", "notin", "nu", "null", "newline",
+  "noindent", "normalsize", "nexists",
+  // r
+  "raggedright", "rangle", "rbrace", "rceil", "re", "restriction", "rfloor", "rho",
+  "right", "rightarrow", "rightarrowtail", "rightleftharpoons", "rightleftarrows",
+  "rm", "root", "rvert", "rVert",
+  // t
+  "tag", "tan", "tanh", "tau", "text", "textbf", "textit", "texttt", "textsf",
+  "textsl", "textsc", "tfrac", "therefore", "theta", "tilde", "times", "tiny",
+  "to", "top", "triangle", "triangleq",
+]);
+
+/**
+ * Repairs string literal contents inside JSON:
+ * - Escapes invalid backslashes (like LaTeX \frac, \sqrt, \alpha, \pm, etc.)
+ * - Escapes literal newlines / control characters
+ * - Fixes unescaped inner double quotes with context awareness
+ */
+export function repairJsonStringTokens(raw: string): string {
+  const str = sanitizeJsonString(raw);
+  let result = "";
+  let inString = false;
+  let isEscaped = false;
+  let isKey = false;
+  const delimStack: string[] = [];
+  let lastNonWsChar = "";
+
+  for (let i = 0; i < str.length; i++) {
+    const char = str[i];
+
+    if (!inString) {
+      if (char === '"') {
+        inString = true;
+        isEscaped = false;
+        // Track whether this string is an object key or a value
+        if (lastNonWsChar === ":") {
+          isKey = false;
+        } else if (lastNonWsChar === "{" || (lastNonWsChar === "," && delimStack[delimStack.length - 1] === "{")) {
+          isKey = true;
+        } else {
+          isKey = false;
+        }
+        result += '"';
+      } else {
+        if (char === "{" || char === "[") {
+          delimStack.push(char);
+        } else if (char === "}") {
+          if (delimStack.length > 0 && delimStack[delimStack.length - 1] === "{") delimStack.pop();
+        } else if (char === "]") {
+          if (delimStack.length > 0 && delimStack[delimStack.length - 1] === "[") delimStack.pop();
+        }
+        result += char;
+      }
+      if (!/\s/.test(char)) {
+        lastNonWsChar = char;
+      }
+      continue;
+    }
+
+    // We are INSIDE a double-quoted string
+    if (isEscaped) {
+      isEscaped = false;
+
+      const isStandardEscape = /["\\/bfnrt]/.test(char);
+      const isUnicodeEscape = char === "u" && /^[0-9a-fA-F]{4}/.test(str.slice(i + 1, i + 5));
+
+      const wordMatch = str.slice(i).match(/^[a-zA-Z]+/)?.[0] || "";
+      const isLatex = LATEX_ESCAPABLE_WORDS.has(wordMatch.toLowerCase());
+
+      if (isLatex) {
+        // Double escape the backslash so LaTeX command is preserved verbatim
+        result += "\\" + char;
+      } else if (isStandardEscape || isUnicodeEscape) {
+        result += char;
+      } else {
+        // Invalid JSON escape (e.g. \s in \sqrt, \a in \alpha, \p in \pi, \d in \delta, etc.)
+        result += "\\" + char;
+      }
+      continue;
+    }
+
+    if (char === "\\") {
+      isEscaped = true;
+      result += "\\";
+      continue;
+    }
+
+    if (char === '"') {
+      const after = str.slice(i + 1);
+      const trimmedAfter = after.trimStart();
+      const nextChar = trimmedAfter[0];
+
+      let isLikelyClosing = false;
+      if (!nextChar) {
+        isLikelyClosing = true;
+      } else if (isKey) {
+        isLikelyClosing = nextChar === ":";
+      } else {
+        if (nextChar === "}" || nextChar === "]") {
+          const afterClosing = trimmedAfter.slice(1).trimStart();
+          const nextNextChar = afterClosing[0];
+          isLikelyClosing = !nextNextChar || nextNextChar === "," || nextNextChar === "}" || nextNextChar === "]";
+        } else if (nextChar === ",") {
+          const afterComma = trimmedAfter.slice(1).trimStart();
+          const isNextTokenValidJson =
+            !afterComma ||
+            /^["{\[\}\]\d\-]/.test(afterComma) ||
+            /^(?:true|false|null|True|False|None)\b/.test(afterComma);
+          isLikelyClosing = isNextTokenValidJson;
+        }
+      }
+
+      if (isLikelyClosing) {
+        inString = false;
+        result += '"';
+      } else {
+        // Unescaped inner quote inside text! Escape it: \"
+        result += '\\"';
+      }
+      continue;
+    }
+
+    // Handle raw control characters inside string
+    if (char === "\n") {
+      result += "\\n";
+      continue;
+    }
+    if (char === "\r") {
+      result += "\\r";
+      continue;
+    }
+    if (char === "\t") {
+      result += "\\t";
+      continue;
+    }
+    if (char.charCodeAt(0) < 0x20) {
+      result += `\\u${char.charCodeAt(0).toString(16).padStart(4, "0")}`;
+      continue;
+    }
+
+    result += char;
+  }
+
+  if (isEscaped) {
+    result += "\\";
+  }
+  if (inString) {
+    result += '"';
+  }
+
+  return result;
+}
+
+export function cleanJsonString(jsonStr: string): string {
+  return repairJsonStringTokens(jsonStr);
+}
+
+export function balanceJsonDelimiters(raw: string): string {
+  let str = repairJsonStringTokens(raw);
+  str = str.replace(/,\s*$/, "");
+
+  const stack: string[] = [];
+  let inString = false;
+  let isEscaped = false;
+
+  for (let i = 0; i < str.length; i++) {
+    const char = str[i];
+    if (inString) {
+      if (isEscaped) {
+        isEscaped = false;
+      } else if (char === "\\") {
+        isEscaped = true;
+      } else if (char === '"') {
+        inString = false;
+      }
+    } else {
+      if (char === '"') {
+        inString = true;
+      } else if (char === "{" || char === "[") {
+        stack.push(char);
+      } else if (char === "}") {
+        if (stack.length > 0 && stack[stack.length - 1] === "{") {
+          stack.pop();
+        }
+      } else if (char === "]") {
+        if (stack.length > 0 && stack[stack.length - 1] === "[") {
+          stack.pop();
+        }
+      }
+    }
+  }
+
+  if (inString) {
+    str += '"';
+  }
+
+  str = str.replace(/,\s*$/, "");
+
+  while (stack.length > 0) {
+    const opener = stack.pop();
+    if (opener === "{") str += "}";
+    else if (opener === "[") str += "]";
+  }
+
+  return str;
+}
+
+export function safeJsonParse<T = any>(raw: string): T {
+  const extracted = extractJsonFromLLMResponse(raw);
+  try {
+    return JSON.parse(extracted);
+  } catch (firstErr) {
+    try {
+      const cleaned = cleanJsonString(extracted);
+      return JSON.parse(cleaned);
+    } catch {
+      try {
+        const balanced = balanceJsonDelimiters(extracted);
+        return JSON.parse(balanced);
+      } catch {
+        throw firstErr;
+      }
+    }
+  }
 }
 
 // Routage IA (décision du 2026-07-21) : DeepSeek n'a pas de vision, donc toute
@@ -1706,9 +2380,9 @@ export async function generateChallengesCore(params: {
   // cap (78-91%) — a single slightly longer response silently truncates the
   // JSON and fails the whole batch. 8000 keeps real headroom at count=6 too.
   const content = await callClaude(prompt, true, undefined, 8000);
-  let parsed: { challenges?: unknown };
+  let parsed: any;
   try {
-    parsed = JSON.parse(extractJsonFromLLMResponse(content));
+    parsed = safeJsonParse(content);
   } catch (err) {
     console.error("Error parsing generateChallenges LLM response:", err, "Raw:", content);
     const snippet = content ? content.substring(0, 150).replace(/\n/g, " ") : "EMPTY_CONTENT";
@@ -1728,7 +2402,20 @@ export async function generateChallengesCore(params: {
 
   let list: z.infer<typeof ChallengeSchema>[];
   try {
-    list = z.array(ChallengeSchema).parse(parsed.challenges ?? []);
+    let rawChallenges: any[];
+    if (Array.isArray(parsed)) {
+      rawChallenges = parsed;
+    } else if (parsed && typeof parsed === "object") {
+      if (Array.isArray(parsed.challenges)) rawChallenges = parsed.challenges;
+      else if (Array.isArray(parsed.data)) rawChallenges = parsed.data;
+      else if (Array.isArray(parsed.items)) rawChallenges = parsed.items;
+      else if (Array.isArray(parsed.results)) rawChallenges = parsed.results;
+      else if (Array.isArray(parsed.defis)) rawChallenges = parsed.defis;
+      else rawChallenges = [parsed];
+    } else {
+      rawChallenges = [];
+    }
+    list = z.array(ChallengeSchema).parse(rawChallenges);
   } catch (err: any) {
     console.error("Zod validation failed for generateChallenges:", err);
     throw new Error(`Réponse IA invalide (structure incorrecte: ${err.message?.substring(0, 100)})`);
@@ -2236,7 +2923,7 @@ Réponds STRICTEMENT en JSON valide avec ce format :
 
   let parsed: { observations?: string; talents_awarded?: Record<string, number> };
   try {
-    parsed = JSON.parse(extractJsonFromLLMResponse(aiContent));
+    parsed = safeJsonParse(aiContent);
   } catch (parseErr) {
     console.error("Error parsing vision/text AI response JSON:", parseErr, "Content:", aiContent);
     throw new Error("Réponse IA invalide — réessayez dans quelques instants.");
@@ -2469,7 +3156,7 @@ Réponds EXCLUSIVEMENT avec un JSON de cette forme, sans texte autour : {"cause"
 
   try {
     const raw = await callClaude(prompt, true, undefined, 1000, 2);
-    const parsed = JSON.parse(extractJsonFromLLMResponse(raw));
+    const parsed = safeJsonParse(raw);
     // Le Loup (chantier 2, Naya 3.0) : audit shadow non-bloquant de la classification.
     void verifyAndLog({
       kind: "not_completed_classification",
@@ -2799,10 +3486,7 @@ export const submitDeclarativeProof = createServerFn({ method: "POST" })
 
 export const AssignTemplateInput = z.object({
   childId: z.string().uuid(),
-  template: ChallengeSchema.extend({
-    intelligences: z.array(z.string()).optional(),
-    pedagogical_context: z.string().optional(),
-  }),
+  template: ChallengeSchema,
   // Atelier du Temps — mécanique "Estimation" (cf. genizio-decisions #30) : combien
   // de temps l'enfant pense avoir besoin, capturé au moment de l'assignation depuis
   // l'Atelier. Absent pour tout autre chemin d'assignation (ex. "Composer un défi
@@ -2819,10 +3503,7 @@ export async function assignTemplateChallengeCore(params: {
   db: any;
   child: { id: string; age: number; time_pressure: string | null };
   childId: string;
-  template: z.infer<typeof ChallengeSchema> & {
-    intelligences?: string[];
-    pedagogical_context?: string;
-  };
+  template: z.infer<typeof ChallengeSchema>;
   estimatedDurationMinutes?: number;
   ownerUserId: string;
   createdByUserId?: string | null;
@@ -2864,13 +3545,9 @@ export async function assignTemplateChallengeCore(params: {
         timePressure: (child.time_pressure as TimePressure) ?? "standard",
         difficulty: template.difficulty,
       }),
-      academic_subject: template.academic_subject ?? null,
-      academic_grade_level: template.academic_grade_level ?? null,
       homework_instruction: template.homework_instruction ?? null,
-      behavioral_driver: template.behavioral_driver ?? null,
-      zpa_level: template.zpa_level ?? null,
       // target_intelligences vient de finalizeChallenge (resolveTargetIntelligences)
-      // plutôt que directement de template.intelligences, non filtré.
+      // ainsi que les champs académiques normalisés (resolveAcademicSubject, resolveAcademicGradeLevel...)
       ...finalizeChallenge(template, child.age),
     })
     .select()
@@ -3154,9 +3831,9 @@ export const generateAcademicHomeworkChallenge = createServerFn({ method: "POST"
     });
 
     const content = await callClaude(prompt, true, undefined, 3000);
-    let parsed: unknown;
+    let parsed: any;
     try {
-      parsed = JSON.parse(extractJsonFromLLMResponse(content));
+      parsed = safeJsonParse(content);
     } catch (err) {
       console.error(
         "Error parsing generateAcademicHomeworkChallenge LLM response:",
@@ -3164,7 +3841,8 @@ export const generateAcademicHomeworkChallenge = createServerFn({ method: "POST"
         "Raw:",
         content,
       );
-      throw new Error("Réponse IA invalide");
+      const snippet = content ? content.substring(0, 150).replace(/\n/g, " ") : "EMPTY_CONTENT";
+      throw new Error(`Réponse IA invalide (extrait: ${snippet}...)`);
     }
 
     // Le Loup (chantier 2, Naya 3.0) : audit shadow non-bloquant de la sortie brute.
@@ -3184,10 +3862,23 @@ export const generateAcademicHomeworkChallenge = createServerFn({ method: "POST"
 
     let c: z.infer<typeof ChallengeSchema>;
     try {
-      c = ChallengeSchema.parse(parsed);
-    } catch (err) {
+      let item: any = parsed;
+      if (Array.isArray(parsed)) {
+        item = parsed[0];
+      } else if (parsed && typeof parsed === "object") {
+        if (Array.isArray(parsed.challenges) && parsed.challenges.length > 0)
+          item = parsed.challenges[0];
+        else if (Array.isArray(parsed.data) && parsed.data.length > 0) item = parsed.data[0];
+        else if (Array.isArray(parsed.items) && parsed.items.length > 0) item = parsed.items[0];
+        else if (Array.isArray(parsed.results) && parsed.results.length > 0) item = parsed.results[0];
+        else if (Array.isArray(parsed.defis) && parsed.defis.length > 0) item = parsed.defis[0];
+        else if (parsed.challenge && typeof parsed.challenge === "object") item = parsed.challenge;
+        else if (parsed.defi && typeof parsed.defi === "object") item = parsed.defi;
+      }
+      c = ChallengeSchema.parse(item);
+    } catch (err: any) {
       console.error("Schema validation failed for academic challenge:", err);
-      throw new Error("Réponse IA invalide — structure non conforme.");
+      throw new Error(`Réponse IA invalide — structure non conforme: ${err?.message?.substring(0, 100) ?? ""}`);
     }
 
     const finalized = finalizeChallenge(c, child.age);
@@ -3213,11 +3904,11 @@ export const generateAcademicHomeworkChallenge = createServerFn({ method: "POST"
     return {
       ...c,
       ...finalized,
-      academic_subject: data.subject,
-      academic_grade_level: data.gradeLevel,
+      academic_subject: resolveAcademicSubject(data.subject) ?? data.subject,
+      academic_grade_level: resolveAcademicGradeLevel(data.gradeLevel) ?? data.gradeLevel,
       homework_instruction: data.homeworkInstruction,
-      behavioral_driver: selectedDriver,
-      zpa_level: zpaResult.level,
+      behavioral_driver: resolveBehavioralDriver(selectedDriver),
+      zpa_level: resolveZpaLevel(zpaResult.level),
     };
   });
 
@@ -3349,12 +4040,13 @@ export const generateSingleChallenge = createServerFn({ method: "POST" })
     // per-minute output-token budget for a response that only needs a
     // fraction of that.
     const content = await callClaude(prompt, true, undefined, 3000);
-    let parsed: unknown;
+    let parsed: any;
     try {
-      parsed = JSON.parse(extractJsonFromLLMResponse(content));
+      parsed = safeJsonParse(content);
     } catch (err) {
       console.error("Error parsing generateSingleChallenge LLM response:", err, "Raw:", content);
-      throw new Error("Réponse IA invalide");
+      const snippet = content ? content.substring(0, 150).replace(/\n/g, " ") : "EMPTY_CONTENT";
+      throw new Error(`Réponse IA invalide (extrait: ${snippet}...)`);
     }
 
     // Le Loup (chantier 2, Naya 3.0) : audit shadow non-bloquant de la sortie brute.
@@ -3369,9 +4061,23 @@ export const generateSingleChallenge = createServerFn({ method: "POST" })
 
     let c: z.infer<typeof ChallengeSchema>;
     try {
-      c = ChallengeSchema.parse(parsed);
-    } catch {
-      throw new Error("Réponse IA invalide");
+      let item: any = parsed;
+      if (Array.isArray(parsed)) {
+        item = parsed[0];
+      } else if (parsed && typeof parsed === "object") {
+        if (Array.isArray(parsed.challenges) && parsed.challenges.length > 0)
+          item = parsed.challenges[0];
+        else if (Array.isArray(parsed.data) && parsed.data.length > 0) item = parsed.data[0];
+        else if (Array.isArray(parsed.items) && parsed.items.length > 0) item = parsed.items[0];
+        else if (Array.isArray(parsed.results) && parsed.results.length > 0) item = parsed.results[0];
+        else if (Array.isArray(parsed.defis) && parsed.defis.length > 0) item = parsed.defis[0];
+        else if (parsed.challenge && typeof parsed.challenge === "object") item = parsed.challenge;
+        else if (parsed.defi && typeof parsed.defi === "object") item = parsed.defi;
+      }
+      c = ChallengeSchema.parse(item);
+    } catch (err: any) {
+      console.error("Schema validation failed for generateSingleChallenge:", err);
+      throw new Error(`Réponse IA invalide (structure incorrecte: ${err?.message?.substring(0, 100) ?? ""})`);
     }
 
     // Preview only — nothing is persisted here. The Laboratoire and the Défi page's
