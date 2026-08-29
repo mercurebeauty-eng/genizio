@@ -24,7 +24,7 @@ describe("internationalGradeForAge — convention US du référentiel", () => {
   it("Pré-élémentaire à 4 ans ; null hors bornes ou valeur invalide", () => {
     expect(internationalGradeForAge(4)).toBe("Pré-élémentaire");
     expect(internationalGradeForAge(3)).toBeNull();
-    expect(internationalGradeForAge(19)).toBeNull();
+    expect(internationalGradeForAge(22)).toBeNull();
     expect(internationalGradeForAge(NaN)).toBeNull();
   });
 
@@ -41,7 +41,7 @@ describe("internationalLevelLabel — libellé court de badge", () => {
   });
 
   it("null quand le grade est hors bornes", () => {
-    expect(internationalLevelLabel(19)).toBeNull();
+    expect(internationalLevelLabel(22)).toBeNull();
   });
 });
 
@@ -84,10 +84,10 @@ describe("lastAcademicLevelByDomain — dernier niveau atteint par domaine", () 
 
   it("fallback « N ans » si le niveau sort des bornes du référentiel", () => {
     const challenges = [
-      c({ academic_domain: "mathematiques", academic_level_age: 19, completed_at: "2026-01-01" }),
+      c({ academic_domain: "mathematiques", academic_level_age: 22, completed_at: "2026-01-01" }),
     ];
     expect(lastAcademicLevelByDomain(challenges)).toEqual([
-      { domain: "mathematiques", levelAge: 19, grade: "19 ans" },
+      { domain: "mathematiques", levelAge: 22, grade: "22 ans" },
     ]);
   });
 });

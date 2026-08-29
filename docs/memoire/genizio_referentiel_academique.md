@@ -64,7 +64,9 @@ Je le signale explicitement plutôt que de forcer les chiffres pour coller à l'
 | 11 ans (Grade 6) | Utilise des variables pour représenter des nombres, résout des équations à une inconnue de la forme x+p=q et px=q, comprend des inégalités simples (x>c, x<c) représentées sur une droite. | **Sourcé** — Common Core 6.EE.B (standards cités précisément). |
 | 12 ans (Grade 7) | Résout "avec fluidité" des équations de la forme px+q=r et p(x+q)=r, résout et représente des inégalités de la forme px+q>r. | **Sourcé** — Common Core 7.EE (standards cités précisément). |
 | 13 ans (Grade 8) | Nombres non rationnels, exposants entiers et racines, relations entre proportionnalité/droites/équations linéaires, résolution de systèmes de 2 équations linéaires, notion de fonction. | **Sourcé** — Common Core Grade 8 (résumé officiel du niveau). |
-| 14 ans (Grade 9, début lycée) | Théorème de Pythagore, statistiques descriptives simples (moyenne, médiane), algèbre plus avancée. | Estimation raisonnée (transition vers le lycée), non vérifiée précisément cette passe. |
+| 14 ans (Grade 9) | Théorème de Pythagore, statistiques descriptives simples (moyenne, médiane), algèbre plus avancée. | Estimation raisonnée (début de lycée), non vérifiée précisément cette passe. |
+| 15-17 ans (Grades 10-12, Lycée) | Algèbre linéaire, géométrie analytique, trigonométrie, calcul différentiel et intégral (bases), probabilités complexes. | Estimation raisonnée (fin de secondaire). |
+| 18-21 ans (Supérieur / Cégep) | Mathématiques appliquées, statistiques inférentielles, résolution de problèmes ouverts, modélisation mathématique (finances, data, ingénierie). | Estimation raisonnée (post-secondaire). |
 
 ## 2. Langage (lecture / écriture / expression)
 
@@ -75,7 +77,9 @@ Je le signale explicitement plutôt que de forcer les chiffres pour coller à l'
 | 6 ans (Grade 1) | "Lit avec une précision et une fluidité suffisantes pour soutenir la compréhension" : lit un texte de son niveau avec intention, à voix haute avec précision/rythme/expression, se corrige seul en s'appuyant sur le contexte. | **Sourcé** — Common Core RF.1.4 (citation quasi exacte). |
 | 7 ans (Grade 2) | Même structure de standard qu'à 6 ans sur un texte de niveau plus élevé ; poursuit le travail sur les voyelles courtes/longues pour décoder des mots. | **Sourcé** — Common Core RF.2.4 (standard structurellement identique à Grade 1, appliqué à un texte plus avancé). |
 | 8-10 ans (Grade 3-5) | Utilise les relations lettres-sons pour décoder et comprendre des mots de plusieurs syllabes, lecture de textes de niveau croissant. Résume un texte, utilise des connecteurs logiques simples (parce que, ensuite, donc). | **Sourcé partiellement** — la partie décodage vient de Common Core RF (progression Grade 3-5, formulation générale) ; la partie "résumé/connecteurs" reste une estimation raisonnée non vérifiée précisément cette passe. |
-| 11-14 ans | Rédige des textes structurés en plusieurs paragraphes avec une progression claire, argumente avec plusieurs arguments organisés, analyse un texte court (intention de l'auteur, point de vue, fiabilité d'une source). | Non vérifié précisément cette passe — cohérent avec la progression générale connue des Writing Standards Common Core, mais les standards W.6 à W.9 n'ont pas été recherchés individuellement ici. À confirmer avant usage. |
+| 11-14 ans (Collège) | Rédige des textes structurés en plusieurs paragraphes avec une progression claire, argumente avec plusieurs arguments organisés, analyse un texte court (intention de l'auteur, point de vue, fiabilité d'une source). | Non vérifié précisément cette passe — cohérent avec la progression générale connue des Writing Standards Common Core. |
+| 15-17 ans (Lycée) | Rédaction d'essais argumentatifs complexes, analyse littéraire profonde, synthèse de documents multiples, prise de parole en public argumentée. | Estimation raisonnée. |
+| 18-21 ans (Supérieur / Cégep) | Recherche académique, rédaction de mémoires ou de rapports professionnels, rhétorique, pensée critique avancée, communication entrepreneuriale. | Estimation raisonnée. |
 
 ## 3. Sciences / Découverte du monde
 
@@ -96,6 +100,8 @@ Je le signale explicitement plutôt que de forcer les chiffres pour coller à l'
 | 5-7 ans (K-2) | Propriétés de base des matériaux (ex : ce qui flotte/coule), besoins de base des êtres vivants et de leur environnement, premières notions de conception de solutions simples (ingénierie). | **Sourcé** — NGSS, bande K-2 (nextgenscience.org). |
 | 8-10 ans (3-5) | Matière et énergie : propriétés et changements d'état. Systèmes du corps humain. Histoire de la Terre et formation des reliefs. À 10 ans (Grade 5) spécifiquement : modélise le mouvement de la matière entre plantes, animaux, décomposeurs et environnement. | **Sourcé** — NGSS bande 3-5 (général) + standard 5-LS2-1 (Grade 5, cité précisément). |
 | 11-14 ans (6-8) | Cycle de l'eau complet avec vocabulaire exact — évaporation, condensation, précipitation, transpiration (MS-ESS2-4). Rôle de la photosynthèse dans le cycle de la matière et de l'énergie (MS-LS1-6). États de la matière et énergie thermique (MS-PS1-4). Plus largement : écosystèmes, diversité du vivant, énergie et forces. | **Sourcé** — NGSS Middle School, 3 standards cités précisément (MS-ESS2-4, MS-LS1-6, MS-PS1-4) + bande générale 6-8. |
+| 15-17 ans (9-12, Lycée) | Modélisation des systèmes biologiques (cellule, ADN, évolution), physique classique et bases de quantique/relativité, chimie organique, dynamique des systèmes terrestres. | **Sourcé partiellement** — NGSS High School (bande 9-12). |
+| 18-21 ans (Supérieur / Cégep) | Projets de recherche autonomes, spécialisation disciplinaire, lecture d'articles scientifiques, conception de protocoles expérimentaux. | Estimation raisonnée (post-secondaire). |
 
 ## 4. Corporelle (motricité)
 

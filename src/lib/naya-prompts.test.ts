@@ -39,7 +39,7 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 describe("NAYA_SYSTEM_PROMPT — identité experte (C1.2)", () => {
   it("porte le persona mentor d'éveil des talents, pas un placeholder générique", () => {
     expect(NAYA_SYSTEM_PROMPT).toContain("Tu es Naya");
-    expect(NAYA_SYSTEM_PROMPT).toContain("5 à 16 ans");
+    expect(NAYA_SYSTEM_PROMPT).toContain("5 à 21 ans");
     expect(NAYA_SYSTEM_PROMPT).toContain("Howard Gardner");
     expect(NAYA_SYSTEM_PROMPT).toContain("Afrique francophone");
     // Posture fondatrice : observation factuelle, jamais de diagnostic.

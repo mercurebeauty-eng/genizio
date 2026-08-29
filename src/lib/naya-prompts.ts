@@ -38,7 +38,7 @@ import { buildContextualizationInstruction } from "@/lib/contextualization";
 // construction et DeepSeek applique automatiquement son context caching (tarif
 // cache hit) sur ce segment, sans changement de code. Côté Anthropic (vision,
 // callAnthropicVision), le même bloc system reçoit un cache_control ephemeral.
-export const NAYA_SYSTEM_PROMPT = `Tu es Naya, l'IA mentore pédagogique de Génizio, une plateforme d'éveil des talents pour enfants de 5 à 16 ans en Afrique francophone et dans la diaspora.
+export const NAYA_SYSTEM_PROMPT = `Tu es Naya, l'IA mentore pédagogique de Génizio, une plateforme d'éveil des talents pour enfants, adolescents et jeunes adultes de 5 à 21 ans en Afrique francophone et dans la diaspora.
 
 Ton expertise : la théorie des intelligences multiples de Howard Gardner, la Zone Proximale d'Apprentissage de Vygotski, la pédagogie par projets concrets, et le contexte réel des familles africaines (matériaux du quotidien, réalités économiques locales, langues, marchés, agriculture, artisanat).
 
@@ -159,10 +159,11 @@ Présente l'ensemble comme un superpouvoir secret ou un avantage tactique qu'il 
 // "Adapte strictly" au lieu de "strictement"), même risque que GENIZIO_PRINCIPLES
 // et SAFETY_INSTRUCTION ci-dessus, même remède : un seul texte source.
 export const AGE_DEVELOPMENT_GUIDANCE = `CONSIGNES DE DÉVELOPPEMENT LIÉES À L'ÂGE :
-Adapte strictement la forme, la complexité intellectuelle et la motricité requise pour le défi à l'âge exact de l'enfant (5 à 16 ans, limite produit) :
+Adapte strictement la forme, la complexité intellectuelle et la motricité requise pour le défi à l'âge exact de l'enfant (5 à 21 ans, limite produit) :
 - De 5 à 7 ans (Phase exploratoire et imaginative) : Activités intégrant de l'imagination, des petits jeux de rôle ("fait semblant de"), du dessin, des petites manipulations de cause à effet guidées par le plaisir immédiat. L'action pratique doit primer sur la théorie.
 - De 8 à 11 ans (Phase structurée et concrète) : Proposer des projets de fabrication concrets (maquettes, expériences scientifiques simples, recettes simples, bricolage) avec des règles claires, des étapes méthodiques, et de l'observation logique ou sociale.
-- De 12 à 16 ans (Phase d'abstraction et d'analyse) : Permettre de la pensée critique, de la stratégie, des projets plus autonomes et complexes, de la logique conceptuelle (ex: coder un algorithme sur papier, déchiffrer des énigmes ou concevoir des objets élaborés).`;
+- De 12 à 16 ans (Phase d'abstraction et d'analyse) : Permettre de la pensée critique, de la stratégie, des projets plus autonomes et complexes, de la logique conceptuelle (ex: coder un algorithme sur papier, déchiffrer des énigmes ou concevoir des objets élaborés).
+- De 17 à 21 ans (Phase d'autonomie et d'entrepreneuriat post-secondaire/supérieur) : Ne jamais infantiliser. Garantir une haute stimulation intellectuelle, des projets monde réel, de l'entrepreneuriat, de la résolution de problèmes ouverts complexes et la prise d'initiative (ex: plan d'affaires, prototypage technique poussé, analyse critique de données).`;
 
 // Idem — dupliquée dans les deux mêmes prompts, indentation cosmétique différente
 // à chaque site (alignée sur "- " ou "N. ") mais texte identique. Chaque site

@@ -65,15 +65,15 @@ export function ProfileDialog({
       : emptyProfileDraft(),
   );
 
-  // Bornes d'âge produit : 5 à 16 ans (contrainte serveur child_profiles_age_check,
-  // migration 20260812120000). La date de naissance doit produire un âge dans cette
+  // Bornes d'âge produit : 5 à 21 ans (contrainte serveur child_profiles_age_check,
+  // migration 20260829130000). La date de naissance doit produire un âge dans cette
   // fenêtre — sinon le trigger sync_child_age_from_birthdate recalcule un âge que la
   // base refuse, avec un message opaque.
   const today = new Date();
   const maxBirthdate = new Date(today.getFullYear() - 5, today.getMonth(), today.getDate())
     .toISOString()
     .slice(0, 10);
-  const minBirthdate = new Date(today.getFullYear() - 16, today.getMonth(), today.getDate())
+  const minBirthdate = new Date(today.getFullYear() - 21, today.getMonth(), today.getDate())
     .toISOString()
     .slice(0, 10);
   const ageFromBirthdate = (birthdate: string | null): number | null => {
@@ -186,8 +186,8 @@ export function ProfileDialog({
       return;
     }
     const birthdateAge = ageFromBirthdate(draft.birthdate);
-    if (birthdateAge !== null && (birthdateAge < 5 || birthdateAge > 16)) {
-      const msg = `L'âge doit être compris entre 5 et 16 ans (cette date de naissance donne ${birthdateAge} ans).`;
+    if (birthdateAge !== null && (birthdateAge < 5 || birthdateAge > 21)) {
+      const msg = `L'âge doit être compris entre 5 et 21 ans (cette date de naissance donne ${birthdateAge} ans).`;
       setError(msg);
       toast.error(msg);
       return;
@@ -366,7 +366,7 @@ export function ProfileDialog({
                     className="rounded-xl border border-ink/10 px-3 py-2 text-xs outline-none focus:ring-2 focus:ring-brand shadow-sm"
                   />
                   <p className="text-[11px] text-ink/50 leading-snug">
-                    L'âge se calcule automatiquement et se met à jour chaque année (5 à 16 ans).
+                    L'âge se calcule automatiquement et se met à jour chaque année (5 à 21 ans).
                   </p>
                 </div>
               </div>

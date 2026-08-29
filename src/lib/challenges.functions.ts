@@ -624,7 +624,7 @@ function resolveTraitSubform(
 }
 
 // Backstop pour l'étiquetage du référentiel académique (cf. genizio-decisions #38) : un âge
-// incohérent (hors [3,18], absent, ou domaine invalide) redevient simplement "pas de
+// incohérent (hors [3,21], absent, ou domaine invalide) redevient simplement "pas de
 // signal" — même philosophie que resolveProofMode, ne jamais faire confiance à la seule
 // auto-discipline du modèle. Contrairement à proof_mode, il n'y a pas de "valeur par défaut
 // sûre" ici : l'absence de signal (les deux champs à null) est elle-même le repli sûr, un
@@ -643,7 +643,7 @@ function resolveAcademicLevel(
     ? (domain as (typeof ACADEMIC_DOMAINS)[number])
     : null;
   const validAge =
-    typeof levelAge === "number" && Number.isFinite(levelAge) && levelAge >= 3 && levelAge <= 18
+    typeof levelAge === "number" && Number.isFinite(levelAge) && levelAge >= 3 && levelAge <= 21
       ? Math.round(levelAge)
       : null;
 
@@ -1664,7 +1664,7 @@ export async function generateChallengesCore(params: {
     // Si un pic collectif non consolidé existe, on forge une intention diagnostique pour Naya
     diagnosticIntentNote = `Vérifier son autonomie réelle en ${diagnosticDomain} suite à une performance de groupe.`;
   } else {
-    const targetWithCause = progressionTargets.find((t) => t.cause);
+    const targetWithCause = progressionTargets.find((t: any) => t.cause);
     if (targetWithCause?.cause) {
       diagnosticIntentNote = `Accompagner la cause observée en ${targetWithCause.domain} (${targetWithCause.cause}).`;
     }

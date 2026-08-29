@@ -35,17 +35,21 @@ export interface DomainAcademicLevel {
 }
 
 const MIN_REFERENTIAL_AGE = 4;
-const MAX_REFERENTIAL_AGE = 18;
+const MAX_REFERENTIAL_AGE = 21;
 
 // Convention US du référentiel : Kindergarten à 5 ans, Grade 1 à 6 ans, etc.
-// (Grade = âge − 5). Valeur invalide ou hors bornes 4-18 → null.
+// (Grade = âge − 5). Valeur invalide ou hors bornes 4-21 → null.
+// Pour l'âge 18-21 ans, on introduit les grades pour l'enseignement supérieur/Cégep.
 export function internationalGradeForAge(age: number): string | null {
   if (!Number.isFinite(age)) return null;
   const a = Math.round(age);
   if (a < MIN_REFERENTIAL_AGE || a > MAX_REFERENTIAL_AGE) return null;
   if (a === MIN_REFERENTIAL_AGE) return "Pré-élémentaire";
   if (a === 5) return "Kindergarten";
-  return `Grade ${a - 5}`;
+  if (a <= 17) return `Grade ${a - 5}`;
+  
+  const postSecYear = a - 17;
+  return `Supérieur / Cégep (Bac+${postSecYear})`;
 }
 
 // Libellé court pour badge (ex: "Niveau international · Grade 3").

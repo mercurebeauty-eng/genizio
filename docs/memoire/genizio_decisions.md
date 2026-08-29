@@ -2102,3 +2102,14 @@ fichier ne porte plus que les constantes partagÃ©es.
      - `validateChallengeProof` (fallback texte) : 500 â†’ 1 500 tokens.
 
 3. **VÃ©rification** : 875/875 tests unitaires verts sur 71 fichiers.
+
+ # #   D é c i s i o n   # 8 9   :   E x t e n s i o n   d e   l a   l i m i t e   d ' â g e   d e   1 6   à   2 1   a n s 
+ * * D é c i s i o n * *   :   L a   b o r n e   d ' â g e   m a x i m u m   d e   l ' a p p l i c a t i o n   p a s s e   d e   1 6   à   2 1   a n s   ( c o u v e r t u r e   j u s q u ' a u   n i v e a u   C é g e p / S u p é r i e u r ) . 
+ * * P o u r q u o i * *   :   D e m a n d e   e x p l i c i t e   d e   l ' u t i l i s a t e u r   p o u r   p e r m e t t r e   l ' a c c o m p a g n e m e n t   d e s   j e u n e s   a d u l t e s   p o s t - b a c   ( l y c é e ,   t e r m i n a l e ,   d é b u t   d ' u n i v e r s i t é ) .   
+ * * A p p l i c a t i o n * *   : 
+ -   * * B a s e   d e   d o n n é e s * *   :   M o d i f i c a t i o n   d e   l a   c o n t r a i n t e   ` c h i l d _ p r o f i l e s _ a g e _ c h e c k `   ( 5   à   2 1   a n s )   v i a   l a   m i g r a t i o n   ` 2 0 2 6 0 8 2 9 1 3 0 0 0 0 _ u p d a t e _ a g e _ l i m i t _ 5 _ 2 1 . s q l ` . 
+ -   * * U I * *   :   ` P r o f i l e D i a l o g . t s x `   a u t o r i s e   d e s   d a t e s   d e   n a i s s a n c e   j u s q u ' à   2 1   a n s   e n   a r r i è r e . 
+ -   * * R é f é r e n t i e l   a c a d é m i q u e * *   :   ` M A X _ R E F E R E N T I A L _ A G E `   p a s s e   à   2 1   d a n s   ` s r c / l i b / a c a d e m i c - l e v e l s . t s `   a v e c   a j o u t   d e s   l i b e l l é s   " S u p é r i e u r   /   C é g e p   ( B a c + 1   à   B a c + 4 ) " . 
+ -   * * I A   ( N a y a ) * *   :   L e   p r o m p t   s y s t è m e   e s t   m i s   à   j o u r   p o u r   e n g l o b e r   l e s   j e u n e s   a d u l t e s   e t   u n e   n o u v e l l e   t r a n c h e   " 1 7   à   2 1   a n s "   e s t   a j o u t é e   à   ` A G E _ D E V E L O P M E N T _ G U I D A N C E `   a v e c   i n t e r d i c t i o n   s t r i c t e   d ' i n f a n t i l i s e r . 
+  
+ 
