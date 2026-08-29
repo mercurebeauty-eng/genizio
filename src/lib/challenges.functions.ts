@@ -128,7 +128,13 @@ export const ChallengeSchema = z.object({
     .nullable()
     .optional(),
   academic_grade_level: z
-    .enum(["CP", "CE1", "CE2", "CM1", "CM2", "6eme", "5eme", "4eme", "3eme"])
+    .enum([
+      "CP", "CE1", "CE2", "CM1", "CM2", 
+      "6eme", "5eme", "4eme", "3eme",
+      "2nde", "1ere", "Terminale", 
+      "Superieur", "Bac+1", "Bac+2", "Bac+3", "Bac+4", "Bac+5",
+      "Cegep", "Universite"
+    ])
     .nullable()
     .optional(),
   homework_instruction: z.string().nullable().optional(),
