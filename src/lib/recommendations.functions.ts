@@ -245,7 +245,7 @@ export const recommendChallengesForChild = createServerFn({ method: "POST" })
           });
 
           try {
-            const rawJson = await callClaude(prompt, true, undefined, 1200, 2);
+            const rawJson = await callClaude(prompt, true, undefined, 2500, 2);
             const parsed = JSON.parse(extractJsonFromLLMResponse(rawJson));
 
             // Le Loup (chantier 2, Naya 3.0) : audit shadow non-bloquant de la sortie brute.
@@ -389,7 +389,7 @@ export const recommendChallengesForChild = createServerFn({ method: "POST" })
         });
 
         try {
-          const rawJson = await callClaude(prompt, true, undefined, 1000, 2);
+          const rawJson = await callClaude(prompt, true, undefined, 2500, 2);
           const parsed = JSON.parse(extractJsonFromLLMResponse(rawJson));
 
           // Le Loup (chantier 2, Naya 3.0) : audit shadow non-bloquant de la sortie brute.
@@ -510,7 +510,7 @@ export const recommendChallengesForChild = createServerFn({ method: "POST" })
       });
 
       try {
-        const rawJson = await callClaude(prompt, true, undefined, 1000, 2);
+        const rawJson = await callClaude(prompt, true, undefined, 2500, 2);
         const parsed = JSON.parse(extractJsonFromLLMResponse(rawJson));
 
         // Le Loup (chantier 2, Naya 3.0) : audit shadow non-bloquant de la sortie brute.
@@ -604,7 +604,7 @@ export const recommendChallengesForChild = createServerFn({ method: "POST" })
       });
 
       try {
-        const rawJson = await callClaude(prompt, true, undefined, 1000, 2);
+        const rawJson = await callClaude(prompt, true, undefined, 2500, 2);
         const parsed = JSON.parse(extractJsonFromLLMResponse(rawJson));
 
         // Le Loup (chantier 2, Naya 3.0) : audit shadow non-bloquant de la sortie brute.
@@ -718,7 +718,7 @@ export const recommendChallengesForChild = createServerFn({ method: "POST" })
       });
 
       try {
-        const rawJson = await callClaude(prompt, true, undefined, 1000, 2);
+        const rawJson = await callClaude(prompt, true, undefined, 2500, 2);
         const parsed = JSON.parse(extractJsonFromLLMResponse(rawJson));
 
         // Le Loup (chantier 2, Naya 3.0) : audit shadow non-bloquant de la sortie brute.

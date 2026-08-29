@@ -17,31 +17,85 @@ import { verifyAndLog } from "@/lib/naya-verifier.functions";
 export const DISCOVERY_SOURCES = ["self_chosen", "found_external", "open_sandbox", "fablab_marathon", "projet_collectif"] as const;
 export type DiscoverySourceType = (typeof DISCOVERY_SOURCES)[number];
 
-export const DISCOVERY_SOURCE_LABELS: Record<DiscoverySourceType, { label: string; badge: string; description: string }> = {
+export const DISCOVERY_POLES = {
+  individual: {
+    id: "individual",
+    title: "Explorations Individuelles",
+    subtitle: "L'enfant dans son univers d'initiative libre et d'autonomie personnelle",
+    badge: "Solo & Autonomie",
+    sources: ["self_chosen", "found_external", "open_sandbox"] as const,
+  },
+  collective: {
+    id: "collective",
+    title: "Ateliers Pratiques & Projets Collectifs",
+    subtitle: "L'enfant face aux pairs, au matériel réel et à l'intelligence collective",
+    badge: "Ateliers & Guilde",
+    sources: ["fablab_marathon", "projet_collectif"] as const,
+  },
+} as const;
+
+export const DISCOVERY_SOURCE_LABELS: Record<
+  DiscoverySourceType,
+  {
+    label: string;
+    door: string;
+    title: string;
+    badge: string;
+    description: string;
+    cta: string;
+    theme: "amber" | "sky" | "emerald" | "indigo" | "rose";
+    pole: "individual" | "collective";
+  }
+> = {
   self_chosen: {
     label: "Je choisis",
+    door: "1. Je choisis",
+    title: "Initiative & Création",
     badge: "Initiative personnelle",
-    description: "L'enfant a eu lui-même l'idée d'explorer, créer ou résoudre ce défi.",
+    description: "Une idée, un bricolage, un conte ou un projet né de sa propre imagination sans aucune consigne.",
+    cta: "Raconter sa création",
+    theme: "amber",
+    pole: "individual",
   },
   found_external: {
     label: "Je trouve",
-    badge: "Trouvé ailleurs",
-    description: "Exercice, challenge ou expérience vu sur Internet, dans un livre ou à l'école.",
+    door: "2. Je trouve",
+    title: "Curiosité Externe",
+    badge: "Défi trouvé ailleurs",
+    description: "Un casse-tête, une énigme ardue ou un défi découvert à l'école, dans un livre ou sur le web.",
+    cta: "Décortiquer le défi",
+    theme: "sky",
+    pole: "individual",
   },
   open_sandbox: {
     label: "Je tente",
-    badge: "Laboratoire libre",
-    description: "Exploration ouverte ou expérimentation spontanée sans cadre rigide.",
+    door: "3. Je tente",
+    title: "Laboratoire Libre",
+    badge: "Essais-Erreurs & Tests",
+    description: "Une expérience spontanée par essais-erreurs, tests d'hypothèses et manipulation sans consigne fermée.",
+    cta: "Consigner l'expérience",
+    theme: "emerald",
+    pole: "individual",
   },
   fablab_marathon: {
     label: "Fab Lab",
-    badge: "Événement de groupe",
-    description: "Participation à un atelier, marathon ou camp de création collectif.",
+    door: "4. Fab Lab & Atelier",
+    title: "Immersion Maker",
+    badge: "Atelier & Outils Réels",
+    description: "Création concrète avec outils réels, bricolage guidé, découpe, électronique ou atelier tiers-lieu.",
+    cta: "Documenter l'atelier",
+    theme: "indigo",
+    pole: "collective",
   },
   projet_collectif: {
     label: "Projet d'équipe",
-    badge: "Coopération",
-    description: "Projet mené à plusieurs, mettant en jeu des compétences interpersonnelles.",
+    door: "5. Projet d'Équipe",
+    title: "Coopération & Guilde",
+    badge: "Escouade & Entraide",
+    description: "Projet mené à plusieurs, mettant en jeu la complémentarité des talents et l'intelligence collective.",
+    cta: "Partager le projet d'équipe",
+    theme: "rose",
+    pole: "collective",
   },
 };
 
@@ -179,8 +233,13 @@ async function analyzeAndCalibrateTrace(params: {
       },
     });
 
-    const rawResponse = await callClaude(prompt, true, undefined, 1000, 2);
-    const analysis = extractJsonFromLLMResponse<DiscoveryAIAnalysis>(rawResponse);
+    const rawResponse = await callClaude(prompt, true, undefined, 2500, 2);
+    let analysis: DiscoveryAIAnalysis | null = null;
+    try {
+      analysis = JSON.parse(extractJsonFromLLMResponse(rawResponse)) as DiscoveryAIAnalysis;
+    } catch {
+      return null;
+    }
 
     if (!analysis) return null;
 
@@ -252,7 +311,8 @@ async function analyzeAndCalibrateTrace(params: {
     void verifyAndLog({
       kind: "narrative",
       output: JSON.stringify(analysis),
-      context: { childAge, childId, domain: traceData.domain },
+      childId,
+      context: { childAge, domain: traceData.domain },
       sourceFunction: "analyzeAndCalibrateTrace",
       model: "deepseek-v4-flash",
     });

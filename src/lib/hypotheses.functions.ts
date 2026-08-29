@@ -132,7 +132,7 @@ ${JSON.stringify(top, null, 2)}
 Réponds uniquement avec le texte final, sans guillemets, sans préambule, sans Markdown.`;
 
   try {
-    const text = (await callClaude(prompt, false, undefined, 400, 2)).trim();
+    const text = (await callClaude(prompt, false, undefined, 1500, 2)).trim();
     if (!text) return null;
 
     let cleaned = text.replace(/^[\d\s.#-]+/gm, "").trim();
@@ -632,7 +632,7 @@ Réponds EXCLUSIVEMENT avec un objet JSON strict au format suivant :
   "academic_secret": "Explication stimulante du secret scientifique/académique avec niveau d'avance..."
 }`;
 
-    const rawJson = await callClaude(prompt, true, undefined, 1000, 2);
+    const rawJson = await callClaude(prompt, true, undefined, 2500, 2);
     let parsed: any;
     try {
       parsed = JSON.parse(extractJsonFromLLMResponse(rawJson));
@@ -925,7 +925,7 @@ Réponds EXCLUSIVEMENT avec un objet JSON strict au format suivant :
   "academic_secret": "Explication stimulante du secret scientifique/académique avec niveau d'avance..."
 }`;
 
-    const rawJson = await callClaude(prompt, true, undefined, 1000, 2);
+    const rawJson = await callClaude(prompt, true, undefined, 2500, 2);
     let parsed: any;
     try {
       parsed = JSON.parse(extractJsonFromLLMResponse(rawJson));

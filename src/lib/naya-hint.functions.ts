@@ -87,7 +87,7 @@ export const generateJustInTimeHint = createServerFn({ method: "POST" })
 
     let hint: string;
     try {
-      const raw = await callClaude(prompt, false, undefined, 250, 2);
+      const raw = await callClaude(prompt, false, undefined, 1000, 2);
       hint = raw.trim();
       if (!hint) throw new Error("Réponse IA vide.");
     } catch (err) {

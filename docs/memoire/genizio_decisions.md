@@ -2047,3 +2047,33 @@ fichier ne porte plus que les constantes partagées.
    - Rendu DOM visible obligatoire : création du composant `@/components/guides/FaqSection.tsx` (accordéon UI) et intégration dans `GuideLayout.tsx` pour éliminer le risque de pénalité Google sur les données structurées invisibles.
    - Balises `<title>` SEO calibrées sous 60 caractères (évitant la troncature SERP) tout en conservant le grand `<h1>` narratif.
    - Référencement complet dans `public/llms.txt` et permissions `robots.txt` ouvertes aux crawlers IA (GPTBot, ClaudeBot, Perplexity).
+
+## Décision #87 : Refonte Majeure de l'Espace Découverte — 2 Pôles Écologiques, 5 Portes Contextualisées & Intégrité Pédagogique (2026-08-29, PR #123)
+
+**✅ IMPLÉMENTÉE (2026-08-29, branche `fix-dynamic-capability`, PR #123)** — refonte complète de l'Espace Découverte (`/profiles/$profileId/decouverte`) et de la modalité d'enregistrement d'initiatives, alignant la collecte sur les règles absolues de l'intégrité pédagogique, de la symétrie mentor/parent et de la continuité individuel ↔ collectif.
+
+1. **2 Pôles Écologiques Structurés (5 Portes d'Exploration)** :
+   - **🌱 Pôle 1 : Explorations Individuelles (Solo & Autonomie)** :
+     - 🚀 **1. Je choisis** (*Initiative & Création*) : projets personnels, contes, bricolages spontanés.
+     - 🔍 **2. Je trouve** (*Curiosité Externe*) : énigmes, casse-têtes, défis scolaires ardus.
+     - 🧪 **3. Je tente** (*Laboratoire Libre*) : expériences par essais-erreurs, tests d'hypothèses.
+   - **🤝 Pôle 2 : Ateliers Pratiques & Projets Collectifs (Monde Réel & Pairs)** :
+     - ⚙️ **4. Fab Lab & Atelier** (*Immersion Maker & Outils Réels*) : manipulation d'outils concrets, machines, sécurité et transformation de matière.
+     - 👥 **5. Projet d'Équipe** (*Coopération & Guilde*) : complémentarité des talents d'escouade et répartition des rôles.
+
+2. **Formulaires Sur-Mesure & Spectre de Données Précis (`DiscoveryRecordDialog.tsx`)** :
+   - Thèmes visuels exclusifs par archétype (Ambre, Ciel, Émeraude, Indigo, Rose-Corail).
+   - Étape 1 : champs contextuels adaptés (matériaux, méthode d'investigation, variables modifiées, outillage & sécurité d'atelier, taille d'équipe & rôles).
+   - Étape 2 : 4 questions métacognitives exclusives par archétype (déclic Eurêka, gestion des blocages, apprentissage transférable) + module photo portfolio compressée côté client.
+
+3. **Moteur Cognitif Naya & Calibration Dynamique** :
+   - `analyzeAndCalibrateTrace` analyse les verbatims et métriques de chaque trace pour calibrer le jumeau Naya.
+   - Détection en temps réel d'Anomalies Positives (potentiel supérieur ou persévérance marquée) et ouverture/enrichissement de cycles d'hypothèses diagnostiques (`READY_FOR_MORE` / direction `AHEAD`).
+
+4. **Symétrie des Rôles & Multi-Vues** :
+   - **Page Découverte Enfant / Parent** : filtres 5 sources avec compteurs dynamiques.
+   - **Flux Mentor (`MentorDiscoveryFeed.tsx`)** : bouton d'action avec dropdown direct vers les 5 portes et filtres d'archétype sans restriction.
+   - **Admin OS (`AdminDiscoveryTab.tsx`)** : répartition analytique globale des 5 sources.
+   - **Cartes de Trace (`DiscoveryTraceCard.tsx`)** : badges dynamiques et affichage des métadonnées de contexte/stratégie.
+
+**Vérifié** : **875 tests verts (71 fichiers)**, `tsc --noEmit` propre sur tous les modules touchés, PR #123 créée.

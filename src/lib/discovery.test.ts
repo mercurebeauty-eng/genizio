@@ -16,13 +16,25 @@ import {
 import { buildDiscoveryAnalysisPrompt } from "@/lib/naya-prompts";
 
 describe("Espace Découverte — Vocabulaires & Constantes", () => {
-  it("contient les 3 sources fondamentales", () => {
-    expect(DISCOVERY_SOURCES).toContain("self_chosen");
-    expect(DISCOVERY_SOURCES).toContain("found_external");
-    expect(DISCOVERY_SOURCES).toContain("open_sandbox");
+  it("contient les 5 sources d'exploration réparties en 2 pôles", () => {
+    expect(DISCOVERY_SOURCES).toEqual([
+      "self_chosen",
+      "found_external",
+      "open_sandbox",
+      "fablab_marathon",
+      "projet_collectif",
+    ]);
     expect(DISCOVERY_SOURCE_LABELS.self_chosen.label).toBe("Je choisis");
     expect(DISCOVERY_SOURCE_LABELS.found_external.label).toBe("Je trouve");
     expect(DISCOVERY_SOURCE_LABELS.open_sandbox.label).toBe("Je tente");
+    expect(DISCOVERY_SOURCE_LABELS.fablab_marathon.label).toBe("Fab Lab");
+    expect(DISCOVERY_SOURCE_LABELS.projet_collectif.label).toBe("Projet d'équipe");
+
+    expect(DISCOVERY_SOURCE_LABELS.self_chosen.pole).toBe("individual");
+    expect(DISCOVERY_SOURCE_LABELS.found_external.pole).toBe("individual");
+    expect(DISCOVERY_SOURCE_LABELS.open_sandbox.pole).toBe("individual");
+    expect(DISCOVERY_SOURCE_LABELS.fablab_marathon.pole).toBe("collective");
+    expect(DISCOVERY_SOURCE_LABELS.projet_collectif.pole).toBe("collective");
   });
 
   it("définit les domaines avec leurs libellés", () => {

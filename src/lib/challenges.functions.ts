@@ -1380,7 +1380,7 @@ async function callDeepSeekText(
   const resolvedModel = isReasoning ? "deepseek-v4-pro" : "deepseek-v4-flash";
   const thinking = isReasoning
     ? { type: "enabled" as const, reasoning_effort: "high" as const }
-    : { type: "disabled" as const };
+    : { type: "enabled" as const, reasoning_effort: "medium" as const };
 
   let attempt = 0;
   while (attempt < maxRetries) {
@@ -1658,12 +1658,10 @@ export async function generateChallengesCore(params: {
   if (hasUnconsolidatedCollectivePeak) {
     // Si un pic collectif non consolidé existe, on forge une intention diagnostique pour Naya
     diagnosticIntentNote = `Vérifier son autonomie réelle en ${diagnosticDomain} suite à une performance de groupe.`;
-  } else if (openCycle?.hypotheses) {
-    // Fallback sur le cycle d'hypothèses existant
-    const hyps = openCycle.hypotheses as any[];
-    const activeHyp = hyps.find((h: any) => h.status === "formulated" || h.status === "testing" || h.cause);
-    if (activeHyp) {
-      diagnosticIntentNote = activeHyp.rationale || `Tester l'hypothèse : ${activeHyp.cause || activeHyp.competenceKey}`;
+  } else {
+    const targetWithCause = progressionTargets.find((t) => t.cause);
+    if (targetWithCause?.cause) {
+      diagnosticIntentNote = `Accompagner la cause observée en ${targetWithCause.domain} (${targetWithCause.cause}).`;
     }
   }
 
@@ -2204,7 +2202,7 @@ Réponds STRICTEMENT en JSON valide avec ce format :
     console.warn("Vision model call failed, falling back to text only:", err);
     imageAnalyzed = false;
     try {
-      aiContent = await callClaude(prompt, true, undefined, 500);
+      aiContent = await callClaude(prompt, true, undefined, 1500);
     } catch (fallbackErr) {
       console.error("Text-only fallback model call failed:", fallbackErr);
       if (
@@ -2457,7 +2455,7 @@ Explication du parent : "${reason.slice(0, 2000)}"
 Réponds EXCLUSIVEMENT avec un JSON de cette forme, sans texte autour : {"cause": "UNE_DES_5_ETIQUETTES"}`;
 
   try {
-    const raw = await callClaude(prompt, true, undefined, 200, 2);
+    const raw = await callClaude(prompt, true, undefined, 1000, 2);
     const parsed = JSON.parse(extractJsonFromLLMResponse(raw));
     // Le Loup (chantier 2, Naya 3.0) : audit shadow non-bloquant de la classification.
     void verifyAndLog({
@@ -3142,7 +3140,7 @@ export const generateAcademicHomeworkChallenge = createServerFn({ method: "POST"
       existingTitles,
     });
 
-    const content = await callClaude(prompt, true, undefined, 1500);
+    const content = await callClaude(prompt, true, undefined, 3000);
     let parsed: unknown;
     try {
       parsed = JSON.parse(extractJsonFromLLMResponse(content));
@@ -3337,7 +3335,7 @@ export const generateSingleChallenge = createServerFn({ method: "POST" })
     // in generateChallenges) would needlessly reserve most of the org's
     // per-minute output-token budget for a response that only needs a
     // fraction of that.
-    const content = await callClaude(prompt, true, undefined, 1200);
+    const content = await callClaude(prompt, true, undefined, 3000);
     let parsed: unknown;
     try {
       parsed = JSON.parse(extractJsonFromLLMResponse(content));
@@ -3448,7 +3446,7 @@ Mets en lumière ses formes d'intelligence dominantes qui ressortent de ses acti
 
     try {
       // 2 short paragraphs, not a batch of défis.
-      const synthesis = await callClaude(prompt, false, undefined, 700);
+      const synthesis = await callClaude(prompt, false, undefined, 2000);
       // Le Loup (chantier 2, Naya 3.0) : audit shadow non-bloquant.
       void verifyAndLog({
         kind: "synthesis",
@@ -3547,7 +3545,7 @@ Nombre de défis réels complétés : ${completed.length}
 Texte brut uniquement, aucune syntaxe Markdown.`;
 
     try {
-      const letter = await callClaude(prompt, false, undefined, 400);
+      const letter = await callClaude(prompt, false, undefined, 1500);
       // Le Loup (chantier 2, Naya 3.0) : audit shadow non-bloquant.
       void verifyAndLog({
         kind: "letter",
