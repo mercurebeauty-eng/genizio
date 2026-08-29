@@ -4,12 +4,27 @@ description: État actuel de l'implémentation — snapshot vérifié contre le 
 metadata:
   type: reference
   status: living-document
-  last_updated: 2026-08-24
+  last_updated: 2026-08-29
 ---
 
 # État du Code
 
-> Vérifié le 2026-08-24 — chantier Guides Siphonneurs & Optimisations SEO / GEO / AEO (décision #86). Statut complet dans le Status Overview de [[MEMORY]].
+> Vérifié le 2026-08-29 — refonte de l'Espace Découverte (5 portes contextualisées & 2 pôles) (décision #87, PR #123). Statut complet dans le Status Overview de [[MEMORY]].
+
+## Snapshot du 2026-08-29 — Refonte Espace Découverte : 5 Portes Contextualisées & 2 Pôles Écologiques (décision #87)
+
+**Branche** : `fix-dynamic-capability` — **COMMITÉ & PUSHÉ** (PR #123).
+
+**Contenu** (détail dans [[genizio-decisions]] #87) :
+- `src/lib/discovery.functions.ts` : typage des 5 sources (`self_chosen`, `found_external`, `open_sandbox`, `fablab_marathon`, `projet_collectif`) et des 2 pôles (`individual`, `collective`). Calibration cognitive `analyzeAndCalibrateTrace` et détection d'anomalies positives.
+- `src/components/discovery/DiscoveryRecordDialog.tsx` : modale d'enregistrement en 2 étapes, 100% contextualisée par archétype (thèmes de couleur, champs sur-mesure, 4 questions métacognitives exclusives par porte, module photo portfolio compressée).
+- `src/routes/profiles.$profileId.decouverte.tsx` : hero banner structuré en 2 pôles (3 cartes individuelles + 2 cartes collectives/atelier) et filtres multi-sources avec compteurs dynamiques.
+- `src/components/discovery/DiscoveryTraceCard.tsx` : badges et thèmes adaptés aux 5 archétypes, affichage du contexte/stratégie et preuve synchronisée.
+- `src/components/mentor/MentorDiscoveryFeed.tsx` : sélecteur dropdown direct vers les 5 portes et filtres pour le mentor.
+- `src/components/admin/AdminDiscoveryTab.tsx` : répartition analytique des 5 sources dans l'Admin OS.
+- `src/lib/discovery.test.ts` : suite de tests unitaires pour les 5 sources, les 2 pôles et les schémas Zod.
+
+**Vérifié** : **875 tests verts (71 fichiers)**, `tsc --noEmit` propre.
 
 ## Snapshot du 2026-08-24 — Guides Siphonneurs & Optimisation SEO / GEO / AEO (décision #86)
 

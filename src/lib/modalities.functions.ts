@@ -259,7 +259,7 @@ export async function processModalityReformulation(
 
   let parsed: any;
   try {
-    const rawJson = await callClaude(prompt, true, undefined, 1000, 2);
+    const rawJson = await callClaude(prompt, true, undefined, 2500, 2);
     parsed = JSON.parse(extractJsonFromLLMResponse(rawJson));
   } catch {
     // Non fatal : l'échec de génération ne fait jamais échouer la soumission

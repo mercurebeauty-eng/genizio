@@ -233,7 +233,7 @@ async function analyzeAndCalibrateTrace(params: {
       },
     });
 
-    const rawResponse = await callClaude(prompt, true, undefined, 1000, 2);
+    const rawResponse = await callClaude(prompt, true, undefined, 2500, 2);
     let analysis: DiscoveryAIAnalysis | null = null;
     try {
       analysis = JSON.parse(extractJsonFromLLMResponse(rawResponse)) as DiscoveryAIAnalysis;
