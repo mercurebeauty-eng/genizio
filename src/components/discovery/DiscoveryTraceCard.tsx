@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { useServerFn } from "@tanstack/react-start";
 import {
   DISCOVERY_SOURCE_LABELS,
   DISCOVERY_DOMAIN_LABELS,
@@ -67,6 +68,7 @@ export function DiscoveryTraceCard({
   const [showDialogue, setShowDialogue] = useState(false);
   const [mentorInput, setMentorInput] = useState(trace.mentor_notes || "");
   const [isSavingFeedback, setIsSavingFeedback] = useState(false);
+  const addMentorDiscoveryFeedbackFn = useServerFn(addMentorDiscoveryFeedback);
 
   const sourceMeta =
     DISCOVERY_SOURCE_LABELS[trace.source_type as DiscoverySourceType] || {
@@ -91,7 +93,7 @@ export function DiscoveryTraceCard({
     if (!mentorInput.trim()) return;
     setIsSavingFeedback(true);
     try {
-      const res = await addMentorDiscoveryFeedback({
+      const res = await addMentorDiscoveryFeedbackFn({
         data: {
           traceId: trace.id,
           notes: mentorInput.trim(),
