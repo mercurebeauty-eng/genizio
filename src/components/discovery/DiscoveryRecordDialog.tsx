@@ -16,6 +16,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { useServerFn } from "@tanstack/react-start";
 import {
   DISCOVERY_SOURCES,
   DISCOVERY_SOURCE_LABELS,
@@ -30,6 +31,7 @@ import {
   type DiscoveryAutonomyLevel,
   type DiscoveryOutcomeStatus,
   type DiscoveryPerceivedDifficulty,
+  createDiscoveryTrace,
 } from "@/lib/discovery.functions";
 import { NayaAvatar } from "@/components/NayaAvatar";
 import {
@@ -92,6 +94,7 @@ export function DiscoveryRecordDialog({
 
   const [loading, setLoading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
+  const createDiscoveryTraceFn = useServerFn(createDiscoveryTrace);
 
   // Réinitialiser la source si initialSource change à l'ouverture
   React.useEffect(() => {
@@ -201,15 +204,13 @@ export function DiscoveryRecordDialog({
 
     setLoading(true);
     try {
-      const { createDiscoveryTrace } = await import("@/lib/discovery.functions");
-
       const nayaDialogue = [];
       if (q1.trim()) nayaDialogue.push({ question: config.q1Label, answer: q1.trim() });
       if (q2.trim()) nayaDialogue.push({ question: config.q2Label, answer: q2.trim() });
       if (q3.trim()) nayaDialogue.push({ question: config.q3Label, answer: q3.trim() });
       if (q4.trim()) nayaDialogue.push({ question: config.q4Label, answer: q4.trim() });
 
-      const res = await createDiscoveryTrace({
+      const res = await createDiscoveryTraceFn({
         data: {
           childId,
           sourceType,
@@ -461,7 +462,7 @@ export function DiscoveryRecordDialog({
                     <SelectContent>
                       {DISCOVERY_OUTCOMES.map((o) => (
                         <SelectItem key={o} value={o}>
-                          {DISCOVERY_OUTCOME_LABELS[o]}
+                          {DISCOVERY_OUTCOME_LABELS[o].label}
                         </SelectItem>
                       ))}
                     </SelectContent>
@@ -481,7 +482,7 @@ export function DiscoveryRecordDialog({
                       <SelectItem value="facile">Facile (très fluide)</SelectItem>
                       <SelectItem value="moyen">Moyen (adapté)</SelectItem>
                       <SelectItem value="difficile">Difficile (a demandé des efforts)</SelectItem>
-                      <SelectItem value="tres_difficile">Très difficile (défi corsé)</SelectItem>
+                      <SelectItem value="eleve">Très difficile (défi corsé)</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
