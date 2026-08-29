@@ -4,7 +4,7 @@
  * Module for Fusion Académique-Ludique (feat/naya-academic-homework-fusion)
  */
 
-export type GradeLevel = "CP" | "CE1" | "CE2" | "CM1" | "CM2" | "6eme" | "5eme" | "4eme" | "3eme" | "2nde" | "1ere" | "Terminale" | "Superieur" | "Bac+1" | "Bac+2" | "Bac+3" | "Bac+4" | "Bac+5" | "Cegep" | "Universite";
+export type GradeLevel = "CP" | "CE1" | "CE2" | "CM1" | "CM2" | "6eme" | "5eme" | "4eme" | "3eme";
 
 export type AcademicSubject = "maths" | "francais" | "sciences" | "histoire_geo" | "anglais";
 
@@ -24,11 +24,15 @@ export const ACADEMIC_SUBJECTS: readonly AcademicSubject[] = [
 ] as const;
 
 export const GRADE_LEVELS: readonly GradeLevel[] = [
-  "CP", "CE1", "CE2", "CM1", "CM2", 
-  "6eme", "5eme", "4eme", "3eme",
-  "2nde", "1ere", "Terminale",
-  "Superieur", "Bac+1", "Bac+2", "Bac+3", "Bac+4", "Bac+5",
-  "Cegep", "Universite"
+  "CP",
+  "CE1",
+  "CE2",
+  "CM1",
+  "CM2",
+  "6eme",
+  "5eme",
+  "4eme",
+  "3eme",
 ] as const;
 
 export const BEHAVIORAL_DRIVERS: readonly BehavioralDriver[] = [
@@ -60,17 +64,6 @@ export const GRADE_LEVEL_METADATA: Record<
   "5eme": { label: "5ème", cycle: "Cycle 4 (Approfondissements)", nominalAge: 12 },
   "4eme": { label: "4ème", cycle: "Cycle 4 (Approfondissements)", nominalAge: 13 },
   "3eme": { label: "3ème", cycle: "Cycle 4 (Approfondissements)", nominalAge: 14 },
-  "2nde": { label: "2nde", cycle: "Lycée", nominalAge: 15 },
-  "1ere": { label: "1ère", cycle: "Lycée", nominalAge: 16 },
-  "Terminale": { label: "Terminale", cycle: "Lycée", nominalAge: 17 },
-  "Superieur": { label: "Supérieur", cycle: "Études Supérieures", nominalAge: 18 },
-  "Bac+1": { label: "Bac+1", cycle: "Études Supérieures", nominalAge: 18 },
-  "Bac+2": { label: "Bac+2", cycle: "Études Supérieures", nominalAge: 19 },
-  "Bac+3": { label: "Bac+3", cycle: "Études Supérieures", nominalAge: 20 },
-  "Bac+4": { label: "Bac+4", cycle: "Études Supérieures", nominalAge: 21 },
-  "Bac+5": { label: "Bac+5", cycle: "Études Supérieures", nominalAge: 22 },
-  "Cegep": { label: "Cégep", cycle: "Collège", nominalAge: 18 },
-  "Universite": { label: "Université", cycle: "Études Supérieures", nominalAge: 20 },
 };
 
 export interface CurriculumTopic {

@@ -8,7 +8,7 @@ import { z } from "zod";
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { requireAdmin } from "@/integrations/supabase/admin-middleware";
-import { callClaude, extractJsonFromLLMResponse } from "@/lib/challenges.functions";
+import { callClaude, safeJsonParse } from "@/lib/challenges.functions";
 import { buildDiscoveryAnalysisPrompt } from "@/lib/naya-prompts";
 import { verifyAndLog } from "@/lib/naya-verifier.functions";
 
@@ -236,7 +236,7 @@ async function analyzeAndCalibrateTrace(params: {
     const rawResponse = await callClaude(prompt, true, undefined, 2500, 2);
     let analysis: DiscoveryAIAnalysis | null = null;
     try {
-      analysis = JSON.parse(extractJsonFromLLMResponse(rawResponse)) as DiscoveryAIAnalysis;
+      analysis = safeJsonParse<DiscoveryAIAnalysis>(rawResponse);
     } catch {
       return null;
     }
