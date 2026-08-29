@@ -2065,7 +2065,7 @@ async function callDeepSeekText(
   const resolvedModel = isReasoning ? "deepseek-v4-pro" : "deepseek-v4-flash";
   const thinking = isReasoning
     ? { type: "enabled" as const, reasoning_effort: "high" as const }
-    : { type: "enabled" as const, reasoning_effort: "medium" as const };
+    : { type: "disabled" as const };
 
   let attempt = 0;
   while (attempt < maxRetries) {
@@ -2087,9 +2087,6 @@ async function callDeepSeekText(
             { role: "system", content: systemPrompt },
             { role: "user", content: prompt },
           ],
-          // Le nouveau v4-flash supporte json_object même en mode "thinking", tant
-          // que le prompt système exige explicitement du JSON (fait ci-dessus) —
-          // contrairement à l'ancien deepseek-reasoner qui refusait ce paramètre.
           ...(jsonMode ? { response_format: { type: "json_object" } } : {}),
         }),
         signal: controller.signal,
@@ -2112,8 +2109,13 @@ async function callDeepSeekText(
       }
 
       const json = await response.json();
-      let textContent: string = json.choices?.[0]?.message?.content ?? "";
-      if (jsonMode) {
+      const choice = json.choices?.[0];
+      let textContent: string = choice?.message?.content ?? "";
+      if (!textContent && choice?.message?.reasoning_content) {
+        textContent = choice.message.reasoning_content;
+      }
+
+      if (jsonMode && textContent) {
         textContent = textContent.trim();
         if (textContent.startsWith("```")) {
           textContent = textContent
@@ -2122,6 +2124,14 @@ async function callDeepSeekText(
             .trim();
         }
       }
+
+      if (!textContent) {
+        console.error("DeepSeek empty choice response:", JSON.stringify(json));
+        throw new Error(
+          `Réponse DeepSeek vide (finish_reason: ${choice?.finish_reason || "inconnu"})`,
+        );
+      }
+
       clearTimeout(timeoutId);
       return textContent;
     } catch (err: any) {
