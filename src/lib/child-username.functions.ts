@@ -1,9 +1,10 @@
 import { createServerFn } from "@tanstack/react-start";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
+import { z } from "zod";
 
-export const checkUsernameAvailabilityFn = createServerFn(
-  "POST",
-  async (username: string) => {
+export const checkUsernameAvailabilityFn = createServerFn({ method: "POST" })
+  .validator((username: unknown) => z.string().parse(username))
+  .handler(async ({ data: username }) => {
     // Basic validation
     if (!username || username.length < 3 || username.length > 20) {
       return false;
@@ -23,12 +24,11 @@ export const checkUsernameAvailabilityFn = createServerFn(
     }
 
     return data === true;
-  }
-);
+  });
 
-export const searchChildProfilesFn = createServerFn(
-  "GET",
-  async (query: string) => {
+export const searchChildProfilesFn = createServerFn({ method: "GET" })
+  .validator((query: unknown) => z.string().parse(query))
+  .handler(async ({ data: query }) => {
     if (!query || query.length < 2) return [];
     const cleanQuery = query.replace(/^@/, "").toLowerCase();
     const { data, error } = await supabaseAdmin
@@ -41,5 +41,4 @@ export const searchChildProfilesFn = createServerFn(
       return [];
     }
     return data || [];
-  }
-);
+  });

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+﻿import { useEffect, useMemo, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { supabase } from "@/integrations/supabase/client";
 import {
@@ -36,10 +36,10 @@ export function ProfileDialog({
   onClose: () => void;
   onSaved: () => void;
 }) {
-  // Limite de CRÉATION (V4, Vague A) : calculée côté serveur depuis family_coverages
-  // (getFamilySubscriptionStatus → creationLimit, miroir du trigger V10 — migration
-  // 20260814200000). Pré-check local seulement : le trigger check_child_profile_quota
-  // fait foi côté base.
+  // Limite de CRÃ‰ATION (V4, Vague A) : calculÃ©e cÃ´tÃ© serveur depuis family_coverages
+  // (getFamilySubscriptionStatus â†’ creationLimit, miroir du trigger V10 â€” migration
+  // 20260814200000). PrÃ©-check local seulement : le trigger check_child_profile_quota
+  // fait foi cÃ´tÃ© base.
   const { creationLimit: quota } = useFamilyCoverage();
 
   const [draft, setDraft] = useState<ProfileDraft>(
@@ -67,9 +67,9 @@ export function ProfileDialog({
       : emptyProfileDraft(),
   );
 
-  // Bornes d'âge produit : 5 à 21 ans (contrainte serveur child_profiles_age_check,
-  // migration 20260829130000). La date de naissance doit produire un âge dans cette
-  // fenêtre — sinon le trigger sync_child_age_from_birthdate recalcule un âge que la
+  // Bornes d'Ã¢ge produit : 5 Ã  21 ans (contrainte serveur child_profiles_age_check,
+  // migration 20260829130000). La date de naissance doit produire un Ã¢ge dans cette
+  // fenÃªtre â€” sinon le trigger sync_child_age_from_birthdate recalcule un Ã¢ge que la
   // base refuse, avec un message opaque.
   const today = new Date();
   const maxBirthdate = new Date(today.getFullYear() - 5, today.getMonth(), today.getDate())
@@ -101,7 +101,7 @@ export function ProfileDialog({
     }
     const timer = setTimeout(async () => {
       setUsernameStatus("checking");
-      const isAvailable = await checkUsername(draft.username);
+      const isAvailable = await checkUsername({ data: draft.username });
       // Allow if it matches initial username exactly
       if (initial?.username && draft.username === initial.username) {
         setUsernameStatus("available");
@@ -126,14 +126,14 @@ export function ProfileDialog({
     initial && initial.interests.length > 0 ? "tags" : "universes",
   );
 
-  // Parcours d'onboarding « Qui est cet enfant ? » (2026-08-12, analyse §6-7, §10) :
-  // Qui → Comment il est → À quel enfant ? → (conditionnelle) Ce qu'il veut devenir.
+  // Parcours d'onboarding Â« Qui est cet enfant ? Â» (2026-08-12, analyse Â§6-7, Â§10) :
+  // Qui â†’ Comment il est â†’ Ã€ quel enfant ? â†’ (conditionnelle) Ce qu'il veut devenir.
   const [wizardStep, setWizardStep] = useState(0);
   const [aspirationInput, setAspirationInput] = useState("");
 
-  // Étape 4 conditionnelle : on demande les aspirations pour les profils vulnérables
-  // (parcours rue, précarité, famille éloignée, conflit avec l'école — analyse §10),
-  // ou si des aspirations existent déjà (on ne cache jamais des données).
+  // Ã‰tape 4 conditionnelle : on demande les aspirations pour les profils vulnÃ©rables
+  // (parcours rue, prÃ©caritÃ©, famille Ã©loignÃ©e, conflit avec l'Ã©cole â€” analyse Â§10),
+  // ou si des aspirations existent dÃ©jÃ  (on ne cache jamais des donnÃ©es).
   const askAspirations = shouldAskAspirations({
     life_context: draft.life_context,
     school_relation: draft.school_relation,
@@ -172,9 +172,9 @@ export function ProfileDialog({
     setAspirationInput("");
   };
 
-  // Pré-remplissage Ville/Pays par IP (2026-07-29, demande utilisateur) : uniquement à la
-  // création d'un profil, jamais sur un profil existant, et jamais si le parent a déjà
-  // commencé à taper — juste une suggestion de départ, toujours modifiable/effaçable.
+  // PrÃ©-remplissage Ville/Pays par IP (2026-07-29, demande utilisateur) : uniquement Ã  la
+  // crÃ©ation d'un profil, jamais sur un profil existant, et jamais si le parent a dÃ©jÃ 
+  // commencÃ© Ã  taper â€” juste une suggestion de dÃ©part, toujours modifiable/effaÃ§able.
   const geoHintFn = useServerFn(getGeoHint);
   useEffect(() => {
     if (initial) return;
@@ -198,28 +198,28 @@ export function ProfileDialog({
   const save = async () => {
     setError(null);
     if (!draft.name.trim()) {
-      setError("Le prénom est obligatoire");
+      setError("Le prÃ©nom est obligatoire");
       return;
     }
     if (!draft.username.trim() || draft.username.length < 3) {
-      setError("L'identifiant est invalide (minimum 3 caractères)");
+      setError("L'identifiant est invalide (minimum 3 caractÃ¨res)");
       return;
     }
     if (usernameStatus === "unavailable") {
       setError("L'identifiant choisi n'est pas disponible");
       return;
     }
-    // Date de naissance = source unique de l'âge (2026-08-13) : le sélecteur d'âge a
-    // été supprimé de l'onboarding — sans date, l'âge n'a plus de source fiable.
+    // Date de naissance = source unique de l'Ã¢ge (2026-08-13) : le sÃ©lecteur d'Ã¢ge a
+    // Ã©tÃ© supprimÃ© de l'onboarding â€” sans date, l'Ã¢ge n'a plus de source fiable.
     if (!draft.birthdate) {
-      const msg = "La date de naissance est obligatoire (l'âge en est dérivé).";
+      const msg = "La date de naissance est obligatoire (l'Ã¢ge en est dÃ©rivÃ©).";
       setError(msg);
       toast.error(msg);
       return;
     }
     const birthdateAge = ageFromBirthdate(draft.birthdate);
     if (birthdateAge !== null && (birthdateAge < 5 || birthdateAge > 21)) {
-      const msg = `L'âge doit être compris entre 5 et 21 ans (cette date de naissance donne ${birthdateAge} ans).`;
+      const msg = `L'Ã¢ge doit Ãªtre compris entre 5 et 21 ans (cette date de naissance donne ${birthdateAge} ans).`;
       setError(msg);
       toast.error(msg);
       return;
@@ -230,8 +230,8 @@ export function ProfileDialog({
       const payload = {
         user_id: userId,
         username: draft.username.trim(), name: draft.name.trim().slice(0, 40),
-        // Âge dérivé de la date de naissance (2026-08-13) : plus aucun sélecteur d'âge
-        // dans l'onboarding — la date est la source unique (le trigger serveur
+        // Ã‚ge dÃ©rivÃ© de la date de naissance (2026-08-13) : plus aucun sÃ©lecteur d'Ã¢ge
+        // dans l'onboarding â€” la date est la source unique (le trigger serveur
         // sync_child_age_from_birthdate aligne la base quoi qu'il arrive).
         age: ageFromBirthdate(draft.birthdate) ?? draft.age,
         birthdate: draft.birthdate || null,
@@ -239,9 +239,9 @@ export function ProfileDialog({
         city: draft.city?.trim() || null,
         country: draft.country?.trim() || null,
         avatar_color: draft.avatar_color,
-        // Profil multidimensionnel (2026-08-12) : tout est optionnel et déclaré par
-        // le parent ; vocabulaire borné par les CHECKs en base (school_level,
-        // school_relation) — le dialogue ne propose que des préréglages.
+        // Profil multidimensionnel (2026-08-12) : tout est optionnel et dÃ©clarÃ© par
+        // le parent ; vocabulaire bornÃ© par les CHECKs en base (school_level,
+        // school_relation) â€” le dialogue ne propose que des prÃ©rÃ©glages.
         school_level: draft.school_level || null,
         languages: draft.languages,
         ability_profile: draft.ability_profile,
@@ -249,10 +249,10 @@ export function ProfileDialog({
         life_context: draft.life_context,
         aspirations: draft.aspirations,
         time_pressure: draft.time_pressure,
-        // Guilde provisoire (refonte 2026-08-09) : à la CRÉATION uniquement, les intérêts
-        // déclarés dérivent une baseline de talents (1-4 pts → "signal_precoce", sous les
-        // seuils 40/70) — l'enfant a une guilde dès le premier jour. Sur l'édition, on ne
-        // touche jamais aux talents gagnés par les défis (undefined = clé ignorée).
+        // Guilde provisoire (refonte 2026-08-09) : Ã  la CRÃ‰ATION uniquement, les intÃ©rÃªts
+        // dÃ©clarÃ©s dÃ©rivent une baseline de talents (1-4 pts â†’ "signal_precoce", sous les
+        // seuils 40/70) â€” l'enfant a une guilde dÃ¨s le premier jour. Sur l'Ã©dition, on ne
+        // touche jamais aux talents gagnÃ©s par les dÃ©fis (undefined = clÃ© ignorÃ©e).
         talents: initial ? undefined : seedTalentsFromInterests(draft.interests),
       };
       if (initial) {
@@ -294,13 +294,13 @@ export function ProfileDialog({
             user_id: userId,
             child_id: created.id,
             event_type: "child_profile_created",
-            description: `Profil créé pour ${payload.name}`,
+            description: `Profil crÃ©Ã© pour ${payload.name}`,
           });
         }
       }
-      // Consentement « Contexte & aptitudes » (2026-08-12) : dès qu'une donnée du
-      // profil multidimensionnel est déclarée (ou modifiée), on le trace — le parent
-      // reste maître des données sensibles de son enfant.
+      // Consentement Â« Contexte & aptitudes Â» (2026-08-12) : dÃ¨s qu'une donnÃ©e du
+      // profil multidimensionnel est dÃ©clarÃ©e (ou modifiÃ©e), on le trace â€” le parent
+      // reste maÃ®tre des donnÃ©es sensibles de son enfant.
       const contextDeclared =
         draft.school_level ||
         draft.languages.length > 0 ||
@@ -314,7 +314,7 @@ export function ProfileDialog({
           child_id: savedId,
           event_type: "context_declared",
           description:
-            "Contexte, aptitudes et aspirations déclarés par le parent (section optionnelle du profil).",
+            "Contexte, aptitudes et aspirations dÃ©clarÃ©s par le parent (section optionnelle du profil).",
         });
       }
       onSaved();
@@ -353,9 +353,9 @@ export function ProfileDialog({
         </div>
 
         <div className="space-y-5">
-          {/* Parcours d'onboarding en étapes (2026-08-12, analyse §6-7, §10) */}
+          {/* Parcours d'onboarding en Ã©tapes (2026-08-12, analyse Â§6-7, Â§10) */}
           <div className="flex items-center justify-between gap-1 rounded-xl bg-ink/5 p-1 text-xs font-bold overflow-x-auto no-scrollbar">
-            {["Qui", "Comment il est", "À quel enfant ?", "Ce qu'il veut devenir"]
+            {["Qui", "Comment il est", "Ã€ quel enfant ?", "Ce qu'il veut devenir"]
               .slice(0, wizardSteps)
               .map((label, i) => (
                 <button
@@ -375,7 +375,7 @@ export function ProfileDialog({
             <div className="space-y-5">
               <div>
                 <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-ink/60">
-                  Prénom
+                  PrÃ©nom
                 </label>
                 <input
                   value={draft.name}
@@ -410,7 +410,7 @@ export function ProfileDialog({
                     placeholder="pseudo_123"
                   />
                   <div className="absolute right-4 top-1/2 -translate-y-1/2">
-                    {usernameStatus === "checking" && <span className="text-xs text-ink/50">Vérification...</span>}
+                    {usernameStatus === "checking" && <span className="text-xs text-ink/50">VÃ©rification...</span>}
                     {usernameStatus === "available" && <span className="text-xs font-bold text-green-600">Disponible</span>}
                     {usernameStatus === "unavailable" && <span className="text-xs font-bold text-red-600">Indisponible</span>}
                   </div>
@@ -434,7 +434,7 @@ export function ProfileDialog({
                     className="rounded-xl border border-ink/10 px-3 py-2 text-xs outline-none focus:ring-2 focus:ring-brand shadow-sm"
                   />
                   <p className="text-[11px] text-ink/50 leading-snug">
-                    L'âge se calcule automatiquement et se met à jour chaque année (5 à 21 ans).
+                    L'Ã¢ge se calcule automatiquement et se met Ã  jour chaque annÃ©e (5 Ã  21 ans).
                   </p>
                 </div>
               </div>
@@ -458,7 +458,7 @@ export function ProfileDialog({
                   <input
                     value={draft.country ?? ""}
                     onChange={(e) => setDraft({ ...draft, country: e.target.value.slice(0, 60) })}
-                    placeholder="Côte d'Ivoire"
+                    placeholder="CÃ´te d'Ivoire"
                     className="w-full rounded-xl border border-ink/10 px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-brand shadow-sm"
                   />
                 </div>
@@ -494,11 +494,11 @@ export function ProfileDialog({
                   Leviers & Moteurs d'engagement
                 </label>
                 <p className="mb-3 text-[11px] text-ink/60 leading-relaxed">
-                  Sélectionnez d'abord les univers dominants de votre enfant, puis affinez ses
+                  SÃ©lectionnez d'abord les univers dominants de votre enfant, puis affinez ses
                   postures d'apprentissage.
                 </p>
 
-                {/* Navigation par étapes */}
+                {/* Navigation par Ã©tapes */}
                 <div className="mb-4 flex items-center justify-between rounded-xl bg-ink/5 p-1 text-xs font-bold">
                   <button
                     type="button"
@@ -525,7 +525,7 @@ export function ProfileDialog({
                 {step === "universes" ? (
                   <div className="space-y-3">
                     <p className="text-[11px] font-medium text-ink/70">
-                      Choisissez les univers dans lesquels votre enfant s'épanouit le plus :
+                      Choisissez les univers dans lesquels votre enfant s'Ã©panouit le plus :
                     </p>
                     <div className="grid grid-cols-2 gap-2">
                       {Object.entries(INTERESTS_BY_TALENT).map(([key, group]) => {
@@ -567,7 +567,7 @@ export function ProfileDialog({
                         onClick={() => setStep("tags")}
                         className="mt-3 w-full rounded-xl bg-ink p-2.5 text-center text-xs font-bold text-white transition-all hover:bg-ink/90"
                       >
-                        Suivant : Affiner les comportements ({selectedTalentKeys.length} univers) →
+                        Suivant : Affiner les comportements ({selectedTalentKeys.length} univers) â†’
                       </button>
                     )}
                   </div>
@@ -576,14 +576,14 @@ export function ProfileDialog({
                     {selectedTalentKeys.length === 0 ? (
                       <div className="rounded-xl border border-dashed border-ink/20 p-4 text-center">
                         <p className="text-xs text-ink/60">
-                          Aucun univers sélectionné à l'étape 1.
+                          Aucun univers sÃ©lectionnÃ© Ã  l'Ã©tape 1.
                         </p>
                         <button
                           type="button"
                           onClick={() => setStep("universes")}
                           className="mt-2 text-xs font-bold text-brand hover:underline"
                         >
-                          ← Sélectionner des univers
+                          â† SÃ©lectionner des univers
                         </button>
                       </div>
                     ) : (
@@ -628,15 +628,15 @@ export function ProfileDialog({
 
           {wizardStep === 2 && (
             <div className="space-y-5">
-              {/* Étape « À quel enfant avons-nous affaire ? » (2026-08-12, analyse §6-7) */}
+              {/* Ã‰tape Â« Ã€ quel enfant avons-nous affaire ? Â» (2026-08-12, analyse Â§6-7) */}
               <div>
                 <p className="mb-1 text-xs font-black uppercase tracking-widest text-ink/70">
-                  À quel enfant avons-nous affaire ?
+                  Ã€ quel enfant avons-nous affaire ?
                 </p>
                 <p className="text-[11px] text-ink/60 leading-relaxed">
-                  Contexte de parcours, handicaps, points forts & difficultés, niveau scolaire,
-                  langues. Tout est facultatif, modifiable à tout moment, et reste privé — ces
-                  informations servent uniquement à personnaliser les activités.
+                  Contexte de parcours, handicaps, points forts & difficultÃ©s, niveau scolaire,
+                  langues. Tout est facultatif, modifiable Ã  tout moment, et reste privÃ© â€” ces
+                  informations servent uniquement Ã  personnaliser les activitÃ©s.
                 </p>
                 <div className="mt-3 space-y-4 rounded-2xl border border-ink/10 bg-white p-4 shadow-sm">
                   {/* Niveau scolaire */}
@@ -649,7 +649,7 @@ export function ProfileDialog({
                       onChange={(e) => setDraft({ ...draft, school_level: e.target.value || null })}
                       className="w-full rounded-xl border border-ink/10 px-3 py-2.5 text-sm outline-none focus:ring-2 focus:ring-brand"
                     >
-                      <option value="">Non renseigné</option>
+                      <option value="">Non renseignÃ©</option>
                       {Object.entries(SCHOOL_LEVELS).map(([k, label]) => (
                         <option key={k} value={k}>
                           {label}
@@ -661,28 +661,28 @@ export function ProfileDialog({
                   {/* Langues */}
                   <div>
                     <label className="mb-1 block text-[10px] font-black uppercase tracking-widest text-ink/60">
-                      Langues parlées à la maison
+                      Langues parlÃ©es Ã  la maison
                     </label>
                     <input
                       value={languagesText}
                       onChange={(e) => setLanguagesText(e.target.value)}
-                      placeholder="ex. français, wolof, dioula"
+                      placeholder="ex. franÃ§ais, wolof, dioula"
                       className="w-full rounded-xl border border-ink/10 px-3 py-2.5 text-sm outline-none focus:ring-2 focus:ring-brand"
                     />
                   </div>
 
-                  {/* Facilités / difficultés par axe */}
+                  {/* FacilitÃ©s / difficultÃ©s par axe */}
                   <div>
                     <p className="mb-1 text-[10px] font-black uppercase tracking-widest text-ink/60">
-                      Points forts & difficultés
+                      Points forts & difficultÃ©s
                     </p>
                     <p className="mb-2 text-[11px] text-ink/50">
-                      Touchez un axe pour le classer — une difficulté est un axe d'entraînement,
-                      jamais une étiquette.
+                      Touchez un axe pour le classer â€” une difficultÃ© est un axe d'entraÃ®nement,
+                      jamais une Ã©tiquette.
                     </p>
                     <div className="space-y-3">
                       <div>
-                        <p className="mb-1.5 text-[11px] font-bold text-emerald-700">✓ Facilités</p>
+                        <p className="mb-1.5 text-[11px] font-bold text-emerald-700">âœ“ FacilitÃ©s</p>
                         <div className="flex flex-wrap gap-1.5">
                           {Object.entries(ABILITY_AXES).map(([k, label]) => {
                             const on = draft.ability_profile[k] === "facile";
@@ -706,7 +706,7 @@ export function ProfileDialog({
                       </div>
                       <div>
                         <p className="mb-1.5 text-[11px] font-bold text-amber-700">
-                          ● Difficultés à stimuler
+                          â— DifficultÃ©s Ã  stimuler
                         </p>
                         <div className="flex flex-wrap gap-1.5">
                           {Object.entries(ABILITY_AXES).map(([k, label]) => {
@@ -732,10 +732,10 @@ export function ProfileDialog({
                     </div>
                   </div>
 
-                  {/* Rapport à l'école */}
+                  {/* Rapport Ã  l'Ã©cole */}
                   <div>
                     <label className="mb-1 block text-[10px] font-black uppercase tracking-widest text-ink/60">
-                      Rapport à l'école
+                      Rapport Ã  l'Ã©cole
                     </label>
                     <div className="flex flex-wrap gap-1.5">
                       {Object.entries(SCHOOL_RELATIONS).map(([k, label]) => {
@@ -759,7 +759,7 @@ export function ProfileDialog({
                     </div>
                   </div>
 
-                  {/* Contexte de parcours (préréglages uniquement) */}
+                  {/* Contexte de parcours (prÃ©rÃ©glages uniquement) */}
                   <div>
                     <label className="mb-1 block text-[10px] font-black uppercase tracking-widest text-ink/60">
                       Contexte de parcours
@@ -819,7 +819,7 @@ export function ProfileDialog({
                       })}
                     </div>
                     <p className="mt-1.5 text-[10px] text-ink/50">
-                      Temps standard : chrono doux. Temps généreux : ×1,5. Sans chronomètre : aucune
+                      Temps standard : chrono doux. Temps gÃ©nÃ©reux : Ã—1,5. Sans chronomÃ¨tre : aucune
                       contrainte temporelle.
                     </p>
                   </div>
@@ -835,9 +835,9 @@ export function ProfileDialog({
                   Ce qu'il veut devenir
                 </p>
                 <p className="mb-2 text-[11px] text-ink/60 leading-relaxed">
-                  Ce que <strong>votre enfant dit</strong> vouloir faire — ses propres mots, même
-                  s'ils vous surprennent. Pour ces enfants, la déclaration est une boussole : Naya
-                  l'explorera par l'expérience, sans jamais en faire un verdict.
+                  Ce que <strong>votre enfant dit</strong> vouloir faire â€” ses propres mots, mÃªme
+                  s'ils vous surprennent. Pour ces enfants, la dÃ©claration est une boussole : Naya
+                  l'explorera par l'expÃ©rience, sans jamais en faire un verdict.
                 </p>
                 <div className="flex flex-wrap gap-1.5">
                   {ASPIRATION_SUGGESTIONS.map((s) => {
@@ -876,7 +876,7 @@ export function ProfileDialog({
                         addAspiration(aspirationInput);
                       }
                     }}
-                    placeholder="Autre métier ou envie…"
+                    placeholder="Autre mÃ©tier ou envieâ€¦"
                     className="flex-1 rounded-xl border border-ink/10 px-3 py-2 text-xs outline-none focus:ring-2 focus:ring-brand"
                   />
                   <button
@@ -906,7 +906,7 @@ export function ProfileDialog({
                           className="shrink-0 text-sky-600 hover:text-sky-900"
                           aria-label={`Retirer ${a.label}`}
                         >
-                          ✕
+                          âœ•
                         </button>
                       </span>
                     ))}
@@ -933,7 +933,7 @@ export function ProfileDialog({
                 onClick={() => setWizardStep((s) => s - 1)}
                 className="press-white rounded-2xl border border-ink/10 bg-white px-4 sm:px-5 py-2.5 text-sm font-bold cursor-pointer"
               >
-                ← Précédent
+                â† PrÃ©cÃ©dent
               </button>
             )}
             {wizardStep < wizardSteps - 1 ? (
@@ -942,7 +942,7 @@ export function ProfileDialog({
                 onClick={() => setWizardStep((s) => s + 1)}
                 className="press-brand rounded-2xl bg-brand px-5 sm:px-6 py-2.5 text-sm font-bold text-white cursor-pointer"
               >
-                Suivant →
+                Suivant â†’
               </button>
             ) : (
               <button
@@ -950,7 +950,7 @@ export function ProfileDialog({
                 disabled={busy}
                 className="press-brand rounded-2xl bg-brand px-5 sm:px-6 py-2.5 text-sm font-bold text-white disabled:opacity-60 cursor-pointer"
               >
-                {busy ? "…" : "Enregistrer"}
+                {busy ? "â€¦" : "Enregistrer"}
               </button>
             )}
           </div>

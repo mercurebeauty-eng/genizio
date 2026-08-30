@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from "react";
+﻿import React, { useState, useRef, useEffect } from "react";
 import {
   Dialog,
   DialogContent,
@@ -67,7 +67,7 @@ type DiscoveryRecordDialogProps = {
   initialSource?: DiscoverySourceType;
 };
 
-// ── Thème visuel et identité selon l'archétype ───────────────────────────────
+// â”€â”€ ThÃ¨me visuel et identitÃ© selon l'archÃ©type â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 function getArchetypeTheme(src: DiscoverySourceType) {
   switch (src) {
@@ -158,33 +158,33 @@ export function DiscoveryRecordDialog({
   const [proofImageUrl, setProofImageUrl] = useState("");
   const [isCompressingImg, setIsCompressingImg] = useState(false);
 
-  // Champs spécifiques 1. Je choisis
+  // Champs spÃ©cifiques 1. Je choisis
   const [sparkOrigin, setSparkOrigin] = useState("Inspiration du quotidien");
-  const [materialsUsed, setMaterialsUsed] = useState("Objets recyclés & Récup");
+  const [materialsUsed, setMaterialsUsed] = useState("Objets recyclÃ©s & RÃ©cup");
 
-  // Champs spécifiques 2. Je trouve
+  // Champs spÃ©cifiques 2. Je trouve
   const [discoveryOrigin, setDiscoveryOrigin] = useState("Livre ou revue");
-  const [investigationMethod, setInvestigationMethod] = useState("Schémas & Croquis");
+  const [investigationMethod, setInvestigationMethod] = useState("SchÃ©mas & Croquis");
 
-  // Champs spécifiques 3. Je tente
+  // Champs spÃ©cifiques 3. Je tente
   const [initialHypothesis, setInitialHypothesis] = useState("");
   const [variableModified, setVariableModified] = useState("Forme et taille");
 
-  // Champs spécifiques 4. Fab Lab
+  // Champs spÃ©cifiques 4. Fab Lab
   const [workshopLocation, setWorkshopLocation] = useState("Fab Lab / Tiers-lieu");
   const [toolsUsed, setToolsUsed] = useState("Carton, colle & ciseaux");
-  const [supervisionLevel, setSupervisionLevel] = useState("Guidé sur les gestes délicats");
+  const [supervisionLevel, setSupervisionLevel] = useState("GuidÃ© sur les gestes dÃ©licats");
 
-  // Champs spécifiques 5. Projet d'Équipe
+  // Champs spÃ©cifiques 5. Projet d'Ã‰quipe
   const [teamHandles, setTeamHandles] = useState("");
   const searchChildProfiles = useServerFn(searchChildProfilesFn);
   const [handleSearchResults, setHandleSearchResults] = useState<any[]>([]);
   const [showHandleSuggestions, setShowHandleSuggestions] = useState(false);
   const [teamSize, setTeamSize] = useState("Petit groupe (3-4)");
-  const [childRole, setChildRole] = useState("💡 Idéateur / Concepteur");
-  const [groupDynamic, setGroupDynamic] = useState("Partage équitable et fluide");
+  const [childRole, setChildRole] = useState("ðŸ’¡ IdÃ©ateur / Concepteur");
+  const [groupDynamic, setGroupDynamic] = useState("Partage Ã©quitable et fluide");
 
-  // Questions métacognitives Naya spécialisées (Étape 2)
+  // Questions mÃ©tacognitives Naya spÃ©cialisÃ©es (Ã‰tape 2)
   const [q1, setQ1] = useState("");
   const [q2, setQ2] = useState("");
   const [q3, setQ3] = useState("");
@@ -194,7 +194,7 @@ export function DiscoveryRecordDialog({
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const createDiscoveryTraceFn = useServerFn(createDiscoveryTrace);
 
-  // Réinitialiser la source si initialSource change à l'ouverture
+  // RÃ©initialiser la source si initialSource change Ã  l'ouverture
   useEffect(() => {
     if (open) {
       setSourceType(initialSource);
@@ -214,18 +214,18 @@ export function DiscoveryRecordDialog({
     setOutcomeStatus("fonctionnel");
     setProofImageUrl("");
     setSparkOrigin("Inspiration du quotidien");
-    setMaterialsUsed("Objets recyclés & Récup");
+    setMaterialsUsed("Objets recyclÃ©s & RÃ©cup");
     setDiscoveryOrigin("Livre ou revue");
-    setInvestigationMethod("Schémas & Croquis");
+    setInvestigationMethod("SchÃ©mas & Croquis");
     setInitialHypothesis("");
     setVariableModified("Forme et taille");
     setWorkshopLocation("Fab Lab / Tiers-lieu");
     setToolsUsed("Carton, colle & ciseaux");
-    setSupervisionLevel("Guidé sur les gestes délicats");
+    setSupervisionLevel("GuidÃ© sur les gestes dÃ©licats");
     setTeamHandles("");
     setTeamSize("Petit groupe (3-4)");
-    setChildRole("💡 Idéateur / Concepteur");
-    setGroupDynamic("Partage équitable et fluide");
+    setChildRole("ðŸ’¡ IdÃ©ateur / Concepteur");
+    setGroupDynamic("Partage Ã©quitable et fluide");
     setQ1("");
     setQ2("");
     setQ3("");
@@ -240,7 +240,7 @@ export function DiscoveryRecordDialog({
     try {
       const compressed = await fileToCompressedProof(file);
       setProofImageUrl(compressed.base64);
-      toast.success("Photo prête ! Elle sera synchronisée dans la galerie du portfolio.");
+      toast.success("Photo prÃªte ! Elle sera synchronisÃ©e dans la galerie du portfolio.");
     } catch (err: any) {
       console.error("Erreur compression image :", err);
       toast.error(err?.message || "Impossible de charger cette image.");
@@ -249,89 +249,89 @@ export function DiscoveryRecordDialog({
     }
   };
 
-  // Configurations complètes et riches par source
+  // Configurations complÃ¨tes et riches par source
   const getSourceConfig = (src: DiscoverySourceType) => {
     switch (src) {
       case "self_chosen":
         return {
-          title: "🚀 Je choisis — Initiative & Création",
+          title: "ðŸš€ Je choisis â€” Initiative & CrÃ©ation",
           badgeText: "Initiative personnelle",
-          desc: `Racontez le projet, le bricolage ou l'histoire que ${childName} a imaginé et créé de son propre élan.`,
-          titlePlaceholder: "Ex: Maquette de catapulte en bois, conte illustré de 6 pages, circuit à billes...",
-          descPlaceholder: "Décrivez ce qu'il/elle a imaginé, comment il/elle s'y est pris(e) et le résultat obtenu...",
-          q1Label: "1. D'où t'est venue cette idée originale ?",
-          q1Placeholder: "Ex: J'ai pensé à ça en observant les oiseaux / en voulant créer un jeu pour ma sœur...",
-          q2Label: "2. Par quoi as-tu commencé pour fabriquer ou créer ?",
-          q2Placeholder: "Ex: J'ai d'abord fait un plan sur papier, puis rassemblé les pièces en carton...",
-          q3Label: "3. Où as-tu rencontré le plus grand obstacle et comment as-tu insisté ?",
-          q3Placeholder: "Ex: Le mécanisme se bloquait, alors j'ai changé l'élastique et poncé les bords...",
+          desc: `Racontez le projet, le bricolage ou l'histoire que ${childName} a imaginÃ© et crÃ©Ã© de son propre Ã©lan.`,
+          titlePlaceholder: "Ex: Maquette de catapulte en bois, conte illustrÃ© de 6 pages, circuit Ã  billes...",
+          descPlaceholder: "DÃ©crivez ce qu'il/elle a imaginÃ©, comment il/elle s'y est pris(e) et le rÃ©sultat obtenu...",
+          q1Label: "1. D'oÃ¹ t'est venue cette idÃ©e originale ?",
+          q1Placeholder: "Ex: J'ai pensÃ© Ã  Ã§a en observant les oiseaux / en voulant crÃ©er un jeu pour ma sÅ“ur...",
+          q2Label: "2. Par quoi as-tu commencÃ© pour fabriquer ou crÃ©er ?",
+          q2Placeholder: "Ex: J'ai d'abord fait un plan sur papier, puis rassemblÃ© les piÃ¨ces en carton...",
+          q3Label: "3. OÃ¹ as-tu rencontrÃ© le plus grand obstacle et comment as-tu insistÃ© ?",
+          q3Placeholder: "Ex: Le mÃ©canisme se bloquait, alors j'ai changÃ© l'Ã©lastique et poncÃ© les bords...",
           q4Label: "4. De quoi es-tu le plus fier et que sais-tu faire maintenant ?",
-          q4Placeholder: "Ex: Le fait que ça tire droit et fonctionne tout seul !",
+          q4Placeholder: "Ex: Le fait que Ã§a tire droit et fonctionne tout seul !",
         };
       case "found_external":
         return {
-          title: "🔍 Je trouve — Curiosité & Défi Externe",
-          badgeText: "Curiosité externe",
-          desc: `Racontez l'énigme, le casse-tête ou le défi ardu que ${childName} a découvert ailleurs et a voulu résoudre.`,
-          titlePlaceholder: "Ex: Énigme des 9 points reliés, casse-tête des allumettes, puzzle logique des vases...",
-          descPlaceholder: "Expliquez quel était l'énoncé du problème et comment il a réussi à le décortiquer...",
-          q1Label: "1. Où as-tu découvert ce défi et pourquoi t'a-t-il intrigué ?",
-          q1Placeholder: "Ex: Vu dans un livre de maths amusantes / proposé par un camarade de classe...",
-          q2Label: "2. Qu'est-ce qui te paraissait impossible ou mystérieux au tout début ?",
+          title: "ðŸ” Je trouve â€” CuriositÃ© & DÃ©fi Externe",
+          badgeText: "CuriositÃ© externe",
+          desc: `Racontez l'Ã©nigme, le casse-tÃªte ou le dÃ©fi ardu que ${childName} a dÃ©couvert ailleurs et a voulu rÃ©soudre.`,
+          titlePlaceholder: "Ex: Ã‰nigme des 9 points reliÃ©s, casse-tÃªte des allumettes, puzzle logique des vases...",
+          descPlaceholder: "Expliquez quel Ã©tait l'Ã©noncÃ© du problÃ¨me et comment il a rÃ©ussi Ã  le dÃ©cortiquer...",
+          q1Label: "1. OÃ¹ as-tu dÃ©couvert ce dÃ©fi et pourquoi t'a-t-il intriguÃ© ?",
+          q1Placeholder: "Ex: Vu dans un livre de maths amusantes / proposÃ© par un camarade de classe...",
+          q2Label: "2. Qu'est-ce qui te paraissait impossible ou mystÃ©rieux au tout dÃ©but ?",
           q2Placeholder: "Ex: Je ne voyais pas comment relier tous les points sans lever le crayon...",
-          q3Label: "3. À quel moment as-tu eu le déclic pour progresser ?",
-          q3Placeholder: "Ex: En essayant de sortir du cadre imaginaire du carré tracé...",
-          q4Label: "4. Quel conseil donnerais-tu à quelqu'un qui veut résoudre cette même énigme ?",
-          q4Placeholder: "Ex: Ne pas rester bloqué dans les lignes et tester des directions inattendues !",
+          q3Label: "3. Ã€ quel moment as-tu eu le dÃ©clic pour progresser ?",
+          q3Placeholder: "Ex: En essayant de sortir du cadre imaginaire du carrÃ© tracÃ©...",
+          q4Label: "4. Quel conseil donnerais-tu Ã  quelqu'un qui veut rÃ©soudre cette mÃªme Ã©nigme ?",
+          q4Placeholder: "Ex: Ne pas rester bloquÃ© dans les lignes et tester des directions inattendues !",
         };
       case "open_sandbox":
         return {
-          title: "🧪 Je tente — Laboratoire Libre & Essais-Erreurs",
+          title: "ðŸ§ª Je tente â€” Laboratoire Libre & Essais-Erreurs",
           badgeText: "Laboratoire libre",
-          desc: `Racontez l'expérience libre, le test spontané d'hypothèses et les essais de ${childName}.`,
-          titlePlaceholder: "Ex: Test de flottabilité avec des objets insolites, hauteur max d'une tour en spaghettis...",
-          descPlaceholder: "Décrivez ce qu'il/elle a cherché à tester, les manipulations faites et ce qui s'est produit...",
-          q1Label: "1. Quelle était ton intuition ou ton hypothèse au départ ?",
-          q1Placeholder: "Ex: Je pensais qu'un objet lourd coulerait toujours plus vite qu'un objet léger...",
-          q2Label: "2. Comment t'y es-tu pris concrètement pour tester et mesurer ?",
-          q2Placeholder: "Ex: J'ai rempli la bassine d'eau et préparé 6 objets de tailles différentes...",
+          desc: `Racontez l'expÃ©rience libre, le test spontanÃ© d'hypothÃ¨ses et les essais de ${childName}.`,
+          titlePlaceholder: "Ex: Test de flottabilitÃ© avec des objets insolites, hauteur max d'une tour en spaghettis...",
+          descPlaceholder: "DÃ©crivez ce qu'il/elle a cherchÃ© Ã  tester, les manipulations faites et ce qui s'est produit...",
+          q1Label: "1. Quelle Ã©tait ton intuition ou ton hypothÃ¨se au dÃ©part ?",
+          q1Placeholder: "Ex: Je pensais qu'un objet lourd coulerait toujours plus vite qu'un objet lÃ©ger...",
+          q2Label: "2. Comment t'y es-tu pris concrÃ¨tement pour tester et mesurer ?",
+          q2Placeholder: "Ex: J'ai rempli la bassine d'eau et prÃ©parÃ© 6 objets de tailles diffÃ©rentes...",
           q3Label: "3. Y a-t-il eu une surprise ou une erreur qui t'a appris quelque chose ?",
-          q3Placeholder: "Ex: La boule de pâte coulait, mais quand je l'ai aplatie en barque, elle flottait !",
-          q4Label: "4. Qu'as-tu appris que tu n'aurais pas deviné sans faire le test ?",
+          q3Placeholder: "Ex: La boule de pÃ¢te coulait, mais quand je l'ai aplatie en barque, elle flottait !",
+          q4Label: "4. Qu'as-tu appris que tu n'aurais pas devinÃ© sans faire le test ?",
           q4Placeholder: "Ex: Que la forme et la surface de contact comptent autant que le poids !",
         };
       case "fablab_marathon":
         return {
-          title: "⚙️ Fab Lab & Atelier — Immersion Outils & Matériaux",
+          title: "âš™ï¸ Fab Lab & Atelier â€” Immersion Outils & MatÃ©riaux",
           badgeText: "Atelier & Fabrication",
-          desc: `Racontez l'activité de fabrication concrète avec outils réels menée par ${childName} en atelier ou maker space.`,
-          titlePlaceholder: "Ex: Horloge en contreplaqué assemblée, voiturette solaire, sculpture articulée...",
-          descPlaceholder: "Décrivez les étapes de fabrication, les matériaux transformés et les gestes techniques appris...",
-          q1Label: "1. Quel était le cadre de cet atelier et quel outil t'a le plus marqué ?",
-          q1Placeholder: "Ex: À l'atelier de bricolage du quartier, j'ai manipulé la scie à chantourner...",
-          q2Label: "2. Quel geste technique ou règle de sécurité as-tu appris à maîtriser ?",
+          desc: `Racontez l'activitÃ© de fabrication concrÃ¨te avec outils rÃ©els menÃ©e par ${childName} en atelier ou maker space.`,
+          titlePlaceholder: "Ex: Horloge en contreplaquÃ© assemblÃ©e, voiturette solaire, sculpture articulÃ©e...",
+          descPlaceholder: "DÃ©crivez les Ã©tapes de fabrication, les matÃ©riaux transformÃ©s et les gestes techniques appris...",
+          q1Label: "1. Quel Ã©tait le cadre de cet atelier et quel outil t'a le plus marquÃ© ?",
+          q1Placeholder: "Ex: Ã€ l'atelier de bricolage du quartier, j'ai manipulÃ© la scie Ã  chantourner...",
+          q2Label: "2. Quel geste technique ou rÃ¨gle de sÃ©curitÃ© as-tu appris Ã  maÃ®triser ?",
           q2Placeholder: "Ex: Porter les lunettes de protection et tenir la planche fermement avec le serre-joint...",
-          q3Label: "3. Comment as-tu géré les imprévus de fabrication ou de matière ?",
-          q3Placeholder: "Ex: Une pièce s'est fendue au perçage, alors j'ai recalculé la distance du bord...",
-          q4Label: "4. Comment pourrais-tu réutiliser cette technique pour fabriquer un autre objet ?",
-          q4Placeholder: "Ex: Je pourrais fabriquer un nichoir pour oiseaux avec les mêmes assemblages !",
+          q3Label: "3. Comment as-tu gÃ©rÃ© les imprÃ©vus de fabrication ou de matiÃ¨re ?",
+          q3Placeholder: "Ex: Une piÃ¨ce s'est fendue au perÃ§age, alors j'ai recalculÃ© la distance du bord...",
+          q4Label: "4. Comment pourrais-tu rÃ©utiliser cette technique pour fabriquer un autre objet ?",
+          q4Placeholder: "Ex: Je pourrais fabriquer un nichoir pour oiseaux avec les mÃªmes assemblages !",
         };
       case "projet_collectif":
       default:
         return {
-          title: "👥 Projet d'Équipe — Coopération & Guilde",
-          badgeText: "Coopération & Escouade",
-          desc: `Racontez le projet collectif mené à plusieurs, mettant en valeur l'entraide et les talents partagés.`,
-          titlePlaceholder: "Ex: Décor et pièce de théâtre de marionnettes à 3, base lunaire géante...",
-          descPlaceholder: "Décrivez le projet commun, l'organisation de l'équipe et la répartition des missions...",
-          q1Label: "1. Comment votre équipe s'est-elle formée et quel était votre but commun ?",
-          q1Placeholder: "Ex: Avec Sarah et Léo, on voulait construire un pont capable de supporter nos livres...",
-          q2Label: "2. Quel rôle as-tu pris naturellement et comment tes talents ont complété l'équipe ?",
-          q2Placeholder: "Ex: J'ai dessiné les plans et calculé les poutres pendant que Sarah découpait...",
-          q3Label: "3. S'il y a eu un désaccord, comment avez-vous trouvé un compromis ?",
-          q3Placeholder: "Ex: On hésitait entre deux formes d'arches, on a testé les deux sur une maquette...",
-          q4Label: "4. Qu'avez-vous réussi ensemble qu'aucun de vous n'aurait pu faire tout seul ?",
-          q4Placeholder: "Ex: Le projet était trop grand pour un seul après-midi, à 3 on a fini en 1h !",
+          title: "ðŸ‘¥ Projet d'Ã‰quipe â€” CoopÃ©ration & Guilde",
+          badgeText: "CoopÃ©ration & Escouade",
+          desc: `Racontez le projet collectif menÃ© Ã  plusieurs, mettant en valeur l'entraide et les talents partagÃ©s.`,
+          titlePlaceholder: "Ex: DÃ©cor et piÃ¨ce de thÃ©Ã¢tre de marionnettes Ã  3, base lunaire gÃ©ante...",
+          descPlaceholder: "DÃ©crivez le projet commun, l'organisation de l'Ã©quipe et la rÃ©partition des missions...",
+          q1Label: "1. Comment votre Ã©quipe s'est-elle formÃ©e et quel Ã©tait votre but commun ?",
+          q1Placeholder: "Ex: Avec Sarah et LÃ©o, on voulait construire un pont capable de supporter nos livres...",
+          q2Label: "2. Quel rÃ´le as-tu pris naturellement et comment tes talents ont complÃ©tÃ© l'Ã©quipe ?",
+          q2Placeholder: "Ex: J'ai dessinÃ© les plans et calculÃ© les poutres pendant que Sarah dÃ©coupait...",
+          q3Label: "3. S'il y a eu un dÃ©saccord, comment avez-vous trouvÃ© un compromis ?",
+          q3Placeholder: "Ex: On hÃ©sitait entre deux formes d'arches, on a testÃ© les deux sur une maquette...",
+          q4Label: "4. Qu'avez-vous rÃ©ussi ensemble qu'aucun de vous n'aurait pu faire tout seul ?",
+          q4Placeholder: "Ex: Le projet Ã©tait trop grand pour un seul aprÃ¨s-midi, Ã  3 on a fini en 1h !",
         };
     }
   };
@@ -349,32 +349,32 @@ export function DiscoveryRecordDialog({
 
     setLoading(true);
     try {
-      // Construction du dialogue métacognitif
+      // Construction du dialogue mÃ©tacognitif
       const nayaDialogue = [];
       if (q1.trim()) nayaDialogue.push({ question: config.q1Label, answer: q1.trim() });
       if (q2.trim()) nayaDialogue.push({ question: config.q2Label, answer: q2.trim() });
       if (q3.trim()) nayaDialogue.push({ question: config.q3Label, answer: q3.trim() });
       if (q4.trim()) nayaDialogue.push({ question: config.q4Label, answer: q4.trim() });
 
-      // Enrichissement des contextes selon l'archétype
+      // Enrichissement des contextes selon l'archÃ©type
       let contextualHelp = "";
       let contextualStrategy = "";
 
       if (sourceType === "self_chosen") {
-        contextualHelp = `Matériaux: ${materialsUsed}`;
-        contextualStrategy = `Étincelle: ${sparkOrigin}`;
+        contextualHelp = `MatÃ©riaux: ${materialsUsed}`;
+        contextualStrategy = `Ã‰tincelle: ${sparkOrigin}`;
       } else if (sourceType === "found_external") {
         contextualHelp = `Origine: ${discoveryOrigin}`;
-        contextualStrategy = `Méthode: ${investigationMethod}`;
+        contextualStrategy = `MÃ©thode: ${investigationMethod}`;
       } else if (sourceType === "open_sandbox") {
-        contextualHelp = initialHypothesis.trim() ? `Hypothèse: ${initialHypothesis.trim()}` : "Hypothèse spontanée";
-        contextualStrategy = `Variables testées: ${variableModified}`;
+        contextualHelp = initialHypothesis.trim() ? `HypothÃ¨se: ${initialHypothesis.trim()}` : "HypothÃ¨se spontanÃ©e";
+        contextualStrategy = `Variables testÃ©es: ${variableModified}`;
       } else if (sourceType === "fablab_marathon") {
         contextualHelp = `Lieu: ${workshopLocation} | Encadrement: ${supervisionLevel}`;
         contextualStrategy = `Outils: ${toolsUsed}`;
       } else if (sourceType === "projet_collectif") {
-        contextualHelp = `Équipe (${teamSize}): ${teamHandles.trim() || "Pairs"}`;
-        contextualStrategy = `Rôle: ${childRole} | Dynamique: ${groupDynamic}`;
+        contextualHelp = `Ã‰quipe (${teamSize}): ${teamHandles.trim() || "Pairs"}`;
+        contextualStrategy = `RÃ´le: ${childRole} | Dynamique: ${groupDynamic}`;
       }
 
             const extractedHandles = teamHandles.match(/@[\w]+/g) || [];
@@ -402,8 +402,8 @@ export function DiscoveryRecordDialog({
       if (res.success && res.trace) {
         toast.success(
           proofImageUrl
-            ? "Exploration enregistrée ! Photo ajoutée au Portfolio et soumise à Naya."
-            : "Exploration enregistrée ! Naya analyse l'initiative...",
+            ? "Exploration enregistrÃ©e ! Photo ajoutÃ©e au Portfolio et soumise Ã  Naya."
+            : "Exploration enregistrÃ©e ! Naya analyse l'initiative...",
         );
         onTraceCreated(res.trace);
         resetForm();
@@ -431,7 +431,7 @@ export function DiscoveryRecordDialog({
                   {config.badgeText}
                 </span>
                 <span className="text-[11px] font-bold text-ink/40 uppercase">
-                  Espace Découverte
+                  Espace DÃ©couverte
                 </span>
               </div>
               <DialogTitle className={`text-xl sm:text-2xl font-black text-ink leading-tight`}>
@@ -456,7 +456,7 @@ export function DiscoveryRecordDialog({
               }`}
             />
             <span className="text-[11px] font-black uppercase text-ink/50 pl-1">
-              Étape {step}/2 : {step === 1 ? "L'Activité & Le Contexte" : "Dialogue Naya & Preuve"}
+              Ã‰tape {step}/2 : {step === 1 ? "L'ActivitÃ© & Le Contexte" : "Dialogue Naya & Preuve"}
             </span>
           </div>
         </DialogHeader>
@@ -468,7 +468,7 @@ export function DiscoveryRecordDialog({
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 <div className="sm:col-span-2 space-y-1.5">
                   <label className="text-xs font-bold text-ink flex items-center gap-1.5">
-                    <span>Titre de la réalisation</span>
+                    <span>Titre de la rÃ©alisation</span>
                     <span className="text-rose-500 font-bold">*</span>
                   </label>
                   <Input
@@ -500,7 +500,7 @@ export function DiscoveryRecordDialog({
               {/* Description */}
               <div className="space-y-1.5">
                 <label className="text-xs font-bold text-ink flex items-center gap-1.5">
-                  <span>Que s'est-il passé concrètement ?</span>
+                  <span>Que s'est-il passÃ© concrÃ¨tement ?</span>
                   <span className="text-rose-500 font-bold">*</span>
                 </label>
                 <Textarea
@@ -513,15 +513,15 @@ export function DiscoveryRecordDialog({
                 />
               </div>
 
-              {/* ── CHAMPS CONTEXTUALISÉS PAR ARCHÉTYPE ────────────────────── */}
+              {/* â”€â”€ CHAMPS CONTEXTUALISÃ‰S PAR ARCHÃ‰TYPE â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
 
-              {/* 1. Spécifique : Je choisis */}
+              {/* 1. SpÃ©cifique : Je choisis */}
               {sourceType === "self_chosen" && (
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 p-4 rounded-2xl bg-amber-50/60 border border-amber-200/70">
                   <div className="space-y-1">
                     <label className="text-[11px] font-bold text-amber-950 flex items-center gap-1.5">
                       <Sparkles className="size-3 text-amber-700" />
-                      <span>Origine de l'étincelle</span>
+                      <span>Origine de l'Ã©tincelle</span>
                     </label>
                     <Select value={sparkOrigin} onValueChange={setSparkOrigin}>
                       <SelectTrigger className="h-9 rounded-xl border-amber-200 bg-white text-xs">
@@ -529,9 +529,9 @@ export function DiscoveryRecordDialog({
                       </SelectTrigger>
                       <SelectContent>
                         <SelectItem value="Inspiration du quotidien">Inspiration du quotidien / Nature</SelectItem>
-                        <SelectItem value="Rêve / Histoire imaginaire">Rêve / Conte / Univers inventé</SelectItem>
-                        <SelectItem value="Résolution d'un problème">Envie de résoudre un problème pratique</SelectItem>
-                        <SelectItem value="Curiosité d'un objet">Attrait pour un objet ou matériau insolite</SelectItem>
+                        <SelectItem value="RÃªve / Histoire imaginaire">RÃªve / Conte / Univers inventÃ©</SelectItem>
+                        <SelectItem value="RÃ©solution d'un problÃ¨me">Envie de rÃ©soudre un problÃ¨me pratique</SelectItem>
+                        <SelectItem value="CuriositÃ© d'un objet">Attrait pour un objet ou matÃ©riau insolite</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
@@ -539,41 +539,41 @@ export function DiscoveryRecordDialog({
                   <div className="space-y-1">
                     <label className="text-[11px] font-bold text-amber-950 flex items-center gap-1.5">
                       <Puzzle className="size-3 text-amber-700" />
-                      <span>Ressources mobilisées</span>
+                      <span>Ressources mobilisÃ©es</span>
                     </label>
                     <Select value={materialsUsed} onValueChange={setMaterialsUsed}>
                       <SelectTrigger className="h-9 rounded-xl border-amber-200 bg-white text-xs">
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="Objets recyclés & Récup">Carton, bouteilles & objets recyclés</SelectItem>
+                        <SelectItem value="Objets recyclÃ©s & RÃ©cup">Carton, bouteilles & objets recyclÃ©s</SelectItem>
                         <SelectItem value="Dessin & Peinture">Feuilles, feutres, peinture & croquis</SelectItem>
                         <SelectItem value="Lego & Briques">Briques de construction / Lego</SelectItem>
-                        <SelectItem value="Numérique & Code">Tablette, logiciel ou code créatif</SelectItem>
-                        <SelectItem value="Objets de la maison">Éléments du quotidien & maison</SelectItem>
+                        <SelectItem value="NumÃ©rique & Code">Tablette, logiciel ou code crÃ©atif</SelectItem>
+                        <SelectItem value="Objets de la maison">Ã‰lÃ©ments du quotidien & maison</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
                 </div>
               )}
 
-              {/* 2. Spécifique : Je trouve */}
+              {/* 2. SpÃ©cifique : Je trouve */}
               {sourceType === "found_external" && (
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 p-4 rounded-2xl bg-sky-50/60 border border-sky-200/70">
                   <div className="space-y-1">
                     <label className="text-[11px] font-bold text-sky-950 flex items-center gap-1.5">
                       <Lightbulb className="size-3 text-sky-700" />
-                      <span>Origine de la découverte</span>
+                      <span>Origine de la dÃ©couverte</span>
                     </label>
                     <Select value={discoveryOrigin} onValueChange={setDiscoveryOrigin}>
                       <SelectTrigger className="h-9 rounded-xl border-sky-200 bg-white text-xs">
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="Livre ou revue">Livre de sciences / Revue illustrée</SelectItem>
-                        <SelectItem value="Défi scolaire ardu">Défi scolaire ardu ou énigme de classe</SelectItem>
-                        <SelectItem value="Vidéo ou Web">Vidéo éducative / Défi sur Internet</SelectItem>
-                        <SelectItem value="Ami ou proche">Proposé par un camarade ou un proche</SelectItem>
+                        <SelectItem value="Livre ou revue">Livre de sciences / Revue illustrÃ©e</SelectItem>
+                        <SelectItem value="DÃ©fi scolaire ardu">DÃ©fi scolaire ardu ou Ã©nigme de classe</SelectItem>
+                        <SelectItem value="VidÃ©o ou Web">VidÃ©o Ã©ducative / DÃ©fi sur Internet</SelectItem>
+                        <SelectItem value="Ami ou proche">ProposÃ© par un camarade ou un proche</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
@@ -581,30 +581,30 @@ export function DiscoveryRecordDialog({
                   <div className="space-y-1">
                     <label className="text-[11px] font-bold text-sky-950 flex items-center gap-1.5">
                       <Target className="size-3 text-sky-700" />
-                      <span>Stratégie d'investigation</span>
+                      <span>StratÃ©gie d'investigation</span>
                     </label>
                     <Select value={investigationMethod} onValueChange={setInvestigationMethod}>
                       <SelectTrigger className="h-9 rounded-xl border-sky-200 bg-white text-xs">
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="Schémas & Croquis">Tracer des schémas & dessins</SelectItem>
-                        <SelectItem value="Décomposition en étapes">Décomposer le problème en petites étapes</SelectItem>
-                        <SelectItem value="Essais par élimination">Tester des hypothèses par élimination</SelectItem>
-                        <SelectItem value="Inversion du problème">Prendre le problème à l'envers</SelectItem>
+                        <SelectItem value="SchÃ©mas & Croquis">Tracer des schÃ©mas & dessins</SelectItem>
+                        <SelectItem value="DÃ©composition en Ã©tapes">DÃ©composer le problÃ¨me en petites Ã©tapes</SelectItem>
+                        <SelectItem value="Essais par Ã©limination">Tester des hypothÃ¨ses par Ã©limination</SelectItem>
+                        <SelectItem value="Inversion du problÃ¨me">Prendre le problÃ¨me Ã  l'envers</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
                 </div>
               )}
 
-              {/* 3. Spécifique : Je tente */}
+              {/* 3. SpÃ©cifique : Je tente */}
               {sourceType === "open_sandbox" && (
                 <div className="space-y-3 p-4 rounded-2xl bg-emerald-50/60 border border-emerald-200/70">
                   <div className="space-y-1">
                     <label className="text-[11px] font-bold text-emerald-950 flex items-center gap-1.5">
                       <FlaskConical className="size-3.5 text-emerald-700" />
-                      <span>Hypothèse ou intuition de départ</span>
+                      <span>HypothÃ¨se ou intuition de dÃ©part</span>
                     </label>
                     <Input
                       value={initialHypothesis}
@@ -615,7 +615,7 @@ export function DiscoveryRecordDialog({
                   </div>
                   <div className="space-y-1">
                     <label className="text-[11px] font-bold text-emerald-950">
-                      Variable(s) modifiée(s) au fil des essais
+                      Variable(s) modifiÃ©e(s) au fil des essais
                     </label>
                     <Select value={variableModified} onValueChange={setVariableModified}>
                       <SelectTrigger className="h-9 rounded-xl border-emerald-200 bg-white text-xs">
@@ -623,16 +623,16 @@ export function DiscoveryRecordDialog({
                       </SelectTrigger>
                       <SelectContent>
                         <SelectItem value="Forme et surface">Forme, contour et surface de contact</SelectItem>
-                        <SelectItem value="Masse et poids">Masse, poids et équilibrage</SelectItem>
+                        <SelectItem value="Masse et poids">Masse, poids et Ã©quilibrage</SelectItem>
                         <SelectItem value="Vitesse et inclinaison">Vitesse, angle d'inclinaison et distance</SelectItem>
-                        <SelectItem value="Dosage et mélange">Dosage des ingrédients / matières</SelectItem>
+                        <SelectItem value="Dosage et mÃ©lange">Dosage des ingrÃ©dients / matiÃ¨res</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
                 </div>
               )}
 
-              {/* 4. Spécifique : Fab Lab */}
+              {/* 4. SpÃ©cifique : Fab Lab */}
               {sourceType === "fablab_marathon" && (
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 p-4 rounded-2xl bg-indigo-50/60 border border-indigo-200/70">
                   <div className="space-y-1">
@@ -647,8 +647,8 @@ export function DiscoveryRecordDialog({
                       <SelectContent>
                         <SelectItem value="Fab Lab / Tiers-lieu">Fab Lab / Tiers-lieu</SelectItem>
                         <SelectItem value="Maison / Garage">Maison / Atelier familial</SelectItem>
-                        <SelectItem value="École / Club">École / Club sciences</SelectItem>
-                        <SelectItem value="Événement / Marathon">Événement / Marathon Maker</SelectItem>
+                        <SelectItem value="Ã‰cole / Club">Ã‰cole / Club sciences</SelectItem>
+                        <SelectItem value="Ã‰vÃ©nement / Marathon">Ã‰vÃ©nement / Marathon Maker</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
@@ -656,7 +656,7 @@ export function DiscoveryRecordDialog({
                   <div className="space-y-1">
                     <label className="text-[11px] font-bold text-indigo-950 flex items-center gap-1">
                       <Wrench className="size-3 text-indigo-700" />
-                      <span>Outils manipulés</span>
+                      <span>Outils manipulÃ©s</span>
                     </label>
                     <Input
                       value={toolsUsed}
@@ -674,22 +674,22 @@ export function DiscoveryRecordDialog({
                       </SelectTrigger>
                       <SelectContent>
                         <SelectItem value="Totalement autonome">Totalement autonome sur l'outil</SelectItem>
-                        <SelectItem value="Guidé sur les gestes délicats">Guidé sur gestes délicats</SelectItem>
-                        <SelectItem value="Supervisé pour sécurité">Supervisé pour sécurité</SelectItem>
+                        <SelectItem value="GuidÃ© sur les gestes dÃ©licats">GuidÃ© sur gestes dÃ©licats</SelectItem>
+                        <SelectItem value="SupervisÃ© pour sÃ©curitÃ©">SupervisÃ© pour sÃ©curitÃ©</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
                 </div>
               )}
 
-              {/* 5. Spécifique : Projet d'Équipe */}
+              {/* 5. SpÃ©cifique : Projet d'Ã‰quipe */}
               {sourceType === "projet_collectif" && (
                 <div className="space-y-3 p-4 rounded-2xl bg-rose-50/60 border border-rose-200/70">
                   <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                     <div className="sm:col-span-2 space-y-1">
                       <label className="text-[11px] font-bold text-rose-950 flex items-center gap-1.5">
                         <Users className="size-3.5 text-rose-700" />
-                        <span>Équipiers (@handles ou prénoms)</span>
+                        <span>Ã‰quipiers (@handles ou prÃ©noms)</span>
                       </label>
                       <div className="relative">
                         <Input
@@ -700,7 +700,7 @@ export function DiscoveryRecordDialog({
                             const match = val.match(/@([\w]+)$/);
                             if (match) {
                               setShowHandleSuggestions(true);
-                              searchChildProfiles(match[0]).then(res => setHandleSearchResults(res));
+                              searchChildProfiles({ data: match[0] }).then(res => setHandleSearchResults(Array.isArray(res) ? res : [])).catch(e => { console.error(e); setHandleSearchResults([]); });
                             } else {
                               setShowHandleSuggestions(false);
                             }
@@ -742,9 +742,9 @@ export function DiscoveryRecordDialog({
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="Binôme (2)">Binôme (2 personnes)</SelectItem>
-                          <SelectItem value="Petit groupe (3-4)">Petit groupe (3 à 4)</SelectItem>
-                          <SelectItem value="Grande équipe (5+)">Grande équipe (5+)</SelectItem>
+                          <SelectItem value="BinÃ´me (2)">BinÃ´me (2 personnes)</SelectItem>
+                          <SelectItem value="Petit groupe (3-4)">Petit groupe (3 Ã  4)</SelectItem>
+                          <SelectItem value="Grande Ã©quipe (5+)">Grande Ã©quipe (5+)</SelectItem>
                         </SelectContent>
                       </Select>
                     </div>
@@ -754,17 +754,17 @@ export function DiscoveryRecordDialog({
                     <div className="space-y-1">
                       <label className="text-[11px] font-bold text-rose-950 flex items-center gap-1">
                         <Award className="size-3 text-rose-700" />
-                        <span>Rôle naturel tenu par {childName}</span>
+                        <span>RÃ´le naturel tenu par {childName}</span>
                       </label>
                       <Select value={childRole} onValueChange={setChildRole}>
                         <SelectTrigger className="h-9 rounded-xl border-rose-200 bg-white text-xs">
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="💡 Idéateur / Concepteur">💡 Idéateur (apporte les idées)</SelectItem>
-                          <SelectItem value="🔨 Bâtisseur / Artisan">🔨 Bâtisseur (fabrique et assemble)</SelectItem>
-                          <SelectItem value="⏱️ Organisateur / Coordinateur">⏱️ Coordinateur (structure le temps)</SelectItem>
-                          <SelectItem value="🤝 Médiateur / Rassembleur">🤝 Médiateur (harmonise le groupe)</SelectItem>
+                          <SelectItem value="ðŸ’¡ IdÃ©ateur / Concepteur">ðŸ’¡ IdÃ©ateur (apporte les idÃ©es)</SelectItem>
+                          <SelectItem value="ðŸ”¨ BÃ¢tisseur / Artisan">ðŸ”¨ BÃ¢tisseur (fabrique et assemble)</SelectItem>
+                          <SelectItem value="â±ï¸ Organisateur / Coordinateur">â±ï¸ Coordinateur (structure le temps)</SelectItem>
+                          <SelectItem value="ðŸ¤ MÃ©diateur / Rassembleur">ðŸ¤ MÃ©diateur (harmonise le groupe)</SelectItem>
                         </SelectContent>
                       </Select>
                     </div>
@@ -776,10 +776,10 @@ export function DiscoveryRecordDialog({
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="Partage équitable et fluide">Partage équitable et fluide</SelectItem>
-                          <SelectItem value="Rôles clairement définis">Rôles clairement définis</SelectItem>
-                          <SelectItem value="Entraide spontanée continue">Entraide spontanée continue</SelectItem>
-                          <SelectItem value="Concertation après désaccord">Concertation après désaccord</SelectItem>
+                          <SelectItem value="Partage Ã©quitable et fluide">Partage Ã©quitable et fluide</SelectItem>
+                          <SelectItem value="RÃ´les clairement dÃ©finis">RÃ´les clairement dÃ©finis</SelectItem>
+                          <SelectItem value="Entraide spontanÃ©e continue">Entraide spontanÃ©e continue</SelectItem>
+                          <SelectItem value="Concertation aprÃ¨s dÃ©saccord">Concertation aprÃ¨s dÃ©saccord</SelectItem>
                         </SelectContent>
                       </Select>
                     </div>
@@ -787,10 +787,10 @@ export function DiscoveryRecordDialog({
                 </div>
               )}
 
-              {/* Métriques d'Effort & Autonomie */}
+              {/* MÃ©triques d'Effort & Autonomie */}
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 p-4 rounded-2xl bg-stone-50 border border-ink/10">
                 <div className="space-y-1">
-                  <label className="text-[11px] font-bold text-ink/70">Temps passé</label>
+                  <label className="text-[11px] font-bold text-ink/70">Temps passÃ©</label>
                   <Select
                     value={durationMinutes.toString()}
                     onValueChange={(val) => setDurationMinutes(Number(val))}
@@ -820,15 +820,15 @@ export function DiscoveryRecordDialog({
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="1">1 essai direct</SelectItem>
-                      <SelectItem value="2">2 à 3 essais</SelectItem>
-                      <SelectItem value="4">4 à 5 essais</SelectItem>
+                      <SelectItem value="2">2 Ã  3 essais</SelectItem>
+                      <SelectItem value="4">4 Ã  5 essais</SelectItem>
                       <SelectItem value="6">Beaucoup d'essais (6+)</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
 
                 <div className="space-y-1">
-                  <label className="text-[11px] font-bold text-ink/70">Autonomie observée</label>
+                  <label className="text-[11px] font-bold text-ink/70">Autonomie observÃ©e</label>
                   <Select
                     value={autonomyLevel}
                     onValueChange={(val: any) => setAutonomyLevel(val)}
@@ -847,10 +847,10 @@ export function DiscoveryRecordDialog({
                 </div>
               </div>
 
-              {/* Résultat obtenu */}
+              {/* RÃ©sultat obtenu */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div className="space-y-1.5">
-                  <label className="text-xs font-bold text-ink">Résultat de l'activité</label>
+                  <label className="text-xs font-bold text-ink">RÃ©sultat de l'activitÃ©</label>
                   <Select value={outcomeStatus} onValueChange={(val: any) => setOutcomeStatus(val)}>
                     <SelectTrigger className="rounded-xl border-ink/20">
                       <SelectValue />
@@ -866,7 +866,7 @@ export function DiscoveryRecordDialog({
                 </div>
 
                 <div className="space-y-1.5">
-                  <label className="text-xs font-bold text-ink">Difficulté ressentie</label>
+                  <label className="text-xs font-bold text-ink">DifficultÃ© ressentie</label>
                   <Select
                     value={perceivedDifficulty}
                     onValueChange={(val: any) => setPerceivedDifficulty(val)}
@@ -875,10 +875,10 @@ export function DiscoveryRecordDialog({
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="facile">Facile (très fluide)</SelectItem>
-                      <SelectItem value="moyen">Moyen (adapté)</SelectItem>
-                      <SelectItem value="difficile">Difficile (a demandé des efforts)</SelectItem>
-                      <SelectItem value="eleve">Très difficile (défi corsé)</SelectItem>
+                      <SelectItem value="facile">Facile (trÃ¨s fluide)</SelectItem>
+                      <SelectItem value="moyen">Moyen (adaptÃ©)</SelectItem>
+                      <SelectItem value="difficile">Difficile (a demandÃ© des efforts)</SelectItem>
+                      <SelectItem value="eleve">TrÃ¨s difficile (dÃ©fi corsÃ©)</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -906,16 +906,16 @@ export function DiscoveryRecordDialog({
 
           {step === 2 && (
             <div className="space-y-6">
-              {/* Dialogue Pédagogique Spécifique */}
+              {/* Dialogue PÃ©dagogique SpÃ©cifique */}
               <div className={`p-4 sm:p-5 rounded-2xl ${theme.dialogueBox} border space-y-4`}>
                 <div className="flex items-center gap-2.5">
                   <NayaAvatar size="sm" />
                   <div>
                     <h4 className={`text-sm font-black ${theme.heading}`}>
-                      Dialogue Métacognitif — L'Observateur Naya
+                      Dialogue MÃ©tacognitif â€” L'Observateur Naya
                     </h4>
                     <p className="text-[11px] text-ink/75 font-medium">
-                      Remplissez avec les propres mots de {childName} pour révéler ses mécanismes d'apprentissage.
+                      Remplissez avec les propres mots de {childName} pour rÃ©vÃ©ler ses mÃ©canismes d'apprentissage.
                     </p>
                   </div>
                 </div>
@@ -981,7 +981,7 @@ export function DiscoveryRecordDialog({
                   <div className="flex items-center gap-2">
                     <Camera className="size-4 text-brand" />
                     <label className="text-xs font-black uppercase text-ink">
-                      Photo de la réalisation (Optionnelle)
+                      Photo de la rÃ©alisation (Optionnelle)
                     </label>
                   </div>
                   <span className="text-[10px] font-bold text-amber-800 bg-amber-100/80 px-2 py-0.5 rounded-full">
@@ -989,7 +989,7 @@ export function DiscoveryRecordDialog({
                   </span>
                 </div>
                 <p className="text-[11px] text-ink/60 font-medium">
-                  Ajoutez une photo du résultat ou du matériel. Naya analysera sa cohérence avec la description et l'ajoutera directement aux artefacts du portfolio de {childName}.
+                  Ajoutez une photo du rÃ©sultat ou du matÃ©riel. Naya analysera sa cohÃ©rence avec la description et l'ajoutera directement aux artefacts du portfolio de {childName}.
                 </p>
 
                 <input
@@ -1004,7 +1004,7 @@ export function DiscoveryRecordDialog({
                   <div className="relative rounded-2xl border border-ink/15 overflow-hidden bg-surface max-h-48 flex items-center justify-center">
                     <img
                       src={proofImageUrl}
-                      alt="Aperçu preuve"
+                      alt="AperÃ§u preuve"
                       className="w-full h-48 object-cover"
                     />
                     <button
@@ -1033,7 +1033,7 @@ export function DiscoveryRecordDialog({
                           Prendre ou importer une photo
                         </span>
                         <span className="text-[10px] text-ink/50">
-                          JPG, PNG, HEIC (iPhone) — compressé automatiquement
+                          JPG, PNG, HEIC (iPhone) â€” compressÃ© automatiquement
                         </span>
                       </>
                     )}
@@ -1051,7 +1051,7 @@ export function DiscoveryRecordDialog({
                   className="rounded-xl px-4 py-2 text-xs font-bold text-ink/70 inline-flex items-center gap-1.5 cursor-pointer"
                 >
                   <ArrowLeft className="size-3.5" />
-                  <span>Retour aux détails</span>
+                  <span>Retour aux dÃ©tails</span>
                 </Button>
 
                 <Button
@@ -1062,7 +1062,7 @@ export function DiscoveryRecordDialog({
                   {loading ? (
                     <>
                       <Loader2 className="size-4 animate-spin" />
-                      <span>Transmission à Naya...</span>
+                      <span>Transmission Ã  Naya...</span>
                     </>
                   ) : (
                     <>
