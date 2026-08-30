@@ -500,6 +500,7 @@ export type Database = {
           time_pressure: string;
           updated_at: string;
           user_id: string;
+          username: string;
           xp: number;
         };
         Insert: {
@@ -534,6 +535,7 @@ export type Database = {
           time_pressure?: string;
           updated_at?: string;
           user_id: string;
+          username: string;
           xp?: number;
         };
         Update: {
@@ -568,6 +570,7 @@ export type Database = {
           time_pressure?: string;
           updated_at?: string;
           user_id?: string;
+          username?: string;
           xp?: number;
         };
         Relationships: [];

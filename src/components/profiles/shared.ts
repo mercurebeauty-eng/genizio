@@ -114,6 +114,7 @@ export const AVATAR_COLORS = [
 export type ChildProfile = {
   id: string;
   user_id: string;
+  username: string;
   name: string;
   age: number;
   birthdate: string | null;
@@ -153,6 +154,7 @@ export type ProfileDraft = Omit<
 >;
 
 export const emptyProfileDraft = (): ProfileDraft => ({
+  username: "",
   name: "",
   age: 10,
   birthdate: null,

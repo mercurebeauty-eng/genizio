@@ -22,6 +22,8 @@ import {
   type AbilityValue,
 } from "@/lib/profile-context";
 import { TIME_PRESSURE_LABELS, type TimePressure } from "@/lib/time-limit";
+import { generateSuggestedUsername, sanitizeUsername } from "@/lib/child-username";
+import { checkUsernameAvailabilityFn } from "@/lib/child-username.functions";
 
 export function ProfileDialog({
   initial,
@@ -43,7 +45,7 @@ export function ProfileDialog({
   const [draft, setDraft] = useState<ProfileDraft>(
     initial
       ? {
-          name: initial.name,
+          username: initial.username ?? "", name: initial.name,
           age: initial.age,
           birthdate: initial.birthdate ?? null,
           interests: initial.interests,
@@ -87,6 +89,28 @@ export function ProfileDialog({
   };
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  
+  const checkUsername = useServerFn(checkUsernameAvailabilityFn);
+  const [usernameStatus, setUsernameStatus] = useState<"idle" | "checking" | "available" | "unavailable">("idle");
+  const [usernameTouched, setUsernameTouched] = useState(false);
+
+  useEffect(() => {
+    if (!draft.username) {
+      setUsernameStatus("idle");
+      return;
+    }
+    const timer = setTimeout(async () => {
+      setUsernameStatus("checking");
+      const isAvailable = await checkUsername(draft.username);
+      // Allow if it matches initial username exactly
+      if (initial?.username && draft.username === initial.username) {
+        setUsernameStatus("available");
+      } else {
+        setUsernameStatus(isAvailable ? "available" : "unavailable");
+      }
+    }, 500);
+    return () => clearTimeout(timer);
+  }, [draft.username, checkUsername, initial?.username]);
 
   const [selectedTalentKeys, setSelectedTalentKeys] = useState<string[]>(() => {
     const activeKeys: string[] = [];
@@ -177,6 +201,14 @@ export function ProfileDialog({
       setError("Le prénom est obligatoire");
       return;
     }
+    if (!draft.username.trim() || draft.username.length < 3) {
+      setError("L'identifiant est invalide (minimum 3 caractères)");
+      return;
+    }
+    if (usernameStatus === "unavailable") {
+      setError("L'identifiant choisi n'est pas disponible");
+      return;
+    }
     // Date de naissance = source unique de l'âge (2026-08-13) : le sélecteur d'âge a
     // été supprimé de l'onboarding — sans date, l'âge n'a plus de source fiable.
     if (!draft.birthdate) {
@@ -197,7 +229,7 @@ export function ProfileDialog({
       let savedId: string | null = initial?.id ?? null;
       const payload = {
         user_id: userId,
-        name: draft.name.trim().slice(0, 40),
+        username: draft.username.trim(), name: draft.name.trim().slice(0, 40),
         // Âge dérivé de la date de naissance (2026-08-13) : plus aucun sélecteur d'âge
         // dans l'onboarding — la date est la source unique (le trigger serveur
         // sync_child_age_from_birthdate aligne la base quoi qu'il arrive).
@@ -347,9 +379,45 @@ export function ProfileDialog({
                 </label>
                 <input
                   value={draft.name}
-                  onChange={(e) => setDraft({ ...draft, name: e.target.value.slice(0, 40) })}
+                  onChange={(e) => {
+                    const newName = e.target.value.slice(0, 40);
+                    setDraft((d) => {
+                      if (!initial && !usernameTouched) {
+                        return { ...d, name: newName, username: generateSuggestedUsername(newName) };
+                      }
+                      return { ...d, name: newName };
+                    });
+                  }}
                   className="w-full rounded-xl border border-ink/10 px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-brand shadow-sm"
                 />
+              </div>
+
+              <div>
+                <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-ink/60">
+                  Identifiant unique (@handle)
+                </label>
+                <div className="relative">
+                  <span className="absolute left-4 top-1/2 -translate-y-1/2 text-ink/40 font-bold">@</span>
+                  <input
+                    value={draft.username}
+                    onChange={(e) => {
+                      setUsernameTouched(true);
+                      setDraft({ ...draft, username: sanitizeUsername(e.target.value) });
+                    }}
+                    className={`w-full rounded-xl border px-4 py-3 pl-9 text-sm outline-none focus:ring-2 focus:ring-brand shadow-sm transition-colors ${
+                      usernameStatus === "unavailable" ? "border-red-500 bg-red-50" : "border-ink/10"
+                    }`}
+                    placeholder="pseudo_123"
+                  />
+                  <div className="absolute right-4 top-1/2 -translate-y-1/2">
+                    {usernameStatus === "checking" && <span className="text-xs text-ink/50">Vérification...</span>}
+                    {usernameStatus === "available" && <span className="text-xs font-bold text-green-600">Disponible</span>}
+                    {usernameStatus === "unavailable" && <span className="text-xs font-bold text-red-600">Indisponible</span>}
+                  </div>
+                </div>
+                <p className="mt-1.5 text-[11px] text-ink/50 leading-snug">
+                  Un pseudo public pour identifier cet enfant dans les projets de groupe (lettres, chiffres, tiret du bas uniquement).
+                </p>
               </div>
 
               <div>
