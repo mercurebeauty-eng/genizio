@@ -1,5 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { requireRateLimit } from "@/lib/rate-limit.middleware";
 import { VALID_TALENT_KEYS, TALENT_KEY_LABELS } from "@/lib/talent-buckets";
 import { INTERESTS_BY_TALENT } from "@/components/profiles/shared";
 import { normalizeChildInterests } from "@/lib/interest-migration";
@@ -2470,7 +2471,7 @@ export async function generateChallengesCore(params: {
 }
 
 export const generateChallenges = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireSupabaseAuth, requireRateLimit])
   .validator((input: unknown) => GenerateInput.parse(input))
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
@@ -3756,7 +3757,7 @@ export const getAcademicGapsForChild = createServerFn({ method: "GET" })
   });
 
 export const generateAcademicHomeworkChallenge = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireSupabaseAuth, requireRateLimit])
   .validator((input: unknown) => GenerateAcademicHomeworkInput.parse(input))
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
@@ -3936,7 +3937,7 @@ const GenerateSingleInput = z.object({
 });
 
 export const generateSingleChallenge = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireSupabaseAuth, requireRateLimit])
   .validator((input: unknown) => GenerateSingleInput.parse(input))
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
@@ -4105,7 +4106,7 @@ export const generateSingleChallenge = createServerFn({ method: "POST" })
   });
 
 export const getChildAISynthesis = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireSupabaseAuth, requireRateLimit])
   .validator((input: unknown) => z.object({ childId: z.string().uuid() }).parse(input))
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
@@ -4217,7 +4218,7 @@ Mets en lumière ses formes d'intelligence dominantes qui ressortent de ses acti
 // cache 7 jours que ai_synthesis, mêmes garanties (fallback sur l'ancienne lettre
 // en cas d'échec transitoire de l'API).
 export const getPassportLetter = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireSupabaseAuth, requireRateLimit])
   .validator((input: unknown) => z.object({ childId: z.string().uuid() }).parse(input))
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
