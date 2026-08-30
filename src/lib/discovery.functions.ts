@@ -1,8 +1,8 @@
-�// Espace Découverte � Fonctions métier, enregistrement des traces et calibration Naya.
+﻿// Espace DÃ©couverte â€” Fonctions mÃ©tier, enregistrement des traces et calibration Naya.
 //
-// Capture l'initiative, la curiosité et la démarche cognitive des enfants lorsqu'ils
-// explorent librement en dehors du parcours structuré habituel, et alimente la boucle
-// d'apprentissage du Jumeau Pédagogique (Naya).
+// Capture l'initiative, la curiositÃ© et la dÃ©marche cognitive des enfants lorsqu'ils
+// explorent librement en dehors du parcours structurÃ© habituel, et alimente la boucle
+// d'apprentissage du Jumeau PÃ©dagogique (Naya).
 
 import { z } from "zod";
 import { createServerFn } from "@tanstack/react-start";
@@ -12,7 +12,7 @@ import { callClaude, safeJsonParse } from "@/lib/challenges.functions";
 import { buildDiscoveryAnalysisPrompt } from "@/lib/naya-prompts";
 import { verifyAndLog } from "@/lib/naya-verifier.functions";
 
-// ���� Vocabulaire & Constantes Découverte ��������������������������������������������������������������������������������
+// â”€â”€ Vocabulaire & Constantes DÃ©couverte â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 export const DISCOVERY_SOURCES = ["self_chosen", "found_external", "open_sandbox", "fablab_marathon", "projet_collectif"] as const;
 export type DiscoverySourceType = (typeof DISCOVERY_SOURCES)[number];
@@ -28,7 +28,7 @@ export const DISCOVERY_POLES = {
   collective: {
     id: "collective",
     title: "Ateliers Pratiques & Projets Collectifs",
-    subtitle: "L'enfant face aux pairs, au matériel réel et à l'intelligence collective",
+    subtitle: "L'enfant face aux pairs, au matÃ©riel rÃ©el et Ã  l'intelligence collective",
     badge: "Ateliers & Guilde",
     sources: ["fablab_marathon", "projet_collectif"] as const,
   },
@@ -50,20 +50,20 @@ export const DISCOVERY_SOURCE_LABELS: Record<
   self_chosen: {
     label: "Je choisis",
     door: "1. Je choisis",
-    title: "Initiative & Création",
+    title: "Initiative & CrÃ©ation",
     badge: "Initiative personnelle",
-    description: "Une idée, un bricolage, un conte ou un projet né de sa propre imagination sans aucune consigne.",
-    cta: "Raconter sa création",
+    description: "Une idÃ©e, un bricolage, un conte ou un projet nÃ© de sa propre imagination sans aucune consigne.",
+    cta: "Raconter sa crÃ©ation",
     theme: "amber",
     pole: "individual",
   },
   found_external: {
     label: "Je trouve",
     door: "2. Je trouve",
-    title: "Curiosité Externe",
-    badge: "Défi trouvé ailleurs",
-    description: "Un casse-tête, une énigme ardue ou un défi découvert à l'école, dans un livre ou sur le web.",
-    cta: "Décortiquer le défi",
+    title: "CuriositÃ© Externe",
+    badge: "DÃ©fi trouvÃ© ailleurs",
+    description: "Un casse-tÃªte, une Ã©nigme ardue ou un dÃ©fi dÃ©couvert Ã  l'Ã©cole, dans un livre ou sur le web.",
+    cta: "DÃ©cortiquer le dÃ©fi",
     theme: "sky",
     pole: "individual",
   },
@@ -72,8 +72,8 @@ export const DISCOVERY_SOURCE_LABELS: Record<
     door: "3. Je tente",
     title: "Laboratoire Libre",
     badge: "Essais-Erreurs & Tests",
-    description: "Une expérience spontanée par essais-erreurs, tests d'hypothèses et manipulation sans consigne fermée.",
-    cta: "Consigner l'expérience",
+    description: "Une expÃ©rience spontanÃ©e par essais-erreurs, tests d'hypothÃ¨ses et manipulation sans consigne fermÃ©e.",
+    cta: "Consigner l'expÃ©rience",
     theme: "emerald",
     pole: "individual",
   },
@@ -81,19 +81,19 @@ export const DISCOVERY_SOURCE_LABELS: Record<
     label: "Fab Lab",
     door: "4. Fab Lab & Atelier",
     title: "Immersion Maker",
-    badge: "Atelier & Outils Réels",
-    description: "Création concrète avec outils réels, bricolage guidé, découpe, électronique ou atelier tiers-lieu.",
+    badge: "Atelier & Outils RÃ©els",
+    description: "CrÃ©ation concrÃ¨te avec outils rÃ©els, bricolage guidÃ©, dÃ©coupe, Ã©lectronique ou atelier tiers-lieu.",
     cta: "Documenter l'atelier",
     theme: "indigo",
     pole: "collective",
   },
   projet_collectif: {
-    label: "Projet d'équipe",
-    door: "5. Projet d'�0quipe",
-    title: "Coopération & Guilde",
+    label: "Projet d'Ã©quipe",
+    door: "5. Projet d'Ã‰quipe",
+    title: "CoopÃ©ration & Guilde",
     badge: "Escouade & Entraide",
-    description: "Projet mené à plusieurs, mettant en jeu la complémentarité des talents et l'intelligence collective.",
-    cta: "Partager le projet d'équipe",
+    description: "Projet menÃ© Ã  plusieurs, mettant en jeu la complÃ©mentaritÃ© des talents et l'intelligence collective.",
+    cta: "Partager le projet d'Ã©quipe",
     theme: "rose",
     pole: "collective",
   },
@@ -114,14 +114,14 @@ export const DISCOVERY_DOMAINS = [
 export type DiscoveryDomain = (typeof DISCOVERY_DOMAINS)[number];
 
 export const DISCOVERY_DOMAIN_LABELS: Record<DiscoveryDomain, string> = {
-  logique: "Logique & �0nigmes",
-  maths: "Mathématiques appliquées",
-  sciences: "Sciences & Expériences",
+  logique: "Logique & Ã‰nigmes",
+  maths: "MathÃ©matiques appliquÃ©es",
+  sciences: "Sciences & ExpÃ©riences",
   construction: "Construction & Bricolage",
-  art_creativite: "Créativité & Design",
-  expression_orale: "Expression & �0loquence",
+  art_creativite: "CrÃ©ativitÃ© & Design",
+  expression_orale: "Expression & Ã‰loquence",
   langues: "Langues & Vocabulaire",
-  programmation: "Numérique & Code",
+  programmation: "NumÃ©rique & Code",
   nature_environnement: "Nature & Environnement",
   autre: "Autre domaine libre",
 };
@@ -134,8 +134,8 @@ export type DiscoveryAutonomyLevel = (typeof DISCOVERY_AUTONOMY_LEVELS)[number];
 
 export const DISCOVERY_AUTONOMY_LABELS: Record<DiscoveryAutonomyLevel, string> = {
   totalement_seul: "Totalement autonome",
-  peu_d_aide: "Très peu d'aide demandée",
-  accompagne: "Guidé ou accompagné",
+  peu_d_aide: "TrÃ¨s peu d'aide demandÃ©e",
+  accompagne: "GuidÃ© ou accompagnÃ©",
 };
 
 export const DISCOVERY_OUTCOMES = ["fonctionnel", "partiel", "en_cours", "echec_enrichissant"] as const;
@@ -143,12 +143,12 @@ export type DiscoveryOutcomeStatus = (typeof DISCOVERY_OUTCOMES)[number];
 
 export const DISCOVERY_OUTCOME_LABELS: Record<DiscoveryOutcomeStatus, { label: string; tone: "success" | "warning" | "info" }> = {
   fonctionnel: { label: "Objectif atteint / Fonctionnel", tone: "success" },
-  partiel: { label: "Partiellement réussi", tone: "info" },
+  partiel: { label: "Partiellement rÃ©ussi", tone: "info" },
   en_cours: { label: "Projet toujours en cours", tone: "info" },
   echec_enrichissant: { label: "Non abouti mais enrichissant", tone: "warning" },
 };
 
-// ���� Types d'analyse IA Naya ����������������������������������������������������������������������������������������������������
+// â”€â”€ Types d'analyse IA Naya â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 export type DiscoveryAIAnalysis = {
   summary: string;
@@ -165,13 +165,13 @@ export type DiscoveryAIAnalysis = {
   role_plasticity_analysis?: string;
 };
 
-// ���� Schémas de Validation Zod ������������������������������������������������������������������������������������������������
+// â”€â”€ SchÃ©mas de Validation Zod â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 export const CreateDiscoveryTraceSchema = z.object({
   childId: z.string().uuid(),
   sourceType: z.enum(DISCOVERY_SOURCES),
-  title: z.string().min(2, "Le titre doit comporter au moins 2 caractères").max(120),
-  description: z.string().min(5, "La description doit comporter au moins 5 caractères").max(3000),
+  title: z.string().min(2, "Le titre doit comporter au moins 2 caractÃ¨res").max(120),
+  description: z.string().min(5, "La description doit comporter au moins 5 caractÃ¨res").max(3000),
   domain: z.string().min(2),
   perceivedDifficulty: z.enum(DISCOVERY_DIFFICULTIES).optional().nullable(),
   attemptsCount: z.number().int().min(1).max(50).default(1),
@@ -201,7 +201,7 @@ export const AddMentorFeedbackSchema = z.object({
   notes: z.string().min(2).max(2000),
 });
 
-// ���� Helpers Serveur ��������������������������������������������������������������������������������������������������������������������
+// â”€â”€ Helpers Serveur â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 async function analyzeAndCalibrateTrace(params: {
   supabaseAdmin: any;
@@ -249,7 +249,7 @@ async function analyzeAndCalibrateTrace(params: {
 
     let hypothesisCycleId: string | null = null;
 
-    // Si une anomalie positive ou une capacité supérieure est détectée, Naya formule une hypothèse
+    // Si une anomalie positive ou une capacitÃ© supÃ©rieure est dÃ©tectÃ©e, Naya formule une hypothÃ¨se
     if (analysis.potential_anomaly && analysis.anomaly_hypothesis) {
       const newHypothesis = {
         cause: "READY_FOR_MORE",
@@ -264,7 +264,7 @@ async function analyzeAndCalibrateTrace(params: {
         confidence: "medium",
       };
 
-      // Vérifier s'il y a déjà un cycle ouvert pour cet enfant sur ce domaine
+      // VÃ©rifier s'il y a dÃ©jÃ  un cycle ouvert pour cet enfant sur ce domaine
       const { data: existingCycle } = await supabaseAdmin
         .from("hypothesis_cycles")
         .select("id, hypotheses")
@@ -301,7 +301,7 @@ async function analyzeAndCalibrateTrace(params: {
       }
     }
 
-    // Mise à jour de la trace avec l'analyse IA et l'id de cycle éventuel
+    // Mise Ã  jour de la trace avec l'analyse IA et l'id de cycle Ã©ventuel
     await supabaseAdmin
       .from("discovery_traces")
       .update({
@@ -328,7 +328,7 @@ async function analyzeAndCalibrateTrace(params: {
   }
 }
 
-// ���� Server Functions ������������������������������������������������������������������������������������������������������������������
+// â”€â”€ Server Functions â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 export const createDiscoveryTrace = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
@@ -337,7 +337,7 @@ export const createDiscoveryTrace = createServerFn({ method: "POST" })
     const { supabase, userId } = context;
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
-    // 1. Vérification d'accès au profil enfant (Parent ou Mentor assigné)
+    // 1. VÃ©rification d'accÃ¨s au profil enfant (Parent ou Mentor assignÃ©)
     const { data: child, error: childErr } = await supabase
       .from("child_profiles")
       .select("id, name, age, talents, user_id")
@@ -345,10 +345,10 @@ export const createDiscoveryTrace = createServerFn({ method: "POST" })
       .maybeSingle();
 
     if (childErr || !child) {
-      throw new Error("Profil enfant introuvable ou accès non autorisé.");
+      throw new Error("Profil enfant introuvable ou accÃ¨s non autorisÃ©.");
     }
 
-    // Vérifier si l'utilisateur est le parent ou un mentor assigné
+    // VÃ©rifier si l'utilisateur est le parent ou un mentor assignÃ©
     const isParent = child.user_id === userId;
     let isMentor = false;
     if (!isParent) {
@@ -363,10 +363,10 @@ export const createDiscoveryTrace = createServerFn({ method: "POST" })
     }
 
     if (!isParent && !isMentor) {
-      throw new Error("Accès refusé : vous devez être le parent ou le mentor de cet enfant.");
+      throw new Error("AccÃ¨s refusÃ© : vous devez Ãªtre le parent ou le mentor de cet enfant.");
     }
 
-        // 2. R�solution des co�quipiers tagu�s (taggedHandles)
+        // 2. Résolution des coéquipiers tagués (taggedHandles)
     let taggedChildIds: string[] = [];
     if (data.taggedHandles && data.taggedHandles.length > 0) {
       // Extraire les noms d'utilisateurs purs sans le @
@@ -379,7 +379,7 @@ export const createDiscoveryTrace = createServerFn({ method: "POST" })
       if (matchedProfiles && matchedProfiles.length > 0) {
         taggedChildIds = matchedProfiles.map((p) => p.id);
         
-        // Notifier les parents/mentors des enfants tagu�s
+        // Notifier les parents/mentors des enfants tagués
         const { notifyUser } = await import('@/lib/app-notifications');
         for (const p of matchedProfiles) {
           await notifyUser({
@@ -432,7 +432,7 @@ export const createDiscoveryTrace = createServerFn({ method: "POST" })
       throw new Error(`Erreur lors de l'enregistrement de l'exploration : ${insertErr?.message}`);
     }
 
-    // 3. �0mission d'événement d'observation pour le Jumeau Pédagogique
+    // 3. Ã‰mission d'Ã©vÃ©nement d'observation pour le Jumeau PÃ©dagogique
     try {
       await supabaseAdmin.from("observation_events").insert({
         child_id: data.childId,
@@ -451,10 +451,10 @@ export const createDiscoveryTrace = createServerFn({ method: "POST" })
         },
       });
     } catch (evtErr) {
-      console.warn("�0chec de l'émission observation_events pour discovery (non-fatal):", evtErr);
+      console.warn("Ã‰chec de l'Ã©mission observation_events pour discovery (non-fatal):", evtErr);
     }
 
-    // 4. Analyse IA & Calibration en tâche de fond / synchrone
+    // 4. Analyse IA & Calibration en tÃ¢che de fond / synchrone
     const analysis = await analyzeAndCalibrateTrace({
       supabaseAdmin,
       traceId: trace.id,
@@ -482,7 +482,7 @@ export const getDiscoveryTracesForChild = createServerFn({ method: "GET" })
     const { supabase, userId } = context;
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
-    // Vérifier l'accès
+    // VÃ©rifier l'accÃ¨s
     const { data: child } = await supabase
       .from("child_profiles")
       .select("id, user_id")
@@ -507,7 +507,7 @@ export const getDiscoveryTracesForChild = createServerFn({ method: "GET" })
     }
 
     if (!isParent && !isMentor) {
-      throw new Error("Accès refusé aux traces d'exploration de cet enfant.");
+      throw new Error("AccÃ¨s refusÃ© aux traces d'exploration de cet enfant.");
     }
 
     const { data: traces, error: tracesErr } = await supabaseAdmin
@@ -541,7 +541,7 @@ export const addMentorDiscoveryFeedback = createServerFn({ method: "POST" })
       throw new Error("Trace introuvable.");
     }
 
-    // 2. Vérifier que l'utilisateur est bien le mentor actif de l'enfant
+    // 2. VÃ©rifier que l'utilisateur est bien le mentor actif de l'enfant
     const { data: mentorLink } = await supabaseAdmin
       .from("mentors")
       .select("id")
@@ -551,10 +551,10 @@ export const addMentorDiscoveryFeedback = createServerFn({ method: "POST" })
       .maybeSingle();
 
     if (!mentorLink) {
-      throw new Error("Seul un mentor assigné à cet enfant peut ajouter une observation.");
+      throw new Error("Seul un mentor assignÃ© Ã  cet enfant peut ajouter une observation.");
     }
 
-    // 3. Mettre à jour la trace
+    // 3. Mettre Ã  jour la trace
     const { data: updated, error: updateErr } = await supabaseAdmin
       .from("discovery_traces")
       .update({
@@ -631,7 +631,7 @@ export const addCoPerspectiveToTrace = createServerFn({ method: "POST" })
     const { supabase, userId } = context;
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
-    // V�rification d'acc�s � l'enfant qui ajoute sa perspective
+    // Vérification d'accès à l'enfant qui ajoute sa perspective
     const { data: child, error: childErr } = await supabase
       .from("child_profiles")
       .select("id, user_id")
@@ -653,9 +653,9 @@ export const addCoPerspectiveToTrace = createServerFn({ method: "POST" })
       isMentor = !!mentorLink;
     }
 
-    if (!isParent && !isMentor) throw new Error("Acc�s refus�");
+    if (!isParent && !isMentor) throw new Error("Accès refusé");
 
-    // R�cup�rer la trace pour s'assurer que l'enfant est bien tagu�
+    // Récupérer la trace pour s'assurer que l'enfant est bien tagué
     const { data: trace } = await supabaseAdmin
       .from("discovery_traces")
       .select("id, co_perspectives, tagged_child_ids")
@@ -666,7 +666,7 @@ export const addCoPerspectiveToTrace = createServerFn({ method: "POST" })
     
     const tagged = Array.isArray(trace.tagged_child_ids) ? trace.tagged_child_ids : [];
     if (!tagged.includes(data.childId)) {
-      throw new Error("L'enfant n'est pas tagu� dans ce projet collectif");
+      throw new Error("L'enfant n'est pas tagué dans ce projet collectif");
     }
 
     const currentPerspectives = Array.isArray(trace.co_perspectives) ? trace.co_perspectives : [];
@@ -680,7 +680,7 @@ export const addCoPerspectiveToTrace = createServerFn({ method: "POST" })
       added_by_user_id: userId
     };
 
-    // Mettre � jour la trace (sans �craser les perspectives existantes)
+    // Mettre à jour la trace (sans écraser les perspectives existantes)
     const { error: updateErr } = await supabaseAdmin
       .from("discovery_traces")
       .update({

@@ -1,11 +1,11 @@
-�// Notifications (2026-08-15, Confiance Mentor) � orchestration des trois canaux :
-//   1. in-app (app_notifications) � canal pull historique, badge + liste ;
-//   2. push (Web Push VAPID, push-notifications.ts) � canal actif, PWA ;
-//   3. email (Brevo, notification-email.functions.ts) � supplément, idempotent.
+﻿// Notifications (2026-08-15, Confiance Mentor) â€” orchestration des trois canaux :
+//   1. in-app (app_notifications) â€” canal pull historique, badge + liste ;
+//   2. push (Web Push VAPID, push-notifications.ts) â€” canal actif, PWA ;
+//   3. email (Brevo, notification-email.functions.ts) â€” supplÃ©ment, idempotent.
 //
-// Le canal in-app est TOUJOURS écrit ; push/email sont optionnels (channels) et
-// fire-and-forget non-bloquant : une erreur de notification ne fait JAMAIS échouer
-// l'action qui l'a déclenchée (même pattern que logMentorAction).
+// Le canal in-app est TOUJOURS Ã©crit ; push/email sont optionnels (channels) et
+// fire-and-forget non-bloquant : une erreur de notification ne fait JAMAIS Ã©chouer
+// l'action qui l'a dÃ©clenchÃ©e (mÃªme pattern que logMentorAction).
 
 export async function notifyUser(params: {
   userId: string;
@@ -16,8 +16,8 @@ export async function notifyUser(params: {
 }): Promise<void> {
   try {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    // (supabaseAdmin as any) : table service-role (même convention que le reste des
-    // tables internes � cast systématique).
+    // (supabaseAdmin as any) : table service-role (mÃªme convention que le reste des
+    // tables internes â€” cast systÃ©matique).
     await (supabaseAdmin as any).from("app_notifications").insert({
       user_id: params.userId,
       type: params.type,
@@ -40,7 +40,7 @@ export async function notifyUser(params: {
   }
 }
 
-// ���� Payload push par type ��������������������������������������������������������������������������������������������������������
+// â”€â”€ Payload push par type â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 function buildPushPayload(params: {
   userId: string;
@@ -54,71 +54,71 @@ function buildPushPayload(params: {
   switch (params.type) {
         case "collective_discovery_tagged":
       return {
-        title: "=e Nouveau projet d'�quipe partag� !",
-        body: `${p.authorName} a mentionn� l'enfant dans un projet collectif : '${p.title}'.`,
+        title: "👥 Nouveau projet d'équipe partagé !",
+        body: `${p.authorName} a mentionné l'enfant dans un projet collectif : '${p.title}'.`,
         url: childId ? `/profiles/${childId}/decouverte` : "/profiles",
       };
     case "mentor_session_to_validate":
       return {
-        title: "Séance à valider",
-        body: "Un mentor a déclaré une séance � confirmez-la pour la rendre officielle.",
+        title: "SÃ©ance Ã  valider",
+        body: "Un mentor a dÃ©clarÃ© une sÃ©ance â€” confirmez-la pour la rendre officielle.",
         url: parentUrl,
       };
     case "mentor_bilan_submitted":
       return {
-        title: "Bilan à valider",
-        body: "Le mentor a soumis le bilan de fin de période.",
+        title: "Bilan Ã  valider",
+        body: "Le mentor a soumis le bilan de fin de pÃ©riode.",
         url: parentUrl,
       };
     case "mentor_session_confirmed":
       return {
-        title: "Séance confirmée",
-        body: "Le parent a confirmé votre séance. Merci !",
+        title: "SÃ©ance confirmÃ©e",
+        body: "Le parent a confirmÃ© votre sÃ©ance. Merci !",
         url: "/mentor",
       };
     case "mentor_bilan_validated":
       return {
-        title: "Bilan validé",
-        body: "Le parent a validé votre bilan de fin de période.",
+        title: "Bilan validÃ©",
+        body: "Le parent a validÃ© votre bilan de fin de pÃ©riode.",
         url: "/mentor",
       };
     case "mentor_bilan_rejected":
       return {
-        title: "Modifications demandées",
+        title: "Modifications demandÃ©es",
         body: "Le parent demande des corrections sur votre bilan.",
         url: "/mentor",
       };
     case "mentor_session_planned":
       return {
-        title: "Séance planifiée",
-        body: "Votre mentor a planifié une séance � le créneau est visible dans le hub Mentor.",
+        title: "SÃ©ance planifiÃ©e",
+        body: "Votre mentor a planifiÃ© une sÃ©ance â€” le crÃ©neau est visible dans le hub Mentor.",
         url: parentUrl,
       };
     case "mentor_session_contested":
       return {
-        title: "Séance contestée",
-        body: "Le parent conteste une séance déclarée � elle ne compte ni pour le score ni pour le paiement.",
+        title: "SÃ©ance contestÃ©e",
+        body: "Le parent conteste une sÃ©ance dÃ©clarÃ©e â€” elle ne compte ni pour le score ni pour le paiement.",
         url: "/mentor",
       };
     case "mentor_status_changed": {
       const to = (p.to as string) ?? "actif";
       return {
-        title: "Votre statut a changé",
+        title: "Votre statut a changÃ©",
         body:
           to === "suspended"
-            ? "Votre compte est suspendu � le score de fiabilité doit remonter."
+            ? "Votre compte est suspendu â€” le score de fiabilitÃ© doit remonter."
             : to === "warning"
-              ? "Votre compte est en alerte � retrouvez le niveau."
+              ? "Votre compte est en alerte â€” retrouvez le niveau."
               : "Votre compte est de nouveau actif.",
         url: "/mentor",
       };
     }
     default:
-      return { title: "Génizio", body: params.type, url: parentUrl };
+      return { title: "GÃ©nizio", body: params.type, url: parentUrl };
   }
 }
 
-// ���� Email par événement (idempotent via consent_events) ��������������������������������������������
+// â”€â”€ Email par Ã©vÃ©nement (idempotent via consent_events) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 async function sendEmailForEvent(
   supabaseAdmin: any,
