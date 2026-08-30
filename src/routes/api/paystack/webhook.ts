@@ -29,6 +29,17 @@ export const Route = createFileRoute("/api/paystack/webhook")({
   server: {
     handlers: {
       POST: async ({ request }: { request: Request }) => {
+        const { checkRateLimit, getClientIp } = await import("@/lib/rate-limit.server");
+        
+        // --- 1. Protection DDoS / Rate Limiting ---
+        // Ex: Max 20 requêtes par minute par IP pour éviter le flood de webhook
+        const clientIp = getClientIp(request);
+        const isAllowed = checkRateLimit(clientIp, { maxRequests: 20, windowMs: 60 * 1000 });
+        if (!isAllowed) {
+          console.warn(`[RateLimit] Blocage de l'IP ${clientIp} sur /api/paystack/webhook`);
+          return Response.json({ error: "Too many requests" }, { status: 429 });
+        }
+
         const { verifyPaystackWebhookSignature } = await import("@/lib/paystack.server");
 
         const rawBody = await request.text();

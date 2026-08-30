@@ -1,5 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { requireRateLimit } from "@/lib/rate-limit.middleware";
 import {
   callClaude,
   finalizeChallenge,
@@ -220,7 +221,7 @@ async function processAbandonedDiscriminantChallenges(
 }
 
 export const ensureHypothesesForChild = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireSupabaseAuth, requireRateLimit])
   .validator((input: unknown) => EnsureInput.parse(input))
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
@@ -534,7 +535,7 @@ const DiscriminantInput = z.object({
 });
 
 export const generateDiscriminantChallenge = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireSupabaseAuth, requireRateLimit])
   .validator((input: unknown) => DiscriminantInput.parse(input))
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
@@ -851,7 +852,7 @@ const SupportRetestInput = z.object({
 // durci), pour vérifier si l'enfant réussit encore sans le soutien renforcé. Voir
 // processSupportRetestResult pour ce que son résultat déclenche.
 export const generateSupportRetestChallenge = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireSupabaseAuth, requireRateLimit])
   .validator((input: unknown) => SupportRetestInput.parse(input))
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
