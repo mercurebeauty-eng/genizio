@@ -33,6 +33,7 @@ import {
   type DiscoveryPerceivedDifficulty,
   createDiscoveryTrace,
 } from "@/lib/discovery.functions";
+import { searchChildProfilesFn } from "@/lib/child-username.functions";
 import { NayaAvatar } from "@/components/NayaAvatar";
 import {
   Sparkles,
@@ -176,6 +177,9 @@ export function DiscoveryRecordDialog({
 
   // Champs spécifiques 5. Projet d'Équipe
   const [teamHandles, setTeamHandles] = useState("");
+  const searchChildProfiles = useServerFn(searchChildProfilesFn);
+  const [handleSearchResults, setHandleSearchResults] = useState<any[]>([]);
+  const [showHandleSuggestions, setShowHandleSuggestions] = useState(false);
   const [teamSize, setTeamSize] = useState("Petit groupe (3-4)");
   const [childRole, setChildRole] = useState("💡 Idéateur / Concepteur");
   const [groupDynamic, setGroupDynamic] = useState("Partage équitable et fluide");
@@ -684,12 +688,48 @@ export function DiscoveryRecordDialog({
                         <Users className="size-3.5 text-rose-700" />
                         <span>Équipiers (@handles ou prénoms)</span>
                       </label>
-                      <Input
-                        value={teamHandles}
-                        onChange={(e) => setTeamHandles(e.target.value)}
-                        placeholder="Ex: @sarah_9, @leo_42, Malik..."
-                        className="h-9 rounded-xl border-rose-200 bg-white text-xs placeholder:text-rose-300 focus-visible:ring-rose-500"
-                      />
+                      <div className="relative">
+                        <Input
+                          value={teamHandles}
+                          onChange={(e) => {
+                            const val = e.target.value;
+                            setTeamHandles(val);
+                            const match = val.match(/@([\w]+)$/);
+                            if (match) {
+                              setShowHandleSuggestions(true);
+                              searchChildProfiles(match[0]).then(res => setHandleSearchResults(res));
+                            } else {
+                              setShowHandleSuggestions(false);
+                            }
+                          }}
+                          placeholder="Ex: @sarah_9, @leo_42, Malik..."
+                          className="h-9 rounded-xl border-rose-200 bg-white text-xs placeholder:text-rose-300 focus-visible:ring-rose-500"
+                        />
+                        {showHandleSuggestions && handleSearchResults.length > 0 && (
+                          <div className="absolute z-10 mt-1 w-full rounded-xl border border-rose-100 bg-white shadow-lg overflow-hidden">
+                            {handleSearchResults.map((profile) => (
+                              <button
+                                key={profile.id}
+                                type="button"
+                                className="flex w-full items-center gap-2 px-3 py-2 text-left hover:bg-rose-50"
+                                onClick={() => {
+                                  const val = teamHandles.replace(/@([\w]+)$/, `@${profile.username} `);
+                                  setTeamHandles(val);
+                                  setShowHandleSuggestions(false);
+                                }}
+                              >
+                                <div className={`size-5 rounded-full flex items-center justify-center ${profile.avatar_color === "brand" ? "bg-brand" : profile.avatar_color === "leaf" ? "bg-leaf" : profile.avatar_color === "sky" ? "bg-sky" : "bg-ink"}`}>
+                                  <span className="text-[9px] font-bold text-white">{profile.name[0]?.toUpperCase()}</span>
+                                </div>
+                                <div className="flex flex-col">
+                                  <span className="text-xs font-bold text-rose-950">{profile.name}</span>
+                                  <span className="text-[10px] text-rose-600">@{profile.username}</span>
+                                </div>
+                              </button>
+                            ))}
+                          </div>
+                        )}
+                      </div>
                     </div>
 
                     <div className="space-y-1">
