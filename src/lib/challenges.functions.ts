@@ -2065,7 +2065,7 @@ async function callDeepSeekText(
   const resolvedModel = isReasoning ? "deepseek-v4-pro" : "deepseek-v4-flash";
   const thinking = isReasoning
     ? { type: "enabled" as const, reasoning_effort: "high" as const }
-    : { type: "disabled" as const };
+    : { type: "enabled" as const, reasoning_effort: "medium" as const };
 
   let attempt = 0;
   while (attempt < maxRetries) {
@@ -2073,6 +2073,12 @@ async function callDeepSeekText(
     const timeoutId = setTimeout(() => controller.abort(), 45000);
 
     try {
+      // Option A: On DeepSeek, forcer response_format: json_object en même temps que
+      // "thinking" provoque un bug (EMPTY_CONTENT ou json vide). On contourne le bug
+      // en désactivant le flag d'API json_object ; le prompt système ordonne déjà 
+      // de produire du JSON brut, et notre safeJsonParse l'extraira du texte.
+      const supportsJsonObject = !thinking || thinking.type !== "enabled";
+
       const response = await fetch("https://api.deepseek.com/chat/completions", {
         method: "POST",
         headers: {
@@ -2087,7 +2093,7 @@ async function callDeepSeekText(
             { role: "system", content: systemPrompt },
             { role: "user", content: prompt },
           ],
-          ...(jsonMode ? { response_format: { type: "json_object" } } : {}),
+          ...(jsonMode && supportsJsonObject ? { response_format: { type: "json_object" } } : {}),
         }),
         signal: controller.signal,
       });
