@@ -2092,7 +2092,7 @@ async function callDeepSeekText(
             { role: "system", content: systemPrompt },
             { role: "user", content: prompt },
           ],
-          ...(jsonMode && supportsJsonObject ? { response_format: { type: "json_object" } } : {}),
+          ...(jsonMode ? { response_format: { type: "json_object" } } : {}),
         }),
         signal: controller.signal,
       });
