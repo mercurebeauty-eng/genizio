@@ -326,9 +326,8 @@ function PortfolioPage() {
         getMentorChildViewFn({ data: { childId: profileId } }),
         supabase
           .from("discovery_traces")
-          .select("id, title, domain, proof_image_url, created_at, source_type, ai_behavioral_analysis")
-          .eq("child_id", profileId)
-          .not("proof_image_url", "is", null)
+          .select("id, title, domain, proof_image_url, created_at, source_type, ai_behavioral_analysis, child_id, tagged_child_ids, co_perspectives, child_profiles!discovery_traces_child_id_fkey(username, name)")
+          .or(`child_id.eq.${profileId},tagged_child_ids.cs.{${profileId}}`)
           .order("created_at", { ascending: false })
           .limit(50),
       ])
@@ -378,9 +377,8 @@ function PortfolioPage() {
         .maybeSingle(),
       supabase
         .from("discovery_traces")
-        .select("id, title, domain, proof_image_url, created_at, source_type, ai_behavioral_analysis")
-        .eq("child_id", profileId)
-        .not("proof_image_url", "is", null)
+        .select("id, title, domain, proof_image_url, created_at, source_type, ai_behavioral_analysis, child_id, tagged_child_ids, co_perspectives, child_profiles!discovery_traces_child_id_fkey(username, name)")
+        .or(`child_id.eq.${profileId},tagged_child_ids.cs.{${profileId}}`)
         .order("created_at", { ascending: false })
         .limit(50),
     ])
@@ -592,6 +590,9 @@ function PortfolioPage() {
     domain: d.domain,
     proof_image_url: d.proof_image_url,
     source: "discovery" as const,
+    child_id: d.child_id,
+    tagged_child_ids: d.tagged_child_ids || [],
+    author_username: d.child_profiles?.username,
   }));
   const artifacts = [...challengeArtifacts, ...discArtifacts];
 
@@ -1734,24 +1735,37 @@ function PortfolioPage() {
               </span>
             </div>
             {artifacts.length === 0 ? (
-              <p className="text-sm text-ink/60">Aucune photo pour l'instant.</p>
+              <p className="text-sm text-ink/60">Aucun projet partagé pour l'instant.</p>
             ) : (
               <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
-                {artifacts.map((c) => (
+                {artifacts.map((c: any) => (
                   <div
                     key={c.id}
                     className="group relative aspect-square overflow-hidden rounded-2xl border border-ink/10 bg-surface shadow-sm"
                   >
-                    <ProofImage
-                      stored={c.proof_image_url}
-                      alt={c.title}
-                      className="h-full w-full object-cover transition-transform group-hover:scale-105"
-                    />
+                    {c.proof_image_url ? (
+                      <ProofImage
+                        stored={c.proof_image_url}
+                        alt={c.title}
+                        className="h-full w-full object-cover transition-transform group-hover:scale-105"
+                      />
+                    ) : (
+                      <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-indigo-50 to-rose-50 transition-transform group-hover:scale-105">
+                        <span className="text-4xl">💡</span>
+                      </div>
+                    )}
                     <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent p-2 text-white">
                       <p className="truncate text-xs font-bold">{c.title}</p>
-                      <div className="flex items-center gap-1.5 mt-0.5">
+                      
+                      {c.source === "discovery" && c.child_id !== profileId && (
+                        <p className="text-[10px] text-amber-300 font-medium mt-0.5 truncate flex items-center gap-1">
+                          Partagé par @{c.author_username || "Auteur"}
+                        </p>
+                      )}
+
+                      <div className="flex flex-wrap items-center gap-1.5 mt-1">
                         <span
-                          className={`text-[9px] font-black uppercase tracking-wider px-1.5 py-0.2 rounded ${
+                          className={`text-[9px] font-black uppercase tracking-wider px-1.5 py-0.5 rounded ${
                             c.source === "discovery"
                               ? "bg-amber-500 text-white"
                               : "bg-white/20 text-white"

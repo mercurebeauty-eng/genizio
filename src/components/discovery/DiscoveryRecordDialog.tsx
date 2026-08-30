@@ -377,6 +377,8 @@ export function DiscoveryRecordDialog({
         contextualStrategy = `Rôle: ${childRole} | Dynamique: ${groupDynamic}`;
       }
 
+            const extractedHandles = teamHandles.match(/@[\w]+/g) || [];
+
       const res = await createDiscoveryTraceFn({
         data: {
           childId,
@@ -393,6 +395,7 @@ export function DiscoveryRecordDialog({
           outcomeStatus,
           proofImageUrl: proofImageUrl.trim() || null,
           nayaDialogue,
+          taggedHandles: extractedHandles,
         },
       });
 
@@ -1076,3 +1079,4 @@ export function DiscoveryRecordDialog({
     </Dialog>
   );
 }
+

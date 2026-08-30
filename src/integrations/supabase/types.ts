@@ -667,6 +667,8 @@ export type Database = {
           proof_image_url: string | null;
           source_type: string;
           strategy_used: string | null;
+          tagged_child_ids: string[] | null;
+          co_perspectives: Json;
           title: string;
           updated_at: string;
           user_id: string;
@@ -692,6 +694,8 @@ export type Database = {
           proof_image_url?: string | null;
           source_type: string;
           strategy_used?: string | null;
+          tagged_child_ids?: string[] | null;
+          co_perspectives?: Json;
           title: string;
           updated_at?: string;
           user_id: string;
@@ -717,6 +721,8 @@ export type Database = {
           proof_image_url?: string | null;
           source_type?: string;
           strategy_used?: string | null;
+          tagged_child_ids?: string[] | null;
+          co_perspectives?: Json;
           title?: string;
           updated_at?: string;
           user_id?: string;
