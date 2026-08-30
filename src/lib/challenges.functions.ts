@@ -2064,9 +2064,13 @@ async function callDeepSeekText(
   // détecté, pas par défi généré).
   const isReasoning = model === "deepseek-reasoner";
   const resolvedModel = isReasoning ? "deepseek-v4-pro" : "deepseek-v4-flash";
+  // Le mode "thinking" sur DeepSeek n'est supporté et utile que sur le modèle de raisonnement
+  // deepseek-v4-pro (pour les hypothèses bayésiennes). Sur v4-flash (génération de défis),
+  // l'activation du thinking provoque la suppression du contenu JSON par l'API DeepSeek
+  // (ou la génération de texte conversationnel qui casse le parseur).
   const thinking = isReasoning
     ? { type: "enabled" as const, reasoning_effort: "high" as const }
-    : { type: "enabled" as const, reasoning_effort: "medium" as const };
+    : { type: "disabled" as const };
 
   let attempt = 0;
   while (attempt < maxRetries) {
@@ -2074,10 +2078,6 @@ async function callDeepSeekText(
     const timeoutId = setTimeout(() => controller.abort(), 45000);
 
     try {
-      // Option A: Quand "thinking" est actif sur DeepSeek, on retire response_format: json_object
-      // car la combinaison des deux dans l'API DeepSeek provoque une réponse vide/invalide.
-      const supportsJsonObject = !thinking || thinking.type !== "enabled";
-
       const response = await fetch("https://api.deepseek.com/chat/completions", {
         method: "POST",
         headers: {
