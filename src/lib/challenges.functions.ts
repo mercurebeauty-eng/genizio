@@ -2067,7 +2067,7 @@ async function callDeepSeekText(
   // Le mode "thinking" sur DeepSeek n'est supporté et utile que sur le modèle de raisonnement
   // deepseek-v4-pro (pour les hypothèses bayésiennes). Sur v4-flash (génération de défis),
   // l'activation du thinking provoque la suppression du contenu JSON par l'API DeepSeek
-  // (ou la génération de texte conversationnel qui casse le parseur).
+  // et génère systématiquement une "Réponse IA invalide".
   const thinking = isReasoning
     ? { type: "enabled" as const, reasoning_effort: "high" as const }
     : { type: "disabled" as const };
