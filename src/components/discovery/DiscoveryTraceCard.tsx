@@ -1,4 +1,4 @@
-﻿import React, { useState } from "react";
+�import React, { useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import {
   DISCOVERY_SOURCE_LABELS,
@@ -74,7 +74,7 @@ export function DiscoveryTraceCard({
 
   const sourceMeta =
     DISCOVERY_SOURCE_LABELS[trace.source_type as DiscoverySourceType] || {
-      label: "DÃ©couverte",
+      label: "Découverte",
       badge: "Exploration",
       description: "",
     };
@@ -102,7 +102,7 @@ export function DiscoveryTraceCard({
         },
       });
       if (res.success && res.trace) {
-        toast.success("Observation mentor enregistrÃ©e.");
+        toast.success("Observation mentor enregistrée.");
         if (onFeedbackSaved) onFeedbackSaved(res.trace);
       }
     } catch (err: any) {
@@ -127,7 +127,7 @@ export function DiscoveryTraceCard({
 
   return (
     <div className="w-full bg-white rounded-3xl p-5 sm:p-6 border border-ink/10 shadow-sm hover:shadow-md transition-all space-y-4">
-      {/* En-tÃªte de la carte */}
+      {/* En-tête de la carte */}
       <div className="flex flex-wrap items-center justify-between gap-2 border-b border-ink/5 pb-3">
         <div className="flex items-center gap-2 flex-wrap">
           {/* Badge Source */}
@@ -164,7 +164,7 @@ export function DiscoveryTraceCard({
             </span>
           )}
 
-          {/* Badge Contexte / StratÃ©gie */}
+          {/* Badge Contexte / Stratégie */}
           {trace.strategy_used && (
             <span className="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-amber-50 text-amber-900 border border-amber-200/60 max-w-xs truncate">
               {trace.strategy_used}
@@ -189,7 +189,7 @@ export function DiscoveryTraceCard({
         )}
       </div>
 
-      {/* MÃ©triques d'exploration */}
+      {/* Métriques d'exploration */}
       <div className="flex flex-wrap items-center gap-2 pt-1 text-xs">
         {trace.autonomy_level && (
           <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-xl bg-violet-50 text-violet-800 font-bold border border-violet-100">
@@ -211,7 +211,7 @@ export function DiscoveryTraceCard({
         {trace.attempts_count > 1 && (
           <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-xl bg-orange-50 text-orange-800 font-bold border border-orange-100">
             <RotateCcw className="size-3.5" />
-            <span>{trace.attempts_count} essais (PersÃ©vÃ©rance)</span>
+            <span>{trace.attempts_count} essais (Persévérance)</span>
           </span>
         )}
 
@@ -229,7 +229,7 @@ export function DiscoveryTraceCard({
         </span>
       </div>
 
-      {/* Preuve photo si existante & synchronisÃ©e au Portfolio */}
+      {/* Preuve photo si existante & synchronisée au Portfolio */}
       {trace.proof_image_url && (
         <div className="pt-2 space-y-1.5">
           <div className="relative rounded-2xl overflow-hidden border border-ink/10 max-h-56 max-w-sm shadow-xs group">
@@ -263,27 +263,27 @@ export function DiscoveryTraceCard({
             {ai.potential_anomaly && (
               <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-black bg-amber-200 text-amber-900 animate-pulse">
                 <Zap className="size-3 fill-current" />
-                <span>Anomalie Positive dÃ©tectÃ©e</span>
+                <span>Anomalie Positive détectée</span>
               </span>
             )}
           </div>
 
           <p className="text-xs text-ink/80 leading-relaxed font-medium">{ai.summary}</p>
 
-          {/* Jauges d'initiative & persÃ©vÃ©rance */}
+          {/* Jauges d'initiative & persévérance */}
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 pt-1">
             <div className="bg-white/80 p-2 rounded-xl border border-amber-100 text-center">
               <span className="text-[10px] text-ink/60 font-bold block">Initiative</span>
               <span className="text-sm font-black text-brand">{ai.initiative_score || 8}/10</span>
             </div>
             <div className="bg-white/80 p-2 rounded-xl border border-amber-100 text-center">
-              <span className="text-[10px] text-ink/60 font-bold block">PersÃ©vÃ©rance</span>
+              <span className="text-[10px] text-ink/60 font-bold block">Persévérance</span>
               <span className="text-sm font-black text-orange-600">
                 {ai.perseverance_score || 7}/10
               </span>
             </div>
             <div className="bg-white/80 p-2 rounded-xl border border-amber-100 text-center">
-              <span className="text-[10px] text-ink/60 font-bold block">CuriositÃ©</span>
+              <span className="text-[10px] text-ink/60 font-bold block">Curiosité</span>
               <span className="text-sm font-black text-sky-600">{ai.curiosity_score || 9}/10</span>
             </div>
             <div className="bg-white/80 p-2 rounded-xl border border-amber-100 text-center">
@@ -292,12 +292,12 @@ export function DiscoveryTraceCard({
             </div>
           </div>
 
-          {/* HypothÃ¨se de calibration si anomalie */}
+          {/* Hypothèse de calibration si anomalie */}
           {ai.potential_anomaly && ai.anomaly_hypothesis && (
             <div className="p-2.5 rounded-xl bg-amber-100/90 border border-amber-300 text-xs text-amber-950 flex items-start gap-2">
               <TrendingUp className="size-4 shrink-0 text-amber-700 mt-0.5" />
               <div className="space-y-0.5">
-                <span className="font-bold block">HypothÃ¨se de calibration :</span>
+                <span className="font-bold block">Hypothèse de calibration :</span>
                 <p className="leading-snug">{ai.anomaly_hypothesis}</p>
               </div>
             </div>
@@ -305,7 +305,7 @@ export function DiscoveryTraceCard({
         </div>
       )}
 
-      {/* Dialogue mÃ©tacognitif Naya (Repliable) */}
+      {/* Dialogue métacognitif Naya (Repliable) */}
       {dialogue.length > 0 && (
         <div className="pt-1">
           <button
@@ -315,7 +315,7 @@ export function DiscoveryTraceCard({
           >
             <MessageSquare className="size-3.5" />
             <span>
-              {showDialogue ? "Masquer les Ã©changes avec Naya" : `Voir les Ã©changes mÃ©tacognitifs (${dialogue.length})`}
+              {showDialogue ? "Masquer les échanges avec Naya" : `Voir les échanges métacognitifs (${dialogue.length})`}
             </span>
           </button>
 
@@ -356,7 +356,7 @@ export function DiscoveryTraceCard({
               <Textarea
                 value={mentorInput}
                 onChange={(e) => setMentorInput(e.target.value)}
-                placeholder="Notez vos observations pour la prochaine sÃ©ance ou pour le bilan..."
+                placeholder="Notez vos observations pour la prochaine séance ou pour le bilan..."
                 rows={2}
                 className="rounded-xl text-xs border-ink/15 focus:border-sky-500 font-medium"
               />
