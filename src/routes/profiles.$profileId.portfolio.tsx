@@ -271,6 +271,8 @@ function PortfolioPage() {
   const [payingPassport, setPayingPassport] = useState(false);
   const [dismissedDiscoveries, setDismissedDiscoveries] = useState<string[]>([]);
   const [expandedMonths, setExpandedMonths] = useState<Set<string>>(new Set());
+  const [gallerySourceFilter, setGallerySourceFilter] = useState<"all" | "challenges" | "discovery">("all");
+  const [galleryDoorFilter, setGalleryDoorFilter] = useState<string>("all");
   // Calibration du temps (chantier 4, §5 suite) : proposition de temps généreux
   // dérivée des TIME_OVER (30 jours, seuil par domaine) — jamais automatique,
   // le parent reste décideur (le rejet est mémorisé en local).
@@ -326,7 +328,7 @@ function PortfolioPage() {
         getMentorChildViewFn({ data: { childId: profileId } }),
         supabase
           .from("discovery_traces")
-          .select("id, title, domain, proof_image_url, created_at, source_type, ai_behavioral_analysis, child_id, tagged_child_ids, co_perspectives, child_profiles!discovery_traces_child_id_fkey(username, name)")
+          .select("id, title, domain, proof_image_url, created_at, source_type, strategy_used, ai_behavioral_analysis, child_id, tagged_child_ids, co_perspectives, child_profiles!discovery_traces_child_id_fkey(username, name)")
           .or(`child_id.eq.${profileId},tagged_child_ids.cs.{${profileId}}`)
           .order("created_at", { ascending: false })
           .limit(50),
@@ -377,7 +379,7 @@ function PortfolioPage() {
         .maybeSingle(),
       supabase
         .from("discovery_traces")
-        .select("id, title, domain, proof_image_url, created_at, source_type, ai_behavioral_analysis, child_id, tagged_child_ids, co_perspectives, child_profiles!discovery_traces_child_id_fkey(username, name)")
+        .select("id, title, domain, proof_image_url, created_at, source_type, strategy_used, ai_behavioral_analysis, child_id, tagged_child_ids, co_perspectives, child_profiles!discovery_traces_child_id_fkey(username, name)")
         .or(`child_id.eq.${profileId},tagged_child_ids.cs.{${profileId}}`)
         .order("created_at", { ascending: false })
         .limit(50),
@@ -584,17 +586,30 @@ function PortfolioPage() {
       proof_image_url: c.proof_image_url!,
       source: "challenge" as const,
     }));
-  const discArtifacts = discoveryArtifacts.map((d) => ({
+  const discArtifacts = discoveryArtifacts.map((d: any) => ({
     id: d.id,
     title: d.title,
     domain: d.domain,
     proof_image_url: d.proof_image_url,
     source: "discovery" as const,
+    source_type: d.source_type,
+    strategy_used: d.strategy_used,
     child_id: d.child_id,
     tagged_child_ids: d.tagged_child_ids || [],
     author_username: d.child_profiles?.username,
   }));
-  const artifacts = [...challengeArtifacts, ...discArtifacts];
+  const allArtifacts = [...challengeArtifacts, ...discArtifacts];
+
+  const filteredArtifacts = allArtifacts.filter((item: any) => {
+    if (gallerySourceFilter === "challenges" && item.source !== "challenge") return false;
+    if (gallerySourceFilter === "discovery" && item.source !== "discovery") return false;
+    if (gallerySourceFilter === "discovery" || gallerySourceFilter === "all") {
+      if (galleryDoorFilter !== "all" && item.source === "discovery" && item.source_type !== galleryDoorFilter) {
+        return false;
+      }
+    }
+    return true;
+  });
 
   // Portrait structuré (2026-08-09) : déterministe et instantané — plus le doublon
   // de la synthèse LLM "Rapport de Naya" (qui vit sur la page Défis). Construit à
@@ -1724,64 +1739,159 @@ function PortfolioPage() {
             )}
           </div>
 
-          <div className="rounded-3xl border border-ink/10 bg-white p-6 shadow-xl space-y-4">
-            <div className="flex items-center justify-between">
-              <h3 className="flex items-center gap-2 font-display text-balance text-lg font-bold">
-                <ImageIcon className="size-5 text-brand" />
-                Galerie d'artefacts ({artifacts.length})
-              </h3>
-              <span className="text-[11px] font-bold text-ink/50">
-                Défis & Explorations libres
-              </span>
+          <div className="rounded-3xl border border-ink/10 bg-white p-6 shadow-xl space-y-5">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-ink/5 pb-4">
+              <div>
+                <h3 className="flex items-center gap-2 font-display text-balance text-lg font-bold text-ink">
+                  <ImageIcon className="size-5 text-brand" />
+                  <span>Galerie d'artefacts & Réalisations ({allArtifacts.length})</span>
+                </h3>
+                <p className="text-xs text-ink/60 font-medium">
+                  Traces visuelles issues des défis académiques et des 5 portes d'exploration libre.
+                </p>
+              </div>
+
+              {/* Filtres de catégorie principale */}
+              <div className="flex items-center gap-1.5 p-1 rounded-2xl bg-stone-100/80 border border-ink/5 self-start sm:self-auto">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setGallerySourceFilter("all");
+                    setGalleryDoorFilter("all");
+                  }}
+                  className={`px-3 py-1 rounded-xl text-xs font-bold transition-all ${
+                    gallerySourceFilter === "all"
+                      ? "bg-white text-ink shadow-xs"
+                      : "text-ink/60 hover:text-ink"
+                  }`}
+                >
+                  Tous ({allArtifacts.length})
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setGallerySourceFilter("challenges")}
+                  className={`px-3 py-1 rounded-xl text-xs font-bold transition-all ${
+                    gallerySourceFilter === "challenges"
+                      ? "bg-white text-brand shadow-xs"
+                      : "text-ink/60 hover:text-ink"
+                  }`}
+                >
+                  ⭐ Défis ({challengeArtifacts.length})
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setGallerySourceFilter("discovery")}
+                  className={`px-3 py-1 rounded-xl text-xs font-bold transition-all ${
+                    gallerySourceFilter === "discovery"
+                      ? "bg-white text-amber-700 shadow-xs"
+                      : "text-ink/60 hover:text-ink"
+                  }`}
+                >
+                  🧭 Explorations ({discArtifacts.length})
+                </button>
+              </div>
             </div>
-            {artifacts.length === 0 ? (
-              <p className="text-sm text-ink/60">Aucun projet partagé pour l'instant.</p>
+
+            {/* Sous-filtres par Porte d'Exploration (si Découverte ou Tous) */}
+            {gallerySourceFilter !== "challenges" && discArtifacts.length > 0 && (
+              <div className="flex items-center gap-1.5 overflow-x-auto pb-1 text-xs">
+                <span className="text-[11px] font-bold text-ink/50 shrink-0 mr-1">Porte :</span>
+                {[
+                  { id: "all", label: "Toutes les portes" },
+                  { id: "self_chosen", label: "💡 Choix libre" },
+                  { id: "found_external", label: "🔍 Défi externe" },
+                  { id: "open_sandbox", label: "🧪 Labo libre" },
+                  { id: "fablab_marathon", label: "⚙️ Fab Lab" },
+                  { id: "projet_collectif", label: "👥 Projet d'Équipe" },
+                ].map((door) => (
+                  <button
+                    key={door.id}
+                    type="button"
+                    onClick={() => setGalleryDoorFilter(door.id)}
+                    className={`px-2.5 py-1 rounded-xl font-bold whitespace-nowrap transition-all text-xs ${
+                      galleryDoorFilter === door.id
+                        ? "bg-amber-100 text-amber-900 border border-amber-300 shadow-2xs"
+                        : "bg-stone-50 text-ink/60 hover:bg-stone-100 border border-ink/5"
+                    }`}
+                  >
+                    {door.label}
+                  </button>
+                ))}
+              </div>
+            )}
+
+            {filteredArtifacts.length === 0 ? (
+              <div className="py-12 text-center text-ink/50 space-y-1">
+                <p className="text-sm font-semibold">Aucun artefact correspondant à ce filtre.</p>
+                <p className="text-xs">Changez de filtre pour afficher les autres réalisations.</p>
+              </div>
             ) : (
               <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
-                {artifacts.map((c: any) => (
-                  <div
-                    key={c.id}
-                    className="group relative aspect-square overflow-hidden rounded-2xl border border-ink/10 bg-surface shadow-sm"
-                  >
-                    {c.proof_image_url ? (
-                      <ProofImage
-                        stored={c.proof_image_url}
-                        alt={c.title}
-                        className="h-full w-full object-cover transition-transform group-hover:scale-105"
-                      />
-                    ) : (
-                      <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-indigo-50 to-rose-50 transition-transform group-hover:scale-105">
-                        <span className="text-4xl">💡</span>
-                      </div>
-                    )}
-                    <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent p-2 text-white">
-                      <p className="truncate text-xs font-bold">{c.title}</p>
-                      
-                      {c.source === "discovery" && c.child_id !== profileId && (
-                        <p className="text-[10px] text-amber-300 font-medium mt-0.5 truncate flex items-center gap-1">
-                          Partagé par @{c.author_username || "Auteur"}
-                        </p>
-                      )}
+                {filteredArtifacts.map((c: any) => {
+                  let teamRoleBadge = "";
+                  if (c.source === "discovery" && c.strategy_used && c.source_type === "projet_collectif") {
+                    const match = c.strategy_used.match(/Rôle(\(s\))?:\s*([^|]+)/i);
+                    if (match && match[2]) {
+                      teamRoleBadge = match[2].trim();
+                    }
+                  }
 
-                      <div className="flex flex-wrap items-center gap-1.5 mt-1">
-                        <span
-                          className={`text-[9px] font-black uppercase tracking-wider px-1.5 py-0.5 rounded ${
-                            c.source === "discovery"
-                              ? "bg-amber-500 text-white"
-                              : "bg-white/20 text-white"
-                          }`}
-                        >
-                          {c.source === "discovery" ? "🧭 Découverte" : "⭐ Défi"}
-                        </span>
-                        {c.domain && (
-                          <span className="text-[9px] text-white/80 truncate">
-                            {c.domain}
-                          </span>
+                  return (
+                    <div
+                      key={c.id}
+                      className="group relative aspect-square overflow-hidden rounded-2xl border border-ink/10 bg-surface shadow-sm"
+                    >
+                      {c.proof_image_url ? (
+                        <ProofImage
+                          stored={c.proof_image_url}
+                          alt={c.title}
+                          className="h-full w-full object-cover transition-transform group-hover:scale-105"
+                        />
+                      ) : (
+                        <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-indigo-50 to-rose-50 transition-transform group-hover:scale-105">
+                          <span className="text-4xl">💡</span>
+                        </div>
+                      )}
+                      <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/85 via-black/50 to-transparent p-2.5 text-white">
+                        <p className="truncate text-xs font-bold leading-tight">{c.title}</p>
+                        
+                        {c.source === "discovery" && c.child_id !== profileId && (
+                          <p className="text-[10px] text-amber-300 font-medium mt-0.5 truncate flex items-center gap-1">
+                            Partagé par @{c.author_username || "Auteur"}
+                          </p>
                         )}
+
+                        <div className="flex flex-wrap items-center gap-1 mt-1.5">
+                          <span
+                            className={`text-[9px] font-black uppercase tracking-wider px-1.5 py-0.5 rounded ${
+                              c.source === "discovery"
+                                ? c.source_type === "projet_collectif"
+                                  ? "bg-rose-600 text-white"
+                                  : "bg-amber-500 text-white"
+                                : "bg-white/20 text-white"
+                            }`}
+                          >
+                            {c.source === "discovery"
+                              ? c.source_type === "projet_collectif"
+                                ? "👥 Équipe"
+                                : "🧭 Découverte"
+                              : "⭐ Défi"}
+                          </span>
+                          {teamRoleBadge && (
+                            <span className="text-[9px] font-bold bg-white/30 text-white px-1.5 py-0.5 rounded truncate max-w-[120px]">
+                              {teamRoleBadge}
+                            </span>
+                          )}
+                          {c.domain && (
+                            <span className="text-[9px] text-white/80 truncate">
+                              {c.domain}
+                            </span>
+                          )}
+                        </div>
                       </div>
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             )}
           </div>

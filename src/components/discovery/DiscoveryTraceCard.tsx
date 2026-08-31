@@ -91,6 +91,25 @@ export function DiscoveryTraceCard({
   const ai = trace.ai_behavioral_analysis as DiscoveryAIAnalysis | null;
   const dialogue = Array.isArray(trace.naya_dialogue) ? trace.naya_dialogue : [];
 
+  // Extraction structurée si projet collectif
+  const isTeamProject = trace.source_type === "projet_collectif";
+  let teamRolesStr = "";
+  let teamDynamicStr = "";
+  let teamNoteStr = "";
+
+  if (isTeamProject && trace.strategy_used) {
+    const parts = trace.strategy_used.split("|").map((p: string) => p.trim());
+    for (const part of parts) {
+      if (part.startsWith("Rôle(s):") || part.startsWith("Rôle:")) {
+        teamRolesStr = part.replace(/^Rôle(\(s\))?:\s*/, "");
+      } else if (part.startsWith("Dynamique:")) {
+        teamDynamicStr = part.replace(/^Dynamique:\s*/, "");
+      } else if (part.startsWith("Note:") || part.startsWith("Précision:")) {
+        teamNoteStr = part.replace(/^(Note|Précision):\s*/, "");
+      }
+    }
+  }
+
   const handleSaveMentorFeedback = async () => {
     if (!mentorInput.trim()) return;
     setIsSavingFeedback(true);
@@ -164,10 +183,22 @@ export function DiscoveryTraceCard({
             </span>
           )}
 
-          {/* Badge Contexte / Stratégie */}
-          {trace.strategy_used && (
+          {/* Badges Spécifiques Équipe ou Stratégie standard */}
+          {isTeamProject && teamRolesStr ? (
+            <span className="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-rose-50 text-rose-900 border border-rose-200/80 flex items-center gap-1">
+              <Award className="size-3 text-rose-700" />
+              <span>{teamRolesStr}</span>
+            </span>
+          ) : trace.strategy_used ? (
             <span className="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-amber-50 text-amber-900 border border-amber-200/60 max-w-xs truncate">
               {trace.strategy_used}
+            </span>
+          ) : null}
+
+          {isTeamProject && teamDynamicStr && (
+            <span className="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-sky-50 text-sky-900 border border-sky-200/80 flex items-center gap-1">
+              <Users className="size-3 text-sky-700" />
+              <span>{teamDynamicStr}</span>
             </span>
           )}
         </div>
@@ -185,6 +216,12 @@ export function DiscoveryTraceCard({
         {trace.help_context && (
           <p className="text-[11px] text-ink/60 font-medium bg-stone-50 p-2 rounded-xl border border-ink/5">
             <strong>Contexte :</strong> {trace.help_context}
+          </p>
+        )}
+        {teamNoteStr && (
+          <p className="text-[11px] text-rose-900/80 font-medium bg-rose-50/70 p-2.5 rounded-xl border border-rose-200/60 flex items-start gap-1.5">
+            <span className="font-bold text-rose-950 shrink-0">Note d'équipe :</span>
+            <span className="italic leading-snug">{teamNoteStr}</span>
           </p>
         )}
       </div>

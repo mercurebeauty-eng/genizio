@@ -8,13 +8,25 @@ export interface TeamMemberProfile {
   talents: Record<string, number>;
   primaryTalentKey: string; // ex: 'logico_mathematique'
   diagnosticIntent?: string; // e.g., "Tester sa capacité à coordonner le groupe"
+  naturalDiscoveryRole?: string; // e.g. "Idéateur", "Capitaine", "Bâtisseur", "Médiateur"
 }
 
 export interface MobilizationAwareTeamMember extends TeamMemberProfile {
   mobilizationInsights?: MobilizationConditionHypothesis[];
 }
 
-export type SquadCompositionStrategy = "synergique" | "mentorat_pairs" | "exploration";
+export type SquadCompositionStrategy = "synergique" | "mentorat_pairs" | "exploration" | "roles_equilibres";
+
+export interface SquadRoleBalanceReport {
+  isBalanced: boolean;
+  roleCoverage: {
+    hasIdeateur: boolean;
+    hasBatisseur: boolean;
+    hasCapitaine: boolean;
+    hasMediateur: boolean;
+  };
+  recommendations: string[];
+}
 
 export interface EscouadeWarning {
   memberId: string;
@@ -199,4 +211,36 @@ export function rankSquadCandidates(
     .sort((a, b) => b.score - a.score)
     .slice(0, 3)
     .map(sc => sc.candidate);
+}
+
+/**
+ * Analyse l'équilibre des rôles naturels Découverte au sein d'une escouade
+ * Équilibre optimal : Idéateur + Bâtisseur + Capitaine/Organisateur + Médiateur
+ */
+export function analyzeSquadRoleBalance(members: TeamMemberProfile[]): SquadRoleBalanceReport {
+  const roles = members.map(m => (m.naturalDiscoveryRole || "").toLowerCase());
+
+  const hasIdeateur = roles.some(r => r.includes("idéateur") || r.includes("createur") || r.includes("créatif"));
+  const hasBatisseur = roles.some(r => r.includes("bâtisseur") || r.includes("praticien") || r.includes("finisseur"));
+  const hasCapitaine = roles.some(r => r.includes("capitaine") || r.includes("moteur") || r.includes("organisateur"));
+  const hasMediateur = roles.some(r => r.includes("médiateur") || r.includes("ciment") || r.includes("soutien"));
+
+  const recommendations: string[] = [];
+  if (!hasIdeateur) recommendations.push("Ajoutez un profil 'Idéateur' pour stimuler l'imagination et la vision initiale.");
+  if (!hasBatisseur) recommendations.push("Ajoutez un profil 'Bâtisseur' pour garantir la concrétisation technique du projet.");
+  if (!hasCapitaine && members.length >= 3) recommendations.push("Désignez un 'Capitaine / Moteur' pour cadencer les étapes du projet.");
+  if (!hasMediateur && members.length >= 4) recommendations.push("Prévoyez un rôle 'Médiateur' pour harmoniser les échanges et réguler l'énergie du groupe.");
+
+  const isBalanced = (hasIdeateur || members.length < 2) && (hasBatisseur || members.length < 2);
+
+  return {
+    isBalanced,
+    roleCoverage: {
+      hasIdeateur,
+      hasBatisseur,
+      hasCapitaine,
+      hasMediateur,
+    },
+    recommendations,
+  };
 }

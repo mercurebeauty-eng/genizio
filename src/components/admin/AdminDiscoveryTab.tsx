@@ -4,6 +4,8 @@ import {
   getDiscoveryAdminStats,
   DISCOVERY_SOURCE_LABELS,
   DISCOVERY_DOMAIN_LABELS,
+  DISCOVERY_TEAM_ROLES,
+  DISCOVERY_TEAM_DYNAMICS,
   type DiscoverySourceType,
   type DiscoveryDomain,
 } from "@/lib/discovery.functions";
@@ -17,6 +19,11 @@ import {
   Clock,
   Loader2,
   CheckCircle2,
+  Users,
+  Award,
+  ShieldCheck,
+  Flame,
+  ArrowUpRight,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 
@@ -51,10 +58,20 @@ export function AdminDiscoveryTab() {
     );
   }
 
-  const bySource = stats?.bySource || { self_chosen: 0, found_external: 0, open_sandbox: 0 };
+  const bySource = stats?.bySource || {
+    self_chosen: 0,
+    found_external: 0,
+    open_sandbox: 0,
+    fablab_marathon: 0,
+    projet_collectif: 0,
+  };
   const total = stats?.totalTraces || 0;
   const anomalies = stats?.anomalyCount || 0;
   const byDomain: Record<string, number> = stats?.byDomain || {};
+  const rolesDistribution: Record<string, number> = stats?.rolesDistribution || {};
+  const dynamicsDistribution: Record<string, number> = stats?.dynamicsDistribution || {};
+  const anomaliesList: any[] = stats?.anomaliesList || [];
+  const reviewedCount: number = stats?.reviewedCount || 0;
 
   return (
     <div className="space-y-6">
@@ -66,21 +83,21 @@ export function AdminDiscoveryTab() {
           </div>
           <div>
             <h2 className="text-xl font-black text-ink">
-              Télémétrie Découverte & Initiatives Libres
+              Télémétrie Découverte, Rôles d'Équipe & Anomalies Positives
             </h2>
             <p className="text-xs sm:text-sm text-ink/70 font-medium">
-              Mesure de l'élan d'exploration spontanée des enfants, des signaux d'initiative et des anomalies positives de calibration.
+              Mesure de l'élan d'exploration spontanée, des postures d'équipe (10 rôles), des dynamiques collectives et des signaux de précocité Naya.
             </p>
           </div>
         </div>
       </div>
 
       {/* KPI Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <Card className="rounded-3xl border-ink/10 shadow-sm bg-white">
           <CardHeader className="pb-2">
             <CardDescription className="text-xs font-black uppercase text-ink/50">
-              Total Explorations Enregistrées
+              Total Explorations
             </CardDescription>
             <CardTitle className="text-3xl font-black text-ink">{total}</CardTitle>
           </CardHeader>
@@ -94,7 +111,7 @@ export function AdminDiscoveryTab() {
         <Card className="rounded-3xl border-ink/10 shadow-sm bg-white">
           <CardHeader className="pb-2">
             <CardDescription className="text-xs font-black uppercase text-amber-700">
-              Initiatives Personnelles (« Je choisis »)
+              Initiatives Spontanées
             </CardDescription>
             <CardTitle className="text-3xl font-black text-amber-700">
               {bySource.self_chosen || 0}
@@ -103,8 +120,25 @@ export function AdminDiscoveryTab() {
           <CardContent>
             <p className="text-xs text-ink/60 font-medium">
               {total > 0
-                ? `${Math.round(((bySource.self_chosen || 0) / total) * 100)}% de toutes les explorations`
-                : "Initiatives spontanées de l'enfant"}
+                ? `${Math.round(((bySource.self_chosen || 0) / total) * 100)}% de choix 100% autonome`
+                : "Initiatives personnelles"}
+            </p>
+          </CardContent>
+        </Card>
+
+        <Card className="rounded-3xl border-ink/10 shadow-sm bg-white">
+          <CardHeader className="pb-2">
+            <CardDescription className="text-xs font-black uppercase text-rose-700">
+              Projets d'Équipe
+            </CardDescription>
+            <CardTitle className="text-3xl font-black text-rose-700 flex items-center gap-2">
+              <span>{bySource.projet_collectif || 0}</span>
+              <Users className="size-5 text-rose-500" />
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-xs text-ink/60 font-medium">
+              Coopérations avec rôles et tags de pairs enregistrés.
             </p>
           </CardContent>
         </Card>
@@ -112,7 +146,7 @@ export function AdminDiscoveryTab() {
         <Card className="rounded-3xl border-ink/10 shadow-sm bg-white">
           <CardHeader className="pb-2">
             <CardDescription className="text-xs font-black uppercase text-emerald-700">
-              Anomalies Positives Détectées
+              Anomalies Positives
             </CardDescription>
             <CardTitle className="text-3xl font-black text-emerald-700 flex items-center gap-2">
               <span>{anomalies}</span>
@@ -121,7 +155,7 @@ export function AdminDiscoveryTab() {
           </CardHeader>
           <CardContent>
             <p className="text-xs text-ink/60 font-medium">
-              Hypothèses de capacité supérieure transmises au moteur de calibration.
+              Signaux de sur-performance transmis à Naya ({reviewedCount} revues par mentor).
             </p>
           </CardContent>
         </Card>
@@ -129,11 +163,11 @@ export function AdminDiscoveryTab() {
 
       {/* Répartition par Source & par Domaine */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {/* Typologie des Sources */}
+        {/* Typologie des Sources (5 Portes) */}
         <Card className="rounded-3xl border-ink/10 shadow-sm bg-white p-6 space-y-4">
           <h3 className="text-base font-black text-ink flex items-center gap-2">
             <Sparkles className="size-4 text-amber-600" />
-            <span>Répartition des 5 Sources d'Exploration</span>
+            <span>Répartition des 5 Portes d'Exploration</span>
           </h3>
           <div className="space-y-3">
             {[
@@ -168,7 +202,7 @@ export function AdminDiscoveryTab() {
               return (
                 <div key={key} className="space-y-1">
                   <div className="flex items-center justify-between text-xs font-bold">
-                    <span className="text-ink">{meta.label} ({meta.badge})</span>
+                    <span className="text-ink">{meta?.label || key} ({meta?.badge || "Exploration"})</span>
                     <span className="text-ink/60">{count} ({pct}%)</span>
                   </div>
                   <div className="w-full bg-stone-100 h-2 rounded-full overflow-hidden">
@@ -214,6 +248,146 @@ export function AdminDiscoveryTab() {
         </Card>
       </div>
 
+      {/* Matrice des Rôles Naturels & Dynamiques Collectives */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        {/* Matrice des 10 Rôles d'Équipe */}
+        <Card className="rounded-3xl border-rose-200/80 shadow-sm bg-gradient-to-b from-rose-50/40 to-white p-6 space-y-4">
+          <div className="flex items-center justify-between">
+            <h3 className="text-base font-black text-rose-950 flex items-center gap-2">
+              <Award className="size-4 text-rose-700" />
+              <span>Matrice des Rôles Naturels en Équipe</span>
+            </h3>
+            <span className="text-[10px] font-bold text-rose-700 uppercase bg-rose-100 px-2 py-0.5 rounded-full">
+              Intelligence Interpersonnelle
+            </span>
+          </div>
+
+          {Object.keys(rolesDistribution).length === 0 ? (
+            <p className="text-xs text-rose-900/60 italic py-6 text-center">
+              En attente de traces de Projets d'Équipe pour cartographier les rôles naturels.
+            </p>
+          ) : (
+            <div className="space-y-2 max-h-64 overflow-y-auto pr-1">
+              {DISCOVERY_TEAM_ROLES.map((r) => {
+                const count = rolesDistribution[r.label] || 0;
+                const totalRoles = Object.values(rolesDistribution).reduce((a, b) => a + b, 0);
+                const pct = totalRoles > 0 ? Math.round((count / totalRoles) * 100) : 0;
+                return (
+                  <div key={r.id} className="p-2.5 rounded-xl bg-white border border-rose-100 space-y-1">
+                    <div className="flex items-center justify-between text-xs font-bold text-rose-950">
+                      <span>{r.label}</span>
+                      <span className="text-rose-700">{count} ({pct}%)</span>
+                    </div>
+                    <p className="text-[10px] text-ink/50 font-normal">{r.desc}</p>
+                    <div className="w-full bg-rose-50 h-1.5 rounded-full overflow-hidden">
+                      <div className="bg-rose-500 h-full transition-all" style={{ width: `${pct}%` }} />
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </Card>
+
+        {/* Dynamiques Relationnelles d'Équipe */}
+        <Card className="rounded-3xl border-sky-200/80 shadow-sm bg-gradient-to-b from-sky-50/40 to-white p-6 space-y-4">
+          <div className="flex items-center justify-between">
+            <h3 className="text-base font-black text-sky-950 flex items-center gap-2">
+              <Users className="size-4 text-sky-700" />
+              <span>Dynamiques Relationnelles Observées</span>
+            </h3>
+            <span className="text-[10px] font-bold text-sky-700 uppercase bg-sky-100 px-2 py-0.5 rounded-full">
+              Synergie de Groupe
+            </span>
+          </div>
+
+          {Object.keys(dynamicsDistribution).length === 0 ? (
+            <p className="text-xs text-sky-900/60 italic py-6 text-center">
+              En attente d'enregistrements collectifs pour profiler les dynamiques de groupe.
+            </p>
+          ) : (
+            <div className="space-y-2 max-h-64 overflow-y-auto pr-1">
+              {DISCOVERY_TEAM_DYNAMICS.map((dyn) => {
+                const count = dynamicsDistribution[dyn.label] || 0;
+                const totalDyn = Object.values(dynamicsDistribution).reduce((a, b) => a + b, 0);
+                const pct = totalDyn > 0 ? Math.round((count / totalDyn) * 100) : 0;
+                return (
+                  <div key={dyn.id} className="p-2.5 rounded-xl bg-white border border-sky-100 space-y-1">
+                    <div className="flex items-center justify-between text-xs font-bold text-sky-950">
+                      <span>{dyn.label}</span>
+                      <span className="text-sky-700">{count} ({pct}%)</span>
+                    </div>
+                    <p className="text-[10px] text-ink/50 font-normal">{dyn.desc}</p>
+                    <div className="w-full bg-sky-50 h-1.5 rounded-full overflow-hidden">
+                      <div className="bg-sky-500 h-full transition-all" style={{ width: `${pct}%` }} />
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </Card>
+      </div>
+
+      {/* Radar des Anomalies Positives de Calibration */}
+      <Card className="rounded-3xl border-emerald-200 shadow-sm bg-gradient-to-b from-emerald-50/40 to-white p-6 space-y-4">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <Zap className="size-5 text-emerald-600 fill-current" />
+            <h3 className="text-base font-black text-emerald-950">
+              Radar des Anomalies Positives & Signaux Faibles de Précocité
+            </h3>
+          </div>
+          <span className="text-xs font-bold px-3 py-1 rounded-full bg-emerald-100 text-emerald-800 border border-emerald-200">
+            {anomaliesList.length} signalement{anomaliesList.length > 1 ? "s" : ""}
+          </span>
+        </div>
+        <p className="text-xs text-emerald-900/70 font-medium">
+          Traces où Naya a détecté une capacité supérieure ou une aisance inattendue lors de l'exploration libre, alimentant les cycles d'hypothèses de calibration.
+        </p>
+
+        {anomaliesList.length === 0 ? (
+          <p className="text-xs text-ink/50 italic py-4 text-center">
+            Aucune anomalie positive détectée pour le moment.
+          </p>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 pt-1">
+            {anomaliesList.map((a: any) => (
+              <div
+                key={a.id}
+                className="p-4 rounded-2xl bg-white border border-emerald-200/80 shadow-xs space-y-2 hover:border-emerald-400 transition-all"
+              >
+                <div className="flex items-center justify-between gap-2">
+                  <span className="font-black text-xs text-ink truncate">{a.childName}</span>
+                  {a.childAge && (
+                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-stone-100 text-ink/70">
+                      {a.childAge} ans
+                    </span>
+                  )}
+                </div>
+                <div className="flex items-center gap-1.5 flex-wrap">
+                  <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-emerald-50 text-emerald-800 border border-emerald-100">
+                    {DISCOVERY_DOMAIN_LABELS[a.domain as DiscoveryDomain] || a.domain}
+                  </span>
+                  <span className="text-[10px] font-bold text-amber-700">
+                    ⚡ Initiative {a.initiativeScore}/10
+                  </span>
+                </div>
+                <p className="text-xs font-bold text-ink line-clamp-1">« {a.title} »</p>
+                {a.anomalyHypothesis && (
+                  <div className="p-2 rounded-xl bg-emerald-50/70 border border-emerald-100 text-[11px] text-emerald-950 leading-snug">
+                    <span className="font-bold block text-[10px] text-emerald-800 uppercase">
+                      Hypothèse de calibration :
+                    </span>
+                    {a.anomalyHypothesis}
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        )}
+      </Card>
+
       {/* Dernières explorations */}
       <Card className="rounded-3xl border-ink/10 shadow-sm bg-white p-6 space-y-4">
         <h3 className="text-base font-black text-ink flex items-center gap-2">
@@ -222,31 +396,42 @@ export function AdminDiscoveryTab() {
         </h3>
         {stats?.recentTraces && stats.recentTraces.length > 0 ? (
           <div className="divide-y divide-ink/5">
-            {stats.recentTraces.map((t: any) => (
-              <div key={t.id} className="py-3 flex items-center justify-between gap-4 text-xs">
-                <div className="space-y-0.5 min-w-0">
-                  <div className="flex items-center gap-2">
-                    <span className="font-bold text-ink truncate">
-                      {DISCOVERY_DOMAIN_LABELS[t.domain as DiscoveryDomain] || t.domain}
-                    </span>
-                    <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-stone-100 text-ink/70">
-                      {DISCOVERY_SOURCE_LABELS[t.source_type as DiscoverySourceType]?.label || t.source_type}
-                    </span>
-                    {t.ai_behavioral_analysis?.potential_anomaly && (
-                      <span className="px-1.5 py-0.2 rounded text-[9px] font-black bg-amber-100 text-amber-800">
-                        ⚡ Anomalie
+            {stats.recentTraces.map((t: any) => {
+              const child = t.child_profiles;
+              return (
+                <div key={t.id} className="py-3 flex items-center justify-between gap-4 text-xs">
+                  <div className="space-y-0.5 min-w-0">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <span className="font-black text-ink">
+                        {child?.name || "Enfant"}
                       </span>
-                    )}
+                      <span className="font-bold text-ink/80 truncate">
+                        — « {t.title} »
+                      </span>
+                      <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-stone-100 text-ink/70">
+                        {DISCOVERY_SOURCE_LABELS[t.source_type as DiscoverySourceType]?.label || t.source_type}
+                      </span>
+                      {t.ai_behavioral_analysis?.potential_anomaly && (
+                        <span className="px-1.5 py-0.2 rounded text-[9px] font-black bg-emerald-100 text-emerald-800">
+                          ⚡ Anomalie
+                        </span>
+                      )}
+                      {t.mentor_reviewed_at && (
+                        <span className="px-1.5 py-0.2 rounded text-[9px] font-bold bg-sky-100 text-sky-800 flex items-center gap-0.5">
+                          <CheckCircle2 className="size-2.5" /> Mentor
+                        </span>
+                      )}
+                    </div>
+                    <span className="text-[11px] text-ink/50 block">
+                      {new Date(t.created_at).toLocaleDateString("fr-FR")} • {DISCOVERY_DOMAIN_LABELS[t.domain as DiscoveryDomain] || t.domain}
+                    </span>
                   </div>
-                  <span className="text-[11px] text-ink/50 block">
-                    {new Date(t.created_at).toLocaleDateString("fr-FR")}
+                  <span className="shrink-0 text-emerald-700 font-bold text-[11px] bg-emerald-50 px-2 py-1 rounded-lg border border-emerald-100">
+                    {t.outcome_status}
                   </span>
                 </div>
-                <span className="shrink-0 text-emerald-700 font-bold text-[11px]">
-                  {t.outcome_status}
-                </span>
-              </div>
-            ))}
+              );
+            })}
           </div>
         ) : (
           <p className="text-xs text-ink/50 italic py-4 text-center">

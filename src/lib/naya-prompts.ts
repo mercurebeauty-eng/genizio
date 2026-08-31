@@ -298,6 +298,8 @@ export interface BuildChallengePromptInput {
   childQuestionNote?: string;
   /** But diagnostique secret (ex: vérifier une hypothèse sur la capacité de transmission) */
   diagnosticIntentNote?: string;
+  /** Synthèse des postures observées en groupe (ex: Idéateur, Bâtisseur, etc.) pour calibration miroir */
+  teamRoleContextNote?: string;
 }
 
 export function buildChallengePrompt(input: BuildChallengePromptInput): string {
@@ -317,6 +319,7 @@ export function buildChallengePrompt(input: BuildChallengePromptInput): string {
     timePressureNote,
     profileContextNote,
     childQuestionNote = "",
+    teamRoleContextNote = "",
   } = input;
   const ignoredDomainsNote =
     ignoredDomains.length > 0
@@ -328,6 +331,9 @@ export function buildChallengePrompt(input: BuildChallengePromptInput): string {
     : "";
   const diagnosticBlock = input.diagnosticIntentNote?.trim()
     ? `\n- BUT DIAGNOSTIQUE SECRET : ${input.diagnosticIntentNote.trim()} — Au moins l'un des défis DOIT placer l'enfant dans cette situation de façon naturelle (sans lui dire qu'il est testé).`
+    : "";
+  const teamRoleBlock = teamRoleContextNote.trim()
+    ? `\n- POSTURE OBSERVÉE EN ÉQUIPE & DÉFIS MIROIRS : ${teamRoleContextNote.trim()} — Utilise cette observation pour proposer au moins un défi qui consolide sa force naturelle ou entraîne avec bienveillance sa posture complémentaire (ex: un idéateur invité à fabriquer jusqu'au bout, un bâtisseur invité à présenter son travail).`
     : "";
 
   return `Tu es Naya, un mentor pédagogique pour enfants en Afrique francophone, sur la plateforme Génizio.
@@ -358,7 +364,7 @@ Contraintes :
 - Ancre les défis dans le contexte africain (matériaux locaux, réalités du quotidien, langues, marchés, agriculture, artisanat, culture).
 - ${contextualizationInstruction}
 - Choisis parmi ces domaines : ${domainsText}.${ignoredDomainsNote}
-${childQuestionBlock}${diagnosticBlock}
+${childQuestionBlock}${diagnosticBlock}${teamRoleBlock}
 - Chaque défi doit être concret, réalisable à la maison ou dans le quartier, adapté à l'âge, avec des matériaux simples et accessibles.
 - ${STEPS_INSTRUCTION}
 - ${buildAvoidRepeatsInstruction(existingTitles)}

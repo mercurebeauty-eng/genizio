@@ -605,18 +605,27 @@ export const getDiscoveryAdminStats = createServerFn({ method: "GET" })
 
     const { data: traces, error } = await supabaseAdmin
       .from("discovery_traces")
-      .select("id, source_type, domain, outcome_status, ai_behavioral_analysis, created_at")
+      .select("id, title, source_type, domain, outcome_status, strategy_used, help_context, ai_behavioral_analysis, mentor_reviewed_at, created_at, child_profiles!discovery_traces_child_id_fkey(name, age, username)")
       .order("created_at", { ascending: false })
-      .limit(100);
+      .limit(150);
 
     if (error) {
       throw new Error(`Erreur lors du chargement des statistiques admin : ${error.message}`);
     }
 
     const totalCount = traces?.length ?? 0;
-    const bySource: Record<string, number> = { self_chosen: 0, found_external: 0, open_sandbox: 0 };
+    const bySource: Record<string, number> = {
+      self_chosen: 0,
+      found_external: 0,
+      open_sandbox: 0,
+      fablab_marathon: 0,
+      projet_collectif: 0,
+    };
     const byDomain: Record<string, number> = {};
-    let anomalyCount = 0;
+    const rolesDistribution: Record<string, number> = {};
+    const dynamicsDistribution: Record<string, number> = {};
+    const anomaliesList: any[] = [];
+    let reviewedCount = 0;
 
     for (const t of traces ?? []) {
       if (t.source_type && bySource[t.source_type] !== undefined) {
@@ -625,9 +634,39 @@ export const getDiscoveryAdminStats = createServerFn({ method: "GET" })
       if (t.domain) {
         byDomain[t.domain] = (byDomain[t.domain] || 0) + 1;
       }
+      if (t.mentor_reviewed_at) {
+        reviewedCount++;
+      }
+
+      // Extraction des rôles et dynamiques depuis strategy_used (si projet collectif)
+      if (t.source_type === "projet_collectif" && t.strategy_used) {
+        for (const role of DISCOVERY_TEAM_ROLES) {
+          if (t.strategy_used.includes(role.label) || t.strategy_used.includes(role.id)) {
+            rolesDistribution[role.label] = (rolesDistribution[role.label] || 0) + 1;
+          }
+        }
+        for (const dyn of DISCOVERY_TEAM_DYNAMICS) {
+          if (t.strategy_used.includes(dyn.label) || t.strategy_used.includes(dyn.id)) {
+            dynamicsDistribution[dyn.label] = (dynamicsDistribution[dyn.label] || 0) + 1;
+          }
+        }
+      }
+
       const ai = t.ai_behavioral_analysis as DiscoveryAIAnalysis | null;
       if (ai?.potential_anomaly) {
-        anomalyCount++;
+        const child = (t as any).child_profiles;
+        anomaliesList.push({
+          id: t.id,
+          title: t.title,
+          childName: child?.name || "Enfant",
+          childAge: child?.age || null,
+          domain: t.domain,
+          sourceType: t.source_type,
+          anomalyHypothesis: ai.anomaly_hypothesis,
+          cognitiveInsights: ai.cognitive_insights,
+          initiativeScore: ai.initiative_score || 8,
+          createdAt: t.created_at,
+        });
       }
     }
 
@@ -635,8 +674,12 @@ export const getDiscoveryAdminStats = createServerFn({ method: "GET" })
       totalTraces: totalCount,
       bySource,
       byDomain,
-      anomalyCount,
-      recentTraces: traces?.slice(0, 10) ?? [],
+      rolesDistribution,
+      dynamicsDistribution,
+      anomalyCount: anomaliesList.length,
+      anomaliesList: anomaliesList.slice(0, 15),
+      reviewedCount,
+      recentTraces: traces?.slice(0, 12) ?? [],
     };
   });
 

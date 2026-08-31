@@ -171,8 +171,8 @@ function PassportPrintPage() {
         .order("earned_at", { ascending: true }),
       supabase
         .from("discovery_traces")
-        .select("id, title, domain, proof_image_url, created_at, source_type, ai_behavioral_analysis")
-        .eq("child_id", profileId)
+        .select("id, title, domain, proof_image_url, created_at, source_type, strategy_used, ai_behavioral_analysis")
+        .or(`child_id.eq.${profileId},tagged_child_ids.cs.{${profileId}}`)
         .order("created_at", { ascending: false })
         .limit(50),
     ])
@@ -365,6 +365,8 @@ function PassportPrintPage() {
   const topDomains = Object.entries(domainCounts)
     .sort((a, b) => b[1] - a[1])
     .slice(0, 3);
+
+  const longitudinalGraph = extractLongitudinalExperiences(discoveryTraces, challenges);
 
   return (
     <div className="min-h-dvh bg-stone-100 py-10 print:py-0 print:bg-white text-ink">
@@ -692,6 +694,40 @@ function PassportPrintPage() {
                       </div>
                     );
                   })}
+                </div>
+              </div>
+            )}
+
+            {/* Intelligence Interpersonnelle & Dynamique d'Équipage (si projets collectifs réels) */}
+            {longitudinalGraph.experiences.length > 0 && (
+              <div className="mt-4 rounded-2xl border border-rose-200 bg-rose-50/60 p-4 shadow-sm no-print-break">
+                <div className="flex items-center justify-between mb-3">
+                  <h3 className="text-xs font-black uppercase tracking-wider text-rose-950 flex items-center gap-1.5">
+                    <Award className="size-4 text-rose-700" />
+                    Intelligence Interpersonnelle & Dynamique d'Équipe
+                  </h3>
+                  <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-rose-100 text-rose-900 border border-rose-200">
+                    Plasticité : {Math.round(longitudinalGraph.roleSummary.plasticityScore * 100)}%
+                  </span>
+                </div>
+
+                <div className="grid grid-cols-2 gap-2 mb-2">
+                  <div className="p-2.5 rounded-xl bg-white border border-rose-100 space-y-1">
+                    <span className="text-[10px] font-bold text-ink/60 uppercase block">Rôles observés</span>
+                    <div className="flex flex-wrap gap-1">
+                      {Object.entries(longitudinalGraph.roleSummary.rolesFrequency).map(([role, count]) => (
+                        <span key={role} className="text-[10px] font-bold bg-rose-100/80 text-rose-900 px-2 py-0.5 rounded-md capitalize">
+                          {role} ({count})
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                  <div className="p-2.5 rounded-xl bg-white border border-rose-100 space-y-1">
+                    <span className="text-[10px] font-bold text-ink/60 uppercase block">Projets collectifs</span>
+                    <p className="text-xs font-black text-rose-950">
+                      {longitudinalGraph.behavioralSummary.totalProjects} projet{longitudinalGraph.behavioralSummary.totalProjects > 1 ? "s" : ""} • {longitudinalGraph.behavioralSummary.distinctDomains} domaine{longitudinalGraph.behavioralSummary.distinctDomains > 1 ? "s" : ""}
+                    </p>
+                  </div>
                 </div>
               </div>
             )}

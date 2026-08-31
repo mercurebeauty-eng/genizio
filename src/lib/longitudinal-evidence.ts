@@ -61,21 +61,42 @@ export function extractLongitudinalExperiences(
   // 1. Filtrage et Mapping des traces
   for (const trace of discoveryTraces || []) {
     if (trace.source_type === "fablab_marathon" || trace.source_type === "projet_collectif") {
-      const collectivePayload = trace.ai_behavioral_analysis as any || {};
+      const collectivePayload = (trace.ai_behavioral_analysis as any) || {};
       
+      // Extraction automatique du rôle depuis collectivePayload ou strategy_used
+      let role: TeamRole | "non_specifie" = (collectivePayload.role as TeamRole) || "non_specifie";
+      if (role === "non_specifie" && trace.strategy_used) {
+        const s = trace.strategy_used.toLowerCase();
+        if (s.includes("idéateur") || s.includes("createur") || s.includes("créatif") || s.includes("conception")) {
+          role = "conception";
+        } else if (s.includes("bâtisseur") || s.includes("praticien") || s.includes("finisseur") || s.includes("fabrication")) {
+          role = "fabrication";
+        } else if (s.includes("capitaine") || s.includes("moteur") || s.includes("organisateur") || s.includes("coordination") || s.includes("soutien")) {
+          role = "coordination";
+        } else if (s.includes("médiateur") || s.includes("ciment") || s.includes("mediation")) {
+          role = "mediation";
+        } else if (s.includes("chercheur") || s.includes("stratège") || s.includes("recherche")) {
+          role = "recherche";
+        } else if (s.includes("porte-parole") || s.includes("conteur") || s.includes("communication")) {
+          role = "communication";
+        } else if (s.includes("programme") || s.includes("code") || s.includes("algorithme")) {
+          role = "programmation";
+        }
+      }
+
       experiences.push({
         id: trace.id,
         title: trace.title || "Projet d'équipe sans titre",
         domain: trace.domain,
         sourceType: trace.source_type,
-        role: (collectivePayload.role as TeamRole) || "non_specifie",
-        implication: (collectivePayload.implication as ImplicationLevel) || "non_specifie",
+        role,
+        implication: (collectivePayload.implication as ImplicationLevel) || "contributeur_actif",
         participationStatus: (collectivePayload.participationStatus as ParticipationStatus) || "active_participant",
         environmentalConditions: collectivePayload.environmentalConditions || undefined,
         supervisorTags: Array.isArray(collectivePayload.supervisorTags) ? collectivePayload.supervisorTags : [],
         proofImageUrl: trace.proof_image_url || null,
         occurredAt: trace.created_at || new Date().toISOString(),
-        supervisorProvenance: collectivePayload.supervisorProvenance || undefined
+        supervisorProvenance: collectivePayload.supervisorProvenance || undefined,
       });
     }
   }
