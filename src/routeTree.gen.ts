@@ -55,6 +55,7 @@ import { Route as GuidesOrientationScolaireMetiersAvenirRouteImport } from './ro
 import { Route as GuidesPotentielHautPotentielEnfantRouteImport } from './routes/guides.potentiel-haut-potentiel-enfant'
 import { Route as GuidesPratiqueAvantTheorieApprentissageIaRouteImport } from './routes/guides.pratique-avant-theorie-apprentissage-ia'
 import { Route as GuidesQuelleLibrairieChoisirLieuxCreativiteEnfantRouteImport } from './routes/guides.quelle-librairie-choisir-lieux-creativite-enfant'
+import { Route as GuidesReussirEntreeEn6emeConseilsParentsRouteImport } from './routes/guides.reussir-entree-en-6eme-conseils-parents'
 import { Route as GuidesReussiteScolaireAiderEnfantRouteImport } from './routes/guides.reussite-scolaire-aider-enfant'
 import { Route as GuidesSacADosMarquesChallengeCreativiteEnfantRouteImport } from './routes/guides.sac-a-dos-marques-challenge-creativite-enfant'
 import { Route as GuidesTestDePersonnaliteEnfantTalentsRouteImport } from './routes/guides.test-de-personnalite-enfant-talents'
@@ -326,6 +327,12 @@ const GuidesQuelleLibrairieChoisirLieuxCreativiteEnfantRoute =
     path: '/quelle-librairie-choisir-lieux-creativite-enfant',
     getParentRoute: () => GuidesRoute,
   } as any)
+const GuidesReussirEntreeEn6emeConseilsParentsRoute =
+  GuidesReussirEntreeEn6emeConseilsParentsRouteImport.update({
+    id: '/reussir-entree-en-6eme-conseils-parents',
+    path: '/reussir-entree-en-6eme-conseils-parents',
+    getParentRoute: () => GuidesRoute,
+  } as any)
 const GuidesReussiteScolaireAiderEnfantRoute =
   GuidesReussiteScolaireAiderEnfantRouteImport.update({
     id: '/reussite-scolaire-aider-enfant',
@@ -473,6 +480,7 @@ export interface FileRoutesByFullPath {
   '/guides/potentiel-haut-potentiel-enfant': typeof GuidesPotentielHautPotentielEnfantRoute
   '/guides/pratique-avant-theorie-apprentissage-ia': typeof GuidesPratiqueAvantTheorieApprentissageIaRoute
   '/guides/quelle-librairie-choisir-lieux-creativite-enfant': typeof GuidesQuelleLibrairieChoisirLieuxCreativiteEnfantRoute
+  '/guides/reussir-entree-en-6eme-conseils-parents': typeof GuidesReussirEntreeEn6emeConseilsParentsRoute
   '/guides/reussite-scolaire-aider-enfant': typeof GuidesReussiteScolaireAiderEnfantRoute
   '/guides/sac-a-dos-marques-challenge-creativite-enfant': typeof GuidesSacADosMarquesChallengeCreativiteEnfantRoute
   '/guides/test-de-personnalite-enfant-talents': typeof GuidesTestDePersonnaliteEnfantTalentsRoute
@@ -535,6 +543,7 @@ export interface FileRoutesByTo {
   '/guides/potentiel-haut-potentiel-enfant': typeof GuidesPotentielHautPotentielEnfantRoute
   '/guides/pratique-avant-theorie-apprentissage-ia': typeof GuidesPratiqueAvantTheorieApprentissageIaRoute
   '/guides/quelle-librairie-choisir-lieux-creativite-enfant': typeof GuidesQuelleLibrairieChoisirLieuxCreativiteEnfantRoute
+  '/guides/reussir-entree-en-6eme-conseils-parents': typeof GuidesReussirEntreeEn6emeConseilsParentsRoute
   '/guides/reussite-scolaire-aider-enfant': typeof GuidesReussiteScolaireAiderEnfantRoute
   '/guides/sac-a-dos-marques-challenge-creativite-enfant': typeof GuidesSacADosMarquesChallengeCreativiteEnfantRoute
   '/guides/test-de-personnalite-enfant-talents': typeof GuidesTestDePersonnaliteEnfantTalentsRoute
@@ -602,6 +611,7 @@ export interface FileRoutesById {
   '/guides/potentiel-haut-potentiel-enfant': typeof GuidesPotentielHautPotentielEnfantRoute
   '/guides/pratique-avant-theorie-apprentissage-ia': typeof GuidesPratiqueAvantTheorieApprentissageIaRoute
   '/guides/quelle-librairie-choisir-lieux-creativite-enfant': typeof GuidesQuelleLibrairieChoisirLieuxCreativiteEnfantRoute
+  '/guides/reussir-entree-en-6eme-conseils-parents': typeof GuidesReussirEntreeEn6emeConseilsParentsRoute
   '/guides/reussite-scolaire-aider-enfant': typeof GuidesReussiteScolaireAiderEnfantRoute
   '/guides/sac-a-dos-marques-challenge-creativite-enfant': typeof GuidesSacADosMarquesChallengeCreativiteEnfantRoute
   '/guides/test-de-personnalite-enfant-talents': typeof GuidesTestDePersonnaliteEnfantTalentsRoute
@@ -670,6 +680,7 @@ export interface FileRouteTypes {
     | '/guides/potentiel-haut-potentiel-enfant'
     | '/guides/pratique-avant-theorie-apprentissage-ia'
     | '/guides/quelle-librairie-choisir-lieux-creativite-enfant'
+    | '/guides/reussir-entree-en-6eme-conseils-parents'
     | '/guides/reussite-scolaire-aider-enfant'
     | '/guides/sac-a-dos-marques-challenge-creativite-enfant'
     | '/guides/test-de-personnalite-enfant-talents'
@@ -732,6 +743,7 @@ export interface FileRouteTypes {
     | '/guides/potentiel-haut-potentiel-enfant'
     | '/guides/pratique-avant-theorie-apprentissage-ia'
     | '/guides/quelle-librairie-choisir-lieux-creativite-enfant'
+    | '/guides/reussir-entree-en-6eme-conseils-parents'
     | '/guides/reussite-scolaire-aider-enfant'
     | '/guides/sac-a-dos-marques-challenge-creativite-enfant'
     | '/guides/test-de-personnalite-enfant-talents'
@@ -798,6 +810,7 @@ export interface FileRouteTypes {
     | '/guides/potentiel-haut-potentiel-enfant'
     | '/guides/pratique-avant-theorie-apprentissage-ia'
     | '/guides/quelle-librairie-choisir-lieux-creativite-enfant'
+    | '/guides/reussir-entree-en-6eme-conseils-parents'
     | '/guides/reussite-scolaire-aider-enfant'
     | '/guides/sac-a-dos-marques-challenge-creativite-enfant'
     | '/guides/test-de-personnalite-enfant-talents'
@@ -1169,6 +1182,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof GuidesQuelleLibrairieChoisirLieuxCreativiteEnfantRouteImport
       parentRoute: typeof GuidesRoute
     }
+    '/guides/reussir-entree-en-6eme-conseils-parents': {
+      id: '/guides/reussir-entree-en-6eme-conseils-parents'
+      path: '/reussir-entree-en-6eme-conseils-parents'
+      fullPath: '/guides/reussir-entree-en-6eme-conseils-parents'
+      preLoaderRoute: typeof GuidesReussirEntreeEn6emeConseilsParentsRouteImport
+      parentRoute: typeof GuidesRoute
+    }
     '/guides/reussite-scolaire-aider-enfant': {
       id: '/guides/reussite-scolaire-aider-enfant'
       path: '/reussite-scolaire-aider-enfant'
@@ -1335,6 +1355,7 @@ interface GuidesRouteChildren {
   GuidesPotentielHautPotentielEnfantRoute: typeof GuidesPotentielHautPotentielEnfantRoute
   GuidesPratiqueAvantTheorieApprentissageIaRoute: typeof GuidesPratiqueAvantTheorieApprentissageIaRoute
   GuidesQuelleLibrairieChoisirLieuxCreativiteEnfantRoute: typeof GuidesQuelleLibrairieChoisirLieuxCreativiteEnfantRoute
+  GuidesReussirEntreeEn6emeConseilsParentsRoute: typeof GuidesReussirEntreeEn6emeConseilsParentsRoute
   GuidesReussiteScolaireAiderEnfantRoute: typeof GuidesReussiteScolaireAiderEnfantRoute
   GuidesSacADosMarquesChallengeCreativiteEnfantRoute: typeof GuidesSacADosMarquesChallengeCreativiteEnfantRoute
   GuidesTestDePersonnaliteEnfantTalentsRoute: typeof GuidesTestDePersonnaliteEnfantTalentsRoute
@@ -1382,6 +1403,8 @@ const GuidesRouteChildren: GuidesRouteChildren = {
     GuidesPratiqueAvantTheorieApprentissageIaRoute,
   GuidesQuelleLibrairieChoisirLieuxCreativiteEnfantRoute:
     GuidesQuelleLibrairieChoisirLieuxCreativiteEnfantRoute,
+  GuidesReussirEntreeEn6emeConseilsParentsRoute:
+    GuidesReussirEntreeEn6emeConseilsParentsRoute,
   GuidesReussiteScolaireAiderEnfantRoute:
     GuidesReussiteScolaireAiderEnfantRoute,
   GuidesSacADosMarquesChallengeCreativiteEnfantRoute:

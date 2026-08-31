@@ -11,7 +11,9 @@
     "lint": "eslint .",
     "format": "prettier --write .",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "indexnow": "python scripts/seo/indexnow_submit.py",
+    "indexnow:dry": "python scripts/seo/indexnow_submit.py --dry-run"
   },
   "dependencies": {
     "@google/genai": "^2.11.0",

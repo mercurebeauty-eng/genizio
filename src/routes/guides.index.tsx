@@ -32,6 +32,13 @@ import { pageMeta, jsonLdScript, breadcrumbJsonLd, absoluteUrl } from "@/lib/seo
 
 const GUIDES = [
   {
+    to: "/guides/reussir-entree-en-6eme-conseils-parents",
+    Icon: GraduationCap,
+    eyebrow: "Collège & Autonomie",
+    title: "Réussir l'entrée en 6ème : le guide pratique des parents pour une rentrée au collège sereine",
+    desc: "Emploi du temps, cartable lourd, devoirs et autonomie : comment aider votre enfant à réussir son entrée en 6ème sans stress.",
+  },
+  {
     to: "/guides/comment-gerer-argent-de-poche-enfant",
     Icon: Coins,
     eyebrow: "Éducation financière & Autonomie",
