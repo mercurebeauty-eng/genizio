@@ -81,6 +81,10 @@ type MentorInfo = {
     budget: number;
     campaignId: string | null;
   };
+  contextName?: string | null;
+  validFrom?: string | null;
+  validUntil?: string | null;
+  scopeType?: string | null;
 };
 
 function MentorHubPage() {
@@ -526,27 +530,62 @@ function MentorHubPage() {
             </div>
           ) : (
             <>
-              {/* Mentor assigné + accompagnement */}
-              <div className="rounded-3xl border border-sky-200 bg-sky-50/60 p-5 shadow-sm flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-                <div className="flex items-center gap-4">
-                  <div className="grid size-11 place-items-center rounded-2xl bg-sky-600 text-white shrink-0">
-                    <Users className="size-5" />
+              {/* Mentor assigné + accompagnement + Supervision Éphémère */}
+              <div className="rounded-3xl border border-sky-200 bg-sky-50/60 p-5 shadow-sm space-y-4">
+                <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                  <div className="flex items-center gap-4">
+                    <div className="grid size-11 place-items-center rounded-2xl bg-sky-600 text-white shrink-0">
+                      <Users className="size-5" />
+                    </div>
+                    <div>
+                      <p className="text-xs font-black uppercase tracking-widest text-sky-700">
+                        {mentorInfo.contextName ? `Superviseur • ${mentorInfo.contextName}` : "Mentor assigné"}
+                      </p>
+                      <p className="text-sm font-bold text-ink mt-0.5">{mentorInfo.email}</p>
+                      <p className="text-xs text-ink/50 mt-0.5">
+                        Depuis le {new Date(mentorInfo.assignedAt).toLocaleDateString("fr-FR")}
+                      </p>
+                    </div>
                   </div>
-                  <div>
-                    <p className="text-xs font-black uppercase tracking-widest text-sky-700">
-                      Mentor assigné
-                    </p>
-                    <p className="text-sm font-bold text-ink mt-0.5">{mentorInfo.email}</p>
-                    <p className="text-xs text-ink/50 mt-0.5">
-                      Depuis le {new Date(mentorInfo.assignedAt).toLocaleDateString("fr-FR")}
-                    </p>
-                  </div>
+
+                  {mentorInfo.accompaniment.funding !== "none" && (
+                    <div className="rounded-2xl border border-sky-200 bg-white px-4 py-2.5 text-xs font-bold text-ink/80">
+                      {mentorInfo.accompaniment.funding === "pack"
+                        ? `🎒 Pack Accompagnement — ${mentorInfo.accompaniment.budget} séances incluses`
+                        : `🏕️ Campagne — ${mentorInfo.accompaniment.budget} séances incluses`}
+                    </div>
+                  )}
                 </div>
-                {mentorInfo.accompaniment.funding !== "none" && (
-                  <div className="rounded-2xl border border-sky-200 bg-white px-4 py-2.5 text-xs font-bold text-ink/80">
-                    {mentorInfo.accompaniment.funding === "pack"
-                      ? `🎒 Pack Accompagnement — ${mentorInfo.accompaniment.budget} séances incluses`
-                      : `🏕️ Campagne — ${mentorInfo.accompaniment.budget} séances incluses`}
+
+                {/* Encadré de périmètre & période éphémère */}
+                {mentorInfo.validUntil && (
+                  <div className="rounded-2xl bg-white border border-sky-200/80 p-3.5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
+                    <div className="flex items-center gap-2 text-ink/70">
+                      <Clock className="size-4 text-brand shrink-0" />
+                      <span>
+                        Période d'intervention : Du{" "}
+                        {mentorInfo.validFrom
+                          ? new Date(mentorInfo.validFrom).toLocaleDateString("fr-FR")
+                          : "début"}{" "}
+                        au {new Date(mentorInfo.validUntil).toLocaleDateString("fr-FR")} à{" "}
+                        {new Date(mentorInfo.validUntil).toLocaleTimeString("fr-FR", {
+                          hour: "2-digit",
+                          minute: "2-digit",
+                        })}
+                      </span>
+                    </div>
+
+                    <div>
+                      {new Date() > new Date(mentorInfo.validUntil) ? (
+                        <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-stone-100 text-stone-700 border border-stone-300 font-extrabold text-[11px]">
+                          <span>🔒 Session terminée & archivée</span>
+                        </span>
+                      ) : (
+                        <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-100 text-emerald-800 border border-emerald-300 font-extrabold text-[11px] animate-pulse">
+                          <span>🟢 Supervision active pour l'atelier</span>
+                        </span>
+                      )}
+                    </div>
                   </div>
                 )}
               </div>

@@ -22,11 +22,25 @@ export function canOperateMentor(params: {
   /** Statut du compte mentor ; absent = 'active' (profil jamais créé). */
   status: MentorOperatorStatus | null | undefined;
   accompaniment: "pack" | "campaign" | "none";
+  /** Bornes temporelles pour supervision éphémère (Fab Lab / Atelier / Stage). */
+  validFrom?: string | null;
+  validUntil?: string | null;
+  now?: Date;
 }): boolean {
   if (!params.hasActiveAssignment) return false;
   const status = params.status ?? "active";
   if (status === "suspended" || status === "banned") return false;
-  return params.accompaniment !== "none";
+  if (params.accompaniment === "none") return false;
+
+  const current = params.now ?? new Date();
+  if (params.validFrom && new Date(params.validFrom) > current) {
+    return false; // Événement pas encore commencé
+  }
+  if (params.validUntil && new Date(params.validUntil) < current) {
+    return false; // Session de supervision terminée
+  }
+
+  return true;
 }
 
 export const MENTOR_OPERATOR_DENIED_MESSAGE =
@@ -81,13 +95,25 @@ export async function assertMentorOperator(
 
   const { data: assignment } = await db
     .from("mentors")
-    .select("id")
+    .select("id, valid_from, valid_until, context_name")
     .eq("mentor_user_id", userId)
     .eq("child_profile_id", childId)
     .is("removed_at", null)
     .maybeSingle();
   if (!assignment) {
     throw new Error("Cet enfant n'est pas (plus) assigné à votre suivi.");
+  }
+
+  const now = new Date();
+  if (assignment.valid_until && new Date(assignment.valid_until) < now) {
+    throw new Error(
+      `La période de supervision pour cet événement (${assignment.context_name || "FabLab / Atelier"}) est terminée. Les données restent accessibles en lecture seule.`,
+    );
+  }
+  if (assignment.valid_from && new Date(assignment.valid_from) > now) {
+    throw new Error(
+      `La période de supervision pour cet événement (${assignment.context_name || "FabLab / Atelier"}) n'a pas encore débuté.`,
+    );
   }
 
   const accompaniment = await resolveChildAccompaniment(db, childId);

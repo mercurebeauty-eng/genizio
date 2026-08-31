@@ -216,6 +216,8 @@ export const CreateDiscoveryTraceSchema = z.object({
     )
     .default([]),
   taggedHandles: z.array(z.string()).optional(),
+  officialEventId: z.string().optional().nullable(),
+  officialEventName: z.string().optional().nullable(),
 });
 
 export const GetDiscoveryTracesSchema = z.object({
@@ -423,6 +425,11 @@ export const createDiscoveryTrace = createServerFn({ method: "POST" })
       }
     }
 
+    let finalStrategy = data.strategyUsed?.trim() ?? null;
+    if (data.officialEventName && (!finalStrategy || !finalStrategy.includes(data.officialEventName))) {
+      finalStrategy = `Événement: ${data.officialEventName.trim()}${finalStrategy ? ` | ${finalStrategy}` : ""}`;
+    }
+
     // 3. Insertion de la trace
     const insertPayload: any = {
       child_id: data.childId,
@@ -436,7 +443,7 @@ export const createDiscoveryTrace = createServerFn({ method: "POST" })
       duration_minutes: data.durationMinutes ?? null,
       autonomy_level: data.autonomyLevel ?? null,
       help_context: data.helpContext?.trim() ?? null,
-      strategy_used: data.strategyUsed?.trim() ?? null,
+      strategy_used: finalStrategy,
       outcome_status: data.outcomeStatus,
       proof_image_url: data.proofImageUrl ? data.proofImageUrl.trim() : null,
       naya_dialogue: data.nayaDialogue,

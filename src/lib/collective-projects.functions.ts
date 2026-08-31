@@ -30,7 +30,7 @@ export const createCollectiveProject = createServerFn({ method: "POST" })
     const { supabase, userId } = context;
 
     // 1. Création de l'entité unique de projet (pas de duplication)
-    const { data: project, error: projectErr } = await supabase
+    const { data: project, error: projectErr } = (await supabase
       .from("collective_projects" as any)
       .insert({
         title: data.title,
@@ -41,7 +41,7 @@ export const createCollectiveProject = createServerFn({ method: "POST" })
         outcome_status: "completed"
       })
       .select()
-      .single();
+      .single()) as { data: any; error: any };
 
     if (projectErr || !project) {
       throw new Error("Impossible de créer le projet collectif.");

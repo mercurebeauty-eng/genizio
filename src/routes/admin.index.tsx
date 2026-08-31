@@ -37,6 +37,7 @@ import { AdminCommerceTab } from "@/components/admin/AdminCommerceTab";
 import { AdminPaymentsTab } from "@/components/admin/AdminPaymentsTab";
 import { AdminCampaignsTab } from "@/components/admin/AdminCampaignsTab";
 import { AdminMentorsTab } from "@/components/admin/AdminMentorsTab";
+import { AdminEventsTab } from "@/components/admin/AdminEventsTab";
 import { AdminProductsTab } from "@/components/admin/AdminProductsTab";
 import { AdminProfilesTab } from "@/components/admin/AdminProfilesTab";
 import { AdminTestimonialsTab } from "@/components/admin/AdminTestimonialsTab";
@@ -452,6 +453,7 @@ function AdminIndexPage() {
             {activeTab === "payments" && <AdminPaymentsTab />}
             {activeTab === "b2b" && <AdminCampaignsTab />}
             {activeTab === "mentors" && <AdminMentorsTab />}
+            {activeTab === "events" && <AdminEventsTab />}
             {activeTab === "products" && <AdminProductsTab onDataChanged={() => loadData(false)} />}
             {activeTab === "profiles" && <AdminProfilesTab onDataChanged={() => loadData(false)} />}
             {activeTab === "testimonials" && (

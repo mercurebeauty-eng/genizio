@@ -14,7 +14,7 @@ export const checkUsernameAvailabilityFn = createServerFn({ method: "POST" })
     }
 
     // Bypasses RLS by calling our security definer function
-    const { data, error } = await supabaseAdmin.rpc("check_child_username_available", {
+    const { data, error } = await (supabaseAdmin as any).rpc("check_child_username_available", {
       requested_username: username,
     });
 

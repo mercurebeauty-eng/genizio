@@ -1446,14 +1446,14 @@ export const getChildMentorInfo = createServerFn({ method: "GET" })
       .maybeSingle();
     if (!child || child.user_id !== userId) return null;
 
-    const { data: assignment } = await supabaseAdmin
+    const { data: assignment } = (await supabaseAdmin
       .from("mentors")
-      .select("mentor_user_id, created_at")
+      .select("mentor_user_id, created_at, context_name, valid_from, valid_until, scope_type" as any)
       .eq("child_profile_id", data.childId)
       .is("removed_at", null)
       .order("created_at", { ascending: false })
       .limit(1)
-      .maybeSingle();
+      .maybeSingle()) as { data: any };
     if (!assignment) return null;
 
     // Email du mentor via parent_profiles (Vague 1) — une requête indexée au lieu
@@ -1469,7 +1469,15 @@ export const getChildMentorInfo = createServerFn({ method: "GET" })
     // (pack ou campagne) + budget de séances — affiché dans le hub parent « Mentor ».
     const accompaniment = await resolveChildAccompaniment(supabaseAdmin, data.childId);
 
-    return { email, assignedAt: assignment.created_at as string, accompaniment };
+    return {
+      email,
+      assignedAt: assignment.created_at as string,
+      accompaniment,
+      contextName: assignment.context_name as string | null,
+      validFrom: assignment.valid_from as string | null,
+      validUntil: assignment.valid_until as string | null,
+      scopeType: assignment.scope_type as string | null,
+    };
   });
 
 // ── Vue mentor : liste de ses enfants assignés ──

@@ -3,6 +3,7 @@ import {
   BarChart3,
   Building2,
   Users,
+  Calendar,
   Package,
   Award,
   Brain,
@@ -24,6 +25,7 @@ export type AdminTab =
   | "executive"
   | "b2b"
   | "mentors"
+  | "events"
   | "products"
   | "talents"
   | "naya"
@@ -93,6 +95,19 @@ export const ADMIN_TABS: AdminTabDef[] = [
       "bg-gradient-to-br from-emerald-500/10 via-white to-white border-emerald-500/20 hover:shadow-emerald-500/25",
     iconClass: "from-emerald-500 to-teal-600 shadow-emerald-500/40",
     haloClass: "from-emerald-400/50 to-teal-400/10",
+  },
+  {
+    id: "events",
+    label: "Événements & FabLabs",
+    sublabel: "Stages & Ateliers",
+    icon: Calendar,
+    badge: "FabLab",
+    badgeBgClass: "bg-amber-500/10",
+    badgeTextClass: "text-amber-700",
+    cardClass:
+      "bg-gradient-to-br from-amber-500/10 via-white to-white border-amber-500/20 hover:shadow-amber-500/25",
+    iconClass: "from-amber-500 to-orange-600 shadow-amber-500/40",
+    haloClass: "from-amber-400/50 to-orange-400/10",
   },
   {
     id: "products",

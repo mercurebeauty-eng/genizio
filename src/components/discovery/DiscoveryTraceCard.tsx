@@ -92,16 +92,19 @@ export function DiscoveryTraceCard({
   const ai = trace.ai_behavioral_analysis as DiscoveryAIAnalysis | null;
   const dialogue = Array.isArray(trace.naya_dialogue) ? trace.naya_dialogue : [];
 
-  // Extraction structurée si projet collectif
+  // Extraction structurée si projet collectif ou événement officiel
   const isTeamProject = trace.source_type === "projet_collectif";
   let teamRolesStr = "";
   let teamDynamicStr = "";
   let teamNoteStr = "";
+  let officialEventName = "";
 
-  if (isTeamProject && trace.strategy_used) {
+  if (trace.strategy_used) {
     const parts = trace.strategy_used.split("|").map((p: string) => p.trim());
     for (const part of parts) {
-      if (part.startsWith("Rôle(s):") || part.startsWith("Rôle:")) {
+      if (part.startsWith("Événement:")) {
+        officialEventName = part.replace(/^Événement:\s*/, "");
+      } else if (part.startsWith("Rôle(s):") || part.startsWith("Rôle:")) {
         teamRolesStr = part.replace(/^Rôle(\(s\))?:\s*/, "");
       } else if (part.startsWith("Dynamique:")) {
         teamDynamicStr = part.replace(/^Dynamique:\s*/, "");
@@ -184,13 +187,21 @@ export function DiscoveryTraceCard({
             </span>
           )}
 
+          {/* Badge Événement Officiel Certifié */}
+          {officialEventName && (
+            <span className="px-2.5 py-0.5 rounded-full text-[11px] font-extrabold bg-amber-100 text-amber-900 border border-amber-300 flex items-center gap-1 shadow-xs">
+              <Award className="size-3 text-amber-700" />
+              <span>🏛️ {officialEventName}</span>
+            </span>
+          )}
+
           {/* Badges Spécifiques Équipe ou Stratégie standard */}
           {isTeamProject && teamRolesStr ? (
             <span className="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-rose-50 text-rose-900 border border-rose-200/80 flex items-center gap-1">
               <Award className="size-3 text-rose-700" />
               <span>{teamRolesStr}</span>
             </span>
-          ) : trace.strategy_used ? (
+          ) : trace.strategy_used && !officialEventName ? (
             <span className="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-amber-50 text-amber-900 border border-amber-200/60 max-w-xs truncate">
               {trace.strategy_used}
             </span>

@@ -57,6 +57,47 @@ describe("canOperateMentor (pur)", () => {
       canOperateMentor({ hasActiveAssignment: true, status: null, accompaniment: "pack" }),
     ).toBe(true);
   });
+
+  it("supervision éphémère (Fab Lab) : actif pendant la période, expiré après", () => {
+    const validFrom = "2026-09-12T08:00:00Z";
+    const validUntil = "2026-09-14T18:00:00Z";
+
+    // 1. Avant l'événement -> faux
+    expect(
+      canOperateMentor({
+        hasActiveAssignment: true,
+        status: "active",
+        accompaniment: "campaign",
+        validFrom,
+        validUntil,
+        now: new Date("2026-09-11T12:00:00Z"),
+      }),
+    ).toBe(false);
+
+    // 2. Pendant l'événement -> vrai
+    expect(
+      canOperateMentor({
+        hasActiveAssignment: true,
+        status: "active",
+        accompaniment: "campaign",
+        validFrom,
+        validUntil,
+        now: new Date("2026-09-13T14:00:00Z"),
+      }),
+    ).toBe(true);
+
+    // 3. Après l'événement -> faux (accès fermé)
+    expect(
+      canOperateMentor({
+        hasActiveAssignment: true,
+        status: "active",
+        accompaniment: "campaign",
+        validFrom,
+        validUntil,
+        now: new Date("2026-09-15T09:00:00Z"),
+      }),
+    ).toBe(false);
+  });
 });
 
 // Fake DB minimal pour assertMentorOperator : mentor_profiles + mentors +

@@ -146,9 +146,9 @@ export function TalentRadarChart({
           if (cos > 0.3) textAnchor = "start";
           else if (cos < -0.3) textAnchor = "end";
 
-          let dominantBaseline: "hanging" | "baseline" | "central" = "central";
+          let dominantBaseline: "hanging" | "alphabetic" | "central" = "central";
           if (sin > 0.4) dominantBaseline = "hanging";
-          else if (sin < -0.4) dominantBaseline = "baseline";
+          else if (sin < -0.4) dominantBaseline = "alphabetic";
 
           return (
             <text

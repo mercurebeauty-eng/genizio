@@ -57,24 +57,32 @@ export const getGuildCommunity = createServerFn({ method: "POST" })
 
       // 1. Récupération des relations connues
       let knownChildIds: string[] = [];
-      const { data: relations } = await supabase
-        .from("child_relations")
-        .select("requester_child_id, addressee_child_id")
-        .in("status", ["accepted", "mentor_verified"])
-        .or(`requester_child_id.eq.${child.id},addressee_child_id.eq.${child.id}`)
-        .catch(() => ({ data: [] })); // fallback
-        
-      if (relations) {
-        knownChildIds = relations.map((r: any) => r.requester_child_id === child.id ? r.addressee_child_id : r.requester_child_id);
+      try {
+        const { data: relations } = (await supabase
+          .from("child_relations" as any)
+          .select("requester_child_id, addressee_child_id")
+          .in("status", ["accepted", "mentor_verified"])
+          .or(`requester_child_id.eq.${child.id},addressee_child_id.eq.${child.id}`)) as { data: any };
+          
+        if (relations) {
+          knownChildIds = relations.map((r: any) => r.requester_child_id === child.id ? r.addressee_child_id : r.requester_child_id);
+        }
+      } catch {
+        knownChildIds = [];
       }
 
       // 2. Récupération des traces collectives
-      const { data: traces } = await supabase
-        .from("discovery_traces")
-        .select("child_id, ai_behavioral_analysis")
-        .in("source_type", ["fablab_marathon", "projet_collectif"])
-        .in("child_id", allCandidateIds)
-        .catch(() => ({ data: [] }));
+      let traces: any[] = [];
+      try {
+        const { data: traceData } = (await supabase
+          .from("discovery_traces" as any)
+          .select("child_id, ai_behavioral_analysis")
+          .in("source_type", ["fablab_marathon", "projet_collectif"])
+          .in("child_id", allCandidateIds)) as { data: any };
+        traces = traceData || [];
+      } catch {
+        traces = [];
+      }
         
       const mobilizationByChild = new Map<string, any[]>();
       if (traces) {

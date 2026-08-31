@@ -36,6 +36,7 @@ import {
   createDiscoveryTrace,
 } from "@/lib/discovery.functions";
 import { searchChildProfilesFn } from "@/lib/child-username.functions";
+import { listActiveEventsForDiscovery } from "@/lib/events.functions";
 import { NayaAvatar } from "@/components/NayaAvatar";
 import {
   Sparkles,
@@ -198,12 +199,22 @@ export function DiscoveryRecordDialog({
   const [loading, setLoading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const createDiscoveryTraceFn = useServerFn(createDiscoveryTrace);
+  const listEventsFn = useServerFn(listActiveEventsForDiscovery);
 
-  // Réinitialiser la source si initialSource change à l'ouverture
+  const [officialEventsList, setOfficialEventsList] = useState<
+    Array<{ id: string; title: string; displayLabel: string }>
+  >([]);
+  const [selectedOfficialEventId, setSelectedOfficialEventId] = useState<string>("none");
+  const [selectedOfficialEventName, setSelectedOfficialEventName] = useState<string>("");
+
+  // Réinitialiser la source si initialSource change à l'ouverture & charger les événements officiels
   useEffect(() => {
     if (open) {
       setSourceType(initialSource);
       setStep(1);
+      listEventsFn()
+        .then((res) => setOfficialEventsList(res || []))
+        .catch(() => setOfficialEventsList([]));
     }
   }, [open, initialSource]);
 
@@ -234,6 +245,8 @@ export function DiscoveryRecordDialog({
     setSelectedDynamic("complementarite");
     setCustomDynamic("");
     setTeamPrecision("");
+    setSelectedOfficialEventId("none");
+    setSelectedOfficialEventName("");
     setQ1("");
     setQ2("");
     setQ3("");
@@ -421,6 +434,8 @@ export function DiscoveryRecordDialog({
           proofImageUrl: proofImageUrl.trim() || null,
           nayaDialogue,
           taggedHandles: extractedHandles,
+          officialEventId: selectedOfficialEventId !== "none" ? selectedOfficialEventId : null,
+          officialEventName: selectedOfficialEventName.trim() || null,
         },
       });
 
@@ -659,50 +674,81 @@ export function DiscoveryRecordDialog({
 
               {/* 4. Spécifique : Fab Lab */}
               {sourceType === "fablab_marathon" && (
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 p-4 rounded-2xl bg-indigo-50/60 border border-indigo-200/70">
-                  <div className="space-y-1">
-                    <label className="text-[11px] font-bold text-indigo-950 flex items-center gap-1">
-                      <Hammer className="size-3 text-indigo-700" />
-                      <span>Cadre de l'atelier</span>
-                    </label>
-                    <Select value={workshopLocation} onValueChange={setWorkshopLocation}>
-                      <SelectTrigger className="h-9 rounded-xl border-indigo-200 bg-white text-xs">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="Fab Lab / Tiers-lieu">Fab Lab / Tiers-lieu</SelectItem>
-                        <SelectItem value="Maison / Garage">Maison / Atelier familial</SelectItem>
-                        <SelectItem value="École / Club">École / Club sciences</SelectItem>
-                        <SelectItem value="Événement / Marathon">Événement / Marathon Maker</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
+                <div className="space-y-3 p-4 rounded-2xl bg-indigo-50/60 border border-indigo-200/70">
+                  {officialEventsList.length > 0 && (
+                    <div className="space-y-1">
+                      <label className="text-[11px] font-bold text-indigo-950 flex items-center gap-1.5">
+                        <Award className="size-3.5 text-brand" />
+                        <span>Événement / Stage officiel Génizio ou Partenaire (optionnel)</span>
+                      </label>
+                      <Select
+                        value={selectedOfficialEventId}
+                        onValueChange={(val) => {
+                          setSelectedOfficialEventId(val);
+                          const ev = officialEventsList.find((e) => e.id === val);
+                          setSelectedOfficialEventName(ev ? ev.title : "");
+                        }}
+                      >
+                        <SelectTrigger className="h-9 rounded-xl border-indigo-200 bg-white text-xs">
+                          <SelectValue placeholder="Aucun (Découverte libre en atelier)" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="none">Aucun (Découverte libre / personnelle)</SelectItem>
+                          {officialEventsList.map((ev) => (
+                            <SelectItem key={ev.id} value={ev.id}>
+                              {ev.displayLabel}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  )}
 
-                  <div className="space-y-1">
-                    <label className="text-[11px] font-bold text-indigo-950 flex items-center gap-1">
-                      <Wrench className="size-3 text-indigo-700" />
-                      <span>Outils manipulés</span>
-                    </label>
-                    <Input
-                      value={toolsUsed}
-                      onChange={(e) => setToolsUsed(e.target.value)}
-                      placeholder="Ex: Ciseaux, pistolet colle, carton..."
-                      className="h-9 rounded-xl border-indigo-200 bg-white text-xs focus-visible:ring-indigo-500"
-                    />
-                  </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                    <div className="space-y-1">
+                      <label className="text-[11px] font-bold text-indigo-950 flex items-center gap-1">
+                        <Hammer className="size-3 text-indigo-700" />
+                        <span>Cadre de l'atelier</span>
+                      </label>
+                      <Select value={workshopLocation} onValueChange={setWorkshopLocation}>
+                        <SelectTrigger className="h-9 rounded-xl border-indigo-200 bg-white text-xs">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="Fab Lab / Tiers-lieu">Fab Lab / Tiers-lieu</SelectItem>
+                          <SelectItem value="Maison / Garage">Maison / Atelier familial</SelectItem>
+                          <SelectItem value="École / Club">École / Club sciences</SelectItem>
+                          <SelectItem value="Événement / Marathon">Événement / Marathon Maker</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
 
-                  <div className="space-y-1">
-                    <label className="text-[11px] font-bold text-indigo-950">Encadrement</label>
-                    <Select value={supervisionLevel} onValueChange={setSupervisionLevel}>
-                      <SelectTrigger className="h-9 rounded-xl border-indigo-200 bg-white text-xs">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="Totalement autonome">Totalement autonome sur l'outil</SelectItem>
-                        <SelectItem value="Guidé sur les gestes délicats">Guidé sur gestes délicats</SelectItem>
-                        <SelectItem value="Supervisé pour sécurité">Supervisé pour sécurité</SelectItem>
-                      </SelectContent>
-                    </Select>
+                    <div className="space-y-1">
+                      <label className="text-[11px] font-bold text-indigo-950 flex items-center gap-1">
+                        <Wrench className="size-3 text-indigo-700" />
+                        <span>Outils manipulés</span>
+                      </label>
+                      <Input
+                        value={toolsUsed}
+                        onChange={(e) => setToolsUsed(e.target.value)}
+                        placeholder="Ex: Ciseaux, pistolet colle, carton..."
+                        className="h-9 rounded-xl border-indigo-200 bg-white text-xs focus-visible:ring-indigo-500"
+                      />
+                    </div>
+
+                    <div className="space-y-1">
+                      <label className="text-[11px] font-bold text-indigo-950">Encadrement</label>
+                      <Select value={supervisionLevel} onValueChange={setSupervisionLevel}>
+                        <SelectTrigger className="h-9 rounded-xl border-indigo-200 bg-white text-xs">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="Totalement autonome">Totalement autonome sur l'outil</SelectItem>
+                          <SelectItem value="Guidé sur les gestes délicats">Guidé sur gestes délicats</SelectItem>
+                          <SelectItem value="Supervisé pour sécurité">Supervisé pour sécurité</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
                   </div>
                 </div>
               )}
@@ -710,6 +756,35 @@ export function DiscoveryRecordDialog({
               {/* 5. Spécifique : Projet d'Équipe */}
               {sourceType === "projet_collectif" && (
                 <div className="space-y-3 p-4 rounded-2xl bg-rose-50/60 border border-rose-200/70">
+                  {officialEventsList.length > 0 && (
+                    <div className="space-y-1">
+                      <label className="text-[11px] font-bold text-rose-950 flex items-center gap-1.5">
+                        <Award className="size-3.5 text-brand" />
+                        <span>Événement / Hackathon officiel Génizio ou Partenaire (optionnel)</span>
+                      </label>
+                      <Select
+                        value={selectedOfficialEventId}
+                        onValueChange={(val) => {
+                          setSelectedOfficialEventId(val);
+                          const ev = officialEventsList.find((e) => e.id === val);
+                          setSelectedOfficialEventName(ev ? ev.title : "");
+                        }}
+                      >
+                        <SelectTrigger className="h-9 rounded-xl border-rose-200 bg-white text-xs">
+                          <SelectValue placeholder="Aucun (Découverte libre en groupe)" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="none">Aucun (Découverte libre en groupe)</SelectItem>
+                          {officialEventsList.map((ev) => (
+                            <SelectItem key={ev.id} value={ev.id}>
+                              {ev.displayLabel}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  )}
+
                   <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                     <div className="sm:col-span-2 space-y-1">
                       <label className="text-[11px] font-bold text-rose-950 flex items-center gap-1.5">
