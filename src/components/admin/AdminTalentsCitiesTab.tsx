@@ -448,7 +448,7 @@ export function AdminTalentsCitiesTab({
               key={item.city}
               className="rounded-2xl border border-ink/10 bg-surface/30 p-5 space-y-3 transition-all hover:bg-white hover:shadow-md"
             >
-              <div className="flex items-start justify-between">
+              <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-2">
                 <div>
                   <h4 className="font-display font-extrabold text-base text-ink flex items-center gap-1.5">
                     <span>{item.city}</span>
@@ -457,9 +457,11 @@ export function AdminTalentsCitiesTab({
                     {item.totalChildren} enfant{item.totalChildren > 1 ? "s" : ""} recensé(s)
                   </span>
                 </div>
-                <div className="text-right">
-                  <span className="text-xs font-extrabold px-2.5 py-1 rounded-full bg-brand/10 text-brand border border-brand/20">
-                    Spécialité : {item.dominantGuildEmoji} {item.dominantGuildName}
+                <div className="flex items-center shrink-0">
+                  <span className="inline-flex items-center gap-1 text-xs font-extrabold px-3 py-1.5 rounded-xl bg-brand/10 text-brand border border-brand/20 whitespace-nowrap">
+                    <span>Spécialité :</span>
+                    <span>{item.dominantGuildEmoji}</span>
+                    <span>{item.dominantGuildName}</span>
                   </span>
                 </div>
               </div>
