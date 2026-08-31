@@ -141,8 +141,9 @@ function Guide() {
             Défi 2 : Le Projet Co-Financement
           </div>
           <p className="text-sm text-ink/80 leading-relaxed">
-            Fixez le budget d'un sac standard. S'il veut le modèle premium, il finance la différence par des missions utiles (voir nos{" "}
-            <a href="/guides/defis-pour-adolescents">défis pour adolescents</a>).
+            Fixez le budget d'un sac standard. S'il veut le modèle premium, il finance la différence par son épargne (voir notre méthode pour{" "}
+            <a href="/guides/comment-gerer-argent-de-poche-enfant">gérer son argent de poche</a>) ou nos{" "}
+            <a href="/guides/defis-pour-adolescents">défis pour adolescents</a>.
           </p>
         </div>
 

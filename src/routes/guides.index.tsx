@@ -26,10 +26,18 @@ import {
   Cpu,
   FlaskConical,
   Clapperboard,
+  Coins,
 } from "lucide-react";
 import { pageMeta, jsonLdScript, breadcrumbJsonLd, absoluteUrl } from "@/lib/seo";
 
 const GUIDES = [
+  {
+    to: "/guides/comment-gerer-argent-de-poche-enfant",
+    Icon: Coins,
+    eyebrow: "Éducation financière & Autonomie",
+    title: "Comment aider son enfant à gérer son argent de poche (guide par âge et méthode pratique)",
+    desc: "À quel âge commencer, combien donner et comment apprendre à votre enfant à gérer son budget avec la méthode des 3 pots sans frustration.",
+  },
   {
     to: "/guides/test-de-personnalite-enfant-talents",
     Icon: Sparkles,

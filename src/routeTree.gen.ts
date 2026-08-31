@@ -37,6 +37,7 @@ import { Route as GuidesActivitesEducativesEnfantRouteImport } from './routes/gu
 import { Route as GuidesActivitesManuellesEnfantRouteImport } from './routes/guides.activites-manuelles-enfant'
 import { Route as GuidesAutismeTdahApprentissageForcesReellesRouteImport } from './routes/guides.autisme-tdah-apprentissage-forces-reelles'
 import { Route as GuidesAutonomieResponsabiliteMaisonRouteImport } from './routes/guides.autonomie-responsabilite-maison'
+import { Route as GuidesCommentGererArgentDePocheEnfantRouteImport } from './routes/guides.comment-gerer-argent-de-poche-enfant'
 import { Route as GuidesChoixParcoursupParcoursScolaireEnfantRouteImport } from './routes/guides.choix-parcoursup-parcours-scolaire-enfant'
 import { Route as GuidesDecrochageScolaireConfianceEnfantRouteImport } from './routes/guides.decrochage-scolaire-confiance-enfant'
 import { Route as GuidesDefisPourAdolescentsRouteImport } from './routes/guides.defis-pour-adolescents'
@@ -215,6 +216,12 @@ const GuidesAutonomieResponsabiliteMaisonRoute =
   GuidesAutonomieResponsabiliteMaisonRouteImport.update({
     id: '/autonomie-responsabilite-maison',
     path: '/autonomie-responsabilite-maison',
+    getParentRoute: () => GuidesRoute,
+  } as any)
+const GuidesCommentGererArgentDePocheEnfantRoute =
+  GuidesCommentGererArgentDePocheEnfantRouteImport.update({
+    id: '/comment-gerer-argent-de-poche-enfant',
+    path: '/comment-gerer-argent-de-poche-enfant',
     getParentRoute: () => GuidesRoute,
   } as any)
 const GuidesChoixParcoursupParcoursScolaireEnfantRoute =
@@ -448,6 +455,7 @@ export interface FileRoutesByFullPath {
   '/guides/activites-manuelles-enfant': typeof GuidesActivitesManuellesEnfantRoute
   '/guides/autisme-tdah-apprentissage-forces-reelles': typeof GuidesAutismeTdahApprentissageForcesReellesRoute
   '/guides/autonomie-responsabilite-maison': typeof GuidesAutonomieResponsabiliteMaisonRoute
+  '/guides/comment-gerer-argent-de-poche-enfant': typeof GuidesCommentGererArgentDePocheEnfantRoute
   '/guides/choix-parcoursup-parcours-scolaire-enfant': typeof GuidesChoixParcoursupParcoursScolaireEnfantRoute
   '/guides/decrochage-scolaire-confiance-enfant': typeof GuidesDecrochageScolaireConfianceEnfantRoute
   '/guides/defis-pour-adolescents': typeof GuidesDefisPourAdolescentsRoute
@@ -509,6 +517,7 @@ export interface FileRoutesByTo {
   '/guides/activites-manuelles-enfant': typeof GuidesActivitesManuellesEnfantRoute
   '/guides/autisme-tdah-apprentissage-forces-reelles': typeof GuidesAutismeTdahApprentissageForcesReellesRoute
   '/guides/autonomie-responsabilite-maison': typeof GuidesAutonomieResponsabiliteMaisonRoute
+  '/guides/comment-gerer-argent-de-poche-enfant': typeof GuidesCommentGererArgentDePocheEnfantRoute
   '/guides/choix-parcoursup-parcours-scolaire-enfant': typeof GuidesChoixParcoursupParcoursScolaireEnfantRoute
   '/guides/decrochage-scolaire-confiance-enfant': typeof GuidesDecrochageScolaireConfianceEnfantRoute
   '/guides/defis-pour-adolescents': typeof GuidesDefisPourAdolescentsRoute
@@ -575,6 +584,7 @@ export interface FileRoutesById {
   '/guides/activites-manuelles-enfant': typeof GuidesActivitesManuellesEnfantRoute
   '/guides/autisme-tdah-apprentissage-forces-reelles': typeof GuidesAutismeTdahApprentissageForcesReellesRoute
   '/guides/autonomie-responsabilite-maison': typeof GuidesAutonomieResponsabiliteMaisonRoute
+  '/guides/comment-gerer-argent-de-poche-enfant': typeof GuidesCommentGererArgentDePocheEnfantRoute
   '/guides/choix-parcoursup-parcours-scolaire-enfant': typeof GuidesChoixParcoursupParcoursScolaireEnfantRoute
   '/guides/decrochage-scolaire-confiance-enfant': typeof GuidesDecrochageScolaireConfianceEnfantRoute
   '/guides/defis-pour-adolescents': typeof GuidesDefisPourAdolescentsRoute
@@ -642,6 +652,7 @@ export interface FileRouteTypes {
     | '/guides/activites-manuelles-enfant'
     | '/guides/autisme-tdah-apprentissage-forces-reelles'
     | '/guides/autonomie-responsabilite-maison'
+    | '/guides/comment-gerer-argent-de-poche-enfant'
     | '/guides/choix-parcoursup-parcours-scolaire-enfant'
     | '/guides/decrochage-scolaire-confiance-enfant'
     | '/guides/defis-pour-adolescents'
@@ -703,6 +714,7 @@ export interface FileRouteTypes {
     | '/guides/activites-manuelles-enfant'
     | '/guides/autisme-tdah-apprentissage-forces-reelles'
     | '/guides/autonomie-responsabilite-maison'
+    | '/guides/comment-gerer-argent-de-poche-enfant'
     | '/guides/choix-parcoursup-parcours-scolaire-enfant'
     | '/guides/decrochage-scolaire-confiance-enfant'
     | '/guides/defis-pour-adolescents'
@@ -768,6 +780,7 @@ export interface FileRouteTypes {
     | '/guides/activites-manuelles-enfant'
     | '/guides/autisme-tdah-apprentissage-forces-reelles'
     | '/guides/autonomie-responsabilite-maison'
+    | '/guides/comment-gerer-argent-de-poche-enfant'
     | '/guides/choix-parcoursup-parcours-scolaire-enfant'
     | '/guides/decrochage-scolaire-confiance-enfant'
     | '/guides/defis-pour-adolescents'
@@ -1028,6 +1041,13 @@ declare module '@tanstack/react-router' {
       path: '/autonomie-responsabilite-maison'
       fullPath: '/guides/autonomie-responsabilite-maison'
       preLoaderRoute: typeof GuidesAutonomieResponsabiliteMaisonRouteImport
+      parentRoute: typeof GuidesRoute
+    }
+    '/guides/comment-gerer-argent-de-poche-enfant': {
+      id: '/guides/comment-gerer-argent-de-poche-enfant'
+      path: '/comment-gerer-argent-de-poche-enfant'
+      fullPath: '/guides/comment-gerer-argent-de-poche-enfant'
+      preLoaderRoute: typeof GuidesCommentGererArgentDePocheEnfantRouteImport
       parentRoute: typeof GuidesRoute
     }
     '/guides/choix-parcoursup-parcours-scolaire-enfant': {
@@ -1297,6 +1317,7 @@ interface GuidesRouteChildren {
   GuidesActivitesManuellesEnfantRoute: typeof GuidesActivitesManuellesEnfantRoute
   GuidesAutismeTdahApprentissageForcesReellesRoute: typeof GuidesAutismeTdahApprentissageForcesReellesRoute
   GuidesAutonomieResponsabiliteMaisonRoute: typeof GuidesAutonomieResponsabiliteMaisonRoute
+  GuidesCommentGererArgentDePocheEnfantRoute: typeof GuidesCommentGererArgentDePocheEnfantRoute
   GuidesChoixParcoursupParcoursScolaireEnfantRoute: typeof GuidesChoixParcoursupParcoursScolaireEnfantRoute
   GuidesDecrochageScolaireConfianceEnfantRoute: typeof GuidesDecrochageScolaireConfianceEnfantRoute
   GuidesDefisPourAdolescentsRoute: typeof GuidesDefisPourAdolescentsRoute
@@ -1329,6 +1350,8 @@ const GuidesRouteChildren: GuidesRouteChildren = {
     GuidesAutismeTdahApprentissageForcesReellesRoute,
   GuidesAutonomieResponsabiliteMaisonRoute:
     GuidesAutonomieResponsabiliteMaisonRoute,
+  GuidesCommentGererArgentDePocheEnfantRoute:
+    GuidesCommentGererArgentDePocheEnfantRoute,
   GuidesChoixParcoursupParcoursScolaireEnfantRoute:
     GuidesChoixParcoursupParcoursScolaireEnfantRoute,
   GuidesDecrochageScolaireConfianceEnfantRoute:
