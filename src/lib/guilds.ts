@@ -35,10 +35,10 @@ export const GUILDS: Record<GuildKey, GuildInfo> = {
     emoji: "🏗️",
     tagline: "Construire le monde de demain",
     description:
-      "Architecture, construction, ingénierie. Tu conçois, tu assembles, tu élèves (📐 Spatiale & 🪵 Artisanale).",
+      "Architecture, construction, ingénierie. Tu conçois, tu assembles, tu élèves (📐 Spatiale).",
     color: "text-amber-800",
     bgColor: "bg-amber-100 border-amber-400",
-    talentKeys: ["spatial", "artisanale"],
+    talentKeys: ["spatial"],
   },
   inventeurs: {
     key: "inventeurs",
@@ -89,10 +89,10 @@ export const GUILDS: Record<GuildKey, GuildInfo> = {
     name: "Les Protecteurs du Vivant",
     emoji: "🌿",
     tagline: "Prendre soin de la Terre et de ses habitants",
-    description: "Agriculture, écologie, biodiversité. Tu cultives, tu protèges, tu régénères.",
+    description: "Agriculture, écologie, biodiversité. Tu cultives, tu protèges, tu régénères (🪵 Artisanale de la Terre).",
     color: "text-green-800",
     bgColor: "bg-green-100 border-green-400",
-    talentKeys: [],
+    talentKeys: ["artisanale"],
   },
 };
 

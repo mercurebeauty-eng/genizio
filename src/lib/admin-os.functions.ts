@@ -252,16 +252,62 @@ export interface HighPotentialAlert {
   rationale: string;
 }
 
+export interface EliteTalentProfile {
+  childId: string;
+  childName: string;
+  age: number;
+  city: string;
+  country: string | null;
+  guildKey: string;
+  guildName: string;
+  guildEmoji: string;
+  dominantTalentKey: string;
+  dominantTalentLabel: string;
+  maxTalentScore: number;
+  discoveryCount: number;
+  naturalRoles: string[];
+  plasticityScore: number;
+  xp: number;
+  compositeScore: number;
+  tierBadge: "Top 1% Élite" | "Top 5% Excellence" | "Top 10% Distinction";
+  tierColor: string;
+}
+
+export interface TerritoryGuildMatrixItem {
+  city: string;
+  totalChildren: number;
+  dominantGuildKey: string;
+  dominantGuildName: string;
+  dominantGuildEmoji: string;
+  guildBreakdown: Record<string, number>;
+}
+
+export interface HybridLicorneProfile {
+  childId: string;
+  childName: string;
+  age: number;
+  city: string;
+  hybridTitle: string;
+  primaryTalents: string[];
+  roles: string[];
+  rationale: string;
+}
+
 export interface TalentCityStatsResponse {
   cityStats: CityStatItem[];
   gardnerTotals: GardnerTotalItem[];
   guildDistribution: GuildDistributionItem[];
   highPotentialAlerts: HighPotentialAlert[];
+  eliteRanking: EliteTalentProfile[];
+  territoryGuildMatrix: TerritoryGuildMatrixItem[];
+  hybridLicornes: HybridLicorneProfile[];
   summary: {
     totalChildren: number;
     totalCities: number;
     highPotentialCount: number;
     totalOrders: number;
+    eliteCount: number;
+    unicornsCount: number;
   };
 }
 
@@ -634,6 +680,229 @@ export function detectHighPotentialProfiles(
   return alerts;
 }
 
+export function calculateEliteRanking(
+  children: Array<{
+    id: string;
+    name: string;
+    age: number;
+    city?: string | null;
+    country?: string | null;
+    talents?: Record<string, any> | null;
+    xp?: number | null;
+  }>,
+  discoveryTraces: Array<{
+    id: string;
+    child_id: string;
+    source_type?: string;
+    strategy_used?: string;
+  }>
+): EliteTalentProfile[] {
+  const safeChildren = Array.isArray(children) ? children : [];
+  const safeTraces = Array.isArray(discoveryTraces) ? discoveryTraces : [];
+
+  const tracesByChild = new Map<string, typeof safeTraces>();
+  for (const t of safeTraces) {
+    if (!t.child_id) continue;
+    if (!tracesByChild.has(t.child_id)) tracesByChild.set(t.child_id, []);
+    tracesByChild.get(t.child_id)!.push(t);
+  }
+
+  const profiles: EliteTalentProfile[] = [];
+
+  for (const child of safeChildren) {
+    if (!child || !child.talents) continue;
+    const rawTalents = (child.talents as Record<string, number>) || {};
+
+    let maxScore = 0;
+    let dominantKey = "logico_mathematique";
+    for (const [k, v] of Object.entries(rawTalents)) {
+      if (typeof v === "number" && v > maxScore) {
+        maxScore = v;
+        dominantKey = k;
+      }
+    }
+
+    const guild = getChildGuild(rawTalents);
+    const childTraces = tracesByChild.get(child.id) || [];
+    const discoveryCount = childTraces.length;
+
+    const rolesSet = new Set<string>();
+    for (const t of childTraces) {
+      if (t.strategy_used && t.source_type === "projet_collectif") {
+        const match = t.strategy_used.match(/Rôle(\(s\))?:\s*([^|]+)/i);
+        if (match && match[2]) {
+          match[2].split(",").forEach((r) => rolesSet.add(r.trim()));
+        }
+      }
+    }
+    const naturalRoles = Array.from(rolesSet);
+    const plasticityScore = Math.min(1, naturalRoles.length / 4);
+
+    const xp = child.xp || 0;
+    const compositeScore = Math.min(
+      100,
+      Math.round(
+        maxScore * 0.45 +
+          Math.min(10, discoveryCount * 2) * 3 +
+          plasticityScore * 100 * 0.15 +
+          Math.min(100, xp / 10) * 0.1
+      )
+    );
+
+    if (compositeScore >= 45 || maxScore >= 60) {
+      let tierBadge: "Top 1% Élite" | "Top 5% Excellence" | "Top 10% Distinction" = "Top 10% Distinction";
+      let tierColor = "bg-amber-100 text-amber-900 border-amber-300";
+
+      if (compositeScore >= 80) {
+        tierBadge = "Top 1% Élite";
+        tierColor = "bg-purple-100 text-purple-900 border-purple-300 font-black";
+      } else if (compositeScore >= 68) {
+        tierBadge = "Top 5% Excellence";
+        tierColor = "bg-emerald-100 text-emerald-900 border-emerald-300 font-bold";
+      }
+
+      profiles.push({
+        childId: child.id,
+        childName: child.name,
+        age: child.age,
+        city: child.city?.trim() || "Ville non renseignée",
+        country: child.country || null,
+        guildKey: guild.key,
+        guildName: guild.name,
+        guildEmoji: guild.emoji,
+        dominantTalentKey: dominantKey,
+        dominantTalentLabel: TALENT_KEY_LABELS[dominantKey] || dominantKey,
+        maxTalentScore: maxScore,
+        discoveryCount,
+        naturalRoles,
+        plasticityScore,
+        xp,
+        compositeScore,
+        tierBadge,
+        tierColor,
+      });
+    }
+  }
+
+  profiles.sort((a, b) => b.compositeScore - a.compositeScore);
+  return profiles.slice(0, 50);
+}
+
+export function calculateTerritoryGuildMatrix(
+  children: Array<{ city?: string | null; talents?: Record<string, any> | null }>
+): TerritoryGuildMatrixItem[] {
+  const safeChildren = Array.isArray(children) ? children : [];
+  const cityGroups = new Map<string, Array<Record<string, number>>>();
+
+  for (const c of safeChildren) {
+    const city = c.city?.trim() || "Ville non renseignée";
+    if (!cityGroups.has(city)) cityGroups.set(city, []);
+    if (c.talents) cityGroups.get(city)!.push(c.talents as Record<string, number>);
+  }
+
+  const matrix: TerritoryGuildMatrixItem[] = [];
+
+  for (const [city, talentsList] of cityGroups.entries()) {
+    const totalChildren = talentsList.length;
+    const guildBreakdown: Record<string, number> = {
+      batisseurs: 0,
+      inventeurs: 0,
+      explorateurs: 0,
+      createurs: 0,
+      strateges: 0,
+      protecteurs: 0,
+    };
+
+    for (const t of talentsList) {
+      const g = getChildGuild(t);
+      if (g.key !== "aucune") {
+        guildBreakdown[g.key] = (guildBreakdown[g.key] || 0) + 1;
+      }
+    }
+
+    let dominantGuildKey = "batisseurs";
+    let maxCount = -1;
+    for (const [k, count] of Object.entries(guildBreakdown)) {
+      if (count > maxCount) {
+        maxCount = count;
+        dominantGuildKey = k;
+      }
+    }
+
+    const dominantGuildInfo = GUILDS[dominantGuildKey as keyof typeof GUILDS] || GUILDS.batisseurs;
+
+    matrix.push({
+      city,
+      totalChildren,
+      dominantGuildKey,
+      dominantGuildName: dominantGuildInfo.name,
+      dominantGuildEmoji: dominantGuildInfo.emoji,
+      guildBreakdown,
+    });
+  }
+
+  matrix.sort((a, b) => b.totalChildren - a.totalChildren);
+  return matrix;
+}
+
+export function calculateHybridLicornes(
+  children: Array<{
+    id: string;
+    name: string;
+    age: number;
+    city?: string | null;
+    talents?: Record<string, any> | null;
+  }>,
+  discoveryTraces: Array<{ child_id: string; strategy_used?: string }>
+): HybridLicorneProfile[] {
+  const safeChildren = Array.isArray(children) ? children : [];
+  const unicorns: HybridLicorneProfile[] = [];
+
+  for (const child of safeChildren) {
+    if (!child || !child.talents) continue;
+    const t = child.talents as Record<string, number>;
+
+    const stemScore = Math.max(t.logico_mathematique || 0, t.spatial || 0);
+    const socialScore = Math.max(t.sociale || 0, t.emotionnelle || 0);
+    const creativeScore = Math.max(t.creative || 0, t.linguistique || 0);
+    const businessScore = t.entrepreneuriale || 0;
+    const natureScore = Math.max(t.corporelle || 0, t.artisanale || 0);
+
+    let hybridTitle: string | null = null;
+    let primaryTalents: string[] = [];
+    let rationale = "";
+
+    if (stemScore >= 60 && socialScore >= 60) {
+      hybridTitle = "🦄 Licorne STEM & Empathie";
+      primaryTalents = ["🧠 Logique / 📐 Spatiale", "🤝 Sociale / 🪞 Émotionnelle"];
+      rationale = `${child.name} allie une grande rigueur analytique/spatiale (${stemScore}/100) et une intelligence interpersonnelle naturelle (${socialScore}/100).`;
+    } else if (creativeScore >= 60 && businessScore >= 60) {
+      hybridTitle = "🦄 Licorne Créative & Stratège";
+      primaryTalents = ["🎨 Création / 🗣️ Narration", "💡 Entrepreneuriat"];
+      rationale = `${child.name} maîtrise l'expression créative (${creativeScore}/100) et le sens des affaires/leadership (${businessScore}/100).`;
+    } else if (natureScore >= 60 && (businessScore >= 60 || socialScore >= 60)) {
+      hybridTitle = "🦄 Licorne Éco-Leader";
+      primaryTalents = ["🌿 Vivant / 🪵 Artisanat", "💡 Vision & Impact"];
+      rationale = `${child.name} associe la passion du terrain/vivant (${natureScore}/100) à une capacité d'entraînement collectif (${Math.max(businessScore, socialScore)}/100).`;
+    }
+
+    if (hybridTitle) {
+      unicorns.push({
+        childId: child.id,
+        childName: child.name,
+        age: child.age,
+        city: child.city?.trim() || "Ville non renseignée",
+        hybridTitle,
+        primaryTalents,
+        roles: [],
+        rationale,
+      });
+    }
+  }
+
+  return unicorns.slice(0, 20);
+}
+
 const ExecutivePageInput = z.object({
   page: z.number().int().min(1).default(1),
   pageSize: z.number().int().min(1).max(100).default(20),
@@ -787,13 +1056,12 @@ export const getTalentCityStatsAdmin = createServerFn({ method: "GET" })
   .handler(async (): Promise<TalentCityStatsResponse> => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
-    const [childrenRes, ordersRes] = await Promise.all([
+    const [childrenRes, ordersRes, discoveryRes] = await Promise.all([
       supabaseAdmin
         .from("child_profiles")
-        .select("id, name, age, city, talents, user_id, created_at"),
-      // Vague 4 batch 4 : seules les colonnes utiles à calculateCityStats (child_id) —
-      // la table orders peut grossir, les autres colonnes n'étaient jamais lues ici.
+        .select("id, name, age, city, country, talents, xp, user_id, created_at"),
       supabaseAdmin.from("orders").select("child_id"),
+      supabaseAdmin.from("discovery_traces").select("id, child_id, source_type, strategy_used, ai_behavioral_analysis"),
     ]);
 
     if (childrenRes.error) throw new Error(childrenRes.error.message);
@@ -804,11 +1072,15 @@ export const getTalentCityStatsAdmin = createServerFn({ method: "GET" })
       talents: (c.talents as Record<string, number> | null) ?? null,
     }));
     const orders = ordersRes.data ?? [];
+    const discoveryTraces = (discoveryRes.data ?? []) as any[];
 
     const cityStats = calculateCityStats(children, orders);
     const gardnerTotals = calculateGardnerTotals(children);
     const guildDistribution = calculateGuildDistribution(children);
     const highPotentialAlerts = detectHighPotentialProfiles(children);
+    const eliteRanking = calculateEliteRanking(children, discoveryTraces);
+    const territoryGuildMatrix = calculateTerritoryGuildMatrix(children);
+    const hybridLicornes = calculateHybridLicornes(children, discoveryTraces);
 
     const uniqueCitiesCount = cityStats.filter((c) => c.city !== "Ville non renseignée").length;
 
@@ -817,11 +1089,16 @@ export const getTalentCityStatsAdmin = createServerFn({ method: "GET" })
       gardnerTotals,
       guildDistribution,
       highPotentialAlerts,
+      eliteRanking,
+      territoryGuildMatrix,
+      hybridLicornes,
       summary: {
         totalChildren: children.length,
         totalCities: uniqueCitiesCount,
         highPotentialCount: highPotentialAlerts.length,
         totalOrders: orders.length,
+        eliteCount: eliteRanking.length,
+        unicornsCount: hybridLicornes.length,
       },
     };
   });
