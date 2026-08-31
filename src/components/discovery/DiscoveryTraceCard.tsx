@@ -20,6 +20,7 @@ import {
   Beaker,
   Hammer,
   Users,
+  Award,
   Clock,
   RotateCcw,
   ShieldCheck,

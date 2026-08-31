@@ -187,6 +187,8 @@ export type DiscoveryAIAnalysis = {
   social_synergy_score?: number;
   interpersonal_insights?: string;
   role_plasticity_analysis?: string;
+  image_context_verified?: boolean;
+  image_feedback?: string | null;
 };
 
 // ── Schémas de Validation Zod ────────────────────────────────────────────────

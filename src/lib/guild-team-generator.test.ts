@@ -23,7 +23,7 @@ describe("guild-team-generator", () => {
 
   describe("analyzeGuildComplementarity", () => {
     it("calcule correctement le score de synergie pour une équipe diversifiée", () => {
-      const members = [
+      const members: Array<{ id: string; name: string; talents: Record<string, number> }> = [
         { id: "1", name: "Alice", talents: { logico_mathematique: 90, spatial: 20 } },
         { id: "2", name: "Bob", talents: { spatial: 90, logico_mathematique: 20 } },
         { id: "3", name: "Charlie", talents: { sociale: 90, spatial: 20 } }
@@ -37,7 +37,7 @@ describe("guild-team-generator", () => {
     });
 
     it("détecte une faible synergie (profils clonés)", () => {
-      const members = [
+      const members: Array<{ id: string; name: string; talents: Record<string, number> }> = [
         { id: "1", name: "Alice", talents: { spatial: 90 } },
         { id: "2", name: "Bob", talents: { spatial: 85 } }
       ];

@@ -64,7 +64,7 @@ export function extractLongitudinalExperiences(
       const collectivePayload = (trace.ai_behavioral_analysis as any) || {};
       
       // Extraction automatique du rôle depuis collectivePayload ou strategy_used
-      let role: TeamRole | "non_specifie" = (collectivePayload.role as TeamRole) || "non_specifie";
+      let role: TeamRole | "non_specifie" = collectivePayload?.role ? (collectivePayload.role as TeamRole) : "non_specifie";
       if (role === "non_specifie" && trace.strategy_used) {
         const s = trace.strategy_used.toLowerCase();
         if (s.includes("idéateur") || s.includes("createur") || s.includes("créatif") || s.includes("conception")) {
