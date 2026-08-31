@@ -1206,7 +1206,8 @@ RÈGLES D'ANALYSE :
 2. Identifie les mécanismes cognitifs sous-jacents (déduction, pensée spatiale, créativité divergente, méthode empirique...).
 3. Détecte si cette trace constitue une « anomalie positive » (indice d'une capacité potentiellement supérieure ou d'une aisance inattendue dans ce contexte libre).
 4. Si une image est fournie, évalue sa cohérence avec la description.
-5. Reste bienveillant, constructif et ancré dans les faits observables.
+5. Si l'exploration est un « Projet d'Équipe », analyse la plasticité du rôle tenu (idéateur, bâtisseur, capitaine, médiateur...), la dynamique relationnelle et l'intelligence interpersonnelle déployée.
+6. Reste bienveillant, constructif et ancré dans les faits observables.
 
 Réponds EXCLUSIVEMENT avec un objet JSON strict au format suivant :
 {

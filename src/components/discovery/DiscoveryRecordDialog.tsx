@@ -26,6 +26,8 @@ import {
   DISCOVERY_AUTONOMY_LABELS,
   DISCOVERY_OUTCOMES,
   DISCOVERY_OUTCOME_LABELS,
+  DISCOVERY_TEAM_ROLES,
+  DISCOVERY_TEAM_DYNAMICS,
   type DiscoverySourceType,
   type DiscoveryDomain,
   type DiscoveryAutonomyLevel,
@@ -181,8 +183,11 @@ export function DiscoveryRecordDialog({
   const [handleSearchResults, setHandleSearchResults] = useState<any[]>([]);
   const [showHandleSuggestions, setShowHandleSuggestions] = useState(false);
   const [teamSize, setTeamSize] = useState("Petit groupe (3-4)");
-  const [childRole, setChildRole] = useState("💡 Idéateur / Concepteur");
-  const [groupDynamic, setGroupDynamic] = useState("Partage équitable et fluide");
+  const [selectedRoles, setSelectedRoles] = useState<string[]>(["ideateur"]);
+  const [customRole, setCustomRole] = useState("");
+  const [selectedDynamic, setSelectedDynamic] = useState<string>("complementarite");
+  const [customDynamic, setCustomDynamic] = useState("");
+  const [teamPrecision, setTeamPrecision] = useState("");
 
   // Questions métacognitives Naya spécialisées (Étape 2)
   const [q1, setQ1] = useState("");
@@ -224,8 +229,11 @@ export function DiscoveryRecordDialog({
     setSupervisionLevel("Guidé sur les gestes délicats");
     setTeamHandles("");
     setTeamSize("Petit groupe (3-4)");
-    setChildRole("💡 Idéateur / Concepteur");
-    setGroupDynamic("Partage équitable et fluide");
+    setSelectedRoles(["ideateur"]);
+    setCustomRole("");
+    setSelectedDynamic("complementarite");
+    setCustomDynamic("");
+    setTeamPrecision("");
     setQ1("");
     setQ2("");
     setQ3("");
@@ -373,8 +381,25 @@ export function DiscoveryRecordDialog({
         contextualHelp = `Lieu: ${workshopLocation} | Encadrement: ${supervisionLevel}`;
         contextualStrategy = `Outils: ${toolsUsed}`;
       } else if (sourceType === "projet_collectif") {
+        const rolesText = selectedRoles
+          .map((rId) => {
+            if (rId === "autre") return customRole.trim() ? `Autre (${customRole.trim()})` : "Autre rôle";
+            const r = DISCOVERY_TEAM_ROLES.find((x) => x.id === rId);
+            return r?.label || rId;
+          })
+          .join(" + ");
+
+        const dynObj = DISCOVERY_TEAM_DYNAMICS.find((x) => x.id === selectedDynamic);
+        const dynText =
+          selectedDynamic === "autre"
+            ? customDynamic.trim()
+              ? `Autre (${customDynamic.trim()})`
+              : "Autre dynamique"
+            : dynObj?.label || selectedDynamic;
+
+        const precisionText = teamPrecision.trim() ? ` | Note: ${teamPrecision.trim()}` : "";
         contextualHelp = `Équipe (${teamSize}): ${teamHandles.trim() || "Pairs"}`;
-        contextualStrategy = `Rôle: ${childRole} | Dynamique: ${groupDynamic}`;
+        contextualStrategy = `Rôle(s): ${rolesText || "Polyvalent"} | Dynamique: ${dynText}${precisionText}`;
       }
 
             const extractedHandles = teamHandles.match(/@[\w]+/g) || [];
@@ -743,45 +768,111 @@ export function DiscoveryRecordDialog({
                         </SelectTrigger>
                         <SelectContent>
                           <SelectItem value="Binôme (2)">Binôme (2 personnes)</SelectItem>
-                          <SelectItem value="Petit groupe (3-4)">Petit groupe (3 à 4)</SelectItem>
-                          <SelectItem value="Grande équipe (5+)">Grande équipe (5+)</SelectItem>
+                          <SelectItem value="Trio (3)">Trio (3 personnes)</SelectItem>
+                          <SelectItem value="Petit groupe (4-5)">Petit groupe (4 à 5)</SelectItem>
+                          <SelectItem value="Grande équipe (6+)">Grande équipe (6+)</SelectItem>
                         </SelectContent>
                       </Select>
                     </div>
                   </div>
 
+                  {/* Rôles naturels tenus par l'enfant (Sélection multiple / badges) */}
+                  <div className="space-y-2 pt-1">
+                    <div className="flex items-center justify-between">
+                      <label className="text-[11px] font-bold text-rose-950 flex items-center gap-1.5">
+                        <Award className="size-3.5 text-rose-700" />
+                        <span>Rôle(s) naturel(s) tenu(s) par {childName}</span>
+                      </label>
+                      <span className="text-[10px] font-medium text-rose-700/70">
+                        {selectedRoles.length === 0 ? "Choisissez 1 ou 2 rôles" : `${selectedRoles.length} sélectionné${selectedRoles.length > 1 ? "s" : ""}`}
+                      </span>
+                    </div>
+
+                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-1.5">
+                      {DISCOVERY_TEAM_ROLES.map((r) => {
+                        const isSelected = selectedRoles.includes(r.id);
+                        return (
+                          <button
+                            key={r.id}
+                            type="button"
+                            onClick={() => {
+                              if (isSelected) {
+                                if (selectedRoles.length > 1) {
+                                  setSelectedRoles(selectedRoles.filter((id) => id !== r.id));
+                                }
+                              } else {
+                                if (selectedRoles.length >= 2) {
+                                  setSelectedRoles([selectedRoles[1], r.id]);
+                                } else {
+                                  setSelectedRoles([...selectedRoles, r.id]);
+                                }
+                              }
+                            }}
+                            className={`flex flex-col items-start p-2 rounded-xl text-left border transition-all text-xs cursor-pointer ${
+                              isSelected
+                                ? "bg-rose-100/90 border-rose-400 text-rose-950 font-bold shadow-xs ring-1 ring-rose-400"
+                                : "bg-white/90 border-rose-200/80 text-rose-900/80 hover:bg-rose-50/80 hover:border-rose-300"
+                            }`}
+                            title={r.desc}
+                          >
+                            <span className="leading-tight">{r.label}</span>
+                            <span className="text-[9px] font-normal text-rose-800/70 line-clamp-1 mt-0.5">
+                              {r.desc}
+                            </span>
+                          </button>
+                        );
+                      })}
+                    </div>
+
+                    {selectedRoles.includes("autre") && (
+                      <Input
+                        value={customRole}
+                        onChange={(e) => setCustomRole(e.target.value)}
+                        placeholder="Précisez le rôle de l'enfant (ex: Décorateur, Stratège musical, Chronométreur...)"
+                        className="h-8 rounded-xl border-rose-200 bg-white text-xs placeholder:text-rose-300 focus-visible:ring-rose-500 mt-1.5"
+                      />
+                    )}
+                  </div>
+
+                  {/* Dynamique relationnelle & Précision */}
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
                     <div className="space-y-1">
-                      <label className="text-[11px] font-bold text-rose-950 flex items-center gap-1">
-                        <Award className="size-3 text-rose-700" />
-                        <span>Rôle naturel tenu par {childName}</span>
-                      </label>
-                      <Select value={childRole} onValueChange={setChildRole}>
+                      <label className="text-[11px] font-bold text-rose-950">Dynamique relationnelle observée</label>
+                      <Select value={selectedDynamic} onValueChange={setSelectedDynamic}>
                         <SelectTrigger className="h-9 rounded-xl border-rose-200 bg-white text-xs">
                           <SelectValue />
                         </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="💡 Idéateur / Concepteur">💡 Idéateur (apporte les idées)</SelectItem>
-                          <SelectItem value="🔨 Bâtisseur / Artisan">🔨 Bâtisseur (fabrique et assemble)</SelectItem>
-                          <SelectItem value="⏱️ Organisateur / Coordinateur">⏱️ Coordinateur (structure le temps)</SelectItem>
-                          <SelectItem value="🤝 Médiateur / Rassembleur">🤝 Médiateur (harmonise le groupe)</SelectItem>
+                        <SelectContent className="max-h-60">
+                          {DISCOVERY_TEAM_DYNAMICS.map((dyn) => (
+                            <SelectItem key={dyn.id} value={dyn.id}>
+                              <div className="flex flex-col text-left py-0.5">
+                                <span className="font-semibold text-xs">{dyn.label}</span>
+                                <span className="text-[10px] text-ink/50">{dyn.desc}</span>
+                              </div>
+                            </SelectItem>
+                          ))}
                         </SelectContent>
                       </Select>
+                      {selectedDynamic === "autre" && (
+                        <Input
+                          value={customDynamic}
+                          onChange={(e) => setCustomDynamic(e.target.value)}
+                          placeholder="Précisez la dynamique (ex: Débat passionné puis vote à main levée...)"
+                          className="h-8 rounded-xl border-rose-200 bg-white text-xs placeholder:text-rose-300 focus-visible:ring-rose-500 mt-1"
+                        />
+                      )}
                     </div>
 
                     <div className="space-y-1">
-                      <label className="text-[11px] font-bold text-rose-950">Dynamique relationnelle</label>
-                      <Select value={groupDynamic} onValueChange={setGroupDynamic}>
-                        <SelectTrigger className="h-9 rounded-xl border-rose-200 bg-white text-xs">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="Partage équitable et fluide">Partage équitable et fluide</SelectItem>
-                          <SelectItem value="Rôles clairement définis">Rôles clairement définis</SelectItem>
-                          <SelectItem value="Entraide spontanée continue">Entraide spontanée continue</SelectItem>
-                          <SelectItem value="Concertation après désaccord">Concertation après désaccord</SelectItem>
-                        </SelectContent>
-                      </Select>
+                      <label className="text-[11px] font-bold text-rose-950">
+                        Anecdote ou note d'équipe <span className="font-normal text-rose-700/60">(optionnel)</span>
+                      </label>
+                      <Input
+                        value={teamPrecision}
+                        onChange={(e) => setTeamPrecision(e.target.value)}
+                        placeholder="Ex: Au début ils hésitaient, puis ils se sont réparti le travail..."
+                        className="h-9 rounded-xl border-rose-200 bg-white text-xs placeholder:text-rose-300 focus-visible:ring-rose-500"
+                      />
                     </div>
                   </div>
                 </div>

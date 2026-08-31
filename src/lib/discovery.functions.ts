@@ -138,6 +138,30 @@ export const DISCOVERY_AUTONOMY_LABELS: Record<DiscoveryAutonomyLevel, string> =
   accompagne: "Guidé ou accompagné",
 };
 
+export const DISCOVERY_TEAM_ROLES = [
+  { id: "ideateur", label: "💡 Idéateur & Créatif", desc: "Foisonnement d'idées, vision globale et imagination" },
+  { id: "batisseur", label: "🔨 Bâtisseur & Praticien", desc: "Concrétisation, assemblage et réalisation technique" },
+  { id: "capitaine", label: "🧭 Capitaine & Moteur", desc: "Impulsion, motivation du groupe et prise de décision" },
+  { id: "organisateur", label: "⏱️ Organisateur & Planificateur", desc: "Méthode, gestion du temps et répartition des tâches" },
+  { id: "mediateur", label: "🤝 Médiateur & Ciment d'équipe", desc: "Écoute, régulation des émotions et harmonie" },
+  { id: "chercheur", label: "🔍 Chercheur & Stratège", desc: "Analyse des blocages, recherche d'infos et logique" },
+  { id: "finisseur", label: "🎨 Perfectionniste & Finisseur", desc: "Souci du détail, finitions et vérification" },
+  { id: "porte_parole", label: "📢 Porte-parole & Conteur", desc: "Présentation du projet, pitch et narration" },
+  { id: "soutien", label: "🛡️ Soutien & Pilier logistique", desc: "Aide polyvalente et assistance aux coéquipiers" },
+  { id: "autre", label: "✍️ Autre rôle personnalisé", desc: "Rôle sur-mesure ou combiné" },
+] as const;
+
+export const DISCOVERY_TEAM_DYNAMICS = [
+  { id: "complementarite", label: "🤝 Complémentarité spontanée", desc: "Chacun a naturellement misé sur ses points forts" },
+  { id: "tutorat", label: "🎓 Tutorat & Transmission", desc: "L'un a guidé ou transmis une compétence à l'autre" },
+  { id: "emulation", label: "⚡ Émulation & Synergie créative", desc: "Les idées ont rebondi et grandi ensemble" },
+  { id: "leadership_tournant", label: "🧭 Leadership partagé / tournant", desc: "La direction a changé selon les phases du projet" },
+  { id: "negociation", label: "🔄 Rebond constructif après désaccord", desc: "Tension ou hésitation surmontée par la concertation" },
+  { id: "parallele", label: "🧩 Travail en parallèle puis assemblage", desc: "Chacun sa mission en autonomie avant la mise en commun" },
+  { id: "entrainement", label: "🚀 Entraînement par l'exemple", desc: "Un enfant a impulsé le mouvement et inspiré le groupe" },
+  { id: "autre", label: "✍️ Autre dynamique observée", desc: "Dynamique spécifique" },
+] as const;
+
 export const DISCOVERY_OUTCOMES = ["fonctionnel", "partiel", "en_cours", "echec_enrichissant"] as const;
 export type DiscoveryOutcomeStatus = (typeof DISCOVERY_OUTCOMES)[number];
 
