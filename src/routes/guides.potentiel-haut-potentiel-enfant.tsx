@@ -15,37 +15,37 @@ const FAQ = [
   {
     question: "Comment savoir si mon enfant est surdoué, HPI ou précoce ?",
     answer:
-      "Aucun signe isolé ne suffit à le dire — le haut potentiel intellectuel (HPI) est un diagnostic psychologique, posé par un psychologue à l'aide de tests spécialisés, pas une observation qu'un parent ou une application peut établir seule. Ce qu'un parent peut en revanche repérer, c'est un ensemble d'indices qui justifient de consulter : une soif de comprendre le « pourquoi » qui dépasse largement les réponses données à l'école, une facilité à faire des liens entre des domaines sans rapport apparent, un décalage entre une intelligence verbale très développée et une maladresse émotionnelle ou sociale, ou au contraire un ennui profond et un désinvestissement scolaire malgré des capacités par ailleurs évidentes.",
+      "Aucun signe isolé ne suffit : le Haut Potentiel Intellectuel (HPI) relève d'un bilan psychométrique complet mené par un psychologue (WISC-V). À la maison, observez plutôt la soif de complexité, la rapidité à relier des domaines sans rapport ou un décalage entre maturité intellectuelle et hypersensibilité émotionnelle.",
   },
   {
     question: "Qu'est-ce qu'un enfant « zèbre » ?",
     answer:
-      "« Zèbre » est un surnom utilisé en France depuis les années 2000 pour désigner les enfants à haut potentiel intellectuel : comme le zèbre, l'enfant HPI n'est ni un cheval blanc ni un cheval noir, mais un animal à part, qui pense autrement. Le mot est devenu courant dans les groupes de parents et sur Internet, mais il n'a aucune valeur clinique : ce qui compte n'est pas le surnom, mais de savoir si les signes que vous observez gênent réellement votre enfant au quotidien. Si c'est le cas, la démarche est toujours la même : en parler à l'école et consulter un professionnel qui pourra évaluer la situation.",
+      "C'est une métaphore populaire sans valeur diagnostique officielle. L'essentiel est de vérifier si le fonctionnement singulier de l'enfant pose une gêne dans sa vie quotidienne ou scolaire.",
   },
   {
     question: "Mon enfant est intelligent mais n'aime pas l'école : est-ce lié ?",
     answer:
-      "C'est une configuration fréquente, et pas seulement chez les enfants à haut potentiel. L'école mesure surtout deux formes d'intelligence — linguistique et logico-mathématique — dans un format standardisé qui avantage la rapidité d'exécution et l'obéissance à la consigne. Un enfant dont les forces sont ailleurs (spatiales, corporelles, entrepreneuriales) peut s'y ennuyer ou s'y sentir incompris sans qu'il y ait le moindre problème cognitif. Un enfant réellement à haut potentiel peut, lui, s'ennuyer pour la raison inverse : le rythme est trop lent. Dans les deux cas, le désintérêt scolaire n'est pas une information suffisante en soi — il faut regarder ce que l'enfant fait quand on le laisse choisir.",
+      "Oui. L'école privilégie l'exécution standardisée. Un enfant précoce s'y ennuie par manque de rythme, tandis qu'un enfant à profil visuel ou manuel s'y sent à l'étroit. Observez ses réalisations en temps libre pour comprendre son vrai moteur.",
   },
   {
     question: "Faut-il demander un saut de classe pour un enfant précoce qui s'ennuie ?",
     answer:
-      "Le saut de classe est une décision qui se prend avec l'école et un professionnel, jamais seul : il aide certains enfants précoces dont l'ennui scolaire est réel, mais il peut aussi isoler socialement un enfant qui saute une année. Avant d'y penser, les pistes moins radicales sont souvent essayées en premier : des exercices plus difficiles dans la même classe, un club ou un projet à son niveau, un accompagnement à la maison. Le critère décisif reste l'enfant : est-ce que sa scolarité actuelle le fait souffrir ? Un enfant qui s'ennuie mais reste épanoui socialement peut très bien continuer dans sa classe avec des aménagements simples.",
+      "Cette mesure se décide en équipe avec les enseignants et le psychologue. Si l'ennui génère une souffrance réelle, le saut de classe est bénéfique ; si l'enfant est épanoui avec ses camarades, des activités enrichies en classe suffisent souvent.",
   },
   {
     question: "Le potentiel d'un enfant se limite-t-il à ce qui est utile à l'école ?",
     answer:
-      "Non, et c'est précisément l'angle mort le plus fréquent. Le potentiel entrepreneurial (organiser un petit commerce entre camarades, évaluer la valeur d'un objet, saisir une occasion), le potentiel social (négocier, fédérer un groupe, désamorcer un conflit) ou le potentiel corporel (coordination fine, sens de l'espace) sont des formes de compétence réelles, transférables plus tard dans la vie professionnelle, mais quasiment invisibles dans un bulletin scolaire classique.",
+      "Non. L'intelligence pratique, le leadership relationnel et l'ingéniosité manuelle sont des compétences déterminantes pour l'avenir, pourtant invisibles sur un bulletin scolaire.",
   },
   {
     question: "Faut-il faire tester le QI de son enfant ?",
     answer:
-      "Un test de QI a un usage précis : objectiver une hypothèse clinique posée par un professionnel (psychologue ou neuropsychologue), en général parce qu'un décalage important gêne concrètement l'enfant au quotidien. Ce n'est pas un outil de confirmation d'ambition parentale, et un chiffre isolé, sans le contexte clinique qui l'accompagne, informe assez peu sur ce qu'un enfant sait réellement faire de ses mains ou avec les autres.",
+      "Seulement si un décalage ou une souffrance scolaire le justifie, pour éclairer un accompagnement personnalisé.",
   },
   {
     question: "Comment Génizio aide-t-il à repérer le potentiel d'un enfant ?",
     answer:
-      "Génizio ne pose aucun diagnostic et ne remplace aucun professionnel de santé. L'application propose des défis concrets répartis sur 9 formes de talent (au sens large de la théorie de Gardner, adaptée), et met à jour la carte des talents de l'enfant à partir des défis qu'il a réellement menés à bien — jamais à partir d'un questionnaire déclaratif. L'objectif est d'élargir ce qu'un parent observe, notamment dans les domaines que l'école ne regarde jamais.",
+      "Génizio propose des défis du monde réel répartis sur 9 formes de talents. La carte des forces de votre enfant se construit à partir de ses réalisations pratiques, sans questionnaire artificiel.",
   },
 ];
 
@@ -54,7 +54,7 @@ export const Route = createFileRoute("/guides/potentiel-haut-potentiel-enfant")(
     const meta = pageMeta({
       title: "Enfant HPI, surdoué ou précoce : comment le reconnaître",
       description:
-        "Enfant surdoué, HPI, précoce ou zèbre : découvrez les signes révélateurs, les limites du test de QI et comment nourrir son potentiel sans le surmener.",
+        "Enfant surdoué, HPI, précoce ou zèbre : les signes révélateurs, les limites du test de QI et comment nourrir son potentiel sans le surmener.",
       path: PATH,
       image: "/guides/og-haut-potentiel.jpg",
       type: "article",
@@ -114,7 +114,7 @@ function Guide() {
     <GuideLayout
       eyebrow="Potentiel & talents"
       title="Enfant surdoué, HPI ou précoce : comment reconnaître et accompagner son haut potentiel"
-      intro="« Mon enfant est-il surdoué ou précoce ? » Cette question taraude de nombreux parents lorsque leur enfant pose des questions vertigineuses, s'ennuie profondément à l'école ou fait preuve d'une hypersensibilité hors norme. Voici les vrais repères d'observation à la maison, les réalités du bilan psychologique et les clés pour valoriser son génie sans l'enfermer dans une case."
+      intro="« Mon enfant est-il surdoué ou précoce ? » Cette question émerge souvent quand un enfant pose des questions vertigineuses, s'ennuie en classe ou fait preuve d'une sensibilité singulière. Voici les repères d'observation à la maison, les réalités du bilan psychologique et les clés pour valoriser son potentiel sans l'enfermer dans une case."
       updated="27 août 2026"
       readingTime="9 min"
       path={PATH}
@@ -162,16 +162,16 @@ function Guide() {
       </p>
       <ul>
         <li>
-          <strong>Une pensée arborescente et fulgurante :</strong> L'enfant fait des liens instantanés entre des sujets sans rapport apparent, posant des questions existentielles précoces (découvrez notre éclairage sur l'
-          <a href="/guides/intelligences-multiples-gardner">intelligence existentielle et les 9 intelligences de Gardner</a>).
+          <strong>Une pensée arborescente et fulgurante :</strong> L'enfant fait des liens instantanés entre des sujets sans rapport apparent, posant des questions existentielles précoces (voir notre éclairage sur l'
+          <a href="/guides/intelligences-multiples-gardner">intelligence existentielle et les 9 formes d'intelligence</a>).
         </li>
         <li>
           <strong>Une hypersensibilité sensorielle et émotionnelle :</strong> Un sens aigu de la justice, des réactions intenses aux bruits ou aux textures, et parfois des tempêtes émotionnelles (consultez nos{" "}
-          <a href="/guides/gestion-colere-emotions-enfant">5 outils pour apaiser la frustration de l'enfant</a>).
+          <a href="/guides/gestion-colere-emotions-enfant">5 outils pour apaiser la frustration</a>).
         </li>
         <li>
           <strong>Un besoin irrépressible de comprendre le sens :</strong> Un rejet viscéral du « par cœur » et des consignes non justifiées, qui peut être confondu avec de l'opposition ou un{" "}
-          <a href="/guides/enfant-agite-concentration">manque d'attention et de concentration</a>.
+          <a href="/guides/enfant-agite-concentration">manque d'attention</a>.
         </li>
         <li>
           <strong>Un perfectionnisme paralysant :</strong> La peur de l'échec ou d'un résultat imparfait qui l'amène parfois à refuser d'entamer une tâche.
@@ -186,12 +186,12 @@ function Guide() {
 
       <h2>Pourquoi le désintérêt scolaire touche tant d'enfants HPI</h2>
       <p>
-        « Mon enfant a d'immenses capacités mais ses notes chutent » : ce paradoxe est fréquent. L'enfant précoce souffre souvent d'un <strong>ennui actif</strong> : le rythme de répétition scolaire ne correspond pas à sa vitesse de traitement. Sans méthode de travail solide, il risque le désengagement. Découvrez nos clés pour{" "}
+        « Mon enfant a d'immenses capacités mais ses notes chutent » : ce paradoxe est fréquent. L'enfant précoce souffre souvent d'un <strong>ennui actif</strong> : le rythme de répétition scolaire ne correspond pas à sa vitesse de traitement. Sans méthode de travail solide, il risque le désengagement. Voir nos clés pour{" "}
         <a href="/guides/decrochage-scolaire-confiance-enfant">redonner confiance à un enfant qui décroche à l'école</a> et nos conseils pour{" "}
         <a href="/guides/reussite-scolaire-aider-enfant">l'aider à réussir sans stresser</a>.
       </p>
       <p>
-        Il est également crucial de distinguer le HPI d'autres profils neuroatypiques, comme détaillé dans notre guide{" "}
+        Il convient aussi de distinguer le HPI d'autres profils neuroatypiques, comme détaillé dans notre guide{" "}
         <a href="/guides/autisme-tdah-apprentissage-forces-reelles">Autisme & TDAH : valoriser leurs forces d'apprentissage</a>.
       </p>
 

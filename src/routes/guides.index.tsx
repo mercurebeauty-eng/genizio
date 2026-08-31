@@ -175,7 +175,7 @@ const GUIDES = [
     Icon: Rocket,
     eyebrow: "Adolescents",
     title: "Motiver un adolescent : 12 défis qui marchent (12-16 ans)",
-    desc: "Ce qui motive réellement un adolescent, pourquoi les activités « pour enfants » ne fonctionnent plus, et comment lui proposer des projets à sa mesure.",
+    desc: "Ce qui motive un adolescent, pourquoi les activités « pour enfants » ne fonctionnent plus, et comment lui proposer des projets à sa mesure.",
   },
   {
     to: "/guides/intelligences-multiples-gardner",
@@ -300,7 +300,7 @@ function GuidesIndex() {
         </h1>
         <p className="mt-6 max-w-2xl text-lg font-medium leading-relaxed text-ink/70">
           Des guides écrits pour les parents d'Afrique francophone et d'ailleurs. On y parle de ce
-          qu'on observe réellement chez un enfant — ce qui l'absorbe, ce qui l'ennuie, ce qu'il sait
+          qu'on observe au quotidien chez un enfant — ce qui l'absorbe, ce qui l'ennuie, ce qu'il sait
           faire de ses mains — plutôt que de ce qu'une note mesure.
         </p>
 

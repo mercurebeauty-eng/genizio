@@ -102,12 +102,12 @@ function Guide() {
 
       <h2>La réserve n'est pas un défaut : c'est une force d'observation</h2>
       <p>
-        Dans la grille des intelligences multiples de Howard Gardner, certains enfants possèdent une forte <strong>intelligence intrapersonnelle</strong> : ils analysent leurs émotions, ressentent la nuance et observent attentivement avant d'agir (découvrez notre guide sur les{" "}
-        <a href="/guides/intelligences-multiples-gardner">9 formes d'intelligence de l'enfant</a>).
+        Dans la grille des intelligences multiples de Howard Gardner, certains enfants possèdent une forte <strong>intelligence intrapersonnelle</strong> : ils analysent leurs émotions, ressentent la nuance et observent attentivement avant d'agir (voir notre guide sur les{" "}
+        <a href="/guides/intelligences-multiples-gardner">9 formes d'intelligence de Gardner</a>).
       </p>
       <p>
-        Au lieu de lui répéter <em>« Ne sois pas timide »</em> (ce qui renforce l'anxiété et le sentiment de honte), valorisez sa perspicacité. En lui confiant des missions graduelles selon les principes de la{" "}
-        <a href="/guides/discipline-positive-sans-punition">discipline positive bienveillante</a>, vous construisez son courage sans braquage.
+        Au lieu de lui répéter <em>« Ne sois pas timide »</em> (ce qui accentue l'anxiété), valorisez sa perspicacité. En lui confiant des missions graduelles selon les principes de la{" "}
+        <a href="/guides/discipline-positive-sans-punition">discipline positive</a>, vous renforcez sa confiance sans braquage.
       </p>
 
       <h2>4 exercices ludiques à réaliser à la maison</h2>
@@ -150,7 +150,7 @@ function Guide() {
 
       <h2>Que faire avant un exposé ou une récitation à l'école ?</h2>
       <p>
-        L'exposé est souvent une épreuve redoutée. Pourtant, une préparation structurée à la maison le transforme en un formidable tremplin d'estime de soi (découvrez comment{" "}
+        L'exposé est souvent une épreuve redoutée. Pourtant, une préparation structurée à la maison le transforme en un formidable tremplin d'estime de soi (voir comment{" "}
         <a href="/guides/reussite-scolaire-aider-enfant">accompagner la réussite scolaire sans stress</a>) :
       </p>
       <div className="my-6 overflow-x-auto rounded-2xl border border-ink/10">

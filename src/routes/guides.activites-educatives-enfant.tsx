@@ -15,27 +15,27 @@ const FAQ = [
   {
     question: "Quelles activités éducatives faire à la maison avec un enfant de 6 à 12 ans ?",
     answer:
-      "Les plus formatrices produisent un résultat visible avec du matériel du quotidien : fabriquer un arrosage automatique avec des bouteilles percées, construire un pont en bâtonnets sans colle, calculer le prix de revient d'une boisson maison puis organiser une vente, ou interviewer un artisan du quartier. Chacune mobilise plusieurs intelligences (logique, manuelle, relationnelle) et laisse une trace concrète dont l'enfant est fier — c'est cette fierté qui ancre durablement l'apprentissage.",
+      "Celles qui laissent une trace concrète : un système d'arrosage en bouteilles, un pont en bâtonnets sans colle, ou le calcul du prix de vente d'un gâteau maison. L'enfant mobilise ses compétences manuelles et logiques avec fierté.",
   },
   {
     question: "Quelle est la différence d'activités entre 6-8 ans et 9-12 ans ?",
     answer:
-      "Entre 6 et 8 ans, privilégiez des défis courts (15-20 min) centrés sur la manipulation, la motricité fine et l'observation immédiate (germination, pesée, parcours chronométré). Entre 9 et 12 ans, l'enfant gagne en autonomie et s'épanouit dans des micro-projets de plusieurs jours : mini-entreprise familiale, journal illustré, programmation débranchée ou construction complexe.",
+      "À 6-8 ans : des défis sensoriels de 15 minutes. À 9-12 ans : des projets autonomes sur plusieurs jours (journal de maison, petite vente, énigmes).",
   },
   {
     question: "Quels jeux éducatifs sans écran proposer à la maison ?",
     answer:
-      "Les jeux les plus formateurs sont souvent du matériel détourné : construction libre en carton, cuisine avec pesée et conversion d'unités, jeux de société de stratégie, ou mini-marché avec de la vraie monnaie. Ils développent à la fois la planification, le calcul mental et la créativité sans aucune sur-stimulation numérique.",
+      "Du carton libre, la cuisine avec conversions de grammes, des jeux de stratégie ou un mini-marché à monnaie réelle. Ils développent le raisonnement logique sans surcharge numérique.",
   },
   {
     question: "Que faire pendant les vacances quand l'enfant s'ennuie et réclame les écrans ?",
     answer:
-      "Ne tentez pas de remplir chaque minute. Proposez un seul défi par jour à heure fixe et laissez l'enfant choisir entre deux options. Un grand fil rouge de vacances (une maquette du quartier, un herbier familial, un stand de limonade) structure ses journées tout en laissant l'ennui jouer son rôle déclencheur de créativité.",
+      "Un seul défi par jour à heure fixe suffit largement. Laissez ensuite l'ennui jouer son rôle : c'est le grand moteur de l'imagination enfantine quand on ne remplit pas chaque créneau à sa place.",
   },
   {
     question: "Comment 10 minutes d'activité relancent-elles la concentration entre deux devoirs ?",
     answer:
-      "Le cerveau d'un enfant de 6 à 12 ans sature après 30 à 45 minutes d'effort abstrait. Une pause de 10 minutes active et manuelle (bâtir une tour, ranger par catégorie, devinette physique) libère la dopamine sans générer l'addiction des écrans, permettant de reprendre les devoirs avec un esprit reposé.",
+      "Une pause motrice courte (bâtir une tour, trier des objets) oxygène le cerveau et détend les yeux sans le piège addictif d'une vidéo.",
   },
 ];
 
@@ -107,7 +107,7 @@ export const Route = createFileRoute("/guides/activites-educatives-enfant")({
     const meta = pageMeta({
       title: "Activités éducatives pour les 6-12 ans à la maison",
       description:
-        "Découvrez 24 activités éducatives sans écran pour enfants de 6 à 12 ans : sciences du quotidien, calcul réel et défis créatifs faciles à la maison.",
+        "24 activités éducatives sans écran pour enfants de 6 à 12 ans : sciences du quotidien, calcul réel et défis créatifs faciles à la maison.",
       path: PATH,
       image: "/guides/og-activites.jpg",
       type: "article",
@@ -192,17 +192,11 @@ function Guide() {
 
       <h2>Pourquoi le résultat visible transforme l'apprentissage</h2>
       <p>
-        Une activité qui se termine par un objet réel, une photo, un plat cuisiné ou un score tient un enfant
-        beaucoup plus longtemps qu'une consigne abstraite. Il ne s'agit pas de le motiver par une récompense artificielle :
-        le résultat rend l'effort <strong>lisible et tangible</strong>. L'enfant voit ce qu'il a produit de ses propres mains,
-        peut le montrer avec fierté et chercher à l'améliorer.
+        Une activité qui aboutit à un objet réel, un plat ou un score capte l'attention bien plus vite qu'une consigne abstraite. Pas besoin de carotte ni de bâton. Le résultat rend l'effort <strong>lisible et tangible</strong>. L'enfant voit ce qu'il a bâti de ses mains. Il en tire une fierté authentique.
       </p>
       <p>
-        C'est aussi ce qui rend l'activité profondément révélatrice pour les parents. Une fiche d'exercices scolaires
-        remplie sous la contrainte ne dit presque rien de la personnalité de l'enfant. Un pont en bâtonnets qui s'effondre trois fois avant de
-        tenir debout en dit infiniment plus : sur sa persévérance, son esprit méthodique et sa façon d'apprivoiser l'erreur.
-        Si votre enfant a du mal à se poser pour les devoirs, découvrez également nos conseils pour{" "}
-        <a href="/guides/enfant-agite-concentration">canaliser l'énergie d'un enfant agité par l'action</a>.
+        Pour les parents, l'expérience est tout aussi éclairante. Une fiche d'exercices scolaires remplie sous la contrainte ne dit presque rien du tempérament d'un jeune. Un pont en bâtonnets qui s'effondre trois fois avant de tenir debout en dit infiniment plus sur sa persévérance et son ingéniosité face à l'erreur (voir nos conseils pour{" "}
+        <a href="/guides/enfant-agite-concentration">canaliser l'énergie d'un enfant agité par l'action</a>).
       </p>
 
       <h2>Adapter les activités selon l'âge : 6-8 ans vs 9-12 ans</h2>

@@ -15,27 +15,27 @@ const FAQ = [
   {
     question: "Quelles sont les meilleures activités manuelles pour un enfant de 4 ans (maternelle) ?",
     answer:
-      "À 4 ans, privilégiez les activités développant la motricité fine et l'autonomie sans danger : modelage en pâte à sel maison, déchirage et collage de papier de soie, enfilage de grosses perles ou macaronis, peinture aux doigts avec pigments naturels (curcuma, betterave) et fabrication d'animaux en rouleaux de carton. L'enfant doit pouvoir manipuler librement sans chercher la perfection.",
+      "À 4 ans, misez sur la motricité fine sans chercher la perfection : modelage de pâte à sel, déchirage et collage de papier de soie, enfilage de macaronis ou animaux en rouleaux de carton. L'essentiel est de manipuler librement.",
   },
   {
     question: "Quelles activités manuelles faciles faire avec un enfant de 6 à 12 ans ?",
     answer:
-      "Pour les 6-12 ans (primaire et collège), passez aux projets d'ingéniosité : fabrication d'une boîte à trésors compartimentée, couture d'un étui ou petit coussin, création d'instruments de musique en carton (balafon, guitare), fabrication de maquettes de ponts ou cabanes et teinture végétale de tissus. Ces projets renforcent la persévérance et la vision 3D.",
+      "Passez aux projets d'assemblage : boîte à compartiments, maquette de pont suspendu, instrument acoustique en carton ou teinture naturelle.",
   },
   {
     question: "Pourquoi le travail manuel est-il essentiel pour le cerveau de l'enfant ?",
     answer:
-      "Le travail des mains active des zones neuronales majeures reliées à la motricité fine, la coordination œil-main et l'écriture. Selon la théorie des intelligences multiples, il stimule l'intelligence corporelle-kinesthésique et spatiale. De plus, transformer une matière brute en objet utile procure une fierté concrète qu'aucun écran ne peut offrir.",
+      "Le travail des mains active des circuits neuronaux majeurs reliés à la coordination œil-main et à l'écriture. Selon les neurosciences et la théorie des intelligences multiples, transformer une matière brute stimule directement l'intelligence spatiale et offre un sentiment d'accomplissement concret qu'aucun écran ne procure.",
   },
   {
     question: "Comment organiser un atelier bricolage à la maison sans rien dépenser ?",
     answer:
-      "Créez une « Boîte Trésor » dans un carton où vous stockez vos emballages propres : bouchons, bouteilles, rouleaux, cartons d'œufs, bouts de ficelle et tissus usés. Installez un coin de table fixe avec une paire de ciseaux à bouts ronds et de la colle. L'enfant puise dans cette réserve en totale autonomie dès qu'une idée lui vient.",
+      "Rassemblez une boîte d'emballages propres (bouchons, rouleaux, ficelles) et posez une paire de ciseaux. L'enfant invente à partir du stock.",
   },
   {
     question: "Comment valoriser les créations de son enfant avec Génizio ?",
     answer:
-      "Génizio génère des défis manuels personnalisés selon l'âge et le matériel disponible à la maison. Lorsque votre enfant termine une construction ou un bricolage, photographiez sa réalisation dans l'application pour enrichir son Passeport de Talents et débloquer de nouveaux défis adaptés.",
+      "Photographiez sa réalisation dans l'application : Génizio identifie les compétences motrices et créatives mobilisées pour enrichir son Passeport de Talents et suggérer un nouveau défi.",
   },
 ];
 
@@ -80,7 +80,7 @@ export const Route = createFileRoute("/guides/activites-manuelles-enfant")({
     const meta = pageMeta({
       title: "18 activités manuelles faciles à la maison (4-12 ans)",
       description:
-        "Découvrez 18 activités manuelles faciles et sans écran pour enfants de 4 à 12 ans : bricolage créatif, motricité fine et recyclage à faire à la maison.",
+        "18 activités manuelles faciles et sans écran pour enfants de 4 à 12 ans : bricolage créatif, motricité fine et recyclage à faire à la maison.",
       path: PATH,
       image: "/guides/og-manuelles.jpg",
       type: "article",
@@ -140,7 +140,7 @@ function Guide() {
     <GuideLayout
       eyebrow="Activités & Bricolage"
       title="18 activités manuelles faciles à faire à la maison avec son enfant (4-12 ans)"
-      intro="Couper, coller, assembler, modeler, réparer : le travail des mains n'est pas un simple passe-temps pour occuper un mercredi après-midi. C'est l'un des moteurs les plus puissants du développement cérébral et de l'autonomie de l'enfant. Découvrez 18 idées concrètes, adaptées par tranche d'âge de 4 à 12 ans, réalisables sans matériel coûteux."
+      intro="Couper, coller, assembler, modeler, réparer : le travail des mains n'est pas un simple passe-temps pour occuper un après-midi pluvieux. C'est l'un des moteurs les plus puissants du développement cérébral et de l'autonomie de l'enfant. Voici 18 idées concrètes, adaptées par tranche d'âge de 4 à 12 ans, réalisables sans matériel coûteux."
       updated="27 août 2026"
       readingTime="8 min"
       path={PATH}
@@ -169,15 +169,15 @@ function Guide() {
 
       <h2>Pourquoi les activités manuelles sont indispensables au cerveau de l'enfant</h2>
       <p>
-        À l'ère des écrans tactiles, où un simple glissement de doigt remplace l'effort physique, les neurosciences rappellent une vérité fondamentale : <strong>le cerveau humain apprend par la manipulation de la matière réelle</strong>.
+        Face à l'omniprésence des tablettes, où un simple glissement de doigt remplace l'effort physique, les neurosciences rappellent une vérité : <strong>le cerveau humain apprend d'abord par la manipulation de la matière</strong>.
       </p>
       <p>
-        En découpant du carton, en dosant la colle ou en enfilant une ficelle, l'enfant active une zone cérébrale majeure liée à la motricité fine, qui conditionne directement la tenue du stylo et la fluidité de l'écriture. Dans le cadre de la{" "}
-        <a href="/guides/intelligences-multiples-gardner">théorie des 9 formes d'intelligence</a>, le bricolage nourrit l'intelligence corporelle-kinesthésique et spatiale.
+        En découpant du carton, en dosant la colle ou en tressant de la ficelle, l'enfant active des circuits moteurs fins qui conditionnent la tenue du crayon et l'écriture. Dans la grille des{" "}
+        <a href="/guides/intelligences-multiples-gardner">9 formes d'intelligence de Gardner</a>, le bricolage nourrit directement l'intelligence spatiale.
       </p>
       <p>
-        De plus, créer un objet de ses mains est la meilleure alternative pour{" "}
-        <a href="/guides/ecrans-addiction-alternatives-enfant">sevrer un enfant des écrans sans crise</a> : face à un projet concret, son attention est naturellement captivée par le résultat tangible.
+        Mieux encore : fabriquer un objet réel reste le moyen le plus efficace pour{" "}
+        <a href="/guides/ecrans-addiction-alternatives-enfant">sevrer un enfant des écrans sans crise</a>. Devant une création concrète, l'attention se pose d'elle-même.
       </p>
 
       <h2>18 activités manuelles classées par tranche d'âge</h2>
@@ -204,18 +204,18 @@ function Guide() {
 
       <h2>Focus : Les activités manuelles pour un enfant de 4 ans (Maternelle)</h2>
       <p>
-        À 4 ans, l'enfant perfectionne la coordination de ses deux mains. Le secret de la réussite réside dans la simplicité :
+        À 4 ans, l'enfant affine la synchronisation de ses deux mains. La clé tient en un mot : simplicité.
       </p>
       <ul>
         <li>
-          <strong>La pâte à sel magique :</strong> 2 verres de farine, 1 verre de sel fin, 1 verre d'eau tiède. Laissez l'enfant pétrir la pâte (un formidable exutoire pour{" "}
-          <a href="/guides/gestion-colere-emotions-enfant">apaiser les tensions et la frustration</a>), puis sculptez des formes avant cuisson douce.
+          <strong>La pâte à sel magique :</strong> 2 verres de farine, 1 verre de sel fin, 1 verre d'eau tiède. Pétrir la matière apaise les tensions nerveuses (un réflexe utile pour{" "}
+          <a href="/guides/gestion-colere-emotions-enfant">canaliser la frustration</a>) avant de sculpter des formes simples.
         </li>
         <li>
-          <strong>Le collage de papier de soie :</strong> Déchirer avec les doigts entraîne les muscles des pouces et index (la pince nécessaire pour écrire).
+          <strong>Le collage de papier de soie :</strong> Déchirer avec les doigts entraîne les muscles des pouces et index.
         </li>
         <li>
-          <strong>Le tri et enfilage de perles :</strong> Développe la concentration chez les tout-petits qui ont du mal à se poser (découvrez aussi nos conseils pour un{" "}
+          <strong>Le tri et enfilage de perles :</strong> Développe l'attention des tout-petits qui peinent à se poser (voir nos repères pour un{" "}
           <a href="/guides/enfant-agite-concentration">enfant qui a du mal à se concentrer</a>).
         </li>
       </ul>

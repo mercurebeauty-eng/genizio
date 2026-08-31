@@ -9,22 +9,22 @@ const FAQ = [
     question:
       "Pourquoi mon enfant attend-il que je crie pour ranger sa chambre ou faire ses devoirs ?",
     answer:
-      "Quand les consignes sont perçues comme des ordres répétitifs sans finalité claire, l'enfant s'habitue à un niveau de plus en plus fort avant de réagir : il ne range pas parce qu'on le lui demande, mais parce qu'on crie. C'est un cercle épuisant. En remplaçant l'ordre répété par un système visible et négocié — un tableau des missions qu'il cocha lui-même, une règle qu'il a contribué à formuler — l'enfant devient acteur de sa tâche au lieu d'attendre l'escalade.",
+      "L'enfant s'habitue au volume sonore et n'agit plus que sous la contrainte immédiate. Remplacez l'ordre répété par un tableau de bord visuel : quand il coche lui-même sa tâche, le support devient l'arbitre neutre.",
   },
   {
     question: "À quel âge un enfant peut-il devenir vraiment autonome à la maison ?",
     answer:
-      "Dès 6-7 ans, un enfant est tout à fait capable de gérer son sac de classe, son rangement personnel et une mission domestique régulière si le système est clair et visuel. De 8 à 10 ans, il peut préparer son cartable la veille, ranger sa chambre seul et tenir une petite responsabilité (arroser les plantes, mettre la table). De 11 à 12 ans, il peut planifier son temps de travail, suivre une recette simple et gérer de petites courses au quartier. L'âge compte moins que la régularité : mieux vaut une seule mission tenue chaque jour que cinq missions oubliées.",
+      "Dès 6-7 ans pour son cartable et ses chaussures. À 8-10 ans pour sa chambre et ses devoirs. À 11-12 ans pour la gestion de son temps et de petites courses. La constance prime sur la quantité : mieux vaut une seule habitude tenue chaque jour que cinq corvées bâclées.",
   },
   {
     question: "Faut-il récompenser l'autonomie avec de l'argent ou des cadeaux ?",
     answer:
-      "Non. Payer l'enfant pour ranger sa chambre ou faire ses devoirs transforme une responsabilité normale en marchandise : il ne fera plus rien sans négocier son tarif, et le jour où vous n'aurez plus de monnaie, il n'y aura plus d'effort. L'autonomie se récompense par de la confiance supplémentaire : de nouveaux privilèges (choisir le menu du dimanche, inviter un ami, décider de l'heure de son bain), la fierté de cocher ses réussites dans son cahier, et des responsabilités plus grandes quand il a prouvé qu'il pouvait les tenir.",
+      "Non. Payer pour ranger transforme le devoir familial en transaction marchande. Récompensez plutôt par de nouveaux privilèges et de la liberté d'initiative.",
   },
   {
     question: "Mon enfant refuse de participer aux tâches de la maison, comment réagir ?",
     answer:
-      "Ne transformez pas le refus en guerre de pouvoir. Revenez à la discussion : demandez-lui quelle mission il choisirait plutôt que celle que vous imposez (« tu préfères ranger le salon ou t'occuper du linge ? »), et proposez d'échanger une tâche contre une autre entre frères et sœurs. Si le refus persiste, appliquez la conséquence naturelle : un enfant qui ne range pas sa chambre trouve moins facilement ses affaires — et c'est lui qui en subit l'inconvénient. L'important est de rester calme et régulier : la crise de refus passe, la règle reste.",
+      "Évitez le bras de fer direct. Offrez-lui le choix entre deux missions équivalentes (« ranger le salon ou vider le lave-vaisselle ? »). Si le refus persiste, laissez jouer la conséquence naturelle : les affaires non rangées ne sont pas disponibles le lendemain.",
   },
 ];
 
@@ -33,7 +33,7 @@ export const Route = createFileRoute("/guides/autonomie-responsabilite-maison")(
     const meta = pageMeta({
       title: "Comment rendre son enfant autonome sans crier (6-12 ans)",
       description:
-        "Comment rendre son enfant autonome sans crier ? Découvrez les tâches adaptées par âge (6-12 ans), la charte familiale et les tableaux de mission visuels.",
+        "Comment rendre son enfant autonome sans crier ? Tâches adaptées par âge (6-12 ans), charte familiale et tableaux de mission visuels.",
       path: PATH,
       image: "/guides/og-autonomie.jpg",
       type: "article",
@@ -71,7 +71,7 @@ function Guide() {
     <GuideLayout
       eyebrow="Autonomie & Responsabilités"
       title="Comment rendre son enfant autonome et responsable à la maison sans crier"
-      intro="Répéter dix fois les mêmes consignes le soir épuise les parents et déresponsabilise l'enfant. L'autonomie ne s'obtient pas par la menace ou l'insistance sonore, mais par la co-construction de règles claires, la valorisation de tâches concrètes et la confiance accordée. Voici comment l'installer sereinement étape par étape."
+      intro="Répéter dix fois les mêmes consignes le soir épuise toute la famille. L'autonomie ne s'obtient pas par l'insistance sonore, mais par des règles concertées, des repères visuels clairs et une confiance réelle. Voici la méthode pour installer des routines solides sans conflit quotidien."
       updated="26 août 2026"
       readingTime="8 min"
       path={PATH}

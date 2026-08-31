@@ -17,17 +17,17 @@ const FAQ = [
   {
     question: "Comment un enfant avec autisme ou TDAH apprend-il le plus efficacement ?",
     answer:
-      "Les enfants neuroatypiques (sur le spectre de l'autisme, avec TDAH ou DYS) traitent l'information de manière préférentiellement visuelle, spatiale et kinesthésique (en manipulant la matière). Ils ont besoin de comprendre 'à quoi ça sert dans le réel' avant d'accepter une théorie abstraite, et s'épanouissent dans des consignes séquencées et des environnements prévisibles.",
+      "Par le visuel et l'action. Un enfant neuroatypique a besoin d'expérimenter concrètement le sens d'une notion avant d'en retenir la règle abstraite. Les consignes séquencées et prévisibles font toute la différence.",
   },
   {
     question: "L'école classique est-elle adaptée aux profils neuroatypiques ?",
     answer:
-      "Le modèle traditionnel de cours magistral (rester assis 6 heures à écouter un flux verbal continu) met ces enfants en surcharge sensorielle et cognitive. Ce n'est pas un manque d'intelligence, mais un décalage de méthode. Dès qu'on leur permet d'apprendre par le projet, l'expérimentation visuelle ou le défi pratique, leur potentiel se libère de façon spectaculaire.",
+      "Le cours magistral de six heures immobiles sature rapidement leur canal sensoriel. Ce n'est pas un déficit d'intelligence, mais un décalage de méthode : dès qu'on remplace l'écoute passive par des projets de manipulation ou des défis pratiques, leur curiosité et leur vivacité se déploient immédiatement.",
   },
   {
     question: "Comment canaliser l'hyperfocalisation d'un enfant atypique ?",
     answer:
-      "L'hyperfocalisation (la capacité à se plonger pendant des heures dans un sujet passionnant) est un super-pouvoir si on sait l'accueillir. Utilisez ses centres d'intérêt spécifiques (les trains, les circuits, les animaux, les étoiles) comme passerelle pour aborder les mathématiques, la lecture ou la géographie.",
+      "Ne la combattez pas, utilisez-la. Un centre d'intérêt fort (astronomie, mécanique, animaux) devient un formidable levier pour aborder les maths ou la lecture.",
   },
 ];
 
@@ -36,7 +36,7 @@ export const Route = createFileRoute("/guides/autisme-tdah-apprentissage-forces-
     const meta = pageMeta({
       title: "Autisme & TDAH : Leurs atouts uniques d'apprentissage",
       description:
-        "Profils atypiques, autisme et TDAH : découvrez comment leur façon d'apprendre par le réel, l'image et l'action concrète surpasse les limites de l'école classique.",
+        "Profils atypiques, autisme et TDAH : comment leur façon d'apprendre par le réel, l'image et l'action concrète valorise leur potentiel face au modèle scolaire classique.",
       path: PATH,
       image: "/guides/og-neurodiversite.jpg",
       type: "article",
@@ -123,17 +123,15 @@ function Guide() {
 
       <h2>1. La pensée en images et le besoin d'ancrage dans la matière</h2>
       <p>
-        Pour un enfant à profil neuroatypique, les cours purement magistraux assis pendant 6 heures génèrent une surcharge cognitive et sensorielle rapide. Son cerveau s'épanouit dans la <strong>pensée spatiale, visuelle et kinesthésique</strong> (telle que décrite dans la{" "}
-        <a href="/guides/intelligences-multiples-gardner">théorie des 9 intelligences de Gardner</a>) :
+        Pour un enfant à profil neuroatypique, écouter passivement pendant six heures est une épreuve. Le cerveau sature. C'est un fait physiologique. Son intelligence se révèle dans la <strong>pensée spatiale, visuelle et kinesthésique</strong> (telle que décrite dans la{" "}
+        <a href="/guides/intelligences-multiples-gardner">théorie des 9 formes d'intelligence de Gardner</a>) :
       </p>
       <ul>
         <li>Il a besoin de voir la structure globale avant les détails.</li>
-        <li>Il comprend une règle de physique ou de mathématiques instantanément lorsqu'il peut la manipuler via des{" "}
-          <a href="/guides/activites-manuelles-enfant">activités manuelles et d'ingénierie concrète</a>.
-        </li>
-        <li>La confrontation directe avec des objets réels (mécanique, programmation, puzzles 3D) dissipe l'anxiété et active une concentration absolue (découvrez nos méthodes pour un{" "}
-          <a href="/guides/enfant-agite-concentration">enfant inattentif ou hyperactif</a>).
-        </li>
+        <li>Il comprend une règle de physique ou de mathématiques dès qu'il peut la manipuler via des{" "}
+          <a href="/guides/activites-manuelles-enfant">activités manuelles et d'ingénierie concrète</a>.</li>
+        <li>Le contact avec des objets réels (mécanique, programmation, puzzles 3D) dissipe l'anxiété et réveille une concentration soutenue (voir nos méthodes pour un{" "}
+          <a href="/guides/enfant-agite-concentration">enfant inattentif ou hyperactif</a>).</li>
       </ul>
 
       <h2>2. Les 3 super-pouvoirs des profils atypiques</h2>

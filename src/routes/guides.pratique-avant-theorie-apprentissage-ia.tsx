@@ -9,29 +9,29 @@ const FAQ = [
     question:
       "Pourquoi enseigner la pratique avant la théorie fonctionne-t-il mieux avec les enfants ?",
     answer:
-      "L'enfant apprend par l'expérience et la curiosité active, pas par l'abstraction pure. Lorsqu'on lui impose une formule ou une règle théorique sans contexte, son cerveau la traite comme une information morte à mémoriser pour un examen. À l'inverse, lorsqu'il est d'abord confronté à un problème concret (construire un objet qui tient, équilibrer un budget, faire pousser une plante), il se heurte aux contraintes du réel. C'est cette friction qui déclenche un besoin viscéral et spontané d'aller chercher la théorie pour réussir son projet. La connaissance devient alors un pouvoir d'action et non une corvée.",
+      "L'enfant apprend par l'action et le tâtonnement expérimental. Face à un problème tangible (construire un pont, calculer un budget de cuisine), les contraintes du réel créent le besoin d'aller chercher la règle théorique pour réussir.",
   },
   {
     question:
       "Comment l'intelligence artificielle change-t-elle la valeur des compétences scolaires ?",
     answer:
-      "L'IA automatise à coût quasi nul les tâches cognitives d'exécution : rédiger un texte standard, coder une fonction, traduire, calculer ou réciter des faits historiques. Être un excellent exécutant mémoriel ne suffit plus pour garantir son avenir. Ce qui devient inestimable, ce sont les méta-compétences humaines : l'esprit critique, la capacité à poser les bonnes questions, l'ingéniosité pratique, le sens de l'initiative, le jugement et l'audace de transformer une idée en réalisation tangible.",
+      "L'IA automatise la récitation de connaissances et le code standard. Ce qui devient précieux, c'est la pensée critique, l'ingéniosité manuelle et la capacité à transformer une idée en projet concret.",
   },
   {
     question:
-      "Mon enfant a de mauvaises notes en théorie : est-ce le signe qu'il réussira moins bien plus tard ?",
+      "Mon enfant a de mauvaises notes en théorie : est-ce le signe d'un échec futur ?",
     answer:
-      "Absolument pas. Les examens scolaires classiques évaluent principalement la mémoire et la conformité à des procédures formelles. Beaucoup d'enfants pénalisés par ce format possèdent une intelligence spatiale, artisanale, entrepreneuriale ou relationnelle remarquable. Dans un monde où l'IA gère la théorie, ces profils axés sur l'action, l'intuition et la débrouillardise pratique détiennent précisément les qualités d'adaptation les plus recherchées.",
+      "Non. Les examens mesurent la mémorisation formelle. Les profils manuels, créatifs ou relationnels disposent souvent d'une forte capacité d'adaptation pratique.",
   },
   {
     question: "Comment appliquer ce principe à la maison dès ce soir en 10 minutes ?",
     answer:
-      "Ne commencez jamais par expliquer la règle. Donnez un micro-défi concret avec du matériel simple : par exemple, 'construis une tour d'au moins 30 cm avec 10 spaghettis et du scotch', ou 'calcule combien nous avons dépensé pour le repas et imagine comment économiser 10 %'. Laissez l'enfant expérimenter, échouer, observer ce qui ne marche pas, puis posez des questions pour l'amener à découvrir lui-même le principe logique ou physique sous-jacent.",
+      "Donnez un mini-défi sans cours préalable : construire une tour stable avec des spaghettis ou calculer 10 % d'économie sur les courses. Laissez-le échouer puis questionnez-le.",
   },
   {
     question: "Comment Naya et Génizio accompagnent-ils cette transition du réel vers la théorie ?",
     answer:
-      "Génizio génère des défis personnalisés ancrés dans le quotidien de l'enfant (cuisine, mécanique, petit commerce, nature, expression). L'enfant réalise son projet, le parent valide la preuve photographique, et l'IA Naya intervient non pour donner des réponses toutes faites, mais pour stimuler le questionnement critique et cartographier les 9 formes d'intelligence de l'enfant au fil des semaines.",
+      "Génizio génère des missions concrètes du quotidien (cuisine, bricolage, nature). La validation par photo ancre la progression et cartographie ses 9 formes d'intelligence sans test scolaire.",
   },
 ];
 
@@ -40,7 +40,7 @@ export const Route = createFileRoute("/guides/pratique-avant-theorie-apprentissa
     const meta = pageMeta({
       title: "Pratique avant théorie : éduquer son enfant à l'ère de l'IA",
       description:
-        "Découvrez pourquoi la confrontation au réel doit précéder la théorie pour développer l'esprit critique, l'ingéniosité et l'employabilité future de votre enfant.",
+        "Pourquoi la confrontation au réel doit précéder la théorie pour développer l'esprit critique, l'ingéniosité et l'autonomie de votre enfant.",
       path: PATH,
       image: "/guides/og-pratique-theorie.jpg",
       type: "article",
@@ -131,9 +131,9 @@ function GuidePratiqueAvantTheorie() {
         <p>
           Dans ce nouveau contexte, continuer à évaluer nos enfants uniquement sur leur capacité à
           restituer des cours théoriques revient à les préparer à des métiers que les algorithmes
-          exécutent déjà mieux qu'eux (découvrez nos repères pour{" "}
+          exécutent déjà mieux qu'eux (voir nos repères pour{" "}
           <a href="/guides/orientation-scolaire-metiers-avenir">aider son enfant à choisir son métier dès 10 ans</a> et notre{" "}
-          <a href="/guides/test-orientation-metier-enfant-futur">test d'orientation pour collégiens à l'ère de l'IA</a>).
+          <a href="/guides/test-orientation-metier-enfant-futur">test d'orientation pour collégiens face à l'IA</a>).
         </p>
 
         <div className="rounded-3xl border border-brand/25 bg-brand/5 p-6 md:p-8">

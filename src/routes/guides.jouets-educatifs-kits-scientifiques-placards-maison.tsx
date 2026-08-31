@@ -17,17 +17,17 @@ const FAQ = [
   {
     question: "Les kits scientifiques et jeux éducatifs du commerce sont-ils inutiles ?",
     answer:
-      "Ils ne sont pas inutiles, mais ils sont souvent limités : ils fonctionnent comme une 'recette pré-mâchée' où l'enfant suit un mode d'emploi sans réelle liberté de concevoir. Une fois l'expérience terminée, la boîte finit au placard. Les matériaux ouverts (carton, plastique récupéré, élastiques, vinaigre) obligent l'enfant à réfléchir par lui-même, à tester, à rater et à recommencer.",
+      "Non, mais leur portée reste mince : l'enfant se contente d'exécuter une notice sans rien inventer. Une fois finie, la boîte dort au placard.",
   },
   {
     question: "Quelles expériences scientifiques simples peut-on faire sans rien acheter ?",
     answer:
-      "Le volcan au bicarbonate et vinaigre (réaction acido-basique), le filtre à eau maison avec des graviers, du sable et du charbon (filtration physique), le pont en carton capable de supporter 2 kg (résistance des structures), ou la catapulte en bâtonnets et élastiques (énergie potentielle et cinétique).",
+      "Quatre classiques immédiats : le volcan au bicarbonate avec du vinaigre pour observer une réaction acide-base gazeuse ; le filtre à eau multicouche (gravier, sable, charbon concassé) pour comprendre la filtration physique ; le pont suspendu en carton ondulé testé avec 2 kg de charge ; et enfin le lanceur à élastiques pour visualiser le transfert entre énergie potentielle et cinétique.",
   },
   {
     question: "Comment encourager un enfant qui n'a pas l'habitude de bricoler ?",
     answer:
-      "Commencez par un défi court avec un objectif très drôle ou spectaculaire (ex : 'Faire rouler une bille du haut de la table jusqu'au salon sans qu'elle touche le sol'). Participez au début pour amorcer la dynamique, puis laissez-le trouver les solutions techniques.",
+      "Donnez-lui une mission loufoque, par exemple faire voyager une bille sans toucher le sol. Donnez l'impulsion au départ, puis effacez-vous.",
   },
 ];
 
@@ -36,7 +36,7 @@ export const Route = createFileRoute("/guides/jouets-educatifs-kits-scientifique
     const meta = pageMeta({
       title: "Kits scientifiques vs Maison : Éveiller l'enfant au réel",
       description:
-        "Découvrez pourquoi les objets de votre cuisine développent mieux l'ingéniosité scientifique de votre enfant que les kits éducatifs coûteux.",
+        "Les objets de votre cuisine développent bien mieux l'ingéniosité scientifique de votre enfant que les kits éducatifs coûteux du commerce.",
       path: PATH,
       image: "/guides/og-jouets-placards.jpg",
       type: "article",
@@ -135,7 +135,7 @@ function Guide() {
             1. Le Défi de l'Ingénieur : Le Pont Poids-Lourd
           </div>
           <p className="text-sm text-ink/80 leading-relaxed">
-            Matériel : 2 feuilles de carton et du scotch. Mission : Construire un pont suspendu capable de soutenir une bouteille d'eau d'un litre.
+            2 cartons, un rouleau d'adhésif. Mission : soutenir 1 litre d'eau sans plier.
           </p>
         </div>
 
@@ -145,7 +145,7 @@ function Guide() {
             2. Le Défi du Chimiste : La Lampe à Lave Maison
           </div>
           <p className="text-sm text-ink/80 leading-relaxed">
-            Matériel : Bouteille, eau, huile et comprimé effervescent. Découverte de la densité des liquides et des réactions acido-basiques.
+            Versez de l'eau, de l'huile et un comprimé effervescent dans une bouteille transparente pour observer la séparation des densités et le dégagement gazeux.
           </p>
         </div>
 
@@ -155,7 +155,7 @@ function Guide() {
             3. Le Défi du Physicien : Le Sauvetage de l'Œuf
           </div>
           <p className="text-sm text-ink/80 leading-relaxed">
-            Matériel : Un œuf cru, pailles, sacs plastiques. Mission : Concevoir un parachute amortisseur pour un lâcher de 2 mètres.
+            Objectif : fabriquer un parachute capable d'amortir une chute de 2 mètres sans casser l'œuf cru.
           </p>
         </div>
 
@@ -165,20 +165,19 @@ function Guide() {
             4. Le Défi Hydraulique : La Station de Filtration
           </div>
           <p className="text-sm text-ink/80 leading-relaxed">
-            Matériel : Bouteille coupée, coton, sable et graviers. Observation de la porosité et de la décantation physique.
+            Superposez coton, sable fin et graviers dans un goulot inversé pour clarifier une eau boueuse par décantation successive.
           </p>
         </div>
       </div>
 
       <h2>3. Ce que cela change dans son rapport à l'école</h2>
       <p>
-        Un enfant qui a construit un pont en carton comprend intuitivement les forces physiques et la géométrie des triangles (découvrez pourquoi{" "}
-        <a href="/guides/pratique-avant-theorie-apprentissage-ia">la pratique doit toujours précéder la théorie à l'ère de l'IA</a>).
+        Un enfant qui a construit un pont en carton comprend la géométrie des triangles bien avant qu'on lui parle de trigonométrie. Le concret précède la formule. C'est le cœur même de notre méthode (voir notre analyse sur <a href="/guides/pratique-avant-theorie-apprentissage-ia">l'importance de la pratique avant la théorie</a>).
       </p>
       <p>
-        Pour stimuler la curiosité de votre enfant au quotidien, explorez également nos{" "}
-        <a href="/guides/activites-educatives-enfant">24 activités éducatives à faire à la maison</a> ainsi que nos conseils d'
-        <a href="/guides/quelle-librairie-choisir-lieux-creativite-enfant">éveil culturel et choix de librairies</a>.
+        Pour nourrir l'envie d'explorer au quotidien, piochez aussi dans nos{" "}
+        <a href="/guides/activites-educatives-enfant">24 activités éducatives maison</a> et nos repères pour{" "}
+        <a href="/guides/quelle-librairie-choisir-lieux-creativite-enfant">choisir une librairie stimulante</a>.
       </p>
 
       <div className="my-8 not-prose rounded-3xl border border-brand/20 bg-brand/5 p-6 sm:p-8">

@@ -17,17 +17,17 @@ const FAQ = [
   {
     question: "Faut-il céder quand son enfant réclame une marque coûteuse comme North Face ou Nike ?",
     answer:
-      "Céder systématiquement installe l'illusion que la valeur personnelle dépend d'un logo commercial. Refuser brutalement sans expliquer crée de la frustration et le sentiment d'être exclu du groupe d'amis. La meilleure approche est le compromis responsabilisant : 'Je comprends pourquoi ce sac te plaît. Voici le budget de base que nous allouons pour un sac solide. Si tu veux ce modèle précis, comment proposes-tu de financer ou de mériter la différence ?'",
+      "Céder à chaque envie installe l'idée que l'estime de soi dépend d'un logo. Mais refuser sans dialogue isole l'adolescent de son groupe. La bonne réponse : financer le coût d'un sac standard solide, et lui proposer de mériter ou financer lui-même le surcoût.",
   },
   {
     question: "Comment valoriser la créativité artisanale face aux marques chez les adolescents ?",
     answer:
-      "Les adolescents adorent la notion d'exclusivité (les 'pièces uniques' ou 'éditions limitées'). Montrez-lui que des créateurs de mode célèbres et des artistes ont commencé en personnalisant des sacs neutres avec de la peinture textile, des patchs ou des broderies. Personnaliser son propre équipement permet de passer du statut de simple suiveur de mode à celui de créateur de tendance.",
+      "Misez sur l'édition limitée : personnaliser un sac neutre avec du tissu wax ou des patchs le transforme en pièce unique qu'aucun camarade ne possède.",
   },
   {
     question: "Quelles activités concrètes proposer pour apprendre la valeur de l'argent ?",
     answer:
-      "Proposez-lui des mini-défis d'autonomie économique adaptés à son âge : vendre de vieux jouets sur un vide-grenier ou une plateforme d'occasion, fabriquer et vendre des gourmandises ou du jus de fruits lors d'un événement familial, ou proposer des petits services rémunérés (laver la voiture des voisins, désherber le jardin, ranger le garage).",
+      "Trois pistes simples : trier et revendre d'anciens jouets sur une plateforme de seconde main, tenir un stand de boissons maison lors d'une fête de quartier, ou proposer des petits services rémunérés aux proches (laver la voiture, désherber le potager, ranger le garage).",
   },
 ];
 
@@ -74,7 +74,7 @@ function Guide() {
     <GuideLayout
       eyebrow="Créativité & Autonomie"
       title="Votre enfant réclame le sac North Face ou Nike ? Challengez-le : et s'il créait son équipement ?"
-      intro="Chaque rentrée scolaire ou passage au collège amène son lot d'exigences : le sac à dos North Face dernier cri, la sacoche Nike incontournable, la housse à la mode. Cette pression des marques pèse sur le budget familial et suscite des tensions. Mais plutôt que de sanctionner ou de céder passivement, pourquoi ne pas transformer cette envie en son tout premier défi de créateur et de gestionnaire ?"
+      intro="Chaque rentrée scolaire ou passage au collège amène son lot d'exigences : le sac à dos de marque, la sacoche à la mode, la trousse tendance. Cette pression des marques pèse sur le budget familial et crée des tiraillements. Plutôt que de sanctionner ou de céder passivement, transformez cette envie en défi d'ingéniosité et de gestion."
       updated="27 août 2026"
       readingTime="7 min"
       path={PATH}
@@ -113,12 +113,12 @@ function Guide() {
 
       <h2>1. Comprendre le vrai besoin derrière la demande de marque</h2>
       <p>
-        Quand un jeune réclame une marque précise, ce n'est pas un simple caprice : l'objet remplit un rôle d'intégration sociale et d'affirmation de soi dans la cour d'école.
+        Quand un jeune réclame une marque précise, ce n'est pas un caprice isolé. C'est un besoin d'appartenance. À cet âge, le vêtement sert d'armure sociale.
       </p>
       <p>
         Plutôt que d'entrer dans un bras de fer (retrouvez nos repères de{" "}
-        <a href="/guides/discipline-positive-sans-punition">discipline positive sans punition ni humiliation</a>), reconnaissez son désir d'appartenance tout en stimulant son{" "}
-        <a href="/guides/autonomie-responsabilite-maison">autonomie et son sens des responsabilités à la maison</a>.
+        <a href="/guides/discipline-positive-sans-punition">discipline positive sans punition</a>), validez son désir tout en sollicitant son{" "}
+        <a href="/guides/autonomie-responsabilite-maison">autonomie et son sens des responsabilités</a>.
       </p>
 
       <h2>2. Les 3 défis pour transformer le consommateur en producteur</h2>
@@ -130,30 +130,30 @@ function Guide() {
             Défi 1 : La Customisation Unique
           </div>
           <p className="text-sm text-ink/80 leading-relaxed">
-            Acheter un sac neutre très solide et le personnaliser avec du wax, de la broderie ou de la peinture textile (piochez dans nos{" "}
-            <a href="/guides/activites-manuelles-enfant">15 activités manuelles créatives</a>).
+            Un sac neutre en toile brute, quelques chutes de wax et de la colle textile : l'adolescent crée un modèle collector que personne d'autre ne portera (idées dans nos{" "}
+            <a href="/guides/activites-manuelles-enfant">activités manuelles</a>).
           </p>
         </div>
 
         <div className="rounded-2xl border border-ink/10 bg-surface/50 p-5 shadow-sm">
           <div className="mb-2 flex items-center gap-2 font-semibold text-ink">
             <Coins className="h-5 w-5 text-brand" />
-            Défi 2 : Le Projet Co-Financement (50/50)
+            Défi 2 : Le Projet Co-Financement
           </div>
           <p className="text-sm text-ink/80 leading-relaxed">
-            Allouez le budget d'un sac standard. Pour le modèle haut de gamme, encouragez-le à mériter le supplément par des services utiles issus de nos{" "}
-            <a href="/guides/defis-pour-adolescents">12 défis stimulants pour adolescents</a>.
+            Fixez le budget d'un sac standard. S'il veut le modèle premium, il finance la différence par des missions utiles (voir nos{" "}
+            <a href="/guides/defis-pour-adolescents">défis pour adolescents</a>).
           </p>
         </div>
 
         <div className="rounded-2xl border border-ink/10 bg-surface/50 p-5 shadow-sm">
           <div className="mb-2 flex items-center gap-2 font-semibold text-ink">
             <Sparkles className="h-5 w-5 text-brand" />
-            Défi 3 : La Housse Upcycling Zéro Déchet
+            Défi 3 : La Housse Upcycling
           </div>
           <p className="text-sm text-ink/80 leading-relaxed">
-            Concevoir et coudre une pochette de protection d'ordinateur en recyclant de vieux jeans. L'occasion idéale d'explorer ses{" "}
-            <a href="/guides/intelligences-multiples-gardner">intelligences kinesthésique et visuo-spatiale</a>.
+            Recycler un vieux jean pour coudre une pochette d'ordinateur rembourrée et muscler ses{" "}
+            <a href="/guides/intelligences-multiples-gardner">intelligences manuelles</a>.
           </p>
         </div>
       </div>

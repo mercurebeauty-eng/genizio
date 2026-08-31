@@ -9,24 +9,24 @@ const FAQ = [
     question:
       "N'est-il pas trop tôt pour parler d'orientation scolaire à un enfant de 10 à 12 ans ?",
     answer:
-      "Il ne s'agit pas de lui faire choisir une carrière définitive, mais d'éveiller sa curiosité pour la diversité des métiers du monde réel : artisanat, commerce, agriculture, santé, numérique, enseignement. Plus un enfant découvre tôt la variété des métiers et des filières possibles, plus il donne du sens à ses apprentissages scolaires actuels — « à quoi ça sert » devient une question concrète, pas une menace.",
+      "Le but n'est pas de figer une carrière, mais de donner du sens aux apprentissages scolaires en découvrant les métiers du quotidien : artisanat, commerce, santé, numérique ou ingénierie.",
   },
   {
     question: "Quelles filières peut choisir mon enfant après le collège ?",
     answer:
-      "Tout dépend du pays et du système scolaire, mais le principe est le même : les filières professionnelles (CAP, BTS, formations techniques, apprentissage) mènent à des métiers réels et demandés — plomberie, électricité, couture, mécanique, cuisine, agriculture, informatique — souvent plus vite que les filières générales, et avec de vraies perspectives. Un enfant qui aime travailler avec ses mains n'a pas « raté » l'école : il a simplement besoin d'une filière qui valorise son intelligence pratique. L'important est de visiter, d'interroger des professionnels et de regarder ce qui existe vraiment près de chez vous avant de décider.",
+      "Les filières techniques et professionnelles (CAP, bac pro, apprentissage) répondent à une vraie demande du marché (artisanat, énergie, maintenance, informatique). Un jeune attiré par le travail manuel a besoin d'un parcours qui valorise son intelligence concrète plutôt que de s'épuiser dans une voie générale inadaptée.",
   },
   {
     question:
-      "Comment l'IA et l'apprentissage par projet aident-ils à déceler les métiers du futur ?",
+      "Comment l'apprentissage par projet aide-t-il à déceler les métiers du futur ?",
     answer:
-      "Les métiers de demain exigeront la résolution de problèmes complexes, la créativité et la pensée critique — des capacités que les examens purement théoriques mesurent mal. En observant les compétences mobilisées lors de défis réels (construire, vendre, organiser, réparer), on identifie les appétences naturelles qui feront la différence, bien avant que les notes n'en disent quoi que ce soit.",
+      "En observant un enfant bâtir, organiser ou réparer un projet réel, ses forces naturelles émergent bien plus nettement qu'à travers un bulletin de notes.",
   },
   {
     question:
       "Que faire si mon enfant ne s'intéresse qu'à un seul sujet (ex. le football ou la musique) ?",
     answer:
-      "Utilisez ce sujet comme point de départ ! Autour du football gravitent des métiers de statistiques, de journalisme, de kinésithérapie, de gestion d'événements et d'architecture de stade. Autour de la musique : l'ingénierie du son, la production, l'événementiel, l'enseignement. Raccordez toujours la passion de l'enfant à l'éventail des métiers et des compétences qui l'entourent — la passion n'est pas une impasse, c'est une porte d'entrée.",
+      "Prenez sa passion comme point de départ. Autour du sport gravitent des métiers de données, de kinésithérapie, de logistique et de journalisme. Raccordez toujours son centre d'intérêt à l'écosystème professionnel qui l'entoure.",
   },
 ];
 
@@ -35,7 +35,7 @@ export const Route = createFileRoute("/guides/orientation-scolaire-metiers-aveni
     const meta = pageMeta({
       title: "Orientation scolaire : choisir son métier dès 10 ans",
       description:
-        "Découvrez 3 enquêtes pratiques à faire à la maison pour éveiller son enfant aux métiers d'avenir, filières techniques et talents réels sans pression.",
+        "3 enquêtes pratiques à faire à la maison pour éveiller son enfant aux métiers d'avenir, filières techniques et talents réels sans pression.",
       path: PATH,
       image: "/guides/og-orientation.jpg",
       type: "article",
@@ -55,7 +55,7 @@ export const Route = createFileRoute("/guides/orientation-scolaire-metiers-aveni
           articleJsonLd({
             headline: "Aider son enfant à choisir son métier : 3 enquêtes à faire à la maison",
             description:
-              "Méthode concrète pour aider son enfant à découvrir les métiers et les filières possibles à l'ère de l'intelligence artificielle.",
+              "Méthode concrète pour aider son enfant à découvrir les métiers et les filières d'avenir dès le collège.",
             path: PATH,
             image: "/guides/og-orientation.jpg",
             datePublished: "2026-08-08",
@@ -97,11 +97,11 @@ function Guide() {
 
       <h2>Pourquoi les notes scolaires seules ne prédisent pas la réussite professionnelle</h2>
       <p>
-        L'école traditionnelle mesure essentiellement l'intelligence verbale et logico-mathématique abstraite. Pourtant, le monde professionnel valorise tout autant l'intelligence relationnelle (négocier, fédérer), spatiale et manuelle (concevoir, réparer) ainsi que le sens pratique (découvrez la cartographie complète des{" "}
+        L'école traditionnelle mesure essentiellement l'intelligence verbale et logico-mathématique abstraite. Pourtant, le monde professionnel valorise tout autant l'intelligence relationnelle (négocier, fédérer), spatiale et manuelle (concevoir, réparer) ainsi que le sens pratique (voir la cartographie des{" "}
         <a href="/guides/intelligences-multiples-gardner">9 formes d'intelligence de Gardner</a>).
       </p>
       <p>
-        À l'ère de l'intelligence artificielle, les compétences techniques pures évoluent très vite. Ce qui fait la différence durable, c'est l'agilité et l'apprentissage par l'action (consultez notre analyse sur{" "}
+        Face aux évolutions technologiques, les compétences techniques pures évoluent très vite. Ce qui fait la différence durable, c'est l'agilité et l'apprentissage par l'action (consultez notre analyse sur{" "}
         <a href="/guides/pratique-avant-theorie-apprentissage-ia">la pratique avant la théorie face à l'IA</a>).
       </p>
 
@@ -135,8 +135,8 @@ function Guide() {
 
       <h2>Des outils complémentaires pour les collégiens et adolescents</h2>
       <p>
-        Si votre enfant entre dans l'adolescence, découvrez notre outil interactif d'exploration :{" "}
-        <a href="/guides/test-orientation-metier-enfant-futur">Test d'orientation collégien : choisir un métier à l'ère de l'IA</a>, ainsi que nos{" "}
+        Si votre enfant entre dans l'adolescence, consultez notre outil interactif d'exploration :{" "}
+        <a href="/guides/test-orientation-metier-enfant-futur">Test d'orientation collégien : choisir son métier face à l'IA</a>, ainsi que nos{" "}
         <a href="/guides/defis-pour-adolescents">12 défis pratiques pour motiver un adolescent</a>.
       </p>
 

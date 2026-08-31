@@ -15,37 +15,37 @@ const FAQ = [
   {
     question: "Pourquoi mon enfant se met-il si facilement en colère ?",
     answer:
-      "Parce que le cerveau qui régule les émotions est le dernier à mûrir chez l'enfant : il se développe jusque vers 20-25 ans. Avant cela, une frustration déclenche une réaction émotionnelle immédiate, sans le filtre qui permet à un adulte de prendre du recul. Ajoutez à cela la fatigue, la faim ou un changement de rythme, et la colère devient vite une soupape. Ce n'est pas un caprice ni une mauvaise volonté : c'est un cerveau en construction qui a besoin d'être accompagné, pas puni, pour apprendre à se réguler.",
+      "Parce que le cortex préfrontal, qui régule les émotions, termine sa maturation vers 20 ans. Face à une frustration, un enfant subit une décharge neurobiologique brute sans filtre d'adulte. Ce n'est pas un caprice : son cerveau apprend encore à gérer la tempête.",
   },
   {
     question: "Comment réagir quand mon enfant fait une crise de colère ?",
     answer:
-      "Quatre réflexes aident : rester calme (votre calme est contagieux, votre colère aussi) ; accueillir l'émotion sans la juger (« tu es très en colère parce que... ») — nommer l'émotion aide le cerveau à la traiter ; ne pas céder sur la limite qui a déclenché la crise, sinon la crise devient un moyen d'obtenir ; et offrir un exutoire physique (courir, taper dans un coussin, déchirer un papier) plutôt que de demander de se taire. Une fois la crise passée, on reparle de ce qui s'est passé, brièvement, sans sermon.",
+      "Trois priorités : garder son calme physique, nommer l'émotion à voix basse (« tu es furieux parce que... ») et tenir fermement la limite sans négocier sous le coup du cri.",
   },
   {
     question: "Que dire pendant une crise de colère ? Et que ne jamais dire ?",
     answer:
-      "Ce qui aide, à dire à voix basse, phrases courtes : « je suis là », « tu es en colère, c'est normal », « je ne te laisserai pas te faire mal », « on va trouver une solution ensemble ». Ce qui aggrave, à éviter absolument : « arrête de pleurer », « tu es ridicule », « tu fais exprès », « si tu continues, tu vas voir », et toute menace ou moquerie. La règle simple : on accueille le ressenti, on tient la limite, et on garde un ton calme même si l'enfant crie. Ce que vous dites compte moins que le calme avec lequel vous le dites.",
+      "À dire doucement : « Je suis là avec toi », « Tu as le droit d'être en colère », « On trouvera une solution ensemble ». À bannir : « Arrête ton cinéma », « Tu es ridicule », ou les menaces de punition démesurée qui ne font que nourrir la panique.",
   },
   {
     question: "Faut-il punir un enfant pour sa colère ?",
     answer:
-      "Punir la colère elle-même est contre-productif : elle est une émotion, pas un comportement, et l'enfant n'en est pas plus responsable que de sa faim. On peut en revanche poser des limites sur les comportements qui accompagnent la colère (frapper, casser, insulter) avec des conséquences claires. La distinction est importante : accueillir la colère (« je vois que tu es en colère ») n'est pas tolérer les actes (« tu as le droit d'être en colère, pas de frapper »). Un enfant qui peut exprimer sa colère sans être jugé apprend à la traverser ; un enfant puni pour l'avoir ressentie apprend seulement à la cacher.",
+      "Non. La colère est un signal émotionnel, pas un délit. En revanche, on sanctionne clairement les actes destructeurs : frapper, casser ou insulter.",
   },
   {
     question: "Les écrans rendent-ils mon enfant plus colérique ?",
     answer:
-      "Le lien est indirect mais réel. Un enfant qui passe beaucoup de temps devant un écran fait moins d'activités physiques, dort parfois moins, et subit des transitions brutales quand on éteint — trois ingrédients classiques des crises. Sans diaboliser l'écran, deux réflexes réduisent les crises liées aux écrans : prévenir avant d'éteindre (« encore 5 minutes, ensuite on éteint ensemble ») et remplacer le temps d'écran retiré par une activité concrète plutôt que par du vide. Beaucoup de parents constatent une baisse nette des crises après quelques semaines de réduction progressive du temps d'écran.",
+      "Indirectement oui : ils réduisent l'activité motrice, perturbent le sommeil et créent des ruptures brutales à l'extinction. Prévenez toujours cinq minutes avant de couper et proposez une activité concrète de relais.",
   },
   {
     question: "La colère de mon enfant est-elle normale ou faut-il consulter ?",
     answer:
-      "La colère fréquente est normale chez l'enfant, surtout entre 2 et 6 ans. Elle mérite une évaluation professionnelle quand elle devient excessive en durée (des crises de plus de 30 minutes à répétition), en intensité (danger pour lui-même ou les autres, destruction), ou en fréquence (plusieurs crises par jour à un âge où l'enfant sait parler). Des signes associés — troubles du sommeil, repli, refus scolaire, idées noires — justifient aussi de consulter. Un pédiatre, un psychologue ou un pédopsychiatre peut évaluer la situation ; ce n'est pas un échec parental, c'est une prise en charge précoce.",
+      "Consultez si les crises durent plus de 30 minutes, deviennent quotidiennes après 6 ans ou s'accompagnent de violence physique et de repli sur soi.",
   },
   {
     question: "Génizio peut-il aider un enfant qui se met souvent en colère ?",
     answer:
-      "Indirectement, oui : une grande partie des crises vient d'un excès d'énergie ou d'ennui mal canalisé. Génizio propose des défis concrets adaptés à l'âge et aux centres d'intérêt de l'enfant — construire, mesurer, cuisiner, organiser — qui donnent un débouché physique et créatif à cette énergie, et une reconnaissance basée sur ce qu'il a réellement accompli. Génizio ne pose aucun diagnostic et ne remplace pas un professionnel : c'est un outil éducatif qui crée des occasions de réussite et d'apaisement à la maison.",
+      "Oui, en lui offrant un canal constructif. Les défis manuels et scientifiques de Génizio permettent de transformer le trop-plein d'énergie en fierté d'accomplissement concret.",
   },
 ];
 
@@ -54,7 +54,7 @@ export const Route = createFileRoute("/guides/gestion-colere-emotions-enfant")({
     const meta = pageMeta({
       title: "Gestion de la colère de l'enfant : 5 outils pour l'apaiser",
       description:
-        "Votre enfant fait des crises de colère ? Découvrez 5 outils pratiques et bienveillants pour désamorcer les tensions et l'aider à réguler ses émotions sans crier.",
+        "Votre enfant fait des crises de colère ? 5 outils pratiques et bienveillants pour désamorcer les tensions et l'aider à réguler ses émotions sans crier.",
       path: PATH,
       image: "/guides/og-colere.jpg",
       type: "article",
@@ -149,14 +149,14 @@ function Guide() {
 
       <h2>La colère n'est pas un caprice : ce que disent les neurosciences</h2>
       <p>
-        Le cortex préfrontal — la zone du cerveau responsable de la régulation émotionnelle, du recul et de la tolérance à la frustration — est la <strong>dernière structure cérébrale à arriver à maturité</strong> (vers 20-25 ans). Chez un enfant de 4, 7 ou même 10 ans, une frustration déclenche une vague neurobiologique brute, sans le filtre qu'un adulte a mis des années à consolider.
+        Le cortex préfrontal est la dernière structure cérébrale à mûrir. Vers 20-25 ans seulement. C'est long. Chez un enfant de 4 ou 8 ans, la frustration déclenche une onde neurobiologique brute sans filtre inhibiteur.
       </p>
       <p>
-        Ajoutez la fatigue de la journée d'école, la faim, un changement imprévu ou le besoin d'attention, et la colère devient une soupape de décompression. Changer de regard sur cette émotion transforme votre réaction : la question n'est plus « comment faire taire ce cri ? » mais « de quel besoin non satisfait cette colère est-elle le signal ? ». Chez les enfants très énergiques, la colère est souvent liée à un besoin de mouvement non comblé : découvrez comment{" "}
-        <a href="/guides/enfant-agite-concentration">canaliser l'agitation et l'énergie débordante de l'enfant</a>.
+        Ajoutez la fatigue d'une journée de classe, la faim ou un imprévu : la colère explose comme une soupape. Inutile de chercher à faire taire le cri. Cherchez plutôt le besoin non comblé. Chez les profils énergiques, le manque de mouvement physique est souvent l'étincelle (voir comment{" "}
+        <a href="/guides/enfant-agite-concentration">canaliser l'agitation et l'énergie motrice de l'enfant</a>).
       </p>
       <p>
-        Chez les enfants hypersensibles — qui ressentent chaque stimulus décuplé — la crise est souvent la pointe émergée d'une surcharge sensorielle ou relationnelle : il faut alors moins la réprimer que lui apprendre à reconnaître les signaux avant-coureurs.
+        Chez les enfants hypersensibles, la crise signale une surcharge sensorielle. Inutile de sévir. Il faut apprendre à repérer les signaux avant l'explosion.
       </p>
 
       <h2>Les trois erreurs parentales les plus fréquentes</h2>

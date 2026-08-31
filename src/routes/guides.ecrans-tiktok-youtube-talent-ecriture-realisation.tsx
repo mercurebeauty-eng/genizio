@@ -15,19 +15,19 @@ const PATH = "/guides/ecrans-tiktok-youtube-talent-ecriture-realisation";
 
 const FAQ = [
   {
-    question: "Comment réagir si mon enfant ou adolescent dit qu'il veut devenir 'Youtubeur' ou 'streameur' ?",
+    question: "Comment réagir si mon enfant veut devenir 'Youtubeur' ?",
     answer:
-      "Ne rejetez pas ce souhait avec mépris. Dites-lui : 'C'est formidable, mais un bon créateur n'improvise pas devant une caméra : c'est d'abord un excellent scénariste, un cadreur et un monteur. Si tu veux créer du contenu, prouvons-le par un projet complet : écris d'abord le script, fais le storyboard et filme un mini-documentaire familial sans diffuser ton visage sur Internet.'",
+      "Rappelez-lui qu'un créateur est avant tout un scénariste. Proposez-lui de réaliser un documentaire de famille sans diffuser son visage en ligne.",
   },
   {
     question: "Faut-il interdire totalement TikTok et YouTube pour protéger son enfant ?",
     answer:
-      "L'interdiction totale à l'adolescence crée souvent des contournements secrets et empêche l'apprentissage de l'autodiscipline. La méthode la plus durable consiste à cadrer les horaires (pas d'écran dans la chambre après 20h) et surtout à changer sa posture : passer de 'consommateur passif sous hypnose' à 'créateur critique qui comprend la mécanique des algorithmes'.",
+      "L'interdiction brute favorise les contournements secrets. Cadrez plutôt les horaires (aucun écran en chambre après 20h) et développez son esprit critique en décortiquant avec lui pourquoi les algorithmes cherchent à retenir son attention en continu.",
   },
   {
     question: "Quelles compétences réelles la création vidéo développe-t-elle ?",
     answer:
-      "La réalisation d'une vidéo courte de qualité mobilise des compétences académiques majeures : la synthèse et la rédaction (scénario), la diction et l'assurance orale (face caméra), la géométrie et la lumière (cadrage), le rythme et la rigueur technique (montage audio/vidéo).",
+      "L'écriture de scénario structure la pensée, le cadrage affine le sens spatial et le montage forge la rigueur.",
   },
 ];
 
@@ -36,7 +36,7 @@ export const Route = createFileRoute("/guides/ecrans-tiktok-youtube-talent-ecrit
     const meta = pageMeta({
       title: "Écrans & Enfants : Devenir créateur plutôt que spectateur",
       description:
-        "Votre enfant passe des heures sur TikTok ? Découvrez comment transformer cette consommation passive en un véritable apprentissage de la réalisation vidéo.",
+        "Votre enfant passe des heures sur TikTok ? Voyez comment transformer cette consommation passive en un apprentissage de la réalisation vidéo.",
       path: PATH,
       image: "/guides/og-tiktok-realisation.jpg",
       type: "article",
@@ -74,7 +74,7 @@ function Guide() {
     <GuideLayout
       eyebrow="Écrans & Numérique"
       title="Votre enfant passe des heures sur TikTok ou YouTube ? Transformez son écran en talent d'écriture et de réalisation"
-      intro="La bataille des écrans est le premier sujet de conflit dans les familles. Couper le Wi-Fi, confisquer le smartphone, limiter arbitrairement le temps... Ces réactions d'urgence s'essoufflent vite. Et si, plutôt que d'interdire, vous changiez la posture de votre enfant : passer de simple consommateur passif à créateur exigeant ?"
+      intro="Chaque soir, la bataille des écrans cristallise les tensions familiales. Couper le Wi-Fi ou confisquer le téléphone règle rarement le fond du problème. Et si, plutôt que d'interdire sans cesse, vous changiez sa posture : passer de simple consommateur passif à créateur exigeant ?"
       updated="27 août 2026"
       readingTime="7 min"
       path={PATH}
@@ -113,12 +113,12 @@ function Guide() {
 
       <h2>1. Pourquoi l'interdiction frontale ne fonctionne plus</h2>
       <p>
-        Les algorithmes des plateformes vidéo captent puissamment l'attention des jeunes. Plutôt que de subir ce piège (découvrez notre méthode de{" "}
-        <a href="/guides/ecrans-addiction-alternatives-enfant">sevrage progressif des écrans chez l'enfant</a>), apprendre à déconstruire les mécanismes de la vidéo permet à l'adolescent de développer son esprit critique.
+        Les plateformes de flux continu captent l'attention par le défilement infini. Plutôt que de subir ce mécanisme (voir notre méthode de{" "}
+        <a href="/guides/ecrans-addiction-alternatives-enfant">sevrage progressif des écrans chez l'enfant</a>), apprendre à fabriquer une vidéo développe l'esprit critique du jeune.
       </p>
       <p>
-        La réalisation vidéo sollicite simultanément plusieurs{" "}
-        <a href="/guides/intelligences-multiples-gardner">formes d'intelligences de Gardner</a> : l'intelligence linguistique (écriture de script), spatiale (cadrage et lumière) et musicale (rythme et montage sonore).
+        Filmer et monter une courte séquence sollicite plusieurs{" "}
+        <a href="/guides/intelligences-multiples-gardner">formes d'intelligences de Gardner</a> : l'écriture de script (linguistique), le cadrage (spatial) et le montage sonore (rythmique).
       </p>
 
       <h2>2. Le protocole du « Studio Familial » : 3 étapes de création</h2>
@@ -173,7 +173,7 @@ function Guide() {
           Développer les compétences du futur avec Génizio
         </h3>
         <p className="mt-2 text-ink/80 leading-relaxed">
-          Génizio canalise l'énergie créative des jeunes à travers des missions captivantes d'écriture, de communication et de projets réels. <strong>Naya</strong> accompagne chaque étape pour transformer leur curiosité en talents solides.
+          Génizio canalise l'énergie créative des jeunes à travers des missions concrètes d'écriture, de communication et de projets réels. <strong>Naya</strong> accompagne chaque étape pour transformer leur curiosité en compétences solides.
         </p>
         <div className="mt-6 flex flex-wrap gap-4">
           <Button asChild size="lg" className="rounded-full bg-brand text-white shadow-md hover:bg-brand-dark transition-all">

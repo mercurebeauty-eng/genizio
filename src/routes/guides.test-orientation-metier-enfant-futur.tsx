@@ -17,26 +17,26 @@ const FAQ = [
   {
     question: "À quel âge doit-on commencer à réfléchir à l'orientation de son enfant ?",
     answer:
-      "Dès 9-11 ans, non pas pour choisir un métier définitif, mais pour ouvrir son horizon sur la diversité des activités humaines : comment fonctionne un commerce, comment une maison est construite, quel problème un médecin ou un ingénieur résout. L'objectif au collège n'est pas de décider, mais d'explorer sans stress.",
+      "Dès 9-11 ans, uniquement pour éveiller sa curiosité sur le monde qui l'entoure. Au collège, le but n'est pas de figer un choix, mais d'expérimenter sans pression.",
   },
   {
     question: "Les tests de métiers gratuits pour collégiens sont-ils efficaces ?",
     answer:
-      "Ils sont utiles pour donner des idées de secteurs, mais ils souffrent d'un gros défaut : ils se basent sur des catalogues de métiers du passé. À l'ère de l'intelligence artificielle, les frontières entre les professions changent à grande vitesse. Il vaut mieux développer des compétences polyvalentes (résoudre un problème, communiquer, apprendre vite) que de s'enfermer dans un intitulé de poste.",
+      "Leur utilité reste superficielle car ils s'appuient sur des nomenclatures d'hier. Face aux mutations technologiques accélérées, les frontières professionnelles bougent chaque année. Mieux vaut cultiver l'agilité intellectuelle, la clarté d'expression et la capacité d'apprentissage continu que d'enfermer un jeune dans une étiquette de poste rigide.",
   },
   {
     question: "Que faire si mon enfant dit qu'il n'aime rien ou n'a pas de passion ?",
     answer:
-      "C'est parfaitement normal. La passion n'est pas une révélation magique qui tombe du ciel : elle naît souvent de la compétence. Quand un enfant réussit à fabriquer, réparer ou organiser quelque chose avec succès, le plaisir arrive. Proposez-lui de petites missions pratiques plutôt que de lui demander abstraitement ce qu'il 'aime'.",
+      "C'est normal. L'intérêt ne précède pas toujours l'action : il naît souvent du sentiment d'efficacité quand on fabrique, répare ou organise un projet concret.",
   },
 ];
 
 export const Route = createFileRoute("/guides/test-orientation-metier-enfant-futur")({
   head: () => {
     const meta = pageMeta({
-      title: "Test d'orientation collégien : Choisir un métier à l'ère de l'IA",
+      title: "Test d'orientation collégien : Choisir son métier face à l'IA",
       description:
-        "Avant de faire passer un test d'orientation à votre enfant, découvrez pourquoi les métiers de demain exigent des compétences réelles plutôt qu'une case figée.",
+        "Avant de faire passer un test d'orientation à votre collégien, comprenez pourquoi les métiers de demain valorisent les compétences d'adaptation.",
       path: PATH,
       image: "/guides/og-test-orientation.jpg",
       type: "article",
@@ -56,7 +56,7 @@ export const Route = createFileRoute("/guides/test-orientation-metier-enfant-fut
           articleJsonLd({
             headline: "Test d'orientation et de métier : comment savoir ce qui anime vraiment votre enfant",
             description:
-              "Pourquoi les tests d'orientation classiques sont dépassés par l'ère de l'IA et comment développer les 4 méta-compétences de l'avenir dès le collège.",
+              "Pourquoi les tests d'orientation classiques sont dépassés et comment développer les 4 méta-compétences de l'avenir dès le collège.",
             path: PATH,
             image: "/guides/og-test-orientation.jpg",
             datePublished: "2026-08-24",
@@ -74,7 +74,7 @@ function Guide() {
     <GuideLayout
       eyebrow="Orientation & Avenir"
       title="Test d'orientation et de métier : comment savoir ce qui anime vraiment votre enfant"
-      intro="« Que veux-tu faire quand tu seras grand ? » Cette question, posée dès le primaire, génère souvent plus d'anxiété que de clarté. Alors que 85 % des emplois de la prochaine décennie seront profondément transformés par l'intelligence artificielle, chercher à figer un intitulé de métier dans un test QCM n'a plus de sens. Voici comment aider votre enfant à découvrir ce qui l'anime réellement et à muscler les compétences que les machines ne remplaceront pas."
+      intro="« Que veux-tu faire quand tu seras grand ? » Cette question, posée dès le primaire, génère souvent plus d'anxiété que de clarté. Alors que 85 % des emplois futurs seront transformés par les nouvelles technologies, figer un intitulé de métier dans un QCM n'a plus de sens. Aidez plutôt votre enfant à cerner ses forces motrices et à muscler les aptitudes que les algorithmes ne remplaceront pas."
       updated="27 août 2026"
       readingTime="8 min"
       path={PATH}
@@ -117,7 +117,7 @@ function Guide() {
         <a href="/guides/test-de-personnalite-enfant-talents">limites des tests de personnalité pour enfants</a>).
       </p>
       <p>
-        À l'ère de l'intelligence artificielle, ce qui compte n'est pas le titre exact d'une profession, mais la capacité à résoudre des problèmes concrets et à valoriser ses{" "}
+        Dans le monde professionnel contemporain, la priorité n'est pas le titre d'un poste, mais la capacité à résoudre des problèmes concrets et à mobiliser ses{" "}
         <a href="/guides/intelligences-multiples-gardner">formes d'intelligence dominantes</a>.
       </p>
 
