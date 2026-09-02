@@ -67,6 +67,7 @@ export const ASPIRATION_CATEGORIES = [
       "Agriculture",
       "Couture",
       "Cuisine & Restauration",
+      "Plomberie",
     ],
   },
   {

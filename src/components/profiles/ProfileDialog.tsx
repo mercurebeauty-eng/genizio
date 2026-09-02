@@ -23,6 +23,7 @@ import {
   LIFE_CONTEXT_OPTIONS,
   SCHOOL_LEVELS,
   SCHOOL_RELATIONS,
+  VULNERABLE_LIFE_CONTEXTS,
   shouldAskAspirations,
   type AbilityValue,
   type LearningProfile,
@@ -138,14 +139,16 @@ export function ProfileDialog({
   const [wizardStep, setWizardStep] = useState(0);
   const [aspirationInput, setAspirationInput] = useState("");
 
-  // Étape 4 contextuelle :
+  // Étape 4 contextuelle et réactive :
   // - Profils vulnérables (parcours rue, précarité, famille éloignée, conflit avec l'école) → "Ce qu'il veut devenir"
   // - Profils standard → "Comment il apprend" (modalités d'apprentissage comportementales fiables pour Naya)
-  const askAspirations = shouldAskAspirations({
-    life_context: draft.life_context,
-    school_relation: draft.school_relation,
-    existingAspirations: draft.aspirations,
-  });
+  const isVulnerable =
+    (draft.life_context ?? []).some((c) => VULNERABLE_LIFE_CONTEXTS.includes(c)) ||
+    draft.school_relation === "conflit" ||
+    draft.school_relation === "non_scolarise";
+
+  const [step4Override, setStep4Override] = useState<"aspirations" | "learning" | null>(null);
+  const askAspirations = step4Override !== null ? step4Override === "aspirations" : isVulnerable;
   const wizardSteps = 4;
 
   const setLearningProfileField = (
@@ -396,7 +399,7 @@ export function ProfileDialog({
             {["Qui", "Comment il est", "À quel enfant ?", askAspirations ? "Ce qu'il veut devenir" : "Comment il apprend"]
               .map((label, i) => (
                 <button
-                  key={label}
+                  key={i}
                   type="button"
                   onClick={() => setWizardStep(i)}
                   className={`flex-1 min-w-0 truncate rounded-lg py-1.5 px-1 sm:px-2 transition-all text-center ${
@@ -868,9 +871,18 @@ export function ProfileDialog({
           {askAspirations && wizardStep === 3 && (
             <div className="space-y-4">
               <div>
-                <p className="mb-1 text-xs font-black uppercase tracking-widest text-ink/70">
-                  Ce qu'il veut devenir
-                </p>
+                <div className="flex items-center justify-between mb-1">
+                  <p className="text-xs font-black uppercase tracking-widest text-ink/70">
+                    Ce qu'il veut devenir
+                  </p>
+                  <button
+                    type="button"
+                    onClick={() => setStep4Override("learning")}
+                    className="text-[11px] font-bold text-brand hover:underline cursor-pointer"
+                  >
+                    Voir « Comment il apprend » →
+                  </button>
+                </div>
                 <p className="mb-3 text-[11px] text-ink/60 leading-relaxed">
                   Ce que <strong>votre enfant dit</strong> vouloir faire — ses propres mots, même
                   s'ils vous surprennent. Pour ces enfants, la déclaration est une boussole : Naya
@@ -976,9 +988,18 @@ export function ProfileDialog({
           {!askAspirations && wizardStep === 3 && (
             <div className="space-y-4">
               <div>
-                <p className="mb-1 text-xs font-black uppercase tracking-widest text-ink/70">
-                  Comment il apprend
-                </p>
+                <div className="flex items-center justify-between mb-1">
+                  <p className="text-xs font-black uppercase tracking-widest text-ink/70">
+                    Comment il apprend
+                  </p>
+                  <button
+                    type="button"
+                    onClick={() => setStep4Override("aspirations")}
+                    className="text-[11px] font-bold text-brand hover:underline cursor-pointer"
+                  >
+                    Voir « Aspirations métiers » →
+                  </button>
+                </div>
                 <p className="mb-3 text-[11px] text-ink/60 leading-relaxed">
                   Ce que <strong>vous observez</strong> au quotidien (pas ce qu'il imagine). Ces repères
                   permettent à Naya d'adapter le format et le tempo des défis à sa dynamique naturelle.

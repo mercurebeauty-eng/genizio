@@ -315,6 +315,18 @@ export const ASPIRATION_BRIDGES: Record<string, AspirationBridge> = {
     worldAnchor:
       "Raconter les récits et légendes du quotidien à travers l'écran : le cinéma permet d'éveiller les consciences et de faire voyager son public.",
   },
+  plomberie: {
+    talentKeys: ["artisanale", "spatial", "logico_mathematique"],
+    domains: ["Artisanat", "Architecture"],
+    skillsHint: [
+      "repérer et réparer une fuite d'eau",
+      "raccorder des tuyaux et mesurer la pression",
+      "comprendre le circuit et l'évacuation des fluides",
+      "sécuriser et entretenir un réseau sanitaire",
+    ],
+    worldAnchor:
+      "L'accès à l'eau propre et l'évacuation saine sont vitaux pour la communauté : le plombier apporte confort, hygiène et solutionne les urgences indispensables du quotidien.",
+  },
 };
 
 /** Pont générique pour une aspiration libre non mappée — thème = label, compétences = les moins explorées. */
