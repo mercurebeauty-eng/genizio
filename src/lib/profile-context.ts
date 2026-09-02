@@ -61,6 +61,9 @@ export const ASPIRATION_CATEGORIES = [
     suggestions: [
       "Menuiserie",
       "Mécanique",
+      "Maçonnerie & Bâtiment",
+      "Ferronnerie",
+      "Tôlerie & Zinguerie",
       "Agriculture",
       "Couture",
       "Cuisine & Restauration",
@@ -94,6 +97,8 @@ export const ASPIRATION_CATEGORIES = [
     icon: "🎨",
     suggestions: [
       "Art & dessin",
+      "Photographie",
+      "Cinéma & Réalisation",
       "Sport",
       "Musique & danse",
       "Soins aux personnes",
@@ -119,6 +124,7 @@ export const LEARNING_MODES: Record<string, string> = {
   pratique: "En faisant (action, manipulation)",
   visuel: "En observant (schémas, images, démonstrations)",
   ecoute: "En écoutant (histoires, explications orales)",
+  imagination: "En imaginant (scénarios, fictions, métaphores)",
   discussion: "En échangeant (poser des questions, débattre)",
   lecture: "En lisant (textes, consignes écrites)",
 };

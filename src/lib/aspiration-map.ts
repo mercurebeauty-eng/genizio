@@ -254,6 +254,67 @@ export const ASPIRATION_BRIDGES: Record<string, AspirationBridge> = {
     worldAnchor:
       "Le soutien aux personnes vulnérables de la communauté : un rôle protecteur qui demande rigueur, respect et générosité.",
   },
+  maconnerie: {
+    talentKeys: ["spatial", "artisanale", "logico_mathematique"],
+    domains: ["Architecture", "Artisanat"],
+    skillsHint: [
+      "vérifier l'aplomb et les niveaux",
+      "doser mortier et béton",
+      "géométrie des fondations et angles",
+      "aligner les briques avec régularité",
+      "sécurité sur le chantier",
+    ],
+    worldAnchor:
+      "Bâtir en dur protège la famille et le quartier : de la petite réparation au gros œuvre, comprendre la solidité et l'équilibre des volumes.",
+  },
+  ferronnerie: {
+    talentKeys: ["artisanale", "spatial", "logico_mathematique"],
+    domains: ["Artisanat", "Tech & IA"],
+    skillsHint: [
+      "façonner et courber le fer",
+      "maîtriser la flamme et la soudure",
+      "prendre des cotes millimétrées",
+      "équerrer et assembler un cadre",
+    ],
+    worldAnchor:
+      "Les grilles et portails protègent la concession : dompter le métal par le feu pour allier solidité défensive et élégance du motif.",
+  },
+  tolerie: {
+    talentKeys: ["artisanale", "spatial", "logico_mathematique"],
+    domains: ["Artisanat", "Architecture"],
+    skillsHint: [
+      "mesurer et tracer les découpes de tôle",
+      "plier et sertir les raccords",
+      "assurer l'étanchéité aux pluies",
+      "orienter l'évacuation des eaux",
+    ],
+    worldAnchor:
+      "Face aux averses torrentielles, la tôle et la gouttière gardent la maison au sec : un savoir-faire essentiel pour la protection de l'habitat.",
+  },
+  photographie: {
+    talentKeys: ["creative", "spatial", "linguistique"],
+    domains: ["Arts", "Communication"],
+    skillsHint: [
+      "cadrer et soigner la composition",
+      "jouer avec la lumière et les reflets",
+      "capturer l'expression spontanée",
+      "restituer l'émotion d'un moment",
+    ],
+    worldAnchor:
+      "Immortaliser les cérémonies, les visages et les scènes de marché : la photo valorise la dignité du quartier et génère des opportunités réelles.",
+  },
+  cinema: {
+    talentKeys: ["creative", "linguistique", "sociale"],
+    domains: ["Arts", "Communication"],
+    skillsHint: [
+      "imaginer une intrigue captivante",
+      "découper l'action en scènes et plans",
+      "guider l'interprétation des personnages",
+      "créer un rythme visuel et sonore",
+    ],
+    worldAnchor:
+      "Raconter les récits et légendes du quotidien à travers l'écran : le cinéma permet d'éveiller les consciences et de faire voyager son public.",
+  },
 };
 
 /** Pont générique pour une aspiration libre non mappée — thème = label, compétences = les moins explorées. */
