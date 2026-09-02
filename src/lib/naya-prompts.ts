@@ -19,6 +19,8 @@
 // Import type-only (effacé à la compilation) — le contrat runtime « constantes
 // pures » est préservé.
 import type { AspirationBridge } from "@/lib/aspiration-map";
+import type { ChildDevelopmentState } from "@/lib/context-engine";
+import type { ChallengeMission } from "@/lib/challenge-planner";
 // Double contextualisation local → global (chantier 6, analyse §30-31) : mapping
 // déterministe pays → matériaux locaux + instruction d'escalier. Module pur sans
 // dépendance — aucun cycle.
@@ -377,6 +379,112 @@ ${childQuestionBlock}${diagnosticBlock}${teamRoleBlock}
 - ${ACADEMIC_SECRET_INSTRUCTION}
 - ${KIND_GUIDANCE_INSTRUCTION}
 
+Réponds STRICTEMENT en JSON valide avec ce format, pour chaque défi :
+{"challenges":[{"domain":"...","title":"...","description":"...","duration":"...","steps":["...","..."],"materials":["...","..."],"material_tags":["..."],"pedagogical_context":"Ce que Naya observe via cette activité","intelligences":["creative"],"trait_subform":"..." (voir liste par intelligence ci-dessus) ou null,"requires_supervision":true ou false,"supervision_warning":"..." (ou null si false),"difficulty":"facile"|"moyen"|"difficile","proof_mode":"photo"|"declarative","proof_target":{"metric":"...","value":20} (uniquement si declarative),"declarative_award":{"corporelle":2} (uniquement si declarative),"academic_domain":"mathematiques"|"langage"|"sciences"|"corporelle"|"sociale"|"emotionnelle"|"entrepreneuriale"|"artisanale"|"spatiale"|null,"academic_level_age":14 (uniquement si academic_domain non null),"academic_reference_note":"..." (uniquement si academic_domain non null),"academic_secret":"Explication stimulante du secret scientifique/physique...","kind":"micro"|"projet","guidance_level":3 (entier 1 à 5)}]}`;
+}
+
+/**
+ * Construit un prompt multicouche où Genizio transmet au modèle l'état actualisé
+ * de sa compréhension de l'enfant et les missions pédagogiques précises à réaliser.
+ *
+ * Découpage strict en 5 couches :
+ * - Couche 1 : Système & Principes Naya
+ * - Couche 2 : État Synthétique de l'Enfant (ChildDevelopmentState)
+ * - Couche 3 : Feuille de Route des Missions Pédagogiques
+ * - Couche 4 : Contrat d'Exécution & Ancrage Terrain
+ * - Couche 5 : Format JSON Strict de Sortie
+ */
+export function buildLayeredChallengePrompt(
+  state: ChildDevelopmentState,
+  missions: ChallengeMission[],
+): string {
+  const childName = state.identity.name;
+  const childAge = state.identity.age;
+  const location = state.identity.location;
+  const count = missions.length;
+
+  const contextualizationInstruction = buildContextualizationInstruction(location);
+
+  // Synthèse des hypothèses actives
+  const hypothesesBlock =
+    state.activeHypotheses.length > 0
+      ? state.activeHypotheses
+          .slice(0, 4)
+          .map(
+            (h) =>
+              `- [${h.type.toUpperCase()}] ${h.statement} (confiance: ${Math.round(h.confidence * 100)}%, statut: ${h.status})`,
+          )
+          .join("\n")
+      : "- Exploration initiale des premières dynamiques.";
+
+  // Synthèse des missions arrêtées par Genizio
+  const missionsBlock = missions
+    .map(
+      (m) => `### MISSION ${m.missionIndex} :
+- Intention pédagogique : ${m.intent}
+- Domaine cible : ${m.targetDomain}
+- Intelligences visées : ${m.targetTalents.join(", ")}
+- Zone de difficulté : ${m.difficultyZone}
+- Cahier des charges : ${m.pedagogicalBrief}${m.actionHook ? `\n- Fil conducteur spécifique : « ${m.actionHook} »` : ""}`,
+    )
+    .join("\n\n");
+
+  const timePressureLine = state.operationalContext.timePressure
+    ? `- Rythme et temps disponible : ${state.operationalContext.timePressure}`
+    : "";
+
+  return `Tu es Naya, mentor pédagogique d'excellence pour enfants en Afrique francophone sur Génizio.
+Conçois ${count} défis d'apprentissage personnalisés répondant EXACTEMENT au cahier des charges des missions planifiées ci-dessous.
+
+================================================================================
+COUCHE 1 — PRINCIPES PÉDAGOGIQUES ET SÉCURITÉ
+================================================================================
+${GENIZIO_PRINCIPLES}
+${AGE_DEVELOPMENT_GUIDANCE}
+- RÈGLE D'OR : Le jeu ou la fabrication manuelle n'est pas un simple divertissement passif. C'est le DISPOSITIF concret par lequel l'enfant mobilise et développe une capacité réelle.
+
+================================================================================
+COUCHE 2 — ÉTAT DE COMPRÉHENSION DE L'ENFANT (CHILD DEVELOPMENT STATE)
+================================================================================
+- Prénom : ${childName}
+- Âge : ${childAge} ans
+- Ville / pays : ${location}
+${timePressureLine}
+- Talents les moins explorés : ${state.capabilities.leastExploredTalents.join(", ") || "aucun"}
+- Domaines stables : ${state.capabilities.stableDomains.join(", ") || "en exploration initiale"}
+
+Hypothèses actives en cours d'exploration :
+${hypothesesBlock}
+
+Derniers défis complétés et observations récentes :
+${state.operationalContext.recentCompletedSummary || "(Premier cycle de défis)"}
+
+================================================================================
+COUCHE 3 — FEUILLE DE ROUTE DES MISSIONS PÉDAGOGIQUES DU JOUR
+================================================================================
+Tu DOIS générer exactement ${count} défis, où chaque défi correspond rigoureusement à la mission assignée :
+
+${missionsBlock}
+
+================================================================================
+COUCHE 4 — CONTRAT D'EXÉCUTION & ANCRAGE TERRAIN
+================================================================================
+- Ancrage africain : ${contextualizationInstruction}
+- Matériaux locaux typiques accessibles : ${state.operationalContext.localMaterials.join(", ")}
+- ${STEPS_INSTRUCTION}
+- ${buildAvoidRepeatsInstruction(state.operationalContext.existingTitles)}
+- ${MATERIAL_TAGS_INSTRUCTION}
+- ${INTELLIGENCES_FIELD_INSTRUCTION}
+- ${TRAIT_SUBFORM_INSTRUCTION}
+- ${SAFETY_INSTRUCTION}
+- ${PROOF_MODE_INSTRUCTION}
+- ${ACADEMIC_REFERENTIAL_INSTRUCTION}
+- ${ACADEMIC_SECRET_INSTRUCTION}
+- ${KIND_GUIDANCE_INSTRUCTION}
+
+================================================================================
+COUCHE 5 — FORMAT DE SORTIE STRICT (JSON)
+================================================================================
 Réponds STRICTEMENT en JSON valide avec ce format, pour chaque défi :
 {"challenges":[{"domain":"...","title":"...","description":"...","duration":"...","steps":["...","..."],"materials":["...","..."],"material_tags":["..."],"pedagogical_context":"Ce que Naya observe via cette activité","intelligences":["creative"],"trait_subform":"..." (voir liste par intelligence ci-dessus) ou null,"requires_supervision":true ou false,"supervision_warning":"..." (ou null si false),"difficulty":"facile"|"moyen"|"difficile","proof_mode":"photo"|"declarative","proof_target":{"metric":"...","value":20} (uniquement si declarative),"declarative_award":{"corporelle":2} (uniquement si declarative),"academic_domain":"mathematiques"|"langage"|"sciences"|"corporelle"|"sociale"|"emotionnelle"|"entrepreneuriale"|"artisanale"|"spatiale"|null,"academic_level_age":14 (uniquement si academic_domain non null),"academic_reference_note":"..." (uniquement si academic_domain non null),"academic_secret":"Explication stimulante du secret scientifique/physique...","kind":"micro"|"projet","guidance_level":3 (entier 1 à 5)}]}`;
 }

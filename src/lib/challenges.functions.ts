@@ -13,6 +13,9 @@ import {
 } from "@/lib/time-limit";
 import { formatChildProfileContext } from "@/lib/profile-context";
 import { getInterestHypothesesSnapshot, type InterestHypotheses } from "@/lib/interest-confidence";
+import { getAspirationHypothesesSnapshot } from "@/lib/aspiration-confidence";
+import { buildChildDevelopmentState } from "@/lib/context-engine";
+import { planChallengeMissions } from "@/lib/challenge-planner";
 import { z } from "zod";
 
 import {
@@ -51,6 +54,7 @@ import {
   NAYA_SYSTEM_PROMPT,
   NAYA_SYSTEM_PROMPT_JSON,
   buildChallengePrompt,
+  buildLayeredChallengePrompt,
   buildSingleChallengePrompt,
   buildHomeworkPrompt,
 } from "@/lib/naya-prompts";
@@ -2365,29 +2369,26 @@ export async function generateChallengesCore(params: {
     }
   }
 
-  // Assemblage délégué au builder pur buildChallengePrompt (chantier 1 « Naya 3.0 ») :
-  // le template string vivait ici et pouvait dériver des rubriques partagées — la
-  // couverture des rubriques est désormais testée unitairement dans naya-prompts.test.ts.
-  const prompt = buildChallengePrompt({
-    count,
-    childName: child.name,
-    childAge: child.age,
-    location: [child.city, child.country].filter(Boolean).join(", ") || "non précisé",
-    interestsPayload: formatChildInterestsPayload(child.interests, interestHypotheses),
-    talentsJson: JSON.stringify(child.talents || {}),
-    completedSummary,
-    progressionInstruction: formatProgressionInstruction(progressionTargets),
-    leastExplored,
-    domainsText: shuffle(DOMAINS).join(", "),
-    ignoredDomains,
+  // Context Engine & Challenge Mission Planner :
+  // Genizio synthétise l'état actualisé de l'enfant et arrête la feuille de route
+  // pédagogique (missions précises) avant d'appeler Naya.
+  const aspirationHypotheses = await getAspirationHypothesesSnapshot(db as any, childId).catch(
+    () => null,
+  );
+
+  const childDevelopmentState = buildChildDevelopmentState({
+    child,
+    completedChallenges: (completedChallenges ?? []) as any[],
+    staleChallenges: (staleChallenges ?? []) as any[],
+    progressionTargets,
+    interestHypotheses,
+    aspirationHypotheses,
+    latestChildQuestion: childQuestionNote,
     existingTitles,
-    timePressureNote: formatTimePressureNote(
-      child.time_pressure as TimePressure | null | undefined,
-    ),
-    profileContextNote: formatChildProfileContext(child as any),
-    childQuestionNote,
-    diagnosticIntentNote,
   });
+
+  const plannedMissions = planChallengeMissions(childDevelopmentState, count);
+  const prompt = buildLayeredChallengePrompt(childDevelopmentState, plannedMissions);
 
   // Up to 6 full défis in one response, each now carrying the academic
   // referential fields (domain/level/citation) added on top of the original

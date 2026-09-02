@@ -558,3 +558,31 @@ describe("Décision #59 — chiffres/mesures réels et benchmark international (
     );
   });
 });
+
+describe("buildLayeredChallengePrompt — architecture multicouche", () => {
+  it("génère un prompt multicouche contenant les 5 couches sans troncature", async () => {
+    const { buildLayeredChallengePrompt } = await import("./naya-prompts");
+    const { buildChildDevelopmentState } = await import("./context-engine");
+    const { planChallengeMissions } = await import("./challenge-planner");
+
+    const state = buildChildDevelopmentState({
+      child: { id: "1", name: "Kofi", age: 10, country: "Côte d'Ivoire" },
+      latestChildQuestion: "Comment pousse le cacao ?",
+    });
+
+    const missions = planChallengeMissions(state, 3);
+    const prompt = buildLayeredChallengePrompt(state, missions);
+
+    expect(prompt).toContain("COUCHE 1 — PRINCIPES PÉDAGOGIQUES");
+    expect(prompt).toContain("COUCHE 2 — ÉTAT DE COMPRÉHENSION DE L'ENFANT");
+    expect(prompt).toContain("COUCHE 3 — FEUILLE DE ROUTE DES MISSIONS PÉDAGOGIQUES DU JOUR");
+    expect(prompt).toContain("COUCHE 4 — CONTRAT D'EXÉCUTION & ANCRAGE TERRAIN");
+    expect(prompt).toContain("COUCHE 5 — FORMAT DE SORTIE STRICT (JSON)");
+
+    expect(prompt).toContain("Kofi");
+    expect(prompt).toContain("Comment pousse le cacao ?");
+    expect(prompt).toContain("MISSION 1 :");
+    expect(prompt).toContain("MISSION 2 :");
+    expect(prompt).toContain("MISSION 3 :");
+  });
+});
