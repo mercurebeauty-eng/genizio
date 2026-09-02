@@ -71,4 +71,14 @@ describe("findAspirationBridge", () => {
       expect(bridge.talentKeys.length).toBeGreaterThan(0);
     }
   });
+
+  it("priorise le customBridge fourni s'il possède des clés", () => {
+    const custom = {
+      talentKeys: ["creative", "spatial"],
+      domains: ["Arts"],
+      skillsHint: ["sculpter", "polir"],
+      worldAnchor: "Créer des oeuvres",
+    };
+    expect(findAspirationBridge("Métier Inconnu", custom)).toBe(custom);
+  });
 });

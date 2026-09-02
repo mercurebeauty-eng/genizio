@@ -53,7 +53,9 @@ export interface AspirationChallengeSignal {
 }
 
 export interface AspirationHypothesisInput {
-  aspirations?: { label: string; type?: string; source?: string }[] | null;
+  aspirations?:
+    | { label: string; type?: string; source?: string; bridge?: AspirationBridge }[]
+    | null;
   completed?: AspirationChallengeSignal[] | null;
   abandoned?: AspirationChallengeSignal[] | null;
 }
@@ -90,7 +92,7 @@ export function resolveAspirationHypotheses(
     const label = aspiration.label?.trim();
     if (!label) continue;
 
-    const bridge = findAspirationBridge(label);
+    const bridge = findAspirationBridge(label, aspiration.bridge);
     const completions = completed.filter((c) => countsAsTrial(c, { label, bridge })).length;
     const abandonedCount = abandoned.filter((c) => countsAsTrial(c, { label, bridge })).length;
     const trials = completions + abandonedCount;

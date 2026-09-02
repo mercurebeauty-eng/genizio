@@ -6,6 +6,8 @@
 // (pas de texte libre sensible sur des mineurs) ; l'aspiration est une HYPOTHÈSE
 // à explorer, jamais un verdict (analyse §10-16).
 
+import type { AspirationBridge } from "./aspiration-map";
+
 export const SCHOOL_LEVELS: Record<string, string> = {
   prescolaire: "Préscolaire",
   cp1: "CP1",
@@ -68,6 +70,11 @@ export const ASPIRATION_CATEGORIES = [
       "Couture",
       "Cuisine & Restauration",
       "Plomberie",
+      "Électricité & Câblage",
+      "Soudure & Chaudronnerie",
+      "Peinture & Finitions",
+      "Boulangerie & Pâtisserie",
+      "Carrelage & Maçonnerie",
     ],
   },
   {
@@ -91,6 +98,7 @@ export const ASPIRATION_CATEGORIES = [
       "Commerce",
       "Agro-transformation",
       "Guide touristique",
+      "Élevage & Soins animaliers",
     ],
   },
   {
@@ -159,6 +167,7 @@ export type Aspiration = {
   label: string;
   type: "metier" | "exploration";
   source?: "parent" | "enfant";
+  bridge?: AspirationBridge;
 };
 
 // Contextes de parcours qui signalent un profil vulnérable — pour ces enfants, la

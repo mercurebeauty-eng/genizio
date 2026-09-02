@@ -26,8 +26,11 @@ import {
   VULNERABLE_LIFE_CONTEXTS,
   shouldAskAspirations,
   type AbilityValue,
+  type Aspiration,
   type LearningProfile,
 } from "@/lib/profile-context";
+import { findAspirationBridge, GENERIC_ASPIRATION_BRIDGE } from "@/lib/aspiration-map";
+import { inferAspirationBridge } from "@/lib/aspiration.functions";
 import { TIME_PRESSURE_LABELS, type TimePressure } from "@/lib/time-limit";
 import { generateSuggestedUsername, sanitizeUsername } from "@/lib/child-username";
 import { checkUsernameAvailabilityFn } from "@/lib/child-username.functions";
@@ -194,21 +197,50 @@ export function ProfileDialog({
   const setAbility = (axis: string, value: AbilityValue) =>
     setDraft((d) => ({ ...d, ability_profile: { ...d.ability_profile, [axis]: value } }));
 
+  const inferAspirationFn = useServerFn(inferAspirationBridge);
+
   const addAspiration = (label: string) => {
     const clean = label.trim().slice(0, 60);
     if (!clean) return;
-    setDraft((d) =>
-      d.aspirations.some((a) => a.label.toLowerCase() === clean.toLowerCase())
-        ? d
-        : {
-            ...d,
-            aspirations: [
-              ...d.aspirations,
-              { label: clean, type: "metier" as const, source: "enfant" as const },
-            ],
-          },
-    );
+    if (draft.aspirations.some((a) => a.label.toLowerCase() === clean.toLowerCase())) {
+      setAspirationInput("");
+      return;
+    }
+
+    const localBridge = findAspirationBridge(clean);
+    const hasLocalBridge =
+      localBridge !== GENERIC_ASPIRATION_BRIDGE && localBridge.talentKeys.length > 0;
+
+    const newAspiration: Aspiration = {
+      label: clean,
+      type: "metier" as const,
+      source: "enfant" as const,
+      bridge: hasLocalBridge ? localBridge : undefined,
+    };
+
+    setDraft((d) => ({
+      ...d,
+      aspirations: [...d.aspirations, newAspiration],
+    }));
     setAspirationInput("");
+
+    // Si le métier n'a pas de pont local prédéfini, inférer intelligemment en arrière-plan
+    if (!hasLocalBridge) {
+      inferAspirationFn({ data: { label: clean } })
+        .then(({ bridge }) => {
+          if (bridge && bridge.talentKeys?.length > 0) {
+            setDraft((d) => ({
+              ...d,
+              aspirations: d.aspirations.map((a) =>
+                a.label.toLowerCase() === clean.toLowerCase() ? { ...a, bridge } : a,
+              ),
+            }));
+          }
+        })
+        .catch((err) => {
+          console.warn("[ProfileDialog] Inférence d'aspiration différée:", err);
+        });
+    }
   };
 
   // Pré-remplissage Ville/Pays par IP (2026-07-29, demande utilisateur) : uniquement à la
@@ -286,7 +318,7 @@ export function ProfileDialog({
         ability_profile: draft.ability_profile,
         school_relation: draft.school_relation || null,
         life_context: draft.life_context,
-        aspirations: draft.aspirations,
+        aspirations: draft.aspirations as any,
         learning_profile: draft.learning_profile ?? {},
         time_pressure: draft.time_pressure,
         // Guilde provisoire (refonte 2026-08-09) : à la CRÉATION uniquement, les intérêts
@@ -958,27 +990,37 @@ export function ProfileDialog({
                 </div>
                 {draft.aspirations.length > 0 && (
                   <div className="mt-2.5 flex flex-wrap gap-1.5">
-                    {draft.aspirations.map((a) => (
-                      <span
-                        key={a.label}
-                        className="inline-flex max-w-full items-center gap-1 rounded-full bg-sky-50 border border-sky-200 px-2.5 py-1 text-[11px] font-bold text-sky-800"
-                      >
-                        <span className="truncate min-w-0">{a.label}</span>
-                        <button
-                          type="button"
-                          onClick={() =>
-                            setDraft((d) => ({
-                              ...d,
-                              aspirations: d.aspirations.filter((x) => x.label !== a.label),
-                            }))
-                          }
-                          className="shrink-0 text-sky-600 hover:text-sky-900 ml-1"
-                          aria-label={`Retirer ${a.label}`}
+                    {draft.aspirations.map((a) => {
+                      const bridge = a.bridge ?? findAspirationBridge(a.label);
+                      const hasSkills = bridge.skillsHint?.length > 0;
+                      return (
+                        <span
+                          key={a.label}
+                          title={hasSkills ? `Compétences : ${bridge.skillsHint.join(", ")}` : undefined}
+                          className="inline-flex max-w-full items-center gap-1.5 rounded-full bg-sky-50 border border-sky-200 px-2.5 py-1 text-[11px] font-bold text-sky-800"
                         >
-                          ✕
-                        </button>
-                      </span>
-                    ))}
+                          <span className="truncate min-w-0">{a.label}</span>
+                          {bridge.domains?.length > 0 && (
+                            <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-sky-200/70 text-sky-900 font-semibold">
+                              {bridge.domains[0]}
+                            </span>
+                          )}
+                          <button
+                            type="button"
+                            onClick={() =>
+                              setDraft((d) => ({
+                                ...d,
+                                aspirations: d.aspirations.filter((x) => x.label !== a.label),
+                              }))
+                            }
+                            className="shrink-0 text-sky-600 hover:text-sky-900 ml-0.5"
+                            aria-label={`Retirer ${a.label}`}
+                          >
+                            ✕
+                          </button>
+                        </span>
+                      );
+                    })}
                   </div>
                 )}
               </div>

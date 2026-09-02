@@ -327,6 +327,78 @@ export const ASPIRATION_BRIDGES: Record<string, AspirationBridge> = {
     worldAnchor:
       "L'accès à l'eau propre et l'évacuation saine sont vitaux pour la communauté : le plombier apporte confort, hygiène et solutionne les urgences indispensables du quotidien.",
   },
+  electricite: {
+    talentKeys: ["logico_mathematique", "artisanale", "spatial"],
+    domains: ["Sciences", "Architecture"],
+    skillsHint: [
+      "comprendre le circuit fermé et le passage du courant",
+      "dénuder et raccorder des câbles en toute sécurité",
+      "tester la continuité et isoler une installation",
+      "mesurer tension et consommation",
+    ],
+    worldAnchor:
+      "Apporter la lumière, alimenter les appareils du quartier et sécuriser les maisons contre les courts-circuits : un métier technique rigoureux et respecté.",
+  },
+  soudure: {
+    talentKeys: ["artisanale", "spatial", "logico_mathematique"],
+    domains: ["Artisanat", "Architecture"],
+    skillsHint: [
+      "assembler des pièces métalliques par fusion",
+      "ajuster les angles et respecter l'équerrage",
+      "meuler et préparer les surfaces",
+      "porter les protections et dompter la chaleur",
+    ],
+    worldAnchor:
+      "Fabriquer les charpentes métalliques, réparer les outils et renforcer les portes : la soudure donne corps et durabilité aux infrastructures locales.",
+  },
+  peinture: {
+    talentKeys: ["artisanale", "creative", "spatial"],
+    domains: ["Artisanat", "Arts"],
+    skillsHint: [
+      "préparer et poncer les supports",
+      "mélanger et doser les pigments et liants",
+      "appliquer des couches régulières et sans coulures",
+      "protéger les murs de l'humidité et de l'usure",
+    ],
+    worldAnchor:
+      "Transformer un mur brut en un espace propre, lumineux et accueillant : la peinture protège l'habitat des intempéries et apporte la beauté dans la communauté.",
+  },
+  boulangerie: {
+    talentKeys: ["artisanale", "logico_mathematique", "entrepreneuriale"],
+    domains: ["Artisanat", "Sciences"],
+    skillsHint: [
+      "peser et respecter les proportions au gramme près",
+      "comprendre le temps de pousse et la fermentation",
+      "pétrir et façonner la pâte avec régularité",
+      "gérer le feu, la cuisson et la croustillance",
+    ],
+    worldAnchor:
+      "Nourrir le quartier chaque matin dès l'aube avec du pain chaud et des beignets : un savoir-faire d'autonomie alimentaire indispensable et rentable.",
+  },
+  carrelage: {
+    talentKeys: ["artisanale", "spatial", "logico_mathematique"],
+    domains: ["Artisanat", "Architecture"],
+    skillsHint: [
+      "calculer les calepinages et découpes d'angles",
+      "vérifier la planéité au niveau à bulle",
+      "gérer les pentes d'évacuation d'eau",
+      "préparer le mortier colle et jointoyer proprement",
+    ],
+    worldAnchor:
+      "Rendre un sol propre, hygiénique, étanche et durable : le carreleur transforme l'intérieur des maisons et garantit un entretien facile.",
+  },
+  elevage: {
+    talentKeys: ["artisanale", "sociale", "logico_mathematique"],
+    domains: ["Agriculture", "Sciences"],
+    skillsHint: [
+      "observer le comportement et l'appétit des animaux",
+      "doser l'alimentation et surveiller l'eau propre",
+      "repérer les signes de maladie et maintenir l'enclos propre",
+      "planifier les cycles de croissance et reproduction",
+    ],
+    worldAnchor:
+      "Prendre soin de la volaille, des caprins ou des poissons : l'élevage constitue un trésor d'épargne sur pied et renforce la résilience familiale.",
+  },
 };
 
 /** Pont générique pour une aspiration libre non mappée — thème = label, compétences = les moins explorées. */
@@ -350,12 +422,22 @@ export function normalizeAspirationLabel(label: string): string {
 }
 
 /**
- * Trouve le pont d'une aspiration : d'abord la clé canonique exacte, puis une
- * correspondance par tokens (une aspiration libre « menuisier » ou « atelier de
- * menuiserie » retombe sur le pont menuiserie), sinon le pont générique.
+ * Trouve le pont d'une aspiration : d'abord le pont personnalisé s'il existe,
+ * puis la clé canonique exacte, puis une correspondance par tokens, sinon le pont générique.
  * Ne JETTE jamais : toute aspiration reçoit un pont.
  */
-export function findAspirationBridge(label: string): AspirationBridge {
+export function findAspirationBridge(
+  label: string,
+  customBridge?: AspirationBridge | null,
+): AspirationBridge {
+  if (
+    customBridge &&
+    Array.isArray(customBridge.talentKeys) &&
+    customBridge.talentKeys.length > 0
+  ) {
+    return customBridge;
+  }
+
   const normalized = normalizeAspirationLabel(label);
   if (!normalized) return GENERIC_ASPIRATION_BRIDGE;
 
