@@ -488,6 +488,7 @@ export type Database = {
           is_active: boolean;
           languages: string[];
           last_activity_date: string | null;
+          learning_profile?: Json;
           life_context: string[];
           name: string;
           passport_letter: string | null;
@@ -523,6 +524,7 @@ export type Database = {
           is_active?: boolean;
           languages?: string[];
           last_activity_date?: string | null;
+          learning_profile?: Json;
           life_context?: string[];
           name: string;
           passport_letter?: string | null;
@@ -558,6 +560,7 @@ export type Database = {
           is_active?: boolean;
           languages?: string[];
           last_activity_date?: string | null;
+          learning_profile?: Json;
           life_context?: string[];
           name?: string;
           passport_letter?: string | null;

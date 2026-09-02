@@ -14,12 +14,18 @@ import { getGeoHint } from "@/lib/geo.functions";
 import { seedTalentsFromInterests } from "@/lib/talent-seed";
 import {
   ABILITY_AXES,
+  ASPIRATION_CATEGORIES,
   ASPIRATION_SUGGESTIONS,
+  CHALLENGE_RAPPORT,
+  COLLAB_PREFERENCE,
+  ERROR_RAPPORT,
+  LEARNING_MODES,
   LIFE_CONTEXT_OPTIONS,
   SCHOOL_LEVELS,
   SCHOOL_RELATIONS,
   shouldAskAspirations,
   type AbilityValue,
+  type LearningProfile,
 } from "@/lib/profile-context";
 import { TIME_PRESSURE_LABELS, type TimePressure } from "@/lib/time-limit";
 import { generateSuggestedUsername, sanitizeUsername } from "@/lib/child-username";
@@ -61,6 +67,7 @@ export function ProfileDialog({
           school_relation: initial.school_relation ?? null,
           life_context: initial.life_context ?? [],
           aspirations: initial.aspirations ?? [],
+          learning_profile: (initial as any).learning_profile ?? {},
           time_pressure: initial.time_pressure ?? "standard",
           is_active: initial.is_active ?? true,
         }
@@ -126,20 +133,49 @@ export function ProfileDialog({
     initial && initial.interests.length > 0 ? "tags" : "universes",
   );
 
-  // Parcours d'onboarding « Qui est cet enfant ? » (2026-08-12, analyse §6-7, §10) :
-  // Qui → Comment il est → À quel enfant ? → (conditionnelle) Ce qu'il veut devenir.
+  // Parcours d'onboarding « Qui est cet enfant ? » (2026-08-12, analyse §6-7, §10, enrichi 2026-09-02) :
+  // Qui → Comment il est → À quel enfant ? → (conditionnelle) Ce qu'il veut devenir (vulnérable) OU Comment il apprend (parcours standard).
   const [wizardStep, setWizardStep] = useState(0);
   const [aspirationInput, setAspirationInput] = useState("");
 
-  // Étape 4 conditionnelle : on demande les aspirations pour les profils vulnérables
-  // (parcours rue, précarité, famille éloignée, conflit avec l'école — analyse §10),
-  // ou si des aspirations existent déjà (on ne cache jamais des données).
+  // Étape 4 contextuelle :
+  // - Profils vulnérables (parcours rue, précarité, famille éloignée, conflit avec l'école) → "Ce qu'il veut devenir"
+  // - Profils standard → "Comment il apprend" (modalités d'apprentissage comportementales fiables pour Naya)
   const askAspirations = shouldAskAspirations({
     life_context: draft.life_context,
     school_relation: draft.school_relation,
     existingAspirations: draft.aspirations,
   });
-  const wizardSteps = askAspirations ? 4 : 3;
+  const wizardSteps = 4;
+
+  const setLearningProfileField = (
+    field: keyof LearningProfile,
+    value: string | string[] | null,
+  ) => {
+    setDraft((d) => ({
+      ...d,
+      learning_profile: {
+        ...(d.learning_profile ?? {}),
+        [field]: value,
+      },
+    }));
+  };
+
+  const toggleLearningMode = (mode: string) => {
+    const current = draft.learning_profile?.learning_mode;
+    const currentList = Array.isArray(current) ? current : current ? [current] : [];
+    if (currentList.includes(mode)) {
+      const next = currentList.filter((m) => m !== mode);
+      setLearningProfileField("learning_mode", next);
+    } else {
+      if (currentList.length >= 2) {
+        const next = [currentList[1], mode];
+        setLearningProfileField("learning_mode", next);
+      } else {
+        setLearningProfileField("learning_mode", [...currentList, mode]);
+      }
+    }
+  };
 
   const languagesText = draft.languages.join(", ");
   const setLanguagesText = (text: string) =>
@@ -248,6 +284,7 @@ export function ProfileDialog({
         school_relation: draft.school_relation || null,
         life_context: draft.life_context,
         aspirations: draft.aspirations,
+        learning_profile: draft.learning_profile ?? {},
         time_pressure: draft.time_pressure,
         // Guilde provisoire (refonte 2026-08-09) : à la CRÉATION uniquement, les intérêts
         // déclarés dérivent une baseline de talents (1-4 pts → "signal_precoce", sous les
@@ -298,7 +335,7 @@ export function ProfileDialog({
           });
         }
       }
-      // Consentement « Contexte & aptitudes » (2026-08-12) : dès qu'une donnée du
+      // Consentement « Contexte & aptitudes » (2026-08-12, enrichi 2026-09-02) : dès qu'une donnée du
       // profil multidimensionnel est déclarée (ou modifiée), on le trace — le parent
       // reste maître des données sensibles de son enfant.
       const contextDeclared =
@@ -307,14 +344,15 @@ export function ProfileDialog({
         Object.values(draft.ability_profile).some((v) => v !== "neutre") ||
         draft.school_relation ||
         draft.life_context.length > 0 ||
-        draft.aspirations.length > 0;
+        draft.aspirations.length > 0 ||
+        (draft.learning_profile && Object.keys(draft.learning_profile).length > 0);
       if (contextDeclared && savedId) {
         await supabase.from("consent_events").insert({
           user_id: userId,
           child_id: savedId,
           event_type: "context_declared",
           description:
-            "Contexte, aptitudes et aspirations déclarés par le parent (section optionnelle du profil).",
+            "Contexte, aptitudes, profil d'apprentissage et aspirations déclarés par le parent.",
         });
       }
       onSaved();
@@ -353,10 +391,9 @@ export function ProfileDialog({
         </div>
 
         <div className="space-y-5">
-          {/* Parcours d'onboarding en étapes (2026-08-12, analyse §6-7, §10) */}
+          {/* Parcours d'onboarding en étapes (2026-08-12, analyse §6-7, §10, enrichi 2026-09-02) */}
           <div className="flex items-center justify-between gap-1 rounded-xl bg-ink/5 p-1 text-xs font-bold overflow-x-auto no-scrollbar">
-            {["Qui", "Comment il est", "À quel enfant ?", "Ce qu'il veut devenir"]
-              .slice(0, wizardSteps)
+            {["Qui", "Comment il est", "À quel enfant ?", askAspirations ? "Ce qu'il veut devenir" : "Comment il apprend"]
               .map((label, i) => (
                 <button
                   key={label}
@@ -834,39 +871,59 @@ export function ProfileDialog({
                 <p className="mb-1 text-xs font-black uppercase tracking-widest text-ink/70">
                   Ce qu'il veut devenir
                 </p>
-                <p className="mb-2 text-[11px] text-ink/60 leading-relaxed">
+                <p className="mb-3 text-[11px] text-ink/60 leading-relaxed">
                   Ce que <strong>votre enfant dit</strong> vouloir faire — ses propres mots, même
                   s'ils vous surprennent. Pour ces enfants, la déclaration est une boussole : Naya
                   l'explorera par l'expérience, sans jamais en faire un verdict.
                 </p>
-                <div className="flex flex-wrap gap-1.5">
-                  {ASPIRATION_SUGGESTIONS.map((s) => {
-                    const on = draft.aspirations.some((a) => a.label === s);
-                    return (
-                      <button
-                        key={s}
-                        type="button"
-                        onClick={() =>
-                          on
-                            ? setDraft((d) => ({
-                                ...d,
-                                aspirations: d.aspirations.filter((a) => a.label !== s),
-                              }))
-                            : addAspiration(s)
-                        }
-                        className={
-                          "rounded-full px-3 py-1 text-[11px] font-bold border-2 transition-all " +
-                          (on
-                            ? "bg-sky-100 border-sky-500 text-sky-800"
-                            : "bg-white border-ink/15 text-ink/60 hover:border-ink/40")
-                        }
-                      >
-                        {s}
-                      </button>
-                    );
-                  })}
+
+                {/* Catégories de métiers */}
+                <div className="space-y-3">
+                  {ASPIRATION_CATEGORIES.map((cat) => (
+                    <div
+                      key={cat.name}
+                      className="rounded-2xl border border-ink/10 p-3 bg-ink/[0.015]"
+                    >
+                      <p className="text-[11px] font-bold text-ink/80 mb-2 flex items-center gap-1.5">
+                        <span>{cat.icon}</span>
+                        <span>{cat.name}</span>
+                      </p>
+                      <div className="flex flex-wrap gap-1.5">
+                        {cat.suggestions.map((s) => {
+                          const on = draft.aspirations.some(
+                            (a) => a.label.toLowerCase() === s.toLowerCase(),
+                          );
+                          return (
+                            <button
+                              key={s}
+                              type="button"
+                              onClick={() =>
+                                on
+                                  ? setDraft((d) => ({
+                                      ...d,
+                                      aspirations: d.aspirations.filter(
+                                        (a) => a.label.toLowerCase() !== s.toLowerCase(),
+                                      ),
+                                    }))
+                                  : addAspiration(s)
+                              }
+                              className={
+                                "rounded-full px-3 py-1 text-[11px] font-bold border-2 transition-all " +
+                                (on
+                                  ? "bg-sky-100 border-sky-500 text-sky-800 shadow-xs"
+                                  : "bg-white border-ink/15 text-ink/60 hover:border-ink/40")
+                              }
+                            >
+                              {s}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  ))}
                 </div>
-                <div className="mt-2 flex gap-2">
+
+                <div className="mt-3 flex gap-2">
                   <input
                     value={aspirationInput}
                     onChange={(e) => setAspirationInput(e.target.value)}
@@ -888,7 +945,7 @@ export function ProfileDialog({
                   </button>
                 </div>
                 {draft.aspirations.length > 0 && (
-                  <div className="mt-2 flex flex-wrap gap-1.5">
+                  <div className="mt-2.5 flex flex-wrap gap-1.5">
                     {draft.aspirations.map((a) => (
                       <span
                         key={a.label}
@@ -903,7 +960,7 @@ export function ProfileDialog({
                               aspirations: d.aspirations.filter((x) => x.label !== a.label),
                             }))
                           }
-                          className="shrink-0 text-sky-600 hover:text-sky-900"
+                          className="shrink-0 text-sky-600 hover:text-sky-900 ml-1"
                           aria-label={`Retirer ${a.label}`}
                         >
                           ✕
@@ -912,6 +969,152 @@ export function ProfileDialog({
                     ))}
                   </div>
                 )}
+              </div>
+            </div>
+          )}
+
+          {!askAspirations && wizardStep === 3 && (
+            <div className="space-y-4">
+              <div>
+                <p className="mb-1 text-xs font-black uppercase tracking-widest text-ink/70">
+                  Comment il apprend
+                </p>
+                <p className="mb-3 text-[11px] text-ink/60 leading-relaxed">
+                  Ce que <strong>vous observez</strong> au quotidien (pas ce qu'il imagine). Ces repères
+                  permettent à Naya d'adapter le format et le tempo des défis à sa dynamique naturelle.
+                </p>
+
+                {/* 1. Modalité d'apprentissage */}
+                <div className="rounded-2xl border border-ink/10 p-3 bg-ink/[0.015] space-y-2 mb-3">
+                  <div className="flex items-center justify-between">
+                    <p className="text-[11px] font-bold text-ink/80 flex items-center gap-1.5">
+                      <span>🎯</span>
+                      <span>Comment retient-il le mieux ?</span>
+                    </p>
+                    <span className="text-[10px] text-ink/50 font-medium">1 à 2 choix</span>
+                  </div>
+                  <div className="flex flex-wrap gap-1.5">
+                    {Object.entries(LEARNING_MODES).map(([key, label]) => {
+                      const current = draft.learning_profile?.learning_mode;
+                      const currentList = Array.isArray(current) ? current : current ? [current] : [];
+                      const on = currentList.includes(key);
+                      return (
+                        <button
+                          key={key}
+                          type="button"
+                          onClick={() => toggleLearningMode(key)}
+                          className={
+                            "rounded-full px-3 py-1.5 text-[11px] font-bold border-2 transition-all " +
+                            (on
+                              ? "bg-amber-100 border-amber-500 text-amber-900 shadow-xs"
+                              : "bg-white border-ink/15 text-ink/60 hover:border-ink/40")
+                          }
+                        >
+                          {label}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {/* 2. Rapport au défi */}
+                <div className="rounded-2xl border border-ink/10 p-3 bg-ink/[0.015] space-y-2 mb-3">
+                  <p className="text-[11px] font-bold text-ink/80 flex items-center gap-1.5">
+                    <span>⚡</span>
+                    <span>Face à un nouveau défi ou problème</span>
+                  </p>
+                  <div className="flex flex-wrap gap-1.5">
+                    {Object.entries(CHALLENGE_RAPPORT).map(([key, label]) => {
+                      const on = draft.learning_profile?.challenge_rapport === key;
+                      return (
+                        <button
+                          key={key}
+                          type="button"
+                          onClick={() =>
+                            setLearningProfileField(
+                              "challenge_rapport",
+                              on ? null : key,
+                            )
+                          }
+                          className={
+                            "rounded-full px-3 py-1.5 text-[11px] font-bold border-2 transition-all " +
+                            (on
+                              ? "bg-brand/15 border-brand text-brand font-black shadow-xs"
+                              : "bg-white border-ink/15 text-ink/60 hover:border-ink/40")
+                          }
+                        >
+                          {label}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {/* 3. Rapport à l'erreur */}
+                <div className="rounded-2xl border border-ink/10 p-3 bg-ink/[0.015] space-y-2 mb-3">
+                  <p className="text-[11px] font-bold text-ink/80 flex items-center gap-1.5">
+                    <span>🔄</span>
+                    <span>Quand il se trompe ou bloque</span>
+                  </p>
+                  <div className="flex flex-wrap gap-1.5">
+                    {Object.entries(ERROR_RAPPORT).map(([key, label]) => {
+                      const on = draft.learning_profile?.error_rapport === key;
+                      return (
+                        <button
+                          key={key}
+                          type="button"
+                          onClick={() =>
+                            setLearningProfileField(
+                              "error_rapport",
+                              on ? null : key,
+                            )
+                          }
+                          className={
+                            "rounded-full px-3 py-1.5 text-[11px] font-bold border-2 transition-all " +
+                            (on
+                              ? "bg-emerald-100 border-emerald-500 text-emerald-900 shadow-xs"
+                              : "bg-white border-ink/15 text-ink/60 hover:border-ink/40")
+                          }
+                        >
+                          {label}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {/* 4. Préférence collaborative */}
+                <div className="rounded-2xl border border-ink/10 p-3 bg-ink/[0.015] space-y-2">
+                  <p className="text-[11px] font-bold text-ink/80 flex items-center gap-1.5">
+                    <span>🤝</span>
+                    <span>Dynamique relationnelle</span>
+                  </p>
+                  <div className="flex flex-wrap gap-1.5">
+                    {Object.entries(COLLAB_PREFERENCE).map(([key, label]) => {
+                      const on = draft.learning_profile?.collab_preference === key;
+                      return (
+                        <button
+                          key={key}
+                          type="button"
+                          onClick={() =>
+                            setLearningProfileField(
+                              "collab_preference",
+                              on ? null : key,
+                            )
+                          }
+                          className={
+                            "rounded-full px-3 py-1.5 text-[11px] font-bold border-2 transition-all " +
+                            (on
+                              ? "bg-indigo-100 border-indigo-500 text-indigo-900 shadow-xs"
+                              : "bg-white border-ink/15 text-ink/60 hover:border-ink/40")
+                          }
+                        >
+                          {label}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
               </div>
             </div>
           )}

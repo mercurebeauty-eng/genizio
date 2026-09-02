@@ -53,20 +53,98 @@ export const LIFE_CONTEXT_OPTIONS: Record<string, string> = {
   famille_eloignee: "Famille éloignée / vit chez un tuteur",
 };
 
-// Suggestions d'aspirations pour l'interface (ajout libre possible côté parent —
-// une aspiration n'est pas une donnée sensible, c'est une déclaration).
-export const ASPIRATION_SUGGESTIONS = [
-  "Menuiserie",
-  "Mécanique",
-  "Médecine",
-  "Agriculture",
-  "Commerce",
-  "Art & dessin",
-  "Sport",
-  "Informatique",
-  "Musique & danse",
-  "Couture",
-];
+// Catégories et suggestions d'aspirations pour l'interface (enfants vulnérables).
+export const ASPIRATION_CATEGORIES = [
+  {
+    name: "Métiers manuels & artisanat",
+    icon: "🔨",
+    suggestions: [
+      "Menuiserie",
+      "Mécanique",
+      "Agriculture",
+      "Couture",
+      "Cuisine & Restauration",
+    ],
+  },
+  {
+    name: "Numérique & Services",
+    icon: "📱",
+    suggestions: [
+      "Informatique",
+      "Réparateur de téléphones",
+      "Monteur vidéo",
+      "Coiffure & Beauté",
+      "Logistique & Livraison",
+    ],
+  },
+  {
+    name: "Impact & Avenir",
+    icon: "🌍",
+    suggestions: [
+      "Médecine",
+      "Énergie solaire",
+      "Éducateur / Animateur",
+      "Commerce",
+      "Agro-transformation",
+      "Guide touristique",
+    ],
+  },
+  {
+    name: "Expression & Sport",
+    icon: "🎨",
+    suggestions: [
+      "Art & dessin",
+      "Sport",
+      "Musique & danse",
+      "Soins aux personnes",
+    ],
+  },
+] as const;
+
+// Suggestions plates pour la rétro-compatibilité
+export const ASPIRATION_SUGGESTIONS: string[] = ASPIRATION_CATEGORIES.flatMap(
+  (c) => [...c.suggestions],
+);
+
+// Rapport au défi (observé par le parent, pas projeté par l'enfant)
+export const CHALLENGE_RAPPORT: Record<string, string> = {
+  rapide_facile: "Préfère les défis courts et accessibles",
+  casse_tete: "Aime les casse-tête longs et complexes",
+  abandonne_vite: "Abandonne vite face à la difficulté",
+  perseverant: "Persévère jusqu'à réussir",
+};
+
+// Mode d'apprentissage dominant (1 ou 2 choix max)
+export const LEARNING_MODES: Record<string, string> = {
+  pratique: "En faisant (action, manipulation)",
+  visuel: "En observant (schémas, images, démonstrations)",
+  ecoute: "En écoutant (histoires, explications orales)",
+  discussion: "En échangeant (poser des questions, débattre)",
+  lecture: "En lisant (textes, consignes écrites)",
+};
+
+// Rapport à l'erreur
+export const ERROR_RAPPORT: Record<string, string> = {
+  decourage: "L'erreur le décourage ou le frustre",
+  amuse: "L'erreur l'amuse ou le détend",
+  motive: "L'erreur le stimule à retenter",
+  indifferent: "L'erreur ne l'affecte pas particulièrement",
+};
+
+// Préférence collaborative
+export const COLLAB_PREFERENCE: Record<string, string> = {
+  solo: "Préfère avancer en solo",
+  duo: "Préfère en duo (avec un pair de confiance)",
+  groupe: "S'épanouit en petite escouade / collectif",
+  mixte: "Alterne selon le sujet",
+};
+
+export type LearningProfile = {
+  challenge_rapport?: string | null;
+  learning_mode?: string | string[] | null;
+  error_rapport?: string | null;
+  collab_preference?: string | null;
+};
 
 export type AbilityValue = "facile" | "neutre" | "difficulte";
 
@@ -120,6 +198,7 @@ export function formatChildProfileContext(profile: {
   school_relation?: string | null;
   life_context?: string[] | null;
   aspirations?: Aspiration[] | null;
+  learning_profile?: LearningProfile | null;
 }): string {
   const lines: string[] = [];
 
@@ -165,6 +244,45 @@ export function formatChildProfileContext(profile: {
     lines.push(
       `- Aspiration(s) déclarée(s)${sourceNote} : ${list} — HYPOTHÈSE À EXPLORER, jamais un verdict : propose des expériences liées à cet univers, observe les aptitudes réelles, et si une divergence apparaît, cherche « qu'est-ce que cet enfant sait réellement bien faire » pour orienter (analyse §10-16).`,
     );
+  }
+
+  if (profile.learning_profile) {
+    const lp = profile.learning_profile;
+    if (lp.learning_mode) {
+      const modes = Array.isArray(lp.learning_mode) ? lp.learning_mode : [lp.learning_mode];
+      const modeLabels = modes.map((m) => LEARNING_MODES[m] ?? m).filter(Boolean);
+      if (modeLabels.length > 0) {
+        lines.push(
+          `- Modalité d'apprentissage observée : ${modeLabels.join(", ")} — adapte le format du défi pour privilégier cette entrée concrète.`,
+        );
+      }
+    }
+    if (lp.challenge_rapport && CHALLENGE_RAPPORT[lp.challenge_rapport]) {
+      const rapport = CHALLENGE_RAPPORT[lp.challenge_rapport];
+      let guidance = "";
+      if (lp.challenge_rapport === "abandonne_vite") {
+        guidance = " — sécurise les premières étapes avec des victoires rapides pour bâtir sa confiance.";
+      } else if (lp.challenge_rapport === "perseverant" || lp.challenge_rapport === "casse_tete") {
+        guidance = " — propose un vrai niveau d'exigence et de profondeur sans trop simplifier.";
+      } else if (lp.challenge_rapport === "rapide_facile") {
+        guidance = " — fractionne en petites étapes immédiates et valorisantes.";
+      }
+      lines.push(`- Rapport au défi observé : ${rapport}${guidance}`);
+    }
+    if (lp.error_rapport && ERROR_RAPPORT[lp.error_rapport]) {
+      const errRapport = ERROR_RAPPORT[lp.error_rapport];
+      let guidance = "";
+      if (lp.error_rapport === "decourage") {
+        guidance = " — dédramatise l'erreur, propose un cadre sans jugement où l'essai est valorisé.";
+      } else if (lp.error_rapport === "motive") {
+        guidance = " — l'erreur est un moteur : utilise le feedback d'itération comme levier d'apprentissage.";
+      }
+      lines.push(`- Rapport à l'erreur : ${errRapport}${guidance}`);
+    }
+    if (lp.collab_preference && COLLAB_PREFERENCE[lp.collab_preference]) {
+      const collab = COLLAB_PREFERENCE[lp.collab_preference];
+      lines.push(`- Préférence relationnelle / groupe : ${collab}.`);
+    }
   }
 
   return lines.length > 0 ? lines.join("\n") : "";

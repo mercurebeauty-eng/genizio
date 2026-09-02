@@ -59,4 +59,16 @@ describe("findAspirationBridge", () => {
       }
     }
   });
+
+  it("toutes les suggestions de ASPIRATION_SUGGESTIONS résolvent vers un pont dédié non-générique", async () => {
+    const { ASPIRATION_SUGGESTIONS } = await import("@/lib/profile-context");
+    for (const suggestion of ASPIRATION_SUGGESTIONS) {
+      const bridge = findAspirationBridge(suggestion);
+      expect(
+        bridge,
+        `La suggestion '${suggestion}' doit avoir un pont dédié non générique`,
+      ).not.toBe(GENERIC_ASPIRATION_BRIDGE);
+      expect(bridge.talentKeys.length).toBeGreaterThan(0);
+    }
+  });
 });

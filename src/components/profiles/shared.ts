@@ -1,5 +1,5 @@
 import { TALENT_KEY_LABELS } from "@/lib/talent-buckets";
-import type { AbilityValue, Aspiration } from "@/lib/profile-context";
+import type { AbilityValue, Aspiration, LearningProfile } from "@/lib/profile-context";
 import type { TimePressure } from "@/lib/time-limit";
 
 // Centres d'intérêt organisés par clé de talent Gardner (les mêmes 9 clés que
@@ -138,6 +138,7 @@ export type ChildProfile = {
   school_relation: string | null;
   life_context: string[];
   aspirations: Aspiration[];
+  learning_profile?: LearningProfile;
   time_pressure: TimePressure;
   is_active: boolean;
 };
@@ -171,6 +172,7 @@ export const emptyProfileDraft = (): ProfileDraft => ({
   school_relation: null,
   life_context: [],
   aspirations: [],
+  learning_profile: {},
   time_pressure: "standard",
   is_active: true,
 });

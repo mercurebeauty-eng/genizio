@@ -72,4 +72,32 @@ describe("formatChildProfileContext", () => {
       expect(SCHOOL_LEVELS[key]).toBeTruthy();
     }
   });
+
+  it("profil d'apprentissage : injecte les modalités, le rapport au défi, l'erreur et la collaboration", () => {
+    const out = formatChildProfileContext({
+      learning_profile: {
+        learning_mode: ["pratique", "visuel"],
+        challenge_rapport: "perseverant",
+        error_rapport: "motive",
+        collab_preference: "duo",
+      },
+    });
+    expect(out).toContain("Modalité d'apprentissage observée :");
+    expect(out).toContain("En faisant");
+    expect(out).toContain("En observant");
+    expect(out).toContain("Rapport au défi observé : Persévère jusqu'à réussir");
+    expect(out).toContain("Rapport à l'erreur : L'erreur le stimule à retenter");
+    expect(out).toContain("Préférence relationnelle / groupe : Préfère en duo");
+  });
+
+  it("profil d'apprentissage : guidance spécifique pour abandonne_vite et decourage", () => {
+    const out = formatChildProfileContext({
+      learning_profile: {
+        challenge_rapport: "abandonne_vite",
+        error_rapport: "decourage",
+      },
+    });
+    expect(out).toContain("victoires rapides pour bâtir sa confiance");
+    expect(out).toContain("dédramatise l'erreur");
+  });
 });

@@ -129,6 +129,131 @@ export const ASPIRATION_BRIDGES: Record<string, AspirationBridge> = {
     worldAnchor:
       "Ancrer dans le tissu local et le marché : coudre utile puis coudre pour vendre — le geste précis comme source de revenu.",
   },
+  cuisine: {
+    talentKeys: ["artisanale", "logico_mathematique", "entrepreneuriale"],
+    domains: ["Artisanat", "Entrepreneuriat"],
+    skillsHint: [
+      "doser les ingrédients",
+      "gérer le temps et les cuissons",
+      "règles d'hygiène",
+      "accueillir et servir",
+      "calculer le coût de revient",
+    ],
+    worldAnchor:
+      "La cuisine nourrit et crée une activité immédiate : comprendre les proportions, la propreté et la satisfaction du client.",
+  },
+  "reparateur de telephones": {
+    talentKeys: ["spatial", "logico_mathematique", "artisanale", "entrepreneuriale"],
+    domains: ["Tech & IA", "Artisanat"],
+    skillsHint: [
+      "démonter minutieusement",
+      "diagnostiquer le composant en panne",
+      "manipuler de petits outils",
+      "tester et vérifier",
+      "tarifier un service",
+    ],
+    worldAnchor:
+      "Le smartphone est l'objet le plus précieux du quotidien : savoir le réparer confère une utilité et un statut d'expert recherché dans le quartier.",
+  },
+  "monteur video": {
+    talentKeys: ["creative", "spatial", "linguistique"],
+    domains: ["Arts", "Tech & IA", "Communication"],
+    skillsHint: [
+      "raconter une histoire en images",
+      "rythmer les séquences",
+      "sélectionner les plans forts",
+      "maîtriser le son et la lumière",
+    ],
+    worldAnchor:
+      "Le téléphone sert d'outil de création : raconter le réel du quartier, valoriser un événement ou un projet local avec un regard captivant.",
+  },
+  coiffure: {
+    talentKeys: ["artisanale", "creative", "sociale", "entrepreneuriale"],
+    domains: ["Artisanat", "Entrepreneuriat"],
+    skillsHint: [
+      "précision du geste",
+      "sens esthétique",
+      "écoute et conseil du client",
+      "patience et endurance",
+      "gestion du salon",
+    ],
+    worldAnchor:
+      "Le salon de coiffure est un lieu central de lien social : allier créativité, relation de confiance et autonomie financière.",
+  },
+  logistique: {
+    talentKeys: ["logico_mathematique", "spatial", "entrepreneuriale"],
+    domains: ["Entrepreneuriat", "Sciences"],
+    skillsHint: [
+      "optimiser un itinéraire",
+      "gérer un stock",
+      "respecter les délais",
+      "sécuriser les colis",
+      "communiquer avec clarté",
+    ],
+    worldAnchor:
+      "La circulation des marchandises fait vivre la ville : repérer les flux, organiser les trajets et être le maillon fiable de la livraison.",
+  },
+  "energie solaire": {
+    talentKeys: ["logico_mathematique", "spatial", "artisanale"],
+    domains: ["Sciences", "Tech & IA"],
+    skillsHint: [
+      "comprendre le circuit électrique",
+      "orienter les panneaux selon le soleil",
+      "mesurer tension et batterie",
+      "entretenir l'installation",
+    ],
+    worldAnchor:
+      "L'énergie solaire apporte la lumière et recharge les téléphones là où le réseau manque : un savoir technique d'avenir essentiel.",
+  },
+  educateur: {
+    talentKeys: ["sociale", "linguistique", "emotionnelle"],
+    domains: ["Communication", "Sport"],
+    skillsHint: [
+      "animer un groupe",
+      "transmettre une règle avec bienveillance",
+      "résoudre un conflit",
+      "encourager les plus timides",
+    ],
+    worldAnchor:
+      "Dans la cour ou le quartier, être le grand frère ou la grande sœur qui inspire, protège et organise des jeux constructifs.",
+  },
+  "agro transformation": {
+    talentKeys: ["artisanale", "logico_mathematique", "entrepreneuriale"],
+    domains: ["Agriculture", "Entrepreneuriat"],
+    skillsHint: [
+      "conserver les aliments",
+      "doser les mélanges",
+      "stériliser et emballer",
+      "calculer la marge de vente",
+      "respecter la saisonnalité",
+    ],
+    worldAnchor:
+      "Transformer les récoltes locales (fruits en jus, manioc en farine) évite le gaspillage et génère une valeur durable au marché.",
+  },
+  "guide touristique": {
+    talentKeys: ["linguistique", "sociale", "spatial"],
+    domains: ["Communication", "Arts"],
+    skillsHint: [
+      "partager l'histoire des lieux",
+      "parler avec aisance",
+      "orienter les visiteurs",
+      "mettre en valeur le patrimoine local",
+    ],
+    worldAnchor:
+      "Raconter la richesse culturelle, historique et humaine de sa ville ou de sa région avec fierté et précision.",
+  },
+  soins: {
+    talentKeys: ["emotionnelle", "sociale", "corporelle"],
+    domains: ["Sciences", "Communication"],
+    skillsHint: [
+      "écouter avec empathie",
+      "gestes de premiers secours",
+      "accompagner une personne âgée ou malade",
+      "patience et douceur",
+    ],
+    worldAnchor:
+      "Le soutien aux personnes vulnérables de la communauté : un rôle protecteur qui demande rigueur, respect et générosité.",
+  },
 };
 
 /** Pont générique pour une aspiration libre non mappée — thème = label, compétences = les moins explorées. */
