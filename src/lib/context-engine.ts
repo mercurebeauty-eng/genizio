@@ -90,7 +90,15 @@ export interface BuildChildDevelopmentStateInput {
     completed_at?: string | null;
   }>;
   staleChallenges?: Array<{ domain: string }>;
-  progressionTargets?: ProgressionTarget[];
+  progressionTargets?: Array<
+    Partial<ProgressionTarget> & {
+      domain: string;
+      lastLevelAge: number;
+      targetLevelAge: number;
+      hasUnconsolidatedCollectivePeak?: boolean;
+      cause?: string | null;
+    }
+  >;
   interestHypotheses?: InterestHypotheses | null;
   aspirationHypotheses?: AspirationHypotheses | null;
   latestChildQuestion?: string | null;
