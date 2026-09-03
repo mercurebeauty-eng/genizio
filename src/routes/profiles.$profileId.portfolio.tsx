@@ -67,6 +67,7 @@ import {
   CheckCircle2,
   Target,
   Gift,
+  LayoutDashboard,
 } from "lucide-react";
 import { AppHeader } from "@/components/AppHeader";
 import { INTERESTS_BY_TALENT } from "@/components/profiles/shared";
@@ -1354,6 +1355,27 @@ function PortfolioPage() {
                 <ChevronRight className="size-3.5" />
               </Link>
             </div>
+          )}
+
+          {/* Raccourci Dashboard Mentor (uniquement en vue superviseur) */}
+          {mentorMode && (
+            <Link
+              to="/mentor"
+              className="flex items-center gap-4 rounded-3xl border border-indigo-200 bg-indigo-50/70 p-5 shadow-sm transition-colors hover:bg-indigo-100/50"
+            >
+              <div className="grid size-12 place-items-center rounded-2xl bg-indigo-600 text-white shrink-0">
+                <LayoutDashboard className="size-6" />
+              </div>
+              <div className="flex-1">
+                <p className="text-sm font-black text-indigo-900">Retour au Dashboard Mentor</p>
+                <p className="text-xs text-ink/70 mt-0.5">
+                  Accédez à votre espace pour gérer vos escouades et suivre vos élèves.
+                </p>
+              </div>
+              <div className="grid size-8 place-items-center rounded-full bg-indigo-600/10 shrink-0">
+                <ChevronRight className="size-4 text-indigo-700" />
+              </div>
+            </Link>
           )}
 
           <div className="grid grid-cols-1 gap-6 ">
