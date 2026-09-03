@@ -746,19 +746,38 @@ export type AdminSubscriptionRow = {
   creditsCount: number;
 };
 
+export type AdminAccompanimentPackRow = {
+  id: string;
+  userId: string;
+  parentName: string | null;
+  parentEmail: string | null;
+  parentPhone: string | null;
+  childId: string;
+  childName: string;
+  childAge: number | null;
+  mentorEmail: string | null;
+  sessions: number;
+  sessionsUsed: number;
+  priceXof: number | null;
+  status: string;
+  startsAt: string | null;
+  endsAt: string | null;
+  createdAt: string;
+};
+
 export type SubscriptionsAdminData = {
   subscriptions: AdminSubscriptionRow[];
+  accompanimentPacks: AdminAccompanimentPackRow[];
   mrrXof: number;
   activeCount: number;
   pastDueCount: number;
   cancelledCount: number;
   churn30dCount: number;
+  activePacksCount: number;
+  totalSessionsRemaining: number;
 };
 
-// Vue admin : chaque famille, sa ligne d'abonnement + couverture parrainage cumulée.
-// MRR = somme des tarifs des familles actives/en retard (grandfathering inclus), churn 30 j =
-// résiliations sur les 30 derniers jours. La couverture réelle de la famille est calculée par
-// le résolveur (child-access.getFamilyCoverage) — ici c'est une lecture de gestion.
+// Vue admin : chaque famille, sa ligne d'abonnement + couverture parrainage cumulée + packs accompagnement par enfant.
 export const getSubscriptionsDataAdmin = createServerFn({ method: "GET" })
   .middleware([requireAdmin])
   .handler(async (): Promise<SubscriptionsAdminData> => {
@@ -775,16 +794,36 @@ export const getSubscriptionsDataAdmin = createServerFn({ method: "GET" })
       .select("user_id, ends_at");
     if (credErr) throw new Error(credErr.message);
 
-    // Contacts parents via parent_profiles (Vague 1) — une requête SQL, fini le scan
-    // paginé de l'annuaire auth (listAllUsers).
+    // Packs accompagnement / mentorat par enfant (family_coverages source='accompaniment_pack')
+    const { data: packs, error: packsErr } = await (supabaseAdmin as any)
+      .from("family_coverages")
+      .select("*")
+      .eq("source", "accompaniment_pack")
+      .order("created_at", { ascending: false });
+    if (packsErr) throw new Error(packsErr.message);
+
+    // Profils enfants pour enrichir les packs
+    const { data: children, error: chErr } = await supabaseAdmin
+      .from("child_profiles")
+      .select("id, name, age");
+    if (chErr) throw new Error(chErr.message);
+    const childById = new Map((children ?? []).map((c) => [c.id, c]));
+
+    // Contacts parents via parent_profiles (Vague 1)
     const { data: contacts, error: contactsErr } = await supabaseAdmin
       .from("parent_profiles")
       .select("user_id, email, phone, display_name");
     if (contactsErr) throw new Error(contactsErr.message);
     const userById = new Map((contacts ?? []).map((u) => [u.user_id, u]));
 
-    // Dernière fin de couverture parrainage par famille (une seule crédit fait foi : la plus
-    // longue, getFamilyCoverage prend le max) + nombre de crédits posés.
+    // Assignations mentors actives pour afficher le mentor en regard de chaque pack
+    const { data: mentorAssignments } = await (supabaseAdmin as any)
+      .from("mentors")
+      .select("child_profile_id, mentor_user_id")
+      .is("removed_at", null);
+    const mentorUserByChild = new Map((mentorAssignments ?? []).map((m: any) => [m.child_profile_id, m.mentor_user_id]));
+
+    // Dernière fin de couverture parrainage par famille
     const sponsoredByUser = new Map<string, string | null>();
     const creditsByUser = new Map<string, number>();
     for (const c of credits ?? []) {
@@ -836,5 +875,90 @@ export const getSubscriptionsDataAdmin = createServerFn({ method: "GET" })
       return row;
     });
 
-    return { subscriptions, mrrXof, activeCount, pastDueCount, cancelledCount, churn30dCount };
+    let activePacksCount = 0;
+    let totalSessionsRemaining = 0;
+
+    const accompanimentPacks: AdminAccompanimentPackRow[] = (packs ?? []).map((p: any) => {
+      const user = userById.get(p.user_id);
+      const child = childById.get(p.child_id);
+      const mentorUserId = mentorUserByChild.get(p.child_id);
+      const mentorUser = mentorUserId ? userById.get(mentorUserId) : null;
+      const sessions = p.sessions ?? 0;
+      const sessionsUsed = p.sessions_used ?? 0;
+      const remaining = Math.max(0, sessions - sessionsUsed);
+
+      const isActive = p.status === "active" && (!p.ends_at || new Date(p.ends_at).getTime() > now.getTime());
+      if (isActive) {
+        activePacksCount += 1;
+        totalSessionsRemaining += remaining;
+      }
+
+      return {
+        id: p.id,
+        userId: p.user_id,
+        parentName: user?.display_name ?? null,
+        parentEmail: user?.email ?? null,
+        parentPhone: user?.phone ?? null,
+        childId: p.child_id,
+        childName: child?.name ?? "—",
+        childAge: child?.age ?? null,
+        mentorEmail: mentorUser?.email ?? null,
+        sessions,
+        sessionsUsed,
+        priceXof: p.price_xof ?? null,
+        status: p.status,
+        startsAt: p.starts_at ?? null,
+        endsAt: p.ends_at ?? null,
+        createdAt: p.created_at,
+      };
+    });
+
+    return {
+      subscriptions,
+      accompanimentPacks,
+      mrrXof,
+      activeCount,
+      pastDueCount,
+      cancelledCount,
+      churn30dCount,
+      activePacksCount,
+      totalSessionsRemaining,
+    };
+  });
+
+// Prolonge un Pack Accompagnement (ajoute des mois et/ou des séances financées)
+export const extendAccompanimentPackAdmin = createServerFn({ method: "POST" })
+  .middleware([requireAdmin])
+  .validator((input: unknown) =>
+    z
+      .object({
+        coverageId: z.string().uuid(),
+        months: z.number().int().min(1).max(12).default(1),
+        addSessions: z.number().int().min(0).default(12),
+      })
+      .parse(input),
+  )
+  .handler(async ({ data }) => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: cov, error: getErr } = await (supabaseAdmin as any)
+      .from("family_coverages")
+      .select("id, ends_at, sessions")
+      .eq("id", data.coverageId)
+      .maybeSingle();
+    if (getErr || !cov) throw new Error("Pack d'accompagnement introuvable");
+
+    const { endsAt } = computeAccessPeriodWindow(cov.ends_at ?? null, data.months);
+    const newSessions = (cov.sessions ?? 0) + data.addSessions;
+
+    const { error: updErr } = await (supabaseAdmin as any)
+      .from("family_coverages")
+      .update({
+        ends_at: endsAt,
+        sessions: newSessions,
+        status: "active",
+      })
+      .eq("id", data.coverageId);
+    if (updErr) throw new Error(updErr.message);
+
+    return { ok: true, endsAt, sessions: newSessions };
   });

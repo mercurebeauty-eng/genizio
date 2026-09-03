@@ -281,6 +281,7 @@ function PortfolioPage() {
   // Boucle de réévaluation complète (chantier 5, §36) : conclusion qualitative de la
   // dernière séquence de reformulations — jamais de verdict (garde-fou §35).
   const [failureSequence, setFailureSequence] = useState<FailureSequenceSnapshot | null>(null);
+  const [hasMentor, setHasMentor] = useState(false);
 
   const ensureHypotheses = useServerFn(ensureHypothesesForChild);
   const initializePassportPaymentFn = useServerFn(initializePassportPayment);
@@ -332,12 +333,19 @@ function PortfolioPage() {
           .or(`child_id.eq.${profileId},tagged_child_ids.cs.{${profileId}}`)
           .order("created_at", { ascending: false })
           .limit(50),
+        supabase
+          .from("mentors")
+          .select("id")
+          .eq("child_profile_id", profileId)
+          .is("removed_at", null)
+          .limit(1),
       ])
-        .then(([view, dt]) => {
+        .then(([view, dt, mentorRes]) => {
           setChild((view.child as Child) ?? null);
           setChallenges((view.challenges ?? []) as Challenge[]);
           setOpenCycle((view.openCycle as OpenHypothesisCycle) ?? null);
           setDiscoveryArtifacts((dt.data ?? []) as any[]);
+          setHasMentor(((mentorRes.data ?? []).length > 0) || true);
         })
         .catch((err) => {
           console.error("Erreur lors du chargement du portfolio (mode mentor):", err);
@@ -345,6 +353,7 @@ function PortfolioPage() {
           setChallenges([]);
           setOpenCycle(null);
           setDiscoveryArtifacts([]);
+          setHasMentor(false);
         })
         .finally(() => {
           setFetching(false);
@@ -383,12 +392,19 @@ function PortfolioPage() {
         .or(`child_id.eq.${profileId},tagged_child_ids.cs.{${profileId}}`)
         .order("created_at", { ascending: false })
         .limit(50),
+      supabase
+        .from("mentors")
+        .select("id")
+        .eq("child_profile_id", profileId)
+        .is("removed_at", null)
+        .limit(1),
     ])
-      .then(([c, ch, hc, dt]) => {
+      .then(([c, ch, hc, dt, mentorRes]) => {
         setChild((c.data as Child) ?? null);
         setChallenges((ch.data ?? []) as Challenge[]);
         setOpenCycle((hc.data as OpenHypothesisCycle) ?? null);
         setDiscoveryArtifacts((dt.data ?? []) as any[]);
+        setHasMentor((mentorRes.data ?? []).length > 0);
       })
       .catch((err) => {
         console.error("Erreur lors du chargement du portfolio:", err);
@@ -396,6 +412,7 @@ function PortfolioPage() {
         setChallenges([]);
         setOpenCycle(null);
         setDiscoveryArtifacts([]);
+        setHasMentor(false);
       })
       .finally(() => {
         setFetching(false);
@@ -1040,10 +1057,12 @@ function PortfolioPage() {
               </div>
               <div>
                 <p className="text-xs font-black uppercase tracking-widest text-sky-700">
-                  Suivi par un mentor
+                  {hasMentor ? "Mentor assigné • Suivi actif" : "Suivi par un mentor"}
                 </p>
                 <p className="text-sm font-medium text-ink/70 mt-0.5">
-                  Consultez l'accompagnement, le bilan de fin de période et l'activité.
+                  {hasMentor
+                    ? "Consultez l'accompagnement, vos 12 séances et le bilan officiel."
+                    : "Consultez l'accompagnement, le bilan de fin de période et l'activité."}
                 </p>
               </div>
             </div>
@@ -1282,8 +1301,8 @@ function PortfolioPage() {
               );
             })()}
 
-          {/* Bannière Accompagnement & Diagnostic */}
-          {!mentorMode && (
+          {/* Bannière Accompagnement & Diagnostic (masquée si l'enfant a déjà un mentor) */}
+          {!mentorMode && !hasMentor && (
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 rounded-3xl border border-sky-200 bg-sky-50/70 p-5 shadow-sm">
               <div className="flex items-center gap-3">
                 <div className="grid size-10 place-items-center rounded-2xl bg-sky-600 text-white shrink-0">

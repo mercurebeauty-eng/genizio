@@ -29,7 +29,9 @@ import {
 } from "@/lib/payments-admin.functions";
 import {
   getSubscriptionsDataAdmin,
+  extendAccompanimentPackAdmin,
   type AdminSubscriptionRow,
+  type AdminAccompanimentPackRow,
 } from "@/lib/subscriptions.functions";
 import {
   listSponsorshipsAdmin,
@@ -116,6 +118,8 @@ export function AdminPaymentsTab() {
   const extendAccessFn = useServerFn(extendChildAccessAdmin);
   const getPendingPaymentsFn = useServerFn(getPaymentsPendingCountAdmin);
 
+  const extendPackFn = useServerFn(extendAccompanimentPackAdmin);
+
   const [section, setSection] = useState<PaymentsSection>("payments");
   const [payments, setPayments] = useState<AdminPaymentRow[] | null>(null);
   const [paymentFilter, setPaymentFilter] = useState<"all" | "initiated">("initiated");
@@ -124,11 +128,17 @@ export function AdminPaymentsTab() {
   const [paymentsTotalPages, setPaymentsTotalPages] = useState(1);
   const [pendingCount, setPendingCount] = useState(0);
   const [subscriptions, setSubscriptions] = useState<AdminSubscriptionRow[] | null>(null);
+  const [accompanimentPacks, setAccompanimentPacks] = useState<AdminAccompanimentPackRow[] | null>(null);
+  const [mrrXof, setMrrXof] = useState(0);
+  const [activeSubsCount, setActiveSubsCount] = useState(0);
+  const [activePacksCount, setActivePacksCount] = useState(0);
+  const [totalSessionsRemaining, setTotalSessionsRemaining] = useState(0);
   const [sponsorships, setSponsorships] = useState<SponsorshipToken[] | null>(null);
   const [expirations, setExpirations] = useState<any[] | null>(null);
   const [loading, setLoading] = useState(true);
   const [busyId, setBusyId] = useState<string | null>(null);
   const [extendingId, setExtendingId] = useState<string | null>(null);
+  const [extendingPackId, setExtendingPackId] = useState<string | null>(null);
   const [confirmingId, setConfirmingId] = useState<string | null>(null);
   const [showCreateSponsorship, setShowCreateSponsorship] = useState(false);
   const [copiedCode, setCopiedCode] = useState<string | null>(null);
@@ -155,7 +165,17 @@ export function AdminPaymentsTab() {
           data: { page: paymentsPage, pageSize: 50, status: paymentFilter },
           ...opts,
         }).catch(() => null),
-        getSubsFn({ data: undefined, ...opts }).catch(() => ({ subscriptions: [] })),
+        getSubsFn({ data: undefined, ...opts }).catch(() => ({
+          subscriptions: [],
+          accompanimentPacks: [],
+          mrrXof: 0,
+          activeCount: 0,
+          pastDueCount: 0,
+          cancelledCount: 0,
+          churn30dCount: 0,
+          activePacksCount: 0,
+          totalSessionsRemaining: 0,
+        })),
         listSponsorshipsFn({ data: { page: 1, pageSize: 50 }, ...opts }).catch(() => ({
           data: [],
         })),
@@ -167,6 +187,11 @@ export function AdminPaymentsTab() {
       setPaymentsTotalPages((p as any)?.totalPages ?? 1);
       setPendingCount((pending as any)?.pendingCount ?? 0);
       setSubscriptions((subs as any)?.subscriptions ?? []);
+      setAccompanimentPacks((subs as any)?.accompanimentPacks ?? []);
+      setMrrXof((subs as any)?.mrrXof ?? 0);
+      setActiveSubsCount((subs as any)?.activeCount ?? 0);
+      setActivePacksCount((subs as any)?.activePacksCount ?? 0);
+      setTotalSessionsRemaining((subs as any)?.totalSessionsRemaining ?? 0);
       setSponsorships((sp as any)?.data ?? []);
       const expList = Array.isArray(exp) ? exp : ((exp as any)?.data ?? []);
       setExpirations(expList);
@@ -260,6 +285,30 @@ export function AdminPaymentsTab() {
       toast.error(err?.message || "Erreur lors de la résiliation.");
     } finally {
       setBusyId(null);
+    }
+  };
+
+  const handleExtendAccompanimentPack = async (
+    coverageId: string,
+    months: number,
+    addSessions: number,
+  ) => {
+    setExtendingPackId(coverageId);
+    try {
+      const res = await extendPackFn({
+        data: { coverageId, months, addSessions },
+        ...opts,
+      });
+      if (res.ok) {
+        toast.success(
+          `Pack prolongé : +${addSessions} séances (Total: ${res.sessions}) — Échéance : ${new Date(res.endsAt).toLocaleDateString("fr-FR")}.`,
+        );
+        await loadAll();
+      }
+    } catch (err: any) {
+      toast.error(err?.message || "Erreur lors de la prolongation du pack.");
+    } finally {
+      setExtendingPackId(null);
     }
   };
 
@@ -478,126 +527,304 @@ export function AdminPaymentsTab() {
         </div>
       )}
 
-      {/* ══ SECTION ABONNEMENTS ══ */}
+      {/* ══ SECTION ABONNEMENTS & ACCOMPAGNEMENT ══ */}
       {section === "subscriptions" && (
-        <div className="overflow-x-auto rounded-2xl border border-ink/10 bg-white shadow-sm">
-          <table className="w-full min-w-[860px] text-left text-sm">
-            <thead className="border-b border-ink/10 bg-surface/60 text-[11px] font-black uppercase tracking-wider text-ink/60">
-              <tr>
-                <th className="px-4 py-3">Parent</th>
-                <th className="px-4 py-3">Tarif</th>
-                <th className="px-4 py-3">Statut</th>
-                <th className="px-4 py-3">Fin de période</th>
-                <th className="px-4 py-3">Secours</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-ink/5">
-              {(subscriptions ?? []).length === 0 && (
-                <tr>
-                  <td colSpan={5} className="px-4 py-10 text-center text-sm text-ink/40">
-                    Aucun abonnement famille.
-                  </td>
-                </tr>
-              )}
-              {(subscriptions ?? []).map((s: AdminSubscriptionRow) => {
-                const periodEnded =
-                  s.status === "active" &&
-                  s.currentPeriodEnd &&
-                  new Date(s.currentPeriodEnd).getTime() < Date.now();
-                return (
-                  <tr key={s.id} className={periodEnded ? "bg-rose-50/50" : ""}>
-                    <td className="px-4 py-3">
-                      <p className="font-bold text-ink">{s.parentName ?? "—"}</p>
-                      <p className="text-xs text-ink/50">
-                        {s.parentEmail ?? "—"}
-                        {s.parentPhone ? ` · ${s.parentPhone}` : ""}
-                      </p>
-                    </td>
-                    <td className="px-4 py-3 font-bold text-ink">
-                      {s.priceXof ? `${formatXof(s.priceXof)} /mois` : "—"}
-                    </td>
-                    <td className="px-4 py-3">
-                      <SubStatusBadge status={s.status} />
-                      {periodEnded && (
-                        <p className="mt-1 text-[10px] font-bold text-rose-600">
-                          ⚠ période dépassée — renouvellement webhook probablement manqué
-                        </p>
-                      )}
-                    </td>
-                    <td className="px-4 py-3">
-                      {s.currentPeriodEnd ? (
-                        <>
-                          <p className="font-semibold text-ink">
-                            {new Date(s.currentPeriodEnd).toLocaleDateString("fr-FR")}
+        <div className="space-y-8">
+          {/* Grille KPI Abonnements & Packs */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div className="rounded-2xl border border-ink/10 bg-white p-4 shadow-sm">
+              <p className="text-xs font-black uppercase tracking-wider text-ink/50">
+                MRR Forfaits Famille
+              </p>
+              <p className="mt-1 text-2xl font-extrabold text-ink">{formatXof(mrrXof)}</p>
+              <p className="mt-0.5 text-xs text-ink/50 font-medium">
+                {activeSubsCount} famille{activeSubsCount > 1 ? "s" : ""} active{activeSubsCount > 1 ? "s" : ""}
+              </p>
+            </div>
+            <div className="rounded-2xl border border-emerald-200 bg-emerald-50/50 p-4 shadow-sm">
+              <p className="text-xs font-black uppercase tracking-wider text-emerald-800">
+                Abonnements Famille
+              </p>
+              <p className="mt-1 text-2xl font-extrabold text-emerald-950">{activeSubsCount}</p>
+              <p className="mt-0.5 text-xs text-emerald-700/80 font-medium">
+                Pass Famille Standard (35 000 F/mois)
+              </p>
+            </div>
+            <div className="rounded-2xl border border-sky-200 bg-sky-50/50 p-4 shadow-sm">
+              <p className="text-xs font-black uppercase tracking-wider text-sky-800">
+                Packs Accompagnement
+              </p>
+              <p className="mt-1 text-2xl font-extrabold text-sky-950">{activePacksCount}</p>
+              <p className="mt-0.5 text-xs text-sky-700/80 font-medium">
+                Enfants avec suivi mentor dédié actif
+              </p>
+            </div>
+            <div className="rounded-2xl border border-indigo-200 bg-indigo-50/50 p-4 shadow-sm">
+              <p className="text-xs font-black uppercase tracking-wider text-indigo-800">
+                Séances Mentor Disponibles
+              </p>
+              <p className="mt-1 text-2xl font-extrabold text-indigo-950">{totalSessionsRemaining}</p>
+              <p className="mt-0.5 text-xs text-indigo-700/80 font-medium">
+                Séances financées restantes sur les packs
+              </p>
+            </div>
+          </div>
+
+          {/* 1. TABLEAU DES PACKS ACCOMPAGNEMENT & MENTORAT (PAR ENFANT) */}
+          <div className="space-y-3">
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <div>
+                <h3 className="flex items-center gap-2 font-display text-lg font-bold text-ink">
+                  <span className="grid size-6 place-items-center rounded-lg bg-sky-600 text-white text-xs">🎒</span>
+                  Packs Accompagnement & Suivi Mentor (Par Enfant)
+                </h3>
+                <p className="text-xs text-ink/60 mt-0.5">
+                  Accompagnement humain individuel — 12 séances/mois par enfant, suivi régulier et bilan officiel parent.
+                </p>
+              </div>
+              <span className="inline-flex items-center rounded-full bg-sky-100 px-3 py-1 text-xs font-bold text-sky-800">
+                {accompanimentPacks?.length ?? 0} pack{(accompanimentPacks?.length ?? 0) > 1 ? "s" : ""} enregistré{(accompanimentPacks?.length ?? 0) > 1 ? "s" : ""}
+              </span>
+            </div>
+
+            <div className="overflow-x-auto rounded-2xl border border-sky-200 bg-white shadow-sm">
+              <table className="w-full min-w-[860px] text-left text-sm">
+                <thead className="border-b border-sky-100 bg-sky-50/60 text-[11px] font-black uppercase tracking-wider text-sky-900">
+                  <tr>
+                    <th className="px-4 py-3">Enfant & Famille</th>
+                    <th className="px-4 py-3">Mentor Assigné</th>
+                    <th className="px-4 py-3">Séances Financées</th>
+                    <th className="px-4 py-3">Tarif</th>
+                    <th className="px-4 py-3">Statut & Échéance</th>
+                    <th className="px-4 py-3">Actions</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-ink/5">
+                  {(accompanimentPacks ?? []).length === 0 && (
+                    <tr>
+                      <td colSpan={6} className="px-4 py-8 text-center text-sm text-ink/40">
+                        Aucun pack accompagnement actif.
+                      </td>
+                    </tr>
+                  )}
+                  {(accompanimentPacks ?? []).map((p: AdminAccompanimentPackRow) => {
+                    const remaining = Math.max(0, p.sessions - p.sessionsUsed);
+                    const periodEnded =
+                      p.status === "active" &&
+                      p.endsAt &&
+                      new Date(p.endsAt).getTime() < Date.now();
+                    return (
+                      <tr key={p.id} className={periodEnded ? "bg-rose-50/40" : ""}>
+                        <td className="px-4 py-3">
+                          <p className="font-bold text-ink flex items-center gap-1.5">
+                            <span>{p.childName}</span>
+                            {p.childAge && (
+                              <span className="rounded-md bg-sky-100 px-1.5 py-0.5 text-[10px] font-extrabold text-sky-800">
+                                {p.childAge} ans
+                              </span>
+                            )}
                           </p>
-                          <p className="text-[10px] font-medium text-ink/40">
-                            {Math.max(
-                              0,
-                              Math.ceil(
-                                (new Date(s.currentPeriodEnd).getTime() - Date.now()) / 86_400_000,
-                              ),
-                            )}{" "}
-                            j restant
+                          <p className="text-xs text-ink/50 mt-0.5">
+                            Parent : {p.parentName ?? p.parentEmail ?? "—"}
+                            {p.parentPhone ? ` · ${p.parentPhone}` : ""}
                           </p>
-                        </>
-                      ) : (
-                        <span className="text-ink/40">—</span>
-                      )}
-                    </td>
-                    <td className="px-4 py-3">
-                      <div className="flex flex-wrap gap-1.5">
-                        {s.status === "initiated" && (
+                        </td>
+                        <td className="px-4 py-3">
+                          {p.mentorEmail ? (
+                            <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-ink/80">
+                              <span className="size-2 rounded-full bg-emerald-500" />
+                              {p.mentorEmail}
+                            </span>
+                          ) : (
+                            <span className="inline-flex items-center rounded-full bg-amber-100 px-2.5 py-0.5 text-[10px] font-bold text-amber-800">
+                              Non assigné
+                            </span>
+                          )}
+                        </td>
+                        <td className="px-4 py-3">
+                          <p className="text-xs font-bold text-ink">
+                            <span className="text-emerald-600 font-extrabold">{remaining}</span> / {p.sessions} séances restantes
+                          </p>
+                          <p className="text-[10px] text-ink/50 font-medium">
+                            {p.sessionsUsed} séance{p.sessionsUsed > 1 ? "s" : ""} consommée{p.sessionsUsed > 1 ? "s" : ""}
+                          </p>
+                        </td>
+                        <td className="px-4 py-3 font-bold text-ink text-xs">
+                          {p.priceXof ? `${formatXof(p.priceXof)} /mois` : "180 000 FCFA /mois"}
+                        </td>
+                        <td className="px-4 py-3">
+                          <SubStatusBadge status={p.status} />
+                          {p.endsAt ? (
+                            <p className="text-[11px] font-medium text-ink/60 mt-1">
+                              Fin : {new Date(p.endsAt).toLocaleDateString("fr-FR")}
+                              <span className="ml-1 text-[10px] text-ink/40">
+                                ({Math.max(0, Math.ceil((new Date(p.endsAt).getTime() - Date.now()) / 86_400_000))} j)
+                              </span>
+                            </p>
+                          ) : (
+                            <p className="text-[10px] text-ink/40">—</p>
+                          )}
+                        </td>
+                        <td className="px-4 py-3">
                           <button
-                            disabled={busyId === s.id}
-                            onClick={() => void handleActivateSubscription(s.id)}
-                            className="inline-flex items-center gap-1 rounded-xl bg-ink px-2.5 py-1.5 text-[10px] font-bold text-white hover:bg-ink/90 disabled:opacity-50 cursor-pointer"
-                            title="Vérifie la référence Paystack puis active l'abonnement (secours du 1er paiement)"
+                            disabled={extendingPackId === p.id}
+                            onClick={() => void handleExtendAccompanimentPack(p.id, 1, 12)}
+                            className="inline-flex items-center gap-1 rounded-xl border border-sky-300 bg-sky-50 px-2.5 py-1.5 text-[10px] font-bold text-sky-800 hover:bg-sky-100 disabled:opacity-50 cursor-pointer"
+                            title="Ajoute 12 séances et prolonge la période de 1 mois"
                           >
-                            {busyId === s.id ? (
+                            {extendingPackId === p.id ? (
                               <Loader2 className="size-3 animate-spin" />
                             ) : (
-                              <ShieldCheck className="size-3" />
+                              <Plus className="size-3" />
                             )}
-                            Activer (vérifier ref)
+                            +12 séances (+1 mois)
                           </button>
-                        )}
-                        {s.status === "active" && (
-                          <>
-                            <button
-                              disabled={extendingId === s.id}
-                              onClick={() => void handleExtendSubscription(s.id, 1)}
-                              className="inline-flex items-center gap-1 rounded-xl border border-sky-200 bg-sky-50 px-2.5 py-1.5 text-[10px] font-bold text-sky-700 hover:bg-sky-100 disabled:opacity-50 cursor-pointer"
-                            >
-                              <CalendarClock className="size-3" />
-                              +1 mois
-                            </button>
-                            <button
-                              disabled={extendingId === s.id}
-                              onClick={() => void handleExtendSubscription(s.id, 3)}
-                              className="inline-flex items-center gap-1 rounded-xl border border-sky-200 bg-sky-50 px-2.5 py-1.5 text-[10px] font-bold text-sky-700 hover:bg-sky-100 disabled:opacity-50 cursor-pointer"
-                            >
-                              <CalendarClock className="size-3" />
-                              +3 mois
-                            </button>
-                          </>
-                        )}
-                        {s.status !== "cancelled" && s.status !== "expired" && (
-                          <button
-                            disabled={busyId === s.id}
-                            onClick={() => void handleCancelSubscription(s.id)}
-                            className="inline-flex items-center gap-1 rounded-xl border border-rose-200 bg-rose-50 px-2.5 py-1.5 text-[10px] font-bold text-rose-700 hover:bg-rose-100 disabled:opacity-50 cursor-pointer"
-                          >
-                            <UserX className="size-3" />
-                            Résilier
-                          </button>
-                        )}
-                      </div>
-                    </td>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          {/* 2. TABLEAU DES ABONNEMENTS FAMILLE (GLOBAL COMPTE) */}
+          <div className="space-y-3 pt-2">
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <div>
+                <h3 className="flex items-center gap-2 font-display text-lg font-bold text-ink">
+                  <CreditCard className="size-4 text-emerald-600" />
+                  Abonnements Famille Standard (Au Compte)
+                </h3>
+                <p className="text-xs text-ink/60 mt-0.5">
+                  Abonnement récurrent débloquant l'accès à l'application Naya pour toute la fratrie (35 000 FCFA/mois).
+                </p>
+              </div>
+              <span className="inline-flex items-center rounded-full bg-emerald-100 px-3 py-1 text-xs font-bold text-emerald-800">
+                {subscriptions?.length ?? 0} abonnement{(subscriptions?.length ?? 0) > 1 ? "s" : ""}
+              </span>
+            </div>
+
+            <div className="overflow-x-auto rounded-2xl border border-ink/10 bg-white shadow-sm">
+              <table className="w-full min-w-[860px] text-left text-sm">
+                <thead className="border-b border-ink/10 bg-surface/60 text-[11px] font-black uppercase tracking-wider text-ink/60">
+                  <tr>
+                    <th className="px-4 py-3">Parent</th>
+                    <th className="px-4 py-3">Tarif</th>
+                    <th className="px-4 py-3">Statut</th>
+                    <th className="px-4 py-3">Fin de période</th>
+                    <th className="px-4 py-3">Secours</th>
                   </tr>
-                );
-              })}
-            </tbody>
-          </table>
+                </thead>
+                <tbody className="divide-y divide-ink/5">
+                  {(subscriptions ?? []).length === 0 && (
+                    <tr>
+                      <td colSpan={5} className="px-4 py-10 text-center text-sm text-ink/40">
+                        Aucun abonnement famille.
+                      </td>
+                    </tr>
+                  )}
+                  {(subscriptions ?? []).map((s: AdminSubscriptionRow) => {
+                    const periodEnded =
+                      s.status === "active" &&
+                      s.currentPeriodEnd &&
+                      new Date(s.currentPeriodEnd).getTime() < Date.now();
+                    return (
+                      <tr key={s.id} className={periodEnded ? "bg-rose-50/50" : ""}>
+                        <td className="px-4 py-3">
+                          <p className="font-bold text-ink">{s.parentName ?? "—"}</p>
+                          <p className="text-xs text-ink/50">
+                            {s.parentEmail ?? "—"}
+                            {s.parentPhone ? ` · ${s.parentPhone}` : ""}
+                          </p>
+                        </td>
+                        <td className="px-4 py-3 font-bold text-ink">
+                          {s.priceXof ? `${formatXof(s.priceXof)} /mois` : "—"}
+                        </td>
+                        <td className="px-4 py-3">
+                          <SubStatusBadge status={s.status} />
+                          {periodEnded && (
+                            <p className="mt-1 text-[10px] font-bold text-rose-600">
+                              ⚠ période dépassée — renouvellement webhook probablement manqué
+                            </p>
+                          )}
+                        </td>
+                        <td className="px-4 py-3">
+                          {s.currentPeriodEnd ? (
+                            <>
+                              <p className="font-semibold text-ink">
+                                {new Date(s.currentPeriodEnd).toLocaleDateString("fr-FR")}
+                              </p>
+                              <p className="text-[10px] font-medium text-ink/40">
+                                {Math.max(
+                                  0,
+                                  Math.ceil(
+                                    (new Date(s.currentPeriodEnd).getTime() - Date.now()) / 86_400_000,
+                                  ),
+                                )}{" "}
+                                j restant
+                              </p>
+                            </>
+                          ) : (
+                            <span className="text-ink/40">—</span>
+                          )}
+                        </td>
+                        <td className="px-4 py-3">
+                          <div className="flex flex-wrap gap-1.5">
+                            {s.status === "initiated" && (
+                              <button
+                                disabled={busyId === s.id}
+                                onClick={() => void handleActivateSubscription(s.id)}
+                                className="inline-flex items-center gap-1 rounded-xl bg-ink px-2.5 py-1.5 text-[10px] font-bold text-white hover:bg-ink/90 disabled:opacity-50 cursor-pointer"
+                                title="Vérifie la référence Paystack puis active l'abonnement (secours du 1er paiement)"
+                              >
+                                {busyId === s.id ? (
+                                  <Loader2 className="size-3 animate-spin" />
+                                ) : (
+                                  <ShieldCheck className="size-3" />
+                                )}
+                                Activer (vérifier ref)
+                              </button>
+                            )}
+                            {s.status === "active" && (
+                              <>
+                                <button
+                                  disabled={extendingId === s.id}
+                                  onClick={() => void handleExtendSubscription(s.id, 1)}
+                                  className="inline-flex items-center gap-1 rounded-xl border border-sky-200 bg-sky-50 px-2.5 py-1.5 text-[10px] font-bold text-sky-700 hover:bg-sky-100 disabled:opacity-50 cursor-pointer"
+                                >
+                                  <CalendarClock className="size-3" />
+                                  +1 mois
+                                </button>
+                                <button
+                                  disabled={extendingId === s.id}
+                                  onClick={() => void handleExtendSubscription(s.id, 3)}
+                                  className="inline-flex items-center gap-1 rounded-xl border border-sky-200 bg-sky-50 px-2.5 py-1.5 text-[10px] font-bold text-sky-700 hover:bg-sky-100 disabled:opacity-50 cursor-pointer"
+                                >
+                                  <CalendarClock className="size-3" />
+                                  +3 mois
+                                </button>
+                              </>
+                            )}
+                            {s.status !== "cancelled" && s.status !== "expired" && (
+                              <button
+                                disabled={busyId === s.id}
+                                onClick={() => void handleCancelSubscription(s.id)}
+                                className="inline-flex items-center gap-1 rounded-xl border border-rose-200 bg-rose-50 px-2.5 py-1.5 text-[10px] font-bold text-rose-700 hover:bg-rose-100 disabled:opacity-50 cursor-pointer"
+                              >
+                                <UserX className="size-3" />
+                                Résilier
+                              </button>
+                            )}
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          </div>
         </div>
       )}
 
