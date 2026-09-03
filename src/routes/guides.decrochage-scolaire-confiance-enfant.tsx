@@ -37,6 +37,11 @@ const FAQ = [
       "Le harcèlement scolaire est l'une des causes les plus fréquentes du refus d'aller à l'école. Si votre enfant se plaint de moqueries répétées, rentre avec des affaires abîmées ou des maux de ventre le matin, prenez-le au sérieux dès la première alerte : écoutez sans minimiser, notez les faits (dates, paroles, témoins), puis parlez-en à l'école en demandant une action précise et un suivi. Ne laissez pas l'enfant « se débrouiller seul » — c'est le rôle de l'adulte de protéger. Et s'il refuse catégoriquement d'aller en classe, c'est un signal d'alerte majeur : le harcèlement doit être traité par l'école et, si besoin, par un professionnel.",
   },
   {
+    question: "Mon enfant n'arrive pas à se faire des amis à l'école et perd confiance, que faire ?",
+    answer:
+      "L'isolement dans la cour de récréation mine l'estime d'un enfant bien plus vite qu'une mauvaise note. À 7 ou 8 ans, être mis à l'écart est vécu comme un rejet total (« personne ne m'aime »). Pour l'aider, ne lui demandez pas de « faire des efforts » au milieu de trente élèves : c'est trop intimidant. Proposez plutôt d'inviter un seul camarade à la maison autour d'un jeu précis ou d'une recette de cuisine. À deux, sans le bruit de la cour, les liens se nouent naturellement. Valorisez aussi son intelligence relationnelle hors de l'école : s'il s'entend bien avec ses cousins ou un voisin, rappelez-lui qu'il sait déjà créer du lien.",
+  },
+  {
     question: "Comment aider un enfant qui a perdu confiance en lui ?",
     answer:
       "La confiance se reconstruit par des expériences concrètes de réussite, pas par des encouragements généraux. Six habitudes aident : nommer des forces précises (« tu as tenu bon jusqu'au bout » plutôt que « tu es intelligent ») ; créer des occasions de réussite qui produisent un résultat visible (une construction, un plat, une histoire terminée) ; valoriser l'effort et le progrès plutôt que les notes ; garder des routines stables qui sécurisent ; écouter sans moraliser pour que l'enfant ose dire ce qu'il ressent ; et demander de l'aide quand le besoin se fait sentir. Ces habitudes aident tous les enfants, qu'il y ait ou non une difficulté particulière.",
@@ -86,10 +91,11 @@ export const Route = createFileRoute("/guides/decrochage-scolaire-confiance-enfa
           publisher: { "@id": `${SITE_URL}/#organization` },
           author: { "@type": "Organization", name: "Génizio" },
           datePublished: "2026-07-27",
-          dateModified: "2026-08-26",
+          dateModified: "2026-09-03",
           about: [
             { "@type": "Thing", name: "Décrochage scolaire" },
             { "@type": "Thing", name: "Confiance en soi de l'enfant" },
+            { "@type": "Thing", name: "Socialisation et amitié chez l'enfant" },
             { "@type": "Thing", name: "Harcèlement scolaire" },
             { "@type": "Thing", name: "Santé mentale de l'enfant" },
           ],
@@ -179,6 +185,13 @@ function Guide() {
               </td>
             </tr>
             <tr>
+              <td className="px-4 py-3 font-semibold">Isolement dans la cour et absence d'amis</td>
+              <td className="px-4 py-3">
+                Sentiment de rejet, timidité sociale ou peur du groupe (découvrez nos pistes pour{" "}
+                <a href="/guides/timidite-confiance-prise-de-parole">libérer la parole d'un enfant en retrait</a>)
+              </td>
+            </tr>
+            <tr>
               <td className="px-4 py-3 font-semibold">Agitation excessive et refus des devoirs</td>
               <td className="px-4 py-3">
                 Trop-plein d'énergie ou surcharge cognitive (consultez notre guide pour{" "}
@@ -196,6 +209,28 @@ function Guide() {
           </tbody>
         </table>
       </div>
+
+      <h2>Quand le découragement naît dans la cour : le poids des amitiés</h2>
+      <p>
+        On associe souvent le découragement aux résultats du carnet. Pourtant, chez un enfant de 7 à 10 ans, le premier baromètre de la confiance en soi n'est pas le tableau noir : c'est la cour de récréation.
+      </p>
+      <p>
+        C'est l'âge où le regard des pairs prend une place immense. Un enfant qui reste assis seul contre un mur pendant la pause ou qui ne trouve aucun camarade pour former une équipe en sport intériorise vite une conclusion destructrice : <em>« Si personne ne joue avec moi, c'est que je ne vaux rien »</em>. Dès lors, s'asseoir en classe devient une épreuve. L'attention s'évapore, non par manque de volonté, mais parce que son esprit est accaparé par la peur d'être invisible ou rejeté.
+      </p>
+      <p>
+        Face à cette détresse, trois gestes concrets changent la donne à la maison :
+      </p>
+      <ul>
+        <li>
+          <strong>Rassurer sans minimiser :</strong> Évitez les formules réflexes comme <em>« Ce n'est pas grave, tu t'en feras d'autres »</em>. Dites plutôt : <em>« Je comprends que ce soit lourd d'être seul à la pause. Tu as le droit d'être triste, et on va trouver des pistes ensemble. »</em>
+        </li>
+        <li>
+          <strong>Privilégier les rencontres à deux :</strong> La mêlée d'un groupe de dix élèves paralyse les plus réservés. Demandez-lui le prénom d'un camarade calme avec qui il aimerait échanger, puis organisez un après-midi chez vous autour d'un défi manuel ou d'un goûter.
+        </li>
+        <li>
+          <strong>Donner des amorces de dialogue simples :</strong> Entraînez avec lui des phrases courtes pour aborder un camarade sans pression : <em>« Tu veux qu'on fasse une partie ? »</em> ou <em>« Je peux t'aider sur cette énigme ? »</em>.
+        </li>
+      </ul>
 
       <h2>Mauvaises notes : réagir sans casser la confiance</h2>
       <p>
