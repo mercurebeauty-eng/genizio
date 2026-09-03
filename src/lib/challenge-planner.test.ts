@@ -116,3 +116,99 @@ describe("Challenge Mission Planner — planSingleChallengeMission", () => {
   });
 });
 
+describe("Pipeline E2E — Context Engine -> Planner -> Layered Prompt -> Schema Parsing", () => {
+  it("valide l'intégration complète de bout en bout", async () => {
+    const { buildChildDevelopmentState } = await import("./context-engine");
+    const { planChallengeMissions } = await import("./challenge-planner");
+    const { buildLayeredChallengePrompt } = await import("./naya-prompts");
+    const { ChallengeSchema } = await import("./challenges.functions");
+
+    // 1. Synthèse de l'état
+    const state = buildChildDevelopmentState({
+      child: {
+        id: "child-e2e-1",
+        name: "Ibrahim",
+        age: 9,
+        city: "Abidjan",
+        country: "Côte d'Ivoire",
+        talents: { artisanale: 4, logico_mathematique: 3, creative: 1 },
+        interests: ["construction", "robotique"],
+      },
+      completedChallenges: [
+        {
+          id: "c-1",
+          title: "Circuit en papier",
+          domain: "Tech & IA",
+          ai_observations: "Excellente curiosité sur les connexions électriques.",
+        },
+      ],
+      progressionTargets: [
+        {
+          domain: "Tech & IA",
+          lastLevelAge: 9,
+          targetLevelAge: 11,
+          hasUnconsolidatedCollectivePeak: true,
+        },
+      ],
+      activeHypotheses: [
+        {
+          id: "h-1",
+          type: "aspiration",
+          statement: "Affinité forte pour la mécatronique",
+          confidence: 0.85,
+          status: "exploring",
+          targetDomain: "Tech & IA",
+        },
+      ],
+      latestChildQuestion: "Comment une pile fait bouger un petit moteur ?",
+      existingTitles: ["Circuit en papier"],
+    });
+
+    // 2. Planification des missions
+    const missions = planChallengeMissions(state, 4);
+    expect(missions).toHaveLength(4);
+    expect(missions[0].intent).toBe("child_question_action");
+    expect(missions[1].intent).toBe("collective_peak_solo");
+
+    // 3. Prompt multicouche
+    const prompt = buildLayeredChallengePrompt(state, missions);
+    expect(prompt).toContain("COUCHE 1 — PRINCIPES PÉDAGOGIQUES");
+    expect(prompt).toContain("COUCHE 2 — ÉTAT DE COMPRÉHENSION DE L'ENFANT");
+    expect(prompt).toContain("COUCHE 3 — FEUILLE DE ROUTE DES MISSIONS PÉDAGOGIQUES DU JOUR");
+    expect(prompt).toContain("COUCHE 4 — CONTRAT D'EXÉCUTION & ANCRAGE TERRAIN");
+    expect(prompt).toContain("COUCHE 5 — FORMAT DE SORTIE STRICT (JSON)");
+
+    // 4. Mock LLM Response format Couche 5
+    const mockChallenge = {
+      domain: "Tech & IA",
+      title: "Le mini-ventilateur à moteur",
+      description: "Fabrique un petit ventilateur avec une pile et un bouchon.",
+      duration: "25 min",
+      steps: ["Dénuder les fils", "Fixer l'hélice", "Tester la rotation"],
+      materials: ["Pile 1.5V", "Petit moteur", "Bouchon", "Carton"],
+      material_tags: ["pile", "moteur", "carton"],
+      pedagogical_context: "Vérifier la compréhension de la boucle électrique en autonomie.",
+      intelligences: ["artisanale", "logico_mathematique"],
+      trait_subform: "bricolage",
+      requires_supervision: false,
+      supervision_warning: null,
+      difficulty: "moyen",
+      proof_mode: "photo",
+      academic_domain: "sciences",
+      academic_level_age: 11,
+      academic_reference_note: "Électricité élémentaire",
+      academic_secret: "Le courant électrique génère un champ magnétique qui fait tourner l'axe.",
+      kind: "micro",
+      guidance_level: 3,
+    };
+
+    // 5. Validation par ChallengeSchema
+    const parsed = ChallengeSchema.parse(mockChallenge);
+    expect(parsed.title).toBe("Le mini-ventilateur à moteur");
+    expect(parsed.academic_level_age).toBe(11);
+    expect(parsed.academic_domain).toBe("sciences");
+    expect(parsed.proof_mode).toBe("photo");
+  });
+});
+
+
