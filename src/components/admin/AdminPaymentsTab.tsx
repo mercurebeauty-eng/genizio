@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo, Fragment } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { useSession } from "@/hooks/use-session";
 import {
@@ -16,6 +16,12 @@ import {
   Wallet,
   UserX,
   AlertTriangle,
+  ChevronDown,
+  ChevronUp,
+  ChevronRight,
+  Sparkles,
+  Users,
+  Layers,
 } from "lucide-react";
 import {
   listPaymentsAdmin,
@@ -99,6 +105,22 @@ function SubStatusBadge({ status }: { status: string }) {
 
 type PaymentsSection = "payments" | "subscriptions" | "sponsorships" | "expirations";
 
+export type AccompanimentFamilyGroup = {
+  userId: string;
+  parentName: string | null;
+  parentEmail: string | null;
+  parentPhone: string | null;
+  totalPacks: number;
+  activePacks: number;
+  totalSessions: number;
+  totalSessionsUsed: number;
+  totalSessionsRemaining: number;
+  totalPriceXof: number;
+  earliestEndsAt: string | null;
+  latestEndsAt: string | null;
+  packs: AdminAccompanimentPackRow[];
+};
+
 export function AdminPaymentsTab() {
   const { session } = useSession();
   const opts = session?.access_token
@@ -142,6 +164,122 @@ export function AdminPaymentsTab() {
   const [confirmingId, setConfirmingId] = useState<string | null>(null);
   const [showCreateSponsorship, setShowCreateSponsorship] = useState(false);
   const [copiedCode, setCopiedCode] = useState<string | null>(null);
+
+  // Recherche, pagination et accordéon pour les packs d'accompagnement
+  const [packSearchQuery, setPackSearchQuery] = useState("");
+  const [packPageSize, setPackPageSize] = useState<number>(10);
+  const [packCurrentPage, setPackCurrentPage] = useState(1);
+  const [expandedFamilyIds, setExpandedFamilyIds] = useState<Set<string>>(new Set());
+
+  // Recherche et pagination pour les abonnements famille
+  const [subSearchQuery, setSubSearchQuery] = useState("");
+  const [subPageSize, setSubPageSize] = useState<number>(10);
+  const [subCurrentPage, setSubCurrentPage] = useState(1);
+
+  // Groupement des packs par compte famille (parent)
+  const accompanimentFamilyGroups = useMemo<AccompanimentFamilyGroup[]>(() => {
+    if (!accompanimentPacks) return [];
+    const map = new Map<string, AccompanimentFamilyGroup>();
+    for (const p of accompanimentPacks) {
+      let g = map.get(p.userId);
+      if (!g) {
+        g = {
+          userId: p.userId,
+          parentName: p.parentName,
+          parentEmail: p.parentEmail,
+          parentPhone: p.parentPhone,
+          totalPacks: 0,
+          activePacks: 0,
+          totalSessions: 0,
+          totalSessionsUsed: 0,
+          totalSessionsRemaining: 0,
+          totalPriceXof: 0,
+          earliestEndsAt: null,
+          latestEndsAt: null,
+          packs: [],
+        };
+        map.set(p.userId, g);
+      }
+      g.totalPacks += 1;
+      const isActive =
+        p.status === "active" && (!p.endsAt || new Date(p.endsAt).getTime() > Date.now());
+      if (isActive) g.activePacks += 1;
+      g.totalSessions += p.sessions ?? 0;
+      g.totalSessionsUsed += p.sessionsUsed ?? 0;
+      g.totalSessionsRemaining += Math.max(0, (p.sessions ?? 0) - (p.sessionsUsed ?? 0));
+      g.totalPriceXof += p.priceXof ?? 180000;
+      if (p.endsAt) {
+        if (!g.latestEndsAt || new Date(p.endsAt).getTime() > new Date(g.latestEndsAt).getTime()) {
+          g.latestEndsAt = p.endsAt;
+        }
+        if (!g.earliestEndsAt || new Date(p.endsAt).getTime() < new Date(g.earliestEndsAt).getTime()) {
+          g.earliestEndsAt = p.endsAt;
+        }
+      }
+      g.packs.push(p);
+    }
+    return Array.from(map.values());
+  }, [accompanimentPacks]);
+
+  // Filtrage des familles d'accompagnement
+  const filteredFamilyGroups = useMemo(() => {
+    const q = packSearchQuery.trim().toLowerCase();
+    if (!q) return accompanimentFamilyGroups;
+    return accompanimentFamilyGroups.filter((g) => {
+      const matchParent =
+        (g.parentName && g.parentName.toLowerCase().includes(q)) ||
+        (g.parentEmail && g.parentEmail.toLowerCase().includes(q)) ||
+        (g.parentPhone && g.parentPhone.toLowerCase().includes(q));
+      const matchChild = g.packs.some(
+        (p) =>
+          (p.childName && p.childName.toLowerCase().includes(q)) ||
+          (p.mentorEmail && p.mentorEmail.toLowerCase().includes(q)),
+      );
+      return matchParent || matchChild;
+    });
+  }, [accompanimentFamilyGroups, packSearchQuery]);
+
+  const totalFamilyPages = Math.max(1, Math.ceil(filteredFamilyGroups.length / packPageSize));
+  const paginatedFamilyGroups = useMemo(() => {
+    const start = (packCurrentPage - 1) * packPageSize;
+    return filteredFamilyGroups.slice(start, start + packPageSize);
+  }, [filteredFamilyGroups, packCurrentPage, packPageSize]);
+
+  const toggleExpandFamily = (userId: string) => {
+    setExpandedFamilyIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(userId)) next.delete(userId);
+      else next.add(userId);
+      return next;
+    });
+  };
+
+  const toggleExpandAllFamilies = () => {
+    if (expandedFamilyIds.size >= filteredFamilyGroups.length && filteredFamilyGroups.length > 0) {
+      setExpandedFamilyIds(new Set());
+    } else {
+      setExpandedFamilyIds(new Set(filteredFamilyGroups.map((g) => g.userId)));
+    }
+  };
+
+  // Filtrage des abonnements famille
+  const filteredSubscriptions = useMemo(() => {
+    const q = subSearchQuery.trim().toLowerCase();
+    if (!q) return subscriptions ?? [];
+    return (subscriptions ?? []).filter((s) => {
+      return (
+        (s.parentName && s.parentName.toLowerCase().includes(q)) ||
+        (s.parentEmail && s.parentEmail.toLowerCase().includes(q)) ||
+        (s.parentPhone && s.parentPhone.toLowerCase().includes(q))
+      );
+    });
+  }, [subscriptions, subSearchQuery]);
+
+  const totalSubPages = Math.max(1, Math.ceil(filteredSubscriptions.length / subPageSize));
+  const paginatedSubscriptions = useMemo(() => {
+    const start = (subCurrentPage - 1) * subPageSize;
+    return filteredSubscriptions.slice(start, start + subPageSize);
+  }, [filteredSubscriptions, subCurrentPage, subPageSize]);
 
   // Refetch isolé de la file des paiements (Vague 4) — changement de page ou de filtre
   // sans recharger abonnements/parrainages/expirations.
@@ -556,7 +694,7 @@ export function AdminPaymentsTab() {
               </p>
               <p className="mt-1 text-2xl font-extrabold text-sky-950">{activePacksCount}</p>
               <p className="mt-0.5 text-xs text-sky-700/80 font-medium">
-                Enfants avec suivi mentor dédié actif
+                {accompanimentFamilyGroups.length} famille{accompanimentFamilyGroups.length > 1 ? "s" : ""} · {activePacksCount} enfant{activePacksCount > 1 ? "s" : ""} suivi{activePacksCount > 1 ? "s" : ""}
               </p>
             </div>
             <div className="rounded-2xl border border-indigo-200 bg-indigo-50/50 p-4 shadow-sm">
@@ -570,126 +708,330 @@ export function AdminPaymentsTab() {
             </div>
           </div>
 
-          {/* 1. TABLEAU DES PACKS ACCOMPAGNEMENT & MENTORAT (PAR ENFANT) */}
+          {/* 1. TABLEAU DES PACKS ACCOMPAGNEMENT & MENTORAT (GROUPÉ PAR FAMILLE AVEC ACCORDÉON) */}
           <div className="space-y-3">
             <div className="flex flex-wrap items-center justify-between gap-2">
               <div>
                 <h3 className="flex items-center gap-2 font-display text-lg font-bold text-ink">
                   <span className="grid size-6 place-items-center rounded-lg bg-sky-600 text-white text-xs">🎒</span>
-                  Packs Accompagnement & Suivi Mentor (Par Enfant)
+                  Packs Accompagnement & Suivi Mentor (Par Compte Famille)
                 </h3>
                 <p className="text-xs text-ink/60 mt-0.5">
-                  Accompagnement humain individuel — 12 séances/mois par enfant, suivi régulier et bilan officiel parent.
+                  1 ligne par compte parent — cliquez pour dérouler l'ensemble des enfants accompagnés et gérer leurs séances.
                 </p>
               </div>
-              <span className="inline-flex items-center rounded-full bg-sky-100 px-3 py-1 text-xs font-bold text-sky-800">
-                {accompanimentPacks?.length ?? 0} pack{(accompanimentPacks?.length ?? 0) > 1 ? "s" : ""} enregistré{(accompanimentPacks?.length ?? 0) > 1 ? "s" : ""}
-              </span>
+              <div className="flex items-center gap-2">
+                <span className="inline-flex items-center rounded-full bg-sky-100 px-3 py-1 text-xs font-bold text-sky-800">
+                  {filteredFamilyGroups.length} famille{filteredFamilyGroups.length > 1 ? "s" : ""} ({accompanimentPacks?.length ?? 0} pack{ (accompanimentPacks?.length ?? 0) > 1 ? "s" : ""})
+                </span>
+              </div>
             </div>
 
+            {/* Barre d'outils : Recherche + Limite d'affichage + Tout Déplier/Replier */}
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 bg-white p-3 rounded-2xl border border-sky-100 shadow-sm">
+              <div className="relative flex-1 min-w-[240px]">
+                <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 size-4 text-ink/40" />
+                <input
+                  type="text"
+                  placeholder="Rechercher par parent, email, tél, enfant ou mentor…"
+                  value={packSearchQuery}
+                  onChange={(e) => {
+                    setPackSearchQuery(e.target.value);
+                    setPackCurrentPage(1);
+                  }}
+                  className="w-full rounded-xl border border-ink/15 bg-surface/30 pl-10 pr-8 py-2 text-xs font-medium text-ink placeholder:text-ink/40 focus:border-sky-500 focus:bg-white focus:outline-none transition-all"
+                />
+                {packSearchQuery && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setPackSearchQuery("");
+                      setPackCurrentPage(1);
+                    }}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-ink/40 hover:text-ink cursor-pointer"
+                  >
+                    ✕
+                  </button>
+                )}
+              </div>
+
+              <div className="flex items-center gap-2 shrink-0">
+                <button
+                  type="button"
+                  onClick={toggleExpandAllFamilies}
+                  className="inline-flex items-center gap-1.5 rounded-xl border border-sky-200 bg-sky-50/70 px-3 py-2 text-xs font-bold text-sky-800 hover:bg-sky-100 transition-all cursor-pointer"
+                >
+                  <Layers className="size-3.5" />
+                  {expandedFamilyIds.size >= filteredFamilyGroups.length && filteredFamilyGroups.length > 0
+                    ? "Replier tout"
+                    : "Déplier tout"}
+                </button>
+
+                <div className="flex items-center gap-1.5 text-xs text-ink/60 font-medium">
+                  <span>Afficher :</span>
+                  <select
+                    value={packPageSize}
+                    onChange={(e) => {
+                      setPackPageSize(Number(e.target.value));
+                      setPackCurrentPage(1);
+                    }}
+                    className="rounded-xl border border-ink/15 bg-white px-2 py-1.5 text-xs font-bold text-ink cursor-pointer focus:border-sky-500 focus:outline-none"
+                  >
+                    <option value={5}>5 / page</option>
+                    <option value={10}>10 / page</option>
+                    <option value={25}>25 / page</option>
+                    <option value={50}>50 / page</option>
+                    <option value={100}>100 / page</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+
+            {/* Tableau principal des comptes familles */}
             <div className="overflow-x-auto rounded-2xl border border-sky-200 bg-white shadow-sm">
               <table className="w-full min-w-[860px] text-left text-sm">
                 <thead className="border-b border-sky-100 bg-sky-50/60 text-[11px] font-black uppercase tracking-wider text-sky-900">
                   <tr>
-                    <th className="px-4 py-3">Enfant & Famille</th>
-                    <th className="px-4 py-3">Mentor Assigné</th>
-                    <th className="px-4 py-3">Séances Financées</th>
-                    <th className="px-4 py-3">Tarif</th>
+                    <th className="px-4 py-3">Compte Famille & Contact</th>
+                    <th className="px-4 py-3">Enfants Suivis</th>
+                    <th className="px-4 py-3">Séances Foyer</th>
+                    <th className="px-4 py-3">Tarif Cumulé</th>
                     <th className="px-4 py-3">Statut & Échéance</th>
-                    <th className="px-4 py-3">Actions</th>
+                    <th className="px-4 py-3 text-right">Détail des Enfants</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-ink/5">
-                  {(accompanimentPacks ?? []).length === 0 && (
+                  {paginatedFamilyGroups.length === 0 && (
                     <tr>
                       <td colSpan={6} className="px-4 py-8 text-center text-sm text-ink/40">
-                        Aucun pack accompagnement actif.
+                        {packSearchQuery
+                          ? "Aucun compte famille ne correspond à votre recherche."
+                          : "Aucun pack accompagnement actif."}
                       </td>
                     </tr>
                   )}
-                  {(accompanimentPacks ?? []).map((p: AdminAccompanimentPackRow) => {
-                    const remaining = Math.max(0, p.sessions - p.sessionsUsed);
+                  {paginatedFamilyGroups.map((family) => {
+                    const isExpanded = expandedFamilyIds.has(family.userId);
                     const periodEnded =
-                      p.status === "active" &&
-                      p.endsAt &&
-                      new Date(p.endsAt).getTime() < Date.now();
+                      family.activePacks > 0 &&
+                      family.latestEndsAt &&
+                      new Date(family.latestEndsAt).getTime() < Date.now();
+
                     return (
-                      <tr key={p.id} className={periodEnded ? "bg-rose-50/40" : ""}>
-                        <td className="px-4 py-3">
-                          <p className="font-bold text-ink flex items-center gap-1.5">
-                            <span>{p.childName}</span>
-                            {p.childAge && (
-                              <span className="rounded-md bg-sky-100 px-1.5 py-0.5 text-[10px] font-extrabold text-sky-800">
-                                {p.childAge} ans
+                      <Fragment key={family.userId}>
+                        <tr
+                          onClick={() => toggleExpandFamily(family.userId)}
+                          className={
+                            "cursor-pointer transition-colors " +
+                            (isExpanded ? "bg-sky-50/30 " : "hover:bg-surface/50 ") +
+                            (periodEnded ? "bg-rose-50/40" : "")
+                          }
+                        >
+                          <td className="px-4 py-3.5">
+                            <div className="flex items-center gap-2">
+                              <p className="font-bold text-ink text-sm">
+                                {family.parentName ?? family.parentEmail ?? "Compte Famille"}
+                              </p>
+                              <span className="rounded-full bg-sky-100 px-2 py-0.5 text-[10px] font-extrabold text-sky-800">
+                                {family.packs.length} enfant{family.packs.length > 1 ? "s" : ""}
                               </span>
-                            )}
-                          </p>
-                          <p className="text-xs text-ink/50 mt-0.5">
-                            Parent : {p.parentName ?? p.parentEmail ?? "—"}
-                            {p.parentPhone ? ` · ${p.parentPhone}` : ""}
-                          </p>
-                        </td>
-                        <td className="px-4 py-3">
-                          {p.mentorEmail ? (
-                            <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-ink/80">
-                              <span className="size-2 rounded-full bg-emerald-500" />
-                              {p.mentorEmail}
-                            </span>
-                          ) : (
-                            <span className="inline-flex items-center rounded-full bg-amber-100 px-2.5 py-0.5 text-[10px] font-bold text-amber-800">
-                              Non assigné
-                            </span>
-                          )}
-                        </td>
-                        <td className="px-4 py-3">
-                          <p className="text-xs font-bold text-ink">
-                            <span className="text-emerald-600 font-extrabold">{remaining}</span> / {p.sessions} séances restantes
-                          </p>
-                          <p className="text-[10px] text-ink/50 font-medium">
-                            {p.sessionsUsed} séance{p.sessionsUsed > 1 ? "s" : ""} consommée{p.sessionsUsed > 1 ? "s" : ""}
-                          </p>
-                        </td>
-                        <td className="px-4 py-3 font-bold text-ink text-xs">
-                          {p.priceXof ? `${formatXof(p.priceXof)} /mois` : "180 000 FCFA /mois"}
-                        </td>
-                        <td className="px-4 py-3">
-                          <SubStatusBadge status={p.status} />
-                          {p.endsAt ? (
-                            <p className="text-[11px] font-medium text-ink/60 mt-1">
-                              Fin : {new Date(p.endsAt).toLocaleDateString("fr-FR")}
-                              <span className="ml-1 text-[10px] text-ink/40">
-                                ({Math.max(0, Math.ceil((new Date(p.endsAt).getTime() - Date.now()) / 86_400_000))} j)
-                              </span>
+                            </div>
+                            <p className="text-xs text-ink/50 mt-0.5">
+                              {family.parentEmail ?? "—"}
+                              {family.parentPhone ? ` · ${family.parentPhone}` : ""}
                             </p>
-                          ) : (
-                            <p className="text-[10px] text-ink/40">—</p>
-                          )}
-                        </td>
-                        <td className="px-4 py-3">
-                          <button
-                            disabled={extendingPackId === p.id}
-                            onClick={() => void handleExtendAccompanimentPack(p.id, 1, 12)}
-                            className="inline-flex items-center gap-1 rounded-xl border border-sky-300 bg-sky-50 px-2.5 py-1.5 text-[10px] font-bold text-sky-800 hover:bg-sky-100 disabled:opacity-50 cursor-pointer"
-                            title="Ajoute 12 séances et prolonge la période de 1 mois"
-                          >
-                            {extendingPackId === p.id ? (
-                              <Loader2 className="size-3 animate-spin" />
-                            ) : (
-                              <Plus className="size-3" />
-                            )}
-                            +12 séances (+1 mois)
-                          </button>
-                        </td>
-                      </tr>
+                          </td>
+
+                          <td className="px-4 py-3.5">
+                            <div className="flex flex-wrap gap-1.5 max-w-xs">
+                              {family.packs.map((p) => (
+                                <span
+                                  key={p.id}
+                                  className="inline-flex items-center gap-1 rounded-lg bg-surface px-2 py-0.5 text-xs font-semibold text-ink/80 border border-ink/5"
+                                >
+                                  <span>{p.childName}</span>
+                                  {p.childAge && (
+                                    <span className="text-[10px] text-ink/40 font-bold">
+                                      ({p.childAge}a)
+                                    </span>
+                                  )}
+                                </span>
+                              ))}
+                            </div>
+                          </td>
+
+                          <td className="px-4 py-3.5">
+                            <p className="text-xs font-bold text-ink">
+                              <span className="text-emerald-600 font-extrabold">
+                                {family.totalSessionsRemaining}
+                              </span>{" "}
+                              / {family.totalSessions} séances restantes
+                            </p>
+                            <p className="text-[10px] text-ink/50 font-medium">
+                              {family.totalSessionsUsed} séance{family.totalSessionsUsed > 1 ? "s" : ""} consommée{family.totalSessionsUsed > 1 ? "s" : ""}
+                            </p>
+                          </td>
+
+                          <td className="px-4 py-3.5 font-bold text-ink text-xs">
+                            {formatXof(family.totalPriceXof)} /mois
+                          </td>
+
+                          <td className="px-4 py-3.5">
+                            <span
+                              className={`inline-flex items-center rounded-full border px-2.5 py-0.5 text-[10px] font-black uppercase tracking-wider ${
+                                family.activePacks > 0
+                                  ? "bg-emerald-500/10 text-emerald-600 border-emerald-200"
+                                  : "bg-ink/10 text-ink/60 border-ink/10"
+                              }`}
+                            >
+                              {family.activePacks > 0 ? "Active" : "Expirée"}
+                            </span>
+                            {family.latestEndsAt ? (
+                              <p className="text-[11px] font-medium text-ink/60 mt-1">
+                                Jusqu'au {new Date(family.latestEndsAt).toLocaleDateString("fr-FR")}
+                              </p>
+                            ) : null}
+                          </td>
+
+                          <td className="px-4 py-3.5 text-right">
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                toggleExpandFamily(family.userId);
+                              }}
+                              className="inline-flex items-center gap-1.5 rounded-xl border border-sky-200 bg-sky-50 px-3 py-1.5 text-xs font-bold text-sky-800 hover:bg-sky-100 transition-all cursor-pointer"
+                            >
+                              {isExpanded ? (
+                                <>
+                                  Masquer ({family.packs.length})
+                                  <ChevronUp className="size-3.5" />
+                                </>
+                              ) : (
+                                <>
+                                  Voir les {family.packs.length} enfants
+                                  <ChevronDown className="size-3.5" />
+                                </>
+                              )}
+                            </button>
+                          </td>
+                        </tr>
+
+                        {/* Sous-table déroulée par enfant */}
+                        {isExpanded && (
+                          <tr className="bg-sky-50/40">
+                            <td colSpan={6} className="px-4 py-3 border-y border-sky-100">
+                              <div className="rounded-xl border border-sky-200 bg-white p-3 shadow-inner space-y-2">
+                                <p className="text-[11px] font-black uppercase tracking-wider text-sky-900 flex items-center gap-1.5">
+                                  <Users className="size-3.5 text-sky-600" />
+                                  Détail des {family.packs.length} enfant{family.packs.length > 1 ? "s" : ""} suivi{family.packs.length > 1 ? "s" : ""} pour {family.parentName ?? family.parentEmail} :
+                                </p>
+                                <div className="divide-y divide-sky-100/60">
+                                  {family.packs.map((p) => {
+                                    const childRemaining = Math.max(0, p.sessions - p.sessionsUsed);
+                                    return (
+                                      <div
+                                        key={p.id}
+                                        className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 py-2.5 first:pt-1 last:pb-1"
+                                      >
+                                        <div className="flex items-center gap-2 min-w-40">
+                                          <div className="grid size-7 place-items-center rounded-lg bg-sky-100 text-sky-800 text-xs font-bold shrink-0">
+                                            {p.childName.charAt(0)}
+                                          </div>
+                                          <div>
+                                            <p className="font-bold text-xs text-ink flex items-center gap-1">
+                                              <span>{p.childName}</span>
+                                              {p.childAge && (
+                                                <span className="text-[10px] text-ink/50 font-normal">
+                                                  ({p.childAge} ans)
+                                                </span>
+                                              )}
+                                            </p>
+                                          </div>
+                                        </div>
+
+                                        <div className="text-xs">
+                                          <span className="text-[10px] font-bold text-ink/40 uppercase mr-1">Mentor :</span>
+                                          {p.mentorEmail ? (
+                                            <span className="inline-flex items-center gap-1 font-semibold text-ink/80">
+                                              <span className="size-1.5 rounded-full bg-emerald-500" />
+                                              {p.mentorEmail}
+                                            </span>
+                                          ) : (
+                                            <span className="rounded-md bg-amber-100 px-1.5 py-0.5 text-[10px] font-bold text-amber-800">
+                                              Non assigné
+                                            </span>
+                                          )}
+                                        </div>
+
+                                        <div className="text-xs">
+                                          <span className="text-[10px] font-bold text-ink/40 uppercase mr-1">Séances :</span>
+                                          <span className="font-bold text-emerald-700">{childRemaining}</span>
+                                          <span className="text-ink/60"> / {p.sessions} restantes</span>
+                                        </div>
+
+                                        <div className="text-xs font-semibold text-ink">
+                                          {p.priceXof ? formatXof(p.priceXof) : "180 000 FCFA"} /mois
+                                        </div>
+
+                                        <div className="text-xs text-ink/60">
+                                          {p.endsAt ? (
+                                            <>
+                                              Fin : {new Date(p.endsAt).toLocaleDateString("fr-FR")}
+                                              <span className="ml-1 text-[10px] text-ink/40">
+                                                ({Math.max(0, Math.ceil((new Date(p.endsAt).getTime() - Date.now()) / 86_400_000))} j)
+                                              </span>
+                                            </>
+                                          ) : "—"}
+                                        </div>
+
+                                        <div className="shrink-0">
+                                          <button
+                                            type="button"
+                                            disabled={extendingPackId === p.id}
+                                            onClick={(e) => {
+                                              e.stopPropagation();
+                                              void handleExtendAccompanimentPack(p.id, 1, 12);
+                                            }}
+                                            className="inline-flex items-center gap-1 rounded-lg border border-sky-300 bg-sky-50 px-2.5 py-1 text-[10px] font-bold text-sky-800 hover:bg-sky-100 disabled:opacity-50 cursor-pointer"
+                                            title="Ajoute 12 séances et prolonge la période de 1 mois"
+                                          >
+                                            {extendingPackId === p.id ? (
+                                              <Loader2 className="size-3 animate-spin" />
+                                            ) : (
+                                              <Plus className="size-3" />
+                                            )}
+                                            +12 séances (+1 mois)
+                                          </button>
+                                        </div>
+                                      </div>
+                                    );
+                                  })}
+                                </div>
+                              </div>
+                            </td>
+                          </tr>
+                        )}
+                      </Fragment>
                     );
                   })}
                 </tbody>
               </table>
             </div>
+
+            {/* Pagination des familles */}
+            <AdminPagination
+              page={packCurrentPage}
+              totalPages={totalFamilyPages}
+              total={filteredFamilyGroups.length}
+              pageSize={packPageSize}
+              onPageChange={(pg) => setPackCurrentPage(pg)}
+              label="famille"
+            />
           </div>
 
           {/* 2. TABLEAU DES ABONNEMENTS FAMILLE (GLOBAL COMPTE) */}
-          <div className="space-y-3 pt-2">
+          <div className="space-y-3 pt-4 border-t border-ink/10">
             <div className="flex flex-wrap items-center justify-between gap-2">
               <div>
                 <h3 className="flex items-center gap-2 font-display text-lg font-bold text-ink">
@@ -701,8 +1043,55 @@ export function AdminPaymentsTab() {
                 </p>
               </div>
               <span className="inline-flex items-center rounded-full bg-emerald-100 px-3 py-1 text-xs font-bold text-emerald-800">
-                {subscriptions?.length ?? 0} abonnement{(subscriptions?.length ?? 0) > 1 ? "s" : ""}
+                {filteredSubscriptions.length} abonnement{filteredSubscriptions.length > 1 ? "s" : ""}
               </span>
+            </div>
+
+            {/* Barre de recherche abonnements standard */}
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 bg-white p-3 rounded-2xl border border-ink/10 shadow-sm">
+              <div className="relative flex-1 min-w-[240px]">
+                <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 size-4 text-ink/40" />
+                <input
+                  type="text"
+                  placeholder="Rechercher par parent, email, téléphone…"
+                  value={subSearchQuery}
+                  onChange={(e) => {
+                    setSubSearchQuery(e.target.value);
+                    setSubCurrentPage(1);
+                  }}
+                  className="w-full rounded-xl border border-ink/15 bg-surface/30 pl-10 pr-8 py-2 text-xs font-medium text-ink placeholder:text-ink/40 focus:border-ink focus:bg-white focus:outline-none transition-all"
+                />
+                {subSearchQuery && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setSubSearchQuery("");
+                      setSubCurrentPage(1);
+                    }}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-ink/40 hover:text-ink cursor-pointer"
+                  >
+                    ✕
+                  </button>
+                )}
+              </div>
+
+              <div className="flex items-center gap-1.5 text-xs text-ink/60 font-medium shrink-0">
+                <span>Afficher :</span>
+                <select
+                  value={subPageSize}
+                  onChange={(e) => {
+                    setSubPageSize(Number(e.target.value));
+                    setSubCurrentPage(1);
+                  }}
+                  className="rounded-xl border border-ink/15 bg-white px-2 py-1.5 text-xs font-bold text-ink cursor-pointer focus:border-ink focus:outline-none"
+                >
+                  <option value={5}>5 / page</option>
+                  <option value={10}>10 / page</option>
+                  <option value={25}>25 / page</option>
+                  <option value={50}>50 / page</option>
+                  <option value={100}>100 / page</option>
+                </select>
+              </div>
             </div>
 
             <div className="overflow-x-auto rounded-2xl border border-ink/10 bg-white shadow-sm">
@@ -717,14 +1106,16 @@ export function AdminPaymentsTab() {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-ink/5">
-                  {(subscriptions ?? []).length === 0 && (
+                  {paginatedSubscriptions.length === 0 && (
                     <tr>
                       <td colSpan={5} className="px-4 py-10 text-center text-sm text-ink/40">
-                        Aucun abonnement famille.
+                        {subSearchQuery
+                          ? "Aucun abonnement famille ne correspond à votre recherche."
+                          : "Aucun abonnement famille."}
                       </td>
                     </tr>
                   )}
-                  {(subscriptions ?? []).map((s: AdminSubscriptionRow) => {
+                  {paginatedSubscriptions.map((s: AdminSubscriptionRow) => {
                     const periodEnded =
                       s.status === "active" &&
                       s.currentPeriodEnd &&
@@ -824,6 +1215,16 @@ export function AdminPaymentsTab() {
                 </tbody>
               </table>
             </div>
+
+            {/* Pagination des abonnements standard */}
+            <AdminPagination
+              page={subCurrentPage}
+              totalPages={totalSubPages}
+              total={filteredSubscriptions.length}
+              pageSize={subPageSize}
+              onPageChange={(pg) => setSubCurrentPage(pg)}
+              label="abonnement"
+            />
           </div>
         </div>
       )}
