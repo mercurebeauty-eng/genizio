@@ -4124,7 +4124,7 @@ export const getChildAISynthesis = createServerFn({ method: "POST" })
 
     const { data: completed } = await db
       .from("challenges")
-      .select("title, domain, ai_observations")
+      .select("title, domain, ai_observations, notes")
       .eq("child_id", data.childId)
       .eq("status", "completed");
 
@@ -4148,7 +4148,8 @@ export const getChildAISynthesis = createServerFn({ method: "POST" })
 
     const completedSummary = ((completed ?? []) as any[])
       .map(
-        (c) => `- Défi "${c.title}" (${c.domain}) : "${c.ai_observations ?? "Pas d'observation"}"`,
+        (c) =>
+          `- Défi "${c.title}" (${c.domain}) : observations de Naya : "${c.ai_observations ?? "Pas d'observation"}"${c.notes ? ` | Notes d'observation du parent : "${c.notes}"` : ""}`,
       )
       .join("\n");
 
@@ -4159,28 +4160,56 @@ export const getChildAISynthesis = createServerFn({ method: "POST" })
     );
     const formattedInterests = formatChildInterestsPayload(child.interests, interestHypotheses);
 
-    const prompt = `Tu es Naya, une IA mentore pédagogique.
-Analyse les accomplissements suivants de l'enfant ${child.name} (${child.age} ans) :
+    const aspirationHypotheses = await getAspirationHypothesesSnapshot(db as any, data.childId).catch(
+      () => null,
+    );
+    const aspirationSummary = aspirationHypotheses?.byLabel
+      ? Object.values(aspirationHypotheses.byLabel)
+          .map(
+            (a: any) =>
+              `- Aspiration explorée : ${a.label} (statut : ${a.status}, confiance : ${Math.round((a.engagement ?? 0) * 100)}%)`,
+          )
+          .join("\n")
+      : "";
+
+    const prompt = `Tu es Naya, mentore psychopédagogique d'excellence pour enfants en Afrique francophone sur Génizio.
+Réalise une analyse approfondie, bienveillante et diagnostique du profil d'apprentissage de ${child.name} (${child.age} ans) à partir des données de terrain ci-dessous.
+
 Modes d'engagement et leviers comportementaux observés par le parent :
 ${formattedInterests}
-
-Défis accomplis et observations de Naya :
+${aspirationSummary ? `\nAspirations métiers et centres d'intérêt testés sur le terrain :\n${aspirationSummary}\n` : ""}
+Historique des défis accomplis, observations de terrain et retours du journal parental :
 ${completedSummary}
 
-Rédige une synthèse pédagogique bienveillante et constructive à l'attention des parents (2 paragraphes courts maximum).
-Mets en lumière ses formes d'intelligence dominantes qui ressortent de ses actions, ses points forts comportementaux, et donne 1-2 recommandations de domaines à explorer ensuite pour cultiver son potentiel.
-Écris dans un style fluide, chaleureux et professionnel, en texte brut uniquement — aucune syntaxe Markdown (pas de #, ##, **, tirets de liste), sépare les deux paragraphes par un simple retour à la ligne.`;
+Scores de talents actuels (Radar des 9 intelligences de Howard Gardner) :
+${JSON.stringify(child.talents || {})}
+
+Consigne de rédaction :
+Rédige une synthèse diagnostique bienveillante, profonde et constructive à l'attention des parents et du mentor (2 à 3 paragraphes fluides).
+1. Analyse comportementale & moteurs d'action : mets en lumière comment l'enfant aborde l'effort, la créativité, la persévérance, la résolution de problèmes et l'autonomie à travers ses accomplissements concrets.
+2. Formes d'intelligence dominantes & talents émergents : identifie les forces confirmées et les signaux prometteurs qui se dégagent de sa pratique réelle.
+3. Recommandations concrètes : propose 1 ou 2 orientations stimulantes et personnalisées pour continuer à nourrir son potentiel sans le surcharger ni l'enfermer dans une étiquette.
+
+Écris dans un style fluide, chaleureux, professionnel et digne d'un rapport de coaching éducatif, en texte brut uniquement (aucune syntaxe Markdown : pas de #, **, ni tirets de liste). Sépare les paragraphes par un simple saut de ligne.`;
 
     try {
-      // 2 short paragraphs, not a batch of défis.
-      const synthesis = await callClaude(prompt, false, undefined, 2000);
+      // Modèle de raisonnement profond v4-pro (deepseek-reasoner) pour un bilan pédagogique haute fidélité
+      const synthesis = await callClaude(
+        prompt,
+        false,
+        undefined,
+        2500,
+        3,
+        undefined,
+        "deepseek-reasoner",
+      );
       // Le Loup (chantier 2, Naya 3.0) : audit shadow non-bloquant.
       void verifyAndLog({
         kind: "synthesis",
         output: synthesis,
         sourceFunction: "getChildAISynthesis",
         childId: data.childId,
-        model: "deepseek-v4-flash",
+        model: "deepseek-v4-pro",
       });
       // Only refresh the cache on a genuine success — a transient
       // quota/API failure must not lock in the fallback message as "the"
@@ -4272,14 +4301,22 @@ Nombre de défis réels complétés : ${completed.length}
 Texte brut uniquement, aucune syntaxe Markdown.`;
 
     try {
-      const letter = await callClaude(prompt, false, undefined, 1500);
+      const letter = await callClaude(
+        prompt,
+        false,
+        undefined,
+        1500,
+        3,
+        undefined,
+        "deepseek-reasoner",
+      );
       // Le Loup (chantier 2, Naya 3.0) : audit shadow non-bloquant.
       void verifyAndLog({
         kind: "letter",
         output: letter,
         sourceFunction: "getPassportLetter",
         childId: data.childId,
-        model: "deepseek-v4-flash",
+        model: "deepseek-v4-pro",
       });
       await supabase
         .from("child_profiles")

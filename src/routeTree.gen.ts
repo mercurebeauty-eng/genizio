@@ -9,160 +9,75 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as IndexRouteImport } from './routes/index'
-import { Route as AProposRouteImport } from './routes/a-propos'
-import { Route as AdminRouteImport } from './routes/admin'
-import { Route as AuthRouteImport } from './routes/auth'
-import { Route as BoutiqueRouteImport } from './routes/boutique'
-import { Route as GuidesRouteImport } from './routes/guides'
-import { Route as LaboratoryRouteImport } from './routes/laboratory'
-import { Route as MentionsLegalesRouteImport } from './routes/mentions-legales'
-import { Route as MentorRouteImport } from './routes/mentor'
-import { Route as NouveautesRouteImport } from './routes/nouveautes'
-import { Route as OrganisationRouteImport } from './routes/organisation'
-import { Route as PaiementRetourRouteImport } from './routes/paiement-retour'
-import { Route as ParrainageRouteImport } from './routes/parrainage'
-import { Route as PrivacyRouteImport } from './routes/privacy'
-import { Route as ProfileRouteImport } from './routes/profile'
-import { Route as ProfilesRouteImport } from './routes/profiles'
-import { Route as RemboursementRouteImport } from './routes/remboursement'
-import { Route as RemboursementsRouteImport } from './routes/remboursements'
-import { Route as TarifsRouteImport } from './routes/tarifs'
 import { Route as TermsRouteImport } from './routes/terms'
-import { Route as AdminIndexRouteImport } from './routes/admin.index'
-import { Route as AdminMentorsRouteImport } from './routes/admin.mentors'
-import { Route as AdminProductsRouteImport } from './routes/admin.products'
+import { Route as TarifsRouteImport } from './routes/tarifs'
+import { Route as RemboursementsRouteImport } from './routes/remboursements'
+import { Route as RemboursementRouteImport } from './routes/remboursement'
+import { Route as ProfilesRouteImport } from './routes/profiles'
+import { Route as ProfileRouteImport } from './routes/profile'
+import { Route as PrivacyRouteImport } from './routes/privacy'
+import { Route as ParrainageRouteImport } from './routes/parrainage'
+import { Route as PaiementRetourRouteImport } from './routes/paiement-retour'
+import { Route as OrganisationRouteImport } from './routes/organisation'
+import { Route as NouveautesRouteImport } from './routes/nouveautes'
+import { Route as MentorRouteImport } from './routes/mentor'
+import { Route as MentionsLegalesRouteImport } from './routes/mentions-legales'
+import { Route as LaboratoryRouteImport } from './routes/laboratory'
+import { Route as GuidesRouteImport } from './routes/guides'
+import { Route as BoutiqueRouteImport } from './routes/boutique'
+import { Route as AuthRouteImport } from './routes/auth'
+import { Route as AdminRouteImport } from './routes/admin'
+import { Route as AProposRouteImport } from './routes/a-propos'
+import { Route as IndexRouteImport } from './routes/index'
+import { Route as ProfilesIndexRouteImport } from './routes/profiles.index'
+import { Route as OrganisationIndexRouteImport } from './routes/organisation.index'
 import { Route as GuidesIndexRouteImport } from './routes/guides.index'
-import { Route as GuidesActivitesEducativesEnfantRouteImport } from './routes/guides.activites-educatives-enfant'
-import { Route as GuidesActivitesManuellesEnfantRouteImport } from './routes/guides.activites-manuelles-enfant'
-import { Route as GuidesAutismeTdahApprentissageForcesReellesRouteImport } from './routes/guides.autisme-tdah-apprentissage-forces-reelles'
-import { Route as GuidesAutonomieResponsabiliteMaisonRouteImport } from './routes/guides.autonomie-responsabilite-maison'
+import { Route as AdminIndexRouteImport } from './routes/admin.index'
+import { Route as RejoindreCampaignIdRouteImport } from './routes/rejoindre.$campaignId'
+import { Route as ProfilesManageRouteImport } from './routes/profiles.manage'
+import { Route as GuidesTimiditeConfiancePriseDeParoleRouteImport } from './routes/guides.timidite-confiance-prise-de-parole'
+import { Route as GuidesTestOrientationMetierEnfantFuturRouteImport } from './routes/guides.test-orientation-metier-enfant-futur'
+import { Route as GuidesTestDePersonnaliteEnfantTalentsRouteImport } from './routes/guides.test-de-personnalite-enfant-talents'
+import { Route as GuidesSacADosMarquesChallengeCreativiteEnfantRouteImport } from './routes/guides.sac-a-dos-marques-challenge-creativite-enfant'
+import { Route as GuidesReussiteScolaireAiderEnfantRouteImport } from './routes/guides.reussite-scolaire-aider-enfant'
+import { Route as GuidesReussirEntreeEn6emeConseilsParentsRouteImport } from './routes/guides.reussir-entree-en-6eme-conseils-parents'
+import { Route as GuidesQuelleLibrairieChoisirLieuxCreativiteEnfantRouteImport } from './routes/guides.quelle-librairie-choisir-lieux-creativite-enfant'
+import { Route as GuidesPratiqueAvantTheorieApprentissageIaRouteImport } from './routes/guides.pratique-avant-theorie-apprentissage-ia'
+import { Route as GuidesPotentielHautPotentielEnfantRouteImport } from './routes/guides.potentiel-haut-potentiel-enfant'
+import { Route as GuidesOrientationScolaireMetiersAvenirRouteImport } from './routes/guides.orientation-scolaire-metiers-avenir'
+import { Route as GuidesJouetsEducatifsKitsScientifiquesPlacardsMaisonRouteImport } from './routes/guides.jouets-educatifs-kits-scientifiques-placards-maison'
+import { Route as GuidesIntelligencesMultiplesGardnerRouteImport } from './routes/guides.intelligences-multiples-gardner'
+import { Route as GuidesIaApprentissageEnfantRouteImport } from './routes/guides.ia-apprentissage-enfant'
+import { Route as GuidesGestionColereEmotionsEnfantRouteImport } from './routes/guides.gestion-colere-emotions-enfant'
+import { Route as GuidesFratrieRivaliteCooperationRouteImport } from './routes/guides.fratrie-rivalite-cooperation'
+import { Route as GuidesEnfantAgiteConcentrationRouteImport } from './routes/guides.enfant-agite-concentration'
+import { Route as GuidesEducationEnfantsAfriqueFrancophoneRouteImport } from './routes/guides.education-enfants-afrique-francophone'
+import { Route as GuidesEcransTiktokYoutubeTalentEcritureRealisationRouteImport } from './routes/guides.ecrans-tiktok-youtube-talent-ecriture-realisation'
+import { Route as GuidesEcransAddictionAlternativesEnfantRouteImport } from './routes/guides.ecrans-addiction-alternatives-enfant'
+import { Route as GuidesDisciplinePositiveSansPunitionRouteImport } from './routes/guides.discipline-positive-sans-punition'
+import { Route as GuidesDefisPourAdolescentsRouteImport } from './routes/guides.defis-pour-adolescents'
+import { Route as GuidesDecrochageScolaireConfianceEnfantRouteImport } from './routes/guides.decrochage-scolaire-confiance-enfant'
 import { Route as GuidesCommentGererArgentDePocheEnfantRouteImport } from './routes/guides.comment-gerer-argent-de-poche-enfant'
 import { Route as GuidesChoixParcoursupParcoursScolaireEnfantRouteImport } from './routes/guides.choix-parcoursup-parcours-scolaire-enfant'
-import { Route as GuidesDecrochageScolaireConfianceEnfantRouteImport } from './routes/guides.decrochage-scolaire-confiance-enfant'
-import { Route as GuidesDefisPourAdolescentsRouteImport } from './routes/guides.defis-pour-adolescents'
-import { Route as GuidesDisciplinePositiveSansPunitionRouteImport } from './routes/guides.discipline-positive-sans-punition'
-import { Route as GuidesEcransAddictionAlternativesEnfantRouteImport } from './routes/guides.ecrans-addiction-alternatives-enfant'
-import { Route as GuidesEcransTiktokYoutubeTalentEcritureRealisationRouteImport } from './routes/guides.ecrans-tiktok-youtube-talent-ecriture-realisation'
-import { Route as GuidesEducationEnfantsAfriqueFrancophoneRouteImport } from './routes/guides.education-enfants-afrique-francophone'
-import { Route as GuidesEnfantAgiteConcentrationRouteImport } from './routes/guides.enfant-agite-concentration'
-import { Route as GuidesFratrieRivaliteCooperationRouteImport } from './routes/guides.fratrie-rivalite-cooperation'
-import { Route as GuidesGestionColereEmotionsEnfantRouteImport } from './routes/guides.gestion-colere-emotions-enfant'
-import { Route as GuidesIaApprentissageEnfantRouteImport } from './routes/guides.ia-apprentissage-enfant'
-import { Route as GuidesIntelligencesMultiplesGardnerRouteImport } from './routes/guides.intelligences-multiples-gardner'
-import { Route as GuidesJouetsEducatifsKitsScientifiquesPlacardsMaisonRouteImport } from './routes/guides.jouets-educatifs-kits-scientifiques-placards-maison'
-import { Route as GuidesOrientationScolaireMetiersAvenirRouteImport } from './routes/guides.orientation-scolaire-metiers-avenir'
-import { Route as GuidesPotentielHautPotentielEnfantRouteImport } from './routes/guides.potentiel-haut-potentiel-enfant'
-import { Route as GuidesPratiqueAvantTheorieApprentissageIaRouteImport } from './routes/guides.pratique-avant-theorie-apprentissage-ia'
-import { Route as GuidesQuelleLibrairieChoisirLieuxCreativiteEnfantRouteImport } from './routes/guides.quelle-librairie-choisir-lieux-creativite-enfant'
-import { Route as GuidesReussirEntreeEn6emeConseilsParentsRouteImport } from './routes/guides.reussir-entree-en-6eme-conseils-parents'
-import { Route as GuidesReussiteScolaireAiderEnfantRouteImport } from './routes/guides.reussite-scolaire-aider-enfant'
-import { Route as GuidesSacADosMarquesChallengeCreativiteEnfantRouteImport } from './routes/guides.sac-a-dos-marques-challenge-creativite-enfant'
-import { Route as GuidesTestDePersonnaliteEnfantTalentsRouteImport } from './routes/guides.test-de-personnalite-enfant-talents'
-import { Route as GuidesTestOrientationMetierEnfantFuturRouteImport } from './routes/guides.test-orientation-metier-enfant-futur'
-import { Route as GuidesTimiditeConfiancePriseDeParoleRouteImport } from './routes/guides.timidite-confiance-prise-de-parole'
-import { Route as OrganisationIndexRouteImport } from './routes/organisation.index'
-import { Route as ProfilesIndexRouteImport } from './routes/profiles.index'
-import { Route as ProfilesManageRouteImport } from './routes/profiles.manage'
-import { Route as RejoindreCampaignIdRouteImport } from './routes/rejoindre.$campaignId'
-import { Route as ApiPaystackWebhookRouteImport } from './routes/api/paystack/webhook'
-import { Route as ProfilesProfileIdBilanPrintRouteImport } from './routes/profiles.$profileId.bilan-print'
-import { Route as ProfilesProfileIdChallengesRouteImport } from './routes/profiles.$profileId.challenges'
-import { Route as ProfilesProfileIdDecouverteRouteImport } from './routes/profiles.$profileId.decouverte'
-import { Route as ProfilesProfileIdGuildRouteImport } from './routes/profiles.$profileId.guild'
-import { Route as ProfilesProfileIdMentorsRouteImport } from './routes/profiles.$profileId.mentors'
-import { Route as ProfilesProfileIdPassportPrintRouteImport } from './routes/profiles.$profileId.passport-print'
-import { Route as ProfilesProfileIdPortfolioRouteImport } from './routes/profiles.$profileId.portfolio'
+import { Route as GuidesAutonomieResponsabiliteMaisonRouteImport } from './routes/guides.autonomie-responsabilite-maison'
+import { Route as GuidesAutismeTdahApprentissageForcesReellesRouteImport } from './routes/guides.autisme-tdah-apprentissage-forces-reelles'
+import { Route as GuidesActivitesManuellesEnfantRouteImport } from './routes/guides.activites-manuelles-enfant'
+import { Route as GuidesActivitesEducativesEnfantRouteImport } from './routes/guides.activites-educatives-enfant'
+import { Route as AdminProductsRouteImport } from './routes/admin.products'
+import { Route as AdminMentorsRouteImport } from './routes/admin.mentors'
 import { Route as ProfilesProfileIdQuestRouteImport } from './routes/profiles.$profileId.quest'
+import { Route as ProfilesProfileIdPortfolioRouteImport } from './routes/profiles.$profileId.portfolio'
+import { Route as ProfilesProfileIdPassportPrintRouteImport } from './routes/profiles.$profileId.passport-print'
+import { Route as ProfilesProfileIdMentorsRouteImport } from './routes/profiles.$profileId.mentors'
+import { Route as ProfilesProfileIdGuildRouteImport } from './routes/profiles.$profileId.guild'
+import { Route as ProfilesProfileIdDecouverteRouteImport } from './routes/profiles.$profileId.decouverte'
+import { Route as ProfilesProfileIdChallengesRouteImport } from './routes/profiles.$profileId.challenges'
+import { Route as ProfilesProfileIdBilanPrintRouteImport } from './routes/profiles.$profileId.bilan-print'
+import { Route as ApiPaystackWebhookRouteImport } from './routes/api/paystack/webhook'
 
-const IndexRoute = IndexRouteImport.update({
-  id: '/',
-  path: '/',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const AProposRoute = AProposRouteImport.update({
-  id: '/a-propos',
-  path: '/a-propos',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const AdminRoute = AdminRouteImport.update({
-  id: '/admin',
-  path: '/admin',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const AuthRoute = AuthRouteImport.update({
-  id: '/auth',
-  path: '/auth',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const BoutiqueRoute = BoutiqueRouteImport.update({
-  id: '/boutique',
-  path: '/boutique',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const GuidesRoute = GuidesRouteImport.update({
-  id: '/guides',
-  path: '/guides',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const LaboratoryRoute = LaboratoryRouteImport.update({
-  id: '/laboratory',
-  path: '/laboratory',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const MentionsLegalesRoute = MentionsLegalesRouteImport.update({
-  id: '/mentions-legales',
-  path: '/mentions-legales',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const MentorRoute = MentorRouteImport.update({
-  id: '/mentor',
-  path: '/mentor',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const NouveautesRoute = NouveautesRouteImport.update({
-  id: '/nouveautes',
-  path: '/nouveautes',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const OrganisationRoute = OrganisationRouteImport.update({
-  id: '/organisation',
-  path: '/organisation',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const PaiementRetourRoute = PaiementRetourRouteImport.update({
-  id: '/paiement-retour',
-  path: '/paiement-retour',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ParrainageRoute = ParrainageRouteImport.update({
-  id: '/parrainage',
-  path: '/parrainage',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const PrivacyRoute = PrivacyRouteImport.update({
-  id: '/privacy',
-  path: '/privacy',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ProfileRoute = ProfileRouteImport.update({
-  id: '/profile',
-  path: '/profile',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ProfilesRoute = ProfilesRouteImport.update({
-  id: '/profiles',
-  path: '/profiles',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const RemboursementRoute = RemboursementRouteImport.update({
-  id: '/remboursement',
-  path: '/remboursement',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const RemboursementsRoute = RemboursementsRouteImport.update({
-  id: '/remboursements',
-  path: '/remboursements',
+const TermsRoute = TermsRouteImport.update({
+  id: '/terms',
+  path: '/terms',
   getParentRoute: () => rootRouteImport,
 } as any)
 const TarifsRoute = TarifsRouteImport.update({
@@ -170,53 +85,256 @@ const TarifsRoute = TarifsRouteImport.update({
   path: '/tarifs',
   getParentRoute: () => rootRouteImport,
 } as any)
-const TermsRoute = TermsRouteImport.update({
-  id: '/terms',
-  path: '/terms',
+const RemboursementsRoute = RemboursementsRouteImport.update({
+  id: '/remboursements',
+  path: '/remboursements',
   getParentRoute: () => rootRouteImport,
 } as any)
-const AdminIndexRoute = AdminIndexRouteImport.update({
+const RemboursementRoute = RemboursementRouteImport.update({
+  id: '/remboursement',
+  path: '/remboursement',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ProfilesRoute = ProfilesRouteImport.update({
+  id: '/profiles',
+  path: '/profiles',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ProfileRoute = ProfileRouteImport.update({
+  id: '/profile',
+  path: '/profile',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PrivacyRoute = PrivacyRouteImport.update({
+  id: '/privacy',
+  path: '/privacy',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ParrainageRoute = ParrainageRouteImport.update({
+  id: '/parrainage',
+  path: '/parrainage',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PaiementRetourRoute = PaiementRetourRouteImport.update({
+  id: '/paiement-retour',
+  path: '/paiement-retour',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const OrganisationRoute = OrganisationRouteImport.update({
+  id: '/organisation',
+  path: '/organisation',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const NouveautesRoute = NouveautesRouteImport.update({
+  id: '/nouveautes',
+  path: '/nouveautes',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const MentorRoute = MentorRouteImport.update({
+  id: '/mentor',
+  path: '/mentor',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const MentionsLegalesRoute = MentionsLegalesRouteImport.update({
+  id: '/mentions-legales',
+  path: '/mentions-legales',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LaboratoryRoute = LaboratoryRouteImport.update({
+  id: '/laboratory',
+  path: '/laboratory',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const GuidesRoute = GuidesRouteImport.update({
+  id: '/guides',
+  path: '/guides',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const BoutiqueRoute = BoutiqueRouteImport.update({
+  id: '/boutique',
+  path: '/boutique',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuthRoute = AuthRouteImport.update({
+  id: '/auth',
+  path: '/auth',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AdminRoute = AdminRouteImport.update({
+  id: '/admin',
+  path: '/admin',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AProposRoute = AProposRouteImport.update({
+  id: '/a-propos',
+  path: '/a-propos',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
-  getParentRoute: () => AdminRoute,
+  getParentRoute: () => rootRouteImport,
 } as any)
-const AdminMentorsRoute = AdminMentorsRouteImport.update({
-  id: '/mentors',
-  path: '/mentors',
-  getParentRoute: () => AdminRoute,
+const ProfilesIndexRoute = ProfilesIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => ProfilesRoute,
 } as any)
-const AdminProductsRoute = AdminProductsRouteImport.update({
-  id: '/products',
-  path: '/products',
-  getParentRoute: () => AdminRoute,
+const OrganisationIndexRoute = OrganisationIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => OrganisationRoute,
 } as any)
 const GuidesIndexRoute = GuidesIndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => GuidesRoute,
 } as any)
-const GuidesActivitesEducativesEnfantRoute =
-  GuidesActivitesEducativesEnfantRouteImport.update({
-    id: '/activites-educatives-enfant',
-    path: '/activites-educatives-enfant',
+const AdminIndexRoute = AdminIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => AdminRoute,
+} as any)
+const RejoindreCampaignIdRoute = RejoindreCampaignIdRouteImport.update({
+  id: '/rejoindre/$campaignId',
+  path: '/rejoindre/$campaignId',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ProfilesManageRoute = ProfilesManageRouteImport.update({
+  id: '/manage',
+  path: '/manage',
+  getParentRoute: () => ProfilesRoute,
+} as any)
+const GuidesTimiditeConfiancePriseDeParoleRoute =
+  GuidesTimiditeConfiancePriseDeParoleRouteImport.update({
+    id: '/timidite-confiance-prise-de-parole',
+    path: '/timidite-confiance-prise-de-parole',
     getParentRoute: () => GuidesRoute,
   } as any)
-const GuidesActivitesManuellesEnfantRoute =
-  GuidesActivitesManuellesEnfantRouteImport.update({
-    id: '/activites-manuelles-enfant',
-    path: '/activites-manuelles-enfant',
+const GuidesTestOrientationMetierEnfantFuturRoute =
+  GuidesTestOrientationMetierEnfantFuturRouteImport.update({
+    id: '/test-orientation-metier-enfant-futur',
+    path: '/test-orientation-metier-enfant-futur',
     getParentRoute: () => GuidesRoute,
   } as any)
-const GuidesAutismeTdahApprentissageForcesReellesRoute =
-  GuidesAutismeTdahApprentissageForcesReellesRouteImport.update({
-    id: '/autisme-tdah-apprentissage-forces-reelles',
-    path: '/autisme-tdah-apprentissage-forces-reelles',
+const GuidesTestDePersonnaliteEnfantTalentsRoute =
+  GuidesTestDePersonnaliteEnfantTalentsRouteImport.update({
+    id: '/test-de-personnalite-enfant-talents',
+    path: '/test-de-personnalite-enfant-talents',
     getParentRoute: () => GuidesRoute,
   } as any)
-const GuidesAutonomieResponsabiliteMaisonRoute =
-  GuidesAutonomieResponsabiliteMaisonRouteImport.update({
-    id: '/autonomie-responsabilite-maison',
-    path: '/autonomie-responsabilite-maison',
+const GuidesSacADosMarquesChallengeCreativiteEnfantRoute =
+  GuidesSacADosMarquesChallengeCreativiteEnfantRouteImport.update({
+    id: '/sac-a-dos-marques-challenge-creativite-enfant',
+    path: '/sac-a-dos-marques-challenge-creativite-enfant',
+    getParentRoute: () => GuidesRoute,
+  } as any)
+const GuidesReussiteScolaireAiderEnfantRoute =
+  GuidesReussiteScolaireAiderEnfantRouteImport.update({
+    id: '/reussite-scolaire-aider-enfant',
+    path: '/reussite-scolaire-aider-enfant',
+    getParentRoute: () => GuidesRoute,
+  } as any)
+const GuidesReussirEntreeEn6emeConseilsParentsRoute =
+  GuidesReussirEntreeEn6emeConseilsParentsRouteImport.update({
+    id: '/reussir-entree-en-6eme-conseils-parents',
+    path: '/reussir-entree-en-6eme-conseils-parents',
+    getParentRoute: () => GuidesRoute,
+  } as any)
+const GuidesQuelleLibrairieChoisirLieuxCreativiteEnfantRoute =
+  GuidesQuelleLibrairieChoisirLieuxCreativiteEnfantRouteImport.update({
+    id: '/quelle-librairie-choisir-lieux-creativite-enfant',
+    path: '/quelle-librairie-choisir-lieux-creativite-enfant',
+    getParentRoute: () => GuidesRoute,
+  } as any)
+const GuidesPratiqueAvantTheorieApprentissageIaRoute =
+  GuidesPratiqueAvantTheorieApprentissageIaRouteImport.update({
+    id: '/pratique-avant-theorie-apprentissage-ia',
+    path: '/pratique-avant-theorie-apprentissage-ia',
+    getParentRoute: () => GuidesRoute,
+  } as any)
+const GuidesPotentielHautPotentielEnfantRoute =
+  GuidesPotentielHautPotentielEnfantRouteImport.update({
+    id: '/potentiel-haut-potentiel-enfant',
+    path: '/potentiel-haut-potentiel-enfant',
+    getParentRoute: () => GuidesRoute,
+  } as any)
+const GuidesOrientationScolaireMetiersAvenirRoute =
+  GuidesOrientationScolaireMetiersAvenirRouteImport.update({
+    id: '/orientation-scolaire-metiers-avenir',
+    path: '/orientation-scolaire-metiers-avenir',
+    getParentRoute: () => GuidesRoute,
+  } as any)
+const GuidesJouetsEducatifsKitsScientifiquesPlacardsMaisonRoute =
+  GuidesJouetsEducatifsKitsScientifiquesPlacardsMaisonRouteImport.update({
+    id: '/jouets-educatifs-kits-scientifiques-placards-maison',
+    path: '/jouets-educatifs-kits-scientifiques-placards-maison',
+    getParentRoute: () => GuidesRoute,
+  } as any)
+const GuidesIntelligencesMultiplesGardnerRoute =
+  GuidesIntelligencesMultiplesGardnerRouteImport.update({
+    id: '/intelligences-multiples-gardner',
+    path: '/intelligences-multiples-gardner',
+    getParentRoute: () => GuidesRoute,
+  } as any)
+const GuidesIaApprentissageEnfantRoute =
+  GuidesIaApprentissageEnfantRouteImport.update({
+    id: '/ia-apprentissage-enfant',
+    path: '/ia-apprentissage-enfant',
+    getParentRoute: () => GuidesRoute,
+  } as any)
+const GuidesGestionColereEmotionsEnfantRoute =
+  GuidesGestionColereEmotionsEnfantRouteImport.update({
+    id: '/gestion-colere-emotions-enfant',
+    path: '/gestion-colere-emotions-enfant',
+    getParentRoute: () => GuidesRoute,
+  } as any)
+const GuidesFratrieRivaliteCooperationRoute =
+  GuidesFratrieRivaliteCooperationRouteImport.update({
+    id: '/fratrie-rivalite-cooperation',
+    path: '/fratrie-rivalite-cooperation',
+    getParentRoute: () => GuidesRoute,
+  } as any)
+const GuidesEnfantAgiteConcentrationRoute =
+  GuidesEnfantAgiteConcentrationRouteImport.update({
+    id: '/enfant-agite-concentration',
+    path: '/enfant-agite-concentration',
+    getParentRoute: () => GuidesRoute,
+  } as any)
+const GuidesEducationEnfantsAfriqueFrancophoneRoute =
+  GuidesEducationEnfantsAfriqueFrancophoneRouteImport.update({
+    id: '/education-enfants-afrique-francophone',
+    path: '/education-enfants-afrique-francophone',
+    getParentRoute: () => GuidesRoute,
+  } as any)
+const GuidesEcransTiktokYoutubeTalentEcritureRealisationRoute =
+  GuidesEcransTiktokYoutubeTalentEcritureRealisationRouteImport.update({
+    id: '/ecrans-tiktok-youtube-talent-ecriture-realisation',
+    path: '/ecrans-tiktok-youtube-talent-ecriture-realisation',
+    getParentRoute: () => GuidesRoute,
+  } as any)
+const GuidesEcransAddictionAlternativesEnfantRoute =
+  GuidesEcransAddictionAlternativesEnfantRouteImport.update({
+    id: '/ecrans-addiction-alternatives-enfant',
+    path: '/ecrans-addiction-alternatives-enfant',
+    getParentRoute: () => GuidesRoute,
+  } as any)
+const GuidesDisciplinePositiveSansPunitionRoute =
+  GuidesDisciplinePositiveSansPunitionRouteImport.update({
+    id: '/discipline-positive-sans-punition',
+    path: '/discipline-positive-sans-punition',
+    getParentRoute: () => GuidesRoute,
+  } as any)
+const GuidesDefisPourAdolescentsRoute =
+  GuidesDefisPourAdolescentsRouteImport.update({
+    id: '/defis-pour-adolescents',
+    path: '/defis-pour-adolescents',
+    getParentRoute: () => GuidesRoute,
+  } as any)
+const GuidesDecrochageScolaireConfianceEnfantRoute =
+  GuidesDecrochageScolaireConfianceEnfantRouteImport.update({
+    id: '/decrochage-scolaire-confiance-enfant',
+    path: '/decrochage-scolaire-confiance-enfant',
     getParentRoute: () => GuidesRoute,
   } as any)
 const GuidesCommentGererArgentDePocheEnfantRoute =
@@ -231,190 +349,49 @@ const GuidesChoixParcoursupParcoursScolaireEnfantRoute =
     path: '/choix-parcoursup-parcours-scolaire-enfant',
     getParentRoute: () => GuidesRoute,
   } as any)
-const GuidesDecrochageScolaireConfianceEnfantRoute =
-  GuidesDecrochageScolaireConfianceEnfantRouteImport.update({
-    id: '/decrochage-scolaire-confiance-enfant',
-    path: '/decrochage-scolaire-confiance-enfant',
+const GuidesAutonomieResponsabiliteMaisonRoute =
+  GuidesAutonomieResponsabiliteMaisonRouteImport.update({
+    id: '/autonomie-responsabilite-maison',
+    path: '/autonomie-responsabilite-maison',
     getParentRoute: () => GuidesRoute,
   } as any)
-const GuidesDefisPourAdolescentsRoute =
-  GuidesDefisPourAdolescentsRouteImport.update({
-    id: '/defis-pour-adolescents',
-    path: '/defis-pour-adolescents',
+const GuidesAutismeTdahApprentissageForcesReellesRoute =
+  GuidesAutismeTdahApprentissageForcesReellesRouteImport.update({
+    id: '/autisme-tdah-apprentissage-forces-reelles',
+    path: '/autisme-tdah-apprentissage-forces-reelles',
     getParentRoute: () => GuidesRoute,
   } as any)
-const GuidesDisciplinePositiveSansPunitionRoute =
-  GuidesDisciplinePositiveSansPunitionRouteImport.update({
-    id: '/discipline-positive-sans-punition',
-    path: '/discipline-positive-sans-punition',
+const GuidesActivitesManuellesEnfantRoute =
+  GuidesActivitesManuellesEnfantRouteImport.update({
+    id: '/activites-manuelles-enfant',
+    path: '/activites-manuelles-enfant',
     getParentRoute: () => GuidesRoute,
   } as any)
-const GuidesEcransAddictionAlternativesEnfantRoute =
-  GuidesEcransAddictionAlternativesEnfantRouteImport.update({
-    id: '/ecrans-addiction-alternatives-enfant',
-    path: '/ecrans-addiction-alternatives-enfant',
+const GuidesActivitesEducativesEnfantRoute =
+  GuidesActivitesEducativesEnfantRouteImport.update({
+    id: '/activites-educatives-enfant',
+    path: '/activites-educatives-enfant',
     getParentRoute: () => GuidesRoute,
   } as any)
-const GuidesEcransTiktokYoutubeTalentEcritureRealisationRoute =
-  GuidesEcransTiktokYoutubeTalentEcritureRealisationRouteImport.update({
-    id: '/ecrans-tiktok-youtube-talent-ecriture-realisation',
-    path: '/ecrans-tiktok-youtube-talent-ecriture-realisation',
-    getParentRoute: () => GuidesRoute,
-  } as any)
-const GuidesEducationEnfantsAfriqueFrancophoneRoute =
-  GuidesEducationEnfantsAfriqueFrancophoneRouteImport.update({
-    id: '/education-enfants-afrique-francophone',
-    path: '/education-enfants-afrique-francophone',
-    getParentRoute: () => GuidesRoute,
-  } as any)
-const GuidesEnfantAgiteConcentrationRoute =
-  GuidesEnfantAgiteConcentrationRouteImport.update({
-    id: '/enfant-agite-concentration',
-    path: '/enfant-agite-concentration',
-    getParentRoute: () => GuidesRoute,
-  } as any)
-const GuidesFratrieRivaliteCooperationRoute =
-  GuidesFratrieRivaliteCooperationRouteImport.update({
-    id: '/fratrie-rivalite-cooperation',
-    path: '/fratrie-rivalite-cooperation',
-    getParentRoute: () => GuidesRoute,
-  } as any)
-const GuidesGestionColereEmotionsEnfantRoute =
-  GuidesGestionColereEmotionsEnfantRouteImport.update({
-    id: '/gestion-colere-emotions-enfant',
-    path: '/gestion-colere-emotions-enfant',
-    getParentRoute: () => GuidesRoute,
-  } as any)
-const GuidesIaApprentissageEnfantRoute =
-  GuidesIaApprentissageEnfantRouteImport.update({
-    id: '/ia-apprentissage-enfant',
-    path: '/ia-apprentissage-enfant',
-    getParentRoute: () => GuidesRoute,
-  } as any)
-const GuidesIntelligencesMultiplesGardnerRoute =
-  GuidesIntelligencesMultiplesGardnerRouteImport.update({
-    id: '/intelligences-multiples-gardner',
-    path: '/intelligences-multiples-gardner',
-    getParentRoute: () => GuidesRoute,
-  } as any)
-const GuidesJouetsEducatifsKitsScientifiquesPlacardsMaisonRoute =
-  GuidesJouetsEducatifsKitsScientifiquesPlacardsMaisonRouteImport.update({
-    id: '/jouets-educatifs-kits-scientifiques-placards-maison',
-    path: '/jouets-educatifs-kits-scientifiques-placards-maison',
-    getParentRoute: () => GuidesRoute,
-  } as any)
-const GuidesOrientationScolaireMetiersAvenirRoute =
-  GuidesOrientationScolaireMetiersAvenirRouteImport.update({
-    id: '/orientation-scolaire-metiers-avenir',
-    path: '/orientation-scolaire-metiers-avenir',
-    getParentRoute: () => GuidesRoute,
-  } as any)
-const GuidesPotentielHautPotentielEnfantRoute =
-  GuidesPotentielHautPotentielEnfantRouteImport.update({
-    id: '/potentiel-haut-potentiel-enfant',
-    path: '/potentiel-haut-potentiel-enfant',
-    getParentRoute: () => GuidesRoute,
-  } as any)
-const GuidesPratiqueAvantTheorieApprentissageIaRoute =
-  GuidesPratiqueAvantTheorieApprentissageIaRouteImport.update({
-    id: '/pratique-avant-theorie-apprentissage-ia',
-    path: '/pratique-avant-theorie-apprentissage-ia',
-    getParentRoute: () => GuidesRoute,
-  } as any)
-const GuidesQuelleLibrairieChoisirLieuxCreativiteEnfantRoute =
-  GuidesQuelleLibrairieChoisirLieuxCreativiteEnfantRouteImport.update({
-    id: '/quelle-librairie-choisir-lieux-creativite-enfant',
-    path: '/quelle-librairie-choisir-lieux-creativite-enfant',
-    getParentRoute: () => GuidesRoute,
-  } as any)
-const GuidesReussirEntreeEn6emeConseilsParentsRoute =
-  GuidesReussirEntreeEn6emeConseilsParentsRouteImport.update({
-    id: '/reussir-entree-en-6eme-conseils-parents',
-    path: '/reussir-entree-en-6eme-conseils-parents',
-    getParentRoute: () => GuidesRoute,
-  } as any)
-const GuidesReussiteScolaireAiderEnfantRoute =
-  GuidesReussiteScolaireAiderEnfantRouteImport.update({
-    id: '/reussite-scolaire-aider-enfant',
-    path: '/reussite-scolaire-aider-enfant',
-    getParentRoute: () => GuidesRoute,
-  } as any)
-const GuidesSacADosMarquesChallengeCreativiteEnfantRoute =
-  GuidesSacADosMarquesChallengeCreativiteEnfantRouteImport.update({
-    id: '/sac-a-dos-marques-challenge-creativite-enfant',
-    path: '/sac-a-dos-marques-challenge-creativite-enfant',
-    getParentRoute: () => GuidesRoute,
-  } as any)
-const GuidesTestDePersonnaliteEnfantTalentsRoute =
-  GuidesTestDePersonnaliteEnfantTalentsRouteImport.update({
-    id: '/test-de-personnalite-enfant-talents',
-    path: '/test-de-personnalite-enfant-talents',
-    getParentRoute: () => GuidesRoute,
-  } as any)
-const GuidesTestOrientationMetierEnfantFuturRoute =
-  GuidesTestOrientationMetierEnfantFuturRouteImport.update({
-    id: '/test-orientation-metier-enfant-futur',
-    path: '/test-orientation-metier-enfant-futur',
-    getParentRoute: () => GuidesRoute,
-  } as any)
-const GuidesTimiditeConfiancePriseDeParoleRoute =
-  GuidesTimiditeConfiancePriseDeParoleRouteImport.update({
-    id: '/timidite-confiance-prise-de-parole',
-    path: '/timidite-confiance-prise-de-parole',
-    getParentRoute: () => GuidesRoute,
-  } as any)
-const OrganisationIndexRoute = OrganisationIndexRouteImport.update({
-  id: '/',
-  path: '/',
-  getParentRoute: () => OrganisationRoute,
+const AdminProductsRoute = AdminProductsRouteImport.update({
+  id: '/products',
+  path: '/products',
+  getParentRoute: () => AdminRoute,
 } as any)
-const ProfilesIndexRoute = ProfilesIndexRouteImport.update({
-  id: '/',
-  path: '/',
+const AdminMentorsRoute = AdminMentorsRouteImport.update({
+  id: '/mentors',
+  path: '/mentors',
+  getParentRoute: () => AdminRoute,
+} as any)
+const ProfilesProfileIdQuestRoute = ProfilesProfileIdQuestRouteImport.update({
+  id: '/$profileId/quest',
+  path: '/$profileId/quest',
   getParentRoute: () => ProfilesRoute,
 } as any)
-const ProfilesManageRoute = ProfilesManageRouteImport.update({
-  id: '/manage',
-  path: '/manage',
-  getParentRoute: () => ProfilesRoute,
-} as any)
-const RejoindreCampaignIdRoute = RejoindreCampaignIdRouteImport.update({
-  id: '/rejoindre/$campaignId',
-  path: '/rejoindre/$campaignId',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ApiPaystackWebhookRoute = ApiPaystackWebhookRouteImport.update({
-  id: '/api/paystack/webhook',
-  path: '/api/paystack/webhook',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ProfilesProfileIdBilanPrintRoute =
-  ProfilesProfileIdBilanPrintRouteImport.update({
-    id: '/$profileId/bilan-print',
-    path: '/$profileId/bilan-print',
-    getParentRoute: () => ProfilesRoute,
-  } as any)
-const ProfilesProfileIdChallengesRoute =
-  ProfilesProfileIdChallengesRouteImport.update({
-    id: '/$profileId/challenges',
-    path: '/$profileId/challenges',
-    getParentRoute: () => ProfilesRoute,
-  } as any)
-const ProfilesProfileIdDecouverteRoute =
-  ProfilesProfileIdDecouverteRouteImport.update({
-    id: '/$profileId/decouverte',
-    path: '/$profileId/decouverte',
-    getParentRoute: () => ProfilesRoute,
-  } as any)
-const ProfilesProfileIdGuildRoute = ProfilesProfileIdGuildRouteImport.update({
-  id: '/$profileId/guild',
-  path: '/$profileId/guild',
-  getParentRoute: () => ProfilesRoute,
-} as any)
-const ProfilesProfileIdMentorsRoute =
-  ProfilesProfileIdMentorsRouteImport.update({
-    id: '/$profileId/mentors',
-    path: '/$profileId/mentors',
+const ProfilesProfileIdPortfolioRoute =
+  ProfilesProfileIdPortfolioRouteImport.update({
+    id: '/$profileId/portfolio',
+    path: '/$profileId/portfolio',
     getParentRoute: () => ProfilesRoute,
   } as any)
 const ProfilesProfileIdPassportPrintRoute =
@@ -423,16 +400,39 @@ const ProfilesProfileIdPassportPrintRoute =
     path: '/$profileId/passport-print',
     getParentRoute: () => ProfilesRoute,
   } as any)
-const ProfilesProfileIdPortfolioRoute =
-  ProfilesProfileIdPortfolioRouteImport.update({
-    id: '/$profileId/portfolio',
-    path: '/$profileId/portfolio',
+const ProfilesProfileIdMentorsRoute =
+  ProfilesProfileIdMentorsRouteImport.update({
+    id: '/$profileId/mentors',
+    path: '/$profileId/mentors',
     getParentRoute: () => ProfilesRoute,
   } as any)
-const ProfilesProfileIdQuestRoute = ProfilesProfileIdQuestRouteImport.update({
-  id: '/$profileId/quest',
-  path: '/$profileId/quest',
+const ProfilesProfileIdGuildRoute = ProfilesProfileIdGuildRouteImport.update({
+  id: '/$profileId/guild',
+  path: '/$profileId/guild',
   getParentRoute: () => ProfilesRoute,
+} as any)
+const ProfilesProfileIdDecouverteRoute =
+  ProfilesProfileIdDecouverteRouteImport.update({
+    id: '/$profileId/decouverte',
+    path: '/$profileId/decouverte',
+    getParentRoute: () => ProfilesRoute,
+  } as any)
+const ProfilesProfileIdChallengesRoute =
+  ProfilesProfileIdChallengesRouteImport.update({
+    id: '/$profileId/challenges',
+    path: '/$profileId/challenges',
+    getParentRoute: () => ProfilesRoute,
+  } as any)
+const ProfilesProfileIdBilanPrintRoute =
+  ProfilesProfileIdBilanPrintRouteImport.update({
+    id: '/$profileId/bilan-print',
+    path: '/$profileId/bilan-print',
+    getParentRoute: () => ProfilesRoute,
+  } as any)
+const ApiPaystackWebhookRoute = ApiPaystackWebhookRouteImport.update({
+  id: '/api/paystack/webhook',
+  path: '/api/paystack/webhook',
+  getParentRoute: () => rootRouteImport,
 } as any)
 
 export interface FileRoutesByFullPath {
@@ -462,8 +462,8 @@ export interface FileRoutesByFullPath {
   '/guides/activites-manuelles-enfant': typeof GuidesActivitesManuellesEnfantRoute
   '/guides/autisme-tdah-apprentissage-forces-reelles': typeof GuidesAutismeTdahApprentissageForcesReellesRoute
   '/guides/autonomie-responsabilite-maison': typeof GuidesAutonomieResponsabiliteMaisonRoute
-  '/guides/comment-gerer-argent-de-poche-enfant': typeof GuidesCommentGererArgentDePocheEnfantRoute
   '/guides/choix-parcoursup-parcours-scolaire-enfant': typeof GuidesChoixParcoursupParcoursScolaireEnfantRoute
+  '/guides/comment-gerer-argent-de-poche-enfant': typeof GuidesCommentGererArgentDePocheEnfantRoute
   '/guides/decrochage-scolaire-confiance-enfant': typeof GuidesDecrochageScolaireConfianceEnfantRoute
   '/guides/defis-pour-adolescents': typeof GuidesDefisPourAdolescentsRoute
   '/guides/discipline-positive-sans-punition': typeof GuidesDisciplinePositiveSansPunitionRoute
@@ -525,8 +525,8 @@ export interface FileRoutesByTo {
   '/guides/activites-manuelles-enfant': typeof GuidesActivitesManuellesEnfantRoute
   '/guides/autisme-tdah-apprentissage-forces-reelles': typeof GuidesAutismeTdahApprentissageForcesReellesRoute
   '/guides/autonomie-responsabilite-maison': typeof GuidesAutonomieResponsabiliteMaisonRoute
-  '/guides/comment-gerer-argent-de-poche-enfant': typeof GuidesCommentGererArgentDePocheEnfantRoute
   '/guides/choix-parcoursup-parcours-scolaire-enfant': typeof GuidesChoixParcoursupParcoursScolaireEnfantRoute
+  '/guides/comment-gerer-argent-de-poche-enfant': typeof GuidesCommentGererArgentDePocheEnfantRoute
   '/guides/decrochage-scolaire-confiance-enfant': typeof GuidesDecrochageScolaireConfianceEnfantRoute
   '/guides/defis-pour-adolescents': typeof GuidesDefisPourAdolescentsRoute
   '/guides/discipline-positive-sans-punition': typeof GuidesDisciplinePositiveSansPunitionRoute
@@ -593,8 +593,8 @@ export interface FileRoutesById {
   '/guides/activites-manuelles-enfant': typeof GuidesActivitesManuellesEnfantRoute
   '/guides/autisme-tdah-apprentissage-forces-reelles': typeof GuidesAutismeTdahApprentissageForcesReellesRoute
   '/guides/autonomie-responsabilite-maison': typeof GuidesAutonomieResponsabiliteMaisonRoute
-  '/guides/comment-gerer-argent-de-poche-enfant': typeof GuidesCommentGererArgentDePocheEnfantRoute
   '/guides/choix-parcoursup-parcours-scolaire-enfant': typeof GuidesChoixParcoursupParcoursScolaireEnfantRoute
+  '/guides/comment-gerer-argent-de-poche-enfant': typeof GuidesCommentGererArgentDePocheEnfantRoute
   '/guides/decrochage-scolaire-confiance-enfant': typeof GuidesDecrochageScolaireConfianceEnfantRoute
   '/guides/defis-pour-adolescents': typeof GuidesDefisPourAdolescentsRoute
   '/guides/discipline-positive-sans-punition': typeof GuidesDisciplinePositiveSansPunitionRoute
@@ -662,8 +662,8 @@ export interface FileRouteTypes {
     | '/guides/activites-manuelles-enfant'
     | '/guides/autisme-tdah-apprentissage-forces-reelles'
     | '/guides/autonomie-responsabilite-maison'
-    | '/guides/comment-gerer-argent-de-poche-enfant'
     | '/guides/choix-parcoursup-parcours-scolaire-enfant'
+    | '/guides/comment-gerer-argent-de-poche-enfant'
     | '/guides/decrochage-scolaire-confiance-enfant'
     | '/guides/defis-pour-adolescents'
     | '/guides/discipline-positive-sans-punition'
@@ -725,8 +725,8 @@ export interface FileRouteTypes {
     | '/guides/activites-manuelles-enfant'
     | '/guides/autisme-tdah-apprentissage-forces-reelles'
     | '/guides/autonomie-responsabilite-maison'
-    | '/guides/comment-gerer-argent-de-poche-enfant'
     | '/guides/choix-parcoursup-parcours-scolaire-enfant'
+    | '/guides/comment-gerer-argent-de-poche-enfant'
     | '/guides/decrochage-scolaire-confiance-enfant'
     | '/guides/defis-pour-adolescents'
     | '/guides/discipline-positive-sans-punition'
@@ -792,8 +792,8 @@ export interface FileRouteTypes {
     | '/guides/activites-manuelles-enfant'
     | '/guides/autisme-tdah-apprentissage-forces-reelles'
     | '/guides/autonomie-responsabilite-maison'
-    | '/guides/comment-gerer-argent-de-poche-enfant'
     | '/guides/choix-parcoursup-parcours-scolaire-enfant'
+    | '/guides/comment-gerer-argent-de-poche-enfant'
     | '/guides/decrochage-scolaire-confiance-enfant'
     | '/guides/defis-pour-adolescents'
     | '/guides/discipline-positive-sans-punition'
@@ -860,130 +860,11 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/': {
-      id: '/'
-      path: '/'
-      fullPath: '/'
-      preLoaderRoute: typeof IndexRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/a-propos': {
-      id: '/a-propos'
-      path: '/a-propos'
-      fullPath: '/a-propos'
-      preLoaderRoute: typeof AProposRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/admin': {
-      id: '/admin'
-      path: '/admin'
-      fullPath: '/admin'
-      preLoaderRoute: typeof AdminRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/auth': {
-      id: '/auth'
-      path: '/auth'
-      fullPath: '/auth'
-      preLoaderRoute: typeof AuthRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/boutique': {
-      id: '/boutique'
-      path: '/boutique'
-      fullPath: '/boutique'
-      preLoaderRoute: typeof BoutiqueRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/guides': {
-      id: '/guides'
-      path: '/guides'
-      fullPath: '/guides'
-      preLoaderRoute: typeof GuidesRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/laboratory': {
-      id: '/laboratory'
-      path: '/laboratory'
-      fullPath: '/laboratory'
-      preLoaderRoute: typeof LaboratoryRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/mentions-legales': {
-      id: '/mentions-legales'
-      path: '/mentions-legales'
-      fullPath: '/mentions-legales'
-      preLoaderRoute: typeof MentionsLegalesRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/mentor': {
-      id: '/mentor'
-      path: '/mentor'
-      fullPath: '/mentor'
-      preLoaderRoute: typeof MentorRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/nouveautes': {
-      id: '/nouveautes'
-      path: '/nouveautes'
-      fullPath: '/nouveautes'
-      preLoaderRoute: typeof NouveautesRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/organisation': {
-      id: '/organisation'
-      path: '/organisation'
-      fullPath: '/organisation'
-      preLoaderRoute: typeof OrganisationRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/paiement-retour': {
-      id: '/paiement-retour'
-      path: '/paiement-retour'
-      fullPath: '/paiement-retour'
-      preLoaderRoute: typeof PaiementRetourRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/parrainage': {
-      id: '/parrainage'
-      path: '/parrainage'
-      fullPath: '/parrainage'
-      preLoaderRoute: typeof ParrainageRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/privacy': {
-      id: '/privacy'
-      path: '/privacy'
-      fullPath: '/privacy'
-      preLoaderRoute: typeof PrivacyRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/profile': {
-      id: '/profile'
-      path: '/profile'
-      fullPath: '/profile'
-      preLoaderRoute: typeof ProfileRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/profiles': {
-      id: '/profiles'
-      path: '/profiles'
-      fullPath: '/profiles'
-      preLoaderRoute: typeof ProfilesRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/remboursement': {
-      id: '/remboursement'
-      path: '/remboursement'
-      fullPath: '/remboursement'
-      preLoaderRoute: typeof RemboursementRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/remboursements': {
-      id: '/remboursements'
-      path: '/remboursements'
-      fullPath: '/remboursements'
-      preLoaderRoute: typeof RemboursementsRouteImport
+    '/terms': {
+      id: '/terms'
+      path: '/terms'
+      fullPath: '/terms'
+      preLoaderRoute: typeof TermsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/tarifs': {
@@ -993,33 +874,145 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof TarifsRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/terms': {
-      id: '/terms'
-      path: '/terms'
-      fullPath: '/terms'
-      preLoaderRoute: typeof TermsRouteImport
+    '/remboursements': {
+      id: '/remboursements'
+      path: '/remboursements'
+      fullPath: '/remboursements'
+      preLoaderRoute: typeof RemboursementsRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/admin/': {
-      id: '/admin/'
+    '/remboursement': {
+      id: '/remboursement'
+      path: '/remboursement'
+      fullPath: '/remboursement'
+      preLoaderRoute: typeof RemboursementRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/profiles': {
+      id: '/profiles'
+      path: '/profiles'
+      fullPath: '/profiles'
+      preLoaderRoute: typeof ProfilesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/profile': {
+      id: '/profile'
+      path: '/profile'
+      fullPath: '/profile'
+      preLoaderRoute: typeof ProfileRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/privacy': {
+      id: '/privacy'
+      path: '/privacy'
+      fullPath: '/privacy'
+      preLoaderRoute: typeof PrivacyRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/parrainage': {
+      id: '/parrainage'
+      path: '/parrainage'
+      fullPath: '/parrainage'
+      preLoaderRoute: typeof ParrainageRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/paiement-retour': {
+      id: '/paiement-retour'
+      path: '/paiement-retour'
+      fullPath: '/paiement-retour'
+      preLoaderRoute: typeof PaiementRetourRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/organisation': {
+      id: '/organisation'
+      path: '/organisation'
+      fullPath: '/organisation'
+      preLoaderRoute: typeof OrganisationRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/nouveautes': {
+      id: '/nouveautes'
+      path: '/nouveautes'
+      fullPath: '/nouveautes'
+      preLoaderRoute: typeof NouveautesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/mentor': {
+      id: '/mentor'
+      path: '/mentor'
+      fullPath: '/mentor'
+      preLoaderRoute: typeof MentorRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/mentions-legales': {
+      id: '/mentions-legales'
+      path: '/mentions-legales'
+      fullPath: '/mentions-legales'
+      preLoaderRoute: typeof MentionsLegalesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/laboratory': {
+      id: '/laboratory'
+      path: '/laboratory'
+      fullPath: '/laboratory'
+      preLoaderRoute: typeof LaboratoryRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/guides': {
+      id: '/guides'
+      path: '/guides'
+      fullPath: '/guides'
+      preLoaderRoute: typeof GuidesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/boutique': {
+      id: '/boutique'
+      path: '/boutique'
+      fullPath: '/boutique'
+      preLoaderRoute: typeof BoutiqueRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/auth': {
+      id: '/auth'
+      path: '/auth'
+      fullPath: '/auth'
+      preLoaderRoute: typeof AuthRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin': {
+      id: '/admin'
+      path: '/admin'
+      fullPath: '/admin'
+      preLoaderRoute: typeof AdminRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/a-propos': {
+      id: '/a-propos'
+      path: '/a-propos'
+      fullPath: '/a-propos'
+      preLoaderRoute: typeof AProposRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/': {
+      id: '/'
       path: '/'
-      fullPath: '/admin/'
-      preLoaderRoute: typeof AdminIndexRouteImport
-      parentRoute: typeof AdminRoute
+      fullPath: '/'
+      preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
     }
-    '/admin/mentors': {
-      id: '/admin/mentors'
-      path: '/mentors'
-      fullPath: '/admin/mentors'
-      preLoaderRoute: typeof AdminMentorsRouteImport
-      parentRoute: typeof AdminRoute
+    '/profiles/': {
+      id: '/profiles/'
+      path: '/'
+      fullPath: '/profiles/'
+      preLoaderRoute: typeof ProfilesIndexRouteImport
+      parentRoute: typeof ProfilesRoute
     }
-    '/admin/products': {
-      id: '/admin/products'
-      path: '/products'
-      fullPath: '/admin/products'
-      preLoaderRoute: typeof AdminProductsRouteImport
-      parentRoute: typeof AdminRoute
+    '/organisation/': {
+      id: '/organisation/'
+      path: '/'
+      fullPath: '/organisation/'
+      preLoaderRoute: typeof OrganisationIndexRouteImport
+      parentRoute: typeof OrganisationRoute
     }
     '/guides/': {
       id: '/guides/'
@@ -1028,32 +1021,179 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof GuidesIndexRouteImport
       parentRoute: typeof GuidesRoute
     }
-    '/guides/activites-educatives-enfant': {
-      id: '/guides/activites-educatives-enfant'
-      path: '/activites-educatives-enfant'
-      fullPath: '/guides/activites-educatives-enfant'
-      preLoaderRoute: typeof GuidesActivitesEducativesEnfantRouteImport
+    '/admin/': {
+      id: '/admin/'
+      path: '/'
+      fullPath: '/admin/'
+      preLoaderRoute: typeof AdminIndexRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/rejoindre/$campaignId': {
+      id: '/rejoindre/$campaignId'
+      path: '/rejoindre/$campaignId'
+      fullPath: '/rejoindre/$campaignId'
+      preLoaderRoute: typeof RejoindreCampaignIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/profiles/manage': {
+      id: '/profiles/manage'
+      path: '/manage'
+      fullPath: '/profiles/manage'
+      preLoaderRoute: typeof ProfilesManageRouteImport
+      parentRoute: typeof ProfilesRoute
+    }
+    '/guides/timidite-confiance-prise-de-parole': {
+      id: '/guides/timidite-confiance-prise-de-parole'
+      path: '/timidite-confiance-prise-de-parole'
+      fullPath: '/guides/timidite-confiance-prise-de-parole'
+      preLoaderRoute: typeof GuidesTimiditeConfiancePriseDeParoleRouteImport
       parentRoute: typeof GuidesRoute
     }
-    '/guides/activites-manuelles-enfant': {
-      id: '/guides/activites-manuelles-enfant'
-      path: '/activites-manuelles-enfant'
-      fullPath: '/guides/activites-manuelles-enfant'
-      preLoaderRoute: typeof GuidesActivitesManuellesEnfantRouteImport
+    '/guides/test-orientation-metier-enfant-futur': {
+      id: '/guides/test-orientation-metier-enfant-futur'
+      path: '/test-orientation-metier-enfant-futur'
+      fullPath: '/guides/test-orientation-metier-enfant-futur'
+      preLoaderRoute: typeof GuidesTestOrientationMetierEnfantFuturRouteImport
       parentRoute: typeof GuidesRoute
     }
-    '/guides/autisme-tdah-apprentissage-forces-reelles': {
-      id: '/guides/autisme-tdah-apprentissage-forces-reelles'
-      path: '/autisme-tdah-apprentissage-forces-reelles'
-      fullPath: '/guides/autisme-tdah-apprentissage-forces-reelles'
-      preLoaderRoute: typeof GuidesAutismeTdahApprentissageForcesReellesRouteImport
+    '/guides/test-de-personnalite-enfant-talents': {
+      id: '/guides/test-de-personnalite-enfant-talents'
+      path: '/test-de-personnalite-enfant-talents'
+      fullPath: '/guides/test-de-personnalite-enfant-talents'
+      preLoaderRoute: typeof GuidesTestDePersonnaliteEnfantTalentsRouteImport
       parentRoute: typeof GuidesRoute
     }
-    '/guides/autonomie-responsabilite-maison': {
-      id: '/guides/autonomie-responsabilite-maison'
-      path: '/autonomie-responsabilite-maison'
-      fullPath: '/guides/autonomie-responsabilite-maison'
-      preLoaderRoute: typeof GuidesAutonomieResponsabiliteMaisonRouteImport
+    '/guides/sac-a-dos-marques-challenge-creativite-enfant': {
+      id: '/guides/sac-a-dos-marques-challenge-creativite-enfant'
+      path: '/sac-a-dos-marques-challenge-creativite-enfant'
+      fullPath: '/guides/sac-a-dos-marques-challenge-creativite-enfant'
+      preLoaderRoute: typeof GuidesSacADosMarquesChallengeCreativiteEnfantRouteImport
+      parentRoute: typeof GuidesRoute
+    }
+    '/guides/reussite-scolaire-aider-enfant': {
+      id: '/guides/reussite-scolaire-aider-enfant'
+      path: '/reussite-scolaire-aider-enfant'
+      fullPath: '/guides/reussite-scolaire-aider-enfant'
+      preLoaderRoute: typeof GuidesReussiteScolaireAiderEnfantRouteImport
+      parentRoute: typeof GuidesRoute
+    }
+    '/guides/reussir-entree-en-6eme-conseils-parents': {
+      id: '/guides/reussir-entree-en-6eme-conseils-parents'
+      path: '/reussir-entree-en-6eme-conseils-parents'
+      fullPath: '/guides/reussir-entree-en-6eme-conseils-parents'
+      preLoaderRoute: typeof GuidesReussirEntreeEn6emeConseilsParentsRouteImport
+      parentRoute: typeof GuidesRoute
+    }
+    '/guides/quelle-librairie-choisir-lieux-creativite-enfant': {
+      id: '/guides/quelle-librairie-choisir-lieux-creativite-enfant'
+      path: '/quelle-librairie-choisir-lieux-creativite-enfant'
+      fullPath: '/guides/quelle-librairie-choisir-lieux-creativite-enfant'
+      preLoaderRoute: typeof GuidesQuelleLibrairieChoisirLieuxCreativiteEnfantRouteImport
+      parentRoute: typeof GuidesRoute
+    }
+    '/guides/pratique-avant-theorie-apprentissage-ia': {
+      id: '/guides/pratique-avant-theorie-apprentissage-ia'
+      path: '/pratique-avant-theorie-apprentissage-ia'
+      fullPath: '/guides/pratique-avant-theorie-apprentissage-ia'
+      preLoaderRoute: typeof GuidesPratiqueAvantTheorieApprentissageIaRouteImport
+      parentRoute: typeof GuidesRoute
+    }
+    '/guides/potentiel-haut-potentiel-enfant': {
+      id: '/guides/potentiel-haut-potentiel-enfant'
+      path: '/potentiel-haut-potentiel-enfant'
+      fullPath: '/guides/potentiel-haut-potentiel-enfant'
+      preLoaderRoute: typeof GuidesPotentielHautPotentielEnfantRouteImport
+      parentRoute: typeof GuidesRoute
+    }
+    '/guides/orientation-scolaire-metiers-avenir': {
+      id: '/guides/orientation-scolaire-metiers-avenir'
+      path: '/orientation-scolaire-metiers-avenir'
+      fullPath: '/guides/orientation-scolaire-metiers-avenir'
+      preLoaderRoute: typeof GuidesOrientationScolaireMetiersAvenirRouteImport
+      parentRoute: typeof GuidesRoute
+    }
+    '/guides/jouets-educatifs-kits-scientifiques-placards-maison': {
+      id: '/guides/jouets-educatifs-kits-scientifiques-placards-maison'
+      path: '/jouets-educatifs-kits-scientifiques-placards-maison'
+      fullPath: '/guides/jouets-educatifs-kits-scientifiques-placards-maison'
+      preLoaderRoute: typeof GuidesJouetsEducatifsKitsScientifiquesPlacardsMaisonRouteImport
+      parentRoute: typeof GuidesRoute
+    }
+    '/guides/intelligences-multiples-gardner': {
+      id: '/guides/intelligences-multiples-gardner'
+      path: '/intelligences-multiples-gardner'
+      fullPath: '/guides/intelligences-multiples-gardner'
+      preLoaderRoute: typeof GuidesIntelligencesMultiplesGardnerRouteImport
+      parentRoute: typeof GuidesRoute
+    }
+    '/guides/ia-apprentissage-enfant': {
+      id: '/guides/ia-apprentissage-enfant'
+      path: '/ia-apprentissage-enfant'
+      fullPath: '/guides/ia-apprentissage-enfant'
+      preLoaderRoute: typeof GuidesIaApprentissageEnfantRouteImport
+      parentRoute: typeof GuidesRoute
+    }
+    '/guides/gestion-colere-emotions-enfant': {
+      id: '/guides/gestion-colere-emotions-enfant'
+      path: '/gestion-colere-emotions-enfant'
+      fullPath: '/guides/gestion-colere-emotions-enfant'
+      preLoaderRoute: typeof GuidesGestionColereEmotionsEnfantRouteImport
+      parentRoute: typeof GuidesRoute
+    }
+    '/guides/fratrie-rivalite-cooperation': {
+      id: '/guides/fratrie-rivalite-cooperation'
+      path: '/fratrie-rivalite-cooperation'
+      fullPath: '/guides/fratrie-rivalite-cooperation'
+      preLoaderRoute: typeof GuidesFratrieRivaliteCooperationRouteImport
+      parentRoute: typeof GuidesRoute
+    }
+    '/guides/enfant-agite-concentration': {
+      id: '/guides/enfant-agite-concentration'
+      path: '/enfant-agite-concentration'
+      fullPath: '/guides/enfant-agite-concentration'
+      preLoaderRoute: typeof GuidesEnfantAgiteConcentrationRouteImport
+      parentRoute: typeof GuidesRoute
+    }
+    '/guides/education-enfants-afrique-francophone': {
+      id: '/guides/education-enfants-afrique-francophone'
+      path: '/education-enfants-afrique-francophone'
+      fullPath: '/guides/education-enfants-afrique-francophone'
+      preLoaderRoute: typeof GuidesEducationEnfantsAfriqueFrancophoneRouteImport
+      parentRoute: typeof GuidesRoute
+    }
+    '/guides/ecrans-tiktok-youtube-talent-ecriture-realisation': {
+      id: '/guides/ecrans-tiktok-youtube-talent-ecriture-realisation'
+      path: '/ecrans-tiktok-youtube-talent-ecriture-realisation'
+      fullPath: '/guides/ecrans-tiktok-youtube-talent-ecriture-realisation'
+      preLoaderRoute: typeof GuidesEcransTiktokYoutubeTalentEcritureRealisationRouteImport
+      parentRoute: typeof GuidesRoute
+    }
+    '/guides/ecrans-addiction-alternatives-enfant': {
+      id: '/guides/ecrans-addiction-alternatives-enfant'
+      path: '/ecrans-addiction-alternatives-enfant'
+      fullPath: '/guides/ecrans-addiction-alternatives-enfant'
+      preLoaderRoute: typeof GuidesEcransAddictionAlternativesEnfantRouteImport
+      parentRoute: typeof GuidesRoute
+    }
+    '/guides/discipline-positive-sans-punition': {
+      id: '/guides/discipline-positive-sans-punition'
+      path: '/discipline-positive-sans-punition'
+      fullPath: '/guides/discipline-positive-sans-punition'
+      preLoaderRoute: typeof GuidesDisciplinePositiveSansPunitionRouteImport
+      parentRoute: typeof GuidesRoute
+    }
+    '/guides/defis-pour-adolescents': {
+      id: '/guides/defis-pour-adolescents'
+      path: '/defis-pour-adolescents'
+      fullPath: '/guides/defis-pour-adolescents'
+      preLoaderRoute: typeof GuidesDefisPourAdolescentsRouteImport
+      parentRoute: typeof GuidesRoute
+    }
+    '/guides/decrochage-scolaire-confiance-enfant': {
+      id: '/guides/decrochage-scolaire-confiance-enfant'
+      path: '/decrochage-scolaire-confiance-enfant'
+      fullPath: '/guides/decrochage-scolaire-confiance-enfant'
+      preLoaderRoute: typeof GuidesDecrochageScolaireConfianceEnfantRouteImport
       parentRoute: typeof GuidesRoute
     }
     '/guides/comment-gerer-argent-de-poche-enfant': {
@@ -1070,235 +1210,53 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof GuidesChoixParcoursupParcoursScolaireEnfantRouteImport
       parentRoute: typeof GuidesRoute
     }
-    '/guides/decrochage-scolaire-confiance-enfant': {
-      id: '/guides/decrochage-scolaire-confiance-enfant'
-      path: '/decrochage-scolaire-confiance-enfant'
-      fullPath: '/guides/decrochage-scolaire-confiance-enfant'
-      preLoaderRoute: typeof GuidesDecrochageScolaireConfianceEnfantRouteImport
+    '/guides/autonomie-responsabilite-maison': {
+      id: '/guides/autonomie-responsabilite-maison'
+      path: '/autonomie-responsabilite-maison'
+      fullPath: '/guides/autonomie-responsabilite-maison'
+      preLoaderRoute: typeof GuidesAutonomieResponsabiliteMaisonRouteImport
       parentRoute: typeof GuidesRoute
     }
-    '/guides/defis-pour-adolescents': {
-      id: '/guides/defis-pour-adolescents'
-      path: '/defis-pour-adolescents'
-      fullPath: '/guides/defis-pour-adolescents'
-      preLoaderRoute: typeof GuidesDefisPourAdolescentsRouteImport
+    '/guides/autisme-tdah-apprentissage-forces-reelles': {
+      id: '/guides/autisme-tdah-apprentissage-forces-reelles'
+      path: '/autisme-tdah-apprentissage-forces-reelles'
+      fullPath: '/guides/autisme-tdah-apprentissage-forces-reelles'
+      preLoaderRoute: typeof GuidesAutismeTdahApprentissageForcesReellesRouteImport
       parentRoute: typeof GuidesRoute
     }
-    '/guides/discipline-positive-sans-punition': {
-      id: '/guides/discipline-positive-sans-punition'
-      path: '/discipline-positive-sans-punition'
-      fullPath: '/guides/discipline-positive-sans-punition'
-      preLoaderRoute: typeof GuidesDisciplinePositiveSansPunitionRouteImport
+    '/guides/activites-manuelles-enfant': {
+      id: '/guides/activites-manuelles-enfant'
+      path: '/activites-manuelles-enfant'
+      fullPath: '/guides/activites-manuelles-enfant'
+      preLoaderRoute: typeof GuidesActivitesManuellesEnfantRouteImport
       parentRoute: typeof GuidesRoute
     }
-    '/guides/ecrans-addiction-alternatives-enfant': {
-      id: '/guides/ecrans-addiction-alternatives-enfant'
-      path: '/ecrans-addiction-alternatives-enfant'
-      fullPath: '/guides/ecrans-addiction-alternatives-enfant'
-      preLoaderRoute: typeof GuidesEcransAddictionAlternativesEnfantRouteImport
+    '/guides/activites-educatives-enfant': {
+      id: '/guides/activites-educatives-enfant'
+      path: '/activites-educatives-enfant'
+      fullPath: '/guides/activites-educatives-enfant'
+      preLoaderRoute: typeof GuidesActivitesEducativesEnfantRouteImport
       parentRoute: typeof GuidesRoute
     }
-    '/guides/ecrans-tiktok-youtube-talent-ecriture-realisation': {
-      id: '/guides/ecrans-tiktok-youtube-talent-ecriture-realisation'
-      path: '/ecrans-tiktok-youtube-talent-ecriture-realisation'
-      fullPath: '/guides/ecrans-tiktok-youtube-talent-ecriture-realisation'
-      preLoaderRoute: typeof GuidesEcransTiktokYoutubeTalentEcritureRealisationRouteImport
-      parentRoute: typeof GuidesRoute
+    '/admin/products': {
+      id: '/admin/products'
+      path: '/products'
+      fullPath: '/admin/products'
+      preLoaderRoute: typeof AdminProductsRouteImport
+      parentRoute: typeof AdminRoute
     }
-    '/guides/education-enfants-afrique-francophone': {
-      id: '/guides/education-enfants-afrique-francophone'
-      path: '/education-enfants-afrique-francophone'
-      fullPath: '/guides/education-enfants-afrique-francophone'
-      preLoaderRoute: typeof GuidesEducationEnfantsAfriqueFrancophoneRouteImport
-      parentRoute: typeof GuidesRoute
+    '/admin/mentors': {
+      id: '/admin/mentors'
+      path: '/mentors'
+      fullPath: '/admin/mentors'
+      preLoaderRoute: typeof AdminMentorsRouteImport
+      parentRoute: typeof AdminRoute
     }
-    '/guides/enfant-agite-concentration': {
-      id: '/guides/enfant-agite-concentration'
-      path: '/enfant-agite-concentration'
-      fullPath: '/guides/enfant-agite-concentration'
-      preLoaderRoute: typeof GuidesEnfantAgiteConcentrationRouteImport
-      parentRoute: typeof GuidesRoute
-    }
-    '/guides/fratrie-rivalite-cooperation': {
-      id: '/guides/fratrie-rivalite-cooperation'
-      path: '/fratrie-rivalite-cooperation'
-      fullPath: '/guides/fratrie-rivalite-cooperation'
-      preLoaderRoute: typeof GuidesFratrieRivaliteCooperationRouteImport
-      parentRoute: typeof GuidesRoute
-    }
-    '/guides/gestion-colere-emotions-enfant': {
-      id: '/guides/gestion-colere-emotions-enfant'
-      path: '/gestion-colere-emotions-enfant'
-      fullPath: '/guides/gestion-colere-emotions-enfant'
-      preLoaderRoute: typeof GuidesGestionColereEmotionsEnfantRouteImport
-      parentRoute: typeof GuidesRoute
-    }
-    '/guides/ia-apprentissage-enfant': {
-      id: '/guides/ia-apprentissage-enfant'
-      path: '/ia-apprentissage-enfant'
-      fullPath: '/guides/ia-apprentissage-enfant'
-      preLoaderRoute: typeof GuidesIaApprentissageEnfantRouteImport
-      parentRoute: typeof GuidesRoute
-    }
-    '/guides/intelligences-multiples-gardner': {
-      id: '/guides/intelligences-multiples-gardner'
-      path: '/intelligences-multiples-gardner'
-      fullPath: '/guides/intelligences-multiples-gardner'
-      preLoaderRoute: typeof GuidesIntelligencesMultiplesGardnerRouteImport
-      parentRoute: typeof GuidesRoute
-    }
-    '/guides/jouets-educatifs-kits-scientifiques-placards-maison': {
-      id: '/guides/jouets-educatifs-kits-scientifiques-placards-maison'
-      path: '/jouets-educatifs-kits-scientifiques-placards-maison'
-      fullPath: '/guides/jouets-educatifs-kits-scientifiques-placards-maison'
-      preLoaderRoute: typeof GuidesJouetsEducatifsKitsScientifiquesPlacardsMaisonRouteImport
-      parentRoute: typeof GuidesRoute
-    }
-    '/guides/orientation-scolaire-metiers-avenir': {
-      id: '/guides/orientation-scolaire-metiers-avenir'
-      path: '/orientation-scolaire-metiers-avenir'
-      fullPath: '/guides/orientation-scolaire-metiers-avenir'
-      preLoaderRoute: typeof GuidesOrientationScolaireMetiersAvenirRouteImport
-      parentRoute: typeof GuidesRoute
-    }
-    '/guides/potentiel-haut-potentiel-enfant': {
-      id: '/guides/potentiel-haut-potentiel-enfant'
-      path: '/potentiel-haut-potentiel-enfant'
-      fullPath: '/guides/potentiel-haut-potentiel-enfant'
-      preLoaderRoute: typeof GuidesPotentielHautPotentielEnfantRouteImport
-      parentRoute: typeof GuidesRoute
-    }
-    '/guides/pratique-avant-theorie-apprentissage-ia': {
-      id: '/guides/pratique-avant-theorie-apprentissage-ia'
-      path: '/pratique-avant-theorie-apprentissage-ia'
-      fullPath: '/guides/pratique-avant-theorie-apprentissage-ia'
-      preLoaderRoute: typeof GuidesPratiqueAvantTheorieApprentissageIaRouteImport
-      parentRoute: typeof GuidesRoute
-    }
-    '/guides/quelle-librairie-choisir-lieux-creativite-enfant': {
-      id: '/guides/quelle-librairie-choisir-lieux-creativite-enfant'
-      path: '/quelle-librairie-choisir-lieux-creativite-enfant'
-      fullPath: '/guides/quelle-librairie-choisir-lieux-creativite-enfant'
-      preLoaderRoute: typeof GuidesQuelleLibrairieChoisirLieuxCreativiteEnfantRouteImport
-      parentRoute: typeof GuidesRoute
-    }
-    '/guides/reussir-entree-en-6eme-conseils-parents': {
-      id: '/guides/reussir-entree-en-6eme-conseils-parents'
-      path: '/reussir-entree-en-6eme-conseils-parents'
-      fullPath: '/guides/reussir-entree-en-6eme-conseils-parents'
-      preLoaderRoute: typeof GuidesReussirEntreeEn6emeConseilsParentsRouteImport
-      parentRoute: typeof GuidesRoute
-    }
-    '/guides/reussite-scolaire-aider-enfant': {
-      id: '/guides/reussite-scolaire-aider-enfant'
-      path: '/reussite-scolaire-aider-enfant'
-      fullPath: '/guides/reussite-scolaire-aider-enfant'
-      preLoaderRoute: typeof GuidesReussiteScolaireAiderEnfantRouteImport
-      parentRoute: typeof GuidesRoute
-    }
-    '/guides/sac-a-dos-marques-challenge-creativite-enfant': {
-      id: '/guides/sac-a-dos-marques-challenge-creativite-enfant'
-      path: '/sac-a-dos-marques-challenge-creativite-enfant'
-      fullPath: '/guides/sac-a-dos-marques-challenge-creativite-enfant'
-      preLoaderRoute: typeof GuidesSacADosMarquesChallengeCreativiteEnfantRouteImport
-      parentRoute: typeof GuidesRoute
-    }
-    '/guides/test-de-personnalite-enfant-talents': {
-      id: '/guides/test-de-personnalite-enfant-talents'
-      path: '/test-de-personnalite-enfant-talents'
-      fullPath: '/guides/test-de-personnalite-enfant-talents'
-      preLoaderRoute: typeof GuidesTestDePersonnaliteEnfantTalentsRouteImport
-      parentRoute: typeof GuidesRoute
-    }
-    '/guides/test-orientation-metier-enfant-futur': {
-      id: '/guides/test-orientation-metier-enfant-futur'
-      path: '/test-orientation-metier-enfant-futur'
-      fullPath: '/guides/test-orientation-metier-enfant-futur'
-      preLoaderRoute: typeof GuidesTestOrientationMetierEnfantFuturRouteImport
-      parentRoute: typeof GuidesRoute
-    }
-    '/guides/timidite-confiance-prise-de-parole': {
-      id: '/guides/timidite-confiance-prise-de-parole'
-      path: '/timidite-confiance-prise-de-parole'
-      fullPath: '/guides/timidite-confiance-prise-de-parole'
-      preLoaderRoute: typeof GuidesTimiditeConfiancePriseDeParoleRouteImport
-      parentRoute: typeof GuidesRoute
-    }
-    '/organisation/': {
-      id: '/organisation/'
-      path: '/'
-      fullPath: '/organisation/'
-      preLoaderRoute: typeof OrganisationIndexRouteImport
-      parentRoute: typeof OrganisationRoute
-    }
-    '/profiles/': {
-      id: '/profiles/'
-      path: '/'
-      fullPath: '/profiles/'
-      preLoaderRoute: typeof ProfilesIndexRouteImport
-      parentRoute: typeof ProfilesRoute
-    }
-    '/profiles/manage': {
-      id: '/profiles/manage'
-      path: '/manage'
-      fullPath: '/profiles/manage'
-      preLoaderRoute: typeof ProfilesManageRouteImport
-      parentRoute: typeof ProfilesRoute
-    }
-    '/rejoindre/$campaignId': {
-      id: '/rejoindre/$campaignId'
-      path: '/rejoindre/$campaignId'
-      fullPath: '/rejoindre/$campaignId'
-      preLoaderRoute: typeof RejoindreCampaignIdRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api/paystack/webhook': {
-      id: '/api/paystack/webhook'
-      path: '/api/paystack/webhook'
-      fullPath: '/api/paystack/webhook'
-      preLoaderRoute: typeof ApiPaystackWebhookRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/profiles/$profileId/bilan-print': {
-      id: '/profiles/$profileId/bilan-print'
-      path: '/$profileId/bilan-print'
-      fullPath: '/profiles/$profileId/bilan-print'
-      preLoaderRoute: typeof ProfilesProfileIdBilanPrintRouteImport
-      parentRoute: typeof ProfilesRoute
-    }
-    '/profiles/$profileId/challenges': {
-      id: '/profiles/$profileId/challenges'
-      path: '/$profileId/challenges'
-      fullPath: '/profiles/$profileId/challenges'
-      preLoaderRoute: typeof ProfilesProfileIdChallengesRouteImport
-      parentRoute: typeof ProfilesRoute
-    }
-    '/profiles/$profileId/decouverte': {
-      id: '/profiles/$profileId/decouverte'
-      path: '/$profileId/decouverte'
-      fullPath: '/profiles/$profileId/decouverte'
-      preLoaderRoute: typeof ProfilesProfileIdDecouverteRouteImport
-      parentRoute: typeof ProfilesRoute
-    }
-    '/profiles/$profileId/guild': {
-      id: '/profiles/$profileId/guild'
-      path: '/$profileId/guild'
-      fullPath: '/profiles/$profileId/guild'
-      preLoaderRoute: typeof ProfilesProfileIdGuildRouteImport
-      parentRoute: typeof ProfilesRoute
-    }
-    '/profiles/$profileId/mentors': {
-      id: '/profiles/$profileId/mentors'
-      path: '/$profileId/mentors'
-      fullPath: '/profiles/$profileId/mentors'
-      preLoaderRoute: typeof ProfilesProfileIdMentorsRouteImport
-      parentRoute: typeof ProfilesRoute
-    }
-    '/profiles/$profileId/passport-print': {
-      id: '/profiles/$profileId/passport-print'
-      path: '/$profileId/passport-print'
-      fullPath: '/profiles/$profileId/passport-print'
-      preLoaderRoute: typeof ProfilesProfileIdPassportPrintRouteImport
+    '/profiles/$profileId/quest': {
+      id: '/profiles/$profileId/quest'
+      path: '/$profileId/quest'
+      fullPath: '/profiles/$profileId/quest'
+      preLoaderRoute: typeof ProfilesProfileIdQuestRouteImport
       parentRoute: typeof ProfilesRoute
     }
     '/profiles/$profileId/portfolio': {
@@ -1308,12 +1266,54 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ProfilesProfileIdPortfolioRouteImport
       parentRoute: typeof ProfilesRoute
     }
-    '/profiles/$profileId/quest': {
-      id: '/profiles/$profileId/quest'
-      path: '/$profileId/quest'
-      fullPath: '/profiles/$profileId/quest'
-      preLoaderRoute: typeof ProfilesProfileIdQuestRouteImport
+    '/profiles/$profileId/passport-print': {
+      id: '/profiles/$profileId/passport-print'
+      path: '/$profileId/passport-print'
+      fullPath: '/profiles/$profileId/passport-print'
+      preLoaderRoute: typeof ProfilesProfileIdPassportPrintRouteImport
       parentRoute: typeof ProfilesRoute
+    }
+    '/profiles/$profileId/mentors': {
+      id: '/profiles/$profileId/mentors'
+      path: '/$profileId/mentors'
+      fullPath: '/profiles/$profileId/mentors'
+      preLoaderRoute: typeof ProfilesProfileIdMentorsRouteImport
+      parentRoute: typeof ProfilesRoute
+    }
+    '/profiles/$profileId/guild': {
+      id: '/profiles/$profileId/guild'
+      path: '/$profileId/guild'
+      fullPath: '/profiles/$profileId/guild'
+      preLoaderRoute: typeof ProfilesProfileIdGuildRouteImport
+      parentRoute: typeof ProfilesRoute
+    }
+    '/profiles/$profileId/decouverte': {
+      id: '/profiles/$profileId/decouverte'
+      path: '/$profileId/decouverte'
+      fullPath: '/profiles/$profileId/decouverte'
+      preLoaderRoute: typeof ProfilesProfileIdDecouverteRouteImport
+      parentRoute: typeof ProfilesRoute
+    }
+    '/profiles/$profileId/challenges': {
+      id: '/profiles/$profileId/challenges'
+      path: '/$profileId/challenges'
+      fullPath: '/profiles/$profileId/challenges'
+      preLoaderRoute: typeof ProfilesProfileIdChallengesRouteImport
+      parentRoute: typeof ProfilesRoute
+    }
+    '/profiles/$profileId/bilan-print': {
+      id: '/profiles/$profileId/bilan-print'
+      path: '/$profileId/bilan-print'
+      fullPath: '/profiles/$profileId/bilan-print'
+      preLoaderRoute: typeof ProfilesProfileIdBilanPrintRouteImport
+      parentRoute: typeof ProfilesRoute
+    }
+    '/api/paystack/webhook': {
+      id: '/api/paystack/webhook'
+      path: '/api/paystack/webhook'
+      fullPath: '/api/paystack/webhook'
+      preLoaderRoute: typeof ApiPaystackWebhookRouteImport
+      parentRoute: typeof rootRouteImport
     }
   }
 }
@@ -1337,8 +1337,8 @@ interface GuidesRouteChildren {
   GuidesActivitesManuellesEnfantRoute: typeof GuidesActivitesManuellesEnfantRoute
   GuidesAutismeTdahApprentissageForcesReellesRoute: typeof GuidesAutismeTdahApprentissageForcesReellesRoute
   GuidesAutonomieResponsabiliteMaisonRoute: typeof GuidesAutonomieResponsabiliteMaisonRoute
-  GuidesCommentGererArgentDePocheEnfantRoute: typeof GuidesCommentGererArgentDePocheEnfantRoute
   GuidesChoixParcoursupParcoursScolaireEnfantRoute: typeof GuidesChoixParcoursupParcoursScolaireEnfantRoute
+  GuidesCommentGererArgentDePocheEnfantRoute: typeof GuidesCommentGererArgentDePocheEnfantRoute
   GuidesDecrochageScolaireConfianceEnfantRoute: typeof GuidesDecrochageScolaireConfianceEnfantRoute
   GuidesDefisPourAdolescentsRoute: typeof GuidesDefisPourAdolescentsRoute
   GuidesDisciplinePositiveSansPunitionRoute: typeof GuidesDisciplinePositiveSansPunitionRoute
@@ -1371,10 +1371,10 @@ const GuidesRouteChildren: GuidesRouteChildren = {
     GuidesAutismeTdahApprentissageForcesReellesRoute,
   GuidesAutonomieResponsabiliteMaisonRoute:
     GuidesAutonomieResponsabiliteMaisonRoute,
-  GuidesCommentGererArgentDePocheEnfantRoute:
-    GuidesCommentGererArgentDePocheEnfantRoute,
   GuidesChoixParcoursupParcoursScolaireEnfantRoute:
     GuidesChoixParcoursupParcoursScolaireEnfantRoute,
+  GuidesCommentGererArgentDePocheEnfantRoute:
+    GuidesCommentGererArgentDePocheEnfantRoute,
   GuidesDecrochageScolaireConfianceEnfantRoute:
     GuidesDecrochageScolaireConfianceEnfantRoute,
   GuidesDefisPourAdolescentsRoute: GuidesDefisPourAdolescentsRoute,
