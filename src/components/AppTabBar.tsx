@@ -1,5 +1,5 @@
 import { Link } from "@tanstack/react-router";
-import { Home, Trophy, Layers, Users, Settings } from "lucide-react";
+import { Home, Trophy, Layers, Users, Settings, LayoutDashboard } from "lucide-react";
 import { useSession } from "@/hooks/use-session";
 import { isMentorMode } from "@/lib/mentor-mode";
 
@@ -42,7 +42,16 @@ export function AppTabBar({ profileId }: AppTabBarProps) {
     { to: "/profile" as const, label: "Réglages", icon: Settings, needsProfileId: false },
   ];
   const visibleItems = mentorMode
-    ? items.filter((item) => item.label !== "Mentor")
+    ? items.map((item) =>
+        item.label === "Mentor"
+          ? {
+              to: "/mentor" as const,
+              label: "Dashboard",
+              icon: LayoutDashboard,
+              needsProfileId: false,
+            }
+          : item,
+      )
     : items;
 
   return (
