@@ -345,7 +345,7 @@ function PortfolioPage() {
           setChallenges((view.challenges ?? []) as Challenge[]);
           setOpenCycle((view.openCycle as OpenHypothesisCycle) ?? null);
           setDiscoveryArtifacts((dt.data ?? []) as any[]);
-          setHasMentor(((mentorRes.data ?? []).length > 0) || true);
+          setHasMentor((mentorRes.data ?? []).length > 0);
         })
         .catch((err) => {
           console.error("Erreur lors du chargement du portfolio (mode mentor):", err);
@@ -1044,33 +1044,32 @@ function PortfolioPage() {
             );
           })()}
 
-          {/* Suivi par un mentor — le suivi complet (mentor, bilan, activité) vit sur la
-              page « Mentor » (décision #76 : fusion du partage et de l'accompagnement). */}
-          <Link
-            to="/profiles/$profileId/mentors"
-            params={{ profileId }}
-            className="flex items-center justify-between gap-4 rounded-3xl border border-sky-200 bg-sky-50/60 p-5 shadow-sm hover:-translate-y-0.5 transition-all"
-          >
-            <div className="flex items-center gap-4">
-              <div className="grid size-11 place-items-center rounded-2xl bg-sky-600 text-white shrink-0">
-                <Users className="size-5" />
+          {/* Suivi par un mentor — uniquement en vue parent ET si un mentor est effectivement assigné à l'enfant */}
+          {!mentorMode && hasMentor && (
+            <Link
+              to="/profiles/$profileId/mentors"
+              params={{ profileId }}
+              className="flex items-center justify-between gap-4 rounded-3xl border border-sky-200 bg-sky-50/60 p-5 shadow-sm hover:-translate-y-0.5 transition-all"
+            >
+              <div className="flex items-center gap-4">
+                <div className="grid size-11 place-items-center rounded-2xl bg-sky-600 text-white shrink-0">
+                  <Users className="size-5" />
+                </div>
+                <div>
+                  <p className="text-xs font-black uppercase tracking-widest text-sky-700">
+                    Mentor assigné • Suivi actif
+                  </p>
+                  <p className="text-sm font-medium text-ink/70 mt-0.5">
+                    Consultez l'accompagnement, vos 12 séances et le bilan officiel.
+                  </p>
+                </div>
               </div>
-              <div>
-                <p className="text-xs font-black uppercase tracking-widest text-sky-700">
-                  {hasMentor ? "Mentor assigné • Suivi actif" : "Suivi par un mentor"}
-                </p>
-                <p className="text-sm font-medium text-ink/70 mt-0.5">
-                  {hasMentor
-                    ? "Consultez l'accompagnement, vos 12 séances et le bilan officiel."
-                    : "Consultez l'accompagnement, le bilan de fin de période et l'activité."}
-                </p>
-              </div>
-            </div>
-            <ChevronRight className="size-5 text-sky-700" />
-          </Link>
+              <ChevronRight className="size-5 text-sky-700" />
+            </Link>
+          )}
 
-          {/* Accès mensuel payant (modèle 2026-08-05) : bannière "accès expiré" */}
-          {accessState && accessState.status.kind === "expired" && (
+          {/* Accès mensuel payant (modèle 2026-08-05) : bannière "accès expiré" (réservée à la vue parent) */}
+          {!mentorMode && accessState && accessState.status.kind === "expired" && (
             <div className="rounded-3xl border border-red-300 bg-red-50/70 p-5 shadow-sm flex flex-wrap items-center gap-3">
               <div className="grid size-10 place-items-center rounded-2xl bg-red-600 text-white shrink-0">
                 <BellRing className="size-5" />
@@ -1091,8 +1090,9 @@ function PortfolioPage() {
             </div>
           )}
 
-          {/* Accès mensuel payant : bannière d'expiration ≤ 14 jours (cohérente avec le panneau admin) */}
-          {accessState &&
+          {/* Accès mensuel payant : bannière d'expiration ≤ 14 jours (réservée à la vue parent) */}
+          {!mentorMode &&
+            accessState &&
             accessState.status.kind === "monthly" &&
             accessState.status.daysLeft <= 14 && (
               <div className="rounded-3xl border border-amber-300 bg-amber-50/70 p-5 shadow-sm flex flex-wrap items-center gap-3">
@@ -1118,25 +1118,25 @@ function PortfolioPage() {
               </div>
             )}
 
-          {/* Rédemption d'un code de parrainage (dons diaspora/RSE, /parrainage) — V4, fusion :
-              un code accorde une couverture FAMILLE, il se rédime depuis les paramètres
-              (SubscriptionCard) — l'ancienne modale par-enfant est retirée. */}
-          <Link
-            to="/profile"
-            className="rounded-3xl border border-brand/20 bg-brand/5 p-4 shadow-sm flex items-center gap-3 text-left hover:bg-brand/10 transition-colors w-full"
-          >
-            <div className="grid size-10 place-items-center rounded-2xl bg-brand text-white shrink-0">
-              <Gift className="size-5" />
-            </div>
-            <div className="flex-1">
-              <p className="text-sm font-black text-brand">Activer un code de parrainage</p>
-              <p className="text-xs text-ink/60">
-                Un parrain (diaspora ou RSE) vous a donné un code ? Il couvre toute votre famille —
-                activez-le depuis vos paramètres.
-              </p>
-            </div>
-            <ChevronRight className="size-5 text-brand" />
-          </Link>
+          {/* Rédemption d'un code de parrainage (réservée à la vue parent) */}
+          {!mentorMode && (
+            <Link
+              to="/profile"
+              className="rounded-3xl border border-brand/20 bg-brand/5 p-4 shadow-sm flex items-center gap-3 text-left hover:bg-brand/10 transition-colors w-full"
+            >
+              <div className="grid size-10 place-items-center rounded-2xl bg-brand text-white shrink-0">
+                <Gift className="size-5" />
+              </div>
+              <div className="flex-1">
+                <p className="text-sm font-black text-brand">Activer un code de parrainage</p>
+                <p className="text-xs text-ink/60">
+                  Un parrain (diaspora ou RSE) vous a donné un code ? Il couvre toute votre famille —
+                  activez-le depuis vos paramètres.
+                </p>
+              </div>
+              <ChevronRight className="size-5 text-brand" />
+            </Link>
+          )}
 
           {/* Card: Saison Trimestrielle Actuelle */}
           {enrolledSeason ? (

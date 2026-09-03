@@ -968,9 +968,8 @@ function ChallengesPage() {
             </div>
           )}
 
-          {/* Gate accès mensuel (décision 2026-08-05) : à expiration, la génération de
-              nouveaux défis est bloquée ; les défis déjà émis restent jouables et visibles. */}
-          {accessState && accessState.status.kind === "expired" && (
+          {/* Gate accès mensuel (décision 2026-08-05) : réservé à la vue parent */}
+          {!mentorMode && accessState && accessState.status.kind === "expired" && (
             <div className="mb-6 rounded-3xl border border-red-300 bg-red-50/70 p-5 shadow-sm flex flex-wrap items-center gap-3">
               <div className="grid size-10 place-items-center rounded-2xl bg-red-600 text-white shrink-0">
                 <Lock className="size-5" />
@@ -991,7 +990,8 @@ function ChallengesPage() {
             </div>
           )}
 
-          {accessState &&
+          {!mentorMode &&
+            accessState &&
             accessState.status.kind === "monthly" &&
             accessState.status.daysLeft <= 14 && (
               <div className="mb-6 rounded-3xl border border-amber-300 bg-amber-50/70 p-5 shadow-sm flex flex-wrap items-center gap-3">
@@ -1017,9 +1017,8 @@ function ChallengesPage() {
               </div>
             )}
 
-          {/* Mode accompagnement (décision #74) : cet enfant est suivi par un mentor
-              qui opère les défis — le parent garde le dernier mot (Réouvrir, bilan, pub). */}
-          {mentorInfo && (
+          {/* Mode accompagnement (décision #74) : réservé à la vue parent */}
+          {!mentorMode && mentorInfo && (
             <div className="mb-6 rounded-3xl border border-sky-200 bg-sky-50/70 p-5 shadow-sm flex flex-wrap items-center gap-3">
               <div className="grid size-10 place-items-center rounded-2xl bg-sky-600 text-white shrink-0">
                 <Users className="size-5" />
