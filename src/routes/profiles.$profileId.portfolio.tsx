@@ -12,6 +12,7 @@ import { getChildEnrolledSeason, getActiveSeason, type Season } from "@/lib/seas
 import { getChildAccessStatusFn, type ChildAccessStatus } from "@/lib/child-access";
 import { formatXof, PASSPORT_PRICE_XOF } from "@/lib/pricing";
 import { initializePassportPayment } from "@/lib/payments.functions";
+import { getFamilySubscriptionStatus } from "@/lib/subscriptions.functions";
 import { getMentorChildView } from "@/lib/mentors.functions";
 import { isMentorMode } from "@/lib/mentor-mode";
 import {
@@ -268,6 +269,12 @@ function PortfolioPage() {
     status: ChildAccessStatus;
     renewalAmountXof: number;
   } | null>(null);
+  const [familySubStatus, setFamilySubStatus] = useState<{
+    status: string | null;
+    currentPeriodEnd: string | null;
+    sponsoredUntil: string | null;
+    campaignCovered: boolean;
+  } | null>(null);
   const [payingPassport, setPayingPassport] = useState(false);
   const [dismissedDiscoveries, setDismissedDiscoveries] = useState<string[]>([]);
   const [expandedMonths, setExpandedMonths] = useState<Set<string>>(new Set());
@@ -290,6 +297,7 @@ function PortfolioPage() {
   const getFailureSequenceFn = useServerFn(getLatestFailureSequence);
   const getMentorChildViewFn = useServerFn(getMentorChildView);
   const acceptDiscoveryFn = useServerFn(acceptChildInterestDiscovery);
+  const getFamilySubscriptionStatusFn = useServerFn(getFamilySubscriptionStatus);
 
   // Paiement en ligne Paystack du Passeport d'Excellence (50 000 FCFA) : le serveur crée
   // la payment, on redirige vers le checkout hébergé. Le webhook/retour passe
@@ -569,6 +577,12 @@ function PortfolioPage() {
     getChildAccessStatusFn({ data: { childId: profileId } })
       .then((res) => setAccessState(res))
       .catch(console.error);
+      
+    if (!mentorMode) {
+      getFamilySubscriptionStatusFn()
+        .then((res) => setFamilySubStatus(res))
+        .catch(console.error);
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [userId, profileId]);
 
@@ -1119,24 +1133,38 @@ function PortfolioPage() {
             )}
 
           {/* Rédemption d'un code de parrainage (réservée à la vue parent) */}
-          {!mentorMode && (
-            <Link
-              to="/profile"
-              className="rounded-3xl border border-brand/20 bg-brand/5 p-4 shadow-sm flex items-center gap-3 text-left hover:bg-brand/10 transition-colors w-full"
-            >
-              <div className="grid size-10 place-items-center rounded-2xl bg-brand text-white shrink-0">
-                <Gift className="size-5" />
-              </div>
-              <div className="flex-1">
-                <p className="text-sm font-black text-brand">Activer un code de parrainage</p>
-                <p className="text-xs text-ink/60">
-                  Un parrain (diaspora ou RSE) vous a donné un code ? Il couvre toute votre famille —
-                  activez-le depuis vos paramètres.
-                </p>
-              </div>
-              <ChevronRight className="size-5 text-brand" />
-            </Link>
-          )}
+          {(() => {
+            if (mentorMode) return null;
+            const coverageActive =
+              (familySubStatus?.status === "active" || familySubStatus?.status === "past_due") &&
+              !!familySubStatus?.currentPeriodEnd &&
+              new Date(familySubStatus.currentPeriodEnd).getTime() > Date.now();
+            const sponsoredActive =
+              !!familySubStatus?.sponsoredUntil &&
+              new Date(familySubStatus.sponsoredUntil).getTime() > Date.now();
+            const isCovered = coverageActive || sponsoredActive || familySubStatus?.campaignCovered;
+            
+            if (isCovered) return null;
+
+            return (
+              <Link
+                to="/profile"
+                className="rounded-3xl border border-brand/20 bg-brand/5 p-4 shadow-sm flex items-center gap-3 text-left hover:bg-brand/10 transition-colors w-full"
+              >
+                <div className="grid size-10 place-items-center rounded-2xl bg-brand text-white shrink-0">
+                  <Gift className="size-5" />
+                </div>
+                <div className="flex-1">
+                  <p className="text-sm font-black text-brand">Activer un code de parrainage</p>
+                  <p className="text-xs text-ink/60">
+                    Un parrain (diaspora ou RSE) vous a donné un code ? Il couvre toute votre famille —
+                    activez-le depuis vos paramètres.
+                  </p>
+                </div>
+                <ChevronRight className="size-5 text-brand" />
+              </Link>
+            );
+          })()}
 
           {/* Card: Saison Trimestrielle Actuelle */}
           {enrolledSeason ? (
