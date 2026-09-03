@@ -148,3 +148,98 @@ export function planChallengeMissions(
 
   return missions;
 }
+
+export interface PlanSingleMissionOptions {
+  forcedDomain?: string | null;
+  homeMaterials?: string | null;
+}
+
+/**
+ * Planifie une mission unique sur-mesure (ex: « Composer un défi ciblé » dans le Lab).
+ * Respecte scrupuleusement le domaine forcé par le parent s'il est spécifié,
+ * tout en injectant le bon mandat pédagogique (pic à consolider, hypothèse active, ou ZPD).
+ */
+export function planSingleChallengeMission(
+  state: ChildDevelopmentState,
+  options?: PlanSingleMissionOptions,
+): ChallengeMission {
+  const forcedDomain =
+    options?.forcedDomain && options.forcedDomain !== "all"
+      ? options.forcedDomain
+      : null;
+
+  let mission: ChallengeMission;
+
+  if (forcedDomain) {
+    // 1. Vérifier si un pic collectif existe sur ce domaine
+    const peakTarget = state.capabilities.progressionTargets.find(
+      (t) => t.domain === forcedDomain && t.hasUnconsolidatedCollectivePeak,
+    );
+    if (peakTarget) {
+      mission = {
+        missionIndex: 1,
+        intent: "collective_peak_solo",
+        targetDomain: forcedDomain,
+        targetTalents: ["artisanale", "logico_mathematique"],
+        difficultyZone: "exploration_zpd",
+        pedagogicalBrief: `Un pic de performance a été observé en groupe dans le domaine ${forcedDomain} (niveau visé : ${peakTarget.targetLevelAge} ans) : concevoir une mission individuelle ciblée pour vérifier son autonomie réelle sans le groupe.`,
+      };
+    } else {
+      // 2. Vérifier si une hypothèse active existe sur ce domaine
+      const activeHyp = state.activeHypotheses.find(
+        (h) =>
+          h.targetDomain === forcedDomain &&
+          (h.status === "exploring" || h.status === "untested"),
+      );
+      if (activeHyp) {
+        mission = {
+          missionIndex: 1,
+          intent: "hypothesis_verification",
+          targetDomain: forcedDomain,
+          targetTalents: activeHyp.targetTalents?.length
+            ? activeHyp.targetTalents
+            : ["artisanale", "spatial"],
+          difficultyZone: "stable",
+          pedagogicalBrief: `Mettre ${state.identity.name} en situation dans le domaine ${forcedDomain} pour éprouver l'hypothèse : « ${activeHyp.statement} ».`,
+        };
+      } else {
+        // 3. Vérifier si une progression ZPD existe sur ce domaine
+        const zpdTarget = state.capabilities.progressionTargets.find(
+          (t) => t.domain === forcedDomain && t.targetLevelAge > t.lastLevelAge,
+        );
+        if (zpdTarget) {
+          mission = {
+            missionIndex: 1,
+            intent: "zpd_progression",
+            targetDomain: forcedDomain,
+            targetTalents: ["logico_mathematique", "artisanale"],
+            difficultyZone: "exploration_zpd",
+            pedagogicalBrief: `Franchir un palier de progression en ${forcedDomain} vers le niveau ${zpdTarget.targetLevelAge} ans. Relier la notion abstraite à une réalisation concrète.`,
+          };
+        } else {
+          // 4. Exploration ciblée dans ce domaine
+          mission = {
+            missionIndex: 1,
+            intent: "open_exploration",
+            targetDomain: forcedDomain,
+            targetTalents: ["creative", "artisanale"],
+            difficultyZone: "stable",
+            pedagogicalBrief: `Découverte pratique et réalisation concrète sur-mesure dans le domaine ciblé : ${forcedDomain}.`,
+          };
+        }
+      }
+    }
+  } else {
+    // Si aucun domaine forcé (ou "all"), on utilise la priorité globale du planificateur
+    mission = planChallengeMissions(state, 1)[0];
+  }
+
+  // Enrichir avec les matériaux maison spécifiés par le parent si présents
+  if (options?.homeMaterials?.trim()) {
+    mission.pedagogicalBrief += ` Conçu spécialement pour utiliser en priorité les matériaux mentionnés : « ${options.homeMaterials.trim()} ».`;
+    mission.actionHook = options.homeMaterials.trim();
+  }
+
+  return mission;
+}
+

@@ -585,4 +585,33 @@ describe("buildLayeredChallengePrompt — architecture multicouche", () => {
     expect(prompt).toContain("MISSION 2 :");
     expect(prompt).toContain("MISSION 3 :");
   });
+
+  it("injecte les options spécifiques d'un défi ciblé (matériaux parent, lieu, durée, scope)", async () => {
+    const { buildLayeredChallengePrompt } = await import("./naya-prompts");
+    const { buildChildDevelopmentState } = await import("./context-engine");
+    const { planSingleChallengeMission } = await import("./challenge-planner");
+
+    const state = buildChildDevelopmentState({
+      child: { id: "2", name: "Fatou", age: 7, country: "Sénégal" },
+    });
+
+    const mission = planSingleChallengeMission(state, {
+      forcedDomain: "Sciences",
+      homeMaterials: "bocal en verre, vinaigre",
+    });
+
+    const prompt = buildLayeredChallengePrompt(state, [mission], {
+      timeAvailable: "15 min",
+      immediateLocation: "Cuisine",
+      materialScope: "home",
+      homeMaterials: "bocal en verre, vinaigre",
+    });
+
+    expect(prompt).toContain("Temps disponible pour ce défi : 15 min");
+    expect(prompt).toContain("Lieu immédiat de l'activité : Cuisine");
+    expect(prompt).toContain("MATÉRIEL (MAISON)");
+    expect(prompt).toContain("bocal en verre, vinaigre");
+    expect(prompt).toContain("MISSION 1 :");
+  });
 });
+

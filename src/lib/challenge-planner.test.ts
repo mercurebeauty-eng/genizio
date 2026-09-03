@@ -79,3 +79,40 @@ describe("Challenge Mission Planner — planChallengeMissions", () => {
     }
   });
 });
+
+describe("Challenge Mission Planner — planSingleChallengeMission", () => {
+  it("respecte le domaine forcé par le parent et cible la ZPD si elle existe", async () => {
+    const { planSingleChallengeMission } = await import("./challenge-planner");
+    const state = buildChildDevelopmentState({
+      child: { id: "5", name: "Aminata", age: 8 },
+      progressionTargets: [
+        {
+          domain: "Sciences",
+          lastLevelAge: 7,
+          targetLevelAge: 9,
+        },
+      ],
+    });
+
+    const mission = planSingleChallengeMission(state, { forcedDomain: "Sciences" });
+    expect(mission.targetDomain).toBe("Sciences");
+    expect(mission.intent).toBe("zpd_progression");
+  });
+
+  it("intègre les matériaux maison spécifiques fournis par le parent", async () => {
+    const { planSingleChallengeMission } = await import("./challenge-planner");
+    const state = buildChildDevelopmentState({
+      child: { id: "6", name: "Ousmane", age: 10 },
+    });
+
+    const mission = planSingleChallengeMission(state, {
+      forcedDomain: "Artisanat & DIY",
+      homeMaterials: "bouteille en plastique, scotch, ficelle",
+    });
+
+    expect(mission.targetDomain).toBe("Artisanat & DIY");
+    expect(mission.actionHook).toBe("bouteille en plastique, scotch, ficelle");
+    expect(mission.pedagogicalBrief).toContain("bouteille en plastique");
+  });
+});
+

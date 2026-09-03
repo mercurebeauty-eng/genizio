@@ -15,7 +15,7 @@ import { formatChildProfileContext } from "@/lib/profile-context";
 import { getInterestHypothesesSnapshot, type InterestHypotheses } from "@/lib/interest-confidence";
 import { getAspirationHypothesesSnapshot } from "@/lib/aspiration-confidence";
 import { buildChildDevelopmentState } from "@/lib/context-engine";
-import { planChallengeMissions } from "@/lib/challenge-planner";
+import { planChallengeMissions, planSingleChallengeMission } from "@/lib/challenge-planner";
 import { z } from "zod";
 
 import {
@@ -3965,20 +3965,20 @@ export const generateSingleChallenge = createServerFn({ method: "POST" })
     const interestHypotheses = await getInterestHypothesesSnapshot(db as any, data.childId).catch(
       () => null,
     );
+    const aspirationHypotheses = await getAspirationHypothesesSnapshot(db as any, data.childId).catch(
+      () => null,
+    );
 
-    // Unlike generateChallenges (the batch generator), this on-demand single-défi
-    // path never checked recent titles at all — a parent clicking "Composer un défi
-    // ciblé" repeatedly could get literal duplicates. Fetching both in parallel
-    // matches generateChallenges' existing pattern instead of inventing a new one.
     const [
       { data: completedChallenges },
       { data: existing },
       progressionTargets,
       { data: latestChildQuestion },
+      { data: staleChallenges },
     ] = await Promise.all([
       db
         .from("challenges")
-        .select("title, domain, ai_observations")
+        .select("id, title, domain, academic_domain, academic_level_age, ai_observations, completed_at")
         .eq("child_id", data.childId)
         .eq("status", "completed")
         .order("completed_at", { ascending: false })
@@ -3990,8 +3990,6 @@ export const generateSingleChallenge = createServerFn({ method: "POST" })
         .order("created_at", { ascending: false })
         .limit(30),
       computeProgressionTargets(db, data.childId),
-      // Question formulée par l'enfant lui-même (chantier « Deuxième colonne
-      // vertébrale », 2026-08-15) — fil conducteur de la génération ciblée.
       db
         .from("challenges")
         .select("child_question")
@@ -4000,56 +3998,50 @@ export const generateSingleChallenge = createServerFn({ method: "POST" })
         .order("created_at", { ascending: false })
         .limit(1)
         .maybeSingle(),
+      db
+        .from("challenges")
+        .select("domain")
+        .eq("child_id", data.childId)
+        .eq("status", "abandoned")
+        .order("created_at", { ascending: false })
+        .limit(10),
     ]);
 
-    const completedSummary = ((completedChallenges ?? []) as any[])
-      .map((c) => `- Défi "${c.title}" (${c.domain}) : "${c.ai_observations ?? ""}"`)
-      .join("\n");
     const existingTitles = ((existing ?? []) as any[]).map((c) => c.title);
     const childQuestionNote = (latestChildQuestion?.child_question ?? "").trim();
-
     const timeAvailable = data.timeAvailable || "30 min";
     const location = data.location || "Maison (Intérieur)";
     const targetDomain = data.domain && data.domain !== "all" ? data.domain : null;
 
-    const domainInstruction = targetDomain
-      ? `3. Tu DOIS générer un défi spécifiquement dans le domaine d'intelligence ou la catégorie suivante : "${targetDomain}". Adapte l'activité pour cibler ce domaine précis.`
-      : `3. Les intelligences actuellement les moins explorées chez cet enfant sont ${getLeastExploredTalentLabels(child.talents as Record<string, number> | null).join(" et ")}. Sauf si le temps/lieu disponible les rend peu réalistes, choisis un domaine d'intelligence qui cible l'une de ces intelligences plutôt que de renforcer un talent déjà confirmé. Tu peux créer des défis "hybrides" (ex: utiliser l'art pour comprendre les mathématiques).`;
-
-    const materialScopeInstruction =
-      data.materialScope === "home"
-        ? "5. MATÉRIEL (MAISON) : Le défi doit être réalisable avec les objets trouvés à la maison (intérieur) ou dans la chambre."
-        : data.materialScope === "outdoor"
-          ? "5. MATÉRIEL (NATURE/EXTÉRIEUR) : Le défi doit utiliser principalement des éléments trouvés dans la nature, à l'extérieur (jardin, parc, rue) ou récupérés dehors."
-          : data.materialScope === "buy"
-            ? "5. MATÉRIEL (À ACHETER) : Le défi peut impliquer d'aller acheter du petit matériel en grande surface, quincaillerie ou papeterie (abordable)."
-            : "5. MATÉRIEL (MIXTE) : Libre à toi ! Tu peux mixer du matériel de maison, des éléments trouvés dehors dans la nature, ou du petit matériel abordable à acheter (ex: colle spéciale, peinture).";
-
-    const prompt = buildSingleChallengePrompt({
-      childName: child.name,
-      childAge: child.age,
-      profileLocation: [child.city, child.country].filter(Boolean).join(", ") || "non précisé",
-      interestsPayload: formatChildInterestsPayload(child.interests, interestHypotheses),
-      talentsJson: JSON.stringify(child.talents || {}),
-      completedSummary,
+    // Context Engine & Challenge Mission Planner pour défi ciblé :
+    // Genizio synthétise l'état actualisé de l'enfant et arrête le mandat pédagogique
+    // sur-mesure pour ce défi unique selon les choix du parent.
+    const childDevelopmentState = buildChildDevelopmentState({
+      child,
+      completedChallenges: (completedChallenges ?? []) as any[],
+      staleChallenges: (staleChallenges ?? []) as any[],
+      progressionTargets,
+      interestHypotheses,
+      aspirationHypotheses,
+      latestChildQuestion: childQuestionNote,
       existingTitles,
-      timeAvailable,
-      immediateLocation: location,
-      homeMaterialsLine: data.homeMaterials
-        ? `- Matériaux/objets disponibles à la maison : ${data.homeMaterials}`
-        : "",
-      progressionInstruction: formatProgressionInstruction(progressionTargets),
-      domainInstruction,
-      materialScopeInstruction,
-      homeMaterialsUseLine: data.homeMaterials
-        ? `6. UTILISATION DES MATÉRIAUX MENTIONNÉS : Tu DOIS concevoir un défi qui utilise en priorité ou exclusivement les matériaux indiqués par le parent ("${data.homeMaterials}"). Si ces matériaux ne suffisent pas, tu PEUX inclure d'autres ustensiles en fonction de la consigne (MAISON/EXTÉRIEUR/ACHAT/MIXTE).`
-        : "",
-      timePressureNote: formatTimePressureNote(
-        child.time_pressure as TimePressure | null | undefined,
-      ),
-      profileContextNote: formatChildProfileContext(child as any),
-      childQuestionNote,
     });
+
+    const mission = planSingleChallengeMission(childDevelopmentState, {
+      forcedDomain: targetDomain,
+      homeMaterials: data.homeMaterials,
+    });
+
+    const prompt = buildLayeredChallengePrompt(
+      childDevelopmentState,
+      [mission],
+      {
+        timeAvailable,
+        immediateLocation: location,
+        materialScope: data.materialScope,
+        homeMaterials: data.homeMaterials,
+      },
+    );
 
     // A single défi, not a batch — the 4000 default (sized for up to 6 défis
     // in generateChallenges) would needlessly reserve most of the org's

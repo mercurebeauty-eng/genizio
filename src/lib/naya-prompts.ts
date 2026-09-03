@@ -383,6 +383,13 @@ Réponds STRICTEMENT en JSON valide avec ce format, pour chaque défi :
 {"challenges":[{"domain":"...","title":"...","description":"...","duration":"...","steps":["...","..."],"materials":["...","..."],"material_tags":["..."],"pedagogical_context":"Ce que Naya observe via cette activité","intelligences":["creative"],"trait_subform":"..." (voir liste par intelligence ci-dessus) ou null,"requires_supervision":true ou false,"supervision_warning":"..." (ou null si false),"difficulty":"facile"|"moyen"|"difficile","proof_mode":"photo"|"declarative","proof_target":{"metric":"...","value":20} (uniquement si declarative),"declarative_award":{"corporelle":2} (uniquement si declarative),"academic_domain":"mathematiques"|"langage"|"sciences"|"corporelle"|"sociale"|"emotionnelle"|"entrepreneuriale"|"artisanale"|"spatiale"|null,"academic_level_age":14 (uniquement si academic_domain non null),"academic_reference_note":"..." (uniquement si academic_domain non null),"academic_secret":"Explication stimulante du secret scientifique/physique...","kind":"micro"|"projet","guidance_level":3 (entier 1 à 5)}]}`;
 }
 
+export interface LayeredChallengePromptOptions {
+  timeAvailable?: string | null;
+  immediateLocation?: string | null;
+  materialScope?: string | null;
+  homeMaterials?: string | null;
+}
+
 /**
  * Construit un prompt multicouche où Genizio transmet au modèle l'état actualisé
  * de sa compréhension de l'enfant et les missions pédagogiques précises à réaliser.
@@ -397,6 +404,7 @@ Réponds STRICTEMENT en JSON valide avec ce format, pour chaque défi :
 export function buildLayeredChallengePrompt(
   state: ChildDevelopmentState,
   missions: ChallengeMission[],
+  options?: LayeredChallengePromptOptions,
 ): string {
   const childName = state.identity.name;
   const childAge = state.identity.age;
@@ -429,8 +437,28 @@ export function buildLayeredChallengePrompt(
     )
     .join("\n\n");
 
-  const timePressureLine = state.operationalContext.timePressure
-    ? `- Rythme et temps disponible : ${state.operationalContext.timePressure}`
+  const timePressureLine = options?.timeAvailable
+    ? `- Temps disponible pour ce défi : ${options.timeAvailable}`
+    : state.operationalContext.timePressure
+      ? `- Rythme et temps disponible : ${state.operationalContext.timePressure}`
+      : "";
+
+  const locationLine = options?.immediateLocation
+    ? `- Ville / pays : ${location}\n- Lieu immédiat de l'activité : ${options.immediateLocation}`
+    : `- Ville / pays : ${location}`;
+
+  const homeMaterialsInstruction = options?.homeMaterials?.trim()
+    ? `\n- UTILISATION DES MATÉRIAUX MENTIONNÉS : Tu DOIS concevoir le défi pour qu'il utilise en priorité ou exclusivement les matériaux indiqués par le parent ("${options.homeMaterials.trim()}").`
+    : "";
+
+  const materialScopeInstruction = options?.materialScope
+    ? options.materialScope === "home"
+      ? "\n- MATÉRIEL (MAISON) : Le défi doit être réalisable avec les objets trouvés à la maison (intérieur) ou dans la chambre."
+      : options.materialScope === "outdoor"
+        ? "\n- MATÉRIEL (NATURE/EXTÉRIEUR) : Le défi doit utiliser principalement des éléments trouvés dans la nature, à l'extérieur (jardin, parc, rue) ou récupérés dehors."
+        : options.materialScope === "buy"
+          ? "\n- MATÉRIEL (À ACHETER) : Le défi peut impliquer d'aller acheter du petit matériel en grande surface, quincaillerie ou papeterie (très abordable)."
+          : "\n- MATÉRIEL (MIXTE) : Libre à toi ! Tu peux mixer du matériel de maison, des éléments trouvés dehors dans la nature, ou du petit matériel abordable."
     : "";
 
   return `Tu es Naya, mentor pédagogique d'excellence pour enfants en Afrique francophone sur Génizio.
@@ -448,7 +476,7 @@ COUCHE 2 — ÉTAT DE COMPRÉHENSION DE L'ENFANT (CHILD DEVELOPMENT STATE)
 ================================================================================
 - Prénom : ${childName}
 - Âge : ${childAge} ans
-- Ville / pays : ${location}
+${locationLine}
 ${timePressureLine}
 - Talents les moins explorés : ${state.capabilities.leastExploredTalents.join(", ") || "aucun"}
 - Domaines stables : ${state.capabilities.stableDomains.join(", ") || "en exploration initiale"}
@@ -470,7 +498,7 @@ ${missionsBlock}
 COUCHE 4 — CONTRAT D'EXÉCUTION & ANCRAGE TERRAIN
 ================================================================================
 - Ancrage africain : ${contextualizationInstruction}
-- Matériaux locaux typiques accessibles : ${state.operationalContext.localMaterials.join(", ")}
+- Matériaux locaux typiques accessibles : ${state.operationalContext.localMaterials.join(", ")}${homeMaterialsInstruction}${materialScopeInstruction}
 - ${STEPS_INSTRUCTION}
 - ${buildAvoidRepeatsInstruction(state.operationalContext.existingTitles)}
 - ${MATERIAL_TAGS_INSTRUCTION}
