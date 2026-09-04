@@ -37,6 +37,26 @@ const FAQ = [
     answer:
       "Rassurez-le. Les surveillants et les professeurs se montrent très attentifs avec les sixièmes en septembre. Glissez un plan annoté du collège dans son carnet pour apaiser ses doutes.",
   },
+  {
+    question: "Mon enfant ne connaît personne au collège : comment l'aider à se faire des copains ?",
+    answer:
+      "Rappelez-lui que presque tous les nouveaux sixièmes arrivent avec la même appréhension. Proposez-lui de s'inscrire dès la deuxième semaine à un club du midi (association sportive, chorale, club d'échecs ou de sciences). Les affinités se créent beaucoup plus vite autour d'un jeu ou d'un projet partagé que sous le regard intimidant de la grande cour.",
+  },
+  {
+    question: "Le cartable pèse une tonne : comment alléger la charge concrètement ?",
+    answer:
+      "Pesez son sac : il ne doit pas excéder 10 % du poids corporel de l'enfant. Remplacer les gros classeurs par deux pochettes légères et des protège-documents souples fait gagner plus d'un kilo. Faites le tri chaque soir à heure fixe pour ne laisser que le matériel du lendemain, et vérifiez avec l'établissement si l'attribution d'un casier ou le prêt d'un second jeu de manuels à la maison est possible.",
+  },
+  {
+    question: "Que faire si mon enfant a peur des plus grands ou du harcèlement ?",
+    answer:
+      "Écoutez ses inquiétudes sans minimiser ses émotions. Expliquez clairement le fonctionnement de l'équipe de vie scolaire : les surveillants, la CPE et les délégués d'élèves veillent en permanence. Donnez-lui une consigne claire et rassurante : si un mot ou un geste le blesse à répétition, il ne doit jamais garder le secret et doit s'adresser sans attendre au professeur principal ou à la vie scolaire.",
+  },
+  {
+    question: "Comment réagir face à une baisse de moyenne au premier trimestre ?",
+    answer:
+      "Cette baisse est habituelle et reflète la découverte du rythme de travail du collège. Ne dramatisez pas le chiffre. Regardez plutôt ensemble la consigne de chaque devoir : l'erreur vient-elle d'une leçon apprise superficiellement ou d'un énoncé lu trop vite ? Aidez-le à tester une révision active en vous expliquant le cours avec ses propres mots.",
+  },
 ];
 
 export const Route = createFileRoute("/guides/reussir-entree-en-6eme-conseils-parents")({
@@ -69,7 +89,7 @@ export const Route = createFileRoute("/guides/reussir-entree-en-6eme-conseils-pa
             path: PATH,
             image: "/guides/og-entree-6eme.jpg",
             datePublished: "2026-08-31",
-            dateModified: "2026-08-31",
+            dateModified: "2026-09-04",
           }),
         ),
       ],

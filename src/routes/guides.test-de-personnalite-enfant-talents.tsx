@@ -29,6 +29,21 @@ const FAQ = [
     answer:
       "Dès l'âge de 5-6 ans, des tendances fortes apparaissent (besoin de bouger, sensibilité aux sons, goût de l'ordre ou de la narration). Cependant, la plasticité cérébrale reste immense jusqu'à l'âge adulte : l'important n'est pas d'enfermer l'enfant dans une case ('il est timide', 'il est scientifique'), mais de lui offrir des défis variés pour explorer tous ses potentiels.",
   },
+  {
+    question: "Est-ce qu'un test de quotient intellectuel (QI) mesure sa personnalité ?",
+    answer:
+      "Non. Un test psychométrique de QI (comme le WISC-V) évalue la rapidité de traitement, la mémoire de travail et le raisonnement logique dans un cadre standardisé. Il n'indique rien sur l'empathie, l'audace, la persévérance face à l'échec ou la créativité manuelle de l'enfant. Confondre les deux bride le regard porté sur ses vraies ressources.",
+  },
+  {
+    question: "Mon enfant change souvent de passion : est-ce le signe d'une instabilité ?",
+    answer:
+      "C'est une excellente nouvelle. Avant l'adolescence, passer du dessin à l'électronique, puis aux origamis et au sport témoigne d'une vivacité d'esprit saine. Cette exploration multimodale permet à l'enfant d'éprouver différentes manières de réfléchir sans pression de rentabilité.",
+  },
+  {
+    question: "Quelle méthode concrète Génizio emploie pour révéler les talents ?",
+    answer:
+      "Génizio bannit les questionnaires théoriques et les étiquettes rigides. L'approche repose sur des défis pratiques tirés du quotidien : construire, réparer, expliquer une idée ou négocier. C'est en observant l'enfant agir et trouver ses propres solutions que se révèle la carte vivante de ses aptitudes.",
+  },
 ];
 
 export const Route = createFileRoute("/guides/test-de-personnalite-enfant-talents")({
@@ -49,18 +64,18 @@ export const Route = createFileRoute("/guides/test-de-personnalite-enfant-talent
           breadcrumbJsonLd([
             { name: "Accueil", path: "/" },
             { name: "Guides", path: "/guides" },
-            { name: "Test de personnalité enfant", path: PATH },
+            { name: "Test de personnalité pour enfant", path: PATH },
           ]),
         ),
         jsonLdScript(
           articleJsonLd({
-            headline: "Test de personnalité enfant : pourquoi 20 questions sur écran ne remplaceront jamais l'action réelle",
+            headline: "Test de personnalité pour enfant : pourquoi les quiz sur écran ne valent pas l'action réelle",
             description:
-              "Analyse critique des tests de personnalité en ligne pour enfants et méthode concrète d'observation des 9 intelligences à travers 3 défis pratiques.",
+              "Pourquoi les tests de personnalité en ligne pour enfants sont trompeurs ? Découvrez comment révéler ses vrais talents par l'action et des défis concrets.",
             path: PATH,
             image: "/guides/og-test-personnalite.jpg",
             datePublished: "2026-08-24",
-            dateModified: "2026-08-26",
+            dateModified: "2026-09-04",
           }),
         ),
       ],

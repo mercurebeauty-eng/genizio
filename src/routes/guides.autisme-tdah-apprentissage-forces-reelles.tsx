@@ -6,7 +6,7 @@ import {
   breadcrumbJsonLd,
   articleJsonLd,
 } from "@/lib/seo";
-import { GuideLayout } from "@/components/guides/GuideLayout";
+import { GuideLayout, MedicalDisclaimer } from "@/components/guides/GuideLayout";
 import { Button } from "@/components/ui/button";
 import { ArrowRight, Eye, Cpu, Zap, HeartHandshake, AlertCircle } from "lucide-react";
 import { Link } from "@tanstack/react-router";
@@ -28,6 +28,21 @@ const FAQ = [
     question: "Comment canaliser l'hyperfocalisation d'un enfant atypique ?",
     answer:
       "Ne la combattez pas, utilisez-la. Un centre d'intérêt fort (astronomie, mécanique, animaux) devient un formidable levier pour aborder les maths ou la lecture.",
+  },
+  {
+    question: "Mon enfant refuse d'écrire ou a une écriture illisible : comment réagir ?",
+    answer:
+      "La dysgraphie et les tensions motrices fines sont courantes chez les profils TDAH et autistes. Plutôt que de multiplier les lignes d'écriture punitive, privilégiez le clavier pour les textes longs, utilisez des lignages agrandis ou contrastés et fractionnez les efforts par séquences de cinq minutes.",
+  },
+  {
+    question: "Quelles activités proposer le week-end pour canaliser son énergie sans l'épuiser ?",
+    answer:
+      "Misez sur des projets d'ingénierie et de manipulation manuelle : montages d'engrenages, petites expériences scientifiques du placard ou création de petits jeux. Ces activités exploitent son intelligence visuo-spatiale tout en lui redonnant le goût de réussir de ses propres mains.",
+  },
+  {
+    question: "Comment éviter l'épuisement sensoriel (crash) après une journée d'école ?",
+    answer:
+      "À la sortie de classe, prévoyez systématiquement un sas de décompression de 30 minutes sans exigences : un goûter au calme, lumière tamisée, sans poser de questions sur la journée et sans devoirs immédiats. Son système nerveux a besoin de cette coupure pour faire redescendre la fatigue d'adaptation.",
   },
 ];
 
@@ -60,7 +75,7 @@ export const Route = createFileRoute("/guides/autisme-tdah-apprentissage-forces-
             path: PATH,
             image: "/guides/og-neurodiversite.jpg",
             datePublished: "2026-08-24",
-            dateModified: "2026-08-26",
+            dateModified: "2026-09-04",
           }),
         ),
       ],
@@ -115,15 +130,9 @@ function Guide() {
         className="my-6 aspect-video w-full rounded-3xl border border-ink/10 object-cover shadow-lg"
       />
 
-      <div className="my-6 rounded-2xl border border-amber-500/20 bg-amber-500/10 p-4 text-sm text-ink/90">
-        <div className="flex items-center gap-2 font-semibold text-amber-900">
-          <AlertCircle className="h-4 w-4 text-amber-600" />
-          Avertissement éducatif
-        </div>
-        <p className="mt-1">
-          Ce guide propose un éclairage pédagogique pour accompagner l'apprentissage à la maison. Il ne remplace pas le diagnostic ni le suivi par des professionnels de santé (pédopsychiatre, neuropédiatre, orthophoniste, psychomotricien).
-        </p>
-      </div>
+      <MedicalDisclaimer>
+        Ce guide apporte des repères éducatifs et psychopédagogiques pour accompagner l'apprentissage à la maison. Il ne remplace en aucun cas un diagnostic médical ni le suivi par des professionnels de santé qualifiés (pédopsychiatre, neuropédiatre, orthophoniste, psychomotricien).
+      </MedicalDisclaimer>
 
       <h2>1. La pensée en images et le besoin d'ancrage dans la matière</h2>
       <p>

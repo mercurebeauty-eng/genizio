@@ -55,8 +55,8 @@ import { Route as GuidesEducationEnfantsAfriqueFrancophoneRouteImport } from './
 import { Route as GuidesEcransTiktokYoutubeTalentEcritureRealisationRouteImport } from './routes/guides.ecrans-tiktok-youtube-talent-ecriture-realisation'
 import { Route as GuidesEcransAddictionAlternativesEnfantRouteImport } from './routes/guides.ecrans-addiction-alternatives-enfant'
 import { Route as GuidesDisciplinePositiveSansPunitionRouteImport } from './routes/guides.discipline-positive-sans-punition'
-import { Route as GuidesDefisPourAdolescentsRouteImport } from './routes/guides.defis-pour-adolescents'
 import { Route as GuidesDifferenceTdahAutismeExplicationParentsRouteImport } from './routes/guides.difference-tdah-autisme-explication-parents'
+import { Route as GuidesDefisPourAdolescentsRouteImport } from './routes/guides.defis-pour-adolescents'
 import { Route as GuidesDecrochageScolaireConfianceEnfantRouteImport } from './routes/guides.decrochage-scolaire-confiance-enfant'
 import { Route as GuidesCommentGererArgentDePocheEnfantRouteImport } from './routes/guides.comment-gerer-argent-de-poche-enfant'
 import { Route as GuidesChoixParcoursupParcoursScolaireEnfantRouteImport } from './routes/guides.choix-parcoursup-parcours-scolaire-enfant'
@@ -326,16 +326,16 @@ const GuidesDisciplinePositiveSansPunitionRoute =
     path: '/discipline-positive-sans-punition',
     getParentRoute: () => GuidesRoute,
   } as any)
-const GuidesDefisPourAdolescentsRoute =
-  GuidesDefisPourAdolescentsRouteImport.update({
-    id: '/defis-pour-adolescents',
-    path: '/defis-pour-adolescents',
-    getParentRoute: () => GuidesRoute,
-  } as any)
 const GuidesDifferenceTdahAutismeExplicationParentsRoute =
   GuidesDifferenceTdahAutismeExplicationParentsRouteImport.update({
     id: '/difference-tdah-autisme-explication-parents',
     path: '/difference-tdah-autisme-explication-parents',
+    getParentRoute: () => GuidesRoute,
+  } as any)
+const GuidesDefisPourAdolescentsRoute =
+  GuidesDefisPourAdolescentsRouteImport.update({
+    id: '/defis-pour-adolescents',
+    path: '/defis-pour-adolescents',
     getParentRoute: () => GuidesRoute,
   } as any)
 const GuidesDecrochageScolaireConfianceEnfantRoute =
@@ -1195,18 +1195,18 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof GuidesDisciplinePositiveSansPunitionRouteImport
       parentRoute: typeof GuidesRoute
     }
-    '/guides/defis-pour-adolescents': {
-      id: '/guides/defis-pour-adolescents'
-      path: '/defis-pour-adolescents'
-      fullPath: '/guides/defis-pour-adolescents'
-      preLoaderRoute: typeof GuidesDefisPourAdolescentsRouteImport
-      parentRoute: typeof GuidesRoute
-    }
     '/guides/difference-tdah-autisme-explication-parents': {
       id: '/guides/difference-tdah-autisme-explication-parents'
       path: '/difference-tdah-autisme-explication-parents'
       fullPath: '/guides/difference-tdah-autisme-explication-parents'
       preLoaderRoute: typeof GuidesDifferenceTdahAutismeExplicationParentsRouteImport
+      parentRoute: typeof GuidesRoute
+    }
+    '/guides/defis-pour-adolescents': {
+      id: '/guides/defis-pour-adolescents'
+      path: '/defis-pour-adolescents'
+      fullPath: '/guides/defis-pour-adolescents'
+      preLoaderRoute: typeof GuidesDefisPourAdolescentsRouteImport
       parentRoute: typeof GuidesRoute
     }
     '/guides/decrochage-scolaire-confiance-enfant': {

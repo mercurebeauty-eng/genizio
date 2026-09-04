@@ -29,6 +29,21 @@ const FAQ = [
     answer:
       "Privilégiez les livres interactifs, les bandes dessinées historiques ou documentaires, les recueils de contes traditionnels et les manuels de projets pratiques (bricolage, expériences scientifiques simples, origami) plutôt que de simples fiches d'exercices répétitives.",
   },
+  {
+    question: "Comment donner le goût de la lecture à un enfant qui n'ouvre aucun livre ?",
+    answer:
+      "Ne commencez pas par des romans imposés. Proposez des formats visuels et rythmés : bandes dessinées, documentaires illustrés, mangas ou livres-jeux dont il est le héros. Partagez la lecture du premier chapitre à voix haute le soir pour lancer l'histoire sans blocage technique de déchiffrage.",
+  },
+  {
+    question: "Comment choisir entre librairie indépendante et médiathèque de quartier ?",
+    answer:
+      "Les deux se complètent. La médiathèque offre un accès gratuit illimité permettant à l'enfant d'emprunter, tester et reposer sans remords. La librairie indépendante permet d'acheter l'ouvrage coup de cœur qui restera sur son chevet, guidé par les recommandations personnalisées d'un libraire jeunesse passionné.",
+  },
+  {
+    question: "Comment prolonger une lecture par des activités manuelles vivantes ?",
+    answer:
+      "Après la lecture d'un conte ou d'un récit documentaire, invitez l'enfant à prolonger l'aventure dans la matière : cuisiner un plat évoqué dans l'histoire, dessiner le plan des lieux ou façonner une maquette avec des matériaux recyclés. Cette passerelle concrète ancre durablement le plaisir d'apprendre.",
+  },
 ];
 
 export const Route = createFileRoute("/guides/quelle-librairie-choisir-lieux-creativite-enfant")({
@@ -49,18 +64,18 @@ export const Route = createFileRoute("/guides/quelle-librairie-choisir-lieux-cre
           breadcrumbJsonLd([
             { name: "Accueil", path: "/" },
             { name: "Guides", path: "/guides" },
-            { name: "Lieux d'éveil & Créativité", path: PATH },
+            { name: "Librairies et lieux de créativité", path: PATH },
           ]),
         ),
         jsonLdScript(
           articleJsonLd({
-            headline: "Quelle librairie choisir pour son enfant ? Pourquoi le marché et le quartier éveillent 10 fois plus sa créativité",
+            headline: "Quelle librairie choisir pour son enfant ? Pourquoi le marché et le quartier éveillent sa créativité",
             description:
-              "Comment transformer l'environnement direct (marché, cuisine, atelier) en laboratoire d'apprentissage vivant et complémentaire de la lecture.",
+              "Pourquoi limiter l'éveil culturel aux rayons des librairies est réducteur et comment le marché ou les ateliers de quartier ouvrent l'esprit de l'enfant.",
             path: PATH,
             image: "/guides/og-librairie-creativite.jpg",
             datePublished: "2026-08-24",
-            dateModified: "2026-08-27",
+            dateModified: "2026-09-04",
           }),
         ),
       ],

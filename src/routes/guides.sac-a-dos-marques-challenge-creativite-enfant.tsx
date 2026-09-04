@@ -29,6 +29,21 @@ const FAQ = [
     answer:
       "Trois pistes simples : trier et revendre d'anciens jouets sur une plateforme de seconde main, tenir un stand de boissons maison lors d'une fête de quartier, ou proposer des petits services rémunérés aux proches (laver la voiture, désherber le potager, ranger le garage).",
   },
+  {
+    question: "Comment gérer la pression des marques au collège sans braquer son ado ?",
+    answer:
+      "Le besoin d'appartenir au groupe est intense à cet âge. Discutez des stratégies publicitaires qui vendent un statut social plutôt qu'une qualité réelle. Fixez une enveloppe budgétaire globale : l'adolescent arbitre librement ses choix, ce qui l'oblige à renoncer à un article pour en financer un autre.",
+  },
+  {
+    question: "Que faire si mon enfant a honte de ses affaires sans marque ?",
+    answer:
+      "Accueillez son malaise sans ironie. Aidez-le à affirmer un style propre : des vêtements chinés avec soin, des customisations originales ou des accessoires singuliers suscitent souvent plus de respect que l'uniforme copié sur quarante camarades. L'assurance naît de l'audace d'être soi.",
+  },
+  {
+    question: "Comment lui faire mesurer le coût réel d'un logo de marque ?",
+    answer:
+      "Convertissez le prix en temps de travail concret : montrez-lui le nombre d'heures de travail ou le budget de courses familiales correspondant à une paire de baskets à la mode. Ce parallèle simple remet la dépense dans la réalité sans sermon culpabilisant.",
+  },
 ];
 
 export const Route = createFileRoute("/guides/sac-a-dos-marques-challenge-creativite-enfant")({
@@ -49,18 +64,18 @@ export const Route = createFileRoute("/guides/sac-a-dos-marques-challenge-creati
           breadcrumbJsonLd([
             { name: "Accueil", path: "/" },
             { name: "Guides", path: "/guides" },
-            { name: "Marques & Défi créatif", path: PATH },
+            { name: "Marques scolaires et créativité", path: PATH },
           ]),
         ),
         jsonLdScript(
           articleJsonLd({
-            headline: "Votre enfant réclame le sac North Face ou Nike ? Challengez-le : et s'il créait son équipement ?",
+            headline: "Votre enfant réclame un sac de marque ? Challengez-le : et s'il créait son équipement ?",
             description:
-              "Comment canaliser la pression sociale des marques scolaires chez l'enfant et l'adolescent pour développer l'ingéniosité manuelle et la gestion financière.",
+              "Méthode pour transformer la pression des marques scolaires en opportunité d'apprentissage de l'autonomie, du budget et de la créativité manuelle.",
             path: PATH,
             image: "/guides/og-sac-challenge.jpg",
             datePublished: "2026-08-24",
-            dateModified: "2026-08-27",
+            dateModified: "2026-09-04",
           }),
         ),
       ],

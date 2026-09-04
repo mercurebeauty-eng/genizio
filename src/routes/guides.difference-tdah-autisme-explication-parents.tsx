@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { GuideLayout } from "@/components/guides/GuideLayout";
+import { GuideLayout, MedicalDisclaimer } from "@/components/guides/GuideLayout";
 import { Button } from "@/components/ui/button";
 import {
   pageMeta,
@@ -38,6 +38,26 @@ const FAQ = [
     question: "Le TDAH fait-il partie intégrante du spectre de l'autisme ?",
     answer:
       "Non. Ce sont deux conditions distinctes réunies sous la bannière des troubles du neurodéveloppement (TND). Leurs câblages cérébraux diffèrent, même si leurs conséquences visibles se confondent en classe.",
+  },
+  {
+    question: "Comment distinguer une crise de colère d'un effondrement autistique (meltdown) ?",
+    answer:
+      "La colère ordinaire chez l'enfant découle d'une frustration précise ; elle cherche une réaction de l'adulte et s'arrête souvent dès qu'une alternative séduisante apparaît. L'effondrement autistique (meltdown) résulte d'une saturation sensorielle ou cognitive. L'enfant ne cherche rien à négocier : son cerveau disjoncte sous le trop-plein de stimuli. Il a besoin d'un retour au calme dans la pénombre, sans parole ni sollicitation.",
+  },
+  {
+    question: "Vers quel professionnel s'orienter pour poser un premier diagnostic ?",
+    answer:
+      "Commencez par votre médecin traitant ou votre pédiatre. Il vous orientera vers un bilan neuropsychologique (pour tester les fonctions exécutives et le quotient intellectuel) ainsi qu'un bilan en psychomotricité ou en orthophonie. La synthèse finale et la pose formelle du diagnostic reviennent à un médecin spécialiste : pédopsychiatre, neuropédiatre ou équipe d'un Centre de Ressources Autisme (CRA).",
+  },
+  {
+    question: "Quels aménagements demander à l'école pour mon enfant ?",
+    answer:
+      "Dès la maternelle ou l'élémentaire, demandez une réunion d'équipe éducative. Vous pouvez mettre en place un PAP (Plan d'Accompagnement Personnalisé) pour fractionner les consignes, autoriser un casque antibruit ou accorder un tiers-temps. Si les besoins nécessitent du matériel pédagogique adapté ou l'aide d'une AESH, constituez un dossier auprès de la MDPH pour ouvrir un PPS (Projet Personnalisé de Scolarisation).",
+  },
+  {
+    question: "Les difficultés s'atténuent-elles à l'adolescence et à l'âge adulte ?",
+    answer:
+      "Le câblage neurologique reste le même toute la vie. En revanche, l'enfant grandit, comprend son mode d'emploi et acquiert des stratégies de compensation efficaces. Avec un cadre familial prévisible et des défis valorisant ses talents concrets, les particularités attentionnelles ou sensorielles cessent d'être un frein pour devenir un profil d'expertise reconnu.",
   },
 ];
 
@@ -123,6 +143,10 @@ function Guide() {
         decoding="async"
         className="my-6 aspect-video w-full rounded-3xl border border-ink/10 object-cover shadow-lg"
       />
+
+      <MedicalDisclaimer>
+        Ce guide apporte des repères éducatifs pour comprendre le fonctionnement de votre enfant au quotidien. Il ne constitue pas un avis médical et ne remplace aucunement une démarche clinique. Seuls des professionnels de santé formés (pédopsychiatre, neuropédiatre, neuropsychologue ou équipes spécialisées de CRA) sont habilités à évaluer et diagnostiquer un trouble du neurodéveloppement.
+      </MedicalDisclaimer>
 
       <h2>1. Pourquoi TDAH et autisme sont si souvent confondus</h2>
       <p>

@@ -29,6 +29,21 @@ const FAQ = [
     answer:
       "Un profil hétérogène (bon dans certaines matières, faible dans d'autres) est souvent le signe d'une motivation sélective ou d'une intelligence pratique non valorisée par les examens classiques. Valorisez ses réalisations tangibles, encouragez-le à développer des projets personnels et misez sur les filières professionnelles ou universitaires appliquées (BTS, BUT, écoles pratiques) où ses compétences réelles s'exprimeront pleinement.",
   },
+  {
+    question: "Comment remplir la rubrique Activités et centres d'intérêt sur Parcoursup ?",
+    answer:
+      "C'est l'espace où le candidat quitte les notes pour montrer sa singularité. Bannissez les formules convenues. Décrivez des faits précis : gestion d'un club, montage de projets vidéo, bénévolat ou réparations manuelles à la maison. Donnez des exemples concrets qui prouvent sa curiosité, son autonomie et sa persévérance.",
+  },
+  {
+    question: "Que faire si toutes les réponses sont en attente ou refusées en juin ?",
+    answer:
+      "Gardez votre calme et rassurez votre enfant. Les listes d'attente évoluent quotidiennement jusqu'à la mi-juillet au gré des désistements. Dès l'ouverture de la phase complémentaire fin juin, saisissez jusqu'à 10 nouveaux vœux dans des filières disposant encore de places. La commission d'accès à l'enseignement supérieur (CAES) peut aussi vous aider à trouver une affectation.",
+  },
+  {
+    question: "Vaut-il mieux choisir une licence générale ou un BUT en IUT ?",
+    answer:
+      "Cela dépend de son tempérament d'apprentissage. La licence universitaire exige une grande autodiscipline face à des cours magistraux théoriques en grand amphithéâtre. Le BUT (Bachelor Universitaire de Technologie) convient directement aux jeunes ayant besoin de projets pratiques en petits groupes, de travaux dirigés et de stages en entreprise.",
+  },
 ];
 
 export const Route = createFileRoute("/guides/choix-parcoursup-parcours-scolaire-enfant")({
@@ -49,18 +64,18 @@ export const Route = createFileRoute("/guides/choix-parcoursup-parcours-scolaire
           breadcrumbJsonLd([
             { name: "Accueil", path: "/" },
             { name: "Guides", path: "/guides" },
-            { name: "Choix de parcours & Orientation", path: PATH },
+            { name: "Choix des vœux et Parcoursup", path: PATH },
           ]),
         ),
         jsonLdScript(
           articleJsonLd({
             headline: "Choix des vœux et parcours scolaire : pourquoi le vrai profil de votre enfant dépasse ses bulletins",
             description:
-              "Conseils bienveillants et pragmatiques pour aborder les choix de filières, les vœux scolaires et construire un passeport de réalisations valorisant.",
+              "Conseils pour aborder l'orientation et Parcoursup sans angoisse en valorisant les talents concrets et les réalisations de votre enfant.",
             path: PATH,
             image: "/guides/og-parcoursup.jpg",
             datePublished: "2026-08-24",
-            dateModified: "2026-08-27",
+            dateModified: "2026-09-04",
           }),
         ),
       ],

@@ -29,6 +29,21 @@ const FAQ = [
     answer:
       "C'est normal. L'intérêt ne précède pas toujours l'action : il naît souvent du sentiment d'efficacité quand on fabrique, répare ou organise un projet concret.",
   },
+  {
+    question: "Quelles compétences protègent le mieux face à l'intelligence artificielle ?",
+    answer:
+      "L'esprit critique, la dextérité manuelle appliquée et l'empathie relationnelle. Les métiers combinant conception pratique, médiation humaine et diagnostic de terrain résisteront bien mieux que les tâches répétitives d'analyse de données ou de rédaction formelle.",
+  },
+  {
+    question: "Mon ado rêve d'être influenceur ou streamer : comment lui répondre sans conflit ?",
+    answer:
+      "Prenez son envie au mot en la transformant en laboratoire de compétences : écriture d'un synopsis, cadrage d'une vidéo, respect du droit à l'image et gestion du son. En passant du statut de spectateur passif à celui de créateur rigoureux, il mesure le travail réel que réclame chaque production sans ressentir de rejet.",
+  },
+  {
+    question: "Comment accompagner son collégien pour dénicher un stage de 3ème pertinent ?",
+    answer:
+      "Aidez-le à lister cinq domaines qui piquent sa curiosité, même modestes (artisanat, commerce local, laboratoire de recherche). Incitez-le à décrocher son téléphone ou à se déplacer avec une lettre personnalisée : cette démarche directe forge l'assurance bien plus que des dizaines de candidatures automatiques sans contact humain.",
+  },
 ];
 
 export const Route = createFileRoute("/guides/test-orientation-metier-enfant-futur")({
@@ -49,18 +64,18 @@ export const Route = createFileRoute("/guides/test-orientation-metier-enfant-fut
           breadcrumbJsonLd([
             { name: "Accueil", path: "/" },
             { name: "Guides", path: "/guides" },
-            { name: "Test d'orientation & Métiers", path: PATH },
+            { name: "Test d'orientation et métier futur", path: PATH },
           ]),
         ),
         jsonLdScript(
           articleJsonLd({
             headline: "Test d'orientation et de métier : comment savoir ce qui anime vraiment votre enfant",
             description:
-              "Pourquoi les tests d'orientation classiques sont dépassés et comment développer les 4 méta-compétences de l'avenir dès le collège.",
+              "Pourquoi les tests d'orientation pour collégiens sont obsolètes et comment cultiver les compétences pérennes face aux transformations du travail.",
             path: PATH,
             image: "/guides/og-test-orientation.jpg",
             datePublished: "2026-08-24",
-            dateModified: "2026-08-27",
+            dateModified: "2026-09-04",
           }),
         ),
       ],

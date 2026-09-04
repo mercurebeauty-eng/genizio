@@ -29,6 +29,21 @@ const FAQ = [
     answer:
       "Donnez-lui une mission loufoque, par exemple faire voyager une bille sans toucher le sol. Donnez l'impulsion au départ, puis effacez-vous.",
   },
+  {
+    question: "À partir de quel âge peut-on faire des expériences scientifiques maison ?",
+    answer:
+      "Dès 4 ou 5 ans avec un adulte. À cet âge, la découverte passe par les sens : observer ce qui flotte ou coule dans une bassine, mélanger des couleurs ou fabriquer de la pâte à modeler. Vers 8-10 ans, l'enfant formule ses propres hypothèses et manipule les outils en autonomie.",
+  },
+  {
+    question: "Comment sécuriser le bricolage sans brider l'expérimentation ?",
+    answer:
+      "Installez un espace dédié facile à nettoyer (un plateau ou une table protégée d'une toile cirée). Posez trois règles simples : lunettes de protection pour découper, interdiction des produits d'entretien toxiques et rangement systématique du matériel avant de tester le résultat.",
+  },
+  {
+    question: "Comment recycler les emballages en défis d'ingénierie stimulants ?",
+    answer:
+      "Gardez les cartons d'œufs, rouleaux en carton et bouchons dans une boîte d'atelier. Lancez un défi à contraintes : concevoir un pont capable de supporter un bol plein ou fabriquer une catapulte avec deux élastiques. Moins le matériel est sophistiqué, plus l'ingéniosité s'aiguise.",
+  },
 ];
 
 export const Route = createFileRoute("/guides/jouets-educatifs-kits-scientifiques-placards-maison")({
@@ -49,18 +64,18 @@ export const Route = createFileRoute("/guides/jouets-educatifs-kits-scientifique
           breadcrumbJsonLd([
             { name: "Accueil", path: "/" },
             { name: "Guides", path: "/guides" },
-            { name: "Sciences & Expériences maison", path: PATH },
+            { name: "Sciences et expériences maison", path: PATH },
           ]),
         ),
         jsonLdScript(
           articleJsonLd({
             headline: "Jouets éducatifs et kits scientifiques : pourquoi ce que vous avez dans vos placards développe mieux l'ingéniosité",
             description:
-              "Comment les objets du quotidien, sans notice ni plastique, surpassent les jouets dits 'éducatifs' pour développer la résolution de problèmes chez l'enfant.",
+              "Pourquoi les objets du quotidien développent mieux la curiosité scientifique de votre enfant que les kits éducatifs fermés du commerce.",
             path: PATH,
             image: "/guides/og-jouets-placards.jpg",
             datePublished: "2026-08-24",
-            dateModified: "2026-08-27",
+            dateModified: "2026-09-04",
           }),
         ),
       ],

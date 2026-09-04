@@ -30,6 +30,16 @@ const FAQ = [
     answer:
       "Oui, et c'est une vraie question à anticiper, surtout à la rentrée scolaire : un enfant réservé peut souffrir en silence — répondre trop bas, ne pas oser demander où sont les toilettes, subir des moqueries sans en parler. Parlez-en avec le maître ou la maîtresse dès les premiers jours : une place au premier rang, un mot d'encouragement discret ou un rôle dans la classe (distribuer les cahiers) changent souvent tout. Et si votre enfant se replie, perd le sommeil ou refuse l'école plusieurs semaines, n'hésitez pas à consulter un professionnel : la réserve n'est pas un problème, la souffrance, si.",
   },
+  {
+    question: "Mon enfant refuse d'ouvrir la bouche à l'école : est-ce un mutisme sélectif ?",
+    answer:
+      "Si votre enfant parle couramment à la maison mais reste muet en classe ou devant des inconnus depuis plus d'un mois, il s'agit sans doute d'un mutisme sélectif. Ce n'est ni de la mauvaise volonté ni un caprice, mais une véritable réaction d'anxiété sociale. Évitez de le forcer ou de négocier la parole. Informez l'enseignant avec tact et rapprochez-vous d'un spécialiste (psychologue ou orthophoniste) pour désamorcer la tension en douceur.",
+  },
+  {
+    question: "Comment l'aider à inviter un camarade à la maison sans le mettre sous pression ?",
+    answer:
+      "Limitez l'invitation à un seul camarade et sur une durée courte (une heure et demie après l'école). Préparez à l'avance une activité manuelle ou un défi pratique (pâtisserie, construction, puzzle) : quand les mains sont occupées sur un projet commun, le contact se noue sans l'angoisse d'avoir à tenir une conversation continue.",
+  },
 ];
 
 export const Route = createFileRoute("/guides/timidite-confiance-prise-de-parole")({
@@ -61,7 +71,7 @@ export const Route = createFileRoute("/guides/timidite-confiance-prise-de-parole
             path: PATH,
             image: "/guides/og-timidite.jpg",
             datePublished: "2026-08-08",
-            dateModified: "2026-08-26",
+            dateModified: "2026-09-04",
           }),
         ),
       ],

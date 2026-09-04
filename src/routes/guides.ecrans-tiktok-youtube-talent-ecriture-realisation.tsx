@@ -29,6 +29,21 @@ const FAQ = [
     answer:
       "L'écriture de scénario structure la pensée, le cadrage affine le sens spatial et le montage forge la rigueur.",
   },
+  {
+    question: "À quel âge autoriser un compte sur les réseaux sociaux ?",
+    answer:
+      "L'âge légal fixé par la loi est de 13 ans (avec accord parental jusqu'à 15 ans). Avant cet âge, les flux vidéo courts saturent la concentration et favorisent l'anxiété de comparaison. Proposez-lui plutôt des outils de création hors ligne : logiciel de montage sur l'ordinateur familial ou animation image par image.",
+  },
+  {
+    question: "Comment passer du visionnage passif à une pratique créative ?",
+    answer:
+      "Instaurez un principe simple : pour chaque heure passée devant des vidéos, prévoyez un temps équivalent d'action manuelle ou numérique (dessiner un storyboard, monter un court métrage ou enregistrer une interview). L'enfant quitte la posture de spectateur pour devenir l'artisan de ses histoires.",
+  },
+  {
+    question: "Quels sont les signaux d'une consommation d'écrans excessive ?",
+    answer:
+      "L'agacement au moment d'éteindre, la perte d'intérêt pour le jeu libre, le sommeil perturbé et l'isolement dans la chambre sont les principaux repères d'alerte. Maintenez des espaces préservés (les repas, la chambre la nuit) et annoncez toujours l'arrêt cinq minutes à l'avance pour éviter la rupture brutale.",
+  },
 ];
 
 export const Route = createFileRoute("/guides/ecrans-tiktok-youtube-talent-ecriture-realisation")({
@@ -49,18 +64,18 @@ export const Route = createFileRoute("/guides/ecrans-tiktok-youtube-talent-ecrit
           breadcrumbJsonLd([
             { name: "Accueil", path: "/" },
             { name: "Guides", path: "/guides" },
-            { name: "Écrans & Création vidéo", path: PATH },
+            { name: "Écrans et création vidéo", path: PATH },
           ]),
         ),
         jsonLdScript(
           articleJsonLd({
             headline: "Votre enfant passe des heures sur TikTok ou YouTube ? Transformez son écran en talent d'écriture et de réalisation",
             description:
-              "Comment passer d'une consommation passive des écrans à une démarche active en apprenant à son enfant les bases du montage, du script et de la réalisation.",
+              "Méthode pour transformer la fascination des écrans en pratique créative : écriture de scénario, cadrage et montage vidéo pour les 8-15 ans.",
             path: PATH,
             image: "/guides/og-tiktok-realisation.jpg",
             datePublished: "2026-08-24",
-            dateModified: "2026-08-27",
+            dateModified: "2026-09-04",
           }),
         ),
       ],

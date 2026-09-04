@@ -23,6 +23,21 @@ const PATH = "/guides/comment-gerer-argent-de-poche-enfant";
 
 const FAQ = [
   {
+    question: "À quel âge commencer à donner de l'argent de poche ?",
+    answer:
+      "Vers 6 ou 7 ans (CP/CE1), dès que l'enfant comprend la notion d'échange et apprend à compter la monnaie. À cet âge, donnez une petite somme chaque semaine à jour fixe pour l'ancrer dans le concret, car un mois paraît une éternité pour lui.",
+  },
+  {
+    question: "Combien donner d'argent de poche selon l'âge ?",
+    answer:
+      "Comptez environ 1 à 2 € (ou 500 à 1 000 FCFA) par semaine entre 6 et 8 ans, 3 à 5 € par semaine entre 9 et 11 ans, puis 15 à 30 € par mois au collège. L'important n'est pas le montant, mais la régularité et le fait que ce budget couvre des plaisirs personnels librement choisis.",
+  },
+  {
+    question: "Faut-il lier l'argent de poche aux bonnes notes ou aux tâches ménagères ?",
+    answer:
+      "Non. Participer aux corvées du foyer relève de la vie collective, pas d'un travail rémunéré. De même, monnayer les résultats scolaires fragilise la curiosité et l'envie d'apprendre pour soi-même. L'argent de poche doit rester un outil d'apprentissage régulier et inconditionnel.",
+  },
+  {
     question: "Faut-il contrôler systématiquement chaque achat de son enfant ?",
     answer:
       "Non. Le contrôle permanent étouffe l'autonomie. Laissez-le choisir librement, quitte à acheter un gadget cassé en deux heures : cette petite déception concrète enseigne la prudence bien plus vite que vingt sermons.",
@@ -57,7 +72,7 @@ export const Route = createFileRoute("/guides/comment-gerer-argent-de-poche-enfa
           breadcrumbJsonLd([
             { name: "Accueil", path: "/" },
             { name: "Guides", path: "/guides" },
-            { name: "Argent de poche & Éducation financière", path: PATH },
+            { name: "Gérer l'argent de poche", path: PATH },
           ]),
         ),
         jsonLdScript(
@@ -69,7 +84,7 @@ export const Route = createFileRoute("/guides/comment-gerer-argent-de-poche-enfa
             path: PATH,
             image: "/guides/og-argent-poche.jpg",
             datePublished: "2026-08-31",
-            dateModified: "2026-08-31",
+            dateModified: "2026-09-04",
           }),
         ),
       ],
