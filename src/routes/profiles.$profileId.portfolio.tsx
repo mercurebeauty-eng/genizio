@@ -68,8 +68,11 @@ import {
   Target,
   Gift,
   LayoutDashboard,
+  GraduationCap,
 } from "lucide-react";
 import { AppHeader } from "@/components/AppHeader";
+import { SharePassportModal } from "@/components/delegations/SharePassportModal";
+import { ParentPostSessionDebrief } from "@/components/safeguarding/ParentPostSessionDebrief";
 import { INTERESTS_BY_TALENT } from "@/components/profiles/shared";
 import {
   getPortfolioPulse,
@@ -290,6 +293,8 @@ function PortfolioPage() {
   // dernière séquence de reformulations — jamais de verdict (garde-fou §35).
   const [failureSequence, setFailureSequence] = useState<FailureSequenceSnapshot | null>(null);
   const [hasMentor, setHasMentor] = useState(false);
+  const [assignedMentorUserId, setAssignedMentorUserId] = useState<string | null>(null);
+  const [isSharePassportOpen, setIsSharePassportOpen] = useState(false);
 
   const ensureHypotheses = useServerFn(ensureHypothesesForChild);
   const initializePassportPaymentFn = useServerFn(initializePassportPayment);
@@ -344,7 +349,7 @@ function PortfolioPage() {
           .limit(50),
         supabase
           .from("mentors")
-          .select("id")
+          .select("id, mentor_user_id")
           .eq("child_profile_id", profileId)
           .is("removed_at", null)
           .limit(1),
@@ -354,7 +359,9 @@ function PortfolioPage() {
           setChallenges((view.challenges ?? []) as Challenge[]);
           setOpenCycle((view.openCycle as OpenHypothesisCycle) ?? null);
           setDiscoveryArtifacts((dt.data ?? []) as any[]);
-          setHasMentor((mentorRes.data ?? []).length > 0);
+          const firstM = (mentorRes.data ?? [])[0];
+          setHasMentor(Boolean(firstM));
+          setAssignedMentorUserId((firstM as any)?.mentor_user_id ?? null);
         })
         .catch((err) => {
           console.error("Erreur lors du chargement du portfolio (mode mentor):", err);
@@ -363,6 +370,7 @@ function PortfolioPage() {
           setOpenCycle(null);
           setDiscoveryArtifacts([]);
           setHasMentor(false);
+          setAssignedMentorUserId(null);
         })
         .finally(() => {
           setFetching(false);
@@ -403,7 +411,7 @@ function PortfolioPage() {
         .limit(50),
       supabase
         .from("mentors")
-        .select("id")
+        .select("id, mentor_user_id")
         .eq("child_profile_id", profileId)
         .is("removed_at", null)
         .limit(1),
@@ -413,7 +421,9 @@ function PortfolioPage() {
         setChallenges((ch.data ?? []) as Challenge[]);
         setOpenCycle((hc.data as OpenHypothesisCycle) ?? null);
         setDiscoveryArtifacts((dt.data ?? []) as any[]);
-        setHasMentor((mentorRes.data ?? []).length > 0);
+        const firstM = (mentorRes.data ?? [])[0];
+        setHasMentor(Boolean(firstM));
+        setAssignedMentorUserId((firstM as any)?.mentor_user_id ?? null);
       })
       .catch((err) => {
         console.error("Erreur lors du chargement du portfolio:", err);
@@ -422,6 +432,7 @@ function PortfolioPage() {
         setOpenCycle(null);
         setDiscoveryArtifacts([]);
         setHasMentor(false);
+        setAssignedMentorUserId(null);
       })
       .finally(() => {
         setFetching(false);
@@ -1378,6 +1389,39 @@ function PortfolioPage() {
             </Link>
           )}
 
+          {/* Passerelle Éducative & Orientation — Partage avec École / Conseiller */}
+          <button
+            type="button"
+            onClick={() => setIsSharePassportOpen(true)}
+            className="flex items-center justify-between gap-4 rounded-3xl border border-indigo-200 bg-gradient-to-r from-indigo-50/90 via-white to-sky-50/70 p-5 shadow-sm transition-all hover:border-indigo-300 w-full text-left cursor-pointer"
+          >
+            <div className="flex items-center gap-3 min-w-0">
+              <div className="grid size-11 place-items-center rounded-2xl bg-indigo-600 text-white shadow-xs shrink-0">
+                <GraduationCap className="size-6" />
+              </div>
+              <div className="min-w-0">
+                <p className="text-xs font-black uppercase tracking-wider text-indigo-950">
+                  Passerelle École & Orientation
+                </p>
+                <p className="text-xs text-ink/75 mt-0.5 font-medium truncate sm:whitespace-normal">
+                  Transmettre la Carte des Talents et le profil d'apprentissage aux professeurs ou conseillers d'orientation.
+                </p>
+              </div>
+            </div>
+            <span className="shrink-0 inline-flex items-center gap-1 rounded-xl bg-indigo-600 px-3.5 py-2 text-xs font-bold text-white shadow-xs hover:bg-indigo-700 transition-colors">
+              Partager l'accès →
+            </span>
+          </button>
+
+          {/* Débriefing bienveillant post-séance (mode parent avec mentor) */}
+          {!mentorMode && hasMentor && assignedMentorUserId && (
+            <ParentPostSessionDebrief
+              childId={child.id}
+              childName={child.name}
+              mentorUserId={assignedMentorUserId}
+            />
+          )}
+
           <div className="grid grid-cols-1 gap-6 ">
             <div className="rounded-3xl border border-ink/10 bg-white p-6 shadow-xl">
               <h3 className="mb-4 flex items-center gap-2 font-display text-balance text-lg font-bold">
@@ -1964,6 +2008,15 @@ function PortfolioPage() {
               </div>
             )}
           </div>
+
+          {child && (
+            <SharePassportModal
+              childId={child.id}
+              childName={child.name}
+              isOpen={isSharePassportOpen}
+              onClose={() => setIsSharePassportOpen(false)}
+            />
+          )}
         </div>
       </main>
 

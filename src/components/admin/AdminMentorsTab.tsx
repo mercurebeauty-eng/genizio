@@ -41,9 +41,12 @@ import {
   ListChecks,
   Banknote,
   KeyRound,
+  HeartHandshake,
 } from "lucide-react";
 import { toast } from "sonner";
 import { confirmDialog } from "@/components/ui/confirm-dialog";
+import { AdminSafeguardingAudits } from "./AdminSafeguardingAudits";
+import { AdminSafetyReports } from "./AdminSafetyReports";
 
 // Refonte « Gestion des Mentors » (2026-08-14) — répond aux trois manques signalés :
 //   • « on ne sait pas comment ça fonctionne » → encadré « Comment ça marche » ci-dessous ;
@@ -58,6 +61,7 @@ export function AdminMentorsTab() {
   const [campaigns, setCampaigns] = useState<{ id: string; name: string }[]>([]);
   const [fetching, setFetching] = useState(true);
   const [forbidden, setForbidden] = useState(false);
+  const [mentorSubTab, setMentorSubTab] = useState<"directory" | "audits" | "safety">("directory");
   const [isAssignModalOpen, setIsAssignModalOpen] = useState(false);
   const [page, setPage] = useState(1);
   const [total, setTotal] = useState(0);
@@ -335,19 +339,63 @@ export function AdminMentorsTab() {
           <Users className="size-6" />
         </div>
         <div>
-          <h2 className="text-xl font-display font-black text-ink">Gestion des Mentors</h2>
+          <h2 className="text-xl font-display font-black text-ink">Gestion des Mentors & Protection</h2>
           <p className="text-sm font-medium text-ink/60">
-            Assigner des mentors aux profils d'enfants et cohortes B2B.
+            Assignation de mentors, audits de bienveillance (Génizio Care) et protection des enfants.
           </p>
         </div>
       </div>
 
-      {/* « Comment ça marche » (2026-08-14) — le fonctionnement du système n'était documenté
-          nulle part : un compte devient mentor quand un admin (enfant par enfant) ou un
-          gestionnaire de campagne (par cohorte) lui assigne des enfants. Le quota de 5 enfants
-          par mentor (« 5 par 5 », décision 2026-08-08) est appliqué en base par le trigger
-          check_mentor_quota. */}
-      <div className="rounded-3xl border border-sky-200/70 bg-sky-50 p-4 sm:p-5">
+      {/* Sous-navigation de l'espace Mentors & Protection */}
+      <div className="flex flex-wrap items-center gap-2 border-b border-ink/10 pb-3">
+        <button
+          type="button"
+          onClick={() => setMentorSubTab("directory")}
+          className={`flex items-center gap-2 px-4 py-2 rounded-2xl text-xs font-black transition-all cursor-pointer ${
+            mentorSubTab === "directory"
+              ? "bg-ink text-white shadow-sm"
+              : "bg-surface text-ink/60 hover:text-ink"
+          }`}
+        >
+          <Users className="size-4" />
+          <span>Mentors & Escouades</span>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => setMentorSubTab("audits")}
+          className={`flex items-center gap-2 px-4 py-2 rounded-2xl text-xs font-black transition-all cursor-pointer ${
+            mentorSubTab === "audits"
+              ? "bg-emerald-700 text-white shadow-sm"
+              : "bg-surface text-emerald-800 hover:bg-emerald-50"
+          }`}
+        >
+          <HeartHandshake className="size-4" />
+          <span>Génizio Care — Audits Trimestriels</span>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => setMentorSubTab("safety")}
+          className={`flex items-center gap-2 px-4 py-2 rounded-2xl text-xs font-black transition-all cursor-pointer ${
+            mentorSubTab === "safety"
+              ? "bg-rose-600 text-white shadow-sm"
+              : "bg-surface text-rose-700 hover:bg-rose-50"
+          }`}
+        >
+          <ShieldAlert className="size-4" />
+          <span>Signalements & Kill-Switch</span>
+        </button>
+      </div>
+
+      {mentorSubTab === "audits" ? (
+        <AdminSafeguardingAudits />
+      ) : mentorSubTab === "safety" ? (
+        <AdminSafetyReports />
+      ) : (
+        <>
+          {/* « Comment ça marche » (2026-08-14) */}
+          <div className="rounded-3xl border border-sky-200/70 bg-sky-50 p-4 sm:p-5">
         <div className="flex gap-3">
           <Info className="size-5 text-sky-600 shrink-0 mt-0.5" />
           <div className="text-xs sm:text-sm text-sky-900 leading-relaxed space-y-1">
@@ -752,6 +800,8 @@ export function AdminMentorsTab() {
           </>
         )}
       </div>
+    </>
+  )}
 
       {/* Modal ledger payout (Vague C) : les séances du mentor + approbation. */}
       {payoutModalFor && (
