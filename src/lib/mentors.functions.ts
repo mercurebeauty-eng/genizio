@@ -1894,7 +1894,24 @@ export const getMentorActivationStatus = createServerFn({ method: "GET" })
     const { data: user } = await supabaseAdmin.auth.admin
       .getUserById(userId)
       .catch(() => ({ data: null }));
-    const mode = (user?.user?.user_metadata as any)?.mode === "mentor" ? "mentor" : "parent";
+    const rawMode = (user?.user?.user_metadata as any)?.mode;
+    const mode = rawMode === "mentor" ? "mentor" : rawMode === "educator" ? "educator" : "parent";
+
+    // Éducateur / Conseiller / Orientation (Sprint C)
+    const { data: educatorProfile } = await supabaseAdmin
+      .from("educator_profiles")
+      .select("*")
+      .eq("user_id", userId)
+      .maybeSingle();
+
+    const userEmail = user?.user?.email?.toLowerCase();
+    const { count: delegationsCount } = await supabaseAdmin
+      .from("child_delegations")
+      .select("id", { count: "exact", head: true })
+      .or(`beneficiary_user_id.eq.${userId},beneficiary_email.eq.${userEmail || "none"}`)
+      .eq("status", "active");
+
+    const hasEducator = !!educatorProfile || (delegationsCount ?? 0) > 0;
 
     return {
       certified: !!profile || hasAssignments,
@@ -1903,10 +1920,23 @@ export const getMentorActivationStatus = createServerFn({ method: "GET" })
       hasAssignments,
       // Décision #81 : nombre d'enfants assignés — carte « Compte Mentor » en mode mentor.
       assignedCount: count ?? 0,
+      hasEducator,
+      educatorProfile: educatorProfile
+        ? {
+            id: educatorProfile.id,
+            handle: educatorProfile.handle,
+            fullName: educatorProfile.full_name,
+            organizationName: educatorProfile.organization_name,
+            professionalRole: educatorProfile.professional_role,
+            classCode: educatorProfile.class_code,
+            isVerified: educatorProfile.is_verified,
+          }
+        : null,
+      delegatedStudentsCount: delegationsCount ?? 0,
     };
   });
 
-const SetModeInput = z.object({ mode: z.enum(["parent", "mentor"]) });
+const SetModeInput = z.object({ mode: z.enum(["parent", "mentor", "educator"]) });
 
 export const setMentorMode = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
@@ -1939,6 +1969,25 @@ export const setMentorMode = createServerFn({ method: "POST" })
       }
     }
 
+    if (data.mode === "educator") {
+      const { data: educatorProfile } = await supabaseAdmin
+        .from("educator_profiles")
+        .select("id")
+        .eq("user_id", userId)
+        .maybeSingle();
+
+      const userEmail = (context as any).claims?.email?.toLowerCase();
+      const { count: delegationsCount } = await supabaseAdmin
+        .from("child_delegations")
+        .select("id", { count: "exact", head: true })
+        .or(`beneficiary_user_id.eq.${userId},beneficiary_email.eq.${userEmail || "none"}`)
+        .eq("status", "active");
+
+      if (!educatorProfile && (delegationsCount ?? 0) === 0) {
+        throw new Error("Veuillez d'abord configurer votre profil professionnel Éducateur / Conseiller.");
+      }
+    }
+
     const { data: user } = await supabaseAdmin.auth.admin.getUserById(userId);
     const meta = { ...(user?.user?.user_metadata ?? {}), mode: data.mode };
     const { error } = await supabaseAdmin.auth.admin.updateUserById(userId, {
@@ -1947,6 +1996,7 @@ export const setMentorMode = createServerFn({ method: "POST" })
     if (error) throw new Error(error.message);
     return { success: true, mode: data.mode };
   });
+
 
 // L'utilisateur active le mode Mentor avec son code — la RPC défenseur vérifie
 // auth.uid() (l'appel passe par le client authentifié, jamais le service role).

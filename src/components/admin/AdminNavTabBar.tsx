@@ -14,6 +14,7 @@ import {
   Bell,
   Home,
   Compass,
+  GraduationCap,
 } from "lucide-react";
 
 // Refonte Admin OS (2026-08-13, décision #71) : onglets — « Seasons » supprimé
@@ -25,6 +26,7 @@ export type AdminTab =
   | "executive"
   | "b2b"
   | "mentors"
+  | "educators"
   | "events"
   | "products"
   | "talents"
@@ -95,6 +97,19 @@ export const ADMIN_TABS: AdminTabDef[] = [
       "bg-gradient-to-br from-emerald-500/10 via-white to-white border-emerald-500/20 hover:shadow-emerald-500/25",
     iconClass: "from-emerald-500 to-teal-600 shadow-emerald-500/40",
     haloClass: "from-emerald-400/50 to-teal-400/10",
+  },
+  {
+    id: "educators",
+    label: "Éducation & Écoles",
+    sublabel: "Profs & Conseillers",
+    icon: GraduationCap,
+    badge: "Écoles",
+    badgeBgClass: "bg-indigo-500/10",
+    badgeTextClass: "text-indigo-700",
+    cardClass:
+      "bg-gradient-to-br from-indigo-500/10 via-white to-white border-indigo-500/20 hover:shadow-indigo-500/25",
+    iconClass: "from-indigo-600 to-sky-700 shadow-indigo-500/40",
+    haloClass: "from-indigo-400/50 to-sky-400/10",
   },
   {
     id: "events",

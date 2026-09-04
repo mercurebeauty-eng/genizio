@@ -6,6 +6,7 @@
 
 import type { ChildDevelopmentState } from "./context-engine";
 import { DOMAINS } from "./challenges.functions";
+import { type PedagogicalFormat, determinePedagogicalFormat } from "./profile-engine";
 
 export type MissionPedagogicalIntent =
   | "child_question_action"   // Répondre par l'expérience à une question posée par l'enfant
@@ -23,6 +24,7 @@ export interface ChallengeMission {
   difficultyZone: "stable" | "exploration_zpd" | "consolidation";
   pedagogicalBrief: string;
   actionHook?: string;
+  format?: PedagogicalFormat;
 }
 
 /**
@@ -63,6 +65,7 @@ export function planChallengeMissions(
       targetDomain,
       targetTalents: ["logico_mathematique", "creative"],
       difficultyZone: "exploration_zpd",
+      format: "investigation",
       pedagogicalBrief: `Répondre par l'expérimentation et l'observation concrète à la question de ${state.identity.name} : « ${state.operationalContext.latestChildQuestion} ». L'enfant doit découvrir la réponse par lui-même en manipulant, jamais par un cours passif.`,
       actionHook: state.operationalContext.latestChildQuestion,
     });
@@ -80,6 +83,7 @@ export function planChallengeMissions(
       targetDomain,
       targetTalents: ["artisanale", "logico_mathematique"],
       difficultyZone: "exploration_zpd",
+      format: "constructive_project",
       pedagogicalBrief: `Un pic de performance a été observé en groupe dans le domaine ${peakTarget.domain} (niveau visé : ${peakTarget.targetLevelAge} ans) : concevoir une mission individuelle pour vérifier son autonomie réelle et ancrer sa confiance en solo.`,
     });
   }
@@ -99,6 +103,7 @@ export function planChallengeMissions(
       targetDomain,
       targetTalents,
       difficultyZone: "stable",
+      format: "investigation",
       pedagogicalBrief: `Mettre ${state.identity.name} en situation pour éprouver l'hypothèse : « ${pendingHypothesis.statement} ». Observer sa persévérance et son affinité réelle sur le terrain.`,
     });
   }
@@ -109,12 +114,17 @@ export function planChallengeMissions(
   );
   if (zpdTarget && missions.length < count) {
     const targetDomain = pickAvailableDomain(zpdTarget.domain);
+    const format: PedagogicalFormat =
+      state.identity.age >= 9 || state.capabilities.stableDomains.includes(zpdTarget.domain)
+        ? "constructive_project"
+        : "investigation";
     missions.push({
       missionIndex: missions.length + 1,
       intent: "zpd_progression",
       targetDomain,
       targetTalents: ["logico_mathematique", "artisanale"],
       difficultyZone: "exploration_zpd",
+      format,
       pedagogicalBrief: `Franchir un palier de progression en ${zpdTarget.domain} vers le niveau ${zpdTarget.targetLevelAge} ans. Relier la notion abstraite à un système concret et décomposer les étapes pour préserver la confiance.`,
     });
   }
@@ -129,6 +139,7 @@ export function planChallengeMissions(
       targetDomain,
       targetTalents: ["creative", "spatial"],
       difficultyZone: "consolidation",
+      format: "spark_micro",
       pedagogicalBrief: `Stimuler le talent moins exploré « ${leastExplored} » en utilisant les modes d'action naturels de l'enfant comme tremplin bienveillant.`,
     });
   }
@@ -142,6 +153,7 @@ export function planChallengeMissions(
       targetDomain,
       targetTalents: ["creative", "artisanale"],
       difficultyZone: "stable",
+      format: "spark_micro",
       pedagogicalBrief: `Découverte et réalisation concrète dans le domaine ${targetDomain}, adaptée à l'âge et aux réalités locales.`,
     });
   }

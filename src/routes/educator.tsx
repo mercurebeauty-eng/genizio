@@ -3,6 +3,7 @@ import { useState, useEffect } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { useSession } from "@/hooks/use-session";
 import { AppHeader } from "@/components/AppHeader";
+import { AppTabBar } from "@/components/AppTabBar";
 import {
   listMyEducatorDelegations,
   getEducationalPassport,
@@ -108,6 +109,7 @@ function EducatorDashboardPage() {
   return (
     <div className="min-h-dvh bg-surface pb-24 text-ink">
       <AppHeader />
+      <AppTabBar profileId="" />
 
       <main className="mx-auto max-w-6xl px-6 py-8 space-y-6">
         {/* Header */}

@@ -24,6 +24,7 @@ import { Route as MentorRouteImport } from './routes/mentor'
 import { Route as MentionsLegalesRouteImport } from './routes/mentions-legales'
 import { Route as LaboratoryRouteImport } from './routes/laboratory'
 import { Route as GuidesRouteImport } from './routes/guides'
+import { Route as EducatorRouteImport } from './routes/educator'
 import { Route as BoutiqueRouteImport } from './routes/boutique'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AdminRouteImport } from './routes/admin'
@@ -149,6 +150,11 @@ const LaboratoryRoute = LaboratoryRouteImport.update({
 const GuidesRoute = GuidesRouteImport.update({
   id: '/guides',
   path: '/guides',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const EducatorRoute = EducatorRouteImport.update({
+  id: '/educator',
+  path: '/educator',
   getParentRoute: () => rootRouteImport,
 } as any)
 const BoutiqueRoute = BoutiqueRouteImport.update({
@@ -448,6 +454,7 @@ export interface FileRoutesByFullPath {
   '/admin': typeof AdminRouteWithChildren
   '/auth': typeof AuthRoute
   '/boutique': typeof BoutiqueRoute
+  '/educator': typeof EducatorRoute
   '/guides': typeof GuidesRouteWithChildren
   '/laboratory': typeof LaboratoryRoute
   '/mentions-legales': typeof MentionsLegalesRoute
@@ -515,6 +522,7 @@ export interface FileRoutesByTo {
   '/a-propos': typeof AProposRoute
   '/auth': typeof AuthRoute
   '/boutique': typeof BoutiqueRoute
+  '/educator': typeof EducatorRoute
   '/laboratory': typeof LaboratoryRoute
   '/mentions-legales': typeof MentionsLegalesRoute
   '/mentor': typeof MentorRoute
@@ -581,6 +589,7 @@ export interface FileRoutesById {
   '/admin': typeof AdminRouteWithChildren
   '/auth': typeof AuthRoute
   '/boutique': typeof BoutiqueRoute
+  '/educator': typeof EducatorRoute
   '/guides': typeof GuidesRouteWithChildren
   '/laboratory': typeof LaboratoryRoute
   '/mentions-legales': typeof MentionsLegalesRoute
@@ -651,6 +660,7 @@ export interface FileRouteTypes {
     | '/admin'
     | '/auth'
     | '/boutique'
+    | '/educator'
     | '/guides'
     | '/laboratory'
     | '/mentions-legales'
@@ -718,6 +728,7 @@ export interface FileRouteTypes {
     | '/a-propos'
     | '/auth'
     | '/boutique'
+    | '/educator'
     | '/laboratory'
     | '/mentions-legales'
     | '/mentor'
@@ -783,6 +794,7 @@ export interface FileRouteTypes {
     | '/admin'
     | '/auth'
     | '/boutique'
+    | '/educator'
     | '/guides'
     | '/laboratory'
     | '/mentions-legales'
@@ -852,6 +864,7 @@ export interface RootRouteChildren {
   AdminRoute: typeof AdminRouteWithChildren
   AuthRoute: typeof AuthRoute
   BoutiqueRoute: typeof BoutiqueRoute
+  EducatorRoute: typeof EducatorRoute
   GuidesRoute: typeof GuidesRouteWithChildren
   LaboratoryRoute: typeof LaboratoryRoute
   MentionsLegalesRoute: typeof MentionsLegalesRoute
@@ -976,6 +989,13 @@ declare module '@tanstack/react-router' {
       path: '/guides'
       fullPath: '/guides'
       preLoaderRoute: typeof GuidesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/educator': {
+      id: '/educator'
+      path: '/educator'
+      fullPath: '/educator'
+      preLoaderRoute: typeof EducatorRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/boutique': {
@@ -1492,6 +1512,7 @@ const rootRouteChildren: RootRouteChildren = {
   AdminRoute: AdminRouteWithChildren,
   AuthRoute: AuthRoute,
   BoutiqueRoute: BoutiqueRoute,
+  EducatorRoute: EducatorRoute,
   GuidesRoute: GuidesRouteWithChildren,
   LaboratoryRoute: LaboratoryRoute,
   MentionsLegalesRoute: MentionsLegalesRoute,

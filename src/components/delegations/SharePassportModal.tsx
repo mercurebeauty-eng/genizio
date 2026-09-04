@@ -8,6 +8,10 @@ import {
   type ChildDelegationDetail,
 } from "@/lib/delegations.functions";
 import {
+  lookupEducator,
+  type EducatorLookupResult,
+} from "@/lib/educators-lookup.functions";
+import {
   GraduationCap,
   X,
   Share2,
@@ -17,7 +21,12 @@ import {
   Trash2,
   Loader2,
   Building2,
-  Phone,
+  MessageSquare,
+  Search,
+  AtSign,
+  Hash,
+  Mail,
+  Copy,
 } from "lucide-react";
 import { toast } from "sonner";
 import { confirmDialog } from "@/components/ui/confirm-dialog";
@@ -40,6 +49,15 @@ export function SharePassportModal({
   const [loading, setLoading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
 
+  // Tab mode: "handle" | "whatsapp" | "email"
+  const [activeMode, setActiveMode] = useState<"handle" | "whatsapp" | "email">("handle");
+
+  // Handle & Code Classe search
+  const [searchQuery, setSearchQuery] = useState("");
+  const [searching, setSearching] = useState(false);
+  const [foundEducator, setFoundEducator] = useState<EducatorLookupResult | null>(null);
+  const [searchedOnce, setSearchedOnce] = useState(false);
+
   // Form states
   const [email, setEmail] = useState("");
   const [name, setName] = useState("");
@@ -48,9 +66,13 @@ export function SharePassportModal({
   const [durationDays, setDurationDays] = useState(300);
   const [sharePhone, setSharePhone] = useState(true);
 
+  // WhatsApp target phone
+  const [targetWhatsApp, setTargetWhatsApp] = useState("");
+
   const createFn = useServerFn(createChildDelegation);
   const listFn = useServerFn(listChildDelegations);
   const revokeFn = useServerFn(revokeChildDelegation);
+  const lookupFn = useServerFn(lookupEducator);
 
   const loadDelegations = async () => {
     if (!childId) return;
@@ -73,9 +95,39 @@ export function SharePassportModal({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOpen, childId]);
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  // Recherche par handle ou code de classe
+  const handleSearchEducator = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!email.trim()) return;
+    if (!searchQuery.trim()) return;
+
+    setSearching(true);
+    setFoundEducator(null);
+    setSearchedOnce(true);
+    try {
+      const opts = session?.access_token
+        ? { headers: { Authorization: `Bearer ${session.access_token}` } }
+        : {};
+      const result = await lookupFn({ data: searchQuery.trim(), ...opts });
+      setFoundEducator(result);
+      if (result) {
+        if (result.email) setEmail(result.email);
+        setName(result.fullName);
+        if (result.organizationName) setOrganization(result.organizationName);
+        setRole(result.professionalRole);
+      }
+    } catch (err) {
+      console.error(err);
+      toast.error("Erreur lors de la recherche du professionnel.");
+    } finally {
+      setSearching(false);
+    }
+  };
+
+  const handleConfirmDelegation = async (targetEmail: string, educatorRole = role) => {
+    if (!targetEmail.trim()) {
+      toast.error("Une adresse email ou un compte est requis pour finaliser l'accès.");
+      return;
+    }
 
     setSubmitting(true);
     try {
@@ -85,10 +137,10 @@ export function SharePassportModal({
       await createFn({
         data: {
           childId,
-          beneficiaryEmail: email.trim(),
+          beneficiaryEmail: targetEmail.trim(),
           beneficiaryName: name.trim() || undefined,
           organizationName: organization.trim() || undefined,
-          professionalRole: role,
+          professionalRole: educatorRole,
           scope: "orientation",
           durationDays,
           shareParentPhone: sharePhone,
@@ -96,7 +148,9 @@ export function SharePassportModal({
         ...opts,
       });
 
-      toast.success(`Accès accordé pour ${email} !`);
+      toast.success(`Pass Éducatif accordé avec succès !`);
+      setFoundEducator(null);
+      setSearchQuery("");
       setEmail("");
       setName("");
       setOrganization("");
@@ -129,6 +183,15 @@ export function SharePassportModal({
       toast.error(err instanceof Error ? err.message : "Erreur lors de la révocation.");
     }
   };
+
+  // WhatsApp link preparation
+  const cleanPhone = targetWhatsApp.replace(/[^\d]/g, "");
+  const whatsappShareText = encodeURIComponent(
+    `Bonjour, je vous partage le Passeport Pédagogique Génizio de mon enfant ${childName} (forces, intelligences multiples et profil d'apprentissage) : ${window.location.origin}/educator`,
+  );
+  const whatsappUrl = cleanPhone
+    ? `https://wa.me/${cleanPhone}?text=${whatsappShareText}`
+    : `https://wa.me/?text=${whatsappShareText}`;
 
   if (!isOpen) return null;
 
@@ -172,115 +235,311 @@ export function SharePassportModal({
           </p>
         </div>
 
-        {/* Formulaire de délégation */}
-        <form onSubmit={handleSubmit} className="space-y-4 text-xs">
-          <h4 className="font-display font-bold text-sm text-ink border-b border-ink/5 pb-1">
-            Accorder un nouvel accès
-          </h4>
+        {/* Choix du mode de ralliement */}
+        <div className="flex rounded-2xl bg-surface p-1 border border-ink/5 text-xs font-bold">
+          <button
+            type="button"
+            onClick={() => setActiveMode("handle")}
+            className={`flex-1 py-2 rounded-xl transition-all cursor-pointer flex items-center justify-center gap-1.5 ${
+              activeMode === "handle"
+                ? "bg-white text-indigo-700 shadow-xs font-black"
+                : "text-ink/60 hover:text-ink"
+            }`}
+          >
+            <AtSign className="size-3.5" />
+            <span>@Handle ou #Classe</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => setActiveMode("whatsapp")}
+            className={`flex-1 py-2 rounded-xl transition-all cursor-pointer flex items-center justify-center gap-1.5 ${
+              activeMode === "whatsapp"
+                ? "bg-white text-emerald-700 shadow-xs font-black"
+                : "text-ink/60 hover:text-ink"
+            }`}
+          >
+            <MessageSquare className="size-3.5" />
+            <span>WhatsApp Direct</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => setActiveMode("email")}
+            className={`flex-1 py-2 rounded-xl transition-all cursor-pointer flex items-center justify-center gap-1.5 ${
+              activeMode === "email"
+                ? "bg-white text-ink shadow-xs font-black"
+                : "text-ink/60 hover:text-ink"
+            }`}
+          >
+            <Mail className="size-3.5" />
+            <span>Email classique</span>
+          </button>
+        </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        {/* MODE 1 : RECHERCHE PAR @HANDLE OU #CODECLASSE */}
+        {activeMode === "handle" && (
+          <div className="space-y-4 text-xs">
+            <form onSubmit={handleSearchEducator} className="space-y-2">
+              <label className="block font-bold text-ink">
+                Identifiant professionnel (@) ou Code de Classe (#) :
+              </label>
+              <div className="flex gap-2">
+                <div className="relative flex-1">
+                  <Search className="size-4 text-ink/40 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+                  <input
+                    type="text"
+                    required
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    placeholder="ex: @kone.maths ou #LCA-6B"
+                    className="w-full rounded-xl border border-ink/10 pl-9 pr-3 py-2.5 font-semibold text-ink outline-none focus:ring-2 focus:ring-brand/30"
+                  />
+                </div>
+                <button
+                  type="submit"
+                  disabled={searching || !searchQuery.trim()}
+                  className="px-4 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold transition-colors flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
+                >
+                  {searching ? <Loader2 className="size-3.5 animate-spin" /> : "Rechercher"}
+                </button>
+              </div>
+            </form>
+
+            {/* Résultat de la recherche */}
+            {foundEducator && (
+              <div className="rounded-2xl border border-emerald-300 bg-emerald-50/60 p-4 space-y-3 animate-in fade-in">
+                <div className="flex items-start justify-between gap-3">
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <h4 className="font-display font-black text-sm text-emerald-950">
+                        {foundEducator.fullName}
+                      </h4>
+                      {foundEducator.isVerified && (
+                        <span className="rounded-full bg-emerald-200 px-2 py-0.5 text-[9px] font-black text-emerald-900">
+                          Vérifié
+                        </span>
+                      )}
+                    </div>
+                    <p className="text-xs text-emerald-900/80 font-medium mt-0.5">
+                      {foundEducator.professionalRole === "teacher"
+                        ? "Enseignant"
+                        : foundEducator.professionalRole === "counselor"
+                          ? "Conseiller d'Orientation"
+                          : "Professionnel de l'éducation"}
+                      {foundEducator.organizationName ? ` · ${foundEducator.organizationName}` : ""}
+                      {foundEducator.classCode ? ` (Classe ${foundEducator.classCode})` : ""}
+                    </p>
+                  </div>
+                </div>
+
+                <div className="pt-2 border-t border-emerald-200/60 flex items-center justify-between gap-3">
+                  <div className="text-[11px] text-emerald-900/70 font-medium">
+                    Durée : <strong>Année scolaire (jusqu'au 31 juillet)</strong>
+                  </div>
+                  <button
+                    type="button"
+                    disabled={submitting}
+                    onClick={() =>
+                      handleConfirmDelegation(
+                        foundEducator.email || `${foundEducator.handle?.replace("@", "")}@genizio.edu`,
+                        foundEducator.professionalRole,
+                      )
+                    }
+                    className="px-4 py-2 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white font-bold text-xs shadow-xs transition-colors flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
+                  >
+                    {submitting ? (
+                      <Loader2 className="size-3.5 animate-spin" />
+                    ) : (
+                      <CheckCircle2 className="size-3.5" />
+                    )}
+                    <span>Confirmer et Transmettre le Pass</span>
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {searchedOnce && !foundEducator && !searching && (
+              <div className="rounded-2xl border border-ink/10 bg-surface p-4 text-center text-ink/60 space-y-1">
+                <p className="font-bold text-ink">Aucun professionnel trouvé pour "{searchQuery}".</p>
+                <p className="text-[11px]">
+                  Vérifiez l'identifiant auprès de votre école ou utilisez le partage WhatsApp ci-dessus.
+                </p>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* MODE 2 : PARTAGE PAR WHATSAPP */}
+        {activeMode === "whatsapp" && (
+          <div className="space-y-4 text-xs">
+            <p className="text-ink/75 leading-relaxed">
+              Transmettez directement l'invitation à votre enseignant sur WhatsApp. Il pourra se
+              connecter avec son compte Google et retrouver immédiatement le dossier de {childName}.
+            </p>
+
             <div>
               <label className="block font-bold text-ink mb-1">
-                Email professionnel du destinataire <span className="text-rose-500">*</span>
+                Numéro WhatsApp du professeur (optionnel) :
               </label>
               <input
-                type="email"
-                required
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="professeur@ecole.com"
-                className="w-full rounded-xl border border-ink/10 p-2.5 font-medium text-ink outline-none focus:ring-2 focus:ring-brand/30"
+                type="tel"
+                value={targetWhatsApp}
+                onChange={(e) => setTargetWhatsApp(e.target.value)}
+                placeholder="+225 07 00 00 00 00"
+                className="w-full rounded-xl border border-ink/10 p-2.5 font-medium text-ink outline-none"
               />
             </div>
-            <div>
-              <label className="block font-bold text-ink mb-1">Rôle professionnel</label>
-              <select
-                value={role}
-                onChange={(e) => setRole(e.target.value as any)}
-                className="w-full rounded-xl border border-ink/10 p-2.5 font-medium text-ink outline-none cursor-pointer"
+
+            <div className="p-3 bg-surface rounded-2xl border border-ink/5 space-y-2">
+              <p className="font-bold text-ink/50 uppercase tracking-wider text-[10px]">
+                Aperçu du message WhatsApp :
+              </p>
+              <p className="text-xs text-ink/80 italic font-medium leading-relaxed">
+                "Bonjour, je vous partage le Passeport Pédagogique Génizio de mon enfant {childName}{" "}
+                (forces, intelligences multiples et profil d'apprentissage) :{" "}
+                <span className="text-indigo-600 underline">{window.location.origin}/educator</span>"
+              </p>
+            </div>
+
+            <div className="flex gap-2">
+              <a
+                href={whatsappUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex-1 py-3 rounded-2xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-md transition-colors flex items-center justify-center gap-2"
               >
-                <option value="teacher">Professeur / Enseignant</option>
-                <option value="counselor">Conseiller d'orientation</option>
-                <option value="psychologist">Psychologue scolaire</option>
-                <option value="other">Autre professionnel de l'éducation</option>
-              </select>
+                <MessageSquare className="size-4" />
+                <span>Ouvrir WhatsApp et envoyer</span>
+              </a>
+              <button
+                type="button"
+                onClick={() => {
+                  void navigator.clipboard.writeText(
+                    `Bonjour, je vous partage le Passeport Pédagogique Génizio de mon enfant ${childName} : ${window.location.origin}/educator`,
+                  );
+                  toast.success("Lien d'invitation copié !");
+                }}
+                className="px-4 py-3 rounded-2xl bg-surface hover:bg-ink/5 border border-ink/10 font-bold text-ink transition-colors cursor-pointer"
+                title="Copier le texte"
+              >
+                <Copy className="size-4" />
+              </button>
             </div>
           </div>
+        )}
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            <div>
-              <label className="block font-bold text-ink mb-1">Nom / Prénom de l'enseignant</label>
-              <input
-                type="text"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                placeholder="ex: M. Koné"
-                className="w-full rounded-xl border border-ink/10 p-2.5 font-medium text-ink outline-none"
-              />
-            </div>
-            <div>
-              <label className="block font-bold text-ink mb-1">Établissement / École</label>
-              <input
-                type="text"
-                value={organization}
-                onChange={(e) => setOrganization(e.target.value)}
-                placeholder="ex: Collège Sacré-Cœur"
-                className="w-full rounded-xl border border-ink/10 p-2.5 font-medium text-ink outline-none"
-              />
-            </div>
-          </div>
-
-          <div>
-            <label className="block font-bold text-ink mb-1">Durée de l'autorisation</label>
-            <div className="grid grid-cols-3 gap-2">
-              {[
-                { days: 300, label: "Année scolaire", desc: "Recommandé" },
-                { days: 30, label: "30 jours", desc: "Orientation" },
-                { days: 15, label: "15 jours", desc: "Diagnostic" },
-              ].map((d) => (
-                <button
-                  key={d.days}
-                  type="button"
-                  onClick={() => setDurationDays(d.days)}
-                  className={`p-2.5 rounded-xl border text-center transition-all cursor-pointer ${
-                    durationDays === d.days
-                      ? "border-brand bg-brand/10 text-brand font-black"
-                      : "border-ink/10 bg-surface text-ink/70"
-                  }`}
-                >
-                  <p className="font-bold">{d.label}</p>
-                  <p className="text-[10px] opacity-75">{d.desc}</p>
-                </button>
-              ))}
-            </div>
-          </div>
-
-          <label className="flex items-center gap-2 p-3 rounded-xl bg-surface border border-ink/5 cursor-pointer">
-            <input
-              type="checkbox"
-              checked={sharePhone}
-              onChange={(e) => setSharePhone(e.target.checked)}
-              className="size-4 rounded accent-brand cursor-pointer"
-            />
-            <span className="text-xs font-semibold text-ink leading-snug">
-              Partager mon numéro WhatsApp / Téléphone avec ce professionnel pour faciliter les échanges
-              scolaires.
-            </span>
-          </label>
-
-          <button
-            type="submit"
-            disabled={submitting}
-            className="w-full py-3 rounded-2xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs shadow-md transition-colors flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
+        {/* MODE 3 : FORMULAIRE EMAIL MANUEL */}
+        {activeMode === "email" && (
+          <form
+            onSubmit={(e) => {
+              e.preventDefault();
+              void handleConfirmDelegation(email);
+            }}
+            className="space-y-4 text-xs"
           >
-            {submitting ? (
-              <Loader2 className="size-4 animate-spin" />
-            ) : (
-              <Share2 className="size-4" />
-            )}
-            <span>Transmettre le Pass Pédagogique</span>
-          </button>
-        </form>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div>
+                <label className="block font-bold text-ink mb-1">
+                  Email du destinataire <span className="text-rose-500">*</span>
+                </label>
+                <input
+                  type="email"
+                  required
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="professeur@ecole.com"
+                  className="w-full rounded-xl border border-ink/10 p-2.5 font-medium text-ink outline-none focus:ring-2 focus:ring-brand/30"
+                />
+              </div>
+              <div>
+                <label className="block font-bold text-ink mb-1">Rôle professionnel</label>
+                <select
+                  value={role}
+                  onChange={(e) => setRole(e.target.value as any)}
+                  className="w-full rounded-xl border border-ink/10 p-2.5 font-medium text-ink outline-none cursor-pointer"
+                >
+                  <option value="teacher">Professeur / Enseignant</option>
+                  <option value="counselor">Conseiller d'orientation</option>
+                  <option value="psychologist">Psychologue scolaire</option>
+                  <option value="other">Autre professionnel de l'éducation</option>
+                </select>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div>
+                <label className="block font-bold text-ink mb-1">Nom / Prénom de l'enseignant</label>
+                <input
+                  type="text"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  placeholder="ex: M. Koné"
+                  className="w-full rounded-xl border border-ink/10 p-2.5 font-medium text-ink outline-none"
+                />
+              </div>
+              <div>
+                <label className="block font-bold text-ink mb-1">Établissement / École</label>
+                <input
+                  type="text"
+                  value={organization}
+                  onChange={(e) => setOrganization(e.target.value)}
+                  placeholder="ex: Collège Sacré-Cœur"
+                  className="w-full rounded-xl border border-ink/10 p-2.5 font-medium text-ink outline-none"
+                />
+              </div>
+            </div>
+
+            <div>
+              <label className="block font-bold text-ink mb-1">Durée de l'autorisation</label>
+              <div className="grid grid-cols-3 gap-2">
+                {[
+                  { days: 300, label: "Année scolaire", desc: "Recommandé" },
+                  { days: 30, label: "30 jours", desc: "Orientation" },
+                  { days: 15, label: "15 jours", desc: "Diagnostic" },
+                ].map((d) => (
+                  <button
+                    key={d.days}
+                    type="button"
+                    onClick={() => setDurationDays(d.days)}
+                    className={`p-2.5 rounded-xl border text-center transition-all cursor-pointer ${
+                      durationDays === d.days
+                        ? "border-brand bg-brand/10 text-brand font-black"
+                        : "border-ink/10 bg-surface text-ink/70"
+                    }`}
+                  >
+                    <p className="font-bold">{d.label}</p>
+                    <p className="text-[10px] opacity-75">{d.desc}</p>
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <label className="flex items-center gap-2 p-3 rounded-xl bg-surface border border-ink/5 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={sharePhone}
+                onChange={(e) => setSharePhone(e.target.checked)}
+                className="size-4 rounded accent-brand cursor-pointer"
+              />
+              <span className="text-xs font-semibold text-ink leading-snug">
+                Partager mon numéro WhatsApp / Téléphone avec ce professionnel pour faciliter les échanges
+                scolaires.
+              </span>
+            </label>
+
+            <button
+              type="submit"
+              disabled={submitting}
+              className="w-full py-3 rounded-2xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs shadow-md transition-colors flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
+            >
+              {submitting ? (
+                <Loader2 className="size-4 animate-spin" />
+              ) : (
+                <Share2 className="size-4" />
+              )}
+              <span>Transmettre le Pass Pédagogique</span>
+            </button>
+          </form>
+        )}
 
         {/* Accès en cours */}
         <div className="space-y-3 border-t border-ink/5 pt-4">

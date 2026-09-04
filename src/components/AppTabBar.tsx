@@ -1,18 +1,18 @@
 import { Link } from "@tanstack/react-router";
-import { Home, Trophy, Layers, Users, Settings, LayoutDashboard } from "lucide-react";
+import { Home, Trophy, Layers, Users, Settings, LayoutDashboard, GraduationCap } from "lucide-react";
 import { useSession } from "@/hooks/use-session";
-import { isMentorMode } from "@/lib/mentor-mode";
+import { isMentorMode, isEducatorMode } from "@/lib/mentor-mode";
 
 type AppTabBarProps = {
   profileId: string;
 };
 
 export function AppTabBar({ profileId }: AppTabBarProps) {
-  // Mode actif (décision #79-81) : en mode Mentor, l'onglet « Mentor » (le hub de
-  // l'enfant) disparaît — on ne se suit pas soi-même. Le mode est un pur
-  // commutateur stocké dans user_metadata, changé depuis Réglages → Mode Mentor.
+  // Mode actif (décision #79-81, Sprint C) : en mode Mentor ou Éducateur,
+  // l'onglet professionnel s'adapte dynamiquement à la posture active.
   const { session } = useSession();
   const mentorMode = isMentorMode(session);
+  const educatorMode = isEducatorMode(session);
 
   // Boutique retirée de la nav principale : aucun autre point d'entrée dans l'app ne pointe
   // vers /boutique (le flux de commande de kit est déjà intégré directement dans la carte de
@@ -52,7 +52,19 @@ export function AppTabBar({ profileId }: AppTabBarProps) {
             }
           : item,
       )
-    : items;
+    : educatorMode
+      ? items.map((item) =>
+          item.label === "Mentor"
+            ? {
+                to: "/educator" as const,
+                label: "Éducateur",
+                icon: GraduationCap,
+                needsProfileId: false,
+              }
+            : item,
+        )
+      : items;
+
 
   return (
     <nav
