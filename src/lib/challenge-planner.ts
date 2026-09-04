@@ -5,7 +5,7 @@
 // sur son cœur d'expertise : la conception de l'expérience concrète engageante.
 
 import type { ChildDevelopmentState } from "./context-engine";
-import { DOMAINS } from "./challenges.functions";
+import { DOMAINS } from "./challenge-domains";
 import { type PedagogicalFormat, determinePedagogicalFormat } from "./profile-engine";
 
 export type MissionPedagogicalIntent =
@@ -187,6 +187,24 @@ export function planSingleChallengeMission(
     const peakTarget = state.capabilities.progressionTargets.find(
       (t) => t.domain === forcedDomain && t.hasUnconsolidatedCollectivePeak,
     );
+    // 2. Vérifier si une hypothèse active existe sur ce domaine
+    const activeHyp = state.activeHypotheses.find(
+      (h) =>
+        h.targetDomain === forcedDomain &&
+        (h.status === "exploring" || h.status === "untested"),
+    );
+    // 3. Vérifier si une progression ZPD existe sur ce domaine
+    const zpdTarget = state.capabilities.progressionTargets.find(
+      (t) => t.domain === forcedDomain && t.targetLevelAge > t.lastLevelAge,
+    );
+
+    const domainCompletedCount = state.capabilities.stableDomains.includes(forcedDomain) ? 3 : 0;
+    const computedFormat = determinePedagogicalFormat({
+      domainCompletedCount,
+      hasUnconsolidatedPeak: !!peakTarget,
+      activeHypothesisStatus: activeHyp?.status,
+    });
+
     if (peakTarget) {
       mission = {
         missionIndex: 1,
@@ -194,52 +212,41 @@ export function planSingleChallengeMission(
         targetDomain: forcedDomain,
         targetTalents: ["artisanale", "logico_mathematique"],
         difficultyZone: "exploration_zpd",
+        format: "constructive_project",
         pedagogicalBrief: `Un pic de performance a été observé en groupe dans le domaine ${forcedDomain} (niveau visé : ${peakTarget.targetLevelAge} ans) : concevoir une mission individuelle ciblée pour vérifier son autonomie réelle sans le groupe.`,
       };
+    } else if (activeHyp) {
+      mission = {
+        missionIndex: 1,
+        intent: "hypothesis_verification",
+        targetDomain: forcedDomain,
+        targetTalents: activeHyp.targetTalents?.length
+          ? activeHyp.targetTalents
+          : ["artisanale", "spatial"],
+        difficultyZone: "stable",
+        format: computedFormat,
+        pedagogicalBrief: `Mettre ${state.identity.name} en situation dans le domaine ${forcedDomain} pour éprouver l'hypothèse : « ${activeHyp.statement} ».`,
+      };
+    } else if (zpdTarget) {
+      mission = {
+        missionIndex: 1,
+        intent: "zpd_progression",
+        targetDomain: forcedDomain,
+        targetTalents: ["logico_mathematique", "artisanale"],
+        difficultyZone: "exploration_zpd",
+        format: computedFormat,
+        pedagogicalBrief: `Franchir un palier de progression en ${forcedDomain} vers le niveau ${zpdTarget.targetLevelAge} ans. Relier la notion abstraite à une réalisation concrète.`,
+      };
     } else {
-      // 2. Vérifier si une hypothèse active existe sur ce domaine
-      const activeHyp = state.activeHypotheses.find(
-        (h) =>
-          h.targetDomain === forcedDomain &&
-          (h.status === "exploring" || h.status === "untested"),
-      );
-      if (activeHyp) {
-        mission = {
-          missionIndex: 1,
-          intent: "hypothesis_verification",
-          targetDomain: forcedDomain,
-          targetTalents: activeHyp.targetTalents?.length
-            ? activeHyp.targetTalents
-            : ["artisanale", "spatial"],
-          difficultyZone: "stable",
-          pedagogicalBrief: `Mettre ${state.identity.name} en situation dans le domaine ${forcedDomain} pour éprouver l'hypothèse : « ${activeHyp.statement} ».`,
-        };
-      } else {
-        // 3. Vérifier si une progression ZPD existe sur ce domaine
-        const zpdTarget = state.capabilities.progressionTargets.find(
-          (t) => t.domain === forcedDomain && t.targetLevelAge > t.lastLevelAge,
-        );
-        if (zpdTarget) {
-          mission = {
-            missionIndex: 1,
-            intent: "zpd_progression",
-            targetDomain: forcedDomain,
-            targetTalents: ["logico_mathematique", "artisanale"],
-            difficultyZone: "exploration_zpd",
-            pedagogicalBrief: `Franchir un palier de progression en ${forcedDomain} vers le niveau ${zpdTarget.targetLevelAge} ans. Relier la notion abstraite à une réalisation concrète.`,
-          };
-        } else {
-          // 4. Exploration ciblée dans ce domaine
-          mission = {
-            missionIndex: 1,
-            intent: "open_exploration",
-            targetDomain: forcedDomain,
-            targetTalents: ["creative", "artisanale"],
-            difficultyZone: "stable",
-            pedagogicalBrief: `Découverte pratique et réalisation concrète sur-mesure dans le domaine ciblé : ${forcedDomain}.`,
-          };
-        }
-      }
+      mission = {
+        missionIndex: 1,
+        intent: "open_exploration",
+        targetDomain: forcedDomain,
+        targetTalents: ["creative", "artisanale"],
+        difficultyZone: "stable",
+        format: computedFormat,
+        pedagogicalBrief: `Découverte pratique et réalisation concrète sur-mesure dans le domaine ciblé : ${forcedDomain}.`,
+      };
     }
   } else {
     // Si aucun domaine forcé (ou "all"), on utilise la priorité globale du planificateur

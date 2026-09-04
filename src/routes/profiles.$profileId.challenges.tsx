@@ -99,6 +99,7 @@ import { GenizioLoader } from "@/components/GenizioLoader";
 import { getActiveChallenge } from "@/lib/active-challenge";
 import { formatPedagogicalIntention } from "@/lib/pedagogical-intention";
 import { getChildEnrolledSeason, type Season } from "@/lib/seasons.functions";
+import { ParentPostSessionDebrief } from "@/components/safeguarding/ParentPostSessionDebrief";
 import { ShoppingBag } from "lucide-react";
 
 // "Mathématiques" et "Émotions et relations sociales" ajoutées (décision #39, item 3) : le
@@ -285,6 +286,7 @@ function ChallengesPage() {
   const [mentorInfo, setMentorInfo] = useState<{
     email: string;
     assignedAt: string;
+    mentorUserId?: string;
   } | null>(null);
   const [notifications, setNotifications] = useState<any[]>([]);
   const [showActivity, setShowActivity] = useState(false);
@@ -1108,6 +1110,18 @@ function ChallengesPage() {
                   )}
                 </PopoverContent>
               </Popover>
+            </div>
+          )}
+
+          {/* Débriefing bienveillant post-séance (mode parent avec mentor) */}
+          {!mentorMode && mentorInfo?.mentorUserId && child && (
+            <div className="mb-6">
+              <ParentPostSessionDebrief
+                childId={child.id}
+                childName={child.name}
+                mentorUserId={mentorInfo.mentorUserId}
+                mentorName={mentorInfo.email}
+              />
             </div>
           )}
 

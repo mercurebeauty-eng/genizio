@@ -45,6 +45,7 @@ import { AdminTestimonialsTab } from "@/components/admin/AdminTestimonialsTab";
 import { AdminNotificationsTab } from "@/components/admin/AdminNotificationsTab";
 import { AdminDiscoveryTab } from "@/components/admin/AdminDiscoveryTab";
 import { getPaymentsPendingCountAdmin } from "@/lib/payments-admin.functions";
+import { getSafeguardingPendingCountAdmin } from "@/lib/safeguarding.functions";
 import { ChevronRight } from "lucide-react";
 import { toast } from "sonner";
 import { GenizioLoader } from "@/components/GenizioLoader";
@@ -59,6 +60,7 @@ function AdminIndexPage() {
   // onglet ouvert affiche la barre de pills persistante (bouton Accueil pour revenir).
   const [activeTab, setActiveTab] = useState<AdminRoute>("home");
   const [pendingPayments, setPendingPayments] = useState(0);
+  const [pendingSafetyAlerts, setPendingSafetyAlerts] = useState(0);
   const [kpis, setKpis] = useState<ExecutiveKPIs | null>(null);
   const [parents, setParents] = useState<ParentBIRC[]>([]);
   const [talentStats, setTalentStats] = useState<TalentCityStatsResponse | null>(null);
@@ -94,6 +96,7 @@ function AdminIndexPage() {
   const getProgressionHealthFn = useServerFn(getProgressionHealthAdmin);
   const getCommerceDataFn = useServerFn(getCommercePassportsDataAdmin);
   const getPendingPaymentsFn = useServerFn(getPaymentsPendingCountAdmin);
+  const getSafetyPendingFn = useServerFn(getSafeguardingPendingCountAdmin);
   const toggleUnlockFn = useServerFn(togglePassportUnlock);
   const updateOrderStatusFn = useServerFn(updateOrderStatus);
   const updateProfileQuotaFn = useServerFn(updateProfileQuotaAdmin);
@@ -159,6 +162,10 @@ function AdminIndexPage() {
       // Comptage des paiements en attente (badge de la carte « Paiements & Accès »).
       const pending = await getPendingPaymentsFn({ data: undefined, ...opts }).catch(() => null);
       if (pending) setPendingPayments(pending.pendingCount);
+
+      // Comptage des alertes de sécurité en attente (badge de la carte « Mentors »).
+      const safetyPending = await getSafetyPendingFn({ data: undefined, ...opts }).catch(() => null);
+      if (safetyPending) setPendingSafetyAlerts(safetyPending.openReportsCount);
 
       // « Le Loup qui apprend » (Décision #56) : l'auto-acquittement paresseux
       // par seuil de confiance s'exécute AVANT la lecture des suggestions, pour
@@ -366,6 +373,11 @@ function AdminIndexPage() {
                         ● {pendingPayments} en attente
                       </span>
                     )}
+                    {tab.id === "mentors" && pendingSafetyAlerts > 0 && (
+                      <span className="inline-flex items-center gap-1 rounded-full bg-rose-600 px-2.5 py-1 text-[10px] font-black uppercase tracking-wider text-white shadow-sm animate-pulse">
+                        ● {pendingSafetyAlerts} alerte{pendingSafetyAlerts > 1 ? "s" : ""}
+                      </span>
+                    )}
                   </div>
                   <div className="relative mt-4">
                     <h3 className="font-display text-lg font-black text-ink">{tab.label}</h3>
@@ -388,6 +400,10 @@ function AdminIndexPage() {
               activeTab={activeTab}
               onTabChange={setActiveTab}
               onGoHome={() => setActiveTab("home")}
+              badges={{
+                payments: pendingPayments > 0 ? pendingPayments : undefined,
+                mentors: pendingSafetyAlerts > 0 ? pendingSafetyAlerts : undefined,
+              }}
             />
 
             {/* Tab Content Display */}

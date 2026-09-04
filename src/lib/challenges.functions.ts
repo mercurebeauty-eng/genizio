@@ -535,18 +535,7 @@ function shuffle<T>(items: readonly T[]): T[] {
   return [...items].sort(() => Math.random() - 0.5);
 }
 
-export const DOMAINS = [
-  "Sciences",
-  "Architecture",
-  "Artisanat",
-  "Agriculture",
-  "Sport",
-  "Communication",
-  "Entrepreneuriat",
-  "Arts",
-  "Langues",
-  "Tech & IA",
-];
+export { DOMAINS, type Domain } from "./challenge-domains";
 
 // V2 (product-intelligence-architect pass): rather than leaving "which
 // intelligence needs more exploration" entirely to the model's judgment on
@@ -2864,13 +2853,21 @@ Ta mission :
 2. Si (et seulement si) la preuve correspond bien au défi, rédige une courte observation (2-3 phrases) encourageante pour le parent, soulignant l'ingéniosité de l'enfant dans cette réalisation. (Tu peux t'adresser au parent). Texte brut uniquement, sans aucune syntaxe Markdown (pas de #, ##, **, tirets de liste).
 3. Dans ce cas seulement, détermine quelles intelligences ont été réellement mobilisées et attribue des points (de 1 à 3 par intelligence, selon la qualité réelle de la réalisation — ne distribue jamais de points par défaut).
 Les intelligences possibles sont : spatial, corporelle, sociale, entrepreneuriale, creative, artisanale, emotionnelle, logico_mathematique, linguistique.
+4. Relève 1 à 2 micro-observations factuelles (« candidate_observations ») de ce que l'enfant a concrètement fait ou démontré sur le terrain (gestes précis, autonomie ou curiosité pratique).
 
 Réponds STRICTEMENT en JSON valide avec ce format :
 {
   "observations": "Ton message d'encouragement...",
   "talents_awarded": {
     "nom_de_lintelligence": 2
-  }
+  },
+  "candidate_observations": [
+    {
+      "signal": "curiosite_inductive",
+      "behavioralEvidence": "Preuve factuelle concise observée sur la réalisation",
+      "competenceKey": "logico_mathematique"
+    }
+  ]
 }`;
 
   let aiContent = "";
@@ -2902,7 +2899,7 @@ Réponds STRICTEMENT en JSON valide avec ce format :
   // that much per call was the main way this endpoint could exhaust the
   // org's per-minute output-token budget on a single request.
   try {
-    aiContent = await callClaude(prompt, true, undefined, 500, 3, imageData);
+    aiContent = await callClaude(prompt, true, undefined, 1000, 3, imageData);
   } catch (err) {
     if (
       err instanceof Error &&
@@ -2937,7 +2934,16 @@ Réponds STRICTEMENT en JSON valide avec ce format :
     }
   }
 
-  let parsed: { observations?: string; talents_awarded?: Record<string, number> };
+  let parsed: {
+    observations?: string;
+    talents_awarded?: Record<string, number>;
+    candidate_observations?: Array<{
+      signal?: string;
+      behavioralEvidence?: string;
+      pedagogicalInsight?: string;
+      competenceKey?: string;
+    }>;
+  };
   try {
     parsed = safeJsonParse(aiContent);
   } catch (parseErr) {
@@ -3098,6 +3104,34 @@ Réponds STRICTEMENT en JSON valide avec ce format :
       void recommendChallengesForChild({ data: { childId: challenge.child_id } });
     } catch (err) {
       console.error("Non-fatal: pré-génération de la prochaine mission a échoué", err);
+    }
+
+    // Feedback Loop (Moteur de Profil) : ingestion asynchrone des observations candidates
+    if (Array.isArray(parsed.candidate_observations) && parsed.candidate_observations.length > 0) {
+      try {
+        const { ingestChallengeObservations } = await import("@/lib/profile-engine");
+        void ingestChallengeObservations({
+          db,
+          childId: challenge.child_id,
+          challengeId: challenge.id,
+          userId: actingUserId,
+          observations: parsed.candidate_observations.map((o) => ({
+            signal: o.signal || "observation_terrain",
+            behavioralEvidence: o.behavioralEvidence || "Preuve comportementale relevée",
+            pedagogicalInsight: o.pedagogicalInsight || "Activité validée sur le terrain",
+            competenceKey: o.competenceKey,
+          })),
+          challengeContext: {
+            title: challenge.title,
+            domain: challenge.domain,
+            difficulty: challenge.difficulty,
+            academic_domain: challenge.academic_domain,
+            academic_level_age: challenge.academic_level_age,
+          },
+        });
+      } catch (ingestErr) {
+        console.error("Non-fatal: ingestChallengeObservations failed", ingestErr);
+      }
     }
   }
 

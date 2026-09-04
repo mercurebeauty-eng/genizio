@@ -677,6 +677,21 @@ function validateProofValidation(
       }
     }
   }
+  if (Array.isArray(output.candidate_observations)) {
+    for (const item of output.candidate_observations) {
+      if (isRecord(item)) {
+        const competenceKey = str(item.competenceKey);
+        if (competenceKey && !(VALID_TALENT_KEYS as readonly string[]).includes(competenceKey)) {
+          v.push({
+            rule: "proof_validation.candidate_competence_valid",
+            severity: "mineur",
+            detail: `Clé d'intelligence invalide dans candidate_observations: ${competenceKey}.`,
+            suggestion: "Clés parmi les 9 intelligences.",
+          });
+        }
+      }
+    }
+  }
   return v;
 }
 

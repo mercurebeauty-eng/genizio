@@ -430,7 +430,17 @@ export function buildLayeredChallengePrompt(
     .map(
       (m) => `### MISSION ${m.missionIndex} :
 - Intention pédagogique : ${m.intent}
-- Domaine cible : ${m.targetDomain}
+- Domaine cible : ${m.targetDomain}${
+        m.format
+          ? `\n- Format pédagogique obligatoire : ${
+              m.format === "spark_micro"
+                ? "L'Étincelle (spark_micro) — Défi court (10-15 min) d'étonnement pratique et manipulation sensorielle sans théorie préalable"
+                : m.format === "investigation"
+                  ? "L'Investigation (investigation) — Défi de recueil de mesures et données répétées pour déduire une loi physique ou scientifique (Pratique vers Théorie)"
+                  : "Le Projet d'Ingénierie (constructive_project) — Projet de synthèse concret et exigeant (conception fonctionnelle, Arduino/code ou mécanique, standard international)"
+            }`
+          : ""
+      }
 - Intelligences visées : ${m.targetTalents.join(", ")}
 - Zone de difficulté : ${m.difficultyZone}
 - Cahier des charges : ${m.pedagogicalBrief}${m.actionHook ? `\n- Fil conducteur spécifique : « ${m.actionHook} »` : ""}`,
@@ -470,6 +480,7 @@ COUCHE 1 — PRINCIPES PÉDAGOGIQUES ET SÉCURITÉ
 ${GENIZIO_PRINCIPLES}
 ${AGE_DEVELOPMENT_GUIDANCE}
 - RÈGLE D'OR : Le jeu ou la fabrication manuelle n'est pas un simple divertissement passif. C'est le DISPOSITIF concret par lequel l'enfant mobilise et développe une capacité réelle.
+- PRINCIPE DIRECTEUR « PRATIQUE VERS THÉORIE » (APPRENTISSAGE INDUCTIF) : L'enfant manipule la matière, observe ou construit D'ABORD. La loi scientifique et l'explication théorique n'arrivent qu'ensuite (via le secret académique), jamais l'inverse.
 
 ================================================================================
 COUCHE 2 — ÉTAT DE COMPRÉHENSION DE L'ENFANT (CHILD DEVELOPMENT STATE)

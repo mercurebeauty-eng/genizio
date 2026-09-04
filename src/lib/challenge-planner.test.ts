@@ -32,6 +32,7 @@ describe("Challenge Mission Planner — planChallengeMissions", () => {
     const peakMission = missions.find((m) => m.intent === "collective_peak_solo");
     expect(peakMission).toBeDefined();
     expect(peakMission?.targetDomain).toBe("Architecture");
+    expect(peakMission?.format).toBe("constructive_project");
   });
 
   it("intègre une vérification d'hypothèse active et une progression ZPD", () => {
@@ -97,6 +98,8 @@ describe("Challenge Mission Planner — planSingleChallengeMission", () => {
     const mission = planSingleChallengeMission(state, { forcedDomain: "Sciences" });
     expect(mission.targetDomain).toBe("Sciences");
     expect(mission.intent).toBe("zpd_progression");
+    expect(mission.format).toBeDefined();
+    expect(["spark_micro", "investigation", "constructive_project"]).toContain(mission.format);
   });
 
   it("intègre les matériaux maison spécifiques fournis par le parent", async () => {

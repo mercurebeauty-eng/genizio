@@ -329,3 +329,22 @@ export const triggerMentorEmergencySuspension = createServerFn({ method: "POST" 
       message: "Kill-Switch exécuté : mentor suspendu et assignations enfants révoquées.",
     };
   });
+
+/**
+ * Comptage des alertes et audits en attente pour les badges d'administration.
+ */
+export const getSafeguardingPendingCountAdmin = createServerFn({ method: "GET" })
+  .middleware([requireAdmin])
+  .handler(async () => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+
+    const { count: openReportsCount } = await supabaseAdmin
+      .from("child_safety_reports")
+      .select("id", { count: "exact", head: true })
+      .eq("status", "open");
+
+    return {
+      openReportsCount: openReportsCount ?? 0,
+    };
+  });
+

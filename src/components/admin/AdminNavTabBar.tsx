@@ -247,11 +247,12 @@ interface AdminNavTabBarProps {
   activeTab: AdminTab;
   onTabChange: (tab: AdminTab) => void;
   onGoHome: () => void;
+  badges?: Partial<Record<AdminTab, number | string>>;
 }
 
 /** Barre de pills persistante (affichée quand un onglet est ouvert) : bouton
  *  Accueil + 9 onglets compacts — scroll horizontal sur mobile, wrap sur desktop. */
-export function AdminNavTabBar({ activeTab, onTabChange, onGoHome }: AdminNavTabBarProps) {
+export function AdminNavTabBar({ activeTab, onTabChange, onGoHome, badges }: AdminNavTabBarProps) {
   return (
     <div className="w-full rounded-2xl border border-ink/10 bg-surface/80 p-1.5 shadow-sm backdrop-blur-md mb-6 sm:mb-8">
       <nav
@@ -271,6 +272,9 @@ export function AdminNavTabBar({ activeTab, onTabChange, onGoHome }: AdminNavTab
         {ADMIN_TABS.map((tab) => {
           const Icon = tab.icon;
           const isActive = activeTab === tab.id;
+          const badgeVal = badges?.[tab.id];
+          const hasBadge = badgeVal !== undefined && (typeof badgeVal === "number" ? badgeVal > 0 : Boolean(badgeVal));
+
           return (
             <button
               key={tab.id}
@@ -285,6 +289,15 @@ export function AdminNavTabBar({ activeTab, onTabChange, onGoHome }: AdminNavTab
             >
               <Icon className={`size-3.5 shrink-0 ${isActive ? "" : "opacity-70"}`} />
               <span className="truncate">{tab.label}</span>
+              {hasBadge && (
+                <span
+                  className={`ml-0.5 rounded-full px-1.5 py-0.2 text-[10px] font-black ${
+                    isActive ? "bg-white text-ink" : "bg-rose-500 text-white"
+                  }`}
+                >
+                  {badgeVal}
+                </span>
+              )}
             </button>
           );
         })}

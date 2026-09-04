@@ -108,21 +108,39 @@ export async function ingestChallengeObservations(
 
   try {
     // 1. Audit trail : persister le paquet d'observations candidates dans `observation_events`
-    const { error: eventErr } = await db.from("observation_events").insert({
+    const payload = {
+      challenge_id: challengeId,
+      challenge_title: challengeContext.title,
+      domain: challengeContext.domain,
+      academic_domain: challengeContext.academic_domain,
+      academic_level_age: challengeContext.academic_level_age,
+      observations,
+      created_at: new Date().toISOString(),
+    };
+
+    let { error: eventErr } = await db.from("observation_events").insert({
       child_id: childId,
       user_id: userId,
-      type: "CANDIDATE_OBSERVATIONS",
-      source: "profile_engine",
-      payload: {
-        challenge_id: challengeId,
-        challenge_title: challengeContext.title,
-        domain: challengeContext.domain,
-        academic_domain: challengeContext.academic_domain,
-        academic_level_age: challengeContext.academic_level_age,
-        observations,
-        created_at: new Date().toISOString(),
-      },
+      type: "CANDIDATE_OBSERVATIONS" as any,
+      source: "profile_engine" as any,
+      payload,
     });
+
+    // Filet de sécurité défensif : si la contrainte SQL n'a pas encore migré dans l'environnement courant,
+    // on replie sur BEHAVIOR_FLAG + app (qui existent depuis la Phase 0 de Naya).
+    if (eventErr && eventErr.message.includes("check")) {
+      const fallback = await db.from("observation_events").insert({
+        child_id: childId,
+        user_id: userId,
+        type: "BEHAVIOR_FLAG",
+        source: "app",
+        payload: {
+          ...payload,
+          event_subtype: "CANDIDATE_OBSERVATIONS",
+        },
+      });
+      eventErr = fallback.error;
+    }
 
     if (eventErr) {
       console.warn("[ProfileEngine] Échec insertion observation_events (non bloquant):", eventErr);

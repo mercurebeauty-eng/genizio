@@ -47,6 +47,7 @@ import { toast } from "sonner";
 import { confirmDialog } from "@/components/ui/confirm-dialog";
 import { AdminSafeguardingAudits } from "./AdminSafeguardingAudits";
 import { AdminSafetyReports } from "./AdminSafetyReports";
+import { getSafeguardingPendingCountAdmin } from "@/lib/safeguarding.functions";
 
 // Refonte « Gestion des Mentors » (2026-08-14) — répond aux trois manques signalés :
 //   • « on ne sait pas comment ça fonctionne » → encadré « Comment ça marche » ci-dessous ;
@@ -62,6 +63,7 @@ export function AdminMentorsTab() {
   const [fetching, setFetching] = useState(true);
   const [forbidden, setForbidden] = useState(false);
   const [mentorSubTab, setMentorSubTab] = useState<"directory" | "audits" | "safety">("directory");
+  const [openReportsCount, setOpenReportsCount] = useState(0);
   const [isAssignModalOpen, setIsAssignModalOpen] = useState(false);
   const [page, setPage] = useState(1);
   const [total, setTotal] = useState(0);
@@ -72,6 +74,7 @@ export function AdminMentorsTab() {
 
   const listFn = useServerFn(listMentorsAdmin);
   const removeFn = useServerFn(removeMentor);
+  const getSafetyCountFn = useServerFn(getSafeguardingPendingCountAdmin);
   const listCampaignsFn = useServerFn(listCampaignsLightAdmin);
   const listSessionsFn = useServerFn(listMentorSessionsAdmin);
   const approveSessionFn = useServerFn(approveMentorSessionAdmin);
@@ -189,6 +192,10 @@ export function AdminMentorsTab() {
         console.error("Erreur chargement campagnes admin:", err);
         setCampaigns([]);
       });
+
+    getSafetyCountFn({ data: undefined, ...opts })
+      .then((res) => setOpenReportsCount(res?.openReportsCount ?? 0))
+      .catch(() => {});
 
     void loadCodes();
 
@@ -385,6 +392,11 @@ export function AdminMentorsTab() {
         >
           <ShieldAlert className="size-4" />
           <span>Signalements & Kill-Switch</span>
+          {openReportsCount > 0 && (
+            <span className="rounded-full bg-rose-500 text-white text-[10px] font-black px-1.5 py-0.2 animate-pulse">
+              {openReportsCount}
+            </span>
+          )}
         </button>
       </div>
 

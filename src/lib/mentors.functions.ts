@@ -1470,6 +1470,7 @@ export const getChildMentorInfo = createServerFn({ method: "GET" })
     const accompaniment = await resolveChildAccompaniment(supabaseAdmin, data.childId);
 
     return {
+      mentorUserId: assignment.mentor_user_id as string,
       email,
       assignedAt: assignment.created_at as string,
       accompaniment,

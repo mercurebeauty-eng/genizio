@@ -175,3 +175,92 @@ export const getMyEducatorProfile = createServerFn({ method: "GET" })
 
     return profile;
   });
+
+export interface EstablishmentColleague {
+  id: string;
+  fullName: string;
+  handle: string | null;
+  classCode: string | null;
+  professionalRole: "teacher" | "counselor" | "psychologist" | "other";
+  isVerified: boolean;
+  whatsappPhone: string | null;
+  createdAt: string;
+}
+
+export interface EstablishmentOverview {
+  hasEstablishment: boolean;
+  organizationName: string | null;
+  totalColleagues: number;
+  totalClasses: number;
+  colleagues: EstablishmentColleague[];
+}
+
+/**
+ * Vue Établissement / Équipe pédagogique :
+ * Permet à un enseignant ou conseiller de voir l'ensemble de ses collègues enregistrés
+ * au sein du même établissement scolaire ou centre d'orientation.
+ */
+export const getMyEstablishmentOverview = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }): Promise<EstablishmentOverview> => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const user = context.user;
+
+    const { data: myProfile } = await supabaseAdmin
+      .from("educator_profiles")
+      .select("organization_name")
+      .eq("user_id", user.id)
+      .maybeSingle();
+
+    const rawOrg = myProfile?.organization_name?.trim();
+    if (!rawOrg) {
+      return {
+        hasEstablishment: false,
+        organizationName: null,
+        totalColleagues: 0,
+        totalClasses: 0,
+        colleagues: [],
+      };
+    }
+
+    const { data: rows, error } = await supabaseAdmin
+      .from("educator_profiles")
+      .select("id, full_name, handle, class_code, professional_role, is_verified, whatsapp_phone, created_at")
+      .ilike("organization_name", rawOrg)
+      .order("created_at", { ascending: true });
+
+    if (error || !rows) {
+      console.error("Erreur getMyEstablishmentOverview:", error);
+      return {
+        hasEstablishment: true,
+        organizationName: rawOrg,
+        totalColleagues: 0,
+        totalClasses: 0,
+        colleagues: [],
+      };
+    }
+
+    const uniqueClasses = new Set<string>();
+    const colleagues: EstablishmentColleague[] = rows.map((r: any) => {
+      if (r.class_code) uniqueClasses.add(r.class_code.toUpperCase());
+      return {
+        id: r.id,
+        fullName: r.full_name,
+        handle: r.handle ? (r.handle.startsWith("@") ? r.handle : `@${r.handle}`) : null,
+        classCode: r.class_code ? (r.class_code.startsWith("#") ? r.class_code : `#${r.class_code}`) : null,
+        professionalRole: r.professional_role,
+        isVerified: Boolean(r.is_verified),
+        whatsappPhone: r.whatsapp_phone || null,
+        createdAt: r.created_at,
+      };
+    });
+
+    return {
+      hasEstablishment: true,
+      organizationName: rawOrg,
+      totalColleagues: colleagues.length,
+      totalClasses: uniqueClasses.size,
+      colleagues,
+    };
+  });
+
