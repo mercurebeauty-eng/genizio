@@ -56,6 +56,7 @@ import { Route as GuidesEcransTiktokYoutubeTalentEcritureRealisationRouteImport 
 import { Route as GuidesEcransAddictionAlternativesEnfantRouteImport } from './routes/guides.ecrans-addiction-alternatives-enfant'
 import { Route as GuidesDisciplinePositiveSansPunitionRouteImport } from './routes/guides.discipline-positive-sans-punition'
 import { Route as GuidesDefisPourAdolescentsRouteImport } from './routes/guides.defis-pour-adolescents'
+import { Route as GuidesDifferenceTdahAutismeExplicationParentsRouteImport } from './routes/guides.difference-tdah-autisme-explication-parents'
 import { Route as GuidesDecrochageScolaireConfianceEnfantRouteImport } from './routes/guides.decrochage-scolaire-confiance-enfant'
 import { Route as GuidesCommentGererArgentDePocheEnfantRouteImport } from './routes/guides.comment-gerer-argent-de-poche-enfant'
 import { Route as GuidesChoixParcoursupParcoursScolaireEnfantRouteImport } from './routes/guides.choix-parcoursup-parcours-scolaire-enfant'
@@ -331,6 +332,12 @@ const GuidesDefisPourAdolescentsRoute =
     path: '/defis-pour-adolescents',
     getParentRoute: () => GuidesRoute,
   } as any)
+const GuidesDifferenceTdahAutismeExplicationParentsRoute =
+  GuidesDifferenceTdahAutismeExplicationParentsRouteImport.update({
+    id: '/difference-tdah-autisme-explication-parents',
+    path: '/difference-tdah-autisme-explication-parents',
+    getParentRoute: () => GuidesRoute,
+  } as any)
 const GuidesDecrochageScolaireConfianceEnfantRoute =
   GuidesDecrochageScolaireConfianceEnfantRouteImport.update({
     id: '/decrochage-scolaire-confiance-enfant',
@@ -466,6 +473,7 @@ export interface FileRoutesByFullPath {
   '/guides/comment-gerer-argent-de-poche-enfant': typeof GuidesCommentGererArgentDePocheEnfantRoute
   '/guides/decrochage-scolaire-confiance-enfant': typeof GuidesDecrochageScolaireConfianceEnfantRoute
   '/guides/defis-pour-adolescents': typeof GuidesDefisPourAdolescentsRoute
+  '/guides/difference-tdah-autisme-explication-parents': typeof GuidesDifferenceTdahAutismeExplicationParentsRoute
   '/guides/discipline-positive-sans-punition': typeof GuidesDisciplinePositiveSansPunitionRoute
   '/guides/ecrans-addiction-alternatives-enfant': typeof GuidesEcransAddictionAlternativesEnfantRoute
   '/guides/ecrans-tiktok-youtube-talent-ecriture-realisation': typeof GuidesEcransTiktokYoutubeTalentEcritureRealisationRoute
@@ -529,6 +537,7 @@ export interface FileRoutesByTo {
   '/guides/comment-gerer-argent-de-poche-enfant': typeof GuidesCommentGererArgentDePocheEnfantRoute
   '/guides/decrochage-scolaire-confiance-enfant': typeof GuidesDecrochageScolaireConfianceEnfantRoute
   '/guides/defis-pour-adolescents': typeof GuidesDefisPourAdolescentsRoute
+  '/guides/difference-tdah-autisme-explication-parents': typeof GuidesDifferenceTdahAutismeExplicationParentsRoute
   '/guides/discipline-positive-sans-punition': typeof GuidesDisciplinePositiveSansPunitionRoute
   '/guides/ecrans-addiction-alternatives-enfant': typeof GuidesEcransAddictionAlternativesEnfantRoute
   '/guides/ecrans-tiktok-youtube-talent-ecriture-realisation': typeof GuidesEcransTiktokYoutubeTalentEcritureRealisationRoute
@@ -597,6 +606,7 @@ export interface FileRoutesById {
   '/guides/comment-gerer-argent-de-poche-enfant': typeof GuidesCommentGererArgentDePocheEnfantRoute
   '/guides/decrochage-scolaire-confiance-enfant': typeof GuidesDecrochageScolaireConfianceEnfantRoute
   '/guides/defis-pour-adolescents': typeof GuidesDefisPourAdolescentsRoute
+  '/guides/difference-tdah-autisme-explication-parents': typeof GuidesDifferenceTdahAutismeExplicationParentsRoute
   '/guides/discipline-positive-sans-punition': typeof GuidesDisciplinePositiveSansPunitionRoute
   '/guides/ecrans-addiction-alternatives-enfant': typeof GuidesEcransAddictionAlternativesEnfantRoute
   '/guides/ecrans-tiktok-youtube-talent-ecriture-realisation': typeof GuidesEcransTiktokYoutubeTalentEcritureRealisationRoute
@@ -666,6 +676,7 @@ export interface FileRouteTypes {
     | '/guides/comment-gerer-argent-de-poche-enfant'
     | '/guides/decrochage-scolaire-confiance-enfant'
     | '/guides/defis-pour-adolescents'
+    | '/guides/difference-tdah-autisme-explication-parents'
     | '/guides/discipline-positive-sans-punition'
     | '/guides/ecrans-addiction-alternatives-enfant'
     | '/guides/ecrans-tiktok-youtube-talent-ecriture-realisation'
@@ -729,6 +740,7 @@ export interface FileRouteTypes {
     | '/guides/comment-gerer-argent-de-poche-enfant'
     | '/guides/decrochage-scolaire-confiance-enfant'
     | '/guides/defis-pour-adolescents'
+    | '/guides/difference-tdah-autisme-explication-parents'
     | '/guides/discipline-positive-sans-punition'
     | '/guides/ecrans-addiction-alternatives-enfant'
     | '/guides/ecrans-tiktok-youtube-talent-ecriture-realisation'
@@ -796,6 +808,7 @@ export interface FileRouteTypes {
     | '/guides/comment-gerer-argent-de-poche-enfant'
     | '/guides/decrochage-scolaire-confiance-enfant'
     | '/guides/defis-pour-adolescents'
+    | '/guides/difference-tdah-autisme-explication-parents'
     | '/guides/discipline-positive-sans-punition'
     | '/guides/ecrans-addiction-alternatives-enfant'
     | '/guides/ecrans-tiktok-youtube-talent-ecriture-realisation'
@@ -1189,6 +1202,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof GuidesDefisPourAdolescentsRouteImport
       parentRoute: typeof GuidesRoute
     }
+    '/guides/difference-tdah-autisme-explication-parents': {
+      id: '/guides/difference-tdah-autisme-explication-parents'
+      path: '/difference-tdah-autisme-explication-parents'
+      fullPath: '/guides/difference-tdah-autisme-explication-parents'
+      preLoaderRoute: typeof GuidesDifferenceTdahAutismeExplicationParentsRouteImport
+      parentRoute: typeof GuidesRoute
+    }
     '/guides/decrochage-scolaire-confiance-enfant': {
       id: '/guides/decrochage-scolaire-confiance-enfant'
       path: '/decrochage-scolaire-confiance-enfant'
@@ -1341,6 +1361,7 @@ interface GuidesRouteChildren {
   GuidesCommentGererArgentDePocheEnfantRoute: typeof GuidesCommentGererArgentDePocheEnfantRoute
   GuidesDecrochageScolaireConfianceEnfantRoute: typeof GuidesDecrochageScolaireConfianceEnfantRoute
   GuidesDefisPourAdolescentsRoute: typeof GuidesDefisPourAdolescentsRoute
+  GuidesDifferenceTdahAutismeExplicationParentsRoute: typeof GuidesDifferenceTdahAutismeExplicationParentsRoute
   GuidesDisciplinePositiveSansPunitionRoute: typeof GuidesDisciplinePositiveSansPunitionRoute
   GuidesEcransAddictionAlternativesEnfantRoute: typeof GuidesEcransAddictionAlternativesEnfantRoute
   GuidesEcransTiktokYoutubeTalentEcritureRealisationRoute: typeof GuidesEcransTiktokYoutubeTalentEcritureRealisationRoute
@@ -1378,6 +1399,8 @@ const GuidesRouteChildren: GuidesRouteChildren = {
   GuidesDecrochageScolaireConfianceEnfantRoute:
     GuidesDecrochageScolaireConfianceEnfantRoute,
   GuidesDefisPourAdolescentsRoute: GuidesDefisPourAdolescentsRoute,
+  GuidesDifferenceTdahAutismeExplicationParentsRoute:
+    GuidesDifferenceTdahAutismeExplicationParentsRoute,
   GuidesDisciplinePositiveSansPunitionRoute:
     GuidesDisciplinePositiveSansPunitionRoute,
   GuidesEcransAddictionAlternativesEnfantRoute:

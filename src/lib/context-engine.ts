@@ -101,6 +101,7 @@ export interface BuildChildDevelopmentStateInput {
   >;
   interestHypotheses?: InterestHypotheses | null;
   aspirationHypotheses?: AspirationHypotheses | null;
+  activeHypotheses?: any;
   latestChildQuestion?: string | null;
   existingTitles?: string[];
 }

@@ -821,7 +821,7 @@ export const getSubscriptionsDataAdmin = createServerFn({ method: "GET" })
       .from("mentors")
       .select("child_profile_id, mentor_user_id")
       .is("removed_at", null);
-    const mentorUserByChild = new Map((mentorAssignments ?? []).map((m: any) => [m.child_profile_id, m.mentor_user_id]));
+    const mentorUserByChild = new Map<string, string>((mentorAssignments ?? []).map((m: any) => [m.child_profile_id, m.mentor_user_id]));
 
     // Dernière fin de couverture parrainage par famille
     const sponsoredByUser = new Map<string, string | null>();

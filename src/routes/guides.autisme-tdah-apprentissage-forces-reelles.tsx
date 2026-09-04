@@ -80,6 +80,10 @@ function Guide() {
       path={PATH}
       related={[
         {
+          label: "Différences TDAH et Autisme : le guide",
+          to: "/guides/difference-tdah-autisme-explication-parents",
+        },
+        {
           label: "Enfant agité ou inattentif : l'aider",
           to: "/guides/enfant-agite-concentration",
         },

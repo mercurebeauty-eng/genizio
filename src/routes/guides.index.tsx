@@ -32,6 +32,13 @@ import { pageMeta, jsonLdScript, breadcrumbJsonLd, absoluteUrl } from "@/lib/seo
 
 const GUIDES = [
   {
+    to: "/guides/difference-tdah-autisme-explication-parents",
+    Icon: Brain,
+    eyebrow: "Neurodiversité & Parentalité",
+    title: "TDAH et autisme : explication des principales différences et repères pour les parents",
+    desc: "Mécanismes d'attention, besoin de routine vs quête de nouveauté, interactions sociales et AuDHD : les clés pour accompagner votre enfant.",
+  },
+  {
     to: "/guides/reussir-entree-en-6eme-conseils-parents",
     Icon: GraduationCap,
     eyebrow: "Collège & Autonomie",
@@ -346,7 +353,23 @@ function GuidesIndex() {
             </Link>
           ))}
         </div>
-      </main>
+      
+      {/* AEO / GEO FAQ Section */}
+      <section className="mt-12 bg-gray-50 p-6 rounded-lg">
+        <h2 className="text-2xl font-bold mb-4">Questions fréquentes des parents</h2>
+        <div className="space-y-4">
+          <details className="cursor-pointer">
+            <summary className="font-semibold text-lg">Comment adapter cette approche au quotidien ?</summary>
+            <p className="mt-2 text-gray-700">Testez de petites étapes. Observez ce qui fonctionne sans imposer de contraintes lourdes. Chaque enfant réagit différemment aux nouveautés.</p>
+          </details>
+          <details className="cursor-pointer">
+            <summary className="font-semibold text-lg">Quels signes montrent un progrès réel ?</summary>
+            <p className="mt-2 text-gray-700">L'autonomie spontanée reste le meilleur indicateur. Un enfant qui initie l'activité sans rappel extérieur montre une véritable appropriation du sujet.</p>
+          </details>
+        </div>
+      </section>
+
+    </main>
 
       <footer className="border-t border-ink/10 bg-white/30 px-6 py-10">
         <div className="mx-auto flex max-w-5xl flex-col items-center justify-between gap-4 text-xs font-bold text-ink/50 md:flex-row">

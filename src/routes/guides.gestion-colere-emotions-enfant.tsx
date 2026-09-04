@@ -23,14 +23,29 @@ const FAQ = [
       "Trois priorités : garder son calme physique, nommer l'émotion à voix basse (« tu es furieux parce que... ») et tenir fermement la limite sans négocier sous le coup du cri.",
   },
   {
+    question: "Comment calmer un enfant qui tape sous le coup de la colère ?",
+    answer:
+      "La règle absolue est la sécurité. Bloquez fermement les coups sans agressivité en disant : « Je ne te laisse pas me taper, ça fait mal. » Orientez ensuite son énergie vers un coussin ou proposez-lui de sauter sur place pour décharger la tension corporelle.",
+  },
+  {
     question: "Que dire pendant une crise de colère ? Et que ne jamais dire ?",
     answer:
       "À dire doucement : « Je suis là avec toi », « Tu as le droit d'être en colère », « On trouvera une solution ensemble ». À bannir : « Arrête ton cinéma », « Tu es ridicule », ou les menaces de punition démesurée qui ne font que nourrir la panique.",
   },
   {
+    question: "Quelles sont les causes cachées d'une colère soudaine chez l'enfant ?",
+    answer:
+      "Derrière l'explosion se cache souvent un besoin physiologique (faim, fatigue, manque de sommeil) ou une surcharge sensorielle (trop de bruit, de lumière, d'interactions). Vérifiez toujours ces éléments basiques avant de chercher une explication psychologique complexe.",
+  },
+  {
     question: "Faut-il punir un enfant pour sa colère ?",
     answer:
       "Non. La colère est un signal émotionnel, pas un délit. En revanche, on sanctionne clairement les actes destructeurs : frapper, casser ou insulter.",
+  },
+  {
+    question: "Est-ce grave si je perds patience et crie sur mon enfant ?",
+    answer:
+      "Tout parent perd patience à l'occasion. Le point central reste la réparation. Une fois le calme revenu, dites simplement : « Je suis désolé d'avoir crié tout à l'heure, j'étais fatigué et j'ai mal géré ma propre colère. » Vous lui montrez ainsi que tout le monde peut se tromper et s'excuser.",
   },
   {
     question: "Les écrans rendent-ils mon enfant plus colérique ?",
