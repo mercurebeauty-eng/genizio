@@ -7,21 +7,41 @@ import {
 import { cn } from "@/lib/utils";
 import { MarkdownContent } from "@/components/ui/markdown-content";
 
-export function StepAccordion({ steps, className }: { steps: string[]; className?: string }) {
+export function StepAccordion({
+  steps,
+  className,
+  isProject = false,
+  isInvestigation = false,
+}: {
+  steps: string[];
+  className?: string;
+  isProject?: boolean;
+  isInvestigation?: boolean;
+}) {
   if (!steps || steps.length === 0) return null;
+
+  const sectionTitle = isProject
+    ? "🛠️ Les phases du projet"
+    : isInvestigation
+      ? "📋 Étapes d'observation & mesure"
+      : "Les étapes du défi";
+
+  const stepPrefix = isProject ? "Phase" : "Étape";
 
   return (
     <div className={className}>
-      <p className="mb-3 text-[10px] font-extrabold uppercase tracking-widest text-ink/60">
-        Les étapes du défi
+      <p className="mb-3 text-[11px] font-black uppercase tracking-widest text-ink/70 flex items-center gap-1.5">
+        <span>{sectionTitle}</span>
       </p>
       <Accordion type="single" collapsible className="w-full space-y-2">
         {steps.map((step, index) => {
           // Si l'étape est longue, on essaie d'extraire une phrase courte pour le titre,
-          // sinon on affiche "Étape X".
+          // sinon on affiche "Phase/Étape X".
           const firstDot = step.indexOf(".");
           const shortTitle =
-            firstDot > 10 && firstDot < 60 ? step.substring(0, firstDot) : `Étape ${index + 1}`;
+            firstDot > 10 && firstDot < 60
+              ? step.substring(0, firstDot)
+              : `${stepPrefix} ${index + 1}`;
 
           return (
             <AccordionItem

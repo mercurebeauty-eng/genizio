@@ -29,6 +29,7 @@ import nayaAvatar from "@/assets/naya-avatar.png";
 import { confirmDialog } from "@/components/ui/confirm-dialog";
 import { DifficultyBadge } from "@/components/challenges/DifficultyBadge";
 import { ChallengeKindBadge } from "@/components/challenges/ChallengeKindBadge";
+import { ChallengeGardnerPills } from "@/components/challenges/ChallengeGardnerPills";
 import { AspirationCompassCard } from "@/components/aspirations/AspirationCompassCard";
 import { MarkdownContent } from "@/components/ui/markdown-content";
 import { GenizioLoader } from "@/components/GenizioLoader";
@@ -60,6 +61,8 @@ type Challenge = ChallengeLike & {
   kind?: string | null;
   child_question?: string | null;
   naya_hint?: string | null;
+  target_intelligences?: string[] | null;
+  trait_subform?: string | null;
 };
 
 const DOMAIN_COLORS: Record<string, string> = {
@@ -884,22 +887,48 @@ function QuestPage() {
         <AspirationCompassCard childId={profileId} mode="child" />
 
         {activeChallenge ? (
-          <div className="bg-white rounded-3xl p-8 border border-ink/10 shadow-xl w-full animate-in zoom-in-95 duration-500 relative overflow-hidden text-left">
+          <div
+            className={`bg-white rounded-3xl p-8 border shadow-xl w-full animate-in zoom-in-95 duration-500 relative overflow-hidden text-left ${
+              activeChallenge.kind === "projet"
+                ? "border-purple-300 ring-2 ring-purple-200/60"
+                : "border-ink/10"
+            }`}
+          >
             <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 flex-wrap">
                 <span className="inline-block rounded-full border border-ink/10 bg-brand px-3.5 py-1 text-xs font-black uppercase tracking-widest text-white shadow-sm">
                   Mission : {activeChallenge.domain}
                 </span>
                 <DifficultyBadge difficulty={activeChallenge.difficulty} />
-                <ChallengeKindBadge kind={activeChallenge.kind} />
+                <ChallengeKindBadge kind={activeChallenge.kind} domain={activeChallenge.domain} />
               </div>
               <span className="text-xs font-black text-ink/60">⏱ {activeChallenge.duration}</span>
             </div>
+
+            {activeChallenge.child_question && (
+              <div className="mb-4 rounded-2xl bg-amber-50 border border-amber-200/80 p-3.5 text-xs text-amber-900 font-bold flex items-center gap-2">
+                <span className="text-base">💬</span>
+                <span>Inspiré de ta question : « {activeChallenge.child_question} »</span>
+              </div>
+            )}
+
             <h2 className="font-display text-balance text-2xl font-black text-ink leading-tight mb-3">
               {activeChallenge.title}
             </h2>
-            <div className="text-ink/70 leading-relaxed mb-6">
+            <div className="text-ink/70 leading-relaxed mb-4">
               <MarkdownContent content={activeChallenge.description} />
+            </div>
+
+            <div className="mb-6">
+              <p className="text-[10px] font-black uppercase tracking-widest text-ink/50 mb-2">
+                Intelligences & Talents mobilisés :
+              </p>
+              <ChallengeGardnerPills
+                intelligences={activeChallenge.target_intelligences}
+                traitSubform={activeChallenge.trait_subform}
+                domain={activeChallenge.domain}
+                size="sm"
+              />
             </div>
 
             {materials.length > 0 && (

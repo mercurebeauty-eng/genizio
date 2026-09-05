@@ -81,6 +81,7 @@ import { RenewChildAccessButton } from "@/components/settings/RenewChildAccessBu
 import { DifficultyBadge } from "@/components/challenges/DifficultyBadge";
 import { ChallengeCountdown } from "@/components/challenges/ChallengeCountdown";
 import { ChallengeKindBadge } from "@/components/challenges/ChallengeKindBadge";
+import { ChallengeGardnerPills } from "@/components/challenges/ChallengeGardnerPills";
 import { MarkdownContent } from "@/components/ui/markdown-content";
 import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover";
 import {
@@ -249,6 +250,7 @@ function ChallengesPage() {
   const [error, setError] = useState<string | null>(null);
   const [openId, setOpenId] = useState<string | null>(null);
   const [statusFilter, setStatusFilter] = useState<"all" | Challenge["status"]>("all");
+  const [formatFilter, setFormatFilter] = useState<"all" | "projet" | "investigation" | "spark">("all");
   const [activeProducts, setActiveProducts] = useState<any[]>([]);
   const [assignedChallengeForKit, setAssignedChallengeForKit] = useState<{
     id: string;
@@ -1573,7 +1575,10 @@ function ChallengesPage() {
                               </span>
                             )}
                             <DifficultyBadge difficulty={currentGeneratedChallenge.difficulty} />
-                            <ChallengeKindBadge kind={currentGeneratedChallenge.kind} />
+                            <ChallengeKindBadge
+                              kind={currentGeneratedChallenge.kind}
+                              domain={currentGeneratedChallenge.domain}
+                            />
                           </div>
                           <span className="text-xs text-ink/60 font-semibold">
                             🕒 {currentGeneratedChallenge.duration}
@@ -1582,6 +1587,14 @@ function ChallengesPage() {
                         <h4 className="font-display text-balance text-xl font-extrabold leading-tight text-ink mb-2">
                           {currentGeneratedChallenge.title}
                         </h4>
+                        <div className="mb-3">
+                          <ChallengeGardnerPills
+                            intelligences={currentGeneratedChallenge.target_intelligences}
+                            traitSubform={currentGeneratedChallenge.trait_subform}
+                            domain={currentGeneratedChallenge.domain}
+                            size="sm"
+                          />
+                        </div>
                         <div className="text-sm text-ink/70 leading-relaxed mb-4">
                           <MarkdownContent content={currentGeneratedChallenge.description} />
                         </div>
@@ -1705,44 +1718,105 @@ function ChallengesPage() {
                     </div>
                   ) : (
                     <>
-                      <div className="flex flex-wrap gap-2">
-                        <button
-                          onClick={() => setStatusFilter("all")}
-                          className={`rounded-xl border border-ink/10 px-3 py-1.5 text-xs font-bold transition-all ${
-                            statusFilter === "all"
-                              ? "bg-ink text-white shadow-sm"
-                              : "bg-white text-ink/65 hover:bg-surface"
-                          }`}
-                        >
-                          Tous ({challenges.length})
-                        </button>
-                        {CHALLENGE_STATUSES.map((s) => {
-                          const count = challenges.filter((c) => c.status === s).length;
-                          return (
+                      <div className="space-y-3">
+                        <div className="flex flex-wrap gap-2">
+                          <button
+                            onClick={() => setStatusFilter("all")}
+                            className={`rounded-xl border border-ink/10 px-3 py-1.5 text-xs font-bold transition-all cursor-pointer ${
+                              statusFilter === "all"
+                                ? "bg-ink text-white shadow-sm"
+                                : "bg-white text-ink/65 hover:bg-surface"
+                            }`}
+                          >
+                            Tous ({challenges.length})
+                          </button>
+                          {CHALLENGE_STATUSES.map((s) => {
+                            const count = challenges.filter((c) => c.status === s).length;
+                            return (
+                              <button
+                                key={s}
+                                onClick={() => setStatusFilter(s)}
+                                className={`rounded-xl border border-ink/10 px-3 py-1.5 text-xs font-bold transition-all cursor-pointer ${
+                                  statusFilter === s
+                                    ? "bg-ink text-white shadow-sm"
+                                    : "bg-white text-ink/65 hover:bg-surface"
+                                }`}
+                              >
+                                {STATUS_LABEL[s]} ({count})
+                              </button>
+                            );
+                          })}
+                        </div>
+
+                        {/* Barre de filtres par format pédagogique */}
+                        {challenges.length > 0 && (
+                          <div className="flex flex-wrap items-center gap-1.5 pt-1 border-t border-ink/5">
+                            <span className="text-[10px] font-black uppercase tracking-wider text-ink/40 mr-1">
+                              Format :
+                            </span>
                             <button
-                              key={s}
-                              onClick={() => setStatusFilter(s)}
-                              className={`rounded-xl border border-ink/10 px-3 py-1.5 text-xs font-bold transition-all ${
-                                statusFilter === s
-                                  ? "bg-ink text-white shadow-sm"
-                                  : "bg-white text-ink/65 hover:bg-surface"
+                              onClick={() => setFormatFilter("all")}
+                              className={`rounded-lg px-2.5 py-1 text-[11px] font-extrabold transition-all cursor-pointer ${
+                                formatFilter === "all"
+                                  ? "bg-brand/15 text-brand border border-brand/30"
+                                  : "text-ink/60 hover:bg-surface border border-transparent"
                               }`}
                             >
-                              {STATUS_LABEL[s]} ({count})
+                              Tous ({challenges.length})
                             </button>
-                          );
-                        })}
+                            <button
+                              onClick={() => setFormatFilter("projet")}
+                              className={`inline-flex items-center gap-1 rounded-lg px-2.5 py-1 text-[11px] font-extrabold transition-all cursor-pointer ${
+                                formatFilter === "projet"
+                                  ? "bg-purple-100 text-purple-900 border border-purple-300 shadow-2xs"
+                                  : "text-ink/60 hover:bg-surface border border-transparent"
+                              }`}
+                            >
+                              <span>🏗️ Grands Projets ({challenges.filter((c) => (c.kind ?? "").toLowerCase() === "projet").length})</span>
+                            </button>
+                            <button
+                              onClick={() => setFormatFilter("investigation")}
+                              className={`inline-flex items-center gap-1 rounded-lg px-2.5 py-1 text-[11px] font-extrabold transition-all cursor-pointer ${
+                                formatFilter === "investigation"
+                                  ? "bg-emerald-100 text-emerald-900 border border-emerald-300 shadow-2xs"
+                                  : "text-ink/60 hover:bg-surface border border-transparent"
+                              }`}
+                            >
+                              <span>🔍 Investigations ({challenges.filter((c) => (c.kind ?? "").toLowerCase() === "investigation").length})</span>
+                            </button>
+                            <button
+                              onClick={() => setFormatFilter("spark")}
+                              className={`inline-flex items-center gap-1 rounded-lg px-2.5 py-1 text-[11px] font-extrabold transition-all cursor-pointer ${
+                                formatFilter === "spark"
+                                  ? "bg-amber-100 text-amber-900 border border-amber-300 shadow-2xs"
+                                  : "text-ink/60 hover:bg-surface border border-transparent"
+                              }`}
+                            >
+                              <span>⚡ Étincelles ({challenges.filter((c) => {
+                                const k = (c.kind ?? "").toLowerCase();
+                                return k === "spark_micro" || k === "micro" || k === "";
+                              }).length})</span>
+                            </button>
+                          </div>
+                        )}
                       </div>
 
                       {(() => {
-                        const filteredChallenges =
-                          statusFilter === "all"
-                            ? challenges
-                            : challenges.filter((c) => c.status === statusFilter);
+                        const filteredChallenges = challenges.filter((c) => {
+                          if (statusFilter !== "all" && c.status !== statusFilter) return false;
+                          if (formatFilter !== "all") {
+                            const k = (c.kind ?? "").toLowerCase();
+                            if (formatFilter === "projet" && k !== "projet") return false;
+                            if (formatFilter === "investigation" && k !== "investigation") return false;
+                            if (formatFilter === "spark" && k !== "spark_micro" && k !== "micro" && k !== "") return false;
+                          }
+                          return true;
+                        });
+
                         if (filteredChallenges.length === 0) {
                           return (
                             <div className="rounded-3xl border border-dashed border-ink/20 bg-white/40 p-10 text-center shadow-sm">
-                              <p className="text-ink/65 font-bold">Aucun défi avec ce statut.</p>
+                              <p className="text-ink/65 font-bold">Aucun défi correspondant à ces filtres.</p>
                             </div>
                           );
                         }
@@ -2086,12 +2160,21 @@ function ChallengeCard({
     }
   };
 
+  const isProject = (c.kind ?? "").toLowerCase() === "projet";
+  const isInvestigation = (c.kind ?? "").toLowerCase() === "investigation";
+
   if (!open) {
     // Unexpanded state: A clean compact card that feels like the prototype
     return (
       <div
         id={`challenge-${c.id}`}
-        className="rounded-[1.5rem] bg-white p-5 shadow-sm border border-border transition-all flex flex-col gap-4"
+        className={`rounded-[1.5rem] p-5 shadow-sm transition-all flex flex-col gap-4 ${
+          isProject
+            ? "border-2 border-purple-300/80 bg-gradient-to-b from-purple-50/30 to-white ring-2 ring-purple-100/60"
+            : isInvestigation
+              ? "border border-emerald-200 bg-white"
+              : "border border-border bg-white"
+        }`}
       >
         <div className="flex flex-wrap items-center justify-between gap-2">
           <div className="flex items-center gap-2 flex-wrap">
@@ -2117,10 +2200,7 @@ function ChallengeCard({
               </span>
             )}
             <DifficultyBadge difficulty={c.difficulty} />
-            <ChallengeKindBadge kind={c.kind} />
-            {/* Temps (2026-08-13) : la durée estimée et le temps limite (chrono doux,
-                quand le défi en a un) sont enfin visibles sur la carte, pas seulement
-                dans le détail ouvert. */}
+            <ChallengeKindBadge kind={c.kind} domain={c.domain} />
             {c.duration && (
               <span className="rounded-full bg-cyan-50 text-cyan-800 border border-cyan-200 px-[11px] py-[5px] text-[12px] font-bold inline-flex items-center gap-1">
                 <Clock className="size-3 shrink-0" />
@@ -2148,6 +2228,21 @@ function ChallengeCard({
             <MarkdownContent content={c.description} />
           </div>
         </div>
+
+        <div className="flex flex-wrap items-center justify-between gap-2 pt-1">
+          <ChallengeGardnerPills
+            intelligences={c.target_intelligences}
+            traitSubform={c.trait_subform}
+            domain={c.domain}
+            size="xs"
+          />
+          {isProject && (
+            <span className="text-[10px] font-black text-purple-700 bg-purple-50 border border-purple-200 px-2 py-0.5 rounded-full shadow-2xs">
+              ⭐ 350 XP
+            </span>
+          )}
+        </div>
+
         <button
           onClick={onToggle}
           className="w-full h-[44px] rounded-full border border-border bg-surface text-[14px] font-bold text-ink shadow-sm hover:bg-surface/80 transition-all flex items-center justify-center cursor-pointer"
@@ -2158,15 +2253,23 @@ function ChallengeCard({
     );
   }
 
+  const headerGradient = isProject
+    ? "bg-gradient-to-br from-[#28184c] via-[#3d236b] to-[#1a0f33]"
+    : isInvestigation
+      ? "bg-gradient-to-br from-[#0c3d30] via-[#145745] to-[#072920]"
+      : "bg-gradient-to-br from-[#df8f3e] to-[#a35e16]";
+
   // Expanded state: The exact prototype "DÉFI — DÉTAIL" layout
   return (
     <div
       id={`challenge-${c.id}`}
-      className="rounded-[26px] overflow-hidden bg-surface shadow-md transition-all border border-border"
+      className={`rounded-[26px] overflow-hidden bg-surface shadow-md transition-all border ${
+        isProject ? "border-purple-300 ring-2 ring-purple-200/50" : "border-border"
+      }`}
     >
       {/* 2. DÉFI — DÉTAIL (Prototype equivalent) */}
       <div className="relative px-5 pt-3 pb-7 overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-br from-[#df8f3e] to-[#a35e16]"></div>
+        <div className={`absolute inset-0 ${headerGradient}`}></div>
         <div
           className="absolute -top-[30px] -right-[20px] w-[170px] h-[170px]"
           style={{ background: "radial-gradient(circle,rgba(255,255,255,.3),transparent 70%)" }}
@@ -2212,7 +2315,7 @@ function ChallengeCard({
               </span>
             )}
             <DifficultyBadge difficulty={c.difficulty} />
-            <ChallengeKindBadge kind={c.kind} />
+            <ChallengeKindBadge kind={c.kind} domain={c.domain} />
             {c.duration && (
               <span className="inline-flex items-center gap-1 px-[11px] py-[5px] bg-white/20 rounded-full text-white text-[12px] font-bold">
                 <Clock className="size-3 shrink-0" />
@@ -2229,7 +2332,7 @@ function ChallengeCard({
               <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor">
                 <path d="M11.5 2.3a.5.5 0 0 1 1 0l2.3 4.6 5.1.75a.5.5 0 0 1 .3.86l-3.7 3.6.87 5.1a.5.5 0 0 1-.77.53L12 15.9l-4.6 2.4a.5.5 0 0 1-.77-.53l.88-5.1-3.7-3.6a.5.5 0 0 1 .29-.86l5.1-.75z" />
               </svg>
-              180 XP
+              {isProject ? "350 XP" : isInvestigation ? "180 XP" : "120 XP"}
             </span>
           </div>
           <div className="font-display text-balance font-bold text-[30px] text-white leading-[1.02]">
@@ -2239,19 +2342,48 @@ function ChallengeCard({
       </div>
 
       <div className="px-5 pt-5 pb-0 -mt-[14px] bg-surface rounded-t-[26px] relative">
-        <div className="flex gap-3 items-start bg-brand-50 rounded-[1rem] p-[14px] mb-5">
+        <div
+          className={`flex gap-3 items-start rounded-[1rem] p-[14px] mb-5 ${
+            isProject
+              ? "bg-purple-50/90 border border-purple-200/80"
+              : isInvestigation
+                ? "bg-emerald-50/90 border border-emerald-200/80"
+                : "bg-brand-50"
+          }`}
+        >
           <img
             src="/naya-mascot.png"
             alt="Naya"
             className="w-[40px] h-[40px] rounded-full object-cover shrink-0"
           />
           <div className="text-[14px] leading-[1.45] text-ink">
-            <b className="text-brand">Naya&nbsp;:</b> J'ai préparé ce défi spécialement pour toi.
-            Montre-moi de quoi tu es capable !
+            {isProject ? (
+              <>
+                <b className="text-purple-700">Naya&nbsp;:</b> C'est un grand projet d'envergure digne d'un créateur ! Prends ton temps, rassemble tes matériaux et avance pas à pas. J'ai hâte de voir ton chef-d'œuvre ! ✨
+              </>
+            ) : isInvestigation ? (
+              <>
+                <b className="text-emerald-700">Naya&nbsp;:</b> Endosse ton costume de chercheur : observe avec précision, teste et déduis le secret par toi-même ! 🔍
+              </>
+            ) : c.pedagogical_context && (c.pedagogical_context.includes("«") || c.pedagogical_context.toLowerCase().includes("question")) ? (
+              <>
+                <b className="text-brand">Naya&nbsp;:</b> Tu te posais une question passionnante ! Voici la mission que j'ai imaginée pour que tu découvres la réponse par l'expérience concrète. 💬
+              </>
+            ) : (
+              <>
+                <b className="text-brand">Naya&nbsp;:</b> J'ai préparé ce défi spécialement pour toi. Montre-moi de quoi tu es capable !
+              </>
+            )}
           </div>
         </div>
 
-        <div className="font-display text-balance font-bold text-[16px] mb-2">Ton objectif</div>
+        <div className="font-display text-balance font-bold text-[16px] mb-2 flex items-center gap-2">
+          {isProject
+            ? "🏛️ Le Chef-d'œuvre à concevoir"
+            : isInvestigation
+              ? "🔬 Ta mission d'enquêteur"
+              : "🎯 Ton objectif"}
+        </div>
         <div className="bg-card border border-border rounded-[1rem] p-4 text-[15px] leading-[1.5] text-ink shadow-sm mb-[22px]">
           <MarkdownContent content={c.description} />
         </div>
@@ -2263,23 +2395,24 @@ function ChallengeCard({
           />
         ) : c.steps && c.steps.length > 0 ? (
           <div className="mb-[22px]">
-            <StepAccordion steps={c.steps} />
+            <StepAccordion
+              steps={c.steps}
+              isProject={isProject}
+              isInvestigation={isInvestigation}
+            />
           </div>
         ) : null}
 
-        <div className="font-display text-balance font-bold text-[16px] mb-[10px]">
-          Ce que tu développes
+        <div className="font-display text-balance font-bold text-[16px] mb-[10px] flex items-center gap-2">
+          <span>{isProject ? "🧠 Intelligences & Talents mobilisés" : "Ce que tu développes"}</span>
         </div>
-        <div className="flex flex-wrap gap-[9px] mb-[22px]">
-          <span className="px-[14px] py-[9px] bg-brand-50 text-brand-700 rounded-full font-bold text-[13px]">
-            {c.domain}
-          </span>
-          <span className="px-[14px] py-[9px] bg-leaf-50 text-leaf-dark rounded-full font-bold text-[13px]">
-            Créativité
-          </span>
-          <span className="px-[14px] py-[9px] bg-sky-50 text-sky-dark rounded-full font-bold text-[13px]">
-            Persévérance
-          </span>
+        <div className="mb-[22px]">
+          <ChallengeGardnerPills
+            intelligences={c.target_intelligences}
+            traitSubform={c.trait_subform}
+            domain={c.domain}
+            size="md"
+          />
         </div>
 
         {c.materials && c.materials.length > 0 && (
