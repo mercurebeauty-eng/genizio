@@ -23,6 +23,14 @@ export default defineConfig({
     preset: "vercel",
   },
   vite: {
+    // node_modules est un mélange bun (react/react-dom réels au premier niveau) et pnpm
+    // (.pnpm/... pour les transitaires). En dev, le SSR externalise les node_modules : Node
+    // résout alors la copie .pnpm de React pour @vercel/analytics pendant que le runtime SSR
+    // utilise la copie premier niveau → "Invalid hook call" et page d'erreur au lieu de la
+    // landing. On force ces deux paquets dans le pipeline de résolution de Vite (une seule
+    // instance de React) — le build de prod n'est pas concerné (nitro bundle tout).
+    ssr: { noExternal: ["@vercel/analytics", "@vercel/speed-insights"] },
+    resolve: { dedupe: ["react", "react-dom"] },
     plugins: [
       VitePWA({
         // 'prompt' + injectRegister:false hands control of the update flow to our own
