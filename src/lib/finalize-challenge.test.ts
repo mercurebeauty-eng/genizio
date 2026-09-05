@@ -246,6 +246,12 @@ describe("getSecretTitle — contextualisation par domaine et intelligences", ()
     expect(title.title).toBe("Le Secret Écologique & du Vivant");
   });
 
+  it("adapte pour l'histoire-géographie et le territoire", () => {
+    const title = getSecretTitle({ academicSubject: "histoire_geo" });
+    expect(title.kicker).toBe("L'Avantage Citoyen & Explorateur de Naya");
+    expect(title.title).toBe("Le Secret d'Enquête Historique & Territoire");
+  });
+
   it("retombe sur le secret scientifique par défaut", () => {
     const title = getSecretTitle({ academicDomain: "sciences", domain: "Sciences & Univers" });
     expect(title.kicker).toBe("L'Avantage Secret de Naya");

@@ -289,13 +289,15 @@ describe("buildHomeworkPrompt — contrat (C1.3)", () => {
     expect(buildHomeworkPrompt(base)).not.toContain("CONTEXTE D'ANXIÉTÉ DÉTECTÉ");
   });
 
-  it("couvre les 11 règles de fusion", () => {
+  it("couvre les 12 règles de fusion", () => {
     const p = buildHomeworkPrompt(base);
     expect(p).toContain(`4. ${GENIZIO_PRINCIPLES.slice(0, 20)}`);
     expect(p).toContain(`6. ${STEPS_INSTRUCTION.slice(0, 20)}`);
     expect(p).toContain(`7. ${SAFETY_INSTRUCTION.slice(0, 20)}`);
     expect(p).toContain(`8. ${PROOF_MODE_INSTRUCTION.slice(0, 20)}`);
     expect(p).toContain(`11. ${ACADEMIC_SECRET_INSTRUCTION.slice(0, 20)}`);
+    expect(p).toContain(`12. ${OBJECTIVE_INSTRUCTION.slice(0, 20)}`);
+    expect(p).toContain("Scénario immersif en 3 temps");
   });
 });
 

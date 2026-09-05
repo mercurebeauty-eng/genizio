@@ -806,12 +806,13 @@ RÈGLES DE FUSION ACADÉMIQUE-LUDIQUE STRICTES :
 9. ${INTELLIGENCES_FIELD_INSTRUCTION}
 10. ${TRAIT_SUBFORM_INSTRUCTION}
 11. ${ACADEMIC_SECRET_INSTRUCTION}
+12. ${OBJECTIVE_INSTRUCTION}
 
 Réponds STRICTEMENT en JSON valide avec ce format exact :
 {
   "domain": "${domainJson}",
   "title": "Titre accrocheur du défi ludique",
-  "description": "Pitch du défi pour l'enfant intégrant la révision de ${homeworkInstruction}",
+  "description": "Scénario immersif en 3 temps intégrant la révision concrète de : ${homeworkInstruction.replace(/"/g, '\\"')}",
   "duration": "${timeAvailable}",
   "steps": ["Étape 1", "Étape 2..."],
   "materials": ["Matériau 1", "Matériau 2..."],

@@ -1014,10 +1014,12 @@ export function getSecretTitle({
   academicDomain,
   domain,
   intelligences,
+  academicSubject,
 }: {
   academicDomain?: string | null;
   domain?: string | null;
   intelligences?: string[] | null;
+  academicSubject?: string | null;
 }): {
   kicker: string;
   title: string;
@@ -1025,6 +1027,22 @@ export function getSecretTitle({
   const normAcad = (academicDomain ?? "").toLowerCase();
   const normDom = (domain ?? "").toLowerCase();
   const normIntel = (intelligences ?? []).map((i) => i.toLowerCase());
+  const normSubj = (academicSubject ?? "").toLowerCase();
+
+  // 0. Histoire & Géographie / Territoire & Société
+  if (
+    normSubj === "histoire_geo" ||
+    normSubj === "histoire" ||
+    normSubj === "geographie" ||
+    normDom.includes("histoire") ||
+    normDom.includes("géograph") ||
+    normDom.includes("geograph")
+  ) {
+    return {
+      kicker: "L'Avantage Citoyen & Explorateur de Naya",
+      title: "Le Secret d'Enquête Historique & Territoire",
+    };
+  }
 
   // 1. Langage / Rhétorique / Expression / Écriture
   if (

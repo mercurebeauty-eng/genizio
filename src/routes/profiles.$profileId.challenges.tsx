@@ -1650,6 +1650,17 @@ function ChallengesPage() {
                           </div>
                         </div>
 
+                        <div className="mb-4">
+                          <LockedAcademicSecretTeaser
+                            academicGradeLevel={currentGeneratedChallenge.academic_grade_level}
+                            academicLevelAge={currentGeneratedChallenge.academic_level_age}
+                            academicDomain={currentGeneratedChallenge.academic_domain}
+                            domain={currentGeneratedChallenge.domain}
+                            intelligences={currentGeneratedChallenge.target_intelligences}
+                            academicSubject={currentGeneratedChallenge.academic_subject}
+                          />
+                        </div>
+
                         <div className="mb-6">
                           {!mentorMode && (
                             <KitSuggestion
@@ -2443,6 +2454,7 @@ function ChallengeCard({
               academicDomain={c.academic_domain}
               domain={c.domain}
               intelligences={c.target_intelligences}
+              academicSubject={c.academic_subject}
             />
             {c.steps && c.steps.length > 0 && (
               <div className="mb-[22px]">
@@ -2474,6 +2486,7 @@ function ChallengeCard({
               academicDomain={c.academic_domain}
               domain={c.domain}
               intelligences={c.target_intelligences}
+              academicSubject={c.academic_subject}
             />
           </>
         )}
@@ -2757,6 +2770,7 @@ export function AcademicSecretCard({
   academicDomain,
   domain,
   intelligences,
+  academicSubject,
 }: {
   secret?: string | null;
   academicGradeLevel?: string | null;
@@ -2764,8 +2778,9 @@ export function AcademicSecretCard({
   academicDomain?: string | null;
   domain?: string | null;
   intelligences?: string[] | null;
+  academicSubject?: string | null;
 }) {
-  const meta = getSecretTitle({ academicDomain, domain, intelligences });
+  const meta = getSecretTitle({ academicDomain, domain, intelligences, academicSubject });
   const gradeLabel =
     academicGradeLevel ?? (academicLevelAge ? frenchGradeLevelForAge(academicLevelAge) : null);
 
@@ -2811,14 +2826,16 @@ export function LockedAcademicSecretTeaser({
   academicDomain,
   domain,
   intelligences,
+  academicSubject,
 }: {
   academicGradeLevel?: string | null;
   academicLevelAge?: number | null;
   academicDomain?: string | null;
   domain?: string | null;
   intelligences?: string[] | null;
+  academicSubject?: string | null;
 }) {
-  const meta = getSecretTitle({ academicDomain, domain, intelligences });
+  const meta = getSecretTitle({ academicDomain, domain, intelligences, academicSubject });
   const gradeLabel =
     academicGradeLevel ?? (academicLevelAge ? frenchGradeLevelForAge(academicLevelAge) : null);
 
