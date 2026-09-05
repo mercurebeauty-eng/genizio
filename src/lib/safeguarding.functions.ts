@@ -421,6 +421,27 @@ export const auditSupportMentorSquadSafeguardsAdmin = createServerFn({ method: "
         isMaterialArtifactDetected: true,
         submissionTimestamp: c.updated_at || new Date().toISOString(),
       }));
+
+      // Preuves de CLUB du samedi : empreintes dHash et confiances Naya Vision
+      // RÉELLES (comblait un stub : preuve_image_url comme empreinte, 0.85 en dur).
+      const { data: clubSessions } = await db
+        .from("mentor_club_sessions")
+        .select("id, mentor_user_id, proof_image_fingerprint, naya_vision_confidence, vision_verdict, occurred_at, status")
+        .eq("mentor_user_id", data.mentorUserId)
+        .in("status", ["validated", "flagged"])
+        .order("occurred_at", { ascending: false })
+        .limit(50);
+      for (const cs of clubSessions ?? []) {
+        submissions.push({
+          challengeId: cs.id,
+          childId: `club:${cs.id}`, // preuve d'escouade, non rattachable à 1 enfant
+          photoUrl: cs.vision_verdict?.proofPath ?? null,
+          imageFingerprint: cs.proof_image_fingerprint ?? `session:${cs.id}`,
+          nayaVisionConfidence: cs.naya_vision_confidence ?? 0,
+          isMaterialArtifactDetected: cs.vision_verdict?.materialArtifactDetected === true,
+          submissionTimestamp: cs.occurred_at,
+        });
+      }
     }
 
     // 4. Structurer les évaluations tripartites par enfant
