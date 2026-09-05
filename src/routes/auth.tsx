@@ -129,7 +129,7 @@ function AuthPage() {
           <p className="mt-2 text-sm text-ink/60">
             {step === "initial" 
               ? "Le premier profil enfant est gratuit pour toujours. Créez votre accès et recevez le premier défi sur mesure de votre enfant."
-              : "Veuillez entrer le code à 6 chiffres que nous venons d'envoyer à " + email}
+              : "Veuillez entrer le code reçu par email à " + email}
           </p>
 
           {step === "initial" ? (
@@ -187,9 +187,9 @@ function AuthPage() {
                     type="text"
                     value={otp}
                     onChange={(e) => setOtp(e.target.value)}
-                    placeholder="Code à 6 chiffres"
+                    placeholder="Code à 6 ou 8 chiffres"
                     required
-                    maxLength={6}
+                    maxLength={8}
                     className="w-full rounded-xl border border-ink/10 bg-surface pl-10 pr-4 py-3 text-sm outline-none focus:border-brand focus:ring-1 focus:ring-brand font-mono font-bold tracking-widest"
                   />
                 </div>
