@@ -1,8 +1,9 @@
 // @lovable.dev/vite-tanstack-config already includes the following — do NOT add them manually
 // or the app will break with duplicate plugins:
 //   - TanStack devtools (dev-only, first), tanstackStart, viteReact, tailwindcss, tsConfigPaths,
-//     nitro (build-only using cloudflare as a default target), VITE_* env injection, @ path alias,
-//     React/TanStack dedupe, error logger plugins, and sandbox detection (port/host/strictPort).
+//     nitro (build-only, preset explicite "vercel" — déploiement Vercel), VITE_* env injection,
+//     @ path alias, React/TanStack dedupe, error logger plugins, and sandbox detection
+//     (port/host/strictPort).
 // You can pass additional config via defineConfig({ vite: { ... }, etc... }) if needed.
 import { defineConfig } from "@lovable.dev/vite-tanstack-config";
 import { VitePWA } from "vite-plugin-pwa";
@@ -13,7 +14,23 @@ export default defineConfig({
     // nitro/vite builds from this
     server: { entry: "server" },
   },
+  nitro: {
+    // Le projet est déployé sur Vercel (plus via Lovable). Sans cette option, le wrapper
+    // Lovable retombe sur son preset par défaut "cloudflare-module", qui produit un Worker
+    // Cloudflare inutilisable chez Vercel — et un preview local impossible (workerd refuse
+    // les timers globaux). "vercel" génère le Build Output API (.vercel/output) : même
+    // output que le déploiement Git de Vercel.
+    preset: "vercel",
+  },
   vite: {
+    // node_modules est un mélange bun (react/react-dom réels au premier niveau) et pnpm
+    // (.pnpm/... pour les transitaires). En dev, le SSR externalise les node_modules : Node
+    // résout alors la copie .pnpm de React pour @vercel/analytics pendant que le runtime SSR
+    // utilise la copie premier niveau → "Invalid hook call" et page d'erreur au lieu de la
+    // landing. On force ces deux paquets dans le pipeline de résolution de Vite (une seule
+    // instance de React) — le build de prod n'est pas concerné (nitro bundle tout).
+    ssr: { noExternal: ["@vercel/analytics", "@vercel/speed-insights"] },
+    resolve: { dedupe: ["react", "react-dom"] },
     plugins: [
       VitePWA({
         // 'prompt' + injectRegister:false hands control of the update flow to our own

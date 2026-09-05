@@ -89,6 +89,17 @@ const LANDING_FAQ: {
       "Un enfant qui a besoin de bouger ou qui décroche face à un cours magistral possède souvent une intelligence corporelle, spatiale ou entrepreneuriale remarquable. Dans un système où l'IA gère la théorie, ces profils axés sur l'action et la création concrète sont appelés à exceller. Génizio leur offre un terrain d'expression où leur énergie est canalisée dans des réalisations valorisantes (sans poser de diagnostic médical, réservé aux professionnels de santé).",
   },
   {
+    question: "Qu'est-ce que le « Gap » dont parle Génizio ?",
+    answer:
+      "Le Gap, c'est l'écart entre le socle commun que tout diplômé possède et ce qui rend votre enfant irremplaçable. Le diplôme certifie que des milliers de jeunes ont appris les mêmes choses ; il ne dit rien de ce qu'ils savent faire de particulier. Le Gap se compose des compétences profondément humaines, pratiques et contextuelles — débrouillardise, intelligence spatiale, leadership, audace entrepreneuriale — que l'école n'évalue pas mais que le monde réel récompense, et que l'IA ne remplace pas. Génizio cartographie et muscle ce Gap défi après défi, à partir de réalisations concrètes.",
+  },
+  {
+    question:
+      "Avec qui mon enfant sera-t-il réellement en concurrence sur le marché du travail ?",
+    answer:
+      "Beaucoup plus loin qu'avec les 40 élèves de sa classe. Votre enfant sera comparé à toute sa génération dans sa ville puis dans son pays, à ceux qui ont cinq ans de plus et occupent déjà les places, à ceux qui ont cinq ans de moins et arrivent avec des méthodes plus récentes — et désormais à l'intelligence artificielle, qui exécute en quelques secondes les tâches théoriques qu'on a mis des années à apprendre. Dans cette arène, un CV identique à mille autres ne suffit plus : c'est la singularité qui fait la différence. Génizio aide précisément à la révéler et à la développer.",
+  },
+  {
     question: "Quelles activités éducatives proposer à un enfant de 5 à 16 ans à la maison ?",
     answer:
       "Les activités les plus formatrices sont celles qui produisent un résultat visible avec du matériel du quotidien : fabriquer un système d'arrosage avec des bouteilles, calculer le prix de revient d'un jus de fruits et le vendre, construire un pont en bâtonnets qui tient sans colle, teindre un tissu avec des pigments de fleurs. Elles mobilisent plusieurs intelligences à la fois et laissent une trace concrète dont l'enfant est fier. Génizio génère ce type de défis sur mesure selon l'âge, la ville et les centres d'intérêt de l'enfant.",
@@ -454,6 +465,8 @@ function NayaLanding() {
       <MarqueeSection />
       <ConstatSection />
       <StorySection />
+      <ConcurrenceSection />
+      <GapSection />
       <MethodSection />
       <DomainsSection />
       <DemoSection />
@@ -472,6 +485,7 @@ function NayaLanding() {
 }
 
 const NAV_LINKS = [
+  { href: "#gap", label: "Le Gap" },
   { href: "#domaines", label: "9 intelligences" },
   { href: "#portfolio", label: "Portfolio de vie" },
   { href: "#demo", label: "Exemple" },
@@ -963,6 +977,191 @@ function ConstatSection() {
             </span>{" "}
             décideront de qui sera acteur ou spectateur de demain. »
           </blockquote>
+        </Reveal>
+      </div>
+    </section>
+  );
+}
+
+// Le Gap (1/2) — Détromper le parent sur la taille réelle de l'arène : les rivaux de son
+// enfant ne sont pas les 40 élèves de la classe, mais une génération entière — et l'IA.
+// Le vocabulaire est volontairement celui du fondateur (« ticket d'entrée », « siamois »).
+const COMPETITORS: { Icon: LucideIcon; title: string; desc: string }[] = [
+  {
+    Icon: Globe,
+    title: "Toute sa génération",
+    desc: "Les jeunes de votre ville, puis de tout le pays : le même programme, les mêmes diplômes, le même marché.",
+  },
+  {
+    Icon: Clock,
+    title: "Ceux qui ont 5 ans de plus",
+    desc: "Déjà sortis des filières, ils occupent les places — et se reforment eux aussi pour rester dans la course.",
+  },
+  {
+    Icon: Sprout,
+    title: "Ceux qui ont 5 ans de moins",
+    desc: "Ils arrivent derrière lui avec des méthodes et des outils plus récents que les siens.",
+  },
+  {
+    Icon: Zap,
+    title: "Et l'intelligence artificielle",
+    desc: "Elle exécute en 3 secondes les tâches théoriques qu'on a mis des années à lui apprendre.",
+  },
+];
+
+function ConcurrenceSection() {
+  return (
+    <section id="gap" className="scroll-mt-24 py-24 lg:py-28">
+      <div className="mx-auto max-w-6xl px-6">
+        <Reveal className="mx-auto mb-14 max-w-2xl text-center">
+          <span className="mb-3 inline-block text-xs font-bold uppercase tracking-widest text-brand">
+            Pourquoi maintenant
+          </span>
+          <h2 className="font-display text-balance text-3xl font-extrabold leading-tight text-ink md:text-4xl">
+            Le mythe de la concurrence en classe.
+          </h2>
+          <p className="mt-5 text-sm font-semibold leading-relaxed text-ink/70">
+            Le diplôme n'est plus une ligne d'arrivée : c'est simplement le ticket d'entrée dans une
+            arène surpeuplée. Et la première illusion à dissiper est celle de la salle de classe :
+            on croit que les rivaux de votre enfant sont les 40 élèves assis à côté de lui. Sur le
+            marché de l'emploi de demain, il devra se démarquer face à :
+          </p>
+        </Reveal>
+
+        <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
+          {COMPETITORS.map(({ Icon, title, desc }, i) => (
+            <Reveal key={title} delay={i * 110}>
+              <div className="group h-full rounded-3xl border border-ink/10 bg-white p-7 shadow-sm transition-all hover:-translate-y-1 hover:border-brand/30 hover:shadow-xl">
+                <span className="mb-5 grid size-12 place-items-center rounded-2xl bg-brand/10 text-brand transition-colors group-hover:bg-brand group-hover:text-white">
+                  <Icon className="size-6" aria-hidden />
+                </span>
+                <h3 className="mb-2 font-display text-balance text-lg font-extrabold text-ink">
+                  {title}
+                </h3>
+                <p className="text-sm font-medium leading-relaxed text-ink/70">{desc}</p>
+              </div>
+            </Reveal>
+          ))}
+        </div>
+
+        <Reveal delay={140} className="mx-auto mt-12 max-w-2xl text-center">
+          <p className="text-sm font-semibold leading-relaxed text-ink/70">
+            Le système scolaire transmet un socle commun de connaissances : c'est son rôle, et il le
+            fait bien. Mais le revers de la médaille, c'est l'homogénéisation — en fin de cycle,
+            leurs CV se ressemblent comme des siamois : mêmes écoles, mêmes diplômes, mêmes
+            connaissances. Si tout le monde possède la même substance académique, une seule question
+            compte :{" "}
+            <span className="text-brand">qu'est-ce qui distinguera votre enfant ?</span>
+          </p>
+        </Reveal>
+      </div>
+    </section>
+  );
+}
+
+// Le Gap (2/2) — La réponse au socle commun : ce qui n'est pas sur le bulletin de notes devient
+// la seule vraie différenciation. Le contraste « ce que l'IA fait / ne fait pas » prépare la
+// méthode (chapitre 02) comme solution de construction du Gap.
+const GAP_AI_CAN: string[] = [
+  "Rédiger un article, un rapport, un devoir",
+  "Coder un site web ou une application simple",
+  "Traduire et synthétiser n'importe quel document",
+  "Restituer une leçon apprise par cœur",
+];
+const GAP_AI_CANNOT: string[] = [
+  "S'adapter à l'imprévu avec de la débrouillardise",
+  "Concevoir un objet de ses mains : l'intelligence spatiale",
+  "Fédérer une équipe autour d'un projet : l'empathie",
+  "Lancer quelque chose à partir de rien : l'audace entrepreneuriale",
+];
+
+function GapSection() {
+  return (
+    <section className="scroll-mt-24 border-y border-ink/10 bg-white/40 py-24 lg:py-28">
+      <div className="mx-auto max-w-6xl px-6">
+        <Reveal className="mx-auto mb-14 max-w-2xl text-center">
+          <span className="mb-3 inline-block text-xs font-bold uppercase tracking-widest text-brand">
+            Le Gap
+          </span>
+          <h2 className="font-display text-balance text-3xl font-extrabold leading-tight text-ink md:text-4xl">
+            Le Gap : la substance de l'irremplaçable.
+          </h2>
+          <p className="mt-5 text-sm font-semibold leading-relaxed text-ink/70">
+            Puisque le diplôme est le dénominateur commun, la seule façon de briller demain est de
+            développer ce qui n'est pas sur le bulletin de notes. Chez Génizio, nous appelons cela
+            le Gap — l'écart, la singularité.
+          </p>
+        </Reveal>
+
+        <div className="mx-auto grid max-w-4xl gap-5 md:grid-cols-2">
+          <Reveal>
+            <div className="h-full rounded-3xl border border-ink/10 bg-white p-7 shadow-sm">
+              <div className="mb-5 flex items-center gap-3">
+                <span className="grid size-11 shrink-0 place-items-center rounded-2xl bg-ink/5 text-ink/70">
+                  <Brain className="size-5" aria-hidden />
+                </span>
+                <h3 className="font-display text-balance text-lg font-extrabold text-ink">
+                  Ce que l'IA fait déjà
+                </h3>
+              </div>
+              <ul className="space-y-2.5">
+                {GAP_AI_CAN.map((item) => (
+                  <li
+                    key={item}
+                    className="flex items-start gap-2.5 text-sm font-medium text-ink/70"
+                  >
+                    <span
+                      className="mt-2 size-1.5 shrink-0 rounded-full bg-ink/30"
+                      aria-hidden
+                    />
+                    {item}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </Reveal>
+          <Reveal delay={110}>
+            <div className="h-full rounded-3xl border border-brand/25 bg-white p-7 shadow-sm">
+              <div className="mb-5 flex items-center gap-3">
+                <span className="grid size-11 shrink-0 place-items-center rounded-2xl bg-brand/10 text-brand">
+                  <Lightbulb className="size-5" aria-hidden />
+                </span>
+                <h3 className="font-display text-balance text-lg font-extrabold text-ink">
+                  Ce que l'IA ne sait pas (encore) faire
+                </h3>
+              </div>
+              <ul className="space-y-2.5">
+                {GAP_AI_CANNOT.map((item) => (
+                  <li
+                    key={item}
+                    className="flex items-start gap-2.5 text-sm font-semibold text-ink/80"
+                  >
+                    <span className="mt-2 size-1.5 shrink-0 rounded-full bg-brand" aria-hidden />
+                    {item}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </Reveal>
+        </div>
+
+        <Reveal delay={120} className="mt-8">
+          <div className="grid items-center gap-6 rounded-3xl border border-ink bg-ink p-8 text-white shadow-xl md:grid-cols-12">
+            <span className="grid size-12 shrink-0 place-items-center rounded-2xl bg-brand/20 text-brand-glow md:col-span-1">
+              <Map className="size-6" aria-hidden />
+            </span>
+            <div className="md:col-span-11">
+              <h3 className="font-display text-balance text-xl font-extrabold md:text-2xl">
+                Le Gap, c'est l'ensemble de ces compétences profondément humaines, pratiques et
+                contextuelles que l'école n'évalue pas — mais que le monde réel récompense.
+              </h3>
+              <p className="mt-3 text-sm font-medium leading-relaxed text-white/70">
+                Au lieu de grandir avec la peur de la mauvaise note, votre enfant grandit avec la
+                certitude de ses capacités réelles. C'est cette substance-là que Génizio
+                cartographie et muscle, défi après défi.
+              </p>
+            </div>
+          </div>
         </Reveal>
       </div>
     </section>

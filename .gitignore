@@ -20,6 +20,9 @@ dist-ssr
 .wrangler/
 .dev.vars
 
+# Vercel CLI (Build Output API générée par `npm run build`, preset nitro vercel)
+.vercel/
+
 # Supabase CLI local cache
 supabase/.temp/
 
