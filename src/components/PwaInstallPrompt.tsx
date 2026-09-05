@@ -1,71 +1,110 @@
 import { useState, useEffect } from "react";
 import { X, Download, Share, PlusSquare, Smartphone, Info } from "lucide-react";
+import {
+  getDeferredInstallPrompt,
+  isInstallPromptSuppressed,
+  isRunningStandalone,
+  type DeferredInstallPrompt,
+} from "@/lib/pwa-install";
+
+// Délai anti-intrusif avant apparition (on ne saute pas à la gorge au
+// chargement, mais on reste ensuite visible jusqu'à action).
+const SHOW_DELAY_MS = 3_000;
+const DISMISSED_KEY = "pwa-prompt-dismissed";
+
+function readDismissedAt(): number | null {
+  const raw = localStorage.getItem(DISMISSED_KEY);
+  if (!raw) return null;
+  const parsed = Number.parseInt(raw, 10);
+  return Number.isFinite(parsed) ? parsed : null;
+}
 
 export function PwaInstallPrompt() {
   const [showPrompt, setShowPrompt] = useState(false);
-  const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
+  const [deferredPrompt, setDeferredPrompt] = useState<DeferredInstallPrompt | null>(null);
   const [isIos, setIsIos] = useState(false);
 
   useEffect(() => {
-    // 1. Check if already running in standalone mode (installed)
-    const isStandalone =
-      window.matchMedia("(display-mode: standalone)").matches ||
-      (window.navigator as any).standalone;
-    if (isStandalone) return;
-
-    // 2. Check if user dismissed prompt recently (hide for 7 days)
-    const dismissedTime = localStorage.getItem("pwa-prompt-dismissed");
-    if (dismissedTime) {
-      const now = new Date().getTime();
-      const diff = now - parseInt(dismissedTime, 10);
-      if (diff < 7 * 24 * 60 * 60 * 1000) {
-        return; // less than 7 days ago
-      }
+    // 1. Déjà installée (standalone) : jamais de popup.
+    if (isRunningStandalone()) {
+      // Nettoyage : une installation invalide la suppression résiduelle.
+      localStorage.removeItem(DISMISSED_KEY);
+      return;
     }
 
-    // 3. Detect iOS
+    // 2. Fermé récemment par l'utilisateur : réapparaît après 2 jours (au lieu
+    //    de 7 — la popup doit accompagner une personne non-installatrice,
+    //    pas disparaître une semaine après un seul clic de trop).
+    if (isInstallPromptSuppressed(readDismissedAt(), Date.now())) return;
+
+    // 3. Détection iOS (pas de beforeinstallprompt chez Apple : guide manuel).
     const userAgent = window.navigator.userAgent.toLowerCase();
     const ios = /iphone|ipad|ipod/.test(userAgent);
     setIsIos(ios);
 
-    if (ios) {
-      // iOS doesn't support beforeinstallprompt, so we just show the iOS guide
-      // We wait 3 seconds before showing it so it's not obtrusive right away
-      const timer = setTimeout(() => setShowPrompt(true), 3000);
-      return () => clearTimeout(timer);
-    } else {
-      // Android / Desktop Chrome / Edge support
-      const handleBeforeInstallPrompt = (e: Event) => {
-        e.preventDefault();
-        setDeferredPrompt(e);
-        // Show the prompt after 3s
-        setTimeout(() => setShowPrompt(true), 3000);
-      };
+    const timer = setTimeout(() => setShowPrompt(true), SHOW_DELAY_MS);
 
-      window.addEventListener("beforeinstallprompt", handleBeforeInstallPrompt);
-      return () => {
-        window.removeEventListener("beforeinstallprompt", handleBeforeInstallPrompt);
-      };
+    if (ios) {
+      return () => clearTimeout(timer);
     }
+
+    // 4. Android / Desktop : l'événement a PEUT-ÊTRE déjà tiré avant le montage
+    //    (course de chargement — c'était le bug principal). On récupère d'abord
+    //    la capture au niveau module, puis on écoute les arrivées tardives.
+    const early = getDeferredInstallPrompt();
+    if (early) setDeferredPrompt(early);
+
+    const handleBeforeInstallPrompt = (e: Event) => {
+      e.preventDefault();
+      setDeferredPrompt(e as unknown as DeferredInstallPrompt);
+    };
+    window.addEventListener("beforeinstallprompt", handleBeforeInstallPrompt);
+
+    // 5. Installation terminée : le popup se retire immédiatement, tout seul.
+    const handleInstalled = () => {
+      setShowPrompt(false);
+      setDeferredPrompt(null);
+      localStorage.removeItem(DISMISSED_KEY);
+    };
+    window.addEventListener("appinstalled", handleInstalled);
+
+    return () => {
+      clearTimeout(timer);
+      window.removeEventListener("beforeinstallprompt", handleBeforeInstallPrompt);
+      window.removeEventListener("appinstalled", handleInstalled);
+    };
   }, []);
 
   const handleInstallClick = async () => {
-    if (!deferredPrompt) return;
-    deferredPrompt.prompt();
-    const { outcome } = await deferredPrompt.userChoice;
-    if (outcome === "accepted") {
-      console.log("User accepted the PWA install prompt");
-      setShowPrompt(false);
+    const prompt = deferredPrompt ?? getDeferredInstallPrompt();
+    if (!prompt) return;
+    try {
+      await prompt.prompt();
+      const { outcome } = await prompt.userChoice;
+      if (outcome === "accepted") {
+        setShowPrompt(false);
+        // appinstalled fera le nettoyage ; par sécurité on supprime aussi ici.
+        localStorage.removeItem(DISMISSED_KEY);
+      } else {
+        // L'utilisateur a fermé la NATIVE prompt de Chrome : suppression plus
+        // longue que la croix (il a explicitement refusé l'OS), mais pas 90 jours.
+        localStorage.setItem(DISMISSED_KEY, Date.now().toString());
+      }
+    } catch (err) {
+      // AbortError possible si le prompt est déjà en cours — non fatal.
+      console.error("Prompt d'installation PWA échoué:", err);
     }
     setDeferredPrompt(null);
   };
 
   const handleDismiss = () => {
     setShowPrompt(false);
-    localStorage.setItem("pwa-prompt-dismissed", new Date().getTime().toString());
+    localStorage.setItem(DISMISSED_KEY, Date.now().toString());
   };
 
   if (!showPrompt) return null;
+
+  const canAutoInstall = Boolean(deferredPrompt ?? getDeferredInstallPrompt());
 
   return (
     <div className="fixed bottom-[calc(5.5rem+env(safe-area-inset-bottom))] left-3 right-3 sm:left-6 sm:right-6 z-50 mx-auto max-w-md rounded-3xl border border-ink/10 bg-white p-4 sm:p-5 shadow-xl animate-in slide-in-from-bottom-10 duration-300">
@@ -148,7 +187,7 @@ export function PwaInstallPrompt() {
               </button>
               <button
                 onClick={handleInstallClick}
-                disabled={!deferredPrompt}
+                disabled={!canAutoInstall}
                 className="press-brand flex-1 flex items-center justify-center gap-1.5 rounded-2xl bg-brand px-4 py-2.5 text-xs font-bold text-white disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
               >
                 <Download className="size-4" />
