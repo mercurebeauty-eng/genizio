@@ -17,6 +17,8 @@ import {
   Plus,
   ShoppingBag,
   Globe,
+  Users,
+  Sparkles,
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -48,6 +50,7 @@ import { MarkdownContent } from "@/components/ui/markdown-content";
 import { COUNTRIES } from "@/lib/countries";
 import { RELATIONSHIP_TYPES } from "@/lib/relationship-types";
 import { GenizioLoader } from "@/components/GenizioLoader";
+import { EmptyState } from "@/components/ui/empty-state";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/profiles/")({
@@ -417,32 +420,32 @@ function DashboardPage() {
               </button>
             </div>
           ) : profiles.length === 0 ? (
-            <div className="rounded-3xl border border-dashed border-ink/20 bg-white/60 p-12 text-center shadow-md backdrop-blur-md">
+            <EmptyState
+              icon={mentorMode ? Users : Sparkles}
+              title={mentorMode ? "Aucun enfant assigné" : "Aucun profil pour l'instant"}
+              description={
+                mentorMode
+                  ? "Un administrateur Génizio doit vous assigner des profils pour que vous puissiez les accompagner."
+                  : "Créez le premier profil pour lancer l'aventure."
+              }
+              className="backdrop-blur-md"
+            >
               {mentorMode ? (
-                <>
-                  <p className="mb-4 text-ink/60">
-                    Aucun enfant ne vous est assigné pour le moment. Un administrateur Génizio doit
-                    vous assigner des profils pour que vous puissiez les accompagner.
-                  </p>
-                  <Link
-                    to="/mentor"
-                    className="press-brand rounded-2xl bg-brand px-6 py-3 text-sm font-bold text-white cursor-pointer inline-block"
-                  >
-                    Ouvrir l'espace Mentor
-                  </Link>
-                </>
+                <Link
+                  to="/mentor"
+                  className="press-brand rounded-2xl bg-brand px-6 py-3 text-sm font-bold text-white cursor-pointer inline-block"
+                >
+                  Ouvrir l'espace Mentor
+                </Link>
               ) : (
-                <>
-                  <p className="mb-4 text-ink/60">Aucun profil pour l'instant. Créez le premier.</p>
-                  <button
-                    onClick={() => setCreating(true)}
-                    className="press-brand rounded-2xl bg-brand px-6 py-3 text-sm font-bold text-white cursor-pointer"
-                  >
-                    + Nouveau profil
-                  </button>
-                </>
+                <button
+                  onClick={() => setCreating(true)}
+                  className="press-brand rounded-2xl bg-brand px-6 py-3 text-sm font-bold text-white cursor-pointer"
+                >
+                  + Nouveau profil
+                </button>
               )}
-            </div>
+            </EmptyState>
           ) : (
             <>
               {selected &&

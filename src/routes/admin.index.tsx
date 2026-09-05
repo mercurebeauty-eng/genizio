@@ -31,22 +31,23 @@ import {
   type ConstitutionSuggestionsResponse,
 } from "@/lib/naya-constitution.functions";
 import { AdminNavTabBar, ADMIN_TABS, type AdminRoute } from "@/components/admin/AdminNavTabBar";
-import { AdminExecutiveTab } from "@/components/admin/AdminExecutiveTab";
-import { AdminTalentsCitiesTab } from "@/components/admin/AdminTalentsCitiesTab";
-import { AdminNayaTab } from "@/components/admin/AdminNayaTab";
-import { AdminCommerceTab } from "@/components/admin/AdminCommerceTab";
-import { AdminPaymentsTab } from "@/components/admin/AdminPaymentsTab";
-import { AdminCampaignsTab } from "@/components/admin/AdminCampaignsTab";
-import { AdminMentorsTab } from "@/components/admin/AdminMentorsTab";
-import { AdminEducatorsTab } from "@/components/admin/AdminEducatorsTab";
-import { AdminEventsTab } from "@/components/admin/AdminEventsTab";
-import { AdminProductsTab } from "@/components/admin/AdminProductsTab";
-import { AdminProfilesTab } from "@/components/admin/AdminProfilesTab";
-import { AdminTestimonialsTab } from "@/components/admin/AdminTestimonialsTab";
-import { AdminNotificationsTab } from "@/components/admin/AdminNotificationsTab";
-import { AdminDiscoveryTab } from "@/components/admin/AdminDiscoveryTab";
+const AdminExecutiveTab = lazy(() => import("@/components/admin/AdminExecutiveTab").then((m) => ({ default: m.AdminExecutiveTab })));
+const AdminTalentsCitiesTab = lazy(() => import("@/components/admin/AdminTalentsCitiesTab").then((m) => ({ default: m.AdminTalentsCitiesTab })));
+const AdminNayaTab = lazy(() => import("@/components/admin/AdminNayaTab").then((m) => ({ default: m.AdminNayaTab })));
+const AdminCommerceTab = lazy(() => import("@/components/admin/AdminCommerceTab").then((m) => ({ default: m.AdminCommerceTab })));
+const AdminPaymentsTab = lazy(() => import("@/components/admin/AdminPaymentsTab").then((m) => ({ default: m.AdminPaymentsTab })));
+const AdminCampaignsTab = lazy(() => import("@/components/admin/AdminCampaignsTab").then((m) => ({ default: m.AdminCampaignsTab })));
+const AdminMentorsTab = lazy(() => import("@/components/admin/AdminMentorsTab").then((m) => ({ default: m.AdminMentorsTab })));
+const AdminEducatorsTab = lazy(() => import("@/components/admin/AdminEducatorsTab").then((m) => ({ default: m.AdminEducatorsTab })));
+const AdminEventsTab = lazy(() => import("@/components/admin/AdminEventsTab").then((m) => ({ default: m.AdminEventsTab })));
+const AdminProductsTab = lazy(() => import("@/components/admin/AdminProductsTab").then((m) => ({ default: m.AdminProductsTab })));
+const AdminProfilesTab = lazy(() => import("@/components/admin/AdminProfilesTab").then((m) => ({ default: m.AdminProfilesTab })));
+const AdminTestimonialsTab = lazy(() => import("@/components/admin/AdminTestimonialsTab").then((m) => ({ default: m.AdminTestimonialsTab })));
+const AdminNotificationsTab = lazy(() => import("@/components/admin/AdminNotificationsTab").then((m) => ({ default: m.AdminNotificationsTab })));
+const AdminDiscoveryTab = lazy(() => import("@/components/admin/AdminDiscoveryTab").then((m) => ({ default: m.AdminDiscoveryTab })));
 import { getPaymentsPendingCountAdmin } from "@/lib/payments-admin.functions";
 import { getSafeguardingPendingCountAdmin } from "@/lib/safeguarding.functions";
+import { lazy, Suspense } from "react";
 import { ChevronRight } from "lucide-react";
 import { toast } from "sonner";
 import { GenizioLoader } from "@/components/GenizioLoader";
@@ -466,7 +467,9 @@ function AdminIndexPage() {
               }}
             />
 
-            {/* Tab Content Display */}
+            {/* Tab Content Display — onglets lazy (code-split : recharts et les
+                14 tabs ne partent plus dans le bundle du shell admin) */}
+            <Suspense fallback={<GenizioLoader className="py-16" />}>
             {activeTab === "executive" && kpis && (
               <AdminExecutiveTab
                 kpis={kpis}
@@ -548,6 +551,7 @@ function AdminIndexPage() {
               <AdminTestimonialsTab isRefreshing={isRefreshing} onRefresh={() => loadData(false)} />
             )}
             {activeTab === "notifications" && <AdminNotificationsTab />}
+            </Suspense>
           </>
         )}
       </main>

@@ -48,6 +48,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { GenizioLoader } from "@/components/GenizioLoader";
+import { EmptyState } from "@/components/ui/empty-state";
 import { EducatorLessonCopilotModal } from "@/components/educators/EducatorLessonCopilotModal";
 import { EducatorHackathonModal } from "@/components/educators/EducatorHackathonModal";
 import {
@@ -441,11 +442,12 @@ function EducatorDashboardPage() {
               <Loader2 className="size-8 animate-spin text-indigo-600" />
             </div>
           ) : establishmentError ? (
-            <div className="rounded-3xl border border-red-200 bg-red-50/70 p-12 text-center shadow-xs space-y-4">
-              <h3 className="font-display font-black text-xl text-red-800">
-                Chargement impossible
-              </h3>
-              <p className="text-xs sm:text-sm text-red-700/80">{establishmentError}</p>
+            <EmptyState
+              icon={Building2}
+              tone="error"
+              title="Chargement impossible"
+              description={establishmentError}
+            >
               <button
                 type="button"
                 onClick={() => {
@@ -456,30 +458,21 @@ function EducatorDashboardPage() {
               >
                 Réessayer
               </button>
-            </div>
+            </EmptyState>
           ) : !establishment?.hasEstablishment ? (
-            <div className="rounded-3xl border border-dashed border-ink/20 bg-white p-10 sm:p-12 text-center shadow-xs space-y-4">
-              <div className="grid size-14 place-items-center rounded-2xl bg-indigo-50 text-indigo-600 mx-auto">
-                <Building2 className="size-7" />
-              </div>
-              <h3 className="font-display font-black text-xl text-ink">
-                Aucun établissement associé à votre compte
-              </h3>
-              <p className="text-xs sm:text-sm text-ink/60 max-w-lg mx-auto leading-relaxed">
-                Renseignez le nom de votre école, collège, lycée ou centre d'orientation dans vos
-                paramètres de profil pour vous regrouper avec vos collègues enseignants et
-                superviseurs.
-              </p>
-              <div className="pt-2">
-                <Link
-                  to="/profile"
-                  className="inline-flex items-center gap-2 px-5 py-2.5 rounded-2xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs shadow-xs transition-colors cursor-pointer"
-                >
-                  <ExternalLink className="size-4" />
-                  <span>Renseigner mon établissement</span>
-                </Link>
-              </div>
-            </div>
+            <EmptyState
+              icon={Building2}
+              title="Aucun établissement associé à votre compte"
+              description="Renseignez le nom de votre école, collège, lycée ou centre d'orientation dans vos paramètres de profil pour vous regrouper avec vos collègues enseignants et superviseurs."
+            >
+              <Link
+                to="/profile"
+                className="inline-flex items-center gap-2 px-5 py-2.5 rounded-2xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs shadow-xs transition-colors cursor-pointer"
+              >
+                <ExternalLink className="size-4" />
+                <span>Renseigner mon établissement</span>
+              </Link>
+            </EmptyState>
           ) : (
             <div className="space-y-6">
               {/* Carte Récapitulative de l'Établissement */}
