@@ -434,10 +434,10 @@ export function buildLayeredChallengePrompt(
         m.format
           ? `\n- Format pédagogique obligatoire : ${
               m.format === "spark_micro"
-                ? "L'Étincelle (spark_micro) — Défi court (10-15 min) d'étonnement pratique et manipulation sensorielle sans théorie préalable"
+                ? "L'Étincelle (spark_micro) — Défi court (10-20 min) d'amorce ou d'étonnement pratique sans théorie préalable"
                 : m.format === "investigation"
-                  ? "L'Investigation (investigation) — Défi de recueil de mesures et données répétées pour déduire une loi physique ou scientifique (Pratique vers Théorie)"
-                  : "Le Projet d'Ingénierie (constructive_project) — Projet de synthèse concret et exigeant (conception fonctionnelle, Arduino/code ou mécanique, standard international)"
+                  ? "L'Investigation (investigation) — Défi de recueil de mesures, observations et données pour déduire une règle ou un principe par soi-même (Pratique vers Théorie)"
+                  : "Le Projet d'Envergure / Projet Constructif (constructive_project) — Projet de synthèse ou œuvre d'aboutissement exigeante adaptée aux intelligences dominantes de l'enfant (création artistique, maquette, conte illustré, herbier classifié, expérience culinaire, automate, robotique/code, etc.)"
             }`
           : ""
       }

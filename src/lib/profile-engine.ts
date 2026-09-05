@@ -12,9 +12,9 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/integrations/supabase/types";
 
 export type PedagogicalFormat =
-  | "spark_micro"          // L'Étincelle : Micro-défi intuitif (10-15 min, étonnement, manip physique ex: eau/huile/miel)
-  | "investigation"        // L'Investigation : Défi d'observation (relevé de données, déduction de lois ex: bâton & soleil)
-  | "constructive_project"; // Le Projet Constructif : Ingénierie & Standard International (Arduino, robotique, construction)
+  | "spark_micro"          // L'Étincelle : Micro-défi d'amorce ou découverte (10-20 min, curiosité, manipulation directe sans théorie préalable)
+  | "investigation"        // L'Investigation : Défi d'observation et de recueil de données/mesures pour déduire un principe par soi-même
+  | "constructive_project"; // Le Projet Constructif : Réalisation d'envergure ou œuvre de synthèse adaptée aux talents de l'enfant (maquette, conte illustré, herbier, création artistique, prototype, robotique/code, etc.)
 
 export type InternationalBenchmark = "below_grade" | "at_grade" | "ahead_of_grade";
 
