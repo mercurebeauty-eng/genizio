@@ -376,7 +376,7 @@ function DashboardPage() {
       <AppHeader />
 
       <main className="mx-auto max-w-6xl px-6 py-10 md:flex ">
-        {selected && <AppTabBar profileId={selected.id} />}
+        <AppTabBar profileId={selected?.id ?? ""} />
 
         <div className="min-w-0 flex-1">
           {!selected && (
