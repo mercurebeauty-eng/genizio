@@ -11,10 +11,13 @@
 
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { requireRateLimit } from "@/lib/rate-limit.middleware";
 import { z } from "zod";
 import {
   resolveExtraSlotPrice,
   resolveSponsorshipPrice,
+  resolveCampusPrice,
+  type CampusTierKey,
   PASSPORT_PRICE_XOF,
   DIAGNOSTIC_PRICE_XOF,
   PACK_PRICE_XOF,
@@ -78,7 +81,7 @@ const OrderPaymentInput = z.object({
 });
 
 export const initializeOrderPayment = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireSupabaseAuth, requireRateLimit])
   .validator((input: unknown) => OrderPaymentInput.parse(input))
   .handler(async ({ data, context }) => {
     const userId = context.userId;
@@ -161,7 +164,7 @@ const ChildAccessPaymentInput = z.object({
 });
 
 export const initializeChildAccessPayment = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireSupabaseAuth, requireRateLimit])
   .validator((input: unknown) => ChildAccessPaymentInput.parse(input))
   .handler(async ({ data, context }) => {
     const userId = context.userId;
@@ -210,7 +213,7 @@ const PassportPaymentInput = z.object({
 });
 
 export const initializePassportPayment = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireSupabaseAuth, requireRateLimit])
   .validator((input: unknown) => PassportPaymentInput.parse(input))
   .handler(async ({ data, context }) => {
     const userId = context.userId;
@@ -253,7 +256,7 @@ const DiagnosticPaymentInput = z.object({
 });
 
 export const initializeDiagnosticPayment = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireSupabaseAuth, requireRateLimit])
   .validator((input: unknown) => DiagnosticPaymentInput.parse(input))
   .handler(async ({ data, context }) => {
     const userId = context.userId;
@@ -300,7 +303,7 @@ const UpgradePaymentInput = z.object({
 });
 
 export const initializeUpgradePayment = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireSupabaseAuth, requireRateLimit])
   .validator((input: unknown) => UpgradePaymentInput.parse(input))
   .handler(async ({ data, context }) => {
     const userId = context.userId;
@@ -348,7 +351,7 @@ const AccompanimentPackInput = z.object({
 });
 
 export const initializeAccompanimentPackPayment = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireSupabaseAuth, requireRateLimit])
   .validator((input: unknown) => AccompanimentPackInput.parse(input))
   .handler(async ({ data, context }) => {
     const userId = context.userId;
@@ -392,7 +395,7 @@ export const initializeAccompanimentPackPayment = createServerFn({ method: "POST
 const VerifyPaymentInput = z.object({ reference: z.string().min(1) });
 
 export const verifyPaymentByReference = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireSupabaseAuth, requireRateLimit])
   .validator((input: unknown) => VerifyPaymentInput.parse(input))
   .handler(async ({ data, context }) => {
     const userId = context.userId;
@@ -472,6 +475,7 @@ const SponsorshipPaymentInput = z.object({
 });
 
 export const initializeSponsorshipPayment = createServerFn({ method: "POST" })
+  .middleware([requireRateLimit])
   .validator((input: unknown) => SponsorshipPaymentInput.parse(input))
   .handler(async ({ data }: { data: any }) => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
@@ -532,6 +536,7 @@ export const initializeSponsorshipPayment = createServerFn({ method: "POST" })
 // créé le code (payment success) → retour idempotent avec le token. Sinon on vérifie la
 // transaction, on applique le bénéfice (création du code) et on le renvoie.
 export const verifySponsorshipPayment = createServerFn({ method: "POST" })
+  .middleware([requireRateLimit])
   .validator((input: unknown) => VerifyPaymentInput.parse(input))
   .handler(async ({ data }: { data: any }) => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
@@ -586,4 +591,83 @@ export const verifySponsorshipPayment = createServerFn({ method: "POST" })
 
     await markPaymentSuccessAndFulfill(supabaseAdmin, payment as unknown as PaymentRow);
     return { paymentStatus: "success", alreadyProcessed: false, token: await fetchToken() };
+  });
+
+// ── Licence Établissement Scolaire (Génizio Campus) ──────────────────────────
+const CampusLicensePaymentInput = z.object({
+  schoolId: z.string().uuid(),
+  tier: z.enum(["pilot", "starter_campus", "standard_campus", "excellence_campus"]),
+  callbackUrl: callbackUrlSchema,
+});
+
+export const initializeCampusLicensePayment = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth, requireRateLimit])
+  .validator((input: unknown) => CampusLicensePaymentInput.parse(input))
+  .handler(async ({ data, context }) => {
+    const userId = context.userId;
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { initializePaystackTransaction, createPaystackReference } =
+      await import("@/lib/paystack.server");
+    const db = supabaseAdmin as any;
+
+    const { data: school, error: schoolErr } = await db
+      .from("schools")
+      .select("id, name, leader_user_id, status")
+      .eq("id", data.schoolId)
+      .maybeSingle();
+
+    if (schoolErr || !school) throw new Error("Établissement introuvable.");
+
+    // Vérification : l'utilisateur doit être soit le leader de l'établissement, soit un éducateur rattaché
+    const { data: myProfile } = await db
+      .from("educator_profiles")
+      .select("school_id")
+      .eq("user_id", userId)
+      .maybeSingle();
+
+    if (school.leader_user_id !== userId && myProfile?.school_id !== school.id) {
+      throw new Error(
+        "Seul un membre habilité de l'équipe pédagogique peut activer une licence pour cet établissement.",
+      );
+    }
+
+    const tierInfo = resolveCampusPrice(data.tier as CampusTierKey);
+    const amountXof = tierInfo.priceXof;
+    const reference = createPaystackReference("CAMPUS");
+
+    await createPaystackPayment({
+      supabaseAdmin,
+      userId,
+      reference,
+      amountXof,
+      metadata: {
+        type: "campus_license",
+        school_id: school.id,
+        licensed_students_quota: tierInfo.quota,
+        months: tierInfo.durationMonths,
+      },
+    });
+
+    const { authorizationUrl } = await initializePaystackTransaction({
+      email: await getPaystackUserEmail(supabaseAdmin, userId),
+      amountXof,
+      reference,
+      callbackUrl: data.callbackUrl,
+      metadata: {
+        intent: "campus_license",
+        school_id: school.id,
+        school_name: school.name,
+        licensed_students_quota: tierInfo.quota,
+        tier: data.tier,
+      },
+    });
+
+    return {
+      authorizationUrl,
+      reference,
+      amountXof,
+      tier: data.tier,
+      quota: tierInfo.quota,
+      schoolName: school.name,
+    };
   });

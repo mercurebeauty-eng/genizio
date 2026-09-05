@@ -87,3 +87,43 @@ export function formatXof(amount: number): string {
 export function formatPromoDeadline(date: Date): string {
   return date.toLocaleDateString("fr-FR", { day: "numeric", month: "long", year: "numeric" });
 }
+
+// ── Tarification Institutionnelle Campus (Écoles, Collèges, Lycées) ──────────
+// Établissements scolaires partenaires : accès Naya déployé à l'échelle de l'école.
+export const CAMPUS_TIERS = {
+  pilot: {
+    name: "Pilote Établissement (1 trimestre)",
+    quota: 50,
+    durationMonths: 3,
+    priceXof: 50000,
+  },
+  starter_campus: {
+    name: "Campus Starter (jusqu'à 250 élèves)",
+    quota: 250,
+    durationMonths: 12,
+    priceXof: 250000,
+  },
+  standard_campus: {
+    name: "Campus Pro (jusqu'à 500 élèves)",
+    quota: 500,
+    durationMonths: 12,
+    priceXof: 450000,
+  },
+  excellence_campus: {
+    name: "Campus Excellence (jusqu'à 1 000 élèves)",
+    quota: 1000,
+    durationMonths: 12,
+    priceXof: 750000,
+  },
+} as const;
+
+export type CampusTierKey = keyof typeof CAMPUS_TIERS;
+
+export function resolveCampusPrice(tierKey: CampusTierKey): {
+  name: string;
+  quota: number;
+  durationMonths: number;
+  priceXof: number;
+} {
+  return CAMPUS_TIERS[tierKey] ?? CAMPUS_TIERS.standard_campus;
+}

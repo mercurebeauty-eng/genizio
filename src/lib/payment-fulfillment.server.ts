@@ -34,9 +34,12 @@ export type PaymentMetadata = {
     | "extra_slots"
     | "accompaniment_pack"
     | "sponsorship"
-    | "campaign_b2b";
+    | "campaign_b2b"
+    | "campus_license";
   order_id?: string;
   child_id?: string;
+  school_id?: string;
+  licensed_students_quota?: number;
   months?: number;
   // sponsorship — infos du parrain stockées dans le metadata pour créer le code côté webhook.
   sponsor_name?: string;
@@ -343,6 +346,33 @@ export async function applyPaystackEntitlement(
       return {
         entitlement: "campaign_b2b",
         detail: `${toCreate} code(s) B2B créé(s) pour « ${campaign.name} »`,
+      };
+    }
+
+    case "campus_license": {
+      if (!metadata.school_id) throw new Error("Payment 'campus_license' sans school_id.");
+      const quota = metadata.licensed_students_quota ?? 250;
+      const durationMonths = metadata.months ?? 12;
+      const validUntil = new Date(Date.now() + durationMonths * 30.5 * 24 * 60 * 60 * 1000).toISOString();
+
+      const { data: updatedSchool, error: schoolErr } = await (supabaseAdmin as any)
+        .from("schools")
+        .update({
+          status: "partner_campus",
+          pricing_tier: quota <= 50 ? "pilot" : "standard_campus",
+          licensed_students_quota: quota,
+          license_valid_until: validUntil,
+          updated_at: new Date().toISOString(),
+        })
+        .eq("id", metadata.school_id)
+        .select("name, code")
+        .single();
+
+      if (schoolErr) throw new Error(`Erreur lors de l'activation du campus: ${schoolErr.message}`);
+
+      return {
+        entitlement: "campus_license",
+        detail: `Licence Campus activée pour « ${updatedSchool?.name} » (${quota} élèves jusqu'au ${validUntil})`,
       };
     }
 
