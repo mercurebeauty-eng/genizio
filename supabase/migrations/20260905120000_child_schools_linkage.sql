@@ -47,7 +47,19 @@ CREATE POLICY "Service role full access to child schools"
 ON public.child_schools FOR ALL TO service_role USING (true) WITH CHECK (true);
 
 CREATE OR REPLACE FUNCTION public.revoke_educators_on_school_change()
-RETURNS TRIGGER AS $ LANGUAGE plpgsql SECURITY DEFINER;
+RETURNS TRIGGER AS $$
+BEGIN
+  -- Un changement effectif de statut révoque les délégations éducatives
+  -- actives de l'enfant (les accès ne doivent pas survivre au changement).
+  IF OLD.status IS DISTINCT FROM NEW.status THEN
+    UPDATE public.child_delegations
+    SET status = 'revoked'
+    WHERE child_id = NEW.child_id
+      AND status = 'active';
+  END IF;
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
 
 CREATE TRIGGER trigger_revoke_educators_on_school_change
   AFTER UPDATE OF status ON public.child_schools

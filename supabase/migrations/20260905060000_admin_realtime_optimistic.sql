@@ -1,6 +1,6 @@
 
 BEGIN;
-DO $ $
+DO $$
 BEGIN
   IF NOT EXISTS (
     SELECT 1
@@ -11,9 +11,9 @@ BEGIN
   ) THEN
     ALTER PUBLICATION supabase_realtime ADD TABLE child_profiles;
   END IF;
-END $ $;
+END $$;;
 
-DO $ $
+DO $$
 BEGIN
   IF NOT EXISTS (
     SELECT 1
@@ -24,5 +24,5 @@ BEGIN
   ) THEN
     ALTER PUBLICATION supabase_realtime ADD TABLE generation_audits;
   END IF;
-END $ $;
+END $$;;
 COMMIT;

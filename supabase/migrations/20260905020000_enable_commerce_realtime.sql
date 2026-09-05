@@ -1,6 +1,6 @@
 -- Publication Realtime pour les tables liées au commerce (orders, products, child_profiles)
 
-DO $ $
+DO $$
 BEGIN
   IF NOT EXISTS (
     SELECT 1 FROM pg_publication_tables
@@ -22,7 +22,7 @@ BEGIN
   ) THEN
     ALTER PUBLICATION supabase_realtime ADD TABLE public.child_profiles;
   END IF;
-END $ $;
+END $$;;
 
 ALTER TABLE public.orders REPLICA IDENTITY FULL;
 ALTER TABLE public.products REPLICA IDENTITY FULL;
