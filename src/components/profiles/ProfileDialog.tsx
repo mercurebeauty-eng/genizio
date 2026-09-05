@@ -11,6 +11,8 @@ import {
 import { toast } from "sonner";
 import { useFamilyCoverage } from "@/hooks/use-family-coverage";
 import { getGeoHint } from "@/lib/geo.functions";
+import { getSupportedCountries } from "@/lib/country-materials.functions";
+import { normalizeCountryKey } from "@/lib/contextualization";
 import { seedTalentsFromInterests } from "@/lib/talent-seed";
 import {
   ABILITY_AXES,
@@ -262,6 +264,30 @@ export function ProfileDialog({
       })
       .catch(() => {});
   }, []);
+
+  // Pays officiels = registre `country_materials` (boucle fermée avec l'Admin OS :
+  // un pays ajouté par l'admin devient sélectionnable ici, et ses matériaux
+  // alimentent Naya). Le pays reste libre via l'option « Autre » (diaspora hors
+  // liste). En cas d'échec de chargement : champ libre historique.
+  const supportedCountriesFn = useServerFn(getSupportedCountries);
+  const [countries, setCountries] = useState<Array<{ key: string; label: string }> | null>(null);
+  useEffect(() => {
+    supportedCountriesFn()
+      .then((res) => setCountries(res.countries))
+      .catch(() => setCountries(null));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Valeur du sélecteur : la clé normalisée du pays du draft si elle correspond à un
+  // pays officiel, sinon « Autre » (pays libre) — le libellé stocké ne change jamais
+  // de format (texte lisible), la normalisation reste côté lecture.
+  const countrySelectValue = useMemo(() => {
+    if (countries === null) return "";
+    const raw = (draft.country ?? "").trim();
+    if (!raw) return "";
+    const key = normalizeCountryKey(raw);
+    return countries.some((c) => c.key === key) ? key : "__other__";
+  }, [countries, draft.country]);
 
   const toggle = (i: string) =>
     setDraft((d) => ({
@@ -554,12 +580,54 @@ export function ProfileDialog({
                   <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-ink/60">
                     Pays
                   </label>
-                  <input
-                    value={draft.country ?? ""}
-                    onChange={(e) => setDraft({ ...draft, country: e.target.value.slice(0, 60) })}
-                    placeholder="Côte d'Ivoire"
-                    className="w-full rounded-xl border border-ink/10 px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-brand shadow-sm"
-                  />
+                  {countries === null ? (
+                    // Liste pas encore chargée (ou échec de chargement) : champ libre,
+                    // comportement historique.
+                    <input
+                      value={draft.country ?? ""}
+                      onChange={(e) =>
+                        setDraft({ ...draft, country: e.target.value.slice(0, 60) })
+                      }
+                      placeholder="Côte d'Ivoire"
+                      className="w-full rounded-xl border border-ink/10 px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-brand shadow-sm"
+                    />
+                  ) : (
+                    <>
+                      <select
+                        value={countrySelectValue}
+                        onChange={(e) => {
+                          const v = e.target.value;
+                          if (v === "__other__") {
+                            setDraft({ ...draft, country: "" });
+                          } else {
+                            setDraft({
+                              ...draft,
+                              country: countries.find((c) => c.key === v)?.label ?? "",
+                            });
+                          }
+                        }}
+                        className="w-full rounded-xl border border-ink/10 bg-white px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-brand shadow-sm"
+                      >
+                        <option value="">Sélectionnez un pays…</option>
+                        {countries.map((c) => (
+                          <option key={c.key} value={c.key}>
+                            {c.label}
+                          </option>
+                        ))}
+                        <option value="__other__">Autre (à préciser)</option>
+                      </select>
+                      {countrySelectValue === "__other__" && (
+                        <input
+                          value={draft.country ?? ""}
+                          onChange={(e) =>
+                            setDraft({ ...draft, country: e.target.value.slice(0, 60) })
+                          }
+                          placeholder="Précisez le pays"
+                          className="mt-2 w-full rounded-xl border border-ink/10 px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-brand shadow-sm"
+                        />
+                      )}
+                    </>
+                  )}
                 </div>
               </div>
 

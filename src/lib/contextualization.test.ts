@@ -3,6 +3,7 @@ import {
   normalizeCountryKey,
   localMaterialsForCountry,
   buildContextualizationInstruction,
+  GENERIC_LOCAL_MATERIALS,
 } from "@/lib/contextualization";
 import {
   buildChallengePrompt,
@@ -36,35 +37,18 @@ describe("localMaterialsForCountry — mapping pays → matériaux locaux (0 IA)
     const materials = localMaterialsForCountry("Côte d'Ivoire");
     expect(materials).toContain("bois local (iroko, sipo)");
     expect(materials).toContain("coques de cacao");
-    expect(materials).not.toEqual([
-      "bambou",
-      "bois local",
-      "carton",
-      "textile",
-      "argile",
-      "matériaux recyclés",
-    ]);
+    expect(materials).not.toEqual(GENERIC_LOCAL_MATERIALS);
   });
 
   it("Sénégal avec accent, Congo qualifié, pays inconnu et absence", () => {
     expect(localMaterialsForCountry("Sénégal")).toContain("coquillages");
     expect(localMaterialsForCountry("République démocratique du Congo")).toContain("raphia");
-    expect(localMaterialsForCountry("Mauritanie")).toEqual([
-      "bambou",
-      "bois local",
-      "carton",
-      "textile",
-      "argile",
-      "matériaux recyclés",
-    ]);
-    expect(localMaterialsForCountry(null)).toEqual([
-      "bambou",
-      "bois local",
-      "carton",
-      "textile",
-      "argile",
-      "matériaux recyclés",
-    ]);
+    // Pays hors registre → repli générique enrichi (12 matériaux universels)
+    expect(localMaterialsForCountry("Mauritanie")).toEqual(GENERIC_LOCAL_MATERIALS);
+    expect(GENERIC_LOCAL_MATERIALS.length).toBeGreaterThanOrEqual(10);
+    expect(GENERIC_LOCAL_MATERIALS).toContain("calebasses");
+    expect(GENERIC_LOCAL_MATERIALS).toContain("matériaux recyclés");
+    expect(localMaterialsForCountry(null)).toEqual(GENERIC_LOCAL_MATERIALS);
   });
 });
 
