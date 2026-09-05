@@ -1123,7 +1123,12 @@ export const getAiProviderStatusAdmin = createServerFn({ method: "GET" })
       deepseekConfigured: !!process.env.DEEPSEEK_API_KEY,
       anthropicConfigured: !!process.env.ANTHROPIC_API_KEY,
       geminiConfigured: !!process.env.GEMINI_API_KEY,
-      glmConfigured: !!(process.env.GLM_API_KEY || process.env.ZHIPU_API_KEY),
+      glmConfigured: !!(
+        process.env.GLM_API_KEY ||
+        process.env.ZHIPU_API_KEY ||
+        process.env.ZHIPUAI_API_KEY ||
+        process.env.BIGMODEL_API_KEY
+      ),
     };
   });
 

@@ -139,7 +139,7 @@ describe("Naya Telemetry & Pricing Functions", () => {
       expect(telemetry.totalCostUsd).toBe(0);
       expect(telemetry.totalCostXof).toBe(0);
       expect(telemetry.conversionRatePct).toBe(0);
-      expect(telemetry.featureBreakdown).toHaveLength(3);
+      expect(telemetry.featureBreakdown).toHaveLength(4);
       expect(telemetry.modelBreakdown).toHaveLength(4);
       expect(telemetry.funnel).toEqual({
         generated: 0,
@@ -173,6 +173,11 @@ describe("Naya Telemetry & Pricing Functions", () => {
 
       const recFeature = telemetry.featureBreakdown.find((f) => f.feature === "Recommandations");
       expect(recFeature?.modelUsed).toBe("DeepSeek V4 Flash");
+
+      const copiloteFeature = telemetry.featureBreakdown.find(
+        (f) => f.feature === "Copilote Professeur",
+      );
+      expect(copiloteFeature?.modelUsed).toBe("GLM 5.3 Flash");
 
       // Model breakdown check
       const chatModel = telemetry.modelBreakdown.find((m) => m.model === "DeepSeek V4 Flash");

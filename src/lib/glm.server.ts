@@ -72,7 +72,11 @@ export class GlmMissingKeyError extends Error {
 }
 
 function glmConfig() {
-  const apiKey = process.env.GLM_API_KEY;
+  const apiKey =
+    process.env.GLM_API_KEY ||
+    process.env.ZHIPU_API_KEY ||
+    process.env.ZHIPUAI_API_KEY ||
+    process.env.BIGMODEL_API_KEY;
   const baseUrl = (process.env.GLM_BASE_URL || GLM_BASE_URL_DEFAULT).replace(/\/$/, "");
   const model = process.env.GLM_MODEL || GLM_MODEL_DEFAULT;
   return { apiKey, baseUrl, model };

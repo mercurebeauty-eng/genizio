@@ -438,3 +438,23 @@ export const getMyEstablishmentOverview = createServerFn({ method: "GET" })
       colleagues,
     };
   });
+
+// ── Garde d'accès à l'espace éducateur (audit UI 2026-09-05) ────────────────
+// Miroir de checkIsActiveMentor : /educator était la seule route à rôle sans
+// garde — tout parent connecté chargeait le shell éducateur et déclenchait les
+// fetches délégations/passeport (bande passante gaspillée, contenu réservé
+// exposé au shell).
+export const checkIsActiveEducator = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const userId = (context as any).claims?.sub;
+
+    const { data: profile } = await (supabaseAdmin as any)
+      .from("educator_profiles")
+      .select("id")
+      .eq("user_id", userId)
+      .limit(1)
+      .maybeSingle();
+    return { isEducator: !!profile };
+  });

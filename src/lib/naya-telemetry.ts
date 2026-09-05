@@ -498,21 +498,14 @@ export function calculateNayaTelemetry(raw: {
       costUsd: recCosts.costUsd,
       costXof: recCosts.costXof,
     },
-    // Copilote Professeur (GLM) : ligne présente dès le premier usage réel —
-    // les dashboards existants ne voient pas de zéro factice tant que le
-    // copilote n'est pas déployé.
-    ...(totalGlmTokens > 0
-      ? [
-          {
-            feature: "Copilote Professeur" as const,
-            callsCount: glmFlashCalls,
-            modelUsed: "GLM 5.3 Flash" as const,
-            estimatedTokens: totalGlmTokens,
-            costUsd: glmCosts.costUsd,
-            costXof: glmCosts.costXof,
-          },
-        ]
-      : []),
+    {
+      feature: "Copilote Professeur" as const,
+      callsCount: glmFlashCalls,
+      modelUsed: "GLM 5.3 Flash" as const,
+      estimatedTokens: totalGlmTokens,
+      costUsd: glmCosts.costUsd,
+      costXof: glmCosts.costXof,
+    },
   ];
 
   const modelBreakdown: ModelUsageBreakdown[] = [
