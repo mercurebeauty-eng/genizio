@@ -4,6 +4,12 @@
 // + option "Sans raison". La note de journal éventuelle du parent part comme
 // reason ; le chip devient not_completed_reason_chip (signal structuré pour le
 // Loup et la classification).
+//
+// Mission de substitution (décision 2026-09-05) : le chip « materiel_introuvable »
+// ouvre un second temps — quel matériau manquait ? — puis génère la mission
+// d'ingénieur (trouver, tester et comparer des substituts). Le matériau choisi
+// part comme missingMaterial : prémices V4 (l'enfant capteur de terrain).
+import { useEffect, useState } from "react";
 import {
   AlertDialog,
   AlertDialogCancel,
@@ -13,9 +19,9 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { HeartHandshake } from "lucide-react";
+import { ArrowLeft, Hammer, HeartHandshake } from "lucide-react";
 
-export type NotCompletedPayload = { reasonChip?: string };
+export type NotCompletedPayload = { reasonChip?: string; missingMaterial?: string };
 
 /** Labels partagés : dialog + bannière "Défi non réussi" de la carte. */
 export const NOT_COMPLETED_CHIP_LABELS: Record<string, string> = {
@@ -23,9 +29,11 @@ export const NOT_COMPLETED_CHIP_LABELS: Record<string, string> = {
   deja_fait_autrement: "Déjà fait autrement",
   pas_interesse: "Pas intéressé·e",
   doublon: "Doublon",
+  materiel_introuvable: "Matériel introuvable",
 };
 
 const CHIPS = Object.entries(NOT_COMPLETED_CHIP_LABELS);
+const MATERIAL_CHIP = "materiel_introuvable";
 
 export function ChallengeNotCompletedDialog({
   challenge,
@@ -34,12 +42,98 @@ export function ChallengeNotCompletedDialog({
   onClose,
   onConfirm,
 }: {
-  challenge: { id: string; title: string } | null;
+  challenge: {
+    id: string;
+    title: string;
+    materials?: string[] | null;
+    material_tags?: string[] | null;
+  } | null;
   open: boolean;
   submitting: boolean;
   onClose: () => void;
   onConfirm: (payload: NotCompletedPayload) => void;
 }) {
+  // Deux temps pour le matériau introuvable : chip → choix du matériau manquant.
+  const [pickingMaterial, setPickingMaterial] = useState(false);
+  useEffect(() => {
+    if (!open) setPickingMaterial(false);
+  }, [open]);
+
+  const materialChoices = [
+    ...new Set(
+      [
+        ...(challenge?.material_tags ?? []),
+        ...(challenge?.materials ?? []),
+      ].filter((m): m is string => typeof m === "string" && m.trim().length > 0),
+    ),
+  ].slice(0, 8);
+
+  const chipButtons = (
+    <>
+      <div className="grid grid-cols-2 gap-2">
+        {CHIPS.map(([code, label]) => (
+          <button
+            key={code}
+            onClick={() => {
+              if (code === MATERIAL_CHIP && materialChoices.length > 0) {
+                setPickingMaterial(true);
+              } else {
+                onConfirm({ reasonChip: code });
+              }
+            }}
+            disabled={submitting}
+            className="rounded-xl border border-rose-200 bg-rose-50 px-3 py-2.5 text-[13px] font-bold text-rose-700 hover:bg-rose-100 active:scale-[0.98] transition-all cursor-pointer disabled:opacity-60"
+          >
+            {label}
+          </button>
+        ))}
+      </div>
+      <button
+        onClick={() => onConfirm({})}
+        disabled={submitting}
+        className="w-full rounded-xl border border-ink/10 bg-transparent px-3 py-2.5 text-[12px] font-bold text-ink/50 hover:text-ink/80 hover:bg-surface transition-all cursor-pointer disabled:opacity-60"
+      >
+        Sans raison particulière
+      </button>
+    </>
+  );
+
+  const materialPicker = (
+    <div className="space-y-2">
+      <button
+        onClick={() => setPickingMaterial(false)}
+        disabled={submitting}
+        className="flex items-center gap-1 text-[11px] font-bold text-ink/40 hover:text-ink/70 transition-colors cursor-pointer disabled:opacity-60"
+      >
+        <ArrowLeft className="size-3" />
+        Retour aux raisons
+      </button>
+      <p className="text-[12px] font-semibold text-ink/60">
+        Quel matériel manquait ? Naya transformera la contrainte en mission
+        d'ingénieur.
+      </p>
+      <div className="grid grid-cols-2 gap-2">
+        {materialChoices.map((m) => (
+          <button
+            key={m}
+            onClick={() => onConfirm({ reasonChip: MATERIAL_CHIP, missingMaterial: m })}
+            disabled={submitting}
+            className="rounded-xl border border-amber-200 bg-amber-50 px-3 py-2.5 text-[13px] font-bold text-amber-700 hover:bg-amber-100 active:scale-[0.98] transition-all cursor-pointer disabled:opacity-60"
+          >
+            {m}
+          </button>
+        ))}
+      </div>
+      <button
+        onClick={() => onConfirm({ reasonChip: MATERIAL_CHIP })}
+        disabled={submitting}
+        className="w-full rounded-xl border border-ink/10 bg-transparent px-3 py-2.5 text-[12px] font-bold text-ink/50 hover:text-ink/80 hover:bg-surface transition-all cursor-pointer disabled:opacity-60"
+      >
+        Plusieurs / difficile à dire
+      </button>
+    </div>
+  );
+
   return (
     <AlertDialog
       open={open}
@@ -50,12 +144,17 @@ export function ChallengeNotCompletedDialog({
       <AlertDialogContent className="rounded-3xl max-w-sm border border-ink/10 shadow-xl">
         <AlertDialogHeader>
           <AlertDialogTitle className="flex items-center gap-2 text-ink">
-            <HeartHandshake className="size-5 text-rose-500" />
+            {pickingMaterial ? (
+              <Hammer className="size-5 text-amber-500" />
+            ) : (
+              <HeartHandshake className="size-5 text-rose-500" />
+            )}
             Ce défi n'a pas abouti — c'est très bien ainsi
           </AlertDialogTitle>
           <AlertDialogDescription className="text-ink/70">
-            Naya en apprend autant d'un défi non terminé que d'un défi réussi. Dis-lui simplement
-            pourquoi, pour qu'elle propose la suite la plus adaptée.
+            {pickingMaterial
+              ? "Naya va transformer ce manque en mission : trouver, tester et comparer des substituts, comme un vrai ingénieur."
+              : "Naya en apprend autant d'un défi non terminé que d'un défi réussi. Dis-lui simplement pourquoi, pour qu'elle propose la suite la plus adaptée."}
           </AlertDialogDescription>
         </AlertDialogHeader>
 
@@ -63,25 +162,7 @@ export function ChallengeNotCompletedDialog({
           <p className="text-sm font-bold text-ink">
             {challenge ? <>Pourquoi « {challenge.title} » n'a pas pu être fait ?</> : null}
           </p>
-          <div className="grid grid-cols-2 gap-2">
-            {CHIPS.map(([code, label]) => (
-              <button
-                key={code}
-                onClick={() => onConfirm({ reasonChip: code })}
-                disabled={submitting}
-                className="rounded-xl border border-rose-200 bg-rose-50 px-3 py-2.5 text-[13px] font-bold text-rose-700 hover:bg-rose-100 active:scale-[0.98] transition-all cursor-pointer disabled:opacity-60"
-              >
-                {label}
-              </button>
-            ))}
-          </div>
-          <button
-            onClick={() => onConfirm({})}
-            disabled={submitting}
-            className="w-full rounded-xl border border-ink/10 bg-transparent px-3 py-2.5 text-[12px] font-bold text-ink/50 hover:text-ink/80 hover:bg-surface transition-all cursor-pointer disabled:opacity-60"
-          >
-            Sans raison particulière
-          </button>
+          {pickingMaterial ? materialPicker : chipButtons}
         </div>
 
         <AlertDialogFooter className="flex-row gap-2 sm:space-x-0">

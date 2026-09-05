@@ -3548,6 +3548,7 @@ export const NOT_COMPLETED_CHIPS = [
   "deja_fait_autrement",
   "pas_interesse",
   "doublon",
+  "materiel_introuvable",
 ] as const;
 type NotCompletedChip = (typeof NOT_COMPLETED_CHIPS)[number];
 
@@ -3555,6 +3556,9 @@ export const NotCompletedInput = z.object({
   id: z.string().uuid(),
   reason: z.string().trim().min(1).max(2000),
   reasonChip: z.enum(NOT_COMPLETED_CHIPS).optional(),
+  // Matériau signalé introuvable (choisi dans le dialog depuis les matériaux du
+  // défi) — alimente l'événement de gap matériel (prémices V4, capteur de terrain).
+  missingMaterial: z.string().trim().min(1).max(60).optional(),
 });
 
 // Étape 2 — "un vrai statut non réussi" (brainstorm produit, 2026-08-02) : jusqu'ici,
@@ -3642,6 +3646,42 @@ export const submitChallengeNotCompleted = createServerFn({ method: "POST" })
         void processSupportRetestResult(data.id, "ABANDONED");
       } catch (err) {
         console.error("Non-fatal: processSupportRetestResult failed", err);
+      }
+
+      // Vérification back-office (V2, shadow) : si ce défi ÉTAIT une mission de
+      // substitution et qu'elle n'a pas abouti, le trigger a posé le gap en
+      // nothing_found — Naya vérifie en silence si des substituts réalistes
+      // existaient (signal d'investigation vs correction du modèle de
+      // disponibilité). Jamais montré à l'enfant.
+      if (challenge.challenge_role === "substitution") {
+        try {
+          const { verifyMaterialGap } = await import("@/lib/substitution.functions");
+          void verifyMaterialGap(sup, data.id);
+        } catch (err) {
+          console.error("Non-fatal: verifyMaterialGap failed", err);
+        }
+      }
+
+      // Étape 4bis — mission de substitution (décision 2026-09-05) : le chip
+      // « materiel_introuvable » est un signal explicite — le problème n'est pas la
+      // manière d'enseigner mais la ressource. La contrainte devient la mission
+      // suivante (trouver, tester et comparer des substituts), prioritaire sur la
+      // reformulation. Sinon on retombe sur la chaîne classique.
+      if (data.reasonChip === "materiel_introuvable") {
+        try {
+          const { processSubstitutionChallenge } = await import("@/lib/substitution.functions");
+          const outcome = await processSubstitutionChallenge(
+            sup,
+            data.id,
+            data.missingMaterial ?? null,
+          );
+          if (outcome.ok) return; // la mission de substitution devient la mission suivante
+          console.error(
+            `Non-fatal: substitution impossible (${outcome.reason}) — repli sur la chaîne classique`,
+          );
+        } catch (err) {
+          console.error("Non-fatal: substitution failed", err);
+        }
       }
 
       // Étape 5 — boucle de réévaluation des modalités (chantier 3, §22-26) : si la cause

@@ -813,7 +813,12 @@ function ChallengesPage() {
     );
     try {
       await markNotCompleted({
-        data: { id: challenge.id, reason: finalReason, reasonChip: payload.reasonChip },
+        data: {
+          id: challenge.id,
+          reason: finalReason,
+          reasonChip: payload.reasonChip,
+          missingMaterial: payload.missingMaterial,
+        },
       });
       setNotCompletedDialog(null);
       toast.success(
