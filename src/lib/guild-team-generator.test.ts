@@ -5,6 +5,7 @@ import {
   buildGuildCollectiveChallengePrompt,
   analyzeEscouadeCompatibility,
   rankSquadCandidates,
+  buildHackathonTeams,
   type MobilizationAwareTeamMember,
 } from "./guild-team-generator";
 import type { MobilizationConditionHypothesis } from "./mobilization-conditions";
@@ -126,5 +127,78 @@ describe("rankSquadCandidates", () => {
 
     const ranked = rankSquadCandidates(childMob, candidates, ["c2"], "synergique");
     expect(ranked[0].id).toBe("c2");
+  });
+});
+
+describe("buildHackathonTeams (Phase 4 — événements collectifs)", () => {
+  const mkMember = (id: string, primaryTalentKey: string, score = 80) => ({
+    id,
+    name: `Enfant ${id}`,
+    talents: { [primaryTalentKey]: score },
+    primaryTalentKey,
+  });
+
+  const bassin = [
+    mkMember("c1", "logico_mathematique"),
+    mkMember("c2", "logico_mathematique"),
+    mkMember("c3", "logico_mathematique"),
+    mkMember("c4", "spatial"),
+    mkMember("c5", "spatial"),
+    mkMember("c6", "linguistique"),
+    mkMember("c7", "corporelle"),
+    mkMember("c8", "artisanale"),
+    mkMember("c9", "creative"),
+    mkMember("c10", "sociale"),
+    mkMember("c11", "emotionnelle"),
+    mkMember("c12", "entrepreneuriale"),
+  ];
+
+  it("produit des équipes de la taille demandée, sans doublon ni oubli", () => {
+    const teams = buildHackathonTeams(bassin, { teamSize: 4, seed: 7 });
+    expect(teams).toHaveLength(3); // 12 / 4
+    const all = teams.flatMap((t) => t.members.map((m) => m.id)).sort();
+    expect(all).toEqual(bassin.map((m) => m.id).sort());
+    for (const t of teams) expect(t.members).toHaveLength(4);
+  });
+
+  it("déterministe à seed égal, différent à seed différent", () => {
+    const a = buildHackathonTeams(bassin, { teamSize: 4, seed: 7 });
+    const b = buildHackathonTeams(bassin, { teamSize: 4, seed: 7 });
+    const c = buildHackathonTeams(bassin, { teamSize: 4, seed: 8 });
+    expect(a).toEqual(b);
+    expect(a).not.toEqual(c);
+  });
+
+  it("évite les groupes d'élites : les équipes ne peuvent pas toutes drainer le même talent rare", () => {
+    // 3 logiciens, 9 autres : avec 3 équipes de 4, un seul logicien par équipe max
+    const teams = buildHackathonTeams(bassin, { teamSize: 4, seed: 3 });
+    for (const team of teams) {
+      const logicos = team.members.filter((m) => m.primaryTalentKey === "logico_mathematique");
+      expect(logicos.length).toBeLessThanOrEqual(1);
+    }
+  });
+
+  it("diversité d'école : deux écoles séparées restent mélangées dans chaque équipe", () => {
+    const schoolByMember: Record<string, string> = {};
+    for (const m of bassin) schoolByMember[m.id] = Number(m.id.slice(1)) <= 6 ? "ecole-A" : "ecole-B";
+    const teams = buildHackathonTeams(bassin, { teamSize: 4, seed: 5, schoolByMember });
+    const mixed = teams.filter((t) => {
+      const schools = new Set(t.members.map((m) => schoolByMember[m.id]));
+      return schools.size === 2;
+    });
+    expect(mixed.length).toBeGreaterThanOrEqual(2);
+  });
+
+  it("rejette une taille d'équipe invalide", () => {
+    expect(() => buildHackathonTeams(bassin, { teamSize: 1 })).toThrow();
+    expect(() => buildHackathonTeams(bassin, { teamSize: 13 })).toThrow();
+  });
+
+  it("bassin non divisible : le reste est laissé hors équipe (jamais d'équipe tronquée)", () => {
+    const teams = buildHackathonTeams(bassin.slice(0, 10), { teamSize: 4, seed: 9 });
+    expect(teams).toHaveLength(2);
+    expect(teams.every((t) => t.members.length === 4)).toBe(true);
+    const picked = teams.flatMap((t) => t.members.map((m) => m.id));
+    expect(new Set(picked).size).toBe(8);
   });
 });

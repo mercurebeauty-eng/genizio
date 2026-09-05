@@ -285,3 +285,81 @@ export function analyzeSquadRoleBalance(members: TeamMemberProfile[]): SquadRole
     recommendations,
   };
 }
+
+// ── Générateur d'équipes de Hackathon (Phase 4) ─────────────────────────────
+
+/**
+ * Divise un bassin de participants (plusieurs classes/écoles) en équipes
+ * HÉTÉROGÈNES et équilibrées pour éviter les « groupes d'élites » :
+ *   • snake draft déterministe (seed reproductible pour auditer le tirage),
+ *   • chaque équipe reçoit à chaque tour le participant au talent dominant le
+ *     plus rare parmi les restants (anti-accumulation d'élites du même canal),
+ *   • diversité d'école maximisée quand `schoolByMember` est fourni.
+ */
+export function buildHackathonTeams(
+  members: MobilizationAwareTeamMember[],
+  opts: {
+    teamSize: number;
+    seed?: number;
+    schoolByMember?: Record<string, string>;
+    teamNames?: string[];
+  },
+): Array<{ teamName: string; members: TeamMemberProfile[] }> {
+  if (opts.teamSize < 2 || opts.teamSize > members.length) {
+    throw new Error(`Taille d'équipe invalide : ${opts.teamSize} pour ${members.length} participants.`);
+  }
+
+  // Ordre de départ déterministe (mélange de Fisher-Yates seedé) : neutralise
+  // l'ordre d'inscription tout en restant reproductible.
+  let state = (opts.seed ?? 42) >>> 0;
+  const nextRand = () => {
+    state = (state * 1664525 + 1013904223) >>> 0;
+    return state / 0xffffffff;
+  };
+  const pool = [...members].sort((a, b) => a.id.localeCompare(b.id));
+  for (let i = pool.length - 1; i > 0; i--) {
+    const j = Math.floor(nextRand() * (i + 1));
+    [pool[i], pool[j]] = [pool[j], pool[i]];
+  }
+
+  const teamCount = Math.floor(members.length / opts.teamSize);
+  const teams: MobilizationAwareTeamMember[][] = Array.from({ length: teamCount }, () => []);
+
+  // Rareté du talent dominant dans le bassin : les talents les plus rares
+  // passent en premier dans chaque tour → chaque équipe capte de la variété.
+  const rarity = new Map<string, number>();
+  for (const m of pool) {
+    rarity.set(m.primaryTalentKey, (rarity.get(m.primaryTalentKey) ?? 0) + 1);
+  }
+
+  const remaining = [...pool];
+  for (let round = 0; round < opts.teamSize; round++) {
+    // À chaque tour : le participant dont le talent dominant est le plus rare
+    // parmi les restants (tie → diversité d'école → ordre du mélange seedé).
+    for (let t = 0; t < teamCount && remaining.length > 0; t++) {
+      let bestIdx = 0;
+      let bestKey = "";
+      for (let i = 0; i < remaining.length; i++) {
+        const m = remaining[i];
+        const school = opts.schoolByMember?.[m.id] ?? "";
+        const key = `${rarity.get(m.primaryTalentKey) ?? 0}:${school}:${nextRand()}`;
+        if (i === 0 || key > bestKey) {
+          bestIdx = i;
+          bestKey = key;
+        }
+      }
+      const picked = remaining.splice(bestIdx, 1)[0];
+      // Serpent : les tours pairs remplissent en ordre, les impairs en inverse —
+      // égalise la force moyenne des équipes au fil des tours.
+      const target = round % 2 === 0 ? t : teamCount - 1 - t;
+      teams[target].push(picked);
+    }
+  }
+
+  return teams.map((team, i) => ({
+    teamName: opts.teamNames?.[i] ?? `Équipe ${i + 1}`,
+    members: team.map(({ id, name, talents, primaryTalentKey, diagnosticIntent, naturalDiscoveryRole }) => ({
+      id, name, talents, primaryTalentKey, diagnosticIntent, naturalDiscoveryRole,
+    })),
+  }));
+}
