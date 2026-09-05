@@ -540,3 +540,12 @@ body {
 .no-scrollbar::-webkit-scrollbar {
   display: none;
 }
+
+/* ── Échelle z-index documentée (audit UI 2026-09-05) ──────────────────────
+   Une seule échelle pour toute l'app — ne pas inventer de valeurs ad hoc :
+   40  AppTabBar (barre de navigation fixe bas)           → z-40
+   50  Overlays courants (modales Radix, FAB, popups bas)  → z-50
+   60  PwaUpdateBanner (au-dessus des popups, sous les modales) → z-[60]
+   100 Célébrations plein écran (badge, level-up)          → z-[100]
+   Modales : toujours via Radix (components/ui/dialog) — jamais de
+   `fixed inset-0` hand-rolled (règle posée à l'audit UI).                */

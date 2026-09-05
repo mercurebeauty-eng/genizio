@@ -21,6 +21,7 @@ import { toast } from "sonner";
 import { useSession } from "@/hooks/use-session";
 import { savePushSubscription, removePushSubscription } from "@/lib/notifications.functions";
 import { awaitServiceWorkerReady, isServiceWorkerSupported } from "@/lib/sw-ready";
+import { useBottomOverlayClaim } from "@/hooks/use-ui-overlays";
 import { X, Bell } from "lucide-react";
 
 const VAPID_PUBLIC_KEY = import.meta.env.VITE_VAPID_PUBLIC_KEY as string | undefined;
@@ -181,10 +182,14 @@ export function PushNotificationsSetup() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [userId, loading]);
 
-  if (!supported || !session || permission !== "default" || dismissed) return null;
+  const visible = supported && !!session && permission === "default" && !dismissed;
+  // Occupe la zone basse d'écran tant qu'affiché — le WhatsAppFAB s'efface.
+  useBottomOverlayClaim(visible);
+
+  if (!visible) return null;
 
   return (
-    <div className="fixed bottom-4 left-1/2 z-50 w-[calc(100%-2rem)] max-w-sm -translate-x-1/2 animate-in slide-in-from-bottom-4 duration-300">
+    <div className="fixed bottom-[calc(4.75rem+env(safe-area-inset-bottom))] left-1/2 z-50 w-[calc(100%-2rem)] max-w-sm -translate-x-1/2 animate-in slide-in-from-bottom-4 duration-300">
       <div className="flex items-center gap-3 rounded-2xl border border-indigo-200 bg-white px-4 py-3 shadow-xl">
         <div className="grid size-9 shrink-0 place-items-center rounded-xl bg-indigo-100 text-indigo-700">
           <Bell className="size-4" />

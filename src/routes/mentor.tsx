@@ -48,6 +48,7 @@ import { fileToCompressedProof } from "@/lib/image-proof";
 import { getChildGuild } from "@/lib/guilds";
 import { MentorDiscoveryFeed } from "@/components/mentor/MentorDiscoveryFeed";
 import { SaturdayClubSquadView } from "@/components/mentor/SaturdayClubSquadView";
+import { useBlobUrl } from "@/hooks/use-blob-url";
 import {
   Loader2,
   Users,
@@ -148,6 +149,9 @@ function MentorDashboardPage() {
   const navigate = useNavigate();
   const [children, setChildren] = useState<ChildWithChallenges[]>([]);
   const [fetching, setFetching] = useState(true);
+  // Chargement du rapport de bilan (distingué du spinner de la liste dashboard :
+  // l'ancien code réinitialisait setFetching — le mauvais état).
+  const [reportLoading, setReportLoading] = useState(false);
   const [loadError, setLoadError] = useState(false);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [selectedChallenge, setSelectedChallenge] = useState<any | null>(null);
@@ -231,6 +235,9 @@ function MentorDashboardPage() {
   // Soumission de preuve (photo en séance ou déclarative).
   const [proofFor, setProofFor] = useState<any | null>(null);
   const [proofPhoto, setProofPhoto] = useState<File | null>(null);
+  // URL daperçu révoquée automatiquement (fuite mémoire sinon : un
+  // createObjectURL en render créait une URL à CHAQUE re-render).
+  const proofPhotoUrl = useBlobUrl(proofPhoto);
   const [declarativeValue, setDeclarativeValue] = useState<string>("");
   const [submittingProof, setSubmittingProof] = useState(false);
   // Génération de défis.
@@ -333,6 +340,7 @@ function MentorDashboardPage() {
   useEffect(() => {
     if (panelTab !== "bilan" || !selectedId) return;
     let cancelled = false;
+    setReportLoading(true);
     setReportDraft(null);
     getReportsFn({ data: { childId: selectedId } })
       .then((res: any) => {
@@ -359,7 +367,7 @@ function MentorDashboardPage() {
       })
       .catch((err: any) => toast.error(err.message || "Impossible de charger le bilan."))
       .finally(() => {
-        if (!cancelled) setFetching(false);
+        if (!cancelled) setReportLoading(false);
       });
     return () => {
       cancelled = true;
@@ -1238,7 +1246,12 @@ function MentorDashboardPage() {
 
                         {/* ── Bilan de fin (décision #74) — le « bilan inclus » du pack ── */}
                         {panelTab === "bilan" && (
-                          <div className="rounded-3xl border border-ink/10 bg-white p-6 shadow-xl space-y-5">
+                          <div className="rounded-3xl border border-ink/10 bg-white p-6 shadow-xl space-y-5 relative">
+                            {reportLoading && (
+                              <div className="absolute inset-0 z-10 grid place-items-center rounded-3xl bg-white/70 backdrop-blur-[2px]">
+                                <Loader2 className="size-7 animate-spin text-brand" />
+                              </div>
+                            )}
                             <div className="flex items-center justify-between gap-3 border-b-2 border-ink pb-4">
                               <div>
                                 <h3 className="font-display text-balance text-lg font-black flex items-center gap-2">
@@ -2138,7 +2151,7 @@ function MentorDashboardPage() {
                       {proofPhoto && (
                         <div className="mt-3 flex items-center gap-3">
                           <img
-                            src={URL.createObjectURL(proofPhoto)}
+                            src={proofPhotoUrl ?? undefined}
                             alt="Preuve"
                             className="size-14 rounded-xl object-cover border border-ink/10"
                           />

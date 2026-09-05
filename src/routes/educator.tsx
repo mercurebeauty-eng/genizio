@@ -1,5 +1,5 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { useSession } from "@/hooks/use-session";
 import { AppHeader } from "@/components/AppHeader";
@@ -12,6 +12,7 @@ import {
 import { initializeProDossierPayment } from "@/lib/payments.functions";
 import { PRO_DOSSIER_PRICE_XOF, formatXof } from "@/lib/pricing";
 import {
+  checkIsActiveEducator,
   getMyEstablishmentOverview,
   type EstablishmentOverview,
 } from "@/lib/educators-lookup.functions";
@@ -70,6 +71,7 @@ function EducatorDashboardPage() {
   const [activeSubTab, setActiveSubTab] = useState<"students" | "establishment">("students");
   const [establishment, setEstablishment] = useState<EstablishmentOverview | null>(null);
   const [loadingEstablishment, setLoadingEstablishment] = useState(false);
+  const [establishmentError, setEstablishmentError] = useState<string | null>(null);
 
   // Detailed modal for a child
   const [selectedChildId, setSelectedChildId] = useState<string | null>(null);
@@ -98,11 +100,16 @@ function EducatorDashboardPage() {
   const [obsNotes, setObsNotes] = useState<string>("");
   const [savingObs, setSavingObs] = useState(false);
 
+  const copiedCodeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const handleCopySchoolCode = (code: string) => {
-    void navigator.clipboard.writeText(code);
+    navigator.clipboard
+      .writeText(code)
+      .then(() => toast.success("Code établissement copié !"))
+      .catch(() => toast.error("Copie impossible — sélectionnez le code à la main."));
     setCopiedCode(true);
-    toast.success("Code établissement copié !");
-    setTimeout(() => setCopiedCode(false), 2000);
+    if (copiedCodeTimer.current) clearTimeout(copiedCodeTimer.current);
+    // Évite le setState-after-unmount si on quitte la page dans les 2 s.
+    copiedCodeTimer.current = setTimeout(() => setCopiedCode(false), 2000);
   };
 
   const listDelegationsFn = useServerFn(listMyEducatorDelegations);
@@ -120,6 +127,18 @@ function EducatorDashboardPage() {
       navigate({ to: "/auth", replace: true });
     }
   }, [session, loading, navigate]);
+
+  // Garde de rôle (audit UI 2026-09-05) : miroir de la garde mentor — /educator
+  // était la seule route à rôle sans vérification, tout parent connecté chargeait
+  // le shell et déclenchait les fetches délégations/passeport.
+  const checkEducatorFn = useServerFn(checkIsActiveEducator);
+  const [isEducator, setIsEducator] = useState<boolean | null>(null);
+  useEffect(() => {
+    if (loading || !session) return;
+    checkEducatorFn({ headers: { Authorization: `Bearer ${session.access_token}` } })
+      .then((res) => setIsEducator(res.isEducator))
+      .catch(() => setIsEducator(false));
+  }, [session, loading, checkEducatorFn]);
 
   const loadDelegations = async () => {
     if (!session) return;
@@ -152,19 +171,24 @@ function EducatorDashboardPage() {
         setImpactMetrics(metrics);
       }
     } catch (err) {
+      // Réseau instable : sans ça, un échec s'affichait comme « Aucun
+      // établissement associé » — le prof croyait son école déliée.
       console.error(err);
+      setEstablishmentError("Chargement de l'établissement impossible.");
+      toast.error("Erreur lors du chargement de l'établissement.");
     } finally {
       setLoadingEstablishment(false);
     }
   };
 
   useEffect(() => {
-    if (session) {
+    // Les données ne partent qu'une fois le rôle éducateur confirmé.
+    if (session && isEducator === true) {
       void loadDelegations();
       void loadEstablishment();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [session]);
+  }, [session, isEducator]);
 
   const handleOpenPassport = async (childId: string) => {
     setSelectedChildId(childId);
@@ -261,9 +285,13 @@ function EducatorDashboardPage() {
       });
       if (res?.authorizationUrl) {
         window.location.href = res.authorizationUrl;
+        return; // redirection en cours : on garde le spinner
       }
+      // Réponse sans URL de paiement : sans ce reset, le bouton tournait à l'infini.
+      toast.error("Initialisation du paiement indisponible — réessayez.");
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Erreur d'initialisation du paiement.");
+    } finally {
       setPayingProDossier(false);
     }
   };
@@ -291,10 +319,33 @@ function EducatorDashboardPage() {
     return matchSearch && matchCohort;
   });
 
-  if (loading || !session) {
+  if (loading || !session || isEducator === null) {
     return (
       <div className="grid min-h-dvh place-items-center bg-surface">
         <GenizioLoader label="Chargement de l'espace éducation…" />
+      </div>
+    );
+  }
+
+  if (!isEducator) {
+    return (
+      <div className="grid min-h-dvh place-items-center bg-surface p-6 text-center">
+        <div>
+          <AlertTriangle className="size-16 text-amber-500 mx-auto mb-4" />
+          <h1 className="font-display text-balance text-2xl font-black text-ink mb-2">
+            Espace éducation réservé
+          </h1>
+          <p className="text-sm text-ink/60 max-w-sm mx-auto mb-6 leading-relaxed">
+            Cet espace est réservé aux professionnels de l'éducation : créez votre profil
+            professionnel (enseignant, conseiller, psychologue) dans vos paramètres pour y accéder.
+          </p>
+          <button
+            onClick={() => navigate({ to: "/profiles" })}
+            className="rounded-2xl border border-ink/10 bg-white px-6 py-3 font-bold cursor-pointer hover:bg-surface transition-colors"
+          >
+            Retour à mes profils
+          </button>
+        </div>
       </div>
     );
   }
@@ -388,6 +439,23 @@ function EducatorDashboardPage() {
           loadingEstablishment ? (
             <div className="flex justify-center py-16">
               <Loader2 className="size-8 animate-spin text-indigo-600" />
+            </div>
+          ) : establishmentError ? (
+            <div className="rounded-3xl border border-red-200 bg-red-50/70 p-12 text-center shadow-xs space-y-4">
+              <h3 className="font-display font-black text-xl text-red-800">
+                Chargement impossible
+              </h3>
+              <p className="text-xs sm:text-sm text-red-700/80">{establishmentError}</p>
+              <button
+                type="button"
+                onClick={() => {
+                  setEstablishmentError(null);
+                  void loadEstablishment();
+                }}
+                className="press-brand rounded-2xl bg-indigo-600 px-6 py-3 text-sm font-bold text-white cursor-pointer"
+              >
+                Réessayer
+              </button>
             </div>
           ) : !establishment?.hasEstablishment ? (
             <div className="rounded-3xl border border-dashed border-ink/20 bg-white p-10 sm:p-12 text-center shadow-xs space-y-4">

@@ -6,6 +6,7 @@ import {
   isRunningStandalone,
   type DeferredInstallPrompt,
 } from "@/lib/pwa-install";
+import { useBottomOverlayClaim } from "@/hooks/use-ui-overlays";
 
 // Délai anti-intrusif avant apparition (on ne saute pas à la gorge au
 // chargement, mais on reste ensuite visible jusqu'à action).
@@ -23,6 +24,10 @@ export function PwaInstallPrompt() {
   const [showPrompt, setShowPrompt] = useState(false);
   const [deferredPrompt, setDeferredPrompt] = useState<DeferredInstallPrompt | null>(null);
   const [isIos, setIsIos] = useState(false);
+
+  // Déclare l'occupation de la zone basse d'écran : le WhatsAppFAB s'efface
+  // tant que ce popup est visible (sinon ils se chevauchent en 360px de large).
+  useBottomOverlayClaim(showPrompt);
 
   useEffect(() => {
     // 1. Déjà installée (standalone) : jamais de popup.

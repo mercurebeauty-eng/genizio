@@ -85,6 +85,7 @@ function DashboardPage() {
   const { new: openCreateOnLoad } = Route.useSearch();
   const [profiles, setProfiles] = useState<ChildProfile[]>([]);
   const [fetching, setFetching] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [challenges, setChallenges] = useState<Challenge[]>([]);
   const [fetchingChallenges, setFetchingChallenges] = useState(false);
@@ -262,6 +263,7 @@ function DashboardPage() {
         return;
       } catch (err) {
         console.error("Erreur de chargement du dashboard mentor:", err);
+        setLoadError(err instanceof Error ? err.message : "Chargement impossible.");
         setProfiles([]);
         setMentorChallengesByChild({});
         setSelectedId(null);
@@ -271,26 +273,36 @@ function DashboardPage() {
       }
     }
 
-    const { data } = await supabase
-      .from("child_profiles")
-      .select("*")
-      .eq("user_id", session.user.id)
-      .order("created_at", { ascending: false });
-    const list = (data ?? []) as unknown as ChildProfile[];
-    setProfiles(list);
-    // Keep the current selection only if it's still in the refetched list —
-    // it may have been deleted elsewhere (another tab, /profiles/manage)
-    // since the last fetch, which would otherwise leave selectedId pointing
-    // at a profile that no longer exists. On a fresh mount (prev is null,
-    // e.g. after a page reload) fall back to the last profile the user
-    // picked, persisted in localStorage, rather than always the newest one.
-    const storedId = localStorage.getItem(`genizio:selectedChildId:${session.user.id}`);
-    setSelectedId((prev) => {
-      if (prev && list.some((p) => p.id === prev)) return prev;
-      if (storedId && list.some((p) => p.id === storedId)) return storedId;
-      return list[0]?.id ?? null;
-    });
-    setFetching(false);
+    // Réseau instable : un échec ici ne doit JAMAIS finir en loader infini ni
+    // en faux « aucun enfant » — état d'erreur explicite avec bouton réessayer.
+    try {
+      const { data, error } = await supabase
+        .from("child_profiles")
+        .select("*")
+        .eq("user_id", session.user.id)
+        .order("created_at", { ascending: false });
+      if (error) throw error;
+      const list = (data ?? []) as unknown as ChildProfile[];
+      setLoadError(null);
+      setProfiles(list);
+      // Keep the current selection only if it's still in the refetched list —
+      // it may have been deleted elsewhere (another tab, /profiles/manage)
+      // since the last fetch, which would otherwise leave selectedId pointing
+      // at a profile that no longer exists. On a fresh mount (prev is null,
+      // e.g. after a page reload) fall back to the last profile the user
+      // picked, persisted in localStorage, rather than always the newest one.
+      const storedId = localStorage.getItem(`genizio:selectedChildId:${session.user.id}`);
+      setSelectedId((prev) => {
+        if (prev && list.some((p) => p.id === prev)) return prev;
+        if (storedId && list.some((p) => p.id === storedId)) return storedId;
+        return list[0]?.id ?? null;
+      });
+    } catch (err) {
+      console.error("Erreur de chargement des profils enfants:", err);
+      setLoadError(err instanceof Error ? err.message : "Chargement impossible.");
+    } finally {
+      setFetching(false);
+    }
   };
 
   useEffect(() => {
@@ -389,6 +401,21 @@ function DashboardPage() {
 
           {fetching ? (
             <GenizioLoader className="py-8" />
+          ) : loadError ? (
+            <div className="rounded-3xl border border-red-200 bg-red-50/70 p-12 text-center shadow-md">
+              <p className="mb-1 font-black text-red-800">Chargement impossible</p>
+              <p className="mb-4 text-sm text-red-700/80">{loadError}</p>
+              <button
+                onClick={() => {
+                  setFetching(true);
+                  setLoadError(null);
+                  void refetch();
+                }}
+                className="press-brand rounded-2xl bg-brand px-6 py-3 text-sm font-bold text-white cursor-pointer"
+              >
+                Réessayer
+              </button>
+            </div>
           ) : profiles.length === 0 ? (
             <div className="rounded-3xl border border-dashed border-ink/20 bg-white/60 p-12 text-center shadow-md backdrop-blur-md">
               {mentorMode ? (

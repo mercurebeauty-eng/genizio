@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { useSession } from "@/hooks/use-session";
 import { supabase } from "@/integrations/supabase/client";
@@ -244,6 +244,12 @@ function AdminIndexPage() {
   }, [session]);
 
   // Synchronisation en direct (Live Sync) de l'Admin OS (pastilles, KPIs, paiements)
+  // pendingPayments est lu via un ref : le channel ne se re-souscrit QUE quand la
+  // session change (avant, chaque tick modifiant le compteur démontait et
+  // re-souscrivait le channel — churn de sockets sur mobile, événements perdus).
+  const pendingPaymentsRef = useRef(pendingPayments);
+  pendingPaymentsRef.current = pendingPayments;
+
   useEffect(() => {
     if (!session) return;
 
@@ -309,7 +315,7 @@ function AdminIndexPage() {
         : {};
       void getPendingPaymentsFn({ data: undefined, ...opts })
         .then((res) => {
-          if (res && res.pendingCount !== pendingPayments) {
+          if (res && res.pendingCount !== pendingPaymentsRef.current) {
             setPendingPayments(res.pendingCount);
           }
         })
@@ -328,7 +334,7 @@ function AdminIndexPage() {
       document.removeEventListener("visibilitychange", handleVisibilityChange);
       void supabase.removeChannel(channel);
     };
-  }, [session, pendingPayments]);
+  }, [session]);
 
   const handleTogglePassport = async (childId: string, unlock: boolean) => {
     try {

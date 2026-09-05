@@ -13,6 +13,7 @@ import { MessageCircle } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useSession } from "@/hooks/use-session";
 import { getChildGuild } from "@/lib/guilds";
+import { useBottomOverlayCount } from "@/hooks/use-ui-overlays";
 
 type ChildContext = {
   name: string;
@@ -45,6 +46,9 @@ export function WhatsAppFAB({ phoneNumber }: WhatsAppFABProps) {
   const userId = session?.user.id;
   const [context, setContext] = useState<ChildContext | null>(null);
   const [visible, setVisible] = useState(true);
+  // Un overlay bas (popup d'installation, setup push) occupe la zone ? Le FAB
+  // s'efface : sur 360px de large, ils se chevauchaient tous les trois.
+  const bottomOverlays = useBottomOverlayCount();
 
   // The FAB is fixed on screen, so on long pages it can end up sitting on top
   // of whatever full-width button happens to scroll under it (e.g. a
@@ -103,6 +107,8 @@ export function WhatsAppFAB({ phoneNumber }: WhatsAppFABProps) {
     };
   }, [userId, profileId]);
   const url = buildWhatsAppUrl(phone, context);
+
+  if (bottomOverlays > 0) return null;
 
   return (
     <a

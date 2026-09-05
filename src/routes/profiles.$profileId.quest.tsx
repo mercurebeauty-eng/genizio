@@ -24,6 +24,7 @@ import {
   Send,
 } from "lucide-react";
 import { toast } from "sonner";
+import { useBlobUrl } from "@/hooks/use-blob-url";
 import { NayaAvatar } from "@/components/NayaAvatar";
 import nayaAvatar from "@/assets/naya-avatar.png";
 import { confirmDialog } from "@/components/ui/confirm-dialog";
@@ -149,7 +150,10 @@ function QuestPage() {
   const [completedChallengeId, setCompletedChallengeId] = useState<string | null>(null);
   const [completedChallengeTitle, setCompletedChallengeTitle] = useState("");
   const [uploadingProof, setUploadingProof] = useState(false);
-  const [proofUrl, setProofUrl] = useState<string | null>(null);
+  // Fichier de preuve conservé (et non une URL) : useBlobUrl crée/révoque
+  // l'aperçu automatiquement — l'ancien code fuyait une URL par soumission.
+  const [proofFile, setProofFile] = useState<File | null>(null);
+  const proofUrl = useBlobUrl(proofFile);
   const [aiObservations, setAiObservations] = useState<string | null>(null);
   const validateAI = useServerFn(validateChallengeProof);
 
@@ -338,7 +342,7 @@ function QuestPage() {
       }
 
       setAiObservations(result.observations);
-      setProofUrl(URL.createObjectURL(file)); // Affichage local immédiat
+      setProofFile(file); // Affichage local immédiat (URL révoquée par useBlobUrl)
 
       // D-06 : signal de célébration pour le parent — consommé par la page Défis au
       // retour/focus (toast 🎉 + rechargement), sans infrastructure de push.
@@ -434,10 +438,10 @@ function QuestPage() {
               </span>
             </div>
 
-            {proofUrl ? (
+            {proofFile ? (
               <div className="space-y-2">
                 <img
-                  src={proofUrl}
+                  src={proofUrl ?? undefined}
                   alt="Preuve"
                   className="h-36 w-full object-cover rounded-xl border border-ink/10"
                 />
@@ -477,7 +481,7 @@ function QuestPage() {
               setIsCelebrated(false);
               setIsQuestActive(false);
               setCurrentStepIndex(0);
-              setProofUrl(null);
+              setProofFile(null);
               setCompletedChallengeId(null);
               navigate({
                 to: "/profiles/$profileId/challenges",

@@ -127,7 +127,7 @@ export function AdminSafeguardingAudits({
       // Optional broadcast explicitly
       try {
         const { supabase } = await import("@/integrations/supabase/client");
-        const channel = supabase.channel("admin-mentors-tab-sync");
+        const channel = supabase.channel("admin-tripartite-sync");
         void channel.send({
           type: "broadcast",
           event: "safeguarding_updated",

@@ -260,35 +260,43 @@ export function AdminMentorsTab({
   }, [session, debouncedSearch, campaignFilter, page]);
 
   useEffect(() => {
-    if (!session) return;
-    const { supabase } = require("@/integrations/supabase/client");
-    const channel = supabase.channel("admin-mentors-tab-sync");
-
-    channel
-      .on("broadcast", { event: "safeguarding_updated" }, () => {
-        void refreshSilently();
-        void onDataChanged?.();
-      })
-      .on(
-        "postgres_changes",
-        { event: "*", schema: "public", table: "child_safety_reports" },
-        () => {
+    // Import dynamique (le reste du fichier le fait déjà pour les broadcasts) —
+    // le canal est créé APRÈS le chargement du module ; au démontage, si le
+    // module n'est pas encore chargé, rien à nettoyer (jamais souscrit).
+    let cancelled = false;
+    let channel: import("@supabase/supabase-js").RealtimeChannel | null = null;
+    let client: typeof import("@/integrations/supabase/client").supabase | null = null;
+    void (async () => {
+      const mod = await import("@/integrations/supabase/client");
+      if (cancelled) return;
+      client = mod.supabase;
+      channel = mod.supabase.channel("admin-mentors-tab-sync");
+      channel
+        .on("broadcast", { event: "safeguarding_updated" }, () => {
           void refreshSilently();
           void onDataChanged?.();
-        },
-      )
-      .on(
-        "postgres_changes",
-        { event: "*", schema: "public", table: "child_safety_audits" },
-        () => {
-          void refreshSilently();
-          void onDataChanged?.();
-        },
-      )
-      .subscribe();
-
+        })
+        .on(
+          "postgres_changes",
+          { event: "*", schema: "public", table: "child_safety_reports" },
+          () => {
+            void refreshSilently();
+            void onDataChanged?.();
+          },
+        )
+        .on(
+          "postgres_changes",
+          { event: "*", schema: "public", table: "child_safety_audits" },
+          () => {
+            void refreshSilently();
+            void onDataChanged?.();
+          },
+        )
+        .subscribe();
+    })();
     return () => {
-      void supabase.removeChannel(channel);
+      cancelled = true;
+      if (channel && client) void client.removeChannel(channel);
     };
   }, [session, refreshSilently, onDataChanged]);
 

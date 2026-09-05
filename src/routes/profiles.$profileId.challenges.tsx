@@ -636,7 +636,11 @@ function ChallengesPage() {
         }
       }
     } catch (err) {
+      // Réseau instable : sans ça, un échec de chargement s'affichait comme un
+      // faux « Aucune expérience entamée » — l'utilisateur relançait une
+      // génération au lieu de réessayer le chargement.
       console.error("Erreur de chargement des défis:", err);
+      setError(err instanceof Error ? err.message : "Impossible de charger les défis.");
     } finally {
       setFetching(false);
       setInitialLoad(false);
@@ -1714,7 +1718,18 @@ function ChallengesPage() {
                     </p>
                   )}
 
-                  {challenges.length === 0 ? (
+                  {error && challenges.length === 0 ? (
+                    <div className="rounded-3xl border border-red-200 bg-red-50/70 p-16 text-center shadow-sm">
+                      <p className="mb-2 text-lg font-bold text-red-800">Chargement impossible</p>
+                      <p className="mb-6 text-sm text-red-700/80 font-medium max-w-sm mx-auto">{error}</p>
+                      <button
+                        onClick={() => void refetch()}
+                        className="press-brand rounded-2xl bg-brand px-6 py-3 text-sm font-bold text-white cursor-pointer"
+                      >
+                        Réessayer
+                      </button>
+                    </div>
+                  ) : challenges.length === 0 ? (
                     <div className="rounded-3xl border border-dashed border-ink/20 bg-white/40 p-16 text-center shadow-sm">
                       <p className="mb-2 text-lg font-bold">Aucune expérience entamée</p>
                       <p className="mb-6 text-sm text-ink/70 font-medium max-w-sm mx-auto">
