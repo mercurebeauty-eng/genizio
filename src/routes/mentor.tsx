@@ -47,6 +47,7 @@ import { NOT_COMPLETED_CHIPS } from "@/lib/challenges.functions";
 import { fileToCompressedProof } from "@/lib/image-proof";
 import { getChildGuild } from "@/lib/guilds";
 import { MentorDiscoveryFeed } from "@/components/mentor/MentorDiscoveryFeed";
+import { SaturdayClubSquadView } from "@/components/mentor/SaturdayClubSquadView";
 import {
   Loader2,
   Users,
@@ -165,7 +166,7 @@ function MentorDashboardPage() {
   const [overview, setOverview] = useState<MentorActivityOverview | null>(null);
   const [activityLoading, setActivityLoading] = useState(true);
   const [activityError, setActivityError] = useState(false);
-  const [view, setView] = useState<"overview" | "children">("overview");
+  const [view, setView] = useState<"overview" | "children" | "club">("overview");
   // Notifications in-app (canal pull — bilan validé/refusé, séance confirmée, statut).
   const [notifications, setNotifications] = useState<any[]>([]);
   const [notifOpen, setNotifOpen] = useState(false);
@@ -814,7 +815,7 @@ function MentorDashboardPage() {
         {/* Bascule Vue d'ensemble / Mes enfants (décision #83) — le mentor consulte
             sa vue globale d'activité ou revient au travail quotidien sur les enfants. */}
         <div className="mb-6 flex w-fit max-w-full items-center gap-1 rounded-2xl border border-ink/10 bg-white p-1 shadow-sm overflow-x-auto no-scrollbar">
-          {(["overview", "children"] as const).map((v) => (
+          {(["overview", "children", "club"] as const).map((v) => (
             <button
               key={v}
               type="button"
@@ -824,12 +825,14 @@ function MentorDashboardPage() {
                 view === v ? "bg-brand text-white shadow-sm" : "text-ink/60 hover:text-ink"
               }`}
             >
-              {v === "overview" ? "Vue d'ensemble" : "Mes enfants"}
+              {v === "overview" ? "Vue d'ensemble" : v === "children" ? "Mes enfants" : "Clubs du Samedi"}
             </button>
           ))}
         </div>
 
-        {view === "overview" ? (
+        {view === "club" ? (
+          <SaturdayClubSquadView onBack={() => setView("overview")} />
+        ) : view === "overview" ? (
           <MentorOverview
             overview={overview}
             loading={activityLoading}
