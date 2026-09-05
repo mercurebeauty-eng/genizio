@@ -42,14 +42,23 @@ const LOCAL_MATERIALS_BY_COUNTRY: Record<string, string[]> = {
   ],
 };
 
-/** Repli pour tout pays non listé : matériaux accessibles dans toute l'Afrique
- *  francophone — jamais un vide (le prompt ne doit jamais casser). */
+/** Repli pour tout pays non listé dans la table `country_materials` (laquelle est le
+ *  registre officiel des pays supportés et alimente aussi le sélecteur de pays du
+ *  formulaire de profil) : matériaux réellement accessibles partout — marché, maison,
+ *  nature — en Afrique francophone comme en diaspora. Jamais un vide (le prompt ne
+ *  doit jamais casser). */
 export const GENERIC_LOCAL_MATERIALS = [
   "bambou",
   "bois local",
-  "carton",
-  "textile",
   "argile",
+  "calebasses",
+  "carton",
+  "sable",
+  "pierres",
+  "ficelle et corde",
+  "bouteilles plastique",
+  "textile",
+  "boîtes métalliques",
   "matériaux recyclés",
 ];
 

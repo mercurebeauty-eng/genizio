@@ -2,13 +2,19 @@
 // des instructions de contextualisation locale injectées dans les prompts de Naya.
 // Édition via l'onglet Naya de l'Admin OS (section « Contextualisation locale »).
 //
-// Le writer est le service role uniquement (RLS : SELECT authenticated, aucune
+// La table est aussi le REGISTRE OFFICIEL des pays supportés : getSupportedCountries
+// l'expose au formulaire de profil (sélecteur « Pays »), fermant la boucle
+// admin → onboarding — un pays ajouté dans l'Admin OS devient sélectionnable à la
+// création d'un profil, et ses matériaux alimentent Naya sans déploiement.
+//
+// L'écriture est le service role uniquement (RLS : SELECT authenticated, aucune
 // policy d'écriture) ; la clé country_key est TOUJOURS dérivée côté serveur via
 // normalizeCountryKey — jamais soumise par le client.
 
 import { z } from "zod";
 import { createServerFn } from "@tanstack/react-start";
 import { requireAdmin } from "@/integrations/supabase/admin-middleware";
+import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { normalizeCountryKey } from "@/lib/contextualization";
 
 export interface CountryMaterialRow {
@@ -17,6 +23,24 @@ export interface CountryMaterialRow {
   materials: string[];
   updatedAt: string | null;
 }
+
+/** Liste des pays officiels (registre country_materials) pour le sélecteur du
+ *  formulaire de profil. Lecture via le client authentifié (RLS SELECT). */
+export const getSupportedCountries = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }): Promise<{ countries: Array<{ key: string; label: string }> }> => {
+    const { data, error } = await context.supabase
+      .from("country_materials")
+      .select("country_key, country_label")
+      .order("country_label", { ascending: true });
+    if (error) throw new Error(error.message);
+    return {
+      countries: (data ?? []).map((r) => ({
+        key: r.country_key,
+        label: r.country_label,
+      })),
+    };
+  });
 
 export const getCountryMaterialsAdmin = createServerFn({ method: "GET" })
   .middleware([requireAdmin])
