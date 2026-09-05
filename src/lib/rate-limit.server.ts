@@ -15,18 +15,23 @@ type RateLimitRecord = {
 // Pour une architecture multi-instances, on utiliserait plutôt Redis.
 const rateLimitCache = new Map<string, RateLimitRecord>();
 
-// Nettoyage périodique du cache pour éviter les fuites de mémoire (toutes les 10 minutes)
-setInterval(
-  () => {
-    const now = Date.now();
-    for (const [ip, record] of rateLimitCache.entries()) {
-      if (now - record.lastReset > 10 * 60 * 1000) {
-        rateLimitCache.delete(ip);
-      }
+// Balayage paresseux : la purge des entrées périmées (> 10 min) se fait au moment du check,
+// pilotée par un timestamp, JAMAIS par un timer global. Un `setInterval` au chargement du
+// module est interdit dans le global scope des Workers (workerd) et tourne inutilement dans
+// chaque instance chaude des lambdas serverless — le sweep-on-access est portable partout.
+const SWEEP_INTERVAL_MS = 10 * 60 * 1000;
+let lastSweep = Date.now();
+
+function sweepIfDue() {
+  const now = Date.now();
+  if (now - lastSweep < SWEEP_INTERVAL_MS) return;
+  lastSweep = now;
+  for (const [ip, record] of rateLimitCache.entries()) {
+    if (now - record.lastReset > SWEEP_INTERVAL_MS) {
+      rateLimitCache.delete(ip);
     }
-  },
-  10 * 60 * 1000,
-);
+  }
+}
 
 export type RateLimitOptions = {
   maxRequests: number; // Nombre max de requêtes
@@ -34,6 +39,7 @@ export type RateLimitOptions = {
 };
 
 export function checkRateLimit(ip: string, options: RateLimitOptions): boolean {
+  sweepIfDue();
   const now = Date.now();
   const record = rateLimitCache.get(ip);
 
