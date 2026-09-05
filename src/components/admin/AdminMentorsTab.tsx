@@ -542,22 +542,30 @@ export function AdminMentorsTab({
             <div className="flex gap-3">
               <Info className="size-5 text-sky-600 shrink-0 mt-0.5" />
               <div className="text-xs sm:text-sm text-sky-900 leading-relaxed space-y-1">
-                <p className="font-black text-sky-800">Comment ça marche</p>
+                <p className="font-black text-sky-800">Comment ça marche & Typologies</p>
                 <p>
                   Un compte devient mentor quand on lui <strong>assigne des enfants</strong> — par
-                  un admin (assignation enfant par enfant) ou par un gestionnaire de campagne
-                  (assignation de toute la cohorte, ici aussi possible via « Assigner à une campagne
-                  »). Le mentor voit alors ces enfants dans son tableau de bord{" "}
+                  un admin ou via une campagne. Le mentor voit ces enfants dans son tableau de bord{" "}
                   <code className="font-mono">/mentor</code>.
                 </p>
-                <p>
-                  <strong>Quota :</strong> un mentor suit au maximum <strong>5 enfants</strong>{" "}
-                  (plancher grand-péré 5, sinon 1 + suppléments payés, plafond absolu 5 — « 5 par 5
-                  »). Au-delà, assigner un 2ᵉ mentor.
-                </p>
+                <div className="mt-2 grid sm:grid-cols-2 gap-2 text-xs">
+                  <div className="rounded-xl border border-sky-300 bg-white/70 p-2.5">
+                    <p className="font-black text-sky-950">1. Mentor Pro (Superviseur Clinique)</p>
+                    <p className="text-sky-800 text-[11px] mt-0.5">
+                      Quota strict <strong>≤ 5 enfants</strong> (Bilan 15 000 F, remédiation lourde, anamnèse, packs 180k/mois).
+                    </p>
+                  </div>
+                  <div className="rounded-xl border border-sky-300 bg-white/70 p-2.5">
+                    <p className="font-black text-sky-950">2. Mentor de Soutien (Club Samedi)</p>
+                    <p className="text-sky-800 text-[11px] mt-0.5">
+                      1 à 2 escouades de <strong>6 à 8 élèves</strong> (10 000 F/mois/enfant : 70% Mentor, 30% Génizio, 0% École). Garde-fou anti-fraude & anti-régression actif.
+                    </p>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
+
 
           {fetching ? (
             <div className="flex justify-center py-16">

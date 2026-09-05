@@ -32,4 +32,23 @@ describe("computeMentorQuota", () => {
   it("une référence manquante n'est jamais grand-pérée", () => {
     expect(computeMentorQuota({ referenceCreatedAt: null, extraQuota: 0 })).toBe(1);
   });
+
+  it("un mentor de soutien dispose d'un quota de base de 8 et d'un plafond de 16 (2 escouades)", () => {
+    expect(
+      computeMentorQuota({
+        referenceCreatedAt: null,
+        extraQuota: 0,
+        category: "support",
+      }),
+    ).toBe(8);
+
+    expect(
+      computeMentorQuota({
+        referenceCreatedAt: null,
+        extraQuota: 10,
+        category: "support",
+      }),
+    ).toBe(16); // Plafonné à 16 (2 escouades de 8)
+  });
 });
+
