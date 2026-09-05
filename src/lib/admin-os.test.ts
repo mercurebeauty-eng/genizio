@@ -354,7 +354,7 @@ describe("Admin OS Helper Functions", () => {
       expect(telemetry.totalApiCalls).toBe(44);
       expect(telemetry.conversionRatePct).toBe(60);
       expect(telemetry.featureBreakdown).toHaveLength(3);
-      expect(telemetry.modelBreakdown).toHaveLength(3);
+      expect(telemetry.modelBreakdown).toHaveLength(4);
       expect(telemetry.projection.projectedCallsMonthly).toBe(176);
     });
   });

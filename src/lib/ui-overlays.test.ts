@@ -1,23 +1,16 @@
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { describe, expect, it } from "vitest";
 import {
   claimBottomOverlay,
   getBottomOverlayCount,
   subscribeBottomOverlays,
 } from "@/lib/ui-overlays";
 
-// Le store d'overlays doit rester exact sous montage/démontage :
-// chaque claim actif = +1, chaque release = -1, jamais de compte négatif.
+// Store d'overlays bas d'écran : chaque overlay affiché (popup d'installation,
+// setup push) réserve un slot ; WhatsAppFAB s'efface tant que le compteur > 0.
+// Le compteur doit rester exact et jamais négatif, quel que soit l'ordre des
+// claim/release (montages/démontages React dans n'importe quel ordre).
 
 describe("ui-overlays store", () => {
-  afterEach(() => {
-    // Retour à zéro entre les tests même si un cleanup a été raté.
-    while (getBottomOverlayCount() > 0) {
-      const release = claimBottomOverlay();
-      release();
-      break;
-    }
-  });
-
   it("claim/release maintient le compteur", () => {
     expect(getBottomOverlayCount()).toBe(0);
     const release1 = claimBottomOverlay();
@@ -37,20 +30,18 @@ describe("ui-overlays store", () => {
     expect(getBottomOverlayCount()).toBe(0);
   });
 
-  it("notifie les abonnés lors des changements d'état", () => {
-    const listener = vi.fn();
-    const unsubscribe = subscribeBottomOverlays(listener);
+  it("notifie les abonnés à chaque changement, et le désabonnement stoppe les notifications", () => {
+    const seen: number[] = [];
+    const unsubscribe = subscribeBottomOverlays(() => seen.push(getBottomOverlayCount()));
 
-    const release1 = claimBottomOverlay();
-    expect(listener).toHaveBeenCalledTimes(1);
-
-    release1();
-    expect(listener).toHaveBeenCalledTimes(2);
+    const release = claimBottomOverlay();
+    expect(seen).toEqual([1]);
+    release();
+    expect(seen).toEqual([1, 0]);
 
     unsubscribe();
     const release2 = claimBottomOverlay();
-    expect(listener).toHaveBeenCalledTimes(2);
+    expect(seen).toEqual([1, 0]); // plus de notification après désabonnement
     release2();
   });
 });
-

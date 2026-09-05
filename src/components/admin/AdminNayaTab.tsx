@@ -71,11 +71,13 @@ export interface AdminNayaTabProps {
 function modelDotClass(modelLabel: string): string {
   if (modelLabel.includes("Sonnet")) return "bg-purple-600";
   if (modelLabel.includes("V4 Pro")) return "bg-amber-500";
+  if (modelLabel.includes("GLM")) return "bg-emerald-600";
   return "bg-sky-500";
 }
 function modelBadgeClass(modelLabel: string): string {
   if (modelLabel.includes("Sonnet")) return "bg-purple-100 text-purple-700";
   if (modelLabel.includes("V4 Pro")) return "bg-amber-100 text-amber-700";
+  if (modelLabel.includes("GLM")) return "bg-emerald-100 text-emerald-700";
   return "bg-sky-100 text-sky-700";
 }
 

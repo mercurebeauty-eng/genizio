@@ -543,20 +543,16 @@ export function calculateNayaTelemetry(raw: {
       costXof: visionCosts.costXof,
       sharePercentage: totalTokens > 0 ? Math.round((totalVisionTokens / totalTokens) * 100) : 0,
     },
-    ...(totalGlmTokens > 0
-      ? [
-          {
-            model: "GLM 5.3 Flash" as const,
-            inputTokens: tokenUsage.glmFlashInputTokens,
-            outputTokens: tokenUsage.glmFlashOutputTokens,
-            totalTokens: totalGlmTokens,
-            costUsd: glmCosts.costUsd,
-            costXof: glmCosts.costXof,
-            sharePercentage:
-              totalTokens > 0 ? Math.round((totalGlmTokens / totalTokens) * 100) : 0,
-          },
-        ]
-      : []),
+    {
+      model: "GLM 5.3 Flash" as const,
+      inputTokens: tokenUsage.glmFlashInputTokens,
+      outputTokens: tokenUsage.glmFlashOutputTokens,
+      totalTokens: totalGlmTokens,
+      costUsd: glmCosts.costUsd,
+      costXof: glmCosts.costXof,
+      sharePercentage:
+        totalTokens > 0 ? Math.round((totalGlmTokens / totalTokens) * 100) : 0,
+    },
   ];
 
   const funnel: ConversionFunnel = {
