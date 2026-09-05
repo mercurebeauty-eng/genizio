@@ -268,9 +268,28 @@ function EducatorDashboardPage() {
     }
   };
 
-  const filtered = delegations.filter((d) =>
-    d.childName.toLowerCase().includes(search.toLowerCase()),
+  const [selectedCohort, setSelectedCohort] = useState<string>("all");
+
+  const cohorts = Array.from(
+    new Set(
+      delegations
+        .map(
+          (d) =>
+            (d.learningProfile?.grade_level as string | undefined) ||
+            (d.childAge ? `${d.childAge} ans` : null),
+        )
+        .filter(Boolean) as string[],
+    ),
   );
+
+  const filtered = delegations.filter((d) => {
+    const matchSearch = d.childName.toLowerCase().includes(search.toLowerCase());
+    const childCohort =
+      (d.learningProfile?.grade_level as string | undefined) ||
+      (d.childAge ? `${d.childAge} ans` : null);
+    const matchCohort = selectedCohort === "all" || childCohort === selectedCohort;
+    return matchSearch && matchCohort;
+  });
 
   if (loading || !session) {
     return (
@@ -669,6 +688,47 @@ function EducatorDashboardPage() {
           )
         ) : (
           <>
+            {/* Filtre par Cohortes & Classes */}
+            {cohorts.length > 0 && (
+              <div className="flex flex-wrap items-center gap-2 pb-2">
+                <span className="text-[11px] font-bold text-ink/50 uppercase tracking-wider">
+                  Cohortes & Classes :
+                </span>
+                <button
+                  type="button"
+                  onClick={() => setSelectedCohort("all")}
+                  className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                    selectedCohort === "all"
+                      ? "bg-indigo-600 text-white shadow-2xs"
+                      : "bg-white text-ink/70 hover:bg-stone-100 border border-ink/10"
+                  }`}
+                >
+                  Toutes ({delegations.length})
+                </button>
+                {cohorts.map((c) => {
+                  const count = delegations.filter(
+                    (d) =>
+                      ((d.learningProfile?.grade_level as string | undefined) ||
+                        (d.childAge ? `${d.childAge} ans` : null)) === c,
+                  ).length;
+                  return (
+                    <button
+                      key={c}
+                      type="button"
+                      onClick={() => setSelectedCohort(c)}
+                      className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                        selectedCohort === c
+                          ? "bg-indigo-600 text-white shadow-2xs"
+                          : "bg-white text-ink/70 hover:bg-stone-100 border border-ink/10"
+                      }`}
+                    >
+                      {c} ({count})
+                    </button>
+                  );
+                })}
+              </div>
+            )}
+
             {/* Barre de recherche */}
             <div className="relative max-w-md">
               <Search className="size-4 text-ink/40 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
@@ -1170,12 +1230,16 @@ function EducatorDashboardPage() {
       <EducatorHackathonModal
         open={hackathonOpen}
         onClose={() => setHackathonOpen(false)}
-        students={delegations.map((d) => ({
+        students={filtered.map((d) => ({
           id: d.childId,
           name: d.childName,
           talents: d.talents,
         }))}
-        schoolName={establishment?.organizationName || "Établissement"}
+        schoolName={
+          selectedCohort !== "all"
+            ? `${establishment?.organizationName || "Établissement"} (${selectedCohort})`
+            : establishment?.organizationName || "Établissement"
+        }
       />
     </div>
   );

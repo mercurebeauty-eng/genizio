@@ -128,8 +128,8 @@ async function resolveClassAcademicContext(
 
     const avg = Math.round((grades.reduce((a: number, b: number) => a + b, 0) / grades.length) * 10) / 10;
     const notes = rows
-      .map((r: any) => (r.teacher_report_notes as string | undefined)?.trim())
-      .filter((n): n is string => Boolean(n && n.length > 3))
+      .map((r: any) => (typeof r.teacher_report_notes === "string" ? r.teacher_report_notes.trim() : ""))
+      .filter((n: string) => n.length > 3)
       .slice(0, 3);
 
     return {

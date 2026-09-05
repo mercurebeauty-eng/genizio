@@ -237,7 +237,7 @@ export function AdminNayaTab({
           </div>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
           <div className="rounded-2xl border border-sky/20 bg-sky/5 p-4">
             <div className="flex items-center gap-2 mb-1.5">
               <MessageSquare className="size-4 text-sky-600" />
@@ -264,6 +264,19 @@ export function AdminNayaTab({
               deepseek-v4-pro · réflexion activée (effort élevé)
             </p>
           </div>
+          <div className="rounded-2xl border border-emerald-500/20 bg-emerald-500/5 p-4">
+            <div className="flex items-center gap-2 mb-1.5">
+              <Zap className="size-4 text-emerald-600" />
+              <span className="text-[10px] font-extrabold uppercase tracking-wider text-emerald-700">
+                Copilote Enseignant
+              </span>
+            </div>
+            <p className="text-sm font-black text-ink">GLM 5.3 Flash (GMICLoud)</p>
+            <p className="text-[11px] text-ink/60 mt-0.5">Fiches cours multimodales & différentiation</p>
+            <p className="text-[10px] font-bold text-emerald-700 mt-1">
+              $0.075/M in · $0.25/M out · multimodal
+            </p>
+          </div>
           <div className="rounded-2xl border border-purple-500/20 bg-purple-500/5 p-4">
             <div className="flex items-center gap-2 mb-1.5">
               <ImageIcon className="size-4 text-purple-600" />
@@ -272,7 +285,10 @@ export function AdminNayaTab({
               </span>
             </div>
             <p className="text-sm font-black text-ink">Claude Sonnet 5</p>
-            <p className="text-[11px] text-ink/60 mt-0.5">Seul cas encore sur Anthropic</p>
+            <p className="text-[11px] text-ink/60 mt-0.5">Validation photo des défis physiques</p>
+            <p className="text-[10px] font-bold text-purple-700 mt-1">
+              Vision Anthropic
+            </p>
           </div>
         </div>
 
@@ -283,6 +299,7 @@ export function AdminNayaTab({
             </span>
             {[
               { label: "DeepSeek", ok: aiProviderStatus.deepseekConfigured },
+              { label: "GLM 5.3 Flash", ok: aiProviderStatus.glmConfigured },
               { label: "Anthropic (vision)", ok: aiProviderStatus.anthropicConfigured },
               { label: "Gemini (réserve)", ok: aiProviderStatus.geminiConfigured },
             ].map(({ label, ok }) => (
@@ -1271,6 +1288,65 @@ function CountryMaterialsSection() {
     }
   };
 
+  const [bulkImportKey, setBulkImportKey] = useState<string | null>(null);
+  const [bulkText, setBulkText] = useState("");
+
+  const parseBulkTerms = (raw: string): string[] => {
+    return raw
+      .split(/\r?\n/)
+      .map((line) =>
+        line
+          .replace(/^[\s*•\-#\d.)\]>]+/, "")
+          .replace(/["`]/g, "")
+          .trim(),
+      )
+      .filter((item) => item.length > 1);
+  };
+
+  const applyBulkImport = (targetKey: string) => {
+    const terms = parseBulkTerms(bulkText);
+    if (terms.length === 0) {
+      toast.error("Aucun terme valide trouvé dans le texte.");
+      return;
+    }
+
+    if (targetKey === "__new__") {
+      let next = [...newMaterials];
+      for (const t of terms) {
+        next = countryChipCommit(next, t);
+      }
+      setNewMaterials(next);
+      toast.success(`${terms.length} terme(s) importé(s) pour le nouveau pays !`);
+    } else {
+      const draft = drafts[targetKey];
+      if (draft) {
+        let next = [...draft.materials];
+        for (const t of terms) {
+          next = countryChipCommit(next, t);
+        }
+        patchDraft(targetKey, { materials: next });
+        toast.success(`${terms.length} terme(s) importé(s) pour ${draft.label} !`);
+      }
+    }
+    setBulkText("");
+    setBulkImportKey(null);
+  };
+
+  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>, targetKey: string) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (evt) => {
+      const content = evt.target?.result as string;
+      if (content) {
+        setBulkText(content);
+        setBulkImportKey(targetKey);
+      }
+    };
+    reader.readAsText(file);
+    e.target.value = "";
+  };
+
   const addCountry = async () => {
     if (savingNew) return;
     if (newLabel.trim().length < 2 || newMaterials.length === 0) {
@@ -1284,6 +1360,8 @@ function CountryMaterialsSection() {
       setNewLabel("");
       setNewMaterials([]);
       setNewInput("");
+      setBulkText("");
+      setBulkImportKey(null);
       await load();
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Échec de l'ajout.");
@@ -1362,6 +1440,8 @@ function CountryMaterialsSection() {
               draft.label !== row.countryLabel ||
               draft.materials.join("|") !== row.materials.join("|");
             const busy = busyKey === row.countryKey;
+            const isBulkOpen = bulkImportKey === row.countryKey;
+
             return (
               <div key={row.countryKey} className="rounded-2xl border border-ink/10 p-4 space-y-3">
                 <div className="flex flex-wrap items-center gap-2">
@@ -1374,7 +1454,60 @@ function CountryMaterialsSection() {
                   <span className="text-[10px] font-mono text-ink/40 bg-ink/5 rounded-lg px-2 py-1">
                     {row.countryKey}
                   </span>
+                  <button
+                    type="button"
+                    onClick={() => setBulkImportKey(isBulkOpen ? null : row.countryKey)}
+                    className="px-2.5 py-1.5 rounded-xl border border-indigo-200 bg-indigo-50 text-indigo-700 hover:bg-indigo-100 text-xs font-bold transition-colors cursor-pointer"
+                  >
+                    📥 {isBulkOpen ? "Fermer l'import" : "Importer une liste (.txt/.md)"}
+                  </button>
                 </div>
+
+                {isBulkOpen && (
+                  <div className="rounded-2xl border border-indigo-200 bg-indigo-50/50 p-4 space-y-3 animate-in fade-in">
+                    <div className="flex items-center justify-between">
+                      <p className="text-xs font-bold text-indigo-950">
+                        Collez votre liste (1 terme par ligne ou puces markdown - / *) :
+                      </p>
+                      <label className="text-[11px] font-bold text-indigo-700 hover:text-indigo-900 cursor-pointer underline">
+                        <span>Charger fichier (.md/.txt)</span>
+                        <input
+                          type="file"
+                          accept=".txt,.md"
+                          onChange={(e) => handleFileUpload(e, row.countryKey)}
+                          className="hidden"
+                        />
+                      </label>
+                    </div>
+                    <textarea
+                      rows={4}
+                      value={bulkText}
+                      onChange={(e) => setBulkText(e.target.value)}
+                      placeholder={`- Argile rouge\n- Bois d'ébène\n- Bambou\n- Feuilles de bananier`}
+                      className="w-full rounded-xl border border-indigo-200 bg-white p-3 text-xs text-ink outline-none focus:ring-2 focus:ring-indigo-400"
+                    />
+                    <div className="flex justify-end gap-2">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setBulkText("");
+                          setBulkImportKey(null);
+                        }}
+                        className="px-3 py-1.5 rounded-xl border border-ink/10 bg-white text-ink/70 text-xs font-semibold cursor-pointer"
+                      >
+                        Annuler
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => applyBulkImport(row.countryKey)}
+                        disabled={!bulkText.trim()}
+                        className="px-4 py-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold shadow-2xs transition-colors cursor-pointer disabled:opacity-50"
+                      >
+                        Importer les termes ({parseBulkTerms(bulkText).length})
+                      </button>
+                    </div>
+                  </div>
+                )}
 
                 <div className="flex flex-wrap items-center gap-1.5">
                   {draft.materials.map((m) => (
@@ -1444,9 +1577,65 @@ function CountryMaterialsSection() {
 
           {rows !== null && (
             <div className="rounded-2xl border border-dashed border-ink/20 p-4 space-y-3">
-              <p className="text-[11px] font-extrabold uppercase tracking-wider text-ink/50">
-                Ajouter un pays
-              </p>
+              <div className="flex items-center justify-between">
+                <p className="text-[11px] font-extrabold uppercase tracking-wider text-ink/50">
+                  Ajouter un pays
+                </p>
+                <button
+                  type="button"
+                  onClick={() => setBulkImportKey(bulkImportKey === "__new__" ? null : "__new__")}
+                  className="px-2.5 py-1 rounded-xl border border-indigo-200 bg-indigo-50 text-indigo-700 hover:bg-indigo-100 text-xs font-bold transition-colors cursor-pointer"
+                >
+                  📥 {bulkImportKey === "__new__" ? "Fermer l'import" : "Importer une liste (.txt/.md)"}
+                </button>
+              </div>
+
+              {bulkImportKey === "__new__" && (
+                <div className="rounded-2xl border border-indigo-200 bg-indigo-50/50 p-4 space-y-3 animate-in fade-in">
+                  <div className="flex items-center justify-between">
+                    <p className="text-xs font-bold text-indigo-950">
+                      Collez votre liste de matériaux pour le nouveau pays :
+                    </p>
+                    <label className="text-[11px] font-bold text-indigo-700 hover:text-indigo-900 cursor-pointer underline">
+                      <span>Charger fichier (.md/.txt)</span>
+                      <input
+                        type="file"
+                        accept=".txt,.md"
+                        onChange={(e) => handleFileUpload(e, "__new__")}
+                        className="hidden"
+                      />
+                    </label>
+                  </div>
+                  <textarea
+                    rows={4}
+                    value={bulkText}
+                    onChange={(e) => setBulkText(e.target.value)}
+                    placeholder={`- Matériau 1\n- Matériau 2\n- Matériau 3`}
+                    className="w-full rounded-xl border border-indigo-200 bg-white p-3 text-xs text-ink outline-none focus:ring-2 focus:ring-indigo-400"
+                  />
+                  <div className="flex justify-end gap-2">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setBulkText("");
+                        setBulkImportKey(null);
+                      }}
+                      className="px-3 py-1.5 rounded-xl border border-ink/10 bg-white text-ink/70 text-xs font-semibold cursor-pointer"
+                    >
+                      Annuler
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => applyBulkImport("__new__")}
+                      disabled={!bulkText.trim()}
+                      className="px-4 py-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold shadow-2xs transition-colors cursor-pointer disabled:opacity-50"
+                    >
+                      Importer les termes ({parseBulkTerms(bulkText).length})
+                    </button>
+                  </div>
+                </div>
+              )}
+
               <div className="flex flex-wrap items-center gap-2">
                 <input
                   value={newLabel}

@@ -1110,11 +1110,12 @@ export interface AiProviderStatus {
   deepseekConfigured: boolean;
   anthropicConfigured: boolean;
   geminiConfigured: boolean;
+  glmConfigured: boolean;
 }
 
 // Simple check de présence des clés API (jamais leur valeur) — pour que l'admin
-// voie immédiatement si DEEPSEEK_API_KEY est bien réglé sur cet environnement
-// après le passage à DeepSeek (2026-07-21), sans avoir à ouvrir .env/Vercel.
+// voie immédiatement si DEEPSEEK_API_KEY, GLM_API_KEY, etc. sont bien réglées sur
+// cet environnement, sans avoir à ouvrir .env/Vercel.
 export const getAiProviderStatusAdmin = createServerFn({ method: "GET" })
   .middleware([requireAdmin])
   .handler(async (): Promise<AiProviderStatus> => {
@@ -1122,6 +1123,7 @@ export const getAiProviderStatusAdmin = createServerFn({ method: "GET" })
       deepseekConfigured: !!process.env.DEEPSEEK_API_KEY,
       anthropicConfigured: !!process.env.ANTHROPIC_API_KEY,
       geminiConfigured: !!process.env.GEMINI_API_KEY,
+      glmConfigured: !!(process.env.GLM_API_KEY || process.env.ZHIPU_API_KEY),
     };
   });
 
