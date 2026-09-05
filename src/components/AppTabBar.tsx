@@ -80,7 +80,8 @@ export function AppTabBar({ profileId }: AppTabBarProps) {
     >
       <div className="flex items-center justify-around w-full">
         {visibleItems.map(({ to, label, icon: Icon, needsProfileId }) => {
-          const targetTo = needsProfileId && !profileId ? "/profiles" : to;
+          const isItemDisabled = Boolean(needsProfileId && !profileId);
+          const targetTo = isItemDisabled ? "/profiles" : to;
           const params = (needsProfileId && profileId ? { profileId } : undefined) as never;
 
           return (
@@ -89,21 +90,33 @@ export function AppTabBar({ profileId }: AppTabBarProps) {
               to={targetTo as any}
               params={params}
               activeOptions={{ exact: label === "Accueil" }}
-              className="flex flex-col items-center gap-1 px-1.5 sm:px-3 py-1 cursor-pointer transition-all duration-150 text-ink/40 hover:text-ink/70"
-              activeProps={{
-                className: "!text-brand font-bold",
-              }}
+              disabled={isItemDisabled}
+              className={`flex flex-col items-center gap-1 px-1.5 sm:px-3 py-1 transition-all duration-150 ${
+                isItemDisabled
+                  ? "opacity-30 cursor-not-allowed pointer-events-none text-ink/30"
+                  : "cursor-pointer text-ink/40 hover:text-ink/70"
+              }`}
+              activeProps={
+                isItemDisabled
+                  ? undefined
+                  : {
+                      className: "!text-brand font-bold",
+                    }
+              }
             >
-              {({ isActive }) => (
-                <>
-                  <div
-                    className={`p-0.5 rounded-full transition-all ${isActive ? "ring-2 ring-brand rounded-full text-brand" : ""}`}
-                  >
-                    <Icon className="size-5 stroke-[2.1]" />
-                  </div>
-                  <span className="text-[10px] font-bold text-balance">{label}</span>
-                </>
-              )}
+              {({ isActive }) => {
+                const active = !isItemDisabled && isActive;
+                return (
+                  <>
+                    <div
+                      className={`p-0.5 rounded-full transition-all ${active ? "ring-2 ring-brand rounded-full text-brand" : ""}`}
+                    >
+                      <Icon className="size-5 stroke-[2.1]" />
+                    </div>
+                    <span className="text-[10px] font-bold text-balance">{label}</span>
+                  </>
+                );
+              }}
             </Link>
           );
         })}
