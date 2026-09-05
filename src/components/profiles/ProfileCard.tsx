@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Link } from "@tanstack/react-router";
 import { TalentRadarChart } from "@/components/TalentRadarChart";
 import { AVATAR_COLORS, type ChildProfile } from "./shared";
+import { ChildSchoolLinker } from "./ChildSchoolLinker";
 
 export function ProfileCard({
   profile,
@@ -70,8 +71,10 @@ export function ProfileCard({
           className="mb-4 h-48 w-full"
         />
       )}
+      
+      <ChildSchoolLinker childId={profile.id} onLinked={() => {}} />
 
-      <div className="flex gap-2">
+      <div className="flex gap-2 mt-2">
         <button
           onClick={onEdit}
           className="press-white flex-1 rounded-xl border border-ink/10 bg-white px-3 py-2 text-xs font-bold"

@@ -15,6 +15,7 @@ import {
   getMyEstablishmentOverview,
   type EstablishmentOverview,
 } from "@/lib/educators-lookup.functions";
+import { getSchoolImpactDashboard, type SchoolImpactMetrics } from "@/lib/child-schools.functions";
 import { TalentRadarChart } from "@/components/TalentRadarChart";
 import {
   GraduationCap,
@@ -67,6 +68,7 @@ function EducatorDashboardPage() {
   const [passportData, setPassportData] = useState<any | null>(null);
   const [loadingPassport, setLoadingPassport] = useState(false);
   const [copiedCode, setCopiedCode] = useState(false);
+  const [impactMetrics, setImpactMetrics] = useState<SchoolImpactMetrics | null>(null);
 
   // Notes cliniques & Déblocage Pro
   const [clinicalNotes, setClinicalNotes] = useState("");
@@ -83,6 +85,7 @@ function EducatorDashboardPage() {
   const listDelegationsFn = useServerFn(listMyEducatorDelegations);
   const getPassportFn = useServerFn(getEducationalPassport);
   const getEstablishmentFn = useServerFn(getMyEstablishmentOverview);
+  const getImpactMetricsFn = useServerFn(getSchoolImpactDashboard);
   const saveNotesFn = useServerFn(saveProClinicalNotes);
   const payProDossierFn = useServerFn(initializeProDossierPayment);
 
@@ -118,6 +121,10 @@ function EducatorDashboardPage() {
         : {};
       const data = await getEstablishmentFn(opts);
       setEstablishment(data);
+      if (data?.isLeader) {
+        const metrics = await getImpactMetricsFn(opts);
+        setImpactMetrics(metrics);
+      }
     } catch (err) {
       console.error(err);
     } finally {
@@ -424,53 +431,86 @@ function EducatorDashboardPage() {
               )}
 
               {/* Leviers Décisionnels & Pédagogie Actionnable pour la Direction */}
-              <div className="rounded-3xl border border-ink/10 bg-white p-6 shadow-xs space-y-4">
-                <div className="flex items-center gap-2 border-b border-ink/5 pb-3">
-                  <div className="grid size-8 place-items-center rounded-xl bg-amber-100 text-amber-800">
-                    <Lightbulb className="size-4.5" />
+              {establishment.isLeader && impactMetrics && (
+                <div className="rounded-3xl border border-ink/10 bg-white p-6 shadow-xs space-y-5">
+                  <div className="flex items-center gap-2 border-b border-ink/5 pb-3">
+                    <div className="grid size-8 place-items-center rounded-xl bg-indigo-100 text-indigo-800">
+                      <TrendingUp className="size-4.5" />
+                    </div>
+                    <div>
+                      <h3 className="font-display font-black text-sm text-ink flex gap-2 items-center">
+                        Tableau de Bord d'Impact Établissement
+                        <span className="rounded-full bg-stone-100 px-2 py-0.5 text-[9px] font-black uppercase text-stone-600 border border-stone-200">
+                          Vue Consultative (Anonymisée)
+                        </span>
+                      </h3>
+                      <p className="text-[11px] text-ink/60">
+                        Données agrégées basées sur les élèves liés à votre établissement.
+                      </p>
+                    </div>
                   </div>
-                  <div>
-                    <h3 className="font-display font-black text-sm text-ink">
-                      Leviers Décisionnels & Pédagogie Actionnable
-                    </h3>
-                    <p className="text-[11px] text-ink/60">
-                      Indicateurs d'impact concrets pour l'adaptation des cours et la prévention du décrochage.
-                    </p>
+
+                  <div className="grid gap-4 sm:grid-cols-4">
+                    <div className="rounded-2xl border border-indigo-100 bg-indigo-50/50 p-4 space-y-1">
+                      <div className="text-[10px] uppercase font-black tracking-wider text-indigo-500">
+                        Élèves Couverts
+                      </div>
+                      <div className="text-2xl font-black text-indigo-900">
+                        {impactMetrics.totalActiveChildren}
+                      </div>
+                    </div>
+                    <div className="rounded-2xl border border-emerald-100 bg-emerald-50/50 p-4 space-y-1">
+                      <div className="text-[10px] uppercase font-black tracking-wider text-emerald-600">
+                        Anomalies Résolues
+                      </div>
+                      <div className="text-2xl font-black text-emerald-900">
+                        {impactMetrics.anomaliesResolved}
+                      </div>
+                    </div>
+                    <div className="rounded-2xl border border-rose-100 bg-rose-50/50 p-4 space-y-1">
+                      <div className="text-[10px] uppercase font-black tracking-wider text-rose-500">
+                        Alertes en cours
+                      </div>
+                      <div className="text-2xl font-black text-rose-900">
+                        {impactMetrics.anomaliesDetected}
+                      </div>
+                    </div>
+                    <div className="rounded-2xl border border-amber-100 bg-amber-50/50 p-4 space-y-1">
+                      <div className="text-[10px] uppercase font-black tracking-wider text-amber-600">
+                        Talent Dominant
+                      </div>
+                      <div className="text-sm font-black text-amber-900 mt-1">
+                        {impactMetrics.topTalents[0]?.name || "-"}
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="grid gap-4 sm:grid-cols-2">
+                    <div className="rounded-2xl border border-ink/5 bg-surface p-4 space-y-3">
+                      <h4 className="text-xs font-bold text-ink">Répartition des Talents (Top 3)</h4>
+                      <div className="space-y-2">
+                        {impactMetrics.topTalents.map((t, idx) => (
+                          <div key={idx} className="flex items-center justify-between text-[11px]">
+                            <span className="text-ink/80">{t.name}</span>
+                            <span className="font-bold text-ink">{t.count} élèves</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                    <div className="rounded-2xl border border-ink/5 bg-surface p-4 space-y-3">
+                      <h4 className="text-xs font-bold text-ink">Dernières observations IA</h4>
+                      <ul className="space-y-2">
+                        {impactMetrics.recentObservations.map((obs, idx) => (
+                          <li key={idx} className="text-[11px] text-ink/70 italic flex items-start gap-1.5">
+                            <span className="text-brand mt-0.5">•</span>
+                            <span>{obs}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
                   </div>
                 </div>
-
-                <div className="grid gap-4 sm:grid-cols-3">
-                  <div className="rounded-2xl border border-rose-100 bg-rose-50/50 p-4 space-y-2">
-                    <div className="flex items-center gap-1.5 text-rose-700 font-bold text-xs">
-                      <AlertTriangle className="size-4 shrink-0" />
-                      <span>Alerte Anti-Décrochage</span>
-                    </div>
-                    <p className="text-[11px] text-ink/75 leading-relaxed">
-                      Suivi continu de l'autonomie et de la persévérance. Détection précoce des chutes d'engagement 3 semaines avant les conseils de classe.
-                    </p>
-                  </div>
-
-                  <div className="rounded-2xl border border-indigo-100 bg-indigo-50/50 p-4 space-y-2">
-                    <div className="flex items-center gap-1.5 text-indigo-700 font-bold text-xs">
-                      <TrendingUp className="size-4 shrink-0" />
-                      <span>Orientation Active</span>
-                    </div>
-                    <p className="text-[11px] text-ink/75 leading-relaxed">
-                      Identification des talents sous-exploités (logique, spatial, interpersonnel) pour orienter chaque élève vers ses filières d'excellence.
-                    </p>
-                  </div>
-
-                  <div className="rounded-2xl border border-emerald-100 bg-emerald-50/50 p-4 space-y-2">
-                    <div className="flex items-center gap-1.5 text-emerald-700 font-bold text-xs">
-                      <CheckCircle2 className="size-4 shrink-0" />
-                      <span>Prescription de Classe</span>
-                    </div>
-                    <p className="text-[11px] text-ink/75 leading-relaxed">
-                      Conseils méthodologiques personnalisés pour les enseignants (manipulatif, visuel, narratif) adaptés au profil réel de la classe.
-                    </p>
-                  </div>
-                </div>
-              </div>
+              )}
 
               {/* Liste des collègues de l'établissement */}
               <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
