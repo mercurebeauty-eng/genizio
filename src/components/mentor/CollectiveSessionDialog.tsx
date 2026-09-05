@@ -176,28 +176,28 @@ export function CollectiveSessionDialog({
                     <div className="flex gap-2">
                       <Button
                         size="sm"
-                        variant={state.implication === "pilier" ? "default" : "outline"}
+                        variant={state.implication === "pilier" ? "brand" : "outline"}
                         onClick={() => handleSetRole(child.id, state.role, "pilier")}
                       >
                         Pilier
                       </Button>
                       <Button
                         size="sm"
-                        variant={state.implication === "contributeur_actif" ? "default" : "outline"}
+                        variant={state.implication === "contributeur_actif" ? "brand" : "outline"}
                         onClick={() => handleSetRole(child.id, state.role, "contributeur_actif")}
                       >
                         Actif
                       </Button>
                       <Button
                         size="sm"
-                        variant={state.implication === "apprenti" ? "default" : "outline"}
+                        variant={state.implication === "apprenti" ? "brand" : "outline"}
                         onClick={() => handleSetRole(child.id, state.role, "apprenti")}
                       >
                         Apprenti
                       </Button>
                       <Button
                         size="sm"
-                        variant={state.implication === "observateur" ? "default" : "outline"}
+                        variant={state.implication === "observateur" ? "brand" : "outline"}
                         onClick={() => handleSetRole(child.id, state.role, "observateur")}
                       >
                         Observateur
