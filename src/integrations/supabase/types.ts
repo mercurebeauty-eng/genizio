@@ -595,6 +595,30 @@ export type Database = {
         };
         Relationships: [];
       };
+      country_materials: {
+        Row: {
+          country_key: string;
+          country_label: string;
+          created_at: string;
+          materials: string[];
+          updated_at: string;
+        };
+        Insert: {
+          country_key: string;
+          country_label: string;
+          created_at?: string;
+          materials: string[];
+          updated_at?: string;
+        };
+        Update: {
+          country_key?: string;
+          country_label?: string;
+          created_at?: string;
+          materials?: string[];
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
       comments: {
         Row: {
           body: string;
