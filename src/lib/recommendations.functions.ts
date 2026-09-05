@@ -6,6 +6,7 @@ import {
 } from "@/lib/hypotheses.functions";
 import { getChildAccessStatus } from "@/lib/child-access";
 import { assertChildActor } from "@/lib/child-actor";
+import { loadLocalMaterialsForCountry } from "@/lib/country-materials";
 import { getInterestHypothesesSnapshot } from "@/lib/interest-confidence";
 import {
   callClaude,
@@ -229,11 +230,16 @@ export const recommendChallengesForChild = createServerFn({ method: "POST" })
             .join("\n");
           const completedInAspirationDomains = completedInDomainsCount.count ?? 0;
 
+          // Matériaux locaux du pays (table country_materials, éditable via l'Admin
+          // OS) — le loader gère le repli constantes (la génération ne casse jamais).
+          const localMaterials = await loadLocalMaterialsForCountry(supabase, child.country);
+
           const prompt = buildAspirationBridgePrompt({
             childName: child.name,
             childAge: child.age,
             profileLocation:
               [child.city, child.country].filter(Boolean).join(", ") || "non précisé",
+            localMaterials,
             interestsPayload: formatChildInterestsPayload(child.interests, interestHypotheses),
             talentsJson: JSON.stringify(child.talents || {}),
             completedSummary,

@@ -3,14 +3,15 @@
 // technologiques simples et standards internationaux — **jamais d'enfermement dans
 // l'environnement immédiat** (le local est le point de départ, jamais le plafond).
 //
-// Tout est déterministe ici (0 IA) : mapping pays → matériaux locaux + génération de
-// l'instruction injectée dans les prompts. Le pont avec le référentiel académique
-// (standards internationaux, ACADEMIC_REFERENTIAL_INSTRUCTION) est rappelé dans la
-// consigne : contenu calibré sur le monde, mise en scène ancrée localement.
+// Source de vérité : la table `country_materials` (éditable via l'Admin OS — onglet
+// Naya — ou Supabase Studio, chargée par loadLocalMaterialsForCountry dans
+// country-materials.ts). Les constantes ci-dessous ne servent plus qu'au REPLI de
+// résilience : pays inconnu de la table ou erreur DB — le prompt ne doit jamais
+// casser. Le seed SQL de la table reproduit fidèlement ces données.
 
 /** Matériaux locaux typiques par pays (clés normalisées sans accents ni articles).
- *  Choix éditorial : des matériaux réellement accessibles (marché, quartier, maison)
- *  dans chaque pays — jamais d'équipement coûteux ou introuvable. */
+ *  REPLI de résilience uniquement — la source de vérité est la table
+ *  `country_materials` (seed identique, éditable sans déploiement). */
 const LOCAL_MATERIALS_BY_COUNTRY: Record<string, string[]> = {
   "cote ivoire": [
     "bois local (iroko, sipo)",
@@ -43,7 +44,7 @@ const LOCAL_MATERIALS_BY_COUNTRY: Record<string, string[]> = {
 
 /** Repli pour tout pays non listé : matériaux accessibles dans toute l'Afrique
  *  francophone — jamais un vide (le prompt ne doit jamais casser). */
-const GENERIC_LOCAL_MATERIALS = [
+export const GENERIC_LOCAL_MATERIALS = [
   "bambou",
   "bois local",
   "carton",
@@ -109,11 +110,16 @@ export function localMaterialsForCountry(country: string | null | undefined): st
 /**
  * Instruction de double contextualisation injectée dans les prompts de génération.
  * `location` est la chaîne « Ville, Pays » ou « non précisé » — le pays en est
- * extrait (dernier segment). L'escalier local → technologique → monde est la règle,
+ * extrait (dernier segment). `localMaterials` est fourni par l'appelant depuis la
+ * table `country_materials` (loadLocalMaterialsForCountry) ; sans lui, repli sur
+ * les constantes ci-dessus. L'escalier local → technologique → monde est la règle,
  * l'interdiction d'enfermement est non-négociable.
  */
-export function buildContextualizationInstruction(location: string | null | undefined): string {
+export function buildContextualizationInstruction(
+  location: string | null | undefined,
+  localMaterials?: string[],
+): string {
   const country = location?.split(",").pop()?.trim() || null;
-  const materials = localMaterialsForCountry(country).join(", ");
+  const materials = (localMaterials ?? localMaterialsForCountry(country)).join(", ");
   return `DOUBLE CONTEXTUALISATION (local → global) : pars des matériaux et réalités du pays (${materials}, marchés, quartier) puis suis l'ESCALIER : (1) ancrage local concret avec ces matériaux → (2) un outil ou mécanisme technologique simple (levier, poulie, boussole, circuit électrique de base…) → (3) une ouverture vers le monde (outil numérique, standard international, exemple d'un autre pays). Ne JAMAIS enfermer l'enfant dans son environnement immédiat : le local est le point de départ, jamais le plafond. Le contenu académique reste calibré sur les standards internationaux (référentiel).`;
 }

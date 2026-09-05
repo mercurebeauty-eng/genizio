@@ -106,6 +106,9 @@ export interface BuildChildDevelopmentStateInput {
   activeHypotheses?: any;
   latestChildQuestion?: string | null;
   existingTitles?: string[];
+  /** Matériaux locaux du pays (loadLocalMaterialsForCountry — table country_materials).
+   *  Optionnel : repli sur les constantes de contextualization.ts si absent. */
+  localMaterials?: string[];
 }
 
 /**
@@ -124,6 +127,7 @@ export function buildChildDevelopmentState(
     aspirationHypotheses,
     latestChildQuestion,
     existingTitles = [],
+    localMaterials,
   } = input;
 
   // 1. Identité & Géographie
@@ -238,7 +242,7 @@ export function buildChildDevelopmentState(
   }
 
   // 4. Contexte Opérationnel
-  const localMaterials = localMaterialsForCountry(child.country || "");
+  const localMaterialsList = localMaterials ?? localMaterialsForCountry(child.country || "");
   const recentCompletedSummary = completedChallenges
     .slice(0, 6)
     .map((c) => `- Défi "${c.title}" (${c.domain}) : "${c.ai_observations ?? "Validé"}"`)
@@ -264,7 +268,7 @@ export function buildChildDevelopmentState(
     },
     activeHypotheses,
     operationalContext: {
-      localMaterials,
+      localMaterials: localMaterialsList,
       timePressure: child.time_pressure ? String(child.time_pressure) : null,
       recentCompletedSummary,
       latestChildQuestion: latestChildQuestion?.trim() || null,
