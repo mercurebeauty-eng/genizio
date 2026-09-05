@@ -47,6 +47,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { GenizioLoader } from "@/components/GenizioLoader";
+import { EducatorLessonCopilotModal } from "@/components/educators/EducatorLessonCopilotModal";
 
 export const Route = createFileRoute("/educator")({
   component: EducatorDashboardPage,
@@ -74,6 +75,9 @@ function EducatorDashboardPage() {
   const [clinicalNotes, setClinicalNotes] = useState("");
   const [savingNotes, setSavingNotes] = useState(false);
   const [payingProDossier, setPayingProDossier] = useState(false);
+
+  // Copilote de préparation (Phase 2)
+  const [copilotOpen, setCopilotOpen] = useState(false);
 
   const handleCopySchoolCode = (code: string) => {
     void navigator.clipboard.writeText(code);
@@ -232,6 +236,14 @@ function EducatorDashboardPage() {
               </p>
             </div>
           </div>
+          <button
+            type="button"
+            onClick={() => setCopilotOpen(true)}
+            className="inline-flex items-center gap-2 rounded-2xl bg-indigo-600 px-4 py-2.5 text-xs font-black text-white shadow-md transition-all hover:bg-indigo-700 shrink-0"
+          >
+            <Sparkles className="size-4" />
+            <span>Copilote de préparation</span>
+          </button>
         </div>
 
         {/* Sélecteur de vue : Mes Élèves vs Mon Établissement */}
@@ -919,6 +931,13 @@ function EducatorDashboardPage() {
           </div>
         </div>
       )}
+
+      {/* Copilote de préparation — fiche différenciée en 30 s (Phase 2) */}
+      <EducatorLessonCopilotModal
+        open={copilotOpen}
+        onClose={() => setCopilotOpen(false)}
+        establishment={establishment}
+      />
     </div>
   );
 }
