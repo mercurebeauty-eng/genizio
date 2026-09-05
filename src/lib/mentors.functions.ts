@@ -56,6 +56,8 @@ export interface MentorAssignmentDetail {
 export interface MentorGroup {
   mentor_user_id: string;
   email: string;
+  display_name: string | null;
+  phone: string | null;
   totalChildren: number;
   /** Quota effectif (plancher + extra, borné 5) — même calcul que check_mentor_quota. */
   quota: number;
@@ -138,16 +140,16 @@ export const listMentorsAdmin = createServerFn({ method: "GET" })
       baseMentorIds = allMentorIds.filter((id) => campaignSet.has(id));
     }
 
-    // Recherche par email en SQL (parent_profiles) — appliquée AVANT la pagination,
+    // Recherche par email, nom ou téléphone en SQL (parent_profiles) — appliquée AVANT la pagination,
     // comme l'ancien filtre en mémoire (qui, lui, exigeait de tout charger).
-    const term = data.search?.trim().toLowerCase();
+    const term = data.search?.trim().toLowerCase().replace(/[%,]/g, " ");
     let filteredMentorIds = baseMentorIds;
     if (term) {
       const { data: matches } = await supabaseAdmin
         .from("parent_profiles")
         .select("user_id")
         .in("user_id", baseMentorIds)
-        .ilike("email", `%${term}%`);
+        .or(`email.ilike.%${term}%,display_name.ilike.%${term}%,phone.ilike.%${term}%`);
       const matchSet = new Set((matches ?? []).map((m) => m.user_id));
       filteredMentorIds = baseMentorIds.filter((id) => matchSet.has(id));
     }
@@ -203,6 +205,8 @@ export const listMentorsAdmin = createServerFn({ method: "GET" })
         groups.set(row.mentor_user_id, {
           mentor_user_id: row.mentor_user_id,
           email: "…",
+          display_name: null,
+          phone: null,
           totalChildren: 1,
           quota: 5,
           score: 0,
@@ -222,19 +226,47 @@ export const listMentorsAdmin = createServerFn({ method: "GET" })
       return { data: [], total, page, pageSize: data.pageSize, totalPages };
     }
 
-    // Résolution ciblée des emails (et date de création, pour le quota hors campagne) :
+    // Résolution ciblée des profils (nom, téléphone, email) et date de création :
     // uniquement les mentors réellement présents, en parallèle.
     const mentorIds = [...groups.keys()];
-    const emailMap = new Map<string, { email: string; createdAt: string | null }>();
+    const { data: parentProfiles } = await supabaseAdmin
+      .from("parent_profiles")
+      .select("user_id, email, phone, display_name")
+      .in("user_id", mentorIds);
+    const parentProfileMap = new Map(
+      (parentProfiles ?? []).map((p) => [p.user_id, p]),
+    );
+
+    const emailMap = new Map<
+      string,
+      { email: string; displayName: string | null; phone: string | null; createdAt: string | null }
+    >();
     const resolved = await Promise.all(
       mentorIds.map(async (id: string) => {
         const { data: u } = await (supabaseAdmin as any).auth.admin
           .getUserById(id)
           .catch(() => ({ data: null }));
+        const profile = parentProfileMap.get(id);
+        const email =
+          profile?.email || (u?.user?.email as string) || "Inconnu";
+        const displayName =
+          profile?.display_name ||
+          (u?.user?.user_metadata?.full_name as string) ||
+          (u?.user?.user_metadata?.display_name as string) ||
+          (u?.user?.user_metadata?.name as string) ||
+          null;
+        const phone =
+          profile?.phone ||
+          (u?.user?.phone as string) ||
+          (u?.user?.user_metadata?.phone as string) ||
+          (u?.user?.user_metadata?.phone_number as string) ||
+          null;
         return [
           id,
           {
-            email: (u?.user?.email as string) ?? "Inconnu",
+            email,
+            displayName,
+            phone,
             createdAt: (u?.user?.created_at as string | null) ?? null,
           },
         ] as const;
@@ -431,13 +463,15 @@ export const listMentorsAdmin = createServerFn({ method: "GET" })
     const operationalAgeDaysByMentor = new Map<string, number>();
 
     const list = [...groups.values()].map((g) => {
-      const email = emailMap.get(g.mentor_user_id)?.email ?? "Inconnu";
-      g.email = email;
+      const info = emailMap.get(g.mentor_user_id);
+      g.email = info?.email ?? "Inconnu";
+      g.display_name = info?.displayName ?? null;
+      g.phone = info?.phone ?? null;
       // Quota effectif : le plus élevé des contextes de ses assignations — plancher
       // grand-péré (référence = campagne si assigné via campagne, sinon date du compte)
       // + extra_mentors_quota de la campagne, borné 5 (même calcul que le trigger
       // check_mentor_quota et computeMentorQuota).
-      const { createdAt } = emailMap.get(g.mentor_user_id) ?? { createdAt: null };
+      const { createdAt } = info ?? { createdAt: null };
       let quota = 0;
       for (const child of g.children) {
         const ctx = child.campaign_id ? campaignRefs.get(child.campaign_id) : undefined;

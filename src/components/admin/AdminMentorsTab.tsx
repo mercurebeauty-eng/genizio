@@ -42,6 +42,7 @@ import {
   Banknote,
   KeyRound,
   HeartHandshake,
+  Phone,
 } from "lucide-react";
 import { toast } from "sonner";
 import { confirmDialog } from "@/components/ui/confirm-dialog";
@@ -582,7 +583,7 @@ export function AdminMentorsTab({
                     type="search"
                     value={search}
                     onChange={(e) => setSearch(e.target.value)}
-                    placeholder="Rechercher un mentor par email…"
+                    placeholder="Rechercher un mentor par email, nom ou téléphone…"
                     aria-label="Rechercher un mentor"
                     className="w-full rounded-2xl border border-ink/10 bg-surface pl-9 pr-4 py-2.5 text-sm font-medium text-ink outline-none focus:ring-2 focus:ring-brand/30"
                   />
@@ -632,14 +633,41 @@ export function AdminMentorsTab({
                       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
                         <div className="flex items-center gap-3 min-w-0">
                           <div className="grid size-10 place-items-center rounded-full bg-gradient-to-br from-brand to-indigo-600 text-white font-black text-sm shrink-0">
-                            {(g.email.charAt(0) || "?").toUpperCase()}
+                            {((g.display_name || g.email).charAt(0) || "?").toUpperCase()}
                           </div>
                           <div className="min-w-0">
-                            <p className="text-sm font-bold text-ink truncate">{g.email}</p>
-                            <p className="text-xs text-ink/60">
-                              {g.totalChildren} enfant{g.totalChildren > 1 ? "s" : ""} suivi
-                              {g.totalChildren > 1 ? "s" : ""}
-                            </p>
+                            <div className="flex items-center gap-2 flex-wrap">
+                              <p className="text-sm font-bold text-ink truncate">
+                                {g.display_name || g.email}
+                              </p>
+                              {g.display_name && (
+                                <span className="text-xs font-semibold text-ink/50 truncate">
+                                  ({g.email})
+                                </span>
+                              )}
+                            </div>
+                            <div className="flex items-center gap-2 flex-wrap text-xs text-ink/60 mt-0.5">
+                              {g.phone ? (
+                                <a
+                                  href={`tel:${g.phone}`}
+                                  className="inline-flex items-center gap-1 font-bold text-brand hover:underline"
+                                  title="Appeler le mentor"
+                                >
+                                  <Phone className="size-3 fill-current" />
+                                  <span>{g.phone}</span>
+                                </a>
+                              ) : (
+                                <span className="inline-flex items-center gap-1 text-ink/40 italic">
+                                  <Phone className="size-3" />
+                                  <span>Sans numéro</span>
+                                </span>
+                              )}
+                              <span className="text-ink/30">•</span>
+                              <span>
+                                {g.totalChildren} enfant{g.totalChildren > 1 ? "s" : ""} suivi
+                                {g.totalChildren > 1 ? "s" : ""}
+                              </span>
+                            </div>
                           </div>
                         </div>
                         <div className="shrink-0">
@@ -971,6 +999,32 @@ export function AdminMentorsTab({
               </button>
             </div>
 
+            {payoutModalFor && (() => {
+              const cur = groups.find((g) => g.mentor_user_id === payoutModalFor);
+              if (!cur) return null;
+              return (
+                <div className="mb-4 rounded-2xl border border-emerald-200/60 bg-emerald-50/50 p-3 flex items-center justify-between gap-3 text-xs">
+                  <div className="min-w-0">
+                    <p className="font-bold text-ink truncate">
+                      {cur.display_name || cur.email}
+                    </p>
+                    {cur.display_name && (
+                      <p className="text-[11px] text-ink/60 truncate">{cur.email}</p>
+                    )}
+                  </div>
+                  {cur.phone && (
+                    <a
+                      href={`tel:${cur.phone}`}
+                      className="inline-flex items-center gap-1 font-bold text-brand hover:underline shrink-0"
+                    >
+                      <Phone className="size-3 fill-current" />
+                      <span>{cur.phone}</span>
+                    </a>
+                  )}
+                </div>
+              );
+            })()}
+
             {sessionsLoading ? (
               <div className="flex justify-center py-10">
                 <Loader2 className="size-7 animate-spin text-brand" />
@@ -1035,6 +1089,18 @@ export function AdminMentorsTab({
             )}
           </div>
         </div>
+      )}
+
+      {isAssignModalOpen && (
+        <AssignMentorModal
+          campaigns={campaigns}
+          onClose={() => setIsAssignModalOpen(false)}
+          onSuccess={() => {
+            setIsAssignModalOpen(false);
+            void refreshSilently();
+            void onDataChanged?.();
+          }}
+        />
       )}
     </div>
   );
@@ -1553,7 +1619,10 @@ function AssignMentorModal({
                   <div className="flex items-center gap-2 text-sm">
                     <span className="font-black text-ink w-20 shrink-0">Parent</span>
                     <span className="font-semibold text-ink/70 truncate min-w-0 flex-1">
-                      {selectedParent?.email}
+                      {selectedParent?.display_name
+                        ? `${selectedParent.display_name} (${selectedParent.email})`
+                        : selectedParent?.email}
+                      {selectedParent?.phone ? ` · Tél : ${selectedParent.phone}` : ""}
                     </span>
                   </div>
                   <div className="flex items-center gap-2 text-sm">
@@ -1566,7 +1635,10 @@ function AssignMentorModal({
                   <div className="flex items-center gap-2 text-sm">
                     <span className="font-black text-ink w-20 shrink-0">Mentor</span>
                     <span className="font-semibold text-ink/70 truncate min-w-0 flex-1">
-                      {selectedMentor?.email}
+                      {selectedMentor?.display_name
+                        ? `${selectedMentor.display_name} (${selectedMentor.email})`
+                        : selectedMentor?.email}
+                      {selectedMentor?.phone ? ` · Tél : ${selectedMentor.phone}` : ""}
                     </span>
                   </div>
                 </div>
