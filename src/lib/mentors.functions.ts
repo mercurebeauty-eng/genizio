@@ -1558,7 +1558,7 @@ export const getMentorDashboard = createServerFn({ method: "GET" })
     const { data: challenges } = await supabaseAdmin
       .from("challenges")
       .select(
-        "child_id, id, title, domain, status, created_at, description, duration, steps, materials, proof_image_url, ai_observations, notes, difficulty, pedagogical_context, requires_supervision, supervision_warning",
+        "child_id, id, title, domain, status, created_at, description, duration, steps, materials, proof_image_url, ai_observations, notes, difficulty, pedagogical_context, challenge_role, target_cause, recommendation_type, reformulation_of, presentation_mode, requires_supervision, supervision_warning",
       )
       .in("child_id", childIds)
       .is("deleted_at", null)

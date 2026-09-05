@@ -216,6 +216,7 @@ export type Database = {
       };
       challenges: {
         Row: {
+          abandoned_processed: boolean;
           academic_domain: string | null;
           academic_grade_level: string | null;
           academic_level_age: number | null;
@@ -225,6 +226,7 @@ export type Database = {
           ai_observations: string | null;
           aspiration_label: string | null;
           behavioral_driver: string | null;
+          challenge_role: string | null;
           child_id: string;
           child_question: string | null;
           completed_at: string | null;
@@ -239,6 +241,7 @@ export type Database = {
           estimated_duration_minutes: number | null;
           guidance_level: number;
           homework_instruction: string | null;
+          hypothesis_cycle_id: string | null;
           id: string;
           kind: string;
           material_tags: string[];
@@ -255,11 +258,14 @@ export type Database = {
           proof_image_url: string | null;
           proof_mode: string;
           proof_target: Json | null;
+          recommendation_type: string | null;
+          reformulation_of: string | null;
           requires_supervision: boolean | null;
           started_at: string | null;
           status: Database["public"]["Enums"]["challenge_status"];
           steps: Json;
           supervision_warning: string | null;
+          target_cause: string | null;
           target_intelligences: Json;
           time_limit_minutes: number | null;
           title: string;
@@ -269,6 +275,7 @@ export type Database = {
           zpa_level: number | null;
         };
         Insert: {
+          abandoned_processed?: boolean;
           academic_domain?: string | null;
           academic_grade_level?: string | null;
           academic_level_age?: number | null;
@@ -278,6 +285,7 @@ export type Database = {
           ai_observations?: string | null;
           aspiration_label?: string | null;
           behavioral_driver?: string | null;
+          challenge_role?: string | null;
           child_id: string;
           child_question?: string | null;
           completed_at?: string | null;
@@ -292,6 +300,7 @@ export type Database = {
           estimated_duration_minutes?: number | null;
           guidance_level?: number;
           homework_instruction?: string | null;
+          hypothesis_cycle_id?: string | null;
           id?: string;
           kind?: string;
           material_tags?: string[];
@@ -308,11 +317,14 @@ export type Database = {
           proof_image_url?: string | null;
           proof_mode?: string;
           proof_target?: Json | null;
+          recommendation_type?: string | null;
+          reformulation_of?: string | null;
           requires_supervision?: boolean | null;
           started_at?: string | null;
           status?: Database["public"]["Enums"]["challenge_status"];
           steps?: Json;
           supervision_warning?: string | null;
+          target_cause?: string | null;
           target_intelligences?: Json;
           time_limit_minutes?: number | null;
           title: string;
@@ -322,6 +334,7 @@ export type Database = {
           zpa_level?: number | null;
         };
         Update: {
+          abandoned_processed?: boolean;
           academic_domain?: string | null;
           academic_grade_level?: string | null;
           academic_level_age?: number | null;
@@ -331,6 +344,7 @@ export type Database = {
           ai_observations?: string | null;
           aspiration_label?: string | null;
           behavioral_driver?: string | null;
+          challenge_role?: string | null;
           child_id?: string;
           child_question?: string | null;
           completed_at?: string | null;
@@ -361,11 +375,14 @@ export type Database = {
           proof_image_url?: string | null;
           proof_mode?: string;
           proof_target?: Json | null;
+          recommendation_type?: string | null;
+          reformulation_of?: string | null;
           requires_supervision?: boolean | null;
           started_at?: string | null;
           status?: Database["public"]["Enums"]["challenge_status"];
           steps?: Json;
           supervision_warning?: string | null;
+          target_cause?: string | null;
           target_intelligences?: Json;
           time_limit_minutes?: number | null;
           title?: string;

@@ -183,7 +183,7 @@ const EnsureInput = z.object({ childId: z.string().uuid() });
 // discriminant abandonné restait invisible du moteur de diagnostic. Repère les
 // défis discriminants toujours "todo"/"in_progress" au-delà du même seuil que
 // STALE_DOMAIN_CUTOFF (14 jours, cf. generateChallenges), traite chacun une seule
-// fois — flag "abandoned_processed" dans pedagogical_context, pour ne pas
+// fois — colonne "abandoned_processed" (typée), pour ne pas
 // réappliquer le multiplicateur bayésien à chaque visite du Portfolio.
 async function processAbandonedDiscriminantChallenges(
   supabase: any,
@@ -192,30 +192,23 @@ async function processAbandonedDiscriminantChallenges(
   const cutoff = new Date(Date.now() - 14 * 24 * 60 * 60 * 1000).toISOString();
   const { data: staleCandidates } = await supabase
     .from("challenges")
-    .select("id, pedagogical_context")
+    .select("id")
     .eq("child_id", childId)
+    .eq("challenge_role", "discriminant")
+    .eq("abandoned_processed", false)
     .in("status", ["todo", "in_progress"])
-    .lt("created_at", cutoff)
-    .not("pedagogical_context", "is", null);
+    .lt("created_at", cutoff);
 
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
   for (const c of staleCandidates ?? []) {
-    let ctx: any;
-    try {
-      ctx = JSON.parse(c.pedagogical_context);
-    } catch {
-      continue;
-    }
-    if (!ctx?.is_discriminant || ctx?.abandoned_processed) continue;
-
     await processDiscriminantResult(c.id, "ABANDONED");
     // Marqué "traité" indépendamment du résultat (ex: cycle déjà résolu autrement
     // entre-temps) — retenter n'apporterait rien, autant arrêter de le revérifier
     // à chaque visite.
     await supabaseAdmin
       .from("challenges")
-      .update({ pedagogical_context: JSON.stringify({ ...ctx, abandoned_processed: true }) })
+      .update({ abandoned_processed: true })
       .eq("id", c.id);
   }
 }
@@ -654,12 +647,14 @@ Réponds EXCLUSIVEMENT avec un objet JSON strict au format suivant :
     });
 
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const pedagogicalContext = JSON.stringify({
-      cycle_id: cycle.id,
+    // Rôle machine du défi dans des colonnes typées (ex-JSON sérialisé dans
+    // pedagogical_context) : lisible sans parse, indexable, jamais cassé par un
+    // changement de formatage.
+    const machineContext = {
+      challenge_role: "discriminant" as const,
+      hypothesis_cycle_id: cycle.id,
       target_cause: topHypothesis.cause,
-      is_discriminant: true,
-      subject,
-    });
+    };
 
     // Correctif (2026-07-20, décision #34) : cette insertion contournait entièrement
     // finalizeChallenge (filet de sécurité + difficulté + material_tags) — un défi
@@ -683,7 +678,7 @@ Réponds EXCLUSIVEMENT avec un objet JSON strict au format suivant :
         materials: safeMaterials,
         status: "todo",
         progress: 0,
-        pedagogical_context: pedagogicalContext,
+        ...machineContext,
         // Même trou que generateChallenges/assignTemplateChallenge à l'origine (avant
         // correctif) : demandé au prompt (ACADEMIC_SECRET_INSTRUCTION) mais ce chemin
         // insère directement sans jamais recopier le champ — la carte "Avantage Secret
@@ -726,24 +721,19 @@ export async function processDiscriminantResult(
 ): Promise<{ processed: boolean; resolved?: boolean; finalDiagnosis?: string }> {
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
-  // 1. Récupère le défi et son contexte pédagogique
+  // 1. Récupère le défi et son rôle machine (colonnes typées — ex-JSON sérialisé
+  // dans pedagogical_context)
   const { data: challenge } = await supabaseAdmin
     .from("challenges")
-    .select("id, pedagogical_context")
+    .select("id, hypothesis_cycle_id, challenge_role, target_cause")
     .eq("id", challengeId)
     .maybeSingle();
 
-  if (!challenge?.pedagogical_context) return { processed: false };
-
-  let context: any;
-  try {
-    context = JSON.parse(challenge.pedagogical_context);
-  } catch (err) {
-    console.error("processDiscriminantResult: Failed to parse pedagogical_context JSON:", err);
-    return { processed: false };
-  }
-
-  if (!context?.is_discriminant || !context?.cycle_id || !context?.target_cause) {
+  if (
+    !challenge?.hypothesis_cycle_id ||
+    challenge.challenge_role !== "discriminant" ||
+    !challenge.target_cause
+  ) {
     return { processed: false };
   }
 
@@ -751,7 +741,7 @@ export async function processDiscriminantResult(
   const { data: cycle } = await supabaseAdmin
     .from("hypothesis_cycles")
     .select("id, hypotheses, status")
-    .eq("id", context.cycle_id)
+    .eq("id", challenge.hypothesis_cycle_id)
     .maybeSingle();
 
   if (!cycle || cycle.status !== "open") return { processed: false };
@@ -764,7 +754,7 @@ export async function processDiscriminantResult(
     }[]) || [];
   if (hypotheses.length === 0) return { processed: false };
 
-  const targetCause = context.target_cause;
+  const targetCause = challenge.target_cause;
 
   // 3. Mise à jour bayésienne des probabilités
   const updated = hypotheses.map((h) => {
@@ -947,11 +937,11 @@ Réponds EXCLUSIVEMENT avec un objet JSON strict au format suivant :
     });
 
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const pedagogicalContext = JSON.stringify({
-      is_support_retest: true,
-      cycle_id: cycle.id,
+    const machineContext = {
+      challenge_role: "support_retest" as const,
+      hypothesis_cycle_id: cycle.id,
       target_cause: cycle.final_diagnosis,
-    });
+    };
 
     const safeTitle = (parsed.title || `Mission Naya : ${subject}`) as string;
     const safeDescription = (parsed.description || "") as string;
@@ -970,7 +960,7 @@ Réponds EXCLUSIVEMENT avec un objet JSON strict au format suivant :
         materials: safeMaterials,
         status: "todo",
         progress: 0,
-        pedagogical_context: pedagogicalContext,
+        ...machineContext,
         // Même trou que generateDiscriminantChallenge — voir le commentaire équivalent
         // là-bas, cause racine identique (insertion directe qui ne recopiait jamais le
         // champ demandé au prompt).
@@ -1013,20 +1003,13 @@ export async function processSupportRetestResult(
 
   const { data: challenge } = await supabaseAdmin
     .from("challenges")
-    .select("id, pedagogical_context")
+    .select("id, challenge_role, hypothesis_cycle_id")
     .eq("id", challengeId)
     .maybeSingle();
 
-  if (!challenge?.pedagogical_context) return { processed: false };
-
-  let context: any;
-  try {
-    context = JSON.parse(challenge.pedagogical_context);
-  } catch {
+  if (challenge?.challenge_role !== "support_retest" || !challenge?.hypothesis_cycle_id) {
     return { processed: false };
   }
-
-  if (!context?.is_support_retest || !context?.cycle_id) return { processed: false };
 
   const updatePayload =
     action === "COMPLETED"
@@ -1038,7 +1021,7 @@ export async function processSupportRetestResult(
   const { error } = await supabaseAdmin
     .from("hypothesis_cycles")
     .update(updatePayload)
-    .eq("id", context.cycle_id);
+    .eq("id", challenge.hypothesis_cycle_id);
 
   if (error) {
     console.error("processSupportRetestResult: échec de la mise à jour:", error);

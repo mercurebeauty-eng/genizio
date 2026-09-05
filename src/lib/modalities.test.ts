@@ -3,7 +3,6 @@ import {
   PRESENTATION_MODES,
   resolveNextModality,
   canReformulate,
-  parseReformulationContext,
   resolveReformulationRoot,
   summarizeModalityAttempts,
   MAX_MODALITY_ATTEMPTS,
@@ -80,38 +79,16 @@ describe("canReformulate — quelles causes ouvrent la boucle", () => {
   });
 });
 
-describe("parseReformulationContext — filiation lisible depuis pedagogical_context (TEXT)", () => {
-  it("parse un contexte de reformulation valide", () => {
-    const ctx = parseReformulationContext(
-      JSON.stringify({
-        is_reformulation: true,
-        original_challenge_id: "abc-123",
-        modality_attempt: 2,
-        presentation_mode: "histoire",
-      }),
-    );
-    expect(ctx).toEqual({
-      originalChallengeId: "abc-123",
-      modalityAttempt: 2,
-      presentationMode: "histoire",
-    });
+describe("resolveReformulationRoot — filiation par la racine (colonne reformulation_of)", () => {
+  it("ancre la chaîne sur l'original quand le défi échoué est lui-même une reformulation", () => {
+    expect(
+      resolveReformulationRoot({ reformulation_of: "abc-123" }, "def-456"),
+    ).toBe("abc-123");
   });
 
-  it("refuse un JSON sans is_reformulation, une modalité inconnue ou un JSON invalide", () => {
-    expect(parseReformulationContext(JSON.stringify({ is_discriminant: true }))).toBeNull();
-    expect(
-      parseReformulationContext(
-        JSON.stringify({
-          is_reformulation: true,
-          original_challenge_id: "a",
-          modality_attempt: 1,
-          presentation_mode: "magie",
-        }),
-      ),
-    ).toBeNull();
-    expect(parseReformulationContext("pas du json")).toBeNull();
-    expect(parseReformulationContext(null)).toBeNull();
-    expect(parseReformulationContext(undefined)).toBeNull();
+  it("le défi échoué EST l'original (pas de filiation) → il devient la racine", () => {
+    expect(resolveReformulationRoot({ reformulation_of: null }, "def-456")).toBe("def-456");
+    expect(resolveReformulationRoot(undefined, "def-456")).toBe("def-456");
   });
 });
 
@@ -186,26 +163,20 @@ describe("buildReformulationPrompt — même objectif, modalité imposée, défi
 
 describe("formatPedagogicalIntention — traduction parent de la reformulation", () => {
   it("traduit la filiation en phrase qualitative (jamais de chiffres ni d'échec)", () => {
-    const text = formatPedagogicalIntention(
-      JSON.stringify({
-        is_reformulation: true,
-        original_challenge_id: "abc",
-        modality_attempt: 1,
-        presentation_mode: "histoire",
-      }),
-    );
+    const text = formatPedagogicalIntention({
+      reformulation_of: "abc",
+      presentation_mode: "histoire",
+    });
     expect(text).toContain("par une histoire cette fois");
     expect(text).not.toContain("échec");
     expect(text).not.toContain("raté");
   });
 
-  it("ne traduit pas un contexte non reformulation", () => {
+  it("traduit les autres intentions machine et masque un résidu JSON non reconnu", () => {
     expect(
-      formatPedagogicalIntention(
-        JSON.stringify({ is_discriminant: true, target_cause: "METHOD_MISMATCH" }),
-      ),
+      formatPedagogicalIntention({ challenge_role: "discriminant", target_cause: "METHOD_MISMATCH" }),
     ).toBeTruthy();
-    expect(formatPedagogicalIntention(JSON.stringify({ quelque_chose: 1 }))).toBeNull();
+    expect(formatPedagogicalIntention({ pedagogical_context: '{"quelque_chose": 1}' })).toBeNull();
   });
 });
 
@@ -231,28 +202,6 @@ describe("PRESENTATION_MODES — vocabulaire fermé partagé", () => {
       "projet",
       "situation_concrete",
     ]);
-  });
-});
-
-describe("resolveReformulationRoot — filiation par la racine, jamais par le parent (P0 review 2026-08-12)", () => {
-  const reformulationCtx = JSON.stringify({
-    is_reformulation: true,
-    original_challenge_id: "O",
-    modality_attempt: 1,
-    presentation_mode: "histoire",
-  });
-
-  it("un défi original est sa propre racine", () => {
-    expect(resolveReformulationRoot(null, "O")).toBe("O");
-    expect(resolveReformulationRoot('{"pedagogical_intention":"x"}', "O")).toBe("O");
-  });
-
-  it("une reformulation s'ancre sur son original, pas sur le parent immédiat", () => {
-    expect(resolveReformulationRoot(reformulationCtx, "R1")).toBe("O");
-  });
-
-  it("contexte illisible → repli sur le défi lui-même (jamais d'erreur)", () => {
-    expect(resolveReformulationRoot("pas du json", "R1")).toBe("R1");
   });
 });
 
