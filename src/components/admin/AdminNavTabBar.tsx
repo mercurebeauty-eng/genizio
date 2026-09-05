@@ -273,7 +273,9 @@ export function AdminNavTabBar({ activeTab, onTabChange, onGoHome, badges }: Adm
           const Icon = tab.icon;
           const isActive = activeTab === tab.id;
           const badgeVal = badges?.[tab.id];
-          const hasBadge = badgeVal !== undefined && (typeof badgeVal === "number" ? badgeVal > 0 : Boolean(badgeVal));
+          const hasBadge =
+            badgeVal !== undefined &&
+            (typeof badgeVal === "number" ? badgeVal > 0 : Boolean(badgeVal));
 
           return (
             <button

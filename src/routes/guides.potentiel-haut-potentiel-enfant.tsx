@@ -123,8 +123,14 @@ function Guide() {
           label: "Les 9 formes d'intelligence (Gardner)",
           to: "/guides/intelligences-multiples-gardner",
         },
-        { label: "Test de personnalité : 4 limites", to: "/guides/test-de-personnalite-enfant-talents" },
-        { label: "Autisme & TDAH : atouts uniques", to: "/guides/autisme-tdah-apprentissage-forces-reelles" },
+        {
+          label: "Test de personnalité : 4 limites",
+          to: "/guides/test-de-personnalite-enfant-talents",
+        },
+        {
+          label: "Autisme & TDAH : atouts uniques",
+          to: "/guides/autisme-tdah-apprentissage-forces-reelles",
+        },
         { label: "Enfant inattentif ou agité", to: "/guides/enfant-agite-concentration" },
       ]}
     >
@@ -155,49 +161,78 @@ function Guide() {
 
       <h2>Le haut potentiel intellectuel (HPI) : les signes observables à la maison</h2>
       <MedicalDisclaimer>
-        Le haut potentiel intellectuel (HPI) est un fonctionnement neurocognitif validé par un bilan psychométrique (test WISC-V par un psychologue ou neuropsychologue). Ce guide vous donne des repères d'observation bienveillants et ne remplace aucun avis médical.
+        Le haut potentiel intellectuel (HPI) est un fonctionnement neurocognitif validé par un bilan
+        psychométrique (test WISC-V par un psychologue ou neuropsychologue). Ce guide vous donne des
+        repères d'observation bienveillants et ne remplace aucun avis médical.
       </MedicalDisclaimer>
       <p>
-        Les signes caractéristiques observés chez l'enfant précoce ou « zèbre » ne se résument pas à de bonnes notes scolaires. Ils combinent souvent :
+        Les signes caractéristiques observés chez l'enfant précoce ou « zèbre » ne se résument pas à
+        de bonnes notes scolaires. Ils combinent souvent :
       </p>
       <ul>
         <li>
-          <strong>Une pensée arborescente et fulgurante :</strong> L'enfant fait des liens instantanés entre des sujets sans rapport apparent, posant des questions existentielles précoces (voir notre éclairage sur l'
-          <a href="/guides/intelligences-multiples-gardner">intelligence existentielle et les 9 formes d'intelligence</a>).
+          <strong>Une pensée arborescente et fulgurante :</strong> L'enfant fait des liens
+          instantanés entre des sujets sans rapport apparent, posant des questions existentielles
+          précoces (voir notre éclairage sur l'
+          <a href="/guides/intelligences-multiples-gardner">
+            intelligence existentielle et les 9 formes d'intelligence
+          </a>
+          ).
         </li>
         <li>
-          <strong>Une hypersensibilité sensorielle et émotionnelle :</strong> Un sens aigu de la justice, des réactions intenses aux bruits ou aux textures, et parfois des tempêtes émotionnelles (consultez nos{" "}
-          <a href="/guides/gestion-colere-emotions-enfant">5 outils pour apaiser la frustration</a>).
+          <strong>Une hypersensibilité sensorielle et émotionnelle :</strong> Un sens aigu de la
+          justice, des réactions intenses aux bruits ou aux textures, et parfois des tempêtes
+          émotionnelles (consultez nos{" "}
+          <a href="/guides/gestion-colere-emotions-enfant">5 outils pour apaiser la frustration</a>
+          ).
         </li>
         <li>
-          <strong>Un besoin irrépressible de comprendre le sens :</strong> Un rejet viscéral du « par cœur » et des consignes non justifiées, qui peut être confondu avec de l'opposition ou un{" "}
-          <a href="/guides/enfant-agite-concentration">manque d'attention</a>.
+          <strong>Un besoin irrépressible de comprendre le sens :</strong> Un rejet viscéral du «
+          par cœur » et des consignes non justifiées, qui peut être confondu avec de l'opposition ou
+          un <a href="/guides/enfant-agite-concentration">manque d'attention</a>.
         </li>
         <li>
-          <strong>Un perfectionnisme paralysant :</strong> La peur de l'échec ou d'un résultat imparfait qui l'amène parfois à refuser d'entamer une tâche.
+          <strong>Un perfectionnisme paralysant :</strong> La peur de l'échec ou d'un résultat
+          imparfait qui l'amène parfois à refuser d'entamer une tâche.
         </li>
       </ul>
 
       <h2>Les limites des tests de QI en ligne et des QCM</h2>
       <p>
-        De nombreux sites proposent des « tests de précocité » ou des quiz en quelques minutes. Attention : ces tests automatisés sont non seulement scientifiquement invalides, mais ils risquent d'enfermer votre enfant dans une fausse étiquette. Lisez notre enquête sur les{" "}
-        <a href="/guides/test-de-personnalite-enfant-talents">4 limites majeures des tests de personnalité pour enfants</a>.
+        De nombreux sites proposent des « tests de précocité » ou des quiz en quelques minutes.
+        Attention : ces tests automatisés sont non seulement scientifiquement invalides, mais ils
+        risquent d'enfermer votre enfant dans une fausse étiquette. Lisez notre enquête sur les{" "}
+        <a href="/guides/test-de-personnalite-enfant-talents">
+          4 limites majeures des tests de personnalité pour enfants
+        </a>
+        .
       </p>
 
       <h2>Pourquoi le désintérêt scolaire touche tant d'enfants HPI</h2>
       <p>
-        « Mon enfant a d'immenses capacités mais ses notes chutent » : ce paradoxe est fréquent. L'enfant précoce souffre souvent d'un <strong>ennui actif</strong> : le rythme de répétition scolaire ne correspond pas à sa vitesse de traitement. Sans méthode de travail solide, il risque le désengagement. Voir nos clés pour{" "}
-        <a href="/guides/decrochage-scolaire-confiance-enfant">redonner confiance à un enfant qui décroche à l'école</a> et nos conseils pour{" "}
+        « Mon enfant a d'immenses capacités mais ses notes chutent » : ce paradoxe est fréquent.
+        L'enfant précoce souffre souvent d'un <strong>ennui actif</strong> : le rythme de répétition
+        scolaire ne correspond pas à sa vitesse de traitement. Sans méthode de travail solide, il
+        risque le désengagement. Voir nos clés pour{" "}
+        <a href="/guides/decrochage-scolaire-confiance-enfant">
+          redonner confiance à un enfant qui décroche à l'école
+        </a>{" "}
+        et nos conseils pour{" "}
         <a href="/guides/reussite-scolaire-aider-enfant">l'aider à réussir sans stresser</a>.
       </p>
       <p>
-        Il convient aussi de distinguer le HPI d'autres profils neuroatypiques, comme détaillé dans notre guide{" "}
-        <a href="/guides/autisme-tdah-apprentissage-forces-reelles">Autisme & TDAH : valoriser leurs forces d'apprentissage</a>.
+        Il convient aussi de distinguer le HPI d'autres profils neuroatypiques, comme détaillé dans
+        notre guide{" "}
+        <a href="/guides/autisme-tdah-apprentissage-forces-reelles">
+          Autisme & TDAH : valoriser leurs forces d'apprentissage
+        </a>
+        .
       </p>
 
       <h2>Nourrir son potentiel par l'action concrète à la maison</h2>
       <p>
-        Au lieu de surcharger un enfant précoce d'exercices scolaires abstraits, proposez-lui des projets où son intelligence se confronte à la matière et au réel :
+        Au lieu de surcharger un enfant précoce d'exercices scolaires abstraits, proposez-lui des
+        projets où son intelligence se confronte à la matière et au réel :
       </p>
       <ul>
         <li>
@@ -206,17 +241,26 @@ function Guide() {
         </li>
         <li>
           Canalisez son besoin d'expérimentation grâce à des{" "}
-          <a href="/guides/activites-manuelles-enfant">projets de bricolage et de fabrication manuelle</a>.
+          <a href="/guides/activites-manuelles-enfant">
+            projets de bricolage et de fabrication manuelle
+          </a>
+          .
         </li>
         <li>
           Développez son sens des responsabilités avec nos rituels pour{" "}
-          <a href="/guides/autonomie-responsabilite-maison">rendre son enfant autonome au quotidien</a>.
+          <a href="/guides/autonomie-responsabilite-maison">
+            rendre son enfant autonome au quotidien
+          </a>
+          .
         </li>
       </ul>
 
       <h2>Ce que fait Génizio au quotidien</h2>
       <p>
-        Génizio ne délivre pas d'étiquette de QI. L'application propose des défis concrets du monde réel adaptés aux 9 formes d'intelligence. En photographiant ses réussites concrètes, l'enfant construit son Passeport de Talents, révélant ses véritables forces sans pression ni comparaison.
+        Génizio ne délivre pas d'étiquette de QI. L'application propose des défis concrets du monde
+        réel adaptés aux 9 formes d'intelligence. En photographiant ses réussites concrètes,
+        l'enfant construit son Passeport de Talents, révélant ses véritables forces sans pression ni
+        comparaison.
       </p>
 
       <h2>Questions fréquentes (FAQ)</h2>

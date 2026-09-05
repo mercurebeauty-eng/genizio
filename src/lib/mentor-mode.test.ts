@@ -69,4 +69,3 @@ describe("getAppMode (pur, mode Parent/Mentor/Éducateur)", () => {
     expect(getAppMode({ user: {} } as any)).toBe("parent");
   });
 });
-

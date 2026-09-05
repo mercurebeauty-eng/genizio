@@ -92,7 +92,6 @@ function MentorHubPage() {
   const { session, loading } = useSession();
   const navigate = useNavigate();
 
-
   const [childName, setChildName] = useState("");
   const [fetching, setFetching] = useState(true);
 
@@ -426,7 +425,9 @@ function MentorHubPage() {
                     <p className="text-sm font-bold text-ink mt-1">
                       {formatXof(SESSION_PRICE_XOF)} / séance
                     </p>
-                    <p className="text-[11px] text-ink/50 mt-0.5">Soit {formatXof(PACK_PRICE_XOF)}/mois</p>
+                    <p className="text-[11px] text-ink/50 mt-0.5">
+                      Soit {formatXof(PACK_PRICE_XOF)}/mois
+                    </p>
                   </div>
                 </div>
 
@@ -486,7 +487,8 @@ function MentorHubPage() {
                   </a>
                 </div>
                 <p className="mt-2.5 text-center text-[11px] text-ink/50 font-medium">
-                  Paiement sécurisé via Paystack : Mobile Money (Wave, Orange, MTN) ou Carte bancaire.
+                  Paiement sécurisé via Paystack : Mobile Money (Wave, Orange, MTN) ou Carte
+                  bancaire.
                 </p>
               </div>
 
@@ -539,7 +541,9 @@ function MentorHubPage() {
                     </div>
                     <div>
                       <p className="text-xs font-black uppercase tracking-widest text-sky-700">
-                        {mentorInfo.contextName ? `Superviseur • ${mentorInfo.contextName}` : "Mentor assigné"}
+                        {mentorInfo.contextName
+                          ? `Superviseur • ${mentorInfo.contextName}`
+                          : "Mentor assigné"}
                       </p>
                       <p className="text-sm font-bold text-ink mt-0.5">{mentorInfo.email}</p>
                       <p className="text-xs text-ink/50 mt-0.5">

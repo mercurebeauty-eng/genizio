@@ -26,13 +26,19 @@ describe("Bouclier de Protection & Safeguarding (Règles métier)", () => {
     expect(alert.requiresImmediateKillSwitch).toBe(true);
     expect(alert.priorityLevel).toBe(1);
 
-    const alert2 = computeSafetyAlertPriority({ category: "unauthorized_contact", severity: "critical" });
+    const alert2 = computeSafetyAlertPriority({
+      category: "unauthorized_contact",
+      severity: "critical",
+    });
     expect(alert2.requiresImmediateKillSwitch).toBe(true);
     expect(alert2.priorityLevel).toBe(1);
   });
 
   it("les signalements de sévérité modérée ne déclenchent pas le kill-switch automatique", () => {
-    const alert = computeSafetyAlertPriority({ category: "unpunctuality_fraud", severity: "medium" });
+    const alert = computeSafetyAlertPriority({
+      category: "unpunctuality_fraud",
+      severity: "medium",
+    });
     expect(alert.requiresImmediateKillSwitch).toBe(false);
     expect(alert.priorityLevel).toBe(3);
   });

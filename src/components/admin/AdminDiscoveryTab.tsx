@@ -86,7 +86,8 @@ export function AdminDiscoveryTab() {
               Télémétrie Découverte, Rôles d'Équipe & Anomalies Positives
             </h2>
             <p className="text-xs sm:text-sm text-ink/70 font-medium">
-              Mesure de l'élan d'exploration spontanée, des postures d'équipe (10 rôles), des dynamiques collectives et des signaux de précocité Naya.
+              Mesure de l'élan d'exploration spontanée, des postures d'équipe (10 rôles), des
+              dynamiques collectives et des signaux de précocité Naya.
             </p>
           </div>
         </div>
@@ -202,11 +203,18 @@ export function AdminDiscoveryTab() {
               return (
                 <div key={key} className="space-y-1">
                   <div className="flex items-center justify-between text-xs font-bold">
-                    <span className="text-ink">{meta?.label || key} ({meta?.badge || "Exploration"})</span>
-                    <span className="text-ink/60">{count} ({pct}%)</span>
+                    <span className="text-ink">
+                      {meta?.label || key} ({meta?.badge || "Exploration"})
+                    </span>
+                    <span className="text-ink/60">
+                      {count} ({pct}%)
+                    </span>
                   </div>
                   <div className="w-full bg-stone-100 h-2 rounded-full overflow-hidden">
-                    <div className={`${color} h-full transition-all`} style={{ width: `${pct}%` }} />
+                    <div
+                      className={`${color} h-full transition-all`}
+                      style={{ width: `${pct}%` }}
+                    />
                   </div>
                 </div>
               );
@@ -273,14 +281,22 @@ export function AdminDiscoveryTab() {
                 const totalRoles = Object.values(rolesDistribution).reduce((a, b) => a + b, 0);
                 const pct = totalRoles > 0 ? Math.round((count / totalRoles) * 100) : 0;
                 return (
-                  <div key={r.id} className="p-2.5 rounded-xl bg-white border border-rose-100 space-y-1">
+                  <div
+                    key={r.id}
+                    className="p-2.5 rounded-xl bg-white border border-rose-100 space-y-1"
+                  >
                     <div className="flex items-center justify-between text-xs font-bold text-rose-950">
                       <span>{r.label}</span>
-                      <span className="text-rose-700">{count} ({pct}%)</span>
+                      <span className="text-rose-700">
+                        {count} ({pct}%)
+                      </span>
                     </div>
                     <p className="text-[10px] text-ink/50 font-normal">{r.desc}</p>
                     <div className="w-full bg-rose-50 h-1.5 rounded-full overflow-hidden">
-                      <div className="bg-rose-500 h-full transition-all" style={{ width: `${pct}%` }} />
+                      <div
+                        className="bg-rose-500 h-full transition-all"
+                        style={{ width: `${pct}%` }}
+                      />
                     </div>
                   </div>
                 );
@@ -312,14 +328,22 @@ export function AdminDiscoveryTab() {
                 const totalDyn = Object.values(dynamicsDistribution).reduce((a, b) => a + b, 0);
                 const pct = totalDyn > 0 ? Math.round((count / totalDyn) * 100) : 0;
                 return (
-                  <div key={dyn.id} className="p-2.5 rounded-xl bg-white border border-sky-100 space-y-1">
+                  <div
+                    key={dyn.id}
+                    className="p-2.5 rounded-xl bg-white border border-sky-100 space-y-1"
+                  >
                     <div className="flex items-center justify-between text-xs font-bold text-sky-950">
                       <span>{dyn.label}</span>
-                      <span className="text-sky-700">{count} ({pct}%)</span>
+                      <span className="text-sky-700">
+                        {count} ({pct}%)
+                      </span>
                     </div>
                     <p className="text-[10px] text-ink/50 font-normal">{dyn.desc}</p>
                     <div className="w-full bg-sky-50 h-1.5 rounded-full overflow-hidden">
-                      <div className="bg-sky-500 h-full transition-all" style={{ width: `${pct}%` }} />
+                      <div
+                        className="bg-sky-500 h-full transition-all"
+                        style={{ width: `${pct}%` }}
+                      />
                     </div>
                   </div>
                 );
@@ -343,7 +367,8 @@ export function AdminDiscoveryTab() {
           </span>
         </div>
         <p className="text-xs text-emerald-900/70 font-medium">
-          Traces où Naya a détecté une capacité supérieure ou une aisance inattendue lors de l'exploration libre, alimentant les cycles d'hypothèses de calibration.
+          Traces où Naya a détecté une capacité supérieure ou une aisance inattendue lors de
+          l'exploration libre, alimentant les cycles d'hypothèses de calibration.
         </p>
 
         {anomaliesList.length === 0 ? (
@@ -402,14 +427,11 @@ export function AdminDiscoveryTab() {
                 <div key={t.id} className="py-3 flex items-center justify-between gap-4 text-xs">
                   <div className="space-y-0.5 min-w-0">
                     <div className="flex items-center gap-2 flex-wrap">
-                      <span className="font-black text-ink">
-                        {child?.name || "Enfant"}
-                      </span>
-                      <span className="font-bold text-ink/80 truncate">
-                        — « {t.title} »
-                      </span>
+                      <span className="font-black text-ink">{child?.name || "Enfant"}</span>
+                      <span className="font-bold text-ink/80 truncate">— « {t.title} »</span>
                       <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-stone-100 text-ink/70">
-                        {DISCOVERY_SOURCE_LABELS[t.source_type as DiscoverySourceType]?.label || t.source_type}
+                        {DISCOVERY_SOURCE_LABELS[t.source_type as DiscoverySourceType]?.label ||
+                          t.source_type}
                       </span>
                       {t.ai_behavioral_analysis?.potential_anomaly && (
                         <span className="px-1.5 py-0.2 rounded text-[9px] font-black bg-emerald-100 text-emerald-800">
@@ -423,7 +445,8 @@ export function AdminDiscoveryTab() {
                       )}
                     </div>
                     <span className="text-[11px] text-ink/50 block">
-                      {new Date(t.created_at).toLocaleDateString("fr-FR")} • {DISCOVERY_DOMAIN_LABELS[t.domain as DiscoveryDomain] || t.domain}
+                      {new Date(t.created_at).toLocaleDateString("fr-FR")} •{" "}
+                      {DISCOVERY_DOMAIN_LABELS[t.domain as DiscoveryDomain] || t.domain}
                     </span>
                   </div>
                   <span className="shrink-0 text-emerald-700 font-bold text-[11px] bg-emerald-50 px-2 py-1 rounded-lg border border-emerald-100">
@@ -434,9 +457,7 @@ export function AdminDiscoveryTab() {
             })}
           </div>
         ) : (
-          <p className="text-xs text-ink/50 italic py-4 text-center">
-            Aucune découverte récente.
-          </p>
+          <p className="text-xs text-ink/50 italic py-4 text-center">Aucune découverte récente.</p>
         )}
       </Card>
     </div>

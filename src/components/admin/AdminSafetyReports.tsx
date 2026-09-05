@@ -20,7 +20,17 @@ import {
 import { toast } from "sonner";
 import { confirmDialog } from "@/components/ui/confirm-dialog";
 
-export function AdminSafetyReports() {
+export interface AdminSafetyReportsProps {
+  onDataChanged?: () => void | Promise<void>;
+  onPendingCountChange?: (count: number) => void;
+  isRefreshing?: boolean;
+}
+
+export function AdminSafetyReports({
+  onDataChanged,
+  onPendingCountChange,
+  isRefreshing = false,
+}: AdminSafetyReportsProps = {}) {
   const { session } = useSession();
   const [reports, setReports] = useState<ChildSafetyReportDetail[]>([]);
   const [loading, setLoading] = useState(true);
@@ -65,6 +75,29 @@ export function AdminSafetyReports() {
     if (!confirmed) return;
 
     setSuspendingMentorId(report.accused_mentor_user_id);
+
+    // Optimistic UI Update
+    const previousReports = reports;
+    const now = new Date().toISOString();
+    setReports((prev) =>
+      prev.map((r) =>
+        r.id === report.id
+          ? {
+              ...r,
+              kill_switch_triggered: true,
+              status: "sanctioned",
+              investigation_notes: `Kill-switch activé le ${now}. Raison: Signalement...`,
+            }
+          : r,
+      ),
+    );
+
+    // Calculate new pending count (decrement open status reports if this one was open)
+    if (report.status === "open") {
+      const openReportsCount = reports.filter((r) => r.status === "open").length - 1;
+      onPendingCountChange?.(Math.max(0, openReportsCount));
+    }
+
     try {
       const opts = session?.access_token
         ? { headers: { Authorization: `Bearer ${session.access_token}` } }
@@ -78,9 +111,27 @@ export function AdminSafetyReports() {
         ...opts,
       });
       toast.success("Kill-Switch exécuté : mentor suspendu immédiatement.");
-      void loadReports();
+
+      try {
+        const { supabase } = await import("@/integrations/supabase/client");
+        const channel = supabase.channel("admin-mentors-tab-sync");
+        void channel.send({
+          type: "broadcast",
+          event: "safeguarding_updated",
+          payload: { timestamp: Date.now() },
+        });
+      } catch (e) {}
+
+      void onDataChanged?.();
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Erreur lors de l'exécution du Kill-Switch.");
+      setReports(previousReports);
+      if (report.status === "open") {
+        const openReportsCount = reports.filter((r) => r.status === "open").length;
+        onPendingCountChange?.(openReportsCount);
+      }
+      toast.error(
+        err instanceof Error ? err.message : "Erreur lors de l'exécution du Kill-Switch.",
+      );
     } finally {
       setSuspendingMentorId(null);
     }

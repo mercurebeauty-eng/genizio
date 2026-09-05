@@ -250,7 +250,9 @@ function ChallengesPage() {
   const [error, setError] = useState<string | null>(null);
   const [openId, setOpenId] = useState<string | null>(null);
   const [statusFilter, setStatusFilter] = useState<"all" | Challenge["status"]>("all");
-  const [formatFilter, setFormatFilter] = useState<"all" | "projet" | "investigation" | "spark">("all");
+  const [formatFilter, setFormatFilter] = useState<"all" | "projet" | "investigation" | "spark">(
+    "all",
+  );
   const [activeProducts, setActiveProducts] = useState<any[]>([]);
   const [assignedChallengeForKit, setAssignedChallengeForKit] = useState<{
     id: string;
@@ -1772,7 +1774,15 @@ function ChallengesPage() {
                                   : "text-ink/60 hover:bg-surface border border-transparent"
                               }`}
                             >
-                              <span>🏗️ Grands Projets ({challenges.filter((c) => (c.kind ?? "").toLowerCase() === "projet").length})</span>
+                              <span>
+                                🏗️ Grands Projets (
+                                {
+                                  challenges.filter(
+                                    (c) => (c.kind ?? "").toLowerCase() === "projet",
+                                  ).length
+                                }
+                                )
+                              </span>
                             </button>
                             <button
                               onClick={() => setFormatFilter("investigation")}
@@ -1782,7 +1792,15 @@ function ChallengesPage() {
                                   : "text-ink/60 hover:bg-surface border border-transparent"
                               }`}
                             >
-                              <span>🔍 Investigations ({challenges.filter((c) => (c.kind ?? "").toLowerCase() === "investigation").length})</span>
+                              <span>
+                                🔍 Investigations (
+                                {
+                                  challenges.filter(
+                                    (c) => (c.kind ?? "").toLowerCase() === "investigation",
+                                  ).length
+                                }
+                                )
+                              </span>
                             </button>
                             <button
                               onClick={() => setFormatFilter("spark")}
@@ -1792,10 +1810,16 @@ function ChallengesPage() {
                                   : "text-ink/60 hover:bg-surface border border-transparent"
                               }`}
                             >
-                              <span>⚡ Étincelles ({challenges.filter((c) => {
-                                const k = (c.kind ?? "").toLowerCase();
-                                return k === "spark_micro" || k === "micro" || k === "";
-                              }).length})</span>
+                              <span>
+                                ⚡ Étincelles (
+                                {
+                                  challenges.filter((c) => {
+                                    const k = (c.kind ?? "").toLowerCase();
+                                    return k === "spark_micro" || k === "micro" || k === "";
+                                  }).length
+                                }
+                                )
+                              </span>
                             </button>
                           </div>
                         )}
@@ -1807,8 +1831,15 @@ function ChallengesPage() {
                           if (formatFilter !== "all") {
                             const k = (c.kind ?? "").toLowerCase();
                             if (formatFilter === "projet" && k !== "projet") return false;
-                            if (formatFilter === "investigation" && k !== "investigation") return false;
-                            if (formatFilter === "spark" && k !== "spark_micro" && k !== "micro" && k !== "") return false;
+                            if (formatFilter === "investigation" && k !== "investigation")
+                              return false;
+                            if (
+                              formatFilter === "spark" &&
+                              k !== "spark_micro" &&
+                              k !== "micro" &&
+                              k !== ""
+                            )
+                              return false;
                           }
                           return true;
                         });
@@ -1816,7 +1847,9 @@ function ChallengesPage() {
                         if (filteredChallenges.length === 0) {
                           return (
                             <div className="rounded-3xl border border-dashed border-ink/20 bg-white/40 p-10 text-center shadow-sm">
-                              <p className="text-ink/65 font-bold">Aucun défi correspondant à ces filtres.</p>
+                              <p className="text-ink/65 font-bold">
+                                Aucun défi correspondant à ces filtres.
+                              </p>
                             </div>
                           );
                         }
@@ -2004,7 +2037,10 @@ function ChallengesPage() {
             <div className="rounded-2xl border border-ink/10 bg-sky/15 p-4 mb-6">
               <ul className="space-y-1.5 mb-3">
                 {assignedChallengeForKit.products.map((p) => (
-                  <li key={p.id} className="flex justify-between items-center text-sm font-bold text-ink gap-2 min-w-0">
+                  <li
+                    key={p.id}
+                    className="flex justify-between items-center text-sm font-bold text-ink gap-2 min-w-0"
+                  >
                     <span className="truncate min-w-0">{p.name}</span>
                     <span className="shrink-0">{p.price_xof.toLocaleString("fr-FR")} FCFA</span>
                   </li>
@@ -2359,19 +2395,27 @@ function ChallengeCard({
           <div className="text-[14px] leading-[1.45] text-ink">
             {isProject ? (
               <>
-                <b className="text-purple-700">Naya&nbsp;:</b> C'est un grand projet d'envergure digne d'un créateur ! Prends ton temps, rassemble tes matériaux et avance pas à pas. J'ai hâte de voir ton chef-d'œuvre ! ✨
+                <b className="text-purple-700">Naya&nbsp;:</b> C'est un grand projet d'envergure
+                digne d'un créateur ! Prends ton temps, rassemble tes matériaux et avance pas à pas.
+                J'ai hâte de voir ton chef-d'œuvre ! ✨
               </>
             ) : isInvestigation ? (
               <>
-                <b className="text-emerald-700">Naya&nbsp;:</b> Endosse ton costume de chercheur : observe avec précision, teste et déduis le secret par toi-même ! 🔍
+                <b className="text-emerald-700">Naya&nbsp;:</b> Endosse ton costume de chercheur :
+                observe avec précision, teste et déduis le secret par toi-même ! 🔍
               </>
-            ) : c.pedagogical_context && (c.pedagogical_context.includes("«") || c.pedagogical_context.toLowerCase().includes("question")) ? (
+            ) : c.pedagogical_context &&
+              (c.pedagogical_context.includes("«") ||
+                c.pedagogical_context.toLowerCase().includes("question")) ? (
               <>
-                <b className="text-brand">Naya&nbsp;:</b> Tu te posais une question passionnante ! Voici la mission que j'ai imaginée pour que tu découvres la réponse par l'expérience concrète. 💬
+                <b className="text-brand">Naya&nbsp;:</b> Tu te posais une question passionnante !
+                Voici la mission que j'ai imaginée pour que tu découvres la réponse par l'expérience
+                concrète. 💬
               </>
             ) : (
               <>
-                <b className="text-brand">Naya&nbsp;:</b> J'ai préparé ce défi spécialement pour toi. Montre-moi de quoi tu es capable !
+                <b className="text-brand">Naya&nbsp;:</b> J'ai préparé ce défi spécialement pour
+                toi. Montre-moi de quoi tu es capable !
               </>
             )}
           </div>

@@ -171,7 +171,9 @@ function PassportPrintPage() {
         .order("earned_at", { ascending: true }),
       supabase
         .from("discovery_traces")
-        .select("id, title, domain, proof_image_url, created_at, source_type, strategy_used, ai_behavioral_analysis")
+        .select(
+          "id, title, domain, proof_image_url, created_at, source_type, strategy_used, ai_behavioral_analysis",
+        )
         .or(`child_id.eq.${profileId},tagged_child_ids.cs.{${profileId}}`)
         .order("created_at", { ascending: false })
         .limit(50),
@@ -713,19 +715,31 @@ function PassportPrintPage() {
 
                 <div className="grid grid-cols-2 gap-2 mb-2">
                   <div className="p-2.5 rounded-xl bg-white border border-rose-100 space-y-1">
-                    <span className="text-[10px] font-bold text-ink/60 uppercase block">Rôles observés</span>
+                    <span className="text-[10px] font-bold text-ink/60 uppercase block">
+                      Rôles observés
+                    </span>
                     <div className="flex flex-wrap gap-1">
-                      {Object.entries(longitudinalGraph.roleSummary.rolesFrequency).map(([role, count]) => (
-                        <span key={role} className="text-[10px] font-bold bg-rose-100/80 text-rose-900 px-2 py-0.5 rounded-md capitalize">
-                          {role} ({count})
-                        </span>
-                      ))}
+                      {Object.entries(longitudinalGraph.roleSummary.rolesFrequency).map(
+                        ([role, count]) => (
+                          <span
+                            key={role}
+                            className="text-[10px] font-bold bg-rose-100/80 text-rose-900 px-2 py-0.5 rounded-md capitalize"
+                          >
+                            {role} ({count})
+                          </span>
+                        ),
+                      )}
                     </div>
                   </div>
                   <div className="p-2.5 rounded-xl bg-white border border-rose-100 space-y-1">
-                    <span className="text-[10px] font-bold text-ink/60 uppercase block">Projets collectifs</span>
+                    <span className="text-[10px] font-bold text-ink/60 uppercase block">
+                      Projets collectifs
+                    </span>
                     <p className="text-xs font-black text-rose-950">
-                      {longitudinalGraph.behavioralSummary.totalProjects} projet{longitudinalGraph.behavioralSummary.totalProjects > 1 ? "s" : ""} • {longitudinalGraph.behavioralSummary.distinctDomains} domaine{longitudinalGraph.behavioralSummary.distinctDomains > 1 ? "s" : ""}
+                      {longitudinalGraph.behavioralSummary.totalProjects} projet
+                      {longitudinalGraph.behavioralSummary.totalProjects > 1 ? "s" : ""} •{" "}
+                      {longitudinalGraph.behavioralSummary.distinctDomains} domaine
+                      {longitudinalGraph.behavioralSummary.distinctDomains > 1 ? "s" : ""}
                     </p>
                   </div>
                 </div>

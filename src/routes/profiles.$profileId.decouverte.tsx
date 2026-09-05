@@ -118,10 +118,7 @@ function DiscoveryPage() {
     return (
       <div className="min-h-screen bg-stone-50 flex flex-col items-center justify-center p-6 text-center space-y-4">
         <p className="text-sm font-bold text-ink/70">Profil enfant introuvable.</p>
-        <Link
-          to="/profiles"
-          className="px-4 py-2 bg-brand text-white font-bold rounded-xl text-xs"
-        >
+        <Link to="/profiles" className="px-4 py-2 bg-brand text-white font-bold rounded-xl text-xs">
           Retour aux profils
         </Link>
       </div>
@@ -169,8 +166,10 @@ function DiscoveryPage() {
                 Espace Découverte
               </h1>
               <p className="text-xs sm:text-sm text-ink/75 font-medium leading-relaxed max-w-lg">
-                Ici, aucune consigne n'est imposée. Choisissez une porte d'entrée ci-dessous pour raconter à Naya ce que{" "}
-                <strong className="text-brand font-black">{child.name}</strong> a exploré de son propre élan ou en groupe.
+                Ici, aucune consigne n'est imposée. Choisissez une porte d'entrée ci-dessous pour
+                raconter à Naya ce que{" "}
+                <strong className="text-brand font-black">{child.name}</strong> a exploré de son
+                propre élan ou en groupe.
               </p>
             </div>
 
@@ -415,7 +414,10 @@ function DiscoveryPage() {
                   Aucune exploration enregistrée pour l'instant
                 </h3>
                 <p className="text-xs text-ink/65 leading-relaxed font-medium">
-                  Cliquez sur l'une des 5 portes ci-dessus (<strong>Je choisis</strong>, <strong>Je trouve</strong>, <strong>Je tente</strong>, <strong>Fab Lab</strong> ou <strong>Projet d'équipe</strong>) pour raconter la première aventure libre de {child.name} !
+                  Cliquez sur l'une des 5 portes ci-dessus (<strong>Je choisis</strong>,{" "}
+                  <strong>Je trouve</strong>, <strong>Je tente</strong>, <strong>Fab Lab</strong> ou{" "}
+                  <strong>Projet d'équipe</strong>) pour raconter la première aventure libre de{" "}
+                  {child.name} !
                 </p>
               </div>
             </div>

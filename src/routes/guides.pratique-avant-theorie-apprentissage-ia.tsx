@@ -18,8 +18,7 @@ const FAQ = [
       "L'IA automatise la récitation de connaissances et le code standard. Ce qui devient précieux, c'est la pensée critique, l'ingéniosité manuelle et la capacité à transformer une idée en projet concret.",
   },
   {
-    question:
-      "Mon enfant a de mauvaises notes en théorie : est-ce le signe d'un échec futur ?",
+    question: "Mon enfant a de mauvaises notes en théorie : est-ce le signe d'un échec futur ?",
     answer:
       "Non. Les examens mesurent la mémorisation formelle. Les profils manuels, créatifs ou relationnels disposent souvent d'une forte capacité d'adaptation pratique.",
   },
@@ -58,7 +57,8 @@ export const Route = createFileRoute("/guides/pratique-avant-theorie-apprentissa
         ),
         jsonLdScript(
           articleJsonLd({
-            headline: "Pourquoi la pratique doit précéder la théorie à l'ère de l'intelligence artificielle",
+            headline:
+              "Pourquoi la pratique doit précéder la théorie à l'ère de l'intelligence artificielle",
             description:
               "Comment inverser le modèle scolaire hérité pour révéler le plein potentiel pratique et intellectuel de votre enfant grâce à l'expérimentation concrète.",
             path: PATH,
@@ -125,15 +125,23 @@ function GuidePratiqueAvantTheorie() {
           Aujourd'hui, n'importe quel modèle d'intelligence artificielle est capable de rédiger un
           essai, de résoudre une équation complexe, de générer du code informatique ou de traduire
           dix langues en une fraction de seconde (consultez notre analyse sur{" "}
-          <a href="/guides/ia-apprentissage-enfant">l'IA pour aider son enfant à apprendre sans tricher</a>).{" "}
-          <strong>Le coût d'accès à la théorie s'est effondré.</strong>
+          <a href="/guides/ia-apprentissage-enfant">
+            l'IA pour aider son enfant à apprendre sans tricher
+          </a>
+          ). <strong>Le coût d'accès à la théorie s'est effondré.</strong>
         </p>
         <p>
           Dans ce nouveau contexte, continuer à évaluer nos enfants uniquement sur leur capacité à
           restituer des cours théoriques revient à les préparer à des métiers que les algorithmes
           exécutent déjà mieux qu'eux (voir nos repères pour{" "}
-          <a href="/guides/orientation-scolaire-metiers-avenir">aider son enfant à choisir son métier dès 10 ans</a> et notre{" "}
-          <a href="/guides/test-orientation-metier-enfant-futur">test d'orientation pour collégiens face à l'IA</a>).
+          <a href="/guides/orientation-scolaire-metiers-avenir">
+            aider son enfant à choisir son métier dès 10 ans
+          </a>{" "}
+          et notre{" "}
+          <a href="/guides/test-orientation-metier-enfant-futur">
+            test d'orientation pour collégiens face à l'IA
+          </a>
+          ).
         </p>
 
         <div className="rounded-3xl border border-brand/25 bg-brand/5 p-6 md:p-8">
@@ -171,8 +179,8 @@ function GuidePratiqueAvantTheorie() {
             <strong>Étape 1 : L'immersion dans le réel.</strong> L'enfant se voit confier une
             mission tangible adaptée à son âge (ex. fabriquer un mini-système d'irrigation
             goutte-à-goutte avec des bouteilles recyclées via nos{" "}
-            <a href="/guides/activites-manuelles-enfant">activités manuelles faciles</a>, créer un logo et vendre des jus de
-            bissap, concevoir un pont en bâtonnets qui supporte 1 kg).
+            <a href="/guides/activites-manuelles-enfant">activités manuelles faciles</a>, créer un
+            logo et vendre des jus de bissap, concevoir un pont en bâtonnets qui supporte 1 kg).
           </li>
           <li>
             <strong>Étape 2 : La friction et l'échec constructif.</strong> Le premier pont
@@ -198,7 +206,10 @@ function GuidePratiqueAvantTheorie() {
         <p>
           Or, dans l'économie du XXIe siècle, ce sont précisément ces profils qui prennent leur
           revanche, comme l'explique la théorie des{" "}
-          <a href="/guides/intelligences-multiples-gardner">9 formes d'intelligence de Howard Gardner</a> :
+          <a href="/guides/intelligences-multiples-gardner">
+            9 formes d'intelligence de Howard Gardner
+          </a>{" "}
+          :
         </p>
         <div className="grid gap-4 sm:grid-cols-2 mt-4">
           <div className="rounded-2xl border border-ink/10 bg-white p-5 shadow-sm">

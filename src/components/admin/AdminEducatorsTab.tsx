@@ -287,7 +287,9 @@ export function AdminEducatorsTab() {
       setIsSchoolModalOpen(false);
       void loadSchoolsData();
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Erreur lors de l'enregistrement de l'établissement.");
+      toast.error(
+        err instanceof Error ? err.message : "Erreur lors de l'enregistrement de l'établissement.",
+      );
     } finally {
       setSavingSchool(false);
     }
@@ -312,7 +314,9 @@ export function AdminEducatorsTab() {
   });
 
   const totalActiveStudents = educators.reduce((acc, curr) => acc + curr.activeChildrenCount, 0);
-  const totalVerifiedSchools = schools.filter((s) => s.status === "verified" || s.status === "partner_campus").length;
+  const totalVerifiedSchools = schools.filter(
+    (s) => s.status === "verified" || s.status === "partner_campus",
+  ).length;
   const totalLicensedQuota = schools.reduce((acc, s) => acc + (s.licensedStudentsQuota || 0), 0);
   const totalAttachedTeachers = schools.reduce((acc, s) => acc + (s.educatorsCount || 0), 0);
 
@@ -329,7 +333,8 @@ export function AdminEducatorsTab() {
               Éducation, Établissements & Campus
             </h2>
             <p className="text-sm font-medium text-ink/60">
-              Supervision des délégations parentales, annuaire officiel des écoles et quotas licences.
+              Supervision des délégations parentales, annuaire officiel des écoles et quotas
+              licences.
             </p>
           </div>
         </div>
@@ -572,7 +577,9 @@ export function AdminEducatorsTab() {
           ) : filteredSchools.length === 0 ? (
             <div className="rounded-3xl border border-dashed border-ink/20 bg-white p-12 text-center space-y-3">
               <Building2 className="size-10 text-ink/30 mx-auto" />
-              <p className="font-bold text-ink/70">Aucun établissement ne correspond aux filtres.</p>
+              <p className="font-bold text-ink/70">
+                Aucun établissement ne correspond aux filtres.
+              </p>
               <button
                 type="button"
                 onClick={openCreateSchoolModal}
@@ -620,7 +627,9 @@ export function AdminEducatorsTab() {
                           </div>
                         </td>
                         <td className="py-3 px-4">
-                          <p className="font-bold text-ink">{s.city}, {s.countryCode}</p>
+                          <p className="font-bold text-ink">
+                            {s.city}, {s.countryCode}
+                          </p>
                           <p className="text-[11px] text-ink/50">
                             {s.type === "public"
                               ? "Public"
@@ -674,9 +683,7 @@ export function AdminEducatorsTab() {
                           <p className="font-black text-indigo-700 text-sm">
                             {s.educatorsCount ?? 0} prof(s)
                           </p>
-                          <p className="text-[10px] text-ink/50">
-                            {s.classesCount ?? 0} classe(s)
-                          </p>
+                          <p className="text-[10px] text-ink/50">{s.classesCount ?? 0} classe(s)</p>
                         </td>
                         <td className="py-3 px-4 text-right">
                           <button
@@ -731,16 +738,26 @@ export function AdminEducatorsTab() {
             ) : (
               <div className="divide-y divide-ink/5">
                 {students.map((st) => (
-                  <div key={st.delegationId} className="py-3 flex items-center justify-between gap-3">
+                  <div
+                    key={st.delegationId}
+                    className="py-3 flex items-center justify-between gap-3"
+                  >
                     <div>
                       <p className="font-bold text-ink text-sm">
                         {st.childName} {st.childAge ? `(${st.childAge} ans)` : ""}
                       </p>
                       <div className="flex flex-wrap items-center gap-2 mt-0.5 text-[11px] text-ink/50">
-                        <span>Mandaté par : <strong>{st.grantedByRole === "parent" ? "Parent" : "Mentor"}</strong></span>
-                        <span>· Valide jusqu'au {new Date(st.validUntil).toLocaleDateString("fr-FR")}</span>
+                        <span>
+                          Mandaté par :{" "}
+                          <strong>{st.grantedByRole === "parent" ? "Parent" : "Mentor"}</strong>
+                        </span>
+                        <span>
+                          · Valide jusqu'au {new Date(st.validUntil).toLocaleDateString("fr-FR")}
+                        </span>
                         {st.shareParentPhone && st.parentPhone && (
-                          <span className="text-emerald-700 font-semibold">· Tél parent partagé</span>
+                          <span className="text-emerald-700 font-semibold">
+                            · Tél parent partagé
+                          </span>
                         )}
                       </div>
                     </div>
@@ -769,10 +786,14 @@ export function AdminEducatorsTab() {
                 <Building2 className="size-6 text-indigo-600" />
                 <div>
                   <h3 className="font-display font-black text-lg text-ink">
-                    {editingSchool ? "Gérer l'Établissement & Licences" : "Créer un Établissement Officiel"}
+                    {editingSchool
+                      ? "Gérer l'Établissement & Licences"
+                      : "Créer un Établissement Officiel"}
                   </h3>
                   <p className="text-xs text-ink/50">
-                    {editingSchool ? `Code : ${editingSchool.code}` : "Ajout au registre officiel Génizio Campus"}
+                    {editingSchool
+                      ? `Code : ${editingSchool.code}`
+                      : "Ajout au registre officiel Génizio Campus"}
                   </p>
                 </div>
               </div>
@@ -880,7 +901,9 @@ export function AdminEducatorsTab() {
 
                 {editingSchool && (
                   <div className="space-y-1 sm:col-span-2">
-                    <label className="font-bold text-ink/70">Code de ralliement officiel (#Code)</label>
+                    <label className="font-bold text-ink/70">
+                      Code de ralliement officiel (#Code)
+                    </label>
                     <input
                       type="text"
                       value={schoolCode}
@@ -950,7 +973,9 @@ export function AdminEducatorsTab() {
                   className="px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs shadow-xs transition-all cursor-pointer disabled:opacity-50 flex items-center gap-1.5"
                 >
                   {savingSchool && <Loader2 className="size-3.5 animate-spin" />}
-                  <span>{editingSchool ? "Enregistrer les modifications" : "Créer l'Établissement"}</span>
+                  <span>
+                    {editingSchool ? "Enregistrer les modifications" : "Créer l'Établissement"}
+                  </span>
                 </button>
               </div>
             </form>

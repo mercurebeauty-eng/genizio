@@ -108,11 +108,18 @@ export function generateSchoolCode(name: string, city: string): string {
   let initials = "";
 
   if (significant.length >= 2) {
-    initials = significant.map((w) => w[0]).join("").slice(0, 4);
+    initials = significant
+      .map((w) => w[0])
+      .join("")
+      .slice(0, 4);
   } else if (significant.length === 1) {
     initials = significant[0].slice(0, 4);
   } else {
-    initials = words.map((w) => w[0]).join("").slice(0, 3) || "GEN";
+    initials =
+      words
+        .map((w) => w[0])
+        .join("")
+        .slice(0, 3) || "GEN";
   }
 
   return `#${initials}-${cityTag}`;
@@ -141,11 +148,7 @@ export const searchSchools = createServerFn({ method: "GET" })
     const cleanQuery = rawQuery.startsWith("#") ? rawQuery.slice(1) : rawQuery;
     const limit = Math.min(Math.max(data?.limit || 20, 1), 50);
 
-    let queryBuilder = db
-      .from("schools")
-      .select("*")
-      .neq("status", "archived")
-      .limit(limit);
+    let queryBuilder = db.from("schools").select("*").neq("status", "archived").limit(limit);
 
     if (cleanQuery.length >= 2) {
       const lower = cleanQuery.toLowerCase();
@@ -154,7 +157,9 @@ export const searchSchools = createServerFn({ method: "GET" })
         `name.ilike.%${lower}%,city.ilike.%${lower}%,code.ilike.%${upper}%,slug.ilike.%${lower}%`,
       );
     } else {
-      queryBuilder = queryBuilder.order("status", { ascending: false }).order("name", { ascending: true });
+      queryBuilder = queryBuilder
+        .order("status", { ascending: false })
+        .order("name", { ascending: true });
     }
 
     const { data: rows, error } = await queryBuilder;
@@ -188,7 +193,10 @@ export const searchSchools = createServerFn({ method: "GET" })
   });
 
 const SuggestSchoolInputSchema = z.object({
-  name: z.string().min(2, "Le nom de l'établissement doit comporter au moins 2 caractères").max(120),
+  name: z
+    .string()
+    .min(2, "Le nom de l'établissement doit comporter au moins 2 caractères")
+    .max(120),
   city: z.string().min(2, "La ville est requise").max(80),
   countryCode: z.string().length(2).default("BF"),
   type: z
@@ -208,7 +216,8 @@ export const suggestSchool = createServerFn({ method: "POST" })
   .handler(async ({ data, context }): Promise<SchoolItem> => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const db = supabaseAdmin as any;
-    const userId = (context as any).userId || (context as any).claims?.sub || (context as any).user?.id;
+    const userId =
+      (context as any).userId || (context as any).claims?.sub || (context as any).user?.id;
 
     const trimmedName = data.name.trim();
     const trimmedCity = data.city.trim();
@@ -279,7 +288,9 @@ export const suggestSchool = createServerFn({ method: "POST" })
 
     if (error || !created) {
       console.error("Erreur suggestSchool:", error);
-      throw new Error(`Impossible d'enregistrer l'établissement : ${error?.message || "Erreur serveur"}`);
+      throw new Error(
+        `Impossible d'enregistrer l'établissement : ${error?.message || "Erreur serveur"}`,
+      );
     }
 
     return {
@@ -314,7 +325,8 @@ export const getMySchoolOverview = createServerFn({ method: "GET" })
   .handler(async ({ context }): Promise<MySchoolOverview> => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const db = supabaseAdmin as any;
-    const userId = (context as any).userId || (context as any).claims?.sub || (context as any).user?.id;
+    const userId =
+      (context as any).userId || (context as any).claims?.sub || (context as any).user?.id;
 
     const { data: myProfile } = await db
       .from("educator_profiles")
@@ -352,12 +364,19 @@ export const getMySchoolOverview = createServerFn({ method: "GET" })
 
     let colleaguesQuery = db
       .from("educator_profiles")
-      .select("id, full_name, handle, class_code, professional_role, is_verified, whatsapp_phone, created_at, school_id, organization_name");
+      .select(
+        "id, full_name, handle, class_code, professional_role, is_verified, whatsapp_phone, created_at, school_id, organization_name",
+      );
 
     if (schoolRow?.id) {
-      colleaguesQuery = colleaguesQuery.or(`school_id.eq.${schoolRow.id},organization_name.ilike.${schoolRow.name}`);
+      colleaguesQuery = colleaguesQuery.or(
+        `school_id.eq.${schoolRow.id},organization_name.ilike.${schoolRow.name}`,
+      );
     } else if (myProfile.organization_name) {
-      colleaguesQuery = colleaguesQuery.ilike("organization_name", myProfile.organization_name.trim());
+      colleaguesQuery = colleaguesQuery.ilike(
+        "organization_name",
+        myProfile.organization_name.trim(),
+      );
     }
 
     const { data: rows } = await colleaguesQuery.order("created_at", { ascending: true });
@@ -369,7 +388,11 @@ export const getMySchoolOverview = createServerFn({ method: "GET" })
         id: r.id,
         fullName: r.full_name,
         handle: r.handle ? (r.handle.startsWith("@") ? r.handle : `@${r.handle}`) : null,
-        classCode: r.class_code ? (r.class_code.startsWith("#") ? r.class_code : `#${r.class_code}`) : null,
+        classCode: r.class_code
+          ? r.class_code.startsWith("#")
+            ? r.class_code
+            : `#${r.class_code}`
+          : null,
         professionalRole: r.professional_role,
         isVerified: Boolean(r.is_verified),
         whatsappPhone: r.whatsapp_phone || null,
@@ -430,9 +453,7 @@ export const listSchoolsAdmin = createServerFn({ method: "GET" })
       return [];
     }
 
-    const { data: educators } = await db
-      .from("educator_profiles")
-      .select("school_id, class_code");
+    const { data: educators } = await db.from("educator_profiles").select("school_id, class_code");
 
     const educatorCountMap = new Map<string, number>();
     const classesCountMap = new Map<string, Set<string>>();
@@ -558,7 +579,9 @@ const UpdateSchoolAdminSchema = z.object({
   id: z.string().uuid(),
   name: z.string().min(2).optional(),
   city: z.string().min(2).optional(),
-  type: z.enum(["public", "private_secular", "private_religious", "international", "other"]).optional(),
+  type: z
+    .enum(["public", "private_secular", "private_religious", "international", "other"])
+    .optional(),
   status: z.enum(["community", "verified", "partner_campus", "archived"]).optional(),
   pricingTier: z.enum(["free", "pilot", "standard_campus", "sponsored"]).optional(),
   licensedStudentsQuota: z.number().min(0).optional(),
@@ -590,13 +613,17 @@ export const updateSchoolAdmin = createServerFn({ method: "POST" })
     if (data.type !== undefined) updatePayload.type = data.type;
     if (data.status !== undefined) updatePayload.status = data.status;
     if (data.pricingTier !== undefined) updatePayload.pricing_tier = data.pricingTier;
-    if (data.licensedStudentsQuota !== undefined) updatePayload.licensed_students_quota = data.licensedStudentsQuota;
+    if (data.licensedStudentsQuota !== undefined)
+      updatePayload.licensed_students_quota = data.licensedStudentsQuota;
     if (data.address !== undefined) updatePayload.address = data.address?.trim() || null;
-    if (data.contactEmail !== undefined) updatePayload.contact_email = data.contactEmail?.trim() || null;
-    if (data.contactPhone !== undefined) updatePayload.contact_phone = data.contactPhone?.trim() || null;
+    if (data.contactEmail !== undefined)
+      updatePayload.contact_email = data.contactEmail?.trim() || null;
+    if (data.contactPhone !== undefined)
+      updatePayload.contact_phone = data.contactPhone?.trim() || null;
     if (data.websiteUrl !== undefined) updatePayload.website_url = data.websiteUrl?.trim() || null;
     if (data.leaderUserId !== undefined) updatePayload.leader_user_id = data.leaderUserId;
-    if (data.sponsorCampaignId !== undefined) updatePayload.sponsor_campaign_id = data.sponsorCampaignId;
+    if (data.sponsorCampaignId !== undefined)
+      updatePayload.sponsor_campaign_id = data.sponsorCampaignId;
     if (data.code !== undefined) updatePayload.code = formatSchoolCode(data.code);
 
     const { data: updated, error } = await db

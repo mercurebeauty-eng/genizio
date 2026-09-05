@@ -1,4 +1,10 @@
-import React, { useState } from "react";
+import { useServerFn } from "@tanstack/react-start";
+import { supabase } from "@/integrations/supabase/client";
+import {
+  updateProfileQuotaAdmin,
+  togglePassportUnlock,
+} from "@/lib/products.functions";
+import React, { useState, useEffect } from "react";
 import {
   Users,
   Award,
@@ -19,15 +25,14 @@ import { toast } from "sonner";
 import type { ExecutiveKPIs, ParentBIRC } from "@/lib/admin-os.functions";
 import { AdminPagination } from "./AdminPagination";
 
-interface AdminExecutiveTabProps {
+export interface AdminExecutiveTabProps {
   kpis: ExecutiveKPIs;
   parents: ParentBIRC[];
   total: number;
   totalPages: number;
   page: number;
   onPageChange: (page: number) => void;
-  onTogglePassport?: (childId: string, unlock: boolean) => Promise<void>;
-  onUpdateQuota?: (userId: string, quota: number) => Promise<void>;
+  onDataChanged?: () => void | Promise<void>;
   onRefresh?: () => void;
   isRefreshing?: boolean;
 }
@@ -39,28 +44,58 @@ export function AdminExecutiveTab({
   totalPages,
   page,
   onPageChange,
-  onTogglePassport,
-  onUpdateQuota,
+  onDataChanged,
   onRefresh,
   isRefreshing = false,
 }: AdminExecutiveTabProps) {
+  const [localParents, setLocalParents] = useState<ParentBIRC[]>(parents);
+  useEffect(() => {
+    setLocalParents(parents);
+  }, [parents]);
+
   const [pendingPassportChildId, setPendingPassportChildId] = useState<string | null>(null);
   const [pendingQuotaUserId, setPendingQuotaUserId] = useState<string | null>(null);
   const [quotaDraft, setQuotaDraft] = useState<Record<string, number>>({});
 
+  const updateProfileQuotaFn = useServerFn(updateProfileQuotaAdmin);
+  const toggleUnlockFn = useServerFn(togglePassportUnlock);
+
   const handleSaveQuota = async (userId: string) => {
-    if (!onUpdateQuota || pendingQuotaUserId === userId) return;
-    const value = quotaDraft[userId];
-    if (value === undefined) return;
+    if (pendingQuotaUserId === userId) return;
+    const quota = quotaDraft[userId];
+    if (quota === undefined) return;
+    
     setPendingQuotaUserId(userId);
+    const previousParents = localParents;
+    
+    // Optimistic UI
+    setLocalParents((prev) =>
+      prev.map((p) => (p.id === userId ? { ...p, quotaOverride: quota > 0 ? quota : 0 } : p)),
+    );
+
     try {
-      await onUpdateQuota(userId, value);
+      const res = await updateProfileQuotaFn({ data: { userId, quota } });
+      if (res.success) {
+        toast.success(
+          quota > 0
+            ? `Couverture de profils définie sur ${quota} (0 = auto).`
+            : "Couverture de profils remise sur auto.",
+        );
+        const ch = supabase.channel("admin-os-global-sync");
+        await ch.send({
+          type: "broadcast",
+          event: "quota_updated",
+          payload: { userId, quota, timestamp: Date.now() },
+        });
+        await onDataChanged?.();
+      }
       setQuotaDraft((prev) => {
         const next = { ...prev };
         delete next[userId];
         return next;
       });
     } catch (err: any) {
+      setLocalParents(previousParents);
       toast.error(
         "Erreur lors de la mise à jour du quota de profils: " + (err?.message || "Erreur inconnue"),
       );
@@ -70,11 +105,39 @@ export function AdminExecutiveTab({
   };
 
   const handleTogglePassportClick = async (childId: string, unlock: boolean) => {
-    if (!onTogglePassport || pendingPassportChildId === childId) return;
+    if (pendingPassportChildId === childId) return;
     setPendingPassportChildId(childId);
+    
+    const previousParents = localParents;
+    // Optimistic UI
+    setLocalParents((prev) =>
+      prev.map((p) => ({
+        ...p,
+        children: p.children?.map((c) =>
+          c.id === childId ? { ...c, pdfUnlocked: unlock } : c,
+        ),
+      })),
+    );
+
     try {
-      await onTogglePassport(childId, unlock);
+      const res = await toggleUnlockFn({ data: { childId, unlock } });
+      if (res.ok) {
+        toast.success(
+          unlock ? "Passeport d'Excellence débloqué !" : "Passeport d'Excellence reverrouillé.",
+        );
+        const ch = supabase.channel("admin-os-global-sync");
+        await ch.send({
+          type: "broadcast",
+          event: "passport_updated",
+          payload: { childId, unlock, timestamp: Date.now() },
+        });
+        await onDataChanged?.();
+      } else {
+        toast.error("Échec de la modification du statut passeport.");
+        setLocalParents(previousParents);
+      }
     } catch (err: any) {
+      setLocalParents(previousParents);
       toast.error(
         "Erreur lors du changement d'accès passeport: " + (err?.message || "Erreur inconnue"),
       );
@@ -227,7 +290,7 @@ export function AdminExecutiveTab({
               </tr>
             </thead>
             <tbody className="divide-y-2 divide-ink/5">
-              {parents.map((parent) => {
+              {localParents.map((parent) => {
                 const whatsappUrl =
                   parent.whatsappUrl ||
                   (parent.phone ? `https://wa.me/${parent.phone.replace(/[^0-9]/g, "")}` : null);

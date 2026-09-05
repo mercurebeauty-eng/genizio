@@ -1,11 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import {
-  pageMeta,
-  jsonLdScript,
-  faqPageJsonLd,
-  breadcrumbJsonLd,
-  articleJsonLd,
-} from "@/lib/seo";
+import { pageMeta, jsonLdScript, faqPageJsonLd, breadcrumbJsonLd, articleJsonLd } from "@/lib/seo";
 import { GuideLayout } from "@/components/guides/GuideLayout";
 import { Button } from "@/components/ui/button";
 import { ArrowRight, Sparkles, Scissors, Coins, Flame } from "lucide-react";
@@ -15,7 +9,8 @@ const PATH = "/guides/sac-a-dos-marques-challenge-creativite-enfant";
 
 const FAQ = [
   {
-    question: "Faut-il céder quand son enfant réclame une marque coûteuse comme North Face ou Nike ?",
+    question:
+      "Faut-il céder quand son enfant réclame une marque coûteuse comme North Face ou Nike ?",
     answer:
       "Céder à chaque envie installe l'idée que l'estime de soi dépend d'un logo. Mais refuser sans dialogue isole l'adolescent de son groupe. La bonne réponse : financer le coût d'un sac standard solide, et lui proposer de mériter ou financer lui-même le surcoût.",
   },
@@ -69,7 +64,8 @@ export const Route = createFileRoute("/guides/sac-a-dos-marques-challenge-creati
         ),
         jsonLdScript(
           articleJsonLd({
-            headline: "Votre enfant réclame un sac de marque ? Challengez-le : et s'il créait son équipement ?",
+            headline:
+              "Votre enfant réclame un sac de marque ? Challengez-le : et s'il créait son équipement ?",
             description:
               "Méthode pour transformer la pression des marques scolaires en opportunité d'apprentissage de l'autonomie, du budget et de la créativité manuelle.",
             path: PATH,
@@ -128,12 +124,17 @@ function Guide() {
 
       <h2>1. Comprendre le vrai besoin derrière la demande de marque</h2>
       <p>
-        Quand un jeune réclame une marque précise, ce n'est pas un caprice isolé. C'est un besoin d'appartenance. À cet âge, le vêtement sert d'armure sociale.
+        Quand un jeune réclame une marque précise, ce n'est pas un caprice isolé. C'est un besoin
+        d'appartenance. À cet âge, le vêtement sert d'armure sociale.
       </p>
       <p>
         Plutôt que d'entrer dans un bras de fer (retrouvez nos repères de{" "}
-        <a href="/guides/discipline-positive-sans-punition">discipline positive sans punition</a>), validez son désir tout en sollicitant son{" "}
-        <a href="/guides/autonomie-responsabilite-maison">autonomie et son sens des responsabilités</a>.
+        <a href="/guides/discipline-positive-sans-punition">discipline positive sans punition</a>),
+        validez son désir tout en sollicitant son{" "}
+        <a href="/guides/autonomie-responsabilite-maison">
+          autonomie et son sens des responsabilités
+        </a>
+        .
       </p>
 
       <h2>2. Les 3 défis pour transformer le consommateur en producteur</h2>
@@ -145,7 +146,8 @@ function Guide() {
             Défi 1 : La Customisation Unique
           </div>
           <p className="text-sm text-ink/80 leading-relaxed">
-            Un sac neutre en toile brute, quelques chutes de wax et de la colle textile : l'adolescent crée un modèle collector que personne d'autre ne portera (idées dans nos{" "}
+            Un sac neutre en toile brute, quelques chutes de wax et de la colle textile :
+            l'adolescent crée un modèle collector que personne d'autre ne portera (idées dans nos{" "}
             <a href="/guides/activites-manuelles-enfant">activités manuelles</a>).
           </p>
         </div>
@@ -156,9 +158,10 @@ function Guide() {
             Défi 2 : Le Projet Co-Financement
           </div>
           <p className="text-sm text-ink/80 leading-relaxed">
-            Fixez le budget d'un sac standard. S'il veut le modèle premium, il finance la différence par son épargne (voir notre méthode pour{" "}
-            <a href="/guides/comment-gerer-argent-de-poche-enfant">gérer son argent de poche</a>) ou nos{" "}
-            <a href="/guides/defis-pour-adolescents">défis pour adolescents</a>.
+            Fixez le budget d'un sac standard. S'il veut le modèle premium, il finance la différence
+            par son épargne (voir notre méthode pour{" "}
+            <a href="/guides/comment-gerer-argent-de-poche-enfant">gérer son argent de poche</a>) ou
+            nos <a href="/guides/defis-pour-adolescents">défis pour adolescents</a>.
           </p>
         </div>
 
@@ -175,13 +178,20 @@ function Guide() {
       </div>
 
       <h2>3. Ce que cette expérience apprend pour la vie</h2>
-      <p>
-        En relevant ce défi, votre enfant apprend trois leçons inestimables pour son avenir :
-      </p>
+      <p>En relevant ce défi, votre enfant apprend trois leçons inestimables pour son avenir :</p>
       <ol className="space-y-3 my-6">
-        <li><strong>L'effort a une valeur mesurable :</strong> Il comprend le lien direct entre travail, patience et argent.</li>
-        <li><strong>La fierté du « Fait Maison » :</strong> Il passe du statut de suiveur passif à celui de créateur original.</li>
-        <li><strong>L'esprit d'initiative :</strong> Il découvre qu'il a le pouvoir d'agir sur son environnement.</li>
+        <li>
+          <strong>L'effort a une valeur mesurable :</strong> Il comprend le lien direct entre
+          travail, patience et argent.
+        </li>
+        <li>
+          <strong>La fierté du « Fait Maison » :</strong> Il passe du statut de suiveur passif à
+          celui de créateur original.
+        </li>
+        <li>
+          <strong>L'esprit d'initiative :</strong> Il découvre qu'il a le pouvoir d'agir sur son
+          environnement.
+        </li>
       </ol>
 
       <div className="my-8 not-prose rounded-3xl border border-brand/20 bg-brand/5 p-6 sm:p-8">
@@ -189,16 +199,27 @@ function Guide() {
           Développer l'ingéniosité pratique avec Génizio
         </h3>
         <p className="mt-2 text-ink/80 leading-relaxed">
-          Génizio encourage les enfants à fabriquer, construire, réparer et entreprendre à travers des missions amusantes guidées par <strong>Naya</strong>. Chaque création enrichit son passeport d'accomplissements.
+          Génizio encourage les enfants à fabriquer, construire, réparer et entreprendre à travers
+          des missions amusantes guidées par <strong>Naya</strong>. Chaque création enrichit son
+          passeport d'accomplissements.
         </p>
         <div className="mt-6 flex flex-wrap gap-4">
-          <Button asChild size="lg" className="rounded-full bg-brand text-white shadow-md hover:bg-brand-dark transition-all">
+          <Button
+            asChild
+            size="lg"
+            className="rounded-full bg-brand text-white shadow-md hover:bg-brand-dark transition-all"
+          >
             <Link to="/auth">
               Lancer un défi à mon enfant
               <ArrowRight className="ml-2 h-4 w-4" />
             </Link>
           </Button>
-          <Button asChild variant="outline" size="lg" className="rounded-full border-ink/20 bg-white text-ink hover:bg-surface hover:text-brand transition-all">
+          <Button
+            asChild
+            variant="outline"
+            size="lg"
+            className="rounded-full border-ink/20 bg-white text-ink hover:bg-surface hover:text-brand transition-all"
+          >
             <Link to="/guides/activites-manuelles-enfant">
               Voir les idées d'activités manuelles
             </Link>

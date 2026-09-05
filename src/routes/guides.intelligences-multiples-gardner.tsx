@@ -66,8 +66,7 @@ const INTELLIGENCES = [
   {
     name: "4. Corporelle & kinesthésique",
     what: "Apprentissage par le corps, le toucher et la dextérité manuelle.",
-    signs:
-      "A besoin de manipuler pour comprendre. Apprend en bougeant.",
+    signs: "A besoin de manipuler pour comprendre. Apprend en bougeant.",
   },
   {
     name: "5. Musicale & rythmique",
@@ -90,8 +89,7 @@ const INTELLIGENCES = [
   {
     name: "8. Naturaliste & écologique",
     what: "Observation, catégorisation et compréhension du vivant.",
-    signs:
-      "Passionné par la faune et la flore. Remarque les moindres détails naturels.",
+    signs: "Passionné par la faune et la flore. Remarque les moindres détails naturels.",
   },
   {
     name: "9. Existentielle (philosophique)",
@@ -172,8 +170,14 @@ function Guide() {
       path={PATH}
       related={[
         { label: "Enfant HPI : les vrais signes", to: "/guides/potentiel-haut-potentiel-enfant" },
-        { label: "Test de personnalité : 4 limites", to: "/guides/test-de-personnalite-enfant-talents" },
-        { label: "Autisme & TDAH : atouts uniques", to: "/guides/autisme-tdah-apprentissage-forces-reelles" },
+        {
+          label: "Test de personnalité : 4 limites",
+          to: "/guides/test-de-personnalite-enfant-talents",
+        },
+        {
+          label: "Autisme & TDAH : atouts uniques",
+          to: "/guides/autisme-tdah-apprentissage-forces-reelles",
+        },
         { label: "24 activités éducatives (6-12 ans)", to: "/guides/activites-educatives-enfant" },
       ]}
     >
@@ -189,15 +193,21 @@ function Guide() {
 
       <h2>D'où vient la théorie des intelligences multiples ?</h2>
       <p>
-        En 1983, le chercheur américain <strong>Howard Gardner</strong> (Harvard) publie <em>Frames of Mind</em>. Un pavé dans la mare. Sa thèse est limpide : le QI traditionnel ne mesure qu'une fraction des capacités humaines. Les compétences logico-mathématiques et verbales prennent toute la place, au détriment du reste.
+        En 1983, le chercheur américain <strong>Howard Gardner</strong> (Harvard) publie{" "}
+        <em>Frames of Mind</em>. Un pavé dans la mare. Sa thèse est limpide : le QI traditionnel ne
+        mesure qu'une fraction des capacités humaines. Les compétences logico-mathématiques et
+        verbales prennent toute la place, au détriment du reste.
       </p>
       <p>
-        Gardner formalise d'abord 7 intelligences. Il y ajoute plus tard le profil naturaliste et examine la composante existentielle. Constat neurobiologique fondamental : <strong>notre cerveau abrite plusieurs circuits de traitement distincts</strong>.
+        Gardner formalise d'abord 7 intelligences. Il y ajoute plus tard le profil naturaliste et
+        examine la composante existentielle. Constat neurobiologique fondamental :{" "}
+        <strong>notre cerveau abrite plusieurs circuits de traitement distincts</strong>.
       </p>
 
       <h2>Les 9 formes d'intelligence : comment les repérer chez votre enfant</h2>
       <p>
-        Voici les 9 profils adaptés aux parents. Oubliez les QCM abstraits : observez simplement ce qu'il entreprend au quotidien.
+        Voici les 9 profils adaptés aux parents. Oubliez les QCM abstraits : observez simplement ce
+        qu'il entreprend au quotidien.
       </p>
 
       <div className="my-8 space-y-5">
@@ -216,39 +226,59 @@ function Guide() {
 
       <h2>Zoom sur l'intelligence existentielle : la 9e forme méconnue</h2>
       <p>
-        Difficile à évaluer sur un bulletin scolaire, l'<strong>intelligence existentielle</strong> (ou philosophique) s'exprime pourtant dès l'âge de 5 ou 6 ans.
+        Difficile à évaluer sur un bulletin scolaire, l'<strong>intelligence existentielle</strong>{" "}
+        (ou philosophique) s'exprime pourtant dès l'âge de 5 ou 6 ans.
       </p>
       <p>
-        L'enfant vous posera des questions directes : <em>« Pourquoi les humains meurent-ils ? »</em>, <em>« Qui a décidé ce qui est juste ? »</em>, <em>« D'où vient l'univers ? »</em>. Ces enfants ont un besoin vital de comprendre le <strong>sens</strong> de ce qu'ils apprennent. Face au « par cœur » non expliqué, ils décrochent par manque de substance philosophique (voir nos conseils pour{" "}
-        <a href="/guides/decrochage-scolaire-confiance-enfant">redonner confiance à un enfant qui se décourage à l'école</a>).
+        L'enfant vous posera des questions directes :{" "}
+        <em>« Pourquoi les humains meurent-ils ? »</em>,{" "}
+        <em>« Qui a décidé ce qui est juste ? »</em>, <em>« D'où vient l'univers ? »</em>. Ces
+        enfants ont un besoin vital de comprendre le <strong>sens</strong> de ce qu'ils apprennent.
+        Face au « par cœur » non expliqué, ils décrochent par manque de substance philosophique
+        (voir nos conseils pour{" "}
+        <a href="/guides/decrochage-scolaire-confiance-enfant">
+          redonner confiance à un enfant qui se décourage à l'école
+        </a>
+        ).
       </p>
 
       <h2>Mon enfant est-il surdoué, HPI ou précoce ?</h2>
       <p>
-        Confusion fréquente : exceller dans plusieurs intelligences ne signifie pas être HPI. <strong>Ce sont deux grilles distinctes</strong>.
+        Confusion fréquente : exceller dans plusieurs intelligences ne signifie pas être HPI.{" "}
+        <strong>Ce sont deux grilles distinctes</strong>.
       </p>
       <p>
-        Le Haut Potentiel Intellectuel relève d'une vitesse de traitement global validée par un psychologue (WISC-V). Si vous observez un décalage marqué, consultez notre{" "}
-        <a href="/guides/potentiel-haut-potentiel-enfant">dossier sur les signes réels du haut potentiel (HPI)</a>. Dans tous les cas, nourrir ses talents réels reste la meilleure réponse éducative.
+        Le Haut Potentiel Intellectuel relève d'une vitesse de traitement global validée par un
+        psychologue (WISC-V). Si vous observez un décalage marqué, consultez notre{" "}
+        <a href="/guides/potentiel-haut-potentiel-enfant">
+          dossier sur les signes réels du haut potentiel (HPI)
+        </a>
+        . Dans tous les cas, nourrir ses talents réels reste la meilleure réponse éducative.
       </p>
 
       <h2>Comment utiliser les forces de votre enfant comme passerelles</h2>
       <p>
-        La règle d'or : ne jamais figer un enfant dans une case unique. Utilisez plutôt un talent dominant pour débloquer une matière difficile :
+        La règle d'or : ne jamais figer un enfant dans une case unique. Utilisez plutôt un talent
+        dominant pour débloquer une matière difficile :
       </p>
       <ul>
         <li>
           <strong>Votre enfant bouge sans arrêt (kinesthésique) ?</strong> Proposez-lui des{" "}
-          <a href="/guides/activites-manuelles-enfant">activités manuelles</a> et découvrez nos repères pour{" "}
-          <a href="/guides/enfant-agite-concentration">canaliser un enfant agité par le mouvement</a>.
+          <a href="/guides/activites-manuelles-enfant">activités manuelles</a> et découvrez nos
+          repères pour{" "}
+          <a href="/guides/enfant-agite-concentration">
+            canaliser un enfant agité par le mouvement
+          </a>
+          .
         </li>
         <li>
-          <strong>Il est très sensible et réfléchi (intrapersonnel) ?</strong> Aidez-le à poser des mots précis avec nos{" "}
+          <strong>Il est très sensible et réfléchi (intrapersonnel) ?</strong> Aidez-le à poser des
+          mots précis avec nos{" "}
           <a href="/guides/gestion-colere-emotions-enfant">5 outils pour apaiser la frustration</a>.
         </li>
         <li>
-          <strong>Il est passionné de logique (logico-spatial) ?</strong> Nourrissez sa curiosité avec nos{" "}
-          <a href="/guides/activites-educatives-enfant">24 activités éducatives maison</a>.
+          <strong>Il est passionné de logique (logico-spatial) ?</strong> Nourrissez sa curiosité
+          avec nos <a href="/guides/activites-educatives-enfant">24 activités éducatives maison</a>.
         </li>
       </ul>
 
@@ -258,15 +288,24 @@ function Guide() {
         </h3>
         <p className="text-sm text-ink/80 leading-relaxed mb-3">
           Oubliez les QCM théoriques (voir notre enquête sur les{" "}
-          <a href="/guides/test-de-personnalite-enfant-talents" className="underline font-semibold text-brand">
+          <a
+            href="/guides/test-de-personnalite-enfant-talents"
+            className="underline font-semibold text-brand"
+          >
             limites des tests de personnalité pour enfants
-          </a>). Pendant 3 jours, observez simplement votre enfant dans ses moments de liberté totale :
+          </a>
+          ). Pendant 3 jours, observez simplement votre enfant dans ses moments de liberté totale :
         </p>
         <ul className="text-sm text-ink/80 leading-relaxed space-y-1">
           <li>• Se met-il à fredonner ou reproduire des rythmes ? (Musicale)</li>
           <li>• Dessine-t-il les plans d'un monde imaginaire ? (Spatiale)</li>
-          <li>• Vient-il négocier ou organiser un jeu pour ses frères et sœurs ? (Interpersonnelle)</li>
-          <li>• Vous interroge-t-il sur les mystères de la nature ou de l'univers ? (Naturaliste / Existentielle)</li>
+          <li>
+            • Vient-il négocier ou organiser un jeu pour ses frères et sœurs ? (Interpersonnelle)
+          </li>
+          <li>
+            • Vous interroge-t-il sur les mystères de la nature ou de l'univers ? (Naturaliste /
+            Existentielle)
+          </li>
         </ul>
         <p className="text-sm text-ink/80 leading-relaxed mt-3">
           Ce sont ces réalisations concrètes qui révèlent sa trajectoire.
@@ -275,10 +314,14 @@ function Guide() {
 
       <h2>Ce que fait Génizio au quotidien</h2>
       <p>
-        L'application Génizio ne pose aucun diagnostic scolaire. Elle propose des défis concrets du quotidien répartis sur les 9 formes d'intelligence : construire un objet, calculer le budget d'un plat familial, inventer une histoire, observer la trajectoire du soleil.
+        L'application Génizio ne pose aucun diagnostic scolaire. Elle propose des défis concrets du
+        quotidien répartis sur les 9 formes d'intelligence : construire un objet, calculer le budget
+        d'un plat familial, inventer une histoire, observer la trajectoire du soleil.
       </p>
       <p>
-        En photographiant le résultat de chaque défi réussi, vous construisez pas à pas le <strong>Passeport de Talents</strong> de votre enfant, fondé sur ses victoires réelles et son génie propre.
+        En photographiant le résultat de chaque défi réussi, vous construisez pas à pas le{" "}
+        <strong>Passeport de Talents</strong> de votre enfant, fondé sur ses victoires réelles et
+        son génie propre.
       </p>
 
       <h2>Questions fréquentes (FAQ)</h2>

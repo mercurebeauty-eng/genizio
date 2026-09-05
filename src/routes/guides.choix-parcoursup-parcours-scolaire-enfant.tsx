@@ -1,11 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import {
-  pageMeta,
-  jsonLdScript,
-  faqPageJsonLd,
-  breadcrumbJsonLd,
-  articleJsonLd,
-} from "@/lib/seo";
+import { pageMeta, jsonLdScript, faqPageJsonLd, breadcrumbJsonLd, articleJsonLd } from "@/lib/seo";
 import { GuideLayout } from "@/components/guides/GuideLayout";
 import { Button } from "@/components/ui/button";
 import { ArrowRight, Award, FolderCheck, CheckCircle2, ShieldCheck } from "lucide-react";
@@ -69,7 +63,8 @@ export const Route = createFileRoute("/guides/choix-parcoursup-parcours-scolaire
         ),
         jsonLdScript(
           articleJsonLd({
-            headline: "Choix des vœux et parcours scolaire : pourquoi le vrai profil de votre enfant dépasse ses bulletins",
+            headline:
+              "Choix des vœux et parcours scolaire : pourquoi le vrai profil de votre enfant dépasse ses bulletins",
             description:
               "Conseils pour aborder l'orientation et Parcoursup sans angoisse en valorisant les talents concrets et les réalisations de votre enfant.",
             path: PATH,
@@ -128,24 +123,37 @@ function Guide() {
 
       <h2>1. Le mythe du « choix unique et définitif »</h2>
       <p>
-        L'un des plus grands générateurs d'anxiété chez les jeunes et leurs parents est l'idée reçue selon laquelle une décision prise à 15 ou 18 ans conditionnerait irrémédiablement toute une vie.
+        L'un des plus grands générateurs d'anxiété chez les jeunes et leurs parents est l'idée reçue
+        selon laquelle une décision prise à 15 ou 18 ans conditionnerait irrémédiablement toute une
+        vie.
       </p>
-      <p>
-        Dans la réalité économique actuelle :
-      </p>
+      <p>Dans la réalité économique actuelle :</p>
       <ul>
-        <li>Une personne active change en moyenne de métier ou d'orientation majeure 4 à 6 fois au cours de sa vie.</li>
-        <li>Les compétences les plus valorisées (rigueur d'exécution, adaptabilité, communication) sont transversales et s'ancrent dans les{" "}
-        <a href="/guides/intelligences-multiples-gardner">9 formes d'intelligence dominantes</a>.</li>
-        <li>Pour aider votre enfant à mûrir ses réflexions dès le collège, découvrez notre{" "}
-        <a href="/guides/test-orientation-metier-enfant-futur">test d'orientation collégien spécial IA</a> et nos enquêtes pour{" "}
-        <a href="/guides/orientation-scolaire-metiers-avenir">choisir son métier dès 10 ans</a>.</li>
+        <li>
+          Une personne active change en moyenne de métier ou d'orientation majeure 4 à 6 fois au
+          cours de sa vie.
+        </li>
+        <li>
+          Les compétences les plus valorisées (rigueur d'exécution, adaptabilité, communication)
+          sont transversales et s'ancrent dans les{" "}
+          <a href="/guides/intelligences-multiples-gardner">9 formes d'intelligence dominantes</a>.
+        </li>
+        <li>
+          Pour aider votre enfant à mûrir ses réflexions dès le collège, découvrez notre{" "}
+          <a href="/guides/test-orientation-metier-enfant-futur">
+            test d'orientation collégien spécial IA
+          </a>{" "}
+          et nos enquêtes pour{" "}
+          <a href="/guides/orientation-scolaire-metiers-avenir">choisir son métier dès 10 ans</a>.
+        </li>
       </ul>
 
       <h2>2. Construire un « Passeport de Réalisations » dès le collège</h2>
       <p>
-        Comment faire sortir du lot le profil de votre enfant, au-delà de ses bulletins de notes (voir nos clés de{" "}
-        <a href="/guides/reussite-scolaire-aider-enfant">réussite scolaire sereine</a>) ? En l'aidant à documenter ce qu'il accomplit concrètement :
+        Comment faire sortir du lot le profil de votre enfant, au-delà de ses bulletins de notes
+        (voir nos clés de{" "}
+        <a href="/guides/reussite-scolaire-aider-enfant">réussite scolaire sereine</a>) ? En
+        l'aidant à documenter ce qu'il accomplit concrètement :
       </p>
 
       <div className="my-6 grid gap-4 sm:grid-cols-3">
@@ -155,7 +163,8 @@ function Guide() {
             Les projets finis
           </div>
           <p className="text-sm text-ink/80 leading-relaxed">
-            Un site web créé, un meuble restauré, un projet d'écriture ou une micro-entreprise du week-end issue de nos{" "}
+            Un site web créé, un meuble restauré, un projet d'écriture ou une micro-entreprise du
+            week-end issue de nos{" "}
             <a href="/guides/defis-pour-adolescents">12 défis stimulants pour adolescents</a>.
           </p>
         </div>
@@ -166,7 +175,8 @@ function Guide() {
             Les engagements réels
           </div>
           <p className="text-sm text-ink/80 leading-relaxed">
-            L'aide régulière au quartier, l'animation d'une équipe sportive ou le mentorat fraternel.
+            L'aide régulière au quartier, l'animation d'une équipe sportive ou le mentorat
+            fraternel.
           </p>
         </div>
 
@@ -177,24 +187,31 @@ function Guide() {
           </div>
           <p className="text-sm text-ink/80 leading-relaxed">
             Avoir surmonté une difficulté scolaire ou personnelle (consultez notre guide sur le{" "}
-            <a href="/guides/decrochage-scolaire-confiance-enfant">décrochage scolaire et la reconquête de la confiance</a>).
+            <a href="/guides/decrochage-scolaire-confiance-enfant">
+              décrochage scolaire et la reconquête de la confiance
+            </a>
+            ).
           </p>
         </div>
       </div>
 
       <h2>3. La méthode des 3 cercles pour sélectionner ses choix d'orientation</h2>
       <p>
-        Au moment de hiérarchiser les choix scolaires, posez-vous avec votre enfant et classez ses souhaits en 3 cercles équilibrés :
+        Au moment de hiérarchiser les choix scolaires, posez-vous avec votre enfant et classez ses
+        souhaits en 3 cercles équilibrés :
       </p>
       <ol className="space-y-3 my-6">
         <li>
-          <strong>Le Cercle d'Ambition (2 à 3 vœux) :</strong> Les filières d'excellence ou passionnées qui le font rêver, même si le niveau d'admission est sélectif.
+          <strong>Le Cercle d'Ambition (2 à 3 vœux) :</strong> Les filières d'excellence ou
+          passionnées qui le font rêver, même si le niveau d'admission est sélectif.
         </li>
         <li>
-          <strong>Le Cercle de Cohérence (4 à 5 vœux) :</strong> Des formations solides et reconnues, parfaitement alignées avec son niveau actuel et ses aptitudes dominantes.
+          <strong>Le Cercle de Cohérence (4 à 5 vœux) :</strong> Des formations solides et
+          reconnues, parfaitement alignées avec son niveau actuel et ses aptitudes dominantes.
         </li>
         <li>
-          <strong>Le Cercle de Sécurité (2 à 3 vœux) :</strong> Des parcours accessibles avec une forte employabilité ou des passerelles multiples pour rebondir.
+          <strong>Le Cercle de Sécurité (2 à 3 vœux) :</strong> Des parcours accessibles avec une
+          forte employabilité ou des passerelles multiples pour rebondir.
         </li>
       </ol>
 
@@ -203,16 +220,27 @@ function Guide() {
           Votre enfant est bien plus qu'une moyenne générale
         </h3>
         <p className="mt-2 text-ink/80 leading-relaxed">
-          Génizio permet à votre enfant de bâtir son cahier de réussites tangibles dès le plus jeune âge. Chaque défi relevé devient une preuve concrète qu'il pourra fièrement exposer dans ses lettres de motivation et ses entretiens futurs.
+          Génizio permet à votre enfant de bâtir son cahier de réussites tangibles dès le plus jeune
+          âge. Chaque défi relevé devient une preuve concrète qu'il pourra fièrement exposer dans
+          ses lettres de motivation et ses entretiens futurs.
         </p>
         <div className="mt-6 flex flex-wrap gap-4">
-          <Button asChild size="lg" className="rounded-full bg-brand text-white shadow-md hover:bg-brand-dark transition-all">
+          <Button
+            asChild
+            size="lg"
+            className="rounded-full bg-brand text-white shadow-md hover:bg-brand-dark transition-all"
+          >
             <Link to="/auth">
               Commencer le passeport de mon enfant
               <ArrowRight className="ml-2 h-4 w-4" />
             </Link>
           </Button>
-          <Button asChild variant="outline" size="lg" className="rounded-full border-ink/20 bg-white text-ink hover:bg-surface hover:text-brand transition-all">
+          <Button
+            asChild
+            variant="outline"
+            size="lg"
+            className="rounded-full border-ink/20 bg-white text-ink hover:bg-surface hover:text-brand transition-all"
+          >
             <Link to="/guides/orientation-scolaire-metiers-avenir">
               Enquêtes métiers à la maison
             </Link>

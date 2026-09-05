@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { useSession } from "@/hooks/use-session";
+import { supabase } from "@/integrations/supabase/client";
 import {
   listProductsAdmin,
   createProduct,
@@ -164,6 +165,20 @@ export function AdminProductsTab({ onDataChanged }: { onDataChanged?: () => void
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [session]);
 
+  // Synchronisation en temps réel (Supabase Realtime)
+  useEffect(() => {
+    if (!session) return;
+    const channel = supabase.channel("admin-products-sync");
+    channel
+      .on("postgres_changes", { event: "*", schema: "public", table: "products" }, () => {
+        void refetch();
+      })
+      .subscribe();
+    return () => {
+      void supabase.removeChannel(channel);
+    };
+  }, [session]);
+
   const handleSubmit = async () => {
     if (!draft.name.trim() || draft.price_xof === "" || Number(draft.price_xof) < 0) {
       toast.error("Nom et prix requis.");
@@ -263,14 +278,18 @@ export function AdminProductsTab({ onDataChanged }: { onDataChanged?: () => void
   };
 
   const toggleActive = async (p: Product) => {
+    const prev = products;
+    setProducts(
+      prev.map((prod) => (prod.id === p.id ? { ...prod, is_active: !prod.is_active } : prod)),
+    );
     const opts = session?.access_token
       ? { headers: { Authorization: `Bearer ${session.access_token}` } }
       : {};
     try {
       await updateFn({ data: { id: p.id, is_active: !p.is_active }, ...opts });
-      void refetch();
       onDataChanged?.();
     } catch (err) {
+      setProducts(prev);
       toast.error(err instanceof Error ? err.message : "Erreur lors de la mise à jour du produit.");
     }
   };
@@ -284,15 +303,17 @@ export function AdminProductsTab({ onDataChanged }: { onDataChanged?: () => void
       }))
     )
       return;
+    const prev = products;
+    setProducts(prev.filter((prod) => prod.id !== id));
     const opts = session?.access_token
       ? { headers: { Authorization: `Bearer ${session.access_token}` } }
       : {};
     try {
       await deleteFn({ data: { id }, ...opts });
       toast.success("Produit supprimé.");
-      void refetch();
       onDataChanged?.();
     } catch (err) {
+      setProducts(prev);
       toast.error(err instanceof Error ? err.message : "Erreur lors de la suppression du produit.");
     }
   };

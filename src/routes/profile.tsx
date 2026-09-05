@@ -120,7 +120,9 @@ function ProfilePage() {
   // Profil Éducateur / Conseiller d'orientation (Sprint C)
   const saveEducatorProfileFn = useServerFn(saveMyEducatorProfile);
   const [savingEducator, setSavingEducator] = useState(false);
-  const [educatorRole, setEducatorRole] = useState<"teacher" | "counselor" | "psychologist" | "other">("teacher");
+  const [educatorRole, setEducatorRole] = useState<
+    "teacher" | "counselor" | "psychologist" | "other"
+  >("teacher");
   const [educatorOrg, setEducatorOrg] = useState("");
   const [educatorHandle, setEducatorHandle] = useState("");
   const [educatorClassCode, setEducatorClassCode] = useState("");
@@ -145,7 +147,6 @@ function ProfilePage() {
   const [suggestType, setSuggestType] = useState<SchoolType>("public");
   const [suggestIsLeader, setSuggestIsLeader] = useState(false);
   const [suggesting, setSuggesting] = useState(false);
-
 
   const handleActivateCode = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -407,7 +408,6 @@ function ProfilePage() {
     }
   };
 
-
   const handleSignOut = async () => {
     await supabase.auth.signOut();
     navigate({ to: "/auth", replace: true });
@@ -501,13 +501,15 @@ function ProfilePage() {
         {/* Left Column: Summary Card */}
         <div className="min-w-0 lg:col-span-1 space-y-6">
           <div className="rounded-3xl border border-ink/10 bg-white p-6 shadow-xl text-center">
-            <div className={`mx-auto grid size-16 place-items-center rounded-2xl border-2 border-ink text-2xl font-bold ${
-              mentorMode
-                ? "bg-brand/10 text-brand"
-                : educatorMode
-                  ? "bg-indigo-50 text-indigo-600"
-                  : "bg-emerald-50 text-emerald-700"
-            }`}>
+            <div
+              className={`mx-auto grid size-16 place-items-center rounded-2xl border-2 border-ink text-2xl font-bold ${
+                mentorMode
+                  ? "bg-brand/10 text-brand"
+                  : educatorMode
+                    ? "bg-indigo-50 text-indigo-600"
+                    : "bg-emerald-50 text-emerald-700"
+              }`}
+            >
               {mentorMode ? (
                 <Eye className="size-8" />
               ) : educatorMode ? (
@@ -644,7 +646,8 @@ function ProfilePage() {
                   </>
                 ) : mentorStatus?.mode === "educator" ? (
                   <>
-                    <GraduationCap className="size-4 text-indigo-600" /> Espace Actif : Mode Éducateur
+                    <GraduationCap className="size-4 text-indigo-600" /> Espace Actif : Mode
+                    Éducateur
                   </>
                 ) : (
                   <>
@@ -741,7 +744,9 @@ function ProfilePage() {
                   </div>
                 ) : (
                   <p className="text-xs text-ink/60 leading-relaxed">
-                    Vous êtes actuellement en <strong>Mode Famille / Parent</strong>. Enregistrez ci-dessous votre fonction professionnelle ou activez votre code mentor pour débloquer la bascule d'espace.
+                    Vous êtes actuellement en <strong>Mode Famille / Parent</strong>. Enregistrez
+                    ci-dessous votre fonction professionnelle ou activez votre code mentor pour
+                    débloquer la bascule d'espace.
                   </p>
                 )}
 
@@ -758,18 +763,23 @@ function ProfilePage() {
                   <p className="font-semibold">
                     {mentorStatus.mode === "mentor" ? (
                       <>
-                        <strong className="text-brand font-black">Mode Mentor actif :</strong> Vous êtes
-                        dans votre espace professionnel pour encadrer les élèves qui vous sont confiés.
+                        <strong className="text-brand font-black">Mode Mentor actif :</strong> Vous
+                        êtes dans votre espace professionnel pour encadrer les élèves qui vous sont
+                        confiés.
                       </>
                     ) : mentorStatus.mode === "educator" ? (
                       <>
-                        <strong className="text-indigo-700 font-black">Mode Éducateur actif :</strong> Vous
-                        consultez les dossiers scolaires, intelligences multiples et bilans d'orientation partagés par les familles.
+                        <strong className="text-indigo-700 font-black">
+                          Mode Éducateur actif :
+                        </strong>{" "}
+                        Vous consultez les dossiers scolaires, intelligences multiples et bilans
+                        d'orientation partagés par les familles.
                       </>
                     ) : (
                       <>
-                        <strong className="text-emerald-700 font-black">Mode Parent actif :</strong> Vous
-                        gérez vos propres enfants, leurs parcours et pouvez leur réserver un mentor ou partager leur profil à l'école.
+                        <strong className="text-emerald-700 font-black">Mode Parent actif :</strong>{" "}
+                        Vous gérez vos propres enfants, leurs parcours et pouvez leur réserver un
+                        mentor ou partager leur profil à l'école.
                       </>
                     )}
                   </p>
@@ -796,7 +806,11 @@ function ProfilePage() {
             )}
           </div>
 
-          {(isMentor || mentorStatus?.certified || mentorStatus?.hasEducator || isAdmin || isManager) && (
+          {(isMentor ||
+            mentorStatus?.certified ||
+            mentorStatus?.hasEducator ||
+            isAdmin ||
+            isManager) && (
             <div className="rounded-3xl border border-ink/10 bg-white p-6 shadow-xl">
               <h3 className="font-display text-balance text-base font-bold flex items-center gap-2 mb-3">
                 <Sparkles className="size-4 text-brand" />
@@ -909,9 +923,9 @@ function ProfilePage() {
                     </span>
                     <span className="font-mono font-bold text-indigo-700 bg-white px-2.5 py-1 rounded-lg border border-indigo-100 inline-block text-xs">
                       {mentorStatus.educatorProfile.handle
-                        ? (mentorStatus.educatorProfile.handle.startsWith("@")
-                            ? mentorStatus.educatorProfile.handle
-                            : `@${mentorStatus.educatorProfile.handle}`)
+                        ? mentorStatus.educatorProfile.handle.startsWith("@")
+                          ? mentorStatus.educatorProfile.handle
+                          : `@${mentorStatus.educatorProfile.handle}`
                         : "Aucun @handle configuré"}
                     </span>
                   </div>
@@ -921,9 +935,9 @@ function ProfilePage() {
                     </span>
                     <span className="font-mono font-bold text-ink bg-white px-2.5 py-1 rounded-lg border border-ink/10 inline-block text-xs">
                       {mentorStatus.educatorProfile.classCode
-                        ? (mentorStatus.educatorProfile.classCode.startsWith("#")
-                            ? mentorStatus.educatorProfile.classCode
-                            : `#${mentorStatus.educatorProfile.classCode}`)
+                        ? mentorStatus.educatorProfile.classCode.startsWith("#")
+                          ? mentorStatus.educatorProfile.classCode
+                          : `#${mentorStatus.educatorProfile.classCode}`
                         : "Aucun code classe"}
                     </span>
                   </div>
@@ -931,7 +945,8 @@ function ProfilePage() {
 
                 <div className="border-t border-indigo-100 pt-3 flex flex-col sm:flex-row items-center justify-between gap-3">
                   <p className="text-xs text-ink/60 leading-relaxed">
-                    Les parents peuvent vous retrouver directement en tapant votre @handle ou votre code classe lors de l'attribution d'un Pass Éducatif.
+                    Les parents peuvent vous retrouver directement en tapant votre @handle ou votre
+                    code classe lors de l'attribution d'un Pass Éducatif.
                   </p>
                   <Link
                     to="/educator"
@@ -945,7 +960,9 @@ function ProfilePage() {
             ) : (
               <form onSubmit={handleSaveEducatorProfile} className="space-y-4">
                 <p className="text-xs text-ink/60 leading-relaxed">
-                  Configurez vos coordonnées professionnelles. Cela active votre <strong>Mode Éducateur</strong> et permet aux parents de vous déléguer le suivi pédagogique de leurs enfants en toute confidentialité.
+                  Configurez vos coordonnées professionnelles. Cela active votre{" "}
+                  <strong>Mode Éducateur</strong> et permet aux parents de vous déléguer le suivi
+                  pédagogique de leurs enfants en toute confidentialité.
                 </p>
 
                 <div className="grid gap-4 sm:grid-cols-2">
@@ -992,7 +1009,8 @@ function ProfilePage() {
                               <p className="font-display font-bold text-sm text-ink truncate">
                                 {educatorOrg}
                               </p>
-                              {educatorSchoolStatus === "verified" || educatorSchoolStatus === "partner_campus" ? (
+                              {educatorSchoolStatus === "verified" ||
+                              educatorSchoolStatus === "partner_campus" ? (
                                 <span className="inline-flex items-center gap-0.5 rounded-full bg-emerald-100 text-emerald-800 px-2 py-0.5 text-[9px] font-black uppercase tracking-wider shrink-0 border border-emerald-200">
                                   <Check className="size-2.5 stroke-[3]" /> Certifié
                                 </span>
@@ -1055,8 +1073,11 @@ function ProfilePage() {
                               >
                                 <div>
                                   <div className="flex items-center gap-2">
-                                    <span className="font-bold text-xs text-ink">{school.name}</span>
-                                    {school.status === "verified" || school.status === "partner_campus" ? (
+                                    <span className="font-bold text-xs text-ink">
+                                      {school.name}
+                                    </span>
+                                    {school.status === "verified" ||
+                                    school.status === "partner_campus" ? (
                                       <span className="rounded-full bg-emerald-100 text-emerald-800 px-1.5 py-0.2 text-[9px] font-black uppercase tracking-wider">
                                         Certifié
                                       </span>
@@ -1106,7 +1127,9 @@ function ProfilePage() {
                         type="text"
                         value={educatorHandle}
                         onChange={(e) =>
-                          setEducatorHandle(e.target.value.toLowerCase().replace(/[^a-z0-9._-]/g, ""))
+                          setEducatorHandle(
+                            e.target.value.toLowerCase().replace(/[^a-z0-9._-]/g, ""),
+                          )
                         }
                         placeholder="kone.maths"
                         className="w-full rounded-xl border border-ink/10 pl-8 pr-4 py-2.5 text-sm font-mono font-bold text-ink outline-none focus:ring-2 focus:ring-indigo-500 shadow-xs"
@@ -1130,7 +1153,9 @@ function ProfilePage() {
                         type="text"
                         value={educatorClassCode}
                         onChange={(e) =>
-                          setEducatorClassCode(e.target.value.toUpperCase().replace(/[^A-Z0-9_-]/g, ""))
+                          setEducatorClassCode(
+                            e.target.value.toUpperCase().replace(/[^A-Z0-9_-]/g, ""),
+                          )
                         }
                         placeholder="LCA-6B"
                         className="w-full rounded-xl border border-ink/10 pl-8 pr-4 py-2.5 text-sm font-mono font-bold text-ink outline-none focus:ring-2 focus:ring-indigo-500 shadow-xs"
@@ -1154,7 +1179,9 @@ function ProfilePage() {
                       <Check className="size-4" />
                     )}
                     <span>
-                      {mentorStatus?.educatorProfile ? "Mettre à jour" : "Enregistrer et activer le Mode Éducateur"}
+                      {mentorStatus?.educatorProfile
+                        ? "Mettre à jour"
+                        : "Enregistrer et activer le Mode Éducateur"}
                     </span>
                   </button>
                   {mentorStatus?.educatorProfile && showEducatorForm && (
@@ -1188,7 +1215,8 @@ function ProfilePage() {
                 </div>
               </div>
               <p className="text-xs text-ink/60 leading-relaxed">
-                Entrez le code d'activation fourni par l'équipe administrative (ex: <code>MNT-XXXXXXXX</code>) pour débloquer votre statut et votre tableau de bord.
+                Entrez le code d'activation fourni par l'équipe administrative (ex:{" "}
+                <code>MNT-XXXXXXXX</code>) pour débloquer votre statut et votre tableau de bord.
               </p>
               <form onSubmit={handleActivateCode} className="flex flex-col sm:flex-row gap-2">
                 <input
@@ -1403,7 +1431,8 @@ function ProfilePage() {
 
             <form onSubmit={handleSuggestSchoolSubmit} className="space-y-3.5 text-xs">
               <p className="text-ink/60 text-[11px] leading-relaxed">
-                Votre école n'est pas encore enregistrée ? Ajoutez-la en 2 secondes. Un code de ralliement officiel lui sera automatiquement attribué.
+                Votre école n'est pas encore enregistrée ? Ajoutez-la en 2 secondes. Un code de
+                ralliement officiel lui sera automatiquement attribué.
               </p>
 
               <div className="space-y-1">

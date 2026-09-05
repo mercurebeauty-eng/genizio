@@ -117,9 +117,7 @@ const min = Math.min(r.min, g.min, b.min);
 // Zone de la promesse (h1 + h2, soit y 250→470) : le texte clair sur fond sombre
 // doit y produire des pixels lumineux. Si la police n'est pas rendue, la zone
 // reste vide et le canal max ne dépasse pas le fond.
-const band = await sharp(outPath)
-  .extract({ left: 60, top: 250, width: 1080, height: 220 })
-  .stats();
+const band = await sharp(outPath).extract({ left: 60, top: 250, width: 1080, height: 220 }).stats();
 const bandMax = Math.max(...band.channels.map((c) => c.max));
 
 if (mean < 8 || min > 245 || bandMax < 170) {

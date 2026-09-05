@@ -96,7 +96,10 @@ function Guide() {
         },
         { label: "Les 9 formes d'intelligence", to: "/guides/intelligences-multiples-gardner" },
         { label: "Réussite scolaire sans stress", to: "/guides/reussite-scolaire-aider-enfant" },
-        { label: "Discipline positive et encouragements", to: "/guides/discipline-positive-sans-punition" },
+        {
+          label: "Discipline positive et encouragements",
+          to: "/guides/discipline-positive-sans-punition",
+        },
         { label: "24 activités éducatives sans écran", to: "/guides/activites-educatives-enfant" },
       ]}
     >
@@ -112,12 +115,16 @@ function Guide() {
 
       <h2>La réserve n'est pas un défaut : c'est une force d'observation</h2>
       <p>
-        Dans la grille des intelligences multiples de Howard Gardner, certains enfants possèdent une forte <strong>intelligence intrapersonnelle</strong> : ils analysent leurs émotions, ressentent la nuance et observent attentivement avant d'agir (voir notre guide sur les{" "}
+        Dans la grille des intelligences multiples de Howard Gardner, certains enfants possèdent une
+        forte <strong>intelligence intrapersonnelle</strong> : ils analysent leurs émotions,
+        ressentent la nuance et observent attentivement avant d'agir (voir notre guide sur les{" "}
         <a href="/guides/intelligences-multiples-gardner">9 formes d'intelligence de Gardner</a>).
       </p>
       <p>
-        Au lieu de lui répéter <em>« Ne sois pas timide »</em> (ce qui accentue l'anxiété), valorisez sa perspicacité. En lui confiant des missions graduelles selon les principes de la{" "}
-        <a href="/guides/discipline-positive-sans-punition">discipline positive</a>, vous renforcez sa confiance sans braquage.
+        Au lieu de lui répéter <em>« Ne sois pas timide »</em> (ce qui accentue l'anxiété),
+        valorisez sa perspicacité. En lui confiant des missions graduelles selon les principes de la{" "}
+        <a href="/guides/discipline-positive-sans-punition">discipline positive</a>, vous renforcez
+        sa confiance sans braquage.
       </p>
 
       <h2>4 exercices ludiques à réaliser à la maison</h2>
@@ -125,7 +132,9 @@ function Guide() {
       <div className="my-6 rounded-2xl bg-brand-50 p-5 border border-brand/20">
         <h3 className="font-bold text-brand text-base mb-2">1. Le Journaliste de la Maison</h3>
         <p className="text-sm text-ink/80 leading-relaxed">
-          Armé d'un faux micro (un stylo ou une cuillère en bois), l'enfant a pour mission d'interviewer un membre de la famille sur son souvenir d'enfance le plus drôle. Le rôle de journaliste lui offre un cadre protecteur : il pose les questions sans se sentir exposé.
+          Armé d'un faux micro (un stylo ou une cuillère en bois), l'enfant a pour mission
+          d'interviewer un membre de la famille sur son souvenir d'enfance le plus drôle. Le rôle de
+          journaliste lui offre un cadre protecteur : il pose les questions sans se sentir exposé.
         </p>
       </div>
 
@@ -134,7 +143,9 @@ function Guide() {
           2. Le Discours de 1 Minute (La Boîte à Objets)
         </h3>
         <p className="text-sm text-amber-900 leading-relaxed">
-          Tirez au sort un objet du quotidien (une chaussure, une mangue, une brosse). L'enfant a 1 minute pour convaincre la famille que cet objet possède un pouvoir magique. L'humour désamorce la peur du jugement.
+          Tirez au sort un objet du quotidien (une chaussure, une mangue, une brosse). L'enfant a 1
+          minute pour convaincre la famille que cet objet possède un pouvoir magique. L'humour
+          désamorce la peur du jugement.
         </p>
       </div>
 
@@ -144,7 +155,9 @@ function Guide() {
         </h3>
         <p className="text-sm text-sky-900 leading-relaxed">
           Derrière une boîte en carton découpée (fabriquée lors d'un atelier issu de nos{" "}
-          <a href="/guides/activites-manuelles-enfant">activités manuelles à la maison</a>), l'enfant fait parler un personnage. La marionnette sert d'écran protecteur : la voix se libère sans contact visuel direct.
+          <a href="/guides/activites-manuelles-enfant">activités manuelles à la maison</a>),
+          l'enfant fait parler un personnage. La marionnette sert d'écran protecteur : la voix se
+          libère sans contact visuel direct.
         </p>
       </div>
 
@@ -153,15 +166,21 @@ function Guide() {
           4. L'Hôte d'Accueil de la Famille
         </h3>
         <p className="text-sm text-emerald-900 leading-relaxed">
-          Lorsqu'un invité arrive, confiez à votre enfant une responsabilité valorisante : offrir un verre d'eau ou le menu du repas. Développez son sens du service avec nos rituels pour{" "}
-          <a href="/guides/autonomie-responsabilite-maison">rendre l'enfant autonome à la maison</a>.
+          Lorsqu'un invité arrive, confiez à votre enfant une responsabilité valorisante : offrir un
+          verre d'eau ou le menu du repas. Développez son sens du service avec nos rituels pour{" "}
+          <a href="/guides/autonomie-responsabilite-maison">rendre l'enfant autonome à la maison</a>
+          .
         </p>
       </div>
 
       <h2>Que faire avant un exposé ou une récitation à l'école ?</h2>
       <p>
-        L'exposé est souvent une épreuve redoutée. Pourtant, une préparation structurée à la maison le transforme en un formidable tremplin d'estime de soi (voir comment{" "}
-        <a href="/guides/reussite-scolaire-aider-enfant">accompagner la réussite scolaire sans stress</a>) :
+        L'exposé est souvent une épreuve redoutée. Pourtant, une préparation structurée à la maison
+        le transforme en un formidable tremplin d'estime de soi (voir comment{" "}
+        <a href="/guides/reussite-scolaire-aider-enfant">
+          accompagner la réussite scolaire sans stress
+        </a>
+        ) :
       </p>
       <div className="my-6 overflow-x-auto rounded-2xl border border-ink/10">
         <table className="w-full min-w-[500px] text-sm print:min-w-0">
@@ -175,19 +194,22 @@ function Guide() {
             <tr>
               <td className="px-4 py-3 font-bold">3 jours avant</td>
               <td className="px-4 py-3">
-                Il raconte son sujet à voix haute en tête-à-tête avec vous. On note ses points forts.
+                Il raconte son sujet à voix haute en tête-à-tête avec vous. On note ses points
+                forts.
               </td>
             </tr>
             <tr>
               <td className="px-4 py-3 font-bold">2 jours avant</td>
               <td className="px-4 py-3">
-                Répétition devant 2 personnes bienveillantes (frère, grand-parent) avec une fiche de 3 mots-clés.
+                Répétition devant 2 personnes bienveillantes (frère, grand-parent) avec une fiche de
+                3 mots-clés.
               </td>
             </tr>
             <tr>
               <td className="px-4 py-3 font-bold">La veille & Jour J</td>
               <td className="px-4 py-3">
-                Respiration ventrale, rappel que l'on partage une histoire et non une performance. Message d'encouragement : <em>« Tu es prêt, ta voix compte. »</em>
+                Respiration ventrale, rappel que l'on partage une histoire et non une performance.
+                Message d'encouragement : <em>« Tu es prêt, ta voix compte. »</em>
               </td>
             </tr>
           </tbody>
@@ -196,13 +218,19 @@ function Guide() {
 
       <h2>Quand la timidité cache une perte de confiance scolaire</h2>
       <p>
-        Si la retenue de votre enfant s'accompagne d'un repli sur soi ou d'un refus d'aller en classe, consultez notre guide spécifique pour{" "}
-        <a href="/guides/decrochage-scolaire-confiance-enfant">redonner confiance à un enfant en difficulté scolaire</a>.
+        Si la retenue de votre enfant s'accompagne d'un repli sur soi ou d'un refus d'aller en
+        classe, consultez notre guide spécifique pour{" "}
+        <a href="/guides/decrochage-scolaire-confiance-enfant">
+          redonner confiance à un enfant en difficulté scolaire
+        </a>
+        .
       </p>
 
       <h2>Ce que fait Génizio au quotidien</h2>
       <p>
-        Génizio aide les enfants timides à s'exprimer par l'action concrète. En validant des défis pratiques à leur rythme, les enfants découvrent la valeur de leur point de vue et partagent leurs réalisations avec fierté.
+        Génizio aide les enfants timides à s'exprimer par l'action concrète. En validant des défis
+        pratiques à leur rythme, les enfants découvrent la valeur de leur point de vue et partagent
+        leurs réalisations avec fierté.
       </p>
 
       <h2>Foire aux questions (FAQ)</h2>

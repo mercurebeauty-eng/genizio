@@ -116,9 +116,9 @@ export const ASPIRATION_CATEGORIES = [
 ] as const;
 
 // Suggestions plates pour la rétro-compatibilité
-export const ASPIRATION_SUGGESTIONS: string[] = ASPIRATION_CATEGORIES.flatMap(
-  (c) => [...c.suggestions],
-);
+export const ASPIRATION_SUGGESTIONS: string[] = ASPIRATION_CATEGORIES.flatMap((c) => [
+  ...c.suggestions,
+]);
 
 // Rapport au défi (observé par le parent, pas projeté par l'enfant)
 export const CHALLENGE_RAPPORT: Record<string, string> = {
@@ -277,7 +277,8 @@ export function formatChildProfileContext(profile: {
       const rapport = CHALLENGE_RAPPORT[lp.challenge_rapport];
       let guidance = "";
       if (lp.challenge_rapport === "abandonne_vite") {
-        guidance = " — sécurise les premières étapes avec des victoires rapides pour bâtir sa confiance.";
+        guidance =
+          " — sécurise les premières étapes avec des victoires rapides pour bâtir sa confiance.";
       } else if (lp.challenge_rapport === "perseverant" || lp.challenge_rapport === "casse_tete") {
         guidance = " — propose un vrai niveau d'exigence et de profondeur sans trop simplifier.";
       } else if (lp.challenge_rapport === "rapide_facile") {
@@ -289,9 +290,11 @@ export function formatChildProfileContext(profile: {
       const errRapport = ERROR_RAPPORT[lp.error_rapport];
       let guidance = "";
       if (lp.error_rapport === "decourage") {
-        guidance = " — dédramatise l'erreur, propose un cadre sans jugement où l'essai est valorisé.";
+        guidance =
+          " — dédramatise l'erreur, propose un cadre sans jugement où l'essai est valorisé.";
       } else if (lp.error_rapport === "motive") {
-        guidance = " — l'erreur est un moteur : utilise le feedback d'itération comme levier d'apprentissage.";
+        guidance =
+          " — l'erreur est un moteur : utilise le feedback d'itération comme levier d'apprentissage.";
       }
       lines.push(`- Rapport à l'erreur : ${errRapport}${guidance}`);
     }

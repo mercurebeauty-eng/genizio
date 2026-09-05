@@ -153,7 +153,8 @@ export function DiscoveryRecordDialog({
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [domain, setDomain] = useState<DiscoveryDomain>("logique");
-  const [perceivedDifficulty, setPerceivedDifficulty] = useState<DiscoveryPerceivedDifficulty>("moyen");
+  const [perceivedDifficulty, setPerceivedDifficulty] =
+    useState<DiscoveryPerceivedDifficulty>("moyen");
   const [attemptsCount, setAttemptsCount] = useState<number>(1);
   const [durationMinutes, setDurationMinutes] = useState<number>(30);
   const [autonomyLevel, setAutonomyLevel] = useState<DiscoveryAutonomyLevel>("totalement_seul");
@@ -278,14 +279,19 @@ export function DiscoveryRecordDialog({
           title: "🚀 Je choisis — Initiative & Création",
           badgeText: "Initiative personnelle",
           desc: `Racontez le projet, le bricolage ou l'histoire que ${childName} a imaginé et créé de son propre élan.`,
-          titlePlaceholder: "Ex: Maquette de catapulte en bois, conte illustré de 6 pages, circuit à billes...",
-          descPlaceholder: "Décrivez ce qu'il/elle a imaginé, comment il/elle s'y est pris(e) et le résultat obtenu...",
+          titlePlaceholder:
+            "Ex: Maquette de catapulte en bois, conte illustré de 6 pages, circuit à billes...",
+          descPlaceholder:
+            "Décrivez ce qu'il/elle a imaginé, comment il/elle s'y est pris(e) et le résultat obtenu...",
           q1Label: "1. D'où t'est venue cette idée originale ?",
-          q1Placeholder: "Ex: J'ai pensé à ça en observant les oiseaux / en voulant créer un jeu pour ma sœur...",
+          q1Placeholder:
+            "Ex: J'ai pensé à ça en observant les oiseaux / en voulant créer un jeu pour ma sœur...",
           q2Label: "2. Par quoi as-tu commencé pour fabriquer ou créer ?",
-          q2Placeholder: "Ex: J'ai d'abord fait un plan sur papier, puis rassemblé les pièces en carton...",
+          q2Placeholder:
+            "Ex: J'ai d'abord fait un plan sur papier, puis rassemblé les pièces en carton...",
           q3Label: "3. Où as-tu rencontré le plus grand obstacle et comment as-tu insisté ?",
-          q3Placeholder: "Ex: Le mécanisme se bloquait, alors j'ai changé l'élastique et poncé les bords...",
+          q3Placeholder:
+            "Ex: Le mécanisme se bloquait, alors j'ai changé l'élastique et poncé les bords...",
           q4Label: "4. De quoi es-tu le plus fier et que sais-tu faire maintenant ?",
           q4Placeholder: "Ex: Le fait que ça tire droit et fonctionne tout seul !",
         };
@@ -294,30 +300,40 @@ export function DiscoveryRecordDialog({
           title: "🔍 Je trouve — Curiosité & Défi Externe",
           badgeText: "Curiosité externe",
           desc: `Racontez l'énigme, le casse-tête ou le défi ardu que ${childName} a découvert ailleurs et a voulu résoudre.`,
-          titlePlaceholder: "Ex: Énigme des 9 points reliés, casse-tête des allumettes, puzzle logique des vases...",
-          descPlaceholder: "Expliquez quel était l'énoncé du problème et comment il a réussi à le décortiquer...",
+          titlePlaceholder:
+            "Ex: Énigme des 9 points reliés, casse-tête des allumettes, puzzle logique des vases...",
+          descPlaceholder:
+            "Expliquez quel était l'énoncé du problème et comment il a réussi à le décortiquer...",
           q1Label: "1. Où as-tu découvert ce défi et pourquoi t'a-t-il intrigué ?",
-          q1Placeholder: "Ex: Vu dans un livre de maths amusantes / proposé par un camarade de classe...",
+          q1Placeholder:
+            "Ex: Vu dans un livre de maths amusantes / proposé par un camarade de classe...",
           q2Label: "2. Qu'est-ce qui te paraissait impossible ou mystérieux au tout début ?",
-          q2Placeholder: "Ex: Je ne voyais pas comment relier tous les points sans lever le crayon...",
+          q2Placeholder:
+            "Ex: Je ne voyais pas comment relier tous les points sans lever le crayon...",
           q3Label: "3. À quel moment as-tu eu le déclic pour progresser ?",
           q3Placeholder: "Ex: En essayant de sortir du cadre imaginaire du carré tracé...",
           q4Label: "4. Quel conseil donnerais-tu à quelqu'un qui veut résoudre cette même énigme ?",
-          q4Placeholder: "Ex: Ne pas rester bloqué dans les lignes et tester des directions inattendues !",
+          q4Placeholder:
+            "Ex: Ne pas rester bloqué dans les lignes et tester des directions inattendues !",
         };
       case "open_sandbox":
         return {
           title: "🧪 Je tente — Laboratoire Libre & Essais-Erreurs",
           badgeText: "Laboratoire libre",
           desc: `Racontez l'expérience libre, le test spontané d'hypothèses et les essais de ${childName}.`,
-          titlePlaceholder: "Ex: Test de flottabilité avec des objets insolites, hauteur max d'une tour en spaghettis...",
-          descPlaceholder: "Décrivez ce qu'il/elle a cherché à tester, les manipulations faites et ce qui s'est produit...",
+          titlePlaceholder:
+            "Ex: Test de flottabilité avec des objets insolites, hauteur max d'une tour en spaghettis...",
+          descPlaceholder:
+            "Décrivez ce qu'il/elle a cherché à tester, les manipulations faites et ce qui s'est produit...",
           q1Label: "1. Quelle était ton intuition ou ton hypothèse au départ ?",
-          q1Placeholder: "Ex: Je pensais qu'un objet lourd coulerait toujours plus vite qu'un objet léger...",
+          q1Placeholder:
+            "Ex: Je pensais qu'un objet lourd coulerait toujours plus vite qu'un objet léger...",
           q2Label: "2. Comment t'y es-tu pris concrètement pour tester et mesurer ?",
-          q2Placeholder: "Ex: J'ai rempli la bassine d'eau et préparé 6 objets de tailles différentes...",
+          q2Placeholder:
+            "Ex: J'ai rempli la bassine d'eau et préparé 6 objets de tailles différentes...",
           q3Label: "3. Y a-t-il eu une surprise ou une erreur qui t'a appris quelque chose ?",
-          q3Placeholder: "Ex: La boule de pâte coulait, mais quand je l'ai aplatie en barque, elle flottait !",
+          q3Placeholder:
+            "Ex: La boule de pâte coulait, mais quand je l'ai aplatie en barque, elle flottait !",
           q4Label: "4. Qu'as-tu appris que tu n'aurais pas deviné sans faire le test ?",
           q4Placeholder: "Ex: Que la forme et la surface de contact comptent autant que le poids !",
         };
@@ -326,16 +342,23 @@ export function DiscoveryRecordDialog({
           title: "⚙️ Fab Lab & Atelier — Immersion Outils & Matériaux",
           badgeText: "Atelier & Fabrication",
           desc: `Racontez l'activité de fabrication concrète avec outils réels menée par ${childName} en atelier ou maker space.`,
-          titlePlaceholder: "Ex: Horloge en contreplaqué assemblée, voiturette solaire, sculpture articulée...",
-          descPlaceholder: "Décrivez les étapes de fabrication, les matériaux transformés et les gestes techniques appris...",
+          titlePlaceholder:
+            "Ex: Horloge en contreplaqué assemblée, voiturette solaire, sculpture articulée...",
+          descPlaceholder:
+            "Décrivez les étapes de fabrication, les matériaux transformés et les gestes techniques appris...",
           q1Label: "1. Quel était le cadre de cet atelier et quel outil t'a le plus marqué ?",
-          q1Placeholder: "Ex: À l'atelier de bricolage du quartier, j'ai manipulé la scie à chantourner...",
+          q1Placeholder:
+            "Ex: À l'atelier de bricolage du quartier, j'ai manipulé la scie à chantourner...",
           q2Label: "2. Quel geste technique ou règle de sécurité as-tu appris à maîtriser ?",
-          q2Placeholder: "Ex: Porter les lunettes de protection et tenir la planche fermement avec le serre-joint...",
+          q2Placeholder:
+            "Ex: Porter les lunettes de protection et tenir la planche fermement avec le serre-joint...",
           q3Label: "3. Comment as-tu géré les imprévus de fabrication ou de matière ?",
-          q3Placeholder: "Ex: Une pièce s'est fendue au perçage, alors j'ai recalculé la distance du bord...",
-          q4Label: "4. Comment pourrais-tu réutiliser cette technique pour fabriquer un autre objet ?",
-          q4Placeholder: "Ex: Je pourrais fabriquer un nichoir pour oiseaux avec les mêmes assemblages !",
+          q3Placeholder:
+            "Ex: Une pièce s'est fendue au perçage, alors j'ai recalculé la distance du bord...",
+          q4Label:
+            "4. Comment pourrais-tu réutiliser cette technique pour fabriquer un autre objet ?",
+          q4Placeholder:
+            "Ex: Je pourrais fabriquer un nichoir pour oiseaux avec les mêmes assemblages !",
         };
       case "projet_collectif":
       default:
@@ -343,16 +366,23 @@ export function DiscoveryRecordDialog({
           title: "👥 Projet d'Équipe — Coopération & Guilde",
           badgeText: "Coopération & Escouade",
           desc: `Racontez le projet collectif mené à plusieurs, mettant en valeur l'entraide et les talents partagés.`,
-          titlePlaceholder: "Ex: Décor et pièce de théâtre de marionnettes à 3, base lunaire géante...",
-          descPlaceholder: "Décrivez le projet commun, l'organisation de l'équipe et la répartition des missions...",
+          titlePlaceholder:
+            "Ex: Décor et pièce de théâtre de marionnettes à 3, base lunaire géante...",
+          descPlaceholder:
+            "Décrivez le projet commun, l'organisation de l'équipe et la répartition des missions...",
           q1Label: "1. Comment votre équipe s'est-elle formée et quel était votre but commun ?",
-          q1Placeholder: "Ex: Avec Sarah et Léo, on voulait construire un pont capable de supporter nos livres...",
-          q2Label: "2. Quel rôle as-tu pris naturellement et comment tes talents ont complété l'équipe ?",
-          q2Placeholder: "Ex: J'ai dessiné les plans et calculé les poutres pendant que Sarah découpait...",
+          q1Placeholder:
+            "Ex: Avec Sarah et Léo, on voulait construire un pont capable de supporter nos livres...",
+          q2Label:
+            "2. Quel rôle as-tu pris naturellement et comment tes talents ont complété l'équipe ?",
+          q2Placeholder:
+            "Ex: J'ai dessiné les plans et calculé les poutres pendant que Sarah découpait...",
           q3Label: "3. S'il y a eu un désaccord, comment avez-vous trouvé un compromis ?",
-          q3Placeholder: "Ex: On hésitait entre deux formes d'arches, on a testé les deux sur une maquette...",
+          q3Placeholder:
+            "Ex: On hésitait entre deux formes d'arches, on a testé les deux sur une maquette...",
           q4Label: "4. Qu'avez-vous réussi ensemble qu'aucun de vous n'aurait pu faire tout seul ?",
-          q4Placeholder: "Ex: Le projet était trop grand pour un seul après-midi, à 3 on a fini en 1h !",
+          q4Placeholder:
+            "Ex: Le projet était trop grand pour un seul après-midi, à 3 on a fini en 1h !",
         };
     }
   };
@@ -388,7 +418,9 @@ export function DiscoveryRecordDialog({
         contextualHelp = `Origine: ${discoveryOrigin}`;
         contextualStrategy = `Méthode: ${investigationMethod}`;
       } else if (sourceType === "open_sandbox") {
-        contextualHelp = initialHypothesis.trim() ? `Hypothèse: ${initialHypothesis.trim()}` : "Hypothèse spontanée";
+        contextualHelp = initialHypothesis.trim()
+          ? `Hypothèse: ${initialHypothesis.trim()}`
+          : "Hypothèse spontanée";
         contextualStrategy = `Variables testées: ${variableModified}`;
       } else if (sourceType === "fablab_marathon") {
         contextualHelp = `Lieu: ${workshopLocation} | Encadrement: ${supervisionLevel}`;
@@ -396,7 +428,8 @@ export function DiscoveryRecordDialog({
       } else if (sourceType === "projet_collectif") {
         const rolesText = selectedRoles
           .map((rId) => {
-            if (rId === "autre") return customRole.trim() ? `Autre (${customRole.trim()})` : "Autre rôle";
+            if (rId === "autre")
+              return customRole.trim() ? `Autre (${customRole.trim()})` : "Autre rôle";
             const r = DISCOVERY_TEAM_ROLES.find((x) => x.id === rId);
             return r?.label || rId;
           })
@@ -415,7 +448,7 @@ export function DiscoveryRecordDialog({
         contextualStrategy = `Rôle(s): ${rolesText || "Polyvalent"} | Dynamique: ${dynText}${precisionText}`;
       }
 
-            const extractedHandles = teamHandles.match(/@[\w]+/g) || [];
+      const extractedHandles = teamHandles.match(/@[\w]+/g) || [];
 
       const res = await createDiscoveryTraceFn({
         data: {
@@ -462,12 +495,16 @@ export function DiscoveryRecordDialog({
       <DialogContent className="max-w-2xl max-h-[92vh] overflow-y-auto rounded-3xl p-6 sm:p-8 bg-white border border-ink/10 shadow-2xl">
         <DialogHeader className="space-y-3">
           <div className="flex items-start gap-3.5">
-            <div className={`size-12 rounded-2xl flex items-center justify-center shadow-sm shrink-0 border ${theme.iconBg}`}>
+            <div
+              className={`size-12 rounded-2xl flex items-center justify-center shadow-sm shrink-0 border ${theme.iconBg}`}
+            >
               <ArchetypeIcon className="size-6 stroke-[2.3]" />
             </div>
             <div className="space-y-0.5 flex-1 min-w-0">
               <div className="flex items-center gap-2">
-                <span className={`text-[10px] font-black uppercase tracking-wider px-2.5 py-0.5 rounded-full border ${theme.badgeBg}`}>
+                <span
+                  className={`text-[10px] font-black uppercase tracking-wider px-2.5 py-0.5 rounded-full border ${theme.badgeBg}`}
+                >
                   {config.badgeText}
                 </span>
                 <span className="text-[11px] font-bold text-ink/40 uppercase">
@@ -568,10 +605,18 @@ export function DiscoveryRecordDialog({
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="Inspiration du quotidien">Inspiration du quotidien / Nature</SelectItem>
-                        <SelectItem value="Rêve / Histoire imaginaire">Rêve / Conte / Univers inventé</SelectItem>
-                        <SelectItem value="Résolution d'un problème">Envie de résoudre un problème pratique</SelectItem>
-                        <SelectItem value="Curiosité d'un objet">Attrait pour un objet ou matériau insolite</SelectItem>
+                        <SelectItem value="Inspiration du quotidien">
+                          Inspiration du quotidien / Nature
+                        </SelectItem>
+                        <SelectItem value="Rêve / Histoire imaginaire">
+                          Rêve / Conte / Univers inventé
+                        </SelectItem>
+                        <SelectItem value="Résolution d'un problème">
+                          Envie de résoudre un problème pratique
+                        </SelectItem>
+                        <SelectItem value="Curiosité d'un objet">
+                          Attrait pour un objet ou matériau insolite
+                        </SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
@@ -586,11 +631,21 @@ export function DiscoveryRecordDialog({
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="Objets recyclés & Récup">Carton, bouteilles & objets recyclés</SelectItem>
-                        <SelectItem value="Dessin & Peinture">Feuilles, feutres, peinture & croquis</SelectItem>
-                        <SelectItem value="Lego & Briques">Briques de construction / Lego</SelectItem>
-                        <SelectItem value="Numérique & Code">Tablette, logiciel ou code créatif</SelectItem>
-                        <SelectItem value="Objets de la maison">Éléments du quotidien & maison</SelectItem>
+                        <SelectItem value="Objets recyclés & Récup">
+                          Carton, bouteilles & objets recyclés
+                        </SelectItem>
+                        <SelectItem value="Dessin & Peinture">
+                          Feuilles, feutres, peinture & croquis
+                        </SelectItem>
+                        <SelectItem value="Lego & Briques">
+                          Briques de construction / Lego
+                        </SelectItem>
+                        <SelectItem value="Numérique & Code">
+                          Tablette, logiciel ou code créatif
+                        </SelectItem>
+                        <SelectItem value="Objets de la maison">
+                          Éléments du quotidien & maison
+                        </SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
@@ -610,10 +665,18 @@ export function DiscoveryRecordDialog({
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="Livre ou revue">Livre de sciences / Revue illustrée</SelectItem>
-                        <SelectItem value="Défi scolaire ardu">Défi scolaire ardu ou énigme de classe</SelectItem>
-                        <SelectItem value="Vidéo ou Web">Vidéo éducative / Défi sur Internet</SelectItem>
-                        <SelectItem value="Ami ou proche">Proposé par un camarade ou un proche</SelectItem>
+                        <SelectItem value="Livre ou revue">
+                          Livre de sciences / Revue illustrée
+                        </SelectItem>
+                        <SelectItem value="Défi scolaire ardu">
+                          Défi scolaire ardu ou énigme de classe
+                        </SelectItem>
+                        <SelectItem value="Vidéo ou Web">
+                          Vidéo éducative / Défi sur Internet
+                        </SelectItem>
+                        <SelectItem value="Ami ou proche">
+                          Proposé par un camarade ou un proche
+                        </SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
@@ -628,10 +691,18 @@ export function DiscoveryRecordDialog({
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="Schémas & Croquis">Tracer des schémas & dessins</SelectItem>
-                        <SelectItem value="Décomposition en étapes">Décomposer le problème en petites étapes</SelectItem>
-                        <SelectItem value="Essais par élimination">Tester des hypothèses par élimination</SelectItem>
-                        <SelectItem value="Inversion du problème">Prendre le problème à l'envers</SelectItem>
+                        <SelectItem value="Schémas & Croquis">
+                          Tracer des schémas & dessins
+                        </SelectItem>
+                        <SelectItem value="Décomposition en étapes">
+                          Décomposer le problème en petites étapes
+                        </SelectItem>
+                        <SelectItem value="Essais par élimination">
+                          Tester des hypothèses par élimination
+                        </SelectItem>
+                        <SelectItem value="Inversion du problème">
+                          Prendre le problème à l'envers
+                        </SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
@@ -662,10 +733,16 @@ export function DiscoveryRecordDialog({
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="Forme et surface">Forme, contour et surface de contact</SelectItem>
+                        <SelectItem value="Forme et surface">
+                          Forme, contour et surface de contact
+                        </SelectItem>
                         <SelectItem value="Masse et poids">Masse, poids et équilibrage</SelectItem>
-                        <SelectItem value="Vitesse et inclinaison">Vitesse, angle d'inclinaison et distance</SelectItem>
-                        <SelectItem value="Dosage et mélange">Dosage des ingrédients / matières</SelectItem>
+                        <SelectItem value="Vitesse et inclinaison">
+                          Vitesse, angle d'inclinaison et distance
+                        </SelectItem>
+                        <SelectItem value="Dosage et mélange">
+                          Dosage des ingrédients / matières
+                        </SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
@@ -693,7 +770,9 @@ export function DiscoveryRecordDialog({
                           <SelectValue placeholder="Aucun (Découverte libre en atelier)" />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="none">Aucun (Découverte libre / personnelle)</SelectItem>
+                          <SelectItem value="none">
+                            Aucun (Découverte libre / personnelle)
+                          </SelectItem>
                           {officialEventsList.map((ev) => (
                             <SelectItem key={ev.id} value={ev.id}>
                               {ev.displayLabel}
@@ -718,7 +797,9 @@ export function DiscoveryRecordDialog({
                           <SelectItem value="Fab Lab / Tiers-lieu">Fab Lab / Tiers-lieu</SelectItem>
                           <SelectItem value="Maison / Garage">Maison / Atelier familial</SelectItem>
                           <SelectItem value="École / Club">École / Club sciences</SelectItem>
-                          <SelectItem value="Événement / Marathon">Événement / Marathon Maker</SelectItem>
+                          <SelectItem value="Événement / Marathon">
+                            Événement / Marathon Maker
+                          </SelectItem>
                         </SelectContent>
                       </Select>
                     </div>
@@ -743,9 +824,15 @@ export function DiscoveryRecordDialog({
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="Totalement autonome">Totalement autonome sur l'outil</SelectItem>
-                          <SelectItem value="Guidé sur les gestes délicats">Guidé sur gestes délicats</SelectItem>
-                          <SelectItem value="Supervisé pour sécurité">Supervisé pour sécurité</SelectItem>
+                          <SelectItem value="Totalement autonome">
+                            Totalement autonome sur l'outil
+                          </SelectItem>
+                          <SelectItem value="Guidé sur les gestes délicats">
+                            Guidé sur gestes délicats
+                          </SelectItem>
+                          <SelectItem value="Supervisé pour sécurité">
+                            Supervisé pour sécurité
+                          </SelectItem>
                         </SelectContent>
                       </Select>
                     </div>
@@ -760,7 +847,9 @@ export function DiscoveryRecordDialog({
                     <div className="space-y-1">
                       <label className="text-[11px] font-bold text-rose-950 flex items-center gap-1.5">
                         <Award className="size-3.5 text-brand" />
-                        <span>Événement / Hackathon officiel Génizio ou Partenaire (optionnel)</span>
+                        <span>
+                          Événement / Hackathon officiel Génizio ou Partenaire (optionnel)
+                        </span>
                       </label>
                       <Select
                         value={selectedOfficialEventId}
@@ -800,7 +889,14 @@ export function DiscoveryRecordDialog({
                             const match = val.match(/@([\w]+)$/);
                             if (match) {
                               setShowHandleSuggestions(true);
-                              searchChildProfiles({ data: match[0] }).then(res => setHandleSearchResults(Array.isArray(res) ? res : [])).catch(e => { console.error(e); setHandleSearchResults([]); });
+                              searchChildProfiles({ data: match[0] })
+                                .then((res) =>
+                                  setHandleSearchResults(Array.isArray(res) ? res : []),
+                                )
+                                .catch((e) => {
+                                  console.error(e);
+                                  setHandleSearchResults([]);
+                                });
                             } else {
                               setShowHandleSuggestions(false);
                             }
@@ -816,17 +912,28 @@ export function DiscoveryRecordDialog({
                                 type="button"
                                 className="flex w-full items-center gap-2 px-3 py-2 text-left hover:bg-rose-50"
                                 onClick={() => {
-                                  const val = teamHandles.replace(/@([\w]+)$/, `@${profile.username} `);
+                                  const val = teamHandles.replace(
+                                    /@([\w]+)$/,
+                                    `@${profile.username} `,
+                                  );
                                   setTeamHandles(val);
                                   setShowHandleSuggestions(false);
                                 }}
                               >
-                                <div className={`size-5 rounded-full flex items-center justify-center ${profile.avatar_color === "brand" ? "bg-brand" : profile.avatar_color === "leaf" ? "bg-leaf" : profile.avatar_color === "sky" ? "bg-sky" : "bg-ink"}`}>
-                                  <span className="text-[9px] font-bold text-white">{profile.name[0]?.toUpperCase()}</span>
+                                <div
+                                  className={`size-5 rounded-full flex items-center justify-center ${profile.avatar_color === "brand" ? "bg-brand" : profile.avatar_color === "leaf" ? "bg-leaf" : profile.avatar_color === "sky" ? "bg-sky" : "bg-ink"}`}
+                                >
+                                  <span className="text-[9px] font-bold text-white">
+                                    {profile.name[0]?.toUpperCase()}
+                                  </span>
                                 </div>
                                 <div className="flex flex-col">
-                                  <span className="text-xs font-bold text-rose-950">{profile.name}</span>
-                                  <span className="text-[10px] text-rose-600">@{profile.username}</span>
+                                  <span className="text-xs font-bold text-rose-950">
+                                    {profile.name}
+                                  </span>
+                                  <span className="text-[10px] text-rose-600">
+                                    @{profile.username}
+                                  </span>
                                 </div>
                               </button>
                             ))}
@@ -836,7 +943,9 @@ export function DiscoveryRecordDialog({
                     </div>
 
                     <div className="space-y-1">
-                      <label className="text-[11px] font-bold text-rose-950">Taille du groupe</label>
+                      <label className="text-[11px] font-bold text-rose-950">
+                        Taille du groupe
+                      </label>
                       <Select value={teamSize} onValueChange={setTeamSize}>
                         <SelectTrigger className="h-9 rounded-xl border-rose-200 bg-white text-xs">
                           <SelectValue />
@@ -859,7 +968,9 @@ export function DiscoveryRecordDialog({
                         <span>Rôle(s) naturel(s) tenu(s) par {childName}</span>
                       </label>
                       <span className="text-[10px] font-medium text-rose-700/70">
-                        {selectedRoles.length === 0 ? "Choisissez 1 ou 2 rôles" : `${selectedRoles.length} sélectionné${selectedRoles.length > 1 ? "s" : ""}`}
+                        {selectedRoles.length === 0
+                          ? "Choisissez 1 ou 2 rôles"
+                          : `${selectedRoles.length} sélectionné${selectedRoles.length > 1 ? "s" : ""}`}
                       </span>
                     </div>
 
@@ -912,7 +1023,9 @@ export function DiscoveryRecordDialog({
                   {/* Dynamique relationnelle & Précision */}
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
                     <div className="space-y-1">
-                      <label className="text-[11px] font-bold text-rose-950">Dynamique relationnelle observée</label>
+                      <label className="text-[11px] font-bold text-rose-950">
+                        Dynamique relationnelle observée
+                      </label>
                       <Select value={selectedDynamic} onValueChange={setSelectedDynamic}>
                         <SelectTrigger className="h-9 rounded-xl border-rose-200 bg-white text-xs">
                           <SelectValue />
@@ -940,7 +1053,8 @@ export function DiscoveryRecordDialog({
 
                     <div className="space-y-1">
                       <label className="text-[11px] font-bold text-rose-950">
-                        Anecdote ou note d'équipe <span className="font-normal text-rose-700/60">(optionnel)</span>
+                        Anecdote ou note d'équipe{" "}
+                        <span className="font-normal text-rose-700/60">(optionnel)</span>
                       </label>
                       <Input
                         value={teamPrecision}
@@ -995,10 +1109,7 @@ export function DiscoveryRecordDialog({
 
                 <div className="space-y-1">
                   <label className="text-[11px] font-bold text-ink/70">Autonomie observée</label>
-                  <Select
-                    value={autonomyLevel}
-                    onValueChange={(val: any) => setAutonomyLevel(val)}
-                  >
+                  <Select value={autonomyLevel} onValueChange={(val: any) => setAutonomyLevel(val)}>
                     <SelectTrigger className="h-9 rounded-xl border-ink/20 text-xs bg-white">
                       <SelectValue />
                     </SelectTrigger>
@@ -1056,7 +1167,9 @@ export function DiscoveryRecordDialog({
                   type="button"
                   onClick={() => {
                     if (!title.trim() || !description.trim()) {
-                      toast.error("Veuillez renseigner le titre et la description avant de continuer.");
+                      toast.error(
+                        "Veuillez renseigner le titre et la description avant de continuer.",
+                      );
                       return;
                     }
                     setStep(2);
@@ -1081,7 +1194,8 @@ export function DiscoveryRecordDialog({
                       Dialogue Métacognitif — L'Observateur Naya
                     </h4>
                     <p className="text-[11px] text-ink/75 font-medium">
-                      Remplissez avec les propres mots de {childName} pour révéler ses mécanismes d'apprentissage.
+                      Remplissez avec les propres mots de {childName} pour révéler ses mécanismes
+                      d'apprentissage.
                     </p>
                   </div>
                 </div>
@@ -1155,7 +1269,8 @@ export function DiscoveryRecordDialog({
                   </span>
                 </div>
                 <p className="text-[11px] text-ink/60 font-medium">
-                  Ajoutez une photo du résultat ou du matériel. Naya analysera sa cohérence avec la description et l'ajoutera directement aux artefacts du portfolio de {childName}.
+                  Ajoutez une photo du résultat ou du matériel. Naya analysera sa cohérence avec la
+                  description et l'ajoutera directement aux artefacts du portfolio de {childName}.
                 </p>
 
                 <input
@@ -1245,4 +1360,3 @@ export function DiscoveryRecordDialog({
     </Dialog>
   );
 }
-

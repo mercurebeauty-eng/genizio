@@ -164,53 +164,86 @@ function Guide() {
 
       <h2>La colère n'est pas un caprice : ce que disent les neurosciences</h2>
       <p>
-        Le cortex préfrontal est la dernière structure cérébrale à mûrir. Vers 20-25 ans seulement. C'est long. Chez un enfant de 4 ou 8 ans, la frustration déclenche une onde neurobiologique brute sans filtre inhibiteur.
+        Le cortex préfrontal est la dernière structure cérébrale à mûrir. Vers 20-25 ans seulement.
+        C'est long. Chez un enfant de 4 ou 8 ans, la frustration déclenche une onde neurobiologique
+        brute sans filtre inhibiteur.
       </p>
       <p>
-        Ajoutez la fatigue d'une journée de classe, la faim ou un imprévu : la colère explose comme une soupape. Inutile de chercher à faire taire le cri. Cherchez plutôt le besoin non comblé. Chez les profils énergiques, le manque de mouvement physique est souvent l'étincelle (voir comment{" "}
-        <a href="/guides/enfant-agite-concentration">canaliser l'agitation et l'énergie motrice de l'enfant</a>).
+        Ajoutez la fatigue d'une journée de classe, la faim ou un imprévu : la colère explose comme
+        une soupape. Inutile de chercher à faire taire le cri. Cherchez plutôt le besoin non comblé.
+        Chez les profils énergiques, le manque de mouvement physique est souvent l'étincelle (voir
+        comment{" "}
+        <a href="/guides/enfant-agite-concentration">
+          canaliser l'agitation et l'énergie motrice de l'enfant
+        </a>
+        ).
       </p>
       <p>
-        Chez les enfants hypersensibles, la crise signale une surcharge sensorielle. Inutile de sévir. Il faut apprendre à repérer les signaux avant l'explosion.
+        Chez les enfants hypersensibles, la crise signale une surcharge sensorielle. Inutile de
+        sévir. Il faut apprendre à repérer les signaux avant l'explosion.
       </p>
 
       <h2>Les trois erreurs parentales les plus fréquentes</h2>
       <ul>
         <li>
-          <strong>Punir l'émotion elle-même.</strong> Punir la colère apprend à l'enfant à la dissimuler par peur, pas à la réguler. On pose un cadre strict sur les actes (frapper, casser, insulter), mais on accueille toujours le ressenti. Pour aller plus loin, consultez notre méthode de{" "}
-          <a href="/guides/discipline-positive-sans-punition">discipline positive sans crier ni punir</a>.
+          <strong>Punir l'émotion elle-même.</strong> Punir la colère apprend à l'enfant à la
+          dissimuler par peur, pas à la réguler. On pose un cadre strict sur les actes (frapper,
+          casser, insulter), mais on accueille toujours le ressenti. Pour aller plus loin, consultez
+          notre méthode de{" "}
+          <a href="/guides/discipline-positive-sans-punition">
+            discipline positive sans crier ni punir
+          </a>
+          .
         </li>
         <li>
-          <strong>Céder pour acheter la paix.</strong> Si la tempête permet d'obtenir le paquet de gâteaux ou le temps d'écran refusé, le cerveau de l'enfant enregistre que la crise est une stratégie gagnante — et elle reviendra avec plus d'intensité.
+          <strong>Céder pour acheter la paix.</strong> Si la tempête permet d'obtenir le paquet de
+          gâteaux ou le temps d'écran refusé, le cerveau de l'enfant enregistre que la crise est une
+          stratégie gagnante — et elle reviendra avec plus d'intensité.
         </li>
         <li>
-          <strong>Entrer dans l'escalade et crier en retour.</strong> Deux systèmes nerveux en panique ne s'apaisent jamais mutuellement. Votre calme physique est le régulateur principal de la pièce.
+          <strong>Entrer dans l'escalade et crier en retour.</strong> Deux systèmes nerveux en
+          panique ne s'apaisent jamais mutuellement. Votre calme physique est le régulateur
+          principal de la pièce.
         </li>
       </ul>
 
       <h2>5 outils concrets pour apaiser une crise à la maison</h2>
       <ol>
         <li>
-          <strong>Nommer l'émotion à voix basse.</strong> « Tu es très en colère parce que nous devons éteindre la console. » Le simple fait de poser des mots précis active l'hémisphère gauche et commence à court-circuiter l'amygdale cérébrale.
+          <strong>Nommer l'émotion à voix basse.</strong> « Tu es très en colère parce que nous
+          devons éteindre la console. » Le simple fait de poser des mots précis active l'hémisphère
+          gauche et commence à court-circuiter l'amygdale cérébrale.
         </li>
         <li>
-          <strong>Accueillir sans céder sur le cadre.</strong> On valide pleinement ce que ressent l'enfant (« je comprends que tu sois déçu ») tout en maintenant la règle avec fermeté et douceur (« et le temps d'écran est terminé »). Voir nos solutions pour{" "}
-          <a href="/guides/ecrans-addiction-alternatives-enfant">désamorcer les crises liées aux écrans</a>.
+          <strong>Accueillir sans céder sur le cadre.</strong> On valide pleinement ce que ressent
+          l'enfant (« je comprends que tu sois déçu ») tout en maintenant la règle avec fermeté et
+          douceur (« et le temps d'écran est terminé »). Voir nos solutions pour{" "}
+          <a href="/guides/ecrans-addiction-alternatives-enfant">
+            désamorcer les crises liées aux écrans
+          </a>
+          .
         </li>
         <li>
-          <strong>Offrir un exutoire physique immédiat.</strong> Courir sur place, taper dans un gros coussin, déchirer un papier journal ou pétrir de la pâte : le corps a besoin de décharger l'adrénaline avant que la parole rationnelle ne redevienne accessible.
+          <strong>Offrir un exutoire physique immédiat.</strong> Courir sur place, taper dans un
+          gros coussin, déchirer un papier journal ou pétrir de la pâte : le corps a besoin de
+          décharger l'adrénaline avant que la parole rationnelle ne redevienne accessible.
         </li>
         <li>
-          <strong>Installer un coin de retour au calme (sans punition).</strong> Un espace douillet choisi ensemble (coussins, livres préférés, bocal sensoriel), où l'enfant peut aller s'apaiser à son rythme sans que ce soit vécu comme une mise à l'écart punitive.
+          <strong>Installer un coin de retour au calme (sans punition).</strong> Un espace douillet
+          choisi ensemble (coussins, livres préférés, bocal sensoriel), où l'enfant peut aller
+          s'apaiser à son rythme sans que ce soit vécu comme une mise à l'écart punitive.
         </li>
         <li>
-          <strong>Le débriefing à froid (5 minutes).</strong> Une fois le calme revenu (1 à 2 heures plus tard), reparlez de l'événement sans reproche : « Qu'est-ce qui t'a mis en colère ? Qu'est-ce qu'on pourrait faire la prochaine fois pour que ça se passe mieux ? ».
+          <strong>Le débriefing à froid (5 minutes).</strong> Une fois le calme revenu (1 à 2 heures
+          plus tard), reparlez de l'événement sans reproche : « Qu'est-ce qui t'a mis en colère ?
+          Qu'est-ce qu'on pourrait faire la prochaine fois pour que ça se passe mieux ? ».
         </li>
       </ol>
 
       <h2>Que dire pendant la crise : tableau des phrases clés</h2>
       <p>
-        Pendant une tempête émotionnelle, les longs discours sont inaudibles. Privilégiez des phrases très courtes, dites d'une voix posée et basse :
+        Pendant une tempête émotionnelle, les longs discours sont inaudibles. Privilégiez des
+        phrases très courtes, dites d'une voix posée et basse :
       </p>
       <div className="my-6 overflow-x-auto rounded-2xl border border-ink/10">
         <table className="w-full min-w-[500px] text-sm print:min-w-0">
@@ -243,17 +276,29 @@ function Guide() {
 
       <h2>Prévenir les colères grâce aux défis concrets et aux talents réels</h2>
       <p>
-        La majorité des crises de fin de journée s'évitent en amont par deux leviers : des transitions anticipées et un exutoire constructif à l'énergie de l'enfant. Un enfant qui a pu, au cours de son après-midi, bâtir, expérimenter, cuisiner ou relever des défis réels arrive le soir avec un réservoir de confiance plein et beaucoup moins de tension à évacuer.
+        La majorité des crises de fin de journée s'évitent en amont par deux leviers : des
+        transitions anticipées et un exutoire constructif à l'énergie de l'enfant. Un enfant qui a
+        pu, au cours de son après-midi, bâtir, expérimenter, cuisiner ou relever des défis réels
+        arrive le soir avec un réservoir de confiance plein et beaucoup moins de tension à évacuer.
       </p>
       <p>
         C'est tout l'objet des défis proposés par Génizio : stimuler les{" "}
-        <a href="/guides/intelligences-multiples-gardner">intelligences multiples de l'enfant</a> (relationnelle, manuelle, logique) à travers des activités quotidiennes valorisantes, plutôt que de le laisser s'épuiser dans la passivité. Vous pouvez aussi réaliser notre{" "}
-        <a href="/guides/test-de-personnalite-enfant-talents">test de personnalité et de découverte des talents réels</a> pour mieux comprendre le tempérament de votre enfant.
+        <a href="/guides/intelligences-multiples-gardner">intelligences multiples de l'enfant</a>{" "}
+        (relationnelle, manuelle, logique) à travers des activités quotidiennes valorisantes, plutôt
+        que de le laisser s'épuiser dans la passivité. Vous pouvez aussi réaliser notre{" "}
+        <a href="/guides/test-de-personnalite-enfant-talents">
+          test de personnalité et de découverte des talents réels
+        </a>{" "}
+        pour mieux comprendre le tempérament de votre enfant.
       </p>
 
       <h2>Quand la colère nécessite un accompagnement professionnel</h2>
       <p>
-        La colère fait partie intégrante du développement normal de l'enfant. Toutefois, une consultation auprès d'un pédiatre, d'un psychologue pour enfants ou d'un pédopsychiatre est recommandée si les crises durent régulièrement plus de 30 minutes, mettent en danger l'enfant ou son entourage, ou s'accompagnent d'un repli scolaire ou de troubles du sommeil importants.
+        La colère fait partie intégrante du développement normal de l'enfant. Toutefois, une
+        consultation auprès d'un pédiatre, d'un psychologue pour enfants ou d'un pédopsychiatre est
+        recommandée si les crises durent régulièrement plus de 30 minutes, mettent en danger
+        l'enfant ou son entourage, ou s'accompagnent d'un repli scolaire ou de troubles du sommeil
+        importants.
       </p>
 
       <h2>Questions fréquentes (FAQ)</h2>

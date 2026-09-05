@@ -4,10 +4,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { useSession } from "@/hooks/use-session";
 import { AppHeader } from "@/components/AppHeader";
 import { AppTabBar } from "@/components/AppTabBar";
-import {
-  listMyEducatorDelegations,
-  getEducationalPassport,
-} from "@/lib/delegations.functions";
+import { listMyEducatorDelegations, getEducationalPassport } from "@/lib/delegations.functions";
 import {
   getMyEstablishmentOverview,
   type EstablishmentOverview,
@@ -163,7 +160,8 @@ function EducatorDashboardPage() {
                 Espace Éducation & Orientation
               </h1>
               <p className="text-xs sm:text-sm text-ink/60 font-semibold">
-                Portail réservé aux enseignants, conseillers d'orientation et psychologues scolaires.
+                Portail réservé aux enseignants, conseillers d'orientation et psychologues
+                scolaires.
               </p>
             </div>
           </div>
@@ -252,7 +250,8 @@ function EducatorDashboardPage() {
                       </span>
                     ) : establishment.schoolStatus === "verified" ? (
                       <span className="rounded-full bg-emerald-100 text-emerald-800 px-2.5 py-0.5 text-[10px] font-black uppercase tracking-wider border border-emerald-200 flex items-center gap-1">
-                        <ShieldCheck className="size-3 text-emerald-600" /> Établissement Certifié Génizio
+                        <ShieldCheck className="size-3 text-emerald-600" /> Établissement Certifié
+                        Génizio
                       </span>
                     ) : (
                       <span className="rounded-full bg-indigo-600 text-white px-2.5 py-0.5 text-[10px] font-black uppercase tracking-wider">
@@ -451,7 +450,9 @@ function EducatorDashboardPage() {
                 <p className="text-xs text-ink/60 max-w-md mx-auto leading-relaxed">
                   Pour accéder au profil d'un élève, demandez à ses parents ou à son mentor de vous
                   partager son <strong>Pass Éducatif</strong> depuis son application Génizio en
-                  indiquant votre identifiant (<strong>@{session.user.user_metadata?.educator_handle || "handle"}</strong>) ou email.
+                  indiquant votre identifiant (
+                  <strong>@{session.user.user_metadata?.educator_handle || "handle"}</strong>) ou
+                  email.
                 </p>
               </div>
             ) : (
@@ -487,8 +488,8 @@ function EducatorDashboardPage() {
                       </div>
 
                       <p className="text-xs text-ink/60 font-medium">
-                        Passeport pédagogique actif · Intelligences multiples & profil d'apprentissage
-                        disponibles.
+                        Passeport pédagogique actif · Intelligences multiples & profil
+                        d'apprentissage disponibles.
                       </p>
                     </div>
 

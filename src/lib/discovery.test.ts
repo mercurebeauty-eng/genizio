@@ -49,7 +49,12 @@ describe("Espace Découverte — Vocabulaires & Constantes", () => {
     expect(DISCOVERY_AUTONOMY_LEVELS).toEqual(["totalement_seul", "peu_d_aide", "accompagne"]);
     expect(DISCOVERY_AUTONOMY_LABELS.totalement_seul).toBe("Totalement autonome");
 
-    expect(DISCOVERY_OUTCOMES).toEqual(["fonctionnel", "partiel", "en_cours", "echec_enrichissant"]);
+    expect(DISCOVERY_OUTCOMES).toEqual([
+      "fonctionnel",
+      "partiel",
+      "en_cours",
+      "echec_enrichissant",
+    ]);
     expect(DISCOVERY_OUTCOME_LABELS.fonctionnel.tone).toBe("success");
     expect(DISCOVERY_OUTCOME_LABELS.echec_enrichissant.tone).toBe("warning");
   });
@@ -74,7 +79,10 @@ describe("Espace Découverte — Schémas de Validation Zod", () => {
       outcomeStatus: "fonctionnel" as const,
       proofImageUrl: "https://example.com/pont.jpg",
       nayaDialogue: [
-        { question: "Qu'as-tu fait aujourd'hui ?", answer: "Un pont suspendu avec des ficelles et bâtonnets." },
+        {
+          question: "Qu'as-tu fait aujourd'hui ?",
+          answer: "Un pont suspendu avec des ficelles et bâtonnets.",
+        },
         { question: "Où as-tu bloqué ?", answer: "Au début le milieu s'effondrait sous le poids." },
       ],
     };
@@ -100,7 +108,8 @@ describe("Espace Découverte — Schémas de Validation Zod", () => {
   it("valide l'ajout de feedback mentor", () => {
     const validFeedback = {
       traceId: validUUID,
-      notes: "Excellente initiative observée lors de notre échange. Amadou a démontré une belle persévérance.",
+      notes:
+        "Excellente initiative observée lors de notre échange. Amadou a démontré une belle persévérance.",
     };
     expect(AddMentorFeedbackSchema.safeParse(validFeedback).success).toBe(true);
 
@@ -129,7 +138,10 @@ describe("Espace Découverte — Prompt Naya", () => {
         autonomyLevel: "totalement_seul",
         outcomeStatus: "fonctionnel",
         dialogue: [
-          { question: "Pourquoi as-tu choisi ce jeu ?", answer: "Parce que je voulais battre mon frère." },
+          {
+            question: "Pourquoi as-tu choisi ce jeu ?",
+            answer: "Parce que je voulais battre mon frère.",
+          },
         ],
       },
     });

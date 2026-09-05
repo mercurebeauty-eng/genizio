@@ -12,7 +12,9 @@ export const requireRateLimit = createMiddleware({ type: "function" }).server(as
   const isAllowed = checkRateLimit(ip, { maxRequests: 10, windowMs: 60 * 1000 });
 
   if (!isAllowed) {
-    throw new Error("Trop de requêtes détectées. Par mesure de sécurité, veuillez patienter une minute.");
+    throw new Error(
+      "Trop de requêtes détectées. Par mesure de sécurité, veuillez patienter une minute.",
+    );
   }
 
   return next();

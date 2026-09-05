@@ -73,21 +73,18 @@ export function DiscoveryTraceCard({
   const [isSavingFeedback, setIsSavingFeedback] = useState(false);
   const addMentorDiscoveryFeedbackFn = useServerFn(addMentorDiscoveryFeedback);
 
-  const sourceMeta =
-    DISCOVERY_SOURCE_LABELS[trace.source_type as DiscoverySourceType] || {
-      label: "Découverte",
-      badge: "Exploration",
-      description: "",
-    };
+  const sourceMeta = DISCOVERY_SOURCE_LABELS[trace.source_type as DiscoverySourceType] || {
+    label: "Découverte",
+    badge: "Exploration",
+    description: "",
+  };
 
-  const domainLabel =
-    DISCOVERY_DOMAIN_LABELS[trace.domain as DiscoveryDomain] || trace.domain;
+  const domainLabel = DISCOVERY_DOMAIN_LABELS[trace.domain as DiscoveryDomain] || trace.domain;
 
-  const outcomeMeta =
-    DISCOVERY_OUTCOME_LABELS[trace.outcome_status as DiscoveryOutcomeStatus] || {
-      label: trace.outcome_status,
-      tone: "info" as const,
-    };
+  const outcomeMeta = DISCOVERY_OUTCOME_LABELS[trace.outcome_status as DiscoveryOutcomeStatus] || {
+    label: trace.outcome_status,
+    tone: "info" as const,
+  };
 
   const ai = trace.ai_behavioral_analysis as DiscoveryAIAnalysis | null;
   const dialogue = Array.isArray(trace.naya_dialogue) ? trace.naya_dialogue : [];
@@ -159,12 +156,12 @@ export function DiscoveryTraceCard({
               trace.source_type === "self_chosen"
                 ? "bg-amber-100 text-amber-800 border border-amber-200"
                 : trace.source_type === "found_external"
-                ? "bg-sky-100 text-sky-800 border border-sky-200"
-                : trace.source_type === "open_sandbox"
-                ? "bg-emerald-100 text-emerald-800 border border-emerald-200"
-                : trace.source_type === "fablab_marathon"
-                ? "bg-indigo-100 text-indigo-800 border border-indigo-200"
-                : "bg-rose-100 text-rose-800 border border-rose-200"
+                  ? "bg-sky-100 text-sky-800 border border-sky-200"
+                  : trace.source_type === "open_sandbox"
+                    ? "bg-emerald-100 text-emerald-800 border border-emerald-200"
+                    : trace.source_type === "fablab_marathon"
+                      ? "bg-indigo-100 text-indigo-800 border border-indigo-200"
+                      : "bg-rose-100 text-rose-800 border border-rose-200"
             }`}
           >
             {trace.source_type === "self_chosen" && <Sparkles className="size-3.5" />}
@@ -179,13 +176,14 @@ export function DiscoveryTraceCard({
           <span className="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-stone-100 text-ink/70 border border-ink/5">
             {domainLabel}
           </span>
-          
-          {(trace as any).child_profiles?.username && (trace as any).source_type === "projet_collectif" && (
-            <span className="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-amber-50 text-amber-700 border border-amber-200 flex items-center gap-1">
-              <Users className="size-3" />
-              Par @{(trace as any).child_profiles.username}
-            </span>
-          )}
+
+          {(trace as any).child_profiles?.username &&
+            (trace as any).source_type === "projet_collectif" && (
+              <span className="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-amber-50 text-amber-700 border border-amber-200 flex items-center gap-1">
+                <Users className="size-3" />
+                Par @{(trace as any).child_profiles.username}
+              </span>
+            )}
 
           {/* Badge Événement Officiel Certifié */}
           {officialEventName && (
@@ -269,8 +267,8 @@ export function DiscoveryTraceCard({
             outcomeMeta.tone === "success"
               ? "bg-emerald-50 text-emerald-800 border border-emerald-100"
               : outcomeMeta.tone === "warning"
-              ? "bg-amber-50 text-amber-800 border border-amber-100"
-              : "bg-blue-50 text-blue-800 border border-blue-100"
+                ? "bg-amber-50 text-amber-800 border border-amber-100"
+                : "bg-blue-50 text-blue-800 border border-blue-100"
           }`}
         >
           <CheckCircle2 className="size-3.5" />
@@ -294,9 +292,7 @@ export function DiscoveryTraceCard({
             </div>
           </div>
           {ai?.image_feedback && (
-            <p className="text-[11px] text-ink/65 italic pl-1">
-              "{ai.image_feedback}"
-            </p>
+            <p className="text-[11px] text-ink/65 italic pl-1">"{ai.image_feedback}"</p>
           )}
         </div>
       )}
@@ -337,7 +333,9 @@ export function DiscoveryTraceCard({
             </div>
             <div className="bg-white/80 p-2 rounded-xl border border-amber-100 text-center">
               <span className="text-[10px] text-ink/60 font-bold block">Autonomie</span>
-              <span className="text-sm font-black text-violet-600">{ai.autonomy_score || 8}/10</span>
+              <span className="text-sm font-black text-violet-600">
+                {ai.autonomy_score || 8}/10
+              </span>
             </div>
           </div>
 
@@ -364,7 +362,9 @@ export function DiscoveryTraceCard({
           >
             <MessageSquare className="size-3.5" />
             <span>
-              {showDialogue ? "Masquer les échanges avec Naya" : `Voir les échanges métacognitifs (${dialogue.length})`}
+              {showDialogue
+                ? "Masquer les échanges avec Naya"
+                : `Voir les échanges métacognitifs (${dialogue.length})`}
             </span>
           </button>
 
@@ -389,7 +389,9 @@ export function DiscoveryTraceCard({
           <div className="p-3 rounded-2xl bg-sky-50/70 border border-sky-200/70 space-y-1">
             <div className="flex items-center gap-1.5 text-xs font-bold text-sky-900">
               <UserCheck className="size-4 text-sky-700" />
-              <span>Observation du Mentor ({formatDate(trace.mentor_reviewed_at || trace.created_at)})</span>
+              <span>
+                Observation du Mentor ({formatDate(trace.mentor_reviewed_at || trace.created_at)})
+              </span>
             </div>
             <p className="text-xs text-sky-950 leading-relaxed pl-5">{trace.mentor_notes}</p>
           </div>
@@ -415,7 +417,11 @@ export function DiscoveryTraceCard({
                 disabled={isSavingFeedback || !mentorInput.trim()}
                 className="self-end rounded-xl px-3 py-2 bg-sky-600 hover:bg-sky-700 text-white font-bold text-xs shrink-0"
               >
-                {isSavingFeedback ? <Loader2 className="size-4 animate-spin" /> : <Send className="size-4" />}
+                {isSavingFeedback ? (
+                  <Loader2 className="size-4 animate-spin" />
+                ) : (
+                  <Send className="size-4" />
+                )}
               </Button>
             </div>
           </div>

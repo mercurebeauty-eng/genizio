@@ -204,9 +204,7 @@ export function AdminTalentsCitiesTab({
             </div>
           </div>
           <div className="mt-4">
-            <div className="font-display text-3xl font-black text-ink">
-              {summary.totalChildren}
-            </div>
+            <div className="font-display text-3xl font-black text-ink">{summary.totalChildren}</div>
             <p className="text-xs font-medium text-ink/50 mt-1">Profils enregistrés</p>
           </div>
         </div>
@@ -367,7 +365,13 @@ export function AdminTalentsCitiesTab({
               {filteredEliteProfiles.map((profile, idx) => (
                 <tr key={profile.childId} className="hover:bg-surface/30 transition-colors">
                   <td className="px-4 py-3.5 text-center font-display font-black text-ink">
-                    {idx === 0 ? "🥇 #1" : idx === 1 ? "🥈 #2" : idx === 2 ? "🥉 #3" : `#${idx + 1}`}
+                    {idx === 0
+                      ? "🥇 #1"
+                      : idx === 1
+                        ? "🥈 #2"
+                        : idx === 2
+                          ? "🥉 #3"
+                          : `#${idx + 1}`}
                   </td>
                   <td className="px-5 py-3.5">
                     <div className="flex items-center gap-3">
@@ -376,7 +380,8 @@ export function AdminTalentsCitiesTab({
                       </div>
                       <div>
                         <div className="font-display font-extrabold text-sm text-ink">
-                          {profile.childName} <span className="text-xs text-ink/50">({profile.age} ans)</span>
+                          {profile.childName}{" "}
+                          <span className="text-xs text-ink/50">({profile.age} ans)</span>
                         </div>
                         <div className="text-xs text-ink/60 flex items-center gap-1">
                           <MapPin className="size-3 text-ink/40" />
@@ -393,7 +398,9 @@ export function AdminTalentsCitiesTab({
                   </td>
                   <td className="px-5 py-3.5">
                     <div className="text-xs font-bold text-ink">{profile.dominantTalentLabel}</div>
-                    <div className="text-[11px] text-ink/50">Score : {profile.maxTalentScore}/100</div>
+                    <div className="text-[11px] text-ink/50">
+                      Score : {profile.maxTalentScore}/100
+                    </div>
                   </td>
                   <td className="px-4 py-3.5 text-center">
                     <span className="inline-block px-2.5 py-0.5 rounded-full bg-sky/10 text-sky-700 text-xs font-extrabold">
@@ -401,10 +408,13 @@ export function AdminTalentsCitiesTab({
                     </span>
                   </td>
                   <td className="px-5 py-3.5 text-center font-display font-black text-base text-ink">
-                    {profile.compositeScore} <span className="text-xs font-normal text-ink/40">/100</span>
+                    {profile.compositeScore}{" "}
+                    <span className="text-xs font-normal text-ink/40">/100</span>
                   </td>
                   <td className="px-5 py-3.5 text-center">
-                    <span className={`inline-block px-3 py-1 rounded-full text-xs border ${profile.tierColor}`}>
+                    <span
+                      className={`inline-block px-3 py-1 rounded-full text-xs border ${profile.tierColor}`}
+                    >
                       {profile.tierBadge}
                     </span>
                   </td>
@@ -433,7 +443,8 @@ export function AdminTalentsCitiesTab({
               </h3>
             </div>
             <p className="text-xs font-medium text-ink/60 mt-0.5">
-              Cartographie des vocations dominantes par ville pour planifier les événements et FabLabs physiques.
+              Cartographie des vocations dominantes par ville pour planifier les événements et
+              FabLabs physiques.
             </p>
           </div>
           <span className="text-xs font-extrabold text-brand bg-brand/10 px-3 py-1 rounded-full">
@@ -471,7 +482,8 @@ export function AdminTalentsCitiesTab({
                 {Object.entries(item.guildBreakdown).map(([gKey, count]) => {
                   const gInfo = GUILDS[gKey as keyof typeof GUILDS];
                   if (!gInfo) return null;
-                  const pct = item.totalChildren > 0 ? Math.round((count / item.totalChildren) * 100) : 0;
+                  const pct =
+                    item.totalChildren > 0 ? Math.round((count / item.totalChildren) * 100) : 0;
                   return (
                     <div key={gKey} className="flex items-center justify-between text-xs">
                       <span className="text-ink/70 font-medium flex items-center gap-1">
@@ -501,7 +513,8 @@ export function AdminTalentsCitiesTab({
               </h3>
             </div>
             <p className="text-xs font-medium text-ink/60 mt-0.5">
-              Détection automatique des combinaisons atypiques (ex: STEM analytique + Empathie sociale ou Créatif + Business).
+              Détection automatique des combinaisons atypiques (ex: STEM analytique + Empathie
+              sociale ou Créatif + Business).
             </p>
           </div>
           <span className="text-xs font-extrabold text-purple-800 bg-purple-100 px-3 py-1 rounded-full border border-purple-300">
@@ -516,7 +529,8 @@ export function AdminTalentsCitiesTab({
               Aucun profil hybride détecté pour le moment
             </p>
             <p className="text-xs text-ink/60 max-w-sm mx-auto">
-              Les profils hybrides apparaîtront automatiquement dès que les enfants cumuleront des scores d'excellence dans deux domaines complémentaires.
+              Les profils hybrides apparaîtront automatiquement dès que les enfants cumuleront des
+              scores d'excellence dans deux domaines complémentaires.
             </p>
           </div>
         ) : (

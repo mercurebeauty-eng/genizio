@@ -73,7 +73,8 @@ export const createChildSafetyReport = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const db = supabaseAdmin as any;
-    const userId = (context as any).userId || (context as any).claims?.sub || (context as any).user?.id;
+    const userId =
+      (context as any).userId || (context as any).claims?.sub || (context as any).user?.id;
 
     // Détermination du rôle du rapporteur
     let reporterRole: "parent" | "educator" | "admin" | "other" = "parent";
@@ -133,11 +134,13 @@ export const listChildSafetyReports = createServerFn({ method: "GET" })
 
     let query = db
       .from("child_safety_reports")
-      .select(`
+      .select(
+        `
         *,
         child_profiles:child_id (name),
         accused:accused_mentor_user_id (email)
-      `)
+      `,
+      )
       .order("created_at", { ascending: false });
 
     if (data?.status) {
@@ -177,7 +180,8 @@ export const recordQuarterlySafetyAudit = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const db = supabaseAdmin as any;
-    const adminUserId = (context as any).userId || (context as any).claims?.sub || (context as any).user?.id;
+    const adminUserId =
+      (context as any).userId || (context as any).claims?.sub || (context as any).user?.id;
 
     const { data: audit, error } = await db
       .from("child_safety_audits")
@@ -221,11 +225,13 @@ export const listQuarterlySafetyAudits = createServerFn({ method: "GET" })
     // 1. Récupérer toutes les assignations actives mentor ↔ enfant
     const { data: assignments } = await db
       .from("mentors")
-      .select(`
+      .select(
+        `
         child_profile_id,
         mentor_user_id,
         child_profiles:child_profile_id (id, name, user_id)
-      `)
+      `,
+      )
       .is("removed_at", null);
 
     if (!assignments || assignments.length === 0) return [];
@@ -281,17 +287,12 @@ export const listQuarterlySafetyAudits = createServerFn({ method: "GET" })
  */
 export const triggerMentorEmergencySuspension = createServerFn({ method: "POST" })
   .middleware([requireAdmin])
-  .validator(
-    (data: {
-      mentorUserId: string;
-      reportId?: string;
-      reason: string;
-    }) => data,
-  )
+  .validator((data: { mentorUserId: string; reportId?: string; reason: string }) => data)
   .handler(async ({ data, context }) => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const db = supabaseAdmin as any;
-    const adminUserId = (context as any).userId || (context as any).claims?.sub || (context as any).user?.id;
+    const adminUserId =
+      (context as any).userId || (context as any).claims?.sub || (context as any).user?.id;
     const adminEmail = (context as any).claims?.email || "admin";
     const now = new Date().toISOString();
 
@@ -354,4 +355,3 @@ export const getSafeguardingPendingCountAdmin = createServerFn({ method: "GET" }
       openReportsCount: openReportsCount ?? 0,
     };
   });
-

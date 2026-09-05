@@ -1,11 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import {
-  pageMeta,
-  jsonLdScript,
-  faqPageJsonLd,
-  breadcrumbJsonLd,
-  articleJsonLd,
-} from "@/lib/seo";
+import { pageMeta, jsonLdScript, faqPageJsonLd, breadcrumbJsonLd, articleJsonLd } from "@/lib/seo";
 import { GuideLayout } from "@/components/guides/GuideLayout";
 import { Button } from "@/components/ui/button";
 import { ArrowRight, Briefcase, Bot, Target, Compass, Sparkles } from "lucide-react";
@@ -69,7 +63,8 @@ export const Route = createFileRoute("/guides/test-orientation-metier-enfant-fut
         ),
         jsonLdScript(
           articleJsonLd({
-            headline: "Test d'orientation et de métier : comment savoir ce qui anime vraiment votre enfant",
+            headline:
+              "Test d'orientation et de métier : comment savoir ce qui anime vraiment votre enfant",
             description:
               "Pourquoi les tests d'orientation pour collégiens sont obsolètes et comment cultiver les compétences pérennes face aux transformations du travail.",
             path: PATH,
@@ -128,17 +123,24 @@ function Guide() {
 
       <h2>1. Pourquoi les questionnaires d'orientation classiques sont obsolètes</h2>
       <p>
-        Les tests d'orientation traditionnels reposent sur une logique héritée du siècle dernier : faire correspondre des réponses déclaratives à des catégories figées (comme le montre notre analyse critique sur les{" "}
-        <a href="/guides/test-de-personnalite-enfant-talents">limites des tests de personnalité pour enfants</a>).
+        Les tests d'orientation traditionnels reposent sur une logique héritée du siècle dernier :
+        faire correspondre des réponses déclaratives à des catégories figées (comme le montre notre
+        analyse critique sur les{" "}
+        <a href="/guides/test-de-personnalite-enfant-talents">
+          limites des tests de personnalité pour enfants
+        </a>
+        ).
       </p>
       <p>
-        Dans le monde professionnel contemporain, la priorité n'est pas le titre d'un poste, mais la capacité à résoudre des problèmes concrets et à mobiliser ses{" "}
+        Dans le monde professionnel contemporain, la priorité n'est pas le titre d'un poste, mais la
+        capacité à résoudre des problèmes concrets et à mobiliser ses{" "}
         <a href="/guides/intelligences-multiples-gardner">formes d'intelligence dominantes</a>.
       </p>
 
       <h2>2. Les 4 méta-compétences qui feront la différence</h2>
       <p>
-        Au lieu de chercher un nom de métier, aidez votre enfant à développer ces 4 piliers fondamentaux :
+        Au lieu de chercher un nom de métier, aidez votre enfant à développer ces 4 piliers
+        fondamentaux :
       </p>
 
       <div className="my-6 grid gap-4 sm:grid-cols-2">
@@ -148,8 +150,12 @@ function Guide() {
             1. La résolution de problèmes réels
           </div>
           <p className="text-sm text-ink/80 leading-relaxed">
-            Être capable de prendre une situation floue et d'élaborer une solution concrète (comme illustré dans notre guide{" "}
-            <a href="/guides/pratique-avant-theorie-apprentissage-ia">la pratique avant la théorie face à l'IA</a>).
+            Être capable de prendre une situation floue et d'élaborer une solution concrète (comme
+            illustré dans notre guide{" "}
+            <a href="/guides/pratique-avant-theorie-apprentissage-ia">
+              la pratique avant la théorie face à l'IA
+            </a>
+            ).
           </p>
         </div>
 
@@ -169,7 +175,8 @@ function Guide() {
             3. L'aisance avec l'intelligence artificielle
           </div>
           <p className="text-sm text-ink/80 leading-relaxed">
-            Utiliser l'IA comme un copilote pour prototyper et décupler sa créativité (voir notre dossier{" "}
+            Utiliser l'IA comme un copilote pour prototyper et décupler sa créativité (voir notre
+            dossier{" "}
             <a href="/guides/ia-apprentissage-enfant">l'IA pour aider son enfant à apprendre</a>).
           </p>
         </div>
@@ -187,26 +194,37 @@ function Guide() {
 
       <h2>3. L'enquête d'immersion : 3 missions pratiques pour collégiens</h2>
       <p>
-        Pour l'aider à découvrir ce qui le passionne, donnez-lui des missions d'explorateur issues de nos enquêtes pour{" "}
-        <a href="/guides/orientation-scolaire-metiers-avenir">aider son enfant à choisir son métier dès 10 ans</a> :
+        Pour l'aider à découvrir ce qui le passionne, donnez-lui des missions d'explorateur issues
+        de nos enquêtes pour{" "}
+        <a href="/guides/orientation-scolaire-metiers-avenir">
+          aider son enfant à choisir son métier dès 10 ans
+        </a>{" "}
+        :
       </p>
       <ol className="space-y-4 my-6">
         <li>
-          <strong>L'interview d'un professionnel de proximité :</strong> Choisir un artisan, médecin ou ingénieur et lui poser 5 questions concrètes sur son quotidien et ses défis.
+          <strong>L'interview d'un professionnel de proximité :</strong> Choisir un artisan, médecin
+          ou ingénieur et lui poser 5 questions concrètes sur son quotidien et ses défis.
         </li>
         <li>
-          <strong>Le mini-stage d'observation de 2 heures :</strong> Observer la réalité d'un atelier, d'un commerce ou d'un laboratoire.
+          <strong>Le mini-stage d'observation de 2 heures :</strong> Observer la réalité d'un
+          atelier, d'un commerce ou d'un laboratoire.
         </li>
         <li>
           <strong>Le projet d'application directe :</strong> Réaliser l'un de nos{" "}
-          <a href="/guides/defis-pour-adolescents">12 défis pratiques pour adolescents</a> pour tester sa persévérance et sa créativité.
+          <a href="/guides/defis-pour-adolescents">12 défis pratiques pour adolescents</a> pour
+          tester sa persévérance et sa créativité.
         </li>
       </ol>
 
       <h2>Anticiper les filières sans angoisse</h2>
       <p>
-        Que ce soit pour le choix de spécialités au lycée ou pour préparer sereinement l'après-bac, consultez également nos conseils pour{" "}
-        <a href="/guides/choix-parcoursup-parcours-scolaire-enfant">dédramatiser Parcoursup et le parcours scolaire</a>.
+        Que ce soit pour le choix de spécialités au lycée ou pour préparer sereinement l'après-bac,
+        consultez également nos conseils pour{" "}
+        <a href="/guides/choix-parcoursup-parcours-scolaire-enfant">
+          dédramatiser Parcoursup et le parcours scolaire
+        </a>
+        .
       </p>
 
       <div className="my-8 not-prose rounded-3xl border border-brand/20 bg-brand/5 p-6 sm:p-8">
@@ -214,19 +232,28 @@ function Guide() {
           Construire un portfolio de compétences avec Génizio
         </h3>
         <p className="mt-2 text-ink/80 leading-relaxed">
-          Génizio aide votre enfant à documenter chacun de ses projets pratiques sous forme de preuves tangibles. Plus tard, face à une filière sélective ou un recruteur, il n'arrivera pas seulement avec des notes, mais avec un vrai portfolio de réalisations.
+          Génizio aide votre enfant à documenter chacun de ses projets pratiques sous forme de
+          preuves tangibles. Plus tard, face à une filière sélective ou un recruteur, il n'arrivera
+          pas seulement avec des notes, mais avec un vrai portfolio de réalisations.
         </p>
         <div className="mt-6 flex flex-wrap gap-4">
-          <Button asChild size="lg" className="rounded-full bg-brand text-white shadow-md hover:bg-brand-dark transition-all">
+          <Button
+            asChild
+            size="lg"
+            className="rounded-full bg-brand text-white shadow-md hover:bg-brand-dark transition-all"
+          >
             <Link to="/auth">
               Créer le compte de mon enfant
               <ArrowRight className="ml-2 h-4 w-4" />
             </Link>
           </Button>
-          <Button asChild variant="outline" size="lg" className="rounded-full border-ink/20 bg-white text-ink hover:bg-surface hover:text-brand transition-all">
-            <Link to="/guides/defis-pour-adolescents">
-              Voir 12 défis pour adolescents
-            </Link>
+          <Button
+            asChild
+            variant="outline"
+            size="lg"
+            className="rounded-full border-ink/20 bg-white text-ink hover:bg-surface hover:text-brand transition-all"
+          >
+            <Link to="/guides/defis-pour-adolescents">Voir 12 défis pour adolescents</Link>
           </Button>
         </div>
       </div>

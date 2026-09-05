@@ -11,7 +11,7 @@ import { z } from "zod";
 const ParticipantSchema = z.object({
   childId: z.string().uuid(),
   teamRole: z.string(), // ex: 'coordinateur', 'programmeur'
-  implicationLevel: z.string() // ex: 'pilier', 'apprenti'
+  implicationLevel: z.string(), // ex: 'pilier', 'apprenti'
 });
 
 const CreateCollectiveProjectInput = z.object({
@@ -38,7 +38,7 @@ export const createCollectiveProject = createServerFn({ method: "POST" })
         context_type: data.contextType,
         guild_id: data.guildId,
         shared_proof_url: data.sharedProofUrl,
-        outcome_status: "completed"
+        outcome_status: "completed",
       })
       .select()
       .single()) as { data: any; error: any };
@@ -48,12 +48,12 @@ export const createCollectiveProject = createServerFn({ method: "POST" })
     }
 
     // 2. Création des relations (rôles individuels rattachés au projet unique)
-    const participantRows = data.participants.map(p => ({
+    const participantRows = data.participants.map((p) => ({
       project_id: project.id,
       child_id: p.childId,
       team_role: p.teamRole,
       implication_level: p.implicationLevel,
-      supervisor_tags: [] // par défaut vide, rempli par le superviseur
+      supervisor_tags: [], // par défaut vide, rempli par le superviseur
     }));
 
     const { error: partErr } = await supabase
@@ -61,7 +61,7 @@ export const createCollectiveProject = createServerFn({ method: "POST" })
       .insert(participantRows);
 
     if (partErr) {
-      // Rollback (idéalement fait via RPC ou transaction Supabase, 
+      // Rollback (idéalement fait via RPC ou transaction Supabase,
       // ici on simplifie en laissant le projet orphelin si erreur)
       throw new Error("Erreur lors de l'enregistrement des participants.");
     }
@@ -73,7 +73,7 @@ const AddObservationInput = z.object({
   projectId: z.string().uuid(),
   childId: z.string().uuid(),
   supervisorTags: z.array(z.string()),
-  individualNotes: z.string()
+  individualNotes: z.string(),
 });
 
 export const attachCollectiveObservation = createServerFn({ method: "POST" })
@@ -81,12 +81,12 @@ export const attachCollectiveObservation = createServerFn({ method: "POST" })
   .validator((input: unknown) => AddObservationInput.parse(input))
   .handler(async ({ data, context }) => {
     const { supabase } = context;
-    
+
     const { error } = await supabase
       .from("collective_project_participants" as any)
       .update({
         supervisor_tags: data.supervisorTags,
-        individual_notes: data.individualNotes
+        individual_notes: data.individualNotes,
       })
       .eq("project_id", data.projectId)
       .eq("child_id", data.childId);

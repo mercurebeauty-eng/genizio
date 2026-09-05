@@ -20,9 +20,7 @@ export function AuthorBio() {
             <span className="text-[11px] font-semibold text-ink/50">Abidjan · Côte d'Ivoire</span>
           </div>
 
-          <h3 className="mt-2 font-display text-lg font-black text-ink">
-            Cheick Mohamed TRAORE
-          </h3>
+          <h3 className="mt-2 font-display text-lg font-black text-ink">Cheick Mohamed TRAORE</h3>
 
           <p className="mt-2 text-xs font-medium leading-relaxed text-ink/75">
             Fondateur de Génizio, concepteur de la méthode de l'apprentissage par le réel et

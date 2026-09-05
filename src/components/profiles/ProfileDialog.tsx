@@ -55,7 +55,8 @@ export function ProfileDialog({
   const [draft, setDraft] = useState<ProfileDraft>(
     initial
       ? {
-          username: initial.username ?? "", name: initial.name,
+          username: initial.username ?? "",
+          name: initial.name,
           age: initial.age,
           birthdate: initial.birthdate ?? null,
           interests: initial.interests,
@@ -100,9 +101,11 @@ export function ProfileDialog({
   };
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  
+
   const checkUsername = useServerFn(checkUsernameAvailabilityFn);
-  const [usernameStatus, setUsernameStatus] = useState<"idle" | "checking" | "available" | "unavailable">("idle");
+  const [usernameStatus, setUsernameStatus] = useState<
+    "idle" | "checking" | "available" | "unavailable"
+  >("idle");
   const [usernameTouched, setUsernameTouched] = useState(false);
 
   useEffect(() => {
@@ -300,7 +303,8 @@ export function ProfileDialog({
       let savedId: string | null = initial?.id ?? null;
       const payload = {
         user_id: userId,
-        username: draft.username.trim(), name: draft.name.trim().slice(0, 40),
+        username: draft.username.trim(),
+        name: draft.name.trim().slice(0, 40),
         // Âge dérivé de la date de naissance (2026-08-13) : plus aucun sélecteur d'âge
         // dans l'onboarding — la date est la source unique (le trigger serveur
         // sync_child_age_from_birthdate aligne la base quoi qu'il arrive).
@@ -428,19 +432,27 @@ export function ProfileDialog({
         <div className="space-y-5">
           {/* Parcours d'onboarding en étapes (2026-08-12, analyse §6-7, §10, enrichi 2026-09-02) */}
           <div className="flex items-center justify-between gap-1 rounded-xl bg-ink/5 p-1 text-xs font-bold overflow-x-auto no-scrollbar">
-            {["Qui", "Comment il est", "À quel enfant ?", askAspirations ? "Ce qu'il veut devenir" : "Comment il apprend"]
-              .map((label, i) => (
-                <button
-                  key={i}
-                  type="button"
-                  onClick={() => setWizardStep(i)}
-                  className={`flex-1 min-w-0 truncate rounded-lg py-1.5 px-1 sm:px-2 transition-all text-center ${
-                    wizardStep === i ? "bg-white text-ink shadow-sm font-black" : "text-ink/60 hover:text-ink"
-                  }`}
-                >
-                  <span className="truncate block">{i + 1}. {label}</span>
-                </button>
-              ))}
+            {[
+              "Qui",
+              "Comment il est",
+              "À quel enfant ?",
+              askAspirations ? "Ce qu'il veut devenir" : "Comment il apprend",
+            ].map((label, i) => (
+              <button
+                key={i}
+                type="button"
+                onClick={() => setWizardStep(i)}
+                className={`flex-1 min-w-0 truncate rounded-lg py-1.5 px-1 sm:px-2 transition-all text-center ${
+                  wizardStep === i
+                    ? "bg-white text-ink shadow-sm font-black"
+                    : "text-ink/60 hover:text-ink"
+                }`}
+              >
+                <span className="truncate block">
+                  {i + 1}. {label}
+                </span>
+              </button>
+            ))}
           </div>
 
           {wizardStep === 0 && (
@@ -455,7 +467,11 @@ export function ProfileDialog({
                     const newName = e.target.value.slice(0, 40);
                     setDraft((d) => {
                       if (!initial && !usernameTouched) {
-                        return { ...d, name: newName, username: generateSuggestedUsername(newName) };
+                        return {
+                          ...d,
+                          name: newName,
+                          username: generateSuggestedUsername(newName),
+                        };
                       }
                       return { ...d, name: newName };
                     });
@@ -469,7 +485,9 @@ export function ProfileDialog({
                   Identifiant unique (@handle)
                 </label>
                 <div className="relative">
-                  <span className="absolute left-4 top-1/2 -translate-y-1/2 text-ink/40 font-bold">@</span>
+                  <span className="absolute left-4 top-1/2 -translate-y-1/2 text-ink/40 font-bold">
+                    @
+                  </span>
                   <input
                     value={draft.username}
                     onChange={(e) => {
@@ -477,18 +495,27 @@ export function ProfileDialog({
                       setDraft({ ...draft, username: sanitizeUsername(e.target.value) });
                     }}
                     className={`w-full rounded-xl border px-4 py-3 pl-9 text-sm outline-none focus:ring-2 focus:ring-brand shadow-sm transition-colors ${
-                      usernameStatus === "unavailable" ? "border-red-500 bg-red-50" : "border-ink/10"
+                      usernameStatus === "unavailable"
+                        ? "border-red-500 bg-red-50"
+                        : "border-ink/10"
                     }`}
                     placeholder="pseudo_123"
                   />
                   <div className="absolute right-4 top-1/2 -translate-y-1/2">
-                    {usernameStatus === "checking" && <span className="text-xs text-ink/50">Vérification...</span>}
-                    {usernameStatus === "available" && <span className="text-xs font-bold text-green-600">Disponible</span>}
-                    {usernameStatus === "unavailable" && <span className="text-xs font-bold text-red-600">Indisponible</span>}
+                    {usernameStatus === "checking" && (
+                      <span className="text-xs text-ink/50">Vérification...</span>
+                    )}
+                    {usernameStatus === "available" && (
+                      <span className="text-xs font-bold text-green-600">Disponible</span>
+                    )}
+                    {usernameStatus === "unavailable" && (
+                      <span className="text-xs font-bold text-red-600">Indisponible</span>
+                    )}
                   </div>
                 </div>
                 <p className="mt-1.5 text-[11px] text-ink/50 leading-snug">
-                  Un pseudo public pour identifier cet enfant dans les projets de groupe (lettres, chiffres, tiret du bas uniquement).
+                  Un pseudo public pour identifier cet enfant dans les projets de groupe (lettres,
+                  chiffres, tiret du bas uniquement).
                 </p>
               </div>
 
@@ -996,7 +1023,9 @@ export function ProfileDialog({
                       return (
                         <span
                           key={a.label}
-                          title={hasSkills ? `Compétences : ${bridge.skillsHint.join(", ")}` : undefined}
+                          title={
+                            hasSkills ? `Compétences : ${bridge.skillsHint.join(", ")}` : undefined
+                          }
                           className="inline-flex max-w-full items-center gap-1.5 rounded-full bg-sky-50 border border-sky-200 px-2.5 py-1 text-[11px] font-bold text-sky-800"
                         >
                           <span className="truncate min-w-0">{a.label}</span>
@@ -1043,8 +1072,9 @@ export function ProfileDialog({
                   </button>
                 </div>
                 <p className="mb-3 text-[11px] text-ink/60 leading-relaxed">
-                  Ce que <strong>vous observez</strong> au quotidien (pas ce qu'il imagine). Ces repères
-                  permettent à Naya d'adapter le format et le tempo des défis à sa dynamique naturelle.
+                  Ce que <strong>vous observez</strong> au quotidien (pas ce qu'il imagine). Ces
+                  repères permettent à Naya d'adapter le format et le tempo des défis à sa dynamique
+                  naturelle.
                 </p>
 
                 {/* 1. Modalité d'apprentissage */}
@@ -1059,7 +1089,11 @@ export function ProfileDialog({
                   <div className="flex flex-wrap gap-1.5">
                     {Object.entries(LEARNING_MODES).map(([key, label]) => {
                       const current = draft.learning_profile?.learning_mode;
-                      const currentList = Array.isArray(current) ? current : current ? [current] : [];
+                      const currentList = Array.isArray(current)
+                        ? current
+                        : current
+                          ? [current]
+                          : [];
                       const on = currentList.includes(key);
                       return (
                         <button
@@ -1094,10 +1128,7 @@ export function ProfileDialog({
                           key={key}
                           type="button"
                           onClick={() =>
-                            setLearningProfileField(
-                              "challenge_rapport",
-                              on ? null : key,
-                            )
+                            setLearningProfileField("challenge_rapport", on ? null : key)
                           }
                           className={
                             "rounded-full px-3 py-1.5 text-[11px] font-bold border-2 transition-all " +
@@ -1126,12 +1157,7 @@ export function ProfileDialog({
                         <button
                           key={key}
                           type="button"
-                          onClick={() =>
-                            setLearningProfileField(
-                              "error_rapport",
-                              on ? null : key,
-                            )
-                          }
+                          onClick={() => setLearningProfileField("error_rapport", on ? null : key)}
                           className={
                             "rounded-full px-3 py-1.5 text-[11px] font-bold border-2 transition-all " +
                             (on
@@ -1160,10 +1186,7 @@ export function ProfileDialog({
                           key={key}
                           type="button"
                           onClick={() =>
-                            setLearningProfileField(
-                              "collab_preference",
-                              on ? null : key,
-                            )
+                            setLearningProfileField("collab_preference", on ? null : key)
                           }
                           className={
                             "rounded-full px-3 py-1.5 text-[11px] font-bold border-2 transition-all " +

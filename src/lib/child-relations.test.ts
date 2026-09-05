@@ -1,10 +1,10 @@
 import { describe, it, expect } from "vitest";
-import { 
-  isValidHandleFormat, 
-  generateSuggestedHandle, 
-  formatHandle, 
+import {
+  isValidHandleFormat,
+  generateSuggestedHandle,
+  formatHandle,
   getCleanHandle,
-  canTransitionRelation
+  canTransitionRelation,
 } from "./child-relations";
 
 describe("child-relations", () => {

@@ -63,16 +63,23 @@ export function AdminProfilesTab({ onDataChanged }: { onDataChanged?: () => void
     }
   };
 
-  const patch = async (childId: string, fn: () => Promise<{ ok: boolean }>) => {
+  const patch = async (
+    childId: string,
+    optimisticUpdate: (c: ChildRow) => ChildRow,
+    fn: () => Promise<any>,
+  ) => {
+    const prevRows = rows;
+    setRows(rows?.map((c) => (c.id === childId ? optimisticUpdate(c) : c)) ?? null);
+
     setBusyId(childId);
     try {
       await fn();
       toast.success("Profil mis à jour");
-      await runSearch(query);
       // Synchronisation du parent (review 2026-08-12, P1) : Exécutif/Commerce
       // affichent l'état partagé (pdf_unlocked, is_active) — les rafraîchir.
       onDataChanged?.();
     } catch (err: any) {
+      setRows(prevRows);
       toast.error(err?.message ?? "Mise à jour impossible");
     } finally {
       setBusyId(null);
@@ -103,16 +110,21 @@ export function AdminProfilesTab({ onDataChanged }: { onDataChanged?: () => void
   // Passeport d'Excellence : vrai toggle Bloqué/Débloqué (décision admin — contourne
   // le paiement Paystack intent 'passport' quand le webhook n'est pas passé).
   const togglePassport = async (child: ChildRow) => {
+    const prevRows = rows;
+    setRows(
+      rows?.map((c) => (c.id === child.id ? { ...c, pdf_unlocked: !c.pdf_unlocked } : c)) ?? null,
+    );
+
     setBusyId(child.id);
     try {
       await passportFn({ data: { childId: child.id, unlock: !child.pdf_unlocked } });
       toast.success(child.pdf_unlocked ? "Passeport reverrouillé." : "Passeport débloqué.");
-      await runSearch(query);
       // Synchronisation du parent (review 2026-08-12, P1) : le toggle passeport doit
       // se refléter dans Commerce/Exécutif — sans ça, un passeport débloqué ici
       // restait affiché verrouillé dans les autres onglets.
       onDataChanged?.();
     } catch (err: any) {
+      setRows(prevRows);
       toast.error(err?.message ?? "Erreur lors du changement de statut du passeport.");
     } finally {
       setBusyId(null);
@@ -214,10 +226,13 @@ export function AdminProfilesTab({ onDataChanged }: { onDataChanged?: () => void
                       value={c.time_pressure}
                       disabled={busyId === c.id}
                       onChange={(e) =>
-                        void patch(c.id, () =>
-                          setTimeFn({
-                            data: { childId: c.id, timePressure: e.target.value as TimePressure },
-                          }),
+                        void patch(
+                          c.id,
+                          (child) => ({ ...child, time_pressure: e.target.value as TimePressure }),
+                          () =>
+                            setTimeFn({
+                              data: { childId: c.id, timePressure: e.target.value as TimePressure },
+                            }),
                         )
                       }
                       className="rounded-xl border border-ink/10 px-2 py-1.5 text-xs outline-none focus:ring-2 focus:ring-brand"
@@ -235,8 +250,10 @@ export function AdminProfilesTab({ onDataChanged }: { onDataChanged?: () => void
                         type="button"
                         disabled={busyId === c.id}
                         onClick={() =>
-                          void patch(c.id, () =>
-                            setActiveFn({ data: { childId: c.id, isActive: !c.is_active } }),
+                          void patch(
+                            c.id,
+                            (child) => ({ ...child, is_active: !child.is_active }),
+                            () => setActiveFn({ data: { childId: c.id, isActive: !c.is_active } }),
                           )
                         }
                         className={
@@ -259,7 +276,11 @@ export function AdminProfilesTab({ onDataChanged }: { onDataChanged?: () => void
                           type="button"
                           disabled={busyId === c.id}
                           onClick={() =>
-                            void patch(c.id, () => unlockFn({ data: { childId: c.id } }))
+                            void patch(
+                              c.id,
+                              (child) => ({ ...child, access_locked_at: null }),
+                              () => unlockFn({ data: { childId: c.id } }),
+                            )
                           }
                           className="inline-flex items-center gap-1 rounded-xl border border-amber-200 bg-amber-50 px-2.5 py-1.5 text-[11px] font-bold text-amber-700 transition-all hover:bg-amber-100 disabled:opacity-50"
                         >

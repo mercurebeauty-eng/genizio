@@ -42,14 +42,16 @@ const GUIDES = [
     to: "/guides/reussir-entree-en-6eme-conseils-parents",
     Icon: GraduationCap,
     eyebrow: "Collège & Autonomie",
-    title: "Réussir l'entrée en 6ème : le guide pratique des parents pour une rentrée au collège sereine",
+    title:
+      "Réussir l'entrée en 6ème : le guide pratique des parents pour une rentrée au collège sereine",
     desc: "Emploi du temps, cartable lourd, devoirs et autonomie : comment aider votre enfant à réussir son entrée en 6ème sans stress.",
   },
   {
     to: "/guides/comment-gerer-argent-de-poche-enfant",
     Icon: Coins,
     eyebrow: "Éducation financière & Autonomie",
-    title: "Comment aider son enfant à gérer son argent de poche (guide par âge et méthode pratique)",
+    title:
+      "Comment aider son enfant à gérer son argent de poche (guide par âge et méthode pratique)",
     desc: "À quel âge commencer, combien donner et comment apprendre à votre enfant à gérer son budget avec la méthode des 3 pots sans frustration.",
   },
   {
@@ -322,8 +324,8 @@ function GuidesIndex() {
         </h1>
         <p className="mt-6 max-w-2xl text-lg font-medium leading-relaxed text-ink/70">
           Des guides écrits pour les parents d'Afrique francophone et d'ailleurs. On y parle de ce
-          qu'on observe au quotidien chez un enfant — ce qui l'absorbe, ce qui l'ennuie, ce qu'il sait
-          faire de ses mains — plutôt que de ce qu'une note mesure.
+          qu'on observe au quotidien chez un enfant — ce qui l'absorbe, ce qui l'ennuie, ce qu'il
+          sait faire de ses mains — plutôt que de ce qu'une note mesure.
         </p>
 
         <div className="mt-14 grid gap-5 md:grid-cols-2">
@@ -353,23 +355,32 @@ function GuidesIndex() {
             </Link>
           ))}
         </div>
-      
-      {/* AEO / GEO FAQ Section */}
-      <section className="mt-12 bg-gray-50 p-6 rounded-lg">
-        <h2 className="text-2xl font-bold mb-4">Questions fréquentes des parents</h2>
-        <div className="space-y-4">
-          <details className="cursor-pointer">
-            <summary className="font-semibold text-lg">Comment adapter cette approche au quotidien ?</summary>
-            <p className="mt-2 text-gray-700">Testez de petites étapes. Observez ce qui fonctionne sans imposer de contraintes lourdes. Chaque enfant réagit différemment aux nouveautés.</p>
-          </details>
-          <details className="cursor-pointer">
-            <summary className="font-semibold text-lg">Quels signes montrent un progrès réel ?</summary>
-            <p className="mt-2 text-gray-700">L'autonomie spontanée reste le meilleur indicateur. Un enfant qui initie l'activité sans rappel extérieur montre une véritable appropriation du sujet.</p>
-          </details>
-        </div>
-      </section>
 
-    </main>
+        {/* AEO / GEO FAQ Section */}
+        <section className="mt-12 bg-gray-50 p-6 rounded-lg">
+          <h2 className="text-2xl font-bold mb-4">Questions fréquentes des parents</h2>
+          <div className="space-y-4">
+            <details className="cursor-pointer">
+              <summary className="font-semibold text-lg">
+                Comment adapter cette approche au quotidien ?
+              </summary>
+              <p className="mt-2 text-gray-700">
+                Testez de petites étapes. Observez ce qui fonctionne sans imposer de contraintes
+                lourdes. Chaque enfant réagit différemment aux nouveautés.
+              </p>
+            </details>
+            <details className="cursor-pointer">
+              <summary className="font-semibold text-lg">
+                Quels signes montrent un progrès réel ?
+              </summary>
+              <p className="mt-2 text-gray-700">
+                L'autonomie spontanée reste le meilleur indicateur. Un enfant qui initie l'activité
+                sans rappel extérieur montre une véritable appropriation du sujet.
+              </p>
+            </details>
+          </div>
+        </section>
+      </main>
 
       <footer className="border-t border-ink/10 bg-white/30 px-6 py-10">
         <div className="mx-auto flex max-w-5xl flex-col items-center justify-between gap-4 text-xs font-bold text-ink/50 md:flex-row">

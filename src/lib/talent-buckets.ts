@@ -89,11 +89,9 @@ export function getLeastExploredTalentLabels(
   count = 2,
 ): string[] {
   const raw = talents ?? {};
-  return (
-    VALID_TALENT_KEYS.map((key) => ({ key, score: raw[key] ?? 0 }))
-      .sort(() => Math.random() - 0.5)
-      .sort((a, b) => a.score - b.score)
-      .slice(0, count)
-      .map(({ key }) => TALENT_KEY_LABELS[key])
-  );
+  return VALID_TALENT_KEYS.map((key) => ({ key, score: raw[key] ?? 0 }))
+    .sort(() => Math.random() - 0.5)
+    .sort((a, b) => a.score - b.score)
+    .slice(0, count)
+    .map(({ key }) => TALENT_KEY_LABELS[key]);
 }

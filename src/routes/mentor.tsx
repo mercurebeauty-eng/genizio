@@ -1105,8 +1105,8 @@ function MentorDashboardPage() {
                               {tab === "defis"
                                 ? "⚙️ Défis"
                                 : tab === "decouverte"
-                                ? "🧭 Découverte"
-                                : "📄 Bilan"}
+                                  ? "🧭 Découverte"
+                                  : "📄 Bilan"}
                             </button>
                           ))}
                         </div>

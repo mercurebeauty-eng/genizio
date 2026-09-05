@@ -1,13 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { GuideLayout } from "@/components/guides/GuideLayout";
 import { Button } from "@/components/ui/button";
-import {
-  pageMeta,
-  jsonLdScript,
-  faqPageJsonLd,
-  breadcrumbJsonLd,
-  articleJsonLd,
-} from "@/lib/seo";
+import { pageMeta, jsonLdScript, faqPageJsonLd, breadcrumbJsonLd, articleJsonLd } from "@/lib/seo";
 import {
   Coins,
   PiggyBank,
@@ -137,23 +131,39 @@ function Guide() {
 
       <h2>1. Un outil d'apprentissage, pas un salaire</h2>
       <p>
-        L'argent reste tabou dans bien des foyers. On craint d'éveiller la cupidité ou de monnayer des gestes élémentaires. Erreur de diagnostic. L'argent de poche vise un but précis : <strong>rendre les choix visibles</strong>.
+        L'argent reste tabou dans bien des foyers. On craint d'éveiller la cupidité ou de monnayer
+        des gestes élémentaires. Erreur de diagnostic. L'argent de poche vise un but précis :{" "}
+        <strong>rendre les choix visibles</strong>.
       </p>
       <p>
-        Tant que les billets dorment dans le portefeuille des parents, tout paraît gratuit et infini. Dès que l'enfant manipule sa propre somme, le monde change. Chaque dépense impose un renoncement : <em>« Acheter ces autocollants aujourd'hui, c'est reporter le ballon de samedi prochain »</em>.
+        Tant que les billets dorment dans le portefeuille des parents, tout paraît gratuit et
+        infini. Dès que l'enfant manipule sa propre somme, le monde change. Chaque dépense impose un
+        renoncement :{" "}
+        <em>
+          « Acheter ces autocollants aujourd'hui, c'est reporter le ballon de samedi prochain »
+        </em>
+        .
       </p>
-      <p>
-        Cette pratique quotidienne mobilise deux facultés fondamentales :
-      </p>
+      <p>Cette pratique quotidienne mobilise deux facultés fondamentales :</p>
       <ul>
-        <li><strong>L'intelligence logico-mathématique :</strong> dénombrer les pièces, calculer le rendu et comparer deux prix.</li>
-        <li><strong>L'intelligence intrapersonnelle :</strong> dompter l'impulsion d'achat, nommer ses priorités et savourer l'effort différé (explorez notre synthèse sur{" "}
-        <a href="/guides/intelligences-multiples-gardner">les 9 formes d'intelligence de Gardner</a>).</li>
+        <li>
+          <strong>L'intelligence logico-mathématique :</strong> dénombrer les pièces, calculer le
+          rendu et comparer deux prix.
+        </li>
+        <li>
+          <strong>L'intelligence intrapersonnelle :</strong> dompter l'impulsion d'achat, nommer ses
+          priorités et savourer l'effort différé (explorez notre synthèse sur{" "}
+          <a href="/guides/intelligences-multiples-gardner">
+            les 9 formes d'intelligence de Gardner
+          </a>
+          ).
+        </li>
       </ul>
 
       <h2>2. À quel âge débuter et quels montants fixer ?</h2>
       <p>
-        Oubliez les barèmes rigides. Le montant idéal dépend des habitudes du foyer, pas d'une règle théorique. Voici un cadre repère éprouvé :
+        Oubliez les barèmes rigides. Le montant idéal dépend des habitudes du foyer, pas d'une règle
+        théorique. Voici un cadre repère éprouvé :
       </p>
 
       <div className="my-6 overflow-x-auto">
@@ -177,13 +187,17 @@ function Guide() {
               <td className="p-4 font-semibold text-ink">9 – 11 ans (CM1/CM2)</td>
               <td className="p-4">Tous les 15 jours</td>
               <td className="p-4">2 000 à 3 000 FCFA / 3 à 5 €</td>
-              <td className="p-4">Anticiper sur deux semaines et piloter un premier petit projet.</td>
+              <td className="p-4">
+                Anticiper sur deux semaines et piloter un premier petit projet.
+              </td>
             </tr>
             <tr>
               <td className="p-4 font-semibold text-ink">12 – 14 ans (Collège)</td>
               <td className="p-4">Mensuel</td>
               <td className="p-4">5 000 à 10 000 FCFA / 10 à 20 €</td>
-              <td className="p-4">Prendre en charge ses sorties entre amis et ses envies personnelles.</td>
+              <td className="p-4">
+                Prendre en charge ses sorties entre amis et ses envies personnelles.
+              </td>
             </tr>
             <tr>
               <td className="p-4 font-semibold text-ink">15 – 17 ans (Lycée)</td>
@@ -197,23 +211,29 @@ function Guide() {
 
       <h3>6 à 8 ans : manipuler les pièces et ancrer le rythme</h3>
       <p>
-        À cet âge, le mois ressemble à une éternité. Donnez une somme modeste chaque dimanche matin. Privilégiez des pièces sonnantes et trébuchantes que l'enfant peut empiler, trier et ranger dans une boîte.
+        À cet âge, le mois ressemble à une éternité. Donnez une somme modeste chaque dimanche matin.
+        Privilégiez des pièces sonnantes et trébuchantes que l'enfant peut empiler, trier et ranger
+        dans une boîte.
       </p>
 
       <h3>9 à 11 ans : premier budget autonome sans intrusion</h3>
       <p>
-        Posez le pacte de non-ingérence. L'argent versé couvre les petits plaisirs convenus. Les repas, les soins et les manuels restent sous la responsabilité des parents.
+        Posez le pacte de non-ingérence. L'argent versé couvre les petits plaisirs convenus. Les
+        repas, les soins et les manuels restent sous la responsabilité des parents.
       </p>
 
       <h3>12 à 16 ans : le virage du numérique</h3>
       <p>
-        Au collège et au lycée, le rythme mensuel prépare directement à la vie adulte. Les solutions mobiles (Wave, Orange Money, cartes de paiement pour ados) évitent les pertes d'espèces, mais exigent un apprentissage : regarder son solde avant d'agir (consultez nos{" "}
+        Au collège et au lycée, le rythme mensuel prépare directement à la vie adulte. Les solutions
+        mobiles (Wave, Orange Money, cartes de paiement pour ados) évitent les pertes d'espèces,
+        mais exigent un apprentissage : regarder son solde avant d'agir (consultez nos{" "}
         <a href="/guides/defis-pour-adolescents">12 défis stimulants pour adolescents</a>).
       </p>
 
       <h2>3. La méthode des 3 pots : organiser sans brider</h2>
       <p>
-        Laisser toute la somme dans une unique poche conduit droit à la frustration. Adoptez la technique des **trois tirelires** :
+        Laisser toute la somme dans une unique poche conduit droit à la frustration. Adoptez la
+        technique des **trois tirelires** :
       </p>
 
       <div className="my-6 grid gap-4 sm:grid-cols-3">
@@ -223,7 +243,8 @@ function Guide() {
             Pot 1 : Plaisir libre (50%)
           </div>
           <p className="text-sm leading-relaxed text-ink/80">
-            Une totale liberté d'usage. Qu'il achète une friandise ou une figurine, aucune justification n'est exigée.
+            Une totale liberté d'usage. Qu'il achète une friandise ou une figurine, aucune
+            justification n'est exigée.
           </p>
         </div>
 
@@ -233,8 +254,12 @@ function Guide() {
             Pot 2 : Projet & Épargne (40%)
           </div>
           <p className="text-sm leading-relaxed text-ink/80">
-            Réservé aux achats plus ambitieux. L'enfant découvre le plaisir de patienter pour s'offrir un objet durable (voir nos conseils sur{" "}
-            <a href="/guides/sac-a-dos-marques-challenge-creativite-enfant">le co-financement face aux marques</a>).
+            Réservé aux achats plus ambitieux. L'enfant découvre le plaisir de patienter pour
+            s'offrir un objet durable (voir nos conseils sur{" "}
+            <a href="/guides/sac-a-dos-marques-challenge-creativite-enfant">
+              le co-financement face aux marques
+            </a>
+            ).
           </p>
         </div>
 
@@ -244,14 +269,16 @@ function Guide() {
             Pot 3 : Partage & Cadeaux (10%)
           </div>
           <p className="text-sm leading-relaxed text-ink/80">
-            Préparer l'anniversaire d'un proche ou participer à un projet solidaire. La générosité s'exerce dès le plus jeune âge.
+            Préparer l'anniversaire d'un proche ou participer à un projet solidaire. La générosité
+            s'exerce dès le plus jeune âge.
           </p>
         </div>
       </div>
 
       <h2>4. Corvées et bonnes notes : faut-il payer ?</h2>
       <p>
-        Monnayer les devoirs ou la participation aux tâches ménagères détruit l'esprit d'équipe familial. La maison n'est pas un marché d'entreprises.
+        Monnayer les devoirs ou la participation aux tâches ménagères détruit l'esprit d'équipe
+        familial. La maison n'est pas un marché d'entreprises.
       </p>
 
       <div className="my-6 grid gap-4 md:grid-cols-2">
@@ -273,34 +300,49 @@ function Guide() {
             Ce qui mérite une rétribution ponctuelle
           </div>
           <ul className="space-y-2 text-sm text-ink/80">
-            <li>• Les chantiers d'envergure (désherbage complet du jardin, nettoyage du garage).</li>
-            <li>• Les créations artisanales vendues lors d'un vide-grenier ou d'un rassemblement familial.</li>
+            <li>
+              • Les chantiers d'envergure (désherbage complet du jardin, nettoyage du garage).
+            </li>
+            <li>
+              • Les créations artisanales vendues lors d'un vide-grenier ou d'un rassemblement
+              familial.
+            </li>
             <li>• Réparer un meuble ou customiser un équipement utile.</li>
           </ul>
         </div>
       </div>
       <p>
         Pour installer ces routines sans épuiser son autorité, découvrez notre démarche d'
-        <a href="/guides/autonomie-responsabilite-maison">autonomie et de responsabilité à la maison</a>.
+        <a href="/guides/autonomie-responsabilite-maison">
+          autonomie et de responsabilité à la maison
+        </a>
+        .
       </p>
 
       <h2>5. Tout dépensé le premier jour : que faire ?</h2>
       <p>
-        Le cas classique : l'argent arrive samedi matin, et dès l'après-midi, la tirelire est vide. Trois jours plus tard surgit la demande d'avance.
+        Le cas classique : l'argent arrive samedi matin, et dès l'après-midi, la tirelire est vide.
+        Trois jours plus tard surgit la demande d'avance.
       </p>
-      <p>
-        Votre réaction scellera la leçon :
-      </p>
+      <p>Votre réaction scellera la leçon :</p>
       <ol className="my-6 space-y-3">
         <li>
-          <strong>1. Refuser toute avance financière :</strong> Renflouer le compte revient à enseigner que l'argent se régénère par magie. Maintenez fermement le cadre fixé.
+          <strong>1. Refuser toute avance financière :</strong> Renflouer le compte revient à
+          enseigner que l'argent se régénère par magie. Maintenez fermement le cadre fixé.
         </li>
         <li>
-          <strong>2. Écarter les remarques sarcastiques :</strong> Bannissez les reproches du type <em>« Tu jettes tout par les fenêtres »</em>. Privilégiez un dialogue apaisé selon les repères de{" "}
+          <strong>2. Écarter les remarques sarcastiques :</strong> Bannissez les reproches du type{" "}
+          <em>« Tu jettes tout par les fenêtres »</em>. Privilégiez un dialogue apaisé selon les
+          repères de{" "}
           <a href="/guides/discipline-positive-sans-punition">discipline positive sans punition</a>.
         </li>
         <li>
-          <strong>3. Débriefer calmement :</strong> Dites simplement : <em>« Ton budget est épuisé jusqu'à la fin du mois. Réfléchissons ensemble à la façon de mieux étaler tes dépenses la prochaine fois »</em>.
+          <strong>3. Débriefer calmement :</strong> Dites simplement :{" "}
+          <em>
+            « Ton budget est épuisé jusqu'à la fin du mois. Réfléchissons ensemble à la façon de
+            mieux étaler tes dépenses la prochaine fois »
+          </em>
+          .
         </li>
       </ol>
 
@@ -312,7 +354,10 @@ function Guide() {
           </h3>
         </div>
         <p className="mt-3 text-sm leading-relaxed text-ink/80">
-          Rassemblez trois bocaux en verre ou trois boîtes à chaussures. Invitez l'enfant à les décorer et à coller trois étiquettes : <strong>Plaisir immédiat</strong>, <strong>Grand projet</strong>, <strong>Partage</strong>. Fixez son premier objectif d'achat et glissez la première pièce.
+          Rassemblez trois bocaux en verre ou trois boîtes à chaussures. Invitez l'enfant à les
+          décorer et à coller trois étiquettes : <strong>Plaisir immédiat</strong>,{" "}
+          <strong>Grand projet</strong>, <strong>Partage</strong>. Fixez son premier objectif
+          d'achat et glissez la première pièce.
         </p>
         <div className="mt-6 flex flex-wrap gap-4">
           <Button asChild size="lg" className="rounded-full">
@@ -322,9 +367,7 @@ function Guide() {
             </Link>
           </Button>
           <Button asChild variant="outline" size="lg" className="rounded-full">
-            <Link to="/guides/activites-manuelles-enfant">
-              Explorer nos activités créatives
-            </Link>
+            <Link to="/guides/activites-manuelles-enfant">Explorer nos activités créatives</Link>
           </Button>
         </div>
       </div>

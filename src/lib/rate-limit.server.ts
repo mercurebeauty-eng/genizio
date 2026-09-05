@@ -16,18 +16,21 @@ type RateLimitRecord = {
 const rateLimitCache = new Map<string, RateLimitRecord>();
 
 // Nettoyage périodique du cache pour éviter les fuites de mémoire (toutes les 10 minutes)
-setInterval(() => {
-  const now = Date.now();
-  for (const [ip, record] of rateLimitCache.entries()) {
-    if (now - record.lastReset > 10 * 60 * 1000) {
-      rateLimitCache.delete(ip);
+setInterval(
+  () => {
+    const now = Date.now();
+    for (const [ip, record] of rateLimitCache.entries()) {
+      if (now - record.lastReset > 10 * 60 * 1000) {
+        rateLimitCache.delete(ip);
+      }
     }
-  }
-}, 10 * 60 * 1000);
+  },
+  10 * 60 * 1000,
+);
 
 export type RateLimitOptions = {
   maxRequests: number; // Nombre max de requêtes
-  windowMs: number;    // Fenêtre de temps en ms
+  windowMs: number; // Fenêtre de temps en ms
 };
 
 export function checkRateLimit(ip: string, options: RateLimitOptions): boolean {

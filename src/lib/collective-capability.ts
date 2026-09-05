@@ -1,17 +1,17 @@
 import type { ObservationEvidence } from "./dynamic-capability";
 
-export type TeamRole = 
-  | "conception" 
-  | "programmation" 
-  | "fabrication" 
-  | "coordination" 
-  | "communication" 
-  | "mediation" 
+export type TeamRole =
+  | "conception"
+  | "programmation"
+  | "fabrication"
+  | "coordination"
+  | "communication"
+  | "mediation"
   | "recherche";
 
 export type ImplicationLevel = "pilier" | "contributeur_actif" | "apprenti" | "observateur";
 
-export type ParticipationStatus = 
+export type ParticipationStatus =
   | "invited"
   | "registered"
   | "present_passive"
@@ -61,7 +61,7 @@ export interface CollectiveParticipantContribution {
  */
 export const IMPLICATION_COEFFICIENTS: Record<ImplicationLevel, number> = {
   pilier: 0.85,
-  contributeur_actif: 0.60,
+  contributeur_actif: 0.6,
   apprenti: 0.35,
   observateur: 0.15,
 };
@@ -75,18 +75,19 @@ export const IMPLICATION_COEFFICIENTS: Record<ImplicationLevel, number> = {
 export function computeParticipantEvidence(
   project: CollectiveProjectTrace,
   contribution: CollectiveParticipantContribution,
-  childStableLevelAge: number
+  childStableLevelAge: number,
 ): ObservationEvidence {
   const status = contribution.participationStatus || "active_participant";
   const isActive = status === "active_participant";
-  
+
   const alpha = isActive ? IMPLICATION_COEFFICIENTS[contribution.implication] : 0;
-  
+
   // Calcul du niveau démontré
   let demonstratedLevelAge = childStableLevelAge;
   if (isActive) {
     if (project.targetLevelAge > childStableLevelAge) {
-      demonstratedLevelAge = childStableLevelAge + alpha * (project.targetLevelAge - childStableLevelAge);
+      demonstratedLevelAge =
+        childStableLevelAge + alpha * (project.targetLevelAge - childStableLevelAge);
     } else {
       // S'il participe activement à un projet inférieur ou égal à son niveau, il démontre au moins le niveau du projet.
       demonstratedLevelAge = project.targetLevelAge;
@@ -100,9 +101,12 @@ export function computeParticipantEvidence(
 
   for (const t of contribution.supervisorTags) {
     const shift = t.impact === "positive" ? 0.2 : t.impact === "negative" ? -0.2 : 0;
-    if (t.dimension === "autonomie") autonomyWeight = Math.min(1.0, Math.max(0.0, autonomyWeight + shift));
-    if (t.dimension === "perseverance") perseveranceWeight = Math.min(1.0, Math.max(0.0, perseveranceWeight + shift));
-    if (t.dimension === "collaboration") collabScore = Math.min(1.0, Math.max(0.0, collabScore + shift));
+    if (t.dimension === "autonomie")
+      autonomyWeight = Math.min(1.0, Math.max(0.0, autonomyWeight + shift));
+    if (t.dimension === "perseverance")
+      perseveranceWeight = Math.min(1.0, Math.max(0.0, perseveranceWeight + shift));
+    if (t.dimension === "collaboration")
+      collabScore = Math.min(1.0, Math.max(0.0, collabScore + shift));
   }
 
   // Le rôle de "pilier" booste l'autonomie s'il n'y a pas de tags contraires
@@ -119,7 +123,12 @@ export function computeParticipantEvidence(
     // La qualité métacognitive & relationnelle est propulsée par le score de collaboration
     metacognitiveWeight: Number(collabScore.toFixed(2)),
     proofWeight: project.hasProofImage ? 1.0 : 0.7,
-    outcomeStatus: project.outcomeStatus === "completed" ? "functional" : (project.outcomeStatus === "failed" ? "failed" : "partial"),
+    outcomeStatus:
+      project.outcomeStatus === "completed"
+        ? "functional"
+        : project.outcomeStatus === "failed"
+          ? "failed"
+          : "partial",
     occurredAt: project.occurredAt,
   };
 }
@@ -148,9 +157,9 @@ export function evaluateTeamSynergy(contributions: CollectiveParticipantContribu
   // Ou Math.log2(min(total, nombre max de rôles))
   const maxPossibleRoles = 7;
   const maxEntropy = Math.log2(Math.min(total, maxPossibleRoles));
-  
+
   const synergyScore = maxEntropy === 0 ? 1.0 : entropy / maxEntropy;
-  
+
   return Number(synergyScore.toFixed(2));
 }
 
@@ -170,7 +179,7 @@ export function computeRolePlasticity(pastRoles: TeamRole[]): number {
   let entropy = 0;
   const total = pastRoles.length;
   const maxPossibleRoles = 7;
-  
+
   for (const count of roleCounts.values()) {
     const p = count / total;
     entropy -= p * Math.log2(p);
@@ -186,7 +195,11 @@ export function computeRolePlasticity(pastRoles: TeamRole[]): number {
 /**
  * Génère un insight formaté pour Naya lorsqu'un potentiel collectif (Pic ZPD) est détecté mais non confirmé en solo.
  */
-export function formatCollectiveInsightForNaya(projectDomain: string, demonstratedLevelAge: number, childStableLevelAge: number): string {
+export function formatCollectiveInsightForNaya(
+  projectDomain: string,
+  demonstratedLevelAge: number,
+  childStableLevelAge: number,
+): string {
   if (demonstratedLevelAge > childStableLevelAge + 0.5) {
     return `L'enfant a récemment démontré un potentiel latent en ${projectDomain} lors d'un projet collectif (niveau exploré : ~${Math.round(demonstratedLevelAge)} ans). Propose un défi individuel abordable mais stimulant pour vérifier s'il a internalisé ces concepts de manière autonome, afin de consolider son socle actuellement estimé à ${Math.round(childStableLevelAge)} ans.`;
   }

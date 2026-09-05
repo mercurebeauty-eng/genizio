@@ -949,8 +949,8 @@ function ConstatSection() {
         <Reveal delay={140} className="mx-auto mt-12 max-w-2xl text-center">
           <p className="text-sm font-semibold leading-relaxed text-ink/70">
             Qu'est-ce que mon enfant aime réellement ? Comment réfléchit-il ? Dans quoi est-il
-            naturellement fort ? Dans quoi doit-il progresser ? La plupart des parents se posent
-            ces questions sans pouvoir y répondre. Génizio y répond par l'observation de ses
+            naturellement fort ? Dans quoi doit-il progresser ? La plupart des parents se posent ces
+            questions sans pouvoir y répondre. Génizio y répond par l'observation de ses
             réalisations — pas par un test.
           </p>
         </Reveal>
@@ -1977,7 +1977,8 @@ const MODEL_LEVELS = [
   {
     n: "05",
     title: "Écoles Expérimentales",
-    tagline: "Le rêve d'un campus construit autour du développement de chaque enfant — pas du programme.",
+    tagline:
+      "Le rêve d'un campus construit autour du développement de chaque enfant — pas du programme.",
     points: [
       "Apprentissage par projets réels",
       "Intervenants professionnels",
@@ -2232,7 +2233,8 @@ function CTASection() {
               </a>
             </div>
             <p className="mt-6 text-[11px] font-semibold text-white/50">
-              1 profil enfant gratuit pour toujours · profils supplémentaires 35 000 F/mois · Accompagnement humain optionnel par un mentor (12 séances/mois)
+              1 profil enfant gratuit pour toujours · profils supplémentaires 35 000 F/mois ·
+              Accompagnement humain optionnel par un mentor (12 séances/mois)
             </p>
           </div>
         </div>

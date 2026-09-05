@@ -7,10 +7,7 @@ import {
   revokeChildDelegation,
   type ChildDelegationDetail,
 } from "@/lib/delegations.functions";
-import {
-  lookupEducator,
-  type EducatorLookupResult,
-} from "@/lib/educators-lookup.functions";
+import { lookupEducator, type EducatorLookupResult } from "@/lib/educators-lookup.functions";
 import {
   GraduationCap,
   X,
@@ -343,7 +340,8 @@ export function SharePassportModal({
                     disabled={submitting}
                     onClick={() =>
                       handleConfirmDelegation(
-                        foundEducator.email || `${foundEducator.handle?.replace("@", "")}@genizio.edu`,
+                        foundEducator.email ||
+                          `${foundEducator.handle?.replace("@", "")}@genizio.edu`,
                         foundEducator.professionalRole,
                       )
                     }
@@ -362,9 +360,12 @@ export function SharePassportModal({
 
             {searchedOnce && !foundEducator && !searching && (
               <div className="rounded-2xl border border-ink/10 bg-surface p-4 text-center text-ink/60 space-y-1">
-                <p className="font-bold text-ink">Aucun professionnel trouvé pour "{searchQuery}".</p>
+                <p className="font-bold text-ink">
+                  Aucun professionnel trouvé pour "{searchQuery}".
+                </p>
                 <p className="text-[11px]">
-                  Vérifiez l'identifiant auprès de votre école ou utilisez le partage WhatsApp ci-dessus.
+                  Vérifiez l'identifiant auprès de votre école ou utilisez le partage WhatsApp
+                  ci-dessus.
                 </p>
               </div>
             )}
@@ -399,7 +400,8 @@ export function SharePassportModal({
               <p className="text-xs text-ink/80 italic font-medium leading-relaxed">
                 "Bonjour, je vous partage le Passeport Pédagogique Génizio de mon enfant {childName}{" "}
                 (forces, intelligences multiples et profil d'apprentissage) :{" "}
-                <span className="text-indigo-600 underline">{window.location.origin}/educator</span>"
+                <span className="text-indigo-600 underline">{window.location.origin}/educator</span>
+                "
               </p>
             </div>
 
@@ -470,7 +472,9 @@ export function SharePassportModal({
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div>
-                <label className="block font-bold text-ink mb-1">Nom / Prénom de l'enseignant</label>
+                <label className="block font-bold text-ink mb-1">
+                  Nom / Prénom de l'enseignant
+                </label>
                 <input
                   type="text"
                   value={name}
@@ -524,8 +528,8 @@ export function SharePassportModal({
                 className="size-4 rounded accent-brand cursor-pointer"
               />
               <span className="text-xs font-semibold text-ink leading-snug">
-                Partager mon numéro WhatsApp / Téléphone avec ce professionnel pour faciliter les échanges
-                scolaires.
+                Partager mon numéro WhatsApp / Téléphone avec ce professionnel pour faciliter les
+                échanges scolaires.
               </span>
             </label>
 

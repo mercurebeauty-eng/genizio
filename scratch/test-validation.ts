@@ -238,10 +238,14 @@ export function runValidationTests() {
 
   // Academic resolvers unit check
   try {
-    if (resolveAcademicSubject("physique-chimie") !== "sciences") throw new Error("resolveAcademicSubject failed");
-    if (resolveAcademicGradeLevel("Licence 1 (Bac+1)") !== "Bac+1") throw new Error("resolveAcademicGradeLevel failed");
-    if (resolveAcademicGradeLevel("6ème") !== "6eme") throw new Error("resolveAcademicGradeLevel 6ème failed");
-    if (resolveBehavioralDriver("Déconstruire") !== "deconstruire") throw new Error("resolveBehavioralDriver failed");
+    if (resolveAcademicSubject("physique-chimie") !== "sciences")
+      throw new Error("resolveAcademicSubject failed");
+    if (resolveAcademicGradeLevel("Licence 1 (Bac+1)") !== "Bac+1")
+      throw new Error("resolveAcademicGradeLevel failed");
+    if (resolveAcademicGradeLevel("6ème") !== "6eme")
+      throw new Error("resolveAcademicGradeLevel 6ème failed");
+    if (resolveBehavioralDriver("Déconstruire") !== "deconstruire")
+      throw new Error("resolveBehavioralDriver failed");
     if (resolveZpaLevel("4") !== 4) throw new Error("resolveZpaLevel failed");
     console.log("[PASS] Academic normalizers enforce PostgreSQL constraints");
     passed++;

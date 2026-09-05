@@ -352,7 +352,6 @@ function DashboardPage() {
     return () => {
       isMounted = false;
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedId, mentorMode, mentorChallengesByChild]);
 
   const selected = profiles.find((p) => p.id === selectedId) ?? null;

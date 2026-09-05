@@ -181,75 +181,82 @@ function GuildPage() {
           </div>
 
           {community?.isOptedIn ? (
-              <>
-                <div className="flex gap-3">
-                  <div className="flex-1 rounded-2xl border border-ink/10 bg-white p-4 text-center shadow-sm">
-                    <div className="font-display text-2xl font-black text-brand">
-                      {community.memberCount}
-                    </div>
-                    <div className="text-xs font-semibold text-ink/60">
-                      Membres actifs de la guilde
-                    </div>
+            <>
+              <div className="flex gap-3">
+                <div className="flex-1 rounded-2xl border border-ink/10 bg-white p-4 text-center shadow-sm">
+                  <div className="font-display text-2xl font-black text-brand">
+                    {community.memberCount}
                   </div>
-                  <div className="flex-1 rounded-2xl border border-ink/10 bg-white p-4 text-center shadow-sm">
-                    <div className="font-display text-2xl font-black text-leaf-dark">
-                      {community.completedThisMonth}
-                    </div>
-                    <div className="text-xs font-semibold text-ink/60">
-                      Défis complétés ce mois-ci
-                    </div>
+                  <div className="text-xs font-semibold text-ink/60">
+                    Membres actifs de la guilde
                   </div>
                 </div>
-
-                <div className={`rounded-2xl border border-ink/10 p-4 shadow-sm ${guild.bgColor}`}>
-                  <p className={`mb-1 font-display text-sm font-bold ${guild.color}`}>
-                    Défi collectif du mois
-                  </p>
-                  <p className={`mb-3 text-xs font-medium opacity-80 ${guild.color}`}>
-                    Ensemble, {guild.name.toLowerCase()} visent {community.monthlyTarget} défis
-                    complétés ce mois-ci.
-                  </p>
-                  <div className="h-2.5 overflow-hidden rounded-full bg-white/60">
-                    <div
-                      className="h-full rounded-full bg-white transition-all duration-700"
-                      style={{
-                        width: `${Math.min(100, Math.round((community.completedThisMonth / community.monthlyTarget) * 100))}%`,
-                      }}
-                    />
+                <div className="flex-1 rounded-2xl border border-ink/10 bg-white p-4 text-center shadow-sm">
+                  <div className="font-display text-2xl font-black text-leaf-dark">
+                    {community.completedThisMonth}
                   </div>
-                  <p className={`mt-2 text-xs font-bold ${guild.color}`}>
-                    {community.completedThisMonth} / {community.monthlyTarget} défis
-                  </p>
+                  <div className="text-xs font-semibold text-ink/60">
+                    Défis complétés ce mois-ci
+                  </div>
                 </div>
+              </div>
 
-                {community.synergyData && community.synergyData.members.length > 1 && (
-                  <div className="rounded-2xl border border-ink/10 bg-white p-5 shadow-sm">
-                    <div className="flex items-center justify-between mb-4">
-                      <p className="font-display text-lg font-black text-ink">
-                        Escouade & Synergie
-                      </p>
-                      <div className="flex items-center gap-2">
-                        {community.compatibilityReport && community.compatibilityReport.compatibilityScore < 1.0 && (
+              <div className={`rounded-2xl border border-ink/10 p-4 shadow-sm ${guild.bgColor}`}>
+                <p className={`mb-1 font-display text-sm font-bold ${guild.color}`}>
+                  Défi collectif du mois
+                </p>
+                <p className={`mb-3 text-xs font-medium opacity-80 ${guild.color}`}>
+                  Ensemble, {guild.name.toLowerCase()} visent {community.monthlyTarget} défis
+                  complétés ce mois-ci.
+                </p>
+                <div className="h-2.5 overflow-hidden rounded-full bg-white/60">
+                  <div
+                    className="h-full rounded-full bg-white transition-all duration-700"
+                    style={{
+                      width: `${Math.min(100, Math.round((community.completedThisMonth / community.monthlyTarget) * 100))}%`,
+                    }}
+                  />
+                </div>
+                <p className={`mt-2 text-xs font-bold ${guild.color}`}>
+                  {community.completedThisMonth} / {community.monthlyTarget} défis
+                </p>
+              </div>
+
+              {community.synergyData && community.synergyData.members.length > 1 && (
+                <div className="rounded-2xl border border-ink/10 bg-white p-5 shadow-sm">
+                  <div className="flex items-center justify-between mb-4">
+                    <p className="font-display text-lg font-black text-ink">Escouade & Synergie</p>
+                    <div className="flex items-center gap-2">
+                      {community.compatibilityReport &&
+                        community.compatibilityReport.compatibilityScore < 1.0 && (
                           <div className="rounded-full bg-orange-100 px-3 py-1 text-xs font-bold text-orange-700">
-                            ⚠️ {(community.compatibilityReport.compatibilityScore * 100).toFixed(0)}% Engagés
+                            ⚠️ {(community.compatibilityReport.compatibilityScore * 100).toFixed(0)}
+                            % Engagés
                           </div>
                         )}
-                        <div className="rounded-full bg-brand/10 px-3 py-1 text-xs font-bold text-brand">
-                          Indice: {Math.round(community.synergyData.synergyScore * 100)}%
-                        </div>
+                      <div className="rounded-full bg-brand/10 px-3 py-1 text-xs font-bold text-brand">
+                        Indice: {Math.round(community.synergyData.synergyScore * 100)}%
                       </div>
                     </div>
-                    
-                    <p className="mb-4 text-sm text-ink/70">
-                      Génizio a identifié une complémentarité optimale avec ces membres pour relever un défi où chaque talent est indispensable.
-                    </p>
-                    
-                    {community.compatibilityReport && community.compatibilityReport.warnings.length > 0 && (
+                  </div>
+
+                  <p className="mb-4 text-sm text-ink/70">
+                    Génizio a identifié une complémentarité optimale avec ces membres pour relever
+                    un défi où chaque talent est indispensable.
+                  </p>
+
+                  {community.compatibilityReport &&
+                    community.compatibilityReport.warnings.length > 0 && (
                       <div className="mb-5 rounded-xl border border-orange-200 bg-orange-50 p-3">
-                        <p className="mb-2 text-xs font-bold text-orange-800">Conseils de mobilisation :</p>
+                        <p className="mb-2 text-xs font-bold text-orange-800">
+                          Conseils de mobilisation :
+                        </p>
                         <ul className="flex flex-col gap-1.5">
                           {community.compatibilityReport.warnings.map((w: any, idx: number) => (
-                            <li key={idx} className="text-xs text-orange-700 flex items-start gap-1.5">
+                            <li
+                              key={idx}
+                              className="text-xs text-orange-700 flex items-start gap-1.5"
+                            >
                               <span className="mt-0.5">•</span>
                               <span>{w.message}</span>
                             </li>
@@ -258,100 +265,110 @@ function GuildPage() {
                       </div>
                     )}
 
-                    <div className="flex flex-wrap gap-2 mb-5">
-                      {community.synergyData.members.map((m: any, i: number) => (
-                        <div key={i} className="flex items-center gap-2 rounded-xl bg-surface px-3 py-2 border border-ink/5">
-                          <div className="grid size-6 place-items-center rounded-full bg-sky-100 text-xs font-bold text-sky-700">
-                            {m.name[0]}
-                          </div>
-                          <div className="flex flex-col">
-                            <span className="text-xs font-bold text-ink">{m.name}</span>
-                            <span className="text-[10px] text-ink/50 uppercase tracking-wider">{TALENT_KEY_LABELS[m.primaryTalentKey as keyof typeof TALENT_KEY_LABELS] || m.primaryTalentKey}</span>
-                          </div>
+                  <div className="flex flex-wrap gap-2 mb-5">
+                    {community.synergyData.members.map((m: any, i: number) => (
+                      <div
+                        key={i}
+                        className="flex items-center gap-2 rounded-xl bg-surface px-3 py-2 border border-ink/5"
+                      >
+                        <div className="grid size-6 place-items-center rounded-full bg-sky-100 text-xs font-bold text-sky-700">
+                          {m.name[0]}
                         </div>
-                      ))}
-                    </div>
+                        <div className="flex flex-col">
+                          <span className="text-xs font-bold text-ink">{m.name}</span>
+                          <span className="text-[10px] text-ink/50 uppercase tracking-wider">
+                            {TALENT_KEY_LABELS[
+                              m.primaryTalentKey as keyof typeof TALENT_KEY_LABELS
+                            ] || m.primaryTalentKey}
+                          </span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
 
-                    <button 
-                      onClick={() => alert("Génération du défi collectif via Naya... L'invitation a été envoyée à l'escouade ! (Simulation)")}
-                      className="w-full rounded-xl bg-brand py-3 text-sm font-bold text-white transition-transform active:scale-[0.98] hover:bg-brand-dark"
-                    >
-                      Générer un défi d'équipe
-                    </button>
+                  <button
+                    onClick={() =>
+                      alert(
+                        "Génération du défi collectif via Naya... L'invitation a été envoyée à l'escouade ! (Simulation)",
+                      )
+                    }
+                    className="w-full rounded-xl bg-brand py-3 text-sm font-bold text-white transition-transform active:scale-[0.98] hover:bg-brand-dark"
+                  >
+                    Générer un défi d'équipe
+                  </button>
+                </div>
+              )}
+
+              <div>
+                <p className="mb-3 text-xs font-extrabold uppercase tracking-widest text-ink/40">
+                  À célébrer
+                </p>
+                {community.recentActivity.length === 0 ? (
+                  <div className="rounded-2xl border border-ink/10 bg-white p-6 text-center text-sm text-ink/60 shadow-sm">
+                    Aucune activité récente dans cette guilde pour le moment.
+                  </div>
+                ) : (
+                  <div className="flex flex-col gap-2.5">
+                    {community.recentActivity.map((a, i) => (
+                      <div
+                        key={i}
+                        className="flex items-center gap-3 rounded-2xl border border-ink/10 bg-white p-3.5 shadow-sm"
+                      >
+                        <div className="grid size-10 shrink-0 place-items-center rounded-full bg-sky-50 font-display font-bold text-sky-dark">
+                          {a.childName[0]}
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <div className="text-sm font-bold text-ink">
+                            {a.childName}, {a.childAge} ans
+                          </div>
+                          <div className="truncate text-xs text-ink/60">{a.title}</div>
+                        </div>
+                        <Heart className="size-4 shrink-0 text-brand/40" />
+                      </div>
+                    ))}
                   </div>
                 )}
+              </div>
 
-                <div>
-                  <p className="mb-3 text-xs font-extrabold uppercase tracking-widest text-ink/40">
-                    À célébrer
-                  </p>
-                  {community.recentActivity.length === 0 ? (
-                    <div className="rounded-2xl border border-ink/10 bg-white p-6 text-center text-sm text-ink/60 shadow-sm">
-                      Aucune activité récente dans cette guilde pour le moment.
-                    </div>
-                  ) : (
-                    <div className="flex flex-col gap-2.5">
-                      {community.recentActivity.map((a, i) => (
-                        <div
-                          key={i}
-                          className="flex items-center gap-3 rounded-2xl border border-ink/10 bg-white p-3.5 shadow-sm"
-                        >
-                          <div className="grid size-10 shrink-0 place-items-center rounded-full bg-sky-50 font-display font-bold text-sky-dark">
-                            {a.childName[0]}
-                          </div>
-                          <div className="min-w-0 flex-1">
-                            <div className="text-sm font-bold text-ink">
-                              {a.childName}, {a.childAge} ans
-                            </div>
-                            <div className="truncate text-xs text-ink/60">{a.title}</div>
-                          </div>
-                          <Heart className="size-4 shrink-0 text-brand/40" />
-                        </div>
-                      ))}
-                    </div>
-                  )}
+              <button
+                onClick={() => handleToggle(false)}
+                disabled={togglingParticipation}
+                className="press-white w-full rounded-2xl border border-ink/10 bg-white py-3 text-xs font-bold text-ink/60 disabled:opacity-50"
+              >
+                <span className="inline-flex items-center gap-1.5">
+                  <Share2 className="size-3.5" />
+                  Désactiver le partage de guilde
+                </span>
+              </button>
+            </>
+          ) : (
+            <div className="rounded-3xl border border-ink/10 bg-white p-6 shadow-md">
+              <div className="flex items-start gap-3">
+                <div className="grid size-10 shrink-0 place-items-center rounded-xl bg-sky-50 text-sky-dark">
+                  <Users className="size-5" />
                 </div>
-
-                <button
-                  onClick={() => handleToggle(false)}
-                  disabled={togglingParticipation}
-                  className="press-white w-full rounded-2xl border border-ink/10 bg-white py-3 text-xs font-bold text-ink/60 disabled:opacity-50"
-                >
-                  <span className="inline-flex items-center gap-1.5">
-                    <Share2 className="size-3.5" />
-                    Désactiver le partage de guilde
-                  </span>
-                </button>
-              </>
-            ) : (
-              <div className="rounded-3xl border border-ink/10 bg-white p-6 shadow-md">
-                <div className="flex items-start gap-3">
-                  <div className="grid size-10 shrink-0 place-items-center rounded-xl bg-sky-50 text-sky-dark">
-                    <Users className="size-5" />
-                  </div>
-                  <div>
-                    <h2 className="font-display text-lg font-bold">
-                      Rejoindre la communauté de guilde
-                    </h2>
-                    <p className="mt-1.5 text-sm leading-relaxed text-ink/70">
-                      Aujourd'hui, seule votre famille voit les progrès de {child.name}. En activant
-                      le partage, le prénom et l'âge de {child.name} deviennent visibles aux autres
-                      familles de la guilde {guild.name}, et {child.name} voit aussi les leurs. Rien
-                      d'autre n'est partagé (ni ville, ni centres d'intérêt, ni notes). Vous pouvez
-                      désactiver à tout moment.
-                    </p>
-                    <button
-                      onClick={() => handleToggle(true)}
-                      disabled={togglingParticipation}
-                      className="press-brand mt-4 rounded-2xl bg-brand px-5 py-2.5 text-sm font-bold text-white disabled:opacity-50"
-                    >
-                      {togglingParticipation ? "..." : "Activer le partage"}
-                    </button>
-                  </div>
+                <div>
+                  <h2 className="font-display text-lg font-bold">
+                    Rejoindre la communauté de guilde
+                  </h2>
+                  <p className="mt-1.5 text-sm leading-relaxed text-ink/70">
+                    Aujourd'hui, seule votre famille voit les progrès de {child.name}. En activant
+                    le partage, le prénom et l'âge de {child.name} deviennent visibles aux autres
+                    familles de la guilde {guild.name}, et {child.name} voit aussi les leurs. Rien
+                    d'autre n'est partagé (ni ville, ni centres d'intérêt, ni notes). Vous pouvez
+                    désactiver à tout moment.
+                  </p>
+                  <button
+                    onClick={() => handleToggle(true)}
+                    disabled={togglingParticipation}
+                    className="press-brand mt-4 rounded-2xl bg-brand px-5 py-2.5 text-sm font-bold text-white disabled:opacity-50"
+                  >
+                    {togglingParticipation ? "..." : "Activer le partage"}
+                  </button>
                 </div>
               </div>
-            )
-          }
+            </div>
+          )}
         </div>
       </main>
     </div>

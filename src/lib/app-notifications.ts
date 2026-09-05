@@ -52,7 +52,7 @@ function buildPushPayload(params: {
   const parentUrl = childId ? `/profiles/${childId}/mentors` : "/profiles";
   const p = params.payload ?? {};
   switch (params.type) {
-        case "collective_discovery_tagged":
+    case "collective_discovery_tagged":
       return {
         title: "👥 Nouveau projet d'équipe partagé !",
         body: `${p.authorName} a mentionné l'enfant dans un projet collectif : '${p.title}'.`,
@@ -163,4 +163,3 @@ async function sendEmailForEvent(
     console.error("sendEmailForEvent failed (non-fatal):", err);
   }
 }
-

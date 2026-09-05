@@ -1,11 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import {
-  pageMeta,
-  jsonLdScript,
-  faqPageJsonLd,
-  breadcrumbJsonLd,
-  articleJsonLd,
-} from "@/lib/seo";
+import { pageMeta, jsonLdScript, faqPageJsonLd, breadcrumbJsonLd, articleJsonLd } from "@/lib/seo";
 import { GuideLayout } from "@/components/guides/GuideLayout";
 import { Button } from "@/components/ui/button";
 import { ArrowRight, CheckCircle2, Sparkles, Brain, Lightbulb } from "lucide-react";
@@ -69,7 +63,8 @@ export const Route = createFileRoute("/guides/test-de-personnalite-enfant-talent
         ),
         jsonLdScript(
           articleJsonLd({
-            headline: "Test de personnalité pour enfant : pourquoi les quiz sur écran ne valent pas l'action réelle",
+            headline:
+              "Test de personnalité pour enfant : pourquoi les quiz sur écran ne valent pas l'action réelle",
             description:
               "Pourquoi les tests de personnalité en ligne pour enfants sont trompeurs ? Découvrez comment révéler ses vrais talents par l'action et des défis concrets.",
             path: PATH,
@@ -128,26 +123,43 @@ function Guide() {
 
       <h2>1. Le piège des tests de personnalité en ligne pour enfants</h2>
       <p>
-        Internet regorge de quiz promettant de révéler si votre enfant est « leader », « créatif », « logique » ou « empathique » en 15 questions. Bien que ludiques en apparence, ces tests posent trois limites scientifiques majeures :
+        Internet regorge de quiz promettant de révéler si votre enfant est « leader », « créatif »,
+        « logique » ou « empathique » en 15 questions. Bien que ludiques en apparence, ces tests
+        posent trois limites scientifiques majeures :
       </p>
       <ul>
         <li>
-          <strong>Le biais de désirabilité sociale :</strong> Un enfant ne répond pas à ce qu'il ressent intimement, mais à ce qu'il pense être la « bonne réponse » pour faire plaisir à ses parents.
+          <strong>Le biais de désirabilité sociale :</strong> Un enfant ne répond pas à ce qu'il
+          ressent intimement, mais à ce qu'il pense être la « bonne réponse » pour faire plaisir à
+          ses parents.
         </li>
         <li>
-          <strong>L'illusion de la case fermée :</strong> Étiqueter un enfant de 9 ans comme « non-manuel » ou « timide » risque de figer son identité (consultez nos conseils pour{" "}
-          <a href="/guides/timidite-confiance-prise-de-parole">aider un enfant réservé à libérer sa parole</a>).
+          <strong>L'illusion de la case fermée :</strong> Étiqueter un enfant de 9 ans comme «
+          non-manuel » ou « timide » risque de figer son identité (consultez nos conseils pour{" "}
+          <a href="/guides/timidite-confiance-prise-de-parole">
+            aider un enfant réservé à libérer sa parole
+          </a>
+          ).
         </li>
         <li>
-          <strong>La déconnexion du réel :</strong> Cocher une case ne dit rien de sa capacité à résoudre un problème concret dans la vraie vie ou à exprimer son profil naturel (découvrez comment{" "}
-          <a href="/guides/potentiel-haut-potentiel-enfant">repérer les signes d'un enfant précoce ou HPI</a>).
+          <strong>La déconnexion du réel :</strong> Cocher une case ne dit rien de sa capacité à
+          résoudre un problème concret dans la vraie vie ou à exprimer son profil naturel (découvrez
+          comment{" "}
+          <a href="/guides/potentiel-haut-potentiel-enfant">
+            repérer les signes d'un enfant précoce ou HPI
+          </a>
+          ).
         </li>
       </ul>
 
       <h2>2. Observer la personnalité en action : les 4 situations révélatrices</h2>
       <p>
-        La psychologie cognitive démontre que les talents d'un jeune enfant se révèlent dans ses comportements spontanés face à la matière et aux autres, selon la grille des{" "}
-        <a href="/guides/intelligences-multiples-gardner">9 formes d'intelligence de Howard Gardner</a>. Voici 4 moments clés à observer :
+        La psychologie cognitive démontre que les talents d'un jeune enfant se révèlent dans ses
+        comportements spontanés face à la matière et aux autres, selon la grille des{" "}
+        <a href="/guides/intelligences-multiples-gardner">
+          9 formes d'intelligence de Howard Gardner
+        </a>
+        . Voici 4 moments clés à observer :
       </p>
 
       <div className="my-6 grid gap-4 sm:grid-cols-2">
@@ -157,7 +169,8 @@ function Guide() {
             Face à un problème imprévu
           </div>
           <p className="text-sm text-ink/80 leading-relaxed">
-            Un jouet se casse, une recette rate : abandonne-t-il immédiatement ou bricole-t-il une solution alternative ?
+            Un jouet se casse, une recette rate : abandonne-t-il immédiatement ou bricole-t-il une
+            solution alternative ?
           </p>
         </div>
 
@@ -167,7 +180,8 @@ function Guide() {
             Quand personne ne le regarde
           </div>
           <p className="text-sm text-ink/80 leading-relaxed">
-            Vers quoi se tourne son énergie lorsqu'il n'a ni écran ni consigne scolaire ? Démonter, dessiner, classer, inventer ?
+            Vers quoi se tourne son énergie lorsqu'il n'a ni écran ni consigne scolaire ? Démonter,
+            dessiner, classer, inventer ?
           </p>
         </div>
 
@@ -177,7 +191,8 @@ function Guide() {
             Dans les interactions sociales
           </div>
           <p className="text-sm text-ink/80 leading-relaxed">
-            En groupe, prend-il spontanément le rôle du stratège, du médiateur bienveillant, du bâtisseur ou de l'orateur ?
+            En groupe, prend-il spontanément le rôle du stratège, du médiateur bienveillant, du
+            bâtisseur ou de l'orateur ?
           </p>
         </div>
 
@@ -187,37 +202,52 @@ function Guide() {
             Son rapport à l'autonomie
           </div>
           <p className="text-sm text-ink/80 leading-relaxed">
-            Est-il capable de mener une mission au marché ou de gérer une responsabilité quotidienne (retrouvez nos repères d'
-            <a href="/guides/autonomie-responsabilite-maison">autonomie et de responsabilités à la maison</a>) ?
+            Est-il capable de mener une mission au marché ou de gérer une responsabilité quotidienne
+            (retrouvez nos repères d'
+            <a href="/guides/autonomie-responsabilite-maison">
+              autonomie et de responsabilités à la maison
+            </a>
+            ) ?
           </p>
         </div>
       </div>
 
       <h2>3. Le protocole des « 3 défis du week-end » (À faire à la maison)</h2>
-      <p>
-        Au lieu d'un test abstrait sur écran, proposez à votre enfant ce protocole simple :
-      </p>
+      <p>Au lieu d'un test abstrait sur écran, proposez à votre enfant ce protocole simple :</p>
       <ol className="space-y-4 my-6">
         <li>
-          <strong>Défi 1 : La Mission du Marché (Intelligence Pratique & Interpersonnelle)</strong><br />
-          Donnez-lui une liste de 3 ingrédients et un budget précis. Laissez-le choisir les étals, négocier et calculer la monnaie rendue.
+          <strong>Défi 1 : La Mission du Marché (Intelligence Pratique & Interpersonnelle)</strong>
+          <br />
+          Donnez-lui une liste de 3 ingrédients et un budget précis. Laissez-le choisir les étals,
+          négocier et calculer la monnaie rendue.
         </li>
         <li>
-          <strong>Défi 2 : L'Invention en Carton (Intelligence Spatiale & Kinesthésique)</strong><br />
+          <strong>Défi 2 : L'Invention en Carton (Intelligence Spatiale & Kinesthésique)</strong>
+          <br />
           Avec une boîte de récupération et des ciseaux (inspiré de nos{" "}
-          <a href="/guides/activites-manuelles-enfant">activités manuelles et de bricolage</a>), demandez-lui de fabriquer un objet fonctionnel.
+          <a href="/guides/activites-manuelles-enfant">activités manuelles et de bricolage</a>),
+          demandez-lui de fabriquer un objet fonctionnel.
         </li>
         <li>
-          <strong>Défi 3 : L'Histoire Inversée (Intelligence Linguistique & Narrative)</strong><br />
-          Demandez-lui de vous expliquer le fonctionnement d'une machine comme s'il était présentateur télé.
+          <strong>Défi 3 : L'Histoire Inversée (Intelligence Linguistique & Narrative)</strong>
+          <br />
+          Demandez-lui de vous expliquer le fonctionnement d'une machine comme s'il était
+          présentateur télé.
         </li>
       </ol>
 
       <h2>Pour aller plus loin vers l'orientation future</h2>
       <p>
-        Pour accompagner un collégien ou adolescent dans la découverte de ses affinités avec les métiers de demain, explorez notre{" "}
-        <a href="/guides/test-orientation-metier-enfant-futur">test d'orientation collégien & métiers d'avenir</a> ainsi que notre guide pour{" "}
-        <a href="/guides/orientation-scolaire-metiers-avenir">aider son enfant à choisir son métier dès 10 ans</a>.
+        Pour accompagner un collégien ou adolescent dans la découverte de ses affinités avec les
+        métiers de demain, explorez notre{" "}
+        <a href="/guides/test-orientation-metier-enfant-futur">
+          test d'orientation collégien & métiers d'avenir
+        </a>{" "}
+        ainsi que notre guide pour{" "}
+        <a href="/guides/orientation-scolaire-metiers-avenir">
+          aider son enfant à choisir son métier dès 10 ans
+        </a>
+        .
       </p>
 
       <div className="my-8 not-prose rounded-3xl border border-brand/20 bg-brand/5 p-6 sm:p-8">
@@ -225,19 +255,29 @@ function Guide() {
           Comment Génizio documente la personnalité par la preuve
         </h3>
         <p className="mt-2 text-ink/80 leading-relaxed">
-          Sur Génizio, l'IA compagne <strong>Naya</strong> n'enferme jamais un enfant dans un score statique. Elle lui propose des défis réels adaptés à son âge, enregistre ses réussites tangibles et génère un <em>Passeport de Talents</em> évolutif fondé sur ce qu'il a réellement accompli.
+          Sur Génizio, l'IA compagne <strong>Naya</strong> n'enferme jamais un enfant dans un score
+          statique. Elle lui propose des défis réels adaptés à son âge, enregistre ses réussites
+          tangibles et génère un <em>Passeport de Talents</em> évolutif fondé sur ce qu'il a
+          réellement accompli.
         </p>
         <div className="mt-6 flex flex-wrap gap-4">
-          <Button asChild size="lg" className="rounded-full bg-brand text-white shadow-md hover:bg-brand-dark transition-all">
+          <Button
+            asChild
+            size="lg"
+            className="rounded-full bg-brand text-white shadow-md hover:bg-brand-dark transition-all"
+          >
             <Link to="/auth">
               Découvrir le Jumeau Pédagogique
               <ArrowRight className="ml-2 h-4 w-4" />
             </Link>
           </Button>
-          <Button asChild variant="outline" size="lg" className="rounded-full border-ink/20 bg-white text-ink hover:bg-surface hover:text-brand transition-all">
-            <Link to="/guides/intelligences-multiples-gardner">
-              Explorer les 9 intelligences
-            </Link>
+          <Button
+            asChild
+            variant="outline"
+            size="lg"
+            className="rounded-full border-ink/20 bg-white text-ink hover:bg-surface hover:text-brand transition-all"
+          >
+            <Link to="/guides/intelligences-multiples-gardner">Explorer les 9 intelligences</Link>
           </Button>
         </div>
       </div>

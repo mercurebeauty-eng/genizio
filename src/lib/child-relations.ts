@@ -16,7 +16,11 @@ export function isValidHandleFormat(handle: string): boolean {
   return handleRegex.test(handle);
 }
 
-export function generateSuggestedHandle(firstName: string, lastName: string = "", suffixLength: number = 4): string {
+export function generateSuggestedHandle(
+  firstName: string,
+  lastName: string = "",
+  suffixLength: number = 4,
+): string {
   const base = `${firstName}${lastName ? "_" + lastName : ""}`
     .toLowerCase()
     .normalize("NFD")
@@ -24,15 +28,17 @@ export function generateSuggestedHandle(firstName: string, lastName: string = ""
     .replace(/[^a-z0-9_]/g, ""); // Ne garder que l'autorisé
 
   const safeBase = base.substring(0, 20 - suffixLength - 1);
-  const randomSuffix = Math.random().toString(36).substring(2, 2 + suffixLength);
-  
+  const randomSuffix = Math.random()
+    .toString(36)
+    .substring(2, 2 + suffixLength);
+
   const handle = `${safeBase}_${randomSuffix}`;
-  
+
   if (!isValidHandleFormat(handle)) {
     // Fallback de sécurité si le prénom contenait que des caractères spéciaux
     return `user_${Math.random().toString(36).substring(2, 8)}`;
   }
-  
+
   return handle;
 }
 
@@ -49,7 +55,11 @@ export function getCleanHandle(handleInput: string): string {
 /**
  * State machine transition validation for relations.
  */
-export function canTransitionRelation(currentStatus: RelationStatus | null, nextStatus: RelationStatus, isParent: boolean): boolean {
+export function canTransitionRelation(
+  currentStatus: RelationStatus | null,
+  nextStatus: RelationStatus,
+  isParent: boolean,
+): boolean {
   if (!currentStatus) {
     // Création d'une nouvelle demande
     return nextStatus === "pending";

@@ -20,7 +20,15 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 
-export function AdminSafeguardingAudits() {
+export interface AdminSafeguardingAuditsProps {
+  onDataChanged?: () => void | Promise<void>;
+  isRefreshing?: boolean;
+}
+
+export function AdminSafeguardingAudits({
+  onDataChanged,
+  isRefreshing = false,
+}: AdminSafeguardingAuditsProps = {}) {
   const { session } = useSession();
   const currentQuarter = `${new Date().getFullYear()}-Q${Math.floor(new Date().getMonth() / 3) + 1}`;
   const [quarterPeriod, setQuarterPeriod] = useState(currentQuarter);
@@ -70,6 +78,26 @@ export function AdminSafeguardingAudits() {
     e.preventDefault();
     if (!selectedAudit) return;
     setSaving(true);
+
+    // Optimistic UI update
+    const previousAudits = audits;
+    const now = new Date().toISOString();
+    setAudits((prev) =>
+      prev.map((a) =>
+        a.child_id === selectedAudit.child_id
+          ? {
+              ...a,
+              status: auditStatus,
+              contact_channel: contactChannel,
+              contacted_person: contactedPerson,
+              child_wellbeing_rating: rating,
+              notes,
+              conducted_at: now,
+            }
+          : a,
+      ),
+    );
+
     try {
       const opts = session?.access_token
         ? { headers: { Authorization: `Bearer ${session.access_token}` } }
@@ -89,8 +117,21 @@ export function AdminSafeguardingAudits() {
       });
       toast.success("Audit de bienveillance enregistré avec succès.");
       setSelectedAudit(null);
-      void loadAudits();
+
+      // Optional broadcast explicitly
+      try {
+        const { supabase } = await import("@/integrations/supabase/client");
+        const channel = supabase.channel("admin-mentors-tab-sync");
+        void channel.send({
+          type: "broadcast",
+          event: "safeguarding_updated",
+          payload: { timestamp: Date.now() },
+        });
+      } catch (e) {}
+
+      void onDataChanged?.();
     } catch (err) {
+      setAudits(previousAudits); // rollback
       toast.error(err instanceof Error ? err.message : "Erreur lors de l'enregistrement.");
     } finally {
       setSaving(false);
@@ -122,9 +163,10 @@ export function AdminSafeguardingAudits() {
               </span>
             </p>
             <p>
-              Pour garantir la sécurité des enfants (particulièrement quand les parents sont analphabètes
-              ou indisponibles), l'équipe Génizio réalise un <strong>contrôle qualité régulier</strong>{" "}
-              tous les 3 mois par appel direct ou message WhatsApp avec la famille.
+              Pour garantir la sécurité des enfants (particulièrement quand les parents sont
+              analphabètes ou indisponibles), l'équipe Génizio réalise un{" "}
+              <strong>contrôle qualité régulier</strong> tous les 3 mois par appel direct ou message
+              WhatsApp avec la famille.
             </p>
           </div>
         </div>
@@ -271,7 +313,9 @@ export function AdminSafeguardingAudits() {
                   {audit.conducted_at && (
                     <div className="mt-3 space-y-1 text-xs border-t border-dashed border-ink/10 pt-2">
                       <div className="flex items-center justify-between text-[11px] text-ink/50">
-                        <span>Audité le {new Date(audit.conducted_at).toLocaleDateString("fr-FR")}</span>
+                        <span>
+                          Audité le {new Date(audit.conducted_at).toLocaleDateString("fr-FR")}
+                        </span>
                         {audit.child_wellbeing_rating && (
                           <span className="flex items-center text-amber-500 font-bold gap-0.5">
                             <Star className="size-3 fill-current" />
@@ -339,10 +383,14 @@ export function AdminSafeguardingAudits() {
                   onChange={(e) => setAuditStatus(e.target.value as any)}
                   className="w-full rounded-xl border border-ink/10 p-2.5 font-semibold text-ink outline-none"
                 >
-                  <option value="contacted_ok">✅ Conforme (Famille rassurée, enfant épanoui)</option>
+                  <option value="contacted_ok">
+                    ✅ Conforme (Famille rassurée, enfant épanoui)
+                  </option>
                   <option value="warning">⚠️ Signaux d'attention (Réserves légères)</option>
                   <option value="escalated">🚨 Alerte critique (Malaise, plainte grave)</option>
-                  <option value="unreachable">❌ Famille injoignable après plusieurs tentatives</option>
+                  <option value="unreachable">
+                    ❌ Famille injoignable après plusieurs tentatives
+                  </option>
                 </select>
               </div>
 
@@ -421,7 +469,11 @@ export function AdminSafeguardingAudits() {
                   disabled={saving}
                   className="flex-1 py-2.5 rounded-xl bg-brand hover:bg-brand/90 font-bold text-white flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-50"
                 >
-                  {saving ? <Loader2 className="size-4 animate-spin" /> : <CheckCircle2 className="size-4" />}
+                  {saving ? (
+                    <Loader2 className="size-4 animate-spin" />
+                  ) : (
+                    <CheckCircle2 className="size-4" />
+                  )}
                   <span>Enregistrer l'audit</span>
                 </button>
               </div>

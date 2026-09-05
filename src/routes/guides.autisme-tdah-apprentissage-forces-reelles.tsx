@@ -1,11 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import {
-  pageMeta,
-  jsonLdScript,
-  faqPageJsonLd,
-  breadcrumbJsonLd,
-  articleJsonLd,
-} from "@/lib/seo";
+import { pageMeta, jsonLdScript, faqPageJsonLd, breadcrumbJsonLd, articleJsonLd } from "@/lib/seo";
 import { GuideLayout, MedicalDisclaimer } from "@/components/guides/GuideLayout";
 import { Button } from "@/components/ui/button";
 import { ArrowRight, Eye, Cpu, Zap, HeartHandshake, AlertCircle } from "lucide-react";
@@ -69,7 +63,8 @@ export const Route = createFileRoute("/guides/autisme-tdah-apprentissage-forces-
         ),
         jsonLdScript(
           articleJsonLd({
-            headline: "Autisme, TDAH et pensée visuelle : pourquoi leur façon d'apprendre par le réel est une force majeure",
+            headline:
+              "Autisme, TDAH et pensée visuelle : pourquoi leur façon d'apprendre par le réel est une force majeure",
             description:
               "Analyse pédagogique des forces des enfants neuroatypiques et comment la pédagogie par l'action concrète transforme leurs difficultés scolaires en talents réels.",
             path: PATH,
@@ -131,20 +126,36 @@ function Guide() {
       />
 
       <MedicalDisclaimer>
-        Ce guide apporte des repères éducatifs et psychopédagogiques pour accompagner l'apprentissage à la maison. Il ne remplace en aucun cas un diagnostic médical ni le suivi par des professionnels de santé qualifiés (pédopsychiatre, neuropédiatre, orthophoniste, psychomotricien).
+        Ce guide apporte des repères éducatifs et psychopédagogiques pour accompagner
+        l'apprentissage à la maison. Il ne remplace en aucun cas un diagnostic médical ni le suivi
+        par des professionnels de santé qualifiés (pédopsychiatre, neuropédiatre, orthophoniste,
+        psychomotricien).
       </MedicalDisclaimer>
 
       <h2>1. La pensée en images et le besoin d'ancrage dans la matière</h2>
       <p>
-        Pour un enfant à profil neuroatypique, écouter passivement pendant six heures est une épreuve. Le cerveau sature. C'est un fait physiologique. Son intelligence se révèle dans la <strong>pensée spatiale, visuelle et kinesthésique</strong> (telle que décrite dans la{" "}
-        <a href="/guides/intelligences-multiples-gardner">théorie des 9 formes d'intelligence de Gardner</a>) :
+        Pour un enfant à profil neuroatypique, écouter passivement pendant six heures est une
+        épreuve. Le cerveau sature. C'est un fait physiologique. Son intelligence se révèle dans la{" "}
+        <strong>pensée spatiale, visuelle et kinesthésique</strong> (telle que décrite dans la{" "}
+        <a href="/guides/intelligences-multiples-gardner">
+          théorie des 9 formes d'intelligence de Gardner
+        </a>
+        ) :
       </p>
       <ul>
         <li>Il a besoin de voir la structure globale avant les détails.</li>
-        <li>Il comprend une règle de physique ou de mathématiques dès qu'il peut la manipuler via des{" "}
-          <a href="/guides/activites-manuelles-enfant">activités manuelles et d'ingénierie concrète</a>.</li>
-        <li>Le contact avec des objets réels (mécanique, programmation, puzzles 3D) dissipe l'anxiété et réveille une concentration soutenue (voir nos méthodes pour un{" "}
-          <a href="/guides/enfant-agite-concentration">enfant inattentif ou hyperactif</a>).</li>
+        <li>
+          Il comprend une règle de physique ou de mathématiques dès qu'il peut la manipuler via des{" "}
+          <a href="/guides/activites-manuelles-enfant">
+            activités manuelles et d'ingénierie concrète
+          </a>
+          .
+        </li>
+        <li>
+          Le contact avec des objets réels (mécanique, programmation, puzzles 3D) dissipe l'anxiété
+          et réveille une concentration soutenue (voir nos méthodes pour un{" "}
+          <a href="/guides/enfant-agite-concentration">enfant inattentif ou hyperactif</a>).
+        </li>
       </ul>
 
       <h2>2. Les 3 super-pouvoirs des profils atypiques</h2>
@@ -156,7 +167,8 @@ function Guide() {
             1. L'Hyperfocalisation
           </div>
           <p className="text-sm text-ink/80 leading-relaxed">
-            Une capacité hors du commun à explorer un sujet jusqu'à un degré d'expertise remarquable (robotique, dessin technique, astronomie, botanique).
+            Une capacité hors du commun à explorer un sujet jusqu'à un degré d'expertise remarquable
+            (robotique, dessin technique, astronomie, botanique).
           </p>
         </div>
 
@@ -166,7 +178,8 @@ function Guide() {
             2. La Détection des Anomalies
           </div>
           <p className="text-sm text-ink/80 leading-relaxed">
-            Un œil ultra aiguisé pour repérer les failles logiques, les détails invisibles pour les autres ou les pièces mal ajustées.
+            Un œil ultra aiguisé pour repérer les failles logiques, les détails invisibles pour les
+            autres ou les pièces mal ajustées.
           </p>
         </div>
 
@@ -176,7 +189,8 @@ function Guide() {
             3. L'Authenticité Radicale
           </div>
           <p className="text-sm text-ink/80 leading-relaxed">
-            Une grande loyauté aux faits et à la logique pure, exempte de faux-semblants, qui forge de grands esprits scientifiques et créatifs.
+            Une grande loyauté aux faits et à la logique pure, exempte de faux-semblants, qui forge
+            de grands esprits scientifiques et créatifs.
           </p>
         </div>
       </div>
@@ -184,19 +198,26 @@ function Guide() {
       <h2>3. 4 principes pour adapter les apprentissages à la maison</h2>
       <ol className="space-y-3 my-6">
         <li>
-          <strong>Rendre chaque consigne visuelle :</strong> Remplacer les longs discours par un schéma, une liste à cocher ou des pictogrammes clairs.
+          <strong>Rendre chaque consigne visuelle :</strong> Remplacer les longs discours par un
+          schéma, une liste à cocher ou des pictogrammes clairs.
         </li>
         <li>
-          <strong>Utiliser ses centres d'intérêt spécifiques :</strong> S'il est passionné par les circuits électriques ou les animaux, faites-en la passerelle d'accès vers les maths et la lecture (consultez notre principe de{" "}
-          <a href="/guides/pratique-avant-theorie-apprentissage-ia">la pratique avant la théorie</a>).
+          <strong>Utiliser ses centres d'intérêt spécifiques :</strong> S'il est passionné par les
+          circuits électriques ou les animaux, faites-en la passerelle d'accès vers les maths et la
+          lecture (consultez notre principe de{" "}
+          <a href="/guides/pratique-avant-theorie-apprentissage-ia">la pratique avant la théorie</a>
+          ).
         </li>
         <li>
-          <strong>Réguler les surcharges sensorielles :</strong> Les crises sont souvent causées par un trop-plein sensoriel ou une incompréhension : appliquez nos{" "}
+          <strong>Réguler les surcharges sensorielles :</strong> Les crises sont souvent causées par
+          un trop-plein sensoriel ou une incompréhension : appliquez nos{" "}
           <a href="/guides/gestion-colere-emotions-enfant">5 outils d'apaisement émotionnel</a>.
         </li>
         <li>
-          <strong>Identifier une éventuelle double exceptionnalité :</strong> De nombreux enfants TDAH ou autistes présentent aussi un haut potentiel intellectuel (consultez notre guide sur les{" "}
-          <a href="/guides/potentiel-haut-potentiel-enfant">signes du haut potentiel HPI</a>).
+          <strong>Identifier une éventuelle double exceptionnalité :</strong> De nombreux enfants
+          TDAH ou autistes présentent aussi un haut potentiel intellectuel (consultez notre guide
+          sur les <a href="/guides/potentiel-haut-potentiel-enfant">signes du haut potentiel HPI</a>
+          ).
         </li>
       </ol>
 
@@ -205,19 +226,28 @@ function Guide() {
           Génizio : un environnement pensé pour chaque profil d'intelligence
         </h3>
         <p className="mt-2 text-ink/80 leading-relaxed">
-          Génizio respecte le rythme et la modalité d'apprentissage unique de votre enfant. Grâce à <strong>Naya</strong>, les défis sont personnalisés selon ses centres d'intérêt réels et ses talents dominants sans jamais l'enfermer dans un diagnostic réducteur.
+          Génizio respecte le rythme et la modalité d'apprentissage unique de votre enfant. Grâce à{" "}
+          <strong>Naya</strong>, les défis sont personnalisés selon ses centres d'intérêt réels et
+          ses talents dominants sans jamais l'enfermer dans un diagnostic réducteur.
         </p>
         <div className="mt-6 flex flex-wrap gap-4">
-          <Button asChild size="lg" className="rounded-full bg-brand text-white shadow-md hover:bg-brand-dark transition-all">
+          <Button
+            asChild
+            size="lg"
+            className="rounded-full bg-brand text-white shadow-md hover:bg-brand-dark transition-all"
+          >
             <Link to="/auth">
               Personnaliser le parcours de mon enfant
               <ArrowRight className="ml-2 h-4 w-4" />
             </Link>
           </Button>
-          <Button asChild variant="outline" size="lg" className="rounded-full border-ink/20 bg-white text-ink hover:bg-surface hover:text-brand transition-all">
-            <Link to="/guides/enfant-agite-concentration">
-              Conseils concentration & TDAH
-            </Link>
+          <Button
+            asChild
+            variant="outline"
+            size="lg"
+            className="rounded-full border-ink/20 bg-white text-ink hover:bg-surface hover:text-brand transition-all"
+          >
+            <Link to="/guides/enfant-agite-concentration">Conseils concentration & TDAH</Link>
           </Button>
         </div>
       </div>

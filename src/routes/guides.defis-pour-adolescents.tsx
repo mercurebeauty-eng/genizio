@@ -135,37 +135,54 @@ function Guide() {
       />
       <h2>Ce qui change vers 12 ans : le besoin d'utilité réelle</h2>
       <p>
-        Un adolescent n'exécute plus une consigne simplement parce qu'un adulte la lui demande. Il évalue spontanément la pertinence de la tâche : à quoi ça sert, qui va le voir, est-ce un projet valorisant ?
+        Un adolescent n'exécute plus une consigne simplement parce qu'un adulte la lui demande. Il
+        évalue spontanément la pertinence de la tâche : à quoi ça sert, qui va le voir, est-ce un
+        projet valorisant ?
       </p>
       <p>
-        À cet âge, les écrans et réseaux sociaux captent une grande partie de son attention. Plutôt que d'entrer dans un bras de fer stérile (découvrez nos méthodes pour{" "}
-        <a href="/guides/ecrans-addiction-alternatives-enfant">réduire les écrans sans conflit</a>), proposez-lui de devenir créateur : transformer son intérêt pour les vidéos en écriture de scripts ou réalisation de montages (consultez notre guide{" "}
-        <a href="/guides/ecrans-tiktok-youtube-talent-ecriture-realisation">TikTok et YouTube : transformer le scroll en talent de réalisation</a>).
+        À cet âge, les écrans et réseaux sociaux captent une grande partie de son attention. Plutôt
+        que d'entrer dans un bras de fer stérile (découvrez nos méthodes pour{" "}
+        <a href="/guides/ecrans-addiction-alternatives-enfant">réduire les écrans sans conflit</a>),
+        proposez-lui de devenir créateur : transformer son intérêt pour les vidéos en écriture de
+        scripts ou réalisation de montages (consultez notre guide{" "}
+        <a href="/guides/ecrans-tiktok-youtube-talent-ecriture-realisation">
+          TikTok et YouTube : transformer le scroll en talent de réalisation
+        </a>
+        ).
       </p>
 
       <h3>Les trois conditions d'un défi motivant</h3>
       <ul>
         <li>
-          <strong>Un rendu montrable :</strong> Une vidéo terminée, un objet vendu, un événement organisé, un outil fonctionnel.
+          <strong>Un rendu montrable :</strong> Une vidéo terminée, un objet vendu, un événement
+          organisé, un outil fonctionnel.
         </li>
         <li>
-          <strong>Une difficulté réelle :</strong> Le projet doit comporter un risque d'échec pour susciter un vrai sentiment d'accomplissement.
+          <strong>Une difficulté réelle :</strong> Le projet doit comporter un risque d'échec pour
+          susciter un vrai sentiment d'accomplissement.
         </li>
         <li>
-          <strong>La méthode laissée libre :</strong> Vous fixez l'objectif, l'adolescent choisit le chemin.
+          <strong>La méthode laissée libre :</strong> Vous fixez l'objectif, l'adolescent choisit le
+          chemin.
         </li>
       </ul>
 
       <h2>Comment introduire un défi sans conflit</h2>
       <ol className="space-y-3 my-6">
         <li>
-          <strong>Ne proposez jamais en plein jeu vidéo :</strong> Choisissez un moment neutre (en voiture, au dîner).
+          <strong>Ne proposez jamais en plein jeu vidéo :</strong> Choisissez un moment neutre (en
+          voiture, au dîner).
         </li>
         <li>
-          <strong>Offrez deux options au choix :</strong> <em>« Tu préfères monter une micro-vente ce week-end ou réaliser un reportage vidéo sur le quartier ? »</em>
+          <strong>Offrez deux options au choix :</strong>{" "}
+          <em>
+            « Tu préfères monter une micro-vente ce week-end ou réaliser un reportage vidéo sur le
+            quartier ? »
+          </em>
         </li>
         <li>
-          <strong>Laissez-le fixer sa date de rendu :</strong> Un engagement temporel choisi responsabilise le jeune.
+          <strong>Laissez-le fixer sa date de rendu :</strong> Un engagement temporel choisi
+          responsabilise le jeune.
         </li>
       </ol>
 
@@ -173,42 +190,73 @@ function Guide() {
 
       <h3>1. Entreprendre & Gérer</h3>
       <ul>
-        <li>Monter une micro-activité le samedi (lavage auto, vente de pâtisseries) et calculer son bénéfice net.</li>
-        <li>Revendre 3 objets inutilisés en ligne en rédigeant des annonces vendeuses et honnêtes.</li>
-        <li>Chiffrer un projet personnel (achat d'un matériel, voyage) et établir un plan de financement.</li>
+        <li>
+          Monter une micro-activité le samedi (lavage auto, vente de pâtisseries) et calculer son
+          bénéfice net.
+        </li>
+        <li>
+          Revendre 3 objets inutilisés en ligne en rédigeant des annonces vendeuses et honnêtes.
+        </li>
+        <li>
+          Chiffrer un projet personnel (achat d'un matériel, voyage) et établir un plan de
+          financement.
+        </li>
       </ul>
 
       <h3>2. Créer & Documenter</h3>
       <ul>
-        <li>Réaliser un mini-documentaire de 3 minutes sur un artisan du quartier, montage et musique compris.</li>
-        <li>Créer une série photo thématique et rédiger un texte argumentatif pour chaque image.</li>
+        <li>
+          Réaliser un mini-documentaire de 3 minutes sur un artisan du quartier, montage et musique
+          compris.
+        </li>
+        <li>
+          Créer une série photo thématique et rédiger un texte argumentatif pour chaque image.
+        </li>
         <li>Tenir un journal de bord de projet sur 30 jours.</li>
       </ul>
 
       <h3>3. Réparer & Ingénierie</h3>
       <ul>
-        <li>Diagnostiquer et réparer un appareil domestique en panne en documentant chaque étape.</li>
+        <li>
+          Diagnostiquer et réparer un appareil domestique en panne en documentant chaque étape.
+        </li>
         <li>Fabriquer un meuble simple sur mesure à partir de plans côtés.</li>
         <li>Installer un système domotique, solaire ou réseau à la maison.</li>
       </ul>
 
       <h3>4. Transmettre & Convaincre</h3>
       <ul>
-        <li>Organiser un tournoi sportif ou un atelier créatif pour les plus jeunes du quartier.</li>
+        <li>
+          Organiser un tournoi sportif ou un atelier créatif pour les plus jeunes du quartier.
+        </li>
         <li>Enseigner une compétence numérique ou linguistique à un adulte.</li>
-        <li>Passer notre <a href="/guides/test-orientation-metier-enfant-futur">test d'orientation collégien spécial IA</a> et explorer les métiers d'avenir avec notre guide <a href="/guides/orientation-scolaire-metiers-avenir">orientation dès 10 ans</a>.</li>
+        <li>
+          Passer notre{" "}
+          <a href="/guides/test-orientation-metier-enfant-futur">
+            test d'orientation collégien spécial IA
+          </a>{" "}
+          et explorer les métiers d'avenir avec notre guide{" "}
+          <a href="/guides/orientation-scolaire-metiers-avenir">orientation dès 10 ans</a>.
+        </li>
       </ul>
 
       <h2>Le dossier de réalisations : préparer son orientation</h2>
       <p>
-        Entre 12 et 16 ans, les choix de filières approchent. Si un adolescent traverse une période de démotivation scolaire (consultez notre guide sur le{" "}
-        <a href="/guides/decrochage-scolaire-confiance-enfant">décrochage scolaire et la perte de confiance</a>), ces réalisations concrètes lui prouvent ses compétences réelles et enrichissent son dossier pour les études futures selon ses{" "}
+        Entre 12 et 16 ans, les choix de filières approchent. Si un adolescent traverse une période
+        de démotivation scolaire (consultez notre guide sur le{" "}
+        <a href="/guides/decrochage-scolaire-confiance-enfant">
+          décrochage scolaire et la perte de confiance
+        </a>
+        ), ces réalisations concrètes lui prouvent ses compétences réelles et enrichissent son
+        dossier pour les études futures selon ses{" "}
         <a href="/guides/intelligences-multiples-gardner">talents dominants</a>.
       </p>
 
       <h2>Ce que fait Génizio pour les adolescents</h2>
       <p>
-        Génizio génère des défis ambitieux sur mesure, adaptés aux centres d'intérêt réels de chaque adolescent. En documentant ses projets dans son Passeport de Talents, le jeune bâtit une preuve concrète de ses compétences pratiques et créatives.
+        Génizio génère des défis ambitieux sur mesure, adaptés aux centres d'intérêt réels de chaque
+        adolescent. En documentant ses projets dans son Passeport de Talents, le jeune bâtit une
+        preuve concrète de ses compétences pratiques et créatives.
       </p>
 
       <h2>Questions fréquentes (FAQ)</h2>

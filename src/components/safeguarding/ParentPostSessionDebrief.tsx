@@ -70,7 +70,9 @@ export function ParentPostSessionDebrief({
       setIsReportOpen(false);
       setDismissed(true);
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Erreur lors de la transmission de l'alerte.");
+      toast.error(
+        err instanceof Error ? err.message : "Erreur lors de la transmission de l'alerte.",
+      );
     } finally {
       setSubmitting(false);
     }
@@ -164,11 +166,17 @@ export function ParentPostSessionDebrief({
                   onChange={(e) => setCategory(e.target.value as any)}
                   className="w-full rounded-xl border border-ink/10 p-2.5 font-medium text-ink outline-none cursor-pointer"
                 >
-                  <option value="excessive_stress">Pression anxiogène / Enfant stressé ou en pleurs</option>
+                  <option value="excessive_stress">
+                    Pression anxiogène / Enfant stressé ou en pleurs
+                  </option>
                   <option value="verbal_abuse">Agressivité verbale / Propos rabaissants</option>
                   <option value="harassment">Harcèlement / Gestes ou propos ambigus</option>
-                  <option value="unauthorized_contact">Tentative de contact privé hors plateforme</option>
-                  <option value="unpunctuality_fraud">Absences répétées / Séances non honorées</option>
+                  <option value="unauthorized_contact">
+                    Tentative de contact privé hors plateforme
+                  </option>
+                  <option value="unpunctuality_fraud">
+                    Absences répétées / Séances non honorées
+                  </option>
                   <option value="other">Autre motif d'inconfort</option>
                 </select>
               </div>

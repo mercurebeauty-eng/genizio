@@ -5,13 +5,34 @@ import { requireAdmin } from "@/integrations/supabase/admin-middleware";
 export type EventType = "fablab" | "hackathon" | "marathon" | "workshop" | "sprint";
 export type EventStatus = "upcoming" | "active" | "completed" | "archived";
 
-export const EVENT_TYPE_LABELS: Record<EventType, { label: string; emoji: string; color: string }> = {
-  fablab: { label: "Fab Lab & Bricolage", emoji: "⚙️", color: "bg-amber-100 text-amber-900 border-amber-300" },
-  hackathon: { label: "Hackathon & Challenge", emoji: "🚀", color: "bg-purple-100 text-purple-900 border-purple-300" },
-  marathon: { label: "Marathon d'Inventeurs", emoji: "🧠", color: "bg-violet-100 text-violet-900 border-violet-300" },
-  workshop: { label: "Atelier Collaboratif", emoji: "🤝", color: "bg-sky-100 text-sky-900 border-sky-300" },
-  sprint: { label: "Sprint de Guilde", emoji: "🏆", color: "bg-emerald-100 text-emerald-900 border-emerald-300" },
-};
+export const EVENT_TYPE_LABELS: Record<EventType, { label: string; emoji: string; color: string }> =
+  {
+    fablab: {
+      label: "Fab Lab & Bricolage",
+      emoji: "⚙️",
+      color: "bg-amber-100 text-amber-900 border-amber-300",
+    },
+    hackathon: {
+      label: "Hackathon & Challenge",
+      emoji: "🚀",
+      color: "bg-purple-100 text-purple-900 border-purple-300",
+    },
+    marathon: {
+      label: "Marathon d'Inventeurs",
+      emoji: "🧠",
+      color: "bg-violet-100 text-violet-900 border-violet-300",
+    },
+    workshop: {
+      label: "Atelier Collaboratif",
+      emoji: "🤝",
+      color: "bg-sky-100 text-sky-900 border-sky-300",
+    },
+    sprint: {
+      label: "Sprint de Guilde",
+      emoji: "🏆",
+      color: "bg-emerald-100 text-emerald-900 border-emerald-300",
+    },
+  };
 
 export interface GenizioEvent {
   id: string;
@@ -144,9 +165,7 @@ export const createEventAdmin = createServerFn({ method: "POST" })
       created_at: new Date().toISOString(),
     };
 
-    const { error: insertError } = await (supabaseAdmin as any)
-      .from("events")
-      .insert(eventPayload);
+    const { error: insertError } = await (supabaseAdmin as any).from("events").insert(eventPayload);
 
     if (insertError) {
       console.warn("Table events fallback insertion error:", insertError.message);
@@ -183,22 +202,21 @@ export const createEventAdmin = createServerFn({ method: "POST" })
 /**
  * Liste légère des événements actifs/récents pour le sélecteur dans la Découverte
  */
-export const listActiveEventsForDiscovery = createServerFn({ method: "GET" })
-  .handler(async () => {
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+export const listActiveEventsForDiscovery = createServerFn({ method: "GET" }).handler(async () => {
+  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
-    const { data: rawEvents } = await (supabaseAdmin as any)
-      .from("events")
-      .select("id, title, event_type, city, group_code, starts_at, ends_at")
-      .order("starts_at", { ascending: false })
-      .limit(20);
+  const { data: rawEvents } = await (supabaseAdmin as any)
+    .from("events")
+    .select("id, title, event_type, city, group_code, starts_at, ends_at")
+    .order("starts_at", { ascending: false })
+    .limit(20);
 
-    return (rawEvents || []).map((e: any) => ({
-      id: e.id,
-      title: e.title,
-      eventType: e.event_type as EventType,
-      city: e.city,
-      groupCode: e.group_code || null,
-      displayLabel: `${EVENT_TYPE_LABELS[e.event_type as EventType]?.emoji || "🏛️"} ${e.title} (${e.city}${e.group_code ? ` - ${e.group_code}` : ""})`,
-    }));
-  });
+  return (rawEvents || []).map((e: any) => ({
+    id: e.id,
+    title: e.title,
+    eventType: e.event_type as EventType,
+    city: e.city,
+    groupCode: e.group_code || null,
+    displayLabel: `${EVENT_TYPE_LABELS[e.event_type as EventType]?.emoji || "🏛️"} ${e.title} (${e.city}${e.group_code ? ` - ${e.group_code}` : ""})`,
+  }));
+});

@@ -73,7 +73,8 @@ export const Route = createFileRoute("/guides/reussite-scolaire-aider-enfant")({
         ),
         jsonLdScript(
           articleJsonLd({
-            headline: "Réussite scolaire : comment aider son enfant à l'école sans crier ni stresser",
+            headline:
+              "Réussite scolaire : comment aider son enfant à l'école sans crier ni stresser",
             description:
               "Guide pratique pour accompagner la scolarité de son enfant : devoirs sereins, gestion des mauvaises notes, autonomie et confiance en soi.",
             path: PATH,
@@ -108,7 +109,10 @@ function Guide() {
         },
         { label: "24 activités éducatives sans écran", to: "/guides/activites-educatives-enfant" },
         { label: "Les 9 formes d'intelligence", to: "/guides/intelligences-multiples-gardner" },
-        { label: "Discipline positive sans crier", to: "/guides/discipline-positive-sans-punition" },
+        {
+          label: "Discipline positive sans crier",
+          to: "/guides/discipline-positive-sans-punition",
+        },
       ]}
     >
       <img
@@ -123,79 +127,122 @@ function Guide() {
 
       <h2>Ce qui prédit réellement la réussite scolaire</h2>
       <p>
-        On croit souvent que la réussite scolaire dépend uniquement du QI ou de la facilité innée. Les recherches en psychologie cognitive démontrent le contraire : ce qui distingue les élèves qui réussissent durablement, c'est la <strong>confiance en leur capacité d'apprendre</strong>, la <strong>régularité</strong> des habitudes de travail, la capacité à <strong>tolérer l'erreur</strong> et la stabilité émotionnelle à la maison.
+        On croit souvent que la réussite scolaire dépend uniquement du QI ou de la facilité innée.
+        Les recherches en psychologie cognitive démontrent le contraire : ce qui distingue les
+        élèves qui réussissent durablement, c'est la{" "}
+        <strong>confiance en leur capacité d'apprendre</strong>, la <strong>régularité</strong> des
+        habitudes de travail, la capacité à <strong>tolérer l'erreur</strong> et la stabilité
+        émotionnelle à la maison.
       </p>
       <p>
-        Un enfant qui comprend que l'intelligence se développe avec l'entraînement persévère bien davantage qu'un enfant enfermé dans une étiquette (découvrez nos repères sur la{" "}
+        Un enfant qui comprend que l'intelligence se développe avec l'entraînement persévère bien
+        davantage qu'un enfant enfermé dans une étiquette (découvrez nos repères sur la{" "}
         <a href="/guides/intelligences-multiples-gardner">théorie des 9 formes d'intelligence</a>).
       </p>
 
       <h2>Les 6 habitudes indispensables à installer à la maison</h2>
       <ol className="space-y-3 my-6">
         <li>
-          <strong>1. Des routines stables et un sommeil préservé :</strong> L'attention dépend d'un cerveau reposé. Éloignez les écrans le soir en appliquant nos conseils pour{" "}
-          <a href="/guides/ecrans-addiction-alternatives-enfant">réduire le temps d'écran sans crise</a>.
+          <strong>1. Des routines stables et un sommeil préservé :</strong> L'attention dépend d'un
+          cerveau reposé. Éloignez les écrans le soir en appliquant nos conseils pour{" "}
+          <a href="/guides/ecrans-addiction-alternatives-enfant">
+            réduire le temps d'écran sans crise
+          </a>
+          .
         </li>
         <li>
-          <strong>2. Un espace de travail épuré :</strong> Une table débarrassée et sans distractions visuelles permet d'éviter l'éparpillement chez un{" "}
-          <a href="/guides/enfant-agite-concentration">enfant inattentif ou qui ne tient pas en place</a>.
+          <strong>2. Un espace de travail épuré :</strong> Une table débarrassée et sans
+          distractions visuelles permet d'éviter l'éparpillement chez un{" "}
+          <a href="/guides/enfant-agite-concentration">
+            enfant inattentif ou qui ne tient pas en place
+          </a>
+          .
         </li>
         <li>
-          <strong>3. L'autonomie plutôt que l'assistanat :</strong> Aidez-le à reformuler la consigne, mais ne faites jamais l'exercice à sa place. Apprenez-lui à devenir autonome grâce à nos rituels d'
+          <strong>3. L'autonomie plutôt que l'assistanat :</strong> Aidez-le à reformuler la
+          consigne, mais ne faites jamais l'exercice à sa place. Apprenez-lui à devenir autonome
+          grâce à nos rituels d'
           <a href="/guides/autonomie-responsabilite-maison">autonomie et de responsabilité</a>.
         </li>
         <li>
-          <strong>4. Valoriser l'effort et la stratégie, pas le résultat brut :</strong> Félicitez sa persévérance (<em>« Tu as cherché 3 méthodes avant de trouver la solution, bravo ! »</em>) selon les principes de la{" "}
+          <strong>4. Valoriser l'effort et la stratégie, pas le résultat brut :</strong> Félicitez
+          sa persévérance (
+          <em>« Tu as cherché 3 méthodes avant de trouver la solution, bravo ! »</em>) selon les
+          principes de la{" "}
           <a href="/guides/discipline-positive-sans-punition">discipline positive sans punition</a>.
         </li>
         <li>
-          <strong>5. Apaiser la frustration face aux erreurs :</strong> Une mauvaise note génère souvent de la colère ou du découragement. Appliquez nos{" "}
+          <strong>5. Apaiser la frustration face aux erreurs :</strong> Une mauvaise note génère
+          souvent de la colère ou du découragement. Appliquez nos{" "}
           <a href="/guides/gestion-colere-emotions-enfant">5 outils pour réguler la frustration</a>.
         </li>
         <li>
           <strong>6. Des victoires dans d'autres domaines :</strong> Proposez-lui nos{" "}
-          <a href="/guides/activites-educatives-enfant">24 activités éducatives sans écran</a> ou des{" "}
-          <a href="/guides/activites-manuelles-enfant">ateliers manuels et de bricolage</a> pour nourrir son sentiment de compétence.
+          <a href="/guides/activites-educatives-enfant">24 activités éducatives sans écran</a> ou
+          des <a href="/guides/activites-manuelles-enfant">ateliers manuels et de bricolage</a> pour
+          nourrir son sentiment de compétence.
         </li>
       </ol>
 
       <h2>Quand l'école ne peut pas suivre : les devoirs dans une classe nombreuse</h2>
       <p>
-        Dans de nombreuses écoles, les classes comptent 40, 60 voire 80 élèves. L'enseignant ne peut pas assurer un suivi individualisé quotidien. C'est à la maison que la consolidation se joue :
+        Dans de nombreuses écoles, les classes comptent 40, 60 voire 80 élèves. L'enseignant ne peut
+        pas assurer un suivi individualisé quotidien. C'est à la maison que la consolidation se joue
+        :
       </p>
       <ul>
         <li>
-          <strong>La méthode de l'enfant-professeur :</strong> Demandez à votre enfant de vous expliquer sa leçon comme s'il était l'enseignant. Expliquer à voix haute est la méthode la plus puissante pour mémoriser.
+          <strong>La méthode de l'enfant-professeur :</strong> Demandez à votre enfant de vous
+          expliquer sa leçon comme s'il était l'enseignant. Expliquer à voix haute est la méthode la
+          plus puissante pour mémoriser.
         </li>
         <li>
-          <strong>Le micro-créneau de 25 minutes :</strong> 25 minutes de concentration intense valent mieux que 2 heures de lutte passive.
+          <strong>Le micro-créneau de 25 minutes :</strong> 25 minutes de concentration intense
+          valent mieux que 2 heures de lutte passive.
         </li>
         <li>
-          <strong>S'aider des nouveaux outils numériques :</strong> Découvrez comment utiliser judicieusement l'IA et les tuteurs virtuels avec notre guide{" "}
-          <a href="/guides/ia-apprentissage-enfant">ChatGPT et l'IA pour les devoirs de mon enfant</a>.
+          <strong>S'aider des nouveaux outils numériques :</strong> Découvrez comment utiliser
+          judicieusement l'IA et les tuteurs virtuels avec notre guide{" "}
+          <a href="/guides/ia-apprentissage-enfant">
+            ChatGPT et l'IA pour les devoirs de mon enfant
+          </a>
+          .
         </li>
       </ul>
 
       <h2>Comment réagir aux mauvaises notes sans drame</h2>
       <p>
-        Une mauvaise note est un signal d'ajustement, pas un verdict définitif. Voici comment transformer un échec en tremplin :
+        Une mauvaise note est un signal d'ajustement, pas un verdict définitif. Voici comment
+        transformer un échec en tremplin :
       </p>
       <ul>
         <li>
-          <strong>Déculpabiliser :</strong> <em>« Cette note mesure ce que tu as compris ce jour-là, pas ta valeur ni ton intelligence. »</em>
+          <strong>Déculpabiliser :</strong>{" "}
+          <em>
+            « Cette note mesure ce que tu as compris ce jour-là, pas ta valeur ni ton intelligence.
+            »
+          </em>
         </li>
         <li>
-          <strong>Analyser l'erreur avec méthode :</strong> Est-ce un manque de vocabulaire, une consigne lue trop vite ou un oubli de révision ?
+          <strong>Analyser l'erreur avec méthode :</strong> Est-ce un manque de vocabulaire, une
+          consigne lue trop vite ou un oubli de révision ?
         </li>
         <li>
-          <strong>Prévenir le décrochage :</strong> Si les difficultés s'installent, suivez notre guide pas à pas pour{" "}
-          <a href="/guides/decrochage-scolaire-confiance-enfant">redonner confiance à un enfant qui perd pied à l'école</a>.
+          <strong>Prévenir le décrochage :</strong> Si les difficultés s'installent, suivez notre
+          guide pas à pas pour{" "}
+          <a href="/guides/decrochage-scolaire-confiance-enfant">
+            redonner confiance à un enfant qui perd pied à l'école
+          </a>
+          .
         </li>
       </ul>
 
       <h2>Ce que fait Génizio au quotidien</h2>
       <p>
-        Génizio renforce le moteur de la réussite scolaire : la confiance par l'action. En réalisant des défis concrets du quotidien (mesures, organisation, sciences maison, expression), votre enfant documente ses réussites réelles dans son Passeport de Talents, développant la curiosité et la persévérance nécessaires à l'école.
+        Génizio renforce le moteur de la réussite scolaire : la confiance par l'action. En réalisant
+        des défis concrets du quotidien (mesures, organisation, sciences maison, expression), votre
+        enfant documente ses réussites réelles dans son Passeport de Talents, développant la
+        curiosité et la persévérance nécessaires à l'école.
       </p>
 
       <h2>Questions fréquentes (FAQ)</h2>

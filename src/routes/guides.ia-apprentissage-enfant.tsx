@@ -133,14 +133,20 @@ function Guide() {
       />
       <h2>Ce que l'IA fait réellement mieux qu'un parent seul</h2>
       <p>
-        Un parent, aussi investi soit-il, ne peut pas improviser chaque soir des analogies parfaites pour chaque notion d'école. L'IA excelle pour vulgariser, adapter un niveau de difficulté et contextualiser des concepts abstraits (découvrez pourquoi nous prônons{" "}
-        <a href="/guides/pratique-avant-theorie-apprentissage-ia">la pratique avant la théorie à l'ère de l'IA</a>).
+        Un parent, aussi investi soit-il, ne peut pas improviser chaque soir des analogies parfaites
+        pour chaque notion d'école. L'IA excelle pour vulgariser, adapter un niveau de difficulté et
+        contextualiser des concepts abstraits (découvrez pourquoi nous prônons{" "}
+        <a href="/guides/pratique-avant-theorie-apprentissage-ia">
+          la pratique avant la théorie à l'ère de l'IA
+        </a>
+        ).
       </p>
       <p>
         Pour les devoirs, cela se traduit en trois usages concrets :{" "}
         <strong>reformuler une leçon</strong> complexe,{" "}
         <strong>générer des exercices progressifs</strong> et{" "}
-        <strong>trouver des exemples du quotidien</strong> qui ancrent la mémoire (retrouvez nos 6 habitudes maison pour la{" "}
+        <strong>trouver des exemples du quotidien</strong> qui ancrent la mémoire (retrouvez nos 6
+        habitudes maison pour la{" "}
         <a href="/guides/reussite-scolaire-aider-enfant">réussite scolaire de l'enfant</a>).
       </p>
 
@@ -160,10 +166,13 @@ function Guide() {
         </p>
       </div>
       <div className="my-6 rounded-2xl bg-sky-50 p-5 border border-sky-200">
-        <h3 className="font-bold text-sky-950 text-base mb-2">2. Expliquer avec une métaphore imagée</h3>
+        <h3 className="font-bold text-sky-950 text-base mb-2">
+          2. Expliquer avec une métaphore imagée
+        </h3>
         <p className="text-sm text-sky-900 leading-relaxed">
           <em>
-            « Explique la différence entre un nom et un adjectif à un enfant de 8 ans, avec des exemples qu'on trouve dans une cour de maison. »
+            « Explique la différence entre un nom et un adjectif à un enfant de 8 ans, avec des
+            exemples qu'on trouve dans une cour de maison. »
           </em>
         </p>
       </div>
@@ -184,44 +193,60 @@ function Guide() {
         </h3>
         <p className="text-sm text-purple-900 leading-relaxed">
           <em>
-            « Trouve 3 exemples de fractions dans un marché en Afrique de l'Ouest (demi, quart, tiers). »
+            « Trouve 3 exemples de fractions dans un marché en Afrique de l'Ouest (demi, quart,
+            tiers). »
           </em>
         </p>
       </div>
       <div className="my-6 rounded-2xl bg-rose-50 p-5 border border-rose-200">
-        <h3 className="font-bold text-rose-950 text-base mb-2">
-          5. Structurer un exposé oral
-        </h3>
+        <h3 className="font-bold text-rose-950 text-base mb-2">5. Structurer un exposé oral</h3>
         <p className="text-sm text-rose-900 leading-relaxed">
           <em>
-            « Aide-moi à préparer un exposé de 3 minutes sur le cycle de l'eau avec un enfant de 10 ans : 3 idées clés et une accroche dynamique. »
-          </em> (pour l'aider à s'exprimer devant la classe, découvrez nos astuces pour{" "}
-          <a href="/guides/timidite-confiance-prise-de-parole">libérer la prise de parole d'un enfant timide</a>).
+            « Aide-moi à préparer un exposé de 3 minutes sur le cycle de l'eau avec un enfant de 10
+            ans : 3 idées clés et une accroche dynamique. »
+          </em>{" "}
+          (pour l'aider à s'exprimer devant la classe, découvrez nos astuces pour{" "}
+          <a href="/guides/timidite-confiance-prise-de-parole">
+            libérer la prise de parole d'un enfant timide
+          </a>
+          ).
         </p>
       </div>
 
       <h2>Les 4 règles d'or pour des devoirs éthiques avec l'IA</h2>
       <ol className="space-y-3 my-6">
         <li>
-          <strong>Le parent pilote l'outil :</strong> C'est l'adulte qui filtre et adapte les réponses de l'IA pour préserver l'équilibre numérique (voir notre guide sur les{" "}
-          <a href="/guides/ecrans-addiction-alternatives-enfant">écrans et les alternatives sans addiction</a>).
+          <strong>Le parent pilote l'outil :</strong> C'est l'adulte qui filtre et adapte les
+          réponses de l'IA pour préserver l'équilibre numérique (voir notre guide sur les{" "}
+          <a href="/guides/ecrans-addiction-alternatives-enfant">
+            écrans et les alternatives sans addiction
+          </a>
+          ).
         </li>
         <li>
-          <strong>L'enfant réfléchit avant :</strong> L'IA intervient en validation ou en éclairage, jamais comme premier recours de facilité.
+          <strong>L'enfant réfléchit avant :</strong> L'IA intervient en validation ou en éclairage,
+          jamais comme premier recours de facilité.
         </li>
         <li>
-          <strong>Zéro copier-coller :</strong> L'enfant doit toujours reformuler les notions avec ses propres mots pour ancrer les{" "}
+          <strong>Zéro copier-coller :</strong> L'enfant doit toujours reformuler les notions avec
+          ses propres mots pour ancrer les{" "}
           <a href="/guides/intelligences-multiples-gardner">connexions cognitives</a>.
         </li>
         <li>
-          <strong>Préparer l'avenir :</strong> Familiariser son enfant aux usages intelligents de l'IA est un tremplin pour son futur métier (découvrez notre{" "}
-          <a href="/guides/test-orientation-metier-enfant-futur">test d'orientation collégien spécial IA</a>).
+          <strong>Préparer l'avenir :</strong> Familiariser son enfant aux usages intelligents de
+          l'IA est un tremplin pour son futur métier (découvrez notre{" "}
+          <a href="/guides/test-orientation-metier-enfant-futur">
+            test d'orientation collégien spécial IA
+          </a>
+          ).
         </li>
       </ol>
 
       <h2>Ce que fait Génizio au quotidien</h2>
       <p>
-        Génizio transforme l'IA en un tuteur interactif et bienveillant (Naya). Plutôt que de donner des réponses prémâchées, Naya challenge l'enfant par des missions pratiques dans le monde réel et valide ses accomplissements avec le parent.
+        Génizio transforme l'IA en un tuteur interactif et bienveillant (Naya). Plutôt que de donner
+        des réponses prémâchées, Naya challenge l'enfant par des missions pratiques dans le monde
+        réel et valide ses accomplissements avec le parent.
       </p>
 
       <h2>Questions fréquentes (FAQ)</h2>

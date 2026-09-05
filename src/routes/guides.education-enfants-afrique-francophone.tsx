@@ -124,16 +124,22 @@ function Guide() {
 
       <h2>Un contexte riche de forces propres</h2>
       <p>
-        La plupart des guides éducatifs classiques supposent l'accès à des infrastructures onéreuses. La réalité en Côte d'Ivoire, au Sénégal, au Cameroun ou dans la diaspora possède ses propres richesses : la solidarité communautaire, le commerce de proximité, la débrouillardise pratique et le bilinguisme.
+        La plupart des guides éducatifs classiques supposent l'accès à des infrastructures
+        onéreuses. La réalité en Côte d'Ivoire, au Sénégal, au Cameroun ou dans la diaspora possède
+        ses propres richesses : la solidarité communautaire, le commerce de proximité, la
+        débrouillardise pratique et le bilinguisme.
       </p>
       <p>
         Ces expériences nourrissent directement les{" "}
-        <a href="/guides/intelligences-multiples-gardner">9 formes d'intelligence de l'enfant</a> (intelligence interpersonnelle, logico-mathématique et naturaliste).
+        <a href="/guides/intelligences-multiples-gardner">9 formes d'intelligence de l'enfant</a>{" "}
+        (intelligence interpersonnelle, logico-mathématique et naturaliste).
       </p>
 
       <h2>Méthode 1 — Le carnet des petites réussites</h2>
       <p>
-        Prenez un cahier et notez chaque semaine une prouesse concrète : <em>« A calculé la monnaie au marché »</em>, <em>« A réparé son jouet avec du fil »</em>, <em>« A raconté une histoire avec éloquence »</em>.
+        Prenez un cahier et notez chaque semaine une prouesse concrète :{" "}
+        <em>« A calculé la monnaie au marché »</em>, <em>« A réparé son jouet avec du fil »</em>,{" "}
+        <em>« A raconté une histoire avec éloquence »</em>.
       </p>
       <p>
         Ce carnet valorise l'effort et responsabilise l'enfant en appliquant les principes de la{" "}
@@ -142,7 +148,9 @@ function Guide() {
 
       <h2>Méthode 2 — L'enquête du quartier et les défis pratiques</h2>
       <p>
-        Confiez-lui des missions d'observation dans son environnement : interviewer un artisan, classifier 5 types de plantes du quartier ou construire un objet à partir de notre sélection d'
+        Confiez-lui des missions d'observation dans son environnement : interviewer un artisan,
+        classifier 5 types de plantes du quartier ou construire un objet à partir de notre sélection
+        d'
         <a href="/guides/activites-manuelles-enfant">activités manuelles et de bricolage récup</a>.
       </p>
       <p>
@@ -152,28 +160,42 @@ function Guide() {
 
       <h2>Méthode 3 — L'heure du conte inversée</h2>
       <p>
-        Une fois par semaine, inversez la tradition : demandez à votre enfant de raconter son conte ou de vous expliquer ce qu'il a appris. Cet exercice d'éloquence développe sa confiance et stimule sa curiosité (explorez aussi nos{" "}
+        Une fois par semaine, inversez la tradition : demandez à votre enfant de raconter son conte
+        ou de vous expliquer ce qu'il a appris. Cet exercice d'éloquence développe sa confiance et
+        stimule sa curiosité (explorez aussi nos{" "}
         <a href="/guides/activites-educatives-enfant">24 activités éducatives sans écran</a>).
       </p>
 
       <h2>Réussir à l'école malgré les classes surchargées</h2>
       <p>
-        Dans une classe nombreuse (60 à 100 élèves), le suivi personnalisé se fait à la maison par des rituels courts de 20 minutes et une écoute active. Consultez notre méthodologie complète pour{" "}
-        <a href="/guides/reussite-scolaire-aider-enfant">aider son enfant à réussir à l'école sans stress</a>.
+        Dans une classe nombreuse (60 à 100 élèves), le suivi personnalisé se fait à la maison par
+        des rituels courts de 20 minutes et une écoute active. Consultez notre méthodologie complète
+        pour{" "}
+        <a href="/guides/reussite-scolaire-aider-enfant">
+          aider son enfant à réussir à l'école sans stress
+        </a>
+        .
       </p>
 
       <h2>La diaspora : accompagner et transmettre</h2>
       <p>
-        Pour les familles de la diaspora, l'équilibre entre racines culturelles et exigence scolaire nécessite un regard bienveillant sur les forces réelles de l'enfant (lisez nos repères pour{" "}
-        <a href="/guides/potentiel-haut-potentiel-enfant">détecter le haut potentiel chez l'enfant</a>).
+        Pour les familles de la diaspora, l'équilibre entre racines culturelles et exigence scolaire
+        nécessite un regard bienveillant sur les forces réelles de l'enfant (lisez nos repères pour{" "}
+        <a href="/guides/potentiel-haut-potentiel-enfant">
+          détecter le haut potentiel chez l'enfant
+        </a>
+        ).
       </p>
       <p>
-        Génizio permet également aux familles de la diaspora de parrainer à distance le parcours d'un enfant au pays via notre programme de parrainage solidaire.
+        Génizio permet également aux familles de la diaspora de parrainer à distance le parcours
+        d'un enfant au pays via notre programme de parrainage solidaire.
       </p>
 
       <h2>Ce que fait Génizio au quotidien</h2>
       <p>
-        Génizio a été pensé dès le départ pour fonctionner avec les réalités de terrain : des défis stimulants réalisables avec des matériaux du quotidien, sans obligation d'achat, et un suivi interactif via WhatsApp.
+        Génizio a été pensé dès le départ pour fonctionner avec les réalités de terrain : des défis
+        stimulants réalisables avec des matériaux du quotidien, sans obligation d'achat, et un suivi
+        interactif via WhatsApp.
       </p>
 
       <h2>Questions fréquentes (FAQ)</h2>

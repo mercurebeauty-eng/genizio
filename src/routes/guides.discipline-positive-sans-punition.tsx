@@ -68,7 +68,8 @@ export const Route = createFileRoute("/guides/discipline-positive-sans-punition"
         jsonLdScript({
           "@context": "https://schema.org",
           "@type": "Article",
-          headline: "Discipline positive : comment poser des limites et se faire obéir sans crier ni frapper",
+          headline:
+            "Discipline positive : comment poser des limites et se faire obéir sans crier ni frapper",
           description:
             "Guide complet d'éducation bienveillante et ferme : se faire obéir sans fessée, conséquences logiques, choix limités et autorité parentale respectueuse.",
           inLanguage: "fr-FR",
@@ -111,7 +112,10 @@ function Guide() {
           to: "/guides/fratrie-rivalite-cooperation",
         },
         { label: "Canaliser un enfant agité", to: "/guides/enfant-agite-concentration" },
-        { label: "Réduire les écrans sans conflit", to: "/guides/ecrans-addiction-alternatives-enfant" },
+        {
+          label: "Réduire les écrans sans conflit",
+          to: "/guides/ecrans-addiction-alternatives-enfant",
+        },
       ]}
     >
       <img
@@ -126,47 +130,73 @@ function Guide() {
 
       <h2>Ce que « poser des limites » veut dire</h2>
       <p>
-        L'autorité parentale n'a pas besoin de passer par la violence ou l'humiliation. Frapper ou insulter apprend seulement à ruser. Rien de plus.
+        L'autorité parentale n'a pas besoin de passer par la violence ou l'humiliation. Frapper ou
+        insulter apprend seulement à ruser. Rien de plus.
       </p>
       <p>
-        Les limites doivent être <strong>fermes sur le fond et respectueuses sur la forme</strong>. C'est l'essence même de la discipline positive, qui s'accorde avec les valeurs des familles bienveillantes (voir notre réflexion sur l'
-        <a href="/guides/education-enfants-afrique-francophone">éducation des talents en Afrique et dans la diaspora</a>).
+        Les limites doivent être <strong>fermes sur le fond et respectueuses sur la forme</strong>.
+        C'est l'essence même de la discipline positive, qui s'accorde avec les valeurs des familles
+        bienveillantes (voir notre réflexion sur l'
+        <a href="/guides/education-enfants-afrique-francophone">
+          éducation des talents en Afrique et dans la diaspora
+        </a>
+        ).
       </p>
 
       <h2>Comprendre avant de sévir : la question qui désamorce les crises</h2>
       <p>
-        Face à un refus d'obéir, demandez-vous d'abord : <strong>« quel est le besoin réel non comblé ? »</strong>
+        Face à un refus d'obéir, demandez-vous d'abord :{" "}
+        <strong>« quel est le besoin réel non comblé ? »</strong>
       </p>
       <ul>
         <li>
-          <strong>Un besoin de décharge motrice :</strong> Un enfant qui rechigne devant ses devoirs a souvent besoin de courir 10 minutes (voir nos repères pour un{" "}
-          <a href="/guides/enfant-agite-concentration">enfant inattentif ou qui ne tient pas en place</a>).
+          <strong>Un besoin de décharge motrice :</strong> Un enfant qui rechigne devant ses devoirs
+          a souvent besoin de courir 10 minutes (voir nos repères pour un{" "}
+          <a href="/guides/enfant-agite-concentration">
+            enfant inattentif ou qui ne tient pas en place
+          </a>
+          ).
         </li>
         <li>
-          <strong>Un trop-plein émotionnel :</strong> Les cris cachent souvent de la fatigue ou de l'impuissance (appliquez nos{" "}
+          <strong>Un trop-plein émotionnel :</strong> Les cris cachent souvent de la fatigue ou de
+          l'impuissance (appliquez nos{" "}
           <a href="/guides/gestion-colere-emotions-enfant">5 outils pour calmer la colère</a>).
         </li>
         <li>
-          <strong>Un appel d'attention :</strong> Des bêtises ciblées pour capter le regard parental (lisez nos solutions pour{" "}
-          <a href="/guides/fratrie-rivalite-cooperation">apaiser les rivalités entre frères et sœurs</a>).
+          <strong>Un appel d'attention :</strong> Des bêtises ciblées pour capter le regard parental
+          (lisez nos solutions pour{" "}
+          <a href="/guides/fratrie-rivalite-cooperation">
+            apaiser les rivalités entre frères et sœurs
+          </a>
+          ).
         </li>
       </ul>
 
       <h2>Quatre techniques concrètes qui remplacent les punitions</h2>
       <ol className="space-y-4 my-6">
         <li>
-          <strong>1. Les choix limités :</strong> Offrez deux options acceptables : <em>« Tu préfères ranger tes jouets maintenant ou dans 5 minutes après le minuteur ? »</em> L'enfant décide à l'intérieur d'un cadre posé.
+          <strong>1. Les choix limités :</strong> Offrez deux options acceptables :{" "}
+          <em>
+            « Tu préfères ranger tes jouets maintenant ou dans 5 minutes après le minuteur ? »
+          </em>{" "}
+          L'enfant décide à l'intérieur d'un cadre posé.
         </li>
         <li>
-          <strong>2. Les conséquences logiques :</strong> La conséquence découle de l'acte : <em>« Tu as renversé l'eau, prends le chiffon pour éponger. »</em> La conséquence enseigne la responsabilité sans rancœur.
+          <strong>2. Les conséquences logiques :</strong> La conséquence découle de l'acte :{" "}
+          <em>« Tu as renversé l'eau, prends le chiffon pour éponger. »</em> La conséquence enseigne
+          la responsabilité sans rancœur.
         </li>
         <li>
-          <strong>3. La réparation :</strong> Lorsqu'un mot blessant a eu lieu, demandez à l'enfant de réparer : une excuse sincère ou un geste de réconciliation.
+          <strong>3. La réparation :</strong> Lorsqu'un mot blessant a eu lieu, demandez à l'enfant
+          de réparer : une excuse sincère ou un geste de réconciliation.
         </li>
         <li>
-          <strong>4. Le contrat familial :</strong> Pour les écrans ou les devoirs, fixez les règles en amont en suivant notre méthode pour{" "}
-          <a href="/guides/ecrans-addiction-alternatives-enfant">réduire les écrans sans crise</a> et nos rituels pour{" "}
-          <a href="/guides/autonomie-responsabilite-maison">rendre l'enfant autonome à la maison</a>.
+          <strong>4. Le contrat familial :</strong> Pour les écrans ou les devoirs, fixez les règles
+          en amont en suivant notre méthode pour{" "}
+          <a href="/guides/ecrans-addiction-alternatives-enfant">réduire les écrans sans crise</a>{" "}
+          et nos rituels pour{" "}
+          <a href="/guides/autonomie-responsabilite-maison">rendre l'enfant autonome à la maison</a>
+          .
         </li>
       </ol>
 
@@ -177,7 +207,11 @@ function Guide() {
           Au magasin : l'enfant fait une crise pour un bonbon ou jouet
         </h3>
         <p className="text-sm text-amber-900 leading-relaxed">
-          <em>« Tu as très envie de ce jouet, je comprends ta déception. Aujourd'hui, nous achetons uniquement ce qui est sur notre liste. Tu peux le noter sur ta liste d'anniversaire. »</em> Accroupissez-vous à sa hauteur, maintenez la limite avec calme sans céder.
+          <em>
+            « Tu as très envie de ce jouet, je comprends ta déception. Aujourd'hui, nous achetons
+            uniquement ce qui est sur notre liste. Tu peux le noter sur ta liste d'anniversaire. »
+          </em>{" "}
+          Accroupissez-vous à sa hauteur, maintenez la limite avec calme sans céder.
         </p>
       </div>
 
@@ -186,7 +220,11 @@ function Guide() {
           À la maison : il refuse catégoriquement d'éteindre sa tablette
         </h3>
         <p className="text-sm text-sky-900 leading-relaxed">
-          <em>« Le temps convenu est terminé. Tu éteins toi-même maintenant, ou bien je range la tablette pour aujourd'hui et demain ? »</em> S'il refuse, appliquez la conséquence calmement, sans crier.
+          <em>
+            « Le temps convenu est terminé. Tu éteins toi-même maintenant, ou bien je range la
+            tablette pour aujourd'hui et demain ? »
+          </em>{" "}
+          S'il refuse, appliquez la conséquence calmement, sans crier.
         </p>
       </div>
 
@@ -195,27 +233,36 @@ function Guide() {
           À l'école : mauvaise note ou mot dans le carnet
         </h3>
         <p className="text-sm text-emerald-900 leading-relaxed">
-          Écoutez d'abord sa version. Ne doublez pas la sanction par des cris. Cherchez la cause et responsabilisez-le pour réparer avec l'enseignant (voir comment{" "}
-          <a href="/guides/reussite-scolaire-aider-enfant" className="underline font-semibold">aider son enfant à réussir à l'école sans stress</a>).
+          Écoutez d'abord sa version. Ne doublez pas la sanction par des cris. Cherchez la cause et
+          responsabilisez-le pour réparer avec l'enseignant (voir comment{" "}
+          <a href="/guides/reussite-scolaire-aider-enfant" className="underline font-semibold">
+            aider son enfant à réussir à l'école sans stress
+          </a>
+          ).
         </p>
       </div>
 
       <h2>Les pièges majeurs qui fragilisent l'autorité</h2>
       <ul>
         <li>
-          <strong>Menacer sans appliquer :</strong> Une menace non exécutée apprend à l'enfant que vos paroles n'ont aucun poids.
+          <strong>Menacer sans appliquer :</strong> Une menace non exécutée apprend à l'enfant que
+          vos paroles n'ont aucun poids.
         </li>
         <li>
-          <strong>Humilier devant des témoins :</strong> Réprimander un enfant en public crée de la honte. Corrigez en tête-à-tête, encouragez devant les autres.
+          <strong>Humilier devant des témoins :</strong> Réprimander un enfant en public crée de la
+          honte. Corrigez en tête-à-tête, encouragez devant les autres.
         </li>
         <li>
-          <strong>Comparer avec les autres :</strong> <em>« Regarde ton frère, lui est sage »</em> détruit l'estime de soi et alimente la jalousie.
+          <strong>Comparer avec les autres :</strong> <em>« Regarde ton frère, lui est sage »</em>{" "}
+          détruit l'estime de soi et alimente la jalousie.
         </li>
       </ul>
 
       <h2>Ce que fait Génizio au quotidien</h2>
       <p>
-        Génizio applique ces principes par l'action pratique. Chaque défi relevé par votre enfant révèle ses talents réels (intelligences multiples, créativité, sens manuel) et renforce son autonomie.
+        Génizio applique ces principes par l'action pratique. Chaque défi relevé par votre enfant
+        révèle ses talents réels (intelligences multiples, créativité, sens manuel) et renforce son
+        autonomie.
       </p>
 
       <h2>Questions fréquentes (FAQ)</h2>

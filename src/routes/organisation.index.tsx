@@ -394,7 +394,9 @@ function OrganisationDashboard() {
                   « {n.observation} »
                 </blockquote>
                 <figcaption className="mt-3 pt-3 border-t border-ink/5 flex items-center justify-between gap-2">
-                  <span className="text-xs font-black text-brand truncate min-w-0 flex-1">{n.title}</span>
+                  <span className="text-xs font-black text-brand truncate min-w-0 flex-1">
+                    {n.title}
+                  </span>
                   <span className="rounded-full bg-surface px-2 py-0.5 text-[10px] font-black uppercase tracking-wider text-ink/50 shrink-0">
                     {n.domain}
                   </span>
@@ -481,7 +483,9 @@ function OrganisationDashboard() {
                         <div className="grid size-9 place-items-center rounded-full bg-gradient-to-br from-brand to-indigo-600 text-white font-black text-sm shrink-0">
                           {(s.email.charAt(0) || "?").toUpperCase()}
                         </div>
-                        <span className="font-bold text-sm text-ink truncate min-w-0">{s.email}</span>
+                        <span className="font-bold text-sm text-ink truncate min-w-0">
+                          {s.email}
+                        </span>
                       </div>
                     </td>
                     <td className="p-4 px-6 text-right">
@@ -965,7 +969,9 @@ function EducatorsSection({
                 <tbody className="divide-y divide-ink/5">
                   {educators.map((e) => (
                     <tr key={e.id} className="hover:bg-surface/30 transition-colors">
-                      <td className="p-4 px-6 font-bold text-sm text-ink truncate min-w-0">{e.email}</td>
+                      <td className="p-4 px-6 font-bold text-sm text-ink truncate min-w-0">
+                        {e.email}
+                      </td>
                       <td className="p-4 px-6 text-sm text-ink/60">
                         {new Date(e.added_at).toLocaleDateString("fr-FR")}
                       </td>

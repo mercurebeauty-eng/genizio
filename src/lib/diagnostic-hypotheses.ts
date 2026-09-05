@@ -50,7 +50,7 @@ export function formulateHypothesis(
   originContext: DiagnosticContextQuadrant,
   initialConfidence: number,
   targetDiscriminantContext: DiagnosticContextQuadrant,
-  assignedRoleOrFormat?: string
+  assignedRoleOrFormat?: string,
 ): DiagnosticHypothesis {
   return {
     id: `hyp_${Math.random().toString(36).substr(2, 9)}`,
@@ -74,9 +74,13 @@ export function formulateHypothesis(
  */
 export function calculateInformationGain(
   hypothesis: DiagnosticHypothesis,
-  candidateContext: DiagnosticContextQuadrant
+  candidateContext: DiagnosticContextQuadrant,
 ): number {
-  if (hypothesis.status === "triangulated" || hypothesis.status === "refuted" || hypothesis.status === "contextualized") {
+  if (
+    hypothesis.status === "triangulated" ||
+    hypothesis.status === "refuted" ||
+    hypothesis.status === "contextualized"
+  ) {
     return 0.0; // Uncertainty is already resolved
   }
 
@@ -87,9 +91,7 @@ export function calculateInformationGain(
 
   if (candidateContext === hypothesis.targetDiscriminantContext) {
     baseIG = 1.0;
-  } else if (
-    hypothesis.evidence.some((e) => e.context === candidateContext && e.success)
-  ) {
+  } else if (hypothesis.evidence.some((e) => e.context === candidateContext && e.success)) {
     baseIG = 0.2; // Diminishing returns for repeating the same context
   }
 
@@ -102,7 +104,7 @@ export function calculateInformationGain(
  */
 export function updateHypothesisWithEvidence(
   hypothesis: DiagnosticHypothesis,
-  newEvidence: DiagnosticEvidence
+  newEvidence: DiagnosticEvidence,
 ): DiagnosticHypothesis {
   const updatedHypothesis = {
     ...hypothesis,
@@ -128,7 +130,7 @@ export function updateHypothesisWithEvidence(
   const adjPEvGivenHFalse = modulate(pEvidenceGivenHypothesisFalse, newEvidence.weight);
 
   // Evidence probability (Law of total probability)
-  const pEvidence = (adjPEvGivenHTrue * prior) + (adjPEvGivenHFalse * (1 - prior));
+  const pEvidence = adjPEvGivenHTrue * prior + adjPEvGivenHFalse * (1 - prior);
 
   // Bayesian update (Posterior)
   const posterior = (adjPEvGivenHTrue * prior) / pEvidence;
@@ -161,15 +163,15 @@ export function assessTriangulationStatus(hypothesis: DiagnosticHypothesis): Dia
   // High confidence & cross-context validation
   if (hypothesis.confidence >= 0.85 && distinctSuccessCount >= 2) {
     hypothesis.status = "triangulated";
-  } 
+  }
   // Consistently fails or high confidence of absence
-  else if (hypothesis.confidence <= 0.20 && failedContexts.size >= 2) {
+  else if (hypothesis.confidence <= 0.2 && failedContexts.size >= 2) {
     hypothesis.status = "refuted";
   }
   // Succeeds in some contexts, but specifically fails in others -> contextualized
   else if (hypothesis.confidence > 0.4 && hasFailures && successfulContexts.size >= 1) {
     hypothesis.status = "contextualized";
-  } 
+  }
   // Gathering evidence
   else if (hypothesis.evidence.length > 0) {
     hypothesis.status = "testing";
@@ -182,5 +184,5 @@ export function assessTriangulationStatus(hypothesis: DiagnosticHypothesis): Dia
  * Filters and returns triangulated competencies for the portfolio view
  */
 export function getTriangulatedCompetencies(hypotheses: DiagnosticHypothesis[]) {
-  return hypotheses.filter(h => h.status === "triangulated" || h.status === "contextualized");
+  return hypotheses.filter((h) => h.status === "triangulated" || h.status === "contextualized");
 }

@@ -45,7 +45,8 @@ export const createChildDelegation = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const db = supabaseAdmin as any;
-    const userId = (context as any).userId || (context as any).claims?.sub || (context as any).user?.id;
+    const userId =
+      (context as any).userId || (context as any).claims?.sub || (context as any).user?.id;
 
     // 1. Vérification des droits : Parent ou Mentor actif
     const actorRole = await assertChildActor(supabaseAdmin, userId, data.childId);
@@ -56,9 +57,7 @@ export const createChildDelegation = createServerFn({ method: "POST" })
     let beneficiaryUserId: string | null = null;
 
     const { data: userList } = await supabaseAdmin.auth.admin.listUsers();
-    const existingUser = userList?.users?.find(
-      (u) => u.email?.toLowerCase() === normalizedEmail,
-    );
+    const existingUser = userList?.users?.find((u) => u.email?.toLowerCase() === normalizedEmail);
     if (existingUser) {
       beneficiaryUserId = existingUser.id;
     }
@@ -103,7 +102,8 @@ export const listChildDelegations = createServerFn({ method: "GET" })
   .handler(async ({ data: childId, context }) => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const db = supabaseAdmin as any;
-    const userId = (context as any).userId || (context as any).claims?.sub || (context as any).user?.id;
+    const userId =
+      (context as any).userId || (context as any).claims?.sub || (context as any).user?.id;
 
     await assertChildActor(supabaseAdmin, userId, childId);
 
@@ -131,7 +131,8 @@ export const revokeChildDelegation = createServerFn({ method: "POST" })
   .handler(async ({ data: delegationId, context }) => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const db = supabaseAdmin as any;
-    const userId = (context as any).userId || (context as any).claims?.sub || (context as any).user?.id;
+    const userId =
+      (context as any).userId || (context as any).claims?.sub || (context as any).user?.id;
 
     const { data: delegation, error: fetchErr } = await db
       .from("child_delegations")
@@ -165,7 +166,8 @@ export const listMyEducatorDelegations = createServerFn({ method: "GET" })
   .handler(async ({ context }) => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const db = supabaseAdmin as any;
-    const userId = (context as any).userId || (context as any).claims?.sub || (context as any).user?.id;
+    const userId =
+      (context as any).userId || (context as any).claims?.sub || (context as any).user?.id;
     const userEmail = (context as any).claims?.email?.toLowerCase();
 
     // Rapprochement automatique : si la délégation avait été créée par email
@@ -181,7 +183,8 @@ export const listMyEducatorDelegations = createServerFn({ method: "GET" })
     const now = new Date().toISOString();
     const { data: delegations, error } = await db
       .from("child_delegations")
-      .select(`
+      .select(
+        `
         id,
         child_id,
         professional_role,
@@ -191,7 +194,8 @@ export const listMyEducatorDelegations = createServerFn({ method: "GET" })
         status,
         last_accessed_at,
         created_at
-      `)
+      `,
+      )
       .or(`beneficiary_user_id.eq.${userId},beneficiary_email.eq.${userEmail}`)
       .eq("status", "active")
       .gt("valid_until", now);
@@ -202,7 +206,9 @@ export const listMyEducatorDelegations = createServerFn({ method: "GET" })
     }
 
     // Récupération des informations synthétiques des enfants
-    const childIds: string[] = Array.from(new Set(delegations.map((d: any) => d.child_id as string)));
+    const childIds: string[] = Array.from(
+      new Set(delegations.map((d: any) => d.child_id as string)),
+    );
     if (childIds.length === 0) return [];
 
     const { data: children } = await supabaseAdmin
@@ -239,7 +245,8 @@ export const getEducationalPassport = createServerFn({ method: "GET" })
   .handler(async ({ data: childId, context }) => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const db = supabaseAdmin as any;
-    const userId = (context as any).userId || (context as any).claims?.sub || (context as any).user?.id;
+    const userId =
+      (context as any).userId || (context as any).claims?.sub || (context as any).user?.id;
     const userEmail = (context as any).claims?.email?.toLowerCase();
     const now = new Date().toISOString();
 

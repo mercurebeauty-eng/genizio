@@ -1,10 +1,7 @@
 import { describe, it, expect } from "vitest";
 
 // Logique pure de vérification et d'expiration des délégations éducatives
-export function isDelegationValid(delegation: {
-  status: string;
-  valid_until: string;
-}): boolean {
+export function isDelegationValid(delegation: { status: string; valid_until: string }): boolean {
   if (delegation.status !== "active") return false;
   return new Date(delegation.valid_until).getTime() > Date.now();
 }

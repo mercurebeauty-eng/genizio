@@ -13,7 +13,8 @@ const PATH = "/guides/activites-manuelles-enfant";
 
 const FAQ = [
   {
-    question: "Quelles sont les meilleures activités manuelles pour un enfant de 4 ans (maternelle) ?",
+    question:
+      "Quelles sont les meilleures activités manuelles pour un enfant de 4 ans (maternelle) ?",
     answer:
       "À 4 ans, misez sur la motricité fine sans chercher la perfection : modelage de pâte à sel, déchirage et collage de papier de soie, enfilage de macaronis ou animaux en rouleaux de carton. L'essentiel est de manipuler librement.",
   },
@@ -154,7 +155,10 @@ function Guide() {
           label: "Éveiller la créativité et le réel",
           to: "/guides/quelle-librairie-choisir-lieux-creativite-enfant",
         },
-        { label: "Les 9 formes d'intelligence (Gardner)", to: "/guides/intelligences-multiples-gardner" },
+        {
+          label: "Les 9 formes d'intelligence (Gardner)",
+          to: "/guides/intelligences-multiples-gardner",
+        },
       ]}
     >
       <img
@@ -169,26 +173,37 @@ function Guide() {
 
       <h2>Pourquoi les activités manuelles sont indispensables au cerveau de l'enfant</h2>
       <p>
-        Face à l'omniprésence des tablettes, où un simple glissement de doigt remplace l'effort physique, les neurosciences rappellent une vérité : <strong>le cerveau humain apprend d'abord par la manipulation de la matière</strong>.
+        Face à l'omniprésence des tablettes, où un simple glissement de doigt remplace l'effort
+        physique, les neurosciences rappellent une vérité :{" "}
+        <strong>le cerveau humain apprend d'abord par la manipulation de la matière</strong>.
       </p>
       <p>
-        En découpant du carton, en dosant la colle ou en tressant de la ficelle, l'enfant active des circuits moteurs fins qui conditionnent la tenue du crayon et l'écriture. Dans la grille des{" "}
-        <a href="/guides/intelligences-multiples-gardner">9 formes d'intelligence de Gardner</a>, le bricolage nourrit directement l'intelligence spatiale.
+        En découpant du carton, en dosant la colle ou en tressant de la ficelle, l'enfant active des
+        circuits moteurs fins qui conditionnent la tenue du crayon et l'écriture. Dans la grille des{" "}
+        <a href="/guides/intelligences-multiples-gardner">9 formes d'intelligence de Gardner</a>, le
+        bricolage nourrit directement l'intelligence spatiale.
       </p>
       <p>
         Mieux encore : fabriquer un objet réel reste le moyen le plus efficace pour{" "}
-        <a href="/guides/ecrans-addiction-alternatives-enfant">sevrer un enfant des écrans sans crise</a>. Devant une création concrète, l'attention se pose d'elle-même.
+        <a href="/guides/ecrans-addiction-alternatives-enfant">
+          sevrer un enfant des écrans sans crise
+        </a>
+        . Devant une création concrète, l'attention se pose d'elle-même.
       </p>
 
       <h2>18 activités manuelles classées par tranche d'âge</h2>
       <p>
-        Chaque tranche d'âge correspond à un stade d'autonomie motrice bien défini. Vous pouvez également combiner ces idées avec nos{" "}
+        Chaque tranche d'âge correspond à un stade d'autonomie motrice bien défini. Vous pouvez
+        également combiner ces idées avec nos{" "}
         <a href="/guides/activites-educatives-enfant">24 activités éducatives à la maison</a>.
       </p>
 
       <div className="my-8 space-y-6">
         {BY_AGE.map((group) => (
-          <div key={group.age} className="rounded-2xl border border-ink/10 bg-surface p-6 shadow-xs">
+          <div
+            key={group.age}
+            className="rounded-2xl border border-ink/10 bg-surface p-6 shadow-xs"
+          >
             <h3 className="text-xl font-bold text-ink">{group.age}</h3>
             <ul className="mt-4 space-y-2 text-sm text-ink/85">
               {group.items.map((item) => (
@@ -204,18 +219,23 @@ function Guide() {
 
       <h2>Focus : Les activités manuelles pour un enfant de 4 ans (Maternelle)</h2>
       <p>
-        À 4 ans, l'enfant affine la synchronisation de ses deux mains. La clé tient en un mot : simplicité.
+        À 4 ans, l'enfant affine la synchronisation de ses deux mains. La clé tient en un mot :
+        simplicité.
       </p>
       <ul>
         <li>
-          <strong>La pâte à sel magique :</strong> 2 verres de farine, 1 verre de sel fin, 1 verre d'eau tiède. Pétrir la matière apaise les tensions nerveuses (un réflexe utile pour{" "}
-          <a href="/guides/gestion-colere-emotions-enfant">canaliser la frustration</a>) avant de sculpter des formes simples.
+          <strong>La pâte à sel magique :</strong> 2 verres de farine, 1 verre de sel fin, 1 verre
+          d'eau tiède. Pétrir la matière apaise les tensions nerveuses (un réflexe utile pour{" "}
+          <a href="/guides/gestion-colere-emotions-enfant">canaliser la frustration</a>) avant de
+          sculpter des formes simples.
         </li>
         <li>
-          <strong>Le collage de papier de soie :</strong> Déchirer avec les doigts entraîne les muscles des pouces et index.
+          <strong>Le collage de papier de soie :</strong> Déchirer avec les doigts entraîne les
+          muscles des pouces et index.
         </li>
         <li>
-          <strong>Le tri et enfilage de perles :</strong> Développe l'attention des tout-petits qui peinent à se poser (voir nos repères pour un{" "}
+          <strong>Le tri et enfilage de perles :</strong> Développe l'attention des tout-petits qui
+          peinent à se poser (voir nos repères pour un{" "}
           <a href="/guides/enfant-agite-concentration">enfant qui a du mal à se concentrer</a>).
         </li>
       </ul>
@@ -227,10 +247,16 @@ function Guide() {
           1. La boîte à secrets compartimentée (4-8 ans, 25 min)
         </h3>
         <p className="text-sm text-amber-900 leading-relaxed">
-          <strong>Matériel :</strong> Une boîte à chaussures, 3 rouleaux de carton coupés en deux, colle, magazines usés.
+          <strong>Matériel :</strong> Une boîte à chaussures, 3 rouleaux de carton coupés en deux,
+          colle, magazines usés.
           <br />
-          <strong>Étapes :</strong> 1. L'enfant colle les rouleaux à l'intérieur pour créer des compartiments secrets. 2. Il décore l'extérieur avec des collages de ses héros ou animaux préférés. 3. Cette boîte devient son espace d'
-          <a href="/guides/autonomie-responsabilite-maison" className="underline font-semibold">autonomie et de rangement</a> pour ses trésors.
+          <strong>Étapes :</strong> 1. L'enfant colle les rouleaux à l'intérieur pour créer des
+          compartiments secrets. 2. Il décore l'extérieur avec des collages de ses héros ou animaux
+          préférés. 3. Cette boîte devient son espace d'
+          <a href="/guides/autonomie-responsabilite-maison" className="underline font-semibold">
+            autonomie et de rangement
+          </a>{" "}
+          pour ses trésors.
         </p>
       </div>
 
@@ -239,9 +265,13 @@ function Guide() {
           2. Le balafon / xylophone en bois et carton (7-10 ans, 30 min)
         </h3>
         <p className="text-sm text-sky-900 leading-relaxed">
-          <strong>Matériel :</strong> Une boîte en carton allongée, 5 baguettes de bois (ou crayons) de longueurs différentes, élastiques.
+          <strong>Matériel :</strong> Une boîte en carton allongée, 5 baguettes de bois (ou crayons)
+          de longueurs différentes, élastiques.
           <br />
-          <strong>Étapes :</strong> 1. Tendre les élastiques autour de la boîte. 2. Glisser les baguettes dessous en les espaçant du plus court au plus long. 3. L'enfant teste les sons émis en frappant avec un bâtonnet : c'est une initiation vivante à l'intelligence musicale et à la physique acoustique.
+          <strong>Étapes :</strong> 1. Tendre les élastiques autour de la boîte. 2. Glisser les
+          baguettes dessous en les espaçant du plus court au plus long. 3. L'enfant teste les sons
+          émis en frappant avec un bâtonnet : c'est une initiation vivante à l'intelligence musicale
+          et à la physique acoustique.
         </p>
       </div>
 
@@ -250,33 +280,48 @@ function Guide() {
           3. La maquette de pont suspendu (9-12 ans, 45 min)
         </h3>
         <p className="text-sm text-emerald-950 text-base mb-2 font-bold">
-          <strong>Matériel :</strong> Carton fort, ficelle, colle forte ou pistolet basse température, ciseaux.
+          <strong>Matériel :</strong> Carton fort, ficelle, colle forte ou pistolet basse
+          température, ciseaux.
           <br />
-          <strong>Étapes :</strong> 1. Tracer et découper deux piliers solides. 2. Relier les piliers avec un tablier de carton suspendu par des haubans en ficelle. 3. Tester la résistance du pont en y posant des petites voitures : l'enfant apprend par l'essai-erreur comme un véritable ingénieur.
+          <strong>Étapes :</strong> 1. Tracer et découper deux piliers solides. 2. Relier les
+          piliers avec un tablier de carton suspendu par des haubans en ficelle. 3. Tester la
+          résistance du pont en y posant des petites voitures : l'enfant apprend par l'essai-erreur
+          comme un véritable ingénieur.
         </p>
       </div>
 
       <h2>Comment installer l'atelier à la maison sans désordre permanent</h2>
       <ul>
         <li>
-          <strong>La Boîte Trésor :</strong> Une grande boîte où vous jetez bouchons, emballages propres, ficelles et chutes de papier. L'enfant sait où piocher en totale indépendance.
+          <strong>La Boîte Trésor :</strong> Une grande boîte où vous jetez bouchons, emballages
+          propres, ficelles et chutes de papier. L'enfant sait où piocher en totale indépendance.
         </li>
         <li>
-          <strong>La nappe de bricolage cirée :</strong> Une simple nappe plastique pliée que l'on déplie en 5 secondes sur la table de la cuisine pour protéger la surface.
+          <strong>La nappe de bricolage cirée :</strong> Une simple nappe plastique pliée que l'on
+          déplie en 5 secondes sur la table de la cuisine pour protéger la surface.
         </li>
         <li>
-          <strong>La règle d'or du parent :</strong> Ne finissez jamais le travail à la place de l'enfant. Un résultat imparfait mais conçu à 100 % par lui génère infiniment plus d'estime de soi qu'un chef-d'œuvre terminé par un adulte.
+          <strong>La règle d'or du parent :</strong> Ne finissez jamais le travail à la place de
+          l'enfant. Un résultat imparfait mais conçu à 100 % par lui génère infiniment plus d'estime
+          de soi qu'un chef-d'œuvre terminé par un adulte.
         </li>
       </ul>
 
       <h2>Ce que le bricolage révèle des talents cachés de votre enfant</h2>
       <p>
-        Quand un enfant construit, observez son comportement : est-il méthodique ou spontané ? Abandonne-t-il dès que la colle lâche ou cherche-t-il une autre solution ? Cette observation en dit beaucoup plus sur ses capacités que n'importe quel test théorique (consultez notre analyse sur les{" "}
-        <a href="/guides/test-de-personnalite-enfant-talents">tests de personnalité pour enfants</a> ou sur le{" "}
-        <a href="/guides/potentiel-haut-potentiel-enfant">repérage des enfants à haut potentiel</a>).
+        Quand un enfant construit, observez son comportement : est-il méthodique ou spontané ?
+        Abandonne-t-il dès que la colle lâche ou cherche-t-il une autre solution ? Cette observation
+        en dit beaucoup plus sur ses capacités que n'importe quel test théorique (consultez notre
+        analyse sur les{" "}
+        <a href="/guides/test-de-personnalite-enfant-talents">tests de personnalité pour enfants</a>{" "}
+        ou sur le{" "}
+        <a href="/guides/potentiel-haut-potentiel-enfant">repérage des enfants à haut potentiel</a>
+        ).
       </p>
       <p>
-        Avec <strong>Génizio</strong>, chaque création manuelle devient une brique vivante de son passeport de compétences. Photographiez simplement sa réalisation : notre système identifie ses progrès et lui suggère le prochain défi stimulant.
+        Avec <strong>Génizio</strong>, chaque création manuelle devient une brique vivante de son
+        passeport de compétences. Photographiez simplement sa réalisation : notre système identifie
+        ses progrès et lui suggère le prochain défi stimulant.
       </p>
 
       <h2>Questions fréquentes (FAQ)</h2>

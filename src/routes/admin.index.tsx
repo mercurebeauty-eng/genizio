@@ -253,9 +253,49 @@ function AdminIndexPage() {
       .on("broadcast", { event: "payment_updated" }, () => {
         void loadData(false);
       })
+      .on("broadcast", { event: "commerce_updated" }, () => {
+        void loadData(false);
+      })
+      .on("broadcast", { event: "passport_updated" }, () => {
+        void loadData(false);
+      })
+      .on("broadcast", { event: "quota_updated" }, () => {
+        void loadData(false);
+      })
+      .on("broadcast", { event: "loup_decision_updated" }, () => {
+        void loadData(false);
+      })
       .on(
         "postgres_changes",
         { event: "*", schema: "public", table: "payments" },
+        () => {
+          void loadData(false);
+        },
+      )
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "orders" },
+        () => {
+          void loadData(false);
+        },
+      )
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "products" },
+        () => {
+          void loadData(false);
+        },
+      )
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "child_profiles" },
+        () => {
+          void loadData(false);
+        },
+      )
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "generation_audits" },
         () => {
           void loadData(false);
         },
@@ -297,31 +337,18 @@ function AdminIndexPage() {
         toast.success(
           unlock ? "Passeport d'Excellence débloqué !" : "Passeport d'Excellence reverrouillé.",
         );
+        const ch = supabase.channel("admin-os-global-sync");
+        await ch.send({
+          type: "broadcast",
+          event: "passport_updated",
+          payload: { childId, unlock, timestamp: Date.now() },
+        });
         await loadData(false);
       } else {
         toast.error("Échec de la modification du statut passeport.");
       }
     } catch (err: any) {
       console.error("Erreur lors de la modification du statut passeport:", err);
-      // Pas de toast ici : le composant appelant (Exécutif/Commerce) attrape et affiche
-      // le message — un double toast partait sinon (review 2026-08-12, P2).
-      throw err;
-    }
-  };
-
-  const handleUpdateQuota = async (userId: string, quota: number) => {
-    try {
-      const res = await updateProfileQuotaFn({ data: { userId, quota } });
-      if (res.success) {
-        toast.success(
-          quota > 0
-            ? `Couverture de profils définie sur ${quota} (0 = auto pour revenir à la règle standard).`
-            : "Couverture de profils remise sur la règle standard automatique.",
-        );
-        await loadData(false);
-      }
-    } catch (err: any) {
-      console.error("Erreur lors de la mise à jour du quota de profils:", err);
       throw err;
     }
   };
@@ -338,27 +365,6 @@ function AdminIndexPage() {
     } catch (err: any) {
       console.error("Erreur lors de la mise à jour de la commande:", err);
       throw err;
-    }
-  };
-
-  const handleDecideSuggestion = async (
-    ruleKey: string,
-    decision: "valide" | "a_revoir" | "rejete",
-  ) => {
-    setDecidingRuleKeys((prev) => (prev.includes(ruleKey) ? prev : [...prev, ruleKey]));
-    try {
-      const res = await decideLoupFn({ data: { decisions: [{ ruleKey, decision }] } });
-      toast.success(
-        res.decided > 0
-          ? "Décision enregistrée — la règle sort des suggestions et passe au journal."
-          : "Aucun audit en attente ne correspond à cette règle.",
-      );
-      await loadData(false);
-    } catch (err: any) {
-      console.error("Erreur lors de la décision du Loup:", err);
-      toast.error(err?.message || "Erreur lors de l'enregistrement de la décision.");
-    } finally {
-      setDecidingRuleKeys((prev) => prev.filter((k) => k !== ruleKey));
     }
   };
 
@@ -463,8 +469,7 @@ function AdminIndexPage() {
                 totalPages={execTotalPages}
                 page={execPage}
                 onPageChange={(p) => void handleExecPageChange(p)}
-                onTogglePassport={handleTogglePassport}
-                onUpdateQuota={handleUpdateQuota}
+                onDataChanged={() => void loadData(false)}
                 onRefresh={() => loadData(false)}
                 isRefreshing={isRefreshing}
               />
@@ -486,8 +491,7 @@ function AdminIndexPage() {
                 isRefreshing={isRefreshing}
                 onRefresh={() => loadData(false)}
                 constitution={loupConstitution}
-                decidingRuleKeys={decidingRuleKeys}
-                onDecideSuggestion={handleDecideSuggestion}
+                onDataChanged={() => void loadData(false)}
               />
             )}
 
@@ -523,7 +527,13 @@ function AdminIndexPage() {
               />
             )}
             {activeTab === "b2b" && <AdminCampaignsTab />}
-            {activeTab === "mentors" && <AdminMentorsTab />}
+            {activeTab === "mentors" && (
+              <AdminMentorsTab
+                onDataChanged={() => void loadData(false)}
+                onPendingCountChange={(count) => setPendingSafetyAlerts(count)}
+                isRefreshing={isRefreshing}
+              />
+            )}
             {activeTab === "educators" && <AdminEducatorsTab />}
             {activeTab === "events" && <AdminEventsTab />}
             {activeTab === "products" && <AdminProductsTab onDataChanged={() => loadData(false)} />}

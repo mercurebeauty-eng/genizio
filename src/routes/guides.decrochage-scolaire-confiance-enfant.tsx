@@ -37,7 +37,8 @@ const FAQ = [
       "Le harcèlement scolaire est l'une des causes les plus fréquentes du refus d'aller à l'école. Si votre enfant se plaint de moqueries répétées, rentre avec des affaires abîmées ou des maux de ventre le matin, prenez-le au sérieux dès la première alerte : écoutez sans minimiser, notez les faits (dates, paroles, témoins), puis parlez-en à l'école en demandant une action précise et un suivi. Ne laissez pas l'enfant « se débrouiller seul » — c'est le rôle de l'adulte de protéger. Et s'il refuse catégoriquement d'aller en classe, c'est un signal d'alerte majeur : le harcèlement doit être traité par l'école et, si besoin, par un professionnel.",
   },
   {
-    question: "Mon enfant n'arrive pas à se faire des amis à l'école et perd confiance, que faire ?",
+    question:
+      "Mon enfant n'arrive pas à se faire des amis à l'école et perd confiance, que faire ?",
     answer:
       "L'isolement dans la cour de récréation mine l'estime d'un enfant bien plus vite qu'une mauvaise note. À 7 ou 8 ans, être mis à l'écart est vécu comme un rejet total (« personne ne m'aime »). Pour l'aider, ne lui demandez pas de « faire des efforts » au milieu de trente élèves : c'est trop intimidant. Proposez plutôt d'inviter un seul camarade à la maison autour d'un jeu précis ou d'une recette de cuisine. À deux, sans le bruit de la cour, les liens se nouent naturellement. Valorisez aussi son intelligence relationnelle hors de l'école : s'il s'entend bien avec ses cousins ou un voisin, rappelez-lui qu'il sait déjà créer du lien.",
   },
@@ -157,16 +158,24 @@ function Guide() {
 
       <h2>Le découragement se construit longtemps avant le décrochage</h2>
       <p>
-        Quand un élève abandonne ses efforts, on a l'impression d'une rupture soudaine. Dans la grande majorité des cas, c'est l'aboutissement d'un long sentiment d'inadéquation scolaire.
+        Quand un élève abandonne ses efforts, on a l'impression d'une rupture soudaine. Dans la
+        grande majorité des cas, c'est l'aboutissement d'un long sentiment d'inadéquation scolaire.
       </p>
       <p>
-        À force de notes décevantes et de comparaisons défavorables, des blessures d'estime s'installent. L'enfant finit par croire que son intelligence est insuffisante. Pourtant, selon la{" "}
-        <a href="/guides/intelligences-multiples-gardner">théorie des 9 intelligences de Howard Gardner</a>, l'école ne mesure qu'une fraction restreinte des capacités humaines (le logico-mathématique et le verbal-linguistique).
+        À force de notes décevantes et de comparaisons défavorables, des blessures d'estime
+        s'installent. L'enfant finit par croire que son intelligence est insuffisante. Pourtant,
+        selon la{" "}
+        <a href="/guides/intelligences-multiples-gardner">
+          théorie des 9 intelligences de Howard Gardner
+        </a>
+        , l'école ne mesure qu'une fraction restreinte des capacités humaines (le
+        logico-mathématique et le verbal-linguistique).
       </p>
 
       <h2>Les signaux d'alerte à observer (tableau pratique)</h2>
       <p>
-        Ce qui suit n'est pas une grille de diagnostic médical, mais des repères d'observation parentale. Ce qui compte, c'est la persistance sur plusieurs semaines :
+        Ce qui suit n'est pas une grille de diagnostic médical, mais des repères d'observation
+        parentale. Ce qui compte, c'est la persistance sur plusieurs semaines :
       </p>
       <div className="my-6 overflow-x-auto rounded-2xl border border-ink/10">
         <table className="w-full min-w-[520px] text-sm print:min-w-0">
@@ -181,14 +190,20 @@ function Guide() {
               <td className="px-4 py-3 font-semibold">Repli sur soi et mutisme</td>
               <td className="px-4 py-3">
                 Perte de confiance ou timidité anxieuse (découvrez nos conseils pour{" "}
-                <a href="/guides/timidite-confiance-prise-de-parole">aider un enfant timide à s'exprimer</a>)
+                <a href="/guides/timidite-confiance-prise-de-parole">
+                  aider un enfant timide à s'exprimer
+                </a>
+                )
               </td>
             </tr>
             <tr>
               <td className="px-4 py-3 font-semibold">Isolement dans la cour et absence d'amis</td>
               <td className="px-4 py-3">
                 Sentiment de rejet, timidité sociale ou peur du groupe (découvrez nos pistes pour{" "}
-                <a href="/guides/timidite-confiance-prise-de-parole">libérer la parole d'un enfant en retrait</a>)
+                <a href="/guides/timidite-confiance-prise-de-parole">
+                  libérer la parole d'un enfant en retrait
+                </a>
+                )
               </td>
             </tr>
             <tr>
@@ -199,12 +214,16 @@ function Guide() {
               </td>
             </tr>
             <tr>
-              <td className="px-4 py-3 font-semibold">Phrases d'auto-dévalorisation (« Je suis nul »)</td>
+              <td className="px-4 py-3 font-semibold">
+                Phrases d'auto-dévalorisation (« Je suis nul »)
+              </td>
               <td className="px-4 py-3">Érosion de l'estime de soi sous la pression des notes</td>
             </tr>
             <tr>
               <td className="px-4 py-3 font-semibold">Maux de ventre récurrents le matin</td>
-              <td className="px-4 py-3">Angoisse scolaire ou harcèlement — à traiter sans attendre</td>
+              <td className="px-4 py-3">
+                Angoisse scolaire ou harcèlement — à traiter sans attendre
+              </td>
             </tr>
           </tbody>
         </table>
@@ -212,41 +231,63 @@ function Guide() {
 
       <h2>Quand le découragement naît dans la cour : le poids des amitiés</h2>
       <p>
-        On associe souvent le découragement aux résultats du carnet. Pourtant, chez un enfant de 7 à 10 ans, le premier baromètre de la confiance en soi n'est pas le tableau noir : c'est la cour de récréation.
+        On associe souvent le découragement aux résultats du carnet. Pourtant, chez un enfant de 7 à
+        10 ans, le premier baromètre de la confiance en soi n'est pas le tableau noir : c'est la
+        cour de récréation.
       </p>
       <p>
-        C'est l'âge où le regard des pairs prend une place immense. Un enfant qui reste assis seul contre un mur pendant la pause ou qui ne trouve aucun camarade pour former une équipe en sport intériorise vite une conclusion destructrice : <em>« Si personne ne joue avec moi, c'est que je ne vaux rien »</em>. Dès lors, s'asseoir en classe devient une épreuve. L'attention s'évapore, non par manque de volonté, mais parce que son esprit est accaparé par la peur d'être invisible ou rejeté.
+        C'est l'âge où le regard des pairs prend une place immense. Un enfant qui reste assis seul
+        contre un mur pendant la pause ou qui ne trouve aucun camarade pour former une équipe en
+        sport intériorise vite une conclusion destructrice :{" "}
+        <em>« Si personne ne joue avec moi, c'est que je ne vaux rien »</em>. Dès lors, s'asseoir en
+        classe devient une épreuve. L'attention s'évapore, non par manque de volonté, mais parce que
+        son esprit est accaparé par la peur d'être invisible ou rejeté.
       </p>
-      <p>
-        Face à cette détresse, trois gestes concrets changent la donne à la maison :
-      </p>
+      <p>Face à cette détresse, trois gestes concrets changent la donne à la maison :</p>
       <ul>
         <li>
-          <strong>Rassurer sans minimiser :</strong> Évitez les formules réflexes comme <em>« Ce n'est pas grave, tu t'en feras d'autres »</em>. Dites plutôt : <em>« Je comprends que ce soit lourd d'être seul à la pause. Tu as le droit d'être triste, et on va trouver des pistes ensemble. »</em>
+          <strong>Rassurer sans minimiser :</strong> Évitez les formules réflexes comme{" "}
+          <em>« Ce n'est pas grave, tu t'en feras d'autres »</em>. Dites plutôt :{" "}
+          <em>
+            « Je comprends que ce soit lourd d'être seul à la pause. Tu as le droit d'être triste,
+            et on va trouver des pistes ensemble. »
+          </em>
         </li>
         <li>
-          <strong>Privilégier les rencontres à deux :</strong> La mêlée d'un groupe de dix élèves paralyse les plus réservés. Demandez-lui le prénom d'un camarade calme avec qui il aimerait échanger, puis organisez un après-midi chez vous autour d'un défi manuel ou d'un goûter.
+          <strong>Privilégier les rencontres à deux :</strong> La mêlée d'un groupe de dix élèves
+          paralyse les plus réservés. Demandez-lui le prénom d'un camarade calme avec qui il
+          aimerait échanger, puis organisez un après-midi chez vous autour d'un défi manuel ou d'un
+          goûter.
         </li>
         <li>
-          <strong>Donner des amorces de dialogue simples :</strong> Entraînez avec lui des phrases courtes pour aborder un camarade sans pression : <em>« Tu veux qu'on fasse une partie ? »</em> ou <em>« Je peux t'aider sur cette énigme ? »</em>.
+          <strong>Donner des amorces de dialogue simples :</strong> Entraînez avec lui des phrases
+          courtes pour aborder un camarade sans pression :{" "}
+          <em>« Tu veux qu'on fasse une partie ? »</em> ou{" "}
+          <em>« Je peux t'aider sur cette énigme ? »</em>.
         </li>
       </ul>
 
       <h2>Mauvaises notes : réagir sans casser la confiance</h2>
       <p>
-        Une mauvaise note est une opportunité d'apprentissage, non un jugement d'identité. Appliquez notre protocole pour{" "}
-        <a href="/guides/reussite-scolaire-aider-enfant">accompagner les devoirs sans crier ni stresser</a> :
+        Une mauvaise note est une opportunité d'apprentissage, non un jugement d'identité. Appliquez
+        notre protocole pour{" "}
+        <a href="/guides/reussite-scolaire-aider-enfant">
+          accompagner les devoirs sans crier ni stresser
+        </a>{" "}
+        :
       </p>
       <ul>
         <li>
-          <strong>Demandez-lui son analyse :</strong> <em>« Qu'est-ce qui t'a semblé le plus confus dans cette consigne ? »</em>
+          <strong>Demandez-lui son analyse :</strong>{" "}
+          <em>« Qu'est-ce qui t'a semblé le plus confus dans cette consigne ? »</em>
         </li>
         <li>
           <strong>Encouragez l'effort :</strong> Félicitez sa persévérance avec les principes de la{" "}
           <a href="/guides/discipline-positive-sans-punition">discipline positive</a>.
         </li>
         <li>
-          <strong>Si vous avez un adolescent démotivé :</strong> Proposez-lui des projets d'action autonomes parmi nos{" "}
+          <strong>Si vous avez un adolescent démotivé :</strong> Proposez-lui des projets d'action
+          autonomes parmi nos{" "}
           <a href="/guides/defis-pour-adolescents">12 défis stimulants pour adolescents</a>.
         </li>
       </ul>
@@ -254,14 +295,17 @@ function Guide() {
       <h2>Ce que les parents peuvent faire au quotidien</h2>
       <ol className="space-y-3 my-6">
         <li>
-          <strong>1. Créer des victoires hors de l'école :</strong> Bricoler, cuisiner, coder, dessiner via nos{" "}
+          <strong>1. Créer des victoires hors de l'école :</strong> Bricoler, cuisiner, coder,
+          dessiner via nos{" "}
           <a href="/guides/activites-educatives-enfant">24 activités concrètes sans écran</a>.
         </li>
         <li>
-          <strong>2. Nommer des forces précises :</strong> <em>« Tu es très attentif aux besoins des autres »</em> plutôt qu'un compliment vague.
+          <strong>2. Nommer des forces précises :</strong>{" "}
+          <em>« Tu es très attentif aux besoins des autres »</em> plutôt qu'un compliment vague.
         </li>
         <li>
-          <strong>3. Protéger son sommeil :</strong> Réduisez l'exposition nocturne aux écrans avec nos méthodes de{" "}
+          <strong>3. Protéger son sommeil :</strong> Réduisez l'exposition nocturne aux écrans avec
+          nos méthodes de{" "}
           <a href="/guides/ecrans-addiction-alternatives-enfant">sevrage progressif des écrans</a>.
         </li>
       </ol>

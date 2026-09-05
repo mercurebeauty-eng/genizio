@@ -40,7 +40,8 @@ export const listEducatorsAdmin = createServerFn({ method: "GET" })
 
     const { data: rows, error } = await db
       .from("child_delegations")
-      .select(`
+      .select(
+        `
         id,
         child_id,
         beneficiary_user_id,
@@ -52,7 +53,8 @@ export const listEducatorsAdmin = createServerFn({ method: "GET" })
         valid_until,
         last_accessed_at,
         created_at
-      `)
+      `,
+      )
       .order("created_at", { ascending: false });
 
     if (error || !rows) {
@@ -110,7 +112,8 @@ export const listEducatorStudentsAdmin = createServerFn({ method: "GET" })
 
     const { data: rows, error } = await db
       .from("child_delegations")
-      .select(`
+      .select(
+        `
         id,
         child_id,
         granted_by,
@@ -119,7 +122,8 @@ export const listEducatorStudentsAdmin = createServerFn({ method: "GET" })
         status,
         share_parent_phone,
         child_profiles:child_id (id, name, age, user_id)
-      `)
+      `,
+      )
       .eq("beneficiary_email", normalizedEmail)
       .order("created_at", { ascending: false });
 

@@ -110,17 +110,21 @@ function Guide() {
 
       <h2>Pourquoi votre enfant attend que vous criiez pour agir</h2>
       <p>
-        Répéter 5 fois calmement une demande sans réaction, puis élever la voix pour qu'il bouge enfin : ce cercle d'escalade sonore habitue l'enfant à ne réagir qu'au volume sonore.
+        Répéter 5 fois calmement une demande sans réaction, puis élever la voix pour qu'il bouge
+        enfin : ce cercle d'escalade sonore habitue l'enfant à ne réagir qu'au volume sonore.
       </p>
       <p>
         Pour briser cette boucle, appliquez les piliers de la{" "}
-        <a href="/guides/discipline-positive-sans-punition">discipline positive sans punition</a> : des règles négociées ensemble, des tâches valorisantes et un support visuel neutre.
+        <a href="/guides/discipline-positive-sans-punition">discipline positive sans punition</a> :
+        des règles négociées ensemble, des tâches valorisantes et un support visuel neutre.
       </p>
 
       <h2>Parler avec son enfant avant de poser les règles</h2>
       <p>
-        Prenez 15 minutes pour échanger : <em>« À quel moment te sens-tu le plus en forme pour ranger ton espace ? »</em>. Pour un{" "}
-        <a href="/guides/enfant-agite-concentration">enfant agité ou inattentif</a>, décomposez les missions complexes en petites étapes de 5 minutes.
+        Prenez 15 minutes pour échanger :{" "}
+        <em>« À quel moment te sens-tu le plus en forme pour ranger ton espace ? »</em>. Pour un{" "}
+        <a href="/guides/enfant-agite-concentration">enfant agité ou inattentif</a>, décomposez les
+        missions complexes en petites étapes de 5 minutes.
       </p>
 
       <h2>Les tâches par âge : ce qu'un enfant peut vraiment gérer</h2>
@@ -144,7 +148,8 @@ function Guide() {
             <tr>
               <td className="px-4 py-3 font-bold">8-10 ans</td>
               <td className="px-4 py-3">
-                Ranger sa chambre, préparer ses affaires la veille, faire ses devoirs en autonomie (voir nos conseils de{" "}
+                Ranger sa chambre, préparer ses affaires la veille, faire ses devoirs en autonomie
+                (voir nos conseils de{" "}
                 <a href="/guides/reussite-scolaire-aider-enfant">réussite scolaire</a>)
               </td>
               <td className="px-4 py-3">Tableau de bord à cocher en autonomie</td>
@@ -152,8 +157,9 @@ function Guide() {
             <tr>
               <td className="px-4 py-3 font-bold">11-12 ans</td>
               <td className="px-4 py-3">
-                Gérer son emploi du temps, planifier ses révisions, réguler ses écrans (voir notre protocole{" "}
-                <a href="/guides/ecrans-addiction-alternatives-enfant">sevrage écrans</a>), faire des courses
+                Gérer son emploi du temps, planifier ses révisions, réguler ses écrans (voir notre
+                protocole <a href="/guides/ecrans-addiction-alternatives-enfant">sevrage écrans</a>
+                ), faire des courses
               </td>
               <td className="px-4 py-3">Liberté de timing dans un cadre validé</td>
             </tr>
@@ -168,7 +174,9 @@ function Guide() {
           1. Rédiger la 'Charte de la Maison' en duo
         </h3>
         <p className="text-sm text-amber-900 leading-relaxed">
-          Définissez ensemble 3 règles d'or et les conséquences logiques. L'enfant s'engage 10 fois mieux dans une règle qu'il a co-écrite. En cas de fratrie, organisez la répartition équitable pour éviter la rivalité (voir nos solutions pour{" "}
+          Définissez ensemble 3 règles d'or et les conséquences logiques. L'enfant s'engage 10 fois
+          mieux dans une règle qu'il a co-écrite. En cas de fratrie, organisez la répartition
+          équitable pour éviter la rivalité (voir nos solutions pour{" "}
           <a href="/guides/fratrie-rivalite-cooperation">apaiser les conflits frères et sœurs</a>).
         </p>
       </div>
@@ -178,7 +186,9 @@ function Guide() {
           2. Le tableau des missions visuelles
         </h3>
         <p className="text-sm text-sky-900 leading-relaxed">
-          Transformez les tâches en étapes numérotées concrètes : 1. Cartable prêt, 2. Tenue du lendemain sortie, 3. Bureau rangé. L'enfant coche lui-même : le support devient l'arbitre, vous n'êtes plus le gendarme.
+          Transformez les tâches en étapes numérotées concrètes : 1. Cartable prêt, 2. Tenue du
+          lendemain sortie, 3. Bureau rangé. L'enfant coche lui-même : le support devient l'arbitre,
+          vous n'êtes plus le gendarme.
         </p>
       </div>
 
@@ -187,23 +197,28 @@ function Guide() {
           3. Accorder une vraie responsabilité
         </h3>
         <p className="text-sm text-emerald-900 leading-relaxed">
-          Confiez-lui la gestion d'un budget pour préparer un plat ou le choix de l'activité du dimanche. On grandit quand on nous confie du pouvoir réel.
+          Confiez-lui la gestion d'un budget pour préparer un plat ou le choix de l'activité du
+          dimanche. On grandit quand on nous confie du pouvoir réel.
         </p>
       </div>
 
       <h2>Que faire en cas d'oubli ?</h2>
       <ul>
         <li>
-          <strong>Laisser agir la conséquence naturelle :</strong> Un devoir oublié ou une tenue froissée responsabilise bien plus vite qu'un long sermon.
+          <strong>Laisser agir la conséquence naturelle :</strong> Un devoir oublié ou une tenue
+          froissée responsabilise bien plus vite qu'un long sermon.
         </li>
         <li>
-          <strong>Remplacer le reproche par la question :</strong> <em>« De quoi as-tu besoin pour ne pas oublier ton cahier demain matin ? »</em>
+          <strong>Remplacer le reproche par la question :</strong>{" "}
+          <em>« De quoi as-tu besoin pour ne pas oublier ton cahier demain matin ? »</em>
         </li>
       </ul>
 
       <h2>Ce que fait Génizio au quotidien</h2>
       <p>
-        Génizio transforme l'autonomie en jeu d'aventure. En relevant des défis concrets du monde réel, l'enfant prend des initiatives, documente ses réussites et remplit son Passeport de Talents avec fierté.
+        Génizio transforme l'autonomie en jeu d'aventure. En relevant des défis concrets du monde
+        réel, l'enfant prend des initiatives, documente ses réussites et remplit son Passeport de
+        Talents avec fierté.
       </p>
 
       <h2>Foire aux questions (FAQ)</h2>

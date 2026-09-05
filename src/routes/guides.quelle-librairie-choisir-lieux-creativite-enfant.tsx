@@ -1,11 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import {
-  pageMeta,
-  jsonLdScript,
-  faqPageJsonLd,
-  breadcrumbJsonLd,
-  articleJsonLd,
-} from "@/lib/seo";
+import { pageMeta, jsonLdScript, faqPageJsonLd, breadcrumbJsonLd, articleJsonLd } from "@/lib/seo";
 import { GuideLayout } from "@/components/guides/GuideLayout";
 import { Button } from "@/components/ui/button";
 import { ArrowRight, BookOpen, Store, Wrench, Utensils } from "lucide-react";
@@ -69,7 +63,8 @@ export const Route = createFileRoute("/guides/quelle-librairie-choisir-lieux-cre
         ),
         jsonLdScript(
           articleJsonLd({
-            headline: "Quelle librairie choisir pour son enfant ? Pourquoi le marché et le quartier éveillent sa créativité",
+            headline:
+              "Quelle librairie choisir pour son enfant ? Pourquoi le marché et le quartier éveillent sa créativité",
             description:
               "Pourquoi limiter l'éveil culturel aux rayons des librairies est réducteur et comment le marché ou les ateliers de quartier ouvrent l'esprit de l'enfant.",
             path: PATH,
@@ -128,21 +123,45 @@ function Guide() {
 
       <h2>1. Les limites de la culture purement livresque</h2>
       <p>
-        Un enfant qui lit beaucoup acquiert du vocabulaire, c'est indiscutable. Mais sans confrontation au monde réel, ce savoir reste abstrait (comme nous l'expliquons dans notre guide sur{" "}
-        <a href="/guides/pratique-avant-theorie-apprentissage-ia">la pratique avant la théorie face à l'IA</a>) :
+        Un enfant qui lit beaucoup acquiert du vocabulaire, c'est indiscutable. Mais sans
+        confrontation au monde réel, ce savoir reste abstrait (comme nous l'expliquons dans notre
+        guide sur{" "}
+        <a href="/guides/pratique-avant-theorie-apprentissage-ia">
+          la pratique avant la théorie face à l'IA
+        </a>
+        ) :
       </p>
       <ul>
-        <li>Il connaît la formule du calcul de surface, mais ne sait pas estimer la taille d'une pièce.</li>
-        <li>Il comprend les théories scientifiques dans les livres, mais tire un apprentissage décuplé en expérimentant avec les objets du placard (voir nos{" "}
-        <a href="/guides/jouets-educatifs-kits-scientifiques-placards-maison">expériences scientifiques maison</a>).</li>
-        <li>Il observe les marques et la consommation sans exercer son discernement critique (découvrez notre approche sur les{" "}
-        <a href="/guides/sac-a-dos-marques-challenge-creativite-enfant">marques et la créativité chez l'enfant</a>).</li>
+        <li>
+          Il connaît la formule du calcul de surface, mais ne sait pas estimer la taille d'une
+          pièce.
+        </li>
+        <li>
+          Il comprend les théories scientifiques dans les livres, mais tire un apprentissage décuplé
+          en expérimentant avec les objets du placard (voir nos{" "}
+          <a href="/guides/jouets-educatifs-kits-scientifiques-placards-maison">
+            expériences scientifiques maison
+          </a>
+          ).
+        </li>
+        <li>
+          Il observe les marques et la consommation sans exercer son discernement critique
+          (découvrez notre approche sur les{" "}
+          <a href="/guides/sac-a-dos-marques-challenge-creativite-enfant">
+            marques et la créativité chez l'enfant
+          </a>
+          ).
+        </li>
       </ul>
 
       <h2>2. Les 3 grands laboratoires d'apprentissage du quotidien</h2>
       <p>
-        Particulièrement en Afrique francophone et dans les contextes multiculturels (voir nos repères d'
-        <a href="/guides/education-enfants-afrique-francophone">éducation des enfants en Afrique francophone</a>), l'environnement quotidien offre des opportunités d'éveil exceptionnelles :
+        Particulièrement en Afrique francophone et dans les contextes multiculturels (voir nos
+        repères d'
+        <a href="/guides/education-enfants-afrique-francophone">
+          éducation des enfants en Afrique francophone
+        </a>
+        ), l'environnement quotidien offre des opportunités d'éveil exceptionnelles :
       </p>
 
       <div className="my-6 grid gap-4 sm:grid-cols-3">
@@ -162,7 +181,8 @@ function Guide() {
             2. La Cuisine : laboratoire de chimie
           </div>
           <p className="text-sm text-ink/80 leading-relaxed">
-            Comprendre les fractions en coupant des fruits, observer les émulsions et doser les ingrédients.
+            Comprendre les fractions en coupant des fruits, observer les émulsions et doser les
+            ingrédients.
           </p>
         </div>
 
@@ -172,44 +192,54 @@ function Guide() {
             3. L'Atelier : physique appliquée
           </div>
           <p className="text-sm text-ink/80 leading-relaxed">
-            Comprendre l'effet de levier, la transmission d'une chaîne ou l'équilibre des structures.
+            Comprendre l'effet de levier, la transmission d'une chaîne ou l'équilibre des
+            structures.
           </p>
         </div>
       </div>
 
       <h2>3. Comment concilier livres et pratique concrète</h2>
       <p>
-        La formule gagnante crée un pont entre ce que l'enfant lit et ce qu'il fabrique avec ses mains (selon ses{" "}
+        La formule gagnante crée un pont entre ce que l'enfant lit et ce qu'il fabrique avec ses
+        mains (selon ses{" "}
         <a href="/guides/intelligences-multiples-gardner">intelligences dominantes</a>) :
       </p>
       <ol className="space-y-3 my-6">
         <li>
-          <strong>Après une histoire d'aventure :</strong> Dessiner une carte grandeur nature dans le salon.
+          <strong>Après une histoire d'aventure :</strong> Dessiner une carte grandeur nature dans
+          le salon.
         </li>
         <li>
-          <strong>Après un conte traditionnel :</strong> Le réécrire et le jouer en famille grâce à nos{" "}
-          <a href="/guides/activites-educatives-enfant">24 activités éducatives à la maison</a>.
+          <strong>Après un conte traditionnel :</strong> Le réécrire et le jouer en famille grâce à
+          nos <a href="/guides/activites-educatives-enfant">24 activités éducatives à la maison</a>.
         </li>
       </ol>
 
       <div className="my-8 not-prose rounded-3xl border border-brand/20 bg-brand/5 p-6 sm:p-8">
-        <h3 className="text-xl font-bold text-ink">
-          L'apprentissage par l'action avec Génizio
-        </h3>
+        <h3 className="text-xl font-bold text-ink">L'apprentissage par l'action avec Génizio</h3>
         <p className="mt-2 text-ink/80 leading-relaxed">
-          Génizio transforme les moments ordinaires du quotidien en missions d'éveil passionnantes. Avec <strong>Naya</strong>, votre enfant apprend en faisant, à son rythme, partout où il se trouve.
+          Génizio transforme les moments ordinaires du quotidien en missions d'éveil passionnantes.
+          Avec <strong>Naya</strong>, votre enfant apprend en faisant, à son rythme, partout où il
+          se trouve.
         </p>
         <div className="mt-6 flex flex-wrap gap-4">
-          <Button asChild size="lg" className="rounded-full bg-brand text-white shadow-md hover:bg-brand-dark transition-all">
+          <Button
+            asChild
+            size="lg"
+            className="rounded-full bg-brand text-white shadow-md hover:bg-brand-dark transition-all"
+          >
             <Link to="/auth">
               Découvrir les défis du quotidien
               <ArrowRight className="ml-2 h-4 w-4" />
             </Link>
           </Button>
-          <Button asChild variant="outline" size="lg" className="rounded-full border-ink/20 bg-white text-ink hover:bg-surface hover:text-brand transition-all">
-            <Link to="/guides/activites-educatives-enfant">
-              Explorer 24 activités maison
-            </Link>
+          <Button
+            asChild
+            variant="outline"
+            size="lg"
+            className="rounded-full border-ink/20 bg-white text-ink hover:bg-surface hover:text-brand transition-all"
+          >
+            <Link to="/guides/activites-educatives-enfant">Explorer 24 activités maison</Link>
           </Button>
         </div>
       </div>

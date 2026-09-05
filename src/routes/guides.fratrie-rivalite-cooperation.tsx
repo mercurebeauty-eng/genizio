@@ -105,50 +105,70 @@ function Guide() {
 
       <h2>Pourquoi la comparaison est le pire poison de la paix familiale</h2>
       <p>
-        Dans beaucoup de familles, les enfants sont comparés involontairement : <em>« Regarde ton grand frère, lui est sage »</em>. Cette étiquette pousse les enfants dans une rivalité territoriale pour capter le regard des parents.
+        Dans beaucoup de familles, les enfants sont comparés involontairement :{" "}
+        <em>« Regarde ton grand frère, lui est sage »</em>. Cette étiquette pousse les enfants dans
+        une rivalité territoriale pour capter le regard des parents.
       </p>
       <p>
         Grâce aux{" "}
-        <a href="/guides/intelligences-multiples-gardner">9 formes d'intelligence de Howard Gardner</a>, montrez à chaque enfant que ses talents sont uniques : l'aîné excelle peut-être en logique et organisation, tandis que le cadet brille par son empathie ou son agilité manuelle. Ils ne sont pas rivaux, ils sont coéquipiers complémentaires.
+        <a href="/guides/intelligences-multiples-gardner">
+          9 formes d'intelligence de Howard Gardner
+        </a>
+        , montrez à chaque enfant que ses talents sont uniques : l'aîné excelle peut-être en logique
+        et organisation, tandis que le cadet brille par son empathie ou son agilité manuelle. Ils ne
+        sont pas rivaux, ils sont coéquipiers complémentaires.
       </p>
 
       <h2>Arbitrer une dispute sans jouer les policiers</h2>
       <p>
-        Chercher le « coupable » (<em>« C'est qui qui a commencé ? »</em>) transforme chaque querelle en procès judiciaire où l'un ressort vainqueur et l'autre humilié. En appliquant la{" "}
-        <a href="/guides/discipline-positive-sans-punition">discipline positive sans punition</a>, privilégiez la responsabilisation :
+        Chercher le « coupable » (<em>« C'est qui qui a commencé ? »</em>) transforme chaque
+        querelle en procès judiciaire où l'un ressort vainqueur et l'autre humilié. En appliquant la{" "}
+        <a href="/guides/discipline-positive-sans-punition">discipline positive sans punition</a>,
+        privilégiez la responsabilisation :
       </p>
       <ul>
         <li>
-          <strong>Accueillir la frustration :</strong> <em>« Je vois que vous êtes très en colère tous les deux »</em> (découvrez comment{" "}
-          <a href="/guides/gestion-colere-emotions-enfant">apaiser les tempêtes émotionnelles chez l'enfant</a>).
+          <strong>Accueillir la frustration :</strong>{" "}
+          <em>« Je vois que vous êtes très en colère tous les deux »</em> (découvrez comment{" "}
+          <a href="/guides/gestion-colere-emotions-enfant">
+            apaiser les tempêtes émotionnelles chez l'enfant
+          </a>
+          ).
         </li>
         <li>
-          <strong>Le contrat de négociation :</strong> <em>« Vous avez 2 minutes pour trouver un accord où chacun gagne quelque chose, sinon le jouet reste sur l'étagère jusqu'à demain. »</em>
+          <strong>Le contrat de négociation :</strong>{" "}
+          <em>
+            « Vous avez 2 minutes pour trouver un accord où chacun gagne quelque chose, sinon le
+            jouet reste sur l'étagère jusqu'à demain. »
+          </em>
         </li>
         <li>
-          <strong>L'apprentissage de l'autonomie :</strong> Développez leur maturité grâce à nos rituels pour{" "}
-          <a href="/guides/autonomie-responsabilite-maison">rendre les enfants autonomes et responsables</a>.
+          <strong>L'apprentissage de l'autonomie :</strong> Développez leur maturité grâce à nos
+          rituels pour{" "}
+          <a href="/guides/autonomie-responsabilite-maison">
+            rendre les enfants autonomes et responsables
+          </a>
+          .
         </li>
       </ul>
 
       <h2>3 défis d'équipe à réaliser à deux pour souder la fratrie</h2>
 
       <div className="my-6 rounded-2xl bg-amber-50 p-5 border border-amber-200">
-        <h3 className="font-bold text-amber-950 text-base mb-2">
-          1. L'Escape Game de la Maison
-        </h3>
+        <h3 className="font-bold text-amber-950 text-base mb-2">1. L'Escape Game de la Maison</h3>
         <p className="text-sm text-amber-900 leading-relaxed">
-          Donnez à la fratrie une mission commune : déchiffrer un mot de passe en 15 minutes pour débloquer le goûter. L'un calcule l'indice, l'autre retrouve la clé cachée. La coopération devient la seule stratégie gagnante.
+          Donnez à la fratrie une mission commune : déchiffrer un mot de passe en 15 minutes pour
+          débloquer le goûter. L'un calcule l'indice, l'autre retrouve la clé cachée. La coopération
+          devient la seule stratégie gagnante.
         </p>
       </div>
 
       <div className="my-6 rounded-2xl bg-sky-50 p-5 border border-sky-200">
-        <h3 className="font-bold text-sky-950 text-base mb-2">
-          2. La Fabrique d'Objets en Binôme
-        </h3>
+        <h3 className="font-bold text-sky-950 text-base mb-2">2. La Fabrique d'Objets en Binôme</h3>
         <p className="text-sm text-sky-900 leading-relaxed">
           Proposez-leur de concevoir ensemble une maquette en carton issue de nos{" "}
-          <a href="/guides/activites-manuelles-enfant">activités manuelles récup</a>. L'un découpe, l'autre assemble et peint.
+          <a href="/guides/activites-manuelles-enfant">activités manuelles récup</a>. L'un découpe,
+          l'autre assemble et peint.
         </p>
       </div>
 
@@ -157,14 +177,17 @@ function Guide() {
           3. Le Grand Journal de Famille
         </h3>
         <p className="text-sm text-emerald-900 leading-relaxed">
-          L'un est reporter et interviewe les parents, l'autre est photographe et met en page les nouvelles de la semaine (issues de nos{" "}
+          L'un est reporter et interviewe les parents, l'autre est photographe et met en page les
+          nouvelles de la semaine (issues de nos{" "}
           <a href="/guides/activites-educatives-enfant">24 activités éducatives sans écran</a>).
         </p>
       </div>
 
       <h2>Ce que fait Génizio au quotidien</h2>
       <p>
-        Génizio valorise chaque enfant selon sa propre carte d'intelligences sans jamais instaurer de classement comparatif. Les défis d'équipe permettent aux frères et sœurs de combiner leurs talents respectifs pour débloquer des réussites familiales partagées.
+        Génizio valorise chaque enfant selon sa propre carte d'intelligences sans jamais instaurer
+        de classement comparatif. Les défis d'équipe permettent aux frères et sœurs de combiner
+        leurs talents respectifs pour débloquer des réussites familiales partagées.
       </p>
 
       <h2>Foire aux questions (FAQ)</h2>

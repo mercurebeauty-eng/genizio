@@ -116,7 +116,10 @@ export const lookupEducator = createServerFn({ method: "GET" })
             organizationName: school.name,
             professionalRole: leaderEdu.professional_role as any,
             classCode: leaderEdu.class_code ? `#${leaderEdu.class_code}` : null,
-            isVerified: leaderEdu.is_verified || school.status === "verified" || school.status === "partner_campus",
+            isVerified:
+              leaderEdu.is_verified ||
+              school.status === "verified" ||
+              school.status === "partner_campus",
             email: educatorEmail,
             schoolId: school.id,
             schoolCode: school.code.startsWith("#") ? school.code : `#${school.code}`,
@@ -150,7 +153,8 @@ export const lookupEducator = createServerFn({ method: "GET" })
       if (user) {
         return {
           handle: null,
-          fullName: (user.user_metadata?.full_name as string) || user.email?.split("@")[0] || "Enseignant",
+          fullName:
+            (user.user_metadata?.full_name as string) || user.email?.split("@")[0] || "Enseignant",
           organizationName: (user.user_metadata?.organization_name as string) || null,
           professionalRole: (user.user_metadata?.role as any) || "teacher",
           classCode: null,
@@ -177,7 +181,10 @@ const SaveEducatorProfileSchema = z.object({
   classCode: z
     .string()
     .max(20)
-    .regex(/^[a-zA-Z0-9_-]*$/, "Caractères autorisés pour le code classe : lettres, chiffres, tirets")
+    .regex(
+      /^[a-zA-Z0-9_-]*$/,
+      "Caractères autorisés pour le code classe : lettres, chiffres, tirets",
+    )
     .optional(),
   whatsappPhone: z.string().optional(),
 });
@@ -191,7 +198,8 @@ export const saveMyEducatorProfile = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const db = supabaseAdmin as any;
-    const userId = (context as any).userId || (context as any).claims?.sub || (context as any).user?.id;
+    const userId =
+      (context as any).userId || (context as any).claims?.sub || (context as any).user?.id;
 
     const normalizedHandle = data.handle?.toLowerCase().trim() || null;
     const normalizedClassCode = data.classCode?.toUpperCase().trim() || null;
@@ -205,7 +213,9 @@ export const saveMyEducatorProfile = createServerFn({ method: "POST" })
         .maybeSingle();
 
       if (existing && existing.user_id !== userId) {
-        throw new Error(`L'identifiant @${normalizedHandle} est déjà utilisé par un autre professionnel.`);
+        throw new Error(
+          `L'identifiant @${normalizedHandle} est déjà utilisé par un autre professionnel.`,
+        );
       }
     }
 
@@ -268,7 +278,8 @@ export const getMyEducatorProfile = createServerFn({ method: "GET" })
   .handler(async ({ context }) => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const db = supabaseAdmin as any;
-    const userId = (context as any).userId || (context as any).claims?.sub || (context as any).user?.id;
+    const userId =
+      (context as any).userId || (context as any).claims?.sub || (context as any).user?.id;
 
     const { data: profile } = await db
       .from("educator_profiles")
@@ -315,7 +326,8 @@ export const getMyEstablishmentOverview = createServerFn({ method: "GET" })
   .handler(async ({ context }): Promise<EstablishmentOverview> => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const db = supabaseAdmin as any;
-    const userId = (context as any).userId || (context as any).claims?.sub || (context as any).user?.id;
+    const userId =
+      (context as any).userId || (context as any).claims?.sub || (context as any).user?.id;
 
     const { data: myProfile } = await db
       .from("educator_profiles")
@@ -354,10 +366,14 @@ export const getMyEstablishmentOverview = createServerFn({ method: "GET" })
 
     let queryBuilder = db
       .from("educator_profiles")
-      .select("id, full_name, handle, class_code, professional_role, is_verified, whatsapp_phone, created_at, school_id, organization_name");
+      .select(
+        "id, full_name, handle, class_code, professional_role, is_verified, whatsapp_phone, created_at, school_id, organization_name",
+      );
 
     if (school?.id) {
-      queryBuilder = queryBuilder.or(`school_id.eq.${school.id},organization_name.ilike.${orgName}`);
+      queryBuilder = queryBuilder.or(
+        `school_id.eq.${school.id},organization_name.ilike.${orgName}`,
+      );
     } else {
       queryBuilder = queryBuilder.ilike("organization_name", orgName);
     }
@@ -389,7 +405,11 @@ export const getMyEstablishmentOverview = createServerFn({ method: "GET" })
         id: r.id,
         fullName: r.full_name,
         handle: r.handle ? (r.handle.startsWith("@") ? r.handle : `@${r.handle}`) : null,
-        classCode: r.class_code ? (r.class_code.startsWith("#") ? r.class_code : `#${r.class_code}`) : null,
+        classCode: r.class_code
+          ? r.class_code.startsWith("#")
+            ? r.class_code
+            : `#${r.class_code}`
+          : null,
         professionalRole: r.professional_role,
         isVerified: Boolean(r.is_verified),
         whatsappPhone: r.whatsapp_phone || null,
@@ -401,7 +421,11 @@ export const getMyEstablishmentOverview = createServerFn({ method: "GET" })
       hasEstablishment: true,
       organizationName: orgName,
       schoolId: school?.id || null,
-      schoolCode: school?.code ? (school.code.startsWith("#") ? school.code : `#${school.code}`) : null,
+      schoolCode: school?.code
+        ? school.code.startsWith("#")
+          ? school.code
+          : `#${school.code}`
+        : null,
       schoolStatus: school?.status || null,
       schoolCity: school?.city || null,
       pricingTier: school?.pricing_tier || null,

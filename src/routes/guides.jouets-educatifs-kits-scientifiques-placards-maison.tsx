@@ -1,11 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import {
-  pageMeta,
-  jsonLdScript,
-  faqPageJsonLd,
-  breadcrumbJsonLd,
-  articleJsonLd,
-} from "@/lib/seo";
+import { pageMeta, jsonLdScript, faqPageJsonLd, breadcrumbJsonLd, articleJsonLd } from "@/lib/seo";
 import { GuideLayout } from "@/components/guides/GuideLayout";
 import { Button } from "@/components/ui/button";
 import { ArrowRight, Package, FlaskConical, Recycle, Sparkles } from "lucide-react";
@@ -46,43 +40,46 @@ const FAQ = [
   },
 ];
 
-export const Route = createFileRoute("/guides/jouets-educatifs-kits-scientifiques-placards-maison")({
-  head: () => {
-    const meta = pageMeta({
-      title: "Kits scientifiques vs Maison : Éveiller l'enfant au réel",
-      description:
-        "Les objets de votre cuisine développent bien mieux l'ingéniosité scientifique de votre enfant que les kits éducatifs coûteux du commerce.",
-      path: PATH,
-      image: "/guides/og-jouets-placards.jpg",
-      type: "article",
-    });
-    return {
-      ...meta,
-      scripts: [
-        jsonLdScript(faqPageJsonLd(FAQ)),
-        jsonLdScript(
-          breadcrumbJsonLd([
-            { name: "Accueil", path: "/" },
-            { name: "Guides", path: "/guides" },
-            { name: "Sciences et expériences maison", path: PATH },
-          ]),
-        ),
-        jsonLdScript(
-          articleJsonLd({
-            headline: "Jouets éducatifs et kits scientifiques : pourquoi ce que vous avez dans vos placards développe mieux l'ingéniosité",
-            description:
-              "Pourquoi les objets du quotidien développent mieux la curiosité scientifique de votre enfant que les kits éducatifs fermés du commerce.",
-            path: PATH,
-            image: "/guides/og-jouets-placards.jpg",
-            datePublished: "2026-08-24",
-            dateModified: "2026-09-04",
-          }),
-        ),
-      ],
-    };
+export const Route = createFileRoute("/guides/jouets-educatifs-kits-scientifiques-placards-maison")(
+  {
+    head: () => {
+      const meta = pageMeta({
+        title: "Kits scientifiques vs Maison : Éveiller l'enfant au réel",
+        description:
+          "Les objets de votre cuisine développent bien mieux l'ingéniosité scientifique de votre enfant que les kits éducatifs coûteux du commerce.",
+        path: PATH,
+        image: "/guides/og-jouets-placards.jpg",
+        type: "article",
+      });
+      return {
+        ...meta,
+        scripts: [
+          jsonLdScript(faqPageJsonLd(FAQ)),
+          jsonLdScript(
+            breadcrumbJsonLd([
+              { name: "Accueil", path: "/" },
+              { name: "Guides", path: "/guides" },
+              { name: "Sciences et expériences maison", path: PATH },
+            ]),
+          ),
+          jsonLdScript(
+            articleJsonLd({
+              headline:
+                "Jouets éducatifs et kits scientifiques : pourquoi ce que vous avez dans vos placards développe mieux l'ingéniosité",
+              description:
+                "Pourquoi les objets du quotidien développent mieux la curiosité scientifique de votre enfant que les kits éducatifs fermés du commerce.",
+              path: PATH,
+              image: "/guides/og-jouets-placards.jpg",
+              datePublished: "2026-08-24",
+              dateModified: "2026-09-04",
+            }),
+          ),
+        ],
+      };
+    },
+    component: Guide,
   },
-  component: Guide,
-});
+);
 
 function Guide() {
   return (
@@ -128,7 +125,8 @@ function Guide() {
 
       <h2>1. Le piège des « kits fermés » versus le génie des « matériaux ouverts »</h2>
       <p>
-        Dans un kit commercial, tout est prédécoupé et standardisé. Si l'enfant modifie une étape, l'expérience échoue. Il apprend à exécuter, pas à chercher.
+        Dans un kit commercial, tout est prédécoupé et standardisé. Si l'enfant modifie une étape,
+        l'expérience échoue. Il apprend à exécuter, pas à chercher.
       </p>
       <p>
         À l'inverse, face à du carton, de la ficelle ou des bouteilles recyclées (comme dans nos{" "}
@@ -136,8 +134,13 @@ function Guide() {
       </p>
       <ul>
         <li>Il n'y a pas de mauvaise réponse prédéfinie.</li>
-        <li>L'enfant teste les lois de la gravité, adapte les découpes et muscle ses{" "}
-        <a href="/guides/intelligences-multiples-gardner">intelligences spatiale et kinesthésique</a>.</li>
+        <li>
+          L'enfant teste les lois de la gravité, adapte les découpes et muscle ses{" "}
+          <a href="/guides/intelligences-multiples-gardner">
+            intelligences spatiale et kinesthésique
+          </a>
+          .
+        </li>
         <li>Chaque réussite procure une fierté authentique issue de son propre raisonnement.</li>
       </ul>
 
@@ -160,7 +163,8 @@ function Guide() {
             2. Le Défi du Chimiste : La Lampe à Lave Maison
           </div>
           <p className="text-sm text-ink/80 leading-relaxed">
-            Versez de l'eau, de l'huile et un comprimé effervescent dans une bouteille transparente pour observer la séparation des densités et le dégagement gazeux.
+            Versez de l'eau, de l'huile et un comprimé effervescent dans une bouteille transparente
+            pour observer la séparation des densités et le dégagement gazeux.
           </p>
         </div>
 
@@ -170,7 +174,8 @@ function Guide() {
             3. Le Défi du Physicien : Le Sauvetage de l'Œuf
           </div>
           <p className="text-sm text-ink/80 leading-relaxed">
-            Objectif : fabriquer un parachute capable d'amortir une chute de 2 mètres sans casser l'œuf cru.
+            Objectif : fabriquer un parachute capable d'amortir une chute de 2 mètres sans casser
+            l'œuf cru.
           </p>
         </div>
 
@@ -180,19 +185,30 @@ function Guide() {
             4. Le Défi Hydraulique : La Station de Filtration
           </div>
           <p className="text-sm text-ink/80 leading-relaxed">
-            Superposez coton, sable fin et graviers dans un goulot inversé pour clarifier une eau boueuse par décantation successive.
+            Superposez coton, sable fin et graviers dans un goulot inversé pour clarifier une eau
+            boueuse par décantation successive.
           </p>
         </div>
       </div>
 
       <h2>3. Ce que cela change dans son rapport à l'école</h2>
       <p>
-        Un enfant qui a construit un pont en carton comprend la géométrie des triangles bien avant qu'on lui parle de trigonométrie. Le concret précède la formule. C'est le cœur même de notre méthode (voir notre analyse sur <a href="/guides/pratique-avant-theorie-apprentissage-ia">l'importance de la pratique avant la théorie</a>).
+        Un enfant qui a construit un pont en carton comprend la géométrie des triangles bien avant
+        qu'on lui parle de trigonométrie. Le concret précède la formule. C'est le cœur même de notre
+        méthode (voir notre analyse sur{" "}
+        <a href="/guides/pratique-avant-theorie-apprentissage-ia">
+          l'importance de la pratique avant la théorie
+        </a>
+        ).
       </p>
       <p>
         Pour nourrir l'envie d'explorer au quotidien, piochez aussi dans nos{" "}
-        <a href="/guides/activites-educatives-enfant">24 activités éducatives maison</a> et nos repères pour{" "}
-        <a href="/guides/quelle-librairie-choisir-lieux-creativite-enfant">choisir une librairie stimulante</a>.
+        <a href="/guides/activites-educatives-enfant">24 activités éducatives maison</a> et nos
+        repères pour{" "}
+        <a href="/guides/quelle-librairie-choisir-lieux-creativite-enfant">
+          choisir une librairie stimulante
+        </a>
+        .
       </p>
 
       <div className="my-8 not-prose rounded-3xl border border-brand/20 bg-brand/5 p-6 sm:p-8">
@@ -200,19 +216,27 @@ function Guide() {
           Transformez votre salon en atelier avec Génizio
         </h3>
         <p className="mt-2 text-ink/80 leading-relaxed">
-          Génizio fournit aux familles des centaines de missions scientifiques et créatives faisables avec les objets du quotidien, guidées pas à pas par <strong>Naya</strong>.
+          Génizio fournit aux familles des centaines de missions scientifiques et créatives
+          faisables avec les objets du quotidien, guidées pas à pas par <strong>Naya</strong>.
         </p>
         <div className="mt-6 flex flex-wrap gap-4">
-          <Button asChild size="lg" className="rounded-full bg-brand text-white shadow-md hover:bg-brand-dark transition-all">
+          <Button
+            asChild
+            size="lg"
+            className="rounded-full bg-brand text-white shadow-md hover:bg-brand-dark transition-all"
+          >
             <Link to="/auth">
               Lancer une mission scientifique
               <ArrowRight className="ml-2 h-4 w-4" />
             </Link>
           </Button>
-          <Button asChild variant="outline" size="lg" className="rounded-full border-ink/20 bg-white text-ink hover:bg-surface hover:text-brand transition-all">
-            <Link to="/guides/activites-manuelles-enfant">
-              Explorer les activités manuelles
-            </Link>
+          <Button
+            asChild
+            variant="outline"
+            size="lg"
+            className="rounded-full border-ink/20 bg-white text-ink hover:bg-surface hover:text-brand transition-all"
+          >
+            <Link to="/guides/activites-manuelles-enfant">Explorer les activités manuelles</Link>
           </Button>
         </div>
       </div>

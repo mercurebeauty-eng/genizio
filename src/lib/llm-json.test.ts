@@ -64,4 +64,3 @@ I need to output a JSON object. For example, { "foo": "bar" }.
     expect(() => JSON.parse(cleaned)).not.toThrow();
   });
 });
-

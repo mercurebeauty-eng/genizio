@@ -5,7 +5,7 @@ import {
   computeRolePlasticity,
   formatCollectiveInsightForNaya,
   type CollectiveProjectTrace,
-  type CollectiveParticipantContribution
+  type CollectiveParticipantContribution,
 } from "./collective-capability";
 
 describe("collective-capability engine", () => {
@@ -24,11 +24,11 @@ describe("collective-capability engine", () => {
         childId: "child-1",
         role: "conception",
         implication: "pilier", // alpha = 0.85
-        supervisorTags: []
+        supervisorTags: [],
       };
-      
+
       const evidence = computeParticipantEvidence(baseProject, contrib, 6);
-      
+
       // 6 + 0.85 * (10 - 6) = 6 + 3.4 = 9.4
       expect(evidence.demonstratedLevelAge).toBe(9.4);
       expect(evidence.autonomyWeight).toBe(0.8); // Base boosted by pilier
@@ -42,11 +42,11 @@ describe("collective-capability engine", () => {
         childId: "child-1",
         role: "fabrication",
         implication: "observateur", // alpha = 0.15
-        supervisorTags: []
+        supervisorTags: [],
       };
-      
+
       const evidence = computeParticipantEvidence(baseProject, contrib, 6);
-      
+
       // 6 + 0.15 * 4 = 6.6
       expect(evidence.demonstratedLevelAge).toBe(6.6);
       expect(evidence.autonomyWeight).toBe(0.5); // Base
@@ -58,11 +58,11 @@ describe("collective-capability engine", () => {
         role: "fabrication",
         implication: "pilier", // Même s'il était listé comme pilier
         participationStatus: "present_passive",
-        supervisorTags: []
+        supervisorTags: [],
       };
-      
+
       const evidence = computeParticipantEvidence(baseProject, passiveContrib, 6);
-      
+
       // demonstratedLevelAge reste le niveau stable (6), aucune appropriation indue du projet (10)
       expect(evidence.demonstratedLevelAge).toBe(6);
     });
@@ -75,14 +75,14 @@ describe("collective-capability engine", () => {
         supervisorTags: [
           { tag: "+Initiative", impact: "positive", dimension: "autonomie" },
           { tag: "+Aide Pair", impact: "positive", dimension: "collaboration" },
-          { tag: "-Décrochage", impact: "negative", dimension: "perseverance" }
-        ]
+          { tag: "-Décrochage", impact: "negative", dimension: "perseverance" },
+        ],
       };
-      
+
       const evidence = computeParticipantEvidence(baseProject, contrib, 8);
       // 8 + 0.60 * 2 = 9.2
       expect(evidence.demonstratedLevelAge).toBe(9.2);
-      
+
       // autonomie: 0.5 + 0.2 = 0.7
       expect(evidence.autonomyWeight).toBe(0.7);
       // collab (metacognitiveWeight): 0.5 + 0.2 = 0.7
@@ -95,7 +95,10 @@ describe("collective-capability engine", () => {
       // Child stable is 12, project is 8.
       const projectBelow: CollectiveProjectTrace = { ...baseProject, targetLevelAge: 8 };
       const contrib: CollectiveParticipantContribution = {
-        childId: "child-1", role: "conception", implication: "pilier", supervisorTags: []
+        childId: "child-1",
+        role: "conception",
+        implication: "pilier",
+        supervisorTags: [],
       };
       const evidence = computeParticipantEvidence(projectBelow, contrib, 12);
       // It should just return targetLevelAge as minimum demonstrated
@@ -105,14 +108,28 @@ describe("collective-capability engine", () => {
 
   describe("evaluateTeamSynergy", () => {
     it("should return 1.0 for a team of 1", () => {
-      expect(evaluateTeamSynergy([{ childId: "1", role: "conception", implication: "pilier", supervisorTags: [] }])).toBe(1.0);
+      expect(
+        evaluateTeamSynergy([
+          { childId: "1", role: "conception", implication: "pilier", supervisorTags: [] },
+        ]),
+      ).toBe(1.0);
     });
 
     it("should return high synergy for diverse roles", () => {
       const team: CollectiveParticipantContribution[] = [
         { childId: "1", role: "conception", implication: "pilier", supervisorTags: [] },
-        { childId: "2", role: "programmation", implication: "contributeur_actif", supervisorTags: [] },
-        { childId: "3", role: "coordination", implication: "contributeur_actif", supervisorTags: [] },
+        {
+          childId: "2",
+          role: "programmation",
+          implication: "contributeur_actif",
+          supervisorTags: [],
+        },
+        {
+          childId: "3",
+          role: "coordination",
+          implication: "contributeur_actif",
+          supervisorTags: [],
+        },
         { childId: "4", role: "fabrication", implication: "apprenti", supervisorTags: [] },
       ];
       // 4 distinct roles for 4 people -> maximum entropy
@@ -121,9 +138,24 @@ describe("collective-capability engine", () => {
 
     it("should return lower synergy if everyone does the same role", () => {
       const team: CollectiveParticipantContribution[] = [
-        { childId: "1", role: "programmation", implication: "contributeur_actif", supervisorTags: [] },
-        { childId: "2", role: "programmation", implication: "contributeur_actif", supervisorTags: [] },
-        { childId: "3", role: "programmation", implication: "contributeur_actif", supervisorTags: [] },
+        {
+          childId: "1",
+          role: "programmation",
+          implication: "contributeur_actif",
+          supervisorTags: [],
+        },
+        {
+          childId: "2",
+          role: "programmation",
+          implication: "contributeur_actif",
+          supervisorTags: [],
+        },
+        {
+          childId: "3",
+          role: "programmation",
+          implication: "contributeur_actif",
+          supervisorTags: [],
+        },
       ];
       // 1 role for 3 people -> 0 entropy
       expect(evaluateTeamSynergy(team)).toBe(0.0);
@@ -141,7 +173,9 @@ describe("collective-capability engine", () => {
 
     it("should return 1.0 for a highly versatile child", () => {
       // Tested on 4 different roles
-      expect(computeRolePlasticity(["conception", "programmation", "fabrication", "coordination"])).toBe(1.0);
+      expect(
+        computeRolePlasticity(["conception", "programmation", "fabrication", "coordination"]),
+      ).toBe(1.0);
     });
   });
 

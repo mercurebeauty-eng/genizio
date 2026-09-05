@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { useSession } from "@/hooks/use-session";
 import {
@@ -49,6 +49,12 @@ import { AdminSafeguardingAudits } from "./AdminSafeguardingAudits";
 import { AdminSafetyReports } from "./AdminSafetyReports";
 import { getSafeguardingPendingCountAdmin } from "@/lib/safeguarding.functions";
 
+export interface AdminMentorsTabProps {
+  onDataChanged?: () => void | Promise<void>;
+  onPendingCountChange?: (count: number) => void;
+  isRefreshing?: boolean;
+}
+
 // Refonte « Gestion des Mentors » (2026-08-14) — répond aux trois manques signalés :
 //   • « on ne sait pas comment ça fonctionne » → encadré « Comment ça marche » ci-dessous ;
 //   • « comment assigne-t-on directement à une campagne ? » → bouton primaire qui ouvre la
@@ -56,7 +62,11 @@ import { getSafeguardingPendingCountAdmin } from "@/lib/safeguarding.functions";
 //     n'avait jusqu'ici que l'assignation enfant-par-enfant ;
 //   • « ingénierie zéro » → liste GROUPÉE par mentor, PAGINÉE, avec recherche par
 //     email et filtre par campagne (l'ancienne liste plate chargeait toute la table).
-export function AdminMentorsTab() {
+export function AdminMentorsTab({
+  onDataChanged,
+  onPendingCountChange,
+  isRefreshing: parentRefreshing = false,
+}: AdminMentorsTabProps = {}) {
   const { session, loading } = useSession();
   const [groups, setGroups] = useState<MentorGroup[]>([]);
   const [campaigns, setCampaigns] = useState<{ id: string; name: string }[]>([]);
@@ -181,6 +191,48 @@ export function AdminMentorsTab() {
     }
   };
 
+  const refreshSilently = useCallback(async () => {
+    try {
+      const opts = session?.access_token
+        ? { headers: { Authorization: `Bearer ${session.access_token}` } }
+        : {};
+
+      const [data, safetyCountRes] = await Promise.all([
+        listFn({
+          data: {
+            page,
+            pageSize: 20,
+            search: debouncedSearch || undefined,
+            campaignId: campaignFilter || undefined,
+          },
+          ...opts,
+        }).catch(() => null),
+        getSafetyCountFn({ data: undefined, ...opts }).catch(() => null),
+      ]);
+
+      if (data) {
+        setGroups((data as any)?.data ?? []);
+        setTotal((data as any)?.total ?? 0);
+        setTotalPages((data as any)?.totalPages ?? 1);
+        setForbidden(false);
+      }
+      if (safetyCountRes) {
+        setOpenReportsCount(safetyCountRes.openReportsCount);
+        onPendingCountChange?.(safetyCountRes.openReportsCount);
+      }
+    } catch (e) {
+      console.error("Erreur actualisation silencieuse mentors:", e);
+    }
+  }, [
+    listFn,
+    getSafetyCountFn,
+    page,
+    debouncedSearch,
+    campaignFilter,
+    session,
+    onPendingCountChange,
+  ]);
+
   useEffect(() => {
     if (!session) return;
     const opts = session?.access_token
@@ -194,7 +246,10 @@ export function AdminMentorsTab() {
       });
 
     getSafetyCountFn({ data: undefined, ...opts })
-      .then((res) => setOpenReportsCount(res?.openReportsCount ?? 0))
+      .then((res) => {
+        setOpenReportsCount(res?.openReportsCount ?? 0);
+        onPendingCountChange?.(res?.openReportsCount ?? 0);
+      })
       .catch(() => {});
 
     void loadCodes();
@@ -202,6 +257,52 @@ export function AdminMentorsTab() {
     void refetch();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [session, debouncedSearch, campaignFilter, page]);
+
+  useEffect(() => {
+    if (!session) return;
+    const { supabase } = require("@/integrations/supabase/client");
+    const channel = supabase.channel("admin-mentors-tab-sync");
+
+    channel
+      .on("broadcast", { event: "safeguarding_updated" }, () => {
+        void refreshSilently();
+        void onDataChanged?.();
+      })
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "child_safety_reports" },
+        () => {
+          void refreshSilently();
+          void onDataChanged?.();
+        },
+      )
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "child_safety_audits" },
+        () => {
+          void refreshSilently();
+          void onDataChanged?.();
+        },
+      )
+      .subscribe();
+
+    return () => {
+      void supabase.removeChannel(channel);
+    };
+  }, [session, refreshSilently, onDataChanged]);
+
+  const broadcastMentorUpdate = useCallback(async () => {
+    try {
+      const { supabase } = await import("@/integrations/supabase/client");
+      const channel = supabase.channel("admin-mentors-tab-sync");
+      void channel.send({
+        type: "broadcast",
+        event: "safeguarding_updated",
+        payload: { timestamp: Date.now() },
+      });
+    } catch (e) {}
+    void onDataChanged?.();
+  }, [onDataChanged]);
 
   const handleRemove = async (assignmentId: string, childName: string) => {
     if (
@@ -219,7 +320,8 @@ export function AdminMentorsTab() {
     try {
       await removeFn({ data: { id: assignmentId }, ...opts });
       toast.success("Mentor retiré.");
-      void refetch();
+      void refreshSilently();
+      void broadcastMentorUpdate();
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Erreur lors du retrait du mentor.");
     }
@@ -257,14 +359,33 @@ export function AdminMentorsTab() {
     )
       return;
     setUpdatingStatusId(mentorUserId);
+
+    // Optimistic UI Update
+    const previousGroups = groups;
+    setGroups((prev) =>
+      prev.map((g) => (g.mentor_user_id === mentorUserId ? { ...g, status } : g)),
+    );
+
     const opts = session?.access_token
       ? { headers: { Authorization: `Bearer ${session.access_token}` } }
       : {};
     try {
       await updateStatusFn({ data: { mentorUserId, status }, ...opts });
       toast.success(`Mentor ${isRestore ? "restauré" : label.toLowerCase()} — statut mis à jour.`);
-      void refetch();
+
+      try {
+        const { supabase } = await import("@/integrations/supabase/client");
+        const channel = supabase.channel("admin-mentors-tab-sync");
+        void channel.send({
+          type: "broadcast",
+          event: "safeguarding_updated",
+          payload: { timestamp: Date.now() },
+        });
+      } catch (e) {}
+
+      void onDataChanged?.();
     } catch (err) {
+      setGroups(previousGroups);
       toast.error(err instanceof Error ? err.message : "Erreur lors de la mise à jour du statut.");
     } finally {
       setUpdatingStatusId(null);
@@ -297,7 +418,8 @@ export function AdminMentorsTab() {
       await approveSessionFn({ data: { sessionId }, ...opts });
       toast.success("Séance approuvée — elle entre dans le payout dû.");
       if (payoutModalFor) void openPayoutModal(payoutModalFor);
-      void refetch();
+      void refreshSilently();
+      void broadcastMentorUpdate();
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Erreur lors de l'approbation.");
     }
@@ -323,7 +445,8 @@ export function AdminMentorsTab() {
       toast.success(
         `${(res as any)?.paidCount ?? 0} séance(s) marquée(s) payée(s) — payout soldé.`,
       );
-      void refetch();
+      void refreshSilently();
+      void broadcastMentorUpdate();
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Erreur lors du paiement.");
     } finally {
@@ -346,9 +469,12 @@ export function AdminMentorsTab() {
           <Users className="size-6" />
         </div>
         <div>
-          <h2 className="text-xl font-display font-black text-ink">Gestion des Mentors & Protection</h2>
+          <h2 className="text-xl font-display font-black text-ink">
+            Gestion des Mentors & Protection
+          </h2>
           <p className="text-sm font-medium text-ink/60">
-            Assignation de mentors, audits de bienveillance (Génizio Care) et protection des enfants.
+            Assignation de mentors, audits de bienveillance (Génizio Care) et protection des
+            enfants.
           </p>
         </div>
       </div>
@@ -401,419 +527,426 @@ export function AdminMentorsTab() {
       </div>
 
       {mentorSubTab === "audits" ? (
-        <AdminSafeguardingAudits />
+        <AdminSafeguardingAudits onDataChanged={onDataChanged} isRefreshing={parentRefreshing} />
       ) : mentorSubTab === "safety" ? (
-        <AdminSafetyReports />
+        <AdminSafetyReports
+          onDataChanged={onDataChanged}
+          onPendingCountChange={onPendingCountChange}
+          isRefreshing={parentRefreshing}
+        />
       ) : (
         <>
           {/* « Comment ça marche » (2026-08-14) */}
           <div className="rounded-3xl border border-sky-200/70 bg-sky-50 p-4 sm:p-5">
-        <div className="flex gap-3">
-          <Info className="size-5 text-sky-600 shrink-0 mt-0.5" />
-          <div className="text-xs sm:text-sm text-sky-900 leading-relaxed space-y-1">
-            <p className="font-black text-sky-800">Comment ça marche</p>
-            <p>
-              Un compte devient mentor quand on lui <strong>assigne des enfants</strong> — par un
-              admin (assignation enfant par enfant) ou par un gestionnaire de campagne (assignation
-              de toute la cohorte, ici aussi possible via « Assigner à une campagne »). Le mentor
-              voit alors ces enfants dans son tableau de bord{" "}
-              <code className="font-mono">/mentor</code>.
-            </p>
-            <p>
-              <strong>Quota :</strong> un mentor suit au maximum <strong>5 enfants</strong>{" "}
-              (plancher grand-péré 5, sinon 1 + suppléments payés, plafond absolu 5 — « 5 par 5 »).
-              Au-delà, assigner un 2ᵉ mentor.
-            </p>
-          </div>
-        </div>
-      </div>
-
-      {fetching ? (
-        <div className="flex justify-center py-16">
-          <Loader2 className="size-8 animate-spin text-brand" />
-        </div>
-      ) : forbidden ? (
-        <div className="rounded-3xl border border-ink/10 bg-white p-10 text-center shadow-xl">
-          <div className="mx-auto mb-3 flex size-12 items-center justify-center rounded-full border-2 border-ink bg-red-50 text-red-500">
-            <ShieldAlert className="size-6" />
-          </div>
-          <p className="font-bold text-ink">Accès réservé à l'administrateur.</p>
-          <p className="mt-1 text-sm text-ink/60">
-            Ce compte ({session.user.email}) n'est pas autorisé à gérer les mentors.
-          </p>
-        </div>
-      ) : (
-        <div className="space-y-6">
-          {/* Barre d'actions : recherche + filtre campagne + assignation */}
-          <div className="flex flex-col lg:flex-row lg:items-center gap-3">
-            <div className="relative flex-1 min-w-[14rem]">
-              <Search className="size-4 text-ink/40 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
-              <input
-                type="search"
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                placeholder="Rechercher un mentor par email…"
-                aria-label="Rechercher un mentor"
-                className="w-full rounded-2xl border border-ink/10 bg-surface pl-9 pr-4 py-2.5 text-sm font-medium text-ink outline-none focus:ring-2 focus:ring-brand/30"
-              />
+            <div className="flex gap-3">
+              <Info className="size-5 text-sky-600 shrink-0 mt-0.5" />
+              <div className="text-xs sm:text-sm text-sky-900 leading-relaxed space-y-1">
+                <p className="font-black text-sky-800">Comment ça marche</p>
+                <p>
+                  Un compte devient mentor quand on lui <strong>assigne des enfants</strong> — par
+                  un admin (assignation enfant par enfant) ou par un gestionnaire de campagne
+                  (assignation de toute la cohorte, ici aussi possible via « Assigner à une campagne
+                  »). Le mentor voit alors ces enfants dans son tableau de bord{" "}
+                  <code className="font-mono">/mentor</code>.
+                </p>
+                <p>
+                  <strong>Quota :</strong> un mentor suit au maximum <strong>5 enfants</strong>{" "}
+                  (plancher grand-péré 5, sinon 1 + suppléments payés, plafond absolu 5 — « 5 par 5
+                  »). Au-delà, assigner un 2ᵉ mentor.
+                </p>
+              </div>
             </div>
-            <select
-              value={campaignFilter}
-              onChange={(e) => setCampaignFilter(e.target.value)}
-              aria-label="Filtrer par campagne"
-              className="rounded-2xl border border-ink/10 bg-white px-3 py-2.5 text-xs font-bold text-ink outline-none focus:ring-2 focus:ring-brand/30 cursor-pointer"
-            >
-              <option value="">Toutes les campagnes</option>
-              {campaigns.map((c) => (
-                <option key={c.id} value={c.id}>
-                  {c.name}
-                </option>
-              ))}
-            </select>
-            <button
-              onClick={() => setIsAssignModalOpen(true)}
-              className="inline-flex items-center justify-center gap-2 rounded-2xl bg-brand px-5 py-2.5 text-sm font-bold text-white hover:bg-brand/90 transition-colors cursor-pointer"
-            >
-              <UserPlus className="size-4" />
-              <span>Assigner à une campagne</span>
-            </button>
           </div>
 
-          {/* Liste groupée par mentor */}
-          {groups.length === 0 ? (
-            <div className="rounded-3xl border border-ink/10 bg-white p-12 text-center shadow-xl">
-              <Users className="size-12 text-ink/20 mx-auto mb-4" />
-              <p className="font-bold text-ink">
-                {debouncedSearch || campaignFilter ? "Aucun résultat" : "Aucun mentor assigné"}
-              </p>
+          {fetching ? (
+            <div className="flex justify-center py-16">
+              <Loader2 className="size-8 animate-spin text-brand" />
+            </div>
+          ) : forbidden ? (
+            <div className="rounded-3xl border border-ink/10 bg-white p-10 text-center shadow-xl">
+              <div className="mx-auto mb-3 flex size-12 items-center justify-center rounded-full border-2 border-ink bg-red-50 text-red-500">
+                <ShieldAlert className="size-6" />
+              </div>
+              <p className="font-bold text-ink">Accès réservé à l'administrateur.</p>
               <p className="mt-1 text-sm text-ink/60">
-                {debouncedSearch || campaignFilter
-                  ? "Aucun mentor ne correspond à ces critères."
-                  : "Assignez des enfants ou une cohorte de campagne pour créer des mentors."}
+                Ce compte ({session.user.email}) n'est pas autorisé à gérer les mentors.
               </p>
             </div>
           ) : (
-            <div className="space-y-4">
-              {groups.map((g) => (
-                <div
-                  key={g.mentor_user_id}
-                  className="rounded-3xl border border-ink/10 bg-white p-5 sm:p-6 shadow-sm"
+            <div className="space-y-6">
+              {/* Barre d'actions : recherche + filtre campagne + assignation */}
+              <div className="flex flex-col lg:flex-row lg:items-center gap-3">
+                <div className="relative flex-1 min-w-[14rem]">
+                  <Search className="size-4 text-ink/40 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+                  <input
+                    type="search"
+                    value={search}
+                    onChange={(e) => setSearch(e.target.value)}
+                    placeholder="Rechercher un mentor par email…"
+                    aria-label="Rechercher un mentor"
+                    className="w-full rounded-2xl border border-ink/10 bg-surface pl-9 pr-4 py-2.5 text-sm font-medium text-ink outline-none focus:ring-2 focus:ring-brand/30"
+                  />
+                </div>
+                <select
+                  value={campaignFilter}
+                  onChange={(e) => setCampaignFilter(e.target.value)}
+                  aria-label="Filtrer par campagne"
+                  className="rounded-2xl border border-ink/10 bg-white px-3 py-2.5 text-xs font-bold text-ink outline-none focus:ring-2 focus:ring-brand/30 cursor-pointer"
                 >
-                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
-                    <div className="flex items-center gap-3 min-w-0">
-                      <div className="grid size-10 place-items-center rounded-full bg-gradient-to-br from-brand to-indigo-600 text-white font-black text-sm shrink-0">
-                        {(g.email.charAt(0) || "?").toUpperCase()}
-                      </div>
-                      <div className="min-w-0">
-                        <p className="text-sm font-bold text-ink truncate">{g.email}</p>
-                        <p className="text-xs text-ink/60">
-                          {g.totalChildren} enfant{g.totalChildren > 1 ? "s" : ""} suivi
-                          {g.totalChildren > 1 ? "s" : ""}
-                        </p>
-                      </div>
-                    </div>
-                    <div className="shrink-0">
-                      <div className="flex items-center gap-2">
-                        <div className="w-28 h-2 rounded-full bg-surface overflow-hidden border border-ink/5">
-                          <div
-                            className="h-full bg-gradient-to-r from-brand to-indigo-500 rounded-full transition-all duration-500"
-                            style={{
-                              width: `${Math.min(100, (g.totalChildren / Math.max(1, g.quota)) * 100)}%`,
-                            }}
-                          />
+                  <option value="">Toutes les campagnes</option>
+                  {campaigns.map((c) => (
+                    <option key={c.id} value={c.id}>
+                      {c.name}
+                    </option>
+                  ))}
+                </select>
+                <button
+                  onClick={() => setIsAssignModalOpen(true)}
+                  className="inline-flex items-center justify-center gap-2 rounded-2xl bg-brand px-5 py-2.5 text-sm font-bold text-white hover:bg-brand/90 transition-colors cursor-pointer"
+                >
+                  <UserPlus className="size-4" />
+                  <span>Assigner à une campagne</span>
+                </button>
+              </div>
+
+              {/* Liste groupée par mentor */}
+              {groups.length === 0 ? (
+                <div className="rounded-3xl border border-ink/10 bg-white p-12 text-center shadow-xl">
+                  <Users className="size-12 text-ink/20 mx-auto mb-4" />
+                  <p className="font-bold text-ink">
+                    {debouncedSearch || campaignFilter ? "Aucun résultat" : "Aucun mentor assigné"}
+                  </p>
+                  <p className="mt-1 text-sm text-ink/60">
+                    {debouncedSearch || campaignFilter
+                      ? "Aucun mentor ne correspond à ces critères."
+                      : "Assignez des enfants ou une cohorte de campagne pour créer des mentors."}
+                  </p>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {groups.map((g) => (
+                    <div
+                      key={g.mentor_user_id}
+                      className="rounded-3xl border border-ink/10 bg-white p-5 sm:p-6 shadow-sm"
+                    >
+                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
+                        <div className="flex items-center gap-3 min-w-0">
+                          <div className="grid size-10 place-items-center rounded-full bg-gradient-to-br from-brand to-indigo-600 text-white font-black text-sm shrink-0">
+                            {(g.email.charAt(0) || "?").toUpperCase()}
+                          </div>
+                          <div className="min-w-0">
+                            <p className="text-sm font-bold text-ink truncate">{g.email}</p>
+                            <p className="text-xs text-ink/60">
+                              {g.totalChildren} enfant{g.totalChildren > 1 ? "s" : ""} suivi
+                              {g.totalChildren > 1 ? "s" : ""}
+                            </p>
+                          </div>
                         </div>
-                        <span
-                          className={`rounded-full px-2.5 py-0.5 text-[10px] font-black uppercase tracking-wider ${
-                            g.totalChildren >= g.quota
-                              ? "bg-amber-100 text-amber-800"
-                              : "bg-emerald-50 text-emerald-700"
-                          }`}
-                        >
-                          {g.totalChildren} / {g.quota}
-                        </span>
-                        {/* Score de fiabilité (V1) + statut : le quota ne dit plus rien de la
+                        <div className="shrink-0">
+                          <div className="flex items-center gap-2">
+                            <div className="w-28 h-2 rounded-full bg-surface overflow-hidden border border-ink/5">
+                              <div
+                                className="h-full bg-gradient-to-r from-brand to-indigo-500 rounded-full transition-all duration-500"
+                                style={{
+                                  width: `${Math.min(100, (g.totalChildren / Math.max(1, g.quota)) * 100)}%`,
+                                }}
+                              />
+                            </div>
+                            <span
+                              className={`rounded-full px-2.5 py-0.5 text-[10px] font-black uppercase tracking-wider ${
+                                g.totalChildren >= g.quota
+                                  ? "bg-amber-100 text-amber-800"
+                                  : "bg-emerald-50 text-emerald-700"
+                              }`}
+                            >
+                              {g.totalChildren} / {g.quota}
+                            </span>
+                            {/* Score de fiabilité (V1) + statut : le quota ne dit plus rien de la
                             qualité — le score (séances déclarées + progression) et le statut
                             (ban/suspension) sont les vrais signaux. */}
-                        <span
-                          title="Score de fiabilité (séances tenues + progression des enfants)"
-                          className={`rounded-full px-2.5 py-0.5 text-[10px] font-black uppercase tracking-wider ${
-                            g.score >= 75
-                              ? "bg-emerald-100 text-emerald-700"
-                              : g.score >= 50
-                                ? "bg-amber-100 text-amber-700"
-                                : "bg-rose-100 text-rose-700"
-                          }`}
-                        >
-                          {g.score}/100
-                        </span>
-                        {/* Confiance Mentor (V3) : palier de confiance (75% payout) + solde
+                            <span
+                              title="Score de fiabilité (séances tenues + progression des enfants)"
+                              className={`rounded-full px-2.5 py-0.5 text-[10px] font-black uppercase tracking-wider ${
+                                g.score >= 75
+                                  ? "bg-emerald-100 text-emerald-700"
+                                  : g.score >= 50
+                                    ? "bg-amber-100 text-amber-700"
+                                    : "bg-rose-100 text-rose-700"
+                              }`}
+                            >
+                              {g.score}/100
+                            </span>
+                            {/* Confiance Mentor (V3) : palier de confiance (75% payout) + solde
                             de points — les vrais signaux de récompense. */}
-                        {g.tier === "trusted" && (
-                          <span
-                            title="Palier confiance : 75% de la séance (3 750 F) au lieu de 70%"
-                            className="rounded-full bg-indigo-100 px-2.5 py-0.5 text-[10px] font-black uppercase tracking-wider text-indigo-700"
-                          >
-                            ⭐ Confiance
-                          </span>
-                        )}
-                        {g.points > 0 && (
-                          <span
-                            title={`Solde de points — bonus payout +${g.pointsBonusPct}%`}
-                            className={`rounded-full px-2.5 py-0.5 text-[10px] font-black uppercase tracking-wider ${
-                              g.badge === "gold"
-                                ? "bg-amber-200 text-amber-800"
-                                : g.badge === "bronze"
-                                  ? "bg-orange-100 text-orange-700"
-                                  : "bg-surface text-ink/60"
-                            }`}
-                          >
-                            🏅 {g.points} pts{g.pointsBonusPct > 0 ? ` +${g.pointsBonusPct}%` : ""}
-                          </span>
-                        )}
-                        {g.status !== "active" && (
-                          <span
-                            className={`rounded-full px-2.5 py-0.5 text-[10px] font-black uppercase tracking-wider ${
-                              g.status === "banned"
-                                ? "bg-rose-600 text-white"
-                                : g.status === "suspended"
-                                  ? "bg-rose-100 text-rose-700"
-                                  : "bg-amber-100 text-amber-700"
-                            }`}
-                          >
-                            {g.status === "banned"
-                              ? "Banni"
-                              : g.status === "suspended"
-                                ? "Suspendu"
-                                : "Averti"}
-                          </span>
-                        )}
+                            {g.tier === "trusted" && (
+                              <span
+                                title="Palier confiance : 75% de la séance (3 750 F) au lieu de 70%"
+                                className="rounded-full bg-indigo-100 px-2.5 py-0.5 text-[10px] font-black uppercase tracking-wider text-indigo-700"
+                              >
+                                ⭐ Confiance
+                              </span>
+                            )}
+                            {g.points > 0 && (
+                              <span
+                                title={`Solde de points — bonus payout +${g.pointsBonusPct}%`}
+                                className={`rounded-full px-2.5 py-0.5 text-[10px] font-black uppercase tracking-wider ${
+                                  g.badge === "gold"
+                                    ? "bg-amber-200 text-amber-800"
+                                    : g.badge === "bronze"
+                                      ? "bg-orange-100 text-orange-700"
+                                      : "bg-surface text-ink/60"
+                                }`}
+                              >
+                                🏅 {g.points} pts
+                                {g.pointsBonusPct > 0 ? ` +${g.pointsBonusPct}%` : ""}
+                              </span>
+                            )}
+                            {g.status !== "active" && (
+                              <span
+                                className={`rounded-full px-2.5 py-0.5 text-[10px] font-black uppercase tracking-wider ${
+                                  g.status === "banned"
+                                    ? "bg-rose-600 text-white"
+                                    : g.status === "suspended"
+                                      ? "bg-rose-100 text-rose-700"
+                                      : "bg-amber-100 text-amber-700"
+                                }`}
+                              >
+                                {g.status === "banned"
+                                  ? "Banni"
+                                  : g.status === "suspended"
+                                    ? "Suspendu"
+                                    : "Averti"}
+                              </span>
+                            )}
+                          </div>
+                        </div>
                       </div>
-                    </div>
-                  </div>
 
-                  {/* Actions de statut (V1) : suspendre/bannir/restaurer le compte mentor.
+                      {/* Actions de statut (V1) : suspendre/bannir/restaurer le compte mentor.
                       Restaurer (→ active) est disponible pour les comptes bannis ET suspendus
                       (2026-08-16) : une suspension automatique antérieure à la garde
                       anti-suspension (données de séance insuffisantes) pouvait être injuste —
                       l'admin doit pouvoir la lever. NB : pour une sanction qui doit tenir
                       malgré la garde, utiliser « Bannir » (jamais touché par l'automatique). */}
-                  <div className="flex flex-wrap items-center gap-2 mb-4">
-                    {g.status === "banned" || g.status === "suspended" ? (
-                      <button
-                        onClick={() => void handleUpdateStatus(g.mentor_user_id, "active")}
-                        disabled={updatingStatusId === g.mentor_user_id}
-                        className="inline-flex items-center gap-1.5 rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-1.5 text-xs font-bold text-emerald-700 hover:bg-emerald-100 transition-all cursor-pointer disabled:opacity-50"
-                      >
-                        {updatingStatusId === g.mentor_user_id ? (
-                          <Loader2 className="size-3.5 animate-spin" />
+                      <div className="flex flex-wrap items-center gap-2 mb-4">
+                        {g.status === "banned" || g.status === "suspended" ? (
+                          <button
+                            onClick={() => void handleUpdateStatus(g.mentor_user_id, "active")}
+                            disabled={updatingStatusId === g.mentor_user_id}
+                            className="inline-flex items-center gap-1.5 rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-1.5 text-xs font-bold text-emerald-700 hover:bg-emerald-100 transition-all cursor-pointer disabled:opacity-50"
+                          >
+                            {updatingStatusId === g.mentor_user_id ? (
+                              <Loader2 className="size-3.5 animate-spin" />
+                            ) : (
+                              <RotateCcw className="size-3.5" />
+                            )}
+                            Restaurer
+                          </button>
                         ) : (
-                          <RotateCcw className="size-3.5" />
+                          <button
+                            onClick={() => void handleUpdateStatus(g.mentor_user_id, "suspended")}
+                            disabled={updatingStatusId === g.mentor_user_id}
+                            className="inline-flex items-center gap-1.5 rounded-xl border border-amber-200 bg-amber-50 px-3 py-1.5 text-xs font-bold text-amber-700 hover:bg-amber-100 transition-all cursor-pointer disabled:opacity-50"
+                          >
+                            Suspendre
+                          </button>
                         )}
-                        Restaurer
-                      </button>
-                    ) : (
-                      <button
-                        onClick={() => void handleUpdateStatus(g.mentor_user_id, "suspended")}
-                        disabled={updatingStatusId === g.mentor_user_id}
-                        className="inline-flex items-center gap-1.5 rounded-xl border border-amber-200 bg-amber-50 px-3 py-1.5 text-xs font-bold text-amber-700 hover:bg-amber-100 transition-all cursor-pointer disabled:opacity-50"
-                      >
-                        Suspendre
-                      </button>
-                    )}
-                    {g.status !== "banned" && (
-                      <button
-                        onClick={() => void handleUpdateStatus(g.mentor_user_id, "banned")}
-                        disabled={updatingStatusId === g.mentor_user_id}
-                        className="inline-flex items-center gap-1.5 rounded-xl border border-rose-200 bg-rose-50 px-3 py-1.5 text-xs font-bold text-rose-600 hover:bg-rose-100 transition-all cursor-pointer disabled:opacity-50"
-                      >
-                        <Ban className="size-3.5" />
-                        Bannir
-                      </button>
-                    )}
-                  </div>
-
-                  {/* Ledger payout (Vague C) : dû des séances approuvées + gestion. */}
-                  <div className="mb-4 flex flex-wrap items-center gap-2 rounded-2xl border border-emerald-200/60 bg-emerald-50/60 px-3 py-2.5">
-                    <div className="min-w-0 flex-1">
-                      <p className="text-[10px] font-black uppercase tracking-widest text-emerald-800">
-                        Payout dû
-                      </p>
-                      <p className="text-sm font-black text-emerald-900">
-                        {formatXof(g.duePayoutXof)}
-                        <span className="ml-1.5 text-[11px] font-bold text-emerald-700/70">
-                          ({g.approvedSessions} séance{g.approvedSessions > 1 ? "s" : ""} approuvée
-                          {g.approvedSessions > 1 ? "s" : ""})
-                        </span>
-                      </p>
-                    </div>
-                    <button
-                      onClick={() => void openPayoutModal(g.mentor_user_id)}
-                      className="inline-flex items-center gap-1.5 rounded-xl border border-emerald-300 bg-white px-3 py-1.5 text-xs font-bold text-emerald-800 hover:bg-emerald-100 transition-all cursor-pointer"
-                    >
-                      <ListChecks className="size-3.5" />
-                      Séances
-                    </button>
-                    {g.approvedSessions > 0 && (
-                      <button
-                        onClick={() => void handleMarkPaid(g.mentor_user_id)}
-                        disabled={markingPaidFor === g.mentor_user_id}
-                        className="inline-flex items-center gap-1.5 rounded-xl bg-emerald-600 px-3 py-1.5 text-xs font-bold text-white hover:bg-emerald-700 transition-all cursor-pointer disabled:opacity-50"
-                      >
-                        {markingPaidFor === g.mentor_user_id ? (
-                          <Loader2 className="size-3.5 animate-spin" />
-                        ) : (
-                          <Banknote className="size-3.5" />
+                        {g.status !== "banned" && (
+                          <button
+                            onClick={() => void handleUpdateStatus(g.mentor_user_id, "banned")}
+                            disabled={updatingStatusId === g.mentor_user_id}
+                            className="inline-flex items-center gap-1.5 rounded-xl border border-rose-200 bg-rose-50 px-3 py-1.5 text-xs font-bold text-rose-600 hover:bg-rose-100 transition-all cursor-pointer disabled:opacity-50"
+                          >
+                            <Ban className="size-3.5" />
+                            Bannir
+                          </button>
                         )}
-                        Marquer payé
-                      </button>
-                    )}
-                  </div>
+                      </div>
 
-                  <ul className="space-y-2">
-                    {g.children.map((child) => (
-                      <li
-                        key={child.id}
-                        className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 rounded-2xl border border-ink/10 bg-surface px-4 py-3"
-                      >
-                        <div className="flex items-center gap-2 min-w-0">
-                          <span className="text-sm font-bold text-ink truncate">
-                            {child.child_name}
-                            {child.child_age != null ? (
-                              <span className="text-ink/40 font-medium">
-                                {" "}
-                                ({child.child_age} ans)
-                              </span>
-                            ) : null}
-                          </span>
-                          {child.campaign_name && (
-                            <span className="inline-flex items-center gap-1 rounded-full border border-ink/10 bg-white px-2.5 py-0.5 text-[10px] font-black uppercase tracking-wider text-brand shrink-0">
-                              <Building2 className="size-3" />
-                              {child.campaign_name}
+                      {/* Ledger payout (Vague C) : dû des séances approuvées + gestion. */}
+                      <div className="mb-4 flex flex-wrap items-center gap-2 rounded-2xl border border-emerald-200/60 bg-emerald-50/60 px-3 py-2.5">
+                        <div className="min-w-0 flex-1">
+                          <p className="text-[10px] font-black uppercase tracking-widest text-emerald-800">
+                            Payout dû
+                          </p>
+                          <p className="text-sm font-black text-emerald-900">
+                            {formatXof(g.duePayoutXof)}
+                            <span className="ml-1.5 text-[11px] font-bold text-emerald-700/70">
+                              ({g.approvedSessions} séance{g.approvedSessions > 1 ? "s" : ""}{" "}
+                              approuvée
+                              {g.approvedSessions > 1 ? "s" : ""})
                             </span>
-                          )}
-                          {!child.campaign_name && (
-                            <span className="rounded-full border border-ink/10 bg-white px-2.5 py-0.5 text-[10px] font-black uppercase tracking-wider text-ink/50 shrink-0">
-                              Hors campagne
-                            </span>
-                          )}
+                          </p>
                         </div>
                         <button
-                          onClick={() => void handleRemove(child.id, child.child_name)}
-                          className="flex items-center gap-1.5 rounded-xl border border-ink/20 bg-white px-3 py-1.5 text-xs font-bold text-red-600 hover:bg-red-50 transition-all cursor-pointer shrink-0"
+                          onClick={() => void openPayoutModal(g.mentor_user_id)}
+                          className="inline-flex items-center gap-1.5 rounded-xl border border-emerald-300 bg-white px-3 py-1.5 text-xs font-bold text-emerald-800 hover:bg-emerald-100 transition-all cursor-pointer"
                         >
-                          <Trash2 className="size-3.5" />
-                          Retirer
+                          <ListChecks className="size-3.5" />
+                          Séances
                         </button>
-                      </li>
-                    ))}
-                  </ul>
+                        {g.approvedSessions > 0 && (
+                          <button
+                            onClick={() => void handleMarkPaid(g.mentor_user_id)}
+                            disabled={markingPaidFor === g.mentor_user_id}
+                            className="inline-flex items-center gap-1.5 rounded-xl bg-emerald-600 px-3 py-1.5 text-xs font-bold text-white hover:bg-emerald-700 transition-all cursor-pointer disabled:opacity-50"
+                          >
+                            {markingPaidFor === g.mentor_user_id ? (
+                              <Loader2 className="size-3.5 animate-spin" />
+                            ) : (
+                              <Banknote className="size-3.5" />
+                            )}
+                            Marquer payé
+                          </button>
+                        )}
+                      </div>
+
+                      <ul className="space-y-2">
+                        {g.children.map((child) => (
+                          <li
+                            key={child.id}
+                            className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 rounded-2xl border border-ink/10 bg-surface px-4 py-3"
+                          >
+                            <div className="flex items-center gap-2 min-w-0">
+                              <span className="text-sm font-bold text-ink truncate">
+                                {child.child_name}
+                                {child.child_age != null ? (
+                                  <span className="text-ink/40 font-medium">
+                                    {" "}
+                                    ({child.child_age} ans)
+                                  </span>
+                                ) : null}
+                              </span>
+                              {child.campaign_name && (
+                                <span className="inline-flex items-center gap-1 rounded-full border border-ink/10 bg-white px-2.5 py-0.5 text-[10px] font-black uppercase tracking-wider text-brand shrink-0">
+                                  <Building2 className="size-3" />
+                                  {child.campaign_name}
+                                </span>
+                              )}
+                              {!child.campaign_name && (
+                                <span className="rounded-full border border-ink/10 bg-white px-2.5 py-0.5 text-[10px] font-black uppercase tracking-wider text-ink/50 shrink-0">
+                                  Hors campagne
+                                </span>
+                              )}
+                            </div>
+                            <button
+                              onClick={() => void handleRemove(child.id, child.child_name)}
+                              className="flex items-center gap-1.5 rounded-xl border border-ink/20 bg-white px-3 py-1.5 text-xs font-bold text-red-600 hover:bg-red-50 transition-all cursor-pointer shrink-0"
+                            >
+                              <Trash2 className="size-3.5" />
+                              Retirer
+                            </button>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  ))}
                 </div>
-              ))}
+              )}
+
+              <AdminPagination
+                page={page}
+                totalPages={totalPages}
+                total={total}
+                pageSize={20}
+                onPageChange={setPage}
+                label="mentor"
+              />
             </div>
           )}
 
-          <AdminPagination
-            page={page}
-            totalPages={totalPages}
-            total={total}
-            pageSize={20}
-            onPageChange={setPage}
-            label="mentor"
-          />
-        </div>
-      )}
-
-      {/* Codes d'activation Mentor (Vague 5, spec §7) : l'utilisateur active lui-même
+          {/* Codes d'activation Mentor (Vague 5, spec §7) : l'utilisateur active lui-même
           le mode Mentor avec un code généré ici (Paramètres → Mentor). */}
-      <div className="rounded-3xl border border-ink/10 bg-white p-6 shadow-xl">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-4">
-          <div>
-            <h3 className="font-display text-base font-black text-ink flex items-center gap-2">
-              <KeyRound className="size-5 text-brand" /> Codes d'activation Mentor
-            </h3>
-            <p className="text-xs text-ink/60 mt-0.5 leading-relaxed">
-              Codes à usage unique : un parent/mentor les saisit dans Paramètres → Mentor pour
-              activer le mode Mentor lui-même (spec §7). Sans code, un mentor n'existe que par
-              assignation admin.
-            </p>
-          </div>
-          <button
-            onClick={() => void handleGenerateCodes(5)}
-            disabled={generatingCodes}
-            className="shrink-0 inline-flex items-center gap-1.5 rounded-xl bg-brand hover:bg-brand/90 text-white px-4 py-2 text-xs font-bold transition-all cursor-pointer disabled:opacity-50"
-          >
-            {generatingCodes ? (
-              <Loader2 className="size-3.5 animate-spin" />
-            ) : (
-              <KeyRound className="size-3.5" />
-            )}
-            Générer 5 codes
-          </button>
-        </div>
-
-        {codes.length === 0 ? (
-          <p className="text-xs font-semibold text-ink/50 py-3">
-            Aucun code généré pour l'instant.
-          </p>
-        ) : (
-          <>
-            <div className="overflow-x-auto rounded-2xl border border-ink/10">
-              <table className="w-full min-w-[480px] text-left text-sm">
-                <thead className="border-b border-ink/10 bg-surface/60 text-[11px] font-black uppercase tracking-wider text-ink/60">
-                  <tr>
-                    <th className="px-4 py-2.5">Code</th>
-                    <th className="px-4 py-2.5">Créé le</th>
-                    <th className="px-4 py-2.5">Valable jusqu'au</th>
-                    <th className="px-4 py-2.5">Statut</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-ink/5">
-                  {codes.map((c) => {
-                    const expired = c.valid_until && new Date(c.valid_until).getTime() < Date.now();
-                    return (
-                      <tr key={c.id}>
-                        <td className="px-4 py-2.5 font-mono text-xs font-bold text-ink">
-                          {c.code}
-                        </td>
-                        <td className="px-4 py-2.5 text-xs text-ink/60">
-                          {new Date(c.created_at).toLocaleDateString("fr-FR")}
-                        </td>
-                        <td className="px-4 py-2.5 text-xs text-ink/60">
-                          {c.valid_until
-                            ? new Date(c.valid_until).toLocaleDateString("fr-FR")
-                            : "Jamais"}
-                        </td>
-                        <td className="px-4 py-2.5">
-                          {c.used_by_email ? (
-                            <span className="rounded-full bg-emerald-100 text-emerald-800 px-2.5 py-0.5 text-[10px] font-extrabold uppercase tracking-wider">
-                              Utilisé par {c.used_by_email}
-                            </span>
-                          ) : expired ? (
-                            <span className="rounded-full bg-amber-100 text-amber-800 px-2.5 py-0.5 text-[10px] font-extrabold uppercase tracking-wider">
-                              Expiré
-                            </span>
-                          ) : (
-                            <span className="rounded-full bg-ink/5 text-ink/70 px-2.5 py-0.5 text-[10px] font-extrabold uppercase tracking-wider">
-                              Disponible
-                            </span>
-                          )}
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
+          <div className="rounded-3xl border border-ink/10 bg-white p-6 shadow-xl">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-4">
+              <div>
+                <h3 className="font-display text-base font-black text-ink flex items-center gap-2">
+                  <KeyRound className="size-5 text-brand" /> Codes d'activation Mentor
+                </h3>
+                <p className="text-xs text-ink/60 mt-0.5 leading-relaxed">
+                  Codes à usage unique : un parent/mentor les saisit dans Paramètres → Mentor pour
+                  activer le mode Mentor lui-même (spec §7). Sans code, un mentor n'existe que par
+                  assignation admin.
+                </p>
+              </div>
+              <button
+                onClick={() => void handleGenerateCodes(5)}
+                disabled={generatingCodes}
+                className="shrink-0 inline-flex items-center gap-1.5 rounded-xl bg-brand hover:bg-brand/90 text-white px-4 py-2 text-xs font-bold transition-all cursor-pointer disabled:opacity-50"
+              >
+                {generatingCodes ? (
+                  <Loader2 className="size-3.5 animate-spin" />
+                ) : (
+                  <KeyRound className="size-3.5" />
+                )}
+                Générer 5 codes
+              </button>
             </div>
-            {codesTotal > 50 && (
-              <p className="mt-2 text-[11px] font-semibold text-ink/50">
-                Affichage des 50 codes les plus récents ({codesTotal} au total).
+
+            {codes.length === 0 ? (
+              <p className="text-xs font-semibold text-ink/50 py-3">
+                Aucun code généré pour l'instant.
               </p>
+            ) : (
+              <>
+                <div className="overflow-x-auto rounded-2xl border border-ink/10">
+                  <table className="w-full min-w-[480px] text-left text-sm">
+                    <thead className="border-b border-ink/10 bg-surface/60 text-[11px] font-black uppercase tracking-wider text-ink/60">
+                      <tr>
+                        <th className="px-4 py-2.5">Code</th>
+                        <th className="px-4 py-2.5">Créé le</th>
+                        <th className="px-4 py-2.5">Valable jusqu'au</th>
+                        <th className="px-4 py-2.5">Statut</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-ink/5">
+                      {codes.map((c) => {
+                        const expired =
+                          c.valid_until && new Date(c.valid_until).getTime() < Date.now();
+                        return (
+                          <tr key={c.id}>
+                            <td className="px-4 py-2.5 font-mono text-xs font-bold text-ink">
+                              {c.code}
+                            </td>
+                            <td className="px-4 py-2.5 text-xs text-ink/60">
+                              {new Date(c.created_at).toLocaleDateString("fr-FR")}
+                            </td>
+                            <td className="px-4 py-2.5 text-xs text-ink/60">
+                              {c.valid_until
+                                ? new Date(c.valid_until).toLocaleDateString("fr-FR")
+                                : "Jamais"}
+                            </td>
+                            <td className="px-4 py-2.5">
+                              {c.used_by_email ? (
+                                <span className="rounded-full bg-emerald-100 text-emerald-800 px-2.5 py-0.5 text-[10px] font-extrabold uppercase tracking-wider">
+                                  Utilisé par {c.used_by_email}
+                                </span>
+                              ) : expired ? (
+                                <span className="rounded-full bg-amber-100 text-amber-800 px-2.5 py-0.5 text-[10px] font-extrabold uppercase tracking-wider">
+                                  Expiré
+                                </span>
+                              ) : (
+                                <span className="rounded-full bg-ink/5 text-ink/70 px-2.5 py-0.5 text-[10px] font-extrabold uppercase tracking-wider">
+                                  Disponible
+                                </span>
+                              )}
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+                {codesTotal > 50 && (
+                  <p className="mt-2 text-[11px] font-semibold text-ink/50">
+                    Affichage des 50 codes les plus récents ({codesTotal} au total).
+                  </p>
+                )}
+              </>
             )}
-          </>
-        )}
-      </div>
-    </>
-  )}
+          </div>
+        </>
+      )}
 
       {/* Modal ledger payout (Vague C) : les séances du mentor + approbation. */}
       {payoutModalFor && (

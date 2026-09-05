@@ -32,7 +32,11 @@ export function formatEstablishmentOverview(
       id: r.id,
       fullName: r.full_name,
       handle: r.handle ? (r.handle.startsWith("@") ? r.handle : `@${r.handle}`) : null,
-      classCode: r.class_code ? (r.class_code.startsWith("#") ? r.class_code : `#${r.class_code}`) : null,
+      classCode: r.class_code
+        ? r.class_code.startsWith("#")
+          ? r.class_code
+          : `#${r.class_code}`
+        : null,
       professionalRole: r.professional_role,
       isVerified: Boolean(r.is_verified),
       whatsappPhone: r.whatsapp_phone || null,

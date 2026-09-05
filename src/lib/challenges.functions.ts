@@ -934,15 +934,15 @@ export function resolveAcademicGradeLevel(
     tle: "Terminale",
     superieur: "Superieur",
     "bac+1": "Bac+1",
-    "bac1": "Bac+1",
+    bac1: "Bac+1",
     "bac+2": "Bac+2",
-    "bac2": "Bac+2",
+    bac2: "Bac+2",
     "bac+3": "Bac+3",
-    "bac3": "Bac+3",
+    bac3: "Bac+3",
     "bac+4": "Bac+4",
-    "bac4": "Bac+4",
+    bac4: "Bac+4",
     "bac+5": "Bac+5",
-    "bac5": "Bac+5",
+    bac5: "Bac+5",
     cegep: "Cegep",
     universite: "Universite",
   };
@@ -950,12 +950,27 @@ export function resolveAcademicGradeLevel(
   if (directMap[clean]) return directMap[clean];
 
   if (clean.includes("bac+1") || clean.includes("licence1") || clean.includes("l1")) return "Bac+1";
-  if (clean.includes("bac+2") || clean.includes("licence2") || clean.includes("l2") || clean.includes("deug"))
+  if (
+    clean.includes("bac+2") ||
+    clean.includes("licence2") ||
+    clean.includes("l2") ||
+    clean.includes("deug")
+  )
     return "Bac+2";
-  if (clean.includes("bac+3") || clean.includes("licence3") || clean.includes("l3") || clean.includes("licence"))
+  if (
+    clean.includes("bac+3") ||
+    clean.includes("licence3") ||
+    clean.includes("l3") ||
+    clean.includes("licence")
+  )
     return "Bac+3";
   if (clean.includes("bac+4") || clean.includes("master1") || clean.includes("m1")) return "Bac+4";
-  if (clean.includes("bac+5") || clean.includes("master2") || clean.includes("m2") || clean.includes("master"))
+  if (
+    clean.includes("bac+5") ||
+    clean.includes("master2") ||
+    clean.includes("m2") ||
+    clean.includes("master")
+  )
     return "Bac+5";
   if (clean.includes("terminale") || clean.includes("tle")) return "Terminale";
   if (clean.includes("1ere") || clean.includes("premiere")) return "1ere";
@@ -1181,7 +1196,12 @@ export type ProgressionTarget = {
   hasUnconsolidatedCollectivePeak?: boolean;
 };
 
-import { calibrateDomainCapability, formatDynamicCapabilityInstruction, mapDiscoveryDifficultyToLevelAge, type ObservationEvidence } from "./dynamic-capability";
+import {
+  calibrateDomainCapability,
+  formatDynamicCapabilityInstruction,
+  mapDiscoveryDifficultyToLevelAge,
+  type ObservationEvidence,
+} from "./dynamic-capability";
 import { mapDiscoveryToAcademicDomain } from "./dynamic-capability";
 
 export async function computeProgressionTargets(
@@ -1206,49 +1226,53 @@ export async function computeProgressionTargets(
     }
   }
 
-  const [{ data: pastChallenges }, { data: discoveryTraces }, { data: openCycle }] = await Promise.all([
-    supabase
-      .from("challenges")
-      .select("academic_domain, academic_level_age, status, completed_at, presentation_mode")
-      .eq("child_id", childId)
-      .not("academic_domain", "is", null)
-      .not("academic_level_age", "is", null)
-      .order("completed_at", { ascending: true }) // Tri croissant pour rejouer l'historique
-      .limit(200),
-    supabase
-      .from("discovery_traces")
-      .select("domain, perceived_difficulty, autonomy_level, attempts_count, outcome_status, proof_image_url, naya_dialogue, created_at, source_type, ai_behavioral_analysis")
-      .eq("child_id", childId)
-      .order("created_at", { ascending: true })
-      .limit(100),
-    supabase
-      .from("hypothesis_cycles")
-      .select("hypotheses, trigger_domain")
-      .eq("child_id", childId)
-      .eq("status", "open")
-      .order("created_at", { ascending: false })
-      .limit(1)
-      .maybeSingle(),
-  ]);
+  const [{ data: pastChallenges }, { data: discoveryTraces }, { data: openCycle }] =
+    await Promise.all([
+      supabase
+        .from("challenges")
+        .select("academic_domain, academic_level_age, status, completed_at, presentation_mode")
+        .eq("child_id", childId)
+        .not("academic_domain", "is", null)
+        .not("academic_level_age", "is", null)
+        .order("completed_at", { ascending: true }) // Tri croissant pour rejouer l'historique
+        .limit(200),
+      supabase
+        .from("discovery_traces")
+        .select(
+          "domain, perceived_difficulty, autonomy_level, attempts_count, outcome_status, proof_image_url, naya_dialogue, created_at, source_type, ai_behavioral_analysis",
+        )
+        .eq("child_id", childId)
+        .order("created_at", { ascending: true })
+        .limit(100),
+      supabase
+        .from("hypothesis_cycles")
+        .select("hypotheses, trigger_domain")
+        .eq("child_id", childId)
+        .eq("status", "open")
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .maybeSingle(),
+    ]);
 
   const evidencesByDomain = new Map<string, ObservationEvidence[]>();
 
   // Injection des défis dans le moteur de capacité
   for (const c of pastChallenges ?? []) {
     if (!c.academic_domain || typeof c.academic_level_age !== "number") continue;
-    
+
     // Convertir les statuts des défis en outcome_status pour le moteur ZPD
     let outcomeStatus: ObservationEvidence["outcomeStatus"] = "failed"; // default
     if (c.status === "completed") outcomeStatus = "completed";
-    else if (c.status === "abandoned" || c.status === "failed" || c.status === "not_completed") outcomeStatus = "failed";
+    else if (c.status === "abandoned" || c.status === "failed" || c.status === "not_completed")
+      outcomeStatus = "failed";
     else continue; // on ignore les todo/in_progress
-    
+
     // Le poids du défi est très élevé car il a été validé (par le parent ou vérifié)
     const ev: ObservationEvidence = {
       source: "challenge",
       domain: c.academic_domain,
       demonstratedLevelAge: c.academic_level_age,
-      autonomyWeight: 1.0,      // Conserver une pondération neutre haute
+      autonomyWeight: 1.0, // Conserver une pondération neutre haute
       perseveranceWeight: 1.0,
       metacognitiveWeight: 1.0,
       proofWeight: 1.0,
@@ -1264,14 +1288,14 @@ export async function computeProgressionTargets(
   for (const d of discoveryTraces ?? []) {
     const acaDomain = mapDiscoveryToAcademicDomain(d.domain);
     const levelAge = mapDiscoveryDifficultyToLevelAge(d.perceived_difficulty, childAge);
-    
+
     let autonomyW = 0.5;
     if (d.autonomy_level === "totalement_seul") autonomyW = 1.0;
     else if (d.autonomy_level === "aide_ponctuelle") autonomyW = 0.7;
     else if (d.autonomy_level === "guide_pas_a_pas") autonomyW = 0.4;
-    
+
     const persW = d.attempts_count >= 2 ? 1.0 : 0.7;
-    
+
     // Évaluation métacognitive heuristique : si naya_dialogue a > 2 clés remplies, on considère 1.0, sinon 0.6
     let metaW = 0.6;
     if (d.naya_dialogue && typeof d.naya_dialogue === "object") {
@@ -1279,7 +1303,7 @@ export async function computeProgressionTargets(
       if (keysCount >= 2) metaW = 1.0;
       else if (keysCount === 1) metaW = 0.8;
     }
-    
+
     const proofW = d.proof_image_url ? 1.0 : 0.7;
 
     let outcomeStatus: ObservationEvidence["outcomeStatus"] = "functional";
@@ -1290,7 +1314,7 @@ export async function computeProgressionTargets(
     let ev: ObservationEvidence;
     if (d.source_type === "fablab_marathon" || d.source_type === "projet_collectif") {
       const collectivePayload = d.ai_behavioral_analysis as any;
-      let alpha = 0.6; 
+      let alpha = 0.6;
       if (collectivePayload?.implication === "pilier") alpha = 0.85;
       else if (collectivePayload?.implication === "apprenti") alpha = 0.35;
       else if (collectivePayload?.implication === "observateur") alpha = 0.15;
@@ -1307,13 +1331,14 @@ export async function computeProgressionTargets(
       let persW2 = 0.5;
       let metaW2 = 0.5;
       if (collectivePayload?.supervisorTags) {
-         for (const t of collectivePayload.supervisorTags) {
-           const shift = t.impact === "positive" ? 0.2 : t.impact === "negative" ? -0.2 : 0;
-           if (t.dimension === "autonomie") autoW = Math.min(1.0, Math.max(0.0, autoW + shift));
-           if (t.dimension === "perseverance") persW2 = Math.min(1.0, Math.max(0.0, persW2 + shift));
-           if (t.dimension === "collaboration") metaW2 = Math.min(1.0, Math.max(0.0, metaW2 + shift));
-         }
-         if (collectivePayload.implication === "pilier" && autoW === 0.5) autoW = 0.8;
+        for (const t of collectivePayload.supervisorTags) {
+          const shift = t.impact === "positive" ? 0.2 : t.impact === "negative" ? -0.2 : 0;
+          if (t.dimension === "autonomie") autoW = Math.min(1.0, Math.max(0.0, autoW + shift));
+          if (t.dimension === "perseverance") persW2 = Math.min(1.0, Math.max(0.0, persW2 + shift));
+          if (t.dimension === "collaboration")
+            metaW2 = Math.min(1.0, Math.max(0.0, metaW2 + shift));
+        }
+        if (collectivePayload.implication === "pilier" && autoW === 0.5) autoW = 0.8;
       }
 
       ev = {
@@ -1345,7 +1370,8 @@ export async function computeProgressionTargets(
     evidencesByDomain.get(acaDomain)!.push(ev);
   }
 
-  const hypotheses = (openCycle?.hypotheses as { cause: string; current_probability: number }[] | null) || [];
+  const hypotheses =
+    (openCycle?.hypotheses as { cause: string; current_probability: number }[] | null) || [];
   const topCause = hypotheses[0]?.cause;
   const causeDomain = openCycle?.trigger_domain as string | undefined;
 
@@ -1354,9 +1380,9 @@ export async function computeProgressionTargets(
   for (const [domain, evidences] of evidencesByDomain.entries()) {
     const isTrigger = causeDomain === domain;
     const activeCause = isTrigger && topCause ? topCause : null;
-    
+
     const cap = calibrateDomainCapability(childAge, domain, evidences, activeCause);
-    
+
     // Remplissage rétrocompatible pour `ProgressionTarget`
     targets.push({
       domain,
@@ -1618,22 +1644,92 @@ function convertSingleQuotesToDouble(str: string): string {
 
 const LATEX_ESCAPABLE_WORDS = new Set([
   // b
-  "bar", "begin", "beta", "bf", "big", "bigg", "bigl", "bigr", "Bigl", "Bigr",
-  "biggl", "biggr", "Biggl", "Biggr", "binom", "bm", "bmod", "bold", "boldsymbol",
-  "bot", "box", "brace", "brack", "breve", "bullet",
+  "bar",
+  "begin",
+  "beta",
+  "bf",
+  "big",
+  "bigg",
+  "bigl",
+  "bigr",
+  "Bigl",
+  "Bigr",
+  "biggl",
+  "biggr",
+  "Biggl",
+  "Biggr",
+  "binom",
+  "bm",
+  "bmod",
+  "bold",
+  "boldsymbol",
+  "bot",
+  "box",
+  "brace",
+  "brack",
+  "breve",
+  "bullet",
   // f
-  "frac", "forall", "flat", "fbox", "footnotesize", "framebox",
+  "frac",
+  "forall",
+  "flat",
+  "fbox",
+  "footnotesize",
+  "framebox",
   // n
-  "nabla", "ne", "neq", "ni", "norm", "not", "notin", "nu", "null", "newline",
-  "noindent", "normalsize", "nexists",
+  "nabla",
+  "ne",
+  "neq",
+  "ni",
+  "norm",
+  "not",
+  "notin",
+  "nu",
+  "null",
+  "newline",
+  "noindent",
+  "normalsize",
+  "nexists",
   // r
-  "raggedright", "rangle", "rbrace", "rceil", "re", "restriction", "rfloor", "rho",
-  "right", "rightarrow", "rightarrowtail", "rightleftharpoons", "rightleftarrows",
-  "rm", "root", "rvert", "rVert",
+  "raggedright",
+  "rangle",
+  "rbrace",
+  "rceil",
+  "re",
+  "restriction",
+  "rfloor",
+  "rho",
+  "right",
+  "rightarrow",
+  "rightarrowtail",
+  "rightleftharpoons",
+  "rightleftarrows",
+  "rm",
+  "root",
+  "rvert",
+  "rVert",
   // t
-  "tag", "tan", "tanh", "tau", "text", "textbf", "textit", "texttt", "textsf",
-  "textsl", "textsc", "tfrac", "therefore", "theta", "tilde", "times", "tiny",
-  "to", "top", "triangle", "triangleq",
+  "tag",
+  "tan",
+  "tanh",
+  "tau",
+  "text",
+  "textbf",
+  "textit",
+  "texttt",
+  "textsf",
+  "textsl",
+  "textsc",
+  "tfrac",
+  "therefore",
+  "theta",
+  "tilde",
+  "times",
+  "tiny",
+  "to",
+  "top",
+  "triangle",
+  "triangleq",
 ]);
 
 /**
@@ -1661,7 +1757,10 @@ export function repairJsonStringTokens(raw: string): string {
         // Track whether this string is an object key or a value
         if (lastNonWsChar === ":") {
           isKey = false;
-        } else if (lastNonWsChar === "{" || (lastNonWsChar === "," && delimStack[delimStack.length - 1] === "{")) {
+        } else if (
+          lastNonWsChar === "{" ||
+          (lastNonWsChar === "," && delimStack[delimStack.length - 1] === "{")
+        ) {
           isKey = true;
         } else {
           isKey = false;
@@ -1725,7 +1824,8 @@ export function repairJsonStringTokens(raw: string): string {
         if (nextChar === "}" || nextChar === "]") {
           const afterClosing = trimmedAfter.slice(1).trimStart();
           const nextNextChar = afterClosing[0];
-          isLikelyClosing = !nextNextChar || nextNextChar === "," || nextNextChar === "}" || nextNextChar === "]";
+          isLikelyClosing =
+            !nextNextChar || nextNextChar === "," || nextNextChar === "}" || nextNextChar === "]";
         } else if (nextChar === ",") {
           const afterComma = trimmedAfter.slice(1).trimStart();
           const isNextTokenValidJson =
@@ -2423,7 +2523,9 @@ export async function generateChallengesCore(params: {
     list = z.array(ChallengeSchema).parse(rawChallenges);
   } catch (err: any) {
     console.error("Zod validation failed for generateChallenges:", err);
-    throw new Error(`Réponse IA invalide (structure incorrecte: ${err.message?.substring(0, 100)})`);
+    throw new Error(
+      `Réponse IA invalide (structure incorrecte: ${err.message?.substring(0, 100)})`,
+    );
   }
 
   const rows = list.map((c) => ({
@@ -2966,7 +3068,7 @@ Réponds STRICTEMENT en JSON valide avec ce format :
 
   const validTalentKeys = new Set(VALID_TALENT_KEYS);
   const deltas: Record<string, number> = {};
-  let intelligenceKeys: string[] = [];
+  const intelligenceKeys: string[] = [];
   for (const [key, points] of Object.entries(awarded)) {
     // Drop anything the AI returns outside the 9 known intelligences — a
     // hallucinated or misspelled key would otherwise pollute talents forever.
@@ -3920,7 +4022,8 @@ export const generateAcademicHomeworkChallenge = createServerFn({ method: "POST"
           item = parsed.challenges[0];
         else if (Array.isArray(parsed.data) && parsed.data.length > 0) item = parsed.data[0];
         else if (Array.isArray(parsed.items) && parsed.items.length > 0) item = parsed.items[0];
-        else if (Array.isArray(parsed.results) && parsed.results.length > 0) item = parsed.results[0];
+        else if (Array.isArray(parsed.results) && parsed.results.length > 0)
+          item = parsed.results[0];
         else if (Array.isArray(parsed.defis) && parsed.defis.length > 0) item = parsed.defis[0];
         else if (parsed.challenge && typeof parsed.challenge === "object") item = parsed.challenge;
         else if (parsed.defi && typeof parsed.defi === "object") item = parsed.defi;
@@ -3928,7 +4031,9 @@ export const generateAcademicHomeworkChallenge = createServerFn({ method: "POST"
       c = ChallengeSchema.parse(item);
     } catch (err: any) {
       console.error("Schema validation failed for academic challenge:", err);
-      throw new Error(`Réponse IA invalide — structure non conforme: ${err?.message?.substring(0, 100) ?? ""}`);
+      throw new Error(
+        `Réponse IA invalide — structure non conforme: ${err?.message?.substring(0, 100) ?? ""}`,
+      );
     }
 
     const finalized = finalizeChallenge(c, child.age);
@@ -3999,9 +4104,10 @@ export const generateSingleChallenge = createServerFn({ method: "POST" })
     const interestHypotheses = await getInterestHypothesesSnapshot(db as any, data.childId).catch(
       () => null,
     );
-    const aspirationHypotheses = await getAspirationHypothesesSnapshot(db as any, data.childId).catch(
-      () => null,
-    );
+    const aspirationHypotheses = await getAspirationHypothesesSnapshot(
+      db as any,
+      data.childId,
+    ).catch(() => null);
 
     const [
       { data: completedChallenges },
@@ -4012,7 +4118,9 @@ export const generateSingleChallenge = createServerFn({ method: "POST" })
     ] = await Promise.all([
       db
         .from("challenges")
-        .select("id, title, domain, academic_domain, academic_level_age, ai_observations, completed_at")
+        .select(
+          "id, title, domain, academic_domain, academic_level_age, ai_observations, completed_at",
+        )
         .eq("child_id", data.childId)
         .eq("status", "completed")
         .order("completed_at", { ascending: false })
@@ -4066,16 +4174,12 @@ export const generateSingleChallenge = createServerFn({ method: "POST" })
       homeMaterials: data.homeMaterials,
     });
 
-    const prompt = buildLayeredChallengePrompt(
-      childDevelopmentState,
-      [mission],
-      {
-        timeAvailable,
-        immediateLocation: location,
-        materialScope: data.materialScope,
-        homeMaterials: data.homeMaterials,
-      },
-    );
+    const prompt = buildLayeredChallengePrompt(childDevelopmentState, [mission], {
+      timeAvailable,
+      immediateLocation: location,
+      materialScope: data.materialScope,
+      homeMaterials: data.homeMaterials,
+    });
 
     // A single défi, not a batch — the 4000 default (sized for up to 6 défis
     // in generateChallenges) would needlessly reserve most of the org's
@@ -4111,7 +4215,8 @@ export const generateSingleChallenge = createServerFn({ method: "POST" })
           item = parsed.challenges[0];
         else if (Array.isArray(parsed.data) && parsed.data.length > 0) item = parsed.data[0];
         else if (Array.isArray(parsed.items) && parsed.items.length > 0) item = parsed.items[0];
-        else if (Array.isArray(parsed.results) && parsed.results.length > 0) item = parsed.results[0];
+        else if (Array.isArray(parsed.results) && parsed.results.length > 0)
+          item = parsed.results[0];
         else if (Array.isArray(parsed.defis) && parsed.defis.length > 0) item = parsed.defis[0];
         else if (parsed.challenge && typeof parsed.challenge === "object") item = parsed.challenge;
         else if (parsed.defi && typeof parsed.defi === "object") item = parsed.defi;
@@ -4119,7 +4224,9 @@ export const generateSingleChallenge = createServerFn({ method: "POST" })
       c = ChallengeSchema.parse(item);
     } catch (err: any) {
       console.error("Schema validation failed for generateSingleChallenge:", err);
-      throw new Error(`Réponse IA invalide (structure incorrecte: ${err?.message?.substring(0, 100) ?? ""})`);
+      throw new Error(
+        `Réponse IA invalide (structure incorrecte: ${err?.message?.substring(0, 100) ?? ""})`,
+      );
     }
 
     // Preview only — nothing is persisted here. The Laboratoire and the Défi page's
@@ -4194,9 +4301,10 @@ export const getChildAISynthesis = createServerFn({ method: "POST" })
     );
     const formattedInterests = formatChildInterestsPayload(child.interests, interestHypotheses);
 
-    const aspirationHypotheses = await getAspirationHypothesesSnapshot(db as any, data.childId).catch(
-      () => null,
-    );
+    const aspirationHypotheses = await getAspirationHypothesesSnapshot(
+      db as any,
+      data.childId,
+    ).catch(() => null);
     const aspirationSummary = aspirationHypotheses?.byLabel
       ? Object.values(aspirationHypotheses.byLabel)
           .map(

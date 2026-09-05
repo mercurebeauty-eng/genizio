@@ -2,7 +2,12 @@ import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { z } from "zod";
 import { getChildGuild } from "@/lib/guilds";
-import { analyzeGuildComplementarity, getPrimaryTalent, analyzeEscouadeCompatibility, rankSquadCandidates } from "@/lib/guild-team-generator";
+import {
+  analyzeGuildComplementarity,
+  getPrimaryTalent,
+  analyzeEscouadeCompatibility,
+  rankSquadCandidates,
+} from "@/lib/guild-team-generator";
 import { analyzeMobilizationConditions } from "@/lib/mobilization-conditions";
 
 // Ma Guilde — vue communautaire (cf. écran 9 du prototype, genizio-decisions
@@ -62,10 +67,14 @@ export const getGuildCommunity = createServerFn({ method: "POST" })
           .from("child_relations" as any)
           .select("requester_child_id, addressee_child_id")
           .in("status", ["accepted", "mentor_verified"])
-          .or(`requester_child_id.eq.${child.id},addressee_child_id.eq.${child.id}`)) as { data: any };
-          
+          .or(`requester_child_id.eq.${child.id},addressee_child_id.eq.${child.id}`)) as {
+          data: any;
+        };
+
         if (relations) {
-          knownChildIds = relations.map((r: any) => r.requester_child_id === child.id ? r.addressee_child_id : r.requester_child_id);
+          knownChildIds = relations.map((r: any) =>
+            r.requester_child_id === child.id ? r.addressee_child_id : r.requester_child_id,
+          );
         }
       } catch {
         knownChildIds = [];
@@ -83,7 +92,7 @@ export const getGuildCommunity = createServerFn({ method: "POST" })
       } catch {
         traces = [];
       }
-        
+
       const mobilizationByChild = new Map<string, any[]>();
       if (traces) {
         const tracesByChild = new Map<string, any[]>();
@@ -91,8 +100,9 @@ export const getGuildCommunity = createServerFn({ method: "POST" })
           if (!t.ai_behavioral_analysis) continue;
           if (!tracesByChild.has(t.child_id)) tracesByChild.set(t.child_id, []);
           tracesByChild.get(t.child_id)!.push({
-            participationStatus: t.ai_behavioral_analysis.participationStatus || "active_participant",
-            environmentalConditions: t.ai_behavioral_analysis.environmentalConditions
+            participationStatus:
+              t.ai_behavioral_analysis.participationStatus || "active_participant",
+            environmentalConditions: t.ai_behavioral_analysis.environmentalConditions,
           });
         }
         for (const [cid, childTraces] of tracesByChild.entries()) {
@@ -109,22 +119,31 @@ export const getGuildCommunity = createServerFn({ method: "POST" })
         name: o.name,
         talents: (o.talents || {}) as Record<string, number>,
         primaryTalentKey: getPrimaryTalent((o.talents || {}) as Record<string, number>),
-        mobilizationInsights: mobilizationByChild.get(o.id) || []
+        mobilizationInsights: mobilizationByChild.get(o.id) || [],
       }));
 
-      const topSquad = rankSquadCandidates(mainChildInsights, candidates, knownChildIds, "synergique");
+      const topSquad = rankSquadCandidates(
+        mainChildInsights,
+        candidates,
+        knownChildIds,
+        "synergique",
+      );
 
       const childProfileAsMember = {
         id: child.id,
         name: child.name,
         talents: (child.talents || {}) as Record<string, number>,
         primaryTalentKey: getPrimaryTalent((child.talents || {}) as Record<string, number>),
-        mobilizationInsights: mainChildInsights
+        mobilizationInsights: mainChildInsights,
       };
 
       const squadMembers = [childProfileAsMember, ...topSquad];
       synergyData = analyzeGuildComplementarity(ownGuild.key, squadMembers);
-      compatibilityReport = analyzeEscouadeCompatibility(squadMembers, squadMembers.length, "explicit_structured");
+      compatibilityReport = analyzeEscouadeCompatibility(
+        squadMembers,
+        squadMembers.length,
+        "explicit_structured",
+      );
     }
 
     const startOfMonth = new Date();

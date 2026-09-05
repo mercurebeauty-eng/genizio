@@ -1,11 +1,11 @@
 import { describe, it, expect } from "vitest";
-import { 
-  getPrimaryTalent, 
-  analyzeGuildComplementarity, 
+import {
+  getPrimaryTalent,
+  analyzeGuildComplementarity,
   buildGuildCollectiveChallengePrompt,
   analyzeEscouadeCompatibility,
   rankSquadCandidates,
-  type MobilizationAwareTeamMember
+  type MobilizationAwareTeamMember,
 } from "./guild-team-generator";
 import type { MobilizationConditionHypothesis } from "./mobilization-conditions";
 
@@ -15,7 +15,7 @@ describe("guild-team-generator", () => {
       const talents = {
         logico_mathematique: 80,
         spatial: 60,
-        sociale: 95
+        sociale: 95,
       };
       expect(getPrimaryTalent(talents)).toBe("sociale");
     });
@@ -26,7 +26,7 @@ describe("guild-team-generator", () => {
       const members: Array<{ id: string; name: string; talents: Record<string, number> }> = [
         { id: "1", name: "Alice", talents: { logico_mathematique: 90, spatial: 20 } },
         { id: "2", name: "Bob", talents: { spatial: 90, logico_mathematique: 20 } },
-        { id: "3", name: "Charlie", talents: { sociale: 90, spatial: 20 } }
+        { id: "3", name: "Charlie", talents: { sociale: 90, spatial: 20 } },
       ];
 
       const analysis = analyzeGuildComplementarity("batisseurs", members);
@@ -39,7 +39,7 @@ describe("guild-team-generator", () => {
     it("détecte une faible synergie (profils clonés)", () => {
       const members: Array<{ id: string; name: string; talents: Record<string, number> }> = [
         { id: "1", name: "Alice", talents: { spatial: 90 } },
-        { id: "2", name: "Bob", talents: { spatial: 85 } }
+        { id: "2", name: "Bob", talents: { spatial: 85 } },
       ];
 
       const analysis = analyzeGuildComplementarity("batisseurs", members);
@@ -53,10 +53,10 @@ describe("guild-team-generator", () => {
         guildKey: "inventeurs",
         members: [
           { id: "1", name: "Léo", talents: {}, primaryTalentKey: "logico_mathematique" },
-          { id: "2", name: "Mia", talents: {}, primaryTalentKey: "corporelle" }
+          { id: "2", name: "Mia", talents: {}, primaryTalentKey: "corporelle" },
         ],
         missingTalents: [],
-        synergyScore: 1.0
+        synergyScore: 1.0,
       };
 
       const prompt = buildGuildCollectiveChallengePrompt(analysis);
@@ -71,7 +71,7 @@ describe("guild-team-generator", () => {
 describe("analyzeEscouadeCompatibility", () => {
   it("retourne 1.0 s'il n'y a aucun conflit", () => {
     const members: MobilizationAwareTeamMember[] = [
-      { id: "1", name: "A", talents: {}, primaryTalentKey: "logique", mobilizationInsights: [] }
+      { id: "1", name: "A", talents: {}, primaryTalentKey: "logique", mobilizationInsights: [] },
     ];
     const report = analyzeEscouadeCompatibility(members, 3, "explicit_structured");
     expect(report.compatibilityScore).toBe(1.0);
@@ -80,10 +80,23 @@ describe("analyzeEscouadeCompatibility", () => {
 
   it("détecte un conflit de taille de groupe", () => {
     const members: MobilizationAwareTeamMember[] = [
-      { 
-        id: "1", name: "A", talents: {}, primaryTalentKey: "logique", 
-        mobilizationInsights: [{ factor: "group_size", optimalContext: "small_group", observedTendency: "", confidence: 1, parentInsightText: "", mentorActionableTip: "", supportingExperiencesCount: 2 }] 
-      }
+      {
+        id: "1",
+        name: "A",
+        talents: {},
+        primaryTalentKey: "logique",
+        mobilizationInsights: [
+          {
+            factor: "group_size",
+            optimalContext: "small_group",
+            observedTendency: "",
+            confidence: 1,
+            parentInsightText: "",
+            mentorActionableTip: "",
+            supportingExperiencesCount: 2,
+          },
+        ],
+      },
     ];
     const report = analyzeEscouadeCompatibility(members, 5, "explicit_structured");
     expect(report.compatibilityScore).toBe(0.0);
@@ -96,11 +109,19 @@ describe("rankSquadCandidates", () => {
   it("priorise les relations connues si peer_familiarity l'exige", () => {
     const candidates: MobilizationAwareTeamMember[] = [
       { id: "c1", name: "Unknown", talents: {}, primaryTalentKey: "logique" },
-      { id: "c2", name: "Known", talents: {}, primaryTalentKey: "logique" }
+      { id: "c2", name: "Known", talents: {}, primaryTalentKey: "logique" },
     ];
-    
+
     const childMob: MobilizationConditionHypothesis[] = [
-      { factor: "peer_familiarity", optimalContext: "peers_familiar", observedTendency: "", confidence: 1, parentInsightText: "", mentorActionableTip: "", supportingExperiencesCount: 2 }
+      {
+        factor: "peer_familiarity",
+        optimalContext: "peers_familiar",
+        observedTendency: "",
+        confidence: 1,
+        parentInsightText: "",
+        mentorActionableTip: "",
+        supportingExperiencesCount: 2,
+      },
     ];
 
     const ranked = rankSquadCandidates(childMob, candidates, ["c2"], "synergique");

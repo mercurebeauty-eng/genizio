@@ -36,11 +36,7 @@ describe("Context Engine — buildChildDevelopmentState", () => {
         { id: "2", title: "Défi 2", domain: "Sciences" },
         { id: "3", title: "Défi 3", domain: "Arts" },
       ],
-      staleChallenges: [
-        { domain: "Sport" },
-        { domain: "Sport" },
-        { domain: "Musique" },
-      ],
+      staleChallenges: [{ domain: "Sport" }, { domain: "Sport" }, { domain: "Musique" }],
     });
 
     expect(state.identity.location).toBe("Dakar, Sénégal");
@@ -91,7 +87,13 @@ describe("Context Engine — buildChildDevelopmentState", () => {
     expect(state.activeHypotheses.some((h) => h.type === "aspiration_job")).toBe(true);
     expect(state.activeHypotheses.some((h) => h.type === "learning_mode")).toBe(true);
     expect(state.activeHypotheses.some((h) => h.type === "collective_posture")).toBe(true);
-    expect(state.activeHypotheses.some((h) => h.type === "progression" && h.targetDomain === "Architecture")).toBe(true);
-    expect(state.operationalContext.latestChildQuestion).toBe("Pourquoi le ciel change de couleur au coucher du soleil ?");
+    expect(
+      state.activeHypotheses.some(
+        (h) => h.type === "progression" && h.targetDomain === "Architecture",
+      ),
+    ).toBe(true);
+    expect(state.operationalContext.latestChildQuestion).toBe(
+      "Pourquoi le ciel change de couleur au coucher du soleil ?",
+    );
   });
 });

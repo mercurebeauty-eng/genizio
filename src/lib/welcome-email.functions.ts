@@ -367,8 +367,8 @@ function resolveFirstName(fullName: string | null | undefined): string {
 }
 
 export const sendWelcomeEmailIfNeeded = createServerFn({ method: "POST" })
-    .middleware([requireRateLimit])
-    .validator((data: { userId: string; email: string; firstName: string | null }) => data)
+  .middleware([requireRateLimit])
+  .validator((data: { userId: string; email: string; firstName: string | null }) => data)
   .handler(async ({ data }) => {
     const SUPABASE_URL = process.env.SUPABASE_URL;
     const SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;

@@ -1,5 +1,13 @@
 import { Link } from "@tanstack/react-router";
-import { Home, Trophy, Layers, Users, Settings, LayoutDashboard, GraduationCap } from "lucide-react";
+import {
+  Home,
+  Trophy,
+  Layers,
+  Users,
+  Settings,
+  LayoutDashboard,
+  GraduationCap,
+} from "lucide-react";
 import { useSession } from "@/hooks/use-session";
 import { isMentorMode, isEducatorMode } from "@/lib/mentor-mode";
 
@@ -64,7 +72,6 @@ export function AppTabBar({ profileId }: AppTabBarProps) {
             : item,
         )
       : items;
-
 
   return (
     <nav

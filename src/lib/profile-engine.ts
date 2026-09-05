@@ -12,8 +12,8 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/integrations/supabase/types";
 
 export type PedagogicalFormat =
-  | "spark_micro"          // L'Étincelle : Micro-défi d'amorce ou découverte (10-20 min, curiosité, manipulation directe sans théorie préalable)
-  | "investigation"        // L'Investigation : Défi d'observation et de recueil de données/mesures pour déduire un principe par soi-même
+  | "spark_micro" // L'Étincelle : Micro-défi d'amorce ou découverte (10-20 min, curiosité, manipulation directe sans théorie préalable)
+  | "investigation" // L'Investigation : Défi d'observation et de recueil de données/mesures pour déduire un principe par soi-même
   | "constructive_project"; // Le Projet Constructif : Réalisation d'envergure ou œuvre de synthèse adaptée aux talents de l'enfant (maquette, conte illustré, herbier, création artistique, prototype, robotique/code, etc.)
 
 export type InternationalBenchmark = "below_grade" | "at_grade" | "ahead_of_grade";
@@ -66,10 +66,17 @@ export function determinePedagogicalFormat(params: {
   activeHypothesisStatus?: string;
   recentObservations?: ObservationCandidate[];
 }): PedagogicalFormat {
-  const { domainCompletedCount, hasUnconsolidatedPeak, activeHypothesisStatus, recentObservations = [] } = params;
+  const {
+    domainCompletedCount,
+    hasUnconsolidatedPeak,
+    activeHypothesisStatus,
+    recentObservations = [],
+  } = params;
 
   // Si une observation récente suggère explicitement un format
-  const explicitSuggestion = recentObservations.find((o) => o.suggestedNextFormat)?.suggestedNextFormat;
+  const explicitSuggestion = recentObservations.find(
+    (o) => o.suggestedNextFormat,
+  )?.suggestedNextFormat;
   if (explicitSuggestion) {
     return explicitSuggestion;
   }

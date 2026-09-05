@@ -47,7 +47,7 @@ export function internationalGradeForAge(age: number): string | null {
   if (a === MIN_REFERENTIAL_AGE) return "Pré-élémentaire";
   if (a === 5) return "Kindergarten";
   if (a <= 17) return `Grade ${a - 5}`;
-  
+
   const postSecYear = a - 17;
   return `Supérieur / Cégep (Bac+${postSecYear})`;
 }

@@ -1448,7 +1448,9 @@ export const getChildMentorInfo = createServerFn({ method: "GET" })
 
     const { data: assignment } = (await supabaseAdmin
       .from("mentors")
-      .select("mentor_user_id, created_at, context_name, valid_from, valid_until, scope_type" as any)
+      .select(
+        "mentor_user_id, created_at, context_name, valid_from, valid_until, scope_type" as any,
+      )
       .eq("child_profile_id", data.childId)
       .is("removed_at", null)
       .order("created_at", { ascending: false })
@@ -1986,7 +1988,9 @@ export const setMentorMode = createServerFn({ method: "POST" })
         .eq("status", "active");
 
       if (!educatorProfile && (delegationsCount ?? 0) === 0) {
-        throw new Error("Veuillez d'abord configurer votre profil professionnel Éducateur / Conseiller.");
+        throw new Error(
+          "Veuillez d'abord configurer votre profil professionnel Éducateur / Conseiller.",
+        );
       }
     }
 
@@ -1998,7 +2002,6 @@ export const setMentorMode = createServerFn({ method: "POST" })
     if (error) throw new Error(error.message);
     return { success: true, mode: data.mode };
   });
-
 
 // L'utilisateur active le mode Mentor avec son code — la RPC défenseur vérifie
 // auth.uid() (l'appel passe par le client authentifié, jamais le service role).

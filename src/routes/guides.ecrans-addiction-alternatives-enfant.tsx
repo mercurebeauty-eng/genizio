@@ -90,7 +90,10 @@ function Guide() {
         { label: "18 activités manuelles (4-12 ans)", to: "/guides/activites-manuelles-enfant" },
         { label: "Canaliser un enfant agité", to: "/guides/enfant-agite-concentration" },
         { label: "Les 9 formes d'intelligence", to: "/guides/intelligences-multiples-gardner" },
-        { label: "Gestion de la colère et frustration", to: "/guides/gestion-colere-emotions-enfant" },
+        {
+          label: "Gestion de la colère et frustration",
+          to: "/guides/gestion-colere-emotions-enfant",
+        },
       ]}
     >
       <img
@@ -111,44 +114,67 @@ function Guide() {
 
       <h2>Pourquoi interdire les écrans d'un coup ne marche pas</h2>
       <p>
-        Les jeux vidéo, les vidéos YouTube et les réseaux sociaux sont conçus pour capter l'attention
-        le plus longtemps possible. Chaque notification ou vidéo suivante déclenche une micro-décharge de dopamine dans le cerveau. C'est le même mécanisme d'addiction comportementale qu'une machine à sous : imprévisible, rapide et hautement stimulant.
+        Les jeux vidéo, les vidéos YouTube et les réseaux sociaux sont conçus pour capter
+        l'attention le plus longtemps possible. Chaque notification ou vidéo suivante déclenche une
+        micro-décharge de dopamine dans le cerveau. C'est le même mécanisme d'addiction
+        comportementale qu'une machine à sous : imprévisible, rapide et hautement stimulant.
       </p>
       <p>
-        Quand vous éteignez brusquement la tablette ou la télévision, l'enfant passe d'un état de <strong>sur-stimulation</strong> à un vide sensoriel total. D'où la tempête émotionnelle, les pleurs et la négociation agressive (découvrez notre guide sur la{" "}
-        <a href="/guides/gestion-colere-emotions-enfant">gestion de la colère et des crises chez l'enfant</a>). Ce n'est pas de la provocation délibérée, mais une réaction neurobiologique de manque.
+        Quand vous éteignez brusquement la tablette ou la télévision, l'enfant passe d'un état de{" "}
+        <strong>sur-stimulation</strong> à un vide sensoriel total. D'où la tempête émotionnelle,
+        les pleurs et la négociation agressive (découvrez notre guide sur la{" "}
+        <a href="/guides/gestion-colere-emotions-enfant">
+          gestion de la colère et des crises chez l'enfant
+        </a>
+        ). Ce n'est pas de la provocation délibérée, mais une réaction neurobiologique de manque.
       </p>
       <p>
-        La solution durable consiste à appliquer une méthode de <strong>sevrage progressif par le faire</strong> : on remplace petit à petit 10 % du temps d'écran par des activités du monde réel qui nourrissent ses{" "}
+        La solution durable consiste à appliquer une méthode de{" "}
+        <strong>sevrage progressif par le faire</strong> : on remplace petit à petit 10 % du temps
+        d'écran par des activités du monde réel qui nourrissent ses{" "}
         <a href="/guides/intelligences-multiples-gardner">9 formes d'intelligence naturelles</a>.
       </p>
 
       <h2>Parler avec son enfant avant d'imposer des règles</h2>
       <p>
-        Avant d'instaurer des restrictions, asseyez-vous avec votre enfant. Imposer une règle unilatérale déclenche un réflexe de rébellion. En appliquant les principes de la{" "}
-        <a href="/guides/discipline-positive-sans-punition">discipline positive sans punition</a>, vous transformez l'interdiction en accord mutuel :
+        Avant d'instaurer des restrictions, asseyez-vous avec votre enfant. Imposer une règle
+        unilatérale déclenche un réflexe de rébellion. En appliquant les principes de la{" "}
+        <a href="/guides/discipline-positive-sans-punition">discipline positive sans punition</a>,
+        vous transformez l'interdiction en accord mutuel :
       </p>
       <ul>
         <li>
-          <strong>« Qu'est-ce qui te plaît le plus dans ce jeu ou cette vidéo ? »</strong> — Sa réponse révèle le besoin sous-jacent : construire, explorer, défier, rigoler avec des amis.
+          <strong>« Qu'est-ce qui te plaît le plus dans ce jeu ou cette vidéo ? »</strong> — Sa
+          réponse révèle le besoin sous-jacent : construire, explorer, défier, rigoler avec des
+          amis.
         </li>
         <li>
-          <strong>« Qu'est-ce que tu ressens dans ton corps quand on éteint ? »</strong> — L'aider à identifier son agitation motrice (retrouvez nos conseils pour un{" "}
+          <strong>« Qu'est-ce que tu ressens dans ton corps quand on éteint ? »</strong> — L'aider à
+          identifier son agitation motrice (retrouvez nos conseils pour un{" "}
           <a href="/guides/enfant-agite-concentration">enfant qui a du mal à se concentrer</a>).
         </li>
         <li>
-          <strong>« Comment pourrions-nous fabriquer ce projet en vrai ? »</strong> — L'inviter à devenir créateur plutôt que spectateur (lisez notre guide sur la{" "}
-          <a href="/guides/ecrans-tiktok-youtube-talent-ecriture-realisation">transformation des enfants de spectateurs à créateurs</a>).
+          <strong>« Comment pourrions-nous fabriquer ce projet en vrai ? »</strong> — L'inviter à
+          devenir créateur plutôt que spectateur (lisez notre guide sur la{" "}
+          <a href="/guides/ecrans-tiktok-youtube-talent-ecriture-realisation">
+            transformation des enfants de spectateurs à créateurs
+          </a>
+          ).
         </li>
       </ul>
       <p>
-        Rédigez ensuite un contrat familial visible. Développez son sens de l'engagement grâce à nos rituels pour{" "}
-        <a href="/guides/autonomie-responsabilite-maison">rendre son enfant autonome et responsable à la maison</a>.
+        Rédigez ensuite un contrat familial visible. Développez son sens de l'engagement grâce à nos
+        rituels pour{" "}
+        <a href="/guides/autonomie-responsabilite-maison">
+          rendre son enfant autonome et responsable à la maison
+        </a>
+        .
       </p>
 
       <h2>Le changement progressif : le sevrage en douceur, palier par palier</h2>
       <p>
-        Descendez par paliers d'environ 10 % de temps d'écran chaque semaine. Si votre enfant passe 2 heures par jour sur les écrans :
+        Descendez par paliers d'environ 10 % de temps d'écran chaque semaine. Si votre enfant passe
+        2 heures par jour sur les écrans :
       </p>
       <div className="my-6 overflow-x-auto rounded-2xl border border-ink/10">
         <table className="w-full min-w-[520px] text-sm print:min-w-0">
@@ -178,7 +204,8 @@ function Guide() {
               <td className="px-4 py-3">1 h 40 → 1 h 30</td>
               <td className="px-4 py-3">
                 Expériences scientifiques de cuisine (issues de nos{" "}
-                <a href="/guides/activites-educatives-enfant">24 activités éducatives sans écran</a>)
+                <a href="/guides/activites-educatives-enfant">24 activités éducatives sans écran</a>
+                )
               </td>
             </tr>
             <tr>
@@ -189,7 +216,9 @@ function Guide() {
             <tr>
               <td className="px-4 py-3 font-bold">Semaine 5+</td>
               <td className="px-4 py-3">1 h maximum</td>
-              <td className="px-4 py-3">Consolidation : contrat respecté, célébration des victoires</td>
+              <td className="px-4 py-3">
+                Consolidation : contrat respecté, célébration des victoires
+              </td>
             </tr>
           </tbody>
         </table>
@@ -202,7 +231,12 @@ function Guide() {
           1. Le défi « Minecraft Réel » — Construire en 3D
         </h3>
         <p className="text-sm text-amber-900 leading-relaxed">
-          Donnez à votre enfant des cartons d'emballage, des ciseaux, du ruban adhésif et un défi clair : <em>« Construis la maquette de ta forteresse idéale avec un pont-levis qui fonctionne. »</em> Le plaisir physique de l'assemblage remplace directement les blocs virtuels.
+          Donnez à votre enfant des cartons d'emballage, des ciseaux, du ruban adhésif et un défi
+          clair :{" "}
+          <em>
+            « Construis la maquette de ta forteresse idéale avec un pont-levis qui fonctionne. »
+          </em>{" "}
+          Le plaisir physique de l'assemblage remplace directement les blocs virtuels.
         </p>
       </div>
 
@@ -211,7 +245,9 @@ function Guide() {
           2. Le reportage photo et vidéo créatif
         </h3>
         <p className="text-sm text-sky-900 leading-relaxed">
-          Confiez-lui un smartphone en mode caméra pour interviewer un grand-parent, photographier 5 insectes du jardin ou créer un mini-tutoriel de cuisine. L'enfant passe du statut de spectateur passif à celui de réalisateur actif.
+          Confiez-lui un smartphone en mode caméra pour interviewer un grand-parent, photographier 5
+          insectes du jardin ou créer un mini-tutoriel de cuisine. L'enfant passe du statut de
+          spectateur passif à celui de réalisateur actif.
         </p>
       </div>
 
@@ -220,26 +256,34 @@ function Guide() {
           3. Le laboratoire secret de la maison
         </h3>
         <p className="text-sm text-emerald-900 leading-relaxed">
-          Bicarbonate, vinaigre, huile, épices : réalisez une réaction chimique effervescente ou une lampe à lave maison. L'effet « waouh » procure la même intensité émotionnelle qu'un jeu vidéo, avec la fierté d'avoir expérimenté soi-même.
+          Bicarbonate, vinaigre, huile, épices : réalisez une réaction chimique effervescente ou une
+          lampe à lave maison. L'effet « waouh » procure la même intensité émotionnelle qu'un jeu
+          vidéo, avec la fierté d'avoir expérimenté soi-même.
         </p>
       </div>
 
       <h2>Rituels pour maintenir l'équilibre au quotidien</h2>
       <ul>
         <li>
-          <strong>Le sablier ou timer physique :</strong> Plus neutre que la voix du parent, il évite les querelles d'autorité.
+          <strong>Le sablier ou timer physique :</strong> Plus neutre que la voix du parent, il
+          évite les querelles d'autorité.
         </li>
         <li>
-          <strong>La règle des 5 minutes d'avertissement :</strong> <em>« Dans 5 minutes, on sauvegarde et on éteint pour préparer le dîner ensemble. »</em>
+          <strong>La règle des 5 minutes d'avertissement :</strong>{" "}
+          <em>« Dans 5 minutes, on sauvegarde et on éteint pour préparer le dîner ensemble. »</em>
         </li>
         <li>
-          <strong>La boîte à écrans pendant les repas et la nuit :</strong> Les écrans restent hors des chambres pour préserver un sommeil réparateur.
+          <strong>La boîte à écrans pendant les repas et la nuit :</strong> Les écrans restent hors
+          des chambres pour préserver un sommeil réparateur.
         </li>
       </ul>
 
       <h2>Ce que fait Génizio au quotidien</h2>
       <p>
-        Génizio transforme l'énergie numérique des enfants en réalisations réelles. L'application propose des défis du monde réel (bricolage, écriture, logique, cuisine, nature). En prenant en photo ses créations terminées, l'enfant accumule des badges d'accomplissement et remplit son Passeport de Talents.
+        Génizio transforme l'énergie numérique des enfants en réalisations réelles. L'application
+        propose des défis du monde réel (bricolage, écriture, logique, cuisine, nature). En prenant
+        en photo ses créations terminées, l'enfant accumule des badges d'accomplissement et remplit
+        son Passeport de Talents.
       </p>
 
       <h2>Foire aux questions (FAQ)</h2>

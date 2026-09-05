@@ -65,12 +65,14 @@ export function AdminEventsTab() {
       setLoading(true);
       const res = await listFn();
       setEvents(res.events || []);
-      setSummary(res.summary || {
-        totalEvents: 0,
-        activeEvents: 0,
-        totalChildrenMobilized: 0,
-        totalSupervisorsActive: 0,
-      });
+      setSummary(
+        res.summary || {
+          totalEvents: 0,
+          activeEvents: 0,
+          totalChildrenMobilized: 0,
+          totalSupervisorsActive: 0,
+        },
+      );
     } catch (err: any) {
       toast.error(err.message || "Erreur lors du chargement des événements.");
     } finally {
@@ -113,7 +115,9 @@ export function AdminEventsTab() {
         },
       });
 
-      toast.success("Événement créé avec succès ! Les relations de supervision sont synchronisées.");
+      toast.success(
+        "Événement créé avec succès ! Les relations de supervision sont synchronisées.",
+      );
       setIsModalOpen(false);
       // Réinitialisation formulaire
       setTitle("");
@@ -160,8 +164,8 @@ export function AdminEventsTab() {
             Gestion des FabLabs, Hackathons & Marathons
           </h2>
           <p className="text-sm font-medium text-ink/60 mt-0.5">
-            Planification des événements officiels, supervision éphémère d'ateliers et traçabilité des
-            découvertes d'escouades.
+            Planification des événements officiels, supervision éphémère d'ateliers et traçabilité
+            des découvertes d'escouades.
           </p>
         </div>
 
@@ -197,9 +201,7 @@ export function AdminEventsTab() {
             </div>
           </div>
           <div className="mt-4">
-            <div className="font-display text-3xl font-black text-ink">
-              {summary.totalEvents}
-            </div>
+            <div className="font-display text-3xl font-black text-ink">{summary.totalEvents}</div>
             <p className="text-xs font-medium text-ink/50 mt-1">Ateliers et stages organisés</p>
           </div>
         </div>
@@ -214,9 +216,7 @@ export function AdminEventsTab() {
             </div>
           </div>
           <div className="mt-4">
-            <div className="font-display text-3xl font-black text-ink">
-              {summary.activeEvents}
-            </div>
+            <div className="font-display text-3xl font-black text-ink">{summary.activeEvents}</div>
             <p className="text-xs font-medium text-ink/50 mt-1">En cours aujourd'hui</p>
           </div>
         </div>
@@ -340,8 +340,8 @@ export function AdminEventsTab() {
                       isEventActive
                         ? "bg-emerald-100 text-emerald-800 border-emerald-300 animate-pulse"
                         : isCompleted
-                        ? "bg-stone-100 text-stone-700 border-stone-300"
-                        : "bg-sky-100 text-sky-800 border-sky-300"
+                          ? "bg-stone-100 text-stone-700 border-stone-300"
+                          : "bg-sky-100 text-sky-800 border-sky-300"
                     }`}
                   >
                     {isEventActive ? "🟢 En cours" : isCompleted ? "🏁 Terminé" : "📅 À venir"}
@@ -473,7 +473,9 @@ export function AdminEventsTab() {
               </div>
 
               <div>
-                <label className="block mb-1 text-ink/70">Partenaire Organisateur (optionnel)</label>
+                <label className="block mb-1 text-ink/70">
+                  Partenaire Organisateur (optionnel)
+                </label>
                 <input
                   type="text"
                   placeholder="ex: Fondation Orange / ONG Éducation Plus"
@@ -496,7 +498,9 @@ export function AdminEventsTab() {
                 </div>
 
                 <div>
-                  <label className="block mb-1 text-ink/70">Date de fin (Coupure automatique) *</label>
+                  <label className="block mb-1 text-ink/70">
+                    Date de fin (Coupure automatique) *
+                  </label>
                   <input
                     type="datetime-local"
                     required
@@ -521,8 +525,8 @@ export function AdminEventsTab() {
               <div className="rounded-2xl bg-amber-50 border border-amber-200 p-3 text-[11px] text-amber-900 font-medium leading-relaxed">
                 🛡️ <strong>Règle de Supervision Éphémère :</strong> Les accès d'écriture du
                 superviseur seront actifs pendant cette période et se verrouilleront automatiquement
-                à la date de fin. L'historique des observations sera conservé à vie dans le portfolio
-                des enfants.
+                à la date de fin. L'historique des observations sera conservé à vie dans le
+                portfolio des enfants.
               </div>
 
               <div className="flex items-center justify-end gap-3 pt-2">

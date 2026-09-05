@@ -282,7 +282,9 @@ function PortfolioPage() {
   const [payingPassport, setPayingPassport] = useState(false);
   const [dismissedDiscoveries, setDismissedDiscoveries] = useState<string[]>([]);
   const [expandedMonths, setExpandedMonths] = useState<Set<string>>(new Set());
-  const [gallerySourceFilter, setGallerySourceFilter] = useState<"all" | "challenges" | "discovery">("all");
+  const [gallerySourceFilter, setGallerySourceFilter] = useState<
+    "all" | "challenges" | "discovery"
+  >("all");
   const [galleryDoorFilter, setGalleryDoorFilter] = useState<string>("all");
   // Calibration du temps (chantier 4, §5 suite) : proposition de temps généreux
   // dérivée des TIME_OVER (30 jours, seuil par domaine) — jamais automatique,
@@ -343,7 +345,9 @@ function PortfolioPage() {
         getMentorChildViewFn({ data: { childId: profileId } }),
         supabase
           .from("discovery_traces")
-          .select("id, title, domain, proof_image_url, created_at, source_type, strategy_used, ai_behavioral_analysis, child_id, tagged_child_ids, co_perspectives, child_profiles!discovery_traces_child_id_fkey(username, name)")
+          .select(
+            "id, title, domain, proof_image_url, created_at, source_type, strategy_used, ai_behavioral_analysis, child_id, tagged_child_ids, co_perspectives, child_profiles!discovery_traces_child_id_fkey(username, name)",
+          )
           .or(`child_id.eq.${profileId},tagged_child_ids.cs.{${profileId}}`)
           .order("created_at", { ascending: false })
           .limit(50),
@@ -405,7 +409,9 @@ function PortfolioPage() {
         .maybeSingle(),
       supabase
         .from("discovery_traces")
-        .select("id, title, domain, proof_image_url, created_at, source_type, strategy_used, ai_behavioral_analysis, child_id, tagged_child_ids, co_perspectives, child_profiles!discovery_traces_child_id_fkey(username, name)")
+        .select(
+          "id, title, domain, proof_image_url, created_at, source_type, strategy_used, ai_behavioral_analysis, child_id, tagged_child_ids, co_perspectives, child_profiles!discovery_traces_child_id_fkey(username, name)",
+        )
         .or(`child_id.eq.${profileId},tagged_child_ids.cs.{${profileId}}`)
         .order("created_at", { ascending: false })
         .limit(50),
@@ -589,7 +595,7 @@ function PortfolioPage() {
     getChildAccessStatusFn({ data: { childId: profileId } })
       .then((res) => setAccessState(res))
       .catch(console.error);
-      
+
     if (!mentorMode) {
       getFamilySubscriptionStatusFn()
         .then((res) => setFamilySubStatus(res))
@@ -647,7 +653,11 @@ function PortfolioPage() {
     if (gallerySourceFilter === "challenges" && item.source !== "challenge") return false;
     if (gallerySourceFilter === "discovery" && item.source !== "discovery") return false;
     if (gallerySourceFilter === "discovery" || gallerySourceFilter === "all") {
-      if (galleryDoorFilter !== "all" && item.source === "discovery" && item.source_type !== galleryDoorFilter) {
+      if (
+        galleryDoorFilter !== "all" &&
+        item.source === "discovery" &&
+        item.source_type !== galleryDoorFilter
+      ) {
         return false;
       }
     }
@@ -1155,7 +1165,7 @@ function PortfolioPage() {
               !!familySubStatus?.sponsoredUntil &&
               new Date(familySubStatus.sponsoredUntil).getTime() > Date.now();
             const isCovered = coverageActive || sponsoredActive || familySubStatus?.campaignCovered;
-            
+
             if (isCovered) return null;
 
             return (
@@ -1169,8 +1179,8 @@ function PortfolioPage() {
                 <div className="flex-1">
                   <p className="text-sm font-black text-brand">Activer un code de parrainage</p>
                   <p className="text-xs text-ink/60">
-                    Un parrain (diaspora ou RSE) vous a donné un code ? Il couvre toute votre famille —
-                    activez-le depuis vos paramètres.
+                    Un parrain (diaspora ou RSE) vous a donné un code ? Il couvre toute votre
+                    famille — activez-le depuis vos paramètres.
                   </p>
                 </div>
                 <ChevronRight className="size-5 text-brand" />
@@ -1317,7 +1327,8 @@ function PortfolioPage() {
                       // Acte d'achat réservé au parent (décision #81) — le mentor
                       // (remplaçant) voit le Passeport mais ne paie pas à sa place.
                       <p className="w-full md:w-auto text-center rounded-2xl border border-dashed border-ink/20 bg-white/60 px-5 py-3 text-xs font-bold text-ink/60">
-                        Le parent peut activer le Passeport ({formatXof(PASSPORT_PRICE_XOF)}) pour le téléchargement.
+                        Le parent peut activer le Passeport ({formatXof(PASSPORT_PRICE_XOF)}) pour
+                        le téléchargement.
                       </p>
                     ) : (
                       <button
@@ -1404,7 +1415,8 @@ function PortfolioPage() {
                   Passerelle École & Orientation
                 </p>
                 <p className="text-xs text-ink/75 mt-0.5 font-medium truncate sm:whitespace-normal">
-                  Transmettre la Carte des Talents et le profil d'apprentissage aux professeurs ou conseillers d'orientation.
+                  Transmettre la Carte des Talents et le profil d'apprentissage aux professeurs ou
+                  conseillers d'orientation.
                 </p>
               </div>
             </div>
@@ -1942,7 +1954,11 @@ function PortfolioPage() {
               <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
                 {filteredArtifacts.map((c: any) => {
                   let teamRoleBadge = "";
-                  if (c.source === "discovery" && c.strategy_used && c.source_type === "projet_collectif") {
+                  if (
+                    c.source === "discovery" &&
+                    c.strategy_used &&
+                    c.source_type === "projet_collectif"
+                  ) {
                     const match = c.strategy_used.match(/Rôle(\(s\))?:\s*([^|]+)/i);
                     if (match && match[2]) {
                       teamRoleBadge = match[2].trim();
@@ -1967,7 +1983,7 @@ function PortfolioPage() {
                       )}
                       <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/85 via-black/50 to-transparent p-2.5 text-white">
                         <p className="truncate text-xs font-bold leading-tight">{c.title}</p>
-                        
+
                         {c.source === "discovery" && c.child_id !== profileId && (
                           <p className="text-[10px] text-amber-300 font-medium mt-0.5 truncate flex items-center gap-1">
                             Partagé par @{c.author_username || "Auteur"}
@@ -1996,9 +2012,7 @@ function PortfolioPage() {
                             </span>
                           )}
                           {c.domain && (
-                            <span className="text-[9px] text-white/80 truncate">
-                              {c.domain}
-                            </span>
+                            <span className="text-[9px] text-white/80 truncate">{c.domain}</span>
                           )}
                         </div>
                       </div>

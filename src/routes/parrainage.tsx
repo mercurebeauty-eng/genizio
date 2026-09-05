@@ -160,7 +160,8 @@ function ParrainagePage() {
             Offrez une <span className="text-brand">Saison d'Élite</span> à un enfant au pays
           </h1>
           <p className="text-lg text-ink/75 font-medium leading-relaxed max-w-2xl mx-auto mb-8">
-            Financez jusqu'à 12 mois d'apprentissage immersif pour un enfant nommé. Recevez à la fin le Portfolio d'Impact certifié de l'enfant.
+            Financez jusqu'à 12 mois d'apprentissage immersif pour un enfant nommé. Recevez à la fin
+            le Portfolio d'Impact certifié de l'enfant.
           </p>
 
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-left max-w-2xl mx-auto mb-8">
@@ -337,8 +338,8 @@ function ParrainagePage() {
                     {eurHint > 0 && <> (≈ {eurHint} €)</>}
                   </p>
                   <p className="mt-1 text-[11px] text-ink/45">
-                    Tarif : {formatXofAmount(STANDARD_PRICE_XOF)} FCFA/mois. Paiement sécurisé en ligne
-                    via Paystack, le code de parrainage est généré immédiatement.
+                    Tarif : {formatXofAmount(STANDARD_PRICE_XOF)} FCFA/mois. Paiement sécurisé en
+                    ligne via Paystack, le code de parrainage est généré immédiatement.
                   </p>
                 </div>
               </div>

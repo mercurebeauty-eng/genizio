@@ -76,4 +76,3 @@ describe("articleJsonLd", () => {
     expect(ld.author.name).toBe("Génizio Éditions");
   });
 });
-

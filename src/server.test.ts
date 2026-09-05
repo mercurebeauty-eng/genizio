@@ -14,9 +14,7 @@ describe("getCanonicalRedirect", () => {
     const res = getCanonicalRedirect(req);
     expect(res).not.toBeNull();
     expect(res?.status).toBe(301);
-    expect(res?.headers.get("Location")).toBe(
-      "https://www.genizio.com/guides/gardner?ref=social",
-    );
+    expect(res?.headers.get("Location")).toBe("https://www.genizio.com/guides/gardner?ref=social");
   });
 
   it("redirige genizio.vercel.app vers https://www.genizio.com en 301", () => {

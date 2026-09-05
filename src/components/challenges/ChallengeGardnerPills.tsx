@@ -41,7 +41,7 @@ export function ChallengeGardnerPills({
   }[size];
 
   const subformLabel = traitSubform
-    ? TALENT_SUBFORM_LABELS[traitSubform] ?? traitSubform.replace(/_/g, " ")
+    ? (TALENT_SUBFORM_LABELS[traitSubform] ?? traitSubform.replace(/_/g, " "))
     : null;
 
   if (keys.length === 0) {

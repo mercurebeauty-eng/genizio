@@ -17,7 +17,10 @@ export interface SupervisionRelation {
 /**
  * Vérifie si la relation de supervision est actuellement valide et active.
  */
-export function isSupervisionValid(relation: SupervisionRelation, atDate: Date = new Date()): boolean {
+export function isSupervisionValid(
+  relation: SupervisionRelation,
+  atDate: Date = new Date(),
+): boolean {
   if (relation.status !== "active") return false;
 
   const now = atDate.getTime();
@@ -33,7 +36,7 @@ export function isSupervisionValid(relation: SupervisionRelation, atDate: Date =
 export function hasSupervisionPermission(
   relation: SupervisionRelation,
   permission: SupervisionPermission,
-  atDate: Date = new Date()
+  atDate: Date = new Date(),
 ): boolean {
   if (!isSupervisionValid(relation, atDate)) return false;
   return relation.permissions.includes(permission);
@@ -42,7 +45,10 @@ export function hasSupervisionPermission(
 /**
  * Met à jour le statut d'une relation (ex: auto-expiration).
  */
-export function refreshSupervisionStatus(relation: SupervisionRelation, atDate: Date = new Date()): SupervisionRelation {
+export function refreshSupervisionStatus(
+  relation: SupervisionRelation,
+  atDate: Date = new Date(),
+): SupervisionRelation {
   if (relation.status === "active" && !isSupervisionValid(relation, atDate)) {
     return { ...relation, status: "expired" };
   }
@@ -58,11 +64,11 @@ export function requestSupervision(
   contextName: string,
   validDays: number = 7,
   permissions: SupervisionPermission[] = ["observe", "assign_role"],
-  organizationId?: string
+  organizationId?: string,
 ): SupervisionRelation {
   const from = new Date();
   const until = new Date(from.getTime() + validDays * 24 * 60 * 60 * 1000);
-  
+
   return {
     id: `sup_${Math.random().toString(36).substr(2, 9)}`,
     supervisorId,
@@ -73,7 +79,7 @@ export function requestSupervision(
     permissions,
     validFrom: from.toISOString(),
     validUntil: until.toISOString(),
-    createdAt: from.toISOString()
+    createdAt: from.toISOString(),
   };
 }
 

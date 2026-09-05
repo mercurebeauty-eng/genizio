@@ -14,7 +14,13 @@ import { verifyAndLog } from "@/lib/naya-verifier.functions";
 
 // ── Vocabulaire & Constantes Découverte ────────────────────────────────────────
 
-export const DISCOVERY_SOURCES = ["self_chosen", "found_external", "open_sandbox", "fablab_marathon", "projet_collectif"] as const;
+export const DISCOVERY_SOURCES = [
+  "self_chosen",
+  "found_external",
+  "open_sandbox",
+  "fablab_marathon",
+  "projet_collectif",
+] as const;
 export type DiscoverySourceType = (typeof DISCOVERY_SOURCES)[number];
 
 export const DISCOVERY_POLES = {
@@ -52,7 +58,8 @@ export const DISCOVERY_SOURCE_LABELS: Record<
     door: "1. Je choisis",
     title: "Initiative & Création",
     badge: "Initiative personnelle",
-    description: "Une idée, un bricolage, un conte ou un projet né de sa propre imagination sans aucune consigne.",
+    description:
+      "Une idée, un bricolage, un conte ou un projet né de sa propre imagination sans aucune consigne.",
     cta: "Raconter sa création",
     theme: "amber",
     pole: "individual",
@@ -62,7 +69,8 @@ export const DISCOVERY_SOURCE_LABELS: Record<
     door: "2. Je trouve",
     title: "Curiosité Externe",
     badge: "Défi trouvé ailleurs",
-    description: "Un casse-tête, une énigme ardue ou un défi découvert à l'école, dans un livre ou sur le web.",
+    description:
+      "Un casse-tête, une énigme ardue ou un défi découvert à l'école, dans un livre ou sur le web.",
     cta: "Décortiquer le défi",
     theme: "sky",
     pole: "individual",
@@ -72,7 +80,8 @@ export const DISCOVERY_SOURCE_LABELS: Record<
     door: "3. Je tente",
     title: "Laboratoire Libre",
     badge: "Essais-Erreurs & Tests",
-    description: "Une expérience spontanée par essais-erreurs, tests d'hypothèses et manipulation sans consigne fermée.",
+    description:
+      "Une expérience spontanée par essais-erreurs, tests d'hypothèses et manipulation sans consigne fermée.",
     cta: "Consigner l'expérience",
     theme: "emerald",
     pole: "individual",
@@ -82,7 +91,8 @@ export const DISCOVERY_SOURCE_LABELS: Record<
     door: "4. Fab Lab & Atelier",
     title: "Immersion Maker",
     badge: "Atelier & Outils Réels",
-    description: "Création concrète avec outils réels, bricolage guidé, découpe, électronique ou atelier tiers-lieu.",
+    description:
+      "Création concrète avec outils réels, bricolage guidé, découpe, électronique ou atelier tiers-lieu.",
     cta: "Documenter l'atelier",
     theme: "indigo",
     pole: "collective",
@@ -92,7 +102,8 @@ export const DISCOVERY_SOURCE_LABELS: Record<
     door: "5. Projet d'Équipe",
     title: "Coopération & Guilde",
     badge: "Escouade & Entraide",
-    description: "Projet mené à plusieurs, mettant en jeu la complémentarité des talents et l'intelligence collective.",
+    description:
+      "Projet mené à plusieurs, mettant en jeu la complémentarité des talents et l'intelligence collective.",
     cta: "Partager le projet d'équipe",
     theme: "rose",
     pole: "collective",
@@ -139,33 +150,105 @@ export const DISCOVERY_AUTONOMY_LABELS: Record<DiscoveryAutonomyLevel, string> =
 };
 
 export const DISCOVERY_TEAM_ROLES = [
-  { id: "ideateur", label: "💡 Idéateur & Créatif", desc: "Foisonnement d'idées, vision globale et imagination" },
-  { id: "batisseur", label: "🔨 Bâtisseur & Praticien", desc: "Concrétisation, assemblage et réalisation technique" },
-  { id: "capitaine", label: "🧭 Capitaine & Moteur", desc: "Impulsion, motivation du groupe et prise de décision" },
-  { id: "organisateur", label: "⏱️ Organisateur & Planificateur", desc: "Méthode, gestion du temps et répartition des tâches" },
-  { id: "mediateur", label: "🤝 Médiateur & Ciment d'équipe", desc: "Écoute, régulation des émotions et harmonie" },
-  { id: "chercheur", label: "🔍 Chercheur & Stratège", desc: "Analyse des blocages, recherche d'infos et logique" },
-  { id: "finisseur", label: "🎨 Perfectionniste & Finisseur", desc: "Souci du détail, finitions et vérification" },
-  { id: "porte_parole", label: "📢 Porte-parole & Conteur", desc: "Présentation du projet, pitch et narration" },
-  { id: "soutien", label: "🛡️ Soutien & Pilier logistique", desc: "Aide polyvalente et assistance aux coéquipiers" },
+  {
+    id: "ideateur",
+    label: "💡 Idéateur & Créatif",
+    desc: "Foisonnement d'idées, vision globale et imagination",
+  },
+  {
+    id: "batisseur",
+    label: "🔨 Bâtisseur & Praticien",
+    desc: "Concrétisation, assemblage et réalisation technique",
+  },
+  {
+    id: "capitaine",
+    label: "🧭 Capitaine & Moteur",
+    desc: "Impulsion, motivation du groupe et prise de décision",
+  },
+  {
+    id: "organisateur",
+    label: "⏱️ Organisateur & Planificateur",
+    desc: "Méthode, gestion du temps et répartition des tâches",
+  },
+  {
+    id: "mediateur",
+    label: "🤝 Médiateur & Ciment d'équipe",
+    desc: "Écoute, régulation des émotions et harmonie",
+  },
+  {
+    id: "chercheur",
+    label: "🔍 Chercheur & Stratège",
+    desc: "Analyse des blocages, recherche d'infos et logique",
+  },
+  {
+    id: "finisseur",
+    label: "🎨 Perfectionniste & Finisseur",
+    desc: "Souci du détail, finitions et vérification",
+  },
+  {
+    id: "porte_parole",
+    label: "📢 Porte-parole & Conteur",
+    desc: "Présentation du projet, pitch et narration",
+  },
+  {
+    id: "soutien",
+    label: "🛡️ Soutien & Pilier logistique",
+    desc: "Aide polyvalente et assistance aux coéquipiers",
+  },
   { id: "autre", label: "✍️ Autre rôle personnalisé", desc: "Rôle sur-mesure ou combiné" },
 ] as const;
 
 export const DISCOVERY_TEAM_DYNAMICS = [
-  { id: "complementarite", label: "🤝 Complémentarité spontanée", desc: "Chacun a naturellement misé sur ses points forts" },
-  { id: "tutorat", label: "🎓 Tutorat & Transmission", desc: "L'un a guidé ou transmis une compétence à l'autre" },
-  { id: "emulation", label: "⚡ Émulation & Synergie créative", desc: "Les idées ont rebondi et grandi ensemble" },
-  { id: "leadership_tournant", label: "🧭 Leadership partagé / tournant", desc: "La direction a changé selon les phases du projet" },
-  { id: "negociation", label: "🔄 Rebond constructif après désaccord", desc: "Tension ou hésitation surmontée par la concertation" },
-  { id: "parallele", label: "🧩 Travail en parallèle puis assemblage", desc: "Chacun sa mission en autonomie avant la mise en commun" },
-  { id: "entrainement", label: "🚀 Entraînement par l'exemple", desc: "Un enfant a impulsé le mouvement et inspiré le groupe" },
+  {
+    id: "complementarite",
+    label: "🤝 Complémentarité spontanée",
+    desc: "Chacun a naturellement misé sur ses points forts",
+  },
+  {
+    id: "tutorat",
+    label: "🎓 Tutorat & Transmission",
+    desc: "L'un a guidé ou transmis une compétence à l'autre",
+  },
+  {
+    id: "emulation",
+    label: "⚡ Émulation & Synergie créative",
+    desc: "Les idées ont rebondi et grandi ensemble",
+  },
+  {
+    id: "leadership_tournant",
+    label: "🧭 Leadership partagé / tournant",
+    desc: "La direction a changé selon les phases du projet",
+  },
+  {
+    id: "negociation",
+    label: "🔄 Rebond constructif après désaccord",
+    desc: "Tension ou hésitation surmontée par la concertation",
+  },
+  {
+    id: "parallele",
+    label: "🧩 Travail en parallèle puis assemblage",
+    desc: "Chacun sa mission en autonomie avant la mise en commun",
+  },
+  {
+    id: "entrainement",
+    label: "🚀 Entraînement par l'exemple",
+    desc: "Un enfant a impulsé le mouvement et inspiré le groupe",
+  },
   { id: "autre", label: "✍️ Autre dynamique observée", desc: "Dynamique spécifique" },
 ] as const;
 
-export const DISCOVERY_OUTCOMES = ["fonctionnel", "partiel", "en_cours", "echec_enrichissant"] as const;
+export const DISCOVERY_OUTCOMES = [
+  "fonctionnel",
+  "partiel",
+  "en_cours",
+  "echec_enrichissant",
+] as const;
 export type DiscoveryOutcomeStatus = (typeof DISCOVERY_OUTCOMES)[number];
 
-export const DISCOVERY_OUTCOME_LABELS: Record<DiscoveryOutcomeStatus, { label: string; tone: "success" | "warning" | "info" }> = {
+export const DISCOVERY_OUTCOME_LABELS: Record<
+  DiscoveryOutcomeStatus,
+  { label: string; tone: "success" | "warning" | "info" }
+> = {
   fonctionnel: { label: "Objectif atteint / Fonctionnel", tone: "success" },
   partiel: { label: "Partiellement réussi", tone: "info" },
   en_cours: { label: "Projet toujours en cours", tone: "info" },
@@ -241,7 +324,8 @@ async function analyzeAndCalibrateTrace(params: {
   traceData: z.infer<typeof CreateDiscoveryTraceSchema>;
   userId: string;
 }): Promise<DiscoveryAIAnalysis | null> {
-  const { supabaseAdmin, traceId, childId, childName, childAge, talents, traceData, userId } = params;
+  const { supabaseAdmin, traceId, childId, childName, childAge, talents, traceData, userId } =
+    params;
 
   try {
     const prompt = buildDiscoveryAnalysisPrompt({
@@ -394,39 +478,42 @@ export const createDiscoveryTrace = createServerFn({ method: "POST" })
       throw new Error("Accès refusé : vous devez être le parent ou le mentor de cet enfant.");
     }
 
-        // 2. Résolution des coéquipiers tagués (taggedHandles)
+    // 2. Résolution des coéquipiers tagués (taggedHandles)
     let taggedChildIds: string[] = [];
     if (data.taggedHandles && data.taggedHandles.length > 0) {
       // Extraire les noms d'utilisateurs purs sans le @
-      const usernames = data.taggedHandles.map((h) => h.replace(/^@/, ''));
+      const usernames = data.taggedHandles.map((h) => h.replace(/^@/, ""));
       const { data: matchedProfiles } = await supabaseAdmin
-        .from('child_profiles')
-        .select('id, user_id, name')
-        .in('username', usernames);
-        
+        .from("child_profiles")
+        .select("id, user_id, name")
+        .in("username", usernames);
+
       if (matchedProfiles && matchedProfiles.length > 0) {
         taggedChildIds = matchedProfiles.map((p) => p.id);
-        
+
         // Notifier les parents/mentors des enfants tagués
-        const { notifyUser } = await import('@/lib/app-notifications');
+        const { notifyUser } = await import("@/lib/app-notifications");
         for (const p of matchedProfiles) {
           await notifyUser({
             userId: p.user_id,
-            type: 'collective_discovery_tagged',
+            type: "collective_discovery_tagged",
             childId: p.id,
             payload: {
               title: data.title.trim(),
               authorName: child.name,
-              sourceType: data.sourceType
+              sourceType: data.sourceType,
             },
-            channels: { push: true }
+            channels: { push: true },
           });
         }
       }
     }
 
     let finalStrategy = data.strategyUsed?.trim() ?? null;
-    if (data.officialEventName && (!finalStrategy || !finalStrategy.includes(data.officialEventName))) {
+    if (
+      data.officialEventName &&
+      (!finalStrategy || !finalStrategy.includes(data.officialEventName))
+    ) {
       finalStrategy = `Événement: ${data.officialEventName.trim()}${finalStrategy ? ` | ${finalStrategy}` : ""}`;
     }
 
@@ -601,7 +688,9 @@ export const addMentorDiscoveryFeedback = createServerFn({ method: "POST" })
       .single();
 
     if (updateErr || !updated) {
-      throw new Error(`Erreur lors de l'enregistrement de l'observation mentor : ${updateErr?.message}`);
+      throw new Error(
+        `Erreur lors de l'enregistrement de l'observation mentor : ${updateErr?.message}`,
+      );
     }
 
     return { success: true, trace: updated };
@@ -614,7 +703,9 @@ export const getDiscoveryAdminStats = createServerFn({ method: "GET" })
 
     const { data: traces, error } = await supabaseAdmin
       .from("discovery_traces")
-      .select("id, title, source_type, domain, outcome_status, strategy_used, help_context, ai_behavioral_analysis, mentor_reviewed_at, created_at, child_profiles!discovery_traces_child_id_fkey(name, age, username)")
+      .select(
+        "id, title, source_type, domain, outcome_status, strategy_used, help_context, ai_behavioral_analysis, mentor_reviewed_at, created_at, child_profiles!discovery_traces_child_id_fkey(name, age, username)",
+      )
       .order("created_at", { ascending: false })
       .limit(150);
 
@@ -715,7 +806,7 @@ export const addCoPerspectiveToTrace = createServerFn({ method: "POST" })
       .maybeSingle();
 
     if (childErr || !child) throw new Error("Profil enfant introuvable");
-    
+
     const isParent = child.user_id === userId;
     let isMentor = false;
     if (!isParent) {
@@ -739,28 +830,28 @@ export const addCoPerspectiveToTrace = createServerFn({ method: "POST" })
       .maybeSingle();
 
     if (!trace) throw new Error("Trace introuvable");
-    
+
     const tagged = Array.isArray(trace.tagged_child_ids) ? trace.tagged_child_ids : [];
     if (!tagged.includes(data.childId)) {
       throw new Error("L'enfant n'est pas tagué dans ce projet collectif");
     }
 
     const currentPerspectives = Array.isArray(trace.co_perspectives) ? trace.co_perspectives : [];
-    
+
     const newPerspective = {
       child_id: data.childId,
       role: data.role,
       perspective: data.perspective,
       proof_image_url: data.proofImageUrl || null,
       added_at: new Date().toISOString(),
-      added_by_user_id: userId
+      added_by_user_id: userId,
     };
 
     // Mettre à jour la trace (sans écraser les perspectives existantes)
     const { error: updateErr } = await supabaseAdmin
       .from("discovery_traces")
       .update({
-        co_perspectives: [...currentPerspectives, newPerspective]
+        co_perspectives: [...currentPerspectives, newPerspective],
       })
       .eq("id", data.traceId);
 
@@ -768,4 +859,3 @@ export const addCoPerspectiveToTrace = createServerFn({ method: "POST" })
 
     return { success: true };
   });
-

@@ -66,9 +66,11 @@ export const getAspirationCompass = createServerFn({ method: "GET" })
 export const inferAspirationBridge = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .validator((input: unknown) =>
-    z.object({
-      label: z.string().trim().min(2).max(100),
-    }).parse(input),
+    z
+      .object({
+        label: z.string().trim().min(2).max(100),
+      })
+      .parse(input),
   )
   .handler(async ({ data }): Promise<{ bridge: AspirationBridge }> => {
     // 1. Résolution locale immédiate si le métier existe déjà ou matche un token

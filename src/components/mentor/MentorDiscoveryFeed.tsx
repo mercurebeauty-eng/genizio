@@ -1,9 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
-import {
-  getDiscoveryTracesForChild,
-  type DiscoverySourceType,
-} from "@/lib/discovery.functions";
+import { getDiscoveryTracesForChild, type DiscoverySourceType } from "@/lib/discovery.functions";
 import { DiscoveryTraceCard } from "@/components/discovery/DiscoveryTraceCard";
 import { DiscoveryRecordDialog } from "@/components/discovery/DiscoveryRecordDialog";
 import {
@@ -74,9 +71,7 @@ export function MentorDiscoveryFeed({ childId, childName }: MentorDiscoveryFeedP
     setTraces((prev) => [newTrace, ...prev]);
   };
 
-  const anomalies = traces.filter(
-    (t) => t.ai_behavioral_analysis?.potential_anomaly === true,
-  );
+  const anomalies = traces.filter((t) => t.ai_behavioral_analysis?.potential_anomaly === true);
 
   const filteredTraces =
     sourceFilter === "all" ? traces : traces.filter((t) => t.source_type === sourceFilter);
@@ -106,7 +101,10 @@ export function MentorDiscoveryFeed({ childId, childName }: MentorDiscoveryFeedP
                 <ChevronDown className="size-3.5 opacity-80" />
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-64 p-2 rounded-2xl shadow-xl border border-ink/10">
+            <DropdownMenuContent
+              align="end"
+              className="w-64 p-2 rounded-2xl shadow-xl border border-ink/10"
+            >
               <DropdownMenuLabel className="text-[10px] font-black uppercase tracking-wider text-ink/50 px-2 py-1">
                 Explorations Individuelles
               </DropdownMenuLabel>
@@ -171,7 +169,10 @@ export function MentorDiscoveryFeed({ childId, childName }: MentorDiscoveryFeedP
         </div>
 
         <p className="text-xs text-amber-900/80 leading-relaxed font-medium">
-          Ce flux répertorie les activités et réalisations que <strong>{childName}</strong> entreprend de son propre chef ou explore en dehors des quêtes imposées. Ces traces révèlent son autonomie réelle, sa curiosité spontanée et ses stratégies d'apprentissage naturelles.
+          Ce flux répertorie les activités et réalisations que <strong>{childName}</strong>{" "}
+          entreprend de son propre chef ou explore en dehors des quêtes imposées. Ces traces
+          révèlent son autonomie réelle, sa curiosité spontanée et ses stratégies d'apprentissage
+          naturelles.
         </p>
       </div>
 
@@ -185,7 +186,9 @@ export function MentorDiscoveryFeed({ childId, childName }: MentorDiscoveryFeedP
             </span>
           </div>
           <p className="text-xs text-amber-900 leading-snug">
-            Naya a identifié des indices de potentiel supérieur ou d'initiative marquée sur certaines explorations. Vous pouvez vous appuyer sur ces pistes pour calibrer vos prochaines séances.
+            Naya a identifié des indices de potentiel supérieur ou d'initiative marquée sur
+            certaines explorations. Vous pouvez vous appuyer sur ces pistes pour calibrer vos
+            prochaines séances.
           </p>
         </div>
       )}
@@ -195,11 +198,31 @@ export function MentorDiscoveryFeed({ childId, childName }: MentorDiscoveryFeedP
         <div className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none">
           {[
             { id: "all", label: "Toutes", count: traces.length },
-            { id: "self_chosen", label: "🚀 Créations", count: traces.filter((t) => t.source_type === "self_chosen").length },
-            { id: "found_external", label: "🔍 Trouvées", count: traces.filter((t) => t.source_type === "found_external").length },
-            { id: "open_sandbox", label: "🧪 Labo", count: traces.filter((t) => t.source_type === "open_sandbox").length },
-            { id: "fablab_marathon", label: "⚙️ Fab Lab", count: traces.filter((t) => t.source_type === "fablab_marathon").length },
-            { id: "projet_collectif", label: "👥 Équipe", count: traces.filter((t) => t.source_type === "projet_collectif").length },
+            {
+              id: "self_chosen",
+              label: "🚀 Créations",
+              count: traces.filter((t) => t.source_type === "self_chosen").length,
+            },
+            {
+              id: "found_external",
+              label: "🔍 Trouvées",
+              count: traces.filter((t) => t.source_type === "found_external").length,
+            },
+            {
+              id: "open_sandbox",
+              label: "🧪 Labo",
+              count: traces.filter((t) => t.source_type === "open_sandbox").length,
+            },
+            {
+              id: "fablab_marathon",
+              label: "⚙️ Fab Lab",
+              count: traces.filter((t) => t.source_type === "fablab_marathon").length,
+            },
+            {
+              id: "projet_collectif",
+              label: "👥 Équipe",
+              count: traces.filter((t) => t.source_type === "projet_collectif").length,
+            },
           ].map((f) => (
             <button
               key={f.id}
@@ -238,7 +261,8 @@ export function MentorDiscoveryFeed({ childId, childName }: MentorDiscoveryFeedP
             Aucune exploration libre enregistrée pour le moment.
           </p>
           <p className="text-xs text-ink/50 max-w-sm mx-auto leading-relaxed">
-            Encouragez la famille ou notez lors de votre prochaine séance les réalisations spontanées de {childName} pour enrichir son profil d'apprentissage.
+            Encouragez la famille ou notez lors de votre prochaine séance les réalisations
+            spontanées de {childName} pour enrichir son profil d'apprentissage.
           </p>
         </div>
       ) : filteredTraces.length === 0 ? (

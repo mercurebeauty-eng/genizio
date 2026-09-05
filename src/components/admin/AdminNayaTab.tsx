@@ -1,5 +1,7 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { toast } from "sonner";
+import { useServerFn } from "@tanstack/react-start";
+import { supabase } from "@/integrations/supabase/client";
 import {
   Brain,
   Cpu,
@@ -26,6 +28,7 @@ import type { NayaTelemetryResponse } from "@/lib/naya-telemetry";
 import { isDeepSeekPeakHour } from "@/lib/naya-telemetry";
 import type { AiProviderStatus, ProgressionHealthResponse } from "@/lib/admin-os.functions";
 import {
+  decideLoupSuggestionsAdmin,
   LOUP_DECISION_LABELS,
   OUTCOME_KIND_LABELS,
   OUTCOME_REASON_LABELS,
@@ -37,7 +40,7 @@ import {
   type RuleDecision,
 } from "@/lib/naya-constitution.functions";
 
-interface AdminNayaTabProps {
+export interface AdminNayaTabProps {
   telemetry: NayaTelemetryResponse;
   aiProviderStatus?: AiProviderStatus | null;
   progressionHealth?: ProgressionHealthResponse | null;
@@ -47,10 +50,7 @@ interface AdminNayaTabProps {
   constitution?: ConstitutionSuggestionsResponse | null;
   /** Clés `kind|domaine|règle` en cours de décision (spinner par carte). */
   decidingRuleKeys?: string[];
-  onDecideSuggestion?: (
-    ruleKey: string,
-    decision: "valide" | "a_revoir" | "rejete",
-  ) => Promise<void>;
+  onDataChanged?: () => void | Promise<void>;
 }
 
 // Couleur par modèle — 3 postes depuis le passage à DeepSeek (2026-07-21) :
@@ -75,9 +75,77 @@ export function AdminNayaTab({
   isRefreshing = false,
   onRefresh,
   constitution,
-  decidingRuleKeys = [],
-  onDecideSuggestion,
+  onDataChanged,
 }: AdminNayaTabProps) {
+  const [localConstitution, setLocalConstitution] = useState<ConstitutionSuggestionsResponse | null>(constitution || null);
+  useEffect(() => {
+    setLocalConstitution(constitution || null);
+  }, [constitution]);
+  const [decidingKeys, setDecidingKeys] = useState<string[]>([]);
+
+  const decideLoupFn = useServerFn(decideLoupSuggestionsAdmin);
+
+  const handleDecideSuggestion = async (
+    ruleKey: string,
+    decision: "valide" | "a_revoir" | "rejete",
+  ) => {
+    if (decidingKeys.includes(ruleKey)) return;
+    setDecidingKeys((prev) => [...prev, ruleKey]);
+
+    const previousConstitution = localConstitution;
+    if (localConstitution) {
+      const suggestionIndex = localConstitution.suggestions.findIndex(
+        (s) => ruleKeyOf(s.kind, s.domain, s.rule) === ruleKey,
+      );
+      if (suggestionIndex > -1) {
+        const suggestion = localConstitution.suggestions[suggestionIndex];
+        const newSuggestions = [...localConstitution.suggestions];
+        newSuggestions.splice(suggestionIndex, 1);
+
+        const newJournalEntry = {
+          ruleKey,
+          kind: suggestion.kind,
+          domain: suggestion.domain,
+          rule: suggestion.rule,
+          decision,
+          decidedAt: new Date().toISOString(),
+          decidedBy: "Admin",
+          note: "Décision admin",
+          count: suggestion.count,
+          childCount: suggestion.childCount,
+        };
+
+        setLocalConstitution({
+          ...localConstitution,
+          suggestions: newSuggestions,
+          journal: [newJournalEntry, ...localConstitution.journal],
+        });
+      }
+    }
+
+    try {
+      const res = await decideLoupFn({ data: { decisions: [{ ruleKey, decision }] } });
+      toast.success(
+        res.decided > 0
+          ? "Décision enregistrée — la règle sort des suggestions et passe au journal."
+          : "Aucun audit en attente ne correspond à cette règle.",
+      );
+      const ch = supabase.channel("admin-os-global-sync");
+      await ch.send({
+        type: "broadcast",
+        event: "loup_decision_updated",
+        payload: { ruleKey, decision, timestamp: Date.now() },
+      });
+      await onDataChanged?.();
+    } catch (err: any) {
+      setLocalConstitution(previousConstitution);
+      console.error("Erreur lors de la décision du Loup:", err);
+      toast.error(err?.message || "Erreur lors de l'enregistrement de la décision.");
+    } finally {
+      setDecidingKeys((prev) => prev.filter((k) => k !== ruleKey));
+    }
+  };
+
   const {
     totalApiCalls,
     totalTokens,
@@ -506,11 +574,11 @@ export function AdminNayaTab({
               <ul className="space-y-1.5">
                 {telemetry.wolf.topViolations.slice(0, 5).map((v) => (
                   <li key={v.rule} className="flex items-center justify-between text-xs gap-3">
-                  <code className="bg-white px-1.5 py-0.5 rounded border border-ink/5 text-ink font-mono truncate min-w-0 flex-1">
-                    {v.rule}
-                  </code>
-                  <span className="font-bold text-ink shrink-0">{v.count}</span>
-                </li>
+                    <code className="bg-white px-1.5 py-0.5 rounded border border-ink/5 text-ink font-mono truncate min-w-0 flex-1">
+                      {v.rule}
+                    </code>
+                    <span className="font-bold text-ink shrink-0">{v.count}</span>
+                  </li>
                 ))}
               </ul>
             )}
@@ -561,14 +629,14 @@ export function AdminNayaTab({
         </div>
 
         {/* État du Loup — mode, échantillonnage, seuils (lus en live côté serveur) */}
-        {constitution ? (
+        {localConstitution ? (
           <div className="grid grid-cols-2 md:grid-cols-5 gap-2 text-center text-xs">
             <div className="bg-surface/30 p-3 rounded-xl border border-ink/5">
               <div className="text-[10px] text-ink/50 font-bold uppercase">Mode</div>
               <div
-                className={`font-extrabold ${constitution.wolfState.enforce ? "text-red-600" : "text-sky-600"}`}
+                className={`font-extrabold ${localConstitution.wolfState.enforce ? "text-red-600" : "text-sky-600"}`}
               >
-                {constitution.wolfState.enforce ? "ENFORCE (recadre)" : "OBSERVATION (shadow)"}
+                {localConstitution.wolfState.enforce ? "ENFORCE (recadre)" : "OBSERVATION (shadow)"}
               </div>
             </div>
             <div className="bg-surface/30 p-3 rounded-xl border border-ink/5">
@@ -576,22 +644,22 @@ export function AdminNayaTab({
                 Échantillonnage sémantique
               </div>
               <div className="font-extrabold text-ink">
-                {constitution.wolfState.semanticRatePct}%
+                {localConstitution.wolfState.semanticRatePct}%
               </div>
             </div>
             <div className="bg-surface/30 p-3 rounded-xl border border-ink/5">
               <div className="text-[10px] text-ink/50 font-bold uppercase">Vérif. activée</div>
               <div
-                className={`font-extrabold ${constitution.wolfState.enabled ? "text-leaf" : "text-red-600"}`}
+                className={`font-extrabold ${localConstitution.wolfState.enabled ? "text-leaf" : "text-red-600"}`}
               >
-                {constitution.wolfState.enabled ? "Oui" : "NON (kill-switch)"}
+                {localConstitution.wolfState.enabled ? "Oui" : "NON (kill-switch)"}
               </div>
             </div>
             <div className="bg-surface/30 p-3 rounded-xl border border-ink/5">
               <div className="text-[10px] text-ink/50 font-bold uppercase">Seuils suggestions</div>
               <div className="font-extrabold text-ink">
-                ≥{constitution.wolfState.suggestThresholds.minCount} occ. · ≥
-                {constitution.wolfState.suggestThresholds.minChildren} enf.
+                ≥{localConstitution.wolfState.suggestThresholds.minCount} occ. · ≥
+                {localConstitution.wolfState.suggestThresholds.minChildren} enf.
               </div>
             </div>
             <div className="bg-surface/30 p-3 rounded-xl border border-ink/5">
@@ -599,8 +667,8 @@ export function AdminNayaTab({
                 Seuils auto-acquittement
               </div>
               <div className="font-extrabold text-ink">
-                ≥{constitution.wolfState.autoAckThresholds.minCount} occ. · ≥
-                {constitution.wolfState.autoAckThresholds.minChildren} enf.
+                ≥{localConstitution.wolfState.autoAckThresholds.minCount} occ. · ≥
+                {localConstitution.wolfState.autoAckThresholds.minChildren} enf.
               </div>
             </div>
           </div>
@@ -610,22 +678,22 @@ export function AdminNayaTab({
         <div className="rounded-2xl border border-ink/10 bg-surface/30 p-4 space-y-3">
           <div className="text-[11px] font-extrabold uppercase tracking-wider text-ink/60">
             En attente —{" "}
-            {constitution ? `${constitution.suggestions.length} règle(s) proposée(s)` : "…"}
+            {localConstitution ? `${localConstitution.suggestions.length} règle(s) proposée(s)` : "…"}
           </div>
-          {!constitution ? (
+          {!localConstitution ? (
             <p className="text-xs text-ink/50 italic">Chargement des suggestions…</p>
-          ) : constitution.suggestions.length === 0 ? (
+          ) : localConstitution.suggestions.length === 0 ? (
             <p className="text-xs text-ink/50 italic">
               Aucune règle en attente — le Loup observe et n'a rien à soumettre pour l'instant.
             </p>
           ) : (
             <ul className="space-y-3">
-              {constitution.suggestions.map((s) => (
+              {localConstitution.suggestions.map((s) => (
                 <SuggestionRow
                   key={ruleKeyOf(s.kind, s.domain, s.rule)}
                   suggestion={s}
-                  busy={decidingRuleKeys.includes(ruleKeyOf(s.kind, s.domain, s.rule))}
-                  onDecide={onDecideSuggestion}
+                  busy={decidingKeys.includes(ruleKeyOf(s.kind, s.domain, s.rule))}
+                  onDecide={handleDecideSuggestion}
                 />
               ))}
             </ul>
@@ -636,17 +704,17 @@ export function AdminNayaTab({
         <div className="rounded-2xl border border-ink/10 bg-surface/30 p-4 space-y-3">
           <div className="text-[11px] font-extrabold uppercase tracking-wider text-ink/60">
             Journal des décisions —{" "}
-            {constitution ? `${constitution.journal.length} règle(s) décidée(s)` : "…"}
+            {localConstitution ? `${localConstitution.journal.length} règle(s) décidée(s)` : "…"}
           </div>
-          {!constitution ? (
+          {!localConstitution ? (
             <p className="text-xs text-ink/50 italic">Chargement du journal…</p>
-          ) : constitution.journal.length === 0 ? (
+          ) : localConstitution.journal.length === 0 ? (
             <p className="text-xs text-ink/50 italic">
               Aucune décision enregistrée — le Loup n'a encore rien auto-acquitté ni validé.
             </p>
           ) : (
             <ul className="space-y-2">
-              {constitution.journal.slice(0, 12).map((j) => (
+              {localConstitution.journal.slice(0, 12).map((j) => (
                 <JournalRow key={j.ruleKey} decision={j} />
               ))}
             </ul>
@@ -659,17 +727,17 @@ export function AdminNayaTab({
         <div className="rounded-2xl border border-ink/10 bg-surface/30 p-4 space-y-3">
           <div className="text-[11px] font-extrabold uppercase tracking-wider text-ink/60">
             Signaux d'abandon —{" "}
-            {constitution ? `${constitution.outcomeSignals.length} signal(aux)` : "…"}
+            {localConstitution ? `${localConstitution.outcomeSignals.length} signal(aux)` : "…"}
           </div>
-          {!constitution ? (
+          {!localConstitution ? (
             <p className="text-xs text-ink/50 italic">Chargement des signaux…</p>
-          ) : constitution.outcomeSignals.length === 0 ? (
+          ) : localConstitution.outcomeSignals.length === 0 ? (
             <p className="text-xs text-ink/50 italic">
               Aucun défi supprimé pour l'instant — les abandons alimenteront Naya ici.
             </p>
           ) : (
             <ul className="space-y-2">
-              {constitution.outcomeSignals.slice(0, 12).map((s) => (
+              {localConstitution.outcomeSignals.slice(0, 12).map((s) => (
                 <OutcomeSignalRow key={`${s.reasonKey}|${s.kind}|${s.domain}`} signal={s} />
               ))}
             </ul>
@@ -954,7 +1022,7 @@ function SuggestionRow({
 }: {
   suggestion: RecurringRule;
   busy: boolean;
-  onDecide?: AdminNayaTabProps["onDecideSuggestion"];
+  onDecide?: (ruleKey: string, decision: "valide" | "a_revoir" | "rejete") => void;
 }) {
   const constat = suggestion.sampleDetails[0];
   const correctif = suggestion.sampleSuggestions[0];

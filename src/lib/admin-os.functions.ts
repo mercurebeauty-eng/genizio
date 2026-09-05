@@ -695,7 +695,7 @@ export function calculateEliteRanking(
     child_id: string;
     source_type?: string;
     strategy_used?: string;
-  }>
+  }>,
 ): EliteTalentProfile[] {
   const safeChildren = Array.isArray(children) ? children : [];
   const safeTraces = Array.isArray(discoveryTraces) ? discoveryTraces : [];
@@ -745,12 +745,13 @@ export function calculateEliteRanking(
         maxScore * 0.45 +
           Math.min(10, discoveryCount * 2) * 3 +
           plasticityScore * 100 * 0.15 +
-          Math.min(100, xp / 10) * 0.1
-      )
+          Math.min(100, xp / 10) * 0.1,
+      ),
     );
 
     if (compositeScore >= 45 || maxScore >= 60) {
-      let tierBadge: "Top 1% Élite" | "Top 5% Excellence" | "Top 10% Distinction" = "Top 10% Distinction";
+      let tierBadge: "Top 1% Élite" | "Top 5% Excellence" | "Top 10% Distinction" =
+        "Top 10% Distinction";
       let tierColor = "bg-amber-100 text-amber-900 border-amber-300";
 
       if (compositeScore >= 80) {
@@ -789,7 +790,7 @@ export function calculateEliteRanking(
 }
 
 export function calculateTerritoryGuildMatrix(
-  children: Array<{ city?: string | null; talents?: Record<string, any> | null }>
+  children: Array<{ city?: string | null; talents?: Record<string, any> | null }>,
 ): TerritoryGuildMatrixItem[] {
   const safeChildren = Array.isArray(children) ? children : [];
   const cityGroups = new Map<string, Array<Record<string, number>>>();
@@ -853,7 +854,7 @@ export function calculateHybridLicornes(
     city?: string | null;
     talents?: Record<string, any> | null;
   }>,
-  discoveryTraces: Array<{ child_id: string; strategy_used?: string }>
+  discoveryTraces: Array<{ child_id: string; strategy_used?: string }>,
 ): HybridLicorneProfile[] {
   const safeChildren = Array.isArray(children) ? children : [];
   const unicorns: HybridLicorneProfile[] = [];
@@ -1061,7 +1062,9 @@ export const getTalentCityStatsAdmin = createServerFn({ method: "GET" })
         .from("child_profiles")
         .select("id, name, age, city, country, talents, xp, user_id, created_at"),
       supabaseAdmin.from("orders").select("child_id"),
-      supabaseAdmin.from("discovery_traces").select("id, child_id, source_type, strategy_used, ai_behavioral_analysis"),
+      supabaseAdmin
+        .from("discovery_traces")
+        .select("id, child_id, source_type, strategy_used, ai_behavioral_analysis"),
     ]);
 
     if (childrenRes.error) throw new Error(childrenRes.error.message);

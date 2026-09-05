@@ -115,8 +115,14 @@ function Guide() {
       path={PATH}
       related={[
         { label: "Gestion de la colère (5 outils)", to: "/guides/gestion-colere-emotions-enfant" },
-        { label: "Discipline positive sans crier", to: "/guides/discipline-positive-sans-punition" },
-        { label: "Autisme & TDAH : atouts uniques", to: "/guides/autisme-tdah-apprentissage-forces-reelles" },
+        {
+          label: "Discipline positive sans crier",
+          to: "/guides/discipline-positive-sans-punition",
+        },
+        {
+          label: "Autisme & TDAH : atouts uniques",
+          to: "/guides/autisme-tdah-apprentissage-forces-reelles",
+        },
         { label: "Les 9 formes d'intelligence", to: "/guides/intelligences-multiples-gardner" },
       ]}
     >
@@ -148,29 +154,38 @@ function Guide() {
         L'attention se déclenche différemment selon <strong>le format de la tâche</strong> : ce
         qu'elle demande au corps, ce qu'elle produit de visible, et le degré de contrôle laissé à
         l'enfant. Selon les principes de la{" "}
-        <a href="/guides/intelligences-multiples-gardner">théorie des 9 formes d'intelligence</a>, beaucoup d'enfants apprennent avec leur corps (intelligence corporelle-kinesthésique).
+        <a href="/guides/intelligences-multiples-gardner">théorie des 9 formes d'intelligence</a>,
+        beaucoup d'enfants apprennent avec leur corps (intelligence corporelle-kinesthésique).
       </p>
 
       <h3>Trois formats qui changent tout</h3>
       <ul>
         <li>
-          <strong>Le corps et le mouvement :</strong> Certains enfants ont un besoin vital de manipuler pour fixer leur pensée. Leur imposer une immobilité totale coupe leurs circuits d'attention. Découvrez nos{" "}
-          <a href="/guides/activites-manuelles-enfant">18 activités manuelles faciles à la maison</a>.
+          <strong>Le corps et le mouvement :</strong> Certains enfants ont un besoin vital de
+          manipuler pour fixer leur pensée. Leur imposer une immobilité totale coupe leurs circuits
+          d'attention. Découvrez nos{" "}
+          <a href="/guides/activites-manuelles-enfant">
+            18 activités manuelles faciles à la maison
+          </a>
+          .
         </li>
         <li>
-          <strong>Le résultat visible :</strong> Une consigne abstraite (« révise ta leçon ») ne produit rien de tangible. Proposez plutôt l'une de nos{" "}
-          <a href="/guides/activites-educatives-enfant">24 activités éducatives sans écran</a> pour donner un but immédiat à son énergie.
+          <strong>Le résultat visible :</strong> Une consigne abstraite (« révise ta leçon ») ne
+          produit rien de tangible. Proposez plutôt l'une de nos{" "}
+          <a href="/guides/activites-educatives-enfant">24 activités éducatives sans écran</a> pour
+          donner un but immédiat à son énergie.
         </li>
         <li>
-          <strong>La marge de décision :</strong> Un enfant qui choisit son ordre de travail tient deux fois plus longtemps qu'un enfant qui subit un protocole rigide.
+          <strong>La marge de décision :</strong> Un enfant qui choisit son ordre de travail tient
+          deux fois plus longtemps qu'un enfant qui subit un protocole rigide.
         </li>
       </ul>
 
       <h2>La question utile : est-ce partout, ou seulement ici ?</h2>
       <p>
         C'est le point de bascule entre « mon enfant fonctionne autrement » et « mon enfant a
-        peut-être besoin d'un accompagnement spécialisé ». Un professionnel de santé s'intéressera précisément
-        à cette distinction :
+        peut-être besoin d'un accompagnement spécialisé ». Un professionnel de santé s'intéressera
+        précisément à cette distinction :
       </p>
       <ul>
         <li>
@@ -178,50 +193,72 @@ function Guide() {
           activité libre, ou seulement dans un cadre scolaire précis ?
         </li>
         <li>
-          Durent-elles depuis plus de <strong>six mois</strong>, ou sont-elles apparues après un événement précis (déménagement, surconsommation d'
-          <a href="/guides/ecrans-addiction-alternatives-enfant">écrans et réseaux sociaux</a>, conflit familial) ?
+          Durent-elles depuis plus de <strong>six mois</strong>, ou sont-elles apparues après un
+          événement précis (déménagement, surconsommation d'
+          <a href="/guides/ecrans-addiction-alternatives-enfant">écrans et réseaux sociaux</a>,
+          conflit familial) ?
         </li>
         <li>
           Y a-t-il un <strong>retentissement réel</strong> sur ses apprentissages (découvrez comment{" "}
-          <a href="/guides/decrochage-scolaire-confiance-enfant">redonner confiance à un enfant en difficulté scolaire</a>) ?
+          <a href="/guides/decrochage-scolaire-confiance-enfant">
+            redonner confiance à un enfant en difficulté scolaire
+          </a>
+          ) ?
         </li>
         <li>
-          Existe-t-il au moins <strong>une activité</strong> sur laquelle il reste absorbé spontanément ?
+          Existe-t-il au moins <strong>une activité</strong> sur laquelle il reste absorbé
+          spontanément ?
         </li>
       </ul>
       <p>
         Pour mieux comprendre les profils neuroatypiques, lisez notre dossier sur l'
-        <a href="/guides/autisme-tdah-apprentissage-forces-reelles">Autisme & TDAH : valoriser leurs forces d'apprentissage</a> ainsi que notre enquête sur les{" "}
-        <a href="/guides/potentiel-haut-potentiel-enfant">signes du haut potentiel intellectuel (HPI)</a>.
+        <a href="/guides/autisme-tdah-apprentissage-forces-reelles">
+          Autisme & TDAH : valoriser leurs forces d'apprentissage
+        </a>{" "}
+        ainsi que notre enquête sur les{" "}
+        <a href="/guides/potentiel-haut-potentiel-enfant">
+          signes du haut potentiel intellectuel (HPI)
+        </a>
+        .
       </p>
 
       <h2>Observer sans étiqueter : une méthode simple</h2>
       <p>
-        La mémoire parentale retient souvent les moments de crise plutôt que la moyenne. Pour avoir une vision objective :
+        La mémoire parentale retient souvent les moments de crise plutôt que la moyenne. Pour avoir
+        une vision objective :
       </p>
       <ol>
         <li>
-          <strong>Notez la durée réelle :</strong> Pendant deux semaines, notez combien de minutes l'enfant est resté engagé sur chaque type d'activité.
+          <strong>Notez la durée réelle :</strong> Pendant deux semaines, notez combien de minutes
+          l'enfant est resté engagé sur chaque type d'activité.
         </li>
         <li>
-          <strong>Notez le contexte :</strong> Est-ce avant ou après les repas ? Après 1 heure passée devant un écran ?
+          <strong>Notez le contexte :</strong> Est-ce avant ou après les repas ? Après 1 heure
+          passée devant un écran ?
         </li>
         <li>
-          <strong>Cherchez les exceptions :</strong> Les moments où il a tenu longtemps révèlent ses véritables leviers d'attention.
+          <strong>Cherchez les exceptions :</strong> Les moments où il a tenu longtemps révèlent ses
+          véritables leviers d'attention.
         </li>
       </ol>
 
       <h2>Ce qui aide, indépendamment de tout diagnostic</h2>
       <ul>
         <li>
-          <strong>Découper en blocs :</strong> Une tâche de 30 minutes devient 3 séquences de 10 minutes avec une respiration entre chaque.
+          <strong>Découper en blocs :</strong> Une tâche de 30 minutes devient 3 séquences de 10
+          minutes avec une respiration entre chaque.
         </li>
         <li>
-          <strong>Réguler les émotions :</strong> L'agitation cache souvent une grande frustration inexprimée : appliquez nos{" "}
-          <a href="/guides/gestion-colere-emotions-enfant">5 outils pour apaiser la colère de l'enfant</a>.
+          <strong>Réguler les émotions :</strong> L'agitation cache souvent une grande frustration
+          inexprimée : appliquez nos{" "}
+          <a href="/guides/gestion-colere-emotions-enfant">
+            5 outils pour apaiser la colère de l'enfant
+          </a>
+          .
         </li>
         <li>
-          <strong>Pratiquer la discipline positive :</strong> Remplacez les punitions stériles par des conséquences logiques en suivant notre guide sur la{" "}
+          <strong>Pratiquer la discipline positive :</strong> Remplacez les punitions stériles par
+          des conséquences logiques en suivant notre guide sur la{" "}
           <a href="/guides/discipline-positive-sans-punition">discipline positive sans crier</a>.
         </li>
       </ul>
@@ -232,39 +269,53 @@ function Guide() {
         </h3>
         <p className="text-sm text-amber-900 leading-relaxed mb-3">
           Au lieu de lui ordonner de « rester sage », lancez-lui ce défi :{" "}
-          <strong>Construire la plus haute tour en livres et rouleaux de carton en exactement 7 minutes.</strong>
+          <strong>
+            Construire la plus haute tour en livres et rouleaux de carton en exactement 7 minutes.
+          </strong>
         </p>
         <p className="text-sm text-amber-900 leading-relaxed">
-          Il doit manipuler, ajuster l'équilibre et anticiper la chute. À la fin, prenez la photo de sa tour pour son passeport de réussites. Vous observerez une concentration totale, car son corps et son esprit sont mobilisés ensemble.
+          Il doit manipuler, ajuster l'équilibre et anticiper la chute. À la fin, prenez la photo de
+          sa tour pour son passeport de réussites. Vous observerez une concentration totale, car son
+          corps et son esprit sont mobilisés ensemble.
         </p>
       </div>
 
       <h2>Les devoirs avec un enfant qui bouge : 5 règles d'or</h2>
       <p>
-        Le moment des devoirs cristallise les tensions. Voici comment transformer ce moment en réussite :
+        Le moment des devoirs cristallise les tensions. Voici comment transformer ce moment en
+        réussite :
       </p>
       <ul>
         <li>
-          <strong>1. La pause motrice préalable :</strong> 15 minutes de vélo, de course ou de danse avant d'ouvrir les cahiers pour décharger le trop-plein d'énergie.
+          <strong>1. La pause motrice préalable :</strong> 15 minutes de vélo, de course ou de danse
+          avant d'ouvrir les cahiers pour décharger le trop-plein d'énergie.
         </li>
         <li>
-          <strong>2. La position debout acceptée :</strong> Laissez votre enfant réciter sa leçon ou résoudre ses exercices debout, en marchant ou en manipulant une balle anti-stress.
+          <strong>2. La position debout acceptée :</strong> Laissez votre enfant réciter sa leçon ou
+          résoudre ses exercices debout, en marchant ou en manipulant une balle anti-stress.
         </li>
         <li>
-          <strong>3. Le devoir à voix haute :</strong> Transformer la lecture silencieuse en mini-exposé dynamique.
+          <strong>3. Le devoir à voix haute :</strong> Transformer la lecture silencieuse en
+          mini-exposé dynamique.
         </li>
         <li>
-          <strong>4. Une seule consigne à la fois :</strong> Évitez les listes à rallonge qui saturent sa mémoire de travail.
+          <strong>4. Une seule consigne à la fois :</strong> Évitez les listes à rallonge qui
+          saturent sa mémoire de travail.
         </li>
         <li>
-          <strong>5. Les encouragements précis :</strong> Félicitez l'effort fourni et la stratégie utilisée (retrouvez nos conseils pour{" "}
-          <a href="/guides/reussite-scolaire-aider-enfant">aider son enfant à réussir à l'école</a>).
+          <strong>5. Les encouragements précis :</strong> Félicitez l'effort fourni et la stratégie
+          utilisée (retrouvez nos conseils pour{" "}
+          <a href="/guides/reussite-scolaire-aider-enfant">aider son enfant à réussir à l'école</a>
+          ).
         </li>
       </ul>
 
       <h2>Ce que fait Génizio au quotidien</h2>
       <p>
-        Génizio ne pose aucun diagnostic médical. L'application propose des défis d'action adaptés aux 9 formes d'intelligence : réparer, inventer, classer, observer. En photographiant ses réalisations, vous conservez la preuve vivante de ses capacités de persévérance et de créativité.
+        Génizio ne pose aucun diagnostic médical. L'application propose des défis d'action adaptés
+        aux 9 formes d'intelligence : réparer, inventer, classer, observer. En photographiant ses
+        réalisations, vous conservez la preuve vivante de ses capacités de persévérance et de
+        créativité.
       </p>
 
       <h2>Questions fréquentes (FAQ)</h2>

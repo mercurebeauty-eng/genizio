@@ -10,7 +10,10 @@ export function aggregateEducatorsMetrics(
     valid_until: string;
   }>,
 ) {
-  const map = new Map<string, { email: string; activeCount: number; totalCount: number; organization?: string }>();
+  const map = new Map<
+    string,
+    { email: string; activeCount: number; totalCount: number; organization?: string }
+  >();
 
   for (const d of delegations) {
     const email = d.beneficiary_email.toLowerCase();

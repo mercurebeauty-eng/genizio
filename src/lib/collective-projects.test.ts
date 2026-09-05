@@ -13,8 +13,8 @@ describe("collective-projects", () => {
         update: vi.fn().mockReturnThis(),
         eq: vi.fn().mockReturnThis(),
         select: vi.fn().mockReturnThis(),
-        single: vi.fn().mockResolvedValue({ data: { id: "proj-123" }, error: null })
-      })
+        single: vi.fn().mockResolvedValue({ data: { id: "proj-123" }, error: null }),
+      }),
     };
   });
 
@@ -25,35 +25,37 @@ describe("collective-projects", () => {
       contextType: "discovery_free",
       participants: [
         { childId: "c1", teamRole: "concepteur", implicationLevel: "pilier" },
-        { childId: "c2", teamRole: "soudeur", implicationLevel: "contributeur" }
-      ]
+        { childId: "c2", teamRole: "soudeur", implicationLevel: "contributeur" },
+      ],
     };
 
     // Simulation manuelle de l'exécution du handler
     const projectInsert = mockSupabase.from("collective_projects").insert;
-    
+
     // Le projet unique est créé
     projectInsert({
       title: data.title,
       domain: data.domain,
       context_type: data.contextType,
-      outcome_status: "completed"
+      outcome_status: "completed",
     });
 
-    expect(projectInsert).toHaveBeenCalledWith(expect.objectContaining({
-      title: "Construire un mini-drone"
-    }));
+    expect(projectInsert).toHaveBeenCalledWith(
+      expect.objectContaining({
+        title: "Construire un mini-drone",
+      }),
+    );
 
     // Simulation: la création du projet retourne 'proj-123'
     const projectId = "proj-123";
 
     // Les participants sont reliés
-    const participantRows = data.participants.map(p => ({
+    const participantRows = data.participants.map((p) => ({
       project_id: projectId,
       child_id: p.childId,
       team_role: p.teamRole,
       implication_level: p.implicationLevel,
-      supervisor_tags: []
+      supervisor_tags: [],
     }));
 
     expect(participantRows).toHaveLength(2);

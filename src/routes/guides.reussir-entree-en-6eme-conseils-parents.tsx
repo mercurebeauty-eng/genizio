@@ -1,13 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { GuideLayout } from "@/components/guides/GuideLayout";
 import { Button } from "@/components/ui/button";
-import {
-  pageMeta,
-  jsonLdScript,
-  faqPageJsonLd,
-  breadcrumbJsonLd,
-  articleJsonLd,
-} from "@/lib/seo";
+import { pageMeta, jsonLdScript, faqPageJsonLd, breadcrumbJsonLd, articleJsonLd } from "@/lib/seo";
 import {
   GraduationCap,
   Calendar,
@@ -38,7 +32,8 @@ const FAQ = [
       "Rassurez-le. Les surveillants et les professeurs se montrent très attentifs avec les sixièmes en septembre. Glissez un plan annoté du collège dans son carnet pour apaiser ses doutes.",
   },
   {
-    question: "Mon enfant ne connaît personne au collège : comment l'aider à se faire des copains ?",
+    question:
+      "Mon enfant ne connaît personne au collège : comment l'aider à se faire des copains ?",
     answer:
       "Rappelez-lui que presque tous les nouveaux sixièmes arrivent avec la même appréhension. Proposez-lui de s'inscrire dès la deuxième semaine à un club du midi (association sportive, chorale, club d'échecs ou de sciences). Les affinités se créent beaucoup plus vite autour d'un jeu ou d'un projet partagé que sous le regard intimidant de la grande cour.",
   },
@@ -142,11 +137,11 @@ function Guide() {
 
       <h2>1. Le grand saut CM2 – 6ème : comprendre ce qui change vraiment</h2>
       <p>
-        En primaire, l'élève évoluait auprès d'un maître unique. Au collège, le cadre s'élargit brutalement avec près de dix professeurs aux exigences divergentes, des sonneries qui dictent chaque heure et des couloirs où se croisent des centaines d'inconnus.
+        En primaire, l'élève évoluait auprès d'un maître unique. Au collège, le cadre s'élargit
+        brutalement avec près de dix professeurs aux exigences divergentes, des sonneries qui
+        dictent chaque heure et des couloirs où se croisent des centaines d'inconnus.
       </p>
-      <p>
-        L'adaptation prend du temps.
-      </p>
+      <p>L'adaptation prend du temps.</p>
 
       <div className="my-6 overflow-x-auto">
         <table className="w-full min-w-[540px] border-collapse rounded-2xl border border-ink/10 bg-white text-left text-sm shadow-sm">
@@ -184,11 +179,10 @@ function Guide() {
 
       <h2>2. Dompter l'emploi du temps et le cartable : la méthode zéro oubli</h2>
       <p>
-        Peur d'oublier un cahier ? Le sac se remplit de tous les manuels et pèse rapidement dix kilos.
+        Peur d'oublier un cahier ? Le sac se remplit de tous les manuels et pèse rapidement dix
+        kilos.
       </p>
-      <p>
-        Soulagez son dos grâce à cette organisation visuelle en trois gestes :
-      </p>
+      <p>Soulagez son dos grâce à cette organisation visuelle en trois gestes :</p>
 
       <div className="my-6 grid gap-4 sm:grid-cols-3">
         <div className="rounded-2xl border border-ink/10 bg-surface/60 p-5 shadow-sm">
@@ -197,7 +191,9 @@ function Guide() {
             1. Le code couleur
           </div>
           <p className="text-sm leading-relaxed text-ink/80">
-            Associez par exemple une pochette bleue au français et un protège-livre vert aux mathématiques, de sorte que l'enfant repère ses affaires en un clin d'œil sans ouvrir son cartable.
+            Associez par exemple une pochette bleue au français et un protège-livre vert aux
+            mathématiques, de sorte que l'enfant repère ses affaires en un clin d'œil sans ouvrir
+            son cartable.
           </p>
         </div>
 
@@ -207,7 +203,8 @@ function Guide() {
             2. Le planning Semaine A / B
           </div>
           <p className="text-sm leading-relaxed text-ink/80">
-            Affichez son emploi du temps en très grand format au-dessus de sa table de travail, en surlignant d'un coup de feutre fluo les cours qui alternent selon les quinzaines.
+            Affichez son emploi du temps en très grand format au-dessus de sa table de travail, en
+            surlignant d'un coup de feutre fluo les cours qui alternent selon les quinzaines.
           </p>
         </div>
 
@@ -217,32 +214,41 @@ function Guide() {
             3. Le sac bouclé la veille
           </div>
           <p className="text-sm leading-relaxed text-ink/80">
-            Le cartable se prépare toujours avant le dîner, ce qui évite les paniques matinales où l'on découvre à sept heures et demie qu'il manque la blouse de sciences.
+            Le cartable se prépare toujours avant le dîner, ce qui évite les paniques matinales où
+            l'on découvre à sept heures et demie qu'il manque la blouse de sciences.
           </p>
         </div>
       </div>
 
       <h2>3. Devoirs du soir : installer le réflexe de l'anticipation</h2>
       <p>
-        Attendre la veille pour réviser un contrôle d'histoire conduit droit aux larmes du dimanche soir.
+        Attendre la veille pour réviser un contrôle d'histoire conduit droit aux larmes du dimanche
+        soir.
       </p>
-      <p>
-        Découpez le travail en trois blocs clairs :
-      </p>
+      <p>Découpez le travail en trois blocs clairs :</p>
       <ul>
-        <li><strong>L'urgence du lendemain :</strong> relire les cours du jour et faire les exercices courts demandés pour le cours suivant.</li>
-        <li><strong>L'avance sur trois jours :</strong> lire quelques pages ou faire un exercice dont l'échéance tombe plus tard dans la semaine.</li>
-        <li><strong>Le projet du week-end :</strong> répartir les révisions lourdes sur deux séances de 25 minutes plutôt qu'un marathon de deux heures (retrouvez nos repères dans notre guide sur{" "}
-        <a href="/guides/reussite-scolaire-aider-enfant">la réussite scolaire sans stress</a>).</li>
+        <li>
+          <strong>L'urgence du lendemain :</strong> relire les cours du jour et faire les exercices
+          courts demandés pour le cours suivant.
+        </li>
+        <li>
+          <strong>L'avance sur trois jours :</strong> lire quelques pages ou faire un exercice dont
+          l'échéance tombe plus tard dans la semaine.
+        </li>
+        <li>
+          <strong>Le projet du week-end :</strong> répartir les révisions lourdes sur deux séances
+          de 25 minutes plutôt qu'un marathon de deux heures (retrouvez nos repères dans notre guide
+          sur <a href="/guides/reussite-scolaire-aider-enfant">la réussite scolaire sans stress</a>
+          ).
+        </li>
       </ul>
 
       <h2>4. Vie sociale et confiance : trouver sa place parmi les grands</h2>
       <p>
-        Le collège rassemble des élèves de 10 à 15 ans. Côtoyer des troisièmes dans la cour intimide parfois.
+        Le collège rassemble des élèves de 10 à 15 ans. Côtoyer des troisièmes dans la cour intimide
+        parfois.
       </p>
-      <p>
-        Deux réflexes aident à fortifier son assurance :
-      </p>
+      <p>Deux réflexes aident à fortifier son assurance :</p>
 
       <div className="my-6 grid gap-4 md:grid-cols-2">
         <div className="rounded-2xl border border-ink/10 bg-surface/50 p-5">
@@ -251,7 +257,9 @@ function Guide() {
             Écouter sans dramatiser
           </div>
           <p className="text-sm leading-relaxed text-ink/80">
-            Le soir, demandez-lui avec qui il a discuté à la cantine ou ce qui l'a fait sourire, plutôt que de l'assaillir immédiatement de questions sur ses notes. Les amitiés solides prennent du temps.
+            Le soir, demandez-lui avec qui il a discuté à la cantine ou ce qui l'a fait sourire,
+            plutôt que de l'assaillir immédiatement de questions sur ses notes. Les amitiés solides
+            prennent du temps.
           </p>
         </div>
 
@@ -261,7 +269,8 @@ function Guide() {
             Valoriser ses passions
           </div>
           <p className="text-sm leading-relaxed text-ink/80">
-            Encouragez-le à s'inscrire à l'Association Sportive ou à un club d'échecs du collège : c'est le moyen le plus direct pour nouer des liens autour d'un intérêt partagé.
+            Encouragez-le à s'inscrire à l'Association Sportive ou à un club d'échecs du collège :
+            c'est le moyen le plus direct pour nouer des liens autour d'un intérêt partagé.
           </p>
         </div>
       </div>
@@ -272,21 +281,23 @@ function Guide() {
 
       <h2>5. Les premières notes : garder le cap sans paniquer</h2>
       <p>
-        Fin octobre tombent les premiers contrôles. Une baisse d'un point sur la moyenne générale est fréquente au premier trimestre. Rien d'alarmant.
+        Fin octobre tombent les premiers contrôles. Une baisse d'un point sur la moyenne générale
+        est fréquente au premier trimestre. Rien d'alarmant.
       </p>
-      <p>
-        Trois règles simples pour réagir :
-      </p>
+      <p>Trois règles simples pour réagir :</p>
       <ol className="my-6 space-y-3">
         <li>
-          <strong>Distinguer la méthode de la capacité :</strong> Une mauvaise note en sixième sanctionne un manque d'organisation, jamais un manque d'intelligence.
+          <strong>Distinguer la méthode de la capacité :</strong> Une mauvaise note en sixième
+          sanctionne un manque d'organisation, jamais un manque d'intelligence.
         </li>
         <li>
-          <strong>Corriger sans s'énerver :</strong> Analysez ensemble les erreurs selon les principes de{" "}
+          <strong>Corriger sans s'énerver :</strong> Analysez ensemble les erreurs selon les
+          principes de{" "}
           <a href="/guides/discipline-positive-sans-punition">discipline positive sans punition</a>.
         </li>
         <li>
-          <strong>Fixer un repère de progrès :</strong> Sur le contrôle suivant, ciblez un point précis comme le soin ou la relecture.
+          <strong>Fixer un repère de progrès :</strong> Sur le contrôle suivant, ciblez un point
+          précis comme le soin ou la relecture.
         </li>
       </ol>
 
@@ -298,7 +309,11 @@ function Guide() {
           </h3>
         </div>
         <p className="mt-3 text-sm leading-relaxed text-ink/80">
-          Prenez son planning de la semaine. Lancez trois défis chrono : <em>« Trouve la salle de SVT du mardi »</em>, <em>« Quel cahier faut-il jeudi matin ? »</em>, <em>« Quel cours alterne en semaine B ? »</em>. Un jeu rapide pour ancrer ses repères d'autonomie.
+          Prenez son planning de la semaine. Lancez trois défis chrono :{" "}
+          <em>« Trouve la salle de SVT du mardi »</em>,{" "}
+          <em>« Quel cahier faut-il jeudi matin ? »</em>,{" "}
+          <em>« Quel cours alterne en semaine B ? »</em>. Un jeu rapide pour ancrer ses repères
+          d'autonomie.
         </p>
         <div className="mt-6 flex flex-wrap gap-4">
           <Button asChild size="lg" className="rounded-full">
@@ -308,9 +323,7 @@ function Guide() {
             </Link>
           </Button>
           <Button asChild variant="outline" size="lg" className="rounded-full">
-            <Link to="/guides/autonomie-responsabilite-maison">
-              Voir nos repères d'autonomie
-            </Link>
+            <Link to="/guides/autonomie-responsabilite-maison">Voir nos repères d'autonomie</Link>
           </Button>
         </div>
       </div>

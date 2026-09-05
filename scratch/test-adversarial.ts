@@ -194,19 +194,25 @@ runTest("safeJsonParse recovers unclosed braces in truncated LLM JSON", () => {
 // 9. Academic field normalizers and Postgres DB Check constraint compatibility
 runTest("Academic field resolvers strictly enforce Postgres check constraints", () => {
   // Subject
-  if (resolveAcademicSubject("physique-chimie") !== "sciences") throw new Error("physique-chimie -> sciences");
-  if (resolveAcademicSubject("Mathématiques") !== "maths") throw new Error("Mathématiques -> maths");
+  if (resolveAcademicSubject("physique-chimie") !== "sciences")
+    throw new Error("physique-chimie -> sciences");
+  if (resolveAcademicSubject("Mathématiques") !== "maths")
+    throw new Error("Mathématiques -> maths");
   if (resolveAcademicSubject("inconnu_xyz") !== null) throw new Error("inconnu -> null");
 
   // Grade level
-  if (resolveAcademicGradeLevel("Licence 1 (Bac+1)") !== "Bac+1") throw new Error("Licence 1 -> Bac+1");
-  if (resolveAcademicGradeLevel("Terminale S") !== "Terminale") throw new Error("Terminale S -> Terminale");
+  if (resolveAcademicGradeLevel("Licence 1 (Bac+1)") !== "Bac+1")
+    throw new Error("Licence 1 -> Bac+1");
+  if (resolveAcademicGradeLevel("Terminale S") !== "Terminale")
+    throw new Error("Terminale S -> Terminale");
   if (resolveAcademicGradeLevel("6ème") !== "6eme") throw new Error("6ème -> 6eme");
   if (resolveAcademicGradeLevel("Doctorat 3") !== null) throw new Error("Doctorat 3 -> null");
 
   // Behavioral driver
-  if (resolveBehavioralDriver("Déconstruire") !== "deconstruire") throw new Error("Déconstruire -> deconstruire");
-  if (resolveBehavioralDriver("investiguer") !== "enqueter") throw new Error("investiguer -> enqueter");
+  if (resolveBehavioralDriver("Déconstruire") !== "deconstruire")
+    throw new Error("Déconstruire -> deconstruire");
+  if (resolveBehavioralDriver("investiguer") !== "enqueter")
+    throw new Error("investiguer -> enqueter");
   if (resolveBehavioralDriver("inconnu") !== null) throw new Error("inconnu -> null");
 
   // ZPA level
@@ -225,14 +231,17 @@ runTest("Wrapped structures unpacked properly", () => {
 });
 
 // 11. Raw single-escaped LaTeX formulas in description and academic_secret
-runTest("safeJsonParse handles raw single-escaped LaTeX formulas (\\frac, \\sqrt, \\alpha, \\times, \\pm, \\Delta)", () => {
-  const raw = `{"title": "Défi Maths", "description": "Calculer \\frac{1}{2} avec \\sqrt{x} et \\alpha + \\beta", "academic_secret": "Utilise $x \\times y \\pm \\Delta$ avec \\pi \\approx 3.14"}`;
-  const data: any = safeJsonParse(raw);
-  const parsed = ChallengeSchema.parse(data);
-  if (!parsed.description.includes("frac") || !parsed.academic_secret?.includes("times")) {
-    throw new Error("Failed to parse LaTeX expressions");
-  }
-});
+runTest(
+  "safeJsonParse handles raw single-escaped LaTeX formulas (\\frac, \\sqrt, \\alpha, \\times, \\pm, \\Delta)",
+  () => {
+    const raw = `{"title": "Défi Maths", "description": "Calculer \\frac{1}{2} avec \\sqrt{x} et \\alpha + \\beta", "academic_secret": "Utilise $x \\times y \\pm \\Delta$ avec \\pi \\approx 3.14"}`;
+    const data: any = safeJsonParse(raw);
+    const parsed = ChallengeSchema.parse(data);
+    if (!parsed.description.includes("frac") || !parsed.academic_secret?.includes("times")) {
+      throw new Error("Failed to parse LaTeX expressions");
+    }
+  },
+);
 
 // 12. Literal newlines and control characters inside strings
 runTest("safeJsonParse repairs literal newlines and control characters inside strings", () => {
@@ -263,7 +272,8 @@ runTest("safeJsonParse converts single-quoted JSON structures", () => {
   const raw = `{'title': 'Défi en single quotes', 'domain': 'Sciences', 'steps': ['E1', 'E2']}`;
   const data: any = safeJsonParse(raw);
   const parsed = ChallengeSchema.parse(data);
-  if (parsed.title !== "Défi en single quotes") throw new Error("Failed to parse single-quoted JSON");
+  if (parsed.title !== "Défi en single quotes")
+    throw new Error("Failed to parse single-quoted JSON");
 });
 
 // 16. BOM and non-breaking spaces
@@ -279,7 +289,11 @@ runTest("safeJsonParse handles advanced LaTeX commands starting with b, f, n, r,
   const raw = `{"title": "Défi Physique Quantique", "description": "Calculer \\nabla f + \\beta \\times \\binom{n}{k} avec \\forall x, x \\neq 0 \\implies \\rho \\to \\tau", "academic_secret": "Utilise \\frac{\\partial y}{\\partial x}"}`;
   const data: any = safeJsonParse(raw);
   const parsed = ChallengeSchema.parse(data);
-  if (!parsed.description.includes("nabla") || !parsed.description.includes("beta") || !parsed.description.includes("rho")) {
+  if (
+    !parsed.description.includes("nabla") ||
+    !parsed.description.includes("beta") ||
+    !parsed.description.includes("rho")
+  ) {
     throw new Error("Failed to parse advanced LaTeX math notation");
   }
 });
@@ -306,7 +320,8 @@ runTest("safeJsonParse handles multi-line single-quoted JSON with French apostro
   const raw = `{\n  'title': 'L\'énigme de l\'arbre',\n  'description': 'L\'oiseau vole vers l\'eau',\n  'steps': ['Observer l\'arbre']\n}`;
   const data: any = safeJsonParse(raw);
   const parsed = ChallengeSchema.parse(data);
-  if (parsed.title !== "L'énigme de l'arbre") throw new Error(`Expected L'énigme de l'arbre, got ${parsed.title}`);
+  if (parsed.title !== "L'énigme de l'arbre")
+    throw new Error(`Expected L'énigme de l'arbre, got ${parsed.title}`);
 });
 
 // 21. Truncated JSON preceded by conversational text without closing brace
@@ -326,4 +341,3 @@ runTest("safeJsonParse handles truncated string ending with a dangling backslash
 });
 
 console.log(`\nAdversarial Summary: ${passed} passed, ${failed} failed (${passed + failed} total)`);
-

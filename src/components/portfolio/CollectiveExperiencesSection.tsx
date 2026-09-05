@@ -14,16 +14,15 @@ export function CollectiveExperiencesSection({ graph }: CollectiveExperiencesSec
   }
 
   // Trier les tags par occurrence
-  const sortedTags = Object.entries(graph.behavioralSummary.tagsFrequency)
-    .sort((a, b) => b[1].count - a[1].count);
+  const sortedTags = Object.entries(graph.behavioralSummary.tagsFrequency).sort(
+    (a, b) => b[1].count - a[1].count,
+  );
 
   return (
     <div className="space-y-6 mt-12 mb-12">
       <div className="flex items-center gap-2 mb-4">
         <Users className="w-6 h-6 text-indigo-600" />
-        <h2 className="text-2xl font-display font-bold text-ink">
-          Projets d'Équipe & Coopération
-        </h2>
+        <h2 className="text-2xl font-display font-bold text-ink">Projets d'Équipe & Coopération</h2>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -35,17 +34,22 @@ export function CollectiveExperiencesSection({ graph }: CollectiveExperiencesSec
               Compétences Démontrées
             </CardTitle>
             <CardDescription>
-              Preuves comportementales issues de {graph.behavioralSummary.totalProjects} projets collectifs
+              Preuves comportementales issues de {graph.behavioralSummary.totalProjects} projets
+              collectifs
             </CardDescription>
           </CardHeader>
           <CardContent>
             <div className="flex flex-wrap gap-2">
               {sortedTags.length > 0 ? (
                 sortedTags.map(([tag, data]) => (
-                  <Badge 
-                    key={tag} 
+                  <Badge
+                    key={tag}
                     variant={data.impact === "positive" ? "default" : "secondary"}
-                    className={data.impact === "positive" ? "bg-indigo-600 hover:bg-indigo-700" : "opacity-80"}
+                    className={
+                      data.impact === "positive"
+                        ? "bg-indigo-600 hover:bg-indigo-700"
+                        : "opacity-80"
+                    }
                   >
                     {tag} ({data.count} observation{data.count > 1 ? "s" : ""})
                   </Badge>
@@ -71,9 +75,14 @@ export function CollectiveExperiencesSection({ graph }: CollectiveExperiencesSec
           <CardContent>
             <div className="flex flex-wrap gap-2">
               {Object.entries(graph.roleSummary.rolesFrequency).map(([role, count]) => (
-                <div key={role} className="flex items-center gap-1.5 px-3 py-1 bg-white border border-indigo-100 rounded-full text-sm">
+                <div
+                  key={role}
+                  className="flex items-center gap-1.5 px-3 py-1 bg-white border border-indigo-100 rounded-full text-sm"
+                >
                   <span className="font-medium capitalize text-indigo-900">{role}</span>
-                  <span className="text-indigo-400 bg-indigo-50 px-1.5 py-0.5 rounded-full text-xs">{count}</span>
+                  <span className="text-indigo-400 bg-indigo-50 px-1.5 py-0.5 rounded-full text-xs">
+                    {count}
+                  </span>
                 </div>
               ))}
             </div>
@@ -89,27 +98,42 @@ export function CollectiveExperiencesSection({ graph }: CollectiveExperiencesSec
               Compétences Triangulées (Multi-Contextes)
             </CardTitle>
             <CardDescription>
-              Capacités démontrées avec succès dans plusieurs contextes (individuel, équipe, tutorat, etc.)
+              Capacités démontrées avec succès dans plusieurs contextes (individuel, équipe,
+              tutorat, etc.)
             </CardDescription>
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
-              {graph.triangulatedCompetencies.map(hyp => {
-                const uniqueContexts = Array.from(new Set(hyp.evidence.filter(e => e.success).map(e => e.context)));
-                
+              {graph.triangulatedCompetencies.map((hyp) => {
+                const uniqueContexts = Array.from(
+                  new Set(hyp.evidence.filter((e) => e.success).map((e) => e.context)),
+                );
+
                 return (
-                  <div key={hyp.id} className="p-3 bg-white rounded-lg border border-emerald-100 flex flex-col md:flex-row md:items-center justify-between gap-4">
+                  <div
+                    key={hyp.id}
+                    className="p-3 bg-white rounded-lg border border-emerald-100 flex flex-col md:flex-row md:items-center justify-between gap-4"
+                  >
                     <div>
-                      <h4 className="font-bold text-emerald-900 capitalize">{hyp.competenceKey.replace(/_/g, " ")}</h4>
+                      <h4 className="font-bold text-emerald-900 capitalize">
+                        {hyp.competenceKey.replace(/_/g, " ")}
+                      </h4>
                       <p className="text-sm text-emerald-700/80 mt-1">
-                        Solidité : <strong className="text-emerald-800">{Math.round(hyp.confidence * 100)}%</strong> 
-                        {" "} • Confirmée dans {uniqueContexts.length}/4 contextes
+                        Solidité :{" "}
+                        <strong className="text-emerald-800">
+                          {Math.round(hyp.confidence * 100)}%
+                        </strong>{" "}
+                        • Confirmée dans {uniqueContexts.length}/4 contextes
                       </p>
                     </div>
                     <div className="flex gap-2 shrink-0">
-                      {uniqueContexts.map(ctx => (
-                        <Badge key={ctx} variant="outline" className="bg-emerald-50 text-emerald-700 border-emerald-200">
-                          {ctx.split('_').pop()}
+                      {uniqueContexts.map((ctx) => (
+                        <Badge
+                          key={ctx}
+                          variant="outline"
+                          className="bg-emerald-50 text-emerald-700 border-emerald-200"
+                        >
+                          {ctx.split("_").pop()}
                         </Badge>
                       ))}
                     </div>
@@ -129,15 +153,22 @@ export function CollectiveExperiencesSection({ graph }: CollectiveExperiencesSec
               Écologie d'Apprentissage & Clés d'Épanouissement
             </CardTitle>
             <CardDescription>
-              Conditions environnementales et relationnelles dans lesquelles le potentiel de l'enfant se libère avec le plus de fluidité
+              Conditions environnementales et relationnelles dans lesquelles le potentiel de
+              l'enfant se libère avec le plus de fluidité
             </CardDescription>
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
               {graph.mobilizationInsights.map((insight, idx) => (
-                <div key={idx} className="p-4 bg-white/80 backdrop-blur-sm rounded-xl border border-indigo-100 shadow-xs">
+                <div
+                  key={idx}
+                  className="p-4 bg-white/80 backdrop-blur-sm rounded-xl border border-indigo-100 shadow-xs"
+                >
                   <div className="flex items-center justify-between gap-2 mb-2">
-                    <Badge variant="outline" className="bg-indigo-50 text-indigo-800 border-indigo-200 font-medium">
+                    <Badge
+                      variant="outline"
+                      className="bg-indigo-50 text-indigo-800 border-indigo-200 font-medium"
+                    >
                       {insight.optimalContext}
                     </Badge>
                     <span className="text-xs text-indigo-500 font-medium">
@@ -166,17 +197,27 @@ export function CollectiveExperiencesSection({ graph }: CollectiveExperiencesSec
         </h3>
         <div className="space-y-4">
           {graph.experiences.map((exp) => (
-            <div key={exp.id} className="flex flex-col sm:flex-row gap-4 p-4 rounded-xl border border-divider-soft bg-surface">
+            <div
+              key={exp.id}
+              className="flex flex-col sm:flex-row gap-4 p-4 rounded-xl border border-divider-soft bg-surface"
+            >
               {exp.proofImageUrl && (
                 <div className="w-full sm:w-32 h-24 shrink-0 rounded-lg overflow-hidden bg-divider-subtle">
-                  <img src={exp.proofImageUrl} alt={exp.title} className="w-full h-full object-cover" />
+                  <img
+                    src={exp.proofImageUrl}
+                    alt={exp.title}
+                    className="w-full h-full object-cover"
+                  />
                 </div>
               )}
               <div className="flex-1">
                 <div className="flex justify-between items-start mb-1">
                   <h4 className="font-bold text-ink">{exp.title}</h4>
                   <span className="text-xs text-ink-muted">
-                    {new Date(exp.occurredAt).toLocaleDateString("fr-FR", { year: "numeric", month: "long" })}
+                    {new Date(exp.occurredAt).toLocaleDateString("fr-FR", {
+                      year: "numeric",
+                      month: "long",
+                    })}
                   </span>
                 </div>
                 <div className="text-sm text-ink-muted mb-2">
@@ -184,19 +225,22 @@ export function CollectiveExperiencesSection({ graph }: CollectiveExperiencesSec
                   <span className="mx-2">•</span>
                   Rôle : <strong className="capitalize text-ink">{exp.role}</strong>
                   {exp.implication !== "non_specifie" && (
-                     <span className="ml-1 text-xs px-1.5 py-0.5 rounded-sm bg-indigo-50 text-indigo-700 capitalize">
-                       ({exp.implication.replace("_", " ")})
-                     </span>
+                    <span className="ml-1 text-xs px-1.5 py-0.5 rounded-sm bg-indigo-50 text-indigo-700 capitalize">
+                      ({exp.implication.replace("_", " ")})
+                    </span>
                   )}
                 </div>
                 {exp.supervisorTags.length > 0 && (
                   <div className="flex flex-wrap gap-1.5 mt-2">
                     {exp.supervisorTags.map((tag, i) => (
-                      <span key={i} className={`text-[11px] px-2 py-0.5 rounded-full border ${
-                        tag.impact === 'positive' 
-                          ? 'border-emerald-200 bg-emerald-50 text-emerald-700' 
-                          : 'border-rose-200 bg-rose-50 text-rose-700'
-                      }`}>
+                      <span
+                        key={i}
+                        className={`text-[11px] px-2 py-0.5 rounded-full border ${
+                          tag.impact === "positive"
+                            ? "border-emerald-200 bg-emerald-50 text-emerald-700"
+                            : "border-rose-200 bg-rose-50 text-rose-700"
+                        }`}
+                      >
                         {tag.tag}
                       </span>
                     ))}
@@ -205,8 +249,10 @@ export function CollectiveExperiencesSection({ graph }: CollectiveExperiencesSec
                 {exp.supervisorProvenance && (
                   <div className="mt-2 text-xs text-indigo-600/80 bg-indigo-50/50 px-2 py-1 rounded inline-flex items-center gap-1 border border-indigo-100/50">
                     <Workflow className="w-3 h-3" />
-                    Observé par <span className="font-semibold">{exp.supervisorProvenance.supervisorId}</span> 
-                    dans le cadre : <span className="italic">{exp.supervisorProvenance.contextName}</span>
+                    Observé par{" "}
+                    <span className="font-semibold">{exp.supervisorProvenance.supervisorId}</span>
+                    dans le cadre :{" "}
+                    <span className="italic">{exp.supervisorProvenance.contextName}</span>
                   </div>
                 )}
               </div>

@@ -5,7 +5,7 @@ import {
   mapDiscoveryDifficultyToLevelAge,
   type ObservationEvidence,
   sampleTargetLevelForChallenge,
-  formatDynamicCapabilityInstruction
+  formatDynamicCapabilityInstruction,
 } from "./dynamic-capability";
 
 describe("dynamic-capability engine", () => {
@@ -94,16 +94,16 @@ describe("dynamic-capability engine", () => {
           proofWeight: 1.0, // Photo validated
           outcomeStatus: "functional",
           occurredAt: d(0),
-        }
+        },
       ];
       const state = calibrateDomainCapability(childAge, "sciences", evidences);
-      
+
       // w = 0.9 * 1.0 * 0.9 * 1.0 = 0.81
       // stable = 8 (hasn't been consolidated yet, just 1 success)
       // explore push = 0.81 * (11 - 8) = 0.81 * 3 = 2.43
       // explore = 8 + 2.43 = 10.43 -> rounded to 10
       // peak = 11
-      
+
       expect(state.stableLevelAge).toBe(8);
       expect(state.exploratoryLevelAge).toBe(10);
       expect(state.peakLevelAge).toBe(11);
@@ -114,20 +114,20 @@ describe("dynamic-capability engine", () => {
         {
           source: "discovery_trace",
           domain: "sciences",
-          demonstratedLevelAge: 11, 
+          demonstratedLevelAge: 11,
           autonomyWeight: 0.3, // copy-paste
           perseveranceWeight: 0.5,
           metacognitiveWeight: 0.5,
           proofWeight: 0.7,
           outcomeStatus: "functional",
           occurredAt: d(0),
-        }
+        },
       ];
       const state = calibrateDomainCapability(childAge, "sciences", evidences);
-      
+
       // w = 0.3 * 0.5 * 0.5 * 0.7 = 0.0525 (low signal)
       // w is < 0.5 so it shouldn't trigger the "montée opportuniste" at all!
-      
+
       expect(state.stableLevelAge).toBe(8);
       expect(state.exploratoryLevelAge).toBe(8);
       expect(state.peakLevelAge).toBe(8); // Did not register as credible peak
@@ -138,7 +138,7 @@ describe("dynamic-capability engine", () => {
         {
           source: "challenge",
           domain: "sciences",
-          demonstratedLevelAge: 9, 
+          demonstratedLevelAge: 9,
           autonomyWeight: 1.0,
           perseveranceWeight: 1.0,
           metacognitiveWeight: 1.0,
@@ -149,16 +149,16 @@ describe("dynamic-capability engine", () => {
         {
           source: "challenge",
           domain: "sciences",
-          demonstratedLevelAge: 9, 
+          demonstratedLevelAge: 9,
           autonomyWeight: 1.0,
           perseveranceWeight: 1.0,
           metacognitiveWeight: 1.0,
           proofWeight: 1.0,
           outcomeStatus: "completed",
           occurredAt: d(2),
-        }
+        },
       ];
-      
+
       const state = calibrateDomainCapability(childAge, "sciences", evidences);
       expect(state.stableLevelAge).toBe(9); // Consolidated!
       expect(state.exploratoryLevelAge).toBe(9);
@@ -168,31 +168,56 @@ describe("dynamic-capability engine", () => {
     it("should amortize decay on repeated failures (inertial recalibration)", () => {
       // First, get an exploratory level of 10
       const evidences: ObservationEvidence[] = [
-        { // Boom, peak at 12, strong evidence
-          source: "discovery_trace", domain: "sciences", demonstratedLevelAge: 12,
-          autonomyWeight: 0.9, perseveranceWeight: 1.0, metacognitiveWeight: 0.9, proofWeight: 1.0,
-          outcomeStatus: "functional", occurredAt: d(1)
+        {
+          // Boom, peak at 12, strong evidence
+          source: "discovery_trace",
+          domain: "sciences",
+          demonstratedLevelAge: 12,
+          autonomyWeight: 0.9,
+          perseveranceWeight: 1.0,
+          metacognitiveWeight: 0.9,
+          proofWeight: 1.0,
+          outcomeStatus: "functional",
+          occurredAt: d(1),
         },
         // explore is now around 8 + 0.81*(4) = 11.24 -> 11
-        
+
         // Then we fail at 11
         {
-          source: "challenge", domain: "sciences", demonstratedLevelAge: 11,
-          autonomyWeight: 1.0, perseveranceWeight: 1.0, metacognitiveWeight: 1.0, proofWeight: 1.0,
-          outcomeStatus: "failed", occurredAt: d(2)
+          source: "challenge",
+          domain: "sciences",
+          demonstratedLevelAge: 11,
+          autonomyWeight: 1.0,
+          perseveranceWeight: 1.0,
+          metacognitiveWeight: 1.0,
+          proofWeight: 1.0,
+          outcomeStatus: "failed",
+          occurredAt: d(2),
         },
         // We fail again at 11 -> explore decays to 10.5
         {
-          source: "challenge", domain: "sciences", demonstratedLevelAge: 11,
-          autonomyWeight: 1.0, perseveranceWeight: 1.0, metacognitiveWeight: 1.0, proofWeight: 1.0,
-          outcomeStatus: "failed", occurredAt: d(3)
+          source: "challenge",
+          domain: "sciences",
+          demonstratedLevelAge: 11,
+          autonomyWeight: 1.0,
+          perseveranceWeight: 1.0,
+          metacognitiveWeight: 1.0,
+          proofWeight: 1.0,
+          outcomeStatus: "failed",
+          occurredAt: d(3),
         },
         // We fail at 10.5 -> explore decays to 10
         {
-          source: "challenge", domain: "sciences", demonstratedLevelAge: 10.5,
-          autonomyWeight: 1.0, perseveranceWeight: 1.0, metacognitiveWeight: 1.0, proofWeight: 1.0,
-          outcomeStatus: "failed", occurredAt: d(4)
-        }
+          source: "challenge",
+          domain: "sciences",
+          demonstratedLevelAge: 10.5,
+          autonomyWeight: 1.0,
+          perseveranceWeight: 1.0,
+          metacognitiveWeight: 1.0,
+          proofWeight: 1.0,
+          outcomeStatus: "failed",
+          occurredAt: d(4),
+        },
       ];
 
       const state = calibrateDomainCapability(childAge, "sciences", evidences);
@@ -216,7 +241,7 @@ describe("dynamic-capability engine", () => {
       exploratoryLevelAge: 7,
       peakLevelAge: 9,
       confidence: 1,
-      evidenceCount: 10
+      evidenceCount: 10,
     };
 
     it("should return stable or stable+1 for < 0.70", () => {
@@ -225,18 +250,25 @@ describe("dynamic-capability engine", () => {
     });
 
     it("should return explore for < 0.95", () => {
-      expect(sampleTargetLevelForChallenge(cap, 0.8).targetLevelAge).toBe(7); 
+      expect(sampleTargetLevelForChallenge(cap, 0.8).targetLevelAge).toBe(7);
     });
 
     it("should return peak for >= 0.95", () => {
-      expect(sampleTargetLevelForChallenge(cap, 0.96).targetLevelAge).toBe(9); 
+      expect(sampleTargetLevelForChallenge(cap, 0.96).targetLevelAge).toBe(9);
     });
   });
 
   describe("formatDynamicCapabilityInstruction", () => {
     it("should format string properly for AI prompt", () => {
       const caps = [
-        { domain: "mathematiques", stableLevelAge: 8, exploratoryLevelAge: 10, peakLevelAge: 12, confidence: 1, evidenceCount: 5 }
+        {
+          domain: "mathematiques",
+          stableLevelAge: 8,
+          exploratoryLevelAge: 10,
+          peakLevelAge: 12,
+          confidence: 1,
+          evidenceCount: 5,
+        },
       ];
       const text = formatDynamicCapabilityInstruction(caps);
       expect(text).toContain("ZONE PROXIMALE DE DÉVELOPPEMENT");

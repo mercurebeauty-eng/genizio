@@ -1,9 +1,5 @@
 import { describe, it, expect } from "vitest";
-import {
-  slugify,
-  generateSchoolCode,
-  formatSchoolCode,
-} from "./schools.functions";
+import { slugify, generateSchoolCode, formatSchoolCode } from "./schools.functions";
 
 /**
  * Règle métier : calcul de conformité des quotas d'un établissement
@@ -44,9 +40,7 @@ describe("Génizio Campus - Logique Métier Établissements & Écoles", () => {
       expect(slugify("Complexe Scolaire Notre-Dame de l'Espérance")).toBe(
         "complexe-scolaire-notre-dame-de-l-esperance",
       );
-      expect(slugify("  Collège Privé Moderne - Bouaké  ")).toBe(
-        "college-prive-moderne-bouake",
-      );
+      expect(slugify("  Collège Privé Moderne - Bouaké  ")).toBe("college-prive-moderne-bouake");
     });
 
     it("gère les caractères alphanumériques et tirets multiples", () => {

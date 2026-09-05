@@ -89,7 +89,8 @@ export const GUILDS: Record<GuildKey, GuildInfo> = {
     name: "Les Protecteurs du Vivant",
     emoji: "🌿",
     tagline: "Prendre soin de la Terre et de ses habitants",
-    description: "Agriculture, écologie, biodiversité. Tu cultives, tu protèges, tu régénères (🪵 Artisanale de la Terre).",
+    description:
+      "Agriculture, écologie, biodiversité. Tu cultives, tu protèges, tu régénères (🪵 Artisanale de la Terre).",
     color: "text-green-800",
     bgColor: "bg-green-100 border-green-400",
     talentKeys: ["artisanale"],

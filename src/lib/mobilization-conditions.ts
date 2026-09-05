@@ -1,6 +1,10 @@
 import type { ParticipationStatus, EnvironmentalConditions } from "./collective-capability";
 
-export type MobilizationFactor = "group_size" | "role_clarity" | "peer_familiarity" | "time_pressure";
+export type MobilizationFactor =
+  | "group_size"
+  | "role_clarity"
+  | "peer_familiarity"
+  | "time_pressure";
 
 export interface MobilizationConditionHypothesis {
   factor: MobilizationFactor;
@@ -22,7 +26,7 @@ export interface MobilizationExperienceTrace {
  * optimales de mobilisation du potentiel de l'enfant (sans jugement moral).
  */
 export function analyzeMobilizationConditions(
-  traces: MobilizationExperienceTrace[]
+  traces: MobilizationExperienceTrace[],
 ): MobilizationConditionHypothesis[] {
   const hypotheses: MobilizationConditionHypothesis[] = [];
   const validTraces = traces.filter((t) => t.environmentalConditions !== undefined);
@@ -47,7 +51,8 @@ export function analyzeMobilizationConditions(
       hypotheses.push({
         factor: "group_size",
         optimalContext: "Escouades restreintes (2 à 4 enfants)",
-        observedTendency: "Plein engagement en petit comité, phase d'observation/retrait en grand groupe.",
+        observedTendency:
+          "Plein engagement en petit comité, phase d'observation/retrait en grand groupe.",
         confidence: Math.min(0.9, 0.5 + (smallGroupTraces.length + largeGroupTraces.length) * 0.1),
         parentInsightText:
           "Votre enfant s'épanouit et prend de belles initiatives lorsqu'il collabore en petit comité (2 à 4 enfants). Dans les grands groupes, il préfère pour l'instant observer avant de s'engager.",
@@ -60,10 +65,10 @@ export function analyzeMobilizationConditions(
 
   // 2. Facteur : Clarté du Rôle (Structuré vs Autonome)
   const structuredTraces = validTraces.filter(
-    (t) => t.environmentalConditions!.roleClarity === "explicit_structured"
+    (t) => t.environmentalConditions!.roleClarity === "explicit_structured",
   );
   const openTraces = validTraces.filter(
-    (t) => t.environmentalConditions!.roleClarity === "open_autonomous"
+    (t) => t.environmentalConditions!.roleClarity === "open_autonomous",
   );
 
   if (structuredTraces.length >= 1 && openTraces.length >= 1) {
@@ -91,10 +96,10 @@ export function analyzeMobilizationConditions(
 
   // 3. Facteur : Familiarité des Pairs (Amis vs Inconnus)
   const familiarTraces = validTraces.filter(
-    (t) => t.environmentalConditions!.peerFamiliarity === "peers_familiar"
+    (t) => t.environmentalConditions!.peerFamiliarity === "peers_familiar",
   );
   const newPeerTraces = validTraces.filter(
-    (t) => t.environmentalConditions!.peerFamiliarity === "peers_new"
+    (t) => t.environmentalConditions!.peerFamiliarity === "peers_new",
   );
 
   if (familiarTraces.length >= 1 && newPeerTraces.length >= 1) {

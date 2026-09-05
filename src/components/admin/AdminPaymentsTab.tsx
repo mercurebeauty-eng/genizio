@@ -161,7 +161,9 @@ export function AdminPaymentsTab({
   const [paymentsTotalPages, setPaymentsTotalPages] = useState(1);
   const [pendingCount, setPendingCount] = useState(0);
   const [subscriptions, setSubscriptions] = useState<AdminSubscriptionRow[] | null>(null);
-  const [accompanimentPacks, setAccompanimentPacks] = useState<AdminAccompanimentPackRow[] | null>(null);
+  const [accompanimentPacks, setAccompanimentPacks] = useState<AdminAccompanimentPackRow[] | null>(
+    null,
+  );
   const [mrrXof, setMrrXof] = useState(0);
   const [activeSubsCount, setActiveSubsCount] = useState(0);
   const [activePacksCount, setActivePacksCount] = useState(0);
@@ -223,7 +225,10 @@ export function AdminPaymentsTab({
         if (!g.latestEndsAt || new Date(p.endsAt).getTime() > new Date(g.latestEndsAt).getTime()) {
           g.latestEndsAt = p.endsAt;
         }
-        if (!g.earliestEndsAt || new Date(p.endsAt).getTime() < new Date(g.earliestEndsAt).getTime()) {
+        if (
+          !g.earliestEndsAt ||
+          new Date(p.endsAt).getTime() < new Date(g.earliestEndsAt).getTime()
+        ) {
           g.earliestEndsAt = p.endsAt;
         }
       }
@@ -328,7 +333,14 @@ export function AdminPaymentsTab({
     } catch (e) {
       console.error("Erreur lors de l'actualisation silencieuse des paiements:", e);
     }
-  }, [listPaymentsFn, getPendingPaymentsFn, paymentsPage, paymentFilter, opts, onPendingCountChange]);
+  }, [
+    listPaymentsFn,
+    getPendingPaymentsFn,
+    paymentsPage,
+    paymentFilter,
+    opts,
+    onPendingCountChange,
+  ]);
 
   const loadAll = async (showLoader = false) => {
     if (showLoader || payments === null) setLoading(true);
@@ -391,14 +403,10 @@ export function AdminPaymentsTab({
         void refreshSilently();
         void onDataChanged?.();
       })
-      .on(
-        "postgres_changes",
-        { event: "*", schema: "public", table: "payments" },
-        () => {
-          void refreshSilently();
-          void onDataChanged?.();
-        },
-      )
+      .on("postgres_changes", { event: "*", schema: "public", table: "payments" }, () => {
+        void refreshSilently();
+        void onDataChanged?.();
+      })
       .subscribe();
 
     return () => {
@@ -791,7 +799,8 @@ export function AdminPaymentsTab({
               </p>
               <p className="mt-1 text-2xl font-extrabold text-ink">{formatXof(mrrXof)}</p>
               <p className="mt-0.5 text-xs text-ink/50 font-medium">
-                {activeSubsCount} famille{activeSubsCount > 1 ? "s" : ""} active{activeSubsCount > 1 ? "s" : ""}
+                {activeSubsCount} famille{activeSubsCount > 1 ? "s" : ""} active
+                {activeSubsCount > 1 ? "s" : ""}
               </p>
             </div>
             <div className="rounded-2xl border border-emerald-200 bg-emerald-50/50 p-4 shadow-sm">
@@ -809,14 +818,18 @@ export function AdminPaymentsTab({
               </p>
               <p className="mt-1 text-2xl font-extrabold text-sky-950">{activePacksCount}</p>
               <p className="mt-0.5 text-xs text-sky-700/80 font-medium">
-                {accompanimentFamilyGroups.length} famille{accompanimentFamilyGroups.length > 1 ? "s" : ""} · {activePacksCount} enfant{activePacksCount > 1 ? "s" : ""} suivi{activePacksCount > 1 ? "s" : ""}
+                {accompanimentFamilyGroups.length} famille
+                {accompanimentFamilyGroups.length > 1 ? "s" : ""} · {activePacksCount} enfant
+                {activePacksCount > 1 ? "s" : ""} suivi{activePacksCount > 1 ? "s" : ""}
               </p>
             </div>
             <div className="rounded-2xl border border-indigo-200 bg-indigo-50/50 p-4 shadow-sm">
               <p className="text-xs font-black uppercase tracking-wider text-indigo-800">
                 Séances Mentor Disponibles
               </p>
-              <p className="mt-1 text-2xl font-extrabold text-indigo-950">{totalSessionsRemaining}</p>
+              <p className="mt-1 text-2xl font-extrabold text-indigo-950">
+                {totalSessionsRemaining}
+              </p>
               <p className="mt-0.5 text-xs text-indigo-700/80 font-medium">
                 Séances financées restantes sur les packs
               </p>
@@ -828,16 +841,21 @@ export function AdminPaymentsTab({
             <div className="flex flex-wrap items-center justify-between gap-2">
               <div>
                 <h3 className="flex items-center gap-2 font-display text-lg font-bold text-ink">
-                  <span className="grid size-6 place-items-center rounded-lg bg-sky-600 text-white text-xs">🎒</span>
+                  <span className="grid size-6 place-items-center rounded-lg bg-sky-600 text-white text-xs">
+                    🎒
+                  </span>
                   Packs Accompagnement & Suivi Mentor (Par Compte Famille)
                 </h3>
                 <p className="text-xs text-ink/60 mt-0.5">
-                  1 ligne par compte parent — cliquez pour dérouler l'ensemble des enfants accompagnés et gérer leurs séances.
+                  1 ligne par compte parent — cliquez pour dérouler l'ensemble des enfants
+                  accompagnés et gérer leurs séances.
                 </p>
               </div>
               <div className="flex items-center gap-2">
                 <span className="inline-flex items-center rounded-full bg-sky-100 px-3 py-1 text-xs font-bold text-sky-800">
-                  {filteredFamilyGroups.length} famille{filteredFamilyGroups.length > 1 ? "s" : ""} ({accompanimentPacks?.length ?? 0} pack{ (accompanimentPacks?.length ?? 0) > 1 ? "s" : ""})
+                  {filteredFamilyGroups.length} famille{filteredFamilyGroups.length > 1 ? "s" : ""}{" "}
+                  ({accompanimentPacks?.length ?? 0} pack
+                  {(accompanimentPacks?.length ?? 0) > 1 ? "s" : ""})
                 </span>
               </div>
             </div>
@@ -877,7 +895,8 @@ export function AdminPaymentsTab({
                   className="inline-flex items-center gap-1.5 rounded-xl border border-sky-200 bg-sky-50/70 px-3 py-2 text-xs font-bold text-sky-800 hover:bg-sky-100 transition-all cursor-pointer"
                 >
                   <Layers className="size-3.5" />
-                  {expandedFamilyIds.size >= filteredFamilyGroups.length && filteredFamilyGroups.length > 0
+                  {expandedFamilyIds.size >= filteredFamilyGroups.length &&
+                  filteredFamilyGroups.length > 0
                     ? "Replier tout"
                     : "Déplier tout"}
                 </button>
@@ -983,7 +1002,9 @@ export function AdminPaymentsTab({
                               / {family.totalSessions} séances restantes
                             </p>
                             <p className="text-[10px] text-ink/50 font-medium">
-                              {family.totalSessionsUsed} séance{family.totalSessionsUsed > 1 ? "s" : ""} consommée{family.totalSessionsUsed > 1 ? "s" : ""}
+                              {family.totalSessionsUsed} séance
+                              {family.totalSessionsUsed > 1 ? "s" : ""} consommée
+                              {family.totalSessionsUsed > 1 ? "s" : ""}
                             </p>
                           </td>
 
@@ -1039,7 +1060,10 @@ export function AdminPaymentsTab({
                               <div className="rounded-xl border border-sky-200 bg-white p-3 shadow-inner space-y-2">
                                 <p className="text-[11px] font-black uppercase tracking-wider text-sky-900 flex items-center gap-1.5">
                                   <Users className="size-3.5 text-sky-600" />
-                                  Détail des {family.packs.length} enfant{family.packs.length > 1 ? "s" : ""} suivi{family.packs.length > 1 ? "s" : ""} pour {family.parentName ?? family.parentEmail} :
+                                  Détail des {family.packs.length} enfant
+                                  {family.packs.length > 1 ? "s" : ""} suivi
+                                  {family.packs.length > 1 ? "s" : ""} pour{" "}
+                                  {family.parentName ?? family.parentEmail} :
                                 </p>
                                 <div className="divide-y divide-sky-100/60">
                                   {family.packs.map((p) => {
@@ -1066,7 +1090,9 @@ export function AdminPaymentsTab({
                                         </div>
 
                                         <div className="text-xs">
-                                          <span className="text-[10px] font-bold text-ink/40 uppercase mr-1">Mentor :</span>
+                                          <span className="text-[10px] font-bold text-ink/40 uppercase mr-1">
+                                            Mentor :
+                                          </span>
                                           {p.mentorEmail ? (
                                             <span className="inline-flex items-center gap-1 font-semibold text-ink/80">
                                               <span className="size-1.5 rounded-full bg-emerald-500" />
@@ -1080,13 +1106,21 @@ export function AdminPaymentsTab({
                                         </div>
 
                                         <div className="text-xs">
-                                          <span className="text-[10px] font-bold text-ink/40 uppercase mr-1">Séances :</span>
-                                          <span className="font-bold text-emerald-700">{childRemaining}</span>
-                                          <span className="text-ink/60"> / {p.sessions} restantes</span>
+                                          <span className="text-[10px] font-bold text-ink/40 uppercase mr-1">
+                                            Séances :
+                                          </span>
+                                          <span className="font-bold text-emerald-700">
+                                            {childRemaining}
+                                          </span>
+                                          <span className="text-ink/60">
+                                            {" "}
+                                            / {p.sessions} restantes
+                                          </span>
                                         </div>
 
                                         <div className="text-xs font-semibold text-ink">
-                                          {p.priceXof ? formatXof(p.priceXof) : "180 000 FCFA"} /mois
+                                          {p.priceXof ? formatXof(p.priceXof) : "180 000 FCFA"}{" "}
+                                          /mois
                                         </div>
 
                                         <div className="text-xs text-ink/60">
@@ -1094,10 +1128,20 @@ export function AdminPaymentsTab({
                                             <>
                                               Fin : {new Date(p.endsAt).toLocaleDateString("fr-FR")}
                                               <span className="ml-1 text-[10px] text-ink/40">
-                                                ({Math.max(0, Math.ceil((new Date(p.endsAt).getTime() - Date.now()) / 86_400_000))} j)
+                                                (
+                                                {Math.max(
+                                                  0,
+                                                  Math.ceil(
+                                                    (new Date(p.endsAt).getTime() - Date.now()) /
+                                                      86_400_000,
+                                                  ),
+                                                )}{" "}
+                                                j)
                                               </span>
                                             </>
-                                          ) : "—"}
+                                          ) : (
+                                            "—"
+                                          )}
                                         </div>
 
                                         <div className="shrink-0">
@@ -1154,11 +1198,13 @@ export function AdminPaymentsTab({
                   Abonnements Famille Standard (Au Compte)
                 </h3>
                 <p className="text-xs text-ink/60 mt-0.5">
-                  Abonnement récurrent débloquant l'accès à l'application Naya pour toute la fratrie (35 000 FCFA/mois).
+                  Abonnement récurrent débloquant l'accès à l'application Naya pour toute la fratrie
+                  (35 000 FCFA/mois).
                 </p>
               </div>
               <span className="inline-flex items-center rounded-full bg-emerald-100 px-3 py-1 text-xs font-bold text-emerald-800">
-                {filteredSubscriptions.length} abonnement{filteredSubscriptions.length > 1 ? "s" : ""}
+                {filteredSubscriptions.length} abonnement
+                {filteredSubscriptions.length > 1 ? "s" : ""}
               </span>
             </div>
 
@@ -1265,7 +1311,8 @@ export function AdminPaymentsTab({
                                 {Math.max(
                                   0,
                                   Math.ceil(
-                                    (new Date(s.currentPeriodEnd).getTime() - Date.now()) / 86_400_000,
+                                    (new Date(s.currentPeriodEnd).getTime() - Date.now()) /
+                                      86_400_000,
                                   ),
                                 )}{" "}
                                 j restant

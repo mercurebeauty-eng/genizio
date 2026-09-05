@@ -120,7 +120,10 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { property: "og:image", content: `${SITE_URL}${OG_IMAGE_PATH}` },
       { property: "og:image:width", content: "1200" },
       { property: "og:image:height", content: "630" },
-      { property: "og:image:alt", content: "Génizio — Découvrez qui est votre enfant, développez ce qu'il peut devenir" },
+      {
+        property: "og:image:alt",
+        content: "Génizio — Découvrez qui est votre enfant, développez ce qu'il peut devenir",
+      },
       { name: "twitter:image", content: `${SITE_URL}${OG_IMAGE_PATH}` },
       { name: "theme-color", content: "#ffffff" },
     ],

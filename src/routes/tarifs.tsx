@@ -95,7 +95,12 @@ const PLANS: {
 
 // Les produits et services payants, au-delà du profil gratuit — chaque prix est lu
 // directement depuis src/lib/pricing.ts (source unique de l'affichage).
-const PRODUCTS: { name: string; price: string; desc: string; href?: "/boutique" | "/parrainage" }[] = [
+const PRODUCTS: {
+  name: string;
+  price: string;
+  desc: string;
+  href?: "/boutique" | "/parrainage";
+}[] = [
   {
     name: "Diagnostic première rencontre (Nouveau)",
     price: `${formatXof(DIAGNOSTIC_PRICE_XOF)} (${eurHint(DIAGNOSTIC_PRICE_EUR)})`,
@@ -320,9 +325,9 @@ function TarifsPage() {
         <p className="mt-8 text-xs font-semibold leading-relaxed text-ink/50">
           Tous les prix sont en FCFA (XOF), TVA incluse le cas échéant. Équivalents en euros à la
           parité saison (10 000 F ≈ 15 €), à titre indicatif : 35 000 F ≈ 53,50 €, 50 000 F ≈ 75 €,
-          75 000 F ≈ 115 €, 180 000 F ≈ 270 €. Les frais éventuels de transfert Mobile Money restent à la
-          charge de l'acheteur. Le premier profil enfant reste gratuit pour toujours, sans carte
-          bancaire demandée.
+          75 000 F ≈ 115 €, 180 000 F ≈ 270 €. Les frais éventuels de transfert Mobile Money restent
+          à la charge de l'acheteur. Le premier profil enfant reste gratuit pour toujours, sans
+          carte bancaire demandée.
         </p>
 
         <div className="mt-12 rounded-3xl bg-ink p-8 text-center text-white shadow-xl md:p-10">

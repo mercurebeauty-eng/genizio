@@ -192,24 +192,40 @@ function Guide() {
 
       <h2>Pourquoi le résultat visible transforme l'apprentissage</h2>
       <p>
-        Une activité qui aboutit à un objet réel, un plat ou un score capte l'attention bien plus vite qu'une consigne abstraite. Pas besoin de carotte ni de bâton. Le résultat rend l'effort <strong>lisible et tangible</strong>. L'enfant voit ce qu'il a bâti de ses mains. Il en tire une fierté authentique.
+        Une activité qui aboutit à un objet réel, un plat ou un score capte l'attention bien plus
+        vite qu'une consigne abstraite. Pas besoin de carotte ni de bâton. Le résultat rend l'effort{" "}
+        <strong>lisible et tangible</strong>. L'enfant voit ce qu'il a bâti de ses mains. Il en tire
+        une fierté authentique.
       </p>
       <p>
-        Pour les parents, l'expérience est tout aussi éclairante. Une fiche d'exercices scolaires remplie sous la contrainte ne dit presque rien du tempérament d'un jeune. Un pont en bâtonnets qui s'effondre trois fois avant de tenir debout en dit infiniment plus sur sa persévérance et son ingéniosité face à l'erreur (voir nos conseils pour{" "}
-        <a href="/guides/enfant-agite-concentration">canaliser l'énergie d'un enfant agité par l'action</a>).
+        Pour les parents, l'expérience est tout aussi éclairante. Une fiche d'exercices scolaires
+        remplie sous la contrainte ne dit presque rien du tempérament d'un jeune. Un pont en
+        bâtonnets qui s'effondre trois fois avant de tenir debout en dit infiniment plus sur sa
+        persévérance et son ingéniosité face à l'erreur (voir nos conseils pour{" "}
+        <a href="/guides/enfant-agite-concentration">
+          canaliser l'énergie d'un enfant agité par l'action
+        </a>
+        ).
       </p>
 
       <h2>Adapter les activités selon l'âge : 6-8 ans vs 9-12 ans</h2>
       <p>
-        Pour qu'une activité éducative fonctionne à la maison, le niveau de défi doit correspondre précisément à la maturité de l'enfant :
+        Pour qu'une activité éducative fonctionne à la maison, le niveau de défi doit correspondre
+        précisément à la maturité de l'enfant :
       </p>
       <ul>
         <li>
-          <strong>Pour les 6 à 8 ans (CP - CE2) :</strong> Privilégiez les micro-défis de 15 à 20 minutes basés sur la motricité fine, la manipulation directe et l'observation immédiate. À cet âge, l'enfant a besoin de voir la réaction physique rapide (germination, pesée, réaction colorée). N'hésitez pas à alterner avec des{" "}
+          <strong>Pour les 6 à 8 ans (CP - CE2) :</strong> Privilégiez les micro-défis de 15 à 20
+          minutes basés sur la motricité fine, la manipulation directe et l'observation immédiate. À
+          cet âge, l'enfant a besoin de voir la réaction physique rapide (germination, pesée,
+          réaction colorée). N'hésitez pas à alterner avec des{" "}
           <a href="/guides/activites-manuelles-enfant">ateliers manuels et de bricolage créatif</a>.
         </li>
         <li>
-          <strong>Pour les 9 à 12 ans (CM1 - 6e/5e) :</strong> L'enfant est capable de concevoir et de piloter de vrais micro-projets sur plusieurs jours (création d'un petit stand commercial, écriture d'une gazette de famille, énigmes mathématiques). Il cherche l'autonomie et aime être traité en partenaire de projet plutôt qu'en simple exécutant.
+          <strong>Pour les 9 à 12 ans (CM1 - 6e/5e) :</strong> L'enfant est capable de concevoir et
+          de piloter de vrais micro-projets sur plusieurs jours (création d'un petit stand
+          commercial, écriture d'une gazette de famille, énigmes mathématiques). Il cherche
+          l'autonomie et aime être traité en partenaire de projet plutôt qu'en simple exécutant.
         </li>
       </ul>
 
@@ -217,15 +233,25 @@ function Guide() {
       <p>
         Le classement ci-dessous s'appuie sur la théorie des{" "}
         <a href="/guides/intelligences-multiples-gardner">9 intelligences d'Howard Gardner</a>.
-        L'intérêt n'est jamais d'enfermer l'enfant dans une case, mais au contraire de varier les plaisirs et d'explorer les formes d'intelligence moins sollicitées par le cadre scolaire classique.
+        L'intérêt n'est jamais d'enfermer l'enfant dans une case, mais au contraire de varier les
+        plaisirs et d'explorer les formes d'intelligence moins sollicitées par le cadre scolaire
+        classique.
       </p>
 
       {ACTIVITIES.map((group) => (
-        <div key={group.intelligence} className="my-6 rounded-2xl border border-ink/10 bg-surface p-5">
-          <h3 className="text-xl font-bold text-ink">{group.intelligence} <span className="text-xs font-normal text-ink/60">({group.age})</span></h3>
+        <div
+          key={group.intelligence}
+          className="my-6 rounded-2xl border border-ink/10 bg-surface p-5"
+        >
+          <h3 className="text-xl font-bold text-ink">
+            {group.intelligence}{" "}
+            <span className="text-xs font-normal text-ink/60">({group.age})</span>
+          </h3>
           <ul className="mt-3 space-y-2">
             {group.items.map((item) => (
-              <li key={item} className="text-ink/80">• {item}</li>
+              <li key={item} className="text-ink/80">
+                • {item}
+              </li>
             ))}
           </ul>
         </div>
@@ -235,13 +261,21 @@ function Guide() {
       <p>Trois critères simples suffisent pour ne pas transformer l'activité en corvée :</p>
       <ol>
         <li>
-          <strong>Le temps réellement disponible.</strong> Une activité de deux heures lancée un soir de semaine à 18h30 ne mènera qu'à de l'agacement. Mieux vaut un mini-défi de 15 minutes bouclé avec le sourire qu'un grand projet abandonné en larmes.
+          <strong>Le temps réellement disponible.</strong> Une activité de deux heures lancée un
+          soir de semaine à 18h30 ne mènera qu'à de l'agacement. Mieux vaut un mini-défi de 15
+          minutes bouclé avec le sourire qu'un grand projet abandonné en larmes.
         </li>
         <li>
-          <strong>Ce qu'il y a déjà dans vos placards.</strong> Une activité qui nécessite d'aller acheter du matériel spécifique est une activité qui n'aura jamais lieu. Les meilleures découvertes se font avec du carton, des bouteilles vides, des graines, de la farine ou de la ficelle.
+          <strong>Ce qu'il y a déjà dans vos placards.</strong> Une activité qui nécessite d'aller
+          acheter du matériel spécifique est une activité qui n'aura jamais lieu. Les meilleures
+          découvertes se font avec du carton, des bouteilles vides, des graines, de la farine ou de
+          la ficelle.
         </li>
         <li>
-          <strong>La passerelle d'intérêt.</strong> Partez toujours de ce que l'enfant adore déjà. Un enfant passionné de jeux vidéo peut concevoir les règles sur papier d'un jeu de plateau : vous partez de sa passion numérique pour l'amener vers une création concrète sans écran (voir aussi notre guide sur le{" "}
+          <strong>La passerelle d'intérêt.</strong> Partez toujours de ce que l'enfant adore déjà.
+          Un enfant passionné de jeux vidéo peut concevoir les règles sur papier d'un jeu de plateau
+          : vous partez de sa passion numérique pour l'amener vers une création concrète sans écran
+          (voir aussi notre guide sur le{" "}
           <a href="/guides/ecrans-addiction-alternatives-enfant">sevrage des écrans en douceur</a>).
         </li>
       </ol>
@@ -249,42 +283,63 @@ function Guide() {
       <h2>Les 4 pièges fréquents à éviter</h2>
       <ul>
         <li>
-          <strong>Corriger pendant l'effort.</strong> Laissez l'erreur se produire : c'est précisément dans le moment où la tour tombe que le cerveau cherche une solution.
+          <strong>Corriger pendant l'effort.</strong> Laissez l'erreur se produire : c'est
+          précisément dans le moment où la tour tombe que le cerveau cherche une solution.
         </li>
         <li>
-          <strong>Finir à sa place.</strong> Un bricolage imparfait mais réalisé à 100 % par l'enfant renforce son sentiment de compétence. Un bel objet fait par l'adulte ne lui apprend rien.
+          <strong>Finir à sa place.</strong> Un bricolage imparfait mais réalisé à 100 % par
+          l'enfant renforce son sentiment de compétence. Un bel objet fait par l'adulte ne lui
+          apprend rien.
         </li>
         <li>
-          <strong>Enchaîner trop d'activités.</strong> Un seul défi mené à son terme par jour est amplement suffisant. Laissez du temps libre pour l'ennui constructif.
+          <strong>Enchaîner trop d'activités.</strong> Un seul défi mené à son terme par jour est
+          amplement suffisant. Laissez du temps libre pour l'ennui constructif.
         </li>
         <li>
-          <strong>Transformer le jeu en évaluation scolaire.</strong> Dès qu'une note ou un jugement de valeur apparaît, l'enfant se met en retrait et bride sa créativité.
+          <strong>Transformer le jeu en évaluation scolaire.</strong> Dès qu'une note ou un jugement
+          de valeur apparaît, l'enfant se met en retrait et bride sa créativité.
         </li>
       </ul>
 
       <h2>Le rituel des « 10 minutes d'activité » entre deux devoirs</h2>
       <p>
-        Le moment le plus difficile pour un enfant après une journée d'école, c'est la rupture d'attention entre deux exercices théoriques. Dix minutes d'activité manuelle suffisent pour oxygéner le cerveau, relâcher les tensions musculaires et relancer la concentration :
+        Le moment le plus difficile pour un enfant après une journée d'école, c'est la rupture
+        d'attention entre deux exercices théoriques. Dix minutes d'activité manuelle suffisent pour
+        oxygéner le cerveau, relâcher les tensions musculaires et relancer la concentration :
       </p>
       <ul>
         <li>
-          <strong>Le défi chronométré inversé :</strong> « Tu as 10 minutes pour construire l'édifice le plus stable avec les ustensiles de cuisine. » On prend une photo souvenir, on range en 2 minutes, et l'on reprend les devoirs dans un état d'esprit détendu.
+          <strong>Le défi chronométré inversé :</strong> « Tu as 10 minutes pour construire
+          l'édifice le plus stable avec les ustensiles de cuisine. » On prend une photo souvenir, on
+          range en 2 minutes, et l'on reprend les devoirs dans un état d'esprit détendu.
         </li>
         <li>
-          <strong>La caisse du jour :</strong> Compter ensemble la monnaie du marché ou vérifier une addition à voix haute — 3 minutes de calcul utile et réel valent une demi-heure de fiches abstraites.
+          <strong>La caisse du jour :</strong> Compter ensemble la monnaie du marché ou vérifier une
+          addition à voix haute — 3 minutes de calcul utile et réel valent une demi-heure de fiches
+          abstraites.
         </li>
         <li>
-          <strong>Le bocal à défis surprises :</strong> Un bocal contenant des papiers pliés (« cite 5 objets d'une couleur précise », « récite une énigme »). L'enfant en tire un au sort pour marquer une pause stimulante.
+          <strong>Le bocal à défis surprises :</strong> Un bocal contenant des papiers pliés (« cite
+          5 objets d'une couleur précise », « récite une énigme »). L'enfant en tire un au sort pour
+          marquer une pause stimulante.
         </li>
       </ul>
 
       <h2>Garder une trace pour révéler les talents naturels de votre enfant</h2>
       <p>
-        Prises isolément, ces activités sont d'excellents moments de partage familial. Mais lorsqu'elles sont consignées et documentées dans le temps, elles constituent une véritable cartographie des forces de votre enfant : on observe vers quoi il se tourne spontanément, comment il résout les imprévus et ce qui le passionne profondément.
+        Prises isolément, ces activités sont d'excellents moments de partage familial. Mais
+        lorsqu'elles sont consignées et documentées dans le temps, elles constituent une véritable
+        cartographie des forces de votre enfant : on observe vers quoi il se tourne spontanément,
+        comment il résout les imprévus et ce qui le passionne profondément.
       </p>
       <p>
-        C'est toute la mission de Génizio : proposer des défis concrets du quotidien, photographier les réalisations réelles et construire le passeport d'intelligences de votre enfant sans test théorique réducteur. Vous pouvez également explorer notre analyse sur les{" "}
-        <a href="/guides/test-de-personnalite-enfant-talents">tests de personnalité pour enfants et la découverte des talents réels</a>.
+        C'est toute la mission de Génizio : proposer des défis concrets du quotidien, photographier
+        les réalisations réelles et construire le passeport d'intelligences de votre enfant sans
+        test théorique réducteur. Vous pouvez également explorer notre analyse sur les{" "}
+        <a href="/guides/test-de-personnalite-enfant-talents">
+          tests de personnalité pour enfants et la découverte des talents réels
+        </a>
+        .
       </p>
 
       <h2>Questions fréquentes (FAQ)</h2>

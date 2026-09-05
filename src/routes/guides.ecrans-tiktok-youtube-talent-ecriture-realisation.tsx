@@ -1,11 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import {
-  pageMeta,
-  jsonLdScript,
-  faqPageJsonLd,
-  breadcrumbJsonLd,
-  articleJsonLd,
-} from "@/lib/seo";
+import { pageMeta, jsonLdScript, faqPageJsonLd, breadcrumbJsonLd, articleJsonLd } from "@/lib/seo";
 import { GuideLayout } from "@/components/guides/GuideLayout";
 import { Button } from "@/components/ui/button";
 import { ArrowRight, Video, PenTool, Clapperboard, Lightbulb } from "lucide-react";
@@ -69,7 +63,8 @@ export const Route = createFileRoute("/guides/ecrans-tiktok-youtube-talent-ecrit
         ),
         jsonLdScript(
           articleJsonLd({
-            headline: "Votre enfant passe des heures sur TikTok ou YouTube ? Transformez son écran en talent d'écriture et de réalisation",
+            headline:
+              "Votre enfant passe des heures sur TikTok ou YouTube ? Transformez son écran en talent d'écriture et de réalisation",
             description:
               "Méthode pour transformer la fascination des écrans en pratique créative : écriture de scénario, cadrage et montage vidéo pour les 8-15 ans.",
             path: PATH,
@@ -128,12 +123,17 @@ function Guide() {
 
       <h2>1. Pourquoi l'interdiction frontale ne fonctionne plus</h2>
       <p>
-        Les plateformes de flux continu captent l'attention par le défilement infini. Plutôt que de subir ce mécanisme (voir notre méthode de{" "}
-        <a href="/guides/ecrans-addiction-alternatives-enfant">sevrage progressif des écrans chez l'enfant</a>), apprendre à fabriquer une vidéo développe l'esprit critique du jeune.
+        Les plateformes de flux continu captent l'attention par le défilement infini. Plutôt que de
+        subir ce mécanisme (voir notre méthode de{" "}
+        <a href="/guides/ecrans-addiction-alternatives-enfant">
+          sevrage progressif des écrans chez l'enfant
+        </a>
+        ), apprendre à fabriquer une vidéo développe l'esprit critique du jeune.
       </p>
       <p>
         Filmer et monter une courte séquence sollicite plusieurs{" "}
-        <a href="/guides/intelligences-multiples-gardner">formes d'intelligences de Gardner</a> : l'écriture de script (linguistique), le cadrage (spatial) et le montage sonore (rythmique).
+        <a href="/guides/intelligences-multiples-gardner">formes d'intelligences de Gardner</a> :
+        l'écriture de script (linguistique), le cadrage (spatial) et le montage sonore (rythmique).
       </p>
 
       <h2>2. Le protocole du « Studio Familial » : 3 étapes de création</h2>
@@ -145,7 +145,8 @@ function Guide() {
             Étape 1 : Le Script écrit
           </div>
           <p className="text-sm text-ink/80 leading-relaxed">
-            Avant d'allumer la caméra, l'enfant écrit un texte de 150 mots avec une accroche percutante et une conclusion claire.
+            Avant d'allumer la caméra, l'enfant écrit un texte de 150 mots avec une accroche
+            percutante et une conclusion claire.
           </p>
         </div>
 
@@ -165,7 +166,8 @@ function Guide() {
             Étape 3 : Le Tournage & Montage
           </div>
           <p className="text-sm text-ink/80 leading-relaxed">
-            Filmer un documentaire familial et monter les séquences avec rigueur. Un travail de diction idéal pour{" "}
+            Filmer un documentaire familial et monter les séquences avec rigueur. Un travail de
+            diction idéal pour{" "}
             <a href="/guides/timidite-confiance-prise-de-parole">développer la confiance orale</a>.
           </p>
         </div>
@@ -174,12 +176,15 @@ function Guide() {
       <h2>3. Les règles d'or d'un projet créatif réussi</h2>
       <ul>
         <li>
-          <strong>La projection en salon privé :</strong> Le projet est projeté devant la famille lors d'un goûter convivial (à combiner avec nos{" "}
-          <a href="/guides/activites-educatives-enfant">24 activités éducatives à la maison</a>), sans pression d'exposition sur les réseaux publics.
+          <strong>La projection en salon privé :</strong> Le projet est projeté devant la famille
+          lors d'un goûter convivial (à combiner avec nos{" "}
+          <a href="/guides/activites-educatives-enfant">24 activités éducatives à la maison</a>),
+          sans pression d'exposition sur les réseaux publics.
         </li>
         <li>
           <strong>Relever de vrais challenges :</strong> Intégrez cette activité dans nos{" "}
-          <a href="/guides/defis-pour-adolescents">12 défis stimulants pour adolescents</a> (reportage de quartier, micro-interview).
+          <a href="/guides/defis-pour-adolescents">12 défis stimulants pour adolescents</a>{" "}
+          (reportage de quartier, micro-interview).
         </li>
       </ul>
 
@@ -188,16 +193,27 @@ function Guide() {
           Développer les compétences du futur avec Génizio
         </h3>
         <p className="mt-2 text-ink/80 leading-relaxed">
-          Génizio canalise l'énergie créative des jeunes à travers des missions concrètes d'écriture, de communication et de projets réels. <strong>Naya</strong> accompagne chaque étape pour transformer leur curiosité en compétences solides.
+          Génizio canalise l'énergie créative des jeunes à travers des missions concrètes
+          d'écriture, de communication et de projets réels. <strong>Naya</strong> accompagne chaque
+          étape pour transformer leur curiosité en compétences solides.
         </p>
         <div className="mt-6 flex flex-wrap gap-4">
-          <Button asChild size="lg" className="rounded-full bg-brand text-white shadow-md hover:bg-brand-dark transition-all">
+          <Button
+            asChild
+            size="lg"
+            className="rounded-full bg-brand text-white shadow-md hover:bg-brand-dark transition-all"
+          >
             <Link to="/auth">
               Lancer un défi de création
               <ArrowRight className="ml-2 h-4 w-4" />
             </Link>
           </Button>
-          <Button asChild variant="outline" size="lg" className="rounded-full border-ink/20 bg-white text-ink hover:bg-surface hover:text-brand transition-all">
+          <Button
+            asChild
+            variant="outline"
+            size="lg"
+            className="rounded-full border-ink/20 bg-white text-ink hover:bg-surface hover:text-brand transition-all"
+          >
             <Link to="/guides/ecrans-addiction-alternatives-enfant">
               Méthode sevrage écrans sans crise
             </Link>
