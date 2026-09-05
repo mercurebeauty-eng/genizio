@@ -116,7 +116,7 @@ const RetryPaymentInput = z.object({
 });
 
 export type RetryPaymentOutcome =
-  | { ok: true; entitlement: string; detail: string }
+  | { ok: true; entitlement: string; detail: string; pendingCount?: number }
   | { ok: false; reason: string; detail?: string };
 
 /**
@@ -171,7 +171,19 @@ export const retryPaymentFulfillmentAdmin = createServerFn({ method: "POST" })
         supabaseAdmin,
         payment as unknown as PaymentRow,
       );
-      return { ok: true, entitlement: result.entitlement, detail: result.detail };
+
+      // Calcul direct du nouveau nombre de paiements en attente
+      const { count: pendingCount } = await supabaseAdmin
+        .from("payments")
+        .select("id", { count: "exact", head: true })
+        .eq("status", "initiated");
+
+      return {
+        ok: true,
+        entitlement: result.entitlement,
+        detail: result.detail,
+        pendingCount: pendingCount ?? 0,
+      };
     } catch (err: any) {
       return { ok: false, reason: "FULFILLMENT_FAILED", detail: err?.message };
     }

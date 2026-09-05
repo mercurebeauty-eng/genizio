@@ -1,6 +1,7 @@
-import { useEffect, useState, useMemo, Fragment } from "react";
+import { useEffect, useState, useMemo, Fragment, useCallback } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { useSession } from "@/hooks/use-session";
+import { supabase } from "@/integrations/supabase/client";
 import {
   CreditCard,
   RefreshCw,
@@ -121,7 +122,17 @@ export type AccompanimentFamilyGroup = {
   packs: AdminAccompanimentPackRow[];
 };
 
-export function AdminPaymentsTab() {
+export interface AdminPaymentsTabProps {
+  onDataChanged?: () => void | Promise<void>;
+  onPendingCountChange?: (count: number) => void;
+  isRefreshing?: boolean;
+}
+
+export function AdminPaymentsTab({
+  onDataChanged,
+  onPendingCountChange,
+  isRefreshing: parentRefreshing = false,
+}: AdminPaymentsTabProps = {}) {
   const { session } = useSession();
   const opts = session?.access_token
     ? { headers: { Authorization: `Bearer ${session.access_token}` } }
@@ -295,8 +306,32 @@ export function AdminPaymentsTab() {
     }
   };
 
-  const loadAll = async () => {
-    setLoading(true);
+  // Rafraîchissement silencieux de la file des paiements et du compteur (sans clignotement ni loader bloquant)
+  const refreshSilently = useCallback(async () => {
+    try {
+      const [p, pending] = await Promise.all([
+        listPaymentsFn({
+          data: { page: paymentsPage, pageSize: 50, status: paymentFilter },
+          ...opts,
+        }).catch(() => null),
+        getPendingPaymentsFn({ data: undefined, ...opts }).catch(() => null),
+      ]);
+      if (p) {
+        setPayments(p.data);
+        setPaymentsTotal(p.total);
+        setPaymentsTotalPages(p.totalPages);
+      }
+      if (pending) {
+        setPendingCount(pending.pendingCount);
+        onPendingCountChange?.(pending.pendingCount);
+      }
+    } catch (e) {
+      console.error("Erreur lors de l'actualisation silencieuse des paiements:", e);
+    }
+  }, [listPaymentsFn, getPendingPaymentsFn, paymentsPage, paymentFilter, opts, onPendingCountChange]);
+
+  const loadAll = async (showLoader = false) => {
+    if (showLoader || payments === null) setLoading(true);
     try {
       const [p, subs, sp, exp, pending] = await Promise.all([
         listPaymentsFn({
@@ -323,7 +358,9 @@ export function AdminPaymentsTab() {
       setPayments((p as any)?.data ?? []);
       setPaymentsTotal((p as any)?.total ?? 0);
       setPaymentsTotalPages((p as any)?.totalPages ?? 1);
-      setPendingCount((pending as any)?.pendingCount ?? 0);
+      const newPending = (pending as any)?.pendingCount ?? 0;
+      setPendingCount(newPending);
+      onPendingCountChange?.(newPending);
       setSubscriptions((subs as any)?.subscriptions ?? []);
       setAccompanimentPacks((subs as any)?.accompanimentPacks ?? []);
       setMrrXof((subs as any)?.mrrXof ?? 0);
@@ -342,17 +379,82 @@ export function AdminPaymentsTab() {
   };
 
   useEffect(() => {
-    if (session) void loadAll();
+    if (session) void loadAll(true);
   }, [session]);
+
+  // Écoute temps réel Supabase sur le canal dédié aux paiements
+  useEffect(() => {
+    const channel = supabase.channel("admin-payments-tab-sync");
+
+    channel
+      .on("broadcast", { event: "payment_updated" }, () => {
+        void refreshSilently();
+        void onDataChanged?.();
+      })
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "payments" },
+        () => {
+          void refreshSilently();
+          void onDataChanged?.();
+        },
+      )
+      .subscribe();
+
+    return () => {
+      void supabase.removeChannel(channel);
+    };
+  }, [refreshSilently, onDataChanged]);
 
   const handleRetry = async (paymentId: string, mode: "verify" | "manual") => {
     setBusyId(paymentId);
+
+    // 1. Mise à jour optimiste immédiate : statut visuel et décrémentation directe de la pastille
+    const previousPayments = payments;
+    const previousPendingCount = pendingCount;
+    const targetPayment = payments?.find((p) => p.id === paymentId);
+
+    if (targetPayment) {
+      const nextPendingCount = Math.max(0, pendingCount - 1);
+      setPendingCount(nextPendingCount);
+      onPendingCountChange?.(nextPendingCount);
+
+      setPayments((prev) =>
+        (prev ?? []).map((p) => (p.id === paymentId ? { ...p, status: "success" } : p)),
+      );
+    }
+
     try {
       const res = await retryFn({ data: { paymentId, mode }, ...opts });
       if (res.ok) {
         toast.success(`Paiement exécuté : ${res.detail}`);
-        await loadAll();
+        if (res.pendingCount !== undefined) {
+          setPendingCount(res.pendingCount);
+          onPendingCountChange?.(res.pendingCount);
+        }
+
+        // Diffusion temps réel sur le canal admin pour synchroniser instantanément les autres onglets / admins
+        try {
+          const ch = supabase.channel("admin-payments-sync");
+          void ch.send({
+            type: "broadcast",
+            event: "payment_updated",
+            payload: { paymentId, status: "success", timestamp: Date.now() },
+          });
+        } catch {
+          // ignore
+        }
+
+        // Rafraîchissement silencieux de la liste sans clignotement
+        await refreshSilently();
+        // Notification au dashboard parent (KPIs, commandes confirmées, etc.)
+        void onDataChanged?.();
       } else {
+        // En cas de refus, annulation de la mise à jour optimiste
+        setPayments(previousPayments);
+        setPendingCount(previousPendingCount);
+        onPendingCountChange?.(previousPendingCount);
+
         const reasons: Record<string, string> = {
           ALREADY_SUCCESS: "Ce paiement est déjà marqué payé.",
           PAYMENT_NOT_FOUND: "Paiement introuvable.",
@@ -365,6 +467,10 @@ export function AdminPaymentsTab() {
         toast.error(reasons[res.reason] ?? res.reason, { description: res.detail });
       }
     } catch (err: any) {
+      // Annulation de la mise à jour optimiste
+      setPayments(previousPayments);
+      setPendingCount(previousPendingCount);
+      onPendingCountChange?.(previousPendingCount);
       toast.error(err?.message || "Erreur lors de l'exécution du paiement.");
     } finally {
       setBusyId(null);
@@ -378,6 +484,7 @@ export function AdminPaymentsTab() {
       if (res.ok) toast.success("Abonnement activé — période ouverte.");
       else toast.error("Activation impossible", { description: res.reason });
       await loadAll();
+      void onDataChanged?.();
     } catch (err: any) {
       toast.error(err?.message || "Erreur lors de l'activation.");
     } finally {
@@ -397,6 +504,7 @@ export function AdminPaymentsTab() {
         toast.error("Prolongation impossible", { description: res.reason });
       }
       await loadAll();
+      void onDataChanged?.();
     } catch (err: any) {
       toast.error(err?.message || "Erreur lors de la prolongation.");
     } finally {
@@ -419,6 +527,7 @@ export function AdminPaymentsTab() {
       if (res.ok) toast.success("Abonnement résilié.");
       else toast.error("Résiliation impossible", { description: res.reason });
       await loadAll();
+      void onDataChanged?.();
     } catch (err: any) {
       toast.error(err?.message || "Erreur lors de la résiliation.");
     } finally {
@@ -442,6 +551,7 @@ export function AdminPaymentsTab() {
           `Pack prolongé : +${addSessions} séances (Total: ${res.sessions}) — Échéance : ${new Date(res.endsAt).toLocaleDateString("fr-FR")}.`,
         );
         await loadAll();
+        void onDataChanged?.();
       }
     } catch (err: any) {
       toast.error(err?.message || "Erreur lors de la prolongation du pack.");
@@ -456,6 +566,7 @@ export function AdminPaymentsTab() {
       await confirmSponsorshipFn({ data: { tokenId }, ...opts });
       toast.success("Paiement du parrainage confirmé — le code est utilisable.");
       await loadAll();
+      void onDataChanged?.();
     } catch (err: any) {
       toast.error(err?.message || "Erreur lors de la confirmation.");
     } finally {
@@ -471,6 +582,7 @@ export function AdminPaymentsTab() {
         `Accès prolongé de ${months} mois — échéance : ${new Date(res.endsAt).toLocaleDateString("fr-FR")}.`,
       );
       await loadAll();
+      void onDataChanged?.();
     } catch (err: any) {
       toast.error(err?.message || "Erreur lors de la prolongation.");
     } finally {
@@ -524,10 +636,13 @@ export function AdminPaymentsTab() {
           </button>
         ))}
         <button
-          onClick={() => void loadAll()}
+          onClick={async () => {
+            await loadAll();
+            void onDataChanged?.();
+          }}
           className="ml-auto flex items-center gap-1.5 rounded-xl border border-ink/10 bg-white px-3 py-2 text-xs font-bold text-ink hover:bg-surface/60 transition-all cursor-pointer"
         >
-          <RefreshCw className="size-3.5" />
+          <RefreshCw className={`size-3.5 ${parentRefreshing ? "animate-spin text-brand" : ""}`} />
           Actualiser
         </button>
       </div>

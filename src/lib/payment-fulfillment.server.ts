@@ -394,5 +394,25 @@ export async function markPaymentSuccessAndFulfill(
     }
   })();
 
+  // Diffusion temps réel vers l'Admin OS (pastille & tableau de bord en direct)
+  void (async () => {
+    try {
+      const channel = supabaseAdmin.channel("admin-payments-sync");
+      await channel.send({
+        type: "broadcast",
+        event: "payment_updated",
+        payload: {
+          paymentId: payment.id,
+          reference: payment.reference,
+          status: "success",
+          timestamp: Date.now(),
+        },
+      });
+      supabaseAdmin.removeChannel(channel);
+    } catch (err) {
+      console.error("Non-fatal: diffusion temps réel payment_updated a échoué", err);
+    }
+  })();
+
   return result;
 }

@@ -2,6 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { useSession } from "@/hooks/use-session";
+import { supabase } from "@/integrations/supabase/client";
 import { AppHeader } from "@/components/AppHeader";
 import {
   togglePassportUnlock,
@@ -242,6 +243,53 @@ function AdminIndexPage() {
     }
   }, [session]);
 
+  // Synchronisation en direct (Live Sync) de l'Admin OS (pastilles, KPIs, paiements)
+  useEffect(() => {
+    if (!session) return;
+
+    const channel = supabase.channel("admin-os-global-sync");
+
+    channel
+      .on("broadcast", { event: "payment_updated" }, () => {
+        void loadData(false);
+      })
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "payments" },
+        () => {
+          void loadData(false);
+        },
+      )
+      .subscribe();
+
+    // Heartbeat de secours (toutes les 25s) pour parer aux coupures de connexion
+    const interval = setInterval(() => {
+      const opts = session?.access_token
+        ? { headers: { Authorization: `Bearer ${session.access_token}` } }
+        : {};
+      void getPendingPaymentsFn({ data: undefined, ...opts })
+        .then((res) => {
+          if (res && res.pendingCount !== pendingPayments) {
+            setPendingPayments(res.pendingCount);
+          }
+        })
+        .catch(() => {});
+    }, 25000);
+
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === "visible") {
+        void loadData(false);
+      }
+    };
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+
+    return () => {
+      clearInterval(interval);
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+      void supabase.removeChannel(channel);
+    };
+  }, [session, pendingPayments]);
+
   const handleTogglePassport = async (childId: string, unlock: boolean) => {
     try {
       const res = await toggleUnlockFn({ data: { childId, unlock } });
@@ -467,7 +515,13 @@ function AdminIndexPage() {
             )}
 
             {activeTab === "discovery" && <AdminDiscoveryTab />}
-            {activeTab === "payments" && <AdminPaymentsTab />}
+            {activeTab === "payments" && (
+              <AdminPaymentsTab
+                onDataChanged={() => void loadData(false)}
+                onPendingCountChange={(count) => setPendingPayments(count)}
+                isRefreshing={isRefreshing}
+              />
+            )}
             {activeTab === "b2b" && <AdminCampaignsTab />}
             {activeTab === "mentors" && <AdminMentorsTab />}
             {activeTab === "educators" && <AdminEducatorsTab />}
