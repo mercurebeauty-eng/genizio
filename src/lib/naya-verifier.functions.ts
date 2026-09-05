@@ -40,6 +40,7 @@ export type GenerationKind =
   | "discriminant"
   | "support_retest"
   | "reformulation"
+  | "substitution"
   | "failure_sequence"
   | "hypothesis"
   | "proof_validation"
@@ -84,6 +85,9 @@ export interface VerifyContext {
   /** Reformulation (chantier 3, modalités) : titre du défi original à reformuler —
    * le Loup vérifie que l'objectif pédagogique reste identique. */
   originalTitle?: string;
+  /** Mission de substitution (décision 2026-09-05) : matériau signalé introuvable —
+   * le Loup vérifie que la chasse au substitut est posée sans donner les réponses. */
+  missingMaterial?: string;
   /** Indice juste-à-temps (chantier 2026-08-15) : titre du défi en cours. */
   challengeTitle?: string;
   /** Fiche Copilote Professeur : effectif de classe saisi par le professeur.
@@ -179,6 +183,7 @@ const KIND_ESTIMATED_COST: Partial<Record<GenerationKind, number>> = {
   recommendation: 0.003,
   discriminant: 0.003,
   support_retest: 0.003,
+  substitution: 0.003,
   hypothesis: 0.01, // deepseek-reasoner (premium)
   proof_validation: 0.01, // vision Sonnet, maxTokens borné
   not_completed_classification: 0.001,
@@ -856,6 +861,7 @@ export function verifyGeneration(
       case "challenge_single":
       case "discriminant":
       case "support_retest":
+      case "substitution":
         for (const c of extractChallengeObjects(kind, output))
           violations.push(...validateChallengeRecord(c, context, kind));
         break;
@@ -964,6 +970,12 @@ export function semanticRubricFor(kind: GenerationKind): string {
       return `1. reformulation-meme-objectif : le défi doit viser le MÊME objectif pédagogique que le défi original (même compétence, niveau équivalent — jamais plus difficile).
 2. reformulation-modalite : la modalité imposée (presentation_mode) doit réellement imprégner le défi — le format correspond à ce que la modalité promet (manipulation → gestes concrets, histoire → récit, etc.).
 3. reformulation-fraiche : le défi ne doit ni mentionner l'échec précédent ni révéler qu'il s'agit d'une reformulation — présenté comme un défi neuf et stimulant.`;
+    case "substitution":
+      return `1. substitution-fonction-pas-objet : la mission doit faire identifier la FONCTION du matériau manquant (être rigide, étanche, souple, servir de levier…) — jamais seulement l'objet.
+2. substitution-chasse-ouverte : l'enfant doit trouver LUI-MÊME au moins 3 substituts pendant la mission — les substituts ne doivent JAMAIS être listés dans le titre, la description ou les étapes.
+3. substitution-test-mesure : le comparatif doit reposer sur un critère mesurable et concret (poids, étanchéité, rigidité, durée…) avec une valeur réelle.
+4. substitution-fraiche : le défi ne doit ni mentionner un échec, un abandon ou un défi « raté », ni révéler qu'il s'agit d'une mission de rattrapage — c'est une mission d'ingénieur à part entière.
+5. substitution-objectif-preserve : l'essentiel de l'objectif pédagogique du défi d'origine doit rester visé une fois le meilleur substitut couronné.`;
     case "failure_sequence":
       // Chantier 5 (§36) : la narration de séquence est aujourd'hui 100 % déterministe
       // (evaluateFailureSequence, 0 IA) — la rubrique est le garde-fou de référence

@@ -69,6 +69,13 @@ export function formatPedagogicalIntention(
     return "Naya vérifie discrètement si un accompagnement renforcé récent est encore nécessaire ici.";
   }
 
+  // Mission de substitution (décision 2026-09-05) : le matériel manquant est devenu
+  // la mission — l'enfant chasse, teste et compare des remplaçants. Le parent voit
+  // la transformation positive, jamais la contrainte comme un échec du système.
+  if (challenge.challenge_role === "substitution") {
+    return "Naya a transformé la contrainte en mission d'ingénieur : trouver, tester et comparer des substituts — l'ingéniosité est le vrai défi.";
+  }
+
   // Chantier 3 — reformulation de modalité (§22-26) : la même compétence, présentée
   // autrement. L'enfant, lui, ne voit qu'un défi frais (le prompt l'exige) ; le parent
   // voit que Naya a changé de manière d'enseigner — jamais de mention de l'échec,

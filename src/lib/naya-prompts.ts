@@ -82,7 +82,8 @@ export const GENIZIO_PRINCIPLES = `PRINCIPES DE GÉNÉRATION GÉNIZIO (règles d
 - PRÉCOCITÉ GUIDÉE (Méthode Singapour) : ne te contente pas de vérifier passivement les acquis basiques de l'âge de l'enfant. Propose un défi qui introduit un concept du niveau supérieur (N+1), tout en le rendant manipulable et compréhensible par l'action concrète.
 - CENTRES D'INTÉRÊT = LEVIERS COMPORTEMENTAUX ET MODES COGNITIFS PROFONDS : Ne traite jamais un centre d'intérêt comme un simple thème ou un hobby décoratif (ex: "football", "dinosaures"). Décode et exploite le LEVIER COMPORTEMENTAL ET LE MODE OPÉRATOIRE MENTAL sous-jacent de l'enfant (ex: "Démonte pour comprendre", "Négocie toujours", "A besoin de bouger pour réfléchir"). Utilise ces traits comme MÉCANIQUE ET POSTURE D'APPRENTISSAGE. Si l'enfant "démonte pour comprendre", propose un défi de déconstruction/analyse inverse. Chaque défi doit employer la mécanique d'action préférée de l'enfant (démonter, schématiser, simuler, optimiser, enquêter).
 - HARMONIE INTÉRIEUR & EXTÉRIEUR : alterne entre le laboratoire de la maison et le terrain d'investigation extérieur (jardin, cour, quartier, parc, architecture locale) selon le sujet.
-- INTERDIT : défi irréalisable concrètement, matériel inaccessible, exercice creux sans valeur pédagogique réelle, tâche trop abstraite déconnectée du quotidien, formulation générique déjà vue mille fois ("dessine ce que tu veux", "imagine une histoire" sans ancrage réel).
+- MATÉRIAU DE CONQUÊTE (règle des ressources, décision 2026-09-05) : le CŒUR du défi doit rester réalisable avec les matériaux garantis du contexte local (les listes du pays sont un plancher, jamais un plafond). Tu peux proposer au plus UN matériau non garanti — plus rare, plus ambitieux, plus excitant — si sa conquête a de la valeur pédagogique : son absence éventuelle ne casse pas le défi, elle ouvre la mission de substitution (trouver, tester et comparer des remplaçants = faire de l'ingénierie vraie). Jamais deux matériaux non garantis dans un même défi ; jamais un matériau coûteux, dangereux ou hors d'atteinte d'un enfant de cet âge (pas d'achat spécial).
+- INTERDIT : défi dont le CŒUR exige un matériel inaccessible ou coûteux, exercice creux sans valeur pédagogique réelle, tâche trop abstraite déconnectée du quotidien, formulation générique déjà vue mille fois ("dessine ce que tu veux", "imagine une histoire" sans ancrage réel).
 - Cible explicitement 1 à 2 compétences précises et nomme-les dans "pedagogical_context" : Cognitives (logique, esprit critique, curiosité scientifique, créativité) · Pratiques (autonomie, débrouillardise/ingéniosité, méthode et rigueur, gestion du temps) · Sociales (communication, leadership, collaboration, empathie) · Personnelles (résilience face à la frustration, confiance en soi, esprit d'initiative, adaptabilité).
 - Ne vise pas systématiquement le format le plus court : plus l'enfant grandit (8 ans et +), plus des formats longs et immersifs (au-delà d'une heure, voire un projet sur plusieurs jours) construisent une vraie résilience — une alternative constructive aux écrans, tant que ça reste réaliste pour le temps disponible indiqué.
 - AUCUNE syntaxe Markdown dans les champs texte (pas de #, ##, **, tirets de liste) — phrases en texte brut uniquement. Les étapes vont exclusivement dans le tableau "steps", jamais mises en forme dans "description".
@@ -1286,6 +1287,23 @@ export interface ReformulationPromptInput {
   existingTitles: string[];
 }
 
+export interface SubstitutionPromptInput {
+  childName: string;
+  childAge: number;
+  location: string;
+  originalTitle: string;
+  originalDomain: string;
+  originalObjective: string;
+  /** Matériaux du défi d'origine (materials + material_tags). */
+  originalMaterials: string[];
+  /** Matériau signalé introuvable — null si l'enfant n'a pas tranché. */
+  missingMaterial: string | null;
+  interestsPayload: string;
+  talentsJson: string;
+  timePressureNote: string;
+  existingTitles: string[];
+}
+
 export function buildReformulationPrompt(input: ReformulationPromptInput): string {
   const semantics =
     MODALITY_SEMANTICS[input.presentationMode] ?? "une autre manière de présenter le savoir.";
@@ -1344,6 +1362,77 @@ Réponds EXCLUSIVEMENT avec un objet JSON strict au format suivant :
   "kind": "micro",
   "guidance_level": 4,
   "presentation_mode": "${input.presentationMode}"
+}`;
+}
+
+// Mission de substitution (décision 2026-09-05) : un matériau du défi s'est révélé
+// introuvable — l'absence devient le défi. L'enfant cherche des remplaçants, les
+// teste, compare : c'est la démarche expérimentale complète (hypothèse, test,
+// critère, verdict) déguisée en débrouillardise. Jamais une leçon, jamais un échec
+// rappelé : l'enfant reçoit une mission d'ingénieur.
+export function buildSubstitutionPrompt(input: SubstitutionPromptInput): string {
+  const materialLine = input.missingMaterial
+    ? `Le matériau signalé introuvable : « ${input.missingMaterial} ».`
+    : `Le ou les matériaux signalés introuvables : ${input.originalMaterials.join(", ") || "(non précisés)"}.`;
+  return `Tu es Naya, la mentore IA. ${input.childName}, ${input.childAge} ans, voulait réaliser le défi « ${input.originalTitle} » (${input.originalDomain}) mais le matériel s'est révélé introuvable.
+${materialLine}
+Tu transformes cette contrainte en MISSION D'INGÉNIEUR : ${input.childName} devient celui qui résout le problème de ressources.
+
+LA MISSION (structure obligatoire) :
+1. IDENTIFIER : ce que le matériau devait FAIRE dans le défi (sa fonction : être rigide, étanche, souple, servir de levier…) — pas ce qu'il était. C'est le raisonnement clé : on remplace une FONCTION, jamais un objet.
+2. CHERCHER : mener ${input.childName} à trouver LUI-MÊME au moins 3 substituts possibles dans son environnement (maison, quartier, nature, récupération) — le défi lui pose la chasse, il ne lui donne pas les réponses toutes faites.
+3. TESTER : comparer les substituts selon UN critère mesurable et concret (résistance au poids, étanchéité, rigidité…), avec une mesure réelle (chiffres, compte, durée).
+4. CONCLURE : couronner le meilleur substitut, expliquer POURQUOI il gagne, puis réaliser l'essentiel de l'objectif d'origine avec lui.
+
+OBJECTIF PÉDAGOGIQUE D'ORIGINE (à préserver — la substitution sert cet objectif, elle ne le remplace pas) :
+${input.originalObjective}
+
+Matériaux d'origine du défi : ${input.originalMaterials.join(", ") || "(aucun)"}
+
+CONTEXTE :
+- Ville / pays : ${input.location}
+- Intérêts et leviers d'engagement : ${input.interestsPayload}
+- Profil de talents : ${input.talentsJson}
+${input.timePressureNote}
+- Titres déjà utilisés (ne pas reprendre) : ${input.existingTitles.join(", ") || "(aucun)"}
+
+RÈGLES ABSOLUES :
+- Ne mentionne JAMAIS un échec, un abandon ou un défi « raté » : ${input.childName} reçoit une mission fraîche où la chasse au substitut EST le défi.
+- Les substituts doivent être trouvés PAR ${input.childName} pendant la mission : ne liste jamais les substituts dans la description ou les étapes — pose la chasse, le critère de test et la comparaison.
+- Substituts accessibles et gratuits (maison, quartier, nature, récupération) — jamais un achat.
+- ${STEPS_INSTRUCTION}
+- ${MATERIAL_TAGS_INSTRUCTION}
+- ${INTELLIGENCES_FIELD_INSTRUCTION}
+- ${TRAIT_SUBFORM_INSTRUCTION}
+- ${PROOF_MODE_INSTRUCTION}
+- ${SAFETY_INSTRUCTION}
+- ${ACADEMIC_REFERENTIAL_INSTRUCTION}
+- ${ACADEMIC_SECRET_INSTRUCTION}
+- ${GENIZIO_PRINCIPLES}
+
+Réponds EXCLUSIVEMENT avec un objet JSON strict au format suivant :
+{
+  "title": "Titre de mission d'ingénieur (la chasse au substitut, pas le matériau manquant)",
+  "domain": "${input.originalDomain}",
+  "description": "Consigne claire, enthousiaste : ${input.childName} est mandaté·e pour résoudre le problème de ressources",
+  "duration": "30 min",
+  "steps": ["Étape 1 : identifier la fonction du matériau", "Étape 2 : la chasse (3 substituts)", "Étape 3 : le test comparatif mesuré", "Étape 4 : le verdict et la réalisation"],
+  "materials": ["Matériel 1", "Matériel 2"],
+  "material_tags": ["tag1", "tag2"],
+  "intelligences": ["entrepreneuriale"],
+  "trait_subform": "..." (voir liste par intelligence ci-dessus) ou null,
+  "difficulty": "facile" ou "moyen",
+  "proof_mode": "photo" ou "declarative",
+  "proof_target": {"metric": "...", "value": 20} (uniquement si declarative),
+  "declarative_award": {"corporelle": 2} (uniquement si declarative),
+  "academic_domain": "mathematiques" | "langage" | "sciences" | "corporelle" | "sociale" | "emotionnelle" | "entrepreneuriale" | "artisanale" | "spatiale" | null,
+  "academic_level_age": 14 (uniquement si academic_domain non null),
+  "academic_reference_note": "..." (uniquement si academic_domain non null),
+  "academic_secret": "Explication stimulante du secret scientifique/académique...",
+  "requires_supervision": true ou false,
+  "supervision_warning": "..." (ou null si false),
+  "kind": "micro",
+  "guidance_level": 4
 }`;
 }
 
