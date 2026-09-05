@@ -48,7 +48,8 @@ export type GenerationKind =
   | "letter"
   | "narrative"
   | "proof_tampon"
-  | "just_in_time_hint";
+  | "just_in_time_hint"
+  | "educator_lesson_fiche";
 
 export type ViolationSeverity = "mineur" | "majeur";
 
@@ -85,6 +86,9 @@ export interface VerifyContext {
   originalTitle?: string;
   /** Indice juste-à-temps (chantier 2026-08-15) : titre du défi en cours. */
   challengeTitle?: string;
+  /** Fiche Copilote Professeur : effectif de classe saisi par le professeur.
+   * Permet au Loup de vérifier que les tailles de groupes le somment. */
+  headcount?: number;
 }
 
 // ── Constantes de référence (copies locales, verrouillées par test) ─────────
@@ -182,6 +186,9 @@ const KIND_ESTIMATED_COST: Partial<Record<GenerationKind, number>> = {
   letter: 0.001,
   narrative: 0.002,
   proof_tampon: 0.002,
+  // Fiche du Copilote Professeur : gros prompt structuré + JSON complet de fiche,
+  // sur GLM 5.3 Flash (barème bas coût). Ordre de grandeur ≈ 3 000 in / 2 000 out.
+  educator_lesson_fiche: 0.012,
 };
 
 // ── Helpers purs ────────────────────────────────────────────────────────────
@@ -709,6 +716,121 @@ function validateClassification(output: Record<string, unknown>, _ctx: VerifyCon
   return v;
 }
 
+// Fiche Copilote Professeur : les 4 canaux cognitifs obligatoires, alignés sur le
+// vocabulaire fermé des modalités de présentation (PRESENTATION_MODES).
+const LESSON_FICHE_CHANNELS = ["manipulatif", "visuo_spatial", "logico_abstrait", "narratif"] as const;
+
+function validateLessonFiche(f: Record<string, unknown>, ctx: VerifyContext): Violation[] {
+  const v: Violation[] = [];
+
+  // L'ancrage local est la réponse à « À quoi ça sert ? » — cœur de la promesse produit.
+  const anchor = isRecord(f.local_anchor) ? f.local_anchor : null;
+  if (!anchor || !str(anchor.trade).trim() || !str(anchor.explanation).trim()) {
+    v.push({
+      rule: "fiche.local_anchor_present",
+      severity: "majeur",
+      detail: "Ancrage local manquant (métier + explication concrète).",
+      suggestion: "Relie la leçon à un métier local réel (artisanat, commerce, urbanisme…).",
+    });
+  }
+
+  const groups = Array.isArray(f.channel_groups) ? f.channel_groups.filter(isRecord) : [];
+  const seenChannels = new Set(groups.map((g) => str(g.channel)));
+  for (const channel of LESSON_FICHE_CHANNELS) {
+    if (!seenChannels.has(channel)) {
+      v.push({
+        rule: "fiche.channels_complete",
+        severity: "majeur",
+        detail: `Canal cognitif manquant : ${channel}.`,
+        suggestion: `Les 4 canaux sont obligatoires : ${LESSON_FICHE_CHANNELS.join(", ")}.`,
+      });
+      break;
+    }
+  }
+  for (const g of groups) {
+    const size = typeof g.group_size === "number" ? g.group_size : NaN;
+    if (!Number.isFinite(size) || size < 0) {
+      v.push({
+        rule: "fiche.group_sizes_valid",
+        severity: "majeur",
+        detail: `Taille de groupe invalide pour ${str(g.channel) || "?"} : ${String(g.group_size)}.`,
+        suggestion: "Chaque groupe doit avoir une taille numérique positive.",
+      });
+      break;
+    }
+    const activity = isRecord(g.activity) ? g.activity : null;
+    const steps = activity && Array.isArray(activity.steps) ? activity.steps : [];
+    if (steps.length === 0 || !str(activity?.title).trim()) {
+      v.push({
+        rule: "fiche.group_activity_present",
+        severity: "majeur",
+        detail: `Activité manquante ou vide pour le groupe ${str(g.channel) || "?"}.`,
+        suggestion: "Chaque canal doit porter une activité titrée avec des étapes.",
+      });
+      break;
+    }
+  }
+  if (
+    v.every((x) => x.rule !== "fiche.group_sizes_valid") &&
+    typeof ctx.headcount === "number" &&
+    ctx.headcount > 0
+  ) {
+    const sum = groups.reduce((acc, g) => acc + (typeof g.group_size === "number" ? g.group_size : 0), 0);
+    if (sum !== ctx.headcount) {
+      v.push({
+        rule: "fiche.group_sizes_sum",
+        severity: "majeur",
+        detail: `Les tailles de groupes somment ${sum}, effectif attendu ${ctx.headcount}.`,
+        suggestion: "La somme des groupes doit égaler l'effectif de la classe.",
+      });
+    }
+  }
+
+  const exercises = Array.isArray(f.exercises) ? f.exercises.filter(isRecord) : [];
+  const levels = new Set(exercises.map((e) => (typeof e.level === "number" ? e.level : -1)));
+  for (const level of [1, 2, 3]) {
+    if (!levels.has(level)) {
+      v.push({
+        rule: "fiche.exercises_three_levels",
+        severity: "majeur",
+        detail: `Niveau d'exercice manquant : ${level} (socle/standard/dépassement).`,
+        suggestion: "Fournis exactement les 3 niveaux de différenciation.",
+      });
+      break;
+    }
+  }
+  for (const e of exercises) {
+    if (!str(e.statement).trim()) {
+      v.push({
+        rule: "fiche.exercise_statement_present",
+        severity: "majeur",
+        detail: `Énoncé vide au niveau ${String(e.level)}.`,
+        suggestion: "Chaque exercice doit avoir un énoncé exploitable en classe.",
+      });
+      break;
+    }
+  }
+
+  if (!Array.isArray(f.board_plan) || f.board_plan.length === 0) {
+    v.push({
+      rule: "fiche.board_plan_present",
+      severity: "mineur",
+      detail: "Plan de tableau absent.",
+      suggestion: "Liste ce que le professeur écrit au tableau (zéro écran pour l'élève).",
+    });
+  }
+  if (!Array.isArray(f.timing) || f.timing.length === 0) {
+    v.push({
+      rule: "fiche.timing_present",
+      severity: "mineur",
+      detail: "Chronométrage absent.",
+      suggestion: "Découpe la séance en phases chronométrées.",
+    });
+  }
+
+  return v;
+}
+
 // ── verifyGeneration (couche 1 — pur, synchrone) ─────────────────────────────
 
 export function verifyGeneration(
@@ -769,6 +891,9 @@ export function verifyGeneration(
             context,
           ),
         );
+        break;
+      case "educator_lesson_fiche":
+        if (isRecord(output)) violations.push(...validateLessonFiche(output, context));
         break;
     }
   } catch (err) {
@@ -875,6 +1000,12 @@ export function semanticRubricFor(kind: GenerationKind): string {
       return `1. hint-pas-la-solution : l'indice ne doit JAMAIS donner la réponse complète ni la démarche aboutie — uniquement le concept minimal qui débloque l'étape.
 2. hint-ancre : l'indice doit s'ancrer dans le geste ou le matériel du défi en cours, pas dans une théorie générique.
 3. hint-taille : 2 à 3 phrases maximum, en langage d'enfant, sans chiffres ni jargon scolaire.`;
+    case "educator_lesson_fiche":
+      return `1. ancrage-local-reel : l'application concrète doit correspondre à un métier réellement présent dans le contexte géographique indiqué (artisanat, commerce, urbanisme, énergie, numérique) — pas un exemple générique nord-américain.
+2. zzero-ecran-eleve : aucune activité de la fiche ne doit demander à un élève d'utiliser un écran — le matériel est physique, le tableau est le seul support visuel collectif.
+3. quatre-canaux-distincts : chaque groupe doit proposer une activité réellement différente selon son canal (manipulatif = gestes concrets, visuo_spatial = schémas/couleurs, logico_abstrait = démonstration/algèbre, narratif = récit/énigme), pas la même activité reformulée.
+4. differenciation-reelle : le niveau 1 doit être plus simple que le niveau 2, lui-même plus simple que le niveau 3 — jamais trois exercices de même difficulté.
+5. effectif-coherent : les tailles de groupes doivent sommer l'effectif fourni et rester enseignables (pas de groupe de 1 ou de 45).`;
   }
 }
 

@@ -44,6 +44,9 @@ describe("Naya Telemetry Stress & Edge Case Suite", () => {
         deepseekReasonerOutputTokens: 0,
         visionSonnetInputTokens: 0,
         visionSonnetOutputTokens: 0,
+        // Copilote Professeur (GLM) — champ ajouté au contrat, à zéro sans usage.
+        glmFlashInputTokens: 0,
+        glmFlashOutputTokens: 0,
       });
       expect(telemetry.projection).toEqual({
         projectedCallsMonthly: 0,

@@ -45,6 +45,11 @@ export const NAYA_PRICING = {
   DEFAULT_OFF_PEAK_SHARE: 0.7,
   SONNET_INPUT_PER_M: 3.0,
   SONNET_OUTPUT_PER_M: 15.0,
+  // GLM 5.3 Flash (Copilote Professeur, passerelle glm.server.ts, endpoint B AI
+  // OpenAI-compatible). Barème à recalibrer sur la grille B AI publique au moment
+  // de la mise en production — valeurs conservatrices bas coût, sans creux/plein.
+  GLM_FLASH_INPUT_PER_M: 0.11,
+  GLM_FLASH_OUTPUT_PER_M: 0.44,
   USD_TO_XOF_RATE: 600,
   // « Le Loup » (chantiers 2-4, Naya 3.0) : la vérification sémantique tourne sur
   // le modèle économique par défaut (deepseek-v4-flash, via callClaude) et son
@@ -70,6 +75,10 @@ export interface NayaTokenUsage {
   // pas de vision. Seul cas où Anthropic est encore appelé.
   visionSonnetInputTokens: number;
   visionSonnetOutputTokens: number;
+  // Copilote Professeur (fiches de préparation) — GLM 5.3 Flash via glm.server.ts.
+  // Tokens RÉELS remontés par l'API (usage), pas des multiplicateurs estimés.
+  glmFlashInputTokens: number;
+  glmFlashOutputTokens: number;
 }
 
 export interface NayaCostResult {
@@ -78,9 +87,13 @@ export interface NayaCostResult {
 }
 
 export interface FeatureBreakdown {
-  feature: "Défis" | "Hypothèses" | "Recommandations";
+  feature: "Défis" | "Hypothèses" | "Recommandations" | "Copilote Professeur";
   /** Noms d'affichage alignés sur les modèles API réels (alias dépréciés depuis le 2026-07-24). */
-  modelUsed: "DeepSeek V4 Flash" | "DeepSeek V4 Flash + Sonnet (vision)" | "DeepSeek V4 Pro";
+  modelUsed:
+    | "DeepSeek V4 Flash"
+    | "DeepSeek V4 Flash + Sonnet (vision)"
+    | "DeepSeek V4 Pro"
+    | "GLM 5.3 Flash";
   callsCount: number;
   estimatedTokens: number;
   costUsd: number;
@@ -88,7 +101,7 @@ export interface FeatureBreakdown {
 }
 
 export interface ModelUsageBreakdown {
-  model: "DeepSeek V4 Flash" | "DeepSeek V4 Pro" | "Claude Sonnet 5 (Vision)";
+  model: "DeepSeek V4 Flash" | "DeepSeek V4 Pro" | "Claude Sonnet 5 (Vision)" | "GLM 5.3 Flash";
   inputTokens: number;
   outputTokens: number;
   totalTokens: number;
@@ -311,6 +324,16 @@ export function calculateVisionSonnetCost(
   return { costUsd: round4(usd), costXof: Math.round(usd * NAYA_PRICING.USD_TO_XOF_RATE) };
 }
 
+/** Coût GLM 5.3 Flash (Copilote Professeur) pour une paire input/output de tokens. */
+export function calculateGlmFlashCost(inputTokens: number, outputTokens: number): NayaCostResult {
+  const input = toSafeTokenCount(inputTokens);
+  const output = toSafeTokenCount(outputTokens);
+  const usd =
+    (input / 1_000_000) * NAYA_PRICING.GLM_FLASH_INPUT_PER_M +
+    (output / 1_000_000) * NAYA_PRICING.GLM_FLASH_OUTPUT_PER_M;
+  return { costUsd: round4(usd), costXof: Math.round(usd * NAYA_PRICING.USD_TO_XOF_RATE) };
+}
+
 /**
  * Calculates challenge conversion rate percentage: (completed / generated) * 100.
  * Clamped strictly to 0% – 100%.
@@ -349,6 +372,9 @@ export function calculateNayaTelemetry(raw: {
   photoProofCompleted?: number;
   hypothesesCycles: number;
   recommendationsCount: number;
+  /** Copilote Professeur : tokens GLM RÉELS remontés de generation_audits /
+   * ai_feature_usage (agrégés par l'appelant), pas un multiplicateur estimé. */
+  glmFlashTokens?: { input: number; output: number; calls?: number };
 }): NayaTelemetryResponse {
   const genCount = Math.max(0, raw.challengesGenerated || 0);
   const startCount = Math.max(0, raw.challengesStarted || 0);
@@ -382,6 +408,8 @@ export function calculateNayaTelemetry(raw: {
     deepseekReasonerOutputTokens: hypReasonerOutput,
     visionSonnetInputTokens: defisVisionInput,
     visionSonnetOutputTokens: defisVisionOutput,
+    glmFlashInputTokens: Math.max(0, raw.glmFlashTokens?.input ?? 0),
+    glmFlashOutputTokens: Math.max(0, raw.glmFlashTokens?.output ?? 0),
   };
 
   const totalChatTokens = tokenUsage.deepseekChatInputTokens + tokenUsage.deepseekChatOutputTokens;
@@ -389,7 +417,8 @@ export function calculateNayaTelemetry(raw: {
     tokenUsage.deepseekReasonerInputTokens + tokenUsage.deepseekReasonerOutputTokens;
   const totalVisionTokens =
     tokenUsage.visionSonnetInputTokens + tokenUsage.visionSonnetOutputTokens;
-  const totalTokens = totalChatTokens + totalReasonerTokens + totalVisionTokens;
+  const totalGlmTokens = tokenUsage.glmFlashInputTokens + tokenUsage.glmFlashOutputTokens;
+  const totalTokens = totalChatTokens + totalReasonerTokens + totalVisionTokens + totalGlmTokens;
 
   const chatCosts = calculateDeepSeekChatCost(
     tokenUsage.deepseekChatInputTokens,
@@ -403,9 +432,16 @@ export function calculateNayaTelemetry(raw: {
     tokenUsage.visionSonnetInputTokens,
     tokenUsage.visionSonnetOutputTokens,
   );
+  const glmCosts = calculateGlmFlashCost(
+    tokenUsage.glmFlashInputTokens,
+    tokenUsage.glmFlashOutputTokens,
+  );
 
-  const totalCostUsd = round4(chatCosts.costUsd + reasonerCosts.costUsd + visionCosts.costUsd);
-  const totalCostXof = chatCosts.costXof + reasonerCosts.costXof + visionCosts.costXof;
+  const totalCostUsd = round4(
+    chatCosts.costUsd + reasonerCosts.costUsd + visionCosts.costUsd + glmCosts.costUsd,
+  );
+  const totalCostXof =
+    chatCosts.costXof + reasonerCosts.costXof + visionCosts.costXof + glmCosts.costXof;
 
   // Plafond du barème creux/plein : tous les appels DeepSeek facturés en pointe
   // (offPeakSharePct = 0). La vision Sonnet est inchangée (pas de creux/plein).
@@ -433,7 +469,8 @@ export function calculateNayaTelemetry(raw: {
   const hypCosts = calculateDeepSeekReasonerCost(hypReasonerInput, hypReasonerOutput);
   const recCosts = calculateDeepSeekChatCost(recChatInput, recChatOutput);
 
-  const totalApiCalls = genCount + photoProofCount + hypCount + recCount;
+  const glmFlashCalls = Math.max(0, raw.glmFlashTokens?.calls ?? 0);
+  const totalApiCalls = genCount + photoProofCount + hypCount + recCount + glmFlashCalls;
   const conversionRatePct = calculateNayaConversionRate(genCount, compCount);
 
   const featureBreakdown: FeatureBreakdown[] = [
@@ -461,6 +498,21 @@ export function calculateNayaTelemetry(raw: {
       costUsd: recCosts.costUsd,
       costXof: recCosts.costXof,
     },
+    // Copilote Professeur (GLM) : ligne présente dès le premier usage réel —
+    // les dashboards existants ne voient pas de zéro factice tant que le
+    // copilote n'est pas déployé.
+    ...(totalGlmTokens > 0
+      ? [
+          {
+            feature: "Copilote Professeur" as const,
+            callsCount: glmFlashCalls,
+            modelUsed: "GLM 5.3 Flash" as const,
+            estimatedTokens: totalGlmTokens,
+            costUsd: glmCosts.costUsd,
+            costXof: glmCosts.costXof,
+          },
+        ]
+      : []),
   ];
 
   const modelBreakdown: ModelUsageBreakdown[] = [
@@ -491,6 +543,20 @@ export function calculateNayaTelemetry(raw: {
       costXof: visionCosts.costXof,
       sharePercentage: totalTokens > 0 ? Math.round((totalVisionTokens / totalTokens) * 100) : 0,
     },
+    ...(totalGlmTokens > 0
+      ? [
+          {
+            model: "GLM 5.3 Flash" as const,
+            inputTokens: tokenUsage.glmFlashInputTokens,
+            outputTokens: tokenUsage.glmFlashOutputTokens,
+            totalTokens: totalGlmTokens,
+            costUsd: glmCosts.costUsd,
+            costXof: glmCosts.costXof,
+            sharePercentage:
+              totalTokens > 0 ? Math.round((totalGlmTokens / totalTokens) * 100) : 0,
+          },
+        ]
+      : []),
   ];
 
   const funnel: ConversionFunnel = {
