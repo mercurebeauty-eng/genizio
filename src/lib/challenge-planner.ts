@@ -9,12 +9,12 @@ import { DOMAINS } from "./challenge-domains";
 import { type PedagogicalFormat, determinePedagogicalFormat } from "./profile-engine";
 
 export type MissionPedagogicalIntent =
-  | "child_question_action"   // Répondre par l'expérience à une question posée par l'enfant
-  | "collective_peak_solo"   // Valider en autonomie solo un pic réussi en groupe
+  | "child_question_action" // Répondre par l'expérience à une question posée par l'enfant
+  | "collective_peak_solo" // Valider en autonomie solo un pic réussi en groupe
   | "hypothesis_verification" // Vérifier une hypothèse d'aspiration ou d'apprentissage
-  | "zpd_progression"         // Pousser la difficulté d'un cran (ZPD N+1)
-  | "cross_domain_bridge"     // Utiliser un atout pour stimuler un talent moins exploré
-  | "open_exploration";       // Exploration équilibrée d'un nouveau domaine
+  | "zpd_progression" // Pousser la difficulté d'un cran (ZPD N+1)
+  | "cross_domain_bridge" // Utiliser un atout pour stimuler un talent moins exploré
+  | "open_exploration"; // Exploration équilibrée d'un nouveau domaine
 
 export interface ChallengeMission {
   missionIndex: number;
@@ -25,6 +25,49 @@ export interface ChallengeMission {
   pedagogicalBrief: string;
   actionHook?: string;
   format?: PedagogicalFormat;
+  guidanceLevel?: number;
+}
+
+export interface DetermineGuidanceLevelInput {
+  age: number;
+  completedInDomain?: number;
+  format?: PedagogicalFormat;
+}
+
+/**
+ * Calcule déterministement le niveau de guidage / étayage pédagogique (1 à 5).
+ * 
+ * Barème d'étayage (scaffolding de Bruner) :
+ * - 4 ou 5 : Guidage pas-à-pas minutieux sans implicite (pour débutant, jeune enfant <= 7 ans, ou besoin de réassurance).
+ * - 3 : Guidage jalonné intermédiaire (étapes claires avec critères concrets de succès, l'enfant orchestre ses sous-gestes).
+ * - 1 ou 2 : Autonomie forte et démarche ouverte (l'adulte/Naya pose l'objectif, les contraintes et les livrables ; l'enfant conçoit sa méthode).
+ */
+export function determineGuidanceLevel({
+  age,
+  completedInDomain = 0,
+  format,
+}: DetermineGuidanceLevelInput): number {
+  let baseLevel: number;
+  if (age <= 7) {
+    baseLevel = 5;
+  } else if (age <= 11) {
+    baseLevel = 3;
+  } else {
+    baseLevel = 2;
+  }
+
+  const fading = Math.floor(Math.max(0, completedInDomain) / 3);
+  let resolved = baseLevel - fading;
+
+  if (format === "constructive_project" && age >= 10) {
+    resolved = Math.min(resolved, 2);
+  } else if (format === "spark_micro" && age <= 8) {
+    resolved = Math.max(resolved, 4);
+  } else if (format === "investigation") {
+    resolved = Math.min(resolved, 3);
+  }
+
+  return Math.max(1, Math.min(5, resolved));
 }
 
 /**
@@ -45,7 +88,11 @@ export function planChallengeMissions(
   const fallbackDomains = availableDomains.length > 0 ? availableDomains : DOMAINS;
 
   function pickAvailableDomain(preferred?: string): string {
-    if (preferred && (fallbackDomains as readonly string[]).includes(preferred) && !usedDomains.has(preferred)) {
+    if (
+      preferred &&
+      (fallbackDomains as readonly string[]).includes(preferred) &&
+      !usedDomains.has(preferred)
+    ) {
       usedDomains.add(preferred);
       return preferred;
     }
@@ -56,16 +103,29 @@ export function planChallengeMissions(
     return candidate;
   }
 
+  function getCompletedCount(domain: string): number {
+    return (
+      state.capabilities.domainCompletedCounts?.[domain] ??
+      (state.capabilities.stableDomains.includes(domain) ? 2 : 0)
+    );
+  }
+
   // 1. Mission Prioritaire : Question formulée spontanément par l'enfant
   if (state.operationalContext.latestChildQuestion && missions.length < count) {
     const targetDomain = pickAvailableDomain("Sciences");
+    const format: PedagogicalFormat = "investigation";
     missions.push({
       missionIndex: missions.length + 1,
       intent: "child_question_action",
       targetDomain,
       targetTalents: ["logico_mathematique", "creative"],
       difficultyZone: "exploration_zpd",
-      format: "investigation",
+      format,
+      guidanceLevel: determineGuidanceLevel({
+        age: state.identity.age,
+        completedInDomain: getCompletedCount(targetDomain),
+        format,
+      }),
       pedagogicalBrief: `Répondre par l'expérimentation et l'observation concrète à la question de ${state.identity.name} : « ${state.operationalContext.latestChildQuestion} ». L'enfant doit découvrir la réponse par lui-même en manipulant, jamais par un cours passif.`,
       actionHook: state.operationalContext.latestChildQuestion,
     });
@@ -77,13 +137,19 @@ export function planChallengeMissions(
   );
   if (peakTarget && missions.length < count) {
     const targetDomain = pickAvailableDomain(peakTarget.domain);
+    const format: PedagogicalFormat = "constructive_project";
     missions.push({
       missionIndex: missions.length + 1,
       intent: "collective_peak_solo",
       targetDomain,
       targetTalents: ["artisanale", "logico_mathematique"],
       difficultyZone: "exploration_zpd",
-      format: "constructive_project",
+      format,
+      guidanceLevel: determineGuidanceLevel({
+        age: state.identity.age,
+        completedInDomain: getCompletedCount(targetDomain),
+        format,
+      }),
       pedagogicalBrief: `Un pic de performance a été observé en groupe dans le domaine ${peakTarget.domain} (niveau visé : ${peakTarget.targetLevelAge} ans) : concevoir une mission individuelle pour vérifier son autonomie réelle et ancrer sa confiance en solo.`,
     });
   }
@@ -97,13 +163,19 @@ export function planChallengeMissions(
     const targetTalents = pendingHypothesis.targetTalents?.length
       ? pendingHypothesis.targetTalents
       : ["artisanale", "spatial"];
+    const format: PedagogicalFormat = "investigation";
     missions.push({
       missionIndex: missions.length + 1,
       intent: "hypothesis_verification",
       targetDomain,
       targetTalents,
       difficultyZone: "stable",
-      format: "investigation",
+      format,
+      guidanceLevel: determineGuidanceLevel({
+        age: state.identity.age,
+        completedInDomain: getCompletedCount(targetDomain),
+        format,
+      }),
       pedagogicalBrief: `Mettre ${state.identity.name} en situation pour éprouver l'hypothèse : « ${pendingHypothesis.statement} ». Observer sa persévérance et son affinité réelle sur le terrain.`,
     });
   }
@@ -125,6 +197,11 @@ export function planChallengeMissions(
       targetTalents: ["logico_mathematique", "artisanale"],
       difficultyZone: "exploration_zpd",
       format,
+      guidanceLevel: determineGuidanceLevel({
+        age: state.identity.age,
+        completedInDomain: getCompletedCount(targetDomain),
+        format,
+      }),
       pedagogicalBrief: `Franchir un palier de progression en ${zpdTarget.domain} vers le niveau ${zpdTarget.targetLevelAge} ans. Relier la notion abstraite à un système concret et décomposer les étapes pour préserver la confiance.`,
     });
   }
@@ -133,13 +210,19 @@ export function planChallengeMissions(
   if (state.capabilities.leastExploredTalents.length > 0 && missions.length < count) {
     const leastExplored = state.capabilities.leastExploredTalents[0];
     const targetDomain = pickAvailableDomain();
+    const format: PedagogicalFormat = "spark_micro";
     missions.push({
       missionIndex: missions.length + 1,
       intent: "cross_domain_bridge",
       targetDomain,
       targetTalents: ["creative", "spatial"],
       difficultyZone: "consolidation",
-      format: "spark_micro",
+      format,
+      guidanceLevel: determineGuidanceLevel({
+        age: state.identity.age,
+        completedInDomain: getCompletedCount(targetDomain),
+        format,
+      }),
       pedagogicalBrief: `Stimuler le talent moins exploré « ${leastExplored} » en utilisant les modes d'action naturels de l'enfant comme tremplin bienveillant.`,
     });
   }
@@ -147,13 +230,19 @@ export function planChallengeMissions(
   // 6. Remplissage si nécessaire pour atteindre `count`
   while (missions.length < count) {
     const targetDomain = pickAvailableDomain();
+    const format: PedagogicalFormat = "spark_micro";
     missions.push({
       missionIndex: missions.length + 1,
       intent: "open_exploration",
       targetDomain,
       targetTalents: ["creative", "artisanale"],
       difficultyZone: "stable",
-      format: "spark_micro",
+      format,
+      guidanceLevel: determineGuidanceLevel({
+        age: state.identity.age,
+        completedInDomain: getCompletedCount(targetDomain),
+        format,
+      }),
       pedagogicalBrief: `Découverte et réalisation concrète dans le domaine ${targetDomain}, adaptée à l'âge et aux réalités locales.`,
     });
   }
@@ -176,9 +265,7 @@ export function planSingleChallengeMission(
   options?: PlanSingleMissionOptions,
 ): ChallengeMission {
   const forcedDomain =
-    options?.forcedDomain && options.forcedDomain !== "all"
-      ? options.forcedDomain
-      : null;
+    options?.forcedDomain && options.forcedDomain !== "all" ? options.forcedDomain : null;
 
   let mission: ChallengeMission;
 
@@ -190,15 +277,16 @@ export function planSingleChallengeMission(
     // 2. Vérifier si une hypothèse active existe sur ce domaine
     const activeHyp = state.activeHypotheses.find(
       (h) =>
-        h.targetDomain === forcedDomain &&
-        (h.status === "exploring" || h.status === "untested"),
+        h.targetDomain === forcedDomain && (h.status === "exploring" || h.status === "untested"),
     );
     // 3. Vérifier si une progression ZPD existe sur ce domaine
     const zpdTarget = state.capabilities.progressionTargets.find(
       (t) => t.domain === forcedDomain && t.targetLevelAge > t.lastLevelAge,
     );
 
-    const domainCompletedCount = state.capabilities.stableDomains.includes(forcedDomain) ? 3 : 0;
+    const domainCompletedCount =
+      state.capabilities.domainCompletedCounts?.[forcedDomain] ??
+      (state.capabilities.stableDomains.includes(forcedDomain) ? 3 : 0);
     const computedFormat = determinePedagogicalFormat({
       domainCompletedCount,
       hasUnconsolidatedPeak: !!peakTarget,
@@ -248,6 +336,12 @@ export function planSingleChallengeMission(
         pedagogicalBrief: `Découverte pratique et réalisation concrète sur-mesure dans le domaine ciblé : ${forcedDomain}.`,
       };
     }
+
+    mission.guidanceLevel = determineGuidanceLevel({
+      age: state.identity.age,
+      completedInDomain: domainCompletedCount,
+      format: mission.format,
+    });
   } else {
     // Si aucun domaine forcé (ou "all"), on utilise la priorité globale du planificateur
     mission = planChallengeMissions(state, 1)[0];
@@ -261,4 +355,3 @@ export function planSingleChallengeMission(
 
   return mission;
 }
-

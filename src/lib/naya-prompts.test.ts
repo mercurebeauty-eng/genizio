@@ -613,5 +613,20 @@ describe("buildLayeredChallengePrompt — architecture multicouche", () => {
     expect(prompt).toContain("bocal en verre, vinaigre");
     expect(prompt).toContain("MISSION 1 :");
   });
-});
 
+  it("injecte le niveau d'étayage et d'autonomie visé (guidance_level) dans la Couche 3", async () => {
+    const { buildLayeredChallengePrompt } = await import("./naya-prompts");
+    const { buildChildDevelopmentState } = await import("./context-engine");
+    const { planChallengeMissions } = await import("./challenge-planner");
+
+    const state = buildChildDevelopmentState({
+      child: { id: "3", name: "Sékou", age: 13, country: "Mali" },
+    });
+
+    const missions = planChallengeMissions(state, 2);
+    const prompt = buildLayeredChallengePrompt(state, missions);
+
+    expect(prompt).toContain("Niveau d'étayage visé");
+    expect(prompt).toContain("Autonomie et démarche personnelle");
+  });
+});

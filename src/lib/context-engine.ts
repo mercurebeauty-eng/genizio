@@ -32,6 +32,8 @@ export interface ChildDevelopmentState {
     gardnerTalents: Record<string, number>;
     /** Domaines où l'enfant a déjà validé des acquis */
     stableDomains: string[];
+    /** Nombre de défis complétés par domaine */
+    domainCompletedCounts?: Record<string, number>;
     /** Cibles de progression ZPD calculées par domaine */
     progressionTargets: Array<{
       domain: string;
@@ -255,6 +257,7 @@ export function buildChildDevelopmentState(
     capabilities: {
       gardnerTalents,
       stableDomains,
+      domainCompletedCounts,
       progressionTargets: mappedProgressionTargets,
       leastExploredTalents,
       ignoredOrFatiguedDomains,

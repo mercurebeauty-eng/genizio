@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { planChallengeMissions } from "./challenge-planner";
+import { planChallengeMissions, determineGuidanceLevel } from "./challenge-planner";
 import { buildChildDevelopmentState } from "./context-engine";
 
 describe("Challenge Mission Planner — planChallengeMissions", () => {
@@ -212,6 +212,52 @@ describe("Pipeline E2E — Context Engine -> Planner -> Layered Prompt -> Schema
     expect(parsed.academic_domain).toBe("sciences");
     expect(parsed.proof_mode).toBe("photo");
   });
+
+  describe("determineGuidanceLevel & guidanceLevel déterministe", () => {
+    it("calcule un étayage élevé (4-5) pour les jeunes enfants", () => {
+      expect(determineGuidanceLevel({ age: 6 })).toBe(5);
+      expect(determineGuidanceLevel({ age: 6, completedInDomain: 3 })).toBe(4);
+      expect(determineGuidanceLevel({ age: 7, format: "spark_micro" })).toBe(5);
+    });
+
+    it("calcule un étayage jalonné (3) pour la tranche d'âge intermédiaire 8-11 ans", () => {
+      expect(determineGuidanceLevel({ age: 9 })).toBe(3);
+      expect(determineGuidanceLevel({ age: 10, format: "constructive_project" })).toBe(2);
+      expect(determineGuidanceLevel({ age: 9, completedInDomain: 6 })).toBe(1);
+    });
+
+    it("calcule une autonomie forte (1-2) pour les grands ou après expérience", () => {
+      expect(determineGuidanceLevel({ age: 14 })).toBe(2);
+      expect(determineGuidanceLevel({ age: 14, completedInDomain: 3 })).toBe(1);
+    });
+
+    it("injecte guidanceLevel dans chaque mission de planChallengeMissions", () => {
+      const state = buildChildDevelopmentState({
+        child: { id: "1", name: "Ibrahim", age: 12 },
+        latestChildQuestion: "Comment pousse une plante ?",
+      });
+
+      const missions = planChallengeMissions(state, 4);
+      for (const m of missions) {
+        expect(m.guidanceLevel).toBeDefined();
+        expect(m.guidanceLevel).toBeGreaterThanOrEqual(1);
+        expect(m.guidanceLevel).toBeLessThanOrEqual(5);
+      }
+    });
+
+    it("ajuste guidanceLevel dans planSingleChallengeMission selon l'historique de domaine", async () => {
+      const { planSingleChallengeMission } = await import("./challenge-planner");
+      const state = buildChildDevelopmentState({
+        child: { id: "2", name: "Aïcha", age: 7 },
+        completedChallenges: [
+          { id: "c1", title: "Défi 1", domain: "Sciences" },
+          { id: "c2", title: "Défi 2", domain: "Sciences" },
+          { id: "c3", title: "Défi 3", domain: "Sciences" },
+        ],
+      });
+
+      const mission = planSingleChallengeMission(state, { forcedDomain: "Sciences" });
+      expect(mission.guidanceLevel).toBe(4); // 5 - 1 (3 défis complétés) = 4
+    });
+  });
 });
-
-

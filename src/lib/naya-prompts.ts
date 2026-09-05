@@ -177,8 +177,11 @@ export const MATERIAL_TAGS_INSTRUCTION = `Pour "material_tags" : un tag court en
 // kind/guidance_level, les filets déterministes resolveKind/resolveGuidanceLevel
 // décident (anti-hallucination, retrait progressif du guidage avec le niveau).
 export const KIND_GUIDANCE_INSTRUCTION = `TYPE DE DÉFI ("kind") ET GUIDAGE ("guidance_level") :
-- "kind":"micro" = activité brève (quelques minutes) à résultat simple ; "kind":"projet" = véritable projet : construire, concevoir, rechercher, planifier, expérimenter, fabriquer → résultat observable (jamais un exercice passif ni une fiche). Un "projet" exige au moins 3 étapes.
-- "guidance_level" (entier 1 à 5) : 1 = consignes très détaillées pas-à-pas (étapes, outils, exemples) ; 5 = « voici l'objectif, trouve ta méthode ». Donne d'autant plus de liberté que l'enfant a déjà complété des défis dans ce domaine.`;
+- "kind":"micro" = activité brève (10 à 30 min) à résultat observable ; "kind":"projet" = véritable projet d'envergure (1h30–2h+, ou multi-étapes) : concevoir, fabriquer, tester, documenter un résultat tangible et soigné (au moins 3 phases/étapes).
+- "guidance_level" (entier 1 à 5) : niveau d'étayage/guidage fourni à l'enfant :
+  * 4 à 5 (Guidage pas-à-pas) : consignes très détaillées sans implicite (chaque sous-geste explicité, pour débutant ou enfant de 5-7 ans).
+  * 3 (Guidage jalonné) : étapes claires avec critères de succès concrets, l'enfant organise ses sous-gestes.
+  * 1 à 2 (Autonomie forte) : objectifs de phase, contraintes et critères d'évaluation (« voici l'objectif et les contraintes, trouve et valide ta démarche »). Plus l'enfant a d'expérience ou d'âge, plus le guidage s'efface.`;
 
 // Ajoutée le 2026-07-22 : avant, "intelligences" acceptait n'importe quel texte
 // libre (ex: "Créativité"), qui ne correspondait jamais aux 9 clés réelles de
@@ -216,7 +219,10 @@ Si aucune sous-forme ne correspond clairement à l'intelligence choisie, omets c
 // et les 4 autres générateurs de défis n'avaient même pas ça. Partagée entre les 5
 // (comme PROOF_MODE_INSTRUCTION/ACADEMIC_REFERENTIAL_INSTRUCTION), pas seulement
 // generateChallenges/generateSingleChallenge comme les fragments précédents.
-export const STEPS_INSTRUCTION = `Pour "steps" (3 à 6 étapes) : chaque étape est UN SEUL geste concret et complet, sans sous-action implicite laissée à deviner. Décompose ce qu'un adulte qui ne connaît pas déjà l'expérience ne saurait pas reconstituer seul (ex: pas "prépare le baromètre" mais "verse de l'eau colorée dans la bouteille jusqu'à mi-hauteur", puis "enfonce la paille dans le bouchon sans qu'elle touche le fond"). Teste mentalement : si on ne lisait QUE la liste des étapes, sans le titre ni la description, pourrait-on réaliser le défi du début à la fin sans se poser de question ? Si non, ajoute l'étape manquante plutôt que de la sous-entendre.`;
+export const STEPS_INSTRUCTION = `Pour "steps" (3 à 6 étapes) : adapte la granularité selon le niveau de guidage ("guidance_level") :
+- Si guidance_level 4-5 (Pas-à-pas détaillé) : chaque étape est UN SEUL geste concret et complet, sans sous-action implicite laissée à deviner (ex: pas "prépare le baromètre" mais "verse de l'eau colorée dans la bouteille jusqu'à mi-hauteur", puis "enfonce la paille dans le bouchon sans qu'elle touche le fond"). Teste mentalement : si on ne lisait QUE la liste des étapes, sans le titre ni la description, pourrait-on réaliser le défi du début à la fin sans se poser de question ? Si non, ajoute l'étape manquante plutôt que de la sous-entendre.
+- Si guidance_level 3 (Jalonné méthodique) : chaque étape formule un jalon d'action clair avec son critère de réussite concret (ex: "Mesure et trace les repères à 5 cm d'intervalle sur la tige", "Assemble la base en vérifiant qu'elle reste bien d'équerre"), laissant l'enfant enchaîner ses micro-actions.
+- Si guidance_level 1-2 (Autonomie et conception) : chaque étape décrit une phase stratégique de réalisation ou de test avec son objectif opérationnel et ses contraintes (ex: "Phase 1 - Exploration & Choix : teste trois formes d'ailes et retiens la plus stable", "Phase 2 - Assemblage & Prototypage : monte le planeur en respectant l'équilibre"), invitant l'enfant à concevoir sa propre méthode.`;
 
 // Idem — dupliquée avec une variation mineure ("déjà proposés" vs "déjà proposés à
 // cet enfant"). Fonction plutôt que constante puisque paramétrée par existingTitles ;
@@ -442,7 +448,17 @@ export function buildLayeredChallengePrompt(
           : ""
       }
 - Intelligences visées : ${m.targetTalents.join(", ")}
-- Zone de difficulté : ${m.difficultyZone}
+- Zone de difficulté : ${m.difficultyZone}${
+        m.guidanceLevel != null
+          ? `\n- Niveau d'étayage visé ("guidance_level": ${m.guidanceLevel}) : ${
+              m.guidanceLevel >= 4
+                ? "Guidage pas-à-pas détaillé (découpage sans implicite pour sécuriser l'enfant)"
+                : m.guidanceLevel === 3
+                  ? "Guidage jalonné méthodique (étapes clés avec critères de succès concrets)"
+                  : "Autonomie et démarche personnelle (objectifs de phase clairs, laisse l'enfant concevoir sa méthode)"
+            }`
+          : ""
+      }
 - Cahier des charges : ${m.pedagogicalBrief}${m.actionHook ? `\n- Fil conducteur spécifique : « ${m.actionHook} »` : ""}`,
     )
     .join("\n\n");
@@ -1319,9 +1335,10 @@ export type DiscoveryAnalysisPromptInput = {
 };
 
 export function buildDiscoveryAnalysisPrompt(input: DiscoveryAnalysisPromptInput): string {
-  const dialogueText = input.trace.dialogue && input.trace.dialogue.length > 0
-    ? input.trace.dialogue.map((d) => `Q: ${d.question}\nR: ${d.answer}`).join("\n\n")
-    : "(Pas de dialogue interactif spécifique)";
+  const dialogueText =
+    input.trace.dialogue && input.trace.dialogue.length > 0
+      ? input.trace.dialogue.map((d) => `Q: ${d.question}\nR: ${d.answer}`).join("\n\n")
+      : "(Pas de dialogue interactif spécifique)";
 
   const imageClause = input.trace.proofImageUrl
     ? `- Preuve photo fournie : ${input.trace.proofImageUrl}\n- VALIDATION CONTEXTUELLE DE L'IMAGE : vérifie si l'image ou la réalisation semble cohérente avec ce qui est raconté (sans rigidité excessive). Règle "image_context_verified" à true si c'est plausible/pertinent.`
