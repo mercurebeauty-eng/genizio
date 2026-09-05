@@ -18,6 +18,7 @@ import {
   FicheParseError,
   groupSizesFromDistribution,
   parseLessonFiche,
+  type ClassAcademicContext,
   type CopilotSource,
   type LessonFiche,
 } from "@/lib/educator-copilot";
@@ -101,6 +102,47 @@ async function resolveClassGroupSizes(
   }
 }
 
+/**
+ * Synthèse des observations académiques récentes de l'établissement (moyenne agrégée,
+ * tendance et axes de progrès formulés par les enseignants).
+ */
+async function resolveClassAcademicContext(
+  db: any,
+  schoolId: string | null,
+): Promise<ClassAcademicContext | undefined> {
+  if (!schoolId) return undefined;
+  try {
+    const { data: rows, error } = await db
+      .from("child_academic_observations")
+      .select("current_average, previous_average, teacher_report_notes")
+      .order("created_at", { ascending: false })
+      .limit(30);
+
+    if (error || !rows || rows.length === 0) return undefined;
+
+    const grades = rows
+      .map((r: any) => Number(r.current_average))
+      .filter((g: number) => !isNaN(g) && g > 0);
+
+    if (grades.length === 0) return undefined;
+
+    const avg = Math.round((grades.reduce((a: number, b: number) => a + b, 0) / grades.length) * 10) / 10;
+    const notes = rows
+      .map((r: any) => (r.teacher_report_notes as string | undefined)?.trim())
+      .filter((n): n is string => Boolean(n && n.length > 3))
+      .slice(0, 3);
+
+    return {
+      averageGrade: avg,
+      gradeTrend: avg >= 13 ? "progression" : avg >= 10 ? "stable" : "fragile",
+      teacherObservations: notes.length > 0 ? notes : undefined,
+    };
+  } catch (err) {
+    console.error("resolveClassAcademicContext degraded:", err);
+    return undefined;
+  }
+}
+
 /** Fusionne les text-parts d'un message multimodal pour le fallback texte Claude. */
 function contentPartsToText(user: string | Array<{ type: string; text?: string }>): string {
   if (typeof user === "string") return user;
@@ -143,11 +185,15 @@ export const generateClassLessonDeconstruction = createServerFn({ method: "POST"
     }
 
     // 3. Segmentation (agrégats, jamais de données individuelles)
-    const groupSizes = await resolveClassGroupSizes(db, profile.school_id ?? null, data.headcount);
+    const [groupSizes, academicContext] = await Promise.all([
+      resolveClassGroupSizes(db, profile.school_id ?? null, data.headcount),
+      resolveClassAcademicContext(db, profile.school_id ?? null),
+    ]);
     const segmentation = {
       headcount: data.headcount,
       gradeLevel: data.gradeLevel,
       countryContext: data.countryContext,
+      academicContext,
     };
 
     // 4. Génération GLM (fallback Claude) + parse avec retry correctif

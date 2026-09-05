@@ -96,6 +96,12 @@ export type CopilotSource =
   | { kind: "photo"; imageBase64: string; mediaType: string; hint?: string }
   | { kind: "voice"; transcript: string; subject?: string };
 
+export interface ClassAcademicContext {
+  averageGrade?: number;
+  gradeTrend?: "progression" | "stable" | "fragile";
+  teacherObservations?: string[];
+}
+
 export interface ClassSegmentation {
   /** Effectif réel saisi par le professeur (40–70 dans les classes cibles). */
   headcount: number;
@@ -103,6 +109,8 @@ export interface ClassSegmentation {
   gradeLevel: string;
   /** Contexte géographique pour l'ancrage métier local, ex. "Côte d'Ivoire". */
   countryContext: string;
+  /** Données et observations académiques réelles de la classe pour calibrer l'étayage. */
+  academicContext?: ClassAcademicContext;
 }
 
 // ── Fiche (contrat JSON, snake_case) ────────────────────────────────────────
@@ -241,11 +249,25 @@ export function buildLessonDeconstructionPrompt(params: {
   const sizesByChannel = COGNITIVE_CHANNELS.map((c, i) => `${c} : ${groupSizes[i] ?? 0} élèves`).join(
     ", ",
   );
-  const segmentationBlock = `CONTEXTE CLASSE :
+  let segmentationBlock = `CONTEXTE CLASSE :
 - Effectif total : ${segmentation.headcount} élèves — la somme des "group_size" doit être EXACTEMENT ${segmentation.headcount}.
 - Répartition imposée par canal (déjà calculée, à respecter scrupuleusement) : ${sizesByChannel}.
 - Niveau scolaire : ${segmentation.gradeLevel}.
 - Contexte géographique de l'établissement : ${segmentation.countryContext} — l'ancrage métier et le matériel en découlent.`;
+
+  if (segmentation.academicContext) {
+    const ac = segmentation.academicContext;
+    const details: string[] = [];
+    if (ac.averageGrade != null) {
+      details.push(`Moyenne académique observée de la cohorte : ${ac.averageGrade}/20 (${ac.gradeTrend === "fragile" ? "Consolidation socle prioritaire" : ac.gradeTrend === "progression" ? "Bonne dynamique d'acquisition" : "Niveau moyen standard"})`);
+    }
+    if (ac.teacherObservations && ac.teacherObservations.length > 0) {
+      details.push(`Observations réelles des enseignants : "${ac.teacherObservations.join('", "')}"`);
+    }
+    if (details.length > 0) {
+      segmentationBlock += `\n- PROFIL ACADÉMIQUE DE LA CLASSE (SOURCE RÉELLE) :\n  ${details.map((d) => `* ${d}`).join("\n  ")}\n  * Directive de calibration : adapte la progressivité des exercices et le niveau d'étayage des activités en tenant compte de ces forces et fragilités réelles.`;
+    }
+  }
 
   const system = `Tu es le Copilote Professeur de Génizio, l'assistant de préparation de cours pour enseignants d'Afrique francophone et de la diaspora. Ta mission : transformer une entrée (texte, photo d'exercice ou dictée) en une FICHE DE PRÉPARATION complète, différenciée en 4 canaux cognitifs, enseignable immédiatement avec des effectifs de 40 à 70 élèves et ZÉRO écran pour l'élève.
 
