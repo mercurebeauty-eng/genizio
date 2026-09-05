@@ -44,10 +44,11 @@ export const createChildDelegation = createServerFn({ method: "POST" })
   .validator((data: unknown) => CreateDelegationSchema.parse(data))
   .handler(async ({ data, context }) => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const user = context.user;
+    const db = supabaseAdmin as any;
+    const userId = (context as any).userId || (context as any).claims?.sub || (context as any).user?.id;
 
     // 1. Vérification des droits : Parent ou Mentor actif
-    const actorRole = await assertChildActor(supabaseAdmin, user.id, data.childId);
+    const actorRole = await assertChildActor(supabaseAdmin, userId, data.childId);
     const grantedByRole = actorRole === "owner" ? "parent" : "mentor";
 
     // 2. Recherche si le bénéficiaire a déjà un compte utilisateur
@@ -65,11 +66,11 @@ export const createChildDelegation = createServerFn({ method: "POST" })
     const validUntil = new Date(Date.now() + data.durationDays * 24 * 60 * 60 * 1000).toISOString();
 
     // 3. Insertion de la délégation
-    const { data: delegation, error } = await supabaseAdmin
+    const { data: delegation, error } = await db
       .from("child_delegations")
       .insert({
         child_id: data.childId,
-        granted_by: user.id,
+        granted_by: userId,
         granted_by_role: grantedByRole,
         beneficiary_user_id: beneficiaryUserId,
         beneficiary_email: normalizedEmail,
@@ -101,11 +102,12 @@ export const listChildDelegations = createServerFn({ method: "GET" })
   .validator((childId: string) => z.string().uuid().parse(childId))
   .handler(async ({ data: childId, context }) => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const user = context.user;
+    const db = supabaseAdmin as any;
+    const userId = (context as any).userId || (context as any).claims?.sub || (context as any).user?.id;
 
-    await assertChildActor(supabaseAdmin, user.id, childId);
+    await assertChildActor(supabaseAdmin, userId, childId);
 
-    const { data: rows, error } = await supabaseAdmin
+    const { data: rows, error } = await db
       .from("child_delegations")
       .select("*")
       .eq("child_id", childId)
@@ -128,9 +130,10 @@ export const revokeChildDelegation = createServerFn({ method: "POST" })
   .validator((delegationId: string) => z.string().uuid().parse(delegationId))
   .handler(async ({ data: delegationId, context }) => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const user = context.user;
+    const db = supabaseAdmin as any;
+    const userId = (context as any).userId || (context as any).claims?.sub || (context as any).user?.id;
 
-    const { data: delegation, error: fetchErr } = await supabaseAdmin
+    const { data: delegation, error: fetchErr } = await db
       .from("child_delegations")
       .select("child_id")
       .eq("id", delegationId)
@@ -140,9 +143,9 @@ export const revokeChildDelegation = createServerFn({ method: "POST" })
       throw new Error("Délégation introuvable.");
     }
 
-    await assertChildActor(supabaseAdmin, user.id, delegation.child_id);
+    await assertChildActor(supabaseAdmin, userId, delegation.child_id);
 
-    const { error: updateErr } = await supabaseAdmin
+    const { error: updateErr } = await db
       .from("child_delegations")
       .update({ status: "revoked", updated_at: new Date().toISOString() })
       .eq("id", delegationId);
@@ -161,21 +164,22 @@ export const listMyEducatorDelegations = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const user = context.user;
-    const userEmail = user.email?.toLowerCase();
+    const db = supabaseAdmin as any;
+    const userId = (context as any).userId || (context as any).claims?.sub || (context as any).user?.id;
+    const userEmail = (context as any).claims?.email?.toLowerCase();
 
     // Rapprochement automatique : si la délégation avait été créée par email
     // avant que l'éducateur ne se connecte, on lie son user_id.
     if (userEmail) {
-      await supabaseAdmin
+      await db
         .from("child_delegations")
-        .update({ beneficiary_user_id: user.id })
+        .update({ beneficiary_user_id: userId })
         .eq("beneficiary_email", userEmail)
         .is("beneficiary_user_id", null);
     }
 
     const now = new Date().toISOString();
-    const { data: delegations, error } = await supabaseAdmin
+    const { data: delegations, error } = await db
       .from("child_delegations")
       .select(`
         id,
@@ -188,7 +192,7 @@ export const listMyEducatorDelegations = createServerFn({ method: "GET" })
         last_accessed_at,
         created_at
       `)
-      .or(`beneficiary_user_id.eq.${user.id},beneficiary_email.eq.${userEmail}`)
+      .or(`beneficiary_user_id.eq.${userId},beneficiary_email.eq.${userEmail}`)
       .eq("status", "active")
       .gt("valid_until", now);
 
@@ -198,7 +202,7 @@ export const listMyEducatorDelegations = createServerFn({ method: "GET" })
     }
 
     // Récupération des informations synthétiques des enfants
-    const childIds = Array.from(new Set(delegations.map((d: any) => d.child_id)));
+    const childIds: string[] = Array.from(new Set(delegations.map((d: any) => d.child_id as string)));
     if (childIds.length === 0) return [];
 
     const { data: children } = await supabaseAdmin
@@ -234,7 +238,9 @@ export const getEducationalPassport = createServerFn({ method: "GET" })
   .validator((childId: string) => z.string().uuid().parse(childId))
   .handler(async ({ data: childId, context }) => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const user = context.user;
+    const db = supabaseAdmin as any;
+    const userId = (context as any).userId || (context as any).claims?.sub || (context as any).user?.id;
+    const userEmail = (context as any).claims?.email?.toLowerCase();
     const now = new Date().toISOString();
 
     // 1. Vérification : est-ce le parent/mentor OU un professionnel délégué ?
@@ -243,17 +249,16 @@ export const getEducationalPassport = createServerFn({ method: "GET" })
     let activeDelegationId: string | null = null;
 
     try {
-      await assertChildActor(supabaseAdmin, user.id, childId);
+      await assertChildActor(supabaseAdmin, userId, childId);
       isAuthorized = true;
       sharePhone = true;
     } catch {
       // Pas parent ni mentor, vérifions la table child_delegations
-      const userEmail = user.email?.toLowerCase();
-      const { data: delegation } = await supabaseAdmin
+      const { data: delegation } = await db
         .from("child_delegations")
         .select("id, share_parent_phone")
         .eq("child_id", childId)
-        .or(`beneficiary_user_id.eq.${user.id},beneficiary_email.eq.${userEmail}`)
+        .or(`beneficiary_user_id.eq.${userId},beneficiary_email.eq.${userEmail}`)
         .eq("status", "active")
         .gt("valid_until", now)
         .maybeSingle();
@@ -271,17 +276,19 @@ export const getEducationalPassport = createServerFn({ method: "GET" })
 
     // 2. Traçabilité de consultation
     if (activeDelegationId) {
-      await supabaseAdmin.rpc("increment_delegation_access", {
-        delegation_id: activeDelegationId,
-      }).catch(async () => {
+      try {
+        await (supabaseAdmin as any).rpc("increment_delegation_access", {
+          delegation_id: activeDelegationId,
+        });
+      } catch {
         // Fallback si RPC absente
-        await supabaseAdmin
+        await db
           .from("child_delegations")
           .update({
             last_accessed_at: now,
           })
           .eq("id", activeDelegationId);
-      });
+      }
     }
 
     // 3. Récupération des données pédagogiques assainies

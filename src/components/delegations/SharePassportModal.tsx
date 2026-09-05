@@ -247,7 +247,7 @@ export function SharePassportModal({
             }`}
           >
             <AtSign className="size-3.5" />
-            <span>@Handle ou #Classe</span>
+            <span>@Handle, #Classe ou #École</span>
           </button>
           <button
             type="button"
@@ -280,7 +280,7 @@ export function SharePassportModal({
           <div className="space-y-4 text-xs">
             <form onSubmit={handleSearchEducator} className="space-y-2">
               <label className="block font-bold text-ink">
-                Identifiant professionnel (@) ou Code de Classe (#) :
+                Identifiant professionnel (@), Code de Classe (#) ou Code École (#) :
               </label>
               <div className="flex gap-2">
                 <div className="relative flex-1">
@@ -290,7 +290,7 @@ export function SharePassportModal({
                     required
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    placeholder="ex: @kone.maths ou #LCA-6B"
+                    placeholder="ex: @kone.maths, #LCA-6B ou #CSV-OUAGA"
                     className="w-full rounded-xl border border-ink/10 pl-9 pr-3 py-2.5 font-semibold text-ink outline-none focus:ring-2 focus:ring-brand/30"
                   />
                 </div>
@@ -314,7 +314,7 @@ export function SharePassportModal({
                         {foundEducator.fullName}
                       </h4>
                       {foundEducator.isVerified && (
-                        <span className="rounded-full bg-emerald-200 px-2 py-0.5 text-[9px] font-black text-emerald-900">
+                        <span className="rounded-full bg-emerald-200 px-2 py-0.5 text-[9px] font-black text-emerald-900 border border-emerald-300">
                           Vérifié
                         </span>
                       )}
@@ -324,8 +324,11 @@ export function SharePassportModal({
                         ? "Enseignant"
                         : foundEducator.professionalRole === "counselor"
                           ? "Conseiller d'Orientation"
-                          : "Professionnel de l'éducation"}
+                          : foundEducator.professionalRole === "psychologist"
+                            ? "Psychologue Scolaire"
+                            : "Professionnel de l'éducation"}
                       {foundEducator.organizationName ? ` · ${foundEducator.organizationName}` : ""}
+                      {foundEducator.schoolCode ? ` (${foundEducator.schoolCode})` : ""}
                       {foundEducator.classCode ? ` (Classe ${foundEducator.classCode})` : ""}
                     </p>
                   </div>

@@ -123,7 +123,7 @@ export async function ingestChallengeObservations(
       user_id: userId,
       type: "CANDIDATE_OBSERVATIONS" as any,
       source: "profile_engine" as any,
-      payload,
+      payload: payload as any,
     });
 
     // Filet de sécurité défensif : si la contrainte SQL n'a pas encore migré dans l'environnement courant,
@@ -137,7 +137,7 @@ export async function ingestChallengeObservations(
         payload: {
           ...payload,
           event_subtype: "CANDIDATE_OBSERVATIONS",
-        },
+        } as any,
       });
       eventErr = fallback.error;
     }

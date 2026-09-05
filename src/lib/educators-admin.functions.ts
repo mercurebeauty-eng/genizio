@@ -35,9 +35,10 @@ export const listEducatorsAdmin = createServerFn({ method: "GET" })
   .middleware([requireAdmin])
   .handler(async () => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const db = supabaseAdmin as any;
     const now = new Date().toISOString();
 
-    const { data: rows, error } = await supabaseAdmin
+    const { data: rows, error } = await db
       .from("child_delegations")
       .select(`
         id,
@@ -104,9 +105,10 @@ export const listEducatorStudentsAdmin = createServerFn({ method: "GET" })
   .validator((email: string) => z.string().email().parse(email))
   .handler(async ({ data: email }) => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const db = supabaseAdmin as any;
     const normalizedEmail = email.toLowerCase().trim();
 
-    const { data: rows, error } = await supabaseAdmin
+    const { data: rows, error } = await db
       .from("child_delegations")
       .select(`
         id,
@@ -163,15 +165,16 @@ export const revokeAllEducatorAccessAdmin = createServerFn({ method: "POST" })
   .validator((email: string) => z.string().email().parse(email))
   .handler(async ({ data: email, context }) => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const adminUser = context.user;
+    const db = supabaseAdmin as any;
+    const adminEmail = (context as any).claims?.email || "admin";
     const normalizedEmail = email.toLowerCase().trim();
     const now = new Date().toISOString();
 
     console.warn(
-      `⛔ RÉVOCATION MASSIVE D'ÉDUCATEUR : ${adminUser.email} révoque tous les accès de ${normalizedEmail}`,
+      `⛔ RÉVOCATION MASSIVE D'ÉDUCATEUR : ${adminEmail} révoque tous les accès de ${normalizedEmail}`,
     );
 
-    const { data, error } = await supabaseAdmin
+    const { data, error } = await db
       .from("child_delegations")
       .update({
         status: "revoked",

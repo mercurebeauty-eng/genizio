@@ -25,6 +25,8 @@ import {
   AtSign,
   Hash,
   Sparkles,
+  Search,
+  X,
 } from "lucide-react";
 import { ConsentLedger } from "@/components/settings/ConsentLedger";
 import { ExportDataButton } from "@/components/settings/ExportDataButton";
@@ -43,6 +45,12 @@ import {
   getMentorActivationStatus,
   setMentorMode,
 } from "@/lib/mentors.functions";
+import {
+  searchSchools,
+  suggestSchool,
+  type SchoolItem,
+  type SchoolType,
+} from "@/lib/schools.functions";
 
 export const Route = createFileRoute("/profile")({
   component: ProfilePage,
@@ -56,6 +64,7 @@ function ProfilePage() {
   // avec le nombre d'enfants assignés ; les actions parent (gérer les profils,
   // lien avec l'enfant) sont masquées.
   const mentorMode = isMentorMode(session);
+  const educatorMode = isEducatorMode(session);
 
   const [phoneNumber, setPhoneNumber] = useState("");
   const [selectedCountry, setSelectedCountry] = useState(COUNTRIES[0]);
@@ -116,6 +125,26 @@ function ProfilePage() {
   const [educatorHandle, setEducatorHandle] = useState("");
   const [educatorClassCode, setEducatorClassCode] = useState("");
   const [showEducatorForm, setShowEducatorForm] = useState(false);
+  const [educatorSchoolId, setEducatorSchoolId] = useState<string | null>(null);
+  const [educatorSchoolCode, setEducatorSchoolCode] = useState<string | null>(null);
+  const [educatorSchoolCity, setEducatorSchoolCity] = useState<string | null>(null);
+  const [educatorSchoolStatus, setEducatorSchoolStatus] = useState<string | null>(null);
+
+  // Autocomplete écoles
+  const searchSchoolsFn = useServerFn(searchSchools);
+  const suggestSchoolFn = useServerFn(suggestSchool);
+  const [schoolQuery, setSchoolQuery] = useState("");
+  const [schoolSuggestions, setSchoolSuggestions] = useState<SchoolItem[]>([]);
+  const [searchingSchools, setSearchingSchools] = useState(false);
+  const [showSchoolDropdown, setShowSchoolDropdown] = useState(false);
+
+  // Modal de déclaration d'un nouvel établissement
+  const [showSuggestModal, setShowSuggestModal] = useState(false);
+  const [suggestName, setSuggestName] = useState("");
+  const [suggestCity, setSuggestCity] = useState("");
+  const [suggestType, setSuggestType] = useState<SchoolType>("public");
+  const [suggestIsLeader, setSuggestIsLeader] = useState(false);
+  const [suggesting, setSuggesting] = useState(false);
 
 
   const handleActivateCode = async (e: React.FormEvent) => {
@@ -239,6 +268,7 @@ function ProfilePage() {
     if (mentorStatus?.educatorProfile) {
       setEducatorRole((mentorStatus.educatorProfile.professionalRole as any) || "teacher");
       setEducatorOrg(mentorStatus.educatorProfile.organizationName || "");
+      setEducatorSchoolId((mentorStatus.educatorProfile as any).schoolId || null);
       setEducatorHandle(
         mentorStatus.educatorProfile.handle
           ? mentorStatus.educatorProfile.handle.replace(/^@/, "")
@@ -251,6 +281,76 @@ function ProfilePage() {
       );
     }
   }, [mentorStatus]);
+
+  // Autocomplete temps réel pour la recherche d'établissement
+  useEffect(() => {
+    if (!showEducatorForm) return;
+    if (schoolQuery.trim().length >= 2) {
+      setSearchingSchools(true);
+      const timer = setTimeout(() => {
+        searchSchoolsFn({ data: { query: schoolQuery.trim(), limit: 8 } })
+          .then((results) => {
+            setSchoolSuggestions(results ?? []);
+            setShowSchoolDropdown(true);
+          })
+          .catch((err) => console.error(err))
+          .finally(() => setSearchingSchools(false));
+      }, 250);
+      return () => clearTimeout(timer);
+    } else {
+      setSchoolSuggestions([]);
+      setShowSchoolDropdown(false);
+    }
+  }, [schoolQuery, showEducatorForm, searchSchoolsFn]);
+
+  const handleSelectSchool = (school: SchoolItem) => {
+    setEducatorSchoolId(school.id);
+    setEducatorOrg(school.name);
+    setEducatorSchoolCode(school.code);
+    setEducatorSchoolCity(school.city);
+    setEducatorSchoolStatus(school.status);
+    setSchoolQuery("");
+    setShowSchoolDropdown(false);
+  };
+
+  const handleClearSchool = () => {
+    setEducatorSchoolId(null);
+    setEducatorOrg("");
+    setEducatorSchoolCode(null);
+    setEducatorSchoolCity(null);
+    setEducatorSchoolStatus(null);
+    setSchoolQuery("");
+  };
+
+  const handleSuggestSchoolSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!suggestName.trim() || !suggestCity.trim()) {
+      toast.error("Le nom et la ville sont obligatoires.");
+      return;
+    }
+    setSuggesting(true);
+    try {
+      const res = await suggestSchoolFn({
+        data: {
+          name: suggestName.trim(),
+          city: suggestCity.trim(),
+          countryCode: "BF",
+          type: suggestType,
+          isLeader: suggestIsLeader,
+        },
+      });
+      handleSelectSchool(res);
+      setShowSuggestModal(false);
+      setSuggestName("");
+      setSuggestCity("");
+      setSuggestIsLeader(false);
+      toast.success("Établissement enregistré et sélectionné !");
+    } catch (err: any) {
+      toast.error(err?.message || "Erreur lors de l'enregistrement de l'établissement.");
+    } finally {
+      setSuggesting(false);
+    }
+  };
 
   const handleSwitchMode = async (mode: "parent" | "mentor" | "educator") => {
     if (!mentorStatus || mentorStatus.mode === mode || switchingMode) return;
@@ -289,6 +389,7 @@ function ProfilePage() {
             "Professionnel",
           professionalRole: educatorRole,
           organizationName: educatorOrg.trim() || undefined,
+          schoolId: educatorSchoolId || undefined,
           handle: educatorHandle.trim() || undefined,
           classCode: educatorClassCode.trim() || undefined,
         },
@@ -790,9 +891,17 @@ function ProfilePage() {
                     <span className="text-[10px] font-extrabold uppercase tracking-wider text-ink/40 block mb-0.5">
                       Établissement / École
                     </span>
-                    <span className="font-bold text-ink">
-                      {mentorStatus.educatorProfile.organizationName || "Non renseigné"}
-                    </span>
+                    <div className="flex items-center gap-1.5 flex-wrap">
+                      <span className="font-bold text-ink">
+                        {mentorStatus.educatorProfile.organizationName || "Non renseigné"}
+                      </span>
+                      {mentorStatus.educatorProfile.isVerified && (
+                        <span className="inline-flex items-center gap-0.5 text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded-full text-[10px] font-bold border border-emerald-200">
+                          <Check className="size-3 text-emerald-600 stroke-[3]" />
+                          Vérifié
+                        </span>
+                      )}
+                    </div>
                   </div>
                   <div>
                     <span className="text-[10px] font-extrabold uppercase tracking-wider text-ink/40 block mb-0.5">
@@ -857,16 +966,131 @@ function ProfilePage() {
                   </div>
 
                   <div className="space-y-1.5 sm:col-span-2">
-                    <label className="text-xs font-bold text-ink/70">
-                      Établissement scolaire / École
-                    </label>
-                    <input
-                      type="text"
-                      value={educatorOrg}
-                      onChange={(e) => setEducatorOrg(e.target.value)}
-                      placeholder="Ex: Lycée Classique d'Abidjan, Collège Notre Dame..."
-                      className="w-full rounded-xl border border-ink/10 px-4 py-2.5 text-sm font-medium text-ink outline-none focus:ring-2 focus:ring-indigo-500 shadow-xs"
-                    />
+                    <div className="flex items-center justify-between">
+                      <label className="text-xs font-bold text-ink/70">
+                        Établissement scolaire / École
+                      </label>
+                      {educatorSchoolId && (
+                        <button
+                          type="button"
+                          onClick={handleClearSchool}
+                          className="text-[11px] text-indigo-600 hover:text-indigo-800 font-bold cursor-pointer"
+                        >
+                          Changer d'école
+                        </button>
+                      )}
+                    </div>
+
+                    {educatorSchoolId ? (
+                      <div className="rounded-2xl border border-indigo-200 bg-indigo-50/60 p-3.5 flex items-center justify-between gap-3">
+                        <div className="flex items-center gap-3 min-w-0">
+                          <div className="grid size-10 place-items-center rounded-xl bg-indigo-600 text-white shrink-0 shadow-2xs">
+                            <Building2 className="size-5" />
+                          </div>
+                          <div className="min-w-0">
+                            <div className="flex items-center gap-2">
+                              <p className="font-display font-bold text-sm text-ink truncate">
+                                {educatorOrg}
+                              </p>
+                              {educatorSchoolStatus === "verified" || educatorSchoolStatus === "partner_campus" ? (
+                                <span className="inline-flex items-center gap-0.5 rounded-full bg-emerald-100 text-emerald-800 px-2 py-0.5 text-[9px] font-black uppercase tracking-wider shrink-0 border border-emerald-200">
+                                  <Check className="size-2.5 stroke-[3]" /> Certifié
+                                </span>
+                              ) : (
+                                <span className="inline-flex items-center gap-0.5 rounded-full bg-amber-50 text-amber-800 px-2 py-0.5 text-[9px] font-black uppercase tracking-wider border border-amber-200 shrink-0">
+                                  Communauté
+                                </span>
+                              )}
+                            </div>
+                            <div className="flex items-center gap-2 text-xs text-ink/60 mt-0.5">
+                              {educatorSchoolCode && (
+                                <span className="font-mono font-bold text-indigo-700 bg-white px-2 py-0.5 rounded border border-indigo-100 text-[11px]">
+                                  {educatorSchoolCode}
+                                </span>
+                              )}
+                              {educatorSchoolCity && <span>· {educatorSchoolCity}</span>}
+                            </div>
+                          </div>
+                        </div>
+
+                        <button
+                          type="button"
+                          onClick={handleClearSchool}
+                          className="rounded-xl border border-ink/10 bg-white px-3 py-1.5 text-xs font-bold text-ink/70 hover:text-ink cursor-pointer shrink-0 shadow-2xs"
+                        >
+                          Modifier
+                        </button>
+                      </div>
+                    ) : (
+                      <div className="relative">
+                        <div className="relative">
+                          <Search className="size-4 text-ink/40 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+                          <input
+                            type="text"
+                            value={schoolQuery || educatorOrg}
+                            onChange={(e) => {
+                              setSchoolQuery(e.target.value);
+                              setEducatorOrg(e.target.value);
+                            }}
+                            onFocus={() => {
+                              if (schoolSuggestions.length > 0) setShowSchoolDropdown(true);
+                            }}
+                            placeholder="Rechercher une école par nom, ville ou code (#CSV-OUAGA)…"
+                            className="w-full rounded-xl border border-ink/10 pl-10 pr-10 py-2.5 text-sm font-medium text-ink outline-none focus:ring-2 focus:ring-indigo-500 shadow-xs"
+                          />
+                          {searchingSchools && (
+                            <Loader2 className="size-4 animate-spin text-indigo-600 absolute right-3.5 top-1/2 -translate-y-1/2" />
+                          )}
+                        </div>
+
+                        {/* Dropdown Suggestions */}
+                        {showSchoolDropdown && schoolSuggestions.length > 0 && (
+                          <div className="absolute z-20 left-0 right-0 top-full mt-1.5 rounded-2xl border border-ink/10 bg-white shadow-xl max-h-56 overflow-y-auto divide-y divide-ink/5">
+                            {schoolSuggestions.map((school) => (
+                              <button
+                                key={school.id}
+                                type="button"
+                                onClick={() => handleSelectSchool(school)}
+                                className="w-full text-left p-3 hover:bg-indigo-50/50 transition-colors flex items-center justify-between gap-3 cursor-pointer"
+                              >
+                                <div>
+                                  <div className="flex items-center gap-2">
+                                    <span className="font-bold text-xs text-ink">{school.name}</span>
+                                    {school.status === "verified" || school.status === "partner_campus" ? (
+                                      <span className="rounded-full bg-emerald-100 text-emerald-800 px-1.5 py-0.2 text-[9px] font-black uppercase tracking-wider">
+                                        Certifié
+                                      </span>
+                                    ) : null}
+                                  </div>
+                                  <p className="text-[11px] text-ink/50 mt-0.5">
+                                    {school.city} · {school.type === "public" ? "Public" : "Privé"}
+                                  </p>
+                                </div>
+                                <span className="font-mono font-bold text-xs text-indigo-700 bg-indigo-50 px-2 py-0.5 rounded-lg border border-indigo-100 shrink-0">
+                                  {school.code}
+                                </span>
+                              </button>
+                            ))}
+                          </div>
+                        )}
+
+                        <div className="pt-2 flex flex-col sm:flex-row sm:items-center justify-between gap-1 text-xs">
+                          <p className="text-[11px] text-ink/50">
+                            Recherche instantanée dans l'annuaire officiel Génizio Campus.
+                          </p>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setSuggestName(schoolQuery.trim() || educatorOrg.trim());
+                              setShowSuggestModal(true);
+                            }}
+                            className="text-[11px] font-bold text-indigo-600 hover:text-indigo-800 hover:underline cursor-pointer text-left sm:text-right"
+                          >
+                            + Enregistrer une nouvelle école
+                          </button>
+                        </div>
+                      </div>
+                    )}
                   </div>
 
                   <div className="space-y-1.5">
@@ -1156,6 +1380,104 @@ function ProfilePage() {
           </div>
         </div>
       </div>
+
+      {/* Modale de déclaration d'un nouvel établissement scolaire */}
+      {showSuggestModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-xs">
+          <div className="relative w-full max-w-md rounded-3xl bg-white p-6 shadow-2xl space-y-4">
+            <div className="flex items-start justify-between border-b border-ink/5 pb-3">
+              <div className="flex items-center gap-2">
+                <Building2 className="size-5 text-indigo-600" />
+                <h3 className="font-display font-bold text-base text-ink">
+                  Déclarer un établissement
+                </h3>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowSuggestModal(false)}
+                className="grid size-7 place-items-center rounded-full hover:bg-ink/5 text-ink/40 cursor-pointer"
+              >
+                <X className="size-4" />
+              </button>
+            </div>
+
+            <form onSubmit={handleSuggestSchoolSubmit} className="space-y-3.5 text-xs">
+              <p className="text-ink/60 text-[11px] leading-relaxed">
+                Votre école n'est pas encore enregistrée ? Ajoutez-la en 2 secondes. Un code de ralliement officiel lui sera automatiquement attribué.
+              </p>
+
+              <div className="space-y-1">
+                <label className="font-bold text-ink/70">Nom complet de l'école *</label>
+                <input
+                  type="text"
+                  required
+                  value={suggestName}
+                  onChange={(e) => setSuggestName(e.target.value)}
+                  placeholder="Ex: Lycée Saint-Viateur"
+                  className="w-full rounded-xl border border-ink/10 px-3.5 py-2.5 font-bold text-ink outline-none focus:ring-2 focus:ring-indigo-500"
+                />
+              </div>
+
+              <div className="space-y-1">
+                <label className="font-bold text-ink/70">Ville *</label>
+                <input
+                  type="text"
+                  required
+                  value={suggestCity}
+                  onChange={(e) => setSuggestCity(e.target.value)}
+                  placeholder="Ex: Ouagadougou"
+                  className="w-full rounded-xl border border-ink/10 px-3.5 py-2.5 font-bold text-ink outline-none focus:ring-2 focus:ring-indigo-500"
+                />
+              </div>
+
+              <div className="space-y-1">
+                <label className="font-bold text-ink/70">Type</label>
+                <select
+                  value={suggestType}
+                  onChange={(e) => setSuggestType(e.target.value as SchoolType)}
+                  className="w-full rounded-xl border border-ink/10 bg-white px-3 py-2.5 font-bold text-ink outline-none cursor-pointer"
+                >
+                  <option value="public">Public</option>
+                  <option value="private_secular">Privé Laïc</option>
+                  <option value="private_religious">Privé Confessionnel</option>
+                  <option value="international">International</option>
+                  <option value="other">Autre</option>
+                </select>
+              </div>
+
+              <label className="flex items-center gap-2 pt-1 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={suggestIsLeader}
+                  onChange={(e) => setSuggestIsLeader(e.target.checked)}
+                  className="rounded border-ink/20 text-indigo-600 focus:ring-indigo-500"
+                />
+                <span className="text-[11px] text-ink/70 font-semibold">
+                  Je suis le Directeur ou Responsable de cet établissement
+                </span>
+              </label>
+
+              <div className="flex items-center justify-end gap-2 pt-2 border-t border-ink/5">
+                <button
+                  type="button"
+                  onClick={() => setShowSuggestModal(false)}
+                  className="px-3.5 py-2 rounded-xl border border-ink/10 text-ink/60 font-bold hover:text-ink cursor-pointer"
+                >
+                  Annuler
+                </button>
+                <button
+                  type="submit"
+                  disabled={suggesting}
+                  className="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold transition-all shadow-xs cursor-pointer disabled:opacity-50 flex items-center gap-1.5"
+                >
+                  {suggesting && <Loader2 className="size-3.5 animate-spin" />}
+                  <span>Enregistrer & Sélectionner</span>
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

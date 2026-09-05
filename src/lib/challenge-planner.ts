@@ -45,7 +45,7 @@ export function planChallengeMissions(
   const fallbackDomains = availableDomains.length > 0 ? availableDomains : DOMAINS;
 
   function pickAvailableDomain(preferred?: string): string {
-    if (preferred && fallbackDomains.includes(preferred) && !usedDomains.has(preferred)) {
+    if (preferred && (fallbackDomains as readonly string[]).includes(preferred) && !usedDomains.has(preferred)) {
       usedDomains.add(preferred);
       return preferred;
     }

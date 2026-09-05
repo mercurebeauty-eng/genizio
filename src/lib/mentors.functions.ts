@@ -1899,14 +1899,14 @@ export const getMentorActivationStatus = createServerFn({ method: "GET" })
     const mode = rawMode === "mentor" ? "mentor" : rawMode === "educator" ? "educator" : "parent";
 
     // Éducateur / Conseiller / Orientation (Sprint C)
-    const { data: educatorProfile } = await supabaseAdmin
+    const { data: educatorProfile } = await (supabaseAdmin as any)
       .from("educator_profiles")
       .select("*")
       .eq("user_id", userId)
       .maybeSingle();
 
     const userEmail = user?.user?.email?.toLowerCase();
-    const { count: delegationsCount } = await supabaseAdmin
+    const { count: delegationsCount } = await (supabaseAdmin as any)
       .from("child_delegations")
       .select("id", { count: "exact", head: true })
       .or(`beneficiary_user_id.eq.${userId},beneficiary_email.eq.${userEmail || "none"}`)
@@ -1928,6 +1928,7 @@ export const getMentorActivationStatus = createServerFn({ method: "GET" })
             handle: educatorProfile.handle,
             fullName: educatorProfile.full_name,
             organizationName: educatorProfile.organization_name,
+            schoolId: educatorProfile.school_id,
             professionalRole: educatorProfile.professional_role,
             classCode: educatorProfile.class_code,
             isVerified: educatorProfile.is_verified,
@@ -1971,14 +1972,14 @@ export const setMentorMode = createServerFn({ method: "POST" })
     }
 
     if (data.mode === "educator") {
-      const { data: educatorProfile } = await supabaseAdmin
+      const { data: educatorProfile } = await (supabaseAdmin as any)
         .from("educator_profiles")
         .select("id")
         .eq("user_id", userId)
         .maybeSingle();
 
       const userEmail = (context as any).claims?.email?.toLowerCase();
-      const { count: delegationsCount } = await supabaseAdmin
+      const { count: delegationsCount } = await (supabaseAdmin as any)
         .from("child_delegations")
         .select("id", { count: "exact", head: true })
         .or(`beneficiary_user_id.eq.${userId},beneficiary_email.eq.${userEmail || "none"}`)

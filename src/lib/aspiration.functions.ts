@@ -105,7 +105,7 @@ Réponds UNIQUEMENT par un JSON brut sans markdown avec ce format :
         VALID_TALENT_KEYS.includes(k),
       );
       const validDomains = (parsed.domains || []).filter((d: string) =>
-        DOMAINS.includes(d),
+        (DOMAINS as readonly string[]).includes(d),
       );
 
       const bridge: AspirationBridge = {

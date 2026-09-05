@@ -31,6 +31,8 @@ import {
   ShieldCheck,
   Building2,
   ExternalLink,
+  Copy,
+  Check,
 } from "lucide-react";
 import { toast } from "sonner";
 import { GenizioLoader } from "@/components/GenizioLoader";
@@ -54,6 +56,14 @@ function EducatorDashboardPage() {
   const [selectedChildId, setSelectedChildId] = useState<string | null>(null);
   const [passportData, setPassportData] = useState<any | null>(null);
   const [loadingPassport, setLoadingPassport] = useState(false);
+  const [copiedCode, setCopiedCode] = useState(false);
+
+  const handleCopySchoolCode = (code: string) => {
+    void navigator.clipboard.writeText(code);
+    setCopiedCode(true);
+    toast.success("Code établissement copié !");
+    setTimeout(() => setCopiedCode(false), 2000);
+  };
 
   const listDelegationsFn = useServerFn(listMyEducatorDelegations);
   const getPassportFn = useServerFn(getEducationalPassport);
@@ -234,14 +244,60 @@ function EducatorDashboardPage() {
             <div className="space-y-6">
               {/* Carte Récapitulative de l'Établissement */}
               <div className="rounded-3xl border border-indigo-200 bg-gradient-to-r from-indigo-50/80 via-white to-sky-50/60 p-6 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-6">
-                <div className="space-y-1.5">
-                  <span className="rounded-full bg-indigo-600 text-white px-2.5 py-0.5 text-[10px] font-black uppercase tracking-wider">
-                    Établissement Scolaire Référencé
-                  </span>
+                <div className="space-y-2">
+                  <div className="flex flex-wrap items-center gap-2">
+                    {establishment.schoolStatus === "partner_campus" ? (
+                      <span className="rounded-full bg-purple-100 text-purple-800 px-2.5 py-0.5 text-[10px] font-black uppercase tracking-wider border border-purple-200 flex items-center gap-1">
+                        <Sparkles className="size-3 text-purple-600" /> Campus Partenaire Agréé
+                      </span>
+                    ) : establishment.schoolStatus === "verified" ? (
+                      <span className="rounded-full bg-emerald-100 text-emerald-800 px-2.5 py-0.5 text-[10px] font-black uppercase tracking-wider border border-emerald-200 flex items-center gap-1">
+                        <ShieldCheck className="size-3 text-emerald-600" /> Établissement Certifié Génizio
+                      </span>
+                    ) : (
+                      <span className="rounded-full bg-indigo-600 text-white px-2.5 py-0.5 text-[10px] font-black uppercase tracking-wider">
+                        Établissement Scolaire Référencé
+                      </span>
+                    )}
+
+                    {establishment.schoolCity && (
+                      <span className="text-xs text-ink/60 font-semibold">
+                        · {establishment.schoolCity}
+                      </span>
+                    )}
+                  </div>
+
                   <h2 className="text-2xl font-display font-black text-ink">
                     {establishment.organizationName}
                   </h2>
-                  <p className="text-xs text-ink/65 font-medium max-w-xl">
+
+                  <div className="flex flex-wrap items-center gap-3 pt-0.5">
+                    {establishment.schoolCode && (
+                      <div className="inline-flex items-center gap-1.5 bg-white border border-indigo-200 rounded-xl px-3 py-1 text-xs font-mono font-bold text-indigo-700 shadow-2xs">
+                        <span>{establishment.schoolCode}</span>
+                        <button
+                          type="button"
+                          onClick={() => handleCopySchoolCode(establishment.schoolCode!)}
+                          title="Copier le code de l'établissement"
+                          className="hover:text-indigo-900 cursor-pointer"
+                        >
+                          {copiedCode ? (
+                            <Check className="size-3.5 text-emerald-600 stroke-[3]" />
+                          ) : (
+                            <Copy className="size-3.5 text-indigo-400" />
+                          )}
+                        </button>
+                      </div>
+                    )}
+
+                    {establishment.licensedQuota && establishment.licensedQuota > 0 ? (
+                      <span className="text-xs font-bold text-emerald-800 bg-emerald-50 border border-emerald-200 px-2.5 py-1 rounded-xl">
+                        {establishment.licensedQuota} licences élèves campus
+                      </span>
+                    ) : null}
+                  </div>
+
+                  <p className="text-xs text-ink/65 font-medium max-w-xl leading-relaxed">
                     Vue partagée de l'équipe pédagogique. Les enseignants et conseillers de cet
                     établissement peuvent collaborer et assurer la continuité du suivi des élèves.
                   </p>
@@ -266,6 +322,39 @@ function EducatorDashboardPage() {
                   </div>
                 </div>
               </div>
+
+              {/* Panneau de Direction / Responsable Établissement */}
+              {establishment.isLeader && (
+                <div className="rounded-3xl border border-indigo-200 bg-indigo-50/70 p-5 space-y-3 shadow-2xs">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                    <div className="flex items-center gap-2.5">
+                      <div className="grid size-9 place-items-center rounded-xl bg-indigo-600 text-white shadow-2xs shrink-0">
+                        <Award className="size-5" />
+                      </div>
+                      <div>
+                        <h3 className="font-display font-black text-sm text-ink">
+                          Coordination Pédagogique & Direction
+                        </h3>
+                        <p className="text-[11px] text-ink/60">
+                          Vous êtes déclaré comme responsable / superviseur de cet établissement.
+                        </p>
+                      </div>
+                    </div>
+
+                    <a
+                      href={`https://wa.me/?text=${encodeURIComponent(
+                        `Bonjour chers collègues,\nRejoignez notre équipe pédagogique sur Génizio Campus pour l'établissement ${establishment.organizationName} avec le code officiel : ${establishment.schoolCode || ""}.\nhttps://www.genizio.com/educator`,
+                      )}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="px-3.5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold transition-all flex items-center justify-center gap-1.5 shadow-2xs shrink-0"
+                    >
+                      <MessageSquare className="size-3.5" />
+                      <span>Inviter les enseignants (WhatsApp)</span>
+                    </a>
+                  </div>
+                </div>
+              )}
 
               {/* Liste des collègues de l'établissement */}
               <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
