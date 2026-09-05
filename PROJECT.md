@@ -20,6 +20,7 @@ Refonte structurelle de l'application Génizio pour transformer 12 flux incohér
 | M2  | Challenge Separation & Portfolio Fusion | Separate Parent/Child on `/challenges`, merge `/parcours` into `/portfolio`        | R2, R3       | DONE   | M1           |
 | M3  | Admin OS Improvements                   | B2B Token Export, Supervisor campaign_id, Unified 8-tab Admin Hub                  | R4, R5, R6   | DONE   | M1           |
 | M4  | Unified Taxonomies & Final Verification | 9 short Gardner labels user-facing, Guild connections, `npx tsc --noEmit` & Vitest | R7, Final QA | DONE   | M1, M2, M3   |
+| M5  | Admin OS Live Sync & Optimistic UI      | Supabase Realtime across all Admin tabs, Optimistic UI, decoupled state sync       | QA, No loads | DONE   | M3           |
 
 ## Interface Contracts & Guidelines
 
