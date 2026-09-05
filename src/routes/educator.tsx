@@ -49,6 +49,7 @@ import {
 import { toast } from "sonner";
 import { GenizioLoader } from "@/components/GenizioLoader";
 import { EmptyState } from "@/components/ui/empty-state";
+import { currentAcademicYear } from "@/lib/academic-year";
 import { EducatorLessonCopilotModal } from "@/components/educators/EducatorLessonCopilotModal";
 import { EducatorHackathonModal } from "@/components/educators/EducatorHackathonModal";
 import {
@@ -57,8 +58,14 @@ import {
 } from "@/lib/tripartite.functions";
 import { Trophy } from "lucide-react";
 
-export const Route = createFileRoute("/educator")({
+type EducatorSearch = { tab?: "students" | "establishment" };
 
+export const Route = createFileRoute("/educator")({
+  validateSearch: (search: Record<string, unknown>): EducatorSearch => {
+    return {
+      tab: search.tab === "establishment" || search.tab === "students" ? search.tab : undefined,
+    };
+  },
   component: EducatorDashboardPage,
 });
 
@@ -69,7 +76,12 @@ function EducatorDashboardPage() {
   const [fetching, setFetching] = useState(true);
   const [search, setSearch] = useState("");
 
-  const [activeSubTab, setActiveSubTab] = useState<"students" | "establishment">("students");
+  const activeSubTab = Route.useSearch({
+    select: (s: EducatorSearch) => s.tab ?? "students",
+  });
+  const setSubTab = (v: "students" | "establishment") => {
+    void navigate({ to: "/educator", search: { tab: v === "students" ? undefined : v }, replace: true });
+  };
   const [establishment, setEstablishment] = useState<EstablishmentOverview | null>(null);
   const [loadingEstablishment, setLoadingEstablishment] = useState(false);
   const [establishmentError, setEstablishmentError] = useState<string | null>(null);
@@ -235,7 +247,7 @@ function EducatorDashboardPage() {
         data: {
           childId: selectedChildId,
           term: obsTerm,
-          academicYear: "2026-2027",
+          academicYear: currentAcademicYear(),
           previousAverage: obsPrev,
           currentAverage: obsCurr,
           classAverage: obsClassAvg,
@@ -397,7 +409,7 @@ function EducatorDashboardPage() {
         <div className="flex flex-wrap items-center gap-2 border-b border-ink/10 pb-4">
           <button
             type="button"
-            onClick={() => setActiveSubTab("students")}
+            onClick={() => setSubTab("students")}
             className={`inline-flex items-center gap-2 px-4 py-2.5 rounded-2xl text-xs font-black transition-all cursor-pointer ${
               activeSubTab === "students"
                 ? "bg-indigo-600 text-white shadow-xs"
@@ -409,7 +421,7 @@ function EducatorDashboardPage() {
           </button>
           <button
             type="button"
-            onClick={() => setActiveSubTab("establishment")}
+            onClick={() => setSubTab("establishment")}
             className={`inline-flex items-center gap-2 px-4 py-2.5 rounded-2xl text-xs font-black transition-all cursor-pointer ${
               activeSubTab === "establishment"
                 ? "bg-indigo-600 text-white shadow-xs"

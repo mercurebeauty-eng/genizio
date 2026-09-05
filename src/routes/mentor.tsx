@@ -89,7 +89,19 @@ import { formatPedagogicalIntention } from "@/lib/pedagogical-intention";
 import { ProofImage } from "@/lib/proof-image";
 import { toast } from "sonner";
 
+// L'onglet actif vit dans l'URL (audit UI V3.3) : refresh et bouton retour
+// préservent la vue, et un onglet est partageable.
+type MentorSearch = { view?: "overview" | "children" | "club" };
+
 export const Route = createFileRoute("/mentor")({
+  validateSearch: (search: Record<string, unknown>): MentorSearch => {
+    return {
+      view:
+        search.view === "overview" || search.view === "children" || search.view === "club"
+          ? search.view
+          : undefined,
+    };
+  },
   component: MentorDashboardPage,
 });
 
@@ -170,7 +182,13 @@ function MentorDashboardPage() {
   const [overview, setOverview] = useState<MentorActivityOverview | null>(null);
   const [activityLoading, setActivityLoading] = useState(true);
   const [activityError, setActivityError] = useState(false);
-  const [view, setView] = useState<"overview" | "children" | "club">("overview");
+  const view = Route.useSearch({
+    select: (s: MentorSearch) => s.view ?? "overview",
+  });
+  const navigateMentor = useNavigate();
+  const setView = (v: "overview" | "children" | "club") => {
+    void navigateMentor({ to: "/mentor", search: { view: v === "overview" ? undefined : v }, replace: true });
+  };
   // Notifications in-app (canal pull — bilan validé/refusé, séance confirmée, statut).
   const [notifications, setNotifications] = useState<any[]>([]);
   const [notifOpen, setNotifOpen] = useState(false);

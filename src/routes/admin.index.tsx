@@ -1,4 +1,4 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState, useRef } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { useSession } from "@/hooks/use-session";
@@ -52,15 +52,34 @@ import { ChevronRight } from "lucide-react";
 import { toast } from "sonner";
 import { GenizioLoader } from "@/components/GenizioLoader";
 
+// L'onglet actif vit dans l'URL (audit UI V3.3) : refresh/partage préservés.
+const ADMIN_TAB_IDS = [
+  "executive", "b2b", "mentors", "educators", "events", "products", "talents",
+  "naya", "discovery", "payments", "commerce", "profiles", "testimonials",
+  "notifications",
+] as const;
+type AdminSearch = { tab?: (typeof ADMIN_TAB_IDS)[number] };
+
 export const Route = createFileRoute("/admin/")({
+  validateSearch: (search: Record<string, unknown>): AdminSearch => {
+    return {
+      tab: ADMIN_TAB_IDS.includes(search.tab as never) ? (search.tab as AdminSearch["tab"]) : undefined,
+    };
+  },
   component: AdminIndexPage,
 });
 
 function AdminIndexPage() {
+  const navigate = useNavigate();
   const { session } = useSession();
   // Refonte UI/UX (2026-08-13) : l'écran d'accueil est une grille de cartes ; un
   // onglet ouvert affiche la barre de pills persistante (bouton Accueil pour revenir).
-  const [activeTab, setActiveTab] = useState<AdminRoute>("home");
+  const activeTab: AdminRoute = Route.useSearch({
+    select: (s: AdminSearch) => s.tab ?? "home",
+  });
+  const setActiveTab = (t: AdminRoute) => {
+    void navigate({ to: "/admin", search: { tab: t === "home" ? undefined : t }, replace: true });
+  };
   const [pendingPayments, setPendingPayments] = useState(0);
   const [pendingSafetyAlerts, setPendingSafetyAlerts] = useState(0);
   const [kpis, setKpis] = useState<ExecutiveKPIs | null>(null);

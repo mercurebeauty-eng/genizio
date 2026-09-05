@@ -200,18 +200,7 @@ export function filterTeenPassportProfiles<T extends { age?: number | null }>(
 /**
  * Formats a raw number amount into West African CFA Franc string format (e.g. 50 000 FCFA).
  */
-export function formatXOF(amount: number | null | undefined): string {
-  if (
-    amount === null ||
-    amount === undefined ||
-    typeof amount !== "number" ||
-    Number.isNaN(amount)
-  ) {
-    return "0 FCFA";
-  }
-  const formatted = new Intl.NumberFormat("fr-FR").format(amount);
-  return `${formatted} FCFA`;
-}
+export { formatXOF } from "./format";
 
 /**
  * Calculates next passport toggle state.

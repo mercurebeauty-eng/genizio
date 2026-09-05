@@ -24,7 +24,7 @@ import type { Style } from "@react-pdf/stylesheet";
 import type { ReactNode } from "react";
 import { getChildGuild, getTalentAffinities } from "@/lib/guilds";
 import { GARDNER_TAXONOMY, type GardnerKey } from "@/lib/gardner";
-import { BADGE_CATALOG } from "@/lib/challenges.functions";
+import { BADGE_CATALOG } from "@/lib/badge-catalog";
 import { normalizeChildInterests } from "@/lib/interest-migration";
 import {
   registerPassportFonts,

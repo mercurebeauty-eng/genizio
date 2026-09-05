@@ -20,7 +20,8 @@ import {
   Loader2,
 } from "lucide-react";
 import { toast } from "sonner";
-import { type PaginatedCommerceResponse, formatXOF } from "@/lib/admin-os.functions";
+import { formatXOF } from "@/lib/format";
+import { type PaginatedCommerceResponse } from "@/lib/admin-os.functions";
 import { PASSPORT_PRICE_XOF } from "@/lib/pricing";
 import { AdminPagination } from "./AdminPagination";
 

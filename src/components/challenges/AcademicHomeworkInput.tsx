@@ -14,7 +14,7 @@ import {
   type AcademicSubject,
   type BehavioralDriver,
   type CurriculumTopic,
-} from "@/lib/academic-homework.functions";
+} from "@/lib/academic-homework.constants";
 
 export const BEHAVIORAL_DRIVER_LABELS: Record<
   BehavioralDriver,
