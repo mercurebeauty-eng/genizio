@@ -1,28 +1,32 @@
-// Notifications push (Web Push PWA) — Confiance Mentor (2026-08-15).
+// Notifications push (Web Push PWA) — Confiance Mentor (2026-08-15), refonte
+// de la fiabilité d'abonnement (2026-09-05).
 //
-// Le hook `usePushNotifications` expose l'état (support, permission) et l'action
-// `enable()` (à appeler sur un geste utilisateur — le navigateur l'exige pour
-// demander la permission). Le composant `PushNotificationsSetup`, monté dans
-// __root, s'abonne automatiquement si la permission est déjà accordée, affiche un
-// bandeau discret pour la demander sinon, et nettoie la subscription du compte à
-// la déconnexion.
+// Rôle : exposer l'état (support, permission) et l'action `enable()`. Le
+// composant `PushNotificationsSetup`, monté dans __root, s'abonne
+// automatiquement si la permission est déjà accordée, propose la demande sinon,
+// et nettoie la subscription du compte à la déconnexion.
+//
+// Correction majeure (2026-09-05) : le flux pendait silencieusement sur
+// `navigator.serviceWorker.ready` quand le SW n'était jamais enregistré —
+// push_subscriptions restait vide sans aucune erreur nulle part. Désormais :
+//   • l'accès au SW passe par awaitServiceWorkerReady() (timeout + message qui
+//     nomme la cause réelle, attente partagée entre composants) ;
+//   • les échecs sont retournés à l'appelant (`enable()` renvoie un résultat
+//     explicite) et toasts sont affichés par le composant de setup ;
+//   • l'utilisateur peut réessayer : aucun échec n'est mis en cache.
 
 import { useEffect, useRef, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
+import { toast } from "sonner";
 import { useSession } from "@/hooks/use-session";
 import { savePushSubscription, removePushSubscription } from "@/lib/notifications.functions";
+import { awaitServiceWorkerReady, isServiceWorkerSupported } from "@/lib/sw-ready";
 import { X, Bell } from "lucide-react";
 
 const VAPID_PUBLIC_KEY = import.meta.env.VITE_VAPID_PUBLIC_KEY as string | undefined;
 
 function isSupported(): boolean {
-  return (
-    typeof window !== "undefined" &&
-    "serviceWorker" in navigator &&
-    "PushManager" in window &&
-    "Notification" in window &&
-    !!VAPID_PUBLIC_KEY
-  );
+  return isServiceWorkerSupported() && !!VAPID_PUBLIC_KEY;
 }
 
 // La clé VAPID applicative est une clé publique encodée en base64url — PushManager
@@ -38,6 +42,10 @@ function urlBase64ToUint8Array(base64: string): Uint8Array<ArrayBuffer> {
   return arr;
 }
 
+export type PushSetupOutcome =
+  | { ok: true }
+  | { ok: false; reason: "permission_denied" | "subscribe_failed" | "unsupported"; message: string };
+
 export function usePushNotifications() {
   const supported = isSupported();
   const [permission, setPermission] = useState<NotificationPermission | "unsupported">(
@@ -46,10 +54,18 @@ export function usePushNotifications() {
   const saveFn = useServerFn(savePushSubscription);
   const removeFn = useServerFn(removePushSubscription);
 
-  const subscribe = async () => {
-    if (!isSupported()) return false;
+  const subscribe = async (): Promise<PushSetupOutcome> => {
+    if (!isSupported()) {
+      return {
+        ok: false,
+        reason: "unsupported",
+        message: "Notifications push non supportées sur cet appareil.",
+      };
+    }
     try {
-      const registration = await navigator.serviceWorker.ready;
+      // Ne résout que si un SW est enregistré (timeout 8 s sinon) — plus jamais
+      // de hang silencieux : l'échec remonte avec sa cause.
+      const registration = await awaitServiceWorkerReady();
       const subscription = await registration.pushManager.subscribe({
         userVisibleOnly: true,
         applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY!),
@@ -65,30 +81,54 @@ export function usePushNotifications() {
           },
         });
       }
-      return true;
+      return { ok: true };
     } catch (err) {
       console.error("Abonnement push échoué:", err);
-      return false;
+      return {
+        ok: false,
+        reason: "subscribe_failed",
+        message:
+          err instanceof Error
+            ? err.message
+            : "Impossible d'activer les notifications pour le moment.",
+      };
     }
   };
 
-  const enable = async () => {
-    if (!isSupported()) return false;
+  const enable = async (): Promise<PushSetupOutcome> => {
+    if (!isSupported()) {
+      return {
+        ok: false,
+        reason: "unsupported",
+        message: "Notifications push non supportées sur cet appareil.",
+      };
+    }
     try {
       const result = await Notification.requestPermission();
       setPermission(result);
-      if (result === "granted") return await subscribe();
-      return false;
-    } catch {
-      return false;
+      if (result !== "granted") {
+        return {
+          ok: false,
+          reason: "permission_denied",
+          message: "Permission de notification refusée — réactivez-la dans les réglages du navigateur.",
+        };
+      }
+      return await subscribe();
+    } catch (err) {
+      console.error("Demande de permission push échouée:", err);
+      return {
+        ok: false,
+        reason: "permission_denied",
+        message: "Demande de permission impossible sur ce navigateur.",
+      };
     }
   };
 
   const disable = async () => {
-    if (!isSupported()) return;
+    if (!isServiceWorkerSupported()) return;
     try {
-      const registration = await navigator.serviceWorker.ready;
-      const subscription = await registration.pushManager.getSubscription();
+      const registration = await navigator.serviceWorker.getRegistration();
+      const subscription = await registration?.pushManager.getSubscription();
       if (subscription?.endpoint) {
         await removeFn({ data: { endpoint: subscription.endpoint } });
       }
@@ -99,17 +139,32 @@ export function usePushNotifications() {
   };
 
   // Au montage : si la permission est déjà accordée (visite précédente), on
-  // s'abonne sans rien demander.
+  // s'abonne sans rien demander — le résultat est silencieux ici (pas de
+  // toast au simple chargement de page), les erreurs restent en console.
   const mounted = useRef(false);
+  const [silentRetryTick, setSilentRetryTick] = useState(0);
   useEffect(() => {
     if (mounted.current) return;
     mounted.current = true;
     if (isSupported() && Notification.permission === "granted") {
-      void subscribe();
+      void subscribe().then((res) => {
+        if (!res.ok) {
+          // Une seule relance différée (ex : SW encore en cours d'enregistrement
+          // au tout premier chargement après déploiement).
+          setTimeout(() => setSilentRetryTick((t) => t + 1), 4_000);
+        }
+      });
     }
   }, []);
 
-  return { supported, permission, enable, disable };
+  useEffect(() => {
+    if (silentRetryTick === 0) return;
+    if (isSupported() && Notification.permission === "granted") {
+      void subscribe();
+    }
+  }, [silentRetryTick]);
+
+  return { supported, permission, enable, disable, subscribe };
 }
 
 export function PushNotificationsSetup() {
@@ -143,8 +198,14 @@ export function PushNotificationsSetup() {
         <button
           onClick={async () => {
             setEnabling(true);
-            await enable();
+            const res = await enable();
             setEnabling(false);
+            // L'utilisateur a fait un geste explicite : tout échec est visible.
+            if (res.ok) {
+              toast.success("Notifications activées !");
+            } else {
+              toast.error(res.message, { duration: 6000 });
+            }
           }}
           disabled={enabling}
           className="shrink-0 rounded-xl bg-brand px-3 py-2 text-[11px] font-black text-white hover:bg-brand/90 disabled:opacity-50 cursor-pointer"

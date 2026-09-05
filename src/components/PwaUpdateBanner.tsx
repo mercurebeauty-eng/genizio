@@ -18,6 +18,13 @@ export function PwaUpdateBanner() {
     needRefresh: [needRefresh],
     updateServiceWorker,
   } = useRegisterSW({
+    // immediate:true (2026-09-05) : avec injectRegister:false côté config, ce
+    // composant est le SEUL point d'enregistrement du service worker — et
+    // registerSW() par défaut a immediate:false, donc rien ne s'enregistrait
+    // jamais : usePushNotifications pendait sur serviceWorker.ready et
+    // push_subscriptions restait vide. L'enregistrement est idempotent :
+    // les visites suivantes récupèrent la registration existante.
+    immediate: true,
     onRegisteredSW(_url, reg) {
       setRegistration(reg ?? null);
     },
