@@ -982,6 +982,191 @@ export function resolveAcademicGradeLevel(
   return null;
 }
 
+/**
+ * Convertit un âge de référentiel académique international (ex: 13 ans) en classe scolaire française (ex: "4eme").
+ */
+export function frenchGradeLevelForAge(
+  age: number | null | undefined,
+): (typeof VALID_ACADEMIC_GRADE_LEVELS)[number] | null {
+  if (!age || !Number.isFinite(age)) return null;
+  const a = Math.round(age);
+  if (a <= 5) return null;
+  if (a === 6) return "CP";
+  if (a === 7) return "CE1";
+  if (a === 8) return "CE2";
+  if (a === 9) return "CM1";
+  if (a === 10) return "CM2";
+  if (a === 11) return "6eme";
+  if (a === 12) return "5eme";
+  if (a === 13) return "4eme";
+  if (a === 14) return "3eme";
+  if (a === 15) return "2nde";
+  if (a === 16) return "1ere";
+  if (a === 17) return "Terminale";
+  if (a >= 18) return "Superieur";
+  return null;
+}
+
+/**
+ * Calcule le titre et l'accroche adaptés au domaine et aux intelligences mobilisées pour l'Avantage Secret de Naya.
+ */
+export function getSecretTitle({
+  academicDomain,
+  domain,
+  intelligences,
+}: {
+  academicDomain?: string | null;
+  domain?: string | null;
+  intelligences?: string[] | null;
+}): {
+  kicker: string;
+  title: string;
+} {
+  const normAcad = (academicDomain ?? "").toLowerCase();
+  const normDom = (domain ?? "").toLowerCase();
+  const normIntel = (intelligences ?? []).map((i) => i.toLowerCase());
+
+  // 1. Langage / Rhétorique / Expression / Écriture
+  if (
+    normAcad === "langage" ||
+    normDom.includes("langage") ||
+    normDom.includes("expression") ||
+    normDom.includes("littéra") ||
+    normDom.includes("rhetorique") ||
+    normDom.includes("rhétorique") ||
+    normIntel.includes("linguistique")
+  ) {
+    return {
+      kicker: "L'Avantage d'Auteur de Naya",
+      title: "Le Secret Rhétorique & d'Écriture",
+    };
+  }
+
+  // 2. Mathématiques / Logique / Algorithme
+  if (
+    normAcad === "mathematiques" ||
+    normDom.includes("math") ||
+    normDom.includes("logique") ||
+    normDom.includes("chiffre") ||
+    normIntel.includes("logique")
+  ) {
+    return {
+      kicker: "L'Avantage Analytique de Naya",
+      title: "Le Secret Mathématique & Logique",
+    };
+  }
+
+  // 3. Entrepreneuriat / Stratégie / Économie / Négociation
+  if (
+    normAcad === "entrepreneuriale" ||
+    normDom.includes("entrepreneuriat") ||
+    normDom.includes("commerce") ||
+    normDom.includes("strategie") ||
+    normDom.includes("stratégie") ||
+    normDom.includes("economie") ||
+    normDom.includes("économie")
+  ) {
+    return {
+      kicker: "L'Avantage Stratégique de Naya",
+      title: "La Règle d'Or Économique & Décision",
+    };
+  }
+
+  // 4. Artisanat / Ingénierie / Bricolage / Architecture
+  if (
+    normAcad === "artisanale" ||
+    normDom.includes("artisanat") ||
+    normDom.includes("bricolage") ||
+    normDom.includes("ingenierie") ||
+    normDom.includes("ingénierie") ||
+    normDom.includes("architecture") ||
+    normDom.includes("construction") ||
+    normDom.includes("technologie")
+  ) {
+    return {
+      kicker: "L'Avantage Concepteur de Naya",
+      title: "Le Secret d'Ingénierie & d'Atelier",
+    };
+  }
+
+  // 5. Social / Débat / Intelligence Relationnelle / Citoyenneté
+  if (
+    normAcad === "sociale" ||
+    normAcad === "emotionnelle" ||
+    normDom.includes("social") ||
+    normDom.includes("citoyen") ||
+    normDom.includes("débat") ||
+    normDom.includes("debat") ||
+    normDom.includes("vivre-ensemble") ||
+    normIntel.includes("interpersonnelle") ||
+    normIntel.includes("intrapersonnelle")
+  ) {
+    return {
+      kicker: "L'Avantage Citoyen de Naya",
+      title: "Le Secret d'Influence & d'Intelligence Sociale",
+    };
+  }
+
+  // 6. Corps / Biomécanique / Kinesthésique
+  if (
+    normAcad === "corporelle" ||
+    normDom.includes("corps") ||
+    normDom.includes("mouvement") ||
+    normDom.includes("sport") ||
+    normIntel.includes("kinesthésique") ||
+    normIntel.includes("kinesthesique")
+  ) {
+    return {
+      kicker: "L'Avantage Pratique de Naya",
+      title: "Le Secret Biomécanique & Maîtrise du Geste",
+    };
+  }
+
+  // 7. Visuel / Dessin / Design / Espace
+  if (
+    normAcad === "spatiale" ||
+    normDom.includes("art") ||
+    normDom.includes("dessin") ||
+    normDom.includes("visuel") ||
+    normDom.includes("design") ||
+    normIntel.includes("visuelle")
+  ) {
+    return {
+      kicker: "L'Avantage Visuel de Naya",
+      title: "Le Secret de Composition & Perspective",
+    };
+  }
+
+  // 8. Nature / Écologie / Biologie / Vivant
+  if (
+    normDom.includes("nature") ||
+    normDom.includes("environnement") ||
+    normDom.includes("vivant") ||
+    normDom.includes("botanique") ||
+    normDom.includes("animaux") ||
+    normIntel.includes("naturaliste")
+  ) {
+    return {
+      kicker: "L'Avantage Naturaliste de Naya",
+      title: "Le Secret Écologique & du Vivant",
+    };
+  }
+
+  // 9. Musique & Rythme
+  if (normDom.includes("musique") || normDom.includes("rythme") || normIntel.includes("musicale")) {
+    return {
+      kicker: "L'Avantage Harmonique de Naya",
+      title: "Le Secret Acoustique & Musical",
+    };
+  }
+
+  // Par défaut : Sciences & Recherche
+  return {
+    kicker: "L'Avantage Secret de Naya",
+    title: "Le Savoir Scientifique Caché",
+  };
+}
+
 export const VALID_BEHAVIORAL_DRIVERS = [
   "deconstruire",
   "schematiser",
@@ -1106,7 +1291,9 @@ export function finalizeChallenge<
     academic_level_age: academic.academic_level_age,
     academic_reference_note: academic.academic_reference_note,
     academic_subject: resolveAcademicSubject(c.academic_subject),
-    academic_grade_level: resolveAcademicGradeLevel(c.academic_grade_level),
+    academic_grade_level:
+      resolveAcademicGradeLevel(c.academic_grade_level) ??
+      (academic.academic_level_age ? frenchGradeLevelForAge(academic.academic_level_age) : null),
     behavioral_driver: resolveBehavioralDriver(c.behavioral_driver),
     zpa_level: resolveZpaLevel(c.zpa_level),
     kind: resolveKind(c.kind, c.steps, c.title),

@@ -73,11 +73,12 @@ export const GENIZIO_PRINCIPLES = `PRINCIPES DE GÉNÉRATION GÉNIZIO (règles d
 - CHIFFRES ET MESURES RÉELS OBLIGATOIRES : chaque défi doit faire réaliser à l'enfant au moins une action quantitative ou langagière précise, avec des VALEURS EXACTES écrites dans les étapes (ex: "mesure 5 cm de fil", "calcule le périmètre du potager de 4 m sur 3 m", "compte 12 graines", "chronomètre 45 secondes", "trouve un mot de 4 syllabes") — jamais d'approximations vagues ("un peu de", "plein de", "au hasard"). Ancre ces mesures dans le quotidien local (tissus, ficelle, terrain, marché, eau, distance, temps). Aligne leur difficulté sur ce que les meilleurs systèmes éducatifs du monde attendent de cet âge (méthode Singapour, Common Core US) : l'ambition Génizio est qu'à la sortie, chaque enfant maîtrise au minimum le niveau international de son âge. Ces valeurs réelles sont la matière exacte que Naya nommera dans "academic_secret" (périmètre, masse, durée, fraction...).
 - INTERDICTION DU BRICOLAGE PASSIF : ne fais JAMAIS d'un simple assemblage de carton/bouteille le cœur du défi. Les objets du quotidien (maison ou extérieur : eau, sel, miroir, ficelle, chronomètre, ombres, plantes, architecture du quartier) ne sont que des instruments de mesure ou de laboratoire, pas de la décoration.
 - 5 ARCHÉTYPES DE QUÊTES D'ÉLITE (alterner rigoureusement d'un défi à l'autre) :
-  1. ðŸ”¬ Laboratoire d'Expérimentation & Physique : tester une loi ou une hypothèse mesurable (densité, gravité, réfraction, équilibre, réactions).
-  2. ðŸ•µï¸ Autopsie & Inversion Logique : analyser un texte, une équation, une carte ou un énoncé volontairement piégé par Naya et identifier les anomalies.
-  3. ⚙ï¸ Ingénierie & Prototype Fonctionnel : construire un mécanisme physique (levier, rampe, poulie, pont) qui résout un problème précis sous contrainte de ressources.
-  4. â±ï¸ Sprint d'Optimisation & Algorithme Mental : découvrir une méthode d'efficacité pour accomplir un calcul ou une tâche 2x plus vite et battre un record.
-  5. ðŸ›ï¸ Plaidoyer & Stratégie Sociale : construire une argumentation structurée avec 3 preuves pour mener une enquête ou défendre une position lors d'un mini-débat.
+  1. 🔬 Laboratoire d'Expérimentation & Physique : tester une loi ou une hypothèse mesurable (densité, gravité, réfraction, équilibre, réactions).
+  2. 🕵️ Autopsie & Inversion Logique : analyser un texte, une équation, une carte ou un énoncé volontairement piégé par Naya et identifier les anomalies.
+  3. ⚙️ Ingénierie & Prototype Fonctionnel : construire un mécanisme physique (levier, rampe, poulie, pont) qui résout un problème précis sous contrainte de ressources.
+  4. ⏱️ Sprint d'Optimisation & Algorithme Mental : découvrir une méthode d'efficacité pour accomplir un calcul ou une tâche 2x plus vite et battre un record.
+  5. 🏛️ Plaidoyer & Stratégie Sociale : construire une argumentation structurée avec 3 preuves pour mener une enquête ou défendre une position lors d'un mini-débat.
+- VERROU LOGIQUE & PROBLÈME À RÉSOUDRE OBLIGATOIRE : Un défi ne doit JAMAIS être une simple succession d'instructions mécaniques que l'enfant exécute passivement sans réfléchir. Il DOIT comporter un véritable VERROU COGNITIF : une anomalie cachée à démasquer, une contrainte physique de résistance (ex: la structure doit supporter le poids de 3 livres ou le souffle d'un éventail), un dilemme de ressources (faire avec seulement 2 feuilles), ou une déduction logique active. C'est ce verrou qui transforme une simple activité manuelle en un entraînement intellectuel d'élite.
 - PRÉCOCITÉ GUIDÉE (Méthode Singapour) : ne te contente pas de vérifier passivement les acquis basiques de l'âge de l'enfant. Propose un défi qui introduit un concept du niveau supérieur (N+1), tout en le rendant manipulable et compréhensible par l'action concrète.
 - CENTRES D'INTÉRÊT = LEVIERS COMPORTEMENTAUX ET MODES COGNITIFS PROFONDS : Ne traite jamais un centre d'intérêt comme un simple thème ou un hobby décoratif (ex: "football", "dinosaures"). Décode et exploite le LEVIER COMPORTEMENTAL ET LE MODE OPÉRATOIRE MENTAL sous-jacent de l'enfant (ex: "Démonte pour comprendre", "Négocie toujours", "A besoin de bouger pour réfléchir"). Utilise ces traits comme MÉCANIQUE ET POSTURE D'APPRENTISSAGE. Si l'enfant "démonte pour comprendre", propose un défi de déconstruction/analyse inverse. Chaque défi doit employer la mécanique d'action préférée de l'enfant (démonter, schématiser, simuler, optimiser, enquêter).
 - HARMONIE INTÉRIEUR & EXTÉRIEUR : alterne entre le laboratoire de la maison et le terrain d'investigation extérieur (jardin, cour, quartier, parc, architecture locale) selon le sujet.
@@ -211,6 +212,15 @@ export const TRAIT_SUBFORM_INSTRUCTION = `Ajoute aussi "trait_subform" : EXACTEM
 - logico_mathematique : "raisonnement_abstrait" (déduire sans support concret) | "calcul" (manipuler des nombres) | "resolution_problemes" (décomposer un problème en étapes) | "reconnaissance_motifs" (repérer une régularité)
 - linguistique : "expression_ecrite" (rédiger clairement) | "expression_orale" (parler devant un groupe) | "argumentation" (convaincre par le raisonnement) | "memorisation_lexicale" (vocabulaire riche)
 Si aucune sous-forme ne correspond clairement à l'intelligence choisie, omets ce champ (null).`;
+
+// Scénarisation immersive de "description" (Ton objectif / Contexte de mission) :
+// évite les descriptions plates d'exercices scolaires au profit d'un récit engageant
+// en 3 temps (Accroche du monde réel → Posture d'acteur de l'enfant → Livrable précis sous contrainte).
+export const OBJECTIVE_INSTRUCTION = `POUR "description" (TON OBJECTIF / SCÉNARIO D'IMMERSION) : Rédige obligatoirement un paragraphe vivant, immersif et captivant de 2 à 4 phrases structuré en trois temps :
+1. L'Accroche narrative / Le Problème du monde réel : pose une situation concrète, un mystère, une anomalie, un dysfonctionnement ou un défi stimulant du quotidien local (ex: "Un vol a été commis dans ton quartier et les alibis des suspects se contredisent", "Le pont en bois du marché s'affaisse sous la charge", "Le commerçant s'est trompé dans son calcul de monnaie").
+2. La Posture valorisante de l'enfant : donne à l'enfant un rôle d'acteur prestigieux (enquêteur, architecte, ingénieur, artisan d'art, stratège ou scientifique en chef) qui intervient pour résoudre le problème.
+3. Le Livrable précis sous contrainte : indique clairement ce qui doit exister physiquement à la fin et sous quelles contraintes de temps ou de méthode (ex: "Tu as 30 minutes pour tester 3 formes, identifier la plus solide et réaliser ton schéma de déduction").
+Ne commence JAMAIS par "Dans ce défi tu vas..." ou "Ce défi consiste à...". Plonge immédiatement l'enfant dans l'action avec énergie et clarté.`;
 
 // Ajoutée le 2026-07-22 suite à un retour parent concret (défi de baromètre aux
 // étapes trop vagues, sautant des sous-actions implicites que seul un adulte
@@ -374,6 +384,7 @@ Contraintes :
 - Choisis parmi ces domaines : ${domainsText}.${ignoredDomainsNote}
 ${childQuestionBlock}${diagnosticBlock}${teamRoleBlock}
 - Chaque défi doit être concret, réalisable à la maison ou dans le quartier, adapté à l'âge, avec des matériaux simples et accessibles.
+- ${OBJECTIVE_INSTRUCTION}
 - ${STEPS_INSTRUCTION}
 - ${buildAvoidRepeatsInstruction(existingTitles)}
 - ${MATERIAL_TAGS_INSTRUCTION}
@@ -526,6 +537,7 @@ COUCHE 4 — CONTRAT D'EXÉCUTION & ANCRAGE TERRAIN
 ================================================================================
 - Ancrage africain : ${contextualizationInstruction}
 - Matériaux locaux typiques accessibles : ${state.operationalContext.localMaterials.join(", ")}${homeMaterialsInstruction}${materialScopeInstruction}
+- ${OBJECTIVE_INSTRUCTION}
 - ${STEPS_INSTRUCTION}
 - ${buildAvoidRepeatsInstruction(state.operationalContext.existingTitles)}
 - ${MATERIAL_TAGS_INSTRUCTION}
@@ -648,6 +660,7 @@ ${childQuestionBlock}
 13. ${ACADEMIC_REFERENTIAL_INSTRUCTION}
 14. ${ACADEMIC_SECRET_INSTRUCTION}
 15. ${KIND_GUIDANCE_INSTRUCTION}
+16. ${OBJECTIVE_INSTRUCTION}
 
 Réponds STRICTEMENT en JSON valide avec ce format exact :
 {

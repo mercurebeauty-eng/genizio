@@ -13,6 +13,7 @@ import {
   INTELLIGENCES_FIELD_INSTRUCTION,
   TRAIT_SUBFORM_INSTRUCTION,
   STEPS_INSTRUCTION,
+  OBJECTIVE_INSTRUCTION,
   buildAvoidRepeatsInstruction,
   buildChallengePrompt,
   buildSingleChallengePrompt,
@@ -556,6 +557,20 @@ describe("Décision #59 — chiffres/mesures réels et benchmark international (
     expect(buildChallengePrompt(input)).toContain(
       "calibrage international, pas une échelle maison",
     );
+  });
+
+  it("la règle du verrou logique et problème à résoudre est présente dans GENIZIO_PRINCIPLES", () => {
+    expect(GENIZIO_PRINCIPLES).toContain("VERROU LOGIQUE & PROBLÈME À RÉSOUDRE OBLIGATOIRE");
+    expect(GENIZIO_PRINCIPLES).toContain("VERROU COGNITIF");
+  });
+
+  it("OBJECTIVE_INSTRUCTION structure la description en 3 temps immersifs et proscrit le style passif", () => {
+    expect(OBJECTIVE_INSTRUCTION).toContain("POUR \"description\" (TON OBJECTIF / SCÉNARIO D'IMMERSION)");
+    expect(OBJECTIVE_INSTRUCTION).toContain("L'Accroche narrative / Le Problème du monde réel");
+    expect(OBJECTIVE_INSTRUCTION).toContain("La Posture valorisante de l'enfant");
+    expect(OBJECTIVE_INSTRUCTION).toContain("Le Livrable précis sous contrainte");
+    expect(OBJECTIVE_INSTRUCTION).toContain("Ne commence JAMAIS par \"Dans ce défi tu vas...\"");
+    expect(buildChallengePrompt(input)).toContain("TON OBJECTIF / SCÉNARIO D'IMMERSION");
   });
 });
 

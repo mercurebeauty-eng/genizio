@@ -1,5 +1,9 @@
 import { describe, it, expect } from "vitest";
-import { finalizeChallenge } from "@/lib/challenges.functions";
+import {
+  finalizeChallenge,
+  frenchGradeLevelForAge,
+  getSecretTitle,
+} from "@/lib/challenges.functions";
 
 // Couvre le gating de trait_subform (V1 du chantier "sous-formes de talent", 2026-07-22,
 // cf. genizio-decisions #40) : ne jamais faire confiance à la seule auto-discipline du modèle
@@ -121,5 +125,130 @@ describe("resolveKind / resolveGuidanceLevel — filets déterministes", () => {
         .guidance_level,
     ).toBe(1);
     expect(finalizeChallenge({ ...base, guidance_level: 3 }, 10).guidance_level).toBe(3);
+  });
+});
+
+describe("frenchGradeLevelForAge & academic_grade_level fallback", () => {
+  it("mappe correctement les âges 6 à 18+ vers les classes scolaires françaises", () => {
+    expect(frenchGradeLevelForAge(null)).toBeNull();
+    expect(frenchGradeLevelForAge(undefined)).toBeNull();
+    expect(frenchGradeLevelForAge(5)).toBeNull();
+    expect(frenchGradeLevelForAge(6)).toBe("CP");
+    expect(frenchGradeLevelForAge(7)).toBe("CE1");
+    expect(frenchGradeLevelForAge(8)).toBe("CE2");
+    expect(frenchGradeLevelForAge(9)).toBe("CM1");
+    expect(frenchGradeLevelForAge(10)).toBe("CM2");
+    expect(frenchGradeLevelForAge(11)).toBe("6eme");
+    expect(frenchGradeLevelForAge(12)).toBe("5eme");
+    expect(frenchGradeLevelForAge(13)).toBe("4eme");
+    expect(frenchGradeLevelForAge(14)).toBe("3eme");
+    expect(frenchGradeLevelForAge(15)).toBe("2nde");
+    expect(frenchGradeLevelForAge(16)).toBe("1ere");
+    expect(frenchGradeLevelForAge(17)).toBe("Terminale");
+    expect(frenchGradeLevelForAge(18)).toBe("Superieur");
+    expect(frenchGradeLevelForAge(20)).toBe("Superieur");
+  });
+
+  it("utilise academic_grade_level si déjà fourni explicitement", () => {
+    const result = finalizeChallenge(
+      {
+        title: "Test défi",
+        description: "desc",
+        steps: ["Étape 1"],
+        materials: [],
+        academic_domain: "sciences",
+        academic_level_age: 13,
+        academic_grade_level: "3eme",
+      },
+      10,
+    );
+    expect(result.academic_grade_level).toBe("3eme");
+  });
+
+  it("retombe automatiquement sur frenchGradeLevelForAge(academic_level_age) si academic_grade_level est omis", () => {
+    const result = finalizeChallenge(
+      {
+        title: "Test défi",
+        description: "desc",
+        steps: ["Étape 1"],
+        materials: [],
+        academic_domain: "sciences",
+        academic_level_age: 13,
+      },
+      10,
+    );
+    expect(result.academic_grade_level).toBe("4eme");
+  });
+
+  it("reste null si ni academic_grade_level ni academic_level_age ne sont fournis", () => {
+    const result = finalizeChallenge(
+      {
+        title: "Test défi",
+        description: "desc",
+        steps: ["Étape 1"],
+        materials: [],
+      },
+      10,
+    );
+    expect(result.academic_grade_level).toBeNull();
+  });
+});
+
+describe("getSecretTitle — contextualisation par domaine et intelligences", () => {
+  it("adapte l'accroche et le titre pour le langage / rhétorique", () => {
+    const title1 = getSecretTitle({ academicDomain: "langage" });
+    expect(title1.kicker).toBe("L'Avantage d'Auteur de Naya");
+    expect(title1.title).toBe("Le Secret Rhétorique & d'Écriture");
+
+    const title2 = getSecretTitle({ domain: "Expression & Langage", intelligences: ["linguistique"] });
+    expect(title2.kicker).toBe("L'Avantage d'Auteur de Naya");
+  });
+
+  it("adapte pour les mathématiques et la logique", () => {
+    const title = getSecretTitle({ academicDomain: "mathematiques", domain: "Logique" });
+    expect(title.kicker).toBe("L'Avantage Analytique de Naya");
+    expect(title.title).toBe("Le Secret Mathématique & Logique");
+  });
+
+  it("adapte pour l'entrepreneuriat et la stratégie", () => {
+    const title = getSecretTitle({ academicDomain: "entrepreneuriale", domain: "Commerce & Stratégie" });
+    expect(title.kicker).toBe("L'Avantage Stratégique de Naya");
+    expect(title.title).toBe("La Règle d'Or Économique & Décision");
+  });
+
+  it("adapte pour l'artisanat et l'ingénierie", () => {
+    const title = getSecretTitle({ academicDomain: "artisanale", domain: "Bricolage & Architecture" });
+    expect(title.kicker).toBe("L'Avantage Concepteur de Naya");
+    expect(title.title).toBe("Le Secret d'Ingénierie & d'Atelier");
+  });
+
+  it("adapte pour l'intelligence sociale, débat et citoyenneté", () => {
+    const title = getSecretTitle({ academicDomain: "sociale", intelligences: ["interpersonnelle"] });
+    expect(title.kicker).toBe("L'Avantage Citoyen de Naya");
+    expect(title.title).toBe("Le Secret d'Influence & d'Intelligence Sociale");
+  });
+
+  it("adapte pour le sport, le corps et la motricité", () => {
+    const title = getSecretTitle({ academicDomain: "corporelle", intelligences: ["kinesthésique"] });
+    expect(title.kicker).toBe("L'Avantage Pratique de Naya");
+    expect(title.title).toBe("Le Secret Biomécanique & Maîtrise du Geste");
+  });
+
+  it("adapte pour les arts visuels et le dessin", () => {
+    const title = getSecretTitle({ academicDomain: "spatiale", domain: "Art & Création" });
+    expect(title.kicker).toBe("L'Avantage Visuel de Naya");
+    expect(title.title).toBe("Le Secret de Composition & Perspective");
+  });
+
+  it("adapte pour la nature et le vivant", () => {
+    const title = getSecretTitle({ domain: "Nature & Écologie", intelligences: ["naturaliste"] });
+    expect(title.kicker).toBe("L'Avantage Naturaliste de Naya");
+    expect(title.title).toBe("Le Secret Écologique & du Vivant");
+  });
+
+  it("retombe sur le secret scientifique par défaut", () => {
+    const title = getSecretTitle({ academicDomain: "sciences", domain: "Sciences & Univers" });
+    expect(title.kicker).toBe("L'Avantage Secret de Naya");
+    expect(title.title).toBe("Le Savoir Scientifique Caché");
   });
 });

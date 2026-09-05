@@ -51,6 +51,8 @@ import {
   TALENT_SUBFORM_LABELS,
   TALENT_SUBFORM_TO_DOMAIN,
   ACADEMIC_DOMAIN_LABELS,
+  frenchGradeLevelForAge,
+  getSecretTitle,
 } from "@/lib/challenges.functions";
 import { getChildMentorInfo, getMentorChildView } from "@/lib/mentors.functions";
 import { isMentorMode } from "@/lib/mentor-mode";
@@ -2433,19 +2435,48 @@ function ChallengeCard({
         </div>
 
         {c.status === "completed" ? (
-          <AcademicSecretCard
-            secret={c.academic_secret}
-            academicGradeLevel={c.academic_grade_level}
-          />
-        ) : c.steps && c.steps.length > 0 ? (
-          <div className="mb-[22px]">
-            <StepAccordion
-              steps={c.steps}
-              isProject={isProject}
-              isInvestigation={isInvestigation}
+          <>
+            <AcademicSecretCard
+              secret={c.academic_secret}
+              academicGradeLevel={c.academic_grade_level}
+              academicLevelAge={c.academic_level_age}
+              academicDomain={c.academic_domain}
+              domain={c.domain}
+              intelligences={c.target_intelligences}
             />
-          </div>
-        ) : null}
+            {c.steps && c.steps.length > 0 && (
+              <div className="mb-[22px]">
+                <div className="font-display text-balance font-bold text-[15px] mb-2 flex items-center gap-2 text-ink/80">
+                  <span>📋 Étapes réalisées du défi</span>
+                </div>
+                <StepAccordion
+                  steps={c.steps}
+                  isProject={isProject}
+                  isInvestigation={isInvestigation}
+                />
+              </div>
+            )}
+          </>
+        ) : (
+          <>
+            {c.steps && c.steps.length > 0 && (
+              <div className="mb-[22px]">
+                <StepAccordion
+                  steps={c.steps}
+                  isProject={isProject}
+                  isInvestigation={isInvestigation}
+                />
+              </div>
+            )}
+            <LockedAcademicSecretTeaser
+              academicGradeLevel={c.academic_grade_level}
+              academicLevelAge={c.academic_level_age}
+              academicDomain={c.academic_domain}
+              domain={c.domain}
+              intelligences={c.target_intelligences}
+            />
+          </>
+        )}
 
         <div className="font-display text-balance font-bold text-[16px] mb-[10px] flex items-center gap-2">
           <span>{isProject ? "🧠 Intelligences & Talents mobilisés" : "Ce que tu développes"}</span>
@@ -2717,13 +2748,27 @@ function ChallengeCard({
   );
 }
 
-function AcademicSecretCard({
+export { getSecretTitle };
+
+export function AcademicSecretCard({
   secret,
   academicGradeLevel,
+  academicLevelAge,
+  academicDomain,
+  domain,
+  intelligences,
 }: {
   secret?: string | null;
   academicGradeLevel?: string | null;
+  academicLevelAge?: number | null;
+  academicDomain?: string | null;
+  domain?: string | null;
+  intelligences?: string[] | null;
 }) {
+  const meta = getSecretTitle({ academicDomain, domain, intelligences });
+  const gradeLabel =
+    academicGradeLevel ?? (academicLevelAge ? frenchGradeLevelForAge(academicLevelAge) : null);
+
   return (
     <div className="mb-[22px] rounded-3xl bg-gradient-to-br from-amber-500/15 via-amber-400/10 to-cyan-500/15 p-5 border-2 border-amber-400/50 shadow-md relative overflow-hidden">
       <div className="flex items-center gap-2 mb-3 flex-wrap">
@@ -2732,15 +2777,15 @@ function AcademicSecretCard({
         </span>
         <div>
           <span className="text-[10px] font-black uppercase tracking-widest text-amber-800">
-            L'Avantage Secret de Naya
+            {meta.kicker}
           </span>
           <h4 className="font-display text-lg font-extrabold text-amber-950">
-            Le Savoir Scientifique Caché
+            {meta.title}
           </h4>
         </div>
-        {academicGradeLevel && (
+        {gradeLabel && (
           <span className="ml-auto rounded-full bg-amber-200 text-amber-950 px-3 py-1 text-xs font-black border border-amber-300 shadow-xs">
-            Niveau {academicGradeLevel}
+            Niveau {gradeLabel}
           </span>
         )}
       </div>
@@ -2755,6 +2800,52 @@ function AcademicSecretCard({
             d'avance en classe !
           </p>
         )}
+      </div>
+    </div>
+  );
+}
+
+export function LockedAcademicSecretTeaser({
+  academicGradeLevel,
+  academicLevelAge,
+  academicDomain,
+  domain,
+  intelligences,
+}: {
+  academicGradeLevel?: string | null;
+  academicLevelAge?: number | null;
+  academicDomain?: string | null;
+  domain?: string | null;
+  intelligences?: string[] | null;
+}) {
+  const meta = getSecretTitle({ academicDomain, domain, intelligences });
+  const gradeLabel =
+    academicGradeLevel ?? (academicLevelAge ? frenchGradeLevelForAge(academicLevelAge) : null);
+
+  return (
+    <div className="mb-[22px] rounded-2xl border-2 border-dashed border-amber-300/80 bg-gradient-to-r from-amber-50/70 via-orange-50/40 to-amber-50/70 p-4 shadow-2xs">
+      <div className="flex items-center gap-3">
+        <span className="grid size-10 place-items-center rounded-xl bg-amber-100 text-amber-800 border border-amber-300/60 shadow-xs shrink-0">
+          <Lock className="size-5" />
+        </span>
+        <div className="min-w-0 flex-1">
+          <div className="flex items-center gap-2 flex-wrap mb-0.5">
+            <span className="text-[10px] font-black uppercase tracking-wider text-amber-800">
+              🔒 Secret Verrouillé • {meta.kicker}
+            </span>
+            {gradeLabel && (
+              <span className="rounded-full bg-amber-200/80 text-amber-950 px-2 py-0.5 text-[11px] font-black border border-amber-300">
+                Niveau {gradeLabel} visé
+              </span>
+            )}
+          </div>
+          <h4 className="font-display text-sm font-extrabold text-amber-950">
+            {meta.title}
+          </h4>
+          <p className="text-xs text-amber-900/80 mt-1 leading-snug">
+            Réalise ce défi sur le terrain pour percer ce mystère et débloquer le savoir d'avance que Naya te réserve !
+          </p>
+        </div>
       </div>
     </div>
   );
