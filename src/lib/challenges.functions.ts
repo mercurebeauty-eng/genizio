@@ -15,6 +15,7 @@ import { formatChildProfileContext } from "@/lib/profile-context";
 import { getInterestHypothesesSnapshot, type InterestHypotheses } from "@/lib/interest-confidence";
 import { getAspirationHypothesesSnapshot } from "@/lib/aspiration-confidence";
 import { buildChildDevelopmentState } from "@/lib/context-engine";
+import { loadLocalMaterialsForCountry } from "@/lib/country-materials";
 import { planChallengeMissions, planSingleChallengeMission } from "@/lib/challenge-planner";
 import { z } from "zod";
 
@@ -2545,6 +2546,10 @@ export async function generateChallengesCore(params: {
     () => null,
   );
 
+  // Matériaux locaux du pays (table country_materials, éditable via l'Admin OS) —
+  // le loader gère le repli constantes (la génération ne casse jamais).
+  const localMaterials = await loadLocalMaterialsForCountry(db, child.country);
+
   // Domains repeatedly generated but never even started are a real signal
   // that's currently thrown away: the prompt only ever sees *completed*
   // challenges (below), so a domain the child ignores keeps coming back
@@ -2679,6 +2684,7 @@ export async function generateChallengesCore(params: {
     aspirationHypotheses,
     latestChildQuestion: childQuestionNote,
     existingTitles,
+    localMaterials,
   });
 
   const plannedMissions = planChallengeMissions(childDevelopmentState, count);
@@ -4360,6 +4366,10 @@ export const generateSingleChallenge = createServerFn({ method: "POST" })
     const location = data.location || "Maison (Intérieur)";
     const targetDomain = data.domain && data.domain !== "all" ? data.domain : null;
 
+    // Matériaux locaux du pays (table country_materials, éditable via l'Admin OS) —
+    // le loader gère le repli constantes (la génération ne casse jamais).
+    const localMaterials = await loadLocalMaterialsForCountry(db, child.country);
+
     // Context Engine & Challenge Mission Planner pour défi ciblé :
     // Genizio synthétise l'état actualisé de l'enfant et arrête le mandat pédagogique
     // sur-mesure pour ce défi unique selon les choix du parent.
@@ -4372,6 +4382,7 @@ export const generateSingleChallenge = createServerFn({ method: "POST" })
       aspirationHypotheses,
       latestChildQuestion: childQuestionNote,
       existingTitles,
+      localMaterials,
     });
 
     const mission = planSingleChallengeMission(childDevelopmentState, {

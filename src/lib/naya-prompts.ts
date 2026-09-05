@@ -293,6 +293,9 @@ export interface BuildChallengePromptInput {
   childAge: number;
   /** "Ville, Pays" ou "non précisé" */
   location: string;
+  /** Matériaux locaux du pays (loadLocalMaterialsForCountry — table country_materials).
+   *  Optionnel : repli sur les constantes de contextualization.ts si absent. */
+  localMaterials?: string[];
   /** Sortie de formatChildInterestsPayload(...) */
   interestsPayload: string;
   /** JSON.stringify(child.talents || {}) */
@@ -343,7 +346,10 @@ export function buildChallengePrompt(input: BuildChallengePromptInput): string {
     ignoredDomains.length > 0
       ? `\n- Cet enfant a déjà reçu plusieurs défis dans ${ignoredDomains.length > 1 ? "ces domaines" : "ce domaine"} (${ignoredDomains.join(", ")}) sans jamais les commencer : évite de reproposer ${ignoredDomains.length > 1 ? "ces domaines" : "ce domaine"}, sauf sous un angle radicalement différent de ce qui a déjà été proposé.`
       : "";
-  const contextualizationInstruction = buildContextualizationInstruction(location);
+  const contextualizationInstruction = buildContextualizationInstruction(
+    location,
+    input.localMaterials,
+  );
   const childQuestionBlock = childQuestionNote.trim()
     ? `\n- LA QUESTION DE ${childName.toUpperCase()} : ${childQuestionNote.trim()} — ${childName} a posé cette question lui-même : c'est le fil conducteur prioritaire. Au moins un des défis doit répondre à cette question par l'action (l'enfant doit découvrir la réponse en expérimentant, jamais par une leçon frontale).`
     : "";
@@ -428,7 +434,12 @@ export function buildLayeredChallengePrompt(
   const location = state.identity.location;
   const count = missions.length;
 
-  const contextualizationInstruction = buildContextualizationInstruction(location);
+  const contextualizationInstruction = buildContextualizationInstruction(
+    location,
+    // Matériaux portés par le ChildDevelopmentState (chargés de la table
+    // country_materials par l'appelant — repli constantes sinon).
+    state.operationalContext.localMaterials,
+  );
 
   // Synthèse des hypothèses actives
   const hypothesesBlock =
@@ -561,6 +572,9 @@ export interface BuildSingleChallengePromptInput {
   childAge: number;
   /** "Ville, Pays" ou "non précisé" (section Profil) */
   profileLocation: string;
+  /** Matériaux locaux du pays (loadLocalMaterialsForCountry — table country_materials).
+   *  Optionnel : repli sur les constantes de contextualization.ts si absent. */
+  localMaterials?: string[];
   interestsPayload: string;
   /** JSON.stringify(child.talents || {}) */
   talentsJson: string;
@@ -607,7 +621,10 @@ export function buildSingleChallengePrompt(input: BuildSingleChallengePromptInpu
     profileContextNote,
     childQuestionNote = "",
   } = input;
-  const contextualizationInstruction = buildContextualizationInstruction(profileLocation);
+  const contextualizationInstruction = buildContextualizationInstruction(
+    profileLocation,
+    input.localMaterials,
+  );
   const childQuestionBlock = childQuestionNote.trim()
     ? `\nQUESTION DE ${childName.toUpperCase()} (fil conducteur prioritaire) : ${childQuestionNote.trim()} — ${childName} a posé cette question lui-même : conçois le défi pour qu'il découvre la réponse par l'action, jamais par une leçon frontale.`
     : "";
@@ -1093,6 +1110,9 @@ export interface BuildAspirationBridgePromptInput {
   childAge: number;
   /** "Ville, Pays" ou "non précisé" */
   profileLocation: string;
+  /** Matériaux locaux du pays (loadLocalMaterialsForCountry — table country_materials).
+   *  Optionnel : repli sur les constantes de contextualization.ts si absent. */
+  localMaterials?: string[];
   interestsPayload: string;
   /** JSON.stringify(child.talents || {}) */
   talentsJson: string;
@@ -1146,7 +1166,10 @@ export function buildAspirationBridgePrompt(input: BuildAspirationBridgePromptIn
       ? `Ancrage dans le réel : ${bridge.worldAnchor}`
       : "Ancre le défi dans la réalité du quartier et de la maison (matériaux locaux, objets du quotidien).";
 
-  const contextualizationInstruction = buildContextualizationInstruction(profileLocation);
+  const contextualizationInstruction = buildContextualizationInstruction(
+    profileLocation,
+    input.localMaterials,
+  );
 
   const vulnerableLine = vulnerable
     ? `CONTEXTE PARTICULIER (à respecter absolument) : cet enfant vient d'un parcours difficile — entre d'abord dans SON monde (argent, marché, débrouillardise, autonomie) avant de lui demander d'entrer dans le nôtre. Relie chaque savoir à un gain CONCRET et immédiat pour lui ; ne demande ni argent dépensé d'avance, ni cadre scolaire. OBJECTIF DE FOND (décision utilisateur) : qu'il apprenne, à son rythme, à faire confiance à un adulte — qu'il découvre qu'on est là pour lui donner ce qui lui a manqué. Construis la mission en escalier : (1) l'adulte est d'abord en retrait, simple présence fiable ; (2) l'adulte DONNE d'abord (un outil, une démonstration, du temps, de l'attention) sans rien exiger en retour ; (3) l'adulte tient une promesse simple que le défi rend vérifiable (être là à l'heure, montrer une fois, fournir le matériel) ; (4) seulement ensuite, une petite collaboration où l'enfant garde l'initiative. Ne force JAMAIS la proximité : c'est l'enfant qui fait le pas, l'adulte reste prévisible et généreux.`

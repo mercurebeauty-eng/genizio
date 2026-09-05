@@ -1476,13 +1476,13 @@ function MentorDashboardPage() {
               </div>
 
               {/* Pedagogical context */}
-              {formatPedagogicalIntention(selectedChallenge.pedagogical_context) && (
+              {formatPedagogicalIntention(selectedChallenge) && (
                 <div className="rounded-2xl border border-ink/10 bg-stone-50 p-4">
                   <p className="text-xs font-black uppercase tracking-wider text-ink/60 mb-1">
                     Objectif Pédagogique (Naya)
                   </p>
                   <p className="text-xs text-ink/70 leading-relaxed font-medium">
-                    {formatPedagogicalIntention(selectedChallenge.pedagogical_context)}
+                    {formatPedagogicalIntention(selectedChallenge)}
                   </p>
                 </div>
               )}

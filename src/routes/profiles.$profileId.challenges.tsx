@@ -1603,18 +1603,14 @@ function ChallengesPage() {
                           <MarkdownContent content={currentGeneratedChallenge.description} />
                         </div>
 
-                        {formatPedagogicalIntention(
-                          currentGeneratedChallenge.pedagogical_context,
-                        ) && (
+                        {formatPedagogicalIntention(currentGeneratedChallenge) && (
                           <div className="mb-4 rounded-xl bg-amber-50 border border-ink/10 p-4 text-xs leading-relaxed text-amber-800">
                             <h5 className="text-[13px] font-bold text-ink mb-1.5 flex items-center gap-1.5">
                               💡 Analyse stratégique (Naya)
                             </h5>
                             <MarkdownContent
                               content={
-                                formatPedagogicalIntention(
-                                  currentGeneratedChallenge.pedagogical_context,
-                                )!
+                                formatPedagogicalIntention(currentGeneratedChallenge)!
                               }
                               inline
                             />
@@ -2626,7 +2622,7 @@ function ChallengeCard({
         </h4>
 
         {/* pedagogical context */}
-        {formatPedagogicalIntention(c.pedagogical_context) && (
+        {formatPedagogicalIntention(c) && (
           <div className="rounded-[1rem] bg-brand-50 p-4 flex gap-3 mb-6">
             <Brain className="size-5 text-brand flex-shrink-0 mt-0.5" />
             <div>
@@ -2636,7 +2632,7 @@ function ChallengeCard({
               <p className="text-[13px] text-brand-700 leading-relaxed italic">
                 "
                 <MarkdownContent
-                  content={formatPedagogicalIntention(c.pedagogical_context)!}
+                  content={formatPedagogicalIntention(c)!}
                   inline
                 />
                 "

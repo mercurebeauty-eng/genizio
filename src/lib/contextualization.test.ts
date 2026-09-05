@@ -82,6 +82,17 @@ describe("buildContextualizationInstruction — escalier local → global", () =
     expect(instruction).toContain("bambou");
     expect(instruction).toContain("standard international");
   });
+
+  it("utilise les matériaux fournis par l'appelant (table country_materials) en priorité", () => {
+    const instruction = buildContextualizationInstruction("Abidjan, Côte d'Ivoire", [
+      "chaux artisanale",
+      "pédales récupérées",
+    ]);
+    expect(instruction).toContain("chaux artisanale");
+    expect(instruction).toContain("pédales récupérées");
+    // Les constantes de repli ne masquent pas la donnée éditable
+    expect(instruction).not.toContain("coques de cacao");
+  });
 });
 
 describe("injection dans les prompts — les défis générés portent la double contextualisation", () => {

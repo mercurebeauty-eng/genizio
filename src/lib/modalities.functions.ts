@@ -8,9 +8,10 @@
 //
 // Contrats :
 //   • challenges.presentation_mode  — modalité du défi (vocabulaire fermé ci-dessous).
-//   • pedagogical_context           — { is_reformulation, original_challenge_id,
-//     modality_attempt, presentation_mode } (lien de filiation, lu par
-//     parseReformulationContext / l'UI via formatPedagogicalIntention).
+//   • challenges.reformulation_of   — filiation vers le défi ORIGINAL de la chaîne
+//     (colonne typée, ex-JSON sérialisé dans pedagogical_context) ; lu par la
+//     résolution de racine, le regroupement des siblings et l'UI via
+//     formatPedagogicalIntention.
 //   • observation_events            — CHALLENGE_NOT_COMPLETED émis par trigger DB
 //     (migration 20260812170000), payload presentation_mode — le Jumeau apprend
 //     « quelle manière échoue » (presentation_signals).
@@ -106,33 +107,6 @@ export function resolveNextModality(
 
 // ── Filiation des reformulations ────────────────────────────────────────────────
 
-export interface ReformulationContext {
-  originalChallengeId: string;
-  modalityAttempt: number;
-  presentationMode: PresentationMode;
-}
-
-/** Lit la filiation depuis `pedagogical_context` (colonne TEXT contenant du JSON). */
-export function parseReformulationContext(
-  raw: string | null | undefined,
-): ReformulationContext | null {
-  if (!raw) return null;
-  try {
-    const parsed = JSON.parse(raw);
-    if (parsed?.is_reformulation !== true) return null;
-    if (typeof parsed.original_challenge_id !== "string") return null;
-    if (typeof parsed.modality_attempt !== "number") return null;
-    if (!(PRESENTATION_MODES as readonly string[]).includes(parsed.presentation_mode)) return null;
-    return {
-      originalChallengeId: parsed.original_challenge_id,
-      modalityAttempt: parsed.modality_attempt,
-      presentationMode: parsed.presentation_mode as PresentationMode,
-    };
-  } catch {
-    return null;
-  }
-}
-
 /** Racine de la chaîne de reformulation (pure) : si le défi échoué est lui-même une
  *  reformulation, la chaîne s'ancre sur l'ORIGINAL (sa propre filiation), pas sur le
  *  parent immédiat — sinon le défi EST l'original. Sans cette résolution, chaque
@@ -140,10 +114,10 @@ export function parseReformulationContext(
  *  précédentes étaient invisibles (modality_attempt toujours 1, boucle jamais bornée,
  *  même modalité re-choisie — review 2026-08-12, P0). */
 export function resolveReformulationRoot(
-  failedChallengeContext: string | null | undefined,
+  failedChallenge: { reformulation_of: string | null } | null | undefined,
   challengeId: string,
 ): string {
-  return parseReformulationContext(failedChallengeContext)?.originalChallengeId ?? challengeId;
+  return failedChallenge?.reformulation_of ?? challengeId;
 }
 
 export interface ModalityAttemptSummary {
@@ -215,22 +189,21 @@ export async function processModalityReformulation(
   //    le parent immédiat — review 2026-08-12, P0) : sans cette résolution, chaque
   //    reformulation démarrée sur un parent ne retrouvait aucun sibling, modality_attempt
   //    restait à 1, la boucle n'était jamais bornée et la même modalité était re-choisie.
-  const rootChallengeId = resolveReformulationRoot(challenge.pedagogical_context, challengeId);
+  const rootChallengeId = resolveReformulationRoot(challenge, challengeId);
   const { data: siblings } = await supabase
     .from("challenges")
-    .select("id, status, title, pedagogical_context, presentation_mode")
+    .select("id, status, title, reformulation_of, presentation_mode")
     .eq("child_id", child.id)
-    .like("pedagogical_context", "%is_reformulation%")
+    .not("reformulation_of", "is", null)
     .order("created_at", { ascending: false })
     .limit(50);
   const attempts = ((siblings ?? []) as any[])
-    .map((s) => {
-      const ctx = parseReformulationContext(s.pedagogical_context);
-      return ctx && ctx.originalChallengeId === rootChallengeId
-        ? { ...ctx, status: s.status as string, title: s.title as string | undefined }
-        : null;
-    })
-    .filter((a): a is NonNullable<typeof a> => a !== null);
+    .filter((s) => s.reformulation_of === rootChallengeId)
+    .map((s) => ({
+      presentationMode: s.presentation_mode as PresentationMode | null,
+      status: s.status as string,
+      title: s.title as string | undefined,
+    }));
 
   const summary = summarizeModalityAttempts(attempts);
   if (summary.pending > 0) return { ok: false, reason: "REFORMULATION_PENDING" };
@@ -330,12 +303,9 @@ export async function processModalityReformulation(
       status: "todo",
       progress: 0,
       academic_secret: parsed.academic_secret ?? null,
-      pedagogical_context: JSON.stringify({
-        is_reformulation: true,
-        original_challenge_id: rootChallengeId,
-        modality_attempt: summary.total + 1,
-        presentation_mode: nextMode,
-      }),
+      // Filiation vers l'ORIGINAL de la chaîne (colonne typée — ex-JSON dans
+      // pedagogical_context) ; presentation_mode est déjà écrit en colonne ci-dessous.
+      reformulation_of: rootChallengeId,
       time_limit_minutes: resolveTimeLimitMinutes({
         estimatedMinutes: null,
         age: child.age,

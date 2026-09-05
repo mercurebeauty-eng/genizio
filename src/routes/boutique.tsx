@@ -631,7 +631,7 @@ function BoutiquePage() {
                 </ol>
               </div>
 
-              {formatPedagogicalIntention(generatedChallenge.pedagogical_context) && (
+              {formatPedagogicalIntention(generatedChallenge) && (
                 <div className="rounded-2xl border border-ink/10 bg-brand/5 p-4 flex gap-3">
                   <Brain className="size-5 text-brand shrink-0 mt-0.5" />
                   <div>
@@ -642,7 +642,7 @@ function BoutiquePage() {
                       "
                       <MarkdownContent
                         content={
-                          formatPedagogicalIntention(generatedChallenge.pedagogical_context)!
+                          formatPedagogicalIntention(generatedChallenge)!
                         }
                         inline
                       />

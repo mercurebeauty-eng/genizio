@@ -6,6 +6,7 @@ import {
 } from "@/lib/hypotheses.functions";
 import { getChildAccessStatus } from "@/lib/child-access";
 import { assertChildActor } from "@/lib/child-actor";
+import { loadLocalMaterialsForCountry } from "@/lib/country-materials";
 import { getInterestHypothesesSnapshot } from "@/lib/interest-confidence";
 import {
   callClaude,
@@ -109,12 +110,14 @@ export const recommendChallengesForChild = createServerFn({ method: "POST" })
 
     if (openCycle) {
       // Vérifie s'il existe déjà un défi discriminant non terminé pour ce cycle
+      // (recherche exacte par colonne typée — l'ancien LIKE sur le JSON sérialisé
+      // de pedagogical_context cassait en silence au moindre changement de format)
       const { data: existingDiscriminant } = await supabase
         .from("challenges")
         .select("*")
         .eq("child_id", data.childId)
         .eq("status", "todo")
-        .like("pedagogical_context", `%"cycle_id":"${openCycle.id}"%`)
+        .eq("hypothesis_cycle_id", openCycle.id)
         .maybeSingle();
 
       if (existingDiscriminant) {
@@ -227,11 +230,16 @@ export const recommendChallengesForChild = createServerFn({ method: "POST" })
             .join("\n");
           const completedInAspirationDomains = completedInDomainsCount.count ?? 0;
 
+          // Matériaux locaux du pays (table country_materials, éditable via l'Admin
+          // OS) — le loader gère le repli constantes (la génération ne casse jamais).
+          const localMaterials = await loadLocalMaterialsForCountry(supabase, child.country);
+
           const prompt = buildAspirationBridgePrompt({
             childName: child.name,
             childAge: child.age,
             profileLocation:
               [child.city, child.country].filter(Boolean).join(", ") || "non précisé",
+            localMaterials,
             interestsPayload: formatChildInterestsPayload(child.interests, interestHypotheses),
             talentsJson: JSON.stringify(child.talents || {}),
             completedSummary,
@@ -281,10 +289,7 @@ export const recommendChallengesForChild = createServerFn({ method: "POST" })
                 materials: safeMaterials,
                 status: "todo",
                 progress: 0,
-                pedagogical_context: JSON.stringify({
-                  is_recommendation: true,
-                  type: "ASPIRATION",
-                }),
+                recommendation_type: "ASPIRATION",
                 academic_secret: parsed.academic_secret ?? null,
                 aspiration_label: hypothesis.label,
                 ...finalizeChallenge(
@@ -419,12 +424,9 @@ export const recommendChallengesForChild = createServerFn({ method: "POST" })
               duration: parsed.duration || "10 min",
               steps: safeSteps,
               materials: safeMaterials,
-              status: "todo",
-              progress: 0,
-              pedagogical_context: JSON.stringify({
-                is_recommendation: true,
-                type: "STABILISATION",
-              }),
+                status: "todo",
+                progress: 0,
+                recommendation_type: "STABILISATION",
               // Même trou que les autres générateurs de recommandation (Essaimage/Stabilisation/
               // Exploration) : demandé au prompt mais jamais recopié dans l'insertion directe.
               academic_secret: parsed.academic_secret ?? null,
@@ -544,7 +546,7 @@ export const recommendChallengesForChild = createServerFn({ method: "POST" })
             materials: safeMaterials,
             status: "todo",
             progress: 0,
-            pedagogical_context: JSON.stringify({ is_recommendation: true, type: "ESSAIMAGE" }),
+            recommendation_type: "ESSAIMAGE",
             // Même trou que les autres générateurs de recommandation — voir le commentaire
             // équivalent sur la branche Stabilisation ci-dessus.
             academic_secret: parsed.academic_secret ?? null,
@@ -636,7 +638,7 @@ export const recommendChallengesForChild = createServerFn({ method: "POST" })
             materials: safeMaterials,
             status: "todo",
             progress: 0,
-            pedagogical_context: JSON.stringify({ is_recommendation: true, type: "STABILISATION" }),
+            recommendation_type: "STABILISATION",
             // Même trou que les autres générateurs de recommandation — voir le commentaire
             // équivalent sur la branche Essaimage ci-dessus.
             academic_secret: parsed.academic_secret ?? null,
@@ -750,7 +752,7 @@ export const recommendChallengesForChild = createServerFn({ method: "POST" })
             materials: safeMaterials,
             status: "todo",
             progress: 0,
-            pedagogical_context: JSON.stringify({ is_recommendation: true, type: "EXPLORATION" }),
+            recommendation_type: "EXPLORATION",
             // Même trou que les autres générateurs de recommandation — voir le commentaire
             // équivalent sur la branche Essaimage ci-dessus.
             academic_secret: parsed.academic_secret ?? null,

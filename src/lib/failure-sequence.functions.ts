@@ -21,7 +21,6 @@ import { z } from "zod";
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import {
-  parseReformulationContext,
   PRESENTATION_MODE_LABELS,
   type PresentationMode,
 } from "@/lib/modalities.functions";
@@ -108,29 +107,25 @@ export const getLatestFailureSequence = createServerFn({ method: "GET" })
 
     const { data: reformulations } = await supabase
       .from("challenges")
-      .select("id, status, presentation_mode, pedagogical_context, created_at")
+      .select("id, status, presentation_mode, reformulation_of, created_at")
       .eq("child_id", data.childId)
-      .like("pedagogical_context", "%is_reformulation%")
+      .not("reformulation_of", "is", null)
       .order("created_at", { ascending: false })
       .limit(20);
 
     const chain = (reformulations ?? []) as {
       status: string;
       presentation_mode: string | null;
-      pedagogical_context: string | null;
+      reformulation_of: string | null;
     }[];
     if (chain.length === 0) return { hasSequence: false, narrative: null, status: null };
 
     // Chaîne la plus récente : la première reformulation (tri desc) donne son
     // original — on regroupe ensuite toutes les tentatives liées à cet original.
-    const latestCtx = parseReformulationContext(chain[0].pedagogical_context);
-    if (!latestCtx) return { hasSequence: false, narrative: null, status: null };
+    const latestRoot = chain[0].reformulation_of;
+    if (!latestRoot) return { hasSequence: false, narrative: null, status: null };
 
-    const siblings = chain.filter(
-      (c) =>
-        parseReformulationContext(c.pedagogical_context)?.originalChallengeId ===
-        latestCtx.originalChallengeId,
-    );
+    const siblings = chain.filter((c) => c.reformulation_of === latestRoot);
 
     const attempts: SequenceAttempt[] = siblings.map((s) => ({
       presentationMode: s.presentation_mode as PresentationMode | null,

@@ -23,6 +23,11 @@ import {
   Copy,
   Eye,
   X,
+  MapPin,
+  Plus,
+  Trash2,
+  Check,
+  ChevronDown,
 } from "lucide-react";
 import type { NayaTelemetryResponse } from "@/lib/naya-telemetry";
 import { isDeepSeekPeakHour } from "@/lib/naya-telemetry";
@@ -39,6 +44,12 @@ import {
   type RecurringRule,
   type RuleDecision,
 } from "@/lib/naya-constitution.functions";
+import {
+  deleteCountryMaterialAdmin,
+  getCountryMaterialsAdmin,
+  upsertCountryMaterialAdmin,
+  type CountryMaterialRow,
+} from "@/lib/country-materials.functions";
 
 export interface AdminNayaTabProps {
   telemetry: NayaTelemetryResponse;
@@ -77,7 +88,8 @@ export function AdminNayaTab({
   constitution,
   onDataChanged,
 }: AdminNayaTabProps) {
-  const [localConstitution, setLocalConstitution] = useState<ConstitutionSuggestionsResponse | null>(constitution || null);
+  const [localConstitution, setLocalConstitution] =
+    useState<ConstitutionSuggestionsResponse | null>(constitution || null);
   useEffect(() => {
     setLocalConstitution(constitution || null);
   }, [constitution]);
@@ -678,7 +690,9 @@ export function AdminNayaTab({
         <div className="rounded-2xl border border-ink/10 bg-surface/30 p-4 space-y-3">
           <div className="text-[11px] font-extrabold uppercase tracking-wider text-ink/60">
             En attente —{" "}
-            {localConstitution ? `${localConstitution.suggestions.length} règle(s) proposée(s)` : "…"}
+            {localConstitution
+              ? `${localConstitution.suggestions.length} règle(s) proposée(s)`
+              : "…"}
           </div>
           {!localConstitution ? (
             <p className="text-xs text-ink/50 italic">Chargement des suggestions…</p>
@@ -984,6 +998,11 @@ export function AdminNayaTab({
           </div>
         </div>
       </div>
+
+      {/* Contextualisation locale — matériaux par pays (table country_materials) :
+          la source éditable des instructions « matériaux du pays » injectées dans
+          chaque prompt de génération Naya (contextualization.ts n'est que le repli). */}
+      <CountryMaterialsSection />
     </div>
   );
 }
@@ -1148,5 +1167,336 @@ function OutcomeSignalRow({ signal }: { signal: OutcomeSignal }) {
         </div>
       </div>
     </li>
+  );
+}
+
+// ── Contextualisation locale — matériaux par pays (table country_materials) ──
+//
+// La source de vérité des « matériaux du pays » injectés dans les prompts de
+// génération (contextualization.ts n'est que le repli de résilience). Édition en
+// chips : libellé du pays (la clé normalisée en est dérivée côté serveur), ajout/
+// retrait de matériaux, sauvegarde par ligne, suppression en deux clics.
+
+interface CountryRowDraft {
+  label: string;
+  materials: string[];
+  input: string;
+}
+
+function countryChipCommit(list: string[], raw: string): string[] {
+  const value = raw.replace(/\s+/g, " ").trim();
+  if (!value || list.includes(value)) return list;
+  return [...list, value];
+}
+
+function CountryMaterialsSection() {
+  const getFn = useServerFn(getCountryMaterialsAdmin);
+  const upsertFn = useServerFn(upsertCountryMaterialAdmin);
+  const deleteFn = useServerFn(deleteCountryMaterialAdmin);
+
+  const [open, setOpen] = useState(false);
+  const [rows, setRows] = useState<CountryMaterialRow[] | null>(null);
+  const [loadError, setLoadError] = useState<string | null>(null);
+  const [drafts, setDrafts] = useState<Record<string, CountryRowDraft>>({});
+  const [busyKey, setBusyKey] = useState<string | null>(null);
+  const [confirmDeleteKey, setConfirmDeleteKey] = useState<string | null>(null);
+  const [newLabel, setNewLabel] = useState("");
+  const [newMaterials, setNewMaterials] = useState<string[]>([]);
+  const [newInput, setNewInput] = useState("");
+  const [savingNew, setSavingNew] = useState(false);
+
+  const load = React.useCallback(async () => {
+    try {
+      const res = await getFn();
+      setRows(res.rows);
+      setLoadError(null);
+      setDrafts(
+        Object.fromEntries(
+          res.rows.map((r) => [
+            r.countryKey,
+            { label: r.countryLabel, materials: [...r.materials], input: "" },
+          ]),
+        ),
+      );
+    } catch (e) {
+      setLoadError(e instanceof Error ? e.message : "Erreur de chargement");
+    }
+  }, [getFn]);
+
+  useEffect(() => {
+    // Chargement paresseux : un aller-retour seulement quand la section est ouverte.
+    if (open && rows === null && loadError === null) void load();
+  }, [open, rows, loadError, load]);
+
+  const patchDraft = (key: string, patch: Partial<CountryRowDraft>) => {
+    setDrafts((prev) => ({ ...prev, [key]: { ...prev[key], ...patch } }));
+  };
+
+  const saveRow = async (key: string) => {
+    const draft = drafts[key];
+    if (!draft || busyKey) return;
+    setBusyKey(key);
+    try {
+      await upsertFn({
+        data: {
+          countryLabel: draft.label,
+          materials: draft.materials,
+          originalKey: key,
+        },
+      });
+      toast.success("Matériaux enregistrés — appliqués dès la prochaine génération.");
+      await load();
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Échec de l'enregistrement.");
+    } finally {
+      setBusyKey(null);
+    }
+  };
+
+  const removeRow = async (key: string) => {
+    if (confirmDeleteKey !== key) {
+      setConfirmDeleteKey(key);
+      return;
+    }
+    setBusyKey(key);
+    try {
+      await deleteFn({ data: { countryKey: key } });
+      toast.success("Pays retiré — les matériaux de repli s'appliquent désormais.");
+      setConfirmDeleteKey(null);
+      await load();
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Échec de la suppression.");
+    } finally {
+      setBusyKey(null);
+    }
+  };
+
+  const addCountry = async () => {
+    if (savingNew) return;
+    if (newLabel.trim().length < 2 || newMaterials.length === 0) {
+      toast.error("Renseignez un libellé de pays et au moins un matériau.");
+      return;
+    }
+    setSavingNew(true);
+    try {
+      await upsertFn({ data: { countryLabel: newLabel, materials: newMaterials } });
+      toast.success("Pays ajouté — appliqué dès la prochaine génération.");
+      setNewLabel("");
+      setNewMaterials([]);
+      setNewInput("");
+      await load();
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Échec de l'ajout.");
+    } finally {
+      setSavingNew(false);
+    }
+  };
+
+  /** Commit d'un chip à la touche Entrée (préserve le focus de l'input). */
+  const chipInputKeyDown =
+    (
+      list: string[],
+      input: string,
+      setInput: (v: string) => void,
+      apply: (next: string[]) => void,
+    ) =>
+    (e: React.KeyboardEvent<HTMLInputElement>) => {
+      if (e.key !== "Enter") return;
+      e.preventDefault();
+      if (input.trim()) {
+        apply(countryChipCommit(list, input));
+        setInput("");
+      }
+    };
+
+  return (
+    <div className="rounded-3xl border border-ink/10 bg-white shadow-xl">
+      <button
+        type="button"
+        onClick={() => setOpen((o) => !o)}
+        className="w-full flex items-center gap-3 p-6 text-left cursor-pointer"
+      >
+        <div className="p-2.5 rounded-2xl bg-brand/10 text-brand">
+          <MapPin className="size-5" />
+        </div>
+        <div className="flex-1 min-w-0">
+          <h3 className="font-display text-lg font-black text-ink">Contextualisation locale</h3>
+          <p className="text-xs text-ink/50 font-medium">
+            Matériaux locaux par pays, injectés dans chaque prompt de génération de Naya. Les pays
+            absents de la table retombent sur les matériaux génériques de repli.
+          </p>
+        </div>
+        <ChevronDown
+          className={`size-5 text-ink/40 transition-transform shrink-0 ${open ? "rotate-180" : ""}`}
+        />
+      </button>
+
+      {open && (
+        <div className="px-6 pb-6 pt-5 border-t border-ink/5 space-y-4">
+          {loadError && (
+            <div className="rounded-2xl bg-red-50 border border-red-100 p-4 text-xs text-red-700 font-medium flex items-center gap-2">
+              <AlertTriangle className="size-4 shrink-0" />
+              <span className="flex-1">Chargement impossible : {loadError}</span>
+              <button
+                type="button"
+                onClick={() => void load()}
+                className="press-red underline font-bold cursor-pointer"
+              >
+                Réessayer
+              </button>
+            </div>
+          )}
+
+          {rows !== null && rows.length === 0 && !loadError && (
+            <div className="rounded-2xl bg-amber-50 border border-amber-100 p-4 text-xs text-amber-800 font-medium flex items-center gap-2">
+              <AlertTriangle className="size-4 shrink-0" />
+              Table vide — la migration 20260905140000 (seed des pays) semble ne pas avoir été
+              appliquée. Vous pouvez ajouter les pays manuellement ci-dessous.
+            </div>
+          )}
+
+          {(rows ?? []).map((row) => {
+            const draft = drafts[row.countryKey];
+            if (!draft) return null;
+            const dirty =
+              draft.label !== row.countryLabel ||
+              draft.materials.join("|") !== row.materials.join("|");
+            const busy = busyKey === row.countryKey;
+            return (
+              <div key={row.countryKey} className="rounded-2xl border border-ink/10 p-4 space-y-3">
+                <div className="flex flex-wrap items-center gap-2">
+                  <input
+                    value={draft.label}
+                    onChange={(e) => patchDraft(row.countryKey, { label: e.target.value })}
+                    className="flex-1 min-w-[180px] rounded-xl border border-ink/10 px-3 py-2 text-sm font-bold text-ink focus:outline-none focus:ring-2 focus:ring-brand/30"
+                    aria-label={`Libellé du pays ${row.countryKey}`}
+                  />
+                  <span className="text-[10px] font-mono text-ink/40 bg-ink/5 rounded-lg px-2 py-1">
+                    {row.countryKey}
+                  </span>
+                </div>
+
+                <div className="flex flex-wrap items-center gap-1.5">
+                  {draft.materials.map((m) => (
+                    <span
+                      key={m}
+                      className="inline-flex items-center gap-1 rounded-full bg-brand/10 text-brand px-2.5 py-1 text-[11px] font-bold"
+                    >
+                      {m}
+                      <button
+                        type="button"
+                        aria-label={`Retirer ${m}`}
+                        onClick={() =>
+                          patchDraft(row.countryKey, {
+                            materials: draft.materials.filter((x) => x !== m),
+                          })
+                        }
+                        className="cursor-pointer text-brand/60 hover:text-brand"
+                      >
+                        <X className="size-3" />
+                      </button>
+                    </span>
+                  ))}
+                  <input
+                    value={draft.input}
+                    onChange={(e) => patchDraft(row.countryKey, { input: e.target.value })}
+                    onKeyDown={chipInputKeyDown(
+                      draft.materials,
+                      draft.input,
+                      (v) => patchDraft(row.countryKey, { input: v }),
+                      (next) => patchDraft(row.countryKey, { materials: next }),
+                    )}
+                    placeholder="Ajouter un matériau…"
+                    className="flex-1 min-w-[160px] rounded-full border border-dashed border-ink/20 px-3 py-1 text-[11px] font-semibold text-ink focus:outline-none focus:ring-2 focus:ring-brand/30"
+                  />
+                </div>
+
+                <div className="flex items-center justify-end gap-2">
+                  <button
+                    type="button"
+                    onClick={() => void removeRow(row.countryKey)}
+                    className={`press-red rounded-xl border px-3 py-1.5 text-[11px] font-extrabold flex items-center gap-1.5 cursor-pointer ${
+                      confirmDeleteKey === row.countryKey
+                        ? "border-red-300 bg-red-500 text-white"
+                        : "border-red-100 bg-red-50 text-red-600"
+                    }`}
+                  >
+                    <Trash2 className="size-3.5" />
+                    {confirmDeleteKey === row.countryKey ? "Confirmer ?" : "Supprimer"}
+                  </button>
+                  <button
+                    type="button"
+                    disabled={!dirty || busy}
+                    onClick={() => void saveRow(row.countryKey)}
+                    className="press-leaf rounded-xl border border-leaf/20 bg-leaf/10 px-3 py-1.5 text-[11px] font-extrabold text-leaf flex items-center gap-1.5 disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
+                  >
+                    {busy ? (
+                      <Loader2 className="size-3.5 animate-spin" />
+                    ) : (
+                      <Check className="size-3.5" />
+                    )}
+                    Enregistrer
+                  </button>
+                </div>
+              </div>
+            );
+          })}
+
+          {rows !== null && (
+            <div className="rounded-2xl border border-dashed border-ink/20 p-4 space-y-3">
+              <p className="text-[11px] font-extrabold uppercase tracking-wider text-ink/50">
+                Ajouter un pays
+              </p>
+              <div className="flex flex-wrap items-center gap-2">
+                <input
+                  value={newLabel}
+                  onChange={(e) => setNewLabel(e.target.value)}
+                  placeholder="Libellé (ex: Mauritanie)"
+                  className="flex-1 min-w-[180px] rounded-xl border border-ink/10 px-3 py-2 text-sm font-bold text-ink focus:outline-none focus:ring-2 focus:ring-brand/30"
+                />
+                <button
+                  type="button"
+                  disabled={savingNew}
+                  onClick={() => void addCountry()}
+                  className="press-sky rounded-xl border border-sky/20 bg-sky/10 px-4 py-2 text-[11px] font-extrabold text-ink flex items-center gap-1.5 disabled:opacity-40 cursor-pointer"
+                >
+                  {savingNew ? (
+                    <Loader2 className="size-3.5 animate-spin" />
+                  ) : (
+                    <Plus className="size-3.5" />
+                  )}
+                  Ajouter
+                </button>
+              </div>
+              <div className="flex flex-wrap items-center gap-1.5">
+                {newMaterials.map((m) => (
+                  <span
+                    key={m}
+                    className="inline-flex items-center gap-1 rounded-full bg-brand/10 text-brand px-2.5 py-1 text-[11px] font-bold"
+                  >
+                    {m}
+                    <button
+                      type="button"
+                      aria-label={`Retirer ${m}`}
+                      onClick={() => setNewMaterials(newMaterials.filter((x) => x !== m))}
+                      className="cursor-pointer text-brand/60 hover:text-brand"
+                    >
+                      <X className="size-3" />
+                    </button>
+                  </span>
+                ))}
+                <input
+                  value={newInput}
+                  onChange={(e) => setNewInput(e.target.value)}
+                  onKeyDown={chipInputKeyDown(newMaterials, newInput, setNewInput, setNewMaterials)}
+                  placeholder="Ajouter un matériau…"
+                  className="flex-1 min-w-[160px] rounded-full border border-dashed border-ink/20 px-3 py-1 text-[11px] font-semibold text-ink focus:outline-none focus:ring-2 focus:ring-brand/30"
+                />
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+    </div>
   );
 }
