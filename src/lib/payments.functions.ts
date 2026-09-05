@@ -21,6 +21,7 @@ import {
   PASSPORT_PRICE_XOF,
   DIAGNOSTIC_PRICE_XOF,
   PACK_PRICE_XOF,
+  PRO_DOSSIER_PRICE_XOF,
 } from "@/lib/pricing";
 import type { PaymentMetadata, PaymentRow } from "@/lib/payment-fulfillment.server";
 
@@ -644,7 +645,6 @@ export const initializeCampusLicensePayment = createServerFn({ method: "POST" })
         type: "campus_license",
         school_id: school.id,
         licensed_students_quota: tierInfo.quota,
-        months: tierInfo.durationMonths,
       },
     });
 
@@ -671,3 +671,69 @@ export const initializeCampusLicensePayment = createServerFn({ method: "POST" })
       schoolName: school.name,
     };
   });
+
+// ── Dossier Pro & Prescription Clinique (15 000 FCFA) ───────────────────────
+const InitializeProDossierSchema = z.object({
+  childId: z.string().uuid(),
+  delegationId: z.string().uuid().optional(),
+  callbackUrl: callbackUrlSchema,
+});
+
+export const initializeProDossierPayment = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth, requireRateLimit])
+  .validator((data: unknown) => InitializeProDossierSchema.parse(data))
+  .handler(async ({ data, context }) => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { initializePaystackTransaction, createPaystackReference } =
+      await import("@/lib/paystack.server");
+    const db = supabaseAdmin as any;
+    const userId =
+      (context as any).userId || (context as any).claims?.sub || (context as any).user?.id;
+
+    // Vérifier que le professionnel a bien une délégation active (ou est le bénéficiaire)
+    const { data: delegation, error: delErr } = await db
+      .from("child_delegations")
+      .select("id, child_id, professional_role, beneficiary_user_id, beneficiary_email")
+      .eq("child_id", data.childId)
+      .eq("status", "active")
+      .maybeSingle();
+
+    if (delErr || !delegation) {
+      throw new Error("Aucune délégation active trouvée pour cet élève.");
+    }
+
+    const amountXof = PRO_DOSSIER_PRICE_XOF; // 15 000 FCFA
+    const reference = createPaystackReference("PRO_DOSSIER");
+
+    await createPaystackPayment({
+      supabaseAdmin,
+      userId,
+      reference,
+      amountXof,
+      metadata: {
+        type: "pro_dossier",
+        child_id: data.childId,
+        delegation_id: delegation.id,
+      },
+    });
+
+    const { authorizationUrl } = await initializePaystackTransaction({
+      email: await getPaystackUserEmail(supabaseAdmin, userId),
+      amountXof,
+      reference,
+      callbackUrl: data.callbackUrl,
+      metadata: {
+        intent: "pro_dossier",
+        child_id: data.childId,
+        delegation_id: delegation.id,
+      },
+    });
+
+    return {
+      authorizationUrl,
+      reference,
+      amountXof,
+      childId: data.childId,
+    };
+  });
+

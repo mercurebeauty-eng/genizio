@@ -41,6 +41,13 @@ export const PASSPORT_PRICE_EUR = 115;
 export const DIAGNOSTIC_PRICE_XOF = 50000;
 export const DIAGNOSTIC_PRICE_EUR = 75;
 
+// Dossier d'Expertise & Prescription Clinique pour Professionnel Indépendant
+// Débloque l'export du Bilan Psycho-Pédagogique officiel (8-12 pages PDF), l'injection
+// de défis de remédiation sur-mesure et l'espace de notes cliniques sécurisées.
+// Prix : 15 000 FCFA par enfant/demande.
+export const PRO_DOSSIER_PRICE_XOF = 15000;
+export const PRO_DOSSIER_PRICE_EUR = 23;
+
 // ── Accompagnement (Positionnement Premium 2026-08-24) ───────────────────────────
 // Le pack d'accompagnement est PAR ENFANT : 12 séances × 15 000 F = 180 000 F/mois/enfant.
 export const SESSION_PRICE_XOF = 15000;
@@ -89,31 +96,38 @@ export function formatPromoDeadline(date: Date): string {
 }
 
 // ── Tarification Institutionnelle Campus (Écoles, Collèges, Lycées) ──────────
-// Établissements scolaires partenaires : accès Naya déployé à l'échelle de l'école.
+// Licence d'Exploitation Établissement (B2B / État / APE) :
+// • Valide impérativement jusqu'au 31 juillet de l'année scolaire en cours.
+// • 0 FCFA pour tous les enseignants rattachés à l'établissement.
+// • Éligible au paiement au comptant ou en 3 échéances trimestrielles calées sur les scolarités.
 export const CAMPUS_TIERS = {
   pilot: {
-    name: "Pilote Établissement (1 trimestre)",
+    name: "Pack Pilote (jusqu'à 50 élèves)",
     quota: 50,
-    durationMonths: 3,
-    priceXof: 50000,
+    pricePerStudentXof: 2500,
+    priceXof: 125000, // 50 × 2 500 F
+    installmentPerTermXof: 125000, // Comptant
   },
   starter_campus: {
     name: "Campus Starter (jusqu'à 250 élèves)",
     quota: 250,
-    durationMonths: 12,
-    priceXof: 250000,
+    pricePerStudentXof: 5000,
+    priceXof: 1250000, // 250 × 5 000 F
+    installmentPerTermXof: 416667, // 3 échéances
   },
   standard_campus: {
-    name: "Campus Pro (jusqu'à 500 élèves)",
+    name: "Campus Pro (jusqu'à 500 élèves - Dégressif)",
     quota: 500,
-    durationMonths: 12,
-    priceXof: 450000,
+    pricePerStudentXof: 4000,
+    priceXof: 2000000, // 500 × 4 000 F
+    installmentPerTermXof: 666667, // 3 échéances
   },
   excellence_campus: {
-    name: "Campus Excellence (jusqu'à 1 000 élèves)",
+    name: "Campus Excellence (jusqu'à 1 000 élèves - Dégressif)",
     quota: 1000,
-    durationMonths: 12,
-    priceXof: 750000,
+    pricePerStudentXof: 3000,
+    priceXof: 3000000, // 1 000 × 3 000 F
+    installmentPerTermXof: 1000000, // 3 échéances
   },
 } as const;
 
@@ -122,8 +136,9 @@ export type CampusTierKey = keyof typeof CAMPUS_TIERS;
 export function resolveCampusPrice(tierKey: CampusTierKey): {
   name: string;
   quota: number;
-  durationMonths: number;
+  pricePerStudentXof: number;
   priceXof: number;
+  installmentPerTermXof: number;
 } {
   return CAMPUS_TIERS[tierKey] ?? CAMPUS_TIERS.standard_campus;
 }

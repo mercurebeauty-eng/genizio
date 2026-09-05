@@ -192,6 +192,7 @@ export const listMyEducatorDelegations = createServerFn({ method: "GET" })
         share_parent_phone,
         valid_until,
         status,
+        pro_dossier_unlocked,
         last_accessed_at,
         created_at
       `,
@@ -230,6 +231,7 @@ export const listMyEducatorDelegations = createServerFn({ method: "GET" })
         professionalRole: d.professional_role,
         scope: d.scope,
         shareParentPhone: d.share_parent_phone,
+        proDossierUnlocked: Boolean(d.pro_dossier_unlocked),
         validUntil: d.valid_until,
       };
     });
@@ -254,6 +256,7 @@ export const getEducationalPassport = createServerFn({ method: "GET" })
     let isAuthorized = false;
     let sharePhone = false;
     let activeDelegationId: string | null = null;
+    let activeDelegation: any = null;
 
     try {
       await assertChildActor(supabaseAdmin, userId, childId);
@@ -263,7 +266,9 @@ export const getEducationalPassport = createServerFn({ method: "GET" })
       // Pas parent ni mentor, vérifions la table child_delegations
       const { data: delegation } = await db
         .from("child_delegations")
-        .select("id, share_parent_phone")
+        .select(
+          "id, share_parent_phone, pro_dossier_unlocked, pro_clinical_notes, pro_remediation_prescriptions",
+        )
         .eq("child_id", childId)
         .or(`beneficiary_user_id.eq.${userId},beneficiary_email.eq.${userEmail}`)
         .eq("status", "active")
@@ -274,6 +279,7 @@ export const getEducationalPassport = createServerFn({ method: "GET" })
         isAuthorized = true;
         sharePhone = delegation.share_parent_phone;
         activeDelegationId = delegation.id;
+        activeDelegation = delegation;
       }
     }
 
@@ -352,5 +358,53 @@ export const getEducationalPassport = createServerFn({ method: "GET" })
         aiObservations: c.ai_observations,
         traitSubform: c.trait_subform,
       })),
+      proDossierUnlocked: Boolean(activeDelegation?.pro_dossier_unlocked),
+      clinicalNotes: (activeDelegation?.pro_clinical_notes as string) || "",
+      prescriptions: (activeDelegation?.pro_remediation_prescriptions as any[]) || [],
+      delegationId: activeDelegationId,
     };
+  });
+
+/**
+ * Enregistre les notes confidentielles du praticien sur le dossier débloqué d'un élève.
+ */
+export const saveProClinicalNotes = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .validator((data: unknown) =>
+    z
+      .object({
+        childId: z.string().uuid(),
+        notes: z.string().max(10000),
+      })
+      .parse(data),
+  )
+  .handler(async ({ data, context }) => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const db = supabaseAdmin as any;
+    const userId =
+      (context as any).userId || (context as any).claims?.sub || (context as any).user?.id;
+    const userEmail = (context as any).claims?.email?.toLowerCase();
+
+    const { data: delegation, error: delErr } = await db
+      .from("child_delegations")
+      .select("id, pro_dossier_unlocked")
+      .eq("child_id", data.childId)
+      .or(`beneficiary_user_id.eq.${userId},beneficiary_email.eq.${userEmail}`)
+      .eq("status", "active")
+      .maybeSingle();
+
+    if (delErr || !delegation || !delegation.pro_dossier_unlocked) {
+      throw new Error("Dossier d'expertise non activé pour cet élève.");
+    }
+
+    const { error: updErr } = await db
+      .from("child_delegations")
+      .update({
+        pro_clinical_notes: data.notes,
+        updated_at: new Date().toISOString(),
+      })
+      .eq("id", delegation.id);
+
+    if (updErr) throw new Error(updErr.message);
+    return { success: true };
   });

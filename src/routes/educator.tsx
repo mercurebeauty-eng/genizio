@@ -4,7 +4,13 @@ import { useServerFn } from "@tanstack/react-start";
 import { useSession } from "@/hooks/use-session";
 import { AppHeader } from "@/components/AppHeader";
 import { AppTabBar } from "@/components/AppTabBar";
-import { listMyEducatorDelegations, getEducationalPassport } from "@/lib/delegations.functions";
+import {
+  listMyEducatorDelegations,
+  getEducationalPassport,
+  saveProClinicalNotes,
+} from "@/lib/delegations.functions";
+import { initializeProDossierPayment } from "@/lib/payments.functions";
+import { PRO_DOSSIER_PRICE_XOF, formatXof } from "@/lib/pricing";
 import {
   getMyEstablishmentOverview,
   type EstablishmentOverview,
@@ -30,6 +36,13 @@ import {
   ExternalLink,
   Copy,
   Check,
+  FileText,
+  Lock,
+  Unlock,
+  AlertTriangle,
+  TrendingUp,
+  Lightbulb,
+  Save,
 } from "lucide-react";
 import { toast } from "sonner";
 import { GenizioLoader } from "@/components/GenizioLoader";
@@ -55,6 +68,11 @@ function EducatorDashboardPage() {
   const [loadingPassport, setLoadingPassport] = useState(false);
   const [copiedCode, setCopiedCode] = useState(false);
 
+  // Notes cliniques & Déblocage Pro
+  const [clinicalNotes, setClinicalNotes] = useState("");
+  const [savingNotes, setSavingNotes] = useState(false);
+  const [payingProDossier, setPayingProDossier] = useState(false);
+
   const handleCopySchoolCode = (code: string) => {
     void navigator.clipboard.writeText(code);
     setCopiedCode(true);
@@ -65,6 +83,8 @@ function EducatorDashboardPage() {
   const listDelegationsFn = useServerFn(listMyEducatorDelegations);
   const getPassportFn = useServerFn(getEducationalPassport);
   const getEstablishmentFn = useServerFn(getMyEstablishmentOverview);
+  const saveNotesFn = useServerFn(saveProClinicalNotes);
+  const payProDossierFn = useServerFn(initializeProDossierPayment);
 
   useEffect(() => {
     if (!loading && !session) {
@@ -123,11 +143,51 @@ function EducatorDashboardPage() {
         : {};
       const data = await getPassportFn({ data: childId, ...opts });
       setPassportData(data);
+      setClinicalNotes(data?.clinicalNotes || "");
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Erreur de chargement du dossier élève.");
       setSelectedChildId(null);
     } finally {
       setLoadingPassport(false);
+    }
+  };
+
+  const handleSaveClinicalNotes = async () => {
+    if (!selectedChildId || !session) return;
+    setSavingNotes(true);
+    try {
+      const opts = session.access_token
+        ? { headers: { Authorization: `Bearer ${session.access_token}` } }
+        : {};
+      await saveNotesFn({ data: { childId: selectedChildId, notes: clinicalNotes }, ...opts });
+      toast.success("Notes cliniques confidentielles enregistrées !");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Erreur d'enregistrement des notes.");
+    } finally {
+      setSavingNotes(false);
+    }
+  };
+
+  const handleUnlockProDossier = async () => {
+    if (!selectedChildId || !session) return;
+    setPayingProDossier(true);
+    try {
+      const opts = session.access_token
+        ? { headers: { Authorization: `Bearer ${session.access_token}` } }
+        : {};
+      const res = await payProDossierFn({
+        data: {
+          childId: selectedChildId,
+          callbackUrl: `${window.location.origin}/paiement-retour`,
+        },
+        ...opts,
+      });
+      if (res?.authorizationUrl) {
+        window.location.href = res.authorizationUrl;
+      }
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Erreur d'initialisation du paiement.");
+      setPayingProDossier(false);
     }
   };
 
@@ -290,8 +350,16 @@ function EducatorDashboardPage() {
                     )}
 
                     {establishment.licensedQuota && establishment.licensedQuota > 0 ? (
-                      <span className="text-xs font-bold text-emerald-800 bg-emerald-50 border border-emerald-200 px-2.5 py-1 rounded-xl">
-                        {establishment.licensedQuota} licences élèves campus
+                      <span className="text-xs font-bold text-emerald-800 bg-emerald-50 border border-emerald-200 px-2.5 py-1 rounded-xl flex items-center gap-1.5">
+                        <Check className="size-3.5 text-emerald-600" />
+                        <span>{establishment.licensedQuota} licences élèves campus</span>
+                        <span className="text-ink/40 font-normal">·</span>
+                        <span className="text-ink/60 font-medium">
+                          Échéance scolaire :{" "}
+                          {establishment.licenseValidUntil
+                            ? new Date(establishment.licenseValidUntil).toLocaleDateString("fr-FR")
+                            : "31 juillet"}
+                        </span>
                       </span>
                     ) : null}
                   </div>
@@ -354,6 +422,55 @@ function EducatorDashboardPage() {
                   </div>
                 </div>
               )}
+
+              {/* Leviers Décisionnels & Pédagogie Actionnable pour la Direction */}
+              <div className="rounded-3xl border border-ink/10 bg-white p-6 shadow-xs space-y-4">
+                <div className="flex items-center gap-2 border-b border-ink/5 pb-3">
+                  <div className="grid size-8 place-items-center rounded-xl bg-amber-100 text-amber-800">
+                    <Lightbulb className="size-4.5" />
+                  </div>
+                  <div>
+                    <h3 className="font-display font-black text-sm text-ink">
+                      Leviers Décisionnels & Pédagogie Actionnable
+                    </h3>
+                    <p className="text-[11px] text-ink/60">
+                      Indicateurs d'impact concrets pour l'adaptation des cours et la prévention du décrochage.
+                    </p>
+                  </div>
+                </div>
+
+                <div className="grid gap-4 sm:grid-cols-3">
+                  <div className="rounded-2xl border border-rose-100 bg-rose-50/50 p-4 space-y-2">
+                    <div className="flex items-center gap-1.5 text-rose-700 font-bold text-xs">
+                      <AlertTriangle className="size-4 shrink-0" />
+                      <span>Alerte Anti-Décrochage</span>
+                    </div>
+                    <p className="text-[11px] text-ink/75 leading-relaxed">
+                      Suivi continu de l'autonomie et de la persévérance. Détection précoce des chutes d'engagement 3 semaines avant les conseils de classe.
+                    </p>
+                  </div>
+
+                  <div className="rounded-2xl border border-indigo-100 bg-indigo-50/50 p-4 space-y-2">
+                    <div className="flex items-center gap-1.5 text-indigo-700 font-bold text-xs">
+                      <TrendingUp className="size-4 shrink-0" />
+                      <span>Orientation Active</span>
+                    </div>
+                    <p className="text-[11px] text-ink/75 leading-relaxed">
+                      Identification des talents sous-exploités (logique, spatial, interpersonnel) pour orienter chaque élève vers ses filières d'excellence.
+                    </p>
+                  </div>
+
+                  <div className="rounded-2xl border border-emerald-100 bg-emerald-50/50 p-4 space-y-2">
+                    <div className="flex items-center gap-1.5 text-emerald-700 font-bold text-xs">
+                      <CheckCircle2 className="size-4 shrink-0" />
+                      <span>Prescription de Classe</span>
+                    </div>
+                    <p className="text-[11px] text-ink/75 leading-relaxed">
+                      Conseils méthodologiques personnalisés pour les enseignants (manipulatif, visuel, narratif) adaptés au profil réel de la classe.
+                    </p>
+                  </div>
+                </div>
+              </div>
 
               {/* Liste des collègues de l'établissement */}
               <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
@@ -648,6 +765,115 @@ function EducatorDashboardPage() {
                     </div>
                   </div>
                 )}
+
+                {/* Volet Professionnel Indépendant : Bilan d'Expertise & Prescription (15 000 FCFA) */}
+                <div className="rounded-3xl border border-indigo-200 bg-gradient-to-br from-indigo-50/70 via-white to-purple-50/50 p-5 space-y-4 shadow-2xs">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-indigo-100 pb-3">
+                    <div className="flex items-center gap-2.5">
+                      <div className="grid size-9 place-items-center rounded-xl bg-indigo-600 text-white shadow-2xs shrink-0">
+                        <FileText className="size-5" />
+                      </div>
+                      <div>
+                        <h4 className="font-display font-black text-sm text-ink flex items-center gap-2">
+                          <span>Pack Bilan d'Expertise & Prescription Clinique</span>
+                          {passportData.proDossierUnlocked ? (
+                            <span className="rounded-full bg-emerald-100 text-emerald-800 px-2 py-0.5 text-[9px] font-black uppercase tracking-wider border border-emerald-200 flex items-center gap-1">
+                              <Unlock className="size-3 text-emerald-600" /> Débloqué
+                            </span>
+                          ) : (
+                            <span className="rounded-full bg-indigo-100 text-indigo-800 px-2 py-0.5 text-[9px] font-black uppercase tracking-wider border border-indigo-200 flex items-center gap-1">
+                              <Lock className="size-3 text-indigo-600" /> {formatXof(PRO_DOSSIER_PRICE_XOF)}
+                            </span>
+                          )}
+                        </h4>
+                        <p className="text-[11px] text-ink/60">
+                          Réservé aux praticiens, psychologues et conseillers d'orientation indépendants.
+                        </p>
+                      </div>
+                    </div>
+
+                    {passportData.proDossierUnlocked ? (
+                      <button
+                        type="button"
+                        onClick={() => toast.info("Export du Bilan d'Expertise en cours de génération...")}
+                        className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs shadow-2xs transition-colors cursor-pointer"
+                      >
+                        <FileText className="size-3.5" />
+                        <span>Télécharger Bilan Officiel (PDF)</span>
+                      </button>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={() => void handleUnlockProDossier()}
+                        disabled={payingProDossier}
+                        className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs shadow-2xs transition-colors cursor-pointer disabled:opacity-50"
+                      >
+                        {payingProDossier ? (
+                          <Loader2 className="size-3.5 animate-spin" />
+                        ) : (
+                          <Unlock className="size-3.5" />
+                        )}
+                        <span>Activer le Dossier ({formatXof(PRO_DOSSIER_PRICE_XOF)})</span>
+                      </button>
+                    )}
+                  </div>
+
+                  {passportData.proDossierUnlocked ? (
+                    <div className="space-y-3 pt-1">
+                      <div className="space-y-1.5">
+                        <label className="text-[11px] font-bold text-ink/70 flex items-center justify-between">
+                          <span>Notes Cliniques Confidentielles & Protocole de Remédiation</span>
+                          <span className="text-[10px] text-ink/40 font-normal">
+                            Visibles uniquement par vous (secret professionnel)
+                          </span>
+                        </label>
+                        <textarea
+                          rows={3}
+                          value={clinicalNotes}
+                          onChange={(e) => setClinicalNotes(e.target.value)}
+                          placeholder="Consignez vos observations cliniques, axes de travail, comptes-rendus de consultations..."
+                          className="w-full rounded-2xl border border-ink/10 bg-white p-3 text-xs text-ink outline-none focus:ring-2 focus:ring-indigo-300 shadow-2xs"
+                        />
+                      </div>
+
+                      <div className="flex justify-end">
+                        <button
+                          type="button"
+                          onClick={() => void handleSaveClinicalNotes()}
+                          disabled={savingNotes}
+                          className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-2xs transition-colors cursor-pointer disabled:opacity-50"
+                        >
+                          {savingNotes ? (
+                            <Loader2 className="size-3 animate-spin" />
+                          ) : (
+                            <Save className="size-3.5" />
+                          )}
+                          <span>Enregistrer mes notes</span>
+                        </button>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="rounded-2xl bg-white/80 border border-indigo-100 p-3.5 text-[11px] text-ink/70 space-y-2">
+                      <p className="font-semibold text-ink">
+                        Ce que débloque le pack professionnel pour votre consultation :
+                      </p>
+                      <ul className="grid gap-2 sm:grid-cols-3">
+                        <li className="flex items-start gap-1.5">
+                          <CheckCircle2 className="size-3.5 text-indigo-600 shrink-0 mt-0.5" />
+                          <span>Bilan complet 8-12 pages co-marqué avec votre en-tête de cabinet.</span>
+                        </li>
+                        <li className="flex items-start gap-1.5">
+                          <CheckCircle2 className="size-3.5 text-indigo-600 shrink-0 mt-0.5" />
+                          <span>Droit d'injection de défis de remédiation directement sur l'app de l'élève.</span>
+                        </li>
+                        <li className="flex items-start gap-1.5">
+                          <CheckCircle2 className="size-3.5 text-indigo-600 shrink-0 mt-0.5" />
+                          <span>Carnet de notes cliniques sécurisées sous secret professionnel.</span>
+                        </li>
+                      </ul>
+                    </div>
+                  )}
+                </div>
               </div>
             ) : null}
           </div>

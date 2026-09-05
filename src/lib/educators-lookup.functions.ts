@@ -310,6 +310,7 @@ export interface EstablishmentOverview {
   schoolCity?: string | null;
   pricingTier?: string | null;
   licensedQuota?: number;
+  licenseValidUntil?: string | null;
   isLeader?: boolean;
   totalColleagues: number;
   totalClasses: number;
@@ -430,6 +431,7 @@ export const getMyEstablishmentOverview = createServerFn({ method: "GET" })
       schoolCity: school?.city || null,
       pricingTier: school?.pricing_tier || null,
       licensedQuota: school?.licensed_students_quota ?? 0,
+      licenseValidUntil: school?.license_valid_until || null,
       isLeader: school?.leader_user_id === userId,
       totalColleagues: colleagues.length,
       totalClasses: uniqueClasses.size,

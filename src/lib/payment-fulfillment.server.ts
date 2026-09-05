@@ -21,6 +21,7 @@ import { computeAccessPeriodWindow } from "@/lib/child-access";
 import { PALIER_CHILDREN } from "@/lib/child-profile-quota";
 import { PACK_SESSIONS } from "@/lib/pricing";
 import { createSponsorshipTokenRecord, getActiveSeason } from "@/lib/seasons.functions";
+import { resolveAcademicYearEnd } from "@/lib/academic-calendar";
 // Import runtime de la fonction pure (payments-admin n'importe ce module que
 // dynamiquement dans ses handlers — aucun cycle d'exécution).
 import { campaignLotDiscrepancy, resolveCampaignTokenLot } from "@/lib/payments-admin.functions";
@@ -35,9 +36,11 @@ export type PaymentMetadata = {
     | "accompaniment_pack"
     | "sponsorship"
     | "campaign_b2b"
-    | "campus_license";
+    | "campus_license"
+    | "pro_dossier";
   order_id?: string;
   child_id?: string;
+  delegation_id?: string;
   school_id?: string;
   licensed_students_quota?: number;
   months?: number;
@@ -352,8 +355,8 @@ export async function applyPaystackEntitlement(
     case "campus_license": {
       if (!metadata.school_id) throw new Error("Payment 'campus_license' sans school_id.");
       const quota = metadata.licensed_students_quota ?? 250;
-      const durationMonths = metadata.months ?? 12;
-      const validUntil = new Date(Date.now() + durationMonths * 30.5 * 24 * 60 * 60 * 1000).toISOString();
+      // Clôture déterministe au 31 juillet de l'année scolaire active (décision académique)
+      const validUntil = resolveAcademicYearEnd().toISOString();
 
       const { data: updatedSchool, error: schoolErr } = await (supabaseAdmin as any)
         .from("schools")
@@ -372,7 +375,38 @@ export async function applyPaystackEntitlement(
 
       return {
         entitlement: "campus_license",
-        detail: `Licence Campus activée pour « ${updatedSchool?.name} » (${quota} élèves jusqu'au ${validUntil})`,
+        detail: `Licence Campus activée pour « ${updatedSchool?.name} » (${quota} élèves jusqu'au 31 juillet)`,
+      };
+    }
+
+    // Dossier d'Expertise & Prescription Clinique pour Professionnel Indépendant (15 000 FCFA)
+    case "pro_dossier": {
+      if (!metadata.child_id) throw new Error("Payment 'pro_dossier' sans child_id.");
+      const nowIso = new Date().toISOString();
+
+      const query = (supabaseAdmin as any)
+        .from("child_delegations")
+        .update({
+          pro_dossier_unlocked: true,
+          pro_dossier_unlocked_at: nowIso,
+          updated_at: nowIso,
+        })
+        .eq("child_id", metadata.child_id);
+
+      if (metadata.delegation_id) {
+        query.eq("id", metadata.delegation_id);
+      } else if (payment.user_id) {
+        query.eq("beneficiary_user_id", payment.user_id);
+      }
+
+      const { error: delegErr } = await query;
+      if (delegErr) {
+        throw new Error(`Erreur lors du déblocage du dossier pro : ${delegErr.message}`);
+      }
+
+      return {
+        entitlement: "pro_dossier",
+        detail: `Dossier d'expertise et prescription débloqué pour l'enfant (${metadata.child_id})`,
       };
     }
 
