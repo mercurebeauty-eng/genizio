@@ -88,6 +88,7 @@ export function AdminEducatorsTab() {
   const [schoolPhone, setSchoolPhone] = useState("");
   const [schoolWebsite, setSchoolWebsite] = useState("");
   const [schoolCode, setSchoolCode] = useState("");
+  const [schoolLeaderEmail, setSchoolLeaderEmail] = useState("");
 
   const listSchoolsFn = useServerFn(listSchoolsAdmin);
   const createSchoolFn = useServerFn(createSchoolAdmin);
@@ -212,6 +213,7 @@ export function AdminEducatorsTab() {
     setSchoolPhone("");
     setSchoolWebsite("");
     setSchoolCode("");
+    setSchoolLeaderEmail("");
     setIsSchoolModalOpen(true);
   };
 
@@ -229,6 +231,7 @@ export function AdminEducatorsTab() {
     setSchoolPhone(school.contactPhone || "");
     setSchoolWebsite(school.websiteUrl || "");
     setSchoolCode(school.code);
+    setSchoolLeaderEmail(""); // By default, we don't display their email as it's not returned by the school payload directly (only leaderUserId is). But they can set a new one.
     setIsSchoolModalOpen(true);
   };
 
@@ -260,6 +263,7 @@ export function AdminEducatorsTab() {
             contactPhone: schoolPhone.trim() || null,
             websiteUrl: schoolWebsite.trim() || null,
             code: schoolCode.trim() || undefined,
+            leaderEmail: schoolLeaderEmail.trim() || undefined,
           },
           ...opts,
         });
@@ -936,6 +940,23 @@ export function AdminEducatorsTab() {
                   />
                 </div>
 
+                {editingSchool && (
+                  <div className="space-y-1 sm:col-span-2">
+                    <label className="font-bold text-ink/70">
+                      Email de l'utilisateur Directeur (Optionnel)
+                    </label>
+                    <input
+                      type="email"
+                      value={schoolLeaderEmail}
+                      onChange={(e) => setSchoolLeaderEmail(e.target.value)}
+                      placeholder="Assigner manuellement un directeur par email..."
+                      className="w-full rounded-xl border border-indigo-200 bg-indigo-50/30 px-3.5 py-2.5 text-xs font-medium text-indigo-900 outline-none focus:border-indigo-400 focus:ring-1 focus:ring-indigo-400"
+                    />
+                    <p className="text-[10px] text-ink/50 leading-tight">
+                      En entrant une adresse email ici, le système recherchera l'utilisateur correspondant et l'assignera comme `leader_user_id` de l'établissement.
+                    </p>
+                  </div>
+                )}
                 <div className="space-y-1">
                   <label className="font-bold text-ink/70">Téléphone de contact</label>
                   <input

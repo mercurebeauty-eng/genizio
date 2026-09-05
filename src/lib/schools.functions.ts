@@ -590,6 +590,7 @@ const UpdateSchoolAdminSchema = z.object({
   contactPhone: z.string().optional().nullable(),
   websiteUrl: z.string().optional().nullable(),
   leaderUserId: z.string().uuid().optional().nullable(),
+  leaderEmail: z.string().email().optional().nullable(),
   sponsorCampaignId: z.string().uuid().optional().nullable(),
   code: z.string().optional(),
 });
@@ -625,6 +626,19 @@ export const updateSchoolAdmin = createServerFn({ method: "POST" })
     if (data.sponsorCampaignId !== undefined)
       updatePayload.sponsor_campaign_id = data.sponsorCampaignId;
     if (data.code !== undefined) updatePayload.code = formatSchoolCode(data.code);
+
+    // Si l'admin fournit un leaderEmail, on cherche son ID dans l'auth
+    if (data.leaderEmail) {
+      const { data: usersData, error: usersErr } = await db.auth.admin.listUsers();
+      if (!usersErr && usersData?.users) {
+        const found = usersData.users.find((u: any) => u.email === data.leaderEmail);
+        if (found) {
+          updatePayload.leader_user_id = found.id;
+        } else {
+          throw new Error(`Aucun utilisateur trouvé avec l'email ${data.leaderEmail}`);
+        }
+      }
+    }
 
     const { data: updated, error } = await db
       .from("schools")
