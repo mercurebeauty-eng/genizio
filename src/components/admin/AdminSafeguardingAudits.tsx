@@ -7,6 +7,11 @@ import {
   type ChildSafetyAuditDetail,
 } from "@/lib/safeguarding.functions";
 import {
+  listDecisionProposalsAdmin,
+  resolveDecisionProposalAdmin,
+  generateTripartiteReportAdmin,
+} from "@/lib/tripartite.functions";
+import {
   PhoneCall,
   MessageSquare,
   CheckCircle2,
@@ -17,6 +22,7 @@ import {
   Loader2,
   X,
   HeartHandshake,
+  ClipboardCheck,
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -151,6 +157,9 @@ export function AdminSafeguardingAudits({
 
   return (
     <div className="space-y-6">
+      {/* Boucle Tripartite (Phase 4) — file de propositions + rapports trimestriels */}
+      <TripartiteDecisionQueue quarterPeriod={quarterPeriod.replace("-Q", "-T")} onDataChanged={onDataChanged} />
+
       {/* Explication Génizio Care */}
       <div className="rounded-3xl border border-emerald-200/80 bg-emerald-50/70 p-5 shadow-sm">
         <div className="flex gap-3">
@@ -481,6 +490,184 @@ export function AdminSafeguardingAudits({
           </div>
         </div>
       )}
+    </div>
+  );
+}
+
+// ── Boucle Fermée Tripartite (Phase 4) ──────────────────────────────────────
+
+interface DecisionProposalRow {
+  id: string;
+  mentor_user_id: string;
+  report_id: string | null;
+  kind: "confidence_bonus" | "suspension_review" | "coach_alert";
+  evidence: string[];
+  status: "proposed" | "confirmed" | "dismissed";
+  decision_note: string | null;
+  created_at: string;
+}
+
+const PROPOSAL_META: Record<DecisionProposalRow["kind"], { label: string; cls: string }> = {
+  suspension_review: { label: "🚨 Revue de suspension", cls: "bg-red-100 text-red-700" },
+  coach_alert: { label: "⚠️ Alerte pédagogique", cls: "bg-amber-100 text-amber-700" },
+  confidence_bonus: { label: "⭐ Prime de confiance", cls: "bg-emerald-100 text-emerald-700" },
+};
+
+function TripartiteDecisionQueue({
+  quarterPeriod,
+  onDataChanged,
+}: {
+  quarterPeriod: string;
+  onDataChanged?: () => void | Promise<void>;
+}) {
+  const listFn = useServerFn(listDecisionProposalsAdmin);
+  const resolveFn = useServerFn(resolveDecisionProposalAdmin);
+  const generateFn = useServerFn(generateTripartiteReportAdmin);
+
+  const [proposals, setProposals] = useState<DecisionProposalRow[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [squadId, setSquadId] = useState("");
+  const [generating, setGenerating] = useState(false);
+  const [lastReport, setLastReport] = useState<string | null>(null);
+
+  const load = async () => {
+    setLoading(true);
+    try {
+      const rows = await listFn({ data: { status: "proposed" } });
+      setProposals(rows ?? []);
+    } catch {
+      toast.error("Lecture de la file tripartite impossible.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    void load();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const handleResolve = async (proposalId: string, decision: "confirm" | "dismiss") => {
+    try {
+      const res = await resolveFn({ data: { proposalId, decision } });
+      setProposals((prev) => prev.filter((p) => p.id !== proposalId));
+      if (res.escalation) toast.warning(res.escalation, { duration: 8000 });
+      else toast.success(decision === "confirm" ? "Proposition confirmée." : "Proposition écartée (tracée).");
+      await onDataChanged?.();
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Décision impossible.");
+    }
+  };
+
+  const handleGenerate = async () => {
+    if (!squadId) {
+      toast.error("Renseignez l'identifiant d'escouade à auditer.");
+      return;
+    }
+    setGenerating(true);
+    try {
+      const report = await generateFn({ data: { quarterPeriod, scope: "squad", squadId } });
+      setLastReport(
+        report.sufficientData
+          ? `Impact ${report.impactIndex}/100 · notes ${report.medianAcademicDelta >= 0 ? "+" : ""}${report.medianAcademicDelta} pt · autonomie ${report.medianAutonomyDelta >= 0 ? "+" : ""}${report.medianAutonomyDelta} pts · artefacts ${report.artifactValidationRate} %`
+          : `Cohorte insuffisante (${report.cohortSize} enfants) — métriques indicatives.`,
+      );
+      toast.success("Rapport trimestriel généré et archivé.");
+      await load();
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Génération impossible.");
+    } finally {
+      setGenerating(false);
+    }
+  };
+
+  return (
+    <div className="rounded-3xl border border-indigo-200/80 bg-indigo-50/60 p-5 shadow-sm space-y-4">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <div>
+          <p className="font-black text-indigo-900 text-sm flex items-center gap-2">
+            <ClipboardCheck className="size-4" />
+            Boucle Fermée Tripartite — {quarterPeriod}
+          </p>
+          <p className="text-[11px] font-semibold text-indigo-950/70 mt-0.5">
+            Croisement trimestriel : notes de classe ↔ artefacts validés ↔ autonomie. Le moteur PROPOSE,
+            vous tranchez — jamais de suspension automatique.
+          </p>
+        </div>
+      </div>
+
+      {/* Génération d'un rapport */}
+      <div className="flex flex-col sm:flex-row gap-2">
+        <input
+          value={squadId}
+          onChange={(e) => setSquadId(e.target.value)}
+          placeholder="ID d'escouade (uuid)…"
+          className="flex-1 rounded-2xl border border-ink/10 bg-white px-3 py-2.5 text-xs font-semibold outline-none focus:ring-2 focus:ring-brand/30"
+        />
+        <button
+          type="button"
+          onClick={() => void handleGenerate()}
+          disabled={generating}
+          className="inline-flex items-center justify-center gap-2 rounded-2xl bg-brand px-4 py-2.5 text-xs font-black text-white shadow-sm disabled:opacity-60 min-h-[42px]"
+        >
+          {generating ? <Loader2 className="size-4 animate-spin" /> : <ClipboardCheck className="size-4" />}
+          Générer le rapport trimestriel
+        </button>
+      </div>
+      {lastReport && (
+        <p className="rounded-xl bg-white/70 px-3 py-2 text-[11px] font-bold text-indigo-900">{lastReport}</p>
+      )}
+
+      {/* File de propositions */}
+      <div className="space-y-2">
+        <p className="text-[10px] font-black uppercase tracking-wider text-indigo-900/60">
+          File de décisions ({proposals.length} en attente)
+        </p>
+        {loading ? (
+          <div className="flex justify-center py-6">
+            <Loader2 className="size-6 animate-spin text-brand" />
+          </div>
+        ) : proposals.length === 0 ? (
+          <p className="rounded-xl bg-white/60 px-3 py-2.5 text-[11px] font-semibold text-indigo-950/60">
+            Aucune proposition en attente — les escouades auditées sont conformes ou déjà tranchées.
+          </p>
+        ) : (
+          proposals.map((p) => {
+            const meta = PROPOSAL_META[p.kind];
+            return (
+              <div key={p.id} className="rounded-2xl border border-ink/10 bg-white p-3.5 shadow-xs space-y-2">
+                <div className="flex items-center justify-between gap-2">
+                  <span className={`rounded-full px-2 py-0.5 text-[10px] font-black ${meta.cls}`}>{meta.label}</span>
+                  <span className="text-[10px] font-bold text-ink/40">
+                    {new Date(p.created_at).toLocaleDateString("fr-FR")}
+                  </span>
+                </div>
+                <ul className="space-y-1">
+                  {p.evidence.map((e, i) => (
+                    <li key={i} className="text-[11px] font-semibold text-ink/80">• {e}</li>
+                  ))}
+                </ul>
+                <div className="flex gap-2 pt-1">
+                  <button
+                    type="button"
+                    onClick={() => void handleResolve(p.id, "confirm")}
+                    className="flex-1 rounded-xl bg-red-600 px-3 py-2 text-[11px] font-black text-white hover:bg-red-700 min-h-[38px]"
+                  >
+                    Confirmer
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => void handleResolve(p.id, "dismiss")}
+                    className="flex-1 rounded-xl border border-ink/10 px-3 py-2 text-[11px] font-black text-ink/70 hover:bg-stone-50 min-h-[38px]"
+                  >
+                    Écarter
+                  </button>
+                </div>
+              </div>
+            );
+          })
+        )}
+      </div>
     </div>
   );
 }
