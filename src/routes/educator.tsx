@@ -48,8 +48,15 @@ import {
 import { toast } from "sonner";
 import { GenizioLoader } from "@/components/GenizioLoader";
 import { EducatorLessonCopilotModal } from "@/components/educators/EducatorLessonCopilotModal";
+import { EducatorHackathonModal } from "@/components/educators/EducatorHackathonModal";
+import {
+  recordChildAcademicObservationEducator,
+  listChildAcademicObservationsEducator,
+} from "@/lib/tripartite.functions";
+import { Trophy } from "lucide-react";
 
 export const Route = createFileRoute("/educator")({
+
   component: EducatorDashboardPage,
 });
 
@@ -79,6 +86,18 @@ function EducatorDashboardPage() {
   // Copilote de préparation (Phase 2)
   const [copilotOpen, setCopilotOpen] = useState(false);
 
+  // Hackathon Modal (Phase 4)
+  const [hackathonOpen, setHackathonOpen] = useState(false);
+
+  // Observations Académiques (Source Neutre Tripartite)
+  const [academicObservations, setAcademicObservations] = useState<any[]>([]);
+  const [obsTerm, setObsTerm] = useState<1 | 2 | 3>(1);
+  const [obsPrev, setObsPrev] = useState<number>(10);
+  const [obsCurr, setObsCurr] = useState<number>(10);
+  const [obsClassAvg, setObsClassAvg] = useState<number>(10);
+  const [obsNotes, setObsNotes] = useState<string>("");
+  const [savingObs, setSavingObs] = useState(false);
+
   const handleCopySchoolCode = (code: string) => {
     void navigator.clipboard.writeText(code);
     setCopiedCode(true);
@@ -92,6 +111,9 @@ function EducatorDashboardPage() {
   const getImpactMetricsFn = useServerFn(getSchoolImpactDashboard);
   const saveNotesFn = useServerFn(saveProClinicalNotes);
   const payProDossierFn = useServerFn(initializeProDossierPayment);
+  const recordAcademicObsFn = useServerFn(recordChildAcademicObservationEducator);
+  const listAcademicObsFn = useServerFn(listChildAcademicObservationsEducator);
+
 
   useEffect(() => {
     if (!loading && !session) {
@@ -148,18 +170,61 @@ function EducatorDashboardPage() {
     setSelectedChildId(childId);
     setLoadingPassport(true);
     setPassportData(null);
+    setAcademicObservations([]);
     try {
       const opts = session?.access_token
         ? { headers: { Authorization: `Bearer ${session.access_token}` } }
         : {};
-      const data = await getPassportFn({ data: childId, ...opts });
+      const [data, obs] = await Promise.all([
+        getPassportFn({ data: childId, ...opts }),
+        listAcademicObsFn({ data: { childId }, ...opts }).catch(() => []),
+      ]);
       setPassportData(data);
       setClinicalNotes(data?.clinicalNotes || "");
+      setAcademicObservations(obs || []);
+      if (obs && obs.length > 0) {
+        const latest = obs[obs.length - 1];
+        setObsTerm(latest.term as 1 | 2 | 3);
+        setObsPrev(Number(latest.previous_average));
+        setObsCurr(Number(latest.current_average));
+        if (latest.class_average != null) setObsClassAvg(Number(latest.class_average));
+        setObsNotes(latest.teacher_report_notes || "");
+      }
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Erreur de chargement du dossier élève.");
       setSelectedChildId(null);
     } finally {
       setLoadingPassport(false);
+    }
+  };
+
+  const handleSaveAcademicObservation = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!selectedChildId || !session) return;
+    setSavingObs(true);
+    try {
+      const opts = session.access_token
+        ? { headers: { Authorization: `Bearer ${session.access_token}` } }
+        : {};
+      await recordAcademicObsFn({
+        data: {
+          childId: selectedChildId,
+          term: obsTerm,
+          academicYear: "2026-2027",
+          previousAverage: obsPrev,
+          currentAverage: obsCurr,
+          classAverage: obsClassAvg,
+          teacherReportNotes: obsNotes,
+        },
+        ...opts,
+      });
+      toast.success("Évaluation académique enregistrée !");
+      const rows = await listAcademicObsFn({ data: { childId: selectedChildId }, ...opts });
+      setAcademicObservations(rows || []);
+    } catch (err: any) {
+      toast.error(err?.message || "Erreur d'enregistrement.");
+    } finally {
+      setSavingObs(false);
     }
   };
 
@@ -178,6 +243,7 @@ function EducatorDashboardPage() {
       setSavingNotes(false);
     }
   };
+
 
   const handleUnlockProDossier = async () => {
     if (!selectedChildId || !session) return;
@@ -236,14 +302,24 @@ function EducatorDashboardPage() {
               </p>
             </div>
           </div>
-          <button
-            type="button"
-            onClick={() => setCopilotOpen(true)}
-            className="inline-flex items-center gap-2 rounded-2xl bg-indigo-600 px-4 py-2.5 text-xs font-black text-white shadow-md transition-all hover:bg-indigo-700 shrink-0"
-          >
-            <Sparkles className="size-4" />
-            <span>Copilote de préparation</span>
-          </button>
+          <div className="flex flex-wrap items-center gap-2 shrink-0">
+            <button
+              type="button"
+              onClick={() => setHackathonOpen(true)}
+              className="inline-flex items-center gap-2 rounded-2xl bg-brand px-4 py-2.5 text-xs font-black text-white shadow-md transition-all hover:bg-brand/90 cursor-pointer"
+            >
+              <Trophy className="size-4" />
+              <span>Générateur Hackathon & FabLab</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setCopilotOpen(true)}
+              className="inline-flex items-center gap-2 rounded-2xl bg-indigo-600 px-4 py-2.5 text-xs font-black text-white shadow-md transition-all hover:bg-indigo-700 cursor-pointer"
+            >
+              <Sparkles className="size-4" />
+              <span>Copilote de préparation</span>
+            </button>
+          </div>
         </div>
 
         {/* Sélecteur de vue : Mes Élèves vs Mon Établissement */}
@@ -925,6 +1001,157 @@ function EducatorDashboardPage() {
                       </ul>
                     </div>
                   )}
+                  {passportData.prescriptions && passportData.prescriptions.length > 0 && (
+                    <div className="rounded-3xl border border-indigo-200 bg-indigo-50/60 p-5 space-y-3 shadow-2xs">
+                      <h4 className="font-display font-bold text-sm text-indigo-950 flex items-center gap-2">
+                        <Lightbulb className="size-4 text-indigo-600" />
+                        <span>Prescriptions Pédagogiques du Praticien pour la Classe</span>
+                      </h4>
+                      <p className="text-[11px] text-indigo-900/80">
+                        Recommandations d'aménagements et leviers d'attention émis par le conseiller ou psychologue référent :
+                      </p>
+                      <div className="space-y-2">
+                        {passportData.prescriptions.map((p: any, idx: number) => (
+                          <div key={idx} className="rounded-2xl bg-white p-3 border border-indigo-100 text-xs">
+                            <p className="font-bold text-indigo-950">{p.title || `Préconisation ${idx + 1}`}</p>
+                            <p className="text-ink/80 text-[11px] mt-0.5">{p.content || p.notes || JSON.stringify(p)}</p>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Volet Évaluations Académiques (Source Neutre Tripartite) */}
+                  <div className="rounded-3xl border border-ink/10 bg-white p-5 space-y-4 shadow-sm">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-ink/5 pb-3">
+                      <div>
+                        <h4 className="font-display font-black text-sm text-ink flex items-center gap-2">
+                          <BookOpen className="size-4 text-brand" />
+                          <span>Observations & Moyennes Académiques Scolaires</span>
+                        </h4>
+                        <p className="text-[11px] text-ink/60 mt-0.5">
+                          Source neutre servant de base objective d'évaluation pour les bilans tripartites (École / Club / Famille).
+                        </p>
+                      </div>
+                    </div>
+
+                    {/* Historique des observations académiques */}
+                    {academicObservations.length > 0 && (
+                      <div className="space-y-2">
+                        <p className="text-[11px] font-bold text-ink/70">Historique des trimestres enregistrés :</p>
+                        <div className="grid gap-2 sm:grid-cols-3">
+                          {academicObservations.map((obs) => (
+                            <div key={obs.id} className="rounded-2xl border border-ink/10 bg-surface p-3 space-y-1">
+                              <div className="flex items-center justify-between">
+                                <span className="font-black text-xs text-brand">Trimestre {obs.term}</span>
+                                <span className="text-[10px] text-ink/40">{obs.academic_year}</span>
+                              </div>
+                              <div className="text-xs text-ink/80">
+                                <span>Moyenne : </span>
+                                <span className="font-bold text-ink">{obs.current_average}/20</span>
+                                {obs.previous_average != null && (
+                                  <span className="text-[10px] text-ink/50 ml-1">
+                                    (préc: {obs.previous_average})
+                                  </span>
+                                )}
+                              </div>
+                              {obs.class_average != null && (
+                                <div className="text-[10px] text-ink/60">
+                                  Moyenne classe : <span className="font-semibold">{obs.class_average}/20</span>
+                                </div>
+                              )}
+                              {obs.teacher_report_notes && (
+                                <p className="text-[10px] text-ink/70 italic border-t border-ink/5 pt-1 mt-1">
+                                  "{obs.teacher_report_notes}"
+                                </p>
+                              )}
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Formulaire d'enregistrement/mise à jour d'évaluation */}
+                    <form onSubmit={handleSaveAcademicObservation} className="rounded-2xl border border-ink/5 bg-surface/50 p-4 space-y-3">
+                      <p className="text-[11px] font-bold text-ink flex items-center gap-1.5">
+                        <Save className="size-3.5 text-brand" />
+                        <span>Saisir ou actualiser les résultats académiques</span>
+                      </p>
+
+                      <div className="grid gap-3 sm:grid-cols-4">
+                        <div>
+                          <label className="block text-[10px] font-bold text-ink/60 uppercase mb-1">Trimestre</label>
+                          <select
+                            value={obsTerm}
+                            onChange={(e) => setObsTerm(Number(e.target.value) as 1 | 2 | 3)}
+                            className="w-full rounded-xl border border-ink/10 bg-white px-2.5 py-1.5 text-xs font-semibold text-ink outline-none focus:ring-2 focus:ring-brand/30"
+                          >
+                            <option value={1}>1er Trimestre</option>
+                            <option value={2}>2ème Trimestre</option>
+                            <option value={3}>3ème Trimestre</option>
+                          </select>
+                        </div>
+                        <div>
+                          <label className="block text-[10px] font-bold text-ink/60 uppercase mb-1">Moyenne Précédente (/20)</label>
+                          <input
+                            type="number"
+                            step="0.1"
+                            min="0"
+                            max="20"
+                            value={obsPrev}
+                            onChange={(e) => setObsPrev(Number(e.target.value))}
+                            className="w-full rounded-xl border border-ink/10 bg-white px-2.5 py-1.5 text-xs font-semibold text-ink outline-none focus:ring-2 focus:ring-brand/30"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-[10px] font-bold text-ink/60 uppercase mb-1">Moyenne Courante (/20)</label>
+                          <input
+                            type="number"
+                            step="0.1"
+                            min="0"
+                            max="20"
+                            value={obsCurr}
+                            onChange={(e) => setObsCurr(Number(e.target.value))}
+                            className="w-full rounded-xl border border-ink/10 bg-white px-2.5 py-1.5 text-xs font-semibold text-ink outline-none focus:ring-2 focus:ring-brand/30"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-[10px] font-bold text-ink/60 uppercase mb-1">Moyenne Classe (/20)</label>
+                          <input
+                            type="number"
+                            step="0.1"
+                            min="0"
+                            max="20"
+                            value={obsClassAvg}
+                            onChange={(e) => setObsClassAvg(Number(e.target.value))}
+                            className="w-full rounded-xl border border-ink/10 bg-white px-2.5 py-1.5 text-xs font-semibold text-ink outline-none focus:ring-2 focus:ring-brand/30"
+                          />
+                        </div>
+                      </div>
+
+                      <div>
+                        <label className="block text-[10px] font-bold text-ink/60 uppercase mb-1">Observations qualitatives de l'enseignant</label>
+                        <input
+                          type="text"
+                          value={obsNotes}
+                          onChange={(e) => setObsNotes(e.target.value)}
+                          placeholder="Ex: Participation active en hausse, rigueur dans le travail individuel..."
+                          className="w-full rounded-xl border border-ink/10 bg-white px-3 py-2 text-xs text-ink outline-none focus:ring-2 focus:ring-brand/30"
+                        />
+                      </div>
+
+                      <div className="flex justify-end pt-1">
+                        <button
+                          type="submit"
+                          disabled={savingObs}
+                          className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs shadow-2xs transition-colors cursor-pointer disabled:opacity-50"
+                        >
+                          {savingObs ? <Loader2 className="size-3.5 animate-spin" /> : <Save className="size-3.5" />}
+                          <span>Enregistrer l'évaluation académique</span>
+                        </button>
+                      </div>
+                    </form>
+                  </div>
                 </div>
               </div>
             ) : null}
@@ -937,6 +1164,18 @@ function EducatorDashboardPage() {
         open={copilotOpen}
         onClose={() => setCopilotOpen(false)}
         establishment={establishment}
+      />
+
+      {/* Générateur d'Équipes Hackathon & FabLab (Phase 4) */}
+      <EducatorHackathonModal
+        open={hackathonOpen}
+        onClose={() => setHackathonOpen(false)}
+        students={delegations.map((d) => ({
+          id: d.childId,
+          name: d.childName,
+          talents: d.talents,
+        }))}
+        schoolName={establishment?.organizationName || "Établissement"}
       />
     </div>
   );

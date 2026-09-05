@@ -9,6 +9,7 @@
 import { z } from "zod";
 import { createServerFn } from "@tanstack/react-start";
 import { requireAdmin } from "@/integrations/supabase/admin-middleware";
+import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import {
   buildTripartiteReport,
   proposeMentorDecisions,
@@ -94,13 +95,32 @@ export const generateTripartiteReportAdmin = createServerFn({ method: "POST" })
             .in("status", ["validated", "flagged"])
         : { data: [] };
 
-      // (b) Notes de classe : les observations académiques sont saisies par le
-      // professeur (delegations/child_safety_audits n'en portent pas encore) —
-      // les évaluations académiques arrivent via la table pédagogique quand
-      // renseignée ; ici on assemble les sondes d'autonomie des Explorations
-      // Libres si disponibles, sinon cohorte artefacts seuls.
+      // (b) Notes de classe : observations académiques saisies par le professeur
+      const { data: gradeRows } = childIds.length
+        ? await db
+            .from("child_academic_observations")
+            .select("child_id, term, previous_average, current_average, class_average, teacher_report_notes")
+            .in("child_id", childIds)
+            .eq("term", quarter <= 3 ? quarter : 3)
+        : { data: [] };
+
+      const gradeByChild = new Map<string, any>(
+        (gradeRows ?? []).map((g: any) => [
+          g.child_id,
+          {
+            childId: g.child_id,
+            term: g.term as 1 | 2 | 3,
+            previousAverage: Number(g.previous_average),
+            currentAverage: Number(g.current_average),
+            classAverage: g.class_average != null ? Number(g.class_average) : undefined,
+            teacherReportNotes: g.teacher_report_notes ?? undefined,
+          },
+        ]),
+      );
+
       const evaluations: ChildTripartiteEvaluation[] = childIds.map((childId: string) => ({
         childId,
+        academicObservation: gradeByChild.get(childId) ?? undefined,
         artifactSubmissions: (clubSessions ?? [])
           .filter((cs: any) =>
             Array.isArray(cs.attendance) &&
@@ -117,6 +137,7 @@ export const generateTripartiteReportAdmin = createServerFn({ method: "POST" })
           })),
         autonomyProbes: [],
       }));
+
 
       const report = buildTripartiteReport({
         period: data.quarterPeriod,
@@ -255,4 +276,79 @@ export const getLatestTripartiteReportAdmin = createServerFn({ method: "GET" })
     return (row?.report as TripartiteCohortReport) ?? null;
   });
 
+// ── Saisie des observations académiques par l'éducateur / professeur ───────
+
+const RecordAcademicObservationSchema = z.object({
+  childId: z.string().uuid(),
+  term: z.number().int().min(1).max(3),
+  academicYear: z.string().default("2026-2027"),
+  previousAverage: z.number().min(0).max(20),
+  currentAverage: z.number().min(0).max(20),
+  classAverage: z.number().min(0).max(20).optional(),
+  teacherReportNotes: z.string().max(1000).optional(),
+});
+
+export const recordChildAcademicObservationEducator = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .validator((input: unknown) => RecordAcademicObservationSchema.parse(input))
+  .handler(async ({ data, context }) => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const db = supabaseAdmin as any;
+    const userId = (context as any).claims?.sub || (context as any).user?.id;
+
+    // Récupération de l'école de l'éducateur si liée
+    const { data: educatorProfile } = await db
+      .from("educator_profiles")
+      .select("school_id")
+      .eq("user_id", userId)
+      .maybeSingle();
+
+    const { data: row, error } = await db
+      .from("child_academic_observations")
+      .upsert(
+        {
+          child_id: data.childId,
+          school_id: educatorProfile?.school_id ?? null,
+          educator_user_id: userId,
+          term: data.term,
+          academic_year: data.academicYear,
+          previous_average: data.previousAverage,
+          current_average: data.currentAverage,
+          class_average: data.classAverage ?? null,
+          teacher_report_notes: data.teacherReportNotes?.trim() ?? null,
+          updated_at: new Date().toISOString(),
+        },
+        { onConflict: "child_id,academic_year,term" },
+      )
+      .select("*")
+      .single();
+
+    if (error) {
+      throw new Error(`Enregistrement de l'observation académique impossible : ${error.message}`);
+    }
+
+    return row;
+  });
+
+export const listChildAcademicObservationsEducator = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .validator((input: unknown) => z.object({ childId: z.string().uuid() }).parse(input))
+  .handler(async ({ data }) => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const db = supabaseAdmin as any;
+    const { data: rows, error } = await db
+      .from("child_academic_observations")
+      .select("*")
+      .eq("child_id", data.childId)
+      .order("term", { ascending: true });
+
+    if (error) {
+      console.error("listChildAcademicObservationsEducator failed:", error);
+      return [];
+    }
+
+    return rows ?? [];
+  });
+
 export type { MentorDecisionProposalKind };
+
