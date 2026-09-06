@@ -200,11 +200,48 @@ export async function processSubstitutionChallenge(
 
 // ── Vérification back-office (V2, shadow) ───────────────────────────────────────
 
-const verifyEnabled = () => (process.env.NAYA_SUBSTITUTION_VERIFY_ENABLED ?? "true") !== "false";
-const verifyRate = () => {
-  const raw = Number(process.env.NAYA_SUBSTITUTION_VERIFY_RATE ?? "1");
-  return Number.isFinite(raw) ? Math.min(1, Math.max(0, raw)) : 1;
-};
+export interface SubstitutionVerifyConfig {
+  enabled: boolean;
+  /** Taux d'échantillonnage 0..1 (1 = chaque événement vérifié). */
+  rate: number;
+}
+
+// Clé du réglage dans app_settings (pilotable depuis l'Admin OS — prend effet
+// immédiatement, sans redéploiement, contrairement aux variables d'environnement).
+export const SUBSTITUTION_VERIFY_SETTINGS_KEY = "substitution_verify";
+
+/**
+ * Lit la configuration de la vérification : la ligne app_settings fait foi ; à
+ * défaut de ligne (ou d'erreur DB), repli sur les variables d'environnement
+ * NAYA_SUBSTITUTION_VERIFY_ENABLED / _RATE, puis sur les défauts. Un échec de
+ * lecture ne doit jamais bloquer la vérification elle-même.
+ */
+export async function readSubstitutionVerifyConfig(sup: any): Promise<SubstitutionVerifyConfig> {
+  const envEnabled = (process.env.NAYA_SUBSTITUTION_VERIFY_ENABLED ?? "true") !== "false";
+  const envRateRaw = Number(process.env.NAYA_SUBSTITUTION_VERIFY_RATE ?? "1");
+  const envRate = Number.isFinite(envRateRaw) ? Math.min(1, Math.max(0, envRateRaw)) : 1;
+
+  try {
+    const { data } = await sup
+      .from("app_settings")
+      .select("value")
+      .eq("key", SUBSTITUTION_VERIFY_SETTINGS_KEY)
+      .maybeSingle();
+    if (data?.value && typeof data.value === "object") {
+      const raw = data.value as { enabled?: unknown; rate?: unknown };
+      return {
+        enabled: raw.enabled === true,
+        rate:
+          typeof raw.rate === "number" && Number.isFinite(raw.rate)
+            ? Math.min(1, Math.max(0, raw.rate))
+            : envRate,
+      };
+    }
+  } catch {
+    // repli env ci-dessous
+  }
+  return { enabled: envEnabled, rate: envRate };
+}
 
 /**
  * Vérification SHADOW d'un gap « nothing_found » : des substituts réalistes
@@ -212,9 +249,11 @@ const verifyRate = () => {
  * strictement interne (le verdict n'est JAMAIS montré à l'enfant ou au parent).
  * substituts_probables → signal d'investigation (Jumeau) ; rare_confirme → le
  * modèle de disponibilité de Naya était faux pour ce terrain (backlog V4).
+ * Pilotage : ligne app_settings « substitution_verify » (Admin OS), repli env.
  */
 export async function verifyMaterialGap(sup: any, substitutionChallengeId: string): Promise<void> {
-  if (!verifyEnabled() || Math.random() >= verifyRate()) return;
+  const config = await readSubstitutionVerifyConfig(sup);
+  if (!config.enabled || Math.random() >= config.rate) return;
 
   try {
     const { data: gapEvent } = await sup
@@ -250,3 +289,55 @@ Réponds EXCLUSIVEMENT en JSON brut : {"substituts": ["...", "..."]}`;
     console.error("Non-fatal: verifyMaterialGap failed", err);
   }
 }
+
+// ── Pilotage Admin OS ───────────────────────────────────────────────────────────
+
+import { z } from "zod";
+import { createServerFn } from "@tanstack/react-start";
+import { requireAdmin } from "@/integrations/supabase/admin-middleware";
+
+/** Réglage de la vérification back-office (onglet Naya). Prend effet immédiatement
+ *  — contrairement aux variables d'environnement, aucune re-déploiement. */
+export const getSubstitutionVerifyAdmin = createServerFn({ method: "GET" })
+  .middleware([requireAdmin])
+  .handler(async (): Promise<SubstitutionVerifyConfig & { updatedAt: string | null }> => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data } = await supabaseAdmin
+      .from("app_settings")
+      .select("value, updated_at")
+      .eq("key", SUBSTITUTION_VERIFY_SETTINGS_KEY)
+      .maybeSingle();
+    const raw = (data?.value ?? {}) as { enabled?: unknown; rate?: unknown };
+    return {
+      enabled: raw.enabled === true,
+      rate:
+        typeof raw.rate === "number" && Number.isFinite(raw.rate)
+          ? Math.min(1, Math.max(0, raw.rate))
+          : 1,
+      updatedAt: (data?.updated_at as string) ?? null,
+    };
+  });
+
+const SetSubstitutionVerifyInput = z.object({
+  enabled: z.boolean(),
+  rate: z.number().min(0).max(1),
+});
+
+export const setSubstitutionVerifyAdmin = createServerFn({ method: "POST" })
+  .middleware([requireAdmin])
+  .validator((input: unknown) => SetSubstitutionVerifyInput.parse(input))
+  .handler(async ({ data }) => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { error } = await supabaseAdmin
+      .from("app_settings")
+      .upsert(
+        {
+          key: SUBSTITUTION_VERIFY_SETTINGS_KEY,
+          value: { enabled: data.enabled, rate: data.rate },
+          updated_at: new Date().toISOString(),
+        },
+        { onConflict: "key" },
+      );
+    if (error) throw new Error(error.message);
+    return { ok: true, enabled: data.enabled, rate: data.rate };
+  });
