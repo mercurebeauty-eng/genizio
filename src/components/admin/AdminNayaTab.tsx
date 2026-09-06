@@ -61,6 +61,10 @@ import {
   upsertCountryMaterialAdmin,
   type CountryMaterialRow,
 } from "@/lib/country-materials.functions";
+import {
+  getSubstitutionVerifyAdmin,
+  setSubstitutionVerifyAdmin,
+} from "@/lib/substitution.functions";
 
 export interface AdminNayaTabProps {
   telemetry: NayaTelemetryResponse;
@@ -1234,6 +1238,10 @@ export function AdminNayaTab({
           la source éditable des instructions « matériaux du pays » injectées dans
           chaque prompt de génération Naya (contextualization.ts n'est que le repli). */}
       <CountryMaterialsSection />
+
+      {/* Pilotage de la vérification back-office des manques matériels (missions de
+          substitution) — réglage en base, effectif immédiatement sans redéploiement. */}
+      <SubstitutionVerifySection />
     </div>
   );
 }
@@ -1898,6 +1906,140 @@ function CountryMaterialsSection() {
               </div>
             </div>
           )}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ── Vérification des manques matériels — pilotage (app_settings) ────────────────
+//
+// La vérification shadow (Naya re-vérifie en silence si des substituts réalistes
+// existaient quand une mission de substitution échoue) est pilotée ici : switch
+// ON/OFF + taux d'échantillonnage. Réglage stocké en base (app_settings) — effectif
+// immédiatement, sans redéploiement. Les variables d'environnement restent le repli
+// si la ligne de réglage disparaît.
+
+const VERIFY_RATE_CHOICES: Array<{ rate: number; label: string }> = [
+  { rate: 1, label: "100 %" },
+  { rate: 0.5, label: "50 %" },
+  { rate: 0.25, label: "25 %" },
+  { rate: 0.1, label: "10 %" },
+];
+
+function SubstitutionVerifySection() {
+  const getFn = useServerFn(getSubstitutionVerifyAdmin);
+  const setFn = useServerFn(setSubstitutionVerifyAdmin);
+
+  const [config, setConfig] = useState<{
+    enabled: boolean;
+    rate: number;
+    updatedAt: string | null;
+  } | null>(null);
+  const [loadError, setLoadError] = useState(false);
+  const [saving, setSaving] = useState(false);
+
+  React.useEffect(() => {
+    getFn()
+      .then(setConfig)
+      .catch(() => setLoadError(true));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const save = async (next: { enabled: boolean; rate: number }) => {
+    if (saving) return;
+    const previous = config;
+    setConfig((c) => (c ? { ...c, ...next } : c));
+    setSaving(true);
+    try {
+      await setFn({ data: next });
+      toast.success("Réglage appliqué — effectif immédiatement, sans redéploiement.");
+      const fresh = await getFn();
+      setConfig(fresh);
+    } catch (e) {
+      setConfig(previous);
+      toast.error(e instanceof Error ? e.message : "Échec de l'enregistrement.");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <div className="rounded-3xl border border-ink/10 bg-white p-6 shadow-xl">
+      <div className="flex items-start gap-3">
+        <div className="p-2.5 rounded-2xl bg-sky/10 text-sky">
+          <ShieldCheck className="size-5" />
+        </div>
+        <div className="flex-1 min-w-0">
+          <h3 className="font-display text-lg font-black text-ink">
+            Vérification des manques matériels
+          </h3>
+          <p className="text-xs text-ink/50 font-medium">
+            Quand une mission de substitution n'aboutit pas, Naya re-vérifie en
+            secret si des substituts réalistes existaient — pour enrichir sa
+            compréhension du terrain. Jamais montré à l'enfant ni au parent.
+          </p>
+        </div>
+        {config && (
+          <button
+            type="button"
+            role="switch"
+            aria-checked={config.enabled}
+            disabled={saving}
+            onClick={() => void save({ enabled: !config.enabled, rate: config.rate })}
+            className={`relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition-colors cursor-pointer disabled:opacity-50 ${
+              config.enabled ? "bg-leaf" : "bg-ink/20"
+            }`}
+          >
+            <span
+              className={`inline-block size-4 transform rounded-full bg-white shadow transition-transform ${
+                config.enabled ? "translate-x-6" : "translate-x-1"
+              }`}
+            />
+          </button>
+        )}
+      </div>
+
+      {loadError && (
+        <div className="mt-4 rounded-2xl bg-red-50 border border-red-100 p-4 text-xs text-red-700 font-medium flex items-center gap-2">
+          <AlertTriangle className="size-4 shrink-0" />
+          Chargement impossible — les défauts (activé, 100 %) s'appliquent en attendant.
+        </div>
+      )}
+
+      {config && config.enabled && (
+        <div className="mt-4 pt-4 border-t border-ink/5">
+          <p className="text-[11px] font-extrabold uppercase tracking-wider text-ink/50 mb-2">
+            Fréquence de vérification
+          </p>
+          <div className="flex flex-wrap gap-2">
+            {VERIFY_RATE_CHOICES.map(({ rate, label }) => {
+              const selected = Math.abs(config.rate - rate) < 0.001;
+              return (
+                <button
+                  key={label}
+                  type="button"
+                  disabled={saving}
+                  onClick={() => void save({ enabled: true, rate })}
+                  className={`rounded-xl border px-4 py-2 text-[12px] font-extrabold transition-all cursor-pointer disabled:opacity-60 ${
+                    selected
+                      ? "border-sky/30 bg-sky/10 text-sky"
+                      : "border-ink/10 bg-white text-ink/60 hover:bg-surface"
+                  }`}
+                >
+                  {label}
+                </button>
+              );
+            })}
+          </div>
+          <p className="mt-2 text-[11px] text-ink/40 font-medium">
+            {config.rate >= 1
+              ? "Chaque événement est vérifié."
+              : `Environ ${Math.round(config.rate * 100)} % des événements sont vérifiés, tirés au hasard.`}
+            {config.updatedAt
+              ? ` Dernier changement : ${new Date(config.updatedAt).toLocaleDateString("fr-FR", { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" })}.`
+              : ""}
+          </p>
         </div>
       )}
     </div>
