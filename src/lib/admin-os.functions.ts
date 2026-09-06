@@ -1147,31 +1147,68 @@ export const CHALLENGE_MODEL_OPTIONS: ChallengeModelOption[] = [
   {
     id: "deepseek-v4-flash",
     label: "DeepSeek V4 Flash",
-    provider: "DeepSeek",
+    provider: "DeepSeek (OpenRouter)",
     description: "Modèle historique économique et rapide",
-    inputPricePerM: 0.14,
-    outputPricePerM: 0.28,
+    inputPricePerM: 0.0808,
+    outputPricePerM: 0.1616,
     color: "sky",
   },
   {
     id: "glm-5.3-flash",
     label: "GLM 5.3 Flash",
-    provider: "GMICLoud / Zhipu (api.b.ai)",
+    provider: "Zhipu AI (OpenRouter / api.b.ai)",
     description: "Haute réactivité & multimodalité",
-    inputPricePerM: 0.075,
-    outputPricePerM: 0.25,
+    inputPricePerM: 0.06,
+    outputPricePerM: 0.4,
     color: "emerald",
   },
   {
     id: "qwen3.8-flash",
     label: "Qwen 3.8 Flash",
-    provider: "api.b.ai / Alibaba",
+    provider: "Alibaba Qwen (OpenRouter / api.b.ai)",
     description: "Précision de raisonnement & vitesse d'exécution",
-    inputPricePerM: 0.05,
-    outputPricePerM: 0.15,
+    inputPricePerM: 0.0481,
+    outputPricePerM: 0.193,
     color: "purple",
   },
 ];
+
+/**
+ * Retourne la liste des options de modèle enrichie des tarifs en direct OpenRouter si disponibles.
+ */
+export function getChallengeModelOptions(
+  livePricing?: import("./openrouter-pricing.types").LiveOpenRouterPricing | null,
+): ChallengeModelOption[] {
+  return [
+    {
+      id: "deepseek-v4-flash",
+      label: "DeepSeek V4 Flash",
+      provider: "DeepSeek (OpenRouter)",
+      description: "Modèle historique économique et rapide",
+      inputPricePerM: livePricing?.deepseekChat?.inputPerM ?? 0.0808,
+      outputPricePerM: livePricing?.deepseekChat?.outputPerM ?? 0.1616,
+      color: "sky",
+    },
+    {
+      id: "glm-5.3-flash",
+      label: "GLM 5.3 Flash",
+      provider: "Zhipu AI (OpenRouter / api.b.ai)",
+      description: "Haute réactivité & multimodalité",
+      inputPricePerM: livePricing?.glmFlash?.inputPerM ?? 0.06,
+      outputPricePerM: livePricing?.glmFlash?.outputPerM ?? 0.4,
+      color: "emerald",
+    },
+    {
+      id: "qwen3.8-flash",
+      label: "Qwen 3.8 Flash",
+      provider: "Alibaba Qwen (OpenRouter / api.b.ai)",
+      description: "Précision de raisonnement & vitesse d'exécution",
+      inputPricePerM: livePricing?.qwenFlash?.inputPerM ?? 0.0481,
+      outputPricePerM: livePricing?.qwenFlash?.outputPerM ?? 0.193,
+      color: "purple",
+    },
+  ];
+}
 
 export interface NayaModelRoutingSettings {
   challengeModel: ChallengeModelId;
@@ -1306,6 +1343,11 @@ export const getNayaTelemetryAdmin = createServerFn({ method: "GET" })
         supabaseAdmin
           .from("generation_audits")
           .select("kind, verdict, violations, semantic_checked, regenerated"),
+        supabaseAdmin
+          .from("admin_naya_settings")
+          .select("challenge_model")
+          .eq("id", "singleton")
+          .maybeSingle(),
       ]);
 
     if (genRes.error) throw new Error(genRes.error.message);
@@ -1323,14 +1365,27 @@ export const getNayaTelemetryAdmin = createServerFn({ method: "GET" })
     const hypothesesCycles = hypoRes.count ?? 0;
     const recommendationsCount = recoRes.count ?? 0;
 
-    const telemetry = calculateNayaTelemetry({
-      challengesGenerated,
-      challengesStarted,
-      challengesCompleted,
-      photoProofCompleted,
-      hypothesesCycles,
-      recommendationsCount,
+    const { getLiveOpenRouterPricing } = await import("@/lib/openrouter-pricing.server");
+    const livePricing = await getLiveOpenRouterPricing().catch((err) => {
+      console.warn("[admin-os] Impossible de récupérer les tarifs OpenRouter en direct, utilisation du repli:", err);
+      return null;
     });
+
+    const activeChallengeModel =
+      (nayaSettingsRes?.data?.challenge_model as any) || "deepseek-v4-flash";
+
+    const telemetry = calculateNayaTelemetry(
+      {
+        challengesGenerated,
+        challengesStarted,
+        challengesCompleted,
+        photoProofCompleted,
+        hypothesesCycles,
+        recommendationsCount,
+        activeChallengeModel,
+      },
+      livePricing,
+    );
 
     // Remplace l'état vide de calculateNayaTelemetry par les audits réels du Loup.
     telemetry.wolf = calculateNayaWolfTelemetry(
@@ -1346,6 +1401,13 @@ export const getNayaTelemetryAdmin = createServerFn({ method: "GET" })
     );
 
     return telemetry;
+  });
+
+export const refreshAiModelPricingAdmin = createServerFn({ method: "POST" })
+  .middleware([requireAdmin])
+  .handler(async () => {
+    const { getLiveOpenRouterPricing } = await import("@/lib/openrouter-pricing.server");
+    return await getLiveOpenRouterPricing(true);
   });
 
 const CommercePageInput = z.object({

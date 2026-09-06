@@ -41,6 +41,8 @@ import type {
   ProgressionHealthResponse,
   NayaModelRoutingSettings,
   ChallengeModelId,
+  getChallengeModelOptions,
+  refreshAiModelPricingAdmin,
 } from "@/lib/admin-os.functions";
 import { CHALLENGE_MODEL_OPTIONS } from "@/lib/admin-os.functions";
 import {
@@ -120,6 +122,32 @@ export function AdminNayaTab({
   const [decidingKeys, setDecidingKeys] = useState<string[]>([]);
 
   const [isUpdatingRouting, setIsUpdatingRouting] = useState(false);
+  const [isRefreshingPricing, setIsRefreshingPricing] = useState(false);
+  const refreshPricingFn = useServerFn(refreshAiModelPricingAdmin);
+
+  const modelOptions = getChallengeModelOptions(telemetry?.livePricing);
+
+  const handleRefreshOpenRouterPricing = async () => {
+    if (isRefreshingPricing) return;
+    try {
+      setIsRefreshingPricing(true);
+      const res = await refreshPricingFn();
+      toast.success(
+        res.isLive
+          ? "Tarifs OpenRouter synchronisés en direct depuis l'API officielle !"
+          : "Tarifs mis à jour (mode de repli sécurisé).",
+      );
+      if (onRefresh) {
+        onRefresh();
+      }
+    } catch (err: any) {
+      console.error("Erreur actualisation tarifs OpenRouter:", err);
+      toast.error(err?.message || "Erreur lors de l'actualisation des tarifs OpenRouter.");
+    } finally {
+      setIsRefreshingPricing(false);
+    }
+  };
+
   const currentChallengeModel: ChallengeModelId =
     nayaRoutingSettings?.challengeModel || "deepseek-v4-flash";
   const fallbackEnabled: boolean =
@@ -294,11 +322,44 @@ export function AdminNayaTab({
               </p>
             </div>
           </div>
-          <div className="inline-flex items-center gap-2 rounded-2xl bg-ink/5 border border-ink/10 px-3 py-1.5 self-start sm:self-auto">
-            <span className="size-2 rounded-full bg-emerald-500 animate-pulse" />
-            <span className="text-xs font-medium text-ink/70">
-              Moteur actif : <strong className="text-ink font-bold">{CHALLENGE_MODEL_OPTIONS.find(m => m.id === currentChallengeModel)?.label || currentChallengeModel}</strong>
-            </span>
+          <div className="flex flex-wrap items-center gap-2 self-start sm:self-auto">
+            <div className="inline-flex items-center gap-2 rounded-2xl bg-ink/5 border border-ink/10 px-3 py-1.5">
+              <span className="size-2 rounded-full bg-emerald-500 animate-pulse" />
+              <span className="text-xs font-medium text-ink/70">
+                Moteur actif : <strong className="text-ink font-bold">{modelOptions.find(m => m.id === currentChallengeModel)?.label || currentChallengeModel}</strong>
+              </span>
+            </div>
+
+            {telemetry?.livePricing && (
+              <div className="inline-flex items-center gap-2 rounded-2xl bg-emerald-50 border border-emerald-200/80 px-3 py-1.5 text-xs text-emerald-800">
+                <span className="size-2 rounded-full bg-emerald-600 animate-pulse" />
+                <span className="font-semibold">
+                  Tarifs OpenRouter :{" "}
+                  <strong className="font-extrabold text-emerald-950">
+                    {telemetry.livePricing.source === "openrouter_api"
+                      ? "API Live"
+                      : telemetry.livePricing.source === "cached"
+                      ? "Cache 15m"
+                      : "Repli standard"}
+                  </strong>
+                </span>
+                {telemetry.livePricing.fetchedAt && (
+                  <span className="text-[10px] text-emerald-700/80 font-medium">
+                    ({new Date(telemetry.livePricing.fetchedAt).toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" })})
+                  </span>
+                )}
+                <button
+                  type="button"
+                  onClick={() => void handleRefreshOpenRouterPricing()}
+                  disabled={isRefreshingPricing}
+                  title="Forcer la synchronisation avec l'API publique OpenRouter"
+                  className="ml-1 inline-flex items-center gap-1 px-2 py-0.5 rounded-lg bg-emerald-600 text-white text-[11px] font-bold hover:bg-emerald-700 transition-colors disabled:opacity-50"
+                >
+                  <RefreshCw className={`size-3 ${isRefreshingPricing ? "animate-spin" : ""}`} />
+                  {isRefreshingPricing ? "Sync..." : "Rafraîchir"}
+                </button>
+              </div>
+            )}
           </div>
         </div>
 
@@ -314,6 +375,11 @@ export function AdminNayaTab({
                 <span className="rounded-full bg-brand/10 text-brand px-2 py-0.5 text-[10px] font-black uppercase tracking-wider">
                   Switch à chaud
                 </span>
+                {telemetry?.livePricing && (
+                  <span className="rounded-full bg-emerald-100 text-emerald-800 px-2 py-0.5 text-[10px] font-extrabold uppercase tracking-wider">
+                    Tarifs Live
+                  </span>
+                )}
               </div>
               <p className="text-xs text-ink/60 mt-0.5">
                 Sélectionnez le modèle d'inférence utilisé pour générer les défis personnalisés des enfants.
@@ -328,7 +394,7 @@ export function AdminNayaTab({
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-            {CHALLENGE_MODEL_OPTIONS.map((opt) => {
+            {modelOptions.map((opt) => {
               const isSelected = opt.id === currentChallengeModel;
               const isConfigured =
                 opt.id === "deepseek-v4-flash"
@@ -375,10 +441,17 @@ export function AdminNayaTab({
                   </div>
 
                   <div className="pt-3 mt-3 border-t border-ink/5 flex items-center justify-between text-[11px]">
-                    <span className="font-bold text-ink/70">
-                      ${opt.inputPricePerM} / ${opt.outputPricePerM}{" "}
-                      <span className="text-[9px] font-medium text-ink/40">1M tok</span>
-                    </span>
+                    <div className="flex flex-col">
+                      <span className="font-bold text-ink/80">
+                        ${opt.inputPricePerM} / ${opt.outputPricePerM}{" "}
+                        <span className="text-[9px] font-medium text-ink/40">1M tok</span>
+                      </span>
+                      {telemetry?.livePricing && (
+                        <span className="text-[9px] font-semibold text-emerald-700">
+                          Tarif live OpenRouter
+                        </span>
+                      )}
+                    </div>
                     <span
                       className={`inline-flex items-center gap-1 font-semibold text-[10px] ${
                         isConfigured ? "text-emerald-700" : "text-amber-700"
@@ -471,7 +544,7 @@ export function AdminNayaTab({
                   </span>
                 </div>
                 <p className="text-sm font-black text-ink">
-                  {CHALLENGE_MODEL_OPTIONS.find((m) => m.id === currentChallengeModel)?.label ||
+                  {modelOptions.find((m) => m.id === currentChallengeModel)?.label ||
                     "DeepSeek V4 Flash"}
                 </p>
                 <p className="text-[11px] text-ink/60 mt-1 leading-snug">
@@ -479,9 +552,11 @@ export function AdminNayaTab({
                 </p>
               </div>
               <div className="pt-2.5 mt-2.5 border-t border-sky-100 flex items-center justify-between text-[10px]">
-                <span className="font-extrabold text-sky-700">Moteur en production</span>
+                <span className="font-extrabold text-sky-700">
+                  ${(modelOptions.find((m) => m.id === currentChallengeModel)?.inputPricePerM ?? 0.0808)} / ${(modelOptions.find((m) => m.id === currentChallengeModel)?.outputPricePerM ?? 0.1616)}
+                </span>
                 <span className="font-semibold text-ink/50">
-                  {CHALLENGE_MODEL_OPTIONS.find((m) => m.id === currentChallengeModel)?.provider || "DeepSeek"}
+                  {modelOptions.find((m) => m.id === currentChallengeModel)?.provider || "DeepSeek"}
                 </span>
               </div>
             </div>
@@ -506,8 +581,10 @@ export function AdminNayaTab({
                 </p>
               </div>
               <div className="pt-2.5 mt-2.5 border-t border-emerald-100 flex items-center justify-between text-[10px]">
-                <span className="font-extrabold text-emerald-700">$0.075 / $0.25 (1M)</span>
-                <span className="font-semibold text-emerald-800">Usage École</span>
+                <span className="font-extrabold text-emerald-700">
+                  ${telemetry?.livePricing?.glmFlash?.inputPerM ?? 0.06} / ${telemetry?.livePricing?.glmFlash?.outputPerM ?? 0.4}
+                </span>
+                <span className="font-semibold text-emerald-800">OpenRouter (1M)</span>
               </div>
             </div>
 
@@ -531,8 +608,10 @@ export function AdminNayaTab({
                 </p>
               </div>
               <div className="pt-2.5 mt-2.5 border-t border-indigo-100 flex items-center justify-between text-[10px]">
-                <span className="font-extrabold text-indigo-700">$0.05 / $0.15 (1M)</span>
-                <span className="font-semibold text-indigo-800">Haute vélocité</span>
+                <span className="font-extrabold text-indigo-700">
+                  ${telemetry?.livePricing?.qwenFlash?.inputPerM ?? 0.0481} / ${telemetry?.livePricing?.qwenFlash?.outputPerM ?? 0.193}
+                </span>
+                <span className="font-semibold text-indigo-800">OpenRouter (1M)</span>
               </div>
             </div>
 
@@ -556,8 +635,10 @@ export function AdminNayaTab({
                 </p>
               </div>
               <div className="pt-2.5 mt-2.5 border-t border-amber-100 flex items-center justify-between text-[10px]">
-                <span className="font-extrabold text-amber-700">Réflexion activée</span>
-                <span className="font-semibold text-amber-800">Effort élevé</span>
+                <span className="font-extrabold text-amber-700">
+                  ${telemetry?.livePricing?.deepseekReasoner?.inputPerM ?? 0.6876} / ${telemetry?.livePricing?.deepseekReasoner?.outputPerM ?? 1.3753}
+                </span>
+                <span className="font-semibold text-amber-800">OpenRouter (1M)</span>
               </div>
             </div>
 
@@ -581,8 +662,10 @@ export function AdminNayaTab({
                 </p>
               </div>
               <div className="pt-2.5 mt-2.5 border-t border-purple-100 flex items-center justify-between text-[10px]">
-                <span className="font-extrabold text-purple-700">Multimodal HD</span>
-                <span className="font-semibold text-purple-800">Audit preuve</span>
+                <span className="font-extrabold text-purple-700">
+                  ${telemetry?.livePricing?.visionSonnet?.inputPerM ?? 2.0} / ${telemetry?.livePricing?.visionSonnet?.outputPerM ?? 10.0}
+                </span>
+                <span className="font-semibold text-purple-800">OpenRouter (1M)</span>
               </div>
             </div>
           </div>
@@ -764,6 +847,12 @@ export function AdminNayaTab({
           <p className="text-xs text-ink/60 mt-2 font-medium">
             Moteurs : DeepSeek, GLM, Qwen & Sonnet (1 USD ≈ 600 XOF)
           </p>
+          {telemetry?.livePricing && (
+            <div className="mt-2 inline-flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-emerald-50 text-emerald-800 text-[10px] font-bold border border-emerald-200/70">
+              <span className="size-1.5 rounded-full bg-emerald-600 animate-pulse" />
+              Calculé d'après les tarifs réels OpenRouter ({telemetry.livePricing.source === "openrouter_api" ? "Direct API" : telemetry.livePricing.source === "cached" ? "Cache 15m" : "Repli standard"})
+            </div>
+          )}
           <div className="mt-2 space-y-1 text-[10px] font-semibold text-ink/55">
             <p className="flex items-center gap-1.5">
               <span
@@ -1135,7 +1224,7 @@ export function AdminNayaTab({
                       </div>
                       <span className="text-[10px] text-ink/50 font-medium block pl-4 mt-0.5">
                         {item.feature === "Défis"
-                          ? `Tâche 1 : Défis personnalisés apprenants (Moteur actif : ${CHALLENGE_MODEL_OPTIONS.find((m) => m.id === currentChallengeModel)?.label || "DeepSeek"})`
+                          ? `Tâche 1 : Défis personnalisés apprenants (Moteur actif : ${modelOptions.find((m) => m.id === currentChallengeModel)?.label || "DeepSeek"})`
                           : item.feature === "Copilote Professeur"
                           ? "Tâche 2 : Déconstruction didactique, fiches de cours & ZPA (GLM dédié)"
                           : item.feature === "Hypothèses"
@@ -1197,6 +1286,17 @@ export function AdminNayaTab({
                     <span className="font-display font-extrabold text-sm text-ink">
                       {model.model}
                     </span>
+                    <span className="text-[10px] text-ink/50 font-semibold">
+                      {model.model.includes("GLM")
+                        ? `($${telemetry?.livePricing?.glmFlash?.inputPerM ?? 0.06}/$${telemetry?.livePricing?.glmFlash?.outputPerM ?? 0.4} 1M)`
+                        : model.model.includes("Qwen")
+                        ? `($${telemetry?.livePricing?.qwenFlash?.inputPerM ?? 0.0481}/$${telemetry?.livePricing?.qwenFlash?.outputPerM ?? 0.193} 1M)`
+                        : model.model.includes("V4 Pro")
+                        ? `($${telemetry?.livePricing?.deepseekReasoner?.inputPerM ?? 0.6876}/$${telemetry?.livePricing?.deepseekReasoner?.outputPerM ?? 1.3753} 1M)`
+                        : model.model.includes("Sonnet")
+                        ? `($${telemetry?.livePricing?.visionSonnet?.inputPerM ?? 2.0}/$${telemetry?.livePricing?.visionSonnet?.outputPerM ?? 10.0} 1M)`
+                        : `($${telemetry?.livePricing?.deepseekChat?.inputPerM ?? 0.0808}/$${telemetry?.livePricing?.deepseekChat?.outputPerM ?? 0.1616} 1M)`}
+                    </span>
                   </div>
                   <div className="flex items-center gap-2">
                     <span className="text-xs font-bold text-ink/60">
@@ -1229,7 +1329,7 @@ export function AdminNayaTab({
                       Tâche 1 · Défis Naya : Moteur Concision & Vélocité (Alibaba)
                     </p>
                     <p className="text-indigo-800 leading-snug mt-0.5">
-                      Inférence ultra-rapide, raisonnement mathématique rigoureux, respect JSON strict et tarif plancher ($0.05/M in · $0.15/M out).
+                      Inférence ultra-rapide, raisonnement mathématique rigoureux, respect JSON strict et tarif plancher OpenRouter (${telemetry?.livePricing?.qwenFlash?.inputPerM ?? 0.0481}/M in · ${telemetry?.livePricing?.qwenFlash?.outputPerM ?? 0.193}/M out).
                     </p>
                   </div>
                 ) : model.model.includes("V4 Pro") ? (
@@ -1389,7 +1489,7 @@ export function AdminNayaTab({
           </div>
 
           <div className="text-[11px] text-ink/50 italic text-center">
-            * Projection multi-modèles basée sur l'activité observée : DeepSeek (taux pondérés 70 % creux / 30 % pointe), GLM 5.3 Flash ($0.075/$0.25 par 1M tokens — Copilote Enseignants & option Défis), Qwen 3.8 Flash ($0.05/$0.15 par 1M tokens — option Défis Naya), et Claude Sonnet 5 (vision photos). Taux 1 USD = 600 XOF. Le mode réflexion (activé sur v4-pro) génère des tokens de raisonnement non modélisés ici.
+            * Projection multi-modèles calculée en temps réel d'après la grille tarifaire OpenRouter : DeepSeek V4 Flash (${telemetry?.livePricing?.deepseekChat?.inputPerM ?? 0.0808}/$${telemetry?.livePricing?.deepseekChat?.outputPerM ?? 0.1616}), GLM 5.3 Flash (${telemetry?.livePricing?.glmFlash?.inputPerM ?? 0.06}/$${telemetry?.livePricing?.glmFlash?.outputPerM ?? 0.4}), Qwen 3.8 Flash (${telemetry?.livePricing?.qwenFlash?.inputPerM ?? 0.0481}/$${telemetry?.livePricing?.qwenFlash?.outputPerM ?? 0.193}) et Claude Sonnet 5 (vision photos). Taux 1 USD = 600 XOF. Le mode réflexion (activé sur v4-pro) génère des tokens de raisonnement non modélisés ici.
           </div>
         </div>
       </div>

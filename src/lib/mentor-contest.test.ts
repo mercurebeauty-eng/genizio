@@ -88,6 +88,24 @@ function makeFakeDb(initial: Record<string, any[]> = {}) {
       update: vi.fn((patch: Record<string, unknown>) => makeUpdateChain(patch)),
     };
   });
+
+  db.rpc = vi.fn(async (funcName: string, args: any) => {
+    if (funcName === "refund_session_credit") {
+      if (args.p_source === "pack") {
+        const p = (tables.family_coverages ?? []).find((r) => r.id === args.p_id);
+        if (p && typeof p.sessions_used === "number" && p.sessions_used > 0) {
+          p.sessions_used -= 1;
+        }
+      } else if (args.p_source === "campaign") {
+        const c = (tables.campaigns ?? []).find((r) => r.id === args.p_id);
+        if (c && typeof c.sessions_used === "number" && c.sessions_used > 0) {
+          c.sessions_used -= 1;
+        }
+      }
+    }
+    return { data: null, error: null };
+  });
+
   return { db, tables };
 }
 

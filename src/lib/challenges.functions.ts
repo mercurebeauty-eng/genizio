@@ -401,14 +401,16 @@ async function awardCompletionXP(supabaseClient: any, childId: string) {
     const xpGain = calculateXPGain(childAge);
     const newXp = oldXp + xpGain;
 
-    await supabaseClient
-      .from("child_profiles")
-      .update({
-        xp: newXp,
-        streak: newStreak,
-        last_activity_date: now.toISOString(),
-      })
-      .eq("id", childId);
+    // XP incrémentée côté SQL (audit vague B) : deux complétions quasi
+    // simultanées lisaient le même oldXp et écrivaient toutes deux oldXp+gain
+    // (gain perdu). La logique streak (fenêtre 7/14j) reste JS — elle dépend
+    // de last_activity_date lu, et le CAS de complétion borne déjà le doublon.
+    await supabaseClient.rpc("increment_child_xp", {
+      p_child_id: childId,
+      p_gain: xpGain,
+      p_streak: newStreak,
+      p_activity_date: now.toISOString(),
+    });
 
     return {
       xpGained: xpGain,
@@ -3762,16 +3764,11 @@ export async function submitDeclarativeProofCore(params: {
   }
 
   const award = (challenge.declarative_award as Record<string, number> | null) ?? {};
-  if (Object.keys(award).length > 0) {
-    const { error: talentsError } = await db.rpc("increment_child_talents", {
-      p_child_id: challenge.child_id,
-      p_deltas: award,
-    });
-    if (talentsError) throw new Error(talentsError.message);
-  }
 
   const observations = `Bravo ! ${childName} a réussi ${reportedValue} ${target.metric} (objectif : ${target.value}). Une belle preuve de persévérance.`;
 
+  // CAS (audit backend vague B, même trou P1 que validateChallengeProofCore) :
+  // complétion écrite seulement si pas déjà completed ; awards APRÈS claim.
   const { data: updated, error } = await db
     .from("challenges")
     .update({
@@ -3782,9 +3779,30 @@ export async function submitDeclarativeProofCore(params: {
       target_intelligences: Object.keys(award),
     })
     .eq("id", id)
+    .neq("status", "completed")
     .select("*")
-    .single();
+    .maybeSingle();
   if (error) throw new Error(error.message);
+  if (!updated) {
+    const { data: current } = await db.from("challenges").select("*").eq("id", id).maybeSingle();
+    return {
+      challenge: current ?? challenge,
+      observations,
+      awarded_points: award,
+      imageAnalyzed: false,
+      relevant: true,
+      levelUp: null,
+      badgeUnlocked: null,
+    };
+  }
+
+  if (Object.keys(award).length > 0) {
+    const { error: talentsError } = await db.rpc("increment_child_talents", {
+      p_child_id: challenge.child_id,
+      p_deltas: award,
+    });
+    if (talentsError) throw new Error(talentsError.message);
+  }
 
   // Manquait ici jusqu'à présent : validateChallengeProof et updateChallenge
   // l'appellent déjà toutes les deux — un défi validé par déclaration (jongles,
