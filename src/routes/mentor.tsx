@@ -93,6 +93,9 @@ import { toast } from "sonner";
 // préservent la vue, et un onglet est partageable.
 type MentorSearch = { view?: "overview" | "children" | "club" };
 
+/** Résumé d'une escouade active du mentor (deux-modèles — mentors de Soutien). */
+type SquadSummary = { id: string; name: string; memberCount: number };
+
 export const Route = createFileRoute("/mentor")({
   validateSearch: (search: Record<string, unknown>): MentorSearch => {
     return {
@@ -178,6 +181,10 @@ function MentorDashboardPage() {
   const [points, setPoints] = useState(0);
   const [badge, setBadge] = useState<"none" | "bronze" | "gold">("none");
   const [pointsBonusPct, setPointsBonusPct] = useState(0);
+  // Deux modèles : la catégorie pilote l'UI (onglet Club, modèle de rémunération).
+  const [category, setCategory] = useState<"pro" | "support">("pro");
+  const [quota, setQuota] = useState(0);
+  const [squads, setSquads] = useState<SquadSummary[]>([]);
   // Vue globale d'activité (décision #83) — données BI du mentor + bascule de vue.
   const [overview, setOverview] = useState<MentorActivityOverview | null>(null);
   const [activityLoading, setActivityLoading] = useState(true);
@@ -306,6 +313,9 @@ function MentorDashboardPage() {
       setPoints((res as any).points ?? 0);
       setBadge((res as any).badge ?? "none");
       setPointsBonusPct((res as any).pointsBonusPct ?? 0);
+      setCategory((res as any).category ?? "pro");
+      setQuota((res as any).quota ?? 0);
+      setSquads(((res as any).squads ?? []) as SquadSummary[]);
     } catch {
       setChildren([]);
       setLoadError(true);
@@ -838,10 +848,39 @@ function MentorDashboardPage() {
           </div>
         </div>
 
+        {/* Deux modèles : bandeau identité du mentor — catégorie, quota et modèle de
+            rémunération. Pro = superviseur clinique (1-on-1) ; Soutien = Clubs du Samedi. */}
+        <div
+          className={`mb-4 flex flex-wrap items-center gap-2 rounded-2xl border px-4 py-2.5 text-xs ${
+            category === "support"
+              ? "border-sky-200 bg-sky-50 text-sky-900"
+              : "border-purple-200 bg-purple-50 text-purple-900"
+          }`}
+        >
+          <span
+            className={`rounded-full px-2.5 py-0.5 text-[10px] font-black uppercase tracking-wider text-white ${
+              category === "support" ? "bg-sky-500" : "bg-purple-500"
+            }`}
+          >
+            {category === "support" ? "Soutien (Club)" : "Pro (Clinique)"}
+          </span>
+          <span className="font-bold">
+            {category === "support"
+              ? `Escouades de 6 à 8 enfants${squads.length > 0 ? ` — ${squads.map((s) => `${s.name} (${s.memberCount})`).join(", ")}` : " — aucune escouade active"}`
+              : `Remédiation 1-on-1 · Quota ${children.length}/${quota} enfant(s)`}
+          </span>
+          <span className="ml-auto font-semibold opacity-80">
+            {category === "support"
+              ? "10 000 F / mois / enfant · 70 % mentor"
+              : `15 000 F / séance · 70 % mentor (${formatXofAmount(MENTOR_SESSION_PAYOUT_XOF)} / séance confirmée)`}
+          </span>
+        </div>
+
         {/* Bascule Vue d'ensemble / Mes enfants (décision #83) — le mentor consulte
-            sa vue globale d'activité ou revient au travail quotidien sur les enfants. */}
+            sa vue globale d'activité ou revient au travail quotidien sur les enfants.
+            L'onglet Clubs du Samedi n'existe que pour les mentors de Soutien (deux-modèles). */}
         <div className="mb-6 flex w-fit max-w-full items-center gap-1 rounded-2xl border border-ink/10 bg-white p-1 shadow-sm overflow-x-auto no-scrollbar">
-          {(["overview", "children", "club"] as const).map((v) => (
+          {(["overview", "children", ...(category === "support" ? (["club"] as const) : [])] as const).map((v) => (
             <button
               key={v}
               type="button"
@@ -856,7 +895,7 @@ function MentorDashboardPage() {
           ))}
         </div>
 
-        {view === "club" ? (
+        {view === "club" && category === "support" ? (
           <SaturdayClubSquadView onBack={() => setView("overview")} />
         ) : view === "overview" ? (
           <MentorOverview

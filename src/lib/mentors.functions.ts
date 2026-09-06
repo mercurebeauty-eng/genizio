@@ -1667,23 +1667,54 @@ export const getMentorDashboard = createServerFn({ method: "GET" })
       .is("removed_at", null);
     if (error) throw new Error(error.message);
 
+    // Deux modèles : la catégorie pilote l'UI du portail (onglet Club, modèle de
+    // rémunération affiché) ; l'escouade est réservée aux mentors de Soutien.
+    const { data: profile } = await (supabaseAdmin as any)
+      .from("mentor_profiles")
+      .select("status, category, created_at")
+      .eq("mentor_user_id", userId)
+      .maybeSingle();
+    const category = resolveMentorCategory(profile?.category);
+    const quota = computeMentorQuota({
+      referenceCreatedAt: (profile?.created_at as string | undefined) ?? null,
+      extraQuota: 0,
+      category,
+    });
+    const { data: activeSquads } = await (supabaseAdmin as any)
+      .from("mentor_squads")
+      .select("id, name")
+      .eq("mentor_user_id", userId)
+      .eq("status", "active");
+    const squadIds = (activeSquads ?? []).map((s: any) => s.id as string);
+    let squads: Array<{ id: string; name: string; memberCount: number }> = [];
+    if (squadIds.length > 0) {
+      const { data: squadMembers } = await (supabaseAdmin as any)
+        .from("mentor_squad_members")
+        .select("squad_id, child_profile_id")
+        .in("squad_id", squadIds)
+        .is("removed_at", null);
+      squads = (activeSquads ?? []).map((s: any) => ({
+        id: s.id as string,
+        name: s.name as string,
+        memberCount: (squadMembers ?? []).filter((m: any) => m.squad_id === s.id).length,
+      }));
+    }
+
     if (!assignments || assignments.length === 0) {
-      const { data: emptyProfile } = await (supabaseAdmin as any)
-        .from("mentor_profiles")
-        .select("status")
-        .eq("mentor_user_id", userId)
-        .maybeSingle();
       return {
         children: [],
         score: null,
         sessionsThisMonth: 0,
         expectedSessions: 0,
-        status: (emptyProfile?.status as string | undefined) ?? "active",
+        status: (profile?.status as string | undefined) ?? "active",
         points: 0,
         tier: "standard",
         badge: "none",
         pointsBonusPct: 0,
         pendingPayoutXof: 0,
+        category,
+        quota,
+        squads,
       };
     }
 
@@ -1750,11 +1781,6 @@ export const getMentorDashboard = createServerFn({ method: "GET" })
 
     // Confiance Mentor (V3) — statut automatique (30 j glissants), palier de
     // confiance et solde de points : le mentor voit sa position et son statut.
-    const { data: profile } = await (supabaseAdmin as any)
-      .from("mentor_profiles")
-      .select("status")
-      .eq("mentor_user_id", userId)
-      .maybeSingle();
     const status = (profile?.status as string | undefined) ?? "active";
     const [rollingScore, points] = await Promise.all([
       computeRollingScore(supabaseAdmin as any, userId),
@@ -1835,6 +1861,9 @@ export const getMentorDashboard = createServerFn({ method: "GET" })
         (sum: number, s: any) => sum + Number(s.payout_xof ?? 0),
         0,
       ),
+      category,
+      quota,
+      squads,
       children: assignments.map((a) => {
         const child = a.child_profiles as any;
         return {
