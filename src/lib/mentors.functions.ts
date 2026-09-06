@@ -65,6 +65,8 @@ export interface MentorGroup {
   score: number;
   /** Statut du compte mentor (mentor_profiles) — active|warning|suspended|banned. */
   status: string;
+  /** Catégorie de mentorat : pro (Superviseur Clinique) ou support (Club Périscolaire Samedi). */
+  category: "pro" | "support";
   /** Solde de points (mentor_points) — source des paliers de récompense. */
   points: number;
   /** Palier de confiance (score ≥ 75 sur 30 j glissants) — 75/25 du payout pour « trusted ». */
@@ -211,6 +213,7 @@ export const listMentorsAdmin = createServerFn({ method: "GET" })
           quota: 5,
           score: 0,
           status: "active",
+          category: "pro",
           points: 0,
           tier: "standard",
           badge: "none",
@@ -281,10 +284,16 @@ export const listMentorsAdmin = createServerFn({ method: "GET" })
     // seules les séances confirmées par le parent alimentent le score.
     const { data: profiles } = await (supabaseAdmin as any)
       .from("mentor_profiles")
-      .select("mentor_user_id, status, created_at")
+      .select("mentor_user_id, status, created_at, category")
       .in("mentor_user_id", mentorIds);
     const statusMap = new Map<string, string>(
       (profiles ?? []).map((p: any) => [p.mentor_user_id as string, p.status as string]),
+    );
+    const categoryMap = new Map<string, "pro" | "support">(
+      (profiles ?? []).map((p: any) => [
+        p.mentor_user_id as string,
+        (p.category === "support" ? "support" : "pro") as "pro" | "support",
+      ]),
     );
     // Date d'activation du profil — borne d'âge opérationnel avec la première
     // assignation (voir computeMentorOperationalAgeDays).
@@ -472,12 +481,20 @@ export const listMentorsAdmin = createServerFn({ method: "GET" })
       // + extra_mentors_quota de la campagne, borné 5 (même calcul que le trigger
       // check_mentor_quota et computeMentorQuota).
       const { createdAt } = info ?? { createdAt: null };
+      g.category = categoryMap.get(g.mentor_user_id) ?? "pro";
       let quota = 0;
       for (const child of g.children) {
         const ctx = child.campaign_id ? campaignRefs.get(child.campaign_id) : undefined;
         const ref = ctx ? ctx.createdAt : createdAt;
         const extra = ctx?.extraQuota ?? 0;
-        quota = Math.max(quota, computeMentorQuota({ referenceCreatedAt: ref, extraQuota: extra }));
+        quota = Math.max(
+          quota,
+          computeMentorQuota({
+            referenceCreatedAt: ref,
+            extraQuota: extra,
+            category: g.category,
+          }),
+        );
       }
       g.quota = quota;
       g.status = statusMap.get(g.mentor_user_id) ?? "active";

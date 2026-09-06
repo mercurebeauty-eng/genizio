@@ -560,13 +560,13 @@ export function AdminMentorsTab({
                   <div className="rounded-xl border border-sky-300 bg-white/70 p-2.5">
                     <p className="font-black text-sky-950">1. Mentor Pro (Superviseur Clinique)</p>
                     <p className="text-sky-800 text-[11px] mt-0.5">
-                      Quota strict <strong>≤ 5 enfants</strong> (Bilan 15 000 F, remédiation lourde, anamnèse, packs 180k/mois).
+                      Quota strict <strong>≤ 5 enfants</strong> (15 000 F / séance · Pack 12 séances = 180 000 F/mois/enfant · Rémunération mentor 70% soit 10 500 F/séance · Bilan diagnostic 50 000 F · Remédiation clinique individualisée).
                     </p>
                   </div>
                   <div className="rounded-xl border border-sky-300 bg-white/70 p-2.5">
                     <p className="font-black text-sky-950">2. Mentor de Soutien (Club Samedi)</p>
                     <p className="text-sky-800 text-[11px] mt-0.5">
-                      1 à 2 escouades de <strong>6 à 8 élèves</strong> (10 000 F/mois/enfant : 70% Mentor, 30% Génizio, 0% École). Garde-fou anti-fraude & anti-régression actif.
+                      1 à 2 escouades de <strong>6 à 8 élèves</strong> (6 à 16 enfants max) · 10 000 F/mois/enfant (70% Mentor soit ~56 000 F/escouade, 30% Génizio, 0% École) · Ateliers collectifs & garde-fous anti-fraude/anti-régression actifs.
                     </p>
                   </div>
                 </div>
@@ -656,6 +656,15 @@ export function AdminMentorsTab({
                               <p className="text-sm font-bold text-ink truncate">
                                 {g.display_name || g.email}
                               </p>
+                              <span
+                                className={`rounded-full px-2 py-0.5 text-[10px] font-black uppercase tracking-wider ${
+                                  g.category === "support"
+                                    ? "bg-sky-100 text-sky-800"
+                                    : "bg-purple-100 text-purple-800"
+                                }`}
+                              >
+                                {g.category === "support" ? "Soutien (Club)" : "Pro (Clinique)"}
+                              </span>
                               {g.display_name && (
                                 <span className="text-xs font-semibold text-ink/50 truncate">
                                   ({g.email})
