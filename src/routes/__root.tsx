@@ -199,6 +199,18 @@ function isInternalTool(pathname: string): boolean {
   return INTERNAL_TOOL_PREFIXES.some((p) => pathname === p || pathname.startsWith(`${p}/`));
 }
 
+// Routes de L'APPLICATION telles que les vit un mentor en mode mentor : son
+// portail + les pages partagées qu'il utilise (enfants assignés, défis, quêtes,
+// portfolio, gestion) + les réglages où il bascule le mode. Volontairement
+// exclu : landing, pages publiques (guides, boutique, parrainage…), /admin,
+// /organisation, /educator, /auth — le violet ne doit jamais déborder hors de
+// l'expérience applicative du mentor (thème de la session, pas du compte).
+const MENTOR_APP_PREFIXES = ["/mentor", "/profiles", "/profile"];
+
+function isMentorAppRoute(pathname: string): boolean {
+  return MENTOR_APP_PREFIXES.some((p) => pathname === p || pathname.startsWith(`${p}/`));
+}
+
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
@@ -207,13 +219,17 @@ function RootComponent() {
   // Univers Mentor (décision #81) : data-mode sur <html> → le bloc
   // :root[data-mode="mentor"] de styles.css rethème l'app (palette indigo/violet +
   // fond de page). Client-only : le mode vit dans la session.
-  // Scoppé à la ROUTE (deux-modèles, 2026-09-06) : le violet n'habille que le
-  // portail /mentor — l'admin et le reste de l'app gardent la palette parent
-  // même quand le compte est en mode mentor (le mode session reste le pilote
-  // fonctionnel : onglets, accès, bascules).
+  // Scoppé aux ROUTES DE L'APPLICATION (correction 2026-09-06) : le violet
+  // habille tout ce qu'un mentor pratique en mode mentor — son portail /mentor
+  // ET les pages partagées /profiles/* (enfants assignés, défis, quêtes,
+  // portfolio) + /profile (réglages, où le mode se bascule). La landing,
+  // l'Admin OS, /organisation et /educator gardent la palette parent : le
+  // rethème ne doit JAMAIS déborder sur les surfaces hors-app (le premier
+  // essai colorait toute l'app ; le scoping strict à "/mentor" laissait le
+  // reste des pages mentor en orange).
   const { session } = useSession();
   const mentorMode = session?.user.user_metadata?.mode === "mentor";
-  const mentorTheme = mentorMode && pathname === "/mentor";
+  const mentorTheme = mentorMode && isMentorAppRoute(pathname);
   useEffect(() => {
     document.documentElement.dataset.mode = mentorTheme ? "mentor" : "parent";
   }, [mentorTheme]);
