@@ -140,7 +140,7 @@ describe("Naya Telemetry & Pricing Functions", () => {
       expect(telemetry.totalCostXof).toBe(0);
       expect(telemetry.conversionRatePct).toBe(0);
       expect(telemetry.featureBreakdown).toHaveLength(4);
-      expect(telemetry.modelBreakdown).toHaveLength(4);
+      expect(telemetry.modelBreakdown).toHaveLength(5);
       expect(telemetry.funnel).toEqual({
         generated: 0,
         started: 0,
@@ -186,17 +186,20 @@ describe("Naya Telemetry & Pricing Functions", () => {
         (m) => m.model === "Claude Sonnet 5 (Vision)",
       );
       const glmModel = telemetry.modelBreakdown.find((m) => m.model === "GLM 5.3 Flash");
+      const qwenModel = telemetry.modelBreakdown.find((m) => m.model === "Qwen 3.8 Flash");
 
       expect(chatModel).toBeDefined();
       expect(reasonerModel).toBeDefined();
       expect(visionModel).toBeDefined();
       expect(glmModel).toBeDefined();
+      expect(qwenModel).toBeDefined();
 
       expect(telemetry.totalTokens).toBe(
         chatModel!.totalTokens +
           reasonerModel!.totalTokens +
           visionModel!.totalTokens +
-          glmModel!.totalTokens,
+          glmModel!.totalTokens +
+          qwenModel!.totalTokens,
       );
       expect(telemetry.projection.projectedCallsMonthly).toBe(telemetry.totalApiCalls * 4);
     });

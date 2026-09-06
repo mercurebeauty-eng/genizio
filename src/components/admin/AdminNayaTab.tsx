@@ -28,10 +28,21 @@ import {
   Trash2,
   Check,
   ChevronDown,
+  Sparkles,
+  ShieldCheck,
+  ToggleLeft,
+  ToggleRight,
+  Sliders,
 } from "lucide-react";
 import type { NayaTelemetryResponse } from "@/lib/naya-telemetry";
 import { isDeepSeekPeakHour } from "@/lib/naya-telemetry";
-import type { AiProviderStatus, ProgressionHealthResponse } from "@/lib/admin-os.functions";
+import type {
+  AiProviderStatus,
+  ProgressionHealthResponse,
+  NayaModelRoutingSettings,
+  ChallengeModelId,
+} from "@/lib/admin-os.functions";
+import { CHALLENGE_MODEL_OPTIONS } from "@/lib/admin-os.functions";
 import {
   decideLoupSuggestionsAdmin,
   LOUP_DECISION_LABELS,
@@ -62,22 +73,27 @@ export interface AdminNayaTabProps {
   /** Clés `kind|domaine|règle` en cours de décision (spinner par carte). */
   decidingRuleKeys?: string[];
   onDataChanged?: () => void | Promise<void>;
+  nayaRoutingSettings?: NayaModelRoutingSettings | null;
+  onUpdateNayaRouting?: (newSettings: {
+    challengeModel: ChallengeModelId;
+    fallbackEnabled?: boolean;
+  }) => Promise<void>;
 }
 
-// Couleur par modèle — 3 postes depuis le passage à DeepSeek (2026-07-21) :
-// sky = deepseek-v4-flash (texte courant), amber = deepseek-v4-pro (raisonnement
-// NAYA, mode réflexion activé), purple = Claude Sonnet 5 (vision uniquement, seul
-// cas encore Anthropic). Les appellations affichent les noms de modèles API réels.
+// Couleur par modèle — support DeepSeek, GLM, Qwen et Claude Sonnet (vision).
+// Les appellations affichent les noms de modèles API réels.
 function modelDotClass(modelLabel: string): string {
   if (modelLabel.includes("Sonnet")) return "bg-purple-600";
   if (modelLabel.includes("V4 Pro")) return "bg-amber-500";
   if (modelLabel.includes("GLM")) return "bg-emerald-600";
+  if (modelLabel.includes("Qwen")) return "bg-indigo-600";
   return "bg-sky-500";
 }
 function modelBadgeClass(modelLabel: string): string {
   if (modelLabel.includes("Sonnet")) return "bg-purple-100 text-purple-700";
   if (modelLabel.includes("V4 Pro")) return "bg-amber-100 text-amber-700";
   if (modelLabel.includes("GLM")) return "bg-emerald-100 text-emerald-700";
+  if (modelLabel.includes("Qwen")) return "bg-indigo-100 text-indigo-700";
   return "bg-sky-100 text-sky-700";
 }
 
@@ -89,6 +105,8 @@ export function AdminNayaTab({
   onRefresh,
   constitution,
   onDataChanged,
+  nayaRoutingSettings,
+  onUpdateNayaRouting,
 }: AdminNayaTabProps) {
   const [localConstitution, setLocalConstitution] =
     useState<ConstitutionSuggestionsResponse | null>(constitution || null);
@@ -96,6 +114,42 @@ export function AdminNayaTab({
     setLocalConstitution(constitution || null);
   }, [constitution]);
   const [decidingKeys, setDecidingKeys] = useState<string[]>([]);
+
+  const [isUpdatingRouting, setIsUpdatingRouting] = useState(false);
+  const currentChallengeModel: ChallengeModelId =
+    nayaRoutingSettings?.challengeModel || "deepseek-v4-flash";
+  const fallbackEnabled: boolean =
+    nayaRoutingSettings?.fallbackEnabled !== false;
+
+  const handleSelectModel = async (modelId: ChallengeModelId) => {
+    if (modelId === currentChallengeModel || isUpdatingRouting || !onUpdateNayaRouting) return;
+    try {
+      setIsUpdatingRouting(true);
+      await onUpdateNayaRouting({
+        challengeModel: modelId,
+        fallbackEnabled,
+      });
+    } catch {
+      // error handled in caller toast
+    } finally {
+      setIsUpdatingRouting(false);
+    }
+  };
+
+  const handleToggleFallback = async () => {
+    if (isUpdatingRouting || !onUpdateNayaRouting) return;
+    try {
+      setIsUpdatingRouting(true);
+      await onUpdateNayaRouting({
+        challengeModel: currentChallengeModel,
+        fallbackEnabled: !fallbackEnabled,
+      });
+    } catch {
+      // error handled in caller toast
+    } finally {
+      setIsUpdatingRouting(false);
+    }
+  };
 
   const decideLoupFn = useServerFn(decideLoupSuggestionsAdmin);
 
@@ -220,37 +274,194 @@ export function AdminNayaTab({
         )}
       </div>
 
-      {/* 🔀 Configuration IA active — routage par tâche + statut des clés API.
-          Ajouté au passage à DeepSeek (2026-07-21) pour que l'admin voie d'un
-          coup d'œil qui fait quoi et si les clés sont bien configurées sur cet
-          environnement, sans avoir à ouvrir .env/Vercel. */}
+      {/* 🔀 Configuration IA active — routage par tâche + statut des clés API + switch à chaud des défis. */}
       <div className="rounded-3xl border border-ink/10 bg-white p-6 shadow-xl space-y-5">
-        <div className="flex items-center gap-3">
-          <div className="p-2.5 rounded-2xl bg-brand/10 text-brand">
-            <RouteIcon className="size-5" />
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div className="flex items-center gap-3">
+            <div className="p-2.5 rounded-2xl bg-brand/10 text-brand">
+              <RouteIcon className="size-5" />
+            </div>
+            <div>
+              <h3 className="font-display text-lg font-extrabold text-ink">
+                Configuration IA active & Routage des Modèles
+              </h3>
+              <p className="text-xs text-ink/60 font-medium">
+                Basculez dynamiquement le moteur des défis académiques, gérez la redondance et surveillez les clés API.
+              </p>
+            </div>
           </div>
-          <div>
-            <h3 className="font-display text-lg font-extrabold text-ink">
-              Configuration IA active
-            </h3>
-            <p className="text-xs text-ink/60 font-medium">
-              Routage par type de tâche — provisoire en attendant une clé Gemini 3.6.
-            </p>
+          <div className="inline-flex items-center gap-2 rounded-2xl bg-ink/5 border border-ink/10 px-3 py-1.5 self-start sm:self-auto">
+            <span className="size-2 rounded-full bg-emerald-500 animate-pulse" />
+            <span className="text-xs font-medium text-ink/70">
+              Moteur actif : <strong className="text-ink font-bold">{CHALLENGE_MODEL_OPTIONS.find(m => m.id === currentChallengeModel)?.label || currentChallengeModel}</strong>
+            </span>
           </div>
         </div>
 
+        {/* 🎛️ Sélecteur de modèle pour les défis Naya */}
+        <div className="rounded-2xl border border-brand/20 bg-brand/[0.03] p-5 space-y-4">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+            <div>
+              <div className="flex items-center gap-2">
+                <Sliders className="size-4 text-brand" />
+                <h4 className="text-sm font-extrabold text-ink">
+                  Moteur Actif pour la Génération des Défis
+                </h4>
+                <span className="rounded-full bg-brand/10 text-brand px-2 py-0.5 text-[10px] font-black uppercase tracking-wider">
+                  Switch à chaud
+                </span>
+              </div>
+              <p className="text-xs text-ink/60 mt-0.5">
+                Sélectionnez le modèle d'inférence utilisé pour générer les défis personnalisés des enfants.
+              </p>
+            </div>
+            {nayaRoutingSettings?.updatedAt && (
+              <span className="text-[11px] text-ink/50 font-medium">
+                Mis à jour le {new Date(nayaRoutingSettings.updatedAt).toLocaleDateString("fr-FR", { hour: "2-digit", minute: "2-digit" })}
+                {nayaRoutingSettings.updatedBy ? ` par ${nayaRoutingSettings.updatedBy}` : ""}
+              </span>
+            )}
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+            {CHALLENGE_MODEL_OPTIONS.map((opt) => {
+              const isSelected = opt.id === currentChallengeModel;
+              const isConfigured =
+                opt.id === "deepseek-v4-flash"
+                  ? aiProviderStatus?.deepseekConfigured !== false
+                  : opt.id === "glm-5.3-flash"
+                  ? aiProviderStatus?.glmConfigured !== false
+                  : aiProviderStatus?.qwenConfigured !== false;
+
+              return (
+                <button
+                  key={opt.id}
+                  type="button"
+                  onClick={() => void handleSelectModel(opt.id)}
+                  disabled={isUpdatingRouting}
+                  className={`text-left rounded-2xl p-4 transition-all duration-200 border relative flex flex-col justify-between ${
+                    isSelected
+                      ? "border-brand bg-white shadow-md ring-2 ring-brand/20"
+                      : "border-ink/10 bg-white/70 hover:border-ink/20 hover:bg-white hover:shadow-sm"
+                  } ${isUpdatingRouting ? "opacity-75 cursor-wait" : ""}`}
+                >
+                  <div>
+                    <div className="flex items-center justify-between gap-2 mb-1.5">
+                      <span
+                        className={`text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full ${
+                          opt.id === "qwen3.8-flash"
+                            ? "bg-indigo-100 text-indigo-700"
+                            : opt.id === "glm-5.3-flash"
+                            ? "bg-emerald-100 text-emerald-700"
+                            : "bg-sky-100 text-sky-700"
+                        }`}
+                      >
+                        {opt.provider}
+                      </span>
+                      {isSelected && (
+                        <span className="flex items-center gap-1 text-[11px] font-extrabold text-brand bg-brand/10 rounded-full px-2 py-0.5">
+                          <Check className="size-3 stroke-[3]" />
+                          Actif
+                        </span>
+                      )}
+                    </div>
+
+                    <p className="font-extrabold text-sm text-ink">{opt.label}</p>
+                    <p className="text-[11px] text-ink/60 mt-1 leading-snug">{opt.description}</p>
+                  </div>
+
+                  <div className="pt-3 mt-3 border-t border-ink/5 flex items-center justify-between text-[11px]">
+                    <span className="font-bold text-ink/70">
+                      ${opt.inputPricePerM} / ${opt.outputPricePerM}{" "}
+                      <span className="text-[9px] font-medium text-ink/40">1M tok</span>
+                    </span>
+                    <span
+                      className={`inline-flex items-center gap-1 font-semibold text-[10px] ${
+                        isConfigured ? "text-emerald-700" : "text-amber-700"
+                      }`}
+                    >
+                      <span
+                        className={`size-1.5 rounded-full ${
+                          isConfigured ? "bg-emerald-500" : "bg-amber-500"
+                        }`}
+                      />
+                      {isConfigured ? "Prêt" : "Clé partagée"}
+                    </span>
+                  </div>
+                </button>
+              );
+            })}
+          </div>
+
+          {/* Redondance & Résilience */}
+          <div className="rounded-xl border border-ink/10 bg-white p-3.5 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div className="flex items-center gap-3">
+              <div
+                className={`p-2 rounded-xl ${
+                  fallbackEnabled ? "bg-emerald-100 text-emerald-700" : "bg-amber-100 text-amber-700"
+                }`}
+              >
+                <ShieldCheck className="size-4" />
+              </div>
+              <div>
+                <div className="flex items-center gap-2">
+                  <p className="text-xs font-bold text-ink">
+                    Redondance & Résilience (Fallback transparent)
+                  </p>
+                  <span
+                    className={`text-[10px] font-bold px-2 py-0.2 rounded-full ${
+                      fallbackEnabled ? "bg-emerald-100 text-emerald-700" : "bg-amber-100 text-amber-700"
+                    }`}
+                  >
+                    {fallbackEnabled ? "Actif (Recommandé)" : "Désactivé"}
+                  </span>
+                </div>
+                <p className="text-[11px] text-ink/60 mt-0.5">
+                  {fallbackEnabled
+                    ? "Si le modèle sélectionné subit un timeout (>45s) ou une erreur 5xx, Naya bascule automatiquement et silencieusement sur DeepSeek pour ne jamais bloquer l'enfant."
+                    : "Attention : en cas de panne de l'API sélectionnée, la génération de défi retournera une erreur sans basculer."}
+                </p>
+              </div>
+            </div>
+
+            <button
+              type="button"
+              onClick={() => void handleToggleFallback()}
+              disabled={isUpdatingRouting}
+              className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold border transition ${
+                fallbackEnabled
+                  ? "bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-100"
+                  : "bg-ink/5 text-ink/70 border-ink/10 hover:bg-ink/10"
+              } ${isUpdatingRouting ? "opacity-50 cursor-wait" : ""}`}
+            >
+              {fallbackEnabled ? <ToggleRight className="size-4" /> : <ToggleLeft className="size-4" />}
+              {fallbackEnabled ? "Désactiver" : "Activer secours"}
+            </button>
+          </div>
+        </div>
+
+        {/* Vue d'ensemble du routage des tâches */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
           <div className="rounded-2xl border border-sky/20 bg-sky/5 p-4">
-            <div className="flex items-center gap-2 mb-1.5">
-              <MessageSquare className="size-4 text-sky-600" />
-              <span className="text-[10px] font-extrabold uppercase tracking-wider text-sky-600">
-                Texte général
+            <div className="flex items-center justify-between gap-2 mb-1.5">
+              <div className="flex items-center gap-2">
+                <MessageSquare className="size-4 text-sky-600" />
+                <span className="text-[10px] font-extrabold uppercase tracking-wider text-sky-600">
+                  Texte général / Défis
+                </span>
+              </div>
+              <span className="text-[9px] font-black uppercase tracking-wider px-1.5 py-0.5 rounded-full bg-brand/10 text-brand">
+                Configurable
               </span>
             </div>
-            <p className="text-sm font-black text-ink">DeepSeek V4 Flash</p>
-            <p className="text-[11px] text-ink/60 mt-0.5">Défis, synthèses, recommandations</p>
+            <p className="text-sm font-black text-ink">
+              {CHALLENGE_MODEL_OPTIONS.find((m) => m.id === currentChallengeModel)?.label ||
+                "DeepSeek V4 Flash"}
+            </p>
+            <p className="text-[11px] text-ink/60 mt-0.5">Défis personnalisés, synthèses, bilans</p>
             <p className="text-[10px] font-bold text-sky-600 mt-1">
-              deepseek-v4-flash · réflexion désactivée
+              {CHALLENGE_MODEL_OPTIONS.find((m) => m.id === currentChallengeModel)?.provider ||
+                "DeepSeek"}
             </p>
           </div>
           <div className="rounded-2xl border border-amber-500/20 bg-amber-500/5 p-4">
@@ -302,6 +513,7 @@ export function AdminNayaTab({
             {[
               { label: "DeepSeek", ok: aiProviderStatus.deepseekConfigured },
               { label: "GLM 5.3 Flash", ok: aiProviderStatus.glmConfigured },
+              { label: "Qwen 3.8 Flash", ok: aiProviderStatus.qwenConfigured },
               { label: "Anthropic (vision)", ok: aiProviderStatus.anthropicConfigured },
               { label: "Gemini (réserve)", ok: aiProviderStatus.geminiConfigured },
             ].map(({ label, ok }) => (

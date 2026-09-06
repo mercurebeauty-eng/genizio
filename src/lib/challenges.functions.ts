@@ -2446,13 +2446,24 @@ export async function callClaude(
       "claude-sonnet-5",
     );
   }
-  return callDeepSeekText(
+  if (modelOverride === "deepseek-reasoner") {
+    return callDeepSeekText(
+      prompt,
+      jsonMode,
+      maxOutputTokens,
+      maxRetries,
+      "deepseek-reasoner",
+    );
+  }
+  const { dispatchChallengeTextGeneration } = await import("@/lib/naya-routing.server");
+  const res = await dispatchChallengeTextGeneration({
     prompt,
     jsonMode,
     maxOutputTokens,
     maxRetries,
-    modelOverride ?? DEEPSEEK_CHAT_MODEL,
-  );
+    callDeepSeekFn: callDeepSeekText,
+  });
+  return res.text;
 }
 
 // Gate "accès mensuel expiré" (décision 2026-08-05) : à l'expiration, la génération de

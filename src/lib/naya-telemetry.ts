@@ -50,6 +50,9 @@ export const NAYA_PRICING = {
   // de la mise en production — valeurs conservatrices bas coût, sans creux/plein.
   GLM_FLASH_INPUT_PER_M: 0.11,
   GLM_FLASH_OUTPUT_PER_M: 0.44,
+  // Qwen 3.8 Flash (api.b.ai / DashScope) — modèle rapide et économique
+  QWEN_FLASH_INPUT_PER_M: 0.05,
+  QWEN_FLASH_OUTPUT_PER_M: 0.15,
   USD_TO_XOF_RATE: 600,
   // « Le Loup » (chantiers 2-4, Naya 3.0) : la vérification sémantique tourne sur
   // le modèle économique par défaut (deepseek-v4-flash, via callClaude) et son
@@ -79,6 +82,9 @@ export interface NayaTokenUsage {
   // Tokens RÉELS remontés par l'API (usage), pas des multiplicateurs estimés.
   glmFlashInputTokens: number;
   glmFlashOutputTokens: number;
+  // Qwen 3.8 Flash (génération de défis alternative via qwen.server.ts).
+  qwenFlashInputTokens: number;
+  qwenFlashOutputTokens: number;
 }
 
 export interface NayaCostResult {
@@ -93,7 +99,8 @@ export interface FeatureBreakdown {
     | "DeepSeek V4 Flash"
     | "DeepSeek V4 Flash + Sonnet (vision)"
     | "DeepSeek V4 Pro"
-    | "GLM 5.3 Flash";
+    | "GLM 5.3 Flash"
+    | "Qwen 3.8 Flash";
   callsCount: number;
   estimatedTokens: number;
   costUsd: number;
@@ -101,7 +108,12 @@ export interface FeatureBreakdown {
 }
 
 export interface ModelUsageBreakdown {
-  model: "DeepSeek V4 Flash" | "DeepSeek V4 Pro" | "Claude Sonnet 5 (Vision)" | "GLM 5.3 Flash";
+  model:
+    | "DeepSeek V4 Flash"
+    | "DeepSeek V4 Pro"
+    | "Claude Sonnet 5 (Vision)"
+    | "GLM 5.3 Flash"
+    | "Qwen 3.8 Flash";
   inputTokens: number;
   outputTokens: number;
   totalTokens: number;
@@ -334,6 +346,16 @@ export function calculateGlmFlashCost(inputTokens: number, outputTokens: number)
   return { costUsd: round4(usd), costXof: Math.round(usd * NAYA_PRICING.USD_TO_XOF_RATE) };
 }
 
+/** Coût Qwen 3.8 Flash pour une paire input/output de tokens. */
+export function calculateQwenFlashCost(inputTokens: number, outputTokens: number): NayaCostResult {
+  const input = toSafeTokenCount(inputTokens);
+  const output = toSafeTokenCount(outputTokens);
+  const usd =
+    (input / 1_000_000) * NAYA_PRICING.QWEN_FLASH_INPUT_PER_M +
+    (output / 1_000_000) * NAYA_PRICING.QWEN_FLASH_OUTPUT_PER_M;
+  return { costUsd: round4(usd), costXof: Math.round(usd * NAYA_PRICING.USD_TO_XOF_RATE) };
+}
+
 /**
  * Calculates challenge conversion rate percentage: (completed / generated) * 100.
  * Clamped strictly to 0% – 100%.
@@ -375,6 +397,8 @@ export function calculateNayaTelemetry(raw: {
   /** Copilote Professeur : tokens GLM RÉELS remontés de generation_audits /
    * ai_feature_usage (agrégés par l'appelant), pas un multiplicateur estimé. */
   glmFlashTokens?: { input: number; output: number; calls?: number };
+  /** Défis / Qwen : tokens Qwen RÉELS remontés si qwen3.8-flash a été sélectionné. */
+  qwenFlashTokens?: { input: number; output: number; calls?: number };
 }): NayaTelemetryResponse {
   const genCount = Math.max(0, raw.challengesGenerated || 0);
   const startCount = Math.max(0, raw.challengesStarted || 0);
@@ -410,6 +434,8 @@ export function calculateNayaTelemetry(raw: {
     visionSonnetOutputTokens: defisVisionOutput,
     glmFlashInputTokens: Math.max(0, raw.glmFlashTokens?.input ?? 0),
     glmFlashOutputTokens: Math.max(0, raw.glmFlashTokens?.output ?? 0),
+    qwenFlashInputTokens: Math.max(0, raw.qwenFlashTokens?.input ?? 0),
+    qwenFlashOutputTokens: Math.max(0, raw.qwenFlashTokens?.output ?? 0),
   };
 
   const totalChatTokens = tokenUsage.deepseekChatInputTokens + tokenUsage.deepseekChatOutputTokens;
@@ -418,7 +444,9 @@ export function calculateNayaTelemetry(raw: {
   const totalVisionTokens =
     tokenUsage.visionSonnetInputTokens + tokenUsage.visionSonnetOutputTokens;
   const totalGlmTokens = tokenUsage.glmFlashInputTokens + tokenUsage.glmFlashOutputTokens;
-  const totalTokens = totalChatTokens + totalReasonerTokens + totalVisionTokens + totalGlmTokens;
+  const totalQwenTokens = tokenUsage.qwenFlashInputTokens + tokenUsage.qwenFlashOutputTokens;
+  const totalTokens =
+    totalChatTokens + totalReasonerTokens + totalVisionTokens + totalGlmTokens + totalQwenTokens;
 
   const chatCosts = calculateDeepSeekChatCost(
     tokenUsage.deepseekChatInputTokens,
@@ -436,12 +464,24 @@ export function calculateNayaTelemetry(raw: {
     tokenUsage.glmFlashInputTokens,
     tokenUsage.glmFlashOutputTokens,
   );
+  const qwenCosts = calculateQwenFlashCost(
+    tokenUsage.qwenFlashInputTokens,
+    tokenUsage.qwenFlashOutputTokens,
+  );
 
   const totalCostUsd = round4(
-    chatCosts.costUsd + reasonerCosts.costUsd + visionCosts.costUsd + glmCosts.costUsd,
+    chatCosts.costUsd +
+      reasonerCosts.costUsd +
+      visionCosts.costUsd +
+      glmCosts.costUsd +
+      qwenCosts.costUsd,
   );
   const totalCostXof =
-    chatCosts.costXof + reasonerCosts.costXof + visionCosts.costXof + glmCosts.costXof;
+    chatCosts.costXof +
+    reasonerCosts.costXof +
+    visionCosts.costXof +
+    glmCosts.costXof +
+    qwenCosts.costXof;
 
   // Plafond du barème creux/plein : tous les appels DeepSeek facturés en pointe
   // (offPeakSharePct = 0). La vision Sonnet est inchangée (pas de creux/plein).
@@ -545,6 +585,16 @@ export function calculateNayaTelemetry(raw: {
       costXof: glmCosts.costXof,
       sharePercentage:
         totalTokens > 0 ? Math.round((totalGlmTokens / totalTokens) * 100) : 0,
+    },
+    {
+      model: "Qwen 3.8 Flash" as const,
+      inputTokens: tokenUsage.qwenFlashInputTokens,
+      outputTokens: tokenUsage.qwenFlashOutputTokens,
+      totalTokens: totalQwenTokens,
+      costUsd: qwenCosts.costUsd,
+      costXof: qwenCosts.costXof,
+      sharePercentage:
+        totalTokens > 0 ? Math.round((totalQwenTokens / totalTokens) * 100) : 0,
     },
   ];
 

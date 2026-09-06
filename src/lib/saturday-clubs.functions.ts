@@ -31,7 +31,7 @@ import {
   type AtelierKey,
   type SquadNaturalRole,
 } from "@/lib/saturday-clubs";
-import { MENTOR_CATEGORY_QUOTAS } from "@/lib/mentor-safeguards";
+import { MENTOR_CATEGORY_QUOTAS, resolveMentorCategory } from "@/lib/mentor-safeguards";
 import { fingerprintProofImage, isComparableFingerprint } from "@/lib/image-fingerprint.server";
 import { hammingDistance } from "@/lib/image-hash";
 import { notifyUser } from "@/lib/app-notifications";
@@ -100,14 +100,15 @@ export interface ClubSessionResult {
 // ── Helpers internes ────────────────────────────────────────────────────────
 
 async function loadMentorCategory(db: any, userId: string): Promise<"support" | "pro"> {
-  // mentor_profiles.category si la colonne existe ; défaut support (le club est
-  // son périmètre). Un mentor pro qui crée une escouade verra ses quotas pro.
+  // mentor_profiles.category (colonne ajoutée en 20260906120000) ; défaut pro
+  // (historique clinique). Un mentor support crée ses escouades avec les quotas
+  // support, un mentor pro qui tente une escouade verra ses quotas pro (max 5).
   const { data: profile } = await db
     .from("mentor_profiles")
     .select("*")
     .eq("mentor_user_id", userId)
     .maybeSingle();
-  return profile?.category === "pro" ? "pro" : "support";
+  return resolveMentorCategory(profile?.category);
 }
 
 async function loadSquad(db: any, squadId: string, userId: string) {

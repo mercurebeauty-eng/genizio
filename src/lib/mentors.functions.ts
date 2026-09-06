@@ -30,6 +30,7 @@ import { assertChildActor } from "@/lib/child-actor";
 import { logMentorAction } from "@/lib/mentor-actions";
 import { punctualityFromSessions } from "@/lib/mentor-scheduling";
 import { processSessionContest } from "@/lib/mentor-contest";
+import { DEFAULT_MENTOR_CATEGORY, resolveMentorCategory, type MentorCategory } from "@/lib/mentor-safeguards";
 
 // Motifs de contestation — ré-export depuis le cœur (mentor-contest.ts) pour les
 // UI (hub parent, notifications mentor) sans casser les imports existants.
@@ -282,18 +283,25 @@ export const listMentorsAdmin = createServerFn({ method: "GET" })
     // et défis de leurs enfants (progression). Même fenêtre « mois courant » des deux
     // côtés. Depuis la V3 (Confiance Mentor), la déclaration seule ne suffit plus :
     // seules les séances confirmées par le parent alimentent le score.
-    const { data: profiles } = await (supabaseAdmin as any)
+    // Lecture tolérante : si la colonne category n'existe pas encore (migration
+    // 20260906120000 pas appliquée), on retente sans elle plutôt que de perdre
+    // aussi les statuts et les scores.
+    let { data: profiles, error: profilesError } = await (supabaseAdmin as any)
       .from("mentor_profiles")
       .select("mentor_user_id, status, created_at, category")
       .in("mentor_user_id", mentorIds);
+    if (profilesError) {
+      const retry = await (supabaseAdmin as any)
+        .from("mentor_profiles")
+        .select("mentor_user_id, status, created_at")
+        .in("mentor_user_id", mentorIds);
+      profiles = retry.data;
+    }
     const statusMap = new Map<string, string>(
       (profiles ?? []).map((p: any) => [p.mentor_user_id as string, p.status as string]),
     );
-    const categoryMap = new Map<string, "pro" | "support">(
-      (profiles ?? []).map((p: any) => [
-        p.mentor_user_id as string,
-        (p.category === "support" ? "support" : "pro") as "pro" | "support",
-      ]),
+    const categoryMap = new Map<string, MentorCategory>(
+      (profiles ?? []).map((p: any) => [p.mentor_user_id as string, resolveMentorCategory(p.category)]),
     );
     // Date d'activation du profil — borne d'âge opérationnel avec la première
     // assignation (voir computeMentorOperationalAgeDays).
@@ -481,7 +489,7 @@ export const listMentorsAdmin = createServerFn({ method: "GET" })
       // + extra_mentors_quota de la campagne, borné 5 (même calcul que le trigger
       // check_mentor_quota et computeMentorQuota).
       const { createdAt } = info ?? { createdAt: null };
-      g.category = categoryMap.get(g.mentor_user_id) ?? "pro";
+      g.category = categoryMap.get(g.mentor_user_id) ?? DEFAULT_MENTOR_CATEGORY;
       let quota = 0;
       for (const child of g.children) {
         const ctx = child.campaign_id ? campaignRefs.get(child.campaign_id) : undefined;
