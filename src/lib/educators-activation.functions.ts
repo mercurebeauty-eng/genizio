@@ -81,9 +81,7 @@ export const listEducatorProfilesAdmin = createServerFn({ method: "GET" })
       }
     }
 
-    const emailsToResolve = profiles
-      .map((p: any) => p.user_id)
-      .filter(Boolean) as string[];
+    const emailsToResolve = profiles.map((p: any) => p.user_id).filter(Boolean) as string[];
     const emailMap = new Map<string, string>();
     if (emailsToResolve.length > 0) {
       const { data: users } = await supabaseAdmin.auth.admin.listUsers();
@@ -343,10 +341,7 @@ export const removeAuthorizedEmailAdmin = createServerFn({ method: "POST" })
   .validator((id: string) => z.string().uuid().parse(id))
   .handler(async ({ data: id }) => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const { error } = await (supabaseAdmin as any)
-      .from("authorized_emails")
-      .delete()
-      .eq("id", id);
+    const { error } = await (supabaseAdmin as any).from("authorized_emails").delete().eq("id", id);
     if (error) throw new Error(`Impossible de retirer l'habilitation : ${error.message}`);
     return { ok: true };
   });

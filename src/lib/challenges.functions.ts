@@ -1687,6 +1687,20 @@ export function extractJsonFromLLMResponse(raw: string): string {
     if (content.startsWith("{") || content.startsWith("[")) return content;
   }
 
+  // 3b. Chaîne JSON littérale encadrée de guillemets : ex. "{\"domain\":...}"
+  // Si on applique le découpage par accolades (règle 4), on retire les guillemets externes
+  // mais on laisse les guillemets internes échappés (\"...), ce qui rend le JSON invalide.
+  // En préservant les guillemets externes, JSON.parse() peut dé-échapper la chaîne proprement.
+  if (
+    (trimmed.startsWith('"') && trimmed.endsWith('"')) ||
+    (trimmed.startsWith("'") && trimmed.endsWith("'"))
+  ) {
+    const inner = trimmed.slice(1, -1).trim();
+    if (inner.startsWith("{") || inner.startsWith("[")) {
+      return trimmed;
+    }
+  }
+
   // 4. Pas de balise — extrait le plus grand span {...} ou [...], tolère du
   //    texte conversationnel avant/après le JSON ou réponse tronquée.
   const firstBrace = trimmed.search(/[{[]/);
@@ -2085,22 +2099,223 @@ export function balanceJsonDelimiters(raw: string): string {
 }
 
 export function safeJsonParse<T = any>(raw: string): T {
-  const extracted = extractJsonFromLLMResponse(raw);
+  if (typeof raw !== "string") return raw as any;
+
+  let content = (raw ?? "").trim();
+  content = content.replace(/<think>[\s\S]*?(?:<\/think>|$)\s*/gi, "").trim();
+
+  // Si la réponse brute commence et se termine par des guillemets tout en contenant du JSON,
+  // tenter un premier parsing en tant que chaîne JSON littérale pour dé-échapper le contenu.
+  if (
+    (content.startsWith('"') && content.endsWith('"')) ||
+    (content.startsWith("'") && content.endsWith("'"))
+  ) {
+    try {
+      const unquoted = JSON.parse(content);
+      if (typeof unquoted === "string" && unquoted.trim().length > 0) {
+        content = unquoted.trim();
+      }
+    } catch {
+      // Ignorer si ce n'était pas une chaîne JSON valide
+    }
+  }
+
+  const extracted = extractJsonFromLLMResponse(content);
+  let parsed: any;
   try {
-    return JSON.parse(extracted);
+    parsed = JSON.parse(extracted);
   } catch (firstErr) {
     try {
       const cleaned = cleanJsonString(extracted);
-      return JSON.parse(cleaned);
+      parsed = JSON.parse(cleaned);
     } catch {
       try {
         const balanced = balanceJsonDelimiters(extracted);
-        return JSON.parse(balanced);
+        parsed = JSON.parse(balanced);
       } catch {
         throw firstErr;
       }
     }
   }
+
+  // Dépaquetage récursif / multicouche : si le résultat parsé est ENCORE une chaîne de caractères
+  // (ex: double-stringified JSON généré par certains modèles ou proxys avec json_object),
+  // on continue de parser tant que c'est une chaîne sérialisée.
+  let depth = 0;
+  while (typeof parsed === "string" && depth < 3) {
+    depth++;
+    const trimmed = parsed.trim();
+    if (
+      (trimmed.startsWith("{") && trimmed.endsWith("}")) ||
+      (trimmed.startsWith("[") && trimmed.endsWith("]")) ||
+      (trimmed.startsWith('"') && trimmed.endsWith('"')) ||
+      trimmed.includes("```")
+    ) {
+      try {
+        parsed = safeJsonParse(trimmed);
+      } catch {
+        break;
+      }
+    } else {
+      break;
+    }
+  }
+
+  return parsed as T;
+}
+
+/**
+ * Dépaquète de manière robuste un défi retourné par une IA (DeepSeek, GLM, Qwen...)
+ * Tolère :
+ * - Un objet défi direct ({ domain: "...", title: "..." })
+ * - Un défi sérialisé en chaîne JSON ('{"domain": "...", "title": "..."}')
+ * - Un tableau contenant un défi ([{ domain: "..." }] ou ['{"domain": "..."}'])
+ * - Un objet conteneur ({ challenges: [...] }, { challenge: ... }, { defis: [...] }, { defi: ... })
+ * - Un objet wrapper générique ({ response: ... }, { output: ... }, { text: ... }, { content: ... }, { result: ... }, { data: ... }, { items: ... })
+ * Garantit de renvoyer un objet (ou un objet par défaut) pour que ChallengeSchema.parse ne lève jamais
+ * invalid_type: expected object, received string.
+ */
+export function unpackChallengeItem(input: any): any {
+  if (input == null) return {};
+
+  let item = input;
+
+  // 1. Si l'élément est une chaîne de caractères, on tente de le parser
+  if (typeof item === "string") {
+    const trimmed = item.trim();
+    if (
+      trimmed.startsWith("{") ||
+      trimmed.startsWith("[") ||
+      trimmed.startsWith('"') ||
+      trimmed.includes("```")
+    ) {
+      try {
+        item = safeJsonParse(trimmed);
+      } catch {
+        // En cas d'échec de parsing JSON, on passe à la suite
+      }
+    }
+  }
+
+  // 2. Si l'élément est un tableau, on extrait récursivement le premier élément
+  if (Array.isArray(item)) {
+    return item.length > 0 ? unpackChallengeItem(item[0]) : {};
+  }
+
+  // 3. Si l'élément est un objet, on inspecte toutes les clés d'emballage connues
+  if (item && typeof item === "object") {
+    // Tableaux de défis
+    if (Array.isArray(item.challenges) && item.challenges.length > 0) {
+      return unpackChallengeItem(item.challenges[0]);
+    }
+    if (Array.isArray(item.defis) && item.defis.length > 0) {
+      return unpackChallengeItem(item.defis[0]);
+    }
+    if (Array.isArray(item.data) && item.data.length > 0) {
+      return unpackChallengeItem(item.data[0]);
+    }
+    if (Array.isArray(item.items) && item.items.length > 0) {
+      return unpackChallengeItem(item.items[0]);
+    }
+    if (Array.isArray(item.results) && item.results.length > 0) {
+      return unpackChallengeItem(item.results[0]);
+    }
+
+    // Clés de défi unique
+    if (item.challenge != null) {
+      return unpackChallengeItem(item.challenge);
+    }
+    if (item.defi != null) {
+      return unpackChallengeItem(item.defi);
+    }
+
+    // Wrappers génériques (modèles alternatifs ou formats conversationnels)
+    if (item.challenges != null && typeof item.challenges !== "object") {
+      return unpackChallengeItem(item.challenges);
+    }
+    if (item.response != null) {
+      return unpackChallengeItem(item.response);
+    }
+    if (item.output != null) {
+      return unpackChallengeItem(item.output);
+    }
+    if (item.result != null) {
+      return unpackChallengeItem(item.result);
+    }
+    if (item.content != null && (typeof item.content === "object" || typeof item.content === "string")) {
+      if (typeof item.content === "string") {
+        const trimmed = item.content.trim();
+        if (trimmed.startsWith("{") || trimmed.startsWith("[") || trimmed.includes("```")) {
+          return unpackChallengeItem(item.content);
+        }
+      } else {
+        return unpackChallengeItem(item.content);
+      }
+    }
+    if (item.text != null && typeof item.text === "string") {
+      const trimmed = item.text.trim();
+      if (trimmed.startsWith("{") || trimmed.startsWith("[") || trimmed.includes("```")) {
+        return unpackChallengeItem(item.text);
+      }
+    }
+
+    return item;
+  }
+
+  // Fallback de sécurité : si c'est un type primitif restant, renvoyer un objet pour ChallengeSchema
+  if (typeof item !== "object" || item === null) {
+    return { title: String(item || "") };
+  }
+
+  return item;
+}
+
+/**
+ * Dépaquète de manière robuste une liste de défis retournée par une IA.
+ */
+export function unpackChallengeList(input: any): any[] {
+  if (input == null) return [];
+
+  let item = input;
+
+  if (typeof item === "string") {
+    const trimmed = item.trim();
+    if (
+      trimmed.startsWith("{") ||
+      trimmed.startsWith("[") ||
+      trimmed.startsWith('"') ||
+      trimmed.includes("```")
+    ) {
+      try {
+        item = safeJsonParse(trimmed);
+      } catch {
+        // En cas d'échec, continue
+      }
+    }
+  }
+
+  let rawList: any[] = [];
+  if (Array.isArray(item)) {
+    rawList = item;
+  } else if (item && typeof item === "object") {
+    if (Array.isArray(item.challenges)) rawList = item.challenges;
+    else if (Array.isArray(item.defis)) rawList = item.defis;
+    else if (Array.isArray(item.data)) rawList = item.data;
+    else if (Array.isArray(item.items)) rawList = item.items;
+    else if (Array.isArray(item.results)) rawList = item.results;
+    else if (item.challenge != null) rawList = [item.challenge];
+    else if (item.defi != null) rawList = [item.defi];
+    else if (item.response != null || item.output != null || item.result != null || item.text != null) {
+      const inner = item.response ?? item.output ?? item.result ?? item.text;
+      return unpackChallengeList(inner);
+    } else {
+      rawList = [item];
+    }
+  }
+
+  return rawList
+    .map((entry) => unpackChallengeItem(entry))
+    .filter((entry) => entry && typeof entry === "object" && Object.keys(entry).length > 0);
 }
 
 // Routage IA (décision du 2026-07-21) : DeepSeek n'a pas de vision, donc toute
@@ -2680,22 +2895,10 @@ export async function generateChallengesCore(params: {
 
   let list: z.infer<typeof ChallengeSchema>[];
   try {
-    let rawChallenges: any[];
-    if (Array.isArray(parsed)) {
-      rawChallenges = parsed;
-    } else if (parsed && typeof parsed === "object") {
-      if (Array.isArray(parsed.challenges)) rawChallenges = parsed.challenges;
-      else if (Array.isArray(parsed.data)) rawChallenges = parsed.data;
-      else if (Array.isArray(parsed.items)) rawChallenges = parsed.items;
-      else if (Array.isArray(parsed.results)) rawChallenges = parsed.results;
-      else if (Array.isArray(parsed.defis)) rawChallenges = parsed.defis;
-      else rawChallenges = [parsed];
-    } else {
-      rawChallenges = [];
-    }
+    const rawChallenges = unpackChallengeList(parsed);
     list = z.array(ChallengeSchema).parse(rawChallenges);
   } catch (err: any) {
-    console.error("Zod validation failed for generateChallenges:", err);
+    console.error("Zod validation failed for generateChallenges:", err, "Raw parsed:", parsed);
     throw new Error(
       `Réponse IA invalide (structure incorrecte: ${err.message?.substring(0, 100)})`,
     );
@@ -4367,23 +4570,10 @@ export const generateAcademicHomeworkChallenge = createServerFn({ method: "POST"
 
     let c: z.infer<typeof ChallengeSchema>;
     try {
-      let item: any = parsed;
-      if (Array.isArray(parsed)) {
-        item = parsed[0];
-      } else if (parsed && typeof parsed === "object") {
-        if (Array.isArray(parsed.challenges) && parsed.challenges.length > 0)
-          item = parsed.challenges[0];
-        else if (Array.isArray(parsed.data) && parsed.data.length > 0) item = parsed.data[0];
-        else if (Array.isArray(parsed.items) && parsed.items.length > 0) item = parsed.items[0];
-        else if (Array.isArray(parsed.results) && parsed.results.length > 0)
-          item = parsed.results[0];
-        else if (Array.isArray(parsed.defis) && parsed.defis.length > 0) item = parsed.defis[0];
-        else if (parsed.challenge && typeof parsed.challenge === "object") item = parsed.challenge;
-        else if (parsed.defi && typeof parsed.defi === "object") item = parsed.defi;
-      }
+      const item = unpackChallengeItem(parsed);
       c = ChallengeSchema.parse(item);
     } catch (err: any) {
-      console.error("Schema validation failed for academic challenge:", err);
+      console.error("Schema validation failed for academic challenge:", err, "Raw parsed:", parsed);
       throw new Error(
         `Réponse IA invalide — structure non conforme: ${err?.message?.substring(0, 100) ?? ""}`,
       );
@@ -4565,23 +4755,10 @@ export const generateSingleChallenge = createServerFn({ method: "POST" })
 
     let c: z.infer<typeof ChallengeSchema>;
     try {
-      let item: any = parsed;
-      if (Array.isArray(parsed)) {
-        item = parsed[0];
-      } else if (parsed && typeof parsed === "object") {
-        if (Array.isArray(parsed.challenges) && parsed.challenges.length > 0)
-          item = parsed.challenges[0];
-        else if (Array.isArray(parsed.data) && parsed.data.length > 0) item = parsed.data[0];
-        else if (Array.isArray(parsed.items) && parsed.items.length > 0) item = parsed.items[0];
-        else if (Array.isArray(parsed.results) && parsed.results.length > 0)
-          item = parsed.results[0];
-        else if (Array.isArray(parsed.defis) && parsed.defis.length > 0) item = parsed.defis[0];
-        else if (parsed.challenge && typeof parsed.challenge === "object") item = parsed.challenge;
-        else if (parsed.defi && typeof parsed.defi === "object") item = parsed.defi;
-      }
+      const item = unpackChallengeItem(parsed);
       c = ChallengeSchema.parse(item);
     } catch (err: any) {
-      console.error("Schema validation failed for generateSingleChallenge:", err);
+      console.error("Schema validation failed for generateSingleChallenge:", err, "Raw parsed:", parsed);
       throw new Error(
         `Réponse IA invalide (structure incorrecte: ${err?.message?.substring(0, 100) ?? ""})`,
       );

@@ -5,11 +5,7 @@ import { z } from "zod";
 import type { EstablishmentColleague } from "./educators-lookup.functions";
 
 export type SchoolType =
-  | "public"
-  | "private_secular"
-  | "private_religious"
-  | "international"
-  | "other";
+  "public" | "private_secular" | "private_religious" | "international" | "other";
 
 export type SchoolStatus = "community" | "verified" | "partner_campus" | "archived";
 

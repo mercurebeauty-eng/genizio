@@ -916,8 +916,8 @@ function ProfilePage() {
                 {mentorStatus.educatorProfile.verificationStatus === "suspended" && (
                   <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-xs font-bold text-red-700 flex items-start gap-2">
                     <Shield className="size-4 shrink-0 text-red-600" />
-                    Votre espace professionnel a été <strong>suspendu</strong> — contactez
-                    l'équipe Génizio.
+                    Votre espace professionnel a été <strong>suspendu</strong> — contactez l'équipe
+                    Génizio.
                   </div>
                 )}
                 <div className="grid gap-3 sm:grid-cols-2 text-sm">
@@ -1250,9 +1250,9 @@ function ProfilePage() {
               <div className="rounded-2xl border border-indigo-50 bg-indigo-50/40 p-5 space-y-3">
                 <p className="text-xs text-ink/60 leading-relaxed">
                   Vous êtes enseignant, conseiller d'orientation, psychologue scolaire ou chef
-                  d'établissement ? Demandez l'activation de votre espace professionnel :
-                  création de votre profil, @handle professionnel, rattachement à votre
-                  établissement et accès au portail éducation.
+                  d'établissement ? Demandez l'activation de votre espace professionnel : création
+                  de votre profil, @handle professionnel, rattachement à votre établissement et
+                  accès au portail éducation.
                 </p>
                 <div className="flex flex-wrap items-center gap-2.5">
                   <button
@@ -1565,8 +1565,8 @@ function ProfilePage() {
                   className="mt-0.5 rounded border-ink/20 text-indigo-600 focus:ring-indigo-500"
                 />
                 <span className="text-[11px] text-ink/70 font-semibold">
-                  Je dirige cet établissement — envoyer une demande de rôle « Chef
-                  d'établissement » (soumise à validation par l'administration Génizio)
+                  Je dirige cet établissement — envoyer une demande de rôle « Chef d'établissement »
+                  (soumise à validation par l'administration Génizio)
                 </span>
               </label>
 

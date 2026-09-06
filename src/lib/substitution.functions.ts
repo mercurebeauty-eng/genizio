@@ -15,7 +15,7 @@
 // de disponibilité de Naya était faux pour ce terrain (correction du registre en
 // backlog V4). Aucun des deux n'est un verdict sur l'enfant.
 
-import { callClaude, safeJsonParse, finalizeChallenge, formatChildInterestsPayload } from "@/lib/challenges.functions";
+import { callClaude, safeJsonParse, finalizeChallenge, formatChildInterestsPayload, unpackChallengeItem } from "@/lib/challenges.functions";
 import { buildSubstitutionPrompt } from "@/lib/naya-prompts";
 import { verifyAndLog } from "@/lib/naya-verifier.functions";
 import { formatTimePressureNote } from "@/lib/time-limit";
@@ -130,10 +130,11 @@ export async function processSubstitutionChallenge(
   });
 
   // 4. Filets déterministes (même point de passage que tous les générateurs).
-  const safeTitle = (parsed.title || `Mission d'ingénieur : ${challenge.domain}`) as string;
-  const safeDescription = (parsed.description || "") as string;
-  const safeSteps = (parsed.steps || []) as string[];
-  const safeMaterials = (parsed.materials || []) as string[];
+  const unpacked = unpackChallengeItem(parsed);
+  const safeTitle = (unpacked.title || `Mission d'ingénieur : ${challenge.domain}`) as string;
+  const safeDescription = (unpacked.description || "") as string;
+  const safeSteps = (unpacked.steps || []) as string[];
+  const safeMaterials = (unpacked.materials || []) as string[];
 
   const finalized = finalizeChallenge(
     {
@@ -141,21 +142,21 @@ export async function processSubstitutionChallenge(
       description: safeDescription,
       steps: safeSteps,
       materials: safeMaterials,
-      material_tags: parsed.material_tags,
-      intelligences: parsed.intelligences,
-      trait_subform: parsed.trait_subform,
-      requires_supervision: parsed.requires_supervision,
-      supervision_warning: parsed.supervision_warning,
-      difficulty: parsed.difficulty,
-      proof_mode: parsed.proof_mode,
-      proof_target: parsed.proof_target,
-      declarative_award: parsed.declarative_award,
-      academic_domain: parsed.academic_domain,
-      academic_level_age: parsed.academic_level_age,
-      academic_reference_note: parsed.academic_reference_note,
-      academic_secret: parsed.academic_secret,
-      kind: parsed.kind,
-      guidance_level: parsed.guidance_level,
+      material_tags: unpacked.material_tags,
+      intelligences: unpacked.intelligences,
+      trait_subform: unpacked.trait_subform,
+      requires_supervision: unpacked.requires_supervision,
+      supervision_warning: unpacked.supervision_warning,
+      difficulty: unpacked.difficulty,
+      proof_mode: unpacked.proof_mode,
+      proof_target: unpacked.proof_target,
+      declarative_award: unpacked.declarative_award,
+      academic_domain: unpacked.academic_domain,
+      academic_level_age: unpacked.academic_level_age,
+      academic_reference_note: unpacked.academic_reference_note,
+      academic_secret: unpacked.academic_secret,
+      kind: unpacked.kind,
+      guidance_level: unpacked.guidance_level,
     },
     child.age,
   );

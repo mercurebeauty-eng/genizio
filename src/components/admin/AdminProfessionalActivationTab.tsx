@@ -99,7 +99,11 @@ export function AdminProfessionalActivationTab() {
     setLoadingRequests(true);
     setLoadingAuthorized(true);
     try {
-      const [p, r, a] = await Promise.all([listProfilesFn(opts), listRequestsFn(opts), listAuthorizedFn(opts)]);
+      const [p, r, a] = await Promise.all([
+        listProfilesFn(opts),
+        listRequestsFn(opts),
+        listAuthorizedFn(opts),
+      ]);
       setProfiles(p ?? []);
       setRequests(r ?? []);
       setAuthorized(a ?? []);
@@ -113,15 +117,12 @@ export function AdminProfessionalActivationTab() {
     }
   };
 
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
     void loadAll();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [session?.access_token]);
 
-  const pendingRequests = useMemo(
-    () => requests.filter((r) => r.status === "pending"),
-    [requests],
-  );
+  const pendingRequests = useMemo(() => requests.filter((r) => r.status === "pending"), [requests]);
 
   const filteredProfiles = useMemo(() => {
     const q = profileSearch.toLowerCase();
@@ -156,7 +157,8 @@ export function AdminProfessionalActivationTab() {
           p.id === profile.id
             ? {
                 ...p,
-                verificationStatus: action === "verify" ? "verified" : action === "suspend" ? "suspended" : "pending",
+                verificationStatus:
+                  action === "verify" ? "verified" : action === "suspend" ? "suspended" : "pending",
               }
             : p,
         ),
@@ -198,7 +200,13 @@ export function AdminProfessionalActivationTab() {
         data: {
           email: newEmail.trim(),
           schoolId: newSchoolId || null,
-          expectedRole: (newRole || null) as any,
+          expectedRole:
+            newRole === "teacher" ||
+            newRole === "counselor" ||
+            newRole === "psychologist" ||
+            newRole === "other"
+              ? newRole
+              : null,
           isLeader: newIsLeader,
           note: newNote.trim() || undefined,
         },
@@ -272,7 +280,10 @@ export function AdminProfessionalActivationTab() {
             </div>
           ) : (
             pendingRequests.map((r) => (
-              <div key={r.id} className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 px-5 py-3.5">
+              <div
+                key={r.id}
+                className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 px-5 py-3.5"
+              >
                 <div className="min-w-0">
                   <p className="text-sm font-bold text-ink">
                     {r.userName || r.userEmail || r.userId}
@@ -315,8 +326,8 @@ export function AdminProfessionalActivationTab() {
             <div>
               <h3 className="font-display font-black text-sm text-ink">Profils professionnels</h3>
               <p className="text-[11px] font-medium text-ink/50">
-                Auto-inscriptions (enseignants, conseillers, psychologues) à activer — l'admin
-                n'y avait plus accès.
+                Auto-inscriptions (enseignants, conseillers, psychologues) à activer — l'admin n'y
+                avait plus accès.
               </p>
             </div>
           </div>
@@ -332,7 +343,9 @@ export function AdminProfessionalActivationTab() {
             </div>
             <select
               value={statusFilter}
-              onChange={(e) => setStatusFilter(e.target.value as any)}
+              onChange={(e) =>
+                setStatusFilter(e.target.value as "all" | "pending" | "verified" | "suspended")
+              }
               className="rounded-xl border border-ink/10 bg-white px-2.5 py-2 text-[11px] font-bold text-ink cursor-pointer"
             >
               <option value="pending">En attente</option>
@@ -373,7 +386,11 @@ export function AdminProfessionalActivationTab() {
                     <p className="text-[11px] font-medium text-ink/50 truncate">
                       {ROLE_LABELS[p.professionalRole] ?? p.professionalRole}
                       {p.email ? ` · ${p.email}` : ""}
-                      {p.schoolName ? ` · ${p.schoolName}` : p.organizationName ? ` · ${p.organizationName}` : ""}
+                      {p.schoolName
+                        ? ` · ${p.schoolName}`
+                        : p.organizationName
+                          ? ` · ${p.organizationName}`
+                          : ""}
                       {p.delegatedStudentsCount > 0
                         ? ` · ${p.delegatedStudentsCount} élève(s) délégué(s)`
                         : ""}
@@ -529,7 +546,9 @@ export function AdminProfessionalActivationTab() {
                   <div className="min-w-0">
                     <p className="text-xs font-bold text-ink font-mono">{a.email}</p>
                     <p className="text-[10px] font-medium text-ink/50 truncate">
-                      {a.expectedRole ? (ROLE_LABELS[a.expectedRole] ?? a.expectedRole) : "Fonction libre"}
+                      {a.expectedRole
+                        ? (ROLE_LABELS[a.expectedRole] ?? a.expectedRole)
+                        : "Fonction libre"}
                       {a.isLeader ? " · Chef d'établissement" : ""}
                       {a.schoolName ? ` · ${a.schoolName}` : " · Sans établissement (indépendant)"}
                     </p>
@@ -568,8 +587,9 @@ function AuthorizedEmailSchoolSelect({
 
   useEffect(() => setUuid(value), [value]);
 
-  const isValidUuid =
-    /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(uuid.trim());
+  const isValidUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(
+    uuid.trim(),
+  );
 
   return (
     <input

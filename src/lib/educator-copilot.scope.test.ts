@@ -14,7 +14,7 @@ describe("extractOutOfScope (périmètre du Copilote enseignant)", () => {
   });
 
   it("détecte un refus dans une réponse avec fences markdown", () => {
-    const raw = "```json\n{\"out_of_scope\": true}\n```";
+    const raw = '```json\n{"out_of_scope": true}\n```';
     expect(extractOutOfScope(raw)).toBe(
       "Le Copilote est spécialisé dans la pédagogie : un assistant généraliste comme ChatGPT ou Gemini sera plus adapté à cette demande.",
     );

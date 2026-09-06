@@ -181,10 +181,13 @@ export async function callGLM(
 
       if (opts.jsonMode && textContent) {
         textContent = textContent.trim();
-        if (textContent.startsWith("```")) {
+        const fenceMatch = textContent.match(/^```(?:json)?\s*([\s\S]*?)\s*```$/i);
+        if (fenceMatch) {
+          textContent = fenceMatch[1].trim();
+        } else if (textContent.startsWith("```")) {
           textContent = textContent
-            .replace(/^```[a-z]*\n/, "")
-            .replace(/\n```$/, "")
+            .replace(/^```[a-z]*\r?\n?/i, "")
+            .replace(/\r?\n?```\s*$/i, "")
             .trim();
         }
       }
